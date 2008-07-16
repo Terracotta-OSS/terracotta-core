@@ -42,8 +42,7 @@ public class DSOClient implements NotificationListener {
   public DSOClient(ConnectionContext cc, ObjectName beanName) {
     this.cc = cc;
     this.beanName = beanName;
-    this.delegate = (DSOClientMBean) MBeanServerInvocationProxy.newProxyInstance(cc.mbsc, beanName,
-                                                                                 DSOClientMBean.class, true);
+    this.delegate = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, beanName, DSOClientMBean.class, true);
     channelID = delegate.getChannelID().toLong();
     remoteAddress = delegate.getRemoteAddress();
     changeHelper = new PropertyChangeSupport(this);
@@ -52,7 +51,7 @@ public class DSOClient implements NotificationListener {
   }
 
   private void testSetupTunneledBeans() {
-    if(delegate.isTunneledBeansRegistered()) {
+    if (delegate.isTunneledBeansRegistered()) {
       setupTunneledBeans();
     } else {
       startListeningForTunneledBeans();
@@ -70,7 +69,7 @@ public class DSOClient implements NotificationListener {
     runtimeOutputOptionsBean = (RuntimeOutputOptionsMBean) MBeanServerInvocationHandler
         .newProxyInstance(cc.mbsc, delegate.getRuntimeOutputOptionsBeanName(), RuntimeOutputOptionsMBean.class, true);
   }
-  
+
   private void startListeningForTunneledBeans() {
     if (isListeningForTunneledBeans) return;
     try {
@@ -94,18 +93,18 @@ public class DSOClient implements NotificationListener {
   public void handleNotification(Notification notification, Object handback) {
     String type = notification.getType();
 
-    if(DSOClientMBean.TUNNELED_BEANS_REGISTERED.equals(type)) {
+    if (DSOClientMBean.TUNNELED_BEANS_REGISTERED.equals(type)) {
       setupTunneledBeans();
       stopListeningForTunneledBeans();
       fireTunneledBeansRegistered();
     }
   }
-  
+
   private void fireTunneledBeansRegistered() {
     PropertyChangeEvent pce = new PropertyChangeEvent(this, DSOClientMBean.TUNNELED_BEANS_REGISTERED, null, null);
     changeHelper.firePropertyChange(pce);
   }
-  
+
   public ObjectName getObjectName() {
     return beanName;
   }

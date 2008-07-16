@@ -26,7 +26,7 @@ public class RootsPanel extends XContainer {
   public RootsPanel(IClusterNode clusterNode, IBasicObject[] roots) {
     super();
 
-    load((ContainerResource) AdminClient.getContext().topRes.getComponent("RootsPanel"));
+    load((ContainerResource) AdminClient.getContext().getComponent("RootsPanel"));
 
     m_clusterNode = clusterNode;
     m_liveObjectCountLabel = (Label) findComponent("LiveObjectCountLabel");

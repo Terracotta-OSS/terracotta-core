@@ -27,7 +27,7 @@ public class ClientNode extends ComponentNode {
   ClientsNode getClientsNode() {
     return m_clientsNode;
   }
-  
+
   protected ClientPanel createClientPanel() {
     return new ClientPanel(this);
   }
@@ -56,7 +56,7 @@ public class ClientNode extends ComponentNode {
   protected ClientRootsNode createClientRootsNode() {
     return new ClientRootsNode(this);
   }
-  
+
   public IClient getClient() {
     return m_client;
   }

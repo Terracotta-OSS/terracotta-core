@@ -31,7 +31,7 @@ public class ServersPanel extends XContainer implements ServerStateListener {
     m_serversNode = serversNode;
     m_connectionContext = serversNode.getConnectionContext();
 
-    load((ContainerResource) m_acc.topRes.getComponent("ServersPanel"));
+    load((ContainerResource) m_acc.getComponent("ServersPanel"));
 
     m_clusterMemberTable = (XObjectTable) findComponent("ClusterMembersTable");
     m_clusterMemberTableModel = new ClusterMemberTableModel();
@@ -44,14 +44,14 @@ public class ServersPanel extends XContainer implements ServerStateListener {
       ServerNode serverNode = (ServerNode) m_serversNode.getChildAt(i);
       m_clusterMemberTableModel.addClusterMember(serverNode.getServer());
     }
-    
+
     serversNode.getClusterModel().addServerStateListener(this);
   }
 
   IClusterModel getClusterModel() {
-    return m_serversNode.getClusterModel();
+    return m_serversNode != null ? m_serversNode.getClusterModel() : null;
   }
-  
+
   public void serverStateChanged(final IServer server, PropertyChangeEvent e) {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin;
 
@@ -48,7 +49,7 @@ public class ClusterThreadDumpsPanel extends XContainer {
     m_acc = AdminClient.getContext();
     m_clusterThreadDumpsNode = clusterThreadDumpsNode;
 
-    load((ContainerResource) m_acc.topRes.getComponent("ClusterThreadDumpsPanel"));
+    load((ContainerResource) m_acc.getComponent("ClusterThreadDumpsPanel"));
 
     m_threadDumpButton = (Button) findComponent("TakeThreadDumpButton");
     m_threadDumpButton.addActionListener(new ThreadDumpButtonHandler());
@@ -122,16 +123,16 @@ public class ClusterThreadDumpsPanel extends XContainer {
     XTreeNode root = (XTreeNode) m_threadDumpTreeModel.getRoot();
     int count = root.getChildCount();
     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'/'HH.mm.ss.SSSZ");
-    for(int i = 0; i < count; i++) {
-      ClusterThreadDumpEntry ctde = (ClusterThreadDumpEntry)root.getChildAt(i);
-      String filenameBase = dateFormat.format(ctde.getTime())+"/";
+    for (int i = 0; i < count; i++) {
+      ClusterThreadDumpEntry ctde = (ClusterThreadDumpEntry) root.getChildAt(i);
+      String filenameBase = dateFormat.format(ctde.getTime()) + "/";
       int entryCount = ctde.getChildCount();
-      for(int j = 0; j < entryCount; j++) {
-        ThreadDumpElement tde = (ThreadDumpElement)ctde.getChildAt(j);
+      for (int j = 0; j < entryCount; j++) {
+        ThreadDumpElement tde = (ThreadDumpElement) ctde.getChildAt(j);
         ZipEntry zipentry = new ZipEntry(filenameBase + tde.toString().replace(':', '-'));
         zipstream.putNextEntry(zipentry);
         zipstream.write(tde.getThreadDump().getBytes("UTF-8"));
-        zipstream.closeEntry();        
+        zipstream.closeEntry();
       }
     }
     zipstream.close();
@@ -141,7 +142,7 @@ public class ClusterThreadDumpsPanel extends XContainer {
     public void actionPerformed(ActionEvent ae) {
       try {
         handleExport();
-      } catch(Exception e) {
+      } catch (Exception e) {
         m_acc.log(e);
       }
     }

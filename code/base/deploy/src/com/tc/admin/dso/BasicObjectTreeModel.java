@@ -13,7 +13,7 @@ import com.tc.object.ObjectID;
 
 public class BasicObjectTreeModel extends XTreeModel {
   private IClusterNode m_clusterNode;
-  
+
   public BasicObjectTreeModel(IClusterNode clusterNode, IBasicObject[] roots) {
     super();
 
@@ -27,16 +27,14 @@ public class BasicObjectTreeModel extends XTreeModel {
   }
 
   private static boolean isResident(IClusterNode clusterNode, IObject object) {
-    while(object != null) {
+    while (object != null) {
       ObjectID oid = object.getObjectID();
-      if(oid != null) {
-        return clusterNode.isResident(oid);
-      }
+      if (oid != null) { return clusterNode.isResident(oid); }
       object = object.getParent();
     }
     return false;
   }
-  
+
   public static BasicObjectNode newObjectNode(IClusterNode clusterNode, IBasicObject object) {
     BasicObjectNode objectNode = new BasicObjectNode(object);
     objectNode.setResident(isResident(clusterNode, object));
@@ -46,7 +44,7 @@ public class BasicObjectTreeModel extends XTreeModel {
   public BasicObjectNode newObjectNode(IBasicObject object) {
     return newObjectNode(m_clusterNode, object);
   }
-  
+
   public void refresh() {
     XTreeNode rootNode = (XTreeNode) getRoot();
     for (int i = rootNode.getChildCount() - 1; i >= 0; i--) {

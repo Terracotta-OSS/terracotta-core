@@ -68,7 +68,7 @@ public class ClientPanel extends XContainer implements NotificationListener, Pro
 
     m_acc = AdminClient.getContext();
 
-    load((ContainerResource) m_acc.topRes.getComponent("ClientPanel"));
+    load((ContainerResource) m_acc.getComponent("ClientPanel"));
 
     m_propertyTable = (PropertyTable) findComponent("ClientInfoTable");
     DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
@@ -205,9 +205,8 @@ public class ClientPanel extends XContainer implements NotificationListener, Pro
       Object loggingBean = checkBox.getClientProperty(checkBox.getName());
       String attrName = checkBox.getName();
       boolean enabled = checkBox.isSelected();
-      LoggingChangeWorker worker = new LoggingChangeWorker(loggingBean, attrName, enabled);
 
-      m_acc.executorService.execute(worker);
+      m_acc.execute(new LoggingChangeWorker(loggingBean, attrName, enabled));
     }
   }
 

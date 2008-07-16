@@ -102,8 +102,8 @@ public class GCRunner {
     ObjectManagementMonitorMBean mbean = null;
     final JMXConnector jmxConnector = RunnerUtility.getJMXConnector(m_userName, m_host, m_port);
     final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
-    mbean = (ObjectManagementMonitorMBean) MBeanServerInvocationProxy
-        .newProxyInstance(mbs, L2MBeanNames.OBJECT_MANAGEMENT, ObjectManagementMonitorMBean.class, false);
+    mbean = MBeanServerInvocationProxy.newMBeanProxy(mbs, L2MBeanNames.OBJECT_MANAGEMENT,
+                                                     ObjectManagementMonitorMBean.class, false);
     try {
       mbean.runGC();
     } catch (RuntimeException e) {

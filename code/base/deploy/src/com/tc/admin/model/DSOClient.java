@@ -49,8 +49,7 @@ public class DSOClient implements IClient, NotificationListener {
   public DSOClient(ConnectionContext cc, ObjectName beanName) {
     this.cc = cc;
     this.beanName = beanName;
-    this.delegate = (DSOClientMBean) MBeanServerInvocationProxy.newProxyInstance(cc.mbsc, beanName,
-                                                                                 DSOClientMBean.class, true);
+    this.delegate = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, beanName, DSOClientMBean.class, true);
     channelID = delegate.getChannelID().toLong();
     remoteAddress = delegate.getRemoteAddress();
     changeHelper = new PropertyChangeSupport(this);
@@ -59,7 +58,7 @@ public class DSOClient implements IClient, NotificationListener {
   }
 
   private void testSetupTunneledBeans() {
-    if(delegate.isTunneledBeansRegistered()) {
+    if (delegate.isTunneledBeansRegistered()) {
       setupTunneledBeans();
     } else {
       startListeningForTunneledBeans();
@@ -73,18 +72,18 @@ public class DSOClient implements IClient, NotificationListener {
         .newProxyInstance(cc.mbsc, delegate.getInstrumentationLoggingBeanName(), InstrumentationLoggingMBean.class,
                           true);
     addMBeanNotificationListener(delegate.getInstrumentationLoggingBeanName(), this, "InstrumentationLoggingMBean");
-    
+
     runtimeLoggingBean = (RuntimeLoggingMBean) MBeanServerInvocationHandler.newProxyInstance(cc.mbsc, delegate
         .getRuntimeLoggingBeanName(), RuntimeLoggingMBean.class, true);
     addMBeanNotificationListener(delegate.getRuntimeLoggingBeanName(), this, "RuntimeLoggingMBean");
-    
+
     runtimeOutputOptionsBean = (RuntimeOutputOptionsMBean) MBeanServerInvocationHandler
         .newProxyInstance(cc.mbsc, delegate.getRuntimeOutputOptionsBeanName(), RuntimeOutputOptionsMBean.class, true);
     addMBeanNotificationListener(delegate.getRuntimeOutputOptionsBeanName(), this, "RuntimeOutputOptionsMBean");
 
     fireTunneledBeansRegistered();
   }
-  
+
   private void startListeningForTunneledBeans() {
     if (isListeningForTunneledBeans) return;
     addMBeanNotificationListener(beanName, this, "DSOClientMBean");
@@ -95,10 +94,10 @@ public class DSOClient implements IClient, NotificationListener {
     try {
       cc.addNotificationListener(objectName, listener);
     } catch (Exception e) {
-      throw new RuntimeException("Adding listener to "+beanType, e);
+      throw new RuntimeException("Adding listener to " + beanType, e);
     }
   }
-  
+
   private void stopListeningForTunneledBeans() {
     if (!isListeningForTunneledBeans) return;
     try {
@@ -112,7 +111,7 @@ public class DSOClient implements IClient, NotificationListener {
   public void handleNotification(Notification notification, Object handback) {
     String type = notification.getType();
 
-    if(DSOClientMBean.TUNNELED_BEANS_REGISTERED.equals(type)) {
+    if (DSOClientMBean.TUNNELED_BEANS_REGISTERED.equals(type)) {
       setupTunneledBeans();
       stopListeningForTunneledBeans();
     } else if (type.startsWith("tc.logging.")) {
@@ -122,18 +121,18 @@ public class DSOClient implements IClient, NotificationListener {
       changeHelper.firePropertyChange(pce);
     }
   }
-  
+
   private void fireTunneledBeansRegistered() {
     PropertyChangeEvent pce = new PropertyChangeEvent(this, DSOClientMBean.TUNNELED_BEANS_REGISTERED, null, null);
     changeHelper.firePropertyChange(pce);
     setReady(true);
   }
-  
+
   private void setReady(boolean ready) {
     boolean oldValue = this.ready;
     changeHelper.firePropertyChange(PROP_READY, oldValue, this.ready = ready);
   }
-  
+
   public boolean isReady() {
     return ready;
   }
@@ -219,15 +218,15 @@ public class DSOClient implements IClient, NotificationListener {
   public String[] getCpuStatNames() {
     return getL1InfoBean().getCpuStatNames();
   }
-  
+
   public StatisticData[] getCpuUsage() {
     return getL1InfoBean().getCpuUsage();
   }
-  
+
   public CountStatistic getTransactionRate() {
     return delegate.getTransactionRate();
   }
-  
+
   public ObjectName getInstrumentationLoggingObjectName() {
     return delegate.getInstrumentationLoggingBeanName();
   }
@@ -247,7 +246,7 @@ public class DSOClient implements IClient, NotificationListener {
   public ObjectName getRuntimeOutputOptionsObjectName() {
     return delegate.getRuntimeOutputOptionsBeanName();
   }
-  
+
   public RuntimeOutputOptionsMBean getRuntimeOutputOptionsBean() {
     return runtimeOutputOptionsBean;
   }
@@ -259,11 +258,11 @@ public class DSOClient implements IClient, NotificationListener {
   public int getLiveObjectCount() {
     return delegate.getLiveObjectCount();
   }
-  
+
   public boolean isResident(ObjectID oid) {
     return delegate.isResident(oid);
   }
-  
+
   public void killClient() {
     delegate.killClient();
   }
@@ -284,10 +283,10 @@ public class DSOClient implements IClient, NotificationListener {
     return getL1InfoBean().getEnvironment();
   }
 
-  public Map getL1Statistics(){
+  public Map getL1Statistics() {
     return getL1InfoBean().getStatistics();
   }
-  
+
   /**
    * Cpu usage, Memory usage, Transaction rate.
    * 

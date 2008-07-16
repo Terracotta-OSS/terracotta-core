@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin;
 
@@ -17,10 +18,10 @@ public class HelpHelper extends BaseHelper {
   }
 
   public Icon getHelpIcon() {
-    if(m_helpIcon == null) {
-      URL url = getClass().getResource(ICONS_PATH+"help.gif");
-      
-      if(url != null) {
+    if (m_helpIcon == null) {
+      URL url = getClass().getResource(ICONS_PATH + "help.gif");
+
+      if (url != null) {
         m_helpIcon = new ImageIcon(url);
       }
     }

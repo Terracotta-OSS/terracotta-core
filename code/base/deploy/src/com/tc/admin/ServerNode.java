@@ -13,14 +13,11 @@ import com.tc.admin.model.IClusterNode;
 import com.tc.admin.model.IServer;
 
 import java.awt.Color;
-import java.awt.Frame;
 import java.awt.Graphics;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.management.remote.JMXConnector;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -36,13 +33,12 @@ import javax.swing.SwingUtilities;
  * through a refactoring.
  */
 
-public class ServerNode extends ComponentNode implements ConnectionListener {
+public class ServerNode extends ComponentNode {
   protected AdminClientContext           m_acc;
   protected ServersNode                  m_serversNode;
   protected IServer                      m_server;
   protected ServerPropertyChangeListener m_serverPropertyChangeListener;
   protected ServerPanel                  m_serverPanel;
-  protected ConnectDialog                m_connectDialog;
   protected JDialog                      m_versionMismatchDialog;
   protected JPopupMenu                   m_popupMenu;
   protected ServerThreadDumpsNode        m_threadDumpsNode;
@@ -57,8 +53,17 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
 
     setRenderer(new ServerNodeTreeCellRenderer());
     initMenu();
-    setComponent(m_serverPanel = createServerPanel());
     m_server.addPropertyChangeListener(m_serverPropertyChangeListener = new ServerPropertyChangeListener());
+  }
+
+  public java.awt.Component getComponent() {
+    if (m_serverPanel == null) {
+      m_serverPanel = createServerPanel();
+      if (m_server.isConnected()) {
+        handleConnected();
+      }
+    }
+    return m_serverPanel;
   }
 
   public IServer getServer() {
@@ -73,6 +78,7 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
     }
 
     public void run() {
+      if (m_server == null) return;
       String prop = m_pce.getPropertyName();
       if (IServer.PROP_CONNECTED.equals(prop)) {
         if (!m_server.isConnected()) {
@@ -104,7 +110,7 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
   void handleConnected() {
     if (m_acc == null) return;
     if (m_versionMismatchDialog != null) return;
-    if (!m_serverPanel.isProductInfoShowing() && !m_acc.controller.testServerMatch(this)) {
+    if (m_serverPanel != null && !m_serverPanel.isProductInfoShowing() && !m_acc.testServerMatch(this)) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           if (m_server.isConnected()) {
@@ -196,63 +202,6 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
     return m_server.hasConnectError();
   }
 
-  ConnectDialog getConnectDialog(ConnectionListener listener) {
-    if (m_connectDialog == null) {
-      Frame frame = (Frame) m_serverPanel.getAncestorOfClass(java.awt.Frame.class);
-      m_connectDialog = new ConnectDialog(frame, m_server, listener);
-    } else {
-      m_connectDialog.setServer(m_server);
-      m_connectDialog.setConnectionListener(listener);
-    }
-
-    return m_connectDialog;
-  }
-
-  /**
-   * Called when the user clicks the Connect button. Not used when auto-connect is enabled.
-   */
-  void connect() {
-    try {
-      beginConnect();
-    } catch (Exception e) {
-      m_acc.controller.log(e);
-    }
-  }
-
-  private void beginConnect() throws Exception {
-    m_acc.controller.block();
-    ConnectDialog cd = getConnectDialog(this);
-    m_server.refreshCachedCredentials();
-    cd.center((Frame) m_serverPanel.getAncestorOfClass(java.awt.Frame.class));
-    cd.setVisible(true);
-  }
-
-  /**
-   * Call back from the ConnectDialog.
-   */
-  public void handleConnection() {
-    JMXConnector jmxc;
-    if ((jmxc = m_connectDialog.getConnector()) != null) {
-      try {
-        m_server.setJMXConnector(jmxc);
-      } catch (IOException ioe) {
-        reportConnectError(ioe);
-      }
-    }
-    m_acc.controller.unblock();
-  }
-
-  /**
-   * Call back from the ConnectDialog.
-   */
-  public void handleException() {
-    Exception e = m_connectDialog.getError();
-    if (e != null) {
-      reportConnectError(e);
-    }
-    m_acc.controller.unblock();
-  }
-
   private void reportConnectError() {
     reportConnectError(m_server.getConnectError());
   }
@@ -262,12 +211,12 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
     if (msg != null && m_serverPanel != null) {
       m_serverPanel.setConnectExceptionMessage(msg);
     }
-    m_acc.controller.nodeChanged(this);
+    m_acc.nodeChanged(this);
   }
 
   void disconnect() {
-    m_acc.controller.setStatus(m_acc.format("disconnecting.from", this));
-    m_acc.controller.updateServerPrefs();
+    m_acc.setStatus(m_acc.format("disconnecting.from", this));
+    m_acc.updateServerPrefs();
     m_server.disconnect();
   }
 
@@ -284,22 +233,23 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
   }
 
   void handleStarting() {
-    m_acc.controller.nodeChanged(this);
-    m_serverPanel.started();
+    m_acc.nodeChanged(this);
+    if (m_serverPanel != null) {
+      m_serverPanel.started();
+    }
   }
 
   private AtomicBoolean m_addingChildren = new AtomicBoolean(false);
 
   void tryAddChildren() {
-    if(!m_server.isReady()) { return; } 
+    if (!m_server.isReady()) { return; }
     if (m_addingChildren.get()) { return; }
 
     try {
       m_addingChildren.set(true);
       if (getChildCount() == 0) {
         addChildren();
-        m_acc.controller.nodeStructureChanged(this);
-//        m_acc.controller.expand(this);
+        m_acc.nodeStructureChanged(this);
       }
     } finally {
       m_addingChildren.set(false);
@@ -321,27 +271,35 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
 
   void handlePassiveUninitialized() {
     tryAddChildren();
-    m_serverPanel.passiveUninitialized();
-    m_acc.controller.nodeChanged(this);
+    if (m_serverPanel != null) {
+      m_serverPanel.passiveUninitialized();
+    }
+    m_acc.nodeChanged(this);
   }
 
   void handlePassiveStandby() {
     tryAddChildren();
-    m_serverPanel.passiveStandby();
-    m_acc.controller.nodeChanged(this);
+    if (m_serverPanel != null) {
+      m_serverPanel.passiveStandby();
+    }
+    m_acc.nodeChanged(this);
   }
 
   void handleActivation() {
     tryAddChildren();
-    m_serverPanel.activated();
-    m_acc.controller.nodeChanged(this);
+    if (m_serverPanel != null) {
+      m_serverPanel.activated();
+    }
+    m_acc.nodeChanged(this);
   }
 
   void handleDisconnect() {
-    m_acc.controller.nodeChanged(this);
-    m_serverPanel.disconnected();
+    m_acc.nodeChanged(this);
+    if (m_serverPanel != null) {
+      m_serverPanel.disconnected();
+    }
     for (int i = getChildCount() - 1; i >= 0; i--) {
-      m_acc.controller.remove((XTreeNode) getChildAt(i));
+      m_acc.remove((XTreeNode) getChildAt(i));
     }
   }
 
@@ -360,7 +318,7 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
   public String getProductCopyright() throws Exception {
     return m_server.getProductCopyright();
   }
-  
+
   String getEnvironment() throws Exception {
     return m_server.getEnvironment();
   }
@@ -431,16 +389,11 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
 
   public void tearDown() {
     m_server.removePropertyChangeListener(m_serverPropertyChangeListener);
-    if (m_connectDialog != null) {
-      m_connectDialog.tearDown();
-    }
     m_acc = null;
     m_server = null;
     m_serverPanel = null;
-    m_connectDialog = null;
     m_popupMenu = null;
     m_threadDumpsNode = null;
-
     super.tearDown();
   }
 }

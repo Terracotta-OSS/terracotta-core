@@ -5,7 +5,7 @@
 #
 # Example:
 # level: 1
-level: set_this_when_first_patch_created
+level: 1
 
 # List of files to include in the patch tar.  File paths listed here are
 # relative to the kit root directory.  Use the YAML syntax for lists:
@@ -14,3 +14,4 @@ level: set_this_when_first_patch_created
 # Example:
 #- lib/tc.jar
 files: 
+ - lib/tc.jar

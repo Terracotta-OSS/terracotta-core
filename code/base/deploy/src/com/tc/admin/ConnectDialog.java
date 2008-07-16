@@ -66,8 +66,8 @@ public final class ConnectDialog extends Dialog {
     m_timeout = CONNECT_TIMEOUT_MILLIS;
     m_listener = listener;
 
-    load((DialogResource) m_acc.topRes.child("ConnectDialog"));
-    ((JComponent)getContentPane()).setBorder(UIManager.getBorder("InternalFrame.border"));    
+    load((DialogResource) m_acc.childResource("ConnectDialog"));
+    ((JComponent) getContentPane()).setBorder(UIManager.getBorder("InternalFrame.border"));
     m_label = (Label) findComponent("ConnectLabel");
     m_label.setText("Connecting to " + server + ". Please wait...");
     pack();
@@ -79,7 +79,7 @@ public final class ConnectDialog extends Dialog {
     m_emptyPanel = (Container) findComponent("EmptyPanel");
     m_emptyPanel.setLayout(new BorderLayout());
 
-    m_authPanel = (Container) AdminClient.getContext().topRes.resolve("AuthPanel");
+    m_authPanel = (Container) AdminClient.getContext().resolveResource("AuthPanel");
 
     Container credentialsPanel = (Container) m_authPanel.findComponent("CredentialsPanel");
     m_authPanel.setVisible(false);
@@ -126,7 +126,7 @@ public final class ConnectDialog extends Dialog {
 
   private void initiateConnectAction() {
     m_cancelButton.setEnabled(true);
-    m_connectInitiator = m_acc.executorService.submit(new ConnectInitiator());
+    m_connectInitiator = m_acc.submit(new ConnectInitiator());
   }
 
   class DialogCloserTask implements ActionListener {
@@ -228,7 +228,7 @@ public final class ConnectDialog extends Dialog {
 
   private class ConnectInitiator implements Runnable {
     public void run() {
-      Future f = m_acc.executorService.submit(new ConnectAction());
+      Future f = m_acc.submitTask(new ConnectAction());
 
       m_error = null;
       try {

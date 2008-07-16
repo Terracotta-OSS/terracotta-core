@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin;
 
@@ -19,8 +20,7 @@ public class ServerThreadDumpsPanel extends AbstractThreadDumpsPanel {
   }
 
   protected Preferences getPreferences() {
-    AdminClientContext acc = AdminClient.getContext();
-    return acc.prefs.node("ServerThreadDumpsPanel");
+    return m_acc.getPrefs().node(ServerThreadDumpsPanel.class.getName());
   }
 
   public void tearDown() {

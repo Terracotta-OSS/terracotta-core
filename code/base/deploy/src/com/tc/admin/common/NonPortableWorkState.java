@@ -176,12 +176,12 @@ public class NonPortableWorkState extends AbstractWorkState {
   }
 
   public String descriptionFor(final ApplicationEventContext context) {
-    if(!(context instanceof NonPortableEventContext)) return "";
-    
+    if (!(context instanceof NonPortableEventContext)) return "";
+
     String explaination = getExplaination();
     if (explaination != null) { return explaination; }
 
-    boolean isRoot = isRoot((NonPortableEventContext)context);
+    boolean isRoot = isRoot((NonPortableEventContext) context);
     StringBuffer sb = new StringBuffer();
     if (isTransient()) {
       sb.append(TRANSIENT_FIELD_MSG);

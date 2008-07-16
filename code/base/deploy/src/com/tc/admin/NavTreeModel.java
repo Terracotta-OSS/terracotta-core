@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin;
 
@@ -20,34 +21,33 @@ public class NavTreeModel extends XTreeModel {
   public NavTreeModel() {
     super();
 
-    AdminClientContext acc         = AdminClient.getContext();
-    Preferences        prefs       = acc.prefs.node("AdminClient");
-    Preferences        serverPrefs = prefs.node(SERVERS);
-    PrefsHelper        prefsHelper = PrefsHelper.getHelper();
-    String[]           children    = prefsHelper.childrenNames(serverPrefs);
-    int                count       = children.length;
-    Preferences        serverPref;
-    ClusterNode        serverNode;
-    String             host;
-    int                port;
-    boolean            autoConnect;
+    AdminClientContext acc = AdminClient.getContext();
+    Preferences prefs = acc.getPrefs().node("AdminClient");
+    Preferences serverPrefs = prefs.node(SERVERS);
+    PrefsHelper prefsHelper = PrefsHelper.getHelper();
+    String[] children = prefsHelper.childrenNames(serverPrefs);
+    int count = children.length;
+    Preferences serverPref;
+    ClusterNode serverNode;
+    String host;
+    int port;
+    boolean autoConnect;
 
-    if(count > 0) {
-      for(int i = 0; i < count; i++) {
-        serverPref  = serverPrefs.node(children[i]);
-        host        = serverPref.get(HOST, ConnectionContext.DEFAULT_HOST);
-        port        = serverPref.getInt(PORT, ConnectionContext.DEFAULT_PORT);
+    if (count > 0) {
+      for (int i = 0; i < count; i++) {
+        serverPref = serverPrefs.node(children[i]);
+        host = serverPref.get(HOST, ConnectionContext.DEFAULT_HOST);
+        port = serverPref.getInt(PORT, ConnectionContext.DEFAULT_PORT);
         autoConnect = serverPref.getBoolean(AUTO_CONNECT, ConnectionContext.DEFAULT_AUTO_CONNECT);
-        serverNode  = acc.nodeFactory.createClusterNode(host, port, autoConnect);
+        serverNode = acc.getNodeFactory().createClusterNode(host, port, autoConnect);
 
-        insertNodeInto(serverNode, (XTreeNode)getRoot(), i);
+        insertNodeInto(serverNode, (XTreeNode) getRoot(), i);
       }
-    }
-    else {
-      serverNode = acc.nodeFactory.createClusterNode();
+    } else {
+      serverNode = acc.getNodeFactory().createClusterNode();
       serverNode.setPreferences(serverPrefs.node("server-0"));
-      acc.client.storePrefs();
-      insertNodeInto(serverNode, (XTreeNode)getRoot(), 0);
+      acc.storePrefs();
+      insertNodeInto(serverNode, (XTreeNode) getRoot(), 0);
     }
   }
 }

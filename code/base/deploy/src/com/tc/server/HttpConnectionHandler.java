@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.server;
 
@@ -14,7 +15,7 @@ import java.net.Socket;
 
 public class HttpConnectionHandler extends AbstractEventHandler {
 
-  private static final TCLogger logger = TCLogging.getLogger(HttpConnectionContext.class);
+  private static final TCLogger     logger = TCLogging.getLogger(HttpConnectionContext.class);
 
   private final TerracottaConnector terracottaConnector;
 

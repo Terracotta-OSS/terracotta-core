@@ -14,18 +14,16 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import javax.management.ObjectName;
 
 public class ClusterModel extends Server implements IClusterModel {
-  private Server[]              m_clusterServers;
-  private Server                m_activeServer;
-  private ActiveLocator         m_activeLocator;
-  private boolean               m_userDisconnecting;
-
-  private static final Server[] EMPTY_SERVERS = {};
+  private Server[]               m_clusterServers;
+  private PropertyChangeListener m_serverPropertyChangeListener;
+  private Server                 m_activeServer;
+  private ActiveLocator          m_activeLocator;
+  private boolean                m_userDisconnecting;
 
   public ClusterModel() {
     this(ConnectionContext.DEFAULT_HOST, ConnectionContext.DEFAULT_PORT, ConnectionContext.DEFAULT_AUTO_CONNECT);
@@ -33,6 +31,7 @@ public class ClusterModel extends Server implements IClusterModel {
 
   public ClusterModel(final String host, final int jmxPort, final boolean autoConnect) {
     super(host, jmxPort, autoConnect);
+    m_serverPropertyChangeListener = new ServerPropertyChangeListener();
   }
 
   private void setActiveServer(Server server, ServerConnectionManager scm) {
@@ -44,16 +43,37 @@ public class ClusterModel extends Server implements IClusterModel {
     boolean autoConnect = isAutoConnect();
     m_connectManager.setAutoConnect(false);
     m_connectManager.setL2Info(new L2Info(scm.getL2Info()));
-    resetBeanProxies();
+    reset();
 
     try {
       m_connectManager.setConnected(m_connectManager.testIsConnected());
-      Server oldActiveServer = m_activeServer;
-      m_activeServer = server;
+      Server oldActiveServer;
+      synchronized (this) {
+        oldActiveServer = m_activeServer;
+        m_activeServer = server;
+      }
       firePropertyChange(PROP_ACTIVE_SERVER, oldActiveServer, server);
     } catch (Exception e) {
+      /**/
+    } finally {
       m_connectManager.setAutoConnect(autoConnect);
     }
+  }
+
+  private void clearActiveServer() {
+    Server oldActiveServer;
+    synchronized (this) {
+      oldActiveServer = m_activeServer;
+      m_activeServer = null;
+      if (m_clusterServers != null) {
+        for (Server server : m_clusterServers = getClusterServers()) {
+          server.addPropertyChangeListener(m_serverPropertyChangeListener);
+          server.tearDown();
+        }
+        m_clusterServers = null;
+      }
+    }
+    firePropertyChange(PROP_ACTIVE_SERVER, oldActiveServer, m_activeServer);
   }
 
   public Server getActiveServer() {
@@ -62,38 +82,40 @@ public class ClusterModel extends Server implements IClusterModel {
 
   public synchronized Server[] getClusterServers() {
     if (m_clusterServers == null) m_clusterServers = super.getClusterServers();
-    return Arrays.asList(m_clusterServers).toArray(EMPTY_SERVERS);
+    return Arrays.asList(m_clusterServers).toArray(new Server[m_clusterServers.length]);
   }
 
   protected void setReady(boolean ready) {
-    if (ready == isReady()) return;
     if (ready) {
-      m_clusterServers = getClusterServers();
-      for (Server server : m_clusterServers) {
-        server.addPropertyChangeListener(new ServerPropertyChangeListener(server));
+      for (Server server : getClusterServers()) {
+        server.addPropertyChangeListener(m_serverPropertyChangeListener);
       }
     }
     super.setReady(ready);
   }
 
   class ServerPropertyChangeListener implements PropertyChangeListener {
-    private Server m_server;
-
-    ServerPropertyChangeListener(Server server) {
-      super();
-      m_server = server;
-    }
-
     public void propertyChange(PropertyChangeEvent evt) {
-      fireServerStateChanged(m_server, evt);
+      fireServerStateChanged((Server) evt.getSource(), evt);
     }
   }
 
-  public void addServerStateListener(ServerStateListener listener) {
+  protected void setConnected(boolean connected) {
+    super.setConnected(connected);
+    if (isConnected()) {
+      if (!m_connectManager.testIsActive()) {
+        testStartActiveLocator();
+      } else {
+        testCancelActiveLocator();
+      }
+    }
+  }
+
+  public synchronized void addServerStateListener(ServerStateListener listener) {
     m_listenerList.add(ServerStateListener.class, listener);
   }
 
-  public void removeServerStateListener(ServerStateListener listener) {
+  public synchronized void removeServerStateListener(ServerStateListener listener) {
     m_listenerList.remove(ServerStateListener.class, listener);
   }
 
@@ -109,6 +131,10 @@ public class ClusterModel extends Server implements IClusterModel {
   private class ActiveLocator extends Thread {
     private ServerConnectionManager scm  = null;
     private volatile boolean        stop = false;
+
+    private ActiveLocator() {
+      super("ActiveServerLocator");
+    }
 
     void setStopped() {
       stop = true;
@@ -128,7 +154,10 @@ public class ClusterModel extends Server implements IClusterModel {
       Server[] servers = getClusterServers();
       if (servers.length > 1) {
         while (true) {
-          if (stop) return;
+          if (stop) {
+            m_activeLocator = null;
+            return;
+          }
           for (Server server : servers) {
             L2Info l2Info = server.getL2Info();
             if (l2Info.matches(getL2Info())) {
@@ -136,6 +165,7 @@ public class ClusterModel extends Server implements IClusterModel {
             }
             ThreadUtil.reallySleep(1000);
             if (stop) {
+              m_activeLocator = null;
               if (scm != null) scm.tearDown();
               return;
             }
@@ -159,45 +189,46 @@ public class ClusterModel extends Server implements IClusterModel {
     }
   }
 
-  public void cancelActiveLocator() {
+  private void testCancelActiveLocator() {
     if (m_activeLocator != null) {
       m_activeLocator.setStopped();
+      while (m_activeLocator != null && m_activeLocator.isAlive()) {
+        try {
+          m_activeLocator.join();
+        } catch (InterruptedException ie) {/**/
+        }
+      }
       m_activeLocator = null;
     }
   }
 
-  public void testStartActiveLocator() {
+  private synchronized void testStartActiveLocator() {
     if (m_activeLocator == null) {
       m_activeLocator = new ActiveLocator();
       m_activeLocator.start();
     }
   }
 
-  public void handleStarting() {
-    cancelActiveLocator();
-    if (!m_connectManager.testIsActive()) {
-      testStartActiveLocator();
-    }
-  }
-
   class ActiveWaiter implements Runnable {
     public void run() {
       while (true) {
-        int count = m_clusterServers.length;
-        if (count == 0) break;
         boolean anyStarted = false;
-        for (int i = 0; i < count; i++) {
-          Server server = m_clusterServers[i];
-          final ServerConnectionManager scm = server.getConnectionManager();
-          if (!scm.equals(m_connectManager) && scm.isActive()) {
-            setActiveServer(server, scm);
-            return;
-          }
-          if (scm.isStarted()) {
-            anyStarted = true;
+        synchronized (ClusterModel.this) {
+          for (int i = 0; i < m_clusterServers.length; i++) {
+            Server server = m_clusterServers[i];
+            final ServerConnectionManager scm = server.getConnectionManager();
+            if (scm.testIsActive()) {
+              setActiveServer(server, scm);
+              return;
+            } else if (scm.isStarted()) {
+              anyStarted = true;
+            }
           }
         }
-        if (!anyStarted) break;
+        if (!anyStarted) {
+          clearActiveServer();
+          break;
+        }
         try {
           Thread.sleep(1000);
         } catch (Exception e) {/**/
@@ -212,13 +243,13 @@ public class ClusterModel extends Server implements IClusterModel {
   }
 
   boolean tryFindNewActive() {
-    int serverCount = m_clusterServers.length;
-    if (serverCount > 1) {
-      for (int i = 0; i < serverCount; i++) {
-        Server server = m_clusterServers[i];
-        ServerConnectionManager scm = server.getConnectionManager();
-        if (!scm.equals(m_connectManager)) {
-          if (scm.isActive()) {
+    synchronized (ClusterModel.this) {
+      int serverCount = m_clusterServers.length;
+      if (serverCount > 1) {
+        for (int i = 0; i < serverCount; i++) {
+          Server server = m_clusterServers[i];
+          ServerConnectionManager scm = server.getConnectionManager();
+          if (scm.testIsActive()) {
             setActiveServer(server, scm);
             return true;
           } else if (scm.isStarted()) {
@@ -239,7 +270,7 @@ public class ClusterModel extends Server implements IClusterModel {
   public void handleDisconnect() {
     super.handleDisconnect();
     if (!m_userDisconnecting && tryFindNewActive()) { return; }
-    setReady(false);
+    clearActiveServer();
     m_userDisconnecting = false;
   }
 
@@ -247,40 +278,27 @@ public class ClusterModel extends Server implements IClusterModel {
     long requestMillis = System.currentTimeMillis();
     Map<IClusterNode, String> map = new HashMap<IClusterNode, String>();
 
-    for (int i = 0; i < m_clusterServers.length; i++) {
-      Server server = m_clusterServers[i];
-      try {
-        map.put(server, server.takeThreadDump(requestMillis));
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
+    for (Server server : getClusterServers()) {
+      map.put(server, server.takeThreadDump(requestMillis));
     }
 
-    Iterator<DSOClient> clientIter = m_clients.iterator();
-    while (clientIter.hasNext()) {
-      DSOClient client = clientIter.next();
-      try {
-        map.put(client, client.takeThreadDump(requestMillis));
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
+    for (DSOClient client : getClients()) {
+      map.put(client, client.takeThreadDump(requestMillis));
     }
 
     return map;
   }
 
-  public Map<DSOClient, CountStatistic> getClientTransactionRates() throws Exception {
+  public Map<DSOClient, CountStatistic> getClientTransactionRates() {
     Map<ObjectName, CountStatistic> map = getDSOBean().getClientTransactionRates();
     Map<DSOClient, CountStatistic> result = new HashMap<DSOClient, CountStatistic>();
-    Iterator<DSOClient> clientIter = m_clients.iterator();
-    while (clientIter.hasNext()) {
-      DSOClient client = clientIter.next();
+    for (DSOClient client : getClients()) {
       result.put(client, map.get(client.getObjectName()));
     }
     return result;
   }
 
-  public Map<Server, CountStatistic> getServerTransactionRates() throws Exception {
+  public Map<Server, CountStatistic> getServerTransactionRates() {
     Map<Server, CountStatistic> result = new HashMap<Server, CountStatistic>();
     for (Server server : getClusterServers()) {
       if (server.isReady()) {
@@ -290,18 +308,16 @@ public class ClusterModel extends Server implements IClusterModel {
     return result;
   }
 
-  public Map<IClient, Map<String, Object>> getPrimaryClientStatistics() throws Exception {
+  public Map<IClient, Map<String, Object>> getPrimaryClientStatistics() {
     Map<ObjectName, Map> map = getDSOBean().getPrimaryClientStatistics();
     Map<IClient, Map<String, Object>> result = new HashMap<IClient, Map<String, Object>>();
-    Iterator<DSOClient> clientIter = m_clients.iterator();
-    while (clientIter.hasNext()) {
-      DSOClient client = clientIter.next();
+    for (DSOClient client : getClients()) {
       result.put(client, map.get(client.getObjectName()));
     }
     return result;
   }
 
-  public Map<IServer, Map<String, Object>> getPrimaryServerStatistics() throws Exception {
+  public Map<IServer, Map<String, Object>> getPrimaryServerStatistics() {
     Map<IServer, Map<String, Object>> result = new HashMap<IServer, Map<String, Object>>();
     for (Server server : getClusterServers()) {
       if (server.isReady()) {
@@ -311,8 +327,9 @@ public class ClusterModel extends Server implements IClusterModel {
     return result;
   }
 
-  public void tearDown() {
+  public synchronized void tearDown() {
     super.tearDown();
     m_clusterServers = null;
+    m_serverPropertyChangeListener = null;
   }
 }

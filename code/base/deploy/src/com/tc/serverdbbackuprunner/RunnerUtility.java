@@ -30,7 +30,7 @@ public class RunnerUtility {
     this.callingClassName = callingClassName;
     this.cmdArguments = Arrays.asList(cmdArguments).toArray(new String[0]);
   }
-  
+
   public void setOptions(Options options) {
     this.options = options;
   }
@@ -107,19 +107,19 @@ public class RunnerUtility {
     new HelpFormatter().printHelp("java " + callingClassName, options);
     System.exit(1);
   }
-  
+
   public void printArguments() {
     System.err.println("Arguments are: " + Arrays.asList(commandLine.getArgs()));
   }
-  
+
   public boolean hasOption(char arg) {
     return commandLine.hasOption(arg);
   }
-  
+
   public String getOptionValue(char arg) {
     return commandLine.getOptionValue(arg);
   }
-  
+
   public static String readPassword() {
     try {
       Method m = System.class.getMethod("console", new Class[] {});
@@ -141,7 +141,7 @@ public class RunnerUtility {
     }
     return null;
   }
-  
+
   public static JMXConnector getJMXConnector(String userName, String host, int port) {
     HashMap env = null;
     if (userName != null) {

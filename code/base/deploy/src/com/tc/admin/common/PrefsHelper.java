@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin.common;
 
@@ -24,8 +25,7 @@ public class PrefsHelper {
   public String[] keys(Preferences prefs) {
     try {
       return prefs.keys();
-    }
-    catch(Exception e) {
+    } catch (Exception e) {
       e.printStackTrace();
       return new String[] {};
     }
@@ -34,8 +34,7 @@ public class PrefsHelper {
   public String[] childrenNames(Preferences prefs) {
     try {
       return prefs.childrenNames();
-    }
-    catch(Exception e) {
+    } catch (Exception e) {
       e.printStackTrace();
       return new String[] {};
     }
@@ -44,22 +43,25 @@ public class PrefsHelper {
   public void flush(Preferences prefs) {
     try {
       prefs.flush();
-    } catch(Exception e) {/**/}
+    } catch (Exception e) {/**/
+    }
   }
 
   public void clearKeys(Preferences prefs) {
     try {
       prefs.clear();
-    } catch(Exception e) {/**/}
+    } catch (Exception e) {/**/
+    }
   }
 
   public void clearChildren(Preferences prefs) {
     try {
       String[] names = prefs.childrenNames();
 
-      for(int i = 0; i < names.length; i++) {
+      for (int i = 0; i < names.length; i++) {
         prefs.node(names[i]).removeNode();
       }
-    } catch(Exception e) {/**/}
+    } catch (Exception e) {/**/
+    }
   }
 }

@@ -4,45 +4,7 @@
 	<classpathentry excluding="**/.svn/*" kind="src" output="build.eclipse/src.classes" path="src.resources"/>
 	<classpathentry excluding="**/.svn/*" kind="src" output="build.eclipse/tests.unit.classes" path="tests.unit"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.core.commands-3.3.0.I20070605-0010.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.core.contenttype-3.2.100.v20070319.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.core.filebuffers-3.3.0.v20070606-0010.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.core.jobs-3.3.0.v20070423.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.core.resources-3.3.0.v20070604.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.core.runtime-3.3.100.v20070530.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.core.variables-3.2.0.v20070426.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.debug.core-3.3.0.v20070607-1800.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.debug.ui-3.3.0.v20070607-1800.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.equinox.app-1.0.0.v20070606.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.equinox.common-3.3.0.v20070426.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.equinox.preferences-3.2.100.v20070522.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.equinox.registry-3.3.0.v20070522.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.jdt.compiler.apt-1.0.0.v20070510-2000.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.jdt.compiler.tool-1.0.0.v_771.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.jdt.core-3.3.0.v_771.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.jdt.debug.ui-3.2.100.v20070531-1800.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.jdt.junit-3.3.0.v20070606-0010.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.jdt.launching-3.3.0.v20070510.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.jdt.ui-3.3.0.v20070607-0010.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.jface-3.3.0.I20070606-0010.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.jface.text-3.3.0.v20070606-0010.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.ltk.core.refactoring-3.3.0.v20070606-0010.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.osgi-3.3.0.v20070530.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.pde.core-3.3.0.v20070608-1300.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.pde.ui-3.3.0.v20070608-1300.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.search-3.3.0.v20070606-0010.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.swt-3.3.0.v3346.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.swt.win32.win32.x86-3.3.0.v3346.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.text-3.3.0.v20070606-0010.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.ui-3.3.0.I20070614-0800.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.ui.console-3.2.0.v20070530.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.ui.editors-3.3.0.v20070606-0010.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.ui.forms-3.3.0.v20070511.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.ui.ide-3.3.0.I20070620.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.ui.views-3.2.100.I20070319-0010.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.ui.workbench-3.3.0.I20070608-1100.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/org.eclipse.ui.workbench.texteditor-3.3.0.v20070606-0010.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/runtime_registry_compatibility-x.jar"/>
+	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/aspectwerkz"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common-api"/>

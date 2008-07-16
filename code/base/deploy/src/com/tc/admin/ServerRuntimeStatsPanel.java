@@ -68,14 +68,14 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
 
   public ServerRuntimeStatsPanel(ServerRuntimeStatsNode serverStatsNode) {
     super();
-    m_serverStatsNode = serverStatsNode;
+    setNode(m_serverStatsNode = serverStatsNode);
     setup(m_chartsPanel);
   }
 
   IServer getServer() {
     return m_serverStatsNode.getServer();
   }
-  
+
   protected synchronized void setup(Container chartsPanel) {
     chartsPanel.setLayout(new GridLayout(0, 2));
     setupMemoryPanel(chartsPanel);
@@ -88,7 +88,7 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
 
   private void setupFlushRatePanel(Container parent) {
     m_flushRateSeries = createTimeSeries("");
-    m_flushRateChart = createChart(m_flushRateSeries);
+    m_flushRateChart = createChart(m_flushRateSeries, false);
     m_flushRatePanel = createChartPanel(m_flushRateChart);
     parent.add(m_flushRatePanel);
     m_flushRatePanel.setPreferredSize(fDefaultGraphSize);
@@ -97,7 +97,7 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
 
   private void setupFaultRatePanel(Container parent) {
     m_faultRateSeries = createTimeSeries("");
-    m_faultRateChart = createChart(m_faultRateSeries);
+    m_faultRateChart = createChart(m_faultRateSeries, false);
     m_faultRatePanel = createChartPanel(m_faultRateChart);
     parent.add(m_faultRatePanel);
     m_faultRatePanel.setPreferredSize(fDefaultGraphSize);
@@ -106,7 +106,7 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
 
   private void setupTxnRatePanel(Container parent) {
     m_txnRateSeries = createTimeSeries("");
-    m_txnRateChart = createChart(m_txnRateSeries);
+    m_txnRateChart = createChart(m_txnRateSeries, false);
     m_txnRatePanel = createChartPanel(m_txnRateChart);
     parent.add(m_txnRatePanel);
     m_txnRatePanel.setPreferredSize(fDefaultGraphSize);
@@ -115,7 +115,7 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
 
   private void setupCacheMissRatePanel(Container parent) {
     m_cacheMissRateSeries = createTimeSeries("");
-    m_cacheMissRateChart = createChart(m_cacheMissRateSeries);
+    m_cacheMissRateChart = createChart(m_cacheMissRateSeries, false);
     m_cacheMissRatePanel = createChartPanel(m_cacheMissRateChart);
     parent.add(m_cacheMissRatePanel);
     m_cacheMissRatePanel.setPreferredSize(fDefaultGraphSize);
@@ -148,7 +148,7 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
     XYPlot plot = (XYPlot) m_cpuChart.getPlot();
     NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
     numberAxis.setRange(0.0, 1.0);
-    if(m_rangeAxisSpace != null) {
+    if (m_rangeAxisSpace != null) {
       plot.setFixedRangeAxisSpace(m_rangeAxisSpace);
     }
     m_cpuPanel.setChart(m_cpuChart);
@@ -191,7 +191,7 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
     parent.add(m_cpuPanel);
     m_cpuPanel.setPreferredSize(fDefaultGraphSize);
     m_cpuPanel.setBorder(new TitledBorder("CPU Usage"));
-    m_acc.executorService.execute(new CpuPanelWorker());
+    m_acc.execute(new CpuPanelWorker());
   }
 
   class TCServerInfoStatGetter extends BasicWorker<Map> {
@@ -223,7 +223,7 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
         }
       } finally {
         if (m_acc != null) {
-          m_acc.executorService.submit(new DSOServerStatGetter());
+          m_acc.execute(new DSOServerStatGetter());
         }
       }
     }
@@ -301,7 +301,7 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
 
   protected synchronized void retrieveStatistics() {
     if (m_acc != null) {
-      m_acc.executorService.submit(new TCServerInfoStatGetter());
+      m_acc.execute(new TCServerInfoStatGetter());
     }
   }
 

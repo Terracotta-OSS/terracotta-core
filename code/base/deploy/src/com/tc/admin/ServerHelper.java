@@ -4,11 +4,7 @@
  */
 package com.tc.admin;
 
-import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.management.beans.L2MBeanNames;
-import com.tc.management.beans.TCServerInfoMBean;
-
-import javax.management.ObjectName;
 
 public class ServerHelper extends BaseHelper {
   private static ServerHelper m_helper = new ServerHelper();
@@ -17,37 +13,23 @@ public class ServerHelper extends BaseHelper {
     return m_helper;
   }
 
-  public ObjectName getServerInfoMBean(ConnectionContext cc) throws Exception {
-    return cc.queryName(L2MBeanNames.TC_SERVER_INFO.getCanonicalName());
-  }
-
-  public TCServerInfoMBean getServerInfoBean(ConnectionContext cc) {
-    return (TCServerInfoMBean) MBeanServerInvocationProxy.newProxyInstance(cc.mbsc, L2MBeanNames.TC_SERVER_INFO,
-                                                                           TCServerInfoMBean.class, false);
-  }
-
   public boolean canShutdown(ConnectionContext cc) throws Exception {
-    ObjectName infoMBean = getServerInfoMBean(cc);
-    return infoMBean != null && cc.getBooleanAttribute(infoMBean, "Shutdownable");
+    return cc.getBooleanAttribute(L2MBeanNames.TC_SERVER_INFO, "Shutdownable");
   }
 
   public boolean isActive(ConnectionContext cc) throws Exception {
-    ObjectName infoMBean = getServerInfoMBean(cc);
-    return infoMBean != null && cc.getBooleanAttribute(infoMBean, "Active");
+    return cc.getBooleanAttribute(L2MBeanNames.TC_SERVER_INFO, "Active");
   }
 
   public boolean isStarted(ConnectionContext cc) throws Exception {
-    ObjectName infoMBean = getServerInfoMBean(cc);
-    return infoMBean != null && cc.getBooleanAttribute(infoMBean, "Started");
+    return cc.getBooleanAttribute(L2MBeanNames.TC_SERVER_INFO, "Started");
   }
 
   public boolean isPassiveUninitialized(ConnectionContext cc) throws Exception {
-    ObjectName infoMBean = getServerInfoMBean(cc);
-    return infoMBean != null && cc.getBooleanAttribute(infoMBean, "PassiveUninitialized");
+    return cc.getBooleanAttribute(L2MBeanNames.TC_SERVER_INFO, "PassiveUninitialized");
   }
 
   public boolean isPassiveStandby(ConnectionContext cc) throws Exception {
-    ObjectName infoMBean = getServerInfoMBean(cc);
-    return infoMBean != null && cc.getBooleanAttribute(infoMBean, "PassiveStandby");
+    return cc.getBooleanAttribute(L2MBeanNames.TC_SERVER_INFO, "PassiveStandby");
   }
 }

@@ -72,7 +72,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   private final ServerTransactionManagerMBean txnMgr;
   private final LockManagerMBean              lockMgr;
   private final ChannelStats                  channelStats;
-  private final ObjectInstanceMonitorMBean    instanceMonitor; 
+  private final ObjectInstanceMonitorMBean    instanceMonitor;
   private final ClientStateManager            clientStateManager;
 
   public DSO(final ServerManagementContext managementContext, final ServerConfigurationContext configContext,
@@ -369,7 +369,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
           if (future.isDone()) {
             try {
               Map statsMap = future.get();
-              if(statsMap != null) {
+              if (statsMap != null) {
                 result.put((ObjectName) statsMap.remove("clientBeanName"), statsMap);
               }
             } catch (Exception e) {

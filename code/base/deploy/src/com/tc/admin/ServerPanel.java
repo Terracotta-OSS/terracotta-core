@@ -36,7 +36,7 @@ public class ServerPanel extends XContainer {
     m_serverNode = serverNode;
     m_acc = AdminClient.getContext();
 
-    load((ContainerResource) m_acc.topRes.getComponent("ServerPanel"));
+    load((ContainerResource) m_acc.getTopRes().getComponent("ServerPanel"));
 
     m_tabbedPane = (TabbedPane) findComponent("TabbedPane");
 
@@ -58,8 +58,7 @@ public class ServerPanel extends XContainer {
   }
 
   protected void storePreferences() {
-    AdminClientContext acc = AdminClient.getContext();
-    acc.client.storePrefs();
+    m_acc.storePrefs();
   }
 
   private static class ServerState {
@@ -148,7 +147,7 @@ public class ServerPanel extends XContainer {
         ServerState serverState = getResult();
         String startTime = serverState.getStartDate().toString();
         setStatusLabel(m_acc.format("server.started.label", startTime));
-        m_acc.controller.setStatus(m_acc.format("server.started.status", m_serverNode, startTime));
+        m_acc.setStatus(m_acc.format("server.started.status", m_serverNode, startTime));
       } else {
         m_acc.log(getException());
       }
@@ -161,10 +160,8 @@ public class ServerPanel extends XContainer {
       if (getException() == null) {
         ServerState serverState = getResult();
         String activateTime = serverState.getActivateDate().toString();
-
         setStatusLabel(m_acc.format("server.activated.label", activateTime));
-        m_acc.controller.addServerLog(m_serverNode.getServer());
-        m_acc.controller.setStatus(m_acc.format("server.activated.status", m_serverNode, activateTime));
+        m_acc.setStatus(m_acc.format("server.activated.status", m_serverNode, activateTime));
       } else {
         m_acc.log(getException());
       }
@@ -177,7 +174,7 @@ public class ServerPanel extends XContainer {
       if (getException() == null) {
         String startTime = new Date().toString();
         setStatusLabel(m_acc.format("server.initializing.label", startTime));
-        m_acc.controller.setStatus(m_acc.format("server.initializing.status", m_serverNode, startTime));
+        m_acc.setStatus(m_acc.format("server.initializing.status", m_serverNode, startTime));
       }
     }
   }
@@ -188,7 +185,7 @@ public class ServerPanel extends XContainer {
       if (getException() == null) {
         String startTime = new Date().toString();
         setStatusLabel(m_acc.format("server.standingby.label", startTime));
-        m_acc.controller.setStatus(m_acc.format("server.standingby.status", m_serverNode, startTime));
+        m_acc.setStatus(m_acc.format("server.standingby.status", m_serverNode, startTime));
       }
     }
   }
@@ -198,19 +195,19 @@ public class ServerPanel extends XContainer {
    * activated() under the presumption that a non-active server won't be saying anything.
    */
   void started() {
-    m_acc.executorService.execute(new StartedWorker());
+    m_acc.execute(new StartedWorker());
   }
 
   void activated() {
-    m_acc.executorService.execute(new ActivatedWorker());
+    m_acc.execute(new ActivatedWorker());
   }
 
   void passiveUninitialized() {
-    m_acc.executorService.execute(new PassiveUninitializedWorker());
+    m_acc.execute(new PassiveUninitializedWorker());
   }
 
   void passiveStandby() {
-    m_acc.executorService.execute(new PassiveStandbyWorker());
+    m_acc.execute(new PassiveStandbyWorker());
   }
 
   void disconnected() {
@@ -218,9 +215,7 @@ public class ServerPanel extends XContainer {
 
     setStatusLabel(m_acc.format("server.disconnected.label", startTime));
     hideProductInfo();
-
-    m_acc.controller.removeServerLog(m_serverNode.getServer());
-    m_acc.controller.setStatus(m_acc.format("server.disconnected.status", m_serverNode, startTime));
+    m_acc.setStatus(m_acc.format("server.disconnected.status", m_serverNode, startTime));
   }
 
   private void setTabbedPaneEnabled(boolean enabled) {

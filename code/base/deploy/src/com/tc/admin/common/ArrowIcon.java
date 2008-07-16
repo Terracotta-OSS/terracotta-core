@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin.common;
 
@@ -18,7 +19,7 @@ public class ArrowIcon implements Icon, SwingConstants {
   public ArrowIcon(int direction, Color shadow) {
     setDirection(direction);
     this.shadow = shadow;
-  }   
+  }
 
   public ArrowIcon() {
     this(SOUTH);
@@ -48,48 +49,48 @@ public class ArrowIcon implements Icon, SwingConstants {
     int w = getIconWidth();
     int h = getIconHeight();
 
-    int size = Math.max(Math.min(h/3, w/3), 2);
+    int size = Math.max(Math.min(h / 3, w / 3), 2);
 
-    paintTriangle(g, x+(w-size)/2, y+(h-size)/2, size);
+    paintTriangle(g, x + (w - size) / 2, y + (h - size) / 2, size);
   }
 
-	public void paintTriangle(Graphics g, int x, int y, int size) {
+  public void paintTriangle(Graphics g, int x, int y, int size) {
     Color oldColor = g.getColor();
-    int   mid      = (size/2)-1;
-    int   j        = 0;
-    int   i;
-	
-	    g.translate(x, y);
-      g.setColor(shadow);
+    int mid = (size / 2) - 1;
+    int j = 0;
+    int i;
 
-      switch(direction) {
-        case NORTH:
-          for(i = 0; i < size; i++) {
-            g.drawLine(mid-i, i, mid+i, i);
-          }
-          break;
-        case SOUTH:
-          j = 0;
-          for(i = size-1; i >= 0; i--) {
-            g.drawLine(mid-i, j, mid+i, j);
-            j++;
-          }
-          break;
-        case WEST:
-          for(i = 0; i < size; i++) {
-            g.drawLine(i, mid-i, i, mid+i);
-          }
-          break;
-        case EAST:
-          j = 0;
-          for(i = size-1; i >= 0; i--)   {
-            g.drawLine(j, mid-i, j, mid+i);
-            j++;
-          }
-          break;
-      }
+    g.translate(x, y);
+    g.setColor(shadow);
 
-	    g.translate(-x, -y);	
-	    g.setColor(oldColor);
-	}
+    switch (direction) {
+      case NORTH:
+        for (i = 0; i < size; i++) {
+          g.drawLine(mid - i, i, mid + i, i);
+        }
+        break;
+      case SOUTH:
+        j = 0;
+        for (i = size - 1; i >= 0; i--) {
+          g.drawLine(mid - i, j, mid + i, j);
+          j++;
+        }
+        break;
+      case WEST:
+        for (i = 0; i < size; i++) {
+          g.drawLine(i, mid - i, i, mid + i);
+        }
+        break;
+      case EAST:
+        j = 0;
+        for (i = size - 1; i >= 0; i--) {
+          g.drawLine(j, mid - i, j, mid + i);
+          j++;
+        }
+        break;
+    }
+
+    g.translate(-x, -y);
+    g.setColor(oldColor);
+  }
 }

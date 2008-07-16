@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin.common;
 
@@ -27,8 +28,8 @@ import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 
 public class XTable extends Table {
-  protected XPopupListener m_popupHelper;
-  protected Timer          m_columnPrefsTimer;
+  protected XPopupListener    m_popupHelper;
+  protected Timer             m_columnPrefsTimer;
 
   private static final String COLUMNS_PREF_KEY = "Columns";
 
@@ -65,12 +66,12 @@ public class XTable extends Table {
     super.load(tableRes);
     ToolTipManager.sharedInstance().registerComponent(this);
   }
-  
+
   public void addNotify() {
     super.addNotify();
-    
+
     TableColumnModel colModel = getColumnModel();
-    if(colModel != null && colModel.getColumnCount() > 0) {
+    if (colModel != null && colModel.getColumnCount() > 0) {
       loadColumnPrefs();
     }
   }
@@ -87,13 +88,13 @@ public class XTable extends Table {
       super();
       this.formatter = formatter;
     }
-    
+
     public void setValue(Object value) {
       String text = "";
 
       try {
         text = (value == null) ? "" : formatter.format(value);
-      } catch(Exception nfe) {
+      } catch (Exception nfe) {
         System.out.println(value.toString());
       }
 
@@ -153,94 +154,89 @@ public class XTable extends Table {
     super.setModel(model);
 
     TableColumnModel colModel = getColumnModel();
-    if(colModel != null && colModel.getColumnCount() > 0) {
+    if (colModel != null && colModel.getColumnCount() > 0) {
       loadColumnPrefs();
     }
   }
-  
+
   protected void loadColumnPrefs() {
-    if(getClass().equals(XTable.class)) {
-      return;
-    }
-    
-    PrefsHelper      helper   = PrefsHelper.getHelper();
-    Preferences      prefs    = helper.userNodeForClass(getClass());
+    if (getClass().equals(XTable.class)) { return; }
+
+    PrefsHelper helper = PrefsHelper.getHelper();
+    Preferences prefs = helper.userNodeForClass(getClass());
     TableColumnModel colModel = getColumnModel();
-    String           s        = prefs.get(COLUMNS_PREF_KEY, null);
-    int              width;
+    String s = prefs.get(COLUMNS_PREF_KEY, null);
+    int width;
 
-    if(s != null) {
-      String [] split = s.split(",");
+    if (s != null) {
+      String[] split = s.split(",");
 
-      for(int i = 0; i < colModel.getColumnCount(); i++) {
-        if(i < split.length && split[i] != null) {
+      for (int i = 0; i < colModel.getColumnCount(); i++) {
+        if (i < split.length && split[i] != null) {
           try {
             width = Integer.parseInt(split[i]);
             colModel.getColumn(i).setPreferredWidth(width);
-          } catch(Exception e) {/**/}
+          } catch (Exception e) {/**/
+          }
         }
       }
     }
   }
 
   protected void storeColumnPrefs() {
-    if(getClass().equals(XTable.class)) {
-      return;
-    }
-    
-    PrefsHelper      helper   = PrefsHelper.getHelper();
-    Preferences      prefs    = helper.userNodeForClass(getClass());
-    StringBuffer     sb       = new StringBuffer();
-    TableColumnModel colModel = getColumnModel();
-    int              width;
+    if (getClass().equals(XTable.class)) { return; }
 
-    for(int i = 0; i < colModel.getColumnCount(); i++) {
+    PrefsHelper helper = PrefsHelper.getHelper();
+    Preferences prefs = helper.userNodeForClass(getClass());
+    StringBuffer sb = new StringBuffer();
+    TableColumnModel colModel = getColumnModel();
+    int width;
+
+    for (int i = 0; i < colModel.getColumnCount(); i++) {
       width = colModel.getColumn(i).getWidth();
       sb.append(width);
       sb.append(",");
     }
 
-    String s = sb.substring(0, sb.length()-1);
+    String s = sb.substring(0, sb.length() - 1);
     prefs.put(COLUMNS_PREF_KEY, s);
     helper.flush(prefs);
   }
 
   public void columnMarginChanged(ChangeEvent e) {
     boolean isValid = isValid();
-    
-    if(isValid) {
+
+    if (isValid) {
       m_columnPrefsTimer.stop();
     }
     super.columnMarginChanged(e);
-    if(isValid) {
+    if (isValid) {
       m_columnPrefsTimer.start();
     }
   }
 
   public Dimension getPreferredSize() {
     int rowCount = getRowCount();
-    
-    if(rowCount > 0) {
-      int                columnCount = getColumnCount();
-      TableCellRenderer  renderer;
+
+    if (rowCount > 0) {
+      int columnCount = getColumnCount();
+      TableCellRenderer renderer;
       java.awt.Component comp;
-      Dimension          prefSize;
-      int                height = 0;
-    
-      for(int row = 0; row < rowCount; row++) {
-        for(int col = 0; col < columnCount; col++) {
-          if((renderer = getCellRenderer(row, col)) != null) {
-            comp = renderer.getTableCellRendererComponent(
-              this, getValueAt(row, col), true, true, row, col
-            );
-  
+      Dimension prefSize;
+      int height = 0;
+
+      for (int row = 0; row < rowCount; row++) {
+        for (int col = 0; col < columnCount; col++) {
+          if ((renderer = getCellRenderer(row, col)) != null) {
+            comp = renderer.getTableCellRendererComponent(this, getValueAt(row, col), true, true, row, col);
+
             prefSize = comp.getPreferredSize();
-            height   = Math.max(height, prefSize.height);
+            height = Math.max(height, prefSize.height);
           }
         }
       }
 
-      if(height > 10) {
+      if (height > 10) {
         setRowHeight(height);
       }
     }
@@ -250,9 +246,9 @@ public class XTable extends Table {
 
   public void setSelectedRows(int[] rows) {
     int rowCount = getRowCount();
-    
-    for(int i = 0; i < rows.length; i++) {
-      if(rows[i] < rowCount) {
+
+    for (int i = 0; i < rows.length; i++) {
+      if (rows[i] < rowCount) {
         setRowSelectionInterval(rows[i], rows[i]);
       }
     }

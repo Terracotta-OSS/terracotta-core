@@ -48,7 +48,7 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
 
     init();
 
-    if(m_object.getObjectID() != null && !m_object.isCycle()) {
+    if (m_object.getObjectID() != null && !m_object.isCycle()) {
       addActionBinding(REFRESH_ACTION, m_refreshAction = new RefreshAction());
     }
   }
@@ -60,11 +60,11 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
   public void setResident(boolean resident) {
     m_resident = resident;
   }
-  
+
   public boolean isResident() {
     return m_resident;
   }
-  
+
   public boolean isObjectValid() {
     return m_object.isValid();
   }
@@ -89,12 +89,12 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
   }
 
   private void testInitMenu() {
-    if(m_popupMenu != null) return;
-    if(m_refreshAction != null) {
+    if (m_popupMenu != null) return;
+    if (m_refreshAction != null) {
       initMenu();
     }
   }
-  
+
   public JPopupMenu getPopupMenu() {
     testInitMenu();
     return m_popupMenu;
@@ -144,9 +144,9 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
     if (children != null && children.elementAt(index) == null) {
       AdminClientContext acc = AdminClient.getContext();
 
-      acc.controller.block();
+      acc.block();
       fillInChildren();
-      acc.controller.unblock();
+      acc.unblock();
     }
 
     return super.getChildAt(index);
@@ -156,7 +156,7 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
     if (object instanceof IMapEntry) {
       return new MapEntryNode((IMapEntry) object);
     } else if (object instanceof IBasicObject) {
-      BasicObjectTreeModel model = (BasicObjectTreeModel)getModel();
+      BasicObjectTreeModel model = (BasicObjectTreeModel) getModel();
       return model.newObjectNode((IBasicObject) object);
     } else {
       return new XTreeNode("Collected...");
@@ -211,7 +211,7 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
 
   public void refresh() {
     AdminClientContext acc = AdminClient.getContext();
-    boolean expanded = acc.controller.isExpanded(this);
+    boolean expanded = acc.isExpanded(this);
     XTreeModel model = getModel();
     XTreeNode node;
 
@@ -232,7 +232,7 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
 
     model.nodeStructureChanged(BasicObjectNode.this);
     if (expanded) {
-      acc.controller.expand(this);
+      acc.expand(this);
     }
   }
 
@@ -246,13 +246,13 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
       AdminClientContext acc = AdminClient.getContext();
       String name = m_object.getName();
 
-      acc.controller.setStatus("Refreshing field " + name + "...");
-      acc.controller.block();
+      acc.setStatus("Refreshing field " + name + "...");
+      acc.block();
 
       refresh();
 
-      acc.controller.clearStatus();
-      acc.controller.unblock();
+      acc.clearStatus();
+      acc.unblock();
     }
   }
 
@@ -276,14 +276,14 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
       m_lessAction.setEnabled(true);
       m_object.setBatchSize(m_batchSize);
 
-      acc.controller.setStatus("Refreshing " + name + "...");
-      acc.controller.block();
+      acc.setStatus("Refreshing " + name + "...");
+      acc.block();
 
       refresh();
 
-      acc.controller.clearStatus();
-      acc.controller.unblock();
-      acc.controller.nodeChanged(BasicObjectNode.this);
+      acc.clearStatus();
+      acc.unblock();
+      acc.nodeChanged(BasicObjectNode.this);
     }
   }
 
@@ -301,14 +301,14 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
       m_moreAction.setEnabled(true);
       m_object.setBatchSize(m_batchSize);
 
-      acc.controller.setStatus("Refreshing " + name + "...");
-      acc.controller.block();
+      acc.setStatus("Refreshing " + name + "...");
+      acc.block();
 
       refresh();
 
-      acc.controller.clearStatus();
-      acc.controller.unblock();
-      acc.controller.nodeChanged(BasicObjectNode.this);
+      acc.clearStatus();
+      acc.unblock();
+      acc.nodeChanged(BasicObjectNode.this);
     }
   }
 

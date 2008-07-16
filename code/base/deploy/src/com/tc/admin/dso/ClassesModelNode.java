@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin.dso;
 
@@ -25,11 +26,11 @@ public class ClassesModelNode implements TMModelNode {
   public Enumeration children(Object node) {
     Vector children = new Vector();
 
-    if(node instanceof XTreeNode) {
-      XTreeNode treeNode   = (XTreeNode)node;
-      int       childCount = treeNode.getChildCount();
+    if (node instanceof XTreeNode) {
+      XTreeNode treeNode = (XTreeNode) node;
+      int childCount = treeNode.getChildCount();
 
-      for(int i = 0; i < childCount; i++) {
+      for (int i = 0; i < childCount; i++) {
         children.add(treeNode.getChildAt(i));
       }
     }
@@ -41,5 +42,6 @@ public class ClassesModelNode implements TMModelNode {
     return node instanceof ClassTreeLeaf;
   }
 
-  public void setUpdater(TMModelUpdater updater) {/**/}
+  public void setUpdater(TMModelUpdater updater) {/**/
+  }
 }

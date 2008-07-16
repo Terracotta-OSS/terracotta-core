@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.server;
 
@@ -19,7 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 public class RestfulServlet extends HttpServlet {
   private final static String RESTFUL_METHOD_PREFIX = "method";
 
-  private volatile String path;
+  private volatile String     path;
 
   protected void service(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
     ensureServletPath(request);
@@ -30,8 +31,9 @@ public class RestfulServlet extends HttpServlet {
     } else {
       String method_name = RESTFUL_METHOD_PREFIX + StringUtils.capitalize(pathinfo.substring(1));
       try {
-        Method method = getClass().getDeclaredMethod(method_name, new Class[] {HttpServletRequest.class, HttpServletResponse.class});
-        method.invoke(this, new Object[] {request, response});
+        Method method = getClass()
+            .getDeclaredMethod(method_name, new Class[] { HttpServletRequest.class, HttpServletResponse.class });
+        method.invoke(this, new Object[] { request, response });
       } catch (InvocationTargetException e) {
         throw new TCRuntimeException(e.getTargetException());
       } catch (IllegalAccessException e) {
@@ -48,13 +50,9 @@ public class RestfulServlet extends HttpServlet {
 
       // build a correct absolute path by using the servlet path and ensuring the value is acceptable
       String servlet_path = request.getServletPath();
-      if (context_path != null &&
-          !context_path.equals(".") &&
-          !context_path.equals("/")) {
+      if (context_path != null && !context_path.equals(".") && !context_path.equals("/")) {
         path = context_path;
-        if (servlet_path != null &&
-            !servlet_path.equals(".") &&
-            !servlet_path.equals("/")) {
+        if (servlet_path != null && !servlet_path.equals(".") && !servlet_path.equals("/")) {
           path += servlet_path;
         }
       } else {
@@ -72,11 +70,9 @@ public class RestfulServlet extends HttpServlet {
     Method[] methods = getClass().getDeclaredMethods();
     for (int i = 0; i < methods.length; i++) {
       Class[] parameter_types = methods[i].getParameterTypes();
-      if (methods[i].getName().startsWith(RESTFUL_METHOD_PREFIX) &&
-          void.class == methods[i].getReturnType() &&
-          2 == parameter_types.length &&
-          HttpServletRequest.class == parameter_types[0] &&
-          HttpServletResponse.class == parameter_types[1]) {
+      if (methods[i].getName().startsWith(RESTFUL_METHOD_PREFIX) && void.class == methods[i].getReturnType()
+          && 2 == parameter_types.length && HttpServletRequest.class == parameter_types[0]
+          && HttpServletResponse.class == parameter_types[1]) {
         String method = StringUtils.uncapitalize(methods[i].getName().substring(RESTFUL_METHOD_PREFIX.length()));
         out.print("<li>");
         out.print("<a href=\"" + path + "/" + method + "\">");

@@ -26,15 +26,15 @@ public class ServersNode extends ComponentNode {
   }
 
   IClusterModel getClusterModel() {
-    return m_clusterNode.getClusterModel();
+    return m_clusterNode != null ? m_clusterNode.getClusterModel() : null;
   }
 
   private void init() {
     setLabel(m_acc.getMessage("servers"));
     for (int i = getChildCount() - 1; i >= 0; i--) {
-      m_acc.controller.remove((XTreeNode) getChildAt(i));
+      m_acc.remove((XTreeNode) getChildAt(i));
     }
-    m_acc.executorService.execute(new InitWorker());
+    m_acc.execute(new InitWorker());
   }
 
   private class InitWorker extends BasicWorker<IServer[]> {
@@ -53,12 +53,12 @@ public class ServersNode extends ComponentNode {
       } else {
         IServer[] clusterServers = getResult();
         for (IServer server : clusterServers) {
-          ServerNode serverNode = m_acc.nodeFactory.createServerNode(ServersNode.this, server); 
+          ServerNode serverNode = m_acc.getNodeFactory().createServerNode(ServersNode.this, server);
           add(serverNode);
           serverNode.handleConnected();
         }
         setLabel(m_acc.getMessage("servers") + " (" + getChildCount() + ")");
-        m_acc.controller.nodeChanged(ServersNode.this);
+        m_acc.nodeChanged(ServersNode.this);
       }
     }
   }

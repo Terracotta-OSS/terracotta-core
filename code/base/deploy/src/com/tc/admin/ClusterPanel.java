@@ -46,7 +46,7 @@ public class ClusterPanel extends XContainer {
     m_clusterNode = clusterNode;
     m_acc = AdminClient.getContext();
 
-    load((ContainerResource) m_acc.topRes.getComponent("ClusterPanel"));
+    load((ContainerResource) m_acc.getComponent("ClusterPanel"));
 
     m_hostField = (JTextField) findComponent("HostField");
     m_portField = (JTextField) findComponent("PortField");
@@ -77,8 +77,8 @@ public class ClusterPanel extends XContainer {
       String host = m_hostField.getText().trim();
 
       m_clusterNode.setHost(m_originalHost = host);
-      m_acc.controller.nodeChanged(m_clusterNode);
-      m_acc.controller.updateServerPrefs();
+      m_acc.nodeChanged(m_clusterNode);
+      m_acc.updateServerPrefs();
     }
   }
 
@@ -88,11 +88,11 @@ public class ClusterPanel extends XContainer {
 
       try {
         m_clusterNode.setPort(m_originalPort = Integer.parseInt(port));
-        m_acc.controller.nodeChanged(m_clusterNode);
-        m_acc.controller.updateServerPrefs();
+        m_acc.nodeChanged(m_clusterNode);
+        m_acc.updateServerPrefs();
       } catch (Exception e) {
         Toolkit.getDefaultToolkit().beep();
-        m_acc.controller.log("'" + port + "' not a number");
+        m_acc.log("'" + port + "' not a number");
         m_portField.setText(Integer.toString(m_clusterNode.getPort()));
       }
     }
@@ -139,7 +139,7 @@ public class ClusterPanel extends XContainer {
   }
 
   void activated() {
-    m_acc.executorService.execute(new ActivatedWorker());
+    m_acc.execute(new ActivatedWorker());
   }
 
   private class ActivatedWorker extends BasicWorker<Date> {
@@ -170,7 +170,7 @@ public class ClusterPanel extends XContainer {
    * activated() under the presumption that a non-active server won't be saying anything.
    */
   void started() {
-    m_acc.executorService.execute(new StartedWorker());
+    m_acc.execute(new StartedWorker());
   }
 
   private class StartedWorker extends BasicWorker<Date> {
@@ -230,7 +230,7 @@ public class ClusterPanel extends XContainer {
     setStatusLabel(m_acc.format("server.disconnected.label", startTime));
     hideProductInfo();
 
-    m_acc.controller.setStatus(m_acc.format("server.disconnected.status", m_clusterNode, startTime));
+    m_acc.setStatus(m_acc.format("server.disconnected.status", m_clusterNode, startTime));
   }
 
   void setStatusLabel(String msg) {
@@ -244,7 +244,7 @@ public class ClusterPanel extends XContainer {
 
   private void testShowProductInfo() {
     if (!isProductInfoShowing()) {
-      m_acc.executorService.execute(new ProductInfoWorker());
+      m_acc.execute(new ProductInfoWorker());
     }
   }
 

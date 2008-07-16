@@ -12,6 +12,6 @@ public interface LockNode {
   LockStats getStats();
 
   Object getValueAt(int column);
-  
+
   LockNode[] children();
 }

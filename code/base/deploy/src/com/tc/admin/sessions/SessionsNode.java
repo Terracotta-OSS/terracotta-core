@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin.sessions;
 
@@ -25,65 +26,64 @@ import javax.swing.KeyStroke;
 import javax.swing.tree.DefaultTreeModel;
 
 public class SessionsNode extends ComponentNode implements NotificationListener {
-  private ConnectionContext m_cc;
-  private JPopupMenu        m_popupMenu;
-  private RefreshAction     m_refreshAction;
+  private ConnectionContext   m_cc;
+  private JPopupMenu          m_popupMenu;
+  private RefreshAction       m_refreshAction;
 
   private static final String REFRESH_ACTION = "RefreshAction";
-  
+
   public SessionsNode(ConnectionContext cc, ObjectName[] beanNames) {
     super();
 
     m_cc = cc;
-    
+
     try {
       ObjectName mbsd = cc.queryName("JMImplementation:type=MBeanServerDelegate");
-      
-      if(mbsd != null) {
+
+      if (mbsd != null) {
         cc.addNotificationListener(mbsd, this);
       }
-    } catch(Exception ioe) {
+    } catch (Exception ioe) {
       ioe.printStackTrace();
     }
-    
-    for(int i = 0; i < beanNames.length; i++) {
+
+    for (int i = 0; i < beanNames.length; i++) {
       try {
         addBean(beanNames[i]);
-      } catch(IOException ioe) {
+      } catch (IOException ioe) {
         ioe.printStackTrace();
       }
     }
-    
+
     setLabel("Session Statistics");
 
     initMenu();
   }
 
   private void addBean(ObjectName name) throws IOException {
-    SessionsProductMBean bean = (SessionsProductMBean)
-      TerracottaManagement.findMBean(name, SessionsProductMBean.class, m_cc.mbsc);
-    SessionsProductNode node = new SessionsProductNode(m_cc, bean, name);  
+    SessionsProductMBean bean = (SessionsProductMBean) TerracottaManagement.findMBean(name, SessionsProductMBean.class,
+                                                                                      m_cc.mbsc);
+    SessionsProductNode node = new SessionsProductNode(m_cc, bean, name);
     DefaultTreeModel model = getModel();
-    
-    if(model != null) {
+
+    if (model != null) {
       model.insertNodeInto(node, this, getChildCount());
-    }
-    else {
+    } else {
       add(node);
     }
   }
-  
+
   public void handleNotification(Notification notification, Object handback) {
-    if(notification instanceof MBeanServerNotification) {
-      MBeanServerNotification mbsn = (MBeanServerNotification)notification;
-      String                  type = notification.getType();
-      ObjectName              name = mbsn.getMBeanName();
-      
-      if(type.equals(MBeanServerNotification.REGISTRATION_NOTIFICATION)) {
-        if(SessionsHelper.getHelper().isSessionsProductMBean(name)) {
+    if (notification instanceof MBeanServerNotification) {
+      MBeanServerNotification mbsn = (MBeanServerNotification) notification;
+      String type = notification.getType();
+      ObjectName name = mbsn.getMBeanName();
+
+      if (type.equals(MBeanServerNotification.REGISTRATION_NOTIFICATION)) {
+        if (SessionsHelper.getHelper().isSessionsProductMBean(name)) {
           try {
             addBean(name);
-          } catch(IOException ioe) {
+          } catch (IOException ioe) {
             ioe.printStackTrace();
           }
         }

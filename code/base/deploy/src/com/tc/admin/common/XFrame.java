@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin.common;
 
@@ -28,17 +29,19 @@ public class XFrame extends Frame {
     addComponentListener(new ComponentListener());
   }
 
-  public void storeBounds() {/**/}
+  public void storeBounds() {/**/
+  }
 
   class ComponentListener extends ComponentAdapter {
     public void componentResized(ComponentEvent e) {
-      if(storeTimer.isRunning()) {
+      if (storeTimer.isRunning()) {
         storeTimer.stop();
       }
       storeTimer.start();
     }
+
     public void componentMoved(ComponentEvent e) {
-      if(storeTimer.isRunning()) {
+      if (storeTimer.isRunning()) {
         storeTimer.stop();
       }
       storeTimer.start();

@@ -11,7 +11,7 @@ import com.tc.admin.model.IClusterNode;
 import java.awt.Component;
 
 public class RootNode extends BasicObjectNode implements IComponentProvider {
-  protected IClusterNode m_clusterNode;
+  protected IClusterNode      m_clusterNode;
   private BasicObjectSetPanel m_rootsPanel;
 
   public RootNode(IClusterNode clusterNode, IBasicObject root) {
@@ -26,7 +26,7 @@ public class RootNode extends BasicObjectNode implements IComponentProvider {
   public int getChildCount() {
     return 0;
   }
-  
+
   public Component getComponent() {
     if (m_rootsPanel == null) {
       m_rootsPanel = new BasicObjectSetPanel(m_clusterNode, new IBasicObject[] { m_object });

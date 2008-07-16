@@ -56,10 +56,12 @@ public class ClientTableModel extends XObjectTableModel {
     int rows = getRowCount();
     for (int i = 0; i < rows; i++) {
       ClientWrapper wrapper = (ClientWrapper) getObjectAt(i);
-      wrapper.m_liveObjectCount = map.get(wrapper.m_client);
+      Integer value = map.get(wrapper.m_client);
+      if(value != null) {
+        wrapper.m_liveObjectCount = value.intValue();
+      }
     }
     fireTableChanged(new TableModelEvent(this, 0, rows - 1, 3, TableModelEvent.UPDATE));
-
   }
 
   public class ClientWrapper {

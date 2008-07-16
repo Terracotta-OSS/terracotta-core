@@ -4,7 +4,6 @@
  */
 package com.tc.admin;
 
-
 import com.tc.admin.common.ComponentNode;
 import com.tc.admin.model.IServer;
 
@@ -23,7 +22,7 @@ public class ServerThreadDumpsNode extends ComponentNode {
   IServer getServer() {
     return m_serverNode.getServer();
   }
-  
+
   protected ServerThreadDumpsPanel createThreadDumpsPanel() {
     return new ServerThreadDumpsPanel(this);
   }

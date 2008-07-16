@@ -43,17 +43,17 @@ public class StatsRecorderNode extends ComponentNode {
   String[] getConnectionCredentials() {
     return m_clusterNode.getConnectionCredentials();
   }
-  
+
   Map<String, Object> getConnectionEnvironment() {
     return m_clusterNode.getConnectionEnvironment();
   }
-  
+
   void newConnectionContext() {
-    if(m_statsRecorderPanel != null) {
+    if (m_statsRecorderPanel != null) {
       m_statsRecorderPanel.newConnectionContext();
     }
   }
-  
+
   StatisticsLocalGathererMBean getStatisticsGathererMBean() {
     return m_clusterNode.getStatisticsGathererMBean();
   }
@@ -68,9 +68,9 @@ public class StatsRecorderNode extends ComponentNode {
   }
 
   String getActiveServerAddress() throws Exception {
-    return m_clusterNode.getHost()+":"+m_clusterNode.getDSOListenPort();
+    return m_clusterNode.getHost() + ":" + m_clusterNode.getDSOListenPort();
   }
-  
+
   void notifyChanged() {
     nodeChanged();
     m_clusterNode.notifyChanged();

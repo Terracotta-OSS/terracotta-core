@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin;
 
@@ -17,9 +18,9 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,8 +30,8 @@ import javax.swing.Timer;
 import javax.swing.UIManager;
 
 public class AdminClient extends ApplicationManager {
-  private static AdminClient m_client;
-  private AdminClientContext m_cntx;
+  private static AdminClient  m_client;
+  private AdminClientContext  m_cntx;
 
   private static final String PREF_FILE = ".AdminClient.xml";
 
@@ -45,52 +46,24 @@ public class AdminClient extends ApplicationManager {
     // Silence httpclient
     System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog");
   }
-  
-  protected AdminClient() {
+
+  private AdminClient() {
     super("AdminClient");
 
-    if(Os.isMac()) {
+    if (Os.isMac()) {
       System.setProperty("com.apple.macos.useScreenMenuBar", "true");
       System.setProperty("apple.laf.useScreenMenuBar", "true");
       System.setProperty("apple.awt.showGrowBox", "true");
       System.setProperty("com.apple.mrj.application.growbox.intrudes", "false");
     }
 
-    m_cntx = new AdminClientContext();
-    m_cntx.client = m_client = this;
-    m_cntx.prefs = loadPrefs();
-    m_cntx.topRes = loadTopRes();
-    m_cntx.bundleHelper = new ResourceBundleHelper(getClass());
-    m_cntx.nodeFactory = AbstractNodeFactory.getFactory();
-    m_cntx.executorService = Executors.newCachedThreadPool();
-
+    m_client = this;
+    m_cntx = new AdminClientContext(this, new ResourceBundleHelper(getClass()), loadTopRes(), AbstractNodeFactory
+        .getFactory(), loadPrefs(), Executors.newCachedThreadPool());
     setIconImage(new Image(getClass().getResource("/com/tc/admin/icons/logo_small.png")));
   }
 
-  static byte[] getBytes(String path) {
-    byte[] result = null;
-    URL    url    = AdminClient.class.getResource(path);
-    
-    if(url != null) {
-      InputStream is = null;
-      
-      try {
-        result = IOUtils.toByteArray(is = url.openStream());
-      } catch(IOException ioe) {
-        ioe.printStackTrace();
-      } finally {
-        IOUtils.closeQuietly(is);
-      }
-    }
-    
-    return result;
-  }
-
   public static AdminClient getClient() {
-    if(m_client == null) {
-      new AdminClient().parseArgs(new String[]{});
-    }
-
     return m_client;
   }
 
@@ -108,7 +81,9 @@ public class AdminClient extends ApplicationManager {
   public DictionaryResource loadPreferences() {
     return new DictionaryResource();
   }
-  public void storePreferences() {/**/}
+
+  public void storePreferences() {/**/
+  }
 
   private Preferences loadPrefs() {
     FileInputStream fis = null;
@@ -116,13 +91,13 @@ public class AdminClient extends ApplicationManager {
     try {
       File f = new File(System.getProperty("user.home"), PREF_FILE);
 
-      if(f.exists()) {
+      if (f.exists()) {
         fis = new FileInputStream(f);
         Preferences.importPreferences(fis);
       }
-    } catch(RuntimeException re) {
+    } catch (RuntimeException re) {
       // ignore
-    } catch(Exception e) {
+    } catch (Exception e) {
       // ignore
     } finally {
       IOUtils.closeQuietly(fis);
@@ -137,10 +112,10 @@ public class AdminClient extends ApplicationManager {
     try {
       File f = new File(System.getProperty("user.home"), PREF_FILE);
       fos = new FileOutputStream(f);
-      m_cntx.prefs.exportSubtree(fos);
-      m_cntx.prefs.flush();
-    } catch(Exception e) {
-      e.printStackTrace();
+      m_cntx.getPrefs().exportSubtree(fos);
+      m_cntx.getPrefs().flush();
+    } catch (Exception e) {
+      /**/
     } finally {
       IOUtils.closeQuietly(fos);
     }
@@ -148,14 +123,14 @@ public class AdminClient extends ApplicationManager {
 
   private DictionaryResource loadTopRes() {
     DictionaryResource topRes = null;
-    InputStream        is     = null;
+    InputStream is = null;
 
     try {
       is = getClass().getResourceAsStream("AdminClient.xml");
       topRes = ApplicationManager.loadResource(is);
-    } catch(RuntimeException re) {
+    } catch (RuntimeException re) {
       throw re;
-    } catch(Exception e) {
+    } catch (Exception e) {
       throw new RuntimeException(e);
     } finally {
       IOUtils.closeQuietly(is);
@@ -165,13 +140,15 @@ public class AdminClient extends ApplicationManager {
   }
 
   public void start() {
-    AdminClientFrame frame = new AdminClientFrame();
+    final AdminClientFrame frame = new AdminClientFrame();
     frame.setIconImage(getIconImage());
-    m_cntx.controller = frame;
+    m_cntx.setController(frame);
     Timer t = new Timer(250, new ActionListener() {
       public void actionPerformed(ActionEvent ae) {
-        ((AdminClientFrame)m_cntx.controller).setVisible(true);
-        splashProc.destroy();
+        frame.setVisible(true);
+        if (splashProc != null) {
+          splashProc.destroy();
+        }
       }
     });
     t.setRepeats(false);
@@ -190,18 +167,30 @@ public class AdminClient extends ApplicationManager {
 
   private static Process splashProc;
 
-  public static final void main(final String[] args)
-    throws Exception
-  {
-    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+  private static class StartupAction implements Runnable {
+    private String[] args;
+
+    StartupAction(String[] args) {
+      this.args = args;
+    }
     
-    splashProc = Splash.start("Starting Terracotta AdminConsole...", new Runnable() {
-      public void run() {
-        AdminClient client = new AdminClient();
-        client.parseArgs(ApplicationManager.parseLAFArgs(args));
-        client.start();
-      }
-    });
-    splashProc.waitFor();
+    public void run() {
+      AdminClient client = new AdminClient();
+      client.parseArgs(ApplicationManager.parseLAFArgs(args));
+      client.start();
+    }
+  }
+  
+  public static final void main(final String[] args) throws Exception {
+    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+
+    List<String> argList = Arrays.asList(args);
+    if (argList.remove("-showSplash")) {
+      StartupAction starter = new StartupAction(argList.toArray(new String[argList.size()]));
+      splashProc = Splash.start("Starting Terracotta AdminConsole...", starter);
+      splashProc.waitFor();
+    } else {
+      new StartupAction(args).run();
+    }
   }
 }

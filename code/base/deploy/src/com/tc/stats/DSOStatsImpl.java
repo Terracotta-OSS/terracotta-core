@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.stats;
 
@@ -19,7 +20,7 @@ import java.lang.reflect.Method;
 
 /**
  * This is the root interface to the global DSO Server statistics.
- *
+ * 
  * @see StatsSupport
  * @see DSOStats
  */
@@ -60,11 +61,10 @@ public class DSOStatsImpl extends StatsSupport implements DSOStats {
     rv.setDoubleValue(value);
     return rv;
   }
-  
-  public CountStatistic getCacheMissRate() {
-    return StatsUtil.makeCountStat( objMgrStats.getCacheMissRate());
-  }
 
+  public CountStatistic getCacheMissRate() {
+    return StatsUtil.makeCountStat(objMgrStats.getCacheMissRate());
+  }
 
   public Statistic[] getStatistics(String[] names) {
     int count = names.length;

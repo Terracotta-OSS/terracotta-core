@@ -113,7 +113,7 @@ public class StatsRecorderPanel extends XContainer {
     m_acc = AdminClient.getContext();
     m_statsRecorderNode = statsRecorderNode;
 
-    load((ContainerResource) m_acc.topRes.getComponent("StatsRecorderPanel"));
+    load((ContainerResource) m_acc.getComponent("StatsRecorderPanel"));
 
     m_startGatheringStatsButton = (ToggleButton) findComponent("StartGatheringStatsButton");
     m_startGatheringStatsButton.addActionListener(new StartGatheringStatsAction());
@@ -159,7 +159,7 @@ public class StatsRecorderPanel extends XContainer {
   }
 
   private void initiateStatsGathererConnectWorker() {
-    m_acc.executorService.execute(new StatsGathererConnectWorker());
+    m_acc.execute(new StatsGathererConnectWorker());
   }
 
   void newConnectionContext() {
@@ -211,7 +211,7 @@ public class StatsRecorderPanel extends XContainer {
 
   private void gathererConnected() {
     m_statsSessionsListModel.clear();
-    m_acc.executorService.execute(new GathererConnectedWorker());
+    m_acc.execute(new GathererConnectedWorker());
   }
 
   private static class GathererConnectedState {
@@ -437,7 +437,7 @@ public class StatsRecorderPanel extends XContainer {
       String[] stats = statList.toArray(new String[0]);
       long samplePeriodMillis = getSamplePeriodMillis();
 
-      m_acc.executorService.execute(new StartGatheringStatsWorker(stats, samplePeriodMillis));
+      m_acc.execute(new StartGatheringStatsWorker(stats, samplePeriodMillis));
     }
   }
 
@@ -469,7 +469,7 @@ public class StatsRecorderPanel extends XContainer {
   class StopGatheringStatsAction implements ActionListener {
     public void actionPerformed(ActionEvent ae) {
       m_startGatheringStatsButton.setSelected(false);
-      m_acc.executorService.execute(new StopGatheringStatsWorker());
+      m_acc.execute(new StopGatheringStatsWorker());
     }
   }
 

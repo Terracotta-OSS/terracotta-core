@@ -30,6 +30,7 @@ import com.tc.admin.common.XMenu;
 import com.tc.admin.common.XMenuBar;
 import com.tc.admin.common.XMenuItem;
 import com.tc.admin.common.XRootNode;
+import com.tc.admin.common.XSplitPane;
 import com.tc.admin.common.XTabbedPane;
 import com.tc.admin.common.XTextField;
 import com.tc.admin.common.XTreeModel;
@@ -39,7 +40,6 @@ import com.tc.admin.model.ServerVersion;
 import com.tc.util.ProductInfo;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
@@ -51,8 +51,6 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -76,7 +74,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
-import javax.swing.JSplitPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
@@ -103,11 +100,6 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
   private AdminClientContext           m_acc;
   private NavTree                      m_tree;
   private XContainer                   m_nodeView;
-  private JSplitPane                   m_mainSplitter;
-  private Integer                      m_mainDivLoc;
-  private JSplitPane                   m_leftSplitter;
-  private Integer                      m_leftDivLoc;
-  private DividerListener              m_dividerListener;
   private XTabbedPane                  m_bottomPane;
   private LogPane                      m_logArea;
   private ArrayList                    m_logListeners;
@@ -133,10 +125,16 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     super();
 
     m_acc = AdminClient.getContext();
-    m_acc.controller = this;
+    m_acc.setController(this);
 
-    FrameResource frameRes = m_acc.topRes.getFrame("MyFrame");
+    FrameResource frameRes = m_acc.getTopRes().getFrame("MyFrame");
     load(frameRes.getContentPane());
+
+    XSplitPane mainSplitter = (XSplitPane) findComponent("MainSplitter");
+    mainSplitter.setPreferences(getPreferences().node(mainSplitter.getName()));
+
+    XSplitPane leftSplitter = (XSplitPane) findComponent("LeftSplitter");
+    leftSplitter.setPreferences(getPreferences().node(leftSplitter.getName()));
 
     m_tree = (NavTree) findComponent("Tree");
     m_nodeView = (XContainer) findComponent("NodeView");
@@ -400,54 +398,11 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
   }
 
   protected Preferences getPreferences() {
-    AdminClientContext acc = AdminClient.getContext();
-    return acc.prefs.node("AdminClientFrame");
+    return m_acc.getPrefs().node("AdminClientFrame");
   }
 
   protected void storePreferences() {
-    AdminClientContext acc = AdminClient.getContext();
-    acc.client.storePrefs();
-  }
-
-  private int getSplitPref(JSplitPane splitter) {
-    Preferences prefs = getPreferences();
-    Preferences splitPrefs = prefs.node(splitter.getName());
-    return splitPrefs.getInt("Split", -1);
-  }
-
-  private JSplitPane getMainSplitter() {
-    if (m_mainSplitter == null) {
-      m_mainSplitter = (JSplitPane) findComponent("MainSplitter");
-      m_mainDivLoc = Integer.valueOf(getSplitPref(m_mainSplitter));
-
-      if (m_dividerListener == null) {
-        m_dividerListener = new DividerListener();
-      }
-    }
-
-    return m_mainSplitter;
-  }
-
-  private JSplitPane getLeftSplitter() {
-    if (m_leftSplitter == null) {
-      m_leftSplitter = (JSplitPane) findComponent("LeftSplitter");
-      m_leftDivLoc = Integer.valueOf(getSplitPref(m_leftSplitter));
-
-      if (m_dividerListener == null) {
-        m_dividerListener = new DividerListener();
-      }
-      Dimension emptySize = new Dimension();
-      java.awt.Component left = m_leftSplitter.getLeftComponent();
-      if (left != null) {
-        left.setMinimumSize(emptySize);
-      }
-      java.awt.Component right = m_leftSplitter.getLeftComponent();
-      if (right != null) {
-        right.setMinimumSize(emptySize);
-      }
-    }
-
-    return m_leftSplitter;
+    AdminClient.getContext().storePrefs();
   }
 
   public void updateServerPrefs() {
@@ -455,7 +410,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     int count = root.getChildCount();
     AdminClientContext acc = AdminClient.getContext();
     PrefsHelper helper = PrefsHelper.getHelper();
-    Preferences prefs = acc.prefs.node("AdminClient");
+    Preferences prefs = acc.getPrefs().node("AdminClient");
     Preferences serverPrefs = prefs.node(ServersHelper.SERVERS);
     Preferences serverPref;
 
@@ -491,48 +446,6 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     storePreferences();
   }
 
-  private class DividerListener implements PropertyChangeListener {
-    public void propertyChange(PropertyChangeEvent pce) {
-      JSplitPane splitter = (JSplitPane) pce.getSource();
-      String propName = pce.getPropertyName();
-
-      if (splitter.isShowing() == false || JSplitPane.DIVIDER_LOCATION_PROPERTY.equals(propName) == false) { return; }
-
-      int divLoc = splitter.getDividerLocation();
-      Integer divLocObj = Integer.valueOf(divLoc);
-      Preferences prefs = getPreferences();
-      String name = splitter.getName();
-      Preferences node = prefs.node(name);
-
-      node.putInt("Split", divLoc);
-      storePreferences();
-
-      if (m_mainSplitter.getName().equals(name)) {
-        m_mainDivLoc = divLocObj;
-      } else {
-        m_leftDivLoc = divLocObj;
-      }
-    }
-  }
-
-  public void doLayout() {
-    super.doLayout();
-
-    JSplitPane splitter = getMainSplitter();
-    if (m_mainDivLoc != null) {
-      splitter.setDividerLocation(m_mainDivLoc.intValue());
-    } else {
-      splitter.setDividerLocation(0.7);
-    }
-
-    splitter = getLeftSplitter();
-    if (m_leftDivLoc != null) {
-      splitter.setDividerLocation(m_leftDivLoc.intValue());
-    } else {
-      splitter.setDividerLocation(0.25);
-    }
-  }
-
   public void log(String s) {
     m_logArea.append(s + System.getProperty("line.separator"));
     m_logArea.setCaretPosition(m_logArea.getDocument().getLength() - 1);
@@ -560,18 +473,6 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     return m_activityArea;
   }
 
-  public void addNotify() {
-    super.addNotify();
-    getMainSplitter().addPropertyChangeListener(m_dividerListener);
-    getLeftSplitter().addPropertyChangeListener(m_dividerListener);
-  }
-
-  public void removeNotify() {
-    getMainSplitter().removePropertyChangeListener(m_dividerListener);
-    getLeftSplitter().removePropertyChangeListener(m_dividerListener);
-    super.removeNotify();
-  }
-
   class NewClusterAction extends XAbstractAction {
     NewClusterAction() {
       super(m_acc.getMessage("new.cluster.action.label"));
@@ -582,7 +483,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       XTreeModel model = (XTreeModel) m_tree.getModel();
       XTreeNode root = (XTreeNode) model.getRoot();
       int index = root.getChildCount();
-      ClusterNode clusterNode = acc.nodeFactory.createClusterNode();
+      ClusterNode clusterNode = acc.getNodeFactory().createClusterNode();
 
       model.insertNodeInto(clusterNode, root, index);
       TreePath path = new TreePath(clusterNode.getPath());
@@ -590,7 +491,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       m_tree.setSelectionPath(path);
 
       PrefsHelper helper = PrefsHelper.getHelper();
-      Preferences prefs = acc.prefs.node("AdminClient");
+      Preferences prefs = acc.getPrefs().node("AdminClient");
       Preferences servers = prefs.node(ServersHelper.SERVERS);
       int count = helper.childrenNames(servers).length;
 
@@ -633,6 +534,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     }
 
     public void actionPerformed(ActionEvent ae) {
+      m_acc.storePrefs();
       if (testWarnCurrentRecordingSessions()) {
         Runtime.getRuntime().exit(0);
       }
@@ -1055,6 +957,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
   }
 
   public void addServerLog(IServer server) {
+    if (hasServerLog(server)) return;
     ServerLog log = new ServerLog(server);
     JScrollPane scroller = new JScrollPane(log);
     int index = m_bottomPane.getTabCount();
@@ -1065,6 +968,17 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     LogDocumentListener ldl = new LogDocumentListener(log);
     log.getDocument().addDocumentListener(ldl);
     m_logListeners.add(ldl);
+  }
+
+  private boolean hasServerLog(IServer server) {
+    JScrollPane scroller;
+    ServerLog log;
+    for (int i = 1; i < m_bottomPane.getTabCount(); i++) {
+      scroller = (JScrollPane) m_bottomPane.getComponentAt(i);
+      log = (ServerLog) scroller.getViewport().getView();
+      if (server.equals(log.getServer())) { return true; }
+    }
+    return false;
   }
 
   public void removeServerLog(IServer server) {

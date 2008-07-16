@@ -160,9 +160,9 @@
     tag="MyFrame" title="Terracotta AdminConsole" visible="false">
     <content-pane>
       <children>
-        <splitpane divider-location="-1" focus-index="0" name="MainSplitter">
+        <splitpane class="com.tc.admin.common.XSplitPane" divider-location="-1" focus-index="0" name="MainSplitter">
           <left>
-            <splitpane divider-location="-1" focus-index="0" name="LeftSplitter" orientation="horizontal">
+            <splitpane class="com.tc.admin.common.XSplitPane" divider-location="-1" focus-index="0" name="LeftSplitter" orientation="horizontal">
               <left>
                 <scrollpane>
                   <tree class="com.tc.admin.NavTree" name="Tree" />
@@ -730,27 +730,6 @@
       <item bottom="1,top:0" height="n" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="s" />
       <item bottom="2,top:n" height="s" left="-1,left:0" right="-1,right:0" top="0,bottom:0" width="s" />
       <item bottom="-1,bottom:n" height="n" left="-1,left:0" right="-1,right:0" top="1,bottom:0" width="s" />
-    </connections>
-  </container>
-  <container tag="ClusterRuntimeStatsPanel">
-    <children>
-      <tabbedpane>
-        <tab title="Combined">
-          <container name="CombinedPanel" class="com.tc.admin.common.XContainer" />
-        </tab>
-        <tab title="CPU">
-          <container name="CpusPanel" class="com.tc.admin.common.XContainer" />
-        </tab>
-        <tab title="Memory">
-          <container name="MemoryPanel" class="com.tc.admin.common.XContainer" />
-        </tab>
-        <tab title="Transactions">
-          <container name="TransactionsPanel" class="com.tc.admin.common.XContainer" />
-        </tab>
-      </tabbedpane>
-    </children>
-    <connections>
-      <item bottom="-1,bottom:0" height="s" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="s" />
     </connections>
   </container>
   <container tag="RootsPanel">

@@ -1,11 +1,10 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin.dso;
 
 import com.tc.admin.AbstractThreadDumpsPanel;
-import com.tc.admin.AdminClient;
-import com.tc.admin.AdminClientContext;
 
 import java.util.prefs.Preferences;
 
@@ -22,8 +21,7 @@ public class ClientThreadDumpsPanel extends AbstractThreadDumpsPanel {
   }
 
   protected Preferences getPreferences() {
-    AdminClientContext acc = AdminClient.getContext();
-    return acc.prefs.node("ClientThreadDumpsPanel");
+    return m_acc.getPrefs().node("ClientThreadDumpsPanel");
   }
 
   public void tearDown() {

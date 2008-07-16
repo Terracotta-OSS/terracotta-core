@@ -10,7 +10,6 @@ import com.tc.admin.ClusterNode;
 import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.ComponentNode;
 import com.tc.admin.common.XAbstractAction;
-import com.tc.admin.common.XTreeModel;
 import com.tc.admin.common.XTreeNode;
 import com.tc.admin.model.IBasicObject;
 import com.tc.admin.model.IClusterModel;
@@ -63,42 +62,41 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
 
   private class InitRunnable implements Runnable {
     public void run() {
+      if (m_acc == null) return;
       init();
     }
   }
 
   private void init() {
-    if(m_clusterNode == null) return;
-    m_clusterNode.getClusterModel().removeRootCreationListener(this);
+    if (m_acc == null) return;
     m_roots = new IBasicObject[0];
     for (int i = getChildCount() - 1; i >= 0; i--) {
-      m_acc.controller.remove((XTreeNode) getChildAt(i));
+      m_acc.remove((XTreeNode) getChildAt(i));
     }
     if (m_rootsPanel != null) {
       m_rootsPanel.clearModel();
     }
-    m_acc.executorService.execute(new InitWorker());
+    m_acc.execute(new InitWorker());
   }
 
   private class InitWorker extends BasicWorker<IBasicObject[]> {
     private InitWorker() {
       super(new Callable<IBasicObject[]>() {
         public IBasicObject[] call() throws Exception {
-          IBasicObject[] result = m_clusterNode.getClusterModel().getRoots();
-          m_clusterNode.getClusterModel().addRootCreationListener(RootsNode.this);
-          return result;
+          return m_clusterNode.getClusterModel().getRoots();
         }
       });
     }
 
     protected void finished() {
+      if (m_acc == null) return;
       Exception e = getException();
       if (e != null) {
         m_acc.log(e);
       } else {
         m_roots = getResult();
         initMenu();
-        m_acc.controller.nodeStructureChanged(RootsNode.this);
+        m_acc.nodeStructureChanged(RootsNode.this);
         if (m_rootsPanel != null) {
           m_rootsPanel.setObjects(m_roots);
         }
@@ -168,19 +166,18 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
         ((RootsPanel) getComponent()).setObjects(m_roots);
         getModel().nodeStructureChanged(RootsNode.this);
         if (isExpanded) {
-          m_acc.controller.expand(RootsNode.this);
+          m_acc.expand(RootsNode.this);
         }
       }
-      m_acc.controller.unblock();
-      m_acc.controller.clearStatus();
+      m_acc.unblock();
+      m_acc.clearStatus();
     }
   }
 
   public void refresh() {
-    boolean expanded = m_acc.controller.isExpanded(this);
-    m_acc.controller.setStatus(m_acc.getMessage("dso.roots.refreshing"));
-    m_acc.controller.block();
-    m_acc.executorService.execute(new RefreshWorker(expanded));
+    m_acc.setStatus(m_acc.getMessage("dso.roots.refreshing"));
+    m_acc.block();
+    m_acc.execute(new RefreshWorker(m_acc.isExpanded(this)));
   }
 
   private class RefreshAction extends XAbstractAction {
@@ -201,6 +198,8 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
   }
 
   public void tearDown() {
+    m_acc = null;
+
     m_clusterNode.getClusterModel().removePropertyChangeListener(this);
     m_clusterNode.getClusterModel().removeRootCreationListener(this);
 
@@ -209,7 +208,6 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
       m_rootsPanel = null;
     }
 
-    m_acc = null;
     m_clusterNode = null;
     m_roots = null;
     m_popupMenu = null;
@@ -234,19 +232,10 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
 
       ArrayList<IBasicObject> list = new ArrayList<IBasicObject>(Arrays.asList(m_roots));
       list.add(m_root);
-      m_roots = list.toArray(new IBasicObject[] {});
-
-      BasicObjectNode rootNode = new BasicObjectNode(m_root);
-      XTreeModel model = getModel();
-      if (model != null) {
-        model.insertNodeInto(rootNode, RootsNode.this, getChildCount());
-      } else {
-        RootsNode.this.add(rootNode);
-      }
+      m_roots = list.toArray(new IBasicObject[list.size()]);
       ((RootsPanel) getComponent()).add(m_root);
 
       m_acc.setStatus(m_acc.getMessage("dso.root.new") + m_root);
     }
   }
-
 }

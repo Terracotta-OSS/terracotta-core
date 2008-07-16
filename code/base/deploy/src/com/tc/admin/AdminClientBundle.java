@@ -129,12 +129,6 @@ public class AdminClientBundle extends ListResourceBundle {
             "<html><h3>Version mismatch for {0}.</h3><br>"
                 + "<table border=0 cellspacing=1><tr><td align=right><b>Terracotta Server Version:</b></td><td>{1}"
                 + "</tr><tr><td align=right><b>AdminConsole Version:</b</td><td>{2}"
-                + "</td></tr></table><h3>Continue?</h3></html>" }, { "dso.backup", "Backup database" },
-        { "dso.backup.starting.msg", "Backup starting..." },
-        { "dso.backup.path.format", "<html><b>{0}</b>:<code>{1}</code></html>" },
-        { "dso.backup.path.label", "Default backup path:" },
-        { "dso.backup.timeout.msg.format", "Timed-out after {0} seconds" },
-        { "dso.backup.progress.msg.format", "Backup {0}% completed..." },
-        { "dso.backup.completed.msg.format", "Backup completed at {0}." } };
+                + "</td></tr></table><h3>Continue?</h3></html>" } };
   }
 }

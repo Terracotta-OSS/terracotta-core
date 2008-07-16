@@ -4,13 +4,11 @@
  */
 package com.tc.admin.model;
 
-import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.GCStats;
 import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.stats.DSOClassInfo;
-import com.tc.stats.DSOMBean;
 import com.tc.stats.statistics.CountStatistic;
 import com.tc.stats.statistics.Statistic;
 
@@ -63,6 +61,8 @@ public interface IServer extends IClusterNode {
 
   Exception getConnectError();
 
+  String getConnectErrorMessage();
+
   String getConnectErrorMessage(Exception e);
 
   boolean isStarted();
@@ -76,10 +76,6 @@ public interface IServer extends IClusterNode {
   long getStartTime();
 
   long getActivateTime();
-
-  TCServerInfoMBean getServerInfoBean();
-
-  DSOMBean getDSOBean();
 
   IServer[] getClusterServers();
 

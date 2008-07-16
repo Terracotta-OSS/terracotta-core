@@ -384,11 +384,11 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
   public int getLiveObjectCount() {
     return stateManager.getReferenceCount(clientID);
   }
-  
+
   public boolean isResident(ObjectID oid) {
     return stateManager.hasReference(clientID, oid);
   }
-  
+
   public MBeanNotificationInfo[] getNotificationInfo() {
     return Arrays.asList(NOTIFICATION_INFO).toArray(EMPTY_NOTIFICATION_INFO);
   }

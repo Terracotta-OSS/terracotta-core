@@ -5,12 +5,9 @@
 package com.tc.admin.dso;
 
 import com.tc.admin.BaseHelper;
-import com.tc.admin.ConnectionContext;
-import com.tc.admin.model.DSOClient;
 
 import java.net.URL;
 
-import javax.management.ObjectName;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
@@ -28,7 +25,6 @@ public class ClientsHelper extends BaseHelper {
       URL url = getClass().getResource(ICONS_PATH + "hierarchicalLayout.gif");
       m_clientsIcon = new ImageIcon(url);
     }
-
     return m_clientsIcon;
   }
 
@@ -37,23 +33,6 @@ public class ClientsHelper extends BaseHelper {
       URL url = getClass().getResource(ICONS_PATH + "genericvariable_obj.gif");
       m_clientIcon = new ImageIcon(url);
     }
-
     return m_clientIcon;
-  }
-
-  public DSOClient[] getClients(ConnectionContext cc) {
-    ObjectName[] clientNames = getClientNames(cc);
-    int count = (clientNames != null) ? clientNames.length : 0;
-    DSOClient[] result = new DSOClient[count];
-
-    for (int i = 0; i < count; i++) {
-      result[i] = new DSOClient(cc, clientNames[i]);
-    }
-
-    return result;
-  }
-
-  public ObjectName[] getClientNames(ConnectionContext cc) {
-    return DSOHelper.getHelper().getDSOBean(cc).getClients();
   }
 }

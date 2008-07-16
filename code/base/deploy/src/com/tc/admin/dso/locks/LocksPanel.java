@@ -99,11 +99,10 @@ public class LocksPanel extends XContainer implements NotificationListener {
     fConnectionContext = locksNode.getConnectionContext();
     fLocksNode = locksNode;
 
-    load((ContainerResource) fAdminClientContext.topRes.getComponent("LocksPanel"));
+    load((ContainerResource) fAdminClientContext.getComponent("LocksPanel"));
 
-    fLockStats = (LockStatisticsMonitorMBean) MBeanServerInvocationProxy
-        .newProxyInstance(fConnectionContext.mbsc, L2MBeanNames.LOCK_STATISTICS, LockStatisticsMonitorMBean.class,
-                          false);
+    fLockStats = MBeanServerInvocationProxy.newMBeanProxy(fConnectionContext.mbsc, L2MBeanNames.LOCK_STATISTICS,
+                                                          LockStatisticsMonitorMBean.class, false);
 
     // We do this to force an early error if the server we're connecting to is old and doesn't
     // have the LockStatisticsMonitorMBean. DSONode catches the error and doesn't display the LocksNode.
@@ -132,7 +131,7 @@ public class LocksPanel extends XContainer implements NotificationListener {
     fTreeTableModel = new LockTreeTableModel(EMPTY_LOCK_SPEC_COLLECTION);
     fTreeTable = (LockTreeTable) findComponent("LockTreeTable");
     fTreeTable.setTreeTableModel(fTreeTableModel);
-    fTreeTable.setPreferences(fAdminClientContext.prefs.node("LockTreeTable"));
+    fTreeTable.setPreferences(fAdminClientContext.getPrefs().node(fTreeTable.getName()));
     fTreeTable.addTreeSelectionListener(new LockSelectionHandler());
 
     ActionListener findNextAction = new FindNextHandler();
@@ -166,7 +165,7 @@ public class LocksPanel extends XContainer implements NotificationListener {
       throw new RuntimeException(e);
     }
 
-    fAdminClientContext.executorService.execute(new LocksPanelEnabledWorker());
+    fAdminClientContext.execute(new LocksPanelEnabledWorker());
   }
 
   private class FindNextHandler implements ActionListener {
@@ -294,7 +293,7 @@ public class LocksPanel extends XContainer implements NotificationListener {
   }
 
   void newConnectionContext() {
-    fAdminClientContext.executorService.execute(new NewConnectionContextWorker());
+    fAdminClientContext.execute(new NewConnectionContextWorker());
   }
 
   boolean isProfiling() {
@@ -393,7 +392,7 @@ public class LocksPanel extends XContainer implements NotificationListener {
 
   private void toggleLocksPanelEnabled() {
     boolean lockStatsEnabled = fLocksPanelEnabled ? false : true;
-    fAdminClientContext.executorService.execute(new LockStatsStateWorker(lockStatsEnabled));
+    fAdminClientContext.execute(new LockStatsStateWorker(lockStatsEnabled));
   }
 
   private void setLocksPanelEnabled(boolean enabled) {
@@ -414,7 +413,7 @@ public class LocksPanel extends XContainer implements NotificationListener {
     final String label = fRefreshButton.getText();
     fRefreshButton.setText("Wait...");
     fRefreshButton.setEnabled(false);
-    fAdminClientContext.executorService.execute(new LockSpecsGetter(label));
+    fAdminClientContext.execute(new LockSpecsGetter(label));
   }
 
   class LockSpecsGetter extends BasicWorker<Collection<LockSpec>> {
@@ -496,7 +495,7 @@ public class LocksPanel extends XContainer implements NotificationListener {
   }
 
   private void setTraceDepth(int traceDepth) {
-    fAdminClientContext.executorService.execute(new TraceDepthWorker(traceDepth));
+    fAdminClientContext.execute(new TraceDepthWorker(traceDepth));
   }
 
   private int getTraceDepth() {

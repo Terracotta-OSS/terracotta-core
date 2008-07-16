@@ -11,11 +11,8 @@ import com.tc.admin.AdminClientContext;
 import com.tc.admin.ConnectionContext;
 import com.tc.admin.ConnectionListener;
 import com.tc.admin.ServerConnectionManager;
-import com.tc.admin.ServerHelper;
 import com.tc.admin.common.ExceptionHelper;
 import com.tc.admin.common.MBeanServerInvocationProxy;
-import com.tc.admin.dso.ClientsHelper;
-import com.tc.admin.dso.DSOHelper;
 import com.tc.config.schema.L2Info;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
@@ -29,7 +26,6 @@ import com.tc.statistics.StatisticData;
 import com.tc.statistics.beans.StatisticsLocalGathererMBean;
 import com.tc.statistics.beans.StatisticsMBeanNames;
 import com.tc.stats.DSOClassInfo;
-import com.tc.stats.DSOClientMBean;
 import com.tc.stats.DSOMBean;
 import com.tc.stats.DSORootMBean;
 import com.tc.stats.statistics.CountStatistic;
@@ -42,11 +38,15 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.text.MessageFormat;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.management.MBeanServerNotification;
 import javax.management.Notification;
@@ -60,6 +60,7 @@ import javax.swing.event.EventListenerList;
 public class Server implements IServer, NotificationListener, ManagedObjectFacadeProvider {
   protected ServerConnectionManager       m_connectManager;
   protected boolean                       m_connected;
+  protected Set<ObjectName>               m_readySet;
   protected boolean                       m_ready;
   protected List<DSOClient>               m_clients;
   private ClientChangeListener            m_clientChangeListener;
@@ -71,31 +72,30 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   protected DSOMBean                      m_dsoBean;
   protected ObjectManagementMonitorMBean  m_objectManagementMonitorBean;
   protected ServerDBBackupMBean           m_serverDBBackupBean;
-  protected ServerVersion                   m_productInfo;
+  protected ServerVersion                 m_productInfo;
   protected List<IBasicObject>            m_roots;
   protected Map<ObjectName, IBasicObject> m_rootMap;
   protected LogListener                   m_logListener;
-
-  private static final ObjectName         SERVER_INFO_OBJECT_NAME = L2MBeanNames.TC_SERVER_INFO;
-  private static final ObjectName         DSO_BEAN_OBJECT_NAME    = L2MBeanNames.DSO;
 
   public Server() {
     this(ConnectionContext.DEFAULT_HOST, ConnectionContext.DEFAULT_PORT, ConnectionContext.DEFAULT_AUTO_CONNECT);
   }
 
   public Server(final String host, final int jmxPort, final boolean autoConnect) {
-    init();
     ConnectionManagerListener cml = new ConnectionManagerListener();
-    m_connectManager = new ServerConnectionManager(host, jmxPort, autoConnect, cml);
+    m_connectManager = new ServerConnectionManager(host, jmxPort, false, cml);
     if (autoConnect) {
       refreshCachedCredentials();
     }
+    init();
+    m_connectManager.setAutoConnect(autoConnect);
   }
 
   public Server(final L2Info l2Info) {
-    init();
     ConnectionManagerListener cml = new ConnectionManagerListener();
-    m_connectManager = new ServerConnectionManager(l2Info, true, cml);
+    m_connectManager = new ServerConnectionManager(l2Info, false, cml);
+    init();
+    m_connectManager.setAutoConnect(true);
   }
 
   public String getName() {
@@ -105,8 +105,35 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   private void init() {
     m_propertyChangeSupport = new PropertyChangeSupport(this);
     m_listenerList = new EventListenerList();
-    m_pendingClients = new ArrayList<DSOClient>();
+    m_logListener = new LogListener();
+    m_pendingClients = new CopyOnWriteArrayList<DSOClient>();
+    m_clients = new CopyOnWriteArrayList<DSOClient>();
+    m_clientChangeListener = new ClientChangeListener();
+    m_roots = new CopyOnWriteArrayList<IBasicObject>();
+    m_rootMap = new ConcurrentHashMap<ObjectName, IBasicObject>();
+    m_readySet = Collections.synchronizedSet(new HashSet<ObjectName>());
+    initReadySet();
     m_ready = false;
+  }
+
+  private void initReadySet() {
+    m_readySet.add(L2MBeanNames.TC_SERVER_INFO);
+    m_readySet.add(L2MBeanNames.DSO);
+    m_readySet.add(L2MBeanNames.SERVER_DB_BACKUP);
+    m_readySet.add(L2MBeanNames.OBJECT_MANAGEMENT);
+    m_readySet.add(L2MBeanNames.LOGGER);
+  }
+
+  private void filterReadySet() {
+    synchronized (m_readySet) {
+      Iterator<ObjectName> iter = m_readySet.iterator();
+      while (iter.hasNext()) {
+        ObjectName beanName = iter.next();
+        if (isMBeanRegistered(beanName)) {
+          iter.remove();
+        }
+      }
+    }
   }
 
   public L2Info getL2Info() {
@@ -129,48 +156,58 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     }
   }
 
+  private synchronized void setupFromDSOBean() throws Exception {
+    for (ObjectName clientBeanName : getDSOBean().getClients()) {
+      addClient(clientBeanName);
+    }
+    for (ObjectName rootBeanName : getDSOBean().getRoots()) {
+      addRoot(rootBeanName);
+    }
+    getConnectionContext().addNotificationListener(L2MBeanNames.DSO, this);
+  }
+
   private void connectionEstablished() {
     try {
       ObjectName mbsd = getConnectionContext().queryName("JMImplementation:type=MBeanServerDelegate");
       getConnectionContext().addNotificationListener(mbsd, this);
-      boolean isDsoBeanRegistered = isMBeanRegistered(DSO_BEAN_OBJECT_NAME);
-      if (isDsoBeanRegistered) {
-        getConnectionContext().addNotificationListener(DSO_BEAN_OBJECT_NAME, this);
+      filterReadySet();
+      if (!m_readySet.contains(L2MBeanNames.DSO)) {
+        setupFromDSOBean();
       }
-      boolean isServerInfoBeanRegistered = isMBeanRegistered(SERVER_INFO_OBJECT_NAME);
-      boolean isDBBackupBeanRegistered = isMBeanRegistered(L2MBeanNames.SERVER_DB_BACKUP);
-      if(isDBBackupBeanRegistered) {
+      if (!m_readySet.contains(L2MBeanNames.SERVER_DB_BACKUP)) {
         getServerDBBackupBean();
       }
-      if (!isReady() && isDsoBeanRegistered && isServerInfoBeanRegistered && isDBBackupBeanRegistered) {
-        setReady(true);
-      }
+      setReady(m_readySet.isEmpty());
     } catch (Exception e) {
       e.printStackTrace();
     }
   }
 
-  private void setConnected(boolean connected) {
-    boolean oldConnected = m_connected;
-    m_connected = connected;
+  protected void setConnected(boolean connected) {
+    boolean oldConnected;
+    synchronized (this) {
+      oldConnected = m_connected;
+      m_connected = connected;
+    }
     firePropertyChange(PROP_CONNECTED, !connected, connected);
-    if (oldConnected == false) {
+    if (connected == true && oldConnected == false) {
       connectionEstablished();
     }
-    if (!connected) {
+    if (oldConnected == true && connected == false) {
+      setReady(false);
       handleDisconnect();
     }
   }
 
   private void removeAllClients() {
-    if (m_clients == null) return;
-    Iterator<DSOClient> clientIter = m_clients.iterator();
-    while (clientIter.hasNext()) {
-      DSOClient client = clientIter.next();
-      fireClientDisconnected(client);
+    DSOClient[] clients;
+    synchronized (m_clients) {
+      clients = getClients();
+      m_clients.clear();
     }
-    m_clients.clear();
-    m_clients = null;
+    for (int i = clients.length - 1; i >= 0; i--) {
+      fireClientDisconnected(clients[i]);
+    }
   }
 
   public boolean isConnected() {
@@ -178,8 +215,11 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   private void setConnectError(Exception e) {
-    Exception oldConnectError = m_connectException;
-    m_connectException = e;
+    Exception oldConnectError;
+    synchronized (this) {
+      oldConnectError = m_connectException;
+      m_connectException = e;
+    }
     firePropertyChange(PROP_CONNECT_ERROR, oldConnectError, e);
   }
 
@@ -287,24 +327,20 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     return new AuthScope(getHost(), getDSOListenPort());
   }
 
-  // boolean isConnected() {
-  // return m_connectManager != null && m_connectManager.isConnected();
-  // }
-
   public boolean isStarted() {
-    return getConnectionManager().isStarted();
+    return m_connectManager != null && m_connectManager.isStarted();
   }
 
   public boolean isActive() {
-    return getConnectionManager().isActive();
+    return m_connectManager != null && m_connectManager.isActive();
   }
 
   public boolean isPassiveUninitialized() {
-    return getConnectionManager().isPassiveUninitialized();
+    return m_connectManager != null && m_connectManager.isPassiveUninitialized();
   }
 
   public boolean isPassiveStandby() {
-    return getConnectionManager().isPassiveStandby();
+    return m_connectManager != null && m_connectManager.isPassiveStandby();
   }
 
   public void doShutdown() {
@@ -312,10 +348,12 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   public boolean isAutoConnect() {
-    return getConnectionManager().isAutoConnect();
+    return m_connectManager != null && m_connectManager.isAutoConnect();
   }
 
   public void setAutoConnect(boolean autoConnect) {
+    assert m_connectManager != null;
+
     if (autoConnect) {
       refreshCachedCredentials();
     }
@@ -341,34 +379,40 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     getConnectionManager().setJMXConnector(jmxc);
   }
 
-  public TCServerInfoMBean getServerInfoBean() {
-    if (m_serverInfoBean != null) return m_serverInfoBean;
-    m_serverInfoBean = ServerHelper.getHelper().getServerInfoBean(getConnectionContext());
+  protected synchronized TCServerInfoMBean getServerInfoBean() {
+    if (m_serverInfoBean == null) {
+      ConnectionContext cc = getConnectionContext();
+      m_serverInfoBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, L2MBeanNames.TC_SERVER_INFO,
+                                                                  TCServerInfoMBean.class, false);
+    }
     return m_serverInfoBean;
   }
 
-  public DSOMBean getDSOBean() {
-    if (m_dsoBean != null) return m_dsoBean;
-    m_dsoBean = DSOHelper.getHelper().getDSOBean(getConnectionContext());
+  protected synchronized DSOMBean getDSOBean() {
+    if (m_dsoBean == null) {
+      ConnectionContext cc = getConnectionContext();
+      m_dsoBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, L2MBeanNames.DSO, DSOMBean.class, false);
+    }
     return m_dsoBean;
   }
 
-  public ObjectManagementMonitorMBean getObjectManagementMonitorBean() {
-    if (m_objectManagementMonitorBean != null) return m_objectManagementMonitorBean;
-    m_objectManagementMonitorBean = DSOHelper.getHelper().getObjectManagementMonitorBean(getConnectionContext());
+  private synchronized ObjectManagementMonitorMBean getObjectManagementMonitorBean() {
+    if (m_objectManagementMonitorBean == null) {
+      ConnectionContext cc = getConnectionContext();
+      m_objectManagementMonitorBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, L2MBeanNames.OBJECT_MANAGEMENT,
+                                                                               ObjectManagementMonitorMBean.class,
+                                                                               false);
+    }
     return m_objectManagementMonitorBean;
   }
 
-  public ServerVersion getProductInfo() {
-    if (m_productInfo != null) return m_productInfo;
-
-    TCServerInfoMBean serverInfo = getServerInfoBean();
-    String version = serverInfo.getVersion();
-    String buildID = serverInfo.getBuildID();
-    String license = serverInfo.getDescriptionOfCapabilities();
-    String copyright = serverInfo.getCopyright();
-
-    return m_productInfo = new ServerVersion(version, buildID, license, copyright);
+  public synchronized ServerVersion getProductInfo() {
+    if (m_productInfo == null) {
+      TCServerInfoMBean serverInfo = getServerInfoBean();
+      m_productInfo = new ServerVersion(serverInfo.getVersion(), serverInfo.getBuildID(), serverInfo
+          .getDescriptionOfCapabilities(), serverInfo.getCopyright());
+    }
+    return m_productInfo;
   }
 
   public String getProductVersion() {
@@ -412,7 +456,11 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   public String[] getCpuStatNames() {
-    return getServerInfoBean().getCpuStatNames();
+    if (isReady()) {
+      return getServerInfoBean().getCpuStatNames();
+    } else {
+      return new String[0];
+    }
   }
 
   public Map getServerStatistics() {
@@ -450,7 +498,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     }
     return result;
   }
-  
+
   public void addClientConnectionListener(ClientConnectionListener listener) {
     m_listenerList.add(ClientConnectionListener.class, listener);
   }
@@ -478,8 +526,11 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   protected void setReady(boolean ready) {
-    boolean oldReady = m_ready;
-    m_ready = ready;
+    boolean oldReady;
+    synchronized (this) {
+      oldReady = m_ready;
+      m_ready = ready;
+    }
     firePropertyChange(PROP_READY, oldReady, ready);
   }
 
@@ -488,20 +539,15 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   private void beanRegistered(ObjectName beanName) {
-    if (beanName.equals(DSO_BEAN_OBJECT_NAME)) {
+    if (beanName.equals(L2MBeanNames.DSO)) {
       try {
-        getConnectionContext().addNotificationListener(DSO_BEAN_OBJECT_NAME, this);
-        if (isMBeanRegistered(SERVER_INFO_OBJECT_NAME)) {
-          setReady(true);
-        }
+        setupFromDSOBean();
       } catch (Exception e) {
         e.printStackTrace();
       }
-    } else if (beanName.equals(SERVER_INFO_OBJECT_NAME)) {
-      if (isMBeanRegistered(DSO_BEAN_OBJECT_NAME)) {
-        setReady(true);
-      }
     }
+    m_readySet.remove(beanName);
+    setReady(m_readySet.isEmpty());
   }
 
   private boolean isMBeanRegistered(ObjectName beanName) {
@@ -513,9 +559,10 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   private boolean haveClient(ObjectName objectName) {
-    if (m_clients == null) return false;
-    for (DSOClient client : m_clients) {
-      if (client.getObjectName().equals(objectName)) { return true; }
+    synchronized (m_clients) {
+      for (DSOClient client : m_clients) {
+        if (client.getObjectName().equals(objectName)) { return true; }
+      }
     }
     return false;
   }
@@ -523,7 +570,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   private class ClientChangeListener implements PropertyChangeListener {
     public void propertyChange(PropertyChangeEvent evt) {
       final String prop = evt.getPropertyName();
-      if (DSOClientMBean.TUNNELED_BEANS_REGISTERED.equals(prop)) {
+      if (IClusterNode.PROP_READY.equals(prop)) {
         DSOClient client = (DSOClient) evt.getSource();
         m_clients.add(client);
         fireClientConnected(client);
@@ -532,11 +579,32 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     }
   }
 
-  private ClientChangeListener getClientChangeListener() {
-    if (m_clientChangeListener == null) {
-      m_clientChangeListener = new ClientChangeListener();
+  private DSOClient addClient(ObjectName clientBeanName) {
+    DSOClient client = new DSOClient(getConnectionContext(), clientBeanName);
+    if (client.isReady()) {
+      m_clients.add(client);
+      fireClientConnected(client);
+    } else {
+      m_pendingClients.add(client);
+      client.addPropertyChangeListener(m_clientChangeListener);
     }
-    return m_clientChangeListener;
+    return client;
+  }
+
+  private void removeClient(ObjectName clientBeanName) {
+    DSOClient target = null;
+    Iterator<DSOClient> iter = m_clients.iterator();
+    while (iter.hasNext()) {
+      DSOClient client = iter.next();
+      if (client.getObjectName().equals(clientBeanName)) {
+        target = client;
+        m_clients.remove(client);
+        break;
+      }
+    }
+    if (target != null) {
+      fireClientDisconnected(target);
+    }
   }
 
   private void clientNotification(Notification notification, Object handback) {
@@ -544,27 +612,11 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
 
     if (DSOMBean.CLIENT_ATTACHED.equals(type)) {
       ObjectName clientObjectName = (ObjectName) notification.getSource();
-      if (haveClient(clientObjectName)) return;
-      DSOClient client = new DSOClient(getConnectionContext(), clientObjectName);
-      if (m_clients == null) m_clients = new ArrayList<DSOClient>();
-      if (client.isTunneledBeansRegistered()) {
-        m_clients.add(client);
-        fireClientConnected(client);
-      } else {
-        client.addPropertyChangeListener(getClientChangeListener());
-        m_pendingClients.add(client);
+      if (!haveClient(clientObjectName)) {
+        addClient(clientObjectName);
       }
     } else if (DSOMBean.CLIENT_DETACHED.equals(type)) {
-      ObjectName beanName = (ObjectName) notification.getSource();
-      Iterator<DSOClient> iter = m_clients.iterator();
-      while (iter.hasNext()) {
-        DSOClient client = iter.next();
-        if (client.getObjectName().equals(beanName)) {
-          fireClientDisconnected(client);
-          iter.remove();
-          return;
-        }
-      }
+      removeClient((ObjectName) notification.getSource());
     }
   }
 
@@ -586,14 +638,13 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   private boolean haveRoot(ObjectName objectName) {
-    return m_rootMap.get(objectName) != null;
+    return m_rootMap.containsKey(objectName);
   }
 
   private void rootAdded(Notification notification, Object handback) {
     ObjectName objectName = (ObjectName) notification.getSource();
     if (haveRoot(objectName)) return;
-    IBasicObject root = addRoot(objectName);
-    fireRootCreated(root);
+    fireRootCreated(addRoot(objectName));
   }
 
   private ManagedObjectFacade safeLookupFacade(DSORootMBean rootBean) {
@@ -604,10 +655,9 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     }
   }
 
-  private IBasicObject addRoot(ObjectName rootBeanName) {
+  private synchronized IBasicObject addRoot(ObjectName rootBeanName) {
     ConnectionContext cc = getConnectionContext();
-    DSORootMBean rootBean = (DSORootMBean) MBeanServerInvocationProxy.newProxyInstance(cc.mbsc, rootBeanName,
-                                                                                       DSORootMBean.class, false);
+    DSORootMBean rootBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, rootBeanName, DSORootMBean.class, false);
     String fieldName = rootBean.getRootName();
     ManagedObjectFacade facade = safeLookupFacade(rootBean);
     if (facade != null) {
@@ -620,19 +670,8 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     return null;
   }
 
-  public IBasicObject[] getRoots() {
-    if (m_roots != null) { return m_roots.toArray(new IBasicObject[0]); }
-
-    m_roots = new ArrayList<IBasicObject>();
-    m_rootMap = new HashMap<ObjectName, IBasicObject>();
-    ObjectName[] rootNames = getDSOBean().getRoots();
-    if (rootNames != null) {
-      for (ObjectName rootBeanName : rootNames) {
-        addRoot(rootBeanName);
-      }
-    }
-
-    return m_roots.toArray(new IBasicObject[0]);
+  public synchronized IBasicObject[] getRoots() {
+    return m_roots.toArray(new IBasicObject[m_roots.size()]);
   }
 
   public void handleNotification(Notification notification, Object handback) {
@@ -653,15 +692,20 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   public synchronized void addPropertyChangeListener(PropertyChangeListener listener) {
+    if (listener == null || m_propertyChangeSupport == null) return;
+    m_propertyChangeSupport.removePropertyChangeListener(listener);
     m_propertyChangeSupport.addPropertyChangeListener(listener);
   }
 
   public synchronized void removePropertyChangeListener(PropertyChangeListener listener) {
+    if (listener == null || m_propertyChangeSupport == null) return;
     m_propertyChangeSupport.removePropertyChangeListener(listener);
   }
 
   public void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
-    m_propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
+    if (m_propertyChangeSupport != null) {
+      m_propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
+    }
   }
 
   public String getCanonicalHostName() {
@@ -674,8 +718,8 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
 
   public StatisticsLocalGathererMBean getStatisticsGathererMBean() {
     ConnectionContext cc = getConnectionContext();
-    return (StatisticsLocalGathererMBean) MBeanServerInvocationProxy
-        .newProxyInstance(cc.mbsc, StatisticsMBeanNames.STATISTICS_GATHERER, StatisticsLocalGathererMBean.class, true);
+    return MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, StatisticsMBeanNames.STATISTICS_GATHERER,
+                                                    StatisticsLocalGathererMBean.class, true);
   }
 
   public Server[] getClusterServers() {
@@ -688,26 +732,15 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     return result;
   }
 
-  public DSOClient[] getClients() {
-    if (m_clients != null) { return m_clients.toArray(new DSOClient[0]); }
-
-    m_clients = new ArrayList<DSOClient>();
-    for (DSOClient client : ClientsHelper.getHelper().getClients(getConnectionContext())) {
-      m_clients.add(client);
-    }
-
-    if(m_clients.size() == 0) {
-      System.err.println(getConnectionStatusString());
-    }
-    
-    return m_clients.toArray(new DSOClient[0]);
+  public synchronized DSOClient[] getClients() {
+    return m_clients.toArray(new DSOClient[m_clients.size()]);
   }
 
-  protected void resetBeanProxies() {
+  protected synchronized void resetBeanProxies() {
     m_serverInfoBean = null;
     m_dsoBean = null;
     m_objectManagementMonitorBean = null;
-    m_serverDBBackupBean  = null;
+    m_serverDBBackupBean = null;
     m_productInfo = null;
   }
 
@@ -715,38 +748,34 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     getConnectionManager().disconnect();
   }
 
-  void handleDisconnect() {
-    setReady(false);
+  synchronized void reset() {
+    m_connected = m_ready = false;
+    initReadySet();
+    m_roots.clear();
+    m_rootMap.clear();
     removeAllClients();
     resetBeanProxies();
+  }
+
+  void handleDisconnect() {
+    reset();
   }
 
   public String takeThreadDump(long moment) {
     return getServerInfoBean().takeThreadDump(moment);
   }
 
-  private void testAddLogListener() {
-    if (m_logListener == null && m_listenerList.getListenerCount(ServerLogListener.class) > 0) {
-      try {
-        ConnectionContext cc = getConnectionContext();
-        cc.addNotificationListener(L2MBeanNames.LOGGER, m_logListener = new LogListener());
-      } catch (Exception e) {
-        /* connection has probably dropped */
-      }
+  public void addServerLogListener(ServerLogListener listener) {
+    synchronized (m_listenerList) {
+      m_listenerList.add(ServerLogListener.class, listener);
+      testAddLogListener();
     }
   }
 
-  public void addServerLogListener(ServerLogListener listener) {
-    testAddLogListener();
-    m_listenerList.add(ServerLogListener.class, listener);
-  }
-
-  private void testRemoveLogListener() {
-    if (m_logListener != null && m_listenerList.getListenerCount(ServerLogListener.class) == 0) {
+  private void testAddLogListener() {
+    if (m_listenerList.getListenerCount(ServerLogListener.class) == 1) {
       try {
-        ConnectionContext cc = getConnectionContext();
-        cc.removeNotificationListener(L2MBeanNames.LOGGER, m_logListener);
-        m_logListener = null;
+        getConnectionContext().addNotificationListener(L2MBeanNames.LOGGER, m_logListener);
       } catch (Exception e) {
         /* connection has probably dropped */
       }
@@ -754,8 +783,20 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   public void removeServerLogListener(ServerLogListener listener) {
-    m_listenerList.remove(ServerLogListener.class, listener);
-    testRemoveLogListener();
+    synchronized (m_listenerList) {
+      m_listenerList.remove(ServerLogListener.class, listener);
+      testRemoveLogListener();
+    }
+  }
+
+  private void testRemoveLogListener() {
+    if (m_listenerList.getListenerCount(ServerLogListener.class) == 0) {
+      try {
+        getConnectionContext().removeNotificationListener(L2MBeanNames.LOGGER, m_logListener);
+      } catch (Exception e) {
+        /* connection has probably dropped */
+      }
+    }
   }
 
   private void fireMessageLogged(String logMsg) {
@@ -817,8 +858,8 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   public ServerDBBackupMBean getServerDBBackupBean() {
     if (m_serverDBBackupBean != null) return m_serverDBBackupBean;
     ConnectionContext cc = getConnectionContext();
-    m_serverDBBackupBean = (ServerDBBackupMBean) MBeanServerInvocationProxy
-        .newProxyInstance(cc.mbsc, L2MBeanNames.SERVER_DB_BACKUP, ServerDBBackupMBean.class, true);
+    m_serverDBBackupBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, L2MBeanNames.SERVER_DB_BACKUP,
+                                                                    ServerDBBackupMBean.class, true);
     if (m_serverDBBackupBean != null && m_serverDBBackupBean.isBackupEnabled()) {
       try {
         cc.addNotificationListener(L2MBeanNames.SERVER_DB_BACKUP, new ServerDBBackupListener());
@@ -832,17 +873,17 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   private class ServerDBBackupListener implements NotificationListener {
     public void handleNotification(Notification notification, Object handback) {
       String type = notification.getType();
-      
-      if(ServerDBBackupMBean.BACKUP_STARTED.equals(type)) {
+
+      if (ServerDBBackupMBean.BACKUP_STARTED.equals(type)) {
         fireDBBackupStarted();
-      } else if(ServerDBBackupMBean.BACKUP_COMPLETED.equals(type)) {
+      } else if (ServerDBBackupMBean.BACKUP_COMPLETED.equals(type)) {
         fireDBBackupCompleted();
-      } else if(ServerDBBackupMBean.PERCENTAGE_COPIED.equals(type)) {
+      } else if (ServerDBBackupMBean.PERCENTAGE_COPIED.equals(type)) {
         String message = notification.getMessage();
         String value = message.substring(0, message.indexOf(' '));
         int percentCopied = Integer.parseInt(value);
         fireDBBackupProgress(percentCopied);
-      } else if(ServerDBBackupMBean.BACKUP_FAILED.equals(type)) {
+      } else if (ServerDBBackupMBean.BACKUP_FAILED.equals(type)) {
         fireDBBackupFailed(notification.getMessage());
       }
     }
@@ -851,7 +892,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   public void addDBBackupListener(DBBackupListener listener) {
     m_listenerList.add(DBBackupListener.class, listener);
   }
-  
+
   public void removeDBBackupListener(DBBackupListener listener) {
     m_listenerList.remove(DBBackupListener.class, listener);
   }
@@ -864,7 +905,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
       }
     }
   }
-  
+
   private void fireDBBackupCompleted() {
     Object[] listeners = m_listenerList.getListenerList();
     for (int i = listeners.length - 2; i >= 0; i -= 2) {
@@ -873,7 +914,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
       }
     }
   }
-  
+
   private void fireDBBackupFailed(String message) {
     Object[] listeners = m_listenerList.getListenerList();
     for (int i = listeners.length - 2; i >= 0; i -= 2) {
@@ -882,7 +923,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
       }
     }
   }
-  
+
   private void fireDBBackupProgress(int percentCopied) {
     Object[] listeners = m_listenerList.getListenerList();
     for (int i = listeners.length - 2; i >= 0; i -= 2) {
@@ -891,7 +932,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
       }
     }
   }
-  
+
   public void backupDB() throws IOException {
     getServerDBBackupBean().runBackUp();
   }
@@ -920,21 +961,23 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     return m_connectManager != null ? m_connectManager.toString() : "tornDown";
   }
 
-  public void tearDown() {
+  public synchronized void tearDown() {
     m_clients.clear();
     m_clients = null;
     m_roots.clear();
     m_roots = null;
+    m_rootMap.clear();
+    m_rootMap = null;
     m_pendingClients.clear();
     m_pendingClients = null;
     m_clientChangeListener = null;
     m_propertyChangeSupport = null;
     m_connectManager.tearDown();
-    m_connectManager = null;
     m_connectException = null;
     m_serverInfoBean = null;
     m_dsoBean = null;
     m_objectManagementMonitorBean = null;
     m_productInfo = null;
+    m_logListener = null;
   }
 }

@@ -1,31 +1,32 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin.sessions;
 
 import com.tc.management.beans.sessions.SessionMonitorMBean;
 
-public class SessionMonitorWrapper  {
+public class SessionMonitorWrapper {
   private SessionMonitorMBean bean;
-  
-  private int requestCount;
-  private int requestRatePerSecond;
-  private int createdSessionCount;
-  private int sessionCreationRatePerMinute;
-  private int destroyedSessionCount;
-  private int sessionDestructionRatePerMinute;
-  
+
+  private int                 requestCount;
+  private int                 requestRatePerSecond;
+  private int                 createdSessionCount;
+  private int                 sessionCreationRatePerMinute;
+  private int                 destroyedSessionCount;
+  private int                 sessionDestructionRatePerMinute;
+
   public SessionMonitorWrapper(SessionMonitorMBean bean) {
     this.bean = bean;
-    
-    requestCount                    = bean.getRequestCount();
-    requestRatePerSecond            = bean.getRequestRatePerSecond();
-    createdSessionCount             = bean.getCreatedSessionCount();
-    sessionCreationRatePerMinute    = bean.getSessionCreationRatePerMinute();
-    destroyedSessionCount           = bean.getDestroyedSessionCount();
+
+    requestCount = bean.getRequestCount();
+    requestRatePerSecond = bean.getRequestRatePerSecond();
+    createdSessionCount = bean.getCreatedSessionCount();
+    sessionCreationRatePerMinute = bean.getSessionCreationRatePerMinute();
+    destroyedSessionCount = bean.getDestroyedSessionCount();
     sessionDestructionRatePerMinute = bean.getSessionDestructionRatePerMinute();
   }
-  
+
   public int getRequestCount() {
     return requestCount;
   }

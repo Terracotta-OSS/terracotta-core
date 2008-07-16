@@ -50,10 +50,8 @@ public class ClassesPanel extends XContainer {
   public ClassesPanel(ClassesNode classesNode) {
     super();
 
-    load((ContainerResource) AdminClient.getContext().topRes.getComponent("ClassesPanel"));
-
+    load((ContainerResource) AdminClient.getContext().getComponent("ClassesPanel"));
     m_classesNode = classesNode;
-
     DSOClassInfo[] classInfo = getClassInfos();
 
     m_table = (ClassesTable) findComponent("ClassTable");
@@ -165,8 +163,8 @@ public class ClassesPanel extends XContainer {
   public void refresh() {
     AdminClientContext acc = AdminClient.getContext();
 
-    acc.controller.setStatus(acc.getMessage("dso.classes.refreshing"));
-    acc.controller.block();
+    acc.setStatus(acc.getMessage("dso.classes.refreshing"));
+    acc.block();
 
     DSOClassInfo[] classInfo = getClassInfos();
     m_table.setClassInfo(classInfo);
@@ -174,7 +172,7 @@ public class ClassesPanel extends XContainer {
     m_treeMap.setModel((ClassTreeModel) m_tree.getModel());
     updateConfigText();
 
-    acc.controller.clearStatus();
-    acc.controller.unblock();
+    acc.clearStatus();
+    acc.unblock();
   }
 }

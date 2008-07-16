@@ -55,8 +55,8 @@ public abstract class HyperlinkFrame extends Frame implements HyperlinkListener 
 
     URL url;
     String iconPath = "/com/tc/admin/icons/logo_small.png";
-    
-    if((url = HyperlinkFrame.class.getResource(iconPath)) != null) {
+
+    if ((url = HyperlinkFrame.class.getResource(iconPath)) != null) {
       setIconImage(new Image(url));
     }
 
@@ -167,7 +167,7 @@ public abstract class HyperlinkFrame extends Frame implements HyperlinkListener 
     AboutDialog m_aboutDialog;
 
     AboutAction() {
-      super(getBundleString("about.title.prefix")+getTitle());
+      super(getBundleString("about.title.prefix") + getTitle());
     }
 
     public void actionPerformed(ActionEvent ae) {

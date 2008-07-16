@@ -90,7 +90,7 @@ public class RuntimeStatsPanel extends XContainer implements RuntimeStatisticCon
     m_allSeries = new ArrayList<TimeSeries>();
     m_allCharts = new ArrayList<JFreeChart>();
     m_shouldAutoStart = true;
-    load((ContainerResource) AdminClient.getContext().topRes.child("RuntimeStatsPanel"));
+    load((ContainerResource) m_acc.childResource("RuntimeStatsPanel"));
   }
 
   public void load(ContainerResource res) {
@@ -188,23 +188,19 @@ public class RuntimeStatsPanel extends XContainer implements RuntimeStatisticCon
   }
 
   protected JFreeChart createChart(TimeSeries series) {
-    JFreeChart chart = DemoChartFactory.getXYLineChart("", "", "", series);
-    int sampleHistoryMinutes = getRuntimeStatsSampleHistoryMinutes();
-    int sampleHistoryMillis = sampleHistoryMinutes * 60 * 1000;
+    return createChart(new TimeSeries[] { series });
+  }
 
-    XYPlot plot = (XYPlot) chart.getPlot();
-    plot.getDomainAxis().setFixedAutoRange(sampleHistoryMillis);
-    ((NumberAxis) plot.getRangeAxis()).setAutoRangeIncludesZero(true);
-
-    int maxSampleCount = (sampleHistoryMinutes * 60) / getRuntimeStatsPollPeriodSeconds();
-    series.setMaximumItemCount(maxSampleCount);
-
-    m_allCharts.add(chart);
-    return chart;
+  protected JFreeChart createChart(TimeSeries series, boolean createLegend) {
+    return createChart(new TimeSeries[] { series }, createLegend);
   }
 
   protected JFreeChart createChart(TimeSeries[] seriesArray) {
-    JFreeChart chart = DemoChartFactory.getXYLineChart("", "", "", seriesArray);
+    return createChart(seriesArray, true);
+  }
+
+  protected JFreeChart createChart(TimeSeries[] seriesArray, boolean createLegend) {
+    JFreeChart chart = DemoChartFactory.getXYLineChart("", "", "", seriesArray, createLegend);
     int sampleHistoryMinutes = getRuntimeStatsSampleHistoryMinutes();
     int sampleHistoryMillis = sampleHistoryMinutes * 60 * 1000;
 
@@ -242,10 +238,12 @@ public class RuntimeStatsPanel extends XContainer implements RuntimeStatisticCon
     m_rangeAxisSpace.setLeft(fixedRangeAxisSpace);
     m_rangeAxisSpace.setRight(5);
 
-    Iterator<XYPlot> plotIter = plotList.iterator();
-    while (plotIter.hasNext()) {
-      XYPlot plot = plotIter.next();
-      plot.setFixedRangeAxisSpace(m_rangeAxisSpace);
+    if (plotList.size() > 0) {
+      Iterator<XYPlot> plotIter = plotList.iterator();
+      while (plotIter.hasNext()) {
+        XYPlot plot = plotIter.next();
+        plot.setFixedRangeAxisSpace(m_rangeAxisSpace);
+      }
     }
 
     if (m_shouldAutoStart) {
@@ -316,13 +314,13 @@ public class RuntimeStatsPanel extends XContainer implements RuntimeStatisticCon
   }
 
   private int getIntPref(String key, int defaultValue) {
-    Preferences prefs = m_acc.prefs.node("RuntimeStats");
-    return prefs.getInt(key, defaultValue);
+    return m_acc.getPrefs().node("RuntimeStats").getInt(key, defaultValue);
   }
 
   private void putIntPref(String key, int value) {
-    Preferences prefs = m_acc.prefs.node("RuntimeStats");
+    Preferences prefs = m_acc.getPrefs().node("RuntimeStats");
     prefs.putInt(key, value);
+    m_acc.storePrefs();
     try {
       prefs.flush();
     } catch (Exception e) {/**/

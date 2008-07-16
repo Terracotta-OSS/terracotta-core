@@ -117,7 +117,7 @@ public class BasicTcObject extends AbstractTcObject implements IBasicObject {
     }
     return m_fieldNames;
   }
-  
+
   public String[] getFieldNames() {
     return Arrays.asList(ensureFieldNames()).toArray(EMPTY_FIELD_NAMES);
   }
@@ -127,10 +127,11 @@ public class BasicTcObject extends AbstractTcObject implements IBasicObject {
   }
 
   public IObject getField(int index) {
-    IObject result = null;
+    int fieldCount = getFieldCount();
+    assert (index > 0 && index < fieldCount);
 
     if (m_fields == null) {
-      m_fields = new IObject[getFieldCount()];
+      m_fields = new IObject[fieldCount];
     }
 
     if (m_fields[index] == null) {
@@ -138,15 +139,13 @@ public class BasicTcObject extends AbstractTcObject implements IBasicObject {
       String field = getFieldName(index);
 
       try {
-        result = newObject(field, mof.getFieldValue(field), mof.getFieldType(field));
+        m_fields[index] = newObject(field, mof.getFieldValue(field), mof.getFieldType(field));
       } catch (Throwable t) {
         /**/
       }
     }
 
-    m_fields[index] = result;
-
-    return result;
+    return m_fields[index];
   }
 
   public boolean isValid() {

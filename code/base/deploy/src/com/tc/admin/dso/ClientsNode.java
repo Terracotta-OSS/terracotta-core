@@ -44,15 +44,17 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
   IClusterModel getClusterModel() {
     return getClusterNode().getClusterModel();
   }
-  
+
   ClusterNode getClusterNode() {
     return m_clusterNode;
   }
-  
+
   public void propertyChange(PropertyChangeEvent evt) {
     String prop = evt.getPropertyName();
     if (IClusterModel.PROP_ACTIVE_SERVER.equals(prop)) {
-      SwingUtilities.invokeLater(new InitRunnable());
+      if (((IClusterModel) evt.getSource()).getActiveServer() != null) {
+        SwingUtilities.invokeLater(new InitRunnable());
+      }
     }
   }
 
@@ -63,16 +65,17 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
   }
 
   private void init() {
+    if (m_clusterNode == null) return;
     m_clusterNode.getClusterModel().removeClientConnectionListener(this);
     setLabel(m_acc.getMessage("clients"));
     m_clients = new IClient[0];
     for (int i = getChildCount() - 1; i >= 0; i--) {
-      m_acc.controller.remove((XTreeNode) getChildAt(i));
+      m_acc.remove((XTreeNode) getChildAt(i));
     }
     if (m_clientsPanel != null) {
       m_clientsPanel.setClients(m_clients);
     }
-    m_acc.executorService.execute(new InitWorker());
+    m_acc.execute(new InitWorker());
   }
 
   private class InitWorker extends BasicWorker<IClient[]> {
@@ -121,7 +124,7 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
       ClientNode ctn = (ClientNode) getChildAt(i);
       String ctnRemoteAddr = ctn.getClient().getRemoteAddress();
       if (ctnRemoteAddr.equals(remoteAddr)) {
-        m_acc.controller.select(ctn);
+        m_acc.select(ctn);
         return;
       }
     }
@@ -205,7 +208,7 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
       if (nodeIndex != -1) {
         list.remove(m_client);
         m_clients = list.toArray(new IClient[] {});
-        m_acc.controller.remove((XTreeNode) getChildAt(nodeIndex));
+        m_acc.remove((XTreeNode) getChildAt(nodeIndex));
         if (m_clientsPanel != null) {
           m_clientsPanel.remove(m_client);
         }

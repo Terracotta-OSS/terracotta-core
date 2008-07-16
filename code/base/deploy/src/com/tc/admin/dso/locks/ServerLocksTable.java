@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin.dso.locks;
 
@@ -20,7 +21,7 @@ public class ServerLocksTable extends XObjectTable {
     super();
     setDefaultRenderer(Long.class, new StatValueRenderer());
   }
-  
+
   class LockTableHeaderRenderer extends TableColumnRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
                                                    int row, int column) {

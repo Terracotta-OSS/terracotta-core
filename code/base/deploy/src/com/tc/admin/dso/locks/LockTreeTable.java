@@ -61,7 +61,7 @@ public class LockTreeTable extends JTreeTable {
     getTableHeader().setDefaultRenderer(fColumnRenderer = new TableColumnRenderer());
     setDefaultRenderer(Long.class, new StatValueRenderer());
   }
-  
+
   LockTreeTable(TreeTableModel treeTableModel, Preferences prefs) {
     this();
     setTreeTableModel(treeTableModel);
@@ -69,12 +69,12 @@ public class LockTreeTable extends JTreeTable {
   }
 
   public void setPreferences(Preferences prefs) {
-    if((fPreferences = prefs) != null) {
+    if ((fPreferences = prefs) != null) {
       fSortColumn = prefs.getInt(SORT_COLUMN_PREF_KEY, 1);
       fSortDirection = prefs.getInt(SORT_DIRECTION_PREF_KEY, DOWN);
     }
   }
-  
+
   public void setTreeTableModel(TreeTableModel model) {
     super.setTreeTableModel(model);
     DefaultTreeCellRenderer renderer = (DefaultTreeCellRenderer) tree.getCellRenderer();
@@ -201,7 +201,7 @@ public class LockTreeTable extends JTreeTable {
       }
 
       setBorder(border);
-      
+
       return this;
     }
   }

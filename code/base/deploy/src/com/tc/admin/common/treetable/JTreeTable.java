@@ -45,7 +45,7 @@ public class JTreeTable extends XTable {
     setShowGrid(false);
     setIntercellSpacing(new Dimension(0, 0));
   }
-  
+
   public JTreeTable(TreeTableModel treeTableModel) {
     this();
     setTreeTableModel(treeTableModel);
@@ -259,8 +259,8 @@ public class JTreeTable extends XTable {
     }
 
     /**
-     * If <code>updatingListSelectionModel</code> is false, this will reset the selected paths from the selected rows
-     * in the list selection model.
+     * If <code>updatingListSelectionModel</code> is false, this will reset the selected paths from the selected rows in
+     * the list selection model.
      */
     protected void updateSelectedPathsFromSelectedRows() {
       if (!updatingListSelectionModel) {
@@ -294,7 +294,7 @@ public class JTreeTable extends XTable {
      */
     class ListSelectionHandler implements ListSelectionListener {
       public void valueChanged(ListSelectionEvent e) {
-        if(e.getValueIsAdjusting()) return;
+        if (e.getValueIsAdjusting()) return;
         updateSelectedPathsFromSelectedRows();
       }
     }

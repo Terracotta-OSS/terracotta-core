@@ -9,10 +9,10 @@ import com.tc.object.appevent.ApplicationEventContext;
 import java.util.Arrays;
 
 public abstract class AbstractWorkState {
-  private AbstractResolutionAction[] fResolutionActions;
+  private AbstractResolutionAction[]              fResolutionActions;
 
   private static final AbstractResolutionAction[] EMPTY_RESOLUTION_ACTIONS = {};
-  
+
   public void setActions(AbstractResolutionAction[] actions) {
     fResolutionActions = Arrays.asList(actions).toArray(EMPTY_RESOLUTION_ACTIONS);
   }
@@ -30,7 +30,8 @@ public abstract class AbstractWorkState {
 
     return false;
   }
-  
+
   public abstract String summary();
+
   public abstract String descriptionFor(ApplicationEventContext context);
 }

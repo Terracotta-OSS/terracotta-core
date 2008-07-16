@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin.common;
 
@@ -18,13 +19,12 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreeNode;
 
 public class XTreeNode extends DefaultMutableTreeNode {
-  private TreeCellRenderer m_renderer;
-  private Icon             m_icon;
-  private ActionMap        m_actionMap;
-  private InputMap         m_inputMap;
+  private TreeCellRenderer   m_renderer;
+  private Icon               m_icon;
+  private ActionMap          m_actionMap;
+  private InputMap           m_inputMap;
 
-  protected static final int MENU_SHORTCUT_KEY_MASK =
-    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+  protected static final int MENU_SHORTCUT_KEY_MASK = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
 
   public XTreeNode() {
     super();
@@ -37,11 +37,11 @@ public class XTreeNode extends DefaultMutableTreeNode {
   public TreeCellRenderer getRenderer() {
     return m_renderer;
   }
-  
+
   public void setRenderer(TreeCellRenderer renderer) {
     m_renderer = renderer;
   }
-  
+
   public Icon getIcon() {
     return m_icon;
   }
@@ -55,11 +55,11 @@ public class XTreeNode extends DefaultMutableTreeNode {
   }
 
   public void tearDownChildren() {
-    if(children != null) {
+    if (children != null) {
       XTreeNode node;
 
-      for(int i = getChildCount()-1; i >= 0; i--) {
-        if((node = (XTreeNode)children.get(i)) != null) {
+      for (int i = getChildCount() - 1; i >= 0; i--) {
+        if ((node = (XTreeNode) children.get(i)) != null) {
           node.tearDown();
           node.removeFromParent();
         }
@@ -78,7 +78,7 @@ public class XTreeNode extends DefaultMutableTreeNode {
   }
 
   public ActionMap ensureActionMap() {
-    if(m_actionMap == null) {
+    if (m_actionMap == null) {
       m_actionMap = new ActionMap();
     }
 
@@ -94,7 +94,7 @@ public class XTreeNode extends DefaultMutableTreeNode {
   }
 
   public InputMap ensureInputMap() {
-    if(m_inputMap == null) {
+    if (m_inputMap == null) {
       m_inputMap = new InputMap();
     }
 
@@ -109,40 +109,43 @@ public class XTreeNode extends DefaultMutableTreeNode {
     ensureActionMap().put(binding, action);
 
     KeyStroke ks = action.getAccelerator();
-    if(ks != null) {
+    if (ks != null) {
       ensureInputMap().put(ks, binding);
     }
   }
 
   public XTreeModel getModel() {
-    TreeNode   root  = getRoot();
+    TreeNode root = getRoot();
     XTreeModel model = null;
-    
-    if(root instanceof XRootNode) {
-      model = ((XRootNode)getRoot()).getModel();
+
+    if (root instanceof XRootNode) {
+      model = ((XRootNode) getRoot()).getModel();
     }
-    
+
     return model;
   }
 
   public int getIndex() {
-    XTreeNode parentNode = (XTreeNode)getParent();
+    XTreeNode parentNode = (XTreeNode) getParent();
     return (parentNode != null) ? parentNode.getIndex(this) : -1;
   }
 
-  public void nodeSelected(TreeSelectionEvent e) {/**/}
-  public void nodeClicked(MouseEvent me) {/**/}
-  
+  public void nodeSelected(TreeSelectionEvent e) {/**/
+  }
+
+  public void nodeClicked(MouseEvent me) {/**/
+  }
+
   protected void nodeChanged() {
     DefaultTreeModel model = getModel();
-    if(model != null) {
+    if (model != null) {
       model.nodeChanged(this);
     }
   }
-  
+
   protected void nodeStructureChanged() {
     DefaultTreeModel model = getModel();
-    if(model != null) {
+    if (model != null) {
       model.nodeStructureChanged(this);
     }
   }

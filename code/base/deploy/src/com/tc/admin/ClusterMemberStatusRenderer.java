@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin;
 
@@ -14,11 +15,9 @@ public class ClusterMemberStatusRenderer extends StatusRenderer {
   }
 
   public void setValue(JTable table, int row, int col) {
-    if(!(table instanceof ClusterMemberTable)) {
-      throw new RuntimeException("Not a ClusterMemberTable");
-    }
-    
-    ClusterMemberTableModel clusterMemberTableModel = (ClusterMemberTableModel)table.getModel();
+    if (!(table instanceof ClusterMemberTable)) { throw new RuntimeException("Not a ClusterMemberTable"); }
+
+    ClusterMemberTableModel clusterMemberTableModel = (ClusterMemberTableModel) table.getModel();
     IServer server = clusterMemberTableModel.getClusterMemberAt(row);
 
     m_label.setText(server.getName());

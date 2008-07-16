@@ -4,13 +4,18 @@
  */
 package com.tc.admin.dso;
 
+import com.tc.admin.AdminClient;
+import com.tc.admin.AdminClientContext;
 import com.tc.admin.common.XTreeNode;
 import com.tc.admin.model.IBasicObject;
 import com.tc.admin.model.IMapEntry;
 import com.tc.admin.model.IObject;
 
+import java.util.Vector;
+
 import javax.swing.Icon;
 import javax.swing.SwingUtilities;
+import javax.swing.tree.TreeNode;
 
 public class MapEntryNode extends XTreeNode implements DSOObjectTreeNode {
   protected IMapEntry m_mapEntry;
@@ -20,19 +25,42 @@ public class MapEntryNode extends XTreeNode implements DSOObjectTreeNode {
   public MapEntryNode(IMapEntry mapEntry) {
     super(mapEntry);
     m_mapEntry = mapEntry;
-    initChildren();
+    init();
   }
 
   public IObject getObject() {
     return m_mapEntry;
   }
 
-  protected void initChildren() {
+  protected void init() {
+    if (children == null) {
+      children = new Vector();
+    }
+    children.setSize(2);
+  }
+
+  public TreeNode getChildAt(int index) {
+    if (children != null && children.elementAt(index) == null) {
+      AdminClientContext acc = AdminClient.getContext();
+      acc.block();
+      fillInChildren();
+      acc.unblock();
+    }
+    return super.getChildAt(index);
+  }
+
+  protected void fillInChildren() {
     IObject key = m_mapEntry.getKey();
     IObject value = m_mapEntry.getValue();
+    XTreeNode child;
 
-    add(newObjectNode(key));
-    add(value != null ? newObjectNode(value) : new XTreeNode("value=null"));
+    child = newObjectNode(key);
+    children.setElementAt(child, 0);
+    child.setParent(MapEntryNode.this);
+
+    child = value != null ? newObjectNode(value) : new XTreeNode("value=null");
+    children.setElementAt(child, 1);
+    child.setParent(MapEntryNode.this);
 
     if (key == null) {
       SwingUtilities.invokeLater(new AncestorReaper());

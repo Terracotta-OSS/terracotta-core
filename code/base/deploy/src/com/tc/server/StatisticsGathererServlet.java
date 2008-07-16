@@ -25,18 +25,20 @@ import javax.servlet.http.HttpServletResponse;
  * Servlet that provides a RESTful interface towards an embedded statistics gatherer
  */
 public class StatisticsGathererServlet extends RestfulServlet {
-  public static final String GATHERER_ATTRIBUTE = StatisticsGathererServlet.class.getName() + ".gatherer";
+  public static final String             GATHERER_ATTRIBUTE = StatisticsGathererServlet.class.getName() + ".gatherer";
 
   private L2TVSConfigurationSetupManager configSetupManager;
   private StatisticsGathererSubSystem    system;
 
   public void init() {
-    configSetupManager = (L2TVSConfigurationSetupManager)getServletContext().getAttribute(ConfigServlet.CONFIG_ATTRIBUTE);
-    system = (StatisticsGathererSubSystem)getServletContext().getAttribute(GATHERER_ATTRIBUTE);
+    configSetupManager = (L2TVSConfigurationSetupManager) getServletContext()
+        .getAttribute(ConfigServlet.CONFIG_ATTRIBUTE);
+    system = (StatisticsGathererSubSystem) getServletContext().getAttribute(GATHERER_ATTRIBUTE);
   }
 
   public void methodStartup(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
-    system.getStatisticsGatherer().connect(TCSocketAddress.LOOPBACK_IP, configSetupManager.commonl2Config().jmxPort().getInt());
+    system.getStatisticsGatherer().connect(TCSocketAddress.LOOPBACK_IP,
+                                           configSetupManager.commonl2Config().jmxPort().getInt());
     printOk(response);
   }
 
@@ -50,7 +52,8 @@ public class StatisticsGathererServlet extends RestfulServlet {
     printOk(response);
   }
 
-  public void methodCreateSession(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
+  public void methodCreateSession(final HttpServletRequest request, final HttpServletResponse response)
+      throws Throwable {
     String sessionid = request.getParameter("sessionId");
     if (null == sessionid) throw new IllegalArgumentException("sessionId");
     system.getStatisticsGatherer().createSession(sessionid);
@@ -62,36 +65,42 @@ public class StatisticsGathererServlet extends RestfulServlet {
     printOk(response);
   }
 
-  public void methodGetActiveSessionId(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
+  public void methodGetActiveSessionId(final HttpServletRequest request, final HttpServletResponse response)
+      throws Throwable {
     String sessionid = system.getStatisticsGatherer().getActiveSessionId();
     print(response, sessionid);
   }
 
-  public void methodGetAvailableSessionIds(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
+  public void methodGetAvailableSessionIds(final HttpServletRequest request, final HttpServletResponse response)
+      throws Throwable {
     String[] sessionids = system.getStatisticsStore().getAvailableSessionIds();
     print(response, sessionids);
   }
 
-  public void methodGetAvailableAgentDifferentiators(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
+  public void methodGetAvailableAgentDifferentiators(final HttpServletRequest request,
+                                                     final HttpServletResponse response) throws Throwable {
     String sessionid = request.getParameter("sessionId");
     if (null == sessionid) throw new IllegalArgumentException("sessionId");
     String[] result = system.getStatisticsStore().getAvailableAgentDifferentiators(sessionid);
     print(response, result);
   }
 
-  public void methodGetSupportedStatistics(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
+  public void methodGetSupportedStatistics(final HttpServletRequest request, final HttpServletResponse response)
+      throws Throwable {
     String[] statistics = system.getStatisticsGatherer().getSupportedStatistics();
     print(response, statistics);
   }
 
-  public void methodEnableStatistics(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
+  public void methodEnableStatistics(final HttpServletRequest request, final HttpServletResponse response)
+      throws Throwable {
     String[] names = request.getParameterValues("names");
     if (null == names) throw new IllegalArgumentException("names");
     system.getStatisticsGatherer().enableStatistics(names);
     printOk(response);
   }
 
-  public void methodCaptureStatistic(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
+  public void methodCaptureStatistic(final HttpServletRequest request, final HttpServletResponse response)
+      throws Throwable {
     String name = request.getParameter("name");
     if (null == name) throw new IllegalArgumentException("name");
     StatisticData[] data = system.getStatisticsGatherer().captureStatistic(name);
@@ -106,17 +115,20 @@ public class StatisticsGathererServlet extends RestfulServlet {
     print(response, out.toString());
   }
 
-  public void methodStartCapturing(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
+  public void methodStartCapturing(final HttpServletRequest request, final HttpServletResponse response)
+      throws Throwable {
     system.getStatisticsGatherer().startCapturing();
     printOk(response);
   }
 
-  public void methodStopCapturing(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
+  public void methodStopCapturing(final HttpServletRequest request, final HttpServletResponse response)
+      throws Throwable {
     system.getStatisticsGatherer().stopCapturing();
     printOk(response);
   }
 
-  public void methodSetGlobalParam(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
+  public void methodSetGlobalParam(final HttpServletRequest request, final HttpServletResponse response)
+      throws Throwable {
     String key = request.getParameter("key");
     String value = request.getParameter("value");
     if (null == key) throw new IllegalArgumentException("key");
@@ -125,14 +137,16 @@ public class StatisticsGathererServlet extends RestfulServlet {
     printOk(response);
   }
 
-  public void methodGetGlobalParam(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
+  public void methodGetGlobalParam(final HttpServletRequest request, final HttpServletResponse response)
+      throws Throwable {
     String key = request.getParameter("key");
     if (null == key) throw new IllegalArgumentException("key");
     Object value = system.getStatisticsGatherer().getGlobalParam(key);
     print(response, value);
   }
 
-  public void methodSetSessionParam(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
+  public void methodSetSessionParam(final HttpServletRequest request, final HttpServletResponse response)
+      throws Throwable {
     String key = request.getParameter("key");
     String value = request.getParameter("value");
     if (null == key) throw new IllegalArgumentException("key");
@@ -141,32 +155,34 @@ public class StatisticsGathererServlet extends RestfulServlet {
     printOk(response);
   }
 
-  public void methodGetSessionParam(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
+  public void methodGetSessionParam(final HttpServletRequest request, final HttpServletResponse response)
+      throws Throwable {
     String key = request.getParameter("key");
     if (null == key) throw new IllegalArgumentException("key");
     Object value = system.getStatisticsGatherer().getSessionParam(key);
     print(response, value);
   }
 
-  public void methodClearStatistics(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
+  public void methodClearStatistics(final HttpServletRequest request, final HttpServletResponse response)
+      throws Throwable {
     String sessionid = request.getParameter("sessionId");
     if (null == sessionid) throw new IllegalArgumentException("sessionId");
     system.getStatisticsStore().clearStatistics(sessionid);
     printOk(response);
   }
 
-  public void methodClearAllStatistics(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
+  public void methodClearAllStatistics(final HttpServletRequest request, final HttpServletResponse response)
+      throws Throwable {
     system.getStatisticsStore().clearAllStatistics();
     printOk(response);
   }
 
-  public void methodRetrieveStatistics(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
+  public void methodRetrieveStatistics(final HttpServletRequest request, final HttpServletResponse response)
+      throws Throwable {
     final StatisticsRetrievalCriteria criteria = new StatisticsRetrievalCriteria()
-      .sessionId(request.getParameter("sessionId"))
-      .agentIp(request.getParameter("agentIp"))
-      .agentDifferentiator(request.getParameter("agentDifferentiator"))
-      .setNames(request.getParameterValues("names"))
-      .setElements(request.getParameterValues("elements"));
+        .sessionId(request.getParameter("sessionId")).agentIp(request.getParameter("agentIp"))
+        .agentDifferentiator(request.getParameter("agentDifferentiator")).setNames(request.getParameterValues("names"))
+        .setElements(request.getParameterValues("elements"));
 
     final boolean textformat = "txt".equals(request.getParameter("format"));
 
@@ -186,7 +202,8 @@ public class StatisticsGathererServlet extends RestfulServlet {
     system.getStatisticsStore().retrieveStatisticsAsCsvStream(os, filename_base, criteria, !textformat);
   }
 
-  public void methodAggregateStatisticsData(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
+  public void methodAggregateStatisticsData(final HttpServletRequest request, final HttpServletResponse response)
+      throws Throwable {
     response.setContentType("text/plain");
     response.setStatus(HttpServletResponse.SC_OK);
 
@@ -197,7 +214,12 @@ public class StatisticsGathererServlet extends RestfulServlet {
     }
 
     Writer writer = response.getWriter();
-    system.getStatisticsStore().aggregateStatisticsData(writer, TextualDataFormat.getFormat(request.getParameter("format")), request.getParameter("sessionId"), request.getParameter("agentDifferentiator"), request.getParameterValues("names"), request.getParameterValues("elements"), interval);
+    system.getStatisticsStore().aggregateStatisticsData(writer,
+                                                        TextualDataFormat.getFormat(request.getParameter("format")),
+                                                        request.getParameter("sessionId"),
+                                                        request.getParameter("agentDifferentiator"),
+                                                        request.getParameterValues("names"),
+                                                        request.getParameterValues("elements"), interval);
     writer.close();
   }
 }

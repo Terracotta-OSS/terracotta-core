@@ -18,16 +18,17 @@ public class TcMapEntryObject extends AbstractTcObject implements IMapEntry {
 
   public TcMapEntryObject(ManagedObjectFacadeProvider facadeProvider, String name, MapEntryFacade facade, IObject parent) {
     super(facadeProvider, name, parent);
+    m_name = name;
     m_facade = facade;
-    m_label  = m_name + " (" + TYPE + ")";
+    m_label = m_name + " (" + TYPE + ")";
   }
-  
+
   public Object getFacade() {
     return m_facade;
   }
-  
+
   public IObject getKey() {
-    if(m_key == null) {
+    if (m_key == null) {
       m_key = getElement("key", m_facade.getKey());
     }
 
@@ -35,7 +36,7 @@ public class TcMapEntryObject extends AbstractTcObject implements IMapEntry {
   }
 
   public IObject getValue() {
-    if(m_value == null) {
+    if (m_value == null) {
       m_value = getElement("value", m_facade.getValue());
     }
 
@@ -45,8 +46,7 @@ public class TcMapEntryObject extends AbstractTcObject implements IMapEntry {
   private IObject getElement(String field, Object value) {
     try {
       return newObject(field, value, null);
-    }
-    catch(Throwable t) {
+    } catch (Throwable t) {
       t.printStackTrace();
     }
 
@@ -56,9 +56,9 @@ public class TcMapEntryObject extends AbstractTcObject implements IMapEntry {
   public String toString() {
     return m_label;
   }
-  
+
   public void accept(DSOObjectVisitor visitor) {
     visitor.visitMapEntry(this);
   }
-  
+
 }

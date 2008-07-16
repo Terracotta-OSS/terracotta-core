@@ -36,7 +36,7 @@ public class AboutDialog extends Dialog implements ActionListener {
   public void actionPerformed(ActionEvent ae) {
     setVisible(false);
   }
-  
+
   private String versionText(ProductInfo productInfo) {
     StringBuffer sb = new StringBuffer("<html><p>");
     sb.append(productInfo.toLongString());

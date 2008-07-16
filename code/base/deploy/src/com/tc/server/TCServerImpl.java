@@ -86,7 +86,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   private DistributedObjectServer              dsoServer;
   private Server                               httpServer;
   private TerracottaConnector                  terracottaConnector;
-  private StatisticsGathererSubSystem    statisticsGathererSubSystem;
+  private StatisticsGathererSubSystem          statisticsGathererSubSystem;
 
   private final Object                         stateLock                                    = new Object();
   private final L2State                        state                                        = new L2State();
@@ -424,9 +424,10 @@ public class TCServerImpl extends SEDA implements TCServer {
         consoleLogger.warn(msg);
         logger.warn(msg);
       } else {
-        boolean aliases = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.HTTP_DEFAULT_SERVLET_ATTRIBUTE_ALIASES, false);
-        boolean dirallowed = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.HTTP_DEFAULT_SERVLET_ATTRIBUTE_DIR_ALLOWED,
-                                                                         false);
+        boolean aliases = TCPropertiesImpl.getProperties()
+            .getBoolean(TCPropertiesConsts.HTTP_DEFAULT_SERVLET_ATTRIBUTE_ALIASES, false);
+        boolean dirallowed = TCPropertiesImpl.getProperties()
+            .getBoolean(TCPropertiesConsts.HTTP_DEFAULT_SERVLET_ATTRIBUTE_DIR_ALLOWED, false);
         context.setAttribute("aliases", aliases);
         context.setAttribute("dirAllowed", dirallowed);
         createAndAddServlet(servletHandler, DefaultServlet.class.getName(), "/");

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin.sessions;
 
@@ -15,18 +16,18 @@ public class SessionsHelper {
   private ObjectName            m_sessionProductQuery;
   private String                m_sessionsMonitorPattern;
   private ObjectName            m_sessionsMonitorQuery;
-  
+
   private SessionsHelper() {
     try {
-      m_sessionProductPattern  = L1MBeanNames.SESSION_PRODUCT_PUBLIC.getCanonicalName() + ",*";
-      m_sessionProductQuery    = new ObjectName(m_sessionProductPattern);
+      m_sessionProductPattern = L1MBeanNames.SESSION_PRODUCT_PUBLIC.getCanonicalName() + ",*";
+      m_sessionProductQuery = new ObjectName(m_sessionProductPattern);
       m_sessionsMonitorPattern = MBeanNames.SESSION_INTERNAL.getCanonicalName() + ",*";
-      m_sessionsMonitorQuery   = new ObjectName(m_sessionsMonitorPattern);
-    } catch(Exception e) {
+      m_sessionsMonitorQuery = new ObjectName(m_sessionsMonitorPattern);
+    } catch (Exception e) {
       e.printStackTrace();
     }
   }
-  
+
   public static SessionsHelper getHelper() {
     return m_helper;
   }
@@ -34,11 +35,12 @@ public class SessionsHelper {
   public boolean isSessionsProductMBean(ObjectName name) {
     return m_sessionProductQuery.apply(name);
   }
-  
+
   public ObjectName[] getSessionsProductMBeans(ConnectionContext cc) {
     try {
       return cc.queryNames(m_sessionProductPattern);
-    } catch (Exception e) {/**/}
+    } catch (Exception e) {/**/
+    }
 
     return null;
   }
@@ -50,7 +52,8 @@ public class SessionsHelper {
   public ObjectName[] getSessionMonitorMBeans(ConnectionContext cc) {
     try {
       return cc.queryNames(m_sessionsMonitorPattern);
-    } catch (Exception e) {/**/}
+    } catch (Exception e) {/**/
+    }
 
     return null;
   }

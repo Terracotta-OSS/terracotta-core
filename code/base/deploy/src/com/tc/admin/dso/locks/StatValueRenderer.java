@@ -11,7 +11,7 @@ import com.tc.admin.common.XTable.LongRenderer;
  */
 public class StatValueRenderer extends LongRenderer {
   public void setValue(Object value) {
-    if(!(value instanceof Long)) {
+    if (!(value instanceof Long)) {
       setText(value != null ? value.toString() : "");
       return;
     }

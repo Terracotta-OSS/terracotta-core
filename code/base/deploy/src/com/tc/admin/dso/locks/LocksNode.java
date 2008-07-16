@@ -49,7 +49,7 @@ public class LocksNode extends ComponentNode {
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded,
                                                   boolean leaf, int row, boolean focused) {
       Component comp = super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, focused);
-      if(m_acc == null) return comp;
+      if (m_acc == null) return comp;
       if (m_locksPanel.isProfiling()) {
         m_label.setForeground(sel ? Color.white : Color.red);
         m_label.setText(getBaseLabel() + m_profilingSuffix);

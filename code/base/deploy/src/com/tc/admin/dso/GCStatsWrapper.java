@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin.dso;
 
@@ -12,7 +13,7 @@ public class GCStatsWrapper implements GCStats {
   private Date    m_startDate;
 
   GCStatsWrapper(GCStats gcStats) {
-    m_gcStats   = gcStats;
+    m_gcStats = gcStats;
     m_startDate = new Date(gcStats.getStartTime());
   }
 

@@ -33,7 +33,7 @@ public abstract class AbstractTcObject implements IObject {
   public String getName() {
     return m_name;
   }
-  
+
   public IObject getParent() {
     return m_parent;
   }

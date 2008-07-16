@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin.common;
 
@@ -22,8 +23,9 @@ public abstract class AbstractResolutionAction extends AbstractAction {
   public void actionPerformed(ActionEvent ae) {/**/
   }
 
-  public void apply() {/**/}
-  
+  public void apply() {/**/
+  }
+
   public void setSelected(boolean selected) {
     fSelected = selected;
   }

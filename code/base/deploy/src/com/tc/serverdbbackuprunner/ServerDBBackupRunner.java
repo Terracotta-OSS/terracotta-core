@@ -128,9 +128,8 @@ public class ServerDBBackupRunner {
   }
 
   public static ServerDBBackupMBean getServerDBBackupMBean(MBeanServerConnection mbs) {
-    ServerDBBackupMBean mbean = (ServerDBBackupMBean) MBeanServerInvocationProxy
-        .newProxyInstance(mbs, L2MBeanNames.SERVER_DB_BACKUP, ServerDBBackupMBean.class, false);
-    return mbean;
+    return MBeanServerInvocationProxy.newMBeanProxy(mbs, L2MBeanNames.SERVER_DB_BACKUP, ServerDBBackupMBean.class,
+                                                    false);
   }
 
   public static MBeanServerConnection getMBeanServerConnection(final JMXConnector jmxConnector, String host, int port) {

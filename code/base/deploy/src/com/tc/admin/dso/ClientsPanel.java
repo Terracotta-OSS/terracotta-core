@@ -8,6 +8,7 @@ import com.tc.admin.AdminClient;
 import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.model.IClient;
+import com.tc.admin.model.IClusterModel;
 
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
@@ -51,17 +52,19 @@ public class ClientsPanel extends XContainer implements ActionListener {
     m_refreshTimer.setRepeats(false);
     m_refreshTimer.start();
   }
-  
+
   public void removeNotify() {
     super.removeNotify();
     m_refreshTimer.stop();
   }
-  
+
   private class ObjectCountWorker extends BasicWorker<Map<IClient, Integer>> {
     private ObjectCountWorker() {
       super(new Callable<Map<IClient, Integer>>() {
         public Map<IClient, Integer> call() throws Exception {
-          return m_clientsNode.getClusterModel().getClientLiveObjectCount();
+          if(m_clientsNode == null) return null;
+          IClusterModel clusterModel = m_clientsNode.getClusterModel();
+          return clusterModel != null ? clusterModel.getClientLiveObjectCount() : null;
         }
       });
     }
@@ -69,23 +72,26 @@ public class ClientsPanel extends XContainer implements ActionListener {
     public void finished() {
       Exception e = getException();
       if (e == null) {
-        m_table.updateObjectCounts(getResult());
-        m_refreshTimer.start();
+        Map<IClient, Integer> result = getResult();
+        if(result != null) {
+          m_table.updateObjectCounts(result);
+          m_refreshTimer.start();
+        }
       }
     }
   }
-  
+
   public void actionPerformed(ActionEvent e) {
-    if(isShowing()) {
-      AdminClient.getContext().executorService.submit(new ObjectCountWorker());
+    if (isShowing()) {
+      AdminClient.getContext().execute(new ObjectCountWorker());
     }
   }
 
   public void tearDown() {
-    if(m_refreshTimer != null) {
+    if (m_refreshTimer != null) {
       m_refreshTimer.stop();
     }
-    
+
     super.tearDown();
 
     m_table = null;

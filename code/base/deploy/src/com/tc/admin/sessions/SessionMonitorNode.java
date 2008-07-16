@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin.sessions;
 
@@ -23,29 +24,29 @@ import javax.swing.KeyStroke;
 import javax.swing.tree.DefaultTreeModel;
 
 public class SessionMonitorNode extends ComponentNode implements NotificationListener {
-  ObjectName            m_beanName;
-  SessionMonitorMBean   m_bean;
-  private JPopupMenu    m_popupMenu;
-  private RefreshAction m_refreshAction;
+  ObjectName                  m_beanName;
+  SessionMonitorMBean         m_bean;
+  private JPopupMenu          m_popupMenu;
+  private RefreshAction       m_refreshAction;
 
   private static final String REFRESH_ACTION = "RefreshAction";
-  
+
   public SessionMonitorNode(ConnectionContext cc, SessionMonitorMBean bean, ObjectName beanName) {
     super();
 
     try {
       ObjectName mbsd = cc.queryName("JMImplementation:type=MBeanServerDelegate");
-      
-      if(mbsd != null) {
+
+      if (mbsd != null) {
         cc.addNotificationListener(mbsd, this);
       }
-    } catch(Exception ioe) {
+    } catch (Exception ioe) {
       ioe.printStackTrace();
     }
-    
+
     m_beanName = beanName;
-    m_bean     = bean;
-    
+    m_bean = bean;
+
     setLabel(beanName.getKeyProperty("node"));
     setComponent(new SessionMonitorPanel(bean));
 
@@ -53,19 +54,19 @@ public class SessionMonitorNode extends ComponentNode implements NotificationLis
   }
 
   public void handleNotification(Notification notification, Object handback) {
-    if(notification instanceof MBeanServerNotification) {
-      MBeanServerNotification mbsn = (MBeanServerNotification)notification;
-      String                  type = notification.getType();
-      ObjectName              name = mbsn.getMBeanName();
-      
-      if(type.equals(MBeanServerNotification.UNREGISTRATION_NOTIFICATION)) {
-        if(name.equals(m_beanName)) {
-          ((DefaultTreeModel)getModel()).removeNodeFromParent(SessionMonitorNode.this);
+    if (notification instanceof MBeanServerNotification) {
+      MBeanServerNotification mbsn = (MBeanServerNotification) notification;
+      String type = notification.getType();
+      ObjectName name = mbsn.getMBeanName();
+
+      if (type.equals(MBeanServerNotification.UNREGISTRATION_NOTIFICATION)) {
+        if (name.equals(m_beanName)) {
+          ((DefaultTreeModel) getModel()).removeNodeFromParent(SessionMonitorNode.this);
         }
       }
     }
   }
-  
+
   private void initMenu() {
     m_refreshAction = new RefreshAction();
 
@@ -80,7 +81,7 @@ public class SessionMonitorNode extends ComponentNode implements NotificationLis
   }
 
   public void refresh() {
-    ((SessionMonitorPanel)getComponent()).refresh();
+    ((SessionMonitorPanel) getComponent()).refresh();
   }
 
   private class RefreshAction extends XAbstractAction {

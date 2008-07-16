@@ -110,11 +110,11 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
 
     public void run() {
       String prop = m_pce.getPropertyName();
-      if (false && IServer.PROP_CONNECTED.equals(prop)) {
+      if (IServer.PROP_CONNECTED.equals(prop)) {
         if (m_clusterModel.isConnected()) {
           handleConnected();
         } else {
-          handleDisconnected();
+          m_acc.removeServerLog(m_clusterModel);
         }
       } else if (IClusterNode.PROP_READY.equals(prop)) {
         handleReady();
@@ -140,7 +140,7 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
   private void handleConnected() {
     if (m_acc == null) return;
     if (m_versionMismatchDialog != null) return;
-    if (!m_clusterPanel.isProductInfoShowing() && !m_acc.controller.testServerMatch(this)) {
+    if (!m_clusterPanel.isProductInfoShowing() && !m_acc.testServerMatch(this)) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           if (m_clusterModel.isConnected()) {
@@ -150,7 +150,6 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
       });
       return;
     }
-    m_acc.controller.block();
     if (isActive()) {
       handleActivation();
     } else if (isPassiveStandby()) {
@@ -160,7 +159,6 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
     } else if (isStarted()) {
       handleStarting();
     }
-    m_acc.controller.unblock();
 
     m_connectAction.setEnabled(false);
     m_disconnectAction.setEnabled(true);
@@ -176,13 +174,16 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
   private void handleReady() {
     if (m_clusterModel.isReady()) {
       handleConnected();
-    } else {
-      handleDisconnect();
     }
   }
 
   private void handleActiveServer() {
-    handleNewActive();
+    IServer activeServer = m_clusterModel.getActiveServer();
+    if (activeServer != null) {
+      handleNewActive();
+    } else {
+      handleDisconnected();
+    }
   }
 
   private void handleConnectError() {
@@ -210,6 +211,8 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
   }
 
   void handleNewActive() {
+    handleActivation();
+    m_acc.addServerLog(m_clusterModel);
     m_clusterPanel.reinitialize();
     synchronized (this) {
       if (m_locksNode != null) {
@@ -219,7 +222,7 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
         m_statsRecorderNode.newConnectionContext();
       }
     }
-    m_acc.controller.nodeChanged(this);
+    m_acc.nodeChanged(this);
   }
 
   String[] getConnectionCredentials() {
@@ -344,12 +347,11 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
     try {
       beginConnect();
     } catch (Exception e) {
-      m_acc.controller.log(e);
+      m_acc.log(e);
     }
   }
 
   private void beginConnect() throws Exception {
-    m_acc.controller.block();
     ConnectDialog cd = getConnectDialog(this);
     m_clusterModel.refreshCachedCredentials();
     cd.center((Frame) m_clusterPanel.getAncestorOfClass(java.awt.Frame.class));
@@ -368,7 +370,6 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
         reportConnectError(ioe);
       }
     }
-    m_acc.controller.unblock();
   }
 
   /**
@@ -379,7 +380,6 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
     if (e != null) {
       reportConnectError(e);
     }
-    m_acc.controller.unblock();
   }
 
   private void reportConnectError() {
@@ -394,14 +394,14 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
       if (autoConnect && error instanceof SecurityException) {
         setAutoConnect(autoConnect = false);
         m_autoConnectMenuItem.setSelected(false);
-        m_acc.controller.updateServerPrefs();
+        m_acc.updateServerPrefs();
       }
       if (!autoConnect) {
         m_clusterPanel.setupConnectButton();
       }
       m_clusterPanel.setStatusLabel(msg);
     }
-    m_acc.controller.nodeChanged(this);
+    m_acc.nodeChanged(this);
   }
 
   /**
@@ -419,10 +419,10 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
   }
 
   private void disconnect(boolean deletingNode) {
-    m_acc.controller.setStatus(m_acc.format("disconnecting.from", this));
+    m_acc.setStatus(m_acc.format("disconnecting.from", this));
     if (!deletingNode) {
       setAutoConnect(false);
-      m_acc.controller.updateServerPrefs();
+      m_acc.updateServerPrefs();
       m_autoConnectMenuItem.setSelected(false);
     }
     m_clusterModel.disconnect();
@@ -489,10 +489,9 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
 
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          AdminClientController controller = m_acc.controller;
-          controller.setStatus(m_acc.format("deleted.server", ClusterNode.this));
-          controller.remove(ClusterNode.this);
-          controller.updateServerPrefs();
+          m_acc.setStatus(m_acc.format("deleted.server", ClusterNode.this));
+          m_acc.remove(ClusterNode.this);
+          m_acc.updateServerPrefs();
         }
       });
     }
@@ -511,22 +510,25 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
       m_connectAction.setEnabled(!autoConnect);
       setAutoConnect(autoConnect);
       m_clusterPanel.setupConnectButton();
-      m_acc.controller.updateServerPrefs();
+      m_acc.updateServerPrefs();
     }
   }
 
   private AtomicBoolean m_addingChildren = new AtomicBoolean(false);
 
   void tryAddChildren() {
-    if(!m_clusterModel.isReady()) { return; }
+    if (!m_clusterModel.isReady()) {
+      return;
+    }
     if (m_addingChildren.get()) { return; }
 
     try {
       m_addingChildren.set(true);
       if (getChildCount() == 0) {
         addChildren();
-        m_acc.controller.nodeStructureChanged(this);
-        m_acc.controller.expand(this);
+        m_acc.nodeStructureChanged(this);
+        m_acc.expand(this);
+        m_acc.addServerLog(m_clusterModel);
       }
     } finally {
       m_addingChildren.set(false);
@@ -563,7 +565,7 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
 
   void makeStatsRecorderUnavailable() {
     if (m_statsRecorderNode != null) {
-      m_acc.controller.remove(m_statsRecorderNode);
+      m_acc.remove(m_statsRecorderNode);
       m_statsRecorderNode.tearDown();
       m_statsRecorderNode = null;
     }
@@ -590,26 +592,22 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
   }
 
   void handleStarting() {
-    m_acc.controller.nodeChanged(this);
+    m_acc.nodeChanged(this);
     m_clusterPanel.started();
-    m_clusterModel.handleStarting();
   }
 
   void handlePassiveUninitialized() {
-    m_acc.controller.nodeChanged(this);
+    m_acc.nodeChanged(this);
     m_clusterPanel.passiveUninitialized();
-    m_clusterModel.testStartActiveLocator();
   }
 
   void handlePassiveStandby() {
-    m_acc.controller.nodeChanged(this);
+    m_acc.nodeChanged(this);
     m_clusterPanel.passiveStandby();
-    m_clusterModel.testStartActiveLocator();
   }
 
   void handleActivation() {
-    m_acc.controller.nodeChanged(this);
-    m_clusterModel.cancelActiveLocator();
+    m_acc.nodeChanged(this);
     tryAddChildren();
     m_clusterPanel.activated();
   }
@@ -655,14 +653,14 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
   }
 
   void handleDisconnect() {
-    m_acc.controller.select(this);
+    m_acc.select(this);
 
     m_locksNode = null;
     m_clientsNode = null;
 
     tearDownChildren();
     removeAllChildren();
-    m_acc.controller.nodeStructureChanged(this);
+    m_acc.nodeStructureChanged(this);
     m_clusterPanel.disconnected();
   }
 

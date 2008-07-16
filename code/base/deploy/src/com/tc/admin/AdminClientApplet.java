@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin;
 
@@ -12,9 +13,7 @@ import com.tc.admin.model.IServer;
 
 import java.awt.BorderLayout;
 
-public class AdminClientApplet extends XApplet
-  implements AdminClientController
-{
+public class AdminClientApplet extends XApplet implements AdminClientController {
   private AdminClientPanel m_mainPanel;
 
   public AdminClientApplet() {
@@ -22,7 +21,7 @@ public class AdminClientApplet extends XApplet
 
     getContentPane().setLayout(new BorderLayout());
     getContentPane().add(m_mainPanel = new AdminClientPanel());
-    
+
     XMenuBar menuBar;
     m_mainPanel.initMenubar(menuBar = new XMenuBar());
     setMenubar(menuBar);
@@ -63,8 +62,8 @@ public class AdminClientApplet extends XApplet
   public boolean testServerMatch(ClusterNode node) {
     return m_mainPanel.testServerMatch(node);
   }
-  
- public void updateServerPrefs() {
+
+  public void updateServerPrefs() {
     m_mainPanel.updateServerPrefs();
   }
 
@@ -95,11 +94,14 @@ public class AdminClientApplet extends XApplet
   public void removeServerLog(IServer server) {
     m_mainPanel.removeServerLog(server);
   }
-  
+
   public Container getActivityArea() {
     return m_mainPanel.getActivityArea();
   }
-  
-  public void block() {/**/}
-  public void unblock() {/**/}
+
+  public void block() {/**/
+  }
+
+  public void unblock() {/**/
+  }
 }

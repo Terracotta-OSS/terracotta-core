@@ -5,6 +5,7 @@
 package com.tc.admin.common;
 
 import org.dijon.Dialog;
+import org.dijon.DialogResource;
 import org.dijon.Item;
 import org.dijon.Label;
 
@@ -20,8 +21,8 @@ import javax.swing.UIManager;
 public class ProgressDialog extends Dialog {
   public ProgressDialog(Frame owner, String title, String msg) {
     super(owner, title, false);
-    load(AdminClient.getContext().topRes.findDialog("ProgressDialog"));
-    ((JComponent)getContentPane()).setBorder(UIManager.getBorder("InternalFrame.border"));
+    load((DialogResource) AdminClient.getContext().childResource("ProgressDialog"));
+    ((JComponent) getContentPane()).setBorder(UIManager.getBorder("InternalFrame.border"));
     setTitle(title);
     Label msgLabel = (Label) findComponent("MessageLabel");
     msgLabel.setFont(UIManager.getFont("TextPane.font"));

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin.common;
 
@@ -12,8 +13,7 @@ import javax.swing.Icon;
 
 // XXX: DEPRECATED
 public abstract class XAbstractAction extends AbstractAction {
-  protected static final int MENU_SHORTCUT_KEY_MASK =
-    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+  protected static final int MENU_SHORTCUT_KEY_MASK = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
 
   public XAbstractAction() {
     super();
@@ -34,7 +34,7 @@ public abstract class XAbstractAction extends AbstractAction {
   }
 
   public String getName() {
-    return (String)getValue(Action.NAME);
+    return (String) getValue(Action.NAME);
   }
 
   public void setSmallIcon(Icon icon) {
@@ -42,7 +42,7 @@ public abstract class XAbstractAction extends AbstractAction {
   }
 
   public Icon getSmallIcon() {
-    return (Icon)getValue(Action.SMALL_ICON);
+    return (Icon) getValue(Action.SMALL_ICON);
   }
 
   public void setAccelerator(KeyStroke ks) {
@@ -50,7 +50,7 @@ public abstract class XAbstractAction extends AbstractAction {
   }
 
   public KeyStroke getAccelerator() {
-    return (KeyStroke)getValue(ACCELERATOR_KEY);
+    return (KeyStroke) getValue(ACCELERATOR_KEY);
   }
 
   public void setShortDescription(String description) {
@@ -58,7 +58,7 @@ public abstract class XAbstractAction extends AbstractAction {
   }
 
   public String getShortDescription() {
-    return (String)getValue(Action.SHORT_DESCRIPTION);
+    return (String) getValue(Action.SHORT_DESCRIPTION);
   }
 
   public void setLongDescription(String description) {
@@ -66,7 +66,7 @@ public abstract class XAbstractAction extends AbstractAction {
   }
 
   public String getLongDescription() {
-    return (String)getValue(Action.LONG_DESCRIPTION);
+    return (String) getValue(Action.LONG_DESCRIPTION);
   }
 
 }

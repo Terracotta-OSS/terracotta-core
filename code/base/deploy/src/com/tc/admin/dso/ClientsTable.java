@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.admin.dso;
 
@@ -33,8 +34,9 @@ public class ClientsTable extends XObjectTable {
   public void removeClient(IClient client) {
     m_model.removeClient(client);
   }
-  
+
   void updateObjectCounts(Map<IClient, Integer> map) {
     m_model.updateObjectCounts(map);
+    sort();
   }
 }

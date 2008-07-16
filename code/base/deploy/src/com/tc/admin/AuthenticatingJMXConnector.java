@@ -24,11 +24,11 @@ public final class AuthenticatingJMXConnector implements JMXConnector {
     m_server = server;
   }
 
-  private JMXConnector getConnector() {
+  private synchronized JMXConnector getConnector() {
     return m_connector;
   }
 
-  private void setConnector(JMXConnector connector) {
+  private synchronized void setConnector(JMXConnector connector) {
     this.m_connector = connector;
   }
 

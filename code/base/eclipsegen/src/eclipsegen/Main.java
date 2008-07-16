@@ -170,6 +170,7 @@ public class Main {
   private void writeDotClassPath(File modDir, Module module, String[] src, String[] jars, String[] moduleJars)
       throws IOException {
 
+    boolean isUiEclipse = module.getName().equals("ui-eclipse");
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     PrintStream ps = new PrintStream(baos);
     ps.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
@@ -193,10 +194,13 @@ public class Main {
                  + module.getJdk().getEclipse() + "\"/>");
 
     // jars
-    for (int i = 0; i < jars.length; i++) {
-      String jar = jars[i];
-      ps.println("\t<classpathentry exported=\"true\" kind=\"lib\" path=\"/dependencies/lib/" + jar + "\"/>");
-
+    if (isUiEclipse) {
+      ps.println("\t<classpathentry kind=\"con\" path=\"org.eclipse.pde.core.requiredPlugins\"/>");
+    } else {
+      for (int i = 0; i < jars.length; i++) {
+        String jar = jars[i];
+        ps.println("\t<classpathentry exported=\"true\" kind=\"lib\" path=\"/dependencies/lib/" + jar + "\"/>");
+      }
     }
 
     // modules dependencies
