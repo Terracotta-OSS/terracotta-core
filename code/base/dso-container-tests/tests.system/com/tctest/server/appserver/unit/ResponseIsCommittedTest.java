@@ -29,27 +29,30 @@ public class ResponseIsCommittedTest extends AbstractOneServerDeploymentTest {
   public void test() throws Exception {
     WebResponse response;
 
-    response = request("/" + CONTEXT + "/" + MAPPING, "cmd=sendRedirect");
+    response = request("sendRedirect");
     assertEquals(HttpServletResponse.SC_MOVED_TEMPORARILY, response.getResponseCode());
-    response = request("/" + CONTEXT + "/" + MAPPING, "cmd=check-sendRedirect");
+    response = request("check-sendRedirect");
     assertEquals("true", response.getText().trim());
 
-    response = request("/" + CONTEXT + "/" + MAPPING, "cmd=sendError1");
+    response = request("sendError1");
     assertEquals(ResponseIsCommittedServlet.SEND_ERROR_CODE, response.getResponseCode());
-    response = request("/" + CONTEXT + "/" + MAPPING, "cmd=check-sendError1");
+    response = request("check-sendError1");
     assertEquals("true", response.getText().trim());
 
-    response = request("/" + CONTEXT + "/" + MAPPING, "cmd=sendError2");
+    response = request("sendError2");
     assertEquals(ResponseIsCommittedServlet.SEND_ERROR_CODE, response.getResponseCode());
-    response = request("/" + CONTEXT + "/" + MAPPING, "cmd=check-sendError2");
+    response = request("check-sendError2");
     assertEquals("true", response.getText().trim());
   }
 
-  private WebResponse request(String request, String query) throws Exception {
+  private WebResponse request(String command) throws Exception {
     WebConversation wc = new WebConversation();
     wc.getClientProperties().setAutoRedirect(false);
-    String url = "http://localhost:" + server0.getPort() + request + "?" + query;
+    String url = "http://localhost:" + server0.getPort() + "/" + CONTEXT + "/" + MAPPING + "?cmd=" + command;
     wc.setExceptionsThrownOnErrorStatus(false);
+
+    System.err.println("making request: " + url);
+
     return wc.getResponse(url);
   }
 

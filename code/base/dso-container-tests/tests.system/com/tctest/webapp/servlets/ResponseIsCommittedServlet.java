@@ -21,28 +21,32 @@ public class ResponseIsCommittedServlet extends HttpServlet {
   private static final WasCommitted wasCommitted    = new WasCommitted();
 
   protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-    resp.setContentType("text/html");
-    PrintWriter out = resp.getWriter();
+    // This sync block is to keep this entire method atomic. After calls to sendRedirect()/sendError() the test program
+    // will continue and will race with setting the committed flags
+    synchronized (wasCommitted) {
+      resp.setContentType("text/html");
+      PrintWriter out = resp.getWriter();
 
-    String cmd = req.getParameter("cmd");
-    if (!cmd.startsWith("check-")) {
-      wasCommitted.checkEmpty(cmd);
-    } else {
-      out.print(wasCommitted.get(cmd.substring("check-".length())));
-      return;
-    }
+      String cmd = req.getParameter("cmd");
+      if (!cmd.startsWith("check-")) {
+        wasCommitted.checkEmpty(cmd);
+      } else {
+        out.print(wasCommitted.get(cmd.substring("check-".length())));
+        return;
+      }
 
-    if ("sendRedirect".equals(cmd)) {
-      resp.sendRedirect("http://www.google.com/DOESNT_MATTER");
-      wasCommitted.set(cmd, resp.isCommitted());
-    } else if ("sendError1".equals(cmd)) {
-      resp.sendError(SEND_ERROR_CODE);
-      wasCommitted.set(cmd, resp.isCommitted());
-    } else if ("sendError2".equals(cmd)) {
-      resp.sendError(SEND_ERROR_CODE, "error message");
-      wasCommitted.set(cmd, resp.isCommitted());
-    } else {
-      throw new AssertionError("unknown command: " + cmd);
+      if ("sendRedirect".equals(cmd)) {
+        resp.sendRedirect("http://www.google.com/DOESNT_MATTER");
+        wasCommitted.set(cmd, resp.isCommitted());
+      } else if ("sendError1".equals(cmd)) {
+        resp.sendError(SEND_ERROR_CODE);
+        wasCommitted.set(cmd, resp.isCommitted());
+      } else if ("sendError2".equals(cmd)) {
+        resp.sendError(SEND_ERROR_CODE, "error message");
+        wasCommitted.set(cmd, resp.isCommitted());
+      } else {
+        throw new AssertionError("unknown command: " + cmd);
+      }
     }
   }
 
@@ -52,7 +56,10 @@ public class ResponseIsCommittedServlet extends HttpServlet {
 
     synchronized void set(String cmd, boolean isCommitted) {
       checkEmpty(cmd);
-      values.put(cmd, Boolean.valueOf(isCommitted));
+      Boolean value = Boolean.valueOf(isCommitted);
+      values.put(cmd, value);
+      System.err.println("set value [" + value + "] for command=[" + cmd + "]. Map is " + values + " @ "
+                         + System.identityHashCode(values));
     }
 
     synchronized void checkEmpty(String cmd) {
@@ -62,7 +69,8 @@ public class ResponseIsCommittedServlet extends HttpServlet {
 
     synchronized boolean get(String cmd) {
       Boolean b = (Boolean) values.get(cmd);
-      if (b == null) { throw new AssertionError("missing value for command " + cmd); }
+      if (b == null) { throw new AssertionError("missing value for command=[" + cmd + "]. Map has " + values + " @ "
+                                                + System.identityHashCode(values)); }
       return b.booleanValue();
     }
   }
