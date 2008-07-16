@@ -13,8 +13,8 @@ import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ReentrantReadWriteLockDowngraderTest extends TransparentTestBase {
@@ -27,6 +27,7 @@ public class ReentrantReadWriteLockDowngraderTest extends TransparentTestBase {
     return ReentrantReadWriteLockDowngraderTestApp.class;
   }
 
+  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
@@ -62,8 +63,11 @@ public class ReentrantReadWriteLockDowngraderTest extends TransparentTestBase {
 
     @Override
     protected void runTest() throws Throwable {
-//      runTestFailing();
-      
+      if (false) {
+        // XXX: enable me when this test will pass
+        runTestFailing();
+      }
+
       int index = barrier.await();
 
       // lock2.writeLock().lock();
