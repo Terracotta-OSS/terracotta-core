@@ -14,6 +14,7 @@ import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ReentrantReadWriteLockDowngraderTest extends TransparentTestBase {
@@ -61,7 +62,10 @@ public class ReentrantReadWriteLockDowngraderTest extends TransparentTestBase {
 
     @Override
     protected void runTest() throws Throwable {
+//      runTestFailing();
+      
       int index = barrier.await();
+
       // lock2.writeLock().lock();
       // lock2.readLock().lock();
       // lock2.writeLock().unlock();
@@ -79,6 +83,76 @@ public class ReentrantReadWriteLockDowngraderTest extends TransparentTestBase {
           throw new AssertionError("Shouldn't have come here : " + index);
       }
       // lock2.readLock().unlock();
+      barrier.await();
+    }
+
+    private void runTestFailing() throws InterruptedException, BrokenBarrierException {
+      int index = barrier.await();
+
+      // obtain the write lock on the first node
+      if (0 == index) {
+        lock.writeLock().lock();
+      }
+
+      barrier.await();
+
+      // ensure that the other nodes can't get the lock in write or read
+      if (index != 0) {
+        assertFalse(lock.writeLock().tryLock());
+        assertFalse(lock.readLock().tryLock());
+      }
+
+      barrier.await();
+
+      // obtain the read lock on the first node
+      if (0 == index) {
+        lock.readLock().lock();
+      }
+
+      barrier.await();
+
+      // the other nodes should still not be able to get the lock in write or read
+      if (index != 0) {
+        assertFalse(lock.writeLock().tryLock());
+        assertFalse(lock.readLock().tryLock());
+      }
+
+      barrier.await();
+
+      // downgrade the write lock to a read lock on the first node
+      if (0 == index) {
+        lock.writeLock().unlock();
+      }
+
+      barrier.await();
+
+      // the other nodes should now be able to get a read lock, but not a write lock
+      if (index != 0) {
+        assertFalse(lock.writeLock().tryLock());
+        assertTrue(lock.readLock().tryLock());
+        lock.readLock().lock();
+        lock.readLock().unlock();
+      }
+
+      barrier.await();
+
+      // unlock the read lock on the first node
+      if (0 == index) {
+        lock.readLock().unlock();
+      }
+
+      barrier.await();
+
+      // the other nodes should now be able to get a read and a write lock
+      if (index != 0) {
+        assertTrue(lock.writeLock().tryLock());
+        assertTrue(lock.readLock().tryLock());
+        lock.writeLock().lock();
+        lock.writeLock().unlock();
+        lock.readLock().lock();
+        lock.readLock().unlock();
+      }
+
       barrier.await();
     }
 
