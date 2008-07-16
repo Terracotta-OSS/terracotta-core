@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.perf.collections;
 
@@ -22,16 +23,12 @@ import java.util.Properties;
  */
 public abstract class CollectionsPerfTestAppBase extends AbstractTransparentApp {
 
-  private Map rootMap = new HashMap();
-  private CollectionType sharedCollection;
-  private Integer        transactionSize;
-  private StatsListener  txnLogger;
-  boolean                staging   = true;
-  boolean                described = false;
-
-  public CollectionsPerfTestAppBase() {
-    super();
-  }
+  private final Map           rootMap   = new HashMap();
+  private CollectionType      sharedCollection;
+  private final Integer       transactionSize;
+  private final StatsListener txnLogger;
+  boolean                     staging   = true;
+  boolean                     described = false;
 
   public CollectionsPerfTestAppBase(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -41,9 +38,9 @@ public abstract class CollectionsPerfTestAppBase extends AbstractTransparentApp 
   }
 
   protected void setCollection(CollectionType collect) {
-    synchronized (rootMap){
-      sharedCollection = (CollectionType)rootMap.get("collection");
-      if((sharedCollection == null) || !sharedCollection.getClass().getName().equals(collect.getClass().getName())){
+    synchronized (rootMap) {
+      sharedCollection = (CollectionType) rootMap.get("collection");
+      if ((sharedCollection == null) || !sharedCollection.getClass().getName().equals(collect.getClass().getName())) {
         sharedCollection = collect;
         rootMap.put("collection", sharedCollection);
       }
@@ -150,9 +147,9 @@ public abstract class CollectionsPerfTestAppBase extends AbstractTransparentApp 
       }
       unlockTimer.stop();
       txnTimer.stop();
-      txnLogger.sample(-1, testDesc + "removed " + count + " elements Txn stats: lock=" + lockTimer.getElapsedMillis() + " op="
-                           + opTimer.getElapsedMillis() + " unlock=" + unlockTimer.getElapsedMillis() + " txn="
-                           + txnTimer.getElapsedMillis());
+      txnLogger.sample(-1, testDesc + "removed " + count + " elements Txn stats: lock=" + lockTimer.getElapsedMillis()
+                           + " op=" + opTimer.getElapsedMillis() + " unlock=" + unlockTimer.getElapsedMillis()
+                           + " txn=" + txnTimer.getElapsedMillis());
       Thread.yield();
     }
     txnLogger.sample(-1, testDesc + "remove stage avg stats: lock=" + lockTimer.getAvgElapsed() + " op="
@@ -235,9 +232,9 @@ public abstract class CollectionsPerfTestAppBase extends AbstractTransparentApp 
       }
       unlockTimer.stop();
       txnTimer.stop();
-      txnLogger.sample(-1, testDesc + "added " + count + " elements Txn stats: lock=" + lockTimer.getElapsedMillis() + " op="
-                           + opTimer.getElapsedMillis() + " unlock=" + unlockTimer.getElapsedMillis() + " txn="
-                           + txnTimer.getElapsedMillis());
+      txnLogger.sample(-1, testDesc + "added " + count + " elements Txn stats: lock=" + lockTimer.getElapsedMillis()
+                           + " op=" + opTimer.getElapsedMillis() + " unlock=" + unlockTimer.getElapsedMillis()
+                           + " txn=" + txnTimer.getElapsedMillis());
       Thread.yield();
     }
     txnLogger.sample(-1, testDesc + "addElements stage avg stats: lock=" + lockTimer.getAvgElapsed() + " op="
