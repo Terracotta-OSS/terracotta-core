@@ -45,8 +45,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * @author steve
@@ -142,7 +142,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
 
     if (isTransactionLoggingDisabled() || objectManager.isCreationInProgress()) { return true; }
 
-    final TxnType txnType = getTxnTypeFromLockLevel(lockLevel);
     ClientTransaction currentTransaction = getTransactionOrNull();
 
     if ((currentTransaction != null) && lockLevel == LockLevel.CONCURRENT) {
@@ -154,7 +153,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     boolean isLocked = lockManager.tryLock(lockID, timeout, lockLevel, lockObjectType);
     if (!isLocked) { return isLocked; }
 
-    pushTxContext(lockID, txnType);
+    pushTxContext(currentTransaction, lockID, lockLevel);
 
     if (currentTransaction == null) {
       createTxAndInitContext();
@@ -170,12 +169,11 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
 
     if (isTransactionLoggingDisabled() || objectManager.isCreationInProgress()) { return false; }
 
-    final TxnType txnType = getTxnTypeFromLockLevel(lockLevel);
     ClientTransaction currentTransaction = getTransactionOrNull();
 
     final LockID lockID = lockManager.lockIDFor(lockName);
 
-    pushTxContext(lockID, txnType);
+    pushTxContext(currentTransaction, lockID, lockLevel);
 
     if (currentTransaction == null) {
       createTxAndInitContext();
@@ -404,9 +402,17 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     return (tc.getLockID().equals(lockID));
   }
 
-  private void pushTxContext(LockID lockID, TxnType txnType) {
+  private void pushTxContext(ClientTransaction currentTransaction, LockID lockID, int lockLevel) {
     ThreadTransactionContext ttc = getThreadTransactionContext();
-    ttc.pushContext(lockID, txnType);
+
+    final TxnType txnType = getTxnTypeFromLockLevel(lockLevel);
+    if (currentTransaction != null &&
+        TxnType.READ_ONLY == txnType &&
+        TxnType.NORMAL == currentTransaction.getTransactionType()) {
+      ttc.pushContext(lockID, TxnType.NORMAL);
+    } else {
+      ttc.pushContext(lockID, txnType);
+    }
   }
 
   private void logCommit0() {
