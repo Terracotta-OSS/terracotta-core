@@ -6,6 +6,7 @@ package com.tc.objectserver.api;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
+import com.tc.objectserver.core.api.ManagedObject;
 
 import java.util.Collections;
 import java.util.Map;
@@ -13,10 +14,10 @@ import java.util.Set;
 
 public class TestObjectManagerResultsContext implements ObjectManagerResultsContext {
 
-  private final Map results;
-  private final Set objectIDs;
+  private final Map<ObjectID, ManagedObject>  results;
+  private final Set<ObjectID>                 objectIDs;
 
-  public TestObjectManagerResultsContext(Map results, Set objectIDs) {
+  public TestObjectManagerResultsContext(Map<ObjectID, ManagedObject> results, Set<ObjectID> objectIDs) {
     this.results = results;
     this.objectIDs = objectIDs;
   }
@@ -29,12 +30,12 @@ public class TestObjectManagerResultsContext implements ObjectManagerResultsCont
     this.results.putAll(results.getObjects());
   }
 
-  public Set getLookupIDs() {
+  public Set<ObjectID> getLookupIDs() {
     return objectIDs;
   }
 
-  public Set getNewObjectIDs() {
-    return Collections.EMPTY_SET;
+  public Set<ObjectID> getNewObjectIDs() {
+    return Collections.emptySet();
   }
 
   public void missingObject(ObjectID oid) {

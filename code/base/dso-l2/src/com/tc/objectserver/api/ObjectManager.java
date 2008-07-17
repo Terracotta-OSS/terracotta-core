@@ -37,7 +37,7 @@ public interface ObjectManager extends ManagedObjectProvider {
   /**
    * release all objects
    */
-  public void releaseAllReadOnly(Collection objects);
+  public void releaseAllReadOnly(Collection<ManagedObject> objects);
 
   /**
    * release for objects that can not have changed while checked out
@@ -49,7 +49,7 @@ public interface ObjectManager extends ManagedObjectProvider {
    * 
    * @param collection
    */
-  public void releaseAll(PersistenceTransaction tx, Collection collection);
+  public void releaseAll(PersistenceTransaction tx, Collection<ManagedObject> collection);
 
   /**
    * Looks up the objects associated with the Object Lookups from the clients. What it does is if all the objects are
@@ -58,7 +58,7 @@ public interface ObjectManager extends ManagedObjectProvider {
    * 
    * @param nodeID - nodeID of the client that is interested in lookup
    * @param maxCount - max number of objects reachable from the requested objects that should be looked up
-   * @param context - ResultContext that gets notifications.
+   * @param responseContext - ResultContext that gets notifications.
    * @return true if all the objects are successfully looked up.
    */
   public boolean lookupObjectsAndSubObjectsFor(NodeID nodeID, ObjectManagerResultsContext responseContext, int maxCount);
@@ -85,7 +85,7 @@ public interface ObjectManager extends ManagedObjectProvider {
 
   public void createRoot(String name, ObjectID id);
 
-  public void createNewObjects(Set ids);
+  public void createNewObjects(Set<ObjectID> ids);
 
   public ObjectID lookupRootID(String name);
 
@@ -119,7 +119,7 @@ public interface ObjectManager extends ManagedObjectProvider {
 
   public void flushAndEvict(List objects2Flush);
 
-  public void preFetchObjectsAndCreate(Set oids, Set newOids);
+  public void preFetchObjectsAndCreate(Set<ObjectID> oids, Set<ObjectID> newOids);
 
   /**
    * This method returns null if you are looking up a newly created object that is not yet initialized. This is mainly

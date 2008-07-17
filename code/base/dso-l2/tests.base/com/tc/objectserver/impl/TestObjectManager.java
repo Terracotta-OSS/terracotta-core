@@ -76,10 +76,9 @@ public class TestObjectManager implements ObjectManager {
     basicLookup((NodeID) args[0], (ObjectManagerResultsContext) args[1], -1);
   }
 
-  private Map createLookResults(Collection ids) {
-    Map results = new HashMap();
-    for (Iterator i = ids.iterator(); i.hasNext();) {
-      ObjectID id = (ObjectID) i.next();
+  private Map<ObjectID, ManagedObject> createLookResults(Collection<ObjectID> ids) {
+    Map<ObjectID, ManagedObject> results = new HashMap<ObjectID, ManagedObject>();
+    for (final ObjectID id : ids) {
       TestManagedObject tmo = new TestManagedObject(id);
       results.put(id, tmo);
     }

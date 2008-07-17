@@ -28,6 +28,7 @@
     <orderEntry type="module" module-name="management" />
     <orderEntry type="module" module-name="management-api" />
     <orderEntry type="module" module-name="modules-common" />
+    <orderEntry type="module" module-name="sigarstats" />
     <orderEntry type="module" module-name="simulator" />
     <orderEntry type="module" module-name="thirdparty" />
     <orderEntry type="module" module-name="thirdparty-api" />

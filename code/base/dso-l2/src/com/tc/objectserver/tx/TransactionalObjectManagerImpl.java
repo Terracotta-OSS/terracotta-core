@@ -41,7 +41,7 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 /**
- * This class keeps track of locally checked out objects for applys and maintain the objects to txnid mapping in the
+ * This class keeps track of locally checked out objects for applies and maintain the objects to txnid mapping in the
  * server. It wraps calls going to object manager from lookup, apply, commit stages
  */
 public class TransactionalObjectManagerImpl implements TransactionalObjectManager {
@@ -442,13 +442,13 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
 
   private class LookupContext implements ObjectManagerResultsContext {
 
-    private final Set               oids;
+    private final Set<ObjectID>     oids;
     private final ServerTransaction txn;
     private boolean                 pending    = false;
     private boolean                 resultsSet = false;
     private Map                     lookedUpObjects;
 
-    public LookupContext(Set oids, ServerTransaction txn) {
+    public LookupContext(Set<ObjectID> oids, ServerTransaction txn) {
       this.oids = oids;
       this.txn = txn;
     }
@@ -479,11 +479,11 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
              + (lookedUpObjects == null ? "null" : lookedUpObjects.keySet().toString()) + "}";
     }
 
-    public Set getLookupIDs() {
+    public Set<ObjectID> getLookupIDs() {
       return oids;
     }
 
-    public Set getNewObjectIDs() {
+    public Set<ObjectID> getNewObjectIDs() {
       return txn.getNewObjectIDs();
     }
 

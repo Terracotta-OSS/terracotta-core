@@ -4,9 +4,6 @@
  */
 package com.tc.objectserver.impl;
 
-import bsh.EvalError;
-import bsh.Interpreter;
-
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
@@ -185,6 +182,7 @@ import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvictRequest;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvicted;
 import com.tc.statistics.retrieval.actions.SRADistributedGC;
+import com.tc.statistics.retrieval.actions.SRAL1ReferenceCount;
 import com.tc.statistics.retrieval.actions.SRAL1ToL2FlushRate;
 import com.tc.statistics.retrieval.actions.SRAL2BroadcastCount;
 import com.tc.statistics.retrieval.actions.SRAL2BroadcastPerTransaction;
@@ -229,6 +227,9 @@ import java.util.Set;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 import javax.management.remote.JMXConnectorServer;
+
+import bsh.EvalError;
+import bsh.Interpreter;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -896,6 +897,7 @@ public class DistributedObjectServer implements TCDumper {
       registry.registerActionInstance(new SRAL1ToL2FlushRate(serverStats));
       registry.registerActionInstance(new SRAL2PendingTransactions(txnManager));
       registry.registerActionInstance(new SRAServerTransactionSequencer(serverTransactionSequencerStats));
+      registry.registerActionInstance(new SRAL1ReferenceCount(clientStateManager));
     }
   }
 

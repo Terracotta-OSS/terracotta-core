@@ -3,13 +3,16 @@
  */
 package com.tc.objectserver.api;
 
+import com.tc.object.ObjectID;
+import com.tc.objectserver.core.api.ManagedObject;
+
 import java.util.Map;
 import java.util.Set;
 
 public interface ObjectManagerLookupResults {
 
-  Map getObjects();
+  Map<ObjectID, ManagedObject> getObjects();
 
-  Set getLookupPendingObjectIDs();
+  Set<ObjectID> getLookupPendingObjectIDs();
 
 }

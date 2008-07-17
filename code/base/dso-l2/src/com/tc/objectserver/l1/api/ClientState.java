@@ -15,12 +15,12 @@ public interface ClientState {
 
   public boolean containsReference(ObjectID id);
 
-  public void removeReferences(Set references);
+  public void removeReferences(Set<ObjectID> references);
 
-  public void addReferencedIdsTo(Set ids);
+  public void addReferencedIdsTo(Set<ObjectID> ids);
 
   public NodeID getNodeID();
 
-  public Set getReferences();
+  public Set<ObjectID> getReferences();
 
 }

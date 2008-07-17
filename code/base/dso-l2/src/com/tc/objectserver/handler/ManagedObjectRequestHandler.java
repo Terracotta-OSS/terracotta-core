@@ -12,6 +12,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.object.ObjectID;
 import com.tc.object.msg.RequestManagedObjectMessage;
 import com.tc.object.net.ChannelStats;
 import com.tc.objectserver.api.ObjectRequestManager;
@@ -57,7 +58,7 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
   }
 
   private void handleEventFromServer(ManagedObjectRequestContext context) {
-    Collection ids = context.getLookupIDs();
+    Collection<ObjectID> ids = context.getLookupIDs();
     // XXX::TODO:: Server initiated lookups are not updated to the channel counter for now
     final int numObjectsRequested = ids.size();
     if (numObjectsRequested != 0) {
@@ -68,9 +69,9 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
 
   private void handleEventFromClient(RequestManagedObjectMessage rmom) {
     MessageChannel channel = rmom.getChannel();
-    Set requestedIDs = rmom.getObjectIDs();
+    Set<ObjectID> requestedIDs = rmom.getObjectIDs();
     ClientID clientID = rmom.getClientID();
-    Set removedIDs = rmom.getRemoved();
+    Set<ObjectID> removedIDs = rmom.getRemoved();
     int maxRequestDepth = rmom.getRequestDepth();
 
     final int numObjectsRequested = requestedIDs.size();

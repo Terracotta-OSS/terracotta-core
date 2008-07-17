@@ -9,6 +9,7 @@ import com.tc.net.groups.ClientID;
 import com.tc.object.ObjectID;
 import com.tc.object.ObjectRequestID;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
+import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 
@@ -28,21 +29,21 @@ public class ManagedObjectRequestContext implements ObjectManagerResultsContext,
   // XXX:: move to property file
   private static final int      MAX_OBJECTS_TO_LOOKUP = 50;
 
-  private final long            timestamp;
-  private final ClientID        clientID;
-  private final Set             requestedObjectIDs;
-  private Map                   objects;
-  private final ObjectRequestID requestID;
-  private boolean               moreObjects           = false;
-  private int                   batchCount            = 0;
-  private Set                   lookupPendingObjectIDs;
-  private final int             maxRequestDepth;
-  private final Sink            sink;
-  private final Set             missingObjects        = new HashSet();
-  private final String          requestingThreadName;
-  private final boolean         isServerInitiated;
+  private final long                    timestamp;
+  private final ClientID                clientID;
+  private final Set<ObjectID>           requestedObjectIDs;
+  private Map<ObjectID, ManagedObject>  objects;
+  private final ObjectRequestID         requestID;
+  private boolean                       moreObjects           = false;
+  private int                           batchCount            = 0;
+  private Set<ObjectID>                 lookupPendingObjectIDs;
+  private final int                     maxRequestDepth;
+  private final Sink                    sink;
+  private final Set<ObjectID>           missingObjects        = new HashSet<ObjectID>();
+  private final String                  requestingThreadName;
+  private final boolean                 isServerInitiated;
 
-  public ManagedObjectRequestContext(ClientID clientID, ObjectRequestID requestID, Set ids, int maxRequestDepth,
+  public ManagedObjectRequestContext(ClientID clientID, ObjectRequestID requestID, Set<ObjectID> ids, int maxRequestDepth,
                                      Sink sink, String requestingThreadName, boolean isServerInitiated) {
     this.maxRequestDepth = maxRequestDepth;
     this.sink = sink;
@@ -74,15 +75,15 @@ public class ManagedObjectRequestContext implements ObjectManagerResultsContext,
     return this.requestID;
   }
 
-  public Set getLookupIDs() {
+  public Set<ObjectID> getLookupIDs() {
     return requestedObjectIDs;
   }
 
-  public Collection getObjects() {
+  public Collection<ManagedObject> getObjects() {
     return objects.values();
   }
 
-  public Set getLookupPendingObjectIDs() {
+  public Set<ObjectID> getLookupPendingObjectIDs() {
     return this.lookupPendingObjectIDs;
   }
 
@@ -117,15 +118,15 @@ public class ManagedObjectRequestContext implements ObjectManagerResultsContext,
     return this.sink;
   }
 
-  public Set getNewObjectIDs() {
-    return Collections.EMPTY_SET;
+  public Set<ObjectID> getNewObjectIDs() {
+    return Collections.emptySet();
   }
 
   public void missingObject(ObjectID oid) {
     missingObjects.add(oid);
   }
 
-  public Set getMissingObjectIDs() {
+  public Set<ObjectID> getMissingObjectIDs() {
     return missingObjects;
   }
 
@@ -139,7 +140,7 @@ public class ManagedObjectRequestContext implements ObjectManagerResultsContext,
 
   // Utility method to create 1 or more server initiated requests.
   public static void createAndAddManagedObjectRequestContextsTo(Sink addTo, ClientID requestedNodeID,
-                                                                ObjectRequestID rid, Set lookupOids, int maxDepth,
+                                                                ObjectRequestID rid, Set<ObjectID> lookupOids, int maxDepth,
                                                                 Sink nextDestination) {
     if (lookupOids.size() <= MAX_OBJECTS_TO_LOOKUP) {
       addTo.add(new ManagedObjectRequestContext(requestedNodeID, rid, lookupOids, -1, nextDestination, Thread
@@ -147,13 +148,13 @@ public class ManagedObjectRequestContext implements ObjectManagerResultsContext,
     } else {
       String threadName = Thread.currentThread().getName();
       // split into multiple request
-      Set split = new HashSet(MAX_OBJECTS_TO_LOOKUP);
-      for (Iterator i = lookupOids.iterator(); i.hasNext();) {
+      Set<ObjectID> split = new HashSet<ObjectID>(MAX_OBJECTS_TO_LOOKUP);
+      for (final Iterator<ObjectID> i = lookupOids.iterator(); i.hasNext();) {
         split.add(i.next());
         if (split.size() >= MAX_OBJECTS_TO_LOOKUP) {
           addTo
               .add(new ManagedObjectRequestContext(requestedNodeID, rid, split, -1, nextDestination, threadName, true));
-          if (i.hasNext()) split = new HashSet(MAX_OBJECTS_TO_LOOKUP);
+          if (i.hasNext()) split = new HashSet<ObjectID>(MAX_OBJECTS_TO_LOOKUP);
         }
       }
     }

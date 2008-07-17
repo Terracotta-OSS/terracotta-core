@@ -56,8 +56,8 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     return id;
   }
 
-  public Set getObjectReferences() {
-    return new HashSet(Arrays.asList(references));
+  public Set<ObjectID> getObjectReferences() {
+    return new HashSet<ObjectID>(Arrays.asList(references));
   }
 
   public void apply(DNA dna, TransactionID txID, BackReferences includeIDs, ObjectInstanceMonitor imo) {

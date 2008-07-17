@@ -36,16 +36,14 @@ import java.util.Set;
 import junit.framework.TestCase;
 
 public class MarkAndSweepGarbageCollectorTest extends TestCase implements ObjectManager {
-  private long                           objectIDCounter     = 0;
-  private TestManagedObject              root1;
-  private TestManagedObject              root2;
-  private Set                            roots               = new HashSet();
-  private Map                            managed;                                                       // = new
-  // HashMap();
-  private GarbageCollector               collector;                                                     // = new
-  // MarkAndSweepGarbageCollector();
-  private Set                            lookedUp;
-  private Set                            released;
+  private long                                  objectIDCounter     = 0;
+  private TestManagedObject                     root1;
+  private TestManagedObject                     root2;
+  private Set<ManagedObject>                    roots               = new HashSet<ManagedObject>();
+  private Map<ObjectID, ManagedObjectReference> managed;            // = new HashMap();
+  private GarbageCollector                      collector;          // = new MarkAndSweepGarbageCollector();
+  private Set<ObjectID>                         lookedUp;
+  private Set<ObjectID>                         released;
   private PersistenceTransactionProvider transactionProvider = new NullPersistenceTransactionProvider();
 
   private Filter                         filter              = new Filter() {
@@ -68,15 +66,15 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
    */
   protected void setUp() throws Exception {
     super.setUp();
-    this.managed = new HashMap();
+    this.managed = new HashMap<ObjectID, ManagedObjectReference>();
 
     this.collector = new MarkAndSweepGarbageCollector(this, new TestClientStateManager(), false,
                                                       new NullStatisticsAgentSubSystem());
-    this.lookedUp = new HashSet();
-    this.released = new HashSet();
+    this.lookedUp = new HashSet<ObjectID>();
+    this.released = new HashSet<ObjectID>();
     this.root1 = createObject(8);
     this.root2 = createObject(8);
-    this.roots = new HashSet();
+    this.roots = new HashSet<ManagedObject>();
     roots.add(root1);
     roots.add(root2);
   }
@@ -85,10 +83,10 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
     return this;
   }
 
-  public Set getRootIds() {
-    HashSet rv = new HashSet();
-    for (Iterator i = roots.iterator(); i.hasNext();) {
-      rv.add(((TestManagedObject) i.next()).getID());
+  public Set<ObjectID> getRootIds() {
+    HashSet<ObjectID> rv = new HashSet<ObjectID>();
+    for (final ManagedObject root : roots) {
+      rv.add(root.getID());
     }
     return rv;
   }
@@ -162,8 +160,7 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
 
     Filter testFilter = new Filter() {
       public boolean shouldVisit(ObjectID referencedObject) {
-        boolean rv = (!tmo2.getID().equals(referencedObject));
-        return rv;
+        return (!tmo2.getID().equals(referencedObject));
       }
     };
 
@@ -221,13 +218,12 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
 
   public ManagedObject getObjectByID(ObjectID id) {
     this.lookedUp.add(id);
-    ManagedObjectReference ref = (ManagedObjectReference) managed.get(id);
+    ManagedObjectReference ref = managed.get(id);
     return (ref == null) ? null : ref.getObject();
   }
 
   public void release(PersistenceTransaction tx, ManagedObject object) {
     this.released.add(object.getID());
-    return;
   }
 
   public void releaseAll(PersistenceTransaction tx, Collection c) {
@@ -280,7 +276,6 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
 
   public void releaseReadOnly(ManagedObject object) {
     this.released.add(object.getID());
-    return;
   }
 
   public void releaseAllReadOnly(Collection objects) {

@@ -12,6 +12,7 @@ import com.tc.io.TCByteBufferOutputStream;
 import com.tc.logging.TCLogger;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.object.ObjectID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.msg.ObjectsNotFoundMessage;
 import com.tc.object.msg.RequestManagedObjectResponseMessage;
@@ -43,16 +44,15 @@ public class RespondToObjectRequestHandler extends AbstractEventHandler {
   public void handleEvent(EventContext context) {
     long batchID = batchIDSequence.next();
     ManagedObjectRequestContext morc = (ManagedObjectRequestContext) context;
-    Collection objs = morc.getObjects();
-    LinkedList objectsInOrder = new LinkedList();
+    Collection<ManagedObject> objs = morc.getObjects();
+    LinkedList<ManagedObject> objectsInOrder = new LinkedList<ManagedObject>();
 
     // Check to see if more objects needs to be looked for this request
     createNewLookupRequestsIfNecessary(morc);
 
-    Collection requestedObjectIDs = morc.getLookupIDs();
-    Set ids = new HashSet(Math.max((int) (objs.size() / .75f) + 1, 16));
-    for (Iterator i = objs.iterator(); i.hasNext();) {
-      ManagedObject mo = (ManagedObject) i.next();
+    Collection<ObjectID> requestedObjectIDs = morc.getLookupIDs();
+    Set<ObjectID> ids = new HashSet<ObjectID>(Math.max((int) (objs.size() / .75f) + 1, 16));
+    for (final ManagedObject mo : objs) {
       ids.add(mo.getID());
       if (requestedObjectIDs.contains(mo.getID())) {
         objectsInOrder.addLast(mo);
@@ -70,9 +70,9 @@ public class RespondToObjectRequestHandler extends AbstractEventHandler {
       int batches = 0;
       ObjectStringSerializer serializer = new ObjectStringSerializer();
       TCByteBufferOutputStream out = new TCByteBufferOutputStream();
-      for (Iterator i = objectsInOrder.iterator(); i.hasNext();) {
+      for (Iterator<ManagedObject> i = objectsInOrder.iterator(); i.hasNext();) {
 
-        ManagedObject m = (ManagedObject) i.next();
+        ManagedObject m = i.next();
         i.remove();
         // We dont want to send any object twice to the client even the client requested it 'coz it only means
         // that the object is on its way to the client. This is true because we process the removeObjectIDs and
@@ -99,7 +99,7 @@ public class RespondToObjectRequestHandler extends AbstractEventHandler {
           }
         }
       }
-      Set missingOids = morc.getMissingObjectIDs();
+      Set<ObjectID> missingOids = morc.getMissingObjectIDs();
       if (!missingOids.isEmpty()) {
         if (morc.isServerInitiated()) {
           // This is a possible case where changes are flying in and server is initiating some lookups and the lookups
@@ -118,15 +118,14 @@ public class RespondToObjectRequestHandler extends AbstractEventHandler {
     } catch (NoSuchChannelException e) {
       logger.info("Not sending response because channel is disconnected: " + morc.getRequestedNodeID()
                   + ".  Releasing all checked-out objects...");
-      for (Iterator i = objectsInOrder.iterator(); i.hasNext();) {
-        objectManager.releaseReadOnly((ManagedObject) i.next());
+      for (final ManagedObject anObjectsInOrder : objectsInOrder) {
+        objectManager.releaseReadOnly(anObjectsInOrder);
       }
-      return;
     }
   }
 
   private void createNewLookupRequestsIfNecessary(ManagedObjectRequestContext morc) {
-    Set oids = morc.getLookupPendingObjectIDs();
+    Set<ObjectID> oids = morc.getLookupPendingObjectIDs();
     if (oids.isEmpty()) { return; }
     if (logger.isDebugEnabled()) {
       logger.debug("Creating Server initiated requests for : " + morc.getRequestedNodeID()

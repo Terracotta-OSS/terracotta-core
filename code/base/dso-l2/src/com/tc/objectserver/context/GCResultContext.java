@@ -5,15 +5,16 @@
 package com.tc.objectserver.context;
 
 import com.tc.async.api.EventContext;
+import com.tc.object.ObjectID;
 
 import java.util.SortedSet;
 
 public class GCResultContext implements EventContext {
 
-  private final int       gcIteration;
-  private final SortedSet gcedOids;
+  private final int                 gcIteration;
+  private final SortedSet<ObjectID> gcedOids;
 
-  public GCResultContext(int gcIteration, SortedSet gcedOids) {
+  public GCResultContext(int gcIteration, SortedSet<ObjectID> gcedOids) {
     this.gcIteration = gcIteration;
     this.gcedOids = gcedOids;
   }
@@ -22,7 +23,7 @@ public class GCResultContext implements EventContext {
     return gcIteration;
   }
 
-  public SortedSet getGCedObjectIDs() {
+  public SortedSet<ObjectID> getGCedObjectIDs() {
     return gcedOids;
   }
 
