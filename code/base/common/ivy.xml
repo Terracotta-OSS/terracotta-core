@@ -4,7 +4,7 @@
   <dependencies>    
 	<dependency name="antlr" rev="2.7.3" org="terracotta"/>
 	<dependency name="bsh" rev="2.0b4" org="terracotta"/>
-	<dependency name="commons-cli" rev="1.0"/>
+    <dependency name="commons-cli" rev="1.1"/>
 	<dependency name="commons-collections" rev="3.1"/>
 	<dependency name="commons-io" rev="1.2"/>
 	<dependency name="commons-lang" rev="2.0"/>

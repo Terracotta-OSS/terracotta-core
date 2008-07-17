@@ -387,6 +387,12 @@ modules:
   - installer:
       options:
         jdk: J2SE-1.4
+  - tim-update-center:
+      options:
+        jdk: J2SE-1.5
+      dependencies:
+        - common
+        - common-api
   - legacy-test-tree:
       options:
         jdk: J2SE-1.4

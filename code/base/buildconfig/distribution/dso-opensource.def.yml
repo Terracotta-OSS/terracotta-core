@@ -112,6 +112,7 @@ bundled_components:
         - modules-common
         - thirdparty
         - thirdparty-api
+        - tim-update-center
         - ui-configurator
 bundled_modules:
   - core:

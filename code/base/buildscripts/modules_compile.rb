@@ -105,9 +105,16 @@ class BuildSubtree
 
     if @resources_exists
       resources_dir = build_results.classes_directory(self).to_s
-      ant.copy(:todir => resources_dir) {
-        ant.fileset(:dir => resource_root.to_s, :includes => '**/*')
-      }
+      ant.copy(:todir => resources_dir) do
+        ant.filterset do
+          ant.filter(:token => 'tc.version', :value => config_source['maven.version'])
+        end
+        ant.fileset(:dir => resource_root.to_s, :includes => '**/*.properties')
+        ant.fileset(:dir => resource_root.to_s, :includes => '**/*.xml')
+      end
+      ant.copy(:todir => resources_dir) do
+        ant.fileset(:dir => resource_root.to_s, :includes => '**/*', :excludes => '**/*.properties')
+      end
     end
     
     create_data_file(config_source, build_results.classes_directory(self).to_s, :build_data)

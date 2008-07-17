@@ -49,6 +49,7 @@ bundled_components:
         - modules-common
         - thirdparty
         - thirdparty-api
+        - tim-update-center
         - ui-eclipse:
             exclude-runtime-libraries: true
         - ui-eclipse-33:

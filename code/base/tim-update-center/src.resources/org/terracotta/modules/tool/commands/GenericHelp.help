@@ -1,0 +1,21 @@
+TIM is an Integrations Module manager for Terracotta.  This is a
+list of all the commands available and how to use them.
+
+Syntax:
+  ./tim.sh [command] [options]
+
+Commands:
+  list		Lists all available TIM packages for your TC installation.
+  install	Install TIM packages.
+  update	Update installed TIM packages.
+  info		Display detailed information about a TIM package.
+  help		Help on how to use this tool.
+
+Options:
+  --help     If used without a command is synonym for the help command.
+             Otherwise it runs the --help for the specified command.
+
+Further help:
+  Each command accepts a --help argument that will display additional
+  usage information for the command. Specifying the command name after 
+  the "help" command does the same thing.

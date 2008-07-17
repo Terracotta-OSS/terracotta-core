@@ -85,6 +85,11 @@
       <artifactId>jmxremote_optional</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.google.code.guice</groupId>
+      <artifactId>guice</artifactId>
+      <version>1.0</version>
+    </dependency>
+    <dependency>
       <groupId>org.beanshell</groupId>
       <artifactId>bsh</artifactId>
     </dependency>
