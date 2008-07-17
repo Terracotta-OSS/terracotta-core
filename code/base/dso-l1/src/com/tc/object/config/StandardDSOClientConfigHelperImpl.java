@@ -169,6 +169,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   private final Map                              classSpecs                         = new HashMap();
   //====================================================================================================================
 
+  private final Map                              missedClassSpecs                         = new HashMap();
+
   private final Map                              customAdapters                     = new ConcurrentHashMap();
 
   private final ClassReplacementMapping          classReplacements                  = new ClassReplacementMappingImpl();
@@ -1420,6 +1422,11 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
           addSpec(spec);
         }
       }
+      else {
+        if (rememberSpec && !classSpecs.containsKey(className)) {
+          if (!missedClassSpecs.containsKey(spec.getClassName())) missedClassSpecs.put(spec.getClassName(), spec);
+        }
+      }
       return spec;
     }
   }
@@ -1593,6 +1600,11 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
       if (includeBootJarSpecs) {
         for (Iterator i = getAllUserDefinedBootSpecs(); i.hasNext();) {
+          rv.add(i.next());
+        }
+      }
+      else {
+        for (Iterator i = missedClassSpecs.values().iterator(); i.hasNext();) {
           rv.add(i.next());
         }
       }
