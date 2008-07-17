@@ -14,6 +14,7 @@ import com.sleepycat.je.util.DbBackup;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.AbstractNotifyingMBean;
@@ -94,6 +95,7 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
 
     backupFileLogger = new FileLoggerForBackup(destinationDir);
 
+    destinationDir = destinationDir + File.separator + NewL2DSOConfig.OBJECTDB_DIRNAME;
     backupFileLogger.logStartMessage();
     logger.info("Starting backup");
 
@@ -233,8 +235,7 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
   private void backupFailed(Exception e) {
     backupFileLogger.logExceptions(e);
     backupFileLogger.logStopMessage();
-    // for debugging purpose - to be removed
-    System.out.println(" Sending Notification for Backup failed ");
+    logger.warn(e.getMessage());
     sendNotification(BACKUP_FAILED, this, e.getMessage());
   }
 

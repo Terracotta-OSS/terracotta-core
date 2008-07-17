@@ -12,6 +12,7 @@ import com.tc.management.beans.object.ServerDBBackupMBean;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.serverdbbackuprunner.RunnerUtility;
 import com.tc.serverdbbackuprunner.ServerDBBackupRunner;
@@ -262,7 +263,7 @@ public class ServerDBBackupTestApp extends AbstractTransparentApp {
       serverControl.crash();
 
       FileUtils.cleanDirectory(new File(dbHome));
-      FileUtils.copyDirectory(new File(copyFrom), new File(dbHome));
+      FileUtils.copyDirectory(new File(copyFrom + File.separator + NewL2DSOConfig.OBJECTDB_DIRNAME), new File(dbHome));
 
       System.out.println("File copied from " + copyFrom + " to " + dbHome);
       serverControl.start();

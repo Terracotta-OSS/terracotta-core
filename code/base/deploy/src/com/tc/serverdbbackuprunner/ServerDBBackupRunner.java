@@ -78,12 +78,18 @@ public class ServerDBBackupRunner {
       host = arguments[0];
       port = Integer.parseInt(arguments[1]);
     }
+    ServerDBBackupRunner serverDBBackupRunner = null;
     try {
-      new ServerDBBackupRunner(host, port, userName).runBackup(path);
+      serverDBBackupRunner = new ServerDBBackupRunner(host, port, userName);
+      serverDBBackupRunner.runBackup(path);
     } catch (Exception se) {
       System.err.println(se.getMessage());
       runnerUtility.usageAndDie();
     }
+
+    if (path == null) path = serverDBBackupRunner.getDefaultBackupPath();
+
+    System.out.println("The back up was successfully taken at " + path);
   }
 
   public ServerDBBackupRunner(String host, int port) {
