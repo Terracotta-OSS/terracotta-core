@@ -575,16 +575,6 @@ public class BootJarTool {
     }
   }
 
-  private final Map getAllSpecs() {
-    Map map = new HashMap();
-    TransparencyClassSpec[] allSpecs = configHelper.getAllSpecs();
-    for (int i = 0; i < allSpecs.length; i++) {
-      TransparencyClassSpec spec = allSpecs[i];
-      map.put(spec.getClassName(), spec);
-    }
-    return Collections.unmodifiableMap(map);
-  }
-
   private void loadClassIntoJar(String className, byte[] data, boolean isPreinstrumented) {
     loadClassIntoJar(className, data, isPreinstrumented, false);
   }
@@ -1325,7 +1315,7 @@ public class BootJarTool {
   private Map getUserDefinedSpecsFromConfig() {
     Map rv = new HashMap();
     for (Iterator i = configHelper.getAllUserDefinedBootSpecs(); i.hasNext();) {
-      TransparencyClassSpec spec = (TransparencyClassSpec)i.next();
+      TransparencyClassSpec spec = (TransparencyClassSpec) i.next();
       Assert.assertTrue(spec.isPreInstrumented());
       rv.put(spec.getClassName(), spec);
     }
