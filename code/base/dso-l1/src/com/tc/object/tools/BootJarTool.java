@@ -176,6 +176,7 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.AccessibleObject;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -229,7 +230,33 @@ public class BootJarTool {
     this.bootJarHandler = new BootJarHandler(WRITE_OUT_TEMP_FILE, this.outputFile);
     this.quiet = quiet;
     this.portability = new PortabilityImpl(this.configHelper);
+
+    loadModules();
+  }
+
+  private void loadModules() {
+    // remove the user defined specs already load from config while modules are running so that specs created take
+    // precedence from user defined specs
+    List userSpecs = new ArrayList();
+    for (Iterator i = configHelper.getAllUserDefinedBootSpecs(); i.hasNext();) {
+      userSpecs.add(i.next());
+    }
+
+    for (Iterator i = userSpecs.iterator(); i.hasNext();) {
+      configHelper.removeSpec(((TransparencyClassSpec) i.next()).getClassName());
+    }
+
+    // load the modules
     ModulesLoader.initModules(this.configHelper, null, true);
+
+    // put the user defined specs back not already included by modules
+    for (Iterator i = userSpecs.iterator(); i.hasNext();) {
+      TransparencyClassSpec userSpec = (TransparencyClassSpec) i.next();
+
+      if (configHelper.getSpec(userSpec.getClassName()) == null) {
+        configHelper.addUserDefinedBootSpec(userSpec.getClassName(), userSpec);
+      }
+    }
   }
 
   public BootJarTool(DSOClientConfigHelper configuration, File outputFile, ClassLoader systemProvider) {
@@ -575,12 +602,22 @@ public class BootJarTool {
     }
   }
 
+  private final Map getAllSpecs() {
+    Map map = new HashMap();
+    TransparencyClassSpec[] allSpecs = configHelper.getAllSpecs();
+    for (int i = 0; i < allSpecs.length; i++) {
+      TransparencyClassSpec spec = allSpecs[i];
+      map.put(spec.getClassName(), spec);
+    }
+    return Collections.unmodifiableMap(map);
+  }
+
   private void loadClassIntoJar(String className, byte[] data, boolean isPreinstrumented) {
     loadClassIntoJar(className, data, isPreinstrumented, false);
   }
 
   private void loadClassIntoJar(String className, byte[] data, boolean isPreinstrumented, boolean isForeign) {
-    Map userSpecs = getUserDefinedSpecsFromConfig();
+    Map userSpecs = getUserDefinedSpecs(getAllSpecs());
     if (!isForeign && userSpecs.containsKey(className)) consoleLogger
         .warn(className + " already belongs in the bootjar by default.");
     bootJar.loadClassIntoJar(className, data, isPreinstrumented, isForeign);
@@ -1310,16 +1347,6 @@ public class BootJarTool {
     }
 
     return Collections.unmodifiableMap(map);
-  }
-
-  private Map getUserDefinedSpecsFromConfig() {
-    Map rv = new HashMap();
-    for (Iterator i = configHelper.getAllUserDefinedBootSpecs(); i.hasNext();) {
-      TransparencyClassSpec spec = (TransparencyClassSpec) i.next();
-      Assert.assertTrue(spec.isPreInstrumented());
-      rv.put(spec.getClassName(), spec);
-    }
-    return Collections.unmodifiableMap(rv);
   }
 
   private final Map getUserDefinedSpecs(Map internalSpecs) {

@@ -1,13 +1,16 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.tc.util.runtime.Vm;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class NonInstrumentedClasses {
-  private static final List nonInstrumentedClass = new ArrayList();
+  private static final Set nonInstrumentedClass = new HashSet();
 
   static {
     nonInstrumentedClass.add("java.lang.Object");
@@ -18,8 +21,11 @@ public class NonInstrumentedClasses {
     nonInstrumentedClass.add("java.util.Dictionary");
     nonInstrumentedClass.add("java.lang.Enum");
     nonInstrumentedClass.add("java.lang.reflect.AccessibleObject");
-    nonInstrumentedClass.add("java.util.concurrent.atomic.AtomicInteger");
-    nonInstrumentedClass.add("java.util.concurrent.atomic.AtomicLong");
+
+    if (Vm.isIBM()) {
+      nonInstrumentedClass.add("java.util.concurrent.atomic.AtomicInteger");
+      nonInstrumentedClass.add("java.util.concurrent.atomic.AtomicLong");
+    }
   }
 
   public boolean isInstrumentationNotNeeded(String clazzName) {
