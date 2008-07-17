@@ -1,4 +1,4 @@
-package org.terracotta.modules.glassfish_1_0_0;
+package org.terracotta.modules.glassfish_2_0_0;
 
 import org.osgi.framework.BundleContext;
 import org.terracotta.modules.configuration.TerracottaConfiguratorModule;
