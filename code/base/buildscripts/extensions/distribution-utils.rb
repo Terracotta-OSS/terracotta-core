@@ -57,7 +57,7 @@ module DistributionUtils
   end
 
   def patch_descriptor_file
-    FilePath.new(@basedir, 'patch.def.yml')
+    @config_source['patch_def_file'] ? FilePath.new(@config_source['patch_def_file']) : FilePath.new(@basedir, 'patch.def.yml')
   end
 
   def dist_directory
