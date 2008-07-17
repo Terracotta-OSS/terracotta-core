@@ -31,7 +31,7 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
   private final SyncObjectIdSet        extantObjectIDs;
   private final ManagedObjectPersistor objectPersistor;
   private final Sink                   gcDisposerSink;
-  private boolean                      inShutdown;
+  private volatile boolean             inShutdown;
 
   public PersistentManagedObjectStore(ManagedObjectPersistor persistor, Sink gcDisposerSink) {
     this.objectPersistor = persistor;
@@ -39,10 +39,10 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
     this.extantObjectIDs = objectPersistor.getAllObjectIDs();
   }
 
-  public synchronized int getObjectCount() {
+  public int getObjectCount() {
     return this.extantObjectIDs.size();
   }
-  
+
   public long nextObjectIDBatch(int batchSize) {
     long rv = this.objectPersistor.nextObjectIDBatch(batchSize);
     return rv;
@@ -124,16 +124,16 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
     return rv;
   }
 
-  public synchronized void shutdown() {
+  public void shutdown() {
     assertNotInShutdown();
     this.inShutdown = true;
   }
 
-  public synchronized boolean inShutdown() {
+  public boolean inShutdown() {
     return this.inShutdown;
   }
 
-  public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
     PrettyPrinter rv = out;
     out = out.println(getClass().getName()).duplicateAndIndent();
     out.indent().print("extantObjectIDs: ").visit(extantObjectIDs).println();
