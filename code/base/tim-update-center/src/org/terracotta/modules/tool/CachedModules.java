@@ -13,7 +13,9 @@ import org.terracotta.modules.tool.util.DataLoader;
 
 import com.google.inject.Inject;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -30,17 +32,23 @@ class CachedModules implements Modules {
   private final String          tcVersion;
   private final DataLoader      dataLoader;
 
+  public CachedModules(@TerracottaVersion String tcVersion, InputStream dataInputStream) throws JDOMException, IOException {
+    this.tcVersion = tcVersion;
+    this.dataLoader = null;
+    loadData(dataInputStream);
+  }
+
   @Inject
   public CachedModules(@TerracottaVersion String tcVersion, DataLoader dataLoader) throws JDOMException, IOException {
     this.tcVersion = tcVersion;
     this.dataLoader = dataLoader;
-    loadData();
+    loadData(new FileInputStream(this.dataLoader.getDataFile()));
   }
 
-  private void loadData() throws JDOMException, IOException {
+  private void loadData(InputStream in) throws JDOMException, IOException {
     if (modules == null) {
       SAXBuilder builder = new SAXBuilder();
-      Document document = builder.build(dataLoader.getDataFile());
+      Document document = builder.build(in);
       Element root = document.getRootElement();
       this.modules = new HashMap<ModuleId, Module>();
 

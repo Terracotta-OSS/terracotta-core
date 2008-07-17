@@ -25,7 +25,7 @@ public class ListCommandTest extends AbstractCommandTestCase {
 
   @Override
   protected AbstractCommand createCommand() {
-    return null;
+    return new ListCommand(null);
   }
 
 }

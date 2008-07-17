@@ -147,6 +147,8 @@ public class DataLoader {
   }
 
   public void loadDataFile() throws IOException {
+    if (this.remoteDataUrl == null)
+      return;
     DownloadUtil downloader = new DownloadUtil(this.proxy);
     downloader.download(this.remoteDataUrl, localDataFile,
                         DownloadOption.CREATE_INTERVENING_DIRECTORIES,

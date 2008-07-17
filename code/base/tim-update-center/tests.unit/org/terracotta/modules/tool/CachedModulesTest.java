@@ -3,9 +3,6 @@
  */
 package org.terracotta.modules.tool;
 
-import org.terracotta.modules.tool.util.DataLoader;
-
-import java.io.File;
 import java.io.InputStream;
 import java.util.List;
 
@@ -119,9 +116,9 @@ public class CachedModulesTest extends TestCase {
     try {
       InputStream data = this.getClass().getResourceAsStream(file);
       assertNotNull(data);
-      return new CachedModules(tcversion, new DataLoader(new File(file)));
+      return new CachedModules(tcversion, data);
     } catch (Exception e) {
-      return null;
+      throw new RuntimeException(e);
     }
   }
 
