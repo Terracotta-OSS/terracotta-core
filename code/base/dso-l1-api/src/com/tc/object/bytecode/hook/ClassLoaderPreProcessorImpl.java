@@ -199,8 +199,27 @@ public class ClassLoaderPreProcessorImpl {
       super.visitFieldInsn(opcode, owner, name, desc);
 
       if ("sclSet".equals(name) && (PUTSTATIC == opcode)) {
+        // The ClassLoader class sets a flag when it's finished setting the
+        // system classloader, however this doesn't mean that the system
+        // classloader has really been set since the same code path might
+        // be followed by nested calls.
+        // Inside the initSystemClassLoader method of ClassLoader, it calls out
+        // to the sun.misc.Launcher class which can be looking up customer
+        // protocol handlers through the URLs that are being used by the
+        // ExtClassLoader. At that time, the system classloader is not yet
+        // set, causing the system classloader to be null during the actual
+        // initialization the system classloader itself. The flag itself
+        // is set however, which can cause DSO to think that the initialization
+        // was actually finished and the system classloader was set.
+        // By checking that the system classloader is actually not null, we
+        // make sure that during those nested calls, the DSO initialization
+        // process doesn't blow up.
+        Label l = new Label();
+        super.visitFieldInsn(GETSTATIC, owner, "scl", "Ljava/lang/ClassLoader;");
+        super.visitJumpInsn(IFNULL, l);
         super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/ClassProcessorHelper",
                               "systemLoaderInitialized", "()V");
+        super.visitLabel(l);
       }
     }
   }
