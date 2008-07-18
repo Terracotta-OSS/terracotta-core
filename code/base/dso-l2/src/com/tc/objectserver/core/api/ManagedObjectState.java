@@ -40,6 +40,7 @@ public interface ManagedObjectState {
   public static final byte CONCURRENT_HASHMAP_TYPE = 0x0c;
   public static final byte PARTIAL_MAP_TYPE        = 0x0d;
   public static final byte URL_TYPE                = 0x0e;
+  public static final byte LINKED_HASHSET_TYPE         = 0x0f;
 
   public void apply(ObjectID objectID, DNACursor cursor, BackReferences includeIDs) throws IOException;
 

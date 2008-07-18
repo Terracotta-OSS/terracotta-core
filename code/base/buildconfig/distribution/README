@@ -1,6 +1,0 @@
-If you change anything in one of these files, due to our current setup, you have to make the same changes
-in all of the files.
-
-For example, if you add a new project to be included in tc.jar, that project has to be in Eclipse and EE 
-kit as well. Hence the same add has to be in dso-enterprise.def.yml and web-enterprise.def.yml
-

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.persistence.sleepycat;
 
@@ -16,8 +17,12 @@ import com.tc.io.serializer.TCObjectOutputStream;
 import com.tc.io.serializer.api.BasicSerializer;
 import com.tc.logging.TCLogger;
 import com.tc.object.ObjectID;
+import com.tc.objectserver.core.api.ManagedObjectState;
+import com.tc.objectserver.managedobject.PersistableObjectState;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
+import com.tc.objectserver.persistence.api.PersistentCollectionsUtil;
 import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor.SleepycatPersistorBase;
+import com.tc.util.Assert;
 import com.tc.util.Conversion;
 
 import java.io.ByteArrayInputStream;
@@ -31,7 +36,7 @@ public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
   private final BasicSerializer            serializer;
   private final ByteArrayOutputStream      bao;
   private final SleepycatCollectionFactory collectionFactory;
-  private final TCObjectOutputStream oo;
+  private final TCObjectOutputStream       oo;
 
   public SleepycatCollectionsPersistor(TCLogger logger, Database mapsDatabase,
                                        SleepycatCollectionFactory sleepycatCollectionFactory) {
@@ -43,8 +48,10 @@ public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
     this.oo = new TCObjectOutputStream(bao);
   }
 
-  public int saveMap(PersistenceTransaction tx, SleepycatPersistableMap map) throws IOException, DatabaseException {
-    return map.commit(this, tx, database);
+  public int saveCollections(PersistenceTransaction tx, ManagedObjectState state) throws IOException, DatabaseException {
+    PersistableObjectState persistabeState = (PersistableObjectState) state;
+    PersistableCollection collection = persistabeState.getPersistentCollection();
+    return collection.commit(this, tx, database);
   }
 
   public synchronized byte[] serialize(long id, Object o) throws IOException {
@@ -64,11 +71,16 @@ public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
     return b;
   }
 
-  public SleepycatPersistableMap loadMap(PersistenceTransaction tx, ObjectID id) throws IOException,
-      ClassNotFoundException, DatabaseException {
-    SleepycatPersistableMap map = (SleepycatPersistableMap) collectionFactory.createPersistentMap(id);
-    map.load(this, tx, database);
-    return map;
+  public void loadCollectionsToManagedState(PersistenceTransaction tx, ObjectID id, ManagedObjectState state)
+      throws IOException, ClassNotFoundException, DatabaseException {
+    assert PersistentCollectionsUtil.isPersistableCollectionType(state.getType());
+
+    PersistableObjectState persistableState = (PersistableObjectState) state;
+    Assert.assertNull(persistableState.getPersistentCollection());
+    PersistableCollection collection = PersistentCollectionsUtil.createPersistableCollection(id, collectionFactory,
+                                                                                             state.getType());
+    collection.load(this, tx, database);
+    persistableState.setPersistentCollection(collection);
   }
 
   public Object deserialize(int start, byte[] data) throws IOException, ClassNotFoundException {

@@ -13,8 +13,10 @@ import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.MapEntryFacade;
 import com.tc.objectserver.mgmt.MapEntryFacadeImpl;
+import com.tc.objectserver.persistence.sleepycat.PersistableCollection;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -26,7 +28,7 @@ import java.util.Map.Entry;
 /**
  * state for maps
  */
-public class MapManagedObjectState extends LogicalManagedObjectState implements PrettyPrintable {
+public class MapManagedObjectState extends LogicalManagedObjectState implements PrettyPrintable, PersistableObjectState {
   protected Map references;
 
   protected MapManagedObjectState(long classID, Map map) {
@@ -179,5 +181,13 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
   protected boolean basicEquals(LogicalManagedObjectState o) {
     MapManagedObjectState mmo = (MapManagedObjectState) o;
     return references.equals(mmo.references);
+  }
+
+  public PersistableCollection getPersistentCollection() {
+    return (PersistableCollection)getMap();
+  }
+
+  public void setPersistentCollection(PersistableCollection collection) {
+    setMap((Map)collection);
   }
 }

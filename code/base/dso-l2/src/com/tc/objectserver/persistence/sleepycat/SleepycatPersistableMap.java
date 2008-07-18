@@ -22,7 +22,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-public class SleepycatPersistableMap implements Map {
+public class SleepycatPersistableMap implements Map, PersistableCollection {
 
   private static final Object REMOVED     = new Object();
 

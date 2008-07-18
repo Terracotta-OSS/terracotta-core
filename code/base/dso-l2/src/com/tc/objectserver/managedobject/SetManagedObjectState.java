@@ -11,24 +11,24 @@ import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
+import com.tc.objectserver.persistence.sleepycat.PersistableCollection;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
  * ManagedObjectState for sets.
  */
-public class SetManagedObjectState extends LogicalManagedObjectState {
+public class SetManagedObjectState extends LogicalManagedObjectState implements PersistableObjectState {
   protected Set references;
 
-  SetManagedObjectState(long classID) {
+  SetManagedObjectState(long classID, Set set) {
     super(classID);
-    this.references = new LinkedHashSet(1, 0.75f); // Accommodating LinkedHashSet.
+    this.references = set;
   }
 
   protected SetManagedObjectState(ObjectInput in) throws IOException {
@@ -112,10 +112,8 @@ public class SetManagedObjectState extends LogicalManagedObjectState {
   }
 
   protected void basicWriteTo(ObjectOutput out) throws IOException {
-    out.writeInt(references.size());
-    for (Iterator i = references.iterator(); i.hasNext();) {
-      out.writeObject(i.next());
-    }
+    //for removing warning
+    if(false) throw new IOException();
   }
 
   protected boolean basicEquals(LogicalManagedObjectState o) {
@@ -123,14 +121,26 @@ public class SetManagedObjectState extends LogicalManagedObjectState {
     return references.equals(mo.references);
   }
 
+  public void setSet(Set set) {
+    if (this.references != null) { throw new AssertionError("The references map is already set ! " + references); }
+    this.references = set;
+  }
+
+  public PersistableCollection getPersistentCollection() {
+    return (PersistableCollection)references;
+  }
+
+  public void setPersistentCollection(PersistableCollection collection) {
+    if (this.references != null) { throw new AssertionError("The references map is already set ! " + references); }
+    this.references = (Set)collection;
+  }
+  
   static SetManagedObjectState readFrom(ObjectInput in) throws IOException, ClassNotFoundException {
-    SetManagedObjectState setmo = new SetManagedObjectState(in);
-    int size = in.readInt();
-    Set set = new LinkedHashSet(size, 0.75f);
-    for (int i = 0; i < size; i++) {
-      set.add(in.readObject());
+    if (false) {
+      // This is added to make the compiler happy. For some reason if I have readFrom() method throw
+      // ClassNotFoundException in LinkedHashMapManagedObjectState, it shows as an error !!
+      throw new ClassNotFoundException();
     }
-    setmo.references = set;
-    return setmo;
+    return new SetManagedObjectState(in);
   }
 }

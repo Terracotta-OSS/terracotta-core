@@ -6,9 +6,12 @@ package com.tc.objectserver.persistence.api;
 import com.tc.object.ObjectID;
 
 import java.util.Map;
+import java.util.Set;
 
 public interface PersistentCollectionFactory {
   
   public Map createPersistentMap(ObjectID id);
+  
+  public Set createPersistentSet(ObjectID id);
 
 }

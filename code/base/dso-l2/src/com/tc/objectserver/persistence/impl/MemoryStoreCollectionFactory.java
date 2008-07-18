@@ -3,12 +3,14 @@
  */
 package com.tc.objectserver.persistence.impl;
 
+import com.tc.exception.ImplementMe;
 import com.tc.exception.TCRuntimeException;
 import com.tc.memorydatastore.client.MemoryDataStoreClient;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.persistence.api.PersistentCollectionFactory;
 
 import java.util.Map;
+import java.util.Set;
 
 public class MemoryStoreCollectionFactory implements PersistentCollectionFactory {
   private MemoryDataStoreClient           db;
@@ -27,6 +29,10 @@ public class MemoryStoreCollectionFactory implements PersistentCollectionFactory
   
   public void setMemoryDataStore(MemoryDataStoreClient db) {
     this.db = db;
+  }
+
+  public Set createPersistentSet(ObjectID id) {
+    throw new ImplementMe();
   }
 
 }
