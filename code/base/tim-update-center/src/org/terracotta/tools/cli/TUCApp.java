@@ -30,7 +30,7 @@ public class TUCApp {
 
   private static Config createConfig() throws IOException {
     Properties props = new Properties();
-    props.load(TUCApp.class.getResourceAsStream("/org/terracotta/modules/tool/config.properties"));
+    props.load(TUCApp.class.getResourceAsStream("/org/terracotta/modules/tool/tim-get.properties"));
     return new Config(props);
   }
 
