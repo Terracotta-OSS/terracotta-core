@@ -6,15 +6,17 @@ package com.tc.objectserver.impl;
 
 import com.tc.logging.TCLogger;
 import com.tc.objectserver.core.api.GarbageCollectionInfo;
+import com.tc.util.Assert;
 
 import java.util.List;
 import java.util.Set;
 
 public class GCLogger {
-  private TCLogger      logger;
+  private final TCLogger      logger;
   private final boolean verboseGC;
 
   public GCLogger(TCLogger logger, boolean verboseGC) {
+    Assert.assertNotNull(logger);
     this.logger = logger;
     this.verboseGC = verboseGC;
   }
