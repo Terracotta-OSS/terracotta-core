@@ -669,7 +669,7 @@ public class ClientLockManagerTest extends TestCase {
     lockManager.unpause();
     unlockComplete.take();
     System.out.println("Done testing unlock(..)");
-    
+
     // TODO: test awardLock() and the other public methods I didn't have
     // time to test...
 
@@ -812,83 +812,6 @@ public class ClientLockManagerTest extends TestCase {
     lockManager.unlock(lid0, tid0);
     assertEquals(2, rmtLockManager.getLockRequestCount());
     assertEquals(2, rmtLockManager.getUnlockRequestCount());
-  }
-
-  public void testLockLease() throws Exception {
-    final ThreadID tid0 = new ThreadID(0);
-    final LockID lid0 = new LockID("0");
-
-    rmtLockManager.makeLocksGreedy();
-
-
-    
-    lockManager.lock(lid0, tid0, LockLevel.READ, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
-    ThreadUtil.reallySleep(500);
-
-    final ThreadID tid1 = new ThreadID(1);
-    Thread t1 = new Thread() {
-      public void run() {
-        ThreadUtil.reallySleep(1000);
-        lockManager.lock(lid0, tid1, LockLevel.WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
-        lockManager.unlock(lid0, tid1);
-      }
-    };
-    t1.start();
-
-    ThreadUtil.reallySleep(1500);
-
-    final ThreadID tid2 = new ThreadID(1);
-    Thread t2 = new Thread() {
-      public void run() {
-        lockManager.awardLock(SessionID.NULL_ID, lid0, tid2, LockLevel.WRITE);
-      }
-    };
-    t2.start();
-
-    ThreadUtil.reallySleep(500);
-
-    lockManager.recall(lid0, ThreadID.VM_ID, LockLevel.WRITE, 5000);
-
-//    final ThreadID tid2 = new ThreadID(1);
-//    Thread t2 = new Thread() {
-//      public void run() {
-//        lockManager.tryLock(lid0, tid2, new TimerSpec(0), LockLevel.READ, LockContextInfo.NULL_LOCK_CONTEXT_INFO);
-//        lockManager.unlock(lid0, tid2);
-//      }
-//    };
-//    t2.start();
-
-    ThreadUtil.reallySleep(500);
-
-//    ThreadUtil.reallySleep(120000);
-
-  }
-
-  public void testLockLease1() throws Exception {
-    final ThreadID tid0 = new ThreadID(0);
-    final LockID lid0 = new LockID("0");
-
-    rmtLockManager.makeLocksGreedy();
-
-
-
-    lockManager.lock(lid0, tid0, LockLevel.WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
-
-    final ThreadID tid1 = new ThreadID(1);
-    Thread t1 = new Thread() {
-      public void run() {
-        lockManager.lock(lid0, tid1, LockLevel.WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
-        lockManager.unlock(lid0, tid1);
-      }
-    };
-    t1.start();
-
-    ThreadUtil.reallySleep(500);
-
-    lockManager.recall(lid0, ThreadID.VM_ID, LockLevel.WRITE, 60000);
-
-//    ThreadUtil.reallySleep(120000);
-
   }
 
   public void testLockUpgradeMakesRemoteRequest() throws Exception {
