@@ -128,7 +128,7 @@ public class ModuleId implements Comparable {
   
   public String toDigestString() {
     String digest = artifactId + " " + version;
-    if (!isDefaultGroupId()) digest = digest.concat(" --group-id " + groupId);
+    if (!isDefaultGroupId()) digest = digest.concat(" [" + groupId + "]");
     return digest;
   }
 }
