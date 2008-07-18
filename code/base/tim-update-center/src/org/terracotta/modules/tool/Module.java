@@ -329,15 +329,15 @@ public class Module implements Comparable {
   }
 
   private void printInstallationInfo(PrintWriter out) {
-    if (isInstalled()) out.println("Installed at " + StringUtils.abbreviate(installPath().getParent(), 75));
+    if (isInstalled()) out.println("Installed at " + installPath().getParent());
     if (getVersions().isEmpty()) {
       out.println("There are no other versions of this TIM that is compatible with TC " + modules.tcVersion());
     } else {
       out.println("The following versions are also available for TC " + modules.tcVersion() + ":\n");
       List<Module> siblings = this.getSiblings();
       for (Module sibling : siblings) {
-        out.print("\t" +  (sibling.isInstalled() ? "+ " : "- ") + sibling.getId().getVersion());
-        if (sibling.isInstalled()) out.println("\tinstalled at " + StringUtils.abbreviate(sibling.installPath().getParent(), 75));
+        out.print("\t" +  sibling.installStateMarker() + " " + sibling.getId().getVersion());
+        if (sibling.isInstalled()) out.println("\tinstalled at " + sibling.installPath().getParent());
         else out.println();
       }
     }
@@ -367,7 +367,7 @@ public class Module implements Comparable {
     Map<ModuleId, Dependency> manifest = computeManifest();
     for (ModuleId m : requires) {
       Dependency d = manifest.get(m);
-      out.println("\t" +  (this.isInstalled(d) ? "+ " : "- ") + m.toDigestString());
+      out.println("\t" +  this.installMarker(d) + " " + m.toDigestString());
     }
   }
 
@@ -450,8 +450,25 @@ public class Module implements Comparable {
   }
 
   public void printDigest(PrintWriter out) {
-    out.print(isInstalled() ? "+ " : "- "); 
-    out.println(id.toDigestString());
+    out.println(installStateMarker() + " " + id.toDigestString()); 
+  }
+
+  private String installMarker(Dependency d) {
+    String marker = isInstalled(d) ? "+" : "-";
+    return marker;
+  }
+  
+  private String installStateMarker() {
+    String marker = isInstalled() ? "+" : "-";
+    if (marker.equals("-")) {
+      List<Module> siblings = getSiblings();
+      for (Module sibling : siblings) {
+        if (!sibling.isInstalled()) continue;
+        marker = "!";
+        break;
+      }
+    }
+    return marker;
   }
 
 }
