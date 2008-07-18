@@ -4,8 +4,6 @@
  */
 package com.tc.stats;
 
-import com.tc.objectserver.api.GCStats;
-import com.tc.objectserver.api.ObjectManagerMBean;
 import com.tc.objectserver.api.ObjectManagerStats;
 import com.tc.objectserver.core.api.DSOGlobalServerStats;
 import com.tc.objectserver.core.impl.ServerManagementContext;
@@ -32,10 +30,8 @@ public class DSOStatsImpl extends StatsSupport implements DSOStats {
   private final SampledCounter       flushRate;
   private final ObjectManagerStats   objMgrStats;
   private final SampledCounter       txnRate;
-  private final ObjectManagerMBean   objManager;
 
   public DSOStatsImpl(ServerManagementContext context) {
-    this.objManager = context.getObjectManager();
     this.serverStats = context.getServerStats();
     this.objMgrStats = serverStats.getObjectManagerStats();
     this.faultRate = serverStats.getObjectFaultCounter();
@@ -82,9 +78,4 @@ public class DSOStatsImpl extends StatsSupport implements DSOStats {
 
     return result;
   }
-
-  public GCStats[] getGarbageCollectorStats() {
-    return this.objManager.getGarbageCollectorStats();
-  }
-
 }

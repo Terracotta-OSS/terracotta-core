@@ -46,7 +46,7 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
       }
     };
 
-    this.garbageCollectionEnabled = this.context.booleanItem("dso/garbage-collection/enabled");
+    this.garbageCollectionEnabled = this.context.booleanItem("dso/garbage-collection/enabled", true);
     this.garbageCollectionVerbose = this.context.booleanItem("dso/garbage-collection/verbose");
     this.garbageCollectionInterval = this.context.intItem("dso/garbage-collection/interval");
     this.clientReconnectWindow = this.context.intItem("dso/client-reconnect-window");

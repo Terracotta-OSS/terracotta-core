@@ -11,7 +11,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.net.groups.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ObjectManager;
-import com.tc.objectserver.api.ObjectManagerEventListener;
+import com.tc.objectserver.api.GCStatsEventListener;
 import com.tc.objectserver.api.ObjectManagerStatsListener;
 import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
@@ -105,7 +105,7 @@ public class TestObjectManager implements ObjectManager {
     throw new ImplementMe();
   }
 
-  public void addListener(ObjectManagerEventListener listener) {
+  public void addListener(GCStatsEventListener listener) {
     throw new ImplementMe();
   }
 

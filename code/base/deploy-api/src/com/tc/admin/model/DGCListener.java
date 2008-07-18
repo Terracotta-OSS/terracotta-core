@@ -8,5 +8,5 @@ import com.tc.objectserver.api.GCStats;
 import java.util.EventListener;
 
 public interface DGCListener extends EventListener {
-  void garbageCollected(GCStats gcStats);
+  void statusUpdate(GCStats gcStats);
 }

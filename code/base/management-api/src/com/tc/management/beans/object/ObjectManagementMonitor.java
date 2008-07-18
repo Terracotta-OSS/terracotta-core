@@ -67,10 +67,7 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements
 		if (gcController == null) {
 			throw new RuntimeException("Failure: see log for more information");
 		}
-		if (gcController.gcEnabledInConfig()) {
-			throw new UnsupportedOperationException(
-					"Cannot run GC externally because GC is enabled through config.");
-		}
+		
 		if (!gcController.isGCStarted()) {
 			throw new UnsupportedOperationException(
 					"Cannot run GC externally because this server "
@@ -111,8 +108,6 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements
 
 	public static interface GCComptroller {
 		void startGC();
-
-		boolean gcEnabledInConfig();
 
 		boolean isGCDisabled();
 

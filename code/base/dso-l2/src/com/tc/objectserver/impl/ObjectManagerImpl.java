@@ -15,10 +15,8 @@ import com.tc.object.ObjectID;
 import com.tc.object.cache.CacheStats;
 import com.tc.object.cache.Evictable;
 import com.tc.object.cache.EvictionPolicy;
-import com.tc.objectserver.api.GCStats;
 import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.api.ObjectManager;
-import com.tc.objectserver.api.ObjectManagerEventListener;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
 import com.tc.objectserver.api.ObjectManagerMBean;
 import com.tc.objectserver.api.ObjectManagerStatsListener;
@@ -167,15 +165,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       logger.error("exception printing roots in ObjectManagerImpl", t);
     }
     return out;
-  }
-
-  public void addListener(ObjectManagerEventListener listener) {
-    if (listener == null) { throw new NullPointerException("cannot add a null event listener"); }
-    collector.addListener(listener);
-  }
-
-  public GCStats[] getGarbageCollectorStats() {
-    return collector.getGarbageCollectorStats();
   }
 
   public ObjectID lookupRootID(String name) {
@@ -680,7 +669,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
     objectStore.removeAllObjectsByID(gcResult);
   }
-
+  
   private void flushAndCommit(PersistenceTransaction persistenceTransaction, ManagedObject managedObject) {
     objectStore.commitObject(persistenceTransaction, managedObject);
     persistenceTransaction.commit();

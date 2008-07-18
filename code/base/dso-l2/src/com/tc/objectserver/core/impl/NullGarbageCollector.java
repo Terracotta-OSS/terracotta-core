@@ -6,10 +6,10 @@ package com.tc.objectserver.core.impl;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.GCStats;
-import com.tc.objectserver.api.ObjectManagerEventListener;
 import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.core.api.GarbageCollector;
+import com.tc.objectserver.core.api.GarbageCollectorEventListener;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
@@ -84,9 +84,9 @@ public class NullGarbageCollector implements GarbageCollector {
   public void setState(StoppableThread st) {
     // do nothing null
   }
-
-  public void addListener(ObjectManagerEventListener listener) {
-    // do nothing null
+  
+  public void addListener(GarbageCollectorEventListener listener) {
+    //
   }
 
   public GCStats[] getGarbageCollectorStats() {

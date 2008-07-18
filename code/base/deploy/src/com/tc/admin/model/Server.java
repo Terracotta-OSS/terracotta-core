@@ -686,8 +686,8 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
       clientNotification(notification, handback);
     } else if (DSOMBean.ROOT_ADDED.equals(type)) {
       rootAdded(notification, handback);
-    } else if (DSOMBean.GC_COMPLETED.equals(type)) {
-      fireGarbageCollected((GCStats) notification.getSource());
+    } else if (DSOMBean.GC_STATUS_UPDATE.equals(type)) {
+      fireStatusUpdated((GCStats) notification.getSource());
     }
   }
 
@@ -834,11 +834,11 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     m_listenerList.remove(DGCListener.class, listener);
   }
 
-  private void fireGarbageCollected(GCStats gcStats) {
+  private void fireStatusUpdated(GCStats gcStats) {
     Object[] listeners = m_listenerList.getListenerList();
     for (int i = listeners.length - 2; i >= 0; i -= 2) {
       if (listeners[i] == DGCListener.class) {
-        ((DGCListener) listeners[i + 1]).garbageCollected(gcStats);
+        ((DGCListener) listeners[i + 1]).statusUpdate(gcStats);
       }
     }
   }

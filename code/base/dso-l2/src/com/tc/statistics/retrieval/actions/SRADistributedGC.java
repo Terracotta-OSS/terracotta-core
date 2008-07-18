@@ -3,7 +3,7 @@
  */
 package com.tc.statistics.retrieval.actions;
 
-import com.tc.objectserver.core.impl.MarkAndSweepGarbageCollector;
+import com.tc.objectserver.core.impl.GCStatisticsAgentSubSystemEventListener;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
@@ -28,7 +28,7 @@ import com.tc.statistics.StatisticType;
  */
 public class SRADistributedGC implements StatisticRetrievalAction {
 
-  public static final String ACTION_NAME = MarkAndSweepGarbageCollector.DISTRIBUTED_GC_STATISTICS;
+  public static final String ACTION_NAME = GCStatisticsAgentSubSystemEventListener.DISTRIBUTED_GC_STATISTICS;
 
   public StatisticData[] retrieveStatisticData() {
     LOGGER.warn("Data for statistic '" + ACTION_NAME + " can't be retrieved using the action instance. " +

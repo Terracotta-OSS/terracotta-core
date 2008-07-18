@@ -10,13 +10,15 @@ import com.tc.admin.AdminClient;
 import com.tc.admin.common.XObjectTableModel;
 
 public class GCStatsTableModel extends XObjectTableModel {
-  private static final String[] FIELDS  = { "Iteration", "StartDate", "ElapsedTime", "BeginObjectCount",
-      "CandidateGarbageCount", "ActualGarbageCount" };
+
+  private static final String[] FIELDS  = { "Iteration", "Type", "Status", "StartDate", "ElapsedTime",
+      "BeginObjectCount", "PausedStageTime", "MarkStageTime", "ActualGarbageCount", "DeleteStageTime" };
 
   private static final String[] HEADERS = AdminClient.getContext().getMessages(
                                                                                new String[] { "dso.gcstats.iteration",
-      "dso.gcstats.startTime", "dso.gcstats.elapsedTime", "dso.gcstats.beginObjectCount",
-      "dso.gcstats.candidateGarbageCount", "dso.gcstats.actualGarbageCount"   });
+      "dso.gcstats.type", "dso.gcstats.status", "dso.gcstats.startTime", "dso.gcstats.elapsedTime",
+      "dso.gcstats.beginObjectCount", "dso.gcstats.pausedStageTime", "dso.gcstats.markStageTime",
+      "dso.gcstats.actualGarbageCount", "dso.gcstats.deleteStageTime"         });
 
   public GCStatsTableModel() {
     super(GCStatsWrapper.class, FIELDS, HEADERS);
@@ -33,8 +35,30 @@ public class GCStatsTableModel extends XObjectTableModel {
     set(wrappers);
   }
 
+  private int iterationRow(int iteration) {
+    int rowCount = getRowCount();
+    for(int i = 0; i < rowCount; i++) {
+      GCStatsWrapper wrapper = (GCStatsWrapper)getObjectAt(i);
+      if(iteration == wrapper.getIteration()) {
+        return i;
+      }
+    }
+    return -1;
+  }
+  
   public void addGCStats(GCStats gcStats) {
-    add(0, new GCStatsWrapper(gcStats));
-    fireTableRowsInserted(0, 0);
+    int row = iterationRow(gcStats.getIteration());
+    if(row != -1) {
+      ((GCStatsWrapper) getObjectAt(row)).set(gcStats);
+      fireTableRowsUpdated(row, row);      
+    } else {
+      add(0, new GCStatsWrapper(gcStats));
+      fireTableRowsInserted(0, 0);
+    }
+  }
+  
+  // no sorting allowed
+  public boolean isColumnSortable(int col) {
+    return false;
   }
 }

@@ -3,7 +3,6 @@
  */
 package com.tc.stats;
 
-import com.tc.objectserver.api.GCStats;
 import com.tc.stats.statistics.CountStatistic;
 import com.tc.stats.statistics.DoubleStatistic;
 import com.tc.stats.statistics.Statistic;
@@ -29,7 +28,5 @@ public interface DSOStats { // extends Stats { XXX: (TE) Not extending the gener
   CountStatistic getObjectFaultRate();
 
   CountStatistic getObjectFlushRate();
-
-  GCStats[] getGarbageCollectorStats();
 
 }

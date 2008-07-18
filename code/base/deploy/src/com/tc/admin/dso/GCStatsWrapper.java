@@ -13,12 +13,25 @@ public class GCStatsWrapper implements GCStats {
   private Date    m_startDate;
 
   GCStatsWrapper(GCStats gcStats) {
+
+    set(gcStats);
+  }
+
+  void set(GCStats gcStats) {
     m_gcStats = gcStats;
     m_startDate = new Date(gcStats.getStartTime());
   }
-
+  
   public int getIteration() {
     return m_gcStats.getIteration();
+  }
+
+  public String getType() {
+    return m_gcStats.getType();
+  }
+
+  public String getStatus() {
+    return m_gcStats.getStatus();
   }
 
   public long getStartTime() {
@@ -37,19 +50,24 @@ public class GCStatsWrapper implements GCStats {
     return m_gcStats.getBeginObjectCount();
   }
 
-  public long getCandidateGarbageCount() {
-    return m_gcStats.getCandidateGarbageCount();
+  public long getPausedStageTime() {
+    return m_gcStats.getPausedStageTime();
+  }
+
+  public long getMarkStageTime() {
+    return m_gcStats.getMarkStageTime();
   }
 
   public long getActualGarbageCount() {
     return m_gcStats.getActualGarbageCount();
   }
 
-  public long getDeleteTime() {
-    return m_gcStats.getDeleteTime();
+  public long getDeleteStageTime() {
+    return m_gcStats.getDeleteStageTime();
   }
-
-  public long getPausedTime() {
-    return m_gcStats.getPausedTime();
+  
+  // No longer used
+  public long getCandidateGarbageCount() {
+    return m_gcStats.getCandidateGarbageCount();
   }
 }

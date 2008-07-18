@@ -14,9 +14,6 @@ public class ConfigurableBean implements Serializable {
   private String property1;
   private String property2;
   
-  public ConfigurableBean() {
-  }
-  
   public String getProperty1() {
     return this.property1;
   }

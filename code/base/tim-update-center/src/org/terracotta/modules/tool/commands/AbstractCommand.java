@@ -46,15 +46,12 @@ public abstract class AbstractCommand implements Command {
   }
   
   public String help() {
+    String cmdLineSyntax = name() + " [arguments]";
     StringWriter writer = new StringWriter();
     HelpFormatter formatter = new HelpFormatter();
-    formatter.printHelp(new PrintWriter(writer), formatter.getWidth(), commandLineSyntax(), "\nheader\n", options,
+    formatter.printHelp(new PrintWriter(writer), formatter.getWidth(), cmdLineSyntax, "\nheader\n", options,
                         formatter.getLeftPadding(), formatter.getDescPadding(), "\nfooter\n", true);
     return writer.toString();
-  }
-  
-  protected String commandLineSyntax() {
-    return  name() + " [arguments] [options]";
   }
 
   private static final String EMPTY_HELP_STRING = "";

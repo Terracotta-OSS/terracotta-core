@@ -42,6 +42,7 @@ import com.tc.management.beans.TCServerInfo;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.core.impl.GCStatsEventPublisher;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.properties.TCPropertiesConsts;
@@ -467,7 +468,8 @@ public class TCServerImpl extends SEDA implements TCServer {
     ServerManagementContext mgmtContext = dsoServer.getManagementContext();
     ServerConfigurationContext configContext = dsoServer.getContext();
     MBeanServer mBeanServer = dsoServer.getMBeanServer();
-    DSOMBean dso = new DSO(mgmtContext, configContext, mBeanServer);
+    GCStatsEventPublisher gcStatsPublisher = dsoServer.getGcStatsEventPublisher();
+    DSOMBean dso = new DSO(mgmtContext, configContext, mBeanServer, gcStatsPublisher);
     mBeanServer.registerMBean(dso, L2MBeanNames.DSO);
     mBeanServer.registerMBean(mgmtContext.getDSOAppEventsMBean(), L2MBeanNames.DSO_APP_EVENTS);
     StatisticsLocalGathererMBeanImpl local_gatherer = new StatisticsLocalGathererMBeanImpl(statisticsGathererSubSystem,

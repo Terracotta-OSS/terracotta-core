@@ -62,7 +62,7 @@ class CachedModules implements Modules {
   }
 
   private boolean qualify(Module module) {
-    return module.getTcVersion().equals("*") || module.getTcVersion().startsWith(this.tcVersion);
+    return module.getTcVersion().equals("*") || module.getTcVersion().equals(this.tcVersion);
   }
 
   public String tcVersion() {

@@ -18,9 +18,10 @@ import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.objectserver.api.GCStats;
 import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.api.ObjectInstanceMonitorMBean;
-import com.tc.objectserver.api.ObjectManagerEventListener;
+import com.tc.objectserver.api.GCStatsEventListener;
 import com.tc.objectserver.api.ObjectManagerMBean;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.core.impl.GCStatsEventPublisher;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.lockmanager.api.LockMBean;
@@ -39,7 +40,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -63,6 +63,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   private final static String                 DSO_OBJECT_NAME_PREFIX = L2MBeanNames.DSO.getCanonicalName() + ",";
 
   private final DSOStatsImpl                  dsoStats;
+  private final GCStatsEventPublisher         gcStatsPublisher;
   private final ObjectManagerMBean            objMgr;
   private final MBeanServer                   mbeanServer;
   private final ArrayList                     rootObjectNames        = new ArrayList();
@@ -76,13 +77,14 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   private final ClientStateManager            clientStateManager;
 
   public DSO(final ServerManagementContext managementContext, final ServerConfigurationContext configContext,
-             final MBeanServer mbeanServer) throws NotCompliantMBeanException {
+             final MBeanServer mbeanServer, final GCStatsEventPublisher gcStatsPublisher) throws NotCompliantMBeanException {
     super(DSOMBean.class);
     try {
       // TraceImplementation.init(TraceTags.LEVEL_TRACE);
     } catch (Exception e) {/**/
     }
     this.mbeanServer = mbeanServer;
+    this.gcStatsPublisher = gcStatsPublisher;
     this.dsoStats = new DSOStatsImpl(managementContext);
     this.lockMgr = managementContext.getLockManager();
     this.objMgr = managementContext.getObjectManager();
@@ -94,7 +96,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
 
     // add various listeners (do this before the setupXXX() methods below so we don't ever miss anything)
     txnMgr.addRootListener(new TransactionManagerListener());
-    objMgr.addListener(new ObjectManagerListener());
+    this.gcStatsPublisher.addListener(new DSOGCStatsEventListener());
     channelMgr.addEventListener(new ChannelManagerListener());
 
     setupRoots();
@@ -134,7 +136,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   }
 
   public GCStats[] getGarbageCollectorStats() {
-    return getStats().getGarbageCollectorStats();
+    return gcStatsPublisher.getGarbageCollectorStats();
   }
 
   public ObjectName[] getRoots() {
@@ -264,7 +266,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
 
       try {
         final DSOClient client = new DSOClient(mbeanServer, channel, channelStats, channelMgr.getClientIDFor(channel
-            .getChannelID()), clientStateManager);
+                                                                                                             .getChannelID()), clientStateManager);
         mbeanServer.registerMBean(client, clientName);
         clientObjectNames.add(clientName);
         clientMap.put(clientName, client);
@@ -409,10 +411,12 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     }
   }
 
-  private class ObjectManagerListener implements ObjectManagerEventListener {
-    public void garbageCollectionComplete(GCStats stats, SortedSet deleted) {
-      sendNotification(GC_COMPLETED, stats);
+  private class DSOGCStatsEventListener implements GCStatsEventListener {
+
+    public void update(GCStats stats) {
+      sendNotification(GC_STATUS_UPDATE, stats);
     }
+
   }
 
   private class ChannelManagerListener implements DSOChannelManagerEventListener {

@@ -11,6 +11,7 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.core.api.GarbageCollector;
+import com.tc.objectserver.core.api.GarbageCollectorEventListener;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
@@ -247,7 +248,7 @@ public class TestGarbageCollector implements GarbageCollector {
     collect(null, objectProvider.getRootIDs(), objectProvider.getAllObjectIDs(), new NullLifeCycleState());
     this.requestGCPause();
     this.blockUntilReadyToGC();
-    this.deleteGarbage(new GCResultContext(1, TCCollections.EMPTY_OBJECT_ID_SET));
+    this.deleteGarbage(new GCResultContext(1, null, null, TCCollections.EMPTY_OBJECT_ID_SET));
   }
 
   public void addNewReferencesTo(Set rescueIds) {
@@ -269,9 +270,8 @@ public class TestGarbageCollector implements GarbageCollector {
 
   }
 
-  public void addListener(ObjectManagerEventListener listener) {
-    throw new ImplementMe();
-
+  public void addListener(GarbageCollectorEventListener listener) {
+    //
   }
 
   public GCStats[] getGarbageCollectorStats() {

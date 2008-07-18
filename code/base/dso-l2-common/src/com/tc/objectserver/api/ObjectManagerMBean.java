@@ -13,15 +13,11 @@ import java.util.Iterator;
  */
 public interface ObjectManagerMBean {
 
-  void addListener(ObjectManagerEventListener listener);
-
   Iterator getRoots();
 
   Iterator getRootNames();
 
   ObjectID lookupRootID(String name);
-
-  GCStats[] getGarbageCollectorStats();
 
   /**
    * Returns a object facade instance. This call does not checkout the object, transactions can be applied to the

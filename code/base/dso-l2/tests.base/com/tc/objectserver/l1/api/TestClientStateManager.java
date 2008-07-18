@@ -55,8 +55,7 @@ public class TestClientStateManager implements ClientStateManager {
   }
 
   public void addAllReferencedIdsTo(Set<ObjectID> rescueIds) {
-    throw new ImplementMe();
-
+    //
   }
   
   public int getReferenceCount(NodeID node) {
