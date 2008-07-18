@@ -113,6 +113,8 @@ bundled_components:
         - thirdparty
         - thirdparty-api
         - tim-update-center
+            kit-resources:
+              - org/terracotta/modules/tool/tim-get.properties
         - ui-configurator
         - ../../../code/base/ent-common
         - ../../../code/base/ent-deploy
