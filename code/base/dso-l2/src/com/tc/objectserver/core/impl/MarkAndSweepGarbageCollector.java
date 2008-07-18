@@ -185,9 +185,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     this.referenceCollector = NULL_CHANGE_COLLECTOR;
 
     // Delete Garbage
-    GCResultContext gcResultContext = new GCResultContext(gcIteration, toDelete);
-    gcResultContext.setGcInfo(gcInfo);
-    gcResultContext.setGcPublisher(gcPublisher);
+    GCResultContext gcResultContext = new GCResultContext(gcIteration, toDelete, gcInfo, gcPublisher);
     deleteGarbage(gcResultContext);
 
     long endMillis = System.currentTimeMillis();
