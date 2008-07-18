@@ -177,6 +177,10 @@ class StaticResources
     FilePath.new(@root_directory, '..', '..', 'kits', 'skeletons')
   end
 
+  def enterprise_skeletons_directory
+    FilePath.new(@root_directory, '..', '..', '..', 'kits', 'skeletons')
+  end
+
   def documentations_directory
     FilePath.new(@root_directory, '..', '..', 'kits', 'source', 'docs')
   end

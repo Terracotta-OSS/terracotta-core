@@ -7,8 +7,25 @@
 module BundledComponents
   def bundled_components(name, directory, spec)
     add_binaries(spec)
+    add_resources(name, directory)
+    add_dso_bootjar(spec)
+    add_module_packages(spec)
+    add_documentations(spec)
+  end
+
+  def add_resources(name, directory)
     @static_resources.supported_platforms(@build_environment).each do |platform|
-      srcdir = FilePath.new(@static_resources.skeletons_directory, name, platform).to_s
+      add_skeletons(@static_resources.skeletons_directory, name, platform, directory)
+      if (@flavor !~ /opensource/i)
+        if File.exist?(@static_resources.enterprise_skeletons_directory.to_s)
+          add_skeletons(@static_resources.enterprise_skeletons_directory, name, platform, directory)
+        end
+      end
+    end
+  end
+
+  def add_skeletons(skeldir, name, platform, directory)
+      srcdir = FilePath.new(skeldir, name, platform).to_s
       if File.directory?(srcdir)
         non_native = @build_environment.is_unix_like? ? ['*.bat', '*.cmd', '*.exe'] : ['*.sh']
         destdir    = FilePath.new(product_directory, directory).ensure_directory
@@ -17,10 +34,6 @@ module BundledComponents
           ant.fileset(:dir => srcdir, :excludes => "**/.svn/**, **/.*")
         end
       end
-    end
-    add_dso_bootjar(spec)
-    add_module_packages(spec)
-    add_documentations(spec)
   end
 
   def add_binaries(component, libdir=libpath(component), destdir=libpath(component))
