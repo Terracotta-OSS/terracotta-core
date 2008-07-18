@@ -9,7 +9,7 @@ import com.tc.objectserver.core.api.GarbageCollectionInfo;
 import java.util.List;
 import java.util.SortedSet;
 
-class GarbageCollectionInfoImpl implements GarbageCollectionInfo {
+public class GarbageCollectionInfoImpl implements GarbageCollectionInfo {
 
   private int       iteration;
 

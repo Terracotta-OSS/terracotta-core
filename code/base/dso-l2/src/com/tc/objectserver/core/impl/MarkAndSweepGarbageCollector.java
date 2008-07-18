@@ -52,15 +52,13 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
                                                                              return;
                                                                            }
 
-                                                                           public PrettyPrinter prettyPrint(
-                                                                                                            PrettyPrinter out) {
+                                                                           public PrettyPrinter prettyPrint(PrettyPrinter out) {
                                                                              return out
                                                                                  .println("NULL CHANGE COLLECTOR");
                                                                            }
                                                                          };
   private static final Filter                      NULL_FILTER           = new Filter() {
-                                                                           public boolean shouldVisit(
-                                                                                                      ObjectID referencedObject) {
+                                                                           public boolean shouldVisit(ObjectID referencedObject) {
                                                                              return true;
                                                                            }
                                                                          };
@@ -187,7 +185,10 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     this.referenceCollector = NULL_CHANGE_COLLECTOR;
 
     // Delete Garbage
-    deleteGarbage(new GCResultContext(gcIteration, gcInfo, gcPublisher, toDelete));
+    GCResultContext gcResultContext = new GCResultContext(gcIteration, toDelete);
+    gcResultContext.setGcInfo(gcInfo);
+    gcResultContext.setGcPublisher(gcPublisher);
+    deleteGarbage(gcResultContext);
 
     long endMillis = System.currentTimeMillis();
     gcInfo.setElapsedTime(endMillis - gcInfo.getStartTime());
