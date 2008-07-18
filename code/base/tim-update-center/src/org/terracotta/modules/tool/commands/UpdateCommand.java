@@ -50,6 +50,16 @@ public class UpdateCommand extends AbstractCommand {
     options.addOption(buildOption(LONGOPT_GROUPID,
                                   "Use this option to qualify the name of the TIM you are looking for. Ignored if the "
                                       + LONGOPT_ALL + " option is specified", String.class));
+    arguments.put("name", "The name of the Integration Module");
+    arguments.put("version", "OPTIONAL. The version used to qualify the name");
+  }
+
+  public String syntax() {
+    return "<name> [version] [options]";
+  }
+  
+  public String description() {
+    return "Update to the latest version of an Integration Module";
   }
 
   private Attributes readAttributes(File jarfile) {

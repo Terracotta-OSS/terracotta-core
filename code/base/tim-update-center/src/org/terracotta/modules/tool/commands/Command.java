@@ -17,6 +17,12 @@ public interface Command {
   /** The name of this command. */
   public String name();
 
+  /** The syntax of this command. */
+  public String syntax();
+
+  /** The description of this command. */
+  public String description();
+  
   /**
    * The command-line options that this command accepts.
    */

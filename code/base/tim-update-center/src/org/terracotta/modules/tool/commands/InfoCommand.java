@@ -24,7 +24,17 @@ public class InfoCommand extends AbstractCommand {
     this.modules = modules;
     assert modules != null : "modules is null";
     options.addOption(buildOption(LONGOPT_GROUPID,
-                                  "Use this option to qualify the name of the TIM you are looking for", String.class));
+                                  "Use this option to qualify the name argument", String.class));
+    arguments.put("name", "The name of the Integration Module");
+    arguments.put("version", "OPTIONAL. The version used to qualify the name");
+  }
+
+  public String syntax() {
+    return "<name> [version] [options]";
+  }
+  
+  public String description() {
+    return "Display detailed information about an Integration Module";
   }
 
   public void execute(CommandLine cli) throws CommandException {

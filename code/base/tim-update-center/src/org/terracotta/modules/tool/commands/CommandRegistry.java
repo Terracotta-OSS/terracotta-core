@@ -9,6 +9,8 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.ParseException;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,5 +59,9 @@ public class CommandRegistry {
 
   public void executeCommand(String commandName, List<String> args) throws CommandException {
     executeCommand(commandName, args.toArray(new String[args.size()]));
+  }
+
+  public Collection<Command> commands() {
+    return Collections.unmodifiableCollection(commands.values());
   }
 }

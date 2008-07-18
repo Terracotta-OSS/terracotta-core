@@ -30,6 +30,15 @@ public class ListCommand extends AbstractCommand {
     this.modules = modules;
     assert modules != null : "modules is null";
     options.addOption(OPTION_DETAILS, LONGOPT_DETAILS, false, "Display detailed information");
+    this.arguments.put("keyword", "OPTIONAL. Filters the list to those that contain this keyword. Multiple keywords may be specified");
+  }
+  
+  public String syntax() {
+    return "[keyword] [options]";
+  }
+  
+  public String description() {
+    return "List all available Integration Modules for TC " + modules.tcVersion();
   }
 
   private void displayWithDetails(List<Module> list) {
