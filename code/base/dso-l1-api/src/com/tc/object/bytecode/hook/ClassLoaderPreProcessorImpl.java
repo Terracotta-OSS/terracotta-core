@@ -214,6 +214,27 @@ public class ClassLoaderPreProcessorImpl {
         // By checking that the system classloader is actually not null, we
         // make sure that during those nested calls, the DSO initialization
         // process doesn't blow up.
+        //
+        // If you have trouble to follow what happens, here's a structural
+        // overview:
+        //
+        // ClassLoader.getSystemClassLoader (1st time, scl is null)
+        //  -> ClassLoader.initSystemClassLoader
+        //  -> sclSet is false, thus continues
+        //  -> Launcher class init
+        //  -> Launcher instance init
+        //  -> Launcher.getLauncher
+        //  -> Launcher.ExtClassLoader.getExtURLs
+        //  -> URL.getURLStreamHandler
+        //      -> ClassLoader.getSystemClassLoader (2nd time, scl is null)
+        //      -> ClassLoader.initSystemClassLoader (sclSet is false)
+        //      -> launcher.getClassLoader() returns null
+        //      -> scl is set to null
+        //      -> sclSet is set to true <=== this is where the extra check is needed
+        //  -> Launcher continues its initialization
+        //  -> launcher.getClassLoader() returns classloader
+        //  -> scl is set to the classloader instance
+        //  -> sclSet is set to true <=== this is where we want to init our stuff
         Label l = new Label();
         super.visitFieldInsn(GETSTATIC, owner, "scl", "Ljava/lang/ClassLoader;");
         super.visitJumpInsn(IFNULL, l);
