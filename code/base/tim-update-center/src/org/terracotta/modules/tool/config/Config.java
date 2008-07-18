@@ -57,7 +57,7 @@ public class Config {
   }
 
   private static String getProperty(Properties props, String name, String defaultValue) {
-    return props.getProperty(KEYSPACE + name, defaultValue);
+    return System.getProperty(KEYSPACE + name, props.getProperty(KEYSPACE + name, defaultValue));
   }
 
   public URL getProxyUrl() {
