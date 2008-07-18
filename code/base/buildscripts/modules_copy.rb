@@ -12,11 +12,10 @@ class BuildSubtree
   # aren't any -- for example, if you haven't called #compile first -- this will
   # do absolutely nothing.
   def copy_classes(build_results, destdir, ant, opts = {})
-    includes = opts[:includes] || '**/*'
-    excludes = opts[:excludes] || ''
+    fileset = opts
+    fileset[:dir] = build_results.classes_directory(self).to_s
     ant.copy(:todir => destdir.to_s) {
-      ant.fileset(:dir => build_results.classes_directory(self).to_s,
-                  :excludes => excludes, :includes => includes)
+      ant.fileset(fileset)
     } if FileTest.directory?(build_results.classes_directory(self).to_s)
   end
 
