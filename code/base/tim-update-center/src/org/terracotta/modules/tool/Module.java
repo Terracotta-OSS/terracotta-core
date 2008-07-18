@@ -31,6 +31,9 @@ import java.util.Map.Entry;
  */
 
 public class Module implements Comparable {
+  private static final String OUTOFDATE_MARKER = "!";
+  private static final String NOTINSTALLED_MARKER = "-";
+  private static final String INSTALLED_MARKER = "+";
   private final ModuleId         id;
   private final String           repoUrl;
   private final String           installPath;
@@ -454,17 +457,17 @@ public class Module implements Comparable {
   }
 
   private String installMarker(Dependency d) {
-    String marker = isInstalled(d) ? "+" : "-";
+    String marker = isInstalled(d) ? INSTALLED_MARKER : NOTINSTALLED_MARKER;
     return marker;
   }
   
   private String installStateMarker() {
-    String marker = isInstalled() ? "+" : "-";
-    if (marker.equals("-")) {
+    String marker = isInstalled() ? INSTALLED_MARKER : NOTINSTALLED_MARKER;
+    if (marker.equals(NOTINSTALLED_MARKER)) {
       List<Module> siblings = getSiblings();
       for (Module sibling : siblings) {
         if (!sibling.isInstalled()) continue;
-        marker = "!";
+        marker = OUTOFDATE_MARKER;
         break;
       }
     }
