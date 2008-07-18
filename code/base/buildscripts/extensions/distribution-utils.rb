@@ -17,7 +17,13 @@ module DistributionUtils
     product_code = product_code.downcase
     flavor = flavor.downcase
     check_if_type_supplied(product_code, flavor)
-    filename = FilePath.new(@static_resources.distribution_config_directory(flavor),
+    
+    # until DEV-1253 is resolved, all distribution files should be in one place
+    # so changes can be applied to them at one time. 
+    # We decided to have all these files in OSS branch
+    config_directory = @static_resources.distribution_config_directory('OPENSOURCE')
+    
+    filename = FilePath.new(config_directory,
       "#{product_code}-#{flavor}.def.yml").canonicalize.to_s
     if File.exist?(filename)
       YAML.load_file(filename)
