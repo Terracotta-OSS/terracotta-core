@@ -23,7 +23,7 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
   public void addListener(GCStatsEventListener listener) {
     gcStatsEventListeners.add(listener);
   }
-  
+
   public GCStats[] getGarbageCollectorStats() {
     return (GCStats[]) gcHistory.toArray(new GCStats[gcHistory.depth()]);
   }
@@ -45,7 +45,7 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
     gcStats.setMarkStageTime(info.getMarkStageTime());
     gcStats.setPauseState();
     fireGCStatsEvent(gcStats);
-    
+
   }
 
   public void garbageCollectorMarkComplete(GarbageCollectionInfo info) {
@@ -55,7 +55,7 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
     gcStats.setPausedStageTime(info.getPausedStageTime());
     gcStats.setMarkCompleteState();
     fireGCStatsEvent(gcStats);
-    
+
   }
 
   public void garbageCollectorDelete(GarbageCollectionInfo info) {
@@ -64,7 +64,6 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
     fireGCStatsEvent(gcStats);
   }
 
-  
   public void garbageCollectorCompleted(GarbageCollectionInfo info) {
     GCStatsImpl gcStats = getGCStats(info);
     gcStats.setDeleteStageTime(info.getDeleteStageTime());
@@ -73,16 +72,16 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
     push(gcStats);
     fireGCStatsEvent(gcStats);
   }
-  
+
   private GCStatsImpl getGCStats(GarbageCollectionInfo info) {
     GCStatsImpl gcStats = null;
-    if((gcStats = info.getObject()) == null) {
+    if ((gcStats = (GCStatsImpl) info.getObject()) == null) {
       gcStats = new GCStatsImpl(info.getIteration(), info.isYoungGen(), info.getStartTime());
       info.setObject(gcStats);
-    } 
+    }
     return gcStats;
   }
-  
+
   private void push(Object obj) {
     gcHistory.push(obj);
   }

@@ -12,17 +12,13 @@ public interface GarbageCollectionInfoPublisher {
   
   public void fireGCMarkResultsEvent(GarbageCollectionInfo info);
   
-  public void fireGCRescue1Event(GarbageCollectionInfo info);
+  public void fireGCRescue1CompleteEvent(GarbageCollectionInfo info);
 
-  public void fireGCRescue1ResultsEvent(GarbageCollectionInfo info);
-  
   public void fireGCPausingEvent(GarbageCollectionInfo info);
   
   public void fireGCPausedEvent(GarbageCollectionInfo info);
   
-  public void fireGCRescue2Event(GarbageCollectionInfo info);
-  
-  public void fireGCRescue2ResultsEvent(GarbageCollectionInfo info);
+  public void fireGCRescue2StartEvent(GarbageCollectionInfo info);
   
   public void fireGCMarkCompleteEvent(GarbageCollectionInfo info);
   

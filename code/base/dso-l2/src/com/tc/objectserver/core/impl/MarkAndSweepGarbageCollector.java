@@ -4,7 +4,6 @@
  */
 package com.tc.objectserver.core.impl;
 
-import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -12,12 +11,9 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.core.api.Filter;
-import com.tc.objectserver.core.api.GarbageCollectionInfo;
-import com.tc.objectserver.core.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.core.api.GarbageCollector;
 import com.tc.objectserver.core.api.GarbageCollectorEventListener;
 import com.tc.objectserver.core.api.ManagedObject;
-import com.tc.objectserver.impl.GCStatsImpl;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
 import com.tc.text.PrettyPrintable;
@@ -137,10 +133,11 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     gcInfo.setStartTime(startMillis);
     gcPublisher.fireGCStartEvent(gcInfo);
 
+    // NOTE:It is important to set this reference collector before getting the roots ID and all object ids
+    this.referenceCollector = new NewReferenceCollector();
+
     Set rootIDs = objectManager.getRootIDs();
     ObjectIDSet managedIDs = objectManager.getAllObjectIDs();
-
-    this.referenceCollector = new NewReferenceCollector();
 
     gcInfo.setBeginObjectCount(managedIDs.size());
 
@@ -148,17 +145,16 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
 
     gcPublisher.fireGCMarkEvent(gcInfo);
     ObjectIDSet gcResults = collect(NULL_FILTER, rootIDs, managedIDs, gcState);
-    gcInfo.setGcResults(gcResults);
+    gcInfo.setPreRescueCount(gcResults.size());
     gcPublisher.fireGCMarkResultsEvent(gcInfo);
 
     if (gcState.isStopRequested()) { return; }
 
     List rescueTimes = new ArrayList();
 
-    gcPublisher.fireGCRescue1Event(gcInfo);
     gcResults = rescue(gcResults, rescueTimes);
-    gcInfo.setGcResults(gcResults);
-    gcPublisher.fireGCRescue1ResultsEvent(gcInfo);
+    gcInfo.setRescue1Count(gcResults.size());
+    gcPublisher.fireGCRescue1CompleteEvent(gcInfo);
 
     gcInfo.setMarkStageTime(System.currentTimeMillis() - startMillis);
 
@@ -176,11 +172,10 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     gcPublisher.fireGCPausedEvent(gcInfo);
 
     gcInfo.setCandidateGarbageCount(gcResults.size());
-    gcPublisher.fireGCRescue2Event(gcInfo);
+    gcPublisher.fireGCRescue2StartEvent(gcInfo);
     SortedSet toDelete = Collections.unmodifiableSortedSet(rescue(new ObjectIDSet(gcResults), rescueTimes));
+    gcInfo.setRescueTimes(rescueTimes);
     gcInfo.setDeleted(toDelete);
-    gcInfo.setActualGarbageCount(toDelete.size());
-    gcPublisher.fireGCRescue2ResultsEvent(gcInfo);
 
     if (gcState.isStopRequested()) { return; }
 
@@ -345,264 +340,6 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
 
   private void profile_collect(long start) {
     if (logger.isDebugEnabled()) logger.debug("collect: " + (System.currentTimeMillis() - start) + " ms.");
-  }
-
-  private static class GarbageCollectionInfoPublisherImpl implements GarbageCollectionInfoPublisher {
-
-    public List garbageCollectionEventListeners = new CopyOnWriteArrayList();
-
-    public void addListener(GarbageCollectorEventListener listener) {
-      garbageCollectionEventListeners.add(listener);
-    }
-
-    public void fireGCStartEvent(GarbageCollectionInfo info) {
-      for (Iterator iter = garbageCollectionEventListeners.iterator(); iter.hasNext();) {
-        GarbageCollectorEventListener listener = (GarbageCollectorEventListener) iter.next();
-        listener.garbageCollectorStart(info);
-      }
-    }
-
-    public void fireGCMarkEvent(GarbageCollectionInfo info) {
-      for (Iterator iter = garbageCollectionEventListeners.iterator(); iter.hasNext();) {
-        GarbageCollectorEventListener listener = (GarbageCollectorEventListener) iter.next();
-        listener.garbageCollectorMark(info);
-      }
-    }
-
-    public void fireGCMarkResultsEvent(GarbageCollectionInfo info) {
-      for (Iterator iter = garbageCollectionEventListeners.iterator(); iter.hasNext();) {
-        GarbageCollectorEventListener listener = (GarbageCollectorEventListener) iter.next();
-        listener.garbageCollectorMark(info);
-      }
-    }
-
-    public void fireGCRescue1Event(GarbageCollectionInfo info) {
-      for (Iterator iter = garbageCollectionEventListeners.iterator(); iter.hasNext();) {
-        GarbageCollectorEventListener listener = (GarbageCollectorEventListener) iter.next();
-        listener.garbageCollectorRescue1(info);
-      }
-    }
-
-    public void fireGCRescue1ResultsEvent(GarbageCollectionInfo info) {
-      for (Iterator iter = garbageCollectionEventListeners.iterator(); iter.hasNext();) {
-        GarbageCollectorEventListener listener = (GarbageCollectorEventListener) iter.next();
-        listener.garbageCollectorRescue1Results(info);
-      }
-    }
-
-    public void fireGCPausingEvent(GarbageCollectionInfo info) {
-      for (Iterator iter = garbageCollectionEventListeners.iterator(); iter.hasNext();) {
-        GarbageCollectorEventListener listener = (GarbageCollectorEventListener) iter.next();
-        listener.garbageCollectorPausing(info);
-      }
-    }
-
-    public void fireGCRescue2Event(GarbageCollectionInfo info) {
-      for (Iterator iter = garbageCollectionEventListeners.iterator(); iter.hasNext();) {
-        GarbageCollectorEventListener listener = (GarbageCollectorEventListener) iter.next();
-        listener.garbageCollectorRescue2(info);
-      }
-    }
-
-    public void fireGCRescue2ResultsEvent(GarbageCollectionInfo info) {
-      for (Iterator iter = garbageCollectionEventListeners.iterator(); iter.hasNext();) {
-        GarbageCollectorEventListener listener = (GarbageCollectorEventListener) iter.next();
-        listener.garbageCollectorRescue2Results(info);
-      }
-    }
-
-    public void fireGCPausedEvent(GarbageCollectionInfo info) {
-      for (Iterator iter = garbageCollectionEventListeners.iterator(); iter.hasNext();) {
-        GarbageCollectorEventListener listener = (GarbageCollectorEventListener) iter.next();
-        listener.garbageCollectorPaused(info);
-      }
-    }
-
-    public void fireGCMarkCompleteEvent(GarbageCollectionInfo info) {
-      for (Iterator iter = garbageCollectionEventListeners.iterator(); iter.hasNext();) {
-        GarbageCollectorEventListener listener = (GarbageCollectorEventListener) iter.next();
-        listener.garbageCollectorMarkComplete(info);
-      }
-    }
-
-    public void fireGCDeleteEvent(GarbageCollectionInfo info) {
-      for (Iterator iter = garbageCollectionEventListeners.iterator(); iter.hasNext();) {
-        GarbageCollectorEventListener listener = (GarbageCollectorEventListener) iter.next();
-        listener.garbageCollectorDelete(info);
-      }
-    }
-
-    public void fireGCCycleCompletedEvent(GarbageCollectionInfo info) {
-      for (Iterator iter = garbageCollectionEventListeners.iterator(); iter.hasNext();) {
-        GarbageCollectorEventListener listener = (GarbageCollectorEventListener) iter.next();
-        listener.garbageCollectorCycleCompleted(info);
-      }
-    }
-
-    public void fireGCCompletedEvent(GarbageCollectionInfo info) {
-      for (Iterator iter = garbageCollectionEventListeners.iterator(); iter.hasNext();) {
-        GarbageCollectorEventListener listener = (GarbageCollectorEventListener) iter.next();
-        listener.garbageCollectorCompleted(info);
-      }
-    }
-  }
-
-  private static class GarbageCollectionInfoImpl implements GarbageCollectionInfo {
-
-    private int         iteration;
-
-    private boolean     youngGen;
-
-    private long        startTime;
-
-    private long        beginObjectCount;
-
-    private long        markStageTime;
-
-    private long        pauseStageTime;
-
-    private long        deleteStageTime;
-
-    private long        elapsedTime;
-
-    private long        candidateGarbageCount;
-
-    private long        actualGarbageCount;
-    
-    private GCStatsImpl gcStats;
-
-    private SortedSet   toDelete;
-
-    private ObjectIDSet gcResults;
-
-    private ObjectIDSet managedIDs;
-
-    private List        rescueTimes;
-
-    public GarbageCollectionInfoImpl(int iteration) {
-      this.iteration = iteration;
-    }   
-
-    public int getIteration() {
-      return this.iteration;
-    }
-
-    public void markYoungGen() {
-      youngGen = true;
-    }
-
-    public void markFullGen() {
-      youngGen = false;
-    }
-
-    public boolean isYoungGen() {
-      return youngGen ? true : false;
-    }
-
-    public void setStartTime(long time) {
-      this.startTime = time;
-    }
-
-    public long getStartTime() {
-      return this.startTime;
-    }
-
-    public void setBeginObjectCount(long count) {
-      this.beginObjectCount = count;
-    }
-
-    public long getBeginObjectCount() {
-      return this.beginObjectCount;
-    }
-
-    public void setMarkStageTime(long time) {
-      this.markStageTime = time;
-    }
-
-    public long getMarkStageTime() {
-      return this.markStageTime;
-    }
-
-    public void setPausedStageTime(long time) {
-      this.pauseStageTime = time;
-    }
-
-    public long getPausedStageTime() {
-      return this.pauseStageTime;
-    }
-
-    public void setDeleteStageTime(long time) {
-      this.deleteStageTime = time;
-    }
-
-    public long getDeleteStageTime() {
-      return this.deleteStageTime;
-    }
-
-    public void setElapsedTime(long time) {
-      this.elapsedTime = time;
-    }
-
-    public long getElapsedTime() {
-      return this.elapsedTime;
-    }
-
-    public void setCandidateGarbageCount(long count) {
-      this.candidateGarbageCount = count;
-    }
-
-    public long getCandidateGarbageCount() {
-      return this.candidateGarbageCount;
-    }
-
-    public void setActualGarbageCount(long count) {
-      this.actualGarbageCount = count;
-    }
-
-    public long getActualGarbageCount() {
-      return this.actualGarbageCount;
-    }
-
-    public void setDeleted(SortedSet deleted) {
-      this.toDelete = deleted;
-    }
-
-    public SortedSet getDeleted() {
-      return this.toDelete;
-    }
-
-    public ObjectIDSet getGcResults() {
-      return gcResults;
-    }
-
-    public void setGcResults(ObjectIDSet gcResults) {
-      this.gcResults = gcResults;
-    }
-
-    public ObjectIDSet getManagedIDs() {
-      return managedIDs;
-    }
-
-    public void setManagedIDs(ObjectIDSet managedIDs) {
-      this.managedIDs = managedIDs;
-    }
-
-    public List getRescueTimes() {
-      return rescueTimes;
-    }
-
-    public void setRescueTimes(List rescueTimes) {
-      this.rescueTimes = rescueTimes;
-    }
-    
-    public GCStatsImpl getObject() {
-      return gcStats;
-    }
-    
-    public void setObject(GCStatsImpl aGCStats) {
-      this.gcStats = aGCStats;
-    }
-
   }
 
   private static class NewReferenceCollector implements ChangeCollector {

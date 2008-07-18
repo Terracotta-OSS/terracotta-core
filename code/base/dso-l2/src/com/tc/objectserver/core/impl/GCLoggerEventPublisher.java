@@ -9,24 +9,23 @@ import com.tc.objectserver.core.api.GarbageCollectionInfo;
 import com.tc.objectserver.impl.GCLogger;
 
 public class GCLoggerEventPublisher extends GarbageCollectorEventListenerAdapter {
-  
+
   private final GCLogger gcLogger;
 
-  public GCLoggerEventPublisher( TCLogger logger, boolean verboseGC ) {
-    gcLogger = new GCLogger(logger, verboseGC );
+  public GCLoggerEventPublisher(TCLogger logger, boolean verboseGC) {
+    gcLogger = new GCLogger(logger, verboseGC);
   }
- 
 
   public void garbageCollectorMark(GarbageCollectionInfo info) {
-    gcLogger.log_markStart(info.getManagedIDs());
+    gcLogger.log_markStart(info.getBeginObjectCount());
   }
 
   public void garbageCollectorMarkResults(GarbageCollectionInfo info) {
-    gcLogger.log_markResults(info.getGcResults());
+    gcLogger.log_markResults(info.getPreRescueCount());
   }
 
-  public void garbageCollectorRescue1(GarbageCollectionInfo info) {
-    gcLogger.log_rescue(1, info.getGcResults());  
+  public void garbageCollectorRescue1Complete(GarbageCollectionInfo info) {
+    gcLogger.log_rescue_complete(1, info.getRescue1Count());
   }
 
   public void garbageCollectorPausing(GarbageCollectionInfo info) {
@@ -37,8 +36,8 @@ public class GCLoggerEventPublisher extends GarbageCollectorEventListenerAdapter
     gcLogger.log_paused();
   }
 
-  public void garbageCollectorRescue2(GarbageCollectionInfo info) {
-    gcLogger.log_rescue(2, info.getGcResults());  
+  public void garbageCollectorRescue2Start(GarbageCollectionInfo info) {
+    gcLogger.log_rescue_start(2, info.getCandidateGarbageCount());
   }
 
   public void garbageCollectorMarkComplete(GarbageCollectionInfo info) {

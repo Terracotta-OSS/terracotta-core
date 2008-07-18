@@ -12,17 +12,13 @@ public interface GarbageCollectorEventListener {
   
   public void garbageCollectorMarkResults(GarbageCollectionInfo info);
   
-  public void garbageCollectorRescue1(GarbageCollectionInfo info);
-
-  public void garbageCollectorRescue1Results(GarbageCollectionInfo info);
+  public void garbageCollectorRescue1Complete(GarbageCollectionInfo info);
 
   public void garbageCollectorPausing(GarbageCollectionInfo info);
 
   public void garbageCollectorPaused(GarbageCollectionInfo info);
 
-  public void garbageCollectorRescue2(GarbageCollectionInfo info);
-
-  public void garbageCollectorRescue2Results(GarbageCollectionInfo info);
+  public void garbageCollectorRescue2Start(GarbageCollectionInfo info);
 
   public void garbageCollectorMarkComplete(GarbageCollectionInfo info);
 

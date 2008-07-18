@@ -33,7 +33,9 @@ public class GCStatisticsAgentSubSystemEventListener extends GarbageCollectorEve
 
   @Override
   public void garbageCollectorCycleCompleted(GarbageCollectionInfo info) {
-    storeGCInfo(info);
+    if (statisticsAgentSubSystem.isActive()) {
+      storeGCInfo(info);
+    }
   }
 
   private void storeGCInfo(GarbageCollectionInfo gcInfo) {
@@ -52,10 +54,12 @@ public class GCStatisticsAgentSubSystemEventListener extends GarbageCollectorEve
     datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "type", gcInfo.isYoungGen() ? "Young" : "Full"));
     datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "start time", gcInfo.getStartTime()));
     datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "elapsed time", gcInfo.getElapsedTime()));
-    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "begin object count", gcInfo.getBeginObjectCount()));
     datas
-        .add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "candidate garbage count", gcInfo.getCandidateGarbageCount()));
-    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "actual garbage count", gcInfo.getActualGarbageCount()));
+        .add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "begin object count", new Long(gcInfo.getBeginObjectCount())));
+    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "candidate garbage count", new Long(gcInfo
+        .getCandidateGarbageCount())));
+    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "actual garbage count", new Long(gcInfo
+        .getActualGarbageCount())));
     datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "pauseTime", gcInfo.getPausedStageTime()));
     datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "deleteTime", gcInfo.getDeleteStageTime()));
     return datas.toArray(new StatisticData[datas.size()]);

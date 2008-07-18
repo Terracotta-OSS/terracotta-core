@@ -130,7 +130,6 @@ public final class ProductInfo {
         InputStream patchData = getData(PATCH_DATA_RESOURCE_NAME);
         INSTANCE = new ProductInfo(buildData, patchData);
       } catch (Exception e) {
-        e.printStackTrace();
         throw new RuntimeException(e.getMessage());
       }
     }

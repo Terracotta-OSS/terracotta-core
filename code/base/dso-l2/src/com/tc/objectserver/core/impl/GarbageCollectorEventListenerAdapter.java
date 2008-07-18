@@ -40,19 +40,11 @@ public abstract class GarbageCollectorEventListenerAdapter implements GarbageCol
     //
   }
 
-  public void garbageCollectorRescue1(GarbageCollectionInfo info) {
+  public void garbageCollectorRescue1Complete(GarbageCollectionInfo info) {
     //
   }
 
-  public void garbageCollectorRescue1Results(GarbageCollectionInfo info) {
-    //
-  }
-
-  public void garbageCollectorRescue2(GarbageCollectionInfo info) {
-    //
-  }
-
-  public void garbageCollectorRescue2Results(GarbageCollectionInfo info) {
+  public void garbageCollectorRescue2Start(GarbageCollectionInfo info) {
     //
   }
 

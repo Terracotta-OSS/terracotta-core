@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.Set;
 
 public class GCLogger {
-  private TCLogger         logger;
-  private final boolean    verboseGC;
+  private TCLogger      logger;
+  private final boolean verboseGC;
 
   public GCLogger(TCLogger logger, boolean verboseGC) {
     this.logger = logger;
@@ -23,12 +23,12 @@ public class GCLogger {
     if (verboseGC()) logGC("GC: START " + iteration);
   }
 
-  public void log_markStart(Set managedIdSet) {
-    if (verboseGC()) logGC("GC: pre-GC managed id count: " + managedIdSet.size());
+  public void log_markStart(int size) {
+    if (verboseGC()) logGC("GC: pre-GC managed id count: " + size);
   }
 
-  public void log_markResults(Set gcResults) {
-    if (verboseGC()) logGC("GC: pre-rescue GC results: " + gcResults.size());
+  public void log_markResults(int size) {
+    if (verboseGC()) logGC("GC: pre-rescue GC results: " + size);
   }
 
   public void log_quiescing() {
@@ -39,8 +39,12 @@ public class GCLogger {
     if (verboseGC()) logGC("GC: paused.");
   }
 
-  public void log_rescue(int pass, Set objectIDs) {
-    if (verboseGC()) logGC("GC: rescue pass " + pass + " on " + objectIDs.size() + " objects...");
+  public void log_rescue_complete(int pass, int count) {
+    if (verboseGC()) logGC("GC: rescue pass " + pass + " completed. gc candidates = " + count + " objects...");
+  }
+
+  public void log_rescue_start(int pass, int count) {
+    if (verboseGC()) logGC("GC: rescue pass " + pass + " on " + count + " objects...");
   }
 
   public void log_sweep(Set toDelete) {
@@ -50,7 +54,6 @@ public class GCLogger {
   public void log_notifyGCComplete() {
     if (verboseGC()) logGC("GC: notifying gc complete...");
   }
-
 
   public void log_GCComplete(GarbageCollectionInfo gcInfo, List rescueTimes) {
     if (verboseGC()) {

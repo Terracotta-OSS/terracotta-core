@@ -42,7 +42,7 @@ public class GarbageDisposeHandler extends AbstractEventHandler {
     GarbageCollectionInfo gcInfo = gcResult.getGCInfo();
     GarbageCollectionInfoPublisher gcPublisher = gcResult.getGCPublisher();
     
-    logger.info("GC DELETE START : " + gcResult);
+    logger.info("GC Delete Start : " + gcResult);
     
     gcPublisher.fireGCDeleteEvent(gcInfo);
     long start = System.currentTimeMillis();
@@ -64,7 +64,7 @@ public class GarbageDisposeHandler extends AbstractEventHandler {
       }
     }
     long elapsed = System.currentTimeMillis() - start;
-    logger.info("GC DELETE COMPLETE : " + gcResult + " Removed " + sortedGarbage.size() + " objects in " + elapsed
+    logger.info("GC Delete Complete : " + gcResult + " Removed " + sortedGarbage.size() + " objects in " + elapsed
                 + " ms.");
     gcInfo.setDeleteStageTime(elapsed); 
     long endMillis = System.currentTimeMillis();
