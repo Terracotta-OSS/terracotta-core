@@ -19,6 +19,7 @@ import org.terracotta.modules.tool.config.Config;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.tc.util.ProductInfo;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -43,6 +44,9 @@ public class TUCApp {
   }
 
   public static void main(String args[]) {
+    System.out.println(ProductInfo.getInstance().toLongString()); 
+    System.out.println();
+    
     Config config = null;
     try {
       config = createConfig();
