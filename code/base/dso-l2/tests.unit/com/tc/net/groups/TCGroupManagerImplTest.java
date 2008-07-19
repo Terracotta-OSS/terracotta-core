@@ -128,6 +128,15 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     tearGroups();
   }
+  
+  private int joinedMemberSize(TCGroupManagerImpl group) {
+    TCGroupMember members[] = (TCGroupMember[])group.getMembers().toArray();
+    int size = members.length;
+    for(int i =0; i < size; ++i) {
+      if (!members[i].isReady()) -- size;
+    }
+    return size;
+  }
 
   public void testOpenZappedNode() throws Exception {
     setupGroups(2);
@@ -138,8 +147,8 @@ public class TCGroupManagerImplTest extends TCTestCase {
     groups[1].join(nodes[1], nodes);
     Thread.sleep(2000);
 
-    assertEquals(0, groups[0].size());
-    assertEquals(0, groups[1].size());
+    assertEquals(0, joinedMemberSize(groups[0]));
+    assertEquals(0, joinedMemberSize(groups[1]));
 
     tearGroups();
   }
