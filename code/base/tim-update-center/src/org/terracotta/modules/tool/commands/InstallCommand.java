@@ -34,7 +34,7 @@ public class InstallCommand extends AbstractCommand {
                                   "Install all compatible TIMs, ignoring the name and version arguments if specified"));
     options.addOption(buildOption(LONGOPT_OVERWRITE, "Overwrite if already installed"));
     options.addOption(buildOption(LONGOPT_PRETEND, "Do not perform actual installation"));
-    arguments.put("name", "The name of the Integration Module");
+    arguments.put("name", "The name of the integration module");
     arguments.put("version", "OPTIONAL. The version used to qualify the name");
     arguments.put("group-id", "OPTIONAL. The group-id used to qualify the name");
   }
@@ -44,7 +44,7 @@ public class InstallCommand extends AbstractCommand {
   }
 
   public String description() {
-    return "Install an Integration Module";
+    return "Install an integration module";
   }
 
   private void install(Module module) {
@@ -54,7 +54,7 @@ public class InstallCommand extends AbstractCommand {
   }
 
   private void installAll() {
-    out.println("\n*** Installing all of the latest Integration Modules for TC " + modules.tcVersion() + " ***\n");
+    out.println("\n*** Installing all of the latest integration modules for TC " + modules.tcVersion() + " ***\n");
     List<Module> latest = modules.listLatest();
     for (Module module : latest) {
       install(module);
@@ -73,6 +73,7 @@ public class InstallCommand extends AbstractCommand {
     List<String> args = cli.getArgList();
     if (args.isEmpty()) {
       out.println("You need to at least specify the name of the integration module.");
+      out.println("You could also use the --all option to install the latest of everything that is available.");
       return;
     }
     

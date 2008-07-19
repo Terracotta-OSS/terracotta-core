@@ -23,7 +23,7 @@ public class InfoCommand extends AbstractCommand {
   public InfoCommand(Modules modules) {
     this.modules = modules;
     assert modules != null : "modules is null";
-    arguments.put("name", "The name of the Integration Module");
+    arguments.put("name", "The name of the integration module");
     arguments.put("version", "OPTIONAL. The version used to qualify the name");
     arguments.put("group-id", "OPTIONAL. The group-id used to qualify the name");
   }
@@ -33,7 +33,7 @@ public class InfoCommand extends AbstractCommand {
   }
 
   public String description() {
-    return "Display detailed information about an Integration Module";
+    return "Display detailed information about an integration module";
   }
 
   public void execute(CommandLine cli) {

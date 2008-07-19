@@ -36,12 +36,12 @@ public class HelpCommand extends AbstractCommand {
     if (topics.isEmpty()) {
       List<String> list = new ArrayList<String>(commandRegistry.commandNames());
       Collections.sort(list);
-      out.println("This is the Integration Modules manager for Terracotta.");
+      out.println("Terracotta Integration Modules manager.");
       out.println("Below is a list of all the commands that are available.");
       out.println();
-      out.println("Syntax:");
+      out.println("General Syntax:");
       out.println();
-      out.println(StringUtils.leftPad("./tim-get.sh [command] [options]", 35));
+      out.println(StringUtils.leftPad("./tim-get.sh [command] [arguments] [options]", 35));
       out.println();
       out.println("Commands:");
       for (String name : list) {

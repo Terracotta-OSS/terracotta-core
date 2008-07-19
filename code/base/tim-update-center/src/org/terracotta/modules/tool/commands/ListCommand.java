@@ -40,7 +40,7 @@ public class ListCommand extends AbstractCommand {
   }
 
   public String description() {
-    return "List all available Integration Modules for TC " + modules.tcVersion();
+    return "List all available integration modules for TC " + modules.tcVersion();
   }
 
   private void displayWithDetails(List<Module> list) {
@@ -84,7 +84,6 @@ public class ListCommand extends AbstractCommand {
     if (!list.isEmpty()) {
       out.println();
       out.println("legends: [+] already installed  [!] installed but newer version exists  [-] not installed");
-      
     }
        
   }
