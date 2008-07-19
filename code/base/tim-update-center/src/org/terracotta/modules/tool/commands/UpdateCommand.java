@@ -26,11 +26,10 @@ import java.util.jar.Manifest;
 
 public class UpdateCommand extends AbstractCommand {
 
-  private static final String LONGOPT_ALL      = "all";
+  private static final String LONGOPT_ALL       = "all";
   private static final String LONGOPT_OVERWRITE = "overwrite";
-  private static final String LONGOPT_FORCE    = "force";
-  private static final String LONGOPT_PRETEND  = "pretend";
-  private static final String LONGOPT_GROUPID  = "group-id";
+  private static final String LONGOPT_FORCE     = "force";
+  private static final String LONGOPT_PRETEND   = "pretend";
 
   private final Modules       modules;
 
@@ -47,9 +46,6 @@ public class UpdateCommand extends AbstractCommand {
     options.addOption(buildOption(LONGOPT_FORCE, "Update anyway, even if update is already installed"));
     options.addOption(buildOption(LONGOPT_OVERWRITE, "Overwrite if already installed"));
     options.addOption(buildOption(LONGOPT_PRETEND, "Do not perform actual installation"));
-    options.addOption(buildOption(LONGOPT_GROUPID,
-                                  "Use this option to qualify the name of the TIM you are looking for. Ignored if the "
-                                      + LONGOPT_ALL + " option is specified", String.class));
     arguments.put("name", "The name of the Integration Module");
     arguments.put("version", "OPTIONAL. The version used to qualify the name");
   }
@@ -57,7 +53,7 @@ public class UpdateCommand extends AbstractCommand {
   public String syntax() {
     return "<name> [version] [options]";
   }
-  
+
   public String description() {
     return "Update to the latest version of an Integration Module";
   }
@@ -103,16 +99,17 @@ public class UpdateCommand extends AbstractCommand {
     return list;
   }
 
-  private void update(String groupId, String artifactId, boolean verbose) {
-    Module module = modules.getLatest(groupId, artifactId);
+  private void update(Module module, boolean verbose) {
+    // Module module = modules.getLatest(groupId, artifactId);
 
     // installed but not available from the list, skip it.
-    if (module == null) {
-      if (!verbose) return;
-      out.println("Integration Module '" + artifactId + "' not found");
-      out.println("It might be using a groupId other than '" + groupId + "'");
-      return;
-    }
+    if (module == null) return;
+    // if (module == null) {
+    // if (!verbose) return;
+    // out.println("Integration Module '" + artifactId + "' not found");
+    // out.println("It might be using a groupId other than '" + groupId + "'");
+    // return;
+    // }
 
     // latest already installed, skip it (unless force flag is set)
     assert module.isLatest() : module + " is not the latest";
@@ -128,7 +125,8 @@ public class UpdateCommand extends AbstractCommand {
   private void updateAll() throws CommandException {
     out.println("\n*** Updating installed Integration Modules for TC " + modules.tcVersion() + " ***\n");
     for (ModuleId entry : installedModules()) {
-      update(entry.getGroupId(), entry.getArtifactId(), false);
+      // update(entry.getGroupId(), entry.getArtifactId(), false);
+      update(modules.get(entry), false);
     }
   }
 
@@ -144,13 +142,33 @@ public class UpdateCommand extends AbstractCommand {
     }
 
     if (args.isEmpty()) {
-      String msg = "You need to at least specify the name of the Integration Module you wish to update";
-      throw new CommandException(msg);
+      out.println("You need to at least specify the name of the integration module.");
+      return;
     }
 
     String artifactId = args.remove(0);
-    String groupId = cli.getOptionValue(LONGOPT_GROUPID, ModuleId.DEFAULT_GROUPID);
-    update(groupId, artifactId, true);
+    String version = args.isEmpty() ? null : args.remove(0);
+    String groupId = args.isEmpty() ? null : args.remove(0);
+    List<Module> candidates = modules.find(artifactId, version, groupId);
+    if (candidates.isEmpty() || (candidates.size() > 1)) {
+      if (candidates.isEmpty()) {
+        out.println("No module found matching the arguments you specified.");
+        out.println("Check that you've spelled them correctly.");
+      } else {
+        out.println("There's more than one integration module found matching the name '" + artifactId + "':");
+        out.println();
+        for (Module candidate : candidates) {
+          ModuleId id = candidate.getId();
+          out.println("  * " + id.getArtifactId() + " " + id.getVersion() + " " + id.getGroupId());
+        }
+        out.println();
+        out.println("Try to use both version and group-id arguments in the command to be more specific.");
+      }
+      return;
+    }
+
+    Module module = candidates.remove(0);
+    update(module, true);
   }
 
 }

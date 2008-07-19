@@ -20,7 +20,6 @@ public class InstallCommand extends AbstractCommand {
   private static final String LONGOPT_ALL       = "all";
   private static final String LONGOPT_OVERWRITE = "overwrite";
   private static final String LONGOPT_PRETEND   = "pretend";
-  private static final String LONGOPT_GROUPID   = "group-id";
 
   private final Modules       modules;
 
@@ -35,17 +34,15 @@ public class InstallCommand extends AbstractCommand {
                                   "Install all compatible TIMs, ignoring the name and version arguments if specified"));
     options.addOption(buildOption(LONGOPT_OVERWRITE, "Overwrite if already installed"));
     options.addOption(buildOption(LONGOPT_PRETEND, "Do not perform actual installation"));
-    options.addOption(buildOption(LONGOPT_GROUPID,
-                                  "Use this option to qualify the name of the TIM you are looking for. Ignored if the "
-                                      + LONGOPT_ALL + " option is specified", String.class));
     arguments.put("name", "The name of the Integration Module");
     arguments.put("version", "OPTIONAL. The version used to qualify the name");
+    arguments.put("group-id", "OPTIONAL. The group-id used to qualify the name");
   }
 
   public String syntax() {
-    return "<name> [version] [options]";
+    return "<name> [version] [group-id] [options]";
   }
-  
+
   public String description() {
     return "Install an Integration Module";
   }
@@ -56,20 +53,6 @@ public class InstallCommand extends AbstractCommand {
     module.install(overwrite, pretend, out);
   }
 
-  private void install(String groupId, String artifactId, String version) {
-    Module module = null;
-
-    if (version == null) module = modules.getLatest(groupId, artifactId);
-    else module = modules.get(ModuleId.create(groupId, artifactId, version));
-
-    if (module == null) {
-      out.println("Integration Module '" + artifactId + "' not found");
-      out.println("It might be using a groupId other than '" + groupId + "'");
-      return;
-    }
-    install(module);
-  }
-
   private void installAll() {
     out.println("\n*** Installing all of the latest Integration Modules for TC " + modules.tcVersion() + " ***\n");
     List<Module> latest = modules.listLatest();
@@ -78,7 +61,7 @@ public class InstallCommand extends AbstractCommand {
     }
   }
 
-  public void execute(CommandLine cli) throws CommandException {
+  public void execute(CommandLine cli) {
     overwrite = cli.hasOption(LONGOPT_OVERWRITE);
     pretend = cli.hasOption(LONGOPT_PRETEND);
 
@@ -89,14 +72,33 @@ public class InstallCommand extends AbstractCommand {
 
     List<String> args = cli.getArgList();
     if (args.isEmpty()) {
-      String msg = "You need to at least specify the name of the Integration Module you wish to install";
-      throw new CommandException(msg);
+      out.println("You need to at least specify the name of the integration module.");
+      return;
     }
-
+    
     String artifactId = args.remove(0);
     String version = args.isEmpty() ? null : args.remove(0);
-    String groupId = cli.getOptionValue(LONGOPT_GROUPID, ModuleId.DEFAULT_GROUPID);
-    install(groupId, artifactId, version);
+    String groupId = args.isEmpty() ? null : args.remove(0);
+    List<Module> candidates = modules.find(artifactId, version, groupId);
+    if (candidates.isEmpty() || (candidates.size() > 1)) {
+      if (candidates.isEmpty()) {
+        out.println("No module found matching the arguments you specified.");
+        out.println("Check that you've spelled them correctly.");
+      } else {
+        out.println("There's more than one integration module found matching the name '" + artifactId + "':");
+        out.println();
+        for (Module candidate : candidates) {
+          ModuleId id = candidate.getId();
+          out.println("  * " + id.getArtifactId() + " " + id.getVersion() + " " + id.getGroupId());
+        }
+        out.println();
+        out.println("Try to use both version and group-id arguments in the command to be more specific.");
+      }
+      return;
+    }
+
+    Module module = candidates.remove(0);
+    install(module);
   }
 
 }

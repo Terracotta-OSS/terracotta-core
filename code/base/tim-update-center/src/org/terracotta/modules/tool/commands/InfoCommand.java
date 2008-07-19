@@ -42,7 +42,6 @@ public class InfoCommand extends AbstractCommand {
       out.println("You need to at least specify the name of the integration module.");
       return;
     }
-
     String artifactId = args.remove(0);
     String version = args.isEmpty() ? null : args.remove(0);
     String groupId = args.isEmpty() ? null : args.remove(0);
@@ -58,11 +57,12 @@ public class InfoCommand extends AbstractCommand {
           ModuleId id = candidate.getId();
           out.println("  * " + id.getArtifactId() + " " + id.getVersion() + " " + id.getGroupId());
         }
+        out.println();
         out.println("Try to use both version and group-id arguments in the command to be more specific.");
       }
       return;
     }
-    
+
     Module module = candidates.remove(0);
     module.printDetails(out);
   }
