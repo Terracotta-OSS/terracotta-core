@@ -21,6 +21,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ManagedObjectStateSerializationTest extends ManagedObjectStateSerializationTestBase {
 
+  public ManagedObjectStateSerializationTest() {
+    // MNK-650
+    disableAllUntil("2008-08-15");
+  }
+
   public void testCheckIfMissingAnyManagedObjectType() throws Exception {
     Field[] fields = ManagedObjectState.class.getDeclaredFields();
 
@@ -91,7 +96,8 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
 
     TestDNACursor cursor = new TestDNACursor();
 
-    cursor.addPhysicalAction(CLASSLOADER_FIELD_NAME, new ClassLoaderInstance(new UTF8ByteDataHolder("loader desc")), true);
+    cursor.addPhysicalAction(CLASSLOADER_FIELD_NAME, new ClassLoaderInstance(new UTF8ByteDataHolder("loader desc")),
+                             true);
     cursor.addPhysicalAction(INTERFACES_FIELD_NAME, myProxy.getClass().getInterfaces(), true);
     cursor.addPhysicalAction(INVOCATION_HANDLER_FIELD_NAME, new ObjectID(2002), true);
 
