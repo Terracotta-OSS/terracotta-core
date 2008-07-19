@@ -62,7 +62,7 @@ class CachedModules implements Modules {
   }
 
   private boolean qualify(Module module) {
-    return module.getTcVersion().equals("*") || module.getTcVersion().equals(this.tcVersion);
+    return module.getTcVersion().equals("*") || module.getTcVersion().startsWith(this.tcVersion);
   }
 
   public String tcVersion() {
@@ -119,6 +119,20 @@ class CachedModules implements Modules {
     List<Module> list = get(groupId, artifactId);
     Collections.reverse(list);
     return list.isEmpty() ? null : list.get(0);
+  }
+  
+  public List<Module> find(String artifactId, String version, String groupId) {
+    List<Module> list = new ArrayList<Module>();
+    for (Module module : list()) {
+      ModuleId moduleId = module.getId();
+      boolean m0 = (artifactId == null) ? true : moduleId.getArtifactId().equals(artifactId);
+      boolean m1 = (version == null) ? true : moduleId.getVersion().equals(version);
+      boolean m2 = (groupId == null) ? true : moduleId.getGroupId().equals(groupId);
+      if (!m0 || !m1 || !m2) continue;
+      list.add(module);
+    }
+    Collections.reverse(list);
+    return list;
   }
 
 }

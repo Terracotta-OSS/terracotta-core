@@ -15,45 +15,55 @@ import java.util.List;
 
 public class InfoCommand extends AbstractCommand {
 
-  private static final String LONGOPT_GROUPID = "group-id";
+  // private static final String LONGOPT_GROUPID = "group-id";
 
-  private final Modules       modules;
+  private final Modules modules;
 
   @Inject
   public InfoCommand(Modules modules) {
     this.modules = modules;
     assert modules != null : "modules is null";
-    options.addOption(buildOption(LONGOPT_GROUPID,
-                                  "Use this option to qualify the name argument", String.class));
     arguments.put("name", "The name of the Integration Module");
     arguments.put("version", "OPTIONAL. The version used to qualify the name");
+    arguments.put("group-id", "OPTIONAL. The group-id used to qualify the name");
   }
 
   public String syntax() {
-    return "<name> [version] [options]";
+    return "<name> [version] [group-id] [options]";
   }
-  
+
   public String description() {
     return "Display detailed information about an Integration Module";
   }
 
-  public void execute(CommandLine cli) throws CommandException {
+  public void execute(CommandLine cli) {
     List<String> args = cli.getArgList();
     if (args.isEmpty()) {
-      String msg = "You need to at least specify the name of the Integration Module you wish to inspect";
-      throw new CommandException(msg);
+      out.println("You need to at least specify the name of the integration module.");
+      return;
     }
 
     String artifactId = args.remove(0);
     String version = args.isEmpty() ? null : args.remove(0);
-    String groupId = cli.getOptionValue(LONGOPT_GROUPID, ModuleId.DEFAULT_GROUPID);
-    Module module = (version == null) ? modules.getLatest(groupId, artifactId) : modules.get(ModuleId
-        .create(groupId, artifactId, version));
-    if (module == null) {
-      out.println("Integration Module '" + artifactId + "' not found");
-      out.println("It might be using a groupId other than '" + groupId + "'");
+    String groupId = args.isEmpty() ? null : args.remove(0);
+    List<Module> candidates = modules.find(artifactId, version, groupId);
+    if (candidates.isEmpty() || (candidates.size() > 1)) {
+      if (candidates.isEmpty()) {
+        out.println("No module found matching the arguments you specified.");
+        out.println("Check that you've spelled them correctly.");
+      } else {
+        out.println("There's more than one integration module found matching the name '" + artifactId + "':");
+        out.println();
+        for (Module candidate : candidates) {
+          ModuleId id = candidate.getId();
+          out.println("  * " + id.getArtifactId() + " " + id.getVersion() + " " + id.getGroupId());
+        }
+        out.println("Try to use both version and group-id arguments in the command to be more specific.");
+      }
       return;
     }
+    
+    Module module = candidates.remove(0);
     module.printDetails(out);
   }
 

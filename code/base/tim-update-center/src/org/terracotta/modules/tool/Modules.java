@@ -44,4 +44,9 @@ public interface Modules {
    * The TC version that binds this list of modules.
    */
   public String tcVersion();
+
+  /**
+   * 
+   */
+  public List<Module> find(String artifactId, String version, String groupId);
 }

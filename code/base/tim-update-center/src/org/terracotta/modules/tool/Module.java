@@ -31,9 +31,14 @@ import java.util.Map.Entry;
  */
 
 public class Module implements Comparable {
-  private static final String OUTOFDATE_MARKER = "!";
-  private static final String NOTINSTALLED_MARKER = "-";
-  private static final String INSTALLED_MARKER = "+";
+  private enum SymbolStyle {
+    BINARY, TERTIARY
+  }
+
+  private static final String    SYMBOL_OUTOFDATE    = "!";
+  private static final String    SYMBOL_NOTINSTALLED = "-";
+  private static final String    SYMBOL_INSTALLED    = "+";
+
   private final ModuleId         id;
   private final String           repoUrl;
   private final String           installPath;
@@ -49,7 +54,7 @@ public class Module implements Comparable {
 
   private final Modules          modules;
 
-  private static File            repositoryPath = null;
+  private static File            repositoryPath      = null;
 
   public ModuleId getId() {
     return id;
@@ -233,7 +238,7 @@ public class Module implements Comparable {
   public void install(boolean overwrite, boolean pretend, PrintWriter out) {
     Map<ModuleId, Dependency> manifest = computeManifest();
     List<ModuleId> list = new ArrayList<ModuleId>(manifest.keySet());
-    
+
     out.println("Installing " + id.toDigestString() + " and dependencies...");
     for (ModuleId key : list) {
       Dependency dependency = manifest.get(key);
@@ -268,7 +273,7 @@ public class Module implements Comparable {
       out.println("   Installed: " + dependencyId);
     }
   }
-  
+
   private Map<ModuleId, Dependency> computeManifest() {
     Map<ModuleId, Dependency> manifest = new HashMap<ModuleId, Dependency>();
     manifest.put(id, new Dependency(this));
@@ -339,7 +344,8 @@ public class Module implements Comparable {
       out.println("The following versions are also available for TC " + modules.tcVersion() + ":\n");
       List<Module> siblings = this.getSiblings();
       for (Module sibling : siblings) {
-        out.print("\t" +  sibling.installStateMarker() + " " + sibling.getId().getVersion());
+        out.print("\t" + installStateSymbol(SymbolStyle.BINARY));
+        out.print(" " + sibling.getId().getVersion());
         if (sibling.isInstalled()) out.println("\tinstalled at " + sibling.installPath().getParent());
         else out.println();
       }
@@ -370,7 +376,7 @@ public class Module implements Comparable {
     Map<ModuleId, Dependency> manifest = computeManifest();
     for (ModuleId m : requires) {
       Dependency d = manifest.get(m);
-      out.println("\t" +  this.installMarker(d) + " " + m.toDigestString());
+      out.println("\t" + installStateSymbol(isInstalled(d)) + " " + m.toDigestString());
     }
   }
 
@@ -453,25 +459,23 @@ public class Module implements Comparable {
   }
 
   public void printDigest(PrintWriter out) {
-    out.println(installStateMarker() + " " + id.toDigestString()); 
+    out.println(installStateSymbol(SymbolStyle.TERTIARY) + " " + id.toDigestString());
   }
 
-  private String installMarker(Dependency d) {
-    String marker = isInstalled(d) ? INSTALLED_MARKER : NOTINSTALLED_MARKER;
-    return marker;
+  private String installStateSymbol(boolean state) {
+    return state ? SYMBOL_INSTALLED : SYMBOL_NOTINSTALLED;
   }
-  
-  private String installStateMarker() {
-    String marker = isInstalled() ? INSTALLED_MARKER : NOTINSTALLED_MARKER;
-    if (marker.equals(NOTINSTALLED_MARKER)) {
+
+  private String installStateSymbol(SymbolStyle style) {
+    String marker = isInstalled() ? SYMBOL_INSTALLED : SYMBOL_NOTINSTALLED;
+    if ((style == SymbolStyle.TERTIARY) && marker.equals(SYMBOL_NOTINSTALLED)) {
       List<Module> siblings = getSiblings();
       for (Module sibling : siblings) {
         if (!sibling.isInstalled()) continue;
-        marker = OUTOFDATE_MARKER;
+        marker = SYMBOL_OUTOFDATE;
         break;
       }
     }
     return marker;
   }
-
 }
