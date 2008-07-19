@@ -51,7 +51,7 @@ public class UpdateCommand extends AbstractCommand {
   }
 
   public String syntax() {
-    return "<name> [group-id] [options]";
+    return "<name> [group-id] {options}";
   }
 
   public String description() {

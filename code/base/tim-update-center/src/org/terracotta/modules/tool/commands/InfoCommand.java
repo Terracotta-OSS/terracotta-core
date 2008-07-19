@@ -15,8 +15,6 @@ import java.util.List;
 
 public class InfoCommand extends AbstractCommand {
 
-  // private static final String LONGOPT_GROUPID = "group-id";
-
   private final Modules modules;
 
   @Inject
@@ -29,7 +27,7 @@ public class InfoCommand extends AbstractCommand {
   }
 
   public String syntax() {
-    return "<name> [version] [group-id] [options]";
+    return "<name> [version] [group-id] {options}";
   }
 
   public String description() {

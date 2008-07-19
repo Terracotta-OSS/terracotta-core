@@ -40,7 +40,7 @@ public class InstallCommand extends AbstractCommand {
   }
 
   public String syntax() {
-    return "<name> [version] [group-id] [options]";
+    return "<name> [version] [group-id] {options}";
   }
 
   public String description() {

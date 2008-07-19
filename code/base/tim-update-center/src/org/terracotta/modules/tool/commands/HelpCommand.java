@@ -19,12 +19,12 @@ public class HelpCommand extends AbstractCommand {
   @Inject
   public HelpCommand(CommandRegistry registry) {
     this.commandRegistry = registry;
-    this.arguments.put("topic", "OPTIONAL. Prints the help regarding this topic. Multiple topics may be specified");
+    this.arguments.put("command-names", "OPTIONAL. Space delimited list of command names to get a help on");
   }
 
   /** The syntax of this command. */
   public String syntax() {
-    return "[topic] [options]";
+    return "[command-names] {options}";
   }
   
   public String description() {
@@ -39,9 +39,9 @@ public class HelpCommand extends AbstractCommand {
       out.println("Terracotta Integration Modules manager.");
       out.println("Below is a list of all the commands that are available.");
       out.println();
-      out.println("General Syntax:");
+      out.println("General syntax:");
       out.println();
-      out.println(StringUtils.leftPad("./tim-get.sh [command] [arguments] [options]", 35));
+      out.println(StringUtils.leftPad("tim-get.sh [command] [arguments] {options}", 46));
       out.println();
       out.println("Commands:");
       for (String name : list) {
@@ -54,7 +54,7 @@ public class HelpCommand extends AbstractCommand {
       }
       out.println();
       out.println("Further help:");
-      out.println("   Each command accepts a --help argument that will display additional");
+      out.println("   Each command accepts a --help option that will display additional");
       out.println("   usage information for the command. Specifying the command name after");
       out.println("   the \"help\" command does the same thing.");
       return;

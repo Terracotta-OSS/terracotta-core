@@ -31,12 +31,12 @@ public class ListCommand extends AbstractCommand {
     assert modules != null : "modules is null";
     options.addOption(OPTION_DETAILS, LONGOPT_DETAILS, false, "Display detailed information");
     this.arguments
-        .put("keyword",
-             "OPTIONAL. Filters the list to those that contain this keyword. Multiple keywords may be specified");
+        .put("keywords",
+             "OPTIONAL. Space delimited list of keywords used to filter the list.");
   }
 
   public String syntax() {
-    return "[keyword] [options]";
+    return "[keywords] {options}";
   }
 
   public String description() {
@@ -85,6 +85,6 @@ public class ListCommand extends AbstractCommand {
       out.println();
       out.println("legends: [+] already installed  [!] installed but newer version exists  [-] not installed");
     }
-       
+
   }
 }

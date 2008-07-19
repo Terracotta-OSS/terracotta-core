@@ -38,7 +38,7 @@ public abstract class AbstractCommand implements Command {
 
   protected final Options createOptions() {
     Options opts = new Options();
-    opts.addOption(OPTION_HELP, LONGOPT_HELP, false, "Display help information");
+    opts.addOption(OPTION_HELP, LONGOPT_HELP, false, "Display help information; ignores all other arguments when specified");
     opts.addOption(OPTION_PROXY, LONGOPT_PROXY, true, "HTTP proxy to use for remote operations");
     return opts;
   }
@@ -78,12 +78,6 @@ public abstract class AbstractCommand implements Command {
     return StringUtils.chomp(writer.toString());
   }
 
-  // private static final String EMPTY_HELP_STRING = "";
-  //
-  // protected String loadHelp() {
-  // return loadHelp(getClass().getSimpleName());
-  // }
-
   public void printHelp() {
     out.println(help());
   }
@@ -113,24 +107,6 @@ public abstract class AbstractCommand implements Command {
   public Options options() {
     return options;
   }
-
-  // protected String loadHelp(String topic) {
-  // String resourceName = "/" + getClass().getPackage().getName().replace('.', '/') + "/" + topic + ".help";
-  // InputStream in = AbstractCommand.class.getResourceAsStream(resourceName);
-  // try {
-  // if (in == null) return EMPTY_HELP_STRING;
-  // List<String> lines = IOUtils.readLines(in);
-  // StringBuffer buffer = new StringBuffer();
-  // for (String line : lines) {
-  // buffer.append(line);
-  // buffer.append(System.getProperty("line.separator"));
-  // }
-  // return buffer.toString();
-  // } catch (IOException e) {
-  // this.err.println("Unable to load resource: " + resourceName);
-  // return EMPTY_HELP_STRING;
-  // }
-  // }
 
   static Option buildOption(String optname, String description) {
     OptionBuilder.withLongOpt(optname);
