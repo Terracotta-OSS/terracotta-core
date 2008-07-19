@@ -12,7 +12,6 @@ import com.tc.test.TCTestCase;
 import com.tc.test.TestConfigObject;
 import com.tc.test.server.util.TcConfigBuilder;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,7 +32,7 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
 
   private final Map     disabledVariants    = new HashMap();
   private final List    disabledJavaVersion = new ArrayList();
-  
+
   public static Test suite() {
     return new ErrorTestSetup(new TestSuite(AbstractDeploymentTest.class));
   }
@@ -70,12 +69,6 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
   }
 
   public void runBare() throws Throwable {
-    Method suiteMethod = getClass().getDeclaredMethod("suite", null);
-    if (suiteMethod == null) {
-      throw new Exception("Container test should have a 'static Test suite()' method declared");
-    } else {
-      System.out.println(suiteMethod);
-    }
     if (shouldDisable()) { return; }
     super.runBare();
   }
