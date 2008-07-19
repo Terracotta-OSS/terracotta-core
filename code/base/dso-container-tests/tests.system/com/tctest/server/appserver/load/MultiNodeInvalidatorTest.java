@@ -14,6 +14,7 @@ import com.tc.test.server.appserver.StandardAppServerParameters;
 import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
 import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
+import com.tc.test.server.appserver.deployment.ServerTestSetup;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tc.test.server.util.TcConfigBuilder;
 import com.tc.util.concurrent.ThreadUtil;
@@ -21,6 +22,8 @@ import com.tctest.webapp.listeners.MultiNodeInvalidatorListener;
 import com.tctest.webapp.servlets.MultiNodeInvalidatorSerlvet;
 
 import java.util.Random;
+
+import junit.framework.Test;
 
 public class MultiNodeInvalidatorTest extends AbstractDeploymentTest {
   private static final String CONTEXT                = "MultiNodeInvalidatorTest";
@@ -40,6 +43,10 @@ public class MultiNodeInvalidatorTest extends AbstractDeploymentTest {
 
   private Deployment          deployment;
   private TcConfigBuilder     configBuilder;
+
+  public static Test suite() {
+    return new ServerTestSetup(MultiNodeInvalidatorTest.class);
+  }
 
   public MultiNodeInvalidatorTest() {
     //
