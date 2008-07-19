@@ -112,7 +112,7 @@ public class UpdateCommand extends AbstractCommand {
   }
 
   private void updateAll() throws CommandException {
-    out.println("\n*** Updating installed integration modules for TC " + modules.tcVersion() + " ***\n");
+    out.println("*** Updating installed integration modules for TC " + modules.tcVersion() + " ***\n");
     for (ModuleId entry : installedModules()) {
       Module latest = modules.getLatest(entry.getGroupId(), entry.getArtifactId());
 

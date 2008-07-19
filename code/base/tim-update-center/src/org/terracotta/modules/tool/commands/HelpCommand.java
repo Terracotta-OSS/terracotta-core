@@ -36,7 +36,7 @@ public class HelpCommand extends AbstractCommand {
     if (topics.isEmpty()) {
       List<String> list = new ArrayList<String>(commandRegistry.commandNames());
       Collections.sort(list);
-      out.println("Terracotta Integration Modules manager.");
+      out.println("This is the Terracotta Integration Modules manager.");
       out.println("Below is a list of all the commands that are available.");
       out.println();
       out.println("General syntax:");

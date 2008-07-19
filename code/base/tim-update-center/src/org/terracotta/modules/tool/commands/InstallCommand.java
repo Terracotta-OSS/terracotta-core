@@ -54,7 +54,7 @@ public class InstallCommand extends AbstractCommand {
   }
 
   private void installAll() {
-    out.println("\n*** Installing all of the latest integration modules for TC " + modules.tcVersion() + " ***\n");
+    out.println("*** Installing all of the latest integration modules for TC " + modules.tcVersion() + " ***\n");
     List<Module> latest = modules.listLatest();
     for (Module module : latest) {
       install(module);

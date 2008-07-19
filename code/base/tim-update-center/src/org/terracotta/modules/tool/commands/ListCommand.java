@@ -75,7 +75,7 @@ public class ListCommand extends AbstractCommand {
       list.add(module);
     }
 
-    out.println("\n*** Terracotta Integration Modules for TC " + modules.tcVersion() + " ***");
+    out.println("*** Terracotta Integration Modules for TC " + modules.tcVersion() + " ***");
     if (cli.hasOption('v') || cli.hasOption(LONGOPT_DETAILS)) displayWithDetails(list);
     else display(list);
 
