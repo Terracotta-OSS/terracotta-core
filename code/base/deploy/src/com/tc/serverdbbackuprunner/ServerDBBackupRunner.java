@@ -110,7 +110,7 @@ public class ServerDBBackupRunner {
                         boolean closeJMXAndListener) throws IOException {
     jmxConnector = RunnerUtility.getJMXConnector(m_userName, m_host, m_port);
     MBeanServerConnection mbs = getMBeanServerConnection(jmxConnector, m_host, m_port);
-    if (mbs == null) return;
+    if (mbs == null) throw new RuntimeException("");
     ServerDBBackupMBean mbean = getServerDBBackupMBean(mbs);
 
     try {
@@ -119,12 +119,9 @@ public class ServerDBBackupRunner {
       }
       mbean.runBackUp(path);
     } catch (IOException e) {
-      System.err.println(e.getMessage());
-      e.printStackTrace();
       throw e;
     } catch (Exception e) {
-      e.printStackTrace();
-      throw new RuntimeException(e);
+      throw new RuntimeException("Backup Failed: are you sure that the server is being run in persistent mode");
     } finally {
       if (closeJMXAndListener) {
         removeListenerAndCloseJMX(listener, jmxConnector, mbs);
@@ -165,7 +162,7 @@ public class ServerDBBackupRunner {
     try {
       jmxConnector.close();
     } catch (IOException e) {
-      e.printStackTrace();
+      System.err.println("Unable to close the JMX connector " + e.getMessage());
     }
   }
 
@@ -173,7 +170,7 @@ public class ServerDBBackupRunner {
     try {
       if (listener != null) mbs.removeNotificationListener(L2MBeanNames.SERVER_DB_BACKUP, listener);
     } catch (Exception e) {
-      e.printStackTrace();
+      System.err.println("Unable to remove Listener " + e.getMessage());
     }
   }
 
