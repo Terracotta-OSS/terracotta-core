@@ -130,10 +130,10 @@ public class TCGroupManagerImplTest extends TCTestCase {
   }
   
   private int joinedMemberSize(TCGroupManagerImpl group) {
-    TCGroupMember members[] = (TCGroupMember[])group.getMembers().toArray();
+    Object members[] = group.getMembers().toArray();
     int size = members.length;
     for(int i =0; i < size; ++i) {
-      if (!members[i].isReady()) -- size;
+      if (!((TCGroupMember)members[i]).isReady()) -- size;
     }
     return size;
   }
