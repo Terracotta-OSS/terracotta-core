@@ -17,7 +17,7 @@ public class SleepycatCollectionsTest extends TCTestCase {
 
   public SleepycatCollectionsTest() {
     // MNK649
-    disableAllUntil("20080815");
+    disableAllUntil("2008-08-15");
   }
 
   @Override
