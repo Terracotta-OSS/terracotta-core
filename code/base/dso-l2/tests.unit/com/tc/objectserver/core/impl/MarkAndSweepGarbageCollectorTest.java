@@ -810,6 +810,42 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     public Map loadRootNamesToIDs() {
       return new HashMap();
     }
+
+    public boolean addMapTypeObject(ObjectID id) {
+      throw new UnsupportedOperationException();
+    }
+
+    public boolean addNewObject(ObjectID id) {
+      throw new UnsupportedOperationException();
+    }
+
+    public boolean containsMapType(ObjectID id) {
+      throw new UnsupportedOperationException();
+    }
+
+    public boolean containsObject(ObjectID id) {
+      throw new UnsupportedOperationException();
+    }
+
+    public SyncObjectIdSet getAllMapsObjectIDs() {
+      throw new UnsupportedOperationException();
+    }
+
+    public int getObjectCount() {
+      throw new UnsupportedOperationException();
+    }
+
+    public void removeAllMapTypeObject(Collection ids) {
+      throw new UnsupportedOperationException();
+    }
+
+    public void removeAllObjectsByID(SortedSet<ObjectID> ids) {
+      throw new UnsupportedOperationException();
+    }
+
+    public ObjectIDSet snapshotObjects() {
+      throw new UnsupportedOperationException();
+    }
   }
 
   private static class NullPersistenceTransactionProvider implements PersistenceTransactionProvider {
