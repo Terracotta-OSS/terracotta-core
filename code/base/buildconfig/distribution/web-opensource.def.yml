@@ -84,7 +84,7 @@ postscripts:
   - inject-copyright
   - make-build-data:
       args:
-        - lib/resources
+        - eclipse/org.terracotta.dso/lib/resources
   - include-schemas:
       args:
         - eclipse/org.terracotta.dso/html/ref/schema
