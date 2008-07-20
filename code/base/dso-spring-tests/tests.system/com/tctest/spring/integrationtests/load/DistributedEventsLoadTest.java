@@ -5,6 +5,7 @@
 package com.tctest.spring.integrationtests.load;
 
 import com.tc.test.server.appserver.deployment.Deployment;
+import com.tc.test.server.appserver.deployment.ServerTestSetup;
 import com.tc.test.server.appserver.deployment.TestCallback;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tctest.spring.bean.EventManager;
@@ -14,6 +15,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+
+import junit.framework.Test;
 
 public class DistributedEventsLoadTest extends SpringDeploymentTest {
   private static final boolean DEBUG                         = true;
@@ -29,6 +32,10 @@ public class DistributedEventsLoadTest extends SpringDeploymentTest {
 
   public DistributedEventsLoadTest() {
     // this.disableAllUntil("2010-01-01", new String[]{"solaris"});
+  }
+
+  public static Test suite() {
+    return new ServerTestSetup(DistributedEventsLoadTest.class);
   }
 
   protected void setUp() throws Exception {
