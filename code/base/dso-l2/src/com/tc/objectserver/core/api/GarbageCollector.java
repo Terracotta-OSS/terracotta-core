@@ -69,4 +69,5 @@ public interface GarbageCollector extends PrettyPrintable {
   
   public boolean deleteGarbage(GCResultContext resultContext);
   
+  public void setGarbageCollectionInfoFactory(GarbageCollectionInfoFactory factory);
 }

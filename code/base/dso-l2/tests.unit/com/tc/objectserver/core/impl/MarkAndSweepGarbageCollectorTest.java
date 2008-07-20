@@ -7,23 +7,32 @@ package com.tc.objectserver.core.impl;
 import com.tc.exception.ImplementMe;
 import com.tc.net.groups.NodeID;
 import com.tc.object.ObjectID;
+import com.tc.objectserver.api.GCStats;
+import com.tc.objectserver.api.GCStatsEventListener;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerStatsListener;
 import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
-import com.tc.objectserver.core.api.Filter;
-//import com.tc.objectserver.core.api.GarbageCollectionInfo;
-import com.tc.objectserver.core.api.GarbageCollector;
-//import com.tc.objectserver.core.api.GarbageCollectorEventListener;
+import com.tc.objectserver.core.api.Filter; 
+import com.tc.objectserver.core.api.GarbageCollectionInfo;
+import com.tc.objectserver.core.api.GarbageCollectionInfoFactory;
+
+import com.tc.objectserver.core.api.GarbageCollector; 
+import com.tc.objectserver.core.api.GarbageCollectorEventListener; 
 import com.tc.objectserver.core.api.ManagedObject;
+import com.tc.objectserver.handler.GarbageDisposeHandler;
 import com.tc.objectserver.impl.ManagedObjectReference;
 import com.tc.objectserver.l1.api.TestClientStateManager;
+import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
-import com.tc.objectserver.persistence.impl.NullPersistenceTransactionProvider;
-import com.tc.util.ObjectIDSet;
+import com.tc.objectserver.persistence.impl.TestPersistenceTransaction;
 
-//import java.util.ArrayList;
+import com.tc.util.ObjectIDSet;
+import com.tc.util.SyncObjectIdSet;
+import com.tc.util.SyncObjectIdSetImpl;
+
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -32,6 +41,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.Stack;
+
 import junit.framework.TestCase;
 
 public class MarkAndSweepGarbageCollectorTest extends TestCase {
@@ -39,10 +51,8 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
   protected TestManagedObject              root1;
   protected TestManagedObject              root2;
   protected Set                            roots               = new HashSet();
-  protected Map                            managed;                                                       // = new
-  // HashMap();
-  protected GarbageCollector               collector;                                                     // = new
-  // MarkAndSweepGarbageCollector();
+  protected Map                            managed;
+  protected GarbageCollector               collector;
   protected Set                            lookedUp;
   protected Set                            released;
   protected ObjectManager                  objectManager;
@@ -84,28 +94,167 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     return this;
   }
 
-  /**
-  public void testGCStats() {
-    TestGCStatsEventListener listener = new TestGCStatsEventListener();
+  public void testGarbageCollectionInfoCalls() {
+    TestGarbageCollectionInfoFactory factory = new TestGarbageCollectionInfoFactory();
+    this.collector.setGarbageCollectionInfoFactory(factory);
+    TestGarbageCollectionInfoCallsListener listener = new TestGarbageCollectionInfoCallsListener();
+    this.collector.addListener(listener);
     collector.start();
-    collector.addGCStatsEventListener(listener);
     collector.gc();
     collector.stop();
-    assertEquals(4, listener.getUpdateGCStatusList().size());
-    List updateGCStatusList = listener.getUpdateGCStatusList();
-    assertEquals("MARK", updateGCStatusList.get(0));
-    assertEquals("PAUSE", updateGCStatusList.get(1));
-    assertEquals("MARK_COMPLETE", updateGCStatusList.get(2));
-    assertEquals("DELETE", updateGCStatusList.get(3));
-  public Set<ObjectID> getRootIds() {
-    HashSet<ObjectID> rv = new HashSet<ObjectID>();
-    for (final ManagedObject root : roots) {
-      rv.add(root.getID());
-    }
-    return rv;
+
+    assertEquals(1, listener.startList.size());
+    assertEquals(1, listener.markList.size());
+    assertEquals(1, listener.markResultsList.size());
+    assertEquals(1, listener.rescue1CompleteList.size());
+    assertEquals(1, listener.pausingList.size());
+    assertEquals(1, listener.pausedList.size());
+    assertEquals(1, listener.rescue2StartList.size());
+    assertEquals(1, listener.markCompleteList.size());
+    assertEquals(1, listener.deleteList.size());
+    assertEquals(1, listener.completedList.size());
+    assertEquals(1, listener.cycleCompletedList.size());
+
   }
- **/
-  
+
+  private static class TestGarbageCollectionInfoCallsListener extends TestGarbageCollectorEventListener {
+
+    @Override
+    public void garbageCollectorStart(GarbageCollectionInfo info) {
+      super.garbageCollectorStart(info);
+      TestGarbageCollectionInfo gcInfo = (TestGarbageCollectionInfo) info;
+      assertEquals(2, gcInfo.setCallStack.size());
+      assertEquals("setStartTime", gcInfo.setCallStack.pop());
+      assertEquals("markFullGen", gcInfo.setCallStack.pop());
+      gcInfo.setCallStack.clear();
+    }
+
+    @Override
+    public void garbageCollectorMark(GarbageCollectionInfo info) {
+      super.garbageCollectorMark(info);
+      TestGarbageCollectionInfo gcInfo = (TestGarbageCollectionInfo) info;
+      assertEquals(1, gcInfo.setCallStack.size());
+      assertEquals("setBeginObjectCount", gcInfo.setCallStack.pop());
+      gcInfo.setCallStack.clear();
+    }
+
+    @Override
+    public void garbageCollectorMarkResults(GarbageCollectionInfo info) {
+      super.garbageCollectorMarkResults(info);
+      TestGarbageCollectionInfo gcInfo = (TestGarbageCollectionInfo) info;
+      assertEquals(1, gcInfo.setCallStack.size());
+      assertEquals("setPreRescueCount", gcInfo.setCallStack.pop());
+      gcInfo.setCallStack.clear();
+    }
+
+    @Override
+    public void garbageCollectorRescue1Complete(GarbageCollectionInfo info) {
+      super.garbageCollectorRescue1Complete(info);
+      TestGarbageCollectionInfo gcInfo = (TestGarbageCollectionInfo) info;
+      assertEquals(1, gcInfo.setCallStack.size());
+      assertEquals("setRescue1Count", gcInfo.setCallStack.pop());
+      gcInfo.setCallStack.clear();
+    }
+
+    @Override
+    public void garbageCollectorPausing(GarbageCollectionInfo info) {
+      super.garbageCollectorPausing(info);
+      TestGarbageCollectionInfo gcInfo = (TestGarbageCollectionInfo) info;
+      assertEquals(1, gcInfo.setCallStack.size());
+      assertEquals("setMarkStageTime", gcInfo.setCallStack.pop());
+      gcInfo.setCallStack.clear();
+    }
+
+    @Override
+    public void garbageCollectorPaused(GarbageCollectionInfo info) {
+      super.garbageCollectorPaused(info);
+      TestGarbageCollectionInfo gcInfo = (TestGarbageCollectionInfo) info;
+      assertEquals(0, gcInfo.setCallStack.size());
+      gcInfo.setCallStack.clear();
+    }
+
+    @Override
+    public void garbageCollectorRescue2Start(GarbageCollectionInfo info) {
+      super.garbageCollectorRescue2Start(info);
+      TestGarbageCollectionInfo gcInfo = (TestGarbageCollectionInfo) info;
+      assertEquals(1, gcInfo.setCallStack.size());
+      assertEquals("setCandidateGarbageCount", gcInfo.setCallStack.pop());
+      gcInfo.setCallStack.clear();
+    }
+
+    @Override
+    public void garbageCollectorMarkComplete(GarbageCollectionInfo info) {
+      super.garbageCollectorMarkComplete(info);
+      TestGarbageCollectionInfo gcInfo = (TestGarbageCollectionInfo) info;
+      assertEquals(3, gcInfo.setCallStack.size());
+      assertEquals("setPausedStageTime", gcInfo.setCallStack.pop());
+      assertEquals("setDeleted", gcInfo.setCallStack.pop());
+      assertEquals("setRescueTimes", gcInfo.setCallStack.pop());
+      gcInfo.setCallStack.clear();
+    }
+
+    @Override
+    public void garbageCollectorCycleCompleted(GarbageCollectionInfo info) {
+      super.garbageCollectorCycleCompleted(info);
+      TestGarbageCollectionInfo gcInfo = (TestGarbageCollectionInfo) info;
+      assertEquals(1, gcInfo.setCallStack.size());
+      assertEquals("setElapsedTime", gcInfo.setCallStack.pop());
+      gcInfo.setCallStack.clear();
+    }
+
+    @Override
+    public void garbageCollectorDelete(GarbageCollectionInfo info) {
+      super.garbageCollectorDelete(info);
+      TestGarbageCollectionInfo gcInfo = (TestGarbageCollectionInfo) info;
+      assertEquals(0, gcInfo.setCallStack.size());
+      gcInfo.setCallStack.clear();
+    }
+
+    @Override
+    public void garbageCollectorCompleted(GarbageCollectionInfo info) {
+      super.garbageCollectorCompleted(info);
+      TestGarbageCollectionInfo gcInfo = (TestGarbageCollectionInfo) info;
+      assertEquals(2, gcInfo.setCallStack.size());
+      assertEquals("setElapsedTime", gcInfo.setCallStack.pop());
+      assertEquals("setDeleteStageTime", gcInfo.setCallStack.pop());
+      gcInfo.setCallStack.clear();
+    }
+
+  }
+
+  public void testGarbageCollectorListener() {
+    TestGarbageCollectorEventListener listener = new TestGarbageCollectorEventListener();
+    collector.addListener(listener);
+    collector.start();
+    collector.gc();
+    collector.stop();
+    assertEquals(1, listener.startList.size());
+    assertEquals(1, listener.markList.size());
+    assertEquals(1, listener.markResultsList.size());
+    assertEquals(1, listener.rescue1CompleteList.size());
+    assertEquals(1, listener.pausingList.size());
+    assertEquals(1, listener.pausedList.size());
+    assertEquals(1, listener.rescue2StartList.size());
+    assertEquals(1, listener.markCompleteList.size());
+    assertEquals(1, listener.deleteList.size());
+    assertEquals(1, listener.completedList.size());
+    assertEquals(1, listener.cycleCompletedList.size());
+
+  }
+
+  public void testGCStatsEventListener() {
+    TestGCStatsEventListener listener = new TestGCStatsEventListener();
+
+    GCStatsEventPublisher gcStatsGarbageCollectionListener = new GCStatsEventPublisher();
+    gcStatsGarbageCollectionListener.addListener(listener);
+    collector.addListener(gcStatsGarbageCollectionListener);
+    collector.start();
+    collector.gc();
+    collector.stop();
+    
+    assertEquals(6, listener.gcStatsList.size());
+  }
+
   public void testEmptyRoots() {
     Set toDelete = collector.collect(filter, objectManager.getRootIDs(), new ObjectIDSet(managed.keySet()));
     assertTrue(toDelete.size() == 0);
@@ -219,90 +368,275 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     managed.put(tmo.getID(), tmo.getReference());
     return tmo;
   }
-  
-  /**
+
+  private static class TestGCStatsEventListener implements GCStatsEventListener {
+
+    protected List gcStatsList = new ArrayList();
+
+    /**
+     * notify the listener that GCStats object has been updated
+     * 
+     * @param stats statistics about this collection
+     */
+    public void update(GCStats stats) {
+      gcStatsList.add(stats);
+    }
+
+  }
+
+  private static class TestGarbageCollectionInfoFactory implements GarbageCollectionInfoFactory {
+
+    public GarbageCollectionInfo newInstance(int iteration) {
+      return new TestGarbageCollectionInfo(iteration);
+    }
+
+  }
+
+  private static class TestGarbageCollectionInfo implements GarbageCollectionInfo {
+
+    private int       actualGarbageCount;
+
+    private int       beginObjectCount;
+
+    private int       candiateGarbageCount;
+
+    private long      startTime;
+
+    private long      deleteStageTime;
+
+    private SortedSet deleted;
+
+    private long      elapsedTime;
+
+    private int       iteration;
+
+    private long      markStageTime;
+
+    private Object    object;
+
+    private long      pausedStageTime;
+
+    private int       preRescueCount;
+
+    private int       rescue1Count;
+
+    private List      rescueTimes;
+
+    private boolean   youngGen;
+
+    protected Stack   setCallStack = new Stack();
+
+    public TestGarbageCollectionInfo(int iteration) {
+      this.iteration = iteration;
+    }
+
+    public int getActualGarbageCount() {
+      return actualGarbageCount;
+    }
+
+    public int getBeginObjectCount() {
+      return beginObjectCount;
+    }
+
+    public int getCandidateGarbageCount() {
+      return candiateGarbageCount;
+    }
+
+    public long getDeleteStageTime() {
+      return deleteStageTime;
+    }
+
+    public SortedSet getDeleted() {
+      return deleted;
+    }
+
+    public long getElapsedTime() {
+      return elapsedTime;
+    }
+
+    public int getIteration() {
+      return iteration;
+    }
+
+    public long getMarkStageTime() {
+      return markStageTime;
+    }
+
+    public Object getObject() {
+      return object;
+    }
+
+    public long getPausedStageTime() {
+      return pausedStageTime;
+    }
+
+    public int getPreRescueCount() {
+      return preRescueCount;
+    }
+
+    public int getRescue1Count() {
+      return rescue1Count;
+    }
+
+    public List getRescueTimes() {
+      return rescueTimes;
+    }
+
+    public long getStartTime() {
+      return startTime;
+    }
+
+    public boolean isYoungGen() {
+      return youngGen;
+    }
+
+    public void setDeleteStageTime(long time) {
+      setCallStack.add("setDeleteStageTime");
+      this.deleteStageTime = time;
+    }
+
+    public void setElapsedTime(long time) {
+      setCallStack.add("setElapsedTime");
+      this.elapsedTime = time;
+    }
+
+    public void setObject(Object stats) {
+      this.object = stats;
+    }
+
+    public void markFullGen() {
+      setCallStack.add("markFullGen");
+      youngGen = false;
+    }
+
+    public void markYoungGen() {
+      setCallStack.add("markYounGen");
+      youngGen = true;
+    }
+
+    public void setBeginObjectCount(int count) {
+      setCallStack.add("setBeginObjectCount");
+      this.beginObjectCount = count;
+    }
+
+    public void setCandidateGarbageCount(int count) {
+      setCallStack.add("setCandidateGarbageCount");
+      this.candiateGarbageCount = count;
+    }
+
+    public void setDeleted(SortedSet deleted) {
+      setCallStack.add("setDeleted");
+      this.deleted = deleted;
+    }
+
+    public void setMarkStageTime(long time) {
+      setCallStack.add("setMarkStageTime");
+      this.markStageTime = time;
+    }
+
+    public void setPausedStageTime(long time) {
+      setCallStack.add("setPausedStageTime");
+      this.pausedStageTime = time;
+    }
+
+    public void setPreRescueCount(int count) {
+      setCallStack.add("setPreRescueCount");
+      this.preRescueCount = count;
+    }
+
+    public void setRescue1Count(int count) {
+      setCallStack.add("setRescue1Count");
+      this.rescue1Count = count;
+    }
+
+    public void setRescueTimes(List rescueTimes) {
+      setCallStack.add("setRescueTimes");
+      this.rescueTimes = rescueTimes;
+    }
+
+    public void setStartTime(long time) {
+      setCallStack.add("setStartTime");
+      this.startTime = time;
+    }
+
+  }
+
   private static class TestGarbageCollectorEventListener implements GarbageCollectorEventListener {
-    
-    protected List completedList = new ArrayList();
-    
-    protected List cycleCompletedList = new ArrayList();
-    
-    protected List deleteList = new ArrayList();
-    
-    protected List markCompleteList = new ArrayList();
-    
-    protected List  
-    
-    public void garbageCollectorCompleted(GarbageCollectionInfo info) {
-      //do nothing
-    }
 
-    public void garbageCollectorCycleCompleted(GarbageCollectionInfo info) {
-     //
-    }
+    protected List startList           = new ArrayList();
 
-    public void garbageCollectorDelete(GarbageCollectionInfo info) {
-     //
-    }
+    protected List markList            = new ArrayList();
 
-    public void garbageCollectorMarkComplete(GarbageCollectionInfo info) {
-      //
+    protected List markResultsList     = new ArrayList();
+
+    protected List rescue1CompleteList = new ArrayList();
+
+    protected List pausingList         = new ArrayList();
+
+    protected List pausedList          = new ArrayList();
+
+    protected List rescue2StartList    = new ArrayList();
+
+    protected List markCompleteList    = new ArrayList();
+
+    protected List deleteList          = new ArrayList();
+
+    protected List cycleCompletedList  = new ArrayList();
+
+    protected List completedList       = new ArrayList();
+
+    public void garbageCollectorStart(GarbageCollectionInfo info) {
+      startList.add(info);
     }
 
     public void garbageCollectorMark(GarbageCollectionInfo info) {
-      //
+      markList.add(info);
     }
 
     public void garbageCollectorMarkResults(GarbageCollectionInfo info) {
-     //
+      markResultsList.add(info);
     }
 
-    public void garbageCollectorPaused(GarbageCollectionInfo info) {
-      //
+    public void garbageCollectorRescue1Complete(GarbageCollectionInfo info) {
+      rescue1CompleteList.add(info);
     }
 
     public void garbageCollectorPausing(GarbageCollectionInfo info) {
-      //
+      pausingList.add(info);
     }
 
-    public void garbageCollectorRescue1(GarbageCollectionInfo info) {
-      //
+    public void garbageCollectorPaused(GarbageCollectionInfo info) {
+      pausedList.add(info);
     }
 
-    public void garbageCollectorRescue1Results(GarbageCollectionInfo info) {
-      //
+    public void garbageCollectorRescue2Start(GarbageCollectionInfo info) {
+      rescue2StartList.add(info);
     }
 
-    public void garbageCollectorRescue2(GarbageCollectionInfo info) {
-      //
+    public void garbageCollectorMarkComplete(GarbageCollectionInfo info) {
+      markCompleteList.add(info);
     }
 
-    public void garbageCollectorRescue2Results(GarbageCollectionInfo info) {
-      //
+    public void garbageCollectorDelete(GarbageCollectionInfo info) {
+      deleteList.add(info);
     }
 
-    public void garbageCollectorStart(GarbageCollectionInfo info) {
-      //
+    public void garbageCollectorCycleCompleted(GarbageCollectionInfo info) {
+      cycleCompletedList.add(info);
     }
-    
+
+    public void garbageCollectorCompleted(GarbageCollectionInfo info) {
+      completedList.add(info);
+    }
+
   }
-  **/
-/**
-  private static class TestGCStatsEventListener implements GCStatsEventListener {
 
-    private List updateGCStatusList = new ArrayList();
+  /**
+   * private static class TestGCStatsEventListener implements GCStatsEventListener { private List updateGCStatusList =
+   * new ArrayList(); public void update(GCStats stats) { System.out.println("update:" + stats);
+   * updateGCStatusList.add(stats.getStatus()); } public List getUpdateGCStatusList() { return updateGCStatusList; } }
+   */
 
-    public void update(GCStats stats) {
-      System.out.println("update:" + stats);
-      updateGCStatusList.add(stats.getStatus());
-    }
-
-    public List getUpdateGCStatusList() {
-      return updateGCStatusList;
-    }
-  }
-**/
-  
   private class GCTestObjectManager implements ObjectManager {
 
     public ManagedObject getObjectByID(ObjectID id) {
@@ -418,13 +752,75 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     }
 
     public void notifyGCComplete(GCResultContext resultContext) {
-   
-//      GCStatsImpl gcStats = resultContext.getGCStats();
-//      gcStats.setDeleteState();
-//      gcStats.setDeleteStageTime(System.currentTimeMillis() - startTime);
-//      gcStats.setCompleteState();
+
+      GarbageDisposeHandler handler = new GarbageDisposeHandler(new NullManagedObjectPersistor(),
+                                                                new NullPersistenceTransactionProvider(), 1);
+
+      handler.handleEvent(resultContext);
     }
 
+  }
+
+  private static class NullManagedObjectPersistor implements ManagedObjectPersistor {
+
+    public Set loadRoots() {
+      return new HashSet();
+    }
+
+    public Set loadRootNames() {
+      return new HashSet();
+    }
+
+    public ObjectID loadRootID(String name) {
+      return null;
+    }
+
+    public void addRoot(PersistenceTransaction tx, String name, ObjectID id) {
+      //
+    }
+
+    public ManagedObject loadObjectByID(ObjectID id) {
+      return null;
+    }
+
+    public long nextObjectIDBatch(int batchSize) {
+      return -1;
+    }
+
+    public void setNextAvailableObjectID(long startID) {
+      //
+    }
+
+    public SyncObjectIdSet getAllObjectIDs() {
+      return new SyncObjectIdSetImpl();
+    }
+
+    public void saveObject(PersistenceTransaction tx, ManagedObject managedObject) {
+      //
+    }
+
+    public void saveAllObjects(PersistenceTransaction tx, Collection managed) {
+      //
+    }
+
+    public void deleteAllObjectsByID(PersistenceTransaction tx, SortedSet<ObjectID> ids) {
+      //
+    }
+
+    public Map loadRootNamesToIDs() {
+      return new HashMap();
+    }
+  }
+
+  private static class NullPersistenceTransactionProvider implements PersistenceTransactionProvider {
+
+    public PersistenceTransaction newTransaction() {
+      return new TestPersistenceTransaction();
+    }
+
+    public PersistenceTransaction nullTransaction() {
+      return new TestPersistenceTransaction();
+    }
   }
 
 }

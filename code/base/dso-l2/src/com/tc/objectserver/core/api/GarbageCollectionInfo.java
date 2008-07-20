@@ -9,15 +9,35 @@ import java.util.SortedSet;
 
 public interface GarbageCollectionInfo {
 
-  public boolean isYoungGen();
+  public int getRescue1Count();
+
+  public void setRescue1Count(int count);
+
+  public int getPreRescueCount();
+
+  public void setPreRescueCount(int count);
 
   public int getIteration();
 
+  public void markYoungGen();
+
+  public void markFullGen();
+
+  public boolean isYoungGen();
+
+  public void setStartTime(long time);
+
   public long getStartTime();
+
+  public void setBeginObjectCount(int count);
 
   public int getBeginObjectCount();
 
+  public void setMarkStageTime(long time);
+
   public long getMarkStageTime();
+
+  public void setPausedStageTime(long time);
 
   public long getPausedStageTime();
 
@@ -29,19 +49,21 @@ public interface GarbageCollectionInfo {
 
   public long getElapsedTime();
 
+  public void setCandidateGarbageCount(int count);
+
   public int getCandidateGarbageCount();
 
   public int getActualGarbageCount();
+
+  public void setDeleted(SortedSet deleted);
 
   public SortedSet getDeleted();
 
   public List getRescueTimes();
 
+  public void setRescueTimes(List rescueTimes);
+
   public Object getObject();
 
-  public void setObject(Object stats);
-
-  public int getPreRescueCount();
-
-  public int getRescue1Count();
+  public void setObject(Object aGCStats);
 }

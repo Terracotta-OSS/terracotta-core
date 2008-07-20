@@ -4,13 +4,14 @@
  */
 package com.tc.objectserver.core.impl;
 
-
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.core.api.Filter;
+import com.tc.objectserver.core.api.GarbageCollectionInfo;
+import com.tc.objectserver.core.api.GarbageCollectionInfoFactory;
 import com.tc.objectserver.core.api.GarbageCollector;
 import com.tc.objectserver.core.api.GarbageCollectorEventListener;
 import com.tc.objectserver.core.api.ManagedObject;
@@ -52,13 +53,15 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
                                                                              return;
                                                                            }
 
-                                                                           public PrettyPrinter prettyPrint(PrettyPrinter out) {
+                                                                           public PrettyPrinter prettyPrint(
+                                                                                                            PrettyPrinter out) {
                                                                              return out
                                                                                  .println("NULL CHANGE COLLECTOR");
                                                                            }
                                                                          };
   private static final Filter                      NULL_FILTER           = new Filter() {
-                                                                           public boolean shouldVisit(ObjectID referencedObject) {
+                                                                           public boolean shouldVisit(
+                                                                                                      ObjectID referencedObject) {
                                                                              return true;
                                                                            }
                                                                          };
@@ -81,11 +84,17 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
   private volatile ChangeCollector                 referenceCollector    = NULL_CHANGE_COLLECTOR;
   private LifeCycleState                           gcState               = new NullLifeCycleState();
   private volatile boolean                         started               = false;
+  private GarbageCollectionInfoFactory             garbageCollectionInfoFactory;
 
   public MarkAndSweepGarbageCollector(ObjectManager objectManager, ClientStateManager stateManager, boolean verboseGC) {
     this.objectManager = objectManager;
     this.stateManager = stateManager;
+    garbageCollectionInfoFactory = new GarbageCollectionInfoFactoryImpl();
     addListener(new GCLoggerEventPublisher(logger, verboseGC));
+  }
+  
+  public void setGarbageCollectionInfoFactory(GarbageCollectionInfoFactory factory) {
+    this.garbageCollectionInfoFactory = factory;
   }
 
   private ObjectIDSet rescue(final ObjectIDSet gcResults, final List rescueTimes) {
@@ -124,7 +133,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     }
 
     int gcIteration = gcIterationCounter.incrementAndGet();
-    GarbageCollectionInfoImpl gcInfo = new GarbageCollectionInfoImpl(gcIteration);
+    GarbageCollectionInfo gcInfo = garbageCollectionInfoFactory.newInstance(gcIteration);
     gcInfo.markFullGen();
 
     long startMillis = System.currentTimeMillis();
