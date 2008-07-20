@@ -7,8 +7,6 @@ package org.terracotta.dso;
 import org.apache.commons.io.CopyUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 import org.apache.xmlbeans.XmlError;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlOptions;
@@ -102,8 +100,6 @@ import com.tc.bundles.Resolver;
 import com.tc.bundles.ResolverUtils;
 import com.tc.config.Loader;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
-import com.tc.logging.CustomerLogging;
-import com.tc.logging.LogLevelImpl;
 import com.tc.object.util.JarResourceLoader;
 import com.tc.plugins.ModulesLoader;
 import com.tc.server.ServerConstants;
@@ -181,12 +177,6 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
   public static final String              SERVER_DSO_PORT_LAUNCH_ATTR         = "server.dso-port";
 
   public static final Server              DEFAULT_SERVER_INSTANCE             = createDefaultServerInstance();
-
-  static {
-    CustomerLogging.getConsoleLogger().setLevel(LogLevelImpl.OFF);
-    Logger.getLogger("com.terracottatech").setLevel(Level.OFF);
-    Logger.getLogger("com.tc").setLevel(Level.OFF);
-  }
 
   public TcPlugin() {
     super();
