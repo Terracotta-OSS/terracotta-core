@@ -55,7 +55,6 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
 
     SleepycatPersistor persistor = new SleepycatPersistor(logger, env, sleepycatSerializationAdapterFactory);
 
-    CursorConfig dbCursorConfig = new CursorConfig();
     ptp = new TestPersistenceTransactionProvider();
     CursorConfig rootDBCursorConfig = new CursorConfig();
     SleepycatCollectionFactory sleepycatCollectionFactory = new SleepycatCollectionFactory();
@@ -63,12 +62,10 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
         .getMapsDatabase(), sleepycatCollectionFactory);
 
     managedObjectPersistor = new ManagedObjectPersistorImpl(logger, env.getClassCatalogWrapper().getClassCatalog(),
-                                                            sleepycatSerializationAdapterFactory, env
-                                                                .getObjectDatabase(), env.getOidDatabase(), env
-                                                                .getOidLogDatabase(), env.getOidLogSequeneceDB(),
-                                                            dbCursorConfig, new TestMutableSequence(), env
-                                                                .getRootDatabase(), rootDBCursorConfig, ptp,
-                                                            sleepycatCollectionsPersistor, env.isParanoidMode());
+                                                            sleepycatSerializationAdapterFactory, env,
+                                                            new TestMutableSequence(), env.getRootDatabase(),
+                                                            rootDBCursorConfig, ptp, sleepycatCollectionsPersistor, env
+                                                                .isParanoidMode());
 
     NullManagedObjectChangeListenerProvider listenerProvider = new NullManagedObjectChangeListenerProvider();
     ManagedObjectStateFactory.disableSingleton(true);

@@ -10,6 +10,8 @@ import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.text.PrettyPrinterImpl;
+import com.tc.util.NullSyncObjectIdSet;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.SyncObjectIdSet;
 import com.tc.util.SyncObjectIdSetImpl;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
@@ -26,9 +28,32 @@ public class TestManagedObjectPersistor implements ManagedObjectPersistor {
   public final Map                    map;
   public boolean                      closeCalled         = false;
   public SyncObjectIdSet              allObjectIDs        = new SyncObjectIdSetImpl();
+  private final SyncObjectIdSet       extantObjectIDs;
 
   public TestManagedObjectPersistor(Map map) {
     this.map = map;
+
+    this.extantObjectIDs = getAllObjectIDs();
+  }
+
+  public int getObjectCount() {
+    return extantObjectIDs.size();
+  }
+
+  public boolean addNewObject(ObjectID id) {
+    return extantObjectIDs.add(id);
+  }
+
+  public boolean containsObject(ObjectID id) {
+    return extantObjectIDs.contains(id);
+  }
+
+  public void removeAllObjectsByID(SortedSet<ObjectID> ids) {
+    this.extantObjectIDs.removeAll(ids);
+  }
+
+  public ObjectIDSet snapshotObjects() {
+    return this.extantObjectIDs.snapshot();
   }
 
   public ManagedObject loadObjectByID(ObjectID id) {
@@ -82,6 +107,10 @@ public class TestManagedObjectPersistor implements ManagedObjectPersistor {
     return allObjectIDs;
   }
 
+  public SyncObjectIdSet getAllMapsObjectIDs() {
+    return new NullSyncObjectIdSet();
+  }
+
   public void deleteAllObjectsByID(PersistenceTransaction tx, SortedSet<ObjectID> ids) {
     for (Iterator i = ids.iterator(); i.hasNext();) {
       deleteObjectByID(tx, (ObjectID) i.next());
@@ -91,4 +120,17 @@ public class TestManagedObjectPersistor implements ManagedObjectPersistor {
   public Map loadRootNamesToIDs() {
     return null;
   }
+
+  public boolean addMapTypeObject(ObjectID id) {
+    return false;
+  }
+
+  public boolean containsMapType(ObjectID id) {
+    return false;
+  }
+
+  public void removeAllMapTypeObject(Collection ids) {
+    return;
+  }
+
 }

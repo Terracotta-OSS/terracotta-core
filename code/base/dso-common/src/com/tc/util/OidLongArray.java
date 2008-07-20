@@ -24,10 +24,25 @@ public class OidLongArray {
     }
 
     this.key = Conversion.bytes2Long(key);
-    ary = new long[value.length / BYTES_PER_LONG];
-    for (int i = 0; i < ary.length; ++i) {
-      ary[i] = Conversion.bytes2Long(value, i * BYTES_PER_LONG);
+    ary = valueToArray(value);
+  }
+  
+  public OidLongArray(long key, byte[] value) {
+    if (value == null) {
+      ary = null;
+      return;
     }
+
+    this.key = key;
+    ary = valueToArray(value);
+  }
+  
+  private long[] valueToArray(byte[] value) {
+    long[] lary = new long[value.length / BYTES_PER_LONG];
+    for (int i = 0; i < lary.length; ++i) {
+      lary[i] = Conversion.bytes2Long(value, i * BYTES_PER_LONG);
+    }
+    return lary;
   }
 
   private long bit(int bitIndex) {
@@ -49,7 +64,11 @@ public class OidLongArray {
   }
 
   public byte[] keyToBytes() {
-    return Conversion.long2Bytes(key);
+    return keyToBytes(0);
+  }
+
+  public byte[] keyToBytes(int auxKey) {
+    return Conversion.long2Bytes(key + auxKey);
   }
 
   public byte[] arrayToBytes() {

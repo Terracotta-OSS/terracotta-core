@@ -98,5 +98,12 @@ public class OidLongArrayTest extends TCTestCase {
                         expected == bits.get(offset+i));
     }
   }
+  
+  public void testKeyToBytes() {
+    long oid = 1000;
+    OidLongArray bits = new OidLongArray(8, oid);
+    byte[] keyBytes = bits.keyToBytes(1);
+    Assert.assertEquals(oid + 1, Conversion.bytes2Long(keyBytes));
+  }
 
 }

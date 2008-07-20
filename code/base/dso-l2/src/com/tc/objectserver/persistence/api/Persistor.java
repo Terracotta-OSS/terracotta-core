@@ -28,4 +28,5 @@ public interface Persistor {
   public PersistentCollectionFactory getPersistentCollectionFactory();
   
   public PersistentMapStore getClusterStateStore();
+  
 }

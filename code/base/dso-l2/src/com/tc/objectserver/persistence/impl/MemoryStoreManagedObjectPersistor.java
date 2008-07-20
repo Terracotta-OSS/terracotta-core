@@ -18,6 +18,7 @@ import com.tc.objectserver.persistence.api.PersistentCollectionsUtil;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.Conversion;
+import com.tc.util.NullSyncObjectIdSet;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.SyncObjectIdSet;
 import com.tc.util.SyncObjectIdSetImpl;
@@ -43,6 +44,7 @@ public final class MemoryStoreManagedObjectPersistor implements ManagedObjectPer
   private long                                  saveCount;
   private final TCLogger                        logger;
   private final MemoryStoreCollectionsPersistor collectionsPersistor;
+  private final SyncObjectIdSet                 extantObjectIDs;
 
   public MemoryStoreManagedObjectPersistor(TCLogger logger, MemoryDataStoreClient objectDB,
                                            MutableSequence objectIDSequence, MemoryDataStoreClient rootDB,
@@ -52,6 +54,28 @@ public final class MemoryStoreManagedObjectPersistor implements ManagedObjectPer
     this.objectIDSequence = objectIDSequence;
     this.rootDB = rootDB;
     this.collectionsPersistor = collectionsPersistor;
+
+    this.extantObjectIDs = getAllObjectIDs();
+  }
+
+  public int getObjectCount() {
+    return extantObjectIDs.size();
+  }
+
+  public boolean addNewObject(ObjectID id) {
+    return extantObjectIDs.add(id);
+  }
+
+  public boolean containsObject(ObjectID id) {
+    return extantObjectIDs.contains(id);
+  }
+
+  public void removeAllObjectsByID(SortedSet<ObjectID> ids) {
+    this.extantObjectIDs.removeAll(ids);
+  }
+
+  public ObjectIDSet snapshotObjects() {
+    return this.extantObjectIDs.snapshot();
   }
 
   public long nextObjectIDBatch(int batchSize) {
@@ -93,6 +117,10 @@ public final class MemoryStoreManagedObjectPersistor implements ManagedObjectPer
     t.setDaemon(true);
     t.start();
     return rv;
+  }
+
+  public SyncObjectIdSet getAllMapsObjectIDs() {
+    return new NullSyncObjectIdSet();
   }
 
   public Set loadRootNames() {
@@ -255,6 +283,7 @@ public final class MemoryStoreManagedObjectPersistor implements ManagedObjectPer
     out.println(this.getClass().getName());
     out = out.duplicateAndIndent();
     out.println("db: " + objectDB);
+    out.indent().print("extantObjectIDs: ").visit(extantObjectIDs).println();
   }
 
   class ObjectIdReader implements Runnable {
@@ -268,7 +297,18 @@ public final class MemoryStoreManagedObjectPersistor implements ManagedObjectPer
       ObjectIDSet tmp = new ObjectIDSet(objectDB.getAll());
       set.stopPopulating(tmp);
     }
+  }
 
+  public boolean addMapTypeObject(ObjectID id) {
+    return false;
+  }
+
+  public boolean containsMapType(ObjectID id) {
+    return false;
+  }
+
+  public void removeAllMapTypeObject(Collection ids) {
+    return;
   }
 
 }

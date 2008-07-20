@@ -26,7 +26,7 @@ public class FastLoadOidLogAnalysisTest extends AbstractDBUtilsTestBase {
     List list = fastLoadOidlogAnalysis.oidlogsStatsList;
     assertEquals(list.size(), 1);
     OidlogsStats stats = (OidlogsStats)list.get(0);
-    assertEquals("oidLogs", stats.getDatabaseName());
+    assertEquals("oid_store_log", stats.getDatabaseName());
     assertEquals(2, stats.getAddCount());
     assertEquals(0, stats.getDeleteCount());
     assertEquals(1000, stats.getStartSeqence());

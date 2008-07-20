@@ -56,7 +56,7 @@ public class FastLoadOidlogAnalysis {
 
   private void reportOidlog(OidlogsStats stats) {
     log(" ");
-    log("\nAnalysis of Oidlogs databases :\n================================\n");
+    log("\nAnalysis of oid_store_log databases :\n================================\n");
     log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
     log("DBName", "# ADD", "# DEL", "Start Sequence", "End Sequence");
     log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
@@ -70,7 +70,7 @@ public class FastLoadOidlogAnalysis {
 
     for (Iterator i = dbs.iterator(); i.hasNext();) {
       String dbName = (String) i.next();
-      if (dbName.equals("oidLogs")) {
+      if (dbName.equals("oid_store_log")) {
         Database db = env.openDatabase(null, dbName, dbc);
         OidlogsStats stats = analyzeOidLogs(dbName, db);
         oidlogsStatsList.add(stats);

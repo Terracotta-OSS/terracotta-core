@@ -34,39 +34,40 @@ import java.util.Properties;
 
 public class DBEnvironment {
 
-  private static final TCLogger            clogger                      = CustomerLogging.getDSOGenericLogger();
-  private static final TCLogger            logger                       = TCLogging.getLogger(DBEnvironment.class);
+  private static final TCLogger            clogger                        = CustomerLogging.getDSOGenericLogger();
+  private static final TCLogger            logger                         = TCLogging.getLogger(DBEnvironment.class);
 
-  private static final String              OBJECTID_SEQUENCE_NAME       = "objectids";
-  private static final String              ROOT_DB_NAME                 = "roots";
-  private static final String              OBJECT_DB_NAME               = "objects";
-  private static final String              OID_DB_NAME                  = "oids";
-  private static final String              OID_LOG_DB_NAME              = "oidLogs";
-  private static final String              OID_LOG_SEQUENCE_NAME        = "oidLogSequence";
+  private static final String              OBJECTID_SEQUENCE_NAME         = "objectids";
+  private static final String              ROOT_DB_NAME                   = "roots";
+  private static final String              OBJECT_DB_NAME                 = "objects";
+  private static final String              OBJECT_OID_STORE_DB_NAME       = "objects_oid_store";
+  private static final String              MAPS_OID_STORE_DB_NAME         = "mapsdatabase_oid_store";
+  private static final String              OID_STORE_LOG_DB_NAME          = "oid_store_log";
+  private static final String              OID_STORE_LOG_SEQUENCE_DB_NAME = "oid_store_log_sequence";
 
-  private static final String              CLIENTID_SEQUENCE_NAME       = "clientids";
-  private static final String              CLIENT_STATE_DB_NAME         = "clientstates";
-  private static final String              TRANSACTION_DB_NAME          = "transactions";
-  private static final String              TRANSACTION_SEQUENCE_DB_NAME = "transactionsequence";
-  private static final String              STRING_INDEX_DB_NAME         = "stringindex";
-  private static final String              CLASS_DB_NAME                = "classdefinitions";
-  private static final String              MAP_DB_NAME                  = "mapsdatabase";
-  private static final String              CLUSTER_STATE_STORE          = "clusterstatestore";
+  private static final String              CLIENTID_SEQUENCE_NAME         = "clientids";
+  private static final String              CLIENT_STATE_DB_NAME           = "clientstates";
+  private static final String              TRANSACTION_DB_NAME            = "transactions";
+  private static final String              TRANSACTION_SEQUENCE_DB_NAME   = "transactionsequence";
+  private static final String              STRING_INDEX_DB_NAME           = "stringindex";
+  private static final String              CLASS_DB_NAME                  = "classdefinitions";
+  private static final String              MAP_DB_NAME                    = "mapsdatabase";
+  private static final String              CLUSTER_STATE_STORE            = "clusterstatestore";
 
-  private static final Object              CONTROL_LOCK                 = new Object();
+  private static final Object              CONTROL_LOCK                   = new Object();
 
-  private static final DBEnvironmentStatus STATUS_INIT                  = new DBEnvironmentStatus("INIT");
-  private static final DBEnvironmentStatus STATUS_ERROR                 = new DBEnvironmentStatus("ERROR");
-  private static final DBEnvironmentStatus STATUS_OPENING               = new DBEnvironmentStatus("OPENING");
-  private static final DBEnvironmentStatus STATUS_OPEN                  = new DBEnvironmentStatus("OPEN");
-  private static final DBEnvironmentStatus STATUS_CLOSING               = new DBEnvironmentStatus("CLOSING");
-  private static final DBEnvironmentStatus STATUS_CLOSED                = new DBEnvironmentStatus("CLOSED");
+  private static final DBEnvironmentStatus STATUS_INIT                    = new DBEnvironmentStatus("INIT");
+  private static final DBEnvironmentStatus STATUS_ERROR                   = new DBEnvironmentStatus("ERROR");
+  private static final DBEnvironmentStatus STATUS_OPENING                 = new DBEnvironmentStatus("OPENING");
+  private static final DBEnvironmentStatus STATUS_OPEN                    = new DBEnvironmentStatus("OPEN");
+  private static final DBEnvironmentStatus STATUS_CLOSING                 = new DBEnvironmentStatus("CLOSING");
+  private static final DBEnvironmentStatus STATUS_CLOSED                  = new DBEnvironmentStatus("CLOSED");
 
-  private static final DatabaseEntry       CLEAN_FLAG_KEY               = new DatabaseEntry(new byte[] { 1 });
-  private static final byte                IS_CLEAN                     = 1;
-  private static final byte                IS_DIRTY                     = 2;
-  private static final long                SLEEP_TIME_ON_STARTUP_ERROR  = 500;
-  private static final int                 STARTUP_RETRY_COUNT          = 5;
+  private static final DatabaseEntry       CLEAN_FLAG_KEY                 = new DatabaseEntry(new byte[] { 1 });
+  private static final byte                IS_CLEAN                       = 1;
+  private static final byte                IS_DIRTY                       = 2;
+  private static final long                SLEEP_TIME_ON_STARTUP_ERROR    = 500;
+  private static final int                 STARTUP_RETRY_COUNT            = 5;
 
   private final List                       createdDatabases;
   private final Map                        databasesByName;
@@ -77,8 +78,8 @@ public class DBEnvironment {
 
   private Environment                      env;
   private Database                         controlDB;
-  private DBEnvironmentStatus              status                       = STATUS_INIT;
-  private DatabaseOpenResult               openResult                   = null;
+  private DBEnvironmentStatus              status                         = STATUS_INIT;
+  private DatabaseOpenResult               openResult                     = null;
 
   private final boolean                    paranoid;
 
@@ -153,9 +154,10 @@ public class DBEnvironment {
       this.catalog = new ClassCatalogWrapper(env, dbcfg);
       newDatabase(env, OBJECTID_SEQUENCE_NAME);
       newDatabase(env, OBJECT_DB_NAME);
-      newDatabase(env, OID_DB_NAME);
-      newDatabase(env, OID_LOG_DB_NAME);
-      newDatabase(env, OID_LOG_SEQUENCE_NAME);
+      newDatabase(env, OBJECT_OID_STORE_DB_NAME);
+      newDatabase(env, MAPS_OID_STORE_DB_NAME);
+      newDatabase(env, OID_STORE_LOG_DB_NAME);
+      newDatabase(env, OID_STORE_LOG_SEQUENCE_DB_NAME);
       newDatabase(env, ROOT_DB_NAME);
 
       newDatabase(env, CLIENTID_SEQUENCE_NAME);
@@ -264,19 +266,24 @@ public class DBEnvironment {
     return (Database) databasesByName.get(OBJECT_DB_NAME);
   }
 
-  public synchronized Database getOidDatabase() throws TCDatabaseException {
+  public synchronized Database getObjectOidStoreDatabase() throws TCDatabaseException {
     assertOpen();
-    return (Database) databasesByName.get(OID_DB_NAME);
+    return (Database) databasesByName.get(OBJECT_OID_STORE_DB_NAME);
   }
 
-  public synchronized Database getOidLogDatabase() throws TCDatabaseException {
+  public synchronized Database getMapsOidStoreDatabase() throws TCDatabaseException {
     assertOpen();
-    return (Database) databasesByName.get(OID_LOG_DB_NAME);
+    return (Database) databasesByName.get(MAPS_OID_STORE_DB_NAME);
+  }
+
+  public synchronized Database getOidStoreLogDatabase() throws TCDatabaseException {
+    assertOpen();
+    return (Database) databasesByName.get(OID_STORE_LOG_DB_NAME);
   }
 
   public synchronized Database getOidLogSequeneceDB() throws TCDatabaseException {
     assertOpen();
-    return (Database) databasesByName.get(OID_LOG_SEQUENCE_NAME);
+    return (Database) databasesByName.get(OID_STORE_LOG_SEQUENCE_DB_NAME);
   }
 
   public synchronized ClassCatalogWrapper getClassCatalogWrapper() throws TCDatabaseException {

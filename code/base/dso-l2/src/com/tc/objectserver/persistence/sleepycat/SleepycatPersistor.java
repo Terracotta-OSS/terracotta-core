@@ -64,8 +64,6 @@ public class SleepycatPersistor implements Persistor {
 
     sanityCheckAndClean(env, l2DataPath, logger);
 
-    CursorConfig dbCursorConfig = new CursorConfig();
-    dbCursorConfig.setReadCommitted(true);
     CursorConfig rootDBCursorConfig = new CursorConfig();
     rootDBCursorConfig.setReadCommitted(true);
     CursorConfig stringIndexCursorConfig = new CursorConfig();
@@ -81,11 +79,7 @@ public class SleepycatPersistor implements Persistor {
                                                                  logger,
                                                                  env.getClassCatalogWrapper().getClassCatalog(),
                                                                  serializationAdapterFactory,
-                                                                 env.getObjectDatabase(),
-                                                                 env.getOidDatabase(),
-                                                                 env.getOidLogDatabase(),
-                                                                 env.getOidLogSequeneceDB(),
-                                                                 dbCursorConfig,
+                                                                 env,
                                                                  new SleepycatSequence(
                                                                                        this.persistenceTransactionProvider,
                                                                                        logger, 1, 1000, env

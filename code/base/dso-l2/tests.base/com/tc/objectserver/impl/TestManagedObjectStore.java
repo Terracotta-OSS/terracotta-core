@@ -30,7 +30,7 @@ public class TestManagedObjectStore implements ManagedObjectStore {
   public boolean containsObject(ObjectID id) {
     return containsKey;
   }
-
+  
   public void addNewObject(ManagedObject managed) {
     addNewWasCalled = true;
     count++;
