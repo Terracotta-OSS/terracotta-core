@@ -70,6 +70,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
       if config_source['target']
         ant.copy(:file => patch_file.to_s, :todir => config_source['target'], :verbose => true)
       end
+      
     end
   end
 
