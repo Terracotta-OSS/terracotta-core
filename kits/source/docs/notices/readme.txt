@@ -44,10 +44,10 @@ With a Terracotta account, you can:
 Configuration File Samples
 --------------------------
 
-The "config-examples" directory contains sample Terracotta configuration file
-with example settings appropriate for a typical deployment. The directory also
-contains a reference configuration file for a complete explanation of the
-options available.
+The tc-config-reference.xml file can be found in docs directory.
+This sample Terracotta configuration file with example settings appropriate 
+for a typical deployment. The directory also contains a reference configuration 
+file for a complete explanation of the options available.
 
 
 Sample Applications
