@@ -4,20 +4,26 @@
  */
 package com.tc.objectserver.persistence.sleepycat;
 
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
+import com.tc.util.concurrent.ThreadUtil;
+
 import java.io.File;
 
 public class ManagedObjectReportTest extends AbstractDBUtilsTestBase {
- 
 
   public void testManagedObjectReport() throws Exception {
 
     File databaseDir = new File(getTempDirectory().toString() + File.separator + "db-data");
     databaseDir.mkdirs();
-  
+
     ManagedObjectReport managedObjectReport = new ManagedObjectReport(databaseDir);
     SleepycatPersistor sleepycatPersistor = managedObjectReport.getSleepycatPersistor();
-    
+
     populateSleepycatDB(sleepycatPersistor);
+    // wait for checkpoint to flush log to oid store
+    ThreadUtil.reallySleep(TCPropertiesImpl.getProperties()
+        .getInt(TCPropertiesConsts.L2_OBJECTMANAGER_LOADOBJECTID_CHECKPOINT_MAXSLEEP) + 100);
 
     managedObjectReport.report();
     assertEquals(managedObjectReport.totalCounter.get(), 202);
@@ -27,7 +33,5 @@ public class ManagedObjectReportTest extends AbstractDBUtilsTestBase {
     assertEquals(managedObjectReport.classMap.size(), 5);
 
   }
-
- 
 
 }
