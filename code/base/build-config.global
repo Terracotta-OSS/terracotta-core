@@ -6,7 +6,7 @@ tc.build-control.branch=trunk
 tc.build-control.jvmargs=-Xms64m,-Xmx128m,-Dtc.base-dir=code/base
 
 tc.tests.configuration.transparent-tests.mode=normal
-tc.tests.configuration.variants.selected.spring=208
+tc.tests.configuration.variants.selected.spring=254
 tc.tests.configuration.reuse_boot_jars=true
 
 # for container tests, you can also specify 'appserver=xxxx' on command line
