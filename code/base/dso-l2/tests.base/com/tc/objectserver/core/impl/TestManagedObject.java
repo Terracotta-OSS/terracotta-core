@@ -8,13 +8,16 @@ import com.tc.exception.ImplementMe;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
+import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAException;
+import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.impl.ManagedObjectReference;
+import com.tc.objectserver.managedobject.AbstractManagedObjectState;
 import com.tc.objectserver.managedobject.BackReferences;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.ManagedObjectTraverser;
@@ -24,6 +27,7 @@ import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import gnu.trove.TLinkable;
 
+import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -172,7 +176,7 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
   }
 
   public ManagedObjectState getManagedObjectState() {
-    throw new ImplementMe();
+    return new NullManagedObjectState();
   }
 
   public String toString() {
@@ -199,4 +203,49 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
   public void setIsNew(boolean newFlag) {
     this.isNew = newFlag;
   }
+  
+  private class NullManagedObjectState extends AbstractManagedObjectState {
+    private final byte type = 0;
+
+    protected boolean basicEquals(AbstractManagedObjectState o) {
+      throw new UnsupportedOperationException();
+    }
+
+    public void addObjectReferencesTo(ManagedObjectTraverser traverser) {
+      throw new UnsupportedOperationException();
+    }
+
+    public void apply(ObjectID objectID, DNACursor cursor, BackReferences includeIDs) {
+      throw new UnsupportedOperationException();
+    }
+
+    public ManagedObjectFacade createFacade(ObjectID objectID, String className, int limit) {
+      throw new UnsupportedOperationException();
+    }
+
+    public void dehydrate(ObjectID objectID, DNAWriter writer) {
+      throw new UnsupportedOperationException();
+    }
+
+    public String getClassName() {
+      throw new UnsupportedOperationException();
+    }
+
+    public String getLoaderDescription() {
+      throw new UnsupportedOperationException();
+    }
+
+    public Set getObjectReferences() {
+      throw new UnsupportedOperationException();
+    }
+
+    public byte getType() {
+      return type;
+    }
+
+    public void writeTo(ObjectOutput o) {
+      throw new UnsupportedOperationException();
+    }
+  }
+
 }
