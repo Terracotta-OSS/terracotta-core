@@ -66,6 +66,10 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
       ant.tar(:destfile => patch_file.to_s, :longfile => 'gnu') do
         ant.tarfileset(:dir => Dir.pwd, :includes => patch_files.join(','))
       end
+      
+      if config_source['target']
+        ant.copy(:file => patch_file.to_s, :todir => config_source['target'], :verbose => true)
+      end
     end
   end
 
