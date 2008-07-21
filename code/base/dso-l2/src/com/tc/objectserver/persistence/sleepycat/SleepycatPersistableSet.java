@@ -18,7 +18,7 @@ import java.util.Iterator;
 public class SleepycatPersistableSet extends AbstractSet implements PersistableCollection {
 
   private final SleepycatPersistableMap map;
-  private static final Boolean    VALUE = true;
+  private static final Boolean          VALUE = true;
 
   public SleepycatPersistableSet(ObjectID id) {
     map = new SleepycatPersistableMap(id);
@@ -54,6 +54,14 @@ public class SleepycatPersistableSet extends AbstractSet implements PersistableC
 
   public Iterator iterator() {
     return map.keySet().iterator();
+  }
+
+  @Override
+  public boolean removeAll(Collection c) {
+    boolean modified = false;
+    for (Iterator i = c.iterator(); i.hasNext();)
+      modified |= remove(i.next());
+    return modified;
   }
 
   public boolean remove(Object obj) {
