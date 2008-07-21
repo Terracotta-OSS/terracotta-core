@@ -41,7 +41,7 @@ import java.util.List;
 
 public class ManagedObjectStateSerializationTestBase extends TCTestCase {
   private final TCLogger                     logger   = TCLogging.getTestingLogger(getClass());
-  private final ObjectID                     objectID = new ObjectID(2000);
+  private ObjectID                           objectID = new ObjectID(2000);
 
   private DBEnvironment                      env;
   private ManagedObjectPersistorImpl         managedObjectPersistor;
@@ -85,6 +85,7 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
   }
 
   protected ManagedObjectState applyValidation(String className, DNACursor dnaCursor) throws Exception {
+    objectID = new ObjectID(objectID.toLong() + 1);
     ManagedObject mo = new ManagedObjectImpl(objectID);
 
     TestDNA dna = new TestDNA(dnaCursor);

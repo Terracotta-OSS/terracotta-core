@@ -21,11 +21,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ManagedObjectStateSerializationTest extends ManagedObjectStateSerializationTestBase {
 
-  public ManagedObjectStateSerializationTest() {
-    // MNK-650
-    disableAllUntil("2008-08-15");
-  }
-
   public void testCheckIfMissingAnyManagedObjectType() throws Exception {
     Field[] fields = ManagedObjectState.class.getDeclaredFields();
 
@@ -57,6 +52,9 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
             break;
           case ManagedObjectState.LIST_TYPE:
             testList();
+            break;
+          case ManagedObjectState.LINKED_HASHSET_TYPE:
+            testLinkedHashSet();
             break;
           case ManagedObjectState.SET_TYPE:
             testSet();
@@ -192,6 +190,18 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
     ManagedObjectState state = applyValidation(className, cursor);
 
     serializationValidation(state, cursor, ManagedObjectState.SET_TYPE);
+  }
+  
+  public void testLinkedHashSet() throws Exception {
+    String className = "java.util.LinkedHashSet";
+    TestDNACursor cursor = new TestDNACursor();
+
+    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2002) });
+    cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2003) });
+
+    ManagedObjectState state = applyValidation(className, cursor);
+
+    serializationValidation(state, cursor, ManagedObjectState.LINKED_HASHSET_TYPE);
   }
 
   public void testTreeSet() throws Exception {
