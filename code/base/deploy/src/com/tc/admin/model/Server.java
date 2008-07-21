@@ -199,17 +199,6 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     }
   }
 
-  private void removeAllClients() {
-    DSOClient[] clients;
-    synchronized (m_clients) {
-      clients = getClients();
-      m_clients.clear();
-    }
-    for (int i = clients.length - 1; i >= 0; i--) {
-      fireClientDisconnected(clients[i]);
-    }
-  }
-
   public boolean isConnected() {
     return m_connected;
   }
@@ -749,11 +738,12 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   synchronized void reset() {
+    if(m_roots == null) return;
     m_connected = m_ready = false;
     initReadySet();
     m_roots.clear();
     m_rootMap.clear();
-    removeAllClients();
+    m_clients.clear();
     resetBeanProxies();
   }
 
@@ -964,6 +954,8 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   public synchronized void tearDown() {
     m_clients.clear();
     m_clients = null;
+    m_readySet.clear();
+    m_readySet = null;
     m_roots.clear();
     m_roots = null;
     m_rootMap.clear();

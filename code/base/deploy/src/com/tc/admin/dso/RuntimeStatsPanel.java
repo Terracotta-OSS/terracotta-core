@@ -68,9 +68,7 @@ public class RuntimeStatsPanel extends XContainer implements RuntimeStatisticCon
 
   private boolean                  m_shouldAutoStart;
 
-  protected static final Dimension fDefaultGraphSize                       = new Dimension(
-                                                                                           ChartPanel.DEFAULT_MINIMUM_DRAW_WIDTH,
-                                                                                           ChartPanel.DEFAULT_MINIMUM_DRAW_HEIGHT);
+  protected static final Dimension fDefaultGraphSize                       = new Dimension(200, 70);
 
   private static final int         DEFAULT_POLL_PERIOD_SECS                = 3;
   private static final int         DEFAULT_SAMPLE_HISTORY_MINUTES          = 5;
@@ -119,7 +117,7 @@ public class RuntimeStatsPanel extends XContainer implements RuntimeStatisticCon
   }
 
   protected ChartPanel createChartPanel(JFreeChart chart) {
-    boolean useBuffer = true;
+    boolean useBuffer = false;
     boolean properties = false;
     boolean save = false;
     boolean print = false;
@@ -451,6 +449,5 @@ public class RuntimeStatsPanel extends XContainer implements RuntimeStatisticCon
     m_clearSamplesButton = null;
     m_samplePeriodSpinner = null;
     m_sampleHistorySpinner = null;
-
   }
 }

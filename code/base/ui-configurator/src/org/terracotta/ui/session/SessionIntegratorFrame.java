@@ -20,7 +20,6 @@ import org.dijon.Frame;
 import org.dijon.Label;
 import org.dijon.Menu;
 import org.dijon.MenuBar;
-import org.dijon.SplitPane;
 import org.dijon.TabbedPane;
 import org.terracotta.ui.session.servers.ServerSelection;
 import org.terracotta.ui.session.servers.ServersDialog;
@@ -32,6 +31,7 @@ import com.tc.admin.common.BrowserLauncher;
 import com.tc.admin.common.ContactTerracottaAction;
 import com.tc.admin.common.OutputStreamListener;
 import com.tc.admin.common.XAbstractAction;
+import com.tc.admin.common.XSplitPane;
 import com.tc.admin.common.XTree;
 import com.tc.config.Directories;
 import com.tc.management.beans.L2MBeanNames;
@@ -60,8 +60,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -88,7 +86,6 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
-import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
@@ -106,9 +103,6 @@ public class SessionIntegratorFrame extends Frame {
 
   private ServersDialog              m_serversDialog;
   private Properties                 m_properties;
-  private SplitPane                  m_controlSplitter;
-  private Integer                    m_controlDividerLocation;
-  private DividerListener            m_dividerListener;
   private TabbedPane                 m_tabbedPane;
   private int                        m_lastSelectedTabIndex;
   private WebAppTreeModel            m_webAppTreeModel;
@@ -236,6 +230,11 @@ public class SessionIntegratorFrame extends Frame {
 
     initMenubar();
     loadIcons();
+
+    XSplitPane splitter = (XSplitPane) findComponent("ControlSplitter");
+    if(splitter != null) {
+      splitter.setPreferences(getPreferences().node(splitter.getName()));
+    }
 
     m_tabbedPane = (TabbedPane) findComponent("MainTabbedPane");
     m_tabbedPane.addChangeListener(new ChangeListener() {
@@ -1872,8 +1871,7 @@ public class SessionIntegratorFrame extends Frame {
     }
   }
 
-  private static final String NON_PORTABLE_DIALOG_SIZE                  = "NonPortableDialogSize";
-  private static final String NON_PORTABLE_DIALOG_ISSUES_SPLIT_LOCATION = "NonPortableDialogIssuesSplitLocation";
+  private static final String NON_PORTABLE_DIALOG_SIZE = "NonPortableDialogSize";
 
   private void handleNonPortableReason(NonPortableObjectEvent event) {
     ContainerResource res = (ContainerResource) SessionIntegrator.getContext().topRes
@@ -1885,19 +1883,18 @@ public class SessionIntegratorFrame extends Frame {
     cp.add(panel);
     panel.setEvent(event);
     dialog.pack();
-    SplitPane issuesSplitter = (SplitPane) panel.findComponent("IssuesSplitter");
+
     Preferences prefs = getPreferences();
-    String s = prefs.get(NON_PORTABLE_DIALOG_ISSUES_SPLIT_LOCATION, null);
-    if (s != null) {
-      issuesSplitter.setDividerLocation(parseInt(s));
-    }
+    XSplitPane splitter = (XSplitPane) findComponent("IssuesSplitter");
+    splitter.setPreferences(prefs.node(splitter.getName()));
+
+    String s;
     if ((s = prefs.get(NON_PORTABLE_DIALOG_SIZE, null)) != null) {
       dialog.setSize(parseSizeString(s));
     }
     dialog.center(this);
     dialog.setVisible(true);
     prefs.put(NON_PORTABLE_DIALOG_SIZE, getSizeString(dialog));
-    prefs.put(NON_PORTABLE_DIALOG_ISSUES_SPLIT_LOCATION, Integer.toString(issuesSplitter.getDividerLocation()));
     storePreferences();
     m_handlingAppEvent = false;
     return;
@@ -2793,70 +2790,6 @@ public class SessionIntegratorFrame extends Frame {
   protected Rectangle getPreferredBounds() {
     Preferences prefs = getPreferences();
     String s = prefs.get("Bounds", null);
-
     return s != null ? parseBoundsString(s) : getDefaultBounds();
-  }
-
-  // TODO: make each SplitPane manage its own preference value.
-
-  private int getSplitPref(JSplitPane splitter) {
-    Preferences prefs = getPreferences();
-    Preferences splitPrefs = prefs.node(splitter.getName());
-
-    return splitPrefs.getInt("Split", -1);
-  }
-
-  private JSplitPane getControlSplitter() {
-    if (m_controlSplitter == null) {
-      m_controlSplitter = (SplitPane) findComponent("ControlSplitter");
-      m_controlDividerLocation = new Integer(getSplitPref(m_controlSplitter));
-
-      if (m_dividerListener == null) {
-        m_dividerListener = new DividerListener();
-      }
-    }
-
-    return m_controlSplitter;
-  }
-
-  class DividerListener implements PropertyChangeListener {
-    public void propertyChange(PropertyChangeEvent pce) {
-      JSplitPane splitter = (JSplitPane) pce.getSource();
-      String propName = pce.getPropertyName();
-
-      if (splitter.isShowing() == false || JSplitPane.DIVIDER_LOCATION_PROPERTY.equals(propName) == false) { return; }
-
-      int divLoc = splitter.getDividerLocation();
-      Integer divLocObj = new Integer(divLoc);
-      Preferences prefs = getPreferences();
-      String name = splitter.getName();
-      Preferences node = prefs.node(name);
-
-      node.putInt("Split", divLoc);
-      storePreferences();
-
-      if (m_controlSplitter.getName().equals(name)) {
-        m_controlDividerLocation = divLocObj;
-      }
-    }
-  }
-
-  public void doLayout() {
-    super.doLayout();
-
-    JSplitPane splitter = getControlSplitter();
-    if (m_controlDividerLocation != null) {
-      splitter.setDividerLocation(m_controlDividerLocation.intValue());
-    }
-  }
-
-  public void addNotify() {
-    super.addNotify();
-    getControlSplitter().addPropertyChangeListener(m_dividerListener);
-  }
-
-  public void removeNotify() {
-    getControlSplitter().removePropertyChangeListener(m_dividerListener);
-    super.removeNotify();
   }
 }

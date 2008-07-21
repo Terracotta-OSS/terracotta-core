@@ -63,7 +63,10 @@ public class AdminClient extends ApplicationManager {
     setIconImage(new Image(getClass().getResource("/com/tc/admin/icons/logo_small.png")));
   }
 
-  public static AdminClient getClient() {
+  public static synchronized AdminClient getClient() {
+    if(m_client == null) {
+      m_client = new AdminClient();
+    }
     return m_client;
   }
 
@@ -143,7 +146,7 @@ public class AdminClient extends ApplicationManager {
     final AdminClientFrame frame = new AdminClientFrame();
     frame.setIconImage(getIconImage());
     m_cntx.setController(frame);
-    Timer t = new Timer(250, new ActionListener() {
+    Timer t = new Timer(splashProc != null ? 1000 : 0, new ActionListener() {
       public void actionPerformed(ActionEvent ae) {
         frame.setVisible(true);
         if (splashProc != null) {
@@ -168,7 +171,7 @@ public class AdminClient extends ApplicationManager {
   private static Process splashProc;
 
   private static class StartupAction implements Runnable {
-    private String[] args;
+    private final String[] args;
 
     StartupAction(String[] args) {
       this.args = args;
@@ -176,13 +179,21 @@ public class AdminClient extends ApplicationManager {
     
     public void run() {
       AdminClient client = new AdminClient();
-      client.parseArgs(ApplicationManager.parseLAFArgs(args));
+      String[] finalArgs;
+      if(System.getProperty("swing.defaultlaf") == null) {
+        finalArgs = ApplicationManager.parseLAFArgs(args);
+      } else{ 
+        finalArgs = args;
+      }
+      client.parseArgs(finalArgs);
       client.start();
     }
   }
   
   public static final void main(final String[] args) throws Exception {
-    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+    if(System.getProperty("swing.defaultlaf") == null) {
+      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+    }
 
     List<String> argList = Arrays.asList(args);
     if (argList.remove("-showSplash")) {

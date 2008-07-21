@@ -14,6 +14,7 @@ import org.jfree.data.time.TimeSeries;
 
 import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.ExceptionHelper;
+import com.tc.admin.model.IClient;
 import com.tc.statistics.StatisticData;
 import com.tc.stats.statistics.CountStatistic;
 import com.tc.stats.statistics.Statistic;
@@ -148,11 +149,19 @@ public class ClientRuntimeStatsPanel extends RuntimeStatsPanel {
     m_cpuPanel.setRangeZoomable(false);
   }
 
+  private synchronized IClient getClient() {
+    return m_clientStatsNode != null ? m_clientStatsNode.getClient() : null;
+  }
+  
   private class CpuPanelWorker extends BasicWorker<String[]> {
     private CpuPanelWorker() {
       super(new Callable<String[]>() {
         public String[] call() throws Exception {
-          return m_clientStatsNode.getClient().getCpuStatNames();
+          final IClient client = getClient();
+          if(client != null) {
+            return client.getCpuStatNames();
+          }
+          return null;
         }
       });
     }
@@ -189,7 +198,11 @@ public class ClientRuntimeStatsPanel extends RuntimeStatsPanel {
     L1InfoStatGetter() {
       super(new Callable<Map>() {
         public Map call() throws Exception {
-          return m_clientStatsNode.getClient().getL1Statistics();
+          final IClient client = getClient();
+          if(client != null) {
+            return client.getL1Statistics();
+          }
+          return null;
         }
       }, getRuntimeStatsPollPeriodSeconds(), TimeUnit.SECONDS);
     }
@@ -246,7 +259,11 @@ public class ClientRuntimeStatsPanel extends RuntimeStatsPanel {
     DSOClientStatGetter() {
       super(new Callable<Statistic[]>() {
         public Statistic[] call() throws Exception {
-          return m_clientStatsNode.getClient().getDSOStatistics(STATS);
+          final IClient client = getClient();
+          if(client != null) {
+            return client.getDSOStatistics(STATS);
+          }
+          return null;
         }
       }, getRuntimeStatsPollPeriodSeconds(), TimeUnit.SECONDS);
     }

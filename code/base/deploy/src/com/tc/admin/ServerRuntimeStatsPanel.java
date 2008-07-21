@@ -72,8 +72,8 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
     setup(m_chartsPanel);
   }
 
-  IServer getServer() {
-    return m_serverStatsNode.getServer();
+  synchronized IServer getServer() {
+    return m_serverStatsNode != null ? m_serverStatsNode.getServer() : null;
   }
 
   protected synchronized void setup(Container chartsPanel) {
@@ -160,8 +160,11 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
     private CpuPanelWorker() {
       super(new Callable<String[]>() {
         public String[] call() throws Exception {
-          String[] cpuNames = getServer().getCpuStatNames();
-          return cpuNames;
+          IServer server = getServer();
+          if(server != null) {
+            return server.getCpuStatNames();
+          }
+          return null;
         }
       });
     }
@@ -198,7 +201,11 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
     TCServerInfoStatGetter() {
       super(new Callable<Map>() {
         public Map call() throws Exception {
-          return getServer().getServerStatistics();
+          IServer server = getServer();
+          if(server != null) {
+            return server.getServerStatistics();
+          }
+          return null;
         }
       }, getRuntimeStatsPollPeriodSeconds(), TimeUnit.SECONDS);
     }
@@ -259,7 +266,11 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
     DSOServerStatGetter() {
       super(new Callable<Statistic[]>() {
         public Statistic[] call() throws Exception {
-          return getServer().getDSOStatistics(STATS);
+          IServer server = getServer();
+          if(server != null) {
+            return server.getDSOStatistics(STATS);
+          }
+          return null;
         }
       }, getRuntimeStatsPollPeriodSeconds(), TimeUnit.SECONDS);
     }

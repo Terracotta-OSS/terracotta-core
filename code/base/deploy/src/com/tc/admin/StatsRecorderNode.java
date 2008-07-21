@@ -14,12 +14,15 @@ import java.util.Map;
 public class StatsRecorderNode extends ComponentNode {
   private ClusterNode        m_clusterNode;
   private StatsRecorderPanel m_statsRecorderPanel;
+  private String             m_baseLabel;
+  private String             m_recordingSuffix;
   private AuthScope          m_authScope;
 
   public StatsRecorderNode(ClusterNode clusterNode) {
     super();
     m_clusterNode = clusterNode;
-    setLabel(AdminClient.getContext().getMessage("stats.recorder.node.label"));
+    setLabel(m_baseLabel = AdminClient.getContext().getMessage("stats.recorder.node.label"));
+    m_recordingSuffix = AdminClient.getContext().getMessage("stats.recording.suffix");
     setIcon(ServerHelper.getHelper().getStatsRecorderIcon());
     setComponent(m_statsRecorderPanel = new StatsRecorderPanel(this));
   }
@@ -69,6 +72,12 @@ public class StatsRecorderNode extends ComponentNode {
 
   String getActiveServerAddress() throws Exception {
     return m_clusterNode.getHost() + ":" + m_clusterNode.getDSOListenPort();
+  }
+
+  void showRecording(boolean recording) {
+    setLabel(m_baseLabel + (recording ? m_recordingSuffix : ""));
+    notifyChanged();
+    m_clusterNode.showRecordingStats(recording);
   }
 
   void notifyChanged() {

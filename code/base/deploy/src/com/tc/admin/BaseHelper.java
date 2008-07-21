@@ -14,6 +14,7 @@ public class BaseHelper {
   protected Icon                m_threadDumpsIcon;
   protected Icon                m_runtimeStatsIcon;
   protected Icon                m_statsRecorderIcon;
+  protected Icon                m_statsRecordingIcon;
 
   protected static final String ICONS_PATH = "/com/tc/admin/icons/";
 
@@ -22,7 +23,6 @@ public class BaseHelper {
       URL url = getClass().getResource(ICONS_PATH + "refresh.gif");
       m_refreshIcon = new ImageIcon(url);
     }
-
     return m_refreshIcon;
   }
 
@@ -31,7 +31,6 @@ public class BaseHelper {
       URL url = getClass().getResource(ICONS_PATH + "thread_view.gif");
       m_threadDumpsIcon = new ImageIcon(url);
     }
-
     return m_threadDumpsIcon;
   }
 
@@ -40,7 +39,6 @@ public class BaseHelper {
       URL url = getClass().getResource(ICONS_PATH + "chart_bar.png");
       m_runtimeStatsIcon = new ImageIcon(url);
     }
-
     return m_runtimeStatsIcon;
   }
 
@@ -49,8 +47,6 @@ public class BaseHelper {
       URL url = getClass().getResource(ICONS_PATH + "camera.png");
       m_statsRecorderIcon = new ImageIcon(url);
     }
-
     return m_statsRecorderIcon;
   }
-
 }

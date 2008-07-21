@@ -8,7 +8,6 @@ import org.apache.commons.httpclient.auth.AuthScope;
 
 import com.tc.admin.common.ComponentNode;
 import com.tc.admin.common.XAbstractAction;
-import com.tc.admin.common.XTreeCellRenderer;
 import com.tc.admin.dso.ClassesNode;
 import com.tc.admin.dso.ClientsNode;
 import com.tc.admin.dso.GCStatsNode;
@@ -23,7 +22,6 @@ import com.tc.admin.model.ServerVersion;
 import com.tc.statistics.beans.StatisticsLocalGathererMBean;
 
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -32,6 +30,10 @@ import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.prefs.Preferences;
 
@@ -42,15 +44,12 @@ import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
-import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
 public class ClusterNode extends ComponentNode implements ConnectionListener {
   private AdminClientContext  m_acc;
   private ClusterModel        m_clusterModel;
-  private String              m_baseLabel;
-  private String              m_recordingStatsLabel;
   private ClusterPanel        m_clusterPanel;
   private ConnectDialog       m_connectDialog;
   private JDialog             m_versionMismatchDialog;
@@ -84,12 +83,10 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
     m_acc = AdminClient.getContext();
     m_clusterModel = new ClusterModel(host, jmxPort, autoConnect);
 
-    setLabel(m_baseLabel = "Terracotta cluster");
-    m_recordingStatsLabel = m_baseLabel + " (recording stats)";
-
+    setLabel(m_acc.getString("cluster.node.label"));
     initMenu(autoConnect);
     setComponent(m_clusterPanel = createClusterPanel());
-    setRenderer(new ClusterNodeRenderer());
+    setIcon(ServersHelper.getHelper().getServerIcon());
     m_clusterModel.addPropertyChangeListener(new ClusterPropertyChangeListener());
   }
 
@@ -194,20 +191,12 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
     });
   }
 
-  private class ClusterNodeRenderer extends XTreeCellRenderer {
-    public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded,
-                                                  boolean leaf, int row, boolean focused) {
-      Component comp = super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, focused);
-      if (haveActiveRecordingSession()) {
-        m_label.setForeground(sel ? Color.white : Color.red);
-        m_label.setText(m_recordingStatsLabel);
-      }
-      return comp;
-    }
-  }
-
   protected ClusterPanel createClusterPanel() {
     return new ClusterPanel(this);
+  }
+
+  boolean isProfilingLocks() {
+    return m_locksNode != null ? m_locksNode.isProfiling() : false;
   }
 
   void handleNewActive() {
@@ -235,10 +224,6 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
 
   public ConnectionContext getConnectionContext() {
     return m_clusterModel.getConnectionContext();
-  }
-
-  String getBaseLabel() {
-    return m_baseLabel;
   }
 
   void setHost(String host) {
@@ -428,10 +413,6 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
     m_clusterModel.disconnect();
   }
 
-  public Icon getIcon() {
-    return ServersHelper.getHelper().getServerIcon();
-  }
-
   public JPopupMenu getPopupMenu() {
     return m_popupMenu;
   }
@@ -489,9 +470,10 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
 
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          m_acc.setStatus(m_acc.format("deleted.server", ClusterNode.this));
-          m_acc.remove(ClusterNode.this);
-          m_acc.updateServerPrefs();
+          AdminClientContext acc = AdminClient.getContext();
+          acc.setStatus(m_acc.format("deleted.server", ClusterNode.this));
+          acc.remove(ClusterNode.this);
+          acc.updateServerPrefs();
         }
       });
     }
@@ -517,9 +499,7 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
   private AtomicBoolean m_addingChildren = new AtomicBoolean(false);
 
   void tryAddChildren() {
-    if (!m_clusterModel.isReady()) {
-      return;
-    }
+    if (!m_clusterModel.isReady()) { return; }
     if (m_addingChildren.get()) { return; }
 
     try {
@@ -547,8 +527,8 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
     add(createGCStatsNode());
     add(createThreadDumpsNode());
     add(m_statsRecorderNode = createStatsRecorderNode());
-    add(createServersNode());
     add(m_clientsNode = createClientsNode());
+    add(createServersNode());
   }
 
   protected RootsNode createRootsNode() {
@@ -650,6 +630,66 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
 
   boolean haveActiveRecordingSession() {
     return m_statsRecorderNode != null && m_statsRecorderNode.isRecording();
+  }
+
+  private ScheduledExecutorService m_scheduledExecutor;
+  private ScheduledFuture<?>       m_monitoringTaskFuture;
+  private Runnable                 m_monitoringActivityTask;
+
+  private synchronized ScheduledExecutorService getScheduledExecutor() {
+    if (m_scheduledExecutor == null) {
+      m_scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
+    }
+    return m_scheduledExecutor;
+  }
+
+  private synchronized Runnable getMonitoringActivityTask() {
+    if (m_monitoringActivityTask == null) {
+      m_monitoringActivityTask = new MonitoringActivityTask();
+    }
+    return m_monitoringActivityTask;
+  }
+
+  private class MonitoringActivityTask implements Runnable {
+    private Icon m_defaultIcon  = ServersHelper.getHelper().getServerIcon();
+    private Icon m_activityIcon = ServersHelper.getHelper().getActivityIcon();
+
+    public void run() {
+      boolean haveActivity = m_locksNode.isProfiling() || m_statsRecorderNode.isRecording();
+      setIcon(determineIcon(haveActivity));
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          notifyChanged();
+        }
+      });
+      if (haveActivity) {
+        m_monitoringTaskFuture = getScheduledExecutor().schedule(this, 3, TimeUnit.SECONDS);
+      } else {
+        m_monitoringTaskFuture = null;
+      }
+    }
+
+    private Icon determineIcon(boolean haveActivity) {
+      Icon icon = m_defaultIcon;
+      if (haveActivity) {
+        icon = (getIcon() == m_defaultIcon) ? m_activityIcon : m_defaultIcon;
+      }
+      return icon;
+    }
+  }
+
+  private synchronized void testStartMonitoringTask() {
+    if (m_monitoringTaskFuture == null) {
+      m_monitoringTaskFuture = getScheduledExecutor().schedule(getMonitoringActivityTask(), 3, TimeUnit.SECONDS);
+    }
+  }
+  
+  public void showRecordingStats(boolean recordingStats) {
+    testStartMonitoringTask();
+  }
+
+  public void showProfilingLocks(boolean profilingLocks) {
+    testStartMonitoringTask();
   }
 
   void handleDisconnect() {

@@ -27,6 +27,8 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.swing.Timer;
 import javax.swing.UIManager;
@@ -44,7 +46,7 @@ public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, P
   private TabbedPane                  m_tabbedPane;
   private ArrayList                   m_startupList;
 
-  public WelcomeFrame() {
+  public WelcomeFrame(String[] args) {
     super(getBundleString("welcome.title"));
 
     if (Os.isMac()) {
@@ -257,10 +259,12 @@ public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, P
     if (m_startupList.isEmpty()) {
       pack();
       center();
-      Timer t = new Timer(2000, new ActionListener() {
+      Timer t = new Timer(splashProc != null ? 1000 : 0, new ActionListener() {
         public void actionPerformed(ActionEvent ae) {
           setVisible(true);
-          splashProc.destroy();
+          if (splashProc != null) {
+            splashProc.destroy();
+          }
         }
       });
       t.setRepeats(false);
@@ -270,16 +274,37 @@ public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, P
 
   private static Process splashProc;
 
-  public static void main(final String[] args) throws Exception {
-    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+  private static class StartupAction implements Runnable {
+    private final String[] args;
 
-    splashProc = Splash.start("Starting Terracotta Welcome...", new Runnable() {
-      public void run() {
-        ApplicationManager.parseLAFArgs(args);
-        WelcomeFrame welcome = new WelcomeFrame();
-        welcome.setResizable(false);
+    StartupAction(String[] args) {
+      this.args = args;
+    }
+
+    public void run() {
+      String[] finalArgs;
+      if (System.getProperty("swing.defaultlaf") == null) {
+        finalArgs = ApplicationManager.parseLAFArgs(args);
+      } else {
+        finalArgs = args;
       }
-    });
-    splashProc.waitFor();
+      WelcomeFrame welcome = new WelcomeFrame(finalArgs);
+      welcome.setResizable(false);
+    }
+  }
+
+  public static void main(final String[] args) throws Exception {
+    if (System.getProperty("swing.defaultlaf") == null) {
+      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+    }
+
+    List<String> argList = Arrays.asList(args);
+    if (argList.remove("-showSplash")) {
+      StartupAction starter = new StartupAction(argList.toArray(new String[argList.size()]));
+      splashProc = Splash.start("Starting Terracotta Welcome...", starter);
+      splashProc.waitFor();
+    } else {
+      new StartupAction(args).run();
+    }
   }
 }

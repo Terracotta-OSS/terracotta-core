@@ -90,10 +90,6 @@ public class ServersNode extends ComponentNode {
   }
 
   public void tearDown() {
-    int serverCount = getChildCount();
-    for (int i = 0; i < serverCount; i++) {
-      ((ServerNode) getChildAt(i)).handleDisconnect();
-    }
     super.tearDown();
     m_acc = null;
     m_clusterNode = null;

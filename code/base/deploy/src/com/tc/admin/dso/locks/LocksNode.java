@@ -9,13 +9,8 @@ import com.tc.admin.AdminClientContext;
 import com.tc.admin.ClusterNode;
 import com.tc.admin.ConnectionContext;
 import com.tc.admin.common.ComponentNode;
-import com.tc.admin.common.XTreeCellRenderer;
-
-import java.awt.Color;
-import java.awt.Component;
 
 import javax.swing.Icon;
-import javax.swing.JTree;
 
 public class LocksNode extends ComponentNode {
   private AdminClientContext m_acc;
@@ -32,7 +27,6 @@ public class LocksNode extends ComponentNode {
     setLabel(m_baseLabel = m_acc.getString("dso.locks"));
     m_profilingSuffix = m_acc.getString("dso.locks.profiling.suffix");
     setComponent(m_locksPanel = new LocksPanel(this));
-    setRenderer(new LocksNodeRenderer());
   }
 
   ConnectionContext getConnectionContext() {
@@ -45,17 +39,8 @@ public class LocksNode extends ComponentNode {
     }
   }
 
-  private class LocksNodeRenderer extends XTreeCellRenderer {
-    public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded,
-                                                  boolean leaf, int row, boolean focused) {
-      Component comp = super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, focused);
-      if (m_acc == null) return comp;
-      if (m_locksPanel.isProfiling()) {
-        m_label.setForeground(sel ? Color.white : Color.red);
-        m_label.setText(getBaseLabel() + m_profilingSuffix);
-      }
-      return comp;
-    }
+  public boolean isProfiling() {
+    return m_locksPanel != null ? m_locksPanel.isProfiling() : false;
   }
 
   public Icon getIcon() {
@@ -64,6 +49,12 @@ public class LocksNode extends ComponentNode {
 
   public String getBaseLabel() {
     return m_baseLabel;
+  }
+
+  void showProfiling(boolean profiling) {
+    setLabel(m_baseLabel + (profiling ? m_profilingSuffix : ""));
+    notifyChanged();
+    m_clusterNode.showProfilingLocks(profiling);
   }
 
   void notifyChanged() {

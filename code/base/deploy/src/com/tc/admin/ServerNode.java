@@ -389,11 +389,13 @@ public class ServerNode extends ComponentNode {
 
   public void tearDown() {
     m_server.removePropertyChangeListener(m_serverPropertyChangeListener);
+    
+    super.tearDown();
+
     m_acc = null;
     m_server = null;
     m_serverPanel = null;
     m_popupMenu = null;
     m_threadDumpsNode = null;
-    super.tearDown();
   }
 }

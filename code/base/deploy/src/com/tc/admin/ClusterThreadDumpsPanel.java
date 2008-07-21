@@ -10,6 +10,7 @@ import org.dijon.ScrollPane;
 import org.dijon.TextArea;
 
 import com.tc.admin.common.XContainer;
+import com.tc.admin.common.XSplitPane;
 import com.tc.admin.common.XTree;
 import com.tc.admin.common.XTreeModel;
 import com.tc.admin.common.XTreeNode;
@@ -20,6 +21,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
+import java.util.prefs.Preferences;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -27,11 +29,11 @@ import javax.swing.JFileChooser;
 import javax.swing.SwingUtilities;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.TreePath;
 
 public class ClusterThreadDumpsPanel extends XContainer {
   private AdminClientContext     m_acc;
   private ClusterThreadDumpsNode m_clusterThreadDumpsNode;
-
   private Button                 m_threadDumpButton;
   private XTree                  m_threadDumpTree;
   private XTreeModel             m_threadDumpTreeModel;
@@ -51,6 +53,9 @@ public class ClusterThreadDumpsPanel extends XContainer {
 
     load((ContainerResource) m_acc.getComponent("ClusterThreadDumpsPanel"));
 
+    XSplitPane splitter = (XSplitPane) findComponent("ThreadDumpsSplitter");
+    splitter.setPreferences(getPreferences().node(splitter.getName()));
+    
     m_threadDumpButton = (Button) findComponent("TakeThreadDumpButton");
     m_threadDumpButton.addActionListener(new ThreadDumpButtonHandler());
 
@@ -67,22 +72,18 @@ public class ClusterThreadDumpsPanel extends XContainer {
     m_exportButton.addActionListener(new ExportHandler());
   }
 
+  protected Preferences getPreferences() {
+    return m_acc.getPrefs().node(ClusterThreadDumpsPanel.class.getName());
+  }
+  
   private class ThreadDumpButtonHandler implements ActionListener {
     public void actionPerformed(ActionEvent ae) {
-      try {
-        ClusterThreadDumpEntry tde = m_clusterThreadDumpsNode.takeThreadDump();
-        XTreeNode root = (XTreeNode) m_threadDumpTreeModel.getRoot();
-        int count = root.getChildCount();
+      ClusterThreadDumpEntry tde = m_clusterThreadDumpsNode.takeThreadDump();
+      XTreeNode root = (XTreeNode) m_threadDumpTreeModel.getRoot();
 
-        root.add(tde);
-        // TODO: the following is daft; nodesWereInserted is all that should be needed but for some
-        // reason the first node requires nodeStructureChanged on the root; why? I don't know.
-        m_threadDumpTreeModel.nodesWereInserted(root, new int[] { count });
-        m_threadDumpTreeModel.nodeStructureChanged(root);
-        m_exportButton.setEnabled(true);
-      } catch (Exception e) {
-        m_acc.log(e);
-      }
+      m_threadDumpTreeModel.insertNodeInto(tde, root, root.getChildCount());
+      m_threadDumpTree.expandPath(new TreePath(tde.getParent()));
+      m_exportButton.setEnabled(true);
     }
   }
 

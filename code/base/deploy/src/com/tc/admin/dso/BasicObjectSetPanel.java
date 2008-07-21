@@ -56,7 +56,7 @@ public class BasicObjectSetPanel extends XContainer {
       if (value instanceof BasicObjectNode) {
         boolean isResident = ((BasicObjectNode) value).isResident();
         if (!isResident) {
-          m_label.setForeground(Color.lightGray);
+          setForeground(Color.lightGray);
         }
       }
       return comp;

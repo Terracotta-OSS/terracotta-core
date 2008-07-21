@@ -68,7 +68,6 @@ public class XSplitPane extends SplitPane implements PropertyChangeListener {
   }
 
   public void doLayout() {
-    super.doLayout();
     if (m_dividerLocation != null) {
       // this one takes an absolute integer value
       setDividerLocation(m_dividerLocation.intValue());
@@ -76,5 +75,6 @@ public class XSplitPane extends SplitPane implements PropertyChangeListener {
       // this one takes an relative double value
       setDividerLocation(DEFAULT_DIVIDER_LOCATION);
     }
+    super.doLayout();
   }
 }

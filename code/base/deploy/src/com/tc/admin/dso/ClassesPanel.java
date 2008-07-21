@@ -60,7 +60,7 @@ public class ClassesPanel extends XContainer {
     m_tree = (XTree) findComponent("ClassTree");
     m_tree.setShowsRootHandles(true);
     m_tree.setModel(new ClassTreeModel(classInfo));
-
+    
     m_treeMap = (ClassesTreeMap) findComponent("ClassesTreeMap");
     m_treeMap.setModel((ClassTreeModel) m_tree.getModel());
 

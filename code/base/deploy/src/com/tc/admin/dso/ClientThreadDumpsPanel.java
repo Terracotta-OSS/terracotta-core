@@ -5,8 +5,7 @@
 package com.tc.admin.dso;
 
 import com.tc.admin.AbstractThreadDumpsPanel;
-
-import java.util.prefs.Preferences;
+import com.tc.admin.model.IClient;
 
 public class ClientThreadDumpsPanel extends AbstractThreadDumpsPanel {
   private ClientThreadDumpsNode m_clientThreadDumpsNode;
@@ -17,11 +16,13 @@ public class ClientThreadDumpsPanel extends AbstractThreadDumpsPanel {
   }
 
   protected String getThreadDumpText() throws Exception {
-    return m_clientThreadDumpsNode.getClient().takeThreadDump(System.currentTimeMillis());
-  }
-
-  protected Preferences getPreferences() {
-    return m_acc.getPrefs().node("ClientThreadDumpsPanel");
+    if(m_clientThreadDumpsNode != null) {
+      IClient client = m_clientThreadDumpsNode.getClient();
+      if(client != null) {
+        return client.takeThreadDump(System.currentTimeMillis());
+      }
+    }
+    return "";
   }
 
   public void tearDown() {

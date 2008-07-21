@@ -17,6 +17,7 @@ public class ServersHelper extends BaseHelper {
   private Icon                 m_deleteIcon;
   private Icon                 m_backupIcon;
   private Icon                 m_shutdownIcon;
+  private Icon                 m_activityIcon;
 
   public static final String   SERVERS      = "Servers";
   public static final String   HOST         = "Host";
@@ -75,4 +76,13 @@ public class ServersHelper extends BaseHelper {
     }
     return m_shutdownIcon;
   }
+  
+  public Icon getActivityIcon() {
+    if (m_activityIcon == null) {
+      URL url = getClass().getResource(ICONS_PATH + "methpri_obj.gif");
+      m_activityIcon = new ImageIcon(url);
+    }
+    return m_activityIcon;
+  }
+  
 }

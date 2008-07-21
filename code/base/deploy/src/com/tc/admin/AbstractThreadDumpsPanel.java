@@ -53,8 +53,10 @@ public abstract class AbstractThreadDumpsPanel extends XContainer {
 
   protected abstract String getThreadDumpText() throws Exception;
 
-  protected abstract Preferences getPreferences();
-
+  protected Preferences getPreferences() {
+    return m_acc.getPrefs().node(getClass().getName());
+  }
+  
   private ThreadDumpEntry createThreadDumpEntry() throws Exception {
     return new ThreadDumpEntry(getThreadDumpText());
   }

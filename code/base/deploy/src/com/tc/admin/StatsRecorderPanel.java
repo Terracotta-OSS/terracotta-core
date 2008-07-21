@@ -306,7 +306,7 @@ public class StatsRecorderPanel extends XContainer {
       m_stopGatheringStatsButton.setEnabled(recording);
 
       updateSessionsControls();
-      m_statsRecorderNode.notifyChanged();
+      m_statsRecorderNode.showRecording(recording);
     }
 
     private void showRecordingInProgress() {

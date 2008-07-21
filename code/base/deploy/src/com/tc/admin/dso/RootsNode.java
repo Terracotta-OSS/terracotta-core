@@ -96,7 +96,6 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
       } else {
         m_roots = getResult();
         initMenu();
-        m_acc.nodeStructureChanged(RootsNode.this);
         if (m_rootsPanel != null) {
           m_rootsPanel.setObjects(m_roots);
         }

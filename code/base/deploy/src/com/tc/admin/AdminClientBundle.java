@@ -9,12 +9,17 @@ import java.util.ListResourceBundle;
 public class AdminClientBundle extends ListResourceBundle {
   public Object[][] getContents() {
     return new Object[][] {
+        { "cluster.node.label", "Terracotta cluster" },
         { "connect.label", "Connect" },
         { "disconnect.label", "Disconnect" },
         { "shutdown.label", "Shutdown" },
         { "shutdown.server.confirm", "Are you sure you want to shutdown {0}?" },
         { "stats.recorder.node.label", "Cluster statistics recorder" },
-        { "stats.active.recording.msg", "There is an active statistic recording sessions.  Quit anyway?" },
+        { "stats.recording.suffix", " (on)" },
+        { "recording.stats.msg", "There is an active statistic recording session.  Quit anyway?" },
+        { "profiling.locks.msg", "Lock profiling is currently enabled.  Quit anyway?" },
+        { "recording.stats.profiling.locks.msg",
+            "<html>There is an active statistic recording session<br>and lock profiling is currently enabled.  Quit anyway?</html>" },
         { "sessions", "Sessions" },
         { "title", "Terracotta Administrator Console" },
         { "new.server.action.label", "New server" },
@@ -45,7 +50,7 @@ public class AdminClientBundle extends ListResourceBundle {
         { "dso.roots", "Cluster object browser" },
         { "dso.client.roots", "Client object browser" },
         { "dso.locks", "Lock profiler" },
-        { "dso.locks.profiling.suffix", " (enabled)" },
+        { "dso.locks.profiling.suffix", " (on)" },
         {
             "dso.locks.column.headings",
             new String[] { "Lock", "<html>Times<br>Requested</html>", "<html>Times<br>Hopped</html>",
@@ -105,7 +110,7 @@ public class AdminClientBundle extends ListResourceBundle {
         { "dso.cache.miss.rate.label", "Cache Misses per second" },
         { "dso.gcstats.iteration", "Iteration" },
         { "dso.gcstats.type", "Type" },
-        { "dso.gcstats.status", "Status" },        
+        { "dso.gcstats.status", "Status" },
         { "dso.gcstats.startTime", "Start time" },
         { "dso.gcstats.elapsedTime", "<html>Total elapsed<br>time (ms.)</html>" },
         { "dso.gcstats.beginObjectCount", "Begin count" },

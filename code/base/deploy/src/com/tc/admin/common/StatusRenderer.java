@@ -25,7 +25,9 @@ public abstract class StatusRenderer extends AbstractTableCellRenderer {
     m_label = (Label) m_statusRenderer.findComponent("StatusLabel");
     m_indicator = (Label) m_statusRenderer.findComponent("StatusIndicator");
 
+    m_statusRenderer.setOpaque(true);
     m_label.setForeground(null);
+    m_label.setBackground(null);
     m_indicator.setOpaque(true);
     m_indicator.setBorder(LineBorder.createBlackLineBorder());
   }

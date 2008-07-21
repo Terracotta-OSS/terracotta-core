@@ -48,13 +48,14 @@ public class ServersPanel extends XContainer implements ServerStateListener {
     serversNode.getClusterModel().addServerStateListener(this);
   }
 
-  IClusterModel getClusterModel() {
+  synchronized IClusterModel getClusterModel() {
     return m_serversNode != null ? m_serversNode.getClusterModel() : null;
   }
 
   public void serverStateChanged(final IServer server, PropertyChangeEvent e) {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
+        if (m_clusterMemberTableModel == null) return;
         int row = m_clusterMemberTableModel.getObjectIndex(server);
         m_clusterMemberTableModel.fireTableCellUpdated(row, 0);
       }
@@ -62,12 +63,16 @@ public class ServersPanel extends XContainer implements ServerStateListener {
   }
 
   public void tearDown() {
+    m_clusterMemberTableModel.clear();
+
     super.tearDown();
 
-    m_acc = null;
-    m_serversNode = null;
-    m_connectionContext = null;
-    m_clusterMemberTable = null;
-    m_clusterMemberTableModel = null;
+    synchronized (this) {
+      m_acc = null;
+      m_serversNode = null;
+      m_connectionContext = null;
+      m_clusterMemberTable = null;
+      m_clusterMemberTableModel = null;
+    }
   }
 }

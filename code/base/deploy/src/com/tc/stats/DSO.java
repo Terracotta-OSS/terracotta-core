@@ -77,7 +77,8 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   private final ClientStateManager            clientStateManager;
 
   public DSO(final ServerManagementContext managementContext, final ServerConfigurationContext configContext,
-             final MBeanServer mbeanServer, final GCStatsEventPublisher gcStatsPublisher) throws NotCompliantMBeanException {
+             final MBeanServer mbeanServer, final GCStatsEventPublisher gcStatsPublisher)
+      throws NotCompliantMBeanException {
     super(DSOMBean.class);
     try {
       // TraceImplementation.init(TraceTags.LEVEL_TRACE);
@@ -266,7 +267,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
 
       try {
         final DSOClient client = new DSOClient(mbeanServer, channel, channelStats, channelMgr.getClientIDFor(channel
-                                                                                                             .getChannelID()), clientStateManager);
+            .getChannelID()), clientStateManager);
         mbeanServer.registerMBean(client, clientName);
         clientObjectNames.add(clientName);
         clientMap.put(clientName, client);
@@ -355,32 +356,31 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
    */
   public Map<ObjectName, Map> getPrimaryClientStatistics() {
     Map<ObjectName, Map> result = new HashMap<ObjectName, Map>();
+    List<Callable<Map>> tasks = new ArrayList<Callable<Map>>();
     synchronized (clientObjectNames) {
       Iterator<ObjectName> iter = clientObjectNames.iterator();
-      List<Callable<Map>> tasks = new ArrayList<Callable<Map>>();
       while (iter.hasNext()) {
         ObjectName clientBeanName = iter.next();
         tasks.add(new PrimaryClientStatWorker(clientBeanName, clientMap.get(clientBeanName)));
       }
-      List<Future<Map>> results;
-      try {
-        results = pool.invokeAll(tasks, 1500, TimeUnit.MILLISECONDS);
-        Iterator<Future<Map>> resultIter = results.iterator();
-        while (resultIter.hasNext()) {
-          Future<Map> future = resultIter.next();
-          if (future.isDone()) {
-            try {
-              Map statsMap = future.get();
-              if (statsMap != null) {
-                result.put((ObjectName) statsMap.remove("clientBeanName"), statsMap);
-              }
-            } catch (Exception e) {
-              /**/
+    }
+    try {
+      List<Future<Map>> results = pool.invokeAll(tasks, 2, TimeUnit.SECONDS);
+      Iterator<Future<Map>> resultIter = results.iterator();
+      while (resultIter.hasNext()) {
+        Future<Map> future = resultIter.next();
+        if (future.isDone()) {
+          try {
+            Map statsMap = future.get();
+            if (statsMap != null) {
+              result.put((ObjectName) statsMap.remove("clientBeanName"), statsMap);
             }
+          } catch (Exception e) {
+            /**/
           }
         }
-      } catch (InterruptedException ie) {/**/
       }
+    } catch (InterruptedException ie) {/**/
     }
     return result;
   }

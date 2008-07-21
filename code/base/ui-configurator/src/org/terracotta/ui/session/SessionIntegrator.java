@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package org.terracotta.ui.session;
 
@@ -20,6 +21,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
 import java.util.prefs.Preferences;
 
 import javax.swing.Timer;
@@ -29,19 +32,19 @@ public class SessionIntegrator extends ApplicationManager {
   private static SessionIntegrator m_client;
   private SessionIntegratorContext m_cntx;
 
-  private static final String APP_NAME =  "SessionIntegrator";
-  private static final String PREF_FILE = "."+APP_NAME+".xml";
-  
+  private static final String      APP_NAME  = "SessionIntegrator";
+  private static final String      PREF_FILE = "." + APP_NAME + ".xml";
+
   public SessionIntegrator() {
     super(APP_NAME);
-    
-    if(Os.isMac()) {
+
+    if (Os.isMac()) {
       System.setProperty("com.apple.macos.useScreenMenuBar", "true");
       System.setProperty("apple.laf.useScreenMenuBar", "true");
       System.setProperty("apple.awt.showGrowBox", "true");
       System.setProperty("com.apple.mrj.application.growbox.intrudes", "false");
     }
-    
+
     m_cntx = new SessionIntegratorContext();
     m_cntx.client = m_client = this;
     m_cntx.prefs = loadPrefs();
@@ -50,30 +53,30 @@ public class SessionIntegrator extends ApplicationManager {
 
     setIconImage(new Image(getBytes("/com/tc/admin/icons/logo_small.gif")));
   }
-  
+
   static byte[] getBytes(String path) {
     byte[] result = null;
-    URL    url    = SessionIntegrator.class.getResource(path);
-    
-    if(url != null) {
+    URL url = SessionIntegrator.class.getResource(path);
+
+    if (url != null) {
       InputStream is = null;
-      
+
       try {
         result = IOUtils.toByteArray(is = url.openStream());
-      } catch(IOException ioe) {
+      } catch (IOException ioe) {
         ioe.printStackTrace();
       } finally {
         IOUtils.closeQuietly(is);
       }
     }
-    
+
     return result;
   }
-  
+
   public void toConsole(String msg) {
     /**/
   }
-  
+
   public static SessionIntegrator getClient() {
     return m_client;
   }
@@ -89,8 +92,9 @@ public class SessionIntegrator extends ApplicationManager {
   public DictionaryResource loadPreferences() {
     return new DictionaryResource();
   }
-  
-  public void storePreferences() {/**/}
+
+  public void storePreferences() {/**/
+  }
 
   private Preferences loadPrefs() {
     FileInputStream fis = null;
@@ -98,11 +102,11 @@ public class SessionIntegrator extends ApplicationManager {
     try {
       File f = new File(System.getProperty("user.home"), PREF_FILE);
 
-      if(f.exists()) {
+      if (f.exists()) {
         fis = new FileInputStream(f);
         Preferences.importPreferences(fis);
       }
-    } catch(Exception e) {
+    } catch (Exception e) {
       // ignore
     } finally {
       IOUtils.closeQuietly(fis);
@@ -119,7 +123,7 @@ public class SessionIntegrator extends ApplicationManager {
       fos = new FileOutputStream(f);
       m_cntx.prefs.exportSubtree(fos);
       m_cntx.prefs.flush();
-    } catch(Exception e) {
+    } catch (Exception e) {
       e.printStackTrace();
     } finally {
       IOUtils.closeQuietly(fos);
@@ -128,12 +132,12 @@ public class SessionIntegrator extends ApplicationManager {
 
   private DictionaryResource loadTopRes() {
     DictionaryResource topRes = null;
-    InputStream        is     = null;
+    InputStream is = null;
 
     try {
-      is = getClass().getResourceAsStream(APP_NAME+".xml");
+      is = getClass().getResourceAsStream(APP_NAME + ".xml");
       topRes = ApplicationManager.loadResource(is);
-    } catch(Throwable t) {
+    } catch (Throwable t) {
       t.printStackTrace();
       System.exit(-1);
     } finally {
@@ -145,10 +149,12 @@ public class SessionIntegrator extends ApplicationManager {
 
   public void start() {
     m_cntx.frame = new SessionIntegratorFrame();
-    Timer t = new Timer(1000, new ActionListener() {
+    Timer t = new Timer(splashProc != null ? 1000 : 0, new ActionListener() {
       public void actionPerformed(ActionEvent ae) {
         m_cntx.frame.setVisible(true);
-        splashProc.destroy();
+        if (splashProc != null) {
+          splashProc.destroy();
+        }
       }
     });
     t.setRepeats(false);
@@ -167,18 +173,38 @@ public class SessionIntegrator extends ApplicationManager {
 
   private static Process splashProc;
 
-  public static final void main(final String[] args)
-    throws Exception
-  {
-    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-    
-    splashProc = Splash.start("Starting Terracotta Sessions Configurator...", new Runnable() {
-      public void run() {
-        SessionIntegrator client = new SessionIntegrator();
-        client.parseArgs(ApplicationManager.parseLAFArgs(args));
-        client.start();
+  private static class StartupAction implements Runnable {
+    private final String[] args;
+
+    StartupAction(String[] args) {
+      this.args = args;
+    }
+
+    public void run() {
+      String[] finalArgs;
+      SessionIntegrator client = new SessionIntegrator();
+      if (System.getProperty("swing.defaultlaf") == null) {
+        finalArgs = ApplicationManager.parseLAFArgs(args);
+      } else {
+        finalArgs = args;
       }
-    });
-    splashProc.waitFor();
+      client.parseArgs(finalArgs);
+      client.start();
+    }
+  }
+
+  public static final void main(final String[] args) throws Exception {
+    if (System.getProperty("swing.defaultlaf") == null) {
+      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+    }
+
+    List<String> argList = Arrays.asList(args);
+    if (argList.remove("-showSplash")) {
+      StartupAction starter = new StartupAction(argList.toArray(new String[argList.size()]));
+      splashProc = Splash.start("Starting Terracotta Sessions Configurator...", starter);
+      splashProc.waitFor();
+    } else {
+      new StartupAction(args).run();
+    }
   }
 }

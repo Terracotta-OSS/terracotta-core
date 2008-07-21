@@ -41,7 +41,9 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -67,7 +69,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
   private TextPane                    m_outputPane;
   private ArrayList                   m_processList;
 
-  public DSOSamplesFrame() {
+  public DSOSamplesFrame(String[] args) {
     super(m_bundleHelper.getString("frame.title"));
 
     Container cp = getContentPane();
@@ -474,12 +476,14 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
   }
 
   public void propertyChange(PropertyChangeEvent pce) {
-    Timer t = new Timer(2000, new ActionListener() {
+    Timer t = new Timer(splashProc != null ? 1000 : 0, new ActionListener() {
       public void actionPerformed(ActionEvent ae) {
         pack();
         center();
         setVisible(true);
-        splashProc.destroy();
+        if (splashProc != null) {
+          splashProc.destroy();
+        }
       }
     });
     t.setRepeats(false);
@@ -488,16 +492,37 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
 
   private static Process splashProc;
 
-  public static void main(final String[] args) throws Exception {
-    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+  private static class StartupAction implements Runnable {
+    private final String[] args;
 
-    splashProc = Splash.start("Starting Pojo Sample Launcher...", new Runnable() {
-      public void run() {
-        ApplicationManager.parseLAFArgs(args);
-        new DSOSamplesFrame();
+    StartupAction(String[] args) {
+      this.args = args;
+    }
+
+    public void run() {
+      String[] finalArgs;
+      if (System.getProperty("swing.defaultlaf") == null) {
+        finalArgs = ApplicationManager.parseLAFArgs(args);
+      } else {
+        finalArgs = args;
       }
-    });
-    splashProc.waitFor();
+      new DSOSamplesFrame(finalArgs);
+    }
+  }
+
+  public static void main(final String[] args) throws Exception {
+    if (System.getProperty("swing.defaultlaf") == null) {
+      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+    }
+
+    List<String> argList = Arrays.asList(args);
+    if (argList.remove("-showSplash")) {
+      StartupAction starter = new StartupAction(argList.toArray(new String[argList.size()]));
+      splashProc = Splash.start("Starting Pojo Sample Launcher...", starter);
+      splashProc.waitFor();
+    } else {
+      new StartupAction(args).run();
+    }
   }
 }
 
