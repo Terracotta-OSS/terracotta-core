@@ -15,20 +15,20 @@ import org.jdom.Element;
 public class ModuleId implements Comparable {
 
   public static final String DEFAULT_GROUPID = "org.terracotta.modules";
-  
-  private final String groupId;
-  private final String artifactId;
-  private final String version;
+
+  private final String       groupId;
+  private final String       artifactId;
+  private final String       version;
 
   ModuleId(String groupId, String artifactId, String version) {
-    assert groupId != null    : "groupId is null";
+    assert groupId != null : "groupId is null";
     assert artifactId != null : "artifactId is null";
-    assert version != null    : "version is null";
+    assert version != null : "version is null";
     this.groupId = groupId.trim();
     this.artifactId = artifactId.trim();
     this.version = version.trim();
   }
-  
+
   public boolean isDefaultGroupId() {
     return DEFAULT_GROUPID.equals(groupId);
   }
@@ -44,7 +44,7 @@ public class ModuleId implements Comparable {
   public String getVersion() {
     return version;
   }
-  
+
   public String getSymbolicName() {
     return ModuleId.computeSymbolicName(groupId, artifactId);
   }
@@ -55,7 +55,7 @@ public class ModuleId implements Comparable {
   public boolean isSibling(ModuleId id) {
     return this.groupId.equals(id.getGroupId()) && this.artifactId.equals(id.getArtifactId());
   }
-  
+
   String sortableVersion() {
     String v = version.replaceAll("-.+$", "");
     String q = version.replaceFirst(v, "").replaceFirst("-", "");
@@ -115,7 +115,21 @@ public class ModuleId implements Comparable {
   public int compareTo(Object obj) {
     assert obj instanceof ModuleId : "must be instanceof ModuleId.";
     ModuleId other = (ModuleId) obj;
-    return toSortableString().compareTo(other.toSortableString());
+    String v1, v2;
+    // comparing siblings:
+    // if same version numbers, but one has a qualifier
+    // make the one with the qualifier older
+    if (this.getSymbolicName().equals(other.getSymbolicName())) {
+      v1 = this.sortableVersion();
+      v2 = other.sortableVersion();
+      int value = v1.compareTo(v2); 
+      if (v1.startsWith(v2) || v2.startsWith(v1)) value = -value;
+      return value;
+    }
+    // comparing non-siblings:
+    v1 = this.toSortableString();
+    v2 = other.toSortableString();
+    return v1.compareTo(v2);
   }
 
   private String toSortableString() {
@@ -125,7 +139,7 @@ public class ModuleId implements Comparable {
   public String toString() {
     return getClass().getSimpleName() + ": " + getSymbolicName() + " [" + version + "]";
   }
-  
+
   public String toDigestString() {
     String digest = artifactId.concat(" (").concat(version).concat(")");
     if (!isDefaultGroupId()) digest = digest.concat(" [" + groupId + "]");

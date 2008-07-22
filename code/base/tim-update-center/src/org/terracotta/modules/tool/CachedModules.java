@@ -135,4 +135,25 @@ class CachedModules implements Modules {
     return list;
   }
 
+  /**
+   * Get latest from a list of modules. Returns null if the modules in the list
+   * are not siblings
+   */
+  public Module getLatest(List<Module> list) {
+    if (list.isEmpty()) return null;
+    
+    Module module = list.get(0);
+    if (list.size() == 1) return module;
+    
+    List<Module> siblings = new ArrayList<Module>(list);
+    for (Module sibling : siblings) {
+      if (module.isSibling(sibling)) continue;
+      return null;
+    }
+    
+    Collections.sort(siblings);
+    Collections.reverse(siblings);
+    return siblings.get(0);
+  }
+
 }

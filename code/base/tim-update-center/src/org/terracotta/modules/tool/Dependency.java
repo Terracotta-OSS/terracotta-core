@@ -35,18 +35,21 @@ public class Dependency {
   }
 
   Dependency(Element element) {
-    this.id = ModuleId.create(element);
-    this.isReference = element.getName().equals("moduleRef");
-    if (this.isReference) {
-      this.repoUrl = null;
-      this.installPath = null;
-      this.filename = null;
+    id = ModuleId.create(element);
+    isReference = element.getName().equals("moduleRef");
+    if (isReference) {
+      repoUrl = null;
+      installPath = null;
+      filename = null;
       return;
     }
-    this.repoUrl = element.getChildText("repoUrl");
-    this.installPath = element.getChildText("installPath");
-    this.filename = element.getChildText("filename");
-    //this.isReference = (this.repoUrl == null) || (this.installPath == null) || (this.filename == null);
+    repoUrl = element.getChildText("repoURL");
+    installPath = element.getChildText("installPath");
+    filename = element.getChildText("filename");
+
+    assert repoUrl != null : "repoUrl field was null";
+    assert installPath != null : "installPath field was null";
+    assert filename != null : "filename field was null";
   }
 
   Dependency(Module module) {
@@ -55,9 +58,15 @@ public class Dependency {
     this.installPath = module.getInstallPath();
     this.filename = module.getFilename();
     this.isReference = false;
+
+    assert repoUrl.length() > 0 : "repoUrl field was empty";
+    assert installPath.length() > 0 : "installPath field was empty";
+    assert filename.length() > 0 : "filename field was empty";
   }
 
   public String toString() {
-    return getClass().getSimpleName() + (isReference ? "Ref" : "") + ": " + id.getSymbolicName() + " [" + id.getVersion() + "]";
+    return getClass().getSimpleName() + (isReference ? "Ref" : "") + ": " + id.getSymbolicName() + " ["
+           + id.getVersion() + "]";
   }
+
 }

@@ -49,6 +49,8 @@ public class Module implements Comparable {
   private final String           vendor;
   private final String           copyright;
   private final String           category;
+  private final String           docUrl;
+  private final String           contactAddress;
   private final String           description;
   private final List<Dependency> dependencies;
 
@@ -117,23 +119,29 @@ public class Module implements Comparable {
 
   Module(Modules modules, Element root) {
     this.modules = modules;
-    this.id = ModuleId.create(root);
-    this.tcVersion = getChildText(root, "tc-version");
-    this.website = getChildText(root, "website");
-    this.vendor = getChildText(root, "vendor");
-    this.copyright = getChildText(root, "copyright");
-    this.category = getChildText(root, "category");
-    this.description = getChildText(root, "description");
-    this.repoUrl = getChildText(root, "repoUrl");
-    this.installPath = getChildText(root, "installPath");
-    this.filename = getChildText(root, "filename");
-    this.dependencies = new ArrayList<Dependency>();
+    id = ModuleId.create(root);
+    tcVersion = getChildText(root, "tc-version");
+    website = getChildText(root, "website");
+    vendor = getChildText(root, "vendor");
+    copyright = getChildText(root, "copyright");
+    category = getChildText(root, "category");
+    description = getChildText(root, "description");
+    repoUrl = getChildText(root, "repoURL");
+    docUrl = getChildText(root, "docURL");
+    contactAddress = getChildText(root, "contactAddress");
+    installPath = getChildText(root, "installPath");
+    filename = getChildText(root, "filename");
+    dependencies = new ArrayList<Dependency>();
     if (root.getChild("dependencies") != null) {
       List<Element> children = root.getChild("dependencies").getChildren();
       for (Element child : children) {
-        this.dependencies.add(new Dependency(child));
+        dependencies.add(new Dependency(child));
       }
     }
+
+    assert repoUrl.length() > 0 : "repoUrl field was empty";
+    assert installPath.length() > 0 : "installPath field was empty";
+    assert filename.length() > 0 : "filename field was empty";
   }
 
   private String getChildText(Element element, String name) {
@@ -219,6 +227,8 @@ public class Module implements Comparable {
       Module sibling = this.modules.get(ModuleId.create(id.getGroupId(), id.getArtifactId(), version));
       siblings.add(sibling);
     }
+    Collections.sort(siblings);
+    Collections.reverse(siblings);
     return siblings;
   }
 
@@ -344,7 +354,7 @@ public class Module implements Comparable {
       out.println("The following versions are also available for TC " + modules.tcVersion() + ":\n");
       List<Module> siblings = this.getSiblings();
       for (Module sibling : siblings) {
-        out.print("\t" + installStateSymbol(SymbolStyle.BINARY));
+        out.print("\t" + sibling.installStateSymbol(SymbolStyle.BINARY));
         out.print(" " + sibling.getId().getVersion());
         if (sibling.isInstalled()) out.println("\tinstalled at " + sibling.installPath().getParent());
         else out.println();
@@ -355,13 +365,17 @@ public class Module implements Comparable {
   private void printBasicInfo(PrintWriter out) {
     out.println("Installed: " + (isInstalled() ? "YES" : "NO"));
     out.println();
-    out.println("Author   : " + vendor);
-    out.println("Copyright: " + copyright);
-    out.println("Homepage : " + website);
+    if (vendor.length() > 0) out.println("Author   : " + vendor);
+    if (copyright.length() > 0) out.println("Copyright: " + copyright);
+    if (website.length() > 0) out.println("Homepage : " + website);
+    if (contactAddress.length() > 0) out.println("Contact  : " + contactAddress);
+    if (docUrl.length() > 0) out.println("Docs     : " + docUrl);
     out.println("Download : " + repoUrl);
     out.println();
-    out.println(description.replaceAll("\n[ ]+", "\n"));
-    out.println();
+    if (description.length() > 0) {
+      out.println(description.replaceAll("\n[ ]+", "\n"));
+      out.println();
+    }
     out.println("Compatible with " + (tcVersion.equals("*") ? "any Terracotta version." : "TC " + tcVersion));
   }
 

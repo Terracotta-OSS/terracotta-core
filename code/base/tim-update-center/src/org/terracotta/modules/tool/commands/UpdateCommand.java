@@ -144,8 +144,11 @@ public class UpdateCommand extends AbstractCommand {
     }
 
     // given the artifactId and maybe the groupId - find some candidates
+    Module module = null;
     String artifactId = args.remove(0);
     String groupId = args.isEmpty() ? null : args.remove(0);
+
+    // get candidates
     List<Module> candidates = modules.find(artifactId, null, groupId);
 
     // no candidates found, inform the user
@@ -154,33 +157,24 @@ public class UpdateCommand extends AbstractCommand {
       out.println("Check that you've spelled them correctly.");
       return;
     }
-
+    
     // several candidates found, see if we can figure out which one we can install
-    if (candidates.size() > 1) {
-      // more than 1 found, they are not siblings if no groupId was specified
-      // so ask the user to be more specific
-      if (groupId == null) {
-        out.println("There's more than one integration module found matching the name '" + artifactId + "':");
-        out.println();
-        for (Module candidate : candidates) {
-          ModuleId id = candidate.getId();
-          out.println("  * " + id.getArtifactId() + " " + id.getGroupId());
-        }
-        out.println();
-        out.println("Pass the group-id argument in the command to be more specific.");
-        return;
-      }
-
-      // more than 1 found, they are siblings (since group-id was specified)
-      // so get the latest from the lot, and install it
-      Module latest = modules.getLatest(groupId, artifactId);
-      update(latest, true);
+    module = modules.getLatest(candidates);
+    if (module != null) {
+      update(module, true);
       return;
     }
-
-    // only 1 candidate found, install it
-    Module module = candidates.remove(0);
-    update(module, true);
+    
+    // we can't figure out which one to update/install
+    // so ask the user to be more specific
+    out.println("There's more than one integration module found matching the name '" + artifactId + "':");
+    out.println();
+    for (Module candidate : candidates) {
+      ModuleId id = candidate.getId();
+      out.println("  * " + id.getArtifactId() + " " + id.getGroupId());
+    }
+    out.println();
+    out.println("Pass the group-id argument in the command to be more specific.");
   }
 
 }

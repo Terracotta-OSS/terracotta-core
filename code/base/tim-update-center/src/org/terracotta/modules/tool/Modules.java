@@ -49,4 +49,10 @@ public interface Modules {
    * 
    */
   public List<Module> find(String artifactId, String version, String groupId);
+  
+  /**
+   * Get latest from a list of modules. Returns null if the modules in the list
+   * are not siblings
+   */
+  public Module getLatest(List<Module> list);
 }
