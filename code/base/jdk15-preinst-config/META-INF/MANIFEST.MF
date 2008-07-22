@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Bundle-Activator: org.terracotta.modules.Jdk15PreInstrumentedConfiguration
-Bundle-Category: terracotta
+Bundle-Category: Terracotta Integration Module
 Bundle-Copyright: Terracotta, Inc. (c) 2003-2007
 Bundle-Description: Standard DSO Configuration for JDK15 PreInstrumented Types
 Bundle-ManifestVersion: 2

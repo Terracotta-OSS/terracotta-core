@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Bundle-Activator: org.terracotta.modules.ExcludesConfiguration
-Bundle-Category: terracotta
+Bundle-Category: Terracotta Integration Module
 Bundle-Copyright: Terracotta, Inc. (c) 2003-2007
 Bundle-Description: Configuration for types that must always be excluded, non-portable, or must not be auto-lockable. 
 Bundle-ManifestVersion: 2

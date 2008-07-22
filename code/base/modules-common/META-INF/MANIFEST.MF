@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Bundle-Activator: org.terracotta.modules.test.TestModuleCommonConfigurator
-Bundle-Category: terracotta
+Bundle-Category: Terracotta Integration Module
 Bundle-Copyright: Terracotta, Inc. (c) 2003-2007
 Bundle-Description: Common code for Terracotta configuration modules
 Bundle-ManifestVersion: 2

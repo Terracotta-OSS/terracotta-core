@@ -1,5 +1,5 @@
 Manifest-Version: 1.0
-Bundle-Category: terracotta
+Bundle-Category: Terracotta Integration Module
 Bundle-Copyright: Terracotta, Inc. (c) 2003-2007
 Bundle-Description: Terracotta configuration for clustering Apache Commons Collections 3.1
 Bundle-DocURL: http://www.terracotta.org/kit/reflector?kitID=2.3&pageID=ApacheCommonsCollectionsConfigModule

@@ -1,5 +1,5 @@
 Manifest-Version: 1.0
-Bundle-Category: terracotta
+Bundle-Category: Terracotta Integration Module
 Bundle-Copyright: Terracotta, Inc. (c) 2003-2007
 Bundle-Description: Terracotta configuration for clustering Websphere 6.1.0.7
 Bundle-ManifestVersion: 2
