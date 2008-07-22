@@ -19,6 +19,8 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   # Assemble a kit just like 'dist', but then selectively extract elements from
   # the kit and bundle into a patch tarball.
   def patch(product_code = 'DSO', flavor = 'OPENSOURCE')
+    @no_demo = true
+    
     # Do error checking first, before going through the lengthy dist target
     descriptor_file = self.patch_descriptor_file.to_s
     unless File.readable?(descriptor_file)
@@ -63,7 +65,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
 
       patch_file_name = File.basename(Dir.pwd) + "-patch-#{patch_level}.tar"
       patch_file = FilePath.new(self.dist_directory, patch_file_name)
-      ant.tar(:destfile => patch_file.to_s, :longfile => 'gnu') do
+      ant.tar(:destfile => patch_file.to_s, :longfile => 'gnu', :compression => 'gzip') do
         ant.tarfileset(:dir => Dir.pwd, :includes => patch_files.join(','))
       end
       
