@@ -221,9 +221,15 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     return map;
   }
 
+  private long             lastCpuUpdateTime        = System.currentTimeMillis();
+  private StatisticData[]  lastCpuUpdate;
+  private static final int CPU_UPDATE_WINDOW_MILLIS = 1000;
+
   public StatisticData[] getCpuUsage() {
-    if (cpuSRA != null) { return cpuSRA.retrieveStatisticData(); }
-    return null;
+    if (cpuSRA == null) return null;
+    if (System.currentTimeMillis() - lastCpuUpdateTime < CPU_UPDATE_WINDOW_MILLIS) { return lastCpuUpdate; }
+    lastCpuUpdateTime = System.currentTimeMillis();
+    return lastCpuUpdate = cpuSRA.retrieveStatisticData();
   }
 
   public String takeThreadDump(long requestMillis) {
