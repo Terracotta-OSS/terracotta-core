@@ -103,7 +103,10 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     debugLog("receive -> " + msg.getHeader().toString());
     if (msg.isSend() || msg.isAck()) {
       Assert.inv(!handshakeMode.get());
-      Assert.inv(channelConnected.get());
+      if (!channelConnected.get()) {
+        logger.warn("Drop stale message " + msg.getHeader().toString() + " from " + sendLayer.getConnectionId());
+        return;
+      }
       if (sessionId != msg.getSessionId()) return; // drop bad message
       delivery.receive(msg);
     } else if (msg.isHandshake()) {

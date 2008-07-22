@@ -204,8 +204,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
       if (!isSynReceived) {
         synchronized (this) {
           if (!isSynReceived) {
-            isSynReceived = true;
-            verifyAndHandleSyn(message);
+            isSynReceived = verifyAndHandleSyn(message);
             message.recycle();
             return;
           }
@@ -216,13 +215,15 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
       }
     }
 
-    private void verifyAndHandleSyn(WireProtocolMessage message) {
+    private boolean verifyAndHandleSyn(WireProtocolMessage message) {
+      boolean isSynced = false;
       if (!verifySyn(message)) {
         handleHandshakeError(new TransportHandshakeErrorContext("Expected a SYN message but received: " + message,
                                                                 TransportHandshakeError.ERROR_HANDSHAKE));
       } else {
         try {
           handleSyn((SynMessage) message);
+          isSynced = true;
         } catch (StackNotFoundException e) {
           handleHandshakeError(new TransportHandshakeErrorContext(
                                                                   "Unable to find communications stack. "
@@ -235,6 +236,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
                                                                   e));
         }
       }
+      return isSynced;
     }
 
     private void handleHandshakeError(TransportHandshakeErrorContext ctxt) {
