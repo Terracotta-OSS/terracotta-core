@@ -39,4 +39,14 @@
   <module artifactId='tim-apache-struts-1.1' version='1.1.2' groupId='org.foo.bar'>
     <tc-version>2.6.2</tc-version>
   </module>
+  
+  <module artifactId='tim-hibernate-3.2.5' version='1.0.0' groupId='org.foo.bar'>
+    <tc-version>2.7.0</tc-version>
+  </module>
+  <module artifactId='tim-hibernate-3.2.5' version='1.0.0-SNAPSHOT' groupId='org.foo.bar'>
+    <tc-version>2.7.0</tc-version>
+  </module>
+  <module artifactId='tim-hibernate-3.2.5' version='1.0.1' groupId='org.foo.bar'>
+    <tc-version>2.7.0</tc-version>
+  </module>
 </modules>

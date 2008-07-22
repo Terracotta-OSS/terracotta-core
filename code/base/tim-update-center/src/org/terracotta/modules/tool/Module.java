@@ -176,9 +176,10 @@ public class Module implements Comparable {
     return ModuleId.computeSymbolicName(id.getGroupId(), id.getArtifactId());
   }
 
-  public boolean isOlder(Module o) {
-    assert getSymbolicName().equals(o.getSymbolicName()) : "symbolicNames do not match.";
-    return id.sortableVersion().compareTo(o.getId().sortableVersion()) < 0;
+  public boolean isOlder(Module other) {
+    assert getSymbolicName().equals(other.getSymbolicName()) : "symbolicNames do not match.";
+    //return id.sortableVersion().compareTo(o.getId().sortableVersion()) < 0;
+    return this.compareTo(other) < 0;
   }
 
   public String toString() {
