@@ -70,4 +70,4 @@ if test $? != 0; then
   exit 14
 fi
 
-export JAVA_OPTS=${ORIG_JAVA_OPTS}
+export JAVA_OPTS="${ORIG_JAVA_OPTS}"
