@@ -27,11 +27,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
-public class TUCApp {
+public class TIMGetTool {
 
   private static Config createConfig() throws IOException {
     Properties props = new Properties();
-    props.load(TUCApp.class.getResourceAsStream("/org/terracotta/modules/tool/tim-get.properties"));
+    props.load(TIMGetTool.class.getResourceAsStream("/org/terracotta/modules/tool/tim-get.properties"));
     return new Config(props);
   }
 

@@ -32,8 +32,10 @@ import java.util.Map.Entry;
 
 public class Module implements Comparable {
   private enum SymbolStyle {
-    BINARY, TERTIARY
+    BINARY, TERNARY
   }
+
+  public static final String     LEGEND              = "legend: [+] already installed  [!] installed but newer version exists  [-] not installed";
 
   private static final String    SYMBOL_OUTOFDATE    = "!";
   private static final String    SYMBOL_NOTINSTALLED = "-";
@@ -178,7 +180,7 @@ public class Module implements Comparable {
 
   public boolean isOlder(Module other) {
     assert getSymbolicName().equals(other.getSymbolicName()) : "symbolicNames do not match.";
-    //return id.sortableVersion().compareTo(o.getId().sortableVersion()) < 0;
+    // return id.sortableVersion().compareTo(o.getId().sortableVersion()) < 0;
     return this.compareTo(other) < 0;
   }
 
@@ -355,7 +357,7 @@ public class Module implements Comparable {
       out.println("The following versions are also available for TC " + modules.tcVersion() + ":\n");
       List<Module> siblings = this.getSiblings();
       for (Module sibling : siblings) {
-        out.print("\t" + sibling.installStateSymbol(SymbolStyle.BINARY));
+        out.print("\t" + sibling.installStateSymbol(SymbolStyle.TERNARY));
         out.print(" " + sibling.getId().getVersion());
         if (sibling.isInstalled()) out.println("\tinstalled at " + sibling.installPath().getParent());
         else out.println();
@@ -404,15 +406,21 @@ public class Module implements Comparable {
 
   private void printConfigInfo(PrintWriter out) {
     Element parent = new Element("modules");
-    Map<ModuleId, Dependency> manifest = this.computeManifest();
-    for (ModuleId key : manifest.keySet()) {
-      Element child = new Element("module");
-      parent.addContent(child);
-      child.setAttribute("name", key.getArtifactId());
-      child.setAttribute("version", key.getVersion());
-      if (key.isDefaultGroupId()) continue;
-      child.setAttribute("group-id", key.getGroupId());
-    }
+    Element child = new Element("module");
+    parent.addContent(child);
+    child.setAttribute("name", id.getArtifactId());
+    child.setAttribute("version", id.getVersion());
+    if (!id.isUsingDefaultGroupId()) child.setAttribute("group-id", id.getGroupId());
+
+    // Map<ModuleId, Dependency> manifest = this.computeManifest();
+    // for (ModuleId key : manifest.keySet()) {
+    // Element child = new Element("module");
+    // parent.addContent(child);
+    // child.setAttribute("name", key.getArtifactId());
+    // child.setAttribute("version", key.getVersion());
+    // if (key.isDefaultGroupId()) continue;
+    // child.setAttribute("group-id", key.getGroupId());
+    // }
 
     out.println("Configuration:\n");
     StringWriter sw = new StringWriter();
@@ -439,7 +447,7 @@ public class Module implements Comparable {
     sw = new StringWriter();
     pw = new PrintWriter(sw);
     printBasicInfo(pw);
-    pw.println("\n---\n");
+    pw.println();
 
     printDependenciesInfo(pw);
     pw.println();
@@ -454,6 +462,9 @@ public class Module implements Comparable {
 
     text.append("\n\t").append(sw.toString().replaceAll("\n", "\n\t"));
     out.println(StringUtils.chomp(text.toString().trim().replaceAll("\t", "   ")));
+
+    out.println();
+    out.println(LEGEND);
   }
 
   public void printSummary(PrintWriter out) {
@@ -474,7 +485,7 @@ public class Module implements Comparable {
   }
 
   public void printDigest(PrintWriter out) {
-    out.println(installStateSymbol(SymbolStyle.TERTIARY) + " " + id.toDigestString());
+    out.println(installStateSymbol(SymbolStyle.TERNARY) + " " + id.toDigestString());
   }
 
   private String installStateSymbol(boolean state) {
@@ -483,7 +494,7 @@ public class Module implements Comparable {
 
   private String installStateSymbol(SymbolStyle style) {
     String marker = isInstalled() ? SYMBOL_INSTALLED : SYMBOL_NOTINSTALLED;
-    if ((style == SymbolStyle.TERTIARY) && marker.equals(SYMBOL_NOTINSTALLED)) {
+    if ((style == SymbolStyle.TERNARY) && marker.equals(SYMBOL_NOTINSTALLED)) {
       List<Module> siblings = getSiblings();
       for (Module sibling : siblings) {
         if (!sibling.isInstalled()) continue;

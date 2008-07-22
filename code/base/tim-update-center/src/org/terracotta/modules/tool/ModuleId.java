@@ -29,7 +29,7 @@ public class ModuleId implements Comparable {
     this.version = version.trim();
   }
 
-  public boolean isDefaultGroupId() {
+  public boolean isUsingDefaultGroupId() {
     return DEFAULT_GROUPID.equals(groupId);
   }
 
@@ -142,7 +142,7 @@ public class ModuleId implements Comparable {
 
   public String toDigestString() {
     String digest = artifactId.concat(" (").concat(version).concat(")");
-    if (!isDefaultGroupId()) digest = digest.concat(" [" + groupId + "]");
+    if (!isUsingDefaultGroupId()) digest = digest.concat(" [" + groupId + "]");
     return digest;
   }
 }

@@ -79,9 +79,9 @@ public class ListCommand extends AbstractCommand {
     if (cli.hasOption('v') || cli.hasOption(LONGOPT_DETAILS)) displayWithDetails(list);
     else display(list);
 
-    if (!list.isEmpty()) {
+    if (!list.isEmpty()) { 
       out.println();
-      out.println("legends: [+] already installed  [!] installed but newer version exists  [-] not installed");
+      out.println(Module.LEGEND);
     }
 
   }

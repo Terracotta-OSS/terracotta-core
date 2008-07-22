@@ -105,7 +105,19 @@ public class MissingBundleException extends BundleException implements BundleExc
     buf.append("If the jar file exists and is in one of the paths listed ");
     buf.append("above, make sure that the Bundle-SymbolicName and\n").append(INDENT);
     buf.append("Bundle-Version attribute in its manifest matches the ones ");
-    buf.append("that the resolver expects.");
+    buf.append("that the resolver expects.\n\n").append(INDENT);
+    
+    buf.append("If you do not have this particular TIM or any of its ");
+    buf.append("dependencies installed try using the tim-get tool's \n").append(INDENT);
+    buf.append("'install' command:\n\n").append(INDENT + INDENT);
+    
+    String scriptname = System.getProperty("os.name").toLowerCase().startsWith("windows") ? "tim-get.bat" : "tim-get.sh"; 
+    buf.append(scriptname).append(" install ");
+    buf.append(name).append(" ").append(version).append(" ").append(groupId);
+    buf.append("\n\n").append(INDENT);
+    
+    buf.append("You can also use the tool's 'list' command to see if it's actually available:\n\n").append(INDENT + INDENT);
+    buf.append(scriptname).append(" list ").append(name);
     return StringUtils.replace(buf.toString(), "\n", System.getProperty("line.separator")) ;
   }
 
