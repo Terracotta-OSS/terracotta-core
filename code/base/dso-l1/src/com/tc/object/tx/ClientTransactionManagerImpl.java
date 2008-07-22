@@ -406,6 +406,13 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     ThreadTransactionContext ttc = getThreadTransactionContext();
 
     final TxnType txnType = getTxnTypeFromLockLevel(lockLevel);
+    // If the currently active transaction context already has the NORMAL type
+    // (which corresponds to a 'write' level) and the type of a new transaction
+    // context is READ_ONLY (which has less isolation), preserve the already
+    // present NORMAL type.
+    // Note that this doesn't change the type of the new transaction itself, it
+    // merely preserves the 'write' level isolation that was already granted
+    // by a previous transaction in the context.
     if (currentTransaction != null &&
         TxnType.READ_ONLY == txnType &&
         TxnType.NORMAL == currentTransaction.getTransactionType()) {
