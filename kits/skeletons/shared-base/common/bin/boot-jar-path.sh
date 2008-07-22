@@ -58,6 +58,9 @@ if $cygwin; then
   [ -n "$DSO_BOOT_JAR" ] && DSO_BOOT_JAR=`cygpath --windows "$DSO_BOOT_JAR"`
 fi
 
+ORIG_JAVA_OPTS=${JAVA_OPTS}
+export JAVA_OPTS="${JAVA_OPTS} -Dtc.logging.console.level=FATAL"
+
 if test -n "${TC_CONFIG_PATH}"; then
   "${TC_INSTALL_DIR}/bin/make-boot-jar.sh" -o "${DSO_BOOT_JAR}" -f "${TC_CONFIG_PATH}"
 else
@@ -66,3 +69,5 @@ fi
 if test $? != 0; then
   exit 14
 fi
+
+export JAVA_OPTS=${ORIG_JAVA_OPTS}
