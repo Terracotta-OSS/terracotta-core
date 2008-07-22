@@ -44,7 +44,9 @@ public class TUCApp {
   }
 
   public static void main(String args[]) {
-    System.out.println(ProductInfo.getInstance().toLongString()); 
+    ProductInfo pInfo = ProductInfo.getInstance();
+    System.out.println(pInfo.toLongString());
+    if (pInfo.isPatched()) System.out.println(pInfo.toLongPatchString());
     System.out.println();
     
     Config config = null;
