@@ -225,4 +225,8 @@ public class TestObjectManager implements ObjectManager {
     throw new ImplementMe();
   }
 
+  public ObjectIDSet getObjectIDsInCache() {
+    throw new ImplementMe();
+  }
+
 }

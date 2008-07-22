@@ -4,6 +4,7 @@
  */
 package com.tctest;
 
+
 import com.tc.test.activepassive.ActivePassiveCrashMode;
 import com.tc.test.activepassive.ActivePassivePersistenceMode;
 import com.tc.test.activepassive.ActivePassiveSharedDataMode;
@@ -12,14 +13,14 @@ import com.tc.util.runtime.Os;
 
 import java.util.Date;
 
-public class CreateLotsOfGarbageGCTest extends GCTestBase implements TestConfigurator {
+public class CreateLotsOfGarbageYoungGenGCTest extends YoungGCTestBase implements TestConfigurator {
 
-  public CreateLotsOfGarbageGCTest() {
+  public CreateLotsOfGarbageYoungGenGCTest() {
     if (Os.isSolaris()) {
       disableAllUntil(new Date(Long.MAX_VALUE));
     }
   }
-  
+
   protected Class getApplicationClass() {
     return CreateLotsOfGarbageGCTestApp.class;
   }
@@ -28,10 +29,6 @@ public class CreateLotsOfGarbageGCTest extends GCTestBase implements TestConfigu
     return true;
   }
 
-  public int getGarbageCollectionInterval() {
-    return 20;
-  }
-  
   // start only 1 L1
   protected int getNodeCount() {
     return 1;
@@ -44,4 +41,5 @@ public class CreateLotsOfGarbageGCTest extends GCTestBase implements TestConfigu
     setupManager.setServerShareDataMode(ActivePassiveSharedDataMode.NETWORK);
     setupManager.setServerPersistenceMode(ActivePassivePersistenceMode.TEMPORARY_SWAP_ONLY);
   }
+
 }

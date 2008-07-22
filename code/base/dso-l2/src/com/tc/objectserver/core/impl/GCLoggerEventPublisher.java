@@ -5,7 +5,6 @@
 package com.tc.objectserver.core.impl;
 
 import com.tc.logging.TCLogger;
-import com.tc.objectserver.core.api.GarbageCollectionInfo;
 import com.tc.objectserver.impl.GCLogger;
 
 public class GCLoggerEventPublisher extends GarbageCollectorEventListenerAdapter {
@@ -14,6 +13,10 @@ public class GCLoggerEventPublisher extends GarbageCollectorEventListenerAdapter
 
   public GCLoggerEventPublisher(TCLogger logger, boolean verboseGC) {
     gcLogger = new GCLogger(logger, verboseGC);
+  }
+  
+  public void garbageCollectorStart(GarbageCollectionInfo info) {
+    gcLogger.log_GCStart(info.getIteration(), info.isFullGC());
   }
 
   public void garbageCollectorMark(GarbageCollectionInfo info) {

@@ -6,7 +6,6 @@ package com.tc.objectserver.core.impl;
 
 import com.tc.objectserver.api.GCStats;
 import com.tc.objectserver.api.GCStatsEventListener;
-import com.tc.objectserver.core.api.GarbageCollectionInfo;
 import com.tc.objectserver.impl.GCStatsImpl;
 import com.tc.stats.LossyStack;
 
@@ -76,7 +75,7 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
   private GCStatsImpl getGCStats(GarbageCollectionInfo info) {
     GCStatsImpl gcStats = null;
     if ((gcStats = (GCStatsImpl) info.getObject()) == null) {
-      gcStats = new GCStatsImpl(info.getIteration(), info.isYoungGen(), info.getStartTime());
+      gcStats = new GCStatsImpl(info.getIteration(), info.isFullGC(), info.getStartTime());
       info.setObject(gcStats);
     }
     return gcStats;

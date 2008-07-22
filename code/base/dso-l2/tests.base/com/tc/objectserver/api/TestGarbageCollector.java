@@ -10,7 +10,6 @@ import com.tc.exception.ImplementMe;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.core.api.Filter;
-import com.tc.objectserver.core.api.GarbageCollectionInfoFactory;
 import com.tc.objectserver.core.api.GarbageCollector;
 import com.tc.objectserver.core.api.GarbageCollectorEventListener;
 import com.tc.text.PrettyPrinter;
@@ -302,8 +301,20 @@ public class TestGarbageCollector implements GarbageCollector {
     return true;
   }
   
-  public void setGarbageCollectionInfoFactory(GarbageCollectionInfoFactory factory) {
-    //do nothing
+  public void gcYoung() {
+    throw new ImplementMe();
+  }
+
+  public void notifyNewObjectInitalized(ObjectID id) {
+    // NOP
+  }
+
+  public void notifyObjectCreated(ObjectID id) {
+    // NOP
+  }
+
+  public void notifyObjectsEvicted(Collection evicted) {
+    // NOP
   }
 
 }

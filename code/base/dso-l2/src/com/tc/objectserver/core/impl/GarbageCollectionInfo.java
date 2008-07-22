@@ -4,16 +4,14 @@
  */
 package com.tc.objectserver.core.impl;
 
-import com.tc.objectserver.core.api.GarbageCollectionInfo;
-
 import java.util.List;
 import java.util.SortedSet;
 
-public class GarbageCollectionInfoImpl implements GarbageCollectionInfo {
+public class GarbageCollectionInfo {
 
   private int       iteration;
 
-  private boolean   youngGen;
+  private boolean   fullGC;
 
   private long      startTime;
 
@@ -41,8 +39,9 @@ public class GarbageCollectionInfoImpl implements GarbageCollectionInfo {
 
   private int       rescue1Count;
 
-  public GarbageCollectionInfoImpl(int iteration) {
+  public GarbageCollectionInfo(int iteration, boolean fullGC) {
     this.iteration = iteration;
+    this.fullGC = fullGC;
   }
 
   public int getRescue1Count() {
@@ -65,16 +64,8 @@ public class GarbageCollectionInfoImpl implements GarbageCollectionInfo {
     return this.iteration;
   }
 
-  public void markYoungGen() {
-    youngGen = true;
-  }
-
-  public void markFullGen() {
-    youngGen = false;
-  }
-
-  public boolean isYoungGen() {
-    return youngGen ? true : false;
+  public boolean isFullGC() {
+    return fullGC;
   }
 
   public void setStartTime(long time) {
@@ -162,4 +153,13 @@ public class GarbageCollectionInfoImpl implements GarbageCollectionInfo {
     this.stats = aGCStats;
   }
 
+  public String toString() {
+    return "GarbageCollectionInfo [ Iteration = " + iteration + " ] = " + " type  = "
+           + (fullGC ? " young, " : " full, ") + " startTime = " + startTime + " begin object count = "
+           + beginObjectCount + " markStageTime = " + markStageTime + " pauseStageTime = " + pauseStageTime
+           + " deleteStageTime = " + deleteStageTime + " elapsedTime = " + elapsedTime
+           + " candiate garabage  count = " + candidateGarbageCount + " actual garbage count  = " + actualGarbageCount
+           + " pre rescue count = " + preRescueCount + " rescue 1 count = " + rescue1Count + " Garbage  = "
+           + (toDelete == null ? "Not Set " : toDelete.size());
+  }
 }

@@ -8,40 +8,34 @@ import com.tc.test.activepassive.ActivePassiveCrashMode;
 import com.tc.test.activepassive.ActivePassivePersistenceMode;
 import com.tc.test.activepassive.ActivePassiveSharedDataMode;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
-import com.tc.util.runtime.Os;
 
-import java.util.Date;
+public class TreeMapYoungGenGCActivePassiveTest extends YoungGCTestBase {
 
-public class CreateLotsOfGarbageGCTest extends GCTestBase implements TestConfigurator {
+  private static final int NODE_COUNT = 3;
 
-  public CreateLotsOfGarbageGCTest() {
-    if (Os.isSolaris()) {
-      disableAllUntil(new Date(Long.MAX_VALUE));
-    }
+  public void doSetUp(TransparentTestIface t) throws Exception {
+    t.getTransparentAppConfig().setClientCount(NODE_COUNT).setIntensity(1);
+    t.initializeTestRunner();
   }
-  
+
   protected Class getApplicationClass() {
-    return CreateLotsOfGarbageGCTestApp.class;
+    return TreeMapTestApp.class;
+  }
+
+  protected boolean canRunCrash() {
+    return true;
   }
 
   protected boolean canRunActivePassive() {
     return true;
   }
 
-  public int getGarbageCollectionInterval() {
-    return 20;
-  }
-  
-  // start only 1 L1
-  protected int getNodeCount() {
-    return 1;
-  }
-
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
     setupManager.setServerCrashMode(ActivePassiveCrashMode.CONTINUOUS_ACTIVE_CRASH);
-    setupManager.setServerCrashWaitTimeInSec(60);
+    setupManager.setServerCrashWaitTimeInSec(90);
     setupManager.setServerShareDataMode(ActivePassiveSharedDataMode.NETWORK);
-    setupManager.setServerPersistenceMode(ActivePassivePersistenceMode.TEMPORARY_SWAP_ONLY);
+    setupManager.setServerPersistenceMode(ActivePassivePersistenceMode.PERMANENT_STORE);
   }
+
 }

@@ -114,6 +114,8 @@ public interface ObjectManager extends ManagedObjectProvider {
   public Set getRootIDs();
 
   public ObjectIDSet getAllObjectIDs();
+  
+  public ObjectIDSet getObjectIDsInCache();
 
   public void addFaultedObject(ObjectID oid, ManagedObject mo, boolean removeOnRelease);
 
@@ -126,4 +128,5 @@ public interface ObjectManager extends ManagedObjectProvider {
    * used by DGC.
    */
   public ManagedObject getObjectByIDOrNull(ObjectID id);
+
 }

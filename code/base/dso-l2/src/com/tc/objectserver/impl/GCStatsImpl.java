@@ -37,21 +37,13 @@ public class GCStatsImpl implements GCStats, Serializable {
   private long                          pausedStageTime       = NOT_INITIALIZED;
   private long                          deleteStageTime       = NOT_INITIALIZED;
   private State                         state                 = GC_START;
-  private boolean                       young;
+  private final boolean                 fullGC;
 
-  public GCStatsImpl(int number, boolean youngGen, long startTime) {
+  public GCStatsImpl(int number, boolean fullGC, long startTime) {
     this.number = number;
-    if (youngGen) {
-      markYoungGen();
-    } else {
-      markFullGen();
-    } 
+    this.fullGC = fullGC;
     validate(startTime);
     this.startTime = startTime;
-  }
-
-  public synchronized boolean isYoung() {
-    return young;
   }
 
   public int getIteration() {
@@ -115,7 +107,7 @@ public class GCStatsImpl implements GCStats, Serializable {
   }
 
   public synchronized String getType() {
-    return young ? YOUNG_GENERATION : FULL_GENERATION;
+    return fullGC ?  FULL_GENERATION : YOUNG_GENERATION;
   }
 
   public synchronized void setActualGarbageCount(long count) {
@@ -163,14 +155,6 @@ public class GCStatsImpl implements GCStats, Serializable {
       time = 0;
     }
     this.elapsedTime = time;
-  }
-
-  public synchronized void markYoungGen() {
-    this.young = true;
-  }
-
-  public synchronized void markFullGen() {
-    this.young = false;
   }
 
   private void validate(long value) {

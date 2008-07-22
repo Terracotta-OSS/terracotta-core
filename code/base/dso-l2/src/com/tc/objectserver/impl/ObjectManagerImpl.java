@@ -5,7 +5,6 @@
 package com.tc.objectserver.impl;
 
 import com.tc.async.api.Sink;
-import com.tc.exception.TCRuntimeException;
 import com.tc.logging.DumpHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -401,6 +400,12 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         }
       }
     }
+    notifyCollectorEvictedObjects(toFlush);
+    notifyCollectorEvictedObjects(removedObjects);
+  }
+
+  private void notifyCollectorEvictedObjects(Collection evicted) {
+    collector.notifyObjectsEvicted(evicted);
   }
 
   private void evicted(Collection managedObjects) {
@@ -588,11 +593,17 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   public ObjectIDSet getAllObjectIDs() {
     return objectStore.getAllObjectIDs();
   }
+  
+  public synchronized ObjectIDSet getObjectIDsInCache() {
+    ObjectIDSet ids =  new ObjectIDSet();
+    ids.addAll(references.keySet());
+    return ids;
+  }
 
   public int getLiveObjectCount() {
     return objectStore.getObjectCount();
   }
-  
+
   private void postRelease() {
     if (collector.isPausingOrPaused()) {
       checkAndNotifyGC();
@@ -621,7 +632,12 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     if (object.isNew()) {
       objectStore.addNewObject(object);
       object.setIsNew(false);
+      fireNewObjectinitialized(object.getID());
     }
+  }
+
+  private void fireNewObjectinitialized(ObjectID id) {
+    collector.notifyNewObjectInitalized(id);
   }
 
   private void removeReferenceIfNecessary(ManagedObjectReference mor) {
@@ -707,11 +723,17 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   // This method is public for testing purpose
   public synchronized void createObject(ManagedObject object) {
     syncAssertNotInShutdown();
-    Assert.eval(object.getID().toLong() != -1);
+    ObjectID oid = object.getID();
+    Assert.eval(oid.toLong() != -1);
     // Not adding to the store yet since this transaction containing the new objects is not yet applied.
     // objectStore.addNewObject(object);
     addNewReference(object, false);
     stats.newObjectCreated();
+    fireObjectCreated(oid);
+  }
+
+  private void fireObjectCreated(ObjectID id) {
+    collector.notifyObjectCreated(id);
   }
 
   public void createRoot(String rootName, ObjectID id) {
@@ -741,35 +763,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
     if (!config.doGC() || config.gcThreadSleepTime() < 0) return;
 
-    final Object stopLock = new Object();
-
-    StoppableThread st = new StoppableThread(this.gcThreadGroup, "GC") {
-      public void requestStop() {
-        super.requestStop();
-
-        synchronized (stopLock) {
-          stopLock.notifyAll();
-        }
-      }
-
-      public void run() {
-        final long gcSleepTime = config.gcThreadSleepTime();
-
-        while (true) {
-          try {
-            if (isStopRequested()) { return; }
-            synchronized (stopLock) {
-              stopLock.wait(gcSleepTime);
-            }
-            if (isStopRequested()) { return; }
-            newCollector.gc();
-          } catch (InterruptedException ie) {
-            throw new TCRuntimeException(ie);
-          }
-        }
-      }
-
-    };
+    StoppableThread st = new GarbageCollectorThread(this.gcThreadGroup, "GC", newCollector, this.config);
     st.setDaemon(true);
     newCollector.setState(st);
   }
@@ -1090,4 +1084,5 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private static Set<ManagedObjectReference> createNewSet() {
     return new HashSet<ManagedObjectReference>(INITIAL_SET_SIZE, LOAD_FACTOR);
   }
+
 }

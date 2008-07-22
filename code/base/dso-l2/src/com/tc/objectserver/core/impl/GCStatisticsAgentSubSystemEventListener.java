@@ -6,7 +6,6 @@ package com.tc.objectserver.core.impl;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.objectserver.core.api.GarbageCollectionInfo;
 import com.tc.statistics.AgentStatisticsManager;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticsAgentSubSystem;
@@ -51,7 +50,7 @@ public class GCStatisticsAgentSubSystemEventListener extends GarbageCollectorEve
   private StatisticData[] getGCStatisticsData(GarbageCollectionInfo gcInfo) {
     List<StatisticData> datas = new ArrayList<StatisticData>();
     datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "iteration", (long) gcInfo.getIteration()));
-    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "type", gcInfo.isYoungGen() ? "Young" : "Full"));
+    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "type", gcInfo.isFullGC() ? "Full" : "YoungGen"));
     datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "start time", gcInfo.getStartTime()));
     datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "elapsed time", gcInfo.getElapsedTime()));
     datas

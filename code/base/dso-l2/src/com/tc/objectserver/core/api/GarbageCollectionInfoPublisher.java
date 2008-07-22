@@ -3,6 +3,8 @@
  */
 package com.tc.objectserver.core.api;
 
+import com.tc.objectserver.core.impl.GarbageCollectionInfo;
+
 
 public interface GarbageCollectionInfoPublisher {
   

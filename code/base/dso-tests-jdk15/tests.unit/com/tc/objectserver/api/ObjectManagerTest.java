@@ -46,7 +46,6 @@ import com.tc.objectserver.context.ManagedObjectFlushingContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.context.RecallObjectsContext;
 import com.tc.objectserver.core.api.Filter;
-import com.tc.objectserver.core.api.GarbageCollectionInfoFactory;
 import com.tc.objectserver.core.api.GarbageCollector;
 import com.tc.objectserver.core.api.GarbageCollectorEventListener;
 import com.tc.objectserver.core.api.ManagedObject;
@@ -1129,6 +1128,82 @@ public class ObjectManagerTest extends BaseDSOTestCase {
       objectStore.addNewObject(mo);
     }
   }
+
+  /**
+  public void testGCStats() {
+    initObjectManager();
+
+    // this should disable the internal gc thread, allowing us to control when
+    // objMgr.gc() happens
+    this.config.myGCThreadSleepTime = -1;
+
+
+    GarbageCollector gc = new MarkAndSweepGarbageCollector(objectManager, clientStateManager,
+                                                           new ObjectManagerConfig(300000, true, true, false, false,
+                                                                                   60000));
+    objectManager.setGarbageCollector(gc);
+    objectManager.start();
+
+    objectManager.createRoot("root-me", new ObjectID(0));
+    ManagedObject root = new TestManagedObject(new ObjectID(0), new ObjectID[] { new ObjectID(1) });
+    objectManager.createObject(root);
+    this.objectStore.addNewObject(root);
+
+    TestManagedObject mo1 = new TestManagedObject(new ObjectID(1), new ObjectID[] { new ObjectID(2) });
+    TestManagedObject mo2 = new TestManagedObject(new ObjectID(2), new ObjectID[] { new ObjectID(3) });
+    TestManagedObject mo3 = new TestManagedObject(new ObjectID(3), new ObjectID[] {});
+    objectManager.createObject(mo1);
+    this.objectStore.addNewObject(mo1);
+    objectManager.createObject(mo2);
+    this.objectStore.addNewObject(mo2);
+    objectManager.createObject(mo3);
+    this.objectStore.addNewObject(mo3);
+
+    ClientID cid1 = new ClientID(new ChannelID(1));
+    clientStateManager.addReference(cid1, root.getID());
+    clientStateManager.addReference(cid1, mo1.getID());
+    clientStateManager.addReference(cid1, mo2.getID());
+    clientStateManager.addReference(cid1, mo3.getID());
+
+//    assertEquals(0, objectManager.getGarbageCollectorStats().length);
+//    assertEquals(0, listener.gcEvents.size());
+
+    long start = System.currentTimeMillis();
+
+    objectManager.getGarbageCollector().gc();
+
+   // assertEquals(1, objectManager.getGarbageCollectorStats().length);
+   // assertEquals(3, listener.gcEvents.size());
+
+    GCStats stats1 = listener.gcEvents.get(0);
+    final int firstIterationNumber = stats1.getIteration();
+    assertSame(stats1, objectManager.getGarbageCollectorStats()[0]);
+    assertTrue("external: " + start + ", reported: " + stats1.getStartTime(), stats1.getStartTime() >= start);
+    assertTrue(String.valueOf(stats1.getElapsedTime()), stats1.getElapsedTime() >= 0);
+    assertEquals(4, stats1.getBeginObjectCount());
+    assertEquals(0, stats1.getCandidateGarbageCount());
+    assertEquals(0, stats1.getActualGarbageCount());
+
+    listener.gcEvents.clear();
+    objectManager.getGarbageCollector().gc();
+    assertEquals(2, objectManager.getGarbageCollectorStats().length);
+    assertEquals(3, listener.gcEvents.size());
+    assertEquals(firstIterationNumber + 1, objectManager.getGarbageCollectorStats()[0].getIteration());
+
+    listener.gcEvents.clear();
+    Set<ObjectID> removed = new HashSet<ObjectID>();
+    removed.add(mo3.getID());
+    clientStateManager.removeReferences(cid1, removed);
+    mo2.setReferences(new ObjectID[] {});
+    objectManager.getGarbageCollector().gc();
+    assertEquals(3, objectManager.getGarbageCollectorStats().length);
+    assertEquals(3, listener.gcEvents.size());
+    GCStats stats3 = listener.gcEvents.get(0);
+    assertEquals(4, stats3.getBeginObjectCount());
+    assertEquals(1, stats3.getActualGarbageCount());
+    assertEquals(1, stats3.getCandidateGarbageCount());
+  }
+  */
   
   public void testLookupFacadeForMissingObject() {
     initObjectManager();
@@ -2196,8 +2271,20 @@ public class ObjectManagerTest extends BaseDSOTestCase {
       return true;
     }
     
-    public void setGarbageCollectionInfoFactory(GarbageCollectionInfoFactory factory) {
-      //do nothing
+    public void gcYoung() {
+      //NOP
+    }
+
+    public void notifyNewObjectInitalized(ObjectID id) {
+      //NOP
+    }
+
+    public void notifyObjectCreated(ObjectID id) {
+      //NOP
+    }
+
+    public void notifyObjectsEvicted(Collection evicted) {
+      //NOP
     }
 
   }
@@ -2243,11 +2330,11 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     public boolean paranoid;
 
     public TestObjectManagerConfig() {
-      super(10000, true, true, true);
+      super(10000, true, true, true, false, 60000);
     }
 
     TestObjectManagerConfig(long gcThreadSleepTime, boolean doGC) {
-      super(gcThreadSleepTime, doGC, true, true);
+      super(gcThreadSleepTime, doGC, true, true, false, 60000);
       throw new RuntimeException("Don't use me.");
     }
 

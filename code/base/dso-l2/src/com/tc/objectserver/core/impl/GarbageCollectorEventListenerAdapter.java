@@ -3,7 +3,6 @@
  */
 package com.tc.objectserver.core.impl;
 
-import com.tc.objectserver.core.api.GarbageCollectionInfo;
 import com.tc.objectserver.core.api.GarbageCollectorEventListener;
 
 public abstract class GarbageCollectorEventListenerAdapter implements GarbageCollectorEventListener {

@@ -5,7 +5,6 @@ package com.tc.objectserver.core.impl;
 
 import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
 
-import com.tc.objectserver.core.api.GarbageCollectionInfo;
 import com.tc.objectserver.core.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.core.api.GarbageCollectorEventListener;
 

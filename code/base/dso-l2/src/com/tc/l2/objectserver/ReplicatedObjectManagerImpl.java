@@ -24,7 +24,7 @@ import com.tc.net.groups.GroupResponse;
 import com.tc.net.groups.NodeID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.context.GCResultContext;
-import com.tc.objectserver.core.api.GarbageCollectionInfo;
+import com.tc.objectserver.core.impl.GarbageCollectionInfo;
 import com.tc.objectserver.core.impl.GarbageCollectorEventListenerAdapter;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TxnsInSystemCompletionLister;
