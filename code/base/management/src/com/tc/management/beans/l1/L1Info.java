@@ -134,12 +134,18 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
 
     return map;
   }
-
+  
+  private long lastCpuUpdateTime = System.currentTimeMillis();
+  private StatisticData[] lastCpuUpdate;
+  private static final int CPU_UPDATE_WINDOW_MILLIS = 1000;
+  
   public StatisticData[] getCpuUsage() {
-    if (cpuSRA != null) {
-      return cpuSRA.retrieveStatisticData();
+    if(cpuSRA == null) return null;
+    if(System.currentTimeMillis() - lastCpuUpdateTime < CPU_UPDATE_WINDOW_MILLIS) {
+      return lastCpuUpdate;
     }
-    return null;
+    lastCpuUpdateTime = System.currentTimeMillis();
+    return lastCpuUpdate = cpuSRA.retrieveStatisticData();
   }
   
   public void reset() {
