@@ -118,8 +118,8 @@ public class ModuleTest extends TestCase {
     assertEquals(2, siblings.size());
     assertTrue(module.isOlder(siblings.get(0)));
     assertTrue(module.isOlder(siblings.get(1)));
-    assertFalse(siblings.get(0).isLatest());
-    assertTrue(siblings.get(1).isLatest());
+    assertTrue(siblings.get(0).isLatest());
+    assertFalse(siblings.get(1).isLatest());
   }
   
   public void testGetSiblings() {
