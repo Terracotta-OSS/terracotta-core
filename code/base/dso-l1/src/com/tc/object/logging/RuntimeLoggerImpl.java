@@ -12,7 +12,6 @@ import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.tx.TimerSpec;
-import com.tc.util.Util;
 
 public class RuntimeLoggerImpl implements RuntimeLogger {
   private static final TCLogger internalLogger = TCLogging.getLogger(RuntimeLoggerImpl.class);
@@ -162,7 +161,7 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
 
   private void appendCall(StringBuffer message) {
     if (fullStack || caller) {
-      StackTraceElement[] stack = getTrimmedStack();
+      StackTraceElement[] stack = new Throwable().getStackTrace();
       if (stack != null) {
         message.append("\n");
         if (fullStack) {
@@ -262,38 +261,4 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
     if (obj == null) { return null; }
     return obj.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(obj));
   }
-
-  private static StackTraceElement[] getTrimmedStack() {
-    StackTraceElement[] stack = new Throwable().getStackTrace();
-    if ((stack == null) || (stack.length <= 1)) {
-      internalLogger.warn("funny stack returned: " + Util.enumerateArray(stack));
-      return null;
-    }
-
-    int index = 0;
-    while (index < stack.length) {
-      String className = stack[index].getClassName();
-
-      if (className.equals("com.tc.object.bytecode.ManagerUtil")) {
-        break;
-      }
-
-      index++;
-    }
-
-    // advance to the calling frame
-    index++;
-
-    if (index < (stack.length - 1)) {
-      StackTraceElement[] rv = new StackTraceElement[stack.length - index];
-      System.arraycopy(stack, index, rv, 0, rv.length);
-      return rv;
-    } else {
-      internalLogger.warn("could not find proper stack frame: " + Util.enumerateArray(stack));
-      return null;
-    }
-
-    // unreachable
-  }
-
 }
