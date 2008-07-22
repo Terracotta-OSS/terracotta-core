@@ -402,6 +402,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/aspectwerkz.iml" filepath="$PROJECT_DIR$/aspectwerkz.iml" />
+	  <module fileurl="file://$PROJECT_DIR$/clustered-apache-struts-1.1.iml" filepath="$PROJECT_DIR$/clustered-apache-struts-1.1.iml" />
       <module fileurl="file://$PROJECT_DIR$/clustered-commons-collections-3.1.iml" filepath="$PROJECT_DIR$/clustered-commons-collections-3.1.iml" />
       <module fileurl="file://$PROJECT_DIR$//clustered-glassfish-1.0.iml" filepath="$PROJECT_DIR$//clustered-glassfish-1.0.iml" />
       <module fileurl="file://$PROJECT_DIR$/clustered-surefire-2.3.iml" filepath="$PROJECT_DIR$/clustered-surefire-2.3.iml" />

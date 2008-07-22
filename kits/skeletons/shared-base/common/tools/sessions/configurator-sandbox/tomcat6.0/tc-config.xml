@@ -31,7 +31,7 @@
     <logs>logs/client-logs/%(webserver.log.name)</logs>
     <statistics>statistics/%(webserver.log.name)</statistics>
     <modules>
-      <module name="tim-apache-struts-1.1" version="1.2.0.SNAPSHOT"/>
+      <module name="clustered-apache-struts-1.1" version="2.7.0.SNAPSHOT"/>
     </modules>
   </clients>
 

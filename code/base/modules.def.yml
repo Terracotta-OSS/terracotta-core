@@ -599,6 +599,30 @@ modules:
         - simulator
         - thirdparty
         - thirdparty-api
+  - clustered-apache-struts-1.1:
+      options:
+        jdk: J2SE-1.4
+        module: true
+      dependencies:
+        - aspectwerkz
+        - common-api
+        - deploy
+        - deploy-api
+        - dso-common
+        - dso-common-jdk15
+        - dso-l1-api
+        - dso-l2
+        - dso-l2-common
+        - dso-memory-datastore
+        - dso-statistics
+        - dso-statistics-api
+        - legacy-test-tree
+        - management
+        - management-api
+        - modules-common
+        - simulator
+        - thirdparty
+        - thirdparty-api		
   - clustered-glassfish-2.0:
       options:
         jdk: J2SE-1.5
