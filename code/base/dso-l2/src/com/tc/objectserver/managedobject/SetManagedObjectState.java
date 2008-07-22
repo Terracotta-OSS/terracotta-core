@@ -67,7 +67,11 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
 
   private Object getValue(Object[] params) {
     // hack for trove sets which replace the old set value (java ones do the opposite) clean this up
-    return params.length == 2 ? params[1] : params[0];
+    if (params.length == 2) {
+      if (!params[0].equals(ObjectID.NULL_ID)) return params[0];
+      else return params[1];
+    }
+    return params[0];
   }
 
   private void addChangeToCollector(ObjectID objectID, Object newValue, BackReferences includeIDs) {
@@ -112,8 +116,8 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
   }
 
   protected void basicWriteTo(ObjectOutput out) throws IOException {
-    //for removing warning
-    if(false) throw new IOException();
+    // for removing warning
+    if (false) throw new IOException();
   }
 
   protected boolean basicEquals(LogicalManagedObjectState o) {
@@ -127,14 +131,14 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
   }
 
   public PersistableCollection getPersistentCollection() {
-    return (PersistableCollection)references;
+    return (PersistableCollection) references;
   }
 
   public void setPersistentCollection(PersistableCollection collection) {
     if (this.references != null) { throw new AssertionError("The references map is already set ! " + references); }
-    this.references = (Set)collection;
+    this.references = (Set) collection;
   }
-  
+
   static SetManagedObjectState readFrom(ObjectInput in) throws IOException, ClassNotFoundException {
     if (false) {
       // This is added to make the compiler happy. For some reason if I have readFrom() method throw
