@@ -32,11 +32,11 @@ public class CollectingNotificationListener implements NotificationListener {
     List data = (List)notification.getUserData();
     ((Collection)o).addAll(data);
     for (Iterator it = data.iterator(); it.hasNext(); ) {
-      System.out.println(data);
+      // System.out.println(data);
       if (SRAShutdownTimestamp.ACTION_NAME.equals(((StatisticData)it.next()).getName())) {
         synchronized (this) {
           nodesToShutdown--;
-          System.out.println(">>> nodesToShutdown = "+nodesToShutdown);
+          // System.out.println(">>> nodesToShutdown = "+nodesToShutdown);
           if (0 == nodesToShutdown) {
             shutdown = true;
             this.notifyAll();
