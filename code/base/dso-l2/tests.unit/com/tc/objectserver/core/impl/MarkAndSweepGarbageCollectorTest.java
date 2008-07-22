@@ -298,17 +298,16 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     assertTrue(toDelete.size() == 1);
   }
 
-  /** 
-   * TODO:: FIXME:: This is broken 
-   */
-  public void DISABLEDtestFilter() {
+  public void testFilter() {
     final TestManagedObject tmo1 = createObject(3);
     final TestManagedObject tmo2 = createObject(3);
     final TestManagedObject tmo3 = createObject(3);
+    final TestManagedObject tmo4 = createObject(3);
 
     tmo1.setReference(0, tmo2.getID());
     tmo2.setReference(0, tmo1.getID());
     tmo2.setReference(1, tmo3.getID());
+    tmo3.setReference(0, tmo4.getID());
 
     root1.setReference(0, tmo1.getID());
 
