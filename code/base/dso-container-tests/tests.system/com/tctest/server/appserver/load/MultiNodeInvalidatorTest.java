@@ -84,7 +84,7 @@ public class MultiNodeInvalidatorTest extends AbstractDeploymentTest {
   }
 
   public void testLoad() throws Throwable {
-    runLoad(LowMemWorkaround.computeNumberOfNodes(4, 2, appServerInfo()));
+    runLoad(LowMemWorkaround.computeNumberOfNodes(4, appServerInfo()));
   }
 
   private void runLoad(final int numServers) throws Throwable {

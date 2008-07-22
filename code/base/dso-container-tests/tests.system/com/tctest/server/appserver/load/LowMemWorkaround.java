@@ -15,7 +15,7 @@ public class LowMemWorkaround {
   // This number isn't exact of course but it is appropriate for our monkey environments
   private static final long TWO_GIGABYTES = 2000000000L;
 
-  public static int computeNumberOfNodes(int defaultNum, int lowMemNum, AppServerInfo appServerInfo) {
+  static int computeNumberOfNodes(int defaultNum, AppServerInfo appServerInfo) {
     try {
       Sigar sigar = new Sigar();
 
@@ -23,9 +23,9 @@ public class LowMemWorkaround {
 
       long memTotal = mem.getTotal();
       if (memTotal < TWO_GIGABYTES) {
-        Banner.warnBanner("Using " + lowMemNum + " nodes (instead of " + defaultNum
-                          + ") since this machine has limited memory (" + memTotal + ")");
-        return lowMemNum;
+        Banner.warnBanner("Using 2 nodes (instead of " + defaultNum + ") since this machine has limited memory ("
+                          + memTotal + ")");
+        return 2;
       }
 
       return defaultNum;
