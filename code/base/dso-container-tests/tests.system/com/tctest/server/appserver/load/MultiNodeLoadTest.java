@@ -55,7 +55,7 @@ public class MultiNodeLoadTest extends AbstractDeploymentTest {
   }
 
   protected final void runLoad(boolean sticky) throws Throwable {
-    int numNodes = LowMemWorkaround.computeNumberOfNodes(4, appServerInfo());
+    int numNodes = LowMemWorkaround.computeNumberOfNodes(4, 2, appServerInfo());
     assertTimeDirection();
     runNodes(numNodes, sticky);
   }
