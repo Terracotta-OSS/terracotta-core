@@ -15,5 +15,5 @@ set JAVA_HOME="%JAVA_HOME:"=%"
 
 set CLASSPATH=%TC_INSTALL_DIR%\lib\tc.jar
 set JAVA_OPTS=-Dtc.install-root=%TC_INSTALL_DIR% %JAVA_OPTS%
-%JAVA_HOME%\bin\java -client %JAVA_OPTS% -cp %CLASSPATH% org.terracotta.tools.cli.TUCApp %*
+%JAVA_HOME%\bin\java -client %JAVA_OPTS% -cp %CLASSPATH% org.terracotta.tools.cli.TIMGetTool %*
 endlocal

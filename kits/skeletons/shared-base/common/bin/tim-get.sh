@@ -34,5 +34,5 @@ exec "${JAVA_HOME}/bin/java" -client \
   -Dtc.install-root="${TC_INSTALL_DIR}" \
   ${JAVA_OPTS} \
   -cp "${TC_INSTALL_DIR}/lib/tc.jar" \
-  org.terracotta.tools.cli.TUCApp "$@"
+  org.terracotta.tools.cli.TIMGetTool "$@"
 
