@@ -32,6 +32,9 @@ set TC_JAVA_HOME="%TC_JAVA_HOME:"=%"
 set TC_JAVACMD=%TC_JAVA_HOME%\bin\java
 set TC_JAR=%TC_INSTALL_DIR%\lib\tc.jar
 
+set ORIG_JAVA_OPTS=%JAVA_OPTS%
+set JAVA_OPTS=%JAVA_OPTS% -Dtc.logging.console.level=FATAL
+
 if defined DSO_BOOT_JAR goto tc_set_dso_boot_jar__1_1
 goto tc_set_dso_boot_jar__1_0
 
@@ -79,3 +82,4 @@ goto tc_set_dso_boot_jar__1_0
 exit %ERRORLEVEL%
 
 :return
+set JAVA_OPTS=%ORIG_JAVA_OPTS%
