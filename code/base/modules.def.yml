@@ -622,7 +622,7 @@ modules:
         - modules-common
         - simulator
         - thirdparty
-        - thirdparty-api		
+        - thirdparty-api
   - clustered-glassfish-2.0:
       options:
         jdk: J2SE-1.5
