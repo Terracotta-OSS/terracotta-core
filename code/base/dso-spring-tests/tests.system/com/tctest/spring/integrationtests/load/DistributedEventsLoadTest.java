@@ -8,6 +8,7 @@ import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.ServerTestSetup;
 import com.tc.test.server.appserver.deployment.TestCallback;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
+import com.tc.test.server.appserver.load.LowMemWorkaround;
 import com.tctest.spring.bean.EventManager;
 import com.tctest.spring.integrationtests.SpringDeploymentTest;
 
@@ -31,7 +32,7 @@ public class DistributedEventsLoadTest extends SpringDeploymentTest {
   private Deployment           deployment;
 
   public DistributedEventsLoadTest() {
-    // this.disableAllUntil("2010-01-01", new String[]{"solaris"});
+    //
   }
 
   public static Test suite() {
@@ -45,8 +46,8 @@ public class DistributedEventsLoadTest extends SpringDeploymentTest {
     }
   }
 
-  public void testFourNodeDistributedEventsLoad() throws Throwable {
-    publishDistributedEvents(4);
+  public void testLoad() throws Throwable {
+    publishDistributedEvents(LowMemWorkaround.computeNumberOfNodes(3, 2, appServerInfo()));
   }
 
   private void publishDistributedEvents(final int nodeCount) throws Throwable {
