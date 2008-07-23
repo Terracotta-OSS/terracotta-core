@@ -58,7 +58,7 @@ public class Module implements Comparable {
 
   private final Modules          modules;
 
-  private String                 rating;
+  private String                 tcRating;
 
   private static File            repositoryPath      = null;
 
@@ -86,8 +86,8 @@ public class Module implements Comparable {
     return list;
   }
 
-  public String getRating() {
-    return rating;
+  public String getTcRating() {
+    return tcRating;
   }
   
   public String getTcVersion() {
@@ -129,7 +129,7 @@ public class Module implements Comparable {
     this.modules = modules;
     id = ModuleId.create(root);
     tcVersion = getChildText(root, "tc-version");
-    rating = getChildText(root, "rating");
+    tcRating = getChildText(root, "tc-rating");
     website = getChildText(root, "website");
     vendor = getChildText(root, "vendor");
     copyright = getChildText(root, "copyright");
@@ -381,7 +381,7 @@ public class Module implements Comparable {
     if (contactAddress.length() > 0) out.println("Contact  : " + contactAddress);
     if (docUrl.length() > 0) out.println("Docs     : " + docUrl);
     out.println("Download : " + repoUrl);
-    out.println("Rating   : " + rating); // CERTIFIED, EXPERIMENTAL, NONE
+    out.println("TC Rating: " + tcRating); // CERTIFIED, EXPERIMENTAL, NONE
     out.println();
     if (description.length() > 0) {
       out.println(description.replaceAll("\n[ ]+", "\n"));
