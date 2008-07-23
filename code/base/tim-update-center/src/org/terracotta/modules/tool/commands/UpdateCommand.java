@@ -30,7 +30,7 @@ public class UpdateCommand extends AbstractCommand {
   private static final String LONGOPT_OVERWRITE = "overwrite";
   private static final String LONGOPT_FORCE     = "force";
   private static final String LONGOPT_PRETEND   = "pretend";
-  private static final String LONGOPT_VERIFY    = "verify";
+  private static final String LONGOPT_NOVERIFY  = "no-verify";
 
   private final Modules       modules;
 
@@ -48,7 +48,7 @@ public class UpdateCommand extends AbstractCommand {
     options.addOption(buildOption(LONGOPT_FORCE, "Update anyway, even if update is already installed"));
     options.addOption(buildOption(LONGOPT_OVERWRITE, "Overwrite if already installed"));
     options.addOption(buildOption(LONGOPT_PRETEND, "Do not perform actual installation"));
-    options.addOption(buildOption(LONGOPT_VERIFY, "Verify checksum before installation"));
+    options.addOption(buildOption(LONGOPT_NOVERIFY, "Skip checksum verification"));
     arguments.put("name", "The name of the integration module");
     arguments.put("group-id", "OPTIONAL. The group-id used to qualify the name");
   }
@@ -132,8 +132,8 @@ public class UpdateCommand extends AbstractCommand {
     force = cli.hasOption(LONGOPT_FORCE);
     overwrite = cli.hasOption(LONGOPT_OVERWRITE) || force;
     pretend = cli.hasOption(LONGOPT_PRETEND);
-    verify = cli.hasOption(LONGOPT_VERIFY);
-
+    verify = !cli.hasOption(LONGOPT_NOVERIFY);
+    
     // --all was specified, update everything that is installed
     if (cli.hasOption(LONGOPT_ALL)) {
       updateAll();

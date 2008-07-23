@@ -20,7 +20,7 @@ public class InstallCommand extends AbstractCommand {
   private static final String LONGOPT_ALL       = "all";
   private static final String LONGOPT_OVERWRITE = "overwrite";
   private static final String LONGOPT_PRETEND   = "pretend";
-  private static final String LONGOPT_VERIFY    = "verify";
+  private static final String LONGOPT_NOVERIFY  = "no-verify";
 
   private final Modules       modules;
 
@@ -36,7 +36,7 @@ public class InstallCommand extends AbstractCommand {
                                   "Install all compatible TIMs, ignoring the name and version arguments if specified"));
     options.addOption(buildOption(LONGOPT_OVERWRITE, "Overwrite if already installed"));
     options.addOption(buildOption(LONGOPT_PRETEND, "Do not perform actual installation"));
-    options.addOption(buildOption(LONGOPT_VERIFY, "Verify checksum before installation"));
+    options.addOption(buildOption(LONGOPT_NOVERIFY, "Skip checksum verification"));
     arguments.put("name", "The name of the integration module");
     arguments.put("version", "OPTIONAL. The version used to qualify the name");
     arguments.put("group-id", "OPTIONAL. The group-id used to qualify the name");
@@ -67,7 +67,7 @@ public class InstallCommand extends AbstractCommand {
   public void execute(CommandLine cli) {
     overwrite = cli.hasOption(LONGOPT_OVERWRITE);
     pretend = cli.hasOption(LONGOPT_PRETEND);
-    verify = cli.hasOption(LONGOPT_VERIFY);
+    verify = !cli.hasOption(LONGOPT_NOVERIFY);
 
     // --all was specified, install everything
     if (cli.hasOption(LONGOPT_ALL)) {
