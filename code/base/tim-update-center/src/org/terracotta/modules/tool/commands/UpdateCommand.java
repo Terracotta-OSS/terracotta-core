@@ -30,12 +30,14 @@ public class UpdateCommand extends AbstractCommand {
   private static final String LONGOPT_OVERWRITE = "overwrite";
   private static final String LONGOPT_FORCE     = "force";
   private static final String LONGOPT_PRETEND   = "pretend";
+  private static final String LONGOPT_VERIFY    = "verify";
 
   private final Modules       modules;
 
   private boolean             force;
   private boolean             overwrite;
   private boolean             pretend;
+  private boolean             verify;
 
   @Inject
   public UpdateCommand(Modules modules) {
@@ -46,6 +48,7 @@ public class UpdateCommand extends AbstractCommand {
     options.addOption(buildOption(LONGOPT_FORCE, "Update anyway, even if update is already installed"));
     options.addOption(buildOption(LONGOPT_OVERWRITE, "Overwrite if already installed"));
     options.addOption(buildOption(LONGOPT_PRETEND, "Do not perform actual installation"));
+    options.addOption(buildOption(LONGOPT_VERIFY, "Verify checksum before installation"));
     arguments.put("name", "The name of the integration module");
     arguments.put("group-id", "OPTIONAL. The group-id used to qualify the name");
   }
@@ -108,7 +111,7 @@ public class UpdateCommand extends AbstractCommand {
     }
 
     // update found, install it
-    module.install(overwrite, pretend, out);
+    module.install(verify, overwrite, pretend, out);
   }
 
   private void updateAll() throws CommandException {
@@ -129,6 +132,7 @@ public class UpdateCommand extends AbstractCommand {
     force = cli.hasOption(LONGOPT_FORCE);
     overwrite = cli.hasOption(LONGOPT_OVERWRITE) || force;
     pretend = cli.hasOption(LONGOPT_PRETEND);
+    verify = cli.hasOption(LONGOPT_VERIFY);
 
     // --all was specified, update everything that is installed
     if (cli.hasOption(LONGOPT_ALL)) {
@@ -157,14 +161,14 @@ public class UpdateCommand extends AbstractCommand {
       out.println("Check that you've spelled them correctly.");
       return;
     }
-    
+
     // several candidates found, see if we can figure out which one we can install
     module = modules.getLatest(candidates);
     if (module != null) {
       update(module, true);
       return;
     }
-    
+
     // we can't figure out which one to update/install
     // so ask the user to be more specific
     out.println("There's more than one integration module found matching the name '" + artifactId + "':");

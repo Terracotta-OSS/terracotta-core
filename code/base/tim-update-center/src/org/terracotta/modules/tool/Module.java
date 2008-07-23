@@ -12,11 +12,19 @@ import org.jdom.output.XMLOutputter;
 import org.terracotta.modules.tool.util.DownloadUtil;
 import org.terracotta.modules.tool.util.DownloadUtil.DownloadOption;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.math.BigInteger;
 import java.net.URL;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -89,7 +97,7 @@ public class Module implements Comparable {
   public String getTcRating() {
     return tcRating;
   }
-  
+
   public String getTcVersion() {
     return tcVersion;
   }
@@ -252,10 +260,11 @@ public class Module implements Comparable {
 
   /**
    * Install this module.
+   * @param verify TODO
    * 
    * @throws IOException
    */
-  public void install(boolean overwrite, boolean pretend, PrintWriter out) {
+  public void install(boolean verify, boolean overwrite, boolean pretend, PrintWriter out) {
     Map<ModuleId, Dependency> manifest = computeManifest();
     List<ModuleId> list = new ArrayList<ModuleId>(manifest.keySet());
 
@@ -274,12 +283,27 @@ public class Module implements Comparable {
       if (!pretend) {
         File srcfile = null;
         try {
-          srcfile = File.createTempFile("TUC", null);
+          srcfile = File.createTempFile("tim-", null);
           download(dependency.getRepoUrl(), srcfile);
         } catch (IOException e) {
           out.println("   Unable to download: " + dependencyId);
           out.println("             from URL: " + dependency.getRepoUrl());
           continue;
+        }
+
+        if (verify) {
+          File md5file = null;
+          try {
+            md5file = File.createTempFile("tim-md5-", null);
+            download(dependency.getRepoUrl() + ".md5", md5file);
+          } catch (IOException e) {
+            out.println("   Unable to verify: " + dependencyId);
+            continue;
+          }
+          if (!downloadVerified(srcfile, md5file)) {
+            out.println("   Checksum failed: " + dependencyId);
+            continue;
+          }
         }
 
         try {
@@ -311,6 +335,42 @@ public class Module implements Comparable {
       manifest.put(dependency.getId(), dependency);
     }
     return manifest;
+  }
+
+  private static boolean downloadVerified(File srcfile, File md5file) {
+    BufferedReader reader = null;
+    InputStream src = null;
+    try {
+      reader = new BufferedReader(new FileReader(md5file));
+      String expected = reader.readLine();
+      reader.close();
+
+      MessageDigest md = MessageDigest.getInstance("MD5");
+      md.reset();
+      src = new BufferedInputStream(new FileInputStream(srcfile));
+      byte[] buffer = new byte[4096];
+      int read = 0;
+      while ((read = src.read(buffer)) > 0) {
+        md.update(buffer, 0, read);
+      }
+      
+      byte[] md5sum = md.digest();
+      BigInteger bigInt = new BigInteger(1, md5sum);
+      String actual = bigInt.toString(16);
+      src.close();
+      return actual.equals(expected);
+    } catch (IOException e) {
+      return false;
+    } catch (NoSuchAlgorithmException e) {
+      return false;
+    } finally {
+      try {
+        if (reader != null) reader.close();
+        if (src != null) src.close();
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 
   private static void download(String address, File localfile) throws IOException {

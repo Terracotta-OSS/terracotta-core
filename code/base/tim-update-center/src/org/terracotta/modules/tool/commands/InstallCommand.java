@@ -20,11 +20,13 @@ public class InstallCommand extends AbstractCommand {
   private static final String LONGOPT_ALL       = "all";
   private static final String LONGOPT_OVERWRITE = "overwrite";
   private static final String LONGOPT_PRETEND   = "pretend";
+  private static final String LONGOPT_VERIFY    = "verify";
 
   private final Modules       modules;
 
   private boolean             overwrite;
   private boolean             pretend;
+  private boolean             verify;
 
   @Inject
   public InstallCommand(Modules modules) {
@@ -34,6 +36,7 @@ public class InstallCommand extends AbstractCommand {
                                   "Install all compatible TIMs, ignoring the name and version arguments if specified"));
     options.addOption(buildOption(LONGOPT_OVERWRITE, "Overwrite if already installed"));
     options.addOption(buildOption(LONGOPT_PRETEND, "Do not perform actual installation"));
+    options.addOption(buildOption(LONGOPT_VERIFY, "Verify checksum before installation"));
     arguments.put("name", "The name of the integration module");
     arguments.put("version", "OPTIONAL. The version used to qualify the name");
     arguments.put("group-id", "OPTIONAL. The group-id used to qualify the name");
@@ -50,7 +53,7 @@ public class InstallCommand extends AbstractCommand {
   private void install(Module module) {
     StringWriter sw = new StringWriter();
     module.printDigest(new PrintWriter(sw));
-    module.install(overwrite, pretend, out);
+    module.install(verify, overwrite, pretend, out);
   }
 
   private void installAll() {
@@ -64,6 +67,7 @@ public class InstallCommand extends AbstractCommand {
   public void execute(CommandLine cli) {
     overwrite = cli.hasOption(LONGOPT_OVERWRITE);
     pretend = cli.hasOption(LONGOPT_PRETEND);
+    verify = cli.hasOption(LONGOPT_VERIFY);
 
     // --all was specified, install everything
     if (cli.hasOption(LONGOPT_ALL)) {
@@ -78,7 +82,7 @@ public class InstallCommand extends AbstractCommand {
       out.println("You could also use the --all option to install the latest of everything that is available.");
       return;
     }
-    
+
     // given the artifactId and maybe the version and groupId - find some candidates
     Module module = null;
     String artifactId = args.remove(0);
@@ -87,21 +91,21 @@ public class InstallCommand extends AbstractCommand {
 
     // get candidates
     List<Module> candidates = modules.find(artifactId, version, groupId);
-    
+
     // no candidates found, inform the user
     if (candidates.isEmpty()) {
       out.println("No module found matching the arguments you specified.");
       out.println("Check that you've spelled them correctly.");
       return;
     }
-    
+
     // several candidates found, see if we can figure out which one we can install
     module = modules.getLatest(candidates);
     if (module != null) {
       install(module);
       return;
     }
-    
+
     // we can't figure out which one to update/install
     // so ask the user to be more specific
     out.println("There's more than one integration module found matching the name '" + artifactId + "':");

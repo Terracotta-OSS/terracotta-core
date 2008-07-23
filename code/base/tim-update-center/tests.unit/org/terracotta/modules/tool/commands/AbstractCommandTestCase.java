@@ -29,7 +29,10 @@ public abstract class AbstractCommandTestCase extends TCTestCase {
   }
 
   public void testHelpNotNull() {
+    assertNotNull(command.description());
+    assertNotEquals(0, command.description().length());
     assertNotNull(command.help());
+    assertNotEquals(0, command.help().length());
   }
 
   protected abstract AbstractCommand createCommand();
