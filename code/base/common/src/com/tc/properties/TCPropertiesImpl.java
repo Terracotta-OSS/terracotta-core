@@ -126,10 +126,10 @@ public class TCPropertiesImpl implements TCProperties {
   public synchronized void overwriteTcPropertiesFromConfig(TcProperty[] tcProperties) {
     if (initialized) return;
 
+    applyConfigOverrides(tcProperties);
+
     // tc properties are now fully initialized
     initialized = true;
-
-    applyConfigOverrides(tcProperties);
 
     // flip the logger proxy to the real deal
     try {
@@ -156,7 +156,7 @@ public class TCPropertiesImpl implements TCProperties {
       propertyValue = tcProperties[i].getPropertyValue();
       if (!this.localTcProperties.containsKey(propertyName)) {
         logger.info("The property \"" + propertyName + "\" has been overridden to " + propertyValue + " from "
-                    + getProperty(propertyName) + " by the tc-config file");
+                    + props.getProperty(propertyName) + " by the tc-config file");
         setProperty(propertyName, propertyValue);
       }
     }
