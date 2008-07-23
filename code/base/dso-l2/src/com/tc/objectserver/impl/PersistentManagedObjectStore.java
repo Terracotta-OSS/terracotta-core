@@ -109,7 +109,6 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
     assertNotInShutdown();
     SortedSet<ObjectID> ids = gcResult.getGCedObjectIDs();
     this.objectPersistor.removeAllObjectsByID(ids);
-    this.objectPersistor.removeAllMapTypeObject(ids);
     logger.info("Scheduling gc results " + gcResult + " to be deleted in the background");
     gcDisposerSink.add(gcResult);
   }

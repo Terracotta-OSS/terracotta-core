@@ -561,6 +561,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
 
     try {
       objectIDManager.deleteAll(tx, sortedOids);
+      removeAllMapTypeObject(sortedOids);
     } catch (TCDatabaseException de) {
       throw new TCRuntimeException(de);
     }
