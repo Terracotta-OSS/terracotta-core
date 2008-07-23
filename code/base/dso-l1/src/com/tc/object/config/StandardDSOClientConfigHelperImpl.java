@@ -1752,9 +1752,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
         l1PropFromL2Stream = connection.getInputStream();
         if (l1PropFromL2Stream != null) return l1PropFromL2Stream;
       } catch (IOException e) {
-        String text = "Can not connect to " + ci.getHostname() + ":" + ci.getPort();
-        boolean tryAgain = i < connectInfo.length;
-        if (tryAgain) text += " \n Will retry next server";
+        String text = "Cannot connect to [" + ci + "].";
+        boolean tryAgain = (i < connectInfo.length - 1);
+        if (tryAgain) text += " Will retry next server.";
         logger.warn(text);
       }
     }
@@ -1763,19 +1763,30 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   private void setupL1ReconnectProperties() {
     InputStream in = null;
+    String serverList = "";
     boolean loggedInConsole = false;
+
+    PreparedComponentsFromL2Connection serverInfos = new PreparedComponentsFromL2Connection(configSetupManager);
+    ConnectionInfoConfigItem connectInfo = (ConnectionInfoConfigItem) serverInfos.createConnectionInfoConfigItem();
+    ConnectionInfo[] connections = (ConnectionInfo[]) connectInfo.getObject();
+
+    for (int i = 0; i < connections.length; i++) {
+      if (serverList.length() > 0) serverList += ", ";
+      serverList += connections[i];
+    }
+    String text = "Cannot connect to " + (connections.length > 1 ? "any of the servers" : "server") + "[" + serverList
+                  + "]. Retrying...\n";
+
     while (in == null) {
       try {
-        PreparedComponentsFromL2Connection serverInfos = new PreparedComponentsFromL2Connection(configSetupManager);
-        ConnectionInfoConfigItem connectInfo = (ConnectionInfoConfigItem) serverInfos.createConnectionInfoConfigItem();
-        in = getL1PropertiesFromL2Stream((ConnectionInfo[]) connectInfo.getObject());
+        in = getL1PropertiesFromL2Stream(connections);
+
         if (in == null) {
-          String text = "We couldn't load l1 reconnect properties from any of the servers. Retrying.....";
           if (loggedInConsole == false) {
-            loggedInConsole = true;
             consoleLogger.warn(text);
+            loggedInConsole = true;
           }
-          logger.warn(text);
+          if (connections.length > 1) logger.warn(text);
           ThreadUtil.reallySleep(1000);
         }
       } catch (Exception e) {
