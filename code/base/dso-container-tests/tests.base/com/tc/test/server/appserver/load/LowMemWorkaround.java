@@ -2,7 +2,7 @@
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tctest.server.appserver.load;
+package com.tc.test.server.appserver.load;
 
 import org.hyperic.sigar.Mem;
 import org.hyperic.sigar.Sigar;
@@ -15,7 +15,7 @@ public class LowMemWorkaround {
   // This number isn't exact of course but it is appropriate for our monkey environments
   private static final long TWO_GIGABYTES = 2000000000L;
 
-  static int computeNumberOfNodes(int defaultNum, AppServerInfo appServerInfo) {
+  public static int computeNumberOfNodes(int defaultNum, int lowMemNum, AppServerInfo appServerInfo) {
     try {
       Sigar sigar = new Sigar();
 
@@ -23,9 +23,9 @@ public class LowMemWorkaround {
 
       long memTotal = mem.getTotal();
       if (memTotal < TWO_GIGABYTES) {
-        Banner.warnBanner("Using 2 nodes (instead of " + defaultNum + ") since this machine has limited memory ("
-                          + memTotal + ")");
-        return 2;
+        Banner.warnBanner("Using " + lowMemNum + " nodes (instead of " + defaultNum
+                          + ") since this machine has limited memory (" + memTotal + ")");
+        return lowMemNum;
       }
 
       return defaultNum;
