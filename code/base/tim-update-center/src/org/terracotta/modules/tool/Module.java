@@ -58,6 +58,8 @@ public class Module implements Comparable {
 
   private final Modules          modules;
 
+  private String                 rating;
+
   private static File            repositoryPath      = null;
 
   public ModuleId getId() {
@@ -84,6 +86,10 @@ public class Module implements Comparable {
     return list;
   }
 
+  public String getRating() {
+    return rating;
+  }
+  
   public String getTcVersion() {
     return tcVersion;
   }
@@ -123,6 +129,7 @@ public class Module implements Comparable {
     this.modules = modules;
     id = ModuleId.create(root);
     tcVersion = getChildText(root, "tc-version");
+    rating = getChildText(root, "rating");
     website = getChildText(root, "website");
     vendor = getChildText(root, "vendor");
     copyright = getChildText(root, "copyright");
@@ -357,7 +364,7 @@ public class Module implements Comparable {
       out.println("The following versions are also available for TC " + modules.tcVersion() + ":\n");
       List<Module> siblings = this.getSiblings();
       for (Module sibling : siblings) {
-        out.print("\t" + sibling.installStateSymbol(SymbolStyle.TERNARY));
+        out.print("\t" + sibling.installStateSymbol(SymbolStyle.BINARY));
         out.print(" " + sibling.getId().getVersion());
         if (sibling.isInstalled()) out.println("\tinstalled at " + sibling.installPath().getParent());
         else out.println();
@@ -374,6 +381,7 @@ public class Module implements Comparable {
     if (contactAddress.length() > 0) out.println("Contact  : " + contactAddress);
     if (docUrl.length() > 0) out.println("Docs     : " + docUrl);
     out.println("Download : " + repoUrl);
+    out.println("Rating   : " + rating); // CERTIFIED, EXPERIMENTAL, NONE
     out.println();
     if (description.length() > 0) {
       out.println(description.replaceAll("\n[ ]+", "\n"));
