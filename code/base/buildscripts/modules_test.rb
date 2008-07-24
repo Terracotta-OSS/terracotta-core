@@ -262,7 +262,9 @@ class BuildSubtree
     out = 0
 
     build_module.dependent_modules.each do |dependent_module|
-      out += dependent_module.subtree(@external_dependencies_like).copy_module_test_data_to_directory(dest_directory, ant)
+      @external_dependencies_like.each do |external_dependency|
+        out += dependent_module.subtree(external_dependency).copy_module_test_data_to_directory(dest_directory, ant)
+      end
     end
 
     out += copy_module_test_data_to_directory(dest_directory, ant)

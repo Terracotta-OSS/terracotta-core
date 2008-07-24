@@ -258,7 +258,9 @@ class BuildSubtree
   # subtree's dependencies are like.
   def dependent_subtrees(&the_proc)
     build_module.dependent_modules.each do |dependent_module|
-      the_proc.call(dependent_module.subtree(@external_dependencies_like))
+      @external_dependencies_like.each do |external_dependency|
+        the_proc.call(dependent_module.subtree(external_dependency))
+      end
     end
   end
 
