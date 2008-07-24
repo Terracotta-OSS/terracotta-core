@@ -164,6 +164,7 @@ postscripts:
         - artifact: terracotta
           file: lib/tc.jar
           pom: poms/terracotta-pom.xml
+          inject: lib/resources/build-data.txt
         - artifact: tcconfig
           file: lib/tcconfig-xmlbeans-generated.jar
           pom: poms/tcconfig-pom.xml
@@ -173,7 +174,9 @@ postscripts:
         - artifact: terracotta-api
           file: lib/terracotta-api-version-PREALPHA.jar
           pom: poms/terracotta-api-pom.xml
+          inject: lib/resources/build-data.txt
         - artifact: terracotta-jmx-api
           file: lib/terracotta-jmx-api.jar
           pom: poms/terracotta-jmx-api-pom.xml
+          inject: lib/resources/build-data.txt
   - make-enterprise
