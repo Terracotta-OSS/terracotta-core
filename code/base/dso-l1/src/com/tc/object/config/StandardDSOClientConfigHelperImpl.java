@@ -1796,8 +1796,23 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     L1ReconnectPropertiesDocument l1ReconnectPropFromL2;
     try {
+      if (in.markSupported()) in.mark(100);
       l1ReconnectPropFromL2 = L1ReconnectPropertiesDocument.Factory.parse(in);
     } catch (Exception e) {
+      if (in.markSupported()) {
+        byte[] l1prop = new byte[100];
+        int bytesRead = -1;
+        try {
+          in.reset();
+          bytesRead = in.read(l1prop, 0, l1prop.length);
+        } catch (IOException ioe) {
+          throw new AssertionError(e);
+        }
+        if (bytesRead > 0) logger.error("Error parsing l1 properties from server : " + new String(l1prop) + "...");
+      }
+      String errorMessage = "Client might not be connected to right listener. Please check if Client is configured with right Server address and DSO port.";
+      consoleLogger.error(errorMessage);
+      logger.error(errorMessage);
       throw new AssertionError(e);
     }
 
