@@ -51,7 +51,7 @@ bundled_components:
         - thirdparty-api
         - tim-update-center:
             kit-resources:
-              - org/terracotta/modules/tool/tim-get.properties
+              - tim-get.properties
         - ui-eclipse:
             exclude-runtime-libraries: true
         - ui-eclipse-33:

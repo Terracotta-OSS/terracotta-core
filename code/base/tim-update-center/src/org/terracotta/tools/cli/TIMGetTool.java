@@ -31,7 +31,7 @@ public class TIMGetTool {
 
   private static Config createConfig() throws IOException {
     Properties props = new Properties();
-    props.load(TIMGetTool.class.getResourceAsStream("/org/terracotta/modules/tool/tim-get.properties"));
+    props.load(TIMGetTool.class.getResourceAsStream("/tim-get.properties"));
     return new Config(props);
   }
 
