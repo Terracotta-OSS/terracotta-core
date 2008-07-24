@@ -45,7 +45,10 @@ class BuildSubtreeFactory
   # Typically, 'external_dependencies_like' is set to 'src' for 'src' subtrees,
   # meaning 'src' subtrees compile only against 'src' subtrees from other modules.
   # For 'tests.base', 'tests.unit', 'and 'tests.system' subtrees, it is set to
-  # include all three of those subtrees and 'src' subtrees in other build modules. 
+  # 'tests.base', meaning 'tests.*' subtrees compile only against 'tests.base' and
+  # 'src' subtrees in other build modules. (This is because you really shouldn't
+  # be writing tests in one module that depend on _tests_ in another module --
+  # just the test _infrastructure_ in another module.)
   def initialize(name, internal_dependent_subtree_names, external_dependencies_like)
     @name = name.to_s
     @internal_dependent_subtree_names = internal_dependent_subtree_names
@@ -66,9 +69,9 @@ class BuildSubtreeFactory
   # there's nothing for it on disk.)
   ALL_BUILD_SUBTREE_FACTORIES = [
     BuildSubtreeFactory.new('src', [ ], 'src'),
-    BuildSubtreeFactory.new('tests.base', [ 'src' ], ['tests.base', 'tests.unit', 'tests.system']),
-    BuildSubtreeFactory.new('tests.unit', [ 'src', 'tests.base' ], ['tests.base', 'tests.unit', 'tests.system'] ),
-    BuildSubtreeFactory.new('tests.system', [ 'src', 'tests.base' ], ['tests.base', 'tests.unit', 'tests.system'] )
+    BuildSubtreeFactory.new('tests.base', [ 'src' ], 'tests.base'),
+    BuildSubtreeFactory.new('tests.unit', [ 'src', 'tests.base' ], 'tests.base'),
+    BuildSubtreeFactory.new('tests.system', [ 'src', 'tests.base' ], 'tests.base')
   ]
 end
 
