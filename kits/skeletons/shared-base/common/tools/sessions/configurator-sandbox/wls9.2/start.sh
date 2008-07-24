@@ -24,7 +24,7 @@ if test -z "${JAVA_HOME}"; then
   exit 1
 fi
 
-"$JAVA_HOME/bin/java" -classpath "$TC_INSTALL_DIR/lib/tc.jar" com.tc.CheckJavaVersion "1.5"
+"$JAVA_HOME/bin/java" -classpath "$TC_INSTALL_DIR/lib/tc.jar" org.terracotta.ui.session.CheckJavaVersion "1.5"
 if test "$?" != "0"; then
   echo Weblogic Server 9.2 requires Java 1.5. Exiting.
   exit 1

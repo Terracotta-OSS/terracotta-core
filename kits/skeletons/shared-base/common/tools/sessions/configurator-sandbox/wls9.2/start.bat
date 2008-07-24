@@ -32,7 +32,7 @@ if not exist %JAVA_HOME% (
   exit 1
 )
 
-%JAVA_HOME%\bin\java -classpath %TC_INSTALL_DIR%\lib\tc.jar com.tc.CheckJavaVersion "1.5"
+%JAVA_HOME%\bin\java -classpath %TC_INSTALL_DIR%\lib\tc.jar org.terracotta.ui.session.CheckJavaVersion "1.5"
 if %ERRORLEVEL% NEQ 0 (
   echo Weblogic Server 9.2 requires Java 1.5. Exiting.
   goto end

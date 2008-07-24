@@ -33,7 +33,7 @@ if not exist %JAVA_HOME% (
   endlocal  
 )
 
-%JAVA_HOME%\bin\java -classpath %TC_INSTALL_DIR%\lib\tc.jar com.tc.CheckJavaVersion "1.4"
+%JAVA_HOME%\bin\java -classpath %TC_INSTALL_DIR%\lib\tc.jar org.terracotta.ui.session.CheckJavaVersion "1.4"
 if %ERRORLEVEL% NEQ 0 (
   echo Weblogic Server 8.1 requires Java 1.4. Exiting.
   goto end
