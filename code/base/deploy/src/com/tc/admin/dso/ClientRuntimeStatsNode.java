@@ -4,6 +4,7 @@
  */
 package com.tc.admin.dso;
 
+import com.tc.admin.AdminClient;
 import com.tc.admin.common.ComponentNode;
 import com.tc.admin.model.IClient;
 
@@ -25,7 +26,9 @@ public class ClientRuntimeStatsNode extends ComponentNode {
 
   public Component getComponent() {
     if (m_runtimeStatsPanel == null) {
+      AdminClient.getContext().block();
       m_runtimeStatsPanel = createRuntimeStatsPanel();
+      AdminClient.getContext().unblock();      
     }
     return m_runtimeStatsPanel;
   }
@@ -35,10 +38,11 @@ public class ClientRuntimeStatsNode extends ComponentNode {
   }
 
   public void tearDown() {
+    super.tearDown();
     if (m_runtimeStatsPanel != null) {
       m_runtimeStatsPanel.tearDown();
       m_runtimeStatsPanel = null;
     }
-    super.tearDown();
+    m_clientNode = null;
   }
 }

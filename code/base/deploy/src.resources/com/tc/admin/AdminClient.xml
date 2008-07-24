@@ -523,7 +523,7 @@
       <item bottom="-1,bottom:0" height="s" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="s" />
     </connections>
   </container>
-  <dialog bounds="50,50,324,91" modal="true" resizable="false" tag="ConnectDialog" title="AdminConsole" undecorated="true" visible="false">
+  <dialog bounds="50,50,324,91" modal="true" resizable="false" tag="ConnectDialog" title="AdminConsole" visible="false">
     <content-pane>
       <children>
         <container>

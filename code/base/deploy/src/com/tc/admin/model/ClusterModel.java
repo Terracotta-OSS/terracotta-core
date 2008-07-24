@@ -34,6 +34,15 @@ public class ClusterModel extends Server implements IClusterModel {
     m_serverPropertyChangeListener = new ServerPropertyChangeListener();
   }
 
+  public void setConnectionCredentials(String[] creds) {
+    super.setConnectionCredentials(creds);
+    if (isReady()) {
+      for (IServer server : getClusterServers()) {
+        server.setConnectionCredentials(creds);
+      }
+    }
+  }
+
   private void setActiveServer(Server server, ServerConnectionManager scm) {
     String[] creds = ServerConnectionManager.getCachedCredentials(scm);
     if (creds != null) {
@@ -86,6 +95,8 @@ public class ClusterModel extends Server implements IClusterModel {
   }
 
   protected void setReady(boolean ready) {
+    if(ready == isReady()) return;
+    
     if (ready) {
       for (Server server : getClusterServers()) {
         server.addPropertyChangeListener(m_serverPropertyChangeListener);

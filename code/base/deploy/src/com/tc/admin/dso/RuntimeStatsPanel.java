@@ -434,15 +434,13 @@ public class RuntimeStatsPanel extends XContainer implements RuntimeStatisticCon
     }
   }
 
-  public void tearDown() {
-    m_acc = null;
-    if (m_statsGathererTimer != null && m_statsGathererTimer.isRunning()) {
-      m_statsGathererTimer.stop();
-    }
-    m_statsGathererTimer = null;
+  public synchronized void tearDown() {
+    stopMonitoringRuntimeStats();
 
     super.tearDown();
 
+    m_acc = null;
+    m_statsGathererTimer = null;
     m_chartsPanel = null;
     m_startMonitoringButton = null;
     m_stopMonitoringButton = null;

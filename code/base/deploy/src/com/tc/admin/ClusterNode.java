@@ -351,6 +351,7 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
     if ((jmxc = m_connectDialog.getConnector()) != null) {
       try {
         m_clusterModel.setJMXConnector(jmxc);
+        m_clusterModel.refreshCachedCredentials();
       } catch (IOException ioe) {
         reportConnectError(ioe);
       }

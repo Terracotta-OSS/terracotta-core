@@ -157,12 +157,22 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   private synchronized void setupFromDSOBean() throws Exception {
-    for (ObjectName clientBeanName : getDSOBean().getClients()) {
-      addClient(clientBeanName);
+    synchronized (CLIENT_ADD_LOCK) {
+      for (ObjectName clientBeanName : getDSOBean().getClients()) {
+        if (!haveClient(clientBeanName)) {
+          addClient(clientBeanName);
+        }
+      }
     }
-    for (ObjectName rootBeanName : getDSOBean().getRoots()) {
-      addRoot(rootBeanName);
+
+    synchronized (ROOT_ADD_LOCK) {
+      for (ObjectName rootBeanName : getDSOBean().getRoots()) {
+        if (!haveRoot(rootBeanName)) {
+          addRoot(rootBeanName);
+        }
+      }
     }
+
     getConnectionContext().addNotificationListener(L2MBeanNames.DSO, this);
   }
 
@@ -452,7 +462,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     }
   }
 
-  public Map getServerStatistics() {
+  public synchronized Map getServerStatistics() {
     return getServerInfoBean().getStatistics();
   }
 
@@ -460,7 +470,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     return getDSOBean().getStatistics(names);
   }
 
-  public Map getPrimaryStatistics() {
+  public synchronized Map getPrimaryStatistics() {
     Map result = getServerStatistics();
     result.put("TransactionRate", getTransactionRate());
     return result;
@@ -561,9 +571,13 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
       final String prop = evt.getPropertyName();
       if (IClusterNode.PROP_READY.equals(prop)) {
         DSOClient client = (DSOClient) evt.getSource();
-        m_clients.add(client);
-        fireClientConnected(client);
-        client.removePropertyChangeListener(this);
+        synchronized (CLIENT_ADD_LOCK) {
+          if (client.isReady() && !m_clients.contains(client)) {
+            m_clients.add(client);
+            fireClientConnected(client);
+            client.removePropertyChangeListener(this);
+          }
+        }
       }
     }
   }
@@ -596,13 +610,17 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     }
   }
 
+  private final Object CLIENT_ADD_LOCK = new Object();
+
   private void clientNotification(Notification notification, Object handback) {
     String type = notification.getType();
 
     if (DSOMBean.CLIENT_ATTACHED.equals(type)) {
       ObjectName clientObjectName = (ObjectName) notification.getSource();
-      if (!haveClient(clientObjectName)) {
-        addClient(clientObjectName);
+      synchronized (CLIENT_ADD_LOCK) {
+        if (!haveClient(clientObjectName)) {
+          addClient(clientObjectName);
+        }
       }
     } else if (DSOMBean.CLIENT_DETACHED.equals(type)) {
       removeClient((ObjectName) notification.getSource());
@@ -630,10 +648,15 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     return m_rootMap.containsKey(objectName);
   }
 
+  private final Object ROOT_ADD_LOCK = new Object();
+
   private void rootAdded(Notification notification, Object handback) {
     ObjectName objectName = (ObjectName) notification.getSource();
-    if (haveRoot(objectName)) return;
-    fireRootCreated(addRoot(objectName));
+    synchronized (ROOT_ADD_LOCK) {
+      if (!haveRoot(objectName)) {
+        fireRootCreated(addRoot(objectName));
+      }
+    }
   }
 
   private ManagedObjectFacade safeLookupFacade(DSORootMBean rootBean) {
@@ -737,13 +760,21 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     getConnectionManager().disconnect();
   }
 
+  private void removeAllClients() {
+    DSOClient[] clients = getClients();
+    for (DSOClient client : clients) {
+      m_clients.remove(client);
+      fireClientDisconnected(client);
+    }
+  }
+
   synchronized void reset() {
-    if(m_roots == null) return;
+    if (m_roots == null) return;
     m_connected = m_ready = false;
     initReadySet();
     m_roots.clear();
     m_rootMap.clear();
-    m_clients.clear();
+    removeAllClients();
     resetBeanProxies();
   }
 

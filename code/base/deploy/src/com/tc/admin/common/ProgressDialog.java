@@ -14,7 +14,6 @@ import com.tc.admin.AdminClient;
 import java.awt.Frame;
 
 import javax.swing.BorderFactory;
-import javax.swing.JComponent;
 import javax.swing.JProgressBar;
 import javax.swing.UIManager;
 
@@ -22,7 +21,6 @@ public class ProgressDialog extends Dialog {
   public ProgressDialog(Frame owner, String title, String msg) {
     super(owner, title, false);
     load((DialogResource) AdminClient.getContext().childResource("ProgressDialog"));
-    ((JComponent) getContentPane()).setBorder(UIManager.getBorder("InternalFrame.border"));
     setTitle(title);
     Label msgLabel = (Label) findComponent("MessageLabel");
     msgLabel.setFont(UIManager.getFont("TextPane.font"));

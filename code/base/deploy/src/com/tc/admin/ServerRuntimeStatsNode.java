@@ -29,16 +29,19 @@ public class ServerRuntimeStatsNode extends ComponentNode {
 
   public Component getComponent() {
     if (m_runtimeStatsPanel == null) {
+      AdminClient.getContext().block();
       m_runtimeStatsPanel = createRuntimeStatsPanel();
+      AdminClient.getContext().unblock();
     }
     return m_runtimeStatsPanel;
   }
 
   public void tearDown() {
+    super.tearDown();
     if (m_runtimeStatsPanel != null) {
       m_runtimeStatsPanel.tearDown();
       m_runtimeStatsPanel = null;
     }
-    super.tearDown();
+    m_serverNode = null;
   }
 }

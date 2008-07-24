@@ -129,11 +129,17 @@ public class DSOClient implements IClient, NotificationListener {
   }
 
   private void setReady(boolean ready) {
-    boolean oldValue = this.ready;
-    changeHelper.firePropertyChange(PROP_READY, oldValue, this.ready = ready);
+    boolean oldValue;
+    
+    synchronized (this) {
+      oldValue = this.ready;
+      this.ready = ready;
+    }
+
+    changeHelper.firePropertyChange(PROP_READY, oldValue, ready);
   }
 
-  public boolean isReady() {
+  public synchronized boolean isReady() {
     return ready;
   }
 

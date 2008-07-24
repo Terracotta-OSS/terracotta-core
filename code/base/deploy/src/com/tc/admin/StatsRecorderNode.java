@@ -28,7 +28,9 @@ public class StatsRecorderNode extends ComponentNode {
   }
 
   void makeUnavailable() {
-    m_clusterNode.makeStatsRecorderUnavailable();
+    if(m_clusterNode != null) {
+      m_clusterNode.makeStatsRecorderUnavailable();
+    }
   }
 
   boolean isRecording() {
