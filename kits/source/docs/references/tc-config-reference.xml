@@ -484,7 +484,9 @@
 
         <!-- This section controls the exact format of the output from
            any options enabled under 'runtime-logging', above.
-           Each individual element controls a different kind of output. -->
+           Each individual element controls a different kind of output. 
+
+           Setting the value of 'caller' element to true is now deprecated.  -->
 
         <runtime-output-options>
           <auto-lock-details>false</auto-lock-details>
