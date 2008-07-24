@@ -108,16 +108,26 @@ public class MissingBundleException extends BundleException implements BundleExc
     buf.append("that the resolver expects.\n\n").append(INDENT);
     
     buf.append("If you do not have this particular TIM or any of its ");
-    buf.append("dependencies installed try using the tim-get tool's \n").append(INDENT);
+    buf.append("dependencies installed, try using the tim-get tool's \n").append(INDENT);
     buf.append("'install' command:\n\n").append(INDENT + INDENT);
     
-    String scriptname = System.getProperty("os.name").toLowerCase().startsWith("windows") ? "tim-get.bat" : "tim-get.sh"; 
-    buf.append(scriptname).append(" install ");
+    String promptname = System.getProperty("os.name").toLowerCase().startsWith("windows") ? "C:\\> " : "$ ";
+    String scriptname = System.getProperty("os.name").toLowerCase().startsWith("windows") ? "tim-get.bat" : "tim-get.sh";
+    
+    buf.append(promptname).append(scriptname).append(" install ");
     buf.append(name).append(" ").append(version).append(" ").append(groupId);
     buf.append("\n\n").append(INDENT);
     
     buf.append("You can also use the tool's 'list' command to see if it's actually available:\n\n").append(INDENT + INDENT);
-    buf.append(scriptname).append(" list ").append(name);
+    buf.append(promptname).append(scriptname).append(" list ").append(name);
+    buf.append(INDENT).append("# list anything that has '").append(name).append("' in it's name");
+    buf.append("\n").append(INDENT + INDENT);
+    buf.append(promptname).append(scriptname).append(" list ").append(StringUtils.repeat(" ", name.length()));
+    buf.append(INDENT).append("# or, list everything that is available");
+    buf.append("\n\n").append(INDENT);
+    
+    buf.append("For more information on how to use the tim-get tool, invoke:\n\n").append(INDENT + INDENT);
+    buf.append(promptname).append(scriptname).append(" help ");
     return StringUtils.replace(buf.toString(), "\n", System.getProperty("line.separator")) ;
   }
 
