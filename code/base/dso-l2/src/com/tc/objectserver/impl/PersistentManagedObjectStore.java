@@ -5,8 +5,6 @@
 package com.tc.objectserver.impl;
 
 import com.tc.async.api.Sink;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ShutdownError;
 import com.tc.objectserver.context.GCResultContext;
@@ -25,8 +23,6 @@ import java.util.Set;
 import java.util.SortedSet;
 
 public class PersistentManagedObjectStore implements ManagedObjectStore {
-
-  private final static TCLogger        logger = TCLogging.getLogger(PersistentManagedObjectStore.class);
 
   private final ManagedObjectPersistor objectPersistor;
   private final Sink                   gcDisposerSink;
@@ -109,7 +105,6 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
     assertNotInShutdown();
     SortedSet<ObjectID> ids = gcResult.getGCedObjectIDs();
     this.objectPersistor.removeAllObjectsByID(ids);
-    logger.info("Scheduling gc results " + gcResult + " to be deleted in the background");
     gcDisposerSink.add(gcResult);
   }
 
