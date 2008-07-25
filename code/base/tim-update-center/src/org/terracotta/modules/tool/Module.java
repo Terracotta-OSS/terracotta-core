@@ -55,6 +55,7 @@ public class Module implements Comparable {
   private final String           filename;
 
   private final String           tcVersion;
+  private final String           tcProjectStatus;
   private final String           website;
   private final String           vendor;
   private final String           copyright;
@@ -66,7 +67,6 @@ public class Module implements Comparable {
 
   private final Modules          modules;
 
-  private String                 tcRating;
 
   private static File            repositoryPath      = null;
 
@@ -94,8 +94,8 @@ public class Module implements Comparable {
     return list;
   }
 
-  public String getTcRating() {
-    return tcRating;
+  public String getTcProjectStatus() {
+    return tcProjectStatus;
   }
 
   public String getTcVersion() {
@@ -137,7 +137,7 @@ public class Module implements Comparable {
     this.modules = modules;
     id = ModuleId.create(root);
     tcVersion = getChildText(root, "tc-version");
-    tcRating = getChildText(root, "tc-rating");
+    tcProjectStatus = getChildText(root, "tc-projectStatus");
     website = getChildText(root, "website");
     vendor = getChildText(root, "vendor");
     copyright = getChildText(root, "copyright");
@@ -441,7 +441,7 @@ public class Module implements Comparable {
     if (contactAddress.length() > 0) out.println("Contact  : " + contactAddress);
     if (docUrl.length() > 0) out.println("Docs     : " + docUrl);
     out.println("Download : " + repoUrl);
-    out.println("TC Rating: " + tcRating); // CERTIFIED, EXPERIMENTAL, NONE
+    out.println("Status   : " + tcProjectStatus); // CERTIFIED, EXPERIMENTAL, NONE, etc.    
     out.println();
     if (description.length() > 0) {
       out.println(description.replaceAll("\n[ ]+", "\n"));
@@ -479,16 +479,6 @@ public class Module implements Comparable {
     child.setAttribute("name", id.getArtifactId());
     child.setAttribute("version", id.getVersion());
     if (!id.isUsingDefaultGroupId()) child.setAttribute("group-id", id.getGroupId());
-
-    // Map<ModuleId, Dependency> manifest = this.computeManifest();
-    // for (ModuleId key : manifest.keySet()) {
-    // Element child = new Element("module");
-    // parent.addContent(child);
-    // child.setAttribute("name", key.getArtifactId());
-    // child.setAttribute("version", key.getVersion());
-    // if (key.isDefaultGroupId()) continue;
-    // child.setAttribute("group-id", key.getGroupId());
-    // }
 
     out.println("Configuration:\n");
     StringWriter sw = new StringWriter();
