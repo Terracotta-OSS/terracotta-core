@@ -11,6 +11,7 @@ import com.tc.bundles.MavenToOSGi;
 import com.tc.bundles.OSGiToMaven;
 import com.tc.bundles.ResolverUtils;
 import com.tc.util.Assert;
+import com.tc.util.runtime.Os;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -111,8 +112,8 @@ public class MissingBundleException extends BundleException implements BundleExc
     buf.append("dependencies installed, try using the tim-get tool's \n").append(INDENT);
     buf.append("'install' command:\n\n").append(INDENT + INDENT);
     
-    String promptname = System.getProperty("os.name").toLowerCase().startsWith("windows") ? "C:\\> " : "$ ";
-    String scriptname = System.getProperty("os.name").toLowerCase().startsWith("windows") ? "tim-get.bat" : "tim-get.sh";
+    String promptname = Os.isWindows() ? "C:\\> " : "$ ";
+    String scriptname = Os.isWindows() ? "tim-get.bat" : "tim-get.sh";
     
     buf.append(promptname).append(scriptname).append(" install ");
     buf.append(name).append(" ").append(version).append(" ").append(groupId);
