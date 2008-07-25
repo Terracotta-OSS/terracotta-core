@@ -16,18 +16,21 @@ import com.tc.admin.common.XAbstractAction;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XObjectTable;
 import com.tc.admin.model.DGCListener;
+import com.tc.admin.model.IClusterModel;
 import com.tc.objectserver.api.GCStats;
 
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.concurrent.Callable;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
-public class GCStatsPanel extends XContainer implements DGCListener {
+public class GCStatsPanel extends XContainer implements DGCListener, PropertyChangeListener {
   private AdminClientContext m_acc;
   private GCStatsNode        m_gcStatsNode;
   private XObjectTable       m_table;
@@ -55,6 +58,21 @@ public class GCStatsPanel extends XContainer implements DGCListener {
 
     m_acc.execute(new InitWorker());
     gcStatsNode.getClusterModel().addDGCListener(this);
+    gcStatsNode.getClusterModel().addPropertyChangeListener(this);
+  }
+
+  public void propertyChange(PropertyChangeEvent evt) {
+    if (IClusterModel.PROP_ACTIVE_SERVER.equals(evt.getPropertyName())) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          if (m_table != null) {
+            GCStatsTableModel model = (GCStatsTableModel) m_table.getModel();
+            model.clear();
+            model.fireTableDataChanged();
+          }
+        }
+      });
+    }
   }
 
   private class InitWorker extends BasicWorker<GCStats[]> {
@@ -149,6 +167,7 @@ public class GCStatsPanel extends XContainer implements DGCListener {
 
   public void tearDown() {
     m_gcStatsNode.getClusterModel().removeDGCListener(this);
+    m_gcStatsNode.getClusterModel().removePropertyChangeListener(this);
 
     super.tearDown();
 
