@@ -25,6 +25,8 @@ public class GarbageCollectionInfo {
 
   private long      elapsedTime;
 
+  private long      totalMarkCycleTime;
+
   private int       candidateGarbageCount;
 
   private int       actualGarbageCount;
@@ -116,6 +118,14 @@ public class GarbageCollectionInfo {
     return this.elapsedTime;
   }
 
+  public void setTotalMarkCycleTime(long time) {
+    this.totalMarkCycleTime = time;
+  }
+
+  public long getTotalMarkCycleTime() {
+    return this.totalMarkCycleTime;
+  }
+
   public void setCandidateGarbageCount(int count) {
     this.candidateGarbageCount = count;
   }
@@ -157,9 +167,9 @@ public class GarbageCollectionInfo {
     return "GarbageCollectionInfo [ Iteration = " + iteration + " ] = " + " type  = "
            + (fullGC ? " young, " : " full, ") + " startTime = " + startTime + " begin object count = "
            + beginObjectCount + " markStageTime = " + markStageTime + " pauseStageTime = " + pauseStageTime
-           + " deleteStageTime = " + deleteStageTime + " elapsedTime = " + elapsedTime
-           + " candiate garabage  count = " + candidateGarbageCount + " actual garbage count  = " + actualGarbageCount
-           + " pre rescue count = " + preRescueCount + " rescue 1 count = " + rescue1Count + " Garbage  = "
-           + (toDelete == null ? "Not Set " : toDelete.size());
+           + " deleteStageTime = " + deleteStageTime + " elapsedTime = " + elapsedTime + " totalMarkCycletime  = "
+           + totalMarkCycleTime + " candiate garabage  count = " + candidateGarbageCount + " actual garbage count  = "
+           + actualGarbageCount + " pre rescue count = " + preRescueCount + " rescue 1 count = " + rescue1Count
+           + " Garbage  = " + (toDelete == null ? "Not Set " : toDelete.size());
   }
 }

@@ -115,7 +115,6 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
   private volatile LifeCycleState                  gcState                     = new NullLifeCycleState();
   private volatile boolean                         started                     = false;
 
-  
   public MarkAndSweepGarbageCollector(ObjectManager objectManager, ClientStateManager stateManager,
                                       ObjectManagerConfig objectManagerConfig) {
     this.objectManagerConfig = objectManagerConfig;
@@ -220,7 +219,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     deleteGarbage(new GCResultContext(gcIteration, toDelete, gcInfo, gcPublisher));
 
     long endMillis = System.currentTimeMillis();
-    gcInfo.setElapsedTime(endMillis - gcInfo.getStartTime());
+    gcInfo.setTotalMarkCycleTime(endMillis - gcInfo.getStartTime());
     gcPublisher.fireGCCycleCompletedEvent(gcInfo);
   }
 
@@ -257,8 +256,10 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
   public boolean deleteGarbage(GCResultContext gcResult) {
     if (requestGCDeleteStart()) {
       youngGenReferenceCollector.removeGarbage(gcResult.getGCedObjectIDs());
-      objectManager.notifyGCComplete(gcResult);
+      // NOTE:: It is important to do this state transition before notifying Object manager to avoid any hanging
+      // lookups.
       notifyGCComplete();
+      objectManager.notifyGCComplete(gcResult);
       return true;
     }
     return false;

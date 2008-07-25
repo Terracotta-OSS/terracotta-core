@@ -72,7 +72,7 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     super.setUp();
     this.managed = new HashMap<ObjectID, ManagedObjectReference>();
     this.objectManager = new GCTestObjectManager();
-    this.collector = new MarkAndSweepGarbageCollector(this.objectManager, new TestClientStateManager(), 
+    this.collector = new MarkAndSweepGarbageCollector(this.objectManager, new TestClientStateManager(),
                                                       new ObjectManagerConfig(300000, true, true, false, false, 60000));
     this.lookedUp = new HashSet<ObjectID>();
     this.released = new HashSet<ObjectID>();
@@ -137,6 +137,8 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     final TestManagedObject tmo1 = createObject(3);
     final TestManagedObject tmo2 = createObject(3);
     final TestManagedObject tmo3 = createObject(3);
+    // Adding the 4'th object to make sure that GC collect() doesn't short circuit collection cycle since there is no
+    // garbage.
     final TestManagedObject tmo4 = createObject(3);
 
     tmo1.setReference(0, tmo2.getID());

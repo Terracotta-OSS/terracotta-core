@@ -64,7 +64,7 @@ public class GCLogger {
       }
       logGC("GC: paused gc time  : " + gcInfo.getPausedStageTime() + " ms.");
       logGC("GC: delete in-memory garbage time  : " + gcInfo.getDeleteStageTime() + " ms.");
-      logGC("GC: total gc time   : " + gcInfo.getElapsedTime() + " ms.");
+      logGC("GC: total mark cycle time   : " + gcInfo.getTotalMarkCycleTime() + " ms.");
       logGC("GC: " + (gcInfo.isFullGC() ? "Full GC" : "YoungGen GC") + " STOP " + gcInfo.getIteration());
     } else {
       logGC("GC: Complete : " + gcInfo);
