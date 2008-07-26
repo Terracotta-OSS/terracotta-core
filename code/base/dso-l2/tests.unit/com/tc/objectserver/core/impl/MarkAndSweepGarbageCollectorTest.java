@@ -7,6 +7,8 @@ package com.tc.objectserver.core.impl;
 import com.tc.exception.ImplementMe;
 import com.tc.net.groups.NodeID;
 import com.tc.object.ObjectID;
+import com.tc.object.cache.CacheStats;
+import com.tc.object.cache.Evictable;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerStatsListener;
 import com.tc.objectserver.context.GCResultContext;
@@ -14,27 +16,27 @@ import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.core.api.GarbageCollector;
 import com.tc.objectserver.core.api.ManagedObject;
-import com.tc.objectserver.handler.GarbageDisposeHandler;
 import com.tc.objectserver.impl.ManagedObjectReference;
 import com.tc.objectserver.impl.ObjectManagerConfig;
 import com.tc.objectserver.l1.api.TestClientStateManager;
-import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
-import com.tc.objectserver.persistence.impl.TestPersistenceTransaction;
+import com.tc.objectserver.persistence.impl.NullPersistenceTransactionProvider;
+import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
-import com.tc.util.SyncObjectIdSet;
-import com.tc.util.SyncObjectIdSetImpl;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.Map.Entry;
 
 import junit.framework.TestCase;
 
@@ -42,12 +44,10 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
   protected long                           objectIDCounter     = 0;
   protected TestManagedObject              root1;
   protected TestManagedObject              root2;
-  protected Set                            roots               = new HashSet();
-  protected Map                            managed;
   protected GarbageCollector               collector;
   protected Set                            lookedUp;
   protected Set                            released;
-  protected ObjectManager                  objectManager;
+  protected GCTestObjectManager            objectManager;
   protected PersistenceTransactionProvider transactionProvider = new NullPersistenceTransactionProvider();
 
   private Filter                           filter              = new Filter() {
@@ -70,17 +70,17 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
    */
   protected void setUp() throws Exception {
     super.setUp();
-    this.managed = new HashMap<ObjectID, ManagedObjectReference>();
     this.objectManager = new GCTestObjectManager();
     this.collector = new MarkAndSweepGarbageCollector(this.objectManager, new TestClientStateManager(),
-                                                      new ObjectManagerConfig(300000, true, true, false, false, 60000));
+                                                      new ObjectManagerConfig(300000, true, true, true, true, 60000));
+    this.objectManager.setGarbageCollector(collector);
+    this.objectManager.start();
     this.lookedUp = new HashSet<ObjectID>();
     this.released = new HashSet<ObjectID>();
     this.root1 = createObject(8);
     this.root2 = createObject(8);
-    this.roots = new HashSet<ManagedObject>();
-    roots.add(root1);
-    roots.add(root2);
+    this.objectManager.createRoot("root1", this.root1.getID());
+    this.objectManager.createRoot("root2", this.root2.getID());
   }
 
   public Object getLock() {
@@ -88,14 +88,14 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
   }
 
   public void testEmptyRoots() {
-    Set toDelete = collector.collect(filter, objectManager.getRootIDs(), new ObjectIDSet(managed.keySet()));
+    Set toDelete = collector.collect(filter, objectManager.getRootIDs(), objectManager.getAllObjectIDs());
     assertTrue(toDelete.size() == 0);
   }
 
   public void testOneLevelNoGarbage() {
     TestManagedObject tmo = createObject(3);
     root1.setReference(0, tmo.getID());
-    Set toDelete = collector.collect(filter, objectManager.getRootIDs(), new ObjectIDSet(managed.keySet()));
+    Set toDelete = collector.collect(filter, objectManager.getRootIDs(), objectManager.getAllObjectIDs());
     assertTrue(toDelete.size() == 0);
   }
 
@@ -103,7 +103,7 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     TestManagedObject tmo = createObject(3);
     root1.setReference(0, tmo.getID());
     root2.setReference(0, tmo.getID());
-    Set toDelete = collector.collect(filter, objectManager.getRootIDs(), new ObjectIDSet(managed.keySet()));
+    Set toDelete = collector.collect(filter, objectManager.getRootIDs(), objectManager.getAllObjectIDs());
     assertTrue(toDelete.size() == 0);
   }
 
@@ -115,7 +115,7 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
 
     root1.setReference(0, tmo1.getID());
 
-    Set toDelete = collector.collect(filter, objectManager.getRootIDs(), new ObjectIDSet(managed.keySet()));
+    Set toDelete = collector.collect(filter, objectManager.getRootIDs(), objectManager.getAllObjectIDs());
     assertTrue(toDelete.size() == 0);
   }
 
@@ -129,7 +129,7 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
 
     root1.setReference(0, tmo1.getID());
 
-    Set toDelete = collector.collect(filter, objectManager.getRootIDs(), new ObjectIDSet(managed.keySet()));
+    Set toDelete = collector.collect(filter, objectManager.getRootIDs(), objectManager.getAllObjectIDs());
     assertTrue(toDelete.size() == 1);
   }
 
@@ -155,19 +155,20 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     };
 
     // make sure that the filter filters out the sub-graph starting at the reference to tmo2.
-    collector.collect(testFilter, objectManager.getRootIDs(), new ObjectIDSet(managed.keySet()));
+    collector.collect(testFilter, objectManager.getRootIDs(), objectManager.getAllObjectIDs());
     assertTrue(this.lookedUp.contains(tmo1.getID()));
     assertFalse(this.lookedUp.contains(tmo2.getID()));
     assertFalse(this.lookedUp.contains(tmo3.getID()));
 
     // try it with the regular filter to make sure the behavior is actually different.
-    collector.collect(filter, objectManager.getRootIDs(), new ObjectIDSet(managed.keySet()));
+    collector.collect(filter, objectManager.getRootIDs(), objectManager.getAllObjectIDs());
     assertTrue(this.lookedUp.contains(tmo1.getID()));
     assertTrue(this.lookedUp.contains(tmo2.getID()));
     assertTrue(this.lookedUp.contains(tmo3.getID()));
   }
 
   public void testLookupAndReleaseBalanced() {
+
     final TestManagedObject tmo1 = createObject(3);
     final TestManagedObject tmo2 = createObject(3);
     final TestManagedObject tmo3 = createObject(3);
@@ -178,8 +179,18 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
 
     root1.setReference(0, tmo1.getID());
 
-    collector.collect(filter, objectManager.getRootIDs(), new ObjectIDSet(managed.keySet()));
+    collector.collect(filter, objectManager.getRootIDs(), objectManager.getAllObjectIDs());
     assertTrue(lookedUp.equals(released));
+  }
+
+  private void createLoopFrom(TestManagedObject tmo, int count) {
+    TestManagedObject prev = tmo;
+    while (count-- > 0) {
+      final TestManagedObject next = createObject(3);
+      prev.setReference(0, next.getID());
+      prev = next;
+    }
+    prev.setReference(0, tmo.getID());
   }
 
   public void testIsInGCPause() throws Exception {
@@ -189,6 +200,64 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     assertTrue(collector.isPausingOrPaused());
     collector.notifyGCComplete();
     assertFalse(collector.isPausingOrPaused());
+  }
+
+  public void testYoungGenGC() throws Exception {
+    // Create a loop
+    final TestManagedObject tmo1 = createObject(3);
+    createLoopFrom(tmo1, 10);
+    root1.setReference(0, tmo1.getID());
+
+    collector.gcYoung();
+    Set deleted = objectManager.getGCedObjectIDs();
+    assertTrue(deleted.isEmpty());
+
+    // Create a loop 2
+    final TestManagedObject tmo2 = createObject(3);
+    createLoopFrom(tmo2, 10);
+    root1.setReference(1, tmo2.getID());
+
+    // Create a loop 3
+    final TestManagedObject tmo3 = createObject(3);
+    createLoopFrom(tmo3, 10);
+    root1.setReference(2, tmo3.getID());
+
+    collector.gcYoung();
+    deleted = objectManager.getGCedObjectIDs();
+    assertTrue(deleted.isEmpty());
+
+    // evict tmo1, still youngGen returns no garbage
+    objectManager.evict(tmo1.getID());
+    collector.gcYoung();
+    deleted = objectManager.getGCedObjectIDs();
+    assertTrue(deleted.isEmpty());
+    
+    // now make the first loop garbage, still young gen returns no garbage
+    root1.setReference(0, ObjectID.NULL_ID);
+    collector.gcYoung();
+    deleted = objectManager.getGCedObjectIDs();
+    assertTrue(deleted.isEmpty());
+
+    // now make the second loop garbage
+    root1.setReference(1, ObjectID.NULL_ID);
+    collector.gcYoung();
+    deleted = objectManager.getGCedObjectIDs();
+    assertFalse(deleted.isEmpty());
+    assertTrue(deleted.contains(tmo2.getID()));
+    assertEquals(11, deleted.size());
+    
+    // perform yet another young generation GC, but no garbage
+    collector.gcYoung();
+    deleted = objectManager.getGCedObjectIDs();
+    assertTrue(deleted.isEmpty());
+    
+    // perform full GC and find the garbage
+    collector.gc();
+    deleted = objectManager.getGCedObjectIDs();
+    assertFalse(deleted.isEmpty());
+    assertTrue(deleted.contains(tmo1.getID()));
+    assertEquals(11, deleted.size());
+    
   }
 
   private ObjectID nextID() {
@@ -201,22 +270,29 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     Arrays.fill(ids, ObjectID.NULL_ID);
 
     TestManagedObject tmo = new TestManagedObject(nextID(), ids);
-    managed.put(tmo.getID(), tmo.getReference());
+    objectManager.createObject(tmo.getID(), tmo.getReference());
     return tmo;
   }
 
-  /**
-   * private static class TestGCStatsEventListener implements GCStatsEventListener { private List updateGCStatusList =
-   * new ArrayList(); public void update(GCStats stats) { System.out.println("update:" + stats);
-   * updateGCStatusList.add(stats.getStatus()); } public List getUpdateGCStatusList() { return updateGCStatusList; } }
-   */
+  private class GCTestObjectManager implements ObjectManager, Evictable {
 
-  private class GCTestObjectManager implements ObjectManager {
+    protected Set              roots         = new HashSet<ObjectID>();
+    protected Map              managed       = new LinkedHashMap<ObjectID, ManagedObjectReference>();
+    protected Map              swappedToDisk = new HashMap<ObjectID, ManagedObjectReference>();
+    protected GarbageCollector gcCollector;
+    protected Set              gced          = new HashSet<ObjectID>();
 
     public ManagedObject getObjectByID(ObjectID id) {
       lookedUp.add(id);
       ManagedObjectReference ref = (ManagedObjectReference) managed.get(id);
+      if (ref == null) ref = (ManagedObjectReference) swappedToDisk.get(id);
       return (ref == null) ? null : ref.getObject();
+    }
+
+    public Set getGCedObjectIDs() {
+      HashSet hs = new HashSet(gced);
+      gced.clear();
+      return hs;
     }
 
     public void release(PersistenceTransaction tx, ManagedObject object) {
@@ -246,7 +322,7 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     }
 
     public void createRoot(String name, ObjectID id) {
-      throw new ImplementMe();
+      roots.add(id);
     }
 
     public ObjectID lookupRootID(String name) {
@@ -254,11 +330,11 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     }
 
     public GarbageCollector getGarbageCollector() {
-      throw new ImplementMe();
+      return this.gcCollector;
     }
 
     public void setGarbageCollector(GarbageCollector gc) {
-      throw new ImplementMe();
+      this.gcCollector = gc;
     }
 
     public void setStatsListener(ObjectManagerStatsListener listener) {
@@ -266,7 +342,7 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     }
 
     public void start() {
-      throw new ImplementMe();
+      this.gcCollector.start();
     }
 
     public void releaseReadOnly(ManagedObject object) {
@@ -283,7 +359,9 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     }
 
     public ObjectIDSet getAllObjectIDs() {
-      return new ObjectIDSet(managed.keySet());
+      ObjectIDSet oids = new ObjectIDSet(managed.keySet());
+      oids.addAll(swappedToDisk.keySet());
+      return oids;
     }
 
     public void addFaultedObject(ObjectID oid, ManagedObject mo, boolean removeOnRelease) {
@@ -291,16 +369,11 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     }
 
     public void waitUntilReadyToGC() {
-      collector.notifyReadyToGC();
+      gcCollector.notifyReadyToGC();
     }
 
     public Set getRootIDs() {
-      HashSet rv = new HashSet();
-      for (Iterator i = roots.iterator(); i.hasNext();) {
-        ObjectID id = ((TestManagedObject) i.next()).getID();
-        rv.add(id);
-      }
-      return rv;
+      return new HashSet(roots);
     }
 
     public void flushAndEvict(List objects2Flush) {
@@ -319,6 +392,12 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
       throw new ImplementMe();
     }
 
+    public void createObject(ObjectID id, ManagedObjectReference mor) {
+      managed.put(id, mor);
+      collector.notifyObjectCreated(id);
+      collector.notifyNewObjectInitalized(id);
+    }
+
     public ManagedObject getObjectByIDOrNull(ObjectID id) {
       ManagedObject mo = getObjectByID(id);
       if (mo != null && mo.isNew()) { return null; }
@@ -327,113 +406,47 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
 
     public void notifyGCComplete(GCResultContext resultContext) {
 
-      GarbageDisposeHandler handler = new GarbageDisposeHandler(new NullManagedObjectPersistor(),
-                                                                new NullPersistenceTransactionProvider(), 1);
+      /*
+       * GarbageDisposeHandler handler = new GarbageDisposeHandler(new NullManagedObjectPersistor(), new
+       * NullPersistenceTransactionProvider(), 1); handler.handleEvent(resultContext);
+       */
 
-      handler.handleEvent(resultContext);
+      SortedSet<ObjectID> ids = resultContext.getGCedObjectIDs();
+      for (Iterator i = ids.iterator(); i.hasNext();) {
+        ObjectID objectID = (ObjectID) i.next();
+        managed.remove(objectID);
+        swappedToDisk.remove(objectID);
+      }
+      int b4 = gced.size();
+      gced.addAll(ids);
+      Assert.assertEquals(b4 + ids.size(), gced.size());
     }
 
     public ObjectIDSet getObjectIDsInCache() {
-      throw new ImplementMe();
+      return new ObjectIDSet(managed.keySet());
     }
+
+    public void evictCache(CacheStats stat) {
+      int count = stat.getObjectCountToEvict(managed.size());
+      Iterator i = managed.entrySet().iterator();
+      List evicted = new ArrayList();
+      while (count-- > 0 && i.hasNext()) {
+        Map.Entry e = (Entry) i.next();
+        ManagedObjectReference mor = (ManagedObjectReference) e.getValue();
+        swappedToDisk.put(e.getKey(), mor);
+        i.remove();
+        evicted.add(mor.getObject());
+      }
+      collector.notifyObjectsEvicted(evicted);
+    }
+
+    public void evict(ObjectID id) {
+      ManagedObjectReference swapped = (ManagedObjectReference) managed.remove(id);
+      swappedToDisk.put(id, swapped) ;
+      ArrayList evicted = new ArrayList();
+      evicted.add(swapped.getObject());
+      collector.notifyObjectsEvicted(evicted);
+    }
+
   }
-
-  private static class NullManagedObjectPersistor implements ManagedObjectPersistor {
-
-    public Set loadRoots() {
-      return new HashSet();
-    }
-
-    public Set loadRootNames() {
-      return new HashSet();
-    }
-
-    public ObjectID loadRootID(String name) {
-      return null;
-    }
-
-    public void addRoot(PersistenceTransaction tx, String name, ObjectID id) {
-      //
-    }
-
-    public ManagedObject loadObjectByID(ObjectID id) {
-      return null;
-    }
-
-    public long nextObjectIDBatch(int batchSize) {
-      return -1;
-    }
-
-    public void setNextAvailableObjectID(long startID) {
-      //
-    }
-
-    public SyncObjectIdSet getAllObjectIDs() {
-      return new SyncObjectIdSetImpl();
-    }
-
-    public void saveObject(PersistenceTransaction tx, ManagedObject managedObject) {
-      //
-    }
-
-    public void saveAllObjects(PersistenceTransaction tx, Collection managed) {
-      //
-    }
-
-    public void deleteAllObjectsByID(PersistenceTransaction tx, SortedSet<ObjectID> ids) {
-      //
-    }
-
-    public Map loadRootNamesToIDs() {
-      return new HashMap();
-    }
-
-    public boolean addMapTypeObject(ObjectID id) {
-      throw new UnsupportedOperationException();
-    }
-
-    public boolean addNewObject(ObjectID id) {
-      throw new UnsupportedOperationException();
-    }
-
-    public boolean containsMapType(ObjectID id) {
-      throw new UnsupportedOperationException();
-    }
-
-    public boolean containsObject(ObjectID id) {
-      throw new UnsupportedOperationException();
-    }
-
-    public SyncObjectIdSet getAllMapsObjectIDs() {
-      throw new UnsupportedOperationException();
-    }
-
-    public int getObjectCount() {
-      throw new UnsupportedOperationException();
-    }
-
-    public void removeAllMapTypeObject(Collection ids) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void removeAllObjectsByID(SortedSet<ObjectID> ids) {
-      throw new UnsupportedOperationException();
-    }
-
-    public ObjectIDSet snapshotObjects() {
-      throw new UnsupportedOperationException();
-    }
-  }
-
-  private static class NullPersistenceTransactionProvider implements PersistenceTransactionProvider {
-
-    public PersistenceTransaction newTransaction() {
-      return new TestPersistenceTransaction();
-    }
-
-    public PersistenceTransaction nullTransaction() {
-      return new TestPersistenceTransaction();
-    }
-  }
-
 }
