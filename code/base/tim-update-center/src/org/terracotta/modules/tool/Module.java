@@ -67,7 +67,6 @@ public class Module implements Comparable {
 
   private final Modules          modules;
 
-
   private static File            repositoryPath      = null;
 
   public ModuleId getId() {
@@ -260,8 +259,8 @@ public class Module implements Comparable {
 
   /**
    * Install this module.
-   * @param verify TODO
    * 
+   * @param verify TODO
    * @throws IOException
    */
   public void install(boolean verify, boolean overwrite, boolean pretend, PrintWriter out) {
@@ -322,10 +321,10 @@ public class Module implements Comparable {
     Map<ModuleId, Dependency> manifest = new HashMap<ModuleId, Dependency>();
     manifest.put(id, new Dependency(this));
     assert dependencies != null : "dependencies field must not be null";
-    for (Dependency dependency : this.dependencies) {
+    for (Dependency dependency : dependencies) {
       if (dependency.isReference()) {
         Module module = modules.get(dependency.getId());
-        assert module != null;
+        assert module != null : "ID yields null: " + dependency.toString();
         for (Entry<ModuleId, Dependency> entry : module.computeManifest().entrySet()) {
           if (manifest.containsKey(entry.getKey())) continue;
           manifest.put(entry.getKey(), entry.getValue());
@@ -353,7 +352,7 @@ public class Module implements Comparable {
       while ((read = src.read(buffer)) > 0) {
         md.update(buffer, 0, read);
       }
-      
+
       byte[] md5sum = md.digest();
       BigInteger bigInt = new BigInteger(1, md5sum);
       String actual = bigInt.toString(16);
@@ -441,7 +440,7 @@ public class Module implements Comparable {
     if (contactAddress.length() > 0) out.println("Contact  : " + contactAddress);
     if (docUrl.length() > 0) out.println("Docs     : " + docUrl);
     out.println("Download : " + repoUrl);
-    out.println("Status   : " + tcProjectStatus); // CERTIFIED, EXPERIMENTAL, NONE, etc.    
+    out.println("Status   : " + tcProjectStatus); // CERTIFIED, EXPERIMENTAL, NONE, etc.
     out.println();
     if (description.length() > 0) {
       out.println(description.replaceAll("\n[ ]+", "\n"));
