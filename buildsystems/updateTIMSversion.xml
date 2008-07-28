@@ -4,8 +4,8 @@
 <!-- ANT_OPTS=-Xmx512m ant -f buildsystems/updateTIMSversion.xml  -->
 
 <target name="updateversion">
-  <replace token='2.7.0.SNAPSHOT' value='2.7.0' dir="." excludes="**/updateTIMSversion.xml"/>
-  <replace token='2.7.0-SNAPSHOT' value='2.7.0' dir="." excludes="**/updateTIMSversion.xml"/>
+  <replace token='2.7.0.SNAPSHOT' value='2.8.0.SNAPSHOT' dir="." excludes="**/updateTIMSversion.xml"/>
+  <replace token='2.7.0-SNAPSHOT' value='2.8.0-SNAPSHOT' dir="." excludes="**/updateTIMSversion.xml"/>
 </target>
  
 </project>

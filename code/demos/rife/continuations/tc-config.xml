@@ -31,7 +31,7 @@
     
     <!-- Tell DSO to load the RIFE 1.6.0 module. -->
     <modules>
-      <module name="clustered-rife-1.6.0" version="2.7.0.SNAPSHOT"/>
+      <module name="clustered-rife-1.6.0" version="2.8.0.SNAPSHOT"/>
     </modules>
   </clients>
   

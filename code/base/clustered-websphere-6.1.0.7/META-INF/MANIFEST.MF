@@ -7,8 +7,8 @@ Bundle-Name: Terracotta Configuration for Websphere 6.1.0.7
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-SymbolicName: org.terracotta.modules.clustered-websphere-6.1.0.7
 Bundle-Vendor: Terracotta, Inc.
-Bundle-Version: 2.7.0.SNAPSHOT
+Bundle-Version: 2.8.0.SNAPSHOT
 Import-Package: org.terracotta.modules.configuration
 Bundle-Activator: org.terracotta.modules.websphere_6_1.WebsphereTerracottaConfigurator
-Require-Bundle: org.terracotta.modules.modules-common;bundle-version:=2.7.0.SNAPSHOT
-Terracotta-RequireVersion: 2.7.0.SNAPSHOT
+Require-Bundle: org.terracotta.modules.modules-common;bundle-version:=2.8.0.SNAPSHOT
+Terracotta-RequireVersion: 2.8.0.SNAPSHOT

@@ -35,6 +35,6 @@ tc.tests.configuration.appserver.repository=http://download.terracotta.org/appse
 
 #tc.tests.configuration.appserver.home=C:/tomcat-5.5.23
 
-maven.version=2.7.0-SNAPSHOT
+maven.version=2.8.0-SNAPSHOT
 maven.snapshot=true
 
