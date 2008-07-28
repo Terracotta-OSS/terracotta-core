@@ -17,7 +17,6 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
@@ -34,21 +33,24 @@ public class MissingBundleException extends BundleException implements BundleExc
     super(msg);
   }
 
-  MissingBundleException(final String msg, final Throwable cause) {
-    super(msg, cause);
-  }
-
   public MissingBundleException(final String msg, final String groupId, final String name, final String version,
                                 final List repositories, final Stack dependencyStack) {
     super(msg);
     Assert.assertNotNull(groupId);
     Assert.assertNotNull(name);
     Assert.assertNotNull(version);
+    Assert.assertNotNull(repositories);
+    Assert.assertNotNull(dependencyStack);
     this.groupId = groupId;
     this.name = name;
     this.version = version;
-    this.repositories = (repositories == null) ? new ArrayList() : repositories;
-    this.dependencyStack = (dependencyStack == null) ? new Stack() : dependencyStack;
+    this.repositories = repositories;
+    this.dependencyStack = dependencyStack;
+  }
+
+  public MissingBundleException(final String msg, final String groupId, final String name, final String version,
+                                final List repositories) {
+    this(msg, groupId, name, version, repositories, new Stack());
   }
 
   private String expectedPaths() {
@@ -107,29 +109,30 @@ public class MissingBundleException extends BundleException implements BundleExc
     buf.append("above, make sure that the Bundle-SymbolicName and\n").append(INDENT);
     buf.append("Bundle-Version attribute in its manifest matches the ones ");
     buf.append("that the resolver expects.\n\n").append(INDENT);
-    
+
     buf.append("If you do not have this particular TIM or any of its ");
     buf.append("dependencies installed, try using the tim-get tool's \n").append(INDENT);
     buf.append("'install' command:\n\n").append(INDENT + INDENT);
-    
+
     String promptname = Os.isWindows() ? "C:\\> " : "$ ";
     String scriptname = Os.isWindows() ? "tim-get.bat" : "tim-get.sh";
-    
+
     buf.append(promptname).append(scriptname).append(" install ");
     buf.append(name).append(" ").append(version).append(" ").append(groupId);
     buf.append("\n\n").append(INDENT);
-    
-    buf.append("You can also use the tool's 'list' command to see if it's actually available:\n\n").append(INDENT + INDENT);
+
+    buf.append("You can also use the tool's 'list' command to see if it's actually available:\n\n")
+        .append(INDENT + INDENT);
     buf.append(promptname).append(scriptname).append(" list ").append(name);
     buf.append(INDENT).append("# list anything that has '").append(name).append("' in it's name");
     buf.append("\n").append(INDENT + INDENT);
     buf.append(promptname).append(scriptname).append(" list ").append(StringUtils.repeat(" ", name.length()));
     buf.append(INDENT).append("# or, list everything that is available");
     buf.append("\n\n").append(INDENT);
-    
+
     buf.append("For more information on how to use the tim-get tool, invoke:\n\n").append(INDENT + INDENT);
     buf.append(promptname).append(scriptname).append(" help ");
-    return StringUtils.replace(buf.toString(), "\n", System.getProperty("line.separator")) ;
+    return StringUtils.replace(buf.toString(), "\n", System.getProperty("line.separator"));
   }
 
   private String dependencyStackAsString(Stack dependencies) {

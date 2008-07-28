@@ -163,7 +163,7 @@ public class Resolver {
     final File location = resolveLocation(name, version, groupId);
     if (location == null) {
       final String msg = formatMessage(Message.ERROR_BUNDLE_UNRESOLVED, new Object[] { name, version, groupId });
-      throw new MissingBundleException(msg, groupId, name, version, repositories, null);
+      throw new MissingBundleException(msg, groupId, name, version, repositories);
     }
 
     logger.info("Resolved TIM " + groupId + ":" + name + ":" + version + " from " + location);
@@ -307,12 +307,12 @@ public class Resolver {
     for (int i = 0; i < requirements.length; i++) {
       final BundleSpec spec = requirements[i];
       stack.push(spec.getSymbolicName(), spec.getVersion());
-      try {
-        ensureBundle(spec, stack);
-      } catch (MissingBundleException e) {
-        throw new MissingBundleException(e.getMessage(), spec.getGroupId(), spec.getName(), spec.getVersion(),
-                                         repositories, dependencyStack);
-      }
+      // try {
+      ensureBundle(spec, stack);
+      // } catch (MissingBundleException e) {
+      // throw new MissingBundleException(e.getMessage(), spec.getGroupId(), spec.getName(), spec.getVersion(),
+      // repositories, dependencyStack);
+      // }
     }
     addToRegistry(location, manifest);
   }
