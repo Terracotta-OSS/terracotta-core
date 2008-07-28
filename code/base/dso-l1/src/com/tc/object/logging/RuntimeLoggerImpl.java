@@ -24,7 +24,6 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
   private boolean        waitNotifyDebug;
 
   private boolean        fullStack;
-  private boolean        caller;
   private boolean        autoLockDetails;
 
   public RuntimeLoggerImpl(DSOClientConfigHelper configHelper) {
@@ -40,7 +39,6 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
     this.waitNotifyDebug = configHelper.runtimeLoggingOptions().logWaitNotifyDebug().getBoolean();
 
     // runtime logging options
-    this.caller = configHelper.runtimeOutputOptions().doCaller().getBoolean();
     this.fullStack = configHelper.runtimeOutputOptions().doFullStack().getBoolean();
     this.autoLockDetails = configHelper.runtimeOutputOptions().doAutoLockDetails().getBoolean();
   }
@@ -110,11 +108,12 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
   }
 
   public void setCaller(boolean caller) {
-    this.caller = caller;
+    // deprecated (see CDV-731, CDV-815)
   }
 
   public boolean getCaller() {
-    return this.caller;
+    // deprecated (see CDV-731, CDV-815)
+    return false;
   }
 
   public void setAutoLockDetails(boolean autoLockDetails) {
@@ -157,20 +156,16 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
   }
 
   private void appendCall(StringBuffer message) {
-    if (fullStack || caller) {
+    if (fullStack) {
       StackTraceElement[] stack = new Throwable().getStackTrace();
       if (stack != null) {
         message.append("\n");
-        if (fullStack) {
-          for (int i = 0; i < stack.length; i++) {
-            message.append("  at ").append(stack[i].toString());
+        for (int i = 0; i < stack.length; i++) {
+          message.append("  at ").append(stack[i].toString());
 
-            if (i < (stack.length - 1)) {
-              message.append("\n");
-            }
+          if (i < (stack.length - 1)) {
+            message.append("\n");
           }
-        } else {
-          message.append("  call: ").append(stack[0].toString());
         }
       }
     }
