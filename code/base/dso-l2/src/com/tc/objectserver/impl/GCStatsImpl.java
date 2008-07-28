@@ -4,8 +4,6 @@
  */
 package com.tc.objectserver.impl;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.objectserver.api.GCStats;
 import com.tc.util.State;
 
@@ -14,7 +12,6 @@ import java.text.SimpleDateFormat;
 
 public class GCStatsImpl implements GCStats, Serializable {
   private static final long             serialVersionUID      = -4177683133067698672L;
-  private static final TCLogger         logger                = TCLogging.getLogger(GCStatsImpl.class);
   private static final SimpleDateFormat printFormat           = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss z");
 
   private static final State            GC_START              = new State("START");
@@ -42,7 +39,6 @@ public class GCStatsImpl implements GCStats, Serializable {
   public GCStatsImpl(int number, boolean fullGC, long startTime) {
     this.number = number;
     this.fullGC = fullGC;
-    validate(startTime);
     this.startTime = startTime;
   }
 
@@ -107,58 +103,35 @@ public class GCStatsImpl implements GCStats, Serializable {
   }
 
   public synchronized String getType() {
-    return fullGC ?  FULL_GENERATION : YOUNG_GENERATION;
+    return fullGC ? FULL_GENERATION : YOUNG_GENERATION;
   }
 
   public synchronized void setActualGarbageCount(long count) {
-    validate(count);
     this.actualGarbageCount = count;
   }
 
   public synchronized void setBeginObjectCount(long count) {
-    validate(count);
     this.beginObjectCount = count;
   }
 
   public synchronized void setCandidateGarbageCount(long count) {
-    validate(count);
     this.candidateGarbageCount = count;
   }
 
   public synchronized void setMarkStageTime(long time) {
-    if (time < 0L) {
-      logger.warn("System timer moved backward, setting GC MarkStageTime to 0");
-      time = 0;
-    }
     this.markStageTime = time;
   }
 
   public synchronized void setPausedStageTime(long time) {
-    if (time < 0L) {
-      logger.warn("System timer moved backward, setting GC PausedStageTime to 0");
-      time = 0;
-    }
     this.pausedStageTime = time;
   }
 
   public synchronized void setDeleteStageTime(long time) {
-    if (time < 0L) {
-      logger.warn("System timer moved backward, setting GC DeleteStageTime to 0");
-      time = 0;
-    }
     this.deleteStageTime = time;
   }
 
   public synchronized void setElapsedTime(long time) {
-    if (time < 0L) {
-      logger.warn("System timer moved backward, setting GC ElapsedTime to 0");
-      time = 0;
-    }
     this.elapsedTime = time;
-  }
-
-  private void validate(long value) {
-    if (value < 0L) { throw new IllegalArgumentException("Value must be greater than or equal to zero"); }
   }
 
   private String formatAsDate(long date) {

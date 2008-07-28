@@ -235,6 +235,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     gcInfo.setRescueTimes(rescueTimes);
     gcInfo.setDeleted(TCCollections.EMPTY_SORTED_SET);
     gcInfo.setPausedStageTime(0);
+    gcInfo.setDeleteStageTime(0);
     long endMillis = System.currentTimeMillis();
     gcInfo.setTotalMarkCycleTime(endMillis - gcInfo.getStartTime());
     gcInfo.setElapsedTime(endMillis - gcInfo.getStartTime());

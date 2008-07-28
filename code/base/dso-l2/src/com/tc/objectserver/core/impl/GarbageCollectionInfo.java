@@ -9,56 +9,58 @@ import java.util.SortedSet;
 
 public class GarbageCollectionInfo {
 
-  private int       iteration;
+  protected static final long NOT_INITIALIZED       = -1L;
 
-  private boolean   fullGC;
+  private int                 iteration;
 
-  private long      startTime;
+  private boolean             fullGC;
 
-  private int       beginObjectCount;
+  private long                startTime             = NOT_INITIALIZED;
 
-  private long      markStageTime;
+  private long                beginObjectCount      = NOT_INITIALIZED;
 
-  private long      pauseStageTime;
+  private long                markStageTime         = NOT_INITIALIZED;
 
-  private long      deleteStageTime;
+  private long                pauseStageTime        = NOT_INITIALIZED;
 
-  private long      elapsedTime;
+  private long                deleteStageTime       = NOT_INITIALIZED;
 
-  private long      totalMarkCycleTime;
+  private long                elapsedTime           = NOT_INITIALIZED;
 
-  private int       candidateGarbageCount;
+  private long                totalMarkCycleTime    = NOT_INITIALIZED;
 
-  private int       actualGarbageCount;
+  private long                candidateGarbageCount = NOT_INITIALIZED;
 
-  private Object    stats;
+  private long                actualGarbageCount    = NOT_INITIALIZED;
 
-  private SortedSet toDelete;
+  private long                preRescueCount        = NOT_INITIALIZED;
 
-  private List      rescueTimes;
+  private long                rescue1Count          = NOT_INITIALIZED;
 
-  private int       preRescueCount;
+  private Object              stats                 = null;
 
-  private int       rescue1Count;
+  private SortedSet           toDelete              = null;
+
+  private List                rescueTimes           = null;
 
   public GarbageCollectionInfo(int iteration, boolean fullGC) {
     this.iteration = iteration;
     this.fullGC = fullGC;
   }
 
-  public int getRescue1Count() {
+  public long getRescue1Count() {
     return this.rescue1Count;
   }
 
-  public void setRescue1Count(int count) {
+  public void setRescue1Count(long count) {
     this.rescue1Count = count;
   }
 
-  public int getPreRescueCount() {
+  public long getPreRescueCount() {
     return this.preRescueCount;
   }
 
-  public void setPreRescueCount(int count) {
+  public void setPreRescueCount(long count) {
     this.preRescueCount = count;
   }
 
@@ -78,11 +80,11 @@ public class GarbageCollectionInfo {
     return this.startTime;
   }
 
-  public void setBeginObjectCount(int count) {
+  public void setBeginObjectCount(long count) {
     this.beginObjectCount = count;
   }
 
-  public int getBeginObjectCount() {
+  public long getBeginObjectCount() {
     return this.beginObjectCount;
   }
 
@@ -130,11 +132,11 @@ public class GarbageCollectionInfo {
     this.candidateGarbageCount = count;
   }
 
-  public int getCandidateGarbageCount() {
+  public long getCandidateGarbageCount() {
     return this.candidateGarbageCount;
   }
 
-  public int getActualGarbageCount() {
+  public long getActualGarbageCount() {
     return this.actualGarbageCount;
   }
 

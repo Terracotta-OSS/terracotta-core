@@ -580,6 +580,7 @@ public class DistributedObjectServer implements TCDumper {
     boolean enableYoungGenDGC = youngDGCProperties.getBoolean("enabled");
     long youngGenDGCFrequency = youngDGCProperties.getLong("frequencyInMillis");
 
+    System.out.println("enabledYoungGenGC :" + enableYoungGenDGC);
     ObjectManagerConfig objectManagerConfig = new ObjectManagerConfig(gcInterval * 1000, gcEnabled, verboseGC,
                                                                       persistent, enableYoungGenDGC,
                                                                       youngGenDGCFrequency);
