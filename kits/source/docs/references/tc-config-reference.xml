@@ -19,6 +19,19 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://www.terracotta.org/schema/terracotta-4.xsd">
 
+  <tc-properties>
+	<!-- This section defines the tuning properties of terracotta cluster 
+		These properties are called tc-properties and user can provide 
+		them here too in addition to the local tc.properties file
+		
+		The order in which the properties would be overridden is the following
+			tc-properties from the installation jar
+			tc-properties from the tc-config
+			tc-properties from local tc.properties file
+			tc-properties set via system properties 
+	-->
+  </tc-properties>
+  
   <!-- The 'system' section contains configuration data that affects the
      entire Terracotta system as a whole; things like whether to activate
      DSO services go here. -->
