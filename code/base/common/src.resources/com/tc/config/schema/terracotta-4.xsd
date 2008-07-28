@@ -11,7 +11,12 @@
           <xs:annotation>
             <xs:documentation>
               This section defines the tc-properties
-              which the user wants to set to all the L1s
+              which the user wants to set
+              The order in which the properties would be overridden is the following
+				tc-properties from the installation jar
+				tc-properties from the tc-config
+				tc-properties from local tc.properties file
+				tc-properties set via system properties 
               Note that the local tc.properties has higher
               preference than this section
             </xs:documentation>
