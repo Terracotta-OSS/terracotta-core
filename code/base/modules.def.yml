@@ -482,7 +482,6 @@ modules:
         - dso-l1
         - dso-l1-api
         - dso-l1-jdk15
-        - dso-l1-jdk15
         - dso-l1-weblogic
         - dso-l2
         - dso-l2-common
@@ -556,7 +555,6 @@ modules:
         - dso-common-jdk15
         - dso-l1
         - dso-l1-api
-        - dso-l1-jdk15
         - dso-l1-jdk15
         - dso-l1-weblogic
         - dso-l2
@@ -777,11 +775,8 @@ modules:
         - management-api
         - modules-common
         - simulator
-        - simulator
         - thirdparty
         - thirdparty-api
-        - thirdparty-api
-
   - eclipsegen:
       options:
         jdk: J2SE-1.5
