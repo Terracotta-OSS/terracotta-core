@@ -1752,7 +1752,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
         l1PropFromL2Stream = connection.getInputStream();
         if (l1PropFromL2Stream != null) return l1PropFromL2Stream;
       } catch (IOException e) {
-        String text = "Cannot connect to [" + ci + "].";
+        String text = "Can't connect to [" + ci + "].";
         boolean tryAgain = (i < connectInfo.length - 1);
         if (tryAgain) text += " Will retry next server.";
         logger.warn(text);
@@ -1774,7 +1774,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       if (serverList.length() > 0) serverList += ", ";
       serverList += connections[i];
     }
-    String text = "Cannot connect to " + (connections.length > 1 ? "any of the servers" : "server") + "[" + serverList
+    String text = "Can't connect to " + (connections.length > 1 ? "any of the servers" : "server") + "[" + serverList
                   + "]. Retrying...\n";
 
     while (in == null) {
