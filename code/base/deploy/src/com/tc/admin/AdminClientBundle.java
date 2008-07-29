@@ -104,7 +104,6 @@ public class AdminClientBundle extends ListResourceBundle {
         { "dso.cache.rate.domain.label", "Time" },
         { "dso.cache.rate.range.label", "Objects per second" },
         { "dso.transaction.rate.range.label", "Transactions per second" },
-        { "dso.pending.transaction.count.range.label", "Pending Transactions" },
         { "dso.cache.activity", "Cache activity" },
         { "dso.cache.miss.rate", "Cache Miss Rate" },
         { "dso.cache.miss.rate.label", "Cache Misses per second" },
@@ -138,6 +137,10 @@ public class AdminClientBundle extends ListResourceBundle {
             "<html><h3>Version mismatch for {0}.</h3><br>"
                 + "<table border=0 cellspacing=1><tr><td align=right><b>Terracotta Server Version:</b></td><td>{1}"
                 + "</tr><tr><td align=right><b>AdminConsole Version:</b</td><td>{2}"
-                + "</td></tr></table><h3>Continue?</h3></html>" } };
+                + "</td></tr></table><h3>Continue?</h3></html>" }, { "cpu.usage", "CPU Usage" },
+        { "object.flush.rate", "Object Flush Rate" }, { "object.fault.rate", "Object FaultRate" },
+        { "transaction.rate", "Transaction Rate" }, { "cache.miss.rate", "Cache Miss Rate" },
+        { "heap.usage", "Heap Usage" }, { "heap.usage.max", "memory max" }, { "heap.usage.used", "memory used" },
+        { "pending.transactions", "Pending Transactions" }, };
   }
 }
