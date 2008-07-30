@@ -396,7 +396,8 @@ public class Module implements Comparable {
     try {
       repositoryPath = repositoryPath.getCanonicalFile();
     } catch (IOException e) {
-      //
+      // can't compute canonicalpath for some reason
+      // we'll just return whatever we have
     }
     return repositoryPath;
   }
