@@ -176,14 +176,20 @@ public class PassiveSmoothStartTestApp extends AbstractTransparentApp {
 
   private void ensurePassiveServer(int index) throws IOException {
     TCServerInfoMBean m = getJmxServer(index);
-    Assert.assertTrue(m.isPassiveStandby());
+    while (!m.isPassiveStandby()) {
+      System.out.println("XXX waiting for passive to join the cluster");
+      ThreadUtil.reallySleep(1000);
+    }
   }
 
   private void ensureActiveServer(int index) throws IOException {
     MBeanServerConnection mBeanServer = jmxConnectors[index].getMBeanServerConnection();
     TCServerInfoMBean m = (TCServerInfoMBean) MBeanServerInvocationHandler
         .newProxyInstance(mBeanServer, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, true);
-    Assert.assertTrue(m.isActive());
+    while (!m.isActive()) {
+      System.out.println("XXX waiting for active to join the cluster");
+      ThreadUtil.reallySleep(1000);
+    }
   }
 
   private TCServerInfoMBean getJmxServer(int index) throws IOException {
