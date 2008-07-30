@@ -112,7 +112,7 @@ public class SleepycatPersistor implements Persistor {
                                                                   + "  Since the integrity of the data cannot be assured, "
                                                                   + "the server is refusing to start."
                                                                   + "  Please remove the database files in the following directory and restart "
-                                                                  + "the server: " + env.getEnvironmentHome()); }
+                                                                  + "the server: " + dbenv.getEnvironmentHome()); }
   }
 
   private void sanityCheckAndClean(DBEnvironment dbenv, File l2DataPath, TCLogger logger) throws TCDatabaseException {
