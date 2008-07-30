@@ -34,28 +34,32 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
 
   public void garbageCollectorMark(GarbageCollectionInfo info) {
     GCStatsImpl gcStats = getGCStats(info);
-     fireGCStatsEvent(gcStats);
+    gcStats.setMarkState();
+    fireGCStatsEvent(gcStats);
   }
 
   public void garbageCollectorPausing(GarbageCollectionInfo info) {
     GCStatsImpl gcStats = getGCStats(info);
+    gcStats.setPauseState();
     fireGCStatsEvent(gcStats);
 
   }
 
   public void garbageCollectorMarkComplete(GarbageCollectionInfo info) {
     GCStatsImpl gcStats = getGCStats(info);
+    gcStats.setMarkCompleteState();
     fireGCStatsEvent(gcStats);
   }
 
   public void garbageCollectorDelete(GarbageCollectionInfo info) {
     GCStatsImpl gcStats = getGCStats(info);
-   
+    gcStats.setDeleteState();
     fireGCStatsEvent(gcStats);
   }
 
   public void garbageCollectorCompleted(GarbageCollectionInfo info) {
     GCStatsImpl gcStats = getGCStats(info);
+    gcStats.setCompleteState();
     push(gcStats);
     fireGCStatsEvent(gcStats);
   }

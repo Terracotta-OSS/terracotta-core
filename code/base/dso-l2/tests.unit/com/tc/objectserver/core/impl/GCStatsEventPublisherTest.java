@@ -5,6 +5,7 @@
 package com.tc.objectserver.core.impl;
 
 import com.tc.object.ObjectID;
+import com.tc.objectserver.api.GCStatsEventListener;
 import com.tc.objectserver.core.api.GarbageCollector;
 import com.tc.objectserver.core.api.GarbageCollectorEventListener;
 import com.tc.objectserver.impl.ObjectManagerConfig;
@@ -94,6 +95,8 @@ public class GCStatsEventPublisherTest extends TestCase {
     assertEquals(1, listener.cycleCompletedList.size());
 
   }
+  
+  
   
   public void testGarbageCollectorListenerShortCircuit() {
    
