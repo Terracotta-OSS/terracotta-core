@@ -27,16 +27,16 @@ import java.io.File;
 import java.io.FileOutputStream;
 
 public class TcPropertiesOverWriteTest extends TransparentTestBase {
-  private static final int   NODE_COUNT                                     = 1;
-  private int                port;
-  private File               configFile;
-  private int                jmxPort;
-  private static final int   NUMBER_OF_TC_PROPERTIES                        = 4;
-  public static TcProperty[] propertiesToTest                               = new TcProperty[NUMBER_OF_TC_PROPERTIES];
-  public static String       L1_CACHEMANAGER_ENABLED_VALUE                  = "true";
-  public static String       L1_LOGGING_MAX_LOGFILE_SIZE_VALUE              = "1234";
-  public static String       L1_TRANSACTIONMANAGER_MAXPENDING_BATCHES_VALUE = "5678";
-  public static String       L1_CACHEMANAGER_LEASTCOUNT_VALUE               = "15";
+  private static final int NODE_COUNT                                     = 1;
+  private int              port;
+  private File             configFile;
+  private int              jmxPort;
+  private static final int NUMBER_OF_TC_PROPERTIES                        = 4;
+  private TcProperty[]     propertiesToTest;
+  public static String     L1_CACHEMANAGER_ENABLED_VALUE                  = "true";
+  public static String     L1_LOGGING_MAX_LOGFILE_SIZE_VALUE              = "1234";
+  public static String     L1_TRANSACTIONMANAGER_MAXPENDING_BATCHES_VALUE = "5678";
+  public static String     L1_CACHEMANAGER_LEASTCOUNT_VALUE               = "15";
 
   protected Class getApplicationClass() {
     return TcPropertiesOverWriteTestApp.class;
@@ -62,6 +62,7 @@ public class TcPropertiesOverWriteTest extends TransparentTestBase {
     jmxPort = pc.chooseRandomPort();
     configFile = getTempFile("tc-config.xml");
     // set the properties to be overwritten, these properties would be overwridden by the tc-config
+    propertiesToTest = new TcProperty[NUMBER_OF_TC_PROPERTIES];
     propertiesToTest[0] = new TcProperty(TCPropertiesConsts.L1_CACHEMANAGER_ENABLED, L1_CACHEMANAGER_ENABLED_VALUE);
     propertiesToTest[1] = new TcProperty(TCPropertiesConsts.L1_LOGGING_MAX_LOGFILE_SIZE,
                                          L1_LOGGING_MAX_LOGFILE_SIZE_VALUE);
