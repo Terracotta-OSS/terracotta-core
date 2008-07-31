@@ -419,7 +419,7 @@ public class Module implements Comparable {
   private void printInstallationInfo(PrintWriter out) {
     if (isInstalled()) out.println("Installed at " + installPath().getParent());
     if (getVersions().isEmpty()) {
-      out.println("There are no other versions of this TIM that is compatible with TC " + modules.tcVersion());
+      out.println("There are no other versions of this TIM that are compatible with TC " + modules.tcVersion());
     } else {
       out.println("The following versions are also available for TC " + modules.tcVersion() + ":\n");
       List<Module> siblings = this.getSiblings();

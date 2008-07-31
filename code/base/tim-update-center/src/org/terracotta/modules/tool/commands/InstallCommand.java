@@ -38,8 +38,8 @@ public class InstallCommand extends AbstractCommand {
     options.addOption(buildOption(LONGOPT_PRETEND, "Do not perform actual installation"));
     options.addOption(buildOption(LONGOPT_NOVERIFY, "Skip checksum verification"));
     arguments.put("name", "The name of the integration module");
-    arguments.put("version", "OPTIONAL. The version used to qualify the name");
-    arguments.put("group-id", "OPTIONAL. The group-id used to qualify the name");
+    arguments.put("version", "(OPTIONAL) The version used to qualify the name");
+    arguments.put("group-id", "(OPTIONAL) The group-id used to qualify the name");
   }
 
   public String syntax() {

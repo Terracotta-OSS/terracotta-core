@@ -22,8 +22,8 @@ public class InfoCommand extends AbstractCommand {
     this.modules = modules;
     assert modules != null : "modules is null";
     arguments.put("name", "The name of the integration module");
-    arguments.put("version", "OPTIONAL. The version used to qualify the name");
-    arguments.put("group-id", "OPTIONAL. The group-id used to qualify the name");
+    arguments.put("version", "(OPTIONAL) The version used to qualify the name");
+    arguments.put("group-id", "(OPTIONAL) The group-id used to qualify the name");
   }
 
   public String syntax() {

@@ -19,7 +19,7 @@ public class HelpCommand extends AbstractCommand {
   @Inject
   public HelpCommand(CommandRegistry registry) {
     this.commandRegistry = registry;
-    arguments.put("command-names", "OPTIONAL. Space delimited list of command names to get a help on");
+    arguments.put("command-names", "(OPTIONAL) Space delimited list of command names to get a help on");
   }
 
   /** The syntax of this command. */

@@ -30,7 +30,7 @@ public class ListCommand extends AbstractCommand {
     this.modules = modules;
     assert modules != null : "modules is null";
     options.addOption(OPTION_DETAILS, LONGOPT_DETAILS, false, "Display detailed information");
-    arguments.put("keywords", "OPTIONAL. Space delimited list of keywords used to filter the list.");
+    arguments.put("keywords", "(OPTIONAL) Space delimited list of keywords used to filter the list.");
   }
 
   public String syntax() {
