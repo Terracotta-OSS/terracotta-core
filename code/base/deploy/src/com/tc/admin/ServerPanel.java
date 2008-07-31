@@ -4,7 +4,11 @@
  */
 package com.tc.admin;
 
+import org.apache.xmlbeans.XmlOptions;
+import org.dijon.Container;
 import org.dijon.ContainerResource;
+import org.dijon.Item;
+import org.dijon.Label;
 import org.dijon.ScrollPane;
 import org.dijon.TabbedPane;
 
@@ -14,6 +18,8 @@ import com.tc.admin.common.PropertyTableModel;
 import com.tc.admin.common.StatusView;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XTextArea;
+import com.terracottatech.config.PersistenceMode;
+import com.terracottatech.config.Servers;
 
 import java.util.Date;
 import java.util.concurrent.Callable;
@@ -40,6 +46,23 @@ public class ServerPanel extends XContainer {
 
     m_tabbedPane = (TabbedPane) findComponent("TabbedPane");
 
+    if(!m_serverNode.getPersistenceMode().equals("permanent-store")) {
+      Container restartabilityInfoPanel = (Container) m_acc.resolveResource("RestartabilityInfoPanel");
+      Label iconLabel = (Label)restartabilityInfoPanel.findComponent("IconLabel");
+      iconLabel.setIcon(LogHelper.getHelper().getAlertIcon());      
+
+      Label textLabel = (Label) restartabilityInfoPanel.findComponent("TextLabel");
+      textLabel.setText(m_acc.getString("server.non-restartable.warning"));
+      
+      XTextArea configSnippetText = (XTextArea)restartabilityInfoPanel.findComponent("ConfigSnippetText");
+      Servers servers = Servers.Factory.newInstance();
+      servers.addNewServer().addNewDso().addNewPersistence().setMode(PersistenceMode.PERMANENT_STORE);
+      configSnippetText.setText(servers.xmlText(new XmlOptions().setSavePrettyPrint().setSavePrettyPrintIndent(3)));
+      configSnippetText.setBackground(null);
+      configSnippetText.setFont(textLabel.getFont());
+      
+      ((Item) findComponent("RestartabilityInfoItem")).setChild(restartabilityInfoPanel);
+    }
     m_propertyTable = (PropertyTable) findComponent("ServerInfoTable");
     DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
     m_propertyTable.setDefaultRenderer(Long.class, renderer);
@@ -247,8 +270,9 @@ public class ServerPanel extends XContainer {
    */
   private void showProductInfo(String version, String copyright) {
     String[] fields = { "CanonicalHostName", "HostAddress", "Port", "DSOListenPort", "ProductVersion",
-        "ProductBuildID", "ProductLicense" };
-    String[] headings = { "Host", "Address", "JMX port", "DSO port", "Version", "Build", "License" };
+        "ProductBuildID", "ProductLicense", "PersistenceMode", "FailoverMode" };
+    String[] headings = { "Host", "Address", "JMX port", "DSO port", "Version", "Build", "License", "Persistence mode",
+        "Failover mode" };
     m_propertyTable.setModel(new PropertyTableModel(m_serverNode, fields, headings));
     m_propertyTable.getAncestorOfClass(ScrollPane.class).setVisible(true);
 

@@ -19,7 +19,7 @@ import java.io.Serializable;
 
 public class RootsPanel extends XContainer {
   protected IClusterNode        m_clusterNode;
-  protected Label               m_liveObjectCountLabel;
+  protected Label               m_liveObjectCountValueLabel;
   protected BasicObjectSetPanel m_objectSetPanel;
   protected MouseListener       m_objectSetMouseListener;
 
@@ -29,7 +29,10 @@ public class RootsPanel extends XContainer {
     load((ContainerResource) AdminClient.getContext().getComponent("RootsPanel"));
 
     m_clusterNode = clusterNode;
-    m_liveObjectCountLabel = (Label) findComponent("LiveObjectCountLabel");
+    String tip = AdminClient.getContext().getString("liveObjectCount.tip");
+    ((Label) findComponent("LiveObjectCountLabel")).setToolTipText(tip);
+    m_liveObjectCountValueLabel = (Label) findComponent("LiveObjectCountValueLabel");
+    m_liveObjectCountValueLabel.setToolTipText(tip);
     m_objectSetPanel = (BasicObjectSetPanel) findComponent("ObjectSetPanel");
 
     m_objectSetPanel.setObjects(clusterNode, roots);
@@ -44,7 +47,7 @@ public class RootsPanel extends XContainer {
   }
 
   private void updateLiveObjectCount() {
-    m_liveObjectCountLabel.setText(Integer.toString(m_clusterNode.getLiveObjectCount()));
+    m_liveObjectCountValueLabel.setText(Integer.toString(m_clusterNode.getLiveObjectCount()));
   }
 
   public void setObjects(IBasicObject[] roots) {
@@ -71,7 +74,7 @@ public class RootsPanel extends XContainer {
     super.tearDown();
 
     m_clusterNode = null;
-    m_liveObjectCountLabel = null;
+    m_liveObjectCountValueLabel = null;
     m_objectSetPanel = null;
     m_objectSetMouseListener = null;
   }

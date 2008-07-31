@@ -89,7 +89,7 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
   }
 
   public String getDefaultPathForBackup() {
-    checkEnabled();
+//    checkEnabled();
     return defaultPathForBackup;
   }
 

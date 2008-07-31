@@ -521,15 +521,16 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     }
 
     if (recordingStats || profilingLocks) {
-      String msg;
+      String key;
       if(recordingStats && profilingLocks) {
-        msg =  m_acc.getMessage("recording.stats.profiling.locks.msg"); 
+        key = "recording.stats.profiling.locks.msg"; 
       } else if(recordingStats) {
-        msg = m_acc.getMessage("recording.stats.msg");
+        key = "recording.stats.msg";
       } else {
-        msg = m_acc.getMessage("profiling.locks.msg");        
+        key = "profiling.locks.msg";        
       }
       
+      String msg = m_acc.format(key, m_acc.getMessage("quit.anyway"));
       Frame frame = (Frame) getAncestorOfClass(Frame.class);
       int answer = JOptionPane.showConfirmDialog(this, msg, frame.getTitle(), JOptionPane.OK_CANCEL_OPTION);
       return answer == JOptionPane.OK_OPTION;

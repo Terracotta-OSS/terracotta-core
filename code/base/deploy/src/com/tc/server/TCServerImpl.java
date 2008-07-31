@@ -25,6 +25,9 @@ import com.tc.capabilities.AbstractCapabilitiesFactory;
 import com.tc.config.Directories;
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.NewCommonL2Config;
+import com.tc.config.schema.NewHaConfig;
+import com.tc.config.schema.dynamic.ConfigItem;
+import com.tc.config.schema.dynamic.StringConfigItem;
 import com.tc.config.schema.messaging.http.ConfigServlet;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
@@ -41,6 +44,7 @@ import com.tc.management.beans.L2State;
 import com.tc.management.beans.TCServerInfo;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
+import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.GCStatsEventPublisher;
 import com.tc.objectserver.core.impl.ServerManagementContext;
@@ -211,6 +215,18 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
   }
 
+  public String getPersistenceMode() {
+    NewL2DSOConfig dsoL2Config = configurationSetupManager.dsoL2Config();
+    ConfigItem persistenceModel = dsoL2Config != null ? dsoL2Config.persistenceMode() : null;
+    return persistenceModel != null ? persistenceModel.getObject().toString() : "temporary-swap-only";
+  }
+  
+  public String getFailoverMode() {
+    NewHaConfig haConfig = configurationSetupManager.haConfig();
+    StringConfigItem haMode = haConfig != null ? haConfig.haMode() : null;
+    return haMode != null ? haMode.getString() : "no failover";
+  }
+  
   public int getDSOListenPort() {
     if (dsoServer != null) { return dsoServer.getListenPort(); }
     throw new IllegalStateException("DSO Server not running");

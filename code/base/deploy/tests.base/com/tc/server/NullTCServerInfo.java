@@ -119,6 +119,14 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
     return null;
   }
   
+  public String getFailoverMode() {
+    return null;
+  }
+
+  public String getPersistenceMode() {
+    return null;
+  }
+  
   public String getEnvironment() {
     return null;
   }

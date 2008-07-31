@@ -51,6 +51,10 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   int getDSOListenPort();
   
+  String getPersistenceMode();
+  
+  String getFailoverMode();
+  
   String[] getCpuStatNames();
   
   Map getStatistics();

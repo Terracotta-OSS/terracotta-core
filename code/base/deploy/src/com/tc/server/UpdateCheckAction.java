@@ -53,17 +53,8 @@ class UpdateCheckAction extends TimerTask {
   }
 
   public static void silenceHttpClientLoggers() {
-    Logger.getLogger("org.apache.commons.httpclient.HttpClient").setLevel(Level.OFF);
-    Logger.getLogger("org.apache.commons.httpclient.params.DefaultHttpParams").setLevel(Level.OFF);
-    Logger.getLogger("org.apache.commons.httpclient.methods.GetMethod").setLevel(Level.OFF);
-    Logger.getLogger("org.apache.commons.httpclient.HttpMethodDirector").setLevel(Level.OFF);
-    Logger.getLogger("org.apache.commons.httpclient.HttpConnection").setLevel(Level.OFF);
-    Logger.getLogger("org.apache.commons.httpclient.HttpMethodBase").setLevel(Level.OFF);
-    Logger.getLogger("org.apache.commons.httpclient.HttpState").setLevel(Level.OFF);
-    Logger.getLogger("org.apache.commons.httpclient.HttpParser").setLevel(Level.OFF);
-    Logger.getLogger("org.apache.commons.httpclient.cookie.CookieSpec").setLevel(Level.OFF);
-    Logger.getLogger("httpclient.wire.header").setLevel(Level.OFF);
-    Logger.getLogger("httpclient.wire.content").setLevel(Level.OFF);
+    Logger.getLogger("org.apache.commons.httpclient").setLevel(Level.OFF);
+    Logger.getLogger("httpclient.wire").setLevel(Level.OFF);
   }
 
   public URL constructCheckURL() throws MalformedURLException {

@@ -276,6 +276,14 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     return sb.toString();
   }
 
+  public String getPersistenceMode() {
+    return server.getPersistenceMode();
+  }
+  
+  public String getFailoverMode() {
+    return server.getFailoverMode();
+  }
+  
   public String getConfig() {
     return server.getConfig();
   }

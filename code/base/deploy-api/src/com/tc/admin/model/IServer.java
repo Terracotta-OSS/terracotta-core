@@ -45,6 +45,10 @@ public interface IServer extends IClusterNode {
 
   Integer getDSOListenPort();
 
+  String getPersistenceMode();
+  
+  String getFailoverMode();
+  
   String getProductVersion();
 
   String getProductBuildID();
