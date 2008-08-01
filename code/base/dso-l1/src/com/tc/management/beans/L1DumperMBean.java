@@ -6,14 +6,7 @@ package com.tc.management.beans;
 
 import com.tc.management.TerracottaMBean;
 
-public interface L2DumperMBean extends TerracottaMBean {
-  void doServerDump();
+public interface L1DumperMBean extends TerracottaMBean {
 
-  int doThreadDump() throws Exception;
-
-  void setThreadDumpCount(int count);
-
-  void setThreadDumpInterval(long interval);
-
-  void dumpClusterState();
+  void dump();
 }

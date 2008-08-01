@@ -13,15 +13,19 @@ import java.util.Map;
 import javax.management.NotificationEmitter;
 
 public interface L1InfoMBean extends TerracottaMBean, NotificationEmitter, RuntimeStatisticConstants {
+
   String takeThreadDump(long requestMillis);
+
+  void startBeanShell(int port);
 
   String getEnvironment();
 
   String getConfig();
 
   String[] getCpuStatNames();
-  
+
   Map getStatistics();
-  
+
   StatisticData[] getCpuUsage();
+
 }

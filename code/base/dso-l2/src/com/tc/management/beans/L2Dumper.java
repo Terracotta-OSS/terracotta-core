@@ -4,28 +4,40 @@
  */
 package com.tc.management.beans;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.management.AbstractTerracottaMBean;
+import com.tc.management.TerracottaManagement;
 
 import java.lang.reflect.Method;
+import java.util.Iterator;
+import java.util.Set;
 
+import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
+import javax.management.ObjectName;
 
 public class L2Dumper extends AbstractTerracottaMBean implements L2DumperMBean {
-  private static final boolean DEBUG                         = false;
+  private static final TCLogger logger                        = TCLogging.getLogger(L2Dumper.class);
 
-  public static final String   THREAD_DUMP_METHOD_NAME       = "dumpThreadsMany";
-  public static final Class[]  THREAD_DUMP_METHOD_PARAMETERS = new Class[] { int.class, long.class };
-  public static final int      DEFAULT_THREAD_DUMP_COUNT     = 3;
-  public static final long     DEFAULT_THREAD_DUMP_INTERVAL  = 1000;
+  private static final boolean  DEBUG                         = false;
 
-  public int                   threadDumpCount               = DEFAULT_THREAD_DUMP_COUNT;
-  public long                  threadDumpInterval            = DEFAULT_THREAD_DUMP_INTERVAL;
+  public static final String    THREAD_DUMP_METHOD_NAME       = "dumpThreadsMany";
+  public static final Class[]   THREAD_DUMP_METHOD_PARAMETERS = new Class[] { int.class, long.class };
+  public static final int       DEFAULT_THREAD_DUMP_COUNT     = 3;
+  public static final long      DEFAULT_THREAD_DUMP_INTERVAL  = 1000;
 
-  private final TCDumper       dumper;
+  public int                    threadDumpCount               = DEFAULT_THREAD_DUMP_COUNT;
+  public long                   threadDumpInterval            = DEFAULT_THREAD_DUMP_INTERVAL;
 
-  public L2Dumper(TCDumper dumper) throws NotCompliantMBeanException {
+  private final TCDumper        dumper;
+
+  private final MBeanServer     mbs;
+
+  public L2Dumper(TCDumper dumper, MBeanServer mbs) throws NotCompliantMBeanException {
     super(L2DumperMBean.class, false);
     this.dumper = dumper;
+    this.mbs = mbs;
   }
 
   public void doServerDump() {
@@ -56,6 +68,27 @@ public class L2Dumper extends AbstractTerracottaMBean implements L2DumperMBean {
   private void debugPrintln(String s) {
     if (DEBUG) {
       System.err.println("##### L2Dumper: " + s);
+    }
+  }
+
+  public void dumpClusterState() {
+    doServerDump();
+
+    Set allL1DumperMBeans;
+    try {
+      allL1DumperMBeans = TerracottaManagement.getAllL1DumperMBeans(mbs);
+    } catch (Exception e) {
+      logger.error(e);
+      return;
+    }
+
+    for (Iterator i = allL1DumperMBeans.iterator(); i.hasNext();) {
+      ObjectName l1DumperBean = (ObjectName) i.next();
+      try {
+        mbs.invoke(l1DumperBean, "dump", new Object[] {}, new String[] {});
+      } catch (Exception e) {
+        logger.error("error dumping on " + l1DumperBean, e);
+      }
     }
   }
 

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.lockmanager.api;
 
@@ -13,7 +14,7 @@ import java.util.Collection;
 
 /**
  * Simple lock manager for the client
- *
+ * 
  * @author steve
  */
 public interface ClientLockManager extends DumpHandler, PrettyPrintable {
@@ -42,12 +43,13 @@ public interface ClientLockManager extends DumpHandler, PrettyPrintable {
    * awards the lock to the threadID
    */
   public void awardLock(SessionID sessionID, LockID id, ThreadID threadID, int type);
-  
+
   public void cannotAwardLock(SessionID sessionID, LockID id, ThreadID threadID, int type);
 
   public LockID lockIDFor(String id);
 
-  public void wait(LockID lockID, ThreadID threadID, TimerSpec call, Object waitObject, WaitListener listener) throws InterruptedException;
+  public void wait(LockID lockID, ThreadID threadID, TimerSpec call, Object waitObject, WaitListener listener)
+      throws InterruptedException;
 
   public void waitTimedOut(LockID lockID, ThreadID threadID);
 
@@ -66,7 +68,7 @@ public interface ClientLockManager extends DumpHandler, PrettyPrintable {
    * Recalls a greedy Lock that was awarded earlier. If leaseTimeInMs is zero, then there is no lease
    */
   public void recall(LockID lockID, ThreadID threadID, int level, int leaseTimeInMs);
-  
+
   /**
    * Adds all lock waits to the given collection and returns that collection.
    */
@@ -81,7 +83,9 @@ public interface ClientLockManager extends DumpHandler, PrettyPrintable {
    * Causes all pending lock requests to be added to the collection.
    */
   public Collection addAllPendingLockRequestsTo(Collection c);
-  
+
+  public void addAllHeldLocksAndPendingLockRequestsTo(Collection heldLocks, Collection pendingLocks);
+
   public Collection addAllPendingTryLockRequestsTo(Collection c);
 
   public void runGC();
@@ -95,10 +99,10 @@ public interface ClientLockManager extends DumpHandler, PrettyPrintable {
   public boolean isLocked(LockID lockID, ThreadID threadID, int lockLevel);
 
   public void queryLockCommit(ThreadID threadID, GlobalLockInfo globalLockInfo);
-  
+
   public void setLockStatisticsConfig(int traceDepth, int gatherInterval);
-  
+
   public void setLockStatisticsEnabled(boolean statEnable);
-  
+
   public void requestLockSpecs();
 }

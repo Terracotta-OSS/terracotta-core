@@ -170,4 +170,9 @@ public class TestLockManager implements ClientLockManager {
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     throw new ImplementMe();
   }
+
+  public void addAllHeldLocksAndPendingLockRequestsTo(Collection heldLocks, Collection pendingLocks) {
+    throw new ImplementMe();
+  }
+
 }

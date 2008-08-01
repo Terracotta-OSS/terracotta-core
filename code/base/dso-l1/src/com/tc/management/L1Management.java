@@ -8,9 +8,9 @@ import com.sun.jmx.remote.opt.util.EnvHelp;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.management.beans.L1Dumper;
 import com.tc.management.beans.L1MBeanNames;
 import com.tc.management.beans.MBeanNames;
-import com.tc.management.beans.l1.L1Info;
 import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.management.beans.logging.InstrumentationLogging;
 import com.tc.management.beans.logging.InstrumentationLoggingMBean;
@@ -52,36 +52,43 @@ import javax.management.remote.JMXServiceURL;
 
 public final class L1Management extends TerracottaManagement {
 
-  private static final TCLogger        logger = TCLogging.getLogger(L1Management.class);
+  private static final TCLogger              logger = TCLogging.getLogger(L1Management.class);
 
-  private final SetOnceFlag            started;
-  private final TunnelingEventHandler  tunnelingHandler;
-  private final Object                 mBeanServerLock;
-  private MBeanServer                  mBeanServer;
+  private final SetOnceFlag                  started;
+  private final TunnelingEventHandler        tunnelingHandler;
+  private final Object                       mBeanServerLock;
+  private MBeanServer                        mBeanServer;
 
-  private final ClientTxMonitor        clientTxBean;
-  private final SessionMonitor         internalSessionBean;
-  private final SessionsProduct        publicSessionBean;
-  private final TerracottaCluster      clusterBean;
-  private final L1Info                 l1InfoBean;
-  private final InstrumentationLogging instrumentationLoggingBean;
-  private final RuntimeOutputOptions   runtimeOutputOptionsBean;
-  private final RuntimeLogging         runtimeLoggingBean;
+  private final ClientTxMonitor              clientTxBean;
+  private final SessionMonitor               internalSessionBean;
+  private final SessionsProduct              publicSessionBean;
+  private final TerracottaCluster            clusterBean;
+  private final L1Info                       l1InfoBean;
+  private final InstrumentationLogging       instrumentationLoggingBean;
+  private final RuntimeOutputOptions         runtimeOutputOptionsBean;
+  private final RuntimeLogging               runtimeLoggingBean;
 
   private final StatisticsAgentSubSystemImpl statisticsAgentSubSystem;
 
-  public L1Management(final TunnelingEventHandler tunnelingHandler, final StatisticsAgentSubSystemImpl statisticsAgentSubSystem, final RuntimeLogger runtimeLogger,
-                      final InstrumentationLogger instrumentationLogger, final String rawConfigText) {
+  private final L1Dumper                     l1DumpBean;
+
+  public L1Management(final TunnelingEventHandler tunnelingHandler,
+                      final StatisticsAgentSubSystemImpl statisticsAgentSubSystem, final RuntimeLogger runtimeLogger,
+                      final InstrumentationLogger instrumentationLogger, final String rawConfigText,
+                      final TCClient client) {
     super();
+
     started = new SetOnceFlag();
     this.tunnelingHandler = tunnelingHandler;
     this.statisticsAgentSubSystem = statisticsAgentSubSystem;
+
     try {
+      l1DumpBean = new L1Dumper(client);
       clientTxBean = new ClientTxMonitor();
       internalSessionBean = new SessionMonitor();
       publicSessionBean = new SessionsProduct(internalSessionBean, clientTxBean);
       clusterBean = new TerracottaCluster();
-      l1InfoBean = new L1Info(rawConfigText);
+      l1InfoBean = new L1Info(client, rawConfigText);
       instrumentationLoggingBean = new InstrumentationLogging(instrumentationLogger);
       runtimeOutputOptionsBean = new RuntimeOutputOptions(runtimeLogger);
       runtimeLoggingBean = new RuntimeLogging(runtimeLogger);
@@ -115,7 +122,8 @@ public final class L1Management extends TerracottaManagement {
                            + " attempts");
             }
           } catch (InstanceAlreadyExistsException e) {
-            logger.error("Exception while registering the L1 MBeans, they already seem to exist in the MBeanServer.", e);
+            logger
+                .error("Exception while registering the L1 MBeans, they already seem to exist in the MBeanServer.", e);
             return;
           } catch (Exception e) {
             // Ignore and try again after 1 second, give the VM a chance to get started
@@ -186,9 +194,9 @@ public final class L1Management extends TerracottaManagement {
     return runtimeLoggingBean;
   }
 
-  private void attemptToRegister(final boolean createDedicatedMBeanServer) throws InstanceAlreadyExistsException, MBeanRegistrationException,
-      NotCompliantMBeanException, SecurityException, IllegalArgumentException, NoSuchMethodException,
-      ClassNotFoundException, IllegalAccessException, InvocationTargetException {
+  private void attemptToRegister(final boolean createDedicatedMBeanServer) throws InstanceAlreadyExistsException,
+      MBeanRegistrationException, NotCompliantMBeanException, SecurityException, IllegalArgumentException,
+      NoSuchMethodException, ClassNotFoundException, IllegalAccessException, InvocationTargetException {
     synchronized (mBeanServerLock) {
       if (mBeanServer == null) {
         if (createDedicatedMBeanServer) {
@@ -210,7 +218,8 @@ public final class L1Management extends TerracottaManagement {
           } else {
             // CDV-260: Make sure to use java.lang.management.ManagementFactory.getPlatformMBeanServer() on JDK 1.5+
             if (logger.isDebugEnabled()) {
-              logger.debug("attemptToRegister(): Inside a 1.5+ runtime, trying to get the platform default MBeanServer");
+              logger
+                  .debug("attemptToRegister(): Inside a 1.5+ runtime, trying to get the platform default MBeanServer");
             }
             mBeanServer = getPlatformDefaultMBeanServer();
           }
@@ -218,6 +227,8 @@ public final class L1Management extends TerracottaManagement {
         addJMXConnectors();
       }
     }
+
+    mBeanServer.registerMBean(l1DumpBean, MBeanNames.L1DUMPER_INTERNAL);
     mBeanServer.registerMBean(clientTxBean, MBeanNames.CLIENT_TX_INTERNAL);
     mBeanServer.registerMBean(internalSessionBean, MBeanNames.SESSION_INTERNAL);
     mBeanServer.registerMBean(publicSessionBean, L1MBeanNames.SESSION_PRODUCT_PUBLIC);

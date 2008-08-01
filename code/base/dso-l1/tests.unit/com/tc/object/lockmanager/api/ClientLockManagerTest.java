@@ -15,24 +15,31 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.logging.NullTCLogger;
 import com.tc.logging.TCLogger;
 import com.tc.management.ClientLockStatManager;
+import com.tc.management.L1Info;
 import com.tc.object.lockmanager.api.TestRemoteLockManager.LockResponder;
 import com.tc.object.lockmanager.impl.ClientLockManagerImpl;
+import com.tc.object.lockmanager.impl.ThreadLockManagerImpl;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
 import com.tc.object.session.TestSessionManager;
 import com.tc.object.tx.TimerSpec;
+import com.tc.util.Assert;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tc.util.runtime.ThreadIDMap;
+import com.tc.util.runtime.ThreadIDMapUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import junit.framework.TestCase;
@@ -42,9 +49,7 @@ import junit.framework.TestCase;
  */
 public class ClientLockManagerTest extends TestCase {
   private ClientLockManager     lockManager;
-
   private TestRemoteLockManager rmtLockManager;
-
   private TestSessionManager    sessionManager;
 
   protected void setUp() throws Exception {
@@ -789,6 +794,148 @@ public class ClientLockManagerTest extends TestCase {
     lockManager.unlock(lid0, tid0);
     ThreadUtil.reallySleep(500);
     assertTrue(done[0]);
+  }
+
+  public void testHeldAndPendingLocksInThreadDump() throws Exception {
+
+    final ThreadIDMap threadIDMap = ThreadIDMapUtil.getInstance();
+    final ThreadLockManager threadLockManager = new ThreadLockManagerImpl(lockManager, threadIDMap);
+
+    final L1Info l1info = new L1Info(lockManager, threadIDMap);
+    final LockID lid0 = threadLockManager.lockIDFor("Locky0");
+    final LockID lid1 = threadLockManager.lockIDFor("Locky1");
+    final LockID lid2 = threadLockManager.lockIDFor("Locky2");
+    final CyclicBarrier txnBarrier = new CyclicBarrier(3);
+
+    final boolean[] done = new boolean[3];
+    done[0] = false;
+    done[1] = false;
+    done[2] = false;
+
+    Thread.currentThread().setName("terracotta_thread");
+    threadLockManager.lock(lid0, LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE,
+                           LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    System.out.println("XXX TERRA Thread : Got WRITE lock0 for tx0");
+
+    threadLockManager.lock(lid0, LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE,
+                           LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    System.out.println("XXX TERRA Thread : Again .. Got WRITE lock0 for tx0");
+
+    threadLockManager.lock(lid1, LockLevel.READ, LockContextInfo.NULL_LOCK_OBJECT_TYPE,
+                           LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    System.out.println("XXX TERRA Thread : Got READ lock1 for tx0");
+
+    Thread t1 = new Thread("yahoo_thread") {
+      public void run() {
+        threadLockManager.lock(lid1, LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE,
+                               LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+        System.out.println("XXX YAHOO Thread : Got READ lock1 for tx1");
+
+        threadLockManager.lock(lid0, LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE,
+                               LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+        System.out.println("XXX YAHOO Thread : Got WRITE lock0 for tx1");
+
+        try {
+          txnBarrier.barrier();
+        } catch (Exception e) {
+          throw new AssertionError(e);
+        }
+
+        threadLockManager.unlock(lid0);
+        System.out.println("XXX YAHOO Thread : Released WRITE lock1 for tx1");
+        threadLockManager.unlock(lid1);
+        System.out.println("XXX YAHOO Thread : Released READ lock1 for tx1");
+
+        done[1] = true;
+      }
+    };
+
+    Thread t2 = new Thread("google_thread") {
+      public void run() {
+        threadLockManager.lock(lid2, LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE,
+                               LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+        System.out.println("XXX GOOGL Thread : Got WRITE lock2 for tx2");
+
+        try {
+          txnBarrier.barrier();
+        } catch (Exception e) {
+          throw new AssertionError(e);
+        }
+
+        threadLockManager.lock(lid1, LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE,
+                               LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+        System.out.println("XXX GOOGL Thread : Got WRITE lock0 for tx2");
+        done[2] = true;
+      }
+    };
+
+    t1.start();
+    t2.start();
+    ThreadUtil.reallySleep(500);
+
+    assertFalse(done[1]);
+    assertFalse(done[2]);
+
+    // pauseAndStart();
+    l1info.takeThreadDump(System.currentTimeMillis());
+
+    Map heldLocksMap = new HashMap();
+    Map pendingLocksMap = new HashMap();
+    l1info.getHeldLocksAndPendingLocksByThreadID(heldLocksMap, pendingLocksMap);
+
+    System.out.println("XXX HELD locks:" + heldLocksMap);
+    System.out.println("XXX WAIT locks:" + pendingLocksMap);
+    // this.lockManager.unpause();
+
+    Assert.eval(heldLocksMap.size() == 2);
+    for (Iterator i = heldLocksMap.values().iterator(); i.hasNext();) {
+      String val = (String) i.next();
+      Assert.eval((val.indexOf("Locky2") > 0) || ((val.indexOf("Locky0") > 0) && (val.indexOf("Locky1") > 0)));
+    }
+
+    Assert.eval(pendingLocksMap.size() == 1);
+    for (Iterator i = pendingLocksMap.values().iterator(); i.hasNext();) {
+      String val = (String) i.next();
+      Assert.eval(val.indexOf("Locky1") > 0);
+    }
+
+    threadLockManager.unlock(lid0);
+    System.out.println("XXX TERRA Thread : Released WRITE lock0 for tx0");
+    ThreadUtil.reallySleep(500);
+    assertFalse(done[1]);
+    assertFalse(done[2]);
+
+    threadLockManager.unlock(lid0);
+    System.out.println("XXX TERRA  Thread : Again Released WRITE lock0 for tx0");
+    threadLockManager.unlock(lid1);
+    System.out.println("XXX TERRA Thread : Released READ lock1 for tx0");
+    ThreadUtil.reallySleep(500);
+    assertFalse(done[1]);
+    assertFalse(done[2]);
+
+    txnBarrier.barrier();
+
+    ThreadUtil.reallySleep(5000);
+    assertTrue(done[1]);
+    assertTrue(done[2]);
+
+    // pauseAndStart();
+    l1info.takeThreadDump(System.currentTimeMillis());
+
+    heldLocksMap.clear();
+    pendingLocksMap.clear();
+    l1info.getHeldLocksAndPendingLocksByThreadID(heldLocksMap, pendingLocksMap);
+    System.out.println("XXX HELD locks:" + heldLocksMap);
+    System.out.println("XXX WAIT locks:" + pendingLocksMap);
+    // this.lockManager.unpause();
+
+    Assert.eval(heldLocksMap.size() == 1);
+    for (Iterator i = heldLocksMap.values().iterator(); i.hasNext();) {
+      String val = (String) i.next();
+      Assert.eval((val.indexOf("Locky1") > 0) && (val.indexOf("Locky2") > 0));
+    }
+
+    Assert.eval(pendingLocksMap.size() == 0);
   }
 
   public void testBasicUnlock() throws Exception {

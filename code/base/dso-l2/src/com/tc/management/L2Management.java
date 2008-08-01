@@ -16,8 +16,6 @@ import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.object.ObjectManagementMonitor;
 import com.tc.management.beans.object.ServerDBBackup;
 import com.tc.net.protocol.tcm.ChannelID;
-import com.tc.properties.TCPropertiesImpl;
-import com.tc.properties.TCPropertiesConsts;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.statistics.beans.StatisticsMBeanNames;
 import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
@@ -68,8 +66,11 @@ public class L2Management extends TerracottaManagement {
   private final ServerDBBackup                 serverDbBackupBean;
 
   public L2Management(TCServerInfoMBean tcServerInfo, LockStatisticsMonitorMBean lockStatistics,
-                      StatisticsAgentSubSystemImpl statisticsAgentSubSystem, StatisticsGatewayMBeanImpl statisticsGateway, L2TVSConfigurationSetupManager configurationSetupManager, TCDumper tcDumper,
-                      InetAddress bindAddr, int port) throws MBeanRegistrationException, NotCompliantMBeanException, InstanceAlreadyExistsException {
+                      StatisticsAgentSubSystemImpl statisticsAgentSubSystem,
+                      StatisticsGatewayMBeanImpl statisticsGateway,
+                      L2TVSConfigurationSetupManager configurationSetupManager, TCDumper tcDumper,
+                      InetAddress bindAddr, int port) throws MBeanRegistrationException, NotCompliantMBeanException,
+      InstanceAlreadyExistsException {
     this.tcServerInfo = tcServerInfo;
     this.lockStatistics = lockStatistics;
     this.configurationSetupManager = configurationSetupManager;
@@ -96,7 +97,7 @@ public class L2Management extends TerracottaManagement {
     // LKC-2990 and LKC-3171: Remove the JMX generic optional logging
     java.util.logging.Logger jmxLogger = java.util.logging.Logger.getLogger("javax.management.remote.generic");
     jmxLogger.setLevel(java.util.logging.Level.OFF);
-    
+
     // DEV-1304: ClientCommunicatorAdmin uses a different logger
     jmxLogger = java.util.logging.Logger.getLogger("javax.management.remote.misc");
     jmxLogger.setLevel(java.util.logging.Level.OFF);
@@ -237,9 +238,7 @@ public class L2Management extends TerracottaManagement {
     }
     mBeanServer.registerMBean(statisticsGateway, StatisticsMBeanNames.STATISTICS_GATEWAY);
 
-    if (TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.TC_MANAGEMENT_TEST_MBEANS_ENABLED)) {
-      mBeanServer.registerMBean(new L2Dumper(tcDumper), L2MBeanNames.DUMPER);
-    }
+    mBeanServer.registerMBean(new L2Dumper(tcDumper, mBeanServer), L2MBeanNames.DUMPER);
   }
 
   private void unregisterMBeans() throws InstanceNotFoundException, MBeanRegistrationException {
@@ -253,8 +252,7 @@ public class L2Management extends TerracottaManagement {
     }
     mBeanServer.unregisterMBean(StatisticsMBeanNames.STATISTICS_GATEWAY);
 
-    if (TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.TC_MANAGEMENT_TEST_MBEANS_ENABLED)) {
-      mBeanServer.unregisterMBean(L2MBeanNames.DUMPER);
-    }
+    mBeanServer.unregisterMBean(L2MBeanNames.DUMPER);
+
   }
 }

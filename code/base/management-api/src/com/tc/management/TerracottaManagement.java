@@ -131,7 +131,7 @@ public abstract class TerracottaManagement {
   public static ObjectName addNodeInfo(ObjectName objName, TCSocketAddress addr) throws MalformedObjectNameException {
     if (objName.getKeyProperty(MBeanKeys.MBEAN_NODE) != null) { return objName; }
     StringBuffer sb = new StringBuffer(objName.getCanonicalName());
-    if(objName.getKeyProperty(NODE_PREFIX_KEY) == null) {
+    if (objName.getKeyProperty(NODE_PREFIX_KEY) == null) {
       sb.append(COMMA).append(NODE_PREFIX);
     }
     addNodeInfo(sb, addr);
@@ -165,6 +165,11 @@ public abstract class TerracottaManagement {
   public static final Set getAllSessionMonitorMBeans(MBeanServerConnection mbs) throws MalformedObjectNameException,
       NullPointerException, IOException {
     return mbs.queryNames(new ObjectName(MBeanNames.SESSION_INTERNAL.getCanonicalName() + ",*"), null);
+  }
+
+  public static final Set getAllL1DumperMBeans(MBeanServerConnection mbs) throws MalformedObjectNameException,
+      NullPointerException, IOException {
+    return mbs.queryNames(new ObjectName(MBeanNames.L1DUMPER_INTERNAL.getCanonicalName() + ",*"), null);
   }
 
   public static final SessionMonitorMBean getClientSessionMonitorMBean(MBeanServerConnection mbs,
