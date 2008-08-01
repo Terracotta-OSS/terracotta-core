@@ -4,6 +4,10 @@
  */
 package com.tctest;
 
+import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,6 +15,15 @@ public class ClientMemoryReaperSynchronousWriteTest extends TransparentTestBase 
 
   private static final int NODE_COUNT    = 2;
   private static final int THREADS_COUNT = 2;
+
+  public ClientMemoryReaperSynchronousWriteTest() {
+    // workaround for MNK-671 : disabling cache manager and other logging for this test alone
+    TCProperties tcProps = TCPropertiesImpl.getProperties();
+    tcProps.setProperty(TCPropertiesConsts.L2_CACHEMANAGER_LOGGING_ENABLED, "false");
+    tcProps.setProperty(TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED, "false");
+    tcProps.setProperty(TCPropertiesConsts.L1_CACHEMANAGER_LOGGING_ENABLED, "false");
+    tcProps.setProperty(TCPropertiesConsts.L1_TRANSACTIONMANAGER_LOGGING_ENABLED, "false");
+  }
 
   protected Class getApplicationClass() {
     return ClientMemoryReaperTestApp.class;
@@ -25,5 +38,15 @@ public class ClientMemoryReaperSynchronousWriteTest extends TransparentTestBase 
     Map attributes = new HashMap();
     attributes.put(ClientMemoryReaperTestApp.SYNCHRONOUS_WRITE, "true");
     return attributes;
+  }
+
+  protected void tearDown() throws Exception {
+    // workaround for MNK-671 : re-enabling cache manager logging
+    TCProperties tcProps = TCPropertiesImpl.getProperties();
+    tcProps.setProperty(TCPropertiesConsts.L2_CACHEMANAGER_LOGGING_ENABLED, "true");
+    tcProps.setProperty(TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED, "true");
+    tcProps.setProperty(TCPropertiesConsts.L1_CACHEMANAGER_LOGGING_ENABLED, "true");
+    tcProps.setProperty(TCPropertiesConsts.L1_TRANSACTIONMANAGER_LOGGING_ENABLED, "true");
+    super.tearDown();
   }
 }
