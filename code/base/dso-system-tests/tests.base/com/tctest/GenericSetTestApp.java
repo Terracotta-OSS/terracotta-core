@@ -135,6 +135,7 @@ public class GenericSetTestApp extends GenericTestApp {
     if (v == LITERAL_VARIANT) return;
 
     if (validate) {
+      Assert.assertEquals(1, set.size());
       Foo f = (Foo) set.iterator().next();
       Assert.assertEquals(set.getClass().getName(), "id1", f.id);
     } else {
@@ -239,11 +240,11 @@ public class GenericSetTestApp extends GenericTestApp {
 
       // ensure that the array is bigger than the set size
       // This test case makes sure the array get's null terminated
-      Assert.assertEquals(1,  set.size());
-      Assert.assertEquals(2,  array.length);
+      Assert.assertEquals(1, set.size());
+      Assert.assertEquals(2, array.length);
 
       // make sure the array contains no nulls
-      synchronized(array) {
+      synchronized (array) {
         Arrays.fill(array, new Object());
       }
 
@@ -253,7 +254,6 @@ public class GenericSetTestApp extends GenericTestApp {
       }
     }
   }
-
 
   // Iterator interface testing methods.
   void testIteratorRemove(Set set, boolean validate, int v) {

@@ -12,8 +12,8 @@ import com.tc.object.TraversedReferences;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
-import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.object.tx.optimistic.TCObjectClone;
@@ -49,10 +49,11 @@ public class HashSetApplicator extends BaseApplicator {
     }
   }
 
-  protected void apply(ClientObjectManager objectManager, Set set, int method, Object[] params) throws ClassNotFoundException {
+  protected void apply(ClientObjectManager objectManager, Set set, int method, Object[] params)
+      throws ClassNotFoundException {
     switch (method) {
       case SerializationUtil.ADD:
-        Object v = getValue(params);
+        Object v = params[0];
         Object value = v instanceof ObjectID ? objectManager.lookupObject((ObjectID) v) : v;
         set.add(value);
         break;
@@ -78,11 +79,6 @@ public class HashSetApplicator extends BaseApplicator {
       retParams.add(params[i] instanceof ObjectID ? objectManager.lookupObject((ObjectID) params[i]) : params[i]);
     }
     return retParams;
-  }
-
-  private Object getValue(Object[] params) {
-    // hack to deal with trove set which replaces on set unlike java Set which does not
-    return params.length == 2 ? params[1] : params[0];
   }
 
   public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
