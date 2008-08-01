@@ -59,6 +59,35 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     rt = new RetrieverThreads(Thread.currentThread().getThreadGroup(), manager);
   }
 
+  public void testManagerState() {
+    try {
+      manager.starting();
+      throw new AssertionError("Started even not PAUSED");
+    } catch (AssertionError e) {
+      // expected assertion
+    }
+
+    manager.pause();
+
+    try {
+      manager.pause();
+      throw new AssertionError("PAUSED even it was in PAUSE state");
+    } catch (AssertionError e) {
+      // expected assertion
+    }
+    
+    try{
+      manager.unpause();
+      throw new AssertionError("UNPAUSED without state being STARTING");
+    }catch (AssertionError e) {
+      // expected assertion
+    }
+    
+    //state is paused
+    manager.starting();
+    manager.unpause();
+  }
+
   public void testDNACacheClearing() {
     Collection dnas;
     int dnaCollectionCount = 4;
