@@ -47,7 +47,7 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
   protected void apply(ObjectID objectID, int method, Object[] params, BackReferences includeIDs) {
     switch (method) {
       case SerializationUtil.ADD:
-        Object v = getValue(params);
+        Object v = params[0];
         addChangeToCollector(objectID, v, includeIDs);
         references.add(v);
         break;
@@ -65,15 +65,6 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
     }
   }
 
-  private Object getValue(Object[] params) {
-    // hack for trove sets which replace the old set value (java ones do the opposite) clean this up
-    if (params.length == 2) {
-      if (!params[0].equals(ObjectID.NULL_ID)) return params[0];
-      else return params[1];
-    }
-    return params[0];
-  }
-
   private void addChangeToCollector(ObjectID objectID, Object newValue, BackReferences includeIDs) {
     if (newValue instanceof ObjectID) {
       getListener().changed(objectID, null, (ObjectID) newValue);
@@ -88,6 +79,7 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
     }
   }
 
+  @Override
   protected void addAllObjectReferencesTo(Set refs) {
     addAllObjectReferencesFromIteratorTo(this.references.iterator(), refs);
   }
@@ -115,11 +107,13 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
     return SET_TYPE;
   }
 
+  @Override
   protected void basicWriteTo(ObjectOutput out) throws IOException {
     // for removing warning
     if (false) throw new IOException();
   }
 
+  @Override
   protected boolean basicEquals(LogicalManagedObjectState o) {
     SetManagedObjectState mo = (SetManagedObjectState) o;
     return references.equals(mo.references);

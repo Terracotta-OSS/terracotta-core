@@ -334,16 +334,8 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.THASHMAP_PUT_LOG));
   }
 
-  public void addTHashSetAddLogSpec(String name) {
-    methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.THASHSET_ADD_LOG));
-  }
-
-  public void addTHashRemoveAtLogSpec(String name) {
-    methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.THASH_REMOVE_AT_LOG));
-  }
-
-  public void addTHashSetRemoveAtLogSpec(String name) {
-    // Do nothing it's taken care of in the add method
+  public void addTObjectHashRemoveAtLogSpec(String name) {
+    methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.TOBJECTHASH_REMOVE_AT_LOG));
   }
 
   public void addHashtableClearLogSpec(String name) {

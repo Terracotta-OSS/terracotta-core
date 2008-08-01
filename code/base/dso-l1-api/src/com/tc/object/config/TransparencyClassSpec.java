@@ -9,7 +9,6 @@ import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.aspectwerkz.reflect.MethodInfo;
-
 import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.ManagerHelper;
 import com.tc.object.bytecode.MethodAdapter;
@@ -21,10 +20,10 @@ import com.tc.object.logging.InstrumentationLogger;
  */
 public interface TransparencyClassSpec {
 
-  public static final byte            NOT_SET                    = 0x00;
-  public static final byte            NOT_ADAPTABLE              = 0x01;
-  public static final byte            ADAPTABLE                  = 0x02;
-  public static final byte            PORTABLE                   = 0x03;
+  public static final byte NOT_SET       = 0x00;
+  public static final byte NOT_ADAPTABLE = 0x01;
+  public static final byte ADAPTABLE     = 0x02;
+  public static final byte PORTABLE      = 0x03;
 
   /**
    * @param classInfo Class information
@@ -34,6 +33,7 @@ public interface TransparencyClassSpec {
 
   /**
    * Add root field
+   * 
    * @param variableName Field name
    * @param rootName Root name
    * @return this
@@ -42,6 +42,7 @@ public interface TransparencyClassSpec {
 
   /**
    * Add root field
+   * 
    * @param variableName Field name
    * @param rootName Root name
    * @param dsoFinal True if final
@@ -51,12 +52,14 @@ public interface TransparencyClassSpec {
 
   /**
    * Mark method as not instrumented
+   * 
    * @param methodName
    */
   public void addDoNotInstrument(String methodName);
 
   /**
    * Check whether method is marked as do not instrument
+   * 
    * @param methodName Method name
    * @return True if do not instrument
    */
@@ -64,31 +67,34 @@ public interface TransparencyClassSpec {
 
   /**
    * Mark this class spec as being preinstrumented.
+   * 
    * @return this
    */
   public TransparencyClassSpec markPreInstrumented();
 
   /**
    * Check whether this class is preinstrumented
+   * 
    * @return True if preinstrumented
    */
   public boolean isPreInstrumented();
 
   /**
    * Mark this class spec as foreign.
+   * 
    * @return this
    */
   public TransparencyClassSpec markForeign();
 
   /**
-   * Check whether this class is not included in the bootjar
-   * by default. When a class is declared in the <additional-boot-jar-classes/>
-   * section of the tc-config, then it is marked as foreign.
+   * Check whether this class is not included in the bootjar by default. When a class is declared in the
+   * <additional-boot-jar-classes/> section of the tc-config, then it is marked as foreign.
    */
   public boolean isForeign();
 
   /**
    * Get lock definitions for member
+   * 
    * @param memberInfo Member
    * @return Locks
    */
@@ -96,6 +102,7 @@ public interface TransparencyClassSpec {
 
   /**
    * Get auto lock definition for member
+   * 
    * @param memberInfo Member
    * @return Auto lock
    */
@@ -103,6 +110,7 @@ public interface TransparencyClassSpec {
 
   /**
    * Examine lock definitions to find the the one that makes the method autolocked
+   * 
    * @param lds Lock defs
    * @return null if no LockDefinitions exists that makes the method autolocked.
    */
@@ -110,6 +118,7 @@ public interface TransparencyClassSpec {
 
   /**
    * Find lock definition that makes method not autolocked
+   * 
    * @param lds Lock defs
    * @return Lock def or null if none
    */
@@ -117,6 +126,7 @@ public interface TransparencyClassSpec {
 
   /**
    * Add support method creator
+   * 
    * @param creator Creator
    * @return this
    */
@@ -124,6 +134,7 @@ public interface TransparencyClassSpec {
 
   /**
    * Add distributed method call
+   * 
    * @param methodName Method
    * @param description Method signature
    * @param runOnAllNodes True to run on all nodes, false for local
@@ -133,6 +144,7 @@ public interface TransparencyClassSpec {
 
   /**
    * Add a transient field
+   * 
    * @param variableName Field name
    * @return this
    */
@@ -140,6 +152,7 @@ public interface TransparencyClassSpec {
 
   /**
    * Add method adapter
+   * 
    * @param method Method name
    * @param adapter The adapter
    * @return this
@@ -148,12 +161,14 @@ public interface TransparencyClassSpec {
 
   /**
    * Get the class name for this spec
+   * 
    * @return Name
    */
   public String getClassName();
 
   /**
    * Call support method creators and add to the class via the visitor
+   * 
    * @param classVisitor Class visitor
    */
   public void createClassSupportMethods(ClassVisitor classVisitor);
@@ -175,6 +190,7 @@ public interface TransparencyClassSpec {
 
   /**
    * Check whether a field is a root in this class
+   * 
    * @param fieldInfo Field
    * @return True if root
    */
@@ -182,6 +198,7 @@ public interface TransparencyClassSpec {
 
   /**
    * Check whether a field is a root in this class
+   * 
    * @param fieldInfo Field
    * @return True if root
    */
@@ -189,6 +206,7 @@ public interface TransparencyClassSpec {
 
   /**
    * Check whether a field is a DSO final root
+   * 
    * @param fieldInfo Field
    * @return True if DSO final root
    */
@@ -196,6 +214,7 @@ public interface TransparencyClassSpec {
 
   /**
    * Check whether a field is transient
+   * 
    * @param access Access modifiers
    * @param classInfo Class info
    * @param fieldName Field name
@@ -205,6 +224,7 @@ public interface TransparencyClassSpec {
 
   /**
    * Check whether a field is volatile
+   * 
    * @param access Access modifiers
    * @param classInfo Class info
    * @param fieldName Field name
@@ -220,6 +240,7 @@ public interface TransparencyClassSpec {
 
   /**
    * Check whether this method is a locked method
+   * 
    * @param memberInfo Method
    * @return True if locked
    */
@@ -227,6 +248,7 @@ public interface TransparencyClassSpec {
 
   /**
    * Get lock definition for locked method
+   * 
    * @param access Access modifiers
    * @param lds Lock defs
    * @return Lock definition
@@ -235,6 +257,7 @@ public interface TransparencyClassSpec {
 
   /**
    * Check if has custom method adapter
+   * 
    * @param memberInfo Method
    * @return True if has custom adapter
    */
@@ -242,6 +265,7 @@ public interface TransparencyClassSpec {
 
   /**
    * Get custom method adapter
+   * 
    * @param managerHelper Manager helper
    * @param access Access modifiers
    * @param methodName Method name
@@ -269,132 +293,140 @@ public interface TransparencyClassSpec {
 
   /**
    * Make this class extend a logically managed class
+   * 
    * @param superClassSpec The logically managed super class
    */
   public void moveToLogical(TransparencyClassSpec superClassSpec);
 
   /**
    * Add logical method adapter to always log access to method
+   * 
    * @param name Method signature
    */
   public void addAlwaysLogSpec(String name);
 
   /**
    * Add logical method adapter to log if method returns true
+   * 
    * @param name Method signature
    */
   public void addIfTrueLogSpec(String name);
 
   /**
    * Add logical method adapter to log calls to Set.iterator() impls
+   * 
    * @param name Method signature
    */
   public void addSetIteratorWrapperSpec(String name);
 
   /**
    * Add logical method adapter to log calls to Set.subSet() on impls
+   * 
    * @param name Method signature
    */
   public void addViewSetWrapperSpec(String name);
 
   /**
    * Add logical method adapter to log calls to Map.entrySet() on Map impls
+   * 
    * @param name Method signature
    */
   public void addEntrySetWrapperSpec(String name);
 
   /**
    * Add logical method adapter to log calls to Map.keySet() on Map impls
+   * 
    * @param name Method signature
    */
   public void addKeySetWrapperSpec(String name);
 
   /**
    * Add logical method adapter to log calls to Map.values() on Map impls
+   * 
    * @param name Method signature
    */
   public void addValuesWrapperSpec(String name);
 
   /**
    * Add logical method adapter to log calls to Map.put() on Map impls
+   * 
    * @param name Method signature
    */
   public void addHashMapPutLogSpec(String name);
 
   /**
    * Add logical method adapter to log calls to Hashtable.put()
+   * 
    * @param name Method signature
    */
   public void addHashtablePutLogSpec(String name);
 
   /**
    * Add logical method adapter to log calls to THashMap.put()
+   * 
    * @param name Method signature
    */
   public void addTHashMapPutLogSpec(String name);
 
   /**
-   * Add logical method adapter to log calls to THashSet.add()
+   * Add logical method adapter to log calls to TObjectHash.removeAt()
+   * 
    * @param name Method signature
    */
-  public void addTHashSetAddLogSpec(String name);
-
-  /**
-   * Add logical method adapter to log calls to THash.removeAt()
-   * @param name Method signature
-   */
-  public void addTHashRemoveAtLogSpec(String name);
-
-  /**
-   * Add logical method adapter to log calls to THashSet.removeAt()
-   * @param name Method signature
-   */
-  public void addTHashSetRemoveAtLogSpec(String name);
+  public void addTObjectHashRemoveAtLogSpec(String name);
 
   /**
    * Add logical method adapter to log calls to Hashtable.clear()
+   * 
    * @param name Method signature
    */
   public void addHashtableClearLogSpec(String name);
 
   /**
    * Add logical method adapter to log calls to Hashtable.remove()
+   * 
    * @param name Method signature
    */
   public void addHashtableRemoveLogSpec(String name);
 
   /**
    * Add logical method adapter to log calls to HashMap.remove()
+   * 
    * @param name Method signature
    */
   public void addHashMapRemoveLogSpec(String name);
 
   /**
    * Add logical method adapter to log calls to System.arraycopy()
+   * 
    * @param name Method signature
    */
   public void addArrayCopyMethodCodeSpec(String name);
 
   /**
    * Add logical method adapter to disable wait/notify code
+   * 
    * @param name Method signature
    */
   public void disableWaitNotifyCodeSpec(String name);
 
   /**
    * Add logical method adapter to log calls to Date.setTime()
+   * 
    * @param name Method signature
    */
   public void addDateMethodLogSpec(String name);
 
   /**
    * Add logical method adapter to log calls to Date.setTime() in subclasses
+   * 
    * @param name Method signature
    */
   public void addDateMethodLogSpec(String name, int methodSpec);
 
   /**
    * Add method code specification
+   * 
    * @param name Method name
    * @param codeSpec Transparency spec
    */
@@ -402,6 +434,7 @@ public interface TransparencyClassSpec {
 
   /**
    * Set honor volatile flag
+   * 
    * @param b New flag value
    * @return this
    */
@@ -419,6 +452,7 @@ public interface TransparencyClassSpec {
 
   /**
    * Set honor transient flag
+   * 
    * @param b New flag value
    * @return this
    */
@@ -426,6 +460,7 @@ public interface TransparencyClassSpec {
 
   /**
    * Set call constructor on load flag
+   * 
    * @param b New value
    * @return this
    */
@@ -433,6 +468,7 @@ public interface TransparencyClassSpec {
 
   /**
    * Set execute script on load flag
+   * 
    * @param script Script to load
    * @return this
    */
@@ -440,6 +476,7 @@ public interface TransparencyClassSpec {
 
   /**
    * Set method to call on load
+   * 
    * @param method Method name
    * @return this
    */
@@ -467,6 +504,7 @@ public interface TransparencyClassSpec {
 
   /**
    * Find code spec for method
+   * 
    * @param methodName Method name
    * @param description Method signature
    * @param isAutolock True if autolocked
@@ -501,19 +539,21 @@ public interface TransparencyClassSpec {
 
   /**
    * Set to use non default constructor
+   * 
    * @param useNonDefaultConstructor True to use non-default
    */
   public void setUseNonDefaultConstructor(boolean useNonDefaultConstructor);
 
-
   /**
    * Set instrumentation action
+   * 
    * @param action Action constants defined in TransparencyClassSpecImpl
    */
   public void setInstrumentationAction(byte action);
 
   /**
    * Get instrumentation action
+   * 
    * @return Action code ADAPTABLE, etc
    */
   public byte getInstrumentationAction();
@@ -530,36 +570,42 @@ public interface TransparencyClassSpec {
 
   /**
    * Get method to call prior to create
+   * 
    * @return Method name
    */
   public String getPreCreateMethod();
 
   /**
    * Get method to call post-create
+   * 
    * @return Method name
    */
   public String getPostCreateMethod();
 
   /**
    * Set method to call pre-create
+   * 
    * @param preCreateMethod Method name
    */
   public void setPreCreateMethod(String preCreateMethod);
 
   /**
    * Set method to call post-create
+   * 
    * @param postCreateMethod Method name
    */
   public void setPostCreateMethod(String postCreateMethod);
 
   /**
    * Set custom class adapter factory
+   * 
    * @param customClassAdapter Custom factory
    */
   public void setCustomClassAdapter(ClassAdapterFactory customClassAdapter);
 
   /**
    * Get custom class adapter factory
+   * 
    * @return Adapter factory
    */
   public ClassAdapterFactory getCustomClassAdapter();
@@ -571,11 +617,11 @@ public interface TransparencyClassSpec {
 
   /**
    * Get spec for super class
+   * 
    * @param superName Super class name
    * @return Class spec for super class
    */
   public TransparencyClassSpec getClassSpec(String superName);
-
 
   /**
    * The supplied spec will be returned if there exists no specific code spec for particular methods

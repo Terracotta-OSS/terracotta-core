@@ -577,9 +577,11 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     // "* org.apache.commons.collections.FastHashMap*.isEmpty(..)",
     // "* org.apache.commons.collections.FastHashMap*.size(..)" });
 
+    spec = getOrCreateSpec("gnu.trove.TObjectHash");
+    spec.addTObjectHashRemoveAtLogSpec(SerializationUtil.TROVE_REMOVE_AT_SIGNATURE);
+
     spec = getOrCreateSpec("gnu.trove.THashMap", "com.tc.object.applicator.HashMapApplicator");
     spec.addTHashMapPutLogSpec(SerializationUtil.PUT_SIGNATURE);
-    spec.addTHashRemoveAtLogSpec(SerializationUtil.TROVE_REMOVE_AT_SIGNATURE);
     spec.addAlwaysLogSpec(SerializationUtil.CLEAR_SIGNATURE);
     spec.addEntrySetWrapperSpec(SerializationUtil.ENTRY_SET_SIGNATURE);
     spec.addKeySetWrapperSpec(SerializationUtil.KEY_SET_SIGNATURE);
@@ -587,8 +589,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     spec.addMethodAdapter(SerializationUtil.TRANSFORM_VALUES_SIGNATURE, new THashMapAdapter.TransformValuesAdapter());
 
     spec = getOrCreateSpec("gnu.trove.THashSet", "com.tc.object.applicator.HashSetApplicator");
-    spec.addTHashSetAddLogSpec(SerializationUtil.ADD_SIGNATURE);
-    spec.addTHashSetRemoveAtLogSpec(SerializationUtil.REMOVE_SIGNATURE);
+    spec.addIfTrueLogSpec(SerializationUtil.ADD_SIGNATURE);
     spec.addAlwaysLogSpec(SerializationUtil.CLEAR_SIGNATURE);
     spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
 

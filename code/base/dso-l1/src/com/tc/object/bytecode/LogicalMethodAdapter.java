@@ -1,8 +1,8 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.bytecode;
-
 
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.Label;
@@ -79,8 +79,8 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
       case MethodSpec.HASHTABLE_REMOVE_LOG:
         createHashMapRemoveWrapperMethod(classVisitor, false);
         break;
-      case MethodSpec.THASH_REMOVE_AT_LOG:
-        createTHashRemoveAtWrapperMethod(classVisitor);
+      case MethodSpec.TOBJECTHASH_REMOVE_AT_LOG:
+        createTObjectHashRemoveAtWrapperMethod(classVisitor);
         break;
       case MethodSpec.HASHMAP_PUT_LOG:
         createHashPutWrapperMethod(classVisitor, true);
@@ -90,9 +90,6 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
         break;
       case MethodSpec.HASHTABLE_CLEAR_LOG:
         createAlwaysLogWrapperMethod(classVisitor, false);
-        break;
-      case MethodSpec.THASHSET_ADD_LOG:
-        createTHashSetAddWrapperMethod(classVisitor);
         break;
       case MethodSpec.THASHMAP_PUT_LOG:
         createTHashMapPutWrapperMethod(classVisitor);
@@ -121,7 +118,7 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
 
   }
 
-  private void createTHashRemoveAtWrapperMethod(ClassVisitor classVisitor) {
+  private void createTObjectHashRemoveAtWrapperMethod(ClassVisitor classVisitor) {
     MethodVisitor mv = classVisitor.visitMethod(wrapperAccess, methodName, description, signature, exceptions);
     addCheckWriteAccessInstrumentedCode(mv, true);
     mv.visitInsn(ACONST_NULL);
@@ -250,87 +247,6 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
     mv.visitMaxs(5, 1);
   }
 
-  private void createTHashSetAddWrapperMethod(ClassVisitor classVisitor) {
-    createTHashSetRemoveMethod(classVisitor);
-    MethodVisitor mv = classVisitor.visitMethod(wrapperAccess, methodName, description, signature, exceptions);
-    addCheckWriteAccessInstrumentedCode(mv, true);
-    mv.visitInsn(ACONST_NULL);
-    mv.visitVarInsn(ASTORE, 2);
-
-    ByteCodeUtil.pushThis(mv);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitMethodInsn(INVOKEVIRTUAL, ownerSlashes, "contains", "(Ljava/lang/Object;)Z");
-    Label l2 = new Label();
-    mv.visitJumpInsn(IFEQ, l2);
-    ByteCodeUtil.pushThis(mv);
-    mv.visitFieldInsn(GETFIELD, ownerSlashes, "_set", "[Ljava/lang/Object;");
-    ByteCodeUtil.pushThis(mv);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitMethodInsn(INVOKEVIRTUAL, ownerSlashes, "index", "(Ljava/lang/Object;)I");
-    mv.visitInsn(AALOAD);
-    mv.visitVarInsn(ASTORE, 2);
-    mv.visitLabel(l2);
-    ByteCodeUtil.pushThis(mv);
-    Type[] params = Type.getArgumentTypes(description);
-    for (int i = 0; i < params.length; i++) {
-      mv.visitVarInsn(params[i].getOpcode(ILOAD), i + 1);
-    }
-    mv.visitMethodInsn(INVOKEVIRTUAL, ownerSlashes, getNewName(), description);
-    Type ret = Type.getReturnType(description);
-    mv.visitVarInsn(ret.getOpcode(ISTORE), 3);
-
-    ByteCodeUtil.pushThis(mv);
-    mv.visitLdcInsn(methodName + description);
-    mv.visitLdcInsn(new Integer(2));
-    mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
-    mv.visitInsn(DUP);
-    int count = 0;
-    mv.visitLdcInsn(new Integer(count++));
-    mv.visitVarInsn(ALOAD, 2);
-    mv.visitInsn(AASTORE);
-
-    mv.visitInsn(DUP);
-    mv.visitLdcInsn(new Integer(count++));
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitInsn(AASTORE);
-
-    managerHelper.callManagerMethod("logicalInvoke", mv);
-
-    mv.visitVarInsn(ret.getOpcode(ILOAD), 3);
-    mv.visitInsn(ret.getOpcode(IRETURN));
-    mv.visitMaxs(0, 0);
-  }
-
-  private void createTHashSetRemoveMethod(ClassVisitor classVisitor) {
-    MethodVisitor mv = classVisitor.visitMethod(wrapperAccess, "removeAt", "(I)V", null, null);
-    addCheckWriteAccessInstrumentedCode(mv, true);
-    ByteCodeUtil.pushThis(mv);
-    mv.visitFieldInsn(GETFIELD, ownerSlashes, "_set", "[Ljava/lang/Object;");
-    mv.visitVarInsn(ILOAD, 1);
-    mv.visitInsn(AALOAD);
-    mv.visitVarInsn(ASTORE, 2);
-    ByteCodeUtil.pushThis(mv);
-    Type[] params = Type.getArgumentTypes("(I)V");
-    for (int i = 0; i < params.length; i++) {
-      mv.visitVarInsn(params[i].getOpcode(ILOAD), i + 1);
-    }
-    mv.visitMethodInsn(INVOKESPECIAL, "gnu/trove/TObjectHash", "removeAt", "(I)V");
-
-    ByteCodeUtil.pushThis(mv);
-
-    mv.visitLdcInsn("removeAt" + "(I)V");
-    mv.visitLdcInsn(new Integer(1));
-    mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
-    mv.visitInsn(DUP);
-    mv.visitLdcInsn(new Integer(0));
-    mv.visitVarInsn(ALOAD, 2);
-    mv.visitInsn(AASTORE);
-    managerHelper.callManagerMethod("logicalInvoke", mv);
-
-    mv.visitInsn(RETURN);
-    mv.visitMaxs(0, 0);
-  }
-
   private void createTHashMapPutWrapperMethod(ClassVisitor classVisitor) {
     MethodVisitor mv = classVisitor.visitMethod(wrapperAccess, methodName, description, signature, exceptions);
     addCheckWriteAccessInstrumentedCode(mv, true);
@@ -403,9 +319,7 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
     // record the logical action if this map managed
     Label notManaged = new Label();
     ByteCodeUtil.pushThis(mv);
-    mv
-        .visitMethodInsn(INVOKEVIRTUAL, ownerSlashes, ClassAdapterBase.MANAGED_METHOD,
-                         "()Lcom/tc/object/TCObject;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, ownerSlashes, ClassAdapterBase.MANAGED_METHOD, "()Lcom/tc/object/TCObject;");
     mv.visitJumpInsn(IFNULL, notManaged);
     ByteCodeUtil.pushThis(mv);
     mv.visitLdcInsn(originalMethodName + description);
