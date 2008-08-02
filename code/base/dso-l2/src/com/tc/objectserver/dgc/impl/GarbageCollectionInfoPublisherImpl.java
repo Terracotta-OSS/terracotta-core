@@ -1,12 +1,13 @@
 /*
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
  */
-package com.tc.objectserver.core.impl;
+package com.tc.objectserver.dgc.impl;
 
 import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
 
-import com.tc.objectserver.core.api.GarbageCollectionInfoPublisher;
-import com.tc.objectserver.core.api.GarbageCollectorEventListener;
+import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
+import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
+import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
 
 import java.util.Iterator;
 import java.util.List;

@@ -1,10 +1,10 @@
 /*
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
  */
-package com.tc.objectserver.impl;
+package com.tc.objectserver.dgc.impl;
 
 import com.tc.management.beans.object.ObjectManagementMonitor.GCComptroller;
-import com.tc.objectserver.core.api.GarbageCollector;
+import com.tc.objectserver.dgc.api.GarbageCollector;
 
 public class GCComptrollerImpl implements GCComptroller {
 

@@ -6,7 +6,8 @@ package com.tc.objectserver.core.impl;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.Filter;
-import com.tc.objectserver.core.api.GarbageCollector;
+import com.tc.objectserver.dgc.api.GarbageCollector;
+import com.tc.objectserver.dgc.impl.MarkAndSweepGarbageCollector;
 import com.tc.objectserver.impl.ObjectManagerConfig;
 import com.tc.objectserver.l1.api.TestClientStateManager;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;

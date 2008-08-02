@@ -2,13 +2,15 @@
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tc.objectserver.impl;
+package com.tc.objectserver.dgc.impl;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.core.api.Filter;
-import com.tc.objectserver.core.api.GarbageCollector;
-import com.tc.objectserver.core.api.GarbageCollectorEventListener;
+import com.tc.objectserver.dgc.api.GarbageCollector;
+import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
+import com.tc.objectserver.dgc.impl.GarbageCollectorThread;
+import com.tc.objectserver.impl.ObjectManagerConfig;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.concurrent.LifeCycleState;
@@ -27,11 +29,11 @@ public class GarbageCollectorThreadTest extends TestCase {
 
   private static final long TEST_DURATION_MILLIS   = 30000L;
 
-  private static final long YOUNG_GC_FREQUENCY     = 2000L;
+  private static final long YOUNG_GC_FREQUENCY     = 3000L;
 
   private static final long FULL_GC_FREQUENCY      = 10000L;
 
-  private static final long GC_FREQUENCY_TOLERANCE = 300L;
+  private static final long GC_FREQUENCY_TOLERANCE = 1000L;
 
   public void testYoungGCOn() {
 

@@ -6,8 +6,8 @@ package com.tc.objectserver.context;
 
 import com.tc.async.api.EventContext;
 import com.tc.object.ObjectID;
-import com.tc.objectserver.core.api.GarbageCollectionInfoPublisher;
-import com.tc.objectserver.core.impl.GarbageCollectionInfo;
+import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
+import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 
 import java.util.SortedSet;
 

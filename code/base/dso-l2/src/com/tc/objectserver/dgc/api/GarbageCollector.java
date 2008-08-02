@@ -2,10 +2,11 @@
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tc.objectserver.core.api;
+package com.tc.objectserver.dgc.api;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.context.GCResultContext;
+import com.tc.objectserver.core.api.Filter;
 import com.tc.text.PrettyPrintable;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.concurrent.LifeCycleState;

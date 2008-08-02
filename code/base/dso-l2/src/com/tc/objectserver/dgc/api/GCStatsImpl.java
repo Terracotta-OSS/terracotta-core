@@ -2,7 +2,7 @@
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tc.objectserver.impl;
+package com.tc.objectserver.dgc.api;
 
 import com.tc.objectserver.api.GCStats;
 import com.tc.util.State;

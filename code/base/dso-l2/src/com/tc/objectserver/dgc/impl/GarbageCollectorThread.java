@@ -2,15 +2,16 @@
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tc.objectserver.impl;
+package com.tc.objectserver.dgc.impl;
 
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.objectserver.core.api.GarbageCollector;
+import com.tc.objectserver.dgc.api.GarbageCollector;
+import com.tc.objectserver.impl.ObjectManagerConfig;
 import com.tc.util.concurrent.StoppableThread;
 
-class GarbageCollectorThread extends StoppableThread {
+public class GarbageCollectorThread extends StoppableThread {
   private static final TCLogger  logger   = TCLogging.getLogger(GarbageCollectorThread.class);
 
   private final GarbageCollector collector;
@@ -18,7 +19,7 @@ class GarbageCollectorThread extends StoppableThread {
   private final long             fullGCSleepTime;
   private final long             youngGCSleepTime;
 
-  GarbageCollectorThread(ThreadGroup group, String name, GarbageCollector newCollector, ObjectManagerConfig config) {
+  public GarbageCollectorThread(ThreadGroup group, String name, GarbageCollector newCollector, ObjectManagerConfig config) {
     super(group, name);
     this.collector = newCollector;
     fullGCSleepTime = config.gcThreadSleepTime();
