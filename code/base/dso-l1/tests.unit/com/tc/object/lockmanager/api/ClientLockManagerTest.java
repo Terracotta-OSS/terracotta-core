@@ -25,6 +25,7 @@ import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
 import com.tc.object.session.TestSessionManager;
 import com.tc.object.tx.TimerSpec;
+import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.concurrent.ThreadUtil;
@@ -43,15 +44,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import junit.framework.TestCase;
-
 /**
  * @author steve
  */
-public class ClientLockManagerTest extends TestCase {
+public class ClientLockManagerTest extends TCTestCase {
   private ClientLockManager     lockManager;
   private TestRemoteLockManager rmtLockManager;
   private TestSessionManager    sessionManager;
+
+  public ClientLockManagerTest() {
+    disableTestUntil("testHeldAndPendingLocksInThreadDump", "2008-08-05");
+  }
 
   protected void setUp() throws Exception {
     super.setUp();
