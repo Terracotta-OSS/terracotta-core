@@ -15,6 +15,7 @@ import com.tc.test.server.util.TcConfigBuilder;
 import com.tctest.webapp.servlets.ShutdownNormallyServlet;
 
 import java.util.Arrays;
+import java.util.Date;
 
 import junit.framework.Test;
 
@@ -27,14 +28,11 @@ public class CookieDisableTest extends AbstractOneServerDeploymentTest {
   private static final String CONTEXT = "CookieDisableTest";
 
   public CookieDisableTest() {
-    //disableAllUntil("2008-12-15");
+    if (appServerInfo().getId() != AppServerInfo.TOMCAT) {
+      disableAllUntil(new Date(Long.MAX_VALUE));
+    }
   }
 
-  public boolean shouldDisable() {
-    boolean tomcat = appServerInfo().getId() == AppServerInfo.TOMCAT;
-    return super.shouldDisable() && !tomcat;
-  }
-  
   public static Test suite() {
     return new CookieDisableTestSetup();
   }
