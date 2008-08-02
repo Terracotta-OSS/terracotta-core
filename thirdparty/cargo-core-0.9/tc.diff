@@ -982,15 +982,15 @@ Index: containers/resin/src/main/java/org/codehaus/cargo/container/resin/ResinPr
 +    String INTERNAL_SOCKET_PORT = "resin.internal.port";
 +}
 
-Property changes on: containers/resin/src/main/java/org/codehaus/cargo/container/resin/ResinPropertySet.java
+Property changes on: containers\resin\src\main\java\org\codehaus\cargo\container\resin\ResinPropertySet.java
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/x-java
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/resin/src/main/java/org/codehaus/cargo/container/resin/Resin3xStandaloneLocalConfiguration.java
@@ -1144,11 +1144,63 @@ Index: containers/resin/src/main/resources/org/codehaus/cargo/container/internal
      <!--
         - Enables/disables exceptions when the browser closes a connection.
        -->
+Index: containers/tomcat/src/main/java/org/codehaus/cargo/container/tomcat/TomcatCopyingInstalledLocalDeployer.java
+===================================================================
+--- containers/tomcat/src/main/java/org/codehaus/cargo/container/tomcat/TomcatCopyingInstalledLocalDeployer.java	(revision 1546)
++++ containers/tomcat/src/main/java/org/codehaus/cargo/container/tomcat/TomcatCopyingInstalledLocalDeployer.java	(working copy)
+@@ -78,21 +78,14 @@
+      */
+     protected void deployWar(String deployableDir, WAR war)
+     {
+-        if (war instanceof TomcatWAR)
+-        {
+-            TomcatWAR tomcatWar = (TomcatWAR) war;
++        TomcatWAR tomcatWar = new TomcatWAR(war.getFile());
+ 
+-            // If the WAR contains a META-INF/context.xml then it means the user is 
+-            // defining how to deploy it.
+-            if (tomcatWar.containsContextFile())
+-            {
+-                // Drop WAR files into the webapps dir, Tomcat will read META-INF/context.xml itself
+-                super.deployWar(deployableDir, war);
+-            }
+-            else if (this.shouldCopyWars)
+-            {
+-                super.deployWar(deployableDir, war);
+-            }
++        // If the WAR contains a META-INF/context.xml then it means the user is 
++        // defining how to deploy it.
++        if (tomcatWar.containsContextFile())
++        {
++            // Drop WAR files into the webapps dir, Tomcat will read META-INF/context.xml itself
++            super.deployWar(deployableDir, war);
+         }
+         else if (this.shouldCopyWars)
+         {
 Index: containers/tomcat/src/main/java/org/codehaus/cargo/container/tomcat/internal/AbstractCatalinaStandaloneLocalConfiguration.java
 ===================================================================
 --- containers/tomcat/src/main/java/org/codehaus/cargo/container/tomcat/internal/AbstractCatalinaStandaloneLocalConfiguration.java	(revision 1546)
 +++ containers/tomcat/src/main/java/org/codehaus/cargo/container/tomcat/internal/AbstractCatalinaStandaloneLocalConfiguration.java	(working copy)
-@@ -216,6 +216,23 @@
+@@ -202,20 +202,35 @@
+ 
+             // Do not create tokens for WARs containing a context file as they
+             // are copied to the webapps directory.
+-            if (deployable instanceof TomcatWAR)
++            
++            TomcatWAR tomcatWar = new TomcatWAR(deployable.getFile());
++            if (tomcatWar.containsContextFile())
+             {
+-                TomcatWAR tomcatWar = (TomcatWAR) deployable;
+-                if (tomcatWar.containsContextFile())
+-                {
+-                    continue;
+-                }
++                continue;
+             }
+-
++            
+             webappTokenValue.append(createContextToken((WAR) deployable));    
+         }
          
          getAntUtils().addTokenToFilterChain(filterChain, "tomcat.webapps",
              webappTokenValue.toString());
@@ -1398,13 +1450,13 @@ Index: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/W
 +    }
 +}
 
-Property changes on: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/WebLogic10xStandaloneLocalConfiguration.java
+Property changes on: containers\weblogic\src\main\java\org\codehaus\cargo\container\weblogic\WebLogic10xStandaloneLocalConfiguration.java
 ___________________________________________________________________
-Name: svn:mime-type
+Added: svn:mime-type
    + text/x-java
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/WebLogic10xInstalledLocalContainer.java
@@ -1497,13 +1549,13 @@ Index: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/W
 +    }
 +}
 
-Property changes on: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/WebLogic10xInstalledLocalContainer.java
+Property changes on: containers\weblogic\src\main\java\org\codehaus\cargo\container\weblogic\WebLogic10xInstalledLocalContainer.java
 ___________________________________________________________________
-Name: svn:mime-type
+Added: svn:mime-type
    + text/x-java
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/WebLogic10xExistingLocalConfiguration.java
@@ -1645,13 +1697,13 @@ Index: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/W
 +    }
 +}
 
-Property changes on: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/WebLogic10xExistingLocalConfiguration.java
+Property changes on: containers\weblogic\src\main\java\org\codehaus\cargo\container\weblogic\WebLogic10xExistingLocalConfiguration.java
 ___________________________________________________________________
-Name: svn:mime-type
+Added: svn:mime-type
    + text/x-java
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/WebLogic8xStandaloneLocalConfiguration.java
@@ -1841,15 +1893,15 @@ Index: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/W
 +    }
 +}
 
-Property changes on: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/WebLogic8xStandaloneLocalConfiguration.java
+Property changes on: containers\weblogic\src\main\java\org\codehaus\cargo\container\weblogic\WebLogic8xStandaloneLocalConfiguration.java
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/x-java
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/WebLogic9xStandaloneLocalConfiguration.java
@@ -2068,15 +2120,15 @@ Index: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/W
 +    }
 +}
 
-Property changes on: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/WebLogic9xStandaloneLocalConfiguration.java
+Property changes on: containers\weblogic\src\main\java\org\codehaus\cargo\container\weblogic\WebLogic9xStandaloneLocalConfiguration.java
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/x-java
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/WebLogic8xExistingLocalConfiguration.java
@@ -2215,15 +2267,15 @@ Index: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/W
 +    }
 +}
 
-Property changes on: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/WebLogic8xExistingLocalConfiguration.java
+Property changes on: containers\weblogic\src\main\java\org\codehaus\cargo\container\weblogic\WebLogic8xExistingLocalConfiguration.java
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/x-java
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/WebLogic9xExistingLocalConfiguration.java
@@ -2362,15 +2414,15 @@ Index: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/W
 +    }
 +}
 
-Property changes on: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/WebLogic9xExistingLocalConfiguration.java
+Property changes on: containers\weblogic\src\main\java\org\codehaus\cargo\container\weblogic\WebLogic9xExistingLocalConfiguration.java
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/x-java
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/WebLogic9xInstalledLocalContainer.java
@@ -2446,15 +2498,15 @@ Index: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/W
 +    }
 +}
 
-Property changes on: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/WebLogic9xInstalledLocalContainer.java
+Property changes on: containers\weblogic\src\main\java\org\codehaus\cargo\container\weblogic\WebLogic9xInstalledLocalContainer.java
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/x-java
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/java/org/codehaus/cargo/container/weblogic/internal/AbstractWebLogicInstalledLocalContainer.java
@@ -2590,15 +2642,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 @@ -0,0 +1 @@
 +This directory holds console extensions. It’s only used on the admin server.
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/console-ext/readme.txt
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\console-ext\readme.txt
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/plain
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/startWebLogic.sh
@@ -2616,13 +2668,13 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +${DOMAIN_HOME}/bin/startWebLogic.sh $*
 +
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/startWebLogic.sh
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\startWebLogic.sh
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/autodeploy/readme.txt
@@ -2688,15 +2740,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +@DOCSWEBROOT/server_start/index.html.
 +
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/autodeploy/readme.txt
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\autodeploy\readme.txt
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/plain
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/config/nodemanager/nm_password.properties
@@ -2708,13 +2760,13 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +#Wed Jun 18 12:35:02 PDT 2008
 +hashed=6FPurs2ET4zEcVPA8ep1Z+E7k2s\=
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/config/nodemanager/nm_password.properties
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\config\nodemanager\nm_password.properties
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/config/jdbc/readme.txt
@@ -2725,15 +2777,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +This directory contains system modules for JDBC: global JDBC modules 
 +that can be configured directly from JMX (as opposed to JSR-88).
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/config/jdbc/readme.txt
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\config\jdbc\readme.txt
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/plain
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/config/startup/readme.txt
@@ -2744,15 +2796,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +This directory contains system modules that contain startup plans. Startup plans are used to generate 
 +shell scripts that can be used as part of server startup. 
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/config/startup/readme.txt
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\config\startup\readme.txt
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/plain
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/config/deployments/readme.txt
@@ -2764,15 +2816,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +Users and administrators should not directly manipulate applications in this subhierarchy!  
 +Only the WebLogic deployment software should ever access these files.
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/config/deployments/readme.txt
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\config\deployments\readme.txt
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/plain
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/config/config.xml
@@ -2825,15 +2877,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +  <admin-server-name>AdminServer</admin-server-name>
 +</domain>
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/config/config.xml
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\config\config.xml
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/xml
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/config/lib/readme.txt
@@ -2844,15 +2896,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +This directory holds jar files that are added to the system classpath of the server, 
 +when the server’s Java virtual machine starts.
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/config/lib/readme.txt
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\config\lib\readme.txt
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/plain
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/config/diagnostics/readme.txt
@@ -2862,15 +2914,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 @@ -0,0 +1 @@
 +This directory contains system modules for instrumentation in the WebLogic Diagnostic Framework (WLDF).
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/config/diagnostics/readme.txt
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\config\diagnostics\readme.txt
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/plain
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/config/security/readme.txt
@@ -2881,15 +2933,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +This directory contains system modules for the security framework. It contains one security provider 
 +configuration extension for each of the kinds of security provider in the domain’s current realm.
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/config/security/readme.txt
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\config\security\readme.txt
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/plain
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/config/jms/readme.txt
@@ -2900,15 +2952,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +This directory contains system modules for JMS: global JMS 
 +modules that can be configured directly from JMX (as opposed to JSR-88).
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/config/jms/readme.txt
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\config\jms\readme.txt
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/plain
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/lib/readme.txt
@@ -2923,15 +2975,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +It is possible to override the $DOMAIN_DIR/lib directory using the -Dweblogic.ext.dirs system property during startup. This property specifies a list of directories to pick up jars from and dynamically append to the end of the server classpath using java.io.File.pathSeparator as the delimiter between path entries.
 +
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/lib/readme.txt
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\lib\readme.txt
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/plain
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/security/DefaultRoleMapperInit.ldift
@@ -3037,9 +3089,9 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +objectclass: EPredicate
 +cn: weblogic.entitlement.rules.TimePredicate
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/security/DefaultRoleMapperInit.ldift
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\security\DefaultRoleMapperInit.ldift
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/security/XACMLRoleMapperInit.ldift
@@ -3176,9 +3228,9 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +xacmlRole: Operator
 +
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/security/XACMLRoleMapperInit.ldift
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\security\XACMLRoleMapperInit.ldift
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/security/DefaultAuthenticatorInit.ldift
@@ -3276,9 +3328,9 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +wlsMemberOf: cn=Administrators,ou=groups,ou=@realm@,dc=@domain@
 +
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/security/DefaultAuthenticatorInit.ldift
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\security\DefaultAuthenticatorInit.ldift
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/security/SerializedSystemIni.dat
@@ -3289,9 +3341,9 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +B$- Ÿ¯yÐN\X¨¥.Ì[‹ðk™÷Þ–f%%ó^—ŠliÁG
 \ No newline at end of file
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/security/SerializedSystemIni.dat
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\security\SerializedSystemIni.dat
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/server_migration/wlsifconfig.sh
@@ -3737,13 +3789,13 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +$COMMAND
 +exit 0
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/server_migration/wlsifconfig.sh
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\bin\server_migration\wlsifconfig.sh
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/server_migration/wlsifconfig.cmd
@@ -3935,9 +3987,9 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +
 +@REM --- End Functions ---
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/server_migration/wlsifconfig.cmd
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\bin\server_migration\wlsifconfig.cmd
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/nodemanager/wlscontrol.sh
@@ -4930,13 +4982,13 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +# Process command
 +do_command
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/nodemanager/wlscontrol.sh
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\bin\nodemanager\wlscontrol.sh
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/stopManagedWebLogic.cmd
@@ -5024,9 +5076,9 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +ENDLOCAL
 \ No newline at end of file
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/stopManagedWebLogic.cmd
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\bin\stopManagedWebLogic.cmd
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/startWebLogic.sh
@@ -5230,13 +5282,13 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +fi
 +
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/startWebLogic.sh
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\bin\startWebLogic.sh
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/startPointBaseConsole.cmd
@@ -5265,9 +5317,9 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +ENDLOCAL
 \ No newline at end of file
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/startPointBaseConsole.cmd
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\bin\startPointBaseConsole.cmd
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/stopManagedWebLogic.sh
@@ -5348,13 +5400,13 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +${DOMAIN_HOME}/bin/stopWebLogic.sh $1 $2
 +
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/stopManagedWebLogic.sh
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\bin\stopManagedWebLogic.sh
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/startManagedWebLogic.cmd
@@ -5475,9 +5527,9 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +ENDLOCAL
 \ No newline at end of file
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/startManagedWebLogic.cmd
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\bin\startManagedWebLogic.cmd
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/setDomainEnv.cmd
@@ -5779,9 +5831,9 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +set JAVA_VM=%JAVA_VM% %JAVA_DEBUG% %JAVA_PROFILE%
 +
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/setDomainEnv.cmd
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\bin\setDomainEnv.cmd
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/startPointBaseConsole.sh
@@ -5803,13 +5855,13 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +${WL_HOME}/common/bin/startPointBaseConsole.sh -port=${POINTBASE_PORT}
 +
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/startPointBaseConsole.sh
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\bin\startPointBaseConsole.sh
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/startManagedWebLogic.sh
@@ -5924,13 +5976,13 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +fi
 +
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/startManagedWebLogic.sh
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\bin\startManagedWebLogic.sh
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/stopWebLogic.cmd
@@ -5998,9 +6050,9 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +ENDLOCAL
 \ No newline at end of file
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/stopWebLogic.cmd
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\bin\stopWebLogic.cmd
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/setDomainEnv.sh
@@ -6391,13 +6443,13 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +export JAVA_VM
 +
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/setDomainEnv.sh
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\bin\setDomainEnv.sh
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/service_migration/readme.txt
@@ -6433,15 +6485,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +"Service-Level Migration" at
 +@DOCSWEBROOT/cluster/service_migration.html
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/service_migration/readme.txt
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\bin\service_migration\readme.txt
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/plain
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/stopWebLogic.sh
@@ -6502,13 +6554,13 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +exit
 +
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/stopWebLogic.sh
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\bin\stopWebLogic.sh
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/startWebLogic.cmd
@@ -6720,9 +6772,9 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +ENDLOCAL
 \ No newline at end of file
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/bin/startWebLogic.cmd
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\bin\startWebLogic.cmd
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/servers/AdminServer/security/boot.properties
@@ -6734,13 +6786,13 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +username=weblogic
 +password=weblogic
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/servers/AdminServer/security/boot.properties
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\servers\AdminServer\security\boot.properties
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/weblogic.xml
@@ -6764,15 +6816,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +</weblogic-web-app>
 \ No newline at end of file
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/weblogic.xml
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\weblogic.xml
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/xml
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/fileRealm.properties
@@ -6791,13 +6843,13 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +user.system=0x56269bf92465564ef4300a36fcbd5badf7e8e6dc
 +acl.modify.weblogic.admin.acl=Administrators
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/fileRealm.properties
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\fileRealm.properties
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/startWebLogic.cmd
@@ -6821,9 +6873,9 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +ENDLOCAL
 \ No newline at end of file
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/startWebLogic.cmd
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\startWebLogic.cmd
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/init-info/domain-info.xml
@@ -6864,15 +6916,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +</domain-info>
 +
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/init-info/domain-info.xml
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\init-info\domain-info.xml
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/xml
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/init-info/startscript.xml
@@ -8175,15 +8227,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +	</script>
 +</scripts>
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/init-info/startscript.xml
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\init-info\startscript.xml
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/xml
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/init-info/security.xml
@@ -8232,15 +8284,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +  <role name="Anonymous" description="built-in anonymous role"/>
 +</securityInfo>
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/init-info/security.xml
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\init-info\security.xml
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/xml
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/init-info/tokenValue.properties
@@ -8293,13 +8345,13 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +@DB2_EXISTS=false
 +@WL_HOME=C\:\\bea10\\wlserver_10.0
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic10x/init-info/tokenValue.properties
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic10x\init-info\tokenValue.properties
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/console-ext/readme.txt
@@ -8309,15 +8361,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 @@ -0,0 +1 @@
 +This directory holds console extensions. It’s only used on the admin server.
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/console-ext/readme.txt
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic9x\console-ext\readme.txt
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/plain
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/autodeploy/readme.txt
@@ -8383,15 +8435,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +@DOCSWEBROOT/server_start/index.html.
 +
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/autodeploy/readme.txt
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic9x\autodeploy\readme.txt
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/plain
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/config/nodemanager/nm_password.properties
@@ -8403,13 +8455,13 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +#Fri Aug 10 11:34:32 PDT 2007
 +hashed=m9/bpU2UMqhwHXOv+z8GpLxlWnw\=
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/config/nodemanager/nm_password.properties
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic9x\config\nodemanager\nm_password.properties
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/config/jdbc/readme.txt
@@ -8420,15 +8472,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +This directory contains system modules for JDBC: global JDBC modules 
 +that can be configured directly from JMX (as opposed to JSR-88).
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/config/jdbc/readme.txt
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic9x\config\jdbc\readme.txt
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/plain
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/config/startup/readme.txt
@@ -8439,15 +8491,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +This directory contains system modules that contain startup plans. Startup plans are used to generate 
 +shell scripts that can be used as part of server startup. 
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/config/startup/readme.txt
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic9x\config\startup\readme.txt
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/plain
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/config/deployments/readme.txt
@@ -8459,15 +8511,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +Users and administrators should not directly manipulate applications in this subhierarchy!  
 +Only the WebLogic deployment software should ever access these files.
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/config/deployments/readme.txt
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic9x\config\deployments\readme.txt
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/plain
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/config/config.xml
@@ -8514,15 +8566,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +  <admin-server-name>AdminServer</admin-server-name>
 +</domain>
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/config/config.xml
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic9x\config\config.xml
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/xml
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/config/lib/readme.txt
@@ -8533,15 +8585,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +This directory holds jar files that are added to the system classpath of the server, 
 +when the server’s Java virtual machine starts.
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/config/lib/readme.txt
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic9x\config\lib\readme.txt
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/plain
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/config/diagnostics/readme.txt
@@ -8551,15 +8603,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 @@ -0,0 +1 @@
 +This directory contains system modules for instrumentation in the WebLogic Diagnostic Framework (WLDF).
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/config/diagnostics/readme.txt
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic9x\config\diagnostics\readme.txt
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/plain
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/config/security/readme.txt
@@ -8570,15 +8622,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +This directory contains system modules for the security framework. It contains one security provider 
 +configuration extension for each of the kinds of security provider in the domain’s current realm.
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/config/security/readme.txt
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic9x\config\security\readme.txt
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/plain
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/config/jms/readme.txt
@@ -8589,15 +8641,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +This directory contains system modules for JMS: global JMS 
 +modules that can be configured directly from JMX (as opposed to JSR-88).
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/config/jms/readme.txt
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic9x\config\jms\readme.txt
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/plain
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/lib/readme.txt
@@ -8612,15 +8664,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +It is possible to override the $DOMAIN_DIR/lib directory using the -Dweblogic.ext.dirs system property during startup. This property specifies a list of directories to pick up jars from and dynamically append to the end of the server classpath using java.io.File.pathSeparator as the delimiter between path entries.
 +
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/lib/readme.txt
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic9x\lib\readme.txt
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/plain
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/security/DefaultRoleMapperInit.ldift
@@ -8720,9 +8772,9 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +objectclass: EPredicate
 +cn: weblogic.entitlement.rules.TimePredicate
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/security/DefaultRoleMapperInit.ldift
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic9x\security\DefaultRoleMapperInit.ldift
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/security/XACMLRoleMapperInit.ldift
@@ -8848,9 +8900,9 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +xacmlRole: Operator
 +
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/security/XACMLRoleMapperInit.ldift
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic9x\security\XACMLRoleMapperInit.ldift
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/security/DefaultAuthenticatorInit.ldift
@@ -8940,9 +8992,9 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +wlsMemberOf: cn=Administrators,ou=groups,ou=@realm@,dc=@domain@
 +
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/security/DefaultAuthenticatorInit.ldift
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic9x\security\DefaultAuthenticatorInit.ldift
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/security/SerializedSystemIni.dat
@@ -8953,9 +9005,9 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +œÂñ Òk:\¶Î—Ã9ìµìãÓÈ³ûn(é@Ziz¯¦²¾
 \ No newline at end of file
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/security/SerializedSystemIni.dat
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic9x\security\SerializedSystemIni.dat
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/servers/AdminServer/security/boot.properties
@@ -8967,13 +9019,13 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +username=weblogic
 +password=weblogic
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/servers/AdminServer/security/boot.properties
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic9x\servers\AdminServer\security\boot.properties
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/user_staged_config/readme.txt
@@ -8985,15 +9037,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +is "user-staged", i.e. the administrator is responsible for staging (copying to the managed servers) 
 +the configuration information.
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/user_staged_config/readme.txt
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic9x\user_staged_config\readme.txt
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/plain
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/weblogic.xml
@@ -9017,15 +9069,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +</weblogic-web-app>
 \ No newline at end of file
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/weblogic.xml
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic9x\weblogic.xml
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/xml
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/fileRealm.properties
@@ -9044,13 +9096,13 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +user.system=0xfd84bfe8090cceda99c719f894b3b88f5fa2b746
 +acl.modify.weblogic.admin.acl=Administrators
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/fileRealm.properties
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic9x\fileRealm.properties
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/init-info/domain-info.xml
@@ -9091,15 +9143,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +</domain-info>
 +
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/init-info/domain-info.xml
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic9x\init-info\domain-info.xml
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/xml
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/init-info/startscript.xml
@@ -10321,15 +10373,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +	</script>
 +</scripts>
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/init-info/startscript.xml
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic9x\init-info\startscript.xml
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/xml
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/init-info/security.xml
@@ -10374,15 +10426,15 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +  <role name="Anonymous" description="built-in anonymous role"/>
 +</securityInfo>
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/init-info/security.xml
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic9x\init-info\security.xml
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:mime-type
+Added: svn:mime-type
    + text/xml
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/init-info/tokenValue.properties
@@ -10435,13 +10487,13 @@ Index: containers/weblogic/src/main/resources/org/codehaus/cargo/container/inter
 +@DB2_EXISTS=false
 +@WL_HOME=C\:\\bea\\weblogic92
 
-Property changes on: containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic9x/init-info/tokenValue.properties
+Property changes on: containers\weblogic\src\main\resources\org\codehaus\cargo\container\internal\resources\weblogic9x\init-info\tokenValue.properties
 ___________________________________________________________________
-Name: svn:executable
+Added: svn:executable
    + *
-Name: svn:keywords
+Added: svn:keywords
    + Date Revision Author HeadURL Id
-Name: svn:eol-style
+Added: svn:eol-style
    + native
 
 Index: api/container/src/main/java/org/codehaus/cargo/container/spi/AbstractInstalledLocalContainer.java
@@ -10846,3 +10898,17 @@ Index: api/generic/src/main/java/org/codehaus/cargo/generic/configuration/Defaul
      }
  
      /**
+Index: pom.xml
+===================================================================
+--- pom.xml	(revision 1546)
++++ pom.xml	(working copy)
+@@ -63,6 +63,9 @@
+         <plugin>
+           <groupId>org.apache.maven.plugins</groupId>
+           <artifactId>maven-checkstyle-plugin</artifactId>
++          <configuration>
++            <skip>true</skip>
++          </configuration>
+           <dependencies>
+             <dependency>
+               <groupId>org.codehaus.cargo</groupId>

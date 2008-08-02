@@ -9,7 +9,7 @@
     <dependency name="ant" rev="launcher-1.6.5"/>
     <dependency name="commons-codec" rev="1.3"/>
     <dependency name="commons-httpclient" rev="3.0.1"/>
-    <dependency name="tc-cargo-core-uberjar" rev="0.9.20080618" org="terracotta"/>
+    <dependency name="tc-cargo-core-uberjar" rev="0.9.20080801" org="terracotta"/>
     <dependency name="httpunit" rev="1.6.2"/>
     <dependency name="spring" rev="2.0.8" org="terracotta" conf="compile->default"/>
     <dependency name="dom4j" rev="1.6.1"/>
