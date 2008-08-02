@@ -226,6 +226,10 @@ public class GarbageCollectorThreadTest extends TestCase {
       return null;
     }
 
+    public boolean requestGCStart() {
+      return true;
+    }
+
   }
 
 }

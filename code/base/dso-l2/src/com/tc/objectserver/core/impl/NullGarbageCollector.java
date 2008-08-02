@@ -130,4 +130,8 @@ public class NullGarbageCollector implements GarbageCollector {
     // do nothing null
   }
 
+  public boolean requestGCStart() {
+    return false;
+  }
+
 }

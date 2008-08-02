@@ -317,4 +317,8 @@ public class TestGarbageCollector implements GarbageCollector {
     // NOP
   }
 
+  public boolean requestGCStart() {
+    throw new ImplementMe();
+  }
+
 }

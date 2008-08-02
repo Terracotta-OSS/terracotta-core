@@ -10,6 +10,7 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.core.api.Filter;
+import com.tc.objectserver.core.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.core.api.GarbageCollector;
 import com.tc.objectserver.core.api.GarbageCollectorEventListener;
 import com.tc.objectserver.core.api.ManagedObject;
@@ -53,7 +54,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
                                                                                  }
 
                                                                                  public Set addNewReferencesTo(Set set) {
-                                                                                   return Collections.EMPTY_SET;
+                                                                                   return set;
                                                                                  }
                                                                                };
 
@@ -71,7 +72,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
 
                                                                                  public Set addYoungGenCandidateObjectIDsTo(
                                                                                                                             Set set) {
-                                                                                   return Collections.EMPTY_SET;
+                                                                                   return set;
                                                                                  }
 
                                                                                  public void notifyObjectInitalized(
@@ -123,154 +124,21 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     addListener(new GCLoggerEventPublisher(logger, objectManagerConfig.verboseGC()));
   }
 
-  private ObjectIDSet rescue(final ObjectIDSet gcResults, final List rescueTimes) {
-    long start = System.currentTimeMillis();
-    Set rescueIds = new ObjectIDSet();
-    stateManager.addAllReferencedIdsTo(rescueIds);
-    int stateManagerIds = rescueIds.size();
-
-    addNewReferencesTo(rescueIds);
-    int referenceCollectorIds = rescueIds.size() - stateManagerIds;
-
-    logger.debug("rescueIds: " + rescueIds.size() + ", stateManagerIds: " + stateManagerIds
-                 + ", additional referenceCollectorIds: " + referenceCollectorIds);
-
-    rescueIds.retainAll(gcResults);
-
-    Filter rescueFilter = new SelectiveFilter(gcResults);
-    ObjectIDSet rv = collect(rescueFilter, rescueIds, gcResults, gcState);
-    rescueTimes.add(new Long(System.currentTimeMillis() - start));
-    return rv;
-  }
-
   /**
    * For state transition diagram look here. http://intranet.terracotta.lan/xwiki/bin/view/Main/DGC+Lifecycle
    */
   public void gc() {
-    doGC(true);
-  }
-
-  private void doGC(boolean fullGC) {
-    while (!requestGCStart()) {
-      logger.info((fullGC ? "Full" : "YoungGen")
-                  + " GC: It is either disabled or is already running. Waiting for 1 min before checking again ...");
-      ThreadUtil.reallySleep(60000);
-    }
-
-    int gcIteration = gcIterationCounter.incrementAndGet();
-    GarbageCollectionInfo gcInfo = new GarbageCollectionInfo(gcIteration, fullGC);
-    long startMillis = System.currentTimeMillis();
-    gcInfo.setStartTime(startMillis);
-    gcPublisher.fireGCStartEvent(gcInfo);
-
-    // NOTE:It is important to set this reference collector before getting the roots ID and all object ids
-    this.referenceCollector = new NewReferenceCollector();
-
-    final ObjectIDSet candidateIDs = getGCCandidates(fullGC);
-    final Set rootIDs = getRootObjectIDs(fullGC, candidateIDs);
-
-    gcInfo.setBeginObjectCount(candidateIDs.size());
-    gcPublisher.fireGCMarkEvent(gcInfo);
-
-    if (gcState.isStopRequested()) { return; }
-
-    Filter filter = (fullGC ? NULL_FILTER : new SelectiveFilter(candidateIDs));
-    ObjectIDSet gcResults = collect(filter, rootIDs, candidateIDs, gcState);
-    gcInfo.setPreRescueCount(gcResults.size());
-    gcPublisher.fireGCMarkResultsEvent(gcInfo);
-
-    if (gcState.isStopRequested()) { return; }
-
-    List rescueTimes = new ArrayList();
-
-    gcResults = rescue(gcResults, rescueTimes);
-    gcInfo.setRescue1Count(gcResults.size());
-    gcInfo.setMarkStageTime(System.currentTimeMillis() - startMillis);
-    gcPublisher.fireGCRescue1CompleteEvent(gcInfo);
-
-    if(gcResults.isEmpty()) {
-      // No garbage, short circuit GC cycle, don't pass objectMgr etc. 
-      this.referenceCollector = NULL_CHANGE_COLLECTOR;
-      notifyGCComplete();
-      shortCircuitGCComplete(gcInfo, rescueTimes);
-      return;
-    }
-    
-    gcPublisher.fireGCPausingEvent(gcInfo);
-    requestGCPause();
-
-    if (gcState.isStopRequested()) { return; }
-
-    objectManager.waitUntilReadyToGC();
-
-    if (gcState.isStopRequested()) { return; }
-
-    long pauseStartMillis = System.currentTimeMillis();
-    gcPublisher.fireGCPausedEvent(gcInfo);
-
-    gcInfo.setCandidateGarbageCount(gcResults.size());
-    gcPublisher.fireGCRescue2StartEvent(gcInfo);
-    SortedSet toDelete = Collections.unmodifiableSortedSet(rescue(new ObjectIDSet(gcResults), rescueTimes));
-    gcInfo.setRescueTimes(rescueTimes);
-    gcInfo.setDeleted(toDelete);
-
-    if (gcState.isStopRequested()) { return; }
-
-    this.referenceCollector = NULL_CHANGE_COLLECTOR;
-
-    long deleteStartMillis = System.currentTimeMillis();
-    gcInfo.setPausedStageTime(deleteStartMillis - pauseStartMillis);
-    gcPublisher.fireGCMarkCompleteEvent(gcInfo);
-
-    // Delete Garbage
-    deleteGarbage(new GCResultContext(gcIteration, toDelete, gcInfo, gcPublisher));
-
-    long endMillis = System.currentTimeMillis();
-    gcInfo.setTotalMarkCycleTime(endMillis - gcInfo.getStartTime());
-    gcPublisher.fireGCCycleCompletedEvent(gcInfo);
-  }
-
-  private void shortCircuitGCComplete(GarbageCollectionInfo gcInfo, List rescueTimes) {
-    gcInfo.setCandidateGarbageCount(0);
-    gcInfo.setRescueTimes(rescueTimes);
-    gcInfo.setDeleted(TCCollections.EMPTY_SORTED_SET);
-    gcInfo.setPausedStageTime(0);
-    gcInfo.setDeleteStageTime(0);
-    long endMillis = System.currentTimeMillis();
-    gcInfo.setTotalMarkCycleTime(endMillis - gcInfo.getStartTime());
-    gcInfo.setElapsedTime(endMillis - gcInfo.getStartTime());
-    gcPublisher.fireGCCycleCompletedEvent(gcInfo);
-    gcPublisher.fireGCCompletedEvent(gcInfo);
-  }
-
-  private Set getRootObjectIDs(boolean fullGC, Set candidateIDs) {
-    if (fullGC) {
-      return objectManager.getRootIDs();
-    } else {
-      return getYoungGenRootIDs(candidateIDs);
-    }
-  }
-
-  private ObjectIDSet getGCCandidates(boolean fullGC) {
-    if (fullGC) {
-      return objectManager.getAllObjectIDs();
-    } else {
-      return (ObjectIDSet) youngGenReferenceCollector.addYoungGenCandidateObjectIDsTo(new ObjectIDSet());
-    }
+    doGC(new FullGCHook(this, this.objectManager, this.stateManager));
   }
 
   public void gcYoung() {
-    doGC(false);
+    doGC(new YoungGCHook(this, this.objectManager, this.stateManager, this.youngGenReferenceCollector));
   }
 
-  private Set getYoungGenRootIDs(Set candidateIDs) {
-    Set idsInMemory = objectManager.getObjectIDsInCache();
-    idsInMemory.removeAll(candidateIDs);
-    Set roots = objectManager.getRootIDs();
-    Set youngGenRoots = youngGenReferenceCollector.getRememberedSet();
-    youngGenRoots.addAll(roots);
-    youngGenRoots.addAll(idsInMemory);
-    return youngGenRoots;
+  private void doGC(GCHook gcHook) {
+    MarkAndSweepGCAlgorithm gcAlgo = new MarkAndSweepGCAlgorithm(this, gcHook, gcPublisher, gcState, gcIterationCounter
+        .incrementAndGet());
+    gcAlgo.doGC();
   }
 
   public boolean deleteGarbage(GCResultContext gcResult) {
@@ -282,6 +150,14 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
       return true;
     }
     return false;
+  }
+
+  private void startMonitoringReferenceChanges() {
+    this.referenceCollector = new NewReferenceCollector();
+  }
+
+  private void stopMonitoringReferenceChanges() {
+    this.referenceCollector = NULL_CHANGE_COLLECTOR;
   }
 
   public void changed(ObjectID changedObject, ObjectID oldReference, ObjectID newReference) {
@@ -300,63 +176,59 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     youngGenReferenceCollector.notifyObjectsEvicted(evicted);
   }
 
+  public void addNewReferencesTo(Set rescueIds) {
+    referenceCollector.addNewReferencesTo(rescueIds);
+  }
+
+  /** 
+   * Used for Tests.
+   *  TODO:: Re-factor tests and remove this method
+   */
   public ObjectIDSet collect(Filter filter, Collection rootIds, ObjectIDSet managedObjectIds) {
     return collect(filter, rootIds, managedObjectIds, NULL_LIFECYCLE_STATE);
   }
 
-  public ObjectIDSet collect(Filter filter, Collection rootIds, ObjectIDSet managedObjectIds,
-                             LifeCycleState lifeCycleState) {
-    long start = System.currentTimeMillis();
-    logstart_collect(rootIds, managedObjectIds);
-
-    for (Iterator i = rootIds.iterator(); i.hasNext() && !managedObjectIds.isEmpty();) {
-      ObjectID rootId = (ObjectID) i.next();
-      managedObjectIds.remove(rootId);
-      if (lifeCycleState.isStopRequested()) return TCCollections.EMPTY_OBJECT_ID_SET;
-      collectRoot(filter, rootId, managedObjectIds, lifeCycleState);
-    }
-
-    profile_collect(start);
-
-    return managedObjectIds;
+  /** 
+   * Used for Tests.
+   *  TODO:: Re-factor tests and remove this method
+   */
+  public ObjectIDSet collect(Filter traverser, Collection roots, ObjectIDSet managedObjectIds, LifeCycleState lstate) {
+    MarkAndSweepGCAlgorithm gcAlgo = new MarkAndSweepGCAlgorithm(this, new FullGCHook(this, objectManager, stateManager), gcPublisher, gcState, gcIterationCounter
+        .incrementAndGet());
+    return gcAlgo.collect(traverser, roots, managedObjectIds, lstate);
   }
 
-  private void collectRoot(Filter filter, ObjectID rootId, Set managedObjectIds, LifeCycleState lifeCycleState) {
-    Set toBeVisited = new ObjectIDSet();
-    toBeVisited.add(rootId);
 
-    while (!toBeVisited.isEmpty() && !managedObjectIds.isEmpty()) {
+  public void start() {
+    if (objectManagerConfig.isYoungGenDGCEnabled()) {
+      this.youngGenReferenceCollector = new YoungGenChangeCollectorImpl();
+    }
+    this.started = true;
+    gcState.start();
+  }
 
-      for (Iterator i = new ObjectIDSet(toBeVisited).iterator(); i.hasNext() && !managedObjectIds.isEmpty();) {
-        ObjectID id = (ObjectID) i.next();
-        if (lifeCycleState.isStopRequested()) return;
-        // TODO:: come back for young gen to see if we can totally avoid faulting
-        ManagedObject obj = objectManager.getObjectByIDOrNull(id);
-        toBeVisited.remove(id);
-        if (obj == null) {
-          logger.warn("Looked up a new Object before its initialized, skipping : " + id);
-          continue;
-        }
-
-        for (Iterator r = obj.getObjectReferences().iterator(); r.hasNext();) {
-          ObjectID mid = (ObjectID) r.next();
-
-          if (mid == null) {
-            // see CDV-765
-            logger.error("null value returned from getObjectReferences() on " + obj);
-            continue;
-          }
-
-          if (mid.isNull() || !managedObjectIds.contains(mid)) continue;
-          if (filter.shouldVisit(mid)) toBeVisited.add(mid);
-          managedObjectIds.remove(mid);
-        }
-        objectManager.releaseReadOnly(obj);
-      }
+  public void stop() {
+    this.started = false;
+    int count = 0;
+    while (!this.gcState.stopAndWait(5000) && (count < 6)) {
+      count++;
+      logger.warn("GC Thread did not stop");
     }
   }
 
-  private synchronized boolean requestGCStart() {
+  public boolean isStarted() {
+    return this.started;
+  }
+
+  public void setState(StoppableThread st) {
+    this.gcState = st;
+  }
+
+  public void addListener(GarbageCollectorEventListener listener) {
+    gcPublisher.addListener(listener);
+  }
+  
+  public synchronized boolean requestGCStart() {
     if (started && state == GC_SLEEP) {
       state = GC_RUNNING;
       return true;
@@ -424,13 +296,343 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     return out.print(getClass().getName()).print("[").print(state).print("]");
   }
 
-  private void logstart_collect(Collection rootIds, Set managedObjectIds) {
-    if (logger.isDebugEnabled()) logger.debug("collect(): rootIds=" + rootIds.size() + ", managedObjectIds="
-                                              + managedObjectIds.size());
+  interface GCHook {
+
+    public ObjectIDSet getGCCandidates();
+
+    public Set getRootObjectIDs(ObjectIDSet candidateIDs);
+
+    public GarbageCollectionInfo getGCInfo(int gcIteration);
+
+    public String getDescription();
+
+    public void startMonitoringReferenceChanges();
+
+    public void stopMonitoringReferenceChanges();
+
+    public Filter getCollectCycleFilter(Set candidateIDs);
+
+    public void waitUntilReadyToGC();
+
+    public Set getObjectReferencesFrom(ObjectID id);
+
+    public Set getRescueIDs();
   }
 
-  private void profile_collect(long start) {
-    if (logger.isDebugEnabled()) logger.debug("collect: " + (System.currentTimeMillis() - start) + " ms.");
+  private static abstract class AbstractGCHook implements GCHook {
+    protected final MarkAndSweepGarbageCollector collector;
+    protected final ObjectManager                objectManager;
+    protected final ClientStateManager           stateManager;
+
+    protected AbstractGCHook(MarkAndSweepGarbageCollector collector, ObjectManager objectManager,
+                             ClientStateManager stateManager) {
+      this.collector = collector;
+      this.objectManager = objectManager;
+      this.stateManager = stateManager;
+    }
+
+    public void startMonitoringReferenceChanges() {
+      collector.startMonitoringReferenceChanges();
+    }
+
+    public void stopMonitoringReferenceChanges() {
+      collector.stopMonitoringReferenceChanges();
+    }
+
+    public void waitUntilReadyToGC() {
+      objectManager.waitUntilReadyToGC();
+    }
+  }
+
+  private final static class FullGCHook extends AbstractGCHook {
+
+    public FullGCHook(MarkAndSweepGarbageCollector collector, ObjectManager objectManager,
+                      ClientStateManager stateManager) {
+      super(collector, objectManager, stateManager);
+    }
+
+    public ObjectIDSet getGCCandidates() {
+      return objectManager.getAllObjectIDs();
+    }
+
+    public String getDescription() {
+      return "Full";
+    }
+
+    public GarbageCollectionInfo getGCInfo(int gcIteration) {
+      return new GarbageCollectionInfo(gcIteration, true);
+    }
+
+    public Set getRootObjectIDs(ObjectIDSet candidateIDs) {
+      return objectManager.getRootIDs();
+    }
+
+    public Filter getCollectCycleFilter(Set candidateIDs) {
+      return NULL_FILTER;
+    }
+
+    public Set getObjectReferencesFrom(ObjectID id) {
+      ManagedObject obj = objectManager.getObjectByIDOrNull(id);
+      if (obj == null) {
+        logger.warn("Looked up a new Object before its initialized, skipping : " + id);
+        return Collections.EMPTY_SET;
+      }
+      Set references = obj.getObjectReferences();
+      objectManager.releaseReadOnly(obj);
+      return references;
+    }
+
+    public Set getRescueIDs() {
+      Set rescueIds = new ObjectIDSet();
+      stateManager.addAllReferencedIdsTo(rescueIds);
+      int stateManagerIds = rescueIds.size();
+
+      collector.addNewReferencesTo(rescueIds);
+      int referenceCollectorIds = rescueIds.size() - stateManagerIds;
+
+      logger.debug("rescueIds: " + rescueIds.size() + ", stateManagerIds: " + stateManagerIds
+                   + ", additional referenceCollectorIds: " + referenceCollectorIds);
+
+      return rescueIds;
+    }
+  }
+
+  private final static class YoungGCHook extends AbstractGCHook {
+
+    private final YoungGenChangeCollector youngGenReferenceCollector;
+
+    public YoungGCHook(MarkAndSweepGarbageCollector collector, ObjectManager objectManager,
+                       ClientStateManager stateManager, YoungGenChangeCollector youngGenChangeCollector) {
+      super(collector, objectManager, stateManager);
+      this.youngGenReferenceCollector = youngGenChangeCollector;
+    }
+
+    public String getDescription() {
+      return "YoungGen";
+    }
+
+    public GarbageCollectionInfo getGCInfo(int gcIteration) {
+      return new GarbageCollectionInfo(gcIteration, true);
+    }
+
+    public ObjectIDSet getGCCandidates() {
+      return (ObjectIDSet) youngGenReferenceCollector.addYoungGenCandidateObjectIDsTo(new ObjectIDSet());
+    }
+
+    public Set getRootObjectIDs(ObjectIDSet candidateIDs) {
+      Set idsInMemory = objectManager.getObjectIDsInCache();
+      idsInMemory.removeAll(candidateIDs);
+      Set roots = objectManager.getRootIDs();
+      Set youngGenRoots = youngGenReferenceCollector.getRememberedSet();
+      youngGenRoots.addAll(roots);
+      youngGenRoots.addAll(idsInMemory);
+      return youngGenRoots;
+    }
+
+    public Filter getCollectCycleFilter(Set candidateIDs) {
+      return new SelectiveFilter(candidateIDs);
+    }
+
+    // TODO::Come back and optimized for young Generation
+    public Set getObjectReferencesFrom(ObjectID id) {
+      ManagedObject obj = objectManager.getObjectByIDOrNull(id);
+      if (obj == null) {
+        logger.warn("Looked up a new Object before its initialized, skipping : " + id);
+        return Collections.EMPTY_SET;
+      }
+      Set references = obj.getObjectReferences();
+      objectManager.releaseReadOnly(obj);
+      return references;
+    }
+
+    // TODO::Come back and optimized for young Generation
+    public Set getRescueIDs() {
+      Set rescueIds = new ObjectIDSet();
+      stateManager.addAllReferencedIdsTo(rescueIds);
+      int stateManagerIds = rescueIds.size();
+
+      collector.addNewReferencesTo(rescueIds);
+      int referenceCollectorIds = rescueIds.size() - stateManagerIds;
+
+      logger.debug("rescueIds: " + rescueIds.size() + ", stateManagerIds: " + stateManagerIds
+                   + ", additional referenceCollectorIds: " + referenceCollectorIds);
+
+      return rescueIds;
+    }
+  }
+
+  private final static class MarkAndSweepGCAlgorithm {
+
+    private final GCHook                         gcHook;
+    private final int                            gcIteration;
+    private final GarbageCollector               collector;
+    private final GarbageCollectionInfoPublisher gcPublisher;
+    private final LifeCycleState                 gcState;
+
+    public MarkAndSweepGCAlgorithm(GarbageCollector collector, GCHook gcHook,
+                                   GarbageCollectionInfoPublisher gcPublisher, LifeCycleState gcState, int gcIteration) {
+      this.collector = collector;
+      this.gcHook = gcHook;
+      this.gcPublisher = gcPublisher;
+      this.gcState = gcState;
+      this.gcIteration = gcIteration;
+    }
+
+    private void doGC() {
+      while (!collector.requestGCStart()) {
+        logger.info(gcHook.getDescription()
+                    + " GC: It is either disabled or is already running. Waiting for 1 min before checking again ...");
+        ThreadUtil.reallySleep(60000);
+      }
+
+      GarbageCollectionInfo gcInfo = gcHook.getGCInfo(gcIteration);
+      long startMillis = System.currentTimeMillis();
+      gcInfo.setStartTime(startMillis);
+      gcPublisher.fireGCStartEvent(gcInfo);
+
+      // NOTE:It is important to set this reference collector before getting the roots ID and all object ids
+      gcHook.startMonitoringReferenceChanges();
+
+      final ObjectIDSet candidateIDs = gcHook.getGCCandidates();
+      final Set rootIDs = gcHook.getRootObjectIDs(candidateIDs);
+
+      gcInfo.setBeginObjectCount(candidateIDs.size());
+      gcPublisher.fireGCMarkEvent(gcInfo);
+
+      if (gcState.isStopRequested()) { return; }
+
+      ObjectIDSet gcResults = collect(gcHook.getCollectCycleFilter(candidateIDs), rootIDs, candidateIDs, gcState);
+      gcInfo.setPreRescueCount(gcResults.size());
+      gcPublisher.fireGCMarkResultsEvent(gcInfo);
+
+      if (gcState.isStopRequested()) { return; }
+
+      List rescueTimes = new ArrayList();
+
+      gcResults = rescue(gcResults, rescueTimes);
+      gcInfo.setRescue1Count(gcResults.size());
+      gcInfo.setMarkStageTime(System.currentTimeMillis() - startMillis);
+      gcPublisher.fireGCRescue1CompleteEvent(gcInfo);
+
+      if (gcResults.isEmpty()) {
+        // No garbage, short circuit GC cycle, don't pass objectMgr etc.
+        gcHook.stopMonitoringReferenceChanges();
+        collector.notifyGCComplete();
+        shortCircuitGCComplete(gcInfo, rescueTimes);
+        return;
+      }
+
+      gcPublisher.fireGCPausingEvent(gcInfo);
+      collector.requestGCPause();
+
+      if (gcState.isStopRequested()) { return; }
+
+      gcHook.waitUntilReadyToGC();
+
+      if (gcState.isStopRequested()) { return; }
+
+      long pauseStartMillis = System.currentTimeMillis();
+      gcPublisher.fireGCPausedEvent(gcInfo);
+
+      gcInfo.setCandidateGarbageCount(gcResults.size());
+      gcPublisher.fireGCRescue2StartEvent(gcInfo);
+      SortedSet toDelete = Collections.unmodifiableSortedSet(rescue(new ObjectIDSet(gcResults), rescueTimes));
+      gcInfo.setRescueTimes(rescueTimes);
+      gcInfo.setDeleted(toDelete);
+
+      if (gcState.isStopRequested()) { return; }
+
+      gcHook.stopMonitoringReferenceChanges();
+
+      long deleteStartMillis = System.currentTimeMillis();
+      gcInfo.setPausedStageTime(deleteStartMillis - pauseStartMillis);
+      gcPublisher.fireGCMarkCompleteEvent(gcInfo);
+
+      // Delete Garbage
+      collector.deleteGarbage(new GCResultContext(gcIteration, toDelete, gcInfo, gcPublisher));
+
+      long endMillis = System.currentTimeMillis();
+      gcInfo.setTotalMarkCycleTime(endMillis - gcInfo.getStartTime());
+      gcPublisher.fireGCCycleCompletedEvent(gcInfo);
+    }
+
+    private void shortCircuitGCComplete(GarbageCollectionInfo gcInfo, List rescueTimes) {
+      gcInfo.setCandidateGarbageCount(0);
+      gcInfo.setRescueTimes(rescueTimes);
+      gcInfo.setDeleted(TCCollections.EMPTY_SORTED_SET);
+      gcInfo.setPausedStageTime(0);
+      gcInfo.setDeleteStageTime(0);
+      long endMillis = System.currentTimeMillis();
+      gcInfo.setTotalMarkCycleTime(endMillis - gcInfo.getStartTime());
+      gcInfo.setElapsedTime(endMillis - gcInfo.getStartTime());
+      gcPublisher.fireGCCycleCompletedEvent(gcInfo);
+      gcPublisher.fireGCCompletedEvent(gcInfo);
+    }
+
+    public ObjectIDSet collect(Filter filter, Collection rootIds, ObjectIDSet managedObjectIds,
+                               LifeCycleState lifeCycleState) {
+      long start = System.currentTimeMillis();
+      logstart_collect(rootIds, managedObjectIds);
+
+      for (Iterator i = rootIds.iterator(); i.hasNext() && !managedObjectIds.isEmpty();) {
+        ObjectID rootId = (ObjectID) i.next();
+        managedObjectIds.remove(rootId);
+        if (lifeCycleState.isStopRequested()) return TCCollections.EMPTY_OBJECT_ID_SET;
+        collectRoot(filter, rootId, managedObjectIds, lifeCycleState);
+      }
+
+      profile_collect(start);
+
+      return managedObjectIds;
+    }
+
+    private void collectRoot(Filter filter, ObjectID rootId, Set managedObjectIds, LifeCycleState lifeCycleState) {
+      Set toBeVisited = new ObjectIDSet();
+      toBeVisited.add(rootId);
+
+      while (!toBeVisited.isEmpty() && !managedObjectIds.isEmpty()) {
+
+        for (Iterator i = new ObjectIDSet(toBeVisited).iterator(); i.hasNext() && !managedObjectIds.isEmpty();) {
+          ObjectID id = (ObjectID) i.next();
+          if (lifeCycleState.isStopRequested()) return;
+          Set references = gcHook.getObjectReferencesFrom(id);
+          toBeVisited.remove(id);
+
+          for (Iterator r = references.iterator(); r.hasNext();) {
+            ObjectID mid = (ObjectID) r.next();
+            if (mid == null) {
+              // see CDV-765
+              logger.error("null value returned from getObjectReferences() on " + id);
+              continue;
+            }
+            if (mid.isNull() || !managedObjectIds.contains(mid)) continue;
+            if (filter.shouldVisit(mid)) toBeVisited.add(mid);
+            managedObjectIds.remove(mid);
+          }
+        }
+      }
+    }
+
+    private ObjectIDSet rescue(final ObjectIDSet gcResults, final List rescueTimes) {
+      long start = System.currentTimeMillis();
+      Set rescueIds = gcHook.getRescueIDs();
+      rescueIds.retainAll(gcResults);
+
+      Filter rescueFilter = new SelectiveFilter(gcResults);
+      ObjectIDSet rv = collect(rescueFilter, rescueIds, gcResults, gcState);
+      rescueTimes.add(new Long(System.currentTimeMillis() - start));
+      return rv;
+    }
+
+    private void logstart_collect(Collection rootIds, Set managedObjectIds) {
+      if (logger.isDebugEnabled()) logger.debug("collect(): rootIds=" + rootIds.size() + ", managedObjectIds="
+                                                + managedObjectIds.size());
+    }
+
+    private void profile_collect(long start) {
+      if (logger.isDebugEnabled()) logger.debug("collect: " + (System.currentTimeMillis() - start) + " ms.");
+    }
+
   }
 
   private static class NewReferenceCollector implements ChangeCollector {
@@ -545,38 +747,5 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     public boolean shouldVisit(ObjectID referencedObject) {
       return keys.contains(referencedObject);
     }
-  }
-
-  public void addNewReferencesTo(Set rescueIds) {
-    referenceCollector.addNewReferencesTo(rescueIds);
-  }
-
-  public void start() {
-    if (objectManagerConfig.isYoungGenDGCEnabled()) {
-      this.youngGenReferenceCollector = new YoungGenChangeCollectorImpl();
-    }
-    this.started = true;
-    gcState.start();
-  }
-
-  public void stop() {
-    this.started = false;
-    int count = 0;
-    while (!this.gcState.stopAndWait(5000) && (count < 6)) {
-      count++;
-      logger.warn("GC Thread did not stop");
-    }
-  }
-
-  public boolean isStarted() {
-    return this.started;
-  }
-
-  public void setState(StoppableThread st) {
-    this.gcState = st;
-  }
-
-  public void addListener(GarbageCollectorEventListener listener) {
-    gcPublisher.addListener(listener);
   }
 }

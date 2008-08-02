@@ -2287,6 +2287,10 @@ public class ObjectManagerTest extends BaseDSOTestCase {
       //NOP
     }
 
+    public boolean requestGCStart() {
+      return true;
+    }
+
   }
 
   private class TestThreadGroup extends ThreadGroup {
