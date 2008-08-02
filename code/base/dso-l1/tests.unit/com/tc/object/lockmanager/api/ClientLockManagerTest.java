@@ -6,6 +6,7 @@ package com.tc.object.lockmanager.api;
 
 import EDU.oswego.cs.dl.util.concurrent.BrokenBarrierException;
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
+import EDU.oswego.cs.dl.util.concurrent.Latch;
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 
@@ -807,10 +808,10 @@ public class ClientLockManagerTest extends TestCase {
     final LockID lid2 = threadLockManager.lockIDFor("Locky2");
     final CyclicBarrier txnBarrier = new CyclicBarrier(3);
 
-    final boolean[] done = new boolean[3];
-    done[0] = false;
-    done[1] = false;
-    done[2] = false;
+    final Latch[] done = new Latch[3];
+    for (int i = 0; i < done.length; i++) {
+      done[i] = new Latch();
+    }
 
     Thread.currentThread().setName("terracotta_thread");
     threadLockManager.lock(lid0, LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE,
@@ -846,7 +847,7 @@ public class ClientLockManagerTest extends TestCase {
         threadLockManager.unlock(lid1);
         System.out.println("XXX YAHOO Thread : Released READ lock1 for tx1");
 
-        done[1] = true;
+        done[1].release();
       }
     };
 
@@ -865,16 +866,15 @@ public class ClientLockManagerTest extends TestCase {
         threadLockManager.lock(lid1, LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE,
                                LockContextInfo.NULL_LOCK_CONTEXT_INFO);
         System.out.println("XXX GOOGL Thread : Got WRITE lock0 for tx2");
-        done[2] = true;
+        done[2].release();
       }
     };
 
     t1.start();
     t2.start();
-    ThreadUtil.reallySleep(500);
 
-    assertFalse(done[1]);
-    assertFalse(done[2]);
+    assertFalse(done[1].attempt(500));
+    assertFalse(done[2].attempt(500));
 
     // pauseAndStart();
     l1info.takeThreadDump(System.currentTimeMillis());
@@ -901,23 +901,20 @@ public class ClientLockManagerTest extends TestCase {
 
     threadLockManager.unlock(lid0);
     System.out.println("XXX TERRA Thread : Released WRITE lock0 for tx0");
-    ThreadUtil.reallySleep(500);
-    assertFalse(done[1]);
-    assertFalse(done[2]);
+    assertFalse(done[1].attempt(500));
+    assertFalse(done[2].attempt(500));
 
     threadLockManager.unlock(lid0);
     System.out.println("XXX TERRA  Thread : Again Released WRITE lock0 for tx0");
     threadLockManager.unlock(lid1);
     System.out.println("XXX TERRA Thread : Released READ lock1 for tx0");
-    ThreadUtil.reallySleep(500);
-    assertFalse(done[1]);
-    assertFalse(done[2]);
+    assertFalse(done[1].attempt(500));
+    assertFalse(done[2].attempt(500));
 
     txnBarrier.barrier();
 
-    ThreadUtil.reallySleep(5000);
-    assertTrue(done[1]);
-    assertTrue(done[2]);
+    done[1].acquire();
+    done[2].acquire();
 
     // pauseAndStart();
     l1info.takeThreadDump(System.currentTimeMillis());
