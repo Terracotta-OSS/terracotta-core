@@ -6,22 +6,20 @@ package org.terracotta.ui.session;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.xmlbeans.XmlError;
-import org.apache.xmlbeans.XmlException;
 
 import com.tc.admin.common.XAbstractAction;
 import com.tc.admin.common.XTextPane;
 
 import java.awt.Color;
+import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -30,15 +28,22 @@ import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
+import javax.swing.JViewport;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.UndoableEditEvent;
+import javax.swing.event.DocumentEvent.EventType;
 import javax.swing.text.DefaultStyledDocument;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
+import javax.swing.text.AbstractDocument.DefaultDocumentEvent;
+import javax.swing.undo.AbstractUndoableEdit;
+import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoManager;
 import javax.swing.undo.UndoableEdit;
 
@@ -63,6 +68,7 @@ public class ConfigTextPane extends XTextPane {
   private SimpleAttributeSet     m_errorAttrSet;
   private Timer                  m_parseTimer;
   private MyUndoManager          m_undoManager;
+  private JViewport              m_viewPort;
 
   public ConfigTextPane() {
     super();
@@ -90,6 +96,11 @@ public class ConfigTextPane extends XTextPane {
     m_configTextListener = new ConfigTextListener();
   }
 
+  public void addNotify() {
+    super.addNotify();
+    m_viewPort = (JViewport) getAncestorOfClass(JViewport.class);
+  }
+
   protected JPopupMenu createPopup() {
     JPopupMenu popupMenu = super.createPopup();
 
@@ -103,73 +114,144 @@ public class ConfigTextPane extends XTextPane {
     return popupMenu;
   }
 
-  private void removeListeners() {
+  private void removeDocumentListener() {
     m_parseTimer.stop();
     getDocument().removeDocumentListener(m_configTextListener);
+  }
+
+  private void removeAllListeners() {
+    removeDocumentListener();
     removeUndoableEditListener();
   }
 
-  private void addListeners() {
+  private void addDocumentListener() {
     getDocument().addDocumentListener(m_configTextListener);
+  }
+
+  private void addAllListeners() {
+    addDocumentListener();
     addUndoableEditListener();
   }
 
   public void load(String filename) {
-    FileInputStream fis = null;
+    FileReader reader = null;
 
-    removeListeners();
+    removeAllListeners();
     try {
-      fis = new FileInputStream(new File(filename));
-      setContent(IOUtils.toString(fis));
+      reader = new FileReader(new File(filename));
+      setText(IOUtils.toString(reader));
       hasErrors();
     } catch (Exception e) {
       e.printStackTrace();
     } finally {
-      IOUtils.closeQuietly(fis);
+      IOUtils.closeQuietly(reader);
     }
-    addListeners();
+    addAllListeners();
+  }
+
+  class UndoableSetAction extends AbstractUndoableEdit {
+    private final String  m_origText;
+    private final String  m_newText;
+    private final boolean m_isModified;
+
+    UndoableSetAction(String origText, String newText, boolean isModified) {
+      m_origText = origText;
+      m_newText = newText;
+      m_isModified = isModified;
+    }
+
+    private void update(String text, boolean isModified) {
+      set(text, false);
+      handleContentChange();
+      m_saveAction.setEnabled(isModified);
+      getMainFrame().setXmlModified(isModified);
+    }
+
+    public void undo() throws CannotUndoException {
+      super.undo();
+      update(m_origText, m_isModified);
+    }
+
+    public void redo() throws CannotRedoException {
+      super.redo();
+      update(m_newText, true);
+    }
+  }
+
+  private UndoableEditEvent createUndoableSetEditEvent(String newText) {
+    return new UndoableEditEvent(this, new UndoableSetAction(getText(), newText, m_saveAction.isEnabled()));
   }
 
   public void set(String text) {
-    removeListeners();
-    try {
-      setContent(text);
-      hasErrors();
-    } catch (Exception e) {
-      e.printStackTrace();
+    set(text, true);
+  }
+
+  public void set(String text, boolean createUndoEvent) {
+    String curText = getText();
+    if (curText != null && curText.equals(text)) return;
+
+    Point viewPosition = null;
+    if (m_viewPort != null) {
+      viewPosition = m_viewPort.getViewPosition();
     }
-    addListeners();
+    removeAllListeners();
+    if (createUndoEvent) {
+      m_undoManager.undoableEditHappened(createUndoableSetEditEvent(text));
+    }
+    setText(text);
+    hasErrors();
+    m_saveAction.setEnabled(true);
+    addAllListeners();
+    if (viewPosition != null) {
+      final Point viewPos = viewPosition;
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          m_viewPort.setViewPosition(viewPos);
+        }
+      });
+    }
+  }
+
+  private void restartParseTimer() {
+    m_parseTimer.stop();
+    m_parseTimer.start();
   }
 
   class ConfigTextListener implements DocumentListener {
     public void insertUpdate(DocumentEvent e) {
       m_saveAction.setEnabled(true);
-      m_parseTimer.stop();
-      m_parseTimer.start();
+      restartParseTimer();
     }
 
     public void removeUpdate(DocumentEvent e) {
       m_saveAction.setEnabled(true);
-      m_parseTimer.stop();
-      m_parseTimer.start();
+      restartParseTimer();
     }
 
     public void changedUpdate(DocumentEvent e) {/**/
     }
   }
 
-  class ParseTimerAction implements ActionListener {
-    public void actionPerformed(ActionEvent ae) {
-      checkForErrors();
+  private void handleContentChange() {
+    boolean errors = checkForErrors();
+    if (!errors) {
+      // getMainFrame().modelChanged();
     }
   }
 
-  private void checkForErrors() {
+  class ParseTimerAction implements ActionListener {
+    public void actionPerformed(ActionEvent ae) {
+      handleContentChange();
+    }
+  }
+
+  private boolean checkForErrors() {
     setEditable(false);
-    removeListeners();
-    hasErrors();
-    addListeners();
+    removeAllListeners();
+    boolean errors = hasErrors();
+    addAllListeners();
     setEditable(true);
+    return errors;
   }
 
   class SaveAction extends XAbstractAction {
@@ -199,38 +281,12 @@ public class ConfigTextPane extends XTextPane {
   }
 
   public boolean hasErrors() {
-    boolean hasErrors = false;
-
     clearAllStyles();
-
-    try {
-      TextLineInfo lineInfo = getLineInfo();
-
-      try {
-        ConfigHelper configHelper = getMainFrame().getConfigHelper();
-        List errors = configHelper.validate(getText());
-
-        hasErrors = errors.size() > 0;
-        handleErrors(errors, lineInfo);
-      } catch (XmlException e) {
-        hasErrors = true;
-
-        Collection c = e.getErrors();
-        ArrayList errorList = new ArrayList();
-
-        if (c != null) {
-          errorList.addAll(c);
-          handleErrors(new ArrayList(c), lineInfo);
-        } else {
-          errorList.add(e);
-          getMainFrame().setConfigErrors(errorList);
-        }
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-
-    return hasErrors;
+    TextLineInfo lineInfo = getLineInfo();
+    ConfigHelper configHelper = getMainFrame().getConfigHelper();
+    List errors = configHelper.validate(getText());
+    handleErrors(errors, lineInfo);
+    return errors.size() > 0;
   }
 
   private void clearAllStyles() {
@@ -310,10 +366,10 @@ public class ConfigTextPane extends XTextPane {
     return (SessionIntegratorFrame) getAncestorOfClass(SessionIntegratorFrame.class);
   }
 
-  private void save() {
+  void save() {
     SessionIntegratorFrame frame = getMainFrame();
 
-    removeListeners();
+    removeAllListeners();
     if (hasErrors()) {
       String msg = "There are configuration errors.  Save anyway?";
       String title = frame.getTitle();
@@ -321,22 +377,22 @@ public class ConfigTextPane extends XTextPane {
       int answer = JOptionPane.showConfirmDialog(frame, msg, title, type);
 
       if (answer == JOptionPane.YES_OPTION) {
-        frame.saveXML(getContent());
+        frame.saveXML(getText());
       }
     } else {
-      frame.saveXML(getContent());
+      frame.saveXML(getText());
     }
-    addListeners();
-    m_undoManager.discardAllEdits();
+    addAllListeners();
+//    m_undoManager.discardAllEdits();
     m_saveAction.setEnabled(false);
-    m_undoAction.setEnabled(false);
-    m_redoAction.setEnabled(false);
+//    m_undoAction.setEnabled(false);
+//    m_redoAction.setEnabled(false);
   }
 
   private void saveAs() {
     SessionIntegratorFrame frame = getMainFrame();
 
-    removeListeners();
+    removeAllListeners();
     if (hasErrors()) {
       String msg = "There are configuration errors.  Save anyway?";
       String title = frame.getTitle();
@@ -349,7 +405,7 @@ public class ConfigTextPane extends XTextPane {
     } else {
       frame.exportConfiguration();
     }
-    addListeners();
+    addAllListeners();
   }
 
   class MyUndoManager extends UndoManager {
@@ -362,6 +418,8 @@ public class ConfigTextPane extends XTextPane {
     }
 
     public void undoableEditHappened(UndoableEditEvent e) {
+      UndoableEdit edit = e.getEdit();
+      if (edit instanceof DefaultDocumentEvent && ((DefaultDocumentEvent) edit).getType() == EventType.CHANGE) { return; }
       super.undoableEditHappened(e);
       m_undoAction.setEnabled(canUndo());
       m_redoAction.setEnabled(canRedo());

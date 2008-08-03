@@ -60,6 +60,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -95,7 +97,7 @@ import javax.swing.text.Document;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
-public class SessionIntegratorFrame extends Frame {
+public class SessionIntegratorFrame extends Frame implements PropertyChangeListener {
   private static final boolean       m_debug                     = Boolean.getBoolean("SessionIntegratorFrame.debug");
 
   private ConfigHelper               m_configHelper;
@@ -225,14 +227,13 @@ public class SessionIntegratorFrame extends Frame {
     setTitle(getBundleString("title"));
     setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
-    m_serverSelection = ServerSelection.getInstance();
-    m_configHelper = new ConfigHelper(m_serverSelection);
+    m_configHelper = createConfigHelper();
 
     initMenubar();
     loadIcons();
 
     XSplitPane splitter = (XSplitPane) findComponent("ControlSplitter");
-    if(splitter != null) {
+    if (splitter != null) {
       splitter.setPreferences(getPreferences().node(splitter.getName()));
     }
 
@@ -351,7 +352,7 @@ public class SessionIntegratorFrame extends Frame {
 
     m_xmlPane = (ConfigTextPane) findComponent("XMLPane");
     m_xmlChangeListener = new XmlChangeListener();
-    initXmlPane();
+//    initXmlPane();
 
     Container configPaneToolbar = (Container) findComponent("ConfigPaneToolbar");
     Button button;
@@ -445,7 +446,8 @@ public class SessionIntegratorFrame extends Frame {
     m_bootClassesPanel = (BootClassesPanel) findComponent("BootClassesPanel");
     m_modulesPanel = (ModulesPanel) findComponent("ModulesPanel");
 
-    setupEditorPanels();
+    initXmlPane();
+//    setupEditorPanels();
 
     m_startButton.setEnabled(isWebServer1Enabled() || isWebServer2Enabled() || isDsoEnabled());
 
@@ -471,6 +473,21 @@ public class SessionIntegratorFrame extends Frame {
     testShutdownWebServer2();
 
     setDsoEnabled(m_dsoEnabled = prefs.getBoolean(DSO_ENABLED_PREF_KEY, false));
+  }
+
+  private ConfigHelper createConfigHelper() {
+    if (m_serverSelection == null) {
+      m_serverSelection = ServerSelection.getInstance();
+    }
+    ConfigHelper result = new ConfigHelper(m_serverSelection);
+    result.addPropertyChangeListener(this);
+    return result;
+  }
+
+  public void propertyChange(PropertyChangeEvent evt) {
+    if (evt.getPropertyName().equals(ConfigHelper.PROP_CONFIG)) {
+      setupEditorPanels();
+    }
   }
 
   static String getBundleString(String key) {
@@ -720,7 +737,7 @@ public class SessionIntegratorFrame extends Frame {
               touch(webApps[i]);
             }
 
-            m_configHelper = new ConfigHelper(m_serverSelection);
+            m_configHelper = createConfigHelper();
             m_l2ConnectManager.setJMXPortNumber(m_configHelper.getJmxPort());
             initXmlPane();
             setupEditorPanels();
@@ -841,7 +858,7 @@ public class SessionIntegratorFrame extends Frame {
     }
   }
 
-  private void setXmlModified(boolean xmlModified) {
+  void setXmlModified(boolean xmlModified) {
     m_xmlModified = xmlModified;
 
     if (m_configTabbedPane != null) {
@@ -1316,22 +1333,27 @@ public class SessionIntegratorFrame extends Frame {
     return WebAppComparable.sort((WebApp[]) appList.toArray(new WebApp[0]));
   }
 
+  private void disableEditorPanels() {
+    m_instrumentedClassesPanel.setEnabled(false);
+    m_transientFieldsPanel.setEnabled(false);
+    m_bootClassesPanel.setEnabled(false);
+    m_modulesPanel.setEnabled(false);
+  }
+  
   private void setupEditorPanels() {
     try {
       TcConfig config = m_configHelper.getConfig();
 
-      if (config == null) {
-        config = m_configHelper.ensureConfig();
-        m_configHelper.save();
-        setXmlModified(false);
+      if (config == ConfigHelper.BAD_CONFIG) {
+        disableEditorPanels();
+      } else {
+        DsoApplication dsoApp = config.getApplication().getDso();
+
+        m_instrumentedClassesPanel.setup(dsoApp);
+        m_transientFieldsPanel.setup(dsoApp);
+        m_bootClassesPanel.setup(dsoApp);
+        m_modulesPanel.setup(config.getClients());
       }
-
-      DsoApplication dsoApp = config.getApplication().getDso();
-
-      m_instrumentedClassesPanel.setup(dsoApp);
-      m_transientFieldsPanel.setup(dsoApp);
-      m_bootClassesPanel.setup(dsoApp);
-      m_modulesPanel.setup(config.getClients());
     } catch (Exception e) {
       m_configHelper.openError(getBundleString("configuration.load.failure.msg"), e);
     }
@@ -2678,7 +2700,7 @@ public class SessionIntegratorFrame extends Frame {
   }
 
   private void saveConfig() {
-    saveXML(m_xmlPane.getText());
+    m_xmlPane.save();
   }
 
   public void modelChanged() {
@@ -2692,7 +2714,6 @@ public class SessionIntegratorFrame extends Frame {
 
   public void saveXML(String xmlText) {
     m_configHelper.save(xmlText);
-    setupEditorPanels();
     setXmlModified(false);
 
     if (isConfigTabSelected() && isL2Ready()) {

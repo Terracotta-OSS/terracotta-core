@@ -28,11 +28,14 @@ import com.terracottatech.config.WebApplication;
 import com.terracottatech.config.WebApplications;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,36 +47,60 @@ import javax.swing.SwingUtilities;
  */
 
 public class ConfigHelper {
-  private Loader              m_configLoader;
-  private XmlOptions          m_xmlOptions;
-  private File                m_configFile;
-  private TcConfig            m_config;
+  private Loader                m_configLoader;
+  private XmlOptions            m_xmlOptions;
+  private File                  m_configFile;
+  private TcConfig              m_config;
+  private PropertyChangeSupport m_propertyChangeSupport;
 
-  private static final String TC_INSTALL_DIR       = SessionIntegratorFrame.getTCInstallDir();
+  private static final String   TC_INSTALL_DIR       = SessionIntegratorFrame.getTCInstallDir();
 
-  private static final String TOMCAT_SANDBOX       = SessionIntegratorFrame.getSandBoxRoot();
+  private static final String   TOMCAT_SANDBOX       = SessionIntegratorFrame.getSandBoxRoot();
 
-  private static final String FS                   = System.getProperty("file.separator");
+  private static final String   FS                   = System.getProperty("file.separator");
 
-  private static final String CUSTOM_BOOT_JAR_PATH = TC_INSTALL_DIR + FS + "lib" + FS + "dso-boot" + FS
-                                                     + getBootJarNameForThisVM();
+  private static final String   CUSTOM_BOOT_JAR_PATH = TC_INSTALL_DIR + FS + "lib" + FS + "dso-boot" + FS
+                                                       + getBootJarNameForThisVM();
 
-  private static final int    DEFAULT_JMX_PORT     = 9520;
+  private static final int      DEFAULT_JMX_PORT     = 9520;
+
+  public static final String    PROP_CONFIG          = "Config";
+
+  public static final TcConfig  BAD_CONFIG           = TcConfig.Factory.newInstance();
 
   public ConfigHelper() {
     super();
+    init();
   }
 
   public ConfigHelper(ServerSelection selection) {
     super();
-
-    String serverName = selection.getSelectedServer().getName();
-
+    init();
     m_configLoader = new Loader();
     m_xmlOptions = createXmlOptions();
-    m_configFile = new File(TOMCAT_SANDBOX + FS + serverName + FS + "tc-config.xml");
-
+    m_configFile = new File(TOMCAT_SANDBOX + FS + selection.getSelectedServer().getName() + FS + "tc-config.xml");
     testUpdateConfig();
+  }
+
+  private void init() {
+    m_propertyChangeSupport = new PropertyChangeSupport(this);
+  }
+
+  public synchronized void addPropertyChangeListener(PropertyChangeListener listener) {
+    if (listener == null || m_propertyChangeSupport == null) return;
+    m_propertyChangeSupport.removePropertyChangeListener(listener);
+    m_propertyChangeSupport.addPropertyChangeListener(listener);
+  }
+
+  public synchronized void removePropertyChangeListener(PropertyChangeListener listener) {
+    if (listener == null || m_propertyChangeSupport == null) return;
+    m_propertyChangeSupport.removePropertyChangeListener(listener);
+  }
+
+  public void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+    if (m_propertyChangeSupport != null) {
+      m_propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
+    }
   }
 
   private void testUpdateConfig() {
@@ -102,7 +129,8 @@ public class ConfigHelper {
   }
 
   public void setConfig(TcConfig newConfig) {
-    m_config = newConfig;
+    TcConfig oldConfig = m_config;
+    firePropertyChange(PROP_CONFIG, oldConfig, m_config = newConfig);
   }
 
   public TcConfig ensureConfig() {
@@ -112,9 +140,10 @@ public class ConfigHelper {
       try {
         config = load();
       } catch (Exception e) {
-    	  e.printStackTrace();
-        m_config = config = TcConfig.Factory.newInstance();
+        e.printStackTrace();
+        config = BAD_CONFIG;
       }
+      setConfig(config);
     }
 
     return config;
@@ -175,50 +204,75 @@ public class ConfigHelper {
     TcConfigDocument configDoc;
 
     configDoc = m_configLoader.parse(configFile, m_xmlOptions);
-    m_config = configDoc.getTcConfig();
+    setConfig(configDoc.getTcConfig());
 
     return m_config;
   }
 
-  public List validate(String xmlText) throws IOException, XmlException {
-    TcConfigDocument configDoc = m_configLoader.parse(xmlText, m_xmlOptions);
-    TcConfig config = configDoc.getTcConfig();
+  /**
+   * @see ConfigTextPane.hasErrors
+   */
+  public List validate(String xmlText) {
+    TcConfigDocument configDoc = null;
+    TcConfig config = null;
     List errors = new ArrayList();
+    
+    try {
+      configDoc = m_configLoader.parse(xmlText, m_xmlOptions);
+      config = configDoc.getTcConfig();
+    } catch(XmlException e) {
+      errors.addAll(e.getErrors());
+    } catch(IOException ioe) {
+      /**/
+    }
 
     if (config != null) {
       m_xmlOptions.setErrorListener(errors);
       configDoc.validate(m_xmlOptions);
       m_xmlOptions.setErrorListener(null);
+    } else {
+      config = BAD_CONFIG;
     }
+    setConfig(config);
 
     return errors;
   }
 
+  public String configDocumentAsString(TcConfigDocument configDoc) {
+    Reader reader = configDoc.newReader(getXmlOptions());
+    StringWriter writer = new StringWriter();
+    try {
+      CopyUtils.copy(reader, writer);
+    } catch (IOException ioe) {/**/
+    }
+    return writer.toString();
+  }
+  
   public void save() {
     TcConfigDocument configDoc = TcConfigDocument.Factory.newInstance();
-    InputStream inStream = null;
-    OutputStream outStream = null;
+    Reader reader = null;
+    Writer writer = null;
 
     try {
       if (m_config != null) {
         configDoc.setTcConfig(m_config);
 
-        inStream = configDoc.newInputStream(getXmlOptions());
-        outStream = new FileOutputStream(m_configFile);
+        reader = configDoc.newReader(getXmlOptions());
+        writer = new FileWriter(m_configFile);
 
-        CopyUtils.copy(inStream, outStream);
+        CopyUtils.copy(reader, writer);
       }
     } catch (Exception e) {
       openError("Error saving '" + m_configFile.getName() + "'", e);
     } finally {
-      IOUtils.closeQuietly(inStream);
-      IOUtils.closeQuietly(outStream);
+      IOUtils.closeQuietly(reader);
+      IOUtils.closeQuietly(writer);
     }
   }
 
   public String getConfigText() {
     TcConfig config = getConfig();
-    InputStream inStream = null;
+    Reader reader = null;
     String text = null;
 
     try {
@@ -227,13 +281,14 @@ public class ConfigHelper {
 
         configDoc.setTcConfig(m_config);
 
-        inStream = configDoc.newInputStream(getXmlOptions());
-        text = IOUtils.toString(inStream);
+//        reader = configDoc.newReader(getXmlOptions());
+//        text = IOUtils.toString(reader);
+        text = configDocumentAsString(configDoc);
       }
     } catch (Exception e) {
       openError("Error getting config text", e);
     } finally {
-      IOUtils.closeQuietly(inStream);
+      IOUtils.closeQuietly(reader);
     }
 
     return text;
@@ -241,47 +296,47 @@ public class ConfigHelper {
 
   public void save(String xmlText) {
     TcConfigDocument configDoc = null;
-    InputStream inStream = null;
-    OutputStream outStream = null;
+    Reader reader = null;
+    Writer writer = null;
 
     try {
       configDoc = m_configLoader.parse(xmlText, m_xmlOptions);
       m_config = configDoc.getTcConfig();
 
       if (m_config != null) {
-        inStream = configDoc.newInputStream(getXmlOptions());
-        outStream = new FileOutputStream(m_configFile);
+        reader = configDoc.newReader(getXmlOptions());
+        writer = new FileWriter(m_configFile);
 
-        CopyUtils.copy(inStream, outStream);
+        CopyUtils.copy(reader, writer);
       }
     } catch (Exception e) {
       openError("Error saving '" + m_configFile.getName() + "'", e);
     } finally {
-      IOUtils.closeQuietly(inStream);
-      IOUtils.closeQuietly(outStream);
+      IOUtils.closeQuietly(reader);
+      IOUtils.closeQuietly(writer);
     }
   }
 
   public void saveAs(File file, String xmlText) {
     TcConfigDocument configDoc = null;
-    InputStream inStream = null;
-    OutputStream outStream = null;
+    Reader reader = null;
+    Writer writer = null;
 
     try {
       configDoc = m_configLoader.parse(xmlText, m_xmlOptions);
       m_config = configDoc.getTcConfig();
 
       if (m_config != null) {
-        inStream = configDoc.newInputStream(getXmlOptions());
-        outStream = new FileOutputStream(file);
+        reader = configDoc.newReader(getXmlOptions());
+        writer = new FileWriter(file);
 
-        CopyUtils.copy(inStream, outStream);
+        CopyUtils.copy(reader, writer);
       }
     } catch (Exception e) {
       openError("Error saving '" + file.getName() + "'", e);
     } finally {
-      IOUtils.closeQuietly(inStream);
-      IOUtils.closeQuietly(outStream);
+      IOUtils.closeQuietly(reader);
+      IOUtils.closeQuietly(writer);
     }
   }
 
@@ -548,9 +603,8 @@ public class ConfigHelper {
     opts.setLoadLineNumbers();
     opts.setSavePrettyPrint();
     opts.setSavePrettyPrintIndent(2);
-    opts.remove(XmlOptions.LOAD_STRIP_WHITESPACE);
+//    opts.remove(XmlOptions.LOAD_STRIP_WHITESPACE);
     opts.remove(XmlOptions.LOAD_STRIP_COMMENTS);
-    opts.remove(XmlOptions.VALIDATE_ON_SET);
 
     return opts;
   }
