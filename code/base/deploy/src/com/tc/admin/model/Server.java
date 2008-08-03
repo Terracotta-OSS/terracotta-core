@@ -59,6 +59,7 @@ import javax.swing.event.EventListenerList;
 
 public class Server implements IServer, NotificationListener, ManagedObjectFacadeProvider {
   protected ServerConnectionManager       m_connectManager;
+  protected String                        m_displayLabel;
   protected boolean                       m_connected;
   protected Set<ObjectName>               m_readySet;
   protected boolean                       m_ready;
@@ -107,6 +108,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   private void init() {
+    m_displayLabel = m_connectManager.toString();
     m_propertyChangeSupport = new PropertyChangeSupport(this);
     m_listenerList = new EventListenerList();
     m_logListener = new LogListener();
@@ -1003,7 +1005,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   public String toString() {
-    return m_connectManager != null ? m_connectManager.toString() : "tornDown";
+    return m_displayLabel;
   }
 
   public synchronized void tearDown() {
