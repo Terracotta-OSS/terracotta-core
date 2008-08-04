@@ -10,7 +10,7 @@ tc.tests.configuration.variants.selected.spring=254
 tc.tests.configuration.reuse_boot_jars=true
 
 # for container tests, you can also specify 'appserver=xxxx' on command line
-appserver=tomcat-5.5.26
+appserver=tomcat-6.0.18
 
 #appserver=tomcat-6.0.18
 #appserver=tomcat-5.0.28
