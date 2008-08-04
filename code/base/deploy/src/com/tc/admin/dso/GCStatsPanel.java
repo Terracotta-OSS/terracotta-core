@@ -134,6 +134,7 @@ public class GCStatsPanel extends XContainer implements DGCListener, PropertyCha
     }
 
     public void run() {
+      m_gcAction.setEnabled(m_gcStats.getElapsedTime() != -1);
       ((GCStatsTableModel) m_table.getModel()).addGCStats(m_gcStats);
     }
   }
