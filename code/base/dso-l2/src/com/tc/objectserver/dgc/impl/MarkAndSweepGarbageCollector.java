@@ -18,6 +18,7 @@ import com.tc.objectserver.impl.ObjectManagerConfig;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.State;
 import com.tc.util.concurrent.LifeCycleState;
@@ -38,7 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class MarkAndSweepGarbageCollector implements GarbageCollector {
 
-  static final TCLogger                    logger                      = TCLogging
+  static final TCLogger                            logger                      = TCLogging
                                                                                    .getLogger(MarkAndSweepGarbageCollector.class);
 
   private static final ChangeCollector             NULL_CHANGE_COLLECTOR       = new ChangeCollector() {
@@ -81,6 +82,14 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
                                                                                  }
 
                                                                                  public void removeGarbage(SortedSet ids) {
+                                                                                   return;
+                                                                                 }
+
+                                                                                 public void startMonitoringChanges() {
+                                                                                   return;
+                                                                                 }
+
+                                                                                 public void stopMonitoringChanges() {
                                                                                    return;
                                                                                  }
                                                                                };
@@ -150,10 +159,12 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
 
   private void startMonitoringReferenceChanges() {
     this.referenceCollector = new NewReferenceCollector();
+    this.youngGenReferenceCollector.startMonitoringChanges();
   }
 
   private void stopMonitoringReferenceChanges() {
     this.referenceCollector = NULL_CHANGE_COLLECTOR;
+    this.youngGenReferenceCollector.stopMonitoringChanges();
   }
 
   public void changed(ObjectID changedObject, ObjectID oldReference, ObjectID newReference) {
@@ -323,16 +334,16 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
       super(collector, objectManager, stateManager);
     }
 
-    public ObjectIDSet getGCCandidates() {
-      return objectManager.getAllObjectIDs();
-    }
-
     public String getDescription() {
       return "Full";
     }
 
     public GarbageCollectionInfo getGCInfo(int gcIteration) {
       return new GarbageCollectionInfo(gcIteration, true);
+    }
+
+    public ObjectIDSet getGCCandidates() {
+      return objectManager.getAllObjectIDs();
     }
 
     public Set getRootObjectIDs(ObjectIDSet candidateIDs) {
@@ -384,7 +395,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     }
 
     public GarbageCollectionInfo getGCInfo(int gcIteration) {
-      return new GarbageCollectionInfo(gcIteration, true);
+      return new GarbageCollectionInfo(gcIteration, false);
     }
 
     public ObjectIDSet getGCCandidates() {
@@ -405,11 +416,10 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
       return new SelectiveFilter(candidateIDs);
     }
 
-    // TODO::Come back and optimized for young Generation
     public Set getObjectReferencesFrom(ObjectID id) {
-      ManagedObject obj = objectManager.getObjectByIDOrNull(id);
+      ManagedObject obj = objectManager.getObjectFromCacheByIDOrNull(id);
       if (obj == null) {
-        logger.warn("Looked up a new Object before its initialized, skipping : " + id);
+        // Not in cache, rescue stage to take care of these inward references.
         return Collections.EMPTY_SET;
       }
       Set references = obj.getObjectReferences();
@@ -417,13 +427,15 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
       return references;
     }
 
-    // TODO::Come back and optimized for young Generation
     public Set getRescueIDs() {
       Set rescueIds = new ObjectIDSet();
       stateManager.addAllReferencedIdsTo(rescueIds);
       int stateManagerIds = rescueIds.size();
 
       collector.addNewReferencesTo(rescueIds);
+      // Get the new RemeberedSet and rescue that too.
+      Set youngGenRoots = youngGenReferenceCollector.getRememberedSet();
+      rescueIds.addAll(youngGenRoots);
       int referenceCollectorIds = rescueIds.size() - stateManagerIds;
 
       logger.debug("rescueIds: " + rescueIds.size() + ", stateManagerIds: " + stateManagerIds
@@ -461,11 +473,18 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
 
   private static final class YoungGenChangeCollectorImpl implements YoungGenChangeCollector {
 
-    private static final State UNINITALIZED      = new State("UNINITIALIZED");
-    private static final State INITALIZED        = new State("INITIALIZED");
+    /* Used in the youngGenObjectIDs Map */
+    private static final State UNINITALIZED         = new State("UNINITIALIZED");
+    private static final State INITALIZED           = new State("INITIALIZED");
 
-    private final Map          youngGenObjectIDs = new HashMap();
-    private final Set          rememberedSet     = new ObjectIDSet();
+    /* Used for the object state */
+    private static final State MONITOR_CHANGES      = new State("MONITOR-CHANGES");
+    private static final State DONT_MONITOR_CHANGES = new State("DONT-MONITOR-CHANGES");
+
+    private final Map          youngGenObjectIDs    = new HashMap();
+    private final Set          rememberedSet        = new ObjectIDSet();
+
+    private State              state                = DONT_MONITOR_CHANGES;
 
     public synchronized Set addYoungGenCandidateObjectIDsTo(Set set) {
       for (Iterator i = youngGenObjectIDs.entrySet().iterator(); i.hasNext();) {
@@ -505,7 +524,18 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
 
     private void removeReferencesTo(ObjectID id) {
       youngGenObjectIDs.remove(id);
-      rememberedSet.remove(id);
+      if (state == DONT_MONITOR_CHANGES) {
+        /**
+         * XXX:: We don't want to remove inward reference to Young Gen Objects that are just faulted out of cache
+         * (becoming OldGen object) while the DGC is running. If we did it will lead to GCing valid reachable objects
+         * since YoungGen only looks us the objects in memory.
+         * <p>
+         * This seems counter-intuitive to not remove inward pointers when in MONITOR_CHANGES state, but if you think of
+         * removing inward references as forgetting the fact that a reference existed, then not removing the reference
+         * is Monitoring the changes.
+         */
+        rememberedSet.remove(id);
+      }
     }
 
     public synchronized void removeGarbage(SortedSet ids) {
@@ -513,6 +543,18 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
         ObjectID oid = (ObjectID) i.next();
         removeReferencesTo(oid);
       }
+    }
+
+    public synchronized void startMonitoringChanges() {
+      Assert.assertTrue(state == DONT_MONITOR_CHANGES);
+      state = MONITOR_CHANGES;
+    }
+
+    public synchronized void stopMonitoringChanges() {
+      Assert.assertTrue(state == MONITOR_CHANGES);
+      state = DONT_MONITOR_CHANGES;
+      // reset remembered set to the latest set of Young Gen IDs.
+      rememberedSet.retainAll(youngGenObjectIDs.keySet());
     }
 
   }
@@ -523,6 +565,10 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
 
   private interface YoungGenChangeCollector {
     public void notifyObjectsEvicted(Collection evicted);
+
+    public void startMonitoringChanges();
+
+    public void stopMonitoringChanges();
 
     public void removeGarbage(SortedSet ids);
 

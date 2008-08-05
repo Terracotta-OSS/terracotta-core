@@ -21,7 +21,6 @@ import java.util.Set;
 
 /**
  * manages all access to objects on the server. This will be single threaded and only accessed via it's event handler.
- * 
  */
 public interface ObjectManager extends ManagedObjectProvider {
 
@@ -104,7 +103,7 @@ public interface ObjectManager extends ManagedObjectProvider {
    * @param resultContext
    */
   public void notifyGCComplete(GCResultContext resultContext);
- 
+
   public void setStatsListener(ObjectManagerStatsListener listener);
 
   public void start();
@@ -114,7 +113,7 @@ public interface ObjectManager extends ManagedObjectProvider {
   public Set getRootIDs();
 
   public ObjectIDSet getAllObjectIDs();
-  
+
   public ObjectIDSet getObjectIDsInCache();
 
   public void addFaultedObject(ObjectID oid, ManagedObject mo, boolean removeOnRelease);
@@ -128,5 +127,11 @@ public interface ObjectManager extends ManagedObjectProvider {
    * used by DGC.
    */
   public ManagedObject getObjectByIDOrNull(ObjectID id);
+
+  /**
+   * This method returns null if you are looking up a newly created object that is not yet initialized or an Object that
+   * is not in cache. This is mainly used by DGC.
+   */
+  public ManagedObject getObjectFromCacheByIDOrNull(ObjectID id);
 
 }

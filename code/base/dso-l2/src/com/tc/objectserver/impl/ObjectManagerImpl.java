@@ -249,6 +249,24 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
     return mo;
   }
+  
+  /**
+   * This method returns null if you are looking up a newly created object that is not yet initialized or an Object that
+   * is not in cache. This is mainly used by DGC.
+   */
+  public ManagedObject getObjectFromCacheByIDOrNull(ObjectID id) {
+    if(isObjectInCache(id)) {
+      // There is still a small race where this call might fault objects that were just flushed to disk, but we can live with that.
+      return getObjectByIDOrNull(id);
+    } else {
+      // Not in cache.
+      return null;
+    }
+  }
+
+  private synchronized boolean isObjectInCache(ObjectID id) {
+    return references.containsKey(id);
+  }
 
   private void markReferenced(ManagedObjectReference reference) {
     if (reference.isReferenced()) { throw new AssertionError("Attempt to mark an already referenced object: "

@@ -229,4 +229,8 @@ public class TestObjectManager implements ObjectManager {
     throw new ImplementMe();
   }
 
+  public ManagedObject getObjectFromCacheByIDOrNull(ObjectID id) {
+    throw new ImplementMe();
+  }
+
 }

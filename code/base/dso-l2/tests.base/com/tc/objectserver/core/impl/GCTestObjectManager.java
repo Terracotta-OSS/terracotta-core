@@ -230,4 +230,11 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
     gcCollector.notifyObjectsEvicted(evicted);
   }
 
+  public ManagedObject getObjectFromCacheByIDOrNull(ObjectID id) {
+    if(managed.containsKey(id) ) {
+      return getObjectByIDOrNull(id);
+    } else {
+      return null;
+    }
+  }
 }
