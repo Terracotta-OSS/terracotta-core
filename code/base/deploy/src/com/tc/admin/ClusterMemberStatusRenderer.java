@@ -22,5 +22,6 @@ public class ClusterMemberStatusRenderer extends StatusRenderer {
 
     m_label.setText(server.getName());
     m_indicator.setBackground(ServerNode.getServerStatusColor(server));
+    m_indicator.setOpaque(true);
   }
 }

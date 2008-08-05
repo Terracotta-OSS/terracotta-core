@@ -37,6 +37,7 @@ public class StatusView extends XContainer {
 
   public void setIndicator(Color color) {
     m_indicator.setBackground(color);
+    m_indicator.setOpaque(true);
   }
 
   public void tearDown() {

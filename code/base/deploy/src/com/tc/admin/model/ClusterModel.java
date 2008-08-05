@@ -52,6 +52,8 @@ public class ClusterModel extends Server implements IClusterModel {
     boolean autoConnect = isAutoConnect();
     m_connectManager.setAutoConnect(false);
     m_connectManager.setL2Info(new L2Info(scm.getL2Info()));
+    m_displayLabel = m_connectManager.toString();
+    
     reset();
 
     try {
