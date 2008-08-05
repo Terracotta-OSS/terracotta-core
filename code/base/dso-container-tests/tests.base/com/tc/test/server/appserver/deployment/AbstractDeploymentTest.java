@@ -53,10 +53,6 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
     return true;
   }
 
-  protected boolean isSessionTest() {
-    return true;
-  }
-
   protected AppServerInfo appServerInfo() {
     return TestConfigObject.getInstance().appServerInfo();
   }

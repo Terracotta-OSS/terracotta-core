@@ -130,6 +130,10 @@ public class DelegateMethodAdapter extends ClassAdapter implements Opcodes, Clas
 
         int access = m.getModifiers();
 
+        if (m.getName().startsWith(ByteCodeUtil.TC_METHOD_PREFIX)) {
+          continue;
+        }
+
         if (Modifier.isStatic(access) || Modifier.isPrivate(access)) {
           continue;
         }

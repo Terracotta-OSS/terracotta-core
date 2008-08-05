@@ -25,10 +25,6 @@ public class InstrumentEverythingInContainerTest extends AbstractDeploymentTest 
     return new ServerTestSetup(InstrumentEverythingInContainerTest.class);
   }
 
-  protected boolean isSessionTest() {
-    return false;
-  }
-
   public void setUp() throws Exception {
     super.setUp();
     if (deployment == null) deployment = makeDeployment();
@@ -39,9 +35,11 @@ public class InstrumentEverythingInContainerTest extends AbstractDeploymentTest 
     tcConfigBuilder.addInstrumentedClass("*..*");
     // These bytes are obfuscated and get verify errors when instrumented by DSO
     tcConfigBuilder.addExclude("com.sun.crypto.provider..*");
+    tcConfigBuilder.addWebApplication(CONTEXT);
 
     WebApplicationServer server = makeWebApplicationServer(tcConfigBuilder);
     server.addWarDeployment(deployment, CONTEXT);
+
     if (!Vm.isIBM()) {
       // InstrumentEverythingInContainerTest under glassfish needs this
       server.getServerParameters().appendJvmArgs("-XX:MaxPermSize=128m");
