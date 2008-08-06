@@ -53,7 +53,7 @@ public class ClientLockManagerTest extends TCTestCase {
   private TestSessionManager    sessionManager;
 
   public ClientLockManagerTest() {
-    disableTestUntil("testHeldAndPendingLocksInThreadDump", "2008-08-05");
+    //
   }
 
   protected void setUp() throws Exception {
@@ -809,6 +809,7 @@ public class ClientLockManagerTest extends TCTestCase {
     final LockID lid0 = threadLockManager.lockIDFor("Locky0");
     final LockID lid1 = threadLockManager.lockIDFor("Locky1");
     final LockID lid2 = threadLockManager.lockIDFor("Locky2");
+    final LockID lid3 = threadLockManager.lockIDFor("Locky3");
     final CyclicBarrier txnBarrier = new CyclicBarrier(3);
 
     final Latch[] done = new Latch[3];
@@ -831,9 +832,9 @@ public class ClientLockManagerTest extends TCTestCase {
 
     Thread t1 = new Thread("yahoo_thread") {
       public void run() {
-        threadLockManager.lock(lid1, LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE,
+        threadLockManager.lock(lid3, LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE,
                                LockContextInfo.NULL_LOCK_CONTEXT_INFO);
-        System.out.println("XXX YAHOO Thread : Got READ lock1 for tx1");
+        System.out.println("XXX YAHOO Thread : Got WRITE lock3 for tx1");
 
         threadLockManager.lock(lid0, LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE,
                                LockContextInfo.NULL_LOCK_CONTEXT_INFO);
@@ -845,10 +846,12 @@ public class ClientLockManagerTest extends TCTestCase {
           throw new AssertionError(e);
         }
 
-        threadLockManager.unlock(lid0);
-        System.out.println("XXX YAHOO Thread : Released WRITE lock1 for tx1");
-        threadLockManager.unlock(lid1);
-        System.out.println("XXX YAHOO Thread : Released READ lock1 for tx1");
+        /*
+         * threadLockManager.unlock(lid0); System.out.println("XXX YAHOO Thread : Released WRITE lock0 for tx1");
+         */
+
+        threadLockManager.unlock(lid3);
+        System.out.println("XXX YAHOO Thread : Released WRITE lock3 for tx1");
 
         done[1].release();
       }
@@ -868,7 +871,7 @@ public class ClientLockManagerTest extends TCTestCase {
 
         threadLockManager.lock(lid1, LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE,
                                LockContextInfo.NULL_LOCK_CONTEXT_INFO);
-        System.out.println("XXX GOOGL Thread : Got WRITE lock0 for tx2");
+        System.out.println("XXX GOOGL Thread : Got WRITE lock1 for tx2");
         done[2].release();
       }
     };
@@ -890,16 +893,17 @@ public class ClientLockManagerTest extends TCTestCase {
     System.out.println("XXX WAIT locks:" + pendingLocksMap);
     // this.lockManager.unpause();
 
-    Assert.eval(heldLocksMap.size() == 2);
+    Assert.eval(heldLocksMap.size() == 3);
     for (Iterator i = heldLocksMap.values().iterator(); i.hasNext();) {
       String val = (String) i.next();
-      Assert.eval((val.indexOf("Locky2") > 0) || ((val.indexOf("Locky0") > 0) && (val.indexOf("Locky1") > 0)));
+      Assert.eval((val.indexOf("Locky2") > 0) || (val.indexOf("Locky3") > 0)
+                  || ((val.indexOf("Locky0") > 0) && (val.indexOf("Locky1") > 0)));
     }
 
     Assert.eval(pendingLocksMap.size() == 1);
     for (Iterator i = pendingLocksMap.values().iterator(); i.hasNext();) {
       String val = (String) i.next();
-      Assert.eval(val.indexOf("Locky1") > 0);
+      Assert.eval(val.indexOf("Locky0") > 0);
     }
 
     threadLockManager.unlock(lid0);
@@ -929,10 +933,10 @@ public class ClientLockManagerTest extends TCTestCase {
     System.out.println("XXX WAIT locks:" + pendingLocksMap);
     // this.lockManager.unpause();
 
-    Assert.eval(heldLocksMap.size() == 1);
+    Assert.eval(heldLocksMap.size() == 2);
     for (Iterator i = heldLocksMap.values().iterator(); i.hasNext();) {
       String val = (String) i.next();
-      Assert.eval((val.indexOf("Locky1") > 0) && (val.indexOf("Locky2") > 0));
+      Assert.eval((val.indexOf("Locky0") > 0) || (val.indexOf("Locky1") > 0) && (val.indexOf("Locky2") > 0));
     }
 
     Assert.eval(pendingLocksMap.size() == 0);
