@@ -64,6 +64,11 @@ public class ClientGCLockHeldApp extends AbstractTransparentApp {
       SynchronizedInt counter = new SynchronizedInt(0);
       synchronized (lockList) {
         lockList.add(counter);
+        try {
+          Thread.sleep(10);
+        } catch (InterruptedException e) {
+          throw new AssertionError(e);
+        }
       }
       counter.increment();
     }
