@@ -186,7 +186,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
       }
     }
     logger.info("Running lock GC took " + (System.currentTimeMillis() - runGCStartTime) + " ms " + iterationCount
-                + "iterations for GCing " + totalGCCount + " locks. gcCandidates remaining = " + gcCandidates.size()
+                + " iterations for GCing " + totalGCCount + " locks. gcCandidates remaining = " + gcCandidates.size()
                 + " total locks remaining = " + locksByID.size());
   }
 
