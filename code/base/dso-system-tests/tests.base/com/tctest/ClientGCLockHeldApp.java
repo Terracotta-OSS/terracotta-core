@@ -60,17 +60,31 @@ public class ClientGCLockHeldApp extends AbstractTransparentApp {
 
     Stopwatch stopwatch = new Stopwatch().start();
 
-    for (int i = 0; stopwatch.getElapsedTime() < (1000 * 60 * MINUTES_TEST_RUN); i++) {
-      SynchronizedInt counter = new SynchronizedInt(0);
-      synchronized (lockList) {
-        lockList.add(counter);
-        try {
-          Thread.sleep(10);
-        } catch (InterruptedException e) {
-          throw new AssertionError(e);
+    Runtime runtime = Runtime.getRuntime();
+    long maxMemory = runtime.maxMemory();
+    
+    System.out.println("maxMemory: " + maxMemory);
+    
+    int locksSize = (int)(maxMemory/10000);
+    
+    System.out.println("locksSize = " + locksSize);
+    while (stopwatch.getElapsedTime() < (1000 * 60 * MINUTES_TEST_RUN)) {
+      
+      for (int i = 0; i < locksSize ; i++) {
+
+        SynchronizedInt counter = new SynchronizedInt(0);
+        synchronized (lockList) {
+          lockList.add(counter);
         }
+        counter.increment();
       }
-      counter.increment();
+      //now sleep for awhile, so locks created can be GCed, if there
+      //is a bug, then it won't be GCed and eventually OOME
+      try {
+        Thread.sleep(30 * 1000);
+      } catch (InterruptedException e) {
+        throw new AssertionError(e);
+      }
     }
   }
 
