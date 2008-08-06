@@ -50,9 +50,9 @@ public class AdminClientBundle extends ListResourceBundle {
         { "server.disconnected.label", "Disconnected on {0}" },
         {
             "server.non-restartable.warning",
-            "<html>This server is configured for <b>temporary-swap-only</b> persistence mode and so will not "
+            "<html>This server is configured for <code>temporary-swap-only</code> persistence mode and so will not "
                 + "allow clients to reconnect upon restart.  To allow for client reconnect upon restart, change the "
-                + "server's configured persistence mode to <b>permanent-store</b> and restart:</html>" },
+                + "server's configured persistence mode to <code>permanent-store</code> and restart:</html>" },
         { "dso", "DSO" },
         { "dso.roots", "Cluster object browser" },
         { "dso.client.roots", "Client object browser" },
@@ -120,13 +120,13 @@ public class AdminClientBundle extends ListResourceBundle {
         { "dso.gcstats.iteration", "Iteration" },
         { "dso.gcstats.type", "Type" },
         { "dso.gcstats.status", "Status" },
-        { "dso.gcstats.startTime", "Start time" },
-        { "dso.gcstats.elapsedTime", "<html>Total elapsed<br>time (ms.)</html>" },
-        { "dso.gcstats.beginObjectCount", "Begin count" },
-        { "dso.gcstats.pausedStageTime", "<html>Paused stage<br>(ms.)</html>" },
-        { "dso.gcstats.markStageTime", "<html>Mark stage<br>(ms.)</html>" },
-        { "dso.gcstats.actualGarbageCount", "Garbage count" },
-        { "dso.gcstats.deleteStageTime", "<html>Delete stage<br>(ms.)</html>" },
+        { "dso.gcstats.startTime", "<html>Start<br>time</html>" },
+        { "dso.gcstats.elapsedTime", "<html>Total<br>elapsed<br>time (ms.)</html>" },
+        { "dso.gcstats.beginObjectCount", "<html>Begin<br>count</html>" },
+        { "dso.gcstats.pausedStageTime", "<html>Paused<br>stage (ms.)</html>" },
+        { "dso.gcstats.markStageTime", "<html>Mark<br>stage (ms.)</html>" },
+        { "dso.gcstats.actualGarbageCount", "<html>Garbage<br>count</html>" },
+        { "dso.gcstats.deleteStageTime", "<html>Delete<br>stage (ms.)</html>" },
         { "dso.all.statistics", "All statistics" },
         { "file.menu.label", "File" },
         { "help.menu.label", "Help" },

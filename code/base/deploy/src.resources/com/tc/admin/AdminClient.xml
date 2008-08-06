@@ -10,23 +10,23 @@
       <item bottom="-1,bottom:n" height="s" left="-1,left:n" right="-1,right:n" top="-1,top:n" width="s" />
     </connections>
   </container>
-  <container tag="RestartabilityInfoPanel">
+  <container tag="PersistenceModeWarningPanel">
     <children>
       <label name="IconLabel"/>
-      <label name="TextLabel"/>
+      <label name="WarningLabel" />
       <textarea class="com.tc.admin.common.XTextArea" name="ConfigSnippetText" editable="false" />
     </children>
     <connections>
       <item bottom="-1,bottom:s" height="n" left="-1,left:n" right="1,left:n" top="-1,top:n" width="n" />
       <item bottom="2,top:n" height="n" left="0,right:n" right="-1,right:n" top="-1,top:n" width="s" />
-      <item bottom="-1,bottom:n" height="n" left="1,left:0" right="-1,right:n" top="1,bottom:n" width="ns" />
+      <item bottom="-1,bottom:n" height="n" left="1,left:0" right="-1,right:s" top="1,bottom:n" width="n" />
     </connections>
   </container>
   <container tag="ServerPanel">
     <children>
       <tabbedpane name="TabbedPane">
         <tab title="Main">
-          <container tag="ServerPanel">
+          <container name="MainPanel">
             <children>
               <container>
                 <children>
@@ -37,7 +37,7 @@
                     </children>
                     <connections>
                       <item bottom="-1,bottom:s" height="n" left="-1,left:0" right="0,left:n" top="-1,top:s" width="n" />
-                      <item bottom="-1,bottom:s" height="n" left="0,right:n" right="-1,right:0" top="-1,top:s" width="ns" />
+                      <item bottom="-1,bottom:s" height="n" left="0,right:n" right="-1,right:0" top="-1,top:s" width="s" />
                     </connections>
                   </container>
                   <item name="RestartabilityInfoItem" />
@@ -55,7 +55,7 @@
               </container>
             </children>
             <connections>
-              <item bottom="-1,bottom:n" height="ns" left="-1,left:n" right="-1,right:n" top="-1,top:n" width="sn" />
+              <item bottom="-1,bottom:0" height="s" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="s" />
             </connections>
           </container>
         </tab>
@@ -798,10 +798,12 @@
         <children>
           <label name="BackupStatusLabel" />
           <item name="BackupProgressBarHolder" />
+          <item name="PersistenceModeWarningHolder" />          
         </children>
         <connections>
           <item bottom="1,top:n" height="n" left="-1,left:n" right="-1,right:ns" top="-1,top:n" width="n" />
-          <item bottom="-1,bottom:n" height="n" left="-1,left:n" right="-1,right:n" top="0,top:n" width="s" />
+          <item bottom="2,top:n" height="n" left="-1,left:n" right="-1,right:n" top="0,top:n" width="s" />
+          <item bottom="-1,bottom:ns" height="n" left="-1,left:n" right="-1,right:n" top="1,bottom:n" width="ns" />
         </connections>
       </container>
     </children>

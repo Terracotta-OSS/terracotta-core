@@ -50,7 +50,7 @@ public class ServerNode extends ComponentNode {
     m_acc = AdminClient.getContext();
     m_serversNode = serversNode;
     m_server = server;
-
+ 
     setRenderer(new ServerNodeTreeCellRenderer());
     initMenu();
     m_server.addPropertyChangeListener(m_serverPropertyChangeListener = new ServerPropertyChangeListener());
@@ -58,10 +58,12 @@ public class ServerNode extends ComponentNode {
 
   public java.awt.Component getComponent() {
     if (m_serverPanel == null) {
+      m_acc.block();
       m_serverPanel = createServerPanel();
       if (m_server.isConnected()) {
         handleConnected();
       }
+      m_acc.unblock();      
     }
     return m_serverPanel;
   }

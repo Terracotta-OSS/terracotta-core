@@ -67,7 +67,7 @@ module BundledComponents
     jarfile = FilePath.new(destdir, "tc.jar")
     if File.exist?(libdir.to_s)
       ant.jar(:destfile => jarfile.to_s, :basedir => runtime_classes_dir.to_s, :excludes => '**/build-data.txt') do
-        libfiles  = Dir.entries(libdir.to_s).delete_if { |item| /\.jar$/ !~ item } << "resources/"
+        libfiles  = Dir.entries(libdir.to_s).delete_if { |item| /\.jar$/ !~ item } << "resources/" << "svt.jar"
         ant.manifest { ant.attribute(:name => 'Class-Path', :value => libfiles.sort.join(' ')) }
       end
     end

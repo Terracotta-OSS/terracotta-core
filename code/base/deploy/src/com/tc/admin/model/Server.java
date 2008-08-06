@@ -108,6 +108,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   private void init() {
+    m_startTime = m_activateTime = -1;    
     m_displayLabel = m_connectManager.toString();
     m_propertyChangeSupport = new PropertyChangeSupport(this);
     m_listenerList = new EventListenerList();
@@ -298,6 +299,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
 
   public void setHost(String host) {
     getConnectionManager().setHostname(host);
+    m_displayLabel = getConnectionManager().toString();
   }
 
   public String getHost() {
@@ -306,6 +308,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
 
   public void setPort(int port) {
     getConnectionManager().setJMXPortNumber(port);
+    m_displayLabel = getConnectionManager().toString();
   }
 
   public int getPort() {
@@ -796,6 +799,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
 
   synchronized void reset() {
     if (m_roots == null) return;
+    m_startTime = m_activateTime = -1;    
     m_connected = m_ready = false;
     initReadySet();
     m_roots.clear();
