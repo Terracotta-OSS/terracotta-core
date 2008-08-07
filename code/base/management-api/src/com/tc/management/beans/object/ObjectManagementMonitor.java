@@ -58,15 +58,32 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
     return gcRunner.isGCRunning();
   }
 
-  public synchronized void runGC() {
-    if (!isEnabled()) {
-      logger.warn("Cannot run GC because mBean is not enabled.");
-      return;
-    }
-    if (gcController == null) {
-      logger.warn("Failure: see log for more information, gcController is null");
-      return;
-    }
+	public synchronized void runGC() {
+		if (!isEnabled()) {
+			throw new UnsupportedOperationException(
+					"Cannot run GC because mBean is not enabled.");
+		}
+		if (gcController == null) {
+			throw new RuntimeException("Failure: see log for more information");
+		}
+		
+		if (!gcController.isGCStarted()) {
+			throw new UnsupportedOperationException(
+					"Cannot run GC externally because this server "
+							+ "is in PASSIVE state and GC is disabled.");
+		}
+		// XXX::Note:: There is potencially a rare here, one could check to see
+		// if it is disabled and before GC is started it could be disabled. In
+		// which case it will not be run, just logged in the log file.
+		if (gcController.isGCDisabled()) {
+			throw new UnsupportedOperationException(
+					"Cannot run GC externally because PASSIVE server(s) are currently synching state "
+							+ "with this ACTIVE server and GC is disabled.");
+		}
+		if (isGCRunning()) {
+			throw new UnsupportedOperationException(
+					"Cannot run GC because GC is already running.");
+		}
 
     if (!gcController.isGCStarted()) {
       logger.warn("Cannot run GC externally because this server " + "is in PASSIVE state and GC is disabled.");

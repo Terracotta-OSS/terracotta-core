@@ -36,7 +36,11 @@ public class RunGCJMXTestApp extends AbstractTransparentApp {
   public void run() {
 
     for (int i = 0; i < 10; i++) {
-      runGC();
+      try {
+        runGC();
+      } catch (Exception e) {
+        System.out.println(e.getMessage());
+      }
       if (!config.getServerControl().isRunning()) {
         notifyError("call to objectManagementMonitor.runGC() should not stop server");
       }
@@ -60,14 +64,10 @@ public class RunGCJMXTestApp extends AbstractTransparentApp {
     }
   }
 
-  private void runGC() {
-    try {
+  private void runGC() throws Exception {
       connect();
       objectMBean.runGC();
-      disconnect();
-    } catch (Exception e) {
-      notifyError("should not throw exception when calling objectManagementMonitor.runGC()");
-    }
+      disconnect();   
   }
 
 }
