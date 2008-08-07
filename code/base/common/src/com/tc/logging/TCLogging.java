@@ -84,8 +84,6 @@ public class TCLogging {
   private static FileLock           currentLoggingDirectoryFileLock    = null;
   private static boolean            lockingDisabled                    = false;
 
-  private static final String       CONSOLE_LOG_LEVEL_PROPERTY_NAME    = "tc.logging.console.level";
-
   public static JMXAppender getJMXAppender() {
     return jmxAppender;
   }
@@ -365,11 +363,6 @@ public class TCLogging {
     Thread.currentThread().setContextClassLoader(TCLogging.class.getClassLoader());
 
     try {
-      String consoleLogLevelStr = System.getProperty(CONSOLE_LOG_LEVEL_PROPERTY_NAME);
-      Level consoleLogLevel = null;
-      if (consoleLogLevelStr != null && !consoleLogLevelStr.trim().equals("")) {
-        consoleLogLevel = Level.toLevel(consoleLogLevelStr);
-      }
       currentLoggingDirectory = null;
 
       Logger jettyLogger = Logger.getLogger("org.mortbay");
@@ -390,7 +383,7 @@ public class TCLogging {
 
       internalLogger.setLevel(Level.INFO);
       customerLogger.setLevel(Level.INFO);
-      consoleLogger.setLevel(consoleLogLevel == null? Level.INFO: consoleLogLevel);
+      consoleLogger.setLevel(Level.INFO);
       benchLogger.setLevel(Level.INFO);
 
       boolean isDev = developmentConfiguration();

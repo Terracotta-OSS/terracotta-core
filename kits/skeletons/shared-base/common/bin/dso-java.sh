@@ -34,4 +34,6 @@ if $cygwin; then
   [ -n "$JAVA_HOME" ] && JAVA_HOME=`cygpath --windows "$JAVA_HOME"`
 fi
 
+echo ""
+echo "Starting Terracotta client..."
 exec "${JAVA_HOME}/bin/java" ${TC_JAVA_OPTS} ${JAVA_OPTS} ${class}
