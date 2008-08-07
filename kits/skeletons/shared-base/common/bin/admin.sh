@@ -26,7 +26,7 @@ TC_INSTALL_DIR=`dirname "$0"`/..
 CP=$TC_INSTALL_DIR/lib/tc.jar
 SVT_JAR=`find $TC_INSTALL_DIR/lib -name "svt*.jar" | tail -1`
 if [ -f "$SVT_JAR" ]; then  
-  CP=$CP:$SVT_JAR  
+  CP="$SVT_JAR:$CP"
 fi
 
 # For Cygwin, convert paths to Windows

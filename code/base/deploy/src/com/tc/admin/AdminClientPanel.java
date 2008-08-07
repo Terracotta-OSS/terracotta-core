@@ -569,7 +569,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
   }
 
   public boolean testServerMatch(ClusterNode clusterNode) {
-    if (com.tc.util.ProductInfo.getInstance().isDevMode() || m_versionCheckAction == null
+    if (/*com.tc.util.ProductInfo.getInstance().isDevMode() ||*/ m_versionCheckAction == null
         || !m_versionCheckAction.isVersionCheckEnabled()) { return true; }
 
     ProductInfo consoleInfo = ProductInfo.getInstance();
@@ -588,37 +588,6 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
 
     if (!versionsMatch(consoleVersion, serverVersion)) {
       int answer = showVersionMismatchDialog(clusterNode, consoleVersion, serverVersion);
-      return (answer == JOptionPane.YES_OPTION);
-    }
-
-    return true;
-  }
-
-  public boolean testServerMatch(ServerNode serverNode) {
-    if (com.tc.util.ProductInfo.getInstance().isDevMode() || m_versionCheckAction == null
-        || !m_versionCheckAction.isVersionCheckEnabled()) { return true; }
-
-    ProductInfo consoleInfo = ProductInfo.getInstance();
-    String consoleVersion = consoleInfo.version();
-    String serverVersion = null;
-    try {
-      serverVersion = serverNode.getProductVersion();
-    } catch (Exception e) {
-      // connection probably lost...
-    }
-    // ...don't interfere with connection messaging
-    if (serverVersion == null) return true;
-
-    int spaceIndex = serverVersion.lastIndexOf(" ");
-
-    // The version string that comes from the server is of the form "Terracotta 2.4", while
-    // the default ProductInfo.getVersion is just the raw version number string: "2.4"
-    if (spaceIndex != -1) {
-      serverVersion = serverVersion.substring(spaceIndex + 1);
-    }
-
-    if (!versionsMatch(consoleVersion, serverVersion)) {
-      int answer = showVersionMismatchDialog(serverNode, consoleVersion, serverVersion);
       return (answer == JOptionPane.YES_OPTION);
     }
 
@@ -648,39 +617,6 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     dialog.show();
     dialog.dispose();
     clusterNode.setVersionMismatchDialog(null);
-
-    Object selectedValue = pane.getValue();
-
-    if (selectedValue == null) return JOptionPane.CLOSED_OPTION;
-    m_versionCheckAction.setVersionCheckEnabled(!versionCheckToggle.isSelected());
-    if (selectedValue instanceof Integer) { return ((Integer) selectedValue).intValue(); }
-
-    return JOptionPane.CLOSED_OPTION;
-  }
-
-  public int showVersionMismatchDialog(ServerNode serverNode, String consoleVersion, String serverVersion)
-      throws HeadlessException {
-    Frame frame = getFrame();
-    Label label = new Label(m_acc.format("version.check.message", serverNode, serverVersion, consoleVersion));
-    Container panel = new Container();
-    panel.setLayout(new BorderLayout());
-    panel.add(label);
-    CheckBox versionCheckToggle = new CheckBox(m_acc.getMessage("version.check.disable.label"));
-    versionCheckToggle.setHorizontalAlignment(SwingConstants.RIGHT);
-    panel.add(versionCheckToggle, BorderLayout.SOUTH);
-    String title = frame.getTitle();
-    JOptionPane pane = new JOptionPane(panel, JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION, null, null, null);
-
-    pane.setInitialValue(null);
-    pane.setComponentOrientation(frame.getComponentOrientation());
-
-    JDialog dialog = pane.createDialog(frame, title);
-    serverNode.setVersionMismatchDialog(dialog);
-
-    pane.selectInitialValue();
-    dialog.show();
-    dialog.dispose();
-    serverNode.setVersionMismatchDialog(null);
 
     Object selectedValue = pane.getValue();
 

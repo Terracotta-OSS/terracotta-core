@@ -200,10 +200,6 @@ public class AdminClientContext {
     return this.controller.testServerMatch(node);
   }
 
-  public boolean testServerMatch(ServerNode node) {
-    return this.controller.testServerMatch(node);
-  }
-
   public void updateServerPrefs() {
     this.controller.updateServerPrefs();
   }

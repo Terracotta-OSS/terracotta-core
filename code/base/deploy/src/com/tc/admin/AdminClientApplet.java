@@ -55,10 +55,6 @@ public class AdminClientApplet extends XApplet implements AdminClientController 
     m_mainPanel.nodeChanged(node);
   }
 
-  public boolean testServerMatch(ServerNode node) {
-    return m_mainPanel.testServerMatch(node);
-  }
-
   public boolean testServerMatch(ClusterNode node) {
     return m_mainPanel.testServerMatch(node);
   }

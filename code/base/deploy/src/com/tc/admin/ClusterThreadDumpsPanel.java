@@ -42,6 +42,7 @@ public class ClusterThreadDumpsPanel extends XContainer {
   private ThreadDumpTreeNode     m_lastSelectedThreadDumpTreeNode;
   private Button                 m_exportButton;
   private File                   m_lastExportDir;
+  private SearchPanel            m_searchPanel;
 
   private static final String    DEFAULT_EXPORT_ARCHIVE_FILENAME = "tc-cluster-thread-dumps.zip";
 
@@ -55,7 +56,7 @@ public class ClusterThreadDumpsPanel extends XContainer {
 
     XSplitPane splitter = (XSplitPane) findComponent("ThreadDumpsSplitter");
     splitter.setPreferences(getPreferences().node(splitter.getName()));
-    
+
     m_threadDumpButton = (Button) findComponent("TakeThreadDumpButton");
     m_threadDumpButton.addActionListener(new ThreadDumpButtonHandler());
 
@@ -70,19 +71,24 @@ public class ClusterThreadDumpsPanel extends XContainer {
 
     m_exportButton = (Button) findComponent("ExportButton");
     m_exportButton.addActionListener(new ExportHandler());
+ 
+    m_searchPanel = (SearchPanel) findComponent("SearchPanel");
+    m_searchPanel.setTextComponent(m_threadDumpTextArea);
   }
 
   protected Preferences getPreferences() {
     return m_acc.getPrefs().node(ClusterThreadDumpsPanel.class.getName());
   }
-  
+
   private class ThreadDumpButtonHandler implements ActionListener {
     public void actionPerformed(ActionEvent ae) {
       ClusterThreadDumpEntry tde = m_clusterThreadDumpsNode.takeThreadDump();
       XTreeNode root = (XTreeNode) m_threadDumpTreeModel.getRoot();
 
       m_threadDumpTreeModel.insertNodeInto(tde, root, root.getChildCount());
-      m_threadDumpTree.expandPath(new TreePath(tde.getParent()));
+      TreePath treePath = new TreePath(tde.getPath());
+      m_threadDumpTree.expandPath(treePath);
+      m_threadDumpTree.setSelectionPath(treePath);
       m_exportButton.setEnabled(true);
     }
   }
@@ -103,6 +109,7 @@ public class ClusterThreadDumpsPanel extends XContainer {
             }
           });
         }
+        m_searchPanel.setEnabled(true);
       }
       m_lastSelectedThreadDumpTreeNode = tdtn;
       m_exportButton.setEnabled(tdtn != null);

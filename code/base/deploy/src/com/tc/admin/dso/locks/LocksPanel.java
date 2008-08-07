@@ -14,6 +14,7 @@ import org.dijon.ToggleButton;
 import com.tc.admin.AdminClient;
 import com.tc.admin.AdminClientContext;
 import com.tc.admin.ConnectionContext;
+import com.tc.admin.SearchPanel;
 import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.ExceptionHelper;
 import com.tc.admin.common.MBeanServerInvocationProxy;
@@ -43,7 +44,6 @@ import java.util.concurrent.TimeoutException;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.Notification;
 import javax.management.NotificationListener;
-import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JSpinner;
 import javax.swing.JTabbedPane;
@@ -75,14 +75,10 @@ public class LocksPanel extends XContainer implements NotificationListener {
   private JTabbedPane                 fLocksTabbedPane;
   private LockTreeTable               fTreeTable;
   private LockTreeTableModel          fTreeTableModel;
-  private JTextField                  fClientLocksFindField;
-  private JButton                     fClientLocksFindNextButton;
-  private JButton                     fClientLocksFindPreviousButton;
+  private SearchPanel                 fClientSearchPanel;
   private XObjectTable                fServerLocksTable;
   private ServerLockTableModel        fServerLockTableModel;
-  private JTextField                  fServerLocksFindField;
-  private JButton                     fServerLocksFindNextButton;
-  private JButton                     fServerLocksFindPreviousButton;
+  private SearchPanel                 fServerSearchPanel;
   private TextArea                    fTraceText;
   private Label                       fConfigLabel;
   private TextArea                    fConfigText;
@@ -137,23 +133,15 @@ public class LocksPanel extends XContainer implements NotificationListener {
     ActionListener findNextAction = new FindNextHandler();
     ActionListener findPreviousAction = new FindPreviousHandler();
 
-    fClientLocksFindField = (JTextField) findComponent("ClientLocksFindField");
-    fClientLocksFindField.addActionListener(findNextAction);
-    fClientLocksFindNextButton = (JButton) findComponent("ClientLocksFindNextButton");
-    fClientLocksFindNextButton.addActionListener(findNextAction);
-    fClientLocksFindPreviousButton = (JButton) findComponent("ClientLocksFindPreviousButton");
-    fClientLocksFindPreviousButton.addActionListener(findPreviousAction);
+    fClientSearchPanel = (SearchPanel) findComponent("ClientLocksSearchPanel");
+    fClientSearchPanel.setHandlers(findNextAction, findPreviousAction);
 
     fServerLocksTable = (XObjectTable) findComponent("ServerLocksTable");
     fServerLockTableModel = new ServerLockTableModel(EMPTY_LOCK_SPEC_COLLECTION);
     fServerLocksTable.setModel(fServerLockTableModel);
 
-    fServerLocksFindField = (JTextField) findComponent("ServerLocksFindField");
-    fServerLocksFindField.addActionListener(findNextAction);
-    fServerLocksFindNextButton = (JButton) findComponent("ServerLocksFindNextButton");
-    fServerLocksFindNextButton.addActionListener(findNextAction);
-    fServerLocksFindPreviousButton = (JButton) findComponent("ServerLocksFindPreviousButton");
-    fServerLocksFindPreviousButton.addActionListener(findPreviousAction);
+    fServerSearchPanel = (SearchPanel) findComponent("ServerLocksSearchPanel");
+    fServerSearchPanel.setHandlers(findNextAction, findPreviousAction);
 
     fTraceText = (TextArea) findComponent("TraceText");
     fConfigLabel = (Label) findComponent("ConfigLabel");
@@ -318,10 +306,10 @@ public class LocksPanel extends XContainer implements NotificationListener {
     JTextField textfield;
     if (fLocksTabbedPane.getSelectedIndex() == 0) {
       table = fTreeTable;
-      textfield = fClientLocksFindField;
+      textfield = fClientSearchPanel.getField();
     } else {
       table = fServerLocksTable;
-      textfield = fServerLocksFindField;
+      textfield = fServerSearchPanel.getField();
     }
     findLock(table, textfield.getText().trim(), next);
   }
@@ -548,14 +536,10 @@ public class LocksPanel extends XContainer implements NotificationListener {
     fLocksTabbedPane = null;
     fTreeTable = null;
     fTreeTableModel = null;
-    fClientLocksFindField = null;
-    fClientLocksFindNextButton = null;
-    fClientLocksFindPreviousButton = null;
+    fClientSearchPanel = null;
     fServerLocksTable = null;
     fServerLockTableModel = null;
-    fServerLocksFindField = null;
-    fServerLocksFindNextButton = null;
-    fServerLocksFindPreviousButton = null;
+    fServerSearchPanel = null;
     fTraceText = null;
     fConfigLabel = null;
     fConfigText = null;

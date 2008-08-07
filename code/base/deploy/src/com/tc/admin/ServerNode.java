@@ -20,7 +20,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.Icon;
 import javax.swing.JComponent;
-import javax.swing.JDialog;
 import javax.swing.JPopupMenu;
 import javax.swing.JTree;
 import javax.swing.SwingUtilities;
@@ -39,7 +38,6 @@ public class ServerNode extends ComponentNode {
   protected IServer                      m_server;
   protected ServerPropertyChangeListener m_serverPropertyChangeListener;
   protected ServerPanel                  m_serverPanel;
-  protected JDialog                      m_versionMismatchDialog;
   protected JPopupMenu                   m_popupMenu;
   protected ServerThreadDumpsNode        m_threadDumpsNode;
   protected ServerRuntimeStatsNode       m_runtimeStatsNode;
@@ -111,17 +109,6 @@ public class ServerNode extends ComponentNode {
 
   void handleConnected() {
     if (m_acc == null) return;
-    if (m_versionMismatchDialog != null) return;
-    if (m_serverPanel != null && !m_serverPanel.isProductInfoShowing() && !m_acc.testServerMatch(this)) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          if (m_server.isConnected()) {
-            disconnect();
-          }
-        }
-      });
-      return;
-    }
     if (isActive()) {
       handleActivation();
     } else if (isPassiveStandby()) {
@@ -134,9 +121,6 @@ public class ServerNode extends ComponentNode {
   }
 
   private void handleDisconnected() {
-    if (m_versionMismatchDialog != null) {
-      m_versionMismatchDialog.setVisible(false);
-    }
     handleDisconnect();
   }
 
@@ -182,10 +166,6 @@ public class ServerNode extends ComponentNode {
 
   protected void initMenu() {
     m_popupMenu = new JPopupMenu("Server Actions");
-  }
-
-  void setVersionMismatchDialog(JDialog dialog) {
-    m_versionMismatchDialog = dialog;
   }
 
   boolean isConnected() {

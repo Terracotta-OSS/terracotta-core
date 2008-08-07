@@ -31,7 +31,8 @@ public abstract class AbstractThreadDumpsPanel extends XContainer {
   private XTextArea            m_threadDumpTextArea;
   private ScrollPane           m_threadDumpTextScroller;
   private ThreadDumpEntry      m_lastSelectedEntry;
-
+  private SearchPanel          m_searchPanel;
+  
   public AbstractThreadDumpsPanel() {
     super();
 
@@ -49,6 +50,9 @@ public abstract class AbstractThreadDumpsPanel extends XContainer {
     m_threadDumpList.addListSelectionListener(new ThreadDumpListSelectionListener());
     m_threadDumpTextArea = (XTextArea) findComponent("ThreadDumpTextArea");
     m_threadDumpTextScroller = (ScrollPane) findComponent("ThreadDumpTextScroller");
+    
+    m_searchPanel = (SearchPanel) findComponent("SearchPanel");
+    m_searchPanel.setTextComponent(m_threadDumpTextArea);
   }
 
   protected abstract String getThreadDumpText() throws Exception;

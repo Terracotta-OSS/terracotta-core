@@ -12,7 +12,7 @@
   </container>
   <container tag="PersistenceModeWarningPanel">
     <children>
-      <label name="IconLabel"/>
+      <label name="IconLabel" />
       <label name="WarningLabel" />
       <textarea class="com.tc.admin.common.XTextArea" name="ConfigSnippetText" editable="false" />
     </children>
@@ -230,21 +230,7 @@
                   <scrollpane>
                     <table class="com.tc.admin.dso.locks.LockTreeTable" name="LockTreeTable" />
                   </scrollpane>
-                  <container>
-                    <children>
-                      <label text="Find:" />
-                      <textfield name="ClientLocksFindField" />
-                      <button name="ClientLocksFindNextButton" text="Next" class="com.tc.admin.common.RolloverButton" image-uri="/com/tc/admin/icons/next_nav.gif" />
-                      <button name="ClientLocksFindPreviousButton" text="Previous" class="com.tc.admin.common.RolloverButton"
-                        image-uri="/com/tc/admin/icons/previous_nav.gif" />
-                    </children>
-                    <connections>
-                      <item bottom="1,bottom:s" height="n" left="-1,left:n" right="1,left:n" top="1,top:s" width="n" />
-                      <item bottom="-1,bottom:ns" height="n" left="0,right:n" right="2,left:n" top="-1,top:ns" width="140" />
-                      <item bottom="-1,bottom:ns" height="n" left="1,right:n" right="3,left:1" top="-1,top:ns" width="n" />
-                      <item bottom="-1,bottom:ns" height="n" left="2,right:1" right="-1,right:ns" top="-1,top:ns" width="n" />
-                    </connections>
-                  </container>
+                  <container name="ClientLocksSearchPanel" class="com.tc.admin.SearchPanel" />
                 </children>
                 <connections>
                   <item bottom="1,top:0" height="s" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="s" />
@@ -295,20 +281,7 @@
               <scrollpane>
                 <table class="com.tc.admin.dso.locks.ServerLocksTable" name="ServerLocksTable" />
               </scrollpane>
-              <container>
-                <children>
-                  <label text="Find:" />
-                  <textfield name="ServerLocksFindField" />
-                  <button name="ServerLocksFindNextButton" text="Next" class="com.tc.admin.common.RolloverButton" image-uri="/com/tc/admin/icons/next_nav.gif" />
-                  <button name="ServerLocksFindPreviousButton" text="Previous" class="com.tc.admin.common.RolloverButton" image-uri="/com/tc/admin/icons/previous_nav.gif" />
-                </children>
-                <connections>
-                  <item bottom="1,bottom:s" height="n" left="-1,left:n" right="1,left:n" top="1,top:s" width="n" />
-                  <item bottom="-1,bottom:ns" height="n" left="0,right:n" right="2,left:n" top="-1,top:ns" width="140" />
-                  <item bottom="-1,bottom:ns" height="n" left="1,right:n" right="3,left:1" top="-1,top:ns" width="n" />
-                  <item bottom="-1,bottom:ns" height="n" left="2,right:1" right="-1,right:ns" top="-1,top:ns" width="n" />
-                </connections>
-              </container>
+                  <container name="ServerLocksSearchPanel" class="com.tc.admin.SearchPanel" />
             </children>
             <connections>
               <item bottom="1,top:0" height="s" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="s" />
@@ -528,7 +501,7 @@
         <tab title="Config snippet">
           <container>
             <children>
-              <textarea name="ClassesConfigDescriptionText" editable="false"/>
+              <textarea name="ClassesConfigDescriptionText" editable="false" />
               <scrollpane>
                 <textarea class="com.tc.admin.common.XTextArea" name="ClassesConfigTextArea" editable="false" line-wrap="false"
                   font="Monospaced-plain-12" />
@@ -622,10 +595,22 @@
           </scrollpane>
         </left>
         <right>
-          <scrollpane name="ThreadDumpTextScroller">
-            <textarea class="com.tc.admin.common.XTextArea" name="ThreadDumpTextArea" editable="false" line-wrap="false"
-              font="Monospaced-plain-12" />
-          </scrollpane>
+          <container>
+            <border>
+              <empty-border />
+            </border>
+            <children>
+              <scrollpane name="ThreadDumpTextScroller">
+                <textarea class="com.tc.admin.common.XTextArea" name="ThreadDumpTextArea" editable="false" line-wrap="false"
+                  font="Monospaced-plain-12" />
+              </scrollpane>
+              <container name="SearchPanel" class="com.tc.admin.SearchPanel" />
+            </children>
+            <connections>
+              <item bottom="1,top:0" height="s" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="s" />
+              <item bottom="-1,bottom:0" height="n" left="-1,left:0" right="-1,right:0" top="0,bottom:0" width="s" />
+            </connections>
+          </container>
         </right>
       </splitpane>
     </children>
@@ -652,16 +637,42 @@
           </scrollpane>
         </left>
         <right>
-          <scrollpane name="ThreadDumpTextScroller">
-            <textarea class="com.tc.admin.common.XTextArea" name="ThreadDumpTextArea" editable="false" line-wrap="false"
-              font="Monospaced-plain-12" />
-          </scrollpane>
+          <container>
+            <border>
+              <empty-border />
+            </border>
+            <children>
+              <scrollpane name="ThreadDumpTextScroller">
+                <textarea class="com.tc.admin.common.XTextArea" name="ThreadDumpTextArea" editable="false" line-wrap="false"
+                  font="Monospaced-plain-12" />
+              </scrollpane>
+              <container name="SearchPanel" class="com.tc.admin.SearchPanel" />
+            </children>
+            <connections>
+              <item bottom="1,top:0" height="s" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="s" />
+              <item bottom="-1,bottom:0" height="n" left="-1,left:0" right="-1,right:0" top="0,bottom:0" width="s" />
+            </connections>
+          </container>
         </right>
       </splitpane>
     </children>
     <connections>
       <item bottom="1,top:0" height="n" left="-1,left:n" right="-1,right:n" top="-1,top:0" width="ns" />
       <item bottom="-1,bottom:n" height="s" left="-1,left:n" right="-1,right:n" top="0,bottom:n" width="s" />
+    </connections>
+  </container>
+  <container tag="SearchPanel" class="com.tc.admin.common.XContainer">
+    <children>
+      <label text="Find:" />
+      <textfield name="FindField" class="com.tc.admin.common.XTextField" />
+      <button name="FindNextButton" text="Next" class="com.tc.admin.common.RolloverButton" image-uri="/com/tc/admin/icons/next_nav.gif" />
+      <button name="FindPreviousButton" text="Previous" class="com.tc.admin.common.RolloverButton" image-uri="/com/tc/admin/icons/previous_nav.gif" />
+    </children>
+    <connections>
+      <item bottom="1,bottom:s" height="n" left="-1,left:n" right="1,left:n" top="1,top:s" width="n" />
+      <item bottom="-1,bottom:ns" height="n" left="0,right:n" right="2,left:n" top="-1,top:ns" width="140" />
+      <item bottom="-1,bottom:ns" height="n" left="1,right:n" right="3,left:1" top="-1,top:ns" width="n" />
+      <item bottom="-1,bottom:ns" height="n" left="2,right:1" right="-1,right:ns" top="-1,top:ns" width="n" />
     </connections>
   </container>
   <container tag="StatsRecorderPanel">
@@ -765,7 +776,7 @@
         <children>
           <label name="LiveObjectCountLabel" text="Live object count:" />
           <label name="LiveObjectCountValueLabel" text="0" />
-          <button name="HelpButton" text="" image-uri="/com/tc/admin/icons/help.gif" class="com.tc.admin.common.RolloverButton"/>
+          <button name="HelpButton" text="" image-uri="/com/tc/admin/icons/help.gif" class="com.tc.admin.common.RolloverButton" />
         </children>
         <connections>
           <item bottom="-1,bottom:ns" height="n" left="-1,left:n" right="1,left:n" top="-1,top:ns" width="n" />
@@ -798,7 +809,7 @@
         <children>
           <label name="BackupStatusLabel" />
           <item name="BackupProgressBarHolder" />
-          <item name="PersistenceModeWarningHolder" />          
+          <item name="PersistenceModeWarningHolder" />
         </children>
         <connections>
           <item bottom="1,top:n" height="n" left="-1,left:n" right="-1,right:ns" top="-1,top:n" width="n" />

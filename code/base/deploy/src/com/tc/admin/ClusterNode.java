@@ -53,6 +53,7 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
   private ClusterPanel        m_clusterPanel;
   private ConnectDialog       m_connectDialog;
   private JDialog             m_versionMismatchDialog;
+  private AtomicBoolean       m_versionCheckOccurred;
   private JPopupMenu          m_popupMenu;
   private ConnectAction       m_connectAction;
   private DisconnectAction    m_disconnectAction;
@@ -88,10 +89,15 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
     setComponent(m_clusterPanel = createClusterPanel());
     setIcon(ServersHelper.getHelper().getServerIcon());
     m_clusterModel.addPropertyChangeListener(new ClusterPropertyChangeListener());
+    m_versionCheckOccurred = new AtomicBoolean(false);    
   }
 
   public IClusterModel getClusterModel() {
     return m_clusterModel;
+  }
+  
+  boolean isDBBackupSupported() {
+    return getClusterModel().isDBBackupSupported();
   }
 
   public IServer[] getClusterServers() throws Exception {
@@ -134,10 +140,14 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
     }
   }
 
+  private boolean testCheckServerVersion() {
+    if (m_versionCheckOccurred.getAndSet(true)) { return true; }
+    return m_acc.testServerMatch(this);
+  }
+  
   private void handleConnected() {
     if (m_acc == null) return;
-    if (m_versionMismatchDialog != null) return;
-    if (!m_clusterPanel.isProductInfoShowing() && !m_acc.testServerMatch(this)) {
+    if (!testCheckServerVersion()) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           if (m_clusterModel.isConnected()) {
@@ -732,6 +742,7 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
     removeAllChildren();
     m_acc.nodeStructureChanged(this);
     m_clusterPanel.disconnected();
+    m_versionCheckOccurred.set(false);
   }
 
   Color getServerStatusColor() {

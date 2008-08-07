@@ -17,7 +17,7 @@ set SVT_JAR=
 set CLASSPATH=%TC_INSTALL_DIR%\lib\tc.jar
 
 for %%i in (%TC_INSTALL_DIR%\lib\svt*.jar) do set SVT_JAR=%%i
-if exist "%SVT_JAR%" set CLASSPATH=%CLASSPATH%;%SVT_JAR%
+if exist "%SVT_JAR%" set CLASSPATH=%SVT_JAR%;%CLASSPATH%
 
 set CLASSPATH="%CLASSPATH:"=%"
 

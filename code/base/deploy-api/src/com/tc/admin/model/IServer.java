@@ -126,6 +126,8 @@ public interface IServer extends IClusterNode {
   void runGC();
 
   int getLiveObjectCount();
+
+  boolean isDBBackupSupported();
   
   void addDBBackupListener(DBBackupListener listener);
   
