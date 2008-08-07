@@ -6,6 +6,7 @@ package org.terracotta.modules.tool.commands;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.terracotta.modules.tool.Module;
 import org.terracotta.modules.tool.ModuleId;
 import org.terracotta.modules.tool.Modules;
@@ -53,10 +54,12 @@ public class UpdateCommand extends AbstractCommand {
     arguments.put("group-id", "(OPTIONAL) The group-id used to qualify the name");
   }
 
+  @Override
   public String syntax() {
     return "<name> [group-id] {options}";
   }
 
+  @Override
   public String description() {
     return "Update to the latest version of an integration module";
   }
@@ -66,15 +69,11 @@ public class UpdateCommand extends AbstractCommand {
     try {
       in = new JarInputStream(new FileInputStream(jarfile));
       Manifest manifest = in.getManifest();
-      return manifest.getMainAttributes();
+      return (manifest == null) ? null : manifest.getMainAttributes();
     } catch (IOException e) {
       return null;
     } finally {
-      if (in != null) try {
-        in.close();
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+      IOUtils.closeQuietly(in);
     }
   }
 
@@ -89,7 +88,9 @@ public class UpdateCommand extends AbstractCommand {
     List<ModuleId> list = new ArrayList<ModuleId>();
     for (File jarfile : jarfiles) {
       Attributes attrs = readAttributes(jarfile);
+
       if (attrs == null) continue;
+      if (!"Terracotta Integration Module".equals(attrs.getValue("Bundle-Category"))) continue;
 
       String symbolicName = attrs.getValue("Bundle-SymbolicName");
       String version = attrs.getValue("Bundle-Version");
@@ -106,7 +107,7 @@ public class UpdateCommand extends AbstractCommand {
     // latest already installed, skip it (unless force flag is set)
     assert module.isLatest() : module + " is not the latest";
     if (module.isInstalled() && !force) {
-      if (verbose) out.println("No updates found");
+      if (verbose) out.println("No updates found.");
       return;
     }
 
@@ -133,7 +134,7 @@ public class UpdateCommand extends AbstractCommand {
     overwrite = cli.hasOption(LONGOPT_OVERWRITE) || force;
     pretend = cli.hasOption(LONGOPT_PRETEND);
     verify = !cli.hasOption(LONGOPT_NOVERIFY);
-    
+
     // --all was specified, update everything that is installed
     if (cli.hasOption(LONGOPT_ALL)) {
       updateAll();

@@ -198,6 +198,7 @@ public class Module implements Comparable {
     return this.compareTo(other) < 0;
   }
 
+  @Override
   public String toString() {
     return getSymbolicName() + " " + id.getVersion();
   }
@@ -320,7 +321,7 @@ public class Module implements Comparable {
   private Map<ModuleId, Dependency> computeManifest() {
     Map<ModuleId, Dependency> manifest = new HashMap<ModuleId, Dependency>();
     manifest.put(id, new Dependency(this));
-    assert dependencies != null : "dependencies field must not be null";
+    // assert dependencies != null : "dependencies field must not be null";
     for (Dependency dependency : dependencies) {
       if (dependency.isReference()) {
         Module module = modules.get(dependency.getId());
@@ -342,7 +343,7 @@ public class Module implements Comparable {
     try {
       reader = new BufferedReader(new FileReader(md5file));
       String expected = reader.readLine();
-      reader.close();
+      // reader.close();
 
       MessageDigest md = MessageDigest.getInstance("MD5");
       md.reset();
@@ -356,7 +357,7 @@ public class Module implements Comparable {
       byte[] md5sum = md.digest();
       BigInteger bigInt = new BigInteger(1, md5sum);
       String actual = bigInt.toString(16);
-      src.close();
+      // src.close();
       return actual.equals(expected);
     } catch (IOException e) {
       return false;
@@ -364,6 +365,7 @@ public class Module implements Comparable {
       return false;
     } finally {
       try {
+        // use IOUtils here
         if (reader != null) reader.close();
         if (src != null) src.close();
       } catch (IOException e) {
@@ -376,6 +378,14 @@ public class Module implements Comparable {
     DownloadUtil downloader = new DownloadUtil();
     downloader.download(new URL(address), localfile, DownloadOption.CREATE_INTERVENING_DIRECTORIES,
                         DownloadOption.OVERWRITE_EXISTING);
+  }
+
+  private File rootInstallPath(String name) {
+    return new File(repositoryPath(), name);
+  }
+
+  private File rootInstallPath() {
+    return rootInstallPath(filename);
   }
 
   private File installPath(String path, String name) {
@@ -403,17 +413,21 @@ public class Module implements Comparable {
   }
 
   /**
-   * Checks if a module described by Dependency has been installed.
+   * Checks if a module described by Dependency has been installed. It is installed if the jar file for the TIM exists
+   * either in the recommended Maven-like installpath or the root of the default repository.
    */
   public boolean isInstalled(Dependency dependency) {
-    return installPath(dependency.getInstallPath(), dependency.getFilename()).exists();
+    String path = dependency.getInstallPath();
+    String name = dependency.getFilename();
+    return installPath(path, name).exists() || rootInstallPath(name).exists();
   }
 
   /**
-   * Checks if this module has been installed.
+   * Checks if this module has been installed. It is installed if the jar file for the TIM exists either in the
+   * recommended Maven-like installpath or the root of the default repository.
    */
   public boolean isInstalled() {
-    return installPath().exists();
+    return installPath().exists() || rootInstallPath().exists();
   }
 
   private void printInstallationInfo(PrintWriter out) {
