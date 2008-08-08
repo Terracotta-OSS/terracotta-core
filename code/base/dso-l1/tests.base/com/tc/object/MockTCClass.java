@@ -146,7 +146,7 @@ public class MockTCClass implements TCClass {
   }
 
   public boolean useResolveLockWhileClearing() {
-    throw new ImplementMe();
+    return true;
   }
 
 }

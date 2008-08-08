@@ -179,9 +179,8 @@ public class TestClassFactory implements TCClassFactory {
     }
 
     public boolean useResolveLockWhileClearing() {
-      throw new ImplementMe();
+      return true;
     }
-
   }
 
   public static class MockTCField implements TCField {

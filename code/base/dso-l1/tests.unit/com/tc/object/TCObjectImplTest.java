@@ -261,7 +261,7 @@ public class TCObjectImplTest extends BaseDSOTestCase {
     }
 
     public boolean useResolveLockWhileClearing() {
-      throw new ImplementMe();
+      return true;
     }
   }
 }
