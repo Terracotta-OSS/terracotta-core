@@ -59,7 +59,7 @@ public class TIMGetTool {
     Injector injector = null;
     CommandRegistry commandRegistry = null;
     try {
-      injector = Guice.createInjector(new Context(config));
+      injector = Guice.createInjector(new AppContext(config));
 
       commandRegistry = injector.getInstance(CommandRegistry.class);
       commandRegistry.addCommand(injector.getInstance(HelpCommand.class));

@@ -26,14 +26,14 @@ import java.net.Proxy.Type;
 /**
  * Module definition for Guice dependency injection.
  */
-public class Context implements Module {
+class AppContext implements Module {
   private final Config config;
 
-  public Context() {
+  public AppContext() {
     this(new Config());
   }
 
-  public Context(Config config) {
+  public AppContext(Config config) {
     this.config = config;
   }
 
