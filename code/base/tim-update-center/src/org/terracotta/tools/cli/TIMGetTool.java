@@ -20,7 +20,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.tc.util.ProductInfo;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -28,10 +27,37 @@ import java.util.Properties;
 
 public class TIMGetTool {
 
-  private static Config createConfig() throws IOException {
-    Properties props = new Properties();
-    props.load(TIMGetTool.class.getResourceAsStream("/tim-get.properties"));
-    return new Config(props);
+  private static Config createConfig() throws Exception {
+    try {
+      Properties props = new Properties();
+      props.load(TIMGetTool.class.getResourceAsStream("/tim-get.properties"));
+      return new Config(props);
+    } catch (Exception e) {
+      throw new Exception("Could not read configuration: " + e.getMessage());
+    }
+  }
+
+  private static CommandRegistry commandRegistry;
+
+  private static void configure() throws Exception {
+    Config config = createConfig();
+    Injector injector = null;
+    try {
+      injector = Guice.createInjector(new AppContext(config));
+      commandRegistry = injector.getInstance(CommandRegistry.class);
+      commandRegistry.addCommand(injector.getInstance(HelpCommand.class));
+      commandRegistry.addCommand(injector.getInstance(InfoCommand.class));
+      commandRegistry.addCommand(injector.getInstance(InstallCommand.class));
+      commandRegistry.addCommand(injector.getInstance(ListCommand.class));
+      commandRegistry.addCommand(injector.getInstance(UpdateCommand.class));
+    } catch (Exception e) {
+      Throwable rootCause = rootCause(e);
+      throw new Exception("Initialization error: " + rootCause.getClass() + ": " + rootCause.getMessage());
+    }
+  }
+
+  private static void execute() throws CommandException {
+    commandRegistry.executeCommand(commandName, commandArgs);
   }
 
   private static Throwable rootCause(Throwable throwable) {
@@ -42,53 +68,39 @@ public class TIMGetTool {
     return rootCause;
   }
 
-  public static void main(String args[]) {
+  private static String       commandName;
+  private static List<String> commandArgs;
+
+  private static void parse(String args[]) throws Exception {
+    commandName = "help";
+    commandArgs = new ArrayList<String>();
+    if (args.length != 0) {
+      if (args[0].startsWith("-")) {
+        Options options = new Options();
+        options.addOption("h", "help", false, "Display help information.");
+        CommandLineParser parser = new GnuParser();
+        parser.parse(options, args);
+      } else {
+        commandName = args[0];
+        commandArgs = new ArrayList<String>(Arrays.asList(args));
+        commandArgs.remove(0);
+      }
+    }
+  }
+
+  private static void prologue() {
     ProductInfo pInfo = ProductInfo.getInstance();
     System.out.println(pInfo.toLongString());
     if (pInfo.isPatched()) System.out.println(pInfo.toLongPatchString());
     System.out.println();
+  }
 
-    Config config = null;
+  public static void main(String args[]) {
+    prologue();
     try {
-      config = createConfig();
-    } catch (Exception e) {
-      System.err.println("Could not read configuration: " + e.getMessage());
-      System.exit(1);
-    }
-
-    Injector injector = null;
-    CommandRegistry commandRegistry = null;
-    try {
-      injector = Guice.createInjector(new AppContext(config));
-
-      commandRegistry = injector.getInstance(CommandRegistry.class);
-      commandRegistry.addCommand(injector.getInstance(HelpCommand.class));
-      commandRegistry.addCommand(injector.getInstance(InfoCommand.class));
-      commandRegistry.addCommand(injector.getInstance(InstallCommand.class));
-      commandRegistry.addCommand(injector.getInstance(ListCommand.class));
-      commandRegistry.addCommand(injector.getInstance(UpdateCommand.class));
-    } catch (Exception e) {
-      Throwable rootCause = rootCause(e);
-      System.err.println("Initialization error: " + rootCause.getClass() + ": " + rootCause.getMessage());
-      System.exit(2);
-    }
-
-    try {
-      String commandName = "help";
-      List<String> commandArgs = new ArrayList<String>();
-      if (args.length != 0) {
-        if (args[0].startsWith("-")) {
-          Options options = new Options();
-          options.addOption("h", "help", false, "Display help information.");
-          CommandLineParser parser = new GnuParser();
-          parser.parse(options, args);
-        } else {
-          commandName = args[0];
-          commandArgs = new ArrayList<String>(Arrays.asList(args));
-          commandArgs.remove(0);
-        }
-      }
-      commandRegistry.executeCommand(commandName, commandArgs);
+      configure();
+      parse(args);
+      execute();
     } catch (CommandException e) {
       System.err.println(e.getMessage());
       System.exit(1);
