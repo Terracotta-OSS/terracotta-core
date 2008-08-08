@@ -265,6 +265,7 @@ public class RogueClientTestApp extends AbstractTransparentApp {
       try {
         System.out.println("Coordinator ready to kill");
         finished.await();
+        System.out.println("Coordinator started killing");
       } catch (Exception e) {
         throw new AssertionError(e);
       }
