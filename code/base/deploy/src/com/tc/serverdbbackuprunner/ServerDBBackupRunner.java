@@ -120,7 +120,7 @@ public class ServerDBBackupRunner {
     } catch (IOException e) {
       throw e;
     } catch (Exception e) {
-      throw new RuntimeException("Backup Failed: are you sure that the server is being run in persistent mode");
+      throw new RuntimeException(e.getCause().getMessage());
     } finally {
       if (closeJMXAndListener) {
         removeListenerAndCloseJMX(listener, jmxConnector, mbs);
