@@ -37,7 +37,7 @@ import java.util.Map;
  * Peer of a Class under management.
  * <p>
  * This is used to cache the fields of each class by type.
- *
+ * 
  * @author orion
  */
 public class TCClassImpl implements TCClass {
@@ -74,14 +74,17 @@ public class TCClassImpl implements TCClass {
 
   private final String                   logicalExtendingClassName;
   private final Class                    logicalSuperClass;
+  private final boolean                  useResolveLockWhileClearing;
 
   TCClassImpl(TCFieldFactory factory, TCClassFactory clazzFactory, ClientObjectManager objectManager, Class peer,
               Class logicalSuperClass, String loaderDesc, String logicalExtendingClassName, boolean isLogical,
-              boolean isCallConstructor, String onLoadScript, String onLoadMethod, boolean useNonDefaultConstructor) {
+              boolean isCallConstructor, String onLoadScript, String onLoadMethod, boolean useNonDefaultConstructor,
+              boolean useResolveLockWhileClearing) {
     this.clazzFactory = clazzFactory;
     this.objectManager = objectManager;
     this.peer = peer;
     this.loaderDesc = loaderDesc;
+
     this.indexed = peer.isArray();
 
     boolean isStatic = Modifier.isStatic(peer.getModifiers());
@@ -107,6 +110,7 @@ public class TCClassImpl implements TCClass {
                                     || useNonDefaultConstructor;
     this.logicalSuperClass = logicalSuperClass;
     this.offsetToFieldNames = getFieldOffsets(peer);
+    this.useResolveLockWhileClearing = useResolveLockWhileClearing;
   }
 
   public Field getParentField() {
@@ -403,5 +407,9 @@ public class TCClassImpl implements TCClass {
 
   public boolean isProxyClass() {
     return isProxyClass;
+  }
+
+  public boolean useResolveLockWhileClearing() {
+    return useResolveLockWhileClearing;
   }
 }

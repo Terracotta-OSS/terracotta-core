@@ -44,7 +44,8 @@ public class TCClassFactoryImpl implements TCClassFactory {
   private final ClassProvider         classProvider;
   private final DNAEncoding           encoding;
 
-  public TCClassFactoryImpl(TCFieldFactory fieldFactory, DSOClientConfigHelper config, ClassProvider classProvider, DNAEncoding dnaEncoding) {
+  public TCClassFactoryImpl(TCFieldFactory fieldFactory, DSOClientConfigHelper config, ClassProvider classProvider,
+                            DNAEncoding dnaEncoding) {
     this.fieldFactory = fieldFactory;
     this.config = config;
     this.classProvider = classProvider;
@@ -58,13 +59,15 @@ public class TCClassFactoryImpl implements TCClassFactory {
         String loaderDesc = classProvider.getLoaderDescriptionFor(clazz);
         String className = clazz.getName();
         ClassInfo classInfo = JavaClassInfo.getClassInfo(clazz);
-        rv = new TCClassImpl(fieldFactory, this,
+        rv = new TCClassImpl(fieldFactory,
+                             this,
                              objectManager,
                              config.getTCPeerClass(clazz),
                              getLogicalSuperClassWithDefaultConstructor(clazz), //
                              loaderDesc, config.getLogicalExtendingClassName(className), config.isLogical(className),
                              config.isCallConstructorOnLoad(classInfo), config.getOnLoadScriptIfDefined(classInfo),
-                             config.getOnLoadMethodIfDefined(classInfo), config.isUseNonDefaultConstructor(clazz));
+                             config.getOnLoadMethodIfDefined(classInfo), config.isUseNonDefaultConstructor(clazz),
+                             config.useResolveLockWhenClearing(clazz));
         classes.put(clazz, rv);
       }
       return rv;

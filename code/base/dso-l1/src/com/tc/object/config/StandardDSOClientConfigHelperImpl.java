@@ -1833,4 +1833,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return l1ReconnectConfig;
   }
 
+  public boolean useResolveLockWhenClearing(Class clazz) {
+    // If this condition ever needs to be true for any other classes besides ConcurrentHashMap, this setting should be
+    // move into the TransparencyClassSpec (as opposed to growing the list of classes here)
+    return !clazz.getName().equals("java.util.concurrent.ConcurrentHashMap");
+  }
+
 }

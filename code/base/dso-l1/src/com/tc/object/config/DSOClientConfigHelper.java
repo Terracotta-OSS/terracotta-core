@@ -35,7 +35,7 @@ import java.util.Map;
  */
 public interface DSOClientConfigHelper extends DSOApplicationConfig {
   String rawConfigText();
-  
+
   String[] getMissingRootDeclarations(ClassInfo classInfo);
 
   boolean shouldBeAdapted(ClassInfo classInfo);
@@ -106,7 +106,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   int getFaultCount();
 
   void addWriteAutolock(String methodPattern);
-  
+
   void addWriteAutolock(String methodPattern, String lockContextInfo);
 
   void addSynchronousWriteAutolock(String methodPattern);
@@ -116,7 +116,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   void addReadAutolock(String methodPattern);
 
   void addAutolock(String methodPattern, ConfigLockLevel type);
-  
+
   void addAutolock(String methodPattern, ConfigLockLevel type, String configurationText);
 
   void addAutoLockExcludePattern(String expression);
@@ -194,7 +194,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   Modules getModulesForInitialization();
 
   void addRepository(String location);
-  
+
   void addModule(String name, String version);
 
   boolean removeCustomAdapter(String name);
@@ -219,6 +219,8 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   ClassAdapterFactory getCustomAdapter(ClassInfo classInfo);
 
   boolean reflectionEnabled();
-  
+
   public ReconnectConfig getL1ReconnectProperties();
+
+  boolean useResolveLockWhenClearing(Class clazz);
 }

@@ -21,24 +21,24 @@ public class TCClassTest extends BaseDSOTestCase {
     DNAEncoding encoding = new ApplicatorDNAEncodingImpl(classProvider);
     TCClassFactory classFactory = new TCClassFactoryImpl(fieldFactory, config, classProvider, encoding);
     TCClass tcc1 = new TCClassImpl(fieldFactory, classFactory, objectManager, TCClassTest.class, null, "", null, false,
-                                   false, null, null, false);
+                                   false, null, null, false, true);
     assertFalse(tcc1.isIndexed());
     assertFalse(tcc1.isNonStaticInner());
     TCClass tcc2 = new TCClassImpl(fieldFactory, classFactory, objectManager, TestClass1.class, null, "", null, false,
-                                   false, null, null, false);
+                                   false, null, null, false, true);
     assertFalse(tcc2.isIndexed());
     assertTrue(tcc2.isNonStaticInner());
     TCClass tcc3 = new TCClassImpl(fieldFactory, classFactory, objectManager, TestClass2.class, null, "", null, false,
-                                   false, null, null, false);
+                                   false, null, null, false, true);
     assertFalse(tcc3.isIndexed());
     assertFalse(tcc3.isNonStaticInner());
     TCClass tcc4 = new TCClassImpl(fieldFactory, classFactory, objectManager, TestClass1[].class, null, "", null, true,
-                                   false, null, null, false);
+                                   false, null, null, false, true);
     assertTrue(tcc4.isIndexed());
     assertFalse(tcc4.isNonStaticInner());
 
     TCClass tcc5 = new TCClassImpl(fieldFactory, classFactory, objectManager, TestClass1[].class, null, "timmy", null,
-                                   true, false, null, null, false);
+                                   true, false, null, null, false, true);
     assertEquals("timmy", tcc5.getDefiningLoaderDescription());
   }
 
