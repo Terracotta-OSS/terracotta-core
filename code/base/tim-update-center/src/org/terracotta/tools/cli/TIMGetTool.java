@@ -7,7 +7,6 @@ package org.terracotta.tools.cli;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.Options;
-import org.terracotta.modules.tool.GuiceModule;
 import org.terracotta.modules.tool.commands.CommandException;
 import org.terracotta.modules.tool.commands.CommandRegistry;
 import org.terracotta.modules.tool.commands.HelpCommand;
@@ -48,12 +47,11 @@ public class TIMGetTool {
     System.out.println(pInfo.toLongString());
     if (pInfo.isPatched()) System.out.println(pInfo.toLongPatchString());
     System.out.println();
-    
+
     Config config = null;
     try {
       config = createConfig();
-    }
-    catch (Exception e) {
+    } catch (Exception e) {
       System.err.println("Could not read configuration: " + e.getMessage());
       System.exit(1);
     }
@@ -61,7 +59,7 @@ public class TIMGetTool {
     Injector injector = null;
     CommandRegistry commandRegistry = null;
     try {
-      injector = Guice.createInjector(new GuiceModule(config));
+      injector = Guice.createInjector(new Context(config));
 
       commandRegistry = injector.getInstance(CommandRegistry.class);
       commandRegistry.addCommand(injector.getInstance(HelpCommand.class));
@@ -82,14 +80,14 @@ public class TIMGetTool {
         if (args[0].startsWith("-")) {
           Options options = new Options();
           options.addOption("h", "help", false, "Display help information.");
-          CommandLineParser parser = new GnuParser();    
+          CommandLineParser parser = new GnuParser();
           parser.parse(options, args);
         } else {
           commandName = args[0];
           commandArgs = new ArrayList<String>(Arrays.asList(args));
           commandArgs.remove(0);
         }
-      } 
+      }
       commandRegistry.executeCommand(commandName, commandArgs);
     } catch (CommandException e) {
       System.err.println(e.getMessage());

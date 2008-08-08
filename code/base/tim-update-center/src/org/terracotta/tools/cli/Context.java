@@ -1,8 +1,11 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
-package org.terracotta.modules.tool;
+package org.terracotta.tools.cli;
 
+import org.terracotta.modules.tool.CachedModules;
+import org.terracotta.modules.tool.Modules;
 import org.terracotta.modules.tool.commands.CommandRegistry;
 import org.terracotta.modules.tool.config.Config;
 import org.terracotta.modules.tool.config.TerracottaVersion;
@@ -23,14 +26,14 @@ import java.net.Proxy.Type;
 /**
  * Module definition for Guice dependency injection.
  */
-public class GuiceModule implements Module {
+public class Context implements Module {
   private final Config config;
 
-  public GuiceModule() {
+  public Context() {
     this(new Config());
   }
 
-  public GuiceModule(Config config) {
+  public Context(Config config) {
     this.config = config;
   }
 
@@ -49,7 +52,7 @@ public class GuiceModule implements Module {
         dataLoader.setCacheRefreshPolicy(CacheRefreshPolicy.ON_EXPIRATION.setExpirationInSeconds(60 * 60 * 24));
         URL proxyUrl = config.getProxyUrl();
         if (proxyUrl != null) {
-          SocketAddress proxyAddress =new InetSocketAddress(proxyUrl.getHost(), proxyUrl.getPort());
+          SocketAddress proxyAddress = new InetSocketAddress(proxyUrl.getHost(), proxyUrl.getPort());
           dataLoader.setProxy(new Proxy(Type.HTTP, proxyAddress));
         }
         return dataLoader;
