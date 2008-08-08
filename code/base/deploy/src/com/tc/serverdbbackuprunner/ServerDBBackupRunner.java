@@ -63,7 +63,7 @@ public class ServerDBBackupRunner {
     if (arguments.length == 0) {
       host = DEFAULT_HOST;
       port = DEFAULT_PORT;
-      System.err.println("No host or port provided. Invoking Backup Runner on Terracotta server at '" + host
+      System.err.println("No host or port provided. Invoking Backup Runner on Terracotta Server at '" + host
                          + "', port " + port + " by default.");
     } else if (arguments.length == 1) {
       host = DEFAULT_HOST;
@@ -140,7 +140,7 @@ public class ServerDBBackupRunner {
       mbs = jmxConnector.getMBeanServerConnection();
     } catch (IOException e1) {
       System.err.println("Unable to connect to host '" + host + "', port " + port
-                         + ". Are you sure there is a Terracotta server running there?");
+                         + ". Are you sure there is a Terracotta Server running there?");
       return null;
     }
     return mbs;
