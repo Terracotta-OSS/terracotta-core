@@ -32,14 +32,13 @@ public class ServerDBBackupRunner {
   public static void main(String[] args) {
     RunnerUtility runnerUtility = new RunnerUtility(ServerDBBackupRunner.class.getName(), args);
 
-    runnerUtility.addOption("n", "hostname", true, "Terracotta Server hostname", String.class, false, "l2-hostname");
-    runnerUtility.addOption("p", "jmxport", true, "Terracotta Server JMX port", Integer.class, false, "l2-jmx-port");
-    runnerUtility.addOption("u", "username", true, "user name", String.class, false);
-    runnerUtility.addOption("d", "pathForBackup", true, "Path for back up", String.class, false);
+    runnerUtility.addOption("n", "hostname", true, "Terracotta Server hostname", String.class, false, "hostname");
+    runnerUtility.addOption("p", "jmxport", true, "Terracotta Server JMX port", Integer.class, false, "jmx-port");
+    runnerUtility.addOption("u", "username", true, "User name", String.class, false);
+    runnerUtility.addOption("d", "directory", true, "Directory to back up to", String.class, false);
     runnerUtility.addOption("h", "help", String.class, false);
 
     runnerUtility.parse();
-    runnerUtility.printArguments();
 
     String[] arguments = runnerUtility.getArguments();
     String host = null;
