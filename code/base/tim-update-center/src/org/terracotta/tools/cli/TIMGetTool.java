@@ -27,6 +27,21 @@ import java.util.Properties;
 
 public class TIMGetTool {
 
+  public static void main(String args[]) {
+    prologue();
+    try {
+      configure();
+      parse(args);
+      execute();
+    } catch (CommandException e) {
+      System.err.println(e.getMessage());
+      System.exit(1);
+    } catch (Exception e) {
+      System.err.println(e.getMessage());
+      System.exit(2);
+    }
+  }
+
   private static Config createConfig() throws Exception {
     try {
       Properties props = new Properties();
@@ -93,21 +108,6 @@ public class TIMGetTool {
     System.out.println(pInfo.toLongString());
     if (pInfo.isPatched()) System.out.println(pInfo.toLongPatchString());
     System.out.println();
-  }
-
-  public static void main(String args[]) {
-    prologue();
-    try {
-      configure();
-      parse(args);
-      execute();
-    } catch (CommandException e) {
-      System.err.println(e.getMessage());
-      System.exit(1);
-    } catch (Exception e) {
-      System.err.println(e.getMessage());
-      System.exit(2);
-    }
   }
 
 }
