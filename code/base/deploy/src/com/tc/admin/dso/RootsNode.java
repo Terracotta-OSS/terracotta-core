@@ -54,9 +54,10 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
   }
 
   public void propertyChange(PropertyChangeEvent evt) {
-    String prop = evt.getPropertyName();
-    if (IClusterModel.PROP_ACTIVE_SERVER.equals(prop)) {
-      SwingUtilities.invokeLater(new InitRunnable());
+    if (IClusterModel.PROP_ACTIVE_SERVER.equals(evt.getPropertyName())) {
+      if (((IClusterModel) evt.getSource()).getActiveServer() != null) {
+        SwingUtilities.invokeLater(new InitRunnable());
+      }
     }
   }
 

@@ -50,8 +50,7 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
   }
 
   public void propertyChange(PropertyChangeEvent evt) {
-    String prop = evt.getPropertyName();
-    if (IClusterModel.PROP_ACTIVE_SERVER.equals(prop)) {
+    if (IClusterModel.PROP_ACTIVE_SERVER.equals(evt.getPropertyName())) {
       if (((IClusterModel) evt.getSource()).getActiveServer() != null) {
         SwingUtilities.invokeLater(new InitRunnable());
       }

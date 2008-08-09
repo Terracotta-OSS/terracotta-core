@@ -84,7 +84,7 @@ public class ClusterModel extends Server implements IClusterModel {
         m_clusterServers = null;
       }
     }
-    firePropertyChange(PROP_ACTIVE_SERVER, oldActiveServer, m_activeServer);
+    firePropertyChange(PROP_ACTIVE_SERVER, oldActiveServer, null);
   }
 
   public synchronized Server getActiveServer() {

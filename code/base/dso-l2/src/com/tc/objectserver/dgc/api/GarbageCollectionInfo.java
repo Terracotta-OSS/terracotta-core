@@ -167,7 +167,7 @@ public class GarbageCollectionInfo {
 
   public String toString() {
     return "GarbageCollectionInfo [ Iteration = " + iteration + " ] = " + " type  = "
-           + (fullGC ? " young, " : " full, ") + " startTime = " + startTime + " begin object count = "
+           + (fullGC ? " full, " : " young, ") + " startTime = " + startTime + " begin object count = "
            + beginObjectCount + " markStageTime = " + markStageTime + " pauseStageTime = " + pauseStageTime
            + " deleteStageTime = " + deleteStageTime + " elapsedTime = " + elapsedTime + " totalMarkCycletime  = "
            + totalMarkCycleTime + " candiate garabage  count = " + candidateGarbageCount + " actual garbage count  = "

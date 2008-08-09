@@ -24,6 +24,7 @@ import com.tc.admin.common.BrowserLauncher;
 import com.tc.admin.common.ExceptionHelper;
 import com.tc.admin.common.ProgressDialog;
 import com.tc.admin.common.XContainer;
+import com.tc.admin.model.IClusterModel;
 import com.tc.statistics.beans.StatisticsLocalGathererMBean;
 import com.tc.statistics.beans.StatisticsMBeanNames;
 import com.tc.statistics.config.StatisticsConfig;
@@ -77,7 +78,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
 
-public class StatsRecorderPanel extends XContainer {
+public class StatsRecorderPanel extends XContainer implements PropertyChangeListener {
   private AdminClientContext           m_acc;
   private StatsRecorderNode            m_statsRecorderNode;
 
@@ -155,15 +156,24 @@ public class StatsRecorderPanel extends XContainer {
     m_viewStatsButton.addActionListener(new ViewStatsSessionsHandler());
 
     setVisible(false);
-    initiateStatsGathererConnectWorker();
+    
+    IClusterModel clusterModel = statsRecorderNode.getClusterModel();
+    if(clusterModel.isActive()) {
+      initiateStatsGathererConnectWorker();
+    }
+    clusterModel.addPropertyChangeListener(this);    
   }
 
+  public void propertyChange(PropertyChangeEvent evt) {
+    if(IClusterModel.PROP_ACTIVE_SERVER.equals(evt.getPropertyName())) {
+      if (((IClusterModel) evt.getSource()).getActiveServer() != null) {
+        initiateStatsGathererConnectWorker();
+      }
+    }
+  }
+  
   private void initiateStatsGathererConnectWorker() {
     m_acc.execute(new StatsGathererConnectWorker());
-  }
-
-  void newConnectionContext() {
-    initiateStatsGathererConnectWorker();
   }
 
   void testTriggerThreadDumpSRA() {
@@ -832,7 +842,7 @@ public class StatsRecorderPanel extends XContainer {
           } catch (Exception e) {
             log(e);
           }
-        } catch (ClassNotFoundException cnfe) {
+        } catch (Exception e) {
           BrowserLauncher.openURL(getSvtUrl());
           return;
         }
@@ -884,6 +894,11 @@ public class StatsRecorderPanel extends XContainer {
   }
 
   public void tearDown() {
+    IClusterModel clusterModel = m_statsRecorderNode.getClusterModel();
+    if(clusterModel != null) {
+      clusterModel.removePropertyChangeListener(this);    
+    }
+    
     super.tearDown();
 
     m_availableStatsArea.tearDown();

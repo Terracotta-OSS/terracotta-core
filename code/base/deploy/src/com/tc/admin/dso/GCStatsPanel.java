@@ -63,15 +63,17 @@ public class GCStatsPanel extends XContainer implements DGCListener, PropertyCha
 
   public void propertyChange(PropertyChangeEvent evt) {
     if (IClusterModel.PROP_ACTIVE_SERVER.equals(evt.getPropertyName())) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          if (m_table != null) {
-            GCStatsTableModel model = (GCStatsTableModel) m_table.getModel();
-            model.clear();
-            model.fireTableDataChanged();
+      if (((IClusterModel) evt.getSource()).getActiveServer() != null) {
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            if (m_table != null) {
+              GCStatsTableModel model = (GCStatsTableModel) m_table.getModel();
+              model.clear();
+              model.fireTableDataChanged();
+            }
           }
-        }
-      });
+        });
+      }
     }
   }
 

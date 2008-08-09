@@ -764,8 +764,12 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   public void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
-    if (m_propertyChangeSupport != null) {
-      m_propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
+    PropertyChangeSupport pcs;
+    synchronized (this) {
+      pcs = m_propertyChangeSupport;
+    }
+    if (pcs != null) {
+      pcs.firePropertyChange(propertyName, oldValue, newValue);
     }
   }
 

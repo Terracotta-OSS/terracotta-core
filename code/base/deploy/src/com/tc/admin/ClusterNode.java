@@ -209,14 +209,6 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
     handleActivation();
     m_acc.addServerLog(m_clusterModel);
     m_clusterPanel.reinitialize();
-    synchronized (this) {
-      if (m_locksNode != null) {
-        m_locksNode.newConnectionContext();
-      }
-      if (m_statsRecorderNode != null) {
-        m_statsRecorderNode.newConnectionContext();
-      }
-    }
     m_acc.nodeChanged(this);
   }
 

@@ -7,6 +7,7 @@ package com.tc.admin;
 import org.apache.commons.httpclient.auth.AuthScope;
 
 import com.tc.admin.common.ComponentNode;
+import com.tc.admin.model.IClusterModel;
 import com.tc.statistics.beans.StatisticsLocalGathererMBean;
 
 import java.util.Map;
@@ -27,6 +28,10 @@ public class StatsRecorderNode extends ComponentNode {
     setComponent(m_statsRecorderPanel = new StatsRecorderPanel(this));
   }
 
+  IClusterModel getClusterModel() {
+    return m_clusterNode != null ? m_clusterNode.getClusterModel() : null;
+  }
+  
   void makeUnavailable() {
     if(m_clusterNode != null) {
       m_clusterNode.makeStatsRecorderUnavailable();
@@ -51,12 +56,6 @@ public class StatsRecorderNode extends ComponentNode {
 
   Map<String, Object> getConnectionEnvironment() {
     return m_clusterNode.getConnectionEnvironment();
-  }
-
-  void newConnectionContext() {
-    if (m_statsRecorderPanel != null) {
-      m_statsRecorderPanel.newConnectionContext();
-    }
   }
 
   StatisticsLocalGathererMBean getStatisticsGathererMBean() {

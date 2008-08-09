@@ -9,6 +9,7 @@ import com.tc.admin.AdminClientContext;
 import com.tc.admin.ClusterNode;
 import com.tc.admin.ConnectionContext;
 import com.tc.admin.common.ComponentNode;
+import com.tc.admin.model.IClusterModel;
 
 import javax.swing.Icon;
 
@@ -29,14 +30,12 @@ public class LocksNode extends ComponentNode {
     setComponent(m_locksPanel = new LocksPanel(this));
   }
 
+  IClusterModel getClusterModel() {
+    return m_clusterNode != null ? m_clusterNode.getClusterModel() : null;
+  }
+  
   ConnectionContext getConnectionContext() {
     return m_clusterNode.getConnectionContext();
-  }
-
-  public void newConnectionContext() {
-    if (m_locksPanel != null) {
-      m_locksPanel.newConnectionContext();
-    }
   }
 
   public boolean isProfiling() {

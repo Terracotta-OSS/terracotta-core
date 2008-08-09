@@ -20,6 +20,7 @@ import com.tc.admin.common.ExceptionHelper;
 import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XObjectTable;
+import com.tc.admin.model.IClusterModel;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.LockStatisticsMonitorMBean;
 import com.tc.management.lock.stats.LockSpec;
@@ -31,6 +32,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.Serializable;
 import java.text.ParseException;
@@ -59,7 +62,11 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.table.TableModel;
 import javax.swing.tree.TreePath;
 
-public class LocksPanel extends XContainer implements NotificationListener {
+/**
+ * TODO: Retrieve lock stats from ClusterModel instead of going directly through MBean.
+ */
+
+public class LocksPanel extends XContainer implements NotificationListener, PropertyChangeListener {
   private AdminClientContext          fAdminClientContext;
   private ConnectionContext           fConnectionContext;
   private LocksNode                   fLocksNode;
@@ -154,6 +161,17 @@ public class LocksPanel extends XContainer implements NotificationListener {
     }
 
     fAdminClientContext.execute(new LocksPanelEnabledWorker());
+    locksNode.getClusterModel().addPropertyChangeListener(this);
+  }
+
+  public void propertyChange(PropertyChangeEvent evt) {
+    if (IClusterModel.PROP_ACTIVE_SERVER.equals(evt.getPropertyName())) {
+      if (((IClusterModel) evt.getSource()).getActiveServer() != null) {
+        if (fAdminClientContext != null) {
+          fAdminClientContext.execute(new NewConnectionContextWorker());
+        }
+      }
+    }
   }
 
   private class FindNextHandler implements ActionListener {
@@ -278,10 +296,6 @@ public class LocksPanel extends XContainer implements NotificationListener {
         setLocksPanelEnabled(getResult());
       }
     }
-  }
-
-  void newConnectionContext() {
-    fAdminClientContext.execute(new NewConnectionContextWorker());
   }
 
   boolean isProfiling() {
@@ -515,10 +529,15 @@ public class LocksPanel extends XContainer implements NotificationListener {
   }
 
   public void tearDown() {
+    IClusterModel clusterModel = fLocksNode.getClusterModel();
+    if (clusterModel != null) {
+      clusterModel.removePropertyChangeListener(this);
+    }
+
     super.tearDown();
 
     try {
-      fConnectionContext.addNotificationListener(L2MBeanNames.LOCK_STATISTICS, this);
+      fConnectionContext.removeNotificationListener(L2MBeanNames.LOCK_STATISTICS, this);
     } catch (Exception e) {
       // ignore
     }

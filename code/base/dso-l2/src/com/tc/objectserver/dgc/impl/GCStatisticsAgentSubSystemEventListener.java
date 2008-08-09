@@ -11,6 +11,7 @@ import com.tc.statistics.AgentStatisticsManager;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.exceptions.AgentStatisticsManagerException;
+import com.tc.statistics.retrieval.actions.SRADistributedGC;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -49,19 +50,27 @@ public class GCStatisticsAgentSubSystemEventListener extends GarbageCollectorEve
   }
 
   private StatisticData[] getGCStatisticsData(GarbageCollectionInfo gcInfo) {
+    System.err.println(gcInfo);
     List<StatisticData> datas = new ArrayList<StatisticData>();
-    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "iteration", (long) gcInfo.getIteration()));
-    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "type", gcInfo.isFullGC() ? "Full" : "YoungGen"));
-    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "start time", gcInfo.getStartTime()));
-    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "elapsed time", gcInfo.getElapsedTime()));
-    datas
-        .add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "begin object count", new Long(gcInfo.getBeginObjectCount())));
-    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "candidate garbage count", new Long(gcInfo
-        .getCandidateGarbageCount())));
-    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "actual garbage count", new Long(gcInfo
-        .getActualGarbageCount())));
-    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "pauseTime", gcInfo.getPausedStageTime()));
-    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, "deleteTime", gcInfo.getDeleteStageTime()));
+    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, SRADistributedGC.ITERATION_ELEMENT, (long) gcInfo
+        .getIteration()));
+    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, SRADistributedGC.TYPE_ELEMENT,
+                                gcInfo.isFullGC() ? SRADistributedGC.TYPE_FULL : SRADistributedGC.TYPE_YOUNG_GEN));
+    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, SRADistributedGC.START_TIME_ELEMENT, gcInfo.getStartTime()));
+    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, SRADistributedGC.ELAPSED_TIME_ELEMENT, gcInfo
+        .getElapsedTime()));
+    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, SRADistributedGC.BEGIN_OBJECT_COUNT_ELEMENT, new Long(gcInfo
+        .getBeginObjectCount())));
+    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, SRADistributedGC.CANDIDATE_OBJECT_COUNT_ELEMENT,
+                                new Long(gcInfo.getCandidateGarbageCount())));
+    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, SRADistributedGC.ACTUAL_GARBAGE_COUNT_ELEMENT,
+                                new Long(gcInfo.getActualGarbageCount())));
+    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, SRADistributedGC.PAUSE_TIME_ELEMENT, gcInfo
+        .getPausedStageTime()));
+    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, SRADistributedGC.MARK_TIME_ELEMENT, gcInfo
+        .getMarkStageTime()));
+    datas.add(new StatisticData(DISTRIBUTED_GC_STATISTICS, SRADistributedGC.DELETE_TIME_ELEMENT, gcInfo
+        .getDeleteStageTime()));
     return datas.toArray(new StatisticData[datas.size()]);
   }
 
