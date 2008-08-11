@@ -5,6 +5,7 @@
 package org.terracotta.modules.tool;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jdom.Element;
 import org.jdom.output.Format;
@@ -342,8 +343,7 @@ public class Module implements Comparable {
     InputStream src = null;
     try {
       reader = new BufferedReader(new FileReader(md5file));
-      String expected = reader.readLine();
-      // reader.close();
+      BigInteger expected = new BigInteger(reader.readLine(), 16);
 
       MessageDigest md = MessageDigest.getInstance("MD5");
       md.reset();
@@ -353,24 +353,17 @@ public class Module implements Comparable {
       while ((read = src.read(buffer)) > 0) {
         md.update(buffer, 0, read);
       }
-
       byte[] md5sum = md.digest();
-      BigInteger bigInt = new BigInteger(1, md5sum);
-      String actual = bigInt.toString(16);
-      // src.close();
+      BigInteger actual = new BigInteger(1, md5sum);
+
       return actual.equals(expected);
     } catch (IOException e) {
       return false;
     } catch (NoSuchAlgorithmException e) {
       return false;
     } finally {
-      try {
-        // use IOUtils here
-        if (reader != null) reader.close();
-        if (src != null) src.close();
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+      IOUtils.closeQuietly(reader);
+      IOUtils.closeQuietly(src);
     }
   }
 
