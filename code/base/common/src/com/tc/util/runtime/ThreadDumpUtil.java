@@ -24,12 +24,14 @@ public class ThreadDumpUtil {
       try {
         threadDumpUtilJdk15Type = Class.forName("com.tc.util.runtime.ThreadDumpUtilJdk15");
       } catch (ClassNotFoundException cnfe) {
+        logger.error("Class ThreadDumpUtilJdk15 not found " + cnfe);
         threadDumpUtilJdk15Type = null;
       }
 
       try {
         threadDumpUtilJdk16Type = Class.forName("com.tc.util.runtime.ThreadDumpUtilJdk16");
       } catch (ClassNotFoundException cnfe) {
+        logger.error("Class ThreadDumpUtilJdk16 not found " + cnfe);
         threadDumpUtilJdk16Type = null;
       }
     } else {
