@@ -46,8 +46,8 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
     assertOnType(zapNodeType, reason);
     if (stateManager.isActiveCoordinator()
         || (zapNodeType == COMMUNICATION_TO_ACTIVE_ERROR && nodeID.equals(stateManager.getActiveNodeID()))) {
-      consoleLogger.warn("\nRequesting node to quit due to the following error:\n"
-                         + getFormatedError(nodeID, zapNodeType, reason) + "\n");
+      consoleLogger
+          .warn("Requesting node to quit : " + getFormatedError(nodeID, zapNodeType));
       return true;
     } else {
       logger.warn("Not allowing to Zap " + nodeID + " since not in " + StateManager.ACTIVE_COORDINATOR);
@@ -59,8 +59,13 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
     return factory.generateWeightSequence();
   }
 
+  private String getFormatedError(NodeID nodeID, int zapNodeType) {
+    return getFormatedError(nodeID, zapNodeType, null);
+  }
+
   private String getFormatedError(NodeID nodeID, int zapNodeType, String reason) {
-    return "NodeID : " + nodeID + " Error Type : " + getErrorTypeString(zapNodeType) + " Details : " + reason;
+    return "NodeID : " + nodeID + " Error Type : " + getErrorTypeString(zapNodeType)
+           + (reason != null ? (" Details : " + reason) : "");
   }
 
   private String getErrorTypeString(int type) {
