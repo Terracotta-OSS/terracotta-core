@@ -230,6 +230,11 @@ used to specify the JDK used by these targets.
 
 MISCELLANEOUS
 
+javadoc
+    Generates Javadoc API documentation in build/doc/api.
+    The set of modules to include is specified by the javadoc option in
+    modules.def.yml
+
 boot_jar_path=/path/to/your/boot/jar
    Specify this option if you want to run your test with your own bootjar
 

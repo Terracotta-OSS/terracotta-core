@@ -24,6 +24,7 @@ modules:
   - common-api:
       options:
         jdk: J2SE-1.4
+        javadoc: true
   - common:
       options:
         jdk: J2SE-1.4
@@ -40,12 +41,14 @@ modules:
   - dso-statistics-api:
       options:
         jdk: J2SE-1.4
+        javadoc: true
       dependencies:
         - common
         - common-api
   - dso-l1-api:
       options:
         jdk: J2SE-1.4
+        javadoc: true
       dependencies:
         - aspectwerkz
         - common
@@ -80,6 +83,7 @@ modules:
   - management-api:
       options:
         jdk: J2SE-1.4
+        javadoc: true
       dependencies:
         - common
         - common-api
@@ -110,6 +114,7 @@ modules:
   - deploy-api:
       options:
         jdk: J2SE-1.5
+        javadoc: true
       dependencies:
         - common-api
         - dso-l1-api

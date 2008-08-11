@@ -28,6 +28,12 @@ class BuildResults
     @build_dir.delete
   end
 
+  # Returns a FilePath object referring to the directory in which Javadoc API
+  # documentation is generated.
+  def javadoc_directory
+    FilePath.new(@build_dir, 'doc', 'api')
+  end
+
   def module_root(the_module)
     FilePath.new(@build_dir, the_module.name)
   end

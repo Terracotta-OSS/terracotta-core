@@ -238,6 +238,26 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     end
   end
 
+  # Produces Javadoc documentation in the build/doc/api directory.
+  # The set of modules to include is specified in modules.def.yml
+  def javadoc
+    depends :init
+
+    javadoc_dir = @build_results.javadoc_directory.delete
+    javadoc_dir.delete
+
+    @ant.javadoc(:destdir => javadoc_dir.to_s,
+                 :author => true, :version => true, :use => true,
+                 :windowtitle => "Terracotta API Documentation") do
+      modules = @module_set.find_all {|mod| mod.javadoc?}
+      modules.each do |mod|
+        @ant.fileset(:dir => mod.name, :defaultexcludes => true) do
+          @ant.include(:name => 'src/**')
+        end
+      end
+    end
+  end
+
   # Runs all tests; you can use check_modules, check_types, check_patterns, etc. (as documented
   # in ConfigSpecifiedTestSet) to alter exactly what gets run.
   def check
