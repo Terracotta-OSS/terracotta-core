@@ -146,7 +146,8 @@ public class NestedReadOnlyTransactionTestApp extends AbstractTransparentApp {
         if (commit) {
           Assert.assertEquals(newValue, longValue);
         } else {
-          Assert.assertEquals(0, longValue);
+          // Before committed, it can be 0 or 15. Wrong assertion here. MNK-694.
+          // Assert.assertEquals(0, longValue);
         }
       }
       }
