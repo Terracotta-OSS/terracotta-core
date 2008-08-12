@@ -27,27 +27,15 @@ public class ChecksumUtilTest extends TestCase {
    * file.
    */
   public void testVerifyMD5SumPass() {
-    File srcFile = FileUtils.toFile(getClass().getResource(TEST_CHECKSUM_DATA_TXT));
-    File md5File = FileUtils.toFile(getClass().getResource(TEST_CHECKSUM_DATA_TXT_MD5));
-    try {
-      Assert.assertTrue(ChecksumUtil.verifyMD5Sum(srcFile, md5File));
-    } catch (NoSuchAlgorithmException e) {
-      Assert.fail("MD5 cryptographic algorithm should be available.");
-    } catch (IOException e) {
-      Assert.fail("srcFile: and md5File: should be available and readable.");
-    }
+    Assert.assertTrue(verifyMD5Sum(TEST_CHECKSUM_DATA_TXT_MD5));
   }
 
+  /**
+   * Test that the verifyMD5Sum(..) will still return true if the content of the MD5 file matches the computed MD5 sum
+   * of the file and the MD5 file is using the md5sum tool's default report format.
+   */
   public void testVerifyMD5SumPassAltFormat() {
-    File srcFile = FileUtils.toFile(getClass().getResource(TEST_CHECKSUM_DATA_TXT));
-    File md5File = FileUtils.toFile(getClass().getResource(TEST_CHECKSUM_DATA_TXT_MD5_ALT_FORMAT));
-    try {
-      Assert.assertTrue(ChecksumUtil.verifyMD5Sum(srcFile, md5File));
-    } catch (NoSuchAlgorithmException e) {
-      Assert.fail("MD5 cryptographic algorithm should be available.");
-    } catch (IOException e) {
-      Assert.fail("srcFile: and md5File: should be available and readable.");
-    }
+    Assert.assertTrue(verifyMD5Sum(TEST_CHECKSUM_DATA_TXT_MD5_ALT_FORMAT));
   }
 
   /**
@@ -55,32 +43,36 @@ public class ChecksumUtilTest extends TestCase {
    * of the file.
    */
   public void testVerifyMD5SumFail() {
-    File srcFile = FileUtils.toFile(getClass().getResource(TEST_CHECKSUM_DATA_TXT));
-    File md5File = FileUtils.toFile(getClass().getResource(TEST_CHECKSUM_DATA_TXT_MD5_NO_MATCH));
-    try {
-      Assert.assertFalse(ChecksumUtil.verifyMD5Sum(srcFile, md5File));
-    } catch (NoSuchAlgorithmException e) {
-      Assert.fail("MD5 cryptographic algorithm should be available.");
-    } catch (IOException e) {
-      Assert.fail("srcFile: and md5File: should be available and readable.");
-    }
+    Assert.assertFalse(verifyMD5Sum(TEST_CHECKSUM_DATA_TXT_MD5_NO_MATCH));
   }
 
   /**
    * Test that a NumberFormatException is thrown when the MD5 file does not use the expected format.
    */
   public void testBadMD5FileFormat() {
-    File srcFile = FileUtils.toFile(getClass().getResource(TEST_CHECKSUM_DATA_TXT));
-    File md5File = FileUtils.toFile(getClass().getResource(TEST_CHECKSUM_DATA_TXT_MD5_BAD_FORMAT));
     try {
-      ChecksumUtil.verifyMD5Sum(srcFile, md5File);
+      verifyMD5Sum(TEST_CHECKSUM_DATA_TXT_MD5_BAD_FORMAT);
       Assert.fail("Should have thrown a NumberFormatException");
     } catch (NumberFormatException e) {
       // as expected - so keep quiet
+    }
+  }
+
+  /**
+   * Helper method to setup and call ChecksumUtil.verifyMD5Sum(..)
+   * 
+   * @param md5Filename The MD5 data file used when invoking ChecksumUtil.verifyMD5Sum(..)
+   */
+  private boolean verifyMD5Sum(String md5Filename) {
+    try {
+      File srcFile = FileUtils.toFile(getClass().getResource(TEST_CHECKSUM_DATA_TXT));
+      File md5File = FileUtils.toFile(getClass().getResource(md5Filename));
+      return ChecksumUtil.verifyMD5Sum(srcFile, md5File);
     } catch (NoSuchAlgorithmException e) {
       Assert.fail("MD5 cryptographic algorithm should be available.");
     } catch (IOException e) {
       Assert.fail("srcFile: and md5File: should be available and readable.");
     }
+    return false;
   }
 }
