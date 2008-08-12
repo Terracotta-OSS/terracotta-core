@@ -30,14 +30,17 @@ public class ChecksumUtil {
   private static BigInteger md5Sum(File source) throws NoSuchAlgorithmException, IOException {
     MessageDigest md = MessageDigest.getInstance("MD5");
     md.reset();
-    md.update(FileUtils.readFileToByteArray(source));
-    byte[] md5sum = md.digest();
+    byte[] md5sum = md.digest(FileUtils.readFileToByteArray(source));
     return new BigInteger(1, md5sum);
   }
 
   /**
    * Reads the contents of a file. It expects the first line of the file to be a String representation of an MD5 sum in
-   * hex format.
+   * hex format. It will also recognize the default repot format used by the md5sum tool, so the following are
+   * considered as valid entries in an md5 file: <code>
+   *    950b176dafe16b89cbb3dc3812a70e4a
+   *    950b176dafe16b89cbb3dc3812a70e4a  testChecksumData.txt
+   * </code>
    * 
    * @param source The input file.
    * @return The value read as a BigInteger
@@ -45,8 +48,8 @@ public class ChecksumUtil {
    * @throws NumberFormatException If the first line of the file does not represent a BigInteger value.
    */
   private static BigInteger readMD5File(File source) throws IOException {
-    String hexStr = StringUtils.trim(StringUtils.chomp(FileUtils.readFileToString(source, null)));
-    return new BigInteger(hexStr, 16);
+    String data = StringUtils.trim(StringUtils.chomp(FileUtils.readFileToString(source, null))).replaceAll(" .+$", "");
+    return new BigInteger(data, 16);
   }
 
   /**

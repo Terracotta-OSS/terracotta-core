@@ -4,47 +4,72 @@ NOTA BENE:
 If you modify any part of this file, make sure that you also update it's companion MD5 sum file by invoking the 
 following commands:
 
-	$ cat testChecksumData.txt | md5sum | sed 's/-$//g' > testChecksumData.txt.md5
-	$ cat testChecksumData.txt | md5sum > testChecksumData.txt.md5-bad.format
+	$ cat testChecksumData.txt | md5sum | sed 's/  -$//g' > testChecksumData.txt.md5
+	$ md5sum testChecksumData.txt > testChecksumData.txt.md5-alt.format
+	$ echo "thisisabadmd5sumdataformat012345" > testChecksumData.txt.md5-bad.format
 	$ env | md5sum | sed 's/-$//g' > testChecksumData.txt.md5-no.match
 
 CONTENT:
 --------
 
-Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Mauris tristique egestas justo. Nunc leo lectus, ornare 
-blandit, lobortis non, porta aliquet, lacus. Sed ut velit id nisl consequat feugiat. Cras gravida nisi vitae orci. 
-Etiam eget pede. Proin turpis leo, congue lacinia, fringilla eget, condimentum nec, sapien. Nullam enim diam, 
-condimentum non, volutpat vel, convallis nec, ante. Nulla facilisi. Integer porta congue odio. Nulla at nulla. In hac 
-habitasse platea dictumst. Morbi mauris libero, pulvinar sit amet, iaculis vel, sollicitudin quis, nunc. In 
-pellentesque lacus. Donec mollis scelerisque elit. Pellentesque sapien turpis, pharetra eu, consectetuer eget, posuere 
-sed, elit. Nulla nunc dui, dignissim aliquam, venenatis non, sagittis vitae, dui. Praesent metus sapien, lacinia a, 
-porttitor non, varius et, felis. Integer facilisis, lorem vel convallis volutpat, lectus tellus pellentesque dui, 
-bibendum convallis sem nisi quis urna.
+Tweedle Dee & Tweedle Dum
+by Bob Dylan
 
-Curabitur et leo. Pellentesque quam ligula, molestie sed, mattis nec, tincidunt vel, magna. Sed leo. Integer euismod. 
-Duis dapibus accumsan velit. Proin sit amet erat. Nullam nibh nulla, lacinia et, scelerisque in, varius nec, tellus. 
-Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas sit amet velit sit amet pede posuere tempor. In 
-cursus augue a lectus. Proin aliquam arcu ac neque. Duis euismod, nisi eu ultricies volutpat, dui orci eleifend augue, 
-quis varius diam purus id felis. Phasellus a dui ac nisi pharetra rhoncus. Proin ut nulla. Vestibulum vel odio. Mauris 
-a ipsum id orci ultrices aliquet.
+Tweedle Dum and Tweedle Dee
+They're throwin' knives into the tree
+Two big bags of dead man's bones
+Got their noses to the grind stone
+Livin' in the Land of Nod
+Trustin' their fate to the hands of God
+They pass by so silently
+Tweedle Dum and Tweedle Dee
 
-Nunc sagittis fringilla erat. Integer eu turpis. In quis quam non arcu pulvinar viverra. Nullam quis magna vitae metus 
-posuere hendrerit. Morbi nec diam nec justo condimentum ultrices. Integer dictum diam. Donec ante ipsum, ultrices eu, 
-dictum non, sodales non, eros. Aenean pellentesque mollis augue. Maecenas id urna. Cras et augue bibendum velit 
-convallis suscipit.
+Well, they're goin' to the country, they're goin' to retire
+They're takin' a streetcar named Desire
+Lookin' at a window with a pecan pie
+Lot of things they'd like they would never buy
+Neither of them .want. to turn and run
+They're makin' a noise to the Sun
+"His Master's Voice is calling me"
+Said Tweedle Dum to Tweedle Dee
 
-Vestibulum tincidunt dui posuere leo. Mauris faucibus, nunc a aliquam fermentum, felis massa cursus ante, nec commodo 
-est sapien ac magna. Morbi lacinia. Aliquam faucibus. Proin sodales volutpat orci. Morbi arcu orci, ultricies eu, 
-vulputate in, bibendum et, neque. Etiam urna purus, suscipit dapibus, semper et, congue ac, eros. Vivamus sit amet 
-metus a eros bibendum hendrerit. Sed eget nulla. Phasellus a nunc in lectus ornare fringilla. Ut commodo, felis at 
-varius blandit, nulla est faucibus metus, eu porta eros eros ut ligula. Curabitur mauris metus, commodo et, blandit 
-at, vulputate sit amet, orci. Sed nisi sapien, mattis eget, accumsan eu, lobortis vel, lacus. Morbi ultricies lacus 
-vitae magna dapibus tincidunt. Cras feugiat leo ut nibh. Proin diam leo, interdum quis, sodales ornare, interdum vel, 
-elit. Nulla facilisi.
+Tweedle Dee and Tweedle Dum
+I'll have more than thumb
+They walk among the stately trees
+They know the secrets of the breeze
+Tweedle Dum said to Tweedle Dee,
+"Your presence is obnoxious to me.
+Feel like baby sittin' on a woman's knee."
+Tweedle Dum and Tweedle Dee
 
-Maecenas malesuada tincidunt velit. Morbi placerat mauris ut nisi. Quisque mollis dapibus eros. Donec erat eros, 
-volutpat sit amet, tempus sed, luctus vitae, erat. Ut sit amet elit. Ut diam dui, pulvinar nec, fermentum a, semper 
-nec, nibh. Sed sed erat. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. 
-Curabitur varius feugiat mauris. Vestibulum ac risus. Etiam condimentum sem vitae erat.
+Well, the rain beat'n' down on a window pane
+I got love for you, and it's all in vain
+Brains in a pot, they're beginning to boil
+They're drippin' with garlic and olive oil
+Tweedle Dee is on his hands and his knees
+Sayin', "Throw me something, Mister, please!"
+"What's good for you is good for me,"
+Said Tweedle Dum to Tweedle Dee.
+
+Well, they're living in a happy harmony
+Tweedle Dum and Tweedle Dee
+They're one day older and a dollar short
+They got a prayer permit and a police escort
+They're lyin' low and they're makin' hay
+They seem determined to go all the way
+They run a brick 'n' tile company
+Tweedle Dum and Tweedle Dee
+
+Well, the timeless stream has a deaf last meal
+And the noble truth is a sacred creed
+My pretty baby, she's looking around
+She's wearin' a multi-thousand dollar gown
+Tweedle Dee is a low down sorry old man
+Tweedle Dum he'll stab you where you stand
+"I've had too much of your company,"
+said Tweedle Dum to Tweedle Dee.
+
+
+Copyright © 2001 Special Rider Music
 
 *** [END-OF-FILE] ***
