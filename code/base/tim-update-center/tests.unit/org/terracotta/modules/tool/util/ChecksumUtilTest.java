@@ -16,19 +16,19 @@ import junit.framework.TestCase;
 
 public class ChecksumUtilTest extends TestCase {
 
-  private static final String TEST_CHECK_SUM_DATA_TXT_MD5_BAD_FORMAT = "/testCheckSumData.txt.md5-bad.format";
-  private static final String TEST_CHECK_SUM_DATA_TXT_MD5_ALT_FORMAT = "/testCheckSumData.txt.md5-alt.format";
-  private static final String TEST_CHECK_SUM_DATA_TXT_MD5_NO_MATCH   = "/testCheckSumData.txt.md5-no.match";
-  private static final String TEST_CHECK_SUM_DATA_TXT_MD5            = "/testCheckSumData.txt.md5";
-  private static final String TEST_CHECK_SUM_DATA_TXT                = "/testCheckSumData.txt";
+  private static final String TEST_CHECKSUM_DATA_TXT_MD5_BAD_FORMAT = "/testChecksumData.txt.md5-bad.format";
+  private static final String TEST_CHECKSUM_DATA_TXT_MD5_ALT_FORMAT = "/testChecksumData.txt.md5-alt.format";
+  private static final String TEST_CHECKSUM_DATA_TXT_MD5_NO_MATCH   = "/testChecksumData.txt.md5-no.match";
+  private static final String TEST_CHECKSUM_DATA_TXT_MD5            = "/testChecksumData.txt.md5";
+  private static final String TEST_CHECKSUM_DATA_TXT                = "/testChecksumData.txt";
 
   /**
    * Test that the verifyMD5Sum(..) will return true if the content of the MD5 file matches the computed MD5 sum of the
    * file.
    */
   public void testVerifyMD5SumPass() {
-    File srcFile = FileUtils.toFile(this.getClass().getResource(TEST_CHECK_SUM_DATA_TXT));
-    File md5File = FileUtils.toFile(this.getClass().getResource(TEST_CHECK_SUM_DATA_TXT_MD5));
+    File srcFile = FileUtils.toFile(getClass().getResource(TEST_CHECKSUM_DATA_TXT));
+    File md5File = FileUtils.toFile(getClass().getResource(TEST_CHECKSUM_DATA_TXT_MD5));
     try {
       Assert.assertTrue(ChecksumUtil.verifyMD5Sum(srcFile, md5File));
     } catch (NoSuchAlgorithmException e) {
@@ -39,8 +39,8 @@ public class ChecksumUtilTest extends TestCase {
   }
 
   public void testVerifyMD5SumPassAltFormat() {
-    File srcFile = FileUtils.toFile(this.getClass().getResource(TEST_CHECK_SUM_DATA_TXT));
-    File md5File = FileUtils.toFile(this.getClass().getResource(TEST_CHECK_SUM_DATA_TXT_MD5_ALT_FORMAT));
+    File srcFile = FileUtils.toFile(getClass().getResource(TEST_CHECKSUM_DATA_TXT));
+    File md5File = FileUtils.toFile(getClass().getResource(TEST_CHECKSUM_DATA_TXT_MD5_ALT_FORMAT));
     try {
       Assert.assertTrue(ChecksumUtil.verifyMD5Sum(srcFile, md5File));
     } catch (NoSuchAlgorithmException e) {
@@ -55,8 +55,8 @@ public class ChecksumUtilTest extends TestCase {
    * of the file.
    */
   public void testVerifyMD5SumFail() {
-    File srcFile = FileUtils.toFile(this.getClass().getResource(TEST_CHECK_SUM_DATA_TXT));
-    File md5File = FileUtils.toFile(this.getClass().getResource(TEST_CHECK_SUM_DATA_TXT_MD5_NO_MATCH));
+    File srcFile = FileUtils.toFile(getClass().getResource(TEST_CHECKSUM_DATA_TXT));
+    File md5File = FileUtils.toFile(getClass().getResource(TEST_CHECKSUM_DATA_TXT_MD5_NO_MATCH));
     try {
       Assert.assertFalse(ChecksumUtil.verifyMD5Sum(srcFile, md5File));
     } catch (NoSuchAlgorithmException e) {
@@ -70,8 +70,8 @@ public class ChecksumUtilTest extends TestCase {
    * Test that a NumberFormatException is thrown when the MD5 file does not use the expected format.
    */
   public void testBadMD5FileFormat() {
-    File srcFile = FileUtils.toFile(this.getClass().getResource(TEST_CHECK_SUM_DATA_TXT));
-    File md5File = FileUtils.toFile(this.getClass().getResource(TEST_CHECK_SUM_DATA_TXT_MD5_BAD_FORMAT));
+    File srcFile = FileUtils.toFile(getClass().getResource(TEST_CHECKSUM_DATA_TXT));
+    File md5File = FileUtils.toFile(getClass().getResource(TEST_CHECKSUM_DATA_TXT_MD5_BAD_FORMAT));
     try {
       ChecksumUtil.verifyMD5Sum(srcFile, md5File);
       Assert.fail("Should have thrown a NumberFormatException");
