@@ -86,6 +86,9 @@ postscripts:
   - make-build-data:
       args:
         - eclipse/org.terracotta.dso/lib/resources
+  - install-forge-tims:
+      args:
+        - tim-apache-struts-1.1
   - include-schemas:
       args:
         - eclipse/org.terracotta.dso/html/ref/schema

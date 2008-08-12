@@ -144,6 +144,9 @@ postscripts:
   - make-build-data:
       args:
         - lib/resources
+  - install-forge-tims:
+      args:
+        - tim-apache-struts-1.1
   - include-schemas:
       args:
         - schema

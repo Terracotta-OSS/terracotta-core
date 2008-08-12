@@ -53,10 +53,12 @@ class FilePath
       # The extension for executable files; this variant is for Windows
       EXECUTABLE_EXTENSION = '.exe'
       BATCH_EXTENSION = '.bat'
+      SCRIPT_EXTENSION = '.bat'
     else
       # The extension for executable files; this variant is for Unix
       EXECUTABLE_EXTENSION = ''
       BATCH_EXTENSION = ''
+      SCRIPT_EXTENSION = '.sh'
     end
   else
     if ENV['OS'] =~ /windows/i
@@ -66,6 +68,7 @@ class FilePath
       # The extension for executable files; this variant is for Windows
       EXECUTABLE_EXTENSION = '.exe'
       BATCH_EXTENSION = '.bat'
+      SCRIPT_EXTENSION = '.bat'
     else
       # The native directory separator; this variant is for Unix, normal Ruby
       NATIVE_DIRECTORY_SEPARATOR = File::SEPARATOR
@@ -73,6 +76,7 @@ class FilePath
       # The extension for executable files; this variant is for Unix
       EXECUTABLE_EXTENSION = ''
       BATCH_EXTENSION = ''
+      SCRIPT_EXTENSION = '.sh'
     end
   end
 
@@ -233,6 +237,12 @@ class FilePath
   # nothing on Unix, but adds '.exe' on Windows.
   def executable_extension
     dup.add_extension(EXECUTABLE_EXTENSION)
+  end
+
+  # Returns a version of this FilePath object with the script extension appended.
+  # On windows, the script extension is '.bat', while on other platforms it is '.sh'
+  def script_extension
+    dup.add_extension(SCRIPT_EXTENSION)
   end
 
   # Returns a version of this FilePath object with the '.bat' extensions
