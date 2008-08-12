@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package org.terracotta.modules.tool.util;
 
@@ -20,8 +21,7 @@ import java.util.Collection;
  */
 public class DownloadUtil {
   /**
-   * Options used to control behavior of the
-   * {@link DownloadUtil#download(URL, File, DownloadOption...)} method.
+   * Options used to control behavior of the {@link DownloadUtil#download(URL, File, DownloadOption...)} method.
    */
   public enum DownloadOption {
     /** Should download overwrite existing files? */
@@ -31,17 +31,15 @@ public class DownloadUtil {
     CREATE_INTERVENING_DIRECTORIES,
 
     /**
-     * Is local file download location a directory?  If the destination is a
-     * directory, the downloaded file will be stored in the specified directory
-     * and the file name will be inferred from the remote URL.  Furthermore,
-     * if the destination file already exists and is a directory, then this
-     * option is implicitly inferred.
+     * Is local file download location a directory? If the destination is a directory, the downloaded file will be
+     * stored in the specified directory and the file name will be inferred from the remote URL. Furthermore, if the
+     * destination file already exists and is a directory, then this option is implicitly inferred.
      */
     DESTINATION_IS_DIRECTORY,
 
     /**
-     * Only download if remote file is modified since timestamp of local file.
-     * Implies {@link DownloadOption#OVERWRITE_EXISTING}.
+     * Only download if remote file is modified since timestamp of local file. Implies
+     * {@link DownloadOption#OVERWRITE_EXISTING}.
      */
     IF_MODIFIED
   }
@@ -51,13 +49,13 @@ public class DownloadUtil {
    */
   private static class DownloadOptionsHelper {
     private final Collection<DownloadOption> options;
+
     public DownloadOptionsHelper(Collection<DownloadOption> options) {
       this.options = options;
     }
 
     public boolean overwriteExisting() {
-      return isOptionSet(DownloadOption.OVERWRITE_EXISTING) ||
-             isOptionSet(DownloadOption.IF_MODIFIED);
+      return isOptionSet(DownloadOption.OVERWRITE_EXISTING) || isOptionSet(DownloadOption.IF_MODIFIED);
     }
 
     public boolean createInterveningDirectories() {
@@ -78,8 +76,8 @@ public class DownloadUtil {
   }
 
   private static final int DEFAULT_BUFFER_SIZE = 1024 * 4;
-  private Proxy proxy;
-  private int bufferSize = DEFAULT_BUFFER_SIZE;
+  private Proxy            proxy;
+  private int              bufferSize          = DEFAULT_BUFFER_SIZE;
 
   public DownloadUtil() {
     this(Proxy.NO_PROXY);
@@ -106,9 +104,8 @@ public class DownloadUtil {
   }
 
   /**
-   * Downloads the file from the given remoteFile URL and saves it to the file
-   * referred to by localFile.
-   *
+   * Downloads the file from the given remoteFile URL and saves it to the file referred to by localFile.
+   * 
    * @param remoteFile URL referring to the remote file to download
    * @param localFile File indicating where to save the downloaded remote file
    * @param options {@link DownloadOption}s to use for download
@@ -118,9 +115,8 @@ public class DownloadUtil {
   }
 
   /**
-   * Downloads the file from the given remoteFile URL and saves it to the file
-   * referred to by localFile.
-   *
+   * Downloads the file from the given remoteFile URL and saves it to the file referred to by localFile.
+   * 
    * @param remoteFile URL referring to the remote file to download
    * @param localFile File indicating where to save the downloaded remote file
    * @param options {@link DownloadOption}s to use for download
@@ -128,9 +124,8 @@ public class DownloadUtil {
   public void download(URL remoteFile, File localFile, Collection<DownloadOption> options) throws IOException {
     DownloadOptionsHelper downloadOptions = new DownloadOptionsHelper(options);
 
-    if (!downloadOptions.overwriteExisting() && localFile.exists()) {
-      throw new IOException("Download file already exists, and overwrite option not set.");
-    }
+    if (!downloadOptions.overwriteExisting() && localFile.exists()) { throw new IOException(
+                                                                                            "Download file already exists, and overwrite option not set."); }
 
     InputStream inputStream = null;
     OutputStream outputStream = null;
@@ -138,8 +133,7 @@ public class DownloadUtil {
       if (downloadOptions.createInterveningDirectories()) {
         if (downloadOptions.isDestinationDirectory()) {
           localFile.mkdirs();
-        }
-        else {
+        } else {
           localFile.getParentFile().mkdirs();
         }
       }
@@ -147,8 +141,7 @@ public class DownloadUtil {
       File destinationFile = null;
       if (downloadOptions.isDestinationDirectory() || localFile.isDirectory()) {
         destinationFile = new File(localFile, DownloadUtil.fileName(remoteFile));
-      }
-      else {
+      } else {
         destinationFile = localFile;
       }
 
@@ -168,12 +161,9 @@ public class DownloadUtil {
       while ((bytesReadCount = inputStream.read(buf)) > 0) {
         outputStream.write(buf, 0, bytesReadCount);
       }
-    }
-    finally {
-      if (inputStream != null)
-        inputStream.close();
-      if (outputStream != null)
-        outputStream.close();
+    } finally {
+      if (inputStream != null) inputStream.close();
+      if (outputStream != null) outputStream.close();
     }
   }
 
@@ -183,7 +173,6 @@ public class DownloadUtil {
   }
 
   public static void main(String[] args) throws IOException {
-    new DownloadUtil().download(new URL(args[0]), new File(args[1]),
-                                DownloadOption.IF_MODIFIED);
+    new DownloadUtil().download(new URL(args[0]), new File(args[1]), DownloadOption.IF_MODIFIED);
   }
 }

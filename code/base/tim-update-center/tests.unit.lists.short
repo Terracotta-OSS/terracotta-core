@@ -1,2 +1,4 @@
-ModuleTest
 CachedModulesTest
+ChecksumUtilTest
+ModuleTest
+PropertiesInterpolatorTest

@@ -5,27 +5,19 @@
 package org.terracotta.modules.tool;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
+import org.terracotta.modules.tool.util.ChecksumUtil;
 import org.terracotta.modules.tool.util.DownloadUtil;
 import org.terracotta.modules.tool.util.DownloadUtil.DownloadOption;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.math.BigInteger;
 import java.net.URL;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -339,31 +331,11 @@ public class Module implements Comparable {
   }
 
   private static boolean downloadVerified(File srcfile, File md5file) {
-    BufferedReader reader = null;
-    InputStream src = null;
     try {
-      reader = new BufferedReader(new FileReader(md5file));
-      BigInteger expected = new BigInteger(reader.readLine(), 16);
-
-      MessageDigest md = MessageDigest.getInstance("MD5");
-      md.reset();
-      src = new BufferedInputStream(new FileInputStream(srcfile));
-      byte[] buffer = new byte[4096];
-      int read = 0;
-      while ((read = src.read(buffer)) > 0) {
-        md.update(buffer, 0, read);
-      }
-      byte[] md5sum = md.digest();
-      BigInteger actual = new BigInteger(1, md5sum);
-
-      return actual.equals(expected);
-    } catch (IOException e) {
+      return ChecksumUtil.verifyMD5Sum(srcfile, md5file);
+    } catch (Exception e) {
+      System.err.println("Error calculating checksum for file '" + srcfile + "': " + e.getMessage());
       return false;
-    } catch (NoSuchAlgorithmException e) {
-      return false;
-    } finally {
-      IOUtils.closeQuietly(reader);
-      IOUtils.closeQuietly(src);
     }
   }
 
