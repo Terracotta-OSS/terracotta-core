@@ -18,7 +18,7 @@ public class StateManagerConfigImpl implements StateManagerConfig {
     int electionTime = -1;
 
     if (haConfig.isNetworkedActivePassive()) {
-      electionTime = haConfig.electionTime().getInt();
+      electionTime = haConfig.electionTime();
     } else {
       throw new AssertionError("Networked Active Passive is not enabled in config");
     }

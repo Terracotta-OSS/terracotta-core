@@ -4,49 +4,74 @@
  */
 package com.tc.config.schema.test;
 
-
 /**
  * Allows you to build valid config for the L2s. This class <strong>MUST NOT</strong> invoke the actual XML beans to do
  * its work; one of its purposes is, in fact, to test that those beans are set up correctly.
  */
 public class L2SConfigBuilder extends BaseConfigBuilder {
 
-  private L2ConfigBuilder[] l2s;
-  private HaConfigBuilder ha;
-  
+  private L2ConfigBuilder[]        l2s;
+  private HaConfigBuilder          ha;
+  private GroupsConfigBuilder      groups;
+  private UpdateCheckConfigBuilder updateCheck;
+
   public L2SConfigBuilder() {
-    super(1, new String[] { "l2s", "ha" });
+    super(1, new String[] { "l2s", "ha", "groups" , "update-check"});
   }
 
   public void setL2s(L2ConfigBuilder[] l2s) {
     this.l2s = l2s;
     setProperty("l2s", l2s);
   }
-  
+
   public void setHa(HaConfigBuilder ha) {
     this.ha = ha;
     setProperty("ha", ha);
   }
 
+  public void setGroups(GroupsConfigBuilder groups) {
+    this.groups = groups;
+    setProperty("groups", groups);
+  }
+  
+  public void setUpdateCheck(UpdateCheckConfigBuilder updateCheck) {
+    this.updateCheck = updateCheck;
+    setProperty("update-check", updateCheck);
+  }
+  
   public L2ConfigBuilder[] getL2s() {
     return l2s;
   }
-  
+
   public HaConfigBuilder getHa() {
     return ha;
+  }
+
+  public GroupsConfigBuilder getGroups() {
+    return groups;
+  }
+
+  public UpdateCheckConfigBuilder getUpdateCheck() {
+    return updateCheck;
   }
   
   public String toString() {
     String out = "";
-    if(isSet("l2s")) {
+    if (isSet("l2s")) {
       out += l2sToString();
     }
-    if(isSet("ha")) {
+    if (isSet("ha")) {
       out += ha.toString();
+    }
+    if (isSet("groups")) {
+      out += groups.toString();
+    }
+    if(isSet("update-check")){
+      out += updateCheck.toString();
     }
     return out;
   }
-  
+
   private String l2sToString() {
     String val = "";
     for (int i = 0; i < l2s.length; i++) {
@@ -57,16 +82,10 @@ public class L2SConfigBuilder extends BaseConfigBuilder {
 
   public static L2SConfigBuilder newMinimalInstance() {
     L2ConfigBuilder l2 = new L2ConfigBuilder();
-//    l2.setName("localhost");
-//    l2.setDSOPort(9510);
-
-    HaConfigBuilder ha = new HaConfigBuilder();
-
     L2SConfigBuilder out = new L2SConfigBuilder();
     out.setL2s(new L2ConfigBuilder[] { l2 });
-    out.setHa(ha);
-
     return out;
   }
+
 
 }

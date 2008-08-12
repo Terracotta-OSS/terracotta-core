@@ -14,16 +14,33 @@ public class HaConfigBuilder extends BaseConfigBuilder {
   private static final String[] ALL_PROPERTIES                         = concat(new Object[] { MODE,
       NETWORKED_ACTIVE_PASSIVE                                        });
 
+  private String                haMode;
+  private String                electionTime;
+
   public HaConfigBuilder() {
-    super(3, ALL_PROPERTIES);
+    super(7, ALL_PROPERTIES);
+  }
+
+  public HaConfigBuilder(int indent) {
+    super(indent, ALL_PROPERTIES);
   }
 
   public void setMode(String data) {
     setProperty("mode", data);
+    this.haMode = data;
+  }
+
+  public String getMode() {
+    return this.haMode;
   }
 
   public void setElectionTime(String data) {
     setProperty("election-time", data);
+    this.electionTime = data;
+  }
+
+  public String getElectionTime() {
+    return this.electionTime;
   }
 
   public String toString() {

@@ -74,7 +74,7 @@ public class TerracottaConfigBuilder extends BaseConfigBuilder {
   public String toString() {
     return "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n\n"
            + "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">\n" + elements(ALL_PROPERTIES)
-           + "</tc:tc-config>";
+           + "\n</tc:tc-config>";
   }
 
   public static TerracottaConfigBuilder newMinimalInstance() {

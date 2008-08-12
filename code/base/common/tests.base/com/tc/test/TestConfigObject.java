@@ -390,7 +390,7 @@ public class TestConfigObject {
   public void addToAppServerClassPath(String cp) {
     extraClassPathForAppServer += File.pathSeparator + cp;
   }
-
+  
   public String linkedChildProcessPath() {
     String out = this.properties.getProperty(LINKED_CHILD_PROCESS_CLASSPATH);
     Assert.assertNotBlank(out);
@@ -412,6 +412,7 @@ public class TestConfigObject {
   public static final String TRANSPARENT_TESTS_MODE_NORMAL         = "normal";
   public static final String TRANSPARENT_TESTS_MODE_CRASH          = "crash";
   public static final String TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE = "active-passive";
+  public static final String TRANSPARENT_TESTS_MODE_ACTIVE_ACTIVE  = "active-active";
 
   private static File        baseDir;
 

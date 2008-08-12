@@ -27,7 +27,6 @@ import com.tc.config.schema.L2Info;
 import com.tc.config.schema.NewCommonL2Config;
 import com.tc.config.schema.NewHaConfig;
 import com.tc.config.schema.dynamic.ConfigItem;
-import com.tc.config.schema.dynamic.StringConfigItem;
 import com.tc.config.schema.messaging.http.ConfigServlet;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
@@ -223,8 +222,8 @@ public class TCServerImpl extends SEDA implements TCServer {
   
   public String getFailoverMode() {
     NewHaConfig haConfig = configurationSetupManager.haConfig();
-    StringConfigItem haMode = haConfig != null ? haConfig.haMode() : null;
-    return haMode != null ? haMode.getString() : "no failover";
+    String haMode = haConfig != null ? haConfig.haMode() : null;
+    return haMode != null ? haMode : "no failover";
   }
   
   public int getDSOListenPort() {

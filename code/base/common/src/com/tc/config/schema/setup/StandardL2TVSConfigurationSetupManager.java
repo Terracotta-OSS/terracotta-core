@@ -4,11 +4,17 @@
  */
 package com.tc.config.schema.setup;
 
+import org.apache.xmlbeans.XmlBoolean;
+import org.apache.xmlbeans.XmlException;
+import org.apache.xmlbeans.XmlInteger;
 import org.apache.xmlbeans.XmlObject;
 import org.apache.xmlbeans.XmlOptions;
 
 import com.tc.capabilities.AbstractCapabilitiesFactory;
 import com.tc.capabilities.Capabilities;
+import com.tc.config.schema.ActiveServerGroupConfig;
+import com.tc.config.schema.ActiveServerGroupsConfig;
+import com.tc.config.schema.ActiveServerGroupsConfigObject;
 import com.tc.config.schema.ConfigTCProperties;
 import com.tc.config.schema.ConfigTCPropertiesFromObject;
 import com.tc.config.schema.IllegalConfigurationChangeHandler;
@@ -32,6 +38,7 @@ import com.tc.object.config.schema.PersistenceMode;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
+import com.terracottatech.config.ActiveServerGroups;
 import com.terracottatech.config.Application;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.Ha;
@@ -43,6 +50,7 @@ import com.terracottatech.config.UpdateCheck;
 import com.terracottatech.config.TcConfigDocument.TcConfig.TcProperties;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -59,34 +67,35 @@ import java.util.Set;
 public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfigurationSetupManager implements
     L2TVSConfigurationSetupManager {
 
-  private static TCLogger            logger = TCLogging.getLogger(StandardL2TVSConfigurationSetupManager.class);
+  private static TCLogger                logger = TCLogging.getLogger(StandardL2TVSConfigurationSetupManager.class);
 
-  private final ConfigurationCreator configurationCreator;
+  private final ConfigurationCreator     configurationCreator;
 
-  private NewSystemConfig            systemConfig;
-  private final Map                  l2ConfigData;
-  private final NewHaConfig          haConfig;
-  private final UpdateCheckConfig    updateCheckConfig;
+  private NewSystemConfig                systemConfig;
+  private final Map                      l2ConfigData;
+  private final NewHaConfig              haConfig;
+  private final ActiveServerGroupsConfig activeServerGroupsConfig;
+  private final UpdateCheckConfig        updateCheckConfig;
 
-  private final String               thisL2Identifier;
-  private L2ConfigData               myConfigData;
-  private ConfigTCProperties         configTCProperties;
-  private final boolean              thisl2IdentifierSpecified;
+  private final String                   thisL2Identifier;
+  private L2ConfigData                   myConfigData;
+  private ConfigTCProperties             configTCProperties;
+  private final boolean                  thisl2IdentifierSpecified;
 
   public StandardL2TVSConfigurationSetupManager(ConfigurationCreator configurationCreator, String thisL2Identifier,
                                                 DefaultValueProvider defaultValueProvider,
                                                 XmlObjectComparator xmlObjectComparator,
                                                 IllegalConfigurationChangeHandler illegalConfigChangeHandler)
       throws ConfigurationSetupException {
-    this(configurationCreator, thisL2Identifier, defaultValueProvider, xmlObjectComparator, illegalConfigChangeHandler, false);
+    this(configurationCreator, thisL2Identifier, defaultValueProvider, xmlObjectComparator, illegalConfigChangeHandler,
+         false);
   }
 
   public StandardL2TVSConfigurationSetupManager(ConfigurationCreator configurationCreator, String thisL2Identifier,
                                                 DefaultValueProvider defaultValueProvider,
                                                 XmlObjectComparator xmlObjectComparator,
                                                 IllegalConfigurationChangeHandler illegalConfigChangeHandler,
-                                                boolean thisl2IdentifierSpecified)
-      throws ConfigurationSetupException {
+                                                boolean thisl2IdentifierSpecified) throws ConfigurationSetupException {
     super(defaultValueProvider, xmlObjectComparator, illegalConfigChangeHandler);
 
     Assert.assertNotNull(configurationCreator);
@@ -97,42 +106,156 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
     this.systemConfig = null;
     this.l2ConfigData = new HashMap();
-    this.haConfig = getHaConfig();
-    this.updateCheckConfig = getUpdateCheckConfig();
 
     this.thisL2Identifier = thisL2Identifier;
     this.myConfigData = null;
     this.thisl2IdentifierSpecified = thisl2IdentifierSpecified;
 
+    // this sets the beans in each repository
     runConfigurationCreator(this.configurationCreator);
 
     this.configTCProperties = new ConfigTCPropertiesFromObject((TcProperties) tcPropertiesRepository().bean());
     overwriteTcPropertiesFromConfig();
+    // do this after runConfigurationCreator method call, after serversBeanRepository is set
+    try {
+      this.updateCheckConfig = getUpdateCheckConfig();
+    } catch (XmlException e2) {
+      throw new ConfigurationSetupException(e2);
+    }
+
+    try {
+      this.haConfig = getHaConfig();
+    } catch (XmlException e1) {
+      throw new ConfigurationSetupException(e1);
+    }
+
     selectL2((Servers) serversBeanRepository().bean(), "the set of L2s known to us");
     validateRestrictions();
+
+    // do this last after everything else is setup
+    try {
+      this.activeServerGroupsConfig = getActiveServerGroupsConfig();
+    } catch (Exception e) {
+      throw new ConfigurationSetupException(e);
+    }
+
+    // do this after servers and groups have been processed
+    validateGroups();
   }
 
-  private NewHaConfig getHaConfig() {
+  private void validateGroups() throws ConfigurationSetupException {
+    Server[] serverArray = ((Servers) serversBeanRepository().bean()).getServerArray();
+    ActiveServerGroupConfig[] groupArray = this.activeServerGroupsConfig.getActiveServerGroupArray();
+
+    for (int i = 0; i < serverArray.length; i++) {
+      String serverName = serverArray[i].getName();
+      boolean found = false;
+      int gid = -1;
+      for (int j = 0; j < groupArray.length; j++) {
+        if (isMemberOf(serverName, groupArray[j])) {
+          if (found) { throw new ConfigurationSetupException("Server{" + serverName
+                                                             + "} is part of more than 1 active-server-group:  groups{"
+                                                             + gid + "," + groupArray[j].getId() + "}"); }
+          gid = groupArray[j].getId();
+          found = true;
+        }
+      }
+      if (!found) { throw new ConfigurationSetupException("Server{" + serverName
+                                                          + "} is not part of any active-server-group."); }
+    }
+  }
+
+  private boolean isMemberOf(String serverName, ActiveServerGroupConfig groupConfig) {
+    String[] members = groupConfig.getMembers().getMemberArray();
+    for (int i = 0; i < members.length; i++) {
+      if (members[i].equals(serverName)) { return true; }
+    }
+    return false;
+  }
+
+  // make sure there is at most one of these
+  private ActiveServerGroupsConfig getActiveServerGroupsConfig() throws ConfigurationSetupException {
+    if (this.haConfig == null) { throw new ConfigurationSetupException(
+                                                          "Define haConfig before defining activeServerGroupsConfig in the constructor!"); }
+
+    final ActiveServerGroups defaultActiveServerGroups = ActiveServerGroupsConfigObject
+        .getDefaultActiveServerGroups(defaultValueProvider, serversBeanRepository(), haConfig.getHa());
+
+    ChildBeanRepository beanRepository = new ChildBeanRepository(serversBeanRepository(), ActiveServerGroups.class,
+                                                                 new ChildBeanFetcher() {
+                                                                   public XmlObject getChild(XmlObject parent) {
+                                                                     ActiveServerGroups activeServerGroups = ((Servers) parent)
+                                                                         .getActiveServerGroups();
+                                                                     if (activeServerGroups == null) {
+                                                                       activeServerGroups = defaultActiveServerGroups;
+                                                                       ((Servers) parent)
+                                                                           .setActiveServerGroups(activeServerGroups);
+                                                                     }
+                                                                     return activeServerGroups;
+                                                                   }
+                                                                 });
+    return new ActiveServerGroupsConfigObject(createContext(beanRepository, configurationCreator
+        .directoryConfigurationLoadedFrom()), this);
+  }
+
+  // make sure there is at most one of these
+  private NewHaConfig getHaConfig() throws XmlException {
+    final Ha defaultHa = NewHaConfigObject.getDefaultCommonHa(defaultValueProvider, serversBeanRepository());
+
     ChildBeanRepository beanRepository = new ChildBeanRepository(serversBeanRepository(), Ha.class,
                                                                  new ChildBeanFetcher() {
                                                                    public XmlObject getChild(XmlObject parent) {
-                                                                     return ((Servers) parent).getHa();
+                                                                     Ha ha = ((Servers) parent).getHa();
+                                                                     if (ha == null) {
+                                                                       ha = defaultHa;
+                                                                       ((Servers) parent).setHa(ha);
+                                                                     }
+                                                                     return ha;
                                                                    }
                                                                  });
 
     return new NewHaConfigObject(createContext(beanRepository, configurationCreator.directoryConfigurationLoadedFrom()));
   }
 
-  private UpdateCheckConfig getUpdateCheckConfig() {
+  private UpdateCheckConfig getUpdateCheckConfig() throws XmlException {
+    final UpdateCheck defaultUpdateCheck = getDefaultUpdateCheck();
+
     ChildBeanRepository beanRepository = new ChildBeanRepository(serversBeanRepository(), UpdateCheck.class,
                                                                  new ChildBeanFetcher() {
                                                                    public XmlObject getChild(XmlObject parent) {
-                                                                     return ((Servers) parent).getUpdateCheck();
+                                                                     UpdateCheck updateCheck = ((Servers) parent)
+                                                                         .getUpdateCheck();
+
+                                                                     if (updateCheck == null) {
+                                                                       updateCheck = defaultUpdateCheck;
+                                                                       ((Servers) parent).setUpdateCheck(updateCheck);
+                                                                     }
+                                                                     return updateCheck;
                                                                    }
                                                                  });
 
     return new UpdateCheckConfigObject(createContext(beanRepository, configurationCreator
         .directoryConfigurationLoadedFrom()));
+  }
+
+  private UpdateCheck getDefaultUpdateCheck() throws XmlException {
+    final int defaultPeriodDays = ((XmlInteger) defaultValueProvider.defaultFor(serversBeanRepository()
+        .rootBeanSchemaType(), "update-check/period-days")).getBigIntegerValue().intValue();
+    final boolean defaultEnabled = ((XmlBoolean) defaultValueProvider.defaultFor(serversBeanRepository()
+        .rootBeanSchemaType(), "update-check/enabled")).getBooleanValue();
+    UpdateCheck uc = UpdateCheck.Factory.newInstance();
+    uc.setEnabled(defaultEnabled);
+    uc.setPeriodDays(defaultPeriodDays);
+    return uc;
+  }
+
+  // called by configObjects that need to create their own context
+  public File getConfigFilePath() {
+    return configurationCreator.directoryConfigurationLoadedFrom();
+  }
+
+  public Ha getCommonHa() {
+    return this.haConfig.getHa();
   }
 
   private class L2ConfigData {
@@ -262,11 +385,12 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     if (this.allCurrentlyKnownServers().length == 1) {
       if (servers != null && servers.getServerArray() != null && servers.getServerArray()[0] != null) {
         final String server0Name = servers.getServerArray()[0].getName();
-        if (thisl2IdentifierSpecified && !thisL2Identifier.equals(server0Name)) {
-          throw new ConfigurationSetupException("You have specified server name '" + thisL2Identifier + "' which does not " +
-                                                "exist in the specified tc-config file. \n\n" +
-                                                "Please check your settings and try again");
-        }
+        if (thisl2IdentifierSpecified && !thisL2Identifier.equals(server0Name)) { throw new ConfigurationSetupException(
+                                                                                                                        "You have specified server name '"
+                                                                                                                            + thisL2Identifier
+                                                                                                                            + "' which does not "
+                                                                                                                            + "exist in the specified tc-config file. \n\n"
+                                                                                                                            + "Please check your settings and try again"); }
         this.myConfigData = configDataFor(server0Name);
       } else {
         this.myConfigData = configDataFor(null);
@@ -370,6 +494,10 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
   public UpdateCheckConfig updateCheckConfig() {
     return updateCheckConfig;
+  }
+
+  public ActiveServerGroupsConfig activeServerGroupsConfig() {
+    return activeServerGroupsConfig;
   }
 
   public String[] allCurrentlyKnownServers() {
