@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import junit.framework.Test;
@@ -35,9 +36,9 @@ public class RenameStandardLoaderTest extends AbstractOneServerDeploymentTest {
   private static final String CONTEXT = "simple";
 
   public RenameStandardLoaderTest() {
-    // MNK-483
+    // DEV-1817
     if (appServerInfo().getId() == AppServerInfo.WEBSPHERE) {
-      disableAllUntil("2008-08-15");
+      disableAllUntil(new Date(Long.MAX_VALUE));
     }
   }
 
