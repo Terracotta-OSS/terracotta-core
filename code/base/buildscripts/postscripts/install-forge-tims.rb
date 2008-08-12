@@ -14,7 +14,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     args.each do |tim|
       puts("***** Installing #{tim}")
       unless system(tim_get.to_s, 'install', tim)
-        raise("Failed to install #{tim}")
+        raise("Failed to install #{tim}.  Exit status: #{$?.exitstatus}")
       end
     end
   end
