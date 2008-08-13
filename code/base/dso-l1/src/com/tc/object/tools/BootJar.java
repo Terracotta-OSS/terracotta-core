@@ -298,6 +298,16 @@ public class BootJar {
     this.creationErrorOccurred = errorOccurred;
   }
 
+  public static void closeQuietly(BootJar bootJar) {
+    if (bootJar != null) {
+      try {
+        bootJar.close();
+      } catch (IOException e) {
+        // e.printStackTrace();
+      }
+    }
+  }
+
   public synchronized void close() throws IOException {
     if (state == STATE_OPEN) {
       if (openForWrite && !this.creationErrorOccurred) {
@@ -307,12 +317,10 @@ public class BootJar {
         out.flush();
         out.close();
       }
-
       if (jarFileInput != null) {
         jarFileInput.close();
       }
     }
-
     state = STATE_CLOSED;
   }
 
