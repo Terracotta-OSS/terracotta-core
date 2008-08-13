@@ -59,7 +59,7 @@ goto tc_set_dso_boot_jar__1_0
      goto return
 
  :tc_set_dso_boot_jar__1_1
-   echo Starting BootJarTool
+   echo Starting BootJarTool...
    if not defined TC_CONFIG_PATH goto tc_set_dso_boot_jar__1_1_1
    set TC_CONFIG_PATH="%TC_CONFIG_PATH:"=%"
    
