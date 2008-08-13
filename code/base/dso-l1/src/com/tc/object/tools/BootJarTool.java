@@ -170,7 +170,6 @@ import com.tcclient.util.MapEntrySetWrapper;
 import gnu.trove.TLinkable;
 
 import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -373,11 +372,10 @@ public class BootJarTool {
       return result;
     } catch (InvalidBootJarMetaDataException e) {
       throw e;
-    } catch (BootJarException e) {
-      throw new RuntimeException(e);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+    } catch (Exception e) {
+      exit(e.getMessage());
     }
+    return null;
   }
 
   /**
@@ -385,8 +383,8 @@ public class BootJarTool {
    */
   private final void verifyJar(File bootJarFile) {
     try {
-      final BootJar bootJarLocal = BootJar.getBootJarForReading(bootJarFile);
-      final Set bootJarClassNames = bootJarLocal.getAllClasses();
+      BootJar bootJarLocal = BootJar.getBootJarForReading(bootJarFile);
+      Set bootJarClassNames = bootJarLocal.getAllClasses();
       Map offendingClasses = new HashMap();
       for (Iterator i = bootJarClassNames.iterator(); i.hasNext();) {
         final String className = (String) i.next();
@@ -396,21 +394,19 @@ public class BootJarTool {
         cr.accept(cv, ClassReader.SKIP_FRAMES);
       }
 
-      String nl = System.getProperty("line.separator");
-      StringBuffer message = new StringBuffer(
-                                              nl
-                                                  + nl
-                                                  + "The following Terracotta classes needs to be included in the boot jar:"
-                                                  + nl + nl);
+      String newline = System.getProperty("line.separator");
+      StringBuffer msg = new StringBuffer();
+      msg.append(newline).append(newline);
+      msg.append("The following Terracotta classes needs to be included in the boot jar:");
+      msg.append(newline).append(newline);
+
       for (Iterator i = offendingClasses.entrySet().iterator(); i.hasNext();) {
         Map.Entry entry = (Map.Entry) i.next();
-        message.append("  - " + entry.getKey() + " [" + entry.getValue() + "]" + nl);
+        msg.append("  - " + entry.getKey() + " [" + entry.getValue() + "]" + newline);
       }
-      Assert.assertTrue(message, offendingClasses.isEmpty());
-    } catch (BootJarException e) {
-      throw new RuntimeException(e);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+      Assert.assertTrue(msg, offendingClasses.isEmpty());
+    } catch (Exception e) {
+      exit(e.getMessage());
     }
   }
 
@@ -1385,36 +1381,25 @@ public class BootJarTool {
   private final byte[] getBytes(String className, ClassLoader provider) {
     try {
       return getBytesForClass(className, provider);
-    } catch (ClassNotFoundException e) {
+    } catch (Exception e) {
       exit("Error sourcing bytes for class " + className, e);
     }
     return null;
   }
 
   public static final byte[] getBytesForClass(String className, ClassLoader loader) throws ClassNotFoundException {
-    String resource = BootJar.classNameToFileName(className);
-    final InputStream is = loader.getResourceAsStream(resource);
-    if (is == null) throw new ClassNotFoundException("No resource found for class: " + className);
+    InputStream input = null;
+    String resource = null;
     try {
-      return getBytesForClass(is);
+      resource = BootJar.classNameToFileName(className);
+      input = loader.getResourceAsStream(resource);
+      if (input == null) throw new ClassNotFoundException("No resource found for class: " + className);
+      return IOUtils.toByteArray(input);
     } catch (IOException e) {
-      throw new ClassNotFoundException("Error reading bytes for " + resource, e);
-    }
-  }
-
-  public static final byte[] getBytesForClass(final InputStream is) throws IOException {
-    final int size = 4096;
-    byte[] buffer = new byte[size];
-    ByteArrayOutputStream baos = new ByteArrayOutputStream(size);
-    int read;
-    try {
-      while ((read = is.read(buffer, 0, size)) > 0) {
-        baos.write(buffer, 0, read);
-      }
+      throw new ClassNotFoundException("Error reading bytes from " + resource, e);
     } finally {
-      IOUtils.closeQuietly(is);
+      IOUtils.closeQuietly(input);
     }
-    return baos.toByteArray();
   }
 
   /**

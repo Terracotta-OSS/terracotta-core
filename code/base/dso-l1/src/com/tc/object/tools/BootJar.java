@@ -4,6 +4,8 @@
  */
 package com.tc.object.tools;
 
+import org.apache.commons.io.IOUtils;
+
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.NotInBootJar;
@@ -12,12 +14,11 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -192,17 +193,20 @@ public class BootJar {
   private static final int QUERY_FOREIGN         = 3;
   private static final int QUERY_NOT_FOREIGN     = 4;
 
-  public synchronized byte[] getBytesForClass(final String name) throws IOException {
-    JarEntry entry = jarFileInput.getJarEntry(BootJar.classNameToFileName(name));
-    final int bufsize = 4098;
-    final byte[] buffer = new byte[bufsize];
-    final BufferedInputStream is = new BufferedInputStream(jarFileInput.getInputStream(entry));
-    ByteArrayOutputStream os = new ByteArrayOutputStream();
-    for (int k = 0; (k = is.read(buffer)) != -1;) {
-      os.write(buffer, 0, k);
+  public synchronized byte[] getBytesForClass(final String className) throws ClassNotFoundException {
+    InputStream input = null;
+    String resource = null;
+    try {
+      resource = BootJar.classNameToFileName(className);
+      JarEntry entry = jarFileInput.getJarEntry(resource);
+      input = jarFileInput.getInputStream(entry);
+      if (input == null) throw new ClassNotFoundException("No resource found for class: " + className);
+      return IOUtils.toByteArray(input);
+    } catch (IOException e) {
+      throw new ClassNotFoundException("Error reading bytes from " + resource, e);
+    } finally {
+      IOUtils.closeQuietly(input);
     }
-    is.close();
-    return os.toByteArray();
   }
 
   private synchronized Set getBootJarClassNames(int query) throws IOException {
