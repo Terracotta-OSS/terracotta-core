@@ -63,8 +63,8 @@ public class MissingBundleException extends BundleException implements BundleExc
   }
 
   private String searchAttributes() {
-    return "groupId: " + groupId + "\n" + INDENT + INDENT + "name   : " + name + "\n" + INDENT + INDENT + "Version: "
-           + version;
+    return "groupId: " + groupId + "\n" + INDENT + INDENT + "name   : " + name + "\n" + INDENT + INDENT + "version: "
+           + OSGiToMaven.bundleVersionToProjectVersion(version);
   }
 
   private String expectedAttributes() {
@@ -118,7 +118,7 @@ public class MissingBundleException extends BundleException implements BundleExc
     String scriptname = Os.isWindows() ? "tim-get.bat" : "tim-get.sh";
 
     buf.append(promptname).append(scriptname).append(" install ");
-    buf.append(name).append(" ").append(version).append(" ").append(groupId);
+    buf.append(name).append(" ").append(OSGiToMaven.bundleVersionToProjectVersion(version)).append(" ").append(groupId);
     buf.append("\n\n").append(INDENT);
 
     buf.append("You can also use the tool's 'list' command to see if it's actually available:\n\n")
