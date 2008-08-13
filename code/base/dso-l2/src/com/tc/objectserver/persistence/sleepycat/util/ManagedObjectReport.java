@@ -2,7 +2,7 @@
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tc.objectserver.persistence.sleepycat;
+package com.tc.objectserver.persistence.sleepycat.util;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -12,13 +12,20 @@ import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListenerProvider;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListener;
+import com.tc.objectserver.persistence.sleepycat.CustomSerializationAdapterFactory;
+import com.tc.objectserver.persistence.sleepycat.DBEnvironment;
+import com.tc.objectserver.persistence.sleepycat.SerializationAdapterFactory;
+import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor;
 import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Counter;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.Writer;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -27,39 +34,41 @@ import java.util.Set;
 
 public class ManagedObjectReport {
 
-  private static final TCLogger logger = TCLogging.getLogger(ManagedObjectReport.class);
+  private static final TCLogger logger                = TCLogging.getLogger(ManagedObjectReport.class);
+
+  private final Writer          writer;
 
   private SleepycatPersistor    persistor;
-  
-  //stat structures
-  protected Map classMap = new HashMap();
-  
-  protected Set nullObjectIDSet = new HashSet();
-  
-  protected Counter objectIDIsNullCounter = new Counter(0);
-  
-  protected Set doesNotExistInSet = new HashSet();
-  
-  protected Counter totalCounter = new Counter(0);
 
-  
-  
+  protected Map                 classMap              = new HashMap();
+
+  protected Set                 nullObjectIDSet       = new HashSet();
+
+  protected Counter             objectIDIsNullCounter = new Counter(0);
+
+  protected Set                 doesNotExistInSet     = new HashSet();
+
+  protected Counter             totalCounter          = new Counter(0);
 
   public ManagedObjectReport(File dir) throws Exception {
+    this(dir, new OutputStreamWriter(System.out));
+  }
+
+  public ManagedObjectReport(File dir, Writer writer) throws Exception {
+    this.writer = writer;
     DBEnvironment env = new DBEnvironment(true, dir);
     SerializationAdapterFactory serializationAdapterFactory = new CustomSerializationAdapterFactory();
     final TestManagedObjectChangeListenerProvider managedObjectChangeListenerProvider = new TestManagedObjectChangeListenerProvider();
     persistor = new SleepycatPersistor(logger, env, serializationAdapterFactory);
     ManagedObjectStateFactory.createInstance(managedObjectChangeListenerProvider, persistor);
   }
-  
+
   protected SleepycatPersistor getSleepycatPersistor() {
     return persistor;
   }
 
   public void report() {
 
-  
     Set objectIDSet = persistor.getManagedObjectPersistor().getAllObjectIDs();
     for (Iterator iter = objectIDSet.iterator(); iter.hasNext();) {
       ObjectID objectID = (ObjectID) iter.next();
@@ -183,13 +192,19 @@ public class ManagedObjectReport {
   }
 
   private static void usage() {
-    log("Usage: ManagedObjectReport <environment home directory>");
+    System.out.println("Usage: ManagedObjectReport <environment home directory>");
   }
 
-  private static void log(String message) {
-    System.out.println(message);
+  private void log(String message) {
+    try {
+      writer.write(message);
+      writer.write("\n");
+      writer.flush();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
-  
+
   private static class TestManagedObjectChangeListenerProvider implements ManagedObjectChangeListenerProvider {
 
     public ManagedObjectChangeListener getListener() {

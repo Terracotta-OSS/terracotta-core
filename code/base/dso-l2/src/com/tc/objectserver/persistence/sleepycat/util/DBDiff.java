@@ -1,7 +1,8 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
-package com.tc.objectserver.persistence.sleepycat;
+package com.tc.objectserver.persistence.sleepycat.util;
 
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
@@ -15,6 +16,10 @@ import com.tc.objectserver.persistence.api.ClientStatePersistor;
 import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
 import com.tc.objectserver.persistence.api.TransactionPersistor;
 import com.tc.objectserver.persistence.impl.StringIndexImpl;
+import com.tc.objectserver.persistence.sleepycat.CustomSerializationAdapterFactory;
+import com.tc.objectserver.persistence.sleepycat.DBEnvironment;
+import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor;
+import com.tc.objectserver.persistence.sleepycat.TCDatabaseException;
 import com.tc.util.Assert;
 import com.tc.util.SyncObjectIdSet;
 
@@ -22,16 +27,19 @@ import gnu.trove.TObjectLongHashMap;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-public class SleepycatTCDBDiff {
-  
-  private static final String VERSION_STRING = "SleepycatTCDBDiff [ Ver 0.2]";
+public class DBDiff {
 
+  private static final String             VERSION_STRING       = "SleepycatTCDBDiff [ Ver 0.2]";
+
+  private final Writer                    writer;
   private final SleepycatPersistor        sdb1;
   private final SleepycatPersistor        sdb2;
   private final File                      d1;
@@ -39,20 +47,24 @@ public class SleepycatTCDBDiff {
   private final boolean                   moDiff;
   private final ManagedObjectStateFactory mosf1;
   private final ManagedObjectStateFactory mosf2;
-  protected boolean diffStringIndexer = false;
-  protected boolean diffGeneratedClasses = false;
-  protected boolean diffTransactions = false;
-  protected boolean diffClientStates = false;
-  protected boolean diffManagedObjects = false;
+  protected boolean                       diffStringIndexer    = false;
+  protected boolean                       diffGeneratedClasses = false;
+  protected boolean                       diffTransactions     = false;
+  protected boolean                       diffClientStates     = false;
+  protected boolean                       diffManagedObjects   = false;
 
-  
-  public SleepycatTCDBDiff(File d1, File d2, boolean moDiff) throws TCDatabaseException, IOException {
+  public DBDiff(File d1, File d2, boolean moDiff) throws TCDatabaseException, IOException {
+    this(d1, d2, moDiff, new OutputStreamWriter(System.out));
+  }
+
+  public DBDiff(File d1, File d2, boolean moDiff, Writer writer) throws TCDatabaseException, IOException {
+    this.writer = writer;
     this.d1 = d1;
     this.d2 = d2;
     this.moDiff = moDiff;
-    this.sdb1 = new SleepycatPersistor(TCLogging.getLogger(SleepycatTCDBDiff.class), new DBEnvironment(true, d1),
+    this.sdb1 = new SleepycatPersistor(TCLogging.getLogger(DBDiff.class), new DBEnvironment(true, d1),
                                        new CustomSerializationAdapterFactory());
-    this.sdb2 = new SleepycatPersistor(TCLogging.getLogger(SleepycatTCDBDiff.class), new DBEnvironment(true, d2),
+    this.sdb2 = new SleepycatPersistor(TCLogging.getLogger(DBDiff.class), new DBEnvironment(true, d2),
                                        new CustomSerializationAdapterFactory());
 
     // Since we dont create any new MOState Objects in this program, we use 1 of the 2 persistor.
@@ -152,8 +164,14 @@ public class SleepycatTCDBDiff {
     }
   }
 
-  private static void log(String message) {
-    System.out.println(message);
+  private void log(String message) {
+    try {
+      writer.write(message);
+      writer.write("\n");
+      writer.flush();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
   private void diffStringIndexer(StringIndexImpl stringIndex1, StringIndexImpl stringIndex2) {
@@ -168,8 +186,8 @@ public class SleepycatTCDBDiff {
 
   public static void main(String[] args) {
     boolean moDiff = false;
-    
-    log(VERSION_STRING);
+
+    System.out.println(VERSION_STRING);
     if (args == null || args.length < 2) {
       usage();
       System.exit(-1);
@@ -183,7 +201,7 @@ public class SleepycatTCDBDiff {
       File d2 = new File(args[1]);
       validateDir(d2);
 
-      SleepycatTCDBDiff sdiff = new SleepycatTCDBDiff(d1, d2, moDiff);
+      DBDiff sdiff = new DBDiff(d1, d2, moDiff);
       sdiff.diff();
     } catch (Exception ex) {
       ex.printStackTrace();
@@ -196,7 +214,7 @@ public class SleepycatTCDBDiff {
   }
 
   private static void usage() {
-    log("Usage: SleepycatTCDBDiff <environment home directory1> <environment home directory2> [-mo]");
+    System.out.println("Usage: SleepycatTCDBDiff <environment home directory1> <environment home directory2> [-mo]");
   }
 
 }

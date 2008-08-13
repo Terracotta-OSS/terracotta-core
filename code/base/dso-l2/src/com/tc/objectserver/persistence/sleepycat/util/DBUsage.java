@@ -2,7 +2,7 @@
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tc.objectserver.persistence.sleepycat;
+package com.tc.objectserver.persistence.sleepycat.util;
 
 import com.sleepycat.je.Cursor;
 import com.sleepycat.je.CursorConfig;
@@ -16,15 +16,19 @@ import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.Iterator;
 import java.util.List;
 
-public class SleepycatDBUsage {
+public class DBUsage {
 
   private static final int  LEFT   = 1;
   private static final int  RIGHT  = 2;
   private static final int  CENTER = 3;
 
+  private final Writer      writer;
   private EnvironmentConfig enc;
   private Environment       env;
   private DatabaseConfig    dbc;
@@ -34,17 +38,22 @@ public class SleepycatDBUsage {
   private long              grandTotal;
   private long              totalCount;
 
-  public SleepycatDBUsage(File dir) throws Exception {
-    enc = new EnvironmentConfig();
-    enc.setReadOnly(true);
-    env = new Environment(dir, enc);
-    dbc = new DatabaseConfig();
-    dbc.setReadOnly(true);
+  public DBUsage(File dir) throws Exception {
+    this(dir, new OutputStreamWriter(System.out));
+  }
+
+  public DBUsage(File dir, Writer writer) throws Exception {
+    this.writer = writer;
+    this.enc = new EnvironmentConfig();
+    this.enc.setReadOnly(true);
+    this.env = new Environment(dir, enc);
+    this.dbc = new DatabaseConfig();
+    this.dbc.setReadOnly(true);
   }
 
   public void report() throws DatabaseException {
     List dbs = env.getDatabaseNames();
-    log("Databases in the enviroment : " + dbs);
+    log("Databases in the environment : " + dbs);
 
     log("\nReport on individual databases :\n================================\n");
     for (Iterator i = dbs.iterator(); i.hasNext();) {
@@ -100,7 +109,7 @@ public class SleepycatDBUsage {
         .valueOf(valueAvg), String.valueOf(totalValueSize), String.valueOf(totalSize));
   }
 
-  private static void log(String nameHeader, String countHeader, String keyHeader, String valueHeader, String sizeHeader) {
+  private void log(String nameHeader, String countHeader, String keyHeader, String valueHeader, String sizeHeader) {
     log(format(nameHeader, 20, LEFT) + format(countHeader, 10, RIGHT) + format(keyHeader, 30, CENTER)
         + format(valueHeader, 30, CENTER) + format(sizeHeader, 15, RIGHT));
   }
@@ -157,7 +166,7 @@ public class SleepycatDBUsage {
     try {
       File dir = new File(args[0]);
       validateDir(dir);
-      SleepycatDBUsage reporter = new SleepycatDBUsage(dir);
+      DBUsage reporter = new DBUsage(dir);
       reporter.report();
     } catch (Exception e) {
       e.printStackTrace();
@@ -170,11 +179,17 @@ public class SleepycatDBUsage {
   }
 
   private static void usage() {
-    log("Usage: SleepycatDBUsage <environment home directory>");
+    System.out.println("Usage: SleepycatDBUsage <environment home directory>");
   }
 
-  private static void log(String message) {
-    System.out.println(message);
+  private void log(String message) {
+    try {
+      writer.write(message);
+      writer.write("\n");
+      writer.flush();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
   protected static final class DBStats {

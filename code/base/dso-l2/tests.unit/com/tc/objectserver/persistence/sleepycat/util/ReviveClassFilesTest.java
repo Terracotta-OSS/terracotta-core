@@ -2,12 +2,15 @@
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tc.objectserver.persistence.sleepycat;
+package com.tc.objectserver.persistence.sleepycat.util;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 
 import com.tc.objectserver.managedobject.bytecode.PhysicalStateClassLoader;
+import com.tc.objectserver.persistence.sleepycat.AbstractDBUtilsTestBase;
+import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor;
+import com.tc.objectserver.persistence.sleepycat.util.ReviveClassFiles;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -26,7 +29,7 @@ public class ReviveClassFilesTest extends AbstractDBUtilsTestBase {
     SleepycatPersistor sleepycatPersistor = reviveClassFiles.getSleepycatPersistor();
     populateSleepycatDB(sleepycatPersistor);
 
-    reviveClassFiles.reviveClassesFiles(classOutputDir);
+    reviveClassFiles.reviveClassesFiles();
     String[] files = classOutputDir.list();
     Arrays.sort(files);
     for (int j = 1; j < files.length; j++) {

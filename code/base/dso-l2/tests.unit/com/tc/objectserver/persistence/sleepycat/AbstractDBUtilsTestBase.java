@@ -33,7 +33,7 @@ import java.util.Set;
 
 public abstract class AbstractDBUtilsTestBase extends TCTestCase {
 
-  private static final TCLogger logger  = TCLogging.getLogger(FastLoadOidLogAnalysisTest.class);
+  private static final TCLogger logger  = TCLogging.getLogger(AbstractDBUtilsTestBase.class);
   private int                   transactionSequence;
   private int                   objectIDSequence;
   private Set                   rootIDs;

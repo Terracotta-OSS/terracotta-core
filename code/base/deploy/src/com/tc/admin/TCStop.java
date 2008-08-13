@@ -7,6 +7,7 @@ package com.tc.admin;
 import org.apache.commons.cli.Options;
 import org.apache.commons.lang.ArrayUtils;
 
+import com.tc.cli.CommandLineBuilder;
 import com.tc.config.schema.NewCommonL2Config;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
@@ -15,7 +16,6 @@ import com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory;
 import com.tc.management.TerracottaManagement;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
-import com.tc.serverdbbackuprunner.RunnerUtility;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,35 +36,35 @@ public class TCStop {
 
   public static final void main(String[] args) throws Exception {
     Options options = StandardTVSConfigurationSetupManagerFactory.createOptions(true);
-    RunnerUtility runnerUtility = new RunnerUtility(TCStop.class.getName(), args);
-    runnerUtility.setOptions(options);
+    CommandLineBuilder commandLineBuilder = new CommandLineBuilder(TCStop.class.getName(), args);
+    commandLineBuilder.setOptions(options);
 
-    runnerUtility.addOption("u", "username", true, "user name", String.class, false);
-    runnerUtility.addOption("h", "help", String.class, false);
+    commandLineBuilder.addOption("u", "username", true, "user name", String.class, false);
+    commandLineBuilder.addOption("h", "help", String.class, false);
 
-    runnerUtility.parse();
-    String[] arguments = runnerUtility.getArguments();
+    commandLineBuilder.parse();
+    String[] arguments = commandLineBuilder.getArguments();
 
     if (arguments.length > 2) {
-      runnerUtility.usageAndDie();
+      commandLineBuilder.usageAndDie();
     }
 
     String host = null;
     int port = -1;
 
-    if (runnerUtility.hasOption('h')) {
-      runnerUtility.usageAndDie();
+    if (commandLineBuilder.hasOption('h')) {
+      commandLineBuilder.usageAndDie();
     }
 
     String defaultName = StandardTVSConfigurationSetupManagerFactory.DEFAULT_CONFIG_SPEC;
     File configFile = new File(System.getProperty("user.dir"), defaultName);
-    boolean configSpecified = runnerUtility.hasOption('f');
-    boolean nameSpecified = runnerUtility.hasOption('n');
-    boolean userNameSpecified = runnerUtility.hasOption('u');
+    boolean configSpecified = commandLineBuilder.hasOption('f');
+    boolean nameSpecified = commandLineBuilder.hasOption('n');
+    boolean userNameSpecified = commandLineBuilder.hasOption('u');
 
     String userName = null;
     if (userNameSpecified) {
-      userName = runnerUtility.getOptionValue('u');
+      userName = commandLineBuilder.getOptionValue('u');
     }
 
     if (configSpecified || System.getProperty("tc.config") != null || configFile.exists()) {
@@ -82,7 +82,7 @@ public class TCStop {
 
       String name = null;
       if (nameSpecified) {
-        name = runnerUtility.getOptionValue('n');
+        name = commandLineBuilder.getOptionValue('n');
       }
 
       L2TVSConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(name);
@@ -130,7 +130,7 @@ public class TCStop {
       new TCStop(host, port, userName).stop();
     } catch (SecurityException se) {
       System.err.println(se.getMessage());
-      runnerUtility.usageAndDie();
+      commandLineBuilder.usageAndDie();
     } catch (Exception e) {
       Throwable root = getRootCause(e);
       if (root instanceof ConnectException) {
@@ -160,7 +160,7 @@ public class TCStop {
   }
 
   public void stop() throws IOException {
-    JMXConnector jmxc = RunnerUtility.getJMXConnector(m_userName, m_host, m_port);
+    JMXConnector jmxc = CommandLineBuilder.getJMXConnector(m_userName, m_host, m_port);
     MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
 
     if (mbsc != null) {

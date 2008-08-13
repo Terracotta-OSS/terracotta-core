@@ -5,11 +5,11 @@
 package com.tc.gcrunner;
 
 import com.tc.admin.common.MBeanServerInvocationProxy;
+import com.tc.cli.CommandLineBuilder;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.object.ObjectManagementMonitorMBean;
-import com.tc.serverdbbackuprunner.RunnerUtility;
 
 import java.io.IOException;
 
@@ -32,28 +32,28 @@ public class GCRunner {
 
   public static void main(String[] args) throws Exception {
 
-    RunnerUtility runnerUtility = new RunnerUtility(GCRunner.class.getName(), args);
+    CommandLineBuilder comandLineBuilder = new CommandLineBuilder(GCRunner.class.getName(), args);
 
-    runnerUtility.addOption("n", "hostname", true, "Terracotta Server hostname", String.class, false, "l2-hostname");
-    runnerUtility.addOption("p", "jmxport", true, "Terracotta Server JMX port", Integer.class, false, "l2-jmx-port");
-    runnerUtility.addOption("u", "username", true, "user name", String.class, false);
-    runnerUtility.addOption("h", "help", String.class, false);
+    comandLineBuilder.addOption("n", "hostname", true, "Terracotta Server hostname", String.class, false, "l2-hostname");
+    comandLineBuilder.addOption("p", "jmxport", true, "Terracotta Server JMX port", Integer.class, false, "l2-jmx-port");
+    comandLineBuilder.addOption("u", "username", true, "user name", String.class, false);
+    comandLineBuilder.addOption("h", "help", String.class, false);
 
-    runnerUtility.parse();
-    runnerUtility.printArguments();
+    comandLineBuilder.parse();
+    comandLineBuilder.printArguments();
 
-    String[] arguments = runnerUtility.getArguments();
+    String[] arguments = comandLineBuilder.getArguments();
     if (arguments.length > 2) {
-      runnerUtility.usageAndDie();
+      comandLineBuilder.usageAndDie();
     }
 
-    if (runnerUtility.hasOption('h')) {
-      runnerUtility.usageAndDie();
+    if (comandLineBuilder.hasOption('h')) {
+      comandLineBuilder.usageAndDie();
     }
 
     String userName = null;
-    if (runnerUtility.hasOption('u')) {
-      userName = runnerUtility.getOptionValue('u');
+    if (comandLineBuilder.hasOption('u')) {
+      userName = comandLineBuilder.getOptionValue('u');
     }
 
     String host = null;
@@ -84,7 +84,7 @@ public class GCRunner {
                          + ". Are you sure there is a Terracotta server running there?");
     } catch (SecurityException se) {
       System.err.println(se.getMessage());
-      runnerUtility.usageAndDie();
+      comandLineBuilder.usageAndDie();
     }
   }
 
@@ -100,7 +100,7 @@ public class GCRunner {
 
   private void runGC() throws Exception {
     ObjectManagementMonitorMBean mbean = null;
-    final JMXConnector jmxConnector = RunnerUtility.getJMXConnector(m_userName, m_host, m_port);
+    final JMXConnector jmxConnector = CommandLineBuilder.getJMXConnector(m_userName, m_host, m_port);
     final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
     mbean = MBeanServerInvocationProxy.newMBeanProxy(mbs, L2MBeanNames.OBJECT_MANAGEMENT,
                                                      ObjectManagementMonitorMBean.class, false);

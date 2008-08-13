@@ -2,7 +2,7 @@
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tc.serverdbbackuprunner;
+package com.tc.cli;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.GnuParser;
@@ -20,13 +20,13 @@ import java.util.HashMap;
 
 import javax.management.remote.JMXConnector;
 
-public class RunnerUtility {
+public class CommandLineBuilder {
   private Options     options = new Options();
   private String      callingClassName;
   private String[]    cmdArguments;
   private CommandLine commandLine;
 
-  public RunnerUtility(String callingClassName, String[] cmdArguments) {
+  public CommandLineBuilder(String callingClassName, String[] cmdArguments) {
     this.callingClassName = callingClassName;
     this.cmdArguments = Arrays.asList(cmdArguments).toArray(new String[0]);
   }
@@ -39,7 +39,6 @@ public class RunnerUtility {
     Option option = new Option(opt, longOpt, hasArg, description);
     option.setType(type);
     option.setRequired(isRequired);
-
     options.addOption(option);
   }
 
@@ -115,8 +114,16 @@ public class RunnerUtility {
   public boolean hasOption(char arg) {
     return commandLine.hasOption(arg);
   }
+  
+  public boolean hasOption(String arg) {
+    return commandLine.hasOption(arg);
+  }
 
   public String getOptionValue(char arg) {
+    return commandLine.getOptionValue(arg);
+  }
+  
+  public String getOptionValue(String arg) {
     return commandLine.getOptionValue(arg);
   }
 

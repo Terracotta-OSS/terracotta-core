@@ -2,11 +2,15 @@
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tc.objectserver.persistence.sleepycat;
+package com.tc.objectserver.persistence.sleepycat.util;
+
+import com.tc.objectserver.persistence.sleepycat.AbstractDBUtilsTestBase;
+import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor;
+import com.tc.objectserver.persistence.sleepycat.util.DBUsage;
 
 import java.io.File;
 
-public class SleepycatDBUsageTest extends AbstractDBUtilsTestBase {
+public class DBUsageTest extends AbstractDBUtilsTestBase {
 
   public void testSleepycatDBUsageTest() throws Exception {
 
@@ -17,7 +21,7 @@ public class SleepycatDBUsageTest extends AbstractDBUtilsTestBase {
     populateSleepycatDB(sleepycatPersistor);
     sleepycatPersistor.close();
 
-    SleepycatDBUsage sleepycatDBUsage_test1 = new SleepycatDBUsage(databaseDir);
+    DBUsage sleepycatDBUsage_test1 = new DBUsage(databaseDir);
     sleepycatDBUsage_test1.report();
 
     assertTrue(sleepycatDBUsage_test1.getTotalCount() > 0);
@@ -31,7 +35,7 @@ public class SleepycatDBUsageTest extends AbstractDBUtilsTestBase {
     sleepycatPersistor.close();
 
     // db is not populated
-    SleepycatDBUsage sleepycatDBUsage_test2 = new SleepycatDBUsage(databaseDir);
+    DBUsage sleepycatDBUsage_test2 = new DBUsage(databaseDir);
     sleepycatDBUsage_test2.report();
 
     assertTrue(sleepycatDBUsage_test2.getTotalCount() > 0);

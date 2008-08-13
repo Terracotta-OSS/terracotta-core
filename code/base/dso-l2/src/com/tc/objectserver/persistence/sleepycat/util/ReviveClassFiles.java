@@ -2,7 +2,7 @@
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tc.objectserver.persistence.sleepycat;
+package com.tc.objectserver.persistence.sleepycat.util;
 
 import org.apache.commons.io.IOUtils;
 
@@ -16,12 +16,18 @@ import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListener;
 import com.tc.objectserver.managedobject.bytecode.PhysicalStateClassLoader;
 import com.tc.objectserver.persistence.api.ClassPersistor;
+import com.tc.objectserver.persistence.sleepycat.CustomSerializationAdapterFactory;
+import com.tc.objectserver.persistence.sleepycat.DBEnvironment;
+import com.tc.objectserver.persistence.sleepycat.SerializationAdapterFactory;
+import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -29,11 +35,19 @@ import java.util.Map.Entry;
 public class ReviveClassFiles {
 
   private static final TCLogger          logger = TCLogging.getLogger(ReviveClassFiles.class);
+  private final Writer                   writer;
   private final SleepycatPersistor       sleepycatPersistor;
   private final ClassPersistor           persistor;
   private final PhysicalStateClassLoader loader;
+  private final File                     destDir;
 
   public ReviveClassFiles(File sourceDir, File destDir) throws Exception {
+    this(sourceDir, destDir, new OutputStreamWriter(System.out));
+  }
+
+  public ReviveClassFiles(File sourceDir, File destDir, Writer writer) throws Exception {
+    this.destDir = destDir;
+    this.writer = writer;
     DBEnvironment env = new DBEnvironment(true, sourceDir);
     SerializationAdapterFactory serializationAdapterFactory = new CustomSerializationAdapterFactory();
     final TestManagedObjectChangeListenerProvider managedObjectChangeListenerProvider = new TestManagedObjectChangeListenerProvider();
@@ -47,19 +61,19 @@ public class ReviveClassFiles {
     return sleepycatPersistor;
   }
 
-  public void reviveClassesFiles(File destDir) {
+  public void reviveClassesFiles() {
     Map map = persistor.retrieveAllClasses();
     for (Iterator i = map.entrySet().iterator(); i.hasNext();) {
       Map.Entry e = (Entry) i.next();
       Integer clazzId = (Integer) e.getKey();
       byte clazzBytes[] = (byte[]) e.getValue();
       int cid = clazzId.intValue();
-      loadFromBytes(cid, clazzBytes, destDir);
+      loadFromBytes(cid, clazzBytes);
     }
 
   }
 
-  private void loadFromBytes(int classId, byte[] clazzBytes, File destDir) {
+  private void loadFromBytes(int classId, byte[] clazzBytes) {
     try {
       ByteArrayInputStream bai = new ByteArrayInputStream(clazzBytes);
       TCObjectInputStream tci = new TCObjectInputStream(bai);
@@ -76,15 +90,15 @@ public class ReviveClassFiles {
       IOUtils.copy(bais, fos);
       IOUtils.closeQuietly(fos);
       IOUtils.closeQuietly(bais);
-      verify(genClassName, classId, destDir);
+      verify(genClassName, classId);
 
     } catch (Exception ex) {
       throw new TCRuntimeException(ex);
     }
   }
 
-  private void verify(String genClassName, int classId, File destDir) {
-    byte[] loadedClassBytes = loadClassData(genClassName, destDir);
+  private void verify(String genClassName, int classId) {
+    byte[] loadedClassBytes = loadClassData(genClassName);
 
     Class clazz = loader.defineClassFromBytes(genClassName, classId, loadedClassBytes, 0, loadedClassBytes.length);
 
@@ -95,8 +109,8 @@ public class ReviveClassFiles {
     }
   }
 
-  private byte[] loadClassData(String name, File classDir) {
-    File classFile = new File(classDir.getPath() + File.separator + name + ".class");
+  private byte[] loadClassData(String name) {
+    File classFile = new File(destDir.getPath() + File.separator + name + ".class");
     FileInputStream fis = null;
     try {
       fis = new FileInputStream(classFile);
@@ -125,7 +139,7 @@ public class ReviveClassFiles {
       validateDir(destDir);
 
       ReviveClassFiles reviver = new ReviveClassFiles(sourceDir, destDir);
-      reviver.reviveClassesFiles(destDir);
+      reviver.reviveClassesFiles();
     } catch (Exception e) {
       e.printStackTrace();
       System.exit(2);
@@ -137,11 +151,17 @@ public class ReviveClassFiles {
   }
 
   private static void usage() {
-    log("Usage: ReviveClassFiles <environment home directory> <class files destination directory>");
+    System.out.println("Usage: ReviveClassFiles <environment home directory> <class files destination directory>");
   }
 
-  private static void log(String message) {
-    System.out.println(message);
+  private void log(String message) {
+    try {
+      writer.write(message);
+      writer.write("\n");
+      writer.flush();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
   private static class TestManagedObjectChangeListenerProvider implements ManagedObjectChangeListenerProvider {

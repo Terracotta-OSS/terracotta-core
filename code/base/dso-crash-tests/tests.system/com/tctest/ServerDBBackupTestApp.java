@@ -8,13 +8,13 @@ import org.apache.commons.io.FileUtils;
 
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 
+import com.tc.cli.CommandLineBuilder;
 import com.tc.management.beans.object.ServerDBBackupMBean;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.objectserver.control.ServerControl;
-import com.tc.serverdbbackuprunner.RunnerUtility;
 import com.tc.serverdbbackuprunner.ServerDBBackupRunner;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -283,7 +283,7 @@ public class ServerDBBackupTestApp extends AbstractTransparentApp {
   }
 
   private void setDbHome() {
-    final JMXConnector jmxConnector = RunnerUtility.getJMXConnector(null, "localhost", jmxPort);
+    final JMXConnector jmxConnector = CommandLineBuilder.getJMXConnector(null, "localhost", jmxPort);
     MBeanServerConnection mbs = ServerDBBackupRunner.getMBeanServerConnection(jmxConnector,"localhost", jmxPort);
     if (mbs == null) return;
     ServerDBBackupMBean mbean = ServerDBBackupRunner.getServerDBBackupMBean(mbs);

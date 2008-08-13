@@ -2,7 +2,7 @@
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tc.objectserver.persistence.sleepycat;
+package com.tc.objectserver.persistence.sleepycat.util;
 
 import com.sleepycat.je.Cursor;
 import com.sleepycat.je.CursorConfig;
@@ -18,27 +18,37 @@ import com.tc.util.Conversion;
 import com.tc.util.OidLongArray;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 public class FastLoadOidlogAnalysis {
 
-  private static final int   LEFT   = 1;
-  private static final int   RIGHT  = 2;
-  private static final int   CENTER = 3;
+  private static final int        LEFT             = 1;
+  private static final int        RIGHT            = 2;
+  private static final int        CENTER           = 3;
 
-  private EnvironmentConfig  enc;
-  private Environment        env;
-  private DatabaseConfig     dbc;
-  protected List oidlogsStatsList = new ArrayList();
+  private final Writer            writer;
+
+  private final EnvironmentConfig enc;
+  private final Environment       env;
+  private final DatabaseConfig    dbc;
+  protected List                  oidlogsStatsList = new ArrayList();
 
   public FastLoadOidlogAnalysis(File dir) throws Exception {
-    enc = new EnvironmentConfig();
-    enc.setReadOnly(true);
-    env = new Environment(dir, enc);
-    dbc = new DatabaseConfig();
-    dbc.setReadOnly(true);
+    this(dir, new OutputStreamWriter(System.out));
+  }
+
+  public FastLoadOidlogAnalysis(File dir, Writer writer) throws Exception {
+    this.writer = writer;
+    this.enc = new EnvironmentConfig();
+    this.enc.setReadOnly(true);
+    this.env = new Environment(dir, enc);
+    this.dbc = new DatabaseConfig();
+    this.dbc.setReadOnly(true);
   }
 
   private OidlogsStats analyzeOidLogs(String dbName, Database db) throws DatabaseException {
@@ -80,7 +90,7 @@ public class FastLoadOidlogAnalysis {
     }
   }
 
-  private static void log(String nameHeader, String countHeader, String keyHeader, String valueHeader, String sizeHeader) {
+  private void log(String nameHeader, String countHeader, String keyHeader, String valueHeader, String sizeHeader) {
     log(format(nameHeader, 20, LEFT) + format(countHeader, 10, RIGHT) + format(keyHeader, 30, CENTER)
         + format(valueHeader, 30, CENTER) + format(sizeHeader, 15, RIGHT));
   }
@@ -115,7 +125,7 @@ public class FastLoadOidlogAnalysis {
       File dir = new File(args[0]);
       validateDir(dir);
       // db usage
-      SleepycatDBUsage reporter = new SleepycatDBUsage(dir);
+      DBUsage reporter = new DBUsage(dir);
       reporter.report();
       // OidLogs analysis
       FastLoadOidlogAnalysis analysis = new FastLoadOidlogAnalysis(dir);
@@ -131,11 +141,17 @@ public class FastLoadOidlogAnalysis {
   }
 
   private static void usage() {
-    log("Usage: FastLoadOidlogAnalysis <environment home directory>");
+    System.out.println("Usage: FastLoadOidlogAnalysis <environment home directory>");
   }
 
-  private static void log(String message) {
-    System.out.println(message);
+  private void log(String message) {
+    try {
+      writer.write(message);
+      writer.write("\n");
+      writer.flush();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
   protected static final class OidlogsStats {

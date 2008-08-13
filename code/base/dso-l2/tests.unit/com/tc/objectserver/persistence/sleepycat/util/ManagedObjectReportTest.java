@@ -2,8 +2,11 @@
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tc.objectserver.persistence.sleepycat;
+package com.tc.objectserver.persistence.sleepycat.util;
 
+import com.tc.objectserver.persistence.sleepycat.AbstractDBUtilsTestBase;
+import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor;
+import com.tc.objectserver.persistence.sleepycat.util.ManagedObjectReport;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.concurrent.ThreadUtil;

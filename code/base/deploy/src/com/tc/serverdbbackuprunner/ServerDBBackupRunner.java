@@ -6,6 +6,7 @@
 package com.tc.serverdbbackuprunner;
 
 import com.tc.admin.common.MBeanServerInvocationProxy;
+import com.tc.cli.CommandLineBuilder;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.object.ServerDBBackupMBean;
 
@@ -30,34 +31,34 @@ public class ServerDBBackupRunner {
   private JMXConnector       jmxConnector;
 
   public static void main(String[] args) {
-    RunnerUtility runnerUtility = new RunnerUtility(ServerDBBackupRunner.class.getName(), args);
+    CommandLineBuilder commandLineBuilder = new CommandLineBuilder(ServerDBBackupRunner.class.getName(), args);
 
-    runnerUtility.addOption("n", "hostname", true, "Terracotta Server hostname", String.class, false, "hostname");
-    runnerUtility.addOption("p", "jmxport", true, "Terracotta Server JMX port", Integer.class, false, "jmx-port");
-    runnerUtility.addOption("u", "username", true, "User name", String.class, false);
-    runnerUtility.addOption("d", "directory", true, "Directory to back up to", String.class, false);
-    runnerUtility.addOption("h", "help", String.class, false);
+    commandLineBuilder.addOption("n", "hostname", true, "Terracotta Server hostname", String.class, false, "hostname");
+    commandLineBuilder.addOption("p", "jmxport", true, "Terracotta Server JMX port", Integer.class, false, "jmx-port");
+    commandLineBuilder.addOption("u", "username", true, "User name", String.class, false);
+    commandLineBuilder.addOption("d", "directory", true, "Directory to back up to", String.class, false);
+    commandLineBuilder.addOption("h", "help", String.class, false);
 
-    runnerUtility.parse();
+    commandLineBuilder.parse();
 
-    String[] arguments = runnerUtility.getArguments();
+    String[] arguments = commandLineBuilder.getArguments();
     String host = null;
     int port = -1;
 
     if (arguments.length > 2) {
-      runnerUtility.usageAndDie();
+      commandLineBuilder.usageAndDie();
     }
-    if (runnerUtility.hasOption('h')) {
-      runnerUtility.usageAndDie();
+    if (commandLineBuilder.hasOption('h')) {
+      commandLineBuilder.usageAndDie();
     }
 
     String userName = null;
-    if (runnerUtility.hasOption('u')) {
-      userName = runnerUtility.getOptionValue('u');
+    if (commandLineBuilder.hasOption('u')) {
+      userName = commandLineBuilder.getOptionValue('u');
     }
     String path = null;
-    if (runnerUtility.hasOption('d')) {
-      path = runnerUtility.getOptionValue('d');
+    if (commandLineBuilder.hasOption('d')) {
+      path = commandLineBuilder.getOptionValue('d');
     }
 
     if (arguments.length == 0) {
@@ -83,7 +84,7 @@ public class ServerDBBackupRunner {
       serverDBBackupRunner.runBackup(path);
     } catch (Exception se) {
       System.err.println(se.getMessage());
-      runnerUtility.usageAndDie();
+      commandLineBuilder.usageAndDie();
     }
 
     if (path == null) path = serverDBBackupRunner.getDefaultBackupPath();
@@ -107,7 +108,7 @@ public class ServerDBBackupRunner {
 
   public void runBackup(String path, NotificationListener listener, NotificationFilter filter, Object obj,
                         boolean closeJMXAndListener) throws IOException {
-    jmxConnector = RunnerUtility.getJMXConnector(m_userName, m_host, m_port);
+    jmxConnector = CommandLineBuilder.getJMXConnector(m_userName, m_host, m_port);
     MBeanServerConnection mbs = getMBeanServerConnection(jmxConnector, m_host, m_port);
     if (mbs == null) throw new RuntimeException("");
     ServerDBBackupMBean mbean = getServerDBBackupMBean(mbs);
@@ -174,7 +175,7 @@ public class ServerDBBackupRunner {
   }
 
   public String getDefaultBackupPath() {
-    final JMXConnector jmxConn = RunnerUtility.getJMXConnector(m_userName, m_host, m_port);
+    final JMXConnector jmxConn = CommandLineBuilder.getJMXConnector(m_userName, m_host, m_port);
     MBeanServerConnection mbs = getMBeanServerConnection(jmxConn, m_host, m_port);
     if (mbs == null) return null;
     ServerDBBackupMBean mbean = getServerDBBackupMBean(mbs);
