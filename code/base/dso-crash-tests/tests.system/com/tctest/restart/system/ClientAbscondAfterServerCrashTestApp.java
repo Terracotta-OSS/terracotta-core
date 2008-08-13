@@ -137,11 +137,11 @@ public class ClientAbscondAfterServerCrashTestApp extends AbstractTransparentApp
     DSOMBean mbean = (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, L2MBeanNames.DSO, DSOMBean.class,
                                                                               true);
     int actualClientCount = mbean.getClients().length;
-    if (actualClientCount != clientCount) { throw new AssertionError(
-                                                                     "Incorrect number of clients connected to the server: expected=["
-                                                                         + clientCount + "] but was actual=["
-                                                                         + actualClientCount + "]."); }
-
+    while (actualClientCount != clientCount) {
+      System.out.println("XXX Expecting " + clientCount + " clients. Present connected clients " + actualClientCount
+                         + ". sleeping ...");
+      ThreadUtil.reallySleep(5000);
+    }
     System.out.println("XXX " + clientCount + " clients are connected to the server.");
     jmxConnector.close();
   }
