@@ -4,24 +4,14 @@
  */
 package com.tc.objectserver.persistence.sleepycat.util;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
-import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
-import com.tc.objectserver.managedobject.ManagedObjectChangeListenerProvider;
-import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
-import com.tc.objectserver.managedobject.NullManagedObjectChangeListener;
-import com.tc.objectserver.persistence.sleepycat.CustomSerializationAdapterFactory;
-import com.tc.objectserver.persistence.sleepycat.DBEnvironment;
-import com.tc.objectserver.persistence.sleepycat.SerializationAdapterFactory;
 import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor;
 import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Counter;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -32,14 +22,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-public class ManagedObjectReport {
-
-  private static final TCLogger logger                = TCLogging.getLogger(ManagedObjectReport.class);
-
-  private final Writer          writer;
-
-  private SleepycatPersistor    persistor;
-
+public class ManagedObjectReport extends BaseUtility {
+ 
   protected Map                 classMap              = new HashMap();
 
   protected Set                 nullObjectIDSet       = new HashSet();
@@ -55,20 +39,12 @@ public class ManagedObjectReport {
   }
 
   public ManagedObjectReport(File dir, Writer writer) throws Exception {
-    this.writer = writer;
-    DBEnvironment env = new DBEnvironment(true, dir);
-    SerializationAdapterFactory serializationAdapterFactory = new CustomSerializationAdapterFactory();
-    final TestManagedObjectChangeListenerProvider managedObjectChangeListenerProvider = new TestManagedObjectChangeListenerProvider();
-    persistor = new SleepycatPersistor(logger, env, serializationAdapterFactory);
-    ManagedObjectStateFactory.createInstance(managedObjectChangeListenerProvider, persistor);
-  }
-
-  protected SleepycatPersistor getSleepycatPersistor() {
-    return persistor;
+    super(writer, new File[]{dir}); 
   }
 
   public void report() {
 
+    SleepycatPersistor persistor = getPersistor(1);
     Set objectIDSet = persistor.getManagedObjectPersistor().getAllObjectIDs();
     for (Iterator iter = objectIDSet.iterator(); iter.hasNext();) {
       ObjectID objectID = (ObjectID) iter.next();
@@ -193,24 +169,6 @@ public class ManagedObjectReport {
 
   private static void usage() {
     System.out.println("Usage: ManagedObjectReport <environment home directory>");
-  }
-
-  private void log(String message) {
-    try {
-      writer.write(message);
-      writer.write("\n");
-      writer.flush();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-  }
-
-  private static class TestManagedObjectChangeListenerProvider implements ManagedObjectChangeListenerProvider {
-
-    public ManagedObjectChangeListener getListener() {
-      return new NullManagedObjectChangeListener();
-
-    }
   }
 
 }

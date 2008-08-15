@@ -4,7 +4,7 @@
  */
 package com.tc.objectserver.persistence.sleepycat.util;
 
-import com.tc.logging.TCLogging;
+
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
@@ -16,8 +16,6 @@ import com.tc.objectserver.persistence.api.ClientStatePersistor;
 import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
 import com.tc.objectserver.persistence.api.TransactionPersistor;
 import com.tc.objectserver.persistence.impl.StringIndexImpl;
-import com.tc.objectserver.persistence.sleepycat.CustomSerializationAdapterFactory;
-import com.tc.objectserver.persistence.sleepycat.DBEnvironment;
 import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor;
 import com.tc.objectserver.persistence.sleepycat.TCDatabaseException;
 import com.tc.util.Assert;
@@ -35,16 +33,11 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-public class DBDiff {
+public class DBDiff extends BaseUtility {
 
   private static final String             VERSION_STRING       = "SleepycatTCDBDiff [ Ver 0.2]";
 
-  private final Writer                    writer;
-  private final SleepycatPersistor        sdb1;
-  private final SleepycatPersistor        sdb2;
-  private final File                      d1;
-  private final File                      d2;
-  private final boolean                   moDiff;
+    private final boolean                   moDiff;
   private final ManagedObjectStateFactory mosf1;
   private final ManagedObjectStateFactory mosf2;
   protected boolean                       diffStringIndexer    = false;
@@ -53,20 +46,14 @@ public class DBDiff {
   protected boolean                       diffClientStates     = false;
   protected boolean                       diffManagedObjects   = false;
 
-  public DBDiff(File d1, File d2, boolean moDiff) throws TCDatabaseException, IOException {
+  public DBDiff(File d1, File d2, boolean moDiff) throws TCDatabaseException, IOException ,Exception {
     this(d1, d2, moDiff, new OutputStreamWriter(System.out));
   }
 
-  public DBDiff(File d1, File d2, boolean moDiff, Writer writer) throws TCDatabaseException, IOException {
-    this.writer = writer;
-    this.d1 = d1;
-    this.d2 = d2;
+  public DBDiff(File d1, File d2, boolean moDiff, Writer writer) throws TCDatabaseException, IOException ,Exception {
+    super(writer, new File[]{d1, d2} );
     this.moDiff = moDiff;
-    this.sdb1 = new SleepycatPersistor(TCLogging.getLogger(DBDiff.class), new DBEnvironment(true, d1),
-                                       new CustomSerializationAdapterFactory());
-    this.sdb2 = new SleepycatPersistor(TCLogging.getLogger(DBDiff.class), new DBEnvironment(true, d2),
-                                       new CustomSerializationAdapterFactory());
-
+  
     // Since we dont create any new MOState Objects in this program, we use 1 of the 2 persistor.
     ManagedObjectChangeListenerProviderImpl moclp = new ManagedObjectChangeListenerProviderImpl();
     moclp.setListener(new ManagedObjectChangeListener() {
@@ -77,13 +64,17 @@ public class DBDiff {
 
     });
     ManagedObjectStateFactory.disableSingleton(true);
-    mosf1 = ManagedObjectStateFactory.createInstance(moclp, sdb1);
-    mosf2 = ManagedObjectStateFactory.createInstance(moclp, sdb2);
+    mosf1 = ManagedObjectStateFactory.createInstance(moclp, getPersistor(1));
+    mosf2 = ManagedObjectStateFactory.createInstance(moclp, getPersistor(2));
 
   }
 
   public void diff() {
+    File d1 = getDatabaseDir(1);
+    File d2 = getDatabaseDir(2);
     log("Diffing [1] " + d1 + " and [2] " + d2);
+    SleepycatPersistor sdb1 = getPersistor(1);
+    SleepycatPersistor sdb2= getPersistor(2);
     diffStringIndexer((StringIndexImpl) sdb1.getStringIndex(), (StringIndexImpl) sdb2.getStringIndex());
     diffManagedObjects(sdb1.getManagedObjectPersistor(), sdb2.getManagedObjectPersistor());
     diffClientStates(sdb1.getClientStatePersistor(), sdb2.getClientStatePersistor());
@@ -161,16 +152,6 @@ public class DBDiff {
     oids2.removeAll(common);
     if (!oids2.isEmpty()) {
       log("****** [2] contains " + oids2 + " not in [1]");
-    }
-  }
-
-  private void log(String message) {
-    try {
-      writer.write(message);
-      writer.write("\n");
-      writer.flush();
-    } catch (IOException e) {
-      e.printStackTrace();
     }
   }
 

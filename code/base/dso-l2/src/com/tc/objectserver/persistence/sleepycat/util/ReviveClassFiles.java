@@ -8,18 +8,8 @@ import org.apache.commons.io.IOUtils;
 
 import com.tc.exception.TCRuntimeException;
 import com.tc.io.serializer.TCObjectInputStream;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
-import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
-import com.tc.objectserver.managedobject.ManagedObjectChangeListenerProvider;
-import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
-import com.tc.objectserver.managedobject.NullManagedObjectChangeListener;
 import com.tc.objectserver.managedobject.bytecode.PhysicalStateClassLoader;
 import com.tc.objectserver.persistence.api.ClassPersistor;
-import com.tc.objectserver.persistence.sleepycat.CustomSerializationAdapterFactory;
-import com.tc.objectserver.persistence.sleepycat.DBEnvironment;
-import com.tc.objectserver.persistence.sleepycat.SerializationAdapterFactory;
-import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -32,11 +22,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class ReviveClassFiles {
+public class ReviveClassFiles extends BaseUtility {
 
-  private static final TCLogger          logger = TCLogging.getLogger(ReviveClassFiles.class);
-  private final Writer                   writer;
-  private final SleepycatPersistor       sleepycatPersistor;
   private final ClassPersistor           persistor;
   private final PhysicalStateClassLoader loader;
   private final File                     destDir;
@@ -46,19 +33,10 @@ public class ReviveClassFiles {
   }
 
   public ReviveClassFiles(File sourceDir, File destDir, Writer writer) throws Exception {
+    super(writer, new File[]{sourceDir});
     this.destDir = destDir;
-    this.writer = writer;
-    DBEnvironment env = new DBEnvironment(true, sourceDir);
-    SerializationAdapterFactory serializationAdapterFactory = new CustomSerializationAdapterFactory();
-    final TestManagedObjectChangeListenerProvider managedObjectChangeListenerProvider = new TestManagedObjectChangeListenerProvider();
-    sleepycatPersistor = new SleepycatPersistor(logger, env, serializationAdapterFactory);
-    ManagedObjectStateFactory.createInstance(managedObjectChangeListenerProvider, sleepycatPersistor);
-    persistor = sleepycatPersistor.getClassPersistor();
+    persistor = getPersistor(1).getClassPersistor();
     loader = new PhysicalStateClassLoader();
-  }
-
-  protected SleepycatPersistor getSleepycatPersistor() {
-    return sleepycatPersistor;
   }
 
   public void reviveClassesFiles() {
@@ -152,24 +130,6 @@ public class ReviveClassFiles {
 
   private static void usage() {
     System.out.println("Usage: ReviveClassFiles <environment home directory> <class files destination directory>");
-  }
-
-  private void log(String message) {
-    try {
-      writer.write(message);
-      writer.write("\n");
-      writer.flush();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-  }
-
-  private static class TestManagedObjectChangeListenerProvider implements ManagedObjectChangeListenerProvider {
-
-    public ManagedObjectChangeListener getListener() {
-      return new NullManagedObjectChangeListener();
-
-    }
   }
 
 }

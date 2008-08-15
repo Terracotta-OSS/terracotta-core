@@ -21,7 +21,7 @@ public class ManagedObjectReportTest extends AbstractDBUtilsTestBase {
     databaseDir.mkdirs();
 
     ManagedObjectReport managedObjectReport = new ManagedObjectReport(databaseDir);
-    SleepycatPersistor sleepycatPersistor = managedObjectReport.getSleepycatPersistor();
+    SleepycatPersistor sleepycatPersistor = managedObjectReport.getPersistor(1);
 
     populateSleepycatDB(sleepycatPersistor);
     // wait for checkpoint to flush log to oid store

@@ -26,7 +26,7 @@ public class ReviveClassFilesTest extends AbstractDBUtilsTestBase {
     classOutputDir.mkdirs();
 
     ReviveClassFiles reviveClassFiles = new ReviveClassFiles(databaseDir, classOutputDir);
-    SleepycatPersistor sleepycatPersistor = reviveClassFiles.getSleepycatPersistor();
+    SleepycatPersistor sleepycatPersistor = reviveClassFiles.getPersistor(1);
     populateSleepycatDB(sleepycatPersistor);
 
     reviveClassFiles.reviveClassesFiles();

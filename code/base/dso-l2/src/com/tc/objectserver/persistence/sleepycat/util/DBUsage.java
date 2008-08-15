@@ -16,19 +16,17 @@ import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Iterator;
 import java.util.List;
 
-public class DBUsage {
+public class DBUsage extends BaseUtility {
 
   private static final int  LEFT   = 1;
   private static final int  RIGHT  = 2;
   private static final int  CENTER = 3;
 
-  private final Writer      writer;
   private EnvironmentConfig enc;
   private Environment       env;
   private DatabaseConfig    dbc;
@@ -43,7 +41,7 @@ public class DBUsage {
   }
 
   public DBUsage(File dir, Writer writer) throws Exception {
-    this.writer = writer;
+    super(writer, new File[]{});
     this.enc = new EnvironmentConfig();
     this.enc.setReadOnly(true);
     this.env = new Environment(dir, enc);
@@ -180,16 +178,6 @@ public class DBUsage {
 
   private static void usage() {
     System.out.println("Usage: SleepycatDBUsage <environment home directory>");
-  }
-
-  private void log(String message) {
-    try {
-      writer.write(message);
-      writer.write("\n");
-      writer.flush();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
   }
 
   protected static final class DBStats {

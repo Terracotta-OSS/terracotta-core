@@ -18,21 +18,19 @@ import com.tc.util.Conversion;
 import com.tc.util.OidLongArray;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class FastLoadOidlogAnalysis {
+public class FastLoadOidlogAnalysis extends BaseUtility{
 
   private static final int        LEFT             = 1;
   private static final int        RIGHT            = 2;
   private static final int        CENTER           = 3;
 
-  private final Writer            writer;
-
+ 
   private final EnvironmentConfig enc;
   private final Environment       env;
   private final DatabaseConfig    dbc;
@@ -43,7 +41,7 @@ public class FastLoadOidlogAnalysis {
   }
 
   public FastLoadOidlogAnalysis(File dir, Writer writer) throws Exception {
-    this.writer = writer;
+    super(writer, new File[]{});
     this.enc = new EnvironmentConfig();
     this.enc.setReadOnly(true);
     this.env = new Environment(dir, enc);
@@ -142,16 +140,6 @@ public class FastLoadOidlogAnalysis {
 
   private static void usage() {
     System.out.println("Usage: FastLoadOidlogAnalysis <environment home directory>");
-  }
-
-  private void log(String message) {
-    try {
-      writer.write(message);
-      writer.write("\n");
-      writer.flush();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
   }
 
   protected static final class OidlogsStats {
