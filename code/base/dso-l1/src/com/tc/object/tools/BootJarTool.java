@@ -2459,54 +2459,54 @@ public class BootJarTool {
   private static final String MAKE_OR_SCAN_MODE = "<" + MAKE_MODE + "|" + SCAN_MODE + ">";
 
   public final static void main(String[] args) {
+    File installDir = getInstallationDir();
+    String outputFileOptionMsg = "path to boot JAR file"
+                                 + (installDir != null ? "\ndefault: [TC_INSTALL_DIR]/lib/dso-boot" : "");
+    Option targetFileOption = new Option(TARGET_FILE_OPTION, true, outputFileOptionMsg);
+    targetFileOption.setArgName("file");
+    targetFileOption.setLongOpt("bootjar-file");
+    targetFileOption.setArgs(1);
+    targetFileOption.setRequired(installDir == null);
+    targetFileOption.setType(String.class);
+
+    Option configFileOption = new Option("f", "config", true, "configuration file (optional)");
+    configFileOption.setArgName("file-or-URL");
+    configFileOption.setType(String.class);
+    configFileOption.setRequired(false);
+
+    Option overwriteOption = new Option("w", "overwrite", false, "always make the boot JAR file");
+    overwriteOption.setType(String.class);
+    overwriteOption.setRequired(false);
+
+    Option verboseOption = new Option("v", "verbose");
+    verboseOption.setType(String.class);
+    verboseOption.setRequired(false);
+
+    Option helpOption = new Option("h", "help");
+    helpOption.setType(String.class);
+    helpOption.setRequired(false);
+
+    Options options = new Options();
+    options.addOption(targetFileOption);
+    options.addOption(configFileOption);
+    options.addOption(overwriteOption);
+    options.addOption(verboseOption);
+    options.addOption(helpOption);
+
+    String mode = MAKE_MODE;
+    CommandLine cmdLine = null;
     try {
-      File installDir = getInstallationDir();
-      String outputFileOptionMsg = "path to boot JAR file"
-                                   + (installDir != null ? "\ndefault: [TC_INSTALL_DIR]/lib/dso-boot" : "");
-      Option targetFileOption = new Option(TARGET_FILE_OPTION, true, outputFileOptionMsg);
-      targetFileOption.setArgName("file");
-      targetFileOption.setLongOpt("bootjar-file");
-      targetFileOption.setArgs(1);
-      targetFileOption.setRequired(installDir == null);
-      targetFileOption.setType(String.class);
+      cmdLine = new PosixParser().parse(options, args);
+      mode = (cmdLine.getArgList().size() > 0) ? cmdLine.getArgList().get(0).toString().toLowerCase() : mode;
+    } catch (ParseException pe) {
+      showHelpAndExit(options, 1);
+    }
 
-      Option configFileOption = new Option("f", "config", true, "configuration file (optional)");
-      configFileOption.setArgName("file-or-URL");
-      configFileOption.setType(String.class);
-      configFileOption.setRequired(false);
+    if (cmdLine.hasOption("h") || (!mode.equals(MAKE_MODE) && !mode.equals(SCAN_MODE))) {
+      showHelpAndExit(options, 1);
+    }
 
-      Option overwriteOption = new Option("w", "overwrite", false, "always make the boot JAR file");
-      overwriteOption.setType(String.class);
-      overwriteOption.setRequired(false);
-
-      Option verboseOption = new Option("v", "verbose");
-      verboseOption.setType(String.class);
-      verboseOption.setRequired(false);
-
-      Option helpOption = new Option("h", "help");
-      helpOption.setType(String.class);
-      helpOption.setRequired(false);
-
-      Options options = new Options();
-      options.addOption(targetFileOption);
-      options.addOption(configFileOption);
-      options.addOption(overwriteOption);
-      options.addOption(verboseOption);
-      options.addOption(helpOption);
-
-      String mode = MAKE_MODE;
-      CommandLine cmdLine = null;
-      try {
-        cmdLine = new PosixParser().parse(options, args);
-        mode = (cmdLine.getArgList().size() > 0) ? cmdLine.getArgList().get(0).toString().toLowerCase() : mode;
-      } catch (ParseException pe) {
-        showHelpAndExit(options, 1);
-      }
-
-      if (cmdLine.hasOption("h") || (!mode.equals(MAKE_MODE) && !mode.equals(SCAN_MODE))) {
-        showHelpAndExit(options, 1);
-      }
-
+    try {
       if (!cmdLine.hasOption("f")
           && System.getProperty(TVSConfigurationSetupManagerFactory.CONFIG_FILE_PROPERTY_NAME) == null) {
         String cwd = System.getProperty("user.dir");
@@ -2528,7 +2528,6 @@ public class BootJarTool {
       L1TVSConfigurationSetupManager config = factory.createL1TVSConfigurationSetupManager(logger);
 
       File targetFile;
-
       if (cmdLine.hasOption(TARGET_FILE_OPTION)) {
         targetFile = new File(cmdLine.getOptionValue(TARGET_FILE_OPTION)).getAbsoluteFile();
       } else {

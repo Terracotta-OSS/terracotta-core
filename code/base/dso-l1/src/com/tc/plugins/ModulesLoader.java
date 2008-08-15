@@ -105,18 +105,9 @@ public class ModulesLoader {
         if (e instanceof BundleExceptionSummary) {
           String msg = ((BundleExceptionSummary) e).getSummary();
           e = new BundleException(msg);
+          logger.fatal(msg);
         }
         throw e;
-        // } catch (BundleException e) {
-        // String msg = (e instanceof BundleExceptionSummary) ? ((BundleExceptionSummary) e).getSummary() :
-        // e.getMessage();
-        // consoleLogger.fatal(msg);
-        // logger.fatal(msg, e);
-        // System.exit(1);
-        // } catch (Throwable t) {
-        // logger.error(t);
-        // consoleLogger.error(t); // at least log this exception, it's very frustrating if it is completely swallowed
-        // System.exit(9);
       } finally {
         if (forBootJar) {
           shutdown(osgiRuntime);
@@ -170,7 +161,6 @@ public class ModulesLoader {
         bundleURLs[i] = locations[i].toURL();
       } catch (MalformedURLException e) {
         throw new BundleException("Malformed file URL for bundle: " + locations[i].getAbsolutePath(), e);
-        // throw new RuntimeException("Malformed file URL for bundle: " + locations[i].getAbsolutePath(), e);
       }
     }
 
@@ -233,8 +223,8 @@ public class ModulesLoader {
       m.setAccessible(true);
       ClassLoader classLoader = (ClassLoader) m.invoke(bundle, new Object[0]);
       return (NamedClassLoader) classLoader;
-    } catch (Throwable t) {
-      throw new BundleException("Unable to get classloader for bundle.", t);
+    } catch (Exception e) {
+      throw new BundleException("Unable to get classloader for bundle.", e);
     }
   }
 

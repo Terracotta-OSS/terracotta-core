@@ -631,15 +631,11 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       BootJar bootJar = null;
       try {
         bootJar = BootJar.getDefaultBootJarForReading();
-
         Set allPreInstrumentedClasses = bootJar.getAllPreInstrumentedClasses();
+        // Create specs for any instrumented classes in the boot jar (such thay they can be shared)
         for (Iterator i = allPreInstrumentedClasses.iterator(); i.hasNext();) {
-          // Create specs for any instrumented classes in the boot jar (such thay they can be shared)
           getOrCreateSpec((String) i.next());
         }
-      } catch (Exception e) {
-        logger.error(e);
-        throw e;
       } finally {
         BootJar.closeQuietly(bootJar);
       }
@@ -965,7 +961,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     try {
       classSpec = ClassUtils.parseFullyQualifiedFieldName(rootFieldName);
     } catch (ParseException e) {
-      throw Assert.failure("Unparseable root fieldName " + rootFieldName);
+      throw Assert.failure("Unable to parse root fieldName " + rootFieldName);
     }
     addRoot(new Root(classSpec.getFullyQualifiedClassName(), classSpec.getShortFieldName(), rootName), false);
   }
