@@ -4,10 +4,6 @@
  */
 package com.tc.bundles;
 
-import org.knopflerfish.framework.VersionRange;
-
-import com.tc.bundles.Version;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,7 +42,7 @@ final class BundleSpecImpl extends BundleSpec {
       attributes.put(pairs[0], pairs[1].replaceAll("\\\"", ""));
     }
   }
-  
+
   public String getSymbolicName() {
     return this.symbolicName;
   }
@@ -80,36 +76,39 @@ final class BundleSpecImpl extends BundleSpec {
   public String getVersion() {
     return isVersionSpecified() ? getVersionSpec() : "(any-version)";
   }
-  
+
   public boolean isOptional() {
     final String resolution = (String) attributes.get(PROP_KEY_RESOLUTION);
     return (resolution != null) && resolution.equals("optional");
   }
 
   public boolean isVersionSpecified() {
-    return getVersionSpec().length() > 0; 
+    return getVersionSpec().length() > 0;
   }
-  
+
   public boolean isVersionSpecifiedAbsolute() {
     return getVersionSpec().matches(IConstants.OSGI_VERSION_PATTERN.pattern());
   }
-  
+
   private String getVersionSpec() {
     final String verspec = (String) attributes.get(PROP_KEY_BUNDLE_VERSION);
     return (verspec == null) ? "" : verspec;
   }
 
-  public boolean isCompatible(final String symbolicNameArg, final String version) {
+  public boolean isCompatible(final String symName, final String version) {
     // symbolic-names must match
-    if (!BundleSpec.isMatchingSymbolicName(this.symbolicName, symbolicNameArg)) return false;
+    if (!BundleSpec.isMatchingSymbolicName(symbolicName, symName)) return false;
 
     // if symbolic-names are matching, then check for version compatibility -
     // and if no specific bundle-version required/specified so it must be compatible with the version
     if (!isVersionSpecified()) return true;
 
-    // otherwise check if the version is within range of the specified required version 
-    final Version target = new Version(version);
-    VersionRange range = new VersionRange(getVersionSpec());
-    return range.withinRange(target);
+    // // otherwise check if the version is within range of the specified required version
+    // final Version target = new Version(version);
+    // VersionRange range = new VersionRange(getVersionSpec());
+    // return range.withinRange(target);
+
+    // check for equality - we don't support version ranges yet
+    return getVersion().equals(version);
   }
 }
