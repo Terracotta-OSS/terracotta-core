@@ -29,8 +29,8 @@ import java.util.Dictionary;
 import java.util.regex.Pattern;
 
 /**
- * Embedded KnopflerFish OSGi implementation, see the <a href="http://www.knopflerfish.org/">Knopflerfish documentation</a>
- * for more details.
+ * Embedded KnopflerFish OSGi implementation, see the <a href="http://www.knopflerfish.org/">Knopflerfish
+ * documentation</a> for more details.
  */
 final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
 
@@ -75,6 +75,9 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
   private void startBundle(final long id, final EmbeddedOSGiEventHandler handler) throws BundleException {
     Assert.assertNotNull(handler);
     final Bundle bundle = framework.bundles.getBundle(id);
+
+    System.err.println("[xxx] " + bundle.getSymbolicName());
+
     final boolean isStarting = ((bundle.getState() & Bundle.STARTING) == Bundle.STARTING);
     final boolean isActive = ((bundle.getState() & Bundle.ACTIVE) == Bundle.ACTIVE);
 
@@ -192,7 +195,8 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
 
       versionCheck(bundle);
     } catch (URISyntaxException e) {
-      throw new RuntimeException(e);
+      // throw new RuntimeException(e);
+      exception(Message.ERROR_BUNDLE_INACCESSIBLE, new Object[] { location.toString() }, e);
     } catch (IOException e) {
       exception(Message.ERROR_BUNDLE_INACCESSIBLE, new Object[] { location.toString() }, e);
     }

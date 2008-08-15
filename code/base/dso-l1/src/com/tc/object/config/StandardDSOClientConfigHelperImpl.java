@@ -552,7 +552,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     markAllSpecsPreInstrumented();
   }
 
-  private void doAutoconfig(boolean interrogateBootJar) {
+  private void doAutoconfig(boolean interrogateBootJar) throws Exception {
     TransparencyClassSpec spec;
 
     addJDK15InstrumentedSpec();
@@ -637,22 +637,11 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
           // Create specs for any instrumented classes in the boot jar (such thay they can be shared)
           getOrCreateSpec((String) i.next());
         }
-      } catch (Throwable e) {
+      } catch (Exception e) {
         logger.error(e);
-
-        // don't needlessly wrap errors and runtimes
-        if (e instanceof RuntimeException) { throw (RuntimeException) e; }
-        if (e instanceof Error) { throw (Error) e; }
-
-        throw new RuntimeException(e);
+        throw e;
       } finally {
-        try {
-          if (bootJar != null) {
-            bootJar.close();
-          }
-        } catch (Exception e) {
-          logger.error(e);
-        }
+        BootJar.closeQuietly(bootJar);
       }
     }
   }
@@ -976,7 +965,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     try {
       classSpec = ClassUtils.parseFullyQualifiedFieldName(rootFieldName);
     } catch (ParseException e) {
-      throw new RuntimeException(e);
+      throw Assert.failure("Unparseable root fieldName " + rootFieldName);
     }
     addRoot(new Root(classSpec.getFullyQualifiedClassName(), classSpec.getShortFieldName(), rootName), false);
   }

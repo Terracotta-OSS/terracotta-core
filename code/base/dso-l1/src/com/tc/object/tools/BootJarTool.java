@@ -222,7 +222,8 @@ public class BootJarTool {
 
   private static final TCLogger       consoleLogger                    = CustomerLogging.getConsoleLogger();
 
-  public BootJarTool(DSOClientConfigHelper configuration, File outputFile, ClassLoader systemProvider, boolean quiet) {
+  public BootJarTool(DSOClientConfigHelper configuration, File outputFile, ClassLoader systemProvider, boolean quiet)
+      throws Exception {
     this.configHelper = configuration;
     this.outputFile = outputFile;
     this.systemLoader = systemProvider;
@@ -230,11 +231,10 @@ public class BootJarTool {
     this.bootJarHandler = new BootJarHandler(WRITE_OUT_TEMP_FILE, this.outputFile);
     this.quiet = quiet;
     this.portability = new PortabilityImpl(this.configHelper);
-
     loadModules();
   }
 
-  private void loadModules() {
+  private void loadModules() throws Exception {
     // remove the user defined specs already load from config while modules are running so that specs created take
     // precedence from user defined specs
     List userSpecs = new ArrayList();
@@ -259,7 +259,7 @@ public class BootJarTool {
     }
   }
 
-  public BootJarTool(DSOClientConfigHelper configuration, File outputFile, ClassLoader systemProvider) {
+  public BootJarTool(DSOClientConfigHelper configuration, File outputFile, ClassLoader systemProvider) throws Exception {
     this(configuration, outputFile, systemProvider, false);
   }
 
@@ -2458,106 +2458,110 @@ public class BootJarTool {
   private static final String SCAN_MODE         = "scan";
   private static final String MAKE_OR_SCAN_MODE = "<" + MAKE_MODE + "|" + SCAN_MODE + ">";
 
-  public final static void main(String[] args) throws Exception {
-    File installDir = getInstallationDir();
-    String outputFileOptionMsg = "path to boot JAR file"
-                                 + (installDir != null ? "\ndefault: [TC_INSTALL_DIR]/lib/dso-boot" : "");
-    Option targetFileOption = new Option(TARGET_FILE_OPTION, true, outputFileOptionMsg);
-    targetFileOption.setArgName("file");
-    targetFileOption.setLongOpt("bootjar-file");
-    targetFileOption.setArgs(1);
-    targetFileOption.setRequired(installDir == null);
-    targetFileOption.setType(String.class);
-
-    Option configFileOption = new Option("f", "config", true, "configuration file (optional)");
-    configFileOption.setArgName("file-or-URL");
-    configFileOption.setType(String.class);
-    configFileOption.setRequired(false);
-
-    Option overwriteOption = new Option("w", "overwrite", false, "always make the boot JAR file");
-    overwriteOption.setType(String.class);
-    overwriteOption.setRequired(false);
-
-    Option verboseOption = new Option("v", "verbose");
-    verboseOption.setType(String.class);
-    verboseOption.setRequired(false);
-
-    Option helpOption = new Option("h", "help");
-    helpOption.setType(String.class);
-    helpOption.setRequired(false);
-
-    Options options = new Options();
-    options.addOption(targetFileOption);
-    options.addOption(configFileOption);
-    options.addOption(overwriteOption);
-    options.addOption(verboseOption);
-    options.addOption(helpOption);
-
-    String mode = MAKE_MODE;
-    CommandLine cmdLine = null;
+  public final static void main(String[] args) {
     try {
-      cmdLine = new PosixParser().parse(options, args);
-      mode = (cmdLine.getArgList().size() > 0) ? cmdLine.getArgList().get(0).toString().toLowerCase() : mode;
-    } catch (ParseException pe) {
-      showHelpAndExit(options, 1);
-    }
+      File installDir = getInstallationDir();
+      String outputFileOptionMsg = "path to boot JAR file"
+                                   + (installDir != null ? "\ndefault: [TC_INSTALL_DIR]/lib/dso-boot" : "");
+      Option targetFileOption = new Option(TARGET_FILE_OPTION, true, outputFileOptionMsg);
+      targetFileOption.setArgName("file");
+      targetFileOption.setLongOpt("bootjar-file");
+      targetFileOption.setArgs(1);
+      targetFileOption.setRequired(installDir == null);
+      targetFileOption.setType(String.class);
 
-    if (cmdLine.hasOption("h") || (!mode.equals(MAKE_MODE) && !mode.equals(SCAN_MODE))) {
-      showHelpAndExit(options, 1);
-    }
+      Option configFileOption = new Option("f", "config", true, "configuration file (optional)");
+      configFileOption.setArgName("file-or-URL");
+      configFileOption.setType(String.class);
+      configFileOption.setRequired(false);
 
-    if (!cmdLine.hasOption("f")
-        && System.getProperty(TVSConfigurationSetupManagerFactory.CONFIG_FILE_PROPERTY_NAME) == null) {
-      String cwd = System.getProperty("user.dir");
-      File localConfig = new File(cwd, DEFAULT_CONFIG_SPEC);
-      String configSpec = localConfig.exists() ? localConfig.getAbsolutePath()
-          : StandardTVSConfigurationSetupManagerFactory.DEFAULT_CONFIG_URI;
-      String[] newArgs = new String[args.length + 2];
-      System.arraycopy(args, 0, newArgs, 0, args.length);
-      newArgs[newArgs.length - 2] = "-f";
-      newArgs[newArgs.length - 1] = configSpec;
-      cmdLine = new PosixParser().parse(options, newArgs);
-    }
+      Option overwriteOption = new Option("w", "overwrite", false, "always make the boot JAR file");
+      overwriteOption.setType(String.class);
+      overwriteOption.setRequired(false);
 
-    StandardTVSConfigurationSetupManagerFactory factory;
-    factory = new StandardTVSConfigurationSetupManagerFactory(cmdLine, false,
-                                                              new FatalIllegalConfigurationChangeHandler());
-    boolean verbose = cmdLine.hasOption("v");
-    TCLogger logger = verbose ? CustomerLogging.getConsoleLogger() : new NullTCLogger();
-    L1TVSConfigurationSetupManager config = factory.createL1TVSConfigurationSetupManager(logger);
+      Option verboseOption = new Option("v", "verbose");
+      verboseOption.setType(String.class);
+      verboseOption.setRequired(false);
 
-    File targetFile;
+      Option helpOption = new Option("h", "help");
+      helpOption.setType(String.class);
+      helpOption.setRequired(false);
 
-    if (cmdLine.hasOption(TARGET_FILE_OPTION)) {
-      targetFile = new File(cmdLine.getOptionValue(TARGET_FILE_OPTION)).getAbsoluteFile();
-    } else {
-      File libDir = new File(installDir, "lib");
-      targetFile = new File(libDir, "dso-boot");
-      FileUtils.forceMkdir(targetFile);
-    }
+      Options options = new Options();
+      options.addOption(targetFileOption);
+      options.addOption(configFileOption);
+      options.addOption(overwriteOption);
+      options.addOption(verboseOption);
+      options.addOption(helpOption);
 
-    if (targetFile.isDirectory()) targetFile = new File(targetFile, BootJarSignature.getBootJarNameForThisVM());
-
-    // This used to be a provider that read from a specified rt.jar (to let us create boot jars for other platforms).
-    // That requirement is no more, but might come back, so I'm leaving at least this much scaffolding in place
-    // WAS: systemProvider = new RuntimeJarBytesProvider(...)
-    ClassLoader systemLoader = ClassLoader.getSystemClassLoader();
-    BootJarTool bjTool = new BootJarTool(new StandardDSOClientConfigHelperImpl(config, false), targetFile,
-                                         systemLoader, !verbose);
-    if (mode.equals(MAKE_MODE)) {
-      boolean makeItAnyway = cmdLine.hasOption("w");
-      if (makeItAnyway || !targetFile.exists() || (targetFile.exists() && !bjTool.isBootJarComplete(targetFile))) {
-        // Don't reuse boot jar tool instance since its config might have been mutated by isBootJarComplete()
-        bjTool = new BootJarTool(new StandardDSOClientConfigHelperImpl(config, false), targetFile, systemLoader,
-                                 !verbose);
-        bjTool.generateJar();
+      String mode = MAKE_MODE;
+      CommandLine cmdLine = null;
+      try {
+        cmdLine = new PosixParser().parse(options, args);
+        mode = (cmdLine.getArgList().size() > 0) ? cmdLine.getArgList().get(0).toString().toLowerCase() : mode;
+      } catch (ParseException pe) {
+        showHelpAndExit(options, 1);
       }
-      bjTool.verifyJar(targetFile);
-    } else if (mode.equals(SCAN_MODE)) {
-      bjTool.scanJar(targetFile);
-    } else {
-      consoleLogger.fatal("\nInvalid mode specified, valid modes are: '" + MAKE_MODE + "' and '" + SCAN_MODE + "';"
-                          + "use the -h option to view the options for this tool.");
+
+      if (cmdLine.hasOption("h") || (!mode.equals(MAKE_MODE) && !mode.equals(SCAN_MODE))) {
+        showHelpAndExit(options, 1);
+      }
+
+      if (!cmdLine.hasOption("f")
+          && System.getProperty(TVSConfigurationSetupManagerFactory.CONFIG_FILE_PROPERTY_NAME) == null) {
+        String cwd = System.getProperty("user.dir");
+        File localConfig = new File(cwd, DEFAULT_CONFIG_SPEC);
+        String configSpec = localConfig.exists() ? localConfig.getAbsolutePath()
+            : StandardTVSConfigurationSetupManagerFactory.DEFAULT_CONFIG_URI;
+        String[] newArgs = new String[args.length + 2];
+        System.arraycopy(args, 0, newArgs, 0, args.length);
+        newArgs[newArgs.length - 2] = "-f";
+        newArgs[newArgs.length - 1] = configSpec;
+        cmdLine = new PosixParser().parse(options, newArgs);
+      }
+
+      StandardTVSConfigurationSetupManagerFactory factory;
+      factory = new StandardTVSConfigurationSetupManagerFactory(cmdLine, false,
+                                                                new FatalIllegalConfigurationChangeHandler());
+      boolean verbose = cmdLine.hasOption("v");
+      TCLogger logger = verbose ? CustomerLogging.getConsoleLogger() : new NullTCLogger();
+      L1TVSConfigurationSetupManager config = factory.createL1TVSConfigurationSetupManager(logger);
+
+      File targetFile;
+
+      if (cmdLine.hasOption(TARGET_FILE_OPTION)) {
+        targetFile = new File(cmdLine.getOptionValue(TARGET_FILE_OPTION)).getAbsoluteFile();
+      } else {
+        targetFile = new File(new File(installDir, "lib"), "dso-boot");
+        FileUtils.forceMkdir(targetFile);
+      }
+
+      if (targetFile.isDirectory()) targetFile = new File(targetFile, BootJarSignature.getBootJarNameForThisVM());
+
+      // This used to be a provider that read from a specified rt.jar (to let us create boot jars for other platforms).
+      // That requirement is no more, but might come back, so I'm leaving at least this much scaffolding in place
+      // WAS: systemProvider = new RuntimeJarBytesProvider(...)
+      ClassLoader systemLoader = ClassLoader.getSystemClassLoader();
+      BootJarTool bjTool = new BootJarTool(new StandardDSOClientConfigHelperImpl(config, false), targetFile,
+                                           systemLoader, !verbose);
+      if (mode.equals(MAKE_MODE)) {
+        boolean makeItAnyway = cmdLine.hasOption("w");
+        if (makeItAnyway || !targetFile.exists() || (targetFile.exists() && !bjTool.isBootJarComplete(targetFile))) {
+          // Don't reuse boot jar tool instance since its config might have been mutated by isBootJarComplete()
+          bjTool = new BootJarTool(new StandardDSOClientConfigHelperImpl(config, false), targetFile, systemLoader,
+                                   !verbose);
+          bjTool.generateJar();
+        }
+        bjTool.verifyJar(targetFile);
+      } else if (mode.equals(SCAN_MODE)) {
+        bjTool.scanJar(targetFile);
+      } else {
+        consoleLogger.fatal("\nInvalid mode specified, valid modes are: '" + MAKE_MODE + "' and '" + SCAN_MODE + "';"
+                            + "use the -h option to view the options for this tool.");
+        System.exit(1);
+      }
+    } catch (Exception e) {
+      consoleLogger.fatal(e.getMessage());
       System.exit(1);
     }
   }

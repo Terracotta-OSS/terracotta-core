@@ -8,9 +8,9 @@ import org.apache.commons.io.FileUtils;
 import org.osgi.framework.BundleException;
 
 import com.tc.bundles.exception.BundleSpecException;
+import com.tc.bundles.exception.MissingBundleException;
 import com.tc.bundles.exception.MissingDefaultRepositoryException;
 import com.tc.bundles.exception.UnreadableBundleException;
-import com.tc.bundles.exception.MissingBundleException;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.MessageFormat;
-import java.util.ArrayList; // import java.util.Collection;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -307,12 +307,12 @@ public class Resolver {
     for (int i = 0; i < requirements.length; i++) {
       final BundleSpec spec = requirements[i];
       stack.push(spec.getSymbolicName(), spec.getVersion());
-      // try {
-      ensureBundle(spec, stack);
-      // } catch (MissingBundleException e) {
-      // throw new MissingBundleException(e.getMessage(), spec.getGroupId(), spec.getName(), spec.getVersion(),
-      // repositories, dependencyStack);
-      // }
+      try {
+        ensureBundle(spec, stack);
+      } catch (MissingBundleException e) {
+        throw new MissingBundleException(e.getMessage(), spec.getGroupId(), spec.getName(), spec.getVersion(),
+                                         repositories, dependencyStack);
+      }
     }
     addToRegistry(location, manifest);
   }
@@ -388,8 +388,8 @@ public class Resolver {
   }
 
   private final class Entry {
-    private File     location;
-    private Manifest manifest;
+    private final File     location;
+    private final Manifest manifest;
 
     public Entry(final File location, final Manifest manifest) {
       this.location = location;
