@@ -19,6 +19,7 @@ import com.tc.util.ClassUtils;
 import com.tc.util.ClassUtils.ClassSpec;
 import com.terracottatech.config.AdditionalBootJarClasses;
 import com.terracottatech.config.Autolock;
+import com.terracottatech.config.ClassExpression;
 import com.terracottatech.config.DistributedMethods;
 import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.Include;
@@ -289,27 +290,35 @@ public class ConfigLoader {
     }
   }
 
-  private void loadInstrumentedClasses(InstrumentedClasses instrumentedClasses) {
+  private void loadInstrumentedClasses(InstrumentedClasses instrumentedClasses) throws ConfigurationSetupException {
     if (instrumentedClasses != null) {
-      Include[] includes = instrumentedClasses.getIncludeArray();
-      for (int i = 0; includes != null && i < includes.length; i++) {
-        Include include = includes[i];
-        IncludeOnLoad includeOnLoad = new IncludeOnLoad();
-        OnLoad onLoad = include.getOnLoad();
-        if (onLoad != null) {
-          if (onLoad.getExecute() != null) {
-            includeOnLoad = new IncludeOnLoad(IncludeOnLoad.EXECUTE, onLoad.getExecute());
-          } else if (onLoad.getMethod() != null) {
-            includeOnLoad = new IncludeOnLoad(IncludeOnLoad.METHOD, onLoad.getMethod());
+      // Call selectPath() rather than using getIncludeArray and getExcludeArray(),
+      // because we need to preserve the relative order of includes and excludes.
+      XmlObject[] elements = instrumentedClasses.selectPath("*");
+      for (int i = 0; elements != null && i < elements.length; ++i) {
+        if (elements[i] instanceof Include) {
+          Include include = (Include) elements[i];
+          IncludeOnLoad includeOnLoad = new IncludeOnLoad();
+          OnLoad onLoad = include.getOnLoad();
+          if (onLoad != null) {
+            if (onLoad.getExecute() != null) {
+              includeOnLoad = new IncludeOnLoad(IncludeOnLoad.EXECUTE, onLoad.getExecute());
+            } else if (onLoad.getMethod() != null) {
+              includeOnLoad = new IncludeOnLoad(IncludeOnLoad.METHOD, onLoad.getMethod());
+            }
           }
+          config.addInstrumentationDescriptor(new IncludedInstrumentedClass(include.getClassExpression(), include
+              .getHonorTransient(), false, includeOnLoad));
         }
-        config.addInstrumentationDescriptor(new IncludedInstrumentedClass(include.getClassExpression(), include
-            .getHonorTransient(), false, includeOnLoad));
-      }
-
-      String[] excludeArray = instrumentedClasses.getExcludeArray();
-      for (int i = 0; excludeArray != null && i < excludeArray.length; i++) {
-        config.addInstrumentationDescriptor(new ExcludedInstrumentedClass(excludeArray[i]));
+        else if (elements[i] instanceof ClassExpression) {
+          String expr = ((ClassExpression)elements[i]).getStringValue();
+          config.addInstrumentationDescriptor(new ExcludedInstrumentedClass(expr));
+        }
+        else {
+          throw new ConfigurationSetupException(
+            "The following element was unexpected within an <instrumented-classes> element:" +
+            elements[i]);
+        }
       }
     }
   }
