@@ -782,7 +782,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
     if (!config.doGC() || config.gcThreadSleepTime() < 0) return;
 
-    StoppableThread st = new GarbageCollectorThread(this.gcThreadGroup, "GC", newCollector, this.config);
+    StoppableThread st = new GarbageCollectorThread(this.gcThreadGroup, "DGC", newCollector, this.config);
     st.setDaemon(true);
     newCollector.setState(st);
   }
