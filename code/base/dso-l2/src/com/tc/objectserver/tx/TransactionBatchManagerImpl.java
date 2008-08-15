@@ -72,19 +72,26 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager {
     }
 
     private void log_stats() {
-      logger
-          .info(nodeID + " : Batch Stats : batch count = " + batchCount + " txnCount = " + txnCount + " avg = " + avg);
+      logger.info(this);
+    }
+
+    public String toString() {
+      return "BatchStats : " + nodeID + " : batch count = " + batchCount + " txnCount = " + txnCount + " avg = " + avg;
     }
 
     private void log_stats(float thresh) {
-      logger.info(nodeID + " : Batch Stats : batch count = " + batchCount + " txnCount = " + txnCount + " avg = " + avg
-                  + " threshold = " + thresh);
+      logger.info(this + " threshold = " + thresh);
     }
 
     public boolean batchComplete(TransactionID txnID) {
-      txnCount--;
+      if (txnCount <= 0) {
+        // this is possible when the passive server moves to active.
+        logger.info("Not decrementing txnCount : " + txnID + " : " + this.toString());
+      } else {
+        txnCount--;
+      }
       if (killed) {
-        // return true only when all txns are acked. Note new batches may still be in network read queue
+        // return true only when all TXNs are ACKed. Note new batches may still be in network read queue
         if (txnCount == 0) {
           cleanUp(nodeID);
           return true;
@@ -97,7 +104,12 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager {
       if (false) log_stats(threshold);
 
       if (txnCount <= threshold) {
-        batchCount--;
+        if (batchCount <= 0) {
+          // this is possible when the passive server moves to active.
+          logger.info("Not decrementing batchCount : " + txnID + " : " + this.toString());
+        } else {
+          batchCount--;
+        }
         return true;
       } else {
         return false;
