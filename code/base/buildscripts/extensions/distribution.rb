@@ -46,7 +46,9 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
 
     puts("Building patch level #{patch_level}")
 
+    # executables will get different permissions in patch tar
     patch_files = Array.new
+    patch_bin_files = Array.new
 
     Dir.chdir(product_directory.to_s) do
       # Make sure patch-data.txt and releasenotes.txt are included in the patch
@@ -60,13 +62,19 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
         unless File.readable?(path)
           raise("Patch descriptor file references non-existant file: #{path}")
         end
-        patch_files << path
+
+        if file =~ /\.sh$|\.bat$|\.exe$|\.dll$|\/bin\/|\/libexec\//
+          patch_bin_files << path
+        else 
+          patch_files << path
+        end
       end
 
       patch_file_name = File.basename(Dir.pwd) + "-patch-#{patch_level}.tar.gz"
       patch_file = FilePath.new(self.dist_directory, patch_file_name)
-      ant.tar(:destfile => patch_file.to_s, :longfile => 'gnu', :compression => 'gzip') do
+      ant.tar(:destfile => patch_file.to_s, :compression => 'gzip', :longfile => 'gnu') do
         ant.tarfileset(:dir => Dir.pwd, :includes => patch_files.join(','))
+        ant.tarfileset(:dir => Dir.pwd, :includes => patch_bin_files.join(','), :mode => 755)
       end
       
       if config_source['target']
