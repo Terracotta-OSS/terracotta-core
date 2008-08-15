@@ -307,12 +307,12 @@ public class Resolver {
     for (int i = 0; i < requirements.length; i++) {
       final BundleSpec spec = requirements[i];
       stack.push(spec.getSymbolicName(), spec.getVersion());
-      // try {
-      ensureBundle(spec, stack);
-      // } catch (MissingBundleException e) {
-      // throw new MissingBundleException(e.getMessage(), spec.getGroupId(), spec.getName(), spec.getVersion(),
-      // repositories, dependencyStack);
-      // }
+      try {
+        ensureBundle(spec, stack);
+      } catch (MissingBundleException e) {
+        throw new MissingBundleException(e.getMessage(), spec.getGroupId(), spec.getName(), spec.getVersion(),
+        repositories, dependencyStack);
+      }
     }
     addToRegistry(location, manifest);
   }
