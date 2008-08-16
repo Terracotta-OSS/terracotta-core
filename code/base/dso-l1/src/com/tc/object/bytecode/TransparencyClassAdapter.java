@@ -38,6 +38,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
   private final PhysicalClassAdapterLogger physicalClassLogger;
   private final InstrumentationLogger      instrumentationLogger;
 
+  private boolean                          supportMethodsCreated;
+
   public TransparencyClassAdapter(ClassInfo classInfo, TransparencyClassSpec spec, final ClassVisitor cv,
                                   ManagerHelper mgrHelper, InstrumentationLogger instrumentationLogger,
                                   ClassLoader caller, Portability portability) {
@@ -52,7 +54,12 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     try {
       logger.debug("ADAPTING CLASS: " + name);
       super.basicVisit(version, access, name, signature, superClassName, interfaces);
-      getTransparencyClassSpec().createClassSupportMethods(cv);
+
+      if (!supportMethodsCreated) {
+        // We can re-enter visit() and we don't want to do this action twice
+        supportMethodsCreated = true;
+        getTransparencyClassSpec().createClassSupportMethods(cv);
+      }
     } catch (RuntimeException e) {
       handleInstrumentationException(e);
       throw e;

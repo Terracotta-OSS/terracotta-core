@@ -99,6 +99,7 @@ import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.MergeTCToJavaClassAdapter;
 import com.tc.object.bytecode.NullManager;
 import com.tc.object.bytecode.NullTCObject;
+import com.tc.object.bytecode.OverridesHashCode;
 import com.tc.object.bytecode.ReentrantLockClassAdapter;
 import com.tc.object.bytecode.ReentrantReadWriteLockClassAdapter;
 import com.tc.object.bytecode.SetRemoveMethodAdapter;
@@ -465,6 +466,7 @@ public class BootJarTool {
 
       loadTerracottaClass(Manageable.class.getName());
       loadTerracottaClass(Clearable.class.getName());
+      loadTerracottaClass(OverridesHashCode.class.getName());
       loadTerracottaClass(Manager.class.getName());
       loadTerracottaClass(InstrumentationLogger.class.getName());
       loadTerracottaClass(NullInstrumentationLogger.class.getName());
@@ -545,6 +547,8 @@ public class BootJarTool {
 
       addRuntimeClasses();
 
+      addLiterals();
+
       addInstrumentedLogManager();
       addSunStandardLoaders();
       addInstrumentedAccessibleObject();
@@ -584,6 +588,22 @@ public class BootJarTool {
     } catch (BootJarHandlerException e) {
       exit(e.getMessage(), e.getCause());
     }
+  }
+
+  private void addLiterals() {
+    bootJar.loadClassIntoJar("java.lang.Boolean", getSystemBytes("java.lang.Boolean"), false);
+    bootJar.loadClassIntoJar("java.lang.Byte", getSystemBytes("java.lang.Byte"), false);
+    bootJar.loadClassIntoJar("java.lang.Character", getSystemBytes("java.lang.Character"), false);
+    bootJar.loadClassIntoJar("java.lang.Double", getSystemBytes("java.lang.Double"), false);
+    bootJar.loadClassIntoJar("java.lang.Float", getSystemBytes("java.lang.Float"), false);
+    bootJar.loadClassIntoJar("java.lang.Integer", getSystemBytes("java.lang.Integer"), false);
+    bootJar.loadClassIntoJar("java.lang.Long", getSystemBytes("java.lang.Long"), false);
+    bootJar.loadClassIntoJar("java.lang.Short", getSystemBytes("java.lang.Short"), false);
+
+    bootJar.loadClassIntoJar("java.math.BigInteger", getSystemBytes("java.math.BigInteger"), false);
+    bootJar.loadClassIntoJar("java.math.BigDecimal", getSystemBytes("java.math.BigDecimal"), false);
+
+    bootJar.loadClassIntoJar("java.lang.StackTraceElement", getSystemBytes("java.lang.StackTraceElement"), false);
   }
 
   private void addIBMSpecific() {

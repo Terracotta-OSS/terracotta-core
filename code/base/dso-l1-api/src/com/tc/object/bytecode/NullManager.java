@@ -21,16 +21,16 @@ import java.lang.reflect.Field;
  */
 public final class NullManager implements Manager {
 
-  public static final String   CLASS    = "com/tc/object/bytecode/NullManager";
-  public static final String   TYPE     = "L" + CLASS + ";";
+  public static final String                 CLASS                 = "com/tc/object/bytecode/NullManager";
+  public static final String                 TYPE                  = "L" + CLASS + ";";
 
-  private static final Manager INSTANCE = new NullManager();
+  private static final Manager               INSTANCE              = new NullManager();
 
   private static final InstrumentationLogger instrumentationLogger = new NullInstrumentationLogger();
 
   /**
    * Get instance of the null manager
-   *
+   * 
    * @return NullManager
    */
   public static Manager getInstance() {
@@ -201,10 +201,6 @@ public final class NullManager implements Manager {
     throw new UnsupportedOperationException();
   }
 
-  public final boolean isCreationInProgress() {
-    return false;
-  }
-
   public final boolean isPhysicallyInstrumented(Class clazz) {
     return false;
   }
@@ -269,6 +265,10 @@ public final class NullManager implements Manager {
 
   public InstrumentationLogger getInstrumentationLogger() {
     return instrumentationLogger;
+  }
+
+  public boolean overridesHashCode(Object obj) {
+    throw new UnsupportedOperationException();
   }
 
 }

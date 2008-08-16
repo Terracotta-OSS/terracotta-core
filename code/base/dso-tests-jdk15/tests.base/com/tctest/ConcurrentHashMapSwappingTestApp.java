@@ -4,8 +4,6 @@
  */
 package com.tctest;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -18,8 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CyclicBarrier;
 
 public class ConcurrentHashMapSwappingTestApp extends AbstractTransparentApp {
-  private static final TCLogger   logger              = TCLogging
-                                                          .getTestingLogger(ConcurrentHashMapSwappingTestApp.class);
+
   public static final String      GC_TEST_KEY         = "gc-test";
 
   private static final int        DEFAULT_NUM_OF_PUT  = 2000;
@@ -79,10 +76,6 @@ public class ConcurrentHashMapSwappingTestApp extends AbstractTransparentApp {
           int useVal = i % MAX_KEY_VALUE;
           if (i % 100 == 0) System.err.println("Puting -- i: " + i + ", using key: " + useVal);
           Object key = new HashKey(useVal);
-          while (System.identityHashCode(key) == key.hashCode()) {
-            key = new HashKey(useVal);
-          }
-          Assert.assertFalse(System.identityHashCode(key) == key.hashCode());
           mapRoot.put(key, new HashValue(useVal));
           int afterSize = mapRoot.size();
           Assert.assertTrue(afterSize >= beforeSize);
@@ -99,14 +92,6 @@ public class ConcurrentHashMapSwappingTestApp extends AbstractTransparentApp {
       int useVal = i;
       if (i % 100 == 0) System.err.println("Getting key: " + useVal);
       Object key = new HashKey(useVal);
-      if (key.hashCode() == System.identityHashCode(key)) {
-        String assertionMsg = "Getting key: " + useVal + ", hashCode: " + key.hashCode() + ", identityHashCode: "
-                              + System.identityHashCode(key);
-        logger.warn(assertionMsg);
-        while (System.identityHashCode(key) == key.hashCode()) {
-          key = new HashKey(useVal);
-        }
-      }
       Assert.assertEquals(new HashValue(useVal), mapRoot.get(key));
     }
 
@@ -135,7 +120,7 @@ public class ConcurrentHashMapSwappingTestApp extends AbstractTransparentApp {
   }
 
   private static class HashKey {
-    private int i;
+    private final int i;
 
     public HashKey(int i) {
       super();
@@ -146,10 +131,12 @@ public class ConcurrentHashMapSwappingTestApp extends AbstractTransparentApp {
       return this.i;
     }
 
+    @Override
     public int hashCode() {
       return i;
     }
 
+    @Override
     public boolean equals(Object obj) {
       if (obj == null) return false;
       if (!(obj instanceof HashKey)) return false;
@@ -158,7 +145,7 @@ public class ConcurrentHashMapSwappingTestApp extends AbstractTransparentApp {
   }
 
   private static class HashValue {
-    private int i;
+    private final int i;
 
     public HashValue(int i) {
       super();
@@ -169,16 +156,19 @@ public class ConcurrentHashMapSwappingTestApp extends AbstractTransparentApp {
       return this.i;
     }
 
+    @Override
     public int hashCode() {
       return i;
     }
 
+    @Override
     public boolean equals(Object obj) {
       if (obj == null) return false;
       if (!(obj instanceof HashValue)) return false;
       return ((HashValue) obj).i == i;
     }
 
+    @Override
     public String toString() {
       return super.toString() + ", i: " + i;
     }

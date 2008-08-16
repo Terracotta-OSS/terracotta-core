@@ -20,14 +20,14 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-@SuppressWarnings("unchecked")
 /**
- * Note that not all the methods of TCMap are implemented here.
- *
- * The ones that can't be found in this class are implemented through
- * byte-code instrumentation, by adapting or renaming the original put and
- * remove methods. This is done in the JavaUtilConcurrentHashMapAdapter class.
+ * Note that not all the methods of TCMap are implemented here.<br>
+ * <br>
+ * The ones that can't be found in this class are implemented through byte-code instrumentation, by adapting or renaming
+ * the original put and remove methods. This is done in the JavaUtilConcurrentHashMapAdapter class.
  */
+
+@SuppressWarnings("unchecked")
 public abstract class ConcurrentHashMapTC extends ConcurrentHashMap implements TCMap, Clearable, Manageable {
   private boolean evictionEnabled = true;
 
@@ -40,45 +40,30 @@ public abstract class ConcurrentHashMapTC extends ConcurrentHashMap implements T
   abstract void __tc_fullyReadUnlock();
 
   /*
-   * ConcurrentHashMap uses the hashcode of the key and identify the segment to use. Each segment is an ReentrantLock.
-   * This prevents multiple threads to update the same segment at the same time. To support in DSO, we need to check if
-   * the ConcurrentHashMap is a shared object. If it is, we check if the hashcode of the key is the same as the
-   * System.identityHashCode. If it is, we will use the DSO ObjectID of the key to be the hashcode. Since the ObjectID
-   * of the key is a cluster-wide constant, different node will identify the same segment based on the ObjectID of the
-   * key. If the hashcode of the key is not the same as the System.identityHashCode, that would mean the application has
-   * defined the hashcode of the key and in this case, we could use honor the application defined hashcode of the key.
-   * The reason that we do not want to always use the ObjectID of the key is because if the application has defined the
-   * hashcode of the key, map.get(key1) and map.get(key2) will return the same object if key1 and key2 has the same
-   * application defined hashcode even though key1 and key2 has 2 different ObjectID. Using ObjectID as the hashcode in
-   * this case will prevent map.get(key1) and map.get(key2) to return the same result. If the application has not
-   * defined the hashcode of the key, key1 and key2 will have 2 different hashcode (due to the fact that they will have
-   * different System.identityHashCode). Therefore, map.get(key1) and map.get(key2) will return different objects. In
-   * this case, using ObjectID will have the proper behavior. One limitation is that if the application define the
-   * hashcode as some combination of system specific data such as a combination of System.identityHashCode() and some
-   * other data, the current support of ConcurrentHashMap does not support this scenario. Another limitation is that if
-   * the application defined hashcode of the key happens to be the same as the System.identityHashCode, the current
-   * support of ConcurrentHashMap does not support this scenario either.
+   * ConcurrentHashMap uses the hashcode() of the key to select the segment to use. For keys types that do NOT override
+   * hashCode() (thus they inherit identity hashcode functionality form java.lang.Object), we use the DSO ObjectID of
+   * the key to be the hashcode. Since the ObjectID of the key is a cluster-wide constant, different node will identify
+   * the same segment based on the ObjectID of the key. The reason that we do not want to always use the ObjectID of the
+   * key is because if the application has defined the hashcode of the key, map.get(key1) and map.get(key2) will return
+   * the same object if key1 and key2 has the same application defined hashcode even though key1 and key2 has 2
+   * different ObjectID. Using ObjectID as the hashcode in this case will prevent map.get(key1) and map.get(key2) to
+   * return the same result. If the key type does not override hashCode(), key1 and key2 will have 2 different hashcode
+   * (due to the fact that they will have different System.identityHashCode). Therefore, map.get(key1) and map.get(key2)
+   * will return different objects. In this case, using ObjectID will have the proper behavior. One limitation is that
+   * if the application implements hashCode() using just the identity hashcode or some other non-stable data, things
+   * won't work correctly
    */
-  private int __tc_hash(Object obj) {
-    return __tc_hash(obj, true);
-  }
-
-  private int __tc_hash(Object obj, boolean flag) {
+  protected int __tc_hash(Object obj) {
     int i = obj.hashCode();
-    boolean useObjectIDHashCode = false;
 
-    if (System.identityHashCode(obj) == i) {
-      if (flag) {
-        if (__tc_managed() != null || ManagerUtil.isCreationInProgress()) useObjectIDHashCode = true;
-      } else {
-        useObjectIDHashCode = true;
-      }
-    }
+    if (__tc_isManaged()) {
+      boolean useObjectIDHashCode = !ManagerUtil.overridesHashCode(obj);
 
-    if (useObjectIDHashCode) {
-      TCObject tcobject = ManagerUtil.shareObjectIfNecessary(obj);
-      if (tcobject != null) {
-        i = tcobject.getObjectID().hashCode();
+      if (useObjectIDHashCode) {
+        TCObject tcobject = ManagerUtil.shareObjectIfNecessary(obj);
+        if (tcobject != null) {
+          i = tcobject.getObjectID().hashCode();
+        }
       }
     }
 
@@ -90,18 +75,8 @@ public abstract class ConcurrentHashMapTC extends ConcurrentHashMap implements T
     return i;
   }
 
-  private boolean __tc_isDsoHashRequired(Object obj) {
-    return __tc_managed() == null || ManagerUtil.lookupExistingOrNull(obj) != null
-           || obj.hashCode() != System.identityHashCode(obj);
-  }
-
-  void __tc_dummy() {
-    // XXX: this method can removed when this hashing nonsense is cleaned up (CDV-615)
-    if (false) {
-      __tc_hash(this);
-      __tc_isDsoHashRequired(this);
-    }
-    throw new AssertionError();
+  boolean __tc_isDsoHashRequired(Object obj) {
+    return __tc_isManaged() && ManagerUtil.lookupExistingOrNull(obj) == null && !ManagerUtil.overridesHashCode(obj);
   }
 
   /*

@@ -75,8 +75,8 @@ public class ManagerImpl implements Manager {
   private DistributedObjectClient                  dso;
   private DmiManager                               methodCallManager;
   private OptimisticTransactionManager             optimisticTransactionManager;
-  private SerializationUtil                        serializer    = new SerializationUtil();
-  private MethodDisplayNames                       methodDisplay = new MethodDisplayNames(serializer);
+  private final SerializationUtil                  serializer    = new SerializationUtil();
+  private final MethodDisplayNames                 methodDisplay = new MethodDisplayNames(serializer);
 
   public ManagerImpl(DSOClientConfigHelper config, ClassProvider classProvider,
                      PreparedComponentsFromL2Connection connectionComponents) {
@@ -184,9 +184,9 @@ public class ManagerImpl implements Manager {
 
         methodCallManager = dso.getDmiManager();
 
-        shutdownManager = new ClientShutdownManager(objectManager, dso.getRemoteTransactionManager(),
-          dso.getStageManager(), dso.getCommunicationsManager(), dso.getChannel(),
-          dso.getClientHandshakeManager(), dso.getStatisticsAgentSubSystem(), connectionComponents);
+        shutdownManager = new ClientShutdownManager(objectManager, dso.getRemoteTransactionManager(), dso
+            .getStageManager(), dso.getCommunicationsManager(), dso.getChannel(), dso.getClientHandshakeManager(), dso
+            .getStatisticsAgentSubSystem(), connectionComponents);
       }
     };
 
@@ -633,13 +633,6 @@ public class ManagerImpl implements Manager {
     }
   }
 
-  public boolean isCreationInProgress() {
-    // I think the condition this.txManager.isTransactionLoggingDisabled() is not necessary and is causing the
-    // problem in DEV-602.
-    // return this.objectManager.isCreationInProgress() || this.txManager.isTransactionLoggingDisabled();
-    return this.objectManager.isCreationInProgress();
-  }
-
   public TCObject shareObjectIfNecessary(Object pojo) {
     TCObject tobj = lookupExistingOrNull(pojo);
     if (tobj != null) { return tobj; }
@@ -910,6 +903,10 @@ public class ManagerImpl implements Manager {
   public boolean isFieldPortableByOffset(Object pojo, long fieldOffset) {
     TCObject tcObj = lookupExistingOrNull(pojo);
     return tcObj != null && tcObj.isFieldPortableByOffset(fieldOffset);
+  }
+
+  public boolean overridesHashCode(Object obj) {
+    return this.portability.overridesHashCode(obj);
   }
 
 }

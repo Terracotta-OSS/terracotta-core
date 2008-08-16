@@ -9,6 +9,8 @@ import com.tc.util.ClassUtils;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Currency;
 import java.util.HashMap;
@@ -103,6 +105,7 @@ public class LiteralValues {
 
   /**
    * Determine LiteralValue code for an instance object
+   * 
    * @param pojo Object instance, should never be null
    * @return Literal value code for the pojo's class
    */
@@ -117,6 +120,7 @@ public class LiteralValues {
 
   /**
    * Determine whether a class is a literal
+   * 
    * @param className Class name
    * @return True if literal value class
    */
@@ -127,6 +131,7 @@ public class LiteralValues {
 
   /**
    * Determine whether the instance is a literal
+   * 
    * @param obj Instance object, may be null
    * @return True if literal value instance, false if null or not literal value instance
    */
@@ -143,6 +148,7 @@ public class LiteralValues {
 
   /**
    * Get literal value code for class name
+   * 
    * @param className Class name, may be null
    * @return Literal value marker or {@link #OBJECT} if className is null
    */
@@ -152,4 +158,10 @@ public class LiteralValues {
     if (i == null) return OBJECT;
     return i.intValue();
   }
+
+  // for tests
+  public Collection getTypes() {
+    return new ArrayList(this.values.keySet());
+  }
+
 }

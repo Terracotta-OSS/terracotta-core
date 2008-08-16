@@ -13,6 +13,7 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.text.Banner;
 import com.tc.util.Assert;
 
 import java.lang.reflect.Field;
@@ -86,6 +87,43 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
 
     } else {
       map.put("timmy", "eck");
+    }
+  }
+
+  void testRehash(ConcurrentHashMap map, boolean validate) throws Exception {
+    if (true) {
+      Banner.warnBanner("THIS TEST CASE DISABLED -- see CDV-844");
+      return;
+    }
+
+    if (validate) {
+      ConcurrentHashMap<Object, Integer> rehashed = (ConcurrentHashMap<Object, Integer>) map.get("key");
+      for (Object key : rehashed.keySet()) {
+        Assert.assertEquals("value", map.get(key));
+      }
+    } else {
+      // create an *unshared* map with lots of Object keys (Object is used since it use identity equals and hashCode())
+      ConcurrentHashMap unshared = new ConcurrentHashMap();
+      for (int i = 0; i < 250; i++) {
+        Object key = new Object();
+        unshared.put(key, "value");
+      }
+
+      // Share it (a side effect of which should be to rehash)
+      map.put("key", unshared);
+    }
+  }
+
+  void testObjectKeys(ConcurrentHashMap map, boolean validate) throws Exception {
+    if (validate) {
+      for (Object key : map.keySet()) {
+        Assert.assertEquals("value", map.get(key));
+      }
+    } else {
+      for (int i = 0; i < 250; i++) {
+        Object key = new Object();
+        map.put(key, "value");
+      }
     }
   }
 
@@ -767,7 +805,8 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
         assertCollectionsEqual(set2, set1);
       } else {
         // fault in one root locally
-        map.get(keyRoots[0]);
+        Object value = map.get(keyRoots[0]);
+        Assert.assertNotNull(value);
 
         Collection set1a = map.entrySet();
         Collection set1b = ((TCMap) map).__tc_getAllLocalEntriesSnapshot();

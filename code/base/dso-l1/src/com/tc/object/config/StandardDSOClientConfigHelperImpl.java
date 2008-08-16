@@ -44,6 +44,7 @@ import com.tc.object.bytecode.DelegateMethodAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentLocksAQSAdapter;
 import com.tc.object.bytecode.ManagerHelper;
 import com.tc.object.bytecode.ManagerHelperFactory;
+import com.tc.object.bytecode.OverridesHashCodeAdapter;
 import com.tc.object.bytecode.SafeSerialVersionUIDAdder;
 import com.tc.object.bytecode.THashMapAdapter;
 import com.tc.object.bytecode.TransparencyClassAdapter;
@@ -1390,7 +1391,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       cv = factory.create(dsoAdapter, caller);
     }
 
-    return new SafeSerialVersionUIDAdder(cv);
+    return new SafeSerialVersionUIDAdder(new OverridesHashCodeAdapter(cv));
   }
 
   private TransparencyClassSpec basicGetOrCreateSpec(String className, String applicator, boolean rememberSpec) {

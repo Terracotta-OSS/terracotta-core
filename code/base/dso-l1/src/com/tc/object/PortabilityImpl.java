@@ -4,7 +4,7 @@
  */
 package com.tc.object;
 
-import EDU.oswego.cs.dl.util.concurrent.ConcurrentHashMap;
+import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
 
 import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
 import com.tc.object.bytecode.TransparentAccess;
@@ -21,11 +21,15 @@ import java.util.Map;
 
 public class PortabilityImpl implements Portability {
 
+  private static final Class[]                EMPTY_CLASS_ARRAY      = new Class[] {};
   private static final Class                  OBJECT_CLASS           = Object.class;
   private static final NonInstrumentedClasses nonInstrumentedClasses = new NonInstrumentedClasses();
-  private final LiteralValues                 literalValues          = new LiteralValues();
-  private final Map                           portableCache          = new ConcurrentHashMap();
-  private final Map                           physicalCache          = new ConcurrentHashMap();
+  private static final LiteralValues          literalValues          = new LiteralValues();
+
+  private final Map                           portableCache          = new ConcurrentReaderHashMap();
+  private final Map                           physicalCache          = new ConcurrentReaderHashMap();
+  private final Map                           hashcodeCache          = new ConcurrentReaderHashMap();
+
   private final DSOClientConfigHelper         config;
 
   public PortabilityImpl(DSOClientConfigHelper config) {
@@ -114,16 +118,17 @@ public class PortabilityImpl implements Portability {
    * This method does not rely on the config but rather on the fact that the class has to be instrumented at this time
    * for the object to be portable. For Logical Objects it still queries the config.
    */
-  public boolean isPortableClass(Class clazz) {
-    String clazzName = clazz.getName();
-    Boolean isPortable = (Boolean) portableCache.get(clazzName);
+  public boolean isPortableClass(final Class clazz) {
+    Boolean isPortable = (Boolean) portableCache.get(clazz);
     if (isPortable != null) { return isPortable.booleanValue(); }
+
+    String clazzName = clazz.getName();
 
     boolean bool = literalValues.isLiteral(clazzName) || config.isLogical(clazzName) || clazz.isArray()
                    || Proxy.isProxyClass(clazz) || ClassUtils.isEnum(clazz) || isClassPhysicallyInstrumented(clazz)
                    || isInstrumentationNotNeeded(clazzName) || ClassUtils.isPortableReflectionClass(clazz)
                    || config.isPortableModuleClass(clazz);
-    portableCache.put(clazzName, Boolean.valueOf(bool));
+    portableCache.put(clazz, Boolean.valueOf(bool));
     return bool;
   }
 
@@ -131,13 +136,12 @@ public class PortabilityImpl implements Portability {
     return nonInstrumentedClasses.isInstrumentationNotNeeded(clazzName);
   }
 
-  public boolean isClassPhysicallyInstrumented(Class clazz) {
+  public boolean isClassPhysicallyInstrumented(final Class clazz) {
     // this method should only return true if this class "directly" implements
     // the interface in question. It specifically does *NOT* walk the class hierarchy looking
     // for the interface. This always means you can't just say instanceof here
 
-    String clazzName = clazz.getName();
-    Boolean isPhysicalAdapted = (Boolean) physicalCache.get(clazzName);
+    Boolean isPhysicalAdapted = (Boolean) physicalCache.get(clazz);
     if (isPhysicalAdapted != null) { return isPhysicalAdapted.booleanValue(); }
 
     boolean rv = false;
@@ -150,12 +154,47 @@ public class PortabilityImpl implements Portability {
       }
     }
 
-    physicalCache.put(clazzName, Boolean.valueOf(rv));
+    physicalCache.put(clazz, Boolean.valueOf(rv));
     return rv;
   }
 
   public boolean isPortableInstance(Object obj) {
     if (obj == null) return true;
     return isPortableClass(obj.getClass());
+  }
+
+  public boolean overridesHashCode(Object obj) {
+    if (obj == null) { throw new NullPointerException(); }
+    return overridesHashCode(obj.getClass());
+  }
+
+  public boolean overridesHashCode(final Class clazz) {
+    Boolean overridesHashCode = (Boolean) hashcodeCache.get(clazz);
+    if (overridesHashCode != null) { return overridesHashCode.booleanValue(); }
+
+    boolean rv = false;
+
+    Class c = clazz;
+
+    // Enums do technically override hashCode() but the reason they do it is to
+    // guarantee identity hash codes (so for our purposes it should not claim to override)
+    if (!ClassUtils.isEnum(clazz)) {
+      while (c != OBJECT_CLASS) {
+        try {
+          c.getDeclaredMethod("hashCode", EMPTY_CLASS_ARRAY);
+          rv = true;
+          break;
+        } catch (SecurityException e) {
+          throw new AssertionError(e);
+        } catch (NoSuchMethodException e) {
+          //
+        }
+
+        c = c.getSuperclass();
+      }
+    }
+
+    hashcodeCache.put(clazz, Boolean.valueOf(rv));
+    return rv;
   }
 }
