@@ -105,7 +105,6 @@ public class ModulesLoader {
         if (e instanceof BundleExceptionSummary) {
           String msg = ((BundleExceptionSummary) e).getSummary();
           e = new BundleException(msg);
-          logger.fatal(msg);
         }
         throw e;
       } finally {
