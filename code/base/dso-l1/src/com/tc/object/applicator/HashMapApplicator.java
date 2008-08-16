@@ -9,19 +9,15 @@ import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.object.TraversedReferences;
-import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.TCMap;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
-import com.tc.object.tx.optimistic.OptimisticTransactionManager;
-import com.tc.object.tx.optimistic.TCObjectClone;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -49,32 +45,6 @@ public class HashMapApplicator extends BaseApplicator {
         addTo.addAnonymousReference(o);
       }
     }
-  }
-
-  /**
-   * return the key value pairs of field names to shared objects for this source. We already updated the literals and
-   * set the new TCObjectClone
-   */
-  public Map connectedCopy(Object source, Object dest, Map visited, ClientObjectManager objectManager,
-                           OptimisticTransactionManager txManager) {
-    Map cloned = new IdentityHashMap();
-
-    Manageable sourceManageable = (Manageable) source;
-    Manageable destManaged = (Manageable) dest;
-
-    Map sourceMap = (Map) source;
-    Map destMap = (Map) dest;
-
-    for (Iterator i = sourceMap.entrySet().iterator(); i.hasNext();) {
-      Entry e = (Entry) i.next();
-
-      Object copyKey = createCopyIfNecessary(objectManager, visited, cloned, e.getKey());
-      Object copyValue = createCopyIfNecessary(objectManager, visited, cloned, e.getValue());
-      destMap.put(copyKey, copyValue);
-    }
-
-    destManaged.__tc_managed(new TCObjectClone(sourceManageable.__tc_managed(), txManager));
-    return cloned;
   }
 
   public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,

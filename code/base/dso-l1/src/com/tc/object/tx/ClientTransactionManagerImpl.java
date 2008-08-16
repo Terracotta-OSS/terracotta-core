@@ -45,8 +45,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 
 /**
  * @author steve
@@ -217,7 +217,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
 
     LockID lockID = lockManager.lockIDFor(lockName);
 
-    if (!lockManager.isLocked(lockID, LockLevel.WRITE)) { throw new IllegalMonitorStateException(getIllegalMonitorStateExceptionMessage()); }
+    if (!lockManager.isLocked(lockID, LockLevel.WRITE)) { throw new IllegalMonitorStateException(
+                                                                                                 getIllegalMonitorStateExceptionMessage()); }
 
     commit(lockID, topTxn, true);
 
@@ -235,7 +236,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
 
     LockID lockID = lockManager.lockIDFor(lockName);
 
-    if (!lockManager.isLocked(lockID, LockLevel.WRITE)) { throw new IllegalMonitorStateException(getIllegalMonitorStateExceptionMessage()); }
+    if (!lockManager.isLocked(lockID, LockLevel.WRITE)) { throw new IllegalMonitorStateException(
+                                                                                                 getIllegalMonitorStateExceptionMessage()); }
 
     currentTxn.addNotify(lockManager.notify(lockID, all));
   }
@@ -247,7 +249,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     errorMsg.append("\n");
     errorMsg.append("2) The object synchronized is not the same as the object waited/notified");
     errorMsg.append("\n");
-    errorMsg.append("3) The object being waited/notified on is a Terracotta distributed object, but no Terracotta auto-lock has been specified.");
+    errorMsg
+        .append("3) The object being waited/notified on is a Terracotta distributed object, but no Terracotta auto-lock has been specified.");
     errorMsg.append("\n\n");
     errorMsg.append("For more information on this issue, please visit our Troubleshooting Guide at:");
     errorMsg.append("\n");
@@ -277,7 +280,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     return (ThreadTransactionContext) this.transaction.get();
   }
 
-  public ClientTransaction getTransaction() throws UnlockedSharedObjectException {
+  private ClientTransaction getTransaction() throws UnlockedSharedObjectException {
     return getTransaction(null);
   }
 
@@ -413,9 +416,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     // Note that this doesn't change the type of the new transaction itself, it
     // merely preserves the 'write' level isolation that was already granted
     // by a previous transaction in the context.
-    if (currentTransaction != null &&
-        TxnType.READ_ONLY == txnType &&
-        TxnType.NORMAL == currentTransaction.getTransactionType()) {
+    if (currentTransaction != null && TxnType.READ_ONLY == txnType
+        && TxnType.NORMAL == currentTransaction.getTransactionType()) {
       ttc.pushContext(lockID, TxnType.NORMAL);
     } else {
       ttc.pushContext(lockID, txnType);
@@ -876,15 +878,18 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
 
   }
 
-//  private static final String READ_ONLY_TEXT = "Current transaction with read-only access attempted to modify a shared object.  "
-//                                               + "\nPlease alter the locks section of your Terracotta configuration so that the methods involved in this transaction have read/write access.";
+  // private static final String READ_ONLY_TEXT =
+  // "Current transaction with read-only access attempted to modify a shared object.  "
+  // +
+  // "\nPlease alter the locks section of your Terracotta configuration so that the methods involved in this transaction have read/write access."
+  // ;
 
-  private static final String READ_ONLY_TEXT = "Attempt to write to a shared object inside the scope of a lock declared as a" +
-  "\nread lock. All writes to shared objects must be within the scope of one or" +
-  "\nmore shared locks with write access defined in your Terracotta configuration." +
-  "\n\nPlease alter the locks section of your Terracotta configuration so that this" +
-  "\naccess is auto-locked or protected by a named lock with write access." +
-  "\n\nFor more information on this issue, please visit our Troubleshooting Guide at:" +
-  "\nhttp://terracotta.org/kit/troubleshooting ";
+  private static final String READ_ONLY_TEXT = "Attempt to write to a shared object inside the scope of a lock declared as a"
+                                               + "\nread lock. All writes to shared objects must be within the scope of one or"
+                                               + "\nmore shared locks with write access defined in your Terracotta configuration."
+                                               + "\n\nPlease alter the locks section of your Terracotta configuration so that this"
+                                               + "\naccess is auto-locked or protected by a named lock with write access."
+                                               + "\n\nFor more information on this issue, please visit our Troubleshooting Guide at:"
+                                               + "\nhttp://terracotta.org/kit/troubleshooting ";
 
 }

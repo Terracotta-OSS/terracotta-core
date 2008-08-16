@@ -14,7 +14,6 @@ import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.hook.impl.ArrayManager;
 import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
-import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.partitions.PartitionManager;
 import com.tc.properties.TCProperties;
 
@@ -77,51 +76,12 @@ public class ManagerUtil {
   }
 
   /**
-   * Begin an optimistic transaction
-   */
-  public static void optimisticBegin() {
-    getManager().optimisticBegin();
-  }
-
-  /**
-   * Commit an optimistic transaction
-   * 
-   * @throws ClassNotFoundException If class not found while faulting in object
-   */
-  public static void optimisticCommit() {
-    beginLock("test", LockLevel.WRITE);
-    try {
-      getManager().optimisticCommit();
-    } catch (ClassNotFoundException e) {
-      throw new TCClassNotFoundException(e);
-    }
-    commitLock("test");
-  }
-
-  /**
-   * Rollback an optimistic transaction
-   */
-  public static void optimisticRollback() {
-    getManager().optimisticRollback();
-  }
-
-  /**
    * Get JVM Client identifier
    * 
    * @return Client identifier
    */
   public static String getClientID() {
     return getManager().getClientID();
-  }
-
-  /**
-   * Deep copy the source object graph
-   * 
-   * @param pojo Source object
-   * @return The copy
-   */
-  public static Object deepCopy(Object pojo) {
-    return getManager().deepCopy(pojo);
   }
 
   /**

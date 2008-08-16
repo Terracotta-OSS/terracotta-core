@@ -5,15 +5,12 @@
 package com.tc.object.change;
 
 import com.tc.object.TCObject;
-import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 
 /**
  * @author orion
  */
 public interface TCChangeBuffer {
-  public final static int NONE     = 0;
   public final static int PHYSICAL = 1;
   public final static int LOGICAL  = 3;
   public final static int ARRAY    = 7;
@@ -35,9 +32,5 @@ public interface TCChangeBuffer {
   public int getTotalEventCount();
 
   public int getType();
-
-  public void accept(TCChangeBufferEventVisitor visitor);
-
-  public DNACursor getDNACursor(OptimisticTransactionManager transactionManager);
 
 }

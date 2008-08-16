@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.applicator;
 
@@ -7,21 +8,16 @@ import com.tc.object.ClientObjectManager;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.object.TraversedReferences;
-import com.tc.object.bytecode.Manageable;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
-import com.tc.object.tx.optimistic.OptimisticTransactionManager;
-import com.tc.object.tx.optimistic.TCObjectClone;
 import com.tc.util.Assert;
 
 import java.io.IOException;
 import java.sql.Timestamp;
-import java.util.Collections;
 import java.util.Date;
-import java.util.Map;
 
 /**
  * ChangeApplicator for Dates.
@@ -72,16 +68,4 @@ public class DateApplicator extends BaseApplicator {
     throw new UnsupportedOperationException();
   }
 
-  public Map connectedCopy(Object source, Object dest, Map visited, ClientObjectManager objectManager,
-                           OptimisticTransactionManager txManager) {
-    Date sourceDate = (Date) source;
-    Date destDate = (Date) dest;
-    destDate.setTime(sourceDate.getTime());
-    if (source instanceof Timestamp) {
-      ((Timestamp) destDate).setNanos(((Timestamp) sourceDate).getNanos());
-    }
-
-    ((Manageable) destDate).__tc_managed(new TCObjectClone(((Manageable) sourceDate).__tc_managed(), txManager));
-    return Collections.EMPTY_MAP;
-  }
 }

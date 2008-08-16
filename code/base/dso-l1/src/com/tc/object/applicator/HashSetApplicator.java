@@ -9,22 +9,16 @@ import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.object.TraversedReferences;
-import com.tc.object.bytecode.Manageable;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
-import com.tc.object.tx.optimistic.OptimisticTransactionManager;
-import com.tc.object.tx.optimistic.TCObjectClone;
-import com.tc.util.Assert;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -114,36 +108,4 @@ public class HashSetApplicator extends BaseApplicator {
     throw new UnsupportedOperationException();
   }
 
-  public Map connectedCopy(Object source, Object dest, Map visited, ClientObjectManager objectManager,
-                           OptimisticTransactionManager txManager) {
-    Map cloned = new IdentityHashMap();
-
-    Manageable sourceManageable = (Manageable) source;
-    Manageable destManaged = (Manageable) dest;
-
-    Set sourceSet = (Set) source;
-    Set destSet = (Set) dest;
-
-    for (Iterator i = sourceSet.iterator(); i.hasNext();) {
-      Object v = i.next();
-      Object copyValue = null;
-
-      if (isLiteralInstance(v)) {
-        copyValue = v;
-      } else if (visited.containsKey(v)) {
-        Assert.eval(visited.get(v) != null);
-        copyValue = visited.get(v);
-      } else {
-        Assert.eval(!isLiteralInstance(v));
-        copyValue = objectManager.createNewCopyInstance(v, createParentIfNecessary(visited, objectManager, cloned, v));
-
-        visited.put(v, copyValue);
-        cloned.put(v, copyValue);
-      }
-      destSet.add(copyValue);
-    }
-
-    destManaged.__tc_managed(new TCObjectClone(sourceManageable.__tc_managed(), txManager));
-    return cloned;
-  }
 }

@@ -13,15 +13,12 @@ import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.object.TraversedReferences;
 import com.tc.object.bytecode.ByteCodeUtil;
-import com.tc.object.bytecode.Manageable;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
-import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.object.tx.optimistic.OptimisticTransactionManager;
-import com.tc.object.tx.optimistic.TCObjectClone;
 import com.tc.util.Assert;
 import com.tc.util.FieldUtils;
 
@@ -29,14 +26,13 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class LinkedBlockingQueueApplicator extends BaseApplicator {
-  private static final TCLogger logger                                  = TCLogging.getLogger(LinkedBlockingQueueApplicator.class);
+  private static final TCLogger logger                                  = TCLogging
+                                                                            .getLogger(LinkedBlockingQueueApplicator.class);
   private static final String   LINKED_BLOCKING_QUEUE_FIELD_NAME_PREFIX = LinkedBlockingQueue.class.getName() + ".";
   private static final String   TAKE_LOCK_FIELD_NAME                    = "takeLock";
   private static final String   PUT_LOCK_FIELD_NAME                     = "putLock";
@@ -257,7 +253,7 @@ public class LinkedBlockingQueueApplicator extends BaseApplicator {
     }
   }
 
-  public void dehydrateMembers(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
+  private void dehydrateMembers(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
     Queue queue = (Queue) pojo;
 
     for (Iterator i = queue.iterator(); i.hasNext();) {
@@ -279,26 +275,4 @@ public class LinkedBlockingQueueApplicator extends BaseApplicator {
     throw new UnsupportedOperationException();
   }
 
-  @SuppressWarnings("unchecked")
-  public Map connectedCopy(Object source, Object dest, Map visited, ClientObjectManager objectManager,
-                           OptimisticTransactionManager txManager) {
-    Map cloned = new IdentityHashMap();
-
-    Manageable sourceManageable = (Manageable) source;
-    Manageable destManaged = (Manageable) dest;
-
-    Queue sourceQueue = (Queue) source;
-    Queue destQueue = (Queue) dest;
-
-    for (Iterator i = sourceQueue.iterator(); i.hasNext();) {
-      Object v = i.next();
-      Object copyValue = null;
-
-      copyValue = createCopyIfNecessary(objectManager, visited, cloned, v);
-      destQueue.add(copyValue);
-    }
-
-    destManaged.__tc_managed(new TCObjectClone(sourceManageable.__tc_managed(), txManager));
-    return cloned;
-  }
 }

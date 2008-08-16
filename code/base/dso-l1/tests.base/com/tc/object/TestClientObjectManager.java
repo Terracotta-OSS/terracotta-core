@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
@@ -10,7 +11,6 @@ import com.tc.object.appevent.ApplicationEventContext;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.tx.ClientTransactionManager;
-import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.object.util.ToggleableStrongReference;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
@@ -30,7 +30,7 @@ public class TestClientObjectManager implements ClientObjectManager {
   public final Map                 objects         = new HashMap();
   public final Map                 object2TCObject = new IdentityHashMap();
   private int                      idSequence      = 1;
-  private Object                   root            = new IdentityHashMap();
+  private final Object             root            = new IdentityHashMap();
   private boolean                  isManaged;
   private ReferenceQueue           referenceQueue;
   private ClientTransactionManager txManager;
@@ -47,7 +47,6 @@ public class TestClientObjectManager implements ClientObjectManager {
   public boolean getIsManaged() {
     return this.isManaged;
   }
-
 
   public boolean isManaged(Object pojo) {
     return this.object2TCObject.containsKey(pojo) || isManaged;
@@ -159,9 +158,9 @@ public class TestClientObjectManager implements ClientObjectManager {
   }
 
   public TCObject lookupExistingOrNull(Object pojo) {
-//    if (isManaged) {
-//      lookupOrCreate(pojo);
-//    }
+    // if (isManaged) {
+    // lookupOrCreate(pojo);
+    // }
 
     return (TCObject) this.object2TCObject.get(pojo);
   }
@@ -192,18 +191,6 @@ public class TestClientObjectManager implements ClientObjectManager {
   }
 
   public WeakReference createNewPeer(TCClass clazz, DNA dna) {
-    throw new ImplementMe();
-  }
-
-  public Object deepCopy(Object source, OptimisticTransactionManager optimisticTxManager) {
-    throw new ImplementMe();
-  }
-
-  public Object createNewCopyInstance(Object source, Object parent) {
-    throw new ImplementMe();
-  }
-
-  public Object createParentCopyInstanceIfNecessary(Map visited, Map cloned, Object v) {
     throw new ImplementMe();
   }
 
@@ -265,12 +252,12 @@ public class TestClientObjectManager implements ClientObjectManager {
 
   public void dump(Writer writer) {
     throw new ImplementMe();
-    
+
   }
 
   public void dumpToLogger() {
     throw new ImplementMe();
-    
+
   }
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
@@ -278,4 +265,3 @@ public class TestClientObjectManager implements ClientObjectManager {
   }
 
 }
-

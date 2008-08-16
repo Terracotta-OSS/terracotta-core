@@ -10,7 +10,6 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.field.TCField;
 import com.tc.object.field.TCFieldFactory;
-import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.objectserver.core.api.TestDNAWriter;
 
 import java.lang.reflect.Constructor;
@@ -229,10 +228,6 @@ public class TCObjectImplTest extends BaseDSOTestCase {
     }
 
     public Class getPeerClass() {
-      throw new ImplementMe();
-    }
-
-    public Map connectedCopy(Object source, Object dest, Map visited, OptimisticTransactionManager txManager) {
       throw new ImplementMe();
     }
 

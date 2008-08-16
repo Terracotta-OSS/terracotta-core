@@ -12,12 +12,7 @@ import com.tc.object.change.event.ArrayElementChangeEvent;
 import com.tc.object.change.event.LiteralChangeEvent;
 import com.tc.object.change.event.LogicalChangeEvent;
 import com.tc.object.change.event.PhysicalChangeEvent;
-import com.tc.object.dna.api.DNACursor;
-import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.dna.api.LogicalAction;
-import com.tc.object.dna.api.PhysicalAction;
-import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
 
@@ -194,124 +189,5 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
     return type;
   }
 
-  public void accept(TCChangeBufferEventVisitor visitor) {
-    switch (type) {
-      case LOGICAL:
-        for (Iterator it = logicalEvents.iterator(); it.hasNext();) {
-          visitor.visitLogicalEvent((LogicalChangeEvent) it.next());
-        }
-        break;
-
-      case PHYSICAL:
-        if (literalValueChangedEvents != null && literalValueChangedEvents.size() > 0) { throw new AssertionError(
-                                                                                                                  "Changes to literal roots are not supported in OptimisticTransaction."); }
-        for (Iterator it = physicalEvents.values().iterator(); it.hasNext();) {
-          visitor.visitPhysicalChangeEvent((PhysicalChangeEvent) it.next());
-        }
-        break;
-
-      case ARRAY:
-        for (Iterator it = arrayEvents.values().iterator(); it.hasNext();) {
-          visitor.visitArrayElementChangeEvent((ArrayElementChangeEvent) it.next());
-        }
-        break;
-
-      default:
-        throw new AssertionError("Unknown event type " + type);
-    }
-  }
-
-  public DNACursor getDNACursor(OptimisticTransactionManager transactionManager) {
-    switch (type) {
-      case PHYSICAL:
-        if (literalValueChangedEvents != null && literalValueChangedEvents.size() > 0) { throw new AssertionError(
-                                                                                                                  "Changes to literal roots are not supported in OptimisticTransaction."); }
-        return new AbstractDNACursor(physicalEvents.values(), transactionManager) {
-          Object createNextAction(Object object) {
-            PhysicalChangeEvent pe = (PhysicalChangeEvent) object;
-            return new PhysicalAction(pe.getFieldName(), convertToParameter(pe.getNewValue()), pe.isReference());
-          }
-        };
-
-      case LOGICAL:
-        return new AbstractDNACursor(logicalEvents, transactionManager) {
-          Object createNextAction(Object object) {
-            LogicalChangeEvent le = (LogicalChangeEvent) object;
-            Object[] p = new Object[le.getParameters().length];
-            for (int i = 0; i < le.getParameters().length; i++) {
-              p[i] = convertToParameter(le.getParameters()[i]);
-            }
-            return new LogicalAction(le.getMethodID(), p);
-          }
-        };
-
-      case ARRAY:
-        return new AbstractDNACursor(arrayEvents.values(), transactionManager) {
-          Object createNextAction(Object object) {
-            ArrayElementChangeEvent ae = (ArrayElementChangeEvent) object;
-            if (ae.isSubarray()) {
-              return new PhysicalAction(ae.getValue(), ae.getIndex());
-            } else {
-              return new PhysicalAction(ae.getIndex(), convertToParameter(ae.getValue()), ae.isReference());
-            }
-          }
-        };
-
-      default:
-        throw new AssertionError("Unknown event type " + type);
-    }
-  }
-
-  private static abstract class AbstractDNACursor implements DNACursor {
-    private final OptimisticTransactionManager transactionManager;
-    private final Iterator                     iterator;
-    private final int                          size;
-
-    private Object                             currentAction = null;
-
-    public AbstractDNACursor(Collection values, OptimisticTransactionManager transactionManager) {
-      this.transactionManager = transactionManager;
-      this.iterator = values.iterator();
-      this.size = values.size();
-    }
-
-    public boolean next() {
-      boolean hasNext = iterator.hasNext();
-      if (hasNext) {
-        this.currentAction = createNextAction(iterator.next());
-      }
-      return hasNext;
-    }
-
-    abstract Object createNextAction(Object object);
-
-    public boolean next(DNAEncoding encoding) {
-      return next();
-    }
-
-    public int getActionCount() {
-      return size;
-    }
-
-    public Object getAction() {
-      return currentAction;
-    }
-
-    public LogicalAction getLogicalAction() {
-      return (LogicalAction) currentAction;
-    }
-
-    public PhysicalAction getPhysicalAction() {
-      return (PhysicalAction) currentAction;
-    }
-
-    public void reset() throws UnsupportedOperationException {
-      throw new UnsupportedOperationException("This operation is not supported by this class.");
-    }
-
-    protected Object convertToParameter(Object object) {
-      return transactionManager.convertToParameter(object);
-    }
-  }
 
 }

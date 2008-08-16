@@ -4,7 +4,6 @@
  */
 package com.tc.object.applicator;
 
-import com.tc.exception.TCNotSupportedMethodException;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.TCObject;
 import com.tc.object.TraversedReferences;
@@ -13,14 +12,12 @@ import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 
 import java.io.IOException;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.Map;
 
 public class AccessibleObjectApplicator extends BaseApplicator {
   private static final String DECLARING_CLASS_FIELD_NAME        = "java.lang.reflect.AccessibleObject.declaringClass";
@@ -154,10 +151,5 @@ public class AccessibleObjectApplicator extends BaseApplicator {
     } else {
       throw new AssertionError("Object type not known.");
     }
-  }
-
-  public Map connectedCopy(Object source, Object dest, Map visited, ClientObjectManager objectManager,
-                           OptimisticTransactionManager txManager) {
-    throw new TCNotSupportedMethodException();
   }
 }

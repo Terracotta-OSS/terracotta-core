@@ -9,15 +9,12 @@ import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.object.TraversedReferences;
-import com.tc.object.bytecode.Manageable;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
-import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.object.tx.optimistic.OptimisticTransactionManager;
-import com.tc.object.tx.optimistic.TCObjectClone;
 import com.tc.util.Assert;
 import com.tc.util.FieldUtils;
 
@@ -25,7 +22,6 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
@@ -48,43 +44,6 @@ public class TreeMapApplicator extends BaseApplicator {
 
   public TreeMapApplicator(DNAEncoding encoding) {
     super(encoding);
-  }
-
-  /**
-   * return the key value pairs of field names to shared objects for this source. We already updated the literals and
-   * set the new TCObjectClone
-   */
-  public Map connectedCopy(Object source, Object dest, Map visited, ClientObjectManager objectManager,
-                           OptimisticTransactionManager txManager) {
-    Map cloned = new IdentityHashMap();
-
-    Manageable sourceManageable = (Manageable) source;
-    Manageable destManaged = (Manageable) dest;
-
-    TreeMap sourceMap = (TreeMap) source;
-    TreeMap destMap = (TreeMap) dest;
-
-    for (Iterator i = sourceMap.entrySet().iterator(); i.hasNext();) {
-      Entry e = (Entry) i.next();
-
-      Object k = e.getKey();
-      Object v = e.getValue();
-
-      Object copyKey = createCopyIfNecessary(objectManager, visited, cloned, k);
-      Object copyValue = createCopyIfNecessary(objectManager, visited, cloned, v);
-
-      destMap.put(copyKey, copyValue);
-    }
-
-    // deal with comparator
-    Comparator comparatorOrig = sourceMap.comparator();
-    Comparator copyValue = (Comparator) createCopyIfNecessary(objectManager, visited, cloned, comparatorOrig);
-    // FIXME::TODO:: check if this is OK.
-    setComparator(destMap, copyValue);
-
-    destManaged.__tc_managed(new TCObjectClone(sourceManageable.__tc_managed(), txManager));
-
-    return cloned;
   }
 
   public TraversedReferences getPortableObjects(Object pojo, TraversedReferences addTo) {

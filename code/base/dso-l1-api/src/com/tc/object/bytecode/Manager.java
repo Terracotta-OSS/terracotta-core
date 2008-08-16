@@ -41,14 +41,6 @@ public interface Manager {
   public boolean isPhysicallyInstrumented(Class clazz);
 
   /**
-   * Deep copy the source object graph
-   * 
-   * @param source Source object
-   * @return The copy
-   */
-  public Object deepCopy(Object source);
-
-  /**
    * Initialize the Manager
    */
   public void init();
@@ -341,23 +333,6 @@ public interface Manager {
    * @return True if root
    */
   public boolean isRoot(Field field);
-
-  /**
-   * Begin an optimistic transaction
-   */
-  public void optimisticBegin();
-
-  /**
-   * Commit an optimistic transaction
-   * 
-   * @throws ClassNotFoundException If class not found while faulting in object
-   */
-  public void optimisticCommit() throws ClassNotFoundException;
-
-  /**
-   * Rollback an optimistic transaction
-   */
-  public void optimisticRollback();
 
   /**
    * Check whether an object is locked at this lockLevel

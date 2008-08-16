@@ -8,23 +8,16 @@ import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.TraversedReferences;
-import com.tc.object.bytecode.ManagerUtil;
-import com.tc.object.bytecode.hook.impl.ArrayManager;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
-import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.object.tx.optimistic.OptimisticTransactionManager;
-import com.tc.object.tx.optimistic.TCObjectClone;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
-import java.util.Collections;
-import java.util.IdentityHashMap;
-import java.util.Map;
 
 public class ArrayApplicator extends BaseApplicator {
 
@@ -121,25 +114,4 @@ public class ArrayApplicator extends BaseApplicator {
     throw new UnsupportedOperationException();
   }
 
-  public Map connectedCopy(Object source, Object dest, Map visited, ClientObjectManager objectManager,
-                           OptimisticTransactionManager txManager) {
-    if (source.getClass().getComponentType().isPrimitive()) {
-      System.arraycopy(source, 0, dest, 0, Array.getLength(dest));
-      return Collections.EMPTY_MAP;
-    }
-
-    Map cloned = new IdentityHashMap();
-
-    Object[] da = (Object[]) dest;
-    Object[] sa = (Object[]) source;
-    int len = da.length;
-    for (int i = 0; i < len; i++) {
-      Object v = sa[i];
-      da[i] = createCopyIfNecessary(objectManager, visited, cloned, v);
-    }
-
-    // HAck hack big hack
-    ManagerUtil.register(dest, new TCObjectClone(ArrayManager.getCloneObject(source), txManager, len));
-    return cloned;
-  }
 }

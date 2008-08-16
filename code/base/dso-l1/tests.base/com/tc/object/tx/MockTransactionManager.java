@@ -29,18 +29,18 @@ import java.util.Set;
  */
 public class MockTransactionManager implements ClientTransactionManager {
 
-  private static final TCLogger logger     = TCLogging.getLogger(MockTransactionManager.class);
+  private static final TCLogger logger         = TCLogging.getLogger(MockTransactionManager.class);
 
   private int                   commitCount;
-  private List                  begins     = new ArrayList();
+  private final List            begins         = new ArrayList();
   // We need to remove initialValue() here because read auto locking now calls Manager.isDsoMonitored() which will
   // checks if isTransactionLogging is disabled. If it runs in the context of class loading, it will try to load
   // the class ThreadTransactionContext and thus throws a LinkageError.
-  private final ThreadLocal     txnLogging = new ThreadLocal();
-  
-  //TODO: This is a test member remove otherwise.
-  private final Counter                       loggingCounter          = new Counter(0);
-  
+  private final ThreadLocal     txnLogging     = new ThreadLocal();
+
+  // TODO: This is a test member remove otherwise.
+  private final Counter         loggingCounter = new Counter(0);
+
   public Counter getLoggingCounter() {
     return loggingCounter;
   }
@@ -159,10 +159,6 @@ public class MockTransactionManager implements ClientTransactionManager {
     throw new ImplementMe();
   }
 
-  public ClientTransaction getTransaction() {
-    throw new ImplementMe();
-  }
-
   public void disableTransactionLogging() {
     ThreadTransactionLoggingStack txnStack = (ThreadTransactionLoggingStack) txnLogging.get();
     if (txnStack == null) {
@@ -178,9 +174,7 @@ public class MockTransactionManager implements ClientTransactionManager {
     Assert.assertNotNull(txnStack);
     final int size = txnStack.decrement();
 
-    if (size < 0) {
-      throw new AssertionError("size=" + size);
-    }
+    if (size < 0) { throw new AssertionError("size=" + size); }
     loggingCounter.increment();
   }
 

@@ -1,12 +1,12 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
 import com.tc.object.bytecode.Manageable;
-import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -32,8 +32,7 @@ public class ProxyTestApp extends AbstractTransparentApp {
   private final CyclicBarrier barrier;
   private MyProxyInf1         proxyImpl;
 
-  private DataRoot            dataRoot = new DataRoot();
-  private Map                 mapRoot  = new HashMap();
+  private final DataRoot      dataRoot = new DataRoot();
 
   public ProxyTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -51,8 +50,6 @@ public class ProxyTestApp extends AbstractTransparentApp {
       subclassProxyTest(index);
       differentLoaderTest(index);
       multipleInterfacesProxyTest(index);
-      cloneTest(index);
-      innerCloneTest(index);
       reflectionTest(index);
 
     } catch (Throwable t) {
@@ -147,59 +144,6 @@ public class ProxyTestApp extends AbstractTransparentApp {
     barrier.barrier();
   }
 
-  private void innerCloneTest(int index) throws Throwable {
-    if (index == 0) {
-      MyInvocationHandler handler = new MyInvocationHandler();
-      Proxy myProxy = (Proxy) Proxy.newProxyInstance(this.getClass().getClassLoader(), new Class[] { MyProxyInf1.class,
-          MyProxyInf2.class }, handler);
-      ((MyProxyInf1) myProxy).setValue(2000);
-      ((MyProxyInf2) myProxy).setStringValue("Testing");
-
-      synchronized (mapRoot) {
-        mapRoot.put("proxy", myProxy);
-      }
-
-      Map clonedMap = null;
-      ManagerUtil.optimisticBegin();
-      clonedMap = (Map) ManagerUtil.deepCopy(mapRoot);
-      ManagerUtil.optimisticCommit();
-
-      Assert.assertEquals(1, clonedMap.size());
-      Proxy clonedProxy = (Proxy) clonedMap.get("proxy");
-
-      Assert.assertFalse(clonedProxy == myProxy);
-      Assert.assertEquals(2000, ((MyProxyInf1) clonedProxy).getValue());
-      Assert.assertEquals("Testing", ((MyProxyInf2) clonedProxy).getStringValue());
-    }
-
-    barrier.barrier();
-  }
-
-  private void cloneTest(int index) throws Throwable {
-    if (index == 0) {
-      MyInvocationHandler handler = new MyInvocationHandler();
-      Proxy myProxy = (Proxy) Proxy.newProxyInstance(this.getClass().getClassLoader(), new Class[] { MyProxyInf1.class,
-          MyProxyInf2.class }, handler);
-      ((MyProxyInf1) myProxy).setValue(2000);
-      ((MyProxyInf2) myProxy).setStringValue("Testing");
-      dataRoot.setMyProxy(myProxy);
-    }
-
-    barrier.barrier();
-
-    Object copy = null;
-    ManagerUtil.optimisticBegin();
-    copy = ManagerUtil.deepCopy(dataRoot.getMyProxy());
-    ManagerUtil.optimisticCommit();
-
-    Assert.assertTrue(copy instanceof Proxy);
-    Assert.assertTrue(copy instanceof MyProxyInf1);
-    Assert.assertTrue(copy instanceof MyProxyInf2);
-    Assert.assertFalse(copy == dataRoot.getMyProxy());
-
-    barrier.barrier();
-  }
-
   private void multipleInterfacesProxyTest(int index) throws Throwable {
     if (index == 0) {
       MyInvocationHandler handler = new MyInvocationHandler();
@@ -263,12 +207,12 @@ public class ProxyTestApp extends AbstractTransparentApp {
 
     barrier.barrier();
   }
-  
+
   private void proxySystemInterface(int index) throws Throwable {
     if (index == 0) {
       MyInvocationHandler handler = new MyInvocationHandler();
       Collection colProxyImpl = (Collection) Proxy.newProxyInstance(System.class.getClassLoader(),
-                                                       new Class[] { Collection.class }, handler);
+                                                                    new Class[] { Collection.class }, handler);
       Assert.assertNull(colProxyImpl.getClass().getClassLoader());
     }
     barrier.barrier();
@@ -374,8 +318,8 @@ public class ProxyTestApp extends AbstractTransparentApp {
   }
 
   public static class MyInvocationHandler implements InvocationHandler {
-    private Map values       = new HashMap();
-    private Map stringValues = new HashMap();
+    private final Map values       = new HashMap();
+    private final Map stringValues = new HashMap();
 
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
       if (method.getName().equals("getValue")) {
@@ -394,7 +338,7 @@ public class ProxyTestApp extends AbstractTransparentApp {
   }
 
   private static class MyMapInvocationHandler implements InvocationHandler {
-    private Map values = new HashMap();
+    private final Map values = new HashMap();
 
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
       if (method.getName().equals("get")) {

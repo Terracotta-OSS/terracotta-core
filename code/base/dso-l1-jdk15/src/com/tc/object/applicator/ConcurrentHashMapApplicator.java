@@ -10,27 +10,19 @@ import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.TraversedReferences;
 import com.tc.object.bytecode.ByteCodeUtil;
-import com.tc.object.bytecode.Manageable;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.object.tx.optimistic.OptimisticTransactionManager;
-import com.tc.object.tx.optimistic.TCObjectClone;
 import com.tc.util.Assert;
 import com.tc.util.FieldUtils;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -70,6 +62,7 @@ public class ConcurrentHashMapApplicator extends PartialHashMapApplicator {
     super(encoding);
   }
 
+  @Override
   public TraversedReferences getPortableObjects(Object pojo, TraversedReferences addTo) {
     super.getPortableObjects(pojo, addTo);
     getPhysicalPortableObjects(pojo, addTo);
@@ -95,6 +88,7 @@ public class ConcurrentHashMapApplicator extends PartialHashMapApplicator {
     }
   }
 
+  @Override
   public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
       ClassNotFoundException {
     Object[] segments = null;
@@ -154,6 +148,7 @@ public class ConcurrentHashMapApplicator extends PartialHashMapApplicator {
     }
   }
 
+  @Override
   public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
     dehydrateFields(objectManager, tcObject, writer, pojo);
     super.dehydrate(objectManager, tcObject, writer, pojo);
@@ -181,33 +176,4 @@ public class ConcurrentHashMapApplicator extends PartialHashMapApplicator {
     }
   }
 
-  public Map connectedCopy(Object source, Object dest, Map visited, ClientObjectManager objectManager,
-                           OptimisticTransactionManager txManager) {
-    Map cloned = new IdentityHashMap();
-
-    Manageable sourceManageable = (Manageable) source;
-    Manageable destManaged = (Manageable) dest;
-
-    Map sourceMap = (Map) source;
-    Map destMap = (Map) dest;
-
-    for (Iterator i = sourceMap.entrySet().iterator(); i.hasNext();) {
-      Entry e = (Entry) i.next();
-
-      Object copyKey = createCopyIfNecessary(objectManager, visited, cloned, e.getKey());
-      Object copyValue = createCopyIfNecessary(objectManager, visited, cloned, e.getValue());
-      try {
-        TC_PUT_METHOD.invoke(destMap, new Object[] { copyKey, copyValue });
-      } catch (IllegalArgumentException e1) {
-        throw new TCRuntimeException(e1);
-      } catch (IllegalAccessException e1) {
-        throw new TCRuntimeException(e1);
-      } catch (InvocationTargetException e1) {
-        throw new TCRuntimeException(e1);
-      }
-    }
-
-    destManaged.__tc_managed(new TCObjectClone(sourceManageable.__tc_managed(), txManager));
-    return cloned;
-  }
 }

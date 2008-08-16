@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.applicator;
 
@@ -7,22 +8,17 @@ import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.TraversedReferences;
-import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
-import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.object.tx.optimistic.OptimisticTransactionManager;
-import com.tc.object.tx.optimistic.TCObjectClone;
 import com.tc.util.Assert;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
-import java.util.IdentityHashMap;
-import java.util.Map;
 
 public class ProxyApplicator extends BaseApplicator {
   private static final String CLASSLOADER_FIELD_NAME        = "java.lang.reflect.Proxy.loader";
@@ -53,7 +49,7 @@ public class ProxyApplicator extends BaseApplicator {
       Assert.eval(a.isTruePhysical());
       fieldName = a.getFieldName();
       fieldValue = a.getObject();
-      
+
       if (fieldName.equals(INVOCATION_HANDLER_FIELD_NAME)) {
         fieldValue = objectManager.lookupObject((ObjectID) fieldValue);
         ((TransparentAccess) po).__tc_setfield(fieldName, fieldValue);
@@ -65,7 +61,7 @@ public class ProxyApplicator extends BaseApplicator {
     InvocationHandler handler = Proxy.getInvocationHandler(pojo);
     Object dehydratableHandler = getDehydratableObject(handler, objectManager);
 
-    //writer.addPhysicalAction(CLASSLOADER_FIELD_NAME, pojo.getClass().getClassLoader());
+    // writer.addPhysicalAction(CLASSLOADER_FIELD_NAME, pojo.getClass().getClassLoader());
     writer.addClassLoaderAction(CLASSLOADER_FIELD_NAME, pojo.getClass().getClassLoader());
     writer.addPhysicalAction(INTERFACES_FIELD_NAME, pojo.getClass().getInterfaces());
     writer.addPhysicalAction(INVOCATION_HANDLER_FIELD_NAME, dehydratableHandler);
@@ -92,23 +88,5 @@ public class ProxyApplicator extends BaseApplicator {
     handler = objectManager.lookupObject((ObjectID) handler);
 
     return Proxy.newProxyInstance(loader, interfaces, (InvocationHandler) handler);
-  }
-
-  public Map connectedCopy(Object source, Object dest, Map visited, ClientObjectManager objectManager,
-                           OptimisticTransactionManager txManager) {
-    Map cloned = new IdentityHashMap();
-
-    Proxy srcProxy = (Proxy) source;
-    Proxy destProxy = (Proxy) dest;
-
-    InvocationHandler handler = Proxy.getInvocationHandler(srcProxy);
-    InvocationHandler clonedHandler = (InvocationHandler) createCopyIfNecessary(objectManager, visited, cloned, handler);
-    
-    ((TransparentAccess)destProxy).__tc_setfield(INVOCATION_HANDLER_FIELD_NAME, clonedHandler);
-
-    TCObject srcTCObject = ((Manageable)srcProxy).__tc_managed();
-    ((Manageable)destProxy).__tc_managed(new TCObjectClone(srcTCObject, txManager));
-
-    return cloned;
   }
 }

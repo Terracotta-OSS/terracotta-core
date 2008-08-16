@@ -4,21 +4,18 @@
  */
 package com.tc.object.applicator;
 
-import com.tc.exception.TCNotSupportedMethodException;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.TCClass;
 import com.tc.object.TCObject;
 import com.tc.object.TraversedReferences;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
-import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LiteralAction;
-import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.util.Assert;
 
 import java.io.IOException;
-import java.util.Map;
 
 public class LiteralTypesApplicator extends BaseApplicator {
 
@@ -58,10 +55,5 @@ public class LiteralTypesApplicator extends BaseApplicator {
     Object value = a.getObject();
 
     return value;
-  }
-
-  public Map connectedCopy(Object source, Object dest, Map visited, ClientObjectManager objectManager,
-                           OptimisticTransactionManager txManager) {
-    throw new TCNotSupportedMethodException();
   }
 }

@@ -4,20 +4,19 @@
  */
 package com.tc.object;
 
+import com.tc.exception.TCClassNotFoundException;
 import com.tc.exception.TCNonPortableObjectError;
 import com.tc.logging.DumpHandler;
 import com.tc.object.appevent.ApplicationEvent;
 import com.tc.object.appevent.ApplicationEventContext;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.tx.ClientTransactionManager;
-import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.object.util.ToggleableStrongReference;
 import com.tc.text.PrettyPrintable;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.Collection;
-import java.util.Map;
 
 /**
  * Manages client-side (L1) object state in a VM.
@@ -26,7 +25,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
 
   /**
    * Find a class based on the class name and the classloader name
-   *
+   * 
    * @param className Class name
    * @param loaderDesc Classloader name
    * @return Class, never null
@@ -36,7 +35,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
 
   /**
    * Determine whether this instance is managed.
-   *
+   * 
    * @param pojo The instance
    * @return True if managed
    */
@@ -44,14 +43,14 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
 
   /**
    * Mark a managed object as referenced
-   *
+   * 
    * @param tcobj Managed object
    */
   public void markReferenced(TCObject tcobj);
 
   /**
    * Determine whether this class is portable
-   *
+   * 
    * @param clazz The class to check
    * @return True if portable
    */
@@ -59,7 +58,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
 
   /**
    * Determine whether this instance is portable
-   *
+   * 
    * @param instance The instance to check
    * @return True if portable
    */
@@ -67,7 +66,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
 
   /**
    * Check whether field of an instance is portable
-   *
+   * 
    * @param value Field value
    * @param fieldName Field name
    * @param pojo Instance to check
@@ -77,7 +76,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
 
   /**
    * Check whether logical action is portable
-   *
+   * 
    * @param params Method call parameters
    * @param paramIndex Parameter index
    * @param methodName Method name
@@ -90,7 +89,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
   /**
    * Replace root ID. Primitive roots are replaceable. Object reference roots generally are not but this can be
    * controlled by the configuration.
-   *
+   * 
    * @param rootName Root object name
    * @param newRootID New root object identifier
    */
@@ -99,7 +98,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
   /**
    * Find object by ID. If necessary, the object will be faulted into the JVM. The default fault-count will be used to
    * limit the number of dependent objects that are also faulted in.
-   *
+   * 
    * @param id Identifier
    * @return Instance for the id
    * @throws ClassNotFoundException If class can't be found in this VM
@@ -110,7 +109,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
    * Look up object by ID, faulting into the JVM if necessary, This method also passes the parent Object context so that
    * more intelligent prefetching is possible at the L2. The default fault-count will be used to limit the number of
    * dependent objects that are also faulted in.
-   *
+   * 
    * @param id Object identifier of the object we are looking up
    * @param parentContext Object identifier of the parent object
    * @return The actual object
@@ -121,7 +120,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
   /**
    * Find object by ID. If necessary, the object will be faulted into the JVM. No fault-count depth will be used and all
    * dependent objects will be faulted into memory.
-   *
+   * 
    * @param id Identifier
    * @return Instance for the id
    * @throws ClassNotFoundException If class can't be found in this VM
@@ -130,7 +129,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
 
   /**
    * Find the managed object for this instance or create a new one if it does not yet exist.
-   *
+   * 
    * @param obj Instance
    * @return Managed object, may be new. Should never be null, but might be object representing null TCObject.
    */
@@ -139,7 +138,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
   /**
    * Find the managed object for this instance or share. This method is (exclusively?) used when implementing
    * ConcurrentHashMap sharing.
-   *
+   * 
    * @param obj Instance
    * @return Should never be null, but might be object representing null TCObject.
    */
@@ -147,7 +146,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
 
   /**
    * Find identifier for existing instance
-   *
+   * 
    * @param obj Object instance
    * @return Identifier
    */
@@ -155,7 +154,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
 
   /**
    * Find named root object
-   *
+   * 
    * @param name Root name
    * @return Root object
    */
@@ -164,7 +163,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
   /**
    * Find and create if necessary a root object for the specified named root. All dependent objects needed will be
    * faulted in to arbitrary depth.
-   *
+   * 
    * @param rootName Root name
    * @param object Instance to use if new
    * @return New or existing object to use as root
@@ -174,7 +173,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
   /**
    * Find and create if necessary a root object for the specified named root. All dependent objects needed will be
    * faulted in, limited to the fault-count specified in the configuration.
-   *
+   * 
    * @param name Root name
    * @param obj Instance to use if new
    * @return New or existing object to use as root
@@ -184,7 +183,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
   /**
    * Find and create if necessary a root object for the specified named root. All dependent objects needed will be
    * faulted in, limited to the fault-count specified in the configuration.
-   *
+   * 
    * @param name Root name
    * @param obj Instance to use if new
    * @param dsoFinal Specify whether this is root is considered final and whether an existing root can be replaced
@@ -194,7 +193,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
 
   /**
    * Find managed object locally (don't fault in an object from the server).
-   *
+   * 
    * @param id Identifier
    * @return Managed object or null if not in client
    */
@@ -202,7 +201,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
 
   /**
    * Find managed object by identifier
-   *
+   * 
    * @param id Identifier
    * @return Managed object
    * @throws ClassNotFoundException If a class needed to hydrate cannot be found
@@ -211,7 +210,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
 
   /**
    * Find managed object by instance, which may be null
-   *
+   * 
    * @param pojo Instance
    * @return Managed object if it exists, or null otherwise
    */
@@ -219,7 +218,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
 
   /**
    * Get all IDs currently in the cache and add to c. Clear all from remote object manager.
-   *
+   * 
    * @param c Collection to collect IDs in
    * @return c
    */
@@ -227,7 +226,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
 
   /**
    * Create new peer object instance for the clazz, referred to through a WeakReference.
-   *
+   * 
    * @param clazz The kind of class
    * @param dna The dna defining the object instance
    * @return Weak reference referring to the peer
@@ -238,7 +237,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
 
   /**
    * Create new peer object instance for the clazz, referred to through a WeakReference.
-   *
+   * 
    * @param clazz The kind of class
    * @param size The size if this is an array
    * @param id The object identifier
@@ -251,7 +250,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
 
   /**
    * Get or create a reference to the managed class for this clazz
-   *
+   * 
    * @param clazz The Java class
    * @return The Terracotta class
    */
@@ -259,21 +258,21 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
 
   /**
    * Set the client transaction manager
-   *
+   * 
    * @param txManager Transaction manager
    */
   public void setTransactionManager(ClientTransactionManager txManager);
 
   /**
    * Get the client transaction manager
-   *
+   * 
    * @return Transaction manager
    */
   public ClientTransactionManager getTransactionManager();
 
   /**
    * Get the reference queue for weakly referenced peers
-   *
+   * 
    * @return Reference queue
    */
   public ReferenceQueue getReferenceQueue();
@@ -299,34 +298,6 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
   public void starting();
 
   /**
-   * Do deep copy of source object using the transaction manager
-   *
-   * @param source Source object
-   * @param optimisticTxManager Transaction manager to use
-   * @return Deep copy of source
-   */
-  public Object deepCopy(Object source, OptimisticTransactionManager optimisticTxManager);
-
-  /**
-   * Take a source and a parent (if non-static inner) and create a new empty instance
-   *
-   * @param source Source object
-   * @param parent Parent object
-   * @return New copy instance of source
-   */
-  public Object createNewCopyInstance(Object source, Object parent);
-
-  /**
-   * For an inner object, create or find the containing parent instance.
-   *
-   * @param visited Map of those objects that have been visited so far
-   * @param cloned Map of those objects that have been cloned already
-   * @param v The object
-   * @return The new or existing parent object clone
-   */
-  public Object createParentCopyInstanceIfNecessary(Map visited, Map cloned, Object v);
-
-  /**
    * @return True if creation in progress
    */
   public boolean isCreationInProgress();
@@ -338,14 +309,14 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
 
   /**
    * Check whether there are any currently pending create objects
-   *
+   * 
    * @return True if any pending
    */
   public boolean hasPendingCreateObjects();
 
   /**
    * Create or replace a root value, typically used for replacable roots.
-   *
+   * 
    * @param rootName Root name
    * @param root New root value
    */
@@ -355,7 +326,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
 
   /**
    * Store the pojo object hierarchy in the context's tree model.
-   *
+   * 
    * @param pojo The object
    * @param context The event context
    */
@@ -364,7 +335,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
   /**
    * Send an ApplicationEvent occurring on pojo to the server via JMX. The handling of concrete event types occurs in
    * com.tc.objectserver.DSOApplicationEvents.
-   *
+   * 
    * @param pojo The object
    * @param event The event
    */
@@ -372,7 +343,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
 
   /**
    * Clone logicalPojo and then apply the specified logical operation, returning the clone.
-   *
+   * 
    * @param logicalPojo The logical object
    * @param methodName The method name on the logical object
    * @param parameters The parameter values
@@ -382,7 +353,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
 
   /**
    * Get or create the toggle reference for the given TCObject
-   *
+   * 
    * @param objectID The TCObjet
    * @param peer The peer object
    * @return the toggle reference

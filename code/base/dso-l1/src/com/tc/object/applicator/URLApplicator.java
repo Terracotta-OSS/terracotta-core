@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.applicator;
 
@@ -13,12 +14,10 @@ import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
-import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.util.Assert;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Map;
 
 /**
  * ChangeApplicator for URLs.
@@ -29,8 +28,9 @@ public class URLApplicator extends BaseApplicator {
     super(encoding);
   }
 
-  public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object pojo) throws IOException, ClassNotFoundException {
-    TCURL url = (TCURL)pojo;
+  public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object pojo) throws IOException,
+      ClassNotFoundException {
+    TCURL url = (TCURL) pojo;
     DNACursor cursor = dna.getCursor();
 
     while (cursor.next(encoding)) {
@@ -47,7 +47,7 @@ public class URLApplicator extends BaseApplicator {
           Assert.assertNotNull(params[5]);
           Assert.assertNotNull(params[6]);
           Assert.assertNotNull(params[7]);
-          
+
           String protocol = null;
           String host = null;
           int port = -1;
@@ -63,7 +63,7 @@ public class URLApplicator extends BaseApplicator {
             host = params[1].toString();
           }
           if (!ObjectID.NULL_ID.equals(params[2])) {
-            port = ((Integer)params[2]).intValue();
+            port = ((Integer) params[2]).intValue();
           }
           if (!ObjectID.NULL_ID.equals(params[3])) {
             authority = params[3].toString();
@@ -90,8 +90,10 @@ public class URLApplicator extends BaseApplicator {
   }
 
   public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
-    URL url = (URL)pojo;
-    writer.addLogicalAction(SerializationUtil.URL_SET, new Object[] { url.getProtocol(), url.getHost(), new Integer(url.getPort()), url.getAuthority(), url.getUserInfo(), url.getPath(), url.getQuery(), url.getRef() });
+    URL url = (URL) pojo;
+    writer.addLogicalAction(SerializationUtil.URL_SET,
+                            new Object[] { url.getProtocol(), url.getHost(), new Integer(url.getPort()),
+                                url.getAuthority(), url.getUserInfo(), url.getPath(), url.getQuery(), url.getRef() });
   }
 
   public TraversedReferences getPortableObjects(Object pojo, TraversedReferences addTo) {
@@ -103,8 +105,4 @@ public class URLApplicator extends BaseApplicator {
     throw new UnsupportedOperationException();
   }
 
-  public Map connectedCopy(Object source, Object dest, Map visited, ClientObjectManager objectManager,
-                           OptimisticTransactionManager txManager) {
-    throw new UnsupportedOperationException();
-  }
 }

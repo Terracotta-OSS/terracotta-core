@@ -4,7 +4,6 @@
  */
 package com.tc.object.applicator;
 
-import com.tc.exception.TCNotSupportedMethodException;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.TCObject;
 import com.tc.object.TraversedReferences;
@@ -14,12 +13,10 @@ import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.util.Assert;
 import com.tc.util.runtime.Vm;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -61,8 +58,4 @@ public class AtomicLongApplicator extends BaseApplicator {
     throw new UnsupportedOperationException();
   }
 
-  public Map connectedCopy(Object source, Object dest, Map visited, ClientObjectManager objectManager,
-                           OptimisticTransactionManager txManager) {
-    throw new TCNotSupportedMethodException();
-  }
 }

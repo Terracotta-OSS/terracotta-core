@@ -9,7 +9,6 @@ import com.tc.object.ObjectID;
 import com.tc.object.TCClass;
 import com.tc.object.TCObject;
 import com.tc.object.TraversedReferences;
-import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
@@ -17,14 +16,10 @@ import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.field.TCField;
-import com.tc.object.tx.optimistic.OptimisticTransactionManager;
-import com.tc.object.tx.optimistic.TCObjectClone;
 import com.tc.util.Assert;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 public class PhysicalApplicator extends BaseApplicator {
@@ -34,34 +29,6 @@ public class PhysicalApplicator extends BaseApplicator {
   public PhysicalApplicator(TCClass clazz, DNAEncoding encoding) {
     super(encoding);
     this.clazz = clazz;
-  }
-
-  /**
-   * return the key value pairs of field names to shared objects for this source. We already updated the literals and
-   * set the new TCObjectClone
-   */
-  public Map connectedCopy(Object source, Object dest, Map visited, ClientObjectManager objectManager,
-                           OptimisticTransactionManager txManager) {
-    Map map = new HashMap();
-    Map cloned = new IdentityHashMap();
-
-    TransparentAccess da = (TransparentAccess) dest;
-
-    Manageable sourceManageable = (Manageable) source;
-    Manageable destManaged = (Manageable) da;
-
-    getAllFields(source, map);
-
-    for (Iterator i = map.keySet().iterator(); i.hasNext();) {
-      String k = (String) i.next();
-      Object v = map.get(k);
-
-      Object copyValue = createCopyIfNecessary(objectManager, visited, cloned, v);
-      da.__tc_setfield(k, copyValue);
-    }
-
-    destManaged.__tc_managed(new TCObjectClone(sourceManageable.__tc_managed(), txManager));
-    return cloned;
   }
 
   public TraversedReferences getPortableObjects(Object pojo, TraversedReferences addTo) {

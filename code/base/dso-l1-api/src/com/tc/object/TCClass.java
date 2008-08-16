@@ -7,12 +7,10 @@ package com.tc.object;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.field.TCField;
-import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.util.Map;
 
 /**
  * Interface for peer to java.lang.Class. The Class of every object under management is represented by an instance of
@@ -83,19 +81,6 @@ public interface TCClass {
    * @return Fields, never null
    */
   public TCField[] getPortableFields();
-
-  /**
-   * Connects the original object to the copy object and creates new copies of referened objects but leaves them
-   * unconnected (mostly this is about doing a deep connected clone without recurrsion so that we don't get stack
-   * overflows
-   * 
-   * @param source Source object
-   * @param dest Copy object
-   * @param visited Note already visited objects
-   * @param txManager Transaction manager
-   * @return Map of original to copy key that were cloned while executing the method
-   */
-  public Map connectedCopy(Object source, Object dest, Map visited, OptimisticTransactionManager txManager);
 
   /**
    * Traverse a graph of objects to find the portable ones

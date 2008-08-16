@@ -8,11 +8,9 @@ import com.tc.exception.ImplementMe;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.field.TCField;
-import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.util.Map;
 
 public class MockTCClass implements TCClass {
   private final String  name = MockTCClass.class.getName();
@@ -115,10 +113,6 @@ public class MockTCClass implements TCClass {
 
   public Class getPeerClass() {
     return getClass();
-  }
-
-  public Map connectedCopy(Object source, Object dest, Map visited, OptimisticTransactionManager txManager) {
-    throw new ImplementMe();
   }
 
   public String getFieldNameByOffset(long fieldOffset) {

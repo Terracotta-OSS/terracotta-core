@@ -16,7 +16,6 @@ import com.tc.object.dna.impl.ProxyInstance;
 import com.tc.object.field.TCField;
 import com.tc.object.field.TCFieldFactory;
 import com.tc.object.loaders.Namespace;
-import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
 import com.tc.util.ReflectionUtil;
@@ -304,10 +303,6 @@ public class TCClassImpl implements TCClass {
       }
     }
     return (TCField[]) l.toArray(new TCField[l.size()]);
-  }
-
-  public Map connectedCopy(Object source, Object dest, Map visited, OptimisticTransactionManager txManager) {
-    return this.applicator.connectedCopy(source, dest, visited, objectManager, txManager);
   }
 
   public boolean isIndexed() {

@@ -22,7 +22,6 @@ import com.tc.object.appevent.NonPortableObjectEvent;
 import com.tc.object.appevent.NonPortableRootContext;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.ManagerUtil;
-import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.cache.CacheStats;
 import com.tc.object.cache.Evictable;
 import com.tc.object.cache.EvictionPolicy;
@@ -35,8 +34,6 @@ import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.msg.JMXMessage;
 import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.tx.ClientTransactionManager;
-import com.tc.object.tx.optimistic.OptimisticTransactionManager;
-import com.tc.object.tx.optimistic.TCObjectClone;
 import com.tc.object.util.IdentityWeakHashMap;
 import com.tc.object.util.ToggleableStrongReference;
 import com.tc.object.walker.ObjectGraphWalker;
@@ -51,8 +48,8 @@ import com.tc.text.StringFormatter;
 import com.tc.util.Assert;
 import com.tc.util.Counter;
 import com.tc.util.NonPortableReason;
-import com.tc.util.ToggleableReferenceManager;
 import com.tc.util.State;
+import com.tc.util.ToggleableReferenceManager;
 import com.tc.util.Util;
 import com.tc.util.concurrent.ResetableLatch;
 import com.tc.util.concurrent.StoppableThread;
@@ -63,17 +60,13 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Array;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -197,21 +190,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     notifyAll();
   }
 
-  public Object createParentCopyInstanceIfNecessary(Map visited, Map cloned, Object v) {
-    TCClass tcc = getOrCreateClass(v.getClass());
-    Object parent = null;
-    if (tcc.isNonStaticInner()) {
-      TransparentAccess access = (TransparentAccess) v;
-      Map m = new HashMap();
-      access.__tc_getallfields(m);
-      Object p = m.get(tcc.getParentFieldName());
-      parent = visited.containsKey(p) ? visited.get(p) : createNewCopyInstance(p, null);
-      visited.put(p, parent);
-      cloned.put(p, parent);
-    }
-    return parent;
-  }
-
   private void waitUntilRunning() {
     boolean isInterrupted = false;
 
@@ -250,35 +228,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     return txManager;
   }
 
-  /**
-   * Deep connected copy used to create stable views on collections of objects. While inefficient this should do that
-   * job. It is important that this method be called holding a distributed lock in order to prevent an unstable view. It
-   * also must be called in an optimistic transaction I'll probably move this out of the client object manager at some
-   * point but we'll see.
-   */
-  public Object deepCopy(Object source, OptimisticTransactionManager optimisticTxManager) {
-    IdentityHashMap cloned = new IdentityHashMap();
-    IdentityHashMap visited = new IdentityHashMap();
-
-    Object parent = this.createParentCopyInstanceIfNecessary(visited, cloned, source);
-    Object copy = createNewCopyInstance(source, parent);
-
-    Assert.eval(copy != null);
-
-    visited.put(source, copy);
-    optimisticTxManager.addClonesToTransaction(visited);
-
-    cloneAndUpdate(optimisticTxManager, cloned, visited, source, copy);
-    while (!cloned.isEmpty()) {
-      Object original = cloned.keySet().iterator().next(); // ick
-      Object clone = cloned.get(original);
-      cloned.remove(original);
-      cloneAndUpdate(optimisticTxManager, cloned, visited, original, clone);
-    }
-
-    return copy;
-  }
-
   private LocalLookupContext getLocalLookupContext() {
     return (LocalLookupContext) localLookupContext.get();
   }
@@ -312,26 +261,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
   // For testing purposes
   protected Map getObjectLatchStateMap() {
     return objectLatchStateMap;
-  }
-
-  /**
-   * While holding the resolve lock to protect against the cleaner create a new copy of the original that is connected
-   * to the copy and has any references replaced with either an existing clone or a new clone where needed. New clones
-   * created in the connected copy are returned so that they can be properly updated from their originals. The reason
-   * for this strategy is to avoid recurrsion (and stack over flows)
-   */
-  private void cloneAndUpdate(OptimisticTransactionManager optimisticTxManager, IdentityHashMap cloned,
-                              IdentityHashMap visited, Object original, Object clone) {
-    TCClass tcc;
-    TCObject tco;
-    tcc = this.getOrCreateClass(original.getClass());
-    tco = this.lookupExistingOrNull(original);
-    synchronized (tco.getResolveLock()) {
-      tco.resolveAllReferences();
-      Map c = tcc.connectedCopy(original, clone, visited, optimisticTxManager);
-      optimisticTxManager.addClonesToTransaction(c);
-      cloned.putAll(c);
-    }
   }
 
   private TCObject create(Object pojo, NonPortableEventContext context) {
@@ -945,7 +874,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
 
   private void basicAddLocal(TCObject obj, boolean removeCreateInProgress) {
     synchronized (this) {
-      Assert.eval(!(obj instanceof TCObjectClone));
       ObjectID id = obj.getObjectID();
       if (basicHasLocal(id)) { throw Assert.failure("Attempt to add an object that already exists: " + obj); }
       idToManaged.put(id, obj);
@@ -1131,35 +1059,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
       }
     } else {
       return createNewPeer(clazz, dna.getArraySize(), dna.getObjectID(), dna.getParentObjectID());
-    }
-  }
-
-  /**
-   * Deep Clone support
-   */
-  public Object createNewCopyInstance(Object source, Object parent) {
-    Assert.eval(!isLiteralPojo(source));
-
-    TCClass clazz = this.getOrCreateClass(source.getClass());
-
-    try {
-      if (clazz.isProxyClass()) {
-        InvocationHandler srcHandler = Proxy.getInvocationHandler(source);
-        Class peerClass = clazz.getPeerClass();
-        return Proxy.newProxyInstance(peerClass.getClassLoader(), peerClass.getInterfaces(), srcHandler);
-      } else if (clazz.isIndexed()) {
-        int size = Array.getLength(source);
-        return factory.getNewArrayInstance(clazz, size);
-      } else if (clazz.isNonStaticInner()) {
-        Assert.eval(parent != null);
-        return factory.getNewPeerObject(clazz, parent);
-      } else {
-        Assert.eval(parent == null);
-        Object o = factory.getNewPeerObject(clazz);
-        return o;
-      }
-    } catch (Exception e) {
-      throw new TCRuntimeException(e);
     }
   }
 

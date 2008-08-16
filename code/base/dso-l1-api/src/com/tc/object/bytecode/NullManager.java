@@ -133,23 +133,7 @@ public final class NullManager implements Manager {
     return false;
   }
 
-  public final Object deepCopy(Object source) {
-    throw new UnsupportedOperationException();
-  }
-
   public final Object lookupRoot(String name) {
-    throw new UnsupportedOperationException();
-  }
-
-  public final void optimisticBegin() {
-    throw new UnsupportedOperationException();
-  }
-
-  public final void optimisticCommit() {
-    throw new UnsupportedOperationException();
-  }
-
-  public final void optimisticRollback() {
     throw new UnsupportedOperationException();
   }
 

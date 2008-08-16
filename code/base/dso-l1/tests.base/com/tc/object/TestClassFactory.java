@@ -9,11 +9,9 @@ import com.tc.object.applicator.ChangeApplicator;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.field.TCField;
-import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.util.Map;
 
 public class TestClassFactory implements TCClassFactory {
 
@@ -148,10 +146,6 @@ public class TestClassFactory implements TCClassFactory {
 
     public Class getPeerClass() {
       return Object.class;
-    }
-
-    public Map connectedCopy(Object source, Object dest, Map visited, OptimisticTransactionManager txManager) {
-      throw new ImplementMe();
     }
 
     public String getFieldNameByOffset(long fieldOffset) {

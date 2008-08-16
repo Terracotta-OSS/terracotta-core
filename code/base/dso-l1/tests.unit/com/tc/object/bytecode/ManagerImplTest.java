@@ -18,14 +18,12 @@ import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.loaders.StandardClassProvider;
 import com.tc.object.session.SessionID;
-import com.tc.object.tx.ClientTransaction;
 import com.tc.object.tx.ClientTransactionManager;
+import com.tc.object.tx.TimerSpec;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
 import com.tc.object.tx.UnlockedSharedObjectException;
-import com.tc.object.tx.TimerSpec;
-import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.object.util.ToggleableStrongReference;
 import com.tc.text.PrettyPrinter;
 
@@ -121,10 +119,10 @@ public class ManagerImplTest extends BaseDSOTestCase {
 
     }
 
-//    public void lock(String lockName, int lockLevel) {
-//      throw new ImplementMe();
-//    }
-//
+    // public void lock(String lockName, int lockLevel) {
+    // throw new ImplementMe();
+    // }
+    //
     public void unlock(String lockName) {
       throw new ImplementMe();
     }
@@ -134,10 +132,6 @@ public class ManagerImplTest extends BaseDSOTestCase {
     }
 
     public int waitLength(String lockName) {
-      throw new ImplementMe();
-    }
-
-    public ClientTransaction getTransaction() {
       throw new ImplementMe();
     }
 
@@ -187,12 +181,12 @@ public class ManagerImplTest extends BaseDSOTestCase {
 
     public void dump(Writer writer) {
       throw new ImplementMe();
-      
+
     }
 
     public void dumpToLogger() {
       throw new ImplementMe();
-      
+
     }
 
     public PrettyPrinter prettyPrint(PrettyPrinter out) {
@@ -311,18 +305,6 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public Object deepCopy(Object source, OptimisticTransactionManager optimisticTxManager) {
-      throw new ImplementMe();
-    }
-
-    public Object createNewCopyInstance(Object source, Object parent) {
-      throw new ImplementMe();
-    }
-
-    public Object createParentCopyInstanceIfNecessary(Map visited, Map cloned, Object v) {
-      throw new ImplementMe();
-    }
-
     public void replaceRootIDIfNecessary(String rootName, ObjectID newRootID) {
       throw new ImplementMe();
 
@@ -383,12 +365,12 @@ public class ManagerImplTest extends BaseDSOTestCase {
 
     public void dump(Writer writer) {
       throw new ImplementMe();
-      
+
     }
 
     public void dumpToLogger() {
       throw new ImplementMe();
-      
+
     }
 
     public PrettyPrinter prettyPrint(PrettyPrinter out) {
