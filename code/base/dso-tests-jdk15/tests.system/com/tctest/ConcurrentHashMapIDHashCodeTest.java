@@ -10,8 +10,10 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.runtime.Vm;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
+import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CyclicBarrier;
 
@@ -22,6 +24,12 @@ import java.util.concurrent.CyclicBarrier;
 public class ConcurrentHashMapIDHashCodeTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 3;
+
+  public ConcurrentHashMapIDHashCodeTest() {
+    if (Vm.isIBM()) {
+      disableAllUntil(new Date(Long.MAX_VALUE));
+    }
+  }
 
   @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
