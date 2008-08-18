@@ -106,6 +106,11 @@ public class CommandLineBuilder {
     new HelpFormatter().printHelp("java " + callingClassName, options);
     System.exit(1);
   }
+  
+  public void usageAndDie(String message) {
+    new HelpFormatter().printHelp(message, options);
+    System.exit(1);
+  }
 
   public void printArguments() {
     System.err.println("Arguments are: " + Arrays.asList(commandLine.getArgs()));

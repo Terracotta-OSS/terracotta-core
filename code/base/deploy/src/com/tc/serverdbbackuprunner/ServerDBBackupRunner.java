@@ -46,10 +46,10 @@ public class ServerDBBackupRunner {
     int port = -1;
 
     if (arguments.length > 2) {
-      commandLineBuilder.usageAndDie();
+      commandLineBuilder.usageAndDie("backup-data.bat/backup-data.sh");
     }
     if (commandLineBuilder.hasOption('h')) {
-      commandLineBuilder.usageAndDie();
+      commandLineBuilder.usageAndDie("backup-data.bat/backup-data.sh");
     }
 
     String userName = null;
@@ -84,7 +84,7 @@ public class ServerDBBackupRunner {
       serverDBBackupRunner.runBackup(path);
     } catch (Exception se) {
       System.err.println(se.getMessage());
-      commandLineBuilder.usageAndDie();
+      commandLineBuilder.usageAndDie("backup-data.bat/backup-data.sh");
     }
 
     if (path == null) path = serverDBBackupRunner.getDefaultBackupPath();
