@@ -5,15 +5,19 @@
 package com.tc.objectserver.persistence.sleepycat;
 
 import com.sleepycat.je.DatabaseException;
+import com.tc.exception.ExceptionWrapper;
+import com.tc.exception.ExceptionWrapperImpl;
 
 public class DatabaseDirtyException extends TCDatabaseException implements com.tc.exception.DatabaseException {
+
+  private static final ExceptionWrapper wrapper = new ExceptionWrapperImpl();
 
   public DatabaseDirtyException(DatabaseException cause) {
     super(cause);
   }
 
   public DatabaseDirtyException(String message) {
-    super(message);
+    super(wrapper.wrap(message));
   }
 
 }
