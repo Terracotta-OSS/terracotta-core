@@ -68,11 +68,11 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
   private static String safeFilePath(File file) {
     try {
       return file.getCanonicalPath();
-    } catch(IOException ioe) {
+    } catch (IOException ioe) {
       return file.getAbsolutePath();
     }
   }
-  
+
   private void checkEnabled() {
     if (!isBackupEnabled()) {
       RuntimeException e = new RuntimeException(
@@ -89,7 +89,7 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
   }
 
   public String getDefaultPathForBackup() {
-//    checkEnabled();
+    // checkEnabled();
     return defaultPathForBackup;
   }
 
@@ -131,7 +131,7 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
       isBackupRunning.set(false);
     }
     logger.info("Backup Successfully Completed");
-    backupFileLogger.logStopMessage();
+    backupFileLogger.logCompletedMessage();
     sendNotification(BACKUP_COMPLETED, this);
   }
 
@@ -249,8 +249,9 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
 
   class FileLoggerForBackup {
     private final String       logFilePath;
-    public final static String BACKUP_STARTED_MSG = "Backup Started at ";
-    public final static String BACKUP_STOPPED_MSG = "Backup Stopped at ";
+    public final static String BACKUP_STARTED_MSG   = "Backup Started at ";
+    public final static String BACKUP_STOPPED_MSG   = "Backup Stopped at ";
+    public final static String BACKUP_COMPLETED_MSG = "Backup Completed at ";
 
     public FileLoggerForBackup(String backupPath) {
       logFilePath = backupPath + File.separator + "backup.log";
@@ -273,6 +274,12 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
     public void logStartMessage() {
       String date = getCurrentDateTime();
       logMessage(BACKUP_STARTED_MSG + date);
+    }
+
+    public void logCompletedMessage() {
+      String date = getCurrentDateTime();
+      logMessage(BACKUP_COMPLETED_MSG + date);
+      logMessage("");
     }
 
     public void logStopMessage() {
