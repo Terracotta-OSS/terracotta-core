@@ -54,7 +54,8 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
   private static final Log                  LOG             = LogFactory.getLog(GenericServer.class);
   private static final String               SERVER          = "server_";
   private static final boolean              GC_LOGGING      = true;
-  private static final boolean              ENABLE_DEBUGGER = false;
+  private static final boolean              ENABLE_DEBUGGER = Boolean.getBoolean(GenericServer.class.getName()
+                                                                                 + ".ENABLE_DEBUGGER");
   private static final ThreadLocal          dsoEnabled      = new ThreadLocal() {
                                                               protected Object initialValue() {
                                                                 return Boolean.TRUE;
