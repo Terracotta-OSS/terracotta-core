@@ -312,6 +312,7 @@ public class BootJar {
       byte[] classBytes = (byte[]) entries.get(je);
       out.putNextEntry(je.getJarEntry());
       out.write(classBytes);
+      out.flush();
     }
   }
 
@@ -320,38 +321,30 @@ public class BootJar {
   }
 
   public static void closeQuietly(BootJar bootJar) {
-    if (bootJar != null) {
-      try {
-        bootJar.close();
-      } catch (IOException e) {
-        // e.printStackTrace();
-      }
-    }
+    if (bootJar != null) bootJar.close();
   }
 
-  public synchronized void close() throws IOException {
-    if (state == STATE_OPEN) {
-      if (openForWrite && !this.creationErrorOccurred) {
-        metaData.write(manifest);
-        JarOutputStream out = new JarOutputStream(new FileOutputStream(file, false), manifest);
-        writeEntries(out);
-        out.flush();
-        out.close();
+  private synchronized void close() {
+    JarOutputStream jarOutput = null;
+    try {
+      if (state == STATE_OPEN) {
+        if (openForWrite && !this.creationErrorOccurred) {
+          metaData.write(manifest);
+          jarOutput = new JarOutputStream(new FileOutputStream(file, false), manifest);
+          writeEntries(jarOutput);
+        }
       }
-      if (jarFileInput != null) {
+    } catch (Exception e) {
+      logger.error(e.getMessage(), e);
+    } finally {
+      IOUtils.closeQuietly(jarOutput);
+      if (jarFileInput != null) try {
         jarFileInput.close();
+      } catch (IOException e) {
+        logger.error(e.getMessage(), e);
       }
+      state = STATE_CLOSED;
     }
-    state = STATE_CLOSED;
-  }
-
-  /**
-   * Check the embedded TC_VERSION information against current product version.
-   * 
-   * @return <code>true</code> TC_VERSION matches current product version.
-   */
-  public boolean checkSourceVersion() {
-    return false;
   }
 
   static class BootJarMetaData {

@@ -24,14 +24,14 @@ public class BootJarTest extends BaseDSOTestCase {
   private final ClassBytesProvider bytesProvider = new ClassLoaderBytesProvider(getClass().getClassLoader());
 
   public BootJarTest() {
-     // 
+    // 
   }
 
   public void testInvalidBootJarVersion() throws Exception {
     File jarFile = this.getTempFile("dso-boot.jar");
     BootJar bootJar = BootJar.getBootJarForWriting(jarFile, "bogus_jvm_signature_666");
     bootJar.loadClassIntoJar(STRING_CLASS, bytesProvider.getBytesForClass(STRING_CLASS), false);
-    bootJar.close();
+    BootJar.closeQuietly(bootJar);
     try {
       BootJar.getBootJarForReading(jarFile);
       fail("The test was expecting an InvalidJVMVersionException, but it was not thrown.");
@@ -118,7 +118,7 @@ public class BootJarTest extends BaseDSOTestCase {
     byte[] classBytes = bytesProvider.getBytesForClass(classname);
     assertNotNull(classBytes);
     bootJar.loadClassIntoJar(spec.getClassName(), classBytes, spec.isPreInstrumented());
-    bootJar.close();
+    BootJar.closeQuietly(bootJar);
 
     bootJar = BootJar.getBootJarForReading(jar, new BootJarSignature(vmSig));
 
@@ -127,7 +127,7 @@ public class BootJarTest extends BaseDSOTestCase {
     assertTrue(allPreInstrumentedClasses.contains(classname));
     assertFalse(allPreInstrumentedClasses.contains(java.lang.String.class.getName()));
 
-    bootJar.close();
+    BootJar.closeQuietly(bootJar);
   }
 
 }

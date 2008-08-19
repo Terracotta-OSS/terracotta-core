@@ -290,8 +290,6 @@ public class BootJarTool {
                       + "<additional-boot-jar-classes/> section of your tc-config file:";
     String MESSAGE3 = "\nUse the make-boot-jar tool to re-create your boot JAR.";
     try {
-      if (!bootJarFile.exists()) throw new FileNotFoundException();
-
       Map result = compareBootJarContentsToUserSpec(bootJarFile);
       Set missing = (Set) result.get(MISSING_CLASSES);
       Set excess = (Set) result.get(EXCESS_CLASSES);
@@ -313,15 +311,16 @@ public class BootJarTool {
         consoleLogger.error(MESSAGE3);
         System.exit(1);
       }
-    } catch (FileNotFoundException e) {
-      consoleLogger.fatal("\nDSO boot JAR file not found: '" + bootJarFile
-                          + "'; you can specify the boot JAR file to scan using the -o or --bootjar-file option.");
-      System.exit(1);
     } catch (InvalidBootJarMetaDataException e) {
       consoleLogger.fatal(e.getMessage());
       consoleLogger.fatal(MESSAGE3);
       System.exit(1);
     }
+    // catch (IOException e) {
+    // consoleLogger.fatal("\nUnable to read DSO boot JAR file: '" + bootJarFile
+    // + "'; you can specify the boot JAR file to scan using the -o or --bootjar-file option.");
+    // System.exit(1);
+    // }
   }
 
   /**
@@ -581,10 +580,11 @@ public class BootJarTool {
     }
 
     try {
-      bootJar.close();
+      BootJar.closeQuietly(bootJar);
+      // bootJar.close();
       bootJarHandler.announceCreationEnd();
-    } catch (IOException e) {
-      exit(bootJarHandler.getCloseErrorMessage(), e);
+      // } catch (IOException e) {
+      // exit(bootJarHandler.getCloseErrorMessage(), e);
     } catch (BootJarHandlerException e) {
       exit(e.getMessage(), e.getCause());
     }
