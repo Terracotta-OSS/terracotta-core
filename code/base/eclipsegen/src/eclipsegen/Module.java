@@ -12,6 +12,7 @@ public class Module {
   private final boolean     isModule;
   private final Set<String> deps;
   private final boolean     isAspectJ;
+  private final boolean     javaodc;
 
   Module(ModuleBuilder builder) {
     this.name = builder.moduleName;
@@ -19,6 +20,7 @@ public class Module {
     this.isModule = getBooleanOption(builder.options, "module", false);
     this.deps = Collections.unmodifiableSet(new TreeSet<String>(builder.deps));
     this.isAspectJ = getBooleanOption(builder.options, "aspectj", false);
+    this.javaodc = getBooleanOption(builder.options, "javadoc", false);
 
     if (!builder.options.isEmpty()) { throw new RuntimeException("options not read: " + builder.options); }
   }
@@ -57,6 +59,10 @@ public class Module {
 
   public boolean isAspectJ() {
     return isAspectJ;
+  }
+
+  public boolean isJavaodc() {
+    return javaodc;
   }
 
 }
