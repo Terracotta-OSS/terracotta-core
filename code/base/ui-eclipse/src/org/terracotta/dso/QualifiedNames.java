@@ -91,4 +91,9 @@ public interface QualifiedNames {
     QUERY_RESTART_OPTION =
       new QualifiedName(TERRACOTTA_QUALIFIER,
                         "QueryRestartOption");
+  
+  public static final QualifiedName
+    BOOT_JAR_PRODUCT_VERSION =
+      new QualifiedName(TERRACOTTA_QUALIFIER,
+                        "BootJarProductVersion");
 }

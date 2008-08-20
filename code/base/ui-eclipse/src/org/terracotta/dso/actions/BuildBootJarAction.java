@@ -40,9 +40,11 @@ import org.terracotta.dso.BootJarHelper;
 import org.terracotta.dso.ClasspathProvider;
 import org.terracotta.dso.ConfigSpec;
 import org.terracotta.dso.ProjectNature;
+import org.terracotta.dso.QualifiedNames;
 import org.terracotta.dso.TcPlugin;
 import org.terracotta.dso.dialogs.ExceptionDialog;
 
+import com.tc.util.ProductInfo;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.File;
@@ -79,7 +81,7 @@ public class BuildBootJarAction extends Action implements IActionDelegate, IWork
   public void setJREContainerPath(String path) {
     m_jreContainerPath = path;
   }
- 
+
   public void run(IAction action) {
     try {
       IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
@@ -202,11 +204,20 @@ public class BuildBootJarAction extends Action implements IActionDelegate, IWork
       File outFile = outPath.toFile();
       if (outFile.exists()) { // it better exist, the process didn't return an error code
         BootClassHelper.cacheBootTypes(outFile);
+        storeCreationProperty(project.getFile(bootJarName));
       }
       plugin.setBootClassHelper(project, new BootClassHelper(m_javaProject, bootJarName));
     }
 
     m_process = null;
+  }
+
+  private static void storeCreationProperty(IFile bootJarFile) {
+    try {
+      bootJarFile.setPersistentProperty(QualifiedNames.BOOT_JAR_PRODUCT_VERSION, ProductInfo.getInstance().version());
+    } catch (CoreException ce) {
+      /* ignore */
+    }
   }
 
   private void checkCancel(IProgressMonitor monitor) throws InterruptedException {
