@@ -21,11 +21,15 @@ import java.util.Vector;
 
 public class CreateRescueCandidatesYoungGCTestApp extends AbstractErrorCatchingTransparentApp {
 
-  private static final long TEST_DURATION = 10 * 60 * 1000;
+  private static final long TEST_DURATION             = 7 * 60 * 1000;
 
-  final Set                 root          = new HashSet();
-  final Vector              unusedBytes   = new Vector();
-  static long               maxDepth      = 2;
+  private static final long THREAD_DURATION_TOLERANCE = 30 * 1000;
+
+  private static final long THREAD_DURATION           = TEST_DURATION - THREAD_DURATION_TOLERANCE;
+
+  final Set                 root                      = new HashSet();
+  final Vector              unusedBytes               = new Vector();
+  static long               maxDepth                  = 2;
 
   public CreateRescueCandidatesYoungGCTestApp(String appId, ApplicationConfig config, ListenerProvider listenerProvider) {
     super(appId, config, listenerProvider);
@@ -67,20 +71,23 @@ public class CreateRescueCandidatesYoungGCTestApp extends AbstractErrorCatchingT
     log("App Id = " + getApplicationId() + " participation count = " + getParticipantCount() + " intensity = "
         + getIntensity());
 
-    PopulateThread populateThread = new PopulateThread(root);
+    PopulateThread populateThread = new PopulateThread(root, THREAD_DURATION);
     populateThread.start();
 
-    RemoveThread removeThread = new RemoveThread(root);
+    RemoveThread removeThread = new RemoveThread(root, THREAD_DURATION);
     removeThread.start();
 
-    DisplaceThread displaceThread = new DisplaceThread(root);
+    DisplaceThread displaceThread = new DisplaceThread(root, THREAD_DURATION);
     displaceThread.start();
 
-    LocalGCThread gcThread = new LocalGCThread();
+    LocalGCThread gcThread = new LocalGCThread(THREAD_DURATION);
     gcThread.start();
 
     try {
-      Thread.sleep(TEST_DURATION);
+      populateThread.join();
+      removeThread.join();
+      displaceThread.join();
+      gcThread.join();
     } catch (InterruptedException e) {
       throw new AssertionError(e);
     }
@@ -115,12 +122,15 @@ public class CreateRescueCandidatesYoungGCTestApp extends AbstractErrorCatchingT
 
   private static final class PopulateThread extends Thread {
 
-    private Set root;
+    private Set  root;
 
-    private Set exceptions = new HashSet();
+    private Set  exceptions = new HashSet();
 
-    public PopulateThread(Set root) {
+    private long duration;
+
+    public PopulateThread(Set root, long duration) {
       this.root = root;
+      this.duration = duration;
     }
 
     public synchronized Set getExceptions() {
@@ -130,7 +140,8 @@ public class CreateRescueCandidatesYoungGCTestApp extends AbstractErrorCatchingT
     public void run() {
       try {
         long objectCount = 0;
-        while (true) {
+        long startTime = System.currentTimeMillis();
+        while (System.currentTimeMillis() < (startTime + duration)) {
           Node rootNode = new Node(objectCount * 100);
           createCicleOfNodes(rootNode, 20);
           synchronized (root) {
@@ -162,12 +173,15 @@ public class CreateRescueCandidatesYoungGCTestApp extends AbstractErrorCatchingT
 
   private static final class RemoveThread extends Thread {
 
-    private Set root;
+    private Set  root;
 
-    private Set exceptions = new HashSet();
+    private Set  exceptions = new HashSet();
 
-    public RemoveThread(Set root) {
+    private long duration;
+
+    public RemoveThread(Set root, long duration) {
       this.root = root;
+      this.duration = duration;
     }
 
     public synchronized Set getExceptions() {
@@ -177,7 +191,8 @@ public class CreateRescueCandidatesYoungGCTestApp extends AbstractErrorCatchingT
     public void run() {
       try {
         int removeCount = 0;
-        while (true) {
+        long startTime = System.currentTimeMillis();
+        while (System.currentTimeMillis() < (startTime + duration)) {
           synchronized (root) {
             Iterator iter = root.iterator();
             if (iter.hasNext()) {
@@ -203,14 +218,17 @@ public class CreateRescueCandidatesYoungGCTestApp extends AbstractErrorCatchingT
 
   private static final class DisplaceThread extends Thread {
 
-    private Set root;
+    private Set  root;
 
-    private Set exceptions   = new HashSet();
+    private Set  exceptions   = new HashSet();
 
-    private Set referenceSet = new HashSet();
+    private Set  referenceSet = new HashSet();
 
-    public DisplaceThread(Set root) {
+    private long duration;
+
+    public DisplaceThread(Set root, long duration) {
       this.root = root;
+      this.duration = duration;
     }
 
     public synchronized Set getExceptions() {
@@ -220,7 +238,8 @@ public class CreateRescueCandidatesYoungGCTestApp extends AbstractErrorCatchingT
     public void run() {
       try {
         int displacedCount = 0;
-        while (true) {
+        long startTime = System.currentTimeMillis();
+        while (System.currentTimeMillis() < (startTime + duration)) {
 
           synchronized (root) {
             Iterator iter = root.iterator();
@@ -232,14 +251,14 @@ public class CreateRescueCandidatesYoungGCTestApp extends AbstractErrorCatchingT
               if (displacedCount % 5 == 0) {
                 System.out.println("displacing: " + referenceSet.size());
                 for (Iterator rIter = referenceSet.iterator(); rIter.hasNext();) {
-                  Node currentNode = (Node)rIter.next();
+                  Node currentNode = (Node) rIter.next();
                   Node node = currentNode.next().next();
                   root.add(node);
                 }
                 referenceSet.clear();
-               
+
               }
-              
+
             }
           }
 
@@ -258,7 +277,13 @@ public class CreateRescueCandidatesYoungGCTestApp extends AbstractErrorCatchingT
 
   private static final class LocalGCThread extends Thread {
 
-    private Set exceptions = new HashSet();
+    private Set  exceptions = new HashSet();
+
+    private long duration;
+
+    public LocalGCThread(long duration) {
+      this.duration = duration;
+    }
 
     public synchronized Set getExceptions() {
       return exceptions;
@@ -267,7 +292,8 @@ public class CreateRescueCandidatesYoungGCTestApp extends AbstractErrorCatchingT
     public void run() {
       try {
 
-        while (true) {
+        long startTime = System.currentTimeMillis();
+        while (System.currentTimeMillis() < (startTime + duration)) {
           System.gc();
           Thread.sleep(50);
 
