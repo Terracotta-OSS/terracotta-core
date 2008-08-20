@@ -4,6 +4,9 @@
  */
 package com.tc.objectserver.impl;
 
+import bsh.EvalError;
+import bsh.Interpreter;
+
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
@@ -15,6 +18,7 @@ import com.tc.exception.CleanDirtyDatabaseException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.exception.ZapDirtyDbServerNodeException;
 import com.tc.exception.ZapServerNodeException;
+import com.tc.handler.CallbackDatabaseDirtyAlertAdapter;
 import com.tc.handler.CallbackDirtyDatabaseCleanUpAdapter;
 import com.tc.handler.CallbackDumpAdapter;
 import com.tc.io.TCFile;
@@ -159,6 +163,7 @@ import com.tc.objectserver.persistence.sleepycat.ConnectionIDFactoryImpl;
 import com.tc.objectserver.persistence.sleepycat.CustomSerializationAdapterFactory;
 import com.tc.objectserver.persistence.sleepycat.DBEnvironment;
 import com.tc.objectserver.persistence.sleepycat.DBException;
+import com.tc.objectserver.persistence.sleepycat.DatabaseDirtyException;
 import com.tc.objectserver.persistence.sleepycat.SerializationAdapterFactory;
 import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor;
 import com.tc.objectserver.persistence.sleepycat.TCDatabaseException;
@@ -230,9 +235,6 @@ import java.util.Set;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 import javax.management.remote.JMXConnectorServer;
-
-import bsh.EvalError;
-import bsh.Interpreter;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -434,6 +436,9 @@ public class DistributedObjectServer implements TCDumper {
         }
       }
       logger.debug("persistence database home: " + dbhome);
+
+      CallbackOnExitHandler dirtydbHandler = new CallbackDatabaseDirtyAlertAdapter(logger, consoleLogger);
+      threadGroup.addCallbackOnExitExceptionHandler(DatabaseDirtyException.class, dirtydbHandler);
 
       DBEnvironment dbenv = new DBEnvironment(persistent, dbhome, l2Properties.getPropertiesFor("berkeleydb")
           .addAllPropertiesTo(new Properties()));
