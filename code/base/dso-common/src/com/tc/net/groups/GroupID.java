@@ -18,10 +18,9 @@ import java.util.ArrayList;
 
 public class GroupID extends NodeIDImpl {
   private static final String UNINITIALIZED = "Uninitialized";
-  public static final GroupID NULL_ID = new GroupID("NULL-GID", null);
-  
+
   private String              name;
-  private ArrayList           nodes = new ArrayList();
+  private ArrayList           nodes         = new ArrayList();
 
   public GroupID() {
     // To make serialization happy
@@ -52,14 +51,15 @@ public class GroupID extends NodeIDImpl {
     }
     return false;
   }
-  
+
   public ArrayList getNodes() {
     return this.nodes;
   }
 
   public int hashCode() {
     int hc = 0;
-    for(int i =0; i < nodes.size(); ++i) hc += ((NodeIDImpl)nodes.get(i)).hashCode();
+    for (int i = 0; i < nodes.size(); ++i)
+      hc += ((NodeIDImpl) nodes.get(i)).hashCode();
     return hc;
   }
 
@@ -77,11 +77,11 @@ public class GroupID extends NodeIDImpl {
     int nodeSize = in.readInt();
     if (nodeSize > 0) {
       nodes = new ArrayList(nodeSize);
-      for(int i =0; i < nodeSize; ++i) {
+      for (int i = 0; i < nodeSize; ++i) {
         try {
           nodes.add(in.readObject());
-        } catch(ClassNotFoundException e) {
-          throw new IOException("ClassNotFound"+e.toString());
+        } catch (ClassNotFoundException e) {
+          throw new IOException("ClassNotFound" + e.toString());
         }
       }
     }
@@ -93,8 +93,8 @@ public class GroupID extends NodeIDImpl {
     if (nodes == null) {
       out.writeInt(0);
     } else {
-      for(int i =0; i < nodes.size(); ++i) {
-        NodeIDImpl node = (NodeIDImpl)nodes.get(i);
+      for (int i = 0; i < nodes.size(); ++i) {
+        NodeIDImpl node = (NodeIDImpl) nodes.get(i);
         out.writeObject(node);
       }
     }
@@ -109,7 +109,7 @@ public class GroupID extends NodeIDImpl {
     int nodeSize = serialInput.readInt();
     if (nodeSize > 0) {
       nodes = new ArrayList(nodeSize);
-      for(int i =0; i < nodeSize; ++i) {
+      for (int i = 0; i < nodeSize; ++i) {
         NodeIDImpl node = new NodeIDImpl();
         node.deserializeFrom(serialInput);
         nodes.add(node);
@@ -124,8 +124,8 @@ public class GroupID extends NodeIDImpl {
     if (nodes == null) {
       serialOutput.writeInt(0);
     } else {
-      for(int i =0; i < nodes.size(); ++i) {
-        NodeIDImpl node = (NodeIDImpl)nodes.get(i);
+      for (int i = 0; i < nodes.size(); ++i) {
+        NodeIDImpl node = (NodeIDImpl) nodes.get(i);
         node.serializeTo(serialOutput);
       }
     }
@@ -134,6 +134,5 @@ public class GroupID extends NodeIDImpl {
   public byte getType() {
     return L2_NODE_TYPE;
   }
-
 
 }
