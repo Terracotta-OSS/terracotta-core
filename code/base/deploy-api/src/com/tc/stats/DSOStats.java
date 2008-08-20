@@ -20,13 +20,18 @@ public interface DSOStats { // extends Stats { XXX: (TE) Not extending the gener
   Statistic[] getStatistics(String[] names);
 
   DoubleStatistic getCacheHitRatio();
+  double getNativeCacheHitRatio();
 
   CountStatistic getCacheMissRate();
+  long getNativeCacheMissRate();
 
   CountStatistic getTransactionRate();
+  long getNativeTransactionRate();
 
   CountStatistic getObjectFaultRate();
+  long getNativeObjectFaultRate();
 
   CountStatistic getObjectFlushRate();
+  long getNativeObjectFlushRate();
 
 }

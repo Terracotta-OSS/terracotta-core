@@ -43,25 +43,45 @@ public class DSOStatsImpl extends StatsSupport implements DSOStats {
     return StatsUtil.makeCountStat(faultRate);
   }
 
+  public long getNativeObjectFaultRate() {
+    return faultRate.getValue();
+  }
+  
   public CountStatistic getObjectFlushRate() {
     return StatsUtil.makeCountStat(flushRate);
   }
 
+  public long getNativeObjectFlushRate() {
+    return flushRate.getValue();
+  }
+  
   public CountStatistic getTransactionRate() {
     return StatsUtil.makeCountStat(txnRate);
   }
 
+  public long getNativeTransactionRate() {
+    return txnRate.getValue();
+  }
+  
   public DoubleStatistic getCacheHitRatio() {
     double value = objMgrStats.getCacheHitRatio();
     DoubleStatisticImpl rv = new DoubleStatisticImpl(System.currentTimeMillis());
     rv.setDoubleValue(value);
     return rv;
   }
-
+  
+  public double getNativeCacheHitRatio() {
+    return objMgrStats.getCacheHitRatio();
+  }
+  
   public CountStatistic getCacheMissRate() {
     return StatsUtil.makeCountStat(objMgrStats.getCacheMissRate());
   }
 
+  public long getNativeCacheMissRate() {
+    return objMgrStats.getCacheMissRate().getCounterValue();
+  }
+  
   public Statistic[] getStatistics(String[] names) {
     int count = names.length;
     Statistic[] result = new Statistic[count];

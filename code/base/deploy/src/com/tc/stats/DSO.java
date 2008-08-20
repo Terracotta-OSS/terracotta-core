@@ -16,9 +16,9 @@ import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.objectserver.api.GCStats;
+import com.tc.objectserver.api.GCStatsEventListener;
 import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.api.ObjectInstanceMonitorMBean;
-import com.tc.objectserver.api.GCStatsEventListener;
 import com.tc.objectserver.api.ObjectManagerMBean;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
@@ -116,22 +116,42 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return getStats().getObjectFlushRate();
   }
 
+  public long getNativeObjectFlushRate() {
+    return getStats().getNativeObjectFlushRate();
+  }
+
   public DoubleStatistic getCacheHitRatio() {
     return getStats().getCacheHitRatio();
   }
 
+  public double getNativeCacheHitRatio() {
+    return getStats().getNativeCacheHitRatio();
+  }
+  
   public CountStatistic getCacheMissRate() {
     return getStats().getCacheMissRate();
   }
 
+  public long getNativeCacheMissRate() {
+    return getStats().getNativeCacheMissRate();
+  }
+  
   public CountStatistic getTransactionRate() {
     return getStats().getTransactionRate();
   }
 
+  public long getNativeTransactionRate() {
+    return getStats().getNativeTransactionRate();
+  }
+  
   public CountStatistic getObjectFaultRate() {
     return getStats().getObjectFaultRate();
   }
 
+  public long getNativeObjectFaultRate() {
+    return getStats().getNativeObjectFaultRate();
+  }
+  
   public Statistic[] getStatistics(String[] names) {
     return getStats().getStatistics(names);
   }
