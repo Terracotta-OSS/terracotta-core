@@ -116,7 +116,7 @@ public class ConfigLoader {
       config.addRoot(new com.tc.object.config.Root(fieldExpression, rootName), false);
     } else {
       String message = "Root definition incomplete";
-      if (rootName != null) message += " for root " + rootName;
+      if (rootName != null) message += " for root named '" + rootName + "'";
       message += ": the value for the field-name or the field-expression must be declared.";
       throw new ConfigurationSetupException(message);
     }
