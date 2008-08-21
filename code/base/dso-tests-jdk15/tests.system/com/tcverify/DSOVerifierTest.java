@@ -213,9 +213,9 @@ public class DSOVerifierTest extends TCTestCase {
     config.getApplication().getDSO().setLocks(new LockConfigBuilder[] { lock1, lock2 });
 
     RootConfigBuilder root = new RootConfigBuilderImpl();
-    // XXX
-    // root.setRootName("verifierMap");
+
     root.setFieldName("com.tcverify.DSOVerifier.verifierMap");
+    root.setRootName("verifierMap");
 
     config.getApplication().getDSO().setRoots(new RootConfigBuilder[] { root });
 
