@@ -90,19 +90,14 @@ public class ConfigLoader {
     String fieldName = root.getFieldName();
     String fieldExpression = root.getFieldExpression();
 
-    // XXX: No need to perform these checks, the XML Schema will enforce these constraints
-
-    // if (fieldName == null && fieldExpression == null) {
-    // String message = "Must specify either field-name or field-expression";
-    // if (rootName != null) message += " for root " + rootName;
-    // throw new ConfigurationSetupException(message);
-    // }
-    //
-    // if (fieldName != null && fieldExpression != null) {
-    // String message = "Cannot specify both field-name and field-expression";
-    // if (rootName != null) message += " for root " + rootName;
-    // throw new ConfigurationSetupException(message);
-    // }
+    // XXX: Can't enforce this via XML Schema - yet, the version of xml beans that
+    // we are using does not correctly support substitutionGroups yet
+    if (fieldName != null && fieldExpression != null) {
+      String message = "Ambiguous root definition";
+      if (rootName != null) message += " for root named '" + rootName + "'";
+      message += ": specify the field-name or a field-expression, but not both";
+      throw new ConfigurationSetupException(message);
+    }
 
     if (fieldName != null) {
       try {
@@ -115,7 +110,7 @@ public class ConfigLoader {
     } else if (fieldExpression != null) {
       config.addRoot(new com.tc.object.config.Root(fieldExpression, rootName), false);
     } else {
-      String message = "Root definition incomplete";
+      String message = "Incomplete root definition";
       if (rootName != null) message += " for root named '" + rootName + "'";
       message += ": the value for the field-name or the field-expression must be declared.";
       throw new ConfigurationSetupException(message);
