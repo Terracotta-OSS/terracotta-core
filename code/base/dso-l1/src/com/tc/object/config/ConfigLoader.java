@@ -60,92 +60,17 @@ public class ConfigLoader {
   }
 
   public void loadDsoConfig(DsoApplication dsoApplication) throws ConfigurationSetupException {
-    if (dsoApplication != null) {
-      Roots rootsList = dsoApplication.getRoots();
-      if (rootsList != null && rootsList.getRootArray() != null) {
-        Root[] roots = rootsList.getRootArray();
-        for (int i = 0; i < roots.length; ++i) {
-          Root root = roots[i];
-          String rootName = root.getRootName();
-          String fieldName = root.getFieldName();
-          String fieldExpression = root.getFieldExpression();
+    if (dsoApplication == null) return;
 
-          // XXX: It would be nice to enforce this constraint in XML Schema
-          if (fieldName == null && fieldExpression == null) {
-            String message = "Must specify either field-name or field-expression";
-            if(rootName != null) {
-              message += " for root " + rootName;
-            }
-            throw new ConfigurationSetupException(message);
-          }
+    addRoots(dsoApplication.getRoots());
+    addWebApplications(dsoApplication.getWebApplications());
 
-          if (fieldName != null && fieldExpression != null) {
-            String message = "Cannot specify both field-name and field-expression";
-            if(rootName != null) {
-              message += " for root " + rootName;
-            }
-            throw new ConfigurationSetupException(message);
-          }
+    loadLocks(dsoApplication.getLocks());
+    loadTransientFields(dsoApplication.getTransientFields());
+    loadInstrumentedClasses(dsoApplication.getInstrumentedClasses());
+    loadDistributedMethods(dsoApplication.getDistributedMethods());
 
-          Assert.assertTrue((fieldName != null && fieldExpression == null) || (fieldName == null && fieldExpression != null));
-
-          if (fieldName != null) {
-            try {
-              ClassSpec classSpec = ClassUtils.parseFullyQualifiedFieldName(fieldName);
-              String className = classSpec.getFullyQualifiedClassName();
-              config.addRoot(new com.tc.object.config.Root(className, classSpec.getShortFieldName(), rootName), false);
-            } catch (ParseException pe) {
-              throw new ConfigurationSetupException("Root '" + root.getFieldName() + "' is invalid", pe);
-            }
-          } else if (fieldExpression != null) {
-            config.addRoot(new com.tc.object.config.Root(fieldExpression, rootName), false);
-          } 
-          // no possible else - this is guaranteed by if check above  
-        }
-      }
-
-      WebApplications webApplicationsList = dsoApplication.getWebApplications();
-      if (webApplicationsList != null && webApplicationsList.getWebApplicationArray() != null) {
-        WebApplication[] webApplications = webApplicationsList.getWebApplicationArray();
-        for (int i = 0; i < webApplications.length; i++) {
-          config.addApplicationName(webApplications[i].getStringValue());
-          if (webApplications[i].getSynchronousWrite()) {
-            config.addSynchronousWriteApplication(webApplications[i].getStringValue());
-          }
-        }
-      }
-
-      loadLocks(dsoApplication.getLocks());
-      loadTransientFields(dsoApplication.getTransientFields());
-      loadInstrumentedClasses(dsoApplication.getInstrumentedClasses());
-      loadDistributedMethods(dsoApplication.getDistributedMethods());
-
-      AdditionalBootJarClasses additionalBootJarClassesList = dsoApplication.getAdditionalBootJarClasses();
-      // XXX
-      if (additionalBootJarClassesList != null) {
-        Set userDefinedBootClassNames = new HashSet();
-        userDefinedBootClassNames.addAll(Arrays.asList(additionalBootJarClassesList.getIncludeArray()));
-        logger.debug("Additional boot-jar classes: " + ArrayUtils.toString(userDefinedBootClassNames));
-
-        for (Iterator i = userDefinedBootClassNames.iterator(); i.hasNext();) {
-          String className = (String) i.next();
-          TransparencyClassSpec spec = config.getSpec(className);
-          if (spec == null) {
-            spec = new TransparencyClassSpecImpl(className, config);
-            spec.markPreInstrumented();
-            config.addUserDefinedBootSpec(spec.getClassName(), spec);
-          } else if (!spec.isPreInstrumented()) {
-            // DEV-458: if the class being added to the boot jar defines locks/distributed methods/etc. it creates a
-            // spec but does not pre-instrument it. This makes sure that the adapted code gets into the boot jar in
-            // this case.
-            // DEV-1110: ignore java.lang.Object 
-            if(!"java.lang.Object".equals(className)) {
-              spec.markPreInstrumented();
-            }
-          }
-        }
-      }
-    }
+    addAdditionalBootJarClasses(dsoApplication.getAdditionalBootJarClasses());
   }
 
   public void loadSpringConfig(SpringApplication springApplication) throws ConfigurationSetupException {
@@ -156,6 +81,95 @@ public class ConfigLoader {
         if (springApp != null) {
           loadSpringApp(springApp);
         }
+      }
+    }
+  }
+
+  private void addRoot(Root root) throws ConfigurationSetupException {
+    String rootName = root.getRootName();
+    String fieldName = root.getFieldName();
+    String fieldExpression = root.getFieldExpression();
+
+    // XXX: No need to perform these checks, the XML Schema will enforce these constraints
+
+    // if (fieldName == null && fieldExpression == null) {
+    // String message = "Must specify either field-name or field-expression";
+    // if (rootName != null) message += " for root " + rootName;
+    // throw new ConfigurationSetupException(message);
+    // }
+    //
+    // if (fieldName != null && fieldExpression != null) {
+    // String message = "Cannot specify both field-name and field-expression";
+    // if (rootName != null) message += " for root " + rootName;
+    // throw new ConfigurationSetupException(message);
+    // }
+
+    Assert.assertTrue((fieldName != null && fieldExpression == null) || (fieldName == null && fieldExpression != null));
+    if (fieldName != null) {
+      try {
+        ClassSpec classSpec = ClassUtils.parseFullyQualifiedFieldName(fieldName);
+        String className = classSpec.getFullyQualifiedClassName();
+        config.addRoot(new com.tc.object.config.Root(className, classSpec.getShortFieldName(), rootName), false);
+      } catch (ParseException pe) {
+        throw new ConfigurationSetupException("Root '" + root.getFieldName() + "' is invalid", pe);
+      }
+    } else if (fieldExpression != null) {
+      config.addRoot(new com.tc.object.config.Root(fieldExpression, rootName), false);
+    }
+    // no possible else - this is guaranteed by if check above
+  }
+
+  private void addRoots(Roots rootsList) throws ConfigurationSetupException {
+    if (rootsList != null && rootsList.getRootArray() != null) {
+      Root[] roots = rootsList.getRootArray();
+      for (int i = 0; i < roots.length; ++i) {
+        addRoot(roots[i]);
+      }
+    }
+  }
+
+  private void addWebApplication(WebApplication webApplication) {
+    config.addApplicationName(webApplication.getStringValue());
+    if (webApplication.getSynchronousWrite()) {
+      config.addSynchronousWriteApplication(webApplication.getStringValue());
+    }
+  }
+
+  private void addWebApplications(WebApplications webApplicationsList) {
+    if (webApplicationsList != null && webApplicationsList.getWebApplicationArray() != null) {
+      WebApplication[] webApplications = webApplicationsList.getWebApplicationArray();
+      for (int i = 0; i < webApplications.length; i++) {
+        addWebApplication(webApplications[i]);
+      }
+    }
+  }
+
+  private void addAdditionalBootJarClasses(AdditionalBootJarClasses additionalBootJarClassesList) {
+    // XXX
+    if (additionalBootJarClassesList == null) return;
+
+    Set userDefinedBootClassNames = new HashSet();
+    userDefinedBootClassNames.addAll(Arrays.asList(additionalBootJarClassesList.getIncludeArray()));
+    logger.debug("Additional boot-jar classes: " + ArrayUtils.toString(userDefinedBootClassNames));
+
+    for (Iterator i = userDefinedBootClassNames.iterator(); i.hasNext();) {
+      addAdditionalBootJarClass((String) i.next());
+    }
+  }
+
+  private void addAdditionalBootJarClass(String className) {
+    TransparencyClassSpec spec = config.getSpec(className);
+    if (spec == null) {
+      spec = new TransparencyClassSpecImpl(className, config);
+      spec.markPreInstrumented();
+      config.addUserDefinedBootSpec(spec.getClassName(), spec);
+    } else if (!spec.isPreInstrumented()) {
+      // DEV-458: if the class being added to the boot jar defines locks/distributed methods/etc. it creates a
+      // spec but does not pre-instrument it. This makes sure that the adapted code gets into the boot jar in
+      // this case.
+      // DEV-1110: ignore java.lang.Object
+      if (!"java.lang.Object".equals(className)) {
+        spec.markPreInstrumented();
       }
     }
   }
@@ -239,7 +253,8 @@ public class ConfigLoader {
 
   private static void gatherNamespaces(XmlObject x, Map nsMap) {
     XmlCursor c = x.newCursor();
-    while(!c.isContainer()) c.toNextToken();
+    while (!c.isContainer())
+      c.toNextToken();
     c.getAllNamespaces(nsMap);
     c.dispose();
   }
@@ -258,7 +273,7 @@ public class ConfigLoader {
     Map nsMap = new HashMap();
     gatherNamespaces(lockList, nsMap);
     options.setSaveImplicitNamespaces(nsMap);
-    
+
     Autolock[] autolocks = lockList.getAutolockArray();
     for (int i = 0; autolocks != null && i < autolocks.length; i++) {
       Autolock autolock = autolocks[i];
@@ -309,15 +324,13 @@ public class ConfigLoader {
           }
           config.addInstrumentationDescriptor(new IncludedInstrumentedClass(include.getClassExpression(), include
               .getHonorTransient(), false, includeOnLoad));
-        }
-        else if (elements[i] instanceof ClassExpression) {
-          String expr = ((ClassExpression)elements[i]).getStringValue();
+        } else if (elements[i] instanceof ClassExpression) {
+          String expr = ((ClassExpression) elements[i]).getStringValue();
           config.addInstrumentationDescriptor(new ExcludedInstrumentedClass(expr));
-        }
-        else {
+        } else {
           throw new ConfigurationSetupException(
-            "The following element was unexpected within an <instrumented-classes> element:" +
-            elements[i]);
+                                                "The following element was unexpected within an <instrumented-classes> element:"
+                                                    + elements[i]);
         }
       }
     }
