@@ -104,7 +104,6 @@ public class ConfigLoader {
     // throw new ConfigurationSetupException(message);
     // }
 
-    Assert.assertTrue((fieldName != null && fieldExpression == null) || (fieldName == null && fieldExpression != null));
     if (fieldName != null) {
       try {
         ClassSpec classSpec = ClassUtils.parseFullyQualifiedFieldName(fieldName);
@@ -115,8 +114,12 @@ public class ConfigLoader {
       }
     } else if (fieldExpression != null) {
       config.addRoot(new com.tc.object.config.Root(fieldExpression, rootName), false);
+    } else {
+      String message = "Root definition incomplete";
+      if (rootName != null) message += " for root " + rootName;
+      message += ": the value for the field-name or the field-expression must be declared.";
+      throw new ConfigurationSetupException(message);
     }
-    // no possible else - this is guaranteed by if check above
   }
 
   private void addRoots(Roots rootsList) throws ConfigurationSetupException {
