@@ -196,6 +196,15 @@
         qualified field name.
       </xs:documentation>
     </xs:annotation>
+    <xs:all>
+      <xs:element name="root-name" type="java-identifier" minOccurs="0" maxOccurs="1" />
+      <xs:element name="field-name" type="qualified-field-name" minOccurs="0" maxOccurs="1" />
+      <xs:element name="field-expression" type="field-expression" minOccurs="0" maxOccurs="1" />
+    </xs:all>
+    <!--
+      switch to this later on and use substitutionGroup for members within
+      the choice section when xmlbeans actually support substitutionGroups
+      
     <xs:sequence minOccurs="1" maxOccurs="1">
       <xs:element name="root-name" type="java-identifier" minOccurs="0" />
       <xs:choice minOccurs="1" maxOccurs="1">
@@ -203,6 +212,7 @@
         <xs:element name="field-expression" type="field-expression" />
       </xs:choice>
     </xs:sequence>
+    -->
   </xs:complexType>
 
   <xs:complexType name="roots">
