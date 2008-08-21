@@ -155,12 +155,11 @@ public class TCPropertiesImpl implements TCProperties {
       propertyName = tcProperties[i].getPropertyName();
       propertyValue = tcProperties[i].getPropertyValue();
       if (!this.localTcProperties.containsKey(propertyName)) {
-        logger.info("The property \"" + propertyName + "\" has been overridden to " + propertyValue + " from "
+        logger.info("The property \"" + propertyName + "\" was overridden to " + propertyValue + " from "
                     + props.getProperty(propertyName) + " by the tc-config file");
         setProperty(propertyName, propertyValue);
       } else {
-        logger.warn("The property \"" + propertyName
-                    + "\" has been set by the local settings(tc.properties/system) to "
+        logger.warn("The property \"" + propertyName + "\" was set by local settings to "
                     + props.getProperty(propertyName) + ". This will not be overridden to " + propertyValue
                     + " from the tc-config file");
       }
@@ -245,8 +244,8 @@ public class TCPropertiesImpl implements TCProperties {
     String val = props.getProperty(key);
     if (val == null && !missingOkay) { throw new AssertionError("TCProperties : Property not found for " + key); }
     if (!initialized) {
-      logger.info("The property \"" + key + "\" has been read before the initialization is complete. \"" + key
-                  + "\" = " + val);
+      logger.info("The property \"" + key + "\" was read before the initialization is complete. \"" + key + "\" = "
+                  + val);
     }
     return val;
   }
