@@ -158,6 +158,11 @@ public class TCPropertiesImpl implements TCProperties {
         logger.info("The property \"" + propertyName + "\" has been overridden to " + propertyValue + " from "
                     + props.getProperty(propertyName) + " by the tc-config file");
         setProperty(propertyName, propertyValue);
+      } else {
+        logger.warn("The property \"" + propertyName
+                    + "\" has been set by the local settings(tc.properties/system) to "
+                    + props.getProperty(propertyName) + ". This will not be overridden to " + propertyValue
+                    + " from the tc-config file");
       }
     }
   }
