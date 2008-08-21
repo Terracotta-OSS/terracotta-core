@@ -50,7 +50,7 @@
                   <item bottom="1,top:0" height="n" left="-1,left:n" right="-1,right:n" top="-1,top:n" width="n" />
                   <item bottom="2,top:0" height="n" left="-1,left:0" right="-1,right:0" top="0,bottom:0" width="s" />
                   <item bottom="3,top:ns" height="ns" left="-1,left:n" right="-1,right:n" top="1,bottom:0" width="s" />
-                  <item bottom="-1,bottom:n" height="n" left="-1,left:sn" right="-1,right:sn" top="2,bottom:ns" width="n" />
+                  <item bottom="-1,bottom:0" height="n" left="-1,left:sn" right="-1,right:sn" top="2,bottom:ns" width="n" />
                 </connections>
               </container>
             </children>
@@ -60,15 +60,32 @@
           </container>
         </tab>
         <tab title="Environment">
-          <scrollpane>
-            <textarea class="com.tc.admin.common.XTextArea" name="EnvironmentTextArea" editable="false" line-wrap="false"
-              font="Monospaced-plain-12" />
-          </scrollpane>
+          <container>
+            <children>
+              <scrollpane>
+                <textarea class="com.tc.admin.common.XTextArea" name="EnvironmentTextArea" editable="false" line-wrap="false" font="Monospaced-plain-12" />
+              </scrollpane>
+              <container name="EnvironmentSearchPanel" class="com.tc.admin.SearchPanel" />
+            </children>
+            <connections>
+              <item bottom="1,top:0" height="s" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="s" />
+              <item bottom="-1,bottom:0" height="n" left="-1,left:0" right="-1,right:0" top="0,bottom:0" width="s" />
+            </connections>
+          </container>
         </tab>
         <tab title="Config">
-          <scrollpane>
-            <textarea class="com.tc.admin.common.XTextArea" name="ConfigTextArea" editable="false" line-wrap="false" font="Monospaced-plain-12" />
-          </scrollpane>
+          <container>
+            <children>
+              <scrollpane>
+                <textarea class="com.tc.admin.common.XTextArea" name="ConfigTextArea" editable="false" line-wrap="false" font="Monospaced-plain-12" />
+              </scrollpane>
+              <container name="ConfigSearchPanel" class="com.tc.admin.SearchPanel" />
+            </children>
+            <connections>
+              <item bottom="1,top:0" height="s" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="s" />
+              <item bottom="-1,bottom:0" height="n" left="-1,left:0" right="-1,right:0" top="0,bottom:0" width="s" />
+            </connections>
+          </container>
         </tab>
       </tabbedpane>
     </children>
@@ -143,7 +160,7 @@
           <item bottom="1,top:n" height="n" left="-1,left:sn" right="-1,right:sn" top="-1,top:sn" width="n" />
           <item bottom="2,top:n" height="n" left="-1,left:sn" right="-1,right:sn" top="0,bottom:n" width="sn" />
           <item bottom="-1,bottom:sn" height="n" left="1,left:0" right="1,right:ns" top="1,bottom:n" width="n" />
-          <item bottom="-1,bottom:n" height="sn" left="-1,left:sn" right="-1,right:sn" top="2,bottom:sn" width="sn" />
+          <item bottom="-1,bottom:0" height="n" left="-1,left:sn" right="-1,right:sn" top="2,bottom:sn" width="sn" />
         </connections>
       </container>
     </children>
@@ -316,12 +333,12 @@
   </container>
   <container class="com.tc.admin.ProductInfoPanel" tag="ProductInfoPanel">
     <children>
-      <label name="Copyright" text="Copyright" />
       <label name="Version" text="Version" />
+      <label name="Copyright" text="Copyright" />
     </children>
     <connections>
-      <item bottom="-1,bottom:n" height="n" left="-1,left:sn" right="-1,right:sn" top="1,bottom:n" width="n" />
-      <item bottom="0,top:n" height="n" left="-1,left:sn" right="-1,right:sn" top="-1,top:n" width="n" />
+      <item bottom="1,top:0" height="n" left="-1,left:sn" right="-1,right:sn" top="-1,top:s" width="n" />
+      <item bottom="-1,bottom:s" height="n" left="-1,left:sn" right="-1,right:sn" top="0,bottom:0" width="n" />
     </connections>
   </container>
   <container tag="SessionMonitorPanel">
@@ -388,15 +405,32 @@
           </container>
         </tab>
         <tab title="Environment">
-          <scrollpane>
-            <textarea class="com.tc.admin.common.XTextArea" name="EnvironmentTextArea" editable="false" line-wrap="false"
-              font="Monospaced-plain-12" />
-          </scrollpane>
+          <container>
+            <children>
+              <scrollpane>
+                <textarea class="com.tc.admin.common.XTextArea" name="EnvironmentTextArea" editable="false" line-wrap="false" font="Monospaced-plain-12" />
+              </scrollpane>
+              <container name="EnvironmentSearchPanel" class="com.tc.admin.SearchPanel" />
+            </children>
+            <connections>
+              <item bottom="1,top:0" height="s" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="s" />
+              <item bottom="-1,bottom:0" height="n" left="-1,left:0" right="-1,right:0" top="0,bottom:0" width="s" />
+            </connections>
+          </container>
         </tab>
         <tab title="Config">
-          <scrollpane>
-            <textarea class="com.tc.admin.common.XTextArea" name="ConfigTextArea" editable="false" line-wrap="false" font="Monospaced-plain-12" />
-          </scrollpane>
+          <container>
+            <children>
+              <scrollpane>
+                <textarea class="com.tc.admin.common.XTextArea" name="ConfigTextArea" editable="false" line-wrap="false" font="Monospaced-plain-12" />
+              </scrollpane>
+              <container name="ConfigSearchPanel" class="com.tc.admin.SearchPanel" />
+            </children>
+            <connections>
+              <item bottom="1,top:0" height="s" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="s" />
+              <item bottom="-1,bottom:0" height="n" left="-1,left:0" right="-1,right:0" top="0,bottom:0" width="s" />
+            </connections>
+          </container>
         </tab>
         <tab title="Logging">
           <container>
@@ -472,7 +506,7 @@
   </container>
   <container tag="GCStatsPanel">
     <children>
-      <button name="RunGCButton" text="Run GC" />
+      <button name="RunGCButton" text="Run DGC" />
       <scrollpane>
         <table class="com.tc.admin.dso.GCStatsTable" name="GCStatsTable" />
       </scrollpane>

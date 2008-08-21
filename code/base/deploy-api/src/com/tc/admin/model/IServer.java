@@ -51,6 +51,8 @@ public interface IServer extends IClusterNode {
   
   String getProductVersion();
 
+  String getProductPatchVersion();
+  
   String getProductBuildID();
 
   String getProductLicense();

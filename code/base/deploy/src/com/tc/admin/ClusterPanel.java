@@ -268,7 +268,7 @@ public class ClusterPanel extends XContainer {
   }
 
   private void showProductInfo(ServerVersion productInfo) {
-    m_productInfoPanel.init(productInfo.version(), productInfo.copyright());
+    m_productInfoPanel.init(productInfo.version(), productInfo.patchVersion(), productInfo.copyright());
     m_productInfoPanel.setVisible(true);
     revalidate();
     repaint();

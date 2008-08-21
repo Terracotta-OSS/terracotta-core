@@ -68,7 +68,7 @@ public class RuntimeStatsPanel extends XContainer implements RuntimeStatisticCon
 
   private boolean                  m_shouldAutoStart;
 
-  protected static final Dimension fDefaultGraphSize                       = new Dimension(200, 70);
+  protected static final Dimension fDefaultGraphSize                       = new Dimension(0,0);
 
   private static final int         DEFAULT_POLL_PERIOD_SECS                = 3;
   private static final int         DEFAULT_SAMPLE_HISTORY_MINUTES          = 5;

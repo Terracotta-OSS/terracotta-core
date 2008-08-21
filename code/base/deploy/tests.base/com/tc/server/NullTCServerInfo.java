@@ -134,4 +134,8 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   public String getConfig() {
     return null;
   }
+
+  public boolean isPatched() {
+    return false;
+  }
 }

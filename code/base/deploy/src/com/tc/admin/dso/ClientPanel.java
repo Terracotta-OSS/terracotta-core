@@ -10,10 +10,12 @@ import org.dijon.TextArea;
 
 import com.tc.admin.AdminClient;
 import com.tc.admin.AdminClientContext;
+import com.tc.admin.SearchPanel;
 import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.PropertyTable;
 import com.tc.admin.common.PropertyTableModel;
 import com.tc.admin.common.XContainer;
+import com.tc.admin.common.XTextArea;
 import com.tc.admin.model.IClient;
 import com.tc.admin.model.IClusterNode;
 import com.tc.management.beans.logging.InstrumentationLoggingMBean;
@@ -75,8 +77,11 @@ public class ClientPanel extends XContainer implements NotificationListener, Pro
     m_propertyTable.setDefaultRenderer(Long.class, renderer);
     m_propertyTable.setDefaultRenderer(Integer.class, renderer);
 
-    m_environmentTextArea = (TextArea) findComponent("EnvironmentTextArea");
-    m_configTextArea = (TextArea) findComponent("ConfigTextArea");
+    m_environmentTextArea = (XTextArea) findComponent("EnvironmentTextArea");
+    ((SearchPanel) findComponent("EnvironmentSearchPanel")).setTextComponent(m_environmentTextArea);
+
+    m_configTextArea = (XTextArea) findComponent("ConfigTextArea");
+    ((SearchPanel) findComponent("ConfigSearchPanel")).setTextComponent(m_configTextArea);
 
     m_classCheckBox = (CheckBox) findComponent("Class1");
     m_locksCheckBox = (CheckBox) findComponent("Locks");

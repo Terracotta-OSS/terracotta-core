@@ -194,7 +194,9 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
   }
 
   public void nodeClicked(MouseEvent me) {
-    m_refreshAction.actionPerformed(null);
+    if(m_refreshAction != null) {
+      m_refreshAction.actionPerformed(null);
+    }
   }
 
   public void tearDown() {

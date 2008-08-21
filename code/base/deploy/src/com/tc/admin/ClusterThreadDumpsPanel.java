@@ -42,7 +42,6 @@ public class ClusterThreadDumpsPanel extends XContainer {
   private ThreadDumpTreeNode     m_lastSelectedThreadDumpTreeNode;
   private Button                 m_exportButton;
   private File                   m_lastExportDir;
-  private SearchPanel            m_searchPanel;
 
   private static final String    DEFAULT_EXPORT_ARCHIVE_FILENAME = "tc-cluster-thread-dumps.zip";
 
@@ -72,8 +71,7 @@ public class ClusterThreadDumpsPanel extends XContainer {
     m_exportButton = (Button) findComponent("ExportButton");
     m_exportButton.addActionListener(new ExportHandler());
  
-    m_searchPanel = (SearchPanel) findComponent("SearchPanel");
-    m_searchPanel.setTextComponent(m_threadDumpTextArea);
+    ((SearchPanel) findComponent("SearchPanel")).setTextComponent(m_threadDumpTextArea);
   }
 
   protected Preferences getPreferences() {
@@ -109,7 +107,6 @@ public class ClusterThreadDumpsPanel extends XContainer {
             }
           });
         }
-        m_searchPanel.setEnabled(true);
       }
       m_lastSelectedThreadDumpTreeNode = tdtn;
       m_exportButton.setEnabled(tdtn != null);

@@ -297,6 +297,10 @@ public class ServerNode extends ComponentNode {
     return m_server.getProductVersion();
   }
 
+  public String getProductPatchVersion() throws Exception {
+    return m_server.getProductPatchVersion();
+  }
+  
   public String getProductBuildID() throws Exception {
     return m_server.getProductBuildID();
   }

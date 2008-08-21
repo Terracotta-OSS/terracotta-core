@@ -41,11 +41,6 @@ public class ServerPanel extends XContainer {
 
     m_tabbedPane = (TabbedPane) findComponent("TabbedPane");
 
-    if(!m_serverNode.getPersistenceMode().equals("permanent-store")) {
-      String warning = m_acc.getString("server.non-restartable.warning");
-      PersistenceModeWarningPanel restartabilityInfoPanel = new PersistenceModeWarningPanel(warning);
-      ((Item) findComponent("RestartabilityInfoItem")).setChild(restartabilityInfoPanel);
-    }
     m_propertyTable = (PropertyTable) findComponent("ServerInfoTable");
     DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
     m_propertyTable.setDefaultRenderer(Long.class, renderer);
@@ -58,7 +53,10 @@ public class ServerPanel extends XContainer {
     m_productInfoPanel.setVisible(false);
 
     m_environmentTextArea = (XTextArea) findComponent("EnvironmentTextArea");
+    ((SearchPanel) findComponent("EnvironmentSearchPanel")).setTextComponent(m_environmentTextArea);
+
     m_configTextArea = (XTextArea) findComponent("ConfigTextArea");
+    ((SearchPanel) findComponent("ConfigSearchPanel")).setTextComponent(m_configTextArea);
 
     hideProductInfo();
   }
@@ -71,17 +69,21 @@ public class ServerPanel extends XContainer {
     private Date    fStartDate;
     private Date    fActivateDate;
     private String  fVersion;
+    private String  fPatch;
     private String  fCopyright;
+    private String  fPersistenceMode;
     private String  fEnvironment;
     private String  fConfig;
     private Integer fDSOListenPort;
 
-    ServerState(Date startDate, Date activateDate, String version, String copyright, String environment, String config,
-                Integer dsoListenPort) {
+    ServerState(Date startDate, Date activateDate, String version, String patch, String copyright,
+                String persistenceMode, String environment, String config, Integer dsoListenPort) {
       fStartDate = startDate;
       fActivateDate = activateDate;
       fVersion = version;
+      fPatch = patch;
       fCopyright = copyright;
+      fPersistenceMode = persistenceMode;
       fEnvironment = environment;
       fConfig = config;
       fDSOListenPort = dsoListenPort;
@@ -99,8 +101,16 @@ public class ServerPanel extends XContainer {
       return fVersion;
     }
 
+    String getPatch() {
+      return fPatch;
+    }
+
     String getCopyright() {
       return fCopyright;
+    }
+
+    String getPersistenceMode() {
+      return fPersistenceMode;
     }
 
     String getEnvironment() {
@@ -116,6 +126,9 @@ public class ServerPanel extends XContainer {
     }
   }
 
+  /**
+   * TODO: grab all of these in one-shot.
+   */
   private class ServerStateWorker extends BasicWorker<ServerState> {
     private ServerStateWorker() {
       super(new Callable<ServerState>() {
@@ -123,12 +136,15 @@ public class ServerPanel extends XContainer {
           Date startDate = new Date(m_serverNode.getStartTime());
           Date activateDate = new Date(m_serverNode.getActivateTime());
           String version = m_serverNode.getProductVersion();
+          String patch = m_serverNode.getProductPatchVersion();
           String copyright = m_serverNode.getProductCopyright();
+          String persistenceMode = m_serverNode.getPersistenceMode();
           String environment = m_serverNode.getEnvironment();
           String config = m_serverNode.getConfig();
           Integer dsoListenPort = m_serverNode.getDSOListenPort();
 
-          return new ServerState(startDate, activateDate, version, copyright, environment, config, dsoListenPort);
+          return new ServerState(startDate, activateDate, version, patch, copyright, persistenceMode, environment,
+                                 config, dsoListenPort);
         }
       });
     }
@@ -139,9 +155,22 @@ public class ServerPanel extends XContainer {
         m_acc.log(e);
       } else {
         ServerState serverState = getResult();
-        showProductInfo(serverState.getVersion(), serverState.getCopyright());
+        testSetupPersistenceModeItem();        
+        showProductInfo(serverState.getVersion(), serverState.getPatch(), serverState.getCopyright());
         m_environmentTextArea.setText(serverState.getEnvironment());
         m_configTextArea.setText(serverState.getConfig());
+      }
+    }
+    
+    private void testSetupPersistenceModeItem() {
+      Item infoItem = (Item) findComponent("RestartabilityInfoItem");
+      
+      if (!m_serverNode.getPersistenceMode().equals("permanent-store")) {
+        String warning = m_acc.getString("server.non-restartable.warning");
+        PersistenceModeWarningPanel restartabilityInfoPanel = new PersistenceModeWarningPanel(warning);
+        infoItem.setChild(restartabilityInfoPanel);
+      } else {
+        infoItem.setChild(null);
       }
     }
   }
@@ -251,7 +280,7 @@ public class ServerPanel extends XContainer {
    * The fields listed below are on ProductNode. If those methods change, so will these fields need to change.
    * PropertyTable uses reflection to access values to display. TODO: i18n
    */
-  private void showProductInfo(String version, String copyright) {
+  private void showProductInfo(String version, String patch, String copyright) {
     String[] fields = { "CanonicalHostName", "HostAddress", "Port", "DSOListenPort", "ProductVersion",
         "ProductBuildID", "ProductLicense", "PersistenceMode", "FailoverMode" };
     String[] headings = { "Host", "Address", "JMX port", "DSO port", "Version", "Build", "License", "Persistence mode",
@@ -259,7 +288,7 @@ public class ServerPanel extends XContainer {
     m_propertyTable.setModel(new PropertyTableModel(m_serverNode, fields, headings));
     m_propertyTable.getAncestorOfClass(ScrollPane.class).setVisible(true);
 
-    m_productInfoPanel.init(version, copyright);
+    m_productInfoPanel.init(version, patch, copyright);
     m_productInfoPanel.setVisible(true);
     setTabbedPaneEnabled(true);
 

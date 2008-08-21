@@ -11,14 +11,14 @@ import com.tc.admin.common.XObjectTableModel;
 
 public class GCStatsTableModel extends XObjectTableModel {
 
-  private static final String[] FIELDS   = { "Iteration", "Type", "Status", "StartDate", "ElapsedTime",
-      "BeginObjectCount", "PausedStageTime", "MarkStageTime", "ActualGarbageCount", "DeleteStageTime" };
+  private static final String[] FIELDS   = { "Iteration", "Type", "Status", "StartDate", "BeginObjectCount",
+      "PausedStageTime", "MarkStageTime", "ActualGarbageCount", "DeleteStageTime", "ElapsedTime" };
 
   private static final String[] HEADERS  = AdminClient.getContext().getMessages(
                                                                                 new String[] { "dso.gcstats.iteration",
-      "dso.gcstats.type", "dso.gcstats.status", "dso.gcstats.startTime", "dso.gcstats.elapsedTime",
-      "dso.gcstats.beginObjectCount", "dso.gcstats.pausedStageTime", "dso.gcstats.markStageTime",
-      "dso.gcstats.actualGarbageCount", "dso.gcstats.deleteStageTime"          });
+      "dso.gcstats.type", "dso.gcstats.status", "dso.gcstats.startTime", "dso.gcstats.beginObjectCount",
+      "dso.gcstats.pausedStageTime", "dso.gcstats.markStageTime", "dso.gcstats.actualGarbageCount",
+      "dso.gcstats.deleteStageTime", "dso.gcstats.elapsedTime"                 });
 
   private static final int      MAX_SIZE = 1500;
 
@@ -69,7 +69,7 @@ public class GCStatsTableModel extends XObjectTableModel {
       fireTableRowsDeleted(count - 1, origCount - 1);
     }
   }
-  
+
   // no sorting allowed
   public boolean isColumnSortable(int col) {
     return false;

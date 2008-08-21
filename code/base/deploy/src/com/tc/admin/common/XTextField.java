@@ -38,4 +38,6 @@ public class XTextField extends TextField {
       setPopupMenu(createPopup());
     }
   }
+  
+  public void selectAll() {/**/}
 }

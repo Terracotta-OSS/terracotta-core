@@ -37,6 +37,8 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   String getBuildID();
   
+  boolean isPatched();
+  
   String getPatchVersion();
   
   String getPatchBuildID();

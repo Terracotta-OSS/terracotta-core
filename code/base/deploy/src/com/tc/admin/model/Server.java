@@ -30,6 +30,7 @@ import com.tc.stats.DSOMBean;
 import com.tc.stats.DSORootMBean;
 import com.tc.stats.statistics.CountStatistic;
 import com.tc.stats.statistics.Statistic;
+import com.tc.util.ProductInfo;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -49,6 +50,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import javax.management.Attribute;
+import javax.management.AttributeList;
 import javax.management.MBeanServerNotification;
 import javax.management.Notification;
 import javax.management.NotificationListener;
@@ -110,7 +113,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   private void init() {
-    m_startTime = m_activateTime = -1;    
+    m_startTime = m_activateTime = -1;
     m_displayLabel = m_connectManager.toString();
     m_propertyChangeSupport = new PropertyChangeSupport(this);
     m_listenerList = new EventListenerList();
@@ -335,7 +338,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     if (m_persistenceMode == null) {
       try {
         m_persistenceMode = getServerInfoBean().getPersistenceMode();
-      } catch(UndeclaredThrowableException edte) {
+      } catch (UndeclaredThrowableException edte) {
         m_persistenceMode = "unknown";
       }
     }
@@ -346,7 +349,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     if (m_failoverMode == null) {
       try {
         m_failoverMode = getServerInfoBean().getFailoverMode();
-      } catch(UndeclaredThrowableException udte) {
+      } catch (UndeclaredThrowableException udte) {
         m_failoverMode = "unknown";
       }
     }
@@ -450,15 +453,48 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
 
   public synchronized ServerVersion getProductInfo() {
     if (m_productInfo == null) {
-      TCServerInfoMBean serverInfo = getServerInfoBean();
-      m_productInfo = new ServerVersion(serverInfo.getVersion(), serverInfo.getBuildID(), serverInfo
-          .getDescriptionOfCapabilities(), serverInfo.getCopyright());
+      ConnectionContext cc = getConnectionContext();
+      String[] attributes = { "Version", "Patched", "PatchVersion", "BuildID", "DescriptionOfCapabilities", "Copyright" };
+      String version = ProductInfo.UNKNOWN_VALUE;
+      String patchVersion = ProductInfo.UNKNOWN_VALUE;
+      String buildID = ProductInfo.UNKNOWN_VALUE;
+      String capabilities = ProductInfo.UNKNOWN_VALUE;
+      String copyright = ProductInfo.UNKNOWN_VALUE;
+      try {
+        AttributeList attrList = cc.mbsc.getAttributes(L2MBeanNames.TC_SERVER_INFO, attributes);
+        if(attrList.get(0) != null) {
+          version = (String) ((Attribute) attrList.get(0)).getValue();
+        }
+        boolean isPatched = false;
+        if(attrList.get(1) != null) {
+          isPatched = (Boolean) ((Attribute) attrList.get(1)).getValue();
+        }
+        if(attrList.get(2) != null) {
+          patchVersion = isPatched ? (String) ((Attribute) attrList.get(2)).getValue() : null;
+        }
+        if(attrList.get(3) != null) {
+          buildID = (String) ((Attribute) attrList.get(3)).getValue();
+        }
+        if(attrList.get(4) != null) {
+          capabilities = (String) ((Attribute) attrList.get(4)).getValue();
+        }
+        if(attrList.get(5) != null) {
+          copyright = (String) ((Attribute) attrList.get(5)).getValue();
+        }
+      } catch (Exception e) {
+        System.err.println(e);
+      }
+      m_productInfo = new ServerVersion(version, patchVersion, buildID, capabilities, copyright);
     }
     return m_productInfo;
   }
 
   public String getProductVersion() {
     return getProductInfo().version();
+  }
+
+  public String getProductPatchVersion() {
+    return getProductInfo().patchVersion();
   }
 
   public String getProductBuildID() {
@@ -823,7 +859,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
 
   synchronized void reset() {
     if (m_roots == null) return;
-    m_startTime = m_activateTime = -1;    
+    m_startTime = m_activateTime = -1;
     m_connected = m_ready = false;
     initReadySet();
     m_roots.clear();
@@ -925,7 +961,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   public int getLiveObjectCount() {
     try {
       return getDSOBean().getLiveObjectCount();
-    } catch(UndeclaredThrowableException ute) {
+    } catch (UndeclaredThrowableException ute) {
       return -1;
     }
   }
@@ -935,7 +971,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   public ServerDBBackupMBean getServerDBBackupBean() {
-    if(!m_serverDBBackupSupported) return null;
+    if (!m_serverDBBackupSupported) return null;
     if (m_serverDBBackupBean != null) return m_serverDBBackupBean;
     ConnectionContext cc = getConnectionContext();
     m_serverDBBackupBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, L2MBeanNames.SERVER_DB_BACKUP,
@@ -1016,13 +1052,11 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   public synchronized boolean isDBBackupSupported() {
     return m_serverDBBackupSupported;
   }
-  
+
   private void ensureDBBackupEnabled() {
-    if(!isDBBackupSupported()) {
-      throw new IllegalStateException("DBBackup not supported");
-    }
+    if (!isDBBackupSupported()) { throw new IllegalStateException("DBBackup not supported"); }
   }
-  
+
   public void backupDB() throws IOException {
     ensureDBBackupEnabled();
     getServerDBBackupBean().runBackUp();

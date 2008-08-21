@@ -89,13 +89,13 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
     setComponent(m_clusterPanel = createClusterPanel());
     setIcon(ServersHelper.getHelper().getServerIcon());
     m_clusterModel.addPropertyChangeListener(new ClusterPropertyChangeListener());
-    m_versionCheckOccurred = new AtomicBoolean(false);    
+    m_versionCheckOccurred = new AtomicBoolean(false);
   }
 
   public IClusterModel getClusterModel() {
     return m_clusterModel;
   }
-  
+
   boolean isDBBackupSupported() {
     return getClusterModel().isDBBackupSupported();
   }
@@ -144,7 +144,7 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
     if (m_versionCheckOccurred.getAndSet(true)) { return true; }
     return m_acc.testServerMatch(this);
   }
-  
+
   private void handleConnected() {
     if (m_acc == null) return;
     if (!testCheckServerVersion()) {
@@ -447,23 +447,21 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
     public void actionPerformed(ActionEvent ae) {
       boolean recordingStats = haveActiveRecordingSession();
       boolean profilingLocks = isProfilingLocks();
-      
+
       if (recordingStats || profilingLocks) {
         String key;
-        if(recordingStats && profilingLocks) {
-          key = "recording.stats.profiling.locks.msg"; 
-        } else if(recordingStats) {
+        if (recordingStats && profilingLocks) {
+          key = "recording.stats.profiling.locks.msg";
+        } else if (recordingStats) {
           key = "recording.stats.msg";
         } else {
-          key = "profiling.locks.msg";        
+          key = "profiling.locks.msg";
         }
-        
+
         String msg = m_acc.format(key, m_acc.getMessage("disconnect.anyway"));
         Frame frame = (Frame) m_clusterPanel.getAncestorOfClass(Frame.class);
         int answer = JOptionPane.showConfirmDialog(m_clusterPanel, msg, frame.getTitle(), JOptionPane.OK_CANCEL_OPTION);
-        if(answer != JOptionPane.OK_OPTION) {
-          return;
-        }
+        if (answer != JOptionPane.OK_OPTION) { return; }
       }
       disconnect();
     }
@@ -649,13 +647,13 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
   }
 
   boolean haveMonitoringActivity() {
-    return haveActiveRecordingSession() || isProfilingLocks();    
+    return haveActiveRecordingSession() || isProfilingLocks();
   }
-  
+
   private ScheduledExecutorService m_scheduledExecutor;
   private ScheduledFuture<?>       m_monitoringTaskFuture;
   private Runnable                 m_monitoringActivityTask;
-  private final int                MONITORING_FEEDBACK_SECS = 2;
+  private final long               MONITORING_FEEDBACK_MILLIS = 750;
 
   private synchronized ScheduledExecutorService getScheduledExecutor() {
     if (m_scheduledExecutor == null) {
@@ -674,7 +672,7 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
   private class MonitoringActivityTask implements Runnable {
     private Icon m_defaultIcon  = ServersHelper.getHelper().getServerIcon();
     private Icon m_activityIcon = ServersHelper.getHelper().getActivityIcon();
-    
+
     public void run() {
       boolean haveActivity = haveMonitoringActivity();
       setIcon(determineIcon(haveActivity));
@@ -684,7 +682,8 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
         }
       });
       if (haveActivity) {
-        m_monitoringTaskFuture = getScheduledExecutor().schedule(this, MONITORING_FEEDBACK_SECS, TimeUnit.SECONDS);
+        m_monitoringTaskFuture = getScheduledExecutor().schedule(this, MONITORING_FEEDBACK_MILLIS,
+                                                                 TimeUnit.MILLISECONDS);
       } else {
         m_monitoringTaskFuture = null;
       }
@@ -701,13 +700,13 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
 
   private synchronized void testStartMonitoringTask() {
     if (m_monitoringTaskFuture == null) {
-      m_monitoringTaskFuture = getScheduledExecutor().schedule(getMonitoringActivityTask(), MONITORING_FEEDBACK_SECS,
-                                                               TimeUnit.SECONDS);
+      m_monitoringTaskFuture = getScheduledExecutor().schedule(getMonitoringActivityTask(), MONITORING_FEEDBACK_MILLIS,
+                                                               TimeUnit.MILLISECONDS);
     }
   }
 
   private synchronized void testStopMonitoringTask() {
-    if(m_scheduledExecutor != null) {
+    if (m_scheduledExecutor != null) {
       m_scheduledExecutor.shutdownNow();
       m_scheduledExecutor = null;
       setIcon(ServersHelper.getHelper().getServerIcon());
@@ -795,7 +794,7 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
     m_clientsNode = null;
 
     m_monitoringActivityTask = null;
-    
+
     super.tearDown();
   }
 }

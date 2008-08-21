@@ -28,7 +28,10 @@ public class ProductInfoPanel extends XContainer {
     m_copyright = (Label) findComponent("Copyright");
   }
 
-  public void init(String version, String copyright) {
+  public void init(String version, String patch, String copyright) {
+    if (patch != null) {
+      version += ", " + patch;
+    }
     m_version.setText(version);
     m_copyright.setText(copyright);
   }
