@@ -196,9 +196,9 @@
         qualified field name.
       </xs:documentation>
     </xs:annotation>
-    <xs:sequence minOccurs="1">
+    <xs:sequence minOccurs="1" maxOccurs="1">
       <xs:element name="root-name" type="java-identifier" minOccurs="0" />
-      <xs:choice minOccurs="1">
+      <xs:choice minOccurs="1" maxOccurs="1">
         <xs:element name="field-name" type="qualified-field-name" />
         <xs:element name="field-expression" type="field-expression" />
       </xs:choice>
