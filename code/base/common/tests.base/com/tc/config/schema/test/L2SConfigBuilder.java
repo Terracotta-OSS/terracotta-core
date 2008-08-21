@@ -16,7 +16,7 @@ public class L2SConfigBuilder extends BaseConfigBuilder {
   private UpdateCheckConfigBuilder updateCheck;
 
   public L2SConfigBuilder() {
-    super(1, new String[] { "l2s", "ha", "groups" , "update-check"});
+    super(1, new String[] { "l2s", "ha", "groups", "update-check" });
   }
 
   public void setL2s(L2ConfigBuilder[] l2s) {
@@ -33,12 +33,12 @@ public class L2SConfigBuilder extends BaseConfigBuilder {
     this.groups = groups;
     setProperty("groups", groups);
   }
-  
+
   public void setUpdateCheck(UpdateCheckConfigBuilder updateCheck) {
     this.updateCheck = updateCheck;
     setProperty("update-check", updateCheck);
   }
-  
+
   public L2ConfigBuilder[] getL2s() {
     return l2s;
   }
@@ -54,19 +54,19 @@ public class L2SConfigBuilder extends BaseConfigBuilder {
   public UpdateCheckConfigBuilder getUpdateCheck() {
     return updateCheck;
   }
-  
+
   public String toString() {
     String out = "";
     if (isSet("l2s")) {
       out += l2sToString();
     }
-    if (isSet("ha")) {
-      out += ha.toString();
-    }
     if (isSet("groups")) {
       out += groups.toString();
     }
-    if(isSet("update-check")){
+    if (isSet("ha")) {
+      out += ha.toString();
+    }
+    if (isSet("update-check")) {
       out += updateCheck.toString();
     }
     return out;
@@ -86,6 +86,5 @@ public class L2SConfigBuilder extends BaseConfigBuilder {
     out.setL2s(new L2ConfigBuilder[] { l2 });
     return out;
   }
-
 
 }
