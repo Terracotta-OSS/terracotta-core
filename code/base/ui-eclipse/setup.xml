@@ -9,7 +9,7 @@
 <project name="Terracotta" default="update-kit-area" basedir=".">
    <target name="update-kit-area">
      <copy overwrite="true" todir="../../../kits/skeletons/eclipse-plugin/common/org.terracotta.dso">
-       <fileset dir="." excludes="**/.svn/**" includes="plugin.xml,META-INF/*,plugin.properties,images/*"/>
+       <fileset dir="." excludes="**/.svn/**" includes="plugin.xml,META-INF/*,plugin.properties,images/eclipse/*"/>
      </copy>
    </target>
 </project>

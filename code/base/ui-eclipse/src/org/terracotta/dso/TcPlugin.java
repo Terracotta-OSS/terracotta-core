@@ -123,6 +123,7 @@ import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
@@ -692,7 +693,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
         try {
           resolver.resolve(module);
         } catch (BundleException be) {
-          /**/
+          // be.printStackTrace();
         }
       }
 
@@ -701,7 +702,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
         try {
           osgiRuntime.installBundle(location.toURL());
         } catch (BundleException be) {
-          be.printStackTrace();
+          // be.printStackTrace();
         }
       }
 
@@ -759,7 +760,23 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
           ArrayList errors = new ArrayList();
           XmlOptions opts = new XmlOptions();
           opts.setErrorListener(errors);
-          if (!application.validate(opts)) moduleInfo.setError(new BundleException("Bundle XML fragment invalid"));
+          if (!application.validate(opts)) {
+            StringBuffer sb = new StringBuffer("Bundle XML fragment invalid");
+            if (errors.size() > 0) {
+              sb.append(": ");
+              Object error = errors.get(0);
+              if (error instanceof XmlError) {
+                sb.append(((XmlError) error).getMessage());
+              } else {
+                sb.append(error.toString());
+              }
+              if(errors.size() > 1) {
+                int remainingErrors = errors.size()-1;
+                sb.append(MessageFormat.format(", ({0} more)", remainingErrors));
+              }
+            }
+            moduleInfo.setError(new BundleException(sb.toString()));
+          }
           modulesConfig.setModuleApplication(moduleInfo, application);
         }
       } catch (Exception e) {
@@ -943,8 +960,10 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     if (config == null) {
       config = BAD_CONFIG;
       setSessionProperty(project, CONFIGURATION, config);
-      fireConfigurationChange(project);
+    } else {
+      getConfigurationHelper(project).validateAll();
     }
+    fireConfigurationChange(project);
   }
 
   /**

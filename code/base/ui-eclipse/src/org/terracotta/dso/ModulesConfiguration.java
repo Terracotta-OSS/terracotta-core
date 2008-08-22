@@ -23,6 +23,7 @@ import com.terracottatech.config.WebApplications;
 import com.terracottatech.config.DistributedMethods.MethodExpression;
 
 import java.io.File;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -67,9 +68,12 @@ public class ModulesConfiguration {
       File location = moduleInfo.getLocation();
       String bundleLocation = bundle.getLocation();
       
-      if(location != null && location.getAbsolutePath().equals(bundleLocation)) {
-        moduleInfo.setBundle(bundle);
-        return moduleInfo;
+      if(location != null) {
+        URI locationURI = location.toURI();
+        if (locationURI.toString().equals(bundleLocation)) {
+          moduleInfo.setBundle(bundle);
+          return moduleInfo;
+        }
       }
     }
     return null;

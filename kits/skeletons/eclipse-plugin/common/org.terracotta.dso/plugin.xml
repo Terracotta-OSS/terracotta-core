@@ -250,6 +250,15 @@
                id="workbenchServerAction">
          </action>
          <action
+               id="updateModulesAction"
+               label="Update modules..."
+               menubarPath="org.terracotta.dso.workbenchActionSetMenu/group2"
+               tooltip="Update plugin with newest Terracotta Integration Modules"
+               icon="images/eclipse/psearch_obj.gif"
+               class="org.terracotta.dso.actions.UpdateModulesAction"
+               enablesFor="*">
+         </action>
+         <action
                id="showConfigEditorAction"
                label="Show Config Editor"
                menubarPath="org.terracotta.dso.workbenchActionSetMenu/group2"

@@ -13,6 +13,7 @@ import org.eclipse.swt.events.FocusAdapter;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseMoveListener;
+import org.eclipse.swt.events.MouseTrackAdapter;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -151,6 +152,12 @@ public class NewAddModuleDialog extends MessageDialog {
         fPathLabel.setText(tip);
       }
     });
+    fTable.addMouseTrackListener(new MouseTrackAdapter() {
+      public void mouseExit(MouseEvent e) {
+        fPathLabel.setText("");
+      }
+    });
+    
 
     fPathLabel = new CLabel(comp, SWT.NONE);
     fPathLabel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
