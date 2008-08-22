@@ -124,7 +124,7 @@
       <dependency>
         <groupId>berkeleydb</groupId>
         <artifactId>je</artifactId>
-        <version>3.3.62</version>
+        <version>3.3.69</version>
       </dependency>
       <dependency>
         <groupId>jline</groupId>
