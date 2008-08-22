@@ -8,13 +8,14 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.lang.StringUtils;
 
 import com.google.inject.Inject;
+import com.tc.util.runtime.Os;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class HelpCommand extends AbstractCommand {
-  private CommandRegistry commandRegistry;
+  private final CommandRegistry commandRegistry;
 
   @Inject
   public HelpCommand(CommandRegistry registry) {
@@ -23,10 +24,12 @@ public class HelpCommand extends AbstractCommand {
   }
 
   /** The syntax of this command. */
+  @Override
   public String syntax() {
     return "[command-names] {options}";
   }
-  
+
+  @Override
   public String description() {
     return "Display help information";
   }
@@ -41,7 +44,8 @@ public class HelpCommand extends AbstractCommand {
       out.println();
       out.println("General syntax:");
       out.println();
-      out.println(StringUtils.leftPad("tim-get.sh [command] [arguments] {options}", 46));
+      String scriptName = "tim-get" + (Os.isWindows() ? ".bat" : ".sh");
+      out.println(StringUtils.leftPad(scriptName + " [command] [arguments] {options}", 46));
       out.println();
       out.println("Commands:");
       for (String name : list) {
