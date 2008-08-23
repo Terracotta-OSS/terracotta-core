@@ -1,6 +1,9 @@
 package com.tc.test.server.appserver.jetty6x;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.tools.ant.Project;
+import org.apache.tools.ant.taskdefs.Zip;
 
 import com.tc.lcp.CargoLinkedChildProcess;
 import com.tc.lcp.HeartBeatService;
@@ -17,8 +20,10 @@ import com.tc.util.PortChooser;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -118,17 +123,24 @@ public class Jetty6xAppServer extends AbstractAppServer {
   }
 
   private void prepareDeployment(AppServerParameters params) throws Exception {
+    instanceName = params.instanceName();
+    instanceDir = new File(sandboxDirectory(), instanceName);
+    ensureDirectory(instanceDir);
+
+    File wars_dir = getWarsDirectory();
+    ensureDirectory(wars_dir);
+
     // move wars into the correct location
     Map wars = params.wars();
     if (wars != null && wars.size() > 0) {
-      File wars_dir = getWarsDirectory();
 
       Set war_entries = wars.entrySet();
       Iterator war_entries_it = war_entries.iterator();
       while (war_entries_it.hasNext()) {
         Map.Entry war_entry = (Map.Entry) war_entries_it.next();
         File war_file = (File) war_entry.getValue();
-        war_file.renameTo(new File(wars_dir, war_file.getName()));
+        File dest = new File(wars_dir, war_file.getName());
+        createServerSpecificWar(war_file, dest);
       }
     }
 
@@ -137,21 +149,50 @@ public class Jetty6xAppServer extends AbstractAppServer {
     jetty_port = portChooser.chooseRandomPort();
     stop_port = portChooser.chooseRandomPort();
 
-    instanceName = params.instanceName();
-    instanceDir = new File(sandboxDirectory(), instanceName);
     workDir = new File(sandboxDirectory(), "work");
     workDir.mkdirs();
 
     File logsDir = new File(instanceDir, "logs");
-    if (!logsDir.exists() && logsDir.mkdirs() == false) { throw new Exception("Can't create logs directory ("
-                                                                              + logsDir.getAbsolutePath()
-                                                                              + ") for jetty instance: " + instanceName); }
+    ensureDirectory(logsDir);
+
     setProperties(params, jetty_port, instanceDir);
     createConfigFile();
   }
 
+  private void createServerSpecificWar(File src, File dest) throws Exception {
+    FileUtils.copyFile(src, dest);
+
+    File tmpDir = new File(instanceDir, "tmp");
+    File webInf = new File(tmpDir, "WEB-INF");
+    ensureDirectory(webInf);
+    writeJettyXml(webInf, instanceName);
+
+    Zip zip = new Zip();
+    zip.setUpdate(true);
+    zip.setDestFile(dest);
+    zip.setBasedir(tmpDir);
+    zip.setProject(new Project());
+    zip.execute();
+  }
+
+  static private void writeJettyXml(File dest, String name) throws IOException {
+    FileOutputStream fos = null;
+    try {
+      fos = new FileOutputStream(new File(dest, "jetty-web.xml"));
+      fos.write(jettyWebXmlText(name).getBytes());
+    } finally {
+      IOUtils.closeQuietly(fos);
+    }
+
+  }
+
+  private static void ensureDirectory(File dir) throws Exception {
+    if (!dir.exists() && dir.mkdirs() == false) { throw new Exception("Can't create directory ("
+                                                                      + dir.getAbsolutePath()); }
+  }
+
   protected File getWarsDirectory() {
-    return new File(this.sandboxDirectory(), "war");
+    return new File(instanceDir, "war");
   }
 
   private void createConfigFile() throws Exception {
@@ -178,7 +219,7 @@ public class Jetty6xAppServer extends AbstractAppServer {
         throw new RuntimeException("Can't find target: " + target);
       }
 
-      configFile = this.sandboxDirectory().getAbsolutePath() + File.separator + "jetty.xml";
+      configFile = new File(instanceDir, "jetty.xml").getAbsolutePath();
       out = new PrintWriter(new FileWriter(configFile));
       out.println(buffer.toString());
 
@@ -187,4 +228,23 @@ public class Jetty6xAppServer extends AbstractAppServer {
       IOUtils.closeQuietly(out);
     }
   }
+
+  private static String jettyWebXmlText(String workerName) {
+    String s = "<?xml version=\"1.0\"  encoding=\"ISO-8859-1\"?>\n";
+    s += "<Configure class=\"org.mortbay.jetty.webapp.WebAppContext\">\n";
+    s += "  <Get name=\"sessionHandler\">\n";
+    s += "    <Get name=\"sessionManager\">\n";
+    s += "      <Call name=\"setIdManager\">\n";
+    s += "        <Arg>\n";
+    s += "          <New class=\"org.mortbay.jetty.servlet.HashSessionIdManager\">\n";
+    s += "            <Set name=\"WorkerName\">" + workerName + "</Set>\n";
+    s += "          </New>\n";
+    s += "        </Arg>\n";
+    s += "      </Call>\n";
+    s += "    </Get>\n";
+    s += "  </Get>\n";
+    s += "</Configure>\n";
+    return s;
+  }
+
 }

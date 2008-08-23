@@ -6,7 +6,6 @@ package com.tctest.server.appserver.unit;
 
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
-import com.tc.test.AppServerInfo;
 import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.ServerTestSetup;
@@ -32,7 +31,7 @@ public class SessionTimeoutTest extends AbstractDeploymentTest {
   private DeploymentBuilder    builder;
   private TcConfigBuilder      tcConfigBuilder;
   private WebApplicationServer server;
-  private Map                  extraServerJvmArgs = new HashMap();
+  private final Map            extraServerJvmArgs = new HashMap();
 
   public SessionTimeoutTest() {
     //
@@ -69,7 +68,6 @@ public class SessionTimeoutTest extends AbstractDeploymentTest {
   }
 
   public void testSessionTimeOutFromTCProperties() throws Exception {
-    if (appServerInfo().getId() == AppServerInfo.JETTY) return;
     extraServerJvmArgs.put("com.tc.session.maxidle.seconds", String.valueOf(Integer.MAX_VALUE));
     init();
     WebConversation wc = new WebConversation();
@@ -107,7 +105,7 @@ public class SessionTimeoutTest extends AbstractDeploymentTest {
     createTestDeployment();
     createAndStartAppServer();
   }
-  
+
   private void initWithSessionTimeout(int timeOutInMinutes) throws Exception {
     createTestDeployment();
     builder.addSessionConfig("session-timeout", String.valueOf(timeOutInMinutes));

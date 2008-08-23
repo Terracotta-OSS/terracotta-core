@@ -21,6 +21,7 @@ public class TIMUtil {
   public static final String      SUREFIRE_2_3;
   public static final String      WEBSPHERE_6_1_0_7;
   public static final String      MODULES_COMMON;
+  public static final String      JETTY_6_1;
 
   private static final Properties modules = new Properties();
 
@@ -35,6 +36,7 @@ public class TIMUtil {
     SUREFIRE_2_3 = lookup(".*surefire-2.3");
     WEBSPHERE_6_1_0_7 = lookup(".*websphere-6.1.0.7");
     MODULES_COMMON = lookup("modules-common");
+    JETTY_6_1 = lookup("tim-jetty-6.1");
   }
 
   private TIMUtil() {

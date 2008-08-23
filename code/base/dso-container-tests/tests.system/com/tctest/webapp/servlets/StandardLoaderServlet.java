@@ -49,7 +49,7 @@ public class StandardLoaderServlet extends HttpServlet {
 
     } else if (PUT_STANDARD_LOADER_OBJECT_INSTANCE.equals(cmd)) {
       synchronized (sharedMap) {
-        final StandardClasspathDummyClass dummyObj = new StandardClasspathDummyClass();
+        Object dummyObj = crateDummyObjectUsingSystemLoader();
         Assert.assertEquals("Object must be in standard class path", ClassLoader.getSystemClassLoader(), dummyObj
             .getClass().getClassLoader());
         sharedMap.put("3", dummyObj);
@@ -59,6 +59,16 @@ public class StandardLoaderServlet extends HttpServlet {
       printClassLoaderHierarchy(resp.getWriter());
     } else {
       resp.getWriter().print("Unknown cmd=" + StringUtil.safeToString(cmd));
+    }
+  }
+
+  private Object crateDummyObjectUsingSystemLoader() {
+    try {
+      ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
+      Class dummyClass = systemClassLoader.loadClass(StandardClasspathDummyClass.class.getName());
+      return dummyClass.newInstance();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 

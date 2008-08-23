@@ -177,6 +177,9 @@ public class ServerManager {
       case AppServerInfo.GLASSFISH:
         aCopy.addModule(TIMUtil.GLASSFISH_2_0, TIMUtil.getVersion(TIMUtil.GLASSFISH_2_0));
         break;
+      case AppServerInfo.JETTY:
+        aCopy.addModule(TIMUtil.JETTY_6_1, TIMUtil.getVersion(TIMUtil.JETTY_6_1));
+        break;
       default:
         // nothing for now
     }

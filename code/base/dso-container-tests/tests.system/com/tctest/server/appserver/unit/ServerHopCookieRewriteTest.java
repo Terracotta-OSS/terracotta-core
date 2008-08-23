@@ -15,7 +15,6 @@ import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tc.test.server.util.TcConfigBuilder;
 import com.tctest.webapp.servlets.ServerHopCookieRewriteTestServlet;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import junit.framework.Test;
@@ -77,10 +76,6 @@ public final class ServerHopCookieRewriteTest extends AbstractDeploymentTest {
   private Deployment makeDeployment() throws Exception {
     DeploymentBuilder builder = makeDeploymentBuilder(CONTEXT + ".war");
     Map initParams = null;
-    if (appServerInfo().getId() == AppServerInfo.JETTY) {
-      initParams = new HashMap();
-      initParams.put("session.delimiter", ".");
-    }
     builder.addServlet(MAPPING, "/" + MAPPING + "/*", ServerHopCookieRewriteTestServlet.class, initParams, false);
     return builder.makeDeployment();
   }

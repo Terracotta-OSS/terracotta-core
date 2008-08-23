@@ -150,14 +150,6 @@ public final class ServerHopCookieRewriteTestServlet extends HttpServlet {
                                                                                                  new Object[] {});
       return b.booleanValue();
     } catch (Exception e) {
-      try {
-        // Jetty Sessions
-        Boolean b = (Boolean) session.getClass().getMethod("isServerHop", new Class[] {}).invoke(session,
-                                                                                                 new Object[] {});
-        return b.booleanValue();
-      } catch (Exception e2) {
-        /**/
-      }
       throw new RuntimeException(e);
     }
 
