@@ -32,6 +32,8 @@ public class DBUsageTest extends AbstractDBUtilsTestBase {
     databaseDir = new File(getTempDirectory().toString() + File.separator + "db-data-test2");
     databaseDir.mkdirs();
     sleepycatPersistor = getSleepycatPersistor(databaseDir);
+    // By getObjectCount() to wait for completion of ObjectIdReaderThread
+    sleepycatPersistor.getManagedObjectPersistor().getObjectCount();
     sleepycatPersistor.close();
 
     // db is not populated
