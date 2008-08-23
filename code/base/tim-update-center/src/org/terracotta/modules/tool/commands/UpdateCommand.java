@@ -103,6 +103,11 @@ public class UpdateCommand extends AbstractCommand {
     return list;
   }
 
+  private void printEpilogue() {
+    out.println();
+    out.println("Done.");
+  }
+
   private void update(Module module, boolean verbose) {
     // latest already installed, skip it (unless force flag is set)
     assert module.isLatest() : module + " is not the latest";
@@ -113,6 +118,7 @@ public class UpdateCommand extends AbstractCommand {
 
     // update found, install it
     module.install(verify, overwrite, pretend, out);
+    if (verbose) printEpilogue();
   }
 
   private void updateAll() throws CommandException {
@@ -126,6 +132,7 @@ public class UpdateCommand extends AbstractCommand {
       // installed and available from the list, install the latest
       update(latest, false);
     }
+    printEpilogue();
   }
 
   public void execute(CommandLine cli) throws CommandException {
