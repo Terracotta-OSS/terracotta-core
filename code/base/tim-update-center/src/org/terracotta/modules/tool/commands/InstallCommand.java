@@ -42,26 +42,39 @@ public class InstallCommand extends AbstractCommand {
     arguments.put("group-id", "(OPTIONAL) The group-id used to qualify the name");
   }
 
+  @Override
   public String syntax() {
     return "<name> [version] [group-id] {options}";
   }
 
+  @Override
   public String description() {
     return "Install an integration module";
   }
 
-  private void install(Module module) {
+  private void printEpilogue() {
+    out.println();
+    out.println("Done.");
+  }
+
+  private void install(Module module, boolean verbose) {
     StringWriter sw = new StringWriter();
     module.printDigest(new PrintWriter(sw));
     module.install(verify, overwrite, pretend, out);
+    if (verbose) printEpilogue();
+  }
+
+  private void install(Module module) {
+    install(module, true);
   }
 
   private void installAll() {
     out.println("*** Installing all of the latest integration modules for TC " + modules.tcVersion() + " ***\n");
     List<Module> latest = modules.listLatest();
     for (Module module : latest) {
-      install(module);
+      install(module, false);
     }
+    printEpilogue();
   }
 
   public void execute(CommandLine cli) {
