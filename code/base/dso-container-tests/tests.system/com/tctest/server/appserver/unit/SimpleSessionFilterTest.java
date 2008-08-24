@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.server.appserver.unit;
 
@@ -10,7 +11,7 @@ import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tc.test.server.util.TcConfigBuilder;
 import com.tctest.webapp.servletfilters.SimpleFilter;
-import com.tctest.webapp.servlets.ShutdownNormallyServlet;
+import com.tctest.webapp.servlets.SimpleSessionFilterServlet;
 
 import junit.framework.Test;
 
@@ -19,12 +20,12 @@ import junit.framework.Test;
  */
 public final class SimpleSessionFilterTest extends AbstractTwoServerDeploymentTest {
   private static final String CONTEXT = "SimpleSessionFilterTest";
-  private static final String SERVLET = "ShutdownNormallyServlet";
-  
+  private static final String SERVLET = "SimpleSessionFilterServlet";
+
   public static Test suite() {
     return new SimpleSessionFilterTestSetup();
   }
-  
+
   public void testFilter() throws Exception {
     WebConversation conversation = new WebConversation();
 
@@ -38,18 +39,19 @@ public final class SimpleSessionFilterTest extends AbstractTwoServerDeploymentTe
   private WebResponse request(WebApplicationServer server, String params, WebConversation con) throws Exception {
     return server.ping("/" + CONTEXT + "/" + SERVLET + "?" + params, con);
   }
-  
+
   private static class SimpleSessionFilterTestSetup extends TwoServerTestSetup {
-    
+
     public SimpleSessionFilterTestSetup() {
       super(SimpleSessionFilterTest.class, CONTEXT);
     }
 
     protected void configureWar(DeploymentBuilder builder) {
-      builder.addServlet("ShutdownNormallyServlet", "/" + SERVLET + "/*", ShutdownNormallyServlet.class, null, false);
+      builder.addServlet("SimpleSessionFilterServlet", "/" + SERVLET + "/*", SimpleSessionFilterServlet.class, null,
+                         false);
       builder.addFilter("SimpleFilter", "/*", SimpleFilter.class, null);
     }
-   
+
     protected void configureTcConfig(TcConfigBuilder clientConfig) {
       clientConfig.addWebApplication(CONTEXT);
       clientConfig.addInstrumentedClass(SimpleFilter.class.getName());
