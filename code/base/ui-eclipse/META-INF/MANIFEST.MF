@@ -28,7 +28,7 @@ Require-Bundle: org.eclipse.ui.editors,
  org.eclipse.pde.ui,
  org.eclipse.ui.forms
 Bundle-ClassPath: ../dependencies/lib/antlr-2.7.3.jar,
- ../dependencies/lib/je-3.3.62.jar,
+ ../dependencies/lib/je-3.3.69.jar,
  ../dependencies/lib/bsh-2.0b4.jar,
  ../dependencies/lib/commons-cli-1.1.jar,
  ../dependencies/lib/commons-collections-3.1.jar,
