@@ -921,8 +921,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   public boolean matches(final String expression, final MemberInfo methodInfo) {
     String executionExpression = ExpressionHelper.expressionPattern2ExecutionExpression(expression);
-    if (logger.isDebugEnabled()) logger
-        .debug("==>Testing for match: " + executionExpression + " against " + methodInfo);
+    if (logger.isDebugEnabled()) {
+      logger.debug("==>Testing for match: " + executionExpression + " against " + methodInfo);
+    }
     ExpressionVisitor visitor = expressionHelper.createExpressionVisitor(executionExpression);
     return visitor.match(expressionHelper.createExecutionExpressionContext(methodInfo));
   }
