@@ -19,6 +19,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -60,7 +62,7 @@ public class Module implements Comparable {
 
   private final Modules          modules;
 
-  private static File            repositoryPath      = null;
+  private static File            repositoryPath;
 
   public ModuleId getId() {
     return id;
@@ -78,7 +80,7 @@ public class Module implements Comparable {
     return filename;
   }
 
-  public List<ModuleId> dependencies() {
+  protected List<ModuleId> dependencies() {
     List<ModuleId> list = new ArrayList<ModuleId>();
     list.addAll(computeManifest().keySet());
     list.remove(id);
@@ -253,27 +255,39 @@ public class Module implements Comparable {
 
   /**
    * Install this module.
-   * 
-   * @param verify TODO
-   * @throws IOException
    */
-  public void install(boolean verify, boolean overwrite, boolean pretend, PrintWriter out) {
-    Map<ModuleId, Dependency> manifest = computeManifest();
+  public void install(PrintWriter out, InstallOption... options) {
+    install(out, Arrays.asList(options));
+  }
+
+  /**
+   * Install this module.
+   */
+  public void install(PrintWriter out, Collection<InstallOption> options) {
+    out.println("Installing " + id.toDigestString() + " and dependencies...");
+
+    InstallOptionsHelper installOptions = new InstallOptionsHelper(options);
+    Map<ModuleId, Dependency> manifest = null;
+    try {
+      manifest = computeManifest();
+    } catch (NullPointerException e) {
+      out.println("   Unable to compute manifest for installation: " + e.getMessage());
+      return;
+    }
     List<ModuleId> list = new ArrayList<ModuleId>(manifest.keySet());
 
-    out.println("Installing " + id.toDigestString() + " and dependencies...");
     for (ModuleId key : list) {
       Dependency dependency = manifest.get(key);
       String dependencyId = dependency.getId().toDigestString();
 
       File destdir = new File(repositoryPath(), dependency.getInstallPath());
       File destfile = new File(destdir, dependency.getFilename());
-      if (isInstalled(dependency) && !overwrite) {
+      if (isInstalled(dependency) && !installOptions.overwrite()) {
         out.println("   Skipped: " + dependencyId);
         continue;
       }
 
-      if (!pretend) {
+      if (!installOptions.pretend()) {
         File srcfile = null;
         try {
           srcfile = File.createTempFile("tim-", null);
@@ -284,7 +298,7 @@ public class Module implements Comparable {
           continue;
         }
 
-        if (verify) {
+        if (installOptions.verify()) {
           File md5file = null;
           try {
             md5file = File.createTempFile("tim-md5-", null);
@@ -311,14 +325,19 @@ public class Module implements Comparable {
     }
   }
 
+  /**
+   * Compute the manifest for a module. A manifest consist of a list of modules that a specific module requires. The
+   * list includes the module itself.
+   * 
+   * @throws NullPointerException if any of the module's depedendencies is not a part of the m.odules list
+   */
   private Map<ModuleId, Dependency> computeManifest() {
     Map<ModuleId, Dependency> manifest = new HashMap<ModuleId, Dependency>();
     manifest.put(id, new Dependency(this));
-    // assert dependencies != null : "dependencies field must not be null";
     for (Dependency dependency : dependencies) {
       if (dependency.isReference()) {
         Module module = modules.get(dependency.getId());
-        assert module != null : "ID yields null: " + dependency.toString();
+        if (module == null) throw new NullPointerException("No listing found for '" + dependency.toString() + "'");
         for (Entry<ModuleId, Dependency> entry : module.computeManifest().entrySet()) {
           if (manifest.containsKey(entry.getKey())) continue;
           manifest.put(entry.getKey(), entry.getValue());
@@ -364,15 +383,14 @@ public class Module implements Comparable {
   /**
    * Returns the canonical file path used as root directory when installing modules.
    */
-  public static File repositoryPath() {
+  public static synchronized File repositoryPath() {
     if (repositoryPath != null) return repositoryPath;
     String rootdir = System.getProperty("tc.install-root", System.getProperty("java.io.tmpdir"));
     repositoryPath = new File(rootdir, "modules");
     try {
       repositoryPath = repositoryPath.getCanonicalFile();
     } catch (IOException e) {
-      // can't compute canonicalpath for some reason
-      // we'll just return whatever we have
+      // can't compute canonical path for some reason - we'll just return whatever we have
     }
     return repositoryPath;
   }
@@ -430,14 +448,22 @@ public class Module implements Comparable {
   }
 
   private void printDependenciesInfo(PrintWriter out) {
-    List<ModuleId> requires = dependencies();
     out.println("Dependencies:\n");
-    if (requires.isEmpty()) {
-      out.println("\tNone.");
+    List<ModuleId> requires = null;
+    Map<ModuleId, Dependency> manifest = null;
+    try {
+      requires = dependencies();
+      if (requires.isEmpty()) {
+        out.println("\tNone.");
+        return;
+      }
+      Collections.sort(requires);
+      manifest = computeManifest();
+    } catch (Exception e) {
+      out.println("\tUnable to compute dependencies for module: " + e.getMessage());
       return;
     }
-    Collections.sort(requires);
-    Map<ModuleId, Dependency> manifest = computeManifest();
+
     for (ModuleId m : requires) {
       Dependency d = manifest.get(m);
       out.println("\t" + installStateSymbol(isInstalled(d)) + " " + m.toDigestString());
@@ -541,4 +567,59 @@ public class Module implements Comparable {
     }
     return marker;
   }
+
+  /**
+   * Options used to control behavior of the {@link Module#dinstall(PrintWriter out, InstallOption...)} method.
+   */
+  public enum InstallOption {
+    /** Should install check the md5 sum of the download file before actuall installation? */
+    SKIP_VERIFY,
+
+    /** Should existing installations be overwritten? */
+    OVERWRITE,
+
+    /** Synonym to OVERWRITE */
+    FORCE,
+
+    /**
+     * Download and perform all other checks except actual installation.
+     */
+    PRETEND
+  }
+
+  /**
+   * Helper class used internally to interpret download options.
+   */
+  private static class InstallOptionsHelper {
+    private final Collection<InstallOption> options;
+
+    public InstallOptionsHelper(Collection<InstallOption> options) {
+      this.options = options;
+    }
+
+    public boolean force() {
+      return isOptionSet(InstallOption.FORCE);
+    }
+
+    public boolean overwrite() {
+      return isOptionSet(InstallOption.OVERWRITE) || force();
+    }
+
+    public boolean skipVerify() {
+      return isOptionSet(InstallOption.SKIP_VERIFY);
+    }
+
+    public boolean verify() {
+      return !skipVerify();
+    }
+
+    public boolean pretend() {
+      return isOptionSet(InstallOption.PRETEND);
+    }
+
+    public boolean isOptionSet(InstallOption option) {
+      return this.options.contains(option);
+    }
+  }
+
 }

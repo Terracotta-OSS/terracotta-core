@@ -10,6 +10,7 @@ import org.apache.commons.io.IOUtils;
 import org.terracotta.modules.tool.Module;
 import org.terracotta.modules.tool.ModuleId;
 import org.terracotta.modules.tool.Modules;
+import org.terracotta.modules.tool.Module.InstallOption;
 
 import com.google.inject.Inject;
 import com.tc.bundles.OSGiToMaven;
@@ -27,18 +28,15 @@ import java.util.jar.Manifest;
 
 public class UpdateCommand extends AbstractCommand {
 
-  private static final String LONGOPT_ALL       = "all";
-  private static final String LONGOPT_OVERWRITE = "overwrite";
-  private static final String LONGOPT_FORCE     = "force";
-  private static final String LONGOPT_PRETEND   = "pretend";
-  private static final String LONGOPT_NOVERIFY  = "no-verify";
+  private static final String             LONGOPT_ALL       = "all";
+  private static final String             LONGOPT_OVERWRITE = "overwrite";
+  private static final String             LONGOPT_FORCE     = "force";
+  private static final String             LONGOPT_PRETEND   = "pretend";
+  private static final String             LONGOPT_NOVERIFY  = "no-verify";
 
-  private final Modules       modules;
+  private final Modules                   modules;
 
-  private boolean             force;
-  private boolean             overwrite;
-  private boolean             pretend;
-  private boolean             verify;
+  private final Collection<InstallOption> installOptions;
 
   @Inject
   public UpdateCommand(Modules modules) {
@@ -52,6 +50,8 @@ public class UpdateCommand extends AbstractCommand {
     options.addOption(buildOption(LONGOPT_NOVERIFY, "Skip checksum verification"));
     arguments.put("name", "The name of the integration module");
     arguments.put("group-id", "(OPTIONAL) The group-id used to qualify the name");
+
+    installOptions = new ArrayList<InstallOption>();
   }
 
   @Override
@@ -77,8 +77,13 @@ public class UpdateCommand extends AbstractCommand {
     }
   }
 
+  // @Inject
+  // @Named(ConfigAnnotation.MODULES_DIRECTORY)
+  // private String repositoryPath;
+
   private List<ModuleId> installedModules() throws CommandException {
     File repository = Module.repositoryPath();
+    // File repository = new File(repositoryPath);
     if (!repository.exists()) {
       String msg = "The local TIM repository '" + repository + "' does not exist";
       throw new CommandException(msg);
@@ -111,13 +116,13 @@ public class UpdateCommand extends AbstractCommand {
   private void update(Module module, boolean verbose) {
     // latest already installed, skip it (unless force flag is set)
     assert module.isLatest() : module + " is not the latest";
-    if (module.isInstalled() && !force) {
+    if (module.isInstalled() && !installOptions.contains(InstallOption.FORCE)) {
       if (verbose) out.println("No updates found.");
       return;
     }
 
     // update found, install it
-    module.install(verify, overwrite, pretend, out);
+    module.install(out, installOptions);
     if (verbose) printEpilogue();
   }
 
@@ -137,10 +142,10 @@ public class UpdateCommand extends AbstractCommand {
 
   public void execute(CommandLine cli) throws CommandException {
     List<String> args = cli.getArgList();
-    force = cli.hasOption(LONGOPT_FORCE);
-    overwrite = cli.hasOption(LONGOPT_OVERWRITE) || force;
-    pretend = cli.hasOption(LONGOPT_PRETEND);
-    verify = !cli.hasOption(LONGOPT_NOVERIFY);
+    if (cli.hasOption(LONGOPT_FORCE)) installOptions.add(InstallOption.FORCE);
+    if (cli.hasOption(LONGOPT_OVERWRITE) || cli.hasOption(LONGOPT_FORCE)) installOptions.add(InstallOption.OVERWRITE);
+    if (cli.hasOption(LONGOPT_PRETEND)) installOptions.add(InstallOption.PRETEND);
+    if (cli.hasOption(LONGOPT_NOVERIFY)) installOptions.add(InstallOption.SKIP_VERIFY);
 
     // --all was specified, update everything that is installed
     if (cli.hasOption(LONGOPT_ALL)) {

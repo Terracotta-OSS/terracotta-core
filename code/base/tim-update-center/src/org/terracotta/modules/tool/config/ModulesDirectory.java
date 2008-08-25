@@ -12,11 +12,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Simple marker annotation for use with Guice in order to inject the Terracotta version as a String.
+ * Marker annotation for use with Guice in order to inject the modulesDirectory value as a String.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target( { ElementType.FIELD, ElementType.PARAMETER })
+@Target( { ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE })
 @BindingAnnotation
-public @interface TerracottaVersion {
+public @interface ModulesDirectory {
   // Marker annotation for use with Guice
 }

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package org.terracotta.modules.tool.config;
 
@@ -16,11 +17,12 @@ import java.util.Properties;
 public class Config {
   public static final String KEYSPACE = "org.terracotta.modules.tool.";
 
-  private String tcVersion;
-  private URL    proxyUrl;
-  private File   modulesDirectory;
-  private URL    dataFileUrl;
-  private File   dataFile;
+  private String             tcVersion;
+  private URL                proxyUrl;
+  private File               modulesDirectory;
+  private URL                dataFileUrl;
+  private File               dataFile;
+  private long               dataCacheExpirationInSeconds;
 
   public Config() {
     // nothing to do
@@ -30,9 +32,9 @@ public class Config {
     properties = new PropertiesInterpolator().interpolated(properties);
     this.setTcVersion(getProperty(properties, "tcVersion"));
     this.setDataFile(new File(getProperty(properties, "dataFile")));
-    this.setDataFileUrl(createUrl(getProperty(properties, "dataFileUrl"),
-                          "dataFileUrl is not a valid URL"));
+    this.setDataFileUrl(createUrl(getProperty(properties, "dataFileUrl"), "dataFileUrl is not a valid URL"));
     this.setModulesDirectory(new File(getProperty(properties, "modulesDir")));
+    this.setDataCacheExpirationInSeconds(Long.parseLong(getProperty(properties, "dataCacheExpirationInSeconds")));
     try {
       this.setDataFileUrl(new URL(getProperty(properties, "dataFileUrl")));
     } catch (MalformedURLException e) {
@@ -40,8 +42,7 @@ public class Config {
     }
 
     String proxy = getProperty(properties, "proxyUrl");
-    if (proxy != null)
-      this.setProxyUrl(createUrl(proxy, "Proxy URL is not a valid URL"));
+    if (proxy != null) this.setProxyUrl(createUrl(proxy, "Proxy URL is not a valid URL"));
   }
 
   private static URL createUrl(String urlString, String errorMessage) {
@@ -63,31 +64,48 @@ public class Config {
   public URL getProxyUrl() {
     return proxyUrl;
   }
+
   public void setProxyUrl(URL proxyUrl) {
     this.proxyUrl = proxyUrl;
   }
+
   public String getTcVersion() {
     return tcVersion;
   }
+
   public void setTcVersion(String tcVersion) {
     this.tcVersion = tcVersion;
   }
+
   public File getModulesDirectory() {
     return modulesDirectory;
   }
+
   public void setModulesDirectory(File modulesDirectory) {
     this.modulesDirectory = modulesDirectory;
   }
+
   public URL getDataFileUrl() {
     return dataFileUrl;
   }
+
   public void setDataFileUrl(URL dataFileUrl) {
     this.dataFileUrl = dataFileUrl;
   }
+
   public File getDataFile() {
     return dataFile;
   }
+
   public void setDataFile(File dataFileDirectory) {
     this.dataFile = dataFileDirectory;
+  }
+
+  public long getDataCacheExpirationInSeconds() {
+    return dataCacheExpirationInSeconds;
+  }
+
+  public void setDataCacheExpirationInSeconds(long dataCacheExpirationInSeconds) {
+    this.dataCacheExpirationInSeconds = dataCacheExpirationInSeconds;
   }
 }

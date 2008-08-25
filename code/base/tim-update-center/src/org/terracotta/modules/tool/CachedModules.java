@@ -8,10 +8,11 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
-import org.terracotta.modules.tool.config.TerracottaVersion;
+import org.terracotta.modules.tool.config.ConfigAnnotation;
 import org.terracotta.modules.tool.util.DataLoader;
 
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -33,15 +34,16 @@ public class CachedModules implements Modules {
   private final String          tcVersion;
   private final DataLoader      dataLoader;
 
-  public CachedModules(@TerracottaVersion String tcVersion, InputStream dataInputStream) throws JDOMException,
-      IOException {
+  public CachedModules(@Named(ConfigAnnotation.TERRACOTTA_VERSION) String tcVersion, InputStream dataInputStream)
+      throws JDOMException, IOException {
     this.tcVersion = tcVersion;
     this.dataLoader = null;
     loadData(dataInputStream);
   }
 
   @Inject
-  public CachedModules(@TerracottaVersion String tcVersion, DataLoader dataLoader) throws JDOMException, IOException {
+  public CachedModules(@Named(ConfigAnnotation.TERRACOTTA_VERSION) String tcVersion, DataLoader dataLoader)
+      throws JDOMException, IOException {
     this.tcVersion = tcVersion;
     this.dataLoader = dataLoader;
     loadData(new FileInputStream(this.dataLoader.getDataFile()));

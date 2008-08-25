@@ -8,7 +8,7 @@ import org.terracotta.modules.tool.CachedModules;
 import org.terracotta.modules.tool.Modules;
 import org.terracotta.modules.tool.commands.CommandRegistry;
 import org.terracotta.modules.tool.config.Config;
-import org.terracotta.modules.tool.config.TerracottaVersion;
+import org.terracotta.modules.tool.config.ConfigAnnotation;
 import org.terracotta.modules.tool.util.DataLoader;
 import org.terracotta.modules.tool.util.DataLoader.CacheRefreshPolicy;
 
@@ -16,6 +16,7 @@ import com.google.inject.Binder;
 import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
+import com.google.inject.name.Names;
 
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -26,7 +27,7 @@ import java.net.Proxy.Type;
 /**
  * Module definition for Guice dependency injection.
  */
-class AppContext implements Module {
+class AppContext implements Module, ConfigAnnotation {
   private final Config config;
 
   public AppContext() {
@@ -39,7 +40,15 @@ class AppContext implements Module {
 
   public void configure(Binder binder) {
     // Inject the tcVersion anywhere the @TerracottaVersion annotation is used
-    binder.bindConstant().annotatedWith(TerracottaVersion.class).to(config.getTcVersion());
+    // binder.bindConstant().annotatedWith(TerracottaVersion.class).to(config.getTcVersion());
+    binder.bindConstant().annotatedWith(Names.named(TERRACOTTA_VERSION)).to(config.getTcVersion());
+
+    // Inject the dataCacheExpirationInSeconds anywhere the @DataCacheExpirationInSeconds is used
+    binder.bindConstant().annotatedWith(Names.named(DATA_CACHE_EXPIRATION_IN_SECONDS))
+        .to(config.getDataCacheExpirationInSeconds());
+
+    // Inject the modulesDirectory anywhere the @ModulesDirectory is used
+    binder.bindConstant().annotatedWith(Names.named(MODULES_DIRECTORY)).to(config.getModulesDirectory().toString());
 
     // Make our Config object available to anybody that needs it
     binder.bind(Config.class).in(Scopes.SINGLETON);
@@ -62,5 +71,4 @@ class AppContext implements Module {
     binder.bind(Modules.class).to(CachedModules.class).in(Scopes.SINGLETON);
     binder.bind(CommandRegistry.class).in(Scopes.SINGLETON);
   }
-
 }

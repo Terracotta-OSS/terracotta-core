@@ -113,7 +113,6 @@ public class ModuleId implements Comparable {
   }
 
   public int compareTo(Object obj) {
-    assert obj instanceof ModuleId : "must be instanceof ModuleId.";
     ModuleId other = (ModuleId) obj;
     String v1, v2;
     // comparing siblings:
@@ -122,7 +121,7 @@ public class ModuleId implements Comparable {
     if (this.getSymbolicName().equals(other.getSymbolicName())) {
       v1 = this.sortableVersion();
       v2 = other.sortableVersion();
-      int value = v1.compareTo(v2); 
+      int value = v1.compareTo(v2);
       if (v1.startsWith(v2) || v2.startsWith(v1)) value = -value;
       return value;
     }
@@ -136,6 +135,7 @@ public class ModuleId implements Comparable {
     return ModuleId.computeSymbolicName(groupId, artifactId) + "-" + sortableVersion();
   }
 
+  @Override
   public String toString() {
     return getClass().getSimpleName() + ": " + getSymbolicName() + " [" + version + "]";
   }

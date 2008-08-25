@@ -12,11 +12,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Simple marker annotation for use with Guice in order to inject the Terracotta version as a String.
+ * Marker annotation for use with Guice in order to inject the dataCacheExpirationInSeconds value as a long.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target( { ElementType.FIELD, ElementType.PARAMETER })
 @BindingAnnotation
-public @interface TerracottaVersion {
+public @interface DataCacheExpirationInSeconds {
   // Marker annotation for use with Guice
 }
