@@ -34,7 +34,7 @@ public class Config {
     this.setDataFile(new File(getProperty(properties, "dataFile")));
     this.setDataFileUrl(createUrl(getProperty(properties, "dataFileUrl"), "dataFileUrl is not a valid URL"));
     this.setModulesDirectory(new File(getProperty(properties, "modulesDir")));
-    this.setDataCacheExpirationInSeconds(Long.parseLong(getProperty(properties, "dataCacheExpirationInSeconds")));
+    // this.setDataCacheExpirationInSeconds(Long.parseLong(getProperty(properties, "dataCacheExpirationInSeconds")));
     try {
       this.setDataFileUrl(new URL(getProperty(properties, "dataFileUrl")));
     } catch (MalformedURLException e) {
