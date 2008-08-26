@@ -94,7 +94,7 @@ public class CommandLineMain {
     String commandName = args[0];
     String[] commandArgs = new String[0];
     if (args.length > 1) {
-      commandArgs = Arrays.asList(args).subList(1, args.length - 1).toArray(new String[args.length - 2]);
+      commandArgs = Arrays.asList(args).subList(1, args.length).toArray(new String[0]);
     }
     commandLineMain.executeCommand(commandName, commandArgs);
   }

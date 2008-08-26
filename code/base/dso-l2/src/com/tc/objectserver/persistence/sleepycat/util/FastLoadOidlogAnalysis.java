@@ -24,13 +24,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class FastLoadOidlogAnalysis extends BaseUtility{
+public class FastLoadOidlogAnalysis extends BaseUtility {
 
   private static final int        LEFT             = 1;
   private static final int        RIGHT            = 2;
   private static final int        CENTER           = 3;
 
- 
   private final EnvironmentConfig enc;
   private final Environment       env;
   private final DatabaseConfig    dbc;
@@ -41,7 +40,7 @@ public class FastLoadOidlogAnalysis extends BaseUtility{
   }
 
   public FastLoadOidlogAnalysis(File dir, Writer writer) throws Exception {
-    super(writer, new File[]{});
+    super(writer, new File[] {});
     this.enc = new EnvironmentConfig();
     this.enc.setReadOnly(true);
     this.env = new Environment(dir, enc);
@@ -49,48 +48,30 @@ public class FastLoadOidlogAnalysis extends BaseUtility{
     this.dbc.setReadOnly(true);
   }
 
-  private OidlogsStats analyzeOidLogs(String dbName, Database db) throws DatabaseException {
-    CursorConfig config = new CursorConfig();
-    Cursor c = db.openCursor(null, config);
-    OidlogsStats stats = new OidlogsStats(dbName);
-    DatabaseEntry key = new DatabaseEntry();
-    DatabaseEntry value = new DatabaseEntry();
-    while (OperationStatus.SUCCESS.equals(c.getNext(key, value, LockMode.DEFAULT))) {
-      stats.record(key.getData(), value.getData());
-    }
-    c.close();
-    return (stats);
-  }
-
-  private void reportOidlog(OidlogsStats stats) {
-    log(" ");
-    log("\nAnalysis of oid_store_log databases :\n================================\n");
-    log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-    log("DBName", "# ADD", "# DEL", "Start Sequence", "End Sequence");
-    log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-    log(stats.getDatabaseName(), String.valueOf(stats.getAddCount()), String.valueOf(stats.getDeleteCount()), String
-        .valueOf(stats.getStartSeqence()), String.valueOf(stats.getEndSequence()));
-    log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-  }
-
   public void report() throws DatabaseException {
     List dbs = env.getDatabaseNames();
+
+    log(" ");
+    log("\nAnalysis of oid databases :\n================================\n");
 
     for (Iterator i = dbs.iterator(); i.hasNext();) {
       String dbName = (String) i.next();
       if (dbName.equals("oid_store_log")) {
         Database db = env.openDatabase(null, dbName, dbc);
-        OidlogsStats stats = analyzeOidLogs(dbName, db);
+        OidlogsStats stats = new OidlogsStats(dbName);
+        stats.analyze(db);
         oidlogsStatsList.add(stats);
         db.close();
-        reportOidlog(stats);
+        stats.report();
+      }
+      if (dbName.equals("objects_oid_store") || dbName.equals("mapsdatabase_oid_store")) {
+        Database db = env.openDatabase(null, dbName, dbc);
+        OidStoreStats stats = new OidStoreStats(dbName);
+        stats.analyze(db);
+        db.close();
+        stats.report();
       }
     }
-  }
-
-  private void log(String nameHeader, String countHeader, String keyHeader, String valueHeader, String sizeHeader) {
-    log(format(nameHeader, 20, LEFT) + format(countHeader, 10, RIGHT) + format(keyHeader, 30, CENTER)
-        + format(valueHeader, 30, CENTER) + format(sizeHeader, 15, RIGHT));
   }
 
   private static String format(String s, int size, int justification) {
@@ -142,21 +123,44 @@ public class FastLoadOidlogAnalysis extends BaseUtility{
     System.out.println("Usage: FastLoadOidlogAnalysis <environment home directory>");
   }
 
-  protected static final class OidlogsStats {
-    private long         addCount;
-    private long         deleteCount;
-    private long         startSequence;
-    private long         endSequence;
+  protected abstract class AbstractOidStats {
     private final String databaseName;
 
-    private boolean      hasStartSeq = false;
-
-    public OidlogsStats(String databaseName) {
+    public AbstractOidStats(String databaseName) {
       this.databaseName = databaseName;
     }
 
     public String getDatabaseName() {
       return databaseName;
+    }
+    
+    public void analyze(Database db) throws DatabaseException {
+      CursorConfig config = new CursorConfig();
+      Cursor c = db.openCursor(null, config);
+      DatabaseEntry key = new DatabaseEntry();
+      DatabaseEntry value = new DatabaseEntry();
+      while (OperationStatus.SUCCESS.equals(c.getNext(key, value, LockMode.DEFAULT))) {
+        record(key.getData(), value.getData());
+      }
+      c.close();
+    }
+    
+    abstract public void record(byte[] key, byte[] value);
+
+    abstract public void report();
+
+  }
+
+  protected final class OidlogsStats extends AbstractOidStats {
+    private long    addCount;
+    private long    deleteCount;
+    private long    startSequence;
+    private long    endSequence;
+
+    private boolean hasStartSeq = false;
+
+    public OidlogsStats(String databaseName) {
+      super(databaseName);
     }
 
     public long getAddCount() {
@@ -175,7 +179,11 @@ public class FastLoadOidlogAnalysis extends BaseUtility{
       return endSequence;
     }
 
-    public void record(byte[] key, byte[] values) {
+    private boolean isAddOper(byte[] key) {
+      return (key[OidLongArray.BYTES_PER_LONG] == 0);
+    }
+
+    public void record(byte[] key, byte[] value) {
 
       if (isAddOper(key)) {
         ++addCount;
@@ -189,11 +197,64 @@ public class FastLoadOidlogAnalysis extends BaseUtility{
       } else {
         endSequence = Conversion.bytes2Long(key);
       }
-
     }
 
-    private boolean isAddOper(byte[] key) {
-      return (key[OidLongArray.BYTES_PER_LONG] == 0);
+    private void sublog(String nameHeader, String countHeader, String keyHeader, String valueHeader, String sizeHeader) {
+      log(format(nameHeader, 20, LEFT) + format(countHeader, 10, RIGHT) + format(keyHeader, 30, CENTER)
+          + format(valueHeader, 30, CENTER) + format(sizeHeader, 15, RIGHT));
+    }
+
+    public void report() {
+      log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+      sublog("DBName", "# ADD", "# DEL", "Start Sequence", "End Sequence");
+      log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+      sublog(getDatabaseName(), String.valueOf(getAddCount()), String.valueOf(getDeleteCount()), String
+          .valueOf(getStartSeqence()), String.valueOf(getEndSequence()));
+      log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+    }
+
+  }
+
+  protected final class OidStoreStats extends AbstractOidStats {
+    private long totalRecord = 0;
+    private long totalBitsOn = 0;
+
+    public OidStoreStats(String databaseName) {
+      super(databaseName);
+    }
+
+    public long getTotalRecords() {
+      return totalRecord;
+    }
+
+    public long getTotalBitsOn() {
+      return totalBitsOn;
+    }
+
+    public void record(byte[] key, byte[] value) {
+      ++totalRecord;
+      // check on bits
+      for (int i = 0; i < value.length; ++i) {
+        byte cmp = (byte) 1;
+        byte b = value[i];
+        for (int j = 0; j < 8; ++j) {
+          if ((b & cmp) != 0) ++totalBitsOn;
+          cmp <<= 1;
+        }
+      }
+    }
+
+    private void sublog(String nameHeader, String countHeader, String keyHeader) {
+      log(format(nameHeader, 20, LEFT) + format(countHeader, 10, RIGHT) + format(keyHeader, 30, CENTER));
+    }
+
+    public void report() {
+      log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+      sublog("DBName", "# records", "# bits on");
+      log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+      sublog(getDatabaseName(), String.valueOf(getTotalRecords()), String.valueOf(getTotalBitsOn()));
+      log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+
     }
 
   }
