@@ -424,22 +424,23 @@ public class NonPortableReason implements Serializable {
     private static final String         SUBCLASS_OF_LOGICALLY_MANAGED_CLASS_ROOT_INSTRUCTIONS_KEY  = "logicallyManagedSuperClass.root.instructions";
     private static final String         SUBCLASS_OF_LOGICALLY_MANAGED_CLASS_FIELD_INSTRUCTIONS_KEY = "logicallyManagedSuperClass.field.instructions";
 
+    private static final String         CLASS_NOT_IN_BOOT_JAR_INFO_KEY                             = "classNotInBootJar.info";
     private static final String         CLASS_NOT_IN_BOOT_JAR_CLASS_KEY                            = "classNotInBootJar.class";
     private static final String         CLASS_NOT_IN_BOOT_JAR_INSTRUCTIONS_KEY                     = "classNotInBootJar.instructions";
 
+    private static final String         CLASS_NOT_INCLUDED_IN_CONFIG_INFO_KEY                      = "classNotIncludedInConfig.info";
     private static final String         CLASS_NOT_INCLUDED_IN_CONFIG_HEADER_KEY                    = "classNotIncludedInConfig.header";
     private static final String         CLASS_NOT_INCLUDED_IN_CONFIG_NON_BOOTJAR_CLASS_KEY         = "classNotIncludedInConfig.non-bootjar.class";
     private static final String         CLASS_NOT_INCLUDED_IN_CONFIG_NON_BOOTJAR_INSTRUCTIONS_KEY  = "classNotIncludedInConfig.non-bootjar.instructions";
     private static final String         CLASS_NOT_INCLUDED_IN_CONFIG_BOOTJAR_CLASS_KEY             = "classNotIncludedInConfig.bootjar.class";
     private static final String         CLASS_NOT_INCLUDED_IN_CONFIG_BOOTJAR_INSTRUCTIONS_KEY      = "classNotIncludedInConfig.bootjar.instructions";
-    private static final String         CLASS_NOT_INCLUDED_IN_CONFIG_FOOTER_KEY                    = "classNotIncludedInConfig.footer";
 
+    private static final String         SUPER_CLASS_NOT_INSTRUMENTED_INFO_KEY                      = "superClassNotInstrumented.info";
     private static final String         SUPER_CLASS_NOT_INSTRUMENTED_HEADER_KEY                    = "superClassNotInstrumented.header";
     private static final String         SUPER_CLASS_NOT_INSTRUMENTED_NON_BOOTJAR_CLASS_KEY         = "superClassNotInstrumented.non-bootjar.class";
     private static final String         SUPER_CLASS_NOT_INSTRUMENTED_NON_BOOTJAR_INSTRUCTIONS_KEY  = "superClassNotInstrumented.non-bootjar.instructions";
     private static final String         SUPER_CLASS_NOT_INSTRUMENTED_BOOTJAR_CLASS_KEY             = "superClassNotInstrumented.bootjar.class";
     private static final String         SUPER_CLASS_NOT_INSTRUMENTED_BOOTJAR_INSTRUCTIONS_KEY      = "superClassNotInstrumented.bootjar.instructions";
-    private static final String         SUPER_CLASS_NOT_INSTRUMENTED_FOOTER_KEY                    = "superClassNotInstrumented.footer";
 
     static String classNotAdaptableInstructions(String fieldName, String nonAdaptableClassName, boolean isRootField) {
       return MessageFormat.format(rb.getString(isRootField ? CLASS_NOT_ADAPTABLE_ROOT_INSTRUCTIONS_KEY
@@ -461,25 +462,28 @@ public class NonPortableReason implements Serializable {
     }
 
     static String classNotInBootJarInstructions(List classes) {
+      final StringBuffer instructions = new StringBuffer(MessageFormat.format(rb.getString(CLASS_NOT_IN_BOOT_JAR_INFO_KEY), null));
+      
       final StringBuffer classesMsg = new StringBuffer();
       for (Iterator pos = classes.iterator(); pos.hasNext();) {
         classesMsg.append(MessageFormat.format(rb.getString(CLASS_NOT_IN_BOOT_JAR_CLASS_KEY),
                                                new Object[] { pos.next() }));
       }
-      return MessageFormat.format(rb.getString(CLASS_NOT_IN_BOOT_JAR_INSTRUCTIONS_KEY), new Object[] { classesMsg });
+      instructions.append(MessageFormat.format(rb.getString(CLASS_NOT_IN_BOOT_JAR_INSTRUCTIONS_KEY), new Object[] { classesMsg }));
+      return instructions.toString();
     }
 
     static String classNotIncludedInConfigInstructions(List normalClassNames, List bootJarClassNames) {
-      final StringBuffer instructions = new StringBuffer(MessageFormat.format(rb
-          .getString(CLASS_NOT_INCLUDED_IN_CONFIG_HEADER_KEY), null));
+      final StringBuffer instructions = new StringBuffer(MessageFormat.format(rb.getString(CLASS_NOT_INCLUDED_IN_CONFIG_INFO_KEY), null));
+      instructions.append(MessageFormat.format(rb.getString(CLASS_NOT_INCLUDED_IN_CONFIG_HEADER_KEY), null));
       if (normalClassNames != null && !normalClassNames.isEmpty()) {
         final StringBuffer classList = new StringBuffer();
         for (Iterator pos = normalClassNames.iterator(); pos.hasNext();) {
           classList.append(MessageFormat.format(rb.getString(CLASS_NOT_INCLUDED_IN_CONFIG_NON_BOOTJAR_CLASS_KEY),
                                                 new Object[] { pos.next() }));
         }
-        instructions.append(MessageFormat.format(rb
-            .getString(CLASS_NOT_INCLUDED_IN_CONFIG_NON_BOOTJAR_INSTRUCTIONS_KEY), new Object[] { classList }));
+        instructions.append(MessageFormat.format(rb.getString(CLASS_NOT_INCLUDED_IN_CONFIG_NON_BOOTJAR_INSTRUCTIONS_KEY),
+                                                 new Object[] { classList }));
       }
       if (bootJarClassNames != null && !bootJarClassNames.isEmpty()) {
         final StringBuffer bootJarClassList = new StringBuffer();
@@ -490,21 +494,20 @@ public class NonPortableReason implements Serializable {
         instructions.append(MessageFormat.format(rb.getString(CLASS_NOT_INCLUDED_IN_CONFIG_BOOTJAR_INSTRUCTIONS_KEY),
                                                  new Object[] { bootJarClassList }));
       }
-      instructions.append(MessageFormat.format(rb.getString(CLASS_NOT_INCLUDED_IN_CONFIG_FOOTER_KEY), null));
       return instructions.toString();
     }
 
     static String superClassNotInstrumentedInstructions(List normalClassNames, List bootJarClassNames) {
-      final StringBuffer instructions = new StringBuffer(MessageFormat.format(rb
-          .getString(SUPER_CLASS_NOT_INSTRUMENTED_HEADER_KEY), null));
+      final StringBuffer instructions = new StringBuffer(MessageFormat.format(rb.getString(SUPER_CLASS_NOT_INSTRUMENTED_INFO_KEY), null));
+      instructions.append(MessageFormat.format(rb.getString(SUPER_CLASS_NOT_INSTRUMENTED_HEADER_KEY), null));
       if (normalClassNames != null && !normalClassNames.isEmpty()) {
         final StringBuffer classList = new StringBuffer();
         for (Iterator pos = normalClassNames.iterator(); pos.hasNext();) {
           classList.append(MessageFormat.format(rb.getString(SUPER_CLASS_NOT_INSTRUMENTED_NON_BOOTJAR_CLASS_KEY),
                                                 new Object[] { pos.next() }));
         }
-        instructions.append(MessageFormat.format(rb
-            .getString(SUPER_CLASS_NOT_INSTRUMENTED_NON_BOOTJAR_INSTRUCTIONS_KEY), new Object[] { classList }));
+        instructions.append(MessageFormat.format(rb.getString(SUPER_CLASS_NOT_INSTRUMENTED_NON_BOOTJAR_INSTRUCTIONS_KEY),
+                                                 new Object[] { classList }));
       }
       if (bootJarClassNames != null && !bootJarClassNames.isEmpty()) {
         final StringBuffer bootJarClassList = new StringBuffer();
@@ -515,7 +518,6 @@ public class NonPortableReason implements Serializable {
         instructions.append(MessageFormat.format(rb.getString(SUPER_CLASS_NOT_INSTRUMENTED_BOOTJAR_INSTRUCTIONS_KEY),
                                                  new Object[] { bootJarClassList }));
       }
-      instructions.append(MessageFormat.format(rb.getString(SUPER_CLASS_NOT_INSTRUMENTED_FOOTER_KEY), null));
       return instructions.toString();
     }
 
