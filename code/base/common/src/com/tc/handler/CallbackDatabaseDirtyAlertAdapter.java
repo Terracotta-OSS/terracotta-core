@@ -8,6 +8,10 @@ import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
 import com.tc.logging.TCLogger;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+
 public class CallbackDatabaseDirtyAlertAdapter implements CallbackOnExitHandler {
 
   private final TCLogger logger;
@@ -19,7 +23,17 @@ public class CallbackDatabaseDirtyAlertAdapter implements CallbackOnExitHandler 
   }
 
   public void callbackOnExit(CallbackOnExitState state) {
-    logger.warn(state.getThrowable().getStackTrace());
+    printToLogger(state);
     consoleLogger.warn(state.getThrowable().getMessage());
+  }
+
+  private void printToLogger(CallbackOnExitState state) {
+    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+    state.getThrowable().printStackTrace(new PrintWriter(stream, true));
+    try {
+      logger.warn(stream.toString("UTF-8"));
+    } catch (UnsupportedEncodingException e) {
+      //
+    }
   }
 }
