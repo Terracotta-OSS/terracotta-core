@@ -58,7 +58,7 @@ public class ServerMessageTransport extends MessageTransportBase {
 
   private void verifyAndHandleAck(WireProtocolMessage message) {
     if (!verifyAck(message)) {
-      handleHandshakeError(new TransportHandshakeErrorContext("Expected an ACK message but received: " + message, 
+      handleHandshakeError(new TransportHandshakeErrorContext("Expected an ACK message but received: " + message,
                                                               TransportHandshakeError.ERROR_HANDSHAKE));
     } else {
       handleAck((TransportHandshakeMessage) message);
@@ -86,6 +86,16 @@ public class ServerMessageTransport extends MessageTransportBase {
       wireNewConnection(newConnection);
     }
 
+  }
+
+  public void closeEvent(TCConnectionEvent event) {
+    if (status.isEstablished()) {
+      status.reset();
+      super.closeEvent(event);
+    } else {
+      // DEV-1856 : Don't bother for connections which actually didn't make up to Transport Establishment.
+      logger.warn("Connection : " + event.getSource() + ", which was not Transport Established, got closed");
+    }
   }
 
 }
