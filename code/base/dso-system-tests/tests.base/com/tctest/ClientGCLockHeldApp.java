@@ -65,7 +65,7 @@ public class ClientGCLockHeldApp extends AbstractTransparentApp {
     
     System.out.println("maxMemory: " + maxMemory);
     
-    int locksSize = (int)(maxMemory/10000);
+    int locksSize = (int)(maxMemory/15000);
     
     System.out.println("locksSize = " + locksSize);
     while (stopwatch.getElapsedTime() < (1000 * 60 * MINUTES_TEST_RUN)) {
