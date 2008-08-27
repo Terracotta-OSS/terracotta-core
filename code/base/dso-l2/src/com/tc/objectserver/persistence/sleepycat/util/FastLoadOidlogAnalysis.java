@@ -133,19 +133,24 @@ public class FastLoadOidlogAnalysis extends BaseUtility {
     public String getDatabaseName() {
       return databaseName;
     }
-    
+
     public void analyze(Database db) throws DatabaseException {
       CursorConfig config = new CursorConfig();
       Cursor c = db.openCursor(null, config);
       DatabaseEntry key = new DatabaseEntry();
       DatabaseEntry value = new DatabaseEntry();
-      while (OperationStatus.SUCCESS.equals(c.getNext(key, value, LockMode.DEFAULT))) {
-        record(key.getData(), value.getData());
+      try {
+        while (OperationStatus.SUCCESS.equals(c.getNext(key, value, LockMode.DEFAULT))) {
+          record(key.getData(), value.getData());
+        }
+      } catch (DatabaseException e) {
+        log("Bad database " + db.getDatabaseName() + " " + e);
+      } finally {
+        c.close();
       }
-      c.close();
     }
-    
-    abstract public void record(byte[] key, byte[] value);
+
+    abstract public void record(byte[] key, byte[] value) throws DatabaseException;
 
     abstract public void report();
 
@@ -183,7 +188,10 @@ public class FastLoadOidlogAnalysis extends BaseUtility {
       return (key[OidLongArray.BYTES_PER_LONG] == 0);
     }
 
-    public void record(byte[] key, byte[] value) {
+    public void record(byte[] key, byte[] value) throws DatabaseException {
+
+      // key must be a long and a byte
+      if ((OidLongArray.BYTES_PER_LONG + 1) != key.length) { throw new DatabaseException("Wrong key size"); }
 
       if (isAddOper(key)) {
         ++addCount;
@@ -196,6 +204,7 @@ public class FastLoadOidlogAnalysis extends BaseUtility {
         hasStartSeq = true;
       } else {
         endSequence = Conversion.bytes2Long(key);
+        if (endSequence <= startSequence) { throw new DatabaseException("Wrong order of sequence"); }
       }
     }
 
@@ -231,7 +240,11 @@ public class FastLoadOidlogAnalysis extends BaseUtility {
       return totalBitsOn;
     }
 
-    public void record(byte[] key, byte[] value) {
+    public void record(byte[] key, byte[] value) throws DatabaseException {
+      // sanity check, key must be a long, value must be a long array
+      if (OidLongArray.BYTES_PER_LONG != key.length) { throw new DatabaseException("Wrong key size!"); }
+      if (0 != (value.length % OidLongArray.BYTES_PER_LONG)) { throw new DatabaseException("Wrong value size!"); }
+
       ++totalRecord;
       // check on bits
       for (int i = 0; i < value.length; ++i) {
