@@ -330,55 +330,58 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
       setRecording(false);
     }
 
-    public void handleNotification(Notification notification, Object handback) {
-      String type = notification.getType();
-      Object userData = notification.getUserData();
+    public void handleNotification(final Notification notification, final Object handback) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          String type = notification.getType();
+          Object userData = notification.getUserData();
 
-      if (type.equals(StatisticsLocalGathererMBean.STATISTICS_LOCALGATHERER_STARTEDUP_TYPE)) {
-        gathererConnected();
-        return;
-      }
+          if (type.equals(StatisticsLocalGathererMBean.STATISTICS_LOCALGATHERER_STARTEDUP_TYPE)) {
+            gathererConnected();
+            return;
+          }
 
-      if (type.equals(StatisticsLocalGathererMBean.STATISTICS_LOCALGATHERER_SESSION_CREATED_TYPE)) {
-        m_currentStatsSessionId = (String) userData;
-        return;
-      }
+          if (type.equals(StatisticsLocalGathererMBean.STATISTICS_LOCALGATHERER_SESSION_CREATED_TYPE)) {
+            m_currentStatsSessionId = (String) userData;
+            return;
+          }
 
-      if (type.equals(StatisticsLocalGathererMBean.STATISTICS_LOCALGATHERER_CAPTURING_STARTED_TYPE)) {
-        showRecordingInProgress();
-        return;
-      }
+          if (type.equals(StatisticsLocalGathererMBean.STATISTICS_LOCALGATHERER_CAPTURING_STARTED_TYPE)) {
+            showRecordingInProgress();
+            return;
+          }
 
-      if (type.equals(StatisticsLocalGathererMBean.STATISTICS_LOCALGATHERER_CAPTURING_STOPPED_TYPE)) {
-        String thisSession = (String) userData;
-        if (m_currentStatsSessionId != null && m_currentStatsSessionId.equals(thisSession)) {
-          m_statsSessionsListModel.addElement(new StatsSessionListItem(thisSession));
-          m_statsSessionsList.setSelectedIndex(m_statsSessionsListModel.getSize() - 1);
-          m_currentStatsSessionId = null;
+          if (type.equals(StatisticsLocalGathererMBean.STATISTICS_LOCALGATHERER_CAPTURING_STOPPED_TYPE)) {
+            String thisSession = (String) userData;
+            if (m_currentStatsSessionId != null && m_currentStatsSessionId.equals(thisSession)) {
+              m_statsSessionsListModel.addElement(new StatsSessionListItem(thisSession));
+              m_statsSessionsList.setSelectedIndex(m_statsSessionsListModel.getSize() - 1);
+              m_currentStatsSessionId = null;
+              hideRecordingInProgress();
+              return;
+            }
+          }
 
-          hideRecordingInProgress();
-          return;
-        }
-      }
+          if (type.equals(StatisticsLocalGathererMBean.STATISTICS_LOCALGATHERER_SESSION_CLEARED_TYPE)) {
+            String sessionId = (String) userData;
+            int sessionCount = m_statsSessionsListModel.getSize();
+            for (int i = 0; i < sessionCount; i++) {
+              StatsSessionListItem item = (StatsSessionListItem) m_statsSessionsListModel.elementAt(i);
+              if (sessionId.equals(item.getSessionId())) {
+                m_statsSessionsListModel.remove(i);
+                break;
+              }
+            }
+            return;
+          }
 
-      if (type.equals(StatisticsLocalGathererMBean.STATISTICS_LOCALGATHERER_SESSION_CLEARED_TYPE)) {
-        String sessionId = (String) userData;
-        int sessionCount = m_statsSessionsListModel.getSize();
-        for (int i = 0; i < sessionCount; i++) {
-          StatsSessionListItem item = (StatsSessionListItem) m_statsSessionsListModel.elementAt(i);
-          if (sessionId.equals(item.getSessionId())) {
-            m_statsSessionsListModel.remove(i);
-            break;
+          if (type.equals(StatisticsLocalGathererMBean.STATISTICS_LOCALGATHERER_ALLSESSIONS_CLEARED_TYPE)) {
+            m_statsSessionsListModel.clear();
+            m_currentStatsSessionId = null;
+            return;
           }
         }
-        return;
-      }
-
-      if (type.equals(StatisticsLocalGathererMBean.STATISTICS_LOCALGATHERER_ALLSESSIONS_CLEARED_TYPE)) {
-        m_statsSessionsListModel.clear();
-        m_currentStatsSessionId = null;
-        return;
-      }
+      });
     }
   }
 
