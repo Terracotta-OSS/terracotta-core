@@ -43,12 +43,16 @@ public interface DSOClientMBean extends TerracottaMBean {
   String getRemoteAddress();
 
   CountStatistic getTransactionRate();
+  long getNativeTransactionRate();
 
   CountStatistic getObjectFaultRate();
+  long getNativeObjectFaultRate();
 
   CountStatistic getObjectFlushRate();
+  long getNativeObjectFlushRate();
 
   CountStatistic getPendingTransactionsCount();
+  long getNativePendingTransactionsCount();
 
   Statistic[] getStatistics(String[] names);
 

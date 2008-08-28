@@ -234,18 +234,34 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     return StatsUtil.makeCountStat(txnRate);
   }
 
+  public long getNativeTransactionRate() {
+    return txnRate.getValue();
+  }
+
   public CountStatistic getObjectFaultRate() {
     return StatsUtil.makeCountStat(faultRate);
   }
 
+  public long getNativeObjectFaultRate() {
+    return faultRate.getValue();
+  }
+  
   public CountStatistic getObjectFlushRate() {
     return StatsUtil.makeCountStat(flushRate);
   }
 
+  public long getNativeObjectFlushRate() {
+    return flushRate.getValue();
+  }
+  
   public CountStatistic getPendingTransactionsCount() {
     return StatsUtil.makeCountStat(pendingTransactions);
   }
 
+  public long getNativePendingTransactionsCount() {
+    return pendingTransactions.getValue();
+  }
+  
   public Statistic[] getStatistics(final String[] names) {
     int count = names.length;
     Statistic[] result = new Statistic[count];
