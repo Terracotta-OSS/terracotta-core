@@ -68,10 +68,10 @@ public class CVT {
     }
 
     if (cli.hasOption("H")) {
-      commands.getConnection().setHost(cli.getOptionValue("host"));
+      commands.getConnection().setHost(cli.getOptionValue("H"));
     }
     if (cli.hasOption("p")) {
-      commands.getConnection().setPort(Integer.parseInt(cli.getOptionValue("port")));
+      commands.getConnection().setPort(Integer.parseInt(cli.getOptionValue("p")));
     }
 
     // create the commands to process
