@@ -23,8 +23,10 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     
     tims     = {}
     timnames = args[0]['tims']
+    tim_getpath.gsub!(/\\/, '/')
+    puts tim_getpath
     timnames.each do |entry|
-      data = %x[#{tim_get.to_s} list #{entry}].split("\n").last
+      data = %x[#{tim_getpath} list #{entry}].split("\n").last
       data.gsub!(/[()]/, '')
       data = data.split
       tims[data.first] = data.last

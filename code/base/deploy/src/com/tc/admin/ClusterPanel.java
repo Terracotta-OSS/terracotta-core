@@ -20,7 +20,9 @@ import java.util.concurrent.Callable;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JRootPane;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 
 public class ClusterPanel extends XContainer {
   private AdminClientContext m_acc;
@@ -67,6 +69,12 @@ public class ClusterPanel extends XContainer {
     setupConnectButton();
   }
 
+  public void addNotify() {
+    super.addNotify();
+    JRootPane rootPane = (JRootPane) getAncestorOfClass(JRootPane.class);
+    rootPane.setDefaultButton(m_connectButton);
+  }
+  
   void reinitialize() {
     m_hostField.setText(m_clusterNode.getHost());
     m_portField.setText(Integer.toString(m_clusterNode.getPort()));
@@ -79,6 +87,11 @@ public class ClusterPanel extends XContainer {
       m_clusterNode.setHost(m_originalHost = host);
       m_acc.nodeChanged(m_clusterNode);
       m_acc.updateServerPrefs();
+      SwingUtilities.invokeLater(new Runnable () {
+        public void run() {
+          m_connectButton.doClick();
+        }
+      });
     }
   }
 
@@ -90,6 +103,11 @@ public class ClusterPanel extends XContainer {
         m_clusterNode.setPort(m_originalPort = Integer.parseInt(port));
         m_acc.nodeChanged(m_clusterNode);
         m_acc.updateServerPrefs();
+        SwingUtilities.invokeLater(new Runnable () {
+          public void run() {
+            m_connectButton.doClick();
+          }
+        });
       } catch (Exception e) {
         Toolkit.getDefaultToolkit().beep();
         m_acc.log("'" + port + "' not a number");
@@ -103,6 +121,7 @@ public class ClusterPanel extends XContainer {
       m_connectButton.setEnabled(false);
       if (m_clusterNode.isConnected()) {
         disconnect();
+        m_connectButton.setEnabled(m_clusterNode.isConnected());
       } else {
         connect();
       }

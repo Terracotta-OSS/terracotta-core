@@ -36,12 +36,11 @@ public class AdminClient extends ApplicationManager {
   private static final String PREF_FILE = ".AdminClient.xml";
 
   static {
-    // Silence jmx remote
-    Logger.getLogger("javax.management.remote.generic").setLevel(Level.OFF);
-    Logger.getLogger("javax.management.remote.misc").setLevel(Level.OFF);
-    Logger.getLogger("com.sun.jmx.remote.opt.util").setLevel(Level.OFF);
-    Logger.getLogger("com.sun.jmx.remote.opt.util").setLevel(Level.OFF);
-    Logger.getLogger("javax.management.remote.rmi").setLevel(Level.OFF);
+    if (!Boolean.getBoolean("javax.management.remote.debug")) {
+      // Silence jmx remote
+      Logger.getLogger("javax.management.remote").setLevel(Level.OFF);
+      Logger.getLogger("com.sun.jmx.remote.opt.util").setLevel(Level.OFF);
+    }
 
     // Silence httpclient
     System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog");
@@ -64,7 +63,7 @@ public class AdminClient extends ApplicationManager {
   }
 
   public static synchronized AdminClient getClient() {
-    if(m_client == null) {
+    if (m_client == null) {
       m_client = new AdminClient();
     }
     return m_client;
@@ -176,22 +175,22 @@ public class AdminClient extends ApplicationManager {
     StartupAction(String[] args) {
       this.args = args;
     }
-    
+
     public void run() {
       AdminClient client = new AdminClient();
       String[] finalArgs;
-      if(System.getProperty("swing.defaultlaf") == null) {
+      if (System.getProperty("swing.defaultlaf") == null) {
         finalArgs = ApplicationManager.parseLAFArgs(args);
-      } else{ 
+      } else {
         finalArgs = args;
       }
       client.parseArgs(finalArgs);
       client.start();
     }
   }
-  
+
   public static final void main(final String[] args) throws Exception {
-    if(System.getProperty("swing.defaultlaf") == null) {
+    if (System.getProperty("swing.defaultlaf") == null) {
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
     }
 

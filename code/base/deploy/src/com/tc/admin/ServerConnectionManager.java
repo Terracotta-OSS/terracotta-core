@@ -53,17 +53,19 @@ public class ServerConnectionManager implements NotificationListener {
   private static final Object                m_connectTestLock      = new Object();
 
   static {
-    String levelName = System.getProperty("ServerConnectionManager.logLevel");
-    Level level = Level.OFF;
+    if (!Boolean.getBoolean("javax.management.remote.debug")) {
+      String levelName = System.getProperty("ServerConnectionManager.logLevel");
+      Level level = Level.OFF;
 
-    if (levelName != null) {
-      try {
-        level = Level.parse(levelName);
-      } catch (IllegalArgumentException ie) {
-        level = Level.ALL;
+      if (levelName != null) {
+        try {
+          level = Level.parse(levelName);
+        } catch (IllegalArgumentException ie) {
+          level = Level.ALL;
+        }
       }
+      Logger.getLogger("javax.management.remote").setLevel(level);
     }
-    Logger.getLogger("javax.management.remote").setLevel(level);
   }
 
   public ServerConnectionManager(String host, int port, boolean autoConnect, ConnectionListener listener) {
@@ -244,7 +246,7 @@ public class ServerConnectionManager implements NotificationListener {
       } catch (Exception e) {/**/
       }
     }
-    m_jmxConnector = new JMXConnectorProxy(safeGetHostName(), getJMXPortNumber(), getConnectionEnvironment());
+    m_jmxConnector = new JMXConnectorProxy(getHostname(), getJMXPortNumber(), getConnectionEnvironment());
   }
 
   public JMXConnector getJmxConnector() {
