@@ -4,9 +4,11 @@
  */
 package com.tc.server;
 
+import com.tc.config.schema.NewCommonL2Config;
 import com.tc.config.schema.messaging.http.ConfigServlet;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.net.TCSocketAddress;
+import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticsGathererSubSystem;
 import com.tc.statistics.store.StatisticsRetrievalCriteria;
@@ -37,8 +39,14 @@ public class StatisticsGathererServlet extends RestfulServlet {
   }
 
   public void methodStartup(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
-    system.getStatisticsGatherer().connect(TCSocketAddress.LOOPBACK_IP,
-                                           configSetupManager.commonl2Config().jmxPort().getInt());
+    final NewCommonL2Config commonConfig = configSetupManager.commonl2Config();
+    final NewL2DSOConfig dsoConfig = configSetupManager.dsoL2Config();
+    String ip = dsoConfig.bind().getString();
+    if (null == ip) {
+      ip = TCSocketAddress.WILDCARD_IP;
+    }
+    final int port = commonConfig.jmxPort().getInt();
+    system.getStatisticsGatherer().connect(ip, port);
     printOk(response);
   }
 

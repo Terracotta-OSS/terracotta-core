@@ -8,6 +8,7 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
 import com.tc.config.schema.NewCommonL2Config;
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.net.TCSocketAddress;
+import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticsGathererSubSystem;
 import com.tc.statistics.beans.StatisticsLocalGathererMBean;
@@ -47,14 +48,16 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
 
   private final StatisticsGathererSubSystem subsystem;
   private final NewCommonL2Config config;
+  private final NewL2DSOConfig dsoConfig;
 
-  public StatisticsLocalGathererMBeanImpl(final StatisticsGathererSubSystem subsystem, final NewCommonL2Config config) throws NotCompliantMBeanException {
+  public StatisticsLocalGathererMBeanImpl(final StatisticsGathererSubSystem subsystem, final NewCommonL2Config config, final NewL2DSOConfig dsoConfig) throws NotCompliantMBeanException {
     super(StatisticsLocalGathererMBean.class, true);
     Assert.assertNotNull("subsystem", subsystem);
     Assert.assertNotNull("config", config);
     sequenceNumber = new SynchronizedLong(0L);
     this.subsystem = subsystem;
     this.config = config;
+    this.dsoConfig = dsoConfig;
 
     // keep at the end of the constructor to make sure that all the initialization
     // is done before registering this instance as a listener
@@ -82,7 +85,11 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
     }
     
     try {
-      subsystem.getStatisticsGatherer().connect(TCSocketAddress.LOOPBACK_IP, config.jmxPort().getInt());
+      String ip = dsoConfig.bind().getString();
+      if (null == ip) {
+        ip = TCSocketAddress.WILDCARD_IP;
+      }
+      subsystem.getStatisticsGatherer().connect(ip, config.jmxPort().getInt());
     } catch (StatisticsGathererException e) {
       throw new RuntimeException(e);
     }
