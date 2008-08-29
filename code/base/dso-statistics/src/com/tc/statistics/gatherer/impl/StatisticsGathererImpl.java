@@ -13,7 +13,9 @@ import com.tc.statistics.gatherer.StatisticsGatherer;
 import com.tc.statistics.gatherer.StatisticsGathererListener;
 import com.tc.statistics.gatherer.exceptions.StatisticsGathererAlreadyConnectedException;
 import com.tc.statistics.gatherer.exceptions.StatisticsGathererCloseSessionErrorException;
+import com.tc.statistics.gatherer.exceptions.StatisticsGathererConnectErrorException;
 import com.tc.statistics.gatherer.exceptions.StatisticsGathererConnectionRequiredException;
+import com.tc.statistics.gatherer.exceptions.StatisticsGathererDisconnectErrorException;
 import com.tc.statistics.gatherer.exceptions.StatisticsGathererException;
 import com.tc.statistics.gatherer.exceptions.StatisticsGathererGlobalConfigGetErrorException;
 import com.tc.statistics.gatherer.exceptions.StatisticsGathererGlobalConfigSetErrorException;
@@ -57,7 +59,7 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
       try {
         store.open();
       } catch (StatisticsStoreException e) {
-        throw new StatisticsGathererSessionCreationErrorException("Unexpected error while opening statistics store.", e);
+        throw new StatisticsGathererConnectErrorException("Unexpected error while opening statistics store.", e);
       }
 
       final Map environment = new HashMap();
@@ -68,7 +70,7 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
         // create the server connection
         mbeanServerConnection = proxy.getMBeanServerConnection();
       } catch (Exception e) {
-        throw new StatisticsGathererSessionCreationErrorException("Unexpected error while connecting to mbean server.", e);
+        throw new StatisticsGathererConnectErrorException("Unexpected error while connecting to mbean server.", e);
       }
 
       // setup the mbeans
@@ -92,7 +94,7 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
       try {
         closeSession();
       } catch (Exception e) {
-        exception = new StatisticsGathererCloseSessionErrorException("Unexpected error while closing the capturing session '"+sessionId+"'.", e);
+        exception = new StatisticsGathererDisconnectErrorException("Unexpected error while closing the capturing session '"+sessionId+"'.", e);
       }
 
       // disable the notification
@@ -100,7 +102,7 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
         try {
           statGateway.disable();
         } catch (Exception e) {
-          StatisticsGathererException ex = new StatisticsGathererCloseSessionErrorException("Unexpected error while disabling the statistics gateway.", e);
+          StatisticsGathererException ex = new StatisticsGathererDisconnectErrorException("Unexpected error while disabling the statistics gateway.", e);
           if (exception != null) {
             exception.setNextException(ex);
           } else {
@@ -114,7 +116,7 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
         try {
           proxy.close();
         } catch (Exception e) {
-          StatisticsGathererException ex = new StatisticsGathererCloseSessionErrorException("Unexpected error while closing the JMX proxy.", e);
+          StatisticsGathererException ex = new StatisticsGathererDisconnectErrorException("Unexpected error while closing the JMX proxy.", e);
           if (exception != null) {
             exception.setNextException(ex);
           } else {
@@ -126,7 +128,7 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
       try {
         store.close();
       } catch (StatisticsStoreException e) {
-        StatisticsGathererException ex = new StatisticsGathererCloseSessionErrorException("Unexpected error while closing the statistics store.", e);
+        StatisticsGathererException ex = new StatisticsGathererDisconnectErrorException("Unexpected error while closing the statistics store.", e);
         if (exception != null) {
           exception.setNextException(ex);
         } else {
