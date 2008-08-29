@@ -147,6 +147,14 @@ postscripts:
   - install-forge-tims:
       args:
         - tim-apache-struts-1.1
+  - inject-forge-tims:
+      args:
+        - tims: 
+            - tim-apache-struts-1.1
+            - tim-apache-struts-1.2
+        - dest: 
+            - tools/sessions/configurator-sandbox
+            - samples/sessions/
   - include-schemas:
       args:
         - schema
