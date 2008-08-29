@@ -4,6 +4,8 @@
 # All rights reserved
 #
 
+require 'find'
+
 class BaseCodeTerracottaBuilder <  TerracottaBuilder
   protected
 
@@ -19,29 +21,27 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
       raise("tim-get script exists, but is not executable")
     end
     
+    tims     = {}
     timnames = args[0]['tims']
+    timnames.each do |entry|
+      data = %x[#{tim_get.to_s} list #{entry}].split("\n").last
+      data.gsub!(/[()]/, '')
+      data = data.split
+      tims[data.first] = data.last
+    end
+    
     dirnames = args[1]['dest']
     dirnames.each do |entry|
       srcdir = FilePath.new(product_directory, *entry.split('/'))
-#Find.find(srcdir) do |path|
-#  if FileTest.file? path
-#    puts "x: #{path}"
-#  end
-#end
+      Find.find(srcdir.to_s) do |path|
+        next unless FileTest.file?(path) && File.basename(path) =~ /^tc-config.xml$/
+        config = File.read(path)
+        tims.each do |k, v|
+          value = "<module name=\"#{k}\" version=\"#{v}\"/>"
+          regex = /<module *name *= *"#{Regexp.escape(k)}" *version *= *"@tim.version@" *\/>/
+          File.open(path, 'w') {|f| f.write(config) } if config.gsub!(regex, value)
+        end
+      end
     end
-
-#puts "xxxxxxxxxxxxxxxxxx"
-#puts "xx"
-#puts args[0]['tims']
-#puts "--"
-#puts args[1]['dest']
-#puts "xx"
-#puts "xxxxxxxxxxxxxxxxxx"
-#   args.each do |tim|
-#     puts("***** Retrieving info #{tim} :: #{tim_get.to_s}")
-#     unless system(tim_get.to_s, 'info', tim)
-#       raise("Failed to retrieve info #{tim}.  Exit status: #{$?.exitstatus}")
-#     end
-#   end
   end
 end
