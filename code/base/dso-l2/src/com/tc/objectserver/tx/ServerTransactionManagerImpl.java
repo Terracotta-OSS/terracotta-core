@@ -476,9 +476,11 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   private TransactionAccount getOrCreateTransactionAccount(NodeID source) {
     synchronized (transactionAccounts) {
       TransactionAccount ta = (TransactionAccount) transactionAccounts.get(source);
-      if(ta != null && ta instanceof ObjectSynchTransactionAccount) {
-        throw new AssertionError("Transaction Account is of type ObjectSyncTransactionAccount : " + ta + " source Id  : " + source);
-      }
+      if (ta != null && ta instanceof ObjectSynchTransactionAccount) { throw new AssertionError(
+                                                                                                "Transaction Account is of type ObjectSyncTransactionAccount : "
+                                                                                                    + ta
+                                                                                                    + " source Id  : "
+                                                                                                    + source); }
       if (state == ACTIVE_MODE) {
         if ((ta == null) || (ta instanceof PassiveTransactionAccount)) {
           Object old = transactionAccounts.put(source, (ta = new TransactionAccountImpl(source)));
@@ -638,11 +640,13 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 
     private final TxnsInSystemCompletionLister callback;
     private final Set                          txnsInSystem;
-    public int                                 count = 0;
+    public int                                 count    = 0;
+    public int                                 lastSize = -1;
 
     public TxnsInSystemCompletionListenerCallback(TxnsInSystemCompletionLister callback, Set txnsInSystem) {
       this.callback = callback;
-      this.txnsInSystem = txnsInSystem;
+      this.lastSize = txnsInSystem.size();
+      this.txnsInSystem = Collections.synchronizedSet(txnsInSystem);
     }
 
     public void addResentServerTransactionIDs(Collection stxIDs) {
@@ -661,22 +665,44 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
       // NOP
     }
 
-    public synchronized void transactionCompleted(ServerTransactionID stxID) {
-      if (txnsInSystem.remove(stxID)) {
-        if (txnsInSystem.isEmpty()) {
-          ServerTransactionManagerImpl.this.removeTransactionListener(this);
-          callback.onCompletion();
+    public void transactionCompleted(ServerTransactionID stxID) {
+      synchronized (txnsInSystem) {
+        if (txnsInSystem.remove(stxID)) {
+          if (txnsInSystem.isEmpty()) {
+            ServerTransactionManagerImpl.this.removeTransactionListener(this);
+            callback.onCompletion();
+          }
+        }
+        if (++count % 1000 == 0) {
+          if (lastSize == txnsInSystem.size()) {
+            logger.warn("TxnsInSystemCompletionLister :: Still waiting for completion of " + txnsInSystem.size()
+                        + " txns to call callback " + callback + " count = " + count + " lastSize = " + lastSize
+                        + " No change in size. Txns = " + shortDesc(txnsInSystem));
+          } else {
+            lastSize = txnsInSystem.size();
+          }
         }
       }
-      if (count++ % 100 == 0) {
-        logger.warn("TxnsInSystemCompletionLister :: Still waiting for completion of " + txnsInSystem.size()
-                    + " txns to call callback " + callback + " count = " + count);
+    }
+
+    private String shortDesc(Set txns) {
+      if (txns == null) {
+        return "null";
+      } else if (txns.size() < 11) {
+        return txns.toString();
+      } else {
+        StringBuilder sb = new StringBuilder("{");
+        int j = 0;
+        for (Iterator i = txns.iterator(); j < 11 && i.hasNext(); j++) {
+          sb.append(i.next()).append(",");
+        }
+        sb.append("....<more> }");
+        return sb.toString();
       }
     }
 
     public void transactionManagerStarted(Set cids) {
       // NOP
     }
-
   }
 }
