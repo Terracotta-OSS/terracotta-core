@@ -23,7 +23,8 @@ public class ReentrantReadWriteLockDowngraderTest extends TransparentTestBase {
   private static final int LOOP_COUNT = 1000;
 
   public ReentrantReadWriteLockDowngraderTest() {
-    disableAllUntil("2008-09-01");
+    // DEV-1616
+    disableAllUntil("2010-09-01");
   }
 
   @Override
