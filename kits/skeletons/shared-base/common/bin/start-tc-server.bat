@@ -14,7 +14,7 @@ if not defined JAVA_HOME set JAVA_HOME="%TC_INSTALL_DIR%\jre"
 set JAVA_HOME="%JAVA_HOME:"=%"
 
 set CLASSPATH=%TC_INSTALL_DIR%\lib\tc.jar
-set OPTS=-server -Xms256m -Xmx256m
+set OPTS=-server -Xms256m -Xmx256m -XX:-HeapDumpOnOutOfMemoryError
 set OPTS=%OPTS% -Dcom.sun.management.jmxremote
 set OPTS=%OPTS% -Dtc.install-root=%TC_INSTALL_DIR%
 set JAVA_OPTS=%OPTS% %JAVA_OPTS%

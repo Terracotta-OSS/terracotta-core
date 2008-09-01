@@ -34,7 +34,8 @@ start=true
 while "$start"
 do
 "${JAVA_HOME}/bin/java" \
-   -server -Xms256m -Xmx256m -Dcom.sun.management.jmxremote \
+   -server -Xms256m -Xmx256m -XX:-HeapDumpOnOutOfMemoryError \
+   -Dcom.sun.management.jmxremote \
    -Dtc.install-root="${TC_INSTALL_DIR}" \
    ${JAVA_OPTS} \
    -cp "${TC_INSTALL_DIR}/lib/tc.jar" \
