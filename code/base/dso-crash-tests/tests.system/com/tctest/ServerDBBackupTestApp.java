@@ -164,9 +164,9 @@ public class ServerDBBackupTestApp extends AbstractTransparentApp {
 
     if (waitOnBarrier() != 0) {
       LinkedBlockingQueue<String> queue = new LinkedBlockingQueue<String>();
-      
+
       NotificationListenerImpl listener = null;
-      try {        
+      try {
         File file = new File(dbBackupPath);
         file.createNewFile();
 
@@ -251,6 +251,7 @@ public class ServerDBBackupTestApp extends AbstractTransparentApp {
         }
 
         if (backupResult.get() == -1) return;
+        backupResult.set(0);
         attempts++;
       }
     }
@@ -284,12 +285,12 @@ public class ServerDBBackupTestApp extends AbstractTransparentApp {
 
   private void setDbHome() {
     final JMXConnector jmxConnector = CommandLineBuilder.getJMXConnector(null, "localhost", jmxPort);
-    MBeanServerConnection mbs = ServerDBBackupRunner.getMBeanServerConnection(jmxConnector,"localhost", jmxPort);
+    MBeanServerConnection mbs = ServerDBBackupRunner.getMBeanServerConnection(jmxConnector, "localhost", jmxPort);
     if (mbs == null) return;
     ServerDBBackupMBean mbean = ServerDBBackupRunner.getServerDBBackupMBean(mbs);
     dbHome = mbean.getDbHome();
     ServerDBBackupRunner.removeListenerAndCloseJMX(null, jmxConnector, mbs);
-    
+
     if (dbHome == null) throw new RuntimeException(
                                                    "The DB home is still not set. Check if persistence mode is enabled.");
   }
@@ -355,7 +356,7 @@ public class ServerDBBackupTestApp extends AbstractTransparentApp {
 
 class NotificationListenerImpl implements NotificationListener, Serializable {
   private LinkedBlockingQueue<String> queue;
-  
+
   public NotificationListenerImpl(LinkedBlockingQueue<String> queue) {
     this.queue = queue;
   }
