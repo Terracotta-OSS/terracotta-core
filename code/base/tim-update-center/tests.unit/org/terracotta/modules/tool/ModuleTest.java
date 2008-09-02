@@ -499,7 +499,7 @@ public final class ModuleTest extends TestCase {
     try {
       return new CachedModules(tcVersion, repodir, getClass().getResourceAsStream(testData));
     } catch (Exception e) {
-      fail("Unable to load test data");
+      fail("Unable to load test data: " + testData);
     }
     return null;
   }

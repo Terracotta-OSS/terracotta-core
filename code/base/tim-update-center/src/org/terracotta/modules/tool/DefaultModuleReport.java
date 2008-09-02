@@ -184,10 +184,10 @@ public class DefaultModuleReport extends ModuleReport {
 
       String script = "tim-get.";
       script += (Os.isWindows() ? "bat" : "sh");
-      script += indent((module.isInstalled() ? "update" : "install"), 1);
-      script += indent(module.artifactId(), 1);
-      script += indent(module.version(), 1);
-      if (isUsingDefaultGroupId(module)) script += indent(module.groupId(), 1);
+      script += INDENT_CHAR + (module.isInstalled() ? "update" : "install");
+      script += INDENT_CHAR + module.artifactId();
+      script += INDENT_CHAR + module.version();
+      if (isUsingDefaultGroupId(module)) script += INDENT_CHAR + module.groupId();
       out.println(indent(script, INDENT_WIDTH));
     }
 
