@@ -90,7 +90,7 @@ public final class ModuleTest extends TestCase {
 
   public void testIsInstalled() throws IOException {
     String tcVersion = "0.0.2";
-    Modules modules = loadModules("/testdata02.xml", tcVersion);
+    Modules modules = loadModules("/testData02.xml", tcVersion);
     Module module = modules.get("foo.bar", "zoo", "0.0.0");
     assertNotNull(module);
 
@@ -118,7 +118,7 @@ public final class ModuleTest extends TestCase {
   public void testManifest() {
     Modules modules;
     String tcVersion = "0.0.0";
-    modules = loadModules("/testdata02.xml", tcVersion);
+    modules = loadModules("/testData02.xml", tcVersion);
 
     List<Module> list = modules.list();
     assertFalse(list.isEmpty());
@@ -150,7 +150,7 @@ public final class ModuleTest extends TestCase {
   public void testBadManifest() {
     Modules modules;
     String tcVersion = "0.0.0";
-    modules = loadModules("/testdata02.xml", tcVersion);
+    modules = loadModules("/testData02.xml", tcVersion);
 
     List<Module> list = modules.list();
     assertFalse(list.isEmpty());
@@ -169,7 +169,7 @@ public final class ModuleTest extends TestCase {
     Modules modules;
     String tcVersion = "0.0.0";
 
-    modules = loadModules("/testdata02.xml", tcVersion);
+    modules = loadModules("/testData02.xml", tcVersion);
     List<Module> list = modules.list();
     assertFalse(list.isEmpty());
 
@@ -187,7 +187,7 @@ public final class ModuleTest extends TestCase {
     assertEquals("0.0.4", versions.get(2));
 
     tcVersion = "0.0.1";
-    modules = loadModules("/testdata02.xml", tcVersion);
+    modules = loadModules("/testData02.xml", tcVersion);
     list = modules.list();
     assertFalse(list.isEmpty());
 
@@ -199,7 +199,7 @@ public final class ModuleTest extends TestCase {
   public void testIsLatest() {
     Modules modules;
     String tcVersion = "0.0.0";
-    modules = loadModules("/testdata02.xml", tcVersion);
+    modules = loadModules("/testData02.xml", tcVersion);
 
     List<Module> list = modules.list();
     assertFalse(list.isEmpty());
@@ -221,7 +221,7 @@ public final class ModuleTest extends TestCase {
     assertTrue(module.isLatest());
 
     tcVersion = "0.0.1";
-    modules = loadModules("/testdata02.xml", tcVersion);
+    modules = loadModules("/testData02.xml", tcVersion);
     list = modules.list();
     assertFalse(list.isEmpty());
 
@@ -234,7 +234,7 @@ public final class ModuleTest extends TestCase {
     Modules modules;
     String tcVersion = "0.0.0";
 
-    modules = loadModules("/testdata02.xml", tcVersion);
+    modules = loadModules("/testData02.xml", tcVersion);
     List<Module> list = modules.list();
     assertFalse(list.isEmpty());
 
