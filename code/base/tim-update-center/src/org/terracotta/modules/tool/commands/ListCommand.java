@@ -6,6 +6,7 @@ package org.terracotta.modules.tool.commands;
 
 import org.apache.commons.cli.CommandLine;
 import org.terracotta.modules.tool.Module;
+import org.terracotta.modules.tool.ModuleReport;
 import org.terracotta.modules.tool.Modules;
 
 import com.google.inject.Inject;
@@ -24,35 +25,40 @@ public class ListCommand extends AbstractCommand {
   private static final String LONGOPT_DETAILS = "details";
 
   private final Modules       modules;
+  private final ModuleReport  report;
 
   @Inject
-  public ListCommand(Modules modules) {
+  public ListCommand(Modules modules, ModuleReport report) {
     this.modules = modules;
-    assert modules != null : "modules is null";
+    this.report = report;
     options.addOption(OPTION_DETAILS, LONGOPT_DETAILS, false, "Display detailed information");
     arguments.put("keywords", "(OPTIONAL) Space delimited list of keywords used to filter the list.");
   }
 
+  @Override
   public String syntax() {
     return "[keywords] {options}";
   }
 
+  @Override
   public String description() {
     return "List all available integration modules for TC " + modules.tcVersion();
   }
 
   private void displayWithDetails(List<Module> list) {
     for (Module module : list) {
+      report.printDigest(module, out);
       out.println();
-      module.printSummary(out);
     }
+    report.printFooter(null, out);
   }
 
   private void display(List<Module> list) {
-    out.println();
     for (Module module : list) {
-      module.printDigest(out);
+      report.printHeadline(module, out);
     }
+    out.println();
+    report.printFooter(null, out);
   }
 
   private boolean isQualified(List<String> keywords, String text) {
@@ -71,18 +77,17 @@ public class ListCommand extends AbstractCommand {
 
     List<Module> list = new ArrayList<Module>();
     for (Module module : latest) {
-      if (!isQualified(keywords, module.getSymbolicName())) continue;
+      if (!isQualified(keywords, module.symbolicName())) continue;
       list.add(module);
     }
 
-    out.println("*** Terracotta Integration Modules for TC " + modules.tcVersion() + " ***");
-    if (cli.hasOption('v') || cli.hasOption(LONGOPT_DETAILS)) displayWithDetails(list);
-    else display(list);
-
-    if (!list.isEmpty()) { 
-      out.println();
-      out.println(Module.LEGEND);
+    out.println("*** Terracotta Integration Modules for TC " + modules.tcVersion() + " ***\n");
+    if (list.isEmpty()) {
+      out.println("None listed.");
+      return;//
     }
 
+    if (cli.hasOption('v') || cli.hasOption(LONGOPT_DETAILS)) displayWithDetails(list);
+    else display(list);
   }
 }

@@ -27,7 +27,7 @@ public class ChecksumUtil {
    *         environment.
    * @throws IOException If unable to process the input file for any reason.
    */
-  private static BigInteger md5Sum(File source) throws NoSuchAlgorithmException, IOException {
+  public static BigInteger md5Sum(File source) throws NoSuchAlgorithmException, IOException {
     MessageDigest md = MessageDigest.getInstance("MD5");
     md.reset();
     byte[] md5sum = md.digest(FileUtils.readFileToByteArray(source));

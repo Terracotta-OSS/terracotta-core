@@ -12,6 +12,7 @@ import org.jdom.Element;
  * 
  * @author Jason Voegele (jvoegele@terracotta.org)
  */
+@Deprecated
 public class ModuleId implements Comparable {
 
   public static final String DEFAULT_GROUPID = "org.terracotta.modules";

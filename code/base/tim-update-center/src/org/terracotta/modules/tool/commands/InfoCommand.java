@@ -6,7 +6,8 @@ package org.terracotta.modules.tool.commands;
 
 import org.apache.commons.cli.CommandLine;
 import org.terracotta.modules.tool.Module;
-import org.terracotta.modules.tool.ModuleId;
+import org.terracotta.modules.tool.ModuleHelper;
+import org.terracotta.modules.tool.ModuleReport;
 import org.terracotta.modules.tool.Modules;
 
 import com.google.inject.Inject;
@@ -15,66 +16,68 @@ import java.util.List;
 
 public class InfoCommand extends AbstractCommand {
 
-  private final Modules modules;
+  private final Modules      modules;
+  private final ModuleReport report;
 
   @Inject
-  public InfoCommand(Modules modules) {
+  public InfoCommand(Modules modules, ModuleReport report) {
     this.modules = modules;
-    assert modules != null : "modules is null";
+    this.report = report;
     arguments.put("name", "The name of the integration module");
     arguments.put("version", "(OPTIONAL) The version used to qualify the name");
     arguments.put("group-id", "(OPTIONAL) The group-id used to qualify the name");
   }
 
+  @Override
   public String syntax() {
     return "<name> [version] [group-id] {options}";
   }
 
+  @Override
   public String description() {
     return "Display detailed information about an integration module";
   }
 
   public void execute(CommandLine cli) {
-    // no args specified, ask user to be more specific
-    List<String> args = cli.getArgList();
-    if (args.isEmpty()) {
-      out.println("You need to at least specify the name of the integration module.");
-      return;
-    }
+    try {
+      // no args specified, ask user to be more specific
+      List<String> args = cli.getArgList();
+      if (args.isEmpty()) {
+        out.println("You need to at least specify the name of the integration module.");
+        return;
+      }
 
-    // given the artifactId and maybe the version and groupId - find some candidates
-    Module module = null;
-    String artifactId = args.remove(0);
-    String version = args.isEmpty() ? null : args.remove(0);
-    String groupId = args.isEmpty() ? null : args.remove(0);
-    
-    // get candidates
-    List<Module> candidates = modules.find(artifactId, version, groupId);
-    
-    // no candidates found, inform the user
-    if (candidates.isEmpty()) {
-      out.println("No module found matching the arguments you specified.");
-      out.println("Check that you've spelled them correctly.");
-      return;
-    }
+      // given the artifactId and maybe the version and groupId - find some candidates
+      // get candidates
+      Module module = null;
+      List<Module> candidates = modules.find(args);
 
-    // several candidates found, see if we can figure out which one we can retrieve
-    module = modules.getLatest(candidates);
-    if (module != null) {
-      module.printDetails(out);
-      return;
-    }
+      // no candidates found, inform the user
+      if (candidates.isEmpty()) {
+        out.println("No module found matching the arguments you specified.");
+        out.println("Check that you've spelled them correctly.");
+        return;
+      }
 
-    // we can't figure out which one to retrieve
-    // so ask the user to be more specific
-    out.println("There's more than one integration module found matching the name '" + artifactId + "':");
-    out.println();
-    for (Module candidate : candidates) {
-      ModuleId id = candidate.getId();
-      out.println("  * " + id.getArtifactId() + " " + id.getVersion() + " " + id.getGroupId());
+      // several candidates found, see if we can figure out which one we can retrieve
+      module = ModuleHelper.getLatest(candidates);
+      if (module != null) {
+        report.printSummary(module, out);
+        out.println();
+        report.printFooter(null, out);
+        return;
+      }
+
+      // we can't figure out which one to retrieve so ask the user to be more specific
+      out.println("There's more than one integration module found matching the name '" + args.get(0) + "':");
+      out.println();
+      for (Module candidate : candidates) {
+        out.println("  * " + candidate.artifactId() + " " + candidate.version() + " " + candidate.groupId());
+      }
+      out.println();
+      out.println("Try to use both version and group-id arguments in the command to be more specific.");
+    } catch (Throwable t) {
+      t.printStackTrace();
     }
-    out.println();
-    out.println("Try to use both version and group-id arguments in the command to be more specific.");
   }
-
 }

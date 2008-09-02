@@ -14,7 +14,7 @@ import java.security.NoSuchAlgorithmException;
 
 import junit.framework.TestCase;
 
-public class ChecksumUtilTest extends TestCase {
+public final class ChecksumUtilTest extends TestCase {
 
   private static final String TEST_CHECKSUM_DATA_TXT_MD5_BAD_FORMAT = "/testChecksumData.txt.md5-bad.format";
   private static final String TEST_CHECKSUM_DATA_TXT_MD5_ALT_FORMAT = "/testChecksumData.txt.md5-alt.format";

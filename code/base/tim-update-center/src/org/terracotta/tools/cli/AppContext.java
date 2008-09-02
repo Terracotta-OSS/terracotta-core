@@ -5,6 +5,8 @@
 package org.terracotta.tools.cli;
 
 import org.terracotta.modules.tool.CachedModules;
+import org.terracotta.modules.tool.DefaultModuleReport;
+import org.terracotta.modules.tool.ModuleReport;
 import org.terracotta.modules.tool.Modules;
 import org.terracotta.modules.tool.commands.CommandRegistry;
 import org.terracotta.modules.tool.config.Config;
@@ -29,10 +31,6 @@ import java.net.Proxy.Type;
  */
 class AppContext implements Module, ConfigAnnotation {
   private final Config config;
-
-  public AppContext() {
-    this(new Config());
-  }
 
   public AppContext(Config config) {
     this.config = config;
@@ -67,6 +65,8 @@ class AppContext implements Module, ConfigAnnotation {
         return dataLoader;
       }
     });
+
+    binder.bind(ModuleReport.class).to(DefaultModuleReport.class);
 
     binder.bind(Modules.class).to(CachedModules.class).in(Scopes.SINGLETON);
     binder.bind(CommandRegistry.class).in(Scopes.SINGLETON);

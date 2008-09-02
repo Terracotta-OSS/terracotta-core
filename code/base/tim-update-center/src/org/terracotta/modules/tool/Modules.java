@@ -4,55 +4,75 @@
  */
 package org.terracotta.modules.tool;
 
+import java.io.File;
 import java.util.List;
 
-/**
- * A collection of modules. Implementations of this interface may query a remote
- * service for each request or cache information for a period of time.
- */
 public interface Modules {
 
   /**
-   * Retrieve a module whose id matches that of the argument.
+   * Retrieve the list of qualified modules, ie: modules whose tcVersion() attribute matches or is compatible with the
+   * tcVersion() attribute of the instance of this class.
    * 
-   * @param id The id of the module to get.
+   * @return A list of modules. The list returned is sorted in the ascending-order.
    */
-  public Module get(ModuleId id);
+  List<Module> list();
 
   /**
-   * Return a list of all modules. The list returned is sorted by symbolicName + version in ascending order.
-   */
-  public List<Module> list();
-
-  /**
-   * Return a list of all modules but include only the latest version of each module. sorted by symbolicName + version
-   * in ascending order.
-   */
-  public List<Module> listLatest();
-  
-  /**
-   * Return a list of modules matching the groupId and artifactId.
-   */
-  public List<Module> get(String groupId, String artifactId);
-
-  /**
-   * Return a the latest module matching the groupId and artifactId.
-   */
-  public Module getLatest(String groupId, String artifactId);
-  
-  /**
-   * The TC version that binds this list of modules.
-   */
-  public String tcVersion();
-
-  /**
+   * Similar to Modules.list() but includes only the latest version of each module.
    * 
+   * @return A list of modules. The list returned is sorted in the ascending order.
    */
-  public List<Module> find(String artifactId, String version, String groupId);
-  
+  List<Module> listLatest();
+
   /**
-   * Get latest from a list of modules. Returns null if the modules in the list
-   * are not siblings
+   * List of all modules regardless of the value of its tcVersion() attribute.
+   * 
+   * @return A list of modules. The list returned is sorted in the ascending order.
    */
-  public Module getLatest(List<Module> list);
+  List<Module> listAll();
+
+  /**
+   * The TC version used to qualify or bound the list returned by Modules.list() and Modules.listLatest()
+   * 
+   * @return A String
+   */
+  String tcVersion();
+
+  /**
+   * The absolute path to the location of the modules' repository.
+   * 
+   * @return An instance of File
+   */
+  File repository();
+
+  /**
+   * Given a module, locate all of its siblings. The search-space is limited to the list returned by Modules.list()
+   * 
+   * @return A list of modules. The list returned DOES NOT include the module itself and is sorted in ascending-order.
+   */
+  List<Module> getSiblings(Module module);
+
+  /**
+   * Given a symbolicName, locate all modules with matching symbolicName. The search-space is limited to the list
+   * returned by Modules.list()
+   * 
+   * @return A list of modules. The list returned includes the module itself and is sorted in the ascending-order.
+   */
+  List<Module> getSiblings(String symbolicName);
+
+  /**
+   * Given the groupId, artifactId, and version, locate a module with the same attribute values. The search-space is the
+   * list returned by Modules.list()
+   * 
+   * @return A module. Null if no module matches the search fields.
+   */
+  Module get(String groupId, String artifactId, String version);
+
+  /**
+   * Given a list of fields and values to search, locate all modules with the same attribute values. The search-space is
+   * the list returned by Modules.list() - the fields supported is implementation dependent.
+   * 
+   * @return A list of modules. The list returned includes the module itself and is sorted in the ascending-order.
+   */
+  List<Module> find(List<String> args);
 }

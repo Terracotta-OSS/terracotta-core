@@ -5,20 +5,22 @@
 package org.terracotta.modules.tool.commands;
 
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.lang.StringUtils;
+import org.terracotta.modules.tool.AbstractModule;
+import org.terracotta.modules.tool.InstallListener;
+import org.terracotta.modules.tool.InstallOption;
 import org.terracotta.modules.tool.Module;
-import org.terracotta.modules.tool.ModuleId;
+import org.terracotta.modules.tool.ModuleHelper;
+import org.terracotta.modules.tool.ModuleReport;
 import org.terracotta.modules.tool.Modules;
-import org.terracotta.modules.tool.Module.InstallOption;
 
 import com.google.inject.Inject;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class InstallCommand extends AbstractCommand {
+public class InstallCommand extends AbstractCommand implements InstallListener {
 
   private static final String             LONGOPT_ALL       = "all";
   private static final String             LONGOPT_OVERWRITE = "overwrite";
@@ -27,13 +29,13 @@ public class InstallCommand extends AbstractCommand {
   private static final String             LONGOPT_NOVERIFY  = "no-verify";
 
   private final Modules                   modules;
-
+  private final ModuleReport              report;
   private final Collection<InstallOption> installOptions;
 
   @Inject
-  public InstallCommand(Modules modules) {
+  public InstallCommand(Modules modules, ModuleReport report) {
     this.modules = modules;
-    assert modules != null : "modules is null";
+    this.report = report;
     options.addOption(buildOption(LONGOPT_ALL,
                                   "Install all compatible TIMs, ignoring the name and version arguments if specified"));
     options.addOption(buildOption(LONGOPT_OVERWRITE, "Install anyway, even if already installed"));
@@ -43,7 +45,6 @@ public class InstallCommand extends AbstractCommand {
     arguments.put("name", "The name of the integration module");
     arguments.put("version", "(OPTIONAL) The version used to qualify the name");
     arguments.put("group-id", "(OPTIONAL) The group-id used to qualify the name");
-
     installOptions = new ArrayList<InstallOption>();
   }
 
@@ -63,9 +64,8 @@ public class InstallCommand extends AbstractCommand {
   }
 
   private void install(Module module, boolean verbose) {
-    StringWriter sw = new StringWriter();
-    module.printDigest(new PrintWriter(sw));
-    module.install(out, installOptions);
+    InstallListener listener = this;
+    module.install(listener, this.installOptions);
     if (verbose) printEpilogue();
   }
 
@@ -103,13 +103,9 @@ public class InstallCommand extends AbstractCommand {
     }
 
     // given the artifactId and maybe the version and groupId - find some candidates
-    Module module = null;
-    String artifactId = args.remove(0);
-    String version = args.isEmpty() ? null : args.remove(0);
-    String groupId = args.isEmpty() ? null : args.remove(0);
-
     // get candidates
-    List<Module> candidates = modules.find(artifactId, version, groupId);
+    Module module = null;
+    List<Module> candidates = modules.find(args);
 
     // no candidates found, inform the user
     if (candidates.isEmpty()) {
@@ -118,23 +114,39 @@ public class InstallCommand extends AbstractCommand {
       return;
     }
 
-    // several candidates found, see if we can figure out which one we can install
-    module = modules.getLatest(candidates);
+    // several candidates found, see if we can figure out which one we can retrieve
+    module = ModuleHelper.getLatest(candidates);
     if (module != null) {
       install(module);
       return;
     }
 
-    // we can't figure out which one to update/install
-    // so ask the user to be more specific
-    out.println("There's more than one integration module found matching the name '" + artifactId + "':");
+    // we can't figure out which one to retrieve so ask the user to be more specific
+    out.println("There's more than one integration module found matching the name '" + args.get(0) + "':");
     out.println();
     for (Module candidate : candidates) {
-      ModuleId id = candidate.getId();
-      out.println("  * " + id.getArtifactId() + " " + id.getVersion() + " " + id.getGroupId());
+      out.println("  * " + candidate.artifactId() + " " + candidate.version() + " " + candidate.groupId());
     }
     out.println();
     out.println("Try to use both version and group-id arguments in the command to be more specific.");
   }
 
+  public void notify(Object source, InstallNotification type, String message) {
+    String line0 = StringUtils.repeat(" ", 3) + StringUtils.capitalize(type.toString().replaceAll("_", " "));
+
+    if (InstallNotification.STARTING.equals(type)) {
+      line0 = "Installing " + report.title((AbstractModule) source);
+      if (!((Module) source).dependencies().isEmpty()) line0 += " and dependencies";
+      line0 += "...";
+    }
+
+    String line1 = StringUtils.isEmpty(message) ? "" : message;
+    if (InstallNotification.INSTALLED.equals(type)) line1 = " - " + line1;
+    else if (InstallNotification.SKIPPED.equals(type)) line1 = " - " + line1;
+    else line1 = "\n" + StringUtils.repeat(" ", line0.length() + 2) + line1;
+    if (!StringUtils.isEmpty(message)) line0 += ": " + report.title((AbstractModule) source) + line1;
+
+    out.println(line0);
+    return;
+  }
 }

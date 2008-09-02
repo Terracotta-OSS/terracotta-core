@@ -4,6 +4,8 @@
  */
 package org.terracotta.modules.tool.util;
 
+import org.apache.commons.io.FileUtils;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -132,9 +134,9 @@ public class DownloadUtil {
     try {
       if (downloadOptions.createInterveningDirectories()) {
         if (downloadOptions.isDestinationDirectory()) {
-          localFile.mkdirs();
+          FileUtils.forceMkdir(localFile);
         } else {
-          localFile.getParentFile().mkdirs();
+          FileUtils.forceMkdir(localFile.getParentFile());
         }
       }
 
