@@ -398,7 +398,7 @@ class SubtreeTestRunRecord
                 @testsuites[file_classname] = testsuite_run
                 @total_suites += 1
                 @total_tests += 1 # unknown, set to 1 as default     
-                create_abnormal_junit_report(filename, file_classname)
+                create_abnormal_junit_report(filename.to_s, file_classname)
               end
                            
               @failed = @failed || testsuite_run.failed?
