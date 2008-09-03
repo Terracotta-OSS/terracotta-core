@@ -5,6 +5,7 @@
 package com.tc.object.lockmanager.impl;
 
 import com.tc.logging.TCLogger;
+import com.tc.logging.TextDecoratorTCLogger;
 import com.tc.management.ClientLockStatManager;
 import com.tc.object.lockmanager.api.ClientLockManager;
 import com.tc.object.lockmanager.api.ClientLockManagerConfig;
@@ -56,7 +57,8 @@ public class StripedClientLockManagerImpl implements ClientLockManager {
     lockManagers = new ClientLockManager[ssize];
     TCLockTimer waitTimer = new TCLockTimerImpl();
     for (int i = 0; i < lockManagers.length; i++) {
-      lockManagers[i] = new ClientLockManagerImpl(logger, remoteLockManager, sessionManager, lockStatManager,
+      lockManagers[i] = new ClientLockManagerImpl(new TextDecoratorTCLogger(logger, "LM[" + i + "]"),
+                                                  remoteLockManager, sessionManager, lockStatManager,
                                                   clientLockManagerConfig, waitTimer);
     }
   }
@@ -260,7 +262,7 @@ public class StripedClientLockManagerImpl implements ClientLockManager {
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.println(getClass().getName());
     for (int i = 0; i < lockManagers.length; i++) {
-      out.indent().println("[ " + i + "] = " );
+      out.indent().println("[ " + i + "] = ");
       lockManagers[i].prettyPrint(out);
     }
     return out;
