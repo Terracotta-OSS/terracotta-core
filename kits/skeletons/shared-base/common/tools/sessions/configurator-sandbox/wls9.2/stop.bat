@@ -11,9 +11,9 @@ rem -------------------------------------
 
 setlocal
 if not defined BEA_HOME (
-  echo BEA_HOME must be set to a Weblogic Server 9.2 installation.
-  endlocal
-  exit 1
+   echo BEA_HOME must be set to a Weblogic Server 9.2 installation.
+   endlocal
+   exit /b 1
 )
 set BEA_HOME="%BEA_HOME:"=%"
 set WL_HOME=%BEA_HOME%\weblogic92
@@ -28,9 +28,9 @@ if not defined JAVA_HOME set JAVA_HOME=%BEA_HOME%\jdk150_10
 set JAVA_HOME="%JAVA_HOME:"=%"
 
 if not exist %JAVA_HOME% (
-  echo JAVA_HOME %JAVA_HOME% does not exist.
-  endlocal
-  exit 1
+   echo JAVA_HOME %JAVA_HOME% does not exist.
+   endlocal
+   exit /b 1
 )
 
 call %WL_HOME%\common\bin\commEnv.cmd

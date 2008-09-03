@@ -13,5 +13,5 @@ REM ----------------------------------------------------------
 setlocal
 set EXIT_ON_ERROR=TRUE
 call "%~d0%~p0..\%1\start.bat" %2 %3
-exit %ERRORLEVEL%
+exit /b %ERRORLEVEL%
 endlocal

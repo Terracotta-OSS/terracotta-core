@@ -24,7 +24,7 @@ goto tc_dso_env_1
   if not "%~1" == "" set TC_CONFIG_PATH=%~1
 
   call %TC_INSTALL_DIR%\bin\boot-jar-path.bat
-  if %ERRORLEVEL% neq 0 exit %ERRORLEVEL%
+  if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
 
   set TC_JAVA_OPTS=-Xbootclasspath/p:%DSO_BOOT_JAR% -Dtc.install-root=%TC_INSTALL_DIR%
   if defined TC_CONFIG_PATH set TC_JAVA_OPTS=%TC_JAVA_OPTS% -Dtc.config=%TC_CONFIG_PATH%

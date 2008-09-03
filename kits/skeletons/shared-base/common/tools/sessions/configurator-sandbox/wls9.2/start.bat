@@ -17,9 +17,9 @@ set SANDBOX="%SANDBOX:"=%"
 set TC_INSTALL_DIR=%SANDBOX%\..\..\..
 
 if not defined BEA_HOME (
-  echo BEA_HOME must be set to a Weblogic Server 9.2 installation.
-  endlocal
-  exit 1
+   echo BEA_HOME must be set to a Weblogic Server 9.2 installation.
+   endlocal
+   exit /b 1
 )
 set BEA_HOME="%BEA_HOME:"=%"
 
@@ -27,9 +27,9 @@ if not defined JAVA_HOME set JAVA_HOME=%BEA_HOME%\jdk150_10
 set JAVA_HOME="%JAVA_HOME:"=%"
 
 if not exist %JAVA_HOME% (
-  echo JAVA_HOME %JAVA_HOME% does not exist.
-  endlocal
-  exit 1
+   echo JAVA_HOME %JAVA_HOME% does not exist.
+   endlocal
+   exit /b 1
 )
 
 %JAVA_HOME%\bin\java -classpath %TC_INSTALL_DIR%\lib\tc.jar org.terracotta.ui.session.CheckJavaVersion "1.5"
@@ -55,5 +55,5 @@ cd %~d0%~p0%1
 call ..\startWLS.bat
 
 :end
-exit %ERRORLEVEL%
+exit /b %ERRORLEVEL%
 endlocal

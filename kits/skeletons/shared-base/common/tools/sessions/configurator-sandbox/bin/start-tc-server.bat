@@ -14,5 +14,5 @@ if %ERRORLEVEL% neq 0 goto end
 call "..\bin\start-tc-server.bat" -f "%SANDBOX%\tc-config.xml"
 
 :end
-exit %ERRORLEVEL%
+exit /b %ERRORLEVEL%
 endlocal

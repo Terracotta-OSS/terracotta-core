@@ -77,6 +77,6 @@ goto tc_set_dso_boot_jar__1_0
      goto return
 
 :error
-exit %ERRORLEVEL%
+exit /b %ERRORLEVEL%
 
 :return
