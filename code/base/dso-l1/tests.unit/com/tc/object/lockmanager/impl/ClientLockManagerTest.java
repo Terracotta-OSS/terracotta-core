@@ -2,7 +2,7 @@
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tc.object.lockmanager.api;
+package com.tc.object.lockmanager.impl;
 
 import EDU.oswego.cs.dl.util.concurrent.BrokenBarrierException;
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
@@ -17,6 +17,18 @@ import com.tc.logging.NullTCLogger;
 import com.tc.logging.TCLogger;
 import com.tc.management.ClientLockStatManager;
 import com.tc.management.L1Info;
+import com.tc.object.lockmanager.api.ClientLockManager;
+import com.tc.object.lockmanager.api.ClientLockManagerConfig;
+import com.tc.object.lockmanager.api.LockID;
+import com.tc.object.lockmanager.api.LockLevel;
+import com.tc.object.lockmanager.api.LockRequest;
+import com.tc.object.lockmanager.api.NullClientLockManagerConfig;
+import com.tc.object.lockmanager.api.RemoteLockManager;
+import com.tc.object.lockmanager.api.TestRemoteLockManager;
+import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.object.lockmanager.api.ThreadLockManager;
+import com.tc.object.lockmanager.api.WaitListener;
+import com.tc.object.lockmanager.api.WaitLockRequest;
 import com.tc.object.lockmanager.api.TestRemoteLockManager.LockResponder;
 import com.tc.object.lockmanager.impl.ClientLockManagerImpl;
 import com.tc.object.lockmanager.impl.ThreadLockManagerImpl;

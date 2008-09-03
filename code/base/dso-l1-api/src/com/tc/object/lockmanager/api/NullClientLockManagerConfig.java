@@ -23,4 +23,8 @@ public class NullClientLockManagerConfig implements ClientLockManagerConfig {
     this.timeoutInterval = timeoutInterval;
   }
 
+  public int getStripedCount() {
+    return ClientLockManagerConfig.DEFAULT_STRIPED_COUNT;
+  }
+
 }

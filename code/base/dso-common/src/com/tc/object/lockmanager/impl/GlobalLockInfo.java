@@ -111,4 +111,7 @@ public class GlobalLockInfo implements TCSerializable {
     return this;
   }
 
+  public LockID getLockID() {
+    return lockID;
+  }
 }

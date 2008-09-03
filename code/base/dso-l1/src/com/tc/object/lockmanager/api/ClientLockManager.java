@@ -15,7 +15,6 @@ import java.util.Collection;
 /**
  * Simple lock manager for the client
  * 
- * @author steve
  */
 public interface ClientLockManager extends DumpHandler, PrettyPrintable {
 
@@ -87,8 +86,6 @@ public interface ClientLockManager extends DumpHandler, PrettyPrintable {
   public void addAllHeldLocksAndPendingLockRequestsTo(Collection heldLocks, Collection pendingLocks);
 
   public Collection addAllPendingTryLockRequestsTo(Collection c);
-
-  public void runGC();
 
   public int queueLength(LockID lockID, ThreadID threadID);
 

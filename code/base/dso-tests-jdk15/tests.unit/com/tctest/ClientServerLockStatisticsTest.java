@@ -32,12 +32,13 @@ import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageImpl;
 import com.tc.net.protocol.tcm.TCMessageSink;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.object.lockmanager.api.ClientLockManager;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.NullClientLockManagerConfig;
 import com.tc.object.lockmanager.api.ThreadID;
-import com.tc.object.lockmanager.impl.ClientLockManagerImpl;
 import com.tc.object.lockmanager.impl.ClientServerLockStatManagerGlue;
+import com.tc.object.lockmanager.impl.StripedClientLockManagerImpl;
 import com.tc.object.msg.AcknowledgeTransactionMessageFactory;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.msg.CommitTransactionMessageFactory;
@@ -65,7 +66,7 @@ import java.util.concurrent.CyclicBarrier;
 
 public class ClientServerLockStatisticsTest extends TCTestCase {
 
-  private ClientLockManagerImpl           clientLockManager;
+  private ClientLockManager               clientLockManager;
   private LockManagerImpl                 serverLockManager;
   private ClientServerLockStatManagerGlue clientServerGlue;
   private TestSessionManager              sessionManager;
@@ -87,8 +88,8 @@ public class ClientServerLockStatisticsTest extends TCTestCase {
     sessionManager = new TestSessionManager();
     clientServerGlue = new ClientServerLockStatManagerGlue(sessionManager, sink);
     clientLockStatManager = new ClientLockStatisticsManagerImpl();
-    clientLockManager = new ClientLockManagerImpl(new NullTCLogger(), clientServerGlue, sessionManager,
-                                                  clientLockStatManager, new NullClientLockManagerConfig());
+    clientLockManager = new StripedClientLockManagerImpl(new NullTCLogger(), clientServerGlue, sessionManager,
+                                                         clientLockStatManager, new NullClientLockManagerConfig());
 
     DSOChannelManager nullChannelManager = new NullChannelManager();
     serverLockStatManager = new L2LockStatisticsManagerImpl();

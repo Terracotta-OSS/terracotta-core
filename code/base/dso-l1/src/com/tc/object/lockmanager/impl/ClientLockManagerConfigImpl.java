@@ -8,17 +8,19 @@ import com.tc.properties.TCProperties;
 
 public class ClientLockManagerConfigImpl implements ClientLockManagerConfig {
   
-  
-  private long timeoutInterval;
+  private final long timeoutInterval;
+  private final int stripedCount;
    
   public ClientLockManagerConfigImpl(TCProperties lockManagerProperties ) {
     this.timeoutInterval = lockManagerProperties.getLong("timeout.interval");  
+    this.stripedCount = lockManagerProperties.getInt("striped.count");
   }
 
   public long getTimeoutInterval() {
     return timeoutInterval;
   }
-  
-  
 
+  public int getStripedCount() {
+    return stripedCount;
+  }
 }

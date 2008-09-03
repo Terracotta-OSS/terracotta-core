@@ -413,6 +413,12 @@ public interface TCPropertiesConsts {
   public static final String   EHCAHCE_LOCK_WRITELEVEL                                = "ehcache.lock.writeLevel";
 
   /*********************************************************************************************************************
+   * Section : L1 Lock Manager
+   ********************************************************************************************************************/
+  public static final String   L1_LOCKMANAGER_STRIPED_COUNT                           = "l1.lockmanager.striped.count";
+  public static final String   L1_LOCKMANAGER_TIMEOUT_INTERVAL                        = "l1.lockmanager.timeout.interval";
+
+  /*********************************************************************************************************************
    * Section : Lock statistics
    ********************************************************************************************************************/
   public static final String   LOCK_STATISTICS_ENABLED                                = "lock.statistics.enabled";
@@ -420,7 +426,7 @@ public interface TCPropertiesConsts {
   public static final String   L1_LOCK_STATISTICS_GATHERINTERVAL                      = "l1.lock.statistics.gatherInterval";
 
   /*********************************************************************************************************************
-   * Section : Greedy Lease Lock
+   * Section : L2 Lock Manager
    ********************************************************************************************************************/
   public static final String   L2_LOCKMANAGER_GREEDY_LEASE_ENABLED                    = "l2.lockmanager.greedy.lease.enabled";
   public static final String   L2_LOCKMANAGER_GREEDY_LEASE_LEASETIME_INMILLS          = "l2.lockmanager.greedy.lease.leaseTimeInMillis";
@@ -507,4 +513,5 @@ public interface TCPropertiesConsts {
   public static final String   HTTP_DEFAULT_SERVLET_ENABLED                           = "http.defaultservlet.enabled";
   public static final String   HTTP_DEFAULT_SERVLET_ATTRIBUTE_ALIASES                 = "http.defaultservlet.attribute.aliases";
   public static final String   HTTP_DEFAULT_SERVLET_ATTRIBUTE_DIR_ALLOWED             = "http.defaultservlet.attribute.dirallowed";
+
 }

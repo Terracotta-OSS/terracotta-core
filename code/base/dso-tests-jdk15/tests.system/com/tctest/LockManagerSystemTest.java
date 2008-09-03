@@ -27,12 +27,13 @@ import com.tc.object.BaseDSOTestCase;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.gtx.TestClientGlobalTransactionManager;
 import com.tc.object.handler.LockResponseHandler;
+import com.tc.object.lockmanager.api.ClientLockManager;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.NullClientLockManagerConfig;
 import com.tc.object.lockmanager.api.ThreadID;
-import com.tc.object.lockmanager.impl.ClientLockManagerImpl;
 import com.tc.object.lockmanager.impl.RemoteLockManagerImpl;
+import com.tc.object.lockmanager.impl.StripedClientLockManagerImpl;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockRequestMessageFactory;
 import com.tc.object.msg.LockResponseMessage;
@@ -63,7 +64,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
 
   private static final TCLogger logger = CustomerLogging.getDSOGenericLogger();
 
-  private ClientLockManagerImpl clientLockManager;
+  private ClientLockManager clientLockManager;
 
   public void setUp() throws Exception {
     BoundedLinkedQueue clientLockRequestQueue = new BoundedLinkedQueue();
@@ -73,7 +74,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
                                                                              new TestClientGlobalTransactionManager(),
                                                                              clientLockRequestQueue);
 
-    clientLockManager = new ClientLockManagerImpl(logger, rmtLockManager, new NullSessionManager(),
+    clientLockManager = new StripedClientLockManagerImpl(logger, rmtLockManager, new NullSessionManager(),
                                                   ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
                                                    new NullClientLockManagerConfig());
 

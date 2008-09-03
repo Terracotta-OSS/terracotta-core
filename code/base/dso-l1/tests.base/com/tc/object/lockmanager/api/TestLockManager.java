@@ -97,10 +97,6 @@ public class TestLockManager implements ClientLockManager {
     return;
   }
 
-  public void runGC() {
-    return;
-  }
-
   public boolean isLocked(LockID lockID, ThreadID threadID, int lockLevel) {
     return lockIDForCalls.contains(lockID.asString());
   }

@@ -62,7 +62,6 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   private final Map                     pendingQueryLockRequestsByID = new ListOrderedMap();
   private final Map                     lockInfoByID                 = new HashMap();
   private final RemoteLockManager       remoteLockManager;
-  private final TCLockTimer             waitTimer                    = new TCLockTimerImpl();
   private final Map                     locksByID                    = new HashMap(INIT_LOCK_MAP_SIZE);
 
   // This is specifically insertion ordered so that locks that are likely to be garbage are in the front, added first
@@ -71,16 +70,26 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   private final SessionManager          sessionManager;
   private final ClientLockStatManager   lockStatManager;
   private final ClientLockManagerConfig clientLockManagerConfig;
+  private final TCLockTimer             waitTimer;
+
+  // For tests
+  ClientLockManagerImpl(TCLogger logger, RemoteLockManager remoteLockManager, SessionManager sessionManager,
+                        ClientLockStatManager lockStatManager, ClientLockManagerConfig clientLockManagerConfig) {
+    this(logger, remoteLockManager, sessionManager, lockStatManager, clientLockManagerConfig, new TCLockTimerImpl());
+
+  }
 
   public ClientLockManagerImpl(TCLogger logger, RemoteLockManager remoteLockManager, SessionManager sessionManager,
-                               ClientLockStatManager lockStatManager, ClientLockManagerConfig clientLockManagerConfig) {
+                               ClientLockStatManager lockStatManager, ClientLockManagerConfig clientLockManagerConfig,
+                               TCLockTimer waitTimer) {
     this.logger = logger;
     this.remoteLockManager = remoteLockManager;
     this.sessionManager = sessionManager;
     this.lockStatManager = lockStatManager;
     this.clientLockManagerConfig = clientLockManagerConfig;
-    waitTimer.getTimer().schedule(new LockGCTask(this), clientLockManagerConfig.getTimeoutInterval(),
-                                  clientLockManagerConfig.getTimeoutInterval());
+    this.waitTimer = waitTimer;
+    this.waitTimer.getTimer().schedule(new LockGCTask(this), clientLockManagerConfig.getTimeoutInterval(),
+                                       clientLockManagerConfig.getTimeoutInterval());
   }
 
   // for testing
@@ -629,9 +638,9 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
 
   static class LockGCTask extends TimerTask {
 
-    final ClientLockManager lockManager;
+    final ClientLockManagerImpl lockManager;
 
-    LockGCTask(ClientLockManager mgr) {
+    LockGCTask(ClientLockManagerImpl mgr) {
       lockManager = mgr;
     }
 
