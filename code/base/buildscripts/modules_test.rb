@@ -725,13 +725,14 @@ class SubtreeTestRun
 
         content = <<END
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuite errors="1" failures="0" name="#{classname}" tests="1" time="69">
-  <properties>
-    <property name="unknow" value="none"></property>
-  </properties>
-  <testcase classname="#{classname}" name="test" time="69"></testcase>
+<testsuite errors="0" failures="1" name="#{classname}" tests="1" time="0">
+  <testcase classname="#{classname}" name="test" time="0">
+      <failure type="junit.framework.AssertionFailedError" message="Failed abnormally">
+         Failed abnormally.
+      </failure>
+  </testcase>
   <system-out/>
-  <system-err><![CDATA[Test #{classname} failed. JVM crashed. Error parsing XML: Premature end of file.]]></system-err>
+  <system-err/>
 </testsuite>
 END
 

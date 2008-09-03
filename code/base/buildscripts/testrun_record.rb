@@ -347,19 +347,17 @@ class SubtreeTestRunRecord
   private
   
   def create_abnormal_junit_report(filename, classname)
-    puts "DEBUG: XXX creating #{filename} for test #{classname}"
     File.open(filename, "w") do |file|
       file << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-      file << "<testsuite errors=\"0\" failures=\"1\" name=\"#{classname.escape(:xml_attribute)}\" tests=\"0\" time=\"0.000\">\n"
+      file << "<testsuite errors=\"0\" failures=\"1\" name=\"#{classname.escape(:xml_attribute)}\" tests=\"1\" time=\"0.000\">\n"
       file << "<testcase classname=\"#{classname.xml_escape}\" name='test' time='0.0'>\n"
-      file << ("  <failure type='junit.framework.AssertionFailedError' message=\"Failed abnormally\">\n") % classname.xml_escape(true)
-      file << ("      Failed abnormally\n") % classname.xml_escape
+      file << "  <failure type='junit.framework.AssertionFailedError' message=\"Failed abnormally\">\n"
+      file << "      Failed abnormally\n"
       file << "   </failure>\n"
       file << "</testcase>\n"
       file << "<system-out/><system-err/>\n"
       file << "</testsuite>\n"
     end
-    puts "DEBUG: XXX file created. File size #{File.size(filename)}"
   end
   
   # Reads in all the XML files for tests in this subtree, analyzes them, and stores the
