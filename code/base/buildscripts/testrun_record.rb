@@ -390,8 +390,6 @@ class SubtreeTestRunRecord
                 @total_suites += 1
                 @total_suites_passed += 1 unless testsuite_run.failed?
               rescue => e
-                STDERR.puts("Test #{file_classname} failed abnormally. Result file can't be parsed. Check log for exception.")
-                STDERR.puts("trace:  #{e}")
                 testsuite_run = UnparseableTestSuiteRunRecord.new(filename, file_classname, e)
                 @testsuites[file_classname] = testsuite_run
                 @total_suites += 1
