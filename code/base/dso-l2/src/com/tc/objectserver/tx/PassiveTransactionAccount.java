@@ -68,7 +68,7 @@ public class PassiveTransactionAccount implements TransactionAccount {
     throw new AssertionError("Transactions should never be relayed from Passive Server");
   }
 
-  public void addAllPendingServerTransactionIDsTo(HashSet txnsInSystem) {
+  public void addAllPendingServerTransactionIDsTo(Set txnsInSystem) {
     synchronized (txnIDs) {
       txnsInSystem.addAll(txnIDs);
     }

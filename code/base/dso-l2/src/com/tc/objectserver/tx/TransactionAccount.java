@@ -7,7 +7,6 @@ package com.tc.objectserver.tx;
 import com.tc.net.groups.NodeID;
 import com.tc.object.tx.TransactionID;
 
-import java.util.HashSet;
 import java.util.Set;
 
 public interface TransactionAccount {
@@ -35,7 +34,7 @@ public interface TransactionAccount {
 
   public void incommingTransactions(Set serverTxnIDs);
 
-  public void addAllPendingServerTransactionIDsTo(HashSet txnsInSystem);
+  public void addAllPendingServerTransactionIDsTo(Set txnsInSystem);
 
   public void nodeDead(CallBackOnComplete callBack);
 

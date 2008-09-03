@@ -535,23 +535,18 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   }
 
   public void callBackOnTxnsInSystemCompletion(TxnsInSystemCompletionLister l) {
-    boolean callback = false;
+    TxnsInSystemCompletionListenerCallback callBack = new TxnsInSystemCompletionListenerCallback(l);
+    Set txnsInSystem = callBack.getTxnsInSystem();
     synchronized (transactionAccounts) {
-      HashSet txnsInSystem = new HashSet();
+      // DEV-1874, MNK-683 :: Register before adding pending server transaction ids to avoid race.
+      addTransactionListener(callBack);
       for (Iterator i = transactionAccounts.entrySet().iterator(); i.hasNext();) {
         Entry entry = (Entry) i.next();
         TransactionAccount client = (TransactionAccount) entry.getValue();
         client.addAllPendingServerTransactionIDsTo(txnsInSystem);
       }
-      if (txnsInSystem.isEmpty()) {
-        callback = true;
-      } else {
-        addTransactionListener(new TxnsInSystemCompletionListenerCallback(l, txnsInSystem));
-      }
     }
-    if (callback) {
-      l.onCompletion();
-    }
+    callBack.initializationComplete();
   }
 
   private void fireIncomingTransactionsEvent(NodeID nodeID, Set serverTxnIDs) {
@@ -640,13 +635,25 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 
     private final TxnsInSystemCompletionLister callback;
     private final Set                          txnsInSystem;
-    public int                                 count    = 0;
-    public int                                 lastSize = -1;
+    private boolean                            initialized = false;
+    private int                                count       = 0;
+    private int                                lastSize    = -1;
 
-    public TxnsInSystemCompletionListenerCallback(TxnsInSystemCompletionLister callback, Set txnsInSystem) {
+    public TxnsInSystemCompletionListenerCallback(TxnsInSystemCompletionLister callback) {
       this.callback = callback;
-      this.lastSize = txnsInSystem.size();
-      this.txnsInSystem = Collections.synchronizedSet(txnsInSystem);
+      this.txnsInSystem = Collections.synchronizedSet(new HashSet());
+    }
+
+    public void initializationComplete() {
+      synchronized (txnsInSystem) {
+        initialized = true;
+        lastSize = txnsInSystem.size();
+        callBackIfEmpty();
+      }
+    }
+
+    public Set getTxnsInSystem() {
+      return txnsInSystem;
     }
 
     public void addResentServerTransactionIDs(Collection stxIDs) {
@@ -667,11 +674,8 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 
     public void transactionCompleted(ServerTransactionID stxID) {
       synchronized (txnsInSystem) {
-        if (txnsInSystem.remove(stxID)) {
-          if (txnsInSystem.isEmpty()) {
-            ServerTransactionManagerImpl.this.removeTransactionListener(this);
-            callback.onCompletion();
-          }
+        if (txnsInSystem.remove(stxID) && initialized) {
+          callBackIfEmpty();
         }
         if (++count % 1000 == 0) {
           if (lastSize == txnsInSystem.size()) {
@@ -682,6 +686,13 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
             lastSize = txnsInSystem.size();
           }
         }
+      }
+    }
+
+    private void callBackIfEmpty() {
+      if (txnsInSystem.isEmpty()) {
+        ServerTransactionManagerImpl.this.removeTransactionListener(this);
+        callback.onCompletion();
       }
     }
 

@@ -25,7 +25,7 @@ public class ObjectSynchTransactionAccount implements TransactionAccount {
     this.sourceID = sourceID;
   }
 
-  public synchronized void addAllPendingServerTransactionIDsTo(HashSet txnIDs) {
+  public synchronized void addAllPendingServerTransactionIDsTo(Set txnIDs) {
     for (Iterator i = txn2Waitees.keySet().iterator(); i.hasNext();) {
       TransactionID txnID = (TransactionID) i.next();
       txnIDs.add(new ServerTransactionID(sourceID, txnID));

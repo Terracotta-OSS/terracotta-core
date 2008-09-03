@@ -144,7 +144,7 @@ public class TransactionAccountImpl implements TransactionAccount {
     }
   }
 
-  public void addAllPendingServerTransactionIDsTo(HashSet txnIDs) {
+  public void addAllPendingServerTransactionIDsTo(Set txnIDs) {
     synchronized (waitees) {
       for (Iterator i = waitees.keySet().iterator(); i.hasNext();) {
         TransactionID txnID = (TransactionID) i.next();
