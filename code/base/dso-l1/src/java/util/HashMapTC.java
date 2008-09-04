@@ -558,6 +558,8 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
       return new EntriesIterator(entries.iterator());
     }
 
+    // FIXME:: DEV-1883 This is removing the keys and not the exact mapping, if I am not wrong, original hashmap checks
+    // if the values are the same too.
     public boolean remove(Object o) {
       if (__tc_isManaged()) {
         synchronized (__tc_managed().getResolveLock()) {
@@ -611,11 +613,39 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
         synchronized (__tc_managed().getResolveLock()) {
           // Managed version
           int sizeB4 = size();
-          HashMapTC.this.remove(o);
+          HashMapTC.this.__tc_remove_logical(o);
           return (size() != sizeB4);
         }
       } else {
         return _keySet.remove(o);
+      }
+    }
+
+    public boolean removeAll(Collection c) {
+      if (__tc_isManaged()) {
+        boolean modified = false;
+        ManagerUtil.checkWriteAccess(HashMapTC.this);
+
+        if (size() > c.size()) {
+          for (Iterator i = c.iterator(); i.hasNext();) {
+            Entry entry = removeEntryForKey(i.next());
+            if (entry != null) {
+              ManagerUtil.logicalInvoke(HashMapTC.this, SerializationUtil.REMOVE_ENTRY_FOR_KEY_SIGNATURE,
+                                        new Object[] { entry.getKey() });
+              modified = true;
+            }
+          }
+        } else {
+          for (Iterator i = iterator(); i.hasNext();) {
+            if (c.contains(i.next())) {
+              i.remove();
+              modified = true;
+            }
+          }
+        }
+        return modified;
+      } else {
+        return _keySet.removeAll(c);
       }
     }
 
