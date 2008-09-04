@@ -153,6 +153,11 @@ public class MessageTransportTest extends TCTestCase {
   public void testServerTransportEvents() throws Exception {
     createServerTransport();
     assertFalse(serverEventMonitor.waitForConnect(500));
+    
+    // to establish connection, the status checked at closing
+    TransportHandshakeMessage ack = this.transportHandshakeMessageFactory.createAck(connectionId, this.serverTransport
+                                                                                    .getConnection());
+    this.serverTransport.receiveTransportMessage(ack);
 
     // add an extra event monitor to make sur ethat, if there are multiple
     // listeners,
