@@ -49,7 +49,7 @@ import java.util.Map;
 /**
  * Server representation of lock management. We will need to keep track of what locks are checkedout, who has the lock
  * and who wants the lock
- *
+ * 
  * @author steve
  */
 public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCallback {
@@ -221,8 +221,13 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
     }
     if (!isStarted()) return;
 
-    Lock lock = getLockFor(lockID);
     ServerThreadContext threadContext = threadContextFactory.getOrCreate(cid, threadID);
+    Lock lock = (Lock) locks.get(lockID);
+    if (lock == null) {
+      // This lock is not present in the server, we still want to send the right lockID info in the response. Create one
+      // for temporary use.
+      lock = new Lock(lockID, this.lockTimeout, this.lockListeners);
+    }
     lock.queryLock(threadContext, lockResponseSink);
   }
 
@@ -415,7 +420,10 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
 
   private Lock getLockFor(LockID id) {
     Lock lock = (Lock) locks.get(id);
-    if (lock == null) return Lock.NULL_LOCK;
+    if (lock == null) {
+      logger.warn("Look up of Non-exisiting Lock for ID : " + id);
+      return Lock.NULL_LOCK;
+    }
     return lock;
   }
 
@@ -629,7 +637,7 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
   public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.println(getClass().getName());
     out.indent().println("locks: " + locks.size());
-    for (Iterator i = locks.values().iterator(); i.hasNext(); ) {
+    for (Iterator i = locks.values().iterator(); i.hasNext();) {
       out.println(i.next());
     }
     return out;

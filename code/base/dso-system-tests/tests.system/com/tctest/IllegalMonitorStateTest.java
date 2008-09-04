@@ -108,7 +108,6 @@ public class IllegalMonitorStateTest extends TransparentTestBase {
 
       spec.addRoot("root1", "root1");
       spec.addRoot("root2", "root2");
-      spec.addRoot("objectRoot", "objectRoot");
     }
 
   }

@@ -90,8 +90,8 @@ public class Lock {
        ServerThreadContextFactory threadContextFactory, L2LockStatsManager lockStatsManager) {
     this(lockID, timeout, listeners, false, lockPolicy, threadContextFactory, lockStatsManager);
   }
-
-  // for tests
+  
+  // used in tests and in query lock when Locks don't exists.
   Lock(LockID lockID, long timeout, LockEventListener[] listeners) {
     this(lockID, timeout, listeners, false, LockManagerImpl.ALTRUISTIC_LOCK_POLICY,
          ServerThreadContextFactory.DEFAULT_FACTORY, L2LockStatsManager.NULL_LOCK_STATS_MANAGER);
