@@ -60,8 +60,10 @@ public class CachedModules implements Modules {
   }
 
   // TODO NEED TEST
-  public List<Module> find(List<String> args) {
+  public List<Module> find(List<String> argList) {
     List<Module> list = new ArrayList<Module>();
+    List<String> args = new ArrayList<String>(argList);
+
     String artifactId = args.remove(0);
     String version = args.isEmpty() ? null : args.remove(0);
     String groupId = args.isEmpty() ? null : args.remove(0);
