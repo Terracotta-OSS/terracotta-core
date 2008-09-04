@@ -89,12 +89,14 @@ public class ServerMessageTransport extends MessageTransportBase {
   }
 
   public void closeEvent(TCConnectionEvent event) {
-    if (status.isEstablished()) {
-      status.reset();
-      super.closeEvent(event);
-    } else {
-      // DEV-1856 : Don't bother for connections which actually didn't make up to Transport Establishment.
-      logger.warn("Connection : " + event.getSource() + ", which was not Transport Established, got closed");
+    synchronized (status) {
+      if (status.isEstablished()) {
+        status.reset();
+        super.closeEvent(event);
+      } else {
+        // DEV-1856 : Don't bother for connections which actually didn't make up to Transport Establishment.
+        logger.warn("Connection : " + event.getSource() + ", which was not Transport Established, got closed");
+      }
     }
   }
 
