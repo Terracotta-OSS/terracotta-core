@@ -123,50 +123,7 @@ public class UpdateCommand extends OneOrAllCommand {
     if (cli.hasOption(LONGOPT_OVERWRITE) || cli.hasOption(LONGOPT_FORCE)) installOptions.add(InstallOption.OVERWRITE);
     if (cli.hasOption(LONGOPT_PRETEND)) installOptions.add(InstallOption.PRETEND);
     if (cli.hasOption(LONGOPT_NOVERIFY)) installOptions.add(InstallOption.SKIP_VERIFY);
-
     process(cli, modules);
-
-    // // --all was specified, update everything that is installed
-    // if (cli.hasOption(LONGOPT_ALL)) {
-    // updateAll();
-    // return;
-    // }
-    //
-    // // no args and --all not specified, ask user to be more specific
-    // List<String> args = cli.getArgList();
-    // if (args.isEmpty()) {
-    // out.println("You need to at least specify the name of the integration module.");
-    // out.println("You could also just use the --all option to update everything you have installed.");
-    // return;
-    // }
-    //
-    // // given the artifactId and maybe the version and groupId - find some candidates
-    // // get candidates
-    // Module module = null;
-    // List<Module> candidates = modules.find(args);
-    //
-    // // no candidates found, inform the user
-    // if (candidates.isEmpty()) {
-    // out.println("No module found matching the arguments you specified.");
-    // out.println("Check that you've spelled them correctly.");
-    // return;
-    // }
-    //
-    // // several candidates found, see if we can figure out which one we can retrieve
-    // module = ModuleHelper.getLatest(candidates);
-    // if (module != null) {
-    // update(module);
-    // return;
-    // }
-    //
-    // // we can't figure out which one to retrieve so ask the user to be more specific
-    // out.println("There's more than one integration module found matching the name '" + args.get(0) + "':");
-    // out.println();
-    // for (Module candidate : candidates) {
-    // out.println("  * " + candidate.artifactId() + " " + candidate.version() + " " + candidate.groupId());
-    // }
-    // out.println();
-    // out.println("Try to use both version and group-id arguments in the command to be more specific.");
   }
 
   private Attributes readAttributes(File jarfile) {

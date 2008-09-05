@@ -124,6 +124,14 @@ public class Module extends AbstractModule implements BasicAttributes {
     return attributesHelper.isInstalled(repository);
   }
 
+  /**
+   * Retrieve the latest version available for this module. If this module has no siblings, then it returns itself.
+   */
+  public Module latest() {
+    List<Module> siblings = siblings();
+    return siblings.isEmpty() ? this : siblings.get(siblings.size() - 1);
+  }
+
   public boolean isLatest() {
     List<Module> siblings = siblings();
     if (siblings.isEmpty()) return true;

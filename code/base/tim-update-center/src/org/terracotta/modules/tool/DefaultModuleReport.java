@@ -20,21 +20,33 @@ import java.util.List;
 
 public class DefaultModuleReport extends ModuleReport {
 
-  private static final int    INDENT_WIDTH    = 3;
-  private static final String INDENT_CHAR     = " ";
-  private static final String DEFAULT_GROUPID = "org.terracotta.modules";
-  private static final String LEGEND          = "(+) Installed  (!) Installed but newer version exists  (-) Not installed";
+  private static final String INSTALLED_MARKER    = "+";
+  private static final String NOTINSTALLED_MARKER = "-";
+  private static final String OUTOFDATE_MARKER    = "!";
+
+  private static final int    INDENT_WIDTH        = 3;
+  private static final String INDENT_CHAR         = " ";
+  private static final String DEFAULT_GROUPID     = "org.terracotta.modules";
+  private static final String LEGEND              = "(+) Installed  (-) Not installed  (!) Installed but newer version exists";
+
+  private String canonicalize(File path) {
+    try {
+      return path.getCanonicalFile().toString();
+    } catch (IOException e) {
+      return path.toString();
+    }
+  }
 
   private String marker(Module module) {
-    if (!module.isInstalled()) return "-";
-    return module.isLatest() ? "+" : "!";
+    if (!module.isInstalled()) return NOTINSTALLED_MARKER;
+    return module.isLatest() ? INSTALLED_MARKER : OUTOFDATE_MARKER;
   }
 
   private boolean isUsingDefaultGroupId(AbstractModule module) {
     return DEFAULT_GROUPID.equals(module.groupId());
   }
 
-  private String indent(String text, int spaces) {
+  private String indent(String text) {
     StringBuffer result = new StringBuffer();
     String[] lines = StringUtils.split(text, '\n');
     for (String line : lines) {
@@ -92,7 +104,7 @@ public class DefaultModuleReport extends ModuleReport {
     String compatibility = module.tcVersion().equals("*") ? "any Terracotta version." : "TC " + module.tcVersion();
     out.println("Compatible with " + compatibility);
 
-    String text = indent(writer.toString(), INDENT_WIDTH);
+    String text = indent(writer.toString());
     return StringUtils.chomp(StringUtils.trim(text));
   }
 
@@ -101,12 +113,12 @@ public class DefaultModuleReport extends ModuleReport {
     PrintWriter out = new PrintWriter(writer);
 
     out.println("Dependencies:\n ");
-    if (module.dependencies().isEmpty()) out.println("None.");
+    if (module.dependencies().isEmpty()) out.println(indent("None."));
 
     for (AbstractModule dependency : module.dependencies()) {
       String line = "* " + dependency.artifactId() + " " + dependency.version();
       if (!isUsingDefaultGroupId(dependency)) line = line.concat(" [" + dependency.groupId() + "]");
-      out.println(indent(line, INDENT_WIDTH));
+      out.println(indent(line));
     }
 
     String text = writer.toString();
@@ -117,9 +129,9 @@ public class DefaultModuleReport extends ModuleReport {
     StringWriter writer = new StringWriter();
     PrintWriter out = new PrintWriter(writer);
     out.println("Maven Coordinates:\n ");
-    out.println(indent("groupId   : " + module.groupId(), INDENT_WIDTH));
-    out.println(indent("artifactId: " + module.artifactId(), INDENT_WIDTH));
-    out.println(indent("version   : " + module.version(), INDENT_WIDTH));
+    out.println(indent("groupId   : " + module.groupId()));
+    out.println(indent("artifactId: " + module.artifactId()));
+    out.println(indent("version   : " + module.version()));
 
     String text = writer.toString();
     return StringUtils.chomp(StringUtils.trim(text));
@@ -143,7 +155,7 @@ public class DefaultModuleReport extends ModuleReport {
     XMLOutputter xmlout = new XMLOutputter(formatter);
     try {
       xmlout.output(parent, new PrintWriter(sw));
-      out.println(indent(sw.toString(), INDENT_WIDTH));
+      out.println(indent(sw.toString()));
     } catch (IOException e) {
       out.println(e.getMessage());
     }
@@ -156,11 +168,16 @@ public class DefaultModuleReport extends ModuleReport {
     StringWriter writer = new StringWriter();
     PrintWriter out = new PrintWriter(writer);
 
-    // XXX this is not accurate - a module may also be installed at the root
     if (module.isInstalled()) {
       Modules owner = module.owner();
+
+      // XXX compute actual location if installed - remember that
+      // a TIM may also be installed at the root of the repository
       File location = new File(owner.repository(), module.installPath().toString());
-      out.println("Installed at " + location.getParent());
+      location = new File(location, module.filename());
+      File actualLocation = location.exists() ? location.getParentFile() : owner.repository();
+      out.println("Installed at " + canonicalize(actualLocation));
+
       if (module.isLatest()) out.println("This is the latest version.\n ");
       else out.println("A newer version is available.\n ");
     }
@@ -168,27 +185,27 @@ public class DefaultModuleReport extends ModuleReport {
     if (module.versions().isEmpty()) {
       out.println("There are no other versions of this TIM that are compatible with TC " + module.tcVersion());
     } else {
-      out.println("The following versions are also available for TC " + module.tcVersion() + ":\n ");
+      out.println("The following versions are also available:\n ");
       List<Module> siblings = module.siblings();
       Collections.reverse(siblings);
       for (Module sibling : siblings) {
-        String line = "* " + sibling.version();
-        if (sibling.isInstalled()) line = line.concat(" (installed)");
-        out.println(indent(line, INDENT_WIDTH));
+        String marker = "(" + (sibling.isInstalled() ? INSTALLED_MARKER : NOTINSTALLED_MARKER) + ") ";
+        String line = marker + sibling.version();
+        out.println(indent(line));
       }
       out.println("\n ");
     }
 
+    // XXX NEED A BETTER WAY HEURISTIC PRESENT THIS INSTALL/UPDATE INSTRUCTION
     if (!module.isInstalled() || !module.isLatest()) {
       out.println("Issue the following command to install the latest version:\n ");
-
       String script = "tim-get.";
       script += (Os.isWindows() ? "bat" : "sh");
       script += INDENT_CHAR + (module.isInstalled() ? "update" : "install");
       script += INDENT_CHAR + module.artifactId();
       script += INDENT_CHAR + module.version();
       if (isUsingDefaultGroupId(module)) script += INDENT_CHAR + module.groupId();
-      out.println(indent(script, INDENT_WIDTH));
+      out.println(indent(script));
     }
 
     String text = writer.toString();
@@ -202,13 +219,13 @@ public class DefaultModuleReport extends ModuleReport {
 
     out.println(digest(module));
     out.println();
-    out.println(indent(dependencies(module), INDENT_WIDTH));
+    out.println(indent(dependencies(module)));
     out.println();
-    out.println(indent(mavenCoordinates(module), INDENT_WIDTH));
+    out.println(indent(mavenCoordinates(module)));
     out.println();
-    out.println(indent(configInfo(module), INDENT_WIDTH));
+    out.println(indent(configInfo(module)));
     out.println();
-    out.println(indent(installationInfo(module), INDENT_WIDTH));
+    out.println(indent(installationInfo(module)));
 
     String text = writer.toString();
     return StringUtils.chomp(StringUtils.trim(text));
