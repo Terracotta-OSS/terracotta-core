@@ -16,7 +16,6 @@ import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.session.NullSessionManager;
-import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -119,24 +118,13 @@ public class ChannelManagerTest extends TestCase {
 
       ClientMessageChannel channel;
       channel = clientComms
-          .createClientChannel(
-                               sessionManager,
-                               0,
-                               TCSocketAddress.LOOPBACK_IP,
-                               lsnr.getBindPort(),
-                               3000,
-                               new ConnectionAddressProvider(
-                                                             new ConnectionInfo[] { new ConnectionInfo(
-                                                                                                       "localhost",
-                                                                                                       lsnr
-                                                                                                           .getBindPort()) }));
+          .createClientChannel(sessionManager, 0, TCSocketAddress.LOOPBACK_IP, lsnr.getBindPort(), 3000,
+                               new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo("localhost", lsnr
+                                   .getBindPort()) }));
       channel.open();
       assertTrue(channel.isConnected());
 
-      while (!channelManager.getChannels()[0].isConnected()) {
-        System.out.println("waiting for server to send final Tx ACK for client connection");
-        ThreadUtil.reallySleep(1000);
-      }
+      assertEquals(1, channelManager.getChannels().length);
       clientComms.getConnectionManager().closeAllConnections(5000);
       assertFalse(channel.isConnected());
 
@@ -199,8 +187,8 @@ public class ChannelManagerTest extends TestCase {
     }
 
     public short getStackLayerFlag() {
-      // its a test
-      // do nothing
+      //its a test
+      //do nothing
       throw new ImplementMe();
     }
 
