@@ -180,7 +180,10 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
       delete_deep_folder(build_folder) if File.exists?(build_folder)
       
       fail("Can't clean build folder") if File.exists?(build_folder)
-      FileUtils.rm(File.join(@basedir.to_s, "dependencies", "lib", "*"))
+      lib = File.join(@basedir.to_s, "dependencies", "lib")
+      Dir.chdir(lib) do 
+        FileUtils.rm Dir.glob("*")
+      end
     rescue Errno::ENOENT => e       
       # ignore file not found error
     end
