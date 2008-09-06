@@ -3,7 +3,7 @@
  */
 package com.tc.statistics.retrieval.actions;
 
-import com.tc.stats.counter.sampled.SampledCounter;
+import com.tc.stats.counter.Counter;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -11,21 +11,21 @@ import java.util.Random;
 
 public class CounterIncrementer implements Runnable {
   private static final Random random = new Random(System.currentTimeMillis());
-  private final SampledCounter counter;
+  private final Counter counter;
   private int intervalMillis;
   private boolean incrementCounter = true;
   final private int minDelta;
   final private int maxDelta;
 
-  public CounterIncrementer(SampledCounter counter, int intervalMillis) {
+  public CounterIncrementer(Counter counter, int intervalMillis) {
     this(counter, intervalMillis, 1, 10);
   }
 
-  public CounterIncrementer(SampledCounter counter, int intervalMillis, int maxDelta) {
+  public CounterIncrementer(Counter counter, int intervalMillis, int maxDelta) {
     this(counter, intervalMillis, 1, maxDelta);
   }
 
-  public CounterIncrementer(SampledCounter counter, int intervalMillis, int minDelta, int maxDelta) {
+  public CounterIncrementer(Counter counter, int intervalMillis, int minDelta, int maxDelta) {
     Assert.assertNotNull(counter);
     Assert.eval(intervalMillis > 0);
     Assert.eval(maxDelta > minDelta);

@@ -13,6 +13,7 @@ import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.util.Assert;
 import com.tc.util.SequenceID;
@@ -37,7 +38,7 @@ import java.util.Map.Entry;
 
 /**
  * Sends off committed transactions
- *
+ * 
  * @author steve
  */
 public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
@@ -66,7 +67,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   private final HashMap                    lockFlushCallbacks          = new HashMap();
 
   private int                              outStandingBatches          = 0;
-  private final SampledCounter             outstandingBatchesCounter;
+  private final Counter                    outstandingBatchesCounter;
   private final TCLogger                   logger;
   private final TransactionBatchAccounting batchAccounting;
   private final LockAccounting             lockAccounting;
@@ -82,9 +83,9 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   public RemoteTransactionManagerImpl(TCLogger logger, final TransactionBatchFactory batchFactory,
                                       TransactionBatchAccounting batchAccounting, LockAccounting lockAccounting,
                                       SessionManager sessionManager, DSOClientMessageChannel channel,
-                                      SampledCounter outstandingBatchesCounter, SampledCounter numTransactionCounter,
+                                      Counter outstandingBatchesCounter, SampledCounter numTransactionCounter,
                                       SampledCounter numBatchesCounter, final SampledCounter batchSizeCounter,
-                                      final SampledCounter pendingTransactionsSize) {
+                                      final Counter pendingBatchesSize) {
     this.logger = logger;
     this.batchAccounting = batchAccounting;
     this.lockAccounting = lockAccounting;
@@ -92,7 +93,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
     this.channel = channel;
     this.status = RUNNING;
     this.sequencer = new TransactionSequencer(batchFactory, lockAccounting, numTransactionCounter, numBatchesCounter,
-                                              batchSizeCounter, pendingTransactionsSize);
+                                              batchSizeCounter, pendingBatchesSize);
     this.timer.schedule(new RemoteTransactionManagerTimerTask(), COMPLETED_ACK_FLUSH_TIMEOUT,
                         COMPLETED_ACK_FLUSH_TIMEOUT);
     this.outstandingBatchesCounter = outstandingBatchesCounter;

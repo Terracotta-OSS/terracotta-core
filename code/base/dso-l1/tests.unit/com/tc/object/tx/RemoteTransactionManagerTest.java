@@ -20,6 +20,8 @@ import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionID;
+import com.tc.stats.counter.Counter;
+import com.tc.stats.counter.CounterConfig;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
@@ -58,21 +60,19 @@ public class RemoteTransactionManagerTest extends TestCase {
     batchFactory = new TestTransactionBatchFactory();
     batchAccounting = new TransactionBatchAccounting();
     lockAccounting = new LockAccounting();
-    CounterManager sampledCounterManager = new CounterManagerImpl();
-    SampledCounter numTransactionCounter = (SampledCounter)sampledCounterManager
+    CounterManager counterManager = new CounterManagerImpl();
+    SampledCounter numTransactionCounter = (SampledCounter)counterManager
       .createCounter(new SampledCounterConfig(1, 900, true, 0L));
-    SampledCounter numBatchesCounter = (SampledCounter)sampledCounterManager
+    SampledCounter numBatchesCounter = (SampledCounter)counterManager
       .createCounter(new SampledCounterConfig(1, 900, true, 0L));
-    SampledCounter outstandingBatchCounter = (SampledCounter)sampledCounterManager
+    SampledCounter batchSizeCounter = (SampledCounter)counterManager
       .createCounter(new SampledCounterConfig(1, 900, true, 0L));
-    SampledCounter batchSizeCounter = (SampledCounter)sampledCounterManager
-      .createCounter(new SampledCounterConfig(1, 900, true, 0L));
-    SampledCounter pendingTransactionsSize = (SampledCounter)sampledCounterManager
-      .createCounter(new SampledCounterConfig(1, 900, true, 0L));
+    Counter outstandingBatchCounter = counterManager.createCounter(new CounterConfig(0));
+    Counter pendingBatchesSize = counterManager.createCounter(new CounterConfig(0));
 
     manager = new RemoteTransactionManagerImpl(logger, batchFactory, batchAccounting, lockAccounting,
       new NullSessionManager(), new MockChannel(), outstandingBatchCounter, numTransactionCounter, numBatchesCounter,
-      batchSizeCounter, pendingTransactionsSize);
+      batchSizeCounter, pendingBatchesSize);
     number = new SynchronizedInt(0);
     error = new SynchronizedRef(null);
     threads = new HashMap();

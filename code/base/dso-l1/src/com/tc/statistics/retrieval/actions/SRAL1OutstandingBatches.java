@@ -6,8 +6,7 @@ package com.tc.statistics.retrieval.actions;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticType;
-import com.tc.stats.counter.sampled.SampledCounter;
-import com.tc.stats.counter.sampled.TimeStampedCounterValue;
+import com.tc.stats.counter.Counter;
 import com.tc.util.Assert;
 
 /**
@@ -22,16 +21,15 @@ public class SRAL1OutstandingBatches implements StatisticRetrievalAction {
 
   public static final String ACTION_NAME = "l1 outstanding batches";
 
-  private final SampledCounter outstandingBatchesCounter;
+  private final Counter outstandingBatchesCounter;
 
-  public SRAL1OutstandingBatches(SampledCounter outstandingBatchesCounter) {
+  public SRAL1OutstandingBatches(Counter outstandingBatchesCounter) {
     this.outstandingBatchesCounter = outstandingBatchesCounter;
     Assert.assertNotNull(outstandingBatchesCounter);
   }
 
   public StatisticData[] retrieveStatisticData() {
-    TimeStampedCounterValue counterValue = outstandingBatchesCounter.getMostRecentSample();
-    long value = counterValue.getCounterValue();
+     long value = outstandingBatchesCounter.getValue();
     return new StatisticData[] { new StatisticData(ACTION_NAME, new Long(value)) };
   }
 

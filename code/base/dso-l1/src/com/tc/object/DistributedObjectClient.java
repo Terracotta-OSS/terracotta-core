@@ -125,13 +125,15 @@ import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvictRequest;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvicted;
 import com.tc.statistics.retrieval.actions.SRAL1OutstandingBatches;
-import com.tc.statistics.retrieval.actions.SRAL1PendingTransactionsSize;
+import com.tc.statistics.retrieval.actions.SRAL1PendingBatchesSize;
 import com.tc.statistics.retrieval.actions.SRAL1TransactionSize;
 import com.tc.statistics.retrieval.actions.SRAL1TransactionsPerBatch;
 import com.tc.statistics.retrieval.actions.SRAMemoryUsage;
 import com.tc.statistics.retrieval.actions.SRAMessages;
 import com.tc.statistics.retrieval.actions.SRAStageQueueDepths;
 import com.tc.statistics.retrieval.actions.SRASystemProperties;
+import com.tc.stats.counter.Counter;
+import com.tc.stats.counter.CounterConfig;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
@@ -183,7 +185,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   private TCProperties                             l1Properties;
   private DmiManager                               dmiManager;
   private boolean                                  createDedicatedMBeanServer = false;
-  private CounterManager                           sampledCounterManager;
+  private CounterManager                           counterManager;
   private final ThreadIDMap                        threadIDMap;
 
   public DistributedObjectClient(DSOClientConfigHelper config, TCThreadGroup threadGroup, ClassProvider classProvider,
@@ -217,11 +219,11 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   private void populateStatisticsRetrievalRegistry(final StatisticsRetrievalRegistry registry,
                                                    final StageManager stageManager,
                                                    final MessageMonitor messageMonitor,
-                                                   final SampledCounter outstandingBatchesCounter,
+                                                   final Counter outstandingBatchesCounter,
                                                    final SampledCounter numTransactionCounter,
                                                    final SampledCounter numBatchesCounter,
                                                    final SampledCounter batchSizeCounter,
-                                                   final SampledCounter pendingTransactionsSize) {
+                                                   final Counter pendingBatchesSize) {
     registry.registerActionInstance(new SRAMemoryUsage());
     registry.registerActionInstance(new SRASystemProperties());
     registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRACpu");
@@ -236,7 +238,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     registry.registerActionInstance(new SRAL1OutstandingBatches(outstandingBatchesCounter));
     registry.registerActionInstance(new SRAL1TransactionsPerBatch(numTransactionCounter, numBatchesCounter));
     registry.registerActionInstance(new SRAL1TransactionSize(batchSizeCounter, numTransactionCounter));
-    registry.registerActionInstance(new SRAL1PendingTransactionsSize(pendingTransactionsSize));
+    registry.registerActionInstance(new SRAL1PendingBatchesSize(pendingBatchesSize));
   }
 
   public synchronized void start() {
@@ -272,7 +274,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     }
     // //////////////////////////////////
 
-    sampledCounterManager = new CounterManagerImpl();
+    counterManager = new CounterManagerImpl();
 
     MessageMonitor mm = MessageMonitorImpl.createMonitor(tcProperties, logger);
 
@@ -310,22 +312,20 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     TransactionBatchFactory txBatchFactory = new TransactionBatchWriterFactory(channel
         .getCommitTransactionMessageFactory(), encoding, FoldingConfig.createFromProperties(tcProperties));
 
-    SampledCounter outstandingBatchesCounter = (SampledCounter) sampledCounterManager
+     SampledCounter numTransactionCounter = (SampledCounter) counterManager
         .createCounter(new SampledCounterConfig(1, 900, true, 0L));
-    SampledCounter numTransactionCounter = (SampledCounter) sampledCounterManager
+    SampledCounter numBatchesCounter = (SampledCounter) counterManager
         .createCounter(new SampledCounterConfig(1, 900, true, 0L));
-    SampledCounter numBatchesCounter = (SampledCounter) sampledCounterManager
+    SampledCounter batchSizeCounter = (SampledCounter) counterManager
         .createCounter(new SampledCounterConfig(1, 900, true, 0L));
-    SampledCounter batchSizeCounter = (SampledCounter) sampledCounterManager
-        .createCounter(new SampledCounterConfig(1, 900, true, 0L));
-    SampledCounter pendingTransactionsSize = (SampledCounter) sampledCounterManager
-        .createCounter(new SampledCounterConfig(1, 900, true, 0L));
+    Counter outstandingBatchesCounter = counterManager.createCounter(new CounterConfig(0));
+    Counter pendingBatchesSize = counterManager.createCounter(new CounterConfig(0));
 
     rtxManager = new RemoteTransactionManagerImpl(new ChannelIDLogger(channel.getChannelIDProvider(), TCLogging
         .getLogger(RemoteTransactionManagerImpl.class)), txBatchFactory, new TransactionBatchAccounting(),
                                                   new LockAccounting(), sessionManager, channel,
                                                   outstandingBatchesCounter, numTransactionCounter, numBatchesCounter,
-                                                  batchSizeCounter, pendingTransactionsSize);
+                                                  batchSizeCounter, pendingBatchesSize);
 
     ClientGlobalTransactionManager gtxManager = new ClientGlobalTransactionManagerImpl(rtxManager);
 
@@ -360,7 +360,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     if (statisticsAgentSubSystem.setup(config.getNewCommonL1Config())) {
       populateStatisticsRetrievalRegistry(statisticsAgentSubSystem.getStatisticsRetrievalRegistry(), stageManager, mm,
                                           outstandingBatchesCounter, numTransactionCounter, numBatchesCounter,
-                                          batchSizeCounter, pendingTransactionsSize);
+                                          batchSizeCounter, pendingBatchesSize);
     }
 
     objectManager = new ClientObjectManagerImpl(remoteObjectManager, config, idProvider, new ClockEvictionPolicy(-1),
