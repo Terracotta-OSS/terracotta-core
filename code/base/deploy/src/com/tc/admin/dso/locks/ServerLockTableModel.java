@@ -7,6 +7,7 @@ package com.tc.admin.dso.locks;
 import com.tc.admin.AdminClient;
 import com.tc.admin.common.XObjectTableModel;
 import com.tc.management.lock.stats.LockSpec;
+import com.tc.object.lockmanager.api.LockID;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -51,6 +52,19 @@ public class ServerLockTableModel extends XObjectTableModel {
     return cTips[column];
   }
 
+  public int wrapperIndex(LockID lockID) {
+    int count = getRowCount();
+    
+    for(int i = 0; i < count; i++) {
+      LockSpecWrapper wrapper = (LockSpecWrapper)getObjectAt(i);
+      if(wrapper.getLockID().equals(lockID)) {
+        return i;
+      }
+    }
+    
+    return -1;
+  }
+  
   public static class LockSpecWrapper {
     private LockSpec fLockSpec;
     private String   fName;
@@ -65,6 +79,10 @@ public class ServerLockTableModel extends XObjectTableModel {
       }
     }
 
+    public LockID getLockID() {
+      return fLockSpec.getLockID();
+    }
+    
     public String getName() {
       return fName;
     }

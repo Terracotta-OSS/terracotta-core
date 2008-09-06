@@ -6,6 +6,7 @@ package com.tc.admin.dso.locks;
 
 import com.tc.management.lock.stats.LockSpec;
 import com.tc.management.lock.stats.LockStats;
+import com.tc.object.lockmanager.api.LockID;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,5 +43,15 @@ public class RootLockNode extends BasicLockNode {
 
   public LockNode[] children() {
     return fChildren;
+  }
+  
+  public LockNode getLockNode(LockID lockID) {
+    for(LockNode lockNode : children()) {
+      LockSpecNode lockSpecNode = (LockSpecNode) lockNode;
+      if(lockSpecNode.getSpec().getLockID().equals(lockID)) {
+        return lockNode;
+      }
+    }
+    return null;
   }
 }

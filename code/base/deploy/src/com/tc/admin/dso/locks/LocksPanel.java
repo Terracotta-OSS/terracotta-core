@@ -6,6 +6,8 @@ package com.tc.admin.dso.locks;
 
 import org.dijon.Button;
 import org.dijon.ContainerResource;
+import org.dijon.Dialog;
+import org.dijon.Frame;
 import org.dijon.Label;
 import org.dijon.Spinner;
 import org.dijon.TextArea;
@@ -18,13 +20,23 @@ import com.tc.admin.SearchPanel;
 import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.ExceptionHelper;
 import com.tc.admin.common.MBeanServerInvocationProxy;
+import com.tc.admin.common.XAbstractAction;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XObjectTable;
+import com.tc.admin.dso.BasicObjectSetPanel;
+import com.tc.admin.dso.locks.ServerLockTableModel.LockSpecWrapper;
+import com.tc.admin.model.BasicTcObject;
+import com.tc.admin.model.ClusterModel;
+import com.tc.admin.model.IBasicObject;
 import com.tc.admin.model.IClusterModel;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.LockStatisticsMonitorMBean;
 import com.tc.management.lock.stats.LockSpec;
+import com.tc.object.ObjectID;
+import com.tc.object.lockmanager.api.LockID;
+import com.tc.objectserver.mgmt.ManagedObjectFacade;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
@@ -32,6 +44,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
@@ -41,6 +55,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -48,15 +63,20 @@ import javax.management.MBeanServerInvocationHandler;
 import javax.management.Notification;
 import javax.management.NotificationListener;
 import javax.swing.JComponent;
+import javax.swing.JPopupMenu;
 import javax.swing.JSpinner;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
+import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.table.TableModel;
@@ -79,6 +99,7 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
   private Timer                       fTraceDepthChangeTimer;
   private int                         fLastTraceDepth;
   private Button                      fRefreshButton;
+  private LockSpecsGetter             fCurrentLockSpecsGetter;
   private JTabbedPane                 fLocksTabbedPane;
   private LockTreeTable               fTreeTable;
   private LockTreeTableModel          fTreeTableModel;
@@ -89,11 +110,12 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
   private TextArea                    fTraceText;
   private Label                       fConfigLabel;
   private TextArea                    fConfigText;
+  private InspectLockObjectAction     fInspectLockObjectAction;
 
   private static Collection<LockSpec> EMPTY_LOCK_SPEC_COLLECTION = new HashSet<LockSpec>();
 
   private static final int            STATUS_TIMEOUT_SECONDS     = 3;
-  private static final int            REFRESH_TIMEOUT_SECONDS    = 10;
+  private static final int            REFRESH_TIMEOUT_SECONDS    = Integer.MAX_VALUE;
 
   public LocksPanel(LocksNode locksNode) {
     super();
@@ -130,12 +152,19 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
     fRefreshButton = (Button) findComponent("RefreshButton");
     fRefreshButton.addActionListener(new RefreshButtonHandler());
 
+    fInspectLockObjectAction = new InspectLockObjectAction();
+    TableMouseListener tableMouseListener = new TableMouseListener();
+
     fLocksTabbedPane = (JTabbedPane) findComponent("LocksTabbedPane");
     fTreeTableModel = new LockTreeTableModel(EMPTY_LOCK_SPEC_COLLECTION);
     fTreeTable = (LockTreeTable) findComponent("LockTreeTable");
     fTreeTable.setTreeTableModel(fTreeTableModel);
     fTreeTable.setPreferences(fAdminClientContext.getPrefs().node(fTreeTable.getName()));
-    fTreeTable.addTreeSelectionListener(new LockSelectionHandler());
+    fTreeTable.addTreeSelectionListener(new ClientLockSelectionHandler());
+    JPopupMenu clientLocksPopup = new JPopupMenu();
+    clientLocksPopup.add(fInspectLockObjectAction);
+    fTreeTable.setPopupMenu(clientLocksPopup);
+    fTreeTable.addMouseListener(tableMouseListener);
 
     ActionListener findNextAction = new FindNextHandler();
     ActionListener findPreviousAction = new FindPreviousHandler();
@@ -146,6 +175,12 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
     fServerLocksTable = (XObjectTable) findComponent("ServerLocksTable");
     fServerLockTableModel = new ServerLockTableModel(EMPTY_LOCK_SPEC_COLLECTION);
     fServerLocksTable.setModel(fServerLockTableModel);
+    fServerLocksTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    fServerLocksTable.getSelectionModel().addListSelectionListener(new ServerLockSelectionHandler());
+    JPopupMenu serverLocksPopup = new JPopupMenu();
+    serverLocksPopup.add(fInspectLockObjectAction);
+    fServerLocksTable.setPopupMenu(serverLocksPopup);
+    fServerLocksTable.addMouseListener(tableMouseListener);
 
     fServerSearchPanel = (SearchPanel) findComponent("ServerLocksSearchPanel");
     fServerSearchPanel.setHandlers(findNextAction, findPreviousAction);
@@ -172,6 +207,62 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
         }
       }
     }
+  }
+
+  private class TableMouseListener extends MouseAdapter {
+    public void mousePressed(MouseEvent e) {
+      JTable table = (JTable) e.getSource();
+      int row = table.rowAtPoint(e.getPoint());
+      if (row != -1) {
+        table.setRowSelectionInterval(row, row);
+      }
+    }
+  }
+
+  private class InspectLockObjectAction extends XAbstractAction {
+    private long fObjectID;
+
+    InspectLockObjectAction() {
+      super("Inspect lock object");
+    }
+
+    public void actionPerformed(ActionEvent ae) {
+      ObjectID oid = new ObjectID(fObjectID);
+      try {
+        int maxFields = ConnectionContext.DSO_SMALL_BATCH_SIZE;
+        ManagedObjectFacade mof = fLocksNode.getClusterModel().lookupFacade(oid, maxFields);
+        Frame frame = (Frame) getAncestorOfClass(Frame.class);
+        Dialog dialog = new Dialog(frame, Long.toString(fObjectID), false);
+        ClusterModel clusterModel = (ClusterModel) fLocksNode.getClusterModel();
+        BasicTcObject dsoObject = new BasicTcObject(clusterModel, "", mof, mof.getClassName(), null);
+        dialog.getContentPane().setLayout(new BorderLayout());
+        dialog.getContentPane().add(new BasicObjectSetPanel(clusterModel, new IBasicObject[] { dsoObject }));
+        dialog.pack();
+        dialog.center(frame);
+        dialog.setVisible(true);
+        dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+      } catch (Exception e) {
+        fAdminClientContext.log(e);
+      }
+    }
+
+    void setLockID(LockID lockID) {
+      fObjectID = getLockObjectID(lockID);
+      setEnabled(fObjectID != -1);
+    }
+  }
+
+  private static long getLockObjectID(LockID lockID) {
+    String s = lockID.asString();
+    if (s.charAt(0) == '@') {
+      s = s.substring(1);
+      try {
+        return Long.parseLong(s);
+      } catch (NumberFormatException nfe) {
+        /**/
+      }
+    }
+    return -1;
   }
 
   private class FindNextHandler implements ActionListener {
@@ -206,11 +297,16 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
 
   private class RefreshButtonHandler implements ActionListener {
     public void actionPerformed(ActionEvent ae) {
-      refresh();
+      if (fCurrentLockSpecsGetter != null) {
+        fCurrentLockSpecsGetter.cancel(true);
+        fCurrentLockSpecsGetter = null;
+      } else {
+        refresh();
+      }
     }
   }
 
-  private class LockSelectionHandler implements TreeSelectionListener {
+  private class ClientLockSelectionHandler implements TreeSelectionListener {
     public void valueChanged(TreeSelectionEvent e) {
       resetSelectedLockDetails();
 
@@ -228,6 +324,37 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
       fConfigText.setText(text);
       fConfigLabel.setText(lockSpecNode.toString());
       populateTraceText(path);
+
+      LockSpec lockSpec = lockSpecNode.getSpec();
+      LockID lockID = lockSpec.getLockID();
+      int index = fServerLockTableModel.wrapperIndex(lockID);
+      fServerLocksTable.setSelectedRows(new int[] { index });
+      Rectangle cellRect = fServerLocksTable.getCellRect(index, 0, false);
+      if (cellRect != null) {
+        fServerLocksTable.scrollRectToVisible(cellRect);
+      }
+
+      fInspectLockObjectAction.setLockID(lockID);
+    }
+  }
+
+  private class ServerLockSelectionHandler implements ListSelectionListener {
+    public void valueChanged(ListSelectionEvent e) {
+      int index = fServerLocksTable.getSelectedRow();
+      if (index != -1) {
+        LockSpecWrapper lockSpecWrapper = (LockSpecWrapper) fServerLockTableModel.getObjectAt(index);
+        LockID lockID = lockSpecWrapper.getLockID();
+        TreePath lockNodePath = fTreeTableModel.getLockNodePath(lockID);
+        if (lockNodePath != null) {
+          fTreeTable.getTree().setSelectionPath(lockNodePath);
+          int row = fTreeTable.getTree().getRowForPath(lockNodePath);
+          Rectangle cellRect = fTreeTable.getCellRect(row, 0, false);
+          if (cellRect != null) {
+            fTreeTable.scrollRectToVisible(cellRect);
+          }
+        }
+        fInspectLockObjectAction.setLockID(lockID);
+      }
     }
   }
 
@@ -413,9 +540,9 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
 
   private void refresh() {
     final String label = fRefreshButton.getText();
-    fRefreshButton.setText("Wait...");
-    fRefreshButton.setEnabled(false);
-    fAdminClientContext.execute(new LockSpecsGetter(label));
+    fRefreshButton.setText("Cancel");
+    fCurrentLockSpecsGetter = new LockSpecsGetter(label);
+    fAdminClientContext.submit(fCurrentLockSpecsGetter);
   }
 
   class LockSpecsGetter extends BasicWorker<Collection<LockSpec>> {
@@ -431,6 +558,10 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
     }
 
     protected void finished() {
+      fRefreshButton.setText("Wait...");
+      fRefreshButton.setEnabled(false);
+      fCurrentLockSpecsGetter = null;
+
       Exception e = getException();
       if (e != null) {
         String msg;
@@ -439,6 +570,8 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
           return;
         } else if (rootCause instanceof TimeoutException) {
           msg = "timed-out after '" + REFRESH_TIMEOUT_SECONDS + "' seconds";
+        } else if (rootCause instanceof CancellationException) {
+          msg = "cancelled";
         } else {
           msg = rootCause.getMessage();
         }

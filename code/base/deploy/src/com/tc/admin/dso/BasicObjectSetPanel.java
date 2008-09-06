@@ -7,23 +7,17 @@ package com.tc.admin.dso;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XTree;
 import com.tc.admin.common.XTreeCellRenderer;
-import com.tc.admin.common.XTreeNode;
 import com.tc.admin.model.IBasicObject;
 import com.tc.admin.model.IClusterNode;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
 
 public class BasicObjectSetPanel extends XContainer {
   private XTree m_tree;
@@ -34,9 +28,7 @@ public class BasicObjectSetPanel extends XContainer {
     m_tree = new XTree();
     m_tree.setCellRenderer(new BasicObjectCellRenderer());
     m_tree.setShowsRootHandles(true);
-    ObjectTreeEventListener treeListener = new ObjectTreeEventListener();
-    m_tree.addMouseListener(treeListener);
-    m_tree.addTreeSelectionListener(treeListener);
+    m_tree.setVisibleRowCount(10);
     add(new JScrollPane(m_tree), BorderLayout.CENTER);
   }
 
@@ -60,30 +52,6 @@ public class BasicObjectSetPanel extends XContainer {
         }
       }
       return comp;
-    }
-  }
-
-  private class ObjectTreeEventListener extends MouseAdapter implements TreeSelectionListener {
-    public void mouseClicked(MouseEvent me) {
-      TreePath path = m_tree.getPathForLocation(me.getX(), me.getY());
-      if (path != null) {
-        m_tree.requestFocus();
-        XTreeNode node = (XTreeNode) path.getLastPathComponent();
-        if (node != null) {
-          node.nodeClicked(me);
-        }
-      }
-    }
-
-    public void valueChanged(TreeSelectionEvent tse) {
-      TreePath path = tse.getNewLeadSelectionPath();
-      if (path != null) {
-        m_tree.requestFocus();
-        XTreeNode node = (XTreeNode) path.getLastPathComponent();
-        if (node != null) {
-          node.nodeSelected(tse);
-        }
-      }
     }
   }
 

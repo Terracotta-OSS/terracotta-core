@@ -15,6 +15,8 @@ import javax.swing.InputMap;
 import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
@@ -47,7 +49,6 @@ public class XTree extends org.dijon.Tree {
         if (e.isPopupTrigger()) {
           TreePath path = getPathForLocation(e.getX(), e.getY());
           Object comp = path != null ? path.getLastPathComponent() : null;
-
           XTreeNode node = comp instanceof XTreeNode ? (XTreeNode) comp : null;
           JPopupMenu menu = node != null ? node.getPopupMenu() : XTree.this.getPopupMenu();
 
@@ -56,8 +57,32 @@ public class XTree extends org.dijon.Tree {
           }
         }
       }
+
+      public void mouseClicked(MouseEvent me) {
+        TreePath path = getPathForLocation(me.getX(), me.getY());
+        if (path != null) {
+          requestFocus();
+          XTreeNode node = (XTreeNode) path.getLastPathComponent();
+          if (node != null) {
+            node.nodeClicked(me);
+          }
+        }
+      }
     };
     addMouseListener(ml);
+
+    addTreeSelectionListener(new TreeSelectionListener() {
+      public void valueChanged(TreeSelectionEvent tse) {
+        TreePath path = tse.getNewLeadSelectionPath();
+        if (path != null) {
+          requestFocus();
+          XTreeNode node = (XTreeNode) path.getLastPathComponent();
+          if (node != null) {
+            node.nodeSelected(tse);
+          }
+        }
+      }
+    });
   }
 
   public XTree(TreeModel model) {
@@ -84,19 +109,15 @@ public class XTree extends org.dijon.Tree {
 
       while (node != null) {
         ActionMap actionMap = node.getActionMap();
-
         if (actionMap != null) {
           InputMap inputMap = node.getInputMap();
-
           if (inputMap != null) {
             Object binding = inputMap.get(ks);
-
             if (binding != null) {
               if ((result = actionMap.get(binding)) != null) { return result; }
             }
           }
         }
-
         node = (XTreeNode) node.getParent();
       }
     }
@@ -137,11 +158,9 @@ public class XTree extends org.dijon.Tree {
 
     while (node != null) {
       parent = (DefaultMutableTreeNode) node.getParent();
-
       if (parent != null) {
         expandPath(new TreePath(parent.getPath()));
       }
-
       node = node.getNextLeaf();
     }
 

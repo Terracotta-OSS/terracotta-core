@@ -316,20 +316,20 @@
           <spinner name="TraceDepthSpinner" />
           <button text="Refresh" name="RefreshButton" />
         </children>
-        <connections>
-          <item bottom="-1,bottom:sn" height="n" left="-1,left:n" right="1,left:n" top="-1,top:sn" width="n" />
-          <item bottom="-1,bottom:sn" height="n" left="0,right:n" right="2,left:n" top="-1,top:sn" width="n" />
-          <item bottom="-1,bottom:sn" height="n" left="1,right:n" right="3,left:ns" top="-1,top:sn" width="n" />
-          <item bottom="-1,bottom:sn" height="n" left="2,right:ns" right="4,left:n" top="-1,top:sn" width="n" />
-          <item bottom="-1,bottom:sn" height="n" left="3,right:n" right="5,left:ns" top="-1,top:sn" width="50" />
-          <item bottom="-1,bottom:sn" height="n" left="4,right:ns" right="-1,right:n" top="-1,top:sn" width="n" />
-        </connections>
+          <connections>
+            <item bottom="1,bottom:s" height="n" left="-1,left:n" right="1,left:n" top="1,top:s" width="n"/>
+            <item bottom="5,top:n" height="n" left="0,right:n" right="2,left:n" top="-1,top:sn" width="n"/>
+            <item bottom="1,bottom:s" height="n" left="1,right:n" right="3,left:n" top="1,top:s" width="n"/>
+            <item bottom="1,bottom:s" height="n" left="2,right:n" right="4,left:n" top="1,top:s" width="n"/>
+            <item bottom="1,bottom:s" height="n" left="3,right:n" right="-1,right:ns" top="1,top:s" width="50"/>
+            <item bottom="-1,bottom:sn" height="n" left="1,left:0" right="-1,right:n" top="1,bottom:n" width="n"/>
+          </connections>
       </container>
     </children>
-    <connections>
-      <item bottom="-1,bottom:n" height="sn" left="-1,left:n" right="-1,right:n" top="1,bottom:n" width="sn" />
-      <item bottom="0,top:sn" height="n" left="-1,left:n" right="-1,right:n" top="-1,top:n" width="sn" />
-    </connections>
+      <connections>
+        <item bottom="-1,bottom:0" height="s" left="-1,left:0" right="-1,right:0" top="1,bottom:0" width="s"/>
+        <item bottom="0,top:sn" height="n" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="sn"/>
+      </connections>
   </container>
   <container class="com.tc.admin.ProductInfoPanel" tag="ProductInfoPanel">
     <children>

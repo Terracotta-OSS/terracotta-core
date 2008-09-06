@@ -3,16 +3,17 @@
  */
 package com.tc.admin.common;
 
-import java.util.Collections;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import javax.swing.SwingUtilities;
 
 public abstract class BasicWorker<T> implements Runnable {
   protected Callable<T> fCallable;
+  protected Future<T> fFuture;
   protected T fResult;
   protected Exception fException;
   protected long fTimeout;
@@ -36,6 +37,10 @@ public abstract class BasicWorker<T> implements Runnable {
     return fException;
   }
   
+  public boolean cancel(boolean mayInterruptIfRunning) {
+    return fFuture != null && fFuture.cancel(mayInterruptIfRunning);
+  }
+  
   public T getResult() {
     return fResult;
   }
@@ -43,10 +48,12 @@ public abstract class BasicWorker<T> implements Runnable {
   public void run() {
     fException = null;
     try {
-      fResult = pool.invokeAny(Collections.singletonList(fCallable), fTimeout, fTimeUnit);
+      fFuture = pool.submit(fCallable);
+      fResult = fFuture.get(fTimeout, fTimeUnit);
     } catch(Exception e) {
       fException = e;
     } finally {
+      fFuture = null;
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           finished();

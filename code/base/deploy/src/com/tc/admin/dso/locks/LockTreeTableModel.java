@@ -7,6 +7,7 @@ package com.tc.admin.dso.locks;
 import com.tc.admin.common.treetable.AbstractTreeTableModel;
 import com.tc.admin.common.treetable.TreeTableModel;
 import com.tc.management.lock.stats.LockSpec;
+import com.tc.object.lockmanager.api.LockID;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -33,6 +34,18 @@ public class LockTreeTableModel extends AbstractTreeTableModel {
     fRoot = (RootLockNode) getRoot();
   }
 
+  public LockNode getLockNode(LockID lockID) {
+    return fRoot.getLockNode(lockID);
+  }
+  
+  public TreePath getLockNodePath(LockID lockID) {
+    LockNode lockNode = getLockNode(lockID);
+    if(lockNode != null) {
+      return new TreePath(new Object[]{fRoot, lockNode});
+    }
+    return null;
+  }
+  
   public void notifyChanged() {
     fireTreeStructureChanged(this, new TreePath[] { new TreePath(fRoot) }, null, null);
   }
