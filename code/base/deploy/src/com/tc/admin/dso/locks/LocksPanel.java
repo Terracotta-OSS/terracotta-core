@@ -103,9 +103,11 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
   private JTabbedPane                 fLocksTabbedPane;
   private LockTreeTable               fTreeTable;
   private LockTreeTableModel          fTreeTableModel;
+  private ClientLockSelectionHandler  fClientLockSelectionHandler;
   private SearchPanel                 fClientSearchPanel;
   private XObjectTable                fServerLocksTable;
   private ServerLockTableModel        fServerLockTableModel;
+  private ServerLockSelectionHandler  fServerLockSelectionHandler;
   private SearchPanel                 fServerSearchPanel;
   private TextArea                    fTraceText;
   private Label                       fConfigLabel;
@@ -160,7 +162,8 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
     fTreeTable = (LockTreeTable) findComponent("LockTreeTable");
     fTreeTable.setTreeTableModel(fTreeTableModel);
     fTreeTable.setPreferences(fAdminClientContext.getPrefs().node(fTreeTable.getName()));
-    fTreeTable.addTreeSelectionListener(new ClientLockSelectionHandler());
+    fClientLockSelectionHandler = new ClientLockSelectionHandler();
+    fTreeTable.addTreeSelectionListener(fClientLockSelectionHandler);
     JPopupMenu clientLocksPopup = new JPopupMenu();
     clientLocksPopup.add(fInspectLockObjectAction);
     fTreeTable.setPopupMenu(clientLocksPopup);
@@ -176,7 +179,8 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
     fServerLockTableModel = new ServerLockTableModel(EMPTY_LOCK_SPEC_COLLECTION);
     fServerLocksTable.setModel(fServerLockTableModel);
     fServerLocksTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    fServerLocksTable.getSelectionModel().addListSelectionListener(new ServerLockSelectionHandler());
+    fServerLockSelectionHandler = new ServerLockSelectionHandler();
+    fServerLocksTable.getSelectionModel().addListSelectionListener(fServerLockSelectionHandler);
     JPopupMenu serverLocksPopup = new JPopupMenu();
     serverLocksPopup.add(fInspectLockObjectAction);
     fServerLocksTable.setPopupMenu(serverLocksPopup);
@@ -328,11 +332,13 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
       LockSpec lockSpec = lockSpecNode.getSpec();
       LockID lockID = lockSpec.getLockID();
       int index = fServerLockTableModel.wrapperIndex(lockID);
+      fServerLocksTable.getSelectionModel().removeListSelectionListener(fServerLockSelectionHandler);
       fServerLocksTable.setSelectedRows(new int[] { index });
       Rectangle cellRect = fServerLocksTable.getCellRect(index, 0, false);
       if (cellRect != null) {
         fServerLocksTable.scrollRectToVisible(cellRect);
       }
+      fServerLocksTable.getSelectionModel().addListSelectionListener(fServerLockSelectionHandler);
 
       fInspectLockObjectAction.setLockID(lockID);
     }
@@ -346,12 +352,14 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
         LockID lockID = lockSpecWrapper.getLockID();
         TreePath lockNodePath = fTreeTableModel.getLockNodePath(lockID);
         if (lockNodePath != null) {
+          fTreeTable.removeTreeSelectionListener(fClientLockSelectionHandler);
           fTreeTable.getTree().setSelectionPath(lockNodePath);
           int row = fTreeTable.getTree().getRowForPath(lockNodePath);
           Rectangle cellRect = fTreeTable.getCellRect(row, 0, false);
           if (cellRect != null) {
             fTreeTable.scrollRectToVisible(cellRect);
           }
+          fTreeTable.addTreeSelectionListener(fClientLockSelectionHandler);
         }
         fInspectLockObjectAction.setLockID(lockID);
       }
@@ -688,9 +696,11 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
     fLocksTabbedPane = null;
     fTreeTable = null;
     fTreeTableModel = null;
+    fClientLockSelectionHandler = null;
     fClientSearchPanel = null;
     fServerLocksTable = null;
     fServerLockTableModel = null;
+    fServerLockSelectionHandler = null;
     fServerSearchPanel = null;
     fTraceText = null;
     fConfigLabel = null;
