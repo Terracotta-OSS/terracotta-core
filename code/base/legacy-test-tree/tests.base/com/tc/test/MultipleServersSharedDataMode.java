@@ -2,15 +2,15 @@
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tc.test.activepassive;
+package com.tc.test;
 
-public class ActivePassiveSharedDataMode {
+public class MultipleServersSharedDataMode {
   public static final String DISK    = "disk";
   public static final String NETWORK = "network";
 
   private final String       mode;
 
-  public ActivePassiveSharedDataMode(String mode) {
+  public MultipleServersSharedDataMode(String mode) {
     if (!mode.equals(DISK) && !mode.equals(NETWORK)) { throw new AssertionError("Unrecognized share data mode [" + mode
                                                                                 + "]"); }
     this.mode = mode;

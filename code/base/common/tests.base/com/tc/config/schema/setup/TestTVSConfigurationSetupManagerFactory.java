@@ -22,6 +22,7 @@ import com.tc.config.schema.repository.MutableBeanRepository;
 import com.tc.object.config.schema.NewDSOApplicationConfig;
 import com.tc.object.config.schema.NewL1DSOConfig;
 import com.tc.object.config.schema.NewL2DSOConfig;
+import com.tc.test.GroupData;
 import com.tc.util.Assert;
 import com.terracottatech.config.ActiveServerGroup;
 import com.terracottatech.config.ActiveServerGroups;
@@ -360,12 +361,32 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
     }
   }
 
-  public void addServerToL1Config(String name, int dsoPort, int jmxPort, boolean onlyOneServerInvolved) {
-    addServerToL1Config(name, dsoPort, jmxPort);
-    addServerGroupToL1Config();
+  // This function will add servers and groups to L1 config
+  public void addServersAndGroupsToL1Config(GroupData[] grpData) {
+    // One by one add all the servers of a group and then add the group
+    for (int i = 0; i < grpData.length; i++) {
+      for (int j = 0; j < grpData[i].getServerCount(); j++)
+        addServerToL1Config(grpData[i].getServerNames()[j], grpData[i].getDsoPorts()[j], grpData[i].getJmxPorts()[j], false);
+
+      addServerGroupToL1Config(i, grpData[i].getServerNames());
+    }
   }
 
+  // This function will add all the servers in a group in L1 config. Ideally should be used when only 1 group contains
+  // all the servers
+  public void addServersAndGroupToL1Config(String[] name, int[] dsoPorts, int[] jmxPorts) {
+    // TODO add some Asserts here
+    for (int i = 0; i < name.length; i++)
+      addServerToL1Config(name[i], dsoPorts[i], jmxPorts[i], false);
+
+    addServerGroupToL1Config();
+  }
+  
   public void addServerToL1Config(String name, int dsoPort, int jmxPort) {
+    addServerToL1Config(name, dsoPort, jmxPort, true);
+  }
+
+  private void addServerToL1Config(String name, int dsoPort, int jmxPort, boolean cleanGroupsBeanSet) {
     Assert.assertTrue(dsoPort >= 0);
     cleanBeanSetServersIfNeeded(l1_beanSet);
 
@@ -385,10 +406,13 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
 
     newL2.setData(BOGUS_FILENAME);
     newL2.setLogs(BOGUS_FILENAME);
+    
+    if(cleanGroupsBeanSet)
+      cleanBeanSetServerGroupsIfNeeded(l1_beanSet);
   }
 
   // should be called after all servers have been added to l1_beanset
-  public void addServerGroupToL1Config() {
+  private void addServerGroupToL1Config() {
     Server[] serverArray = l1_beanSet.serversBean().getServerArray();
     Assert.assertNotNull(serverArray);
     Assert.assertTrue(serverArray.length > 0);
@@ -397,19 +421,11 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
     for (int i = 0; i < serverArray.length; i++) {
       memberNames[i] = serverArray[i].getName();
     }
+
     addServerGroupToL1Config(0, memberNames);
   }
 
-  public void addServerGroupToL1Config(int groupId, List members) {
-    String[] memberNames = new String[members.size()];
-    int position = 0;
-    for (Iterator iter = members.iterator(); iter.hasNext();) {
-      memberNames[position++] = (String) iter.next();
-    }
-    addServerGroupToL1Config(groupId, memberNames);
-  }
-
-  public void addServerGroupToL1Config(int groupId, String[] members) {
+  private void addServerGroupToL1Config(int groupId, String[] members) {
     Assert.assertNotNull(members);
     Assert.assertTrue(members.length > 0);
     Assert.assertTrue(groupId >= 0);

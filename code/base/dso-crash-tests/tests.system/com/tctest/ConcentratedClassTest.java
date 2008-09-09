@@ -5,9 +5,9 @@
 package com.tctest;
 
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
-import com.tc.test.activepassive.ActivePassiveCrashMode;
-import com.tc.test.activepassive.ActivePassivePersistenceMode;
-import com.tc.test.activepassive.ActivePassiveSharedDataMode;
+import com.tc.test.MultipleServersCrashMode;
+import com.tc.test.MultipleServersPersistenceMode;
+import com.tc.test.MultipleServersSharedDataMode;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 import com.terracottatech.config.PersistenceMode;
 
@@ -16,7 +16,7 @@ import com.terracottatech.config.PersistenceMode;
  * test will prove to me that we have a race condition in GenricTCField.[set/get](). If we do, I'll fix it. And then
  * this test will mostly just be a regression test
  */
-public class ConcentratedClassTest extends TransparentTestBase {
+public class ConcentratedClassTest extends ActivePassiveTransparentTestBase {
 
   public static final int NODE_COUNT = 2;
 
@@ -39,16 +39,12 @@ public class ConcentratedClassTest extends TransparentTestBase {
     return true;
   }
 
-  protected boolean canRunActivePassive() {
-    return true;
-  }
-
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
-    setupManager.setServerCrashMode(ActivePassiveCrashMode.CONTINUOUS_ACTIVE_CRASH);
+    setupManager.setServerCrashMode(MultipleServersCrashMode.CONTINUOUS_ACTIVE_CRASH);
     setupManager.setServerCrashWaitTimeInSec(60);
-    setupManager.setServerShareDataMode(ActivePassiveSharedDataMode.NETWORK);
-    setupManager.setServerPersistenceMode(ActivePassivePersistenceMode.TEMPORARY_SWAP_ONLY);
+    setupManager.setServerShareDataMode(MultipleServersSharedDataMode.NETWORK);
+    setupManager.setServerPersistenceMode(MultipleServersPersistenceMode.TEMPORARY_SWAP_ONLY);
     setupManager.setMaxCrashCount(2);
   }
 

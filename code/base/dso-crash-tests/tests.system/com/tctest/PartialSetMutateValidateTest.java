@@ -3,13 +3,13 @@
  */
 package com.tctest;
 
-import com.tc.test.activepassive.ActivePassiveCrashMode;
-import com.tc.test.activepassive.ActivePassivePersistenceMode;
-import com.tc.test.activepassive.ActivePassiveSharedDataMode;
+import com.tc.test.MultipleServersCrashMode;
+import com.tc.test.MultipleServersPersistenceMode;
+import com.tc.test.MultipleServersSharedDataMode;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 import com.tctest.runner.TransparentAppConfig;
 
-public class PartialSetMutateValidateTest extends TransparentTestBase {
+public class PartialSetMutateValidateTest extends ActivePassiveTransparentTestBase {
 
   public static final int      MUTATOR_NODE_COUNT      = 2;
   public static final int      VALIDATOR_NODE_COUNT    = 1;
@@ -30,12 +30,8 @@ public class PartialSetMutateValidateTest extends TransparentTestBase {
 
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
-    setupManager.setServerCrashMode(ActivePassiveCrashMode.CRASH_AFTER_MUTATE);
-    setupManager.setServerShareDataMode(ActivePassiveSharedDataMode.NETWORK);
-    setupManager.setServerPersistenceMode(ActivePassivePersistenceMode.PERMANENT_STORE);
-  }
-
-  protected boolean canRunActivePassive() {
-    return true;
+    setupManager.setServerCrashMode(MultipleServersCrashMode.CRASH_AFTER_MUTATE);
+    setupManager.setServerShareDataMode(MultipleServersSharedDataMode.NETWORK);
+    setupManager.setServerPersistenceMode(MultipleServersPersistenceMode.PERMANENT_STORE);
   }
 }

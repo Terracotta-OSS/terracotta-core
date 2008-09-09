@@ -55,7 +55,7 @@ public class NonStaticSubclassGCTest extends GCTestBase {
   }
 
   public void doSetUp(TransparentTestIface t) throws Exception {
-    t.getTransparentAppConfig().setAttribute(GC_INTERVAL, new Integer(getGarbageCollectionInterval()));
+    t.getTransparentAppConfig().setAttribute(GC_INTERVAL, new Integer(gcConfigHelper.getGarbageCollectionInterval()));
     super.doSetUp(t);
   }
 

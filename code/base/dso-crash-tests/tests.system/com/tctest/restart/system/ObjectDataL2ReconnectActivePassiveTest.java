@@ -4,20 +4,20 @@
  */
 package com.tctest.restart.system;
 
-import com.tc.test.activepassive.ActivePassiveCrashMode;
-import com.tc.test.activepassive.ActivePassivePersistenceMode;
-import com.tc.test.activepassive.ActivePassiveSharedDataMode;
+import com.tc.test.MultipleServersCrashMode;
+import com.tc.test.MultipleServersPersistenceMode;
+import com.tc.test.MultipleServersSharedDataMode;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 import com.tc.test.proxyconnect.ProxyConnectManager;
 import com.tc.util.runtime.Os;
+import com.tctest.ActivePassiveTransparentTestBase;
 import com.tctest.TestConfigurator;
-import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class ObjectDataL2ReconnectActivePassiveTest extends TransparentTestBase implements TestConfigurator {
+public class ObjectDataL2ReconnectActivePassiveTest extends ActivePassiveTransparentTestBase implements TestConfigurator {
 
   private int clientCount = 2;
 
@@ -51,10 +51,6 @@ public class ObjectDataL2ReconnectActivePassiveTest extends TransparentTestBase 
     return true;
   }
 
-  protected boolean canRunActivePassive() {
-    return true;
-  }
-
   protected void setupL2ProxyConnectTest(ProxyConnectManager[] managers) {
     /*
      * subclass can overwrite to change the test parameters.
@@ -67,11 +63,11 @@ public class ObjectDataL2ReconnectActivePassiveTest extends TransparentTestBase 
 
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
-    setupManager.setServerCrashMode(ActivePassiveCrashMode.CONTINUOUS_ACTIVE_CRASH);
+    setupManager.setServerCrashMode(MultipleServersCrashMode.CONTINUOUS_ACTIVE_CRASH);
     setupManager.setServerCrashWaitTimeInSec(30);
 
-    setupManager.setServerShareDataMode(ActivePassiveSharedDataMode.NETWORK);
-    setupManager.setServerPersistenceMode(ActivePassivePersistenceMode.TEMPORARY_SWAP_ONLY);
+    setupManager.setServerShareDataMode(MultipleServersSharedDataMode.NETWORK);
+    setupManager.setServerPersistenceMode(MultipleServersPersistenceMode.TEMPORARY_SWAP_ONLY);
   }
 
 }

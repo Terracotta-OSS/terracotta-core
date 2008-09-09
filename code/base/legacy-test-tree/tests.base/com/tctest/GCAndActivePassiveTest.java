@@ -6,7 +6,7 @@ package com.tctest;
 
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 
-public abstract class GCTestBase extends TransparentTestBase implements TestConfigurator {
+public abstract class GCAndActivePassiveTest extends ActivePassiveTransparentTestBase implements TestConfigurator {
 
   protected GCConfigurationHelper gcConfigHelper = new GCConfigurationHelper();
 

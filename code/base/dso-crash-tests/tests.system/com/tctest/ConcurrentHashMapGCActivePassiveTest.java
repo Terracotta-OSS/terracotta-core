@@ -4,12 +4,12 @@
  */
 package com.tctest;
 
-import com.tc.test.activepassive.ActivePassiveCrashMode;
-import com.tc.test.activepassive.ActivePassivePersistenceMode;
-import com.tc.test.activepassive.ActivePassiveSharedDataMode;
+import com.tc.test.MultipleServersCrashMode;
+import com.tc.test.MultipleServersPersistenceMode;
+import com.tc.test.MultipleServersSharedDataMode;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 
-public class ConcurrentHashMapGCActivePassiveTest extends GCTestBase implements TestConfigurator {
+public class ConcurrentHashMapGCActivePassiveTest extends GCAndActivePassiveTest implements TestConfigurator {
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setAttribute(ConcurrentHashMapSwappingTestApp.GC_TEST_KEY, "true");
     super.doSetUp(t);
@@ -19,16 +19,12 @@ public class ConcurrentHashMapGCActivePassiveTest extends GCTestBase implements 
     return ConcurrentHashMapSwappingTestApp.class;
   }
 
-  protected boolean canRunActivePassive() {
-    return true;
-  }
-
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
-    setupManager.setServerCrashMode(ActivePassiveCrashMode.CONTINUOUS_ACTIVE_CRASH);
+    setupManager.setServerCrashMode(MultipleServersCrashMode.CONTINUOUS_ACTIVE_CRASH);
     setupManager.setServerCrashWaitTimeInSec(40);
-    setupManager.setServerShareDataMode(ActivePassiveSharedDataMode.NETWORK);
-    setupManager.setServerPersistenceMode(ActivePassivePersistenceMode.TEMPORARY_SWAP_ONLY);
+    setupManager.setServerShareDataMode(MultipleServersSharedDataMode.NETWORK);
+    setupManager.setServerPersistenceMode(MultipleServersPersistenceMode.TEMPORARY_SWAP_ONLY);
   }
 
 }

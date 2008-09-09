@@ -4,14 +4,14 @@
  */
 package com.tctest;
 
-import com.tc.test.activepassive.ActivePassiveCrashMode;
-import com.tc.test.activepassive.ActivePassivePersistenceMode;
-import com.tc.test.activepassive.ActivePassiveSharedDataMode;
+import com.tc.test.MultipleServersCrashMode;
+import com.tc.test.MultipleServersPersistenceMode;
+import com.tc.test.MultipleServersSharedDataMode;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 import com.tc.test.proxyconnect.ProxyConnectManager;
 import com.tc.util.runtime.Os;
 
-public class LinkedBlockingQueueL2ReconnectActivePassiveTest extends TransparentTestBase {
+public class LinkedBlockingQueueL2ReconnectActivePassiveTest extends ActivePassiveTransparentTestBase {
 
   private static final int NODE_COUNT = 4;
   
@@ -29,10 +29,6 @@ public class LinkedBlockingQueueL2ReconnectActivePassiveTest extends Transparent
 
   protected Class getApplicationClass() {
     return LinkedBlockingQueueCrashTestApp.class;
-  }
-  
-  protected boolean canRunActivePassive() {
-    return true;
   }
   
   protected boolean enableL2Reconnect() {
@@ -55,10 +51,10 @@ public class LinkedBlockingQueueL2ReconnectActivePassiveTest extends Transparent
 
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
-    setupManager.setServerCrashMode(ActivePassiveCrashMode.CONTINUOUS_ACTIVE_CRASH);
+    setupManager.setServerCrashMode(MultipleServersCrashMode.CONTINUOUS_ACTIVE_CRASH);
     setupManager.setServerCrashWaitTimeInSec(30);
-    setupManager.setServerShareDataMode(ActivePassiveSharedDataMode.NETWORK);
-    setupManager.setServerPersistenceMode(ActivePassivePersistenceMode.TEMPORARY_SWAP_ONLY);
+    setupManager.setServerShareDataMode(MultipleServersSharedDataMode.NETWORK);
+    setupManager.setServerPersistenceMode(MultipleServersPersistenceMode.TEMPORARY_SWAP_ONLY);
   }
  
 }

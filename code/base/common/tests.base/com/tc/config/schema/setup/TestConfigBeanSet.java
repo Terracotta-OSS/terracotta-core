@@ -8,10 +8,13 @@ import org.apache.xmlbeans.XmlObject;
 import org.apache.xmlbeans.XmlOptions;
 
 import com.tc.util.Assert;
+import com.terracottatech.config.ActiveServerGroup;
+import com.terracottatech.config.ActiveServerGroups;
 import com.terracottatech.config.Application;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.Ha;
 import com.terracottatech.config.HaMode;
+import com.terracottatech.config.Members;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 import com.terracottatech.config.System;
@@ -46,11 +49,11 @@ public class TestConfigBeanSet {
     Ha commonHa = this.rootServersBean.addNewHa();
     commonHa.setMode(HaMode.DISK_BASED_ACTIVE_PASSIVE);
     commonHa.addNewNetworkedActivePassive();
-//    ActiveServerGroups groups = this.rootServersBean.addNewActiveServerGroups();
-//    ActiveServerGroup group = groups.addNewActiveServerGroup();
-//    group.setHa(commonHa);
-//    Members members = group.addNewMembers();
-//    members.addMember(DEFAULT_SERVER_NAME);
+    ActiveServerGroups groups = this.rootServersBean.addNewActiveServerGroups();
+    ActiveServerGroup group = groups.addNewActiveServerGroup();
+    group.setHa(commonHa);
+    Members members = group.addNewMembers();
+    members.addMember(DEFAULT_SERVER_NAME);
 
     this.rootSystemBean = System.Factory.newInstance();
 

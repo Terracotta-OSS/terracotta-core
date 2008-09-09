@@ -26,7 +26,9 @@ import com.tc.simulator.container.ContainerResult;
 import com.tc.simulator.container.ContainerStateFactory;
 import com.tc.simulator.control.Control;
 import com.tc.simulator.listener.ResultsListener;
-import com.tc.test.activepassive.ActivePassiveServerManager;
+import com.tc.test.MultipleServerManager;
+import com.tc.test.MultipleServersCrashMode;
+import com.tc.test.MultipleServersTestSetupManager;
 import com.tcsimulator.ControlImpl;
 import com.tcsimulator.container.ContainerStateFactoryObject;
 import com.tcsimulator.listener.QueuePrinter;
@@ -70,8 +72,8 @@ public class DistributedTestRunner implements ResultsListener {
 
   private final boolean                                 isMutatorValidatorTest;
   private final int                                     validatorCount;
-  private final boolean                                 isActivePassiveTest;
-  private final ActivePassiveServerManager              serverManager;
+  private final boolean                                 isMultipleServerTest;
+  private final MultipleServerManager                   serverManager;
 
   private final int                                     adaptedMutatorCount;
   private final int                                     adaptedValidatorCount;
@@ -93,8 +95,8 @@ public class DistributedTestRunner implements ResultsListener {
                                TestTVSConfigurationSetupManagerFactory configFactory,
                                DSOClientConfigHelper configHelper, Class applicationClass, Map optionalAttributes,
                                ApplicationConfig applicationConfig, boolean startServer,
-                               boolean isMutatorValidatorTest, boolean isActivePassiveTest,
-                               ActivePassiveServerManager serverManager, TransparentAppConfig transparentAppConfig)
+                               boolean isMutatorValidatorTest, boolean isMultipleServerTest,
+                               MultipleServerManager serverManager, TransparentAppConfig transparentAppConfig)
       throws Exception {
     this.optionalAttributes = optionalAttributes;
     this.clientCount = transparentAppConfig.getClientCount();
@@ -105,7 +107,7 @@ public class DistributedTestRunner implements ResultsListener {
     this.configHelper = configHelper;
     this.isMutatorValidatorTest = isMutatorValidatorTest;
     this.validatorCount = transparentAppConfig.getValidatorCount();
-    this.isActivePassiveTest = isActivePassiveTest;
+    this.isMultipleServerTest = isMultipleServerTest;
     this.serverManager = serverManager;
     this.globalIdGenerator = new TestGlobalIdGenerator();
     this.applicationClass = applicationClass;
@@ -217,7 +219,7 @@ public class DistributedTestRunner implements ResultsListener {
           notifyExecutionTimeout();
         }
 
-        if (isActivePassiveTest) {
+        if (isMultipleServerTest) {
           checkForErrors();
         }
 
@@ -225,16 +227,16 @@ public class DistributedTestRunner implements ResultsListener {
           new Thread(validatorContainers[i]).start();
         }
 
-        if (isActivePassiveTest && serverManager.crashActiveServerAfterMutate()) {
+        if (isMultipleServerTest && shouldCrashActiveServersAfterMutate()) {
           Thread.sleep(5000);
           debugPrintln("***** DTR: Crashing active server");
-          serverManager.crashActive();
+          serverManager.crashActiveServers();
           debugPrintln("***** DTR: Notifying the test-wide control");
           control.notifyValidationStart();
         }
       }
 
-      if (isActivePassiveTest) {
+      if (isMultipleServerTest) {
         checkForErrors();
       }
 
@@ -244,7 +246,7 @@ public class DistributedTestRunner implements ResultsListener {
         notifyExecutionTimeout();
       }
 
-      if (isActivePassiveTest) {
+      if (isMultipleServerTest) {
         checkForErrors();
       }
     } catch (Throwable t) {
@@ -252,6 +254,12 @@ public class DistributedTestRunner implements ResultsListener {
     } finally {
       if (false && this.startServer) this.server.stop();
     }
+  }
+
+  private boolean shouldCrashActiveServersAfterMutate() {
+    MultipleServersTestSetupManager testSetupManager = serverManager.getMultipleServersTestManager();
+    if (testSetupManager.getServerCrashMode().equals(MultipleServersCrashMode.CRASH_AFTER_MUTATE)) return true;
+    return false;
   }
 
   private void checkForErrors() throws Exception {
@@ -344,12 +352,7 @@ public class DistributedTestRunner implements ResultsListener {
   }
 
   private Control newContainerControl() {
-    boolean crashActiveServerAfterMutate;
-    if (isActivePassiveTest) {
-      crashActiveServerAfterMutate = serverManager.crashActiveServerAfterMutate();
-    } else {
-      crashActiveServerAfterMutate = false;
-    }
+    boolean crashActiveServerAfterMutate = isMultipleServerTest ? shouldCrashActiveServersAfterMutate() : false;
     return new ControlImpl(this.clientCount, validatorCount, crashActiveServerAfterMutate);
   }
 

@@ -12,6 +12,12 @@ import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.objectserver.control.ExtraProcessServerControl;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.test.GroupData;
+import com.tc.test.MultipleServerManager;
+import com.tc.test.MultipleServersConfigCreator;
+import com.tc.test.MultipleServersCrashMode;
+import com.tc.test.MultipleServersPersistenceMode;
+import com.tc.test.MultipleServersTestSetupManager;
 import com.tc.test.proxyconnect.ProxyConnectManager;
 import com.tc.test.proxyconnect.ProxyConnectManagerImpl;
 import com.tc.util.PortChooser;
@@ -29,53 +35,55 @@ import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.remote.JMXConnector;
 
-public class ActivePassiveServerManager {
-  private static final String                    HOST             = "localhost";
-  private static final String                    SERVER_NAME      = "testserver";
-  private static final String                    CONFIG_FILE_NAME = "active-passive-server-config.xml";
-  private static final boolean                   DEBUG            = false;
-  private static final int                       NULL_VAL         = -1;
+public class ActivePassiveServerManager extends MultipleServerManager {
+  private static final String                   HOST               = "localhost";
+  private static final String                   SERVER_NAME        = "testserver";
+  private static final boolean                  DEBUG              = false;
+  private static final int                      NULL_VAL           = -1;
 
-  private final File                             tempDir;
-  private final PortChooser                      portChooser;
-  private final String                           configModel;
-  private final ActivePassiveTestSetupManager    setupManger;
+  private final File                            tempDir;
+  private final PortChooser                     portChooser;
+  private final String                          configModel;
 
-  private final int                              serverCount;
-  private final String                           serverCrashMode;
-  private final long                             serverCrashWaitTimeInSec;
-  private final String                           serverPersistence;
-  private final boolean                          serverNetworkShare;
-  private final ActivePassiveServerConfigCreator serverConfigCreator;
-  private final String                           configFileLocation;
-  private final File                             configFile;
+  private final int                             serverCount;
+  private final String                          serverCrashMode;
+  private final long                            serverCrashWaitTimeInSec;
+  private final String                          serverPersistence;
+  private final boolean                         serverNetworkShare;
+  private MultipleServersConfigCreator          serverConfigCreator;
+  private final String                          configFileLocation;
+  private final File                            configFile;
 
-  private final ServerInfo[]                     servers;
-  private final int[]                            dsoPorts;
-  private final int[]                            jmxPorts;
-  private final int[]                            l2GroupPorts;
-  private final String[]                         serverNames;
-  private final TCServerInfoMBean[]              tcServerInfoMBeans;
-  private final JMXConnector[]                   jmxConnectors;
+  private final ServerInfo[]                    servers;
+  private final int[]                           dsoPorts;
+  private final int[]                           jmxPorts;
+  private final int[]                           l2GroupPorts;
+  private final String[]                        serverNames;
+  private final TCServerInfoMBean[]             tcServerInfoMBeans;
+  private final JMXConnector[]                  jmxConnectors;
 
-  private final List                             errors;
+  private final List                            errors;
 
-  private int                                    activeIndex      = NULL_VAL;
-  private int                                    lastCrashedIndex = NULL_VAL;
-  private ActivePassiveServerCrasher             serverCrasher;
-  private int                                    maxCrashCount;
-  private final TestState                        testState;
-  private Random                                 random;
-  private long                                   seed;
-  private final File                             javaHome;
-  private int                                    pid              = -1;
-  private List                                   jvmArgs          = null;
-  private final boolean                          isProxyL2groupPorts;
-  private final int[]                            proxyL2GroupPorts;
-  protected ProxyConnectManager[]                proxyL2Managers;
+  private int                                   activeIndex        = NULL_VAL;
+  private int                                   lastCrashedIndex   = NULL_VAL;
+  private ActivePassiveServerCrasher            serverCrasher;
+  private int                                   maxCrashCount;
+  private final TestState                       testState;
+  private Random                                random;
+  private long                                  seed;
+  private final File                            javaHome;
+  private int                                   pid                = -1;
+  private List                                  jvmArgs            = null;
+  private final boolean                         isProxyL2groupPorts;
+  private final int[]                           proxyL2GroupPorts;
+  protected ProxyConnectManager[]               proxyL2Managers;
+
+  // this is used when active-active tests are run. This will help in differentiating between the names in the different
+  // groups
+  private int                                   startIndexOfServer = 0;
 
   public ActivePassiveServerManager(boolean isActivePassiveTest, File tempDir, PortChooser portChooser,
-                                    String configModel, ActivePassiveTestSetupManager setupManger, File javaHome,
+                                    String configModel, MultipleServersTestSetupManager setupManger, File javaHome,
                                     TestTVSConfigurationSetupManagerFactory configFactory) throws Exception {
     this(isActivePassiveTest, tempDir, portChooser, configModel, setupManger, javaHome, configFactory, new ArrayList(),
          false);
@@ -83,15 +91,25 @@ public class ActivePassiveServerManager {
   }
 
   public ActivePassiveServerManager(boolean isActivePassiveTest, File tempDir, PortChooser portChooser,
-                                    String configModel, ActivePassiveTestSetupManager setupManger, File javaHome,
+                                    String configModel, MultipleServersTestSetupManager setupManger, File javaHome,
                                     TestTVSConfigurationSetupManagerFactory configFactory, List extraJvmArgs,
                                     boolean isProxyL2GroupPorts) throws Exception {
+    this(isActivePassiveTest, tempDir, portChooser, configModel, setupManger, javaHome, configFactory, extraJvmArgs,
+         isProxyL2GroupPorts, true, 0);
+  }
+
+  // Should be called directly when an active-active test is to be run
+  public ActivePassiveServerManager(boolean isActivePassiveTest, File tempDir, PortChooser portChooser,
+                                    String configModel, MultipleServersTestSetupManager setupManger, File javaHome,
+                                    TestTVSConfigurationSetupManagerFactory configFactory, List extraJvmArgs,
+                                    boolean isProxyL2GroupPorts, boolean isConfigToBeWritten, int startIndexOfServer)
+      throws Exception {
+    super(setupManger);
+    
     this.isProxyL2groupPorts = isProxyL2GroupPorts;
     this.jvmArgs = extraJvmArgs;
 
     if (!isActivePassiveTest) { throw new AssertionError("A non-ActivePassiveTest is trying to use this class."); }
-
-    this.setupManger = setupManger;
 
     serverCount = this.setupManger.getServerCount();
 
@@ -119,17 +137,20 @@ public class ActivePassiveServerManager {
     serverNames = new String[this.serverCount];
     tcServerInfoMBeans = new TCServerInfoMBean[this.serverCount];
     jmxConnectors = new JMXConnector[this.serverCount];
-    createServers();
+    this.startIndexOfServer = startIndexOfServer;
+    createServers(this.startIndexOfServer);
 
-    serverConfigCreator = new ActivePassiveServerConfigCreator(
-                                                               this.serverCount,
-                                                               dsoPorts,
-                                                               jmxPorts,
-                                                               (isProxyL2GroupPorts) ? proxyL2GroupPorts : l2GroupPorts,
-                                                               serverNames, serverPersistence, serverNetworkShare,
-                                                               this.configModel, configFile, this.tempDir,
-                                                               configFactory);
-    serverConfigCreator.writeL2Config();
+    if (isConfigToBeWritten) {
+      GroupData[] groupList = new GroupData[1];
+      groupList[0] = new GroupData(dsoPorts, jmxPorts, (isProxyL2GroupPorts) ? proxyL2GroupPorts : l2GroupPorts,
+                                   serverNames);
+      MultipleServersConfigCreator serversConfigCreator = new MultipleServersConfigCreator(this.setupManger, groupList,
+                                                                                           this.configModel,
+                                                                                           configFile, this.tempDir,
+                                                                                           configFactory);
+      this.serverConfigCreator = serversConfigCreator;
+      serverConfigCreator.writeL2Config();
+    }
 
     // setup proxy
     if (isProxyL2GroupPorts) {
@@ -146,7 +167,7 @@ public class ActivePassiveServerManager {
     testState = new TestState();
     this.javaHome = javaHome;
 
-    if (serverCrashMode.equals(ActivePassiveCrashMode.RANDOM_SERVER_CRASH)) {
+    if (serverCrashMode.equals(MultipleServersCrashMode.RANDOM_SERVER_CRASH)) {
       SecureRandom srandom = SecureRandom.getInstance("SHA1PRNG");
       seed = srandom.nextLong();
       random = new Random(seed);
@@ -166,37 +187,37 @@ public class ActivePassiveServerManager {
     lastCrashedIndex = NULL_VAL;
   }
 
-  private void createServers() {
+  private void createServers(int serverNameStartIndex) {
     int startIndex = 0;
-
     if (DEBUG) {
       dsoPorts[0] = 8510;
       jmxPorts[0] = 8520;
       l2GroupPorts[0] = 8530;
-      serverNames[0] = SERVER_NAME + 0;
+      serverNames[0] = SERVER_NAME + (serverNameStartIndex + 0);
       servers[0] = new ServerInfo(HOST, serverNames[0], dsoPorts[0], jmxPorts[0], l2GroupPorts[0],
                                   getServerControl(dsoPorts[0], jmxPorts[0], serverNames[0]));
       dsoPorts[1] = 7510;
       jmxPorts[1] = 7520;
       l2GroupPorts[1] = 7530;
-      serverNames[1] = SERVER_NAME + 1;
+      serverNames[1] = SERVER_NAME + (serverNameStartIndex + 1);
       servers[1] = new ServerInfo(HOST, serverNames[1], dsoPorts[1], jmxPorts[1], l2GroupPorts[1],
                                   getServerControl(dsoPorts[1], jmxPorts[1], serverNames[1]));
       if (dsoPorts.length > 2) {
         dsoPorts[2] = 6510;
         jmxPorts[2] = 6520;
         l2GroupPorts[2] = 6530;
-        serverNames[2] = SERVER_NAME + 2;
+        serverNames[2] = SERVER_NAME + (serverNameStartIndex + 2);
         servers[2] = new ServerInfo(HOST, serverNames[2], dsoPorts[2], jmxPorts[2], l2GroupPorts[2],
                                     getServerControl(dsoPorts[2], jmxPorts[2], serverNames[2]));
       }
 
       startIndex = 3;
+      serverNameStartIndex += 3;
     }
 
     for (int i = startIndex; i < dsoPorts.length; i++) {
       setPorts(i);
-      serverNames[i] = SERVER_NAME + i;
+      serverNames[i] = SERVER_NAME + (serverNameStartIndex + i);
       List perServerJvmArgs;
       if (isProxyL2groupPorts) {
         // hidden tc.properties only used by L2 proxy testing purpose
@@ -211,11 +232,11 @@ public class ActivePassiveServerManager {
     }
   }
 
-  private void setPorts(int index) {
+  private void setPorts(int serverIndex) {
     while (true) {
       int newPort = portChooser.chooseRandomPort();
       if (isUnusedPort(newPort)) {
-        jmxPorts[index] = newPort;
+        jmxPorts[serverIndex] = newPort;
         break;
       }
     }
@@ -228,9 +249,9 @@ public class ActivePassiveServerManager {
         continue;
       }
       if (isUnusedPort(newPort) && isUnusedPort(newPort + 1) && isUnusedPort(newPort + 2)) {
-        dsoPorts[index] = newPort;
-        l2GroupPorts[index] = newPort + 1;
-        proxyL2GroupPorts[index] = newPort + 2;
+        dsoPorts[serverIndex] = newPort;
+        l2GroupPorts[serverIndex] = newPort + 1;
+        proxyL2GroupPorts[serverIndex] = newPort + 2;
         break;
       }
     }
@@ -299,7 +320,7 @@ public class ActivePassiveServerManager {
       Thread.sleep(1000);
     }
     System.out.println("********  index=[" + index + "]  i=[" + index + "] isPassiveStandby=[" + isPassiveStandby
-                 + "]  threadId=[" + Thread.currentThread().getName() + "]");
+                       + "]  threadId=[" + Thread.currentThread().getName() + "]");
     return isPassiveStandby;
   }
 
@@ -316,8 +337,8 @@ public class ActivePassiveServerManager {
 
     activeIndex = getActiveIndex(true);
 
-    if (serverCrashMode.equals(ActivePassiveCrashMode.CONTINUOUS_ACTIVE_CRASH)
-        || serverCrashMode.equals(ActivePassiveCrashMode.RANDOM_SERVER_CRASH)) {
+    if (serverCrashMode.equals(MultipleServersCrashMode.CONTINUOUS_ACTIVE_CRASH)
+        || serverCrashMode.equals(MultipleServersCrashMode.RANDOM_SERVER_CRASH)) {
       startContinuousCrash();
     }
   }
@@ -680,25 +701,27 @@ public class ActivePassiveServerManager {
     return jmxPorts;
   }
 
-  public boolean crashActiveServerAfterMutate() {
-    if (serverCrashMode.equals(ActivePassiveCrashMode.CRASH_AFTER_MUTATE)) { return true; }
-    return false;
+  public String[] getServerNames() {
+    return serverNames;
   }
 
-  public void addServersToL1Config(TestTVSConfigurationSetupManagerFactory configFactory) {
+  public int[] getL2GroupPorts() {
+    return isProxyL2groupPorts ? proxyL2GroupPorts : l2GroupPorts;
+  }
+  
+  public void addServersAndGroupToL1Config(TestTVSConfigurationSetupManagerFactory configFactory) {
     for (int i = 0; i < serverCount; i++) {
 
       debugPrintln("******* adding to L1 config: serverName=[" + serverNames[i] + "] dsoPort=[" + dsoPorts[i]
                    + "] jmxPort=[" + jmxPorts[i] + "]");
-
-      configFactory.addServerToL1Config(serverNames[i], dsoPorts[i], jmxPorts[i]);
     }
+    configFactory.addServersAndGroupToL1Config(serverNames, dsoPorts, jmxPorts);
   }
 
   public void crashServer() throws Exception {
-    if (serverCrashMode.equals(ActivePassiveCrashMode.CONTINUOUS_ACTIVE_CRASH)) {
+    if (serverCrashMode.equals(MultipleServersCrashMode.CONTINUOUS_ACTIVE_CRASH)) {
       crashActive();
-    } else if (serverCrashMode.equals(ActivePassiveCrashMode.RANDOM_SERVER_CRASH)) {
+    } else if (serverCrashMode.equals(MultipleServersCrashMode.RANDOM_SERVER_CRASH)) {
       crashRandomServer();
     }
 
@@ -706,9 +729,9 @@ public class ActivePassiveServerManager {
   }
 
   public void cleanupServerDB(int index) throws Exception {
-    if (serverNetworkShare && serverPersistence.equals(ActivePassivePersistenceMode.PERMANENT_STORE)) {
+    if (serverNetworkShare && serverPersistence.equals(MultipleServersPersistenceMode.PERMANENT_STORE)) {
       System.out.println("Deleting data directory for server=[" + servers[index].getDsoPort() + "]");
-      deleteDirectory(serverConfigCreator.getDataLocation(index));
+      deleteDirectory(serverConfigCreator.getDataLocation(startIndexOfServer + index));
     }
   }
 
@@ -792,4 +815,7 @@ public class ActivePassiveServerManager {
     }
   }
 
+  public void crashActiveServers() throws Exception {
+    crashActive();
+  }
 }

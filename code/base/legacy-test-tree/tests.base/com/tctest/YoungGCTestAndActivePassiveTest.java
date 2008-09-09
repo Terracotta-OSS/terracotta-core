@@ -6,9 +6,9 @@ package com.tctest;
 
 import java.util.ArrayList;
 
-public abstract class YoungGCTestBase extends GCTestBase {
+public abstract class YoungGCTestAndActivePassiveTest extends GCAndActivePassiveTest {
 
-  public YoungGCTestBase() {
+  public YoungGCTestAndActivePassiveTest() {
     gcConfigHelper = new YoungGCConfigurationHelper();
   }
 

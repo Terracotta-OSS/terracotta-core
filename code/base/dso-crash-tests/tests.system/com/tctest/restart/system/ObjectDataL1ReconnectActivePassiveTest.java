@@ -4,18 +4,18 @@
  */
 package com.tctest.restart.system;
 
-import com.tc.test.activepassive.ActivePassiveCrashMode;
-import com.tc.test.activepassive.ActivePassivePersistenceMode;
-import com.tc.test.activepassive.ActivePassiveSharedDataMode;
+import com.tc.test.MultipleServersCrashMode;
+import com.tc.test.MultipleServersPersistenceMode;
+import com.tc.test.MultipleServersSharedDataMode;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
+import com.tctest.ActivePassiveTransparentTestBase;
 import com.tctest.TestConfigurator;
-import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class ObjectDataL1ReconnectActivePassiveTest extends TransparentTestBase implements TestConfigurator {
+public class ObjectDataL1ReconnectActivePassiveTest extends ActivePassiveTransparentTestBase implements TestConfigurator {
 
   private int clientCount = 2;
 
@@ -38,17 +38,13 @@ public class ObjectDataL1ReconnectActivePassiveTest extends TransparentTestBase 
     return true;
   }
 
-  protected boolean canRunActivePassive() {
-    return true;
-  }
-
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
-    setupManager.setServerCrashMode(ActivePassiveCrashMode.CONTINUOUS_ACTIVE_CRASH);
+    setupManager.setServerCrashMode(MultipleServersCrashMode.CONTINUOUS_ACTIVE_CRASH);
     setupManager.setServerCrashWaitTimeInSec(30);
     // leaving this as a disk-based active-passive test just so we have one
-    setupManager.setServerShareDataMode(ActivePassiveSharedDataMode.DISK);
-    setupManager.setServerPersistenceMode(ActivePassivePersistenceMode.PERMANENT_STORE);
+    setupManager.setServerShareDataMode(MultipleServersSharedDataMode.DISK);
+    setupManager.setServerPersistenceMode(MultipleServersPersistenceMode.PERMANENT_STORE);
   }
 
 }
