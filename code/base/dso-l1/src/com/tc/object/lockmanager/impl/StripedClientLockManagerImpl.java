@@ -44,7 +44,6 @@ public class StripedClientLockManagerImpl implements ClientLockManager {
     this.logger = logger;
     int stripedCount = clientLockManagerConfig.getStripedCount();
 
-    // Find power-of-two sizes best matching arguments
     int sshift = 0;
     int ssize = 1;
     while (ssize < stripedCount) {
@@ -64,13 +63,9 @@ public class StripedClientLockManagerImpl implements ClientLockManager {
   }
 
   /**
-   * Applies a supplemental hash function to a given hashCode, which defends against poor quality hash functions. This
-   * is critical because ConcurrentHashMap uses power-of-two length hash tables, that otherwise encounter collisions for
-   * hashCodes that do not differ in lower or upper bits.
+   * Applies a supplemental hash function to a given hashCode, which defends against poor quality hash functions. 
    */
   private static int hash(int h) {
-    // Spread bits to regularize both segment and index locations,
-    // using variant of single-word Wang/Jenkins hash.
     h += (h << 15) ^ 0xffffcd7d;
     h ^= (h >>> 10);
     h += (h << 3);
