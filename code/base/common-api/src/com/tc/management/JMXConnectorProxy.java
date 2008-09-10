@@ -80,16 +80,26 @@ public class JMXConnectorProxy implements JMXConnector {
     }
   }
 
-  private void testForDsoPort() throws Exception {
-    String url = MessageFormat.format("http://{0}:{1}/config", new Object[] { m_host, Integer.toString(m_port) });
-    HttpClient client = new HttpClient();
-    GetMethod get = new GetMethod(url.toString());
+  /*
+   * This method is here to guard against trying to use the DSO port for JMX. This class first tries to connect using
+   * the RMI protocol (authentication) and failing that tries again using the JMXMP protocol (simple, we like). With RMI
+   * the client speaks first but with JMXMP the server speaks first. So, when we get to JMXMP, an attempt to talk JMX
+   * over the DSO port will hang. This method makes an HTTP request to the config servlet and if it succeeds it throws
+   * an exception. Unfortunately, the test framework spawns internal L1s with a class loader that duplicates the system
+   * loader and that makes commons-logging fail because it doesn't like seeing multiple versions of the same class.
+   */
+  private void testForDsoPort() {
+    HttpClient client;
     try {
-      client.setTimeout(2000);
+      client = new HttpClient();
+    } catch(Throwable ignore) {
+      return;
+    }
+    String url = MessageFormat.format("http://{0}:{1}/config", new Object[] { m_host, Integer.toString(m_port) });
+    GetMethod get = new GetMethod(url);
+    try {
       int status = client.executeMethod(get);
-      if(status == HttpStatus.SC_OK) {
-        throw new RuntimeException("HTTP server listening at port " + m_port);
-      }
+      if (status == HttpStatus.SC_OK) { throw new RuntimeException("Please specify the JMX port, not the DSO port"); }
     } catch (IOException ioe) {
       /* this is good */
     } finally {
