@@ -163,7 +163,8 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     }
 
     public void clearTransactionsBelowLowWaterMark(GlobalTransactionID lowGlobalTransactionIDWatermark) {
-      throw new AssertionError("Recd. LowWaterMark while in ACTIVE state : " + lowGlobalTransactionIDWatermark);
+      // There could still be some messages in the queue that arrives after the node becomes ACTIVE
+      logger.warn("Ignoring LowWaterMark recd. while in ACTIVE state : " + lowGlobalTransactionIDWatermark);
     }
 
   }
