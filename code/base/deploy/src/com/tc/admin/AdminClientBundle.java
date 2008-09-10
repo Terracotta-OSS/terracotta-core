@@ -88,8 +88,7 @@ public class AdminClientBundle extends ListResourceBundle {
         { "dso.object.flush.rate", "Object Flush Rate" },
         { "dso.object.fault.rate", "Object Fault Rate" },
         { "dso.transaction.rate", "Transaction Rate" },
-        { "dso.pending.transaction.count", "Pending Transaction Count" },
-        { "dso.pending.client.transactions", "Pending Client Transactions" },
+        { "dso.pending.client.transactions", "Unacknowledged Transaction Broadcasts" },
         { "dso.root.retrieving", "Retrieving new DSO root..." },
         { "dso.root.new", "Added new DSO root: " },
         { "cluster.thread.dumps", "Cluster thread dumps" },
@@ -147,10 +146,10 @@ public class AdminClientBundle extends ListResourceBundle {
             "<html><h3>Version mismatch for {0}.</h3><br>"
                 + "<table border=0 cellspacing=1><tr><td align=right><b>Terracotta Server Version:</b></td><td>{1}"
                 + "</tr><tr><td align=right><b>AdminConsole Version:</b</td><td>{2}"
-                + "</td></tr></table><h3>Continue?</h3></html>" }, { "cpu.usage", "CPU Usage" },
+                + "</td></tr></table><h3>Continue?</h3></html>" }, { "cpu.usage", "Host CPU" },
         { "object.flush.rate", "Object Flush Rate" }, { "object.fault.rate", "Object FaultRate" },
         { "transaction.rate", "Transaction Rate" }, { "cache.miss.rate", "Cache Miss Rate" },
         { "heap.usage", "Heap Usage" }, { "heap.usage.max", "memory max" }, { "heap.usage.used", "memory used" },
-        { "pending.transactions", "Pending Transactions" }, };
+        { "pending.transactions", "Unacknowledged Transaction Broadcasts" }, };
   }
 }

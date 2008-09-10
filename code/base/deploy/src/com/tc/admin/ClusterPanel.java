@@ -121,7 +121,9 @@ public class ClusterPanel extends XContainer {
       m_connectButton.setEnabled(false);
       if (m_clusterNode.isConnected()) {
         disconnect();
-        m_connectButton.setEnabled(m_clusterNode.isConnected());
+        if(m_clusterNode.isConnected()) {
+          m_connectButton.setEnabled(true);
+        }
       } else {
         connect();
       }

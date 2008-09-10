@@ -4,6 +4,10 @@
  */
 package com.tc.management;
 
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.methods.GetMethod;
+
 import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -46,7 +50,8 @@ public class JMXConnectorProxy implements JMXConnector {
 
   private JMXConnector getConnectorProxy() {
     JMXConnector connector = (JMXConnector) Proxy.newProxyInstance(JMXConnector.class.getClassLoader(),
-        new Class[] { JMXConnector.class }, new ConnectorInvocationHandler());
+                                                                   new Class[] { JMXConnector.class },
+                                                                   new ConnectorInvocationHandler());
     return connector;
   }
 
@@ -75,8 +80,26 @@ public class JMXConnectorProxy implements JMXConnector {
     }
   }
 
+  private void testForDsoPort() throws Exception {
+    String url = MessageFormat.format("http://{0}:{1}/config", new Object[] { m_host, Integer.toString(m_port) });
+    HttpClient client = new HttpClient();
+    GetMethod get = new GetMethod(url.toString());
+    try {
+      client.setTimeout(2000);
+      int status = client.executeMethod(get);
+      if(status == HttpStatus.SC_OK) {
+        throw new RuntimeException("HTTP server listening at port " + m_port);
+      }
+    } catch (IOException ioe) {
+      /* this is good */
+    } finally {
+      get.releaseConnection();
+    }
+  }
+
   private void ensureConnector() throws Exception {
     if (m_connector == null) {
+      testForDsoPort();
       determineConnector();
     }
   }

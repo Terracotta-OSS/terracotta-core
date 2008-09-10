@@ -12,6 +12,7 @@ import org.dijon.Label;
 import org.dijon.TextField;
 
 import com.tc.admin.model.IServer;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.awt.BorderLayout;
 import java.awt.Frame;
@@ -19,6 +20,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -30,8 +33,9 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
+import javax.swing.WindowConstants;
 
-public final class ConnectDialog extends Dialog {
+public final class ConnectDialog extends Dialog implements HierarchyListener {
   private static final long          DEFAULT_CONNECT_TIMEOUT_MILLIS = 8000;
   public static final long           CONNECT_TIMEOUT_MILLIS         = Long.getLong("com.tc.admin.connect-timeout",
                                                                                    DEFAULT_CONNECT_TIMEOUT_MILLIS)
@@ -71,7 +75,6 @@ public final class ConnectDialog extends Dialog {
 
     m_cancelButton = (Button) findComponent("CancelButton");
     m_cancelButton.addActionListener(new CancelButtonHandler());
-    getContentPane().addHierarchyListener(new ShowingChangeListener());
 
     m_emptyPanel = (Container) findComponent("EmptyPanel");
     m_emptyPanel.setLayout(new BorderLayout());
@@ -100,6 +103,22 @@ public final class ConnectDialog extends Dialog {
 
     m_hideTimer = new Timer(100, new DialogCloserTask());
     m_hideTimer.setRepeats(false);
+
+    addWindowListener(new WindowAdapter() {
+      public void windowClosing(WindowEvent e) {
+        m_cancelButton.doClick();
+      }
+    });
+
+    setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+  }
+
+  public void setVisible(boolean visible) {
+    getContentPane().removeHierarchyListener(this);
+    if (visible) {
+      getContentPane().addHierarchyListener(this);
+    }
+    super.setVisible(visible);
   }
 
   class CancelButtonHandler implements ActionListener {
@@ -108,6 +127,7 @@ public final class ConnectDialog extends Dialog {
       m_connectInitiator.cancel(true);
       m_error = new RuntimeException("Canceled");
       ConnectDialog.this.setVisible(false);
+      fireHandleConnect();
     }
   }
 
@@ -130,6 +150,7 @@ public final class ConnectDialog extends Dialog {
     public void actionPerformed(ActionEvent evt) {
       disableAuthenticationDialog();
       setVisible(false);
+      fireHandleConnect();
     }
   }
 
@@ -194,16 +215,17 @@ public final class ConnectDialog extends Dialog {
     return m_error;
   }
 
-  private class ShowingChangeListener implements HierarchyListener {
-    public void hierarchyChanged(HierarchyEvent e) {
-      long flags = e.getChangeFlags();
+  /**
+   * java.awt.event.HierachyListener implementation
+   */
+  public void hierarchyChanged(HierarchyEvent e) {
+    long flags = e.getChangeFlags();
 
-      if ((flags & HierarchyEvent.SHOWING_CHANGED) != 0) {
-        if (isShowing()) {
-          initiateConnectAction();
-        } else {
-          fireHandleConnect();
-        }
+    if ((flags & HierarchyEvent.SHOWING_CHANGED) != 0) {
+      if (isShowing()) {
+        initiateConnectAction();
+      } else {
+        fireHandleConnect();
       }
     }
   }
@@ -229,12 +251,17 @@ public final class ConnectDialog extends Dialog {
 
       m_error = null;
       try {
+        ThreadUtil.reallySleep(3000);
         f.get(m_timeout, TimeUnit.MILLISECONDS);
         m_hideTimer.start();
         return;
       } catch (TimeoutException te) {
+        m_error = new TimeoutException("Timed-out");
         m_hideTimer.start();
         return;
+      } catch (InterruptedException ie) {
+        ie.printStackTrace();
+        // interrupted by CancelButtonHandler
       } catch (Exception e) {
         Throwable cause = e.getCause();
         if (!m_isAuthenticating && cause instanceof SecurityException) {

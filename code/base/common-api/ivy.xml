@@ -7,5 +7,6 @@
     <dependency name="jetty-util" rev="6.1.8" org="terracotta"/>
     <dependency name="jmxremote" rev="1.0.1_04" org="terracotta"/>
     <dependency name="jmxri" rev="1.2.1" org="terracotta"/>
+    <dependency name="commons-httpclient" rev="3.0.1"/>
   </dependencies>
 </ivy-module>
