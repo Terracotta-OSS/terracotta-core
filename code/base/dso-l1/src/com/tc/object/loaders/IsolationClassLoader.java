@@ -73,7 +73,7 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
     classProvider.registerNamedLoader(this);
     return new ManagerImpl(startClient, objectManager, txManager, theConfig, classProvider, connectionComponents, false);
   }
- 
+
   public void stop() {
     this.manager.stop();
   }
@@ -84,7 +84,10 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
     Class c = findLoadedClass(name);
     if (c != null) { return c; }
 
-    if (name.startsWith("com.tc.")) {
+    // "com.tc." classes are delegated to the system loader so that test classes can catch the same exception types as
+    // the DSO runtime (which is in the system loader). "org.apache.commons.logging" classes are also delegated so that
+    // the stupid checks in commons logging about multiple versions don't go off
+    if (name.startsWith("com.tc.") || name.startsWith("org.apache.commons.logging.")) {
       return SYSTEM_LOADER.loadClass(name);
     } else {
       if (adapters.containsKey(name)) {
