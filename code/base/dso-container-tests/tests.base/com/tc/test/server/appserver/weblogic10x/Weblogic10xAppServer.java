@@ -54,7 +54,6 @@ public final class Weblogic10xAppServer extends CargoAppServer {
     protected void setState(State state) {
       if (state.equals(State.STARTING)) {
         adjustConfig();
-        setBeaHomeIfNeeded();
         prepareSecurityFile();
       }
     }
@@ -70,13 +69,6 @@ public final class Weblogic10xAppServer extends CargoAppServer {
         ReplaceLine.parseFile(tokens, new File(getConfiguration().getHome(), "/config/config.xml"));
       } catch (IOException ioe) {
         throw new RuntimeException(ioe);
-      }
-    }
-
-    private void setBeaHomeIfNeeded() {
-      File license = new File(getHome(), "license.bea");
-      if (license.exists()) {
-        this.setBeaHome(this.getHome());
       }
     }
 

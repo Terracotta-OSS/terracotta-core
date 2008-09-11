@@ -13,8 +13,9 @@ tc.tests.configuration.reuse_boot_jars=true
 appserver=tomcat-6.0.18
 
 #appserver=tomcat-6.0.18
+#appserver=tomcat-5.5.27
 #appserver=tomcat-5.0.28
-#appserver=weblogic-10.0.mp1
+#appserver=weblogic-10.3.0
 #appserver=weblogic-9.2.mp3
 #appserver=weblogic-9.2.mp2
 #appserver=weblogic-8.1.sp6
