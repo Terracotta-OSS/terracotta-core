@@ -313,7 +313,7 @@ class InstrumentationSpec {
           Method m = methods[i];
           String methodName = m.getName();
           int modifier = m.getModifiers();
-          if (!shouldVisitMethod(modifier, methodName) || Modifier.isFinal(modifier)) {
+          if (!shouldVisitMethod(modifier, methodName) || Modifier.isFinal(modifier) || Modifier.isStatic(modifier)) {
             continue;
           }
 
