@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.weblogic;
 
@@ -9,15 +10,15 @@ import weblogic.j2ee.descriptor.FilterMappingBean;
 public class DSOFilterMappingBean implements FilterMappingBean {
 
   private final FilterBean filter;
-  
+
   public DSOFilterMappingBean(FilterBean filter) {
     this.filter = filter;
   }
-  
+
   public FilterBean getFilter() {
     return filter;
   }
-  
+
   public void addDispatcher(String s) {
     throw new AssertionError();
   }
@@ -64,6 +65,22 @@ public class DSOFilterMappingBean implements FilterMappingBean {
 
   public void setUrlPattern(String s) {
     throw new AssertionError();
+  }
+
+  public String[] getServletNames() {
+    return new String[] { getServletName() };
+  }
+
+  public String[] getUrlPatterns() {
+    return new String[] { getUrlPattern() };
+  }
+
+  public void setServletNames(String[] as) {
+      throw new AssertionError();
+  }
+
+  public void setUrlPatterns(String[] as) {
+      throw new AssertionError();
   }
 
 }

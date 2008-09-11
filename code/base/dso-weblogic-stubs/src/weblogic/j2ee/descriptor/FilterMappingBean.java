@@ -2,27 +2,36 @@ package weblogic.j2ee.descriptor;
 
 public interface FilterMappingBean {
 
-    public abstract String getFilterName();
+  public abstract String getFilterName();
 
-    public abstract void setFilterName(String s);
+  public abstract void setFilterName(String s);
 
-    public abstract String getUrlPattern();
+  public abstract String getUrlPattern();
 
-    public abstract void setUrlPattern(String s);
+  public abstract void setUrlPattern(String s);
 
-    public abstract String getServletName();
+  public abstract String getServletName();
 
-    public abstract void setServletName(String s);
+  public abstract void setServletName(String s);
 
-    public abstract String[] getDispatchers();
+  public abstract String[] getDispatchers();
 
-    public abstract void addDispatcher(String s);
+  public abstract void addDispatcher(String s);
 
-    public abstract void removeDispatcher(String s);
+  public abstract void removeDispatcher(String s);
 
-    public abstract void setDispatchers(String as[]);
+  public abstract void setDispatchers(String as[]);
 
-    public abstract String getId();
+  public abstract String getId();
 
-    public abstract void setId(String s);
+  public abstract void setId(String s);
+
+  public abstract String[] getUrlPatterns();
+
+  public abstract void setUrlPatterns(String as[]);
+
+  public abstract String[] getServletNames();
+
+  public abstract void setServletNames(String as[]);
+
 }

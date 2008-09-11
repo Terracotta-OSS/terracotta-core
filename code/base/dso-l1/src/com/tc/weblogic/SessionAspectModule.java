@@ -12,8 +12,8 @@ import com.tc.aspectwerkz.definition.deployer.AspectModuleDeployer;
 public class SessionAspectModule implements AspectModule {
 
   public void deploy(AspectModuleDeployer deployer) {
-    if (WeblogicHelper.isWL9()) {
-      addWL9Aspect(deployer);
+    if (WeblogicHelper.isWL9() || WeblogicHelper.isWL10()) {
+      addWL9PlusAspect(deployer);
     } else if (WeblogicHelper.isWL8()) {
       addWL8Aspect(deployer);
     }
@@ -37,8 +37,8 @@ public class SessionAspectModule implements AspectModule {
                    "addFilterMappingIfNeeded(StaticJoinPoint jp, weblogic.servlet.internal.WebAppServletContext webAppServletContext)");
   }
 
-  private void addWL9Aspect(AspectModuleDeployer deployer) {
-    AspectDefinitionBuilder builder = deployer.newAspectBuilder("com.tc.weblogic.SessionAspectWL9",
+  private void addWL9PlusAspect(AspectModuleDeployer deployer) {
+    AspectDefinitionBuilder builder = deployer.newAspectBuilder("com.tc.weblogic.SessionAspectWL9Plus",
                                                                 DeploymentModel.PER_JVM, null);
 
     builder.addAdvice("around", "withincode(* weblogic.servlet.internal.FilterManager.registerServletFilters(..)) "

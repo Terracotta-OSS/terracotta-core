@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.weblogic;
 
@@ -10,17 +11,18 @@ import weblogic.servlet.internal.WebAppServletContext;
 import com.tc.aspectwerkz.joinpoint.StaticJoinPoint;
 import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 
-public class SessionAspectWL9 {
+public class SessionAspectWL9Plus {
 
   /**
-   * Used in WL 9.2 to insert the Terracotta SessionFilter.
+   * Used in WL 9+ to insert the Terracotta SessionFilter.
+   * 
    * @param jp The Aspectwerkz join point
-   * @param filterManager The Weblogic 9.2 FilterManager - does not exist in WL 8.
+   * @param filterManager The Weblogic FilterManager - does not exist in WL 8.
    * @return The FilterMBean[] expected to be returned from the original call.
    */
-  public Object addFilterIfNeeded(StaticJoinPoint jp, weblogic.servlet.internal.FilterManager filterManager) 
-  throws Throwable {
-    
+  public Object addFilterIfNeeded(StaticJoinPoint jp, weblogic.servlet.internal.FilterManager filterManager)
+      throws Throwable {
+
     FilterBean[] filters = (FilterBean[]) jp.proceed();
     if (filters == null) {
       filters = new FilterBean[] {};
@@ -38,15 +40,16 @@ public class SessionAspectWL9 {
 
     return filters;
   }
- 
+
   /**
-   * Used in WL 9.2 to insert the Terracotta SessionFilter.
+   * Used in WL 9+ to insert the Terracotta SessionFilter.
+   * 
    * @param jp The Aspectwerkz join point
-   * @param filterManager The Weblogic 9.2 FilterManager - does not exist in WL 8.
+   * @param filterManager The Weblogic FilterManager - does not exist in WL 8.
    * @return The FilterMappingMBean[] expected to be returned from the original call.
    */
-  public Object addFilterMappingIfNeeded(StaticJoinPoint jp, weblogic.servlet.internal.FilterManager filterManager) 
-  throws Throwable {
+  public Object addFilterMappingIfNeeded(StaticJoinPoint jp, weblogic.servlet.internal.FilterManager filterManager)
+      throws Throwable {
     FilterMappingBean[] mappings = (FilterMappingBean[]) jp.proceed();
     if (mappings == null) {
       mappings = new FilterMappingBean[] {};
@@ -61,14 +64,14 @@ public class SessionAspectWL9 {
     }
     return mappings;
   }
- 
+
   private static boolean isDSOSessions(WebAppServletContext context) {
     // Get context path and strip leading /
     String appName = context.getContextPath();
-    if(appName.startsWith("/")) {
+    if (appName.startsWith("/")) {
       appName = appName.substring(1, appName.length());
     }
-    
+
     boolean rv = ClassProcessorHelper.isDSOSessions(appName);
     return rv;
   }

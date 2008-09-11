@@ -21,18 +21,21 @@ public class WeblogicHelper {
   }
 
   public static boolean isWL8() {
-    try {
-      String version = getVersion();
-      return version.startsWith("8");
-    } catch (Exception e) {
-      return false;
-    }
+    return versionStartsWith("8");
   }
 
   public static boolean isWL9() {
+    return versionStartsWith("9");
+  }
+
+  public static boolean isWL10() {
+    return versionStartsWith("10");
+  }
+
+  private static boolean versionStartsWith(String ver) {
     try {
       String version = getVersion();
-      return version.startsWith("9");
+      return version.startsWith(ver);
     } catch (Exception e) {
       return false;
     }
@@ -45,10 +48,12 @@ public class WeblogicHelper {
   }
 
   public static boolean isSupportedVersion() {
+    // XXX: Should we support a way to suppress this and still let people try a "unsupported" version?
+
     try {
       String ver = getVersion();
       logger.info("Detected weblogic version: " + ver);
-      return ver != null && (ver.startsWith("8.1") || ver.startsWith("9"));
+      return ver != null && (ver.startsWith("8.1") || ver.startsWith("9") || ver.startsWith("10.3"));
     } catch (Exception e) {
       logger.error("Error trying to determine weblogic version", e);
       return false;
