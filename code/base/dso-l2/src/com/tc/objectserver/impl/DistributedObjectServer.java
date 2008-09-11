@@ -471,12 +471,13 @@ public class DistributedObjectServer implements TCDumper {
         throw new AssertionError("Unknown Cache Policy : " + cachePolicy
                                  + " Accepted Values are : <LRU>/<LFU> Please check tc.properties");
       }
+      int gcDeleteThreads = l2Properties.getInt("seda.gcdeletestage.threads");
       Sink gcDisposerSink = stageManager
           .createStage(
                        ServerConfigurationContext.GC_DELETE_FROM_DISK_STAGE,
                        new GarbageDisposeHandler(persistor.getManagedObjectPersistor(), persistor
-                           .getPersistenceTransactionProvider(), objManagerProperties.getInt("deleteBatchSize")), 1,
-                       maxStageSize).getSink();
+                           .getPersistenceTransactionProvider(), objManagerProperties.getInt("deleteBatchSize")),
+                       gcDeleteThreads, maxStageSize).getSink();
 
       objectStore = new PersistentManagedObjectStore(persistor.getManagedObjectPersistor(), gcDisposerSink);
     } else {
@@ -556,15 +557,12 @@ public class DistributedObjectServer implements TCDumper {
 
     l2DSOConfig.changesInItemIgnored(l2DSOConfig.garbageCollectionEnabled());
     boolean gcEnabled = l2DSOConfig.garbageCollectionEnabled().getBoolean();
-    logger.debug("GC enabled: " + gcEnabled);
 
     l2DSOConfig.changesInItemIgnored(l2DSOConfig.garbageCollectionInterval());
     long gcInterval = l2DSOConfig.garbageCollectionInterval().getInt();
-    if (gcEnabled) logger.debug("GC interval: " + gcInterval + " seconds");
 
     l2DSOConfig.changesInItemIgnored(l2DSOConfig.garbageCollectionVerbose());
     boolean verboseGC = l2DSOConfig.garbageCollectionVerbose().getBoolean();
-    if (gcEnabled) logger.debug("Verbose GC enabled: " + verboseGC);
     sampledCounterManager = new CounterManagerImpl();
     SampledCounter objectCreationRate = (SampledCounter) sampledCounterManager
         .createCounter(new SampledCounterConfig(1, 900, true, 0L));

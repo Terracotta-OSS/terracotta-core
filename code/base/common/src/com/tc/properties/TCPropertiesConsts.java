@@ -102,6 +102,7 @@ public interface TCPropertiesConsts {
   public static final String   L2_SEDA_COMMITSTAGE                                    = "l2.seda.commitstage.threads";
   public static final String   L2_SEDA_FAULTSTAGE_THREADS                             = "l2.seda.faultstage.threads";
   public static final String   L2_SEDA_FLUSHSTAGE_THREAD                              = "l2.seda.flushstage.threads";
+  public static final String   L2_SEDA_GCDELETESTAGE_THREAD                           = "l2.seda.gcdeletestage.threads";
   public static final String   L2_SEDA_STAGE_SINK_CAPACITY                            = "l2.seda.stage.sink.capacity";
 
   /*********************************************************************************************************************
