@@ -73,7 +73,7 @@ public final class Weblogic10xAppServer extends CargoAppServer {
     }
 
     private void prepareSecurityFile() {
-      if (Os.isLinux()) {
+      if (Os.isLinux() || Os.isSolaris()) {
         try {
           String[] resources = new String[] { "security/SerializedSystemIni.dat" };
           for (int i = 0; i < resources.length; i++) {
@@ -84,7 +84,6 @@ public final class Weblogic10xAppServer extends CargoAppServer {
         } catch (IOException e) {
           throw new RuntimeException(e);
         }
-
       }
     }
 
