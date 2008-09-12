@@ -47,7 +47,7 @@ public class SerializationResolveTest extends TransparentTestBase {
     protected void runTest() throws Throwable {
       int index = barrier.barrier();
       if (index == 0) {
-        root = new SerializableObject();
+        root = makeGraph(500);
       }
 
       barrier.barrier();
@@ -62,8 +62,31 @@ public class SerializationResolveTest extends TransparentTestBase {
 
         if (ManagerUtil.isManaged(so)) { throw new AssertionError("deserialized object is shared"); }
 
-        if (so.field == null) { throw new AssertionError("field was null in deserialized instance"); }
+        verifyGraph(so);
       }
+    }
+
+    private void verifyGraph(final SerializableObject top) {
+      SerializableObject so = top;
+      while (so != top) {
+        if (ManagerUtil.isManaged(so)) { throw new AssertionError("deserialized object is shared"); }
+
+        if (so.next == null) { throw new AssertionError("field was null in deserialized instance"); }
+
+        so = so.next;
+      }
+    }
+
+    private SerializableObject makeGraph(int depth) {
+      SerializableObject top = new SerializableObject();
+      SerializableObject current = top;
+      for (int i = 0; i < depth; i++) {
+        SerializableObject next = new SerializableObject();
+        current.next = next;
+        current = next;
+      }
+      current.next = top;
+      return top;
     }
 
     private SerializableObject testSerialization(SerializableObject so) throws Exception {
@@ -95,12 +118,12 @@ public class SerializationResolveTest extends TransparentTestBase {
 }
 
 class SerializableObject implements Serializable {
-     final Object field = this;
+  SerializableObject next;
 }
 
 class UninstrumentedReader {
   static Object readField(SerializableObject object) {
-    // this field read is not uninstrumented and lets the test observe unresolved fields
-    return object.field;
+    // this field read is not instrumented and lets the test observe unresolved fields
+    return object.next;
   }
 }
