@@ -13,7 +13,6 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
-import com.tctest.SerializationResolveTest.App.SerializableObject;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.io.ByteArrayInputStream;
@@ -84,6 +83,7 @@ public class SerializationResolveTest extends TransparentTestBase {
       TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
 
       config.addIncludePattern(testClass + "$*");
+      config.addIncludePattern("com.tctest.SerializableObject");
 
       String methodExpression = "* " + testClass + "*.*(..)";
       config.addWriteAutolock(methodExpression);
@@ -91,11 +91,11 @@ public class SerializationResolveTest extends TransparentTestBase {
       spec.addRoot("root", "root");
       spec.addRoot("barrier", "barrier");
     }
-
-    public static class SerializableObject implements Serializable {
-      final Object field = this;
-    }
   }
+}
+
+class SerializableObject implements Serializable {
+     final Object field = this;
 }
 
 class UninstrumentedReader {
