@@ -81,10 +81,6 @@ public class TestClientTransaction implements ClientTransaction {
     throw new ImplementMe();
   }
 
-  public TxnType getTransactionType() {
-    return txnType;
-  }
-
   public void addNotify(Notify notify) {
     this.notifies.add(notify);
   }
@@ -147,5 +143,17 @@ public class TestClientTransaction implements ClientTransaction {
 
   public List getNotifies() {
     return notifies;
+  }
+
+  public TxnType getEffectiveType() {
+    throw new ImplementMe();
+  }
+
+  public TxnType getLockType() {
+    return txnType;
+  }
+
+  public boolean isEffectivelyReadOnly() {
+    throw new ImplementMe();
   }
 }

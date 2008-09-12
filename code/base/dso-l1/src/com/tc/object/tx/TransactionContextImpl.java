@@ -10,26 +10,41 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TransactionContextImpl implements TransactionContext {
-  private final TxnType type;
+  private final TxnType lockTxType;
+  private final TxnType effectiveTxType;
   private final LockID  lockID;
   private final List    lockIDs;
 
-  public TransactionContextImpl(LockID lockID, TxnType type) {
-    this.type = type;
+  public TransactionContextImpl(final LockID lockID, final TxnType lockTxType, final TxnType effectiveTxType) {
+    this.lockTxType = lockTxType;
+    this.effectiveTxType = effectiveTxType;
     this.lockID = lockID;
     this.lockIDs = new ArrayList();
     lockIDs.add(lockID);
   }
   
   // assume lockIDs contains lockID
-  public TransactionContextImpl(LockID lockID, TxnType type, List lockIDs) {
-    this.type = type;
+  public TransactionContextImpl(final LockID lockID, final TxnType lockTxType, final TxnType effectiveTxType, final List lockIDs) {
+    this.lockTxType = lockTxType;
+    this.effectiveTxType = effectiveTxType;
     this.lockID = lockID;
     this.lockIDs = lockIDs;    
   }
   
-  public TxnType getType() {
-    return type;
+  public TxnType getLockType() {
+    return lockTxType;
+  }
+
+  public TxnType getEffectiveType() {
+    return effectiveTxType;
+  }
+  
+  public boolean isEffectivelyReadOnly() {
+    if (effectiveTxType != null) {
+      return TxnType.READ_ONLY == effectiveTxType;
+    } else {
+      return TxnType.READ_ONLY == lockTxType;
+    }
   }
 
   public LockID getLockID() {

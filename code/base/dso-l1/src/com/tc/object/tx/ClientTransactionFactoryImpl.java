@@ -21,9 +21,9 @@ public class ClientTransactionFactoryImpl implements ClientTransactionFactory {
     return new ClientTransactionImpl(nextTransactionID(), runtimeLogger);
   }
 
-  public ClientTransaction newNullInstance(LockID id, TxnType type) {
+  public ClientTransaction newNullInstance(final LockID id, final TxnType type) {
     ClientTransaction tc = new NullClientTransaction(nextTransactionID());
-    tc.setTransactionContext(new TransactionContextImpl(id, type));
+    tc.setTransactionContext(new TransactionContextImpl(id, type, type));
     return tc;
   }
 

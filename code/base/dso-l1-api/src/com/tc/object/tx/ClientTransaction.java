@@ -136,11 +136,34 @@ public interface ClientTransaction {
   public boolean isNull();
 
   /**
-   * Get transaction type
-   *
-   * @return Type
+   * Returns the transaction type that corresponds to the lock type that
+   * initiated this transaction.
+   * 
+   * @return Type of transaction based on the lock
+   * @see #getEffectiveType()
    */
-  public TxnType getTransactionType();
+  public TxnType getLockType();
+
+  /**
+   * Returns the effective transaction type.
+   *
+   * Read the docs of {@link TransactionContext#getEffectiveType()} for more details.
+   * 
+   * @return Type of transaction based on the context
+   * @see #getLockType()
+   */
+  public TxnType getEffectiveType();
+  
+  /**
+   * Evaluates the effective transaction type to see if it's read-only.
+   * 
+   * Read the docs of {@link TransactionContext#getEffectiveType()} for more details.
+   * 
+   * @return {@code true} when the effective transaction type is read-only, or
+   * {@code false} when it's not
+   * @see #getEffectiveType()
+   */
+  public boolean isEffectivelyReadOnly();
 
   /**
    * Add a new Notify

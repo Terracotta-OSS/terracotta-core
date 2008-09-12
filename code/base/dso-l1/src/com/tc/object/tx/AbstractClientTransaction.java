@@ -42,8 +42,16 @@ abstract class AbstractClientTransaction implements ClientTransaction {
     this.transactionContext = transactionContext;
   }
 
-  public TxnType getTransactionType() {
-    return transactionContext.getType();
+  public TxnType getLockType() {
+    return transactionContext.getLockType();
+  }
+
+  public TxnType getEffectiveType() {
+    return transactionContext.getEffectiveType();
+  }
+  
+  public boolean isEffectivelyReadOnly() {
+    return transactionContext.isEffectivelyReadOnly();
   }
 
   public List getAllLockIDs() {
@@ -59,25 +67,27 @@ abstract class AbstractClientTransaction implements ClientTransaction {
   }
 
   public final void createObject(TCObject source) {
-    if (transactionContext.getType() == TxnType.READ_ONLY) { throw new AssertionError(
-                                                                                      source.getClass().getName()
-                                                                                          + " was already checked to have write access!"); }
+    if (transactionContext.isEffectivelyReadOnly()) {
+      throw new AssertionError(source.getClass().getName() + " was already checked to have write access!");
+    }
+    
     alreadyCommittedCheck();
     basicCreate(source);
   }
 
   public final void createRoot(String name, ObjectID rootID) {
-    if (transactionContext.getType() == TxnType.READ_ONLY) { throw new AssertionError(
-                                                                                      name
-                                                                                          + " was already checked to have write access!"); }
+    if (transactionContext.isEffectivelyReadOnly()) {
+      throw new AssertionError(name + " was already checked to have write access!");
+    }
     alreadyCommittedCheck();
     basicCreateRoot(name, rootID);
   }
 
   public final void fieldChanged(TCObject source, String classname, String fieldname, Object newValue, int index) {
     assertNotReadOnlyTxn();
-    if (source.getTCClass().isEnum()) { throw new AssertionError("fieldChanged() on an enum type "
-                                                                 + source.getTCClass().getPeerClass().getName()); }
+    if (source.getTCClass().isEnum()) {
+      throw new AssertionError("fieldChanged() on an enum type " + source.getTCClass().getPeerClass().getName());
+    }
 
     alreadyCommittedCheck();
     basicFieldChanged(source, classname, fieldname, newValue, index);
@@ -110,7 +120,9 @@ abstract class AbstractClientTransaction implements ClientTransaction {
   }
 
   private void assertNotReadOnlyTxn() {
-    if (transactionContext.getType() == TxnType.READ_ONLY) { throw new AssertionError("fail to perform read only check"); }
+    if (transactionContext.isEffectivelyReadOnly()) {
+      throw new AssertionError("fail to perform read only check");
+    }
   }
 
   public void setAlreadyCommitted() {

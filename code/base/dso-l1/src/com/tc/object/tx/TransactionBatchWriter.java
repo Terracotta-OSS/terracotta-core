@@ -188,7 +188,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
           closeDependentKeys(dependentKeys.keySet());
         } else if (!exceedsLimits && potential != null) {
           if (DEBUG) logger.info("potential fold found " + System.identityHashCode(potential));
-          if (potential.canAcceptFold(txn.getAllLockIDs(), txn.getTransactionType())) {
+          if (potential.canAcceptFold(txn.getAllLockIDs(), txn.getLockType())) {
             if (DEBUG) logger.info("fold accepted into " + System.identityHashCode(potential));
 
             // need to take on the incoming ObjectIDs present in the buffer we are folding into here
@@ -213,7 +213,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     TransactionBuffer txnBuffer = new TransactionBuffer(sid, newOutputStream(), serializer, encoding);
 
     if (foldingEnabled) {
-      FoldingKey key = new FoldingKey(txnBuffer, txn.getTransactionType(), txn.getAllLockIDs(), new HashSet(txn
+      FoldingKey key = new FoldingKey(txnBuffer, txn.getLockType(), txn.getAllLockIDs(), new HashSet(txn
           .getChangeBuffers().keySet()));
       registerKeyForOids(txn.getChangeBuffers().keySet(), key);
     }
@@ -235,7 +235,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
   private void log_incomingTxn(ClientTransaction txn, boolean exceedsLimits, boolean scanForClose) {
     logger.info("incoming txn [" + txn.getTransactionID() + " locks=" + txn.getAllLockIDs() + ", oids="
                 + txn.getChangeBuffers().keySet() + ", dmi=" + txn.getDmiDescriptors() + ", roots=" + txn.getNewRoots()
-                + ", notifies=" + txn.getNotifies() + ", type=" + txn.getTransactionType() + "] exceedsLimit="
+                + ", notifies=" + txn.getNotifies() + ", type=" + txn.getLockType() + "] exceedsLimit="
                 + exceedsLimits + ", scanForClose=" + scanForClose);
   }
 
@@ -504,7 +504,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
       // /////////////////////////////////////////////////////////////////////////////////////////
 
       output.writeLong(txn.getTransactionID().toLong());
-      output.writeByte(txn.getTransactionType().getType());
+      output.writeByte(txn.getLockType().getType());
       txnCountMark = output.mark();
       output.writeInt(UNINITIALIZED_LENGTH);
       SequenceID sid = txn.getSequenceID();

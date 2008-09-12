@@ -45,7 +45,7 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   }
 
   public boolean isConcurrent() {
-    return this.getTransactionType().isConcurrent();
+    return this.getLockType().isConcurrent();
   }
 
   public boolean hasChangesOrNotifies() {

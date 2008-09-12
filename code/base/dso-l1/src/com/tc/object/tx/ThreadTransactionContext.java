@@ -77,8 +77,8 @@ public class ThreadTransactionContext {
     return ctx;
   }
 
-  public void pushContext(LockID id, TxnType txType) {
-    transactionStack.push(new TransactionContextImpl(id, txType, getAllLockIDs(id)));
+  public void pushContext(final LockID id, final TxnType lockTxType, final TxnType effectiveTxType) {
+    transactionStack.push(new TransactionContextImpl(id, lockTxType, effectiveTxType, getAllLockIDs(id)));
   }
 
   private List getAllLockIDs(LockID id) {

@@ -28,7 +28,6 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
   public TransactionID                txID;
   public Map                          newRoots;
   public TransactionID                acked;
-  public TxnType                      transactionType;
   public TxnBatchID                   batchAcked;
   public ClientTransaction            transaction;
 
@@ -37,7 +36,6 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
     this.changes = txn.getChangeBuffers();
     this.txID = txn.getTransactionID();
     this.newRoots = txn.getNewRoots();
-    this.transactionType = txn.getTransactionType();
     this.transaction = txn;
   }
 
