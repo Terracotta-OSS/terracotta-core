@@ -116,7 +116,7 @@ public class DefaultModuleReport extends ModuleReport {
     if (module.dependencies().isEmpty()) out.println(indent("None."));
 
     for (AbstractModule dependency : module.dependencies()) {
-      String line = "* " + dependency.artifactId() + " " + dependency.version();
+      String line = "o " + dependency.artifactId() + " " + dependency.version();
       if (!isUsingDefaultGroupId(dependency)) line = line.concat(" [" + dependency.groupId() + "]");
       out.println(indent(line));
     }
