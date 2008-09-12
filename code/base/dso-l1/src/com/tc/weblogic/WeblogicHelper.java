@@ -53,7 +53,7 @@ public class WeblogicHelper {
     try {
       String ver = getVersion();
       logger.info("Detected weblogic version: " + ver);
-      return ver != null && (ver.startsWith("8.1") || ver.startsWith("9") || ver.startsWith("10.3"));
+      return ver != null && (ver.startsWith("8.1") || ver.startsWith("9") || ver.startsWith("10"));
     } catch (Exception e) {
       logger.error("Error trying to determine weblogic version", e);
       return false;
