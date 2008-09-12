@@ -648,6 +648,12 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       if (WeblogicHelper.isSupportedVersion()) {
         addAspectModule("weblogic.servlet.internal", "com.tc.weblogic.SessionAspectModule");
 
+        if (WeblogicHelper.isWL10()) {
+          // These types get verify errors (if instrumented) in weblogic 10-mp1 (run
+          // InstrumentEverythingInContainerTest to see)
+          addPermanentExcludePattern("kodo.kernel..*");
+        }
+
         addCustomAdapter("weblogic.Server", new ServerAdapter());
         addCustomAdapter("weblogic.utils.classloaders.GenericClassLoader", new GenericClassLoaderAdapter());
         addCustomAdapter("weblogic.ejb20.ejbc.EjbCodeGenerator", new EJBCodeGeneratorAdapter());
