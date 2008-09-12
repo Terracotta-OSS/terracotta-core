@@ -309,21 +309,21 @@
       </tabbedpane>
       <container>
         <children>
-          <label text="Enable lock profiling:" />
-          <togglebutton text="Off" name="DisableButton" />
-          <togglebutton text="On" name="EnableButton" />
-          <label text="Trace depth:" />
-          <spinner name="TraceDepthSpinner" />
-          <button text="Refresh" name="RefreshButton" />
+          <label text="Enable lock profiling:"/>
+          <togglebutton text="Off" name="DisableButton"/>
+          <togglebutton text="On" name="EnableButton"/>
+          <label text="Trace depth:"/>
+          <spinner name="TraceDepthSpinner"/>
+          <button text="Refresh" name="RefreshButton"/>
         </children>
-          <connections>
-            <item bottom="1,bottom:s" height="n" left="-1,left:n" right="1,left:n" top="1,top:s" width="n"/>
-            <item bottom="5,top:n" height="n" left="0,right:n" right="2,left:n" top="-1,top:sn" width="n"/>
-            <item bottom="1,bottom:s" height="n" left="1,right:n" right="3,left:n" top="1,top:s" width="n"/>
-            <item bottom="1,bottom:s" height="n" left="2,right:n" right="4,left:n" top="1,top:s" width="n"/>
-            <item bottom="1,bottom:s" height="n" left="3,right:n" right="-1,right:ns" top="1,top:s" width="50"/>
-            <item bottom="-1,bottom:sn" height="n" left="1,left:0" right="-1,right:n" top="1,bottom:n" width="n"/>
-          </connections>
+        <connections>
+          <item bottom="-1,bottom:sn" height="n" left="-1,left:n" right="1,left:n" top="-1,top:sn" width="n"/>
+          <item bottom="-1,bottom:sn" height="n" left="0,right:n" right="2,left:n" top="-1,top:sn" width="n"/>
+          <item bottom="-1,bottom:sn" height="n" left="1,right:n" right="3,left:ns" top="-1,top:sn" width="n"/>
+          <item bottom="-1,bottom:sn" height="n" left="2,right:ns" right="4,left:n" top="-1,top:sn" width="n"/>
+          <item bottom="-1,bottom:sn" height="n" left="3,right:n" right="5,left:ns" top="-1,top:sn" width="50"/>
+          <item bottom="-1,bottom:sn" height="n" left="4,right:ns" right="-1,right:n" top="-1,top:sn" width="n"/>
+        </connections>
       </container>
     </children>
       <connections>
