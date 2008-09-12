@@ -558,6 +558,7 @@ public class BootJarTool {
       addInstrumentedJavaNetURL();
       addInstrumentedProxy();
       addTreeMap();
+      addObjectStreamClass();
 
       addIBMSpecific();
 
@@ -588,6 +589,28 @@ public class BootJarTool {
     } catch (BootJarHandlerException e) {
       exit(e.getMessage(), e.getCause());
     }
+  }
+
+  private void addObjectStreamClass() {
+    String jClassNameDots = "java.io.ObjectStreamClass";
+    String tcClassNameDots = "java.io.ObjectStreamClassTC";
+
+    byte[] tcData = getSystemBytes(tcClassNameDots);
+    ClassReader tcCR = new ClassReader(tcData);
+    ClassNode tcCN = new ClassNode();
+    tcCR.accept(tcCN, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+
+    byte[] jData = getSystemBytes(jClassNameDots);
+
+    ClassReader jCR = new ClassReader(jData);
+    ClassWriter cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
+
+    Map instrumentedContext = new HashMap();
+    ClassVisitor cv = new MergeTCToJavaClassAdapter(cw, null, jClassNameDots, tcClassNameDots, tcCN,
+                                                    instrumentedContext);
+    jCR.accept(cv, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+    jData = cw.toByteArray();
+    loadClassIntoJar(jClassNameDots, jData, true);
   }
 
   private void addLiterals() {

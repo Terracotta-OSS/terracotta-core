@@ -25,18 +25,18 @@ import java.util.Map;
 import java.util.Set;
 
 public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter implements Opcodes {
-  private static final String      TC_INIT          = ByteCodeUtil.TC_METHOD_PREFIX + "$$_init_$$";
+  private static final String            TC_INIT          = ByteCodeUtil.TC_METHOD_PREFIX + "$$_init_$$";
 
-  private final List               jInnerClassNames = new ArrayList();
-  private final ClassNode          tcClassNode;
-  private final String             jFullClassSlashes;
-  private final String             tcFullClassSlashes;
-  private final Map                instrumentedContext;
-  private final Set                visitedMethods;
-  private final String             methodPrefix;
-  private final boolean            insertTCinit;
-  private String                   superName;
-  private TransparencyClassAdapter dsoAdapter;
+  private final List                     jInnerClassNames = new ArrayList();
+  private final ClassNode                tcClassNode;
+  private final String                   jFullClassSlashes;
+  private final String                   tcFullClassSlashes;
+  private final Map                      instrumentedContext;
+  private final Set                      visitedMethods;
+  private final String                   methodPrefix;
+  private final boolean                  insertTCinit;
+  private String                         superName;
+  private final TransparencyClassAdapter dsoAdapter;
 
   public MergeTCToJavaClassAdapter(ClassVisitor cv, TransparencyClassAdapter dsoAdapter, String jFullClassDots,
                                    String tcFullClassDots, ClassNode tcClassNode, Map instrumentedContext,
@@ -125,8 +125,12 @@ public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter i
     }
     interfaces = new String[jInterfaces.size()];
     jInterfaces.toArray(interfaces);
-    // super.visit(version, access, name, signature, superName, interfaces);
-    dsoAdapter.visit(version, access, name, signature, superClassName, interfaces);
+
+    if (dsoAdapter == null) {
+      super.visit(version, access, name, signature, superName, interfaces);
+    } else {
+      dsoAdapter.visit(version, access, name, signature, superClassName, interfaces);
+    }
   }
 
   private String getNewName(String methodName) {
@@ -244,8 +248,11 @@ public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter i
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
       desc = replaceClassName(desc);
       signature = replaceClassName(signature);
-      // return new TCSuperMethodAdapter(super.visitMethod(access, name, desc, signature, exceptions));
-      return new TCSuperMethodAdapter(dsoAdapter.basicVisitMethod(access, name, desc, signature, exceptions));
+      if (dsoAdapter == null) {
+        return new TCSuperMethodAdapter(super.visitMethod(access, name, desc, signature, exceptions));
+      } else {
+        return new TCSuperMethodAdapter(dsoAdapter.basicVisitMethod(access, name, desc, signature, exceptions));
+      }
     }
 
     private String replaceClassName(String classNameDots) {
