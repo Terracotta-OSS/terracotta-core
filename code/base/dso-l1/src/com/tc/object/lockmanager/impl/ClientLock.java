@@ -637,9 +637,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
       Object o = i.next();
       if (isOnlyWaitLockRequest(o)) continue;
       LockRequest lr = (LockRequest) o;
-      if (isTryLockRequest(lr) &&
-          !((TryLockRequest)lr).getTimerSpec().needsToWait() &&
-          isHeld()) {
+      if (isTryLockRequest(lr) && !((TryLockRequest) lr).getTimerSpec().needsToWait() && isHeld()) {
         // The tryLock contract stipulates that it should return immediately
         // and only acquire the lock if it wasn't held at the time of
         // invocation. Any tryLocks without a timeout that are pending should
@@ -763,6 +761,21 @@ class ClientLock implements TimerCallback, LockFlushCallback {
     return c;
   }
 
+  public synchronized void addAllHeldLocksAndPendingLockRequestsTo(Collection heldLocks, Collection pendingLocks) {
+    for (Iterator i = holders.keySet().iterator(); i.hasNext();) {
+      ThreadID threadID = (ThreadID) i.next();
+      LockHold hold = (LockHold) holders.get(threadID);
+      if (hold.isHolding() && hold.getServerLevel() != LockLevel.NIL_LOCK_LEVEL) {
+        heldLocks.add(new LockRequest(this.lockID, threadID, hold.getServerLevel(), lockObjectType));
+      }
+    }
+    for (Iterator i = pendingLockRequests.values().iterator(); i.hasNext();) {
+      LockRequest request = (LockRequest) i.next();
+      if (isWaitLockRequest(request)) continue;
+      pendingLocks.add(request);
+    }
+  }
+  
   public synchronized Collection addHoldersToAsLockRequests(Collection c) {
     if (greediness.isNotGreedy()) {
       for (Iterator i = holders.keySet().iterator(); i.hasNext();) {
@@ -1347,7 +1360,6 @@ class ClientLock implements TimerCallback, LockFlushCallback {
       /*
        * server_level is not changed to NIL_LOCK_LEVEL even though the server will release the lock as we need to know
        * what state we were holding before wait on certain scenarios like server crash etc.
-       *
        * @see ClientLockManager.notified
        */
       return this.server_level;

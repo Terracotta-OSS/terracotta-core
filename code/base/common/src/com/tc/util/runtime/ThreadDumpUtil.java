@@ -93,17 +93,17 @@ public class ThreadDumpUtil {
 
   public static String getHeldAndPendingLockInfo(Map heldMap, Map pendingMap, Long tcThreadID) {
     String info = "";
-    if (heldMap != null && pendingMap != null) {
 
+    if (heldMap != null && pendingMap != null) {
       Object heldLocks = heldMap.get(tcThreadID);
       Object pendingLocks = pendingMap.get(tcThreadID);
 
       if ((tcThreadID != null) && (heldLocks != null)) {
-        info += "distributed locks HELD: " + heldLocks + "\n";
+        info += "\n\tDistributed Locks HELD: " + heldLocks + "\n";
       }
 
       if ((tcThreadID != null) && (pendingLocks != null)) {
-        info += "distributed locks WAITING for: " + pendingLocks + "\n";
+        info += "\n\tDistributed Locks PENDING: " + pendingLocks + "\n";
       }
 
     }

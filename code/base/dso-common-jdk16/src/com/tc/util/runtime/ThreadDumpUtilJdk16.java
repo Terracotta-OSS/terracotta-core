@@ -12,7 +12,7 @@ import java.lang.management.ThreadMXBean;
 import java.util.Date;
 import java.util.Map;
 
-public abstract class ThreadDumpUtilJdk16 {
+public class ThreadDumpUtilJdk16 {
 
   private static ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
 
@@ -20,7 +20,7 @@ public abstract class ThreadDumpUtilJdk16 {
     return getThreadDump(null, null, new NullThreadIDMap());
   }
 
-  public static String getThreadDump(Map heldMap, Map pendingMap, NullThreadIDMap thIDMap) {
+  public static String getThreadDump(Map heldMap, Map pendingMap, ThreadIDMap thIDMap) {
     StringBuilder sb = new StringBuilder();
     sb.append(new Date().toString());
     sb.append('\n');
@@ -41,17 +41,26 @@ public abstract class ThreadDumpUtilJdk16 {
           sb.append('\n');
 
           StackTraceElement[] stea = threadInfo.getStackTrace();
+          MonitorInfo[] monitorInfos = threadInfo.getLockedMonitors();
           for (int j = 0; j < stea.length; j++) {
             sb.append("\tat ");
             sb.append(stea[j].toString());
             sb.append('\n');
+            for (MonitorInfo monitorInfo : monitorInfos) {
+              if (monitorInfo.getLockedStackFrame().equals(stea[j])) {
+                sb.append("\t- locked <0x");
+                sb.append(Integer.toHexString(monitorInfo.getIdentityHashCode()));
+                sb.append("> (a ");
+                sb.append(monitorInfo.getClassName());
+                sb.append(")");
+                sb.append('\n');
+              }
+            }
           }
           sb.append(ThreadDumpUtil.getHeldAndPendingLockInfo(heldMap, pendingMap, thIDMap.getTCThreadID(threadInfo
               .getThreadId())));
-          if (threadMXBean.isObjectMonitorUsageSupported()) {
-            sb.append("\n").append(threadLockedMonitors(threadInfo));
-          } else if (threadMXBean.isSynchronizerUsageSupported()) {
-            sb.append("\n").append(threadLockedSynchronizers(threadInfo));
+          if (!threadMXBean.isObjectMonitorUsageSupported() && threadMXBean.isSynchronizerUsageSupported()) {
+            sb.append(threadLockedSynchronizers(threadInfo));
           }
           sb.append('\n');
         }
@@ -106,40 +115,21 @@ public abstract class ThreadDumpUtilJdk16 {
 
   private static String threadLockedSynchronizers(ThreadInfo threadInfo) {
     try {
-      StringBuffer lockedSynchBuff = new StringBuffer();
-      lockedSynchBuff.append("Locked Synchronizers: \n");
       LockInfo[] lockInfos = threadInfo.getLockedSynchronizers();
-      if (lockInfos.length < 1) { return lockedSynchBuff.append("None \n").toString(); }
-      for (int i = 0; i < lockInfos.length; i++) {
-        LockInfo lockInfo = lockInfos[i];
-        lockedSynchBuff.append(lockInfo.getClassName()).append(" <").append(lockInfo.getIdentityHashCode())
-            .append("> \n");
+      if (lockInfos.length > 0) {
+        StringBuffer lockedSynchBuff = new StringBuffer();
+        lockedSynchBuff.append("\nLocked Synchronizers: \n");
+        for (int i = 0; i < lockInfos.length; i++) {
+          LockInfo lockInfo = lockInfos[i];
+          lockedSynchBuff.append(lockInfo.getClassName()).append(" <").append(lockInfo.getIdentityHashCode())
+              .append("> \n");
+        }
+        return lockedSynchBuff.append("\n").toString();
+      } else {
+        return "";
       }
-      return lockedSynchBuff.append("\n").toString();
     } catch (Exception e) {
       return "No Locked Synchronizers information available. \n";
-    }
-  }
-
-  private static String threadLockedMonitors(ThreadInfo threadInfo) {
-    try {
-      StringBuffer lockedMonitorBuff = new StringBuffer();
-      lockedMonitorBuff.append("Locked Monitors: \n");
-      MonitorInfo[] monitorInfos = threadInfo.getLockedMonitors();
-      if (monitorInfos.length < 1) { return lockedMonitorBuff.append("None \n").toString(); }
-      for (int i = 0; i < monitorInfos.length; i++) {
-        MonitorInfo monitorInfo = monitorInfos[i];
-        lockedMonitorBuff.append(monitorInfo.getClassName()).append(" <").append(monitorInfo.getIdentityHashCode())
-            .append("> \n");
-        lockedMonitorBuff.append("lockedStackDepth: " + monitorInfo.getLockedStackDepth() + "\n");
-        StackTraceElement stea = monitorInfo.getLockedStackFrame();
-        lockedMonitorBuff.append("\tat ");
-        lockedMonitorBuff.append(stea.toString());
-        lockedMonitorBuff.append('\n');
-      }
-      return lockedMonitorBuff.append("\n").toString();
-    } catch (Exception e) {
-      return "No Locked monitors information available. \n";
     }
   }
 

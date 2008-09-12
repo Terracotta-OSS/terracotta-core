@@ -545,8 +545,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   public synchronized void addAllHeldLocksAndPendingLockRequestsTo(Collection heldLocks, Collection pendingLocks) {
     for (Iterator i = locksByID.values().iterator(); i.hasNext();) {
       ClientLock lock = (ClientLock) i.next();
-      lock.addHoldersToAsLockRequests(heldLocks);
-      lock.addAllPendingLockRequestsTo(pendingLocks);
+      lock.addAllHeldLocksAndPendingLockRequestsTo(heldLocks, pendingLocks);
     }
   }
 

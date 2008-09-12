@@ -37,6 +37,11 @@ public class JMXConnectorProxy implements JMXConnector {
   public static final String JMXMP_URI_PATTERN  = "service:jmx:jmxmp://{0}:{1}";
   public static final String JMXRMI_URI_PATTERN = "service:jmx:rmi:///jndi/rmi://{0}:{1}/jmxrmi";
 
+  static {
+    // Silence httpclient
+    System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog");
+  }
+  
   public JMXConnectorProxy(final String host, final int port, final Map env) {
     m_host = host;
     m_port = port;
@@ -96,6 +101,8 @@ public class JMXConnectorProxy implements JMXConnector {
       if (status == HttpStatus.SC_OK) { throw new RuntimeException("Please specify the JMX port, not the DSO port"); }
     } catch (IOException ioe) {
       /* this is good */
+    } catch (Throwable t) {
+      t.printStackTrace();
     } finally {
       get.releaseConnection();
     }
