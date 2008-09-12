@@ -37,9 +37,9 @@ public class SessionConfigTest extends AbstractDeploymentTest {
   private DeploymentBuilder    builder;
   private TcConfigBuilder      tcConfigBuilder;
   private WebApplicationServer server;
-  private Map                  descriptors        = new HashMap();
-  private Map                  extraServerJvmArgs = new HashMap();
-  private boolean              weblogicOrWebsphere;
+  private final Map            descriptors        = new HashMap();
+  private final Map            extraServerJvmArgs = new HashMap();
+  private final boolean        weblogicOrWebsphere;
 
   public SessionConfigTest() {
     weblogicOrWebsphere = appServerInfo().getId() == AppServerInfo.WEBLOGIC
@@ -54,7 +54,7 @@ public class SessionConfigTest extends AbstractDeploymentTest {
   public void testCookieDisabled() throws Exception {
     if (!weblogicOrWebsphere) return;
     descriptors.put("wl81", "weblogic81a.xml");
-    descriptors.put("wl92", "weblogic92a.xml");
+    descriptors.put("wl92-10", "weblogic92a.xml");
     descriptors.put("was61", "websphere61a.xml");
     init();
 
@@ -71,7 +71,7 @@ public class SessionConfigTest extends AbstractDeploymentTest {
   public void testUrlRewritingDisabled() throws Exception {
     if (!weblogicOrWebsphere) return;
     descriptors.put("wl81", "weblogic81b.xml");
-    descriptors.put("wl92", "weblogic92b.xml");
+    descriptors.put("wl92-10", "weblogic92b.xml");
     descriptors.put("was61", "websphere61b.xml");
     init();
 
@@ -85,7 +85,7 @@ public class SessionConfigTest extends AbstractDeploymentTest {
     if (!weblogicOrWebsphere) return;
     if (appServerInfo().getId() != AppServerInfo.WEBLOGIC) { return; }
     descriptors.put("wl81", "weblogic81c.xml");
-    descriptors.put("wl92", "weblogic92c.xml");
+    descriptors.put("wl92-10", "weblogic92c.xml");
     init();
 
     WebConversation wc = new WebConversation();
@@ -102,7 +102,7 @@ public class SessionConfigTest extends AbstractDeploymentTest {
   public void testIdLength() throws Exception {
     if (appServerInfo().getId() != AppServerInfo.WEBLOGIC) { return; }
     descriptors.put("wl81", "weblogic81d.xml");
-    descriptors.put("wl92", "weblogic92d.xml");
+    descriptors.put("wl92-10", "weblogic92d.xml");
     init();
 
     WebConversation wc = new WebConversation();
@@ -154,8 +154,8 @@ public class SessionConfigTest extends AbstractDeploymentTest {
         if (appServerInfo().getMajor().equals("8")) {
           builder.addResourceFullpath(RESOURCE_ROOT, (String) descriptors.get("wl81"), "WEB-INF/weblogic.xml");
         }
-        if (appServerInfo().getMajor().equals("9")) {
-          builder.addResourceFullpath(RESOURCE_ROOT, (String) descriptors.get("wl92"), "WEB-INF/weblogic.xml");
+        if (appServerInfo().getMajor().equals("9") || appServerInfo().getMajor().equals("10")) {
+          builder.addResourceFullpath(RESOURCE_ROOT, (String) descriptors.get("wl92-10"), "WEB-INF/weblogic.xml");
         }
         break;
       case AppServerInfo.WEBSPHERE:

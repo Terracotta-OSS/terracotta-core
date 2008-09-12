@@ -95,7 +95,7 @@ public class CookieSettingTest extends AbstractDeploymentTest {
         builder.addResourceFullpath("/com/tctest/server/appserver/unit/cookiesettingtest", "weblogic81.xml",
                                     "WEB-INF/weblogic.xml");
       }
-      if (appServerInfo().getMajor().equals("9")) {
+      if (appServerInfo().getMajor().equals("9") || appServerInfo().getMajor().equals("10")) {
         builder.addResourceFullpath("/com/tctest/server/appserver/unit/cookiesettingtest", "weblogic92.xml",
                                     "WEB-INF/weblogic.xml");
       }
