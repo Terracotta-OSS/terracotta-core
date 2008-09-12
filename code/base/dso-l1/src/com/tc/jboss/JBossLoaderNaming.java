@@ -31,14 +31,16 @@ public class JBossLoaderNaming {
     if (initialized) { throw new IllegalStateException("already initialized"); }
     initialized = true;
 
-    NamedClassLoader ncl = (NamedClassLoader) bootLoader;
-    ncl.__tc_setClassLoaderName(Namespace.createLoaderName(Namespace.JBOSS_NAMESPACE, "boot"));
-    ClassProcessorHelper.registerGlobalLoader(ncl);
+    // Depending on how people have munged their CLASSPATH, the boot loader might not need to be named
+    if (bootLoader != ClassLoader.getSystemClassLoader()) {
+      NamedClassLoader ncl = (NamedClassLoader) bootLoader;
+      ncl.__tc_setClassLoaderName(Namespace.createLoaderName(Namespace.JBOSS_NAMESPACE, "boot"));
+      ClassProcessorHelper.registerGlobalLoader(ncl);
+    }
 
     serverHomeDir = fixUpUrl(homeDir.getAbsoluteFile().toURL()).toExternalForm();
     serverBaseDir = fixUpUrl(baseDir.getAbsoluteFile().toURL()).toExternalForm();
     serverTempDir = fixUpUrl(tempDir.getAbsoluteFile().toURL()).toExternalForm();
-
   }
 
   private static URL fixUpUrl(URL url) throws MalformedURLException {
