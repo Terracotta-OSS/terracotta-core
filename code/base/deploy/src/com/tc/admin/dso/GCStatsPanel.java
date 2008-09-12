@@ -51,7 +51,7 @@ public class GCStatsPanel extends XContainer implements DGCListener, PropertyCha
     Button runDGCButton = (Button) findComponent("RunGCButton");
     runDGCButton.setAction(m_gcAction);
 
-    m_popupMenu = new PopupMenu("GC");
+    m_popupMenu = new PopupMenu("DGC");
     m_popupMenu.add(m_gcAction);
     m_table.add(m_popupMenu);
     m_table.addMouseListener(new TableMouseHandler());
@@ -116,7 +116,7 @@ public class GCStatsPanel extends XContainer implements DGCListener, PropertyCha
 
   class RunGCAction extends XAbstractAction {
     RunGCAction() {
-      super("Run GC");
+      super("Run DGC");
     }
 
     public void actionPerformed(ActionEvent ae) {
