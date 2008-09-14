@@ -118,6 +118,8 @@ public class DBDiff extends BaseUtility {
     log("Diffing ManagedObjects...(Partial implementation)");
     SyncObjectIdSet oids1 = mp1.getAllObjectIDs();
     SyncObjectIdSet oids2 = mp2.getAllObjectIDs();
+    oids1.snapshot();
+    oids2.snapshot();
     if (!oids1.equals(oids2)) {
       log("*** [1] containing " + oids1.size() + " ObjectIDs differs from [2] containing " + oids2.size()
           + " ObjectIDs");
