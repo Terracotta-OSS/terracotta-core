@@ -38,7 +38,6 @@ public class JMXConnectorProxy implements JMXConnector {
   public static final String JMXRMI_URI_PATTERN = "service:jmx:rmi:///jndi/rmi://{0}:{1}/jmxrmi";
 
   static {
-    // Silence httpclient
     System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog");
   }
   

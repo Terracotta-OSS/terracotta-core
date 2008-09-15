@@ -26,6 +26,10 @@ public class CommandLineBuilder {
   private String[]    cmdArguments;
   private CommandLine commandLine;
 
+  static {
+    System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog");
+  }
+
   public CommandLineBuilder(String callingClassName, String[] cmdArguments) {
     this.callingClassName = callingClassName;
     this.cmdArguments = Arrays.asList(cmdArguments).toArray(new String[0]);
