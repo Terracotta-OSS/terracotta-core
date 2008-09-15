@@ -32,7 +32,7 @@ public class CommandLineMainTest extends TestCase {
     ManagedObjectReportCommand command = new ManagedObjectReportCommand(sw);
     clm.executeCommand(command.optionName(), new String[0]);
     String assertString = "sleepycat database source required.\n"
-                          + "\tUsage: managed-object-report <sleepycat source directory>\n"
+                          + "\tUsage: managed-object-report <sleepycat source directory> [[list-all-objects]|[show-object <objectID>]]\n"
                           + "\tThis utility prints the state of managed objects in the database located at <sleepycat source directory>.\n";
     assertEquals(assertString, sw.toString());
   }
