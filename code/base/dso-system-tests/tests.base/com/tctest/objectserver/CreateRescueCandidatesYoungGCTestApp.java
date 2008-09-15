@@ -9,6 +9,7 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.util.runtime.Os;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.text.DateFormat;
@@ -21,18 +22,24 @@ import java.util.Vector;
 
 public class CreateRescueCandidatesYoungGCTestApp extends AbstractErrorCatchingTransparentApp {
 
-  private static final long TEST_DURATION             = 7 * 60 * 1000;
+  private static long       TEST_DURATION;
 
-  private static final long THREAD_DURATION_TOLERANCE = 30 * 1000;
+  private static long       THREAD_DURATION_TOLERANCE;
 
-  private static final long THREAD_DURATION           = TEST_DURATION - THREAD_DURATION_TOLERANCE;
+  private static long       THREAD_DURATION;
 
-  final Set                 root                      = new HashSet();
-  final Vector              unusedBytes               = new Vector();
-  static long               maxDepth                  = 2;
+  private static final long MINUTE      = 60 * 1000;
+
+  final Set                 root        = new HashSet();
+  final Vector              unusedBytes = new Vector();
+  static long               maxDepth    = 2;
 
   public CreateRescueCandidatesYoungGCTestApp(String appId, ApplicationConfig config, ListenerProvider listenerProvider) {
     super(appId, config, listenerProvider);
+
+    TEST_DURATION = Os.isSolaris() ? (3 * MINUTE) : (7 * MINUTE);
+    THREAD_DURATION_TOLERANCE = Os.isSolaris() ? (15 * 1000) : (30 * 1000);
+    THREAD_DURATION = TEST_DURATION - THREAD_DURATION_TOLERANCE;
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
