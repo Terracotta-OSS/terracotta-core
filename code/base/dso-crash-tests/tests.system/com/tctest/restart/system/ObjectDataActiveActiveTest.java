@@ -8,11 +8,11 @@ import com.tc.test.MultipleServersCrashMode;
 import com.tc.test.MultipleServersPersistenceMode;
 import com.tc.test.MultipleServersSharedDataMode;
 import com.tc.test.activeactive.ActiveActiveTestSetupManager;
+import com.tctest.ActiveActiveTransparentTestBase;
 import com.tctest.TestConfigurator;
-import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
 
-public class ObjectDataActiveActiveTest extends TransparentTestBase implements TestConfigurator {
+public class ObjectDataActiveActiveTest extends ActiveActiveTransparentTestBase implements TestConfigurator {
 
   private int       clientCount  = 1;
   private final int electionTime = 5;

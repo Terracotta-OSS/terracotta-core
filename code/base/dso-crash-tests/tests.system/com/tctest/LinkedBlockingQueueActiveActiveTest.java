@@ -9,7 +9,7 @@ import com.tc.test.MultipleServersPersistenceMode;
 import com.tc.test.MultipleServersSharedDataMode;
 import com.tc.test.activeactive.ActiveActiveTestSetupManager;
 
-public class LinkedBlockingQueueActiveActiveTest extends TransparentTestBase {
+public class LinkedBlockingQueueActiveActiveTest extends ActiveActiveTransparentTestBase {
 
   private static final int NODE_COUNT   = 1;
   private final int        electionTime = 5;
@@ -31,5 +31,4 @@ public class LinkedBlockingQueueActiveActiveTest extends TransparentTestBase {
     setupManager.addActiveServerGroup(2, MultipleServersSharedDataMode.DISK, electionTime);
     setupManager.addActiveServerGroup(2, MultipleServersSharedDataMode.DISK, electionTime);
   }
-
 }
