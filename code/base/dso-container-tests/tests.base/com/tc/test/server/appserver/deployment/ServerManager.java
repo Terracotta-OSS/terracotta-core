@@ -49,7 +49,6 @@ public class ServerManager {
   private static int                  serverCounter  = 0;
 
   public ServerManager(final Class testClass, Collection extraJvmArgs) throws Exception {
-    PropertiesHackForRunningInEclipse.initializePropertiesWhenRunningInEclipse();
     config = TestConfigObject.getInstance();
     factory = AppServerFactory.createFactoryFromProperties();
     installDir = config.appserverServerInstallDir();
