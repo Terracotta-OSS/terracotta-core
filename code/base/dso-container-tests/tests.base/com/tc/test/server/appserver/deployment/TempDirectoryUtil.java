@@ -19,7 +19,6 @@ public class TempDirectoryUtil {
 
   protected static synchronized TempDirectoryHelper getTempDirectoryHelper(Class type) {
     if (tempDirectoryHelper == null) {
-      PropertiesHackForRunningInEclipse.initializePropertiesWhenRunningInEclipse();
       tempDirectoryHelper = new TempDirectoryHelper(type, true);
     }
 
