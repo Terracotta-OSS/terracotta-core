@@ -180,6 +180,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
 
   public void flush(LockID lockID) {
     final long start = System.currentTimeMillis();
+    long lastPrinted = 0;
     boolean isInterrupted = false;
     Collection c;
     synchronized (lock) {
@@ -187,9 +188,10 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
         try {
           lock.wait(FLUSH_WAIT_INTERVAL);
           long now = System.currentTimeMillis();
-          if ((now - start) > FLUSH_WAIT_INTERVAL) {
+          if ((now - start) > FLUSH_WAIT_INTERVAL && (now - lastPrinted) > FLUSH_WAIT_INTERVAL / 3) {
             logger.info("Flush for " + lockID + " took longer than: " + (FLUSH_WAIT_INTERVAL / 1000) + " sec. Took : "
                         + (now - start) + " ms. # Transactions not yet Acked = " + c.size() + "\n");
+            lastPrinted = now;
           }
         } catch (InterruptedException e) {
           isInterrupted = true;
@@ -229,7 +231,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
 
     long diff = System.currentTimeMillis() - start;
     if (diff > 1000) {
-      logger.info("WARNING ! Took more than 1000ms to add to sequencer  : " + diff + " ms");
+      logger.info(txn.getTransactionID() + " : Took more than 1000ms to add to sequencer  : " + diff + " ms");
     }
 
     synchronized (lock) {
