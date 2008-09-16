@@ -8,6 +8,7 @@ import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.test.GroupData;
 import com.tc.test.MultipleServerManager;
 import com.tc.test.MultipleServersConfigCreator;
+import com.tc.test.MultipleServersCrashMode;
 import com.tc.test.activepassive.ActivePassiveServerManager;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 import com.tc.test.proxyconnect.ProxyConnectManager;
@@ -52,7 +53,7 @@ public class ActiveActiveServerManager extends MultipleServerManager {
       activePassiveServerManagers[i] = new ActivePassiveServerManager(true, tempDir, portChooser, configModel,
                                                                       activePasssiveTestSetupManager, javaHome,
                                                                       configFactory, extraJvmArgs, isProxyL2GroupPorts,
-                                                                      false, noOfServers);
+                                                                      true, noOfServers);
       noOfServers += setupManger.getGroupMemberCount(i);
     }
 
@@ -91,10 +92,15 @@ public class ActiveActiveServerManager extends MultipleServerManager {
   }
 
   private ActivePassiveTestSetupManager createActivePassiveTestSetupManager(int grpIndex) {
+    if (setupManger.getGroupMemberCount(grpIndex) == 1
+        && !setupManger.getServerCrashMode().equals(MultipleServersCrashMode.NO_CRASH)) throw new AssertionError(
+                                                                                                                 "An active-server group with only one server should have the crash mode set as NO_CRASH");
+
     ActivePassiveTestSetupManager testSetupManager = new ActivePassiveTestSetupManager();
     testSetupManager.setMaxCrashCount(setupManger.getMaxCrashCount());
     testSetupManager.setServerCount(setupManger.getGroupMemberCount(grpIndex));
-    testSetupManager.setServerCrashMode(setupManger.getServerCrashMode());
+    ActiveActiveCrashMode mode = new ActiveActiveCrashMode(setupManger.getServerCrashMode());
+    testSetupManager.setServerCrashMode(mode);
     testSetupManager.setServerCrashWaitTimeInSec(setupManger.getServerCrashWaitTimeInSec());
     testSetupManager.setServerPersistenceMode(setupManger.getServerPersistenceMode());
     testSetupManager.setServerShareDataMode(setupManger.getGroupServerShareDataMode(grpIndex));

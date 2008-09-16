@@ -4,7 +4,6 @@
  */
 package com.tc.test;
 
-
 public abstract class MultipleServersTestSetupManager {
 
   private int                            serverCount;
@@ -17,6 +16,10 @@ public abstract class MultipleServersTestSetupManager {
 
   public void setServerCount(int count) {
     serverCount = count;
+  }
+
+  public void setServerCrashMode(MultipleServersCrashMode crashMode) {
+    this.crashMode = crashMode;
   }
 
   public int getServerCount() {
@@ -77,11 +80,11 @@ public abstract class MultipleServersTestSetupManager {
   public int getElectionTime() {
     return this.electionTime;
   }
-  
+
   public abstract int getActiveServerGroupCount();
 
   public abstract int getGroupMemberCount(int groupIndex);
-  
+
   public abstract int getGroupElectionTime(int groupIndex);
 
   public abstract String getGroupServerShareDataMode(int groupIndex);
