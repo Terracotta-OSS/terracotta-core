@@ -1,13 +1,12 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.io.serializer;
 
 import com.tc.io.serializer.api.BasicSerializer;
 import com.tc.io.serializer.api.Serializer;
 import com.tc.object.ObjectID;
-import com.tc.objectserver.persistence.impl.NullStringIndexPersistor;
-import com.tc.objectserver.persistence.impl.StringIndexImpl;
 import com.tc.util.TCAssertionError;
 
 import java.io.ByteArrayInputStream;
@@ -20,7 +19,7 @@ public class DSOSerializerPolicyTest extends TestCase {
   private Serializer serializer;
 
   public void test() throws Exception {
-    DSOSerializerPolicy policy = new DSOSerializerPolicy(new StringIndexImpl(new NullStringIndexPersistor()));
+    DSOSerializerPolicy policy = new DSOSerializerPolicy();
     serializer = new BasicSerializer(policy);
 
     ObjectID oid = new ObjectID(1);

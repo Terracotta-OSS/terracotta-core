@@ -6,7 +6,6 @@ package com.tc.io.serializer;
 
 import com.tc.io.serializer.api.Serializer;
 import com.tc.io.serializer.api.SerializerPolicy;
-import com.tc.io.serializer.api.StringIndex;
 import com.tc.io.serializer.impl.BooleanSerializer;
 import com.tc.io.serializer.impl.ByteSerializer;
 import com.tc.io.serializer.impl.CharacterSerializer;
@@ -17,7 +16,6 @@ import com.tc.io.serializer.impl.LongSerializer;
 import com.tc.io.serializer.impl.ObjectIDSerializer;
 import com.tc.io.serializer.impl.ObjectSerializer;
 import com.tc.io.serializer.impl.ShortSerializer;
-import com.tc.io.serializer.impl.StringSerializer;
 import com.tc.io.serializer.impl.StringUTFSerializer;
 import com.tc.object.ObjectID;
 
@@ -36,15 +34,7 @@ public final class DSOSerializerPolicy implements SerializerPolicy {
   private final TIntObjectHashMap         id2Serializer;
   private final DSOSerializerPolicy.SDesc objectSerializer;
 
-  public DSOSerializerPolicy(StringIndex stringIndex) {
-    this(stringIndex, false);
-  }
-
   public DSOSerializerPolicy() {
-    this(null, true);
-  }
-
-  private DSOSerializerPolicy(StringIndex stringIndex, boolean useUTFStrings) {
     class2SerializerDescriptor = new HashMap();
     id2Serializer = new TIntObjectHashMap();
 
@@ -53,11 +43,7 @@ public final class DSOSerializerPolicy implements SerializerPolicy {
     addSerializerMapping(Boolean.class, new BooleanSerializer());
     addSerializerMapping(Byte.class, new ByteSerializer());
     addSerializerMapping(Character.class, new CharacterSerializer());
-    if (useUTFStrings) {
-      addSerializerMapping(String.class, new StringUTFSerializer());
-    } else {
-      addSerializerMapping(String.class, new StringSerializer(stringIndex));
-    }
+    addSerializerMapping(String.class, new StringUTFSerializer());
     addSerializerMapping(Double.class, new DoubleSerializer());
     addSerializerMapping(Float.class, new FloatSerializer());
     addSerializerMapping(Integer.class, new IntegerSerializer());
