@@ -126,7 +126,7 @@ public class StatisticsGathererTest extends TransparentTestBase implements Stati
     gatherer.stopCapturing();
     assertEquals(sessionid2, listenerCapturingStopped);
 
-    Thread.sleep(5000);
+    Thread.sleep(15000);
 
     final List<StatisticData> data_list = new ArrayList<StatisticData>();
     store.retrieveStatistics(new StatisticsRetrievalCriteria(), new StatisticDataUser() {
