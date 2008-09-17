@@ -109,14 +109,15 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
       // No Throttling
       return;
     } else if (factor >= 3) {
-      // Halt
-      haltUntilLessThan(TOTAL_PENDING_TRANSACTIONS_THRESHOLD * 3, totalPendingTxns);
+      // More than 3 times, Halt until less than 2.5 times of TOTAL_PENDING_TRANSACTIONS_THRESHOLD
+      haltUntilLessThan((int) (TOTAL_PENDING_TRANSACTIONS_THRESHOLD * 2.5), totalPendingTxns);
     } else {
       // throttle
       int maxSecsToSleep = MAX_SLEEP_SECS * Math.min(factor, 3);
       logger.info("Throttling Transaction Acks for " + maxSecsToSleep + " secs maximum since totalPendingTxns reached "
                   + totalPendingTxns);
-      while (maxSecsToSleep > 0 && totalPendingTxns > TOTAL_PENDING_TRANSACTIONS_THRESHOLD) {
+      // Wait until max time to sleep or until it falls below 66 % of TOTAL_PENDING_TRANSACTIONS_THRESHOLD
+      while (maxSecsToSleep > 0 && totalPendingTxns > ((int) (TOTAL_PENDING_TRANSACTIONS_THRESHOLD *.66))) {
         try {
           wait(1000);
         } catch (InterruptedException e) {
