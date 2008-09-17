@@ -81,7 +81,7 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
 							+ "with this ACTIVE server and DGC is disabled.");
 		}
 		if (isGCRunning()) {
-			throw new UnsupportedOperationException(
+			logger.warn(
 					"Cannot run DGC because DGC is already running.");
 		}
 
