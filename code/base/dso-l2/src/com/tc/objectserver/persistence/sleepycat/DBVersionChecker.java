@@ -29,7 +29,7 @@ public class DBVersionChecker {
 
     @Override
     public String toString() {
-      return "Sleepycat DB version [" + getVersion() + "]";
+      return "Database version [" + getVersion() + "]";
     }
 
     // TODO: db upgrade/revert routines
