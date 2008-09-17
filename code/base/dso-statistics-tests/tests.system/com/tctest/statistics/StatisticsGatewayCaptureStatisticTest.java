@@ -44,8 +44,8 @@ public class StatisticsGatewayCaptureStatisticTest extends TransparentTestBase {
     // start capturing
     stat_gateway.startCapturing(sessionid);
 
-    // wait for 3 seconds
-    Thread.sleep(3000);
+    // wait for 10 seconds
+    Thread.sleep(10000);
 
     StatisticData[] data1 = stat_gateway.captureStatistic(sessionid, SRASystemProperties.ACTION_NAME);
     assertEquals(total_node_count, data1.length);
@@ -58,8 +58,8 @@ public class StatisticsGatewayCaptureStatisticTest extends TransparentTestBase {
       assertEquals(SRASystemProperties.ACTION_NAME, data2[i].getName());
     }
 
-    // wait for 3 seconds
-    Thread.sleep(3000);
+    // wait for 10 seconds
+    Thread.sleep(10000);
 
     // stop capturing and wait for the last data
     synchronized (listener) {
