@@ -12,8 +12,9 @@ import java.util.Collection;
 public class ServerManagerUtil {
 
   protected final static Log logger = LogFactory.getLog(ServerManagerUtil.class);
+  private static ServerManager theServerManager;
 
-  private static ServerManager start(Class testClass, boolean withPersistentStore, Collection extraJvmArgs,
+  private static synchronized ServerManager start(Class testClass, boolean withPersistentStore, Collection extraJvmArgs,
                                      final boolean coresident) throws Exception {
     if (!coresident) {
       ServerManager existingServerManager = getExistingServerManager();
@@ -28,7 +29,7 @@ public class ServerManagerUtil {
     return serverManager;
   }
 
-  private static void stop(ServerManager serverManager, final boolean coresident) {
+  private static synchronized void stop(ServerManager serverManager, final boolean coresident) {
     if (!coresident) {
       ServerManager existingServerManager = getExistingServerManager();
       if (existingServerManager != null) {
@@ -40,38 +41,36 @@ public class ServerManagerUtil {
     serverManager.stop();
   }
 
-  private static ThreadLocal serverManagerHolder = new ThreadLocal();
-
-  private static ServerManager getExistingServerManager() {
-    return (ServerManager) serverManagerHolder.get();
+  private static synchronized ServerManager getExistingServerManager() {
+    return theServerManager;
   }
 
-  public static ServerManager startAndBind(Class testClass, boolean withPersistentStore, Collection extraJvmArgs)
+  public static synchronized ServerManager startAndBind(Class testClass, boolean withPersistentStore, Collection extraJvmArgs)
       throws Exception {
     return startAndBind(testClass, withPersistentStore, extraJvmArgs, false);
   }
 
-  public static ServerManager startAndBind(Class testClass, boolean withPersistentStore, Collection extraJvmArgs,
+  public static synchronized ServerManager startAndBind(Class testClass, boolean withPersistentStore, Collection extraJvmArgs,
                                            final boolean coresident) throws Exception {
     ServerManager sm = start(testClass, withPersistentStore, extraJvmArgs, coresident);
-    if (!coresident) serverManagerHolder.set(sm);
+    if (!coresident) theServerManager = sm;
     return sm;
   }
 
-  public static void stopAndRelease(ServerManager sm) {
+  public static synchronized void stopAndRelease(ServerManager sm) {
     stopAndRelease(sm, false);
   }
 
-  public static void stopAndRelease(ServerManager sm, final boolean coresident) {
-    if (!coresident) serverManagerHolder.set(null);
+  public static synchronized void stopAndRelease(ServerManager sm, final boolean coresident) {
+    if (!coresident) theServerManager = null;
     stop(sm, coresident);
   }
 
-  public static void stopAllWebServers(ServerManager serverManager) {
+  public static synchronized void stopAllWebServers(ServerManager serverManager) {
     stopAllWebServers(serverManager, false);
   }
 
-  public static void stopAllWebServers(ServerManager serverManager, final boolean coresident) {
+  public static synchronized void stopAllWebServers(ServerManager serverManager, final boolean coresident) {
     if (!coresident) getExistingServerManager().stopAllWebServers();
     else serverManager.stopAllWebServers();
   }

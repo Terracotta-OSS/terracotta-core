@@ -54,7 +54,6 @@ public class ServerManager {
     installDir = config.appserverServerInstallDir();
     tempDir = TempDirectoryUtil.getTempDirectory(testClass);
     tcConfigFile = new File(tempDir, "tc-config.xml");
-    serverCounter++;
     sandbox = AppServerUtil.createSandbox(tempDir);
     warDir = new File(sandbox, "war");
     jvmArgs = extraJvmArgs;
@@ -105,7 +104,7 @@ public class ServerManager {
   }
 
   private void startDSO(boolean withPersistentStore) throws Exception {
-    File workDir = new File(tempDir, "dso-server-" + serverCounter);
+    File workDir = new File(tempDir, "dso-server-" + serverCounter++);
     workDir.mkdirs();
     dsoServer = new DSOServer(withPersistentStore, workDir, serverTcConfig);
     if (!Vm.isIBM() && !(Os.isMac() && Vm.isJDK14())) {
