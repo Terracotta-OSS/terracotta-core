@@ -153,6 +153,12 @@ NOTE: Output of binaries are placed under code/base/build/dist
 --no-demo
     Use this option with "dist" target will create only the binaries
 
+--no-schema
+    Skipping schema compilation
+
+--no-no
+    This equals --no-ivy --no-demo --no-schema
+
 dist <product_code> <flavor> [maven.repo=URL]
     Create distribution binaries.
     <product_code> may be one of dso (the default), web, or api

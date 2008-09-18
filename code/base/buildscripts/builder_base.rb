@@ -94,6 +94,12 @@ class TerracottaBuilder
     option_parser.on('--no-ivy') do @no_ivy = true end
     option_parser.on('--no-compile') do @no_compile = true end
     option_parser.on('--no-demo') do @no_demo = true end
+    option_parser.on('--no-schema') do @no_schema = true end
+    option_parser.on('--no-no') do 
+      @no_ivy = true
+      @no_demo = true
+      @no_schema = true end
+    end
     option_parser.on('--emma') do Registry[:emma] = true end
     
     @start_time = Time.now

@@ -23,6 +23,10 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   end
   
   def postscript(ant, build_environment, product_directory, *args)
+    if @no_schema
+      loud_message("--no-schema found. Skipping")
+      return
+    end
     srcdir = @static_resources.config_schema_source_directory(@module_set)
     tmpdir = FilePath.new(product_directory, 'tmp').ensure_directory
 
