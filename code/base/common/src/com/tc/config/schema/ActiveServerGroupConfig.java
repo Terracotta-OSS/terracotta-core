@@ -4,9 +4,10 @@
  */
 package com.tc.config.schema;
 
-
 public interface ActiveServerGroupConfig extends NewConfig {
   MembersConfig getMembers();
+
+  boolean isMember(String l2Name);
 
   NewHaConfig getHa();
 

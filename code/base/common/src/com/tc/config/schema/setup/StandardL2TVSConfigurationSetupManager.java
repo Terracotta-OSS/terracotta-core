@@ -116,7 +116,8 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
     this.configTCProperties = new ConfigTCPropertiesFromObject((TcProperties) tcPropertiesRepository().bean());
     overwriteTcPropertiesFromConfig();
-    // do this after runConfigurationCreator method call, after serversBeanRepository is set
+    // do this after runConfigurationCreator method call, after
+    // serversBeanRepository is set
     try {
       this.updateCheckConfig = getUpdateCheckConfig();
     } catch (XmlException e2) {
@@ -152,7 +153,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
       boolean found = false;
       int gid = -1;
       for (int j = 0; j < groupArray.length; j++) {
-        if (isMemberOf(serverName, groupArray[j])) {
+        if (groupArray[j].isMember(serverName)) {
           if (found) { throw new ConfigurationSetupException("Server{" + serverName
                                                              + "} is part of more than 1 active-server-group:  groups{"
                                                              + gid + "," + groupArray[j].getId() + "}"); }
@@ -165,18 +166,10 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     }
   }
 
-  private boolean isMemberOf(String serverName, ActiveServerGroupConfig groupConfig) {
-    String[] members = groupConfig.getMembers().getMemberArray();
-    for (int i = 0; i < members.length; i++) {
-      if (members[i].equals(serverName)) { return true; }
-    }
-    return false;
-  }
-
   // make sure there is at most one of these
   private ActiveServerGroupsConfig getActiveServerGroupsConfig() throws ConfigurationSetupException {
     if (this.haConfig == null) { throw new ConfigurationSetupException(
-                                                          "Define haConfig before defining activeServerGroupsConfig in the constructor!"); }
+                                                                       "Define haConfig before defining activeServerGroupsConfig in the constructor!"); }
 
     final ActiveServerGroups defaultActiveServerGroups = ActiveServerGroupsConfigObject
         .getDefaultActiveServerGroups(defaultValueProvider, serversBeanRepository(), haConfig.getHa());
@@ -267,7 +260,8 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
     public L2ConfigData(String name) throws ConfigurationSetupException {
       this.name = name;
-      findMyL2Bean(); // To get the exception in case things are screwed up
+      findMyL2Bean(); // To get the exception in case things are screwed
+      // up
 
       this.beanRepository = new ChildBeanRepository(serversBeanRepository(), Server.class, new BeanFetcher());
 
@@ -419,7 +413,8 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
                                                                                                              "Attempting to run multiple servers without license "
                                                                                                                  + "authorization of DSO High Availability."); }
 
-        // We have clustered DSO; they must all be in permanent-store mode
+        // We have clustered DSO; they must all be in permanent-store
+        // mode
         for (int i = 0; i < servers.length; ++i) {
           String name = servers[i].getName();
           L2ConfigData data = configDataFor(name);
@@ -522,10 +517,14 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
   }
 
   public InputStream effectiveConfigFile() {
-    // This MUST piece together the configuration from our currently-active bean repositories. If we just read the
-    // actual config file we got on startup, we'd be sending out, well, the config we got on startup -- which might be
-    // quite different from our current config, if an L1 came in and overrode our config. This effective config will
-    // also contain the effects of parameter substitution for server elements
+    // This MUST piece together the configuration from our currently-active
+    // bean repositories. If we just read the
+    // actual config file we got on startup, we'd be sending out, well, the
+    // config we got on startup -- which might be
+    // quite different from our current config, if an L1 came in and
+    // overrode our config. This effective config will
+    // also contain the effects of parameter substitution for server
+    // elements
 
     TcConfigDocument doc = TcConfigDocument.Factory.newInstance();
     TcConfigDocument.TcConfig config = doc.addNewTcConfig();
@@ -564,6 +563,10 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
   private void overwriteTcPropertiesFromConfig() {
     TCProperties tcProps = TCPropertiesImpl.getProperties();
     tcProps.overwriteTcPropertiesFromConfig(this.configTCProperties.getTcPropertiesArray());
+  }
+
+  public ActiveServerGroupConfig getActiveServerGroupForThisL2() {
+    return this.activeServerGroupsConfig.getActiveServerGroupForL2(this.thisL2Identifier);
   }
 
 }

@@ -77,4 +77,11 @@ public class ActiveServerGroupsConfigObject extends BaseNewConfigObject implemen
     asgs.setActiveServerGroupArray(groupArray);
     return asgs;
   }
+
+  public ActiveServerGroupConfig getActiveServerGroupForL2(String name) {
+    for (int groupCount = 0; groupCount < activeServerGroupCount; groupCount++) {
+      if (groupConfigArray[groupCount].isMember(name)) { return groupConfigArray[groupCount]; }
+    }
+    return null;
+  }
 }

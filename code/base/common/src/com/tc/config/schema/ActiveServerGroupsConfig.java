@@ -5,7 +5,9 @@
 package com.tc.config.schema;
 
 public interface ActiveServerGroupsConfig extends NewConfig {
-  ActiveServerGroupConfig[] getActiveServerGroupArray();
+	ActiveServerGroupConfig[] getActiveServerGroupArray();
 
-  int getActiveServerGroupCount();
+	ActiveServerGroupConfig getActiveServerGroupForL2(String l2Name);
+
+	int getActiveServerGroupCount();
 }

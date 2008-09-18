@@ -21,9 +21,11 @@ import com.terracottatech.config.Servers;
 
 public class ActiveServerGroupConfigObject extends BaseNewConfigObject implements ActiveServerGroupConfig {
 
-  // TODO: the defaultValueProvider is not implemented to fetch default values for attributes... possibly fix this and
+  // TODO: the defaultValueProvider is not implemented to fetch default values
+  // for attributes... possibly fix this and
   // use the commented code to set defaultId:
-  // int defaultId = ((XmlInteger) defaultValueProvider.defaultFor(serversBeanRepository.rootBeanSchemaType(),
+  // int defaultId = ((XmlInteger)
+  // defaultValueProvider.defaultFor(serversBeanRepository.rootBeanSchemaType(),
   // "active-server-groups/active-server-group[@id]")).getBigIntegerValue().intValue();
   public static final int     defaultGroupId = 0;
 
@@ -96,6 +98,14 @@ public class ActiveServerGroupConfigObject extends BaseNewConfigObject implement
     }
 
     return asg;
+  }
+
+  public boolean isMember(String l2Name) {
+    String[] members = getMembers().getMemberArray();
+    for (int i = 0; i < members.length; i++) {
+      if (members[i].equals(l2Name)) { return true; }
+    }
+    return false;
   }
 
 }
