@@ -14,6 +14,10 @@ public class LinkedBlockingQueueActiveActiveTest extends ActiveActiveTransparent
   private static final int NODE_COUNT   = 1;
   private final int        electionTime = 5;
 
+  public LinkedBlockingQueueActiveActiveTest() {
+    disableAllUntil("2008-11-01");
+  }
+
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
