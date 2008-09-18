@@ -98,7 +98,7 @@ class TerracottaBuilder
     option_parser.on('--no-no') do 
       @no_ivy = true
       @no_demo = true
-      @no_schema = true end
+      @no_schema = true
     end
     option_parser.on('--emma') do Registry[:emma] = true end
     
