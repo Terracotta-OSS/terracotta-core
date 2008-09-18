@@ -25,7 +25,7 @@ public class LinkedBlockingQueueActiveActiveTest extends ActiveActiveTransparent
 
   public void setupActiveActiveTest(ActiveActiveTestSetupManager setupManager) {
     setupManager.setServerCount(4);
-    setupManager.setServerCrashMode(MultipleServersCrashMode.NO_CRASH);
+    setupManager.setServerCrashMode(MultipleServersCrashMode.CONTINUOUS_ACTIVE_CRASH);
     setupManager.setServerShareDataMode(MultipleServersSharedDataMode.NETWORK);
     setupManager.setServerPersistenceMode(MultipleServersPersistenceMode.PERMANENT_STORE);
     setupManager.addActiveServerGroup(2, MultipleServersSharedDataMode.NETWORK, electionTime);
