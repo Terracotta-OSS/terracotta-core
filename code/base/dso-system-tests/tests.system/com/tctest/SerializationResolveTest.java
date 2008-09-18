@@ -4,7 +4,6 @@
  */
 package com.tctest;
 
-import EDU.oswego.cs.dl.util.concurrent.BrokenBarrierException;
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
 import com.tc.object.bytecode.ManagerUtil;
@@ -21,12 +20,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
 
-/**
- * CDV-244, CDV-907
- */
 public class SerializationResolveTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 2;
@@ -39,12 +33,11 @@ public class SerializationResolveTest extends TransparentTestBase {
   protected Class getApplicationClass() {
     return App.class;
   }
-  
-  public static final class App extends AbstractErrorCatchingTransparentApp {
+
+  public static class App extends AbstractErrorCatchingTransparentApp {
 
     private final CyclicBarrier barrier;
     private SerializableObject  root;
-    private HashMap mapRoot;
 
     public App(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
       super(appId, cfg, listenerProvider);
@@ -52,36 +45,6 @@ public class SerializationResolveTest extends TransparentTestBase {
     }
 
     protected void runTest() throws Throwable {
-      testSimple();
-      testHashMap();
-    }
-
-    private void testHashMap() throws Exception {
-      final int index = barrier.barrier();
-      final String key = "Test";
-      final SerializableObject value = new SerializableObject();
-      if (index == 0) {
-        mapRoot = new HashMap();
-        synchronized (mapRoot){
-          mapRoot.put(key, value);
-        }
-      }
-      
-      barrier.barrier();
-
-      if (index != 0) {
-        final Map so = (Map)testSerialization(mapRoot);
-        
-        if (so == mapRoot) { throw new AssertionError("same object returned"); }
-        
-        if (ManagerUtil.isManaged(so)) { throw new AssertionError("deserialized object is shared"); }
-        
-        if (!(so.values().iterator().next() instanceof SerializableObject)) { throw new AssertionError("Iterated Map value was ObjectID in deserialized Map instance"); }
-        if (!(so.get(key) instanceof SerializableObject)) { throw new AssertionError("Map value was ObjectID in deserialized Map instance"); }
-      }
-    }    
-    
-    private void testSimple() throws InterruptedException, BrokenBarrierException, AssertionError, Exception {
       int index = barrier.barrier();
       if (index == 0) {
         root = makeGraph(500);
@@ -93,7 +56,7 @@ public class SerializationResolveTest extends TransparentTestBase {
         Object val = UninstrumentedReader.readField(root);
         if (val != null) { throw new AssertionError("failed to observe unresolved field"); }
 
-        SerializableObject so = (SerializableObject)testSerialization(root);
+        SerializableObject so = testSerialization(root);
 
         if (so == root) { throw new AssertionError("same object returned"); }
 
@@ -126,14 +89,14 @@ public class SerializationResolveTest extends TransparentTestBase {
       return top;
     }
 
-    private Serializable testSerialization(Serializable so) throws Exception {
+    private SerializableObject testSerialization(SerializableObject so) throws Exception {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       ObjectOutputStream oos = new ObjectOutputStream(baos);
       oos.writeObject(so);
       oos.close();
 
       ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
-      return (Serializable) ois.readObject();
+      return (SerializableObject) ois.readObject();
     }
 
     public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
@@ -149,11 +112,9 @@ public class SerializationResolveTest extends TransparentTestBase {
       config.addWriteAutolock(methodExpression);
 
       spec.addRoot("root", "root");
-      spec.addRoot("mapRoot", "mapRoot");
       spec.addRoot("barrier", "barrier");
     }
-  }  
-  
+  }
 }
 
 class SerializableObject implements Serializable {

@@ -10,18 +10,20 @@ import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 
-public class LinkedHashMapClassAdapter extends ChangeClassNameHierarchyAdapter implements Opcodes {
-  
-  public static final ClassAdapterFactory FACTORY = new ClassAdapterFactory(){
-    public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
-      return new LinkedHashMapClassAdapter(visitor);
-    }
-  };
-  
+public class LinkedHashMapClassAdapter extends ChangeClassNameHierarchyAdapter implements Opcodes, ClassAdapterFactory {
+
   private String className;
 
   public LinkedHashMapClassAdapter(ClassVisitor cv) {
     super(cv);
+  }
+
+  public LinkedHashMapClassAdapter() {
+    super(null);
+  }
+
+  public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
+    return new LinkedHashMapClassAdapter(visitor);
   }
 
   public final void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
