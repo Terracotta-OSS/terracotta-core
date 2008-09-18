@@ -9,6 +9,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Clearable;
+import com.tc.object.bytecode.HashMapClassAdapter;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.TCMap;
@@ -18,6 +19,9 @@ import com.tc.util.Assert;
 /*
  * This class will be merged with java.lang.HashMap in the bootjar. This HashMap can store ObjectIDs instead of Objects
  * to save memory and transparently fault Objects as needed. It can also clear references.
+ * 
+ * After merging, the {@link HashMapClassAdapter} will be applied, which will instrument either the entrySet0 method
+ * (if present) or the entrySet method otherwise.
  */
 public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
 
@@ -372,10 +376,10 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
     return new ValuesCollectionWrapper(super.values());
   }
 
-  public Set entrySet() {
-    return new EntrySetWrapper(nonOverridableEntrySet());
+  public Set entrySet(){
+    return this.nonOverridableEntrySet();
   }
-
+  
   private final Set nonOverridableEntrySet() {
     return super.entrySet();
   }
@@ -526,7 +530,10 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
 
   }
 
-  private class EntrySetWrapper extends AbstractSet {
+  /**
+   * This inner class is used by {@link HashMapClassAdapter}
+   */
+  class EntrySetWrapper extends AbstractSet {
 
     private final Set entries;
 
@@ -555,7 +562,7 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
     }
 
     public Iterator iterator() {
-      return new EntriesIterator(entries.iterator());
+      return new UnwrappedEntriesIterator(entries.iterator());
     }
 
     // FIXME:: DEV-1883 This is removing the keys and not the exact mapping, if I am not wrong, original hashmap checks
@@ -692,12 +699,12 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
 
   }
 
-  private class EntriesIterator implements Iterator {
+  private class UnwrappedEntriesIterator implements Iterator {
 
     private final Iterator iterator;
     private Map.Entry      currentEntry;
 
-    public EntriesIterator(Iterator iterator) {
+    public UnwrappedEntriesIterator(Iterator iterator) {
       this.iterator = iterator;
     }
 
@@ -738,28 +745,48 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
       }
     }
   }
+  
+  private abstract class WrappedEntriesIterator implements Iterator {
 
-  private class KeysIterator extends EntriesIterator {
+    private final Iterator iterator;
+
+    public WrappedEntriesIterator(Iterator iterator) {
+      this.iterator = iterator;
+    }
+
+    public boolean hasNext() {
+      return iterator.hasNext();
+    }
+
+    protected Map.Entry nextEntry() {
+      return (Map.Entry) iterator.next();
+    }
+
+    public void remove() {
+      iterator.remove();
+    }
+  }
+  
+  private class KeysIterator extends WrappedEntriesIterator {
 
     public KeysIterator(Iterator iterator) {
       super(iterator);
     }
 
     public Object next() {
-      return ((Map.Entry) super.next()).getKey();
+      return nextEntry().getKey();
     }
   }
 
-  private class ValuesIterator extends EntriesIterator {
+  private class ValuesIterator extends WrappedEntriesIterator {
 
     public ValuesIterator(Iterator iterator) {
       super(iterator);
     }
 
     public Object next() {
-      return ((Map.Entry) super.next()).getValue();
+      return nextEntry().getValue();
     }
-
   }
 
 }
