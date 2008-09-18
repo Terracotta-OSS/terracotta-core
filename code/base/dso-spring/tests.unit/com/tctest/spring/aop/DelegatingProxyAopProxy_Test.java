@@ -19,8 +19,9 @@ public class DelegatingProxyAopProxy_Test extends TCTestCase {
   private static final String BEAN_CONFIG = "com/tctest/spring/beanfactory-fastproxy.xml";
 
   public DelegatingProxyAopProxy_Test(String name) {
+    //DEV-1947
     super(name);
-    disableAllUntil("2008-09-18");  // XXX timebombed
+    disableAllUntil("2009-09-18");  // XXX timebombed
   }
 
   public static void testBeforeAdvice() {
