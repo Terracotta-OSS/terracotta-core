@@ -34,7 +34,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
 
     patch_level = config_source['level'] || patch_descriptor['level']
 
-    depends :dist
+    dist(product_code, flavor)
 
     begin
       # Warn if patch level is not a positive integer
