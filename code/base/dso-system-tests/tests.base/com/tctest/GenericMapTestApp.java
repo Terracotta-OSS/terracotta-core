@@ -44,6 +44,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.Map.Entry;
 
+
 public class GenericMapTestApp extends GenericTestApp {
 
   private static final int LITERAL_VARIANT   = 1;
@@ -67,7 +68,7 @@ public class GenericMapTestApp extends GenericTestApp {
 
   protected void setupTestObject(String test) {
     List maps = new ArrayList();
-
+    
     maps.add(new HashMap());
     maps.add(new Hashtable());
     maps.add(new TreeMap(new NullTolerantComparator()));
@@ -181,6 +182,10 @@ public class GenericMapTestApp extends GenericTestApp {
     }
 
     // unreachable
+  }
+  
+  void testFailure() {
+    throw new AssertionError("see if this test is failing!!!");
   }
 
   void testBasicUnSynchronizedPut(Map map, boolean validate, int v) {
