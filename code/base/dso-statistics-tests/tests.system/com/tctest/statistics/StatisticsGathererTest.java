@@ -126,15 +126,33 @@ public class StatisticsGathererTest extends TransparentTestBase implements Stati
     gatherer.stopCapturing();
     assertEquals(sessionid2, listenerCapturingStopped);
 
-    Thread.sleep(15000);
+    Thread.sleep(5000);
 
-    final List<StatisticData> data_list = new ArrayList<StatisticData>();
-    store.retrieveStatistics(new StatisticsRetrievalCriteria(), new StatisticDataUser() {
-      public boolean useStatisticData(StatisticData data) {
-        data_list.add(data);
-        return true;
+    List<StatisticData> data_list = null;
+    boolean got_all_shutdowns = false;
+    do {
+      final List<StatisticData> potential_data_list = new ArrayList<StatisticData>();
+      store.retrieveStatistics(new StatisticsRetrievalCriteria(), new StatisticDataUser() {
+        public boolean useStatisticData(StatisticData data) {
+          potential_data_list.add(data);
+          return true;
+        }
+      });
+
+      int number_of_shutdowns = 0;
+      for (StatisticData data : potential_data_list) {
+        if (SRAShutdownTimestamp.ACTION_NAME.equals(data.getName())) {
+          number_of_shutdowns++;
+        }
       }
-    });
+      
+      got_all_shutdowns = (number_of_shutdowns == StatisticsGathererTestApp.NODE_COUNT+1);
+      if (got_all_shutdowns) {
+        data_list = potential_data_list;
+      } else {
+        Thread.sleep(3000);
+      }
+    } while (!got_all_shutdowns);
 
     listenerSessionClosed = null;
     assertNull(listenerSessionClosed);
@@ -146,7 +164,6 @@ public class StatisticsGathererTest extends TransparentTestBase implements Stati
     assertNull(gatherer.getActiveSessionId());
 
     // check the data
-    assertTrue(data_list.size() > 2);
     System.out.println("=========================");
     System.out.println("Received Statistics Data:");
     System.out.println("-------------------------");
@@ -154,6 +171,7 @@ public class StatisticsGathererTest extends TransparentTestBase implements Stati
       System.out.println(data);
     }
     System.out.println("=========================");
+    assertTrue(data_list.size() > 2);
     assertEquals(SRAStartupTimestamp.ACTION_NAME, data_list.get(0).getName());
     assertEquals(SRAShutdownTimestamp.ACTION_NAME, data_list.get(data_list.size() - 1).getName());
     Set<String> received_data_names = new HashSet<String>();
@@ -166,6 +184,7 @@ public class StatisticsGathererTest extends TransparentTestBase implements Stati
     // this assert is not true since there are statistics that do not have data
     // until there are some transaction between the L1 and L2.
     // e.g. SRAMessages, SRAL2FaultsFromDisk, SRADistributedGC
+    //
     // commenting below assert until we simulate some messages between L1 and L2
     //assertTrue(received_data_names.size() >= statistics.length);
   }
