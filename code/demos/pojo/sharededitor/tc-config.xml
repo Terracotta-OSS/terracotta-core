@@ -49,7 +49,7 @@
         </include>
         <!--Although the class 'demo.sharededitor.models.ObjectManager' is already declared as
              instrumented by the preceding declaration, certain parts of it should only
-             be available locally (see the <transient-fields/> section) -- this is why a
+             be available locally (see the <transient-fields/> section), therefore a
              special declaration of it follows.
 
              By setting the value of <honor-transient> to 'true', fields declared as transient *are* transient
@@ -58,7 +58,7 @@
 
              In 'demo.sharededitor.models.ObjectManager', most members (transient and otherwise) are initialized upon creation. 
              However, when DSO finds that an object is already available from the server, additional instances of the app 
-             will simply receive a reference to that object, and its constructor will not be called -- transient fields 
+             will simply receive a reference to that object, and its constructor will not be called,  Ttransient fields 
              will not be initialized at this point, so the <on-load> declaration is used to indicate actions
              that the class needs to take when DSO loads that object from the server (actions that normally
              happens on class instantiation).-->
