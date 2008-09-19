@@ -7,7 +7,6 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
 
 import com.tc.config.schema.NewCommonL2Config;
 import com.tc.management.AbstractTerracottaMBean;
-import com.tc.net.TCSocketAddress;
 import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticsGathererSubSystem;
@@ -85,11 +84,11 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
     }
     
     try {
-      String ip = dsoConfig.bind().getString();
-      if (null == ip) {
-        ip = TCSocketAddress.WILDCARD_IP;
+      String hostname = dsoConfig.bind().getString();
+      if (null == hostname) {
+        hostname = dsoConfig.host().getString();
       }
-      subsystem.getStatisticsGatherer().connect(ip, config.jmxPort().getInt());
+      subsystem.getStatisticsGatherer().connect(hostname, config.jmxPort().getInt());
     } catch (StatisticsGathererException e) {
       throw new RuntimeException(e);
     }
