@@ -9,6 +9,7 @@ import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.Server;
 import com.tc.test.server.appserver.deployment.ServerTestSetup;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
+import com.tc.util.runtime.Os;
 import com.tctest.spring.bean.ISingleton;
 import com.tctest.spring.integrationtests.SpringDeploymentTest;
 
@@ -37,8 +38,12 @@ public class SingletonTest extends SpringDeploymentTest {
     if (deployment == null) deployment = makeDeployment();
   }
 
-  public void testSingleton4() throws Exception {
-    runNodes(4);
+  public void testSingleton() throws Exception {
+    if (Os.isSolaris()) {
+      runNodes(2);
+    } else {
+      runNodes(4);
+    }
   }
 
   private void runNodes(int nodeCount) throws Exception {
