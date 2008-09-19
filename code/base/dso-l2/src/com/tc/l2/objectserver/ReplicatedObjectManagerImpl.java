@@ -183,7 +183,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.NODE_JOINED_WITH_DIRTY_DB,
                            error + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
     } else {
-      // DEV-1945 : We don't want newly joined nodes to be syncing the Objects while the active is receiving the resent transactions.
+      // DEV-1944 : We don't want newly joined nodes to be syncing the Objects while the active is receiving the resent transactions.
       // If we do that there is a race where passive can apply already applied transactions twice. XXX:: 3 passives - partial sync.
       transactionManager.callBackOnResentTxnsInSystemCompletion(new TxnsInSystemCompletionLister() {
         public void onCompletion() {
