@@ -68,6 +68,7 @@ import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.Clearable;
 import com.tc.object.bytecode.DataOutputStreamAdapter;
 import com.tc.object.bytecode.DuplicateMethodAdapter;
+import com.tc.object.bytecode.HashMapClassAdapter;
 import com.tc.object.bytecode.HashtableClassAdapter;
 import com.tc.object.bytecode.JavaLangReflectArrayAdapter;
 import com.tc.object.bytecode.JavaLangReflectFieldAdapter;
@@ -2126,7 +2127,7 @@ public class BootJarTool {
     String tcMapClassNameDots = "java.util.LinkedHashMapTC";
 
     mergeClass(tcMapClassNameDots, jMapClassNameDots, instrumentedContext, null,
-               new ClassAdapterFactory[] { new LinkedHashMapClassAdapter() });
+               new ClassAdapterFactory[] { LinkedHashMapClassAdapter.FACTORY });
   }
 
   private void addInstrumentedReentrantReadWriteLock() {
@@ -2226,18 +2227,14 @@ public class BootJarTool {
   }
 
   private void addInstrumentedHashMap() {
-    String jMapClassNameDots = "java.util.HashMap";
-    String tcMapClassNameDots = "java.util.HashMapTC";
     Map instrumentedContext = new HashMap();
-    mergeClass(tcMapClassNameDots, jMapClassNameDots, instrumentedContext);
+    mergeClass(HashMapClassAdapter.TC_MAP_CLASSNAME_DOTS, HashMapClassAdapter.J_MAP_CLASSNAME_DOTS, 
+               instrumentedContext, null,
+               new ClassAdapterFactory[] { HashMapClassAdapter.FACTORY });
 
     addInstrumentedLinkedHashMap(instrumentedContext);
   }
-
-  private final void mergeClass(String tcClassNameDots, String jClassNameDots, Map instrumentedContext) {
-    mergeClass(tcClassNameDots, jClassNameDots, instrumentedContext, null, null);
-  }
-
+  
   private final void mergeClass(String tcClassNameDots, String jClassNameDots, Map instrumentedContext,
                                 final MethodNode[] replacedMethods, ClassAdapterFactory[] addlAdapters) {
     byte[] tcData = getSystemBytes(tcClassNameDots);
