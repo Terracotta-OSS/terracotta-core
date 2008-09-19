@@ -47,7 +47,7 @@
 
              In 'demo.chatter.ChatManager' most members (transient and otherwise) are initialized upon creation. 
              However, when DSO finds that an object is already available from the server, additional instances of the app 
-             will simply receive a reference to that object, and its constructor will not be called -- transient fields 
+             will simply receive a reference to that object, and its constructor will not be called; transient fields 
              will not be initialized at this point, so the <on-load> declaration is used to indicate actions
              that the class needs to take when DSO loads that object from the server (actions that normally
              happens on class instantiation).-->
