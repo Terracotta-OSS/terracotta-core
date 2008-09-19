@@ -183,10 +183,6 @@ public class GenericMapTestApp extends GenericTestApp {
 
     // unreachable
   }
-  
-  void testFailure() {
-    throw new AssertionError("see if this test is failing!!!");
-  }
 
   void testBasicUnSynchronizedPut(Map map, boolean validate, int v) {
     // if (map instanceof Hashtable) { return; }
