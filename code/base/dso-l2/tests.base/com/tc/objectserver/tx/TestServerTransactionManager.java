@@ -127,4 +127,8 @@ public class TestServerTransactionManager implements ServerTransactionManager {
   public void objectsSynched(NodeID node, ServerTransactionID tid) {
     throw new ImplementMe();
   }
+
+  public void callBackOnResentTxnsInSystemCompletion(TxnsInSystemCompletionLister l) {
+    throw new ImplementMe();
+  }
 }

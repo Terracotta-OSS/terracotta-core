@@ -15,6 +15,7 @@ import com.tc.util.State;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -29,19 +30,21 @@ import java.util.Set;
  */
 public class ResentTransactionSequencer implements ServerTransactionListener {
 
-  private static final TCLogger                logger                 = TCLogging
-                                                                          .getLogger(ResentTransactionSequencer.class);
+  private static final TCLogger                logger            = TCLogging
+                                                                     .getLogger(ResentTransactionSequencer.class);
 
-  private static final State                   PASS_THRU              = new State("PASS_THRU");
-  private static final State                   ADD_RESENT             = new State("ADD_RESENT");
-  private static final State                   INCOMING_RESENT        = new State("INCOMING_RESENT");
+  private static final State                   PASS_THRU_PASSIVE = new State("PASS_THRU_PASSIVE");
+  private static final State                   PASS_THRU_ACTIVE  = new State("PASS_THRU_ACTIVE");
+  private static final State                   ADD_RESENT        = new State("ADD_RESENT");
+  private static final State                   INCOMING_RESENT   = new State("INCOMING_RESENT");
 
   private final TransactionalObjectManager     txnObjectManager;
   private final ServerTransactionManager       transactionManager;
   private final ServerGlobalTransactionManager gtxm;
-  private final List                           resentTxns             = new LinkedList();
-  private final Map                            pendingTxns            = new LinkedHashMap();
-  private State                                state                  = PASS_THRU;
+  private final List                           resentTxns        = new LinkedList();
+  private final Map                            pendingTxns       = new LinkedHashMap();
+  private final List                           pendingCallBacks  = Collections.synchronizedList(new LinkedList());
+  private State                                state             = PASS_THRU_PASSIVE;
 
   public ResentTransactionSequencer(ServerTransactionManager transactionManager, ServerGlobalTransactionManager gtxm,
                                     TransactionalObjectManager txnObjectManager) {
@@ -50,19 +53,42 @@ public class ResentTransactionSequencer implements ServerTransactionListener {
     this.txnObjectManager = txnObjectManager;
   }
 
-  public synchronized void addTransactions(Collection txns) {
-    State lstate = state;
-    if (lstate == PASS_THRU) {
-      txnObjectManager.addTransactions(txns);
-    } else if (lstate == INCOMING_RESENT) {
-      addToPending(txns);
-      processResent();
-    } else {
-      throw new AssertionError("Illegal State : " + state + " resentTxns : " + resentTxns);
+  public void addTransactions(Collection txns) {
+    boolean addPendingCallbacks = false;
+    synchronized (this) {
+      State lstate = state;
+      if (lstate == PASS_THRU_ACTIVE || lstate == PASS_THRU_PASSIVE) {
+        txnObjectManager.addTransactions(txns);
+      } else if (lstate == INCOMING_RESENT) {
+        addToPending(txns);
+        addPendingCallbacks = processResent();
+      } else {
+        throw new AssertionError("Illegal State : " + state + " resentTxns : " + resentTxns);
+      }
+    }
+    if (addPendingCallbacks) {
+      addAndClearPendingCallBacks();
     }
   }
 
-  private synchronized void processResent() {
+  public void callBackOnResentTxnsInSystemCompletion(TxnsInSystemCompletionLister l) {
+    boolean addCallBack = false;
+    synchronized (this) {
+      if (state == PASS_THRU_ACTIVE) {
+        addCallBack = true;
+      } else {
+        logger.info("Making callback " + l + " pending since in " + state + " resent txns size : " + resentTxns.size());
+        pendingCallBacks.add(l);
+      }
+    }
+    if (addCallBack) {
+      // We can't be sure that the resent transactions are actually applied and committed already, so we wait for all
+      // TXNs in the system to complete before calling back.
+      transactionManager.callBackOnTxnsInSystemCompletion(l);
+    }
+  }
+
+  private boolean processResent() {
     ArrayList txns2Process = new ArrayList();
     for (Iterator i = resentTxns.iterator(); i.hasNext();) {
       TransactionDesc desc = (TransactionDesc) i.next();
@@ -77,10 +103,10 @@ public class ResentTransactionSequencer implements ServerTransactionListener {
     if (!txns2Process.isEmpty()) {
       txnObjectManager.addTransactions(txns2Process);
     }
-    moveToPassThruIfPossible();
+    return moveToPassThruActiveIfPossible();
   }
 
-  private synchronized void addToPending(Collection txns) {
+  private void addToPending(Collection txns) {
     for (Iterator i = txns.iterator(); i.hasNext();) {
       ServerTransaction txn = (ServerTransaction) i.next();
       pendingTxns.put(txn.getServerTransactionID(), txn);
@@ -92,10 +118,16 @@ public class ResentTransactionSequencer implements ServerTransactionListener {
     this.state = ADD_RESENT;
   }
 
-  public synchronized void transactionManagerStarted(Set cids) {
-    this.state = INCOMING_RESENT;
-    removeAllExceptFrom(cids);
-    moveToPassThruIfPossible();
+  public void transactionManagerStarted(Set cids) {
+    boolean addPendingCallbacks = false;
+    synchronized (this) {
+      this.state = INCOMING_RESENT;
+      removeAllExceptFrom(cids);
+      addPendingCallbacks = moveToPassThruActiveIfPossible();
+    }
+    if (addPendingCallbacks) {
+      addAndClearPendingCallBacks();
+    }
   }
 
   private void removeAllExceptFrom(Set cids) {
@@ -108,13 +140,15 @@ public class ResentTransactionSequencer implements ServerTransactionListener {
     }
   }
 
-  private void moveToPassThruIfPossible() {
+  private boolean moveToPassThruActiveIfPossible() {
     if (resentTxns.isEmpty()) {
-      this.state = PASS_THRU;
+      this.state = PASS_THRU_ACTIVE;
       clearPending();
       logger.info("Unregistering ResentTransactionSequencer since no more resent Transactions : " + resentTxns.size());
       this.transactionManager.removeTransactionListener(this);
+      return true;
     }
+    return false;
   }
 
   private void clearPending() {
@@ -160,15 +194,34 @@ public class ResentTransactionSequencer implements ServerTransactionListener {
     i.add(toAdd);
   }
 
-  public synchronized void clearAllTransactionsFor(NodeID deadNode) {
-    for (Iterator i = resentTxns.iterator(); i.hasNext();) {
-      TransactionDesc desc = (TransactionDesc) i.next();
-      if (desc.getServerTransactionID().getSourceID().equals(deadNode)) {
-        logger.warn("Removing " + desc + " because " + deadNode + " is dead");
-        i.remove();
+  public void clearAllTransactionsFor(NodeID deadNode) {
+    boolean addPendingCallBacks;
+    synchronized (this) {
+      for (Iterator i = resentTxns.iterator(); i.hasNext();) {
+        TransactionDesc desc = (TransactionDesc) i.next();
+        if (desc.getServerTransactionID().getSourceID().equals(deadNode)) {
+          logger.warn("Removing " + desc + " because " + deadNode + " is dead");
+          i.remove();
+        }
       }
+      addPendingCallBacks = moveToPassThruActiveIfPossible();
     }
-    moveToPassThruIfPossible();
+    if (addPendingCallBacks) {
+      addAndClearPendingCallBacks();
+    }
+  }
+
+  private void addAndClearPendingCallBacks() {
+    TxnsInSystemCompletionLister[] pendingCallBacksCopy;
+    synchronized (pendingCallBacks) {
+      pendingCallBacksCopy = (TxnsInSystemCompletionLister[]) pendingCallBacks
+          .toArray(new TxnsInSystemCompletionLister[pendingCallBacks.size()]);
+      pendingCallBacks.clear();
+    }
+    for (int j = 0; j < pendingCallBacksCopy.length; j++) {
+      logger.info("Adding Pending resent CallBacks to  TxnMgr : " + pendingCallBacksCopy[j]);
+      transactionManager.callBackOnTxnsInSystemCompletion(pendingCallBacksCopy[j]);
+    }
   }
 
   public void incomingTransactions(NodeID source, Set serverTxnIDs) {
@@ -206,5 +259,4 @@ public class ResentTransactionSequencer implements ServerTransactionListener {
     }
 
   }
-
 }

@@ -548,6 +548,13 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
     callBack.initializationComplete();
   }
+  
+  /*
+   * This method calls back the listener when all the resent TXNs are complete.
+   */
+  public void callBackOnResentTxnsInSystemCompletion(TxnsInSystemCompletionLister l) {
+    resentTxnSequencer.callBackOnResentTxnsInSystemCompletion(l);
+  }
 
   private void fireIncomingTransactionsEvent(NodeID nodeID, Set serverTxnIDs) {
     for (Iterator iter = txnEventListeners.iterator(); iter.hasNext();) {

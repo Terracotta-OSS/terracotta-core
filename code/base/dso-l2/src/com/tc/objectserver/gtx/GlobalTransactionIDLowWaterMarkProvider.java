@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+// XXX::TODO:: Clean this class to use the new callBackOnResentTxnsInSystemCompletion() interface in transactionManager.
 public class GlobalTransactionIDLowWaterMarkProvider implements GlobalTransactionManager, ServerTransactionListener {
 
   private static final TCLogger             logger              = TCLogging
@@ -47,6 +48,8 @@ public class GlobalTransactionIDLowWaterMarkProvider implements GlobalTransactio
     this.lwmProvider = NULL_GLOBAL_TXN_MGR;
   }
 
+  // XXX::TODO:: Clean this class to use the new callBackOnResentTxnsInSystemCompletion() interface in
+  // transactionManager.
   public void goToActiveMode() {
     transactionManager.addTransactionListener(this);
   }

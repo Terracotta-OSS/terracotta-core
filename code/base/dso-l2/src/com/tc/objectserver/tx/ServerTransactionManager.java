@@ -87,6 +87,8 @@ public interface ServerTransactionManager extends DumpHandler, PrettyPrintable {
   public void removeTransactionListener(ServerTransactionListener listener);
 
   public void callBackOnTxnsInSystemCompletion(TxnsInSystemCompletionLister l);
+  
+  public void callBackOnResentTxnsInSystemCompletion(TxnsInSystemCompletionLister l);
 
   public void incomingTransactions(NodeID nodeID, Set txnIDs, Collection txns, boolean relayed);
 
