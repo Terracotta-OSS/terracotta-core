@@ -125,7 +125,6 @@ bundled_modules:
         - clustered-glassfish-2.0
         - clustered-surefire-2.3
         - clustered-websphere-6.1.0.7
-        - clustered-apache-struts-1.1
         - excludes-config
         - guimodels-config
         - jdk15-preinst-config
