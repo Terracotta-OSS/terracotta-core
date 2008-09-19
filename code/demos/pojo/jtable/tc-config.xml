@@ -28,17 +28,15 @@
 
   <application>
     <dso>
-      <!-- Our app requires these custom objects/classes to be shared - the following declarations
-           tells DSO which ones they are. When the app runs under DSO, instances of these classes
+      <!-- The app requires these custom objects/classes to be shared - the following declarations
+           tell DSO which ones they are. When the app runs under DSO, instances of these classes
            will broadcast changes in their state.
 
-           A good idiom when writing an app that you intend to cluster via TC DSO, is to group the 
-           classes you wish to share under a single package (although if you follow the MVC pattern
-           this tends to happen naturally) - this way the list of classes you wish to instrument
-           can be concise
+           A best practice (and an MVC pattern) when writing an app that you intend to cluster via Terracotta is to group the 
+           classes you want to share under a single package. This makes the list of instrumented classes more concise.
 
-           Here, we say, instrument all of the classes found in all of the 
-           packages of our sample app -->
+           The following <include> instruments all of the classes found in all of the
+           packages of our sample app. -->
       <instrumented-classes>
         <include>
           <class-expression>*..*</class-expression>
@@ -46,7 +44,7 @@
       </instrumented-classes>
 
       <!-- We declare the field 'demo.jtable.Main.model' a root, making it 
-           available for all instances of our app that runs via DSO -->
+           available to all instances of our app that run via DSO. -->
       <roots>
         <root>
           <field-name>demo.jtable.Main.model</field-name>

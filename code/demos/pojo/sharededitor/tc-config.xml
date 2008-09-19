@@ -19,7 +19,7 @@
   </servers>
 
   <!--Configure DSO for 'development' mode;
-       See the Terracotta DSO Guide for additional information.-->
+       See the Terracotta Configuration Guide and Reference for additional information.-->
   <system>
     <configuration-model>development</configuration-model>
   </system>
@@ -34,38 +34,34 @@
 
   <application>
     <dso>
-      <!--Our app requires these custom objects/classes to be shared - the following declarations
-           tells DSO which ones they are. When the app runs under DSO, instances of these classes
+      <!--The app requires these custom objects/classes to be shared - the following declarations
+           tell DSO which ones they are. When the app runs under DSO, instances of these classes
            will broadcast changes in their state.
 
-           A good idiom when writing an app that you intend to cluster via TC DSO, is to group the 
-           classes you wish to share under a single package (although if you follow the MVC pattern
-           this tends to happen naturally) - this way the list of classes you wish to instrument
-           can be concise-->
+           A best practice (and an MVC pattern) when writing an app that you intend to cluster via Terracotta is to group the 
+           classes you want to share under a single package. This makes the list of instrumented classes more concise.-->
       <instrumented-classes>
-        <!--Here, we say, instrument all of the classes found under the 'demo.sharededitor.models'
-             package-->
+        <!--The following <include> instruments all of the classes found under the 'demo.sharededitor.models'
+             package.-->
         <include>
           <class-expression>demo.sharededitor.models.*</class-expression>
           <honor-transient>true</honor-transient>
         </include>
         <!--Although the class 'demo.sharededitor.models.ObjectManager' is already declared as
-             instrumented by the preceding declaration - we want certain parts of it to only
-             be available locally (see the <transient-fields/> section) - this is why we have a
-             special declaration for it here;
+             instrumented by the preceding declaration, certain parts of it should only
+             be available locally (see the <transient-fields/> section) -- this is why a
+             special declaration of it follows.
 
-             When we tell DSO to honor transients (by setting the value of the  'honor-transient'
-             field to 'true'), fields declared as transient *are* transient - its state and value
-             will not become available across instances of the app. Only local instances of the app
-             will be able to create, read, and write (to) these fields.
+             By setting the value of <honor-transient> to 'true', fields declared as transient *are* transient
+             and their state and value will not become available across instances of the app. Only local instances of the app
+             will be able to create, read, and write to these fields.
 
-             In the 'demo.sharededitor.models.ObjectManager' we happen to initialize most of its members
-             (transient and otherwise) upon creation. However, when DSO finds that an object is already
-             available from the server, additional instances of the app will simply receive a reference 
-             to that object, and its constructor will not be called - transient fields will not be 
-             initialized at this point, so we use the 'on-load' declaration to indicate actions
-             that the class need to take when DSO loads that object from the server (actions that normally
-             happens on class instantiation)-->
+             In 'demo.sharededitor.models.ObjectManager', most members (transient and otherwise) are initialized upon creation. 
+             However, when DSO finds that an object is already available from the server, additional instances of the app 
+             will simply receive a reference to that object, and its constructor will not be called -- transient fields 
+             will not be initialized at this point, so the <on-load> declaration is used to indicate actions
+             that the class needs to take when DSO loads that object from the server (actions that normally
+             happens on class instantiation).-->
         <include>
           <class-expression>demo.sharededitor.models.ObjectManager</class-expression>
           <honor-transient>true</honor-transient>
@@ -80,29 +76,28 @@
           <class-expression>javax.swing.event.MouseInputAdapter</class-expression>
         </include>
       </instrumented-classes>
-      <!--These methods belong to our root object: demo.sharededitor.controls.Dispatcher.objmgr
+      <!--These methods belong to the root object: demo.sharededitor.controls.Dispatcher.objmgr
            This section makes it so that calls made to this method from any instance of the app
-           also happens across all instances of the app at the time of the call-->
+           also happens across all instances of the app at the time of the call.-->
       <distributed-methods>
         <method-expression>void demo.sharededitor.models.ObjectManager.changed(Object, Object)</method-expression>
       </distributed-methods>
-      <!--These fields belong to our root object: demo.sharededitor.controls.Dispatcher.objmgr,
-           we make them transient because we want the values that they hold to only be available
-           locally-->
+      <!--These fields belong to our root object: demo.sharededitor.controls.Dispatcher.objmgr;
+           make them transient so the values that they hold are available only locally.-->
       <transient-fields>
         <field-name>demo.sharededitor.models.ObjectManager.listener</field-name>
         <field-name>demo.sharededitor.models.ObjectManager.grabList</field-name>
         <field-name>demo.sharededitor.models.ObjectManager.lastGrabbed</field-name>
       </transient-fields>
-      <!--These methods (originating from local objects) operates on objects declared as shared. This 
+      <!--These methods (originating from local objects) operate on objects declared as shared. This 
            section tells DSO to assume a lock on those objects for the duration of the call-->
       <locks>
         <autolock>
           <method-expression>* *..*.*(..)</method-expression>
         </autolock>
       </locks>
-      <!--We declare the field 'demo.sharededitor.controls.Dispatcher.objmgr' a root, making it 
-           available for all instances of our app that runs via DSO-->
+      <!--We declare the field 'demo.sharededitor.controls.Dispatcher.objmgr' a root, making it
+           available for all instances of our app that run via DSO-->
       <roots>
         <root>
           <field-name>demo.sharededitor.controls.Dispatcher.objmgr</field-name>

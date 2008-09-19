@@ -13,7 +13,10 @@
   xsi:schemaLocation="http://www.terracotta.org/schema/terracotta-4.xsd">
 
   <!-- Tell DSO where the Terracotta server can be found; 
-       See the Terracotta DSO Guide for additional information. -->
+       See 
+       - Terracotta Configuration Guide and Reference 
+       - About Terracotta Configuration Files
+       for additional information. -->
   <servers>
     <server host="%i" name="sample">
       <data>terracotta/demo-server/server-data</data>
