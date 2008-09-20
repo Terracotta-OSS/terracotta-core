@@ -40,7 +40,7 @@ public class ClientMessageTransport extends MessageTransportBase {
   /**
    * Constructor for when you want a transport that isn't connected yet (e.g., in a client). This constructor will
    * create an unopened MessageTransport.
-   *
+   * 
    * @param commsManager CommmunicationsManager
    */
   public ClientMessageTransport(ClientConnectionEstablisher clientConnectionEstablisher,
@@ -57,7 +57,7 @@ public class ClientMessageTransport extends MessageTransportBase {
 
   /**
    * Blocking open. Causes a connection to be made. Will throw exceptions if the connect fails.
-   *
+   * 
    * @throws TCTimeoutException
    * @throws IOException
    * @throws TCTimeoutException
@@ -177,7 +177,7 @@ public class ClientMessageTransport extends MessageTransportBase {
         }
       }
 
-      if (connectionId != null && !ConnectionID.NULL_ID.equals(connectionId)) {
+      if (!connectionId.isNewConnection()) {
         // This is a reconnect
         Assert.eval(connectionId.equals(synAck.getConnectionId()));
       }
@@ -203,7 +203,7 @@ public class ClientMessageTransport extends MessageTransportBase {
 
   /**
    * Builds a protocol stack and tries to make a connection. This is a blocking call.
-   *
+   * 
    * @throws TCTimeoutException
    * @throws MaxConnectionsExceededException
    * @throws IOException
@@ -239,7 +239,7 @@ public class ClientMessageTransport extends MessageTransportBase {
     }
   }
 
-  private void sendAck() throws IOException {
+   private void sendAck() throws IOException {
     synchronized (status) {
       // DEV-1364 : Connection close might have happened
       if (!status.isSynSent()) throw new IOException();

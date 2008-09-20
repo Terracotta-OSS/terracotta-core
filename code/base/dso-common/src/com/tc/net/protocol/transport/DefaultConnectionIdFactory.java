@@ -20,6 +20,10 @@ public class DefaultConnectionIdFactory implements ConnectionIDFactory {
     return new ConnectionID(sequence++, uid);
   }
 
+  public ConnectionID makeConnectionId(long channelID) {
+    return new ConnectionID(channelID, uid);
+  }
+
   public Set loadConnectionIDs() {
     return Collections.EMPTY_SET;
   }
@@ -27,7 +31,6 @@ public class DefaultConnectionIdFactory implements ConnectionIDFactory {
   public void init(String clusterID, long nextAvailChannelID, Set connections) {
     throw new ImplementMe();
   }
-
 
   public void registerForConnectionIDEvents(ConnectionIDFactoryListener listener) {
     throw new ImplementMe();

@@ -9,6 +9,8 @@ import java.util.Set;
 public interface ConnectionIDFactory {
 
   public ConnectionID nextConnectionId();
+
+  public ConnectionID makeConnectionId(long channelID);
   
   public void restoreConnectionId(ConnectionID rv);
   

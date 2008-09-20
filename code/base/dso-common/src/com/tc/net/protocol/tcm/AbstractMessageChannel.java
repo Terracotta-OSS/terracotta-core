@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.tcm;
 
@@ -12,6 +13,9 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.logging.TCLogger;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.groups.ClientID;
+import com.tc.net.groups.NodeID;
+import com.tc.net.groups.NodeIDImpl;
 import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
@@ -29,25 +33,29 @@ import java.util.Set;
  * @author teck
  */
 abstract class AbstractMessageChannel implements MessageChannel, MessageChannelInternal {
-  
-  private final Map                     attachments               = new ConcurrentReaderHashMap();
-  private final Object                  attachmentLock            = new Object();
-  private final Set                     listeners                 = new CopyOnWriteArraySet();
-  private final ChannelStatus           status                    = new ChannelStatus();
-  private final SynchronizedRef         remoteAddr                = new SynchronizedRef(null);
-  private final SynchronizedRef         localAddr                 = new SynchronizedRef(null);
-  private final TCMessageFactory        msgFactory;
-  private final TCMessageRouter         router;
-  private final TCMessageParser         parser;
-  private final TCLogger                logger;
 
-  protected NetworkLayer                sendLayer;
+  private final Map              attachments    = new ConcurrentReaderHashMap();
+  private final Object           attachmentLock = new Object();
+  private final Set              listeners      = new CopyOnWriteArraySet();
+  private final ChannelStatus    status         = new ChannelStatus();
+  private final SynchronizedRef  remoteAddr     = new SynchronizedRef(null);
+  private final SynchronizedRef  localAddr      = new SynchronizedRef(null);
+  private final TCMessageFactory msgFactory;
+  private final TCMessageRouter  router;
+  private final TCMessageParser  parser;
+  private final TCLogger         logger;
+  private NodeID                 localNodeID;
+  private NodeID                 remoteNodeID;
+
+  protected NetworkLayer         sendLayer;
 
   AbstractMessageChannel(TCMessageRouter router, TCLogger logger, TCMessageFactory msgFactory) {
     this.router = router;
     this.logger = logger;
     this.msgFactory = msgFactory;
     this.parser = new TCMessageParser(this.msgFactory);
+    this.localNodeID = ClientID.NULL_ID;
+    this.remoteNodeID = NodeIDImpl.NULL_ID;
   }
 
   public void addAttachment(String key, Object value, boolean replace) {
@@ -81,6 +89,22 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
     listeners.add(listener);
   }
 
+  public NodeID getLocalNodeID() {
+    return localNodeID;
+  }
+
+  public void setLocalNodeID(NodeID localNodeID) {
+    this.localNodeID = localNodeID;
+  }
+
+  public NodeID getRemoteNodeID() {
+    return remoteNodeID;
+  }
+
+  public void setRemoteNodeID(NodeID remoteNodeID) {
+    this.remoteNodeID = remoteNodeID;
+  }
+
   public TCMessage createMessage(TCMessageType type) {
     TCMessage rv = this.msgFactory.createMessage(this, type);
     // TODO: set default channel specific information in the TC message header
@@ -96,7 +120,8 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
     router.unrouteMessageType(messageType);
   }
 
-  public abstract NetworkStackID open() throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException, IOException;
+  public abstract NetworkStackID open() throws MaxConnectionsExceededException, TCTimeoutException,
+      UnknownHostException, IOException;
 
   /**
    * Routes a TCMessage to a sink. The hydrate sink will do the hydrate() work
@@ -115,7 +140,7 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
     }
   }
 
-  public final boolean isConnected() {
+  public boolean isConnected() {
     return this.sendLayer != null && this.sendLayer.isConnected();
   }
 
@@ -127,11 +152,11 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
     throw new UnsupportedOperationException();
   }
 
-  public NetworkLayer getReceiveLayer(){
-    //this is the topmost layer, it has no parent
+  public NetworkLayer getReceiveLayer() {
+    // this is the topmost layer, it has no parent
     return null;
   }
-  
+
   public void send(final TCNetworkMessage message) {
     if (logger.isDebugEnabled()) {
       final Runnable logMsg = new Runnable() {
@@ -213,23 +238,21 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
   }
 
   /**
-   * this function gets the stack Lyaer Flag
-   * added to build the communctaion stack information
+   * this function gets the stack Lyaer Flag added to build the communctaion stack information
    */
-  public short getStackLayerFlag(){
-    //this is the channel layer
+  public short getStackLayerFlag() {
+    // this is the channel layer
     return TYPE_CHANNEL_LAYER;
   }
-  
+
   /**
-   * this function gets the stack Layer Name
-   * added to build the communctaion stack information
+   * this function gets the stack Layer Name added to build the communctaion stack information
    */
-  public String getStackLayerName(){
-    //this is the channel layer
+  public String getStackLayerName() {
+    // this is the channel layer
     return NAME_CHANNEL_LAYER;
   }
-  
+
   class ChannelStatus {
     private ChannelState state;
 

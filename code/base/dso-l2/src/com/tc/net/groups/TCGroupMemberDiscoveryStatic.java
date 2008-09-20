@@ -11,8 +11,8 @@ import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ChannelEventType;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.ThreadUtil;
@@ -56,7 +56,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
   }
 
   private String getNodeName(Node node) {
-    return (TCGroupManagerImpl.makeGroupNodeName(node.getHost(), node.getPort()));
+    return (node.getServerNodeName());
   }
 
   public boolean isValidClusterNode(NodeID nodeID) {
@@ -78,7 +78,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     try {
       if (logger.isDebugEnabled()) logger.debug(getLocalNodeID().toString() + " opens channel to " + node);
       incConnectingCount();
-      manager.openChannel(node.getHost(), node.getPort(), stateMachine);
+      manager.openChannel(node.getHost(), node.getGroupPort(), stateMachine);
       stateMachine.connected();
     } catch (TCTimeoutException e) {
       stateMachine.connectTimeout();

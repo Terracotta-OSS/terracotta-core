@@ -11,11 +11,17 @@ public class ConnectionInfo implements java.io.Serializable {
   public static final ConnectionInfo[] EMPTY_ARRAY = new ConnectionInfo[0];
   private final String                 hostname;
   private final int                    port;
+  private final int                    groupId;
 
   public ConnectionInfo(String hostname, int port) {
+    this(hostname, port, -1);
+  }
+
+  public ConnectionInfo(String hostname, int port, int groupId) {
     Assert.assertNotNull(hostname);
     this.hostname = hostname;
     this.port = port;
+    this.groupId = groupId;
   }
 
   public String getHostname() {
@@ -24,6 +30,10 @@ public class ConnectionInfo implements java.io.Serializable {
 
   public int getPort() {
     return port;
+  }
+  
+  public int getGroupId() {
+    return groupId;
   }
 
   public boolean equals(Object o) {

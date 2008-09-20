@@ -34,13 +34,13 @@ public class TCGroupSendLargeMessageTest extends TCTestCase {
   public void baseTestSendingReceivingMessagesStatic(long oidsCount) throws Exception {
     System.out.println("Test with ObjectIDs size " + oidsCount);
     PortChooser pc = new PortChooser();
-    final int p1 = pc.chooseRandomPort();
-    final int p2 = pc.chooseRandomPort();
-    final Node[] allNodes = new Node[] { new Node(LOCALHOST, p1, TCSocketAddress.WILDCARD_IP),
-        new Node(LOCALHOST, p2, TCSocketAddress.WILDCARD_IP) };
+    final int p1 = pc.chooseRandom2Port();
+    final int p2 = pc.chooseRandom2Port();
+    final Node[] allNodes = new Node[] { new Node(LOCALHOST, p1, p1 + 1, TCSocketAddress.WILDCARD_IP),
+        new Node(LOCALHOST, p2, p2 + 1, TCSocketAddress.WILDCARD_IP) };
 
     StageManager stageManager1 = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(null)), new QueueFactory());
-    TCGroupManagerImpl gm1 = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, p1, stageManager1);
+    TCGroupManagerImpl gm1 = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, p1, p1 + 1, stageManager1);
     ConfigurationContext context1 = new ConfigurationContextImpl(stageManager1);
     stageManager1.startAll(context1);
     gm1.setDiscover(new TCGroupMemberDiscoveryStatic(gm1));
@@ -48,7 +48,7 @@ public class TCGroupSendLargeMessageTest extends TCTestCase {
     gm1.registerForMessages(GCResultMessage.class, l1);
 
     StageManager stageManager2 = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(null)), new QueueFactory());
-    TCGroupManagerImpl gm2 = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, p2, stageManager2);
+    TCGroupManagerImpl gm2 = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, p2, p2 + 1, stageManager2);
     ConfigurationContext context2 = new ConfigurationContextImpl(stageManager2);
     stageManager2.startAll(context2);
     gm2.setDiscover(new TCGroupMemberDiscoveryStatic(gm2));

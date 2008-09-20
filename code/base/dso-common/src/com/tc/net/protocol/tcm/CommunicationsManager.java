@@ -27,7 +27,7 @@ public interface CommunicationsManager {
 
   /**
    * Creates a client message channel to the given host/port.
-   *
+   * 
    * @param maxReconnectTries The number of times the channel will attempt to reestablish communications with the server
    *        if the connection is lost. If n==0, the channel will not attempt to reestablish communications. If n>0, the
    *        channel will attempt to reestablish communications n times. If n<0 the channel will always try to
@@ -37,7 +37,18 @@ public interface CommunicationsManager {
    * @param timeout The maximum time (in milliseconds) to wait for the underlying connection to be established before
    *        giving up.
    */
-  public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, final int maxReconnectTries,
+
+  public ClientGroupMessageChannel createClientGroupChannel(final SessionProvider sessionProvider,
+                                                            final int maxReconnectTries, final int timeout,
+                                                            ConnectionAddressProvider[] addressProviders);
+
+  public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
+                                                  String hostname, int port, final int timeout,
+                                                  ConnectionAddressProvider addressProvider, int callbackPort,
+                                                  MessageTransportFactory transportFactory,
+                                                  TCMessageFactory msgFactory, TCMessageRouter router);
+
+  public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
                                                   String hostname, int port, final int timeout,
                                                   ConnectionAddressProvider addressProvider, int callbackPort);
 

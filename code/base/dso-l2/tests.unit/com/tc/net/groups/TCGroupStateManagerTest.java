@@ -174,8 +174,8 @@ public class TCGroupStateManagerTest extends TCTestCase {
     int[] ports = new int[nodes];
     Node[] allNodes = new Node[nodes];
     for (int i = 0; i < nodes; ++i) {
-      ports[i] = pc.chooseRandomPort();
-      allNodes[i] = new Node(LOCALHOST, ports[i], TCSocketAddress.WILDCARD_IP);
+      ports[i] = pc.chooseRandom2Port();
+      allNodes[i] = new Node(LOCALHOST, ports[i], ports[i] + 1, TCSocketAddress.WILDCARD_IP);
     }
 
     StateManager[] managers = new StateManager[nodes];
@@ -242,8 +242,8 @@ public class TCGroupStateManagerTest extends TCTestCase {
     int[] ports = new int[nodes];
     Node[] allNodes = new Node[nodes];
     for (int i = 0; i < nodes; ++i) {
-      ports[i] = pc.chooseRandomPort();
-      allNodes[i] = new Node(LOCALHOST, ports[i], TCSocketAddress.WILDCARD_IP);
+      ports[i] = pc.chooseRandom2Port();
+      allNodes[i] = new Node(LOCALHOST, ports[i], ports[i] + 1, TCSocketAddress.WILDCARD_IP);
     }
 
     StateManager[] managers = new StateManager[nodes];
@@ -291,8 +291,8 @@ public class TCGroupStateManagerTest extends TCTestCase {
     int[] ports = new int[nodes];
     Node[] allNodes = new Node[nodes];
     for (int i = 0; i < nodes; ++i) {
-      ports[i] = pc.chooseRandomPort();
-      allNodes[i] = new Node(LOCALHOST, ports[i], TCSocketAddress.WILDCARD_IP);
+      ports[i] = pc.chooseRandom2Port();
+      allNodes[i] = new Node(LOCALHOST, ports[i], ports[i] + 1, TCSocketAddress.WILDCARD_IP);
     }
 
     final StateManager[] managers = new StateManager[nodes];
@@ -321,10 +321,10 @@ public class TCGroupStateManagerTest extends TCTestCase {
     for (int i = 1; i < nodes; ++i) {
       ids[i] = groupMgr[i].join(allNodes[i], allNodes);
     }
-    
+
     ThreadUtil.reallySleep(1000);
     int nodesNeedToMoveToPassive = nodes - 1;
-    while(nodesNeedToMoveToPassive > 0) {
+    while (nodesNeedToMoveToPassive > 0) {
       NodeID toBePassiveNode = joinedNodes.poll(5000, TimeUnit.MILLISECONDS);
       System.out.println("*** moveNodeToPassiveStandby -> " + toBePassiveNode);
       managers[0].moveNodeToPassiveStandby(toBePassiveNode);
@@ -386,7 +386,8 @@ public class TCGroupStateManagerTest extends TCTestCase {
       throws Exception {
     StageManager stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
     TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), nodes[localIndex].getHost(),
-                                                   nodes[localIndex].getPort(), stageManager);
+                                                   nodes[localIndex].getPort(), nodes[localIndex].getGroupPort(),
+                                                   stageManager);
     ConfigurationContext context = new ConfigurationContextImpl(stageManager);
     stageManager.startAll(context);
     gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm));

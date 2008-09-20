@@ -5,6 +5,7 @@ package com.tc.net.protocol.tcm;
 
 import com.tc.exception.ImplementMe;
 import com.tc.net.groups.ClientID;
+import com.tc.net.groups.NodeID;
 import com.tc.object.session.SessionID;
 
 import junit.framework.TestCase;
@@ -63,6 +64,14 @@ public class MessageMonitorImplTest extends TestCase {
     }
 
     public SessionID getLocalSessionID() {
+      throw new ImplementMe();
+    }
+
+    public NodeID getSourceNodeID() {
+      throw new ImplementMe();
+    }
+
+    public NodeID getDestinationNodeID() {
       throw new ImplementMe();
     }
     

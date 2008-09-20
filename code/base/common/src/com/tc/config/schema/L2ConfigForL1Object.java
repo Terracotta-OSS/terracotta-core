@@ -96,17 +96,20 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
       private void organizeByGroup(XmlObject xmlObject) {
         ActiveServerGroups asgs = ((Servers) xmlObject).getActiveServerGroups();
         if (asgs == null) {
-          ActiveServerGroups groups = ((Servers) xmlObject).addNewActiveServerGroups();
-          asgs = groups;
-          ActiveServerGroup group = groups.addNewActiveServerGroup();
+          asgs = ((Servers) xmlObject).addNewActiveServerGroups();
+        }
+        ActiveServerGroup[] asgArray = asgs.getActiveServerGroupArray();
+        if (asgArray == null || asgArray.length == 0) {
+          ActiveServerGroup group = asgs.addNewActiveServerGroup();
           Members members = group.addNewMembers();
           for (Iterator iter = l2DataByName.keySet().iterator(); iter.hasNext();) {
             String host = (String) iter.next();
             members.addMember(host);
           }
+          asgArray = asgs.getActiveServerGroupArray();
         }
-        ActiveServerGroup[] asgArray = asgs.getActiveServerGroupArray();
         Assert.assertNotNull(asgArray);
+        Assert.assertTrue(asgArray.length >= 1);
 
         for (int i = 0; i < asgArray.length; i++) {
           String[] members = asgArray[i].getMembers().getMemberArray();

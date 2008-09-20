@@ -4,6 +4,7 @@
 package com.tc.object.bytecode.hook.impl;
 
 import com.tc.config.schema.dynamic.ConfigItem;
+import com.tc.config.schema.dynamic.ObjectArrayConfigItem;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.object.DistributedObjectClient;
 import com.tc.object.config.ConnectionInfoConfigItem;
@@ -24,4 +25,22 @@ public class PreparedComponentsFromL2Connection {
   public ConfigItem createConnectionInfoConfigItem() {
     return new ConnectionInfoConfigItem(this.config.l2Config().l2Data());
   }
+
+  public ConfigItem[] createConnectionInfoConfigItemByGroup() {
+    // this initializes the data structures in L2ConfigForL1Object
+    this.config.l2Config().l2Data().getObject();
+
+    ObjectArrayConfigItem[] l2DataByGroup = this.config.l2Config().getL2DataByGroup();
+    ConfigItem[] items = new ConfigItem[l2DataByGroup.length];
+    for (int i = 0; i < l2DataByGroup.length; i++) {
+      items[i] = new ConnectionInfoConfigItem(l2DataByGroup[i]);
+    }
+    return items;
+  }
+  
+  public boolean isActiveActive() {
+    ConfigItem[] groups = createConnectionInfoConfigItemByGroup();
+    return (groups.length > 1);
+  }
+
 }

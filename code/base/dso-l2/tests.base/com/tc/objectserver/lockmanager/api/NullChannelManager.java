@@ -6,6 +6,7 @@ package com.tc.objectserver.lockmanager.api;
 
 import com.tc.net.groups.ClientID;
 import com.tc.net.groups.NodeID;
+import com.tc.net.groups.NodeIDImpl;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
@@ -50,7 +51,7 @@ public class NullChannelManager implements DSOChannelManager {
     //
   }
 
-  public void makeChannelActive(ClientID clientID, boolean persistent) {
+  public void makeChannelActive(ClientID clientID, boolean persistent, NodeIDImpl serverNodeID) {
     //
   }
 

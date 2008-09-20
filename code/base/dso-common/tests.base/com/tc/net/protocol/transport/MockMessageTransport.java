@@ -119,4 +119,8 @@ public class MockMessageTransport implements MessageTransport {
   public int getRemoteCallbackPort() {
     throw new ImplementMe();
   }
+
+  public void initConnectionID(ConnectionID cid) {
+    connectionId = cid;
+  }
 }

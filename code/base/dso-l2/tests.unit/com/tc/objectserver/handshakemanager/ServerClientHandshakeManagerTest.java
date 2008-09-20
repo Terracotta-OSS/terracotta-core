@@ -9,6 +9,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.groups.ClientID;
 import com.tc.net.groups.NodeID;
+import com.tc.net.groups.NodeIDImpl;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TestMessageChannel;
@@ -78,7 +79,8 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     TCLogger logger = TCLogging.getLogger(ServerClientHandshakeManager.class);
     this.hm = new ServerClientHandshakeManager(logger, channelManager, new TestServerTransactionManager(),
                                                sequenceValidator, clientStateManager, lockManager, lockResponseSink,
-                                               objectIDRequestSink, timer, reconnectTimeout, false, logger);
+                                               objectIDRequestSink, timer, reconnectTimeout, false, logger,
+                                               NodeIDImpl.NULL_ID);
     this.hm.setStarting(convertToConnectionIds(existingUnconnectedClients));
   }
 
@@ -395,9 +397,9 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public void makeChannelActive(ClientID clientID, boolean persistent) {
+    public void makeChannelActive(ClientID clientID, boolean persistent, NodeIDImpl serverNodeID) {
       ClientHandshakeAckMessage ackMsg = newClientHandshakeAckMessage(clientID);
-      ackMsg.initialize(persistent, getAllClientIDsString(), clientID.toString(), serverVersion);
+      ackMsg.initialize(persistent, getAllClientIDsString(), clientID.toString(), serverVersion, serverNodeID);
       ackMsg.send();
     }
 
@@ -426,6 +428,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     private boolean                     persistent;
     private final TestMessageChannel    channel;
     private String                      serverVersion;
+    private NodeIDImpl                  serverNodeID;
 
     private TestClientHandshakeAckMessage(ClientID clientID) {
       this.clientID = clientID;
@@ -441,9 +444,10 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       return persistent;
     }
 
-    public void initialize(boolean isPersistent, Set allNodes, String thisNodeID, String sv) {
+    public void initialize(boolean isPersistent, Set allNodes, String thisNodeID, String sv, NodeIDImpl aServerNodeID) {
       this.persistent = isPersistent;
       this.serverVersion = sv;
+      this.serverNodeID = aServerNodeID;
     }
 
     public MessageChannel getChannel() {
@@ -464,6 +468,10 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
 
     public ClientID getClientID() {
       return this.clientID;
+    }
+
+    public NodeIDImpl getServerNodeID() {
+      return serverNodeID;
     }
 
   }

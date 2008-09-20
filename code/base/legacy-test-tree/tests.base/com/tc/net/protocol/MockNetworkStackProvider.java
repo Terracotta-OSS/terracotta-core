@@ -20,9 +20,7 @@ public class MockNetworkStackProvider implements NetworkStackProvider {
   public void attachNewConnection(TCConnection connection) throws StackNotFoundException {
     try {
       connectTransportCalls.put(connection);
-      if (throwStackNotFoundException) { 
-          throw new StackNotFoundException(null);
-      }
+      if (throwStackNotFoundException) { throw new StackNotFoundException(null); }
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
@@ -39,5 +37,4 @@ public class MockNetworkStackProvider implements NetworkStackProvider {
   public MessageTransport attachNewConnection(ConnectionID connectionId, TCConnection connection) {
     throw new ImplementMe();
   }
-
 }

@@ -7,11 +7,10 @@ package com.tc.object.net;
 import com.tc.exception.ImplementMe;
 import com.tc.net.groups.ClientID;
 import com.tc.net.groups.NodeID;
+import com.tc.net.groups.NodeIDImpl;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
-import com.tc.object.net.DSOChannelManager;
-import com.tc.object.net.DSOChannelManagerEventListener;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -62,7 +61,7 @@ public class MockChannelManager implements DSOChannelManager {
     throw new ImplementMe();
   }
 
-  public void makeChannelActive(ClientID clientID, boolean persistent) {
+  public void makeChannelActive(ClientID clientID, boolean persistent, NodeIDImpl serverNodeID) {
     throw new ImplementMe();
   }
 

@@ -244,6 +244,10 @@ public class ServerStackProviderTest extends TCTestCase {
       connId = super.nextConnectionId();
       return connId;
     }
+    
+    public ConnectionID makeConnectionId(long channelID) {
+      return(super.makeConnectionId(channelID));
+    }
   }
 
 }

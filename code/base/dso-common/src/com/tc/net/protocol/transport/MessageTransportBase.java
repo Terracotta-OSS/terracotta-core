@@ -392,5 +392,9 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   public synchronized void setRemoteCallbackPort(int remoteCallbackPort) {
     this.remoteCallbackPort = remoteCallbackPort;
   }
+  
+  public void initConnectionID(ConnectionID cid) {
+    connectionId = cid;
+  }
 
 }

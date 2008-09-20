@@ -26,4 +26,9 @@ public class ConnectionAddressProvider {
   public synchronized ConnectionAddressIterator getIterator() {
     return new ConnectionAddressIterator(addresses);
   }
+  
+  public int getGroupId() {
+    if(addresses == null || addresses[0] == null) return -1;
+    return addresses[0].getGroupId();
+  }
 }

@@ -16,9 +16,9 @@ public class ObjectDataActiveActiveTest extends ActiveActiveTransparentTestBase 
 
   private int       clientCount  = 1;
   private final int electionTime = 5;
-
+  
   public ObjectDataActiveActiveTest() {
-    disableAllUntil("2008-11-01");
+    disableAllUntil("2019-10-01");
   }
 
   protected Class<ObjectDataTestApp> getApplicationClass() {
@@ -31,11 +31,11 @@ public class ObjectDataActiveActiveTest extends ActiveActiveTransparentTestBase 
   }
 
   public void setupActiveActiveTest(ActiveActiveTestSetupManager setupManager) {
-    setupManager.setServerCount(5);
-    setupManager.setServerCrashMode(MultipleServersCrashMode.CONTINUOUS_ACTIVE_CRASH);
-    setupManager.setServerShareDataMode(MultipleServersSharedDataMode.DISK);
+    setupManager.setServerCount(2);
+    setupManager.setServerCrashMode(MultipleServersCrashMode.NO_CRASH);
+    setupManager.setServerShareDataMode(MultipleServersSharedDataMode.NETWORK);
     setupManager.setServerPersistenceMode(MultipleServersPersistenceMode.PERMANENT_STORE);
-    setupManager.addActiveServerGroup(2, MultipleServersSharedDataMode.DISK, electionTime);
-    setupManager.addActiveServerGroup(3, MultipleServersSharedDataMode.DISK, electionTime);
+    setupManager.addActiveServerGroup(1, MultipleServersSharedDataMode.NETWORK, electionTime);
+    setupManager.addActiveServerGroup(1, MultipleServersSharedDataMode.NETWORK, electionTime);
   }
 }

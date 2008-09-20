@@ -47,6 +47,7 @@ import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.Node;
 import com.tc.net.groups.NodeID;
+import com.tc.net.groups.NodeIDImpl;
 import com.tc.net.groups.TCGroupManagerImpl;
 import com.tc.net.groups.TribesGroupManager;
 import com.tc.object.msg.MessageRecycler;
@@ -57,8 +58,8 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.tx.ServerTransactionManager;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.sequence.SequenceGenerator;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorException;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorListener;
@@ -68,9 +69,9 @@ import java.io.IOException;
 public class L2HACoordinator implements L2Coordinator, StateChangeListener, GroupEventsListener,
     SequenceGeneratorListener {
 
-  private static final TCLogger                logger                  = TCLogging.getLogger(L2HACoordinator.class);
-  public static final String                   TC_GROUP_COMM           = "tc-group-comm";
-  public static final String                   TRIBES_COMM             = "tribes";
+  private static final TCLogger                logger        = TCLogging.getLogger(L2HACoordinator.class);
+  public static final String                   TC_GROUP_COMM = "tc-group-comm";
+  public static final String                   TRIBES_COMM   = "tribes";
 
   private final TCLogger                       consoleLogger;
   private final DistributedObjectServer        server;
@@ -87,16 +88,19 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
 
   private NewHaConfig                          haConfig;
   private final L2TVSConfigurationSetupManager configSetupManager;
+  private final NodeIDImpl                     serverNodeID;
 
   public L2HACoordinator(L2TVSConfigurationSetupManager configSetupManager, TCLogger consoleLogger,
                          DistributedObjectServer server, StageManager stageManager,
                          PersistentMapStore clusterStateStore, ObjectManager objectManager,
                          ServerTransactionManager transactionManager, ServerGlobalTransactionManager gtxm,
-                         DSOChannelManager channelManager, NewHaConfig haConfig, MessageRecycler recycler) {
+                         DSOChannelManager channelManager, NewHaConfig haConfig, MessageRecycler recycler,
+                         NodeIDImpl serverNodeID) {
     this.configSetupManager = configSetupManager;
     this.consoleLogger = consoleLogger;
     this.server = server;
     this.haConfig = haConfig;
+    this.serverNodeID = serverNodeID;
 
     init(stageManager, clusterStateStore, objectManager, transactionManager, gtxm, channelManager, recycler);
   }
@@ -124,12 +128,12 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     // choose a group comm layer
     final String commLayer = TCPropertiesImpl.getProperties().getProperty(TCPropertiesConsts.L2_NHA_GROUPCOMM_TYPE);
     if (commLayer.equals(TC_GROUP_COMM)) {
-      this.groupManager = new TCGroupManagerImpl(configSetupManager, stageManager);
+      this.groupManager = new TCGroupManagerImpl(configSetupManager, stageManager, serverNodeID);
     } else if (commLayer.equals(TRIBES_COMM)) {
       this.groupManager = new TribesGroupManager();
     } else {
-      throw new GroupException("wrong property " + TCPropertiesConsts.L2_NHA_GROUPCOMM_TYPE + " can be " + TC_GROUP_COMM + " or "
-                               + TRIBES_COMM);
+      throw new GroupException("wrong property " + TCPropertiesConsts.L2_NHA_GROUPCOMM_TYPE + " can be "
+                               + TC_GROUP_COMM + " or " + TRIBES_COMM);
     }
 
     this.stateManager = new StateManagerImpl(consoleLogger, groupManager, stateChangeSink,

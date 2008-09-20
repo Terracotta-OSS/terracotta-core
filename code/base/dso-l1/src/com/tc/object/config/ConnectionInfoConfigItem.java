@@ -59,7 +59,7 @@ public class ConnectionInfoConfigItem extends DerivedConfigItem {
       out = new ConnectionInfo[l2Data.length];
 
       for (int i = 0; i < out.length; ++i) {
-        out[i] = new ConnectionInfo(l2Data[i].host(), l2Data[i].dsoPort());
+        out[i] = new ConnectionInfo(l2Data[i].host(), l2Data[i].dsoPort(), l2Data[i].getGroupId());
       }
     }
 

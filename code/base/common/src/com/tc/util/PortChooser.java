@@ -27,13 +27,27 @@ public final class PortChooser {
       return choose();
     }
   }
-  
+
+  public int chooseRandom2Port() {
+    int port;
+    synchronized (VM_WIDE_LOCK) {
+      do {
+        port = choose();
+        if (!isPortUsed(port + 1)) {
+          chosen.add(new Integer(port + 1));
+          break;
+        }
+      } while (true);
+    }
+    return port;
+  }
+
   public boolean isPortUsed(int portNum) {
     final Integer port = new Integer(portNum);
     if (chosen.contains(port)) return true;
     return !canBind(portNum);
   }
-  
+
   private boolean canBind(int portNum) {
     ServerSocket ss = null;
     boolean isFree = false;
@@ -64,8 +78,8 @@ public final class PortChooser {
       boolean added = chosen.add(attempt);
       if (!added) {
         continue; // already picked at some point, try again
-      }      
-      if (canBind(attempt.intValue())) return(attempt.intValue());
+      }
+      if (canBind(attempt.intValue())) return (attempt.intValue());
     }
   }
 

@@ -10,6 +10,7 @@ import com.tc.async.impl.NullSink;
 import com.tc.logging.TCLogger;
 import com.tc.net.groups.ClientID;
 import com.tc.net.groups.NodeID;
+import com.tc.net.groups.NodeIDImpl;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.object.lockmanager.api.LockContext;
@@ -56,12 +57,13 @@ public class ServerClientHandshakeManager {
   private final boolean                  persistent;
   private final ServerTransactionManager transactionManager;
   private final TCLogger                 consoleLogger;
+  private final NodeIDImpl               serverNodeID;
 
   public ServerClientHandshakeManager(TCLogger logger, DSOChannelManager channelManager,
                                       ServerTransactionManager transactionManager, SequenceValidator sequenceValidator,
                                       ClientStateManager clientStateManager, LockManager lockManager,
                                       Sink lockResponseSink, Sink oidRequestSink, TCTimer timer, long reconnectTimeout,
-                                      boolean persistent, TCLogger consoleLogger) {
+                                      boolean persistent, TCLogger consoleLogger, NodeIDImpl serverNodeID) {
     this.logger = logger;
     this.channelManager = channelManager;
     this.transactionManager = transactionManager;
@@ -75,6 +77,7 @@ public class ServerClientHandshakeManager {
     this.persistent = persistent;
     this.consoleLogger = consoleLogger;
     this.reconnectTimerTask = new ReconnectTimerTask(this, timer);
+    this.serverNodeID = serverNodeID;
   }
 
   public synchronized boolean isStarting() {
@@ -169,8 +172,8 @@ public class ServerClientHandshakeManager {
 
     // NOTE: handshake ack message initialize()/send() must be done atomically with making the channel active
     // and is thus done inside this channel manager call
-    channelManager.makeChannelActive(clientID, persistent);
-    
+    channelManager.makeChannelActive(clientID, persistent, serverNodeID);
+
     if (clientsRequestingObjectIDSequence.remove(clientID)) {
       oidRequestSink.add(new ObjectIDBatchRequestImpl(clientID, BATCH_SEQUENCE_SIZE));
     }

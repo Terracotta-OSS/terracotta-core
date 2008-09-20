@@ -383,7 +383,8 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
   }
   
   public void addServerToL1Config(String name, int dsoPort, int jmxPort) {
-    addServerToL1Config(name, dsoPort, jmxPort, true);
+    addServerToL1Config(name, dsoPort, jmxPort, false);
+    addServerGroupToL1Config();
   }
 
   private void addServerToL1Config(String name, int dsoPort, int jmxPort, boolean cleanGroupsBeanSet) {

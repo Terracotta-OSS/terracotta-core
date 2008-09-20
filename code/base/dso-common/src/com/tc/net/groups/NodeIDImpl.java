@@ -15,14 +15,14 @@ import java.util.Arrays;
 
 public class NodeIDImpl implements NodeID {
 
-  public static final NodeID  NULL_ID       = new NodeIDImpl("NULL-ID", new byte[0]);
+  public static final NodeIDImpl NULL_ID       = new NodeIDImpl("NULL-ID", new byte[0]);
 
-  private static final String UNINITIALIZED = "Uninitialized";
+  private static final String    UNINITIALIZED = "Uninitialized";
 
-  private String              name;
-  private byte[]              uid;
+  private String                 name;
+  private byte[]                 uid;
 
-  private transient int       hash;
+  private transient int          hash;
 
   public NodeIDImpl() {
     // satisfy serialization
@@ -137,4 +137,5 @@ public class NodeIDImpl implements NodeID {
     }
     return 0;
   }
+  
 }

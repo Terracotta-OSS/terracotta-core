@@ -59,12 +59,14 @@ public class TCGroupManagerImplTest extends TCTestCase {
   final TCMessageFactory           msgFactory     = new TCMessageFactoryImpl(sessionManager, monitor);
   final TCMessageRouter            msgRouter      = new TCMessageRouterImpl();
 
+  private int                      ports[];
   private int                      groupPorts[];
   private TCGroupManagerImpl       groups[];
   private TestGroupMessageListener listeners[];
   private Node                     nodes[];
 
   private void setupGroups(int n) throws Exception {
+    ports = new int[n];
     groupPorts = new int[n];
     groups = new TCGroupManagerImpl[n];
     listeners = new TestGroupMessageListener[n];
@@ -72,13 +74,14 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     PortChooser pc = new PortChooser();
     for (int i = 0; i < n; ++i) {
-      groupPorts[i] = pc.chooseRandomPort();
-      nodes[i] = new Node(LOCALHOST, groupPorts[i], TCSocketAddress.WILDCARD_IP);
+      ports[i] = pc.chooseRandom2Port();
+      groupPorts[i] = ports[i] + 1;
+      nodes[i] = new Node(LOCALHOST, ports[i], groupPorts[i], TCSocketAddress.WILDCARD_IP);
     }
     for (int i = 0; i < n; ++i) {
       StageManager stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(TCLogging
           .getLogger(TCGroupManagerImplTest.class))), new QueueFactory());
-      groups[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, groupPorts[i], stageManager);
+      groups[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports[i], groupPorts[i], stageManager);
       ConfigurationContext context = new ConfigurationContextImpl(stageManager);
       stageManager.startAll(context);
       groups[i].setDiscover(new TCGroupMemberDiscoveryStatic(groups[i]));
@@ -128,12 +131,12 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     tearGroups();
   }
-  
+
   private int joinedMemberSize(TCGroupManagerImpl group) {
     Object members[] = group.getMembers().toArray();
     int size = members.length;
-    for(int i =0; i < size; ++i) {
-      if (!((TCGroupMember)members[i]).isReady()) -- size;
+    for (int i = 0; i < size; ++i) {
+      if (!((TCGroupMember) members[i]).isReady()) --size;
     }
     return size;
   }

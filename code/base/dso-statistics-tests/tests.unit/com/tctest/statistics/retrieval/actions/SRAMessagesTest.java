@@ -1,10 +1,12 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.statistics.retrieval.actions;
 
 import com.tc.exception.ImplementMe;
 import com.tc.net.groups.ClientID;
+import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.MessageMonitorImpl;
@@ -38,12 +40,13 @@ public class SRAMessagesTest extends TCTestCase {
     SRAMessages messages = new SRAMessages(messageMonitor);
     Assert.assertEquals(StatisticType.SNAPSHOT, messages.getType());
 
-    int[] incSizes = { 100, 120, 300, 245 };  //just some random sizes
-    int [] outSizes = {50, 125, 560, 345, 20, 456};  //just some random sizes
+    int[] incSizes = { 100, 120, 300, 245 }; // just some random sizes
+    int[] outSizes = { 50, 125, 560, 345, 20, 456 }; // just some random sizes
 
-    //just some random types
-    TCMessageType[] msgTypes = { TCMessageType.ACKNOWLEDGE_TRANSACTION_MESSAGE, TCMessageType.BATCH_TRANSACTION_ACK_MESSAGE,
-      TCMessageType.BENCH_MESSAGE, TCMessageType.BROADCAST_TRANSACTION_MESSAGE, TCMessageType.CLIENT_HANDSHAKE_MESSAGE};
+    // just some random types
+    TCMessageType[] msgTypes = { TCMessageType.ACKNOWLEDGE_TRANSACTION_MESSAGE,
+        TCMessageType.BATCH_TRANSACTION_ACK_MESSAGE, TCMessageType.BENCH_MESSAGE,
+        TCMessageType.BROADCAST_TRANSACTION_MESSAGE, TCMessageType.CLIENT_HANDSHAKE_MESSAGE };
 
     for (int i = 0; i < msgTypes.length; i++) {
       for (int j = 0; j < incSizes.length; j++) {
@@ -54,7 +57,7 @@ public class SRAMessagesTest extends TCTestCase {
       }
     }
 
-    StatisticData [] data = messages.retrieveStatisticData();
+    StatisticData[] data = messages.retrieveStatisticData();
     for (int i = 0; i < data.length; i++) {
       StatisticData statisticData = data[i];
       System.out.println(statisticData);
@@ -111,7 +114,7 @@ public class SRAMessagesTest extends TCTestCase {
 
   private static class TestTCMessage implements TCMessage {
     private final TCMessageType type;
-    private final int length;
+    private final int           length;
 
     private TestTCMessage(final TCMessageType type, final int length) {
       this.type = type;
@@ -162,24 +165,32 @@ public class SRAMessagesTest extends TCTestCase {
     public SessionID getLocalSessionID() {
       throw new ImplementMe();
     }
+
+    public NodeID getSourceNodeID() {
+      throw new ImplementMe();
+    }
+
+    public NodeID getDestinationNodeID() {
+      throw new ImplementMe();
+    }
   }
 
   private static class SRAMessagesData {
     private final String typeName;
     private final String elementName;
 
-    private final long data;
+    private final long   data;
 
     private SRAMessagesData(final StatisticData data) {
       String element = data.getElement();
-      String [] toks = element.split(SRAMessages.ELEMENT_NAME_DELIMITER);
+      String[] toks = element.split(SRAMessages.ELEMENT_NAME_DELIMITER);
 
       assertEquals(2, toks.length);
 
       this.typeName = toks[0];
       this.elementName = toks[1];
 
-      this.data = (Long)data.getData();
+      this.data = (Long) data.getData();
     }
 
     private static SRAMessagesData createSRAMessagesData(final StatisticData data) {

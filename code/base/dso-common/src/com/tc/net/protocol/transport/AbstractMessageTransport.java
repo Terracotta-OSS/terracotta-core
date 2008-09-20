@@ -120,4 +120,8 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
     }
     return currentLayer;
   }
+  
+  public void initConnectionID(ConnectionID cid) {
+    throw new UnsupportedOperationException();
+  }
 }

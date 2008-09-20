@@ -222,6 +222,11 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     sendMessage(opm);
     sendLayer.close();
   }
+  
+  public void initConnectionID(ConnectionID cid) {
+    Assert.assertNotNull(sendLayer);
+    sendLayer.initConnectionID(cid);
+  }
 
   /*********************************************************************************************************************
    * Transport listener interface...

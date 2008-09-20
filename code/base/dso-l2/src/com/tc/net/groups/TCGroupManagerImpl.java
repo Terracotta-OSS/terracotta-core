@@ -108,14 +108,16 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   /*
    * Setup a communication manager which can establish channel from either sides.
    */
-  public TCGroupManagerImpl(L2TVSConfigurationSetupManager configSetupManager, StageManager stageManager) {
-    this(configSetupManager, new NullConnectionPolicy(), stageManager);
+  public TCGroupManagerImpl(L2TVSConfigurationSetupManager configSetupManager, StageManager stageManager,
+                            NodeIDImpl thisNodeID) {
+    this(configSetupManager, new NullConnectionPolicy(), stageManager, thisNodeID);
   }
 
   public TCGroupManagerImpl(L2TVSConfigurationSetupManager configSetupManager, ConnectionPolicy connectionPolicy,
-                            StageManager stageManager) {
+                            StageManager stageManager, NodeIDImpl thisNodeID) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
+    this.thisNodeID = thisNodeID;
     l2ReconnectConfig = new L2ReconnectConfigImpl();
     this.isUseOOOLayer = l2ReconnectConfig.getReconnectEnabled();
 
@@ -138,7 +140,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     } catch (UnknownHostException e) {
       throw new TCRuntimeException(e);
     }
-    thisNodeID = init(makeGroupNodeName(l2DSOConfig.host().getString(), groupPort), socketAddress);
+    init(socketAddress);
     Assert.assertNotNull(thisNodeID);
     setDiscover(new TCGroupMemberDiscoveryStatic(this));
   }
@@ -146,25 +148,18 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   /*
    * for testing purpose only. Tester needs to do setDiscover().
    */
-  TCGroupManagerImpl(ConnectionPolicy connectionPolicy, String hostname, int groupPort, StageManager stageManager) {
+  TCGroupManagerImpl(ConnectionPolicy connectionPolicy, String hostname, int port, int groupPort, StageManager stageManager) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
     l2ReconnectConfig = new L2ReconnectConfigImpl();
     this.isUseOOOLayer = l2ReconnectConfig.getReconnectEnabled();
     this.groupPort = groupPort;
-    thisNodeID = init(makeGroupNodeName(hostname, groupPort), new TCSocketAddress(TCSocketAddress.WILDCARD_ADDR,
-                                                                                  groupPort));
+    thisNodeID = new NodeIDImpl(new Node(hostname, port).getServerNodeName(), UUID.getUUID().toString().getBytes());
+    logger.info("Creating server nodeID: " + thisNodeID);
+    init(new TCSocketAddress(TCSocketAddress.WILDCARD_ADDR, groupPort));
   }
 
-  protected static String makeGroupNodeName(String hostname, int groupPort) {
-    return (hostname + ":" + groupPort);
-  }
-
-  private NodeIDImpl init(String nodeName, TCSocketAddress socketAddress) {
-
-    NodeIDImpl aNodeID = new NodeIDImpl(nodeName, UUID.getUUID().toString().getBytes());
-    logger.info("Creating group node: " + aNodeID);
-
+  private void init(TCSocketAddress socketAddress) {
     int maxStageSize = 5000;
     hydrateStage = stageManager.createStage(ServerConfigurationContext.GROUP_HYDRATE_MESSAGE_STAGE,
                                             new HydrateHandler(), 1, maxStageSize);
@@ -177,9 +172,10 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
 
     final NetworkStackHarnessFactory networkStackHarnessFactory;
     if (isUseOOOLayer) {
-      final Stage oooSendStage = stageManager.createStage(ServerConfigurationContext.L2_OOO_NET_SEND_STAGE, new OOOEventHandler(), 1, maxStageSize);
-      final Stage oooReceiveStage = stageManager.createStage(ServerConfigurationContext.L2_OOO_NET_RECEIVE_STAGE, new OOOEventHandler(), 1,
-                                                             maxStageSize);
+      final Stage oooSendStage = stageManager.createStage(ServerConfigurationContext.L2_OOO_NET_SEND_STAGE,
+                                                          new OOOEventHandler(), 1, maxStageSize);
+      final Stage oooReceiveStage = stageManager.createStage(ServerConfigurationContext.L2_OOO_NET_RECEIVE_STAGE,
+                                                             new OOOEventHandler(), 1, maxStageSize);
       networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
                                                                      new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
                                                                      oooSendStage.getSink(), oooReceiveStage.getSink(),
@@ -207,8 +203,6 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
         .getSink());
 
     registerForMessages(GroupZapNodeMessage.class, new ZapNodeRequestRouter());
-
-    return (aNodeID);
   }
 
   /*

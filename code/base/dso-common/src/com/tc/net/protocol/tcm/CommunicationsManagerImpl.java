@@ -21,6 +21,7 @@ import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.transport.ClientConnectionEstablisher;
 import com.tc.net.protocol.transport.ClientMessageTransport;
 import com.tc.net.protocol.transport.ConnectionHealthChecker;
+import com.tc.net.protocol.transport.ConnectionHealthCheckerEchoImpl;
 import com.tc.net.protocol.transport.ConnectionHealthCheckerImpl;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
@@ -30,7 +31,6 @@ import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.MessageTransportFactory;
 import com.tc.net.protocol.transport.MessageTransportListener;
-import com.tc.net.protocol.transport.ConnectionHealthCheckerEchoImpl;
 import com.tc.net.protocol.transport.ServerMessageTransport;
 import com.tc.net.protocol.transport.ServerStackProvider;
 import com.tc.net.protocol.transport.TransportHandshakeError;
@@ -39,6 +39,7 @@ import com.tc.net.protocol.transport.TransportHandshakeErrorHandler;
 import com.tc.net.protocol.transport.TransportHandshakeMessage;
 import com.tc.net.protocol.transport.TransportHandshakeMessageFactory;
 import com.tc.net.protocol.transport.TransportMessageFactoryImpl;
+import com.tc.net.protocol.transport.WireProtocolAdaptorFactory;
 import com.tc.net.protocol.transport.WireProtocolAdaptorFactoryImpl;
 import com.tc.net.protocol.transport.WireProtocolMessageSink;
 import com.tc.object.session.SessionProvider;
@@ -52,7 +53,7 @@ import java.util.Set;
 
 /**
  * Communications manager for setting up listeners and creating client connections
- *
+ * 
  * @author teck
  */
 public class CommunicationsManagerImpl implements CommunicationsManager {
@@ -100,7 +101,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   /**
    * Create a comms manager with the given connection manager. This cstr is mostly for testing, or in the event that you
    * actually want to use an explicit connection manager
-   *
+   * 
    * @param connMgr the connection manager to use
    * @param serverDescriptors
    */
@@ -154,6 +155,16 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     }
   }
 
+  public ClientGroupMessageChannel createClientGroupChannel(final SessionProvider sessionProvider,
+                                                            final int maxReconnectTries, final int timeout,
+                                                            ConnectionAddressProvider[] addressProviders) {
+    ClientGroupMessageChannel clientGroup = new ClientGroupMessageChannelImpl(new TCMessageFactoryImpl(sessionProvider,
+                                                                                                     monitor),
+                                                                            sessionProvider, maxReconnectTries, this,
+                                                                            addressProviders);
+    return (clientGroup);
+  }
+
   public ClientMessageChannel createClientChannel(final SessionProvider sessionProvider, final int maxReconnectTries,
                                                   String hostname, int port, final int timeout,
                                                   ConnectionAddressProvider addressProvider) {
@@ -163,75 +174,36 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
 
   public ClientMessageChannel createClientChannel(final SessionProvider sessionProvider, final int maxReconnectTries,
                                                   String hostname, int port, final int timeout,
-                                                  ConnectionAddressProvider addressProvider, final int callbackPort) {
-    final ConnectionAddressProvider provider = addressProvider;
-    MessageTransportFactory transportFactory = new MessageTransportFactory() {
-      public MessageTransport createNewTransport() {
-        TransportHandshakeErrorHandler handshakeErrorHandler = new TransportHandshakeErrorHandler() {
-
-          public void handleHandshakeError(TransportHandshakeErrorContext e) {
-            if (e.getErrorType() == TransportHandshakeError.ERROR_STACK_MISMATCH) System.err.println(e.getMessage());
-            else System.err.println(e);
-            new TCRuntimeException("I'm crashing the client!").printStackTrace();
-            try {
-              Thread.sleep(30 * 1000);
-            } catch (InterruptedException e1) {
-              e1.printStackTrace();
-            }
-            System.exit(1);
-          }
-
-          public void handleHandshakeError(TransportHandshakeErrorContext e, TransportHandshakeMessage m) {
-            System.err.println(e);
-            System.err.println(m);
-            new TCRuntimeException("I'm crashing the client").printStackTrace();
-            try {
-              Thread.sleep(30 * 1000);
-            } catch (InterruptedException e1) {
-              e1.printStackTrace();
-            }
-            System.exit(1);
-          }
-
-        };
-
-        ClientConnectionEstablisher clientConnectionEstablisher = new ClientConnectionEstablisher(connectionManager,
-                                                                                                  provider,
-                                                                                                  maxReconnectTries,
-                                                                                                  timeout);
-        ClientMessageTransport cmt = new ClientMessageTransport(clientConnectionEstablisher, handshakeErrorHandler,
-                                                                transportMessageFactory,
-                                                                new WireProtocolAdaptorFactoryImpl(), callbackPort);
-        cmt.addTransportListener(connectionHealthChecker);
-        return cmt;
-      }
-
-      public MessageTransport createNewTransport(ConnectionID connectionID, TransportHandshakeErrorHandler handler,
-                                                 TransportHandshakeMessageFactory handshakeMessageFactory,
-                                                 List transportListeners) {
-        throw new AssertionError();
-      }
-
-      public MessageTransport createNewTransport(ConnectionID connectionId, TCConnection connection,
-                                                 TransportHandshakeErrorHandler handler,
-                                                 TransportHandshakeMessageFactory handshakeMessageFactory,
-                                                 List transportListeners) {
-        throw new AssertionError();
-      }
-    };
-
+                                                  ConnectionAddressProvider addressProvider, int callbackPort) {
     return createClientChannel(sessionProvider, maxReconnectTries, hostname, port, timeout, addressProvider,
-                               transportFactory);
+                               callbackPort, null, null, null);
+
   }
 
   public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, final int maxReconnectTries,
                                                   String hostname, int port, final int timeout,
                                                   ConnectionAddressProvider addressProvider,
                                                   MessageTransportFactory transportFactory) {
-    // XXX: maxReconnectTries MUST be non-zero if we have a
-    // once and only once protocol stack.
-    ClientMessageChannelImpl rv = new ClientMessageChannelImpl(new TCMessageFactoryImpl(sessionProvider, monitor),
-                                                               new TCMessageRouterImpl(), sessionProvider);
+    return createClientChannel(sessionProvider, maxReconnectTries, hostname, port, timeout, addressProvider,
+                               TransportHandshakeMessage.NO_CALLBACK_PORT, transportFactory, null, null);
+  }
+
+  public ClientMessageChannel createClientChannel(final SessionProvider sessionProvider, final int maxReconnectTries,
+                                                  String hostname, int port, final int timeout,
+                                                  ConnectionAddressProvider addressProvider, final int callbackPort,
+                                                  MessageTransportFactory transportFactory,
+                                                  TCMessageFactory messageFactory, TCMessageRouter router) {
+
+    TCMessageFactory msgFactory = (messageFactory != null) ? messageFactory : new TCMessageFactoryImpl(sessionProvider,
+                                                                                                       monitor);
+    TCMessageRouter msgRouter = (router != null) ? router : new TCMessageRouterImpl();
+
+    ClientMessageChannelImpl rv = new ClientMessageChannelImpl(msgFactory, msgRouter, sessionProvider);
+
+    if (transportFactory == null) transportFactory = new MessageTransportFactoryImpl(connectionManager,
+                                                                                     addressProvider,
+                                                                                     maxReconnectTries, timeout,
+                                                                                     callbackPort);
 
     NetworkStackHarness stackHarness = this.stackHarnessFactory.createClientHarness(transportFactory, rv,
                                                                                     new MessageTransportListener[0]);
@@ -362,4 +334,84 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     this.connectionHealthChecker.start();
   }
 
+  private class MessageTransportFactoryImpl implements MessageTransportFactory {
+    private final TCConnectionManager       connectionMgr;
+    private final ConnectionAddressProvider addressProvider;
+    private final int                       maxReconnectTries;
+    private final int                       timeout;
+    private final int                       callbackPort;
+
+    public MessageTransportFactoryImpl(final TCConnectionManager connectionManager,
+                                       final ConnectionAddressProvider addressProvider, final int maxReconnectTries,
+                                       final int timeout, int callbackPort) {
+      this.connectionMgr = connectionManager;
+      this.addressProvider = addressProvider;
+      this.maxReconnectTries = maxReconnectTries;
+      this.timeout = timeout;
+      this.callbackPort = callbackPort;
+    }
+
+    public MessageTransport createNewTransport() {
+      TransportHandshakeErrorHandler handshakeErrorHandler = new TransportHandshakeErrorHandler() {
+
+        public void handleHandshakeError(TransportHandshakeErrorContext e) {
+          if (e.getErrorType() == TransportHandshakeError.ERROR_STACK_MISMATCH) System.err.println(e.getMessage());
+          else System.err.println(e);
+          new TCRuntimeException("I'm crashing the client!").printStackTrace();
+          try {
+            Thread.sleep(30 * 1000);
+          } catch (InterruptedException e1) {
+            e1.printStackTrace();
+          }
+          System.exit(1);
+        }
+
+        public void handleHandshakeError(TransportHandshakeErrorContext e, TransportHandshakeMessage m) {
+          System.err.println(e);
+          System.err.println(m);
+          new TCRuntimeException("I'm crashing the client").printStackTrace();
+          try {
+            Thread.sleep(30 * 1000);
+          } catch (InterruptedException e1) {
+            e1.printStackTrace();
+          }
+          System.exit(1);
+        }
+
+      };
+
+      ClientConnectionEstablisher clientConnectionEstablisher = new ClientConnectionEstablisher(connectionMgr,
+                                                                                                addressProvider,
+                                                                                                maxReconnectTries,
+                                                                                                timeout);
+      ClientMessageTransport cmt = createClientMessageTransport(clientConnectionEstablisher, handshakeErrorHandler,
+                                                                transportMessageFactory,
+                                                                new WireProtocolAdaptorFactoryImpl(), callbackPort);
+      cmt.addTransportListener(connectionHealthChecker);
+      return cmt;
+    }
+
+    protected ClientMessageTransport createClientMessageTransport(
+                                                                  ClientConnectionEstablisher clientConnectionEstablisher,
+                                                                  TransportHandshakeErrorHandler handshakeErrorHandler,
+                                                                  TransportHandshakeMessageFactory messageFactory,
+                                                                  WireProtocolAdaptorFactory wireProtocolAdaptorFactory,
+                                                                  int callbackPortNum) {
+      return new ClientMessageTransport(clientConnectionEstablisher, handshakeErrorHandler, transportMessageFactory,
+                                        wireProtocolAdaptorFactory, callbackPortNum);
+    }
+
+    public MessageTransport createNewTransport(ConnectionID connectionID, TransportHandshakeErrorHandler handler,
+                                               TransportHandshakeMessageFactory handshakeMessageFactory,
+                                               List transportListeners) {
+      throw new AssertionError();
+    }
+
+    public MessageTransport createNewTransport(ConnectionID connectionId, TCConnection connection,
+                                               TransportHandshakeErrorHandler handler,
+                                               TransportHandshakeMessageFactory handshakeMessageFactory,
+                                               List transportListeners) {
+      throw new AssertionError();
+    }
+  }
 }

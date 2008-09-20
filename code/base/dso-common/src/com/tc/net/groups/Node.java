@@ -4,18 +4,29 @@
  */
 package com.tc.net.groups;
 
+import com.tc.net.TCSocketAddress;
 
 public class Node {
 
   private final String host;
   private final int    port;
+  private final int    groupPort;
   private final int    hashCode;
   private final String bind;
 
+  public Node(final String host, final int port) {
+    this(host, port, TCSocketAddress.WILDCARD_IP);
+  }
+
   public Node(final String host, final int port, final String bind) {
+    this(host, port, 0, bind);
+  }
+
+  public Node(final String host, final int port, final int groupPort, final String bind) {
     checkArgs(host, port);
     this.host = host.trim();
     this.port = port;
+    this.groupPort = groupPort;
     this.bind = bind; // not part of equals()
     this.hashCode = (host + "-" + port).hashCode();
   }
@@ -26,6 +37,10 @@ public class Node {
 
   public int getPort() {
     return port;
+  }
+
+  public int getGroupPort() {
+    return groupPort;
   }
 
   public String getBind() {
@@ -52,4 +67,9 @@ public class Node {
   public String toString() {
     return "Node{host=" + host + ":" + port + "}";
   }
+
+  public String getServerNodeName() {
+    return (host + ":" + port);
+  }
+
 }

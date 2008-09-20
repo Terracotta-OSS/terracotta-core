@@ -6,6 +6,7 @@ package com.tc.object.net;
 
 import com.tc.net.groups.ClientID;
 import com.tc.net.groups.NodeID;
+import com.tc.net.groups.NodeIDImpl;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
@@ -38,7 +39,7 @@ public interface DSOChannelManager {
 
   public Set getAllClientIDs();
 
-  public void makeChannelActive(ClientID clientID, boolean persistent);
+  public void makeChannelActive(ClientID clientID, boolean persistent, NodeIDImpl serverNodeID);
 
   public void makeChannelActiveNoAck(MessageChannel channel);
 

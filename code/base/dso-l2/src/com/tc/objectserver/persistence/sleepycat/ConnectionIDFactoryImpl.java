@@ -36,13 +36,28 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
   }
 
   public ConnectionID nextConnectionId() {
+    return buildConnectionId(connectionIDSequence.next());
+  }
+  
+  private ConnectionID buildConnectionId(long channelID) {
     Assert.assertNotNull(uid);
-    long clientID = connectionIDSequence.next();
     // Make sure we save the fact that we are giving out this id to someone in the database before giving it out.
-    clientStateStore.saveClientState(new ChannelID(clientID));
-    ConnectionID rv = new ConnectionID(clientID, uid);
+    clientStateStore.saveClientState(new ChannelID(channelID));
+    ConnectionID rv = new ConnectionID(channelID, uid);
     fireCreationEvent(rv);
     return rv;
+  }
+
+  public ConnectionID makeConnectionId(long channelID) {
+    // provided channelID shall not be using
+    Assert.assertFalse(clientStateStore.containsClient(new ChannelID(channelID)));
+    
+    // adjust next id as needed 
+    if (channelID >= connectionIDSequence.current()) {
+      connectionIDSequence.setNext(channelID + 1);
+    }
+    
+    return buildConnectionId(channelID);
   }
   
   public void restoreConnectionId(ConnectionID rv) {
