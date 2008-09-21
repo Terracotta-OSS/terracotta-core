@@ -16,7 +16,11 @@ public interface TCPropertiesConsts {
 
   public static final String[] OLD_PROPERTIES                                         = { "l1.reconnect.enabled",
       "l1.reconnect.timeout.millis", "l2.nha.ooo.maxDelayedAcks", "l2.nha.ooo.sendWindow",
-      "l2.objectmanager.loadObjectID.checkpoint.changes", "l2.objectmanager.loadObjectID.checkpoint.timeperiod" };
+      "l2.objectmanager.loadObjectID.checkpoint.changes", "l2.objectmanager.loadObjectID.checkpoint.timeperiod",
+      "l2.nha.groupcomm.type", "l2.nha.tribes.failuredetector.millis", "l2.nha.tribes.orderinterceptor.enabled",
+      "l2.nha.tribes.mcast.mcastPort", "l2.nha.tribes.mcast.mcastAddress", "l2.nha.tribes.mcast.memberDropTime",
+      "l2.nha.tribes.mcast.mcastFrequency", "l2.nha.tribes.mcast.tcpListenPort", "l2.nha.tribes.mcast.tcpListenHost",
+      "l2.nha.mcast.enabled"};
 
   /*********************************************************************************************************************
    * <code>
@@ -164,14 +168,10 @@ public interface TCPropertiesConsts {
    * tcgroupcomm.reconnect.sendqueue.cap - sendqueue capacity, 0 for Integer.MAX_VALUE
    * tcgroupcomm.reconnect.maxDelayedAcks - at least one ack per maxDelayedAcks messages received
    * tcgroupcomm.reconnect.sendWindow - max outstanding messages before ack received
-   * send.timeout.millis              - number of milliseconds to retry sending a message 
-   * tribes.failuredetector.millis    - number of milliseconds for a node to response a check otherwise will be removed from group. 
-   * mcast.enabled                    - If true, uses Multicast instead of TCP for L2-L2 discovery 
-   * l2.nha.tribes.mcast.*            - these properties are passed to tribes
    * tcgroupcomm.reconnect.enabled  -  enable L2-L2 reconnect
+   * send.timeout.millis              - number of milliseconds to retry sending a message 
    * </code>
    ********************************************************************************************************************/
-  public static final String   L2_NHA_GROUPCOMM_TYPE                                  = "l2.nha.groupcomm.type";
   public static final String   L2_NHA_TCGROUPCOMM_HANDSHAKE_TIMEOUT                   = "l2.nha.tcgroupcomm.handshake.timeout";
   public static final String   L2_NHA_TCGROUPCOMM_RESPONSE_TIMELIMIT                  = "l2.nha.tcgroupcomm.response.timelimit";
   public static final String   L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED                   = "l2.nha.tcgroupcomm.reconnect.enabled";
@@ -183,15 +183,6 @@ public interface TCPropertiesConsts {
   // a hidden tc.properties only used for l2 proxy testing purpose
   public static final String   L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT           = "l2.nha.tcgroupcomm.l2proxytoport";
   public static final String   L2_NHA_SEND_TIMEOUT_MILLS                              = "l2.nha.send.timeout.millis";
-  public static final String   L2_NHA_TRIBES_FAILURE_DETECTOR_MILLS                   = "l2.nha.tribes.failuredetector.millis";
-  public static final String   L2_NHA_MCAST_ENABLED                                   = "l2.nha.mcast.enabled";
-  public static final String   L2_NHA_TRIBES_ORDER_INTERCEPTOR_ENABLED                = "l2.nha.tribes.orderinterceptor.enabled";
-  public static final String   L2_NHA_TRIBES_MCAST_MCASTPORT                          = "l2.nha.tribes.mcast.mcastPort";
-  public static final String   L2_NHA_TRIBES_MCAST_MCASTADDRESS                       = "l2.nha.tribes.mcast.mcastAddress";
-  public static final String   L2_NHA_TRIBES_MCAST_MEMBERDROPTIME                     = "l2.nha.tribes.mcast.memberDropTime";
-  public static final String   L2_NHA_TRIBES_MCAST_MCASTFREQUENCY                     = "l2.nha.tribes.mcast.mcastFrequency";
-  public static final String   L2_NHA_TRIBES_MCAST_TCPLISTENPORT                      = "l2.nha.tribes.mcast.tcpListenPort";
-  public static final String   L2_NHA_TRIBES_MCAST_TCPLISTENHOST                      = "l2.nha.tribes.mcast.tcpListenHost";
   public static final String   L2_NHA_DIRTYDB_AUTODELETE                              = "l2.nha.dirtydb.autoDelete";
   public static final String   L2_NHA_AUTORESTART                                     = "l2.nha.autoRestart";
 
