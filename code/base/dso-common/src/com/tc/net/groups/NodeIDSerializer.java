@@ -55,7 +55,7 @@ public class NodeIDSerializer implements TCSerializable {
       case NodeID.L1_NODE_TYPE:
         return new ClientID();
       case NodeID.L2_NODE_TYPE:
-        return new NodeIDImpl();
+        return new ServerID();
       default:
         throw new AssertionError("Unknown type : " + type);
     }

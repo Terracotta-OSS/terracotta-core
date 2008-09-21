@@ -408,7 +408,7 @@ public class TribesGroupManagerTest extends TCTestCase {
       if (actual == null) {
         ThreadUtil.reallySleep(1 * 500);
       } else {
-        assertTrue(n1.equals(actual) || ((NodeIDImpl) n1).getName().equals(((NodeIDImpl) actual).getName()));
+        assertTrue(n1.equals(actual) || ((ServerID) n1).getName().equals(((ServerID) actual).getName()));
         System.err.println("\n### [" + msg + "] it took " + (i * 500) + " millis to get " + event + " event");
         return true;
       }
@@ -423,7 +423,7 @@ public class TribesGroupManagerTest extends TCTestCase {
     NodeID             node;
 
     public SenderThread(ThreadGroup group, String name, TribesGroupManager mgr, Integer upbound) {
-      this(group, name, mgr, upbound, NodeIDImpl.NULL_ID);
+      this(group, name, mgr, upbound, ServerID.NULL_ID);
     }
 
     public SenderThread(ThreadGroup group, String name, TribesGroupManager mgr, Integer upbound, NodeID node) {

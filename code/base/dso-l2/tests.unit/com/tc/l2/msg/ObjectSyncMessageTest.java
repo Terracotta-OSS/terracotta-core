@@ -11,7 +11,7 @@ import com.tc.bytes.TCByteBufferFactory;
 import com.tc.bytes.TCByteBufferTestUtil;
 import com.tc.l2.context.ManagedObjectSyncContext;
 import com.tc.net.groups.NodeID;
-import com.tc.net.groups.NodeIDImpl;
+import com.tc.net.groups.ServerID;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.tx.ServerTransactionID;
@@ -36,7 +36,7 @@ public class ObjectSyncMessageTest extends TestCase {
   private final int                dnaCount = 56;
 
   public void setUp() {
-    NodeID nodeID = new NodeIDImpl("foo", "foobar".getBytes());
+    NodeID nodeID = new ServerID("foo", "foobar".getBytes());
     HashMap rootsMap = new HashMap();
     rootsMap.put("root1", new ObjectID(1));
     rootsMap.put("root2", new ObjectID(2));
@@ -95,7 +95,7 @@ public class ObjectSyncMessageTest extends TestCase {
 
   public void testBasicSerialization() throws Exception {
     ObjectSyncMessage osm = ObjectSyncMessageFactory
-        .createObjectSyncMessageFrom(managedObjectSyncContext, new ServerTransactionID(new NodeIDImpl("xyz",
+        .createObjectSyncMessageFrom(managedObjectSyncContext, new ServerTransactionID(new ServerID("xyz",
                                                                                                       new byte[] { 3,
                                                                                                           4, 5 }),
                                                                                        new TransactionID(99)));

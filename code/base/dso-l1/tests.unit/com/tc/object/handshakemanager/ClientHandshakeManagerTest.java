@@ -8,7 +8,7 @@ import com.tc.async.impl.NullSink;
 import com.tc.cluster.Cluster;
 import com.tc.exception.ImplementMe;
 import com.tc.logging.TCLogging;
-import com.tc.net.groups.NodeIDImpl;
+import com.tc.net.groups.ServerID;
 import com.tc.net.protocol.tcm.TestChannelIDProvider;
 import com.tc.object.ClientIDProvider;
 import com.tc.object.ClientIDProviderImpl;
@@ -59,7 +59,7 @@ import java.util.Set;
 
 public class ClientHandshakeManagerTest extends TCTestCase {
   private static final String                clientVersion = "x.y.z";
-  private static final NodeIDImpl            serverNodeID  = new NodeIDImpl("test:9520", UUID.getUUID().toString()
+  private static final ServerID              serverNodeID  = new ServerID("test:9520", UUID.getUUID().toString()
                                                                .getBytes());
   private TestClientObjectManager            objectManager;
   private TestClientLockManager              lockManager;
@@ -187,7 +187,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
 
     // make sure RuntimeException is thrown if NULL serverNodeID
     try {
-      mgr.acknowledgeHandshake(cip.getClientID(), false, "1", new String[] {}, clientVersion, NodeIDImpl.NULL_ID,
+      mgr.acknowledgeHandshake(cip.getClientID(), false, "1", new String[] {}, clientVersion, ServerID.NULL_ID,
                                sentMessage.getChannel());
       fail();
     } catch (RuntimeException e) {

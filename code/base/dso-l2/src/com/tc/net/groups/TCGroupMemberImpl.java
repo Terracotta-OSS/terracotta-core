@@ -18,15 +18,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
   private TCGroupManagerImpl   manager;
   private final MessageChannel channel;
-  private final NodeIDImpl     localNodeID;
-  private final NodeIDImpl     peerNodeID;
+  private final ServerID       localNodeID;
+  private final ServerID       peerNodeID;
   // set member ready only when both ends are in group
   private final AtomicBoolean  ready              = new AtomicBoolean(false);
   private final AtomicBoolean  joined             = new AtomicBoolean(false);
   private volatile boolean     closeEventNotified = false;
   private volatile boolean     eventFiring        = false;
 
-  public TCGroupMemberImpl(NodeIDImpl localNodeID, NodeIDImpl peerNodeID, MessageChannel channel) {
+  public TCGroupMemberImpl(ServerID localNodeID, ServerID peerNodeID, MessageChannel channel) {
     this.channel = channel;
     this.localNodeID = localNodeID;
     this.peerNodeID = peerNodeID;
@@ -63,11 +63,11 @@ public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
     }
   }
 
-  public NodeIDImpl getLocalNodeID() {
+  public ServerID getLocalNodeID() {
     return localNodeID;
   }
 
-  public NodeIDImpl getPeerNodeID() {
+  public ServerID getPeerNodeID() {
     return peerNodeID;
   }
 

@@ -203,7 +203,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
    */
   private static NodeID makeNodeIDFrom(Member member) {
     if (useMcast) {
-      return new NodeIDImpl(member.getName(), member.getUniqueId());
+      return new ServerID(member.getName(), member.getUniqueId());
     } else {
       byte[] host = member.getHost();
       int port = member.getPort();
@@ -219,7 +219,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       byte uid[] = new byte[length + 4];
       System.arraycopy(host, 0, uid, 0, length);
       Conversion.writeInt(port, uid, length);
-      return new NodeIDImpl(member.getName(), uid);
+      return new ServerID(member.getName(), uid);
     }
   }
 

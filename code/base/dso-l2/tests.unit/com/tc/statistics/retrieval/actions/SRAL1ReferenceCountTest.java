@@ -5,7 +5,7 @@ package com.tc.statistics.retrieval.actions;
 
 import com.tc.logging.NullTCLogger;
 import com.tc.net.groups.NodeID;
-import com.tc.net.groups.NodeIDImpl;
+import com.tc.net.groups.ServerID;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.impl.ClientStateManagerImpl;
@@ -32,10 +32,10 @@ public class SRAL1ReferenceCountTest extends TestCase {
     byte[] b3 = new byte[] { 43, 5, 127 , (byte) 255, -87, 9 };
     byte[] b4 = new byte[] { 4};
 
-    NodeID n1 = new NodeIDImpl("node1", b1);
-    NodeID n2 = new NodeIDImpl("node2", b2);
-    NodeID n3 = new NodeIDImpl("node3", b3);
-    NodeID n4 = new NodeIDImpl("node4", b4);
+    NodeID n1 = new ServerID("node1", b1);
+    NodeID n2 = new ServerID("node2", b2);
+    NodeID n3 = new ServerID("node3", b3);
+    NodeID n4 = new ServerID("node4", b4);
 
     manager.startupNode(n1);
     manager.startupNode(n2);

@@ -9,7 +9,7 @@ import com.tc.async.api.Stage;
 import com.tc.cluster.Cluster;
 import com.tc.logging.TCLogger;
 import com.tc.net.groups.ClientID;
-import com.tc.net.groups.NodeIDImpl;
+import com.tc.net.groups.ServerID;
 import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ChannelEventType;
@@ -180,7 +180,7 @@ public class ClientHandshakeManager implements ChannelEventListener {
   }
 
   protected void acknowledgeHandshake(ClientID clientID, boolean persistentServer, String thisNodeId,
-                                      String[] clusterMembers, String serverVersion, NodeIDImpl serverNodeID,
+                                      String[] clusterMembers, String serverVersion, ServerID serverNodeID,
                                       MessageChannel channel) {
     logger.info("Received Handshake ack for this node :" + clientID);
     if (getState() != STARTING) {
@@ -196,7 +196,7 @@ public class ClientHandshakeManager implements ChannelEventListener {
 
     this.serverIsPersistent = persistentServer;
     
-    if (serverNodeID == NodeIDImpl.NULL_ID) {
+    if (serverNodeID == ServerID.NULL_ID) {
       throw new RuntimeException("ClientHandshakeAck message with NULL serverID");
     }
     channel.setRemoteNodeID(serverNodeID);

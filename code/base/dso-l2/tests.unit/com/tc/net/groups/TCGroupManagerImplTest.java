@@ -227,7 +227,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     Map roots = new HashMap();
     long sID = 10;
     ObjectSyncMessage message = new ObjectSyncMessage(ObjectSyncMessage.MANAGED_OBJECT_SYNC_TYPE);
-    message.initialize(new ServerTransactionID(new NodeIDImpl("hello", new byte[] { 34, 33, (byte) 234 }),
+    message.initialize(new ServerTransactionID(new ServerID("hello", new byte[] { 34, 33, (byte) 234 }),
                                                new TransactionID(342)), dnaOids, count, serializedDNAs,
                        objectSerializer, roots, sID);
     return (message);
@@ -335,7 +335,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
   private L2StateMessage createL2StateMessage() {
     long weights[] = new long[] { 1, 23, 44, 78 };
-    Enrollment enroll = new Enrollment(new NodeIDImpl("test", UUID.getUUID().toString().getBytes()), true, weights);
+    Enrollment enroll = new Enrollment(new ServerID("test", UUID.getUUID().toString().getBytes()), true, weights);
     L2StateMessage message = new L2StateMessage(L2StateMessage.START_ELECTION, enroll);
     return (message);
   }
@@ -511,7 +511,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     private NodeID             toNode;
 
     public SenderThread(ThreadGroup group, String name, TCGroupManagerImpl mgr, Integer upbound) {
-      this(group, name, mgr, upbound, NodeIDImpl.NULL_ID);
+      this(group, name, mgr, upbound, ServerID.NULL_ID);
     }
 
     public SenderThread(ThreadGroup group, String name, TCGroupManagerImpl mgr, Integer upbound, NodeID toNode) {

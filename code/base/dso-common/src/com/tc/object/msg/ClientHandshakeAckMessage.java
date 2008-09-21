@@ -5,7 +5,7 @@
 package com.tc.object.msg;
 
 import com.tc.net.groups.ClientID;
-import com.tc.net.groups.NodeIDImpl;
+import com.tc.net.groups.ServerID;
 import com.tc.net.protocol.tcm.MessageChannel;
 
 import java.util.Set;
@@ -16,7 +16,7 @@ public interface ClientHandshakeAckMessage {
   public boolean getPersistentServer();
 
   public void initialize(boolean persistent, Set allNodes, String thisNodeID, String serverVersion,
-                         NodeIDImpl serverNodeID);
+                         ServerID serverNodeID);
 
   public MessageChannel getChannel();
 
@@ -28,5 +28,5 @@ public interface ClientHandshakeAckMessage {
 
   public ClientID getClientID();
 
-  public NodeIDImpl getServerNodeID();
+  public ServerID getServerNodeID();
 }

@@ -13,23 +13,23 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
 
-public class NodeIDImpl implements NodeID {
+public class ServerID implements NodeID {
 
-  public static final NodeIDImpl NULL_ID       = new NodeIDImpl("NULL-ID", new byte[0]);
+  public static final ServerID NULL_ID       = new ServerID("NULL-ID", new byte[0]);
 
-  private static final String    UNINITIALIZED = "Uninitialized";
+  private static final String  UNINITIALIZED = "Uninitialized";
 
-  private String                 name;
-  private byte[]                 uid;
+  private String               name;
+  private byte[]               uid;
 
-  private transient int          hash;
+  private transient int        hash;
 
-  public NodeIDImpl() {
+  public ServerID() {
     // satisfy serialization
     this.name = UNINITIALIZED;
   }
 
-  public NodeIDImpl(String name, byte[] uid) {
+  public ServerID(String name, byte[] uid) {
     this.name = name;
     this.uid = uid;
   }
@@ -46,8 +46,8 @@ public class NodeIDImpl implements NodeID {
   }
 
   public boolean equals(Object o) {
-    if (o instanceof NodeIDImpl) {
-      NodeIDImpl that = (NodeIDImpl) o;
+    if (o instanceof ServerID) {
+      ServerID that = (ServerID) o;
       return Arrays.equals(that.uid, this.uid);
     }
     return false;
@@ -126,7 +126,7 @@ public class NodeIDImpl implements NodeID {
   public int compareTo(Object o) {
     NodeID n = (NodeID) o;
     if (getType() != n.getType()) { return getType() - n.getType(); }
-    NodeIDImpl target = (NodeIDImpl) n;
+    ServerID target = (ServerID) n;
     byte[] targetUid = target.getUID();
     int length = uid.length;
     int diff = length - targetUid.length;
@@ -137,5 +137,5 @@ public class NodeIDImpl implements NodeID {
     }
     return 0;
   }
-  
+
 }

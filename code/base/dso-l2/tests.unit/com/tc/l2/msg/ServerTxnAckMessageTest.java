@@ -9,7 +9,7 @@ import com.tc.bytes.TCByteBufferFactory;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.ClientID;
 import com.tc.net.groups.NodeID;
-import com.tc.net.groups.NodeIDImpl;
+import com.tc.net.groups.ServerID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
@@ -39,7 +39,7 @@ public class ServerTxnAckMessageTest extends TestCase {
   private AbstractGroupMessage relayedCommitTransactionMessage;
   private Set                  serverTransactionIDs;
   private final int            channelId = 2;
-  private final NodeID         nodeID    = new NodeIDImpl("foo", "foobar".getBytes());
+  private final NodeID         nodeID    = new ServerID("foo", "foobar".getBytes());
 
   public void setUp() {
     TestCommitTransactionMessage testCommitTransactionMessage = (TestCommitTransactionMessage) new TestCommitTransactionMessageFactory()

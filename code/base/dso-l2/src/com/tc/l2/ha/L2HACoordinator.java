@@ -47,7 +47,7 @@ import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.Node;
 import com.tc.net.groups.NodeID;
-import com.tc.net.groups.NodeIDImpl;
+import com.tc.net.groups.ServerID;
 import com.tc.net.groups.TCGroupManagerImpl;
 import com.tc.net.groups.TribesGroupManager;
 import com.tc.object.msg.MessageRecycler;
@@ -88,14 +88,14 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
 
   private NewHaConfig                          haConfig;
   private final L2TVSConfigurationSetupManager configSetupManager;
-  private final NodeIDImpl                     serverNodeID;
+  private final ServerID                       serverNodeID;
 
   public L2HACoordinator(L2TVSConfigurationSetupManager configSetupManager, TCLogger consoleLogger,
                          DistributedObjectServer server, StageManager stageManager,
                          PersistentMapStore clusterStateStore, ObjectManager objectManager,
                          ServerTransactionManager transactionManager, ServerGlobalTransactionManager gtxm,
                          DSOChannelManager channelManager, NewHaConfig haConfig, MessageRecycler recycler,
-                         NodeIDImpl serverNodeID) {
+                         ServerID serverNodeID) {
     this.configSetupManager = configSetupManager;
     this.consoleLogger = consoleLogger;
     this.server = server;

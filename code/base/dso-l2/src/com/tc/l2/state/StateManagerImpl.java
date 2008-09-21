@@ -18,7 +18,7 @@ import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupMessage;
 import com.tc.net.groups.NodeID;
-import com.tc.net.groups.NodeIDImpl;
+import com.tc.net.groups.ServerID;
 import com.tc.util.Assert;
 import com.tc.util.State;
 
@@ -37,7 +37,7 @@ public class StateManagerImpl implements StateManager {
   private final CopyOnWriteArrayList   listeners          = new CopyOnWriteArrayList();
   private final Object                 electionLock       = new Object();
 
-  private NodeID                       activeNode         = NodeIDImpl.NULL_ID;
+  private NodeID                       activeNode         = ServerID.NULL_ID;
   private volatile State               state              = START_STATE;
   private boolean                      electionInProgress = false;
 
@@ -76,7 +76,7 @@ public class StateManagerImpl implements StateManager {
 
   private void runElection(boolean isNew) {
     NodeID myNodeID = getLocalNodeID();
-    NodeID winner = NodeIDImpl.NULL_ID;
+    NodeID winner = ServerID.NULL_ID;
     int count = 0;
     while (getActiveNodeID().isNull()) {
       if (++count > 1) {
@@ -260,7 +260,7 @@ public class StateManagerImpl implements StateManager {
 
   private synchronized void handleElectionResultMessage(L2StateMessage msg) throws GroupException {
     if (activeNode.equals(msg.getEnrollment().getNodeID())) {
-      Assert.assertFalse(NodeIDImpl.NULL_ID.equals(activeNode));
+      Assert.assertFalse(ServerID.NULL_ID.equals(activeNode));
       // This wouldn't normally happen, but we agree - so ack
       GroupMessage resultAgreed = L2StateMessageFactory.createResultAgreedMessage(msg, msg.getEnrollment());
       logger.info("Agreed with Election Result from " + msg.messageFrom() + " : " + resultAgreed);
@@ -335,7 +335,7 @@ public class StateManagerImpl implements StateManager {
     synchronized (this) {
       if (activeNode.equals(disconnectedNode)) {
         // ACTIVE Node is gone
-        setActiveNodeID(NodeIDImpl.NULL_ID);
+        setActiveNodeID(ServerID.NULL_ID);
       }
       if (state != PASSIVE_UNINTIALIZED && state != ACTIVE_COORDINATOR && activeNode.isNull()) {
         elect = true;

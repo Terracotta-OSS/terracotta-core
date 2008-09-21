@@ -8,7 +8,7 @@ import com.tc.async.api.Sink;
 import com.tc.exception.TCRuntimeException;
 import com.tc.management.ClientLockStatManager;
 import com.tc.net.groups.NodeID;
-import com.tc.net.groups.NodeIDImpl;
+import com.tc.net.groups.ServerID;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.bytecode.ByteCodeUtil;
@@ -29,7 +29,7 @@ import java.util.Set;
 // Methods in this class are not synchronized. They should be called from a proper synchronized
 // context, which is from the ClientLockManager context.
 public class ClientLockStatisticsManagerImpl extends LockStatisticsManager implements ClientLockStatManager {
-  private final static NodeID     NULL_NODE_ID                = NodeIDImpl.NULL_ID;
+  private final static NodeID     NULL_NODE_ID                = ServerID.NULL_ID;
   private final static Set        IGNORE_STACK_TRACES_PACKAGE = new HashSet();
 
   private Sink                    sink;

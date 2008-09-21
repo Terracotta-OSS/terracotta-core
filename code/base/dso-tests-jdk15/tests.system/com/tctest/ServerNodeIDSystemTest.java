@@ -16,7 +16,7 @@ import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogging;
 import com.tc.net.groups.ClientID;
 import com.tc.net.groups.NodeID;
-import com.tc.net.groups.NodeIDImpl;
+import com.tc.net.groups.ServerID;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.ServerMessageChannelImpl;
 import com.tc.net.protocol.tcm.TCMessage;
@@ -56,7 +56,7 @@ public class ServerNodeIDSystemTest extends BaseDSOTestCase {
 
         // verify logic here
         // Client shall hold the same ServerNodeID as server's
-        NodeIDImpl serverNodeID = server.getDSOServer().getServerNodeID();
+        ServerID serverNodeID = server.getDSOServer().getServerNodeID();
         System.out.println("XXX ServerNodeID: " + serverNodeID);
         ClientMessageChannel clientChannel = client.getChannel().channel();
         NodeID clientServerNodeID = clientChannel.getRemoteNodeID();

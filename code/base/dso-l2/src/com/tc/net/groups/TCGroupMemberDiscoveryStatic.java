@@ -60,7 +60,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
   }
 
   public boolean isValidClusterNode(NodeID nodeID) {
-    String nodeName = ((NodeIDImpl) nodeID).getName();
+    String nodeName = ((ServerID) nodeID).getName();
     return (nodeStateMap.get(nodeName) != null);
   }
 
@@ -181,14 +181,14 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
   }
 
   public synchronized void nodeJoined(NodeID nodeID) {
-    String nodeName = ((NodeIDImpl) nodeID).getName();
+    String nodeName = ((ServerID) nodeID).getName();
     nodeStateMap.get(nodeName).nodeJoined();
     joinedNodes++;
   }
 
   public synchronized void nodeLeft(NodeID nodeID) {
     joinedNodes--;
-    String nodeName = ((NodeIDImpl) nodeID).getName();
+    String nodeName = ((ServerID) nodeID).getName();
     nodeStateMap.get(nodeName).nodeLeft();
     notifyAll();
   }

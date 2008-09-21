@@ -211,7 +211,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
     Map roots = new HashMap();
     long sID = 10;
     ObjectSyncMessage message = new ObjectSyncMessage(ObjectSyncMessage.MANAGED_OBJECT_SYNC_TYPE);
-    message.initialize(new ServerTransactionID(new NodeIDImpl("hello", new byte[] { 34, 33, (byte) 234 }),
+    message.initialize(new ServerTransactionID(new ServerID("hello", new byte[] { 34, 33, (byte) 234 }),
                                                new TransactionID(342)), dnaOids, count, serializedDNAs,
                        objectSerializer, roots, sID);
     sendGroupMessage(message);
@@ -243,8 +243,8 @@ public class TCGroupMessageWrapperTest extends TestCase {
     sendGroupMessage(sendMesg);
   }
 
-  private NodeIDImpl makeNodeID(String name) {
-    return (new NodeIDImpl(name, UUID.getUUID().toString().getBytes()));
+  private ServerID makeNodeID(String name) {
+    return (new ServerID(name, UUID.getUUID().toString().getBytes()));
   }
 
 }

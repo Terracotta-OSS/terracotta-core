@@ -73,48 +73,48 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventListener {
-  private static final TCLogger                               logger                      = TCLogging
-                                                                                              .getLogger(TCGroupManagerImpl.class);
-  public static final String                                  HANDSHAKE_STATE_MACHINE_TAG = "TcGroupCommHandshake";
-  private final ReconnectConfig                               l2ReconnectConfig;
+  private static final TCLogger                             logger                      = TCLogging
+                                                                                            .getLogger(TCGroupManagerImpl.class);
+  public static final String                                HANDSHAKE_STATE_MACHINE_TAG = "TcGroupCommHandshake";
+  private final ReconnectConfig                             l2ReconnectConfig;
 
-  private final NodeIDImpl                                    thisNodeID;
-  private final int                                           groupPort;
-  private final ConnectionPolicy                              connectionPolicy;
-  private final CopyOnWriteArrayList<GroupEventsListener>     groupListeners              = new CopyOnWriteArrayList<GroupEventsListener>();
-  private final Map<String, GroupMessageListener>             messageListeners            = new ConcurrentHashMap<String, GroupMessageListener>();
-  private final Map<MessageID, GroupResponse>                 pendingRequests             = new ConcurrentHashMap<MessageID, GroupResponse>();
-  private final AtomicBoolean                                 isStopped                   = new AtomicBoolean(false);
-  private final ConcurrentHashMap<MessageChannel, NodeIDImpl> channelToNodeID             = new ConcurrentHashMap<MessageChannel, NodeIDImpl>();
-  private final ConcurrentHashMap<NodeIDImpl, TCGroupMember>  members                     = new ConcurrentHashMap<NodeIDImpl, TCGroupMember>();
-  private final ConcurrentHashMap<String, TCGroupMember>      nodenameToMembers           = new ConcurrentHashMap<String, TCGroupMember>();
-  private final Timer                                         handshakeTimer              = new Timer(true);
-  private final Set<NodeID>                                   zappedSet                   = Collections
-                                                                                              .synchronizedSet(new HashSet<NodeID>());
-  private final StageManager                                  stageManager;
-  private final boolean                                       isUseOOOLayer;
+  private final ServerID                                    thisNodeID;
+  private final int                                         groupPort;
+  private final ConnectionPolicy                            connectionPolicy;
+  private final CopyOnWriteArrayList<GroupEventsListener>   groupListeners              = new CopyOnWriteArrayList<GroupEventsListener>();
+  private final Map<String, GroupMessageListener>           messageListeners            = new ConcurrentHashMap<String, GroupMessageListener>();
+  private final Map<MessageID, GroupResponse>               pendingRequests             = new ConcurrentHashMap<MessageID, GroupResponse>();
+  private final AtomicBoolean                               isStopped                   = new AtomicBoolean(false);
+  private final ConcurrentHashMap<MessageChannel, ServerID> channelToNodeID             = new ConcurrentHashMap<MessageChannel, ServerID>();
+  private final ConcurrentHashMap<ServerID, TCGroupMember>  members                     = new ConcurrentHashMap<ServerID, TCGroupMember>();
+  private final ConcurrentHashMap<String, TCGroupMember>    nodenameToMembers           = new ConcurrentHashMap<String, TCGroupMember>();
+  private final Timer                                       handshakeTimer              = new Timer(true);
+  private final Set<NodeID>                                 zappedSet                   = Collections
+                                                                                            .synchronizedSet(new HashSet<NodeID>());
+  private final StageManager                                stageManager;
+  private final boolean                                     isUseOOOLayer;
 
-  private CommunicationsManager                               communicationsManager;
-  private NetworkListener                                     groupListener;
-  private TCGroupMemberDiscovery                              discover;
-  private ZapNodeRequestProcessor                             zapNodeRequestProcessor     = new DefaultZapNodeRequestProcessor(
-                                                                                                                               logger);
-  private Stage                                               hydrateStage;
-  private Stage                                               receiveGroupMessageStage;
-  private Stage                                               handshakeMessageStage;
-  private Stage                                               discoveryStage;
-  private TCProperties                                        l2Properties;
+  private CommunicationsManager                             communicationsManager;
+  private NetworkListener                                   groupListener;
+  private TCGroupMemberDiscovery                            discover;
+  private ZapNodeRequestProcessor                           zapNodeRequestProcessor     = new DefaultZapNodeRequestProcessor(
+                                                                                                                             logger);
+  private Stage                                             hydrateStage;
+  private Stage                                             receiveGroupMessageStage;
+  private Stage                                             handshakeMessageStage;
+  private Stage                                             discoveryStage;
+  private TCProperties                                      l2Properties;
 
   /*
    * Setup a communication manager which can establish channel from either sides.
    */
   public TCGroupManagerImpl(L2TVSConfigurationSetupManager configSetupManager, StageManager stageManager,
-                            NodeIDImpl thisNodeID) {
+                            ServerID thisNodeID) {
     this(configSetupManager, new NullConnectionPolicy(), stageManager, thisNodeID);
   }
 
   public TCGroupManagerImpl(L2TVSConfigurationSetupManager configSetupManager, ConnectionPolicy connectionPolicy,
-                            StageManager stageManager, NodeIDImpl thisNodeID) {
+                            StageManager stageManager, ServerID thisNodeID) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
     this.thisNodeID = thisNodeID;
@@ -148,13 +148,14 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   /*
    * for testing purpose only. Tester needs to do setDiscover().
    */
-  TCGroupManagerImpl(ConnectionPolicy connectionPolicy, String hostname, int port, int groupPort, StageManager stageManager) {
+  TCGroupManagerImpl(ConnectionPolicy connectionPolicy, String hostname, int port, int groupPort,
+                     StageManager stageManager) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
     l2ReconnectConfig = new L2ReconnectConfigImpl();
     this.isUseOOOLayer = l2ReconnectConfig.getReconnectEnabled();
     this.groupPort = groupPort;
-    thisNodeID = new NodeIDImpl(new Node(hostname, port).getServerNodeName(), UUID.getUUID().toString().getBytes());
+    thisNodeID = new ServerID(new Node(hostname, port).getServerNodeName(), UUID.getUUID().toString().getBytes());
     logger.info("Creating server nodeID: " + thisNodeID);
     init(new TCSocketAddress(TCSocketAddress.WILDCARD_ADDR, groupPort));
   }
@@ -232,7 +233,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     return getNodeID();
   }
 
-  private NodeIDImpl getNodeID() {
+  private ServerID getNodeID() {
     return thisNodeID;
   }
 
@@ -242,18 +243,18 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   }
 
   private void membersAdd(TCGroupMember member) {
-    NodeIDImpl nodeID = member.getPeerNodeID();
+    ServerID nodeID = member.getPeerNodeID();
     members.put(nodeID, member);
     nodenameToMembers.put(nodeID.getName(), member);
   }
 
   private void membersRemove(TCGroupMember member) {
-    NodeIDImpl nodeID = member.getPeerNodeID();
+    ServerID nodeID = member.getPeerNodeID();
     members.remove(nodeID);
     nodenameToMembers.remove(nodeID.getName());
   }
 
-  private void removeIfMemberReconnecting(NodeIDImpl newNodeID) {
+  private void removeIfMemberReconnecting(ServerID newNodeID) {
     TCGroupMember oldMember = nodenameToMembers.get(newNodeID.getName());
     if ((oldMember != null) && (oldMember.getPeerNodeID() != newNodeID)) {
       MessageChannel channel = oldMember.getChannel();
@@ -286,7 +287,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   }
 
   private void fireNodeEvent(TCGroupMember member, boolean joined) {
-    NodeIDImpl newNode = member.getPeerNodeID();
+    ServerID newNode = member.getPeerNodeID();
     member.setReady(joined);
     if (logger.isDebugEnabled()) logger.debug("fireNodeEvent: joined = " + joined + ", node = " + newNode);
     for (GroupEventsListener listener : groupListeners) {
@@ -463,12 +464,12 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   /*
    * receivedNodeID -- Store NodeID of connected channels
    */
-  void receivedNodeID(MessageChannel channel, NodeIDImpl nodeID) {
+  void receivedNodeID(MessageChannel channel, ServerID nodeID) {
     channelToNodeID.put(channel, nodeID);
   }
 
   private TCGroupMember getMember(MessageChannel channel) {
-    NodeIDImpl nodeID = channelToNodeID.get(channel);
+    ServerID nodeID = channelToNodeID.get(channel);
     if (nodeID == null) return null;
     TCGroupMember m = members.get(nodeID);
     return ((m != null) && (m.getChannel() == channel)) ? m : null;
@@ -537,7 +538,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
       }
     }
 
-    NodeIDImpl from = m.getPeerNodeID();
+    ServerID from = m.getPeerNodeID();
     MessageID requestID = message.inResponseTo();
 
     message.setMessageOrginator(from);
@@ -546,7 +547,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     }
   }
 
-  private boolean notifyPendingRequests(MessageID requestID, GroupMessage gmsg, NodeIDImpl nodeID) {
+  private boolean notifyPendingRequests(MessageID requestID, GroupMessage gmsg, ServerID nodeID) {
     GroupResponseImpl response = (GroupResponseImpl) pendingRequests.get(requestID);
     if (response != null) {
       response.addResponseFrom(nodeID, gmsg);
@@ -579,7 +580,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     registerForMessages(msgClass, new RouteGroupMessagesToSink(msgClass.getName(), sink));
   }
 
-  private void fireMessageReceivedEvent(NodeIDImpl from, GroupMessage msg) {
+  private void fireMessageReceivedEvent(ServerID from, GroupMessage msg) {
     GroupMessageListener listener = messageListeners.get(msg.getClass().getName());
     if (listener != null) {
       listener.messageReceived(from, msg);
@@ -621,7 +622,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
 
   private static class GroupResponseImpl implements GroupResponse {
 
-    private final Set<NodeIDImpl>    waitFor   = new HashSet<NodeIDImpl>();
+    private final Set<ServerID>      waitFor   = new HashSet<ServerID>();
     private final List<GroupMessage> responses = new ArrayList<GroupMessage>();
     private final TCGroupManagerImpl manager;
 
@@ -666,7 +667,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
       }
     }
 
-    public synchronized void addResponseFrom(NodeIDImpl nodeID, GroupMessage gmsg) {
+    public synchronized void addResponseFrom(ServerID nodeID, GroupMessage gmsg) {
       if (!waitFor.remove(nodeID)) {
         String message = "Recd response from a member not in list : " + nodeID + " : waiting For : " + waitFor
                          + " msg : " + gmsg;
@@ -683,7 +684,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
       notifyAll();
     }
 
-    public synchronized void waitForResponses(NodeIDImpl sender) throws GroupException {
+    public synchronized void waitForResponses(ServerID sender) throws GroupException {
       long start = System.currentTimeMillis();
       while (!waitFor.isEmpty() && !manager.isStopped()) {
         try {
@@ -765,16 +766,16 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
 
     private final TCGroupManagerImpl manager;
     private final MessageChannel     channel;
-    private final NodeIDImpl         localNodeID;
+    private final ServerID           localNodeID;
 
     private HandshakeState           current;
-    private NodeIDImpl               peerNodeID;
+    private ServerID                 peerNodeID;
     private TimerTask                timerTask;
     private TCGroupMember            member;
     private boolean                  disconnectEventNotified;
     private boolean                  stateTransitionInProgress;
 
-    public TCGroupHandshakeStateMachine(TCGroupManagerImpl manager, MessageChannel channel, NodeIDImpl localNodeID) {
+    public TCGroupHandshakeStateMachine(TCGroupManagerImpl manager, MessageChannel channel, ServerID localNodeID) {
       this.manager = manager;
       this.channel = channel;
       this.localNodeID = localNodeID;

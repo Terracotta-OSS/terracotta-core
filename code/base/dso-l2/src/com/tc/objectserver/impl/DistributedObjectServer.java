@@ -54,7 +54,7 @@ import com.tc.net.NIOWorkarounds;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.groups.ClientID;
 import com.tc.net.groups.Node;
-import com.tc.net.groups.NodeIDImpl;
+import com.tc.net.groups.ServerID;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OOOEventHandler;
@@ -247,7 +247,7 @@ import javax.management.remote.JMXConnectorServer;
  * Startup and shutdown point. Builds and starts the server
  */
 public class DistributedObjectServer implements TCDumper, ChannelManagerEventListener {
-  private NodeIDImpl                           thisServerNodeID         = NodeIDImpl.NULL_ID;
+  private ServerID                             thisServerNodeID         = ServerID.NULL_ID;
   private final ConnectionPolicy               connectionPolicy;
 
   private static final TCLogger                logger                   = CustomerLogging.getDSOGenericLogger();
@@ -904,9 +904,9 @@ public class DistributedObjectServer implements TCDumper, ChannelManagerEventLis
     setLoggerOnExit();
   }
 
-  private NodeIDImpl makeServerNodeID(NewL2DSOConfig l2DSOConfig) {
+  private ServerID makeServerNodeID(NewL2DSOConfig l2DSOConfig) {
     String nodeName = new Node(l2DSOConfig.host().getString(), l2DSOConfig.listenPort().getInt()).getServerNodeName();
-    NodeIDImpl aNodeID = new NodeIDImpl(nodeName, UUID.getUUID().toString().getBytes());
+    ServerID aNodeID = new ServerID(nodeName, UUID.getUUID().toString().getBytes());
     logger.info("Creating server nodeID: " + aNodeID);
     return aNodeID;
   }
@@ -916,7 +916,7 @@ public class DistributedObjectServer implements TCDumper, ChannelManagerEventLis
     channel.setRemoteNodeID(new ClientID(channel.getChannelID()));
   }
 
-  public NodeIDImpl getServerNodeID() {
+  public ServerID getServerNodeID() {
     return thisServerNodeID;
   }
 

@@ -10,7 +10,7 @@ import com.tc.async.impl.NullSink;
 import com.tc.logging.TCLogger;
 import com.tc.net.groups.ClientID;
 import com.tc.net.groups.NodeID;
-import com.tc.net.groups.NodeIDImpl;
+import com.tc.net.groups.ServerID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.object.lockmanager.api.LockContext;
@@ -57,13 +57,13 @@ public class ServerClientHandshakeManager {
   private final boolean                  persistent;
   private final ServerTransactionManager transactionManager;
   private final TCLogger                 consoleLogger;
-  private final NodeIDImpl               serverNodeID;
+  private final ServerID                 serverNodeID;
 
   public ServerClientHandshakeManager(TCLogger logger, DSOChannelManager channelManager,
                                       ServerTransactionManager transactionManager, SequenceValidator sequenceValidator,
                                       ClientStateManager clientStateManager, LockManager lockManager,
                                       Sink lockResponseSink, Sink oidRequestSink, TCTimer timer, long reconnectTimeout,
-                                      boolean persistent, TCLogger consoleLogger, NodeIDImpl serverNodeID) {
+                                      boolean persistent, TCLogger consoleLogger, ServerID serverNodeID) {
     this.logger = logger;
     this.channelManager = channelManager;
     this.transactionManager = transactionManager;

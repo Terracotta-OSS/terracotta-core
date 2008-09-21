@@ -15,7 +15,7 @@ import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.groups.ClientID;
 import com.tc.net.groups.NodeID;
-import com.tc.net.groups.NodeIDImpl;
+import com.tc.net.groups.ServerID;
 import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
@@ -55,7 +55,7 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
     this.msgFactory = msgFactory;
     this.parser = new TCMessageParser(this.msgFactory);
     this.localNodeID = ClientID.NULL_ID;
-    this.remoteNodeID = NodeIDImpl.NULL_ID;
+    this.remoteNodeID = ServerID.NULL_ID;
   }
 
   public void addAttachment(String key, Object value, boolean replace) {

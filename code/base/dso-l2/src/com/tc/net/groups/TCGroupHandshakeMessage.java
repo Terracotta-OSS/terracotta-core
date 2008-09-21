@@ -26,7 +26,7 @@ public class TCGroupHandshakeMessage extends DSOMessageBase {
   private final static int  HANDSHAKE_OK         = 1;
   private final static int  HANDSHAKE_DENY       = 0;
   private byte              messageType;
-  private NodeIDImpl        nodeID;
+  private ServerID          nodeID;
   private int               message;
 
   public TCGroupHandshakeMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
@@ -54,12 +54,12 @@ public class TCGroupHandshakeMessage extends DSOMessageBase {
     return (this.message == HANDSHAKE_OK);
   }
 
-  public NodeIDImpl getNodeID() {
+  public ServerID getNodeID() {
     Assert.eval(this.messageType == NODE_ID);
     return this.nodeID;
   }
 
-  public void initializeNodeID(NodeIDImpl aNodeID) {
+  public void initializeNodeID(ServerID aNodeID) {
     this.messageType = NODE_ID;
     this.nodeID = aNodeID;
   }
@@ -82,7 +82,7 @@ public class TCGroupHandshakeMessage extends DSOMessageBase {
         messageType = getByteValue();
         return true;
       case NODE_ID:
-        nodeID = new NodeIDImpl();
+        nodeID = new ServerID();
         getObject(nodeID);
         return true;
       case HANDSHAKE_MESSAGE_ID:

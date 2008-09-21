@@ -14,7 +14,7 @@ import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupMessage;
 import com.tc.net.groups.GroupResponse;
 import com.tc.net.groups.NodeID;
-import com.tc.net.groups.NodeIDImpl;
+import com.tc.net.groups.ServerID;
 import com.tc.util.Assert;
 import com.tc.util.State;
 
@@ -145,7 +145,7 @@ public class ElectionManagerImpl implements ElectionManager {
   }
 
   public NodeID runElection(NodeID myNodeId, boolean isNew, WeightGeneratorFactory weightsFactory) {
-    NodeID winnerID = NodeIDImpl.NULL_ID;
+    NodeID winnerID = ServerID.NULL_ID;
     int count = 0;
     while (winnerID.isNull()) {
       if (count++ > 0) {
@@ -202,7 +202,7 @@ public class ElectionManagerImpl implements ElectionManager {
       } else if (response.getType() == L2StateMessage.RESULT_CONFLICT) {
         logger.info("Result Conflict: Local Result : " + e + " From : " + response.messageFrom() + " Result : "
                     + response.getEnrollment());
-        return NodeIDImpl.NULL_ID;
+        return ServerID.NULL_ID;
       } else {
         throw new AssertionError("Node : " + response.messageFrom()
                                  + " responded neither with RESULT_AGREED or RESULT_CONFLICT :" + response);
