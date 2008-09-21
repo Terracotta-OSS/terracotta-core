@@ -20,7 +20,7 @@ import com.tc.management.ClientLockStatManager;
 import com.tc.management.L2LockStatsManager;
 import com.tc.management.lock.stats.LockSpec;
 import com.tc.management.lock.stats.TCStackTraceElement;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.BaseDSOTestCase;

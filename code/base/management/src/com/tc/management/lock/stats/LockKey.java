@@ -5,7 +5,7 @@ package com.tc.management.lock.stats;
 
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.ThreadID;
 

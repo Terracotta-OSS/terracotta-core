@@ -6,7 +6,7 @@ package com.tc.l2.state;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.util.Assert;
 
 import java.io.Externalizable;

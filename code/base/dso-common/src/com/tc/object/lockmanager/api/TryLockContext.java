@@ -4,7 +4,7 @@
  */
 package com.tc.object.lockmanager.api;
 
-import com.tc.net.groups.ClientID;
+import com.tc.net.ClientID;
 import com.tc.object.tx.TimerSpec;
 
 public class TryLockContext extends WaitContext {

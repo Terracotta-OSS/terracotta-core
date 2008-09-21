@@ -5,7 +5,7 @@
 package com.tc.objectserver.context;
 
 import com.tc.async.api.EventContext;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.ThreadID;

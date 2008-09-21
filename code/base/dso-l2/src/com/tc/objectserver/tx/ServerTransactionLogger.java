@@ -5,7 +5,7 @@
 package com.tc.objectserver.tx;
 
 import com.tc.logging.TCLogger;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.object.tx.ServerTransactionID;
 
 import java.util.Collection;

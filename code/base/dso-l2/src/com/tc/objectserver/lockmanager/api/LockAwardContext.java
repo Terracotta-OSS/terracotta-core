@@ -3,7 +3,7 @@
  */
 package com.tc.objectserver.lockmanager.api;
 
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.object.lockmanager.api.LockID;
 
 public interface LockAwardContext {

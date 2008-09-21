@@ -4,8 +4,8 @@
 package com.tc.net.protocol.tcm;
 
 import com.tc.async.api.EventContext;
-import com.tc.net.groups.ClientID;
-import com.tc.net.groups.NodeID;
+import com.tc.net.ClientID;
+import com.tc.net.NodeID;
 import com.tc.object.session.SessionID;
 
 import java.io.IOException;

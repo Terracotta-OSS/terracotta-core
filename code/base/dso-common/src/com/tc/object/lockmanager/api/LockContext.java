@@ -9,7 +9,7 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.net.groups.NodeIDSerializer;
 import com.tc.util.Assert;
 

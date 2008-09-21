@@ -7,8 +7,8 @@ package com.tc.l2.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
+import com.tc.net.NodeID;
 import com.tc.net.groups.GroupEventsListener;
-import com.tc.net.groups.NodeID;
 
 public class GroupEventsDispatchHandler extends AbstractEventHandler {
 

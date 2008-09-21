@@ -6,7 +6,7 @@ package com.tc.l2.state;
 
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.L2StateMessage;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 
 public interface ElectionManager {
 

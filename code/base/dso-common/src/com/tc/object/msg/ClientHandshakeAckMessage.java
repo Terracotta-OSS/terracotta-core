@@ -4,8 +4,8 @@
  */
 package com.tc.object.msg;
 
-import com.tc.net.groups.ClientID;
-import com.tc.net.groups.ServerID;
+import com.tc.net.ClientID;
+import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.MessageChannel;
 
 import java.util.Set;

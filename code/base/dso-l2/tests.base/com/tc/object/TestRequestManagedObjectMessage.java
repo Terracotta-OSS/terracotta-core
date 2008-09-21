@@ -5,7 +5,7 @@
 package com.tc.object;
 
 import com.tc.async.api.EventContext;
-import com.tc.net.groups.ClientID;
+import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;

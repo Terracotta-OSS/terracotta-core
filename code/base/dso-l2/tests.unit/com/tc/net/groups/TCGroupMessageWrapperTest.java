@@ -16,6 +16,8 @@ import com.tc.l2.msg.ObjectSyncResetMessage;
 import com.tc.l2.msg.RelayedCommitTransactionMessage;
 import com.tc.l2.msg.ServerTxnAckMessage;
 import com.tc.l2.state.Enrollment;
+import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;

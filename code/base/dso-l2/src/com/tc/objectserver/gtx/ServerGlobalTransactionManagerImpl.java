@@ -4,7 +4,7 @@
  */
 package com.tc.objectserver.gtx;
 
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;

@@ -13,6 +13,7 @@ import com.tc.l2.msg.GCResultMessage;
 import com.tc.l2.msg.GCResultMessageFactory;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
+import com.tc.net.NodeID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.ObjectID;

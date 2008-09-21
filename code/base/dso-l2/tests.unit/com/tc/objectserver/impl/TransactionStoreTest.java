@@ -4,7 +4,7 @@
  */
 package com.tc.objectserver.impl;
 
-import com.tc.net.groups.ClientID;
+import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;

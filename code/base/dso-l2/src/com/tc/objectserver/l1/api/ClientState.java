@@ -4,7 +4,7 @@
  */
 package com.tc.objectserver.l1.api;
 
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
 
 import java.util.Set;

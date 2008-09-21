@@ -3,6 +3,8 @@
  */
 package com.tc.net.groups;
 
+import com.tc.net.NodeID;
+
 public interface GroupEventsListener {
 
   public void nodeJoined(NodeID nodeID);

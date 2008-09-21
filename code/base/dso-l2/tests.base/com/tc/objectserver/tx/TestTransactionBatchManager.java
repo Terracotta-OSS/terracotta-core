@@ -8,7 +8,7 @@ import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 
 import com.tc.exception.TCRuntimeException;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 

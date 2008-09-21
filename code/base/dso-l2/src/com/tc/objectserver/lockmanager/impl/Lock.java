@@ -12,7 +12,7 @@ import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.L2LockStatsManager;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;

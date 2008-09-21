@@ -4,6 +4,8 @@
  */
 package com.tc.net.groups;
 
+import com.tc.net.NodeID;
+
 import java.util.List;
 
 public interface GroupResponse {

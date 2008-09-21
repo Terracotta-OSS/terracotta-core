@@ -4,7 +4,7 @@
 package com.tc.l2.state;
 
 import com.tc.l2.ha.WeightGeneratorFactory;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 
 public class EnrollmentFactory {
 

@@ -4,7 +4,7 @@
 package com.tc.objectserver.context;
 
 import com.tc.async.api.EventContext;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;

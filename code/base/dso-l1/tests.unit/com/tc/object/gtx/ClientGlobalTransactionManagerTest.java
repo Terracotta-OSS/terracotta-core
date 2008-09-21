@@ -4,7 +4,7 @@
  */
 package com.tc.object.gtx;
 
-import com.tc.net.groups.ClientID;
+import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.tx.TestRemoteTransactionManager;
 import com.tc.object.tx.TransactionID;

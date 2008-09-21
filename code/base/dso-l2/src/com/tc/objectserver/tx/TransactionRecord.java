@@ -3,7 +3,7 @@
  */
 package com.tc.objectserver.tx;
 
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 
 import java.util.HashSet;
 import java.util.Set;

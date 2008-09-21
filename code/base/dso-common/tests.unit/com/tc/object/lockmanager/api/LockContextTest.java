@@ -6,7 +6,7 @@ package com.tc.object.lockmanager.api;
 
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.net.groups.ClientID;
+import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.tx.TimerSpec;
 import com.tc.util.Assert;

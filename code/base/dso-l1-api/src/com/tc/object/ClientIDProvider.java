@@ -3,7 +3,7 @@
  */
 package com.tc.object;
 
-import com.tc.net.groups.ClientID;
+import com.tc.net.ClientID;
 
 public interface ClientIDProvider {
   

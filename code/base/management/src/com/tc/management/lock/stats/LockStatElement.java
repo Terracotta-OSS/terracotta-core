@@ -12,7 +12,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.lockmanager.impl.LockHolder;

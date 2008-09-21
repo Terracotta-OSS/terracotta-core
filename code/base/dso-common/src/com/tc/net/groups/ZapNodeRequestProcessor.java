@@ -4,6 +4,8 @@
  */
 package com.tc.net.groups;
 
+import com.tc.net.NodeID;
+
 public interface ZapNodeRequestProcessor {
 
   public boolean acceptOutgoingZapNodeRequest(NodeID nodeID, int type, String reason);

@@ -5,8 +5,8 @@
 package com.tc.l2.objectserver;
 
 import com.tc.l2.msg.GCResultMessage;
+import com.tc.net.NodeID;
 import com.tc.net.groups.GroupException;
-import com.tc.net.groups.NodeID;
 
 public interface ReplicatedObjectManager {
 

@@ -6,10 +6,10 @@ package com.tc.l2.msg;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
+import com.tc.net.ClientID;
+import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
-import com.tc.net.groups.ClientID;
-import com.tc.net.groups.NodeID;
-import com.tc.net.groups.ServerID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;

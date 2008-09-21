@@ -9,7 +9,7 @@ import EDU.oswego.cs.dl.util.concurrent.Latch;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.impl.VersionizedDNAWrapper;

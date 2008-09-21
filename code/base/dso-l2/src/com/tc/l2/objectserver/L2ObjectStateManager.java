@@ -6,7 +6,7 @@ package com.tc.l2.objectserver;
 
 import com.tc.async.api.Sink;
 import com.tc.l2.context.ManagedObjectSyncContext;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 
 import java.util.Collection;
 import java.util.Set;

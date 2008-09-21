@@ -6,8 +6,8 @@ package com.tc.object.tx;
 
 import com.tc.io.serializer.TCObjectInputStream;
 import com.tc.io.serializer.TCObjectOutputStream;
-import com.tc.net.groups.ClientID;
-import com.tc.net.groups.NodeID;
+import com.tc.net.ClientID;
+import com.tc.net.NodeID;
 import com.tc.net.groups.NodeIDSerializer;
 
 import java.io.ByteArrayInputStream;

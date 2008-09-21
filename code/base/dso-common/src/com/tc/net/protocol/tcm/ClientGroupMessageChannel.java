@@ -4,7 +4,7 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.net.groups.GroupID;
+import com.tc.net.GroupID;
 
 public interface ClientGroupMessageChannel extends ClientMessageChannel {
 

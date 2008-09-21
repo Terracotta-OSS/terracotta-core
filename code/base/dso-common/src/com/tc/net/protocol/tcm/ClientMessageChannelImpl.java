@@ -6,8 +6,8 @@ package com.tc.net.protocol.tcm;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.ClientID;
 import com.tc.net.MaxConnectionsExceededException;
-import com.tc.net.groups.ClientID;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.transport.ConnectionID;

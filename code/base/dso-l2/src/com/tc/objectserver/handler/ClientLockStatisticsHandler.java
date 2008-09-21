@@ -7,7 +7,7 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
 import com.tc.management.L2LockStatsManager;
 import com.tc.management.lock.stats.LockStatisticsResponseMessage;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 
 import java.util.Collection;
 

@@ -6,7 +6,7 @@ package com.tc.objectserver.handler;
 
 import com.tc.async.impl.MockStage;
 import com.tc.exception.ImplementMe;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ObjectID;
 import com.tc.object.TestRequestManagedObjectMessage;

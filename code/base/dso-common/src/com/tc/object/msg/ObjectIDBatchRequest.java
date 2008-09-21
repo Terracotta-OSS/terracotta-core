@@ -4,7 +4,7 @@
  */
 package com.tc.object.msg;
 
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 
 public interface ObjectIDBatchRequest {
 

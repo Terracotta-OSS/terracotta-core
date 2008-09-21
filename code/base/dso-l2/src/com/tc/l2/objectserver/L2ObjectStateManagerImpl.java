@@ -10,7 +10,7 @@ import com.tc.async.api.Sink;
 import com.tc.l2.context.ManagedObjectSyncContext;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TxnsInSystemCompletionLister;

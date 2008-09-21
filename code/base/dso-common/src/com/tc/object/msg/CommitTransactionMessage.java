@@ -4,7 +4,7 @@
 package com.tc.object.msg;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.net.groups.ClientID;
+import com.tc.net.ClientID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.tx.TransactionBatch;
 

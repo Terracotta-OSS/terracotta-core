@@ -5,6 +5,8 @@
 package com.tc.net.groups;
 
 import com.tc.async.api.Sink;
+import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 
 import java.util.Collections;
 import java.util.List;

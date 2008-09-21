@@ -4,8 +4,8 @@
  */
 package com.tc.object.lockmanager.api;
 
-import com.tc.net.groups.ClientID;
-import com.tc.net.groups.NodeID;
+import com.tc.net.ClientID;
+import com.tc.net.NodeID;
 
 public class ServerThreadID {
   public static final ServerThreadID NULL_ID = new ServerThreadID(ClientID.NULL_ID, ThreadID.NULL_ID);

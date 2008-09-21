@@ -5,9 +5,9 @@
 package com.tc.l2.msg;
 
 import com.tc.async.api.EventContext;
+import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.MessageID;
-import com.tc.net.groups.NodeID;
 import com.tc.net.groups.NodeIDSerializer;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;

@@ -5,6 +5,7 @@
 package com.tc.net.groups;
 
 import com.tc.async.api.EventContext;
+import com.tc.net.NodeID;
 import com.tc.util.Assert;
 
 public class NullTCGroupMemberDiscovery implements TCGroupMemberDiscovery {

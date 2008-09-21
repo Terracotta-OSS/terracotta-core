@@ -4,7 +4,7 @@
  */
 package com.tc.objectserver.tx;
 
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.object.tx.TransactionID;
 
 import java.util.Set;

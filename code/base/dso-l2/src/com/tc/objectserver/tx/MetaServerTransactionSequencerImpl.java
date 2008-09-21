@@ -4,7 +4,7 @@
  */
 package com.tc.objectserver.tx;
 
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.objectserver.context.TransactionLookupContext;
 import com.tc.util.concurrent.CopyOnWriteArrayMap;
 

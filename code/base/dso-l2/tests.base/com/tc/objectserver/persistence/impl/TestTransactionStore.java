@@ -6,7 +6,7 @@ package com.tc.objectserver.persistence.impl;
 
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCRuntimeException;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;

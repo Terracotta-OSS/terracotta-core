@@ -8,7 +8,7 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.l2.msg.ServerTxnAckMessage;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.tx.ServerTransactionManager;

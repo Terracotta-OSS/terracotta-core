@@ -4,8 +4,8 @@
 package com.tc.net.protocol.tcm;
 
 import com.tc.net.MaxConnectionsExceededException;
+import com.tc.net.NodeID;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.util.TCTimeoutException;

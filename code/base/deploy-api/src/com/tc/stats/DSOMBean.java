@@ -4,7 +4,7 @@
 package com.tc.stats;
 
 import com.tc.management.TerracottaMBean;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.GCStats;
 import com.tc.objectserver.api.NoSuchObjectException;

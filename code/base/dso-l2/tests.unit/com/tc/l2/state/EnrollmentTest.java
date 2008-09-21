@@ -5,7 +5,7 @@
 package com.tc.l2.state;
 
 import com.tc.l2.ha.WeightGeneratorFactory;
-import com.tc.net.groups.ServerID;
+import com.tc.net.ServerID;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

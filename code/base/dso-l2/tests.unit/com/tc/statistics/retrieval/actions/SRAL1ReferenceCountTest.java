@@ -4,8 +4,8 @@
 package com.tc.statistics.retrieval.actions;
 
 import com.tc.logging.NullTCLogger;
-import com.tc.net.groups.NodeID;
-import com.tc.net.groups.ServerID;
+import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.impl.ClientStateManagerImpl;

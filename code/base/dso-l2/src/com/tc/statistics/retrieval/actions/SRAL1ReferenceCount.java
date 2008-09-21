@@ -3,7 +3,7 @@
  */
 package com.tc.statistics.retrieval.actions;
 
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;

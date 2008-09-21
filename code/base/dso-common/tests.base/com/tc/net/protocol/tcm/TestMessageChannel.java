@@ -6,8 +6,8 @@ package com.tc.net.protocol.tcm;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.ImplementMe;
+import com.tc.net.NodeID;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;

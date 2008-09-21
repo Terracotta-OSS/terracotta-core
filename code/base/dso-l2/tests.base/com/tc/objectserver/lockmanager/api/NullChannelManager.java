@@ -4,9 +4,9 @@
  */
 package com.tc.objectserver.lockmanager.api;
 
-import com.tc.net.groups.ClientID;
-import com.tc.net.groups.NodeID;
-import com.tc.net.groups.ServerID;
+import com.tc.net.ClientID;
+import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessage;

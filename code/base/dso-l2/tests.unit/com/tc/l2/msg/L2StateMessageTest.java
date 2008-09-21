@@ -7,7 +7,7 @@ package com.tc.l2.msg;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.state.Enrollment;
 import com.tc.l2.state.EnrollmentFactory;
-import com.tc.net.groups.ServerID;
+import com.tc.net.ServerID;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

@@ -6,7 +6,7 @@ package com.tc.object.msg;
 
 import com.tc.exception.ImplementMe;
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.net.groups.ClientID;
+import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;

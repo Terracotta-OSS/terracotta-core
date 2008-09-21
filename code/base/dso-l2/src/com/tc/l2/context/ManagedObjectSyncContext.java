@@ -6,7 +6,7 @@ package com.tc.l2.context;
 
 import com.tc.async.api.Sink;
 import com.tc.bytes.TCByteBuffer;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.objectserver.api.ObjectManagerLookupResults;

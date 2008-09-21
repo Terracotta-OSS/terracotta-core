@@ -13,7 +13,7 @@ import com.tc.l2.context.IncomingTransactionContext;
 import com.tc.l2.objectserver.ReplicatedObjectManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.CommitTransactionMessageImpl;
 import com.tc.object.msg.MessageRecycler;

@@ -6,7 +6,7 @@ package com.tc.object;
 
 import com.tc.exception.TCObjectNotFoundException;
 import com.tc.logging.TCLogger;
-import com.tc.net.groups.ClientID;
+import com.tc.net.ClientID;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.msg.RequestManagedObjectMessage;
 import com.tc.object.msg.RequestManagedObjectMessageFactory;

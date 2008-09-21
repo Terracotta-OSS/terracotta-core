@@ -6,7 +6,7 @@ package com.tc.management;
 
 import com.tc.management.lock.stats.LockSpec;
 import com.tc.management.lock.stats.TCStackTraceElement;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.net.DSOChannelManager;

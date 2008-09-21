@@ -3,6 +3,9 @@
  */
 package com.tc.net.groups;
 
+import com.tc.net.NodeID;
+import com.tc.net.ServerID;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInput;

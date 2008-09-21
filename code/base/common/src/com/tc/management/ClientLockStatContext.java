@@ -4,7 +4,7 @@
  */
 package com.tc.management;
 
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 

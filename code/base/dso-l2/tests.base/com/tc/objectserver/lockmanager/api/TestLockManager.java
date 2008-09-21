@@ -7,7 +7,7 @@ package com.tc.objectserver.lockmanager.api;
 import com.tc.async.api.Sink;
 import com.tc.config.lock.LockContextInfo;
 import com.tc.exception.ImplementMe;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.ThreadID;

@@ -5,7 +5,7 @@
 package com.tc.objectserver.l1.api;
 
 import com.tc.logging.TCLogging;
-import com.tc.net.groups.ClientID;
+import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.TestDNA;

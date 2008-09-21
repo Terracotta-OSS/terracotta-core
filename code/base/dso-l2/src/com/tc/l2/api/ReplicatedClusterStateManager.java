@@ -4,8 +4,8 @@
  */
 package com.tc.l2.api;
 
+import com.tc.net.NodeID;
 import com.tc.net.groups.GroupException;
-import com.tc.net.groups.NodeID;
 
 public interface ReplicatedClusterStateManager {
 

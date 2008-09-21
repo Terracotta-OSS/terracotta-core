@@ -4,7 +4,7 @@
  */
 package com.tc.object;
 
-import com.tc.net.groups.ClientID;
+import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelIDProvider;
 
 public class ClientIDProviderImpl implements ClientIDProvider {

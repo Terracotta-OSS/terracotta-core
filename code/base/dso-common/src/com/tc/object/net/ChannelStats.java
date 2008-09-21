@@ -4,7 +4,7 @@
  */
 package com.tc.object.net;
 
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.stats.StatsConfig;
 import com.tc.stats.counter.BoundedCounterConfig;

@@ -5,7 +5,7 @@
 package com.tc.objectserver.tx;
 
 import com.tc.exception.ImplementMe;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;

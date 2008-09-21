@@ -6,11 +6,11 @@ package com.tc.net.protocol.tcm;
 
 import com.tc.async.api.Sink;
 import com.tc.exception.ImplementMe;
+import com.tc.net.ClientID;
+import com.tc.net.GroupID;
+import com.tc.net.NodeID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
-import com.tc.net.groups.ClientID;
-import com.tc.net.groups.GroupID;
-import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.object.session.SessionProvider;

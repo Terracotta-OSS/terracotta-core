@@ -3,7 +3,7 @@
  */
 package com.tc.l2.msg;
 
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 
 public class ObjectSyncCompleteMessageFactory {
 

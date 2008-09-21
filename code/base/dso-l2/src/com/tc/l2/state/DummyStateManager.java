@@ -6,8 +6,8 @@ package com.tc.l2.state;
 
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.msg.L2StateMessage;
-import com.tc.net.groups.NodeID;
-import com.tc.net.groups.ServerID;
+import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 
 public class DummyStateManager implements StateManager {
 

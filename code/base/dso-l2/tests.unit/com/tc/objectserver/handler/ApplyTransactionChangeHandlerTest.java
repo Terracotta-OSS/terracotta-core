@@ -7,7 +7,7 @@ package com.tc.objectserver.handler;
 import com.tc.async.impl.MockSink;
 import com.tc.async.impl.MockStage;
 import com.tc.l2.ha.L2HADisabledCooridinator;
-import com.tc.net.groups.ClientID;
+import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;

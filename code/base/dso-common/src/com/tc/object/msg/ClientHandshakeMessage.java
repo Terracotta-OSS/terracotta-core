@@ -4,7 +4,7 @@
  */
 package com.tc.object.msg;
 
-import com.tc.net.groups.ClientID;
+import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.TryLockContext;

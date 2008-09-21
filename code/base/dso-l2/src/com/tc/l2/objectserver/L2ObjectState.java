@@ -3,7 +3,7 @@
  */
 package com.tc.l2.objectserver;
 
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 
 public interface L2ObjectState {
 

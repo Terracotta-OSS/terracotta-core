@@ -5,7 +5,7 @@
 package com.tc.objectserver.context;
 
 import com.tc.async.api.Sink;
-import com.tc.net.groups.ClientID;
+import com.tc.net.ClientID;
 import com.tc.object.ObjectID;
 import com.tc.object.ObjectRequestID;
 import com.tc.objectserver.api.ObjectManagerLookupResults;

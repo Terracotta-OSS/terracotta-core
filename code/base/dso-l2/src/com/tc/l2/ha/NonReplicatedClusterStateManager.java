@@ -5,7 +5,7 @@
 package com.tc.l2.ha;
 
 import com.tc.l2.api.ReplicatedClusterStateManager;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 
 public class NonReplicatedClusterStateManager implements ReplicatedClusterStateManager {
 

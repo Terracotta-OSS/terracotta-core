@@ -8,7 +8,7 @@ import com.tc.async.impl.MockSink;
 import com.tc.async.impl.OrderedSink;
 import com.tc.lang.Recyclable;
 import com.tc.logging.TCLogging;
-import com.tc.net.groups.ClientID;
+import com.tc.net.ClientID;
 import com.tc.net.groups.SingleNodeGroupManager;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ObjectID;

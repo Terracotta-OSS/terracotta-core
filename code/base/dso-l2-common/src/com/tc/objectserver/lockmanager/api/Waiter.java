@@ -4,7 +4,7 @@
  */
 package com.tc.objectserver.lockmanager.api;
 
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.tx.TimerSpec;
 

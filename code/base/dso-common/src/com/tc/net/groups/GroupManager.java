@@ -5,6 +5,7 @@
 package com.tc.net.groups;
 
 import com.tc.async.api.Sink;
+import com.tc.net.NodeID;
 
 public interface GroupManager {
 

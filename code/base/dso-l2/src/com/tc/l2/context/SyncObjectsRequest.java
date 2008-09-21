@@ -4,7 +4,7 @@
 package com.tc.l2.context;
 
 import com.tc.async.api.EventContext;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 
 public class SyncObjectsRequest implements EventContext {
 

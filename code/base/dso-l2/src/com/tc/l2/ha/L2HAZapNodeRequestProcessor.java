@@ -10,9 +10,9 @@ import com.tc.l2.state.Enrollment;
 import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.NodeID;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
-import com.tc.net.groups.NodeID;
 import com.tc.net.groups.ZapNodeRequestProcessor;
 
 import java.io.PrintWriter;

@@ -13,7 +13,7 @@ import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.L2HADisabledCooridinator;
 import com.tc.l2.msg.RelayedCommitTransactionMessage;
 import com.tc.logging.TCLogger;
-import com.tc.net.groups.ClientID;
+import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;

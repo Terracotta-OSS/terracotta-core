@@ -5,8 +5,8 @@
 package com.tc.objectserver.lockmanager.impl;
 
 import com.tc.exception.ImplementMe;
-import com.tc.net.groups.ClientID;
-import com.tc.net.groups.NodeID;
+import com.tc.net.ClientID;
+import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MockMessageChannel;
 import com.tc.object.lockmanager.api.LockID;

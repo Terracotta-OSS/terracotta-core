@@ -4,8 +4,8 @@
  */
 package com.tc.object.msg;
 
-import com.tc.net.groups.ClientID;
-import com.tc.net.groups.NodeID;
+import com.tc.net.ClientID;
+import com.tc.net.NodeID;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 

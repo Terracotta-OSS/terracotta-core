@@ -8,7 +8,7 @@ import com.tc.async.impl.NullSink;
 import com.tc.cluster.Cluster;
 import com.tc.exception.ImplementMe;
 import com.tc.logging.TCLogging;
-import com.tc.net.groups.ServerID;
+import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.TestChannelIDProvider;
 import com.tc.object.ClientIDProvider;
 import com.tc.object.ClientIDProviderImpl;

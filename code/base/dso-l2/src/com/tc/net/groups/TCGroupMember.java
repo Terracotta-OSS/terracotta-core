@@ -4,6 +4,7 @@
  */
 package com.tc.net.groups;
 
+import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.MessageChannel;
 
 public interface TCGroupMember {

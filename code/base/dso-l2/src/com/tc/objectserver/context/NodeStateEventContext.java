@@ -5,7 +5,7 @@
 package com.tc.objectserver.context;
 
 import com.tc.async.api.EventContext;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 
 public class NodeStateEventContext implements EventContext {
   public static final int CREATE = 0;

@@ -6,7 +6,7 @@ package com.tc.management.lock.stats;
 
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCNotSupportedMethodException;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.ThreadID;
 

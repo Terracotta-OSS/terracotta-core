@@ -5,7 +5,7 @@
 package com.tc.objectserver.tx;
 
 import com.tc.config.TcProperty;
-import com.tc.net.groups.ClientID;
+import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ApplicatorDNAEncodingImpl;
 import com.tc.object.MockTCObject;

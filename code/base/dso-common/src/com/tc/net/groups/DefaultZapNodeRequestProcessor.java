@@ -5,6 +5,7 @@
 package com.tc.net.groups;
 
 import com.tc.logging.TCLogger;
+import com.tc.net.NodeID;
 
 public class DefaultZapNodeRequestProcessor implements ZapNodeRequestProcessor {
 

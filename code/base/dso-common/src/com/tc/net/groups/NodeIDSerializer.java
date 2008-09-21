@@ -9,6 +9,9 @@ import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
 import com.tc.io.serializer.TCObjectInputStream;
 import com.tc.io.serializer.TCObjectOutputStream;
+import com.tc.net.ClientID;
+import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

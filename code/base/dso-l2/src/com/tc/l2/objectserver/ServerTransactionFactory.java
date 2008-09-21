@@ -5,7 +5,7 @@
 package com.tc.l2.objectserver;
 
 import com.tc.l2.msg.ObjectSyncMessage;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.tx.ServerTransaction;

@@ -5,7 +5,7 @@
 package com.tc.object.msg;
 
 import com.tc.exception.ImplementMe;
-import com.tc.net.groups.ClientID;
+import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.TestMessageChannel;

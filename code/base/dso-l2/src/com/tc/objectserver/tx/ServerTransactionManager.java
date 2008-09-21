@@ -5,7 +5,7 @@
 package com.tc.objectserver.tx;
 
 import com.tc.logging.DumpHandler;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;

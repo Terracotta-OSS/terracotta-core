@@ -5,7 +5,7 @@
 package com.tc.objectserver.l1.impl;
 
 import com.tc.logging.TCLogger;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
 import com.tc.objectserver.l1.api.ClientState;

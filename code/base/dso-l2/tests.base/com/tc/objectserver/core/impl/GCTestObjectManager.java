@@ -5,7 +5,7 @@
 package com.tc.objectserver.core.impl;
 
 import com.tc.exception.ImplementMe;
-import com.tc.net.groups.NodeID;
+import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.object.cache.CacheStats;
 import com.tc.object.cache.Evictable;

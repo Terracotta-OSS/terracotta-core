@@ -8,7 +8,7 @@ import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
 import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.EnvironmentConfig;
-import com.tc.net.groups.ClientID;
+import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
