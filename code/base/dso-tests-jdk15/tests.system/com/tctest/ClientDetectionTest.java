@@ -52,7 +52,6 @@ public class ClientDetectionTest extends TransparentTestBase {
     configFile = getTempFile("tc-config.xml");
     writeConfigFile();
 
-    configFactory().addServerToL1Config(null, port, adminPort);
     setUpControlledServer(configFactory(), configHelper(), port, adminPort, configFile.getAbsolutePath());
     doSetUp(this);
   }

@@ -76,8 +76,6 @@ public class TcPropertiesOverWriteTest extends TransparentTestBase {
     propertiesToTest[3] = new TcProperty(TCPropertiesConsts.L1_CACHEMANAGER_LEASTCOUNT, "9000");
     writeConfigFile();
 
-    configFactory().addServerToL1Config(null, port, jmxPort);
-
     setUpControlledServer(configFactory(), configHelper(), port, jmxPort, configFile.getAbsolutePath(), null);
     doSetUp(this);
   }

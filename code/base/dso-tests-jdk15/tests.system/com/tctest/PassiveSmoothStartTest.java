@@ -76,9 +76,7 @@ public class PassiveSmoothStartTest extends TransparentTestBase {
   }
 
   private void setConfigFactory(TestTVSConfigurationSetupManagerFactory factory) {
-    for (int i = 0; i < SERVERS; i++) {
-      factory.addServerToL1Config(null, dsoPorts[i], jmxPorts[i]);
-    }
+    factory.addServersAndGroupToL1Config(serverNames, dsoPorts, jmxPorts);
   }
 
   private void writeConfigFile(File configFile, int index) {

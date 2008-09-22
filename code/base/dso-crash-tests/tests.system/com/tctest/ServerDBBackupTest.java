@@ -48,8 +48,6 @@ public class ServerDBBackupTest extends TransparentTestBase {
 
     writeConfigFile();
 
-    configFactory().addServerToL1Config(null, port, jmxPort);
-
     ArrayList jvmArgs = new ArrayList();
     setJvmArgsL1Reconnect(jvmArgs);
     setUpControlledServer(configFactory(), configHelper(), port, jmxPort, configFile.getAbsolutePath(), jvmArgs);

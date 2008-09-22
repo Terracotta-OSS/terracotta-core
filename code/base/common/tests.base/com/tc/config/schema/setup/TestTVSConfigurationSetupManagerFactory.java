@@ -174,6 +174,8 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
   private boolean                        gcVerbose               = false;
   private int                            gcIntervalInSec         = 3600;
 
+  private boolean                        isConfigDone            = false;
+
   public TestTVSConfigurationSetupManagerFactory(int mode, String l2Identifier,
                                                  IllegalConfigurationChangeHandler illegalConfigurationChangeHandler) {
     super(illegalConfigurationChangeHandler);
@@ -363,28 +365,44 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
 
   // This function will add servers and groups to L1 config
   public void addServersAndGroupsToL1Config(GroupData[] grpData) {
+    assertIfCalledBefore();
+
     // One by one add all the servers of a group and then add the group
     for (int i = 0; i < grpData.length; i++) {
       for (int j = 0; j < grpData[i].getServerCount(); j++)
-        addServerToL1Config(grpData[i].getServerNames()[j], grpData[i].getDsoPorts()[j], grpData[i].getJmxPorts()[j], false);
+        addServerToL1Config(grpData[i].getServerNames()[j], grpData[i].getDsoPorts()[j], grpData[i].getJmxPorts()[j],
+                            false);
 
       addServerGroupToL1Config(i, grpData[i].getServerNames());
     }
+
+    isConfigDone = true;
   }
 
   // This function will add all the servers in a group in L1 config. Ideally should be used when only 1 group contains
   // all the servers
   public void addServersAndGroupToL1Config(String[] name, int[] dsoPorts, int[] jmxPorts) {
-    // TODO add some Asserts here
+    assertIfCalledBefore();
+
     for (int i = 0; i < name.length; i++)
       addServerToL1Config(name[i], dsoPorts[i], jmxPorts[i], false);
 
     addServerGroupToL1Config();
+
+    isConfigDone = true;
   }
-  
+
+  private void assertIfCalledBefore() throws AssertionError {
+    if (isConfigDone) throw new AssertionError("Config factory not used properly. Servers were added more than once.");
+  }
+
   public void addServerToL1Config(String name, int dsoPort, int jmxPort) {
+    assertIfCalledBefore();
+
     addServerToL1Config(name, dsoPort, jmxPort, false);
     addServerGroupToL1Config();
+
+    isConfigDone = true;
   }
 
   private void addServerToL1Config(String name, int dsoPort, int jmxPort, boolean cleanGroupsBeanSet) {
@@ -407,9 +425,8 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
 
     newL2.setData(BOGUS_FILENAME);
     newL2.setLogs(BOGUS_FILENAME);
-    
-    if(cleanGroupsBeanSet)
-      cleanBeanSetServerGroupsIfNeeded(l1_beanSet);
+
+    if (cleanGroupsBeanSet) cleanBeanSetServerGroupsIfNeeded(l1_beanSet);
   }
 
   // should be called after all servers have been added to l1_beanset

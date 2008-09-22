@@ -65,7 +65,6 @@ public class RogueClientTest extends TransparentTestBase {
                                                                                                   null,
                                                                                                   new FatalIllegalConfigurationChangeHandler());
 
-    factory.addServerToL1Config(null, port, adminPort);
     L1TVSConfigurationSetupManager manager = factory.createL1TVSConfigurationSetupManager();
     setUpControlledServer(factory, new StandardDSOClientConfigHelperImpl(manager), port, adminPort, configFile
         .getAbsolutePath());

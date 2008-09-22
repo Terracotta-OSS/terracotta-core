@@ -39,8 +39,6 @@ public class SetsSystemTest extends TransparentTestBase {
 
     writeConfigFile(port, jmxPort);
 
-    configFactory().addServerToL1Config(null, port, jmxPort);
-
     ArrayList jvmArgs = new ArrayList();
     setJvmArgsL1Reconnect(jvmArgs);
     setUpControlledServer(configFactory(), configHelper(), port, jmxPort, configFile.getAbsolutePath(), jvmArgs);

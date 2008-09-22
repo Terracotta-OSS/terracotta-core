@@ -63,8 +63,6 @@ public class L1ReconnectDisabledTest extends TransparentTestBase {
     configFile = getTempFile("tc-config.xml");
     writeConfigFile();
 
-    configFactory().addServerToL1Config(null, port, jmxPort);
-    
     ArrayList jvmArgs = new ArrayList();
     setJvmArgsL1Reconnect(jvmArgs);
     setUpControlledServer(configFactory(), configHelper(), port, jmxPort, configFile.getAbsolutePath(), jvmArgs);

@@ -50,7 +50,6 @@ public class ClusterMembershipEventJMXTest extends TransparentTestBase {
     configFile = getTempFile("config-file.xml");
     writeConfigFile();
 
-    configFactory().addServerToL1Config(null, port, adminPort);
     setUpControlledServer(configFactory(), configHelper(), port, adminPort, configFile.getAbsolutePath());
     doSetUp(this);
   }
