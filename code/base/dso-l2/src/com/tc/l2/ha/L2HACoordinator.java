@@ -67,8 +67,6 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     SequenceGeneratorListener {
 
   private static final TCLogger                logger        = TCLogging.getLogger(L2HACoordinator.class);
-  public static final String                   TC_GROUP_COMM = "tc-group-comm";
-  public static final String                   TRIBES_COMM   = "tribes";
 
   private final TCLogger                       consoleLogger;
   private final DistributedObjectServer        server;

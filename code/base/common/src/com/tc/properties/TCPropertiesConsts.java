@@ -160,7 +160,6 @@ public interface TCPropertiesConsts {
    * <code>
    * Section : Network HA (nha) 
    * Description : If Networked HA is enabled then these values take effect 
-   * groupcomm.type                   - communication layer can be "tc-group-comm" or "tribes" 
    * tcgroupcomm.handshake.timeout    - tc-group-comm handshake timeout milliseconds 
    * tcgroupcomm.response.timelimit   - tc-group-comm message response timelimit millisecon RuntimeException thrown after timelimit 
    * tcgroupcomm.discovery.interval   - tc-group-comm member discovery interval milliseconds 
