@@ -67,7 +67,7 @@ public class LockStatisticsResponseMessage extends DSOMessageBase {
       rv.append("UNKNOWN \n");
     }
 
-    return rv.toString();
+    return rv.toString() + super.describePayload();
   }
 
   protected boolean hydrateValue(byte name) throws IOException {

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol;
 
@@ -8,6 +9,7 @@ import com.tc.exception.TCInternalError;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.util.Assert;
+import com.tc.util.HexDump;
 import com.tc.util.StringUtil;
 import com.tc.util.concurrent.SetOnceFlag;
 
@@ -17,7 +19,8 @@ import com.tc.util.concurrent.SetOnceFlag;
  * @author teck
  */
 public class AbstractTCNetworkMessage implements TCNetworkMessage {
-  protected static final TCLogger logger = TCLogging.getLogger(TCNetworkMessage.class);
+  protected static final TCLogger logger                = TCLogging.getLogger(TCNetworkMessage.class);
+  int                             MESSAGE_DUMP_MAXBYTES = 64 * 1024;
 
   protected AbstractTCNetworkMessage(TCNetworkHeader header, boolean seal) {
     this(header, null, null, seal);
@@ -166,22 +169,26 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
   // override this method to add more description to your payload data
   protected String describePayload() {
     StringBuffer buf = new StringBuffer();
-
+    int totalBytesDumped = 0;
     if ((payloadData != null) && (payloadData.length != 0)) {
       for (int i = 0; i < payloadData.length; i++) {
-        if (payloadData[i] != null) {
-          //
-        }
-
         buf.append("Buffer ").append(i).append(": ");
-
         if (payloadData[i] != null) {
+
           buf.append(payloadData[i].toString());
+          buf.append("\n");
+
+          if (totalBytesDumped < MESSAGE_DUMP_MAXBYTES) {
+            int bytesFullBuf = (payloadData[i].limit() - payloadData[i].arrayOffset());
+            int bytesToDump = (((totalBytesDumped + bytesFullBuf) < MESSAGE_DUMP_MAXBYTES) ? bytesFullBuf
+                : (MESSAGE_DUMP_MAXBYTES - totalBytesDumped));
+
+            buf.append(HexDump.dump(payloadData[i].array(), payloadData[i].arrayOffset(), bytesToDump));
+            totalBytesDumped += bytesToDump;
+          }
         } else {
           buf.append("null");
         }
-
-        buf.append("\n");
       }
     } else {
       buf.append("No payload buffers present");
@@ -189,16 +196,16 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
 
     return buf.toString();
   }
-  
+
   protected String dump() {
     StringBuffer toRet = new StringBuffer(toString());
     toRet.append("\n\n");
-    if(entireMessageData != null) {
+    if (entireMessageData != null) {
       for (int i = 0; i < entireMessageData.length; i++) {
         toRet.append('[').append(i).append(']').append('=').append(entireMessageData[i].toString());
         toRet.append(" =  { ");
-          byte ba[] = entireMessageData[i].array();
-        for (int j = 0 ; j < ba.length; j++) {
+        byte ba[] = entireMessageData[i].array();
+        for (int j = 0; j < ba.length; j++) {
           toRet.append(Byte.toString(ba[j])).append(' ');
         }
         toRet.append(" }  \n\n");
@@ -285,7 +292,7 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
   public final Runnable getSentCallback() {
     return this.sentCallback;
   }
-  
+
   private void checkNotRecycled() {
     if (isRecycled()) { throw new IllegalStateException("Message is already Recycled"); }
   }
