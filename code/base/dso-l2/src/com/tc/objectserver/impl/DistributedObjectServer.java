@@ -309,12 +309,9 @@ public class DistributedObjectServer implements TCDumper, ChannelManagerEventLis
   public DistributedObjectServer(L2TVSConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
                                  ConnectionPolicy connectionPolicy, Sink httpSink, TCServerInfoMBean tcServerInfoMBean,
                                  L2State l2State, SEDA seda) {
-    // This assertion is here because we want to assume that all threads
-    // spawned by the server (including any created in
-    // 3rd party libs) inherit their thread group from the current thread .
-    // Consider this before removing the assertion.
-    // Even in tests, we probably don't want different thread group
-    // configurations
+    // This assertion is here because we want to assume that all threads spawned by the server (including any created in
+    // 3rd party libs) inherit their thread group from the current thread . Consider this before removing the assertion.
+    // Even in tests, we probably don't want different thread group configurations
     Assert.assertEquals(threadGroup, Thread.currentThread().getThreadGroup());
 
     this.configSetupManager = configSetupManager;
@@ -410,9 +407,7 @@ public class DistributedObjectServer implements TCDumper, ChannelManagerEventLis
 
     l1ReconnectConfig = new L1ReconnectConfigImpl();
 
-    final boolean swapEnabled = true; // 2006-01-31 andrew -- no longer
-    // possible to use in-memory only;
-    // DSO folks say
+    final boolean swapEnabled = true; // 2006-01-31 andrew -- no longer possible to use in-memory only; DSO folks say
     // it's broken
     final boolean persistent = persistenceMode.equals(PersistenceMode.PERMANENT_STORE);
 
@@ -462,25 +457,20 @@ public class DistributedObjectServer implements TCDumper, ChannelManagerEventLis
       persistor = new SleepycatPersistor(TCLogging.getLogger(SleepycatPersistor.class), dbenv,
                                          serializationAdapterFactory, this.configSetupManager.commonl2Config()
                                              .dataPath().getFile());
-      // Setting the DB environment for the bean which takes backup of the
-      // active server
+      // Setting the DB environment for the bean which takes backup of the active server
       if (persistent) {
         ServerDBBackup mbean = l2Management.findServerDbBackupMBean();
         mbean.setDbEnvironment(dbenv.getEnvironment(), dbenv.getEnvironmentHome());
       }
-      // DONT DELETE ::This commented code is for replacing SleepyCat with
-      // MemoryDataStore as an in-memory DB for
-      // testing purpose. You need to include MemoryDataStore in tc.jar
-      // and enable with tc.properties
+      // DONT DELETE ::This commented code is for replacing SleepyCat with MemoryDataStore as an in-memory DB for
+      // testing purpose. You need to include MemoryDataStore in tc.jar and enable with tc.properties
       // l2.memorystore.enabled=true.
       // boolean useMemoryStore = false;
-      // if (l2Properties.getProperty("memorystore.enabled", false) !=
-      // null) {
+      // if (l2Properties.getProperty("memorystore.enabled", false) != null) {
       // useMemoryStore = l2Properties.getBoolean("memorystore.enabled");
       // }
       // if (useMemoryStore) {
-      // persistor = new
-      // MemoryStorePersistor(TCLogging.getLogger(MemoryStorePersistor.class));
+      // persistor = new MemoryStorePersistor(TCLogging.getLogger(MemoryStorePersistor.class));
       // }
 
       String cachePolicy = l2Properties.getProperty("objectmanager.cachePolicy").toUpperCase();
@@ -593,8 +583,7 @@ public class DistributedObjectServer implements TCDumper, ChannelManagerEventLis
 
     SequenceValidator sequenceValidator = new SequenceValidator(0);
     ManagedObjectFaultHandler managedObjectFaultHandler = new ManagedObjectFaultHandler();
-    // Server initiated request processing queues shouldn't have any max
-    // queue size.
+    // Server initiated request processing queues shouldn't have any max queue size.
     Stage faultManagedObjectStage = stageManager.createStage(ServerConfigurationContext.MANAGED_OBJECT_FAULT_STAGE,
                                                              managedObjectFaultHandler, l2Properties
                                                                  .getInt("seda.faultstage.threads"), -1);
@@ -1124,10 +1113,8 @@ public class DistributedObjectServer implements TCDumper, ChannelManagerEventLis
       logger.error("Error shutting down jmx server", t);
     }
 
-    // XXX: not calling basicStop() here, it creates a race condition with
-    // the Sleepycat's own writer lock (see
-    // LKC-3239) Provided we ever fix graceful server shutdown, we'll want
-    // to uncommnet this at that time and/or get rid
+    // XXX: not calling basicStop() here, it creates a race condition with the Sleepycat's own writer lock (see
+    // LKC-3239) Provided we ever fix graceful server shutdown, we'll want to uncommnet this at that time and/or get rid
     // of this method completely
 
     // basicStop();
