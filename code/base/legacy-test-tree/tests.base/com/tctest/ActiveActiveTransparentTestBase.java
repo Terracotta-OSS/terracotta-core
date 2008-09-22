@@ -5,6 +5,7 @@
 package com.tctest;
 
 import com.tc.test.MultipleServersConfigCreator;
+import com.tc.test.TestConfigObject;
 import com.tc.test.activeactive.ActiveActiveServerManager;
 import com.tc.test.activeactive.ActiveActiveTestSetupManager;
 import com.tc.util.PortChooser;
@@ -42,6 +43,10 @@ public abstract class ActiveActiveTransparentTestBase extends MultipleServersTra
     multipleServerManager = aaServerManager;
   }
 
+  public boolean isMultipleServerTest() {
+    return TestConfigObject.TRANSPARENT_TESTS_MODE_ACTIVE_ACTIVE.equals(mode());
+  }
+  
   protected abstract void setupActiveActiveTest(ActiveActiveTestSetupManager setupManager);
 
 }

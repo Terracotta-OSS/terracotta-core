@@ -46,4 +46,8 @@ public abstract class ActivePassiveTransparentTestBase extends MultipleServersTr
     manager.startActivePassiveServers();
   }
 
+  public boolean isMultipleServerTest() {
+    return TestConfigObject.TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE.equals(mode());
+  }
+
 }

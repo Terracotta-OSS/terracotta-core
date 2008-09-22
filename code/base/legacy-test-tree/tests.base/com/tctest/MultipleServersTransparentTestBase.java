@@ -6,7 +6,6 @@ package com.tctest;
 
 import com.tc.test.MultipleServerManager;
 import com.tc.test.ProcessInfo;
-import com.tc.test.TestConfigObject;
 import com.tctest.runner.DistributedTestRunner;
 import com.tctest.runner.DistributedTestRunnerConfig;
 import com.tctest.runner.TransparentAppConfig;
@@ -31,13 +30,7 @@ public abstract class MultipleServersTransparentTestBase extends TransparentTest
   }
 
   protected boolean canRun() {
-    return super.canRun() || (mode().equals(TestConfigObject.TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE))
-           || (mode().equals(TestConfigObject.TRANSPARENT_TESTS_MODE_ACTIVE_ACTIVE));
-  }
-
-  public final boolean isMultipleServerTest() {
-    return TestConfigObject.TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE.equals(mode())
-           || TestConfigObject.TRANSPARENT_TESTS_MODE_ACTIVE_ACTIVE.equals(mode());
+    return super.canRun() || isMultipleServerTest();
   }
 
   public void test() throws Exception {
