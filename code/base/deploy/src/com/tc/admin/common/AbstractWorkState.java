@@ -9,7 +9,7 @@ import com.tc.object.appevent.ApplicationEventContext;
 import java.util.Arrays;
 
 public abstract class AbstractWorkState {
-  private AbstractResolutionAction[]              fResolutionActions;
+  private AbstractResolutionAction[]              fResolutionActions = EMPTY_RESOLUTION_ACTIONS;
 
   private static final AbstractResolutionAction[] EMPTY_RESOLUTION_ACTIONS = {};
 

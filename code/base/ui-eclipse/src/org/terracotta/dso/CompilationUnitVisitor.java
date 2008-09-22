@@ -35,6 +35,7 @@ import org.eclipse.jdt.core.dom.AssertStatement;
 import org.eclipse.jdt.core.dom.Assignment;
 import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.BlockComment;
+import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.BooleanLiteral;
 import org.eclipse.jdt.core.dom.BreakStatement;
 import org.eclipse.jdt.core.dom.CastExpression;
@@ -283,7 +284,7 @@ public class CompilationUnitVisitor extends ASTVisitor {
     Type         typeNode = node.getType();
     ITypeBinding binding  = typeNode.resolveBinding();
     
-    if (binding != null && !binding.isPrimitive() && (binding.isClass() || binding.isInterface())) {
+    if (binding != null && (binding.isPrimitive() || binding.isClass() || binding.isInterface())) {
       IType type = typeFromTypeBinding(binding);
       
       List fragments = node.fragments();
@@ -429,8 +430,23 @@ public class CompilationUnitVisitor extends ASTVisitor {
     if(binding != null) {
       if(binding.isField()) {
         String parentClass = getQualifiedName(binding.getDeclaringClass());
-        String fieldName   = parentClass+"."+binding.getName();
+        String fieldName = parentClass+"."+binding.getName();
         IField field = (IField)binding.getJavaElement();
+
+        FieldInfo fieldInfo = PatternHelper.getHelper().getFieldInfo(field);
+        if (fieldInfo instanceof JavaModelFieldInfo) {
+          JavaModelFieldInfo jmfi = (JavaModelFieldInfo) fieldInfo;
+          ASTNode parent = node.getParent();
+          if(parent instanceof BodyDeclaration) {
+            BodyDeclaration body = (BodyDeclaration)parent;
+            jmfi.clearAnnotations();
+            for (Object o : body.modifiers()) {
+              if (o instanceof Annotation) {
+                jmfi.addAnnotation((Annotation) o);
+              }
+            }
+          }
+        }
         
         if(m_configHelper.isRoot(field)) {
           addMarker("rootMarker", "DSO Root Field", node.getName());

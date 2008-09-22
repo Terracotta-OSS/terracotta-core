@@ -128,6 +128,7 @@ public class AdminClientBundle extends ListResourceBundle {
         { "dso.gcstats.deleteStageTime", "<html>Delete<br>stage (ms.)</html>" },
         { "dso.all.statistics", "All statistics" },
         { "file.menu.label", "File" },
+        { "tools.menu.label", "Tools" },        
         { "help.menu.label", "Help" },
         { "help.item.label", "Terracotta Console Help..." },
         { "about.action.label", "About Terracotta Console" },
@@ -147,7 +148,7 @@ public class AdminClientBundle extends ListResourceBundle {
                 + "<table border=0 cellspacing=1><tr><td align=right><b>Terracotta Server Version:</b></td><td>{1}"
                 + "</tr><tr><td align=right><b>AdminConsole Version:</b</td><td>{2}"
                 + "</td></tr></table><h3>Continue?</h3></html>" }, { "cpu.usage", "Host CPU" },
-        { "object.flush.rate", "Object Flush Rate" }, { "object.fault.rate", "Object FaultRate" },
+        { "object.flush.rate", "Object Flush Rate" }, { "object.fault.rate", "Object Fault Rate" },
         { "transaction.rate", "Transaction Rate" }, { "cache.miss.rate", "Cache Miss Rate" },
         { "heap.usage", "Heap Usage" }, { "heap.usage.max", "memory max" }, { "heap.usage.used", "memory used" },
         { "pending.transactions", "Unacknowledged Transaction Broadcasts" }, };

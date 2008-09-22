@@ -48,17 +48,7 @@ public interface IServer extends IClusterNode {
   String getPersistenceMode();
   
   String getFailoverMode();
-  
-  String getProductVersion();
-
-  String getProductPatchVersion();
-  
-  String getProductBuildID();
-
-  String getProductLicense();
-
-  String getProductCopyright();
-  
+    
   String getConnectionStatusString();
   
   boolean isConnected();

@@ -52,10 +52,14 @@ public class BasicObjectTreeModel extends XTreeModel {
     }
   }
 
-  public void add(IBasicObject object) {
+  public BasicObjectNode add(IBasicObject object) {
     XTreeNode parentNode = (XTreeNode) getRoot();
     int index = parentNode.getChildCount();
-
-    insertNodeInto(newObjectNode(object), parentNode, index);
+    BasicObjectNode newNode = newObjectNode(object);
+    insertNodeInto(newNode, parentNode, index);
+    if(parentNode.getChildCount() == 1) {
+      reload(); // Huh? Display doesn't update when first child is added? Force it to.
+    }
+    return newNode;
   }
 }

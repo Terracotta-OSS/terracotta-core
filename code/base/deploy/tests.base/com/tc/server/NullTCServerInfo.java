@@ -55,6 +55,10 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
     return "";
   }
   
+  public String getPatchLevel() {
+    return "";
+  }
+  
   public String getPatchVersion() {
     return "";
   }

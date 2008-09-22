@@ -16,12 +16,10 @@ import org.dijon.ContainerResource;
 import org.dijon.List;
 import org.dijon.Spinner;
 import org.dijon.ToggleButton;
-import org.osgi.framework.Version;
 
 import EDU.oswego.cs.dl.util.concurrent.misc.SwingWorker;
 
 import com.tc.admin.common.BasicWorker;
-import com.tc.admin.common.BrowserLauncher;
 import com.tc.admin.common.ExceptionHelper;
 import com.tc.admin.common.ProgressDialog;
 import com.tc.admin.common.XContainer;
@@ -54,10 +52,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.net.URL;
-import java.net.URLClassLoader;
-import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -107,9 +102,6 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
 
   private static final int             DEFAULT_STATS_POLL_PERIOD_SECONDS = 2;
   private static final String          DEFAULT_STATS_CONFIG_FILENAME     = "tc-stats-config.xml";
-
-  private static final String          SNAPSHOT_VISUALIZER_TYPE          = "org.terracotta.tools.SnapshotVisualizer";
-  private static final String          GET_SVT_URL                       = "http://www.terracotta.org/kit/reflector?kitID={0}&pageID=GetSVT";
 
   public StatsRecorderPanel(StatsRecorderNode statsRecorderNode) {
     super();
@@ -822,122 +814,19 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
   }
 
   class ViewStatsSessionsHandler implements ActionListener, PropertyChangeListener {
-    private ClassLoader m_svtClassLoader;
-    private JFrame      m_svtFrame;
-    private Method      m_retrieveMethod;
-    private Method      m_setSessionMethod;
-    private boolean     m_shouldLogErrors = true;
-
-    private String getSvtUrl() {
-      String kitID = com.tc.util.ProductInfo.getInstance().kitID();
-      if (kitID == null || com.tc.util.ProductInfo.UNKNOWN_VALUE.equals(kitID)) {
-        if ((kitID = System.getProperty("com.tc.kitID")) == null) {
-          kitID = "42.0";
-        }
-      }
-      return MessageFormat.format(GET_SVT_URL, kitID);
-    }
-
-    private class VersionMap implements Comparable {
-      final File    versionDir;
-      final Version version;
-      final String  qualifier;
-
-      VersionMap(File versionDir) {
-        this.versionDir = versionDir;
-        String name = versionDir.getName();
-        int dashIndex = name.indexOf('-');
-        if (dashIndex != -1) {
-          qualifier = name.substring(dashIndex + 1);
-          name = name.substring(0, dashIndex);
-        } else {
-          qualifier = null;
-        }
-        this.version = new Version(name);
-      }
-
-      public int compareTo(Object o) {
-        int result = 0;
-        if (o instanceof VersionMap) {
-          VersionMap other = (VersionMap) o;
-          result = version.compareTo(other.version);
-          if (result == 0) {
-            result = qualifier != null ? -1 : 1;
-          }
-        }
-        return result;
-      }
-
-      public String toString() {
-        return "[path=" + versionDir.getAbsolutePath() + ", version=" + version.toString() + ", qualifier=" + qualifier
-               + "]";
-      }
-    }
-
-    /**
-     * Inspect the default kit modules area for the set of tim-svt's, determine the newest one, use it to create an SVT
-     * frame. This assume the user is running the console from a kit and that the tim-svt was installed using the
-     * tim-get script.
-     */
-    private ClassLoader getSVTClassLoader() {
-      if (m_svtClassLoader == null) {
-        String tcInstallRoot = System.getProperty("tc.install-root");
-        if (tcInstallRoot != null) {
-          String timSvtPath = tcInstallRoot + File.separator + "modules" + File.separator + "org" + File.separator
-                              + "terracotta" + File.separator + "modules" + File.separator + "tim-svt";
-          File timSvtRoot = new File(timSvtPath);
-          if (timSvtRoot.exists()) {
-            File[] versions = timSvtRoot.listFiles();
-            ArrayList<VersionMap> vm = new ArrayList<VersionMap>();
-            for (File versionDir : versions) {
-              if (versionDir.isDirectory()) {
-                String name = versionDir.getName();
-                if (name.matches("\\d+\\.\\d+\\.\\d+(-.*+)?")) {
-                  vm.add(new VersionMap(versionDir));
-                }
-              }
-            }
-            VersionMap[] vma = vm.toArray(new VersionMap[vm.size()]);
-            if (vma.length > 0) {
-              Arrays.sort(vma);
-              File newestDir = vma[vma.length - 1].versionDir;
-              File newest = new File(newestDir, "tim-svt-" + newestDir.getName() + ".jar");
-              try {
-                URL[] source = { newest.toURL() };
-                m_svtClassLoader = URLClassLoader.newInstance(source, getClass().getClassLoader());
-              } catch (Exception e) {
-                log(e);
-              }
-            }
-          }
-        }
-      }
-
-      return m_svtClassLoader;
-    }
-
-    private Class getSVTFrameType() throws ClassNotFoundException {
-      ClassLoader cl = getSVTClassLoader();
-      if (cl != null) {
-        return cl.loadClass(SNAPSHOT_VISUALIZER_TYPE);
-      } else {
-        return Class.forName(SNAPSHOT_VISUALIZER_TYPE);
-      }
-    }
+    private JFrame  m_svtFrame;
+    private Method  m_retrieveMethod;
+    private Method  m_setSessionMethod;
+    private boolean m_shouldLogErrors = true;
 
     public void actionPerformed(ActionEvent ae) {
       if (m_svtFrame == null) {
-        try {
-          Class svtFrameType = getSVTFrameType();
-          try {
-            Method getOrCreate = svtFrameType.getMethod("getOrCreate");
-            m_svtFrame = (JFrame) getOrCreate.invoke(null);
-            m_svtFrame.addPropertyChangeListener("newStore", this);
-          } catch (Exception e) {
-            log(e);
-          }
-        } catch (Exception e) {
-          BrowserLauncher.openURL(getSvtUrl());
+        AdminClientPanel topPanel = (AdminClientPanel) getAncestorOfClass(AdminClientPanel.class);
+        if ((m_svtFrame  = topPanel.getSVTFrame()) != null) {
+          m_svtFrame.addPropertyChangeListener("newStore", this);
+        } else {
+          // AdminClientPanel.getSVTFrame will open the user's browser on the website page with
+          // download instructions.
           return;
         }
       }

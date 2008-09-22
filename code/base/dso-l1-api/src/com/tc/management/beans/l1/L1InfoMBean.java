@@ -14,6 +14,20 @@ import javax.management.NotificationEmitter;
 
 public interface L1InfoMBean extends TerracottaMBean, NotificationEmitter, RuntimeStatisticConstants {
 
+  String getVersion();
+
+  String getBuildID();
+  
+  boolean isPatched();
+  
+  String getPatchLevel();
+  
+  String getPatchVersion();
+  
+  String getPatchBuildID();
+  
+  String getCopyright();
+  
   String takeThreadDump(long requestMillis);
 
   void startBeanShell(int port);

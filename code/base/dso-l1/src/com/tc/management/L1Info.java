@@ -14,6 +14,7 @@ import com.tc.runtime.MemoryUsage;
 import com.tc.runtime.TCRuntime;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
+import com.tc.util.ProductInfo;
 import com.tc.util.runtime.ThreadDumpUtil;
 import com.tc.util.runtime.ThreadIDMap;
 
@@ -32,6 +33,9 @@ import javax.management.NotCompliantMBeanException;
 
 public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
   private static final TCLogger    logger = TCLogging.getLogger(L1Info.class);
+  private final ProductInfo        productInfo;
+  private final String             buildID;
+
   private final String             rawConfigText;
   private final JVMMemoryManager   manager;
   private StatisticRetrievalAction cpuSRA;
@@ -43,6 +47,8 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
   public L1Info(TCClient client, String rawConfigText) throws NotCompliantMBeanException {
     super(L1InfoMBean.class, false);
 
+    this.productInfo = ProductInfo.getInstance();
+    this.buildID = productInfo.buildID();
     this.manager = TCRuntime.getJVMMemoryManager();
     this.rawConfigText = rawConfigText;
     this.client = client;
@@ -66,6 +72,8 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
   // for tests
   public L1Info(ClientLockManager lockManager, ThreadIDMap threadIDMap) throws NotCompliantMBeanException {
     super(L1InfoMBean.class, false);
+    this.productInfo = ProductInfo.getInstance();
+    this.buildID = productInfo.buildID();
     this.rawConfigText = null;
     this.manager = TCRuntime.getJVMMemoryManager();
     this.lockManager = lockManager;
@@ -73,6 +81,42 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
     this.client = null;
   }
 
+  public String getVersion() {
+    return productInfo.toShortString();
+  }
+
+  public String getBuildID() {
+    return buildID;
+  }
+
+  public boolean isPatched() {
+    return productInfo.isPatched();
+  }
+  
+  public String getPatchLevel() {
+    return productInfo.patchLevel();
+  }
+  
+  public String getPatchVersion() {
+    if(productInfo.isPatched()) {
+      return productInfo.toLongPatchString();
+    } else {
+      return "";
+    }
+  }
+
+  public String getPatchBuildID() {
+    if(productInfo.isPatched()) {
+      return productInfo.patchBuildID();
+    } else {
+      return "";
+    }
+  }
+  
+  public String getCopyright() {
+    return productInfo.copyright();
+  }
+  
   public String getEnvironment() {
     StringBuffer sb = new StringBuffer();
     Properties env = System.getProperties();

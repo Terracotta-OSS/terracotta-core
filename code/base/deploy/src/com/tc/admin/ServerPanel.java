@@ -16,7 +16,10 @@ import com.tc.admin.common.StatusView;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XTextArea;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 import javax.swing.table.DefaultTableCellRenderer;
@@ -26,7 +29,6 @@ public class ServerPanel extends XContainer {
   private ServerNode         m_serverNode;
   private PropertyTable      m_propertyTable;
   private StatusView         m_statusView;
-  private ProductInfoPanel   m_productInfoPanel;
   private TabbedPane         m_tabbedPane;
   private XTextArea          m_environmentTextArea;
   private XTextArea          m_configTextArea;
@@ -47,10 +49,7 @@ public class ServerPanel extends XContainer {
     m_propertyTable.setDefaultRenderer(Integer.class, renderer);
 
     m_statusView = (StatusView) findComponent("StatusIndicator");
-    m_productInfoPanel = (ProductInfoPanel) findComponent("ProductInfoPanel");
-
     m_statusView.setLabel("Not connected");
-    m_productInfoPanel.setVisible(false);
 
     m_environmentTextArea = (XTextArea) findComponent("EnvironmentTextArea");
     ((SearchPanel) findComponent("EnvironmentSearchPanel")).setTextComponent(m_environmentTextArea);
@@ -69,19 +68,19 @@ public class ServerPanel extends XContainer {
     private Date    fStartDate;
     private Date    fActivateDate;
     private String  fVersion;
-    private String  fPatch;
+    private String  fPatchLevel;
     private String  fCopyright;
     private String  fPersistenceMode;
     private String  fEnvironment;
     private String  fConfig;
     private Integer fDSOListenPort;
 
-    ServerState(Date startDate, Date activateDate, String version, String patch, String copyright,
+    ServerState(Date startDate, Date activateDate, String version, String patchLevel, String copyright,
                 String persistenceMode, String environment, String config, Integer dsoListenPort) {
       fStartDate = startDate;
       fActivateDate = activateDate;
       fVersion = version;
-      fPatch = patch;
+      fPatchLevel = patchLevel;
       fCopyright = copyright;
       fPersistenceMode = persistenceMode;
       fEnvironment = environment;
@@ -101,8 +100,8 @@ public class ServerPanel extends XContainer {
       return fVersion;
     }
 
-    String getPatch() {
-      return fPatch;
+    String getPatchLevel() {
+      return fPatchLevel;
     }
 
     String getCopyright() {
@@ -136,14 +135,14 @@ public class ServerPanel extends XContainer {
           Date startDate = new Date(m_serverNode.getStartTime());
           Date activateDate = new Date(m_serverNode.getActivateTime());
           String version = m_serverNode.getProductVersion();
-          String patch = m_serverNode.getProductPatchVersion();
+          String patchLevel = m_serverNode.getProductPatchLevel();
           String copyright = m_serverNode.getProductCopyright();
           String persistenceMode = m_serverNode.getPersistenceMode();
           String environment = m_serverNode.getEnvironment();
           String config = m_serverNode.getConfig();
           Integer dsoListenPort = m_serverNode.getDSOListenPort();
 
-          return new ServerState(startDate, activateDate, version, patch, copyright, persistenceMode, environment,
+          return new ServerState(startDate, activateDate, version, patchLevel, copyright, persistenceMode, environment,
                                  config, dsoListenPort);
         }
       });
@@ -155,16 +154,16 @@ public class ServerPanel extends XContainer {
         m_acc.log(e);
       } else {
         ServerState serverState = getResult();
-        testSetupPersistenceModeItem();        
-        showProductInfo(serverState.getVersion(), serverState.getPatch(), serverState.getCopyright());
+        testSetupPersistenceModeItem();
+        showProductInfo(serverState.getVersion(), serverState.getPatchLevel(), serverState.getCopyright());
         m_environmentTextArea.setText(serverState.getEnvironment());
         m_configTextArea.setText(serverState.getConfig());
       }
     }
-    
+
     private void testSetupPersistenceModeItem() {
       Item infoItem = (Item) findComponent("RestartabilityInfoItem");
-      
+
       if (!m_serverNode.getPersistenceMode().equals("permanent-store")) {
         String warning = m_acc.getString("server.non-restartable.warning");
         PersistenceModeWarningPanel restartabilityInfoPanel = new PersistenceModeWarningPanel(warning);
@@ -272,10 +271,6 @@ public class ServerPanel extends XContainer {
     m_statusView.setIndicator(m_serverNode.getServerStatusColor());
   }
 
-  boolean isProductInfoShowing() {
-    return m_productInfoPanel.isVisible();
-  }
-
   /**
    * The fields listed below are on ProductNode. If those methods change, so will these fields need to change.
    * PropertyTable uses reflection to access values to display. TODO: i18n
@@ -285,11 +280,17 @@ public class ServerPanel extends XContainer {
         "ProductBuildID", "ProductLicense", "PersistenceMode", "FailoverMode" };
     String[] headings = { "Host", "Address", "JMX port", "DSO port", "Version", "Build", "License", "Persistence mode",
         "Failover mode" };
+    List<String> fieldList = new ArrayList(Arrays.asList(fields));
+    List<String> headingList = new ArrayList(Arrays.asList(headings));
+    if (patch != null && patch.length() > 0) {
+      fieldList.add(fieldList.indexOf("ProductLicense"), "ProductPatchVersion");
+      headingList.add(headingList.indexOf("License"), "Patch");
+    }
+    fields = fieldList.toArray(new String[fieldList.size()]);
+    headings = headingList.toArray(new String[headingList.size()]);
     m_propertyTable.setModel(new PropertyTableModel(m_serverNode, fields, headings));
     m_propertyTable.getAncestorOfClass(ScrollPane.class).setVisible(true);
 
-    m_productInfoPanel.init(version, patch, copyright);
-    m_productInfoPanel.setVisible(true);
     setTabbedPaneEnabled(true);
 
     revalidate();
@@ -299,7 +300,6 @@ public class ServerPanel extends XContainer {
   private void hideProductInfo() {
     m_propertyTable.setModel(new PropertyTableModel());
     m_propertyTable.getAncestorOfClass(ScrollPane.class).setVisible(false);
-    m_productInfoPanel.setVisible(false);
     m_tabbedPane.setSelectedIndex(0);
     m_tabbedPane.setEnabled(false);
 
@@ -309,7 +309,6 @@ public class ServerPanel extends XContainer {
 
   public void tearDown() {
     m_statusView.tearDown();
-    m_productInfoPanel.tearDown();
 
     super.tearDown();
 
@@ -317,7 +316,6 @@ public class ServerPanel extends XContainer {
     m_serverNode = null;
     m_propertyTable = null;
     m_statusView = null;
-    m_productInfoPanel = null;
     m_tabbedPane = null;
     m_environmentTextArea = null;
     m_configTextArea = null;

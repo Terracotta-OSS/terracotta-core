@@ -70,6 +70,7 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
 
   private void init() {
     if (m_acc == null) return;
+    m_clusterNode.getClusterModel().removeRootCreationListener(this);
     m_roots = new IBasicObject[0];
     for (int i = getChildCount() - 1; i >= 0; i--) {
       m_acc.remove((XTreeNode) getChildAt(i));
@@ -91,6 +92,7 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
 
     protected void finished() {
       if (m_acc == null) return;
+      m_clusterNode.getClusterModel().addRootCreationListener(RootsNode.this);
       Exception e = getException();
       if (e != null) {
         m_acc.log(e);
@@ -101,7 +103,7 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
           m_rootsPanel.setObjects(m_roots);
         }
       }
-    }
+   }
   }
 
   protected RootsPanel createRootsPanel() {

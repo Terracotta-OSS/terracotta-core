@@ -6,24 +6,27 @@ package com.tc.admin.model;
 
 import com.tc.util.ProductInfo;
 
-public class ServerVersion {
+public class ProductVersion {
 
   private final String version;
+  private final String patchLevel;
   private final String patchVersion;
   private final String buildID;
   private final String license;
   private final String copyright;
 
-  public ServerVersion() {
+  public ProductVersion() {
     this.version = ProductInfo.UNKNOWN_VALUE;
+    this.patchLevel = ProductInfo.UNKNOWN_VALUE;
     this.patchVersion = ProductInfo.UNKNOWN_VALUE;
     this.buildID = ProductInfo.UNKNOWN_VALUE;
     this.license = ProductInfo.UNKNOWN_VALUE;
     this.copyright = ProductInfo.UNKNOWN_VALUE;
   }
   
-  public ServerVersion(String version, String patchVersion, String buildID, String license, String copyright) {
+  public ProductVersion(String version, String patchLevel, String patchVersion, String buildID, String license, String copyright) {
     this.version = version;
+    this.patchLevel = patchLevel;
     this.patchVersion = patchVersion;
     this.buildID = buildID;
     this.license = license;
@@ -34,10 +37,14 @@ public class ServerVersion {
     return this.version;
   }
 
+  public String patchLevel() {
+    return this.patchLevel;
+  }
+
   public String patchVersion() {
     return this.patchVersion;
   }
-
+  
   public String license() {
     return this.license;
   }

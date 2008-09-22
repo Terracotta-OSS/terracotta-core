@@ -91,6 +91,7 @@ public class ClasspathProvider extends StandardClasspathProvider {
       "management",
       "management-api",
       "aspectwerkz",
+      "sigarstats",
       "thirdparty",
       "thirdparty-api",
       "dso-common",

@@ -208,6 +208,7 @@ public class ClientRuntimeStatsPanel extends RuntimeStatsPanel {
     }
 
     protected void finished() {
+      if(m_acc == null) return;
       Exception e = getException();
       if (e == null) {
         Map statMap = getResult();
@@ -269,6 +270,7 @@ public class ClientRuntimeStatsPanel extends RuntimeStatsPanel {
     }
 
     protected void finished() {
+      if(m_acc == null) return;
       Exception e = getException();
       if (e == null) {
         Statistic[] stats = getResult();

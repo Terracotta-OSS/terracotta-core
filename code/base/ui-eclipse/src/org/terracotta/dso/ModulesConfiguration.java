@@ -23,14 +23,14 @@ import com.terracottatech.config.WebApplications;
 import com.terracottatech.config.DistributedMethods.MethodExpression;
 
 import java.io.File;
-import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class ModulesConfiguration {
   private List<ModuleInfo> fModuleInfoList;
-  private DsoApplication fApplication;
+  private DsoApplication   fApplication;
 
   public ModulesConfiguration() {
     fModuleInfoList = new ArrayList();
@@ -45,45 +45,50 @@ public class ModulesConfiguration {
 
   public ModuleInfo getOrAdd(Module module) {
     ModuleInfo moduleInfo = getModuleInfo(module);
-    if(moduleInfo == null) { moduleInfo = add(module); }
+    if (moduleInfo == null) {
+      moduleInfo = add(module);
+    }
     return moduleInfo;
   }
 
   public static boolean sameModule(Module m1, Module m2) {
-    return m1 != null && m2 != null &&
-        m1.getName().equals(m2.getName()) &&
-        m1.getGroupId().equals(m2.getGroupId()) &&
-        m1.getVersion().equals(m2.getVersion());
+    return m1 != null && m2 != null && m1.getName().equals(m2.getName()) && m1.getGroupId().equals(m2.getGroupId())
+           && m1.getVersion().equals(m2.getVersion());
   }
-  
+
   public ModuleInfo getModuleInfo(Module module) {
-    for(ModuleInfo moduleInfo : fModuleInfoList) {
-      if(sameModule(module, moduleInfo.getModule())) { return moduleInfo; }
+    for (ModuleInfo moduleInfo : fModuleInfoList) {
+      if (sameModule(module, moduleInfo.getModule())) { return moduleInfo; }
     }
     return null;
   }
-  
+
   public ModuleInfo associateBundle(Bundle bundle) {
-    for(ModuleInfo moduleInfo : fModuleInfoList) {
+    for (ModuleInfo moduleInfo : fModuleInfoList) {
       File location = moduleInfo.getLocation();
       String bundleLocation = bundle.getLocation();
-      
-      if(location != null) {
-        URI locationURI = location.toURI();
-        if (locationURI.toString().equals(bundleLocation)) {
-          moduleInfo.setBundle(bundle);
-          return moduleInfo;
+
+      if (location != null) {
+        try {
+          File bundleFile = new File(new URL(bundleLocation).getPath());
+          String bundleFileLocation = bundleFile.getAbsolutePath();
+          if (bundleFileLocation.equals(location.getAbsolutePath())) {
+            moduleInfo.setBundle(bundle);
+            return moduleInfo;
+          }
+        } catch (Exception e) {
+          // e.printStackTrace();
         }
       }
     }
     return null;
   }
-  
+
   public void setModuleApplication(ModuleInfo moduleInfo, DsoApplication application) {
     moduleInfo.setApplication(application);
     merge(application);
   }
-  
+
   public DsoApplication getApplication() {
     return fApplication;
   }

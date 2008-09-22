@@ -693,7 +693,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
         try {
           resolver.resolve(module);
         } catch (BundleException be) {
-          // be.printStackTrace();
+          /**/
         }
       }
 
@@ -702,7 +702,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
         try {
           osgiRuntime.installBundle(location.toURL());
         } catch (BundleException be) {
-          // be.printStackTrace();
+          /**/
         }
       }
 
@@ -723,7 +723,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
         }
       });
     } catch (Exception e) {
-      // e.printStackTrace();
+      /**/
     } finally {
       if (osgiRuntime != null) {
         osgiRuntime.shutdown();
@@ -917,7 +917,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
       project.setDescription(description, null);
       updateDecorator("org.terracotta.dso.projectDecorator");
     } catch (CoreException ce) {
-      ce.printStackTrace();
+      /**/
     }
   }
 
@@ -1256,7 +1256,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
       try {
         res.setSessionProperty(name, value);
       } catch (CoreException ce) {
-        ce.printStackTrace();
+        /**/
       }
     }
   }
@@ -1266,7 +1266,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
       try {
         return res.getSessionProperty(name);
       } catch (CoreException ce) {
-        ce.printStackTrace();
+        /**/
       }
     }
 
@@ -1278,7 +1278,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
       try {
         resource.setPersistentProperty(name, value);
       } catch (CoreException ce) {
-        ce.printStackTrace();
+        /**/
       }
     }
   }

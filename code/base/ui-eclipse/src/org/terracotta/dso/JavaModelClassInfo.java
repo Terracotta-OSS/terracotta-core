@@ -30,7 +30,7 @@ public class JavaModelClassInfo extends SimpleClassInfo {
   private ClassInfo[] fInterfaces;
   private List<AnnotationElement.Annotation> fAnnotations = new ArrayList<AnnotationElement.Annotation>();
   private final Map<IMethod, SoftReference> fMethodInfoCache = new HashMap<IMethod, SoftReference>();
-  private final Map<IField, SoftReference> fFieldInfoCache = new HashMap<IField, SoftReference>();
+  private final Map<String, SoftReference> fFieldInfoCache = new HashMap<String, SoftReference>();
 
   private static final String[] NO_INTERFACE_SIGS = new String[0];
   private static final ClassInfo[] NO_INTERFACES = new ClassInfo[0];
@@ -94,13 +94,14 @@ public class JavaModelClassInfo extends SimpleClassInfo {
   public FieldInfo getField(ClassInfoFactory classInfoFactory, IField field) {
     FieldInfo info = null;
     synchronized (fFieldInfoCache) {
-      SoftReference ref = fFieldInfoCache.get(field);
+      String key = field.getElementName();
+      SoftReference ref = fFieldInfoCache.get(key);
       if(ref != null) {
         info = (FieldInfo) ref.get();
       }
-      if (info == null) {
+      if (info == null && field.isResolved()) {
         info = new JavaModelFieldInfo(classInfoFactory, field);
-        fFieldInfoCache.put(field, new SoftReference(info));
+        fFieldInfoCache.put(key, new SoftReference(info));
       }
     }
     return info;

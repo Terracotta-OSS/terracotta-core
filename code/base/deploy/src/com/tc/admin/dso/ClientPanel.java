@@ -27,7 +27,10 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 import javax.management.Notification;
@@ -108,8 +111,18 @@ public class ClientPanel extends XContainer implements NotificationListener, Pro
   public void setClient(IClient client) {
     m_client = client;
 
-    String[] fields = { "Host", "Port", "ChannelID" };
-    m_propertyTable.setModel(new PropertyTableModel(client, fields, fields));
+    String patchLevel = client.getProductPatchLevel();
+    String[] fields = { "Host", "Port", "ChannelID", "ProductVersion", "ProductBuildID" };
+    List<String> fieldList = new ArrayList(Arrays.asList(fields));
+    String[] headings = { "Host", "Port", "Channel ID", "Version", "Build" };
+    List<String> headingList = new ArrayList(Arrays.asList(headings));
+    if (patchLevel != null && patchLevel.length() > 0) {
+      fieldList.add("ProductPatchVersion");
+      headingList.add("Patch");
+    }
+    fields = fieldList.toArray(new String[fieldList.size()]);
+    headings = headingList.toArray(new String[headingList.size()]);
+    m_propertyTable.setModel(new PropertyTableModel(client, fields, headings));
 
     m_loggingChangeHandler = new LoggingChangeHandler();
 

@@ -11,40 +11,59 @@ import org.eclipse.jdt.core.JavaModelException;
 import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.MethodInfo;
+import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
 
 import java.lang.ref.SoftReference;
 import java.util.HashMap;
 import java.util.Map;
 
 public class ClassInfoFactory extends com.tc.object.bytecode.aspectwerkz.ClassInfoFactory {
-  private final Map<String, SoftReference> classInfoCache = new HashMap<String, SoftReference>();
+  private final Map<String, SoftReference> fClassInfoCache = new HashMap<String, SoftReference>();
 
+  private static final ClassInfo intClassInfo = JavaClassInfo.getClassInfo(Integer.TYPE);
+  private static final ClassInfo doubleClassInfo = JavaClassInfo.getClassInfo(Double.TYPE);
+  private static final ClassInfo floatClassInfo = JavaClassInfo.getClassInfo(Float.TYPE);
+  private static final ClassInfo longClassInfo = JavaClassInfo.getClassInfo(Long.TYPE);
+  private static final ClassInfo charClassInfo = JavaClassInfo.getClassInfo(Character.TYPE);
+  private static final ClassInfo byteClassInfo = JavaClassInfo.getClassInfo(Byte.TYPE);
+  
+  public ClassInfoFactory() {
+    super();
+    fClassInfoCache.put("int", new SoftReference(intClassInfo));
+    fClassInfoCache.put("double", new SoftReference(doubleClassInfo));
+    fClassInfoCache.put("float", new SoftReference(floatClassInfo));
+    fClassInfoCache.put("long", new SoftReference(longClassInfo));    
+    fClassInfoCache.put("char", new SoftReference(charClassInfo));
+    fClassInfoCache.put("byte", new SoftReference(byteClassInfo));    
+  }
+  
   public ClassInfo getClassInfo(String className) {
     ClassInfo info = null;
-    synchronized (classInfoCache) {
-      SoftReference ref = classInfoCache.get(className);
+    synchronized (fClassInfoCache) {
+      SoftReference ref = fClassInfoCache.get(className);
       if(ref != null) {
-        info = (JavaModelClassInfo) ref.get();
+        info = (ClassInfo) ref.get();
       }
       if (info == null) {
         info = new JavaModelClassInfo(className);
-        classInfoCache.put(className, new SoftReference(info));
+        fClassInfoCache.put(className, new SoftReference(info));
       }
     }
     return info;
   }
 
   public ClassInfo getClassInfo(IType type) {
+    if(type == null) return null;
     JavaModelClassInfo info = null;
-    synchronized (classInfoCache) {
+    synchronized (fClassInfoCache) {
       String className = type.getFullyQualifiedName('$');
-      SoftReference ref = classInfoCache.get(className);
+      SoftReference ref = fClassInfoCache.get(className);
       if(ref != null) {
         info = (JavaModelClassInfo) ref.get();
       }
       if (info == null || info.isStale()) {
         info = new JavaModelClassInfo(type);
-        classInfoCache.put(className, new SoftReference(info));
+        fClassInfoCache.put(className, new SoftReference(info));
       }
     }
     return info;

@@ -18,6 +18,7 @@ import org.dijon.Separator;
 import org.dijon.TextArea;
 import org.dijon.TextPane;
 import org.dijon.UndoMonger;
+import org.osgi.framework.Version;
 
 import com.tc.admin.common.AboutDialog;
 import com.tc.admin.common.BrowserLauncher;
@@ -36,7 +37,7 @@ import com.tc.admin.common.XTextField;
 import com.tc.admin.common.XTreeModel;
 import com.tc.admin.common.XTreeNode;
 import com.tc.admin.model.IServer;
-import com.tc.admin.model.ServerVersion;
+import com.tc.admin.model.ProductVersion;
 import com.tc.util.ProductInfo;
 
 import java.awt.BorderLayout;
@@ -51,18 +52,23 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringWriter;
+import java.lang.reflect.Method;
 import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.net.URLEncoder;
 import java.net.UnknownHostException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.prefs.Preferences;
@@ -70,6 +76,7 @@ import java.util.prefs.Preferences;
 import javax.swing.Icon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
@@ -289,6 +296,10 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
 
     menuBar.add(menu);
 
+    menu = new XMenu(m_acc.getMessage("tools.menu.label"));
+    menu.add(new ShowSVTAction());
+    menuBar.add(menu);
+
     menu = new XMenu(m_acc.getMessage("help.menu.label"));
     XMenuItem mitem = new XMenuItem("AdminConsole Help", HelpHelper.getHelper().getHelpIcon());
     mitem.setAction(m_helpAction = new HelpAction());
@@ -332,6 +343,21 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     public void actionPerformed(ActionEvent ae) {
       block();
       BrowserLauncher.openURL(url);
+      unblock();
+    }
+  }
+
+  class ShowSVTAction extends XAbstractAction {
+    ShowSVTAction() {
+      super("Show SVT...");
+    }
+
+    public void actionPerformed(ActionEvent ae) {
+      block();
+      JFrame svtFrame = getSVTFrame();
+      if(svtFrame != null) {
+        svtFrame.setVisible(true);
+      }
       unblock();
     }
   }
@@ -522,14 +548,14 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
 
     if (recordingStats || profilingLocks) {
       String key;
-      if(recordingStats && profilingLocks) {
-        key = "recording.stats.profiling.locks.msg"; 
-      } else if(recordingStats) {
+      if (recordingStats && profilingLocks) {
+        key = "recording.stats.profiling.locks.msg";
+      } else if (recordingStats) {
         key = "recording.stats.msg";
       } else {
-        key = "profiling.locks.msg";        
+        key = "profiling.locks.msg";
       }
-      
+
       String msg = m_acc.format(key, m_acc.getMessage("quit.anyway"));
       Frame frame = (Frame) getAncestorOfClass(Frame.class);
       int answer = JOptionPane.showConfirmDialog(this, msg, frame.getTitle(), JOptionPane.OK_CANCEL_OPTION);
@@ -569,12 +595,12 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
   }
 
   public boolean testServerMatch(ClusterNode clusterNode) {
-    if (/*com.tc.util.ProductInfo.getInstance().isDevMode() ||*/ m_versionCheckAction == null
-        || !m_versionCheckAction.isVersionCheckEnabled()) { return true; }
+    if (/* com.tc.util.ProductInfo.getInstance().isDevMode() || */m_versionCheckAction == null
+                                                                  || !m_versionCheckAction.isVersionCheckEnabled()) { return true; }
 
     ProductInfo consoleInfo = ProductInfo.getInstance();
     String consoleVersion = consoleInfo.version();
-    ServerVersion serverInfo = clusterNode.getProductInfo();
+    ProductVersion serverInfo = clusterNode.getProductInfo();
     if (serverInfo == null) return true; // something went wrong, move on
     String serverVersion = serverInfo.version();
     int spaceIndex = serverVersion.lastIndexOf(" ");
@@ -1035,5 +1061,127 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
 
   protected void addEdit(UndoableEdit edit) {
     getUndoManager().addEdit(edit);
+  }
+
+  // SVT
+  
+  private static final String SNAPSHOT_VISUALIZER_TYPE = "org.terracotta.tools.SnapshotVisualizer";
+  private static final String GET_SVT_URL              = "http://www.terracotta.org/kit/reflector?kitID={0}&pageID=GetSVT";
+
+  private ClassLoader         m_svtClassLoader;
+  private JFrame              m_svtFrame;
+
+  private String getSvtUrl() {
+    String kitID = com.tc.util.ProductInfo.getInstance().kitID();
+    if (kitID == null || com.tc.util.ProductInfo.UNKNOWN_VALUE.equals(kitID)) {
+      if ((kitID = System.getProperty("com.tc.kitID")) == null) {
+        kitID = "42.0";
+      }
+    }
+    return MessageFormat.format(GET_SVT_URL, kitID);
+  }
+
+  private class VersionMap implements Comparable {
+    final File    versionDir;
+    final Version version;
+    final String  qualifier;
+
+    VersionMap(File versionDir) {
+      this.versionDir = versionDir;
+      String name = versionDir.getName();
+      int dashIndex = name.indexOf('-');
+      if (dashIndex != -1) {
+        qualifier = name.substring(dashIndex + 1);
+        name = name.substring(0, dashIndex);
+      } else {
+        qualifier = null;
+      }
+      this.version = new Version(name);
+    }
+
+    public int compareTo(Object o) {
+      int result = 0;
+      if (o instanceof VersionMap) {
+        VersionMap other = (VersionMap) o;
+        result = version.compareTo(other.version);
+        if (result == 0) {
+          result = qualifier != null ? -1 : 1;
+        }
+      }
+      return result;
+    }
+
+    public String toString() {
+      return "[path=" + versionDir.getAbsolutePath() + ", version=" + version.toString() + ", qualifier=" + qualifier
+             + "]";
+    }
+  }
+
+  /**
+   * Inspect the default kit modules area for the set of tim-svt's, determine the newest one, use it to create an SVT
+   * frame. This assume the user is running the console from a kit and that the tim-svt was installed using the tim-get
+   * script.
+   */
+  private ClassLoader getSVTClassLoader() {
+    if (m_svtClassLoader == null) {
+      String tcInstallRoot = System.getProperty("tc.install-root");
+      if (tcInstallRoot != null) {
+        String timSvtPath = tcInstallRoot + File.separator + "modules" + File.separator + "org" + File.separator
+                            + "terracotta" + File.separator + "modules" + File.separator + "tim-svt";
+        File timSvtRoot = new File(timSvtPath);
+        if (timSvtRoot.exists()) {
+          File[] versions = timSvtRoot.listFiles();
+          ArrayList<VersionMap> vm = new ArrayList<VersionMap>();
+          for (File versionDir : versions) {
+            if (versionDir.isDirectory()) {
+              String name = versionDir.getName();
+              if (name.matches("\\d+\\.\\d+\\.\\d+(-.*+)?")) {
+                vm.add(new VersionMap(versionDir));
+              }
+            }
+          }
+          VersionMap[] vma = vm.toArray(new VersionMap[vm.size()]);
+          if (vma.length > 0) {
+            Arrays.sort(vma);
+            File newestDir = vma[vma.length - 1].versionDir;
+            File newest = new File(newestDir, "tim-svt-" + newestDir.getName() + ".jar");
+            try {
+              URL[] source = { newest.toURL() };
+              m_svtClassLoader = URLClassLoader.newInstance(source, getClass().getClassLoader());
+            } catch (Exception e) {
+              log(e);
+            }
+          }
+        }
+      }
+    }
+
+    return m_svtClassLoader;
+  }
+
+  private Class getSVTFrameType() throws ClassNotFoundException {
+    ClassLoader cl = getSVTClassLoader();
+    if (cl != null) {
+      return cl.loadClass(SNAPSHOT_VISUALIZER_TYPE);
+    } else {
+      return Class.forName(SNAPSHOT_VISUALIZER_TYPE);
+    }
+  }
+
+  public JFrame getSVTFrame() {
+    if (m_svtFrame == null) {
+      try {
+        Class svtFrameType = getSVTFrameType();
+        try {
+          Method getOrCreate = svtFrameType.getMethod("getOrCreate");
+          m_svtFrame = (JFrame) getOrCreate.invoke(null);
+        } catch (Exception e) {
+          log(e);
+        }
+      } catch (Exception e) {
+        BrowserLauncher.openURL(getSvtUrl());
+      }
+    }
+    return m_svtFrame;
   }
 }

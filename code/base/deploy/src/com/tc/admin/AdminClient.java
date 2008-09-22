@@ -42,7 +42,6 @@ public class AdminClient extends ApplicationManager {
       Logger.getLogger("com.sun.jmx.remote.opt.util").setLevel(Level.OFF);
     }
 
-    // Silence httpclient
     System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog");
   }
 

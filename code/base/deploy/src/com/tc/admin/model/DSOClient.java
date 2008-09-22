@@ -7,8 +7,6 @@ package com.tc.admin.model;
 import com.tc.admin.AdminClient;
 import com.tc.admin.ConnectionContext;
 import com.tc.admin.common.MBeanServerInvocationProxy;
-import com.tc.admin.model.IClient;
-import com.tc.admin.model.IClusterModel;
 import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.management.beans.logging.InstrumentationLoggingMBean;
 import com.tc.management.beans.logging.RuntimeLoggingMBean;
@@ -18,12 +16,15 @@ import com.tc.statistics.StatisticData;
 import com.tc.stats.DSOClientMBean;
 import com.tc.stats.statistics.CountStatistic;
 import com.tc.stats.statistics.Statistic;
+import com.tc.util.ProductInfo;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.Map;
 
+import javax.management.Attribute;
+import javax.management.AttributeList;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.Notification;
 import javax.management.NotificationListener;
@@ -38,6 +39,7 @@ public class DSOClient implements IClient, NotificationListener {
   private String                      host;
   private Integer                     port;
   protected PropertyChangeSupport     changeHelper;
+  protected ProductVersion             productInfo;
 
   private boolean                     ready;
   private boolean                     isListeningForTunneledBeans;
@@ -130,7 +132,7 @@ public class DSOClient implements IClient, NotificationListener {
 
   private void setReady(boolean ready) {
     boolean oldValue;
-    
+
     synchronized (this) {
       oldValue = this.ready;
       this.ready = ready;
@@ -279,6 +281,68 @@ public class DSOClient implements IClient, NotificationListener {
 
   public void removePropertyChangeListener(PropertyChangeListener listener) {
     changeHelper.removePropertyChangeListener(listener);
+  }
+
+  public synchronized ProductVersion getProductInfo() {
+    if (productInfo == null) {
+      String[] attributes = { "Version", "Patched", "PatchLevel", "PatchVersion", "BuildID", "Copyright" };
+      String version = ProductInfo.UNKNOWN_VALUE;
+      String patchLevel = ProductInfo.UNKNOWN_VALUE;
+      String patchVersion = ProductInfo.UNKNOWN_VALUE;      
+      String buildID = ProductInfo.UNKNOWN_VALUE;
+      String capabilities = ProductInfo.UNKNOWN_VALUE;
+      String copyright = ProductInfo.UNKNOWN_VALUE;
+      try {
+        AttributeList attrList = cc.mbsc.getAttributes(delegate.getL1InfoBeanName(), attributes);
+        if (attrList.get(0) != null) {
+          version = (String) ((Attribute) attrList.get(0)).getValue();
+        }
+        boolean isPatched = false;
+        if (attrList.get(1) != null) {
+          isPatched = (Boolean) ((Attribute) attrList.get(1)).getValue();
+        }
+        if (attrList.get(2) != null) {
+          patchLevel = isPatched ? (String) ((Attribute) attrList.get(2)).getValue() : null;
+        }
+        if (attrList.get(3) != null) {
+          patchVersion = (String) ((Attribute) attrList.get(3)).getValue();
+        }
+        if (attrList.get(4) != null) {
+          buildID = (String) ((Attribute) attrList.get(4)).getValue();
+        }
+        if (attrList.get(5) != null) {
+          copyright = (String) ((Attribute) attrList.get(5)).getValue();
+        }
+      } catch (Exception e) {
+        System.err.println(e);
+      }
+      productInfo = new ProductVersion(version, patchLevel, patchVersion, buildID, capabilities, copyright);
+    }
+    return productInfo;
+  }
+
+  public String getProductVersion() {
+    return getProductInfo().version();
+  }
+
+  public String getProductPatchLevel() {
+    return getProductInfo().patchLevel();
+  }
+
+  public String getProductPatchVersion() {
+    return getProductInfo().patchVersion();
+  }
+  
+  public String getProductBuildID() {
+    return getProductInfo().buildID();
+  }
+
+  public String getProductLicense() {
+    return getProductInfo().license();
+  }
+
+  public String getProductCopyright() {
+    return getProductInfo().copyright();
   }
 
   public String getConfig() {

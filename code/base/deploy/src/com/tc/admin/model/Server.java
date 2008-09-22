@@ -78,7 +78,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   protected ObjectManagementMonitorMBean  m_objectManagementMonitorBean;
   protected boolean                       m_serverDBBackupSupported;
   protected ServerDBBackupMBean           m_serverDBBackupBean;
-  protected ServerVersion                 m_productInfo;
+  protected ProductVersion                 m_productInfo;
   protected List<IBasicObject>            m_roots;
   protected Map<ObjectName, IBasicObject> m_rootMap;
   protected LogListener                   m_logListener;
@@ -169,19 +169,15 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   private synchronized void setupFromDSOBean() throws Exception {
-    synchronized (CLIENT_ADD_LOCK) {
-      for (ObjectName clientBeanName : getDSOBean().getClients()) {
-        if (!haveClient(clientBeanName)) {
-          addClient(clientBeanName);
-        }
+    for (ObjectName clientBeanName : getDSOBean().getClients()) {
+      if (!haveClient(clientBeanName)) {
+        addClient(clientBeanName);
       }
     }
 
-    synchronized (ROOT_ADD_LOCK) {
-      for (ObjectName rootBeanName : getDSOBean().getRoots()) {
-        if (!haveRoot(rootBeanName)) {
-          addRoot(rootBeanName);
-        }
+    for (ObjectName rootBeanName : getDSOBean().getRoots()) {
+      if (!haveRoot(rootBeanName)) {
+        addRoot(rootBeanName);
       }
     }
 
@@ -451,46 +447,55 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     return m_objectManagementMonitorBean;
   }
 
-  public synchronized ServerVersion getProductInfo() {
+  public synchronized ProductVersion getProductInfo() {
     if (m_productInfo == null) {
       ConnectionContext cc = getConnectionContext();
-      String[] attributes = { "Version", "Patched", "PatchVersion", "BuildID", "DescriptionOfCapabilities", "Copyright" };
+      String[] attributes = { "Version", "Patched", "PatchLevel", "PatchVersion", "BuildID",
+          "DescriptionOfCapabilities", "Copyright" };
       String version = ProductInfo.UNKNOWN_VALUE;
+      String patchLevel = ProductInfo.UNKNOWN_VALUE;
       String patchVersion = ProductInfo.UNKNOWN_VALUE;
       String buildID = ProductInfo.UNKNOWN_VALUE;
       String capabilities = ProductInfo.UNKNOWN_VALUE;
       String copyright = ProductInfo.UNKNOWN_VALUE;
       try {
         AttributeList attrList = cc.mbsc.getAttributes(L2MBeanNames.TC_SERVER_INFO, attributes);
-        if(attrList.get(0) != null) {
+        if (attrList.get(0) != null) {
           version = (String) ((Attribute) attrList.get(0)).getValue();
         }
         boolean isPatched = false;
-        if(attrList.get(1) != null) {
+        if (attrList.get(1) != null) {
           isPatched = (Boolean) ((Attribute) attrList.get(1)).getValue();
         }
-        if(attrList.get(2) != null) {
-          patchVersion = isPatched ? (String) ((Attribute) attrList.get(2)).getValue() : null;
+        if (attrList.get(2) != null) {
+          patchLevel = isPatched ? (String) ((Attribute) attrList.get(2)).getValue() : null;
         }
-        if(attrList.get(3) != null) {
-          buildID = (String) ((Attribute) attrList.get(3)).getValue();
+        if (attrList.get(3) != null) {
+          patchVersion = (String) ((Attribute) attrList.get(3)).getValue();
         }
-        if(attrList.get(4) != null) {
-          capabilities = (String) ((Attribute) attrList.get(4)).getValue();
+        if (attrList.get(4) != null) {
+          buildID = (String) ((Attribute) attrList.get(4)).getValue();
         }
-        if(attrList.get(5) != null) {
-          copyright = (String) ((Attribute) attrList.get(5)).getValue();
+        if (attrList.get(5) != null) {
+          capabilities = (String) ((Attribute) attrList.get(5)).getValue();
+        }
+        if (attrList.get(6) != null) {
+          copyright = (String) ((Attribute) attrList.get(6)).getValue();
         }
       } catch (Exception e) {
         System.err.println(e);
       }
-      m_productInfo = new ServerVersion(version, patchVersion, buildID, capabilities, copyright);
+      m_productInfo = new ProductVersion(version, patchLevel, patchVersion, buildID, capabilities, copyright);
     }
     return m_productInfo;
   }
 
   public String getProductVersion() {
     return getProductInfo().version();
+  }
+
+  public String getProductPatchLevel() {
+    return getProductInfo().patchLevel();
   }
 
   public String getProductPatchVersion() {
@@ -733,14 +738,16 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     return m_rootMap.containsKey(objectName);
   }
 
-  private final Object ROOT_ADD_LOCK = new Object();
-
   private void rootAdded(Notification notification, Object handback) {
     ObjectName objectName = (ObjectName) notification.getSource();
-    synchronized (ROOT_ADD_LOCK) {
+    IBasicObject newRoot = null;
+    synchronized (this) {
       if (!haveRoot(objectName)) {
-        fireRootCreated(addRoot(objectName));
+        newRoot = addRoot(objectName);
       }
+    }
+    if (newRoot != null) {
+      fireRootCreated(newRoot);
     }
   }
 

@@ -293,23 +293,27 @@ public class ServerNode extends ComponentNode {
     }
   }
 
-  public String getProductVersion() throws Exception {
+  public String getProductVersion() {
     return m_server.getProductVersion();
   }
 
-  public String getProductPatchVersion() throws Exception {
+  public String getProductPatchLevel() {
+    return m_server.getProductPatchLevel();
+  }
+  
+  public String getProductPatchVersion() {
     return m_server.getProductPatchVersion();
   }
   
-  public String getProductBuildID() throws Exception {
+  public String getProductBuildID() {
     return m_server.getProductBuildID();
   }
 
-  public String getProductLicense() throws Exception {
+  public String getProductLicense() {
     return m_server.getProductLicense();
   }
 
-  public String getProductCopyright() throws Exception {
+  public String getProductCopyright() {
     return m_server.getProductCopyright();
   }
 
