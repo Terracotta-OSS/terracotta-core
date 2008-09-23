@@ -16,9 +16,10 @@ public class DBVersionChecker {
     /**
      * TC r2.6 : dbVersion 1.0; TC r2.7 : dbVersion 2.0;
      */
-    DB_VERSION_1("1.0"), DB_VERSION_2("2.0");
+    DB_VERSION_1("1.0"), DB_VERSION_2("2.0"), DB_VERSION_2_1("2.1");
 
     private String version;
+
     private DbVersions(String ver) {
       this.version = ver;
     }
@@ -35,7 +36,7 @@ public class DBVersionChecker {
     // TODO: db upgrade/revert routines
   }
 
-  private static final DbVersions DB_VERSION_CURRENT = DbVersions.DB_VERSION_2;
+  private static final DbVersions DB_VERSION_CURRENT = DbVersions.DB_VERSION_2_1;
 
   private PersistentMapStore      clusterStore;
   private static final TCLogger   logger             = CustomerLogging.getDSOGenericLogger();

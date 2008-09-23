@@ -82,21 +82,28 @@ public class SleepycatPersistor implements Persistor {
                                                                  env,
                                                                  new SleepycatSequence(
                                                                                        this.persistenceTransactionProvider,
-                                                                                       logger, 1, 1000, env
-                                                                                           .getObjectIDDB()), env
-                                                                     .getRootDatabase(), rootDBCursorConfig,
+                                                                                       logger,
+                                                                                       SleepycatSequenceKeys.OBJECTID_SEQUENCE_NAME,
+                                                                                       1000, env
+                                                                                           .getGlobalSequenceDatabase()),
+                                                                 env.getRootDatabase(), rootDBCursorConfig,
                                                                  this.persistenceTransactionProvider,
                                                                  this.sleepycatCollectionsPersistor, env
                                                                      .isParanoidMode());
-    this.clientStatePersistor = new ClientStatePersistorImpl(logger, this.persistenceTransactionProvider,
-                                                             new SleepycatSequence(this.persistenceTransactionProvider,
-                                                                                   logger, 1, 0, env
-                                                                                       .getClientIDDatabase()), env
-                                                                 .getClientStateDatabase());
+    this.clientStatePersistor = new ClientStatePersistorImpl(
+                                                             logger,
+                                                             this.persistenceTransactionProvider,
+                                                             new SleepycatSequence(
+                                                                                   this.persistenceTransactionProvider,
+                                                                                   logger,
+                                                                                   SleepycatSequenceKeys.CLIENTID_SEQUENCE_NAME,
+                                                                                   0, env.getGlobalSequenceDatabase()),
+                                                             env.getClientStateDatabase());
     this.transactionPerisistor = new TransactionPersistorImpl(env.getTransactionDatabase(),
                                                               this.persistenceTransactionProvider);
-    this.globalTransactionIDSequence = new SleepycatSequence(this.persistenceTransactionProvider, logger, 1, 1, env
-        .getTransactionSequenceDatabase());
+    this.globalTransactionIDSequence = new SleepycatSequence(this.persistenceTransactionProvider, logger,
+                                                             SleepycatSequenceKeys.TRANSACTION_SEQUENCE_DB_NAME, 1, env
+                                                                 .getGlobalSequenceDatabase());
     this.classPersistor = new ClassPersistorImpl(this.persistenceTransactionProvider, logger, env.getClassDatabase());
     this.clusterStateStore = new SleepycatMapStore(this.persistenceTransactionProvider, logger, env
         .getClusterStateStoreDatabase());

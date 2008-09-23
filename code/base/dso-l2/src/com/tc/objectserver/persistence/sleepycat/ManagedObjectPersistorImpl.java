@@ -126,7 +126,9 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
       this.objectIDManager = new NullObjectIDManager();
     } else if (oidFastLoad) {
       // read objectIDs from compressed DB
-      MutableSequence sequence = new SleepycatSequence(this.ptp, logger, 1, 1000, env.getOidLogSequeneceDB());
+      MutableSequence sequence = new SleepycatSequence(this.ptp, logger,
+                                                       SleepycatSequenceKeys.OID_STORE_LOG_SEQUENCE_DB_NAME, 1000, env
+                                                           .getGlobalSequenceDatabase());
       this.objectIDManager = new FastObjectIDManagerImpl(env, ptp, sequence, this);
     } else {
       // read objectIDs from object DB
