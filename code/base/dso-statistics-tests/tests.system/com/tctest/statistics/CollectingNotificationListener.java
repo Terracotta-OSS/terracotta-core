@@ -16,14 +16,21 @@ import javax.management.NotificationListener;
 
 public class CollectingNotificationListener implements NotificationListener {
   private boolean shutdown = false;
-  private int nodesToShutdown;
+  private final int nodesToShutdown;
+  private int nodeCount;
 
   public CollectingNotificationListener(final int nodesToShutdown) {
     this.nodesToShutdown = nodesToShutdown;
+    reset();
   }
 
   public boolean getShutdown() {
     return shutdown;
+  }
+  
+  public synchronized void reset() {
+   shutdown = false;
+   nodeCount = nodesToShutdown;
   }
 
   public void handleNotification(Notification notification, Object o) {
@@ -35,9 +42,9 @@ public class CollectingNotificationListener implements NotificationListener {
       // System.out.println(data);
       if (SRAShutdownTimestamp.ACTION_NAME.equals(((StatisticData)it.next()).getName())) {
         synchronized (this) {
-          nodesToShutdown--;
-          // System.out.println(">>> nodesToShutdown = "+nodesToShutdown);
-          if (0 == nodesToShutdown) {
+          nodeCount--;
+          // System.out.println(">>> nodeCount = "+nodeCount);
+          if (0 == nodeCount) {
             shutdown = true;
             this.notifyAll();
           }

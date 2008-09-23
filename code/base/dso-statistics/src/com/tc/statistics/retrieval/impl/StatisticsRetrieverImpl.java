@@ -33,11 +33,13 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsBufferListener {
+  public static final String        TIMER_NAME = "Statistics Retriever";
+
   public final static int           DEFAULT_NOTIFICATION_INTERVAL = 60;
 
   private final static TCLogger     LOGGER = TCLogging.getLogger(StatisticsRetrieverImpl.class);
 
-  private final Timer               timer = new TCTimerImpl("Statistics Retriever", true);
+  private Timer                     timer;
 
   private final StatisticsConfig    config;
   private final StatisticsBuffer    buffer;
@@ -104,13 +106,13 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
   public void startup() {
     retrieveStartupMarker();
     retrieveStartupStatistics();
-    enableTimerTasks();
+    enableTimerAndTasks();
   }
 
   public void shutdown() {
     buffer.removeListener(this);
 
-    disableTimerTasks();
+    disableTimerAndTasks();
   }
 
   public boolean containsAction(final StatisticRetrievalAction action) {
@@ -168,11 +170,12 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
     }
   }
 
-  private synchronized void enableTimerTasks() {
-    if (statsTask != null || infoTask != null) {
-      disableTimerTasks();
+  private synchronized void enableTimerAndTasks() {
+    if (timer != null || statsTask != null || infoTask != null) {
+      disableTimerAndTasks();
     }
 
+    timer = new TCTimerImpl(TIMER_NAME, true);
     infoTask = new LogRetrievalInProcessTask();
     timer.scheduleAtFixedRate(infoTask, 0, TCPropertiesImpl.getProperties()
         .getInt(TCPropertiesConsts.CVT_RETRIEVER_NOTIFICATION_INTERVAL, DEFAULT_NOTIFICATION_INTERVAL) * 1000);
@@ -181,7 +184,7 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
     timer.scheduleAtFixedRate(statsTask, 0, config.getParamLong(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL));
   }
 
-  private synchronized void disableTimerTasks() {
+  private synchronized void disableTimerAndTasks() {
     if (statsTask != null) {
       statsTask.shutdown();
 
@@ -212,6 +215,11 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
     if (infoTask != null) {
       infoTask.shutdown();
       infoTask = null;
+    }
+    
+    if (timer != null) {
+      timer.cancel();
+      timer = null;
     }
   }
 

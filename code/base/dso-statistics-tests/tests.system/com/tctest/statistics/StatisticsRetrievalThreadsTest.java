@@ -7,9 +7,9 @@ import com.tc.management.JMXConnectorProxy;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.beans.StatisticsGatewayMBean;
 import com.tc.statistics.beans.StatisticsMBeanNames;
-import com.tc.statistics.retrieval.actions.SRAShutdownTimestamp;
-import com.tc.statistics.retrieval.actions.SRAStartupTimestamp;
+import com.tc.statistics.retrieval.impl.StatisticsRetrieverImpl;
 import com.tc.util.UUID;
+import com.tc.util.runtime.ThreadDumpUtil;
 import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
 
@@ -19,7 +19,9 @@ import java.util.List;
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
 
-public class StatisticsGatewayNoActionsTest extends TransparentTestBase {
+import junit.framework.Assert;
+
+public class StatisticsRetrievalThreadsTest extends TransparentTestBase {
   protected void duringRunningCluster() throws Exception {
     JMXConnectorProxy jmxc = new JMXConnectorProxy("localhost", getAdminPort());
     MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
@@ -32,40 +34,29 @@ public class StatisticsGatewayNoActionsTest extends TransparentTestBase {
     mbsc.addNotificationListener(StatisticsMBeanNames.STATISTICS_GATEWAY, listener, null, data);
     stat_gateway.enable();
 
-    String sessionid = UUID.getUUID().toString();
-    stat_gateway.createSession(sessionid);
+    for (int i = 0; i < 5; i++) {
+      String sessionid = UUID.getUUID().toString();
+      stat_gateway.createSession(sessionid);
 
-    // register all the supported statistics
-    String[] statistics = stat_gateway.getSupportedStatistics();
-    for (String statistic : statistics) {
-      stat_gateway.enableStatistic(sessionid, statistic);
-    }
-
-    // remove all statistics
-    stat_gateway.disableAllStatistics(sessionid);
-
-    // start capturing
-    stat_gateway.startCapturing(sessionid);
-
-    // wait for 10 seconds
-    Thread.sleep(10000);
-
-    // stop capturing and wait for the last data
-    synchronized (listener) {
-      stat_gateway.stopCapturing(sessionid);
-      while (!listener.getShutdown()) {
-        listener.wait(2000);
+      // start capturing
+      stat_gateway.startCapturing(sessionid);
+  
+      // stop capturing and wait for the last data
+      synchronized (listener) {
+        stat_gateway.stopCapturing(sessionid);
+        while (!listener.getShutdown()) {
+          listener.wait(2000);
+        }
+        listener.reset();
       }
     }
-    
+
+    String thread_dump = ThreadDumpUtil.getThreadDump();
+    Assert.assertFalse(thread_dump.contains(StatisticsRetrieverImpl.TIMER_NAME));
+
     // disable the notification and detach the listener
     stat_gateway.disable();
     mbsc.removeNotificationListener(StatisticsMBeanNames.STATISTICS_GATEWAY, listener);
-
-    // check the data
-    assertEquals((StatisticsGatewayNoActionsTestApp.NODE_COUNT + 1) * 2, data.size());
-    assertEquals(SRAStartupTimestamp.ACTION_NAME, data.get(0).getName());
-    assertEquals(SRAShutdownTimestamp.ACTION_NAME, data.get(data.size() - 1).getName());
   }
 
   protected Class getApplicationClass() {
@@ -73,7 +64,7 @@ public class StatisticsGatewayNoActionsTest extends TransparentTestBase {
   }
 
   public void doSetUp(TransparentTestIface t) throws Exception {
-    t.getTransparentAppConfig().setClientCount(StatisticsGatewayNoActionsTestApp.NODE_COUNT);
+    t.getTransparentAppConfig().setClientCount(StatisticsRetrievalThreadsTestApp.NODE_COUNT);
     t.initializeTestRunner();
   }
 }
