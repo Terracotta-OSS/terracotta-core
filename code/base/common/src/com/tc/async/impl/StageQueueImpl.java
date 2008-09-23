@@ -89,8 +89,8 @@ public class StageQueueImpl implements Sink, Source {
     try {
       queue.put(context);
     } catch (InterruptedException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      logger.error(e);
+      throw new AssertionError(e);
     }
 
   }
