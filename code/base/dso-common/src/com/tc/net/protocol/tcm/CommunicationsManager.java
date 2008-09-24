@@ -38,10 +38,6 @@ public interface CommunicationsManager {
    *        giving up.
    */
 
-  public ClientGroupMessageChannel createClientGroupChannel(final SessionProvider sessionProvider,
-                                                            final int maxReconnectTries, final int timeout,
-                                                            ConnectionAddressProvider[] addressProviders);
-
   public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
                                                   String hostname, int port, final int timeout,
                                                   ConnectionAddressProvider addressProvider, int callbackPort,

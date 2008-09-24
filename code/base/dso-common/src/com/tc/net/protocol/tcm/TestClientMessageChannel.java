@@ -13,6 +13,7 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
+import com.tc.net.protocol.clientgroup.ClientGroupMessageChannel;
 import com.tc.object.session.SessionProvider;
 
 /**

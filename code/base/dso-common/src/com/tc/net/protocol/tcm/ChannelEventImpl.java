@@ -11,7 +11,7 @@ public class ChannelEventImpl implements ChannelEvent {
   private final MessageChannel   channel;
   private final Date             timestamp;
 
-  ChannelEventImpl(ChannelEventType type, MessageChannel channel) {
+  public ChannelEventImpl(ChannelEventType type, MessageChannel channel) {
     this.type = type;
     this.channel = channel;
     this.timestamp = new Date();

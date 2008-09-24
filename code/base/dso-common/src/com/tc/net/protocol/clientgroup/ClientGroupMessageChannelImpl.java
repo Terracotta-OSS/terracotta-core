@@ -2,7 +2,7 @@
  * All content copyright (c) 2003-2007 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tc.net.protocol.tcm;
+package com.tc.net.protocol.clientgroup;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -13,6 +13,21 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
+import com.tc.net.protocol.tcm.ChannelEvent;
+import com.tc.net.protocol.tcm.ChannelEventImpl;
+import com.tc.net.protocol.tcm.ChannelEventListener;
+import com.tc.net.protocol.tcm.ChannelEventType;
+import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.protocol.tcm.ChannelIDProvider;
+import com.tc.net.protocol.tcm.ClientMessageChannel;
+import com.tc.net.protocol.tcm.ClientMessageChannelImpl;
+import com.tc.net.protocol.tcm.CommunicationsManager;
+import com.tc.net.protocol.tcm.TCMessage;
+import com.tc.net.protocol.tcm.TCMessageFactory;
+import com.tc.net.protocol.tcm.TCMessageImpl;
+import com.tc.net.protocol.tcm.TCMessageRouterImpl;
+import com.tc.net.protocol.tcm.TCMessageSink;
+import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.TransportHandshakeMessage;
 import com.tc.object.session.SessionProvider;

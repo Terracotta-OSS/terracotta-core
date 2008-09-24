@@ -9,8 +9,8 @@ import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.lang.TCThreadGroup;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
+import com.tc.net.protocol.clientgroup.ClientGroupCommunicationsManager;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
-import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -30,7 +30,7 @@ public class DistributedObjectActiveActiveClient extends DistributedObjectClient
     
   }
 
-  protected ClientMessageChannel createChannel(CommunicationsManager commMgr, PreparedComponentsFromL2Connection connComp, SessionProvider sessionProvider) {
+  protected ClientMessageChannel createChannel(ClientGroupCommunicationsManager commMgr, PreparedComponentsFromL2Connection connComp, SessionProvider sessionProvider) {
     ClientMessageChannel cmc;
     ConfigItem[] connectionInfoItems = connComp.createConnectionInfoConfigItemByGroup();
     ConnectionAddressProvider[] addrProviders = new ConnectionAddressProvider[connectionInfoItems.length];

@@ -343,7 +343,7 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
   /*
    * send with payload from a dehydrated message
    */
-  protected void cloneAndSend(TCMessageImpl message) {
+  public void cloneAndSend(TCMessageImpl message) {
     if (isSent.attemptSet()) {
       dehydrate(message.getPayload());
       basicSend();

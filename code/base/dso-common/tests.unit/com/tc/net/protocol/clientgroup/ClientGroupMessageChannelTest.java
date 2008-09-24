@@ -2,7 +2,7 @@
  * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tc.net.protocol.tcm;
+package com.tc.net.protocol.clientgroup;
 
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
 
@@ -14,6 +14,17 @@ import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
+import com.tc.net.protocol.tcm.ClientMessageChannel;
+import com.tc.net.protocol.tcm.CommunicationsManager;
+import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.net.protocol.tcm.MessageChannelInternal;
+import com.tc.net.protocol.tcm.MessageMonitor;
+import com.tc.net.protocol.tcm.NetworkListener;
+import com.tc.net.protocol.tcm.NullMessageMonitor;
+import com.tc.net.protocol.tcm.TCMessage;
+import com.tc.net.protocol.tcm.TCMessageSink;
+import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.net.protocol.tcm.UnsupportedMessageTypeException;
 import com.tc.net.protocol.tcm.msgs.PingMessage;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
@@ -35,32 +46,33 @@ import java.util.List;
 import java.util.Random;
 
 public class ClientGroupMessageChannelTest extends TCTestCase {
-  static final int               L2_COUNT        = 5;
-  static final int               ITERATIONS      = 100;
-  static final int               WAIT_PERIOD     = 100;
-  static final int               WAIT            = ITERATIONS * WAIT_PERIOD;
-  static final int               MESSAGE_COUNT   = 250;
+  static final int                       L2_COUNT        = 5;
+  static final int                       ITERATIONS      = 100;
+  static final int                       WAIT_PERIOD     = 100;
+  static final int                       WAIT            = ITERATIONS * WAIT_PERIOD;
+  static final int                       MESSAGE_COUNT   = 250;
 
-  TCLogger                       logger          = TCLogging.getLogger(getClass());
-  CommunicationsManager          clientComms;
-  CommunicationsManager[]        serverComms     = new CommunicationsManager[L2_COUNT];
-  NetworkListener[]              lsnr            = new NetworkListener[L2_COUNT];
-  GroupID[]                      groupIDs;
-  ClientGroupMessageChannel      groupChannel;
-  SequenceGenerator              sequence;
-  MessageSendAndReceiveWatcher[] clientWatcheres = new MessageSendAndReceiveWatcher[L2_COUNT];
-  MessageSendAndReceiveWatcher[] serverWatcheres = new MessageSendAndReceiveWatcher[L2_COUNT];
-  SynchronizedRef                error           = new SynchronizedRef(null);
-  SequenceGenerator              sq              = new SequenceGenerator();
+  TCLogger                               logger          = TCLogging.getLogger(getClass());
+  ClientGroupCommunicationsManagerImpl   clientComms;
+  ClientGroupCommunicationsManagerImpl[] serverComms     = new ClientGroupCommunicationsManagerImpl[L2_COUNT];
+  NetworkListener[]                      lsnr            = new NetworkListener[L2_COUNT];
+  GroupID[]                              groupIDs;
+  ClientGroupMessageChannel              groupChannel;
+  SequenceGenerator                      sequence;
+  MessageSendAndReceiveWatcher[]         clientWatcheres = new MessageSendAndReceiveWatcher[L2_COUNT];
+  MessageSendAndReceiveWatcher[]         serverWatcheres = new MessageSendAndReceiveWatcher[L2_COUNT];
+  SynchronizedRef                        error           = new SynchronizedRef(null);
+  SequenceGenerator                      sq              = new SequenceGenerator();
 
-  private int[]                  ports           = new int[L2_COUNT];
+  private int[]                          ports           = new int[L2_COUNT];
 
   public ClientGroupMessageChannelTest() {
     // disableAllUntil("2007-10-15");
   }
 
   protected void setUp(int maxReconnectTries) throws Exception {
-    setUp(maxReconnectTries, new PlainNetworkStackHarnessFactory(), new PlainNetworkStackHarnessFactory((maxReconnectTries > 0)));
+    setUp(maxReconnectTries, new PlainNetworkStackHarnessFactory(),
+          new PlainNetworkStackHarnessFactory((maxReconnectTries > 0)));
   }
 
   protected void setUp(int maxReconnectTries, NetworkStackHarnessFactory clientStackHarnessFactory,
@@ -70,12 +82,13 @@ public class ClientGroupMessageChannelTest extends TCTestCase {
     this.sequence = new SequenceGenerator();
 
     MessageMonitor mm = new NullMessageMonitor();
-    clientComms = new CommunicationsManagerImpl(mm, clientStackHarnessFactory, new NullConnectionPolicy());
+    clientComms = new ClientGroupCommunicationsManagerImpl(mm, clientStackHarnessFactory, new NullConnectionPolicy());
     for (int i = 0; i < L2_COUNT; ++i) {
       clientWatcheres[i] = new MessageSendAndReceiveWatcher();
       serverWatcheres[i] = new MessageSendAndReceiveWatcher();
 
-      serverComms[i] = new CommunicationsManagerImpl(mm, serverStackHarnessFactory, new NullConnectionPolicy());
+      serverComms[i] = new ClientGroupCommunicationsManagerImpl(mm, serverStackHarnessFactory,
+                                                                new NullConnectionPolicy());
       lsnr[i] = initListener(i, serverComms[i], 0, clientWatcheres[i], serverWatcheres[i]);
       ports[i] = lsnr[i].getBindPort();
     }
@@ -204,7 +217,7 @@ public class ClientGroupMessageChannelTest extends TCTestCase {
       logger.info("testAutomaticReconnect doing channel " + i);
       channelAutomaticReconnect(i);
     }
-    
+
     groupChannel.close();
   }
 
@@ -268,7 +281,7 @@ public class ClientGroupMessageChannelTest extends TCTestCase {
 
     // don't explicitly need to do this, but if we wait, it's possible an error will happen on another thread
     ThreadUtil.reallySleep(5000);
-    
+
     groupChannel.close();
   }
 
@@ -307,7 +320,7 @@ public class ClientGroupMessageChannelTest extends TCTestCase {
     ThreadUtil.reallySleep(WAIT * 4);
     assertTrue(groupChannel.getConnectAttemptCount() + " vs " + count, groupChannel.getConnectAttemptCount() > count);
     assertEquals(L2_COUNT, groupChannel.getConnectCount());
-    
+
     groupChannel.close();
   }
 
@@ -335,7 +348,7 @@ public class ClientGroupMessageChannelTest extends TCTestCase {
     for (int i = 0; i < L2_COUNT; ++i) {
       channelSend(i);
     }
-    
+
     groupChannel.close();
   }
 
@@ -351,7 +364,7 @@ public class ClientGroupMessageChannelTest extends TCTestCase {
 
     for (int ch = 0; ch < L2_COUNT; ++ch)
       waitForMessages(ch, count);
-    
+
     groupChannel.close();
   }
 
@@ -367,7 +380,7 @@ public class ClientGroupMessageChannelTest extends TCTestCase {
       System.out.println("XXX Wait for channel " + ch);
       waitForMessages(ch, count);
     }
-    
+
     groupChannel.close();
   }
 
