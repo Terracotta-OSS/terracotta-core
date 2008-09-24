@@ -5,7 +5,7 @@ package com.tc.object.lockmanager.api;
 
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
-import com.tc.net.ClientID;
+import com.tc.net.NodeID;
 import com.tc.object.tx.TimerSpec;
 import com.tc.object.tx.TimerSpecFactory;
 
@@ -20,7 +20,7 @@ public class WaitContext extends LockContext {
 
   private TimerSpec                     timerSpec;
 
-  public WaitContext(LockID lockID, ClientID cid, ThreadID threadID, int lockLevel, String lockType, TimerSpec timerSpec) {
+  public WaitContext(LockID lockID, NodeID cid, ThreadID threadID, int lockLevel, String lockType, TimerSpec timerSpec) {
     super(lockID, cid, threadID, lockLevel, lockType);
     this.timerSpec = timerSpec;
   }

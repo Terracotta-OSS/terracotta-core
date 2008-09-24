@@ -21,7 +21,7 @@ public class ClientLockStatisticsHandler extends AbstractEventHandler {
 
   public void handleEvent(EventContext context) {
     LockStatisticsResponseMessage lsrm = (LockStatisticsResponseMessage)context;
-    NodeID nodeID = lsrm.getClientID();
+    NodeID nodeID = lsrm.getSourceNodeID();
     Collection lockStatElements = lsrm.getStackTraceElements();
     lockStatsManager.recordClientStat(nodeID, lockStatElements);
   }

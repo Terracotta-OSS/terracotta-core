@@ -53,6 +53,6 @@ public class ObjectIDBatchRequestMessage extends DSOMessageBase implements Objec
   }
 
   public NodeID getRequestingNodeID() {
-    return getClientID();
+    return getSourceNodeID();
   }
 }

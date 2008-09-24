@@ -6,6 +6,7 @@ package com.tc.object.msg;
 
 import com.tc.exception.ImplementMe;
 import com.tc.net.ClientID;
+import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.TestMessageChannel;
@@ -52,7 +53,7 @@ public class TestClientHandshakeMessage implements ClientHandshakeMessage {
     }
   }
 
-  public ClientID getClientID() {
+  public NodeID getSourceNodeID() {
     return this.clientID;
   }
 

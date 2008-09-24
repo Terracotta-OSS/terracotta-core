@@ -8,7 +8,7 @@ import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.cluster.Cluster;
 import com.tc.logging.TCLogger;
-import com.tc.net.ClientID;
+import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
@@ -174,15 +174,15 @@ public class ClientHandshakeManager implements ChannelEventListener {
   }
 
   public void acknowledgeHandshake(ClientHandshakeAckMessage handshakeAck) {
-    acknowledgeHandshake(handshakeAck.getClientID(), handshakeAck.getPersistentServer(), handshakeAck.getThisNodeId(),
+    acknowledgeHandshake(handshakeAck.getSourceNodeID(), handshakeAck.getPersistentServer(), handshakeAck.getThisNodeId(),
                          handshakeAck.getAllNodes(), handshakeAck.getServerVersion(), handshakeAck.getServerNodeID(),
                          handshakeAck.getChannel());
   }
 
-  protected void acknowledgeHandshake(ClientID clientID, boolean persistentServer, String thisNodeId,
+  protected void acknowledgeHandshake(NodeID sourceID, boolean persistentServer, String thisNodeId,
                                       String[] clusterMembers, String serverVersion, ServerID serverNodeID,
                                       MessageChannel channel) {
-    logger.info("Received Handshake ack for this node :" + clientID);
+    logger.info("Received Handshake ack for this node :" + sourceID);
     if (getState() != STARTING) {
       logger.warn("Handshake acknowledged while not STARTING: " + getState());
       return;

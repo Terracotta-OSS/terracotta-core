@@ -70,7 +70,7 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
   private void handleEventFromClient(RequestManagedObjectMessage rmom) {
     MessageChannel channel = rmom.getChannel();
     Set<ObjectID> requestedIDs = rmom.getObjectIDs();
-    ClientID clientID = rmom.getClientID();
+    ClientID clientID = (ClientID)rmom.getSourceNodeID();
     Set<ObjectID> removedIDs = rmom.getRemoved();
     int maxRequestDepth = rmom.getRequestDepth();
 

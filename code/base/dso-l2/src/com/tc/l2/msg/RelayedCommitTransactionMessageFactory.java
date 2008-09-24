@@ -19,7 +19,7 @@ public class RelayedCommitTransactionMessageFactory {
                                                                                       CommitTransactionMessage commitMsg,
                                                                                       Collection txns, long seqID,
                                                                                       GlobalTransactionID lowWaterMark) {
-    RelayedCommitTransactionMessage msg = new RelayedCommitTransactionMessage(commitMsg.getClientID(), commitMsg
+    RelayedCommitTransactionMessage msg = new RelayedCommitTransactionMessage(commitMsg.getSourceNodeID(), commitMsg
         .getBatchData(), commitMsg.getSerializer(), getGlobalTransactionIDMapping(txns), seqID, lowWaterMark);
     return msg;
   }

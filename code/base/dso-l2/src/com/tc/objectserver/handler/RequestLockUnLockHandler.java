@@ -9,7 +9,7 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.impl.NullSink;
-import com.tc.net.ClientID;
+import com.tc.net.NodeID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.msg.LockRequestMessage;
@@ -31,7 +31,7 @@ public class RequestLockUnLockHandler extends AbstractEventHandler {
     LockRequestMessage lrm = (LockRequestMessage) context;
 
     LockID lid = lrm.getLockID();
-    ClientID cid = lrm.getClientID();
+    NodeID cid = lrm.getSourceNodeID();
     ThreadID tid = lrm.getThreadID();
     if (lrm.isObtainLockRequest()) {
       lockManager.requestLock(lid, cid, tid, lrm.getLockLevel(), lrm.getLockType(), lockResponseSink);

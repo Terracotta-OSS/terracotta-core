@@ -6,6 +6,7 @@ package com.tc.object;
 
 import com.tc.async.api.EventContext;
 import com.tc.net.ClientID;
+import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
@@ -76,7 +77,7 @@ public class TestRequestManagedObjectMessage implements RequestManagedObjectMess
     return this.channel;
   }
 
-  public ClientID getClientID() {
+  public NodeID getSourceNodeID() {
     return new ClientID(new ChannelID(0));
   }
 

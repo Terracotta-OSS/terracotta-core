@@ -29,14 +29,14 @@ public class RequestRootHandler extends AbstractEventHandler {
     RequestRootMessage rrm = (RequestRootMessage) context;
     ObjectID rootID = objectManager.lookupRootID(rrm.getRootName());
     try {
-      MessageChannel channel = channelManager.getActiveChannel(rrm.getClientID());
+      MessageChannel channel = channelManager.getActiveChannel(rrm.getSourceNodeID());
 
       RequestRootResponseMessage rrrm = (RequestRootResponseMessage) channel
           .createMessage(TCMessageType.REQUEST_ROOT_RESPONSE_MESSAGE);
       rrrm.initialize(rrm.getRootName(), rootID);
       rrrm.send();
     } catch (NoSuchChannelException e) {
-      logger.info("Failed to send root request response because channel:" + rrm.getClientID() + " is disconnected.");
+      logger.info("Failed to send root request response because channel:" + rrm.getSourceNodeID() + " is disconnected.");
       return;
     }
   }

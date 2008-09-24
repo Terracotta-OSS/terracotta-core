@@ -89,7 +89,7 @@ public class ServerClientHandshakeManager {
   }
 
   public void notifyClientConnect(ClientHandshakeMessage handshake) throws ClientHandshakeException {
-    ClientID clientID = handshake.getClientID();
+    ClientID clientID = (ClientID) handshake.getSourceNodeID();
     logger.info("Client connected " + clientID);
     synchronized (this) {
       logger.debug("Handling client handshake...");
@@ -266,10 +266,10 @@ public class ServerClientHandshakeManager {
 
   private static class ObjectIDBatchRequestImpl implements ObjectIDBatchRequest, EventContext {
 
-    private final ClientID clientID;
-    private final int      batchSize;
+    private final NodeID clientID;
+    private final int    batchSize;
 
-    public ObjectIDBatchRequestImpl(ClientID clientID, int batchSize) {
+    public ObjectIDBatchRequestImpl(NodeID clientID, int batchSize) {
       this.clientID = clientID;
       this.batchSize = batchSize;
     }

@@ -9,7 +9,7 @@ import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCObjectNotFoundException;
 import com.tc.logging.NullTCLogger;
-import com.tc.net.ClientID;
+import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TestChannelIDProvider;
@@ -526,7 +526,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
       sendQueue.put(new Object());
     }
 
-    public ClientID getClientID() {
+    public NodeID getSourceNodeID() {
       throw new ImplementMe();
     }
 
@@ -580,7 +580,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public ClientID getClientID() {
+    public NodeID getSourceNodeID() {
       throw new ImplementMe();
     }
 

@@ -180,13 +180,13 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     handshake.waitContexts.add(waitContext);
     handshake.isChangeListener = true;
 
-    assertFalse(sequenceValidator.isNext(handshake.getClientID(), new SequenceID(minSequenceID.toLong())));
+    assertFalse(sequenceValidator.isNext(handshake.getSourceNodeID(), new SequenceID(minSequenceID.toLong())));
     assertEquals(2, existingUnconnectedClients.size());
     assertFalse(hm.isStarted());
     assertTrue(hm.isStarting());
 
     // reset sequence validator
-    sequenceValidator.remove(handshake.getClientID());
+    sequenceValidator.remove(handshake.getSourceNodeID());
 
     // connect the first client
     channelManager.clientIDs.add(handshake.clientID);
@@ -205,7 +205,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     assertTrue(scc.time == null);
 
     // make sure the transaction sequence was set
-    assertTrue(sequenceValidator.isNext(handshake.getClientID(), new SequenceID(minSequenceID.toLong())));
+    assertTrue(sequenceValidator.isNext(handshake.getSourceNodeID(), new SequenceID(minSequenceID.toLong())));
 
     // make sure all of the object references from that client were added to the
     // client state manager.
@@ -466,7 +466,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       return serverVersion;
     }
 
-    public ClientID getClientID() {
+    public NodeID getSourceNodeID() {
       return this.clientID;
     }
 

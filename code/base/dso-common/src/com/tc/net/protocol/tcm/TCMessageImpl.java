@@ -8,7 +8,6 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.io.TCSerializable;
-import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.AbstractTCNetworkMessage;
 import com.tc.util.Assert;
@@ -359,10 +358,4 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
     return isOutgoing? channel.getRemoteNodeID() : channel.getLocalNodeID();
   }
 
-  // FIXME:: This is here till them tc-comms merge.
-  // TODO:: Remove this method once getSourceID and getDestinationID is merged into truck. You can use those methods
-  // instead.
-  public ClientID getClientID() {
-    return new ClientID(getChannelID());
-  }
 }

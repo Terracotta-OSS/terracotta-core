@@ -91,26 +91,26 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     req.initializeLockRecallCommit(lockID);
     for (Iterator i = lockContext.iterator(); i.hasNext();) {
       LockRequest request = (LockRequest) i.next();
-      LockContext ctxt = new LockContext(request.lockID(), req.getClientID(), request.threadID(), request.lockLevel(), request.lockType());
+      LockContext ctxt = new LockContext(request.lockID(), req.getSourceNodeID(), request.threadID(), request.lockLevel(), request.lockType());
       req.addLockContext(ctxt);
     }
 
     for (Iterator i = waitContext.iterator(); i.hasNext();) {
       WaitLockRequest request = (WaitLockRequest) i.next();
-      WaitContext ctxt = new WaitContext(request.lockID(), req.getClientID(), request.threadID(), request.lockLevel(), request.lockType(),
+      WaitContext ctxt = new WaitContext(request.lockID(), req.getSourceNodeID(), request.threadID(), request.lockLevel(), request.lockType(),
                                          request.getTimerSpec());
       req.addWaitContext(ctxt);
     }
 
     for (Iterator i = pendingRequests.iterator(); i.hasNext();) {
       LockRequest request = (LockRequest) i.next();
-      LockContext ctxt = new LockContext(request.lockID(), req.getClientID(), request.threadID(), request.lockLevel(), request.lockType());
+      LockContext ctxt = new LockContext(request.lockID(), req.getSourceNodeID(), request.threadID(), request.lockLevel(), request.lockType());
       req.addPendingLockContext(ctxt);
     }
 
     for (Iterator i = pendingTryLockRequests.iterator(); i.hasNext();) {
       TryLockRequest request = (TryLockRequest) i.next();
-      LockContext ctxt = new TryLockContext(request.lockID(), req.getClientID(), request.threadID(), request
+      LockContext ctxt = new TryLockContext(request.lockID(), req.getSourceNodeID(), request.threadID(), request
           .lockLevel(), request.lockType(), request.getTimerSpec());
       req.addPendingTryLockContext(ctxt);
     }

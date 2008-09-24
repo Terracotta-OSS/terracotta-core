@@ -6,6 +6,7 @@ package com.tc.objectserver.tx;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.net.ClientID;
+import com.tc.net.NodeID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.msg.CommitTransactionMessage;
 import com.tc.object.tx.TransactionBatch;
@@ -54,7 +55,7 @@ public class TestCommitTransactionMessage implements CommitTransactionMessage {
     return serializer;
   }
 
-  public ClientID getClientID() {
+  public NodeID getSourceNodeID() {
     return clientID;
   }
 

@@ -52,7 +52,7 @@ public class ClientServerLockStatManagerGlue extends ClientServerLockManagerGlue
         }
       } else if (ec instanceof LockStatisticsResponseMessage) {
         LockStatisticsResponseMessage lsrm = (LockStatisticsResponseMessage)ec;
-        serverLockStatManager.recordClientStat(lsrm.getClientID(), lsrm.getStackTraceElements());
+        serverLockStatManager.recordClientStat(lsrm.getSourceNodeID(), lsrm.getStackTraceElements());
       }
     }
   }

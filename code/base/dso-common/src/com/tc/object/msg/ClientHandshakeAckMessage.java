@@ -4,7 +4,7 @@
  */
 package com.tc.object.msg;
 
-import com.tc.net.ClientID;
+import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.MessageChannel;
 
@@ -26,7 +26,7 @@ public interface ClientHandshakeAckMessage {
 
   public String getServerVersion();
 
-  public ClientID getClientID();
+  public NodeID getSourceNodeID();
 
   public ServerID getServerNodeID();
 }

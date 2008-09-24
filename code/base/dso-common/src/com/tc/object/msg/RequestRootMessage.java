@@ -4,7 +4,7 @@
 package com.tc.object.msg;
 
 import com.tc.lang.Recyclable;
-import com.tc.net.ClientID;
+import com.tc.net.NodeID;
 
 public interface RequestRootMessage extends Recyclable {
 
@@ -14,6 +14,6 @@ public interface RequestRootMessage extends Recyclable {
 
   public void send();
   
-  public ClientID getClientID();
+  public NodeID getSourceNodeID();
 
 }

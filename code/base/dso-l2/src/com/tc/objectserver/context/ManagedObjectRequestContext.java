@@ -27,21 +27,21 @@ import java.util.Set;
 public class ManagedObjectRequestContext implements ObjectManagerResultsContext, PrettyPrintable {
 
   // XXX:: move to property file
-  private static final int      MAX_OBJECTS_TO_LOOKUP = 50;
+  private static final int             MAX_OBJECTS_TO_LOOKUP = 50;
 
-  private final long                    timestamp;
-  private final ClientID                clientID;
-  private final Set<ObjectID>           requestedObjectIDs;
-  private Map<ObjectID, ManagedObject>  objects;
-  private final ObjectRequestID         requestID;
-  private boolean                       moreObjects           = false;
-  private int                           batchCount            = 0;
-  private Set<ObjectID>                 lookupPendingObjectIDs;
-  private final int                     maxRequestDepth;
-  private final Sink                    sink;
-  private final Set<ObjectID>           missingObjects        = new HashSet<ObjectID>();
-  private final String                  requestingThreadName;
-  private final boolean                 isServerInitiated;
+  private final long                   timestamp;
+  private final ClientID               clientID;
+  private final Set<ObjectID>          requestedObjectIDs;
+  private Map<ObjectID, ManagedObject> objects;
+  private final ObjectRequestID        requestID;
+  private boolean                      moreObjects           = false;
+  private int                          batchCount            = 0;
+  private Set<ObjectID>                lookupPendingObjectIDs;
+  private final int                    maxRequestDepth;
+  private final Sink                   sink;
+  private final Set<ObjectID>          missingObjects        = new HashSet<ObjectID>();
+  private final String                 requestingThreadName;
+  private final boolean                isServerInitiated;
 
   public ManagedObjectRequestContext(ClientID clientID, ObjectRequestID requestID, Set<ObjectID> ids, int maxRequestDepth,
                                      Sink sink, String requestingThreadName, boolean isServerInitiated) {
@@ -140,8 +140,8 @@ public class ManagedObjectRequestContext implements ObjectManagerResultsContext,
 
   // Utility method to create 1 or more server initiated requests.
   public static void createAndAddManagedObjectRequestContextsTo(Sink addTo, ClientID requestedNodeID,
-                                                                ObjectRequestID rid, Set<ObjectID> lookupOids, int maxDepth,
-                                                                Sink nextDestination) {
+                                                                ObjectRequestID rid, Set<ObjectID> lookupOids,
+                                                                int maxDepth, Sink nextDestination) {
     if (lookupOids.size() <= MAX_OBJECTS_TO_LOOKUP) {
       addTo.add(new ManagedObjectRequestContext(requestedNodeID, rid, lookupOids, -1, nextDestination, Thread
           .currentThread().getName(), true));

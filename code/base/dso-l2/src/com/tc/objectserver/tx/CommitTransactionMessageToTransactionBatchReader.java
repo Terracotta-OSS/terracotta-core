@@ -22,7 +22,7 @@ public final class CommitTransactionMessageToTransactionBatchReader implements T
 
   // Used by active server
   public TransactionBatchReader newTransactionBatchReader(CommitTransactionMessage ctm) throws IOException {
-    return new TransactionBatchReaderImpl(gtxm, ctm.getBatchData(), ctm.getClientID(), ctm.getSerializer(),
+    return new TransactionBatchReaderImpl(gtxm, ctm.getBatchData(), ctm.getSourceNodeID(), ctm.getSerializer(),
                                           activeTxnFactory);
   }
 

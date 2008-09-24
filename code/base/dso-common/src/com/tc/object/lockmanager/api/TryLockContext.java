@@ -4,7 +4,7 @@
  */
 package com.tc.object.lockmanager.api;
 
-import com.tc.net.ClientID;
+import com.tc.net.NodeID;
 import com.tc.object.tx.TimerSpec;
 
 public class TryLockContext extends WaitContext {
@@ -12,7 +12,7 @@ public class TryLockContext extends WaitContext {
     return;
   }
 
-  public TryLockContext(LockID lockID, ClientID clientID, ThreadID threadID, int lockLevel, String lockType,
+  public TryLockContext(LockID lockID, NodeID clientID, ThreadID threadID, int lockLevel, String lockType,
                         TimerSpec timeSpan) {
     super(lockID, clientID, threadID, lockLevel, lockType, timeSpan);
   }

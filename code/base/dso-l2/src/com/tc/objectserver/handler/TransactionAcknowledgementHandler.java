@@ -16,7 +16,7 @@ public class TransactionAcknowledgementHandler extends AbstractEventHandler {
 
   public void handleEvent(EventContext context) {
     AcknowledgeTransactionMessage atm = (AcknowledgeTransactionMessage) context;
-    transactionManager.acknowledgement(atm.getRequesterID(), atm.getRequestID(), atm.getClientID());
+    transactionManager.acknowledgement(atm.getRequesterID(), atm.getRequestID(), atm.getSourceNodeID());
   }
 
   public void initialize(ConfigurationContext context) {
