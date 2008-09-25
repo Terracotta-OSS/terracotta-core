@@ -86,13 +86,26 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       sequencer.addTransactionLookupContexts(txnLookupContexts);
       txnStageCoordinator.initiateLookup();
     } catch (Throwable t) {
-      // TODO :: remove after debug
       logger.error(t);
+      dumpOnError(txns);
+      throw new AssertionError(t);
+    }
+  }
+
+  private void dumpOnError(Collection txns) {
+    try {
       for (Iterator i = txns.iterator(); i.hasNext();) {
         ServerTransaction stx = (ServerTransaction) i.next();
-        logger.error("Txn = " + stx);
+        ServerTransactionID stxn = stx.getServerTransactionID();
+        logger.error("DumpOnError : Txn = " + stx);
+        // NOTE:: Calling initiateApply() changes state, but we are crashing anyways
+        logger.error("DumpOnError : GID for Txn " + stxn + " is " + gtxm.getGlobalTransactionID(stxn) + " : initate apply : "
+                     + gtxm.initiateApply(stxn));
       }
-      throw new AssertionError(t);
+      logger.error("DumpOnError : GID Low watermark : " + gtxm.getLowGlobalTransactionIDWatermark());
+      logger.error("DumpOnError : GID Sequence current : " + gtxm.getGlobalTransactionIDSequence().current());
+    } catch (Exception e) {
+      logger.error("DumpOnError : Exception on dumpOnError", e);
     }
   }
 
@@ -529,7 +542,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     }
 
     public PrettyPrinter prettyPrint(PrettyPrinter out) {
-      out.print(getClass().getName()).print(" : " ).print(pending.size());
+      out.print(getClass().getName()).print(" : ").print(pending.size());
       return out;
     }
   }
