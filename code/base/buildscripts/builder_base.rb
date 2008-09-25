@@ -179,7 +179,67 @@ class TerracottaBuilder
     @targets_run = [ ]
   end
 
+  # Executes the given subcommand of the tim-get tool with the given flags.
+  # Some flags may be added to the command-line automatically based on flags
+  # passed to tcbuild itself.  For instance, if the final_kit=true flag is
+  # passed to tcbuild, then this method will automatically set the
+  # includeSnapshots flag to false.
+  #
+  # Note that tim-get itself is built very late in the dist stage of the build
+  # process and that this method will not function until tim-get has been
+  # created.  Therefore, this method can only be used for post-processing tasks
+  # such as installing TIMs from the Forge into the kit after it has been built.
+  def tim_get(subcommand, *flags)
+    tim_get_command(subcommand, *flags) do |command|
+      system(*command)
+    end
+  end
+
+  # Executes the given subcommand of the tim-get tool with the given flags,
+  # and returns the output as a string.  This method behaves just like the
+  # tim_get method except that it captures and returns stdout.
+  def tim_get_output(subcommand, *flags)
+    tim_get_command(subcommand, *flags) do |command|
+      %x[#{command.join(' ')}]
+    end
+  end
+
   protected
+
+  def tim_get_command(subcommand, *flags)
+    unless @tim_get
+      @tim_get = FilePath.new(product_directory, 'bin', 'tim-get').script_extension
+      unless File.exist?(@tim_get.to_s)
+        raise("Cannot find tim-get executable at expected location: #{@tim_get}")
+      end
+      unless File.executable?(@tim_get.to_s)
+        raise("tim-get script exists, but is not executable")
+      end
+    end
+
+    prefix = 'org.terracotta.modules.tool'
+    include_snapshots = @config_source['final_kit'] == 'true' ? true : false
+    java_opts = ["-D#{prefix}.includeSnapshots=#{include_snapshots}"]
+    if index_url = @config_source['tim-get.index.url']
+      java_opts << "-D#{prefix}.dataFileUrl=#{index_url}"
+    end
+
+    ENV['JAVA_OPTS'] = java_opts.join(' ')
+
+    result = yield [@tim_get.to_s, subcommand.to_s, *flags]
+
+    unless $?.exitstatus == 0
+      $stderr.puts("tim-get command failed with exit status '#{$?.exitstatus}'")
+      $stderr.puts("tim-get command: #{tim_get_command.join(' ')}")
+      $stderr.puts("JAVA_OPTS: #{ENV['JAVA_OPTS']}")
+      raise("tim-get command failed.  Exit status: #{$?.exitstatus}")
+    end
+
+    ENV['JAVA_OPTS'] = nil
+
+    result
+  end
+
   # Where should we archive the build to? Returns nil if none. Value comes from the config source.
   def build_archive_dir
     out = config_source['build-archive-dir']
