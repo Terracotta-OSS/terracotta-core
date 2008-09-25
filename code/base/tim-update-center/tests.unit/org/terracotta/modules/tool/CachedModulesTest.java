@@ -174,7 +174,7 @@ public final class CachedModulesTest extends TestCase {
   private Modules load(String testData, String tcVersion) {
     File tmpdir = new File(System.getProperty("java.io.tmpdir"));
     try {
-      return new CachedModules(tcVersion, tmpdir, getClass().getResourceAsStream(testData));
+      return new CachedModules(tcVersion, true, tmpdir, getClass().getResourceAsStream(testData));
     } catch (Exception e) {
       fail("Unable to load test data: " + testData);
     }

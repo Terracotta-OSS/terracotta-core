@@ -497,7 +497,7 @@ public final class ModuleTest extends TestCase {
     File tmpdir = new File(System.getProperty("java.io.tmpdir"));
     File repodir = new File(tmpdir, "modules");
     try {
-      return new CachedModules(tcVersion, repodir, getClass().getResourceAsStream(testData));
+      return new CachedModules(tcVersion, true, repodir, getClass().getResourceAsStream(testData));
     } catch (Exception e) {
       fail("Unable to load test data: " + testData);
     }

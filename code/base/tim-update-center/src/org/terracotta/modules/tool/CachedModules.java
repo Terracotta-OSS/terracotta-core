@@ -32,17 +32,20 @@ public class CachedModules implements Modules {
   private List<Module> latestModules;
 
   private final String tcVersion;
+  private final boolean includeSnapshots;
   private final File   repository;
 
   @Inject
   public CachedModules(@Named(ConfigAnnotation.TERRACOTTA_VERSION) String tcVersion,
+                       @Named(ConfigAnnotation.INCLUDE_SNAPSHOTS) boolean includeSnapshots,
                        @Named(ConfigAnnotation.MODULES_DIRECTORY) String repository, DataLoader dataLoader)
       throws JDOMException, IOException {
-    this(tcVersion, new File(repository), new FileInputStream(dataLoader.getDataFile()));
+    this(tcVersion, includeSnapshots, new File(repository), new FileInputStream(dataLoader.getDataFile()));
   }
 
-  CachedModules(String tcVersion, File repository, InputStream inputStream) throws JDOMException, IOException {
+  CachedModules(String tcVersion, boolean includeSnapshots, File repository, InputStream inputStream) throws JDOMException, IOException {
     this.tcVersion = tcVersion;
+    this.includeSnapshots = includeSnapshots;
     this.repository = repository;
     loadData(inputStream);
   }
@@ -122,6 +125,7 @@ public class CachedModules implements Modules {
 
     List<Module> list = new ArrayList<Module>();
     for (Module module : modules) {
+      if (!includeSnapshots && module.version().endsWith("-SNAPSHOT")) continue;
       if (qualify(module)) list.add(module);
     }
     Collections.sort(list);

@@ -41,6 +41,9 @@ class AppContext implements Module, ConfigAnnotation {
     // binder.bindConstant().annotatedWith(TerracottaVersion.class).to(config.getTcVersion());
     binder.bindConstant().annotatedWith(Names.named(TERRACOTTA_VERSION)).to(config.getTcVersion());
 
+    // Inject the includeSnapshots anywhere the @IncludeSnapshots is used
+    binder.bindConstant().annotatedWith(Names.named(INCLUDE_SNAPSHOTS)).to(config.getIncludeSnapshots());
+
     // Inject the dataCacheExpirationInSeconds anywhere the @DataCacheExpirationInSeconds is used
     binder.bindConstant().annotatedWith(Names.named(DATA_CACHE_EXPIRATION_IN_SECONDS))
         .to(config.getDataCacheExpirationInSeconds());
