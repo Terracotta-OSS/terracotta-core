@@ -61,23 +61,22 @@ public class ServerDBBackupRunner {
       path = commandLineBuilder.getOptionValue('d');
     }
 
-    if (arguments.length == 0) {
-      host = DEFAULT_HOST;
-      port = DEFAULT_PORT;
-      System.err.println("No host or port provided. Invoking Backup Runner on Terracotta Server at '" + host
-                         + "', port " + port + " by default.");
-    } else if (arguments.length == 1) {
-      host = DEFAULT_HOST;
+    String hostValue = commandLineBuilder.getOptionValue('n');
+    String portValue = commandLineBuilder.getOptionValue('p');
+
+    host = hostValue == null ? DEFAULT_HOST : hostValue;
+    port = DEFAULT_PORT;
+
+    if (portValue != null) {
       try {
-        port = Integer.parseInt(arguments[0]);
+        port = Integer.parseInt(portValue);
       } catch (NumberFormatException e) {
-        port = DEFAULT_PORT;
         System.err.println("Invalid port number specified. Using default port '" + port + "'");
       }
-    } else {
-      host = arguments[0];
-      port = Integer.parseInt(arguments[1]);
     }
+
+    System.out.println("Invoking Backup Runner on Terracotta Server at '" + host + "', port " + port);
+
     ServerDBBackupRunner serverDBBackupRunner = null;
     try {
       serverDBBackupRunner = new ServerDBBackupRunner(host, port, userName);
