@@ -226,7 +226,7 @@ class TerracottaBuilder
 
     ENV['JAVA_OPTS'] = java_opts.join(' ')
 
-    result = yield [@tim_get.to_s, subcommand.to_s, *flags]
+    result = yield [@tim_get.to_s.gsub(/\\/, '/'), subcommand.to_s, *flags]
 
     unless $?.exitstatus == 0
       $stderr.puts("tim-get command failed with exit status '#{$?.exitstatus}'")
