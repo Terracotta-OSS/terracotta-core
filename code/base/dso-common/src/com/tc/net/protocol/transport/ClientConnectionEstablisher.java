@@ -136,6 +136,7 @@ public class ClientConnectionEstablisher {
       boolean connected = cmt.isConnected();
       if (connected) {
         cmt.logger.warn("Got reconnect request for ClientMessageTransport that is connected.  skipping");
+        return;
       }
 
       asyncReconnecting.set(true);
