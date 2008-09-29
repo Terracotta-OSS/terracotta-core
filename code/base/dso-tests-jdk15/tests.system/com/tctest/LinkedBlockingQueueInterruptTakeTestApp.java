@@ -59,7 +59,7 @@ public class LinkedBlockingQueueInterruptTakeTestApp extends AbstractTransparent
       // wait for the queue to be empty
       synchronized (queue) {
         while (queue.size() > 0) {
-          Thread.sleep(500);
+          queue.wait(500);
         }
       }
 
@@ -112,6 +112,7 @@ public class LinkedBlockingQueueInterruptTakeTestApp extends AbstractTransparent
 //          System.out.println("Node "+node+" - thread 1 : checking taken state");
           if (taken != null) {
             synchronized (queue) {
+              queue.notifyAll();
               System.out.println("Node "+node+" - thread 1 : updating counts - "+(++localCount)+", "+(++count));
             }
           }
