@@ -44,6 +44,7 @@ import com.tc.util.Util;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.runtime.Vm;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashMap;
@@ -51,11 +52,13 @@ import java.util.Iterator;
 import java.util.Map;
 
 public class ManagerImpl implements Manager {
-  private static final TCLogger                    logger        = TCLogging.getLogger(Manager.class);
+  private static final TCLogger                    logger                       = TCLogging.getLogger(Manager.class);
 
-  private static final LiteralValues               literals      = new LiteralValues();
+  private static final LiteralValues               literals                     = new LiteralValues();
 
-  private final SetOnceFlag                        clientStarted = new SetOnceFlag();
+  private static final String                      DISTRIBUTED_OBJECT_CLIENT_EE = "com.tc.object.EnterpriseDistributedObjectClient";
+
+  private final SetOnceFlag                        clientStarted                = new SetOnceFlag();
   private final DSOClientConfigHelper              config;
   private final ClassProvider                      classProvider;
   private final boolean                            startClient;
@@ -64,7 +67,7 @@ public class ManagerImpl implements Manager {
   private final Portability                        portability;
   private final Cluster                            cluster;
 
-  private RuntimeLogger                            runtimeLogger = new NullRuntimeLogger();
+  private RuntimeLogger                            runtimeLogger                = new NullRuntimeLogger();
   private final InstrumentationLogger              instrumentationLogger;
 
   private ClientObjectManager                      objectManager;
@@ -72,8 +75,8 @@ public class ManagerImpl implements Manager {
   private ClientTransactionManager                 txManager;
   private DistributedObjectClient                  dso;
   private DmiManager                               methodCallManager;
-  private final SerializationUtil                  serializer    = new SerializationUtil();
-  private final MethodDisplayNames                 methodDisplay = new MethodDisplayNames(serializer);
+  private final SerializationUtil                  serializer                   = new SerializationUtil();
+  private final MethodDisplayNames                 methodDisplay                = new MethodDisplayNames(serializer);
 
   public ManagerImpl(DSOClientConfigHelper config, ClassProvider classProvider,
                      PreparedComponentsFromL2Connection connectionComponents) {
@@ -168,7 +171,14 @@ public class ManagerImpl implements Manager {
 
     StartupAction action = new StartupHelper.StartupAction() {
       public void execute() throws Throwable {
-        dso = new DistributedObjectClient(config, group, classProvider, connectionComponents, ManagerImpl.this, cluster);
+        if (connectionComponents.isActiveActive()) {
+          // TODO::Find a better a way of doing this
+          dso = createDistributeObjectClientForEE(config, group, classProvider, connectionComponents, ManagerImpl.this,
+                                                  cluster);
+        } else {
+          dso = new DistributedObjectClient(config, group, classProvider, connectionComponents, ManagerImpl.this,
+                                            cluster);
+        }
         if (forTests) {
           dso.setCreateDedicatedMBeanServer(true);
         }
@@ -182,10 +192,31 @@ public class ManagerImpl implements Manager {
             .getStageManager(), dso.getCommunicationsManager(), dso.getChannel(), dso.getClientHandshakeManager(), dso
             .getStatisticsAgentSubSystem(), connectionComponents);
       }
+
     };
 
     StartupHelper startupHelper = new StartupHelper(group, action);
     startupHelper.startUp();
+  }
+
+  //NOTE::Using reflection to create EE version, TODO:: find better ways of doing this 
+  private DistributedObjectClient createDistributeObjectClientForEE(
+                                                                    DSOClientConfigHelper lconfig,
+                                                                    TCThreadGroup lgroup,
+                                                                    ClassProvider lclassProvider,
+                                                                    PreparedComponentsFromL2Connection lconnectionComponents,
+                                                                    Manager lmanager, Cluster lcluster) {
+    Class classArgs[] = new Class[] { DSOClientConfigHelper.class, TCThreadGroup.class, ClassProvider.class,
+        PreparedComponentsFromL2Connection.class, Manager.class, Cluster.class };
+    Object args[] = new Object[] { lconfig, lgroup, lclassProvider, lconnectionComponents, lmanager, lcluster };
+    try {
+      Class c = Class.forName(DISTRIBUTED_OBJECT_CLIENT_EE);
+      Constructor constructor = c.getConstructor(classArgs);
+      return (DistributedObjectClient) constructor.newInstance(args);
+    } catch (Exception e) {
+      logger.error("Unable to instanciate Client with required capabilities", e);
+      throw new AssertionError(e);
+    }
   }
 
   public void stop() {
