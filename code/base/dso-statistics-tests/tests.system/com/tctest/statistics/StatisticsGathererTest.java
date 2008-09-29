@@ -194,7 +194,7 @@ public class StatisticsGathererTest extends TransparentTestBase implements Stati
   }
 
   public void doSetUp(TransparentTestIface t) throws Exception {
-    t.getTransparentAppConfig().setClientCount(StatisticsGathererConfigSampleRateTestApp.NODE_COUNT);
+    t.getTransparentAppConfig().setClientCount(StatisticsGathererTestApp.NODE_COUNT);
     t.initializeTestRunner();
   }
 }
