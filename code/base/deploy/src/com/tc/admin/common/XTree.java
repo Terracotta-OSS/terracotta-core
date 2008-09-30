@@ -41,19 +41,21 @@ public class XTree extends org.dijon.Tree {
         testPopup(e);
       }
 
-      public void mouseReleased(MouseEvent e) {
-        testPopup(e);
+      public void mouseReleased(MouseEvent me) {
+        testPopup(me);
       }
 
-      public void testPopup(MouseEvent e) {
-        if (e.isPopupTrigger()) {
-          TreePath path = getPathForLocation(e.getX(), e.getY());
+      public void testPopup(MouseEvent me) {
+        if (me.isPopupTrigger()) {
+          TreePath path = getPathForLocation(me.getX(), me.getY());
           Object comp = path != null ? path.getLastPathComponent() : null;
           XTreeNode node = comp instanceof XTreeNode ? (XTreeNode) comp : null;
-          JPopupMenu menu = node != null ? node.getPopupMenu() : XTree.this.getPopupMenu();
+          JPopupMenu menu = null;
 
+          if(node != null) menu = node.getPopupMenu();
+          if(menu == null) menu = XTree.this.getPopupMenu();
           if (menu != null) {
-            menu.show(XTree.this, e.getX(), e.getY());
+            menu.show(XTree.this, me.getX(), me.getY());
           }
         }
       }
@@ -62,12 +64,12 @@ public class XTree extends org.dijon.Tree {
         TreePath path = getPathForLocation(me.getX(), me.getY());
         if (path != null) {
           requestFocus();
-          XTreeNode node = (XTreeNode) path.getLastPathComponent();
-          if (node != null) {
-            node.nodeClicked(me);
+          Object comp = path.getLastPathComponent();
+          if (comp instanceof XTreeNode) {
+            ((XTreeNode) comp).nodeClicked(me);
           }
         }
-      }
+     }
     };
     addMouseListener(ml);
 
@@ -76,9 +78,9 @@ public class XTree extends org.dijon.Tree {
         TreePath path = tse.getNewLeadSelectionPath();
         if (path != null) {
           requestFocus();
-          XTreeNode node = (XTreeNode) path.getLastPathComponent();
-          if (node != null) {
-            node.nodeSelected(tse);
+          Object comp = path.getLastPathComponent();
+          if (comp instanceof XTreeNode) {
+            ((XTreeNode) comp).nodeSelected(tse);
           }
         }
       }

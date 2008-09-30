@@ -31,6 +31,7 @@ import com.tc.admin.common.XTextField;
 import com.tc.admin.common.XTextPane;
 import com.tc.admin.common.XTree;
 import com.tc.admin.common.XTreeCellRenderer;
+import com.tc.admin.common.XTreeNode;
 import com.tc.object.appevent.NonPortableObjectEvent;
 import com.tc.object.appevent.NonPortableObjectState;
 import com.terracottatech.config.Include;
@@ -54,6 +55,7 @@ import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JTree;
 import javax.swing.SwingConstants;
@@ -483,7 +485,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
   class ObjectTreeCellRenderer extends XTreeCellRenderer {
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded,
                                                   boolean leaf, int row, boolean focused) {
-      Label label = (Label) super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, focused);
+      JLabel label = (JLabel) super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, focused);
 
       label.setIcon(PORTABLE_ICON);
       if (value instanceof DefaultMutableTreeNode) {
@@ -539,7 +541,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     fResolutionsPanel.setVisible(false);
   }
 
-  class ActionTreeNode extends DefaultMutableTreeNode {
+  class ActionTreeNode extends XTreeNode {
     ActionTreeNode(AbstractResolutionAction action) {
       super(action);
     }

@@ -218,7 +218,7 @@ class TerracottaBuilder
     end
 
     prefix = 'org.terracotta.modules.tool'
-    include_snapshots = @config_source['final_kit'] == 'true' ? true : false
+    include_snapshots = @config_source['final_kit'] == 'true' ? false : true
     java_opts = ["-D#{prefix}.includeSnapshots=#{include_snapshots}"]
     if index_url = @config_source['tim-get.index.url']
       java_opts << "-D#{prefix}.dataFileUrl=#{index_url}"

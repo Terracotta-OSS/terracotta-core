@@ -29,6 +29,7 @@ import com.tc.admin.ConnectionListener;
 import com.tc.admin.ServerConnectionManager;
 import com.tc.admin.common.BrowserLauncher;
 import com.tc.admin.common.ContactTerracottaAction;
+import com.tc.admin.common.FastFileChooser;
 import com.tc.admin.common.OutputStreamListener;
 import com.tc.admin.common.XAbstractAction;
 import com.tc.admin.common.XSplitPane;
@@ -770,7 +771,7 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
   }
 
   void exportConfiguration() {
-    JFileChooser chooser = new JFileChooser();
+    FastFileChooser chooser = new FastFileChooser();
     File currentDir = getLastDirectory();
 
     chooser.setMultiSelectionEnabled(false);
@@ -884,7 +885,7 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
   }
 
   private void importWebApp() {
-    JFileChooser chooser = new JFileChooser();
+    FastFileChooser chooser = new FastFileChooser();
     File currentDir = getLastDirectory();
 
     chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
@@ -1904,16 +1905,18 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
     cp.setLayout(new BorderLayout());
     cp.add(panel);
     panel.setEvent(event);
-    dialog.pack();
 
     Preferences prefs = getPreferences();
-    XSplitPane splitter = (XSplitPane) findComponent("IssuesSplitter");
+    XSplitPane splitter = (XSplitPane) panel.findComponent("IssuesSplitter");
     splitter.setPreferences(prefs.node(splitter.getName()));
 
     String s;
     if ((s = prefs.get(NON_PORTABLE_DIALOG_SIZE, null)) != null) {
       dialog.setSize(parseSizeString(s));
+    } else {
+      dialog.pack();
     }
+
     dialog.center(this);
     dialog.setVisible(true);
     prefs.put(NON_PORTABLE_DIALOG_SIZE, getSizeString(dialog));

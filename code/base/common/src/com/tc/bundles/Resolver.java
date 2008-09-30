@@ -160,7 +160,13 @@ public class Resolver {
       throw new BundleException(msg);
     }
 
-    final File location = resolveLocation(name, version, groupId);
+    final File location;
+    try {
+      location = resolveLocation(name, version, groupId);
+    } catch(Exception e) {
+      String msg = "Invalid module specification: name=" + name + ", version=" + version + ", groupId=" + groupId;
+      throw new BundleException(msg, e);
+    }
     if (location == null) {
       final String msg = formatMessage(Message.ERROR_BUNDLE_UNRESOLVED, new Object[] { name, version, groupId });
       throw new MissingBundleException(msg, groupId, name, version, repositories);

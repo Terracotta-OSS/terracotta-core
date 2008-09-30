@@ -6,6 +6,11 @@ rem  except as may otherwise be noted in a separate copyright notice.
 rem  All rights reserved.
 rem
 
+rem
+rem This script is for use by the Session Configurator and not meant to be
+rem executed manually.
+rem
+
 REM ----------------------------------------------------------
 REM - start.bat {tomcat5.0|tomcat5.5|wls8.1} 908{1,2} [nodso]
 REM ----------------------------------------------------------
@@ -13,5 +18,5 @@ REM ----------------------------------------------------------
 setlocal
 set EXIT_ON_ERROR=TRUE
 call "%~d0%~p0..\%1\start.bat" %2 %3
-exit /b %ERRORLEVEL%
+exit %ERRORLEVEL%
 endlocal
