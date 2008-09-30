@@ -259,6 +259,40 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
     }
   }
 
+  /**
+   * Test add module programmatically with non-default groupId 
+   */
+  public void testNonDefaultGroupId() throws Exception {
+    String groupId = "org.foo";
+    String artifactId = "bar";
+    String version = "1.0.0";
+    String symbolicName = groupId + "." + artifactId;
+
+    // Create bundle jar based on these attributes
+    File tempDir = getTempDirectory();
+    File generatedJar1 = createBundle(tempDir, groupId, artifactId, version, symbolicName, version,
+                                      null, TC_OK_CONFIG);
+
+    EmbeddedOSGiRuntime osgiRuntime = null;
+    try {
+      DSOClientConfigHelper configHelper = configHelper();
+
+      // Add temp dir to list of repository locations to pick up bundle above
+      configHelper.addRepository(tempDir.getAbsolutePath());
+      configHelper.addModule(groupId, artifactId, version);
+      ClassProvider classProvider = new MockClassProvider();
+
+      Modules modules = configHelper.getModulesForInitialization();
+      osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
+      ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false);
+
+      // should find and load the module without error
+      
+    } finally {
+      shutdownAndCleanUpJars(osgiRuntime, new File[] { generatedJar1 });
+    }
+  }
+
   private static final String TC_CONFIG_NO_ROOT_FIELD_OR_EXPR = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
                                                                 + "<xml-fragment>" + "<roots>"
                                                                 + "<root><root-name>no_expr</root-name></root>"
@@ -266,6 +300,11 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
 
   private static final String TC_CONFIG_MISSING_FIRST_CHAR    = "?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
                                                                 + "<xml-fragment>" + "</xml-fragment>";
+
+  private static final String TC_OK_CONFIG = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
+    + "<xml-fragment>" + "<roots>"
+    + "<root><root-name>no_expr</root-name> <field-name>org.foo.bar.SomeClass.someField</field-name></root>"
+    + "</roots>" + "</xml-fragment>";  
 
   private void shutdownAndCleanUpJars(EmbeddedOSGiRuntime osgiRuntime, File[] jars) {
     // Shutdown and wait for open jar references to get cleaned up

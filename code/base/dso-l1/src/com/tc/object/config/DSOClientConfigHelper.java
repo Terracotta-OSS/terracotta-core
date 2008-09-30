@@ -195,7 +195,21 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   void addRepository(String location);
 
-  void addModule(String name, String version);
+  /** 
+   * Add module dependency with no groupId, indicating the groupId should be assumed to 
+   * be the default: "org.terracotta.modules".
+   * @artifactId Such as tim-foobar
+   * @version Such as 1.0.0-SNAPSHOT
+   */
+  void addModule(String artifactId, String version);
+
+  /** 
+   * Add module dependency 
+   * @groupId Such as org.terracotta.modules
+   * @artifactId Such as tim-foobar
+   * @version Such as 1.0.0-SNAPSHOT
+   */
+  void addModule(String groupId, String artifactId, String version);
 
   boolean removeCustomAdapter(String name);
 

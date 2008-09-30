@@ -1682,9 +1682,16 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     modulesContext.modules.addRepository(location);
   }
 
-  public void addModule(String name, String version) {
+  public void addModule(String artifactId, String version) {
     Module newModule = modulesContext.modules.addNewModule();
-    newModule.setName(name);
+    newModule.setName(artifactId);
+    newModule.setVersion(version);
+  }
+
+  public void addModule(String groupId, String artifactId, String version) {
+    Module newModule = modulesContext.modules.addNewModule();
+    newModule.setGroupId(groupId);
+    newModule.setName(artifactId);
     newModule.setVersion(version);
   }
 

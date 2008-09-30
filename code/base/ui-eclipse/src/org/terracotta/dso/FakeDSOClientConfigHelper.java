@@ -156,6 +156,9 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     /**/
   }
 
+  public void addModule(String groupId, String name, String version) {
+    /**/
+  }
   public void addReadAutoSynchronize(String methodPattern) {
     /**/
   }
