@@ -30,8 +30,18 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
       end
     end
 
-    puts "WARNING: Unable to locate all of the TIMs listed in the distribution config - only some TIM info will be injected." if !tims.empty? && timnames.size != tims.size
-    puts "WARNING: Unable to locate any TIMs - no TIM info will be injected." if tims.empty?
+    if !tims.empty? && timnames.size != tims.size
+      msg  = "Unable to locate all of the TIMs listed in the distribution config - only some TIM info will be injected.\n" 
+      msg << "What got installed: #{tims.keys.join(', ')}\n"
+      msg << "What was specified: #{timnames.join(', ')}"
+      fail msg
+    end
+  
+    if tims.empty? 
+      msg = "Unable to locate any TIMs - no TIM info will be injected.\n"
+      msg << "What was specified: #{timnames.join(', ')}"
+      fail msg
+    end
     
     dirnames = args[1]['dest']
     dirnames.each do |entry|
