@@ -4,9 +4,17 @@
  */
 package com.tc.management;
 
+import com.sun.jmx.remote.generic.DefaultConfig;
+import com.sun.jmx.remote.generic.ServerSynchroMessageConnection;
+import com.sun.jmx.remote.generic.SynchroCallback;
+import com.sun.jmx.remote.generic.SynchroMessageConnectionServer;
+import com.sun.jmx.remote.generic.SynchroMessageConnectionServerImpl;
+import com.sun.jmx.remote.socket.SocketConnectionServer;
+import com.tc.async.api.Sink;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.CustomerLogging;
+import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.beans.L2Dumper;
 import com.tc.management.beans.L2MBeanNames;
@@ -19,6 +27,8 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.statistics.beans.StatisticsMBeanNames;
 import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
+import com.tc.util.concurrent.TCExceptionResultException;
+import com.tc.util.concurrent.TCFuture;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,12 +54,18 @@ import javax.management.MBeanServerFactory;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnectorServer;
-import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
+import javax.management.remote.generic.GenericConnectorServer;
+import javax.management.remote.generic.MessageConnectionServer;
+import javax.management.remote.message.MBeanServerRequestMessage;
+import javax.management.remote.message.Message;
 import javax.management.remote.rmi.RMIConnectorServer;
 import javax.management.remote.rmi.RMIJRMPServerImpl;
+import javax.security.auth.Subject;
 
 public class L2Management extends TerracottaManagement {
+
+  private static final TCLogger                logger         = TCLogging.getLogger(L2Management.class);
 
   private MBeanServer                          mBeanServer;
   private JMXConnectorServer                   jmxConnectorServer;
@@ -64,13 +80,14 @@ public class L2Management extends TerracottaManagement {
   private final int                            jmxPort;
   private final InetAddress                    bindAddress;
   private final ServerDBBackup                 serverDbBackupBean;
+  private final Sink                           remoteEventsSink;
 
   public L2Management(TCServerInfoMBean tcServerInfo, LockStatisticsMonitorMBean lockStatistics,
                       StatisticsAgentSubSystemImpl statisticsAgentSubSystem,
                       StatisticsGatewayMBeanImpl statisticsGateway,
                       L2TVSConfigurationSetupManager configurationSetupManager, TCDumper tcDumper,
-                      InetAddress bindAddr, int port) throws MBeanRegistrationException, NotCompliantMBeanException,
-      InstanceAlreadyExistsException {
+                      InetAddress bindAddr, int port, Sink remoteEventsSink) throws MBeanRegistrationException,
+      NotCompliantMBeanException, InstanceAlreadyExistsException {
     this.tcServerInfo = tcServerInfo;
     this.lockStatistics = lockStatistics;
     this.configurationSetupManager = configurationSetupManager;
@@ -79,6 +96,7 @@ public class L2Management extends TerracottaManagement {
     this.tcDumper = tcDumper;
     this.bindAddress = bindAddr;
     this.jmxPort = port;
+    this.remoteEventsSink = remoteEventsSink;
 
     try {
       objectManagementBean = new ObjectManagementMonitor();
@@ -137,18 +155,22 @@ public class L2Management extends TerracottaManagement {
       this.bindAddr = bindAddress;
     }
 
+    @Override
     public ServerSocket createServerSocket(int port) throws IOException {
       return new ServerSocket(port, 0, this.bindAddr);
     }
 
+    @Override
     public Socket createSocket(String dummy, int port) throws IOException {
       return new Socket(bindAddr, port);
     }
 
+    @Override
     public int hashCode() {
       return bindAddr.hashCode();
     }
 
+    @Override
     public boolean equals(Object obj) {
       if (obj == this) {
         return true;
@@ -193,7 +215,21 @@ public class L2Management extends TerracottaManagement {
     } else {
       // DEV-1060
       url = new JMXServiceURL("jmxmp", bindAddress.getHostAddress(), jmxPort);
-      jmxConnectorServer = JMXConnectorServerFactory.newJMXConnectorServer(url, env, mBeanServer);
+
+      MessageConnectionServer msgConnectionServer = new SocketConnectionServer(url, env);
+
+      // We use our own connection server classes here so that we can intervene when remote jmx requests come in.
+      // Specifically we take every request and instead of processing it directly in the JMX thread, we pass the request
+      // of to a SEDA stage. The whole point of doing is that the JMX runtime likes to use Thread.interrupt() which we
+      // don't want happening in our code. Pushing the requests into our own stage thread provides isolation from these
+      // interrupts (see DEV-1955)
+      SynchroMessageConnectionServer synchroMessageConnectionServer = new TCSynchroMessageConnectionServer(
+                                                                                                           remoteEventsSink,
+                                                                                                           msgConnectionServer,
+                                                                                                           env);
+      env.put(DefaultConfig.SYNCHRO_MESSAGE_CONNECTION_SERVER, synchroMessageConnectionServer);
+
+      jmxConnectorServer = new GenericConnectorServer(env, mBeanServer);
       jmxConnectorServer.start();
       CustomerLogging.getConsoleLogger().info("JMX Server started. Available at URL[" + url + "]");
     }
@@ -206,6 +242,7 @@ public class L2Management extends TerracottaManagement {
     }
   }
 
+  @Override
   public Object findMBean(ObjectName objectName, Class mBeanInterface) throws IOException {
     return findMBean(objectName, mBeanInterface, mBeanServer);
   }
@@ -255,4 +292,90 @@ public class L2Management extends TerracottaManagement {
     mBeanServer.unregisterMBean(L2MBeanNames.DUMPER);
 
   }
+
+  public static class TCSynchroMessageConnectionServer extends SynchroMessageConnectionServerImpl {
+
+    private final Sink remoteEventsSink;
+
+    public TCSynchroMessageConnectionServer(Sink remoteEventsSink, MessageConnectionServer msServer, Map env) {
+      super(msServer, env);
+      this.remoteEventsSink = remoteEventsSink;
+    }
+
+    @Override
+    public ServerSynchroMessageConnection accept() throws IOException {
+      return new ServerSynchroMessageConnectionWrapper(remoteEventsSink, super.accept());
+    }
+  }
+
+  private static class ServerSynchroMessageConnectionWrapper implements ServerSynchroMessageConnection {
+
+    private final ServerSynchroMessageConnection conn;
+    private final Sink                           queue;
+
+    public ServerSynchroMessageConnectionWrapper(Sink queue, ServerSynchroMessageConnection conn) {
+      this.queue = queue;
+      this.conn = conn;
+    }
+
+    public void close() throws IOException {
+      conn.close();
+    }
+
+    public void connect(Map env) throws IOException {
+      conn.connect(env);
+    }
+
+    public String getConnectionId() {
+      return conn.getConnectionId();
+    }
+
+    public Subject getSubject() {
+      return conn.getSubject();
+    }
+
+    public void sendOneWay(Message msg) throws IOException, UnsupportedOperationException {
+      conn.sendOneWay(msg);
+    }
+
+    public void setCallback(SynchroCallback cb) {
+      conn.setCallback(new SynchroCallbackWrapper(queue, cb));
+    }
+  }
+
+  private static class SynchroCallbackWrapper implements SynchroCallback {
+
+    private final SynchroCallback callback;
+    private final Sink            remoteEventsSink;
+
+    public SynchroCallbackWrapper(Sink remoteEventsSink, SynchroCallback cb) {
+      this.remoteEventsSink = remoteEventsSink;
+      this.callback = cb;
+    }
+
+    public void connectionException(Exception ie) {
+      callback.connectionException(ie);
+    }
+
+    public Message execute(Message request) {
+      if (request instanceof MBeanServerRequestMessage) {
+        TCFuture future = new TCFuture();
+        remoteEventsSink.add(new CallbackExecuteContext(Thread.currentThread().getContextClassLoader(), callback,
+                                                        request, future));
+
+        try {
+          return (Message) future.get();
+        } catch (InterruptedException e) {
+          logger.debug("remote JMX call interrupted");
+          return null;
+        } catch (TCExceptionResultException e) {
+          throw new RuntimeException(e.getCause());
+        }
+      }
+
+      return callback.execute(request);
+
+    }
+  }
+
 }

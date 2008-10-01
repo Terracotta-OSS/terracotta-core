@@ -20,12 +20,12 @@ public interface TCPropertiesConsts {
       "l2.nha.groupcomm.type", "l2.nha.tribes.failuredetector.millis", "l2.nha.tribes.orderinterceptor.enabled",
       "l2.nha.tribes.mcast.mcastPort", "l2.nha.tribes.mcast.mcastAddress", "l2.nha.tribes.mcast.memberDropTime",
       "l2.nha.tribes.mcast.mcastFrequency", "l2.nha.tribes.mcast.tcpListenPort", "l2.nha.tribes.mcast.tcpListenHost",
-      "l2.nha.mcast.enabled"};
+      "l2.nha.mcast.enabled"                                                         };
 
   /*********************************************************************************************************************
    * <code>
-   * Section : L2 Cache Manager Properties 
-   * Description : This section contains the defaults for the cache manager for the L2 
+   * Section : L2 Cache Manager Properties
+   * Description : This section contains the defaults for the cache manager for the L2
    * TODO : Explain all these parameters
    * </code>
    ********************************************************************************************************************/
@@ -52,21 +52,21 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section : L2 Object Manager Properties Description : 
-   * This section contains the defaults for the object manager of the L2 
-   * cachePolicy : <lru>/<lfu>  - Least Recently Used or Least Frequently used 
+   * Section : L2 Object Manager Properties Description :
+   * This section contains the defaults for the object manager of the L2
+   * cachePolicy : <lru>/<lfu>  - Least Recently Used or Least Frequently used
    * deleteBatchSize            - Max number of objects deleted in one transaction when removing from the object store after a GC
    * maxObjectsToCommit         - Max number of Objects commited in one transaction in the commit stage and flush stage
    * maxObjectsInTxnObjGrouping - Max number of Objects allowed in the TransactionalObject grouping
    * maxTxnsInTxnObjectGrouping - Max number of Transations allowed in the TransactionalObject grouping
    * fault.logging.enabled      - Enables/Disables logging of ManagedObject Faults from disk. If enabled, it logs every 100 faults.
-   * loadObjectID.fastLoad      - Enables/Disables fast loading of ObjectIDs. Only effective for persistence with mode permanent-store. 
-   *                              This will speed up Object-Ids loading at restart but some overhead occurred at regular operations. 
-   *                              You can go from enable to disable but need a fresh start if change from disable to enable for building 
-   *                              up compressed object-Id. 
-   * loadObjectID.longsPerDiskEntry - Size of long array entry to store object IDs in persistent store. One bit for each ID. 
-   * loadObjectID.checkpoint.changes - number of changes to trigger objectID checkpoint 
-   * loadObjectID.checkpoint.maxlimit - max number of changes to process in one run checkpoint. 
+   * loadObjectID.fastLoad      - Enables/Disables fast loading of ObjectIDs. Only effective for persistence with mode permanent-store.
+   *                              This will speed up Object-Ids loading at restart but some overhead occurred at regular operations.
+   *                              You can go from enable to disable but need a fresh start if change from disable to enable for building
+   *                              up compressed object-Id.
+   * loadObjectID.longsPerDiskEntry - Size of long array entry to store object IDs in persistent store. One bit for each ID.
+   * loadObjectID.checkpoint.changes - number of changes to trigger objectID checkpoint
+   * loadObjectID.checkpoint.maxlimit - max number of changes to process in one run checkpoint.
    * loadObjectID.checkpoint.timeperiod - time period in milliseconds between checkpoints
    * passive.sync.batch.size    - Number of objects in each message that is sent from active to passive while synching
    * passive.sync.throttle.timeInMillis - Time to wait before sending the next batch of objects to the passive
@@ -99,7 +99,7 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section : L2 Seda stage properties 
+   * Section : L2 Seda stage properties
    * Description : This section contains configuration for SEDA stages for L2
    * </code>
    ********************************************************************************************************************/
@@ -111,7 +111,7 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section : L1 Seda stage properties 
+   * Section : L1 Seda stage properties
    * Description : This section contains configuration for SEDA stages for L1
    * </code>
    ********************************************************************************************************************/
@@ -119,10 +119,10 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section : L2 Berkeley DB Persistence Layer Properties 
-   * Description : This section contains the of Berkeley DB JE properties thats used in L2 
-   * For an explanation of these properties look at Berkeley DB documentation 
-   * (l2.berkeleydb is removed before giving to Berkeley DB JE) 
+   * Section : L2 Berkeley DB Persistence Layer Properties
+   * Description : This section contains the of Berkeley DB JE properties thats used in L2
+   * For an explanation of these properties look at Berkeley DB documentation
+   * (l2.berkeleydb is removed before giving to Berkeley DB JE)
    * </code>
    ********************************************************************************************************************/
   public static final String   L2_BERKELEYDB_JE_LOCK_TIMEOUT                          = "l2.berkeleydb.je.lock.timeout";
@@ -136,9 +136,9 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section : L2 LFU cachepolicy defaults 
+   * Section : L2 LFU cachepolicy defaults
    * Description : If cachePolicy is set to lfu, then these values take effect
-   * agingFactor (float)                    - valid values 0 to 1 
+   * agingFactor (float)                    - valid values 0 to 1
    * recentlyAccessedIgnorePercentage (int) - valid values 0 - 100
    * debug.enabled                          - valid values true/false
    * </code>
@@ -149,7 +149,7 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section : L2 Bean shell Properties 
+   * Section : L2 Bean shell Properties
    * Description : Bean shell can be enabled in the server for debugging.
    * </code>
    ********************************************************************************************************************/
@@ -158,17 +158,17 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section : Network HA (nha) 
-   * Description : If Networked HA is enabled then these values take effect 
-   * tcgroupcomm.handshake.timeout    - tc-group-comm handshake timeout milliseconds 
-   * tcgroupcomm.response.timelimit   - tc-group-comm message response timelimit millisecon RuntimeException thrown after timelimit 
-   * tcgroupcomm.discovery.interval   - tc-group-comm member discovery interval milliseconds 
+   * Section : Network HA (nha)
+   * Description : If Networked HA is enabled then these values take effect
+   * tcgroupcomm.handshake.timeout    - tc-group-comm handshake timeout milliseconds
+   * tcgroupcomm.response.timelimit   - tc-group-comm message response timelimit millisecon RuntimeException thrown after timelimit
+   * tcgroupcomm.discovery.interval   - tc-group-comm member discovery interval milliseconds
    * tcgroupcomm.reconnect.timeout    - L2-L2 reconnect windows in milliseconds
    * tcgroupcomm.reconnect.sendqueue.cap - sendqueue capacity, 0 for Integer.MAX_VALUE
    * tcgroupcomm.reconnect.maxDelayedAcks - at least one ack per maxDelayedAcks messages received
    * tcgroupcomm.reconnect.sendWindow - max outstanding messages before ack received
    * tcgroupcomm.reconnect.enabled  -  enable L2-L2 reconnect
-   * send.timeout.millis              - number of milliseconds to retry sending a message 
+   * send.timeout.millis              - number of milliseconds to retry sending a message
    * </code>
    ********************************************************************************************************************/
   public static final String   L2_NHA_TCGROUPCOMM_HANDSHAKE_TIMEOUT                   = "l2.nha.tcgroupcomm.handshake.timeout";
@@ -187,7 +187,7 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section : Misc L2 Properties 
+   * Section : Misc L2 Properties
    * Description : Other Miscellaneous L2 Properties
    * </code>
    ********************************************************************************************************************/
@@ -195,8 +195,8 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section : L1 JVM Compatibility Properties 
-   * Description : This section contains the defaults for the JVM compatibility for the L1 
+   * Section : L1 JVM Compatibility Properties
+   * Description : This section contains the defaults for the JVM compatibility for the L1
    * TODO : Explain all these parameters
    * </code>
    ********************************************************************************************************************/
@@ -204,12 +204,12 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section : L1 Integration Modules 
+   * Section : L1 Integration Modules
    * Description : This section contains the defaults for the L1 integration modules
-   * repositories                 - comma-separated list of additional module repositories URL's; if the tc.install-root system property is set, a default 
-   *                                repository of (tc.install-root)/modules will be injected default - comma-separated list of integration modules that are 
+   * repositories                 - comma-separated list of additional module repositories URL's; if the tc.install-root system property is set, a default
+   *                                repository of (tc.install-root)/modules will be injected default - comma-separated list of integration modules that are
    *                                implicitly loaded by the L1 in the form specified by the Required-Bundles OSGI
-   * manifest header additional   - list of additional integration modules to be started, in the form specified by the OSGI Required-Bundles manifest header 
+   * manifest header additional   - list of additional integration modules to be started, in the form specified by the OSGI Required-Bundles manifest header
    * tc-version-check             - off|warn|enforce|strict
    * </code>
    ********************************************************************************************************************/
@@ -220,8 +220,8 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section : L1 Cache Manager Properties 
-   * Description : This section contains the defaults for the cache manager for the L1 
+   * Section : L1 Cache Manager Properties
+   * Description : This section contains the defaults for the cache manager for the L1
    * TODO : Explain all these parameters
    * </code>
    ********************************************************************************************************************/
@@ -237,22 +237,22 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section : L1 Transaction Manager Properties 
-   * Description : This section contains the defaults for the Transaction manager for the L1 
+   * Section : L1 Transaction Manager Properties
+   * Description : This section contains the defaults for the Transaction manager for the L1
    * logging.enabled             - if true, enables some logging in the transaction manager
    * maxOutstandingBatchSize     - the max number of batches of transaction that each L1 sends to the L2 at once
    * maxBatchSizeInKiloBytes     - the max size of batches that are send to the L2 from the L1. The units is in Kilobytes
-   * maxPendingBatches           - the max number of pending batches the client creates before a Batch ack is received from the server, after which the client stalls 
-   *                               until a Batch ack is received. 
-   * maxSleepTimeBeforeHalt      - the max time that a user thread will wait for L2 to catchup if the L2 is behind applying transactions. This time is used before 
-   *                               maxPendingBatches is reached. The units are in milliseconds 
+   * maxPendingBatches           - the max number of pending batches the client creates before a Batch ack is received from the server, after which the client stalls
+   *                               until a Batch ack is received.
+   * maxSleepTimeBeforeHalt      - the max time that a user thread will wait for L2 to catchup if the L2 is behind applying transactions. This time is used before
+   *                               maxPendingBatches is reached. The units are in milliseconds
    * completedAckFlushTimeout    - the timeout in milliseconds after which a NullTransaction is send to the server if completed txn acks are still pending
-   * strings.compress.enabled    - Enables string compression when sending to the L2. There is a processing overhead at the L1, but saves network bandwidth, 
+   * strings.compress.enabled    - Enables string compression when sending to the L2. There is a processing overhead at the L1, but saves network bandwidth,
    *                               reduces memory requirements in the L2 and also reduces disk io at the L2.
-   * strings.compress.minSize    - Strings with lengths less that this number are not compressed 
-   * folding.enabled             - true/false whether txn folding is enabled. Folding is the act of combining similar (but unique) application transactions into 
-   *                               a single txn (for more optimal processing on the server). Only transactions that share common  locks and objects can be folded. 
-   * folding.lock.limit          - the maximum number of distinct locks permitted in folded txns (0 or less means infinite) 
+   * strings.compress.minSize    - Strings with lengths less that this number are not compressed
+   * folding.enabled             - true/false whether txn folding is enabled. Folding is the act of combining similar (but unique) application transactions into
+   *                               a single txn (for more optimal processing on the server). Only transactions that share common  locks and objects can be folded.
+   * folding.lock.limit          - the maximum number of distinct locks permitted in folded txns (0 or less means infinite)
    * folding.object.limit        - the maximum number of distinct objects permitted in folded txns (0 or less means infinite)
    * </code>
    ********************************************************************************************************************/
@@ -272,9 +272,9 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section: L1 Connect Properties 
+   * Section: L1 Connect Properties
    * Description: This section contains properties controlling L1 connect feature
-   * max.connect.retries - maximum L2 connection attempts 
+   * max.connect.retries - maximum L2 connection attempts
    * connect.versionMatchCheck.enabled - if true, connection is established only when L1 and L2 are of the same DSO version
    * </code>
    ********************************************************************************************************************/
@@ -285,9 +285,9 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section: L1 Reconnect Properties 
-   * Description: This section contains properties controlling L1 reconnect feature Note that l1 get these properties from l2, so the local copy of l1 doesn't matter 
-   * enabled - if true, enables l1 reconnect feature (and Once-And-Only-Once protocol) 
+   * Section: L1 Reconnect Properties
+   * Description: This section contains properties controlling L1 reconnect feature Note that l1 get these properties from l2, so the local copy of l1 doesn't matter
+   * enabled - if true, enables l1 reconnect feature (and Once-And-Only-Once protocol)
    * timeout.millis - number of milliseconds a disconnected L1 is allowed to reconnect to L2 that has not crashed
    * </code>
    ********************************************************************************************************************/
@@ -299,7 +299,7 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section : L1 Object Manager Properties 
+   * Section : L1 Object Manager Properties
    * Description : This section contains the defaults for the Object manager for the L1
    * </code>
    ********************************************************************************************************************/
@@ -309,7 +309,7 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section : Common Logging properties for both L1 and L2 
+   * Section : Common Logging properties for both L1 and L2
    * Description : Logging attributes that can be overridden.
    * maxBackups - The maximum number of backup log files to keep maxLogFileSize - The maximum size of a log file in megabytes
    * </code>
@@ -319,9 +319,9 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section : Common Stage Monitoring properties for both L1 and L2 
-   * Description : Stage monitoring can be enabled or disabled for debugging. 
-   * enabled : <true/false> - Enable or Disable Monitoring 
+   * Section : Common Stage Monitoring properties for both L1 and L2
+   * Description : Stage monitoring can be enabled or disabled for debugging.
+   * enabled : <true/false> - Enable or Disable Monitoring
    * delay : long - frequency in milliseconds
    * </code>
    ********************************************************************************************************************/
@@ -333,7 +333,7 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section : Common property for TC Management MBean 
+   * Section : Common property for TC Management MBean
    * Description : TC Management MBeans can be enabled/disabled
    * mbeans.enabled : <true/false> - All mbeans enabled/disabled test.mbeans.enabled : <true/false> - Test mode mbeans
    * enabled/disabled
@@ -344,30 +344,30 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section                         : Session properties (applies to all DSO session enabled web apps in this VM) 
-   * id.length                       : The length (in chars) for session identifiers (min 8) 
-   * serverid                        : The server identifier to place in the session ID 
-   * delimiter                       : Thedelimiter that separates the server ID from the session ID 
+   * Section                         : Session properties (applies to all DSO session enabled web apps in this VM)
+   * id.length                       : The length (in chars) for session identifiers (min 8)
+   * serverid                        : The server identifier to place in the session ID
+   * delimiter                       : Thedelimiter that separates the server ID from the session ID
    * cookie.domain                   : Domain value for session cookie
-   * cookie.secure                   : Enable / disable the secure flag in the session cookie 
-   * cookie.maxage.seconds           : The maximum lifetime of the session cookie 
-   * cookie.name                     : Name of the session cookie cookie.enabled : Enable / disable the use of cookies for session tracking 
-   * maxidle.seconds                 : Session idle timeout in seconds 
-   * tracking.enabled                : Enable / disable session tracking completely 
-   * urlrewrite.enabled              : Enable / disable the URL functionality 
-   * attribute.listeners             : Comma separated list of HttpSessionAttributeListener classes 
+   * cookie.secure                   : Enable / disable the secure flag in the session cookie
+   * cookie.maxage.seconds           : The maximum lifetime of the session cookie
+   * cookie.name                     : Name of the session cookie cookie.enabled : Enable / disable the use of cookies for session tracking
+   * maxidle.seconds                 : Session idle timeout in seconds
+   * tracking.enabled                : Enable / disable session tracking completely
+   * urlrewrite.enabled              : Enable / disable the URL functionality
+   * attribute.listeners             : Comma separated list of HttpSessionAttributeListener classes
    * listeners                       : Comma separated list of HttpSessionListener
-   * classes invalidator.sleep       : Sleep time between runs of the session invalidator 
-   * request.bench.enabled           : Enable / disable request benchmark logging 
+   * classes invalidator.sleep       : Sleep time between runs of the session invalidator
+   * request.bench.enabled           : Enable / disable request benchmark logging
    * invalidator.bench.enabled       : Enable / disable benchmark logging for session
-   * invalidation request.tracking   : Enable / disable the stuck request monitor 
-   * request.tracking.dump           : Enable / disable thread dumping when stuck requests discovered (unix only) 
-   * request.tracking.interval       : Frequency (ms) of stuck request inspection 
-   * request.tracking.threshold      : Threshold (ms) before requests are considered "stuck" 
-   * debug.hops                      : Log session hopping (ie. processing of session by more than one VM) 
-   * debug.hops.interval             : Number of hops between debug printing 
-   * debug.invalidate                : Log session invalidation vhosts.excluded : comma separated list of virtual hosts that should never use Terracotta clustered 
-   *                                   sessions (tomcat only) 
+   * invalidation request.tracking   : Enable / disable the stuck request monitor
+   * request.tracking.dump           : Enable / disable thread dumping when stuck requests discovered (unix only)
+   * request.tracking.interval       : Frequency (ms) of stuck request inspection
+   * request.tracking.threshold      : Threshold (ms) before requests are considered "stuck"
+   * debug.hops                      : Log session hopping (ie. processing of session by more than one VM)
+   * debug.hops.interval             : Number of hops between debug printing
+   * debug.invalidate                : Log session invalidation vhosts.excluded : comma separated list of virtual hosts that should never use Terracotta clustered
+   *                                   sessions (tomcat only)
    * session.debug.sessions          : output additional debug information when sessions are looked up, created, etc
    * </code>
    ********************************************************************************************************************/
@@ -429,7 +429,7 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section : tcCom 
+   * Section : tcCom
    * l2.tccom.workerthreads - Number of workers threads for network communications. Defaults to java.lang.Runtime.availableProcessors()
    * </code>
    ********************************************************************************************************************/
@@ -444,7 +444,7 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section : CVT 
+   * Section : CVT
    * cvt.retriever.notification.interval   - Interval between log file messages when the CVT retriever is running (in seconds)
    * cvt.statistics.logging.interval       - Interval between logging of statistics data (in seconds).
    * cvt.buffer.randomsuffix.enabled       - If true, add a random suffix when a buffer is created
@@ -485,8 +485,8 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section : TCMessage debug monitoring 
-   * tcm.monitor.enabled - if enabled the count and size of TC messages will be collected and logged 
+   * Section : TCMessage debug monitoring
+   * tcm.monitor.enabled - if enabled the count and size of TC messages will be collected and logged
    * tcm.monitor.delay   - the delay (in seconds) between reporting to the log
    * </code>
    ********************************************************************************************************************/
@@ -495,7 +495,7 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section : HTTP 
+   * Section : HTTP
    * http.defaultservlet.enabled                - If true, will serve files through embedded HTTP server
    * http.defaultservlet.attribute.aliases      - If true, allows aliases like symlinks to be followed while serving files
    * http.defaultservlet.attribute.dirallowed   - If true, directory listings are returned if no welcome file is found
@@ -504,5 +504,15 @@ public interface TCPropertiesConsts {
   public static final String   HTTP_DEFAULT_SERVLET_ENABLED                           = "http.defaultservlet.enabled";
   public static final String   HTTP_DEFAULT_SERVLET_ATTRIBUTE_ALIASES                 = "http.defaultservlet.attribute.aliases";
   public static final String   HTTP_DEFAULT_SERVLET_ATTRIBUTE_DIR_ALLOWED             = "http.defaultservlet.attribute.dirallowed";
+
+  /*********************************************************************************************************************
+   * <code>
+   * Section : Remote JMX
+   * l2.remotejmx.maxthreads                     - maximum number of concurrent remote jmx operations permitted
+   * l2.remotejmx.idletime                       - idle timeout (in seconds) for remote jmx processing threads
+   * </code>
+   ********************************************************************************************************************/
+  public static final String   L2_REMOTEJMX_MAXTHREADS                                = "l2.remotejmx.maxthreads";
+  public static final String   L2_REMOTEJMX_IDLETIME                                  = "l2.remotejmx.idletime";
 
 }
