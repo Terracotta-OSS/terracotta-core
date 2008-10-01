@@ -220,8 +220,8 @@ public class L2Management extends TerracottaManagement {
 
       // We use our own connection server classes here so that we can intervene when remote jmx requests come in.
       // Specifically we take every request and instead of processing it directly in the JMX thread, we pass the request
-      // of to a SEDA stage. The whole point of doing is that the JMX runtime likes to use Thread.interrupt() which we
-      // don't want happening in our code. Pushing the requests into our own stage thread provides isolation from these
+      // off to a thread pool. The whole point of doing is that the JMX runtime likes to use Thread.interrupt() which we
+      // don't want happening in our code. Pushing the requests into our own threads provides isolation from these
       // interrupts (see DEV-1955)
       SynchroMessageConnectionServer synchroMessageConnectionServer = new TCSynchroMessageConnectionServer(
                                                                                                            remoteEventsSink,
