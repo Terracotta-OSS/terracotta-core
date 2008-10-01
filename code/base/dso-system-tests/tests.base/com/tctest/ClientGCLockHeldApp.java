@@ -12,6 +12,7 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.object.config.spec.SynchronizedIntSpec;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.runner.AbstractTransparentApp;
@@ -44,6 +45,7 @@ public class ClientGCLockHeldApp extends AbstractTransparentApp {
     config.addWriteAutolock(methodExpression);
     new SynchronizedIntSpec().visit(visitor, config);
     new CyclicBarrierSpec().visit(visitor, config);
+
   }
 
   public void run() {
@@ -62,15 +64,24 @@ public class ClientGCLockHeldApp extends AbstractTransparentApp {
 
     Runtime runtime = Runtime.getRuntime();
     long maxMemory = runtime.maxMemory();
-    
+
     System.out.println("maxMemory: " + maxMemory);
-    
-    int locksSize = (int)(maxMemory/15000);
+
+    int locksSize = (int) (maxMemory / 15000);
+
+    int stripedCount = Integer.valueOf(TCPropertiesImpl.getProperties().getProperty("l1.lockmanager.striped.count"))
+        .intValue();
+
+    System.out.println("stripedCount = " + stripedCount);
+
+    if (stripedCount > 0) {
+      locksSize = locksSize / stripedCount;
+    }
     
     System.out.println("locksSize = " + locksSize);
     while (stopwatch.getElapsedTime() < (1000 * 60 * MINUTES_TEST_RUN)) {
-      
-      for (int i = 0; i < locksSize ; i++) {
+
+      for (int i = 0; i < locksSize; i++) {
 
         SynchronizedInt counter = new SynchronizedInt(0);
         synchronized (lockList) {
@@ -78,10 +89,10 @@ public class ClientGCLockHeldApp extends AbstractTransparentApp {
         }
         counter.increment();
       }
-      //now sleep for awhile, so locks created can be GCed, if there
-      //is a bug, then it won't be GCed and eventually OOME
+      // now sleep for awhile, so locks created can be GCed, if there
+      // is a bug, then it won't be GCed and eventually OOME
       try {
-        Thread.sleep(30 * 1000);
+        Thread.sleep(61 * 1000);
       } catch (InterruptedException e) {
         throw new AssertionError(e);
       }
