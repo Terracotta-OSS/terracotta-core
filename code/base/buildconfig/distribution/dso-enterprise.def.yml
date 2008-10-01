@@ -156,6 +156,7 @@ postscripts:
             - tim-apache-struts-1.1
         - dest: 
             - tools/sessions/configurator-sandbox
+  - delete-tim-get-index
   - include-schemas:
       args:
         - schema

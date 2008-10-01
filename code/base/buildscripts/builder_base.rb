@@ -219,7 +219,8 @@ class TerracottaBuilder
 
     prefix = 'org.terracotta.modules.tool'
     include_snapshots = @config_source['final_kit'] == 'true' ? false : true
-    java_opts = ["-D#{prefix}.includeSnapshots=#{include_snapshots}"]
+    java_opts = ["-D#{prefix}.includeSnapshots=#{include_snapshots}",
+                 "-D#{prefix}.dataFile=#{self.tim_get_index_file}"]
     if index_url = @config_source['tim-get.index.url']
       java_opts << "-D#{prefix}.dataFileUrl=#{index_url}"
     end
@@ -238,6 +239,15 @@ class TerracottaBuilder
     ENV['JAVA_OPTS'] = nil
 
     result
+  end
+
+  def tim_get_index_file
+    require 'tmpdir'
+    File.join(Dir.tmpdir, 'tim-get.index')
+  end
+
+  def delete_tim_get_index_file
+    File.delete(tim_get_index_file)
   end
 
   # Where should we archive the build to? Returns nil if none. Value comes from the config source.
