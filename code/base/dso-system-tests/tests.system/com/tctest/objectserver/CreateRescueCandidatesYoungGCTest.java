@@ -10,6 +10,8 @@ import com.tc.test.MultipleServersSharedDataMode;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 import com.tctest.YoungGCTestAndActivePassiveTest;
 
+import java.util.ArrayList;
+
 
 
 public class CreateRescueCandidatesYoungGCTest extends YoungGCTestAndActivePassiveTest {
@@ -26,6 +28,10 @@ public class CreateRescueCandidatesYoungGCTest extends YoungGCTestAndActivePassi
   // start only 1 L1
   protected int getNodeCount() {
     return 4;
+  }
+  
+  protected void setExtraJvmArgs(final ArrayList jvmArgs) {
+     jvmArgs.add("-verbosegc");
   }
   
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
