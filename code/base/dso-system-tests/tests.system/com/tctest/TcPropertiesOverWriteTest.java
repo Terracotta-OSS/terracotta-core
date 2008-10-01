@@ -64,7 +64,7 @@ public class TcPropertiesOverWriteTest extends TransparentTestBase {
     // set the properties to be overwritten, these properties would be overwridden by the tc-config
     propertiesToTest = new TcProperty[NUMBER_OF_TC_PROPERTIES];
     propertiesToTest[0] = new TcProperty(TCPropertiesConsts.L1_CACHEMANAGER_ENABLED, L1_CACHEMANAGER_ENABLED_VALUE);
-    propertiesToTest[1] = new TcProperty(TCPropertiesConsts.L1_LOGGING_MAX_LOGFILE_SIZE,
+    propertiesToTest[1] = new TcProperty(TCPropertiesConsts.LOGGING_MAX_LOGFILE_SIZE,
                                          L1_LOGGING_MAX_LOGFILE_SIZE_VALUE);
 
     // this property is also given as a system property which has higher precedence to tc-config

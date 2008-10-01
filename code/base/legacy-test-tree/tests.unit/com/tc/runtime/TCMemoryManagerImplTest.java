@@ -9,12 +9,15 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogging;
+import com.tc.runtime.cache.CacheMemoryEventType;
+import com.tc.runtime.cache.CacheMemoryEventsListener;
+import com.tc.runtime.cache.CacheMemoryManagerEventGenerator;
 import com.tc.test.TCTestCase;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Vector;
 
-public class TCMemoryManagerImplTest extends TCTestCase implements MemoryEventsListener {
+public class TCMemoryManagerImplTest extends TCTestCase implements CacheMemoryEventsListener {
 
   int             usedThreshold         = 70;
   int             usedCriticalThreshold = 90;
@@ -28,10 +31,11 @@ public class TCMemoryManagerImplTest extends TCTestCase implements MemoryEventsL
   private Vector  errors                = new Vector();
 
   public void test() throws Throwable {
-    TCMemoryManager mm = new TCMemoryManagerImpl(usedThreshold, usedCriticalThreshold, sleepInterval, lc, true,
+    TCMemoryManager mm = new TCMemoryManagerImpl(sleepInterval, lc, true,
                                                  new TCThreadGroup(new ThrowableHandler(TCLogging
                                                      .getLogger(TCMemoryManagerImplTest.class))));
-    mm.registerForMemoryEvents(this);
+
+    new CacheMemoryManagerEventGenerator(usedThreshold, usedCriticalThreshold, lc, mm, this);
     try {
       hogMemory();
     } catch (Throwable e) {
@@ -68,14 +72,14 @@ public class TCMemoryManagerImplTest extends TCTestCase implements MemoryEventsL
     }
   }
 
-  public void memoryUsed(MemoryEventType type, MemoryUsage usage) {
+  public void memoryUsed(CacheMemoryEventType type, MemoryUsage usage) {
     int usedPercentage = usage.getUsedPercentage();
-    if (callCount.increment() % 10 == 1 || type == MemoryEventType.ABOVE_CRITICAL_THRESHOLD) {
+    if (callCount.increment() % 10 == 1 || type == CacheMemoryEventType.ABOVE_CRITICAL_THRESHOLD) {
       System.err.println("Current used memory  % : " + usedPercentage + " vector size  = " + v.size());
     }
 
     if (this.usedThreshold > usedPercentage) {
-      if (type != MemoryEventType.BELOW_THRESHOLD) {
+      if (type != CacheMemoryEventType.BELOW_THRESHOLD) {
         errors.add(new AssertionError("Used Percentage reported (" + usedPercentage + ") is less than Used threshold ("
                                       + usedThreshold + ") set, but type is " + type));
       } else if (lastIsBelowThreshold) {
@@ -87,17 +91,17 @@ public class TCMemoryManagerImplTest extends TCTestCase implements MemoryEventsL
       lastIsBelowThreshold = false;
     }
 
-    if (type == MemoryEventType.ABOVE_CRITICAL_THRESHOLD && this.usedCriticalThreshold > usedPercentage) {
+    if (type == CacheMemoryEventType.ABOVE_CRITICAL_THRESHOLD && this.usedCriticalThreshold > usedPercentage) {
       errors.add(new AssertionError("Received CRITICAL event with used < critical threshold : " + usedPercentage
                                     + " < " + this.usedCriticalThreshold));
-    } else if (type == MemoryEventType.ABOVE_THRESHOLD && this.usedCriticalThreshold < usedPercentage) {
+    } else if (type == CacheMemoryEventType.ABOVE_THRESHOLD && this.usedCriticalThreshold < usedPercentage) {
       errors.add(new AssertionError("Received NORMAL event with used > critical threshold : " + usedPercentage + " > "
                                     + this.usedCriticalThreshold));
     } else {
       this.lastCall = 0;
     }
 
-    if (type == MemoryEventType.ABOVE_THRESHOLD) {
+    if (type == CacheMemoryEventType.ABOVE_THRESHOLD) {
       if (this.lastCall == usedPercentage) {
         errors.add(new AssertionError("Recd two callbacks with same value (" + usedPercentage + ")"));
       } else if (Math.abs(this.lastCall - usedPercentage) < lc) {

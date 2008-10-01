@@ -119,7 +119,7 @@ public class TcPropertiesOverWriteTestApp extends AbstractTransparentApp {
       TCProperties tcProps = ManagerUtil.getTCProperties();
       Assert.eval(tcProps.getProperty(TCPropertiesConsts.L1_CACHEMANAGER_ENABLED)
           .equals(TcPropertiesOverWriteTest.L1_CACHEMANAGER_ENABLED_VALUE));
-      Assert.eval(tcProps.getProperty(TCPropertiesConsts.L1_LOGGING_MAX_LOGFILE_SIZE)
+      Assert.eval(tcProps.getProperty(TCPropertiesConsts.LOGGING_MAX_LOGFILE_SIZE)
           .equals(TcPropertiesOverWriteTest.L1_LOGGING_MAX_LOGFILE_SIZE_VALUE));
       Assert.eval(tcProps.getProperty(TCPropertiesConsts.L1_TRANSACTIONMANAGER_MAXPENDING_BATCHES)
           .equals(TcPropertiesOverWriteTest.L1_TRANSACTIONMANAGER_MAXPENDING_BATCHES_VALUE));

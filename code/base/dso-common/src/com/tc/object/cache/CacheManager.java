@@ -7,10 +7,11 @@ package com.tc.object.cache;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.runtime.MemoryEventType;
-import com.tc.runtime.MemoryEventsListener;
 import com.tc.runtime.MemoryUsage;
 import com.tc.runtime.TCMemoryManagerImpl;
+import com.tc.runtime.cache.CacheMemoryEventType;
+import com.tc.runtime.cache.CacheMemoryEventsListener;
+import com.tc.runtime.cache.CacheMemoryManagerEventGenerator;
 import com.tc.statistics.AgentStatisticsManager;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticsAgentSubSystem;
@@ -24,31 +25,31 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
-public class CacheManager implements MemoryEventsListener {
+public class CacheManager implements CacheMemoryEventsListener {
 
-  public static final String CACHE_OBJECTS_EVICT_REQUEST = "cache objects evict request";
-  public static final String CACHE_OBJECTS_EVICTED = "cache objects evicted";
+  public static final String             CACHE_OBJECTS_EVICT_REQUEST = "cache objects evict request";
+  public static final String             CACHE_OBJECTS_EVICTED       = "cache objects evicted";
 
-  private static final TCLogger     logger              = TCLogging.getLogger(CacheManager.class);
+  private static final TCLogger          logger                      = TCLogging.getLogger(CacheManager.class);
 
-  private static final State        INIT                = new State("INIT");
-  private static final State        PROCESSING          = new State("PROCESSING");
-  private static final State        COMPLETE            = new State("COMPLETE");
+  private static final State             INIT                        = new State("INIT");
+  private static final State             PROCESSING                  = new State("PROCESSING");
+  private static final State             COMPLETE                    = new State("COMPLETE");
 
-  private final Evictable           evictable;
-  private final CacheConfig         config;
-  private final TCMemoryManagerImpl memoryManager;
+  private final Evictable                evictable;
+  private final CacheConfig              config;
 
-  private int                       calculatedCacheSize = 0;
-  private CacheStatistics           lastStat            = null;
-  private final StatisticsAgentSubSystem  statisticsAgentSubSystem;
+  private int                            calculatedCacheSize         = 0;
+  private CacheStatistics                lastStat                    = null;
+  private final StatisticsAgentSubSystem statisticsAgentSubSystem;
 
-  public CacheManager(Evictable evictable, CacheConfig config, TCThreadGroup threadGroup, StatisticsAgentSubSystem statisticsAgentSubSystem) {
+  public CacheManager(Evictable evictable, CacheConfig config, TCThreadGroup threadGroup,
+                      StatisticsAgentSubSystem statisticsAgentSubSystem, TCMemoryManagerImpl memoryManager) {
     this.evictable = evictable;
     this.config = config;
-    this.memoryManager = new TCMemoryManagerImpl(config.getUsedThreshold(), config.getUsedCriticalThreshold(), config
-        .getSleepInterval(), config.getLeastCount(), config.isOnlyOldGenMonitored(), threadGroup);
-    this.memoryManager.registerForMemoryEvents(this);
+    new CacheMemoryManagerEventGenerator(config.getUsedThreshold(), config.getUsedCriticalThreshold(), config.getLeastCount(),
+                               memoryManager, this);
+
     if (config.getObjectCountCriticalThreshold() > 0) {
       logger
           .warn("Cache Object Count Critical threshold is set to "
@@ -59,7 +60,7 @@ public class CacheManager implements MemoryEventsListener {
     Assert.assertNotNull(statisticsAgentSubSystem);
   }
 
-  public void memoryUsed(MemoryEventType type, MemoryUsage usage) {
+  public void memoryUsed(CacheMemoryEventType type, MemoryUsage usage) {
     CacheStatistics cp = new CacheStatistics(type, usage);
     evictable.evictCache(cp);
     cp.validate();
@@ -72,18 +73,18 @@ public class CacheManager implements MemoryEventsListener {
   }
 
   private final class CacheStatistics implements CacheStats {
-    private final MemoryEventType type;
-    private final MemoryUsage     usage;
+    private final CacheMemoryEventType type;
+    private final MemoryUsage          usage;
 
-    private int                   countBefore;
-    private int                   countAfter;
-    private int                   evicted;
-    private boolean               objectsGCed = false;
-    private int                   toEvict;
-    private long                  startTime;
-    private State                 state       = INIT;
+    private int                        countBefore;
+    private int                        countAfter;
+    private int                        evicted;
+    private boolean                    objectsGCed = false;
+    private int                        toEvict;
+    private long                       startTime;
+    private State                      state       = INIT;
 
-    public CacheStatistics(MemoryEventType type, MemoryUsage usage) {
+    public CacheStatistics(CacheMemoryEventType type, MemoryUsage usage) {
       this.type = type;
       this.usage = usage;
     }
@@ -112,8 +113,7 @@ public class CacheManager implements MemoryEventsListener {
       final long collectionCount = usage.getCollectionCount();
       if (config.isLoggingEnabled()) {
         logger.info("Asking to evict " + toEvict + " current size = " + currentCount + " calculated cache size = "
-                    + calculatedCacheSize + " heap used = " + usedPercentage + " %  gc count = "
-                    + collectionCount);
+                    + calculatedCacheSize + " heap used = " + usedPercentage + " %  gc count = " + collectionCount);
       }
       if (statisticsAgentSubSystem.isActive()) {
         storeCacheEvictRequestStats(currentCount, toEvict, calculatedCacheSize, usedPercentage, collectionCount);
@@ -121,19 +121,24 @@ public class CacheManager implements MemoryEventsListener {
       return this.toEvict;
     }
 
-    private synchronized void storeCacheEvictRequestStats(int currentCount, int toEvictArg, int cacheSize, int usedPercentage, long collectionCount) {
+    private synchronized void storeCacheEvictRequestStats(int currentCount, int toEvictArg, int cacheSize,
+                                                          int usedPercentage, long collectionCount) {
       Date moment = new Date();
       AgentStatisticsManager agentStatisticsManager = statisticsAgentSubSystem.getStatisticsManager();
       Collection sessions = agentStatisticsManager.getActiveSessionIDsForAction(CACHE_OBJECTS_EVICT_REQUEST);
       if (sessions != null && sessions.size() > 0) {
-        StatisticData[] datas = getCacheObjectsEvictRequestData(currentCount, toEvictArg, cacheSize, usedPercentage, collectionCount);
+        StatisticData[] datas = getCacheObjectsEvictRequestData(currentCount, toEvictArg, cacheSize, usedPercentage,
+                                                                collectionCount);
         storeStatisticsDatas(moment, sessions, datas);
       }
     }
 
-    private synchronized StatisticData[] getCacheObjectsEvictRequestData(int currentCount, int toEvictArg, int cacheSize, int usedPercentage, long collectionCount) {
+    private synchronized StatisticData[] getCacheObjectsEvictRequestData(int currentCount, int toEvictArg,
+                                                                         int cacheSize, int usedPercentage,
+                                                                         long collectionCount) {
       List datas = new ArrayList();
-      StatisticData statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "asking to evict count", new Long(toEvictArg));
+      StatisticData statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "asking to evict count",
+                                                      new Long(toEvictArg));
       datas.add(statisticData);
 
       statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "current size", new Long(currentCount));
@@ -148,7 +153,7 @@ public class CacheManager implements MemoryEventsListener {
       statisticData = new StatisticData(CACHE_OBJECTS_EVICT_REQUEST, "gc count", new Long(collectionCount));
       datas.add(statisticData);
 
-      return (StatisticData[])datas.toArray(new StatisticData[0]);
+      return (StatisticData[]) datas.toArray(new StatisticData[0]);
     }
 
     //
@@ -159,12 +164,12 @@ public class CacheManager implements MemoryEventsListener {
     // or in 1.4 we check to see if the usedMemory has gone down which is an indication of gc (not foolprove though)
     //
     private void adjustCachedObjectCount(int currentCount) {
-      if (type == MemoryEventType.BELOW_THRESHOLD || lastStat == null
+      if (type == CacheMemoryEventType.BELOW_THRESHOLD || lastStat == null
           || lastStat.usage.getCollectionCount() < usage.getCollectionCount()
           || (usage.getCollectionCount() < 0 && lastStat.usage.getUsedMemory() > usage.getUsedMemory())) {
         double used = usage.getUsedPercentage();
         double threshold = config.getUsedThreshold();
-        Assert.assertTrue((type == MemoryEventType.BELOW_THRESHOLD && threshold >= used) || threshold <= used);
+        Assert.assertTrue((type == CacheMemoryEventType.BELOW_THRESHOLD && threshold >= used) || threshold <= used);
         if (used > 0) calculatedCacheSize = (int) (currentCount * (threshold / used));
       }
     }
@@ -185,7 +190,8 @@ public class CacheManager implements MemoryEventsListener {
       }
     }
 
-    private synchronized void storeCacheObjectsEvictedStats(int evictedCount, int currentCount, int newObjectsCount, long timeTaken) {
+    private synchronized void storeCacheObjectsEvictedStats(int evictedCount, int currentCount, int newObjectsCount,
+                                                            long timeTaken) {
       Date moment = new Date();
       AgentStatisticsManager agentStatisticsManager = statisticsAgentSubSystem.getStatisticsManager();
       Collection sessions = agentStatisticsManager.getActiveSessionIDsForAction(CACHE_OBJECTS_EVICTED);
@@ -198,7 +204,7 @@ public class CacheManager implements MemoryEventsListener {
     private synchronized void storeStatisticsDatas(Date moment, Collection sessions, StatisticData[] datas) {
       try {
         for (Iterator sessionsIterator = sessions.iterator(); sessionsIterator.hasNext();) {
-          String session = (String)sessionsIterator.next();
+          String session = (String) sessionsIterator.next();
           for (int i = 0; i < datas.length; i++) {
             StatisticData data = datas[i];
             statisticsAgentSubSystem.getStatisticsManager().injectStatisticData(session, data.moment(moment));
@@ -209,7 +215,8 @@ public class CacheManager implements MemoryEventsListener {
       }
     }
 
-    private synchronized StatisticData[] getCacheObjectsEvictedData(int evictedCount, int currentCount, int newObjectsCount, long timeTaken) {
+    private synchronized StatisticData[] getCacheObjectsEvictedData(int evictedCount, int currentCount,
+                                                                    int newObjectsCount, long timeTaken) {
       List datas = new ArrayList();
       StatisticData statisticData = new StatisticData(CACHE_OBJECTS_EVICTED, "evicted count", new Long(evictedCount));
       datas.add(statisticData);
@@ -223,7 +230,7 @@ public class CacheManager implements MemoryEventsListener {
       statisticData = new StatisticData(CACHE_OBJECTS_EVICTED, "time taken", new Long(timeTaken));
       datas.add(statisticData);
 
-      return (StatisticData[])datas.toArray(new StatisticData[0]);
+      return (StatisticData[]) datas.toArray(new StatisticData[0]);
     }
 
     private int getNewObjectsCount() {
@@ -233,7 +240,7 @@ public class CacheManager implements MemoryEventsListener {
     // TODO:: This need to be more intellegent. It should also check if a GC actually happened after eviction. Use
     // Reference Queue
     private int computeObjects2Evict(int currentCount) {
-      if (type == MemoryEventType.BELOW_THRESHOLD || calculatedCacheSize > currentCount) { return 0; }
+      if (type == CacheMemoryEventType.BELOW_THRESHOLD || calculatedCacheSize > currentCount) { return 0; }
       int overshoot = 0;
       if (config.getObjectCountCriticalThreshold() > 0 && currentCount > config.getObjectCountCriticalThreshold()) {
         // Give higher precidence to Object Count Critical Threshold than calculate cache size.

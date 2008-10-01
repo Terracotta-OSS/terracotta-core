@@ -50,6 +50,7 @@ import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
+import com.tc.object.cache.CacheConfig;
 import com.tc.object.cache.CacheConfigImpl;
 import com.tc.object.cache.CacheManager;
 import com.tc.object.cache.ClockEvictionPolicy;
@@ -119,6 +120,8 @@ import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.runtime.TCMemoryManagerImpl;
+import com.tc.runtime.logging.GCLoggerForTimeOut;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
@@ -323,12 +326,14 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     TransactionBatchFactory txBatchFactory = new TransactionBatchWriterFactory(channel
         .getCommitTransactionMessageFactory(), encoding, FoldingConfig.createFromProperties(tcProperties));
 
-     SampledCounter numTransactionCounter = (SampledCounter) counterManager
-        .createCounter(new SampledCounterConfig(1, 900, true, 0L));
+    SampledCounter numTransactionCounter = (SampledCounter) counterManager.createCounter(new SampledCounterConfig(1,
+                                                                                                                  900,
+                                                                                                                  true,
+                                                                                                                  0L));
     SampledCounter numBatchesCounter = (SampledCounter) counterManager
         .createCounter(new SampledCounterConfig(1, 900, true, 0L));
-    SampledCounter batchSizeCounter = (SampledCounter) counterManager
-        .createCounter(new SampledCounterConfig(1, 900, true, 0L));
+    SampledCounter batchSizeCounter = (SampledCounter) counterManager.createCounter(new SampledCounterConfig(1, 900,
+                                                                                                             true, 0L));
     Counter outstandingBatchesCounter = counterManager.createCounter(new CounterConfig(0));
     Counter pendingBatchesSize = counterManager.createCounter(new CounterConfig(0));
 
@@ -345,8 +350,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     lockManager = new StripedClientLockManagerImpl(new ChannelIDLogger(channel.getChannelIDProvider(), TCLogging
         .getLogger(ClientLockManager.class)), new RemoteLockManagerImpl(channel.getLockRequestMessageFactory(),
                                                                         gtxManager), sessionManager, lockStatManager,
-                                            new ClientLockManagerConfigImpl(l1Properties
-                                                .getPropertiesFor("lockmanager")));
+                                                   new ClientLockManagerConfigImpl(l1Properties
+                                                       .getPropertiesFor("lockmanager")));
     threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter(lockManager));
     RemoteObjectManager remoteObjectManager = new RemoteObjectManagerImpl(new ChannelIDLogger(channel
         .getChannelIDProvider(), TCLogging.getLogger(RemoteObjectManager.class)), clientIDProvider, channel
@@ -380,9 +385,16 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                                 toggleRefMgr);
     threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter(objectManager));
     TCProperties cacheManagerProperties = l1Properties.getPropertiesFor("cachemanager");
+    CacheConfig cacheConfig = new CacheConfigImpl(cacheManagerProperties);
+    TCMemoryManagerImpl tcMemManager = new TCMemoryManagerImpl(cacheConfig.getSleepInterval(), cacheConfig
+        .getLeastCount(), cacheConfig.isOnlyOldGenMonitored(), getThreadGroup());
+    long timeOut = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.LOGGING_LONG_GC_THRESHOLD);
+    GCLoggerForTimeOut gcLogger = new GCLoggerForTimeOut(logger, timeOut);
+    tcMemManager.registerForMemoryEvents(gcLogger);
+
     if (cacheManagerProperties.getBoolean("enabled")) {
-      this.cacheManager = new CacheManager(objectManager, new CacheConfigImpl(cacheManagerProperties),
-                                           getThreadGroup(), statisticsAgentSubSystem);
+      this.cacheManager = new CacheManager(objectManager, cacheConfig, getThreadGroup(), statisticsAgentSubSystem,
+                                           tcMemManager);
       if (logger.isDebugEnabled()) {
         logger.debug("CacheManager Enabled : " + cacheManager);
       }

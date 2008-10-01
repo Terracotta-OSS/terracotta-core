@@ -81,5 +81,10 @@ class TCMemoryManagerJdk14 implements JVMMemoryManager {
       return -1;
     }
 
+    // This is not supported in 1.4
+    public long getCollectionTime() {
+      return -1;
+    }
+
   }
 }

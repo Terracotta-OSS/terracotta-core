@@ -9,6 +9,7 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogging;
+import com.tc.runtime.TCMemoryManagerImpl;
 import com.tc.statistics.mock.NullStatisticsAgentSubSystem;
 import com.tc.test.TCTestCase;
 import com.tc.util.concurrent.ThreadUtil;
@@ -31,8 +32,11 @@ public class CacheManagerTest extends TCTestCase implements Evictable {
   Vector                   v                = new Vector();
 
   public void test() throws Exception {
-    CacheManager cm = new CacheManager(this, new TestCacheConfig(), new TCThreadGroup(new ThrowableHandler(TCLogging
-        .getLogger(CacheManagerTest.class))), new NullStatisticsAgentSubSystem());
+    CacheConfig cacheConfig = new TestCacheConfig();
+    TCThreadGroup thrdGrp = new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(CacheManagerTest.class)));
+    TCMemoryManagerImpl tcMemManager = new TCMemoryManagerImpl(cacheConfig.getSleepInterval(), cacheConfig
+        .getLeastCount(), cacheConfig.isOnlyOldGenMonitored(), thrdGrp);
+    CacheManager cm = new CacheManager(this, cacheConfig, thrdGrp, new NullStatisticsAgentSubSystem(), tcMemManager);
     log("Cache Manager Created : " + cm);
     hogMemory();
     assertTrue(callCount.get() > 0);

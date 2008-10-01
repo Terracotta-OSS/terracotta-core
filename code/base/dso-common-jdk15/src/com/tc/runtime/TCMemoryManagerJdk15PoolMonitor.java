@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.runtime;
 
@@ -17,9 +18,9 @@ import java.util.List;
 
 class TCMemoryManagerJdk15PoolMonitor extends TCMemoryManagerJdk15Basic {
 
-  private static final String          OLD_GEN_NAME     = "OLD GEN";
+  private static final String          OLD_GEN_NAME            = "OLD GEN";
   // this pool is used when jdk is run with -client option
-  private static final String          TENURED_GEN_NAME = "TENURED GEN"; 
+  private static final String          TENURED_GEN_NAME        = "TENURED GEN";
   private static final String          IBMJDK_TENURED_GEN_NAME = "Java heap";
 
   private final MemoryPoolMXBean       oldGenBean;
@@ -54,9 +55,7 @@ class TCMemoryManagerJdk15PoolMonitor extends TCMemoryManagerJdk15Basic {
       String[] managedPools = gc.getMemoryPoolNames();
       if (gc.isValid() && managedPools != null) {
         for (int j = 0; j < managedPools.length; j++) {
-          if (isOldGen(managedPools[j])) {
-            return gc;
-          }
+          if (isOldGen(managedPools[j])) { return gc; }
         }
         gcs2Pools.put(gc.getName(), Arrays.asList(managedPools));
       }
@@ -78,6 +77,7 @@ class TCMemoryManagerJdk15PoolMonitor extends TCMemoryManagerJdk15Basic {
 
   public MemoryUsage getOldGenUsage() {
     java.lang.management.MemoryUsage oldGenUsage = oldGenBean.getUsage();
-    return new Jdk15MemoryUsage(oldGenUsage, oldGenBean.getName(), oldGenCollectorBean.getCollectionCount());
+    return new Jdk15MemoryUsage(oldGenUsage, oldGenBean.getName(), oldGenCollectorBean.getCollectionCount(),
+                                oldGenCollectorBean.getCollectionTime());
   }
 }

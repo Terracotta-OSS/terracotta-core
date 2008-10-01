@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.runtime;
 
@@ -19,48 +20,26 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
 
   private final List            listeners = new ArrayList();
 
-  private final int             threshold;
-  private final int             criticalThreshold;
-  private final int             leastCount;
+  private int                   leastCount;
   private final long            sleepInterval;
   private final boolean         monitorOldGenOnly;
 
   private MemoryMonitor         monitor;
 
-  private final TCThreadGroup threadGroup;
+  private final TCThreadGroup   threadGroup;
 
-  public TCMemoryManagerImpl(int usedThreshold, int usedCriticalThreshold, long sleepInterval, int leastCount,
-                             boolean monitorOldGenOnly, TCThreadGroup threadGroup) {
+  public TCMemoryManagerImpl(long sleepInterval, int leastCount, boolean monitorOldGenOnly, TCThreadGroup threadGroup) {
     this.threadGroup = threadGroup;
-    verifyInput(usedThreshold, usedCriticalThreshold, sleepInterval, leastCount);
+    verifyInput(sleepInterval, leastCount);
     this.monitorOldGenOnly = monitorOldGenOnly;
     this.leastCount = leastCount;
-    this.threshold = usedThreshold;
-    this.criticalThreshold = usedCriticalThreshold;
     this.sleepInterval = sleepInterval;
   }
 
-  private void verifyInput(int usedT, int usedCT, long sleep, int lc) {
-    if (usedT <= 0 || usedT >= 100) {
-      //
-      throw new AssertionError("Used Threshold should be > 0 && < 100 : " + usedT + " Outside range");
-    }
-    if (usedCT <= 0 || usedCT >= 100) {
-      //
-      throw new AssertionError("Critical Used Threshold should be > 0 && < 100 : " + usedCT + " Outside range");
-    }
-    if (usedT > usedCT) {
-      //
-      throw new AssertionError("Used Threshold should be <= Critical Used Threshold : " + usedT + " <= " + usedCT);
-    }
-    if (sleep <= 0) {
-      //
-      throw new AssertionError("Sleep Interval cannot be <= 0 : sleep Interval = " + sleep);
-    }
-    if (lc <= 0 || lc >= 100) {
-      //
-      throw new AssertionError("Least Count should be > 0 && < 100 : " + lc + " Outside range");
-    }
+  private void verifyInput(long sleep, int lc) {
+    if (sleep <= 0) { throw new AssertionError("Sleep Interval cannot be <= 0 : sleep Interval = " + sleep); }
+    if (lc <= 0 || lc >= 100) { throw new AssertionError("Least Count should be > 0 && < 100 : " + lc
+                                                         + " Outside range"); }
   }
 
   public synchronized void registerForMemoryEvents(MemoryEventsListener listener) {
@@ -95,11 +74,15 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
     }
   }
 
-  private synchronized void fireMemoryEvent(MemoryEventType type, MemoryUsage mu) {
+  private synchronized void fireMemoryEvent(MemoryUsage mu) {
     for (Iterator i = listeners.iterator(); i.hasNext();) {
       MemoryEventsListener listener = (MemoryEventsListener) i.next();
-      listener.memoryUsed(type, mu);
+      listener.memoryUsed(mu);
     }
+  }
+
+  public boolean isMonitorOldGenOnly() {
+    return monitor.monitorOldGenOnly();
   }
 
   public class MemoryMonitor implements Runnable {
@@ -108,15 +91,12 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
     private final boolean          oldGen;
     private volatile boolean       run = true;
     private int                    lastUsed;
-    private MemoryUsage            lastReported;
     private long                   sleepTime;
-    private MemoryEventType        currentState;
 
     public MemoryMonitor(JVMMemoryManager manager, long sleepInterval, boolean monitorOldGenOnly) {
       this.manager = manager;
       this.sleepTime = sleepInterval;
       this.oldGen = monitorOldGenOnly && manager.isMemoryPoolMonitoringSupported();
-      this.currentState = MemoryEventType.BELOW_THRESHOLD;
     }
 
     public void stop() {
@@ -130,7 +110,7 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
         try {
           Thread.sleep(sleepTime);
           MemoryUsage mu = (_oldGen ? manager.getOldGenUsage() : manager.getMemoryUsage());
-          reportUsage(mu);
+          fireMemoryEvent(mu);
           adjust(mu);
         } catch (Throwable t) {
           logger.error(t);
@@ -161,38 +141,8 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
       }
     }
 
-    private void reportUsage(MemoryUsage mu) {
-      int usedPercentage = mu.getUsedPercentage();
-      if (usedPercentage < threshold) {
-        if (currentState != MemoryEventType.BELOW_THRESHOLD) {
-          // Send only 1 BELOW_THRESHOLD event
-          fire(MemoryEventType.BELOW_THRESHOLD, mu);
-        }
-      } else if (usedPercentage >= criticalThreshold) {
-        if (!oldGen || currentState != MemoryEventType.ABOVE_CRITICAL_THRESHOLD || isLeastCountReached(usedPercentage)
-            || isGCCompleted(mu)) {
-          // Send an event every time if we are monitoring the entire heap or else if we are monitoring only old gen
-          // then send an event only if greater than least count or if we just reached ABOVE_CRITICAL_THRESHOLD or if a gc took place
-          fire(MemoryEventType.ABOVE_CRITICAL_THRESHOLD, mu);
-        }
-      } else if (currentState != MemoryEventType.ABOVE_THRESHOLD || isLeastCountReached(usedPercentage)) {
-        fire(MemoryEventType.ABOVE_THRESHOLD, mu);
-      }
-    }
-
-    private boolean isGCCompleted(MemoryUsage mu) {
-      return lastReported.getCollectionCount() < mu.getCollectionCount();
-    }
-
-    private boolean isLeastCountReached(int usedPercentage) {
-      return (Math.abs(usedPercentage - lastReported.getUsedPercentage()) >= leastCount);
-    }
-
-    private void fire(MemoryEventType type, MemoryUsage mu) {
-      fireMemoryEvent(type, mu);
-      currentState = type;
-      lastReported = mu;
+    public boolean monitorOldGenOnly() {
+      return oldGen;
     }
   }
-
 }

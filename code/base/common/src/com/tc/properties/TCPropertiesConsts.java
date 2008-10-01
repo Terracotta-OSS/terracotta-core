@@ -311,11 +311,13 @@ public interface TCPropertiesConsts {
    * <code>
    * Section : Common Logging properties for both L1 and L2
    * Description : Logging attributes that can be overridden.
-   * maxBackups - The maximum number of backup log files to keep maxLogFileSize - The maximum size of a log file in megabytes
+   * maxBackups       - The maximum number of backup log files to keep maxLogFileSize - The maximum size of a log file in megabytes
+   * longgc.threshold - GC taking greater than the time mentioned will be logged
    * </code>
    ********************************************************************************************************************/
-  public static final String   L1_LOGGING_MAXBACKUPS                                  = "logging.maxBackups";
-  public static final String   L1_LOGGING_MAX_LOGFILE_SIZE                            = "logging.maxLogFileSize";
+  public static final String   LOGGING_MAXBACKUPS                                     = "logging.maxBackups";
+  public static final String   LOGGING_MAX_LOGFILE_SIZE                               = "logging.maxLogFileSize";
+  public static final String   LOGGING_LONG_GC_THRESHOLD                              = "logging.longgc.threshold";
 
   /*********************************************************************************************************************
    * <code>
@@ -504,7 +506,6 @@ public interface TCPropertiesConsts {
   public static final String   HTTP_DEFAULT_SERVLET_ENABLED                           = "http.defaultservlet.enabled";
   public static final String   HTTP_DEFAULT_SERVLET_ATTRIBUTE_ALIASES                 = "http.defaultservlet.attribute.aliases";
   public static final String   HTTP_DEFAULT_SERVLET_ATTRIBUTE_DIR_ALLOWED             = "http.defaultservlet.attribute.dirallowed";
-
   /*********************************************************************************************************************
    * <code>
    * Section : Remote JMX

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.runtime;
 
@@ -21,4 +22,9 @@ public interface MemoryUsage {
    *         since the beginning. -1 if this is not supported.
    */
   public long getCollectionCount();
+
+  /**
+   * @return -1 if not supported
+   */
+  public long getCollectionTime();
 }
