@@ -56,6 +56,7 @@ public class SpringConfiguration
       configHelper.addIncludePattern("edu.emory.mathcs.backport.java.util.concurrent.PriorityBlockingQueue", false, false, false);
       configHelper.addIncludePattern("edu.emory.mathcs.backport.java.util.concurrent.ArrayBlockingQueue", false, false, false);
       configHelper.addIncludePattern("edu.emory.mathcs.backport.java.util.concurrent.CopyOnWriteArrayList", false, false, false);
+      configHelper.addIncludePattern("edu.emory.mathcs.backport.java.util.concurrent.ConcurrentHashMap", false, false, false);
 
       final LockDefinition ld = configHelper.createLockDefinition("addApplicationListener", ConfigLockLevel.WRITE); 
       ld.commit();
