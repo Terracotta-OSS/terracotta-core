@@ -21,6 +21,7 @@ public abstract class ServerCrashingAppBase extends AbstractErrorCatchingTranspa
   public static final String      CONFIG_FILE = "config-file";
   public static final String      PORT_NUMBER = "port-number";
   public static final String      HOST_NAME   = "host-name";
+  public static final String      ADMIN_PORT  = "admin-port";
 
   private final ApplicationConfig config;
 
@@ -41,6 +42,10 @@ public abstract class ServerCrashingAppBase extends AbstractErrorCatchingTranspa
     return Integer.parseInt(config.getAttribute(PORT_NUMBER));
   }
 
+  public int getAdminPort() {
+    return Integer.parseInt(config.getAttribute(ADMIN_PORT));
+  }
+
   public String getConfigFilePath() {
     return config.getAttribute(CONFIG_FILE);
   }
@@ -51,11 +56,11 @@ public abstract class ServerCrashingAppBase extends AbstractErrorCatchingTranspa
     return configFile.substring(0, i);
   }
 
-  protected ExtraL1ProcessControl spawnNewClient(String clientId, Class clientClass) throws Exception {
+  protected ExtraL1ProcessControl spawnNewClientAndWaitForCompletion(String clientID, Class clientClass) throws Exception {
     final String hostName = getHostName();
     final int port = getPort();
     final File configFile = new File(getConfigFilePath());
-    File workingDir = new File(configFile.getParentFile(), "client-" + clientId);
+    File workingDir = new File(configFile.getParentFile(), "client-" + clientID);
     FileUtils.forceMkdir(workingDir);
 
     List jvmArgs = new ArrayList();

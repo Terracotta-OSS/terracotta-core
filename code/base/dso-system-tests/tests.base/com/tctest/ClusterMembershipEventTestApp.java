@@ -74,7 +74,7 @@ public class ClusterMembershipEventTestApp extends ServerCrashingAppBase impleme
 
     if (isMasterNode) {
       // master node blocks until new client exists...
-      spawnNewClient("0", L1Client.class);
+      spawnNewClientAndWaitForCompletion("0", L1Client.class);
     }
     barrier.barrier();
     System.err.println("### stage 4 [new client disconnected]: thisNode=" + thisNode + ", threadId="

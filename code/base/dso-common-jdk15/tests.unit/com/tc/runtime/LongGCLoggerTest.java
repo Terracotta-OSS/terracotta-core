@@ -9,26 +9,25 @@ import com.tc.lang.ThrowableHandler;
 import com.tc.logging.LogLevel;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.runtime.logging.GCLoggerForTimeOut;
+import com.tc.runtime.logging.LongGCLogger;
 import com.tc.test.TCTestCase;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
-public class GCLoggerForTimeOutTest extends TCTestCase {
+public class LongGCLoggerTest extends TCTestCase {
 
-  private Object    object       = new Object();
-  private final int LOOP_COUNT   = 20;
-  private final int OBJECT_COUNT = 1000;
+  private CountDownLatch latch        = new CountDownLatch(1);
+  private final int      LOOP_COUNT   = 20;
+  private final int      OBJECT_COUNT = 1000;
 
   public void test() throws Exception {
     register();
     // Create some data for GC in a diff thread
     createThreadAndCollectGarbage();
     // wait in a thread to get notified
-    synchronized (object) {
-      object.wait();
-    }
+    latch.await(); 
   }
 
   private void createThreadAndCollectGarbage() {
@@ -80,9 +79,9 @@ public class GCLoggerForTimeOutTest extends TCTestCase {
 
   private void register() {
     TCLogger tcLogger = new TCLoggerImpl();
-    TCThreadGroup thrdGrp = new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(GCLoggerForTimeOutTest.class)));
+    TCThreadGroup thrdGrp = new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(LongGCLoggerTest.class)));
     TCMemoryManagerImpl tcMemManager = new TCMemoryManagerImpl(1L, 2, true, thrdGrp);
-    GCLoggerForTimeOut logger = new GCLoggerForTimeOut(tcLogger, 1);
+    LongGCLogger logger = new LongGCLogger(tcLogger, 1);
     tcMemManager.registerForMemoryEvents(logger);
   }
 
@@ -142,9 +141,7 @@ public class GCLoggerForTimeOutTest extends TCTestCase {
     public void warn(Object message) {
       System.err.println(message);
 
-      synchronized (object) {
-        object.notifyAll();
-      }
+      latch.countDown();
     }
 
     public void warn(Object message, Throwable t) {

@@ -4,16 +4,16 @@
  */
 package com.tc.runtime.logging;
 
-public final class GCLoggingMemoryEventType {
-  public static GCLoggingMemoryEventType LONG_GC = new GCLoggingMemoryEventType("LONG_GC");
+public final class LongGCEventType {
+  public static LongGCEventType LONG_GC = new LongGCEventType("LONG_GC");
 
   private String                       name;
 
-  public GCLoggingMemoryEventType(String name) {
+  public LongGCEventType(String name) {
     this.name = name;
   }
 
   public String toString() {
-    return "GCLoggingMemoryEventType." + name;
+    return "LongGCEventType." + name;
   }
 }

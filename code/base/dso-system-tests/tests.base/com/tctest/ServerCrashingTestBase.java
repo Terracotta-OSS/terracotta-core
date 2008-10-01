@@ -67,6 +67,7 @@ public abstract class ServerCrashingTestBase extends TransparentTestBase {
     cfg.setAttribute(ServerCrashingAppBase.CONFIG_FILE, configFile.getAbsolutePath());
     cfg.setAttribute(ServerCrashingAppBase.PORT_NUMBER, String.valueOf(port));
     cfg.setAttribute(ServerCrashingAppBase.HOST_NAME, "localhost");
+    cfg.setAttribute(ServerCrashingAppBase.ADMIN_PORT, String.valueOf(adminPort));
 
     doSetUp(this);
   }

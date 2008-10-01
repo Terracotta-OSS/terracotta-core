@@ -98,7 +98,7 @@ public class GCRunner {
     m_userName = userName;
   }
 
-  private void runGC() throws Exception {
+  public void runGC() throws Exception {
     ObjectManagementMonitorMBean mbean = null;
     final JMXConnector jmxConnector = CommandLineBuilder.getJMXConnector(m_userName, m_host, m_port);
     final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
