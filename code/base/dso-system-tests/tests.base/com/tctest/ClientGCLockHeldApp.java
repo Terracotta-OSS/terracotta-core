@@ -12,7 +12,6 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.object.config.spec.SynchronizedIntSpec;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.runner.AbstractTransparentApp;
@@ -69,15 +68,6 @@ public class ClientGCLockHeldApp extends AbstractTransparentApp {
 
     int locksSize = (int) (maxMemory / 15000);
 
-    int stripedCount = Integer.valueOf(TCPropertiesImpl.getProperties().getProperty("l1.lockmanager.striped.count"))
-        .intValue();
-
-    System.out.println("stripedCount = " + stripedCount);
-
-    if (stripedCount > 0) {
-      locksSize = locksSize / stripedCount;
-    }
-    
     System.out.println("locksSize = " + locksSize);
     while (stopwatch.getElapsedTime() < (1000 * 60 * MINUTES_TEST_RUN)) {
 
