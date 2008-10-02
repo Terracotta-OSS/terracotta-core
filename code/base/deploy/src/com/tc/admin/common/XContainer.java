@@ -4,9 +4,9 @@
  */
 package com.tc.admin.common;
 
-import java.awt.LayoutManager;
-
 import org.dijon.Container;
+
+import java.awt.LayoutManager;
 
 public class XContainer extends Container {
   private XTreeNode m_node;

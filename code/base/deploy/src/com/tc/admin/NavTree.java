@@ -4,8 +4,8 @@
  */
 package com.tc.admin;
 
-import com.tc.admin.common.XTree;
 import com.tc.admin.common.XRootNode;
+import com.tc.admin.common.XTree;
 
 public class NavTree extends XTree {
   public NavTree() {

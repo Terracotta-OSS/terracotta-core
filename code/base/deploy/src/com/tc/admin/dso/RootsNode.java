@@ -107,7 +107,7 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
   }
 
   protected RootsPanel createRootsPanel() {
-    return new RootsPanel(getClusterModel(), m_roots);
+    return new RootsPanel(getClusterModel(), getClusterModel(), m_roots);
   }
 
   public Component getComponent() {

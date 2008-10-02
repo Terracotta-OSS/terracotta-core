@@ -8,7 +8,6 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.api.ObjectManagerMBean;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
-import com.tc.stats.DSORootMBean;
 
 public class DSORoot implements DSORootMBean {
   private final ObjectID           objectID;

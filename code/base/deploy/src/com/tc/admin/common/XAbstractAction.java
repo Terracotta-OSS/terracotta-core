@@ -6,10 +6,10 @@ package com.tc.admin.common;
 
 import java.awt.Toolkit;
 
-import javax.swing.Action;
 import javax.swing.AbstractAction;
-import javax.swing.KeyStroke;
+import javax.swing.Action;
 import javax.swing.Icon;
+import javax.swing.KeyStroke;
 
 // XXX: DEPRECATED
 public abstract class XAbstractAction extends AbstractAction {

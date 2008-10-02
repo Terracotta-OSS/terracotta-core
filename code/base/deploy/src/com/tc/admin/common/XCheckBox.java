@@ -4,9 +4,9 @@
  */
 package com.tc.admin.common;
 
-import javax.swing.JPopupMenu;
-
 import org.dijon.CheckBox;
+
+import javax.swing.JPopupMenu;
 
 public class XCheckBox extends CheckBox {
   protected XPopupListener m_popupListener;

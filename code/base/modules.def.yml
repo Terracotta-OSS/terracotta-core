@@ -107,6 +107,7 @@ modules:
         - common-api
         - dso-common
         - dso-common-jdk15
+        - dso-common-jdk16
         - dso-l1-api
         - dso-statistics-api
         - management-api
@@ -185,6 +186,7 @@ modules:
         - common-api
         - dso-common
         - dso-common-jdk15
+        - dso-common-jdk16
         - dso-l1-api
         - dso-l2-common
         - dso-statistics-api
@@ -199,6 +201,7 @@ modules:
         - common-api
         - dso-common
         - dso-common-jdk15
+        - dso-common-jdk16
         - dso-l1-api
         - dso-statistics
         - dso-statistics-api
@@ -215,6 +218,7 @@ modules:
         - common-api
         - dso-common
         - dso-common-jdk15
+        - dso-common-jdk16
         - dso-l1
         - dso-l1-api
         - thirdparty
@@ -242,6 +246,7 @@ modules:
         - common-api
         - dso-common
         - dso-common-jdk15
+        - dso-common-jdk16
         - dso-l1
         - dso-l1-api
         - dso-l1-session
@@ -290,6 +295,7 @@ modules:
         - common-api
         - dso-common
         - dso-common-jdk15
+        - dso-common-jdk16
         - dso-l1-api
         - dso-l2-common
         - dso-memory-datastore
@@ -309,6 +315,7 @@ modules:
         - deploy-api
         - dso-common
         - dso-common-jdk15
+        - dso-common-jdk16
         - dso-l1
         - dso-l1-api
         - dso-l2
@@ -327,6 +334,7 @@ modules:
         - common-api
         - dso-common
         - dso-common-jdk15
+        - dso-common-jdk16
         - dso-l1
         - dso-l1-api
         - dso-l2
@@ -344,6 +352,7 @@ modules:
         - deploy-api
         - dso-common
         - dso-common-jdk15
+        - dso-common-jdk16
         - dso-l1
         - dso-l1-api
         - dso-l2
@@ -358,6 +367,7 @@ modules:
         - common-api
         - dso-common
         - dso-common-jdk15
+        - dso-common-jdk16
         - dso-l1
         - dso-l1-api
   - ui-eclipse:
@@ -371,6 +381,7 @@ modules:
         - deploy-api
         - dso-common
         - dso-common-jdk15
+        - dso-common-jdk16
         - dso-l1
         - dso-l1-api
         - dso-l2
@@ -413,6 +424,7 @@ modules:
         - deploy-api
         - dso-common
         - dso-common-jdk15
+        - dso-common-jdk16
         - dso-l1
         - dso-l1-api
         - dso-l1-jdk15
@@ -437,6 +449,7 @@ modules:
         - deploy-api
         - dso-common
         - dso-common-jdk15
+        - dso-common-jdk16
         - dso-l1
         - dso-l1-api
         - dso-l2
@@ -460,6 +473,7 @@ modules:
         - deploy-api
         - dso-common
         - dso-common-jdk15
+        - dso-common-jdk16
         - dso-l1
         - dso-l1-api
         - dso-l1-jdk15
@@ -484,6 +498,7 @@ modules:
         - deploy-api
         - dso-common
         - dso-common-jdk15
+        - dso-common-jdk16
         - dso-l1
         - dso-l1-api
         - dso-l1-jdk15
@@ -510,6 +525,7 @@ modules:
         - deploy-api
         - dso-common
         - dso-common-jdk15
+        - dso-common-jdk16
         - dso-l1
         - dso-l1-api
         - dso-l1-jdk15
@@ -534,6 +550,7 @@ modules:
         - deploy-api
         - dso-common
         - dso-common-jdk15
+        - dso-common-jdk16
         - dso-l1
         - dso-l1-api
         - dso-l1-jdk15
@@ -558,6 +575,7 @@ modules:
         - deploy-api
         - dso-common
         - dso-common-jdk15
+        - dso-common-jdk16
         - dso-l1
         - dso-l1-api
         - dso-l1-jdk15
@@ -586,6 +604,7 @@ modules:
         - deploy-api
         - dso-common
         - dso-common-jdk15
+        - dso-common-jdk16
         - dso-l1
         - dso-l1-api
         - dso-l1-jdk15
@@ -630,6 +649,7 @@ modules:
         - deploy-api
         - dso-common
         - dso-common-jdk15
+        - dso-common-jdk16
         - dso-l1
         - dso-l1-api
         - dso-l1-jdk15
@@ -654,6 +674,7 @@ modules:
         - deploy-api
         - dso-common
         - dso-common-jdk15
+        - dso-common-jdk16
         - dso-l1-api
         - dso-l2
         - dso-memory-datastore
@@ -685,6 +706,7 @@ modules:
         - deploy-api
         - dso-common
         - dso-common-jdk15
+        - dso-common-jdk16
         - dso-l1
         - dso-l1-api
         - dso-l1-session
@@ -711,6 +733,7 @@ modules:
         - deploy-api
         - dso-common
         - dso-common-jdk15
+        - dso-common-jdk16
         - dso-container-tests
         - dso-l1
         - dso-l1-api
@@ -740,6 +763,7 @@ modules:
         - deploy-api
         - dso-common
         - dso-common-jdk15
+        - dso-common-jdk16
         - dso-container-tests
         - dso-l1
         - dso-l1-api
@@ -779,6 +803,7 @@ module-groups:
     - aspectwerkz
     - dso-common
     - dso-common-jdk15
+    - dso-common-jdk16
     - dso-l1
     - dso-l1-jdk15
     - dso-l1-weblogic

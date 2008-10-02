@@ -4,14 +4,14 @@
  */
 package com.tc.admin.common;
 
+import org.dijon.Frame;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 
 import javax.swing.Timer;
-
-import org.dijon.Frame;
 
 public class XFrame extends Frame {
   private Timer storeTimer;

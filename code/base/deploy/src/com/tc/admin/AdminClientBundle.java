@@ -128,7 +128,7 @@ public class AdminClientBundle extends ListResourceBundle {
         { "dso.gcstats.deleteStageTime", "<html>Delete<br>stage (ms.)</html>" },
         { "dso.all.statistics", "All statistics" },
         { "file.menu.label", "File" },
-        { "tools.menu.label", "Tools" },        
+        { "tools.menu.label", "Tools" },
         { "help.menu.label", "Help" },
         { "help.item.label", "Terracotta Console Help..." },
         { "about.action.label", "About Terracotta Console" },
@@ -151,6 +151,7 @@ public class AdminClientBundle extends ListResourceBundle {
         { "object.flush.rate", "Object Flush Rate" }, { "object.fault.rate", "Object Fault Rate" },
         { "transaction.rate", "Transaction Rate" }, { "cache.miss.rate", "Cache Miss Rate" },
         { "heap.usage", "Heap Usage" }, { "heap.usage.max", "memory max" }, { "heap.usage.used", "memory used" },
-        { "pending.transactions", "Unacknowledged Transaction Broadcasts" }, };
+        { "pending.transactions", "Unacknowledged Transaction Broadcasts" },
+        { "resident.object.message", "<html><span style='color:#C0C0C0'>Greyed-out</span> items not resident in this client" } };
   }
 }

@@ -10,6 +10,7 @@ import org.dijon.TextArea;
 
 import com.tc.admin.AdminClient;
 import com.tc.admin.AdminClientContext;
+import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.XAbstractAction;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XTextArea;
@@ -25,10 +26,12 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.concurrent.Callable;
 
 import javax.swing.KeyStroke;
 
 public class ClassesPanel extends XContainer {
+  protected AdminClientContext m_acc;
   private ClassesNode           m_classesNode;
   private ClassesTable          m_table;
   private XTree                 m_tree;
@@ -51,16 +54,15 @@ public class ClassesPanel extends XContainer {
   public ClassesPanel(ClassesNode classesNode) {
     super();
 
-    load((ContainerResource) AdminClient.getContext().getComponent("ClassesPanel"));
+    m_acc = AdminClient.getContext();
+    load((ContainerResource) m_acc.getComponent("ClassesPanel"));
     m_classesNode = classesNode;
-    DSOClassInfo[] classInfo = getClassInfos();
 
     m_table = (ClassesTable) findComponent("ClassTable");
-    m_table.setClassInfo(classInfo);
 
     m_tree = (XTree) findComponent("ClassTree");
     m_tree.setShowsRootHandles(true);
-    m_tree.setModel(new ClassTreeModel(classInfo));
+    m_tree.setModel(new ClassTreeModel(new DSOClassInfo[] {}));
     
     m_treeMap = (ClassesTreeMap) findComponent("ClassesTreeMap");
     m_treeMap.setModel((ClassTreeModel) m_tree.getModel());
@@ -68,13 +70,40 @@ public class ClassesPanel extends XContainer {
     TextArea configDescriptionText = (TextArea) findComponent("ClassesConfigDescriptionText");
     configDescriptionText.setText(AdminClient.getContext().getString("dso.classes.config.desc"));
     m_configText = (XTextArea) findComponent("ClassesConfigTextArea");
-    updateConfigText();
 
     KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0, true);
     getActionMap().put(REFRESH, new RefreshAction());
     getInputMap().put(ks, REFRESH);
+
+    init();
   }
 
+  private void init() {
+    if (m_acc == null) return;
+    m_acc.execute(new InitWorker());
+  }
+  
+  private class InitWorker extends BasicWorker<DSOClassInfo[]> {
+    private InitWorker() {
+      super(new Callable<DSOClassInfo[]>() {
+        public DSOClassInfo[] call() throws Exception {
+          return getClassInfos();
+        }
+      });
+    }
+
+    protected void finished() {
+      Exception e = getException();
+      if (e == null) {
+        DSOClassInfo[] classInfo = getResult();        
+        m_table.setClassInfo(classInfo);
+        ((ClassTreeModel) m_tree.getModel()).setClassInfo(classInfo);
+        m_treeMap.setModel((ClassTreeModel) m_tree.getModel());
+        updateConfigText();
+      }
+   }
+  }
+  
   private DSOClassInfo[] getClassInfos() {
     DSOClassInfo[] classInfo = m_classesNode.getClusterModel().getClassInfo();
     ArrayList<DSOClassInfo> list = new ArrayList<DSOClassInfo>();
@@ -164,18 +193,11 @@ public class ClassesPanel extends XContainer {
   }
 
   public void refresh() {
-    AdminClientContext acc = AdminClient.getContext();
-
-    acc.setStatus(acc.getMessage("dso.classes.refreshing"));
-    acc.block();
-
-    DSOClassInfo[] classInfo = getClassInfos();
-    m_table.setClassInfo(classInfo);
-    ((ClassTreeModel) m_tree.getModel()).setClassInfo(classInfo);
-    m_treeMap.setModel((ClassTreeModel) m_tree.getModel());
-    updateConfigText();
-
-    acc.clearStatus();
-    acc.unblock();
+    init();
+  }
+  
+  public void tearDown() {
+    m_acc = null;
+    super.tearDown();
   }
 }

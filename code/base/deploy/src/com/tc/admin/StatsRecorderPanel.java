@@ -21,6 +21,7 @@ import EDU.oswego.cs.dl.util.concurrent.misc.SwingWorker;
 
 import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.ExceptionHelper;
+import com.tc.admin.common.FastFileChooser;
 import com.tc.admin.common.ProgressDialog;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.model.IClusterModel;
@@ -545,7 +546,7 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
 
   private class ImportStatsConfigHandler implements ActionListener {
     public void actionPerformed(ActionEvent ae) {
-      JFileChooser chooser = new JFileChooser();
+      FastFileChooser chooser = new FastFileChooser();
       if (m_lastExportDir != null) chooser.setCurrentDirectory(m_lastExportDir);
       chooser.setDialogTitle("Import statistics configuration");
       chooser.setMultiSelectionEnabled(false);
@@ -581,7 +582,7 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
 
   private class ExportStatsConfigHandler implements ActionListener {
     public void actionPerformed(ActionEvent ae) {
-      JFileChooser chooser = new JFileChooser();
+      FastFileChooser chooser = new FastFileChooser();
       if (m_lastExportDir != null) chooser.setCurrentDirectory(m_lastExportDir);
       chooser.setDialogTitle("Export statistics configuration");
       chooser.setMultiSelectionEnabled(false);
@@ -624,7 +625,7 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
     private UsernamePasswordCredentials m_credentials;
 
     private JFileChooser createFileChooser() {
-      JFileChooser chooser = new JFileChooser();
+      FastFileChooser chooser = new FastFileChooser();
       if (m_lastExportDir != null) chooser.setCurrentDirectory(m_lastExportDir);
       chooser.setDialogTitle("Export statistics");
       chooser.setMultiSelectionEnabled(false);

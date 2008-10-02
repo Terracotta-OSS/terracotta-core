@@ -25,6 +25,10 @@ public class ClientThreadDumpsPanel extends AbstractThreadDumpsPanel {
     return "";
   }
 
+  protected String getNodeName() {
+    return m_clientThreadDumpsNode.getClient().toString();
+  }
+  
   public void tearDown() {
     super.tearDown();
     m_clientThreadDumpsNode = null;

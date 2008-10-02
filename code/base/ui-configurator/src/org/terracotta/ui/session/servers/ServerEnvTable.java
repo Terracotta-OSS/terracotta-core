@@ -7,6 +7,7 @@ import org.dijon.Button;
 import org.dijon.Container;
 import org.dijon.TextField;
 
+import com.tc.admin.common.FastFileChooser;
 import com.tc.admin.common.XCellEditor;
 import com.tc.admin.common.XObjectTable;
 import com.tc.admin.common.XTableCellRenderer;
@@ -108,7 +109,7 @@ public class ServerEnvTable extends XObjectTable {
   
   private JFileChooser getChooser() {
     if(m_chsr == null) {
-      m_chsr = new JFileChooser();
+      m_chsr = new FastFileChooser();
       m_chsr.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
     }
     

@@ -4,9 +4,9 @@
  */
 package com.tc.admin.dso;
 
-import java.util.Date;
-
 import com.tc.objectserver.api.GCStats;
+
+import java.util.Date;
 
 public class GCStatsWrapper implements GCStats {
   private GCStats m_gcStats;

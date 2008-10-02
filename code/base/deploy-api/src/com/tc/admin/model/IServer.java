@@ -17,7 +17,7 @@ import java.util.Map;
 
 import javax.management.remote.JMXConnector;
 
-public interface IServer extends IClusterNode {
+public interface IServer extends IClusterNode, ManagedObjectFacadeProvider {
   static final String PROP_CONNECTED     = "connected";
   static final String PROP_CONNECT_ERROR = "connectError";
 

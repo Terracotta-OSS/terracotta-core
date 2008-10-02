@@ -4,13 +4,11 @@
  */
 package com.tc.admin;
 
-import java.util.prefs.Preferences;
-
-import com.tc.admin.ConnectionContext;
-
 import com.tc.admin.common.PrefsHelper;
 import com.tc.admin.common.XTreeModel;
 import com.tc.admin.common.XTreeNode;
+
+import java.util.prefs.Preferences;
 
 public class NavTreeModel extends XTreeModel {
   private static final String SERVERS      = ServersHelper.SERVERS;

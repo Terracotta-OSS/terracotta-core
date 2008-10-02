@@ -4,13 +4,13 @@
  */
 package com.tc.admin.dso;
 
-import java.util.Enumeration;
-import java.util.Vector;
-
 import treemap.TMModelNode;
 import treemap.TMModelUpdater;
 
 import com.tc.admin.common.XTreeNode;
+
+import java.util.Enumeration;
+import java.util.Vector;
 
 public class ClassesModelNode implements TMModelNode {
   private ClassTreeModel treeModel;

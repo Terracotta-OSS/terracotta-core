@@ -4,10 +4,9 @@
  */
 package com.tc.admin.dso;
 
-import com.tc.objectserver.api.GCStats;
-
 import com.tc.admin.AdminClient;
 import com.tc.admin.common.XObjectTableModel;
+import com.tc.objectserver.api.GCStats;
 
 public class GCStatsTableModel extends XObjectTableModel {
 

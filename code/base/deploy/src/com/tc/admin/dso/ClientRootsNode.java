@@ -4,6 +4,10 @@
  */
 package com.tc.admin.dso;
 
+import org.dijon.Label;
+
+import com.tc.admin.AdminClient;
+
 public class ClientRootsNode extends RootsNode {
   protected ClientNode m_clientNode;
 
@@ -14,6 +18,10 @@ public class ClientRootsNode extends RootsNode {
   }
 
   protected RootsPanel createRootsPanel() {
-    return new RootsPanel(m_clientNode.getClient(), m_roots);
+    RootsPanel panel = new RootsPanel(m_clientNode.getClientsNode().getClusterModel(), m_clientNode.getClient(),
+                                      m_roots);
+    Label explainationLabel = (Label) panel.findComponent("ExplainationLabel");
+    explainationLabel.setText(AdminClient.getContext().getMessage("resident.object.message"));
+    return panel;
   }
 }

@@ -20,7 +20,7 @@ public class XTextArea extends TextArea {
     return new TextComponentHelper(this);
   }
 
-  private JPopupMenu createPopup() {
+  public JPopupMenu createPopup() {
     return m_helper.createPopup();
   }
 

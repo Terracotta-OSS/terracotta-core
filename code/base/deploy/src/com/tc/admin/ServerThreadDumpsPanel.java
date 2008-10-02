@@ -15,13 +15,15 @@ public class ServerThreadDumpsPanel extends AbstractThreadDumpsPanel {
   }
 
   protected String getThreadDumpText() throws Exception {
-    if(m_serverThreadDumpsNode != null) {
+    if (m_serverThreadDumpsNode != null) {
       IServer server = m_serverThreadDumpsNode.getServer();
-      if(server != null) {
-        return server.takeThreadDump(System.currentTimeMillis());
-      }
+      if (server != null) { return server.takeThreadDump(System.currentTimeMillis()); }
     }
     return "";
+  }
+
+  protected String getNodeName() {
+    return m_serverThreadDumpsNode.getServer().toString();
   }
 
   public void tearDown() {

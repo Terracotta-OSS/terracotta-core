@@ -7,7 +7,6 @@ package com.tc.stats;
 import com.tc.objectserver.api.ObjectManagerStats;
 import com.tc.objectserver.core.api.DSOGlobalServerStats;
 import com.tc.objectserver.core.impl.ServerManagementContext;
-import com.tc.stats.DSOStats;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.statistics.CountStatistic;
 import com.tc.stats.statistics.DoubleStatistic;

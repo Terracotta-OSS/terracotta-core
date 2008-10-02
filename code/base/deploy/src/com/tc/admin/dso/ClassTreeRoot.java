@@ -4,9 +4,8 @@
  */
 package com.tc.admin.dso;
 
-import com.tc.admin.common.XRootNode;
-
 import com.tc.admin.AdminClient;
+import com.tc.admin.common.XRootNode;
 import com.tc.stats.DSOClassInfo;
 
 public class ClassTreeRoot extends XRootNode implements ClassTreeNode {

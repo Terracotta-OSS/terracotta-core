@@ -4,11 +4,14 @@
  */
 package com.tc.admin.common;
 
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.text.BadLocationException;
@@ -17,11 +20,12 @@ import javax.swing.text.JTextComponent;
 
 // XXX: DEPRECATED
 public class TextComponentHelper extends XPopupListener implements CaretListener {
-  protected JTextComponent m_component;
-  protected CutAction      m_cutAction;
-  protected CopyAction     m_copyAction;
-  protected PasteAction    m_pasteAction;
-  protected ClearAction    m_clearAction;
+  protected JTextComponent  m_component;
+  protected CutAction       m_cutAction;
+  protected CopyAction      m_copyAction;
+  protected PasteAction     m_pasteAction;
+  protected ClearAction     m_clearAction;
+  protected SelectAllAction m_selectAllAction;
 
   public TextComponentHelper() {
     super();
@@ -55,6 +59,7 @@ public class TextComponentHelper extends XPopupListener implements CaretListener
       addPasteAction(popup);
       addClearAction(popup);
     }
+    addSelectAllAction(popup);
 
     return popup;
   }
@@ -89,6 +94,11 @@ public class TextComponentHelper extends XPopupListener implements CaretListener
 
   public Action getClearAction() {
     return m_clearAction;
+  }
+
+  protected void addSelectAllAction(JPopupMenu popup) {
+    popup.addSeparator();
+    popup.add(m_selectAllAction = new SelectAllAction());
   }
 
   private class CutAction extends XAbstractAction {
@@ -144,6 +154,31 @@ public class TextComponentHelper extends XPopupListener implements CaretListener
     }
   }
 
+  private class SelectAllAction extends XAbstractAction {
+    protected SelectAllAction() {
+      super("Select All");
+
+    }
+
+    public void actionPerformed(ActionEvent ae) {
+      final JScrollPane scroller = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, m_component);
+      Point scrollLoc = null;
+      if (scroller != null) {
+        scrollLoc = scroller.getViewport().getViewPosition();
+      }
+      m_component.requestFocusInWindow();
+      m_component.selectAll();
+      if (scrollLoc != null) {
+        final Point loc = scrollLoc;
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            scroller.getViewport().setViewPosition(loc);
+          }
+        });
+      }
+    }
+  }
+
   public boolean hasSelectionRange() {
     return (m_component.getSelectionStart() - m_component.getSelectionEnd()) != 0;
   }
@@ -151,7 +186,8 @@ public class TextComponentHelper extends XPopupListener implements CaretListener
   private void testEnableMenuItems() {
     boolean hasSelectionRange = hasSelectionRange();
     boolean editable = m_component.isEditable();
-
+    boolean haveContent = m_component.getDocument().getLength() > 0;
+    
     if (m_cutAction != null) {
       m_cutAction.setEnabled(editable && hasSelectionRange);
     }
@@ -165,7 +201,11 @@ public class TextComponentHelper extends XPopupListener implements CaretListener
     }
 
     if (m_clearAction != null) {
-      m_clearAction.setEnabled(m_component.getDocument().getLength() > 0);
+      m_clearAction.setEnabled(haveContent);
+    }
+    
+    if(m_selectAllAction != null) {
+      m_selectAllAction.setEnabled(haveContent);
     }
   }
 
