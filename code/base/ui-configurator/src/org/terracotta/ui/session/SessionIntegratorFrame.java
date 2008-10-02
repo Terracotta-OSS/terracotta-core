@@ -495,7 +495,7 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
     return SessionIntegrator.getContext().getMessage(key);
   }
 
-  static String formatBundleString(String key, Object[] args) {
+  static String formatBundleString(String key, Object... args) {
     return MessageFormat.format(getBundleString(key), args);
   }
 
@@ -605,13 +605,11 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
     menu.add(m_helpAction = new HelpAction());
     menu.add(new ShowSplashAction());
     menu.addSeparator();
-    menu.add(new ContactTerracottaAction(getBundleString("visit.forums.title"), getBundleString("forums.url")));
-    menu.add(new ContactTerracottaAction(getBundleString("contact.support.title"), getBundleString("support.url")));
-    /*
-     * menu.add(new ContactTerracottaAction(getBundleString("contact.field.eng.title"),
-     * getBundleString("field.eng.url"))); menu.add(new ContactTerracottaAction(getBundleString("contact.sales.title"),
-     * getBundleString("sales.url")));
-     */
+    
+    String kitID = ProductInfo.getInstance().kitID();
+    menu.add(new ContactTerracottaAction(getBundleString("visit.forums.title"), formatBundleString("forums.url", kitID)));
+    menu.add(new ContactTerracottaAction(getBundleString("contact.support.title"), formatBundleString("support.url", kitID)));
+
     menu.addSeparator();
     menu.add(new AboutAction());
     menuBar.add(menu);

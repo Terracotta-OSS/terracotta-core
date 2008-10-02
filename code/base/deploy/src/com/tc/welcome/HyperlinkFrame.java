@@ -15,6 +15,7 @@ import com.tc.admin.common.ContactTerracottaAction;
 import com.tc.admin.common.XAbstractAction;
 import com.tc.object.tools.BootJarSignature;
 import com.tc.object.tools.UnsupportedVMException;
+import com.tc.util.ProductInfo;
 import com.tc.util.ResourceBundleHelper;
 import com.tc.util.runtime.Os;
 
@@ -25,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.text.MessageFormat;
 
 import javax.swing.WindowConstants;
 import javax.swing.event.HyperlinkListener;
@@ -48,8 +50,10 @@ public abstract class HyperlinkFrame extends Frame implements HyperlinkListener 
     menubar.add(menu = new Menu(getBundleString("file.menu.title")));
     initFileMenu(menu);
     menubar.add(menu = new Menu(getBundleString("help.menu.title")));
-    menu.add(new ContactTerracottaAction(getBundleString("visit.forums.title"), getBundleString("forums.url")));
-    menu.add(new ContactTerracottaAction(getBundleString("contact.support.title"), getBundleString("support.url")));
+
+    String kitID = ProductInfo.getInstance().kitID();
+    menu.add(new ContactTerracottaAction(getBundleString("visit.forums.title"), formatBundleString("forums.url", kitID)));
+    menu.add(new ContactTerracottaAction(getBundleString("contact.support.title"), formatBundleString("support.url", kitID)));
     menu.add(new Separator());
     menu.add(new AboutAction());
 
@@ -77,6 +81,10 @@ public abstract class HyperlinkFrame extends Frame implements HyperlinkListener 
     return m_bundleHelper.getString(key);
   }
 
+  private String formatBundleString(String key, Object... args) {
+    return MessageFormat.format(getBundleString(key), args);
+  }
+  
   protected void quit() {
     Runtime.getRuntime().exit(0);
   }

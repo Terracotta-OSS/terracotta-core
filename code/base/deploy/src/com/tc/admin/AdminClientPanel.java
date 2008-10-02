@@ -66,7 +66,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.URLEncoder;
 import java.net.UnknownHostException;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Properties;
@@ -301,13 +300,13 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     menuBar.add(menu);
 
     menu = new XMenu(m_acc.getMessage("help.menu.label"));
-    XMenuItem mitem = new XMenuItem("AdminConsole Help", HelpHelper.getHelper().getHelpIcon());
-    mitem.setAction(m_helpAction = new HelpAction());
+    XMenuItem mitem = new XMenuItem(m_helpAction = new HelpAction());
     menu.add(mitem);
     menu.addSeparator();
-    menu.add(new ContactTerracottaAction("Visit Terracotta Forums", "http://www.terracottatech.com/forums/"));
-    menu.add(new ContactTerracottaAction("Contact Terracotta Technical Support",
-                                         "http://www.terracottatech.com/support_services.shtml"));
+
+    String kitID = getKitID();
+    menu.add(new ContactTerracottaAction(m_acc.getString("visit.forums.title"), m_acc.format("forums.url", kitID)));
+    menu.add(new ContactTerracottaAction(m_acc.getString("contact.support.title"), m_acc.format("support.url", kitID)));
     menu.addSeparator();
 
     m_updateCheckerControlAction = new UpdateCheckerControlAction();
@@ -326,30 +325,32 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     menuBar.add(menu);
   }
 
-  class HelpAction extends XAbstractAction {
-    String url;
-
-    HelpAction() {
-      super("AdminConsole Help");
-      String kitID = com.tc.util.ProductInfo.getInstance().kitID();
-      if (kitID == null || com.tc.util.ProductInfo.UNKNOWN_VALUE.equals(kitID)) {
-        if ((kitID = System.getProperty("com.tc.kitID")) == null) {
-          kitID = "42.0";
-        }
+  private static String getKitID() {
+    String kitID = ProductInfo.getInstance().kitID();
+    if (kitID == null || ProductInfo.UNKNOWN_VALUE.equals(kitID)) {
+      if ((kitID = System.getProperty("com.tc.kitID")) == null) {
+        kitID = "2.7";
       }
-      url = "http://www.terracotta.org/kit/reflector?kitID=" + kitID + "&pageID=ConsoleGuide";
+    }
+    return kitID;
+  }
+  
+  private class HelpAction extends XAbstractAction {
+    HelpAction() {
+      super(m_acc.getString("help.item.label"));
+      putValue(SMALL_ICON, HelpHelper.getHelper().getHelpIcon());
     }
 
     public void actionPerformed(ActionEvent ae) {
       block();
-      BrowserLauncher.openURL(url);
+      BrowserLauncher.openURL(m_acc.format("console.guide.url", getKitID()));
       unblock();
     }
   }
 
-  class ShowSVTAction extends XAbstractAction {
+  private class ShowSVTAction extends XAbstractAction {
     ShowSVTAction() {
-      super("Show SVT...");
+      super(m_acc.getString("show.svt.label"));
     }
 
     public void actionPerformed(ActionEvent ae) {
@@ -1066,19 +1067,11 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
   // SVT
   
   private static final String SNAPSHOT_VISUALIZER_TYPE = "org.terracotta.tools.SnapshotVisualizer";
-  private static final String GET_SVT_URL              = "http://www.terracotta.org/kit/reflector?kitID={0}&pageID=GetSVT";
-
   private ClassLoader         m_svtClassLoader;
   private JFrame              m_svtFrame;
 
   private String getSvtUrl() {
-    String kitID = com.tc.util.ProductInfo.getInstance().kitID();
-    if (kitID == null || com.tc.util.ProductInfo.UNKNOWN_VALUE.equals(kitID)) {
-      if ((kitID = System.getProperty("com.tc.kitID")) == null) {
-        kitID = "42.0";
-      }
-    }
-    return MessageFormat.format(GET_SVT_URL, kitID);
+    return m_acc.format("get.svt.url", getKitID());
   }
 
   private class VersionMap implements Comparable {

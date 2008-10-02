@@ -6,6 +6,7 @@ package com.tc.admin.common;
 
 import org.dijon.MenuItem;
 
+import javax.swing.Action;
 import javax.swing.Icon;
 
 public class XMenuItem extends MenuItem {
@@ -19,6 +20,10 @@ public class XMenuItem extends MenuItem {
 
   public XMenuItem(String label, Icon icon) {
     super(label, icon);
+  }
+
+  public XMenuItem(Action action) {
+    super(action);
   }
 
 }

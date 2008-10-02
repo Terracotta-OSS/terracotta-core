@@ -5,17 +5,17 @@
 package com.tc.welcome;
 
 import java.util.ListResourceBundle;
+import java.util.ResourceBundle;
 
 public class HyperlinkFrameBundle extends ListResourceBundle {
+  public HyperlinkFrameBundle() {
+    super();
+    setParent(ResourceBundle.getBundle("com.tc.admin.common.CommonBundle"));
+  }
+
   public Object[][] getContents() {
     return new Object[][] { { "file.menu.title", "File" }, { "help.menu.title", "Help" },
-        { "visit.forums.title", "Visit Terracotta Forums" }, { "forums.url", "http://www.terracottatech.com/forums/" },
-        { "contact.support.title", "Contact Terracotta Technical Support" },
-        { "support.url", "http://www.terracottatech.com/support_services.shtml" },
-        { "contact.field.eng.title", "Contact Terracotta Field Engineering" },
-        { "field.eng.url", "http://www.terracottatech.com/contact/field/" },
-        { "contact.sales.title", "Contact Terracotta Sales" },
-        { "sales.url", "http://www.terracottatech.com/contact/" }, { "page.load.error", "Unable to load page." },
-        { "about.title.prefix", "About " }, { "quit.action.name", "Exit" } };
+        { "page.load.error", "Unable to load page." }, { "about.title.prefix", "About " },
+        { "quit.action.name", "Exit" } };
   }
 }
