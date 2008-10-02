@@ -85,11 +85,7 @@ public class MultipleServersConfigCreator {
     if (i < 1 && i > dataLocations.length) { throw new AssertionError("Invalid index=[" + i + "]... there are ["
                                                                       + dataLocations.length
                                                                       + "] servers involved in this test."); }
-    if (serverDiskless) {
-      return dataLocations[i];
-    } else {
-      return dataLocations[0];
-    }
+    return dataLocations[i];
   }
 
   public void writeL2Config() throws Exception {
@@ -114,13 +110,14 @@ public class MultipleServersConfigCreator {
         boolean isServerDiskless = !mode.equals(MultipleServersSharedDataMode.DISK) ? true : false;
         if (isServerDiskless) {
           dataLocations[serverIndex] = dataLocationHome + File.separator + "server-" + serverIndex;
-          l2.setData(dataLocations[serverIndex]);
         } else {
-          l2.setData(dataLocationHome);
-          if (dataLocations[0] == null) {
-            dataLocations[0] = dataLocationHome;
+          int index = 0;
+          for (int k = 0; k < i; k++) {
+            index = index + groupData[k].getServerCount();
           }
+          dataLocations[serverIndex] = dataLocationHome + File.separator + "server-" + index;
         }
+        l2.setData(dataLocations[serverIndex]);
         l2.setLogs(logLocationHome + "server-" + serverIndex);
         l2.setName(groupData[i].getServerNames()[j]);
         l2.setDSOPort(groupData[i].getDsoPorts()[j]);
