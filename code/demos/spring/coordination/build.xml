@@ -33,7 +33,9 @@
         <include name="spring-context-2.5.4.jar"/>
         <include name="spring-core-2.5.4.jar"/>
         <include name="spring-web-2.5.4.jar"/>
-        <include name="dwr-1.1.3.jar"/>
+        <include name="spring-webmvc-2.5.4.jar"/>
+        <include name="dwr-2.0.5.jar"/>
+        <include name="backport-util-concurrent-3.0.jar"/>
       </zipfileset>
     </zip>
   </target>

@@ -33,7 +33,7 @@
         {
           timeout:4000,
           callback:function(counter) {
-            DWRUtil.setValue("counter", counter);
+            DWRUtil.setValue("counter", counter, { escapeHtml:false });
             timestamp = new Date().getTime();
           },
           errorHandler:function(message) {
