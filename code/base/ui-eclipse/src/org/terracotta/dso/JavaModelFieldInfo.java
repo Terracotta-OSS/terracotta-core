@@ -9,27 +9,24 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.Annotation;
-import org.eclipse.jdt.core.dom.IAnnotationBinding;
 
 import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.backport175.bytecode.AnnotationElement;
 import com.tc.exception.ImplementMe;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class JavaModelFieldInfo implements FieldInfo {
-  private ClassInfoFactory                   fClassInfoFactory;
-  private IField                             fField;
-  private List<AnnotationElement.Annotation> fAnnotations = new ArrayList<AnnotationElement.Annotation>();
-  private String                             fTypeName;
-  private IType                              fType;
-  private ClassInfo                          fClassInfo;
+  private ClassInfoFactory        fClassInfoFactory;
+  private IField                  fField;
+  private JavaModelAnnotationInfo fAnnotationInfo;
+  private String                  fTypeName;
+  private IType                   fType;
+  private ClassInfo               fClassInfo;
 
   public JavaModelFieldInfo(ClassInfoFactory classInfoFactory, IField field) {
     fClassInfoFactory = classInfoFactory;
     fField = field;
+    fAnnotationInfo = new JavaModelAnnotationInfo(field);
   }
 
   public ClassInfo getType() {
@@ -70,7 +67,7 @@ public class JavaModelFieldInfo implements FieldInfo {
 
   public IType determineFieldType() {
     try {
-      String typeName = resolveTypeName();
+      String typeName = getTypeName();
       IJavaProject javaProject = fField.getJavaProject();
       if (typeName != null) { return JdtUtils.findType(javaProject, typeName); }
     } catch (JavaModelException jme) {
@@ -84,17 +81,19 @@ public class JavaModelFieldInfo implements FieldInfo {
   }
 
   public void clearAnnotations() {
-    fAnnotations.clear();
+    fAnnotationInfo.clear();
   }
 
   public void addAnnotation(Annotation annotation) {
-    IAnnotationBinding binding = annotation.resolveAnnotationBinding();
-    String name = binding.getAnnotationType().getQualifiedName();
-    fAnnotations.add(new AnnotationElement.Annotation(name));
+    fAnnotationInfo.addAnnotation(annotation);
+  }
+
+  public void addAnnotation(String fqcn) {
+    fAnnotationInfo.addAnnotation(fqcn);
   }
 
   public AnnotationElement.Annotation[] getAnnotations() {
-    return fAnnotations.toArray(new AnnotationElement.Annotation[0]);
+    return fAnnotationInfo.getAnnotations();
   }
 
   public String getGenericsSignature() {

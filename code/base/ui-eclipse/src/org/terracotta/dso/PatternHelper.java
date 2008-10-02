@@ -53,16 +53,6 @@ public class PatternHelper {
     m_executionExpressionContextCache = new HashMap();
   }
 
-  // public boolean matchesFieldName(Root root, String fieldName) {
-  // if(root.isSetFieldName()) {
-  // return root.getFieldName().equals(fieldName);
-  // } else {
-  // String fieldExpr = root.getFieldExpression();
-  // ExpressionVisitor visitor = m_expressionHelper.createExpressionVisitor("get(" + fieldExpr + ")");
-  // return visitor.match(new ExpressionContext(PointcutType.GET, fi, fi));
-  // }
-  // }
-
   public boolean matchesField(Root root, IField field) {
     if (root.isSetFieldName()) {
       return root.getFieldName().equals(ConfigurationHelper.getFullName(field));

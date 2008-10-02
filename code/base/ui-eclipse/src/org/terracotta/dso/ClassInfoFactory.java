@@ -61,7 +61,7 @@ public class ClassInfoFactory extends com.tc.object.bytecode.aspectwerkz.ClassIn
       if(ref != null) {
         info = (JavaModelClassInfo) ref.get();
       }
-      if (info == null || info.isStale()) {
+      if (info == null || info.isStale(type)) {
         info = new JavaModelClassInfo(type);
         fClassInfoCache.put(className, new SoftReference(info));
       }
@@ -69,6 +69,16 @@ public class ClassInfoFactory extends com.tc.object.bytecode.aspectwerkz.ClassIn
     return info;
   }
 
+  public void clear(IType type) {
+    if(type != null) {
+      clear(type.getFullyQualifiedName('$'));
+    }
+  }
+  
+  public void clear(String className) {
+    fClassInfoCache.remove(className);
+  }
+  
   public MethodInfo getMethodInfo(IMethod method) throws JavaModelException {
     JavaModelClassInfo classInfo = (JavaModelClassInfo)getClassInfo(method.getDeclaringType());
     return classInfo.getMethod(this, method);

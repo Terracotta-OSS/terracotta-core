@@ -174,9 +174,7 @@ public class RootsPanel extends ConfigurationEditorPanel {
     item.setData(root);
   }
 
-  private void internalAddRoot(String fieldNameOrExpression) {
-    Root root = ensureRoots().addNewRoot();
-
+  private void internalSetRoot(Root root, String fieldNameOrExpression) {
     fieldNameOrExpression = fieldNameOrExpression.trim();
     String sansWhitespace = StringUtils.deleteWhitespace(fieldNameOrExpression);
     if(fieldNameOrExpression.length() != sansWhitespace.length()) {
@@ -190,6 +188,11 @@ public class RootsPanel extends ConfigurationEditorPanel {
         root.unsetFieldExpression();
       }
     }
+  }
+  
+  private void internalAddRoot(String fieldNameOrExpression) {
+    Root root = ensureRoots().addNewRoot();
+    internalSetRoot(root, fieldNameOrExpression);
     createTableItem(root);
 
     int row = m_layout.m_table.getItemCount() - 1;
@@ -308,21 +311,21 @@ public class RootsPanel extends ConfigurationEditorPanel {
   class TableDataListener implements Listener {
     public void handleEvent(Event e) {
       TableItem item = (TableItem) e.item;
-      String text = item.getText(e.index);
+      String fieldNameOrExpression = item.getText(e.index);
       Root root = (Root) item.getData();
 
       if (e.index == FIELD_COLUMN) {
-        if(text.length() == 0) {
+        if(fieldNameOrExpression.length() == 0) {
           int index = m_layout.m_table.indexOf(item);
           ensureRoots().removeRoot(index);
           m_layout.m_table.remove(index);
           syncModel();
           return;
         } else {
-          root.setFieldName(text);
+          internalSetRoot(root, fieldNameOrExpression);
         }
       } else if (e.index == NAME_COLUMN) {
-        root.setRootName(text);
+        root.setRootName(fieldNameOrExpression);
       }
       fireRootChanged(m_layout.m_table.indexOf(item));
     }

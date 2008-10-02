@@ -53,7 +53,11 @@ class ConfigLabelProvider extends LabelProvider {
   public Image getImage(Object element) {
     if(element instanceof RootWrapper) {
       RootWrapper wrapper = (RootWrapper)element;
-      return getJavaElementImage(fViewer.getPart().getField(wrapper.getFieldName()));
+      if(wrapper.isSetFieldName()) {
+        return getJavaElementImage(fViewer.getPart().getField(wrapper.getFieldName()));
+      } else if(wrapper.isSetFieldExpression()) {
+        return null;
+      }
     } else if(element instanceof RootsWrapper) {
       return m_rootsImage;
     } else if(element instanceof LocksWrapper) {
