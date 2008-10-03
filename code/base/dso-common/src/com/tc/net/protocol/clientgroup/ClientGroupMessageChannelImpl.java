@@ -72,6 +72,8 @@ public class ClientGroupMessageChannelImpl extends ClientMessageChannelImpl impl
                              new TCMessageRouterImpl());
     GroupID groupID = new GroupID(addressProvider.getGroupId());
     groupChannelMap.put(groupID, channel);
+    // set GroupID to remoteNodeID of active sub-channel
+    channel.setRemoteNodeID(groupID);
     logger.info("Created sub-channel " + groupID + ": " + addressProvider);
     return groupID;
   }

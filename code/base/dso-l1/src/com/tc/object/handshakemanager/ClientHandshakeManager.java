@@ -174,8 +174,8 @@ public class ClientHandshakeManager implements ChannelEventListener {
   }
 
   public void acknowledgeHandshake(ClientHandshakeAckMessage handshakeAck) {
-    acknowledgeHandshake(handshakeAck.getSourceNodeID(), handshakeAck.getPersistentServer(), handshakeAck.getThisNodeId(),
-                         handshakeAck.getAllNodes(), handshakeAck.getServerVersion(), handshakeAck.getServerNodeID(),
+    acknowledgeHandshake(handshakeAck.getSourceNodeID(), handshakeAck.getPersistentServer(), handshakeAck
+        .getThisNodeId(), handshakeAck.getAllNodes(), handshakeAck.getServerVersion(), handshakeAck.getServerNodeID(),
                          handshakeAck.getChannel());
   }
 
@@ -195,11 +195,11 @@ public class ClientHandshakeManager implements ChannelEventListener {
     }
 
     this.serverIsPersistent = persistentServer;
-    
-    if (serverNodeID == ServerID.NULL_ID) {
-      throw new RuntimeException("ClientHandshakeAck message with NULL serverID");
+
+    if (serverNodeID == ServerID.NULL_ID) { throw new RuntimeException("ClientHandshakeAck message with NULL serverID"); }
+    if (channel.getRemoteNodeID().isNull()) {
+      channel.setRemoteNodeID(serverNodeID);
     }
-    channel.setRemoteNodeID(serverNodeID);
 
     cluster.thisNodeConnected(thisNodeId, clusterMembers);
 
