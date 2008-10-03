@@ -31,28 +31,39 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ConcurrentHashMapTestApp extends GenericTestApp {
 
   private final DataKey[]   keyRoots   = new DataKey[] { new DataKey(1), new DataKey(2), new DataKey(3), new DataKey(4) };
-  private final DataValue[] valueRoots = new DataValue[] { new DataValue(10), new DataValue(20), new DataValue(30),
-      new DataValue(40)               };
+  private final DataValue[] valueRoots = new DataValue[] { new DataValue(10), new DataValue(20), new DataValue(30), new DataValue(40) };
+
+  private final DataKey[]   keyRootsLarge   = new DataKey[256];
+  private final DataValue[] valueRootsLarge = new DataValue[256];
 
   private final HashKey[]   hashKeys   = new HashKey[] { new HashKey(1), new HashKey(2), new HashKey(3), new HashKey(4) };
-  private final HashValue[] hashValues = new HashValue[] { new HashValue(10), new HashValue(20), new HashValue(30),
-      new HashValue(40)               };
+  private final HashValue[] hashValues = new HashValue[] { new HashValue(10), new HashValue(20), new HashValue(30), new HashValue(40) };
 
   public ConcurrentHashMapTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider, ConcurrentHashMap.class);
+    
   }
 
   @Override
   protected Object getTestObject(String test) {
+    if ("RemoveLogical".equals(test)) {
+      return sharedMap.get("mapSingleSegment");
+    }
     return sharedMap.get("map");
   }
 
   @Override
   protected void setupTestObject(String test) {
+    for (int i = 0; i < keyRootsLarge.length; i++) {
+      keyRootsLarge[i] = new DataKey(i);
+      valueRootsLarge[i] = new DataValue(i*10);
+    }
+
     List listOfMaps = new ArrayList();
     listOfMaps.add(new ConcurrentHashMap());
     sharedMap.put("maps", listOfMaps);
     sharedMap.put("map", new ConcurrentHashMap());
+    sharedMap.put("mapSingleSegment", new ConcurrentHashMap(16, 0.75f, 1));
     sharedMap.put("arrayforConcurrentHashMap", new Object[4]);
     sharedMap.put("arrayforConcurrentHashMapWithHashKeys", new Object[4]);
   }
@@ -242,17 +253,16 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
 
   void testRemoveLogical(ConcurrentHashMap map, boolean validate) throws Exception {
     Map toPut = new HashMap();
-    toPut.put(keyRoots[0], valueRoots[0]);
-    toPut.put(keyRoots[1], valueRoots[1]);
-    toPut.put(keyRoots[2], valueRoots[2]);
-    toPut.put(keyRoots[3], valueRoots[3]);
+    for (int i = 0; i < keyRootsLarge.length; i++) {
+      toPut.put(keyRootsLarge[i], valueRootsLarge[i]);
+    }
 
     if (validate) {
-      ((TCMap) toPut).__tc_remove_logical(keyRoots[1]);
+      ((TCMap) toPut).__tc_remove_logical(keyRootsLarge[50]);
       assertMappingsEqual(toPut, map);
     } else {
       map.putAll(toPut);
-      ((TCMap) map).__tc_remove_logical(keyRoots[1]);
+      ((TCMap) map).__tc_remove_logical(keyRootsLarge[50]);
     }
   }
 
@@ -1544,6 +1554,8 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
     config.addIncludePattern(testClass + "$*");
     spec.addRoot("keyRoots", "keyRoots");
     spec.addRoot("valueRoots", "valueRoots");
+    spec.addRoot("keyRootsLarge", "keyRootsLarge");
+    spec.addRoot("valueRootsLarge", "valueRootsLarge");
     spec.addRoot("hashKeys", "hashKeys");
     spec.addRoot("hashValues", "hashValues");
   }
