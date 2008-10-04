@@ -247,7 +247,7 @@ class TerracottaBuilder
   end
 
   def delete_tim_get_index_file
-    File.delete(tim_get_index_file)
+    File.delete(tim_get_index_file) if File.exists?(tim_get_index_file)
   end
 
   # Where should we archive the build to? Returns nil if none. Value comes from the config source.
