@@ -8,14 +8,14 @@ import com.tc.net.ClientID;
 import com.tc.object.ObjectRequestID;
 import com.tc.util.ObjectIDSet;
 
-public class ObjectRequestServerContextImpl implements EventContext {
+public class ObjectRequestServerContext implements EventContext {
 
   private final ClientID requestedNodeID;
   private final ObjectRequestID objectRequestID;
   private final ObjectIDSet lookupIDs;
   private String requestingThreadName;
   
-  public ObjectRequestServerContextImpl(ClientID requestNodeID, ObjectRequestID objectRequestID, ObjectIDSet lookupIDs, String requestingThreadName) {
+  public ObjectRequestServerContext(ClientID requestNodeID, ObjectRequestID objectRequestID, ObjectIDSet lookupIDs, String requestingThreadName) {
     this.requestedNodeID = requestNodeID;
     this.objectRequestID = objectRequestID;
     this.lookupIDs = lookupIDs;

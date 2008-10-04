@@ -24,7 +24,7 @@ import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
 import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
-import com.tc.objectserver.context.ObjectRequestServerContextImpl;
+import com.tc.objectserver.context.ObjectRequestServerContext;
 import com.tc.objectserver.context.RespondToObjectRequestContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.l1.api.ClientStateManager;
@@ -540,7 +540,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
           logger.debug("LookupPendingObjectIDs = " + results.getLookupPendingObjectIDs() + " , clientID = " + clientID
                        + " , requestID = " + requestID);
         }
-        objectRequestSink.add(new ObjectRequestServerContextImpl(this.clientID, this.requestID, results
+        objectRequestSink.add(new ObjectRequestServerContext(this.clientID, this.requestID, results
             .getLookupPendingObjectIDs(), this.requestingThreadName));
       }
       ResponseContext responseContext = new ResponseContext(this.clientID, this.objects.values(), this.lookupIDs,

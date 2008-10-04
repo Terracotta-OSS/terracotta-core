@@ -18,7 +18,7 @@ import com.tc.object.msg.BroadcastTransactionMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.context.BroadcastChangeContext;
-import com.tc.objectserver.context.ObjectRequestServerContextImpl;
+import com.tc.objectserver.context.ObjectRequestServerContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.tx.ServerTransactionManager;
@@ -76,7 +76,7 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
           || includeDmi) {
         transactionManager.addWaitingForAcknowledgement(committerID, txnID, clientID);
         if (lookupObjectIDs.size() > 0) {
-          this.managedObjectRequestSink.add(new ObjectRequestServerContextImpl(clientID, ObjectRequestID.NULL_ID, lookupObjectIDs, Thread
+          this.managedObjectRequestSink.add(new ObjectRequestServerContext(clientID, ObjectRequestID.NULL_ID, lookupObjectIDs, Thread
                   .currentThread().getName()));
         }
         final DmiDescriptor[] dmi = (includeDmi) ? prunedDmis : DmiDescriptor.EMPTY_ARRAY;

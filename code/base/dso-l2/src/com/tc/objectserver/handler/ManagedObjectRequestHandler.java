@@ -15,7 +15,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.msg.RequestManagedObjectMessage;
 import com.tc.object.net.ChannelStats;
 import com.tc.objectserver.api.ObjectRequestManager;
-import com.tc.objectserver.context.ObjectRequestServerContextImpl;
+import com.tc.objectserver.context.ObjectRequestServerContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.stats.counter.Counter;
@@ -48,12 +48,12 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
   public void handleEvent(EventContext context) {
     if (context instanceof RequestManagedObjectMessage) {
       handleEventFromClient((RequestManagedObjectMessage) context);
-    } else if (context instanceof ObjectRequestServerContextImpl) {
-      handleEventFromServer((ObjectRequestServerContextImpl) context);
+    } else if (context instanceof ObjectRequestServerContext) {
+      handleEventFromServer((ObjectRequestServerContext) context);
     }
   }
 
-  private void handleEventFromServer(ObjectRequestServerContextImpl context) {
+  private void handleEventFromServer(ObjectRequestServerContext context) {
     Collection<ObjectID> ids = context.getLookupIDs();
     // XXX::TODO:: Server initiated lookups are not updated to the channel counter for now
     final int numObjectsRequested = ids.size();
