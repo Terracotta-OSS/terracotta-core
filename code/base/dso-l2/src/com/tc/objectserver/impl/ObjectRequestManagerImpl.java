@@ -396,13 +396,16 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
         this.objectRequestMap.put(reqObjects, clientList);
         return true;
       } else {
+        
         if (clientList.add(clientID)) {
           if (verbose && (++sameClientRequestCount % 100) == 0) {
-            logger.info("[ObjectRequestCache] Same client request tally thus far: " + sameClientRequestCount);
+            //The count keeps track of how many requests were made from the same client that has already been requested
+            logger.info("[ObjectRequestCache] same client already made requests. total same client request optimized: " + sameClientRequestCount);
           }
         } else {
           if (verbose && (++multipleClientRequestCount % 100) == 0) {
-            logger.info("[ObjectRequestCache] Multiple client request tally thus far: " + multipleClientRequestCount);
+            //The count keeps track of how many requests were made from the multiple clients that has already been requested
+            logger.info("[ObjectRequestCache] multiple clients already made requests. total multiple clients request optimized: " + multipleClientRequestCount);
           }
         }
         return false;
