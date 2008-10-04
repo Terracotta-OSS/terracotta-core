@@ -577,10 +577,10 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
     @Override
     public String toString() {
       return "Lookup Context [ clientID = " + clientID + " , requestID = " + requestID + " , ids = " + lookupIDs
-             + " , objects.size = " + objects.size() + " , missingObjects  = " + missingObjects
-             + " , maxRequestDepth = " + maxRequestDepth + " , requestingThreadName = " + requestingThreadName
-             + " , serverInitiated = " + serverInitiated + " , respondObjectRequestSink = " + respondObjectRequestSink
-             + " ] ";
+             + " , lookedup objects.size() = " + (objects != null ? objects.size() : 0) + " , missingObjects  = "
+             + missingObjects + " , maxRequestDepth = " + maxRequestDepth + " , requestingThreadName = "
+             + requestingThreadName + " , serverInitiated = " + serverInitiated + " , respondObjectRequestSink = "
+             + respondObjectRequestSink + " ] ";
     }
 
   }
