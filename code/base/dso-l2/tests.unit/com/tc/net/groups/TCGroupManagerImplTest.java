@@ -49,7 +49,6 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -219,7 +218,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
   }
 
   private ObjectSyncMessage createTestObjectSyncMessage() {
-    Set dnaOids = new ObjectIDSet();
+    ObjectIDSet dnaOids = new ObjectIDSet();
     for (long i = 1; i <= 100; ++i) {
       dnaOids.add(new ObjectID(i));
     }

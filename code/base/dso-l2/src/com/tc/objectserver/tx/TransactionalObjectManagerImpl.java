@@ -18,12 +18,13 @@ import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.context.RecallObjectsContext;
 import com.tc.objectserver.context.TransactionLookupContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
+import com.tc.util.ObjectIDSet;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -99,8 +100,8 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
         ServerTransactionID stxn = stx.getServerTransactionID();
         logger.error("DumpOnError : Txn = " + stx);
         // NOTE:: Calling initiateApply() changes state, but we are crashing anyways
-        logger.error("DumpOnError : GID for Txn " + stxn + " is " + gtxm.getGlobalTransactionID(stxn) + " : initate apply : "
-                     + gtxm.initiateApply(stxn));
+        logger.error("DumpOnError : GID for Txn " + stxn + " is " + gtxm.getGlobalTransactionID(stxn)
+                     + " : initate apply : " + gtxm.initiateApply(stxn));
       }
       logger.error("DumpOnError : GID Low watermark : " + gtxm.getLowGlobalTransactionIDWatermark());
       logger.error("DumpOnError : GID Sequence current : " + gtxm.getGlobalTransactionIDSequence().current());
@@ -156,7 +157,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   public synchronized void lookupObjectsForApplyAndAddToSink(ServerTransaction txn) {
     Collection oids = txn.getObjectIDs();
     // log("lookupObjectsForApplyAndAddToSink(): START : " + txn.getServerTransactionID() + " : " + oids);
-    Set newRequests = new HashSet();
+    ObjectIDSet newRequests = new ObjectIDSet();
     boolean makePending = false;
     for (Iterator i = oids.iterator(); i.hasNext();) {
       ObjectID oid = (ObjectID) i.next();
@@ -455,13 +456,13 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
 
   private class LookupContext implements ObjectManagerResultsContext {
 
-    private final Set<ObjectID>     oids;
+    private final ObjectIDSet       oids;
     private final ServerTransaction txn;
     private boolean                 pending    = false;
     private boolean                 resultsSet = false;
     private Map                     lookedUpObjects;
 
-    public LookupContext(Set<ObjectID> oids, ServerTransaction txn) {
+    public LookupContext(ObjectIDSet oids, ServerTransaction txn) {
       this.oids = oids;
       this.txn = txn;
     }
@@ -492,11 +493,11 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
              + (lookedUpObjects == null ? "null" : lookedUpObjects.keySet().toString()) + "}";
     }
 
-    public Set<ObjectID> getLookupIDs() {
+    public ObjectIDSet getLookupIDs() {
       return oids;
     }
 
-    public Set<ObjectID> getNewObjectIDs() {
+    public ObjectIDSet getNewObjectIDs() {
       return txn.getNewObjectIDs();
     }
 

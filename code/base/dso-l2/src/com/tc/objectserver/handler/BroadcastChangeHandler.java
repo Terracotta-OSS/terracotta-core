@@ -18,15 +18,15 @@ import com.tc.object.msg.BroadcastTransactionMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.context.BroadcastChangeContext;
-import com.tc.objectserver.context.ManagedObjectRequestContext;
+import com.tc.objectserver.context.ObjectRequestServerContextImpl;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.stats.counter.sampled.SampledCounter;
+import com.tc.util.ObjectIDSet;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,8 +39,6 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
   private ClientStateManager       clientStateManager;
   private ServerTransactionManager transactionManager;
   private Sink                     managedObjectRequestSink;
-  private Sink                     respondObjectRequestSink;
-
   private SampledCounter           broadcastCounter;
   private SampledCounter           changeCounter;
 
@@ -65,7 +63,7 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
       Map newRoots = bcc.getNewRoots();
       Set notifiedWaiters = bcc.getNewlyPendingWaiters().getNotifiedFor(clientID);
       List prunedChanges = Collections.EMPTY_LIST;
-      Set lookupObjectIDs = new HashSet();
+      ObjectIDSet lookupObjectIDs = new ObjectIDSet();
 
       if (!clientID.equals(committerID)) {
         prunedChanges = clientStateManager.createPrunedChangesAndAddObjectIDTo(bcc.getChanges(), bcc.getIncludeIDs(),
@@ -78,10 +76,8 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
           || includeDmi) {
         transactionManager.addWaitingForAcknowledgement(committerID, txnID, clientID);
         if (lookupObjectIDs.size() > 0) {
-          ManagedObjectRequestContext.createAndAddManagedObjectRequestContextsTo(this.managedObjectRequestSink,
-                                                                                 clientID, ObjectRequestID.NULL_ID,
-                                                                                 lookupObjectIDs, -1,
-                                                                                 this.respondObjectRequestSink);
+          this.managedObjectRequestSink.add(new ObjectRequestServerContextImpl(clientID, ObjectRequestID.NULL_ID, lookupObjectIDs, Thread
+                  .currentThread().getName()));
         }
         final DmiDescriptor[] dmi = (includeDmi) ? prunedDmis : DmiDescriptor.EMPTY_ARRAY;
         BroadcastTransactionMessage responseMessage = (BroadcastTransactionMessage) client
@@ -128,6 +124,5 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
     this.clientStateManager = scc.getClientStateManager();
     this.transactionManager = scc.getTransactionManager();
     this.managedObjectRequestSink = scc.getStage(ServerConfigurationContext.MANAGED_OBJECT_REQUEST_STAGE).getSink();
-    this.respondObjectRequestSink = scc.getStage(ServerConfigurationContext.RESPOND_TO_OBJECT_REQUEST_STAGE).getSink();
   }
 }

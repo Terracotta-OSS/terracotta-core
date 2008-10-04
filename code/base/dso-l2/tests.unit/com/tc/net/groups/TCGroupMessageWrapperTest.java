@@ -203,7 +203,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
   }
 
   public void testObjectSyncMessage() throws Exception {
-    Set dnaOids = new ObjectIDSet();
+    ObjectIDSet dnaOids = new ObjectIDSet();
     for (long i = 1; i <= 100; ++i) {
       dnaOids.add(new ObjectID(i));
     }

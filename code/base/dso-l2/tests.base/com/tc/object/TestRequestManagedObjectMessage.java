@@ -11,15 +11,14 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.msg.RequestManagedObjectMessage;
-
-import java.util.Set;
+import com.tc.util.ObjectIDSet;
 
 public class TestRequestManagedObjectMessage implements RequestManagedObjectMessage, EventContext {
 
   private ObjectRequestID requestID;
-  private Set             removed;
+  private ObjectIDSet     removed;
   private MessageChannel  channel;
-  private Set             objectIDs;
+  private ObjectIDSet     objectIDs;
 
   public TestRequestManagedObjectMessage() {
     super();
@@ -29,23 +28,23 @@ public class TestRequestManagedObjectMessage implements RequestManagedObjectMess
     return this.requestID;
   }
 
-  public Set getObjectIDs() {
+  public ObjectIDSet getObjectIDs() {
     return this.objectIDs;
   }
 
-  public void setObjectIDs(Set IDs) {
+  public void setObjectIDs(ObjectIDSet IDs) {
     this.objectIDs = IDs;
   }
 
-  public Set getRemoved() {
+  public ObjectIDSet getRemoved() {
     return this.removed;
   }
 
-  public void setRemoved(Set rm) {
+  public void setRemoved(ObjectIDSet rm) {
     this.removed = rm;
   }
 
-  public void initialize(ObjectRequestContext ctxt, Set oids, Set removedIDs) {
+  public void initialize(ObjectRequestContext ctxt, ObjectIDSet oids, ObjectIDSet removedIDs) {
     //
   }
 

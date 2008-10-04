@@ -14,21 +14,21 @@ import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
 import com.tc.objectserver.tx.ServerTransaction;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class PrunedServerTransaction implements ServerTransaction {
 
   private final List              prunedChanges;
   private final ServerTransaction orgTxn;
-  private final Set        oids;
-  private final Set               newOids;
+  private final ObjectIDSet       oids;
+  private final ObjectIDSet       newOids;
 
-  public PrunedServerTransaction(List prunedChanges, ServerTransaction st, Set oids, Set newOids) {
+  public PrunedServerTransaction(List prunedChanges, ServerTransaction st, ObjectIDSet oids, ObjectIDSet newOids) {
     this.prunedChanges = prunedChanges;
     this.orgTxn = st;
     this.oids = oids;
@@ -59,7 +59,7 @@ public class PrunedServerTransaction implements ServerTransaction {
     return orgTxn.getLockIDs();
   }
 
-  public Set getNewObjectIDs() {
+  public ObjectIDSet getNewObjectIDs() {
     return newOids;
   }
 
@@ -67,7 +67,7 @@ public class PrunedServerTransaction implements ServerTransaction {
     return orgTxn.getNewRoots();
   }
 
-  public Set getObjectIDs() {
+  public ObjectIDSet getObjectIDs() {
     return oids;
   }
 

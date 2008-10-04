@@ -12,29 +12,28 @@ import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.util.Assert;
+import com.tc.util.ObjectIDSet;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 public class ManagedObjectSyncContext implements ObjectManagerResultsContext {
 
   private final NodeID                nodeID;
-  private final Set<ObjectID>         oids;
+  private final ObjectIDSet           oids;
   private final boolean               more;
   private final Sink                  nextSink;
   private final Map<String, ObjectID> rootsMap;
 
-  private ObjectManagerLookupResults result;
-  private TCByteBuffer[]             dnas;
-  private int                        dnaCount;
-  private ObjectStringSerializer     serializer;
-  private long                       sequenceID;
-  private final int                  totalObjectsToSync;
-  private final int                  totalObjectsSynced;
+  private ObjectManagerLookupResults  result;
+  private TCByteBuffer[]              dnas;
+  private int                         dnaCount;
+  private ObjectStringSerializer      serializer;
+  private long                        sequenceID;
+  private final int                   totalObjectsToSync;
+  private final int                   totalObjectsSynced;
 
-  public ManagedObjectSyncContext(NodeID nodeID, Set<ObjectID> oids, boolean more, Sink sink, int totalObjectsToSync,
+  public ManagedObjectSyncContext(NodeID nodeID, ObjectIDSet oids, boolean more, Sink sink, int totalObjectsToSync,
                                   int totalObjectsSynced) {
     this.nodeID = nodeID;
     this.oids = oids;
@@ -45,12 +44,12 @@ public class ManagedObjectSyncContext implements ObjectManagerResultsContext {
     this.rootsMap = Collections.emptyMap();
   }
 
-  public ManagedObjectSyncContext(NodeID nodeID, Map<String, ObjectID> rootsMap, boolean more, Sink sink, int totalObjectsToSync,
-                                  int totalObjectsSynced) {
+  public ManagedObjectSyncContext(NodeID nodeID, Map<String, ObjectID> rootsMap, boolean more, Sink sink,
+                                  int totalObjectsToSync, int totalObjectsSynced) {
     this.nodeID = nodeID;
     this.totalObjectsToSync = totalObjectsToSync;
     this.totalObjectsSynced = totalObjectsSynced;
-    this.oids = new HashSet<ObjectID>(rootsMap.values());
+    this.oids = new ObjectIDSet(rootsMap.values());
     this.more = more;
     this.nextSink = sink;
     this.rootsMap = rootsMap;
@@ -61,7 +60,7 @@ public class ManagedObjectSyncContext implements ObjectManagerResultsContext {
     nextSink.add(this);
   }
 
-  public Set<ObjectID> getLookupIDs() {
+  public ObjectIDSet getLookupIDs() {
     return oids;
   }
 
@@ -111,8 +110,8 @@ public class ManagedObjectSyncContext implements ObjectManagerResultsContext {
     return more;
   }
 
-  public Set<ObjectID> getNewObjectIDs() {
-    return Collections.emptySet();
+  public ObjectIDSet getNewObjectIDs() {
+    return new ObjectIDSet();
   }
 
   public void setSequenceID(long nextSequence) {

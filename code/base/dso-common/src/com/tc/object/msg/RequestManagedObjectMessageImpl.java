@@ -15,11 +15,10 @@ import com.tc.object.ObjectID;
 import com.tc.object.ObjectRequestContext;
 import com.tc.object.ObjectRequestID;
 import com.tc.object.session.SessionID;
+import com.tc.util.ObjectIDSet;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Set;
 
 public class RequestManagedObjectMessageImpl extends DSOMessageBase implements EventContext,
     RequestManagedObjectMessage {
@@ -29,8 +28,8 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
   private final static byte REQUEST_DEPTH_ID           = 5;
   private final static byte REQUESTING_THREAD_NAME     = 6;
 
-  private Set               objectIDs                  = new HashSet();
-  private Set               removed                    = new HashSet();
+  private ObjectIDSet       objectIDs                  = new ObjectIDSet();
+  private ObjectIDSet       removed                    = new ObjectIDSet();
   private ObjectRequestID   requestID;
   private int               requestDepth;
   private String            threadName;
@@ -86,15 +85,15 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
     return requestID;
   }
 
-  public Set getObjectIDs() {
+  public ObjectIDSet getObjectIDs() {
     return objectIDs;
   }
 
-  public Set getRemoved() {
+  public ObjectIDSet getRemoved() {
     return removed;
   }
 
-  public void initialize(ObjectRequestContext ctxt, Set oids, Set removedIDs) {
+  public void initialize(ObjectRequestContext ctxt, ObjectIDSet oids, ObjectIDSet removedIDs) {
     this.requestID = ctxt.getRequestID();
     this.objectIDs.addAll(oids);
     this.removed = removedIDs;

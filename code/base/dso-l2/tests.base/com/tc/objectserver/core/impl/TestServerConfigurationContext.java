@@ -12,6 +12,7 @@ import com.tc.logging.TCLogging;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.ObjectManager;
+import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
@@ -27,6 +28,7 @@ import java.util.Map;
 public class TestServerConfigurationContext implements ServerConfigurationContext {
 
   public ObjectManager                objectManager;
+  public ObjectRequestManager         objectRequestManager;
   public LockManager                  lockManager;
   public DSOChannelManager            channelManager;
   public ClientStateManager           clientStateManager;
@@ -46,6 +48,14 @@ public class TestServerConfigurationContext implements ServerConfigurationContex
     return this.objectManager;
   }
 
+  public ObjectRequestManager getObjectRequestManager() {
+    return this.objectRequestManager;
+  }
+
+  public void setObjectRequestManager(ObjectRequestManager objectRequestManager) {
+    this.objectRequestManager = objectRequestManager;
+  }
+  
   public LockManager getLockManager() {
     return this.lockManager;
   }

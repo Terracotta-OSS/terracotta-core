@@ -22,6 +22,7 @@ import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionID;
 import com.tc.objectserver.core.api.TestDNA;
 import com.tc.test.TCTestCase;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -75,15 +76,15 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     } catch (AssertionError e) {
       // expected assertion
     }
-    
-    try{
+
+    try {
       manager.unpause();
       throw new AssertionError("UNPAUSED without state being STARTING");
-    }catch (AssertionError e) {
+    } catch (AssertionError e) {
       // expected assertion
     }
-    
-    //state is paused
+
+    // state is paused
     manager.starting();
     manager.unpause();
   }
@@ -559,15 +560,15 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public Set getObjectIDs() {
+    public ObjectIDSet getObjectIDs() {
       throw new ImplementMe();
     }
 
-    public Set getRemoved() {
+    public ObjectIDSet getRemoved() {
       throw new ImplementMe();
     }
 
-    public void initialize(ObjectRequestContext ctxt, Set oids, Set removedIDs) {
+    public void initialize(ObjectRequestContext ctxt, ObjectIDSet oids, ObjectIDSet removedIDs) {
       this.objectIDs = oids;
       this.initializeQueue.put(new Object[] { ctxt, oids, removedIDs });
     }

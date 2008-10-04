@@ -11,15 +11,17 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ObjectID;
 import com.tc.object.TestRequestManagedObjectMessage;
 import com.tc.object.net.ChannelStats;
+import com.tc.object.net.TestDSOChannelManager;
+import com.tc.objectserver.api.TestSink;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.TestServerConfigurationContext;
-import com.tc.objectserver.impl.TestObjectRequestManager;
+import com.tc.objectserver.impl.ObjectRequestManagerImpl;
+import com.tc.objectserver.impl.TestObjectManager;
 import com.tc.objectserver.l1.api.TestClientStateManager;
+import com.tc.objectserver.tx.TestServerTransactionManager;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.CounterImpl;
-
-import java.util.HashSet;
-import java.util.Set;
+import com.tc.util.ObjectIDSet;
 
 import junit.framework.TestCase;
 
@@ -34,20 +36,30 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
 
     TestChannelStats channelStats = new TestChannelStats(channelReqCounter, channelRemCounter);
 
+    TestObjectManager objectManager = new TestObjectManager();
+    TestDSOChannelManager channelManager = new TestDSOChannelManager();
+    TestClientStateManager clientStateManager = new TestClientStateManager();
+    TestServerTransactionManager serverTransactionManager = new TestServerTransactionManager();
+    TestSink requestSink = new TestSink();
+    TestSink respondSink = new TestSink();
+    ObjectRequestManagerImpl objectRequestManager = new ObjectRequestManagerImpl(objectManager, channelManager,
+                                                                                 clientStateManager,
+                                                                                 serverTransactionManager, requestSink, respondSink);
+
     TestServerConfigurationContext context = new TestServerConfigurationContext();
+    context.setObjectRequestManager(objectRequestManager);
     context.clientStateManager = new TestClientStateManager();
     context.addStage(ServerConfigurationContext.RESPOND_TO_OBJECT_REQUEST_STAGE, new MockStage("yo"));
     context.channelStats = channelStats;
 
-    ManagedObjectRequestHandler handler = new ManagedObjectRequestHandler(requestCounter, removeCounter,
-                                                                          new TestObjectRequestManager());
+    ManagedObjectRequestHandler handler = new ManagedObjectRequestHandler(requestCounter, removeCounter);
     handler.initializeContext(context);
 
     TestRequestManagedObjectMessage msg = new TestRequestManagedObjectMessage();
-    HashSet s = new HashSet();
+    ObjectIDSet s = new ObjectIDSet();
     s.add(new ObjectID(1));
     msg.setObjectIDs(s);
-    Set removed = makeRemovedSet(31);
+    ObjectIDSet removed = makeRemovedSet(31);
     msg.setRemoved(removed);
 
     assertEquals(0, requestCounter.getValue());
@@ -61,8 +73,8 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
     assertEquals(100, channelRemCounter.getValue());
   }
 
-  private Set makeRemovedSet(int num) {
-    Set rv = new HashSet();
+  private ObjectIDSet makeRemovedSet(int num) {
+    ObjectIDSet rv = new ObjectIDSet();
     for (int i = 0; i < num; i++) {
       rv.add(new ObjectID(i));
     }
@@ -97,12 +109,12 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
 
     public void notifyTransactionAckedFrom(NodeID nodeID) {
       throw new ImplementMe();
-      
+
     }
 
     public void notifyTransactionBroadcastedTo(NodeID nodeID) {
       throw new ImplementMe();
-      
+
     }
   }
 

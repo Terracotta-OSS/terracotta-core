@@ -16,14 +16,13 @@ import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
 import com.tc.util.Assert;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Represents an atomic change to the states of objects on the server
@@ -40,8 +39,8 @@ public class ServerTransactionImpl implements ServerTransaction {
   private final ObjectStringSerializer serializer;
   private final Collection             notifies;
   private final DmiDescriptor[]        dmis;
-  private final Set                    objectIDs;
-  private final Set                    newObjectIDs;
+  private final ObjectIDSet            objectIDs;
+  private final ObjectIDSet            newObjectIDs;
   private final TxnBatchID             batchID;
   private final GlobalTransactionID    globalTxnID;
   private final int                    numApplicationTxn;
@@ -68,8 +67,8 @@ public class ServerTransactionImpl implements ServerTransaction {
     this.dmis = dmis;
     this.changes = dnas;
     this.serializer = serializer;
-    Set ids = new HashSet(changes.size());
-    HashSet newIDs = new HashSet(changes.size());
+    ObjectIDSet ids = new ObjectIDSet();
+    ObjectIDSet newIDs = new ObjectIDSet();
     boolean added = true;
     for (Iterator i = changes.iterator(); i.hasNext();) {
       DNA dna = (DNA) i.next();
@@ -119,11 +118,11 @@ public class ServerTransactionImpl implements ServerTransaction {
     return transactionType;
   }
 
-  public Set getObjectIDs() {
+  public ObjectIDSet getObjectIDs() {
     return this.objectIDs;
   }
 
-  public Set getNewObjectIDs() {
+  public ObjectIDSet getNewObjectIDs() {
     return this.newObjectIDs;
   }
 
@@ -138,9 +137,8 @@ public class ServerTransactionImpl implements ServerTransaction {
   public String toString() {
     return "ServerTransaction[" + seqID + " , " + txID + "," + sourceID + "," + transactionType + "] = { changes = "
            + changes.size() + ", notifies = " + notifies.size() + ", newRoots = " + newRoots.size() + ", numTxns = "
-           + getNumApplicationTxn() + ", oids =  " + objectIDs + ", newObjectIDs = " + newObjectIDs +
-           ",\n" + getChangesDetails() +
-           " }";
+           + getNumApplicationTxn() + ", oids =  " + objectIDs + ", newObjectIDs = " + newObjectIDs + ",\n"
+           + getChangesDetails() + " }";
   }
 
   private String getChangesDetails() {

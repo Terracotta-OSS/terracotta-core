@@ -7,17 +7,16 @@ package com.tc.objectserver.context;
 import com.tc.async.api.EventContext;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
-
-import java.util.Set;
+import com.tc.util.ObjectIDSet;
 
 /**
  * Interface for a context that needs ObjectManager look results
  */
 public interface ObjectManagerResultsContext extends EventContext {
 
-  public Set<ObjectID> getLookupIDs();
+  public ObjectIDSet getLookupIDs();
 
-  public Set<ObjectID> getNewObjectIDs();
+  public ObjectIDSet getNewObjectIDs();
 
   public void setResults(ObjectManagerLookupResults results);
 

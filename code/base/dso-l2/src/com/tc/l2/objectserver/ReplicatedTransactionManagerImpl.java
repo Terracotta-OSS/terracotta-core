@@ -39,7 +39,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -218,8 +217,8 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
         ServerTransaction st = (ServerTransaction) i.next();
         List changes = st.getChanges();
         List prunedChanges = new ArrayList(changes.size());
-        Set oids = new HashSet(changes.size());
-        Set newOids = new HashSet(changes.size());
+        ObjectIDSet oids = new ObjectIDSet();
+        ObjectIDSet newOids = new ObjectIDSet();
         for (Iterator j = changes.iterator(); j.hasNext();) {
           DNA dna = (DNA) j.next();
           ObjectID id = dna.getObjectID();
@@ -286,7 +285,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
       // XXX::NOTE:: Normally even though getChanges() returns a list, you will only find one change for each OID (Look
       // at ClientTransactionImpl) but here we break that. But hopefully no one is depending on THAT in the system.
       List compoundChanges = new ArrayList(changes.size() * 2);
-      Set oids = new HashSet(changes.size());
+      ObjectIDSet oids = new ObjectIDSet();
       boolean modified = false;
       for (Iterator i = changes.iterator(); i.hasNext();) {
         DNA dna = (DNA) i.next();

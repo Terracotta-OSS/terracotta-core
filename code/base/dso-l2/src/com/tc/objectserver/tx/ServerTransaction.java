@@ -13,11 +13,11 @@ import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
+import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Represents an atomic change to the states of objects on the server
@@ -45,9 +45,9 @@ public interface ServerTransaction extends GlobalTransaction {
 
   public TxnType getTransactionType();
 
-  public Set getObjectIDs();
+  public ObjectIDSet getObjectIDs();
 
-  public Set getNewObjectIDs();
+  public ObjectIDSet getNewObjectIDs();
 
   public Collection getNotifies();
 

@@ -31,13 +31,13 @@ import java.util.Set;
  */
 public class ClientStateManagerImpl implements ClientStateManager {
 
-  private static final State STARTED = new State("STARTED");
-  private static final State STOPPED = new State("STOPPED");
+  private static final State             STARTED = new State("STARTED");
+  private static final State             STOPPED = new State("STOPPED");
 
-  private State              state   = STARTED;
+  private State                          state   = STARTED;
 
-  private final Map<NodeID, ClientState>  clientStates;
-  private final TCLogger                  logger;
+  private final Map<NodeID, ClientState> clientStates;
+  private final TCLogger                 logger;
 
   // for testing
   public ClientStateManagerImpl(TCLogger logger, Map<NodeID, ClientState> states) {
@@ -50,7 +50,7 @@ public class ClientStateManagerImpl implements ClientStateManager {
   }
 
   public synchronized List<DNA> createPrunedChangesAndAddObjectIDTo(Collection<DNA> changes, BackReferences includeIDs,
-                                                               NodeID id, Set<ObjectID> objectIDs) {
+                                                                    NodeID id, Set<ObjectID> objectIDs) {
     assertStarted();
     ClientStateImpl clientState = getClientState(id);
     if (clientState == null) {
@@ -79,7 +79,6 @@ public class ClientStateManagerImpl implements ClientStateManager {
 
   public synchronized void addReference(NodeID id, ObjectID objectID) {
     assertStarted();
-    // logger.info("Adding Reference for " + id + " to " + objectID);
     ClientStateImpl c = getClientState(id);
     if (c != null) {
       c.addReference(objectID);
@@ -90,7 +89,6 @@ public class ClientStateManagerImpl implements ClientStateManager {
 
   public synchronized void removeReferences(NodeID id, Set<ObjectID> removed) {
     assertStarted();
-    // logger.info("Removing Reference for " + id + " to " + removed);
     ClientStateImpl c = getClientState(id);
     if (c != null) {
       c.removeReferences(removed);
@@ -150,6 +148,7 @@ public class ClientStateManagerImpl implements ClientStateManager {
       refs.addAll(oids);
       return oids;
     }
+
     Set<ObjectID> newReferences = new HashSet<ObjectID>();
     for (ObjectID oid : oids) {
       if (refs.add(oid)) {

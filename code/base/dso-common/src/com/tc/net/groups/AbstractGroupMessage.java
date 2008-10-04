@@ -12,6 +12,7 @@ import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.util.ObjectIDSet;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -137,7 +138,7 @@ public abstract class AbstractGroupMessage implements GroupMessage {
     }
   }
   
-  protected Set readObjectIDS(ObjectInput in, Set oids) throws IOException {
+  protected ObjectIDSet readObjectIDS(ObjectInput in, ObjectIDSet oids) throws IOException {
     int size = in.readInt();
     for (int i = 0; i < size; i++) {
       oids.add(new ObjectID(in.readLong()));

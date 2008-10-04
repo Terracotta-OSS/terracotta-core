@@ -14,16 +14,16 @@ import com.tc.object.msg.RequestRootMessage;
 import com.tc.object.msg.RequestRootMessageFactory;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.State;
 import com.tc.util.Util;
 
 import gnu.trove.THashMap;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -64,7 +64,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
                                                                                              TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_LOGGING_ENABLED);
   private final int                                defaultDepth;
   private State                                    state                     = RUNNING;
-  private Set                                      removeObjects             = new HashSet(256);
+  private ObjectIDSet                              removeObjects             = new ObjectIDSet();
   private final SessionManager                     sessionManager;
   private final TCLogger                           logger;
   private static final int                         REMOVE_OBJECTS_THRESHOLD  = 10000;
@@ -141,7 +141,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
     assertStarting("Attempt to request outstanding object requests while not STARTING");
     for (Iterator i = outstandingObjectRequests.values().iterator(); i.hasNext();) {
       RequestManagedObjectMessage rmom = createRequestManagedObjectMessage((ObjectRequestContext) i.next(),
-                                                                           Collections.EMPTY_SET);
+                                                                           new ObjectIDSet());
       rmom.send();
     }
     for (Iterator i = outstandingRootRequests.values().iterator(); i.hasNext();) {
@@ -203,7 +203,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
 
   private void sendRequest(ObjectRequestContext ctxt) {
     RequestManagedObjectMessage rmom = createRequestManagedObjectMessage(ctxt, removeObjects);
-    removeObjects = new HashSet(256);
+    removeObjects = new ObjectIDSet();
     ObjectID id = null;
     for (Iterator i = ctxt.getObjectIDs().iterator(); i.hasNext();) {
       id = (ObjectID) i.next();
@@ -218,9 +218,9 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
     requestMonitor.notifyObjectRequest(ctxt);
   }
 
-  private RequestManagedObjectMessage createRequestManagedObjectMessage(ObjectRequestContext ctxt, Set removed) {
+  private RequestManagedObjectMessage createRequestManagedObjectMessage(ObjectRequestContext ctxt, ObjectIDSet removed) {
     RequestManagedObjectMessage rmom = rmomFactory.newRequestManagedObjectMessage();
-    Set requestedObjectIDs = ctxt.getObjectIDs();
+    ObjectIDSet requestedObjectIDs = ctxt.getObjectIDs();
     rmom.initialize(ctxt, requestedObjectIDs, removed);
     return rmom;
   }
@@ -326,9 +326,9 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
     if (removeObjects.size() >= REMOVE_OBJECTS_THRESHOLD) {
       ObjectRequestContext ctxt = new ObjectRequestContextImpl(this.cip.getClientID(),
                                                                new ObjectRequestID(objectRequestIDCounter++),
-                                                               Collections.EMPTY_SET, -1);
+                                                               new ObjectIDSet(), -1);
       RequestManagedObjectMessage rmom = createRequestManagedObjectMessage(ctxt, removeObjects);
-      removeObjects = new HashSet(256);
+      removeObjects = new ObjectIDSet();
       rmom.send();
     }
   }
@@ -337,7 +337,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
 
     private final long            timestamp;
 
-    private final Set             objectIDs;
+    private final ObjectIDSet     objectIDs;
 
     private final ObjectRequestID requestID;
 
@@ -347,7 +347,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
 
     private ObjectRequestContextImpl(ClientID clientID, ObjectRequestID requestID, ObjectID objectID, int depth,
                                      ObjectID parentContext) {
-      this(clientID, requestID, new HashSet(), depth);
+      this(clientID, requestID, new ObjectIDSet(), depth);
       this.objectIDs.add(objectID);
       // XXX:: This is a hack for now. This parent context could be exposed to the L2 to make it more elegant.
       if (!parentContext.isNull()) {
@@ -355,7 +355,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
       }
     }
 
-    private ObjectRequestContextImpl(ClientID clientID, ObjectRequestID requestID, Set objectIDs, int depth) {
+    private ObjectRequestContextImpl(ClientID clientID, ObjectRequestID requestID, ObjectIDSet objectIDs, int depth) {
       this.timestamp = System.currentTimeMillis();
       this.clientID = clientID;
       this.requestID = requestID;
@@ -371,7 +371,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
       return this.requestID;
     }
 
-    public Set getObjectIDs() {
+    public ObjectIDSet getObjectIDs() {
       return this.objectIDs;
     }
 

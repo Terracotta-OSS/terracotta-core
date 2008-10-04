@@ -15,25 +15,25 @@ import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.util.Assert;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class ObjectSyncServerTransaction implements ServerTransaction {
 
   private final TransactionID       txnID;
-  private final Set                 oids;
+  private final ObjectIDSet         oids;
   private final List                changes;
   private final ServerTransactionID serverTxnID;
   private final Map                 rootsMap;
   private final NodeID              serverID;
 
-  public ObjectSyncServerTransaction(ServerTransactionID serverTransactionID, Set oids, int dnaCount, List changes,
-                                     Map rootsMap, NodeID serverID) {
+  public ObjectSyncServerTransaction(ServerTransactionID serverTransactionID, ObjectIDSet oids, int dnaCount,
+                                     List changes, Map rootsMap, NodeID serverID) {
     this.oids = oids;
     this.changes = changes;
     this.rootsMap = rootsMap;
@@ -77,14 +77,14 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
     return rootsMap;
   }
 
-  public Set getObjectIDs() {
+  public ObjectIDSet getObjectIDs() {
     return oids;
   }
 
   /*
    * All objects contained in ObjectSync Message are new Objects for the passive
    */
-  public Set getNewObjectIDs() {
+  public ObjectIDSet getNewObjectIDs() {
     return oids;
   }
 

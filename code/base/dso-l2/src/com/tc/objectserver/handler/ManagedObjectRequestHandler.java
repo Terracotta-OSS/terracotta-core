@@ -7,7 +7,6 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
-import com.tc.async.api.Sink;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
@@ -16,13 +15,13 @@ import com.tc.object.ObjectID;
 import com.tc.object.msg.RequestManagedObjectMessage;
 import com.tc.object.net.ChannelStats;
 import com.tc.objectserver.api.ObjectRequestManager;
-import com.tc.objectserver.context.ManagedObjectRequestContext;
+import com.tc.objectserver.context.ObjectRequestServerContextImpl;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.stats.counter.Counter;
+import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
-import java.util.Set;
 
 /**
  * Converts the request into a call to the objectManager with the proper next steps initialized I'm not convinced that
@@ -32,46 +31,45 @@ import java.util.Set;
  */
 public class ManagedObjectRequestHandler extends AbstractEventHandler {
 
-  private ClientStateManager         stateManager;
-  private ChannelStats               channelStats;
-  private Sink                       respondObjectRequestSink;
+  private ClientStateManager    stateManager;
+  private ChannelStats          channelStats;
 
-  private final Counter              globalObjectRequestCounter;
-  private final Counter              globalObjectFlushCounter;
-  private final ObjectRequestManager objectRequestManager;
+  private final Counter         globalObjectRequestCounter;
+  private final Counter         globalObjectFlushCounter;
+  private ObjectRequestManager  objectRequestManager;
 
-  private static final TCLogger      logger = TCLogging.getLogger(ManagedObjectRequestHandler.class);
+  private static final TCLogger logger = TCLogging.getLogger(ManagedObjectRequestHandler.class);
 
-  public ManagedObjectRequestHandler(Counter globalObjectRequestCounter, Counter globalObjectFlushCounter,
-                                     ObjectRequestManager objectRequestManager) {
+  public ManagedObjectRequestHandler(Counter globalObjectRequestCounter, Counter globalObjectFlushCounter) {
     this.globalObjectRequestCounter = globalObjectRequestCounter;
     this.globalObjectFlushCounter = globalObjectFlushCounter;
-    this.objectRequestManager = objectRequestManager;
   }
 
   public void handleEvent(EventContext context) {
     if (context instanceof RequestManagedObjectMessage) {
       handleEventFromClient((RequestManagedObjectMessage) context);
-    } else if (context instanceof ManagedObjectRequestContext) {
-      handleEventFromServer((ManagedObjectRequestContext) context);
+    } else if (context instanceof ObjectRequestServerContextImpl) {
+      handleEventFromServer((ObjectRequestServerContextImpl) context);
     }
   }
 
-  private void handleEventFromServer(ManagedObjectRequestContext context) {
+  private void handleEventFromServer(ObjectRequestServerContextImpl context) {
     Collection<ObjectID> ids = context.getLookupIDs();
     // XXX::TODO:: Server initiated lookups are not updated to the channel counter for now
     final int numObjectsRequested = ids.size();
     if (numObjectsRequested != 0) {
       globalObjectRequestCounter.increment(numObjectsRequested);
     }
-    objectRequestManager.requestObjects(context, context.getMaxRequestDepth());
+    objectRequestManager.requestObjects(context.getRequestedNodeID(), context.getRequestID(), context.getLookupIDs(),
+                                        context.getMaxRequestDepth(), context.isServerInitiated(), context
+                                            .getRequestingThreadName());
   }
 
   private void handleEventFromClient(RequestManagedObjectMessage rmom) {
     MessageChannel channel = rmom.getChannel();
-    Set<ObjectID> requestedIDs = rmom.getObjectIDs();
-    ClientID clientID = (ClientID)rmom.getSourceNodeID();
-    Set<ObjectID> removedIDs = rmom.getRemoved();
+    ObjectIDSet requestedIDs = rmom.getObjectIDs();
+    ClientID clientID = (ClientID) rmom.getSourceNodeID();
+    ObjectIDSet removedIDs = rmom.getRemoved();
     int maxRequestDepth = rmom.getRequestDepth();
 
     final int numObjectsRequested = requestedIDs.size();
@@ -93,11 +91,8 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
       logger.warn("Time to Remove " + numObjectsRemoved + " is " + t + " ms");
     }
     if (numObjectsRequested > 0) {
-      ManagedObjectRequestContext reqContext = new ManagedObjectRequestContext(clientID, rmom.getRequestID(),
-                                                                               requestedIDs, maxRequestDepth,
-                                                                               this.respondObjectRequestSink, rmom
-                                                                                   .getRequestingThreadName(), false);
-      objectRequestManager.requestObjects(reqContext, maxRequestDepth);
+      objectRequestManager.requestObjects(clientID, rmom.getRequestID(), requestedIDs, maxRequestDepth, false, rmom
+          .getRequestingThreadName());
     }
   }
 
@@ -106,7 +101,7 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
     ServerConfigurationContext oscc = (ServerConfigurationContext) context;
     stateManager = oscc.getClientStateManager();
     channelStats = oscc.getChannelStats();
-    this.respondObjectRequestSink = oscc.getStage(ServerConfigurationContext.RESPOND_TO_OBJECT_REQUEST_STAGE).getSink();
+    objectRequestManager = oscc.getObjectRequestManager();
   }
 
 }

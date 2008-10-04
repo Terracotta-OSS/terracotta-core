@@ -15,6 +15,7 @@ import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
+import com.tc.util.ObjectIDSet;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -22,18 +23,16 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
 
 public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEventContext {
 
   public static final int        MANAGED_OBJECT_SYNC_TYPE = 0;
 
-  private Set                    oids;
+  private ObjectIDSet            oids;
   private int                    dnaCount;
   private TCByteBuffer[]         dnas;
   private ObjectStringSerializer serializer;
@@ -53,7 +52,7 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
   protected void basicReadExternal(int msgType, ObjectInput in) throws IOException, ClassNotFoundException {
     Assert.assertEquals(MANAGED_OBJECT_SYNC_TYPE, msgType);
     servertxnID = new ServerTransactionID(NodeIDSerializer.readNodeID(in), new TransactionID(in.readLong()));
-    oids = readObjectIDS(in, new HashSet(500));
+    oids = readObjectIDS(in, new ObjectIDSet());
     dnaCount = in.readInt();
     readRootsMap(in);
     serializer = readObjectStringSerializer(in);
@@ -102,7 +101,7 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
     }
   }
 
-  public void initialize(ServerTransactionID stxnID, Set dnaOids, int count, TCByteBuffer[] serializedDNAs,
+  public void initialize(ServerTransactionID stxnID, ObjectIDSet dnaOids, int count, TCByteBuffer[] serializedDNAs,
                          ObjectStringSerializer objectSerializer, Map roots, long sqID) {
     this.servertxnID = stxnID;
     this.oids = dnaOids;
@@ -117,7 +116,7 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
     return dnaCount;
   }
 
-  public Set getOids() {
+  public ObjectIDSet getOids() {
     return oids;
   }
 
@@ -161,7 +160,7 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
   public long getSequenceID() {
     return this.sequenceID;
   }
-  
+
   public ServerTransactionID getServerTransactionID() {
     return servertxnID;
   }

@@ -15,6 +15,7 @@ import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TxnsInSystemCompletionLister;
 import com.tc.util.Assert;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.State;
 import com.tc.util.concurrent.CopyOnWriteArrayMap;
 
@@ -155,7 +156,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
       Assert.assertTrue(state == SYNC_STARTED);
       Assert.assertNull(syncingContext);
       if (isRootsMissing()) { return getMissingRootsSynccontext(sink); }
-      Set oids = new HashSet(count);
+      ObjectIDSet oids = new ObjectIDSet();
       for (Iterator i = missingOids.iterator(); i.hasNext() && --count >= 0;) {
         oids.add(i.next());
         // XXX::FIXME This has to be commented because ObjectIDSet2 doesnt support remove().

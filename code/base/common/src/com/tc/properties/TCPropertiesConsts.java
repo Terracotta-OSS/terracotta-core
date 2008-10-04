@@ -59,6 +59,7 @@ public interface TCPropertiesConsts {
    * maxObjectsToCommit         - Max number of Objects commited in one transaction in the commit stage and flush stage
    * maxObjectsInTxnObjGrouping - Max number of Objects allowed in the TransactionalObject grouping
    * maxTxnsInTxnObjectGrouping - Max number of Transations allowed in the TransactionalObject grouping
+   * maximumObjectsToLookUp     - Whats the maximum objects that l2 will lookup in one shot
    * fault.logging.enabled      - Enables/Disables logging of ManagedObject Faults from disk. If enabled, it logs every 100 faults.
    * loadObjectID.fastLoad      - Enables/Disables fast loading of ObjectIDs. Only effective for persistence with mode permanent-store.
    *                              This will speed up Object-Ids loading at restart but some overhead occurred at regular operations.
@@ -80,6 +81,8 @@ public interface TCPropertiesConsts {
   public static final String   L2_OBJECTMANAGER_MAXOBJECTS_TO_COMMIT                  = "l2.objectmanager.maxObjectsToCommit";
   public static final String   L2_OBJECTMANAGER_MAXOBJECTS_INTXNOBJ_GROUPING          = "l2.objectmanager.maxObjectsInTxnObjGrouping";
   public static final String   L2_OBJECTMANAGER_MAXTXNS_INTXNOBJECT_GROUPING          = "l2.objectmanager.maxTxnsInTxnObjectGrouping";
+  public static final String   L2_OBJECTMANAGER_OBJECT_REQUEST_SPLIT_SIZE             = "l2.objectmanager.objectrequest.split.size";
+  public static final String   L2_OBJECTMANAGER_OBJECT_REQUEST_LOGGING_ENABLED        = "l2.objectmanager.objectrequest.logging.enabled";
   public static final String   L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED                 = "l2.objectmanager.fault.logging.enabled";
   public static final String   L2_OBJECTMANAGER_PERSISTOR_LOGGING_ENABLED             = "l2.objectmanager.persistor.logging.enabled";
   public static final String   L2_OBJECTMANAGER_LOADOBJECTID_FASTLOAD                 = "l2.objectmanager.loadObjectID.fastLoad";
@@ -506,6 +509,7 @@ public interface TCPropertiesConsts {
   public static final String   HTTP_DEFAULT_SERVLET_ENABLED                           = "http.defaultservlet.enabled";
   public static final String   HTTP_DEFAULT_SERVLET_ATTRIBUTE_ALIASES                 = "http.defaultservlet.attribute.aliases";
   public static final String   HTTP_DEFAULT_SERVLET_ATTRIBUTE_DIR_ALLOWED             = "http.defaultservlet.attribute.dirallowed";
+
   /*********************************************************************************************************************
    * <code>
    * Section : Remote JMX

@@ -14,20 +14,19 @@ import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public final class TestServerTransaction implements ServerTransaction {
 
   public List                       changes = new ArrayList();
-  public Set                        oids    = new HashSet();
+  public ObjectIDSet                oids    = new ObjectIDSet();
   private ServerTransactionID       sid;
   private TxnBatchID                bid;
   private final GlobalTransactionID gtid;
@@ -74,7 +73,7 @@ public final class TestServerTransaction implements ServerTransaction {
     throw new ImplementMe();
   }
 
-  public Set getObjectIDs() {
+  public ObjectIDSet getObjectIDs() {
     return oids;
   }
 
@@ -98,7 +97,7 @@ public final class TestServerTransaction implements ServerTransaction {
     return false;
   }
 
-  public Set getNewObjectIDs() {
+  public ObjectIDSet getNewObjectIDs() {
     throw new ImplementMe();
   }
 

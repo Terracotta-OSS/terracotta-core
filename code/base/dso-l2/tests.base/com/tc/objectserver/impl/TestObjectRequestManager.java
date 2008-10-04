@@ -4,20 +4,30 @@
  */
 package com.tc.objectserver.impl;
 
+import com.tc.net.ClientID;
+import com.tc.object.ObjectRequestID;
 import com.tc.objectserver.api.ObjectRequestManager;
-import com.tc.objectserver.context.ManagedObjectRequestContext;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
+
+import java.util.Collection;
 
 public class TestObjectRequestManager implements ObjectRequestManager {
 
   public final NoExceptionLinkedQueue startCalls = new NoExceptionLinkedQueue();
 
-  public void requestObjects(ManagedObjectRequestContext responseContext, int maxReachableObjects) {
-    // NOP
-  }
-
   public void start() {
     startCalls.put(new Object());
+  }
+
+  public void requestObjects(ClientID clientID, ObjectRequestID requestID, ObjectIDSet ids, int maxRequestDepth,
+                             boolean serverInitiated, String requestingThreadName) {
+    // not implemented
+  }
+
+  public void sendObjects(ClientID requestedNodeID, Collection objs, ObjectIDSet requestedObjectIDs,
+                          ObjectIDSet missingObjectIDs, boolean isServerInitiated, int maxRequestDepth) {
+    // not implemented
   }
 
 }
