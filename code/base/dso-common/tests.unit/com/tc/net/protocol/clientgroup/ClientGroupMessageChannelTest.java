@@ -400,8 +400,10 @@ public class ClientGroupMessageChannelTest extends TCTestCase {
     assertNull(groupChannel.getLocalAddress());
 
     groupChannel.open();
-    createAndSendMessage();
-    waitForMessages(0, 1);
+    for (int i = 0; i < L2_COUNT; ++i) {
+      createAndSendMessage(i);
+      waitForMessages(i, 1);
+    }
 
     for (int i = 0; i < L2_COUNT; ++i) {
       TCSocketAddress clientRemote = groupChannel.getChannel(groupIDs[i]).getRemoteAddress();
