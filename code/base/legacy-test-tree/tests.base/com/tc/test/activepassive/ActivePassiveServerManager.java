@@ -36,51 +36,50 @@ import javax.management.MBeanServerInvocationHandler;
 import javax.management.remote.JMXConnector;
 
 public class ActivePassiveServerManager extends MultipleServerManager {
-  private static final String          HOST               = "localhost";
-  private static final String          SERVER_NAME        = "testserver";
-  private static final boolean         DEBUG              = false;
-  private static final int             NULL_VAL           = -1;
+  private static final String        HOST               = "localhost";
+  private static final String        SERVER_NAME        = "testserver";
+  private static final boolean       DEBUG              = false;
+  private static final int           NULL_VAL           = -1;
 
-  private final File                   tempDir;
-  private final PortChooser            portChooser;
-  private final String                 configModel;
+  private final File                 tempDir;
+  private final PortChooser          portChooser;
+  private final String               configModel;
 
-  private final int                    serverCount;
-  private final String                 serverCrashMode;
-  private final long                   serverCrashWaitTimeInSec;
-  private final String                 serverPersistence;
-  private final boolean                serverNetworkShare;
-  private MultipleServersConfigCreator serverConfigCreator;
-  private final String                 configFileLocation;
-  private final File                   configFile;
+  private final int                  serverCount;
+  private final String               serverCrashMode;
+  private final long                 serverCrashWaitTimeInSec;
+  private final String               serverPersistence;
+  private final boolean              serverNetworkShare;
+  private final String               configFileLocation;
+  private final File                 configFile;
 
-  private final ServerInfo[]           servers;
-  private final int[]                  dsoPorts;
-  private final int[]                  jmxPorts;
-  private final int[]                  l2GroupPorts;
-  private final String[]               serverNames;
-  private final TCServerInfoMBean[]    tcServerInfoMBeans;
-  private final JMXConnector[]         jmxConnectors;
+  private final ServerInfo[]         servers;
+  private final int[]                dsoPorts;
+  private final int[]                jmxPorts;
+  private final int[]                l2GroupPorts;
+  private final String[]             serverNames;
+  private final TCServerInfoMBean[]  tcServerInfoMBeans;
+  private final JMXConnector[]       jmxConnectors;
 
-  private final List                   errors;
+  private final List                 errors;
 
-  private int                          activeIndex        = NULL_VAL;
-  private int                          lastCrashedIndex   = NULL_VAL;
-  private ActivePassiveServerCrasher   serverCrasher;
-  private int                          maxCrashCount;
-  private final TestState              testState;
-  private Random                       random;
-  private long                         seed;
-  private final File                   javaHome;
-  private int                          pid                = -1;
-  private List                         jvmArgs            = null;
-  private final boolean                isProxyL2groupPorts;
-  private final int[]                  proxyL2GroupPorts;
-  protected ProxyConnectManager[]      proxyL2Managers;
+  private int                        activeIndex        = NULL_VAL;
+  private int                        lastCrashedIndex   = NULL_VAL;
+  private ActivePassiveServerCrasher serverCrasher;
+  private int                        maxCrashCount;
+  private final TestState            testState;
+  private Random                     random;
+  private long                       seed;
+  private final File                 javaHome;
+  private int                        pid                = -1;
+  private List                       jvmArgs            = null;
+  private final boolean              isProxyL2groupPorts;
+  private final int[]                proxyL2GroupPorts;
+  protected ProxyConnectManager[]    proxyL2Managers;
 
   // this is used when active-active tests are run. This will help in differentiating between the names in the different
   // groups
-  private int                          startIndexOfServer = 0;
+  private int                        startIndexOfServer = 0;
 
   public ActivePassiveServerManager(boolean isActivePassiveTest, File tempDir, PortChooser portChooser,
                                     String configModel, MultipleServersTestSetupManager setupManger, File javaHome,

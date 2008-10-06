@@ -11,10 +11,11 @@ import java.util.List;
 
 public abstract class MultipleServerManager {
 
-  public static final String CONFIG_FILE_NAME = "multiple-servers-config.xml";
-  
+  public static final String                      CONFIG_FILE_NAME = "multiple-servers-config.xml";
+
   protected final MultipleServersTestSetupManager setupManger;
-  
+  protected MultipleServersConfigCreator          serverConfigCreator;
+
   public MultipleServerManager(MultipleServersTestSetupManager setupManger) {
     this.setupManger = setupManger;
   }

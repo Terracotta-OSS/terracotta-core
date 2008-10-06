@@ -8,7 +8,6 @@ import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.test.GroupData;
 import com.tc.test.MultipleServerManager;
 import com.tc.test.MultipleServersConfigCreator;
-import com.tc.test.MultipleServersCrashMode;
 import com.tc.test.activepassive.ActivePassiveServerManager;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 import com.tc.test.proxyconnect.ProxyConnectManager;
@@ -63,9 +62,9 @@ public class ActiveActiveServerManager extends MultipleServerManager {
 
     groupsData = createGroups();
     // Create a active-active config creator and then write the config
-    MultipleServersConfigCreator creator = new MultipleServersConfigCreator(this.setupManger, groupsData, configModel,
-                                                                            configFile, tempDir, configFactory);
-    creator.writeL2Config();
+    serverConfigCreator = new MultipleServersConfigCreator(this.setupManger, groupsData, configModel, configFile,
+                                                           tempDir, configFactory);
+    serverConfigCreator.writeL2Config();
   }
 
   private GroupData[] createGroups() {
@@ -92,10 +91,6 @@ public class ActiveActiveServerManager extends MultipleServerManager {
   }
 
   private ActivePassiveTestSetupManager createActivePassiveTestSetupManager(int grpIndex) {
-    if (setupManger.getGroupMemberCount(grpIndex) == 1
-        && !setupManger.getServerCrashMode().equals(MultipleServersCrashMode.NO_CRASH)) throw new AssertionError(
-                                                                                                                 "An active-server group with only one server should have the crash mode set as NO_CRASH");
-
     ActivePassiveTestSetupManager testSetupManager = new ActivePassiveTestSetupManager();
     testSetupManager.setMaxCrashCount(setupManger.getMaxCrashCount());
     testSetupManager.setServerCount(setupManger.getGroupMemberCount(grpIndex));
