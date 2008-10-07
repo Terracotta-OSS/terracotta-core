@@ -60,7 +60,7 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
 
 	public synchronized void runGC() {
 		if (!isEnabled()) {
-			throw new UnsupportedOperationException(
+			logger.warn(
 					"Cannot run DGC because mBean is not enabled.");
 		}
 		if (gcController == null) {
@@ -68,7 +68,7 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
 		}
 		
 		if (!gcController.isGCStarted()) {
-			throw new UnsupportedOperationException(
+			logger.warn(
 					"Cannot run DGC externally because this server "
 							+ "is in PASSIVE state and DGC is disabled.");
 		}
