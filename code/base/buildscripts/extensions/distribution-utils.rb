@@ -120,6 +120,16 @@ module DistributionUtils
     else
       @config[symbol.to_s] || default
     end
+    
+    # append revision number to kitname and root directory in
+    # case of building a nightly
+    if @build_environment.version =~ /nightly/
+      case symbol
+      when :kit_name_pattern then out += "-revrevision"
+      when :root_directory then out += "-revrevision"
+      end
+    end
+    
     out = interpolate(out) unless out.nil?
     out
   end

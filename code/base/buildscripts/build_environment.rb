@@ -79,8 +79,7 @@ class BuildEnvironment < Environment
   # property is set in the configuration source supplied in the constructor.
   def version
     return @version unless @version.nil?
-    @version = @config_source['version'] || maven_version() || 'unknown'        
-    @version.gsub!(/revision/, current_revision.to_s)    
+    @version = @config_source['version'] || maven_version() || 'unknown'  
     @version
   end
   
