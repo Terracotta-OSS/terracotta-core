@@ -244,7 +244,7 @@ public class TCPropertiesImpl implements TCProperties {
     String val = props.getProperty(key);
     if (val == null && !missingOkay) { throw new AssertionError("TCProperties : Property not found for " + key); }
     if (!initialized) {
-      logger.info("The property \"" + key + "\" was read before the initialization is complete. \"" + key + "\" = "
+      logger.info("The property \"" + key + "\" was read before the initialization completed. \"" + key + "\" = "
                   + val);
     }
     return val;
