@@ -27,7 +27,7 @@ public class CreateRescueCandidatesYoungGCTest extends YoungGCTestAndActivePassi
   
   // start only 1 L1
   protected int getNodeCount() {
-    return 4;
+    return 3;
   }
   
   protected void setExtraJvmArgs(final ArrayList jvmArgs) {
