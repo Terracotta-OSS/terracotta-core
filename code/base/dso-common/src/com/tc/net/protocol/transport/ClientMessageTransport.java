@@ -121,7 +121,6 @@ public class ClientMessageTransport extends MessageTransportBase {
   // TODO :: come back
   public void closeEvent(TCConnectionEvent event) {
     if (isNotOpen()) return;
-    status.reset();
     super.closeEvent(event);
   }
 
