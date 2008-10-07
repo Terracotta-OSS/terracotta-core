@@ -2,7 +2,7 @@
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tctest;
+package com.tc.net.protocol.tcm;
 
 import com.tc.cluster.Cluster;
 import com.tc.config.schema.SettableConfigItem;
@@ -14,6 +14,9 @@ import com.tc.lang.StartupHelper;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogging;
+import com.tc.net.core.MockTCConnection;
+import com.tc.net.core.TCConnection;
+import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.ClientMessageChannelImpl;
 import com.tc.net.protocol.tcm.ServerMessageChannelImpl;
@@ -22,6 +25,7 @@ import com.tc.net.protocol.tcm.TCMessageSink;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.UnsupportedMessageTypeException;
 import com.tc.net.protocol.tcm.msgs.PingMessage;
+import com.tc.net.protocol.transport.ClientMessageTransport;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.object.DistributedObjectClient;
 import com.tc.object.PauseListener;
@@ -39,7 +43,7 @@ import com.tc.util.concurrent.ThreadUtil;
 
 public class TwoDisconnectEventsTest extends BaseDSOTestCase {
 
-  public void testClientServerNodeID() throws Exception {
+  public void testTwoDisconnectEvents() throws Exception {
     final PortChooser pc = new PortChooser();
     final int dsoPort = pc.chooseRandomPort();
     final int jmxPort = pc.chooseRandomPort();
@@ -86,8 +90,18 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
 
         // two transport disconnect events to client.
         ClientMessageChannelImpl cmci = (ClientMessageChannelImpl)clientChannel;
-        cmci.notifyTransportDisconnected(null);
-        cmci.notifyTransportDisconnected(null);
+        ClientMessageTransport cmt = (ClientMessageTransport)cmci.getSendLayer();
+        cmt.setAllowConnectionReplace(true);
+
+        // send first event
+        TCConnection tccomm = new MockTCConnection();
+        cmt.attachNewConnection(tccomm);
+        cmt.closeEvent(new TCConnectionEvent(tccomm));
+
+        // send second event
+        tccomm = new MockTCConnection();
+        cmt.attachNewConnection(tccomm);
+        cmt.closeEvent(new TCConnectionEvent(tccomm));
         ThreadUtil.reallySleep(200);
         msg = clientChannel.createMessage(TCMessageType.PING_MESSAGE);
         Assert.assertEquals(msg.getLocalSessionID(), cmci.getSessionID());

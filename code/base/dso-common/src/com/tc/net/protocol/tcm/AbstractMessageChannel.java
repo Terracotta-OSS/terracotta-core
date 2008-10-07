@@ -309,4 +309,10 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
       }
     }
   }
+  
+  // for testing purpose
+  protected NetworkLayer getSendLayer() {
+    return sendLayer;
+  }
+
 }
