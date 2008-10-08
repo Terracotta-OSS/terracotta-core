@@ -46,6 +46,8 @@ import com.tc.net.protocol.tcm.HydrateHandler;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.MessageMonitorImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.net.protocol.transport.ConnectionPolicy;
+import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.bytecode.Manager;
@@ -233,6 +235,16 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     return (cmc);
   }
 
+  /*
+   * Overwrite this routine to do active-active channel
+   */
+  protected CommunicationsManager createCommunicationsManager(MessageMonitor monitor,
+                                                              NetworkStackHarnessFactory stackHarnessFactory,
+                                                              ConnectionPolicy connectionPolicy,
+                                                              HealthCheckerConfig aConfig) {
+    return new CommunicationsManagerImpl(monitor, stackHarnessFactory, connectionPolicy, aConfig);
+  }
+
   private void populateStatisticsRetrievalRegistry(final StatisticsRetrievalRegistry registry,
                                                    final StageManager stageManager,
                                                    final MessageMonitor messageMonitor,
@@ -295,9 +307,9 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     MessageMonitor mm = MessageMonitorImpl.createMonitor(tcProperties, logger);
 
-    communicationsManager = new CommunicationsManagerImpl(mm, networkStackHarnessFactory, new NullConnectionPolicy(),
-                                                          new HealthCheckerConfigImpl(l1Properties
-                                                              .getPropertiesFor("healthcheck.l2"), "DSO Client"));
+    communicationsManager = createCommunicationsManager(mm, networkStackHarnessFactory, new NullConnectionPolicy(),
+                                                        new HealthCheckerConfigImpl(l1Properties
+                                                            .getPropertiesFor("healthcheck.l2"), "DSO Client"));
 
     logger.debug("Created CommunicationsManager.");
 

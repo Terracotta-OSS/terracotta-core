@@ -116,14 +116,17 @@ public class ClientGroupMessageChannelImpl extends ClientMessageChannelImpl impl
     try {
       // open coordinator channel
       ch = getChannel(coordinatorGroupID);
-      nid = ch.open();
-      setLocalNodeID(new ClientID(getChannelID()));
-      logger.info("Opened sub-channel(coordinator): " + connectionInfo(ch));
+      if (!ch.isOpen()) {
+        nid = ch.open();
+        setLocalNodeID(new ClientID(getChannelID()));
+        logger.info("Opened sub-channel(coordinator): " + connectionInfo(ch));
+      }
 
       for (Iterator i = groupChannelMap.keySet().iterator(); i.hasNext();) {
         GroupID id = (GroupID) i.next();
         if (id == coordinatorGroupID) continue;
         ch = getChannel(id);
+        if(ch.isOpen()) continue;
         ch.setLocalNodeID(getLocalNodeID());
         ch.open();
         logger.info("Opened sub-channel: " + connectionInfo(ch));

@@ -5,9 +5,10 @@
 package com.tc.net.protocol.clientgroup;
 
 import com.tc.net.core.ConnectionAddressProvider;
+import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.object.session.SessionProvider;
 
-public interface ClientGroupCommunicationsManager  {
+public interface ClientGroupCommunicationsManager extends CommunicationsManager {
 
   public ClientGroupMessageChannel createClientGroupChannel(final SessionProvider sessionProvider,
                                                             final int maxReconnectTries, final int timeout,
