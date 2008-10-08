@@ -65,6 +65,10 @@ public class ActiveActiveServerManager extends MultipleServerManager {
     serverConfigCreator = new MultipleServersConfigCreator(this.setupManger, groupsData, configModel, configFile,
                                                            tempDir, configFactory);
     serverConfigCreator.writeL2Config();
+
+    for (int i = 0; i < activePassiveServerManagers.length; i++) {
+      activePassiveServerManagers[i].setConfigCreator(serverConfigCreator);
+    }
   }
 
   private GroupData[] createGroups() {

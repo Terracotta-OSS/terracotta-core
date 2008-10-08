@@ -81,14 +81,6 @@ public class ActivePassiveServerManager extends MultipleServerManager {
   // groups
   private int                        startIndexOfServer = 0;
 
-  public ActivePassiveServerManager(boolean isActivePassiveTest, File tempDir, PortChooser portChooser,
-                                    String configModel, MultipleServersTestSetupManager setupManger, File javaHome,
-                                    TestTVSConfigurationSetupManagerFactory configFactory) throws Exception {
-    this(isActivePassiveTest, tempDir, portChooser, configModel, setupManger, javaHome, configFactory, new ArrayList(),
-         false);
-
-  }
-
   // Should be called directly when an active-passive test is to be run.
   public ActivePassiveServerManager(boolean isActivePassiveTest, File tempDir, PortChooser portChooser,
                                     String configModel, MultipleServersTestSetupManager setupManger, File javaHome,
@@ -174,6 +166,12 @@ public class ActivePassiveServerManager extends MultipleServerManager {
       random = new Random(seed);
       System.out.println("***** Random number generator seed=[" + seed + "]");
     }
+  }
+
+  public void setConfigCreator(MultipleServersConfigCreator creator) {
+    if (this.serverConfigCreator != null) { throw new AssertionError(
+                                                                     "MultipleServersConfigCreator should not be created again"); }
+    this.serverConfigCreator = creator;
   }
 
   public ProxyConnectManager[] getL2ProxyManagers() {
@@ -584,7 +582,9 @@ public class ActivePassiveServerManager extends MultipleServerManager {
     debugPrintln("***** lastCrashedIndex[" + lastCrashedIndex + "] ");
 
     debugPrintln("***** about to search for active  threadId=[" + Thread.currentThread().getName() + "]");
-    if (serverCount > 1) activeIndex = getActiveIndex(true);
+    if (serverCount > 1) {
+      activeIndex = getActiveIndex(true);
+    }
     debugPrintln("***** activeIndex[" + activeIndex + "] ");
   }
 
@@ -685,6 +685,9 @@ public class ActivePassiveServerManager extends MultipleServerManager {
                                                                                                         .getDsoPort()
                                                                                                     + "] is not running as expected!"); }
       resetLastCrashedIndex();
+      if (serverCount == 1) {
+        activeIndex = getActiveIndex(true);
+      }
     } else {
       throw new AssertionError("No crashed servers to restart.");
     }
