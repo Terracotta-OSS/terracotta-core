@@ -27,7 +27,6 @@ class BuildModuleSetBuilder
 
     @filenames.each do |filename|
       if FileTest.file?(filename.to_s)
-        module_base_dir = FilePath.new(File.dirname(filename.relative_path_from(@root_dir).to_s))
         File.open(filename.to_s) do |file|
           yaml = YAML.load(file)
 
@@ -37,14 +36,7 @@ class BuildModuleSetBuilder
             if data = a_module.values[0]
               if module_options = data['options']
                 module_options.each_pair { |k, v| options[k.to_sym] = v }
-                bare_module_name = a_module.keys.first
-                if module_base_dir == @root_dir
-                  module_path = FilePath.new(bare_module_name)
-                else
-                  module_path = FilePath.new(module_base_dir, bare_module_name)
-                end
-
-                options[:name]         = module_path.to_s
+                options[:name]         = a_module.keys[0]
                 options[:dependencies] = data['dependencies'] || []
               end
             end
