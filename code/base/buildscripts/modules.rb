@@ -246,7 +246,7 @@ class BuildModule
     # Given a hash, creates a new BuildModule from it and adds it to the set. The hash
     # must contain exactly the data required by BuildModule#initialize (see above).
     def add(data)
-      @modules << BuildModule.new(@root_dir, self, data)
+      @modules << BuildModule.new(data[:root_dir] || @root_dir, self, data)
     end
 
     # Returns the module with the given name, or raises an exception if no such module
