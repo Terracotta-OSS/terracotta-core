@@ -76,7 +76,10 @@ class SvnUpdate
     rescue
       currently_good_rev = -1
     end
-    currently_good_rev
+	
+	# XXX: need is a temporary hack so that EE monkey can progress.
+    # Need to find a way to take into account of both EE rev and OS rev for monkey-police
+	@topdir =~ /community/ ? -1 : current_good_rev
   end
 
   def clean_up_temp_dir
