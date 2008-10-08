@@ -117,9 +117,9 @@ bundled_components:
             kit-resources:
               - tim-get.properties
         - ui-configurator
-        - ../../../code/base/ent-common
-        - ../../../code/base/ent-deploy
-        - ../../../code/base/ent-ui-configurator
+        - ent-common
+        - ent-deploy
+        - ent-ui-configurator
 bundled_modules:
   - core:
       install_directory: modules
