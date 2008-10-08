@@ -123,7 +123,7 @@ module DistributionUtils
     
     # append revision number to kitname and root directory in
     # case of building a nightly
-    if @build_environment.version =~ /nightly/
+    if @build_environment.version =~ /nightly/ && out =~ /terracotta/
       case symbol
       when :kit_name_pattern then out += "-revrevision"
       when :root_directory then out += "-revrevision"
