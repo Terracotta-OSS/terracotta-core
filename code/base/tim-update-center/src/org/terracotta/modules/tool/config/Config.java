@@ -4,6 +4,7 @@
  */
 package org.terracotta.modules.tool.config;
 
+import org.apache.commons.lang.StringUtils;
 import org.terracotta.modules.tool.util.PropertiesInterpolator;
 
 import java.io.File;
@@ -33,7 +34,11 @@ public class Config {
     properties = new PropertiesInterpolator().interpolated(properties);
     this.setTcVersion(getProperty(properties, "tcVersion"));
     this.setIncludeSnapshots(Boolean.parseBoolean(getProperty(properties, "includeSnapshots")));
-    this.setDataFile(new File(getProperty(properties, "dataFile")));
+
+    String path = getProperty(properties, "dataFile");
+    if (StringUtils.isEmpty(path)) path = new File(System.getProperty("java.io.tmpdir"), "tim-get.index").toString();
+    this.setDataFile(new File(path));
+
     this.setDataFileUrl(createUrl(getProperty(properties, "dataFileUrl"), "dataFileUrl is not a valid URL"));
     this.setModulesDirectory(new File(getProperty(properties, "modulesDir")));
     // this.setDataCacheExpirationInSeconds(Long.parseLong(getProperty(properties, "dataCacheExpirationInSeconds")));
