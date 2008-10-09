@@ -17,6 +17,8 @@ import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
 import com.tc.objectserver.impl.ObjectManagerConfig;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
@@ -24,6 +26,7 @@ import com.tc.util.State;
 import com.tc.util.concurrent.LifeCycleState;
 import com.tc.util.concurrent.NullLifeCycleState;
 import com.tc.util.concurrent.StoppableThread;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -41,6 +44,16 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
 
   static final TCLogger                            logger                      = TCLogging
                                                                                    .getLogger(MarkAndSweepGarbageCollector.class);
+
+  private static final long                        THROTTLE_GC_MILLIS          = TCPropertiesImpl
+                                                                                   .getProperties()
+                                                                                   .getLong(
+                                                                                            TCPropertiesConsts.L2_OBJECTMANAGER_DGC_THROTTLE_TIME);
+
+  private static final long                        REQUESTS_PER_THROTTLE       = TCPropertiesImpl
+                                                                                   .getProperties()
+                                                                                   .getLong(
+                                                                                            TCPropertiesConsts.L2_OBJECTMANAGER_DGC_REQUEST_PER_THROTTLE);
 
   private static final ChangeCollector             NULL_CHANGE_COLLECTOR       = new ChangeCollector() {
                                                                                  public void changed(
@@ -354,6 +367,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     }
 
     public Set getObjectReferencesFrom(ObjectID id) {
+      throttleIfNecessary();
       ManagedObject obj = objectManager.getObjectByIDOrNull(id);
       if (obj == null) {
         logger.warn("Looked up a new Object before its initialized, skipping : " + id);
@@ -362,6 +376,14 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
       Set references = obj.getObjectReferences();
       objectManager.releaseReadOnly(obj);
       return references;
+    }
+
+    private int request_count = 0;
+
+    private void throttleIfNecessary() {
+      if (THROTTLE_GC_MILLIS > 0 && ++request_count % REQUESTS_PER_THROTTLE == 0) {
+        ThreadUtil.reallySleep(THROTTLE_GC_MILLIS);
+      }
     }
 
     public Set getRescueIDs() {
