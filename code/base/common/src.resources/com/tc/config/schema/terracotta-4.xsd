@@ -961,6 +961,8 @@
         putting a trial license onto your production server and
         then panicking thirty days later when that license
         expires.)
+        DEPRECATED: license file must be installed to Terracotta
+        installation directory.
       </xs:documentation>
     </xs:annotation>
     <xs:restriction base="xs:token">
@@ -983,6 +985,8 @@
             hostname; this allows flexibility in the case
             where different servers have their license file
             in different locations.
+            DEPRECATED: license file must be installed to Terracotta
+            installation directory.
           </xs:documentation>
         </xs:annotation>
       </xs:element>
@@ -998,6 +1002,8 @@
             license onto your production server and then
             panicking thirty days later when that license
             expires.)
+            DEPRECATED: license file must be installed to Terracotta
+            installation directory.
           </xs:documentation>
         </xs:annotation>
       </xs:element>
@@ -1022,6 +1028,8 @@
             limited 'initial' mode, which limits server
             runtime and limits the maximum number of
             simultaneously-connected clients.
+            DEPRECATED: license file must be installed to Terracotta
+            installation directory.
           </xs:documentation>
         </xs:annotation>
       </xs:element>
