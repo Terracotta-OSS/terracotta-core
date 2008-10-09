@@ -4,13 +4,14 @@
  */
 package com.tc.runtime;
 
+import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
+
 import com.tc.exception.TCRuntimeException;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.util.runtime.Os;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -18,7 +19,7 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
 
   private static final TCLogger logger    = TCLogging.getLogger(TCMemoryManagerImpl.class);
 
-  private final List            listeners = new ArrayList();
+  private final List            listeners = new CopyOnWriteArrayList();
 
   private int                   leastCount;
   private final long            sleepInterval;
@@ -42,12 +43,12 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
                                                          + " Outside range"); }
   }
 
-  public synchronized void registerForMemoryEvents(MemoryEventsListener listener) {
+  public void registerForMemoryEvents(MemoryEventsListener listener) {
     listeners.add(listener);
     startMonitorIfNecessary();
   }
 
-  public synchronized void unregisterForMemoryEvents(MemoryEventsListener listener) {
+  public void unregisterForMemoryEvents(MemoryEventsListener listener) {
     listeners.remove(listener);
     stopMonitorIfNecessary();
   }
@@ -74,7 +75,7 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
     }
   }
 
-  private synchronized void fireMemoryEvent(MemoryUsage mu) {
+  private void fireMemoryEvent(MemoryUsage mu) {
     for (Iterator i = listeners.iterator(); i.hasNext();) {
       MemoryEventsListener listener = (MemoryEventsListener) i.next();
       listener.memoryUsed(mu);
