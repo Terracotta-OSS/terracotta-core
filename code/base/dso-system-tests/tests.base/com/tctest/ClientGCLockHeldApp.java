@@ -44,7 +44,6 @@ public class ClientGCLockHeldApp extends AbstractTransparentApp {
     config.addWriteAutolock(methodExpression);
     new SynchronizedIntSpec().visit(visitor, config);
     new CyclicBarrierSpec().visit(visitor, config);
-
   }
 
   public void run() {
@@ -60,31 +59,18 @@ public class ClientGCLockHeldApp extends AbstractTransparentApp {
     thread.start();
 
     Stopwatch stopwatch = new Stopwatch().start();
-
-    Runtime runtime = Runtime.getRuntime();
-    long maxMemory = runtime.maxMemory();
-
-    System.out.println("maxMemory: " + maxMemory);
-
-    int locksSize = (int) (maxMemory / 15000);
-
-    System.out.println("locksSize = " + locksSize);
+   
     while (stopwatch.getElapsedTime() < (1000 * 60 * MINUTES_TEST_RUN)) {
 
-      for (int i = 0; i < locksSize; i++) {
-
-        SynchronizedInt counter = new SynchronizedInt(0);
-        synchronized (lockList) {
-          lockList.add(counter);
-        }
-        counter.increment();
+      SynchronizedInt counter = new SynchronizedInt(0);
+      synchronized (lockList) {
+        lockList.add(counter);
       }
-      // now sleep for awhile, so locks created can be GCed, if there
-      // is a bug, then it won't be GCed and eventually OOME
-      try {
-        Thread.sleep(61 * 1000);
-      } catch (InterruptedException e) {
-        throw new AssertionError(e);
+      
+      counter.increment();
+
+      synchronized (lockList) {
+        lockList.remove(counter);
       }
     }
   }
