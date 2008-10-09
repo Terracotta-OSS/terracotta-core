@@ -14,7 +14,6 @@ import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
@@ -25,6 +24,9 @@ import com.tc.objectserver.persistence.api.PersistentCollectionsUtil;
 import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor.SleepycatPersistorBase;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.statistics.util.NullStatsRecorder;
+import com.tc.statistics.util.StatsPrinter;
+import com.tc.statistics.util.StatsRecorder;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
@@ -33,10 +35,10 @@ import com.tc.util.NullSyncObjectIdSet;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.SyncObjectIdSet;
 import com.tc.util.SyncObjectIdSetImpl;
-import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.sequence.MutableSequence;
 
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -46,14 +48,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase implements ManagedObjectPersistor,
     PrettyPrintable {
-
-  private final static TCLogger                statsLogger           = TCLogging.getLogger("com.tc.StatsLogger");
 
   private static final Comparator              MO_COMPARATOR         = new Comparator() {
                                                                        public int compare(Object o1, Object o2) {
@@ -79,7 +76,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
                                                                          .getProperties()
                                                                          .getBoolean(
                                                                                      TCPropertiesConsts.L2_OBJECTMANAGER_PERSISTOR_LOGGING_ENABLED);
-  private static final boolean                 measurePerf           = TCPropertiesImpl
+  private static final boolean                 MEASURE_PERF          = TCPropertiesImpl
                                                                          .getProperties()
                                                                          .getBoolean(
                                                                                      TCPropertiesConsts.L2_OBJECTMANAGER_PERSISTOR_MEASURE_PERF,
@@ -97,12 +94,10 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   private SerializationAdapter                 serializationAdapter;
   private final SleepycatCollectionsPersistor  collectionsPersistor;
   private final ObjectIDManager                objectIDManager;
-  private final ConcurrentHashMap              statsRecords          = new ConcurrentHashMap();
-  private int                                  deleteCounter;
-  private int                                  deletePersistentStateCounter;
-  private long                                 deleteTime;
   private final SyncObjectIdSet                extantObjectIDs;
   private final SyncObjectIdSet                extantMapTypeOidSet;
+  private final StatsRecorder                  commitStats;
+  private final StatsRecorder                  perfMeasureStats;
 
   public ManagedObjectPersistorImpl(TCLogger logger, ClassCatalog classCatalog,
                                     SerializationAdapterFactory serializationAdapterFactory, DBEnvironment env,
@@ -138,8 +133,27 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
     this.extantObjectIDs = getAllObjectIDs();
     this.extantMapTypeOidSet = getAllMapsObjectIDs();
 
-    if (STATS_LOGGING_ENABLED) startStatsPrinter();
-    if (measurePerf) startDeleteOperPrinter();
+    if (STATS_LOGGING_ENABLED) {
+      commitStats = new StatsPrinter("MO Commit Stats Printer", 5000, new MessageFormat("Commits in the Last {0} ms"),
+                                     new MessageFormat(
+                                     // hate this stupid formatter, can't figure how to prefix with space
+                                     // " count = {0,number,000000}   bytes = {1,number,0000000}   new = {2,number, 0000}"
+                                                       " count = {0}   bytes = {1}   new = {2}"), true);
+    } else {
+      commitStats = new NullStatsRecorder();
+    }
+    if (MEASURE_PERF) {
+      perfMeasureStats = new StatsPrinter(
+                                          "MO Delete Stats Printer",
+                                          60000,
+                                          new MessageFormat("Deletes in the Last {0} ms"),
+                                          new MessageFormat(
+                                          // " count = {0,number,#}   collections mo state = {1,number,#}   time taken = {2,number, #}"
+                                                            " total count = {0}   collections mo state = {1}   time taken = {2} nanos"),
+                                          false);
+    } else {
+      perfMeasureStats = new NullStatsRecorder();
+    }
   }
 
   public int getObjectCount() {
@@ -374,7 +388,9 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
           logger.debug("saveCount: " + saveCount);
         }
       }
-      if (STATS_LOGGING_ENABLED) updateStats(managedObject, length);
+      if (STATS_LOGGING_ENABLED) {
+        updateStats(managedObject, length);
+      }
     } catch (DatabaseException de) {
       throw new TCDatabaseException(de);
     }
@@ -387,65 +403,11 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   }
 
   private void record(String className, int length, boolean isNew) {
-    StatsRecord r = (StatsRecord) statsRecords.get(className);
-    if (r == null) {
-      r = new StatsRecord(className);
-      statsRecords.put(className, r);
-    }
-    r.update(length, isNew);
+    commitStats.updateStats(className, 1, length, (isNew ? 1 : 0)); // count, bytes written, new
   }
 
-  private void startStatsPrinter() {
-    Thread t = new Thread(new Runnable() {
-      public void run() {
-        while (true) {
-          ThreadUtil.reallySleep(5000);
-          statsLogger.info("Commits in last 5 seconds");
-          statsLogger.info("===========================");
-          StatsRecord total = new StatsRecord("TOTAL");
-          for (Iterator i = statsRecords.entrySet().iterator(); i.hasNext();) {
-            Map.Entry e = (Entry) i.next();
-            StatsRecord r = (StatsRecord) e.getValue();
-            r.printDetailsIfNecessary(total);
-          }
-          total.printDetailsIfNecessary(null);
-        }
-      }
-    }, "ManagedObjects Stats printer");
-    t.start();
-  }
-
-  private void startDeleteOperPrinter() {
-    Thread t = new Thread(new Runnable() {
-      public void run() {
-        while (true) {
-          ThreadUtil.reallySleep(60000);
-          logger.info("Deletes count:" + deleteCounter + " delete state count:" + deletePersistentStateCounter
-                      + " usedTime(ns): " + deleteTime);
-        }
-      }
-    }, "Delete Statistics printer");
-    t.setDaemon(true);
-    t.start();
-  }
-
-  private static String createLogString(String className, long written, int count, int newCount) {
-    StringBuilder sb = new StringBuilder();
-    appendFixedSpaceString(sb, className, 50);
-    sb.append(": bytes = ");
-    appendFixedSpaceString(sb, String.valueOf(written), 8).append(" count = ");
-    appendFixedSpaceString(sb, String.valueOf(count), 5).append(" new = ").append(newCount);
-    return sb.toString();
-  }
-
-  private static StringBuilder appendFixedSpaceString(StringBuilder sb, String msg, int length) {
-    int spaces = Math.max(length - msg.length(), 0);
-    sb.append(msg);
-    while (spaces-- > 0) {
-      sb.append(" ");
-    }
-    return sb;
-  }
+  // logger.info("Deletes count:" + deleteCounter + " delete state count:" + deletePersistentStateCounter
+  // + " usedTime(ns): " + deleteTime);
 
   private int basicSaveCollection(PersistenceTransaction tx, ManagedObject managedObject) throws IOException,
       TCDatabaseException {
@@ -535,16 +497,19 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
         throw new DBException("Unable to remove ManagedObject for object id: " + id + ", status: " + status);
       } else {
         long startTime = 0;
-        if (measurePerf) {
+        boolean isMapType = false;
+        if (MEASURE_PERF) {
           startTime = System.nanoTime();
-          ++deleteCounter;
         }
         if (containsMapType(id)) {
-          if (measurePerf) ++deletePersistentStateCounter;
+          isMapType = true;
           // may return false if ManagedObject persistent state empty
           collectionsPersistor.deleteCollection(tx, id);
         }
-        if (measurePerf) deleteTime += (System.nanoTime() - startTime);
+        if (MEASURE_PERF) {
+          perfMeasureStats.updateStats("Managed Objects deleted ", 1, (isMapType ? 1 : 0),
+                                       (System.nanoTime() - startTime));
+        }
       }
     } catch (DatabaseException t) {
       throw new DBException(t);
@@ -623,38 +588,5 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   // for testing purpose only
   ObjectIDManager getOibjectIDManager() {
     return objectIDManager;
-  }
-
-  private static final class StatsRecord {
-    private final AtomicInteger written    = new AtomicInteger(0);
-    private final AtomicInteger count      = new AtomicInteger(0);
-    private final AtomicInteger newObjects = new AtomicInteger(0);
-    private final String        className;
-
-    public StatsRecord(String className) {
-      this.className = className;
-    }
-
-    public void update(int length, boolean isNew) {
-      written.addAndGet(length);
-      count.incrementAndGet();
-      if (isNew) newObjects.incrementAndGet();
-    }
-
-    public void printDetailsIfNecessary(StatsRecord total) {
-      int length = written.getAndSet(0);
-      int c = count.getAndSet(0);
-      int newCount = newObjects.getAndSet(0);
-      if (c != 0) {
-        statsLogger.info(createLogString(className, length, c, newCount));
-        if (total != null) total.add(length, c, newCount);
-      }
-    }
-
-    private void add(int length, int c, int newCount) {
-      written.addAndGet(length);
-      count.addAndGet(c);
-      newObjects.addAndGet(newCount);
-    }
   }
 }
