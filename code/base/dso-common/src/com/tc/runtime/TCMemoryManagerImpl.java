@@ -53,14 +53,14 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
     stopMonitorIfNecessary();
   }
 
-  private void stopMonitorIfNecessary() {
+  private synchronized void stopMonitorIfNecessary() {
     if (listeners.size() == 0 && monitor != null) {
       monitor.stop();
       monitor = null;
     }
   }
 
-  private void startMonitorIfNecessary() {
+  private synchronized void startMonitorIfNecessary() {
     if (listeners.size() > 0 && monitor == null) {
       this.monitor = new MemoryMonitor(TCRuntime.getJVMMemoryManager(), this.sleepInterval, this.monitorOldGenOnly);
       Thread t = new Thread(this.threadGroup, this.monitor);
@@ -82,7 +82,7 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
     }
   }
 
-  public boolean isMonitorOldGenOnly() {
+  public synchronized boolean isMonitorOldGenOnly() {
     return monitor.monitorOldGenOnly();
   }
 
