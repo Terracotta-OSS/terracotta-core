@@ -23,8 +23,12 @@ class SvnUpdate
     
     @branch  = get_branch()
     build_archive_dir = ENV['OS'] =~ /Windows/i ? 'o:/archive' : '/shares/monkeyoutput/archive'
-    File.open(File.join(build_archive_dir, "monkey-police", @branch, "good_rev.yml")) do | f |
-      @good_revisions = YAML.load(f)
+    
+    rev_file = File.join(build_archive_dir, "monkey-police", @branch, "good_rev.yml")
+    if File.exists?(rev_file)
+      File.open(rev_file) { |f| @good_revisions = YAML.load(f) }
+    else
+      @good_revisions = { "os" => 0, "ee" => 0}
     end
     
     clean_up_temp_dir
