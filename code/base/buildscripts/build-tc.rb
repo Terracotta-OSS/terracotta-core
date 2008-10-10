@@ -731,17 +731,17 @@ END
   def eclipse
     depends :init
 
-    eclipseBuilder = EclipseProjectBuilder.new(true, ant)
-    @module_set.each { |the_module| the_module.eclipse(@build_environment, eclipseBuilder) }
-    eclipseBuilder.generate
+    eclipse_builder = EclipseProjectBuilder.new(true, ant)
+    @module_set.each { |the_module| the_module.eclipse(@build_environment, eclipse_builder) }
+    eclipse_builder.generate
   end
 
   # Regenerates Eclipse projects for all the modules. Only overwrites .classpath files; will not
   # change existing project files, if they're present.
   def meclipse
     depends :init
-    eclipseBuilder = EclipseProjectBuilder.new(false, ant)
-    @module_set.each { |the_module| the_module.eclipse(@build_environment, eclipseBuilder) }
+    eclipse_builder = EclipseProjectBuilder.new(false, ant)
+    @module_set.each { |the_module| the_module.eclipse(@build_environment, eclipse_builder) }
   end
 
   # Shows all configuration properties we're using.
@@ -805,7 +805,7 @@ END
 
       depends :init, :compile
       run_tests(FixedGroupTypeTestSet.new([ group ], types, @module_groups))
-    elsif target.to_s =~ /^(create|publish)_(.*)\s*$/ && /_package$\s*$/
+    elsif target.to_s =~ /^(create|publish)_(.*)\s*$/
       out  = true
       verb = $1
       data = $2.sub(/_package$/, '')
@@ -847,8 +847,8 @@ END
     end
     
     # clear sinner list
-    sinnerList = File.join(ENV['HOME'], ".tc", "sinner.txt")
-    FileUtils.rm(sinnerList) if File.exist?(sinnerList)
+    sinner_list = File.join(ENV['HOME'], ".tc", "sinner.txt")
+    FileUtils.rm(sinner_list) if File.exist?(sinner_list)
   end
 
   def mark_this_revision_as_bad(revision, exception)
@@ -856,18 +856,18 @@ END
     STDERR.puts(exception)
     
     # get the original sinner who broke the build
-    sinnerList = File.join(ENV['HOME'], ".tc", "sinner.txt")
+    sinner_list = File.join(ENV['HOME'], ".tc", "sinner.txt")
     sinners = Set.new
     
-    if File.exist?(sinnerList)
-      File.open(sinnerList, "r") do |f|
+    if File.exist?(sinner_list)
+      File.open(sinner_list, "r") do |f|
         sinners = Marshal.load(f)
       end      
     end
     
     sinners << @build_environment.os_last_changed_author
 
-    File.open(sinnerList, "w") do |f|
+    File.open(sinner_list, "w") do |f|
       Marshal.dump(sinners, f)
     end      
 
