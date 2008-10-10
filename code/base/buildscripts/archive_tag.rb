@@ -21,7 +21,7 @@ class ArchiveTag
   def to_path(filename, extension)
     user = @build_environment.build_username
     host = @build_environment.build_hostname
-    revision = @build_environment.current_revision
+    revision = @build_environment.os_revision
     version = @build_environment.version
     branch = @build_environment.current_branch
     os_type = @build_environment.os_type(:nice)
