@@ -33,7 +33,7 @@ class BuildEnvironment < Environment
   end
   
   def ee_revision
-    @ee_svnnifo.current_revision
+    @ee_svninfo.current_revision
   end
   
   def os_revision
