@@ -33,36 +33,91 @@ public class Main {
 
   // TODO: take modules.def.yml location as command line arg
 
-  private final String modulesFile;
+  private final String        ossModulesFile;
+  private final String        entModulesFile;
+  private final boolean       isEnterprise;
 
-  public Main(String modulesFile) {
+  private final static String MODULES_DEF_YML  = "modules.def.yml";
+  private final static String ENTERPRISE_PASTH = ".." + File.separator + ".." + File.separator + ".." + File.separator
+                                                 + ".." + File.separator + "code" + File.separator + "base";
+
+  public Main() {
+    String modulesFile = new File("..", MODULES_DEF_YML).getAbsolutePath();
     Util.ensureFile(modulesFile);
+    this.ossModulesFile = modulesFile;
 
-    this.modulesFile = modulesFile;
+    File entModFile = new File(ENTERPRISE_PASTH, MODULES_DEF_YML);
+    if (entModFile.exists()) {
+      Util.ensureFile(entModFile);
+      this.entModulesFile = entModFile.getAbsolutePath();
+      this.isEnterprise = true;
+    } else {
+      this.entModulesFile = null;
+      this.isEnterprise = false;
+    }
   }
 
   public static void main(String[] args) throws Exception {
+    if (args.length > 1) { throw new RuntimeException("Can't take more than one argument"); }
     System.out.println("Running eclipsegen...");
-    new Main(resolveModulesDef()).generate();
+    String moduleName = null;
+    if (args.length == 1) {
+      moduleName = args[0];
+    }
+    new Main().generate(moduleName);
     System.out.println("Done!");
   }
 
-  private void generate() throws Exception {
-    System.err.println("reading " + modulesFile);
+  private void generate(String moduleName) throws Exception {
+    System.err.println("reading " + ossModulesFile);
 
-    File base = new File(modulesFile).getParentFile();
+    File ossBase = new File(this.ossModulesFile).getParentFile();
 
-    Module[] modules = loadModules();
+    Module[] ossModules = getModules(moduleName, loadModules(this.ossModulesFile));
 
-    writeClasspathFiles(base, modules);
+    File entBase = null;
+    Module[] entModules = null;
+    if (this.isEnterprise) {
+      System.err.println("reading " + entModulesFile);
+      entBase = new File(entModulesFile).getParentFile();
+      entModules = getModules(moduleName, loadModules(this.entModulesFile));
+    }
 
-    writeSettings(base, modules);
+    if (ossModules == null && entModules == null) { throw new RuntimeException("Module " + moduleName
+                                                                               + " was not found"); }
+
+    if (ossModules != null) {
+      writeClasspathFiles(ossBase, ossModules);
+      writeSettings(ossBase, ossModules);
+      writeProjectFiles(ossBase, ossModules);
+    }
+
+    if (this.isEnterprise && entModules != null) {
+      writeClasspathFiles(entBase, entModules);
+      writeSettings(entBase, entModules);
+      writeProjectFiles(entBase, entModules);
+    }
   }
 
   @SuppressWarnings("unchecked")
-  private Module[] loadModules() throws FileNotFoundException {
+  private Module[] loadModules(String modulesFile) throws FileNotFoundException {
     Map ymlData = (Map) YAML.load(new FileReader(modulesFile));
     return ModulesDefReader.readFrom(ymlData);
+  }
+
+  private Module[] getModules(String moduleName, Module[] modules) {
+    if (moduleName == null) {
+      return modules;
+    } else {
+      for (int i = 0; i < modules.length; i++) {
+        if (modules[i].getName().equals(moduleName)) {
+          Module[] temp = new Module[1];
+          temp[0] = modules[i];
+          return temp;
+        }
+      }
+    }
+    return null;
   }
 
   private void writeSettings(File base, Module[] modules) throws IOException {
@@ -93,6 +148,7 @@ public class Main {
     File coreOverride = new File(modSettingsTc, "org.eclipse.jdt.core.prefs");
     File uiOverride = new File(modSettingsTc, "org.eclipse.jdt.ui.prefs");
 
+    System.err.println("Writing .settings for " + modDir.getName());
     if (coreOverride.exists()) {
       FileUtils.copyFileToDirectory(coreOverride, modSettings);
     } else {
@@ -137,6 +193,18 @@ public class Main {
       String[] moduleJars = findModuleJars(modDir);
 
       writeDotClassPath(modDir, module, src, jars, moduleJars);
+    }
+
+  }
+
+  private void writeProjectFiles(File base, Module[] modules) throws Exception {
+    for (int i = 0; i < modules.length; i++) {
+      Module module = modules[i];
+
+      File modDir = new File(base, module.getName());
+      Util.ensureDir(modDir);
+
+      writeDotProjectFile(modDir, module);
     }
 
   }
@@ -220,7 +288,47 @@ public class Main {
     ps.println("</classpath>");
     ps.close();
 
+    System.err.println("Writing .classpath for " + modDir.getName());
     FileOutputStream fos = new FileOutputStream(new File(modDir, ".classpath"));
+    fos.write(baos.toByteArray());
+    fos.close();
+  }
+
+  private void writeDotProjectFile(File modDir, Module module) throws IOException {
+
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    PrintStream ps = new PrintStream(baos);
+    ps.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+    ps.println("<projectDescription>");
+    ps.println("<name>" + module.getName() + "</name>");
+
+    ps.println();
+    ps.println("<comment>" + module.getName() + " source code" + "</comment>");
+
+    ps.println();
+    ps.println("<projects />");
+
+    ps.println("<buildSpec>");
+    ps.println("<buildCommand>");
+    ps.println("<name>org.eclipse.jdt.core.javabuilder</name>");
+    ps.println();
+    ps.println("<arguments />");
+    ps.println("</buildCommand>");
+    ps.println();
+    ps.println("</buildSpec>");
+
+    ps.println();
+    ps.println("<natures ><nature >org.eclipse.jdt.core.javanature</nature>");
+    ps.println();
+    ps.println("<nature >org.eclipse.pde.PluginNature</nature>");
+    ps.println();
+    ps.println("</natures>");
+    ps.println();
+    ps.println("</projectDescription>");
+    ps.close();
+
+    System.err.println("Writing .project for " + modDir.getName());
+    FileOutputStream fos = new FileOutputStream(new File(modDir, ".project"));
     fos.write(baos.toByteArray());
     fos.close();
   }
@@ -326,10 +434,6 @@ public class Main {
     }
 
     return rv;
-  }
-
-  private static String resolveModulesDef() {
-    return new File("..", "modules.def.yml").getAbsolutePath();
   }
 
 }
