@@ -25,19 +25,23 @@ class BuildEnvironment < Environment
     @config_source = config_source
     @build_timestamp = Time.now
     @os_svninfo = SvnInfo.new(os_root_dir)
-    @ee_svninfo = ee_root_dir ? SvnInfo.new(ee_root_dir) : nil
+    @ee_svninfo = SvnInfo.new(ee_root_dir)
   end
 
   def is_ee_branch?
-    @ee_svninfo != nil
+    @ee_svninfo.valid?
+  end
+  
+  def commbo_revision
+    "#{@ee_svninfo.revision}-#{@os_svninfo.revision}"
   end
   
   def ee_revision
-    @ee_svninfo.current_revision
+    @ee_svninfo.revision
   end
   
   def os_revision
-    @os_svninfo.current_revision
+    @os_svninfo.revision
   end
   
   def os_last_changed_author

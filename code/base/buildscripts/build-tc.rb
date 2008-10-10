@@ -323,9 +323,9 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
       check_maven_version
       check_short
       raise "check_short failed." if @script_results.failed?
-      mark_this_revision_as_good(@build_environment.os_revision)
+      mark_this_revision_as_good()
     rescue 
-      mark_this_revision_as_bad(@build_environment.os_revision, $!)
+      mark_this_revision_as_bad($!)
       raise
     end
   end
@@ -838,40 +838,20 @@ END
 
   private
 
-  def mark_this_revision_as_good(revision)
-    STDERR.puts("Revision #{revision} is good to go.")
+  def mark_this_revision_as_good
+    STDERR.puts("Revision #{@build_environment.commbo_revision} is good to go.")
     root = File.join(build_archive_dir.to_s, "monkey-police", @build_environment.current_branch)
     FileUtils.mkdir_p(root) unless File.exist?(root)
-    File.open(File.join(root, "good_rev.txt"), "w") do | f |
-      f << revision.to_s + "\n"
+    good_rev_file = File.join(root, "good_rev.yml")
+    File.open(good_rev_file, "w") do | f |
+      YAML.dump({'ee' => @build_environment.ee_revision, 'os' => @build_environment.os_revision}, f)
     end
-    
-    # clear sinner list
-    sinner_list = File.join(ENV['HOME'], ".tc", "sinner.txt")
-    FileUtils.rm(sinner_list) if File.exist?(sinner_list)
   end
 
-  def mark_this_revision_as_bad(revision, exception)
-    STDERR.puts("Revision #{revision} is bad, mm'kay!")
-    STDERR.puts(exception)
-    
-    # get the original sinner who broke the build
-    sinner_list = File.join(ENV['HOME'], ".tc", "sinner.txt")
-    sinners = Set.new
-    
-    if File.exist?(sinner_list)
-      File.open(sinner_list, "r") do |f|
-        sinners = Marshal.load(f)
-      end      
-    end
-    
-    sinners << @build_environment.os_last_changed_author
-
-    File.open(sinner_list, "w") do |f|
-      Marshal.dump(sinners, f)
-    end      
-
-    STDERR.puts("Please let #{sinners.to_a.join(', ')} know.")
+  def mark_this_revision_as_bad(exception)
+    STDERR.puts("Revision #{@build_environment.commbo_revision} is bad, mm'kay!")
+    STDERR.puts(exception) 
+    STDERR.puts("Please let people on this mail list know.")
   end
 
   # The full path to the build archive, including directory.
