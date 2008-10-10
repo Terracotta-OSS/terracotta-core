@@ -323,9 +323,9 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
       check_maven_version
       check_short
       raise "check_short failed." if @script_results.failed?
-      mark_this_revision_as_good(@build_environment.current_revision)
+      mark_this_revision_as_good(@build_environment.os_revision)
     rescue 
-      mark_this_revision_as_bad(@build_environment.current_revision, $!)
+      mark_this_revision_as_bad(@build_environment.os_revision, $!)
       raise
     end
   end

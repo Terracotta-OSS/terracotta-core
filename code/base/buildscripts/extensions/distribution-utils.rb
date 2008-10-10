@@ -151,7 +151,7 @@ module DistributionUtils
     s = s.gsub(/version/, @build_environment.version)
     s = s.gsub(/branch/, @build_environment.current_branch)
     s = s.gsub(/platform/, @build_environment.os_family.downcase)
-    s = s.gsub(/revision/, @build_environment.current_revision.to_s)
+    s = s.gsub(/revision/, @build_environment.os_revision.to_s)
     s = s.gsub(/edition/, @build_environment.edition)
     s = s.downcase
     s

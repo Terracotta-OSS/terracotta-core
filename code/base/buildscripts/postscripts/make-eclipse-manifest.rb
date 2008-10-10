@@ -84,7 +84,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     version_number = "#{version_number}.0" unless version_number =~ /^\d+\.\d+\.\d+/
     
     # add revision number and timestamp
-    tokens << "r#{build_environment.current_revision}"
+    tokens << "r#{build_environment.os_revision}"
     tokens << "v#{Time.now.strftime('%Y%m%d')}"
     
     version = version_number
