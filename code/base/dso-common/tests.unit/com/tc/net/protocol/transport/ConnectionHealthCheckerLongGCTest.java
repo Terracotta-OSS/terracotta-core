@@ -4,6 +4,9 @@
  */
 package com.tc.net.protocol.transport;
 
+import org.hyperic.sigar.NetStat;
+import org.hyperic.sigar.Sigar;
+
 import com.tc.async.api.Stage;
 import com.tc.async.impl.StageManagerImpl;
 import com.tc.lang.TCThreadGroup;
@@ -32,8 +35,6 @@ import com.tc.net.protocol.tcm.msgs.PingMessage;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.session.NullSessionManager;
 import com.tc.properties.L1ReconnectConfigImpl;
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.PortChooser;
 import com.tc.util.SequenceGenerator;
@@ -51,19 +52,27 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
   TCPProxy              proxy     = null;
   int                   proxyPort = 0;
 
+  public ConnectionHealthCheckerLongGCTest() {
+    disableTestUntil("testL1SocketConnectTimeoutL2AndL1Reconnect", "2008-10-15");
+  }
+
   protected void setUp(HealthCheckerConfig serverHCConf, HealthCheckerConfig clientHCConf) throws Exception {
+    setUp(serverHCConf, clientHCConf, false);
+  }
+
+  protected void setUp(HealthCheckerConfig serverHCConf, HealthCheckerConfig clientHCConf, boolean EnableReconnect)
+      throws Exception {
     super.setUp();
 
     NetworkStackHarnessFactory networkStackHarnessFactory;
 
     logger.setLevel(LogLevelImpl.DEBUG);
 
-    if (false /* TCPropertiesImpl.getProperties().getBoolean(L1ReconnectProperties.L1_RECONNECT_ENABLED) */) {
+    if (EnableReconnect) {
       StageManagerImpl stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(TCLogging
           .getLogger(StageManagerImpl.class))), new QueueFactory());
       final Stage oooSendStage = stageManager.createStage("OOONetSendStage", new OOOEventHandler(), 1, 5000);
       final Stage oooReceiveStage = stageManager.createStage("OOONetReceiveStage", new OOOEventHandler(), 1, 5000);
-      final int sendQueueCap = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_L1RECONNECT_SENDQUEUE_CAP);
       networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
                                                                      new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
                                                                      oooSendStage.getSink(), oooReceiveStage.getSink(),
@@ -167,7 +176,15 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     assertNotNull(config);
     long extraTime = (config.getPingIntervalMillis() * config.getPingProbes())
                      + (config.getSocketConnectTimeout() * config.getPingIntervalMillis());
-    return extraTime;
+    long grace_time = config.getPingIntervalMillis();
+    return extraTime + grace_time;
+  }
+
+  public long getMinScoketConnectResultTimeAfterSocketConnectStart(HealthCheckerConfig config) {
+    assertNotNull(config);
+    long extraTime = (config.getSocketConnectTimeout() * config.getPingIntervalMillis());
+    long grace_time = config.getPingIntervalMillis();
+    return extraTime + grace_time;
   }
 
   public long getFullExtraCheckTime(HealthCheckerConfig config) {
@@ -177,11 +194,11 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     return extraTime;
   }
 
-  public void testL2ExtraCheckL1() throws Exception {
+  public void testL2SocketConnectL1() throws Exception {
     HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(5000, 2000, 1, "ServerCommsHC-Test31", true /*
-                                                                                                            * EXTRA
-                                                                                                            * CHECK ON
-                                                                                                            */);
+                                                                                                             * EXTRA
+                                                                                                             * CHECK ON
+                                                                                                             */);
     this.setUp(hcConfig, null);
     ((CommunicationsManagerImpl) clientComms).setConnHealthChecker(new ConnectionHealthCheckerDummyImpl());
     ClientMessageChannel clientMsgCh = createClientMsgCh();
@@ -217,11 +234,11 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
 
   }
 
-  public void testL1ExtraCheckL2() throws Exception {
-    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(5000, 2000, 2, "ServerCommsHC-Test32", true /*
-                                                                                                            * EXTRA
-                                                                                                            * CHECK ON
-                                                                                                            */);
+  public void testL1SocketConnectL2() throws Exception {
+    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(5000, 2000, 2, "ClientCommsHC-Test32", true /*
+                                                                                                             * EXTRA
+                                                                                                             * CHECK ON
+                                                                                                             */);
     this.setUp(null, hcConfig);
     ((CommunicationsManagerImpl) serverComms).setConnHealthChecker(new ConnectionHealthCheckerDummyImpl());
     ClientMessageChannel clientMsgCh = createClientMsgCh();
@@ -261,11 +278,139 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
 
   }
 
-  public void testL2ExtraCheckL1WithProxyDelay() throws Exception {
+  public void testL1SocketConnectTimeoutL2() throws Exception {
+    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(4000, 2000, 2, "ClientCommsHC-Test32", true /*
+                                                                                                             * EXTRA
+                                                                                                             * CHECK ON
+                                                                                                             */);
+    Sigar sigar = new Sigar();
+    NetStat netstat = null;
+
+    this.setUp(null, null);
+
+    // set up custom HealthCheckers
+    ((CommunicationsManagerImpl) serverComms).setConnHealthChecker(new ConnectionHealthCheckerDummyImpl());
+    ((CommunicationsManagerImpl) clientComms)
+        .setConnHealthChecker(new TestConnectionHealthCheckerImpl(hcConfig, clientComms.getConnectionManager()));
+
+    ClientMessageChannel clientMsgCh = createClientMsgCh();
+    clientMsgCh.open();
+
+    // Verifications
+    ConnectionHealthCheckerImpl connHC = (ConnectionHealthCheckerImpl) ((CommunicationsManagerImpl) clientComms)
+        .getConnHealthChecker();
+    assertNotNull(connHC);
+
+    while (!connHC.isRunning() && (connHC.getTotalConnsUnderMonitor() != 1)) {
+      System.out.println("Yet to start the connection health cheker thread...");
+      ThreadUtil.reallySleep(1000);
+    }
+
+    SequenceGenerator sq = new SequenceGenerator();
+    for (int i = 1; i <= 5; i++) {
+      PingMessage ping = (PingMessage) clientMsgCh.createMessage(TCMessageType.PING_MESSAGE);
+      ping.initialize(sq);
+      ping.send();
+    }
+
+    netstat = sigar.getNetStat(serverLsnr.getBindAddress().getAddress(), serverLsnr.getBindPort());
+    assertTrue(netstat.getTcpEstablished() == 2);
+
+    System.out.println("Sleeping for " + getMinSleepTimeToStartLongGCTest(hcConfig));
+    ThreadUtil.reallySleep(getMinSleepTimeToStartLongGCTest(hcConfig));
+
+    /*
+     * L1 should have started the Extra Check by now; since we are using Dumb HC socket connector, socket connect should
+     * time out.
+     */
+    ThreadUtil.reallySleep(getMinScoketConnectResultTime(hcConfig));
+    assertEquals(0, connHC.getTotalConnsUnderMonitor());
+
+    ThreadUtil.reallySleep(5000);
+    netstat = sigar.getNetStat(serverLsnr.getBindAddress().getAddress(), serverLsnr.getBindPort());
+    assertTrue(netstat.getTcpEstablished() == 0);
+  }
+
+  public void testL1SocketConnectTimeoutL2AndL1Reconnect() throws Exception {
+    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(4000, 1000, 2, "ClientCommsHC-Test32", true /*
+                                                                                                             * EXTRA
+                                                                                                             * CHECK ON
+                                                                                                             */);
+    Sigar sigar = new Sigar();
+    NetStat netstat = null;
+
+    this.setUp(null, null, true);
+
+    // set up custom HealthCheckers
+    ((CommunicationsManagerImpl) serverComms).setConnHealthChecker(new ConnectionHealthCheckerDummyImpl());
+    ((CommunicationsManagerImpl) clientComms)
+        .setConnHealthChecker(new TestConnectionHealthCheckerImpl(hcConfig, clientComms.getConnectionManager()));
+
+    ClientMessageChannel clientMsgCh = createClientMsgCh();
+    clientMsgCh.open();
+
+    // Verifications
+    ConnectionHealthCheckerImpl connHC = (ConnectionHealthCheckerImpl) ((CommunicationsManagerImpl) clientComms)
+        .getConnHealthChecker();
+    assertNotNull(connHC);
+
+    while (!connHC.isRunning() && (connHC.getTotalConnsUnderMonitor() != 1)) {
+      System.out.println("Yet to start the connection health cheker thread...");
+      ThreadUtil.reallySleep(1000);
+    }
+
+    SequenceGenerator sq = new SequenceGenerator();
+    for (int i = 1; i <= 5; i++) {
+      PingMessage ping = (PingMessage) clientMsgCh.createMessage(TCMessageType.PING_MESSAGE);
+      ping.initialize(sq);
+      ping.send();
+    }
+
+    netstat = sigar.getNetStat(serverLsnr.getBindAddress().getAddress(), serverLsnr.getBindPort());
+    assertTrue(netstat.getTcpEstablished() == 2);
+
+    System.out.println("Sleeping for " + getMinSleepTimeToStartLongGCTest(hcConfig));
+    ThreadUtil.reallySleep(getMinSleepTimeToStartLongGCTest(hcConfig));
+
+    // set some delay in proxy so that even if reconnect started, we will have sufficient time to check established
+    // connections
+    proxy.setDelay(2000);
+    System.out.println("woke up");
+
+    /*
+     * L1 should have started the Extra Check by now; since we are using Dumb HC socket connector, socket connect should
+     * time out.
+     */
+    ThreadUtil.reallySleep(getMinScoketConnectResultTimeAfterSocketConnectStart(hcConfig));
+    while (!connHC.isRunning() && (connHC.getTotalConnsUnderMonitor() != 0)) {
+      System.out.println("waiting for client to disconnect");
+      ThreadUtil.reallySleep(1000);
+    }
+
+    /*
+     * Client is suppose to start the reconnect immediately after its disconnect. Lets remove the obstacle from the road
+     */
+    proxy.setDelay(0);
+    while (!connHC.isRunning() && (connHC.getTotalConnsUnderMonitor() != 1)) {
+      System.out.println("waiting for client to rejoin");
+      ThreadUtil.reallySleep(1000);
+    }
+
+    ThreadUtil.reallySleep(5000);
+    /*
+     * Client disconnected after it found socket connect timeout. After the successful reconnect there should be no
+     * connection leak. DEV-1963
+     */
+    netstat = sigar.getNetStat(serverLsnr.getBindAddress().getAddress(), serverLsnr.getBindPort());
+    System.out.println("XXX reconnect- tcp estd : " + netstat.getTcpEstablished());
+    assertTrue(netstat.getTcpEstablished() == 2);
+  }
+
+  public void testL2SocketConnectL1WithProxyDelay() throws Exception {
     HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(5000, 2000, 2, "ServerCommsHC-Test33", true /*
-                                                                                                            * EXTRA
-                                                                                                            * CHECK ON
-                                                                                                            */);
+                                                                                                             * EXTRA
+                                                                                                             * CHECK ON
+                                                                                                             */);
     this.setUp(hcConfig, null);
 
     ClientMessageChannel clientMsgCh = createClientMsgCh();

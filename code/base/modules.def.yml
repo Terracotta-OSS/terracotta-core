@@ -64,6 +64,7 @@ modules:
         - dso-l1-api
         - thirdparty-api
         - dso-statistics-api
+        - sigarstats
   - dso-common-jdk15:
       options:
         jdk: J2SE-1.5

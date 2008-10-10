@@ -37,9 +37,15 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
     logger = TCLogging.getLogger(ConnectionHealthCheckerImpl.class.getName() + ": "
                                  + healthCheckerConfig.getHealthCheckerName());
 
-    monitorThreadEngine = new HealthCheckerMonitorThreadEngine(healthCheckerConfig, connManager, logger);
+    monitorThreadEngine = getHealthMonitorThreadEngine(healthCheckerConfig, connManager, logger);
     monitorThread = new Thread(monitorThreadEngine, "HealthChecker");
     monitorThread.setDaemon(true);
+  }
+
+  protected HealthCheckerMonitorThreadEngine getHealthMonitorThreadEngine(HealthCheckerConfig config,
+                                                                          TCConnectionManager connectionManager,
+                                                                          TCLogger loger) {
+    return new HealthCheckerMonitorThreadEngine(config, connectionManager, loger);
   }
 
   public void start() {
@@ -101,7 +107,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
     }
   }
 
-  private static class HealthCheckerMonitorThreadEngine implements Runnable {
+  static class HealthCheckerMonitorThreadEngine implements Runnable {
     private final ConcurrentHashMap   connectionMap = new ConcurrentHashMap();
     private final long                pingIdleTime;
     private final long                pingInterval;
@@ -133,14 +139,19 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
 
     public void addConnection(MessageTransport transport) {
       MessageTransportBase mtb = (MessageTransportBase) transport;
-      ConnectionHealthCheckerContext context = new ConnectionHealthCheckerContextImpl(mtb, config, connectionManager);
-      mtb.setHealthCheckerContext(context);
+      mtb.setHealthCheckerContext(getHealthCheckerContext(mtb, config, connectionManager));
       connectionMap.put(transport.getConnectionId(), transport);
     }
 
     public boolean removeConnection(MessageTransport transport) {
       if ((connectionMap.remove(transport.getConnectionId())) != null) { return true; }
       return false;
+    }
+
+    protected ConnectionHealthCheckerContext getHealthCheckerContext(MessageTransportBase transport,
+                                                                     HealthCheckerConfig conf,
+                                                                     TCConnectionManager connManager) {
+      return new ConnectionHealthCheckerContextImpl(transport, conf, connManager);
     }
 
     public void stop() {
@@ -185,11 +196,11 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
     }
 
     /* For testing only */
-    public int getTotalConnectionsUnderMonitor() {
+    int getTotalConnectionsUnderMonitor() {
       return connectionMap.size();
     }
 
-    public long getTotalProbesSentOnAllConnections() {
+    long getTotalProbesSentOnAllConnections() {
       Iterator connIterator = connectionMap.values().iterator();
       long totalProbeSent = 0;
       while (connIterator.hasNext()) {
@@ -200,7 +211,6 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
       }
       return totalProbeSent;
     }
-
   }
 
   /* For testing only */
@@ -211,5 +221,4 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
   public long getTotalProbesSentOnAllConns() {
     return monitorThreadEngine.getTotalProbesSentOnAllConnections();
   }
-
 }

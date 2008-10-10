@@ -18,7 +18,7 @@ import java.io.IOException;
  * When the peer node doesn't reply for the PING probes, an extra check(on demand) is made to make sure if it is really
  * dead. Today's heuristic to detect the Long GC is to connect to some of the peer listener ports. If it succeeds, we
  * will cycle again the probe sends.
- *
+ * 
  * @author Manoj
  */
 public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnect {
@@ -74,6 +74,13 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
     return true;
   }
 
+  private void stop() {
+    if (conn != null) {
+      conn.removeListener(this);
+      conn.asynchClose();
+    }
+  }
+
   /*
    * Returns true if connection is still in progress.
    */
@@ -88,7 +95,7 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
 
     if (socketConnectNoReplyWaitCount > this.timeoutInterval) {
       logger.info("Socket Connect to " + remoteNodeDesc + " taking long time. probably DEAD");
-      conn.removeListener(this);
+      stop();
       changeState(SOCKETCONNECT_FAIL);
       return false;
     }
@@ -97,19 +104,12 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
     return true;
   }
 
-  private void reset() {
-    socketConnectNoReplyWaitCount = 0;
-    changeState(SOCKETCONNECT_IDLE);
-  }
-
   public synchronized void closeEvent(TCConnectionEvent event) {
-    changeState(SOCKETCONNECT_IDLE);
+    //
   }
 
   public synchronized void connectEvent(TCConnectionEvent event) {
-    // Async connect goes thru
-    conn.asynchClose();
-    reset();
+    stop();
     changeState(SOCKETCONNECT_IDLE);
   }
 
@@ -117,6 +117,7 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
     if (logger.isDebugEnabled()) {
       logger.debug("Socket Connect EOF event:" + event.toString() + " on " + remoteNodeDesc);
     }
+    stop();
     changeState(SOCKETCONNECT_FAIL);
   }
 
@@ -124,6 +125,7 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
     if (logger.isDebugEnabled()) {
       logger.debug("Socket Connect Error Event:" + errorEvent.toString() + " on " + remoteNodeDesc);
     }
+    stop();
     changeState(SOCKETCONNECT_FAIL);
   }
 

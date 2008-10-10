@@ -21,7 +21,7 @@ import com.tc.util.State;
  * A HealthChecker Context takes care of sending and receiving probe signals, book-keeping, sending additional probes
  * and all the logic to monitor peers health. One Context per Transport is assigned as soon as a TC Connection is
  * Established.
- *
+ * 
  * @author Manoj
  */
 
@@ -49,8 +49,8 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
 
   // Socket Connect probes
   private int                                    socketConnectSuccessCount  = 0;
-  private TCConnection                           conn;
-  private HealthCheckerSocketConnect             sockectConnect;
+  private TCConnection                           presentConnection          = null;
+  private HealthCheckerSocketConnect             sockectConnect             = new NullHealthCheckerSocketConnectImpl();
 
   // stats
   private final SynchronizedLong                 pingProbeSentCount         = new SynchronizedLong(0);
@@ -90,25 +90,35 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
   }
 
   private boolean initSocketConnectProbe() {
-    int callbackPort = transport.getRemoteCallbackPort();
-    if (TransportHandshakeMessage.NO_CALLBACK_PORT == callbackPort) { return false; }
-
     // trigger the socket connect
-    conn = connectionManager.createConnection(new NullProtocolAdaptor());
-    conn.addListener(this);
-
-    // TODO: do we need to exchange the address as well? (since it might be different than the remote IP on this conn)
-    TCSocketAddress sa = new TCSocketAddress(transport.getRemoteAddress().getAddress(), callbackPort);
-
-    sockectConnect = new HealthCheckerSocketConnectImpl(sa, conn, remoteNodeDesc, logger, config
-        .getSocketConnectTimeout());
-
+    presentConnection = getNewConnection();
+    sockectConnect = getHealthCheckerSocketConnector(presentConnection);
     if (sockectConnect.start()) {
       return true;
     } else {
-      conn.removeListener(this);
+      clearPresentConnection();
       return false;
     }
+  }
+
+  protected TCConnection getNewConnection() {
+    TCConnection connection = connectionManager.createConnection(new NullProtocolAdaptor());
+    connection.addListener(this);
+    return connection;
+  }
+
+  protected HealthCheckerSocketConnect getHealthCheckerSocketConnector(TCConnection connection) {
+    int callbackPort = transport.getRemoteCallbackPort();
+    if (TransportHandshakeMessage.NO_CALLBACK_PORT == callbackPort) { return new NullHealthCheckerSocketConnectImpl(); }
+
+    // TODO: do we need to exchange the address as well? (since it might be different than the remote IP on this conn)
+    TCSocketAddress sa = new TCSocketAddress(transport.getRemoteAddress().getAddress(), callbackPort);
+    return new HealthCheckerSocketConnectImpl(sa, connection, remoteNodeDesc, logger, config.getSocketConnectTimeout());
+  }
+
+  private void clearPresentConnection() {
+    presentConnection.removeListener(this);
+    presentConnection = null;
   }
 
   public synchronized void refresh() {
@@ -203,7 +213,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
   }
 
   public synchronized void connectEvent(TCConnectionEvent event) {
-    if (event.getSource() == conn) {
+    if (canAcceptConnectionEvent(event)) {
       // Async connect goes thru
       socketConnectSuccessCount++;
       if (socketConnectSuccessCount < config.getSocketConnectMaxCount()) {
@@ -219,17 +229,31 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
   }
 
   public synchronized void endOfFileEvent(TCConnectionEvent event) {
-    if (event.getSource() == conn) {
+    if (canAcceptConnectionEvent(event)) {
       logger.warn("Socket Connect EOF event:" + event.toString() + " on " + remoteNodeDesc);
       changeState(DEAD);
     }
   }
 
   public synchronized void errorEvent(TCConnectionErrorEvent errorEvent) {
-    if (errorEvent.getSource() == conn) {
+    if (canAcceptConnectionEvent(errorEvent)) {
       logger.error("Socket Connect Error Event:" + errorEvent.toString() + " on " + remoteNodeDesc);
       changeState(DEAD);
     }
+  }
+
+  private boolean canAcceptConnectionEvent(TCConnectionEvent event) {
+    if ((event.getSource() == presentConnection) && (currentState == SOCKET_CONNECT)) {
+      return true;
+    } else {
+      // connection events after wait-period OR when not in socket connect stage -- ignore
+      logger.info("Unexpected connection event: " + event + ". Current state: " + currentState);
+      return false;
+    }
+  }
+
+  TCLogger getLogger() {
+    return this.logger;
   }
 
 }
