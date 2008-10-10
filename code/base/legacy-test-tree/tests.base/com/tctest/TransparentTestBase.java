@@ -189,7 +189,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       if (!canRunL1ProxyConnect()) configFactory().addServerToL1Config(null, dsoPort, -1);
     }
 
-    if (canRunL1ProxyConnect()) {
+    if (canRunL1ProxyConnect() && !isMultipleServerTest()) {
       setupProxyConnect(helper, portChooser);
     }
 
@@ -257,8 +257,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       helper.getServerCrasherConfig().setRestartInterval(60 * 1000);
     } else if (isMultipleServerTest()) {
       // not doing active-passive/active-active for proxy yet
-      throw new AssertionError(
-                               "Proxy-connect is yet not running with multiple servers that is in active-passive or active-active mode");
+      throw new AssertionError("Should never reach here");
     } else {
       dsoPort = portChooser.chooseRandomPort();
       adminPort = portChooser.chooseRandomPort();
@@ -285,6 +284,16 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   }
 
   protected void setupL2ProxyConnectTest(ProxyConnectManager[] managers) {
+    /*
+     * subclass can overwrite to change the test parameters.
+     */
+    for (int i = 0; i < managers.length; ++i) {
+      managers[i].setProxyWaitTime(20 * 1000);
+      managers[i].setProxyDownTime(100);
+    }
+  }
+
+  protected void setupL1ProxyConnectTest(ProxyConnectManager[] managers) {
     /*
      * subclass can overwrite to change the test parameters.
      */
@@ -514,7 +523,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       // NOTE: for crash tests the server needs to be started by the ServerCrasher.. timing issue
 
       this.runner.startServer();
-      if (canRunL1ProxyConnect()) {
+      if (canRunL1ProxyConnect() && !isMultipleServerTest()) {
         proxyMgr.proxyUp();
 
         if (!enableManualProxyConnectControl()) {

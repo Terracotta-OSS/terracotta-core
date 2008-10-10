@@ -22,20 +22,14 @@ public class ActiveActiveServerManager extends MultipleServerManager {
    * One <code>ActivePassiveServerManager</code> for each group since they logically form a group
    */
   private ActivePassiveServerManager[] activePassiveServerManagers;
-  private ProxyConnectManager[]        proxyManagers;
+  private ProxyConnectManager[]        proxyL2Managers;
+  private ProxyConnectManager[]        proxyL1Managers;
   private GroupData[]                  groupsData;
 
   public ActiveActiveServerManager(File tempDir, PortChooser portChooser, String configModel,
                                    ActiveActiveTestSetupManager setupManger, File javaHome,
-                                   TestTVSConfigurationSetupManagerFactory configFactory) throws Exception {
-    this(tempDir, portChooser, configModel, setupManger, javaHome, configFactory, new ArrayList(), false);
-
-  }
-
-  public ActiveActiveServerManager(File tempDir, PortChooser portChooser, String configModel,
-                                   ActiveActiveTestSetupManager setupManger, File javaHome,
                                    TestTVSConfigurationSetupManagerFactory configFactory, List extraJvmArgs,
-                                   boolean isProxyL2GroupPorts) throws Exception {
+                                   boolean isProxyL2GroupPorts, boolean isProxyDsoPorts) throws Exception {
     super(setupManger);
     int groupCount = setupManger.getActiveServerGroupCount();
     activePassiveServerManagers = new ActivePassiveServerManager[groupCount];
@@ -52,7 +46,7 @@ public class ActiveActiveServerManager extends MultipleServerManager {
       activePassiveServerManagers[i] = new ActivePassiveServerManager(true, tempDir, portChooser, configModel,
                                                                       activePasssiveTestSetupManager, javaHome,
                                                                       configFactory, extraJvmArgs, isProxyL2GroupPorts,
-                                                                      true, noOfServers);
+                                                                      isProxyDsoPorts, true, noOfServers);
       noOfServers += setupManger.getGroupMemberCount(i);
     }
 
@@ -69,6 +63,14 @@ public class ActiveActiveServerManager extends MultipleServerManager {
     for (int i = 0; i < activePassiveServerManagers.length; i++) {
       activePassiveServerManagers[i].setConfigCreator(serverConfigCreator);
     }
+
+    if (isProxyDsoPorts) {
+      setL1ProxyManagers();
+
+      for (int i = 0; i < activePassiveServerManagers.length; i++) {
+        groupsData[i].setDsoPorts(activePassiveServerManagers[i].getProxyDsoPorts());
+      }
+    }
   }
 
   private GroupData[] createGroups() {
@@ -83,12 +85,24 @@ public class ActiveActiveServerManager extends MultipleServerManager {
   }
 
   private void setL2ProxyManagers() {
-    proxyManagers = new ProxyConnectManager[setupManger.getServerCount()];
+    proxyL2Managers = new ProxyConnectManager[setupManger.getServerCount()];
     int count = 0;
     for (int i = 0; i < activePassiveServerManagers.length; i++) {
       ProxyConnectManager[] managers = activePassiveServerManagers[i].getL2ProxyManagers();
       for (int j = 0; j < managers.length; j++) {
-        proxyManagers[count] = managers[j];
+        proxyL2Managers[count] = managers[j];
+        count++;
+      }
+    }
+  }
+
+  private void setL1ProxyManagers() {
+    proxyL1Managers = new ProxyConnectManager[setupManger.getServerCount()];
+    int count = 0;
+    for (int i = 0; i < activePassiveServerManagers.length; i++) {
+      ProxyConnectManager[] managers = activePassiveServerManagers[i].getL1ProxyManagers();
+      for (int j = 0; j < managers.length; j++) {
+        proxyL1Managers[count] = managers[j];
         count++;
       }
     }
@@ -108,7 +122,7 @@ public class ActiveActiveServerManager extends MultipleServerManager {
   }
 
   public ProxyConnectManager[] getL2ProxyManagers() {
-    return proxyManagers;
+    return proxyL2Managers;
   }
 
   public void startActiveActiveServers() throws Exception {
@@ -154,5 +168,9 @@ public class ActiveActiveServerManager extends MultipleServerManager {
     for (int i = 0; i < grpCount; i++) {
       activePassiveServerManagers[i].crashActive();
     }
+  }
+
+  public ProxyConnectManager[] getL1ProxyManagers() {
+    return proxyL1Managers;
   }
 }

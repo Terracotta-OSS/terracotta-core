@@ -5,7 +5,7 @@
 package com.tc.test;
 
 public class GroupData {
-  private final int[]    dsoPorts;
+  private int[]          dsoPorts;
   private final int[]    jmxPorts;
   private final int[]    l2GroupPorts;
   private final String[] serverNames;
@@ -15,6 +15,10 @@ public class GroupData {
     this.dsoPorts = dsoPorts;
     this.jmxPorts = jmxPorts;
     this.l2GroupPorts = l2GroupPorts;
+  }
+
+  public void setDsoPorts(int[] dsoPorts) {
+    this.dsoPorts = dsoPorts;
   }
 
   public int[] getDsoPorts() {
@@ -32,7 +36,7 @@ public class GroupData {
   public String[] getServerNames() {
     return serverNames;
   }
-  
+
   public int getServerCount() {
     return dsoPorts.length;
   }

@@ -77,6 +77,10 @@ public class ActivePassiveServerManager extends MultipleServerManager {
   private final int[]                proxyL2GroupPorts;
   protected ProxyConnectManager[]    proxyL2Managers;
 
+  private final boolean              isProxyDsoPorts;
+  private final int[]                proxyDsoPorts;
+  protected ProxyConnectManager[]    proxyL1Managers;
+
   // this is used when active-active tests are run. This will help in differentiating between the names in the different
   // groups
   private int                        startIndexOfServer = 0;
@@ -85,20 +89,21 @@ public class ActivePassiveServerManager extends MultipleServerManager {
   public ActivePassiveServerManager(boolean isActivePassiveTest, File tempDir, PortChooser portChooser,
                                     String configModel, MultipleServersTestSetupManager setupManger, File javaHome,
                                     TestTVSConfigurationSetupManagerFactory configFactory, List extraJvmArgs,
-                                    boolean isProxyL2GroupPorts) throws Exception {
+                                    boolean isProxyL2GroupPorts, boolean isProxyDsoPorts) throws Exception {
     this(isActivePassiveTest, tempDir, portChooser, configModel, setupManger, javaHome, configFactory, extraJvmArgs,
-         isProxyL2GroupPorts, false, 0);
+         isProxyL2GroupPorts, isProxyDsoPorts, false, 0);
   }
 
   // Should be called directly when an active-active test is to be run. In case of active active config is not written
   public ActivePassiveServerManager(boolean isActivePassiveTest, File tempDir, PortChooser portChooser,
                                     String configModel, MultipleServersTestSetupManager setupManger, File javaHome,
                                     TestTVSConfigurationSetupManagerFactory configFactory, List extraJvmArgs,
-                                    boolean isProxyL2GroupPorts, boolean isActiveActive, int startIndexOfServer)
-      throws Exception {
+                                    boolean isProxyL2GroupPorts, boolean isProxyDsoPorts, boolean isActiveActive,
+                                    int startIndexOfServer) throws Exception {
     super(setupManger);
 
     this.isProxyL2groupPorts = isProxyL2GroupPorts;
+    this.isProxyDsoPorts = isProxyDsoPorts;
     this.jvmArgs = extraJvmArgs;
 
     if (!isActivePassiveTest) { throw new AssertionError("A non-ActivePassiveTest is trying to use this class."); }
@@ -127,6 +132,7 @@ public class ActivePassiveServerManager extends MultipleServerManager {
     jmxPorts = new int[this.serverCount];
     l2GroupPorts = new int[this.serverCount];
     proxyL2GroupPorts = new int[this.serverCount];
+    proxyDsoPorts = new int[this.serverCount];
     serverNames = new String[this.serverCount];
     tcServerInfoMBeans = new TCServerInfoMBean[this.serverCount];
     jmxConnectors = new JMXConnector[this.serverCount];
@@ -153,6 +159,16 @@ public class ActivePassiveServerManager extends MultipleServerManager {
         proxyL2Managers[i].setDsoPort(l2GroupPorts[i]);
         proxyL2Managers[i].setProxyPort(proxyL2GroupPorts[i]);
         proxyL2Managers[i].setupProxy();
+      }
+    }
+
+    if (isProxyDsoPorts) {
+      proxyL1Managers = new ProxyConnectManager[this.serverCount];
+      for (int i = 0; i < this.serverCount; ++i) {
+        proxyL1Managers[i] = new ProxyConnectManagerImpl();
+        proxyL1Managers[i].setDsoPort(dsoPorts[i]);
+        proxyL1Managers[i].setProxyPort(proxyDsoPorts[i]);
+        proxyL1Managers[i].setupProxy();
       }
     }
 
@@ -226,6 +242,7 @@ public class ActivePassiveServerManager extends MultipleServerManager {
       } else {
         perServerJvmArgs = jvmArgs;
       }
+
       servers[i] = new ServerInfo(HOST, serverNames[i], dsoPorts[i], jmxPorts[i], l2GroupPorts[i],
                                   getServerControl(dsoPorts[i], jmxPorts[i], serverNames[i], perServerJvmArgs));
     }
@@ -247,10 +264,11 @@ public class ActivePassiveServerManager extends MultipleServerManager {
       if (portChooser.isPortUsed(newPort + 1)) {
         continue;
       }
-      if (isUnusedPort(newPort) && isUnusedPort(newPort + 1) && isUnusedPort(newPort + 2)) {
+      if (isUnusedPort(newPort) && isUnusedPort(newPort + 1) && isUnusedPort(newPort + 2) && isUnusedPort(newPort + 3)) {
         dsoPorts[serverIndex] = newPort;
         l2GroupPorts[serverIndex] = newPort + 1;
         proxyL2GroupPorts[serverIndex] = newPort + 2;
+        proxyDsoPorts[serverIndex] = newPort + 3;
         break;
       }
     }
@@ -278,6 +296,11 @@ public class ActivePassiveServerManager extends MultipleServerManager {
         unused = false;
       }
     }
+    for (int i = 0; i < proxyDsoPorts.length; i++) {
+      if (proxyDsoPorts[i] == port) {
+        unused = false;
+      }
+    }
     return unused;
   }
 
@@ -302,6 +325,7 @@ public class ActivePassiveServerManager extends MultipleServerManager {
       tcServerInfoMBeans[index] = getTcServerInfoMBean(index);
 
     }
+
     System.out.println("*** Server started [" + servers[index].getDsoPort() + "]");
   }
 
@@ -399,6 +423,13 @@ public class ActivePassiveServerManager extends MultipleServerManager {
       }
       Thread.sleep(1000);
     }
+
+    if (isProxyDsoPorts) {
+      System.out.println("*** Starting the DSO proxy with proxy port as " + proxyL1Managers[index].getProxyPort()
+                         + " and DSO port as " + proxyL1Managers[index].getDsoPort());
+      proxyL1Managers[index].proxyUp();
+      proxyL1Managers[index].startProxyTest();
+    }
     return index;
   }
 
@@ -471,6 +502,8 @@ public class ActivePassiveServerManager extends MultipleServerManager {
     if (index == activeIndex) {
       sc.shutdown();
       if (isProxyL2groupPorts) proxyL2Managers[index].proxyDown();
+      if (isProxyDsoPorts) proxyL1Managers[index].proxyDown();
+
       System.out.println("*** Server(active) stopped [" + servers[index].getDsoPort() + "]");
       return;
     }
@@ -575,6 +608,10 @@ public class ActivePassiveServerManager extends MultipleServerManager {
     debugPrintln("***** Sleeping after crashing active server ");
     waitForServerCrash(server);
     if (isProxyL2groupPorts) proxyL2Managers[activeIndex].proxyDown();
+    if (isProxyDsoPorts) {
+      proxyL1Managers[activeIndex].proxyDown();
+      proxyL1Managers[activeIndex].startProxyTest();
+    }
     debugPrintln("***** Done sleeping after crashing active server ");
 
     lastCrashedIndex = activeIndex;
@@ -716,10 +753,10 @@ public class ActivePassiveServerManager extends MultipleServerManager {
   public void addServersAndGroupToL1Config(TestTVSConfigurationSetupManagerFactory configFactory) {
     for (int i = 0; i < serverCount; i++) {
 
-      debugPrintln("******* adding to L1 config: serverName=[" + serverNames[i] + "] dsoPort=[" + dsoPorts[i]
-                   + "] jmxPort=[" + jmxPorts[i] + "]");
+      debugPrintln("******* adding to L1 config: serverName=[" + serverNames[i] + "] dsoPort=["
+                   + (isProxyDsoPorts ? proxyDsoPorts[i] : dsoPorts[i]) + "] jmxPort=[" + jmxPorts[i] + "]");
     }
-    configFactory.addServersAndGroupToL1Config(serverNames, dsoPorts, jmxPorts);
+    configFactory.addServersAndGroupToL1Config(serverNames, isProxyDsoPorts ? proxyDsoPorts : dsoPorts, jmxPorts);
   }
 
   public void crashServer() throws Exception {
@@ -823,5 +860,13 @@ public class ActivePassiveServerManager extends MultipleServerManager {
 
   public void crashActiveServers() throws Exception {
     crashActive();
+  }
+
+  public int[] getProxyDsoPorts() {
+    return proxyDsoPorts;
+  }
+
+  public ProxyConnectManager[] getL1ProxyManagers() {
+    return proxyL1Managers;
   }
 }

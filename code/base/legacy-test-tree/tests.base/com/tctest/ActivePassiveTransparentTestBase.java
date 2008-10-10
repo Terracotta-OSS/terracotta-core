@@ -35,10 +35,12 @@ public abstract class ActivePassiveTransparentTestBase extends MultipleServersTr
                                                                                 MultipleServersConfigCreator.DEV_MODE,
                                                                                 apSetupManager, javaHome,
                                                                                 configFactory(), jvmArgs,
-                                                                                canRunL2ProxyConnect());
-    
+                                                                                canRunL2ProxyConnect(),
+                                                                                canRunL1ProxyConnect());
+
     apServerManager.addServersAndGroupToL1Config(configFactory());
     if (canRunL2ProxyConnect()) setupL2ProxyConnectTest(apServerManager.getL2ProxyManagers());
+    if (canRunL1ProxyConnect()) setupL1ProxyConnectTest(apServerManager.getL1ProxyManagers());
 
     multipleServerManager = apServerManager;
   }

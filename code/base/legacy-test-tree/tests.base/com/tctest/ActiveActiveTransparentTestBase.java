@@ -36,9 +36,11 @@ public abstract class ActiveActiveTransparentTestBase extends MultipleServersTra
                                                                               MultipleServersConfigCreator.DEV_MODE,
                                                                               aaSetupManager, javaHome,
                                                                               configFactory(), jvmArgs,
-                                                                              canRunL2ProxyConnect());
+                                                                              canRunL2ProxyConnect(),
+                                                                              canRunL1ProxyConnect());
     aaServerManager.addGroupsToL1Config(configFactory());
     if (canRunL2ProxyConnect()) setupL2ProxyConnectTest(aaServerManager.getL2ProxyManagers());
+    if (canRunL1ProxyConnect()) setupL1ProxyConnectTest(aaServerManager.getL1ProxyManagers());
 
     multipleServerManager = aaServerManager;
   }
@@ -46,7 +48,7 @@ public abstract class ActiveActiveTransparentTestBase extends MultipleServersTra
   public boolean isMultipleServerTest() {
     return TestConfigObject.TRANSPARENT_TESTS_MODE_ACTIVE_ACTIVE.equals(mode());
   }
-  
+
   protected abstract void setupActiveActiveTest(ActiveActiveTestSetupManager setupManager);
 
 }
