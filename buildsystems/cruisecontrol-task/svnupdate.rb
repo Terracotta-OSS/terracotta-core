@@ -9,7 +9,6 @@ class SvnUpdate
   def initialize(monkey_name)
     @monkey_name = monkey_name
 
-    @branch  = get_branch()
     @os_topdir = File.join(File.expand_path(File.dirname(__FILE__)), "..", "..")
     @is_ee_branch = @os_topdir =~ /community/ ? true : false
     @ee_topdir = File.join(@os_topdir, "..") if @is_ee_branch
@@ -22,6 +21,7 @@ class SvnUpdate
     @os_svninfo = YAML.load(`svn info #{@os_topdir}`)
     @ee_svninfo = YAML.load(`svn info #{@ee_topdir}`) if @is_ee_branch
     
+    @branch  = get_branch()
     build_archive_dir = ENV['OS'] =~ /Windows/i ? 'o:/archive' : '/shares/monkeyoutput/archive'
     File.open(File.join(build_archive_dir, "monkey-police", @branch, "good_rev.yml")) do | f |
       @good_revisions = YAML.load(f)
