@@ -295,6 +295,10 @@ public class Main {
   }
 
   private void writeDotProjectFile(File modDir, Module module) throws IOException {
+    File file = new File(modDir, ".project");
+
+    // don't overwrite existing .project files (they might be customized)
+    if (file.exists()) return;
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     PrintStream ps = new PrintStream(baos);
@@ -328,7 +332,7 @@ public class Main {
     ps.close();
 
     System.err.println("Writing .project for " + modDir.getName());
-    FileOutputStream fos = new FileOutputStream(new File(modDir, ".project"));
+    FileOutputStream fos = new FileOutputStream(file);
     fos.write(baos.toByteArray());
     fos.close();
   }
