@@ -52,12 +52,12 @@ module BuildData
       file.puts("#{keyspace}.host=#{build_environment.build_hostname}")
       file.puts("#{keyspace}.user=#{build_environment.build_username}")
       file.puts("#{keyspace}.timestamp=#{build_environment.build_timestamp.strftime('%Y%m%d-%H%m%S')}")
-      file.puts("#{keyspace}.revision=#{build_environment.current_revision}")
+      file.puts("#{keyspace}.revision=#{build_environment.os_revision}")
       file.puts("#{keyspace}.branch=#{build_environment.current_branch}")
 
       # extra info if built under EE branch
-      if build_environment.ee_svninfo
-        file.puts("#{keyspace}.ee.revision=#{build_environment.ee_svninfo.current_revision}")
+      if build_environment.is_ee_branch?
+        file.puts("#{keyspace}.ee.revision=#{build_environment.ee_revision}")
       end
     end
 

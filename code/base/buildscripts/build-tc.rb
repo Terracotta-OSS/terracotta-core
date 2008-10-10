@@ -42,9 +42,9 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     super(:help, arguments)
 
     # Some more objects we need.
-    root_dir = FilePath.new(@basedir.to_s, "..", "..").canonicalize.to_s
-    ee_root_dir =  root_dir =~ /community/ ? FilePath.new(root_dir.to_s, "..").canonicalize.to_s : nil
-    @build_environment = BuildEnvironment.new(platform, config_source, root_dir, ee_root_dir)
+    os_root_dir = FilePath.new(@basedir.to_s, "..", "..").canonicalize.to_s
+    ee_root_dir =  os_root_dir =~ /community/ ? FilePath.new(os_root_dir.to_s, "..").canonicalize.to_s : nil
+    @build_environment = BuildEnvironment.new(platform, config_source, os_root_dir, ee_root_dir)
     @static_resources = StaticResources.new(basedir)
     @archive_tag = ArchiveTag.new(@build_environment)
 
@@ -865,7 +865,7 @@ END
       end      
     end
     
-    sinners << @build_environment.last_changed_author
+    sinners << @build_environment.os_last_changed_author
 
     File.open(sinnerList, "w") do |f|
       Marshal.dump(sinners, f)

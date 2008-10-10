@@ -17,35 +17,43 @@ end
 # out of our source environment, as opposed to a more general Ruby or JRuby
 # environment.
 class BuildEnvironment < Environment
-  attr_reader :ee_svninfo
+  attr_reader :ee_svninfo, :os_svninfo
+  
   # Creates a new instance, given a Platform object and a configuration source.
-  def initialize(platform, config_source, root_dir, ee_root_dir=nil)
+  def initialize(platform, config_source, os_root_dir, ee_root_dir=nil)
     super(platform)
     @config_source = config_source
     @build_timestamp = Time.now
-    @svninfo = SvnInfo.new(root_dir)
+    @os_svninfo = SvnInfo.new(os_root_dir)
     @ee_svninfo = ee_root_dir ? SvnInfo.new(ee_root_dir) : nil
   end
 
-  # What's the latest revision on the local source base?
-  def current_revision
-    @svninfo.current_revision
+  def is_ee_branch?
+    @ee_svninfo != nil
   end
   
-  def last_changed_author
-    @svninfo.last_changed_author
+  def ee_revision
+    @ee_svnnifo.current_revision
   end
   
-  def last_changed_date
-    @svninfo.last_changed_date
+  def os_revision
+    @os_svninfo.current_revision
+  end
+  
+  def os_last_changed_author
+    @os_svninfo.last_changed_author
   end
 
+  def ee_last_changed_author
+    @os_svninfo.last_changed_author
+  end
+  
   # What branch are we building from? 
   # read from tc.build-control.branch in build-config.global
   # if not, try to parse from "svn info" command
   def current_branch
     return @branch unless @branch.blank?
-    @branch = case @svninfo.url
+    @branch = case @os_svninfo.url
     when /trunk/ then "trunk"
     when /branches\/private\/([^\/]+)/ then $1
     when /branches\/([^\/]+)/ then $1
