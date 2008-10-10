@@ -12,12 +12,14 @@ public final class ServerTransactionManagerConfig {
   private final boolean verboseLogging;
   private final boolean printStats;
   private final boolean printCommits;
+  private final boolean printBroadcastStats;
 
   public ServerTransactionManagerConfig(TCProperties tcproperties) {
     this.loggingEnabled = tcproperties.getBoolean("logging.enabled");
     this.verboseLogging = tcproperties.getBoolean("logging.verbose");
     this.printStats = tcproperties.getBoolean("logging.printStats");
     this.printCommits = tcproperties.getBoolean("logging.printCommits");
+    this.printBroadcastStats = tcproperties.getBoolean("logging.printBroadcastStats");
   }
 
   // Used in tests
@@ -26,6 +28,7 @@ public final class ServerTransactionManagerConfig {
     this.verboseLogging = false;
     this.printStats = false;
     this.printCommits = false;
+    this.printBroadcastStats = false;
   }
 
   public boolean isLoggingEnabled() {
@@ -42,5 +45,9 @@ public final class ServerTransactionManagerConfig {
 
   public boolean isPrintCommitsEnabled() {
     return printCommits;
+  }
+
+  public boolean isPrintBroadcastStatsEnabled() {
+    return printBroadcastStats;
   }
 }

@@ -56,6 +56,13 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
     return typeName;
   }
 
+  // This method is there for debugging/logging stats. Should never be used otherwise.
+  public void setTypeClassName(String className) {
+    if (typeName == null) {
+      typeName = className;
+    }
+  }
+
   public ObjectID getObjectID() throws DNAException {
     return id;
   }

@@ -12,6 +12,7 @@ import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
+import com.tc.object.dna.impl.DNAImpl;
 import com.tc.object.dna.impl.VersionizedDNAWrapper;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.gtx.GlobalTransactionManager;
@@ -86,8 +87,9 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   private final AtomicInteger                           objectsCommitted         = new AtomicInteger(0);
   private final AtomicInteger                           noOfCommits              = new AtomicInteger(0);
   private final boolean                                 commitLoggingEnabled;
-  private volatile long                                 lastStatsTime            = 0;
+  private final boolean                                 broadcastStatsLoggingEnabled;
 
+  private volatile long                                 lastStatsTime            = 0;
   private Object                                        statsLock                = new Object();
 
   public ServerTransactionManagerImpl(ServerGlobalTransactionManager gtxm, TransactionStore transactionStore,
@@ -109,6 +111,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
       enableTransactionLogger();
     }
     this.commitLoggingEnabled = config.isPrintCommitsEnabled();
+    this.broadcastStatsLoggingEnabled = config.isPrintBroadcastStatsEnabled();
   }
 
   public void enableTransactionLogger() {
@@ -317,6 +320,12 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
       DNA change = new VersionizedDNAWrapper(orgDNA, version, true);
       ManagedObject mo = (ManagedObject) objects.get(change.getObjectID());
       mo.apply(change, txnID, includeIDs, instanceMonitor, !active);
+      if (broadcastStatsLoggingEnabled) {
+        // This ugly code exists so that Broadcast change handler can log more stats about the broadcasts that are
+        // taking place there. This type info was lost from the DNA in one of the performance optimizations that we did.
+        DNAImpl dnaImpl = (DNAImpl) orgDNA;
+        dnaImpl.setTypeClassName(mo.getManagedObjectState().getClassName());
+      }
       if (active && !change.isDelta()) {
         // Only New objects reference are added here
         stateManager.addReference(txn.getSourceID(), mo.getID());
@@ -548,7 +557,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
     callBack.initializationComplete();
   }
-  
+
   /*
    * This method calls back the listener when all the resent TXNs are complete.
    */

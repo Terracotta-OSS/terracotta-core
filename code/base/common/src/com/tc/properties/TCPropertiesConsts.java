@@ -46,6 +46,7 @@ public interface TCPropertiesConsts {
   public static final String   L2_TRANSACTIONMANAGER_LOGGING_VERBOSE                  = "l2.transactionmanager.logging.verbose";
   public static final String   L2_TRANSACTIONMANAGER_LOGGING_PRINTSTATS               = "l2.transactionmanager.logging.printStats";
   public static final String   L2_TRANSACTIONMANAGER_LOGGING_PRINTCOMMITS             = "l2.transactionmanager.logging.printCommits";
+  public static final String   L2_TRANSACTIONMANAGER_LOGGING_PRINT_BROADCAST_STATS    = "l2.transactionmanager.logging.printBroadcastStats";
   public static final String   L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_ENABLED         = "l2.transactionmanager.passive.throttle.enabled";
   public static final String   L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_THRESHOLD       = "l2.transactionmanager.passive.throttle.threshold";
   public static final String   L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_MAXSLEEPSECONDS = "l2.transactionmanager.passive.throttle.maxSleepSeconds";
