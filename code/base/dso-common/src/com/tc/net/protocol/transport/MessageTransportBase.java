@@ -283,12 +283,13 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     }
 
     if (isSameConnection) {
-      synchronized(status) {
-        if (!status.isEstablished()) {
+      synchronized (status) {
+        if (status.isEstablished() || status.isDisconnected()) {
+          status.reset();
+        } else {
           logger.warn("Ignore redundant close event: " + event);
           return;
         }
-        status.reset();
       }
       fireTransportDisconnectedEvent();
     }
@@ -399,7 +400,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   public synchronized void setRemoteCallbackPort(int remoteCallbackPort) {
     this.remoteCallbackPort = remoteCallbackPort;
   }
-  
+
   public void initConnectionID(ConnectionID cid) {
     connectionId = cid;
   }
