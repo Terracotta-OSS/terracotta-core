@@ -20,6 +20,7 @@ class SvnUpdate
 
     @os_svninfo = YAML.load(`svn info #{@os_topdir}`)
     @ee_svninfo = YAML.load(`svn info #{@ee_topdir}`) if @is_ee_branch
+    log "ee svninfo: #{@ee_svninfo}" if @is_ee_branch
     
     @branch  = get_branch()
     build_archive_dir = ENV['OS'] =~ /Windows/i ? 'o:/archive' : '/shares/monkeyoutput/archive'
