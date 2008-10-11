@@ -321,7 +321,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     begin
       @no_compile = false # override this if it's turned on
       check_maven_version
-      check_short
+      check_list('none')
       raise "check_short failed." if @script_results.failed?
       mark_this_revision_as_good()
     rescue 
