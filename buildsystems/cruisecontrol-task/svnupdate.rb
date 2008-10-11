@@ -78,9 +78,11 @@ class SvnUpdate
   # attempt svn update 3 times if encounter errors
   def svn_update_with_error_tolerant(path, revision)
     msg = ''
-    command = "svn update -r#{revision} --ignore-externals --non-interactive '#{path}' 2>&1"
+    command = "svn update -r#{revision} --ignore-externals '#{path}' 2>&1"
+    log "command #{command}"
     3.downto(1) do
       msg = `#{command}`
+      log "result: #{msg}"
       return if $? == 0
       sleep(5*60)
       `svn cleanup '#{path}'`
