@@ -30,7 +30,7 @@ class SvnUpdate
     else
       @good_revisions = { "os" => 0, "ee" => 0}
     end
-    puts "good revisions #{@good_revisions}"
+    log "good revisions #{@good_revisions}"
     clean_up_temp_dir
   end
   
@@ -50,6 +50,11 @@ class SvnUpdate
     `rm -rf #{Dir.tmpdir}/Jetty*`
   end
 
+  def log(msg)
+    File.open(File.join(Dir.tmpdir, "svnupdate.log"), "a") do |f|
+      f.log("#{Time.now}: #{msg}")
+    end
+  end
   
   # assume OS and EE branch names are the same
   def get_branch    
@@ -84,9 +89,9 @@ class SvnUpdate
 
   def do_update(path, svninfo, good_rev)
     current_rev = get_revision(svninfo)
-    puts "path: #{path}"
-    puts "current rev: #{current_rev}"
-    puts "good_rev: #{good_rev}"
+    log "path: #{path}"
+    log "current rev: #{current_rev}"
+    log "good_rev: #{good_rev}"
     if @monkey_name == "monkey-police" || @monkey_name =~ /test/ || good_rev == 0
       svn_update_with_error_tolerant(path, "HEAD")
       return
