@@ -95,7 +95,7 @@ class SvnUpdate
     log "path: #{path}"
     log "current rev: #{current_rev}"
     log "good_rev: #{good_rev}"
-    if @monkey_name == "monkey-police" || @monkey_name =~ /test/ || good_rev == 0
+    if @monkey_name == "monkey-police" || @monkey_name == "test-monkey" || good_rev == 0
       svn_update_with_error_tolerant(path, "HEAD")
       return
     end
