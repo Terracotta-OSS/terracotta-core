@@ -27,27 +27,47 @@ import java.util.Map;
 
 public class CachedModules implements Modules {
 
-  private List<Module> modules;
-  private List<Module> qualifiedModules;
-  private List<Module> latestModules;
-
-  private final String tcVersion;
-  private final boolean includeSnapshots;
-  private final File   repository;
+  private List<Module>     modules;
+  private List<Module>     qualifiedModules;
+  private List<Module>     latestModules;
 
   @Inject
-  public CachedModules(@Named(ConfigAnnotation.TERRACOTTA_VERSION) String tcVersion,
-                       @Named(ConfigAnnotation.INCLUDE_SNAPSHOTS) boolean includeSnapshots,
-                       @Named(ConfigAnnotation.MODULES_DIRECTORY) String repository, DataLoader dataLoader)
-      throws JDOMException, IOException {
-    this(tcVersion, includeSnapshots, new File(repository), new FileInputStream(dataLoader.getDataFile()));
+  @Named(ConfigAnnotation.TERRACOTTA_VERSION)
+  private String           tcVersion;
+
+  @Inject
+  @Named(ConfigAnnotation.INCLUDE_SNAPSHOTS)
+  private boolean          includeSnapshots;
+
+  private final File       repository;
+  private final DataLoader dataLoader;
+
+  @Inject
+  public CachedModules(@Named(ConfigAnnotation.MODULES_DIRECTORY) String repository, DataLoader dataLoader) {
+    this.repository = new File(repository);
+    this.dataLoader = dataLoader;
   }
 
-  CachedModules(String tcVersion, boolean includeSnapshots, File repository, InputStream inputStream) throws JDOMException, IOException {
+  /**
+   * XXX: This constructor is used for tests only
+   */
+  CachedModules(String tcVersion, boolean includeSnapshots, File repository, InputStream inputStream)
+      throws JDOMException, IOException {
     this.tcVersion = tcVersion;
     this.includeSnapshots = includeSnapshots;
     this.repository = repository;
+    this.dataLoader = null;
     loadData(inputStream);
+  }
+
+  private void loadData() {
+    if ((modules == null) || modules.isEmpty()) {
+      try {
+        loadData(new FileInputStream(dataLoader.getDataFile()));
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 
   private void loadData(InputStream inputStream) throws JDOMException, IOException {
@@ -122,6 +142,7 @@ public class CachedModules implements Modules {
 
   public List<Module> list() {
     if (qualifiedModules != null) return qualifiedModules;
+    loadData();
 
     List<Module> list = new ArrayList<Module>();
     for (Module module : modules) {
@@ -154,6 +175,7 @@ public class CachedModules implements Modules {
   }
 
   public List<Module> listAll() {
+    loadData();
     return Collections.unmodifiableList(modules);
   }
 

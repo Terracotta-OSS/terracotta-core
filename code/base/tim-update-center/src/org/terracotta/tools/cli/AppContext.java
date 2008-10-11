@@ -12,6 +12,7 @@ import org.terracotta.modules.tool.commands.CommandRegistry;
 import org.terracotta.modules.tool.config.Config;
 import org.terracotta.modules.tool.config.ConfigAnnotation;
 import org.terracotta.modules.tool.util.DataLoader;
+import org.terracotta.modules.tool.util.DownloadUtil;
 import org.terracotta.modules.tool.util.DataLoader.CacheRefreshPolicy;
 
 import com.google.inject.Binder;
@@ -53,6 +54,16 @@ class AppContext implements Module, ConfigAnnotation {
 
     // Make our Config object available to anybody that needs it
     binder.bind(Config.class).in(Scopes.SINGLETON);
+    binder.bind(Config.class).annotatedWith(Names.named(CONFIG_INSTANCE)).toInstance(config);
+
+    URL proxyUrl = config.getProxyUrl();
+    final Proxy proxy;
+    if (proxyUrl != null) {
+      SocketAddress proxyAddress = new InetSocketAddress(proxyUrl.getHost(), proxyUrl.getPort());
+      proxy = new Proxy(Type.HTTP, proxyAddress);
+    } else {
+      proxy = Proxy.NO_PROXY;
+    }
 
     // The DataLoader is used by the CachedModules implementation to download
     // the remote data file and cache it locally.
@@ -60,18 +71,28 @@ class AppContext implements Module, ConfigAnnotation {
       public DataLoader get() {
         DataLoader dataLoader = new DataLoader(config.getDataFileUrl(), config.getDataFile());
         dataLoader.setCacheRefreshPolicy(CacheRefreshPolicy.ON_EXPIRATION.setExpirationInSeconds(60 * 60 * 24));
-        URL proxyUrl = config.getProxyUrl();
-        if (proxyUrl != null) {
-          SocketAddress proxyAddress = new InetSocketAddress(proxyUrl.getHost(), proxyUrl.getPort());
-          dataLoader.setProxy(new Proxy(Type.HTTP, proxyAddress));
-        }
+        dataLoader.setProxy(proxy);
         return dataLoader;
       }
     });
 
-    binder.bind(ModuleReport.class).to(DefaultModuleReport.class);
+    binder.bind(DownloadUtil.class).toProvider(new Provider<DownloadUtil>() {
+      public DownloadUtil get() {
+        DownloadUtil downloadUtil = new DownloadUtil();
+        downloadUtil.setProxy(proxy);
+        return downloadUtil;
+      }
+    });
+    binder.bind(DownloadUtil.class).annotatedWith(Names.named(DOWNLOADUTIL_INSTANCE)).to(DownloadUtil.class);
 
+    binder.bind(ModuleReport.class).to(DefaultModuleReport.class);
     binder.bind(Modules.class).to(CachedModules.class).in(Scopes.SINGLETON);
+
     binder.bind(CommandRegistry.class).in(Scopes.SINGLETON);
+
+    binder.bind(ModuleReport.class).annotatedWith(Names.named(MODULEREPORT_INSTANCE)).to(DefaultModuleReport.class)
+        .in(Scopes.SINGLETON);
+    binder.bind(Modules.class).annotatedWith(Names.named(MODULES_INSTANCE)).to(CachedModules.class)
+        .in(Scopes.SINGLETON);
   }
 }

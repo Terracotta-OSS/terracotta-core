@@ -32,11 +32,11 @@ public class Module extends AbstractModule implements BasicAttributes {
   private final Map<String, Object> attributes;
   private final AttributesHelper    attributesHelper;
 
-  @Inject
   public Module(Modules modules, Element module) {
     this(modules, DocumentToAttributes.transform(module));
   }
 
+  @Inject
   Module(Modules modules, Map<String, Object> attributes) {
     this.modules = modules;
     this.attributes = attributes;
@@ -298,10 +298,9 @@ public class Module extends AbstractModule implements BasicAttributes {
     }
   }
 
-  private static void download(URL address, File localfile) throws IOException {
+  private void download(URL address, File localfile) throws IOException {
     DownloadUtil downloader = new DownloadUtil();
     downloader.download(address, localfile, DownloadOption.CREATE_INTERVENING_DIRECTORIES,
                         DownloadOption.OVERWRITE_EXISTING);
   }
-
 }

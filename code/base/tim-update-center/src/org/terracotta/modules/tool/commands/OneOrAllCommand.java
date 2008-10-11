@@ -12,7 +12,7 @@ import org.terracotta.modules.tool.Modules;
 
 import java.util.List;
 
-abstract class OneOrAllCommand extends AbstractCommand {
+abstract class OneOrAllCommand extends ModuleOperatorCommand {
 
   protected static final String LONGOPT_ALL = "all";
 
@@ -51,7 +51,7 @@ abstract class OneOrAllCommand extends AbstractCommand {
 
   protected abstract void handleAll();
 
-  protected void process(CommandLine cli, Modules modules) {
+  protected void process(CommandLine cli, Modules list) {
     // --all was specified, install everything
     if (hasAllOption(cli)) {
       handleAll();
@@ -67,7 +67,7 @@ abstract class OneOrAllCommand extends AbstractCommand {
 
     // given the artifactId and maybe the version and groupId - find some candidates get candidates
     Module module = null;
-    List<Module> candidates = modules.find(args);
+    List<Module> candidates = list.find(args);
 
     // no candidates found, inform the user
     if (candidates.isEmpty()) {

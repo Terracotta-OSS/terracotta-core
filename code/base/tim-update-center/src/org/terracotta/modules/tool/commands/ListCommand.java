@@ -6,10 +6,6 @@ package org.terracotta.modules.tool.commands;
 
 import org.apache.commons.cli.CommandLine;
 import org.terracotta.modules.tool.Module;
-import org.terracotta.modules.tool.ModuleReport;
-import org.terracotta.modules.tool.Modules;
-
-import com.google.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,18 +15,12 @@ import java.util.regex.Pattern;
 /**
  * Command class implementing the <code>list</code> command.
  */
-public class ListCommand extends AbstractCommand {
+public class ListCommand extends ModuleOperatorCommand {
 
   private static final String OPTION_DETAILS  = "v";
   private static final String LONGOPT_DETAILS = "details";
 
-  private final Modules       modules;
-  private final ModuleReport  report;
-
-  @Inject
-  public ListCommand(Modules modules, ModuleReport report) {
-    this.modules = modules;
-    this.report = report;
+  public ListCommand() {
     options.addOption(OPTION_DETAILS, LONGOPT_DETAILS, false, "Display detailed information");
     arguments.put("keywords", "(OPTIONAL) Space delimited list of keywords used to filter the list.");
   }

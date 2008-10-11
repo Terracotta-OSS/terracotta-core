@@ -8,6 +8,11 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.lang.StringUtils;
+import org.terracotta.modules.tool.config.Config;
+import org.terracotta.modules.tool.config.ConfigAnnotation;
+
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -36,9 +41,14 @@ public abstract class AbstractCommand implements Command {
   protected PrintWriter         out           = new PrintWriter(System.out, true);
   protected PrintWriter         err           = new PrintWriter(System.err, true);
 
+  @Inject
+  @Named(ConfigAnnotation.CONFIG_INSTANCE)
+  protected Config              config;
+
   protected final Options createOptions() {
     Options opts = new Options();
-    opts.addOption(OPTION_HELP, LONGOPT_HELP, false, "Display help information; ignores all other arguments when specified");
+    opts.addOption(OPTION_HELP, LONGOPT_HELP, false,
+                   "Display help information; ignores all other arguments when specified");
     opts.addOption(OPTION_PROXY, LONGOPT_PROXY, true, "HTTP proxy to use for remote operations");
     return opts;
   }

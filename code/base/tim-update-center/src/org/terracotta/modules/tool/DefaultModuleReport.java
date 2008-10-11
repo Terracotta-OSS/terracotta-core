@@ -196,7 +196,7 @@ public class DefaultModuleReport extends ModuleReport {
       out.println("\n ");
     }
 
-    // XXX NEED A BETTER WAY HEURISTIC PRESENT THIS INSTALL/UPDATE INSTRUCTION
+    // XXX NEED A BETTER WAY TO PRESENT THIS INSTALL/UPDATE INSTRUCTION
     if (!module.isInstalled() || !module.isLatest()) {
       out.println("Issue the following command to install the latest version:\n ");
       String script = "tim-get.";

@@ -10,5 +10,9 @@ public interface ConfigAnnotation {
   public static String INCLUDE_SNAPSHOTS                = "IncludeSnapshots";
   public static String DATA_CACHE_EXPIRATION_IN_SECONDS = "DataCacheExpirationInSeconds";
   public static String MODULES_DIRECTORY                = "ModulesDirectory";
+  public static String CONFIG_INSTANCE                  = "ConfigInstance";
+  public static String MODULES_INSTANCE                 = "ModulesInstance";
+  public static String MODULEREPORT_INSTANCE            = "ModuleReportInstance";
+  public static String DOWNLOADUTIL_INSTANCE            = "DownloadUtilInstance";
 
 }

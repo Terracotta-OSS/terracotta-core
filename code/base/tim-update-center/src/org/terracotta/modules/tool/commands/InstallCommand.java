@@ -8,10 +8,6 @@ import org.apache.commons.cli.CommandLine;
 import org.terracotta.modules.tool.InstallListener;
 import org.terracotta.modules.tool.InstallOption;
 import org.terracotta.modules.tool.Module;
-import org.terracotta.modules.tool.ModuleReport;
-import org.terracotta.modules.tool.Modules;
-
-import com.google.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,20 +15,14 @@ import java.util.List;
 
 public class InstallCommand extends OneOrAllCommand {
 
-  // private static final String LONGOPT_ALL = "all";
   private static final String             LONGOPT_OVERWRITE = "overwrite";
   private static final String             LONGOPT_FORCE     = "force";
   private static final String             LONGOPT_PRETEND   = "pretend";
   private static final String             LONGOPT_NOVERIFY  = "no-verify";
 
-  private final Modules                   modules;
-  private final ModuleReport              report;
   private final Collection<InstallOption> installOptions;
 
-  @Inject
-  public InstallCommand(Modules modules, ModuleReport report) {
-    this.modules = modules;
-    this.report = report;
+  public InstallCommand() {
     options.addOption(buildOption(LONGOPT_ALL, "Install all compatible TIMs,  all other arguments are ignored"));
     options.addOption(buildOption(LONGOPT_OVERWRITE, "Install anyway, even if already installed"));
     options.addOption(buildOption(LONGOPT_FORCE, "Synonym to overwrite"));

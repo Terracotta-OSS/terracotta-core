@@ -22,7 +22,7 @@ import java.util.Set;
  * @author Jason Voegele (jvoegele@terracotta.org)
  */
 public class CommandRegistry {
-  private Map<String, Command> commands = new HashMap<String, Command>();
+  private final Map<String, Command> commands = new HashMap<String, Command>();
 
   public void addCommand(Command command) {
     commands.put(command.name(), command);
@@ -40,9 +40,7 @@ public class CommandRegistry {
 
   public void executeCommand(String commandName, String[] args) throws CommandException {
     Command cmd = getCommand(commandName);
-    if (cmd == null) {
-      throw new CommandException("Unknown command: " + commandName);
-    }
+    if (cmd == null) { throw new CommandException("Unknown command: " + commandName); }
 
     CommandLineParser parser = new GnuParser();
     try {

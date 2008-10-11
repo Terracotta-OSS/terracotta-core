@@ -6,20 +6,10 @@ package org.terracotta.modules.tool.commands;
 
 import org.apache.commons.cli.CommandLine;
 import org.terracotta.modules.tool.Module;
-import org.terracotta.modules.tool.ModuleReport;
-import org.terracotta.modules.tool.Modules;
-
-import com.google.inject.Inject;
 
 public class InfoCommand extends OneOrAllCommand {
 
-  private final Modules      modules;
-  private final ModuleReport report;
-
-  @Inject
-  public InfoCommand(Modules modules, ModuleReport report) {
-    this.modules = modules;
-    this.report = report;
+  public InfoCommand() {
     arguments.put("name", "The name of the integration module");
     arguments.put("version", "(OPTIONAL) The version used to qualify the name");
     arguments.put("group-id", "(OPTIONAL) The group-id used to qualify the name");

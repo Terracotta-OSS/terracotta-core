@@ -30,8 +30,8 @@ public class TIMGetTool {
   public static void main(String args[]) {
     prologue();
     try {
-      configure();
       parse(args);
+      configure();
       execute();
     } catch (CommandException e) {
       System.err.println(e.getMessage());
