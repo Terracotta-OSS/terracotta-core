@@ -30,7 +30,7 @@ class SvnUpdate
     else
       @good_revisions = { "os" => 0, "ee" => 0}
     end
-    
+    puts "good revisions #{@good_revisions}"
     clean_up_temp_dir
   end
   
@@ -84,6 +84,9 @@ class SvnUpdate
 
   def do_update(path, svninfo, good_rev)
     current_rev = get_revision(svninfo)
+    puts "path: #{path}"
+    puts "current rev: #{current_rev}"
+    puts "good_rev: #{good_rev}"
     if @monkey_name == "monkey-police" || @monkey_name =~ /test/ || good_rev == 0
       svn_update_with_error_tolerant(path, "HEAD")
       return
