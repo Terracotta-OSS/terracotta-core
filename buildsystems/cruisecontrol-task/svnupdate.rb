@@ -52,7 +52,7 @@ class SvnUpdate
 
   def log(msg)
     File.open(File.join(Dir.tmpdir, "svnupdate.log"), "a") do |f|
-      f.log("#{Time.now}: #{msg}")
+      f.puts("#{Time.now}: #{msg}")
     end
   end
   
