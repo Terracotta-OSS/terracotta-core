@@ -5,6 +5,7 @@
 package org.terracotta.modules.tool;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 public interface Modules {
@@ -48,6 +49,7 @@ public interface Modules {
   /**
    * Given a module, locate all of its siblings. The search-space is limited to the list returned by Modules.list()
    * 
+   * @param module The module whose siblings are returned.
    * @return A list of modules. The list returned DOES NOT include the module itself and is sorted in ascending-order.
    */
   List<Module> getSiblings(Module module);
@@ -56,6 +58,8 @@ public interface Modules {
    * Given a symbolicName, locate all modules with matching symbolicName. The search-space is limited to the list
    * returned by Modules.list()
    * 
+   * @param symbolicName This is: groupId + '.' + artifactId - in a collection of modules, those that have the same
+   *        symbolicName are considered siblings.
    * @return A list of modules. The list returned includes the module itself and is sorted in the ascending-order.
    */
   List<Module> getSiblings(String symbolicName);
@@ -64,6 +68,9 @@ public interface Modules {
    * Given the groupId, artifactId, and version, locate a module with the same attribute values. The search-space is the
    * list returned by Modules.list()
    * 
+   * @param groupId The groupId of the module to get.
+   * @param artifactId The artifactId of the module to get
+   * @param version The version of the module to get
    * @return A module. Null if no module matches the search fields.
    */
   Module get(String groupId, String artifactId, String version);
@@ -72,7 +79,18 @@ public interface Modules {
    * Given a list of fields and values to search, locate all modules with the same attribute values. The search-space is
    * the list returned by Modules.list() - the fields supported is implementation dependent.
    * 
+   * @param args The list of fields and values used as arguments for the search.
    * @return A list of modules. The list returned includes the module itself and is sorted in the ascending-order.
    */
   List<Module> find(List<String> args);
+
+  /**
+   * Download a module.
+   * 
+   * @param module The module to download
+   * @param verify Flag to indicate if checksum verification is performed after a successful download.
+   * @return A File instance representing the just downloaded module.
+   * @throws IOException if unable to download or checksum verification failed.
+   */
+  File download(Module module, boolean verify) throws IOException;
 }

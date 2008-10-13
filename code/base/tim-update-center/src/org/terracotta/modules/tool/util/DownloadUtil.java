@@ -125,7 +125,6 @@ public class DownloadUtil {
    */
   public void download(URL remoteFile, File localFile, Collection<DownloadOption> options) throws IOException {
     DownloadOptionsHelper downloadOptions = new DownloadOptionsHelper(options);
-
     if (!downloadOptions.overwriteExisting() && localFile.exists()) { throw new IOException(
                                                                                             "Download file already exists, and overwrite option not set."); }
 

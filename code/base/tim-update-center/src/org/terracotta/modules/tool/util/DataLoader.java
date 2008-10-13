@@ -4,9 +4,12 @@
  */
 package org.terracotta.modules.tool.util;
 
+import org.terracotta.modules.tool.config.Config;
+import org.terracotta.modules.tool.config.ConfigAnnotation;
 import org.terracotta.modules.tool.util.DownloadUtil.DownloadOption;
 
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,10 +50,13 @@ public class DataLoader {
   private final File         localDataFile;
   private CacheRefreshPolicy cacheRefreshPolicy = CacheRefreshPolicy.ON_EXPIRATION;
 
-  private Proxy              proxy              = Proxy.NO_PROXY;
+  @Inject
+  @Named(ConfigAnnotation.DOWNLOADUTIL_INSTANCE)
+  private final DownloadUtil downloader;
 
   public DataLoader(File localDataFile) {
     this.localDataFile = localDataFile;
+    this.downloader = new DownloadUtil();
   }
 
   public DataLoader(URL remoteDataUrl, File localDataFile) {
@@ -58,19 +64,24 @@ public class DataLoader {
     this.remoteDataUrl = remoteDataUrl;
   }
 
+  @Inject
+  public DataLoader(@Named(ConfigAnnotation.CONFIG_INSTANCE) Config config) {
+    this(config.getDataFileUrl(), config.getDataFile());
+    setCacheRefreshPolicy(CacheRefreshPolicy.ON_EXPIRATION.setExpirationInSeconds(config
+        .getDataCacheExpirationInSeconds()));
+  }
+
   /**
    * Sets the Proxy to use when retrieving the remote data file.
    */
-  @Inject
   public void setProxy(Proxy proxy) {
-    this.proxy = proxy;
+    downloader.setProxy(proxy);
   }
 
   public CacheRefreshPolicy getCacheRefreshPolicy() {
     return cacheRefreshPolicy;
   }
 
-  @Inject
   public void setCacheRefreshPolicy(CacheRefreshPolicy cacheRefreshPolicy) {
     this.cacheRefreshPolicy = cacheRefreshPolicy;
   }
@@ -122,12 +133,12 @@ public class DataLoader {
   }
 
   public boolean isRemoteDataModified() throws IOException {
-    URLConnection connection = remoteDataUrl.openConnection(proxy);
+    URLConnection connection = remoteDataUrl.openConnection(downloader.getProxy());
     return connection.getLastModified() > localDataFile.lastModified();
   }
 
   public boolean isLocalDataFileExpired() {
-    return localDataFileAge() > cacheRefreshPolicy.getExpirationInSeconds();
+    return false && localDataFileAge() > cacheRefreshPolicy.getExpirationInSeconds();
   }
 
   /**
@@ -141,7 +152,6 @@ public class DataLoader {
 
   public void loadDataFile() throws IOException {
     if (this.remoteDataUrl == null) return;
-    DownloadUtil downloader = new DownloadUtil(this.proxy);
     downloader.download(this.remoteDataUrl, localDataFile, DownloadOption.CREATE_INTERVENING_DIRECTORIES,
                         DownloadOption.OVERWRITE_EXISTING);
   }

@@ -9,9 +9,6 @@ import org.apache.commons.lang.StringUtils;
 import org.jdom.Element;
 import org.terracotta.modules.tool.DocumentToAttributes.DependencyType;
 import org.terracotta.modules.tool.InstallListener.InstallNotification;
-import org.terracotta.modules.tool.util.ChecksumUtil;
-import org.terracotta.modules.tool.util.DownloadUtil;
-import org.terracotta.modules.tool.util.DownloadUtil.DownloadOption;
 
 import com.google.inject.Inject;
 
@@ -247,33 +244,13 @@ public class Module extends AbstractModule implements BasicAttributes {
 
       if (!installOptions.pretend()) {
         File srcfile = null;
+
         try {
-          srcfile = File.createTempFile("tim-", null);
-          download(basicAttr.repoUrl(), srcfile);
+          srcfile = modules.download(this, installOptions.verify());
         } catch (IOException e) {
           String message = "Attempt to download TIM file at " + basicAttr.repoUrl() + " failed - " + e.getMessage();
           notifyListener(listener, module, InstallNotification.DOWNLOAD_FAILED, message);
           continue;
-        }
-
-        if (installOptions.verify()) {
-          File md5file = null;
-          URL md5url = null;
-          try {
-            md5file = File.createTempFile("tim-md5-", null);
-            md5url = new URL(basicAttr.repoUrl().toExternalForm() + ".md5");
-            download(md5url, md5file);
-          } catch (IOException e) {
-            String message = "Attempt to download checksum file at " + md5url + " failed - " + e.getMessage();
-            notifyListener(listener, module, InstallNotification.DOWNLOAD_FAILED, message);
-            continue;
-          }
-
-          if (!downloadVerified(srcfile, md5file)) {
-            String message = "Download might have been corrupted.";
-            notifyListener(listener, module, InstallNotification.CHECKSUM_FAILED, message);
-            continue;
-          }
         }
 
         try {
@@ -290,17 +267,4 @@ public class Module extends AbstractModule implements BasicAttributes {
     }
   }
 
-  private static boolean downloadVerified(File srcfile, File md5file) {
-    try {
-      return ChecksumUtil.verifyMD5Sum(srcfile, md5file);
-    } catch (Exception e) {
-      return false;
-    }
-  }
-
-  private void download(URL address, File localfile) throws IOException {
-    DownloadUtil downloader = new DownloadUtil();
-    downloader.download(address, localfile, DownloadOption.CREATE_INTERVENING_DIRECTORIES,
-                        DownloadOption.OVERWRITE_EXISTING);
-  }
 }

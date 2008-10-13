@@ -26,7 +26,8 @@ public class Config {
   private File               dataFile;
   private long               dataCacheExpirationInSeconds;
 
-  public Config() {
+  // We need to declare this no arg contructor so it can be Guice'd
+  Config() {
     // nothing to do
   }
 
@@ -41,7 +42,8 @@ public class Config {
 
     this.setDataFileUrl(createUrl(getProperty(properties, "dataFileUrl"), "dataFileUrl is not a valid URL"));
     this.setModulesDirectory(new File(getProperty(properties, "modulesDir")));
-    // this.setDataCacheExpirationInSeconds(Long.parseLong(getProperty(properties, "dataCacheExpirationInSeconds")));
+    this.setDataCacheExpirationInSeconds(Long.parseLong(getProperty(properties, "dataCacheExpirationInSeconds")));
+
     try {
       this.setDataFileUrl(new URL(getProperty(properties, "dataFileUrl")));
     } catch (MalformedURLException e) {

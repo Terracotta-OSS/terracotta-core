@@ -10,7 +10,10 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 import org.terracotta.modules.tool.config.ConfigAnnotation;
+import org.terracotta.modules.tool.util.ChecksumUtil;
 import org.terracotta.modules.tool.util.DataLoader;
+import org.terracotta.modules.tool.util.DownloadUtil;
+import org.terracotta.modules.tool.util.DownloadUtil.DownloadOption;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -19,6 +22,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,25 +31,57 @@ import java.util.Map;
 
 public class CachedModules implements Modules {
 
-  private List<Module>     modules;
-  private List<Module>     qualifiedModules;
-  private List<Module>     latestModules;
+  private List<Module>       modules;
+  private List<Module>       qualifiedModules;
+  private List<Module>       latestModules;
 
   @Inject
   @Named(ConfigAnnotation.TERRACOTTA_VERSION)
-  private String           tcVersion;
+  private String             tcVersion;
 
   @Inject
   @Named(ConfigAnnotation.INCLUDE_SNAPSHOTS)
-  private boolean          includeSnapshots;
+  private boolean            includeSnapshots;
 
-  private final File       repository;
-  private final DataLoader dataLoader;
+  private final File         repository;
+  private final DataLoader   dataLoader;
+
+  @Inject
+  @Named(ConfigAnnotation.DOWNLOADUTIL_INSTANCE)
+  private final DownloadUtil downloader;
 
   @Inject
   public CachedModules(@Named(ConfigAnnotation.MODULES_DIRECTORY) String repository, DataLoader dataLoader) {
     this.repository = new File(repository);
     this.dataLoader = dataLoader;
+    this.downloader = new DownloadUtil();
+  }
+
+  public File download(Module module, boolean verify) throws IOException {
+    File srcfile = File.createTempFile("tim-", null);
+    download(module.repoUrl(), srcfile);
+
+    if (verify) {
+      File md5file = File.createTempFile("tim-md5-", null);
+      URL md5url = new URL(module.repoUrl().toExternalForm() + ".md5");
+      download(md5url, md5file);
+
+      if (!downloadVerified(srcfile, md5file)) throw new IOException("The file might have been corrupted");
+    }
+
+    return srcfile;
+  }
+
+  private void download(URL url, File dest) throws IOException {
+    downloader.download(url, dest, DownloadOption.CREATE_INTERVENING_DIRECTORIES, DownloadOption.OVERWRITE_EXISTING);
+  }
+
+  private static boolean downloadVerified(File srcfile, File md5file) {
+    try {
+      return ChecksumUtil.verifyMD5Sum(srcfile, md5file);
+    } catch (Exception e) {
+      return false;
+    }
   }
 
   /**
@@ -57,6 +93,7 @@ public class CachedModules implements Modules {
     this.includeSnapshots = includeSnapshots;
     this.repository = repository;
     this.dataLoader = null;
+    this.downloader = new DownloadUtil();
     loadData(inputStream);
   }
 
@@ -65,7 +102,7 @@ public class CachedModules implements Modules {
       try {
         loadData(new FileInputStream(dataLoader.getDataFile()));
       } catch (Exception e) {
-        throw new RuntimeException(e);
+        throw new RuntimeException("Unable to read TIM index: " + e.getMessage());
       }
     }
   }

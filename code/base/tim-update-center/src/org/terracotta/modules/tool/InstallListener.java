@@ -7,7 +7,7 @@ package org.terracotta.modules.tool;
 public interface InstallListener {
 
   public enum InstallNotification {
-    STARTING, ABORTED, SKIPPED, DOWNLOAD_FAILED, CHECKSUM_FAILED, INSTALL_FAILED, INSTALLED;
+    STARTING, ABORTED, SKIPPED, DOWNLOAD_FAILED, INSTALL_FAILED, INSTALLED;
   }
 
   void notify(Object source, InstallNotification type, String message);
