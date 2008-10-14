@@ -605,7 +605,7 @@ public class ManagerImpl implements Manager {
   }
 
   public boolean tryBeginLock(String lockID, long timeoutInNanos, int type) {
-    return tryBegin(lockID, type, createTimerSpecFromNanos(timeoutInNanos), null);
+    return tryBegin(lockID, type, null, createTimerSpecFromNanos(timeoutInNanos), null);
   }
 
   public int localHeldCount(Object obj, int lockLevel) {
