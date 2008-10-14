@@ -1,13 +1,8 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
- * notice. All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
  */
 package com.tctest;
 
-import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
-
-import com.tc.object.bytecode.Manager;
-import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.spec.CyclicBarrierSpec;
@@ -15,23 +10,27 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.runner.AbstractTransparentApp;
 
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import junit.framework.Assert;
 
-public class TryLockTestApp extends AbstractTransparentApp {
+public class ReentrantReadWriteLockTryLockTestApp extends AbstractTransparentApp {
 
   public static final int NODE_COUNT = 2;
   
   private final CyclicBarrier barrier = new CyclicBarrier(NODE_COUNT);
   private final MockCoordinator coordinator = new MockCoordinator();
 
-  public TryLockTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
+  public ReentrantReadWriteLockTryLockTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
   }
 
   public void run() {
     int id;
     try {
-      id = barrier.barrier();
+      id = barrier.await();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -44,7 +43,7 @@ public class TryLockTestApp extends AbstractTransparentApp {
 
       Thread.sleep(2000);
 
-      barrier.barrier();
+      barrier.await();
 
       // stop the first queue and wait for its thread to stop running
       if (id != 0) {
@@ -52,7 +51,7 @@ public class TryLockTestApp extends AbstractTransparentApp {
         queue.getProcessingThread().join();
       }
 
-      barrier.barrier();
+      barrier.await();
 
       // ensure that the failed try locks count on the second queue is zero
       // and let it run uncontended while getting tryLocks
@@ -65,7 +64,7 @@ public class TryLockTestApp extends AbstractTransparentApp {
         Assert.assertEquals(0, queue.getTryLocksFailCount());
       }
       
-      barrier.barrier();
+      barrier.await();
 
       // again, ensure that the failed try locks count on the second queue is zero
       // explicitly take a lock and then let it run uncontended while getting tryLocks
@@ -81,11 +80,11 @@ public class TryLockTestApp extends AbstractTransparentApp {
         coordinator.stop(queue);
       }
       
-      barrier.barrier();
+      barrier.await();
       
       queue.getProcessingThread().join();
 
-      barrier.barrier();
+      barrier.await();
     } catch (Exception e) {
       throw new RuntimeException(e);
     } finally {
@@ -94,7 +93,7 @@ public class TryLockTestApp extends AbstractTransparentApp {
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    String testClass = TryLockTestApp.class.getName();
+    String testClass = ReentrantReadWriteLockTryLockTestApp.class.getName();
     config
       .getOrCreateSpec(testClass)
       .addRoot("barrier", "barrier")
@@ -110,48 +109,42 @@ public class TryLockTestApp extends AbstractTransparentApp {
   }
   
   public static class MockCoordinator {
-    private final static String LOCK_ID = "coordinator_lock";
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     
     public void start(final MockQueue queue) {
       System.out.println("> "+queue.getName()+" : start - lock()");
-      ManagerUtil.beginLock(LOCK_ID, Manager.LOCK_TYPE_WRITE);      
+      lock.writeLock().lock();
       try {
         System.out.println("> "+queue.getName()+" : start - locked");
         queue.startProcessingThread(this);
       } finally {
         System.out.println("> "+queue.getName()+" : start - unlock()");
-        ManagerUtil.commitLock(LOCK_ID);      
+        lock.writeLock().unlock();
         System.out.println("> "+queue.getName()+" : start - unlocked");
       }
     }
     
     public void stop(final MockQueue queue) {
-      synchronized (queue) {
-        if (!queue.getProcessingThread().isAlive()) {
-          return;
-        }
-      }
-      
       System.out.println("> "+queue.getName()+" : stop - lock()");
-      ManagerUtil.beginLock(LOCK_ID, Manager.LOCK_TYPE_WRITE);      
+      lock.writeLock().lock();
       try {
         System.out.println("> "+queue.getName()+" : stop - locked");
         queue.cancel();
       } finally {
         System.out.println("> "+queue.getName()+" : stop - unlock()");
-        ManagerUtil.commitLock(LOCK_ID);      
+        lock.writeLock().unlock();
         System.out.println("> "+queue.getName()+" : stop - unlocked");
       }
     }
     
     public void normalLock(final MockQueue queue) {
       System.out.println("> "+queue.getName()+" : normalLock - lock()");
-      ManagerUtil.beginLock(LOCK_ID, Manager.LOCK_TYPE_WRITE);      
+      lock.writeLock().lock();
       try {
         System.out.println("> "+queue.getName()+" : normalLock - locked");
       } finally {
         System.out.println("> "+queue.getName()+" : normalLock - unlock()");
-        ManagerUtil.commitLock(LOCK_ID);      
+        lock.writeLock().unlock();
         System.out.println("> "+queue.getName()+" : normalLock - unlocked");
       }
     }
@@ -162,9 +155,9 @@ public class TryLockTestApp extends AbstractTransparentApp {
 //      return tryLockWithTimeout();
     }
 
-    boolean tryLockWithTimeout() {
+    boolean tryLockWithoutTimeout() {
       System.out.println("> "+Thread.currentThread().getName()+" : tryLock - tryLock()");
-      if (ManagerUtil.tryBeginLockWithTimeout(LOCK_ID, 1, Manager.LOCK_TYPE_WRITE)) {      
+      if (lock.readLock().tryLock()) {
         try {
           try {
             Thread.sleep(100);
@@ -173,7 +166,7 @@ public class TryLockTestApp extends AbstractTransparentApp {
           }
         } finally {
           System.out.println("> "+Thread.currentThread().getName()+" : tryLock - unlock()");
-          ManagerUtil.commitLock(LOCK_ID);      
+          lock.readLock().unlock();
           System.out.println("> "+Thread.currentThread().getName()+" : tryLock - unlocked");
         }
         return true;
@@ -182,27 +175,32 @@ public class TryLockTestApp extends AbstractTransparentApp {
       return false;
     }
 
-    boolean tryLockWithoutTimeout() {
+    boolean tryLockWithTimeout() {
       System.out.println("> "+Thread.currentThread().getName()+" : tryLock - tryLock()");
-      if (ManagerUtil.tryBeginLock(LOCK_ID, Manager.LOCK_TYPE_WRITE)) {      
-        try {
+      try {
+        if (lock.readLock().tryLock(1, TimeUnit.MICROSECONDS)) {
           try {
-            Thread.sleep(100);
-          } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            try {
+              Thread.sleep(100);
+            } catch (InterruptedException e) {
+              throw new RuntimeException(e);
+            }
+          } finally {
+            System.out.println("> "+Thread.currentThread().getName()+" : tryLock - unlock()");
+            lock.readLock().unlock();
+            System.out.println("> "+Thread.currentThread().getName()+" : tryLock - unlocked");
           }
-        } finally {
-          System.out.println("> "+Thread.currentThread().getName()+" : tryLock - unlock()");
-          ManagerUtil.commitLock(LOCK_ID);      
-          System.out.println("> "+Thread.currentThread().getName()+" : tryLock - unlocked");
+          return true;
         }
-        return true;
+        
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
       }
       
       return false;
     }
   }
-  
+
   public static class MockQueue {
     private transient Thread  processingThread;
     private transient String  name;
@@ -221,7 +219,6 @@ public class TryLockTestApp extends AbstractTransparentApp {
     synchronized void startProcessingThread(final MockCoordinator processingCoordinator) {
       coordinator = processingCoordinator;
       processingThread = new Thread(new ProcessingThread(), name);
-      processingThread.setDaemon(true);
       processingThread.start();
     }
     
