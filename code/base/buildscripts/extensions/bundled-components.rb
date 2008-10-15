@@ -8,7 +8,6 @@ module BundledComponents
   def bundled_components(name, directory, spec)
     add_binaries(spec)
     add_resources(name, directory)
-    add_dso_bootjar(spec)
     add_module_packages(spec)
     add_documentations(spec)
   end
