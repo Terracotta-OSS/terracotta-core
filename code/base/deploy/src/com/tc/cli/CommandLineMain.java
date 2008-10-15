@@ -11,6 +11,7 @@ import com.tc.cli.command.DBUsageCommand;
 import com.tc.cli.command.FastLoadOidLogAnalysisCommand;
 import com.tc.cli.command.ManagedObjectReportCommand;
 import com.tc.cli.command.ReviveClassFilesCommand;
+import com.tc.cli.command.SetDbCleanCommand;
 import com.tc.util.ProductInfo;
 
 import java.io.IOException;
@@ -49,6 +50,7 @@ public class CommandLineMain {
     registerCommand(new ReviveClassFilesCommand(writer));
     registerCommand(new DBUsageCommand(writer));
     registerCommand(new DBDiffCommand(writer));
+    registerCommand(new SetDbCleanCommand(writer));
   }
 
   void registerCommand(Command command) {

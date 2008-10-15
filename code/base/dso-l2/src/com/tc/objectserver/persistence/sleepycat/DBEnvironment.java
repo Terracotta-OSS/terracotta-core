@@ -425,6 +425,10 @@ public class DBEnvironment {
       }
     }
   }
+  
+  public static final String getClusterStateStoreName() {
+    return CLUSTER_STATE_STORE;
+  }
 
   private static final class DBEnvironmentStatus {
     private final String description;

@@ -184,4 +184,8 @@ public class ClusterState {
   public Set getAllConnections() {
     return new HashSet(connections);
   }
+  
+  public static final String getL2StateKey() {
+    return L2_STATE_KEY;
+  }
 }
