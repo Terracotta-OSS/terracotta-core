@@ -8,7 +8,6 @@ module BundledJREs
   def bundled_jres(name, directory, spec)
     version        = spec[:version]
     os_type        = @build_environment.os_type(:nice).downcase
-    processor_type = @build_environment.processor_type.downcase
     jre_filename   = "jre-with-jdk-#{version}-#{os_type}.tar.gz"
     jre_url        = "#{@static_resources.jre_url}/#{os_type}/#{jre_filename}" 
     jre_srcdir     = FilePath.new(ENV['HOME'], '.tc').ensure_directory
