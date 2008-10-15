@@ -1045,6 +1045,7 @@ END
       'monkey-platform' => @build_environment.platform,
 
       'branch' => @build_environment.current_branch,
+      'is_ee_branch' => @build_environment.is_ee_branch?,
       'revision' => @build_environment.combo_revision,
 
       'appserver' => config_source['tc.tests.configuration.appserver.factory.name'] + "-"  +
