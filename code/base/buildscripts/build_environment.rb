@@ -32,7 +32,7 @@ class BuildEnvironment < Environment
     @ee_svninfo.valid?
   end
   
-  def commbo_revision
+  def combo_revision
     "#{@ee_svninfo.revision}-#{@os_svninfo.revision}"
   end
   

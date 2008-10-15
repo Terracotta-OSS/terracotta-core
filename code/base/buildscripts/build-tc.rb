@@ -839,7 +839,7 @@ END
   private
 
   def mark_this_revision_as_good
-    STDERR.puts("Revision #{@build_environment.commbo_revision} is good to go.")
+    STDERR.puts("Revision #{@build_environment.combo_revision} is good to go.")
     root = File.join(build_archive_dir.to_s, "monkey-police", @build_environment.current_branch)
     FileUtils.mkdir_p(root) unless File.exist?(root)
     good_rev_file = File.join(root, "good_rev.yml")
@@ -849,7 +849,7 @@ END
   end
 
   def mark_this_revision_as_bad(exception)
-    STDERR.puts("Revision #{@build_environment.commbo_revision} is bad, mm'kay!")
+    STDERR.puts("Revision #{@build_environment.combo_revision} is bad, mm'kay!")
     STDERR.puts(exception) 
     STDERR.puts("Please let people on this mail list know.")
   end
@@ -1045,7 +1045,7 @@ END
       'monkey-platform' => @build_environment.platform,
 
       'branch' => @build_environment.current_branch,
-      'revision' => @build_environment.os_revision,
+      'revision' => @build_environment.combo_revision,
 
       'appserver' => config_source['tc.tests.configuration.appserver.factory.name'] + "-"  +
         config_source['tc.tests.configuration.appserver.major-version'] + "." +
