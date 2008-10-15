@@ -113,7 +113,7 @@ bundled_components:
         - modules-common
         - thirdparty
         - thirdparty-api
-        - tim-update-center:
+        - tim-get-tool:
             kit-resources:
               - tim-get.properties
         - ui-configurator

@@ -404,7 +404,7 @@ modules:
   - installer:
       options:
         jdk: J2SE-1.4
-  - tim-update-center:
+  - tim-get-tool:
       options:
         jdk: J2SE-1.5
       dependencies:
