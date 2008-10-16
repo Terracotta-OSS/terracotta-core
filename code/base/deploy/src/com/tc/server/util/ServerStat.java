@@ -60,7 +60,7 @@ public class ServerStat {
   }
 
   public String getHealth() {
-    if (!connected) return UNKNOWN;
+    if (!connected) return "failed to connect at port " + port;
     return infoBean.getHealthStatus();
   }
 
@@ -71,40 +71,58 @@ public class ServerStat {
     sb.append("  health: " + getHealth()).append(newline);
     sb.append("  role: " + getRole()).append(newline);
     sb.append("  state: " + getState()).append(newline);
+    sb.append("  jmxport: " + port).append(newline);
     return sb.toString();
   }
 
   public static void main(String[] args) {
-    String host = "localhost";
-    int port = 9520;
-
+    String usage = "    server-stat.sh -s host1,host2\n" +
+                   "    server-stat.sh -s host1:9520,host2:9520\n" +
+                   "    server-stat.sh -f /path/to/tc-config.xml\n";
     CommandLineBuilder commandLineBuilder = new CommandLineBuilder(ServerStat.class.getName(), args);
 
-    commandLineBuilder.addOption("n", "hostname", true, "Terracotta Server hostname", String.class, false, "hostname");
-    commandLineBuilder.addOption("p", "jmxport", true, "Terracotta Server JMX port", Integer.class, false, "jmxport");
+    commandLineBuilder.addOption("s", true, "Terracotta server list (comma separated)", String.class, false, "list");
+    commandLineBuilder.addOption("f", true, "Terracotta tc-config file", String.class, false, "file");
     commandLineBuilder.addOption("h", "help", String.class, false);
-    commandLineBuilder.setUsageMessage("server-stat.bat/server-stat.sh");
+    commandLineBuilder.setUsageMessage(usage);
     commandLineBuilder.parse();
 
     if (commandLineBuilder.hasOption('h')) {
-      commandLineBuilder.usageAndDie("server-stat.bat/server-stat.sh");
+      commandLineBuilder.usageAndDie(usage);
     }
 
-    String hostValue = commandLineBuilder.getOptionValue('n');
-    String portValue = commandLineBuilder.getOptionValue('p');
+    String hostList = commandLineBuilder.getOptionValue('s');
+    String configFile = commandLineBuilder.getOptionValue('f');
 
-    if (hostValue != null) host = hostValue;
-
-    if (portValue != null) {
-      try {
-        port = Integer.parseInt(portValue);
-      } catch (NumberFormatException e) {
-        System.err.println("Invalid port number specified. Using default port '" + port + "'");
+    if (hostList == null) {
+      printStat("localhost:9520");
+    } else {
+      String[] pairs = hostList.split(",");
+      for (String info : pairs) {
+        printStat(info);
+        System.out.println();
       }
     }
-
+    
+    if (configFile != null) {
+      //
+    }
+  }
+  
+  public static void printStat(String info) {
+    String host = "localhost";
+    int port = 9520;
+    if (info.indexOf(':') > 0) {
+      String[] args = info.split(":");
+      host = args[0];
+      try {
+        port = Integer.valueOf(args[1]);
+      } catch (NumberFormatException e) {
+        System.err.println("Error parsing port number from: " + info + ". Using default port 9520");
+        port = 9520;
+      }
+    }
     ServerStat stat = new ServerStat(host, port);
     System.out.println(stat.toString());
-
   }
 }
