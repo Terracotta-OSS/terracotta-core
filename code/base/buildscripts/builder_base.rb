@@ -132,6 +132,9 @@ class TerracottaBuilder
       puts "EMMA_HOME: #{Registry[:emma_home]}"
     end
     
+    Registry[:izpack_home]     = FilePath.new(@basedir.to_s, "..", "..", "buildsystems", "IzPack").canonicalize.to_s
+    Registry[:izpack_compiler] = FilePath.new(Registry[:izpack_home], "standalone-compiler.jar").canonicalize.to_s
+    
     reset
   end
 

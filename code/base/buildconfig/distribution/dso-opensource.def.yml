@@ -136,7 +136,7 @@ packaging:
       assert: '@build_environment.os_type !~ /^\s*windows\s*$/i'
   - zip:
       assert: '!@build_environment.has_installanywhere && (@build_environment.os_type =~ /^\s*windows\s*$/i)'
-#  - izpack
+  - izpack
   - installanywhere:
       assert: '@build_environment.has_installanywhere && (@build_environment.os_type =~ /^\s*windows\s*$/i)'
 postscripts:
