@@ -55,7 +55,7 @@ public class ServerStat {
                                                                                    TCServerInfoMBean.class, false);
       connected = true;
     } catch (Exception e) {
-      errorMessage = e.getMessage();
+      errorMessage = "Failed to connect to " + host + ":" + port;
       connected = false;
     }
   }
@@ -113,7 +113,7 @@ public class ServerStat {
         handleList(hostList);
       }
     } catch (Exception e) {
-      System.err.println("Failed: " + e.getMessage());
+      System.err.println(e.getMessage());
       System.exit(1);
     }
   }
