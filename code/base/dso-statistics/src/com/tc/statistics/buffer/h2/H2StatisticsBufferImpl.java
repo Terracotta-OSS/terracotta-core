@@ -141,6 +141,16 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
     }
   }
 
+  public void fillInDefaultValues(final StatisticData data) {
+    if (null == data.getAgentIp()) {
+      data.setAgentIp(defaultAgentIp);
+    }
+    
+    if (null == data.getAgentDifferentiator()) {
+      data.setAgentDifferentiator(defaultAgentDifferentiator);
+    }
+  }
+
   public void open() throws StatisticsBufferException {
     synchronized (this) {
       try {
@@ -430,12 +440,7 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
     Assert.assertNotNull("moment property of data", data.getMoment());
     Assert.assertNotNull("name property of data", data.getName());
 
-    if (null == data.getAgentIp()) {
-      data.setAgentIp(defaultAgentIp);
-    }
-    if (null == data.getAgentDifferentiator()) {
-      data.setAgentDifferentiator(defaultAgentDifferentiator);
-    }
+    fillInDefaultValues(data);
     
     Assert.assertNotNull("agentIp property of data", data.getAgentIp());
     Assert.assertNotNull("agentDifferentiator property of data", data.getAgentDifferentiator());

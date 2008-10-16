@@ -10,6 +10,8 @@ import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticsGathererSubSystem;
+import com.tc.statistics.gatherer.StatisticsGathererListener;
+import com.tc.statistics.gatherer.exceptions.StatisticsGathererException;
 import com.tc.statistics.store.StatisticsRetrievalCriteria;
 import com.tc.statistics.store.TextualDataFormat;
 
@@ -17,7 +19,17 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -25,19 +37,31 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * Servlet that provides a RESTful interface towards an embedded statistics gatherer
  */
-public class StatisticsGathererServlet extends RestfulServlet {
+public class StatisticsGathererServlet extends RestfulServlet implements StatisticsGathererListener {
   public static final String             GATHERER_ATTRIBUTE = StatisticsGathererServlet.class.getName() + ".gatherer";
 
   private L2TVSConfigurationSetupManager configSetupManager;
   private StatisticsGathererSubSystem    system;
+  
+  private boolean connected = false;
 
   public void init() {
     configSetupManager = (L2TVSConfigurationSetupManager) getServletContext()
         .getAttribute(ConfigServlet.CONFIG_ATTRIBUTE);
     system = (StatisticsGathererSubSystem) getServletContext().getAttribute(GATHERER_ATTRIBUTE);
+    system.getStatisticsGatherer().addListener(this);
   }
 
   public void methodStartup(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
+    startup();
+    printOk(response);
+  }
+
+  private synchronized void startup() throws StatisticsGathererException {
+    if (connected) {
+      return;
+    }
+    
     final NewCommonL2Config commonConfig = configSetupManager.commonl2Config();
     final NewL2DSOConfig dsoConfig = configSetupManager.dsoL2Config();
     String hostname = dsoConfig.bind().getString();
@@ -46,11 +70,12 @@ public class StatisticsGathererServlet extends RestfulServlet {
     }
     final int port = commonConfig.jmxPort().getInt();
     system.getStatisticsGatherer().connect(hostname, port);
-    printOk(response);
   }
 
-  public void methodShutdown(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
-    system.getStatisticsGatherer().disconnect();
+  public synchronized void methodShutdown(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
+    if (!connected) {
+      system.getStatisticsGatherer().disconnect();
+    }
     printOk(response);
   }
 
@@ -112,7 +137,7 @@ public class StatisticsGathererServlet extends RestfulServlet {
     if (null == name) throw new IllegalArgumentException("name");
     StatisticData[] data = system.getStatisticsGatherer().captureStatistic(name);
     response.setContentType("text/plain");
-    StringBuffer out = new StringBuffer();
+    StringBuilder out = new StringBuilder();
     out.append(StatisticData.CURRENT_CSV_HEADER);
     if (data != null) {
       for (int i = 0; i < data.length; i++) {
@@ -120,6 +145,187 @@ public class StatisticsGathererServlet extends RestfulServlet {
       }
     }
     print(response, out.toString());
+  }
+  
+  private final static long                              REALTIME_DATA_INTERVAL   = 1000L;
+  private final static long                              REALTIME_DATA_BUFFERSIZE = 60;
+  private final static long                              REALTIME_DATA_MAXAGE     = REALTIME_DATA_BUFFERSIZE * REALTIME_DATA_INTERVAL;
+
+  private final static Pattern                           XML_TAG_NAME_PATTERN     = Pattern.compile("\\W");
+
+  private final ReentrantReadWriteLock                   realtimeDataLock         = new ReentrantReadWriteLock();
+  private final Map<String, LinkedList<StatisticData[]>> realtimeData             = new HashMap<String, LinkedList<StatisticData[]>>();
+  private long                                           lastRealtimeData         = 0L;
+
+  private String xmlTagName(final String name) {
+    return XML_TAG_NAME_PATTERN.matcher(name).replaceAll("_");
+  }
+  
+  public void methodRealtime(final HttpServletRequest request, final HttpServletResponse response)
+      throws Throwable {
+    final String[] names = request.getParameterValues("names");
+    if (null == names) throw new IllegalArgumentException("names");
+    
+    startup();
+    
+    updateRealtimeData(names);
+
+    response.setContentType("text/xml");
+    
+    StringBuilder out = new StringBuilder();
+    
+    realtimeDataLock.readLock().lock();
+    try {
+      Map<String, Map<String, Map<String, Map<Date, List<StatisticData>>>>> nodes = new LinkedHashMap<String, Map<String, Map<String, Map<Date, List<StatisticData>>>>>();
+
+      for (Map.Entry<String, LinkedList<StatisticData[]>> entry : realtimeData.entrySet()) {
+        final String statName = entry.getKey();
+        
+        for (StatisticData[] statDataSnapshot : entry.getValue()) {
+          for (StatisticData statData : statDataSnapshot) {
+            
+            Map<String, Map<String, Map<Date, List<StatisticData>>>> stats = nodes.get(statData.getAgentDifferentiator());
+            if (null == stats) {
+              stats = new HashMap<String, Map<String, Map<Date, List<StatisticData>>>>();
+              nodes.put(statData.getAgentDifferentiator(), stats);
+            }
+            
+            Map<String, Map<Date, List<StatisticData>>> elements = stats.get(statName);
+            if (null == elements) {
+              elements = new HashMap<String, Map<Date, List<StatisticData>>>();
+              stats.put(statName, elements);
+            }
+
+            String element = statData.getElement();
+            if (null == element) {
+              element = statName;
+            }
+            Map<Date, List<StatisticData>> timeseries = elements.get(element);        
+            if (null == timeseries) {
+              timeseries = new LinkedHashMap<Date, List<StatisticData>>();
+              elements.put(element, timeseries);
+            }
+            
+            List<StatisticData> dataElements = timeseries.get(statData.getMoment());
+            if (null == dataElements) {
+              dataElements = new ArrayList<StatisticData>();
+              timeseries.put(statData.getMoment(), dataElements);
+            }
+            
+            dataElements.add(statData);
+          }
+        }
+      }
+      
+      out.append("<?xml version=\"1.0\"?>\n");
+      out.append("<nodes>\n");
+      for (Map.Entry<String, Map<String, Map<String, Map<Date, List<StatisticData>>>>> nodeEntry : nodes.entrySet()) {
+        final String nodeName = xmlTagName(nodeEntry.getKey());
+        out.append("  <");
+        out.append(nodeName);
+        out.append(">\n");
+        for (Map.Entry<String, Map<String, Map<Date, List<StatisticData>>>> statsEntry : nodeEntry.getValue().entrySet()) {
+          final String statName = xmlTagName(statsEntry.getKey());
+          out.append("    <");
+          out.append(statName);
+          out.append(">\n");
+          for (Map.Entry<String, Map<Date, List<StatisticData>>> elementEntry : statsEntry.getValue().entrySet()) {
+            final String elementName = xmlTagName(elementEntry.getKey());
+            out.append("      <");
+            out.append(elementName);
+            out.append(">\n");
+            
+            Set<Map.Entry<Date, List<StatisticData>>> timeseriesSet = elementEntry.getValue().entrySet();
+            if (elementEntry.getValue().size() > 1 &&
+                elementEntry.getValue().size() < REALTIME_DATA_BUFFERSIZE) {
+              outputDataElement(out, System.currentTimeMillis()-REALTIME_DATA_MAXAGE, timeseriesSet.iterator().next().getValue());
+            }
+            for (Map.Entry<Date, List<StatisticData>> timeseriesEntry : timeseriesSet) {
+              long time = timeseriesEntry.getKey().getTime();
+              List<StatisticData> data = timeseriesEntry.getValue();
+              outputDataElement(out, time, data);
+            }
+            
+            out.append("      </");
+            out.append(elementName);
+            out.append(">\n");
+          }
+          out.append("    </");
+          out.append(statName);
+          out.append(">\n");
+        }
+        out.append("  </");
+        out.append(nodeName);
+        out.append(">\n");
+      }
+      out.append("</nodes>");
+    } finally {
+      realtimeDataLock.readLock().unlock();
+    }
+    
+    print(response, out.toString());
+  }
+
+  private void outputDataElement(StringBuilder out, long time, List<StatisticData> data) {
+    out.append("        <data>");
+    out.append("<m>");
+    out.append(time);
+    out.append("</m>");
+    int i = 1;
+    for (StatisticData dataElement : data) {
+      out.append("<v");
+      out.append(i);
+      out.append(">");
+      out.append(dataElement.getData());
+      out.append("</v");
+      out.append(i);
+      out.append(">");
+      i++;
+    }
+    out.append("</data>\n");
+  }
+
+  private void updateRealtimeData(final String[] statNames) throws StatisticsGathererException {
+    realtimeDataLock.readLock().lock();
+    try {
+      if (System.currentTimeMillis() <  lastRealtimeData + REALTIME_DATA_INTERVAL) {
+        return;
+      }
+    } finally {
+      realtimeDataLock.readLock().unlock();
+    }
+
+    realtimeDataLock.writeLock().lock();
+    try {
+      for (String statName : statNames) {
+        StatisticData[] data = system.getStatisticsGatherer().retrieveStatisticData(statName);
+
+        LinkedList<StatisticData[]> aggregatedData = realtimeData.get(statName);
+        if (null == aggregatedData) {
+          aggregatedData = new LinkedList<StatisticData[]>();
+          realtimeData.put(statName, aggregatedData);
+        }
+        
+        // remove outdated aggregated data
+        Iterator<StatisticData[]> it = aggregatedData.iterator();
+        while (it.hasNext()) {
+          if (it.next()[0].getMoment().getTime() + REALTIME_DATA_MAXAGE < System.currentTimeMillis()) {
+            it.remove();
+          }
+        }
+        
+        if (data != null &&
+            data.length > 0) {
+          aggregatedData.addLast(data);
+          if (aggregatedData.size() > REALTIME_DATA_BUFFERSIZE) {
+            aggregatedData.removeFirst();
+          }
+          lastRealtimeData = System.currentTimeMillis();
+        }
+      }
+    } finally {
+      realtimeDataLock.writeLock().unlock();
+    }
   }
 
   public void methodStartCapturing(final HttpServletRequest request, final HttpServletResponse response)
@@ -228,5 +434,37 @@ public class StatisticsGathererServlet extends RestfulServlet {
                                                         request.getParameterValues("names"),
                                                         request.getParameterValues("elements"), interval);
     writer.close();
+  }
+
+  public void capturingStarted(String sessionId) {
+    // nothing to do
+  }
+
+  public void capturingStopped(String sessionId) {
+    // nothing to do
+  }
+
+  public synchronized void connected(String managerHostName, int managerPort) {
+    connected = true;
+  }
+
+  public synchronized void disconnected() {
+    connected = false;
+  }
+
+  public void reinitialized() {
+    // nothing to do
+  }
+
+  public void sessionClosed(String sessionId) {
+    // nothing to do
+  }
+
+  public void sessionCreated(String sessionId) {
+    // nothing to do
+  }
+
+  public void statisticsEnabled(String[] names) {
+    // nothing to do
   }
 }

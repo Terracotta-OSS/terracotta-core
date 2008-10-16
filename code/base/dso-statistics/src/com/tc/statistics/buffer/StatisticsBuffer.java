@@ -25,6 +25,8 @@ public interface StatisticsBuffer {
 
   public void consumeStatistics(String sessionId, StatisticsConsumer consumer) throws StatisticsBufferException;
 
+  public void fillInDefaultValues(StatisticData data);
+
   public void setDefaultAgentIp(String defaultAgentIp);
 
   public void setDefaultAgentDifferentiator(String defaultAgentDifferentiator);
@@ -34,7 +36,7 @@ public interface StatisticsBuffer {
   public String getDefaultAgentDifferentiator();
 
   public String getDefaultNodeName();
-
+  
   public void addListener(StatisticsBufferListener listener);
 
   public void removeListener(StatisticsBufferListener listener);

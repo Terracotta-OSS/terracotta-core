@@ -153,6 +153,25 @@ public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implemen
     return data;
   }
 
+  public StatisticData[] retrieveStatisticData(final String name) {
+    StatisticRetrievalAction action = registry.getActionInstance(name);
+    if (null == action) {
+      return null;
+    }
+
+    final Date moment = new Date();
+    StatisticData[] data = action.retrieveStatisticData();
+    if (data != null) {
+      for (int i = 0; i < data.length; i++) {
+        buffer.fillInDefaultValues(data[i]);
+        data[i].setMoment(moment);
+      }
+    } else {
+      data = StatisticData.EMPTY_ARRAY;
+    }
+    return data;
+  }
+
   public synchronized void startCapturing(final String sessionId) {
     try {
       buffer.startCapturing(sessionId);

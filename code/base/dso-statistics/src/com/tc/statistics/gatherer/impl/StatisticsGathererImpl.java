@@ -221,6 +221,11 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
     return statGateway.captureStatistic(sessionId, name);
   }
 
+  public StatisticData[] retrieveStatisticData(String name) throws StatisticsGathererException {
+    if (null == statGateway) throw new StatisticsGathererConnectionRequiredException();
+    return statGateway.retrieveStatisticData(name);
+  }
+
   public void enableStatistics(final String[] names) throws StatisticsGathererException {
     Assert.assertNotNull("names", names);
 

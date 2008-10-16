@@ -22,6 +22,8 @@ public interface StatisticsManager  {
 
   public StatisticData[] captureStatistic(String sessionId, String name);
 
+  public StatisticData[] retrieveStatisticData(String name);
+
   public void startCapturing(String sessionId);
 
   public void stopCapturing(String sessionId);

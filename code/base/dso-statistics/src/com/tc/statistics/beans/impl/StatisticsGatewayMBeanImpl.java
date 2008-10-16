@@ -180,6 +180,22 @@ public class StatisticsGatewayMBeanImpl extends AbstractTerracottaMBean implemen
     return (StatisticData[])result_list.toArray(new StatisticData[result_list.size()]);
   }
 
+  public StatisticData[] retrieveStatisticData(final String name) {
+    List result_list = new ArrayList();
+
+    for (Iterator agent_it = agents.values().iterator(); agent_it.hasNext(); ) {
+      StatisticsAgentConnection agent = (StatisticsAgentConnection)agent_it.next();
+      StatisticData[] data = agent.retrieveStatisticData(name);
+      if (data != null) {
+        for (int i = 0; i < data.length; i++) {
+          result_list.add(data[i]);
+        }
+      }
+    }
+
+    return (StatisticData[])result_list.toArray(new StatisticData[result_list.size()]);
+  }
+
   public void startCapturing(final String sessionId) {
     for (Iterator it = agents.values().iterator(); it.hasNext(); ) {
       StatisticsAgentConnection agent = (StatisticsAgentConnection)it.next();

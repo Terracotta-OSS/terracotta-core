@@ -25,6 +25,8 @@ public interface StatisticsGatherer {
 
   public StatisticData[] captureStatistic(String name) throws StatisticsGathererException;
 
+  public StatisticData[] retrieveStatisticData(String name) throws StatisticsGathererException;
+
   public void startCapturing() throws StatisticsGathererException;
 
   public void stopCapturing() throws StatisticsGathererException;
