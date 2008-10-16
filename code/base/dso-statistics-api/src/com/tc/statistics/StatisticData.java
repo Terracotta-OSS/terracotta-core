@@ -390,6 +390,63 @@ public class StatisticData implements Serializable {
   }
 
   /**
+   * Converts this data instance to an XML representation. This only outputs
+   * the values of the fields as XML tags, there's no surrounding &lt;statistic&gt;
+   * tag.
+   *
+   * @return the XML representation of this data
+   */
+  public String toXml() {
+    StringBuffer result = new StringBuffer();
+    result.append("<sessionId>");
+    if (sessionId != null) {
+      result.append(sessionId);
+    }
+    result.append("</sessionId>");
+    
+    result.append("<agentIp>");
+    if (agentIp != null) {
+      result.append(agentIp);
+    }
+    result.append("</agentIp>");
+    
+    result.append("<agentDifferentiator>");
+    if (agentDifferentiator != null) {
+      result.append(agentDifferentiator);
+    }
+    result.append("</agentDifferentiator>");
+    
+    result.append("<moment>");
+    if (moment != null) {
+      result.append(new Long((moment).getTime()));
+    }
+    result.append("</moment>");
+    
+    result.append("<name>");
+    if (name != null) {
+      result.append(name);
+    }
+    result.append("</name>");
+
+    result.append("<element>");
+    if (element != null) {
+      result.append(element);
+    }
+    result.append("</element>");
+
+    result.append("<value>");
+    if (data != null) {
+      if (data instanceof Date) {
+        result.append(new Long(((Date)data).getTime()));
+      } else {
+        result.append(element);
+      }
+    }
+    result.append("</value>");
+    return result.toString();
+  }
+  
+  /**
    * Creates a new data instance from a single line of CSV data.
    *
    * This parser assumes that there are exactly as many CSV fields as there are

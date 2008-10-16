@@ -146,6 +146,37 @@ public class StatisticsGathererServlet extends RestfulServlet implements Statist
     }
     print(response, out.toString());
   }
+
+  public void methodRetrieveStatisticData(final HttpServletRequest request, final HttpServletResponse response)
+      throws Throwable {
+    String[] names = request.getParameterValues("names");
+    if (null == names) throw new IllegalArgumentException("names");
+    
+    response.setContentType("text/xml");
+    StringBuilder out = new StringBuilder();
+
+    out.append("<?xml version=\"1.0\"?>\n");
+    out.append("<statistics>\n");
+
+    for (String name : names) {
+      out.append("  <statistic type=\""+name+"\">\n");
+      StatisticData[] data = system.getStatisticsGatherer().retrieveStatisticData(name);
+      if (data != null) {
+        for (int i = 0; i < data.length; i++) {
+          out.append("    <data>\n");
+          out.append("      ");
+          out.append(data[i].toXml());
+          out.append("\n");
+          out.append("    </data>\n");
+        }
+      }
+      out.append("  </statistic>\n");
+    }
+
+    out.append("</statistics>\n");
+
+    print(response, out.toString());
+  }
   
   private final static long                              REALTIME_DATA_INTERVAL   = 1000L;
   private final static long                              REALTIME_DATA_BUFFERSIZE = 60;
@@ -238,12 +269,12 @@ public class StatisticsGathererServlet extends RestfulServlet implements Statist
             Set<Map.Entry<Date, List<StatisticData>>> timeseriesSet = elementEntry.getValue().entrySet();
             if (elementEntry.getValue().size() > 1 &&
                 elementEntry.getValue().size() < REALTIME_DATA_BUFFERSIZE) {
-              outputDataElement(out, System.currentTimeMillis()-REALTIME_DATA_MAXAGE, timeseriesSet.iterator().next().getValue());
+              outputRealtimeDataElement(out, System.currentTimeMillis()-REALTIME_DATA_MAXAGE, timeseriesSet.iterator().next().getValue());
             }
             for (Map.Entry<Date, List<StatisticData>> timeseriesEntry : timeseriesSet) {
               long time = timeseriesEntry.getKey().getTime();
               List<StatisticData> data = timeseriesEntry.getValue();
-              outputDataElement(out, time, data);
+              outputRealtimeDataElement(out, time, data);
             }
             
             out.append("      </");
@@ -266,7 +297,7 @@ public class StatisticsGathererServlet extends RestfulServlet implements Statist
     print(response, out.toString());
   }
 
-  private void outputDataElement(StringBuilder out, long time, List<StatisticData> data) {
+  private void outputRealtimeDataElement(StringBuilder out, long time, List<StatisticData> data) {
     out.append("        <data>");
     out.append("<m>");
     out.append(time);
