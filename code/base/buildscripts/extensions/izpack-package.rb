@@ -28,10 +28,8 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     File.open(config, 'w') { |out| out << template }
 
     # install IzPack as an Ant task
-    ant.taskdef(
-      :name      => 'izpack', 
-      :classname => 'com.izforge.izpack.ant.IzPackTask', 
-      :classpath => Registry[:izpack_compiler])
+    puts "izpack: #{Registry[:izpack_compiler]}"
+    ant.taskdef(:name => 'izpack', :classname => 'com.izforge.izpack.ant.IzPackTask', :classpath => Registry[:izpack_compiler]) 
 
     # build the package
     installer_package_name = FilePath.new(destdir.to_s, "#{filename}.jar")
