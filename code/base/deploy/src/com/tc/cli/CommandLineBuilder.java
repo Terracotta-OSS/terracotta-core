@@ -25,6 +25,7 @@ public class CommandLineBuilder {
   private String      callingClassName;
   private String[]    cmdArguments;
   private CommandLine commandLine;
+  private String      usageMessage;
 
   static {
     System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog");
@@ -37,6 +38,10 @@ public class CommandLineBuilder {
 
   public void setOptions(Options options) {
     this.options = options;
+  }
+
+  public void setUsageMessage(String message) {
+    this.usageMessage = message;
   }
 
   public void addOption(String opt, String longOpt, boolean hasArg, String description, Class type, boolean isRequired) {
@@ -107,10 +112,11 @@ public class CommandLineBuilder {
   }
 
   public void usageAndDie() {
-    new HelpFormatter().printHelp("java " + callingClassName, options);
+    String message = usageMessage != null ? usageMessage : "java " + callingClassName;
+    new HelpFormatter().printHelp(message, options);
     System.exit(1);
   }
-  
+
   public void usageAndDie(String message) {
     new HelpFormatter().printHelp(message, options);
     System.exit(1);
@@ -123,7 +129,7 @@ public class CommandLineBuilder {
   public boolean hasOption(char arg) {
     return commandLine.hasOption(arg);
   }
-  
+
   public boolean hasOption(String arg) {
     return commandLine.hasOption(arg);
   }
@@ -131,7 +137,7 @@ public class CommandLineBuilder {
   public String getOptionValue(char arg) {
     return commandLine.getOptionValue(arg);
   }
-  
+
   public String getOptionValue(String arg) {
     return commandLine.getOptionValue(arg);
   }

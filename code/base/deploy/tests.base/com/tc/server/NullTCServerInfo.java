@@ -46,7 +46,7 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   public int getDSOListenPort() {
     return 0;
   }
-  
+
   public long getStartTime() {
     return 0;
   }
@@ -54,15 +54,15 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   public String getVersion() {
     return "";
   }
-  
+
   public String getPatchLevel() {
     return "";
   }
-  
+
   public String getPatchVersion() {
     return "";
   }
-  
+
   public String getPatchBuildID() {
     return "";
   }
@@ -78,7 +78,7 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   public boolean isShutdownable() {
     return false;
   }
-  
+
   public void shutdown() {
     //
   }
@@ -110,19 +110,19 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   public String[] getCpuStatNames() {
     return null;
   }
-  
+
   public Map getStatistics() {
     return null;
   }
-  
+
   public StatisticData[] getCpuUsage() {
     return null;
   }
-  
+
   public String takeThreadDump(long requestMillis) {
     return null;
   }
-  
+
   public String getFailoverMode() {
     return null;
   }
@@ -130,7 +130,7 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   public String getPersistenceMode() {
     return null;
   }
-  
+
   public String getEnvironment() {
     return null;
   }
@@ -141,5 +141,9 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
 
   public boolean isPatched() {
     return false;
+  }
+
+  public String getState() {
+    return null;
   }
 }

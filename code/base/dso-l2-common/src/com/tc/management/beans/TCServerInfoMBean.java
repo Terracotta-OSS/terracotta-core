@@ -70,4 +70,6 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   String getEnvironment();
   
   String getConfig();
+  
+  String getState();
 }

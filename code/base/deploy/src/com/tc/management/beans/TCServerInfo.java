@@ -52,6 +52,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   private final ProductInfo                    productInfo;
   private final String                         buildID;
   private final L2State                        l2State;
+
   private final StateChangeNotificationInfo    stateChangeNotificationInfo;
   private long                                 nextSequenceNumber;
 
@@ -158,6 +159,10 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     }
   }
 
+  public String getState() {
+    return l2State.toString();
+  }
+
   public String getVersion() {
     return productInfo.toShortString();
   }
@@ -169,17 +174,17 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   public boolean isPatched() {
     return productInfo.isPatched();
   }
-  
+
   public String getPatchLevel() {
-    if(productInfo.isPatched()) {
+    if (productInfo.isPatched()) {
       return productInfo.patchLevel();
     } else {
       return "";
     }
   }
-  
+
   public String getPatchVersion() {
-    if(productInfo.isPatched()) {
+    if (productInfo.isPatched()) {
       return productInfo.toLongPatchString();
     } else {
       return "";
@@ -187,7 +192,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   }
 
   public String getPatchBuildID() {
-    if(productInfo.isPatched()) {
+    if (productInfo.isPatched()) {
       return productInfo.patchBuildID();
     } else {
       return "";
@@ -299,11 +304,11 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   public String getPersistenceMode() {
     return server.getPersistenceMode();
   }
-  
+
   public String getFailoverMode() {
     return server.getFailoverMode();
   }
-  
+
   public String getConfig() {
     return server.getConfig();
   }
