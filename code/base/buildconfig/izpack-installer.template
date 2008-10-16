@@ -24,15 +24,17 @@
       <res id="LicencePanel.licence" src="license.txt" />
       <res id="InfoPanel.info" src="readme.txt" />
       <res src="../../../buildconfig/windows_shortcuts.xml" id="shortcutSpec.xml" />
+      <res src="../../../buildconfig/unix_shortcuts.xml" id="Unix_shortcutSpec.xml" />
    </resources>
 
    <panels>
-      <panel classname="HelloPanel" />
-      <panel classname="LicencePanel" />
-      <panel classname="TargetPanel" />
-      <panel classname="InstallPanel" />
-      <panel classname="ShortcutPanel" />
-      <panel classname="FinishPanel" />
+      <panel classname="HelloPanel"/>
+      <panel classname="LicencePanel"/>
+      <panel classname="TargetPanel"/>
+      <panel classname="SummaryPanel"/>
+      <panel classname="InstallPanel"/>
+      <panel classname="ShortcutPanel"/>
+      <panel classname="FinishPanel"/>
    </panels>
 
    <packs>

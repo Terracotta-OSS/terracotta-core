@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+
+<shortcuts>
+  <skipIfNotSupported/>
+  <programGroup defaultName="TerracottaXXX" location="applications"/>
+
+  <shortcut
+      name="Administrator Console"
+      target="$INSTALL_PATH\bin\admin.bat"
+      description="Start the Terracotta Administrator Console"
+      programGroup="yes"
+      desktop="yes"
+      applications="yes"
+      startMenu="yes"
+      startup="no"
+      initialState="noShow"
+      iconFile="$INSTALL_PATH/icons/logo_small.ico"
+      iconIndex="0">
+    <createForPack name="Terracotta"/>
+  </shortcut>
+
+  <shortcut
+           name="Terracotta Welcome"
+           target="$INSTALL_PATH\bin\welcome.bat"
+           description="Start the Terracotta Welcome application"
+           programGroup="yes"
+           desktop="yes"
+           applications="yes"
+           startMenu="yes"
+           startup="no"
+           initialState="noShow"
+           iconFile="$INSTALL_PATH/icons/logo_small.ico"
+           iconIndex="0">
+    <createForPack name="Terracotta"/>
+  </shortcut>
+
+</shortcuts>
