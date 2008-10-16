@@ -789,7 +789,8 @@ public class Lock {
     boolean clear;
     try {
       // Lock upgrade is not supported.
-      if (!pendingLockRequests.isEmpty()) {
+      // DEV-1999 : Note this can be called on node disconnects. If the lock state is in recalled, we shouldn't be giving new request.
+      if (!pendingLockRequests.isEmpty() && !recalled) {
         Request request = (Request) pendingLockRequests.get(pendingLockRequests.get(0));
         int reqLockLevel = request.getLockLevel();
 
@@ -892,7 +893,7 @@ public class Lock {
   synchronized boolean recallCommit(ServerThreadContext threadContext) {
     // debug("recallCommit() - BEGIN -", threadContext);
     Assert.assertTrue(isGreedyRequest(threadContext));
-    boolean issueRecall = !recalled;
+    boolean issueRecall = !recalled && hasPending();
     removeCurrentHold(threadContext);
     if (issueRecall) {
       recall(LockLevel.WRITE);
@@ -985,9 +986,7 @@ public class Lock {
   }
 
   /**
-   * This clears out stuff from the pending and wait lists that belonged to a dead session. It occurs to me that this is
-   * a race condition because a request could come in on the connection, then the cleanup could happen, and then the
-   * request could be processed. We need to drop requests that are processed after the cleanup
+   * This clears out stuff from the pending and wait lists that belonged to a dead session. 
    *
    * @param nid
    */
