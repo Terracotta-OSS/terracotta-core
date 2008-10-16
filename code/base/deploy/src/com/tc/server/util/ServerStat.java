@@ -22,8 +22,8 @@ import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
 
 public class ServerStat {
-  private static final String   UNKNOWN = "unknown";
-  private static final String   NEWLINE = System.getProperty("line.separator");
+  private static final String   UNKNOWN      = "unknown";
+  private static final String   NEWLINE      = System.getProperty("line.separator");
 
   public String                 host;
   public int                    port;
@@ -88,8 +88,8 @@ public class ServerStat {
   }
 
   public static void main(String[] args) {
-    String usage = "    server-stat.sh -s host1,host2" + NEWLINE + "    server-stat.sh -s host1:9520,host2:9520"
-                   + NEWLINE + "    server-stat.sh -f /path/to/tc-config.xml" + NEWLINE;
+    String usage = " server-stat -s host1,host2" + NEWLINE + "       server-stat -s host1:9520,host2:9520" + NEWLINE
+                   + "       server-stat -f /path/to/tc-config.xml" + NEWLINE;
 
     CommandLineBuilder commandLineBuilder = new CommandLineBuilder(ServerStat.class.getName(), args);
 
