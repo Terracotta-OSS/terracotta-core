@@ -32,6 +32,7 @@ public class ServerStat {
 
   private TCServerInfoMBean     infoBean;
   private boolean               connected;
+  private String                errorMessage = "";
 
   public ServerStat(String host, int port) {
     this.host = host;
@@ -53,7 +54,8 @@ public class ServerStat {
       infoBean = (TCServerInfoMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.TC_SERVER_INFO,
                                                                                    TCServerInfoMBean.class, false);
       connected = true;
-    } catch (IOException e) {
+    } catch (Exception e) {
+      errorMessage = e.getMessage();
       connected = false;
     }
   }
@@ -69,25 +71,26 @@ public class ServerStat {
   }
 
   public String getHealth() {
-    if (!connected) return "FAILED to connect";
+    if (!connected) return "FAILED";
     return infoBean.getHealthStatus();
   }
 
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("- " + host + ":").append(NEWLINE);
-    sb.append("  health: " + getHealth()).append(NEWLINE);
-    sb.append("  role: " + getRole()).append(NEWLINE);
-    sb.append("  state: " + getState()).append(NEWLINE);
-    sb.append("  jmxport: " + port).append(NEWLINE);
+    sb.append(host + ".health: " + getHealth()).append(NEWLINE);
+    sb.append(host + ".role: " + getRole()).append(NEWLINE);
+    sb.append(host + ".state: " + getState()).append(NEWLINE);
+    sb.append(host + ".jmxport: " + port).append(NEWLINE);
+    if (!connected) {
+      sb.append(host + ".error: " + errorMessage).append(NEWLINE);
+    }
     return sb.toString();
   }
 
   public static void main(String[] args) {
-    String usage = "    server-stat.sh -s host1,host2" + NEWLINE + 
-                   "    server-stat.sh -s host1:9520,host2:9520" + NEWLINE +
-                   "    server-stat.sh -f /path/to/tc-config.xml" + NEWLINE;
-    
+    String usage = "    server-stat.sh -s host1,host2" + NEWLINE + "    server-stat.sh -s host1:9520,host2:9520"
+                   + NEWLINE + "    server-stat.sh -f /path/to/tc-config.xml" + NEWLINE;
+
     CommandLineBuilder commandLineBuilder = new CommandLineBuilder(ServerStat.class.getName(), args);
 
     commandLineBuilder.addOption("s", true, "Terracotta server list (comma separated)", String.class, false, "list");
@@ -103,10 +106,15 @@ public class ServerStat {
     String hostList = commandLineBuilder.getOptionValue('s');
     String configFile = commandLineBuilder.getOptionValue('f');
 
-    if (configFile != null) {
-      handleConfigFile(configFile);
-    } else {
-      handleList(hostList);
+    try {
+      if (configFile != null) {
+        handleConfigFile(configFile);
+      } else {
+        handleList(hostList);
+      }
+    } catch (Exception e) {
+      System.err.println("Failed: " + e.getMessage());
+      System.exit(1);
     }
   }
 
@@ -115,11 +123,9 @@ public class ServerStat {
     try {
       tcConfigDocument = new Loader().parse(new File(configFile));
     } catch (IOException e) {
-      System.err.println("Error reading " + configFile + ". Error: " + e.getMessage());
-      System.exit(1);
+      throw new RuntimeException("Error reading " + configFile + ": " + e.getMessage());
     } catch (XmlException e) {
-      System.err.println("Error parsing " + configFile + ". Error: " + e.getMessage());
-      System.exit(1);
+      throw new RuntimeException("Error parsing " + configFile + ": " + e.getMessage());
     }
     TcConfig tcConfig = tcConfigDocument.getTcConfig();
     Server[] servers = tcConfig.getServers().getServerArray();
@@ -141,8 +147,9 @@ public class ServerStat {
     }
   }
 
+  // info = host | host:port
   private static void printStat(String info) {
-    String host = "localhost";
+    String host = info;
     int port = 9520;
     if (info.indexOf(':') > 0) {
       String[] args = info.split(":");
@@ -150,11 +157,8 @@ public class ServerStat {
       try {
         port = Integer.valueOf(args[1]);
       } catch (NumberFormatException e) {
-        System.err.println("Error parsing port number from: " + info + ". Using default port 9520");
-        port = 9520;
+        throw new RuntimeException("Failed to parse jmxport: " + info);
       }
-    } else {
-      host = info;
     }
     ServerStat stat = new ServerStat(host, port);
     System.out.println(stat.toString());
