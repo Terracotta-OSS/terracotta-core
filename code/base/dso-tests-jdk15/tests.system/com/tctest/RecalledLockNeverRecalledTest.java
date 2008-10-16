@@ -163,7 +163,7 @@ public class RecalledLockNeverRecalledTest extends ServerCrashingTestBase {
     }
 
     private void spawnAndWaitForNode() throws Exception {
-      spawnNewClient("Node 2", EmptyClient.class);
+      spawnNewClientAndWaitForCompletion("Node 2", EmptyClient.class);
     }
 
     /**
