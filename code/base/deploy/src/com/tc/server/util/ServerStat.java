@@ -153,6 +153,8 @@ public class ServerStat {
         System.err.println("Error parsing port number from: " + info + ". Using default port 9520");
         port = 9520;
       }
+    } else {
+      host = info;
     }
     ServerStat stat = new ServerStat(host, port);
     System.out.println(stat.toString());
