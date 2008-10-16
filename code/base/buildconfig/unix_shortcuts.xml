@@ -24,7 +24,7 @@
 
    <shortcut
             name="Terracotta Welcome"
-            target="$INSTALL_PATH/bin/welcome.sh"
+            target="$INSTALL_PATH/welcome.sh"
             description="Start the Terracotta Welcome application"
             programGroup="yes"
             desktop="yes"

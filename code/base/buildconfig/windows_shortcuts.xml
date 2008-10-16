@@ -21,7 +21,7 @@
 
   <shortcut
            name="Terracotta Welcome"
-           target="$INSTALL_PATH\bin\welcome.bat"
+           target="$INSTALL_PATH\welcome.bat"
            description="Start the Terracotta Welcome application"
            programGroup="yes"
            desktop="yes"
