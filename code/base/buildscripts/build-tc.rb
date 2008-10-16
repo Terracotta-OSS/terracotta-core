@@ -13,6 +13,8 @@ require 'builder/antbuilder'
 require 'fileutils'
 require 'yaml'
 require 'set'
+require 'erb'
+require 'find'
 
 require 'buildscripts/cross_platform'
 require 'buildscripts/autorequire'

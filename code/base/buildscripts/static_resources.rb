@@ -62,6 +62,11 @@ class StaticResources
   def distribution_config_directory(flavor)
     FilePath.new(source_root(flavor), 'buildconfig', 'distribution')
   end
+  
+  # @@@HACK
+  def izpack_installer_template
+    FilePath.new(@root_directory, 'buildconfig', 'izpack-installer.template')
+  end
 
   def enterprise_modules_file
     FilePath.new(@root_directory, '..', '..', '..', 'code', 'base', 'modules.def.yml')

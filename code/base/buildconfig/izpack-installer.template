@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="iso-8859-1" standalone="yes" ?>
+<!--
+   IzPack installer file.
+
+   To create an installer from this file you must use the IzPack compiler.
+-->
+
+<installation version="1.0">
+   <info>
+      <appname>Terracotta</appname>
+      <appversion><%= @build_environment.version %></appversion>
+      <url>http://www.terracotta.org/</url>
+   </info>
+
+   <guiprefs width="640" height="480" resizable="no" />
+
+   <locale>
+      <langpack iso3="eng" />
+   </locale>
+
+   <native type="izpack" name="ShellLink.dll" />
+
+   <resources>
+      <res id="LicencePanel.licence" src="license.txt" />
+      <res id="InfoPanel.info" src="readme.txt" />
+      <res src="../../../buildconfig/windows_shortcuts.xml" id="shortcutSpec.xml" />
+   </resources>
+
+   <panels>
+      <panel classname="HelloPanel" />
+      <panel classname="LicencePanel" />
+      <panel classname="TargetPanel" />
+      <panel classname="InstallPanel" />
+      <panel classname="ShortcutPanel" />
+      <panel classname="FinishPanel" />
+   </panels>
+
+   <packs>
+      <pack name="Terracotta" required="yes">
+         <description>The base files</description>
+
+         <% for entry in files %>
+         <file src="<%= entry %>" targetdir="$INSTALL_PATH" />
+         <% end %>
+
+         <% for entry in scripts %>
+         <executable stage="never" os="unix" targetfile="$INSTALL_PATH/<%= entry %>" />
+         <% end %>
+      </pack>
+   </packs>
+</installation>
