@@ -24,6 +24,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -33,26 +34,21 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
-  public final static String           CRASH_TEST               = "CRASH_TEST";
-  private final static int             NUM_OF_PUTS              = 400;
-  private final static int             IBM_NUM_OF_PUTS          = 300;
-  private final int                    putsCount;
+  public final static String  CRASH_TEST        = "CRASH_TEST";
+  private final static int    NUM_OF_PUTS       = 400;
+  private final static int    IBM_NUM_OF_PUTS   = 300;
+  private final int           putsCount;
 
-  private final CyclicBarrier          barrier, barrier2, barrier3, barrier4, barrier5;
-  private final DataRoot               dataRoot                 = new DataRoot();
+  private final CyclicBarrier barrier, barrier2, barrier3, barrier4, barrier5;
+  private final DataRoot      dataRoot          = new DataRoot();
 
-  private final ReentrantReadWriteLock nonFairReadWriteLockRoot = new ReentrantReadWriteLock();
-  private final ReentrantReadWriteLock fairReadWriteLockRoot    = new ReentrantReadWriteLock(true);
-  private final Condition              nonFairCondition         = nonFairReadWriteLockRoot.writeLock().newCondition();
-  private final Condition              fairCondition            = fairReadWriteLockRoot.writeLock().newCondition();
+  private final List          queue             = new LinkedList();
+  private final List          shareableLockList = new ArrayList();
+  private final Random        random;
 
-  private final List                   queue                    = new LinkedList();
-  private final List                   shareableLockList        = new ArrayList();
-  private final Random                 random;
-
-  private final int                    numOfPutters             = 1;
-  private final int                    numOfGetters;
-  private final boolean                isCrashTest;
+  private final int           numOfPutters      = 1;
+  private final int           numOfGetters;
+  private final boolean       isCrashTest;
 
   public ReentrantReadWriteLockTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -84,11 +80,11 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
 
       unsharedToSharedWriteLockTest(index, new ReentrantReadWriteLock());
 
-      readWriteLockTest(index, nonFairReadWriteLockRoot, nonFairCondition);
+      readWriteLockTest(index, false);
       ReentrantReadWriteLock localLock = new ReentrantReadWriteLock();
       singleNodeConditionVariableTesting(index, localLock.writeLock(), localLock.writeLock().newCondition());
 
-      readWriteLockTest(index, fairReadWriteLockRoot, fairCondition);
+      readWriteLockTest(index, true);
       localLock = new ReentrantReadWriteLock(true);
       singleNodeConditionVariableTesting(index, localLock.writeLock(), localLock.writeLock().newCondition());
 
@@ -179,31 +175,55 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     barrier.await();
   }
 
-  private void readWriteLockTest(int index, ReentrantReadWriteLock readWriteLock, Condition condition) throws Exception {
-    basicTryReadLockTest(index, readWriteLock);
-    basicTryReadWriteLockTest(index, readWriteLock);
-    basicTryWriteReadLockTest(index, readWriteLock);
-    basicTryWriteLockTimeoutTest(index, readWriteLock);
-    tryReadLockMultiNodeTest(index, readWriteLock);
-    tryWriteLockMultiNodeTest(index, readWriteLock);
-    tryReadWriteLockSingleNodeTest(index, readWriteLock);
+  private void readWriteLockTest(int index, boolean fair) throws Exception {
+    basicTryReadLockTest(index, getASharedReentrantReadWriteLock(fair, index).getFirst());
+    basicTryReadWriteLockTest(index, getASharedReentrantReadWriteLock(fair, index).getFirst());
+    basicTryWriteReadLockTest(index, getASharedReentrantReadWriteLock(fair, index).getFirst());
+    basicTryWriteLockTimeoutTest(index, getASharedReentrantReadWriteLock(fair, index).getFirst());
+    tryReadLockMultiNodeTest(index, getASharedReentrantReadWriteLock(fair, index).getFirst());
+    tryWriteLockMultiNodeTest(index, getASharedReentrantReadWriteLock(fair, index).getFirst());
+    tryReadWriteLockSingleNodeTest(index, getASharedReentrantReadWriteLock(fair, index).getFirst());
     if (!Vm.isIBM()) {
       tryReadWriteLockSingleNodeTest(index, new ReentrantReadWriteLock());
     }
 
-    basicSingleNodeReadThenWriteLockingTest(index, readWriteLock);
+    basicSingleNodeReadThenWriteLockingTest(index, getASharedReentrantReadWriteLock(fair, index).getFirst());
     basicSingleNodeReadThenWriteLockingTest(index, new ReentrantReadWriteLock());
-    basicMultiNodesReadThenWriteLockingTest(index, readWriteLock);
-    modifyDataUsingReadLockTest(index, readWriteLock);
-    modifyDataTest(index, readWriteLock);
-    lockDownGradeTest(index, readWriteLock);
-    reentrantReadLockWithWriteTest(index, readWriteLock);
-    basicAPITest(index, readWriteLock);
-    basicConditionVariableTesting(index, readWriteLock.writeLock(), condition);
-    basicConditionVariableWaitTesting(index, readWriteLock, condition);
-    singleNodeConditionVariableTesting(index, readWriteLock.writeLock(), condition);
+    basicMultiNodesReadThenWriteLockingTest(index, getASharedReentrantReadWriteLock(fair, index).getFirst());
+    modifyDataUsingReadLockTest(index, getASharedReentrantReadWriteLock(fair, index).getFirst());
+    modifyDataTest(index, getASharedReentrantReadWriteLock(fair, index).getFirst());
+    lockDownGradeTest(index, getASharedReentrantReadWriteLock(fair, index).getFirst());
+    reentrantReadLockWithWriteTest(index, getASharedReentrantReadWriteLock(fair, index).getFirst());
+    basicAPITest(index, getASharedReentrantReadWriteLock(fair, index).getFirst());
+    Tuple<ReentrantReadWriteLock, Condition> t = getASharedReentrantReadWriteLock(fair, index);
+    basicConditionVariableTesting(index, t.getFirst().writeLock(), t.getSecond());
+    t = getASharedReentrantReadWriteLock(fair, index);
+    basicConditionVariableWaitTesting(index, t.getFirst(), t.getSecond());
+    t = getASharedReentrantReadWriteLock(fair, index);
+    singleNodeConditionVariableTesting(index, t.getFirst().writeLock(), t.getSecond());
 
-    tryLockTest(index, readWriteLock);
+    tryLockTest(index, getASharedReentrantReadWriteLock(fair, index).getFirst());
+  }
+
+  private Tuple<ReentrantReadWriteLock, Condition> getASharedReentrantReadWriteLock(boolean fair, int index)
+      throws InterruptedException, BrokenBarrierException {
+    ReentrantReadWriteLock rrwl;
+    Tuple<ReentrantReadWriteLock, Condition> tuple;
+    if (index == 0) {
+      rrwl = new ReentrantReadWriteLock(fair);
+      tuple = new Tuple<ReentrantReadWriteLock, Condition>(rrwl, rrwl.writeLock().newCondition());
+      synchronized (shareableLockList) {
+        shareableLockList.clear();
+        shareableLockList.add(tuple);
+      }
+      barrier.await();
+    } else {
+      barrier.await();
+      synchronized (shareableLockList) {
+        tuple = (Tuple) shareableLockList.get(0);
+      }
+    }
+    return tuple;
   }
 
   private void unsharedToSharedTest(int index, ReentrantReadWriteLock lock) throws Exception {
@@ -1342,18 +1362,33 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     String methodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(methodExpression);
 
-    spec.addRoot("nonFairReadWriteLockRoot", "nonFairReadWriteLockRoot");
-    spec.addRoot("fairReadWriteLockRoot", "fairReadWriteLockRoot");
     spec.addRoot("barrier", "barrier");
     spec.addRoot("barrier2", "barrier2");
     spec.addRoot("barrier3", "barrier3");
     spec.addRoot("barrier4", "barrier4");
     spec.addRoot("barrier5", "barrier5");
     spec.addRoot("dataRoot", "dataRoot");
-    spec.addRoot("nonFairCondition", "nonFairCondition");
-    spec.addRoot("fairCondition", "fairCondition");
     spec.addRoot("queue", "queue");
     spec.addRoot("shareableLockList", "shareableLockList");
+  }
+
+  private static class Tuple<E1, E2> {
+
+    private final E1 e1;
+    private final E2 e2;
+
+    public Tuple(E1 e1, E2 e2) {
+      this.e1 = e1;
+      this.e2 = e2;
+    }
+
+    public E1 getFirst() {
+      return e1;
+    }
+
+    public E2 getSecond() {
+      return e2;
+    }
   }
 
   private static class DataRoot {
