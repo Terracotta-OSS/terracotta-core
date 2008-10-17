@@ -172,7 +172,20 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     end
   end
 
-  # clean all under build and depedencies/lib
+  # clean 'build' and  'depedencies/lib'
+  def clean_all
+    begin
+      clean
+      lib = File.join(@basedir.to_s, "dependencies", "lib")
+      Dir.chdir(lib) do 
+        FileUtils.rm Dir.glob("*")
+      end
+    rescue Errno::ENOENT => e       
+      # ignore file not found error
+    end
+  end
+  
+  # clean 'build' folder
   def clean
     begin
       build_folder = File.join(@basedir.to_s, "build")
@@ -182,10 +195,6 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
       delete_deep_folder(build_folder) if File.exists?(build_folder)
       
       fail("Can't clean build folder") if File.exists?(build_folder)
-      lib = File.join(@basedir.to_s, "dependencies", "lib")
-      Dir.chdir(lib) do 
-        FileUtils.rm Dir.glob("*")
-      end
     rescue Errno::ENOENT => e       
       # ignore file not found error
     end
@@ -252,8 +261,8 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     javadoc_dir.delete
 
     @ant.javadoc(:destdir => javadoc_dir.to_s,
-                 :author => true, :version => true, :use => true,
-                 :windowtitle => "Terracotta API Documentation") do
+      :author => true, :version => true, :use => true,
+      :windowtitle => "Terracotta API Documentation") do
       modules = @module_set.find_all {|mod| mod.javadoc?}
       modules.each do |mod|
         @ant.fileset(:dir => mod.name, :defaultexcludes => true) do

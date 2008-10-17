@@ -108,7 +108,7 @@
                     inheritAll="true"/>
 
                 <exec executable="${tcbuild}" dir="${basedir}">
-                    <arg value="clean" />
+                    <arg value="clean_all" />
                     <arg value="build-archive-dir=NONE" />
                 </exec>
 
