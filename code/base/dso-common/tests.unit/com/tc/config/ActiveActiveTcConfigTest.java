@@ -24,7 +24,7 @@ public class ActiveActiveTcConfigTest extends TCTestCase {
 
   public void testFakeL2sName() {
     try {
-      tcConfig = getTempFile("tc-config.xml");
+      tcConfig = getTempFile("tc-config-testFakeL2sName.xml");
       String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
                       + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
                       + "\n<servers>"
@@ -59,9 +59,9 @@ public class ActiveActiveTcConfigTest extends TCTestCase {
     }
   }
 
-  public void testL2sWithDeifferentPersistenceMode() {
+  public void testL2sWithDifferentPersistenceMode() {
     try {
-      tcConfig = getTempFile("tc-config.xml");
+      tcConfig = getTempFile("tc-config-testL2sWithDifferentPersistenceMode.xml");
       String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
                       + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
                       + "\n<servers>"
@@ -98,7 +98,7 @@ public class ActiveActiveTcConfigTest extends TCTestCase {
 
   public void testServerInTwoGroups() {
     try {
-      tcConfig = getTempFile("tc-config.xml");
+      tcConfig = getTempFile("tc-config-testServerInTwoGroups.xml");
       String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
                       + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
                       + "\n<servers>"
@@ -156,7 +156,7 @@ public class ActiveActiveTcConfigTest extends TCTestCase {
 
   public void testServerNotPresentInAnyGroup() {
     try {
-      tcConfig = getTempFile("tc-config.xml");
+      tcConfig = getTempFile("tc-config-testServerNotPresentInAnyGroup.xml");
       String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
                       + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
                       + "\n<servers>"
@@ -214,7 +214,7 @@ public class ActiveActiveTcConfigTest extends TCTestCase {
 
   public void testMultipleGroups() {
     try {
-      tcConfig = getTempFile("tc-config.xml");
+      tcConfig = getTempFile("tc-config-testMultipleGroups.xml");
       String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
                       + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
                       + "\n<servers>"
@@ -273,7 +273,7 @@ public class ActiveActiveTcConfigTest extends TCTestCase {
 
   public void testMultipleHa() {
     try {
-      tcConfig = getTempFile("tc-config.xml");
+      tcConfig = getTempFile("tc-config-testMultipleHa.xml");
       String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
                       + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
                       + "\n<servers>"
@@ -330,7 +330,7 @@ public class ActiveActiveTcConfigTest extends TCTestCase {
 
   public void testMultipleUpdateCheck() {
     try {
-      tcConfig = getTempFile("tc-config.xml");
+      tcConfig = getTempFile("tc-config-testMultipleUpdateCheck.xml");
       String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
                       + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
                       + "\n<servers>"
@@ -389,7 +389,7 @@ public class ActiveActiveTcConfigTest extends TCTestCase {
 
   public void testParseGroupInOrder() {
     try {
-      tcConfig = getTempFile("tc-config.xml");
+      tcConfig = getTempFile("tc-config-testParseGroupInOrder.xml");
       String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
                       + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
                       + "\n<servers>"
@@ -468,7 +468,7 @@ public class ActiveActiveTcConfigTest extends TCTestCase {
 
   public void testDefaultValues() {
     try {
-      tcConfig = getTempFile("tc-config.xml");
+      tcConfig = getTempFile("tc-config-testDefaultValues.xml");
       String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
                       + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
                       + "\n</tc:tc-config>";
@@ -510,5 +510,9 @@ public class ActiveActiveTcConfigTest extends TCTestCase {
     } catch (Exception e) {
       throw Assert.failure("Can't create config file", e);
     }
+  }
+
+  protected boolean cleanTempDir() {
+    return false;
   }
 }
