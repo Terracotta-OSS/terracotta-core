@@ -62,7 +62,7 @@ public class TCGroupMessageWrapper extends DSOMessageBase {
         try {
           this.message = (GroupMessage) stream.readObject();
         } catch (ClassNotFoundException e) {
-          throw new RuntimeException();
+          throw new RuntimeException(e);
         }
         return true;
       default:
