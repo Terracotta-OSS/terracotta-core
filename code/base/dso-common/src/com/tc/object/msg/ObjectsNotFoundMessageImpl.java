@@ -8,7 +8,6 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
-import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ObjectID;
@@ -19,7 +18,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-public class ObjectsNotFoundMessageImpl extends DSOMessageBase implements TCMessage {
+public class ObjectsNotFoundMessageImpl extends DSOMessageBase implements ObjectsNotFoundMessage {
 
   private final static byte BATCH_ID    = 0;
   private final static byte MISSING_OID = 1;
