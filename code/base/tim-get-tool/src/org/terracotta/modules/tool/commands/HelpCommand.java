@@ -61,6 +61,12 @@ public class HelpCommand extends AbstractCommand {
       out.println("   Each command accepts a --help option that will display additional");
       out.println("   usage information for the command. Specifying the command name after");
       out.println("   the \"help\" command does the same thing.");
+
+      out.println();
+      out.println("Properties file:");
+      out.println("   For most cases there is no need to edit it, but there is a tim-get.properties ");
+      out.println("   file in the lib/resources folder that dictates " + scriptName + "'s");
+      out.println("   behavior - read the file for details.");
       return;
     }
 
