@@ -4,8 +4,6 @@
  */
 package com.tc.objectserver.managedobject;
 
-import EDU.oswego.cs.dl.util.concurrent.ConcurrentHashMap;
-
 import com.tc.exception.TCRuntimeException;
 import com.tc.io.serializer.TCObjectInputStream;
 import com.tc.io.serializer.TCObjectOutputStream;
@@ -29,19 +27,20 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PhysicalManagedObjectStateFactory {
 
   private static final Class[]           CONSTRUCTOR_PARAMS_CLASS = new Class[0];
   private static final Object[]          CONSTRUCTOR_PARAMS       = new Object[0];
   private final PhysicalStateClassLoader loader;
-  private final Map                      knownClasses;
+  private final Map<Object,String>       knownClasses;
   private final ClassPersistor           persistor;
   private int                            sequenceId               = 0;
 
   public PhysicalManagedObjectStateFactory(ClassPersistor persistor) {
     this.loader = new PhysicalStateClassLoader();
-    this.knownClasses = new ConcurrentHashMap();
+    this.knownClasses = new ConcurrentHashMap<Object,String>();
     this.persistor = persistor;
     loadAllClassesFromDB();
   }
@@ -109,12 +108,12 @@ public class PhysicalManagedObjectStateFactory {
     cs.setGenerateParentIdStorage(!parentID.isNull());
 
     String classIdentifier = cs.getClassIdentifier();
-    String generatedClassName = (String) knownClasses.get(classIdentifier);
+    String generatedClassName = knownClasses.get(classIdentifier);
     if (generatedClassName == null) {
       Object lock = cs.getLock();
       synchronized (lock) {
         // Check again ! Double check locking is OK here as loader.load() is synchronized internally anyway
-        generatedClassName = (String) knownClasses.get(classIdentifier);
+        generatedClassName = knownClasses.get(classIdentifier);
         if (generatedClassName == null) {
           PhysicalManagedObjectState po = createNewClassAndInitializeObject(parentID, cs, cursor);
           return po;
@@ -126,7 +125,7 @@ public class PhysicalManagedObjectStateFactory {
 
   public PhysicalManagedObjectState create(ObjectID parentID, int classId) throws ClassNotFoundException {
     Integer cid = new Integer(classId);
-    String className = (String) knownClasses.get(cid);
+    String className = knownClasses.get(cid);
     if (className == null) { throw new ClassNotFoundException("Unknown Class Id :" + classId + " Details : parent = "
                                                               + parentID); }
     return createNewObject(className, parentID);
@@ -136,7 +135,7 @@ public class PhysicalManagedObjectStateFactory {
                                              DNACursor cursor, PhysicalManagedObjectState oldState) {
     ClassSpec cs = new ClassSpec(className, loaderDesc, classID);
     String classIdentifier = cs.getClassIdentifier();
-    String generatedClassName = (String) knownClasses.get(classIdentifier);
+    String generatedClassName = knownClasses.get(classIdentifier);
     Assert.assertNotNull(generatedClassName);
     Object lock = cs.getLock();
     synchronized (lock) {
