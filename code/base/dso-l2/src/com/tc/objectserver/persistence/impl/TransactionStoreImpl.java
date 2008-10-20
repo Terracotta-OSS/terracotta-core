@@ -125,19 +125,19 @@ public class TransactionStoreImpl implements TransactionStore {
    */
   public void clearCommitedTransactionsBelowLowWaterMark(PersistenceTransaction tx, ServerTransactionID stxIDs) {
     Collection gidDescs = sids.clearCommitedSidsBelowLowWaterMark(stxIDs);
-    removeGlobalTransacionDescs(gidDescs, tx);
+    removeGlobalTransactionDescs(gidDescs, tx);
   }
 
   public void shutdownNode(PersistenceTransaction tx, NodeID nid) {
     Collection gidDescs = sids.removeAll(nid);
     logger.info("shutdownClient() : Removing txns from DB : " + gidDescs.size());
-    removeGlobalTransacionDescs(gidDescs, tx);
+    removeGlobalTransactionDescs(gidDescs, tx);
   }
 
   /**
    * Global Transaction descriptors should have been deleted from sids data structure, before this call.
    */
-  private void removeGlobalTransacionDescs(Collection gidDescs, PersistenceTransaction tx) {
+  private void removeGlobalTransactionDescs(Collection gidDescs, PersistenceTransaction tx) {
     SortedSet<ServerTransactionID> toRemove = new TreeSet<ServerTransactionID>();
     for (Iterator i = gidDescs.iterator(); i.hasNext();) {
       GlobalTransactionDescriptor gd = (GlobalTransactionDescriptor) i.next();
@@ -152,7 +152,7 @@ public class TransactionStoreImpl implements TransactionStore {
   public void shutdownAllClientsExcept(PersistenceTransaction tx, Set cids) {
     Collection gidDescs = sids.removeAllExcept(cids);
     logger.info("shutdownAllClientsExcept() : Removing txns from DB : " + gidDescs.size());
-    removeGlobalTransacionDescs(gidDescs, tx);
+    removeGlobalTransactionDescs(gidDescs, tx);
   }
 
   // Used in Passive server
