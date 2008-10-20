@@ -508,7 +508,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
   //
   // private Object oid1;
   // public Set getObjectReferences() {
-  // Set result = new THashSet(25);
+  // Set result = new HashSet(25);
   // if (oid1 instanceof ObjectID && !((ObjectID)oid1).isNull() ) {
   // result.add(oid1);
   // }
@@ -546,10 +546,10 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
     int size = referenceFields.size();
     size += cs.generateParentIdStorage() ? 1 : 0;
 
-    mv.visitTypeInsn(NEW, "gnu/trove/THashSet");
+    mv.visitTypeInsn(NEW, "java/util/HashSet");
     mv.visitInsn(DUP);
     mv.visitIntInsn(BIPUSH, size);
-    mv.visitMethodInsn(INVOKESPECIAL, "gnu/trove/THashSet", "<init>", "(I)V");
+    mv.visitMethodInsn(INVOKESPECIAL, "java/util/HashSet", "<init>", "(I)V");
     mv.visitVarInsn(ASTORE, 1);
 
     if (!cs.isDirectSubClassOfPhysicalMOState()) {
