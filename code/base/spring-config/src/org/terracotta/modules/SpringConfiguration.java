@@ -82,48 +82,13 @@ public class SpringConfiguration
       configHelper.addIncludePattern("org.springframework.webflow.core.collection.LocalAttributeMap", false, false, false);
       configHelper.addIncludePattern("org.springframework.webflow.conversation.impl.*", false, false, false);
 
-      // getOrCreateSpec("org.springframework.webflow.engine.impl.FlowSessionImpl").setHonorTransient(false).addTransient("flow");
-      // flow : Flow
-      // flowId : String
-      // state : State
-      // stateId : String
-      // .addTransient("parent") // : FlowSessionImpl
-      // .addTransient("scope") // : LocalAttributeMap
-      // .addTransient("status"); // : FlowSessionStatus
-
-      // all "transient" for all subclasses except "State.id"
-      // getOrCreateSpec("org.springframework.webflow.engine.State") //
-      // .addTransient("logger").addTransient("flow") //
-      // .addTransient("entryActionList") //
-      // .addTransient("exceptionHandlerSet"); //
-      // getOrCreateSpec("org.springframework.webflow.engine.EndState") //
-      // .addTransient("viewSelector") //
-      // .addTransient("outputMapper"); //
-      // getOrCreateSpec("org.springframework.webflow.engine.TransitionableState") // abstract
-      // .addTransient("transitions")
-      // .addTransient("exitActionList");
-      // getOrCreateSpec("org.springframework.webflow.engine.ActionState") //
-      // .addTransient("actionList");
-      // getOrCreateSpec("org.springframework.webflow.engine.SubflowState") //
-      // .addTransient("subflow") //
-      // .addTransient("attributeMapper"); //
-      // getOrCreateSpec("org.springframework.webflow.engine.ViewState") //
-      // .addTransient("viewSelector") //
-      // .addTransient("renderActionList");
-      // // getOrCreateSpec("org.springframework.webflow.engine.DecisionState"); no fields
-
-      // TODO investigate if better granularity of above classes is required
-      // org.springframework.webflow.execution.repository.support.DefaultFlowExecutionRepository
-      // org.springframework.webflow.execution.repository.support.AbstractConversationFlowExecutionRepository
-      // org.springframework.webflow.execution.repository.support.AbstractFlowExecutionRepository
-      // org.springframework.webflow.execution.repository.support.DefaultFlowExecutionRepositoryFactory
-      // org.springframework.webflow.execution.repository.support.DelegatingFlowExecutionRepositoryFactory
-      // org.springframework.webflow.execution.repository.support.FlowExecutionRepositoryServices
-      // org.springframework.webflow.execution.repository.support.SharedMapFlowExecutionRepositoryFactory
-      // org.springframework.webflow.execution.repository.conversation.impl.LocalConversationService
-      // org.springframework.webflow.util.RandomGuidUidGenerator
-      // org.springframework.webflow.registry.FlowRegistryImpl
-      // etc...
+      configHelper.addIncludePattern("javax.el.ELException", false, false, false);
+      configHelper.addIncludePattern("org.springframework.web.servlet.view.JstlView", false, false, false);
+      configHelper.addIncludePattern("org.springframework.web.servlet.view.InternalResourceView", false, false, false);
+      configHelper.addIncludePattern("org.springframework.web.servlet.view.AbstractUrlBasedView", false, false, false);
+      configHelper.addIncludePattern("org.springframework.web.servlet.view.AbstractView", false, false, false);
+      configHelper.addIncludePattern("org.springframework.web.context.support.WebApplicationObjectSupport", false, false, false);
+      configHelper.addIncludePattern("org.springframework.context.support.ApplicationObjectSupport", false, false, false);
     }
 
 }
