@@ -4,8 +4,6 @@
  */
 package com.tc.objectserver.tx;
 
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
-
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
@@ -38,8 +36,10 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * This class keeps track of locally checked out objects for applies and maintain the objects to txnid mapping in the
@@ -66,8 +66,8 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
 
   private final Set                            pendingObjectRequest    = new HashSet();
   private final PendingList                    pendingTxnList          = new PendingList();
-  private final LinkedQueue                    processedPendingLookups = new LinkedQueue();
-  private final LinkedQueue                    processedApplys         = new LinkedQueue();
+  private final Queue<LookupContext>           processedPendingLookups = new ConcurrentLinkedQueue<LookupContext>();
+  private final Queue<ServerTransactionID>     processedApplys         = new ConcurrentLinkedQueue<ServerTransactionID>();
 
   private final TransactionalStageCoordinator  txnStageCoordinator;
 
@@ -289,23 +289,15 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   private boolean addProcessedPendingLookups() {
     LookupContext c;
     boolean processedPending = false;
-    try {
-      while ((c = (LookupContext) processedPendingLookups.poll(0)) != null) {
-        addLookedupObjects(c);
-        processedPending = true;
-      }
-    } catch (InterruptedException e) {
-      throw new AssertionError(e);
+    while ((c = processedPendingLookups.poll()) != null) {
+      addLookedupObjects(c);
+      processedPending = true;
     }
     return processedPending;
   }
 
   private void addProcessedPending(LookupContext context) {
-    try {
-      processedPendingLookups.put(context);
-    } catch (InterruptedException e) {
-      throw new AssertionError(e);
-    }
+    processedPendingLookups.add(context);
     txnStageCoordinator.initiateLookup();
   }
 
@@ -319,28 +311,20 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
 
   // ApplyTransaction stage method
   public boolean applyTransactionComplete(ServerTransactionID stxnID) {
-    try {
-      processedApplys.put(stxnID);
-    } catch (InterruptedException e) {
-      throw new AssertionError(e);
-    }
+    processedApplys.add(stxnID);
     txnStageCoordinator.initiateApplyComplete();
     return true;
   }
 
   // Apply Complete stage method
   public void processApplyComplete() {
-    try {
-      ServerTransactionID txnID;
-      ArrayList txnIDs = new ArrayList();
-      while ((txnID = (ServerTransactionID) processedApplys.poll(0)) != null) {
-        txnIDs.add(txnID);
-      }
-      if (txnIDs.size() > 0) {
-        processApplyTxnComplete(txnIDs);
-      }
-    } catch (InterruptedException e) {
-      throw new AssertionError(e);
+    ServerTransactionID txnID;
+    ArrayList txnIDs = new ArrayList();
+    while ((txnID = processedApplys.poll()) != null) {
+      txnIDs.add(txnID);
+    }
+    if (txnIDs.size() > 0) {
+      processApplyTxnComplete(txnIDs);
     }
   }
 
