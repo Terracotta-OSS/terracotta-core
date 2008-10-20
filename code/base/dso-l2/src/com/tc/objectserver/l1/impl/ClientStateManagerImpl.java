@@ -20,7 +20,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -121,17 +120,8 @@ public class ClientStateManagerImpl implements ClientStateManager {
       return;
     }
     Set<ObjectID> refs = cs.getReferences();
-    // XXX:: This is a work around for THashSet's poor implementation of removeAll
-    if (oids.size() >= refs.size()) {
-      oids.removeAll(refs);
-    } else {
-      for (Iterator<ObjectID> i = oids.iterator(); i.hasNext();) {
-        if (refs.contains(i.next())) {
-          i.remove();
-        }
-      }
-    }
-
+    
+    oids.removeAll(refs);
   }
 
   /*
