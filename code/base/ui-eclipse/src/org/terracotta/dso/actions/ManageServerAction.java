@@ -107,7 +107,7 @@ public class ManageServerAction extends BaseAction implements IRunnableWithProgr
 
   private static void reportError(boolean isRunning, Exception e) {
     Shell shell = new Shell();
-    String msg = MessageFormat.format("Error {0} Terracotta Server:\n\n", isRunning ? "stopping" : "starting");
+    String msg = MessageFormat.format("Error {0} Terracotta Server instance:\n\n", isRunning ? "stopping" : "starting");
     MessageDialog.openInformation(shell, "Terracotta", msg + ActionUtil.getStatusMessages(e));
   }
 

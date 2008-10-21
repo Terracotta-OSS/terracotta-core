@@ -45,7 +45,7 @@ public final class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
   private static final boolean DEFAULT_WARN_CONFIG_PROBLEMS_OPTION = TcPlugin.DEFAULT_WARN_CONFIG_PROBLEMS_OPTION;
   private static final boolean DEFAULT_QUERY_RESTART_OPTION        = TcPlugin.DEFAULT_QUERY_RESTART_OPTION;
 
-  private static final String  AUTO_RESTART_SERVER_MSG             = "Automatically start the Terracotta Server when necessary";
+  private static final String  AUTO_RESTART_SERVER_MSG             = "Automatically start the Terracotta Server instance when necessary";
   private static final String  WARN_CONFIG_PROBLEMS_MSG            = "Warn about config problems before launching a Terracotta process";
   private static final String  QUERY_RESTART_MSG                   = "When the config changes, offer to restart running Terracotta processes";
 

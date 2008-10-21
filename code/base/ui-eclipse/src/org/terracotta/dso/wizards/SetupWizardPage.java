@@ -39,7 +39,7 @@ public class SetupWizardPage extends WizardPage {
   private static final String PAGE_NAME               = "TCSetupWizardPage";
   private static final String PAGE_TITLE              = "Terracotta Project Setup";
   private static final String PAGE_DESC               = "Specify the location of your Terracotta configuration file and\n"
-                                                          + "Terracotta server Java runtime options";
+                                                          + "Terracotta server instance Java runtime options";
 
   private static final String DEFAULT_CONFIG_FILENAME = TcPlugin.DEFAULT_CONFIG_FILENAME;
   private static final String DEFAULT_SERVER_OPTIONS  = TcPlugin.DEFAULT_SERVER_OPTIONS;

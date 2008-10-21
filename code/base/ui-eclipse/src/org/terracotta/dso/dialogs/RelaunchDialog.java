@@ -33,10 +33,10 @@ import java.util.List;
 
 /**
  * <p>
- * This dialog displays the set of Terracotta servers and DSO Application launches currently running and lets the user
- * select the subset to either terminate or restart. Selecting/deselecting the Terracotta Server or DSO Applications
- * nodes selects/deselects all child nodes. When all child nodes are selected/deselected, the parent node is made to
- * match.
+ * This dialog displays the set of Terracotta server instances and DSO Application launches currently running and lets
+ * the user select the subset to either terminate or restart. Selecting/deselecting the Terracotta Server instance or
+ * DSO Applications nodes selects/deselects all child nodes. When all child nodes are selected/deselected, the parent
+ * node is made to match.
  * <p>
  * When the resultCode is set, after the dialog is closed, if the resultCode was not CONTINUE_INDEX the passed in map of
  * server launches and the list of DSO Application launches are filtered according to users selection.
@@ -102,7 +102,7 @@ public class RelaunchDialog extends MessageDialog implements SelectionListener {
       fServersItem = new TreeItem(fTree, SWT.NONE);
       Iterator<ILaunch> iter = fServerLaunches.iterator();
 
-      fServersItem.setText("Terracotta Servers");
+      fServersItem.setText("Terracotta Server instances");
       fServersItem.setChecked(true);
       while (iter.hasNext()) {
         ILaunch launch = iter.next();

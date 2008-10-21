@@ -190,10 +190,10 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
                                                                    + "configurator-sandbox";
   private static final String        SANDBOX_ROOT                = System.getProperty("configurator.sandbox",
                                                                                       DEFAULT_SANDBOX_ROOT);
-  private static final String        L2_LABEL                    = "Terracotta Server";
+  private static final String        L2_LABEL                    = "Terracotta Server instance";
   private static final String        L2_STARTUP_SCRIPT           = "start-tc-server" + SCRIPT_EXTENSION;
   private static final String        L2_SHUTDOWN_SCRIPT          = "stop-tc-server" + SCRIPT_EXTENSION;
-  private static final String        L2_STARTUP_TRIGGER          = "Terracotta Server has started up";
+  private static final String        L2_STARTUP_TRIGGER          = "Terracotta Server instance has started up";
   private static final int           SERVER1_PORT                = 9081;
   private static final String        WEBSERVER_STARTUP_SCRIPT    = "start-web-server" + SCRIPT_EXTENSION;
   private static final String        WEBSERVER_SHUTDOWN_SCRIPT   = "stop-web-server" + SCRIPT_EXTENSION;

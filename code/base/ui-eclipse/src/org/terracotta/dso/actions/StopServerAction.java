@@ -41,7 +41,7 @@ public class StopServerAction implements IObjectActionDelegate, IRunnableWithPro
       MessageDialog.openInformation(
         shell,
         "Terracotta",
-        "Cannot stop Terracotta Server:\n" +
+        "Cannot stop Terracotta Server instance:\n" +
         ActionUtil.getStatusMessages(e));
     }
   }

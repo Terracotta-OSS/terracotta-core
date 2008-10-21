@@ -90,7 +90,7 @@ public class ServerTracker implements IDebugEventSetListener {
           if (serverInfo != null) {
             m_servers.remove(source);
             serverInfo.setStatus(ServerInfo.TERMINATED);
-            displayStatus("Terracotta Server '" + serverInfo.getName() + "' terminated.");
+            displayStatus("Terracotta Server instance '" + serverInfo.getName() + "' terminated.");
             IJavaProject javaProj = serverInfo.getJavaProject();
             if (!anyRunning(javaProj)) {
               setRunning(javaProj, null);
@@ -165,7 +165,7 @@ public class ServerTracker implements IDebugEventSetListener {
 
   private void internalStartServer(final IJavaProject javaProject, final String name, final Server server,
                                    final IProgressMonitor monitor) throws CoreException {
-    monitor.beginTask("Starting Terracotta Server '" + name + "' ...", IProgressMonitor.UNKNOWN);
+    monitor.beginTask("Starting Terracotta Server instance '" + name + "' ...", IProgressMonitor.UNKNOWN);
 
     TcPlugin plugin = TcPlugin.getDefault();
     String projName = javaProject.getElementName();
@@ -187,11 +187,11 @@ public class ServerTracker implements IDebugEventSetListener {
         monitor.done();
 
         if (info.isTerminated()) {
-          String msg = "Terracotta Server '" + name + "' failed to start.";
+          String msg = "Terracotta Server instance '" + name + "' failed to start.";
           Status status = new Status(IStatus.ERROR, TcPlugin.getPluginId(), msg);
           throw new CoreException(status);
         } else if (info.isStarted()) {
-          displayStatus("Terracotta Server '" + name + "' started.");
+          displayStatus("Terracotta Server instance '" + name + "' started.");
         }
       }
     }
@@ -372,7 +372,7 @@ public class ServerTracker implements IDebugEventSetListener {
 
     public void run(IProgressMonitor monitor) throws InvocationTargetException {
       try {
-        monitor.beginTask("Stopping Terracotta Server '" + m_name + "' ...", IProgressMonitor.UNKNOWN);
+        monitor.beginTask("Stopping Terracotta Server instance '" + m_name + "' ...", IProgressMonitor.UNKNOWN);
         doStopServer(m_javaProject, m_name, m_server, monitor);
         if (m_restart) {
           internalStartServer(m_javaProject, m_name, m_server, monitor);

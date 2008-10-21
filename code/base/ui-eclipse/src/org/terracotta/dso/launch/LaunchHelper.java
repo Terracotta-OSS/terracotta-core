@@ -281,7 +281,7 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
     Display.getDefault().syncExec(new Runnable() {
       public void run() {
         String title = "Terracotta";
-        String msg = "Start a local Terracotta Server?";
+        String msg = "Start a local Terracotta Server instance?";
         QueryStartServerDialog dialog = new QueryStartServerDialog(title, msg);
         int result = dialog.open();
 
