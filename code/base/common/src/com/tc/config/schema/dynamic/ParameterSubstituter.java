@@ -148,19 +148,19 @@ public class ParameterSubstituter {
     return format.format(new Date(System.currentTimeMillis()));
   }
   
-  private static String getHostname() {
+  public static String getHostname() {
     try {
       return InetAddress.getLocalHost().getCanonicalHostName();
     } catch (UnknownHostException uhe) {
-      return "unknown-host";
+      throw new RuntimeException(uhe);
     }
   }
 
-  private static String getIpAddress() {
+  public static String getIpAddress() {
     try {
       return InetAddress.getLocalHost().getHostAddress();
     } catch (UnknownHostException uhe) {
-      return "unknown-ip-address";
+      throw new RuntimeException(uhe);
     }
   }
 
