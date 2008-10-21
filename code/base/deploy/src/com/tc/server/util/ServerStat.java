@@ -8,6 +8,7 @@ import org.apache.xmlbeans.XmlException;
 
 import com.tc.cli.CommandLineBuilder;
 import com.tc.config.Loader;
+import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
@@ -130,7 +131,10 @@ public class ServerStat {
     TcConfig tcConfig = tcConfigDocument.getTcConfig();
     Server[] servers = tcConfig.getServers().getServerArray();
     for (int i = 0; i < servers.length; i++) {
-      ServerStat stat = new ServerStat(servers[i].getHost(), servers[i].getJmxPort());
+      String host = servers[i].getHost();
+      if ("%h".equals(host)) host = ParameterSubstituter.getHostname();
+      if ("%i".equals(host)) host = ParameterSubstituter.getIpAddress();
+      ServerStat stat = new ServerStat(host, servers[i].getJmxPort());
       System.out.println(stat.toString());
     }
   }
