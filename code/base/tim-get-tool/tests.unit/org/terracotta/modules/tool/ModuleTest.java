@@ -5,6 +5,7 @@
 package org.terracotta.modules.tool;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jdom.Document;
@@ -273,7 +274,8 @@ public final class ModuleTest extends TestCase {
       assertEquals(
                    "http://forge-dev.terracotta.lan/repo/org/terracotta/modules/tim-ehcache-1.3/1.0.2/tim-ehcache-1.3-1.0.2.jar",
                    module.repoUrl().toString());
-      assertEquals("org/terracotta/modules/tim-ehcache-1.3/1.0.2", module.installPath().toString());
+      assertEquals(FilenameUtils.separatorsToSystem("org/terracotta/modules/tim-ehcache-1.3/1.0.2"), module
+          .installPath().toString());
       assertEquals("tim-ehcache-1.3-1.0.2.jar", module.filename());
 
       assertFalse(module.docUrl().toURI().equals(module.website().toURI()));
@@ -292,7 +294,8 @@ public final class ModuleTest extends TestCase {
       assertEquals(
                    "http://forge-dev.terracotta.lan/repo/org/terracotta/modules/modules-common/2.5.2/modules-common-2.5.2.jar",
                    dependency.repoUrl().toString());
-      assertEquals("org/terracotta/modules/modules-common/2.5.2", dependency.installPath().toString());
+      assertEquals(FilenameUtils.separatorsToSystem("org/terracotta/modules/modules-common/2.5.2"), dependency
+          .installPath().toString());
       assertEquals("modules-common-2.5.2.jar", dependency.filename());
 
       Reference reference = (Reference) dependencies.get(1);
@@ -315,7 +318,8 @@ public final class ModuleTest extends TestCase {
       assertEquals(
                    "http://forge-dev.terracotta.lan/repo/org/terracotta/modules/tim-ehcache-commons/1.0.2/tim-ehcache-commons-1.0.2.jar",
                    module.repoUrl().toString());
-      assertEquals("org/terracotta/modules/tim-ehcache-commons/1.0.2", module.installPath().toString());
+      assertEquals(FilenameUtils.separatorsToSystem("org/terracotta/modules/tim-ehcache-commons/1.0.2"), module
+          .installPath().toString());
       assertEquals("tim-ehcache-commons-1.0.2.jar", module.filename());
       assertEquals(module.docUrl(), module.website());
 
@@ -331,7 +335,8 @@ public final class ModuleTest extends TestCase {
       assertEquals(
                    "http://forge-dev.terracotta.lan/repo/org/terracotta/modules/modules-common/2.5.2/modules-common-2.5.2.jar",
                    dependency.repoUrl().toString());
-      assertEquals("org/terracotta/modules/modules-common/2.5.2", dependency.installPath().toString());
+      assertEquals(FilenameUtils.separatorsToSystem("org/terracotta/modules/modules-common/2.5.2"), dependency
+          .installPath().toString());
       assertEquals("modules-common-2.5.2.jar", dependency.filename());
     } finally {
       IOUtils.closeQuietly(data);
