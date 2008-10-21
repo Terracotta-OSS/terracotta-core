@@ -153,7 +153,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     doGC(new YoungGCHook(this, this.objectManager, this.stateManager, this.youngGenReferenceCollector));
   }
 
-  void doGC(GCHook gcHook) {
+  private void doGC(GCHook gcHook) {
     MarkAndSweepGCAlgorithm gcAlgo = new MarkAndSweepGCAlgorithm(this, gcHook, gcPublisher, gcState, gcIterationCounter
         .incrementAndGet());
     gcAlgo.doGC();
@@ -169,12 +169,12 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     return false;
   }
 
-  void startMonitoringReferenceChanges() {
+  private void startMonitoringReferenceChanges() {
     this.referenceCollector = new NewReferenceCollector();
     this.youngGenReferenceCollector.startMonitoringChanges();
   }
 
-  void stopMonitoringReferenceChanges() {
+  private void stopMonitoringReferenceChanges() {
     this.referenceCollector = NULL_CHANGE_COLLECTOR;
     this.youngGenReferenceCollector.stopMonitoringChanges();
   }
