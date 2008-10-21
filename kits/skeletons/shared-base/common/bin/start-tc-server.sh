@@ -42,7 +42,7 @@ do
    com.tc.server.TCServerMain "$@"
  exitValue=$?
  start=false;
- if [ "$exitValue" == 11 ]
+ if [ "$exitValue" = 11 ]
  then
    start=true;
    echo "start-tc-server: Restarting the server..."
