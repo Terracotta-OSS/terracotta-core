@@ -25,6 +25,9 @@ import java.util.regex.Pattern;
  * Utility class to retrieve the build information for the product.
  */
 public final class ProductInfo {
+  private static final String ENTERPRISE = "Enterprise";
+  private static final String OPENSOURCE = "Opensource";
+
   private static final ResourceBundleHelper bundleHelper                 = new ResourceBundleHelper(ProductInfo.class);
 
   private static final String               DATE_FORMAT                  = "yyyyMMdd-HHmmss";
@@ -98,7 +101,7 @@ public final class ProductInfo {
     // Get all release build properties
     this.version = getBuildProperty(properties, BUILD_DATA_VERSION_KEY, UNKNOWN_VALUE);
     this.maven_version = getBuildProperty(properties, BUILD_DATA_MAVEN_VERSION_KEY, UNKNOWN_VALUE);
-    this.edition = getBuildProperty(properties, BUILD_DATA_EDITION_KEY, "opensource");
+    this.edition = getBuildProperty(properties, BUILD_DATA_EDITION_KEY, OPENSOURCE);
 
     this.timestamp = parseTimestamp(getBuildProperty(properties, BUILD_DATA_TIMESTAMP_KEY, null));
     this.host = getBuildProperty(properties, BUILD_DATA_HOST_KEY, UNKNOWN_VALUE);
@@ -270,7 +273,7 @@ public final class ProductInfo {
   }
 
   public String toShortString() {
-    return moniker + " " + ("opensource".equals(edition) ? "" : (edition + " ")) + version;
+    return moniker + " " + (OPENSOURCE.equals(edition) ? "" : (edition + " ")) + version;
   }
 
   public String toLongString() {
@@ -280,7 +283,7 @@ public final class ProductInfo {
   public String buildID() {
     if (buildID == null) {
       String rev = revision;
-      if (edition.indexOf("Enterprise") >= 0) {
+      if (edition.indexOf(ENTERPRISE) >= 0) {
         rev = ee_revision + "-" + revision;
       }
       buildID = buildTimestampAsString() + " (Revision " + rev + " by " + user + "@" + host + " from " + branch + ")";
