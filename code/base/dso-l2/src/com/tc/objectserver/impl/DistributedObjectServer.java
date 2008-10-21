@@ -395,7 +395,7 @@ public class DistributedObjectServer implements TCDumper, ChannelManagerEventLis
     try {
       startJMXServer(bind, configSetupManager.commonl2Config().jmxPort().getInt(), new RemoteJMXProcessor());
     } catch (Exception e) {
-      String msg = "Unable to start the JMX server. Do you have another Terracotta Server running?";
+      String msg = "Unable to start the JMX server. Do you have another Terracotta Server instance running?";
       consoleLogger.error(msg);
       logger.error(msg, e);
       System.exit(-1);
@@ -992,7 +992,7 @@ public class DistributedObjectServer implements TCDumper, ChannelManagerEventLis
     Set existingConnections = Collections.unmodifiableSet(connectionIdFactory.loadConnectionIDs());
     context.getClientHandshakeManager().setStarting(existingConnections);
     l1Listener.start(existingConnections);
-    consoleLogger.info("Terracotta Server has started up as ACTIVE node on " + format(l1Listener)
+    consoleLogger.info("Terracotta Server instance has started up as ACTIVE node on " + format(l1Listener)
                        + " successfully, and is now ready for work.");
     return true;
   }
@@ -1006,7 +1006,7 @@ public class DistributedObjectServer implements TCDumper, ChannelManagerEventLis
 
   public boolean stopActiveMode() throws TCTimeoutException {
     // TODO:: Make this not take timeout and force stop
-    consoleLogger.info("Stopping ACTIVE Terracotta Server on " + format(l1Listener) + ".");
+    consoleLogger.info("Stopping ACTIVE Terracotta Server instance on " + format(l1Listener) + ".");
     l1Listener.stop(10000);
     l1Listener.getChannelManager().closeAllChannels();
     return true;

@@ -325,7 +325,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   private class StartAction implements StartupAction {
     public void execute() throws Throwable {
       if (logger.isDebugEnabled()) {
-        logger.debug("Starting Terracotta server...");
+        logger.debug("Starting Terracotta server instance...");
       }
 
       startTime = System.currentTimeMillis();

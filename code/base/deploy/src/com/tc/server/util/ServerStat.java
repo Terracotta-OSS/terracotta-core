@@ -93,7 +93,7 @@ public class ServerStat {
 
     CommandLineBuilder commandLineBuilder = new CommandLineBuilder(ServerStat.class.getName(), args);
 
-    commandLineBuilder.addOption("s", true, "Terracotta server list (comma separated)", String.class, false, "list");
+    commandLineBuilder.addOption("s", true, "Terracotta server instance list (comma separated)", String.class, false, "list");
     commandLineBuilder.addOption("f", true, "Terracotta tc-config file", String.class, false, "file");
     commandLineBuilder.addOption("h", "help", String.class, false);
     commandLineBuilder.setUsageMessage(usage);

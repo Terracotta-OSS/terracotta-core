@@ -76,7 +76,7 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
   private void checkEnabled() {
     if (!isBackupEnabled()) {
       RuntimeException e = new RuntimeException(
-                                                "The Terracotta Server might not have been started in persistent mode. So the requested operation cannot be performed.");
+                                                "The Terracotta Server instance might not have been started in persistent mode. So the requested operation cannot be performed.");
 
       backupFailed(e);
       throw e;

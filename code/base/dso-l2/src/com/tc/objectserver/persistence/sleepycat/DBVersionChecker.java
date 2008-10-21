@@ -56,7 +56,7 @@ public class DBVersionChecker {
         logger.info("Sleepy Cat DB version is " + dbVersion);
         if (!dbVersion.equals(DB_VERSION_CURRENT.getVersion())) { throw new DBVersionMismatchException(
                                                                                                        "There is a mismatch in Terracotta and DB data format. "
-                                                                                                           + "Please ensure that both Terracotta Server and "
+                                                                                                           + "Please ensure that both Terracotta Server instance and "
                                                                                                            + "DB are upgraded to the same version."
                                                                                                            + " Expected : "
                                                                                                            + DB_VERSION_CURRENT

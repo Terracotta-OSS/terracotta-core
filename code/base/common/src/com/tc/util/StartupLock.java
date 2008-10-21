@@ -105,7 +105,7 @@ public class StartupLock {
       throw new AssertionError(e);
     } catch (IOException ioe) {
       throw new TCDataFileLockingException("Unable to acquire file lock on '" + tcFile.getFile().getAbsolutePath()
-                                           + "'.  Aborting Terracotta server startup.");
+                                           + "'.  Aborting Terracotta server instance startup.");
     } finally {
       blocking = false;
     }

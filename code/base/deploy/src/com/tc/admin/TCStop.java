@@ -89,16 +89,16 @@ public class TCStop {
       String[] servers = manager.allCurrentlyKnownServers();
 
       if (nameSpecified && !Arrays.asList(servers).contains(name)) {
-        System.err.println("The specified Terracotta server configuration '" + name + "' does not exist; exiting.");
+        System.err.println("The specified configuration of the Terracotta server instance '" + name + "' does not exist; exiting.");
         System.exit(1);
       }
 
       if (name == null && servers != null && servers.length == 1) {
         name = servers[0];
-        System.err.println("There is only one Terracotta server in this configuration file (" + name
+        System.err.println("There is only one Terracotta server instance in this configuration file (" + name
                            + "); stopping it.");
       } else if (name == null && servers != null && servers.length > 1) {
-        System.err.println("There are multiple Terracotta servers defined in this configuration file; please specify "
+        System.err.println("There are multiple Terracotta server instances defined in this configuration file; please specify "
                            + "which one you want to stop, using the '-n' command-line option. Available servers are:\n"
                            + "    " + ArrayUtils.toString(servers));
         System.exit(1);
@@ -115,7 +115,7 @@ public class TCStop {
       if (arguments.length == 0) {
         host = DEFAULT_HOST;
         port = DEFAULT_PORT;
-        System.err.println("No host or port provided. Stopping the Terracotta server at '" + host + "', port " + port
+        System.err.println("No host or port provided. Stopping the Terracotta server instance at '" + host + "', port " + port
                            + " by default.");
       } else if (arguments.length == 1) {
         host = DEFAULT_HOST;
@@ -135,7 +135,7 @@ public class TCStop {
       Throwable root = getRootCause(e);
       if (root instanceof ConnectException) {
         System.err.println("Unable to connect to host '" + host + "', port " + port
-                           + ". Are you sure there is a Terracotta server running there?");
+                           + ". Are you sure there is a Terracotta server instance running there?");
       }
     }
   }

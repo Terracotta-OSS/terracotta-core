@@ -90,7 +90,7 @@ public class CliCommands {
         if (e.getCause() != null &&
             e.getCause() instanceof ServiceUnavailableException) {
           System.out.println("Unable to connect to host '" + connection.getHost() + "' and port '" + connection.getPort() + "'.");
-          System.out.println("Are you sure there is a Terracotta server running there?");
+          System.out.println("Are you sure there is a Terracotta server instance running there?");
           return false;
         } else {
           throw e;

@@ -33,8 +33,8 @@ public class ServerDBBackupRunner {
   public static void main(String[] args) {
     CommandLineBuilder commandLineBuilder = new CommandLineBuilder(ServerDBBackupRunner.class.getName(), args);
 
-    commandLineBuilder.addOption("n", "hostname", true, "Terracotta Server hostname", String.class, false, "hostname");
-    commandLineBuilder.addOption("p", "jmxport", true, "Terracotta Server JMX port", Integer.class, false, "jmx-port");
+    commandLineBuilder.addOption("n", "hostname", true, "Terracotta Server instance hostname", String.class, false, "hostname");
+    commandLineBuilder.addOption("p", "jmxport", true, "Terracotta Server instance JMX port", Integer.class, false, "jmx-port");
     commandLineBuilder.addOption("u", "username", true, "User name", String.class, false);
     commandLineBuilder.addOption("d", "directory", true, "Directory to back up to", String.class, false);
     commandLineBuilder.addOption("h", "help", String.class, false);
@@ -75,7 +75,7 @@ public class ServerDBBackupRunner {
       }
     }
 
-    System.out.println("Invoking Backup Runner on Terracotta Server at '" + host + "', port " + port);
+    System.out.println("Invoking Backup Runner on Terracotta Server instance at '" + host + "', port " + port);
 
     ServerDBBackupRunner serverDBBackupRunner = null;
     try {
@@ -140,7 +140,7 @@ public class ServerDBBackupRunner {
       mbs = jmxConnector.getMBeanServerConnection();
     } catch (IOException e1) {
       System.err.println("Unable to connect to host '" + host + "', port " + port
-                         + ". Are you sure there is a Terracotta Server running there?");
+                         + ". Are you sure there is a Terracotta Server instance running there?");
       return null;
     }
     return mbs;

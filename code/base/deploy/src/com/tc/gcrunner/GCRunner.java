@@ -34,8 +34,8 @@ public class GCRunner {
 
     CommandLineBuilder comandLineBuilder = new CommandLineBuilder(GCRunner.class.getName(), args);
 
-    comandLineBuilder.addOption("n", "hostname", true, "Terracotta Server hostname", String.class, false, "l2-hostname");
-    comandLineBuilder.addOption("p", "jmxport", true, "Terracotta Server JMX port", Integer.class, false, "l2-jmx-port");
+    comandLineBuilder.addOption("n", "hostname", true, "The Terracotta Server instane hostname", String.class, false, "l2-hostname");
+    comandLineBuilder.addOption("p", "jmxport", true, "Terracotta Server instance JMX port", Integer.class, false, "l2-jmx-port");
     comandLineBuilder.addOption("u", "username", true, "user name", String.class, false);
     comandLineBuilder.addOption("h", "help", String.class, false);
 
@@ -62,7 +62,7 @@ public class GCRunner {
     if (arguments.length == 0) {
       host = DEFAULT_HOST;
       port = DEFAULT_PORT;
-      System.err.println("No host or port provided. Invoking GC on Terracotta server at '" + host + "', port " + port
+      System.err.println("No host or port provided. Invoking GC on Terracotta server instance at '" + host + "', port " + port
                          + " by default.");
     } else if (arguments.length == 1) {
       host = DEFAULT_HOST;
@@ -81,7 +81,7 @@ public class GCRunner {
       new GCRunner(host, port, userName).runGC();
     } catch (IOException ioe) {
       System.err.println("Unable to connect to host '" + host + "', port " + port
-                         + ". Are you sure there is a Terracotta server running there?");
+                         + ". Are you sure there is a Terracotta server instance running there?");
     } catch (SecurityException se) {
       System.err.println(se.getMessage());
       comandLineBuilder.usageAndDie();
