@@ -141,17 +141,9 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
 
       // TODO match on (within, null, classInfo) should be equivalent to those ones.
       final Set definitions = context.getDefinitions();
-      final ExpressionContext[] ctxs = new ExpressionContext[] {
-          new ExpressionContext(PointcutType.EXECUTION, classInfo, classInfo),
-          new ExpressionContext(PointcutType.CALL, null, classInfo),
-          new ExpressionContext(PointcutType.GET, null, classInfo),
-          new ExpressionContext(PointcutType.SET, null, classInfo),
-          new ExpressionContext(PointcutType.HANDLER, null, classInfo),
-          new ExpressionContext(PointcutType.STATIC_INITIALIZATION, classInfo, classInfo),
-          new ExpressionContext(PointcutType.WITHIN, classInfo, classInfo) };
 
       // has AW aspects?
-      final boolean isAdvisable = !classFilter(definitions, ctxs, classInfo);
+      final boolean isAdvisable = isAdvisable(classInfo, definitions);
 
       if (!isAdvisable && !isDsoAdaptable && !hasCustomAdapter) {
         context.setCurrentBytecode(context.getInitialBytecode());
@@ -364,6 +356,22 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
     }
   }
 
+  public static boolean isAdvisable(ClassInfo classInfo, final Set definitions) {
+    return !classFilter(definitions, getDefaultExpressionContexts(classInfo), classInfo);
+  }
+
+  private static ExpressionContext[] getDefaultExpressionContexts(ClassInfo classInfo) {
+    final ExpressionContext[] ctxs = new ExpressionContext[] {
+        new ExpressionContext(PointcutType.EXECUTION, classInfo, classInfo),
+        new ExpressionContext(PointcutType.CALL, null, classInfo),
+        new ExpressionContext(PointcutType.GET, null, classInfo),
+        new ExpressionContext(PointcutType.SET, null, classInfo),
+        new ExpressionContext(PointcutType.HANDLER, null, classInfo),
+        new ExpressionContext(PointcutType.STATIC_INITIALIZATION, classInfo, classInfo),
+        new ExpressionContext(PointcutType.WITHIN, classInfo, classInfo) };
+    return ctxs;
+  }
+
   private boolean isInstrumentedByDSO(ClassInfo classInfo) {
     ClassInfo[] interfaces = classInfo.getInterfaces();
     for (int i = 0; i < interfaces.length; i++) {
@@ -382,8 +390,12 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
    */
   private static boolean classFilter(final Set definitions, final ExpressionContext[] ctxs, final ClassInfo classInfo) {
     if (classInfo.isInterface()) { return true; }
+    return classFilter(definitions, ctxs, classInfo.getName());
+  }
+  
+  private static boolean classFilter(final Set definitions, final ExpressionContext[] ctxs, final String className) {
     for (Iterator defs = definitions.iterator(); defs.hasNext();) {
-      if (!classFilter((SystemDefinition) defs.next(), ctxs, classInfo)) { return false; }
+      if (!classFilter((SystemDefinition) defs.next(), ctxs, className)) { return false; }
     }
     return true;
   }
@@ -399,9 +411,8 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
    *        handle that? cache lookup? or custom class level attribute ?
    */
   private static boolean classFilter(final SystemDefinition definition, final ExpressionContext[] ctxs,
-                                     final ClassInfo classInfo) {
-    if (classInfo.isInterface()) { return true; }
-    String className = classInfo.getName();
+                                     String className) {
+
     if (definition.inExcludePackage(className)) { return true; }
     if (!definition.inIncludePackage(className)) { return true; }
     if (definition.isAdvised(ctxs)) { return false; }

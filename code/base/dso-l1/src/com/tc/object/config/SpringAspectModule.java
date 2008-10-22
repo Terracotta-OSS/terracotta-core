@@ -138,14 +138,16 @@ public class SpringAspectModule implements AspectModule {
                          + "org.springframework.beans.factory.support.AbstractBeanFactory beanFactory)");
 
       builder.addAdvice("around",
-                        "cflow(execution(* org.springframework.beans.factory.support.AbstractBeanFactory.getBean(String, ..))) "
+                        "(withincode(* org.springframework.beans.factory.support.AbstractBeanFactory.getBean(String, ..)) || " + //Spring 2.0.x
+                        " withincode(* org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(String, ..))) "   //Spring 2.5.x
                             + "AND call(* org.springframework.beans.factory.config.Scope+.get(String, ..)) "
                             + "AND target(s) AND args(beanName, ..)",
                         "virtualizeScopedBean(StaticJoinPoint jp, org.springframework.beans.factory.config.Scope s, String beanName)");
 
       builder.addAdvice(
                         "around",
-                        "call(* org.springframework.beans.factory.config.Scope+.registerDestructionCallback(..)) "
+                        "withincode(* org.springframework.beans.factory.ObjectFactory+.getObject()) "
+                            + "AND call(* org.springframework.beans.factory.config.Scope+.registerDestructionCallback(..)) "
                             + "AND target(scope) AND args(beanName, callback)",
                         "wrapDestructionCallback(StaticJoinPoint jp, String beanName, java.lang.Runnable callback, "
                             + "org.springframework.beans.factory.config.Scope scope)");
@@ -198,7 +200,8 @@ public class SpringAspectModule implements AspectModule {
 
     builder.addAdvice(
                    "before",
-                   "cflow(execution(* org.springframework.context.support.AbstractApplicationContext+.refresh())) "
+                   "(withincode(* org.springframework.context.support.AbstractApplicationContext+.refresh()) ||" +
+                   " withincode(* org.springframework.context.support.AbstractApplicationContext+.finishRefresh()) ) "
                        + "AND call(* org.springframework.context.support.AbstractApplicationContext+.publishEvent(..)) "
                        + "AND target(ctx)",
                    "registerContext(StaticJoinPoint jp, org.springframework.context.support.AbstractApplicationContext ctx)");
