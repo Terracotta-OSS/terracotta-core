@@ -15,8 +15,6 @@ import com.tc.config.schema.IllegalConfigurationChangeHandler;
 import com.tc.logging.TCLogger;
 
 import java.io.File;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 /**
  * The standard implementation of {@link com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory} &mdash; uses
@@ -42,7 +40,6 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
   private final String        defaultL2Identifier;
   private final String        configSpec;
   private final File          cwd;
-  private boolean             l2IdentifierSpecified = false;
 
   public StandardTVSConfigurationSetupManagerFactory(boolean isForL2,
                                                      IllegalConfigurationChangeHandler illegalChangeHandler)
@@ -129,30 +126,7 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
 
     this.cwd = new File(cwdAsString);
 
-    if (specifiedL2Identifier != null) {
-      this.defaultL2Identifier = specifiedL2Identifier;
-      l2IdentifierSpecified = true;
-    } else {
-      String hostName = null;
-
-      try {
-        hostName = InetAddress.getLocalHost().getHostName();
-      } catch (UnknownHostException uhe) {
-        /**/
-      }
-
-      String potentialName = hostName;
-
-      if (potentialName != null && potentialName.indexOf(".") >= 0) potentialName = potentialName
-          .substring(0, potentialName.indexOf("."));
-      if (potentialName != null) potentialName = potentialName.trim();
-
-      if (!StringUtils.isBlank(potentialName) && (!potentialName.equalsIgnoreCase("localhost"))) {
-        this.defaultL2Identifier = potentialName;
-      } else {
-        this.defaultL2Identifier = null;
-      }
-    }
+    this.defaultL2Identifier = specifiedL2Identifier;
   }
 
   public static Options createOptions(boolean isForL2) {
@@ -212,7 +186,7 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
     configurationCreator = new StandardXMLFileConfigurationCreator(this.configSpec, this.cwd, this.beanFactory);
 
     return new StandardL2TVSConfigurationSetupManager(configurationCreator, l2Name, this.defaultValueProvider,
-      this.xmlObjectComparator, this.illegalChangeHandler, l2IdentifierSpecified);
+                                                      this.xmlObjectComparator, this.illegalChangeHandler);
   }
 
 }
