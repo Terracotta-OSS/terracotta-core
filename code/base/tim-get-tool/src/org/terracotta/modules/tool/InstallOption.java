@@ -8,8 +8,11 @@ package org.terracotta.modules.tool;
  * Options used to control behavior of the {@link Module#dinstall(PrintWriter out, InstallOption...)} method.
  */
 public enum InstallOption {
-  /** Should install check the md5 sum of the download file before actuall installation? */
+  /** Should install check the md5 sum of the downloaded file before actual installation? */
   SKIP_VERIFY,
+
+  /** Should install check if the content of the downloaded file's manifest before actual installation? */
+  SKIP_INSPECT,
 
   /** Should existing installations be overwritten? */
   OVERWRITE,
@@ -17,8 +20,6 @@ public enum InstallOption {
   /** Synonym to OVERWRITE */
   FORCE,
 
-  /**
-   * Download and perform all other checks except actual installation.
-   */
+  /** Download and perform all other checks except actual installation */
   PRETEND
 }

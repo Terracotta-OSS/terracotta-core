@@ -89,9 +89,10 @@ public interface Modules {
    * 
    * @param module The module to download
    * @param verify Flag to indicate if checksum verification is performed after a successful download.
+   * @param inspect Flag to indicate if manifest verification is performed after a successful download.
    * @return A File instance representing the just downloaded module.
    * @throws IOException if unable to download or checksum verification failed.
    */
-  File download(Installable module, boolean verify) throws IOException;
+  File download(Installable module, boolean verify, boolean inspect) throws IOException;
 
 }

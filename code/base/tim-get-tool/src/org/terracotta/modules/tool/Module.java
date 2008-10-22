@@ -246,7 +246,7 @@ public class Module extends AbstractModule implements Installable {
         File srcfile = null;
 
         try {
-          srcfile = modules.download(module, installOptions.verify());
+          srcfile = modules.download(module, installOptions.verify(), installOptions.inspect());
         } catch (IOException e) {
           String message = "Attempt to download TIM file at " + module.repoUrl() + " failed - " + e.getMessage();
           notifyListener(listener, entry, InstallNotification.DOWNLOAD_FAILED, message);

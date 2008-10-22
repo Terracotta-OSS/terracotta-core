@@ -26,8 +26,16 @@ public class InstallOptionsHelper {
     return isOptionSet(InstallOption.SKIP_VERIFY);
   }
 
+  public boolean skipInspect() {
+    return isOptionSet(InstallOption.SKIP_INSPECT);
+  }
+
   public boolean verify() {
     return !skipVerify();
+  }
+
+  public boolean inspect() {
+    return !skipInspect();
   }
 
   public boolean pretend() {
