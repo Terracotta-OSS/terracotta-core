@@ -7,7 +7,7 @@ package org.terracotta.modules.tool;
 import java.io.File;
 import java.net.URL;
 
-interface BasicAttributes {
+interface Installable {
 
   /**
    * The full relative path where a TIM may be installed.

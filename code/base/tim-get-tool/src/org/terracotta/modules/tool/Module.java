@@ -23,7 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class Module extends AbstractModule implements BasicAttributes {
+public class Module extends AbstractModule implements Installable {
 
   private final Modules             modules;
   private final Map<String, Object> attributes;
@@ -232,13 +232,13 @@ public class Module extends AbstractModule implements BasicAttributes {
       return;
     }
 
-    for (AbstractModule module : manifest) {
-      BasicAttributes basicAttr = (BasicAttributes) module;
+    for (AbstractModule entry : manifest) {
+      Installable module = (Installable) entry;
 
-      File destdir = new File(modules.repository(), basicAttr.installPath().toString());
-      File destfile = new File(destdir, basicAttr.filename());
-      if (basicAttr.isInstalled(modules.repository()) && !installOptions.overwrite()) {
-        notifyListener(listener, module, InstallNotification.SKIPPED, "Already installed");
+      File destdir = new File(modules.repository(), module.installPath().toString());
+      File destfile = new File(destdir, module.filename());
+      if (module.isInstalled(modules.repository()) && !installOptions.overwrite()) {
+        notifyListener(listener, entry, InstallNotification.SKIPPED, "Already installed");
         continue;
       }
 
@@ -246,10 +246,10 @@ public class Module extends AbstractModule implements BasicAttributes {
         File srcfile = null;
 
         try {
-          srcfile = modules.download(basicAttr, installOptions.verify());
+          srcfile = modules.download(module, installOptions.verify());
         } catch (IOException e) {
-          String message = "Attempt to download TIM file at " + basicAttr.repoUrl() + " failed - " + e.getMessage();
-          notifyListener(listener, module, InstallNotification.DOWNLOAD_FAILED, message);
+          String message = "Attempt to download TIM file at " + module.repoUrl() + " failed - " + e.getMessage();
+          notifyListener(listener, entry, InstallNotification.DOWNLOAD_FAILED, message);
           continue;
         }
 
@@ -258,12 +258,12 @@ public class Module extends AbstractModule implements BasicAttributes {
           FileUtils.copyFile(srcfile, destfile);
         } catch (IOException e) {
           String message = destfile + " (" + e.getMessage() + ")";
-          notifyListener(listener, module, InstallNotification.INSTALL_FAILED, message);
+          notifyListener(listener, entry, InstallNotification.INSTALL_FAILED, message);
           continue;
         }
       }
 
-      notifyListener(listener, module, InstallNotification.INSTALLED, "Ok");
+      notifyListener(listener, entry, InstallNotification.INSTALLED, "Ok");
     }
   }
 }

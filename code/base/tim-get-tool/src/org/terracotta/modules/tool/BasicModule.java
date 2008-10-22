@@ -10,7 +10,7 @@ import java.io.File;
 import java.net.URL;
 import java.util.Map;
 
-public class BasicModule extends AbstractModule implements BasicAttributes {
+public class BasicModule extends AbstractModule implements Installable {
 
   private final Module              owner;
   private final Map<String, Object> attributes;

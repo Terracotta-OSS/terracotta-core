@@ -11,7 +11,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
 
-class AttributesHelper implements BasicAttributes {
+class AttributesHelper implements Installable {
 
   private final Map<String, Object> attributes;
 

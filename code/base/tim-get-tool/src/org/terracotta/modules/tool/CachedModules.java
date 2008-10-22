@@ -62,7 +62,7 @@ public class CachedModules implements Modules {
     this.downloader = new DownloadUtil();
   }
 
-  public File download(BasicAttributes module, boolean verify) throws IOException {
+  public File download(Installable module, boolean verify) throws IOException {
     File srcfile = File.createTempFile("tim.", null);
     srcfile.deleteOnExit();
     download(module.repoUrl(), srcfile);
@@ -75,11 +75,13 @@ public class CachedModules implements Modules {
 
       if (!downloadVerified(srcfile, md5file)) {
         String msg = "The file might be corrupt, the expected hash value does not jive.";
+        System.err.println("[xxx] " + msg);
         throw new IOException(msg);
       }
 
       if (!attributesVerified(srcfile, (AbstractModule) module)) {
         String msg = "The file might be corrupt - the name and/or version retrieved does not jive with what was requested.";
+        System.err.println("[xxx] " + msg);
         throw new IOException(msg);
       }
     }
