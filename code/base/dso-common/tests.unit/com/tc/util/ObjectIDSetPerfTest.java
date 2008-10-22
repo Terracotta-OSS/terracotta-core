@@ -15,43 +15,44 @@ import junit.framework.TestCase;
 public class ObjectIDSetPerfTest extends TestCase {
 
   private Random random = new Random();
+  private static final int SET_SIZE = ObjectIDSet.MIN_JUMBO_SIZE - 1;
   
   public void setUp() {
     // warmup 
-    hammerAdd(new ObjectIDSet(), 10000, 20);
+    hammerAdd(new ObjectIDSet(), 10000, SET_SIZE);
     hammerAdd(new JumboObjectIDSet(), 10000, 10000);
   }
   
   public void testAddPerformance() {
     int loops = 1000 * 1000;
-    long elapsedSmall = hammerAdd(new ObjectIDSet(), loops, 20);
-    long elapsedJumbo = hammerAdd(new JumboObjectIDSet(), loops, loops*20);
+    long elapsedSmall = hammerAdd(new ObjectIDSet(), loops, SET_SIZE);
+    long elapsedJumbo = hammerAdd(new JumboObjectIDSet(), loops, loops*SET_SIZE);
     System.out.println("add: small = " + elapsedSmall + " ms, jumbo = " + elapsedJumbo + " ms");
-    assertTrue(elapsedSmall < elapsedJumbo);
+    assertTrue(elapsedSmall <= elapsedJumbo);
   } 
   
   public void testRemovePerformance() {
     int loops = 1000 * 1000;
-    long elapsedSmall = hammerRemove(new ObjectIDSet(), loops, 20);
-    long elapsedJumbo = hammerRemove(new JumboObjectIDSet(), loops, loops*20);
+    long elapsedSmall = hammerRemove(new ObjectIDSet(), loops, SET_SIZE);
+    long elapsedJumbo = hammerRemove(new JumboObjectIDSet(), loops, loops*SET_SIZE);
     System.out.println("add/remove: small = " + elapsedSmall + " ms, jumbo = " + elapsedJumbo + " ms");
-    assertTrue(elapsedSmall < elapsedJumbo);
+    assertTrue(elapsedSmall <= elapsedJumbo);
   }
   
   public void testIterateAllPerformance() {
-    int loops = 100 * 1000;
-    long elapsedSmall = hammerIterate(new ObjectIDSet(), loops, 20);
-    long elapsedJumbo = hammerIterate(new JumboObjectIDSet(), loops, 20);
+    int loops = 500 * 1000;
+    long elapsedSmall = hammerIterate(new ObjectIDSet(), loops, SET_SIZE);
+    long elapsedJumbo = hammerIterate(new JumboObjectIDSet(), loops, SET_SIZE);
     System.out.println("iterate all: small = " + elapsedSmall + " ms, jumbo = " + elapsedJumbo + " ms");
-    assertTrue(elapsedSmall < elapsedJumbo);
+    assertTrue(elapsedSmall <= elapsedJumbo);
   }
   
   public void testFirstPerformance() {
-    int loops = 1000 * 1000;
-    long elapsedSmall = hammerFirst(new ObjectIDSet(), loops, 20);
-    long elapsedJumbo = hammerFirst(new JumboObjectIDSet(), loops, 20);
+    int loops = 10000 * 1000;
+    long elapsedSmall = hammerFirst(new ObjectIDSet(), loops, SET_SIZE);
+    long elapsedJumbo = hammerFirst(new JumboObjectIDSet(), loops, SET_SIZE);
     System.out.println("first: small = " + elapsedSmall + " ms, jumbo = " + elapsedJumbo + " ms");
-    assertTrue(elapsedSmall < elapsedJumbo);
+    assertTrue(elapsedSmall <= elapsedJumbo);
   }
 
   private long hammerAdd(Set set, int loops, int range) {
