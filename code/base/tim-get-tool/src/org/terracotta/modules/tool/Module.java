@@ -246,7 +246,7 @@ public class Module extends AbstractModule implements BasicAttributes {
         File srcfile = null;
 
         try {
-          srcfile = modules.download(this, installOptions.verify());
+          srcfile = modules.download(basicAttr, installOptions.verify());
         } catch (IOException e) {
           String message = "Attempt to download TIM file at " + basicAttr.repoUrl() + " failed - " + e.getMessage();
           notifyListener(listener, module, InstallNotification.DOWNLOAD_FAILED, message);
@@ -266,5 +266,4 @@ public class Module extends AbstractModule implements BasicAttributes {
       notifyListener(listener, module, InstallNotification.INSTALLED, "Ok");
     }
   }
-
 }

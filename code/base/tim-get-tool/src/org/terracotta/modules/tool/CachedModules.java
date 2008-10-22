@@ -4,6 +4,7 @@
  */
 package org.terracotta.modules.tool;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -17,6 +18,7 @@ import org.terracotta.modules.tool.util.DownloadUtil.DownloadOption;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import com.tc.bundles.OSGiToMaven;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -28,6 +30,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 
 public class CachedModules implements Modules {
 
@@ -57,19 +62,36 @@ public class CachedModules implements Modules {
     this.downloader = new DownloadUtil();
   }
 
-  public File download(Module module, boolean verify) throws IOException {
-    File srcfile = File.createTempFile("tim-", null);
+  public File download(BasicAttributes module, boolean verify) throws IOException {
+    File srcfile = File.createTempFile("tim.", null);
+    srcfile.deleteOnExit();
     download(module.repoUrl(), srcfile);
 
     if (verify) {
-      File md5file = File.createTempFile("tim-md5-", null);
+      File md5file = File.createTempFile("tim.md5.", null);
       URL md5url = new URL(module.repoUrl().toExternalForm() + ".md5");
+      md5file.deleteOnExit();
       download(md5url, md5file);
 
-      if (!downloadVerified(srcfile, md5file)) throw new IOException("The file might have been corrupted");
-    }
+      if (!downloadVerified(srcfile, md5file)) {
+        String msg = "The file might be corrupt, the expected hash value does not jive.";
+        throw new IOException(msg);
+      }
 
+      if (!attributesVerified(srcfile, (AbstractModule) module)) {
+        String msg = "The file might be corrupt - the name and/or version retrieved does not jive with what was requested.";
+        throw new IOException(msg);
+      }
+    }
     return srcfile;
+  }
+
+  private static boolean attributesVerified(File srcfile, AbstractModule module) throws IOException {
+    Manifest mf = (new JarFile(srcfile)).getManifest();
+    Attributes attrs = mf.getMainAttributes();
+    String sym = attrs.getValue("Bundle-SymbolicName");
+    String ver = OSGiToMaven.bundleVersionToProjectVersion(attrs.getValue("Bundle-Version"));
+    return sym.equals(module.symbolicName()) && ver.equals(module.version());
   }
 
   private void download(URL url, File dest) throws IOException {
@@ -99,10 +121,14 @@ public class CachedModules implements Modules {
 
   private void loadData() {
     if ((modules == null) || modules.isEmpty()) {
+      InputStream datafile = null;
       try {
-        loadData(new FileInputStream(dataLoader.getDataFile()));
+        datafile = new FileInputStream(dataLoader.getDataFile());
+        loadData(datafile);
       } catch (Exception e) {
         throw new RuntimeException("Unable to read TIM index: " + e.getMessage());
+      } finally {
+        IOUtils.closeQuietly(datafile);
       }
     }
   }

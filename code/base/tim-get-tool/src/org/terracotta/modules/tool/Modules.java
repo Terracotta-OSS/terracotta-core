@@ -92,5 +92,6 @@ public interface Modules {
    * @return A File instance representing the just downloaded module.
    * @throws IOException if unable to download or checksum verification failed.
    */
-  File download(Module module, boolean verify) throws IOException;
+  File download(BasicAttributes module, boolean verify) throws IOException;
+
 }
