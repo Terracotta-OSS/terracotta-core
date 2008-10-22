@@ -8,4 +8,4 @@ terracotta.build.user=theuser
 terracotta.build.timestamp=20080616-130651
 terracotta.build.revision=12345
 terracotta.build.branch=thebranch
-terracotta.build.edition=opensource
+terracotta.build.edition=Opensource

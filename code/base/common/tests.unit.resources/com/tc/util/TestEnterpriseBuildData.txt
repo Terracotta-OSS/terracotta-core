@@ -10,4 +10,4 @@ terracotta.build.revision=12345
 terracotta.build.ee.revision=98765
 terracotta.build.change-tag=thechange
 terracotta.build.branch=thebranch
-terracotta.build.edition=Enterprise Edition
+terracotta.build.edition=Enterprise

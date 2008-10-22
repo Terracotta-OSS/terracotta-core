@@ -74,11 +74,12 @@ public class ProductInfoTest extends TestCase {
     assertTrue(copyright.indexOf("Terracotta, Inc.") >= 0);
     assertTrue(copyright.indexOf("All rights reserved.") >= 0);
 
-    assertEquals("opensource", info.edition());
+    assertEquals("opensource", info.edition().toLowerCase());
     assertEquals("1.2", info.kitID());
     assertEquals("Unlimited development", info.license());
     assertEquals("1.2.3-SNAPSHOT", info.mavenArtifactsVersion());
     assertEquals("Terracotta", info.moniker());
+    System.out.println(info.toLongString());
     assertEquals("Terracotta 1.2.3-SNAPSHOT, as of 20080616-130651 (Revision 12345 by theuser@thehost from thebranch)",
                  info.toLongString());
     assertEquals("Terracotta 1.2.3-SNAPSHOT", info.toShortString());
@@ -101,15 +102,15 @@ public class ProductInfoTest extends TestCase {
     assertTrue(copyright.indexOf("Terracotta, Inc.") >= 0);
     assertTrue(copyright.indexOf("All rights reserved.") >= 0);
 
-    assertEquals("Enterprise Edition", info.edition());
+    assertEquals("enterprise", info.edition().toLowerCase());
     assertEquals("1.2", info.kitID());
     assertEquals("Unlimited development", info.license());
     assertEquals("1.2.3-SNAPSHOT", info.mavenArtifactsVersion());
     assertEquals("Terracotta", info.moniker());
     assertEquals(
-                 "Terracotta Enterprise Edition 1.2.3-SNAPSHOT, as of 20080616-130651 (Revision 98765-12345 by theuser@thehost from thebranch)",
+                 "Terracotta Enterprise 1.2.3-SNAPSHOT, as of 20080616-130651 (Revision 98765-12345 by theuser@thehost from thebranch)",
                  info.toLongString());
-    assertEquals("Terracotta Enterprise Edition 1.2.3-SNAPSHOT", info.toShortString());
+    assertEquals("Terracotta Enterprise 1.2.3-SNAPSHOT", info.toShortString());
     assertEquals("1.2.3-SNAPSHOT", info.version());
   }
 

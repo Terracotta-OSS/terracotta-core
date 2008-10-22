@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
  */
 public final class ProductInfo {
   private static final String ENTERPRISE = "Enterprise";
-  private static final String OPENSOURCE = "opensource";
+  private static final String OPENSOURCE = "Opensource";
 
   private static final ResourceBundleHelper bundleHelper                 = new ResourceBundleHelper(ProductInfo.class);
 
