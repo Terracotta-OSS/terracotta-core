@@ -29,7 +29,7 @@ class BuildEnvironment < Environment
   end
 
   def is_ee_branch?
-    @ee_svninfo.valid?
+    @ee_svninfo.valid? ? true : false
   end
   
   def combo_revision
