@@ -71,7 +71,7 @@ module DistributionUtils
   end
 
   def product_directory
-    FilePath.new(@distribution_results.build_dir, get_config(:package_directory)).ensure_directory
+    FilePath.new(@distribution_results.build_dir, get_config(:root_directory)).ensure_directory
   end
 
   def dorevpath(component)
@@ -116,7 +116,6 @@ module DistributionUtils
   def get_config(symbol, default=nil)
     out = case symbol
     when :version           then @build_environment.version
-    when :package_directory then @config[symbol.to_s] || "#{get_config(:root_directory)}"
     else
       @config[symbol.to_s] || default
     end
