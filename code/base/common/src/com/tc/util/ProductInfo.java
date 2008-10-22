@@ -289,7 +289,7 @@ public final class ProductInfo {
   public String buildID() {
     if (buildID == null) {
       String rev = revision;
-      if (edition.indexOf(ENTERPRISE) >= 0) {
+      if (ENTERPRISE.equals(edition)) {
         rev = ee_revision + "-" + revision;
       }
       buildID = buildTimestampAsString() + " (Revision " + rev + " by " + user + "@" + host + " from " + branch + ")";
@@ -307,7 +307,7 @@ public final class ProductInfo {
 
   public String patchBuildID() {
     String rev = patchRevision;
-    if (edition.indexOf(ENTERPRISE) >= 0) {
+    if (ENTERPRISE.equals(edition)) {
       rev = patchEERevision + "-" + patchRevision;
     }
 

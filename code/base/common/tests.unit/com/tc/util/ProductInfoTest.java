@@ -74,7 +74,7 @@ public class ProductInfoTest extends TestCase {
     assertTrue(copyright.indexOf("Terracotta, Inc.") >= 0);
     assertTrue(copyright.indexOf("All rights reserved.") >= 0);
 
-    assertEquals("opensource", info.edition().toLowerCase());
+    assertEquals("Opensource", info.edition());
     assertEquals("1.2", info.kitID());
     assertEquals("Unlimited development", info.license());
     assertEquals("1.2.3-SNAPSHOT", info.mavenArtifactsVersion());
@@ -102,7 +102,7 @@ public class ProductInfoTest extends TestCase {
     assertTrue(copyright.indexOf("Terracotta, Inc.") >= 0);
     assertTrue(copyright.indexOf("All rights reserved.") >= 0);
 
-    assertEquals("enterprise", info.edition().toLowerCase());
+    assertEquals("Enterprise", info.edition());
     assertEquals("1.2", info.kitID());
     assertEquals("Unlimited development", info.license());
     assertEquals("1.2.3-SNAPSHOT", info.mavenArtifactsVersion());
