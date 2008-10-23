@@ -71,7 +71,7 @@ public class ClientConnectionEstablisher {
 
   /**
    * Blocking open. Causes a connection to be made. Will throw exceptions if the connect fails.
-   *
+   * 
    * @throws TCTimeoutException
    * @throws IOException
    * @throws TCTimeoutException
@@ -104,7 +104,7 @@ public class ClientConnectionEstablisher {
 
   /**
    * Tries to make a connection. This is a blocking call.
-   *
+   * 
    * @return
    * @throws TCTimeoutException
    * @throws IOException
@@ -143,8 +143,24 @@ public class ClientConnectionEstablisher {
       for (int i = 0; ((maxReconnectTries < 0) || (i < maxReconnectTries)) && !connected; i++) {
         ConnectionAddressIterator addresses = connAddressProvider.getIterator();
         while (addresses.hasNext() && !connected) {
+
           TCConnection connection = null;
           final ConnectionInfo connInfo = addresses.next();
+
+          // DEV-1945
+          if (i == 0) {
+            String previousConnectHostName = cmt.getRemoteAddress().getAddress().getHostName();
+            String connectingToHostName = connInfo.getHostname();
+
+            int previousConnectHostPort = cmt.getRemoteAddress().getPort();
+            int connectingToHostPort = connInfo.getPort();
+
+            if ((addresses.hasNext()) && (previousConnectHostName.equals(connectingToHostName))
+                && (previousConnectHostPort == connectingToHostPort)) {
+              continue;
+            }
+          }
+
           try {
             if (i % 20 == 0) {
               cmt.logger.warn("Reconnect attempt " + i + " of " + desc + " reconnect tries to " + connInfo
