@@ -194,19 +194,7 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
       throw Assert.failure("Unknown mode: " + mode);
     }
 
-    if (l2Identifier != null) {
-      Assert.assertNotBlank(l2Identifier);
-      this.defaultL2Identifier = l2Identifier;
-    } else {
-      String defaultName = this.beanSet.serversBean().getServerArray()[0].getName();
-      if (!TestConfigBeanSet.DEFAULT_SERVER_NAME.equals(defaultName)) {
-        this.defaultL2Identifier = this.beanSet.serversBean().getServerArray()[0].getName();
-      } else {
-        this.defaultL2Identifier = TestConfigBeanSet.DEFAULT_HOST;
-      }
-    }
-
-    Assert.assertNotNull(this.defaultL2Identifier);
+    this.defaultL2Identifier = l2Identifier;
 
     // FIXME 2005-11-30 andrew -- This stinks like mad...we should be able to do something better than perverting the
     // existing config-setup managers here.
