@@ -486,7 +486,7 @@ You may cancel this installation at any time by clicking the 'Cancel' button.]]>
 								</object>
 							</property>
 							<property name="sourceJarPath">
-								<string><![CDATA[C:\Program Files\Macrovision\InstallAnywhere 7.1 Enterprise\plugins\extracttofilecustomcode.jar]]></string>
+								<string><![CDATA[C:\Program Files\Macrovision\InstallAnywhere 8.0 Enterprise\plugins\extracttofilecustomcode.jar]]></string>
 							</property>
 							<property name="hasHelp">
 								<boolean>true</boolean>
@@ -573,7 +573,7 @@ You may cancel this installation at any time by clicking the 'Cancel' button.]]>
 								</object>
 							</property>
 							<property name="sourceJarPath">
-								<string><![CDATA[C:\Program Files\Macrovision\InstallAnywhere 7.1 Enterprise\plugins\PropertiesFileReader.jar]]></string>
+								<string><![CDATA[C:\Program Files\Macrovision\InstallAnywhere 8.0 Enterprise\plugins\PropertiesFileReader.jar]]></string>
 							</property>
 							<property name="hasHelp">
 								<boolean>true</boolean>
@@ -620,7 +620,7 @@ You may cancel this installation at any time by clicking the 'Cancel' button.]]>
 								<string><![CDATA[$USER_MAGIC_FOLDER_1$]]></string>
 							</property>
 							<property name="value">
-								<string><![CDATA[$USER_INSTALL_DIR$$/$$SHORT_NAME$$TC_VERSION$]]></string>
+								<string><![CDATA[$USER_INSTALL_DIR$$/$$ROOT_DIR$]]></string>
 							</property>
 						</object>
 					</method>
@@ -681,7 +681,7 @@ You may cancel this installation at any time by clicking the 'Cancel' button.]]>
 								<string><![CDATA[$USER_MAGIC_FOLDER_3$]]></string>
 							</property>
 							<property name="value">
-								<string><![CDATA[$USER_INSTALL_DIR$$/$terracotta-$TC_VERSION$]]></string>
+								<string><![CDATA[$USER_INSTALL_DIR$$/$$ROOT_DIR$]]></string>
 							</property>
 						</object>
 					</method>
@@ -4521,7 +4521,7 @@ and any path to a file to read from that file]]></string>
 												<boolean>true</boolean>
 											</property>
 											<property name="destinationName">
-												<string><![CDATA[$SHORT_NAME$$TC_VERSION$]]></string>
+												<string><![CDATA[$ROOT_DIR$]]></string>
 											</property>
 											<property name="removeRecursively">
 												<boolean>true</boolean>

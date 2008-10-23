@@ -57,6 +57,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     ant.jar(:destfile => jarfile.to_s, :basedir => rt_classes_dir.to_s)
     rt_classes_dir.delete
 
+    ant.replace(:token => "$ROOT_DIR$", :value => install_name, :file => project_file.to_s)
     ant.taskdef(:name => "buildinstaller", :classname => "com.zerog.ia.integration.ant.InstallAnywhereAntTask")
     ant.buildinstaller(:IALocation => BuildEnvironment::IA_LOCATION, :IAProjectFile => project_file.to_s, :failonerror => true)
 
