@@ -236,6 +236,9 @@ public class ServerClientHandshakeManager {
     if (state != INIT) throw new AssertionError("Should be in STARTING state: " + state);
   }
 
+  synchronized int getUnconnectedClientsSize() {
+    return existingUnconnectedClients.size();
+  }
   /**
    * Notifies handshake manager that the reconnect time has passed.
    * 
@@ -259,9 +262,9 @@ public class ServerClientHandshakeManager {
 
     public void run() {
       timeToWait -= RECONNECT_WARN_INTERVAL;
-      if (timeToWait > 0 && handshakeManager.existingUnconnectedClients.size() > 0) {  
+      if (timeToWait > 0 && handshakeManager.getUnconnectedClientsSize() > 0) {  
         handshakeManager.consoleLogger.info("Reconnect window active.  Waiting for " 
-                                            + handshakeManager.existingUnconnectedClients.size() 
+                                            + handshakeManager.getUnconnectedClientsSize() 
                                             + " clients to connect. "
                                             + timeToWait + " ms remaining.");
         if (timeToWait < RECONNECT_WARN_INTERVAL) {
