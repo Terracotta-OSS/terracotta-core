@@ -57,25 +57,27 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
   private TestLockManager              lockManager;
   private TestSink                     lockResponseSink;
   private TestSink                     objectIDRequestSink;
-  private long                         reconnectTimeout;
   private Set                          existingUnconnectedClients;
   private TestTimer                    timer;
   private TestChannelManager           channelManager;
   private SequenceValidator            sequenceValidator;
+  private static long                  SHORT_RECONNECT_TIMEOUT = ServerClientHandshakeManager.RECONNECT_WARN_INTERVAL / 3;
+  private static long                  MEDIUM_RECONNECT_TIMEOUT = ServerClientHandshakeManager.RECONNECT_WARN_INTERVAL;
+  private static long                  LONG_RECONNECT_TIMEOUT = ServerClientHandshakeManager.RECONNECT_WARN_INTERVAL * 2;
+  private static long                  DEFAULT_RECONNECT_TIMEOUT = SHORT_RECONNECT_TIMEOUT;
 
   public void setUp() {
     existingUnconnectedClients = new HashSet();
     clientStateManager = new TestClientStateManager();
     lockManager = new TestLockManager();
     lockResponseSink = new TestSink();
-    objectIDRequestSink = new TestSink();
-    reconnectTimeout = 10 * 1000;
+    objectIDRequestSink = new TestSink();    
     timer = new TestTimer();
     channelManager = new TestChannelManager();
     sequenceValidator = new SequenceValidator(0);
   }
 
-  private void initHandshakeManager() {
+  private void initHandshakeManager(long reconnectTimeout) {
     TCLogger logger = TCLogging.getLogger(ServerClientHandshakeManager.class);
     this.hm = new ServerClientHandshakeManager(logger, channelManager, new TestServerTransactionManager(),
                                                sequenceValidator, clientStateManager, lockManager, lockResponseSink,
@@ -94,17 +96,29 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
   }
 
   public void testNoUnconnectedClients() throws Exception {
-    initHandshakeManager();
+    initHandshakeManager(DEFAULT_RECONNECT_TIMEOUT);
     assertStarted();
   }
 
-  public void testTimeout() throws Exception {
+  public void testTimeout1() throws Exception {
+    doTimeoutTest(SHORT_RECONNECT_TIMEOUT);
+  }
+  
+  public void testTimeout2() throws Exception {
+    doTimeoutTest(MEDIUM_RECONNECT_TIMEOUT);
+  }
+
+  public void testTimeout3() throws Exception {
+    doTimeoutTest(LONG_RECONNECT_TIMEOUT);
+  }
+
+  private void doTimeoutTest(long reconnectTimeout) throws ClientHandshakeException {
     ClientID clientID = new ClientID(new ChannelID(100));
 
     existingUnconnectedClients.add(clientID);
     existingUnconnectedClients.add(new ClientID(new ChannelID(101)));
 
-    initHandshakeManager();
+    initHandshakeManager(reconnectTimeout);
 
     TestClientHandshakeMessage handshake = newClientHandshakeMessage(clientID);
     hm.notifyClientConnect(handshake);
@@ -116,7 +130,13 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     // make sure executing the timer task calls cancel on the timer and calls
     // notifyTimeout() on the handshake manager.
     assertTrue(timer.cancelCalls.isEmpty());
-    scc.task.run();
+    if (reconnectTimeout < ServerClientHandshakeManager.RECONNECT_WARN_INTERVAL) {
+      scc.task.run();
+    } else {
+      for (int i=0; i < (reconnectTimeout/ServerClientHandshakeManager.RECONNECT_WARN_INTERVAL); i++) {
+        scc.task.run();
+      }
+    }
     assertEquals(1, timer.cancelCalls.size());
     assertEquals(1, channelManager.closeAllChannelIDs.size());
     assertEquals(new ClientID(new ChannelID(101)), channelManager.closeAllChannelIDs.get(0));
@@ -132,7 +152,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     existingUnconnectedClients.add(channelID1);
     existingUnconnectedClients.add(channelID2);
 
-    initHandshakeManager();
+    initHandshakeManager(DEFAULT_RECONNECT_TIMEOUT);
 
     assertFalse(hm.isStarted());
 
@@ -157,7 +177,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     existingUnconnectedClients.add(clientID1);
     existingUnconnectedClients.add(clientID2);
 
-    initHandshakeManager();
+    initHandshakeManager(DEFAULT_RECONNECT_TIMEOUT);
 
     TestClientHandshakeMessage handshake = newClientHandshakeMessage(clientID1);
     ArrayList sequenceIDs = new ArrayList();
@@ -200,7 +220,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     // make sure the timer task was scheduled properly
     assertEquals(1, timer.scheduleCalls.size());
     TestTimer.ScheduleCallContext scc = (ScheduleCallContext) timer.scheduleCalls.get(0);
-    assertEquals(new Long(reconnectTimeout), scc.delay);
+    assertEquals(new Long(DEFAULT_RECONNECT_TIMEOUT), scc.delay);
     assertTrue(scc.period == null);
     assertTrue(scc.time == null);
 
@@ -280,7 +300,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     existingUnconnectedClients.add(clientID1);
     existingUnconnectedClients.add(clientID2);
 
-    initHandshakeManager();
+    initHandshakeManager(DEFAULT_RECONNECT_TIMEOUT);
 
     TestClientHandshakeMessage handshake = newClientHandshakeMessage(clientID1);
     handshake.setIsObjectIDsRequested(true);
