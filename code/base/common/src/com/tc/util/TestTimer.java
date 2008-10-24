@@ -27,8 +27,7 @@ public class TestTimer implements TCTimer {
   }
 
   public void schedule(TimerTask task, long delay, long period) {
-    return;
-
+    scheduleCalls.add(new ScheduleCallContext(task, new Long(delay), null, new Long(period)));
   }
 
   public void schedule(TimerTask task, Date firstTime, long period) {
