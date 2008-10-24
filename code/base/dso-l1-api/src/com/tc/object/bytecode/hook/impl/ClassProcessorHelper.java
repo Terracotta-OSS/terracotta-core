@@ -65,6 +65,8 @@ public class ClassProcessorHelper {
 
   private static final String                TC_DSO_GLOBALMODE_SYSPROP = "tc.dso.globalmode";
 
+  private static final String                TC_LOADER_DEBUG_SYSPROP   = "tc.loader.debug";
+
   // Used for converting resource names into class names
   private static final String                CLASS_SUFFIX              = ".class";
   private static final int                   CLASS_SUFFIX_LENGTH       = CLASS_SUFFIX.length();
@@ -85,7 +87,8 @@ public class ClassProcessorHelper {
   private static final Map                   contextMap                = new WeakHashMap();
   private static final Map                   partitionedContextMap     = new HashMap();
 
-  private static final StandardClassProvider globalProvider            = new StandardClassProvider();
+  private static final StandardClassProvider globalProvider            = new StandardClassProvider(Boolean
+                                                                           .getBoolean(TC_LOADER_DEBUG_SYSPROP));
 
   private static URLClassLoader              tcLoader;
   private static DSOContext                  globalContext;
@@ -318,10 +321,10 @@ public class ClassProcessorHelper {
     URL[] rv = new URL[entries.length];
     for (int i = 0; i < entries.length; i++) {
       String entry = entries[i].getCanonicalPath().replace(File.separatorChar, '/');
-      if (entries[i].isDirectory()) entry += "/"; 
+      if (entries[i].isDirectory()) entry += "/";
       rv[i] = new URL("file", "", entry);
     }
-    
+
     return rv;
   }
 

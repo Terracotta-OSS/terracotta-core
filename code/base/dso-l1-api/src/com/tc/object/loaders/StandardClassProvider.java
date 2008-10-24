@@ -20,9 +20,14 @@ public class StandardClassProvider implements ClassProvider {
   private static final String SYSTEM  = Namespace.getStandardSystemLoaderName();
 
   private final Map           loaders = new HashMap();
+  private final boolean       debug;
 
   public StandardClassProvider() {
-    //
+    this(false);
+  }
+
+  public StandardClassProvider(boolean debug) {
+    this.debug = debug;
   }
 
   public ClassLoader getClassLoader(String desc) {
@@ -59,7 +64,13 @@ public class StandardClassProvider implements ClassProvider {
   public void registerNamedLoader(NamedClassLoader loader) {
     final String name = getName(loader);
     synchronized (loaders) {
-      loaders.put(name, new WeakReference(loader));
+      Object prev = loaders.put(name, new WeakReference(loader));
+
+      if (debug) {
+        Throwable t = new Throwable("INFO: loader of type [" + loader.getClass().getName() + "] with name [" + name
+                                    + "] registered (replaced:" + (prev != null) + ")");
+        t.printStackTrace();
+      }
     }
   }
 
