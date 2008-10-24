@@ -9,12 +9,10 @@ import com.tc.test.TCTestCase;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -230,7 +228,7 @@ public class ObjectIDSetTest extends TCTestCase {
     objIdSet.add(new ObjectID(num));
     try {
       iterateElements(iterator);
-      throw new AssertionError("We should have gotten the ConcurrentModificationException");
+      throw new AssertionError("We should have got the ConcurrentModificationException");
     } catch (ConcurrentModificationException cme) {
       System.out.println("Caught Expected Exception " + cme.getClass().getName());
     }
@@ -239,7 +237,7 @@ public class ObjectIDSetTest extends TCTestCase {
     objIdSet.remove(new ObjectID(0));
     try {
       iterateElements(iterator);
-      throw new AssertionError("We should have gotten the ConcurrentModificationException");
+      throw new AssertionError("We should have got the ConcurrentModificationException");
     } catch (ConcurrentModificationException cme) {
       System.out.println("Caught Expected Exception " + cme.getClass().getName());
     }
@@ -454,51 +452,4 @@ public class ObjectIDSetTest extends TCTestCase {
     visitedElements += iterateElements(i);
     assertEquals(visitedElements, totalElements - 1);
   }
-  
-  public void testSmallSetSerialization() throws Exception {
-    ObjectIDSet smallSet = new ObjectIDSet();
-    smallSet.add(new ObjectID(1000));
-    checkSerialization(smallSet);
-  } 
-  
-  public void testLargeSetSerialization() throws Exception {
-    ObjectIDSet largeSet = new ObjectIDSet();
-    for(int i=0; i<ObjectIDSet.MIN_JUMBO_SIZE+1; i++) {
-      largeSet.add(new ObjectID(i));
-    }
-    checkSerialization(largeSet);
-  }
-  
-  
-  private Object checkSerialization(Object o) throws Exception {
-    if (!(o instanceof Serializable)) {
-      System.err.println("Skipping non-serializable " + o.getClass().getName());
-      return null;
-    }
-
-    return validateSerialization(o);
-  }
-  
-  private Object validateSerialization(Object o) throws Exception {
-    System.out.println("TESTING " + o.getClass());
-    assertTrue(o instanceof Serializable);
-
-    return deserialize(serialize(o));
-  }
-  
-  private static byte[] serialize(Object obj) throws IOException {
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    ObjectOutputStream oos = new ObjectOutputStream(baos);
-    oos.writeObject(obj);
-    oos.close();
-    return baos.toByteArray();
-  }
-  
-  private static Object deserialize(byte[] data) throws IOException, ClassNotFoundException {
-    ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(data));
-    Object rv = ois.readObject();
-    ois.close();
-    return rv;
-  }
-
 }
