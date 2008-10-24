@@ -15,6 +15,8 @@ import com.tctest.webapp.listeners.BindingListener;
 import com.tctest.webapp.listeners.SessionListener;
 import com.tctest.webapp.servlets.ListenerReportingServlet;
 
+import java.util.Date;
+
 import junit.framework.Test;
 
 public class SessionEventsWithTCPropsTest extends AbstractOneServerDeploymentTest {
@@ -24,7 +26,7 @@ public class SessionEventsWithTCPropsTest extends AbstractOneServerDeploymentTes
   public SessionEventsWithTCPropsTest() {
     // DEV-1117
     if (appServerInfo().getId() == AppServerInfo.WEBLOGIC) {
-      disableAllUntil("2008-12-30");
+      disableAllUntil(new Date(Long.MAX_VALUE));
     }
   }
 
