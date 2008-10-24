@@ -7,6 +7,8 @@ package com.tc.net.protocol.transport;
 import org.hyperic.sigar.NetStat;
 import org.hyperic.sigar.Sigar;
 
+import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
+
 import com.tc.async.api.Stage;
 import com.tc.async.impl.StageManagerImpl;
 import com.tc.lang.TCThreadGroup;
@@ -52,10 +54,6 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
   TCPProxy              proxy     = null;
   int                   proxyPort = 0;
 
-  public ConnectionHealthCheckerLongGCTest() {
-    disableTestUntil("testL1SocketConnectTimeoutL2AndL1Reconnect", "2008-10-29");
-  }
-
   protected void setUp(HealthCheckerConfig serverHCConf, HealthCheckerConfig clientHCConf) throws Exception {
     setUp(serverHCConf, clientHCConf, false);
   }
@@ -70,7 +68,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
 
     if (EnableReconnect) {
       StageManagerImpl stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(TCLogging
-          .getLogger(StageManagerImpl.class))), new QueueFactory());
+          .getLogger(StageManagerImpl.class))), new QueueFactory(BoundedLinkedQueue.class.getName()));
       final Stage oooSendStage = stageManager.createStage("OOONetSendStage", new OOOEventHandler(), 1, 5000);
       final Stage oooReceiveStage = stageManager.createStage("OOONetReceiveStage", new OOOEventHandler(), 1, 5000);
       networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
