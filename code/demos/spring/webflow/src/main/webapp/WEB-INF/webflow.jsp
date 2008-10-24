@@ -82,7 +82,7 @@
   command from the <code>spring/samples/webflow</code> directory. For example, <code>./stop-tomcat1.sh</code>
   (or <code>stop-tomcat1.bat</code> in Windows) will stop the Tomcat server instance from node1.
   <p/>
-    
+
   <c:choose>
     <c:when test="${webflow.state == null or webflow.state == 'stateA'}">
       <h3>Running the application</h3>
@@ -108,9 +108,10 @@
     </c:otherwise>
   </c:choose>
 
-  <form action="webflow.htm" name="myform" id="myform" method="post">
+  <form name="myform" id="myform" method="post">
     <c:if test="${webflow.state != 'complete'}">
       <input type="hidden" name="_flowExecutionKey" value='<c:out value="${flowExecutionKey}"/>'/>
+      <input type="hidden" name="_eventId" value='submit'/>
     </c:if>
     
     <table border="1" cellpadding="2" cellspacing="0" style="border-collapse:collapse">
@@ -128,7 +129,7 @@
               <input type="text" name="value" value="<c:out value='${webflow.a}'/>" id="field0" onKeyPress="return checkEnter(event)" style="width:300px"/>
             </td>
             <td bgcolor="#eaeaea" valign="middle">
-              <input type="submit" id="_eventId_submit" name="_eventId_submit" value="Continue"/>
+              <input type="submit" />
             </td>
           </tr>
         </c:when>
@@ -147,7 +148,7 @@
               <input type="text" name="value" value="<c:out value='${webflow.b}'/>" id="field0" onKeyPress="return checkEnter(event)" style="width:300px"/>
             </td>
             <td bgcolor="#eaeaea" valign="middle">
-              <input type="submit" id="_eventId_submit" name="_eventId_submit" value="Continue"/>
+              <input type="submit" />
             </td>
           </tr>
         </c:when>
@@ -166,7 +167,7 @@
               <input type="text" name="value" value="<c:out value='${webflow.c}'/>" id="field0" onKeyPress="return checkEnter(event)" style="width:300px"/>
             </td>
             <td bgcolor="#eaeaea" valign="middle">
-              <input type="submit" id="_eventId_submit" name="_eventId_submit" value="Continue"/>
+              <input type="submit" />
             </td>
           </tr>
         </c:when>
@@ -185,7 +186,7 @@
               <input type="text" name="value" value="<c:out value='${webflow.d}'/>" id="field0" onKeyPress="return checkEnter(event)" style="width:300px"/>
             </td>
             <td bgcolor="#eaeaea" valign="middle">
-              <input type="submit" id="_eventId_submit" name="_eventId_submit" value="Continue"/>
+              <input type="submit" />
             </td>
           </tr>
         </c:when>
@@ -199,7 +200,7 @@
     </table>
   </form>
   <p/>
-  <a href="webflow.htm?_flowId=webflow">Restart</a>
+  <a href="webflow.htm">Restart</a>
   <p/>
 </body>
 </html>
