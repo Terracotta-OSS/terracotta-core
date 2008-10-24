@@ -52,6 +52,10 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
   TCPProxy              proxy     = null;
   int                   proxyPort = 0;
 
+  public ConnectionHealthCheckerLongGCTest() {
+    disableTestUntil("testL1SocketConnectTimeoutL2AndL1Reconnect", "2008-10-29");
+  }
+
   protected void setUp(HealthCheckerConfig serverHCConf, HealthCheckerConfig clientHCConf) throws Exception {
     setUp(serverHCConf, clientHCConf, false);
   }
