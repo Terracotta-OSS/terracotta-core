@@ -6,18 +6,18 @@ package com.tc.util.runtime;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.util.Assert;
 
 import java.lang.reflect.Method;
-import java.util.Map;
+import java.util.ArrayList;
 
 public class ThreadDumpUtil {
 
-  private static final TCLogger logger            = TCLogging.getLogger(ThreadDumpUtil.class);
+  private static final TCLogger logger = TCLogging.getLogger(ThreadDumpUtil.class);
 
   private static Class          threadDumpUtilJdk15Type;
   private static Class          threadDumpUtilJdk16Type;
-  private static final Class[]  EMPTY_PARAM_TYPES = new Class[0];
-  private static final Object[] EMPTY_PARAMS      = new Object[0];
 
   static {
     if (Vm.isJDK15Compliant()) {
@@ -42,40 +42,33 @@ public class ThreadDumpUtil {
   }
 
   public static String getThreadDump() {
-    return getThreadDump(null, null, new NullThreadIDMap());
+    return getThreadDump(new NullLockInfoByThreadIDImpl(), new NullThreadIDMap());
   }
 
-  public static String getThreadDump(Map heldLockMap, Map pendingLockMap, ThreadIDMap threadIDMap) {
+  public static String getThreadDump(LockInfoByThreadID lockInfo, ThreadIDMap threadIDMap) {
     final Exception exception;
     try {
       if (!Vm.isJDK15Compliant()) { return "Thread dumps require JRE-1.5 or greater"; }
+      Assert.assertTrue((threadDumpUtilJdk15Type != null) || (threadDumpUtilJdk16Type != null));
 
       Method method = null;
       if (Vm.isJDK15()) {
         if (threadDumpUtilJdk15Type != null) {
-          method = getThreadDumpMethod(threadDumpUtilJdk15Type, heldLockMap, pendingLockMap);
+          method = getThreadDumpMethod(threadDumpUtilJdk15Type, lockInfo);
         } else {
           return "ThreadDump Classes class not available";
         }
 
       } else if (Vm.isJDK16Compliant()) {
         if (threadDumpUtilJdk16Type != null) {
-          method = getThreadDumpMethod(threadDumpUtilJdk16Type, heldLockMap, pendingLockMap);
+          method = getThreadDumpMethod(threadDumpUtilJdk16Type, lockInfo);
         } else if (threadDumpUtilJdk15Type != null) {
-          method = getThreadDumpMethod(threadDumpUtilJdk15Type, heldLockMap, pendingLockMap);
-        } else {
-          return "ThreadDump Classes class not available";
+          method = getThreadDumpMethod(threadDumpUtilJdk15Type, lockInfo);
         }
       } else {
         return "Thread dumps require JRE-1.5 or greater";
       }
-
-      if ((heldLockMap != null) && (pendingLockMap != null)
-          && (threadDumpUtilJdk15Type != null || threadDumpUtilJdk16Type != null)) {
-        return (String) method.invoke(null, new Object[] { heldLockMap, pendingLockMap, threadIDMap });
-      } else {
-        return (String) method.invoke(null, EMPTY_PARAMS);
-      }
+      return (String) method.invoke(null, new Object[] { lockInfo, threadIDMap });
     } catch (Exception e) {
       logger.error("Cannot take thread dumps - " + e.getMessage(), e);
       exception = e;
@@ -83,33 +76,28 @@ public class ThreadDumpUtil {
     return "Cannot take thread dumps " + exception.getMessage();
   }
 
-  private static Method getThreadDumpMethod(Class jdkType, Map heldLockMap, Map pendingLockMap) throws Exception {
+  private static Method getThreadDumpMethod(Class jdkType, LockInfoByThreadID lockInfo) throws Exception {
     Method method = null;
-    if (heldLockMap != null && pendingLockMap != null) {
-      method = jdkType.getMethod("getThreadDump", new Class[] { Map.class, Map.class, ThreadIDMap.class });
-    } else {
-      method = jdkType.getMethod("getThreadDump", EMPTY_PARAM_TYPES);
-    }
+    Assert.assertNotNull(lockInfo);
+    method = jdkType.getMethod("getThreadDump", new Class[] { LockInfoByThreadID.class, ThreadIDMap.class });
     return method;
   }
 
-  public static String getHeldAndPendingLockInfo(Map heldMap, Map pendingMap, Long tcThreadID) {
-    String info = "";
-
-    if (heldMap != null && pendingMap != null) {
-      Object heldLocks = heldMap.get(tcThreadID);
-      Object pendingLocks = pendingMap.get(tcThreadID);
-
-      if ((tcThreadID != null) && (heldLocks != null)) {
-        info += "\n\tDistributed Locks HELD: " + heldLocks + "\n";
-      }
-
-      if ((tcThreadID != null) && (pendingLocks != null)) {
-        info += "\n\tDistributed Locks PENDING: " + pendingLocks + "\n";
-      }
-
+  public static String getLockList(LockInfoByThreadID lockInfo, ThreadID tcThreadID) {
+    String lockList = "";
+    ArrayList heldLocks = lockInfo.getHeldLocks(tcThreadID);
+    ArrayList waitOnLocks = lockInfo.getWaitOnLocks(tcThreadID);
+    ArrayList pendingLocks = lockInfo.getPendingLocks(tcThreadID);
+    if (heldLocks.size() != 0) {
+      lockList += "LOCKED : " + heldLocks.toString() + "\n";
     }
-    return info;
+    if (waitOnLocks.size() != 0) {
+      lockList += "WAITING ON LOCK: " + waitOnLocks.toString() + "\n";
+    }
+    if (pendingLocks.size() != 0) {
+      lockList += "WAITING TO LOCK: " + pendingLocks.toString() + "\n";
+    }
+    return lockList;
   }
 
   public static void main(String[] args) {

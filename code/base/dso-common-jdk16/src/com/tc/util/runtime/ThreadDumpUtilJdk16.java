@@ -10,17 +10,16 @@ import java.lang.management.MonitorInfo;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.util.Date;
-import java.util.Map;
 
 public class ThreadDumpUtilJdk16 {
 
   private static ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
 
   public static String getThreadDump() {
-    return getThreadDump(null, null, new NullThreadIDMap());
+    return getThreadDump(new NullLockInfoByThreadIDImpl(), new NullThreadIDMap());
   }
 
-  public static String getThreadDump(Map heldMap, Map pendingMap, ThreadIDMap thIDMap) {
+  public static String getThreadDump(LockInfoByThreadID lockInfo, ThreadIDMap threadIDMap) {
     StringBuilder sb = new StringBuilder();
     sb.append(new Date().toString());
     sb.append('\n');
@@ -57,8 +56,7 @@ public class ThreadDumpUtilJdk16 {
               }
             }
           }
-          sb.append(ThreadDumpUtil.getHeldAndPendingLockInfo(heldMap, pendingMap, thIDMap.getTCThreadID(threadInfo
-              .getThreadId())));
+          sb.append(ThreadDumpUtil.getLockList(lockInfo, threadIDMap.getTCThreadID(threadInfo.getThreadId())));
           if (!threadMXBean.isObjectMonitorUsageSupported() && threadMXBean.isSynchronizerUsageSupported()) {
             sb.append(threadLockedSynchronizers(threadInfo));
           }

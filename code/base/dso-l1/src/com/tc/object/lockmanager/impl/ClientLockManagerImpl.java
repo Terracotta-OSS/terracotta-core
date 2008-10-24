@@ -31,6 +31,7 @@ import com.tc.text.StringFormatter;
 import com.tc.util.Assert;
 import com.tc.util.State;
 import com.tc.util.Util;
+import com.tc.util.runtime.LockInfoByThreadID;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -542,10 +543,10 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     return c;
   }
 
-  public synchronized void addAllHeldLocksAndPendingLockRequestsTo(Collection heldLocks, Collection pendingLocks) {
+  public synchronized void addAllLocksTo(LockInfoByThreadID lockInfo) {
     for (Iterator i = locksByID.values().iterator(); i.hasNext();) {
       ClientLock lock = (ClientLock) i.next();
-      lock.addAllHeldLocksAndPendingLockRequestsTo(heldLocks, pendingLocks);
+      lock.addAllLocksTo(lockInfo);
     }
   }
 

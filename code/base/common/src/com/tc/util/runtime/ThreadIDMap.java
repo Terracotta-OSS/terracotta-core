@@ -13,6 +13,6 @@ public interface ThreadIDMap {
 
   public void addTCThreadID(ThreadID tcThreadID);
 
-  public Long getTCThreadID(long vmThreadID);
+  public ThreadID getTCThreadID(long vmThreadID);
 
 }

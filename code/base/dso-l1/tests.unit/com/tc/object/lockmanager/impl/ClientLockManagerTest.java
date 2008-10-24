@@ -30,8 +30,6 @@ import com.tc.object.lockmanager.api.ThreadLockManager;
 import com.tc.object.lockmanager.api.WaitListener;
 import com.tc.object.lockmanager.api.WaitLockRequest;
 import com.tc.object.lockmanager.api.TestRemoteLockManager.LockResponder;
-import com.tc.object.lockmanager.impl.ClientLockManagerImpl;
-import com.tc.object.lockmanager.impl.ThreadLockManagerImpl;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
@@ -47,13 +45,11 @@ import com.tc.util.runtime.ThreadIDMapUtil;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -595,13 +591,18 @@ public class ClientLockManagerTest extends TCTestCase {
   }
 
   public void testAddAllOutstandingWaitersTo() throws Exception {
+
+    final ThreadIDMap threadIDMap = ThreadIDMapUtil.getInstance();
+    final ThreadLockManager threadLockManager = new ThreadLockManagerImpl(lockManager, threadIDMap);
+    final L1Info l1info = new L1Info(lockManager, threadIDMap);
+
     final LockID lockID = new LockID("my lock");
     final ThreadID tx1 = new ThreadID(1);
     final TimerSpec waitInvocation = new TimerSpec();
     final Object waitObject = new Object();
     final NoExceptionLinkedQueue barrier = new NoExceptionLinkedQueue();
     lockManager.lock(lockID, tx1, LockLevel.WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
-    Thread t = new LockWaiter(barrier, lockID, tx1, waitInvocation, waitObject);
+    Thread t = new LockWaiter(barrier, lockID, threadLockManager, waitInvocation, waitObject);
     t.start();
     barrier.take();
     ThreadUtil.reallySleep(200);
@@ -617,11 +618,17 @@ public class ClientLockManagerTest extends TCTestCase {
     pauseAndStart();
     lockManager.addAllWaitersTo(s);
     List waiters = new LinkedList(s);
+    String threadDump = l1info.takeThreadDump(System.currentTimeMillis());
     assertEquals(1, waiters.size());
     WaitLockRequest waitRequest = (WaitLockRequest) waiters.get(0);
     assertEquals(lockID, waitRequest.lockID());
     assertEquals(tx1, waitRequest.threadID());
     assertEquals(waitInvocation, waitRequest.getTimerSpec());
+
+    if (threadDump.indexOf("require JRE-1.5 or greater") < 0) {
+      Assert.eval("The text \"WAITING ON LOCK: [LockID(my lock)]\" should be present in the thread dump", threadDump
+          .indexOf("WAITING ON LOCK: [LockID(my lock)]") >= 0);
+    }
 
     // The lock this waiter was in when wait was called should no longer be
     // outstanding.
@@ -822,6 +829,7 @@ public class ClientLockManagerTest extends TCTestCase {
     final LockID lid1 = threadLockManager.lockIDFor("Locky1");
     final LockID lid2 = threadLockManager.lockIDFor("Locky2");
     final LockID lid3 = threadLockManager.lockIDFor("Locky3");
+
     final CyclicBarrier txnBarrier = new CyclicBarrier(3);
 
     final Latch[] done = new Latch[3];
@@ -895,27 +903,20 @@ public class ClientLockManagerTest extends TCTestCase {
     assertFalse(done[2].attempt(500));
 
     // pauseAndStart();
-    l1info.takeThreadDump(System.currentTimeMillis());
+    String threadDump = l1info.takeThreadDump(System.currentTimeMillis());
 
-    Map heldLocksMap = new HashMap();
-    Map pendingLocksMap = new HashMap();
-    l1info.getHeldLocksAndPendingLocksByThreadID(heldLocksMap, pendingLocksMap);
+    if (threadDump.indexOf("require JRE-1.5 or greater") < 0) {
+      Assert.eval("The text \"LOCKED : [LockID(Locky2)]\" should be present in the thread dump", threadDump
+          .indexOf("LOCKED : [LockID(Locky2)]") >= 0);
 
-    System.out.println("XXX HELD locks:" + heldLocksMap);
-    System.out.println("XXX WAIT locks:" + pendingLocksMap);
-    // this.lockManager.unpause();
+      Assert.eval("The text \"LOCKED : [LockID(Locky3)]\" should be present in the thread dump", threadDump
+          .indexOf("LOCKED : [LockID(Locky3)]") >= 0);
 
-    Assert.eval(heldLocksMap.size() == 3);
-    for (Iterator i = heldLocksMap.values().iterator(); i.hasNext();) {
-      String val = (String) i.next();
-      Assert.eval((val.indexOf("Locky2") > 0) || (val.indexOf("Locky3") > 0)
-                  || ((val.indexOf("Locky0") > 0) && (val.indexOf("Locky1") > 0)));
-    }
+      Assert.eval("The text \"WAITING TO LOCK: [LockID(Locky0)]\" should be present in the thread dump", threadDump
+          .indexOf("WAITING TO LOCK: [LockID(Locky0)]") >= 0);
 
-    Assert.eval(pendingLocksMap.size() == 1);
-    for (Iterator i = pendingLocksMap.values().iterator(); i.hasNext();) {
-      String val = (String) i.next();
-      Assert.eval(val.indexOf("Locky0") > 0);
+      Assert.eval((threadDump.indexOf("LOCKED : [LockID(Locky1), LockID(Locky0)]") >= 0)
+                  || (threadDump.indexOf("LOCKED : [LockID(Locky0), LockID(Locky1)]") >= 0));
     }
 
     threadLockManager.unlock(lid0);
@@ -934,24 +935,6 @@ public class ClientLockManagerTest extends TCTestCase {
 
     done[1].acquire();
     done[2].acquire();
-
-    // pauseAndStart();
-    l1info.takeThreadDump(System.currentTimeMillis());
-
-    heldLocksMap.clear();
-    pendingLocksMap.clear();
-    l1info.getHeldLocksAndPendingLocksByThreadID(heldLocksMap, pendingLocksMap);
-    System.out.println("XXX HELD locks:" + heldLocksMap);
-    System.out.println("XXX WAIT locks:" + pendingLocksMap);
-    // this.lockManager.unpause();
-
-    Assert.eval(heldLocksMap.size() == 2);
-    for (Iterator i = heldLocksMap.values().iterator(); i.hasNext();) {
-      String val = (String) i.next();
-      Assert.eval((val.indexOf("Locky0") > 0) || (val.indexOf("Locky1") > 0) && (val.indexOf("Locky2") > 0));
-    }
-
-    Assert.eval(pendingLocksMap.size() == 0);
   }
 
   public void testBasicUnlock() throws Exception {
@@ -1057,36 +1040,50 @@ public class ClientLockManagerTest extends TCTestCase {
 
   public class LockWaiter extends Thread implements WaitListener {
     private final LockID                 lid;
-
     private final ThreadID               tid;
-
     private final TimerSpec              call;
-
     private final NoExceptionLinkedQueue preWaitSignalQueue;
-
     private final Object                 waitObject;
-
     private final List                   exceptions = new LinkedList();
+    private final ThreadLockManager      threadLockManager;
 
     private LockWaiter(NoExceptionLinkedQueue preWaitSignalQueue, WaitLockRequest request, Object waitObject) {
-      this(preWaitSignalQueue, request.lockID(), request.threadID(), request.getTimerSpec(), waitObject);
+      this(preWaitSignalQueue, request.lockID(), null, request.threadID(), request.getTimerSpec(), waitObject);
+    }
+
+    private LockWaiter(NoExceptionLinkedQueue preWaitSignalQueue, LockID lid, ThreadLockManager threadLockManager,
+                       TimerSpec call, Object waitObject) {
+      this(preWaitSignalQueue, lid, threadLockManager, null, call, waitObject);
     }
 
     private LockWaiter(NoExceptionLinkedQueue preWaitSignalQueue, LockID lid, ThreadID threadID, TimerSpec call,
                        Object waitObject) {
+      this(preWaitSignalQueue, lid, null, threadID, call, waitObject);
+    }
+
+    private LockWaiter(NoExceptionLinkedQueue preWaitSignalQueue, LockID lid, ThreadLockManager threadLockManager,
+                       ThreadID threadID, TimerSpec call, Object waitObject) {
       this.preWaitSignalQueue = preWaitSignalQueue;
       this.lid = lid;
       this.tid = threadID;
+      this.threadLockManager = threadLockManager;
       this.waitObject = waitObject;
       this.call = call;
+      this.setName("LockWaiter");
     }
 
     public void run() {
       try {
-        lockManager.wait(lid, tid, call, waitObject, this);
+        if (threadLockManager != null) {
+          threadLockManager.wait(lid, call, waitObject, this);
+        } else {
+          lockManager.wait(lid, tid, call, waitObject, this);
+        }
       } catch (Throwable t) {
         exceptions.add(t);
       }
+
+      ThreadUtil.reallySleep(2000);
     }
 
     public void handleWaitEvent() {

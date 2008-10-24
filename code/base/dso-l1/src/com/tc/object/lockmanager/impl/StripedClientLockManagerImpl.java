@@ -20,6 +20,7 @@ import com.tc.object.session.SessionManager;
 import com.tc.object.tx.TimerSpec;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.State;
+import com.tc.util.runtime.LockInfoByThreadID;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -63,7 +64,7 @@ public class StripedClientLockManagerImpl implements ClientLockManager {
   }
 
   /**
-   * Applies a supplemental hash function to a given hashCode, which defends against poor quality hash functions. 
+   * Applies a supplemental hash function to a given hashCode, which defends against poor quality hash functions.
    */
   private static int hash(int h) {
     h += (h << 15) ^ 0xffffcd7d;
@@ -175,9 +176,9 @@ public class StripedClientLockManagerImpl implements ClientLockManager {
     lockManagerFor(lockID).waitTimedOut(lockID, threadID);
   }
 
-  public void addAllHeldLocksAndPendingLockRequestsTo(Collection heldLocks, Collection pendingLocks) {
+  public void addAllLocksTo(LockInfoByThreadID lockInfo) {
     for (int i = 0; i < lockManagers.length; i++) {
-      lockManagers[i].addAllHeldLocksAndPendingLockRequestsTo(heldLocks, pendingLocks);
+      lockManagers[i].addAllLocksTo(lockInfo);
     }
   }
 

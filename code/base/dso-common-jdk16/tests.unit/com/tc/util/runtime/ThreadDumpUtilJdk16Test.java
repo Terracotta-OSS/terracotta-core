@@ -4,7 +4,6 @@
  */
 package com.tc.util.runtime;
 
-import java.util.HashMap;
 import java.util.concurrent.CyclicBarrier;
 
 import junit.framework.TestCase;
@@ -21,9 +20,6 @@ public class ThreadDumpUtilJdk16Test extends TestCase {
     synchronized (this) {
       // validate that correct thread dump is taken.
       String dump = ThreadDumpUtil.getThreadDump();
-      assertTrue(dump.contains("- locked"));
-
-      dump = ThreadDumpUtil.getThreadDump(new HashMap(), new HashMap(), new NullThreadIDMap());
       assertTrue(dump.contains("- locked"));
     }
   }

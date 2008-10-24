@@ -12,7 +12,7 @@ public class NullThreadIDMap implements ThreadIDMap {
     //
   }
 
-  public Long getTCThreadID(long l) {
+  public ThreadID getTCThreadID(long l) {
     return null;
   }
 

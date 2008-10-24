@@ -8,17 +8,16 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.util.Date;
-import java.util.Map;
 
 public class ThreadDumpUtilJdk15 {
 
   private static ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
 
   public static String getThreadDump() {
-    return getThreadDump(null, null, new NullThreadIDMap());
+    return getThreadDump(new NullLockInfoByThreadIDImpl(), new NullThreadIDMap());
   }
 
-  public static String getThreadDump(Map heldMap, Map pendingMap, ThreadIDMap threadIDMap) {
+  public static String getThreadDump(LockInfoByThreadID lockInfo, ThreadIDMap threadIDMap) {
 
     StringBuilder sb = new StringBuilder();
     sb.append(new Date().toString());
@@ -38,14 +37,13 @@ public class ThreadDumpUtilJdk15 {
         if (threadInfo != null) {
           sb.append(threadHeader(threadInfo, threadIds[i]));
           sb.append('\n');
-
           StackTraceElement[] stea = threadInfo.getStackTrace();
           for (int j = 0; j < stea.length; j++) {
             sb.append("\tat ");
             sb.append(stea[j].toString());
             sb.append('\n');
           }
-          sb.append(ThreadDumpUtil.getHeldAndPendingLockInfo(heldMap, pendingMap, threadIDMap.getTCThreadID(threadIds[i])));
+          sb.append(ThreadDumpUtil.getLockList(lockInfo, threadIDMap.getTCThreadID(threadInfo.getThreadId())));
           sb.append('\n');
         }
       }

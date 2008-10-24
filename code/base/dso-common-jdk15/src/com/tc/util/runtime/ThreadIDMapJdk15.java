@@ -11,14 +11,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ThreadIDMapJdk15 implements ThreadIDMap {
-  private final Map<Long, Long> threadIDMap = new HashMap<Long, Long>();
+  private final Map<Long, ThreadID> threadIDMap = new HashMap<Long, ThreadID>();
 
   public synchronized void addTCThreadID(ThreadID tcThreadID) {
-    Object prev = threadIDMap.put(Thread.currentThread().getId(), tcThreadID.toLong());
+    Object prev = threadIDMap.put(Thread.currentThread().getId(), tcThreadID);
     Assert.assertNull(prev);
   }
 
-  public synchronized Long getTCThreadID(long vmThreadID) {
+  public synchronized ThreadID getTCThreadID(long vmThreadID) {
     return threadIDMap.get(vmThreadID);
   }
 }

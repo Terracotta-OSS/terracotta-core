@@ -9,6 +9,7 @@ import com.tc.object.lockmanager.impl.GlobalLockInfo;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TimerSpec;
 import com.tc.text.PrettyPrintable;
+import com.tc.util.runtime.LockInfoByThreadID;
 
 import java.util.Collection;
 
@@ -83,7 +84,7 @@ public interface ClientLockManager extends DumpHandler, PrettyPrintable {
    */
   public Collection addAllPendingLockRequestsTo(Collection c);
 
-  public void addAllHeldLocksAndPendingLockRequestsTo(Collection heldLocks, Collection pendingLocks);
+  public void addAllLocksTo(LockInfoByThreadID lockInfo);
 
   public Collection addAllPendingTryLockRequestsTo(Collection c);
 
