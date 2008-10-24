@@ -819,7 +819,7 @@ public class ClientLockManagerTest extends TCTestCase {
     assertTrue(done[0]);
   }
 
-  public void testHeldAndPendingLocksInThreadDump() throws Exception {
+  public void testAllLockInfoInThreadDump() throws Exception {
 
     final ThreadIDMap threadIDMap = ThreadIDMapUtil.getInstance();
     final ThreadLockManager threadLockManager = new ThreadLockManagerImpl(lockManager, threadIDMap);

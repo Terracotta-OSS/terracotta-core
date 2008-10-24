@@ -38,6 +38,7 @@ public class ThreadDumpUtil {
       }
     } else {
       // Thread dumps require JRE-1.5 or greater
+      logger.error("Thread dumps require JRE-1.5 or greater");
     }
   }
 

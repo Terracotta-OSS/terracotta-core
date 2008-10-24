@@ -768,6 +768,10 @@ class ClientLock implements TimerCallback, LockFlushCallback {
    * held/waiting-on/wating-to lock for each thread.
    */
   public synchronized void addAllLocksTo(LockInfoByThreadID lockInfo) {
+    if (greediness.isGreedy()) {
+     lockInfo.addLock(LockState.HOLDING, ThreadID.VM_ID, this.lockID.toString());
+    }
+    
     for (Iterator i = holders.keySet().iterator(); i.hasNext();) {
       ThreadID threadID = (ThreadID) i.next();
       LockHold hold = (LockHold) holders.get(threadID);

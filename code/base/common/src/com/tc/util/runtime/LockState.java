@@ -5,12 +5,18 @@
 package com.tc.util.runtime;
 
 public class LockState {
-  public static final LockState HOLDING    = new LockState();
-  public static final LockState WAITING_ON = new LockState();
-  public static final LockState WAITING_TO = new LockState();
+  public static final LockState HOLDING    = new LockState("HOLDING LOCK");
+  public static final LockState WAITING_ON = new LockState("WAITING ON LOCK");
+  public static final LockState WAITING_TO = new LockState("WAITING TO LOCK");
 
-  private LockState() {
-    // do nothing -- to prevent from any instantiation of this class
+  private final String          state;
+
+  private LockState(String state) {
+    this.state = state;
+  }
+
+  public String toString() {
+    return this.state;
   }
 
 }

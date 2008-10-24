@@ -74,7 +74,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   private final TCLockTimer             waitTimer;
 
   // For tests
-  ClientLockManagerImpl(TCLogger logger, RemoteLockManager remoteLockManager, SessionManager sessionManager,
+  public ClientLockManagerImpl(TCLogger logger, RemoteLockManager remoteLockManager, SessionManager sessionManager,
                         ClientLockStatManager lockStatManager, ClientLockManagerConfig clientLockManagerConfig) {
     this(logger, remoteLockManager, sessionManager, lockStatManager, clientLockManagerConfig, new TCLockTimerImpl());
 
