@@ -27,6 +27,7 @@ public class CacheMemoryManagerEventGenerator implements MemoryEventsListener {
     this.leastCount = leastCount;
     manager.registerForMemoryEvents(this);
     this.isOldGen = manager.isMonitorOldGenOnly();
+    this.currentState = CacheMemoryEventType.BELOW_THRESHOLD;
   }
 
   private void verifyInput(int thrhdl, int cricThrhld, int lc) {
