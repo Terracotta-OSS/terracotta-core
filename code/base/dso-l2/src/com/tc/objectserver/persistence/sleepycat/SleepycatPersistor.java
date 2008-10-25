@@ -7,6 +7,7 @@ package com.tc.objectserver.persistence.sleepycat;
 import com.sleepycat.je.Cursor;
 import com.sleepycat.je.CursorConfig;
 import com.sleepycat.je.DatabaseException;
+import com.sleepycat.je.StatsConfig;
 import com.sleepycat.je.Transaction;
 import com.tc.io.serializer.api.StringIndex;
 import com.tc.l2.state.StateManager;
@@ -27,6 +28,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.Banner;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.sequence.MutableSequence;
 
 import java.io.File;
@@ -34,6 +36,7 @@ import java.io.IOException;
 
 public class SleepycatPersistor implements Persistor {
   private static final int                     DEFAULT_CAPACITY = 50000;
+  private static final TCLogger                statsLogger      = TCLogging.getLogger(SleepycatPersistor.class);
 
   private final StringIndexPersistor           stringIndexPersistor;
   private final StringIndex                    stringIndex;
@@ -107,7 +110,28 @@ public class SleepycatPersistor implements Persistor {
     this.classPersistor = new ClassPersistorImpl(this.persistenceTransactionProvider, logger, env.getClassDatabase());
     this.clusterStateStore = new SleepycatMapStore(this.persistenceTransactionProvider, logger, env
         .getClusterStateStoreDatabase());
+    startStatsLoggerIfNeeded();
+  }
 
+  private void startStatsLoggerIfNeeded() {
+    if (TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_BDB_JE_STATS_LOGGING_ENABLED)) {
+      Thread t = new Thread("Berkeley DB JE Stats printer") {
+        public void run() {
+          StatsConfig sc = new StatsConfig();
+          sc.setClear(true);
+          while (true) {
+            ThreadUtil.reallySleep(5000);
+            try {
+              statsLogger.info("BDB JE Stats in last 5 secs : " + env.getStats(sc));
+            } catch (TCDatabaseException e) {
+              statsLogger.error("Error trying to get stats : " + e);
+            }
+          }
+        }
+      };
+      t.setDaemon(true);
+      t.start();
+    }
   }
 
   private void open(DBEnvironment dbenv, TCLogger logger) throws TCDatabaseException {
