@@ -6,14 +6,14 @@ package com.tc.statistics.retrieval.actions;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.objectserver.handler.ManagedObjectFaultHandler;
-import com.tc.properties.TCPropertiesImpl;
+import com.tc.objectserver.core.api.DSOGlobalServerStats;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
-
-import java.util.concurrent.atomic.AtomicLong;
+import com.tc.stats.counter.sampled.SampledCounter;
+import com.tc.stats.counter.sampled.TimeStampedCounterValue;
 
 /**
  * This statistic gives the fault rate of objects faulted from disk to L2. <p/> The {@link StatisticData} contains the
@@ -35,15 +35,15 @@ public class SRAL2FaultsFromDisk implements StatisticRetrievalAction {
                                                                          false);
 
   private static final TCLogger logger                   = TCLogging.getLogger(SRAL2FaultsFromDisk.class);
-  private final AtomicLong      faultCount;
+  private final SampledCounter  faultCounter;
 
-  public SRAL2FaultsFromDisk(final ManagedObjectFaultHandler faultHandler) {
+  public SRAL2FaultsFromDisk(final DSOGlobalServerStats serverStats) {
     if (!LOG_ANABLED) {
-      this.faultCount = null;
+      this.faultCounter = null;
       logger.info("\"" + ACTION_NAME + "\" statistic is not enabled. Please enable the property \""
                   + TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED + "\"" + " to collect this statistic.");
     } else {
-      faultCount = faultHandler.getFaultCount();
+      faultCounter = serverStats.getL2FaultFromDiskCounter();
     }
   }
 
@@ -56,7 +56,8 @@ public class SRAL2FaultsFromDisk implements StatisticRetrievalAction {
   }
 
   public StatisticData[] retrieveStatisticData() {
-    if (faultCount == null) return EMPTY_STATISTIC_DATA;
-    return new StatisticData[] { new StatisticData(ACTION_NAME, ELEMENT_NAME_FAULT_COUNT, faultCount.get()) };
+    if (faultCounter == null) return EMPTY_STATISTIC_DATA;
+    TimeStampedCounterValue value = faultCounter.getMostRecentSample();
+    return new StatisticData[] { new StatisticData(ACTION_NAME, ELEMENT_NAME_FAULT_COUNT, value.getCounterValue()) };
   }
 }

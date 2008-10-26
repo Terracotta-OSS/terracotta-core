@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.core.api;
 
@@ -9,23 +10,25 @@ import com.tc.stats.counter.sampled.SampledCounter;
 
 public class DSOGlobalServerStatsImpl implements DSOGlobalServerStats {
 
-  private final SampledCounter faultCounter;
-  private final SampledCounter flushCounter;
-  private final SampledCounter txnCounter;
+  private final SampledCounter         faultCounter;
+  private final SampledCounter         flushCounter;
+  private final SampledCounter         txnCounter;
   private final ObjectManagerStatsImpl objMgrStats;
 
-  private final SampledCounter broadcastCounter;
-  private final SampledCounter changesCounter;
+  private final SampledCounter         broadcastCounter;
+  private final SampledCounter         changesCounter;
+  private final SampledCounter         l2FaultFromDiskCounter;
 
   public DSOGlobalServerStatsImpl(SampledCounter flushCounter, SampledCounter faultCounter, SampledCounter txnCounter,
                                   ObjectManagerStatsImpl objMgrStats, SampledCounter broadcastCounter,
-                                  SampledCounter changesCounter) {
+                                  SampledCounter changesCounter, SampledCounter l2FaultFromDiskCounter) {
     this.flushCounter = flushCounter;
     this.faultCounter = faultCounter;
     this.txnCounter = txnCounter;
     this.objMgrStats = objMgrStats;
     this.broadcastCounter = broadcastCounter;
     this.changesCounter = changesCounter;
+    this.l2FaultFromDiskCounter = l2FaultFromDiskCounter;
   }
 
   public SampledCounter getObjectFlushCounter() {
@@ -50,5 +53,9 @@ public class DSOGlobalServerStatsImpl implements DSOGlobalServerStats {
 
   public SampledCounter getChangesCounter() {
     return changesCounter;
+  }
+
+  public SampledCounter getL2FaultFromDiskCounter() {
+    return l2FaultFromDiskCounter;
   }
 }

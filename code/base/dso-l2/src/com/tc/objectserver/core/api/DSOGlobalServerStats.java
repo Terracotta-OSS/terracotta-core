@@ -20,4 +20,6 @@ public interface DSOGlobalServerStats {
 
   SampledCounter getChangesCounter();
 
+  SampledCounter getL2FaultFromDiskCounter();
+
 }
