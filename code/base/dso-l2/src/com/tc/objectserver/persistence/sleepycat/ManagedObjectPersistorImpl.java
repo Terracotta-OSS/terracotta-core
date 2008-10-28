@@ -82,22 +82,23 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
                                                                                      TCPropertiesConsts.L2_OBJECTMANAGER_PERSISTOR_MEASURE_PERF,
                                                                                      false);
 
-  private final Database                       objectDB;
-  private final SerializationAdapterFactory    saf;
-  private final MutableSequence                objectIDSequence;
-  private final Database                       rootDB;
-  private final CursorConfig                   rootDBCursorConfig;
-  private long                                 saveCount;
-  private final TCLogger                       logger;
-  private final PersistenceTransactionProvider ptp;
-  private final ClassCatalog                   classCatalog;
-  private SerializationAdapter                 serializationAdapter;
-  private final SleepycatCollectionsPersistor  collectionsPersistor;
-  private final ObjectIDManager                objectIDManager;
-  private final SyncObjectIdSet                extantObjectIDs;
-  private final SyncObjectIdSet                extantMapTypeOidSet;
-  private final StatsRecorder                  commitStats;
-  private final StatsRecorder                  perfMeasureStats;
+  private final Database                                objectDB;
+  private final SerializationAdapterFactory             saf;
+  private final MutableSequence                         objectIDSequence;
+  private final Database                                rootDB;
+  private final CursorConfig                            rootDBCursorConfig;
+  private long                                          saveCount;
+  private final TCLogger                                logger;
+  private final PersistenceTransactionProvider          ptp;
+  private final ClassCatalog                            classCatalog;
+  private final SleepycatCollectionsPersistor           collectionsPersistor;
+  private final ObjectIDManager                         objectIDManager;
+  private final SyncObjectIdSet                         extantObjectIDs;
+  private final SyncObjectIdSet                         extantMapTypeOidSet;
+  private final StatsRecorder                           commitStats;
+  private final StatsRecorder                           perfMeasureStats;
+
+  private volatile ThreadLocal<SerializationAdapter>    threadlocalAdapter;
 
   public ManagedObjectPersistorImpl(TCLogger logger, ClassCatalog classCatalog,
                                     SerializationAdapterFactory serializationAdapterFactory, DBEnvironment env,
@@ -137,7 +138,8 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
       commitStats = new StatsPrinter("MO Commit Stats Printer", 5000, new MessageFormat("Commits in the Last {0} ms"),
                                      new MessageFormat(
                                      // hate this stupid formatter, can't figure how to prefix with space
-                                     // " count = {0,number,000000}   bytes = {1,number,0000000}   new = {2,number, 0000}"
+                                                       // " count = {0,number,000000} bytes = {1,number,0000000} new =
+                                                        // {2,number, 0000}"
                                                        " count = {0}   bytes = {1}   new = {2}"), true);
     } else {
       commitStats = new NullStatsRecorder();
@@ -148,7 +150,8 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
                                           60000,
                                           new MessageFormat("Deletes in the Last {0} ms"),
                                           new MessageFormat(
-                                          // " count = {0,number,#}   collections mo state = {1,number,#}   time taken = {2,number, #}"
+                                          // " count = {0,number,#} collections mo state = {1,number,#} time taken =
+                                          // {2,number, #}"
                                                             " total count = {0}   collections mo state = {1}   time taken = {2} nanos"),
                                           false);
     } else {
@@ -537,10 +540,28 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   /**
    * This is only package protected for tests.
    */
-  SerializationAdapter getSerializationAdapter() throws IOException {
+  SerializationAdapter getSerializationAdapter() {
     // XXX: This lazy initialization comes from how the sleepycat stuff is glued together in the server.
-    if (serializationAdapter == null) serializationAdapter = saf.newAdapter(this.classCatalog);
-    return serializationAdapter;
+    if (threadlocalAdapter == null) {
+      synchronized (this) {
+        initializethreadlocalAdapter();
+      }
+    }
+    return threadlocalAdapter.get();
+    // if (serializationAdapter == null) serializationAdapter = saf.newAdapter(this.classCatalog);
+    // return serializationAdapter;
+  }
+
+  private void initializethreadlocalAdapter() {
+    threadlocalAdapter = new ThreadLocal<SerializationAdapter>() {
+      protected SerializationAdapter initialValue() {
+        try {
+          return saf.newAdapter(classCatalog);
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    };
   }
 
   /*********************************************************************************************************************

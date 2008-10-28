@@ -32,7 +32,6 @@ import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.sequence.MutableSequence;
 
 import java.io.File;
-import java.io.IOException;
 
 public class SleepycatPersistor implements Persistor {
   private static final int                     DEFAULT_CAPACITY = 50000;
@@ -273,7 +272,7 @@ public class SleepycatPersistor implements Persistor {
   /**
    * This is only exposed for tests.
    */
-  public SerializationAdapter getSerializationAdapter() throws IOException {
+  public SerializationAdapter getSerializationAdapter() {
     return this.managedObjectPersistor.getSerializationAdapter();
   }
 
