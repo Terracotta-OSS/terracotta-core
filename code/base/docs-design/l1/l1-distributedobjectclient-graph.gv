@@ -1,0 +1,41 @@
+/*
+ * This graph describes the important objects connected to DistributedObjectClient,
+ * in terms of cardinality and lifecycle. It is not exhaustive.
+ */
+digraph g {
+graph [
+ center = true
+ rankdir = LR
+];
+
+node [
+ style = filled
+ color = lightblue2
+ shape = rectangle
+ fontname = Arial
+ fontsize = 10
+];
+
+edge [
+];
+
+/* ============== SINGLETON CLASSES ================== */
+node [ color = lightblue2 shape = rectangle ];
+DistributedObjectClient [label = "com.tc.object.\nDistributedObjectClient"]
+ClientObjectManager [label = "com.tc.object.\nClientObjectManager"]
+ClientLockManager [label = "com.tc.object.lockmanager.api.\nClientLockManager"]
+ClientTransactionManager [label = "com.tc.object.tx.\nClientTransactionManager"]
+CommunicationsManager [label = "com.tc.net.protocol.tcm.\nCommunicationsManager"]
+DSOClientConfigHelper [label = "com.tc.object.config.\nDSOClientConfigHelper"]
+ClassProvider [label = "com.tc.object.loaders.\nClassProvider"]
+CacheManager [label = "com.tc.object.cache.\nCacheManager"]
+
+/* ============== CARDINALITIES ====================== */
+edge [arrowtail = diamond]
+DistributedObjectClient -> ClientObjectManager
+DistributedObjectClient -> ClientLockManager
+DistributedObjectClient -> ClientTransactionManager
+DistributedObjectClient -> CommunicationsManager
+DistributedObjectClient -> DSOClientConfigHelper
+DistributedObjectClient -> ClassProvider
+DistributedObjectClient -> CacheManager
