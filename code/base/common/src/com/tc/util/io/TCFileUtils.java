@@ -15,6 +15,58 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class TCFileUtils {
+  
+  /**
+   * Callback interface for ensureWritableDir(), so that the calling code can report problems to the user.
+   */
+  public interface EnsureWritableDirReporter {
+    /** 
+     * called if directory exists but is read-only
+     * @param dir the directory that was being checked (will be non-null)
+     * @param e an exception encountered during verification, or null if none was encountered.
+     */
+    void reportReadOnly(File dir, Exception e);
+    /** 
+     * called if directory does not exist and could not be created, or exists but
+     * is not a directory (e.g., an ordinary file).
+     * @param dir the directory that was being checked (will be non-null)
+     * @param e an exception encountered during dir creation, or null if none was encountered.
+     */
+    void reportFailedCreate(File dir, Exception e);
+  }
+  
+  /**
+   * Ensure that a directory exists and is writable. If it does not exist, try to create it.
+   * @param dir must be non-null
+   * @param reporter will be called if a problem is encountered. May be null if reporting
+   * is not desired
+   * @return true if the directory exists and is writable on return.
+   */
+  public static boolean ensureWritableDir(File dir, EnsureWritableDirReporter reporter) {
+    try {
+      if (!dir.exists()) {
+        dir.mkdirs();
+      }
+      // verify that dir exists and is a directory
+      if (!dir.isDirectory()) {
+        reporter.reportFailedCreate(dir, null);
+        return false;
+      }
+      // check write permissions
+      if (!dir.canWrite()) {
+        reporter.reportReadOnly(dir, null);
+        return false;
+      }
+    } catch (NullPointerException npe) {
+      // rethrow NPE - nulls are a programming error, shouldn't happen
+      throw npe;
+    } catch (Exception e) {
+      reporter.reportFailedCreate(dir, e);
+      return false;
+    }
+    return true;
+
+  }
 
   /**
    * Given a resource path, returns the File object of that resource

@@ -22,6 +22,7 @@ import com.tc.statistics.logging.impl.StatisticsLoggerImpl;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.statistics.retrieval.actions.SRAMemoryUsage;
 import com.tc.statistics.retrieval.impl.StatisticsRetrievalRegistryImpl;
+import com.tc.util.io.TCFileUtils;
 
 import java.io.File;
 
@@ -56,7 +57,7 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
     if (null == statisticsBuffer) throw new AssertionError("The statistics subsystem has to be setup before.");
     statisticsBuffer.setDefaultAgentDifferentiator(defaultAgentDifferentiator);
   }
-
+  
   public synchronized boolean setup(final NewStatisticsConfig config) {
     StatisticsConfig statistics_config = new StatisticsConfigImpl();
 
@@ -67,17 +68,34 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
 
     // create the statistics buffer
     File stat_path = config.statisticsPath().getFile();
-    try {
-      stat_path.mkdirs();
-    } catch (Exception e) {
-      // TODO: needs to be properly written and put in a properties file
-      String msg =
-        "\n**************************************************************************************\n"
-        + "Unable to create the directory '" + stat_path.getAbsolutePath() + "' for the statistics buffer.\n"
-        + "The CVT system will not be active for this node.\n"
-        + "**************************************************************************************\n";
-      CONSOLE_LOGGER.warn(msg);
-      DSO_LOGGER.warn(msg, e);
+    if (!TCFileUtils.ensureWritableDir(stat_path, 
+                                       new TCFileUtils.EnsureWritableDirReporter() {
+
+      public void reportFailedCreate(File dir, Exception e) {
+        // TODO: needs to be properly written and put in a properties file
+        String msg =
+          "\n**************************************************************************************\n"
+          + "Unable to create the directory '" + dir.getAbsolutePath() + "' for the statistics buffer.\n"
+          + "The CVT system will not be active for this node. To fix this, ensure that the Terracotta\n"
+          + "client has read and write privileges to this directory and its parent directories.\n"
+          + "**************************************************************************************\n";
+        CONSOLE_LOGGER.warn(msg);
+        DSO_LOGGER.warn(msg, e);
+     }
+
+      public void reportReadOnly(File dir, Exception e) {
+        // TODO: needs to be properly written and put in a properties file
+        String msg =
+          "\n**************************************************************************************\n"
+          + "Unable to write to the directory '" + dir.getAbsolutePath() + "' for the statistics buffer.\n"
+          + "The CVT system will not be active for this node. To fix this, ensure that the Terracotta\n"
+          + "client has write privileges in this directory.\n"
+          + "**************************************************************************************\n";
+        CONSOLE_LOGGER.warn(msg);
+        DSO_LOGGER.warn(msg, e);
+      }
+      
+    })) {
       return false;
     }
     try {

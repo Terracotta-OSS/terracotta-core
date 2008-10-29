@@ -116,7 +116,9 @@ public class TCServerImpl extends SEDA implements TCServer {
     this.configurationSetupManager = manager;
 
     statisticsGathererSubSystem = new StatisticsGathererSubSystem();
-    statisticsGathererSubSystem.setup(manager.commonl2Config());
+    if (!statisticsGathererSubSystem.setup(manager.commonl2Config())) {
+      System.exit(1);
+    }
   }
 
   public L2Info[] infoForAllL2s() {

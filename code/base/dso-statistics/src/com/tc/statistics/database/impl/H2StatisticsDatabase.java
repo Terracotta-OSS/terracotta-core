@@ -23,6 +23,9 @@ public class H2StatisticsDatabase extends AbstractStatisticsDatabase {
   private final File dbDir;
   private final String urlSuffix;
 
+  /**
+   * @param dbDir must already exist and be writable.
+   */
   public H2StatisticsDatabase(final File dbDir, final String urlSuffix) {
     if (null == dbDir) Assert.fail("dbDir can't be null");
     if (!dbDir.exists()) Assert.fail("dbDir '" + dbDir.getAbsolutePath() + "' doesn't exist");

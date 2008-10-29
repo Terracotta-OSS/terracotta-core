@@ -12,6 +12,7 @@ import com.tc.statistics.gatherer.impl.StatisticsGathererImpl;
 import com.tc.statistics.store.StatisticsStore;
 import com.tc.statistics.store.exceptions.StatisticsStoreException;
 import com.tc.statistics.store.h2.H2StatisticsStoreImpl;
+import com.tc.util.io.TCFileUtils;
 
 import java.io.File;
 
@@ -31,17 +32,34 @@ public class StatisticsGathererSubSystem {
   public synchronized boolean setup(final NewStatisticsConfig config) {
     // create the statistics store
     File stat_path = config.statisticsPath().getFile();
-    try {
-      stat_path.mkdirs();
-    } catch (Exception e) {
-      // TODO: needs to be properly written and put in a properties file
-      String msg =
-        "\n**************************************************************************************\n"
-        + "Unable to create the directory '" + stat_path.getAbsolutePath() + "' for the statistics store.\n"
-        + "The CVT gathering system will not be active on this node.\n"
-        + "**************************************************************************************\n";
-      CONSOLE_LOGGER.error(msg);
-      DSO_LOGGER.error(msg, e);
+    if (!TCFileUtils.ensureWritableDir(stat_path, 
+                                       new TCFileUtils.EnsureWritableDirReporter() {
+
+      public void reportFailedCreate(File dir, Exception e) {
+        // TODO: needs to be properly written and put in a properties file
+        String msg =
+          "\n**************************************************************************************\n"
+          + "Unable to create the directory '" + dir.getAbsolutePath() + "' for the statistics buffer.\n"
+          + "This directory is specified in the Terracotta configuration. Please ensure that the\n"
+          + "Terracotta client has read and write privileges to this directory and its parent directories.\n"
+          + "**************************************************************************************\n";
+        CONSOLE_LOGGER.error(msg);
+        DSO_LOGGER.error(msg, e);
+     }
+
+      public void reportReadOnly(File dir, Exception e) {
+        // TODO: needs to be properly written and put in a properties file
+        String msg =
+          "\n**************************************************************************************\n"
+          + "Unable to write to the directory '" + dir.getAbsolutePath() + "' for the statistics buffer.\n"
+          + "This directory is specified in the Terracotta configuration. Please ensure that the\n"
+          + "Terracotta client has write privileges in this directory.\n"
+          + "**************************************************************************************\n";
+        CONSOLE_LOGGER.error(msg);
+        DSO_LOGGER.error(msg, e);
+      }
+      
+    })) {
       return false;
     }
     try {
