@@ -23,6 +23,7 @@ import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Random;
 
@@ -42,14 +43,17 @@ public class SRAL2FaultsFromDiskTest extends TCTestCase {
     final CounterManager counterManager = new CounterManagerImpl();
     final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 10, true, 0L);
     final SampledCounter faultsFromDisk = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
+    final SampledCounter time2FaultCounter = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
+    final SampledCounter time2AddCounter = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
 
-    dsoGlobalServerStats = new DSOGlobalServerStatsImpl(null, null, null, null, null, null, faultsFromDisk);
+    dsoGlobalServerStats = new DSOGlobalServerStatsImpl(null, null, null, null, null, null, faultsFromDisk,
+                                                        time2FaultCounter, time2AddCounter);
 
-    this.managedObjectFaultHandler = new ManagedObjectFaultHandler(faultsFromDisk);
+    this.managedObjectFaultHandler = new ManagedObjectFaultHandler(faultsFromDisk, time2FaultCounter, time2AddCounter);
     final TestServerConfigurationContext serverConfigContext = new TestServerConfigurationContext();
     serverConfigContext.objectManager = new TestObjectManager() {
       public void addFaultedObject(final ObjectID oid, final ManagedObject mo, final boolean removeOnRelease) {
-        //
+        ThreadUtil.reallySleep(100);
       }
     };
     serverConfigContext.objectStore = new TestManagedObjectStore();
@@ -70,14 +74,17 @@ public class SRAL2FaultsFromDiskTest extends TCTestCase {
       System.out.println("Simulating object fault from disk...");
       managedObjectFaultHandler.handleEvent(context);
       StatisticData[] data = faultsFromDisk.retrieveStatisticData();
-      Assert.assertEquals(1, data.length);
-      assertData(data[0]);
+      Assert.assertEquals(3, data.length);
+      assertData(data[0], SRAL2FaultsFromDisk.ELEMENT_NAME_FAULT_COUNT);
+      assertData(data[1], SRAL2FaultsFromDisk.ELEMENT_NAME_TIME_2_FAULT_FROM_DISK);
+      assertData(data[2], SRAL2FaultsFromDisk.ELEMENT_NAME_TIME_2_ADD_2_OBJ_MGR);
       Thread.sleep(100);
     }
   }
 
-  private void assertData(final StatisticData statisticData) {
+  private void assertData(final StatisticData statisticData, String element) {
     Assert.assertEquals(SRAL2FaultsFromDisk.ACTION_NAME, statisticData.getName());
+    Assert.assertEquals(element, statisticData.getElement());
     Assert.assertNull(statisticData.getAgentIp());
     Assert.assertNull(statisticData.getAgentDifferentiator());
     Long count = (Long) statisticData.getData();

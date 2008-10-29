@@ -587,15 +587,21 @@ public class DistributedObjectServer implements TCDumper, ChannelManagerEventLis
     ObjectManagerStatsImpl objMgrStats = new ObjectManagerStatsImpl(objectCreationRate, objectFaultRate);
     SampledCounter l2FaultFromDisk = (SampledCounter) sampledCounterManager
         .createCounter(new SampledCounterConfig(1, 300, true, 0L));
+    SampledCounter time2FaultFromDisk = (SampledCounter) sampledCounterManager
+        .createCounter(new SampledCounterConfig(1, 300, true, 0L));
+    SampledCounter time2Add2ObjMgr = (SampledCounter) sampledCounterManager
+        .createCounter(new SampledCounterConfig(1, 300, true, 0L));
 
     SequenceValidator sequenceValidator = new SequenceValidator(0);
     // Server initiated request processing queues shouldn't have any max queue size.
     Stage faultManagedObjectStage = stageManager.createStage(ServerConfigurationContext.MANAGED_OBJECT_FAULT_STAGE,
-                                                             new ManagedObjectFaultHandler(l2FaultFromDisk), l2Properties
-                                                                 .getInt("seda.faultstage.threads"), -1);
+                                                             new ManagedObjectFaultHandler(l2FaultFromDisk,
+                                                                                           time2FaultFromDisk,
+                                                                                           time2Add2ObjMgr),
+                                                             l2Properties.getInt("seda.faultstage.threads"), -1);
     Stage flushManagedObjectStage = stageManager.createStage(ServerConfigurationContext.MANAGED_OBJECT_FLUSH_STAGE,
-                                                             new ManagedObjectFlushHandler(), (persistent ? 1 : l2Properties
-                                                                 .getInt("seda.flushstage.threads")), -1);
+                                                             new ManagedObjectFlushHandler(), (persistent ? 1
+                                                                 : l2Properties.getInt("seda.flushstage.threads")), -1);
     TCProperties youngDGCProperties = objManagerProperties.getPropertiesFor("dgc").getPropertiesFor("young");
     boolean enableYoungGenDGC = youngDGCProperties.getBoolean("enabled");
     long youngGenDGCFrequency = youngDGCProperties.getLong("frequencyInMillis");
@@ -682,7 +688,8 @@ public class DistributedObjectServer implements TCDumper, ChannelManagerEventLis
 
     DSOGlobalServerStats serverStats = new DSOGlobalServerStatsImpl(globalObjectFlushCounter, globalObjectFaultCounter,
                                                                     globalTxnCounter, objMgrStats, broadcastCounter,
-                                                                    changeCounter, l2FaultFromDisk);
+                                                                    changeCounter, l2FaultFromDisk, time2FaultFromDisk,
+                                                                    time2Add2ObjMgr);
 
     final TransactionStore transactionStore = new TransactionStoreImpl(transactionPersistor,
                                                                        globalTransactionIDSequence);

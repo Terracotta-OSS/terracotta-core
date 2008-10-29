@@ -27,7 +27,8 @@ public class SRAL2TransactionCountTest extends TestCase {
     final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 10, true, 0L);
     final SampledCounter transactionCounter = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
 
-    dsoGlobalServerStats = new DSOGlobalServerStatsImpl(null, null, transactionCounter, null, null, null, null);
+    dsoGlobalServerStats = new DSOGlobalServerStatsImpl(null, null, transactionCounter, null, null, null, null, null,
+                                                        null);
 
     counterIncrementer = new CounterIncrementer(transactionCounter, 200);
     new Thread(counterIncrementer, "Counter Incrementer").start();

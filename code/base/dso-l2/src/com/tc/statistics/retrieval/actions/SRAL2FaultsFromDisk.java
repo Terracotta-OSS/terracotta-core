@@ -26,24 +26,33 @@ import com.tc.stats.counter.sampled.TimeStampedCounterValue;
  */
 public class SRAL2FaultsFromDisk implements StatisticRetrievalAction {
 
-  public final static String    ACTION_NAME              = "l2 faults from disk";
-  private static final String   ELEMENT_NAME_FAULT_COUNT = "fault count";
-  private static final boolean  LOG_ANABLED              = TCPropertiesImpl
-                                                             .getProperties()
-                                                             .getBoolean(
-                                                                         TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED,
-                                                                         false);
+  public static final String    ACTION_NAME                         = "l2 faults from disk";
+  public static final String    ELEMENT_NAME_FAULT_COUNT            = "fault count";
+  public static final String    ELEMENT_NAME_TIME_2_FAULT_FROM_DISK = "time taken to fault from disk";
+  public static final String    ELEMENT_NAME_TIME_2_ADD_2_OBJ_MGR   = "time taken to add to Object Manager";
 
-  private static final TCLogger logger                   = TCLogging.getLogger(SRAL2FaultsFromDisk.class);
+  private static final boolean  LOG_ANABLED                         = TCPropertiesImpl
+                                                                        .getProperties()
+                                                                        .getBoolean(
+                                                                                    TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED,
+                                                                                    false);
+
+  private static final TCLogger logger                              = TCLogging.getLogger(SRAL2FaultsFromDisk.class);
   private final SampledCounter  faultCounter;
+  private final SampledCounter  time2FaultFromDisk;
+  private final SampledCounter  time2Add2ObjectMgr;
 
   public SRAL2FaultsFromDisk(final DSOGlobalServerStats serverStats) {
     if (!LOG_ANABLED) {
       this.faultCounter = null;
+      this.time2FaultFromDisk = null;
+      this.time2Add2ObjectMgr = null;
       logger.info("\"" + ACTION_NAME + "\" statistic is not enabled. Please enable the property \""
                   + TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED + "\"" + " to collect this statistic.");
     } else {
       faultCounter = serverStats.getL2FaultFromDiskCounter();
+      time2FaultFromDisk = serverStats.getTime2FaultFromDisk();
+      time2Add2ObjectMgr = serverStats.getTime2Add2ObjectMgr();
     }
   }
 
@@ -57,7 +66,12 @@ public class SRAL2FaultsFromDisk implements StatisticRetrievalAction {
 
   public StatisticData[] retrieveStatisticData() {
     if (faultCounter == null) return EMPTY_STATISTIC_DATA;
-    TimeStampedCounterValue value = faultCounter.getMostRecentSample();
-    return new StatisticData[] { new StatisticData(ACTION_NAME, ELEMENT_NAME_FAULT_COUNT, value.getCounterValue()) };
+    TimeStampedCounterValue faultCount = faultCounter.getMostRecentSample();
+    TimeStampedCounterValue time2Fault = time2FaultFromDisk.getMostRecentSample();
+    TimeStampedCounterValue time2Add = time2Add2ObjectMgr.getMostRecentSample();
+    return new StatisticData[] {
+        new StatisticData(ACTION_NAME, ELEMENT_NAME_FAULT_COUNT, faultCount.getCounterValue()),
+        new StatisticData(ACTION_NAME, ELEMENT_NAME_TIME_2_FAULT_FROM_DISK, time2Fault.getCounterValue()),
+        new StatisticData(ACTION_NAME, ELEMENT_NAME_TIME_2_ADD_2_OBJ_MGR, time2Add.getCounterValue()) };
   }
 }

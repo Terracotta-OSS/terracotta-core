@@ -31,29 +31,39 @@ public class ManagedObjectFaultHandler extends AbstractEventHandler {
 
   private ObjectManager         objectManager;
   private ManagedObjectStore    objectStore;
-  //TODO::Remove this counter, its not needed if you remove the logging @see below
+  // TODO::Remove this counter, its not needed if you remove the logging @see below
   private final AtomicLong      faultsCounter;
   private final SampledCounter  faultFromDisk;
+  private final SampledCounter  time2FaultFromDisk;
+  private final SampledCounter  time2Add2ObjMgr;
 
-  public ManagedObjectFaultHandler(SampledCounter faultFromDisk) {
+  public ManagedObjectFaultHandler(SampledCounter faultFromDisk, SampledCounter time2FaultFromDisk,
+                                   SampledCounter time2Add2ObjMgr) {
     this.faultFromDisk = faultFromDisk;
-    faultsCounter = new AtomicLong();
+    this.time2FaultFromDisk = time2FaultFromDisk;
+    this.time2Add2ObjMgr = time2Add2ObjMgr;
+    this.faultsCounter = new AtomicLong();
   }
 
   public void handleEvent(EventContext context) {
+    ManagedObjectFaultingContext mfc = (ManagedObjectFaultingContext) context;
+    ObjectID oid = mfc.getId();
+    long t0 = System.nanoTime();
+    ManagedObject mo = objectStore.getObjectByID(oid);
+    long t1 = System.nanoTime();
+    objectManager.addFaultedObject(oid, mo, mfc.isRemoveOnRelease());
+    long t2 = System.nanoTime();
     if (LOG_OBJECT_FAULT) {
       // TODO:: Now that this is promoted into an SRA, this should be on all the time. Once SampledCounter is updated to
       // use CAS change this to always sample faults and deprecate the TC property
-      incrementAndLog();
+      logStats(t1 - t0, t2 - t1);
     }
-    ManagedObjectFaultingContext mfc = (ManagedObjectFaultingContext) context;
-    ObjectID oid = mfc.getId();
-    ManagedObject mo = objectStore.getObjectByID(oid);
-    objectManager.addFaultedObject(oid, mo, mfc.isRemoveOnRelease());
   }
 
-  private void incrementAndLog() {
+  private void logStats(long time2Fault, long time2Add) {
     faultFromDisk.increment();
+    time2FaultFromDisk.increment(time2Fault);
+    time2Add2ObjMgr.increment(time2Add);
     long count = faultsCounter.incrementAndGet();
     if (count % 1000 == 0) {
       logger.info("Number of Objects faulted from disk = " + count);

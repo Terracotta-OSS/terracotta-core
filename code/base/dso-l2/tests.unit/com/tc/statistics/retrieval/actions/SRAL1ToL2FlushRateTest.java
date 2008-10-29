@@ -26,7 +26,8 @@ public class SRAL1ToL2FlushRateTest extends TestCase {
     final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 10, true, 0L);
     final SampledCounter l1Tol2FlushCounter = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
 
-    dsoGlobalServerStats = new DSOGlobalServerStatsImpl(l1Tol2FlushCounter, null, null, null, null, null, null);
+    dsoGlobalServerStats = new DSOGlobalServerStatsImpl(l1Tol2FlushCounter, null, null, null, null, null, null, null,
+                                                        null);
 
     counterIncrementer = new CounterIncrementer(l1Tol2FlushCounter, 200);
     new Thread(counterIncrementer, "Counter Incrementer").start();
