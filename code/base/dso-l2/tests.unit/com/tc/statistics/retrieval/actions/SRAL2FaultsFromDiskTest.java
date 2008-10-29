@@ -76,8 +76,8 @@ public class SRAL2FaultsFromDiskTest extends TCTestCase {
       StatisticData[] data = faultsFromDisk.retrieveStatisticData();
       Assert.assertEquals(3, data.length);
       assertData(data[0], SRAL2FaultsFromDisk.ELEMENT_NAME_FAULT_COUNT);
-      assertData(data[1], SRAL2FaultsFromDisk.ELEMENT_NAME_TIME_2_FAULT_FROM_DISK);
-      assertData(data[2], SRAL2FaultsFromDisk.ELEMENT_NAME_TIME_2_ADD_2_OBJ_MGR);
+      assertData(data[1], SRAL2FaultsFromDisk.ELEMENT_NAME_AVG_TIME_2_FAULT_FROM_DISK);
+      assertData(data[2], SRAL2FaultsFromDisk.ELEMENT_NAME_AVG_TIME_2_ADD_2_OBJ_MGR);
       Thread.sleep(100);
     }
   }

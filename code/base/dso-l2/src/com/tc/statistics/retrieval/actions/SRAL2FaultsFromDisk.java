@@ -13,7 +13,6 @@ import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
 import com.tc.stats.counter.sampled.SampledCounter;
-import com.tc.stats.counter.sampled.TimeStampedCounterValue;
 
 /**
  * This statistic gives the fault rate of objects faulted from disk to L2. <p/> The {@link StatisticData} contains the
@@ -26,18 +25,19 @@ import com.tc.stats.counter.sampled.TimeStampedCounterValue;
  */
 public class SRAL2FaultsFromDisk implements StatisticRetrievalAction {
 
-  public static final String    ACTION_NAME                         = "l2 faults from disk";
-  public static final String    ELEMENT_NAME_FAULT_COUNT            = "fault count";
-  public static final String    ELEMENT_NAME_TIME_2_FAULT_FROM_DISK = "time taken to fault from disk";
-  public static final String    ELEMENT_NAME_TIME_2_ADD_2_OBJ_MGR   = "time taken to add to Object Manager";
+  public static final String    ACTION_NAME                             = "l2 faults from disk";
+  public static final String    ELEMENT_NAME_FAULT_COUNT                = "fault count";
+  public static final String    ELEMENT_NAME_AVG_TIME_2_FAULT_FROM_DISK = "avg time to fault from disk";
+  public static final String    ELEMENT_NAME_AVG_TIME_2_ADD_2_OBJ_MGR   = "avg time to add to Object Manager";
 
-  private static final boolean  LOG_ANABLED                         = TCPropertiesImpl
-                                                                        .getProperties()
-                                                                        .getBoolean(
-                                                                                    TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED,
-                                                                                    false);
+  private static final boolean  LOG_ANABLED                             = TCPropertiesImpl
+                                                                            .getProperties()
+                                                                            .getBoolean(
+                                                                                        TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED,
+                                                                                        false);
 
-  private static final TCLogger logger                              = TCLogging.getLogger(SRAL2FaultsFromDisk.class);
+  private static final TCLogger logger                                  = TCLogging
+                                                                            .getLogger(SRAL2FaultsFromDisk.class);
   private final SampledCounter  faultCounter;
   private final SampledCounter  time2FaultFromDisk;
   private final SampledCounter  time2Add2ObjectMgr;
@@ -66,12 +66,15 @@ public class SRAL2FaultsFromDisk implements StatisticRetrievalAction {
 
   public StatisticData[] retrieveStatisticData() {
     if (faultCounter == null) return EMPTY_STATISTIC_DATA;
-    TimeStampedCounterValue faultCount = faultCounter.getMostRecentSample();
-    TimeStampedCounterValue time2Fault = time2FaultFromDisk.getMostRecentSample();
-    TimeStampedCounterValue time2Add = time2Add2ObjectMgr.getMostRecentSample();
+    long faultCount = faultCounter.getMostRecentSample().getCounterValue();
+    long time2Fault = time2FaultFromDisk.getMostRecentSample().getCounterValue();
+    long time2Add = time2Add2ObjectMgr.getMostRecentSample().getCounterValue();
     return new StatisticData[] {
-        new StatisticData(ACTION_NAME, ELEMENT_NAME_FAULT_COUNT, faultCount.getCounterValue()),
-        new StatisticData(ACTION_NAME, ELEMENT_NAME_TIME_2_FAULT_FROM_DISK, time2Fault.getCounterValue()),
-        new StatisticData(ACTION_NAME, ELEMENT_NAME_TIME_2_ADD_2_OBJ_MGR, time2Add.getCounterValue()) };
+        new StatisticData(ACTION_NAME, ELEMENT_NAME_FAULT_COUNT, faultCount),
+        new StatisticData(ACTION_NAME, ELEMENT_NAME_AVG_TIME_2_FAULT_FROM_DISK, (faultCount == 0 ? 0 : time2Fault
+                                                                                                       / faultCount)),
+        new StatisticData(ACTION_NAME, ELEMENT_NAME_AVG_TIME_2_ADD_2_OBJ_MGR, (faultCount == 0 ? 0 : time2Add
+                                                                                                     / faultCount)) };
+
   }
 }
