@@ -12,7 +12,6 @@ import com.tc.management.beans.logging.InstrumentationLoggingMBean;
 import com.tc.management.beans.logging.RuntimeLoggingMBean;
 import com.tc.management.beans.logging.RuntimeOutputOptionsMBean;
 import com.tc.stats.DSOClientMBean;
-import com.tc.stats.statistics.Statistic;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -163,7 +162,7 @@ public class DSOClient implements NotificationListener {
     return getRemoteAddress();
   }
 
-  public Statistic[] getStatistics(String[] names) {
+  public Number[] getStatistics(String[] names) {
     return delegate.getStatistics(names);
   }
 

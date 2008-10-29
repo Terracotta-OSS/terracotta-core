@@ -12,7 +12,7 @@ public class AdminClientBundle extends ListResourceBundle {
     super();
     setParent(ResourceBundle.getBundle("com.tc.admin.common.CommonBundle"));
   }
-  
+
   public Object[][] getContents() {
     return new Object[][] {
         { "console.guide.url", "http://www.terracotta.org/kit/reflector?kitID={0}&pageID=ConsoleGuide" },
@@ -33,8 +33,7 @@ public class AdminClientBundle extends ListResourceBundle {
             "<html>There is an active statistic recording session<br>and lock profiling is currently enabled.  {0}</html>" },
         { "sessions", "Sessions" },
         { "title", "Terracotta Administrator Console" },
-        { "new.server.action.label", "New server" },
-        { "new.cluster.action.label", "New cluster" },
+        { "new.cluster.action.label", "New Cluster" },
         { "quit.action.label", "Quit" },
         { "connect.title", "Connect to JMX Server" },
         { "connecting.to", "Connecting to {0} ..." },
@@ -59,12 +58,16 @@ public class AdminClientBundle extends ListResourceBundle {
         { "server.disconnected.label", "Disconnected on {0}" },
         {
             "server.non-restartable.warning",
-            "<html>This server is configured for <code>temporary-swap-only</code> persistence mode and so will not "
-                + "allow clients to reconnect upon restart.  To allow for client reconnect upon restart, change the "
-                + "server's configured persistence mode to <code>permanent-store</code> and restart:</html>" },
+            "<html>This Terracotta server array is configured for <code>temporary-swap-only</code> persistence "
+                + "mode. In the event that all Terracotta servers in the array are taken down, all clustered data "
+                + "will be lost and no existing clients will be allowed to rejoin the cluster. To ensure that in "
+                + "the event of a full cluster restart data is preserved and clients may rejoin the cluster, change "
+                + "the configured persistence mode to <code>permanent-store</code> and restart:</html>" },
         { "dso", "DSO" },
-        { "dso.roots", "Cluster object browser" },
-        { "dso.client.roots", "Client object browser" },
+        { "dso.roots", "Cluster objects" },
+        { "dso.roots.suffix.singular", "root" },
+        { "dso.roots.suffix.plural", "roots" },
+        { "dso.client.roots", "Client objects" },
         { "dso.locks", "Lock profiler" },
         { "dso.locks.profiling.suffix", " (on)" },
         {
@@ -141,7 +144,7 @@ public class AdminClientBundle extends ListResourceBundle {
         { "help.menu.label", "Help" },
         { "help.item.label", "AdminConsole Help..." },
         { "about.action.label", "About Terracotta Console" },
-        { "update-checker.control.label", "Check for updates" },
+        { "update-checker.control.label", "Check For Updates" },
         { "update-checker.action.label", "Update Checker..." },
         { "update-checker.connect.failed.msg", "Unable to connect to update site." },
         { "update-checker.current.msg", "Your software is up-to-date." },
@@ -156,11 +159,21 @@ public class AdminClientBundle extends ListResourceBundle {
             "<html><h3>Version mismatch for {0}.</h3><br>"
                 + "<table border=0 cellspacing=1><tr><td align=right><b>Terracotta Server instance Version:</b></td><td>{1}"
                 + "</tr><tr><td align=right><b>AdminConsole Version:</b</td><td>{2}"
-                + "</td></tr></table><h3>Continue?</h3></html>" }, { "cpu.usage", "Host CPU" },
-        { "object.flush.rate", "Object Flush Rate" }, { "object.fault.rate", "Object Fault Rate" },
-        { "transaction.rate", "Transaction Rate" }, { "cache.miss.rate", "Cache Miss Rate" },
-        { "heap.usage", "Heap Usage" }, { "heap.usage.max", "memory max" }, { "heap.usage.used", "memory used" },
+                + "</td></tr></table><h3>Continue?</h3></html>" },
+        { "cpu.usage", "Host CPU" },
+        { "object.flush.rate", "Object Flush Rate" },
+        { "object.fault.rate", "Object Fault Rate" },
+        { "transaction.rate", "Transaction Rate" },
+        { "cache.miss.rate", "Cache Miss Rate" },
+        { "heap.usage", "Heap Usage" },
+        { "heap.usage.max", "memory max" },
+        { "heap.usage.used", "memory used" },
         { "pending.transactions", "Unacknowledged Transaction Broadcasts" },
-        { "resident.object.message", "<html><span style='color:#C0C0C0'>Greyed-out</span> items not resident in this client" } };
+        { "resident.object.message",
+            "<html><span style='color:#C0C0C0'>Greyed-out</span> items not resident in this client" },
+        { "thread.dump.timeout.msg", "Timed-out after {0} seconds." }, { "roots.inspect.show", "Show..." },
+        { "thread.dump.export.as.text", "Export As Text..." },
+        { "export.all.thread.dumps.dialog.title", "Export All Thread Dumps"},
+        { "export.thread.dump.as.text.dialog.title", "Export Thread Dump As Text"} };
   }
 }

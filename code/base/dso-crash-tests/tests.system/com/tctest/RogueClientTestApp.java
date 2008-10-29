@@ -255,7 +255,7 @@ public class RogueClientTestApp extends AbstractTransparentApp {
       while (true) {
         ThreadUtil.reallySleep(500);
         for (int i = 0; i < participantCount; i++) {
-          int pendingTransactions = (int) clients[i].getPendingTransactionsCount().getCount();
+          int pendingTransactions = (int) clients[i].getPendingTransactionsCount();
           System.out.println("Client " + i + " Pend Tx Cnt: " + pendingTransactions);
           totalNoOfPendingTransactionsForClient[i] = totalNoOfPendingTransactionsForClient[i] + pendingTransactions;
         }

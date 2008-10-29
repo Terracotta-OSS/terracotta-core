@@ -22,6 +22,7 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
+import java.util.concurrent.Future;
 import java.util.prefs.Preferences;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -49,8 +50,8 @@ public abstract class AbstractThreadDumpsPanel extends XContainer {
   private DeleteAllAction      m_deleteAllAction;
   private ExportAsTextAction   m_exportAsTextAction;
 
-  private static final String DELETE_ITEM_CMD = "DeleteItemCmd";
-  
+  private static final String  DELETE_ITEM_CMD = "DeleteItemCmd";
+
   public AbstractThreadDumpsPanel() {
     super();
 
@@ -80,7 +81,7 @@ public abstract class AbstractThreadDumpsPanel extends XContainer {
     m_exportButton.addActionListener(new ExportAsArchiveHandler());
 
     ((SearchPanel) findComponent("SearchPanel")).setTextComponent(m_threadDumpTextArea);
-    
+
     m_threadDumpList.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), DELETE_ITEM_CMD);
     m_threadDumpList.getActionMap().put(DELETE_ITEM_CMD, m_deleteAction);
   }
@@ -95,7 +96,7 @@ public abstract class AbstractThreadDumpsPanel extends XContainer {
 
   private class DeleteAction extends XAbstractAction {
     private DeleteAction() {
-      super("Delete");
+      super(m_acc.getString("delete"));
       setEnabled(false);
     }
 
@@ -108,7 +109,7 @@ public abstract class AbstractThreadDumpsPanel extends XContainer {
 
   private class DeleteAllAction extends XAbstractAction {
     private DeleteAllAction() {
-      super("Delete All");
+      super(m_acc.getString("delete.all"));
       setEnabled(false);
     }
 
@@ -120,7 +121,7 @@ public abstract class AbstractThreadDumpsPanel extends XContainer {
 
   private class ExportAsTextAction extends XAbstractAction {
     private ExportAsTextAction() {
-      super("Export as text...");
+      super(m_acc.getString("thread.dump.export.as.text"));
       setEnabled(false);
     }
 
@@ -135,19 +136,41 @@ public abstract class AbstractThreadDumpsPanel extends XContainer {
 
   protected abstract String getNodeName();
 
-  protected abstract String getThreadDumpText() throws Exception;
+  protected abstract Future<String> getThreadDumpText() throws Exception;
 
   protected Preferences getPreferences() {
     return m_acc.getPrefs().node(getClass().getName());
   }
 
   private ThreadDumpEntry createThreadDumpEntry() throws Exception {
-    return new ThreadDumpEntry(getThreadDumpText());
+    return new TDE(getThreadDumpText());
+  }
+
+  private class TDE extends ThreadDumpEntry {
+    TDE(Future<String> threadDumpFuture) {
+      super(threadDumpFuture);
+    }
+
+    public void run() {
+      super.run();
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          int row = m_threadDumpListModel.indexOf(TDE.this);
+          if (m_threadDumpList.isSelectedIndex(row)) {
+            m_threadDumpTextArea.setText(getContent());
+          }
+          m_threadDumpButton.setEnabled(true);
+          m_exportButton.setEnabled(true);
+        }
+      });
+    }
   }
 
   class ThreadDumpButtonHandler implements ActionListener {
     public void actionPerformed(ActionEvent ae) {
       try {
+        m_threadDumpButton.setEnabled(false);
+        m_exportButton.setEnabled(false);
         m_threadDumpListModel.addElement(createThreadDumpEntry());
         m_threadDumpList.setSelectedIndex(m_threadDumpListModel.getSize() - 1);
       } catch (Exception e) {
@@ -164,7 +187,7 @@ public abstract class AbstractThreadDumpsPanel extends XContainer {
       }
       ThreadDumpEntry tde = (ThreadDumpEntry) m_threadDumpList.getSelectedValue();
       if (tde != null) {
-        m_threadDumpTextArea.setText(tde.getThreadDumpText());
+        m_threadDumpTextArea.setText(tde.getContent());
         final Point viewPosition = tde.getViewPosition();
         if (viewPosition != null) {
           SwingUtilities.invokeLater(new Runnable() {
@@ -180,11 +203,11 @@ public abstract class AbstractThreadDumpsPanel extends XContainer {
   }
 
   private void setControlsEnabled(boolean haveSelection) {
-    m_exportButton.setEnabled(haveSelection);
     m_deleteAction.setEnabled(haveSelection);
     m_deleteAllAction.setEnabled(haveSelection);
     m_exportAsTextAction.setEnabled(haveSelection);
     if (!haveSelection) {
+      m_exportButton.setEnabled(haveSelection);
       m_threadDumpTextArea.setText("");
     }
   }
@@ -192,7 +215,7 @@ public abstract class AbstractThreadDumpsPanel extends XContainer {
   private void exportAsArchive() throws Exception {
     FastFileChooser chooser = new FastFileChooser();
     if (m_lastExportDir != null) chooser.setCurrentDirectory(m_lastExportDir);
-    chooser.setDialogTitle("Export thread dumps");
+    chooser.setDialogTitle(m_acc.getString("export.all.thread.dumps.dialog.title"));
     chooser.setMultiSelectionEnabled(false);
     String nodeName = getNodeName().replace(':', '-');
     chooser.setSelectedFile(new File(chooser.getCurrentDirectory(), nodeName + "-thread-dumps.zip"));
@@ -209,7 +232,7 @@ public abstract class AbstractThreadDumpsPanel extends XContainer {
       String filenameBase = dateFormat.format(tde.getTime());
       ZipEntry zipentry = new ZipEntry(filenameBase);
       zipstream.putNextEntry(zipentry);
-      zipstream.write(tde.getThreadDumpText().getBytes("UTF-8"));
+      zipstream.write(tde.getContent().getBytes("UTF-8"));
       zipstream.closeEntry();
     }
     zipstream.close();
@@ -228,7 +251,7 @@ public abstract class AbstractThreadDumpsPanel extends XContainer {
   private void exportAsText() throws Exception {
     FastFileChooser chooser = new FastFileChooser();
     if (m_lastExportDir != null) chooser.setCurrentDirectory(m_lastExportDir);
-    chooser.setDialogTitle("Export thread dump as text");
+    chooser.setDialogTitle(m_acc.getString("export.thread.dump.as.text.dialog.title"));
     chooser.setMultiSelectionEnabled(false);
     String nodeName = getNodeName().replace(':', '-');
     chooser.setSelectedFile(new File(chooser.getCurrentDirectory(), nodeName + "-thread-dump.txt"));
@@ -238,7 +261,7 @@ public abstract class AbstractThreadDumpsPanel extends XContainer {
     m_lastExportDir = file.getParentFile();
     int row = m_threadDumpList.getSelectedIndex();
     ThreadDumpEntry tde = (ThreadDumpEntry) m_threadDumpList.getModel().getElementAt(row);
-    fos.write(tde.getThreadDumpText().getBytes("UTF-8"));
+    fos.write(tde.getContent().getBytes("UTF-8"));
     fos.close();
   }
 
@@ -252,5 +275,9 @@ public abstract class AbstractThreadDumpsPanel extends XContainer {
     m_threadDumpTextArea = null;
     m_threadDumpTextScroller = null;
     m_lastSelectedEntry = null;
+    m_lastExportDir = null;
+    m_deleteAction = null;
+    m_deleteAllAction = null;
+    m_exportAsTextAction = null;
   }
 }

@@ -16,8 +16,6 @@ import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.ExceptionHelper;
 import com.tc.admin.model.IClient;
 import com.tc.statistics.StatisticData;
-import com.tc.stats.statistics.CountStatistic;
-import com.tc.stats.statistics.Statistic;
 
 import java.awt.GridLayout;
 import java.io.IOException;
@@ -256,10 +254,10 @@ public class ClientRuntimeStatsPanel extends RuntimeStatsPanel {
     }
   }
 
-  class DSOClientStatGetter extends BasicWorker<Statistic[]> {
+  class DSOClientStatGetter extends BasicWorker<Number[]> {
     DSOClientStatGetter() {
-      super(new Callable<Statistic[]>() {
-        public Statistic[] call() throws Exception {
+      super(new Callable<Number[]>() {
+        public Number[] call() throws Exception {
           final IClient client = getClient();
           if(client != null) {
             return client.getDSOStatistics(STATS);
@@ -273,7 +271,7 @@ public class ClientRuntimeStatsPanel extends RuntimeStatsPanel {
       if(m_acc == null) return;
       Exception e = getException();
       if (e == null) {
-        Statistic[] stats = getResult();
+        Number[] stats = getResult();
         if (stats != null) {
           handleDSOStatistics(stats);
         }
@@ -291,13 +289,15 @@ public class ClientRuntimeStatsPanel extends RuntimeStatsPanel {
     }
   }
 
-  private synchronized void handleDSOStatistics(Statistic[] stats) {
+  private synchronized void handleDSOStatistics(Number[] stats) {
     if (m_acc == null) return;
 
-    updateSeries(m_flushRateSeries, (CountStatistic) stats[0]);
-    updateSeries(m_faultRateSeries, (CountStatistic) stats[1]);
-    updateSeries(m_txnRateSeries, (CountStatistic) stats[2]);
-    updateSeries(m_pendingTxnsSeries, (CountStatistic) stats[3]);
+    m_tmpDate.setTime(System.currentTimeMillis());
+
+    updateSeries(m_flushRateSeries, stats[0]);
+    updateSeries(m_faultRateSeries, stats[1]);
+    updateSeries(m_txnRateSeries, stats[2]);
+    updateSeries(m_pendingTxnsSeries, stats[3]);
   }
 
   protected synchronized void retrieveStatistics() {

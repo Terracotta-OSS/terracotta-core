@@ -10,8 +10,6 @@ import com.tc.management.beans.logging.RuntimeLoggingMBean;
 import com.tc.management.beans.logging.RuntimeOutputOptionsMBean;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ObjectID;
-import com.tc.stats.statistics.CountStatistic;
-import com.tc.stats.statistics.Statistic;
 
 import javax.management.ObjectName;
 
@@ -42,19 +40,15 @@ public interface DSOClientMBean extends TerracottaMBean {
 
   String getRemoteAddress();
 
-  CountStatistic getTransactionRate();
-  long getNativeTransactionRate();
+  long getTransactionRate();
 
-  CountStatistic getObjectFaultRate();
-  long getNativeObjectFaultRate();
+  long getObjectFaultRate();
 
-  CountStatistic getObjectFlushRate();
-  long getNativeObjectFlushRate();
+  long getObjectFlushRate();
 
-  CountStatistic getPendingTransactionsCount();
-  long getNativePendingTransactionsCount();
+  long getPendingTransactionsCount();
 
-  Statistic[] getStatistics(String[] names);
+  Number[] getStatistics(String[] names);
 
   int getLiveObjectCount();
   

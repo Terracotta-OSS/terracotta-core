@@ -26,7 +26,6 @@ import com.tc.admin.common.DemoChartFactory;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XTextPane;
 import com.tc.management.RuntimeStatisticConstants;
-import com.tc.stats.statistics.CountStatistic;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -386,11 +385,10 @@ public class RuntimeStatsPanel extends XContainer implements RuntimeStatisticCon
     }
   }
 
-  private Date m_tmpDate = new Date();
+  protected Date m_tmpDate = new Date();
 
-  protected void updateSeries(TimeSeries series, CountStatistic value) {
-    m_tmpDate.setTime(value.getLastSampleTime());
-    series.addOrUpdate(new Second(m_tmpDate), value.getCount());
+  protected void updateSeries(TimeSeries series, Number value) {
+    series.addOrUpdate(new Second(m_tmpDate), value);
   }
 
   protected void retrieveStatistics() {

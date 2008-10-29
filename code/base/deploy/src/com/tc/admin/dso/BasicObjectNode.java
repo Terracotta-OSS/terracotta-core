@@ -272,7 +272,7 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
       AdminClientContext acc = AdminClient.getContext();
       String name = m_object.getName();
 
-      setEnabled(incrementDSOBatchSize() == ConnectionContext.DSO_MAX_BATCH_SIZE);
+      setEnabled(incrementDSOBatchSize() != ConnectionContext.DSO_MAX_BATCH_SIZE);
       m_lessAction.setEnabled(true);
       m_object.setBatchSize(m_batchSize);
 

@@ -96,9 +96,9 @@
       <container name="ChartsPanel" />
       <container>
         <children>
-          <button image-uri="/com/tc/admin/icons/clear_co.gif" name="ClearSamplesButton" tip="Clear samples" />
-          <button enabled="false" image-uri="/com/tc/admin/icons/suspend_co.gif" name="StopMonitoringButton" tip="Stop monitoring" />
-          <button image-uri="/com/tc/admin/icons/resume_co.gif" name="StartMonitoringButton" tip="Start monitoring" />
+          <button image-uri="/com/tc/admin/icons/clear_co.gif" name="ClearSamplesButton" tip="Clear Samples" />
+          <button enabled="false" image-uri="/com/tc/admin/icons/suspend_co.gif" name="StopMonitoringButton" tip="Stop Monitoring" />
+          <button image-uri="/com/tc/admin/icons/resume_co.gif" name="StartMonitoringButton" tip="Start Monitoring" />
           <spinner name="SampleHistorySpinner" tip="Number of minutes of samples to display" />
           <label text="History Minutes:" />
           <spinner name="SamplePeriodSpinner" tip="Sample poll period (seconds)" />
@@ -132,7 +132,7 @@
             <children>
               <container>
                 <children>
-                  <button image-uri="/com/tc/admin/icons/newex_wiz.gif" name="ConnectButton" text="Connect" tip="Connect to server" />
+                  <button image-uri="/com/tc/admin/icons/newex_wiz.gif" name="ConnectButton" text="Connect" tip="Connect To Server" />
                   <textfield name="PortField" text="4756" />
                   <label text="JMX Port:" />
                   <textfield name="HostField" text="localhost" />
@@ -611,8 +611,8 @@
     <children>
       <container>
         <children>
-          <button text="Take thread dump" name="TakeThreadDumpButton" />
-          <button text="Export all..." name="ExportButton" enabled="false" />
+          <button text="Take Thread Dump" name="TakeThreadDumpButton" />
+          <button text="Export All..." name="ExportButton" enabled="false" />
         </children>
         <connections>
           <item bottom="-1,bottom:ns" height="n" left="-1,left:n" right="1,left:n" top="-1,top:ns" width="n" />
@@ -706,8 +706,8 @@
               </container>
               <container>
                 <children>
-                  <button text="Import configuration..." name="ImportStatsConfigButton" />
-                  <button text="Export configuration..." name="ExportStatsConfigButton" />
+                  <button text="Import Configuration..." name="ImportStatsConfigButton" />
+                  <button text="Export Configuration..." name="ExportStatsConfigButton" />
                 </children>
                 <connections>
                   <item bottom="1,top:n" height="n" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="ns" />
@@ -733,9 +733,9 @@
           </scrollpane>
           <container>
             <children>
-              <button text="Export all sessions..." name="ExportStatsButton" enabled="false" />
-              <button text="Clear session" name="ClearStatsSessionButton" enabled="false" />
-              <button text="Clear all sessions" name="ClearAllStatsSessionsButton" enabled="false" />
+              <button text="Export All Sessions..." name="ExportStatsButton" enabled="false" />
+              <button text="Clear Session" name="ClearStatsSessionButton" enabled="false" />
+              <button text="Clear All Sessions" name="ClearAllStatsSessionsButton" enabled="false" />
               <button text="View..." name="ViewStatsSessionsButton" enabled="false" />
             </children>
             <connections>
@@ -798,7 +798,7 @@
     <children>
       <container>
         <children>
-          <button text="Backup DB..." name="BackupButton" />
+          <button text="Backup Database..." name="BackupButton" />
           <label name="BackupHostLabel" text="host" />
           <textfield name="BackupPathTextField" class="com.tc.admin.common.XTextField" editable="false" />
         </children>

@@ -13,10 +13,13 @@ public class ClientRootsNode extends RootsNode {
 
   public ClientRootsNode(ClientNode clientNode) {
     super(clientNode.getClientsNode().getClusterNode());
-    setLabel(m_acc.getMessage("dso.client.roots"));
     m_clientNode = clientNode;
   }
 
+  String getBaseLabel() {
+    return m_acc.getMessage("dso.client.roots");
+  }
+  
   protected RootsPanel createRootsPanel() {
     RootsPanel panel = new RootsPanel(m_clientNode.getClientsNode().getClusterModel(), m_clientNode.getClient(),
                                       m_roots);

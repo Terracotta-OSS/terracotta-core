@@ -24,4 +24,6 @@ public abstract class ThreadDumpTreeNode extends XTreeNode {
   }
 
   abstract String getContent();
+  abstract void cancel();
+  abstract boolean isDone();
 }

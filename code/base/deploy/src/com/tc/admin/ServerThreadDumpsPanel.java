@@ -6,6 +6,9 @@ package com.tc.admin;
 
 import com.tc.admin.model.IServer;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+
 public class ServerThreadDumpsPanel extends AbstractThreadDumpsPanel {
   private ServerThreadDumpsNode m_serverThreadDumpsNode;
 
@@ -14,12 +17,13 @@ public class ServerThreadDumpsPanel extends AbstractThreadDumpsPanel {
     m_serverThreadDumpsNode = serverThreadDumpsNode;
   }
 
-  protected String getThreadDumpText() throws Exception {
-    if (m_serverThreadDumpsNode != null) {
-      IServer server = m_serverThreadDumpsNode.getServer();
-      if (server != null) { return server.takeThreadDump(System.currentTimeMillis()); }
-    }
-    return "";
+  protected Future<String> getThreadDumpText() throws Exception {
+    final IServer server = m_serverThreadDumpsNode != null ? m_serverThreadDumpsNode.getServer() : null;
+    return AdminClient.getContext().submitTask(new Callable<String>() {
+      public String call() throws Exception {
+        return server != null ? server.takeThreadDump(System.currentTimeMillis()) : "";
+      }
+    });
   }
 
   protected String getNodeName() {

@@ -7,7 +7,6 @@ package com.tc.admin.model;
 import com.tc.admin.ConnectionContext;
 import com.tc.admin.ServerConnectionManager;
 import com.tc.config.schema.L2Info;
-import com.tc.stats.statistics.CountStatistic;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.beans.PropertyChangeEvent;
@@ -15,6 +14,10 @@ import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import javax.management.ObjectName;
 
@@ -288,32 +291,41 @@ public class ClusterModel extends Server implements IClusterModel {
     m_userDisconnecting = false;
   }
 
-  public synchronized Map<IClusterNode, String> takeThreadDump() {
+  private static Future<String> threadDumpFuture(ExecutorService pool, final IClusterNode node, final long time) {
+    return pool.submit(new Callable<String>() {
+      public String call() throws Exception {
+        return node.takeThreadDump(time);
+      }
+    });
+  }
+  
+  public synchronized Map<IClusterNode, Future<String>> takeThreadDump() {
+    ExecutorService pool = Executors.newCachedThreadPool();
     long requestMillis = System.currentTimeMillis();
-    Map<IClusterNode, String> map = new HashMap<IClusterNode, String>();
+    Map<IClusterNode, Future<String>> map = new HashMap<IClusterNode, Future<String>>();
 
     for (Server server : getClusterServers()) {
-      map.put(server, server.takeThreadDump(requestMillis));
+      map.put(server, threadDumpFuture(pool, server, requestMillis));
     }
-
     for (DSOClient client : getClients()) {
-      map.put(client, client.takeThreadDump(requestMillis));
+      map.put(client, threadDumpFuture(pool, client, requestMillis));
     }
-
+    pool.shutdown();
+    
     return map;
   }
 
-  public Map<DSOClient, CountStatistic> getClientTransactionRates() {
-    Map<ObjectName, CountStatistic> map = getDSOBean().getClientTransactionRates();
-    Map<DSOClient, CountStatistic> result = new HashMap<DSOClient, CountStatistic>();
+  public Map<DSOClient, Long> getClientTransactionRates() {
+    Map<ObjectName, Long> map = getDSOBean().getClientTransactionRates();
+    Map<DSOClient, Long> result = new HashMap<DSOClient, Long>();
     for (DSOClient client : getClients()) {
       result.put(client, map.get(client.getObjectName()));
     }
     return result;
   }
 
-  public Map<Server, CountStatistic> getServerTransactionRates() {
-    Map<Server, CountStatistic> result = new HashMap<Server, CountStatistic>();
+  public Map<Server, Number> getServerTransactionRates() {
+    Map<Server, Number> result = new HashMap<Server, Number>();
     for (Server server : getClusterServers()) {
       if (server.isReady()) {
         result.put(server, server.getTransactionRate());

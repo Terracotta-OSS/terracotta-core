@@ -24,8 +24,6 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.statistics.StatisticData;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.SampledCounter;
-import com.tc.stats.statistics.CountStatistic;
-import com.tc.stats.statistics.Statistic;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -230,47 +228,31 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     return addr.getCanonicalStringForm();
   }
 
-  public CountStatistic getTransactionRate() {
-    return StatsUtil.makeCountStat(txnRate);
-  }
-
-  public long getNativeTransactionRate() {
+  public long getTransactionRate() {
     return txnRate.getValue();
   }
 
-  public CountStatistic getObjectFaultRate() {
-    return StatsUtil.makeCountStat(faultRate);
-  }
-
-  public long getNativeObjectFaultRate() {
+  public long getObjectFaultRate() {
     return faultRate.getValue();
   }
   
-  public CountStatistic getObjectFlushRate() {
-    return StatsUtil.makeCountStat(flushRate);
-  }
-
-  public long getNativeObjectFlushRate() {
+  public long getObjectFlushRate() {
     return flushRate.getValue();
   }
   
-  public CountStatistic getPendingTransactionsCount() {
-    return StatsUtil.makeCountStat(pendingTransactions);
-  }
-
-  public long getNativePendingTransactionsCount() {
+  public long getPendingTransactionsCount() {
     return pendingTransactions.getValue();
   }
   
-  public Statistic[] getStatistics(final String[] names) {
+  public Number[] getStatistics(final String[] names) {
     int count = names.length;
-    Statistic[] result = new Statistic[count];
+    Number[] result = new Number[count];
     Method method;
 
     for (int i = 0; i < count; i++) {
       try {
         method = getClass().getMethod("get" + names[i], new Class[] {});
-        result[i] = (Statistic) method.invoke(this, new Object[] {});
+        result[i] = (Number) method.invoke(this, new Object[] {});
       } catch (Exception e) {
         e.printStackTrace();
       }

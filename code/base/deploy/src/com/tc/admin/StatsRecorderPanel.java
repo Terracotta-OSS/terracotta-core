@@ -174,7 +174,11 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
 
   void testTriggerThreadDumpSRA() {
     if (isRecording()) {
-      m_statisticsGathererMBean.captureStatistic(SRAThreadDump.ACTION_NAME);
+      m_acc.submit(new Runnable() {
+        public void run() {
+          m_statisticsGathererMBean.captureStatistic(SRAThreadDump.ACTION_NAME);
+        }
+      });
     }
   }
 

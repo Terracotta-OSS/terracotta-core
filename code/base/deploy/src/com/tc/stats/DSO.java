@@ -30,9 +30,6 @@ import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.tx.ServerTransactionManagerEventListener;
 import com.tc.objectserver.tx.ServerTransactionManagerMBean;
 import com.tc.statistics.StatisticData;
-import com.tc.stats.statistics.CountStatistic;
-import com.tc.stats.statistics.DoubleStatistic;
-import com.tc.stats.statistics.Statistic;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -112,47 +109,27 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return dsoStats;
   }
 
-  public CountStatistic getObjectFlushRate() {
+  public long getObjectFlushRate() {
     return getStats().getObjectFlushRate();
   }
 
-  public long getNativeObjectFlushRate() {
-    return getStats().getNativeObjectFlushRate();
-  }
-
-  public DoubleStatistic getCacheHitRatio() {
+  public double getCacheHitRatio() {
     return getStats().getCacheHitRatio();
   }
 
-  public double getNativeCacheHitRatio() {
-    return getStats().getNativeCacheHitRatio();
-  }
-  
-  public CountStatistic getCacheMissRate() {
+  public long getCacheMissRate() {
     return getStats().getCacheMissRate();
   }
 
-  public long getNativeCacheMissRate() {
-    return getStats().getNativeCacheMissRate();
-  }
-  
-  public CountStatistic getTransactionRate() {
+  public long getTransactionRate() {
     return getStats().getTransactionRate();
   }
 
-  public long getNativeTransactionRate() {
-    return getStats().getNativeTransactionRate();
-  }
-  
-  public CountStatistic getObjectFaultRate() {
+  public long getObjectFaultRate() {
     return getStats().getObjectFaultRate();
   }
 
-  public long getNativeObjectFaultRate() {
-    return getStats().getNativeObjectFaultRate();
-  }
-  
-  public Statistic[] getStatistics(String[] names) {
+  public Number[] getStatistics(String[] names) {
     return getStats().getStatistics(names);
   }
 
@@ -298,8 +275,8 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     }
   }
 
-  public Map<ObjectName, CountStatistic> getAllPendingTransactionsCount() {
-    Map<ObjectName, CountStatistic> map = new HashMap<ObjectName, CountStatistic>();
+  public Map<ObjectName, Long> getAllPendingTransactionsCount() {
+    Map<ObjectName, Long> map = new HashMap<ObjectName, Long>();
     synchronized (clientObjectNames) {
       Iterator<ObjectName> iter = clientObjectNames.iterator();
       while (iter.hasNext()) {
@@ -310,8 +287,8 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return map;
   }
 
-  public Map<ObjectName, CountStatistic> getClientTransactionRates() {
-    Map<ObjectName, CountStatistic> result = new HashMap<ObjectName, CountStatistic>();
+  public Map<ObjectName, Long> getClientTransactionRates() {
+    Map<ObjectName, Long> result = new HashMap<ObjectName, Long>();
     synchronized (clientObjectNames) {
       Iterator<ObjectName> iter = clientObjectNames.iterator();
       while (iter.hasNext()) {
@@ -409,6 +386,16 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return objMgr.getLiveObjectCount();
   }
 
+  public long getLastCollectionGarbageCount() {
+    GCStats gcStats = gcStatsPublisher.getLastGarbageCollectorStats();
+    return gcStats != null ? gcStats.getActualGarbageCount() : -1;
+  }
+  
+  public long getLastCollectionElapsedTime() {
+    GCStats gcStats = gcStatsPublisher.getLastGarbageCollectorStats();
+    return gcStats != null ? gcStats.getElapsedTime() : -1;
+  }
+  
   public Map<ObjectName, Integer> getClientLiveObjectCount() {
     Map<ObjectName, Integer> result = new HashMap<ObjectName, Integer>();
     synchronized (clientObjectNames) {

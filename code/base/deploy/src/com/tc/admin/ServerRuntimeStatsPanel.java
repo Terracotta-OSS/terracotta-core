@@ -17,8 +17,6 @@ import com.tc.admin.common.ExceptionHelper;
 import com.tc.admin.dso.RuntimeStatsPanel;
 import com.tc.admin.model.IServer;
 import com.tc.statistics.StatisticData;
-import com.tc.stats.statistics.CountStatistic;
-import com.tc.stats.statistics.Statistic;
 
 import java.awt.GridLayout;
 import java.io.IOException;
@@ -258,10 +256,10 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
     }
   }
 
-  class DSOServerStatGetter extends BasicWorker<Statistic[]> {
+  class DSOServerStatGetter extends BasicWorker<Number[]> {
     DSOServerStatGetter() {
-      super(new Callable<Statistic[]>() {
-        public Statistic[] call() throws Exception {
+      super(new Callable<Number[]>() {
+        public Number[] call() throws Exception {
           IServer server = getServer();
           if (server != null) { return server.getDSOStatistics(STATS); }
           return null;
@@ -273,7 +271,7 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
       try {
         Exception e = getException();
         if (e == null) {
-          Statistic[] stats = getResult();
+          Number[] stats = getResult();
           if (stats != null) {
             handleDSOServerStats(stats);
           }
@@ -295,13 +293,15 @@ public class ServerRuntimeStatsPanel extends RuntimeStatsPanel {
     }
   }
 
-  private synchronized void handleDSOServerStats(Statistic[] stats) {
+  private synchronized void handleDSOServerStats(Number[] stats) {
     if (m_acc == null) return;
 
-    updateSeries(m_flushRateSeries, (CountStatistic) stats[0]);
-    updateSeries(m_faultRateSeries, (CountStatistic) stats[1]);
-    updateSeries(m_txnRateSeries, (CountStatistic) stats[2]);
-    updateSeries(m_cacheMissRateSeries, (CountStatistic) stats[3]);
+    m_tmpDate.setTime(System.currentTimeMillis());
+
+    updateSeries(m_flushRateSeries, stats[0]);
+    updateSeries(m_faultRateSeries, stats[1]);
+    updateSeries(m_txnRateSeries, stats[2]);
+    updateSeries(m_cacheMissRateSeries, stats[3]);
   }
 
   protected synchronized void retrieveStatistics() {

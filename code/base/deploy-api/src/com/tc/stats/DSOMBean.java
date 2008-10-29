@@ -11,7 +11,6 @@ import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.lockmanager.api.LockMBean;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.statistics.StatisticData;
-import com.tc.stats.statistics.CountStatistic;
 
 import java.util.Map;
 
@@ -41,9 +40,9 @@ public interface DSOMBean extends DSOStats, TerracottaMBean {
 
   DSOClassInfo[] getClassInfo();
 
-  Map<ObjectName, CountStatistic> getAllPendingTransactionsCount();
+  Map<ObjectName, Long> getAllPendingTransactionsCount();
   
-  Map<ObjectName, CountStatistic> getClientTransactionRates();
+  Map<ObjectName, Long> getClientTransactionRates();
   
   Map<ObjectName, StatisticData[]> getL1CpuUsages();
   
@@ -56,6 +55,10 @@ public interface DSOMBean extends DSOStats, TerracottaMBean {
   Map<ObjectName, Integer> getClientLiveObjectCount();
   
   int getLiveObjectCount();
+  
+  long getLastCollectionGarbageCount();
+  
+  long getLastCollectionElapsedTime();
   
   boolean isResident(NodeID node, ObjectID oid);
   

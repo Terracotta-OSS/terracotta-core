@@ -8,10 +8,6 @@ import com.tc.objectserver.api.ObjectManagerStats;
 import com.tc.objectserver.core.api.DSOGlobalServerStats;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.stats.counter.sampled.SampledCounter;
-import com.tc.stats.statistics.CountStatistic;
-import com.tc.stats.statistics.DoubleStatistic;
-import com.tc.stats.statistics.DoubleStatisticImpl;
-import com.tc.stats.statistics.Statistic;
 
 import java.lang.reflect.Method;
 
@@ -38,58 +34,35 @@ public class DSOStatsImpl extends StatsSupport implements DSOStats {
     this.txnRate = serverStats.getTransactionCounter();
   }
 
-  public CountStatistic getObjectFaultRate() {
-    return StatsUtil.makeCountStat(faultRate);
-  }
-
-  public long getNativeObjectFaultRate() {
+  public long getObjectFaultRate() {
     return faultRate.getValue();
   }
   
-  public CountStatistic getObjectFlushRate() {
-    return StatsUtil.makeCountStat(flushRate);
-  }
-
-  public long getNativeObjectFlushRate() {
+  public long getObjectFlushRate() {
     return flushRate.getValue();
   }
   
-  public CountStatistic getTransactionRate() {
-    return StatsUtil.makeCountStat(txnRate);
-  }
-
-  public long getNativeTransactionRate() {
+  public long getTransactionRate() {
     return txnRate.getValue();
   }
   
-  public DoubleStatistic getCacheHitRatio() {
-    double value = objMgrStats.getCacheHitRatio();
-    DoubleStatisticImpl rv = new DoubleStatisticImpl(System.currentTimeMillis());
-    rv.setDoubleValue(value);
-    return rv;
-  }
-  
-  public double getNativeCacheHitRatio() {
+  public double getCacheHitRatio() {
     return objMgrStats.getCacheHitRatio();
   }
   
-  public CountStatistic getCacheMissRate() {
-    return StatsUtil.makeCountStat(objMgrStats.getCacheMissRate());
-  }
-
-  public long getNativeCacheMissRate() {
+  public long getCacheMissRate() {
     return objMgrStats.getCacheMissRate().getCounterValue();
   }
   
-  public Statistic[] getStatistics(String[] names) {
+  public Number[] getStatistics(String[] names) {
     int count = names.length;
-    Statistic[] result = new Statistic[count];
+    Number[] result = new Number[count];
     Method method;
 
     for (int i = 0; i < count; i++) {
       try {
         method = getClass().getMethod("get" + names[i], new Class[] {});
-        result[i] = (Statistic) method.invoke(this, new Object[] {});
+        result[i] = (Number) method.invoke(this, new Object[] {});
       } catch (Exception e) {
         e.printStackTrace();
       }

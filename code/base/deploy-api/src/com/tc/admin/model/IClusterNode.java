@@ -6,7 +6,6 @@ package com.tc.admin.model;
 
 import com.tc.object.ObjectID;
 import com.tc.statistics.StatisticData;
-import com.tc.stats.statistics.CountStatistic;
 
 import java.beans.PropertyChangeListener;
 import java.util.Map;
@@ -36,7 +35,7 @@ public interface IClusterNode {
 
   String getConfig();
 
-  CountStatistic getTransactionRate();
+  long getTransactionRate();
 
   StatisticData[] getCpuUsage();
 

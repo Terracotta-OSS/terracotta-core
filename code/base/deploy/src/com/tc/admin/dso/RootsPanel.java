@@ -33,6 +33,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.Serializable;
 
+import javax.swing.JFormattedTextField;
 import javax.swing.JOptionPane;
 import javax.swing.WindowConstants;
 import javax.swing.event.DocumentEvent;
@@ -67,6 +68,7 @@ public class RootsPanel extends XContainer {
     
     InspectObjectAction inspectAction = new InspectObjectAction();
     m_inspectObjectField = (XTextField) findComponent("InspectObjectField");
+    m_inspectObjectField.setFocusLostBehavior(JFormattedTextField.PERSIST);
     m_inspectObjectField.addActionListener(new InspectFieldHandler());
     m_inspectObjectField.getDocument().addDocumentListener(inspectAction);
     m_inspectObjectButton = (XButton) findComponent("InspectObjectButton");
@@ -89,7 +91,7 @@ public class RootsPanel extends XContainer {
     private long fObjectID;
 
     InspectObjectAction() {
-      super("Show...");
+      super(AdminClient.getContext().getMessage("roots.inspect.show"));
     }
 
     public void actionPerformed(ActionEvent ae) {
@@ -180,9 +182,8 @@ public class RootsPanel extends XContainer {
     }
     
     public void actionPerformed(ActionEvent e) {
-      String kitID =getKitID();
-      String loc = "http://www.terracotta.org/kit/reflector?kitID=" + kitID
-                   + "&pageID=ConsoleGuide#AdminConsoleGuide-Roots";
+      String kitID = getKitID();
+      String loc = AdminClient.getContext().format("console.guide.url", kitID) + "#AdminConsoleGuide-Roots";
       BrowserLauncher.openURL(loc);
     }
   }

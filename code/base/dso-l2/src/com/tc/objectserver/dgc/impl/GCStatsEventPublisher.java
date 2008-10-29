@@ -28,6 +28,10 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
     return (GCStats[]) gcHistory.toArray(new GCStats[gcHistory.depth()]);
   }
 
+  public GCStats getLastGarbageCollectorStats() {
+    return (GCStats) gcHistory.peek();
+  }
+  
   public void garbageCollectorStart(GarbageCollectionInfo info) {
     GCStatsImpl gcStats = getGCStats(info);
     fireGCStatsEvent(gcStats);
