@@ -52,53 +52,53 @@ import java.util.TreeSet;
 public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase implements ManagedObjectPersistor,
     PrettyPrintable {
 
-  private static final Comparator                    MO_COMPARATOR         = new Comparator() {
-                                                                             public int compare(Object o1, Object o2) {
-                                                                               long oid1 = ((ManagedObject) o1).getID()
-                                                                                   .toLong();
-                                                                               long oid2 = ((ManagedObject) o2).getID()
-                                                                                   .toLong();
-                                                                               if (oid1 < oid2) {
-                                                                                 return -1;
-                                                                               } else if (oid1 > oid2) {
-                                                                                 return 1;
-                                                                               } else {
-                                                                                 return 0;
-                                                                               }
-                                                                             }
-                                                                           };
+  private static final Comparator                 MO_COMPARATOR         = new Comparator() {
+                                                                          public int compare(Object o1, Object o2) {
+                                                                            long oid1 = ((ManagedObject) o1).getID()
+                                                                                .toLong();
+                                                                            long oid2 = ((ManagedObject) o2).getID()
+                                                                                .toLong();
+                                                                            if (oid1 < oid2) {
+                                                                              return -1;
+                                                                            } else if (oid1 > oid2) {
+                                                                              return 1;
+                                                                            } else {
+                                                                              return 0;
+                                                                            }
+                                                                          }
+                                                                        };
 
-  private static final Object                        MO_PERSISTOR_KEY      = ManagedObjectPersistorImpl.class.getName()
-                                                                             + ".saveAllObjects";
-  private static final Object                        MO_PERSISTOR_VALUE    = "Complete";
+  private static final Object                     MO_PERSISTOR_KEY      = ManagedObjectPersistorImpl.class.getName()
+                                                                          + ".saveAllObjects";
+  private static final Object                     MO_PERSISTOR_VALUE    = "Complete";
 
-  private static final boolean                       STATS_LOGGING_ENABLED = TCPropertiesImpl
-                                                                               .getProperties()
-                                                                               .getBoolean(
-                                                                                           TCPropertiesConsts.L2_OBJECTMANAGER_PERSISTOR_LOGGING_ENABLED);
-  private static final boolean                       MEASURE_PERF          = TCPropertiesImpl
-                                                                               .getProperties()
-                                                                               .getBoolean(
-                                                                                           TCPropertiesConsts.L2_OBJECTMANAGER_PERSISTOR_MEASURE_PERF,
-                                                                                           false);
+  private static final boolean                    STATS_LOGGING_ENABLED = TCPropertiesImpl
+                                                                            .getProperties()
+                                                                            .getBoolean(
+                                                                                        TCPropertiesConsts.L2_OBJECTMANAGER_PERSISTOR_LOGGING_ENABLED);
+  private static final boolean                    MEASURE_PERF          = TCPropertiesImpl
+                                                                            .getProperties()
+                                                                            .getBoolean(
+                                                                                        TCPropertiesConsts.L2_OBJECTMANAGER_PERSISTOR_MEASURE_PERF,
+                                                                                        false);
 
-  private final Database                             objectDB;
-  private final SerializationAdapterFactory          saf;
-  private final MutableSequence                      objectIDSequence;
-  private final Database                             rootDB;
-  private final CursorConfig                         rootDBCursorConfig;
-  private long                                       saveCount;
-  private final TCLogger                             logger;
-  private final PersistenceTransactionProvider       ptp;
-  private final ClassCatalog                         classCatalog;
-  private final SleepycatCollectionsPersistor        collectionsPersistor;
-  private final ObjectIDManager                      objectIDManager;
-  private final SyncObjectIdSet                      extantObjectIDs;
-  private final SyncObjectIdSet                      extantMapTypeOidSet;
-  private final StatsRecorder                        commitStats;
-  private final StatsRecorder                        perfMeasureStats;
+  private final Database                          objectDB;
+  private final SerializationAdapterFactory       saf;
+  private final MutableSequence                   objectIDSequence;
+  private final Database                          rootDB;
+  private final CursorConfig                      rootDBCursorConfig;
+  private long                                    saveCount;
+  private final TCLogger                          logger;
+  private final PersistenceTransactionProvider    ptp;
+  private final ClassCatalog                      classCatalog;
+  private final SleepycatCollectionsPersistor     collectionsPersistor;
+  private final ObjectIDManager                   objectIDManager;
+  private final SyncObjectIdSet                   extantObjectIDs;
+  private final SyncObjectIdSet                   extantMapTypeOidSet;
+  private final StatsRecorder                     commitStats;
+  private final StatsRecorder                     perfMeasureStats;
 
-  private volatile ThreadLocal<SerializationAdapter> threadlocalAdapter;
+  private final ThreadLocal<SerializationAdapter> threadlocalAdapter;
 
   public ManagedObjectPersistorImpl(TCLogger logger, ClassCatalog classCatalog,
                                     SerializationAdapterFactory serializationAdapterFactory, DBEnvironment env,
@@ -116,7 +116,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
     this.ptp = ptp;
     this.collectionsPersistor = collectionsPersistor;
 
-    initializethreadlocalAdapter();
+    this.threadlocalAdapter = initializethreadlocalAdapter();
 
     boolean oidFastLoad = TCPropertiesImpl.getProperties()
         .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_LOADOBJECTID_FASTLOAD);
@@ -546,8 +546,8 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
     return threadlocalAdapter.get();
   }
 
-  private void initializethreadlocalAdapter() {
-    threadlocalAdapter = new ThreadLocal<SerializationAdapter>() {
+  private ThreadLocal<SerializationAdapter> initializethreadlocalAdapter() {
+    ThreadLocal<SerializationAdapter> threadlclAdapter = new ThreadLocal<SerializationAdapter>() {
       protected SerializationAdapter initialValue() {
         try {
           return saf.newAdapter(classCatalog);
@@ -556,6 +556,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
         }
       }
     };
+    return threadlclAdapter;
   }
 
   /*********************************************************************************************************************
