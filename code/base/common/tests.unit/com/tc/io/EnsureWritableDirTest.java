@@ -7,6 +7,7 @@ import com.tc.test.TCTestCase;
 import com.tc.test.TempDirectoryHelper;
 import com.tc.util.io.TCFileUtils;
 import com.tc.util.io.TCFileUtils.EnsureWritableDirReporter;
+import com.tc.util.runtime.Os;
 
 import java.io.File;
 import java.io.IOException;
@@ -111,6 +112,11 @@ public class EnsureWritableDirTest extends TCTestCase {
    * to make the directory be writable again after making it read-only.
    */
   public void testReadOnlyParent() throws Exception {
+    // On Windows, the read-only attribute of a directory is ignored except when deleting
+    // the directory itself, so this test is inapplicable.
+    if (Os.isWindows()) {
+      return;
+    }
     File tmpDir = createTmpDir();
     tmpDir.setReadOnly();
     File child = new File(tmpDir, "child");
