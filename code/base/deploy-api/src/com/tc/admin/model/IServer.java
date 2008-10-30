@@ -148,4 +148,12 @@ public interface IServer extends IClusterNode, ManagedObjectFacadeProvider {
   void setFlushDebug(boolean flushDebug);
   
   boolean getFlushDebug();
+
+  boolean getBroadcastDebug();
+
+  void setBroadcastDebug(boolean broadcastDebug);
+
+  boolean getCommitDebug();
+
+  void setCommitDebug(boolean commitDebug);
 }
