@@ -26,7 +26,6 @@ import com.tc.util.Util;
 import gnu.trove.TLinkable;
 
 import java.io.IOException;
-import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 
 /**
@@ -52,11 +51,11 @@ public abstract class TCObjectImpl implements TCObject {
   private byte                  flags                       = 0;
   private static final TCLogger consoleLogger               = CustomerLogging.getConsoleLogger();
 
-  protected TCObjectImpl(ReferenceQueue queue, ObjectID id, Object peer, TCClass clazz, boolean isNew) {
+  protected TCObjectImpl(ObjectID id, Object peer, TCClass clazz, boolean isNew) {
     this.objectID = id;
     this.tcClazz = clazz;
     if (peer != null) {
-      setPeerObject(new WeakObjectReference(id, peer, queue));
+      setPeerObject(getObjectManager().newWeakObjectReference(id, peer));
     }
 
     setFlag(IS_NEW_OFFSET, isNew);

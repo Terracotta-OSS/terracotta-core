@@ -18,6 +18,7 @@ import com.tc.objectserver.core.impl.TestServerConfigurationContext;
 import com.tc.objectserver.impl.ObjectRequestManagerImpl;
 import com.tc.objectserver.impl.TestObjectManager;
 import com.tc.objectserver.l1.api.TestClientStateManager;
+import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.tx.TestServerTransactionManager;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.CounterImpl;
@@ -44,7 +45,8 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
     TestSink respondSink = new TestSink();
     ObjectRequestManagerImpl objectRequestManager = new ObjectRequestManagerImpl(objectManager, channelManager,
                                                                                  clientStateManager,
-                                                                                 serverTransactionManager, requestSink, respondSink);
+                                                                                 serverTransactionManager, requestSink,
+                                                                                 respondSink, new ObjectStatsRecorder());
 
     TestServerConfigurationContext context = new TestServerConfigurationContext();
     context.setObjectRequestManager(objectRequestManager);

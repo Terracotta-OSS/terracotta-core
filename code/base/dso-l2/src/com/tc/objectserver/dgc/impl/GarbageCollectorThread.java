@@ -16,17 +16,20 @@ public class GarbageCollectorThread extends StoppableThread {
 
   private final GarbageCollector collector;
   private final Object           stopLock = new Object();
+  private final boolean          doFullGC;
   private final long             fullGCSleepTime;
   private final long             youngGCSleepTime;
 
-  public GarbageCollectorThread(ThreadGroup group, String name, GarbageCollector newCollector, ObjectManagerConfig config) {
+  public GarbageCollectorThread(ThreadGroup group, String name, GarbageCollector newCollector,
+                                ObjectManagerConfig config) {
     super(group, name);
     this.collector = newCollector;
+    doFullGC = config.doGC();
     fullGCSleepTime = config.gcThreadSleepTime();
     long youngGCTime = -1;
     if (config.isYoungGenDGCEnabled()) {
       youngGCTime = config.getYoungGenDGCFrequencyInMillis();
-      if (youngGCTime >= fullGCSleepTime) {
+      if (doFullGC && youngGCTime >= fullGCSleepTime) {
         logger.warn("Disabling YoungGen Garbage Collector since the time interval for YoungGen GC ( " + youngGCTime
                     + " ms) is greater than or equal to  the time interval for Full GC ( " + fullGCSleepTime + " ms)");
         youngGCTime = -1;
@@ -35,8 +38,12 @@ public class GarbageCollectorThread extends StoppableThread {
         youngGCTime = -1;
       }
     }
-    youngGCSleepTime = youngGCTime;
-    logger.info("Young Gen Time = " + youngGCTime + " Full Gen Time = " + fullGCSleepTime);
+    if ((youngGCSleepTime = youngGCTime) == -1 && !doFullGC) {
+      logger.warn("Stopping Garbage Collector thread as both Full and YoungGen collectors are disabled.");
+      requestStop();
+    } else {
+      logger.info("Young Gen Time = " + youngGCTime + " Full Gen Time = " + fullGCSleepTime);
+    }
   }
 
   public void requestStop() {
@@ -51,21 +58,25 @@ public class GarbageCollectorThread extends StoppableThread {
     long lastFullGC = System.currentTimeMillis();
     while (true) {
       if (isStopRequested()) { return; }
-      if (youngGCSleepTime <= 0) {
-        // young generation GC is disabled
-        doFullGC(fullGCSleepTime);
-        lastFullGC = System.currentTimeMillis();
-      } else {
-        // run young or full GC
-        long current = System.currentTimeMillis();
-        if (lastFullGC + fullGCSleepTime > current + youngGCSleepTime) {
-          // Run young GC next
-          doYoungGC(youngGCSleepTime);
-        } else {
-          // Run full GC next, sleeping at least 1 second
-          doFullGC(Math.max(lastFullGC + fullGCSleepTime - current, 1000));
+      if (doFullGC) {
+        if (youngGCSleepTime <= 0) {
+          // young generation GC is disabled
+          doFullGC(fullGCSleepTime);
           lastFullGC = System.currentTimeMillis();
+        } else {
+          // run young or full GC
+          long current = System.currentTimeMillis();
+          if (lastFullGC + fullGCSleepTime > current + youngGCSleepTime) {
+            // Run young GC next
+            doYoungGC(youngGCSleepTime);
+          } else {
+            // Run full GC next, sleeping at least 1 second
+            doFullGC(Math.max(lastFullGC + fullGCSleepTime - current, 1000));
+            lastFullGC = System.currentTimeMillis();
+          }
         }
+      } else {
+        doYoungGC(youngGCSleepTime);
       }
     }
   }

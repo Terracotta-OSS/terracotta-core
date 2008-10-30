@@ -264,4 +264,8 @@ public class TestClientObjectManager implements ClientObjectManager {
     throw new ImplementMe();
   }
 
+  public WeakReference newWeakObjectReference(ObjectID objectID, Object peer) {
+    return new WeakObjectReference(objectID, peer, referenceQueue);
+  }
+
 }

@@ -11,6 +11,7 @@ import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.AbstractTerracottaMBean;
+import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.runtime.JVMMemoryManager;
 import com.tc.runtime.MemoryUsage;
 import com.tc.runtime.TCRuntime;
@@ -62,7 +63,10 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
 
   private static final String[]                EMPTY_CPU_NAMES = {};
 
-  public TCServerInfo(final TCServer server, final L2State l2State) throws NotCompliantMBeanException {
+  private final ObjectStatsRecorder            objectStatsRecorder;
+
+  public TCServerInfo(final TCServer server, final L2State l2State, final ObjectStatsRecorder objectStatsRecorder)
+      throws NotCompliantMBeanException {
     super(TCServerInfoMBean.class, true);
     this.server = server;
     this.l2State = l2State;
@@ -86,6 +90,12 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     } catch (Exception e) {
       /**/
     }
+
+    this.objectStatsRecorder = objectStatsRecorder;
+  }
+
+  public ObjectStatsRecorder getObjectStatsRecorder() {
+    return this.objectStatsRecorder;
   }
 
   public void reset() {
@@ -344,4 +354,45 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
       System.err.println(s);
     }
   }
+
+  public boolean getFaultDebug() {
+    return objectStatsRecorder.getFaultDebug();
+  }
+
+  public void setFaultDebug(boolean faultDebug) {
+    objectStatsRecorder.setFaultDebug(faultDebug);
+  }
+
+  public boolean getRequestDebug() {
+    return objectStatsRecorder.getRequestDebug();
+  }
+
+  public void setRequestDebug(boolean requestDebug) {
+    objectStatsRecorder.setRequestDebug(requestDebug);
+  }
+
+  public boolean getFlushDebug() {
+    return objectStatsRecorder.getFlushDebug();
+  }
+
+  public void setFlushDebug(boolean flushDebug) {
+    objectStatsRecorder.setFlushDebug(flushDebug);
+  }
+
+  public boolean getBroadcastDebug() {
+    return objectStatsRecorder.getBroadcastDebug();
+  }
+
+  public void setBroadcastDebug(boolean broadcastDebug) {
+    objectStatsRecorder.setBroadcastDebug(broadcastDebug);
+  }
+
+  public boolean getCommitDebug() {
+    return objectStatsRecorder.getCommitDebug();
+  }
+
+  public void setCommitDebug(boolean commitDebug) {
+    objectStatsRecorder.setCommitDebug(commitDebug);
+  }
+
 }

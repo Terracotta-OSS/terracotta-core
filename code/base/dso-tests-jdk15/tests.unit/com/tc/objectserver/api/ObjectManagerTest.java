@@ -65,6 +65,7 @@ import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.MapEntryFacade;
+import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
@@ -132,6 +133,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
   private TransactionalObjectManagerImpl     txObjectManager;
   private TestSinkContext                    testFaultSinkContext;
   private long                               version = 0;
+  private ObjectStatsRecorder                objectStatsRecorder;
 
   /**
    * Constructor for ObjectManagerTest.
@@ -156,6 +158,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     stats = new ObjectManagerStatsImpl(newObjectCounter, objectfaultCounter);
     persistenceTransactionProvider = new TestPersistenceTransactionProvider();
     NULL_TRANSACTION = TestPersistenceTransaction.NULL_TRANSACTION;
+    objectStatsRecorder = new ObjectStatsRecorder();
   }
 
   private void initObjectManager() {
@@ -179,7 +182,8 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     TestSink faultSink = new TestSink();
     TestSink flushSink = new TestSink();
     this.objectManager = new ObjectManagerImpl(config, threadGroup, clientStateManager, store, cache,
-                                               persistenceTransactionProvider, faultSink, flushSink);
+                                               persistenceTransactionProvider, faultSink, flushSink,
+                                               objectStatsRecorder);
     testFaultSinkContext = new TestSinkContext();
     new TestMOFaulter(this.objectManager, store, faultSink, testFaultSinkContext).start();
     new TestMOFlusher(this.objectManager, flushSink, new NullSinkContext()).start();
@@ -733,7 +737,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     config.paranoid = paranoid;
     objectManager = new ObjectManagerImpl(config, createThreadGroup(), clientStateManager, store,
                                           new LRUEvictionPolicy(100), persistenceTransactionProvider, faultSink,
-                                          flushSink);
+                                          flushSink, objectStatsRecorder);
     new TestMOFaulter(this.objectManager, store, faultSink, new NullSinkContext()).start();
     new TestMOFlusher(this.objectManager, flushSink, new NullSinkContext()).start();
 

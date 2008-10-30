@@ -22,4 +22,8 @@ public class WeakObjectReference extends WeakReference {
   public ObjectID getObjectID() {
     return id;
   }
+
+  public String getObjectType() {
+    return null;
+  }
 }

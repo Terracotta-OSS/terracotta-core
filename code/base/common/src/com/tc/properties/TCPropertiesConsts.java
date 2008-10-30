@@ -85,6 +85,8 @@ public interface TCPropertiesConsts {
   public static final String   L2_OBJECTMANAGER_OBJECT_REQUEST_SPLIT_SIZE             = "l2.objectmanager.objectrequest.split.size";
   public static final String   L2_OBJECTMANAGER_OBJECT_REQUEST_LOGGING_ENABLED        = "l2.objectmanager.objectrequest.logging.enabled";
   public static final String   L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED                 = "l2.objectmanager.fault.logging.enabled";
+  public static final String   L2_OBJECTMANAGER_REQUEST_LOGGING_ENABLED               = "l2.objectmanager.request.logging.enabled";
+  public static final String   L2_OBJECTMANAGER_FLUSH_LOGGING_ENABLED                 = "l2.objectmanager.flush.logging.enabled";
   public static final String   L2_OBJECTMANAGER_PERSISTOR_LOGGING_ENABLED             = "l2.objectmanager.persistor.logging.enabled";
   public static final String   L2_OBJECTMANAGER_LOADOBJECTID_FASTLOAD                 = "l2.objectmanager.loadObjectID.fastLoad";
   public static final String   L2_OBJECTMANAGER_LOADOBJECTID_LONGS_PERDISKENTRY       = "l2.objectmanager.loadObjectID.longsPerDiskEntry";
@@ -313,6 +315,8 @@ public interface TCPropertiesConsts {
   public static final String   L1_OBJECTMANAGER_REMOTE_MAX_DNALRU_SIZE                = "l1.objectmanager.remote.maxDNALRUSize";
   public static final String   L1_OBJECTMANAGER_REMOTE_LOGGING_ENABLED                = "l1.objectmanager.remote.logging.enabled";
   public static final String   L1_OBJECTMANAGER_OBJECTID_REQUEST_SIZE                 = "l1.objectmanager.objectid.request.size";
+  public static final String   L1_OBJECTMANAGER_FLUSH_LOGGING_ENABLED                 = "l1.objectmanager.flush.logging.enabled";
+  public static final String   L1_OBJECTMANAGER_FAULT_LOGGING_ENABLED                 = "l1.objectmanager.fault.logging.enabled";
 
   /*********************************************************************************************************************
    * <code>
@@ -524,4 +528,11 @@ public interface TCPropertiesConsts {
   public static final String   L2_REMOTEJMX_MAXTHREADS                                = "l2.remotejmx.maxthreads";
   public static final String   L2_REMOTEJMX_IDLETIME                                  = "l2.remotejmx.idletime";
 
+  /*********************************************************************************************************************
+   * <code>
+   * Section :  Stats Printer
+   * stats.printer.intervalInMillis              - interval at which gathered stats are printed
+   * </code>
+   ********************************************************************************************************************/
+  public static final String   STATS_PRINTER_INTERVAL                                 = "stats.printer.intervalInMillis";
 }

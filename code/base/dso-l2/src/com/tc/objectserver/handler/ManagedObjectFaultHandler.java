@@ -14,6 +14,7 @@ import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.context.ManagedObjectFaultingContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -23,23 +24,25 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class ManagedObjectFaultHandler extends AbstractEventHandler {
 
-  private static final TCLogger logger           = TCLogging.getLogger(ManagedObjectFaultHandler.class);
-  private static final boolean  LOG_OBJECT_FAULT = TCPropertiesImpl
-                                                     .getProperties()
-                                                     .getBoolean(
-                                                                 TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED);
+  private static final TCLogger     logger           = TCLogging.getLogger(ManagedObjectFaultHandler.class);
+  private static final boolean      LOG_OBJECT_FAULT = TCPropertiesImpl
+                                                         .getProperties()
+                                                         .getBoolean(
+                                                                     TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED);
 
-  private ObjectManager         objectManager;
-  private ManagedObjectStore    objectStore;
+  private ObjectManager             objectManager;
+  private ManagedObjectStore        objectStore;
+  private final ObjectStatsRecorder objectStatsRecorder;
   // TODO::Remove this counter, its not needed if you remove the logging @see below
-  private final AtomicLong      faultsCounter;
-  private final SampledCounter  faultFromDisk;
-  private final SampledCounter  time2FaultFromDisk;
-  private final SampledCounter  time2Add2ObjMgr;
+  private final AtomicLong          faultsCounter;
+  private final SampledCounter      faultFromDisk;
+  private final SampledCounter      time2FaultFromDisk;
+  private final SampledCounter      time2Add2ObjMgr;
 
   public ManagedObjectFaultHandler(SampledCounter faultFromDisk, SampledCounter time2FaultFromDisk,
-                                   SampledCounter time2Add2ObjMgr) {
+                                   SampledCounter time2Add2ObjMgr, ObjectStatsRecorder objectStatsRecorder) {
     this.faultFromDisk = faultFromDisk;
+    this.objectStatsRecorder = objectStatsRecorder;
     this.time2FaultFromDisk = time2FaultFromDisk;
     this.time2Add2ObjMgr = time2Add2ObjMgr;
     this.faultsCounter = new AtomicLong();
@@ -58,6 +61,15 @@ public class ManagedObjectFaultHandler extends AbstractEventHandler {
       // use CAS change this to always sample faults and deprecate the TC property
       logStats(t1 - t0, t2 - t1);
     }
+    if (objectStatsRecorder.getFaultDebug()) {
+      updateStats(mo);
+    }
+  }
+
+  private void updateStats(ManagedObject mo) {
+    String className = mo.getManagedObjectState().getClassName();
+    if (className == null) className = "UNKNOWN"; // Could happen on restart scenario
+    objectStatsRecorder.updateFaultStats(className);
   }
 
   private void logStats(long time2Fault, long time2Add) {

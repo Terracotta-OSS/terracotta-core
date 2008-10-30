@@ -7,12 +7,10 @@ package com.tc.object;
 import com.tc.object.bytecode.Clearable;
 import com.tc.util.Assert;
 
-import java.lang.ref.ReferenceQueue;
-
 public class TCObjectLogical extends TCObjectImpl {
 
-  public TCObjectLogical(ReferenceQueue queue, ObjectID id, Object peer, TCClass tcc, boolean isNew) {
-    super(queue, id, peer, tcc, isNew);
+  public TCObjectLogical(ObjectID id, Object peer, TCClass tcc, boolean isNew) {
+    super(id, peer, tcc, isNew);
   }
 
   public void logicalInvoke(int method, String methodName, Object[] parameters) {

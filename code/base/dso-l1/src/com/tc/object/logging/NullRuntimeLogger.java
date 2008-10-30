@@ -128,4 +128,29 @@ public class NullRuntimeLogger implements RuntimeLogger {
   public void setWaitNotifyDebug(boolean waitNotifyDebug) {
     /**/
   }
+
+  public boolean getFlushDebug() {
+    return false;
+  }
+
+  public void setFlushDebug(boolean flushDebug) {
+    /**/
+  }
+
+  public void updateFlushStats(String type) {
+    /**/
+  }
+
+  public boolean getFaultDebug() {
+    return false;
+  }
+
+  public void setFaultDebug(boolean faultDebug) {
+    /**/
+  }
+
+  public void updateFaultStats(String type) {
+    /**/
+  }
+
 }

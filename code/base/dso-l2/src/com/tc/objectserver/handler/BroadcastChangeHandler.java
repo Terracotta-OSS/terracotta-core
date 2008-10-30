@@ -22,16 +22,11 @@ import com.tc.objectserver.context.BroadcastChangeContext;
 import com.tc.objectserver.context.ObjectRequestServerContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.l1.api.ClientStateManager;
+import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.tx.ServerTransactionManager;
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
-import com.tc.statistics.util.NullStatsRecorder;
-import com.tc.statistics.util.StatsPrinter;
-import com.tc.statistics.util.StatsRecorder;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.util.ObjectIDSet;
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -44,30 +39,20 @@ import java.util.Set;
  */
 public class BroadcastChangeHandler extends AbstractEventHandler {
 
-  private static final boolean     BROADCAST_STATS_LOGGING_ENABLED = TCPropertiesImpl
-                                                                       .getProperties()
-                                                                       .getBoolean(
-                                                                                   TCPropertiesConsts.L2_TRANSACTIONMANAGER_LOGGING_PRINT_BROADCAST_STATS);
+  private DSOChannelManager         channelManager;
+  private ClientStateManager        clientStateManager;
+  private ServerTransactionManager  transactionManager;
+  private Sink                      managedObjectRequestSink;
+  private final ObjectStatsRecorder objectStatsRecorder;
 
-  private DSOChannelManager        channelManager;
-  private ClientStateManager       clientStateManager;
-  private ServerTransactionManager transactionManager;
-  private Sink                     managedObjectRequestSink;
-  private final StatsRecorder      broadcastStats;
+  private SampledCounter            broadcastCounter;
+  private SampledCounter            changeCounter;
 
-  private SampledCounter           broadcastCounter;
-  private SampledCounter           changeCounter;
-
-  public BroadcastChangeHandler(SampledCounter broadcastCounter, SampledCounter changeCounter) {
+  public BroadcastChangeHandler(SampledCounter broadcastCounter, SampledCounter changeCounter,
+                                ObjectStatsRecorder objectStatsRecorder) {
     this.broadcastCounter = broadcastCounter;
     this.changeCounter = changeCounter;
-    if (BROADCAST_STATS_LOGGING_ENABLED) {
-      broadcastStats = new StatsPrinter("Broadcast Stats Printer", 5000,
-                                        new MessageFormat("Broadcasted in the Last {0} ms"),
-                                        new MessageFormat(" {0} broadcasts"), true);
-    } else {
-      broadcastStats = new NullStatsRecorder();
-    }
+    this.objectStatsRecorder = objectStatsRecorder;
   }
 
   public void handleEvent(EventContext context) {
@@ -93,7 +78,7 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
                                                                                clientID, lookupObjectIDs);
       }
 
-      if(BROADCAST_STATS_LOGGING_ENABLED) updateStats(prunedChanges);
+      if (objectStatsRecorder.getBroadcastDebug()) updateStats(prunedChanges);
 
       DmiDescriptor[] prunedDmis = pruneDmiDescriptors(bcc.getDmiDescriptors(), clientID, clientStateManager);
       final boolean includeDmi = !clientID.equals(committerID) && prunedDmis.length > 0;
@@ -101,8 +86,9 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
           || includeDmi) {
         transactionManager.addWaitingForAcknowledgement(committerID, txnID, clientID);
         if (lookupObjectIDs.size() > 0) {
-          this.managedObjectRequestSink.add(new ObjectRequestServerContext(clientID, ObjectRequestID.NULL_ID, lookupObjectIDs, Thread
-                  .currentThread().getName()));
+          this.managedObjectRequestSink.add(new ObjectRequestServerContext(clientID, ObjectRequestID.NULL_ID,
+                                                                           lookupObjectIDs, Thread.currentThread()
+                                                                               .getName()));
         }
         final DmiDescriptor[] dmi = (includeDmi) ? prunedDmis : DmiDescriptor.EMPTY_ARRAY;
         BroadcastTransactionMessage responseMessage = (BroadcastTransactionMessage) client
@@ -125,8 +111,8 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
     for (Iterator i = prunedChanges.iterator(); i.hasNext();) {
       DNA dna = (DNA) i.next();
       String className = dna.getTypeName();
-      if (className == null) className = "UNKNOWN";   // Could happen on restart scenario
-      broadcastStats.updateStats(className, 1);
+      if (className == null) className = "UNKNOWN"; // Could happen on restart scenario
+      objectStatsRecorder.updateBroadcastStats(className);
     }
   }
 

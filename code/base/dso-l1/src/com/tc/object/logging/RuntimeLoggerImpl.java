@@ -11,6 +11,13 @@ import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.tx.TimerSpec;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
+import com.tc.statistics.util.NullStatsRecorder;
+import com.tc.statistics.util.StatsPrinter;
+import com.tc.statistics.util.StatsRecorder;
+
+import java.text.MessageFormat;
 
 public class RuntimeLoggerImpl implements RuntimeLogger {
   private final TCLogger logger;
@@ -25,6 +32,12 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
 
   private boolean        fullStack;
   private boolean        autoLockDetails;
+
+  private boolean        flushDebug;
+  private StatsRecorder  flushStatsRecorder;
+
+  private boolean        faultDebug;
+  private StatsRecorder  faultStatsRecorder;
 
   public RuntimeLoggerImpl(DSOClientConfigHelper configHelper) {
     this.logger = CustomerLogging.getDSORuntimeLogger();
@@ -41,6 +54,12 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
     // runtime logging options
     this.fullStack = configHelper.runtimeOutputOptions().doFullStack().getBoolean();
     this.autoLockDetails = configHelper.runtimeOutputOptions().doAutoLockDetails().getBoolean();
+
+    setFlushDebug(TCPropertiesImpl.getProperties()
+        .getBoolean(TCPropertiesConsts.L1_OBJECTMANAGER_FLUSH_LOGGING_ENABLED));
+    setFaultDebug(TCPropertiesImpl.getProperties()
+        .getBoolean(TCPropertiesConsts.L1_OBJECTMANAGER_FAULT_LOGGING_ENABLED));
+
   }
 
   public void setLockDebug(boolean lockDebug) {
@@ -124,6 +143,49 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
     return this.autoLockDetails;
   }
 
+  public void setFlushDebug(boolean flushDebug) {
+    this.flushDebug = flushDebug;
+    if (flushStatsRecorder != null) {
+      flushStatsRecorder.finish();
+    }
+    if (flushDebug) {
+      flushStatsRecorder = new StatsPrinter(new MessageFormat("ManagedObjects flushed in the Last {0} ms"),
+                                            new MessageFormat(" {0} instances"), true);
+    } else {
+      flushStatsRecorder = new NullStatsRecorder();
+    }
+  }
+
+  public boolean getFlushDebug() {
+    return this.flushDebug;
+  }
+
+  public void updateFlushStats(String type) {
+    flushStatsRecorder.updateStats(type, StatsRecorder.SINGLE_INCR);
+  }
+
+  public void setFaultDebug(boolean faultDebug) {
+    this.faultDebug = faultDebug;
+    if (faultStatsRecorder != null) {
+      faultStatsRecorder.finish();
+    }
+    if (faultDebug) {
+      faultStatsRecorder = new StatsPrinter(new MessageFormat("ManagedObjects faulted in the Last {0} ms"),
+                                            new MessageFormat(" {0} instances"), true);
+    } else {
+      faultStatsRecorder = new NullStatsRecorder();
+    }
+  }
+
+  public boolean getFaultDebug() {
+    return this.faultDebug;
+  }
+
+  public void updateFaultStats(String type) {
+    faultStatsRecorder.updateStats(type, StatsRecorder.SINGLE_INCR);
+  }
+
+  
   public void lockAcquired(String lockName, int level, Object instance, TCObject tcObject) {
     boolean isAutoLock = ByteCodeUtil.isAutolockName(lockName);
 

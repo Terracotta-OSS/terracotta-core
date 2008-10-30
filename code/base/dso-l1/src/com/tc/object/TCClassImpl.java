@@ -323,9 +323,9 @@ public class TCClassImpl implements TCClass {
 
   public TCObject createTCObject(ObjectID id, Object pojo, boolean isNew) {
     if (isLogical) {
-      return new TCObjectLogical(objectManager.getReferenceQueue(), id, pojo, this, isNew);
+      return new TCObjectLogical(id, pojo, this, isNew);
     } else {
-      return new TCObjectPhysical(objectManager.getReferenceQueue(), id, pojo, this, isNew);
+      return new TCObjectPhysical(id, pojo, this, isNew);
     }
   }
 

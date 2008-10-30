@@ -30,9 +30,9 @@ public class TCObjectImplTest extends BaseDSOTestCase {
     TestObject to2 = new TestObject("TestObject2", null);
     ObjectID id1 = new ObjectID(1);
     ObjectID id2 = new ObjectID(2);
-    objectManager.add(id2, new TCObjectPhysical(objectManager.getReferenceQueue(), id2, to2, clazz, false));
+    objectManager.add(id2, new TCObjectPhysical(id2, to2, clazz, false));
 
-    TCObjectImpl tcObj = new TCObjectPhysical(objectManager.getReferenceQueue(), id1, to1, clazz, false);
+    TCObjectImpl tcObj = new TCObjectPhysical(id1, to1, clazz, false);
     tcObj.resolveReference(TestObject.class.getName() + ".test1");
     tcObj.resolveReference(TestObject.class.getName() + ".test2");
     assertTrue(to1.test1 == null);// nothing should happen from that

@@ -28,6 +28,7 @@ import com.tc.objectserver.context.ObjectRequestServerContext;
 import com.tc.objectserver.context.RespondToObjectRequestContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.l1.api.ClientStateManager;
+import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.tx.ServerTransactionListener;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.properties.TCPropertiesConsts;
@@ -78,9 +79,12 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
   private Sequence                       batchIDSequence      = new SimpleSequence();
   private ObjectRequestCache             objectRequestCache;
 
+  private ObjectStatsRecorder            objectStatsRecorder;
+
   public ObjectRequestManagerImpl(ObjectManager objectManager, DSOChannelManager channelManager,
                                   ClientStateManager stateManager, ServerTransactionManager transactionManager,
-                                  Sink objectRequestSink, Sink respondObjectRequestSink) {
+                                  Sink objectRequestSink, Sink respondObjectRequestSink,
+                                  ObjectStatsRecorder objectStatsRecorder) {
     this.objectManager = objectManager;
     this.channelManager = channelManager;
     this.stateManager = stateManager;
@@ -88,8 +92,8 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
     this.respondObjectRequestSink = respondObjectRequestSink;
     this.objectRequestSink = objectRequestSink;
     this.objectRequestCache = new ObjectRequestCache(LOGGING_ENABLED);
+    this.objectStatsRecorder = objectStatsRecorder;
     transactionManager.addTransactionListener(this);
-
   }
 
   public synchronized void transactionManagerStarted(Set cids) {
@@ -250,6 +254,8 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
         messageMap.put(clientID, new BatchAndSend(channel, batchID));
       }
 
+      boolean requestDebug = objectStatsRecorder.getRequestDebug();
+
       for (Iterator<Map.Entry<ClientID, Set<ObjectID>>> i = clientNewIDsMap.entrySet().iterator(); i.hasNext();) {
         Map.Entry<ClientID, Set<ObjectID>> entry = i.next();
         ClientID clientID = entry.getKey();
@@ -262,6 +268,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
           ManagedObject mo = (ManagedObject) iter.next();
           if (newIDs.contains(mo.getID())) {
             batchAndSend.sendObject(mo);
+            if (requestDebug) updateStats(mo);
           }
           if (isLast) {
             objectManager.releaseReadOnly(mo);
@@ -306,6 +313,12 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
 
   protected synchronized int getObjectRequestCacheClientSize() {
     return objectRequestCache.clientSize();
+  }
+
+  private void updateStats(ManagedObject mo) {
+    String className = mo.getManagedObjectState().getClassName();
+    if (className == null) className = "UNKNOWN";
+    objectStatsRecorder.updateRequestStats(className);
   }
 
   protected static class RequestedObject {
@@ -396,16 +409,20 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
         this.objectRequestMap.put(reqObjects, clientList);
         return true;
       } else {
-        
+
         if (clientList.add(clientID)) {
           if (verbose && (++sameClientRequestCount % 100) == 0) {
-            //The count keeps track of how many requests were made from the same client that has already been requested
-            logger.info("[ObjectRequestCache] same client already made requests. total same client request optimized: " + sameClientRequestCount);
+            // The count keeps track of how many requests were made from the same client that has already been requested
+            logger.info("[ObjectRequestCache] same client already made requests. total same client request optimized: "
+                        + sameClientRequestCount);
           }
         } else {
           if (verbose && (++multipleClientRequestCount % 100) == 0) {
-            //The count keeps track of how many requests were made from the multiple clients that has already been requested
-            logger.info("[ObjectRequestCache] multiple clients already made requests. total multiple clients request optimized: " + multipleClientRequestCount);
+            // The count keeps track of how many requests were made from the multiple clients that has already been
+            // requested
+            logger
+                .info("[ObjectRequestCache] multiple clients already made requests. total multiple clients request optimized: "
+                      + multipleClientRequestCount);
           }
         }
         return false;

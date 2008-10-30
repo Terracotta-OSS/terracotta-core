@@ -377,6 +377,10 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
+    public WeakReference newWeakObjectReference(ObjectID objectID, Object peer) {
+      throw new ImplementMe();
+    }
+
   }
 
 }

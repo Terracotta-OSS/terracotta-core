@@ -93,6 +93,26 @@ public class RuntimeLogging extends AbstractTerracottaMBean implements RuntimeLo
     return runtimeLogger.getWaitNotifyDebug();
   }
 
+  public void setFlushDebug(boolean flushDebug) {
+    runtimeLogger.setFlushDebug(flushDebug);
+    sendNotification(new Notification(FLUSH_DEBUG_EVENT_TYPE, this, sequenceNumber.increment(), System
+        .currentTimeMillis(), Boolean.toString(flushDebug)));
+  }
+
+  public boolean getFlushDebug() {
+    return runtimeLogger.getFlushDebug();
+  }
+
+  public void setFaultDebug(boolean faultDebug) {
+    runtimeLogger.setFaultDebug(faultDebug);
+    sendNotification(new Notification(FAULT_DEBUG_EVENT_TYPE, this, sequenceNumber.increment(), System
+        .currentTimeMillis(), Boolean.toString(faultDebug)));
+  }
+
+  public boolean getFaultDebug() {
+    return runtimeLogger.getFaultDebug();
+  }
+
   public void reset() {
     /**/
   }

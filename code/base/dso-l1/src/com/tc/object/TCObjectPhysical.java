@@ -12,15 +12,14 @@ import com.tc.util.ClassUtils;
 
 import gnu.trove.THashMap;
 
-import java.lang.ref.ReferenceQueue;
 import java.util.HashMap;
 import java.util.Map;
 
 public class TCObjectPhysical extends TCObjectImpl {
   private Map references = null;
 
-  public TCObjectPhysical(ReferenceQueue queue, ObjectID id, Object peer, TCClass tcc, boolean isNew) {
-    super(queue, id, peer, tcc, isNew);
+  public TCObjectPhysical(ObjectID id, Object peer, TCClass tcc, boolean isNew) {
+    super(id, peer, tcc, isNew);
   }
 
   private Map getReferences() {
@@ -146,8 +145,7 @@ public class TCObjectPhysical extends TCObjectImpl {
 
   public void literalValueChanged(Object newValue, Object oldValue) {
     getObjectManager().getTransactionManager().literalValueChanged(this, newValue, oldValue);
-    setPeerObject(newValue == null ? null : new WeakObjectReference(getObjectID(), newValue, getObjectManager()
-        .getReferenceQueue()));
+    setPeerObject(newValue == null ? null : getObjectManager().newWeakObjectReference(getObjectID(), newValue));
   }
 
   /**
@@ -155,8 +153,7 @@ public class TCObjectPhysical extends TCObjectImpl {
    * applicator thread which has been synchronized on getResolveLock() in TCObjectImpl.hydrate().
    */
   public void setLiteralValue(Object newValue) {
-    setPeerObject(newValue == null ? null : new WeakObjectReference(getObjectID(), newValue, getObjectManager()
-        .getReferenceQueue()));
+    setPeerObject(newValue == null ? null : getObjectManager().newWeakObjectReference(getObjectID(), newValue));
   }
 
   protected boolean isEvictable() {

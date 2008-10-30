@@ -29,6 +29,7 @@ import com.tc.objectserver.l1.api.TestClientStateManager;
 import com.tc.objectserver.l1.impl.TransactionAcknowledgeAction;
 import com.tc.objectserver.lockmanager.api.TestLockManager;
 import com.tc.objectserver.managedobject.BackReferences;
+import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.impl.NullPersistenceTransactionProvider;
 import com.tc.objectserver.persistence.impl.TestTransactionStore;
 import com.tc.stats.counter.Counter;
@@ -87,7 +88,8 @@ public class ServerTransactionManagerImplTest extends TestCase {
                                                                this.clientStateManager, this.objectManager,
                                                                new NullTransactionalObjectManager(), this.action,
                                                                this.transactionRateCounter, this.channelStats,
-                                                               new ServerTransactionManagerConfig());
+                                                               new ServerTransactionManagerConfig(),
+                                                               new ObjectStatsRecorder());
     this.transactionManager.goToActiveMode();
     this.transactionManager.start(Collections.EMPTY_SET);
   }
@@ -549,11 +551,11 @@ public class ServerTransactionManagerImplTest extends TestCase {
     }
 
     public void notifyTransactionAckedFrom(NodeID nodeID) {
-      //NOP
+      // NOP
     }
 
     public void notifyTransactionBroadcastedTo(NodeID nodeID) {
-      //NOP
+      // NOP
     }
 
   }

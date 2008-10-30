@@ -48,6 +48,8 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
 import com.tc.objectserver.impl.DistributedObjectServer;
+import com.tc.objectserver.mgmt.ObjectStatsRecorder;
+import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.servlets.L1ReconnectPropertiesServlet;
@@ -221,13 +223,13 @@ public class TCServerImpl extends SEDA implements TCServer {
     ConfigItem persistenceModel = dsoL2Config != null ? dsoL2Config.persistenceMode() : null;
     return persistenceModel != null ? persistenceModel.getObject().toString() : "temporary-swap-only";
   }
-  
+
   public String getFailoverMode() {
     NewHaConfig haConfig = configurationSetupManager.haConfig();
     String haMode = haConfig != null ? haConfig.haMode() : null;
     return haMode != null ? haMode : "no failover";
   }
-  
+
   public int getDSOListenPort() {
     if (dsoServer != null) { return dsoServer.getListenPort(); }
     throw new IllegalStateException("DSO Server not running");
@@ -372,8 +374,16 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   private void startDSOServer(Sink httpSink) throws Exception {
     Assert.assertTrue(state.isStartState());
+    TCProperties tcProps = TCPropertiesImpl.getProperties();
+    ObjectStatsRecorder objectStatsRecorder = new ObjectStatsRecorder(tcProps
+        .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED), tcProps
+        .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_REQUEST_LOGGING_ENABLED), tcProps
+        .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_FLUSH_LOGGING_ENABLED), tcProps
+        .getBoolean(TCPropertiesConsts.L2_TRANSACTIONMANAGER_LOGGING_PRINT_BROADCAST_STATS), tcProps
+        .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_PERSISTOR_LOGGING_ENABLED));
     dsoServer = new DistributedObjectServer(configurationSetupManager, getThreadGroup(), connectionPolicy, httpSink,
-                                            new TCServerInfo(this, state), state, this);
+                                            new TCServerInfo(this, state, objectStatsRecorder), objectStatsRecorder,
+                                            state, this);
     dsoServer.start();
     registerDSOServer();
   }
@@ -490,8 +500,10 @@ public class TCServerImpl extends SEDA implements TCServer {
     mBeanServer.registerMBean(dso, L2MBeanNames.DSO);
     mBeanServer.registerMBean(mgmtContext.getDSOAppEventsMBean(), L2MBeanNames.DSO_APP_EVENTS);
     StatisticsLocalGathererMBeanImpl local_gatherer = new StatisticsLocalGathererMBeanImpl(statisticsGathererSubSystem,
-                                                                                           configurationSetupManager.commonl2Config(),
-                                                                                           configurationSetupManager.dsoL2Config());
+                                                                                           configurationSetupManager
+                                                                                               .commonl2Config(),
+                                                                                           configurationSetupManager
+                                                                                               .dsoL2Config());
     mBeanServer.registerMBean(local_gatherer, StatisticsMBeanNames.STATISTICS_GATHERER);
   }
 

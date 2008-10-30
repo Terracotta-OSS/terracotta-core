@@ -28,7 +28,7 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   void stop();
 
   boolean isShutdownable();
-  
+
   void shutdown();
 
   void startBeanShell(int port);
@@ -36,13 +36,13 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   String getVersion();
 
   String getBuildID();
-  
+
   boolean isPatched();
-  
+
   String getPatchLevel();
-  
+
   String getPatchVersion();
-  
+
   String getPatchBuildID();
 
   String getCopyright();
@@ -54,22 +54,43 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   L2Info[] getL2Info();
 
   int getDSOListenPort();
-  
+
   String getPersistenceMode();
-  
+
   String getFailoverMode();
-  
+
   String[] getCpuStatNames();
-  
+
   Map getStatistics();
-  
+
   StatisticData[] getCpuUsage();
 
   String takeThreadDump(long requestMillis);
-  
+
   String getEnvironment();
-  
+
   String getConfig();
-  
+
   String getState();
+
+  void setFaultDebug(boolean faultDebug);
+
+  boolean getFaultDebug();
+
+  void setRequestDebug(boolean requestDebug);
+
+  boolean getRequestDebug();
+  
+  void setFlushDebug(boolean flushDebug);
+
+  boolean getFlushDebug();
+  
+  void setBroadcastDebug(boolean broadcastDebug);
+
+  boolean getBroadcastDebug();
+ 
+  void setCommitDebug(boolean commitDebug);
+
+  boolean getCommitDebug();
+  
 }

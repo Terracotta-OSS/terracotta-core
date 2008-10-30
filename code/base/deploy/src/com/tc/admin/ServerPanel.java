@@ -4,6 +4,7 @@
  */
 package com.tc.admin;
 
+import org.dijon.CheckBox;
 import org.dijon.ContainerResource;
 import org.dijon.Item;
 import org.dijon.ScrollPane;
@@ -15,23 +16,37 @@ import com.tc.admin.common.PropertyTableModel;
 import com.tc.admin.common.StatusView;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XTextArea;
+import com.tc.admin.model.IServer;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
 
 import javax.swing.table.DefaultTableCellRenderer;
 
 public class ServerPanel extends XContainer {
-  private AdminClientContext m_acc;
-  private ServerNode         m_serverNode;
-  private PropertyTable      m_propertyTable;
-  private StatusView         m_statusView;
-  private TabbedPane         m_tabbedPane;
-  private XTextArea          m_environmentTextArea;
-  private XTextArea          m_configTextArea;
+  private AdminClientContext          m_acc;
+  private ServerNode                  m_serverNode;
+  private PropertyTable               m_propertyTable;
+  private StatusView                  m_statusView;
+  private TabbedPane                  m_tabbedPane;
+  private XTextArea                   m_environmentTextArea;
+  private XTextArea                   m_configTextArea;
+
+  protected CheckBox                  m_faultDebugCheckBox;
+  protected CheckBox                  m_requestDebugCheckBox;
+  protected CheckBox                  m_flushDebugCheckBox;
+  protected CheckBox                  m_broadcastDebugCheckBox;
+  protected CheckBox                  m_commitDebugCheckBox;
+
+  protected ActionListener            m_loggingChangeHandler;
+  protected HashMap<String, CheckBox> m_loggingControlMap;
 
   public ServerPanel(ServerNode serverNode) {
     super(serverNode);
@@ -57,6 +72,22 @@ public class ServerPanel extends XContainer {
     m_configTextArea = (XTextArea) findComponent("ConfigTextArea");
     ((SearchPanel) findComponent("ConfigSearchPanel")).setTextComponent(m_configTextArea);
 
+    m_faultDebugCheckBox = (CheckBox) findComponent("FaultDebug");
+    m_requestDebugCheckBox = (CheckBox) findComponent("RequestDebug");
+    m_flushDebugCheckBox = (CheckBox) findComponent("FlushDebug");
+    m_broadcastDebugCheckBox = (CheckBox) findComponent("BroadcastDebug");
+    m_commitDebugCheckBox = (CheckBox) findComponent("CommitDebug");
+
+    m_loggingControlMap = new HashMap<String, CheckBox>();
+    m_loggingChangeHandler = new LoggingChangeHandler();
+    
+    IServer server = serverNode.getServer();
+    setupLoggingControl(m_faultDebugCheckBox, server);
+    setupLoggingControl(m_requestDebugCheckBox, server);
+    setupLoggingControl(m_flushDebugCheckBox, server);
+    setupLoggingControl(m_broadcastDebugCheckBox, server);
+    setupLoggingControl(m_commitDebugCheckBox, server);
+    
     hideProductInfo();
   }
 
@@ -307,6 +338,55 @@ public class ServerPanel extends XContainer {
     repaint();
   }
 
+  private void setupLoggingControl(CheckBox checkBox, Object bean) {
+    setLoggingControl(checkBox, bean);
+    checkBox.putClientProperty(checkBox.getName(), bean);
+    checkBox.addActionListener(m_loggingChangeHandler);
+    m_loggingControlMap.put(checkBox.getName(), checkBox);
+  }
+
+  private void setLoggingControl(CheckBox checkBox, Object bean) {
+    try {
+      Class beanClass = bean.getClass();
+      Method setter = beanClass.getMethod("get" + checkBox.getName(), new Class[0]);
+      Boolean value = (Boolean) setter.invoke(bean, new Object[0]);
+      checkBox.setSelected(value.booleanValue());
+    } catch (Exception e) {
+      m_acc.log(e);
+    }
+  }
+  
+  private class LoggingChangeWorker extends BasicWorker<Void> {
+    private LoggingChangeWorker(final Object loggingBean, final String attrName, final boolean enabled) {
+      super(new Callable<Void>() {
+        public Void call() throws Exception {
+          Class beanClass = loggingBean.getClass();
+          Method setter = beanClass.getMethod("set" + attrName, new Class[] { Boolean.TYPE });
+          setter.invoke(loggingBean, new Object[] { Boolean.valueOf(enabled) });
+          return null;
+        }
+      });
+    }
+
+    protected void finished() {
+      Exception e = getException();
+      if (e != null) {
+        m_acc.log(e);
+      }
+    }
+  }
+
+  class LoggingChangeHandler implements ActionListener {
+    public void actionPerformed(ActionEvent ae) {
+      CheckBox checkBox = (CheckBox) ae.getSource();
+      Object loggingBean = checkBox.getClientProperty(checkBox.getName());
+      String attrName = checkBox.getName();
+      boolean enabled = checkBox.isSelected();
+
+      m_acc.execute(new LoggingChangeWorker(loggingBean, attrName, enabled));
+    }
+  }
+  
   public void tearDown() {
     m_statusView.tearDown();
 

@@ -17,6 +17,7 @@ import com.tc.logging.TCLogger;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
+import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
@@ -52,35 +53,31 @@ import java.util.TreeSet;
 public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase implements ManagedObjectPersistor,
     PrettyPrintable {
 
-  private static final Comparator                 MO_COMPARATOR         = new Comparator() {
-                                                                          public int compare(Object o1, Object o2) {
-                                                                            long oid1 = ((ManagedObject) o1).getID()
-                                                                                .toLong();
-                                                                            long oid2 = ((ManagedObject) o2).getID()
-                                                                                .toLong();
-                                                                            if (oid1 < oid2) {
-                                                                              return -1;
-                                                                            } else if (oid1 > oid2) {
-                                                                              return 1;
-                                                                            } else {
-                                                                              return 0;
-                                                                            }
-                                                                          }
-                                                                        };
+  private static final Comparator                 MO_COMPARATOR      = new Comparator() {
+                                                                       public int compare(Object o1, Object o2) {
+                                                                         long oid1 = ((ManagedObject) o1).getID()
+                                                                             .toLong();
+                                                                         long oid2 = ((ManagedObject) o2).getID()
+                                                                             .toLong();
+                                                                         if (oid1 < oid2) {
+                                                                           return -1;
+                                                                         } else if (oid1 > oid2) {
+                                                                           return 1;
+                                                                         } else {
+                                                                           return 0;
+                                                                         }
+                                                                       }
+                                                                     };
 
-  private static final Object                     MO_PERSISTOR_KEY      = ManagedObjectPersistorImpl.class.getName()
-                                                                          + ".saveAllObjects";
-  private static final Object                     MO_PERSISTOR_VALUE    = "Complete";
+  private static final Object                     MO_PERSISTOR_KEY   = ManagedObjectPersistorImpl.class.getName()
+                                                                       + ".saveAllObjects";
+  private static final Object                     MO_PERSISTOR_VALUE = "Complete";
 
-  private static final boolean                    STATS_LOGGING_ENABLED = TCPropertiesImpl
-                                                                            .getProperties()
-                                                                            .getBoolean(
-                                                                                        TCPropertiesConsts.L2_OBJECTMANAGER_PERSISTOR_LOGGING_ENABLED);
-  private static final boolean                    MEASURE_PERF          = TCPropertiesImpl
-                                                                            .getProperties()
-                                                                            .getBoolean(
-                                                                                        TCPropertiesConsts.L2_OBJECTMANAGER_PERSISTOR_MEASURE_PERF,
-                                                                                        false);
+  private static final boolean                    MEASURE_PERF       = TCPropertiesImpl
+                                                                         .getProperties()
+                                                                         .getBoolean(
+                                                                                     TCPropertiesConsts.L2_OBJECTMANAGER_PERSISTOR_MEASURE_PERF,
+                                                                                     false);
 
   private final Database                          objectDB;
   private final SerializationAdapterFactory       saf;
@@ -95,7 +92,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   private final ObjectIDManager                   objectIDManager;
   private final SyncObjectIdSet                   extantObjectIDs;
   private final SyncObjectIdSet                   extantMapTypeOidSet;
-  private final StatsRecorder                     commitStats;
+  private final ObjectStatsRecorder               objectStatsRecorder;
   private final StatsRecorder                     perfMeasureStats;
 
   private final ThreadLocal<SerializationAdapter> threadlocalAdapter;
@@ -104,8 +101,8 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
                                     SerializationAdapterFactory serializationAdapterFactory, DBEnvironment env,
                                     MutableSequence objectIDSequence, Database rootDB, CursorConfig rootDBCursorConfig,
                                     PersistenceTransactionProvider ptp,
-                                    SleepycatCollectionsPersistor collectionsPersistor, boolean paranoid)
-      throws TCDatabaseException {
+                                    SleepycatCollectionsPersistor collectionsPersistor, boolean paranoid,
+                                    ObjectStatsRecorder objectStatsRecorder) throws TCDatabaseException {
     this.logger = logger;
     this.classCatalog = classCatalog;
     this.saf = serializationAdapterFactory;
@@ -136,20 +133,10 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
     this.extantObjectIDs = getAllObjectIDs();
     this.extantMapTypeOidSet = getAllMapsObjectIDs();
 
-    if (STATS_LOGGING_ENABLED) {
-      commitStats = new StatsPrinter("MO Commit Stats Printer", 5000, new MessageFormat("Commits in the Last {0} ms"),
-                                     new MessageFormat(
-                                     // hate this stupid formatter, can't figure how to prefix with space
-                                                       // " count = {0,number,000000} bytes = {1,number,0000000} new =
-                                                       // {2,number, 0000}"
-                                                       " count = {0}   bytes = {1}   new = {2}"), true);
-    } else {
-      commitStats = new NullStatsRecorder();
-    }
+    this.objectStatsRecorder = objectStatsRecorder;
+
     if (MEASURE_PERF) {
       perfMeasureStats = new StatsPrinter(
-                                          "MO Delete Stats Printer",
-                                          60000,
                                           new MessageFormat("Deletes in the Last {0} ms"),
                                           new MessageFormat(
                                           // " count = {0,number,#} collections mo state = {1,number,#} time taken =
@@ -393,7 +380,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
           logger.debug("saveCount: " + saveCount);
         }
       }
-      if (STATS_LOGGING_ENABLED) {
+      if (objectStatsRecorder.getCommitDebug()) {
         updateStats(managedObject, length);
       }
     } catch (DatabaseException de) {
@@ -408,7 +395,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   }
 
   private void record(String className, int length, boolean isNew) {
-    commitStats.updateStats(className, 1, length, (isNew ? 1 : 0)); // count, bytes written, new
+    objectStatsRecorder.updateCommitStats(className, length, isNew); // count, bytes written, new
   }
 
   // logger.info("Deletes count:" + deleteCounter + " delete state count:" + deletePersistentStateCounter
@@ -512,8 +499,8 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
           collectionsPersistor.deleteCollection(tx, id);
         }
         if (MEASURE_PERF) {
-          perfMeasureStats.updateStats("Managed Objects deleted ", 1, (isMapType ? 1 : 0),
-                                       (System.nanoTime() - startTime));
+          perfMeasureStats.updateStats("Managed Objects deleted ", new long[] { 1, (isMapType ? 1 : 0),
+              (System.nanoTime() - startTime) });
         }
       }
     } catch (DatabaseException t) {

@@ -146,4 +146,45 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   public String getState() {
     return null;
   }
+
+  public boolean getFaultDebug() {
+    return false;
+  }
+
+  public void setFaultDebug(boolean faultDebug) {
+    /**/
+  }
+
+  public boolean getRequestDebug() {
+    return false;
+  }
+
+  public void setRequestDebug(boolean requestDebug) {
+    /**/
+  }
+
+  public boolean getFlushDebug() {
+    return false;
+  }
+
+  public void setFlushDebug(boolean flushDebug) {
+    /**/
+  }
+
+  public boolean getBroadcastDebug() {
+    return false;
+  }
+
+  public void setBroadcastDebug(boolean broadcastDebug) {
+    /**/
+  }
+
+  public boolean getCommitDebug() {
+    return false;
+  }
+
+  public void setCommitDebug(boolean commitDebug) {
+    /**/
+  }
+
 }

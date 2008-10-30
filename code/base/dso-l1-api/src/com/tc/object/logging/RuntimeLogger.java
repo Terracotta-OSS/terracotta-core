@@ -46,6 +46,14 @@ public interface RuntimeLogger {
   void setAutoLockDetails(boolean autoLockDetails);
   boolean getAutoLockDetails();
   
+  void setFlushDebug(boolean flushDebug);
+  boolean getFlushDebug();
+  void updateFlushStats(String type);
+  
+  void setFaultDebug(boolean faultDebug);
+  boolean getFaultDebug();
+  void updateFaultStats(String type);
+  
   // /////////////////////////////
   // log methods
   // /////////////////////////////

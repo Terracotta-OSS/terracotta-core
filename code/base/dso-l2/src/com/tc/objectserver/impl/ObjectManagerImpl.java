@@ -33,6 +33,7 @@ import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
 import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.managedobject.ManagedObjectTraverser;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
+import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
@@ -100,9 +101,12 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private TransactionalObjectManager                  txnObjectMgr             = new NullTransactionalObjectManager();
   private int                                         preFetchedCount          = 0;
 
+  private final ObjectStatsRecorder                   objectStatsRecorder;
+
   public ObjectManagerImpl(ObjectManagerConfig config, ThreadGroup gcThreadGroup, ClientStateManager stateManager,
                            ManagedObjectStore objectStore, EvictionPolicy cache,
-                           PersistenceTransactionProvider persistenceTransactionProvider, Sink faultSink, Sink flushSink) {
+                           PersistenceTransactionProvider persistenceTransactionProvider, Sink faultSink,
+                           Sink flushSink, ObjectStatsRecorder objectStatsRecorder) {
     this.faultSink = faultSink;
     this.flushSink = flushSink;
     Assert.assertNotNull(objectStore);
@@ -113,6 +117,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     this.evictionPolicy = cache;
     this.persistenceTransactionProvider = persistenceTransactionProvider;
     this.references = new HashMap<ObjectID, ManagedObjectReference>(10000);
+    this.objectStatsRecorder = objectStatsRecorder;
   }
 
   public void setTransactionalObjectManager(TransactionalObjectManager txnObjectManager) {
@@ -784,7 +789,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
     this.collector = newCollector;
 
-    if (!config.doGC() || config.gcThreadSleepTime() < 0) return;
+    if ((!config.doGC() || config.gcThreadSleepTime() <= 0)
+        && (!config.isYoungGenDGCEnabled() || config.getYoungGenDGCFrequencyInMillis() <= 0)) return;
 
     StoppableThread st = new GarbageCollectorThread(this.gcThreadGroup, "DGC", newCollector, this.config);
     st.setDaemon(true);
@@ -855,6 +861,10 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     ArrayList<ManagedObjectReference> removed = new ArrayList<ManagedObjectReference>();
     reapCache(removalCandidates, toFlush, removed);
 
+    if (objectStatsRecorder.getFlushDebug()) {
+      updateFlushStats(toFlush, removed);
+    }
+
     int evicted = (toFlush.size() + removed.size());
     // Let GC work for us
     removed = null;
@@ -868,6 +878,21 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
     // TODO:: Send the right objects to the cache manager
     stat.objectEvicted(evicted, references_size(), Collections.EMPTY_LIST);
+  }
+
+  private void updateFlushStats(Collection<ManagedObject> toFlush, Collection<ManagedObjectReference> removedObjects) {
+    Iterator<ManagedObject> flushIter = toFlush.iterator();
+    while (flushIter.hasNext()) {
+      String className = flushIter.next().getManagedObjectState().getClassName();
+      if (className == null) className = "UNKNOWN";
+      objectStatsRecorder.updateFlushStats(className);
+    }
+    Iterator<ManagedObjectReference> removedIter = removedObjects.iterator();
+    while (removedIter.hasNext()) {
+      String className = removedIter.next().getObject().getManagedObjectState().getClassName();
+      if (className == null) className = "UNKNOWN";
+      objectStatsRecorder.updateFlushStats(className);
+    }
   }
 
   private void waitUntilFlushComplete() {

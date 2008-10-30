@@ -12,6 +12,7 @@ import com.tc.objectserver.core.impl.TestServerConfigurationContext;
 import com.tc.objectserver.handler.ManagedObjectFaultHandler;
 import com.tc.objectserver.impl.TestManagedObjectStore;
 import com.tc.objectserver.impl.TestObjectManager;
+import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -49,7 +50,8 @@ public class SRAL2FaultsFromDiskTest extends TCTestCase {
     dsoGlobalServerStats = new DSOGlobalServerStatsImpl(null, null, null, null, null, null, faultsFromDisk,
                                                         time2FaultCounter, time2AddCounter);
 
-    this.managedObjectFaultHandler = new ManagedObjectFaultHandler(faultsFromDisk, time2FaultCounter, time2AddCounter);
+    this.managedObjectFaultHandler = new ManagedObjectFaultHandler(faultsFromDisk, time2FaultCounter, time2AddCounter,
+                                                                   new ObjectStatsRecorder());
     final TestServerConfigurationContext serverConfigContext = new TestServerConfigurationContext();
     serverConfigContext.objectManager = new TestObjectManager() {
       public void addFaultedObject(final ObjectID oid, final ManagedObject mo, final boolean removeOnRelease) {

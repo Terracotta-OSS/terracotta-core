@@ -14,13 +14,13 @@ public class SRAServerTransactionSequencer implements StatisticRetrievalAction {
 
   public final static String                    ACTION_NAME           = "l2 transaction sequencer";
 
-  private final static String                   TXN_COUNT             = "txn count";
+  public final static String                    TXN_COUNT             = "txn count";
 
-  private final static String                   PENDING_TXN_COUNT     = "pending transactions count";
+  public final static String                    PENDING_TXN_COUNT     = "pending transactions count";
 
-  private final static String                   BLOCKED_TXN_COUNT     = "blocked transactions count";
+  public final static String                    BLOCKED_TXN_COUNT     = "blocked transactions count";
 
-  private final static String                   BLOCKED_OBJECTS_COUNT = "blocked objects count";
+  public final static String                    BLOCKED_OBJECTS_COUNT = "blocked objects count";
 
   private final ServerTransactionSequencerStats serverTransactionSequencerStats;
 

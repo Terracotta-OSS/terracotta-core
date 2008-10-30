@@ -20,6 +20,7 @@ import com.tc.objectserver.managedobject.AbstractManagedObjectState;
 import com.tc.objectserver.managedobject.BackReferences;
 import com.tc.objectserver.managedobject.ManagedObjectTraverser;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
+import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.impl.TestMutableSequence;
@@ -70,7 +71,8 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
                                                             new SleepycatSerializationAdapterFactory(), env,
                                                             new TestMutableSequence(), env.getRootDatabase(),
                                                             rootDBCursorConfig, persistenceTransactionProvider,
-                                                            testSleepycatCollectionsPersistor, env.isParanoidMode());
+                                                            testSleepycatCollectionsPersistor, env.isParanoidMode(),
+                                                            new ObjectStatsRecorder());
     objectStore = new PersistentManagedObjectStore(managedObjectPersistor, new MockSink());
     oidManager = (FastObjectIDManagerImpl) managedObjectPersistor.getOibjectIDManager();
   }

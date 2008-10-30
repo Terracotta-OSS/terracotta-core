@@ -1121,4 +1121,80 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     m_productInfo = null;
     m_logListener = null;
   }
+
+  public void setFaultDebug(boolean faultDebug) {
+    TCServerInfoMBean serverInfo = getServerInfoBean();
+    if(serverInfo != null) {
+      serverInfo.setFaultDebug(faultDebug);
+    }
+  }
+
+  public boolean getFaultDebug() {
+    TCServerInfoMBean serverInfo = getServerInfoBean();
+    if(serverInfo != null) {
+      return serverInfo.getFaultDebug();
+    }
+    return false;
+  }
+
+  public boolean getFlushDebug() {
+    TCServerInfoMBean serverInfo = getServerInfoBean();
+    if(serverInfo != null) {
+      return serverInfo.getFlushDebug();
+    }
+    return false;
+  }
+
+  public void setFlushDebug(boolean flushDebug) {
+    TCServerInfoMBean serverInfo = getServerInfoBean();
+    if(serverInfo != null) {
+      serverInfo.setFlushDebug(flushDebug);
+    }
+  }
+
+  public boolean getRequestDebug() {
+    TCServerInfoMBean serverInfo = getServerInfoBean();
+    if(serverInfo != null) {
+      return serverInfo.getRequestDebug();
+    }
+    return false;
+  }
+
+  public void setRequestDebug(boolean requestDebug) {
+    TCServerInfoMBean serverInfo = getServerInfoBean();
+    if(serverInfo != null) {
+      serverInfo.setRequestDebug(requestDebug);
+    }
+  }
+  
+  public boolean getBroadcastDebug() {
+    TCServerInfoMBean serverInfo = getServerInfoBean();
+    if(serverInfo != null) {
+      return serverInfo.getBroadcastDebug();
+    }
+    return false;
+  }
+
+  public void setBroadcastDebug(boolean broadcastDebug) {
+    TCServerInfoMBean serverInfo = getServerInfoBean();
+    if(serverInfo != null) {
+      serverInfo.setBroadcastDebug(broadcastDebug);
+    }
+  }
+  
+  public boolean getCommitDebug() {
+    TCServerInfoMBean serverInfo = getServerInfoBean();
+    if(serverInfo != null) {
+      return serverInfo.getCommitDebug();
+    }
+    return false;
+  }
+
+  public void setCommitDebug(boolean commitDebug) {
+    TCServerInfoMBean serverInfo = getServerInfoBean();
+    if(serverInfo != null) {
+      serverInfo.setCommitDebug(commitDebug);
+    }
+  }
+  
 }

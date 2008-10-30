@@ -18,6 +18,7 @@ import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
+import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.server.NullTCServerInfo;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
@@ -29,7 +30,7 @@ import java.net.UnknownHostException;
 
 /**
  * Test for DEV-1060
- *
+ * 
  * @author Manoj
  */
 public class DSOServerBindAddressTest extends BaseDSOTestCase {
@@ -37,7 +38,7 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
                                                 .getLogger(DistributedObjectServer.class)));
   private static final String[]   bindAddrs = { "0.0.0.0", "127.0.0.1", localAddr() };
   private DistributedObjectServer server;
-  
+
   static String localAddr() {
     try {
       return InetAddress.getLocalHost().getHostAddress();
@@ -59,7 +60,8 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
 
     public void execute() throws Throwable {
       server = new DistributedObjectServer(createL2Manager(bindAddr, dsoPort, jmxPort), group,
-                                           new NullConnectionPolicy(), new NullTCServerInfo());
+                                           new NullConnectionPolicy(), new NullTCServerInfo(),
+                                           new ObjectStatsRecorder());
       server.start();
     }
 

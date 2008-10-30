@@ -35,20 +35,20 @@ import java.util.HashSet;
 import java.util.Map;
 
 public class ClientObjectManagerTest extends BaseDSOTestCase {
-  private ClientObjectManager     mgr;
-  private TestRemoteObjectManager remoteObjectManager;
-  private DSOClientConfigHelper   clientConfiguration;
-  private ObjectIDProvider        idProvider;
-  private EvictionPolicy          cache;
-  private RuntimeLogger           runtimeLogger;
-  private ClassProvider           classProvider;
-  private TCClassFactory          classFactory;
-  private TestObjectFactory       objectFactory;
-  private String                  rootName;
-  private Object                  object;
-  private ObjectID                objectID;
-  private MockTCObject            tcObject;
-  private CyclicBarrier           mutualRefBarrier;
+  private ClientObjectManager            mgr;
+  private TestRemoteObjectManager        remoteObjectManager;
+  private DSOClientConfigHelper          clientConfiguration;
+  private ObjectIDProvider               idProvider;
+  private EvictionPolicy                 cache;
+  private RuntimeLogger                  runtimeLogger;
+  private ClassProvider                  classProvider;
+  private TCClassFactory                 classFactory;
+  private TestObjectFactory              objectFactory;
+  private String                         rootName;
+  private Object                         object;
+  private ObjectID                       objectID;
+  private MockTCObject                   tcObject;
+  private CyclicBarrier                  mutualRefBarrier;
 
   public void setUp() throws Exception {
     remoteObjectManager = new TestRemoteObjectManager();
@@ -188,7 +188,6 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     RuntimeException expect = new RuntimeException();
     this.tcObject.setHydrateException(expect);
 
-
     TestDNA dna = newEmptyDNA();
     prepareObjectLookupResults(dna);
 
@@ -196,7 +195,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
       mgr.lookup(objectID);
       fail("no exception");
     } catch (Exception e) {
-      if (! (e == expect || e.getCause() == expect)) {
+      if (!(e == expect || e.getCause() == expect)) {
         fail(e);
       }
     }
@@ -208,7 +207,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
       mgr.lookup(objectID);
       fail("no exception");
     } catch (Exception e) {
-      if (! (e == expect || e.getCause() == expect)) {
+      if (!(e == expect || e.getCause() == expect)) {
         fail(e);
       }
     }
@@ -436,26 +435,26 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
         if (getLocalDepthCounter().get() == 0) {
           TCField[] tcFields = new TCField[] { new MockTCField("object") };
           TCClass tcClass = new MockTCClass(clientObjectManager, true, true, true, tcFields);
-          tcObj = new TCObjectPhysical(clientObjectManager.getReferenceQueue(), id, null, tcClass, isNew);
+          tcObj = new TCObjectPhysical(id, null, tcClass, isNew);
           tcObj.setReference("object", new ObjectID(2));
           getLocalDepthCounter().increment();
         } else {
           TCField[] tcFields = new TCField[] { new MockTCField("object") };
           TCClass tcClass = new MockTCClass(clientObjectManager, true, true, true, tcFields);
-          tcObj = new TCObjectPhysical(clientObjectManager.getReferenceQueue(), id, null, tcClass, isNew);
+          tcObj = new TCObjectPhysical(id, null, tcClass, isNew);
           getLocalDepthCounter().increment();
         }
       } else if (id.toLong() == 2) {
         if (getLocalDepthCounter().get() == 0) {
           TCField[] tcFields = new TCField[] { new MockTCField("object") };
           TCClass tcClass = new MockTCClass(clientObjectManager, true, true, true, tcFields);
-          tcObj = new TCObjectPhysical(clientObjectManager.getReferenceQueue(), id, null, tcClass, isNew);
+          tcObj = new TCObjectPhysical(id, null, tcClass, isNew);
           tcObj.setReference("object", new ObjectID(1));
           getLocalDepthCounter().increment();
         } else {
           TCField[] tcFields = new TCField[] { new MockTCField("object") };
           TCClass tcClass = new MockTCClass(clientObjectManager, true, true, true, tcFields);
-          tcObj = new TCObjectPhysical(clientObjectManager.getReferenceQueue(), id, null, tcClass, isNew);
+          tcObj = new TCObjectPhysical(id, null, tcClass, isNew);
           getLocalDepthCounter().increment();
         }
       }

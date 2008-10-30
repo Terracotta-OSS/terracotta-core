@@ -14,7 +14,6 @@ import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.util.ToggleableStrongReference;
 import com.tc.text.PrettyPrintable;
 
-import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.Collection;
 
@@ -271,13 +270,6 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
   public ClientTransactionManager getTransactionManager();
 
   /**
-   * Get the reference queue for weakly referenced peers
-   * 
-   * @return Reference queue
-   */
-  public ReferenceQueue getReferenceQueue();
-
-  /**
    * Shutdown the client object manager
    */
   public void shutdown();
@@ -359,5 +351,14 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
    * @return the toggle reference
    */
   ToggleableStrongReference getOrCreateToggleRef(ObjectID objectID, Object peer);
+
+  /**
+   * Create new WeakReference wrapper for the given id and peer object.
+   * 
+   * @param objectID The TCObjet
+   * @param peer The peer object
+   * @return the weak reference
+   */
+  WeakReference newWeakObjectReference(ObjectID objectID, Object peer);
 
 }

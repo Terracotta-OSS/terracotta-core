@@ -21,6 +21,7 @@ import com.tc.objectserver.api.NullObjectInstanceMonitor;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.core.api.TestDNA;
+import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.impl.TestMutableSequence;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransactionProvider;
@@ -65,7 +66,7 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
                                                             sleepycatSerializationAdapterFactory, env,
                                                             new TestMutableSequence(), env.getRootDatabase(),
                                                             rootDBCursorConfig, ptp, sleepycatCollectionsPersistor, env
-                                                                .isParanoidMode());
+                                                                .isParanoidMode(), new ObjectStatsRecorder());
 
     NullManagedObjectChangeListenerProvider listenerProvider = new NullManagedObjectChangeListenerProvider();
     ManagedObjectStateFactory.disableSingleton(true);

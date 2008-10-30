@@ -60,7 +60,9 @@ public class ClientPanel extends XContainer implements NotificationListener, Pro
   protected CheckBox                  m_waitNotifyDebugCheckBox;
   protected CheckBox                  m_distributedMethodDebugCheckBox;
   protected CheckBox                  m_newObjectDebugCheckBox;
-
+  protected CheckBox                  m_flushDebugCheckBox;
+  protected CheckBox                  m_faultDebugCheckBox;
+  
   protected CheckBox                  m_autoLockDetailsCheckBox;
   protected CheckBox                  m_callerCheckBox;
   protected CheckBox                  m_fullStackCheckBox;
@@ -98,6 +100,8 @@ public class ClientPanel extends XContainer implements NotificationListener, Pro
     m_waitNotifyDebugCheckBox = (CheckBox) findComponent("WaitNotifyDebug");
     m_distributedMethodDebugCheckBox = (CheckBox) findComponent("DistributedMethodDebug");
     m_newObjectDebugCheckBox = (CheckBox) findComponent("NewObjectDebug");
+    m_flushDebugCheckBox = (CheckBox) findComponent("FlushDebug");
+    m_faultDebugCheckBox = (CheckBox) findComponent("FaultDebug");
 
     m_autoLockDetailsCheckBox = (CheckBox) findComponent("AutoLockDetails");
     m_callerCheckBox = (CheckBox) findComponent("Caller");
@@ -169,6 +173,8 @@ public class ClientPanel extends XContainer implements NotificationListener, Pro
     setupLoggingControl(m_waitNotifyDebugCheckBox, runtimeLoggingBean);
     setupLoggingControl(m_distributedMethodDebugCheckBox, runtimeLoggingBean);
     setupLoggingControl(m_newObjectDebugCheckBox, runtimeLoggingBean);
+    setupLoggingControl(m_flushDebugCheckBox, runtimeLoggingBean);
+    setupLoggingControl(m_faultDebugCheckBox, runtimeLoggingBean);
   }
 
   private void setupRuntimeOutputOptions() throws Exception {
@@ -284,6 +290,8 @@ public class ClientPanel extends XContainer implements NotificationListener, Pro
     m_waitNotifyDebugCheckBox = null;
     m_distributedMethodDebugCheckBox = null;
     m_newObjectDebugCheckBox = null;
+    m_flushDebugCheckBox = null;
+    m_faultDebugCheckBox = null;
     m_autoLockDetailsCheckBox = null;
     m_callerCheckBox = null;
     m_fullStackCheckBox = null;

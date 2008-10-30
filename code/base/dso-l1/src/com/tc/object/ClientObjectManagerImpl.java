@@ -104,7 +104,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
   private final TCClassFactory                 clazzFactory;
   private final Set                            rootLookupsInProgress  = new HashSet();
   private final ObjectIDProvider               idProvider;
-  private final ReferenceQueue                 referenceQueue         = new ReferenceQueue();
   private final TCObjectFactory                factory;
 
   private ClientTransactionManager             txManager;
@@ -120,6 +119,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
   private final Portability                    portability;
   private final DSOClientMessageChannel        channel;
   private final ToggleableReferenceManager     referenceManager;
+  private final ReferenceQueue                 referenceQueue         = new ReferenceQueue();
 
   private final boolean                        sendErrors             = System.getProperty("project.name") != null;
 
@@ -271,10 +271,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
   private TCObject share(Object pojo, NonPortableEventContext context) {
     addToSharedFromRoot(pojo, context);
     return basicLookup(pojo);
-  }
-
-  public ReferenceQueue getReferenceQueue() {
-    return referenceQueue;
   }
 
   public void shutdown() {
@@ -510,6 +506,9 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
           Assert.assertFalse(dna.isDelta());
           // now hydrate the object, this could call resolveReferences which would call this method recursively
           obj.hydrate(dna, false);
+          if (runtimeLogger.getFaultDebug()) {
+            runtimeLogger.updateFaultStats(dna.getTypeName());
+          }
         } catch (Exception e) {
           // remove the object creating in progress from the list.
           if (createInProgressSet) removeCreateInProgress(id);
@@ -1053,7 +1052,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
   public WeakReference createNewPeer(TCClass clazz, DNA dna) {
     if (clazz.isUseNonDefaultConstructor()) {
       try {
-        return new WeakObjectReference(dna.getObjectID(), factory.getNewPeerObject(clazz, dna), referenceQueue);
+        return newWeakObjectReference(dna.getObjectID(), factory.getNewPeerObject(clazz, dna));
       } catch (Exception e) {
         throw new TCRuntimeException(e);
       }
@@ -1066,14 +1065,22 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     try {
       if (clazz.isIndexed()) {
         Object array = factory.getNewArrayInstance(clazz, size);
-        return new WeakObjectReference(id, array, referenceQueue);
+        return newWeakObjectReference(id, array);
       } else if (parentID.isNull()) {
-        return new WeakObjectReference(id, factory.getNewPeerObject(clazz), referenceQueue);
+        return newWeakObjectReference(id, factory.getNewPeerObject(clazz));
       } else {
-        return new WeakObjectReference(id, factory.getNewPeerObject(clazz, lookupObject(parentID)), referenceQueue);
+        return newWeakObjectReference(id, factory.getNewPeerObject(clazz, lookupObject(parentID)));
       }
     } catch (Exception e) {
       throw new TCRuntimeException(e);
+    }
+  }
+
+  public WeakReference newWeakObjectReference(ObjectID oid, Object referent) {
+    if (runtimeLogger.getFlushDebug()) {
+      return new LoggingWeakObjectReference(oid, referent, referenceQueue);
+    } else {
+      return new WeakObjectReference(oid, referent, referenceQueue);
     }
   }
 
@@ -1101,6 +1108,9 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
             if (wor != null) {
               ObjectID objectID = wor.getObjectID();
               reap(objectID);
+              if (runtimeLogger.getFlushDebug()) {
+                updateFlushStats(wor);
+              }
             }
           } catch (InterruptedException e) {
             return;
@@ -1110,6 +1120,12 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     };
     reaper.setDaemon(true);
     reaper.start();
+  }
+
+  private void updateFlushStats(WeakObjectReference wor) {
+    String className = wor.getObjectType();
+    if (className == null) className = "UNKNOWN";
+    runtimeLogger.updateFlushStats(className);
   }
 
   // XXX::: Cache eviction doesnt clear it from the cache. it happens in reap().

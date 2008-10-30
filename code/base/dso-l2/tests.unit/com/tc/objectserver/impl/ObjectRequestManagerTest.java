@@ -59,6 +59,7 @@ import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListenerProviderImpl;
 import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
+import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.sleepycat.CustomSerializationAdapterFactory;
@@ -148,7 +149,7 @@ public class ObjectRequestManagerTest extends TestCase {
     ObjectRequestManagerImpl objectRequestManager = new ObjectRequestManagerImpl(objectManager, channelManager,
                                                                                  clientStateManager,
                                                                                  serverTransactionManager, requestSink,
-                                                                                 respondSink);
+                                                                                 respondSink, new ObjectStatsRecorder());
 
     int objectsToBeRequested = 47;
     int numberOfRequestsMade = objectsToBeRequested / ObjectRequestManagerImpl.SPLIT_SIZE;
@@ -223,7 +224,7 @@ public class ObjectRequestManagerTest extends TestCase {
     ObjectRequestManagerImpl objectRequestManager = new ObjectRequestManagerImpl(objectManager, channelManager,
                                                                                  clientStateManager,
                                                                                  serverTransactionManager, requestSink,
-                                                                                 respondSink);
+                                                                                 respondSink, new ObjectStatsRecorder());
 
     int objectsToBeRequested = 100;
     int numberOfRequestsMade = objectsToBeRequested / ObjectRequestManagerImpl.SPLIT_SIZE;
@@ -336,7 +337,7 @@ public class ObjectRequestManagerTest extends TestCase {
     ObjectRequestManagerImpl objectRequestManager = new ObjectRequestManagerImpl(objectManager, channelManager,
                                                                                  clientStateManager,
                                                                                  serverTransactionManager, requestSink,
-                                                                                 respondSink);
+                                                                                 respondSink, new ObjectStatsRecorder());
 
     int objectsToBeRequested = 100;
     int numberOfRequestsMade = objectsToBeRequested / ObjectRequestManagerImpl.SPLIT_SIZE;
@@ -449,7 +450,7 @@ public class ObjectRequestManagerTest extends TestCase {
     ObjectRequestManagerImpl objectRequestManager = new ObjectRequestManagerImpl(objectManager, channelManager,
                                                                                  clientStateManager,
                                                                                  serverTransactionManager, requestSink,
-                                                                                 respondSink);
+                                                                                 respondSink, new ObjectStatsRecorder());
     ClientID clientID = new ClientID(new ChannelID(1));
     ObjectRequestID requestID = new ObjectRequestID(1);
 
@@ -498,7 +499,7 @@ public class ObjectRequestManagerTest extends TestCase {
     ObjectRequestManagerImpl objectRequestManager = new ObjectRequestManagerImpl(objectManager, channelManager,
                                                                                  clientStateManager,
                                                                                  serverTransactionManager, requestSink,
-                                                                                 respondSink);
+                                                                                 respondSink, new ObjectStatsRecorder());
     ClientID clientID = new ClientID(new ChannelID(1));
     ObjectRequestID requestID = new ObjectRequestID(1);
     ObjectIDSet ids = createObjectIDSet(100);
@@ -530,8 +531,8 @@ public class ObjectRequestManagerTest extends TestCase {
     Sink respondSink = new TestSink();
     Collection objs = null;
 
-    LookupContext lookupContext = new LookupContext( clientID, objectRequestID, ids, 0, "Thread-1", false,
-                                                    requestSink, respondSink);
+    LookupContext lookupContext = new LookupContext(clientID, objectRequestID, ids, 0, "Thread-1", false, requestSink,
+                                                    respondSink);
     assertEquals(lookupContext.getLookupIDs().size(), ids.size());
     assertEquals(0, lookupContext.getMaxRequestDepth());
     assertEquals(clientID, lookupContext.getRequestedNodeID());
