@@ -151,11 +151,14 @@ postscripts:
   - install-forge-tims:
       args:
         - tim-apache-struts-1.1
+        - tim-rife-1.6.0
   - inject-forge-tims:
       args:
         - tims: 
             - tim-apache-struts-1.1
+            - tim-rife-1.6.0
         - dest: 
+            - samples/rife
             - tools/sessions/configurator-sandbox
   - delete-tim-get-index
   - include-schemas:
