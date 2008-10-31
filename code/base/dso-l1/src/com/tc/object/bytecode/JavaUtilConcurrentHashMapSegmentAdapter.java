@@ -107,15 +107,15 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
           new ClearMethodAdapter(mv),
           super.visitMethod(ACC_SYNTHETIC, TC_ORIG_CLEAR_METHOD_NAME, TC_ORIG_CLEAR_METHOD_DESC, null, null),
           // Again, this method does not require locking as it is called by __tc_rehash() which grabs the lock already.
-          new RemoveLockUnlockMethodAdapter(super.visitMethod(ACC_SYNTHETIC, TC_CLEAR_METHOD_NAME, TC_CLEAR_METHOD_DESC, null, null))});
+          new RemoveLockUnlockMethodAdapter(newLazyValuesAdapter(access, desc, super.visitMethod(ACC_SYNTHETIC, TC_CLEAR_METHOD_NAME, TC_CLEAR_METHOD_DESC, null, null)))});
       } else if ("replace".equals(name) && "(Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;".equals(desc)) {
-        visitor = new ReplaceMethodAdapter(mv);
+        visitor = new ReplaceMethodAdapter(newLazyValuesAdapter(access, desc, mv));
       } else if ("replace".equals(name) && "(Ljava/lang/Object;ILjava/lang/Object;Ljava/lang/Object;)Z".equals(desc)) {
-        visitor = new ReplaceIfValueEqualMethodAdapter(mv);
+        visitor = new ReplaceIfValueEqualMethodAdapter(newLazyValuesAdapter(access, desc, mv));
       } else if ("<init>".equals(name) && "(IF)V".equals(desc)) {
-        visitor = new InitMethodAdapter(mv);
+        visitor = new InitMethodAdapter(newLazyValuesAdapter(access, desc, mv));
       } else if ("readValueUnderLock".equals(name) && "(Ljava/util/concurrent/ConcurrentHashMap$HashEntry;)Ljava/lang/Object;".equals(desc)) {
-        visitor = new ReadValueUnderLockMethodAdapter(mv);
+        visitor = new ReadValueUnderLockMethodAdapter(newLazyValuesAdapter(access, desc, mv));
       } else {
         visitor = mv;
       }
@@ -123,9 +123,13 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
       if ("rehash".equals(name) && "()V".equals(desc)) {
         return visitor;
       } else {
-        return new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, visitor, false);
+        return visitor == mv ? newLazyValuesAdapter(access, desc, mv) : visitor;
       }
     }
+  }
+
+  private JavaUtilConcurrentHashMapLazyValuesMethodAdapter newLazyValuesAdapter(int access, String desc, MethodVisitor mv) {
+    return new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, mv, false);
   }
 
   private String getNewName(String methodName) {
