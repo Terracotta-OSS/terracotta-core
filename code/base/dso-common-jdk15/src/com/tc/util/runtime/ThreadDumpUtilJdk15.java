@@ -14,7 +14,7 @@ public class ThreadDumpUtilJdk15 {
   private static ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
 
   public static String getThreadDump() {
-    return getThreadDump(new NullLockInfoByThreadIDImpl(), new NullThreadIDMap());
+    return getThreadDump(new NullLockInfoByThreadIDImpl(), new NullThreadIDMapImpl());
   }
 
   public static String getThreadDump(LockInfoByThreadID lockInfo, ThreadIDMap threadIDMap) {

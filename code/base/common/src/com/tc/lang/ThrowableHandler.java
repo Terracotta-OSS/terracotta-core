@@ -15,7 +15,6 @@ import com.tc.handler.CallbackStartupExceptionLoggingAdapter;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
 import com.tc.logging.TCLogger;
-import com.tc.logging.ThreadDumpHandler;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.TCDataFileLockingException;
@@ -51,12 +50,7 @@ public class ThrowableHandler {
     helper = new ExceptionHelperImpl();
     helper.addHelper(new RuntimeExceptionHelper());
     helper.addHelper(new MortbayMultiExceptionHelper());
-    registerDefaultCallbackHandlers();
     registerStartupExceptionCallbackHandlers();
-  }
-
-  protected void registerDefaultCallbackHandlers() {
-    callbackOnExitDefaultHandlers.add(new ThreadDumpHandler());
   }
 
   protected void registerStartupExceptionCallbackHandlers() {

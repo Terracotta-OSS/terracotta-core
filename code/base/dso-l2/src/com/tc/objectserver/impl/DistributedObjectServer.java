@@ -22,6 +22,7 @@ import com.tc.exception.ZapServerNodeException;
 import com.tc.handler.CallbackDatabaseDirtyAlertAdapter;
 import com.tc.handler.CallbackDirtyDatabaseCleanUpAdapter;
 import com.tc.handler.CallbackDumpAdapter;
+import com.tc.handler.LockInfoDumpHandler;
 import com.tc.io.TCFile;
 import com.tc.io.TCFileImpl;
 import com.tc.io.TCRandomFileAccessImpl;
@@ -34,6 +35,7 @@ import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.logging.ThreadDumpHandler;
 import com.tc.management.L2LockStatsManager;
 import com.tc.management.L2Management;
 import com.tc.management.RemoteJMXProcessor;
@@ -230,6 +232,9 @@ import com.tc.util.TCTimeoutException;
 import com.tc.util.TCTimerImpl;
 import com.tc.util.UUID;
 import com.tc.util.io.TCFileUtils;
+import com.tc.util.runtime.LockInfoByThreadID;
+import com.tc.util.runtime.NullThreadIDMapImpl;
+import com.tc.util.runtime.ThreadIDMap;
 import com.tc.util.sequence.BatchSequence;
 import com.tc.util.sequence.MutableSequence;
 import com.tc.util.sequence.Sequence;
@@ -251,7 +256,7 @@ import javax.management.remote.JMXConnectorServer;
 /**
  * Startup and shutdown point. Builds and starts the server
  */
-public class DistributedObjectServer implements TCDumper, ChannelManagerEventListener {
+public class DistributedObjectServer implements TCDumper, ChannelManagerEventListener, LockInfoDumpHandler {
   private ServerID                             thisServerNodeID         = ServerID.NULL_ID;
   private final ConnectionPolicy               connectionPolicy;
 
@@ -353,7 +358,8 @@ public class DistributedObjectServer implements TCDumper, ChannelManagerEventLis
 
   public synchronized void start() throws IOException, TCDatabaseException, LocationNotCreatedException,
       FileNotCreatedException {
-
+    
+    threadGroup.addCallbackOnExitDefaultHandler(new ThreadDumpHandler(this));
     thisServerNodeID = makeServerNodeID(configSetupManager.dsoL2Config());
     L2LockStatsManager lockStatsManager = new L2LockStatisticsManagerImpl();
 
@@ -1225,5 +1231,13 @@ public class DistributedObjectServer implements TCDumper, ChannelManagerEventLis
 
   public ReconnectConfig getL1ReconnectProperties() {
     return l1ReconnectConfig;
+  }
+
+  public void addAllLocksTo(LockInfoByThreadID lockInfo) {
+    // this feature not implemented for server. DEV-1949
+  }
+
+  public ThreadIDMap getThreadIDMap() {
+    return new NullThreadIDMapImpl();
   }
 }

@@ -4,15 +4,10 @@
  */
 package com.tc.management;
 
+import com.tc.handler.LockInfoDumpHandler;
 import com.tc.management.beans.TCDumper;
-import com.tc.object.lockmanager.api.ClientLockManager;
-import com.tc.util.runtime.ThreadIDMap;
 
-public interface TCClient extends TCDumper {
-
-  public ThreadIDMap getThreadIDMap();
-
-  public ClientLockManager getLockManager();
+public interface TCClient extends TCDumper, LockInfoDumpHandler {
 
   public void startBeanShell(int port);
 

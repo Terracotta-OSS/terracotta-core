@@ -21,6 +21,7 @@ import com.tc.logging.ChannelIDLoggerProvider;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.logging.ThreadDumpHandler;
 import com.tc.management.ClientLockStatManager;
 import com.tc.management.L1Management;
 import com.tc.management.TCClient;
@@ -149,6 +150,7 @@ import com.tc.util.ProductInfo;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.ToggleableReferenceManager;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tc.util.runtime.LockInfoByThreadID;
 import com.tc.util.runtime.ThreadIDMap;
 import com.tc.util.runtime.ThreadIDMapUtil;
 import com.tc.util.sequence.BatchSequence;
@@ -211,6 +213,14 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
   public ThreadIDMap getThreadIDMap() {
     return this.threadIDMap;
+  }
+
+  public void addAllLocksTo(LockInfoByThreadID lockInfo) {
+    if (this.lockManager != null) {
+      this.lockManager.addAllLocksTo(lockInfo);
+    } else {
+      logger.error("LockManager not initialised still. LockInfo for threads cannot be updated");
+    }
   }
 
   public void setCreateDedicatedMBeanServer(boolean createDedicatedMBeanServer) {
@@ -280,6 +290,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     final SessionManager sessionManager = new SessionManagerImpl(sessionSequence);
     final SessionProvider sessionProvider = (SessionProvider) sessionManager;
 
+    threadGroup.addCallbackOnExitDefaultHandler(new ThreadDumpHandler(this));
     StageManager stageManager = getStageManager();
 
     // stageManager.turnTracingOn();
@@ -594,10 +605,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
    */
   public synchronized void stopForTests() {
     manager.stop();
-  }
-
-  public ClientLockManager getLockManager() {
-    return lockManager;
   }
 
   public ClientTransactionManager getTransactionManager() {

@@ -13,6 +13,7 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 import com.tc.config.lock.LockContextInfo;
 import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.exception.TCRuntimeException;
+import com.tc.handler.LockInfoDumpHandler;
 import com.tc.logging.NullTCLogger;
 import com.tc.logging.TCLogger;
 import com.tc.management.ClientLockStatManager;
@@ -39,6 +40,7 @@ import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tc.util.runtime.LockInfoByThreadID;
 import com.tc.util.runtime.ThreadIDMap;
 import com.tc.util.runtime.ThreadIDMapUtil;
 
@@ -594,7 +596,19 @@ public class ClientLockManagerTest extends TCTestCase {
 
     final ThreadIDMap threadIDMap = ThreadIDMapUtil.getInstance();
     final ThreadLockManager threadLockManager = new ThreadLockManagerImpl(lockManager, threadIDMap);
-    final L1Info l1info = new L1Info(lockManager, threadIDMap);
+    final LockInfoDumpHandler lockInfoDumpHandler = new LockInfoDumpHandler() {
+
+      public void addAllLocksTo(LockInfoByThreadID lockInfo) {
+        lockManager.addAllLocksTo(lockInfo);
+      }
+
+      public ThreadIDMap getThreadIDMap() {
+        return threadIDMap;
+      }
+
+    };
+
+    final L1Info l1info = new L1Info(lockInfoDumpHandler);
 
     final LockID lockID = new LockID("my lock");
     final ThreadID tx1 = new ThreadID(1);
@@ -824,7 +838,19 @@ public class ClientLockManagerTest extends TCTestCase {
     final ThreadIDMap threadIDMap = ThreadIDMapUtil.getInstance();
     final ThreadLockManager threadLockManager = new ThreadLockManagerImpl(lockManager, threadIDMap);
 
-    final L1Info l1info = new L1Info(lockManager, threadIDMap);
+    final LockInfoDumpHandler lockInfoDumpHandler = new LockInfoDumpHandler() {
+
+      public void addAllLocksTo(LockInfoByThreadID lockInfo) {
+        lockManager.addAllLocksTo(lockInfo);
+      }
+
+      public ThreadIDMap getThreadIDMap() {
+        return threadIDMap;
+      }
+
+    };
+
+    final L1Info l1info = new L1Info(lockInfoDumpHandler);
     final LockID lid0 = threadLockManager.lockIDFor("Locky0");
     final LockID lid1 = threadLockManager.lockIDFor("Locky1");
     final LockID lid2 = threadLockManager.lockIDFor("Locky2");

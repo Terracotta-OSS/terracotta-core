@@ -11,7 +11,7 @@ import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.lockmanager.api.ThreadLockManager;
 import com.tc.object.lockmanager.api.WaitListener;
 import com.tc.object.tx.TimerSpec;
-import com.tc.util.runtime.NullThreadIDMap;
+import com.tc.util.runtime.NullThreadIDMapImpl;
 import com.tc.util.runtime.ThreadIDMap;
 
 public class ThreadLockManagerImpl implements ThreadLockManager {
@@ -22,7 +22,7 @@ public class ThreadLockManagerImpl implements ThreadLockManager {
   private final ThreadIDMap       threadIDMap;
 
   public ThreadLockManagerImpl(ClientLockManager lockManager) {
-    this(lockManager, new NullThreadIDMap());
+    this(lockManager, new NullThreadIDMapImpl());
   }
 
   public ThreadLockManagerImpl(ClientLockManager lockManager, ThreadIDMap thMap) {

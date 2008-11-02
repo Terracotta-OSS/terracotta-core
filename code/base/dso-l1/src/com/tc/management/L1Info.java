@@ -4,10 +4,10 @@
  */
 package com.tc.management;
 
+import com.tc.handler.LockInfoDumpHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.beans.l1.L1InfoMBean;
-import com.tc.object.lockmanager.api.ClientLockManager;
 import com.tc.runtime.JVMMemoryManager;
 import com.tc.runtime.MemoryUsage;
 import com.tc.runtime.TCRuntime;
@@ -17,7 +17,6 @@ import com.tc.util.ProductInfo;
 import com.tc.util.runtime.LockInfoByThreadID;
 import com.tc.util.runtime.LockInfoByThreadIDImpl;
 import com.tc.util.runtime.ThreadDumpUtil;
-import com.tc.util.runtime.ThreadIDMap;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,17 +30,16 @@ import java.util.Properties;
 import javax.management.NotCompliantMBeanException;
 
 public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
-  private static final TCLogger    logger = TCLogging.getLogger(L1Info.class);
-  private final ProductInfo        productInfo;
-  private final String             buildID;
+  private static final TCLogger     logger = TCLogging.getLogger(L1Info.class);
+  private final ProductInfo         productInfo;
+  private final String              buildID;
 
-  private final String             rawConfigText;
-  private final JVMMemoryManager   manager;
-  private StatisticRetrievalAction cpuSRA;
-  private String[]                 cpuNames;
-  private final TCClient           client;
-  private final ThreadIDMap        threadIDMap;
-  private final ClientLockManager  lockManager;
+  private final String              rawConfigText;
+  private final JVMMemoryManager    manager;
+  private StatisticRetrievalAction  cpuSRA;
+  private String[]                  cpuNames;
+  private final TCClient            client;
+  private final LockInfoDumpHandler lockInfoDumpHandler;
 
   public L1Info(TCClient client, String rawConfigText) throws NotCompliantMBeanException {
     super(L1InfoMBean.class, false);
@@ -51,8 +49,7 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
     this.manager = TCRuntime.getJVMMemoryManager();
     this.rawConfigText = rawConfigText;
     this.client = client;
-    this.lockManager = client.getLockManager();
-    this.threadIDMap = client.getThreadIDMap();
+    this.lockInfoDumpHandler = client;
     try {
       Class sraCpuType = Class.forName("com.tc.statistics.retrieval.actions.SRACpuCombined");
       if (sraCpuType != null) {
@@ -69,14 +66,13 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
   }
 
   // for tests
-  public L1Info(ClientLockManager lockManager, ThreadIDMap threadIDMap) throws NotCompliantMBeanException {
+  public L1Info(LockInfoDumpHandler lockInfoDumpHandler) throws NotCompliantMBeanException {
     super(L1InfoMBean.class, false);
     this.productInfo = ProductInfo.getInstance();
     this.buildID = productInfo.buildID();
     this.rawConfigText = null;
     this.manager = TCRuntime.getJVMMemoryManager();
-    this.lockManager = lockManager;
-    this.threadIDMap = threadIDMap;
+    this.lockInfoDumpHandler = lockInfoDumpHandler;
     this.client = null;
   }
 
@@ -164,8 +160,8 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
 
   public String takeThreadDump(long requestMillis) {
     LockInfoByThreadID lockInfo = new LockInfoByThreadIDImpl();
-    this.lockManager.addAllLocksTo(lockInfo);
-    String text = ThreadDumpUtil.getThreadDump(lockInfo, threadIDMap);
+    this.lockInfoDumpHandler.addAllLocksTo(lockInfo);
+    String text = ThreadDumpUtil.getThreadDump(lockInfo, this.lockInfoDumpHandler.getThreadIDMap());
     logger.info(text);
     return text;
   }

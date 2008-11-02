@@ -33,6 +33,6 @@ public class ThreadIDMapUtil {
         logger.warn("Not able to create new instance of ThreadIDMapJdk15 : " + e);
       }
     }
-    return new NullThreadIDMap();
+    return new NullThreadIDMapImpl();
   }
 }
