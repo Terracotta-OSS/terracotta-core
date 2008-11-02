@@ -48,6 +48,11 @@ public class SessionResponse50 extends SessionResponse implements HttpResponse {
     return this;
   }
 
+  public boolean isCommitted() {
+    // see CDV-939
+    return valveRes.isAppCommitted();
+  }
+
   // /////////////////////////////////////////////
   // the rest is just delegates...
   public ServletOutputStream createOutputStream() throws IOException {

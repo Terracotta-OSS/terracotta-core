@@ -33,33 +33,36 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.Map.Entry;
 
 import junit.framework.Assert;
 
 /*
- * <!ELEMENT web-app (icon?, display-name?, description?, distributable?, context-param*, filter*, filter-mapping*,
- * listener*, servlet*, servlet-mapping*, session-config?, mime-mapping*, welcome-file-list?, error-page*, taglib*,
- * resource-env-ref*, resource-ref*, security-constraint*, login-config?, security-role*, env-entry*, ejb-ref*,
- * ejb-local-ref*)>
+ * <!ELEMENT web-app (icon?, display-name?, description?, distributable?, context-param, filter, filter-mapping,
+ * listener, servlet, servlet-mapping, session-config?, mime-mapping, welcome-file-list?, error-page, taglib,
+ * resource-env-ref, resource-ref, security-constraint, login-config?, security-role, env-entry, ejb-ref,
+ * ejb-local-ref)>
  */
 
 public class WARBuilder implements DeploymentBuilder {
   private static final TCLogger  logger                = TCLogging.getLogger(WARBuilder.class);
   private FileSystemPath         warDirectoryPath;
-  private String                 warFileName;
-  private Set                    classDirectories      = new HashSet();                        /* <FileSystemPath> */
-  private Set                    libs                  = new HashSet();
-  private List                   resources             = new ArrayList();
-  private List                   remoteServices        = new ArrayList();
-  private Set                    beanDefinitionFiles   = new HashSet();
-  private Map                    contextParams         = new HashMap();
-  private Map                    sessionConfig         = new HashMap();
-  private List                   listeners             = new ArrayList();
-  private List                   servlets              = new ArrayList();
-  private List                   filters               = new ArrayList();
-  private Map                    taglibs               = new HashMap();
-  private StringBuffer           remoteSvcDefBlock     = new StringBuffer();
+  private final String           warFileName;
+  private final Set              classDirectories      = new HashSet();                        /* <FileSystemPath> */
+  private final Set              libs                  = new HashSet();
+  private final List             resources             = new ArrayList();
+  private final List             remoteServices        = new ArrayList();
+  private final Set              beanDefinitionFiles   = new HashSet();
+  private final Map              contextParams         = new HashMap();
+  private final Map              sessionConfig         = new HashMap();
+  private final List             listeners             = new ArrayList();
+  private final List             servlets              = new ArrayList();
+  private final List             filters               = new ArrayList();
+  private final Map              taglibs               = new HashMap();
+  private final StringBuffer     remoteSvcDefBlock     = new StringBuffer();
   private final FileSystemPath   tempDirPath;
+  private final Map              errorPages            = new HashMap();
+
   private String                 dispatcherServletName = null;
 
   private final TestConfigObject testConfig;
@@ -332,6 +335,17 @@ public class WARBuilder implements DeploymentBuilder {
         writeSessionConfig(pw, (String) entry.getKey(), (String) entry.getValue());
       }
 
+      for (Iterator i = errorPages.entrySet().iterator(); i.hasNext();) {
+        Entry e = (Entry) i.next();
+        Integer status = (Integer) e.getKey();
+        String location = (String) e.getValue();
+
+        pw.println("  <error-page>");
+        pw.println("    <error-code>" + status + "</error-code>");
+        pw.println("    <location>" + location + "</location>");
+        pw.println("  </error-page>");
+      }
+
       if (!taglibs.isEmpty()) {
         pw.println("  <jsp-config>");
         for (Iterator it = taglibs.entrySet().iterator(); it.hasNext();) {
@@ -559,6 +573,11 @@ public class WARBuilder implements DeploymentBuilder {
 
   public DeploymentBuilder addTaglib(String uri, String location) {
     taglibs.put(uri, location);
+    return this;
+  }
+
+  public DeploymentBuilder addErrorPage(int status, String location) {
+    errorPages.put(new Integer(status), location);
     return this;
   }
 

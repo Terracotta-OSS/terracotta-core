@@ -21,6 +21,7 @@ public interface DeploymentBuilder {
   public DeploymentBuilder addFilter(String name, String mapping, Class filterClass, Map params);
   public DeploymentBuilder setDispatcherServlet(String name, String mapping, Class servletClass, Map params, boolean loadOnStartup);
   public DeploymentBuilder addTaglib(String uri, String location);
+  public DeploymentBuilder addErrorPage(int status, String location);
 
   public DeploymentBuilder addBeanDefinitionFile(String beanDefinition);
 
