@@ -27,16 +27,37 @@ public class CacheManagerTest extends TCTestCase implements Evictable {
   long                     sleepInterval    = 500;
   int                      lc               = 2;
   int                      percentage2Evict = 10;
-  SynchronizedInt          callCount        = new SynchronizedInt(0);
+  SynchronizedInt          callCount;
 
-  Vector                   v                = new Vector();
+  Vector                   v;
+  TestCacheConfig          cacheConfig;
+  TCMemoryManagerImpl      tcMemManager;
+  TCThreadGroup            thrdGrp;
+
+  public void setUp() {
+    callCount = new SynchronizedInt(0);
+    v = new Vector();
+    cacheConfig = new TestCacheConfig();
+    thrdGrp = new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(CacheManagerTest.class)));
+    tcMemManager = new TCMemoryManagerImpl(cacheConfig.getSleepInterval(), cacheConfig.getLeastCount(), cacheConfig
+        .isOnlyOldGenMonitored(), thrdGrp);
+    System.gc();
+    System.gc();
+    System.gc();
+  }
 
   public void test() throws Exception {
-    CacheConfig cacheConfig = new TestCacheConfig();
-    TCThreadGroup thrdGrp = new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(CacheManagerTest.class)));
-    TCMemoryManagerImpl tcMemManager = new TCMemoryManagerImpl(cacheConfig.getSleepInterval(), cacheConfig
-        .getLeastCount(), cacheConfig.isOnlyOldGenMonitored(), thrdGrp);
     CacheManager cm = new CacheManager(this, cacheConfig, thrdGrp, new NullStatisticsAgentSubSystem(), tcMemManager);
+    log("Cache Manager Created : " + cm);
+    hogMemory();
+    assertTrue(callCount.get() > 0);
+  }
+
+  public void testCritcalObjectCount() throws Exception {
+    cacheConfig.criticalObjectCount = 500;
+    CacheManager cm = new CacheManager(new CritialObjectCountCacheValidator(cacheConfig
+        .getObjectCountCriticalThreshold(), cacheConfig.getPercentageToEvict()), cacheConfig, thrdGrp,
+                                       new NullStatisticsAgentSubSystem(), tcMemManager);
     log("Cache Manager Created : " + cm);
     hogMemory();
     assertTrue(callCount.get() > 0);
@@ -96,25 +117,29 @@ public class CacheManagerTest extends TCTestCase implements Evictable {
   public void evictCache(CacheStats stat) {
     synchronized (v) {
       int toEvict = stat.getObjectCountToEvict(v.size());
-      int evicted = 0;
-      ArrayList targetObjects4GC = new ArrayList();
-      if (toEvict >= v.size()) {
-        evicted = v.size();
-        targetObjects4GC.addAll(v);
-        v.clear();
-      } else {
-        for (int i = 0; i < toEvict; i++) {
-          targetObjects4GC.add(v.remove(rnd(v.size())));
-          evicted++;
-        }
-      }
-      stat.objectEvicted(evicted, v.size(), targetObjects4GC);
-      if (callCount.increment() % 10 == 1) {
-        log(stat.toString());
-        log("Asked to evict - " + toEvict + " Evicted : " + evicted + " Vector Size : " + v.size());
-      }
-      v.notifyAll();
+      evict(stat, toEvict);
     }
+  }
+
+  private void evict(CacheStats stat, int toEvict) {
+    int evicted = 0;
+    ArrayList targetObjects4GC = new ArrayList();
+    if (toEvict >= v.size()) {
+      evicted = v.size();
+      targetObjects4GC.addAll(v);
+      v.clear();
+    } else {
+      for (int i = 0; i < toEvict; i++) {
+        targetObjects4GC.add(v.remove(rnd(v.size())));
+        evicted++;
+      }
+    }
+    stat.objectEvicted(evicted, v.size(), targetObjects4GC);
+    if (callCount.increment() % 10 == 1) {
+      log(stat.toString());
+      log("Asked to evict - " + toEvict + " Evicted : " + evicted + " Vector Size : " + v.size());
+    }
+    v.notifyAll();
   }
 
   Random r = new Random();
@@ -123,7 +148,32 @@ public class CacheManagerTest extends TCTestCase implements Evictable {
     return r.nextInt(max);
   }
 
+  public class CritialObjectCountCacheValidator implements Evictable {
+
+    private final int criticalObjectCount;
+    private final int evictionPercentage;
+
+    public CritialObjectCountCacheValidator(int criticalObjectCount, int evictionPercentage) {
+      this.criticalObjectCount = criticalObjectCount;
+      this.evictionPercentage = evictionPercentage;
+    }
+
+    public void evictCache(CacheStats stat) {
+      synchronized (v) {
+        int toEvict = stat.getObjectCountToEvict(v.size());
+        int willRemain = v.size() - toEvict;
+        log("Current Size : " + v.size() + " To Evict : " + toEvict + " Will Remain : " + willRemain);
+        if (toEvict == 0) return;   // Below threshold
+        assertTrue(willRemain <= criticalObjectCount);
+        assertTrue((willRemain + (2 * criticalObjectCount * evictionPercentage / 100)) > criticalObjectCount);
+        CacheManagerTest.this.evict(stat, toEvict);
+      }
+    }
+  }
+
   public class TestCacheConfig implements CacheConfig {
+
+    int criticalObjectCount = -1;
 
     public int getUsedCriticalThreshold() {
       return usedCritialT;
@@ -154,7 +204,7 @@ public class CacheManagerTest extends TCTestCase implements Evictable {
     }
 
     public int getObjectCountCriticalThreshold() {
-      return -1;
+      return criticalObjectCount;
     }
 
   }

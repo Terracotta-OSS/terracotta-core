@@ -47,8 +47,8 @@ public class CacheManager implements CacheMemoryEventsListener {
                       StatisticsAgentSubSystem statisticsAgentSubSystem, TCMemoryManagerImpl memoryManager) {
     this.evictable = evictable;
     this.config = config;
-    new CacheMemoryManagerEventGenerator(config.getUsedThreshold(), config.getUsedCriticalThreshold(), config.getLeastCount(),
-                               memoryManager, this);
+    new CacheMemoryManagerEventGenerator(config.getUsedThreshold(), config.getUsedCriticalThreshold(), config
+        .getLeastCount(), memoryManager, this);
 
     if (config.getObjectCountCriticalThreshold() > 0) {
       logger
@@ -170,7 +170,12 @@ public class CacheManager implements CacheMemoryEventsListener {
         double used = usage.getUsedPercentage();
         double threshold = config.getUsedThreshold();
         Assert.assertTrue((type == CacheMemoryEventType.BELOW_THRESHOLD && threshold >= used) || threshold <= used);
-        if (used > 0) calculatedCacheSize = (int) (currentCount * (threshold / used));
+        if (config.getObjectCountCriticalThreshold() > 0) {
+          // set calculated cache size to critical object threshold
+          calculatedCacheSize = config.getObjectCountCriticalThreshold();
+        } else if (used > 0) {
+          calculatedCacheSize = (int) (currentCount * (threshold / used));
+        }
       }
     }
 
@@ -237,22 +242,13 @@ public class CacheManager implements CacheMemoryEventsListener {
       return countAfter - (countBefore - evicted);
     }
 
-    // TODO:: This need to be more intellegent. It should also check if a GC actually happened after eviction. Use
-    // Reference Queue
     private int computeObjects2Evict(int currentCount) {
       if (type == CacheMemoryEventType.BELOW_THRESHOLD || calculatedCacheSize > currentCount) { return 0; }
-      int overshoot = 0;
-      if (config.getObjectCountCriticalThreshold() > 0 && currentCount > config.getObjectCountCriticalThreshold()) {
-        // Give higher precidence to Object Count Critical Threshold than calculate cache size.
-        overshoot = currentCount - config.getObjectCountCriticalThreshold();
-      } else {
-        overshoot = currentCount - calculatedCacheSize;
-      }
+      int overshoot = currentCount - calculatedCacheSize;
       if (overshoot <= 0) { return 0; }
       int objects2Evict = overshoot + ((calculatedCacheSize * config.getPercentageToEvict()) / 100);
-      // it is possible for higher percentage to evict, the calculated value crosses the current count limit : CDV-592
-      if (objects2Evict > currentCount) objects2Evict = currentCount;
-      return objects2Evict;
+      // CDV-592 : With a higher percentage to evict, the calculated value could cross the currentCount
+      return (objects2Evict > currentCount ? currentCount : objects2Evict);
     }
 
     public String toString() {
