@@ -61,7 +61,7 @@ public class SessionResponse55 extends Response {
 
   public boolean isCommitted() {
     // see CDV-939
-    return this.valveRes.isAppCommitted();
+    return this.valveRes.isCommitted();
   }
 
   // This class delegates all HttpServletResponse methods to the delegate, except for isCommitted()

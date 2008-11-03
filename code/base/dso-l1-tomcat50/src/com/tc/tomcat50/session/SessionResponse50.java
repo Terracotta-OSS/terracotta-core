@@ -50,7 +50,7 @@ public class SessionResponse50 extends SessionResponse implements HttpResponse {
 
   public boolean isCommitted() {
     // see CDV-939
-    return valveRes.isAppCommitted();
+    return valveRes.isCommitted();
   }
 
   // /////////////////////////////////////////////
