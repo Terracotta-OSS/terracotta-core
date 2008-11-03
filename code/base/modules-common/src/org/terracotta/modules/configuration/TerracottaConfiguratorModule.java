@@ -23,16 +23,18 @@ import java.net.URL;
 public abstract class TerracottaConfiguratorModule implements BundleActivator {
 
   protected StandardDSOClientConfigHelper configHelper;
+  private Bundle                          thisBundle;
 
   protected ServiceReference getConfigHelperReference(BundleContext context) throws Exception {
     final String CONFIGHELPER_CLASS_NAME = "com.tc.object.config.StandardDSOClientConfigHelper";
     final ServiceReference configHelperRef = context.getServiceReference(CONFIGHELPER_CLASS_NAME);
     if (configHelperRef == null) { throw new BundleException("Expected the " + CONFIGHELPER_CLASS_NAME
-        + " service to be registered, was unable to find it"); }
+                                                             + " service to be registered, was unable to find it"); }
     return configHelperRef;
   }
 
   public final void start(final BundleContext context) throws Exception {
+    thisBundle = context.getBundle();
     final ServiceReference configHelperRef = getConfigHelperReference(context);
     configHelper = (StandardDSOClientConfigHelper) context.getService(configHelperRef);
     Assert.assertNotNull(configHelper);
@@ -41,16 +43,20 @@ public abstract class TerracottaConfiguratorModule implements BundleActivator {
     registerModuleSpec(context);
   }
 
+  protected Bundle getThisBundle() {
+    return thisBundle;
+  }
+
   public void stop(final BundleContext context) throws Exception {
-  // Ignore this, we don't need to stop anything
+    // Ignore this, we don't need to stop anything
   }
 
   protected void addInstrumentation(final BundleContext context) {
-  // default empty body
+    // default empty body
   }
 
   protected void registerModuleSpec(final BundleContext context) {
-  // default empty body
+    // default empty body
   }
 
   protected final String getBundleJarUrl(final Bundle bundle) {
@@ -129,7 +135,7 @@ public abstract class TerracottaConfiguratorModule implements BundleActivator {
         bundle = bundles[i];
         break;
       }
-    }  
+    }
     return bundle;
   }
 

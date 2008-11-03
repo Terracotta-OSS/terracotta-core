@@ -3,5 +3,6 @@
   <info organisation="ibiblio" module="clustered-glassfish-2.0"/>
   <dependencies>
     <dependency name="catalina" rev="5.0.28" org="terracotta"/>
+	<dependency name="servlet-api" rev="2.4" org="terracotta"/>
   </dependencies>
 </ivy-module>

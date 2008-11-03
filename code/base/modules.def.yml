@@ -633,6 +633,9 @@ modules:
         - deploy-api
         - dso-common
         - dso-l1
+        - dso-l1-session
+        - dso-l1-tomcat
+        - dso-l1-tomcat50
         - dso-l1-api
         - modules-common
         - dso-statistics-api

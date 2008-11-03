@@ -17,8 +17,12 @@ public class GlassfishTerracottaConfigurator extends TerracottaConfiguratorModul
                                                                                   "req");
     configHelper.addCustomAdapter("com.tc.tomcat50.session.SessionRequest50", delegateMethodAdapter);
 
-    final DelegateMethodAdapter respAdapter = new DelegateMethodAdapter("org.apache.catalina.HttpResponse",
-                                                                                  "valveRes");
+    final DelegateMethodAdapter respAdapter = new DelegateMethodAdapter("org.apache.catalina.HttpResponse", "valveRes");
     configHelper.addCustomAdapter("com.tc.tomcat50.session.SessionResponse50", respAdapter);
+
+    StandardHostValveAdapter standardHostValveAdapter = new StandardHostValveAdapter();
+    configHelper.addCustomAdapter("org.apache.catalina.core.StandardHostValve", standardHostValveAdapter);
+
+    addExportedBundleClass(getThisBundle(), ResponseCommittedHelper.class.getName());
   }
 }

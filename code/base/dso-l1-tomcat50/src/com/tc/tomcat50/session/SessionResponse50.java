@@ -50,6 +50,12 @@ public class SessionResponse50 extends SessionResponse implements HttpResponse {
 
   public boolean isCommitted() {
     // see CDV-939
+    return valveRes.isAppCommitted();
+  }
+
+  public boolean isCommittedForce() {
+    // This is used as a kludgey workaround in glassfish to get at the
+    // regular (non-app) committed status
     return valveRes.isCommitted();
   }
 
@@ -184,10 +190,10 @@ public class SessionResponse50 extends SessionResponse implements HttpResponse {
     Object current = response;
     while (current != null) {
       if (current instanceof SessionResponse50) {
-        rv = ((SessionResponse50)current).valveRes;
+        rv = ((SessionResponse50) current).valveRes;
         break;
       } else if (current instanceof ServletResponseWrapper) {
-        current = ((ServletResponseWrapper)current).getResponse();
+        current = ((ServletResponseWrapper) current).getResponse();
       } else {
         break;
       }
@@ -200,16 +206,15 @@ public class SessionResponse50 extends SessionResponse implements HttpResponse {
     Object current = response;
     while (current != null) {
       if (current instanceof SessionResponse50) {
-        current = ((SessionResponse50)current).valveRes;
+        current = ((SessionResponse50) current).valveRes;
       } else if (current instanceof ServletResponseWrapper) {
-        current = ((ServletResponseWrapper)current).getResponse();
+        current = ((ServletResponseWrapper) current).getResponse();
       } else {
-        rv = new CoyoteResponseFacade((CoyoteResponse)current);
+        rv = new CoyoteResponseFacade((CoyoteResponse) current);
         break;
       }
     }
     return rv;
   }
-
 
 }
