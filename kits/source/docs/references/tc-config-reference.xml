@@ -591,28 +591,56 @@
          are critical to correct functioning of DSO.
 
          Two types of lock elements may be included here, in any order:
-         'autolock' and 'named-lock'. 
+         'autolock' and 'named-lock'.
+         
+         Locks are configured with one of the following levels: 'write',
+         'synchronous-write', 'read', or 'concurrent'.
 
-         Autolocks extend normal Java 'synchronized' blocks and methods
-         across the entire cluster just as you'd expect, by locking on
-         the object you're synchronizing upon; Applying autolocks to
-         methods that contain no synchronization (method or block)
-         is ineffective. If the original definition of the method is not
-         synchronized, one could enable the "auto-synchronized" attribute.
-         When set to true, this attribute will add a synchronized modifier
-         to the method signature before autolocking on the method.
-         By default, "auto-synchronized" attribute is set to false.
+         Write locks are used when the method(s) being locked
+         modify the data being protected. Only one thread in one
+         JVM, cluster-wide, may be inside the same write lock
+         at once. Further, no threads may be inside a read lock
+         while one thread holds a write lock of the same identity.
+             
+         Synchronous-write locks add a further guarantee over write locks.
+         Where a write lock guarantees that all changes made in the scope of
+         that lock will be applied prior to a thread acquiring that lock,
+         synchronous-write locks guarantee that the thread holding the lock
+         will not release the lock until the changes made under that lock
+         are fully ACKed by the server.
 
-         Named locks are completely independent of Java synchronization.
-         Named locks create a lock with the specified name. Named locks
-         are always acquired when the methods to which they are applied
-         are invoked irrespective of whether the instance is shared or
-         not (additionally, the instance does not qualify the lock in
-         any way, named locks cause cluster-wide excecution serialization
-         to methods to which they applied).
-      -->
+         Read locks may be used only when the method(s) being
+         locked do not actually modify the data in question;
+         multiple threads in multiple JVMs may be inside the
+         same read lock at the same time. However, if a thread
+         is locked upon the same object but using a write lock,
+         then any threads that require a read lock must wait
+         until the write locks has been released.
+
+         Concurrent locks are a looser form of write lock, and
+         should be used with caution. Multiple threads can be
+         inside a concurrent lock at the same time, and can all
+         write to the data; This can easily lead to nondeterministic
+         program behavior and thus is generally used only with
+         considerable caution.
+        -->
+
       <locks>
-        <!-- Specifies an autolock (distributed synchronization). -->
+        <!-- Specifies an autolock (distributed synchronization).
+           Autolocks extend normal Java 'synchronized' blocks and methods
+           across the entire cluster just as you'd expect, by locking on
+           the object you're synchronizing upon. Applying an autolock to
+           methods that contain no synchronization (method or block)
+           is ineffective. If the original definition of the method is not
+           synchronized, it should be refactored. If it can not be factored,
+           enable the "auto-synchronized" attribute.
+           When set to true, this attribute will add a synchronized modifier
+           to the method signature before autolocking on the method.
+           By default, the "auto-synchronized" attribute is set to false.
+
+           *** NOTE THAT USING AUTO-SYNCHRONIZED MAY HAVE A SEVERE IMPACT
+             ON PERFORMANCE. ***
+          -->
         <autolock auto-synchronized="false">
           <!-- The expression of method(s) to lock. This is an
              AspectWerkz-compatible method specification expression.
@@ -620,42 +648,27 @@
           <method-expression>* com.mycompany.pkga.MyClassOne.set*(..)</method-expression>
 
           <!-- The level of the lock: 'write', 'synchronous-write', 'read', or
-	       'concurrent'. 
-
-             Write locks are used when the method(s) being locked
-             modify the data being protected. Only one thread in one
-             JVM, cluster-wide, may be inside the same write lock 
-             at once. Further, no threads may be inside a read lock
-             while one thread holds a write lock of the same identity.
-	     
-	     Synchronous-write locks add a further guarantee over write locks.
-	     Where a write lock guarantees that all changes made in the scope of
-	     that lock will be applied prior to a thread acquiring that lock,
-	     synchronous-write locks guarantee that the thread holding the lock
-	     will not release the lock until the changes made under that lock
-	     are fully ACKed by the server.
-
-             Read locks may be used only when the method(s) being
-             locked do not actually modify the data in question;
-             multiple threads in multiple JVMs may be inside the 
-             same read lock at the same time. However, if a thread 
-             is locked upon the same object but using a write lock,
-             then any threads that require a read lock must wait
-             until the write locks has been released.
-
-             Concurrent locks are a looser form of write lock, and
-             should be used with caution. Multiple threads can be
-             inside a concurrent lock at the same time, and can all
-             write to the data; This can easily lead to nondeterministic
-             program behavior and thus is generally used only with
-             considerable caution.
-          -->
+             'concurrent'. See above for more details. -->
           <lock-level>write</lock-level>
         </autolock>
 
-        <!-- Specifies a named lock. If you create multiple named-lock
-           sections in this file that share the same name, they are
-           the same lock, and will behave as such. -->
+
+      <!-- Specifies a named lock.
+         Named locks are completely independent of Java synchronization.
+
+         *** NOTE THAT USING NAMED LOCKS MAY HAVE A SEVERE IMPACT ON
+            PERFORMANCE. ***
+
+         A named lock creates a lock with the specified name. This type of
+         lock is always acquired when the methods to which it is applied
+         are invoked irrespective of whether the instance is shared or
+         not. Additionally, the instance does not qualify the lock in
+         any way; named locks cause cluster-wide excecution serialization
+         to methods to which they applied.
+
+         If you create multiple named-lock sections in this file that
+         share the same name, they behave as the same lock. -->
+           
         <named-lock>
           <!-- The name of the lock. (REQUIRED) -->
           <lock-name>lockOne</lock-name>
@@ -666,8 +679,7 @@
           <method-expression>* com.mycompany.pkgb.get*(int)</method-expression>
 
           <!-- The level of the lock: 'read', 'write', or 'concurrent'.
-             See above for more details.
-          -->
+             See above for more details. -->
           <lock-level>read</lock-level>
         </named-lock>
       </locks>
