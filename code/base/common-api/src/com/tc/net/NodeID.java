@@ -35,5 +35,14 @@ public interface NodeID extends Externalizable, TCSerializable, Comparable {
   /**
    * This method should return one of the above defined types.
    */
-  public byte getType();
+  public byte getNodeType();
+
+  static final byte CLIENT_ID_TYPE = 11;
+  static final byte SERVER_ID_TYPE = 12;
+  static final byte GROUP_ID_TYPE  = 13;
+
+  /*
+   * return one of above ID type for serialization
+   */
+  public byte getIDType();
 }

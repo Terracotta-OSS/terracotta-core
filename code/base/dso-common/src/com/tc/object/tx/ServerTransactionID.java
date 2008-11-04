@@ -44,7 +44,7 @@ public class ServerTransactionID implements Comparable {
   }
 
   public boolean isServerGeneratedTransaction() {
-    return (sourceID.getType() == NodeID.L2_NODE_TYPE);
+    return (sourceID.getNodeType() == NodeID.L2_NODE_TYPE);
   }
 
   public boolean isNull() {

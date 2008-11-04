@@ -10,6 +10,7 @@ import com.tc.io.TCSerializable;
 import com.tc.io.serializer.TCObjectInputStream;
 import com.tc.io.serializer.TCObjectOutputStream;
 import com.tc.net.ClientID;
+import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 
@@ -41,7 +42,7 @@ public class NodeIDSerializer implements TCSerializable {
   }
 
   public static void writeNodeID(NodeID n, ObjectOutput out) throws IOException {
-    byte type = n.getType();
+    byte type = n.getIDType();
     out.writeByte(type);
     n.writeExternal(out);
   }
@@ -55,10 +56,12 @@ public class NodeIDSerializer implements TCSerializable {
 
   private static NodeID getImpl(byte type) {
     switch (type) {
-      case NodeID.L1_NODE_TYPE:
+      case NodeID.CLIENT_ID_TYPE:
         return new ClientID();
-      case NodeID.L2_NODE_TYPE:
+      case NodeID.SERVER_ID_TYPE:
         return new ServerID();
+      case NodeID.GROUP_ID_TYPE:
+        return new GroupID();
       default:
         throw new AssertionError("Unknown type : " + type);
     }
@@ -99,7 +102,7 @@ public class NodeIDSerializer implements TCSerializable {
   }
 
   public void serializeTo(TCByteBufferOutput serialOutput) {
-    serialOutput.writeByte(this.nodeID.getType());
+    serialOutput.writeByte(this.nodeID.getIDType());
     this.nodeID.serializeTo(serialOutput);
   }
 }

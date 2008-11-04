@@ -37,7 +37,7 @@ public class ObjectSynchTransactionAccount implements TransactionAccount {
    * measures.
    */
   public synchronized void addWaitee(NodeID waitee, TransactionID requestID) {
-    assert waitee.getType() == NodeID.L2_NODE_TYPE;
+    assert waitee.getNodeType() == NodeID.L2_NODE_TYPE;
     Set waitees = getOrCreate(requestID);
     waitees.add(waitee);
   }
@@ -81,7 +81,7 @@ public class ObjectSynchTransactionAccount implements TransactionAccount {
   }
 
   public synchronized boolean removeWaitee(NodeID waitee, TransactionID requestID) {
-    assert waitee.getType() == NodeID.L2_NODE_TYPE;
+    assert waitee.getNodeType() == NodeID.L2_NODE_TYPE;
     Set waiteesSet = (Set) txn2Waitees.get(requestID);
     if (waiteesSet == null) { return true; }
     waiteesSet.remove(waitee);
@@ -93,7 +93,7 @@ public class ObjectSynchTransactionAccount implements TransactionAccount {
   }
 
   public Set requestersWaitingFor(NodeID nodeID) {
-    if (nodeID.getType() == NodeID.L1_NODE_TYPE) { return Collections.EMPTY_SET; }
+    if (nodeID.getNodeType() == NodeID.L1_NODE_TYPE) { return Collections.EMPTY_SET; }
     synchronized (this) {
       Set requesters = new HashSet();
       for (Iterator i = txn2Waitees.entrySet().iterator(); i.hasNext();) {

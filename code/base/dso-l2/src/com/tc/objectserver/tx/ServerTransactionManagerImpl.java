@@ -255,7 +255,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     } else {
       logger.warn("Not adding to Waiting for Ack since Waiter not found in the states map: " + waiter);
     }
-    if (isActive() && waitee.getType() == NodeID.L1_NODE_TYPE) {
+    if (isActive() && waitee.getNodeType() == NodeID.L1_NODE_TYPE) {
       channelStats.notifyTransactionBroadcastedTo(waitee);
     }
   }
@@ -278,7 +278,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     final ServerTransactionID serverTxnID = new ServerTransactionID(waiter, txnID);
     totalPendingTransactions.decrementAndGet();
     fireTransactionCompleteEvent(serverTxnID);
-    if (isActive() && waiter.getType() == NodeID.L1_NODE_TYPE) {
+    if (isActive() && waiter.getNodeType() == NodeID.L1_NODE_TYPE) {
       action.acknowledgeTransaction(serverTxnID);
     }
   }
@@ -288,7 +288,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     // NOTE ::Sometime you can get double notification for the same txn in server restart cases. In those cases the
     // accounting could be messed up. The counter is set to have a minimum bound of zero to avoid ugly negative values.
     // @see ChannelStatsImpl
-    if (isActive() && waitee.getType() == NodeID.L1_NODE_TYPE) {
+    if (isActive() && waitee.getNodeType() == NodeID.L1_NODE_TYPE) {
       channelStats.notifyTransactionAckedFrom(waitee);
     }
 
