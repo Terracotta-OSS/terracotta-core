@@ -76,13 +76,13 @@ public class GroupID implements NodeID {
     serialOutput.writeInt(getGroupNumber());
   }
 
-  public byte getType() {
-    return L2_NODE_TYPE;
+  public byte getNodeType() {
+    return GROUP_NODE_TYPE;
   }
 
   public int compareTo(Object o) {
     GroupID n = (GroupID) o;
-    if (getType() != n.getType()) { return getType() - n.getType(); }
+    if (getNodeType() != n.getNodeType()) { return getNodeType() - n.getNodeType(); }
     return getGroupNumber() - n.getGroupNumber();
   }
 

@@ -119,13 +119,13 @@ public class ServerID implements NodeID {
     out.write(this.uid);
   }
 
-  public byte getType() {
-    return L2_NODE_TYPE;
+  public byte getNodeType() {
+    return SERVER_NODE_TYPE;
   }
 
   public int compareTo(Object o) {
     NodeID n = (NodeID) o;
-    if (getType() != n.getType()) { return getType() - n.getType(); }
+    if (getNodeType() != n.getNodeType()) { return getNodeType() - n.getNodeType(); }
     ServerID target = (ServerID) n;
     byte[] targetUid = target.getUID();
     int length = uid.length;

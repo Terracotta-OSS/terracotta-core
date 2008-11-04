@@ -14,8 +14,9 @@ import java.io.Externalizable;
  */
 public interface NodeID extends Externalizable, TCSerializable, Comparable {
 
-  public static final byte L1_NODE_TYPE = 0x01;
-  public static final byte L2_NODE_TYPE = 0x02;
+  public static final byte CLIENT_NODE_TYPE = 0x01;
+  public static final byte SERVER_NODE_TYPE = 0x02;
+  public static final byte GROUP_NODE_TYPE  = 0x03;
 
   // /////////////////////////////////////////////////////////////////////////////////////////////////////
   // XXX:: NOTE::
@@ -35,5 +36,5 @@ public interface NodeID extends Externalizable, TCSerializable, Comparable {
   /**
    * This method should return one of the above defined types.
    */
-  public byte getType();
+  public byte getNodeType();
 }

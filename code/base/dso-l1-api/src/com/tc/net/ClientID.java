@@ -77,14 +77,14 @@ public class ClientID implements NodeID {
     serialOutput.writeLong(this.channelID.toLong());
   }
 
-  public byte getType() {
-    return L1_NODE_TYPE;
+  public byte getNodeType() {
+    return CLIENT_NODE_TYPE;
   }
 
   public int compareTo(Object o) {
     NodeID n = (NodeID) o;
-    if(getType() != n.getType()) {
-      return getType() - n.getType();
+    if(getNodeType() != n.getNodeType()) {
+      return getNodeType() - n.getNodeType();
     }
     ClientID c = (ClientID) n;
     return this.channelID.compareTo(c.channelID);
