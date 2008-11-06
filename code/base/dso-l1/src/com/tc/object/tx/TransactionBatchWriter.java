@@ -429,7 +429,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     }
 
     String dump() {
-      return " { " + sequenceID + " , Objects in Txn = " + references.size() + " }";
+      return " { " + sequenceID + " , Objects in Txn = " + (references == null ? -1 : references.size()) + " }";
     }
 
     SequenceID getSequenceID() {
