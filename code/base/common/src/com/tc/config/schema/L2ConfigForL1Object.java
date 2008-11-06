@@ -22,6 +22,7 @@ import com.terracottatech.config.System;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,7 +58,7 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
     this.systemContext.ensureRepositoryProvides(System.class);
 
     this.l2DataByName = new HashMap();
-    this.l2DataByGroupId = new HashMap();
+    this.l2DataByGroupId = new LinkedHashMap();
 
     this.defaultL2Data = new L2Data(DEFAULT_HOST, getL2IntDefault("server/dso-port"));
 
