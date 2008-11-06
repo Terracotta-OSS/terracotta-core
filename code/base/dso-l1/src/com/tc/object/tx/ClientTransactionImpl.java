@@ -130,7 +130,7 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   }
 
   public Collection getReferencesOfObjectsInTxn() {
-    return referenced.keySet();
+    return Collections.unmodifiableCollection(referenced.keySet());
   }
 
   public void addNotify(Notify notify) {

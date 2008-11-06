@@ -47,29 +47,31 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 public class TransactionBatchWriter implements ClientTransactionBatch {
-  private static final boolean                  DEBUG                     = TCPropertiesImpl.getProperties()
-                                                                              .getBoolean(TCPropertiesConsts.L1_TRANSACTIONMANAGER_FOLDING_DEBUG);
+  private static final boolean                  DEBUG                  = TCPropertiesImpl
+                                                                           .getProperties()
+                                                                           .getBoolean(
+                                                                                       TCPropertiesConsts.L1_TRANSACTIONMANAGER_FOLDING_DEBUG);
 
-  private static final TCLogger                 logger                    = TCLogging
-                                                                              .getLogger(TransactionBatchWriter.class);
+  private static final TCLogger                 logger                 = TCLogging
+                                                                           .getLogger(TransactionBatchWriter.class);
 
   private final CommitTransactionMessageFactory commitTransactionMessageFactory;
   private final TxnBatchID                      batchID;
-  private final LinkedHashMap                   transactionData           = new LinkedHashMap();
-  private final Map                             foldingKeys               = new HashMap();
+  private final LinkedHashMap                   transactionData        = new LinkedHashMap();
+  private final Map                             foldingKeys            = new HashMap();
   private final ObjectStringSerializer          serializer;
   private final DNAEncoding                     encoding;
-  private final List                            batchDataOutputStreams    = new ArrayList();
+  private final List                            batchDataOutputStreams = new ArrayList();
 
   private final boolean                         foldingEnabled;
   private final int                             foldingObjectLimit;
   private final int                             foldingLockLimit;
 
-  private short                                 outstandingWriteCount     = 0;
-  private int                                   bytesWritten              = 0;
+  private short                                 outstandingWriteCount  = 0;
+  private int                                   bytesWritten           = 0;
 
-  private int                                   numFolded                 = 0;
-  private int                                   numTxns                   = 0;
+  private int                                   numFolded              = 0;
+  private int                                   numTxns                = 0;
 
   public TransactionBatchWriter(TxnBatchID batchID, ObjectStringSerializer serializer, DNAEncoding encoding,
                                 CommitTransactionMessageFactory commitTransactionMessageFactory,
@@ -235,8 +237,8 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
   private void log_incomingTxn(ClientTransaction txn, boolean exceedsLimits, boolean scanForClose) {
     logger.info("incoming txn [" + txn.getTransactionID() + " locks=" + txn.getAllLockIDs() + ", oids="
                 + txn.getChangeBuffers().keySet() + ", dmi=" + txn.getDmiDescriptors() + ", roots=" + txn.getNewRoots()
-                + ", notifies=" + txn.getNotifies() + ", type=" + txn.getLockType() + "] exceedsLimit="
-                + exceedsLimits + ", scanForClose=" + scanForClose);
+                + ", notifies=" + txn.getNotifies() + ", type=" + txn.getLockType() + "] exceedsLimit=" + exceedsLimits
+                + ", scanForClose=" + scanForClose);
   }
 
   private void closeDependentKeys(Collection dependentKeys) {
@@ -374,10 +376,10 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     private final Mark                     startMark;
     private final SetOnceFlag              committed            = new SetOnceFlag();
 
-    // Maintaining hard references so that it doesn't get GC'ed on us
-    private final IdentityHashMap          references           = new IdentityHashMap();
     private final Map                      writers              = new LinkedHashMap();
 
+    // Maintaining hard references so that it doesn't get GC'ed on us
+    private Collection                     references;
     private boolean                        needsCopy            = false;
     private int                            headerLength         = UNINITIALIZED_LENGTH;
     private int                            txnCount             = 0;
@@ -435,9 +437,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     }
 
     int write(ClientTransaction txn) {
-      for (Iterator i = txn.getReferencesOfObjectsInTxn().iterator(); i.hasNext();) {
-        this.references.put(i.next(), null);
-      }
+      this.references = txn.getReferencesOfObjectsInTxn();
 
       int start = output.getBytesWritten();
 
@@ -646,7 +646,8 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     }
 
     public static FoldingConfig createFromProperties(TCProperties props) {
-      return new FoldingConfig(props.getBoolean(TCPropertiesConsts.L1_TRANSACTIONMANAGER_FOLDING_ENABLED), props.getInt(TCPropertiesConsts.L1_TRANSACTIONMANAGER_FOLDING_OBJECT_LIMIT), props
+      return new FoldingConfig(props.getBoolean(TCPropertiesConsts.L1_TRANSACTIONMANAGER_FOLDING_ENABLED), props
+          .getInt(TCPropertiesConsts.L1_TRANSACTIONMANAGER_FOLDING_OBJECT_LIMIT), props
           .getInt(TCPropertiesConsts.L1_TRANSACTIONMANAGER_FOLDING_LOCK_LIMIT));
     }
   }
