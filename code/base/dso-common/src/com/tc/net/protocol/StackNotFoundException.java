@@ -3,6 +3,7 @@
  */
 package com.tc.net.protocol;
 
+import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.transport.ConnectionID;
 
 /**
@@ -10,7 +11,7 @@ import com.tc.net.protocol.transport.ConnectionID;
  */
 public class StackNotFoundException extends Exception {
 
-  public StackNotFoundException(ConnectionID connectionId) {
-    super(connectionId + " not found");
+  public StackNotFoundException(ConnectionID connectionId, TCSocketAddress socketAddress) {
+    super(connectionId + " not found. Connection is being requested from "+ socketAddress);
   }
 }

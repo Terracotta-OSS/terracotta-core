@@ -103,7 +103,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
       harness = (NetworkStackHarness) harnesses.get(connectionId);
 
       if (harness == null) {
-        throw new StackNotFoundException(connectionId);
+        throw new StackNotFoundException(connectionId, connection.getRemoteAddress());
       } else {
         rv = harness.attachNewConnection(connection);
         connectionIdFactory.restoreConnectionId(connectionId);
