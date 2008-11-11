@@ -330,20 +330,13 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   #  - check for version in poms
   #  - check for compilation 
   #  - check_short
-  #  - publish TC artifacts to /shares/maven2
   def check_compile
     begin
       @no_compile = false # override this if it's turned on
       check_maven_version
       check_short
       raise "check_short failed." if @script_results.failed?
-      
-      #publish TC core artifacts
-      @internal_config_source[MAVEN_REPO_CONFIG_KEY] = 'file:///shares/maven2'
-      @internal_config_source[MAVEN_REPO_ID_CONFIG_KEY] = 'kong'
-      @internal_config_source[MAVEN_SNAPSHOT_CONFIG_KEY] = 'true'
-      dist_maven
-      
+         
       mark_this_revision_as_good()
     rescue 
       mark_this_revision_as_bad($!)
