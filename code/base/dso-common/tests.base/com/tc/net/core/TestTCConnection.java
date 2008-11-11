@@ -61,7 +61,7 @@ public class TestTCConnection implements TCConnection {
   }
 
   public TCSocketAddress getRemoteAddress() {
-    throw new ImplementMe();
+    return new TCSocketAddress(TCSocketAddress.LOOPBACK_ADDR, 0);
   }
 
   public void putMessage(TCNetworkMessage message) {
