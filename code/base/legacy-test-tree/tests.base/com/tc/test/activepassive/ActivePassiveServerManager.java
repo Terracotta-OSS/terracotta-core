@@ -189,6 +189,10 @@ public class ActivePassiveServerManager extends MultipleServerManager {
                                                                      "MultipleServersConfigCreator should not be created again"); }
     this.serverConfigCreator = creator;
   }
+  
+  public MultipleServersConfigCreator getConfigCreator() {
+    return this.serverConfigCreator;
+  }
 
   public ProxyConnectManager[] getL2ProxyManagers() {
     return proxyL2Managers;
@@ -495,6 +499,10 @@ public class ActivePassiveServerManager extends MultipleServerManager {
         System.out.println("*** Server stopped [" + servers[index].getDsoPort() + "] due to last crashed");
         return;
       } else {
+        if (serverCrashMode.equals(MultipleServersCrashMode.AP_CUSTOMIZED_CRASH)) {
+          // Customized tests verify by its own.
+          return;
+        }
         throw new AssertionError("Server[" + servers[index].getDsoPort() + "] is not running as expected!");
       }
     }
