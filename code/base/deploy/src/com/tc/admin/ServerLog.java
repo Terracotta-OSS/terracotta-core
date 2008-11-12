@@ -96,7 +96,7 @@ public class ServerLog extends LogPane {
   private void appendToLog(StyledDocument doc, int offset, String s, AttributeSet attrSet) throws BadLocationException {
     doc.insertString(offset, s, attrSet);
 
-    if (MAX_LOG_LINES > 0) {
+    if (MAX_LOG_LINES > 0 && getAutoScroll()) {
       int lineCount;
       int length = doc.getLength();
 
@@ -131,11 +131,6 @@ public class ServerLog extends LogPane {
     }
 
     return result;
-  }
-
-  public void log(String s) {
-    append(s);
-    setCaretPosition(getDocument().getLength() - 1);
   }
 
   public void tearDown() {

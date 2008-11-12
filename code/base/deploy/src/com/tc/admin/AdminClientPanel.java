@@ -43,15 +43,19 @@ import com.tc.util.ProductInfo;
 import java.awt.BorderLayout;
 import java.awt.Frame;
 import java.awt.HeadlessException;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -78,8 +82,10 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
+import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
+import javax.swing.JViewport;
 import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
@@ -93,6 +99,7 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.text.AttributeSet;
+import javax.swing.text.Document;
 import javax.swing.text.Element;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.html.HTML;
@@ -334,7 +341,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     }
     return kitID;
   }
-  
+
   private class HelpAction extends XAbstractAction {
     HelpAction() {
       super(m_acc.getString("help.item.label"));
@@ -356,7 +363,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     public void actionPerformed(ActionEvent ae) {
       block();
       JFrame svtFrame = getSVTFrame();
-      if(svtFrame != null) {
+      if (svtFrame != null) {
         svtFrame.setVisible(true);
       }
       unblock();
@@ -475,7 +482,6 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
 
   public void log(String s) {
     m_logArea.append(s + System.getProperty("line.separator"));
-    m_logArea.setCaretPosition(m_logArea.getDocument().getLength() - 1);
   }
 
   public void log(Throwable t) {
@@ -931,10 +937,56 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     }
   }
 
+  private boolean shouldAutoScroll(JScrollPane scroller, LogPane log) {
+    JViewport viewport = scroller.getViewport();
+    Rectangle visibleRect = viewport.getViewRect();
+    Rectangle bounds = log.getBounds();
+    return (bounds.y + bounds.height) <= visibleRect.height;
+  }
+
   public void addServerLog(IServer server) {
     if (hasServerLog(server)) return;
-    ServerLog log = new ServerLog(server);
-    JScrollPane scroller = new JScrollPane(log);
+    final ServerLog log = new ServerLog(server);
+    final JScrollPane scroller = new JScrollPane(log);
+    JScrollBar scrollBar = scroller.getVerticalScrollBar();
+    scrollBar.addMouseListener(new MouseAdapter() {
+      public void mousePressed(MouseEvent e) {
+        log.setAutoScroll(false);
+      }
+
+      public void mouseReleased(MouseEvent e) {
+        boolean autoScroll = shouldAutoScroll(scroller, log);
+        log.setAutoScroll(autoScroll);
+        if (!autoScroll) {
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              log.requestFocusInWindow();
+            }
+          });
+        }
+      }
+    });
+    scroller.addMouseWheelListener(new MouseWheelListener() {
+      public void mouseWheelMoved(MouseWheelEvent e) {
+        boolean autoScroll = shouldAutoScroll(scroller, log);
+        log.setAutoScroll(autoScroll);
+        if (!autoScroll) {
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              log.requestFocusInWindow();
+            }
+          });
+        }
+      }
+    });
+    log.addKeyListener(new KeyAdapter() {
+      public void keyPressed(KeyEvent e) {
+        int keyCode = e.getKeyCode(); 
+        if(keyCode == KeyEvent.VK_ENTER) {
+          log.setAutoScroll(true);
+        }
+      }
+    });
     int index = m_bottomPane.getTabCount();
 
     m_bottomPane.addTab(server.toString(), (Icon) null, scroller, null);
@@ -991,7 +1043,11 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       }
     }
 
-    public void removeUpdate(DocumentEvent e) {/**/
+    public void removeUpdate(DocumentEvent e) {
+      Document doc = e.getDocument();
+      if (doc.getLength() == 0) {
+        ((LogPane) textComponent).setAutoScroll(true);
+      }
     }
 
     public void changedUpdate(DocumentEvent e) {/**/
@@ -1065,7 +1121,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
   }
 
   // SVT
-  
+
   private static final String SNAPSHOT_VISUALIZER_TYPE = "org.terracotta.tools.SnapshotVisualizer";
   private ClassLoader         m_svtClassLoader;
   private JFrame              m_svtFrame;
