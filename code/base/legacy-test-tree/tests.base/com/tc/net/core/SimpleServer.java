@@ -10,12 +10,13 @@ import com.tc.net.protocol.GenericNetworkMessageSink;
 import com.tc.net.protocol.GenericProtocolAdaptor;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
 import com.tc.net.protocol.TCProtocolAdaptor;
+import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 
 import java.io.IOException;
 
 /**
  * A simple server instance that accepts GenericNetwork messages and delivers them to a sink
- *
+ * 
  * @author teck
  */
 public class SimpleServer {
@@ -35,7 +36,8 @@ public class SimpleServer {
   public SimpleServer(GenericNetworkMessageSink sink, int port, int serverThreadCount) {
     this.sink = sink;
     this.port = port;
-    this.connMgr = new TCConnectionManagerJDK14(serverThreadCount);
+    this.connMgr = new TCConnectionManagerJDK14(serverThreadCount,
+                                                new HealthCheckerConfigImpl("DefaultConfigForActiveConnections"));
   }
 
   public TCConnectionManager getConnectionManager() {
