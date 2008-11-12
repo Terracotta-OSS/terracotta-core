@@ -118,6 +118,9 @@ public class AdminClientBundle extends ListResourceBundle {
         { "dso.client.liveObjectCount", "Live objects" },
         { "liveObjectCount.tip", "<html>Number of managed objects currently resident,<br>excluding literals</html>" },
         { "dso.gcstats", "Distributed garbage collection" },
+        { "dso.gcstats.overview.pending", "Getting DGC settings: please wait..." },
+        { "dso.gcstats.overview.enabled", "DGC is configured to run: every {0} seconds ({1} minutes)." },
+        { "dso.gcstats.overview.disabled", "DGC is disabled in this server array instance's configuration." },
         { "map.entry", "MapEntry" },
         { "log.error", "ERROR" },
         { "log.warn", "WARN" },
@@ -173,6 +176,7 @@ public class AdminClientBundle extends ListResourceBundle {
             "<html><span style='color:#C0C0C0'>Greyed-out</span> items not resident in this client" },
         { "thread.dump.timeout.msg", "Timed-out after {0} seconds." }, { "roots.inspect.show", "Show..." },
         { "thread.dump.export.as.text", "Export As Text..." },
+        { "thread.dump.take", "Take Thread Dump" },
         { "export.all.thread.dumps.dialog.title", "Export All Thread Dumps"},
         { "export.thread.dump.as.text.dialog.title", "Export Thread Dump As Text"} };
   }

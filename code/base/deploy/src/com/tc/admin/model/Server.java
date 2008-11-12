@@ -76,7 +76,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   protected ObjectManagementMonitorMBean  m_objectManagementMonitorBean;
   protected boolean                       m_serverDBBackupSupported;
   protected ServerDBBackupMBean           m_serverDBBackupBean;
-  protected ProductVersion                 m_productInfo;
+  protected ProductVersion                m_productInfo;
   protected List<IBasicObject>            m_roots;
   protected Map<ObjectName, IBasicObject> m_rootMap;
   protected LogListener                   m_logListener;
@@ -183,7 +183,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   private void connectionEstablished() {
-    if(m_readySet == null) return;
+    if (m_readySet == null) return;
     try {
       ObjectName mbsd = getConnectionContext().queryName("JMImplementation:type=MBeanServerDelegate");
       getConnectionContext().addNotificationListener(mbsd, this);
@@ -213,9 +213,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   protected void setConnected(boolean connected) {
     boolean oldConnected;
     synchronized (this) {
-      if(m_readySet == null) {
-        return;
-      }
+      if (m_readySet == null) { return; }
       oldConnected = m_connected;
       m_connected = connected;
     }
@@ -1124,77 +1122,79 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
 
   public void setFaultDebug(boolean faultDebug) {
     TCServerInfoMBean serverInfo = getServerInfoBean();
-    if(serverInfo != null) {
+    if (serverInfo != null) {
       serverInfo.setFaultDebug(faultDebug);
     }
   }
 
   public boolean getFaultDebug() {
     TCServerInfoMBean serverInfo = getServerInfoBean();
-    if(serverInfo != null) {
-      return serverInfo.getFaultDebug();
-    }
+    if (serverInfo != null) { return serverInfo.getFaultDebug(); }
     return false;
   }
 
   public boolean getFlushDebug() {
     TCServerInfoMBean serverInfo = getServerInfoBean();
-    if(serverInfo != null) {
-      return serverInfo.getFlushDebug();
-    }
+    if (serverInfo != null) { return serverInfo.getFlushDebug(); }
     return false;
   }
 
   public void setFlushDebug(boolean flushDebug) {
     TCServerInfoMBean serverInfo = getServerInfoBean();
-    if(serverInfo != null) {
+    if (serverInfo != null) {
       serverInfo.setFlushDebug(flushDebug);
     }
   }
 
   public boolean getRequestDebug() {
     TCServerInfoMBean serverInfo = getServerInfoBean();
-    if(serverInfo != null) {
-      return serverInfo.getRequestDebug();
-    }
+    if (serverInfo != null) { return serverInfo.getRequestDebug(); }
     return false;
   }
 
   public void setRequestDebug(boolean requestDebug) {
     TCServerInfoMBean serverInfo = getServerInfoBean();
-    if(serverInfo != null) {
+    if (serverInfo != null) {
       serverInfo.setRequestDebug(requestDebug);
     }
   }
-  
+
   public boolean getBroadcastDebug() {
     TCServerInfoMBean serverInfo = getServerInfoBean();
-    if(serverInfo != null) {
-      return serverInfo.getBroadcastDebug();
-    }
+    if (serverInfo != null) { return serverInfo.getBroadcastDebug(); }
     return false;
   }
 
   public void setBroadcastDebug(boolean broadcastDebug) {
     TCServerInfoMBean serverInfo = getServerInfoBean();
-    if(serverInfo != null) {
+    if (serverInfo != null) {
       serverInfo.setBroadcastDebug(broadcastDebug);
     }
   }
-  
+
   public boolean getCommitDebug() {
     TCServerInfoMBean serverInfo = getServerInfoBean();
-    if(serverInfo != null) {
-      return serverInfo.getCommitDebug();
-    }
+    if (serverInfo != null) { return serverInfo.getCommitDebug(); }
     return false;
   }
 
   public void setCommitDebug(boolean commitDebug) {
     TCServerInfoMBean serverInfo = getServerInfoBean();
-    if(serverInfo != null) {
+    if (serverInfo != null) {
       serverInfo.setCommitDebug(commitDebug);
     }
   }
-  
+
+  public int getGarbageCollectionInterval() {
+    TCServerInfoMBean serverInfo = getServerInfoBean();
+    if (serverInfo != null) { return serverInfo.getGarbageCollectionInterval(); }
+    return -1;
+  }
+
+  public boolean isGarbageCollectionEnabled() {
+    TCServerInfoMBean serverInfo = getServerInfoBean();
+    if (serverInfo != null) { return serverInfo.isGarbageCollectionEnabled(); }
+    return false;
+  }
+
 }

@@ -135,6 +135,10 @@ public interface IServer extends IClusterNode, ManagedObjectFacadeProvider {
 
   String getDBHome();
   
+  boolean isGarbageCollectionEnabled();
+  
+  int getGarbageCollectionInterval();
+
   void disconnect();
   
   void setFaultDebug(boolean faultDebug);

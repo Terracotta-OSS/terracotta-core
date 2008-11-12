@@ -585,7 +585,6 @@ public class ServerConnectionManager implements NotificationListener {
   public void tearDown() {
     cancelActiveServices();
 
-    m_l2Info = null;
     m_serverHelper = null;
     m_connectCntx = null;
     m_connectListener = null;

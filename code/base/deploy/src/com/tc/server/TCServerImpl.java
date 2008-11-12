@@ -209,6 +209,14 @@ public class TCServerImpl extends SEDA implements TCServer {
     return activateTime;
   }
 
+  public boolean isGarbageCollectionEnabled() {
+    return configurationSetupManager.dsoL2Config().garbageCollectionEnabled().getBoolean();
+  }
+  
+  public int getGarbageCollectionInterval() {
+    return configurationSetupManager.dsoL2Config().garbageCollectionInterval().getInt();
+  }
+  
   public String getConfig() {
     try {
       InputStream is = configurationSetupManager.rawConfigFile();

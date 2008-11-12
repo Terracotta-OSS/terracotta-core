@@ -59,6 +59,10 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   String getFailoverMode();
 
+  boolean isGarbageCollectionEnabled();
+  
+  int getGarbageCollectionInterval();
+
   String[] getCpuStatNames();
 
   Map getStatistics();

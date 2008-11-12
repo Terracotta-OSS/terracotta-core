@@ -27,6 +27,10 @@ public interface TCServer {
   
   void shutdown();
 
+  boolean isGarbageCollectionEnabled();
+  
+  int getGarbageCollectionInterval();
+
   String getConfig();
   
   String getPersistenceMode();

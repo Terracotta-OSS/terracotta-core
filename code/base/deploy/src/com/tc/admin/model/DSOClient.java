@@ -258,7 +258,7 @@ public class DSOClient implements IClient, NotificationListener {
   }
 
   public String takeThreadDump(long requestMillis) {
-    return l1InfoBean != null ? l1InfoBean.takeThreadDump(requestMillis) : null;
+    return l1InfoBean != null ? l1InfoBean.takeThreadDump(requestMillis) : "";
   }
 
   public int getLiveObjectCount() {

@@ -6,11 +6,13 @@ package com.tc.admin.dso;
 
 import org.dijon.Button;
 import org.dijon.ContainerResource;
+import org.dijon.Label;
 import org.dijon.PopupMenu;
 
 import com.tc.admin.AdminClient;
 import com.tc.admin.AdminClientContext;
 import com.tc.admin.common.BasicWorker;
+import com.tc.admin.common.BrowserLauncher;
 import com.tc.admin.common.ExceptionHelper;
 import com.tc.admin.common.XAbstractAction;
 import com.tc.admin.common.XContainer;
@@ -18,9 +20,11 @@ import com.tc.admin.common.XObjectTable;
 import com.tc.admin.model.DGCListener;
 import com.tc.admin.model.IClusterModel;
 import com.tc.objectserver.api.GCStats;
+import com.tc.util.ProductInfo;
 
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
@@ -34,6 +38,7 @@ public class GCStatsPanel extends XContainer implements DGCListener, PropertyCha
   private AdminClientContext m_acc;
   private GCStatsNode        m_gcStatsNode;
   private XObjectTable       m_table;
+  private Label              m_overviewLabel;
   private PopupMenu          m_popupMenu;
   private RunGCAction        m_gcAction;
 
@@ -51,6 +56,11 @@ public class GCStatsPanel extends XContainer implements DGCListener, PropertyCha
     Button runDGCButton = (Button) findComponent("RunGCButton");
     runDGCButton.setAction(m_gcAction);
 
+    m_overviewLabel = (Label) findComponent("OverviewLabel");
+    m_overviewLabel.setText(m_acc.getString("dso.gcstats.overview.pending"));
+
+    ((Button) findComponent("HelpButton")).addActionListener(new HelpButtonHandler());
+
     m_popupMenu = new PopupMenu("DGC");
     m_popupMenu.add(m_gcAction);
     m_table.add(m_popupMenu);
@@ -59,6 +69,49 @@ public class GCStatsPanel extends XContainer implements DGCListener, PropertyCha
     m_acc.execute(new InitWorker());
     gcStatsNode.getClusterModel().addDGCListener(this);
     gcStatsNode.getClusterModel().addPropertyChangeListener(this);
+
+    m_acc.submit(new InitOverviewTextWorker());
+  }
+
+  private class InitOverviewTextWorker extends BasicWorker<String> {
+    private InitOverviewTextWorker() {
+      super(new Callable<String>() {
+        public String call() {
+          IClusterModel clusterModel = m_gcStatsNode.getClusterModel();
+          if (clusterModel.isGarbageCollectionEnabled()) {
+            int seconds = clusterModel.getGarbageCollectionInterval();
+            float minutes = seconds / 60f;
+            return m_acc.format("dso.gcstats.overview.enabled", seconds, minutes);
+          } else {
+            return m_acc.getString("dso.gcstats.overview.enabled");
+          }
+        }
+      });
+    }
+
+    protected void finished() {
+      Exception e = getException();
+      if (e == null) {
+        m_overviewLabel.setText(getResult());
+      }
+    }
+  }
+
+  private class HelpButtonHandler implements ActionListener {
+    private String getKitID() {
+      String kitID = ProductInfo.getInstance().kitID();
+      if (ProductInfo.UNKNOWN_VALUE.equals(kitID)) {
+        kitID = System.getProperty("com.tc.kitID", "42.0");
+      }
+      return kitID;
+    }
+
+    public void actionPerformed(ActionEvent e) {
+      String kitID = getKitID();
+      String loc = AdminClient.getContext().format("console.guide.url", kitID)
+                   + "#AdminConsoleGuide-DistributedGarbageCollection";
+      BrowserLauncher.openURL(loc);
+    }
   }
 
   public void propertyChange(PropertyChangeEvent evt) {

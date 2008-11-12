@@ -294,7 +294,7 @@ public class ClusterModel extends Server implements IClusterModel {
   private static Future<String> threadDumpFuture(ExecutorService pool, final IClusterNode node, final long time) {
     return pool.submit(new Callable<String>() {
       public String call() throws Exception {
-        return node.takeThreadDump(time);
+        return node.isReady() ? node.takeThreadDump(time) : "";
       }
     });
   }

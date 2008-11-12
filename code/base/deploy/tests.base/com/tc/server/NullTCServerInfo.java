@@ -187,4 +187,12 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
     /**/
   }
 
+  public int getGarbageCollectionInterval() {
+    return 0;
+  }
+
+  public boolean isGarbageCollectionEnabled() {
+    return false;
+  }
+
 }
