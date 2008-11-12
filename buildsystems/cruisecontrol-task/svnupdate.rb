@@ -6,8 +6,8 @@ require 'yaml'
 
 class SvnUpdate
 
-  def initialize(monkey_name)
-    @monkey_name = monkey_name
+  def initialize(build_target)
+    @build_target = build_target
 
     @os_topdir = File.join(File.expand_path(File.dirname(__FILE__)), "..", "..")
     @is_ee_branch = @os_topdir =~ /community/ ? true : false
@@ -95,7 +95,12 @@ class SvnUpdate
     log "path: #{path}"
     log "current rev: #{current_rev}"
     log "good_rev: #{good_rev}"
-    if @monkey_name == "monkey-police" || @monkey_name == "test-monkey" || good_rev == 0
+	
+	# only update to HEAD if it's a 
+	#   - monkey-police running "check_compile" target
+	#   - or if it's a test monkey
+	#   - or there's no good_rev info
+    if @build_target == "check_compile" || @build_target == "check_monkeytest" || good_rev == 0
       svn_update_with_error_tolerant(path, "HEAD")
       return
     end
