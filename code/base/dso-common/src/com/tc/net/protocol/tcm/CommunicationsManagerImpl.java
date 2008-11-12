@@ -116,7 +116,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     privateConnMgr = (connMgr == null);
 
     if (null == connMgr) {
-      this.connectionManager = new TCConnectionManagerJDK14(workerCommCount);
+      this.connectionManager = new TCConnectionManagerJDK14(workerCommCount, healthCheckerConfig);
     } else {
       this.connectionManager = connMgr;
     }

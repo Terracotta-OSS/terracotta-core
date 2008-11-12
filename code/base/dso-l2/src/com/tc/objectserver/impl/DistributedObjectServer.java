@@ -358,7 +358,7 @@ public class DistributedObjectServer implements TCDumper, ChannelManagerEventLis
 
   public synchronized void start() throws IOException, TCDatabaseException, LocationNotCreatedException,
       FileNotCreatedException {
-    
+
     threadGroup.addCallbackOnExitDefaultHandler(new ThreadDumpHandler(this));
     thisServerNodeID = makeServerNodeID(configSetupManager.dsoL2Config());
     L2LockStatsManager lockStatsManager = new L2LockStatisticsManagerImpl();
@@ -674,7 +674,8 @@ public class DistributedObjectServer implements TCDumper, ChannelManagerEventLis
     ClientTunnelingEventHandler cteh = new ClientTunnelingEventHandler();
 
     ProductInfo pInfo = ProductInfo.getInstance();
-    DSOChannelManager channelManager = new DSOChannelManagerImpl(l1Listener.getChannelManager(), pInfo.version());
+    DSOChannelManager channelManager = new DSOChannelManagerImpl(l1Listener.getChannelManager(), communicationsManager
+        .getConnectionManager(), pInfo.version());
     channelManager.addEventListener(cteh);
     channelManager.addEventListener(connectionIdFactory);
 

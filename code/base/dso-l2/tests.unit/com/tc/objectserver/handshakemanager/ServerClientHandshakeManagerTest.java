@@ -10,6 +10,7 @@ import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
+import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TestMessageChannel;
@@ -374,8 +375,8 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       return null;
     }
 
-    public Set getAllActiveClientIDs() {
-      return this.clientIDs;
+    public TCConnection[] getAllActiveClientConnections() {
+      return null;
     }
 
     public boolean isValidID(ChannelID channelID) {
@@ -410,7 +411,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     }
 
     public Set getAllClientIDs() {
-      return getAllActiveClientIDs();
+      return this.clientIDs;
     }
 
     public boolean isActiveID(NodeID nodeID) {

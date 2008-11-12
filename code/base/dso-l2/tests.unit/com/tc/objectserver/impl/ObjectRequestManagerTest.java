@@ -15,6 +15,7 @@ import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.tcm.ChannelEventListener;
@@ -825,7 +826,7 @@ public class ObjectRequestManagerTest extends TestCase {
       throw new NotImplementedException(TestDSOChannelManager.class);
     }
 
-    public Set getAllActiveClientIDs() {
+    public TCConnection[] getAllActiveClientConnections() {
       throw new NotImplementedException(TestDSOChannelManager.class);
     }
 

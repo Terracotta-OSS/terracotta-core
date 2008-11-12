@@ -12,6 +12,8 @@ import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.core.TCConnection;
+import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.ChannelManager;
 import com.tc.net.protocol.tcm.ChannelManagerEventListener;
@@ -46,12 +48,15 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
   private final List                eventListeners = new CopyOnWriteArrayList();
 
   private final ChannelManager      genericChannelManager;
+  private final TCConnectionManager connectionManager;
   private final String              serverVersion;
 
-  public DSOChannelManagerImpl(ChannelManager genericChannelManager, String serverVersion) {
+  public DSOChannelManagerImpl(ChannelManager genericChannelManager, TCConnectionManager connectionManager,
+                               String serverVersion) {
     this.genericChannelManager = genericChannelManager;
     this.genericChannelManager.addEventListener(new GenericChannelEventListener());
     this.serverVersion = serverVersion;
+    this.connectionManager = connectionManager;
   }
 
   public MessageChannel getActiveChannel(NodeID id) throws NoSuchChannelException {
@@ -101,8 +106,8 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
     return (ClientHandshakeAckMessage) channel.createMessage(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE);
   }
 
-  public Set getAllActiveClientIDs() {
-    return activeChannels.keySet();
+  public TCConnection[] getAllActiveClientConnections() {
+    return connectionManager.getAllActiveConnections();
   }
 
   public void makeChannelActive(ClientID clientID, boolean persistent, ServerID serverNodeID) {
@@ -111,8 +116,7 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
       MessageChannel channel = ackMsg.getChannel();
       synchronized (activeChannels) {
         activeChannels.put(clientID, channel);
-        ackMsg.initialize(persistent, getAllActiveClientIDsString(), clientID.toString(),
-                          serverVersion, serverNodeID);
+        ackMsg.initialize(persistent, getAllActiveClientIDsString(), clientID.toString(), serverVersion, serverNodeID);
         ackMsg.send();
       }
       fireChannelCreatedEvent(channel);

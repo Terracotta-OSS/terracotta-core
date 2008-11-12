@@ -8,6 +8,7 @@ import com.tc.exception.ImplementMe;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
+import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
@@ -53,7 +54,7 @@ public class MockChannelManager implements DSOChannelManager {
     throw new ImplementMe();
   }
 
-  public Set getAllActiveClientIDs() {
+  public TCConnection[] getAllActiveClientConnections() {
     throw new ImplementMe();
   }
 

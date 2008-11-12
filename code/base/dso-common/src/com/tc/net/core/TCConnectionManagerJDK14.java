@@ -14,18 +14,23 @@ import com.tc.net.core.event.TCListenerEvent;
 import com.tc.net.core.event.TCListenerEventListener;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
 import com.tc.net.protocol.TCProtocolAdaptor;
+import com.tc.net.protocol.transport.ConnectionHealthCheckerUtil;
+import com.tc.net.protocol.transport.HealthCheckerConfig;
+import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.util.concurrent.SetOnceFlag;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.nio.channels.ServerSocketChannel;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 /**
  * JDK 1.4 implementation of TCConnectionManager interface
- *
+ * 
  * @author teck
  */
 public class TCConnectionManagerJDK14 implements TCConnectionManager {
@@ -34,6 +39,7 @@ public class TCConnectionManagerJDK14 implements TCConnectionManager {
   protected static final TCLogger       logger                 = TCLogging.getLogger(TCConnectionManager.class);
 
   private final TCCommJDK14             comm;
+  private final HealthCheckerConfig     healthCheckerConfig;
   private final Set                     connections            = new HashSet();
   private final Set                     listeners              = new HashSet();
   private final SetOnceFlag             shutdown               = new SetOnceFlag();
@@ -42,13 +48,14 @@ public class TCConnectionManagerJDK14 implements TCConnectionManager {
   private final SocketParams            socketParams;
 
   public TCConnectionManagerJDK14() {
-    this(0);
+    this(0, new HealthCheckerConfigImpl("DefaultConfigForActiveConnections"));
   }
 
-  public TCConnectionManagerJDK14(int workerCommCount) {
+  public TCConnectionManagerJDK14(int workerCommCount, HealthCheckerConfig healthCheckerConfig) {
     this.connEvents = new ConnectionEvents();
     this.listenerEvents = new ListenerEvents();
     this.socketParams = new SocketParams();
+    this.healthCheckerConfig = healthCheckerConfig;
     this.comm = new TCCommJDK14(workerCommCount, socketParams);
     this.comm.start();
   }
@@ -89,6 +96,23 @@ public class TCConnectionManagerJDK14 implements TCConnectionManager {
   public TCConnection[] getAllConnections() {
     synchronized (connections) {
       return (TCConnection[]) connections.toArray(EMPTY_CONNECTION_ARRAY);
+    }
+  }
+
+  // DEV-1858
+  public TCConnection[] getAllActiveConnections() {
+    synchronized (connections) {
+      ArrayList activeConnections = new ArrayList();
+      long maxIdleTime = ConnectionHealthCheckerUtil.getMaxIdleTimeForAlive(healthCheckerConfig, false);
+      for (Iterator i = connections.iterator(); i.hasNext();) {
+        TCConnection conn = (TCConnection) i.next();
+        if (conn.getIdleTime() < maxIdleTime) {
+          activeConnections.add(conn);
+        } else {
+          logger.info(conn + "  is not active. Max allowed Idle time:" + maxIdleTime);
+        }
+      }
+      return (TCConnection[]) activeConnections.toArray(new TCConnection[activeConnections.size()]);
     }
   }
 

@@ -7,6 +7,7 @@ package com.tc.object.net;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
+import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
@@ -30,7 +31,7 @@ public interface DSOChannelManager {
 
   public String getChannelAddress(NodeID nid);
 
-  public Set getAllActiveClientIDs();
+  public TCConnection[] getAllActiveClientConnections();
 
   public void addEventListener(DSOChannelManagerEventListener listener);
 

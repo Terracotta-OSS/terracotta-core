@@ -112,4 +112,8 @@ public class MockConnectionManager implements TCConnectionManager {
     throw new ImplementMe();
   }
 
+  public TCConnection[] getAllActiveConnections() {
+    throw new ImplementMe();
+  }
+
 }

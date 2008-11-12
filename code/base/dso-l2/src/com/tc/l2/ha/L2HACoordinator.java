@@ -177,8 +177,8 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     WeightGeneratorFactory wgf = new WeightGeneratorFactory();
     wgf.add(new WeightGenerator() {
       public long getWeight() {
-        // return number of connected clients
-        return channelManager.getAllActiveClientIDs().size();
+        // return number of connected clients and are active
+        return channelManager.getAllActiveClientConnections().length;
       }
     });
     return wgf;

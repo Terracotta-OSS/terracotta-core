@@ -201,6 +201,10 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
     public final void shutdown() {
       delegate.shutdown();
     }
+
+    public TCConnection[] getAllActiveConnections() {
+      return delegate.getAllConnections();
+    }
   }
 
 }

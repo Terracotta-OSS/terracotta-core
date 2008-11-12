@@ -7,6 +7,7 @@ package com.tc.objectserver.lockmanager.api;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
+import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
@@ -43,8 +44,8 @@ public class NullChannelManager implements DSOChannelManager {
     throw new UnsupportedOperationException();
   }
 
-  public Set getAllActiveClientIDs() {
-    return Collections.EMPTY_SET;
+  public TCConnection[] getAllActiveClientConnections() {
+    return new TCConnection[] {};
   }
 
   public void addEventListener(DSOChannelManagerEventListener listener) {
