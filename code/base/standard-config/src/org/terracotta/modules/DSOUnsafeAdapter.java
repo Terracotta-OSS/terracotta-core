@@ -204,7 +204,7 @@ public class DSOUnsafeAdapter extends ClassAdapter implements Opcodes, ClassAdap
     mv.visitMethodInsn(INVOKESPECIAL, "sun/misc/Unsafe", methodName, description);
   }
 
-  private class FieldMethodAdapter extends LocalVariablesSorter implements Opcodes {
+  private static class FieldMethodAdapter extends LocalVariablesSorter implements Opcodes {
     public FieldMethodAdapter(int access, String desc, MethodVisitor mv) {
       super(access, desc, mv);
     }
