@@ -52,7 +52,7 @@ public class HaConfigTest extends TCTestCase {
       factory = new StandardTVSConfigurationSetupManagerFactory(new String[] { "-f", tcConfig.getAbsolutePath(), "-n",
           "server2" }, true, new FatalIllegalConfigurationChangeHandler());
       try {
-        haConfig = new HaConfigImpl(factory.createL2TVSConfigurationSetupManager(null));
+        new HaConfigImpl(factory.createL2TVSConfigurationSetupManager(null));
         throw new AssertionError("Config setup manager is suppose to blast for non-existing server name");
       } catch (ConfigurationSetupException cse) {
         // expected exception
