@@ -5,11 +5,11 @@
 package com.tc.runtime.logging;
 
 public final class LongGCEventType {
-  public static LongGCEventType LONG_GC = new LongGCEventType("LONG_GC");
+  public static final LongGCEventType LONG_GC = new LongGCEventType("LONG_GC");
 
-  private String                       name;
+  private final String                       name;
 
-  public LongGCEventType(String name) {
+  private LongGCEventType(String name) {
     this.name = name;
   }
 

@@ -13,9 +13,9 @@ import org.apache.commons.lang.builder.ToStringStyle;
  */
 public class OurStringBuilder extends ToStringBuilder {
 
-  public static StandardToStringStyle STANDARD_STYLE;
-  public static StandardToStringStyle MULTI_LINE_STYLE;
-  public static StandardToStringStyle COMPACT_STYLE;
+  public static final StandardToStringStyle STANDARD_STYLE;
+  public static final StandardToStringStyle MULTI_LINE_STYLE;
+  public static final StandardToStringStyle COMPACT_STYLE;
 
   static {
     STANDARD_STYLE = new StandardToStringStyle();
@@ -63,7 +63,7 @@ public class OurStringBuilder extends ToStringBuilder {
   }
   
   public ToStringBuilder append(String tag, Object[]arr, boolean b) {
-    if (arr == null) return super.append(tag, arr, b);
+    if (arr == null) return super.append(tag, (Object[])null, b);
     if (arr.length == 0) return super.append(tag, arr, b);
     this.append("{elementCount=" + arr.length + ":");
     for (int i = 0; i < arr.length; i++) {

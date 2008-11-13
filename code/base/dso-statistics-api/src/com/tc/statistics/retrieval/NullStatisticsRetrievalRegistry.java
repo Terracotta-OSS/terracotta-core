@@ -10,7 +10,7 @@ import java.util.Collections;
 
 public class NullStatisticsRetrievalRegistry implements StatisticsRetrievalRegistry {
 
-  public static NullStatisticsRetrievalRegistry INSTANCE = new NullStatisticsRetrievalRegistry();
+  public static final NullStatisticsRetrievalRegistry INSTANCE = new NullStatisticsRetrievalRegistry();
 
   public void removeAllActionInstances() {
     //no-op
