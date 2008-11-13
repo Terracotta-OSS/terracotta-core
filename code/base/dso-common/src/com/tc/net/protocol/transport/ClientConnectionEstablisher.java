@@ -6,6 +6,7 @@ package com.tc.net.protocol.transport;
 
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 
+import com.tc.logging.LossyTCLogger;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.MaxConnectionsExceededException;
@@ -132,6 +133,8 @@ public class ClientConnectionEstablisher {
 
   private void reconnect(ClientMessageTransport cmt) throws MaxConnectionsExceededException {
     try {
+      // Lossy logging for connection errors. Log the errors once in every 10 seconds
+      LossyTCLogger connectionErrorLossyLogger = new LossyTCLogger(cmt.logger, 10000, LossyTCLogger.TIME_BASED, true);
 
       boolean connected = cmt.isConnected();
       if (connected) {
@@ -172,11 +175,11 @@ public class ClientConnectionEstablisher {
           } catch (MaxConnectionsExceededException e) {
             throw e;
           } catch (TCTimeoutException e) {
-            handleConnectException(e, false, cmt.logger, connection);
+            handleConnectException(e, false, connectionErrorLossyLogger, connection);
           } catch (IOException e) {
-            handleConnectException(e, false, cmt.logger, connection);
+            handleConnectException(e, false, connectionErrorLossyLogger, connection);
           } catch (Exception e) {
-            handleConnectException(e, true, cmt.logger, connection);
+            handleConnectException(e, true, connectionErrorLossyLogger, connection);
           }
 
         }
