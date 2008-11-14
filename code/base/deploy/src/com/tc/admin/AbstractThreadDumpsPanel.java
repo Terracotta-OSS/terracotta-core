@@ -60,6 +60,7 @@ public abstract class AbstractThreadDumpsPanel extends XContainer {
 
     m_threadDumpButton = (Button) findComponent("TakeThreadDumpButton");
     m_threadDumpButton.addActionListener(new ThreadDumpButtonHandler());
+    m_threadDumpButton.setText(m_acc.getString("thread.dump.take"));
 
     XSplitPane splitter = (XSplitPane) findComponent("ThreadDumpsSplitter");
     splitter.setPreferences(getPreferences().node(splitter.getName()));
@@ -159,20 +160,30 @@ public abstract class AbstractThreadDumpsPanel extends XContainer {
           if (m_threadDumpList.isSelectedIndex(row)) {
             m_threadDumpTextArea.setText(getContent());
           }
-          m_threadDumpButton.setEnabled(true);
+          m_threadDumpButton.setText(m_acc.getString("thread.dump.take"));
           m_exportButton.setEnabled(true);
         }
       });
     }
   }
+  
+  private boolean isWaiting() {
+    return m_threadDumpButton.getText().equals(m_acc.getString("cancel"));
+  }
 
   class ThreadDumpButtonHandler implements ActionListener {
     public void actionPerformed(ActionEvent ae) {
       try {
-        m_threadDumpButton.setEnabled(false);
-        m_exportButton.setEnabled(false);
-        m_threadDumpListModel.addElement(createThreadDumpEntry());
-        m_threadDumpList.setSelectedIndex(m_threadDumpListModel.getSize() - 1);
+        if (!isWaiting()) {
+          m_exportButton.setEnabled(false);
+          m_threadDumpButton.setText(m_acc.getString("cancel"));
+          m_threadDumpListModel.addElement(createThreadDumpEntry());
+          m_threadDumpList.setSelectedIndex(m_threadDumpListModel.getSize() - 1);
+        } else {
+          ThreadDumpEntry tde = (ThreadDumpEntry) m_threadDumpListModel
+              .getElementAt(m_threadDumpListModel.getSize() - 1);
+          tde.cancel();
+        }
       } catch (Exception e) {
         AdminClient.getContext().log(e);
       }

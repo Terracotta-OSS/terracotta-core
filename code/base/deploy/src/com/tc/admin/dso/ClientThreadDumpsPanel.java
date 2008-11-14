@@ -23,7 +23,7 @@ public class ClientThreadDumpsPanel extends AbstractThreadDumpsPanel {
     final IClient client = m_clientThreadDumpsNode != null ? m_clientThreadDumpsNode.getClient() : null;
     return AdminClient.getContext().submitTask(new Callable<String>() {
       public String call() throws Exception {
-        return client != null ? client.takeThreadDump(System.currentTimeMillis()) : "";
+        return client != null && client.isReady() ? client.takeThreadDump(System.currentTimeMillis()) : "";
       }
     });
   }

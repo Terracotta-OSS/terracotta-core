@@ -6,6 +6,7 @@ package com.tc.admin;
 
 import java.awt.Point;
 import java.util.Date;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -16,7 +17,7 @@ public class ThreadDumpEntry implements Runnable {
   private Date             m_time;
   private Point            m_viewPosition;
 
-  private static final int DEFAULT_TIMEOUT_SECONDS = 30;
+  private static final int DEFAULT_TIMEOUT_SECONDS = 300;
   private static final int TIMEOUT_SECONDS         = Integer.getInteger("com.tc.admin.ThreadDumpEntry.timeout",
                                                                         DEFAULT_TIMEOUT_SECONDS);
 
@@ -33,6 +34,8 @@ public class ThreadDumpEntry implements Runnable {
     } catch (TimeoutException e) {
       m_threadDumpFuture.cancel(true);
       result = AdminClient.getContext().format("thread.dump.timeout.msg", TIMEOUT_SECONDS);
+    } catch (CancellationException ce) {
+      result = AdminClient.getContext().format("canceled");
     } catch (Exception e) {
       result = e.getMessage();
     }
@@ -53,8 +56,9 @@ public class ThreadDumpEntry implements Runnable {
 
   public void cancel() {
     if (!isDone()) {
-      m_threadDumpFuture.cancel(true);
-      setThreadDump(AdminClient.getContext().format("canceled"));
+      if(!m_threadDumpFuture.cancel(true)) {
+        setThreadDump("Failed to cancel!");
+      }
     }
   }
 

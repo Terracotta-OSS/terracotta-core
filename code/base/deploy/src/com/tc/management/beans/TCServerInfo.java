@@ -20,7 +20,6 @@ import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.util.ProductInfo;
 import com.tc.util.State;
-import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.ThreadDumpUtil;
 
 import java.util.ArrayList;
@@ -277,11 +276,6 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   }
 
   public String takeThreadDump(long requestMillis) {
-    ThreadUtil.reallySleep(10000);
-    if(Thread.currentThread().isInterrupted()) {
-      logger.info("interrupted");
-      return "interrupted";
-    }
     String text = ThreadDumpUtil.getThreadDump();
     logger.info(text);
     return text;
