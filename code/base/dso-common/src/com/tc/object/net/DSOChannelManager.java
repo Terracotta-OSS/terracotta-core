@@ -6,7 +6,6 @@ package com.tc.object.net;
 
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
-import com.tc.net.ServerID;
 import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -40,7 +39,7 @@ public interface DSOChannelManager {
 
   public Set getAllClientIDs();
 
-  public void makeChannelActive(ClientID clientID, boolean persistent, ServerID serverNodeID);
+  public void makeChannelActive(ClientID clientID, boolean persistent);
 
   public void makeChannelActiveNoAck(MessageChannel channel);
 

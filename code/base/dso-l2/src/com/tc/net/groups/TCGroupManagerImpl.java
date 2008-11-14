@@ -189,9 +189,10 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
 
     l2Properties = TCPropertiesImpl.getProperties().getPropertiesFor("l2");
     communicationsManager = new CommunicationsManagerImpl(new NullMessageMonitor(), networkStackHarnessFactory,
-                                                          this.connectionPolicy,
+                                                          this.connectionPolicy, 0,
                                                           new HealthCheckerConfigImpl(l2Properties
-                                                              .getPropertiesFor("healthcheck.l2"), "TCGroupManager"));
+                                                              .getPropertiesFor("healthcheck.l2"), "TCGroupManager"),
+                                                          thisNodeID);
 
     groupListener = communicationsManager.createListener(new NullSessionManager(), socketAddress, true,
                                                          new DefaultConnectionIdFactory());

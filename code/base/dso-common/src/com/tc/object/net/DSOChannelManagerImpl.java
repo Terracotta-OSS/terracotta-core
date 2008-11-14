@@ -10,7 +10,6 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
-import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
@@ -110,13 +109,13 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
     return connectionManager.getAllActiveConnections();
   }
 
-  public void makeChannelActive(ClientID clientID, boolean persistent, ServerID serverNodeID) {
+  public void makeChannelActive(ClientID clientID, boolean persistent) {
     try {
       ClientHandshakeAckMessage ackMsg = newClientHandshakeAckMessage(clientID);
       MessageChannel channel = ackMsg.getChannel();
       synchronized (activeChannels) {
         activeChannels.put(clientID, channel);
-        ackMsg.initialize(persistent, getAllActiveClientIDsString(), clientID.toString(), serverVersion, serverNodeID);
+        ackMsg.initialize(persistent, getAllActiveClientIDsString(), clientID.toString(), serverVersion);
         ackMsg.send();
       }
       fireChannelCreatedEvent(channel);

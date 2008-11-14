@@ -6,7 +6,6 @@ package com.tc.object.msg;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -24,13 +23,11 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
   private static final byte ALL_NODES         = 2;
   private static final byte THIS_NODE_ID      = 3;
   private static final byte SERVER_VERSION    = 4;
-  private static final byte SERVER_NODEID     = 5;
 
   private final Set         allNodes          = new HashSet();
   private boolean           persistentServer;
   private String            thisNodeId;
   private String            serverVersion;
-  private ServerID          serverNodeID;
 
   public ClientHandshakeAckMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                                        MessageChannel channel, TCMessageType type) {
@@ -51,7 +48,6 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
 
     putNVPair(THIS_NODE_ID, thisNodeId);
     putNVPair(SERVER_VERSION, serverVersion);
-    putNVPair(SERVER_NODEID, serverNodeID);
   }
 
   protected boolean hydrateValue(byte name) throws IOException {
@@ -68,22 +64,17 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
       case SERVER_VERSION:
         serverVersion = getStringValue();
         return true;
-      case SERVER_NODEID:
-        serverNodeID = new ServerID();
-        getObject(serverNodeID);
-        return true;
       default:
         return false;
     }
   }
 
-  public void initialize(boolean persistent, Set allNodeIDs, String thisNodeID, String sv, ServerID aServerNodeID) {
+  public void initialize(boolean persistent, Set allNodeIDs, String thisNodeID, String sv) {
     this.persistentServer = persistent;
     this.allNodes.addAll(allNodeIDs);
 
     this.thisNodeId = thisNodeID;
     this.serverVersion = sv;
-    this.serverNodeID = aServerNodeID;
   }
 
   public boolean getPersistentServer() {
@@ -102,7 +93,4 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
     return serverVersion;
   }
 
-  public ServerID getServerNodeID() {
-    return serverNodeID;
-  }
 }

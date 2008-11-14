@@ -8,7 +8,6 @@ import com.tc.async.impl.NullSink;
 import com.tc.cluster.Cluster;
 import com.tc.exception.ImplementMe;
 import com.tc.logging.TCLogging;
-import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.TestChannelIDProvider;
 import com.tc.object.ClientIDProvider;
 import com.tc.object.ClientIDProviderImpl;
@@ -42,7 +41,6 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.SequenceID;
-import com.tc.util.UUID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.runtime.LockInfoByThreadID;
 import com.tc.util.sequence.BatchSequence;
@@ -60,8 +58,6 @@ import java.util.Set;
 
 public class ClientHandshakeManagerTest extends TCTestCase {
   private static final String                clientVersion = "x.y.z";
-  private static final ServerID              serverNodeID  = new ServerID("test:9520", UUID.getUUID().toString()
-                                                               .getBytes());
   private TestClientObjectManager            objectManager;
   private TestClientLockManager              lockManager;
   private ClientIDProvider                   cip;
@@ -175,8 +171,8 @@ public class ClientHandshakeManagerTest extends TCTestCase {
 
     // make sure RuntimeException is thrown if client/server versions don't match and version checking is enabled
     try {
-      mgr.acknowledgeHandshake(cip.getClientID(), false, "1", new String[] {}, clientVersion + "a.b.c", serverNodeID,
-                               sentMessage.getChannel());
+      mgr.acknowledgeHandshake(cip.getClientID(), false, "1", new String[] {}, clientVersion + "a.b.c", sentMessage
+          .getChannel());
       if (checkVersionMatchEnabled()) {
         fail();
       }
@@ -186,18 +182,8 @@ public class ClientHandshakeManagerTest extends TCTestCase {
       }
     }
 
-    // make sure RuntimeException is thrown if NULL serverNodeID
-    try {
-      mgr.acknowledgeHandshake(cip.getClientID(), false, "1", new String[] {}, clientVersion, ServerID.NULL_ID,
-                               sentMessage.getChannel());
-      fail();
-    } catch (RuntimeException e) {
-      // expected
-    }
-
     // now ack for real
-    mgr.acknowledgeHandshake(cip.getClientID(), false, "1", new String[] {}, clientVersion, serverNodeID, sentMessage
-        .getChannel());
+    mgr.acknowledgeHandshake(cip.getClientID(), false, "1", new String[] {}, clientVersion, sentMessage.getChannel());
 
     // make sure the remote object manager was told to requestOutstanding()
     remoteObjectManager.requestOutstandingContexts.take();

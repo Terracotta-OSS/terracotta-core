@@ -1,10 +1,13 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.tcm;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.ClientID;
+import com.tc.net.ServerID;
 import com.tc.net.protocol.NetworkStackID;
 
 /**
@@ -19,9 +22,12 @@ public class ServerMessageChannelImpl extends AbstractMessageChannel implements 
   /**
    * this is for the server it needs a session ID
    */
-  protected ServerMessageChannelImpl(ChannelID sessionID, TCMessageRouter router, TCMessageFactory msgFactory) {
+  protected ServerMessageChannelImpl(ChannelID sessionID, TCMessageRouter router, TCMessageFactory msgFactory,
+                                     final ServerID serverID) {
     super(router, logger, msgFactory);
     this.sessionID = sessionID;
+    setLocalNodeID(serverID);
+    setRemoteNodeID(new ClientID(sessionID));
 
     // server message channels should always be open initially
     this.getStatus().open();

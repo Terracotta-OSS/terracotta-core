@@ -6,6 +6,7 @@ package com.tc.net.protocol.tcm;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.ImplementMe;
+import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
@@ -32,9 +33,9 @@ public class ChannelManagerTest extends TestCase {
 
   final ServerMessageChannelFactory channelFactory = new ServerMessageChannelFactory() {
                                                      public MessageChannelInternal createNewChannel(ChannelID id) {
-                                                       return new ServerMessageChannelImpl(id, msgRouter, msgFactory);
-                                                     }
-                                                   };
+                                                       return new ServerMessageChannelImpl(id, msgRouter, msgFactory,
+                                                       new ServerID("test:9520", new byte[] { 1,3, 5, 7 }));
+                                                     }};
 
   public void testEvents() {
     Events events = new Events();

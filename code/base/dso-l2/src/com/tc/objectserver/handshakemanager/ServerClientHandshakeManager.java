@@ -10,7 +10,6 @@ import com.tc.async.impl.NullSink;
 import com.tc.logging.TCLogger;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
-import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.object.lockmanager.api.LockContext;
@@ -58,13 +57,12 @@ public class ServerClientHandshakeManager {
   private final boolean                  persistent;
   private final ServerTransactionManager transactionManager;
   private final TCLogger                 consoleLogger;
-  private final ServerID                 serverNodeID;
 
   public ServerClientHandshakeManager(TCLogger logger, DSOChannelManager channelManager,
                                       ServerTransactionManager transactionManager, SequenceValidator sequenceValidator,
                                       ClientStateManager clientStateManager, LockManager lockManager,
                                       Sink lockResponseSink, Sink oidRequestSink, TCTimer timer, long reconnectTimeout,
-                                      boolean persistent, TCLogger consoleLogger, ServerID serverNodeID) {
+                                      boolean persistent, TCLogger consoleLogger) {
     this.logger = logger;
     this.channelManager = channelManager;
     this.transactionManager = transactionManager;
@@ -78,7 +76,6 @@ public class ServerClientHandshakeManager {
     this.persistent = persistent;
     this.consoleLogger = consoleLogger;
     this.reconnectTimerTask = new ReconnectTimerTask(this, timer);
-    this.serverNodeID = serverNodeID;
   }
 
   public synchronized boolean isStarting() {
@@ -173,7 +170,7 @@ public class ServerClientHandshakeManager {
 
     // NOTE: handshake ack message initialize()/send() must be done atomically with making the channel active
     // and is thus done inside this channel manager call
-    channelManager.makeChannelActive(clientID, persistent, serverNodeID);
+    channelManager.makeChannelActive(clientID, persistent);
 
     if (clientsRequestingObjectIDSequence.remove(clientID)) {
       oidRequestSink.add(new ObjectIDBatchRequestImpl(clientID, BATCH_SEQUENCE_SIZE));

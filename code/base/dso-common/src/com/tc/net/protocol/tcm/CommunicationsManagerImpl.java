@@ -9,6 +9,8 @@ import com.tc.async.impl.NullSink;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.GroupID;
+import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.Constants;
@@ -68,6 +70,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   private final MessageMonitor                   monitor;
   private final ConnectionPolicy                 connectionPolicy;
   private ConnectionHealthChecker                connectionHealthChecker;
+  private ServerID                               serverID  = ServerID.NULL_ID;
 
   /**
    * Create a communications manager. This implies that one or more network handling threads will be started on your
@@ -94,8 +97,10 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   }
 
   public CommunicationsManagerImpl(MessageMonitor monitor, NetworkStackHarnessFactory stackHarnessFactory,
-                                   ConnectionPolicy connectionPolicy, int workerCommCount, HealthCheckerConfig config) {
+                                   ConnectionPolicy connectionPolicy, int workerCommCount, HealthCheckerConfig config,
+                                   ServerID serverID) {
     this(monitor, stackHarnessFactory, null, connectionPolicy, workerCommCount, config);
+    this.serverID = serverID;
   }
 
   /**
@@ -200,6 +205,9 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
 
     stackHarness.finalizeStack();
 
+    // for active sub-channels or default group id for regular
+    rv.setRemoteNodeID(new GroupID(addressProvider.getGroupId()));
+
     return rv;
   }
 
@@ -243,12 +251,12 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     if (shutdown.isSet()) { throw new IllegalStateException("Comms manger shut down"); }
 
     // The idea here is that someday we might want to pass in a custom channel factory. The reason you might want to do
-    // that is so thay you can control the actual class of the channels created off this listener
+    // that is so that you can control the actual class of the channels created off this listener
     final TCMessageRouter msgRouter = new TCMessageRouterImpl();
     final TCMessageFactory msgFactory = new TCMessageFactoryImpl(sessionProvider, monitor);
     final ServerMessageChannelFactory channelFactory = new ServerMessageChannelFactory() {
       public MessageChannelInternal createNewChannel(ChannelID id) {
-        return new ServerMessageChannelImpl(id, msgRouter, msgFactory);
+        return new ServerMessageChannelImpl(id, msgRouter, msgFactory, serverID);
       }
     };
 

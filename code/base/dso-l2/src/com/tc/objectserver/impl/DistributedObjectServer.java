@@ -53,7 +53,6 @@ import com.tc.management.remote.protocol.terracotta.ClientTunnelingEventHandler;
 import com.tc.management.remote.protocol.terracotta.JmxRemoteTunnelMessage;
 import com.tc.management.remote.protocol.terracotta.L1JmxReady;
 import com.tc.net.AddressChecker;
-import com.tc.net.ClientID;
 import com.tc.net.NIOWorkarounds;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
@@ -64,11 +63,9 @@ import com.tc.net.protocol.delivery.OOOEventHandler;
 import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl;
 import com.tc.net.protocol.tcm.ChannelManager;
-import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
 import com.tc.net.protocol.tcm.HydrateHandler;
-import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.MessageMonitorImpl;
 import com.tc.net.protocol.tcm.NetworkListener;
@@ -256,7 +253,7 @@ import javax.management.remote.JMXConnectorServer;
 /**
  * Startup and shutdown point. Builds and starts the server
  */
-public class DistributedObjectServer implements TCDumper, ChannelManagerEventListener, LockInfoDumpHandler {
+public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
   private ServerID                             thisServerNodeID         = ServerID.NULL_ID;
   private final ConnectionPolicy               connectionPolicy;
 
@@ -571,7 +568,8 @@ public class DistributedObjectServer implements TCDumper, ChannelManagerEventLis
 
     communicationsManager = new CommunicationsManagerImpl(mm, networkStackHarnessFactory, connectionPolicy,
                                                           numCommWorkers, new HealthCheckerConfigImpl(l2Properties
-                                                              .getPropertiesFor("healthcheck.l1"), "DSO Server"));
+                                                              .getPropertiesFor("healthcheck.l1"), "DSO Server"),
+                                                          thisServerNodeID);
 
     final DSOApplicationEvents appEvents;
     try {
@@ -668,8 +666,6 @@ public class DistributedObjectServer implements TCDumper, ChannelManagerEventLis
 
     l1Listener = communicationsManager.createListener(sessionProvider, new TCSocketAddress(bind, serverPort), true,
                                                       connectionIdFactory, httpSink);
-    // Listen to channel creation/removal
-    l1Listener.getChannelManager().addEventListener(this);
 
     ClientTunnelingEventHandler cteh = new ClientTunnelingEventHandler();
 
@@ -885,8 +881,7 @@ public class DistributedObjectServer implements TCDumper, ChannelManagerEventLis
                                                                                                            "Reconnect timer",
                                                                                                            true),
                                                                                            reconnectTimeout,
-                                                                                           persistent, consoleLogger,
-                                                                                           thisServerNodeID);
+                                                                                           persistent, consoleLogger);
 
     boolean networkedHA = this.haConfig.isNetworkedActivePassive();
     if (networkedHA) {
@@ -940,11 +935,6 @@ public class DistributedObjectServer implements TCDumper, ChannelManagerEventLis
     return aNodeID;
   }
 
-  public void channelCreated(MessageChannel channel) {
-    channel.setLocalNodeID(thisServerNodeID);
-    channel.setRemoteNodeID(new ClientID(channel.getChannelID()));
-  }
-
   public ServerID getServerNodeID() {
     return thisServerNodeID;
   }
@@ -957,10 +947,6 @@ public class DistributedObjectServer implements TCDumper, ChannelManagerEventLis
   // for testing purpose only
   public void addClassMapping(TCMessageType type, Class msgClass) {
     l1Listener.addClassMapping(type, msgClass);
-  }
-
-  public void channelRemoved(MessageChannel channel) {
-    // nothing so far
   }
 
   private void setLoggerOnExit() {
