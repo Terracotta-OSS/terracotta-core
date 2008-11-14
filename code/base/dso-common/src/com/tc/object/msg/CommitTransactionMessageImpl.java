@@ -22,13 +22,13 @@ import java.io.IOException;
  * @author steve
  */
 public class CommitTransactionMessageImpl extends DSOMessageBase implements EventContext, CommitTransactionMessage {
-  private static final byte      BATCH_TRANSACTION_DATA_ID = 1;
-  private static final byte      SERIALIZER_ID             = 2;
-  private ObjectStringSerializer serializer;
+  private static final byte               BATCH_TRANSACTION_DATA_ID = 1;
+  private static final byte               SERIALIZER_ID             = 2;
 
-  private Recyclable             batch;                        // This is used to recycle buffers on
-  // the write side
+  // This is used to recycle buffers on the write side
+  private Recyclable             batch;
   private TCByteBuffer[]         batchData;
+  private ObjectStringSerializer serializer;
 
   public CommitTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                                       MessageChannel channel, TCMessageType type) {
@@ -68,17 +68,12 @@ public class CommitTransactionMessageImpl extends DSOMessageBase implements Even
 
   public void setBatch(TransactionBatch batch, ObjectStringSerializer serializer) {
     this.batch = batch;
-    setBatchData(batch.getData(), serializer);
-  }
-
-  // This is here for a test
-  synchronized void setBatchData(TCByteBuffer[] batchData, ObjectStringSerializer serializer) {
     if (this.batchData != null) throw new AssertionError("Attempt to set TransactionBatch more than once.");
-    this.batchData = batchData;
+    this.batchData = batch.getData();
     this.serializer = serializer;
   }
 
-  public synchronized TCByteBuffer[] getBatchData() {
+  public TCByteBuffer[] getBatchData() {
     return batchData;
   }
 
