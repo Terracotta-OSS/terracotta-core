@@ -114,6 +114,10 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
           fireMemoryEvent(mu);
           adjust(mu);
         } catch (Throwable t) {
+          // for debugging pupose
+          StackTraceElement[] trace = t.getStackTrace();
+          for (int i = 0; i < trace.length; i++)
+            logger.warn(trace[i].toString());
           logger.error(t);
           throw new TCRuntimeException(t);
         }
