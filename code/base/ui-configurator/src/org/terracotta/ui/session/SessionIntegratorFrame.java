@@ -27,6 +27,7 @@ import org.terracotta.ui.session.servers.ServersDialog;
 import com.tc.admin.ConnectionContext;
 import com.tc.admin.ConnectionListener;
 import com.tc.admin.ServerConnectionManager;
+import com.tc.admin.common.AboutDialog;
 import com.tc.admin.common.BrowserLauncher;
 import com.tc.admin.common.ContactTerracottaAction;
 import com.tc.admin.common.FastFileChooser;
@@ -667,29 +668,14 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
 
     public void actionPerformed(ActionEvent ae) {
       if (m_aboutDialog == null) {
-        SessionIntegratorContext cntx = SessionIntegrator.getContext();
+        if (m_aboutDialog == null) {
+          m_aboutDialog = new AboutDialog(SessionIntegratorFrame.this);
+        }
 
-        m_aboutDialog = new Dialog(SessionIntegratorFrame.this, true);
-        m_aboutDialog.load((DialogResource) cntx.topRes.child("AboutDialog"));
-
-        ConfiguratorInfoPanel info;
-        String title = SessionIntegratorFrame.this.getTitle();
-        info = (ConfiguratorInfoPanel) m_aboutDialog.findComponent("ConfiguratorInfoPanel");
-        info.init(title, ProductInfo.getInstance());
-        Label monikerLabel = (Label) m_aboutDialog.findComponent("MonikerLabel");
-        monikerLabel.setText(title);
-        Button okButton = (Button) m_aboutDialog.findComponent("OKButton");
-        m_aboutDialog.getRootPane().setDefaultButton(okButton);
-        okButton.addActionListener(new ActionListener() {
-          public void actionPerformed(ActionEvent ae2) {
-            m_aboutDialog.setVisible(false);
-          }
-        });
+        m_aboutDialog.pack();
+        m_aboutDialog.center(SessionIntegratorFrame.this);
+        m_aboutDialog.setVisible(true);
       }
-
-      m_aboutDialog.pack();
-      m_aboutDialog.center(SessionIntegratorFrame.this);
-      m_aboutDialog.setVisible(true);
     }
   }
 
