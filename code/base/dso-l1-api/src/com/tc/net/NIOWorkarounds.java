@@ -76,7 +76,7 @@ public class NIOWorkarounds {
       if (prev != null) {
         msg += "This overrides the previous value of " + prev + "\n";
       }
-      System.err.println(msg.toString());
+      System.err.println(msg);
     }
   }
 
