@@ -76,7 +76,7 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
         ThreadUtil.reallySleep(100);
         Assert.assertEquals(1, clientSink.getReceivedCount());
         PingMessage pingReceived = clientSink.getReceivedPing();
-        Assert.assertTrue(msg.getSourceNodeID().equals(pingReceived.getSourceNodeID()));
+        Assert.assertTrue(msg.getSourceNodeID().equals(server.getDSOServer().getServerNodeID()));
         Assert.assertTrue(msg.getDestinationNodeID().equals(pingReceived.getDestinationNodeID()));
 
         // client ping server
@@ -86,7 +86,7 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
         Assert.assertEquals(1, serverSink.getReceivedCount());
         pingReceived = serverSink.getReceivedPing();
         Assert.assertTrue(msg.getSourceNodeID().equals(pingReceived.getSourceNodeID()));
-        Assert.assertTrue(msg.getDestinationNodeID().equals(pingReceived.getDestinationNodeID()));
+        Assert.assertTrue(server.getDSOServer().getServerNodeID().equals(pingReceived.getDestinationNodeID()));
 
         // two transport disconnect events to client.
         ClientMessageChannelImpl cmci = (ClientMessageChannelImpl)clientChannel;
