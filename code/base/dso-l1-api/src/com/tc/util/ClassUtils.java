@@ -129,7 +129,7 @@ public class ClassUtils {
     private String shortFieldName;
 
     private void parseFullyQualifiedFieldName(String fieldName) throws ParseException {
-      if (fieldName == null) throwNotFullyQualifiedFieldName(fieldName, 0);
+      if (fieldName == null) throwNotFullyQualifiedFieldName(null, 0);
       int lastDot = fieldName.lastIndexOf('.');
       if (lastDot <= 0) throwNotFullyQualifiedFieldName(fieldName, 0);
       if (lastDot + 1 == fieldName.length()) throwNotFullyQualifiedFieldName(fieldName, lastDot);
