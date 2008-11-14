@@ -10,12 +10,16 @@ import java.awt.Component;
 
 import javax.swing.JComponent;
 import javax.swing.JTable;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 
 public class ServerLocksTable extends XObjectTable {
-  private TableCellRenderer fTableColumnHeaderRenderer = new LockTableHeaderRenderer();
+  private TableCellRenderer                     fTableColumnHeaderRenderer = new LockTableHeaderRenderer();
+
+  private static final DefaultTableCellRenderer HEADER_RENDERER            = new DefaultTableCellRenderer();
 
   public ServerLocksTable() {
     super();
@@ -37,5 +41,10 @@ public class ServerLocksTable extends XObjectTable {
     for (int i = 0; i < colModel.getColumnCount(); i++) {
       colModel.getColumn(i).setHeaderRenderer(fTableColumnHeaderRenderer);
     }
+  }
+
+  public void addColumn(TableColumn aColumn) {
+    super.addColumn(aColumn);
+    aColumn.setHeaderRenderer(HEADER_RENDERER);
   }
 }

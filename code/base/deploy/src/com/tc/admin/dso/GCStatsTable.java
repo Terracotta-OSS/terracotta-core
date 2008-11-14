@@ -10,11 +10,16 @@ import java.awt.Color;
 import java.text.DateFormat;
 import java.util.Date;
 
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableColumn;
+
 public class GCStatsTable extends XObjectTable {
-  private static final BaseRenderer START_TIME_RENDERER      = new BaseRenderer(DateFormat
-                                                                 .getDateTimeInstance(DateFormat.SHORT,
-                                                                                      DateFormat.MEDIUM));
-  private static final LongRenderer UNDEFINED_VALUE_RENDERER = new UndefinedValueRenderer();
+  private static final BaseRenderer             START_TIME_RENDERER      = new BaseRenderer(DateFormat
+                                                                             .getDateTimeInstance(DateFormat.SHORT,
+                                                                                                  DateFormat.MEDIUM));
+  private static final LongRenderer             UNDEFINED_VALUE_RENDERER = new UndefinedValueRenderer();
+
+  private static final DefaultTableCellRenderer HEADER_RENDERER          = new DefaultTableCellRenderer();
 
   public GCStatsTable() {
     super();
@@ -38,9 +43,20 @@ public class GCStatsTable extends XObjectTable {
     }
   }
 
+  public void addColumn(TableColumn aColumn) {
+    super.addColumn(aColumn);
+    aColumn.setHeaderRenderer(HEADER_RENDERER);
+  }
+
   // no sorting allowed
-  
-  public int getSortColumn() {return -1;}
-  protected void loadSortPrefs() {/**/}
-  protected void storeSortPrefs() {/**/}
+
+  public int getSortColumn() {
+    return -1;
+  }
+
+  protected void loadSortPrefs() {/**/
+  }
+
+  protected void storeSortPrefs() {/**/
+  }
 }

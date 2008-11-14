@@ -25,6 +25,7 @@ import javax.swing.UIManager;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
@@ -32,17 +33,19 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeSelectionModel;
 
 public class LockTreeTable extends JTreeTable {
-  protected int               fSortColumn;
-  protected int               fSortDirection;
-  private TableColumnRenderer fColumnRenderer;
-  private Preferences         fPreferences;
-  private ArrowLabel          fArrowLabel;
+  protected int                                 fSortColumn;
+  protected int                                 fSortDirection;
+  private TableColumnRenderer                   fColumnRenderer;
+  private Preferences                           fPreferences;
+  private ArrowLabel                            fArrowLabel;
 
-  public static final int     UP                      = SwingConstants.NORTH;
-  public static final int     DOWN                    = SwingConstants.SOUTH;
+  public static final int                       UP                      = SwingConstants.NORTH;
+  public static final int                       DOWN                    = SwingConstants.SOUTH;
 
-  private static final String SORT_COLUMN_PREF_KEY    = "SortColumn";
-  private static final String SORT_DIRECTION_PREF_KEY = "SortDirection";
+  private static final String                   SORT_COLUMN_PREF_KEY    = "SortColumn";
+  private static final String                   SORT_DIRECTION_PREF_KEY = "SortDirection";
+
+  private static final DefaultTableCellRenderer HEADER_RENDERER         = new DefaultTableCellRenderer();
 
   public LockTreeTable() {
     super();
@@ -97,6 +100,11 @@ public class LockTreeTable extends JTreeTable {
 
   public void removeTreeSelectionListener(TreeSelectionListener listener) {
     tree.removeTreeSelectionListener(listener);
+  }
+
+  public void addColumn(TableColumn aColumn) {
+    super.addColumn(aColumn);
+    aColumn.setHeaderRenderer(HEADER_RENDERER);
   }
 
   private void putPreferenceInt(String key, int value) {
