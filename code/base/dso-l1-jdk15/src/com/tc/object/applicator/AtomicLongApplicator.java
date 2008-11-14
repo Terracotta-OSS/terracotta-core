@@ -51,7 +51,7 @@ public class AtomicLongApplicator extends BaseApplicator {
     AtomicLong ai = (AtomicLong) pojo;
     long value = ai.get();
 
-    writer.addPhysicalAction(AtomicLongAdapter.VALUE_FIELD_NAME, new Long(value));
+    writer.addPhysicalAction(AtomicLongAdapter.VALUE_FIELD_NAME, Long.valueOf(value));
   }
 
   public Object getNewInstance(ClientObjectManager objectManager, DNA dna) {

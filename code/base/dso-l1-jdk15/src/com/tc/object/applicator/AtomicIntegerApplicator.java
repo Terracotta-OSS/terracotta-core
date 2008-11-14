@@ -51,7 +51,7 @@ public class AtomicIntegerApplicator extends BaseApplicator {
     AtomicInteger ai = (AtomicInteger) pojo;
     int value = ai.get();
 
-    writer.addPhysicalAction(AtomicIntegerAdapter.VALUE_FIELD_NAME, new Integer(value));
+    writer.addPhysicalAction(AtomicIntegerAdapter.VALUE_FIELD_NAME, Integer.valueOf(value));
   }
 
   public Object getNewInstance(ClientObjectManager objectManager, DNA dna) {

@@ -91,7 +91,7 @@ public class ConcurrentHashMapSegmentApplicator extends PhysicalApplicator {
       Field field = getTableField();
       Object[] tableArray = (Object[])field.get(pojo);
       int tableLength = tableArray.length;
-      writer.addPhysicalAction(TABLE_LENGTH_FIELD_NAME, new Integer(tableLength));
+      writer.addPhysicalAction(TABLE_LENGTH_FIELD_NAME, Integer.valueOf(tableLength));
     } catch (SecurityException e) {
       throw new TCRuntimeException(e);
     } catch (IllegalArgumentException e) {
