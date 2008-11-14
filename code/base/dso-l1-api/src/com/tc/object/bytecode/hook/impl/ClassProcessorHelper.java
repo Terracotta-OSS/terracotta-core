@@ -823,9 +823,9 @@ public class ClassProcessorHelper {
    * ClassProcessorHelper initialization state
    */
   public static final class State {
-    private final int NOT_INTIALIZED = 0;
-    private final int INITIALIZING   = 1;
-    private final int INITIALIZED    = 2;
+    private static final int NOT_INTIALIZED = 0;
+    private static final int INITIALIZING   = 1;
+    private static final int INITIALIZED    = 2;
     private int       state          = NOT_INTIALIZED;
 
     final synchronized boolean attemptInit() {
