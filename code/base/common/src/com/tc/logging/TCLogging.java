@@ -5,6 +5,7 @@
 package com.tc.logging;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Appender;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
@@ -97,7 +98,7 @@ public class TCLogging {
     if ((name == null) || !name.startsWith(INTERNAL_LOGGER_NAMESPACE_WITH_DOT)) {
       // this comment here to make formatter sane
       throw new IllegalArgumentException("Logger not in valid namepsace (ie. '" + INTERNAL_LOGGER_NAMESPACE_WITH_DOT
-          + "' ): " + name);
+                                         + "' ): " + name);
     }
 
     return new TCLoggerImpl(name);
@@ -256,7 +257,7 @@ public class TCLogging {
       FileUtils.forceMkdir(theDirectory);
     } catch (IOException ioe) {
       reportLoggingError("We can't create the directory '" + theDirectory.getAbsolutePath()
-          + "' that you specified for your logs.", ioe);
+                         + "' that you specified for your logs.", ioe);
       return;
     }
 
@@ -279,8 +280,8 @@ public class TCLogging {
 
         if (thisDirectoryLock == null) {
           reportLoggingError("The log directory, '" + theDirectory.getAbsolutePath()
-              + "', is already in use by another " + "Terracotta process. Logging will proceed to the console only.",
-              null);
+                             + "', is already in use by another "
+                             + "Terracotta process. Logging will proceed to the console only.", null);
           return;
         }
 
@@ -288,8 +289,8 @@ public class TCLogging {
         // This VM already holds the lock; no problem
       } catch (IOException ioe) {
         reportLoggingError("We can't lock the file '" + lockFile.getAbsolutePath() + "', to make sure that only one "
-            + "Terracotta process is using this directory for logging. This may be a permission "
-            + "issue, or some unexpected error. Logging will proceed to the console only.", ioe);
+                           + "Terracotta process is using this directory for logging. This may be a permission "
+                           + "issue, or some unexpected error. Logging will proceed to the console only.", ioe);
         return;
       }
     }
@@ -323,7 +324,7 @@ public class TCLogging {
         newFileAppender = new RollingFileAppender(new PatternLayout(FILE_AND_JMX_PATTERN), logFilePath, true);
         newFileAppender.setName("file appender");
         int maxLogFileSize = props.getInt(MAX_LOG_FILE_SIZE_PROPERTY, DEFAULT_MAX_LOG_FILE_SIZE);
-        newFileAppender.setMaxFileSize(maxLogFileSize+"MB");
+        newFileAppender.setMaxFileSize(maxLogFileSize + "MB");
         newFileAppender.setMaxBackupIndex(props.getInt(MAX_BACKUPS_PROPERTY, DEFAULT_MAX_BACKUPS));
 
         // This makes us start with a new file each time.
@@ -438,15 +439,15 @@ public class TCLogging {
   }
 
   private static void writeVersion() {
-    ProductInfo info = ProductInfo.getInstance();    
+    ProductInfo info = ProductInfo.getInstance();
     TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
 
     // Write build info always
     String longProductString = info.toLongString();
     consoleLogger.info(longProductString);
-    
+
     // Write patch info, if any
-    if(info.isPatched()) {
+    if (info.isPatched()) {
       String longPatchString = info.toLongPatchString();
       consoleLogger.info(longPatchString);
     }
@@ -464,7 +465,7 @@ public class TCLogging {
         Object objKey = entry.getKey();
         Object objValue = entry.getValue();
 
-        // Filter out any bad non-String keys or values in system properties 
+        // Filter out any bad non-String keys or values in system properties
         if (objKey instanceof String && objValue instanceof String) {
           String key = (String) objKey;
           keys.add(key);
@@ -472,23 +473,23 @@ public class TCLogging {
         }
       }
 
+      String nl = System.getProperty("line.separator");
       StringBuffer data = new StringBuffer();
-      data.append("========================================================================\n");
-      data.append("All Java System Properties for this Terracotta instance:\n");
+      data.append("All Java System Properties for this Terracotta instance:");
+      data.append(nl);
+      data.append("========================================================================");
+      data.append(nl);
 
       String[] sortedKeys = (String[]) keys.toArray(new String[keys.size()]);
       Arrays.sort(sortedKeys);
       for (int i = 0; i < sortedKeys.length; ++i) {
         String key = sortedKeys[i];
-        String value = (String) properties.get(key);
-
-        while (key.length() < maxKeyLength)
-          key += " ";
-
-        data.append(key + ": " + value + "\n");
+        data.append(StringUtils.rightPad(key, maxKeyLength));
+        data.append(": ");
+        data.append(properties.get(key));
+        data.append(nl);
       }
-
-      data.append("========================================================================\n");
+      data.append("========================================================================");
 
       getLogger(TCLogging.class).info(data.toString());
     } catch (Throwable t) {
