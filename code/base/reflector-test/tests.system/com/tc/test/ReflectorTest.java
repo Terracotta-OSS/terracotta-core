@@ -48,7 +48,7 @@ public class ReflectorTest extends TestCase {
   public void testBrokenLinks() throws Exception {
     for (Iterator it = reflector.entrySet().iterator(); it.hasNext();) {
       Map.Entry e = (Map.Entry) it.next();
-      if (excludedLinks.contains(e.getKey())) continue;
+      if (excludedLinks.contains(e.getKey()) || e.toString().indexOf("http:") < 0) continue;
       System.out.println("Checking link: " + e.getKey() + " = " + e.getValue());
       assertNotBroken((String) e.getKey(), (String) e.getValue());
     }
