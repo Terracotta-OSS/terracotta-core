@@ -6,6 +6,7 @@
 
 module BundledJREs
   def bundled_jres(name, directory, spec)
+    return if @no_jre
     if @build_environment.has_installanywhere
       version        = spec[:version]
       os_type        = @build_environment.os_type(:nice).downcase

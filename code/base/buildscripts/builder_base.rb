@@ -91,10 +91,11 @@ class TerracottaBuilder
   # targets, and configuration properties.
   def initialize(default_target, arguments)
     option_parser = OptionParser.new
-    option_parser.on('--no-ivy') do @no_ivy = true end
-    option_parser.on('--no-compile') do @no_compile = true end
-    option_parser.on('--no-demo') do @no_demo = true end
-    option_parser.on('--no-schema') do @no_schema = true end
+    option_parser.on('--no-ivy') { @no_ivy = true }
+    option_parser.on('--no-compile') { @no_compile = true }
+    option_parser.on('--no-demo') { @no_demo = true }
+    option_parser.on('--no-schema') { @no_schema = true }
+    option_parser.on('--no-jre') { @no_jre = true }
     option_parser.on('--no-no') do 
       @no_ivy = true
       @no_demo = true
