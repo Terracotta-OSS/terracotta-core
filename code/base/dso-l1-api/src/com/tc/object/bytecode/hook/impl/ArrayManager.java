@@ -40,7 +40,7 @@ public class ArrayManager {
 
   /**
    * Register an array with its TCO. It is an error to register an array that has already been registered.
-   *
+   * 
    * @param array Array
    * @param tco TCObject
    * @throws NullPointerException if array or tco are null
@@ -48,7 +48,7 @@ public class ArrayManager {
   public static void register(Object array, TCObject tco) {
     if ((array == null) || (tco == null)) { throw new NullPointerException(); }
 
-    final int index = array.hashCode() % NUM_MAPS;
+    final int index = hash(array) % NUM_MAPS;
     final Map map = maps[index];
     final int start = index * CACHE_DEPTH;
     final int end = start + CACHE_DEPTH;
@@ -69,12 +69,14 @@ public class ArrayManager {
 
   /**
    * Get the TCO for an array
-   *
+   * 
    * @param array The array instance
    * @return The TCObject
    */
   public static TCObject getObject(Object array) {
-    final int hash = array.hashCode();
+    if (array == null) { throw new NullPointerException(); }
+
+    final int hash = hash(array);
     final int index = hash % NUM_MAPS;
     final Map map = maps[index];
     final int start = index * CACHE_DEPTH;
@@ -95,7 +97,7 @@ public class ArrayManager {
 
   /**
    * Get TCObject for a cloned array
-   *
+   * 
    * @param array Array
    * @return TCObject
    */
@@ -105,7 +107,7 @@ public class ArrayManager {
 
   /**
    * For java.lang.reflect.Array.get()
-   *
+   * 
    * @param array The array
    * @param index Index into the array
    * @return Item in array at index, boxed to Object if primitive array
@@ -142,7 +144,7 @@ public class ArrayManager {
 
   /**
    * Indicate that object in array changed
-   *
+   * 
    * @param array The array
    * @param index The index into array
    * @param value The new value
@@ -160,7 +162,7 @@ public class ArrayManager {
 
   /**
    * Indicate that short in array changed
-   *
+   * 
    * @param array The array
    * @param index The index into array
    * @param value The new value
@@ -178,7 +180,7 @@ public class ArrayManager {
 
   /**
    * Indicate that long in array changed
-   *
+   * 
    * @param array The array
    * @param index The index into array
    * @param value The new value
@@ -196,7 +198,7 @@ public class ArrayManager {
 
   /**
    * Indicate that int in array changed
-   *
+   * 
    * @param array The array
    * @param index The index into array
    * @param value The new value
@@ -214,7 +216,7 @@ public class ArrayManager {
 
   /**
    * Indicate that float in array changed
-   *
+   * 
    * @param array The array
    * @param index The index into array
    * @param value The new value
@@ -232,7 +234,7 @@ public class ArrayManager {
 
   /**
    * Indicate that double in array changed
-   *
+   * 
    * @param array The array
    * @param index The index into array
    * @param value The new value
@@ -250,7 +252,7 @@ public class ArrayManager {
 
   /**
    * Indicate that char in array changed
-   *
+   * 
    * @param array The array
    * @param index The index into array
    * @param value The new value
@@ -268,7 +270,7 @@ public class ArrayManager {
 
   /**
    * Indicate that byte or boolean in array changed
-   *
+   * 
    * @param array The array
    * @param index The index into array
    * @param value The new value
@@ -280,9 +282,11 @@ public class ArrayManager {
     // The call to check the second letter of the class name appears faster than getClass().equals(Boolean.TYPE)
     if (array.getClass().getName().charAt(1) == 'Z') {
       boolean[] booleanArray = (boolean[]) array;
-      boolean existingBooleanVal = booleanArray[index]; // do array operation first (fail fast, NPE and array index out
-      // of bounds)
+
+      // do array operation first (fail fast, NPE and array index out of bounds)
+      boolean existingBooleanVal = booleanArray[index];
       if (false && existingBooleanVal != existingBooleanVal) Assert.fail(); // silence compiler warning
+
       boolean booleanValue = value == 1;
 
       TCObject tco = getObject(array);
@@ -292,8 +296,9 @@ public class ArrayManager {
       booleanArray[index] = booleanValue;
     } else {
       byte[] byteArray = (byte[]) array;
-      byte existingByteVal = byteArray[index]; // do array operation first (fail fast, NPE and array index out of
-      // bounds)
+
+      // do array operation first (fail fast, NPE and array index out of bounds)
+      byte existingByteVal = byteArray[index];
       if (false && existingByteVal != existingByteVal) Assert.fail(); // silence compiler warning
 
       TCObject tco = getObject(array);
@@ -306,7 +311,7 @@ public class ArrayManager {
 
   /**
    * Handle System.arraycopy() semantics with managed arrays
-   *
+   * 
    * @param src Source array
    * @param srcPos Start index in source
    * @param dest Destination array
@@ -470,7 +475,7 @@ public class ArrayManager {
 
   /**
    * Copy char[]
-   *
+   * 
    * @param src Source array
    * @param srcPos Start in src
    * @param dest Destination array
@@ -548,6 +553,13 @@ public class ArrayManager {
 
     // don't mutate local objects until DSO accepts/records the change (above)
     System.arraycopy(l2subset, 0, dest, destPos, length);
+  }
+
+  private static int hash(Object o) {
+    // In most VMs, the *identity* hashCode() for all objects is positive, but make sure of this to avoid a negative
+    // index possibility (CDV-1052). Since arrays always use identity hashCode() there is no way for user code to
+    // intervene
+    return o.hashCode() & 0x7fffffff;
   }
 
   private static final int BOOLEAN = 1;
