@@ -4,8 +4,13 @@
  */
 package com.tc.net.protocol.transport;
 
+import org.hyperic.sigar.NetConnection;
+import org.hyperic.sigar.NetFlags;
+import org.hyperic.sigar.NetInfo;
+import org.hyperic.sigar.NetInterfaceConfig;
 import org.hyperic.sigar.NetStat;
 import org.hyperic.sigar.Sigar;
+import org.hyperic.sigar.SigarException;
 
 import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
 
@@ -276,6 +281,27 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
 
   }
 
+  private void getNetInfo(int bindPort) throws SigarException {
+    Sigar s = new Sigar();
+    NetInfo info = s.getNetInfo();
+    NetInterfaceConfig config = s.getNetInterfaceConfig(null);
+    System.out.println(info.toString());
+    System.out.println(config.toString());
+
+    int flags = NetFlags.CONN_TCP | NetFlags.TCP_ESTABLISHED;
+
+    NetConnection[] connections = s.getNetConnectionList(flags);
+
+    System.out.println("XXX Established connections if any");
+    for (int i = 0; i < connections.length; i++) {
+      long port = connections[i].getLocalPort();
+      long remotePort = connections[i].getRemotePort();
+      if (bindPort == port || bindPort == remotePort) {
+        System.out.println("XXX " + connections[i]);
+      }
+    }
+  }
+
   public void testL1SocketConnectTimeoutL2() throws Exception {
     HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(4000, 2000, 2, "ClientCommsHC-Test32", true /*
                                                                                                              * EXTRA
@@ -312,6 +338,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     }
 
     netstat = sigar.getNetStat(serverLsnr.getBindAddress().getAddress(), serverLsnr.getBindPort());
+    getNetInfo(serverLsnr.getBindPort());
     assertTrue(netstat.getTcpEstablished() == 2);
 
     System.out.println("Sleeping for " + getMinSleepTimeToStartLongGCTest(hcConfig));
@@ -326,6 +353,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
 
     ThreadUtil.reallySleep(5000);
     netstat = sigar.getNetStat(serverLsnr.getBindAddress().getAddress(), serverLsnr.getBindPort());
+    getNetInfo(serverLsnr.getBindPort());
     assertTrue(netstat.getTcpEstablished() == 0);
   }
 
@@ -365,6 +393,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     }
 
     netstat = sigar.getNetStat(serverLsnr.getBindAddress().getAddress(), serverLsnr.getBindPort());
+    getNetInfo(serverLsnr.getBindPort());
     assertTrue(netstat.getTcpEstablished() == 2);
 
     System.out.println("Sleeping for " + getMinSleepTimeToStartLongGCTest(hcConfig));
@@ -400,6 +429,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
      * connection leak. DEV-1963
      */
     netstat = sigar.getNetStat(serverLsnr.getBindAddress().getAddress(), serverLsnr.getBindPort());
+    getNetInfo(serverLsnr.getBindPort());
     System.out.println("XXX reconnect- tcp estd : " + netstat.getTcpEstablished());
     assertTrue(netstat.getTcpEstablished() == 2);
   }
