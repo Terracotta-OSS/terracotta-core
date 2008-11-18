@@ -137,6 +137,8 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     Server[] serverArray = ((Servers) serversBeanRepository().bean()).getServerArray();
     ActiveServerGroupConfig[] groupArray = this.activeServerGroupsConfig.getActiveServerGroupArray();
 
+    validateGroupNames(groupArray);
+
     for (int i = 0; i < serverArray.length; i++) {
       String serverName = serverArray[i].getName();
       boolean found = false;
@@ -152,6 +154,20 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
       }
       if (!found) { throw new ConfigurationSetupException("Server{" + serverName
                                                           + "} is not part of any active-server-group."); }
+    }
+  }
+
+  private void validateGroupNames(ActiveServerGroupConfig[] groupArray) throws ConfigurationSetupException {
+    HashSet list = new HashSet();
+    for (int i = 0; i < groupArray.length; i++) {
+      String grpName = groupArray[i].getGroupName();
+      if (grpName != null) {
+        if (list.contains(grpName)) { throw new ConfigurationSetupException(
+                                                                            "Group Name {"
+                                                                                + grpName
+                                                                                + "} is part of more than 1 active-server-group groups"); }
+        list.add(grpName);
+      }
     }
   }
 

@@ -12,6 +12,7 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.groups.Node;
 import com.tc.net.groups.ServerGroup;
 import com.tc.object.config.schema.NewL2DSOConfig;
+import com.tc.util.ActiveCoordintorHelper;
 import com.tc.util.Assert;
 
 public class HaConfigImpl implements HaConfig {
@@ -19,6 +20,7 @@ public class HaConfigImpl implements HaConfig {
   private final L2TVSConfigurationSetupManager configSetupManager;
   private final ServerGroup[]                  groups;
   private Node[]                               nodes;
+  private final ServerGroup                    activeCoordinatorGroup;
 
   public HaConfigImpl(L2TVSConfigurationSetupManager configSetupManager) {
     this.configSetupManager = configSetupManager;
@@ -28,6 +30,8 @@ public class HaConfigImpl implements HaConfig {
     for (int i = 0; i < groupCount; i++) {
       this.groups[i] = new ServerGroup(groupsConfig.getActiveServerGroupArray()[i]);
     }
+    int coodinatorIndex = ActiveCoordintorHelper.getCoordinatorGroup(groupsConfig.getActiveServerGroupArray());
+    activeCoordinatorGroup = coodinatorIndex != -1 ? groups[coodinatorIndex] : null;
   }
 
   public boolean isActiveActive() {
@@ -43,7 +47,7 @@ public class HaConfigImpl implements HaConfig {
   }
 
   public ServerGroup getActiveCoordinatorGroup() {
-    return groups != null ? groups[0] : null;
+    return activeCoordinatorGroup;
   }
 
   public ServerGroup[] getAllActiveServerGroups() {
@@ -93,7 +97,7 @@ public class HaConfigImpl implements HaConfig {
   }
 
   private static Node makeNode(NewL2DSOConfig l2) {
-    return new Node(l2.host().getString(), l2.listenPort().getInt(), l2.l2GroupPort().getInt(), TCSocketAddress.WILDCARD_IP);
+    return new Node(l2.host().getString(), l2.listenPort().getInt(), l2.l2GroupPort().getInt(),
+                    TCSocketAddress.WILDCARD_IP);
   }
-
 }

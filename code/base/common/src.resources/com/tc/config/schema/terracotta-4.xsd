@@ -912,6 +912,7 @@
       <xs:element name="members" type="members" minOccurs="0" />
       <xs:element name="ha" type="ha" minOccurs="0" />
     </xs:all>
+    <xs:attribute name="group-name" type="xs:string"/>
   </xs:complexType>
   
   <xs:complexType name="members">

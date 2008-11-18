@@ -32,6 +32,7 @@ public class ActiveServerGroupConfigObject extends BaseNewConfigObject implement
   private final int           groupId;
   private final NewHaConfig   haConfig;
   private final MembersConfig membersConfig;
+  private final String        grpName;
 
   public ActiveServerGroupConfigObject(ConfigContext context, StandardL2TVSConfigurationSetupManager setupManager,
                                        int groupId) {
@@ -40,6 +41,7 @@ public class ActiveServerGroupConfigObject extends BaseNewConfigObject implement
     ActiveServerGroup group = (ActiveServerGroup) context.bean();
 
     this.groupId = groupId;
+    this.grpName = group.getGroupName();
 
     membersConfig = new MembersConfigObject(createContext(setupManager, true, group));
     haConfig = new NewHaConfigObject(createContext(setupManager, false, group));
@@ -47,6 +49,10 @@ public class ActiveServerGroupConfigObject extends BaseNewConfigObject implement
 
   public NewHaConfig getHa() {
     return this.haConfig;
+  }
+
+  public String getGroupName() {
+    return grpName;
   }
 
   public MembersConfig getMembers() {
@@ -107,5 +113,4 @@ public class ActiveServerGroupConfigObject extends BaseNewConfigObject implement
     }
     return false;
   }
-
 }

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema;
 
@@ -18,6 +19,7 @@ public interface L2ConfigForL1 {
     private final String host;
     private final int    dsoPort;
     private int          groupId = -1;
+    private String       groupName;
 
     public L2Data(String host, int dsoPort) {
       Assert.assertNotBlank(host);
@@ -41,6 +43,17 @@ public interface L2ConfigForL1 {
     public int getGroupId() {
       Assert.assertTrue(groupId > -1);
       return groupId;
+    }
+
+    public void setGroupName(String groupName) {
+      this.groupName = groupName;
+    }
+
+    /**
+     * This function could return null if no group name is specified in the tc config file
+     */
+    public String getGroupName() {
+      return groupName;
     }
 
     public boolean equals(Object that) {
