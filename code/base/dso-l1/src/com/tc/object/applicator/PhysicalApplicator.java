@@ -17,8 +17,10 @@ import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.field.TCField;
 import com.tc.util.Assert;
+import com.tc.util.ClassUtils;
 
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,7 +41,15 @@ public class PhysicalApplicator extends BaseApplicator {
 
     TCField[] fields = clazz.getPortableFields();
     if (clazz.isNonStaticInner()) {
-      addTo.addNamedReference(clazz.getName(), clazz.getParentFieldName(), map.get(clazz.getParentFieldName()));
+      String qualifiedParentFieldName = clazz.getParentFieldName();
+      final String fName;
+      try {
+        fName = ClassUtils.parseFullyQualifiedFieldName(qualifiedParentFieldName).getShortFieldName();
+      } catch (ParseException e) {
+        throw new AssertionError(e);
+      }
+
+      addTo.addNamedReference(clazz.getName(), fName, map.get(qualifiedParentFieldName));
     }
     for (int i = 0; i < fields.length; i++) {
       Object o = map.get(fields[i].getName());
