@@ -112,6 +112,7 @@ public class TCConnectionManagerJDK14 implements TCConnectionManager {
           logger.info(conn + "  is not active. Max allowed Idle time:" + maxIdleTime);
         }
       }
+      logger.info("Active connections : " + activeConnections.size() + " out of " + connections.size());
       return (TCConnection[]) activeConnections.toArray(new TCConnection[activeConnections.size()]);
     }
   }
