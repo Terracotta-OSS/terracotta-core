@@ -95,7 +95,9 @@ class InstrumentationSpec {
     for (int i = 0; i < fields.length; i++) {
       FieldInfo fieldInfo = fields[i];
       Object prev = rv.put(fieldInfo.getName(), fieldInfo);
-      if (prev != null) { throw new AssertionError("replaced mapping for " + fieldInfo.getName()); }
+      if (prev != null) { throw new AssertionError("replaced mapping for " + fieldInfo.getName() + " in class "
+                                                   + this.getClassInfo().getName()); }
+
     }
 
     return rv;
