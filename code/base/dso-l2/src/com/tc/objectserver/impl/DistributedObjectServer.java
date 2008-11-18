@@ -650,6 +650,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
 
     if (cacheManagerProperties.getBoolean("enabled")) {
       cacheManager = new CacheManager(objectManager, cacheConfig, threadGroup, statisticsAgentSubSystem, tcMemManager);
+      cacheManager.start();
       if (logger.isDebugEnabled()) {
         logger.debug("CacheManager Enabled : " + cacheManager);
       }

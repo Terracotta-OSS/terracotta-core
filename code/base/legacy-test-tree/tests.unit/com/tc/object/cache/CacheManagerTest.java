@@ -48,6 +48,7 @@ public class CacheManagerTest extends TCTestCase implements Evictable {
 
   public void test() throws Exception {
     CacheManager cm = new CacheManager(this, cacheConfig, thrdGrp, new NullStatisticsAgentSubSystem(), tcMemManager);
+    cm.start();
     log("Cache Manager Created : " + cm);
     hogMemory();
     assertTrue(callCount.get() > 0);
@@ -58,6 +59,7 @@ public class CacheManagerTest extends TCTestCase implements Evictable {
     CacheManager cm = new CacheManager(new CritialObjectCountCacheValidator(cacheConfig
         .getObjectCountCriticalThreshold(), cacheConfig.getPercentageToEvict()), cacheConfig, thrdGrp,
                                        new NullStatisticsAgentSubSystem(), tcMemManager);
+    cm.start();
     log("Cache Manager Created : " + cm);
     hogMemory();
     assertTrue(callCount.get() > 0);

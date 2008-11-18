@@ -418,6 +418,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     if (cacheManagerProperties.getBoolean("enabled")) {
       this.cacheManager = new CacheManager(objectManager, cacheConfig, getThreadGroup(), statisticsAgentSubSystem,
                                            tcMemManager);
+      this.cacheManager.start();
       if (logger.isDebugEnabled()) {
         logger.debug("CacheManager Enabled : " + cacheManager);
       }

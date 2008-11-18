@@ -42,13 +42,13 @@ public class CacheManager implements CacheMemoryEventsListener {
   private int                            calculatedCacheSize         = 0;
   private CacheStatistics                lastStat                    = null;
   private final StatisticsAgentSubSystem statisticsAgentSubSystem;
+  private final TCMemoryManagerImpl      memoryManager;
 
   public CacheManager(Evictable evictable, CacheConfig config, TCThreadGroup threadGroup,
                       StatisticsAgentSubSystem statisticsAgentSubSystem, TCMemoryManagerImpl memoryManager) {
     this.evictable = evictable;
     this.config = config;
-    new CacheMemoryManagerEventGenerator(config.getUsedThreshold(), config.getUsedCriticalThreshold(), config
-        .getLeastCount(), memoryManager, this);
+    this.memoryManager = memoryManager;
 
     if (config.getObjectCountCriticalThreshold() > 0) {
       logger
@@ -58,6 +58,11 @@ public class CacheManager implements CacheMemoryEventsListener {
     }
     this.statisticsAgentSubSystem = statisticsAgentSubSystem;
     Assert.assertNotNull(statisticsAgentSubSystem);
+  }
+
+  public void start() {
+    new CacheMemoryManagerEventGenerator(config.getUsedThreshold(), config.getUsedCriticalThreshold(), config
+        .getLeastCount(), memoryManager, this);
   }
 
   public void memoryUsed(CacheMemoryEventType type, MemoryUsage usage) {
