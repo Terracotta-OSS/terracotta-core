@@ -38,9 +38,6 @@ public class ActiveCoordintorHelper {
 
     for (int i = 0; i < asg.length; i++) {
       String grpName = asg[i].getGroupName();
-      if (grpName == null) {
-        grpName = getGroupNameFrom(asg[i].getMembers().getMemberArray());
-      }
       Assert.assertNotNull(grpName);
       if (grpId == -1 || groupName.compareTo(grpName) > 0) {
         grpId = i;

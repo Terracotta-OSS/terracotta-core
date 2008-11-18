@@ -559,7 +559,7 @@ public class ActiveActiveTcConfigTest extends TCTestCase {
       Assert.assertEquals("coordinator-grp", asgf.getGroupName());
       setupManager = factory.createL2TVSConfigurationSetupManager(tcConfig, "server2");
       asgf = setupManager.getActiveServerGroupForThisL2();
-      Assert.assertEquals(null, asgf.getGroupName());
+      Assert.assertEquals("server2", asgf.getGroupName());
     } catch (Exception e) {
       throw new AssertionError(e);
     }
@@ -618,6 +618,69 @@ public class ActiveActiveTcConfigTest extends TCTestCase {
                                                                                                     new FatalIllegalConfigurationChangeHandler());
       
       factory.createL2TVSConfigurationSetupManager(tcConfig, "server1");
+      fail("Should throw exception when the group names are same");
+    } catch (ConfigurationSetupException e) { 
+      // expected exception
+      System.out.println("Expected Exception.");
+      System.out.println(e.getMessage());
+    } catch (Exception e) {
+      throw new AssertionError(e);
+    }
+  }
+  
+  public void testSameGroupNames2() {
+    try {
+      tcConfig = getTempFile("tc-config-testSameGroupNames2.xml");
+      String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
+                      + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
+                      + "\n<servers>"
+                      + "\n      <server name=\"a\">" 
+                      + "\n      <dso>" 
+                      + "\n        <persistence>"
+                      + "\n          <mode>permanent-store</mode>" 
+                      + "\n        </persistence>" 
+                      + "\n      </dso>"
+                      + "\n      </server>" 
+                      + "\n      <server name=\"b\">" 
+                      + "\n      <dso>" 
+                      + "\n        <persistence>"
+                      + "\n          <mode>permanent-store</mode>" 
+                      + "\n        </persistence>" 
+                      + "\n      </dso>"
+                      + "\n      </server>" 
+                      + "\n      <active-server-groups>" 
+                      + "\n          <active-server-group group-name=\"b\">"
+                      + "\n              <members>" 
+                      + "\n                <member>a</member>"
+                      + "\n              </members>"
+                      + "\n              <ha>" 
+                      + "\n                <mode>networked-active-passive</mode>"
+                      + "\n                <networked-active-passive>"
+                      + "\n                  <election-time>1000</election-time>"
+                      + "\n                </networked-active-passive>" 
+                      + "\n              </ha>"
+                      + "\n          </active-server-group>" 
+                      + "\n          <active-server-group>"
+                      + "\n              <members>" 
+                      + "\n                <member>b</member>"
+                      + "\n              </members>"
+                      + "\n              <ha>" 
+                      + "\n                <mode>networked-active-passive</mode>"
+                      + "\n                <networked-active-passive>"
+                      + "\n                  <election-time>1000</election-time>"
+                      + "\n                </networked-active-passive>" 
+                      + "\n              </ha>"
+                      + "\n          </active-server-group>" 
+                      + "\n      </active-server-groups>"
+                      + "\n</servers>"
+                      + "\n</tc:tc-config>";
+      writeConfigFile(config);
+      TestTVSConfigurationSetupManagerFactory factory = new TestTVSConfigurationSetupManagerFactory(
+                                                                                                    TestTVSConfigurationSetupManagerFactory.MODE_CENTRALIZED_CONFIG,
+                                                                                                    null,
+                                                                                                    new FatalIllegalConfigurationChangeHandler());
+      
+      factory.createL2TVSConfigurationSetupManager(tcConfig, "a");
       fail("Should throw exception when the group names are same");
     } catch (ConfigurationSetupException e) { 
       // expected exception

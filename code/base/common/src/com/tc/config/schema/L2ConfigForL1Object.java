@@ -125,7 +125,12 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
             L2Data data = (L2Data) l2DataByName.get(members[j]);
             Assert.assertNotNull(data);
             data.setGroupId(i);
-            data.setGroupName(asgArray[i].getGroupName());
+            String groupName = asgArray[i].getGroupName();
+            if (groupName == null) {
+              groupName = ActiveCoordintorHelper.getGroupNameFrom(asgArray[i].getMembers().getMemberArray());
+            }
+
+            data.setGroupName(groupName);
             groupList.add(data);
           }
         }
