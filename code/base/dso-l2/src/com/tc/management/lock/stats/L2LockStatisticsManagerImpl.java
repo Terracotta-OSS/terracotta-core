@@ -15,8 +15,8 @@ import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.NoSuchChannelException;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -51,7 +51,8 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
   }
 
   public L2LockStatisticsManagerImpl() {
-    this.lockStatisticsEnabled = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.LOCK_STATISTICS_ENABLED, false);
+    this.lockStatisticsEnabled = TCPropertiesImpl.getProperties()
+        .getBoolean(TCPropertiesConsts.LOCK_STATISTICS_ENABLED, false);
   }
 
   public synchronized void start(DSOChannelManager dsoChannelManager) {
@@ -148,10 +149,10 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
         for (Iterator<TCStackTraceElement> i = stackTraceElements.iterator(); i.hasNext();) {
           TCStackTraceElement tcStackTraceElement = i.next();
           LockID lockID = tcStackTraceElement.getLockID();
-          Collection lockStatElements = tcStackTraceElement.getLockStatElements();
+          LockStatElement lockStatElement = tcStackTraceElement.getLockStatElement();
 
           ServerLockStatisticsInfoImpl lsc = (ServerLockStatisticsInfoImpl) getOrCreateLockStatInfo(lockID);
-          lsc.setLockStatElements(nodeID, lockStatElements);
+          lsc.setLockStatElement(nodeID, lockStatElement);
         }
       }
 
@@ -236,9 +237,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
       MessageChannel channel = channelManager.getActiveChannel(nodeID);
       int traceDepth = getTraceDepth();
       int gatherInterval = getGatherInterval();
-      if (traceDepth > 0) {
-        sendLockStatisticsEnableDisableMessage(channel, traceDepth > 0, traceDepth, gatherInterval);
-      }
+      sendLockStatisticsEnableDisableMessage(channel, true, traceDepth, gatherInterval);
     } catch (NoSuchChannelException e) {
       logger.warn(e);
     }
@@ -248,7 +247,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
     if (isLockStatisticsEnabled()) {
       MessageChannel[] channels = channelManager.getActiveChannels();
       for (int i = 0; i < channels.length; i++) {
-        sendLockStatisticsEnableDisableMessage(channels[i], traceDepth > 0, traceDepth, gatherInterval);
+        sendLockStatisticsEnableDisableMessage(channels[i], true, traceDepth, gatherInterval);
       }
     }
   }

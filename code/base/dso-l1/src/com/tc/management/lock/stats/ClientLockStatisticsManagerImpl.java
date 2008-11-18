@@ -19,7 +19,6 @@ import com.tc.object.net.DSOClientMessageChannel;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -29,11 +28,14 @@ import java.util.Set;
 // Methods in this class are not synchronized. They should be called from a proper synchronized
 // context, which is from the ClientLockManager context.
 public class ClientLockStatisticsManagerImpl extends LockStatisticsManager implements ClientLockStatManager {
-  private final static NodeID     NULL_NODE_ID                = ServerID.NULL_ID;
-  private final static Set        IGNORE_STACK_TRACES_PACKAGE = new HashSet();
 
-  private Sink                    sink;
-  private DSOClientMessageChannel channel;
+  private final static NodeID              NULL_NODE_ID                = ServerID.NULL_ID;
+  private final static Set                 IGNORE_STACK_TRACES_PACKAGE = new HashSet();
+
+  private Sink                             sink;
+  private DSOClientMessageChannel          channel;
+
+  private static final StackTraceElement[] EMPTY_STACK_TRACE           = {};
 
   static {
     IGNORE_STACK_TRACES_PACKAGE.add("com.tc.");
@@ -108,22 +110,25 @@ public class ClientLockStatisticsManagerImpl extends LockStatisticsManager imple
   }
 
   private boolean isClientStatEnabled() {
-    if (!lockStatisticsEnabled) { return false; }
-
-    return lockStatConfig.getTraceDepth() > MIN_CLIENT_TRACE_DEPTH;
+    return lockStatisticsEnabled;
   }
 
-  private Collection getLockStatElements(LockID lockID) {
+  private LockStatElement getLockStatElement(LockID lockID) {
     LockStatisticsInfo lsc = getLockStatInfo(lockID);
-    if (lsc == null) { return Collections.EMPTY_LIST; }
-
-    lsc.aggregateLockHoldersData();
-    return lsc.children();
+    if (lsc == null) { return new LockStatElement(lockID, null); }
+    if (lsc.hasChildren()) {
+      lsc.aggregateLockHoldersData();
+    }
+    return lsc.getLockStatElement();
   }
 
-  private StackTraceElement[] getStackTraceElements(int stackTraceDepth) {
-    StackTraceElement[] stackTraces = (new Exception()).getStackTrace();
-    return filterStackTracesElement(stackTraces, stackTraceDepth);
+  private StackTraceElement[] getStackTraceElements(int depth) {
+    if (depth > 0) {
+      StackTraceElement[] stackTraces = (new Exception()).getStackTrace();
+      return filterStackTracesElement(stackTraces, depth);
+    } else {
+      return EMPTY_STACK_TRACE;
+    }
   }
 
   private StackTraceElement[] filterStackTracesElement(StackTraceElement[] stackTraces, int stackTraceDepth) {
@@ -200,9 +205,8 @@ public class ClientLockStatisticsManagerImpl extends LockStatisticsManager imple
       Set allLockIDs = lockStats.keySet();
       for (Iterator i = allLockIDs.iterator(); i.hasNext();) {
         LockID lockID = (LockID) i.next();
-        Collection lockStatElements = getLockStatElements(lockID);
-
-        allTCLockStatElements.add(new TCStackTraceElement(lockID, lockStatElements));
+        LockStatElement lockStatElement = getLockStatElement(lockID);
+        allTCLockStatElements.add(new TCStackTraceElement(lockID, lockStatElement));
       }
     }
     sink.add(createLockStatisticsResponseMessage(channel.channel(), allTCLockStatElements));

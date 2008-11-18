@@ -28,6 +28,8 @@ public interface LockStatisticsInfo {
 
   public long getNumberOfPendingRequests();
 
+  public boolean hasChildren();
+  
   public Collection children();
 
   public LockStatElement getLockStatElement();

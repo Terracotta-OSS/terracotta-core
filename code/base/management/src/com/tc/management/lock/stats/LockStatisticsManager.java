@@ -19,8 +19,6 @@ import java.util.Map;
  * Methods in this class are not synchronized because they are called from the context of its concrete subclasses.
  */
 public abstract class LockStatisticsManager implements Serializable {
-  protected final static int     MIN_CLIENT_TRACE_DEPTH = 0;
-
   protected final Map            lockStats              = new HashMap();       // map<lockID, LockStatisticsInfo>
   protected final LockStatConfig lockStatConfig         = new LockStatConfig();
   protected final Map            nestedDepth            = new HashMap();       // map<ThreadID/NodeID, int>
@@ -128,7 +126,7 @@ public abstract class LockStatisticsManager implements Serializable {
 
   protected static class LockStatConfig {
     private final static int DEFAULT_GATHER_INTERVAL = 1;
-    private final static int DEFAULT_TRACE_DEPTH     = 1;
+    private final static int DEFAULT_TRACE_DEPTH     = 0;
 
     private int              traceDepth              = DEFAULT_TRACE_DEPTH;
     // Currently, the gatherInterval data is not being honored.

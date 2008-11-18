@@ -103,6 +103,10 @@ public class ClientLockStatisticsInfoImpl implements LockSpec, LockStatisticsInf
     return stat.getNumOfLockPendingRequested();
   }
 
+  public boolean hasChildren() {
+    return statElement.hasChildren();
+  }
+  
   public Collection children() {
     return statElement.children();
   }

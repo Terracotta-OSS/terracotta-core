@@ -17,13 +17,13 @@ import java.util.Map;
 import java.util.Set;
 
 public class ServerLockStatisticsInfoImpl implements LockSpec, LockStatisticsInfo, Serializable {
-  private final LockID                                   lockID;
-  private final Set<NodeID>                              statEnabledClients     = new HashSet<NodeID>();
-  private final Map<NodeID, Collection<LockStatElement>> clientLockStatElements = new HashMap<NodeID, Collection<LockStatElement>>();
+  private final LockID                       lockID;
+  private final Set<NodeID>                  statEnabledClients     = new HashSet<NodeID>();
+  private final Map<NodeID, LockStatElement> clientLockStatElements = new HashMap<NodeID, LockStatElement>();
 
-  private LockStatElement                                clientStatElement, serverStatElement;
-  private LockStats                                      clientStat, serverStat;
-  private String                                         lockType;
+  private LockStatElement                    clientStatElement, serverStatElement;
+  private LockStats                          clientStat, serverStat;
+  private String                             lockType;
 
   public ServerLockStatisticsInfoImpl(LockID lockID) {
     this.lockID = lockID;
@@ -38,7 +38,7 @@ public class ServerLockStatisticsInfoImpl implements LockSpec, LockStatisticsInf
     serverStatElement = new LockStatElement(lockID, null);
     serverStat = serverStatElement.getStats();
   }
-  
+
   public void clearAllStatsFor(NodeID nodeID) {
     statEnabledClients.remove(nodeID);
     clientLockStatElements.remove(nodeID);
@@ -47,7 +47,7 @@ public class ServerLockStatisticsInfoImpl implements LockSpec, LockStatisticsInf
   public LockID getLockID() {
     return lockID;
   }
-  
+
   public LockStats getServerStats() {
     return serverStat;
   }
@@ -61,14 +61,19 @@ public class ServerLockStatisticsInfoImpl implements LockSpec, LockStatisticsInf
     return lockType;
   }
 
+  public boolean hasChildren() {
+    return clientStatElement.hasChildren();
+  }
+
   public Collection children() {
     return clientStatElement.children();
   }
 
-  public void recordLockRequested(NodeID nodeID, ThreadID threadID, long requestedTimeInMillis, int numberOfPendingRequests,
-                                  StackTraceElement[] stackTraces, String contextInfo) {
+  public void recordLockRequested(NodeID nodeID, ThreadID threadID, long requestedTimeInMillis,
+                                  int numberOfPendingRequests, StackTraceElement[] stackTraces, String contextInfo) {
     this.lockType = contextInfo;
-    serverStatElement.recordLockRequested(nodeID, threadID, requestedTimeInMillis, numberOfPendingRequests, contextInfo, stackTraces, 0);
+    serverStatElement.recordLockRequested(nodeID, threadID, requestedTimeInMillis, numberOfPendingRequests,
+                                          contextInfo, stackTraces, 0);
   }
 
   public void recordLockRejected(NodeID nodeID, ThreadID threadID) {
@@ -120,34 +125,20 @@ public class ServerLockStatisticsInfoImpl implements LockSpec, LockStatisticsInf
     return serverStatElement;
   }
 
-  public void setLockStatElements(NodeID nodeID, Collection lockStatElements) {
-    clientLockStatElements.put(nodeID, lockStatElements);
-  }
-
-  private void mergeLockStatElements() {
-    clientStatElement.clearChild();
-
-    for (Iterator<Collection<LockStatElement>> i = clientLockStatElements.values().iterator(); i.hasNext();) {
-      Collection<LockStatElement> lockStatElements = i.next();
-      for (Iterator<LockStatElement> it = lockStatElements.iterator(); it.hasNext();) {
-        LockStatElement lse = it.next();
-        clientStatElement.mergeChild(lse);
-      }
-    }
+  public void setLockStatElement(NodeID nodeID, LockStatElement lockStatElement) {
+    clientLockStatElements.put(nodeID, lockStatElement);
   }
 
   public void aggregateLockHoldersData() {
-    mergeLockStatElements();
-    
-    // For the client stat, we need to aggregate the children statistics back to the top level
-    clientStatElement.aggregateLockStat();
-    // For the server stat, since there is no child for server stat, the recursive part of the aggregateLockHoldersData() will
-    // be skipped.
+    clientStatElement.clear();
+    for (Iterator<LockStatElement> i = clientLockStatElements.values().iterator(); i.hasNext();) {
+      clientStatElement.aggregate(i.next());
+    }
     serverStatElement.aggregateLockHoldersData(serverStat, 0);
   }
 
   public String toString() {
-    StringBuffer sb = new StringBuffer("lockType: " );
+    StringBuffer sb = new StringBuffer("lockType: ");
     sb.append(lockType);
     sb.append(" ");
     sb.append(serverStatElement.toString());

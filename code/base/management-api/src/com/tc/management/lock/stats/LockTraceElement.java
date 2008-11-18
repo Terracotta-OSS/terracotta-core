@@ -12,5 +12,7 @@ public interface LockTraceElement {
   
   LockStats getStats();
   
+  boolean hasChildren();
+  
   Collection children();
 }

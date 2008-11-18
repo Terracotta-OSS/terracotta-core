@@ -13,63 +13,47 @@ import com.tc.object.lockmanager.api.LockID;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
 
 public class TCStackTraceElement implements TCSerializable, Serializable {
-  private Collection lockStatElements;
-  private LockID lockID;
-  private int hashCode;
+  private LockStatElement lockStatElement;
+  private LockID          lockID;
+  private int             hashCode;
 
   public TCStackTraceElement() {
     return;
   }
 
-  public TCStackTraceElement(LockID lockID, Collection lockStatElements) {
+  public TCStackTraceElement(LockID lockID, LockStatElement lockStatElement) {
     this.lockID = lockID;
-    this.lockStatElements = lockStatElements;
-    
+    this.lockStatElement = lockStatElement;
+
     computeHashCode();
   }
-  
+
   private void computeHashCode() {
     HashCodeBuilder hashCodeBuilder = new HashCodeBuilder(5503, 6737);
     hashCodeBuilder.append(lockID.hashCode());
-    for (Iterator i=lockStatElements.iterator(); i.hasNext(); ) {
-      LockStatElement lse = (LockStatElement)i.next();
-      hashCodeBuilder.append(lse.hashCode());
-    }
+    hashCodeBuilder.append(lockStatElement.hashCode());
     this.hashCode = hashCodeBuilder.toHashCode();
   }
 
   public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     this.lockID = new LockID(serialInput.readString());
-    int length = serialInput.readInt();
-    lockStatElements = new ArrayList(length);
-    for (int i = 0; i < length; i++) {
-      LockStatElement lse = new LockStatElement();
-      lse.deserializeFrom(serialInput);
-      lockStatElements.add(lse);
-    }
+    lockStatElement = new LockStatElement();
+    lockStatElement.deserializeFrom(serialInput);
     computeHashCode();
-
     return this;
   }
 
   public void serializeTo(TCByteBufferOutput serialOutput) {
     serialOutput.writeString(lockID.asString());
-    serialOutput.writeInt(lockStatElements.size());
-    for (Iterator i=lockStatElements.iterator(); i.hasNext(); ) {
-      LockStatElement lse = (LockStatElement)i.next();
-      lse.serializeTo(serialOutput);
-    }
+    lockStatElement.serializeTo(serialOutput);
   }
-  
-  public Collection getLockStatElements() {
-    return this.lockStatElements;
+
+  public LockStatElement getLockStatElement() {
+    return this.lockStatElement;
   }
-  
+
   public LockID getLockID() {
     return this.lockID;
   }
@@ -78,28 +62,19 @@ public class TCStackTraceElement implements TCSerializable, Serializable {
     StringBuffer sb = new StringBuffer();
     sb.append(lockID);
     sb.append("\n");
-    for (Iterator i=lockStatElements.iterator(); i.hasNext(); ) {
-      LockStatElement lse = (LockStatElement)i.next();
-      sb.append(lse.toString());
-      sb.append("\n");
-    }
+    sb.append(lockStatElement.toString());
+    sb.append("\n");
     return sb.toString();
   }
-  
+
   public boolean equals(Object obj) {
     if (!(obj instanceof TCStackTraceElement)) { return false; }
     if (this == obj) { return true; }
 
     TCStackTraceElement so = (TCStackTraceElement) obj;
     if (!this.lockID.equals(so.lockID)) { return false; }
-    if (this.lockStatElements.size() != so.lockStatElements.size()) { return false; }
-    
-    Iterator j=so.lockStatElements.iterator();
-    for (Iterator i=lockStatElements.iterator(); i.hasNext(); ) {
-      LockStatElement lse = (LockStatElement)i.next();
-      LockStatElement lse2 = (LockStatElement)j.next();
-      if (!lse.equals(lse2)) { return false; }
-    }
+    if (!this.lockStatElement.equals(so.lockStatElement)) { return false; }
+
     return true;
   }
 

@@ -35,9 +35,10 @@ public class LockStatElement implements TCSerializable, Serializable, LockTraceE
   private LockID                         lockID;
   private LockStats                      lockStat;
   private int                            hashCode;
-  private Map                            nextStat          = new ConcurrentHashMap(); // Map<LockStatElement, LockStatElement>
-  public final transient LockHolderStats holderStats       = new LockHolderStats();   // TCSerializable and Serializable
-                                                                                      // transient
+  private Map                            nextStat          = new ConcurrentHashMap(); // Map<LockStatElement,
+  // LockStatElement>
+  public final transient LockHolderStats holderStats       = new LockHolderStats();  // TCSerializable and Serializable
+  // transient
 
   private StackTraceElement              stackTraceElement;
   private String                         lockConfigElement = "";
@@ -60,6 +61,10 @@ public class LockStatElement implements TCSerializable, Serializable, LockTraceE
 
   public LockStats getStats() {
     return lockStat;
+  }
+
+  public boolean hasChildren() {
+    return nextStat.size() > 0;
   }
 
   /**
@@ -206,26 +211,26 @@ public class LockStatElement implements TCSerializable, Serializable, LockTraceE
     }
   }
 
-  public void aggregateLockStat() {
-    lockStat.clear();
-    for (Iterator i = nextStat.keySet().iterator(); i.hasNext();) {
-      LockStatElement lockStatElement = (LockStatElement) i.next();
-      long pendingRequests = lockStatElement.lockStat.getNumOfLockPendingRequested();
-      long lockRequested = lockStatElement.lockStat.getNumOfLockRequested();
-      long lockHopRequests = lockStatElement.lockStat.getNumOfLockHopRequests();
-      long lockAwarded = lockStatElement.lockStat.getNumOfLockAwarded();
-      long timeToAwardedInMillis = lockStatElement.lockStat.getTotalWaitTimeToAwardedInMillis();
-      long heldTimeInMillis = lockStatElement.lockStat.getTotalRecordedHeldTimeInMillis();
-      long numOfReleases = lockStatElement.lockStat.getNumOfLockReleased();
-      lockStat.aggregateStatistics(pendingRequests, lockRequested, lockHopRequests, lockAwarded, timeToAwardedInMillis,
-                                   heldTimeInMillis, numOfReleases);
-    }
-  }
-
   public void setChild(Collection lockStatElements) {
     for (Iterator i = lockStatElements.iterator(); i.hasNext();) {
       LockStatElement lse = (LockStatElement) i.next();
       nextStat.put(lse, lse);
+    }
+  }
+
+  public void aggregate(LockStatElement lockStatElement) {
+    long pendingRequests = lockStatElement.lockStat.getNumOfLockPendingRequested();
+    long lockRequested = lockStatElement.lockStat.getNumOfLockRequested();
+    long lockHopRequests = lockStatElement.lockStat.getNumOfLockHopRequests();
+    long lockAwarded = lockStatElement.lockStat.getNumOfLockAwarded();
+    long timeToAwardedInMillis = lockStatElement.lockStat.getTotalWaitTimeToAwardedInMillis();
+    long heldTimeInMillis = lockStatElement.lockStat.getTotalRecordedHeldTimeInMillis();
+    long numOfReleases = lockStatElement.lockStat.getNumOfLockReleased();
+    lockStat.aggregateStatistics(pendingRequests, lockRequested, lockHopRequests, lockAwarded, timeToAwardedInMillis,
+                                 heldTimeInMillis, numOfReleases);
+
+    for (Iterator i = lockStatElement.nextStat.values().iterator(); i.hasNext();) {
+      mergeChild((LockStatElement) i.next());
     }
   }
 
@@ -234,25 +239,12 @@ public class LockStatElement implements TCSerializable, Serializable, LockTraceE
     if (existLSE == null) {
       nextStat.put(lockStatElement, lockStatElement);
     } else {
-      long pendingRequests = lockStatElement.lockStat.getNumOfLockPendingRequested();
-      long lockRequested = lockStatElement.lockStat.getNumOfLockRequested();
-      long lockHopRequests = lockStatElement.lockStat.getNumOfLockHopRequests();
-      long lockAwarded = lockStatElement.lockStat.getNumOfLockAwarded();
-      long timeToAwardedInMillis = lockStatElement.lockStat.getTotalWaitTimeToAwardedInMillis();
-      long heldTimeInMillis = lockStatElement.lockStat.getTotalRecordedHeldTimeInMillis();
-      long numOfReleases = lockStatElement.lockStat.getNumOfLockReleased();
-      existLSE.lockStat.aggregateStatistics(pendingRequests, lockRequested, lockHopRequests, lockAwarded,
-                                            timeToAwardedInMillis, heldTimeInMillis, numOfReleases);
-
-      for (Iterator i = lockStatElement.nextStat.values().iterator(); i.hasNext();) {
-        LockStatElement child = (LockStatElement) i.next();
-
-        existLSE.mergeChild(child);
-      }
+      existLSE.aggregate(lockStatElement);
     }
   }
 
-  public void clearChild() {
+  public void clear() {
+    lockStat.clear();
     nextStat.clear();
   }
 
