@@ -4,6 +4,8 @@
  */
 package com.tc.net.groups;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
@@ -17,15 +19,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Each TCGroupMember sits on top of a channel.
  */
 public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
-  private TCGroupManagerImpl   manager;
-  private final MessageChannel channel;
-  private final ServerID       localNodeID;
-  private final ServerID       peerNodeID;
+  private static final TCLogger logger             = TCLogging.getLogger(TCGroupMemberImpl.class);
+  private TCGroupManagerImpl    manager;
+  private final MessageChannel  channel;
+  private final ServerID        localNodeID;
+  private final ServerID        peerNodeID;
   // set member ready only when both ends are in group
-  private final AtomicBoolean  ready              = new AtomicBoolean(false);
-  private final AtomicBoolean  joined             = new AtomicBoolean(false);
-  private volatile boolean     closeEventNotified = false;
-  private volatile boolean     eventFiring        = false;
+  private final AtomicBoolean   ready              = new AtomicBoolean(false);
+  private final AtomicBoolean   joined             = new AtomicBoolean(false);
+  private volatile boolean      closeEventNotified = false;
+  private volatile boolean      eventFiring        = false;
 
   public TCGroupMemberImpl(ServerID localNodeID, ServerID peerNodeID, MessageChannel channel) {
     this.channel = channel;
@@ -43,6 +46,18 @@ public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
    */
   public void send(GroupMessage msg) throws GroupException {
     if (!channel.isOpen()) { throw new GroupException("Channel is not ready: " + toString()); }
+    sendMessage(msg);
+  }
+
+  public void sendIgnoreNotReady(GroupMessage msg) {
+    if (!channel.isOpen()) {
+      logger.warn("Send to a not ready member " + this);
+      return;
+    }
+    sendMessage(msg);
+  }
+
+  private void sendMessage(GroupMessage msg) {
     TCGroupMessageWrapper wrapper = (TCGroupMessageWrapper) channel.createMessage(TCMessageType.GROUP_WRAPPER_MESSAGE);
     wrapper.setGroupMessage(msg);
     wrapper.send();

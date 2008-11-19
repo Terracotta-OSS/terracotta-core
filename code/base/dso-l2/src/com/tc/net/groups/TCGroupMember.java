@@ -16,6 +16,8 @@ public interface TCGroupMember {
   public MessageChannel getChannel();
 
   public void send(GroupMessage msg) throws GroupException;
+  
+  public void sendIgnoreNotReady(GroupMessage msg);
 
   public void setTCGroupManager(TCGroupManagerImpl manager);
 

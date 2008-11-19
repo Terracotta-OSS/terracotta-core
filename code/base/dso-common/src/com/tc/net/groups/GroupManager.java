@@ -15,9 +15,9 @@ public interface GroupManager {
   
   public NodeID getLocalNodeID() throws GroupException;
 
-  public void sendAll(GroupMessage msg) throws GroupException;
+  public void sendAll(GroupMessage msg);
   
-  public void sendAll(GroupMessage msg, Set nodeIDs) throws GroupException;
+  public void sendAll(GroupMessage msg, Set nodeIDs);
   
   public GroupResponse sendAllAndWaitForResponse(GroupMessage msg) throws GroupException;
   

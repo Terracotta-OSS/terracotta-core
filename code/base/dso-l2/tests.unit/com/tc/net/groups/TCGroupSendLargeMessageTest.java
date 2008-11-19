@@ -89,7 +89,7 @@ public class TCGroupSendLargeMessageTest extends TCTestCase {
   }
 
   private void checkSendingReceivingMessages(TCGroupManagerImpl gm1, MyListener l1, TCGroupManagerImpl gm2,
-                                             MyListener l2, long oidsCount) throws GroupException {
+                                             MyListener l2, long oidsCount) {
     ThreadUtil.reallySleep(5 * 1000);
 
     ObjectIDSet oidSet = new ObjectIDSet();

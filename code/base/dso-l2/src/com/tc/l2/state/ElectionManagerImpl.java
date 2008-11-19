@@ -127,11 +127,7 @@ public class ElectionManagerImpl implements ElectionManager {
   public synchronized void declareWinner(NodeID myNodeId) {
     Assert.assertEquals(winner.getNodeID(), myNodeId);
     GroupMessage msg = createElectionWonMessage(this.winner);
-    try {
-      this.groupManager.sendAll(msg);
-    } catch (GroupException e) {
-      logger.error("Error declaring results : ", e);
-    }
+    this.groupManager.sendAll(msg);
     logger.info("Declared as Winner: Winner is : " + this.winner);
     reset(winner);
   }

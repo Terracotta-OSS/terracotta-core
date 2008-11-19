@@ -287,11 +287,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       final long id = gcIdGenerator.incrementAndGet();
       transactionManager.callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionLister() {
         public void onCompletion() {
-          try {
-            groupManager.sendAll(msg);
-          } catch (GroupException e) {
-            logger.error("Error sending gc results : ", e);
-          }
+          groupManager.sendAll(msg);
         }
 
         public String toString() {

@@ -68,11 +68,11 @@ public class VirtualTCGroupManagerImpl implements GroupManager, GroupEventsListe
     registerForMessages(msgClass, new RouteGroupMessagesToSink(msgClass.getName(), sink));
   }
 
-  public void sendAll(GroupMessage msg) throws GroupException {
+  public void sendAll(GroupMessage msg) {
     groupManager.sendAll(msg, groupNodeIDs);
   }
   
-  public void sendAll(GroupMessage msg, Set nodeIDs) throws GroupException {
+  public void sendAll(GroupMessage msg, Set nodeIDs) {
     groupManager.sendAll(msg, nodeIDs);
   }
 
