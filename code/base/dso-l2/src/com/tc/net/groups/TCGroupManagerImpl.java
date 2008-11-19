@@ -329,7 +329,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     }
     return (getNodeID());
   }
-
+  
   public void memberDisappeared(TCGroupMember member, boolean byDisconnectEvent) {
     Assert.assertNotNull(member);
     if (isStopped.get()) return;
@@ -362,7 +362,12 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   }
 
   public void sendAll(GroupMessage msg) throws GroupException {
+    sendAll(msg, members.keySet());
+  }
+
+  public void sendAll(GroupMessage msg, Set nodeIDs) throws GroupException {
     for (TCGroupMember m : members.values()) {
+      if (!nodeIDs.contains(m.getPeerNodeID())) continue;
       if (m.isReady()) {
         m.send(msg);
       } else {
@@ -402,13 +407,17 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   }
 
   public GroupResponse sendAllAndWaitForResponse(GroupMessage msg) throws GroupException {
+    return sendAllAndWaitForResponse(msg, members.keySet());
+  }
+
+  public GroupResponse sendAllAndWaitForResponse(GroupMessage msg, Set nodeIDs) throws GroupException {
     if (logger.isDebugEnabled()) logger.debug(getNodeID() + " : Sending to ALL and Waiting for Response : "
                                               + msg.getMessageID());
     GroupResponseImpl groupResponse = new GroupResponseImpl(this);
     MessageID msgID = msg.getMessageID();
     GroupResponse old = pendingRequests.put(msgID, groupResponse);
     Assert.assertNull(old);
-    groupResponse.sendAll(msg);
+    groupResponse.sendAll(msg, nodeIDs);
     groupResponse.waitForResponses(getNodeID());
     pendingRequests.remove(msgID);
     return groupResponse;
@@ -659,7 +668,12 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     }
 
     public synchronized void sendAll(GroupMessage msg) throws GroupException {
+      sendAll(msg, manager.members.keySet());
+    }
+
+    public synchronized void sendAll(GroupMessage msg, Set nodeIDs) throws GroupException {
       for (TCGroupMember m : manager.getMembers()) {
+        if (!nodeIDs.contains(m.getPeerNodeID())) continue;
         if (m.isReady()) {
           Assert.assertNotNull(m.getPeerNodeID());
           waitFor.add(m.getPeerNodeID());

@@ -886,7 +886,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
 
     boolean networkedHA = this.haConfig.isNetworkedActivePassive();
     if (networkedHA) {
-      this.haConfig.makeAllNodes();
+      this.haConfig.makeThisGroupNodes();
 
       logger.info("L2 Networked HA Enabled ");
       l2Coordinator = new L2HACoordinator(configSetupManager, consoleLogger, this, stageManager, persistor
@@ -921,7 +921,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
 
     if (networkedHA) {
       final Node thisNode = this.haConfig.makeThisNode();
-      l2Coordinator.start(thisNode, this.haConfig.getAllNodes());
+      l2Coordinator.start(thisNode, this.haConfig.getThisGroupNodes());
     } else {
       // In non-network enabled HA, Only active server reached here.
       startActiveMode();

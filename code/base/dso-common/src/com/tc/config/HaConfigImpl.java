@@ -15,11 +15,15 @@ import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.util.ActiveCoordintorHelper;
 import com.tc.util.Assert;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class HaConfigImpl implements HaConfig {
 
   private final L2TVSConfigurationSetupManager configSetupManager;
   private final ServerGroup[]                  groups;
-  private Node[]                               nodes;
+  private Node[]                               thisGroupNodes;
+  private final Set                            allNodes = new HashSet();
   private final ServerGroup                    activeCoordinatorGroup;
 
   public HaConfigImpl(L2TVSConfigurationSetupManager configSetupManager) {
@@ -54,7 +58,7 @@ public class HaConfigImpl implements HaConfig {
     return this.groups;
   }
 
-  public Node[] makeAllNodes() {
+  public Node[] makeThisGroupNodes() {
     ActiveServerGroupConfig asgc = configSetupManager.getActiveServerGroupForThisL2();
     Assert.assertNotNull(asgc);
     String[] l2Names = asgc.getMembers().getMemberArray();
@@ -70,12 +74,34 @@ public class HaConfigImpl implements HaConfig {
       rv[i] = makeNode(l2);
       addNodeToGroup(rv[i], l2Names[i]);
     }
-    this.nodes = rv;
+    this.thisGroupNodes = rv;
     return rv;
   }
 
+  public Node[] getThisGroupNodes() {
+    return this.thisGroupNodes;
+  }
+
+  public void makeAllNodes() {
+    ActiveServerGroupConfig[] asgcs = configSetupManager.activeServerGroupsConfig().getActiveServerGroupArray();
+    for (int j = 0; j < asgcs.length; ++j) {
+      ActiveServerGroupConfig asgc = asgcs[j];
+      Assert.assertNotNull(asgc);
+      String[] l2Names = asgc.getMembers().getMemberArray();
+      for (int i = 0; i < l2Names.length; i++) {
+        try {
+          NewL2DSOConfig l2 = configSetupManager.dsoL2ConfigFor(l2Names[i]);
+          allNodes.add(makeNode(l2));
+        } catch (ConfigurationSetupException e) {
+          throw new RuntimeException("Error getting l2 config for: " + l2Names[i], e);
+        }
+      }
+    }
+  }
+
   public Node[] getAllNodes() {
-    return this.nodes;
+    Assert.assertTrue(allNodes.size() > 0);
+    return (Node[]) allNodes.toArray(new Node[allNodes.size()]);
   }
 
   // servers and groups were checked in configSetupManger

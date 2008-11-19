@@ -40,13 +40,13 @@ public class HaConfigTest extends TCTestCase {
       TVSConfigurationSetupManagerFactory factory = new StandardTVSConfigurationSetupManagerFactory(new String[] {
           "-f", tcConfig.getAbsolutePath() }, true, new FatalIllegalConfigurationChangeHandler());
       HaConfig haConfig = new HaConfigImpl(factory.createL2TVSConfigurationSetupManager(null));
-      Assert.assertTrue(haConfig.makeAllNodes().length == 1);
+      Assert.assertTrue(haConfig.makeThisGroupNodes().length == 1);
 
       //test for picking up right active server group for a give server
       factory = new StandardTVSConfigurationSetupManagerFactory(new String[] { "-f", tcConfig.getAbsolutePath(), "-n",
           "server1" }, true, new FatalIllegalConfigurationChangeHandler());
       haConfig = new HaConfigImpl(factory.createL2TVSConfigurationSetupManager(null));
-      Assert.assertTrue(haConfig.makeAllNodes().length == 1);
+      Assert.assertTrue(haConfig.makeThisGroupNodes().length == 1);
 
       //expecting an error when given non existing server for haConfig
       factory = new StandardTVSConfigurationSetupManagerFactory(new String[] { "-f", tcConfig.getAbsolutePath(), "-n",

@@ -10,6 +10,7 @@ import com.tc.net.ServerID;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /*
  * This is a simple class that is a dummy group manager. All it does is it treats this one node that it runs in as a
@@ -37,7 +38,7 @@ public class SingleNodeGroupManager implements GroupManager {
     this.thisNode = new ServerID("CurrentNode", CURRENT_NODE_ID);
     return this.thisNode;
   }
-
+  
   public NodeID getLocalNodeID() throws GroupException {
     if (thisNode == null) { throw new GroupException("Not Joined yet !"); }
     return this.thisNode;
@@ -54,12 +55,21 @@ public class SingleNodeGroupManager implements GroupManager {
   public void sendAll(GroupMessage msg) {
     // NOP : No Network, no one to write to
   }
-
+  
+  public void sendAll(GroupMessage msg, Set nodeIDs) {
+    // NOP
+  }
+  
   public GroupResponse sendAllAndWaitForResponse(GroupMessage msg) {
     // NOP : No Network, no one to write to, hen no response too
     return DUMMY_RESPONSE;
   }
-
+  
+  public GroupResponse sendAllAndWaitForResponse(GroupMessage msg, Set nodeIDs) {
+    // NOP : No Network, no one to write to, hen no response too
+    return DUMMY_RESPONSE;
+  }
+  
   public void sendTo(NodeID node, GroupMessage msg) throws GroupException {
     throw new GroupException("Can't write to Node : " + node + " Node Not found !");
   }
@@ -80,4 +90,5 @@ public class SingleNodeGroupManager implements GroupManager {
   public void setZapNodeRequestProcessor(ZapNodeRequestProcessor processor) {
     // NOP
   }
+
 }
