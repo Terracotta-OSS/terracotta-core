@@ -246,7 +246,7 @@ boot_jar_path=/path/to/your/boot/jar
 
 create_boot_jar <jvm_type>
     Creates a boot JAR file for <jvm_type>
-    <jvm_type> can be '1.4', '1.5', or the fully-qualified path
+    <jvm_type> can be '1.5', '1.6', or the fully-qualified path
     to a Java home.
 
 show_config
@@ -268,8 +268,8 @@ tests, while using the default JDK for everything else.
 Both jdk= and tests-jdk= can be given either the name of a JDK specified in
 jdk.def.yml, or the path to a Java installation.  For example:
 
-  tests-jdk=1.4               # run tests using J2SE_14
   tests-jdk=1.5               # run tests using J2SE_15
+  tests-jdk=1.6               # run tests using JAVASE_16
   jdk=/usr/local/jdk1.6.0     # do everything with JAVASE_16
 
 SEE ALSO

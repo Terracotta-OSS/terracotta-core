@@ -866,9 +866,6 @@ END
       if version >= "1.5.0"
         # Note: this works for IBM JDK too
         @extra_jvmargs << "-agentlib:jdwp=#{common_options}"
-      elsif version >= "1.4.0"
-        @extra_jvmargs << "-Xdebug"
-        @extra_jvmargs << "-Xrunjdwp:#{common_options}"
       end
     end
   end

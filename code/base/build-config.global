@@ -19,7 +19,6 @@ appserver=tomcat-6.0.18
 #appserver=weblogic-10.0.mp1
 #appserver=weblogic-9.2.mp3
 #appserver=weblogic-9.2.mp2
-#appserver=weblogic-8.1.sp6
 #appserver=jboss-4.0.5
 #appserver=jboss-3.2.8.sp1
 #appserver=jetty-6.1.5
