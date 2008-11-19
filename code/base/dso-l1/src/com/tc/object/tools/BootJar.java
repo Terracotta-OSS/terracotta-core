@@ -370,7 +370,7 @@ public class BootJar {
 
     BootJarMetaData(Manifest manifest) throws BootJarException {
       Assert.assertNotNull(manifest);
-      Attributes attributes = (Attributes) manifest.getEntries().get(META_DATA_ATTRIBUTE_NAME);
+      Attributes attributes = manifest.getEntries().get(META_DATA_ATTRIBUTE_NAME);
       if (attributes == null) { throw new InvalidBootJarMetaDataException("Missing attributes in jar manifest."); }
 
       version = attributes.getValue(VERSION);

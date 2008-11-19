@@ -59,8 +59,8 @@ public class StandardXmlObjectComparator implements XmlObjectComparator {
       String thisWhere = where + "/" + getPropertyFromMethodName(method.getName());
 
       try {
-        Object oneValue = method.invoke(one, null);
-        Object twoValue = method.invoke(two, null);
+        Object oneValue = method.invoke(one);
+        Object twoValue = method.invoke(two);
 
         compareValues(thisWhere, oneValue, twoValue);
       } catch (IllegalArgumentException iae) {

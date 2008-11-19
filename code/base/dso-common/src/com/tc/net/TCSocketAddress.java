@@ -68,11 +68,11 @@ public class TCSocketAddress {
   private String                  canonicalStringForm;
 
   public static byte[] getLoopbackBytes() {
-    return (byte[]) LOOPBACK_BYTES.clone();
+    return LOOPBACK_BYTES.clone();
   }
 
   public static byte[] getWilcardBytes() {
-    return (byte[]) WILDCARD_BYTES.clone();
+    return WILDCARD_BYTES.clone();
   }
 
   // TODO: add a constructor that takes the output of toStringForm() and

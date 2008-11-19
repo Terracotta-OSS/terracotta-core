@@ -20,8 +20,7 @@ import java.util.List;
 import java.util.ResourceBundle;
 
 /**
- * Encapsulate why something is non-portable and build nice error messages 
- * for printing when that occurs.
+ * Encapsulate why something is non-portable and build nice error messages for printing when that occurs.
  */
 public class NonPortableReason implements Serializable {
 
@@ -103,6 +102,7 @@ public class NonPortableReason implements Serializable {
 
   /**
    * Add detail to the reason
+   * 
    * @param label The label
    * @param value The value
    */
@@ -218,7 +218,7 @@ public class NonPortableReason implements Serializable {
         break;
       default:
         throw new AssertionError("Unknown reason: " + reason);
-    }    
+    }
     return sb.toString();
   }
 
@@ -240,7 +240,7 @@ public class NonPortableReason implements Serializable {
         if (detail == null) {
           detail = findDetailByLabel(NonPortableFieldSetContext.FIELD_NAME_LABEL);
         }
-        if (detail == null ) {
+        if (detail == null) {
           detail = findDetailByLabel("Referring field");
         }
         sb.append(Messages.superClassNotAdaptableInstructions(detail != null ? detail.getValue() : null, className,
@@ -284,6 +284,7 @@ public class NonPortableReason implements Serializable {
 
   /**
    * Check whether this reason knows the field name referring to the non-portable object.
+   * 
    * @return True if has field name
    */
   public boolean hasUltimateNonPortableFieldName() {
@@ -292,6 +293,7 @@ public class NonPortableReason implements Serializable {
 
   /**
    * Set the name of the field holding the nonportable object.
+   * 
    * @param name Name of the field
    */
   public void setUltimateNonPortableFieldName(String name) {
@@ -346,6 +348,7 @@ public class NonPortableReason implements Serializable {
 
   /**
    * Add erroneous super class
+   * 
    * @param superClass Super class that is non-portable
    */
   public void addErroneousSuperClass(Class superClass) {
@@ -389,8 +392,8 @@ public class NonPortableReason implements Serializable {
   }
 
   /**
-   * Accept a formatter for message formatting.  This method will walk 
-   * the reason text, details, and instructions.
+   * Accept a formatter for message formatting. This method will walk the reason text, details, and instructions.
+   * 
    * @param formatter Formatter to help formatting the reason
    */
   public void accept(NonPortableReasonFormatter formatter) {
@@ -462,28 +465,31 @@ public class NonPortableReason implements Serializable {
     }
 
     static String classNotInBootJarInstructions(List classes) {
-      final StringBuffer instructions = new StringBuffer(MessageFormat.format(rb.getString(CLASS_NOT_IN_BOOT_JAR_INFO_KEY), null));
-      
+      final StringBuffer instructions = new StringBuffer(MessageFormat.format(rb
+          .getString(CLASS_NOT_IN_BOOT_JAR_INFO_KEY), (Object[]) null));
+
       final StringBuffer classesMsg = new StringBuffer();
       for (Iterator pos = classes.iterator(); pos.hasNext();) {
         classesMsg.append(MessageFormat.format(rb.getString(CLASS_NOT_IN_BOOT_JAR_CLASS_KEY),
                                                new Object[] { pos.next() }));
       }
-      instructions.append(MessageFormat.format(rb.getString(CLASS_NOT_IN_BOOT_JAR_INSTRUCTIONS_KEY), new Object[] { classesMsg }));
+      instructions.append(MessageFormat.format(rb.getString(CLASS_NOT_IN_BOOT_JAR_INSTRUCTIONS_KEY),
+                                               new Object[] { classesMsg }));
       return instructions.toString();
     }
 
     static String classNotIncludedInConfigInstructions(List normalClassNames, List bootJarClassNames) {
-      final StringBuffer instructions = new StringBuffer(MessageFormat.format(rb.getString(CLASS_NOT_INCLUDED_IN_CONFIG_INFO_KEY), null));
-      instructions.append(MessageFormat.format(rb.getString(CLASS_NOT_INCLUDED_IN_CONFIG_HEADER_KEY), null));
+      final StringBuffer instructions = new StringBuffer(MessageFormat.format(rb
+          .getString(CLASS_NOT_INCLUDED_IN_CONFIG_INFO_KEY), (Object[]) null));
+      instructions.append(MessageFormat.format(rb.getString(CLASS_NOT_INCLUDED_IN_CONFIG_HEADER_KEY), (Object[]) null));
       if (normalClassNames != null && !normalClassNames.isEmpty()) {
         final StringBuffer classList = new StringBuffer();
         for (Iterator pos = normalClassNames.iterator(); pos.hasNext();) {
           classList.append(MessageFormat.format(rb.getString(CLASS_NOT_INCLUDED_IN_CONFIG_NON_BOOTJAR_CLASS_KEY),
                                                 new Object[] { pos.next() }));
         }
-        instructions.append(MessageFormat.format(rb.getString(CLASS_NOT_INCLUDED_IN_CONFIG_NON_BOOTJAR_INSTRUCTIONS_KEY),
-                                                 new Object[] { classList }));
+        instructions.append(MessageFormat.format(rb
+            .getString(CLASS_NOT_INCLUDED_IN_CONFIG_NON_BOOTJAR_INSTRUCTIONS_KEY), new Object[] { classList }));
       }
       if (bootJarClassNames != null && !bootJarClassNames.isEmpty()) {
         final StringBuffer bootJarClassList = new StringBuffer();
@@ -498,16 +504,17 @@ public class NonPortableReason implements Serializable {
     }
 
     static String superClassNotInstrumentedInstructions(List normalClassNames, List bootJarClassNames) {
-      final StringBuffer instructions = new StringBuffer(MessageFormat.format(rb.getString(SUPER_CLASS_NOT_INSTRUMENTED_INFO_KEY), null));
-      instructions.append(MessageFormat.format(rb.getString(SUPER_CLASS_NOT_INSTRUMENTED_HEADER_KEY), null));
+      final StringBuffer instructions = new StringBuffer(MessageFormat.format(rb
+          .getString(SUPER_CLASS_NOT_INSTRUMENTED_INFO_KEY), (Object[]) null));
+      instructions.append(MessageFormat.format(rb.getString(SUPER_CLASS_NOT_INSTRUMENTED_HEADER_KEY), (Object[]) null));
       if (normalClassNames != null && !normalClassNames.isEmpty()) {
         final StringBuffer classList = new StringBuffer();
         for (Iterator pos = normalClassNames.iterator(); pos.hasNext();) {
           classList.append(MessageFormat.format(rb.getString(SUPER_CLASS_NOT_INSTRUMENTED_NON_BOOTJAR_CLASS_KEY),
                                                 new Object[] { pos.next() }));
         }
-        instructions.append(MessageFormat.format(rb.getString(SUPER_CLASS_NOT_INSTRUMENTED_NON_BOOTJAR_INSTRUCTIONS_KEY),
-                                                 new Object[] { classList }));
+        instructions.append(MessageFormat.format(rb
+            .getString(SUPER_CLASS_NOT_INSTRUMENTED_NON_BOOTJAR_INSTRUCTIONS_KEY), new Object[] { classList }));
       }
       if (bootJarClassNames != null && !bootJarClassNames.isEmpty()) {
         final StringBuffer bootJarClassList = new StringBuffer();

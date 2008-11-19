@@ -299,7 +299,7 @@ public class ClassProcessorHelper {
     if (tcHomeDir == null) {
       ClassLoader classPathLoader = sun.misc.Launcher.getLauncher().getClassLoader();
       URL[] systemURLS = ((URLClassLoader) classPathLoader).getURLs();
-      return (URL[]) systemURLS.clone();
+      return systemURLS.clone();
     }
 
     File tcLib = new File(tcHomeDir, "lib");

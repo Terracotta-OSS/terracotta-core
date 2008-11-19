@@ -215,9 +215,9 @@ public class FieldUtils {
   private static Object resolveReference(Object obj, Field field) {
     String fieldGetterMethodName = fieldGetterMethod(field.getName());
     try {
-      Method m = field.getDeclaringClass().getDeclaredMethod(fieldGetterMethodName, null);
+      Method m = field.getDeclaringClass().getDeclaredMethod(fieldGetterMethodName, (Class[]) null);
       m.setAccessible(true);
-      Object retValue = m.invoke(obj, null);
+      Object retValue = m.invoke(obj, (Object[]) null);
       return retValue;
     } catch (NoSuchMethodException e) {
       throw new TCRuntimeException(e);

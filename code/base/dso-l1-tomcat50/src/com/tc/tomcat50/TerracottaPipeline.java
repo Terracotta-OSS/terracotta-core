@@ -28,7 +28,7 @@ public class TerracottaPipeline extends StandardPipeline {
     Valve[] rv = super.getValves();
     if (super.valves == rv) {
       // make defensive copy
-      rv = (Valve[]) rv.clone();
+      rv = rv.clone();
     }
     return rv;
   }

@@ -13,7 +13,7 @@ import java.util.Arrays;
 public class SysProps {
 
   public static void main(String[] args) {
-    String[] props = (String[]) System.getProperties().keySet().toArray(new String[] {});
+    String[] props = System.getProperties().keySet().toArray(new String[] {});
 
     Arrays.sort(props);
 

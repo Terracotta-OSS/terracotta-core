@@ -199,7 +199,7 @@ public class TestConfigObjectInvocationHandler implements InvocationHandler {
         Method createMethod = factoryClass.getMethod("newInstance", new Class[0]);
         Assert.eval(XmlObject.class.isAssignableFrom(createMethod.getReturnType()));
         Assert.eval(Modifier.isStatic(createMethod.getModifiers()));
-        XmlObject out = (XmlObject) createMethod.invoke(null, null);
+        XmlObject out = (XmlObject) createMethod.invoke(null);
         logger.debug("Created new object " + out + ".");
         xsetMethod.invoke(beanToSetOn, new Object[] { out });
         logger.debug("Set new object " + out + " via xset...() method " + xsetMethod + " on bean " + beanToSetOn);

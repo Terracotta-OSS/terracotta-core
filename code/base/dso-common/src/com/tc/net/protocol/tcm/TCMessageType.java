@@ -100,7 +100,7 @@ public final class TCMessageType {
   }
 
   public static TCMessageType[] getAllMessageTypes() {
-    return (TCMessageType[]) allTypes.clone();
+    return allTypes.clone();
   }
 
   public int getType() {

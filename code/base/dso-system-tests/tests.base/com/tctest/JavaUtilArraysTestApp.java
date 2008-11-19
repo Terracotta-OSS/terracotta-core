@@ -268,28 +268,28 @@ public class JavaUtilArraysTestApp extends AbstractTransparentApp {
       Arrays.fill(filledBoolean, true);
 
       this.filledByte = new byte[10];
-      this.sortedByte = (byte[]) unsortedByte.clone();
+      this.sortedByte = unsortedByte.clone();
 
       this.filledChar = new char[10];
-      this.sortedChar = (char[]) unsortedChar.clone();
+      this.sortedChar = unsortedChar.clone();
 
       this.filledDouble = new double[10];
-      this.sortedDouble = (double[]) unsortedDouble.clone();
+      this.sortedDouble = unsortedDouble.clone();
 
       this.filledInt = new int[10];
-      this.sortedInt = (int[]) unsortedInt.clone();
+      this.sortedInt = unsortedInt.clone();
 
       this.filledFloat = new float[10];
-      this.sortedFloat = (float[]) unsortedFloat.clone();
+      this.sortedFloat = unsortedFloat.clone();
 
       this.filledLong = new long[10];
-      this.sortedLong = (long[]) unsortedLong.clone();
+      this.sortedLong = unsortedLong.clone();
 
       this.filledShort = new short[10];
-      this.sortedShort = (short[]) unsortedShort.clone();
+      this.sortedShort = unsortedShort.clone();
 
       this.filledObject = new Object[10];
-      this.sortedObject = (Object[]) unsortedObject.clone();
+      this.sortedObject = unsortedObject.clone();
 
       // the underlying array will be sorted(), so we should expect the List to come out sorted on the other side
       this.asList = Arrays.asList(this.sortedObject);

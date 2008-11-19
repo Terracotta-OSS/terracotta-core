@@ -41,7 +41,7 @@ public class LockContextTest extends TestCase {
     TCByteBufferOutputStream out = new TCByteBufferOutputStream();
     o.serializeTo(out);
 
-    LockContext lc2 = (LockContext) o.getClass().newInstance();
+    LockContext lc2 = o.getClass().newInstance();
     lc2.deserializeFrom(new TCByteBufferInputStream(out.toArray()));
 
     Assert.assertEquals(hash, lc2.hashCode());
