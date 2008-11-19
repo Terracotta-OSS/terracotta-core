@@ -15,24 +15,24 @@ modules:
         - common
   - thirdparty-api:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
   - thirdparty:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
       dependencies:
         - thirdparty-api
   - common-api:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
         javadoc: true
   - common:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
       dependencies:
         - common-api
   - aspectwerkz:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
       dependencies:
         - common
         - common-api
@@ -40,14 +40,14 @@ modules:
         - thirdparty-api
   - dso-statistics-api:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
         javadoc: true
       dependencies:
         - common
         - common-api
   - dso-l1-api:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
         javadoc: true
       dependencies:
         - aspectwerkz
@@ -57,7 +57,7 @@ modules:
         - thirdparty-api
   - dso-common:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
       dependencies:
         - common
         - common-api
@@ -83,7 +83,7 @@ modules:
         - dso-statistics-api
   - management-api:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
         javadoc: true
       dependencies:
         - common
@@ -93,7 +93,7 @@ modules:
         - dso-statistics-api
   - management:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
       dependencies:
         - common
         - common-api
@@ -103,7 +103,7 @@ modules:
         - management-api
   - dso-l2-common:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
       dependencies:
         - common-api
         - dso-common
@@ -125,14 +125,14 @@ modules:
         - thirdparty-api
   - modules-common:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
         module: true
       dependencies:
         - common-api
         - dso-l1-api
   - excludes-config:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
         module: true
       dependencies:
         - common-api
@@ -140,7 +140,7 @@ modules:
         - modules-common
   - guimodels-config:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
         module: true
       dependencies:
         - common-api
@@ -148,7 +148,7 @@ modules:
         - modules-common
   - jdk15-preinst-config:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
         module: true
       dependencies:
         - common-api
@@ -156,7 +156,7 @@ modules:
         - modules-common
   - spring-config:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
         module: true
       dependencies:
         - common-api
@@ -165,7 +165,7 @@ modules:
         - thirdparty-api
   - standard-config:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
         module: true
       dependencies:
         - common-api
@@ -174,14 +174,14 @@ modules:
         - thirdparty-api
   - sigarstats:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
       dependencies:
         - common
         - common-api
         - dso-statistics-api
   - dso-statistics:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
       dependencies:
         - common
         - common-api
@@ -195,7 +195,7 @@ modules:
         - management-api
   - dso-l1:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
       dependencies:
         - aspectwerkz
         - common
@@ -226,7 +226,7 @@ modules:
         - thirdparty-api
   - dso-l1-session:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
       dependencies:
         - common
         - common-api
@@ -237,10 +237,10 @@ modules:
         - management-api
   - dso-weblogic-stubs:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
   - dso-l1-weblogic:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
       dependencies:
         - aspectwerkz
         - common
@@ -254,7 +254,7 @@ modules:
         - dso-weblogic-stubs
   - dso-l1-tomcat:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
       dependencies:
         - common
         - common-api
@@ -263,7 +263,7 @@ modules:
         - dso-l1-api
   - dso-l1-tomcat50:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
       dependencies:
         - common
         - common-api
@@ -272,7 +272,7 @@ modules:
         - dso-l1-session
   - dso-l1-tomcat55:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
       dependencies:
         - common
         - common-api
@@ -281,7 +281,7 @@ modules:
         - dso-l1-session
   - dso-memory-datastore:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
       dependencies:
         - common
         - common-api
@@ -329,7 +329,7 @@ modules:
         - thirdparty-api
   - simulator:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
       dependencies:
         - common
         - common-api
@@ -362,7 +362,7 @@ modules:
         - dso-statistics-api
   - examples:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
       dependencies:
         - common
         - common-api
@@ -403,7 +403,7 @@ modules:
         - ui-eclipse
   - installer:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
   - tim-get-tool:
       options:
         jdk: J2SE-1.5
@@ -412,7 +412,7 @@ modules:
         - common-api
   - legacy-test-tree:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
       dependencies:
         - aspectwerkz
         - common
@@ -465,7 +465,7 @@ modules:
         - thirdparty-api
   - dso-spring:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
       dependencies:
         - aspectwerkz
         - common
@@ -490,7 +490,7 @@ modules:
         - thirdparty-api
   - dso-system-tests:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
       dependencies:
         - aspectwerkz
         - common
@@ -597,7 +597,7 @@ modules:
         - thirdparty-api
   - dso-spring-crash-tests:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
       dependencies:
         - aspectwerkz
         - common
@@ -644,7 +644,7 @@ modules:
         - thirdparty-api
   - clustered-commons-collections-3.1:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
         module: true
       dependencies:
         - aspectwerkz
@@ -692,7 +692,7 @@ modules:
         - thirdparty-api
   - clustered-surefire-2.3:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
         module: true
       dependencies:
         - common
@@ -702,7 +702,7 @@ modules:
         - thirdparty-api
   - dso-container-tests:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
       dependencies:
         - aspectwerkz
         - common
@@ -729,7 +729,7 @@ modules:
         - thirdparty-api
   - dso-spring-tests:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
       dependencies:
         - aspectwerkz
         - common
