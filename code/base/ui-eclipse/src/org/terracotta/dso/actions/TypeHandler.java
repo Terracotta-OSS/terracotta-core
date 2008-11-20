@@ -55,8 +55,8 @@ public class TypeHandler extends BaseMenuCreator {
       addMenuAction(menu, m_excludedAction);
 
       if (m_element instanceof IType) {
-        m_bootJarAction.setType((IType) m_element);
-        addMenuAction(menu, m_bootJarAction);
+        m_bootJarAction.setType((IType) m_element, menu);
+//        addMenuAction(menu, m_bootJarAction);
       }
     }
   }

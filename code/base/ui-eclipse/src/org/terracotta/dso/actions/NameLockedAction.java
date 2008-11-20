@@ -4,10 +4,22 @@
  */
 package org.terracotta.dso.actions;
 
+import org.eclipse.core.commands.ExecutionException;
+import org.eclipse.core.commands.operations.AbstractOperation;
+import org.eclipse.core.commands.operations.IOperationHistory;
+import org.eclipse.core.commands.operations.IUndoContext;
+import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.PlatformUI;
+import org.terracotta.dso.ConfigurationHelper;
 import org.terracotta.dso.PatternHelper;
+import org.terracotta.dso.TcPlugin;
 import org.terracotta.dso.dialogs.NamedLockDialog;
 
 import com.tc.util.event.UpdateEvent;
@@ -36,20 +48,87 @@ public class NameLockedAction extends BaseAction {
   }
 
   public void performAction(Event event) {
-    if (isChecked()) {
+    IWorkbench workbench = PlatformUI.getWorkbench();
+    IOperationHistory operationHistory = workbench.getOperationSupport().getOperationHistory();
+    IUndoContext undoContext = workbench.getOperationSupport().getUndoContext();
+    NamedLockOperation operation = new NamedLockOperation(m_element, isChecked());
+    operation.addContext(undoContext);
+    try {
+      operationHistory.execute(operation, null, null);
+    } catch (ExecutionException ee) {
+      TcPlugin.getDefault().openError("Executing NamedLockOperation", ee);
+    }
+  }
+
+  class NamedLockOperation extends AbstractOperation {
+    private final IJavaElement fJavaElement;
+    private final boolean      fAddNamedLock;
+    private final String       fPattern;
+    private String             fName;
+    private LockLevel.Enum     fLevel;
+    private boolean            fHaveDetails;
+
+    public NamedLockOperation(IJavaElement javaElement, boolean addNamedLock) {
+      super("");
+      fJavaElement = javaElement;
+      fAddNamedLock = addNamedLock;
+      fPattern = PatternHelper.getExecutionPattern(fJavaElement);
+      if (fAddNamedLock) {
+        setLabel("Add Named Lock");
+      } else {
+        setLabel("Remove Named Lock");
+      }
+      fHaveDetails = false;
+    }
+
+    private void obtainDetails() {
       Shell shell = ActionUtil.findSelectedEditorPart().getSite().getShell();
-      NamedLockDialog dialog = new NamedLockDialog(shell, PatternHelper.getExecutionPattern(m_element));
+      NamedLockDialog dialog = new NamedLockDialog(shell, fPattern);
       dialog.addValueListener(new UpdateEventListener() {
         public void handleUpdate(UpdateEvent e) {
           Object[] values = (Object[]) e.data;
-          getConfigHelper().ensureNameLocked(m_element, (String) values[0], (LockLevel.Enum) values[1]);
+          fName = (String) values[0];
+          fLevel = (LockLevel.Enum) values[1];
+          fHaveDetails = true;
         }
       });
       dialog.open();
-    } else {
-      getConfigHelper().ensureNotNameLocked(m_element);
     }
 
-    inspectCompilationUnit();
+    public IStatus execute(IProgressMonitor monitor, IAdaptable info) {
+      final ConfigurationHelper helper = getConfigHelper();
+
+      if (fAddNamedLock) {
+        if (!fHaveDetails) {
+          obtainDetails();
+        }
+        helper.ensureNameLocked(fJavaElement, fName, fLevel);
+      } else {
+        helper.ensureNotNameLocked(fJavaElement);
+      }
+      inspectCompilationUnit();
+
+      return Status.OK_STATUS;
+    }
+
+    public IStatus undo(IProgressMonitor monitor, IAdaptable info) {
+      final ConfigurationHelper helper = getConfigHelper();
+
+      if (fAddNamedLock) {
+        helper.ensureNotNameLocked(fJavaElement);
+      } else {
+        if (!fHaveDetails) {
+          obtainDetails();
+        }
+        helper.ensureNameLocked(fJavaElement, fName, fLevel);
+      }
+      inspectCompilationUnit();
+
+      return Status.OK_STATUS;
+    }
+
+    public IStatus redo(IProgressMonitor monitor, IAdaptable info) {
+      return execute(monitor, info);
+    }
   }
 }

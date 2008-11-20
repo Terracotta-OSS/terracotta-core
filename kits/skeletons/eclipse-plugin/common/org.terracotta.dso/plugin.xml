@@ -568,7 +568,7 @@
 
       <objectContribution
             objectClass="org.eclipse.jdt.core.ICompilationUnit"
-            id="modulesMenuContribution">
+            id="moduleMenuActionsContribution">
          <visibility>
             <objectState name="projectNature" value="org.terracotta.dso.ProjectNature"/>
          </visibility>
@@ -578,7 +578,14 @@
                class="org.terracotta.dso.actions.ModuleHandler"
                menubarPath="moduleMenu/group1"
                enablesFor="1"
-               id="modulesMenu">
+               id="moduleMenuActionsModulesHandler">
+         </action>
+         <action
+               label="Methods"
+               icon="images/eclipse/jmeth_obj.gif"
+               class="org.terracotta.dso.actions.MethodHandler"
+               menubarPath="moduleMenu/group1"
+               id="moduleMenuActionsMethodHandler">
          </action>
       </objectContribution>
 
@@ -599,7 +606,7 @@
 
       <objectContribution
             objectClass="org.eclipse.jdt.core.IType"
-            id="typesMenuContribution">
+            id="typesMenuActionsContribution">
          <filter
             name="projectNature"
             value="org.terracotta.dso.ProjectNature">
@@ -610,7 +617,14 @@
                class="org.terracotta.dso.actions.TypeHandler"
                menubarPath="typeMenu/group1"
                enablesFor="1"
-               id="typesMenu">
+               id="typesMenuActionsTypeHandler">
+         </action>
+         <action
+               label="Methods"
+               icon="images/eclipse/jmeth_obj.gif"
+               class="org.terracotta.dso.actions.MethodHandler"
+               menubarPath="typeMenu/group1"
+               id="typesMenuActionsMethodHandler">
          </action>
       </objectContribution>
 
@@ -631,7 +645,7 @@
 
       <objectContribution
             objectClass="org.eclipse.jdt.core.IClassFile"
-            id="classTypesMenuContribution">
+            id="classMenuActionsContribution">
          <filter
             name="projectNature"
             value="org.terracotta.dso.ProjectNature">
@@ -642,7 +656,14 @@
                class="org.terracotta.dso.actions.TypeHandler"
                menubarPath="classMenu/group1"
                enablesFor="1"
-               id="classTypesMenu">
+               id="classMenuActionsTypesHandler">
+         </action>
+         <action
+               label="Methods"
+               icon="images/eclipse/jmeth_obj.gif"
+               class="org.terracotta.dso.actions.MethodHandler"
+               menubarPath="classMenu/group1"
+               id="classMenuActionsMethodHandler">
          </action>
       </objectContribution>
 
@@ -662,7 +683,7 @@
 
       <objectContribution
             objectClass="org.eclipse.jdt.core.IPackageFragment"
-            id="packageFragmentsMenuContribution">
+            id="packageFragmentMenuActionsContribution">
          <visibility>
             <objectState name="projectNature" value="org.terracotta.dso.ProjectNature"/>
          </visibility>
@@ -672,7 +693,14 @@
                class="org.terracotta.dso.actions.PackageFragmentHandler"
                menubarPath="packageFragmentMenu/group1"
                enablesFor="1"
-               id="packageFragmentsMenu">
+               id="packageFragmentMenuActionsPackageFragmentHandler">
+         </action>
+         <action
+               label="Methods"
+               icon="images/eclipse/jmeth_obj.gif"
+               class="org.terracotta.dso.actions.MethodHandler"
+               menubarPath="packageFragmentMenu/group1"
+               id="packageFragmentMenuActionsMethodHandler">
          </action>
       </objectContribution>
     </extension>

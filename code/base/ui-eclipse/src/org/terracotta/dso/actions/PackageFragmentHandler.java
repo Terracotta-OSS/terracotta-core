@@ -25,18 +25,17 @@ public class PackageFragmentHandler extends BaseMenuCreator {
   private IPackageFragment   m_fragment;
   private AdaptableAction    m_adaptableAction;
   private ExcludedTypeAction m_excludedAction;
-  private LockHandler        m_lockHandler;
   
   public PackageFragmentHandler() {
     super();
     
     m_adaptableAction = new AdaptableAction();
     m_excludedAction  = new ExcludedTypeAction();
-    m_lockHandler     = new LockHandler();
   }
   
   protected IJavaElement getJavaElement(ISelection selection) {
     IPackageFragment fragment = ActionUtil.findSelectedPackageFragment(selection);
+    String label = "Package";
     
     m_fragment = null;
     
@@ -46,10 +45,13 @@ public class PackageFragmentHandler extends BaseMenuCreator {
       try {
         if(project.hasNature(ProjectNature.NATURE_ID)) {
           m_fragment = fragment;
+          label = "Package " + fragment.getElementName();
         }
       } catch(Exception e) {/**/}
     }
     
+    m_delegateAction.setText(label);
+
     return m_fragment;
   }
   
@@ -60,9 +62,6 @@ public class PackageFragmentHandler extends BaseMenuCreator {
       
       m_excludedAction.setJavaElement(m_fragment);
       addMenuAction(menu, m_excludedAction);
-      
-      m_lockHandler.setJavaElement(m_fragment);
-      m_lockHandler.fillMenu(menu);
     }
   }  
 }

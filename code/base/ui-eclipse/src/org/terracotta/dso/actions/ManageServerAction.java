@@ -99,7 +99,7 @@ public class ManageServerAction extends BaseAction implements IRunnableWithProgr
 
     try {
       IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
-      window.run(true, false, this);
+      window.run(true, true, this);
     } catch (Exception e) {
       reportError(isRunning, e);
     }

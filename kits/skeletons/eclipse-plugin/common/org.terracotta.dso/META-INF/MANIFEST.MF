@@ -76,6 +76,7 @@ Bundle-ClassPath: ../dependencies/lib/antlr-2.7.3.jar,
  ../aspectwerkz/build.eclipse/src.classes,
  ../dso-common/build.eclipse/src.classes,
  ../dso-common-jdk15/build.eclipse/src.classes,
+ ../dso-common-jdk16/build.eclipse/src.classes,
  ../dso-l1/build.eclipse/src.classes,
  ../dso-l1-jdk15/build.eclipse/src.classes,
  ../dso-l1-api/build.eclipse/src.classes,
@@ -84,6 +85,7 @@ Bundle-ClassPath: ../dependencies/lib/antlr-2.7.3.jar,
  ../thirdparty/build.eclipse/src.classes,
  ../thirdparty-api/build.eclipse/src.classes,
  ../management/build.eclipse/src.classes,
- ../management-api/build.eclipse/src.classes
+ ../management-api/build.eclipse/src.classes,
+ ../dso-spring/build.eclipse/src.classes
 Bundle-Activator: org.terracotta.dso.TcPlugin
 Bundle-RequiredExecutionEnvironment: J2SE-1.5

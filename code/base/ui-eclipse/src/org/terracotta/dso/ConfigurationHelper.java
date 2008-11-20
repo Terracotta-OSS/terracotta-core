@@ -101,19 +101,19 @@ public class ConfigurationHelper {
   public boolean isInstrumentationNotNeeded(final ICompilationUnit cu) {
     return isInstrumentationNotNeeded(cu.findPrimaryType());
   }
- 
+
   public boolean isInstrumentationNotNeeded(final IClassFile cf) {
     return isInstrumentationNotNeeded(cf.findPrimaryType());
   }
-  
+
   public boolean isInstrumentationNotNeeded(final IType type) {
     return isInstrumentationNotNeeded(type.getFullyQualifiedName('$'));
   }
-  
+
   public boolean isInstrumentationNotNeeded(final String classname) {
     return m_nonInstrumentedClasses.isInstrumentationNotNeeded(classname);
   }
-  
+
   public boolean isAdaptable(IJavaElement element) {
     if (element instanceof ICompilationUnit) {
       return isAdaptable((ICompilationUnit) element);
@@ -600,7 +600,7 @@ public class ConfigurationHelper {
   }
 
   public void ensureAdaptable(String classExpr, MultiChangeSignaller signaller) {
-    if(isInstrumentationNotNeeded(classExpr)) return;
+    if (isInstrumentationNotNeeded(classExpr)) return;
     if (isAdaptable(classExpr)) {
       internalEnsureAdaptable(classExpr, signaller);
     }
@@ -620,7 +620,7 @@ public class ConfigurationHelper {
   }
 
   public void internalEnsureAdaptable(String classExpr, MultiChangeSignaller signaller) {
-    if(isInstrumentationNotNeeded(classExpr)) return;
+    if (isInstrumentationNotNeeded(classExpr)) return;
     addIncludeRule(classExpr);
     signaller.includeRulesChanged = true;
   }
@@ -665,7 +665,6 @@ public class ConfigurationHelper {
 
   public void internalEnsureNotAdaptable(ICompilationUnit module, MultiChangeSignaller signaller) {
     IType primaryType = module.findPrimaryType();
-
     if (primaryType != null) {
       internalEnsureNotAdaptable(primaryType, signaller);
     }
@@ -1785,6 +1784,8 @@ public class ConfigurationHelper {
       return isAutolocked((IMethod) element);
     } else if (element instanceof IType) {
       return isAutolocked((IType) element);
+    } else if (element instanceof ICompilationUnit) {
+      return isAutolocked((ICompilationUnit) element);
     } else if (element instanceof IPackageDeclaration) {
       return isAutolocked((IPackageDeclaration) element);
     } else if (element instanceof IPackageFragment) {
@@ -1919,6 +1920,11 @@ public class ConfigurationHelper {
     }
 
     return false;
+  }
+
+  public boolean isAutolocked(ICompilationUnit cu) {
+    IType primaryType = cu.findPrimaryType();
+    return primaryType != null ? isAutolocked(primaryType) : false;
   }
 
   public boolean isAutolocked(IPackageDeclaration packageDecl) {
@@ -2390,6 +2396,8 @@ public class ConfigurationHelper {
       ensureAutolocked((IMethod) element, signaller);
     } else if (element instanceof IType) {
       ensureAutolocked((IType) element, signaller);
+    } else if (element instanceof ICompilationUnit) {
+      ensureAutolocked((ICompilationUnit) element, signaller);
     } else if (element instanceof IPackageDeclaration) {
       ensureAutolocked((IPackageDeclaration) element, signaller);
     } else if (element instanceof IPackageFragment) {
@@ -2494,6 +2502,20 @@ public class ConfigurationHelper {
     addNewAutolock(PatternHelper.getExecutionPattern(type), LockLevel.WRITE, signaller);
   }
 
+  public void ensureAutolocked(ICompilationUnit cu, MultiChangeSignaller signaller) {
+    IType primaryType = cu.findPrimaryType();
+    if (primaryType != null) {
+      ensureAutolocked(primaryType, signaller);
+    }
+  }
+
+  public void ensureAutolocked(ICompilationUnit cu) {
+    IType primaryType = cu.findPrimaryType();
+    if (primaryType != null) {
+      ensureAutolocked(primaryType);
+    }
+  }
+
   public void ensureAutolocked(IPackageDeclaration packageDecl) {
     MultiChangeSignaller signaller = new MultiChangeSignaller();
     ensureAutolocked(packageDecl, signaller);
@@ -2516,7 +2538,6 @@ public class ConfigurationHelper {
     if (!isAdaptable(packageDecl)) {
       internalEnsureAdaptable(packageDecl, signaller);
     }
-
     addNewAutolock(PatternHelper.getExecutionPattern(packageDecl), LockLevel.WRITE, signaller);
   }
 
@@ -2542,7 +2563,6 @@ public class ConfigurationHelper {
     if (!isAdaptable(fragment)) {
       internalEnsureAdaptable(fragment, signaller);
     }
-
     addNewAutolock(PatternHelper.getExecutionPattern(fragment), LockLevel.WRITE, signaller);
   }
 
@@ -2602,7 +2622,6 @@ public class ConfigurationHelper {
 
   public void ensureNotNameLocked(IMethod method, MultiChangeSignaller signaller) {
     MethodInfo methodInfo = m_patternHelper.getMethodInfo(method);
-
     if (methodInfo != null) {
       ensureNotNameLocked(methodInfo, signaller);
     }
@@ -2793,6 +2812,8 @@ public class ConfigurationHelper {
       ensureNotAutolocked((IMethod) element, signaller);
     } else if (element instanceof IType) {
       ensureNotAutolocked((IType) element, signaller);
+    } else if (element instanceof ICompilationUnit) {
+      ensureNotAutolocked((ICompilationUnit) element, signaller);
     } else if (element instanceof IPackageFragment) {
       ensureNotAutolocked((IPackageFragment) element, signaller);
     } else if (element instanceof IJavaProject) {
@@ -2883,6 +2904,20 @@ public class ConfigurationHelper {
       }
 
       testRemoveLocks();
+    }
+  }
+
+  public void ensureNotAutolocked(ICompilationUnit cu) {
+    IType primaryType = cu.findPrimaryType();
+    if (primaryType != null) {
+      ensureNotAutolocked(primaryType);
+    }
+  }
+
+  public void ensureNotAutolocked(ICompilationUnit cu, MultiChangeSignaller signaller) {
+    IType primaryType = cu.findPrimaryType();
+    if (primaryType != null) {
+      ensureNotAutolocked(primaryType, signaller);
     }
   }
 
@@ -3223,7 +3258,7 @@ public class ConfigurationHelper {
   }
 
   public void ensureBootJarClass(String className, MultiChangeSignaller signaller) {
-    if(isInstrumentationNotNeeded(className)) return;
+    if (isInstrumentationNotNeeded(className)) return;
     if (!isBootJarClass(className)) {
       internalEnsureBootJarClass(className, signaller);
     }
@@ -3236,7 +3271,7 @@ public class ConfigurationHelper {
   }
 
   public void internalEnsureBootJarClass(String className, MultiChangeSignaller signaller) {
-    if(isInstrumentationNotNeeded(className)) return;
+    if (isInstrumentationNotNeeded(className)) return;
     ensureAdditionalBootJarClasses().addInclude(className);
     signaller.bootClassesChanged = true;
   }
@@ -3841,13 +3876,13 @@ public class ConfigurationHelper {
       expr = expr.trim();
     }
 
-    if(isInstrumentationNotNeeded(classname)) {
-      msg = "Type '"+classname+"' should never be instrumented";
+    if (isInstrumentationNotNeeded(classname)) {
+      msg = "Type '" + classname + "' should never be instrumented";
     } else {
       BootClassHelper bch = m_plugin.getBootClassHelper(m_project);
-      
-      if(bch != null && bch.isAdaptable(classname)) {
-        msg = "Type '"+classname+"' is a pre-instrumented (default) boot type";
+
+      if (bch != null && bch.isAdaptable(classname)) {
+        msg = "Type '" + classname + "' is a pre-instrumented (default) boot type";
       } else {
         try {
           if (expr != null && JdtUtils.findType(m_javaProject, expr) == null) {
@@ -3858,7 +3893,7 @@ public class ConfigurationHelper {
         }
       }
     }
-    
+
     if (msg != null) {
       reportConfigProblem(classname, msg, BOOT_CLASS_PROBLEM_MARKER);
     }
@@ -3876,15 +3911,16 @@ public class ConfigurationHelper {
       ModulesConfiguration modulesConfig = m_plugin.getModulesConfiguration(m_project);
 
       for (String repo : modules.getRepositoryArray()) {
-        if(repo.startsWith("file:")) {
-          reportConfigProblem(repo, "File URLs have been deprecated - use file path instead", MODULE_REPO_PROBLEM_MARKER);
+        if (repo.startsWith("file:")) {
+          reportConfigProblem(repo, "File URLs have been deprecated - use file path instead",
+                              MODULE_REPO_PROBLEM_MARKER);
         } else {
           File file = new File(repo);
-          if(! file.exists()) {
+          if (!file.exists()) {
             reportConfigProblem(repo, "Repository does not exist", MODULE_REPO_PROBLEM_MARKER);
-          } else if(! file.isDirectory()) {
+          } else if (!file.isDirectory()) {
             reportConfigProblem(repo, "Repository is not a directory", MODULE_REPO_PROBLEM_MARKER);
-          } 
+          }
         }
       }
 

@@ -96,6 +96,7 @@ public class ClasspathProvider extends StandardClasspathProvider {
       "thirdparty-api",
       "dso-common",
       "dso-common-jdk15",
+      "dso-common-jdk16",
       "dso-l1",
       "dso-l1-api",
       "dso-l1-jdk15",
@@ -103,7 +104,8 @@ public class ClasspathProvider extends StandardClasspathProvider {
       "dso-l2-common",
       "dso-statistics",
       "dso-statistics-api",
-      "tim-update-center"};
+      "tim-update-center",
+      "dso-spring"};
 
     for (int i = 0; i < dirs.length; i++) {
       list.add(buildPath.append(dirs[i]).append("build.eclipse").append("src.classes"));

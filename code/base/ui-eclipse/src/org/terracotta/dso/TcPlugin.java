@@ -770,8 +770,8 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
               } else {
                 sb.append(error.toString());
               }
-              if(errors.size() > 1) {
-                int remainingErrors = errors.size()-1;
+              if (errors.size() > 1) {
+                int remainingErrors = errors.size() - 1;
                 sb.append(MessageFormat.format(", ({0} more)", remainingErrors));
               }
             }
@@ -868,7 +868,6 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
       try {
         IFile configFile = getConfigurationFile(project);
         String content = IOUtils.toString(configFile.getContents());
-
         doc = new Document(content);
       } catch (Exception e) {
         openError("Problem handling refactor", e);
@@ -1186,35 +1185,30 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
   }
 
   public void saveConfiguration(IProject project) {
-    IFile configFile;
-    TcConfig config;
-    TcConfigDocument configDoc;
-    XmlOptions opts;
-    InputStream stream;
+    IFile configFile = getConfigurationFile(project);
+    if (configFile != null) {
+      InputStream stream = null;
 
-    ignoreNextConfigChange();
+      try {
+        TcConfig config = getConfiguration(project);
+        if (config != null) {
+          ignoreNextConfigChange();
 
-    opts = getXmlOptions();
-    configFile = getConfigurationFile(project);
-    config = getConfiguration(project);
-    configDoc = TcConfigDocument.Factory.newInstance();
-    stream = null;
+          TcConfigDocument configDoc = TcConfigDocument.Factory.newInstance();
+          configDoc.setTcConfig(config);
+          stream = configDoc.newInputStream(getXmlOptions());
+          configFile.setContents(stream, true, true, null);
+          stream = null;
 
-    try {
-      if (config != null) {
-        configDoc.setTcConfig(config);
-        stream = configDoc.newInputStream(opts);
-        configFile.setContents(stream, true, true, null);
-        stream = null;
-
-        getConfigurationHelper(project).validateAll();
-        fireConfigurationChange(project);
-      }
-    } catch (Exception e) {
-      openError("Error saving '" + configFile.getName() + "'", e);
-    } finally {
-      if (stream != null) {
-        IOUtils.closeQuietly(stream);
+          getConfigurationHelper(project).validateAll();
+          fireConfigurationChange(project);
+        }
+      } catch (Exception e) {
+        openError("Error saving '" + configFile.getName() + "'", e);
+      } finally {
+        if (stream != null) {
+          IOUtils.closeQuietly(stream);
+        }
       }
     }
   }

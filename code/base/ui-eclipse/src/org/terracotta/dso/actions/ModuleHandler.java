@@ -56,8 +56,8 @@ public class ModuleHandler extends BaseMenuCreator {
         m_excludedAction.setJavaElement(type);
         addMenuAction(menu, m_excludedAction);
 
-        m_bootJarAction.setType(type);
-        addMenuAction(menu, m_bootJarAction);
+        m_bootJarAction.setType(type, menu);
+//        addMenuAction(menu, m_bootJarAction);
       }
     }
   }

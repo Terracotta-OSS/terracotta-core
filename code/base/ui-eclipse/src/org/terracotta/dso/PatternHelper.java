@@ -133,6 +133,8 @@ public class PatternHelper {
     return createWithinExpressionContext(m_classInfoFactory.getClassInfo(type));
   }
 
+  // the following two methods are non-sensical
+  
   public ExpressionContext createWithinExpressionContext(final IPackageDeclaration packageDecl) {
     return createWithinExpressionContext(packageDecl.getElementName());
   }
@@ -183,11 +185,11 @@ public class PatternHelper {
   }
 
   public boolean matchesPackageFragment(final String expr, final IPackageFragment fragment) {
-    return matchesClass(expr, createWithinExpressionContext(fragment));
+    return expr.equals(fragment.getElementName()+"..*") || expr.equals(fragment.getElementName()+".*");
   }
 
   public boolean matchesPackageDeclaration(final String expr, final IPackageDeclaration packageDecl) {
-    return matchesClass(expr, createWithinExpressionContext(packageDecl));
+    return expr.equals(packageDecl.getElementName()+"..*") || expr.equals(packageDecl.getElementName()+".*");
   }
 
   public static String getSignature(IMethod method) throws JavaModelException {
