@@ -6,6 +6,7 @@ package java.util;
 
 import com.tc.exception.TCObjectNotFoundException;
 import com.tc.object.ObjectID;
+import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Clearable;
 import com.tc.object.bytecode.Manageable;
@@ -51,7 +52,7 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
     if (__tc_isManaged()) {
       synchronized (__tc_managed().getResolveLock()) {
         ManagerUtil.checkWriteAccess(this);
-        ManagerUtil.logicalInvoke(this, "clear()V", new Object[0]);
+        ManagerUtil.logicalInvoke(this, SerializationUtil.CLEAR_SIGNATURE, new Object[0]);
         super.clear();
       }
     } else {
@@ -181,14 +182,14 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
         Entry e = __tc_getEntry(key);
         if (e == null) {
           // New mapping
-          ManagerUtil.logicalInvoke(this, "put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", new Object[] {
+          ManagerUtil.logicalInvoke(this, SerializationUtil.PUT_SIGNATURE, new Object[] {
               key, value });
           // Sucks to do a second lookup !!
           return unwrapValueIfNecessary(super.put(key, wrapValueIfNecessary(value)));
         } else {
           Object old = unwrapValueIfNecessary(e.getValue());
           if (old != value) {
-            ManagerUtil.logicalInvoke(this, "put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+            ManagerUtil.logicalInvoke(this, SerializationUtil.PUT_SIGNATURE,
                                       new Object[] { e.getKey(), value });
             e.setValue(wrapValueIfNecessary(value));
           }
@@ -237,8 +238,19 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
     }
   }
 
-  public synchronized void putAll(Map arg0) {
-    super.putAll(arg0);
+  public synchronized void putAll(Map t) {
+    if (__tc_isManaged()) {
+      if (t.isEmpty())
+        return;
+      
+      Iterator i = t.entrySet().iterator();
+      while (i.hasNext()) {
+          Map.Entry e = (Map.Entry) i.next();
+          __tc_put_logical(e.getKey(), e.getValue());
+      }
+    } else {
+      super.putAll(t);
+    }
   }
 
   public synchronized Object remove(Object key) {
@@ -252,7 +264,7 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
         Object rv = unwrapValueIfNecessary(entry.getValue());
 
         ManagerUtil
-            .logicalInvoke(this, "remove(Ljava/lang/Object;)Ljava/lang/Object;", new Object[] { entry.getKey() });
+            .logicalInvoke(this, SerializationUtil.REMOVE_KEY_SIGNATURE, new Object[] { entry.getKey() });
 
         return rv;
       }
@@ -294,7 +306,7 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
         if (entry == null) { return; }
 
         ManagerUtil
-            .logicalInvoke(this, "remove(Ljava/lang/Object;)Ljava/lang/Object;", new Object[] { entry.getKey() });
+            .logicalInvoke(this, SerializationUtil.REMOVE_KEY_SIGNATURE, new Object[] { entry.getKey() });
       }
     } else {
       super.remove(key);
@@ -307,18 +319,18 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
    */
   public synchronized void __tc_put_logical(Object key, Object value) {
     if (__tc_isManaged()) {
+      if (key == null || value == null) { throw new NullPointerException(); }
       synchronized (__tc_managed().getResolveLock()) {
-        if (key == null || value == null) { throw new NullPointerException(); }
         ManagerUtil.checkWriteAccess(this);
         Entry e = __tc_getEntry(key);
         if (e == null) {
           // New mapping
-          ManagerUtil.logicalInvoke(this, "put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", new Object[] {
+          ManagerUtil.logicalInvoke(this, SerializationUtil.PUT_SIGNATURE, new Object[] {
               key, value });
           // Sucks to do a second lookup !!
           super.put(key, wrapValueIfNecessary(value));
         } else {
-          ManagerUtil.logicalInvoke(this, "put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+          ManagerUtil.logicalInvoke(this, SerializationUtil.PUT_SIGNATURE,
                                     new Object[] { e.getKey(), value });
           e.setValue(wrapValueIfNecessary(value));
         }
@@ -603,7 +615,7 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
             // ? (both has error checks that we want to take place before any modification is propagated
             if (value == null) throw new NullPointerException();
             ManagerUtil.checkWriteAccess(HashtableTC.this);
-            ManagerUtil.logicalInvoke(HashtableTC.this, "put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+            ManagerUtil.logicalInvoke(HashtableTC.this, SerializationUtil.PUT_SIGNATURE,
                                       new Object[] { getKey(), value });
             return unwrapValueIfNecessary(entry.setValue(value));
           }
@@ -752,7 +764,7 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
           Entry entry = __tc_removeEntryForKey(entryToRemove.getKey());
           if (entry == null) { return false; }
 
-          ManagerUtil.logicalInvoke(HashtableTC.this, "remove(Ljava/lang/Object;)Ljava/lang/Object;",
+          ManagerUtil.logicalInvoke(HashtableTC.this, SerializationUtil.REMOVE_KEY_SIGNATURE,
                                     new Object[] { entry.getKey() });
           return true;
         }
@@ -790,9 +802,48 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
 
     // XXX:: Calls Hashtable.remove();
     public boolean remove(Object o) {
-      return keys.remove(o);
+      if (__tc_isManaged()) {
+        synchronized (__tc_managed().getResolveLock()) {
+          // Managed version
+          int sizeB4 = size();
+          HashtableTC.this.__tc_remove_logical(o);
+          return (size() != sizeB4);
+        }
+      } else {
+        return keys.remove(o);
+      }
     }
 
+    public boolean removeAll(Collection c) {
+      if (__tc_isManaged()) {
+        boolean modified = false;
+        
+        synchronized (__tc_managed().getResolveLock()) {
+          ManagerUtil.checkWriteAccess(HashtableTC.this);
+
+          if (size() > c.size()) {
+            for (Iterator i = c.iterator(); i.hasNext();) {
+              Entry entry = __tc_removeEntryForKey(i.next());
+              if (entry != null) {
+                ManagerUtil.logicalInvoke(HashtableTC.this, SerializationUtil.REMOVE_KEY_SIGNATURE, new Object[] { entry.getKey() });
+                modified = true;
+              }
+            }
+          } else {
+            for (Iterator i = iterator(); i.hasNext();) {
+              if (c.contains(i.next())) {
+                i.remove();
+                modified = true;
+              }
+            }
+          }
+        }
+        return modified;
+      } else {
+        return super.removeAll(c);
+      }
+    }
+    
     public int size() {
       return HashtableTC.this.size();
     }
@@ -874,7 +925,7 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
           synchronized (__tc_managed().getResolveLock()) {
             ManagerUtil.checkWriteAccess(HashtableTC.this);
             entries.remove();
-            ManagerUtil.logicalInvoke(HashtableTC.this, "remove(Ljava/lang/Object;)Ljava/lang/Object;",
+            ManagerUtil.logicalInvoke(HashtableTC.this, SerializationUtil.REMOVE_KEY_SIGNATURE,
                                       new Object[] { currentEntry.getKey() });
           }
         }

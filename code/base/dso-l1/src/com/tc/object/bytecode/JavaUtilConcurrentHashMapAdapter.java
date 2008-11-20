@@ -12,6 +12,7 @@ import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.asm.Type;
 import com.tc.asm.commons.LocalVariablesSorter;
+import com.tc.util.Assert;
 import com.tc.util.runtime.Vm;
 
 public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Opcodes {
@@ -39,7 +40,9 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
   private final static String TC_APPLICATOR_CLEAR_METHOD_NAME     = "__tc_applicator_clear";
   private final static String TC_APPLICATOR_CLEAR_METHOD_DESC     = "()V";
   private final static String TC_REMOVE_LOGICAL_METHOD_NAME       = "__tc_remove_logical";
-  private final static String TC_REMOVE_LOGICAL_METHOD_DESC       = "(Ljava/lang/Object;)V";
+  private final static String TC_REMOVE_LOGICAL_METHOD_DESC       = "(Ljava/lang/Object;)V";  
+  private final static String TC_PUT_LOGICAL_METHOD_NAME          = "__tc_put_logical";
+  private final static String TC_PUT_LOGICAL_METHOD_DESC          = "(Ljava/lang/Object;Ljava/lang/Object;)V";
   private final static String HASH_METHOD_NAME                    = "hash";
 
   public JavaUtilConcurrentHashMapAdapter(ClassVisitor cv) {
@@ -68,30 +71,47 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
 
     MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
     if ("entrySet".equals(name) && "()Ljava/util/Set;".equals(desc)) {
-      return new EntrySetMethodAdapter(mv);
+      return new SetWrapperMethodAdapter(mv, "java/util/concurrent/ConcurrentHashMap$EntrySet",
+                                         "com/tcclient/util/ConcurrentHashMapEntrySetWrapper");
+    } else if ("keySet".equals(name) && "()Ljava/util/Set;".equals(desc)) {
+      return new SetWrapperMethodAdapter(mv, "java/util/concurrent/ConcurrentHashMap$KeySet",
+      "com/tcclient/util/ConcurrentHashMapKeySetWrapper");
     } else if ("segmentFor".equals(name) && "(I)Ljava/util/concurrent/ConcurrentHashMap$Segment;".equals(desc)) {
       return rewriteSegmentForMethod(mv);
     } else if ("get".equals(name) && "(Ljava/lang/Object;)Ljava/lang/Object;".equals(desc)) {
       return new MulticastMethodVisitor(new MethodVisitor[] {
-        new OriginalGetMethodAdapter(super.visitMethod(ACC_SYNTHETIC|ACC_PUBLIC, TC_ORIG_GET_METHOD_NAME, TC_ORIG_GET_METHOD_DESC, null, null)),
+        new RetargetingMethodAdapter(super.visitMethod(ACC_SYNTHETIC|ACC_PUBLIC, TC_ORIG_GET_METHOD_NAME, TC_ORIG_GET_METHOD_DESC, null, null),
+                                     "get", JavaUtilConcurrentHashMapSegmentAdapter.TC_ORIG_GET_METHOD_NAME,
+                                     JavaUtilConcurrentHashMapSegmentAdapter.TC_ORIG_GET_METHOD_DESC),
         new ConcurrentHashMapMethodAdapter(new GetMethodAdapter(mv))});
     }
 
     if ("put".equals(name) && "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;".equals(desc)) {
       mv = new MulticastMethodVisitor(new MethodVisitor[] {
-          mv,
-        new ApplicatorPutMethodAdapter(super.visitMethod(ACC_SYNTHETIC|ACC_PUBLIC, TC_APPLICATOR_PUT_METHOD_NAME, TC_APPLICATOR_PUT_METHOD_DESC, null, null))});
+        mv,
+        new NoReturnRetargetingMethodAdapter(super.visitMethod(ACC_SYNTHETIC|ACC_PUBLIC, TC_APPLICATOR_PUT_METHOD_NAME, TC_APPLICATOR_PUT_METHOD_DESC, null, null),
+                                             "put", JavaUtilConcurrentHashMapSegmentAdapter.TC_ORIG_PUT_METHOD_NAME,
+                                             JavaUtilConcurrentHashMapSegmentAdapter.TC_ORIG_PUT_METHOD_DESC),
+        new NoReturnRetargetingMethodAdapter(super.visitMethod(ACC_SYNTHETIC|ACC_PUBLIC, TC_PUT_LOGICAL_METHOD_NAME, TC_PUT_LOGICAL_METHOD_DESC, null, null),
+                                             "put", JavaUtilConcurrentHashMapSegmentAdapter.TC_NULL_RETURN_PUT_METHOD_NAME,
+                                             JavaUtilConcurrentHashMapSegmentAdapter.TC_NULL_RETURN_PUT_METHOD_DESC)});
     } else if ("clear".equals(name) && "()V".equals(desc)) {
       mv = new MulticastMethodVisitor(new MethodVisitor[] {
-          mv,
-        new ApplicatorClearMethodAdapter(super.visitMethod(ACC_SYNTHETIC|ACC_PUBLIC, TC_APPLICATOR_CLEAR_METHOD_NAME, TC_APPLICATOR_CLEAR_METHOD_DESC, null, null))});
+        mv,
+        new RetargetingMethodAdapter(super.visitMethod(ACC_SYNTHETIC|ACC_PUBLIC, TC_APPLICATOR_CLEAR_METHOD_NAME, TC_APPLICATOR_CLEAR_METHOD_DESC, null, null),
+                                     "clear", JavaUtilConcurrentHashMapSegmentAdapter.TC_ORIG_CLEAR_METHOD_NAME,
+                                     JavaUtilConcurrentHashMapSegmentAdapter.TC_ORIG_CLEAR_METHOD_DESC)});
     } else if ("containsKey".equals(name) && "(Ljava/lang/Object;)Z".equals(desc)) {
       mv = new ContainsKeyMethodAdapter(mv);
     } else if ("remove".equals(name) && "(Ljava/lang/Object;)Ljava/lang/Object;".equals(desc)) {
       mv = new MulticastMethodVisitor(new MethodVisitor[] {
-          new SimpleRemoveMethodAdapter(mv),
-        new ApplicatorRemoveMethodAdapter(super.visitMethod(ACC_SYNTHETIC|ACC_PUBLIC, TC_APPLICATOR_REMOVE_METHOD_NAME, TC_APPLICATOR_REMOVE_METHOD_DESC, null, null)),
-        new RemoveLogicalMethodAdapter(super.visitMethod(ACC_SYNTHETIC|ACC_PUBLIC, TC_REMOVE_LOGICAL_METHOD_NAME, TC_REMOVE_LOGICAL_METHOD_DESC, null, null))});
+        new SimpleRemoveMethodAdapter(mv),
+        new NoReturnRetargetingMethodAdapter(super.visitMethod(ACC_SYNTHETIC|ACC_PUBLIC, TC_APPLICATOR_REMOVE_METHOD_NAME, TC_APPLICATOR_REMOVE_METHOD_DESC, null, null),
+                                             "remove", JavaUtilConcurrentHashMapSegmentAdapter.TC_ORIG_REMOVE_METHOD_NAME,
+                                             JavaUtilConcurrentHashMapSegmentAdapter.TC_ORIG_REMOVE_METHOD_DESC),
+        new NoReturnRetargetingMethodAdapter(super.visitMethod(ACC_SYNTHETIC|ACC_PUBLIC, TC_REMOVE_LOGICAL_METHOD_NAME, TC_REMOVE_LOGICAL_METHOD_DESC, null, null),
+                                             "remove", JavaUtilConcurrentHashMapSegmentAdapter.TC_NULL_RETURN_REMOVE_METHOD_NAME,
+                                             JavaUtilConcurrentHashMapSegmentAdapter.TC_NULL_RETURN_REMOVE_METHOD_DESC)});
     } else if ("remove".equals(name) && "(Ljava/lang/Object;Ljava/lang/Object;)Z".equals(desc)) {
       mv = new RemoveMethodAdapter(mv);
     } else if ("replace".equals(name) && "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;".equals(desc)) {
@@ -593,138 +613,88 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     mv.visitEnd();
   }
 
-  private static class EntrySetMethodAdapter extends MethodAdapter implements Opcodes {
-    public EntrySetMethodAdapter(MethodVisitor mv) {
+  private static class SetWrapperMethodAdapter extends MethodAdapter implements Opcodes {
+    private final String wrapperClass;
+    private final String targetSet;
+    
+    public SetWrapperMethodAdapter(MethodVisitor mv, String targetSet, String wrapperClass) {
       super(mv);
+      this.targetSet = targetSet;
+      this.wrapperClass = wrapperClass;
     }
-
+    
     public void visitMethodInsn(int opcode, String owner, String name, String desc) {
       super.visitMethodInsn(opcode, owner, name, desc);
-
-      if (INVOKESPECIAL == opcode && "java/util/concurrent/ConcurrentHashMap$EntrySet".equals(owner)
-          && "<init>".equals(name) && "(Ljava/util/concurrent/ConcurrentHashMap;)V".equals(desc)) {
+      
+      if (INVOKESPECIAL == opcode && targetSet.equals(owner) && "<init>".equals(name)
+          && "(Ljava/util/concurrent/ConcurrentHashMap;)V".equals(desc)) {
         mv.visitVarInsn(ASTORE, 1);
-        mv.visitTypeInsn(NEW, "com/tcclient/util/ConcurrentHashMapEntrySetWrapper");
+        mv.visitTypeInsn(NEW, wrapperClass);
         mv.visitInsn(DUP);
         mv.visitVarInsn(ALOAD, 0);
         mv.visitVarInsn(ALOAD, 1);
-        mv.visitMethodInsn(INVOKESPECIAL, "com/tcclient/util/ConcurrentHashMapEntrySetWrapper", "<init>",
-                           "(Ljava/util/Map;Ljava/util/Set;)V");
+        mv.visitMethodInsn(INVOKESPECIAL, wrapperClass, "<init>", "(Ljava/util/Map;Ljava/util/Set;)V");
       }
     }
   }
-
-  private static class ApplicatorClearMethodAdapter extends MethodAdapter implements Opcodes {
-    public ApplicatorClearMethodAdapter(MethodVisitor mv) {
+  
+  private static class RetargetingMethodAdapter extends MethodAdapter implements Opcodes {
+    private final String target;
+    private final String replacement;
+    private final String descriptor;
+    
+    private int matches;
+    
+    public RetargetingMethodAdapter(MethodVisitor mv, String target, String replacement, String descriptor) {
       super(mv);
+      this.target = target;
+      this.replacement = replacement;
+      this.descriptor = descriptor;
+      this.matches = 0;
     }
-
+    
     public void visitMethodInsn(int opcode, String owner, String name, String desc) {
       if (INVOKEVIRTUAL == opcode && "java/util/concurrent/ConcurrentHashMap$Segment".equals(owner)
-          && "clear".equals(name) && JavaUtilConcurrentHashMapSegmentAdapter.TC_ORIG_CLEAR_METHOD_DESC.equals(desc)) {
-        super.visitMethodInsn(opcode, owner, JavaUtilConcurrentHashMapSegmentAdapter.TC_ORIG_CLEAR_METHOD_NAME, desc);
-      } else {
-        super.visitMethodInsn(opcode, owner, name, desc);
-      }
-    }
-  }
-
-  private static class ApplicatorPutMethodAdapter extends MethodAdapter implements Opcodes {
-    public ApplicatorPutMethodAdapter(MethodVisitor mv) {
-      super(mv);
-    }
-
-    public void visitMethodInsn(int opcode, String owner, String name, String desc) {
-      if (INVOKEVIRTUAL == opcode && "java/util/concurrent/ConcurrentHashMap$Segment".equals(owner)
-          && "put".equals(name) && JavaUtilConcurrentHashMapSegmentAdapter.TC_ORIG_PUT_METHOD_DESC.equals(desc)) {
-        // use the un-instrumented version of the segment put method
-        super.visitMethodInsn(opcode, owner, JavaUtilConcurrentHashMapSegmentAdapter.TC_ORIG_PUT_METHOD_NAME, desc);
-      } else {
-        super.visitMethodInsn(opcode, owner, name, desc);
-      }
-    }
-
-    public void visitInsn(int opcode) {
-      if (ARETURN == opcode) {
-        // change the old value return to a void return and swallow the normally returned value
-        super.visitInsn(POP);
-        super.visitInsn(RETURN);
-      } else {
-        super.visitInsn(opcode);
-      }
-    }
-  }
-
-  private static class OriginalGetMethodAdapter extends MethodAdapter implements Opcodes {
-    public OriginalGetMethodAdapter(MethodVisitor mv) {
-      super(mv);
-    }
-
-    public void visitMethodInsn(int opcode, String owner, String name, String desc) {
-      if (INVOKEVIRTUAL == opcode && "java/util/concurrent/ConcurrentHashMap$Segment".equals(owner)
-          && "get".equals(name) && JavaUtilConcurrentHashMapSegmentAdapter.TC_ORIG_GET_METHOD_DESC.equals(desc)) {
-        // use the un-instrumented version of the segment 'get' method
-        super.visitMethodInsn(opcode, owner, JavaUtilConcurrentHashMapSegmentAdapter.TC_ORIG_GET_METHOD_NAME, desc);
-      } else {
-        super.visitMethodInsn(opcode, owner, name, desc);
-      }
-    }
-  }
-
-  private static class ApplicatorRemoveMethodAdapter extends MethodAdapter implements Opcodes {
-    public ApplicatorRemoveMethodAdapter(MethodVisitor mv) {
-      super(mv);
-    }
-
-    public void visitMethodInsn(int opcode, String owner, String name, String desc) {
-      if (INVOKEVIRTUAL == opcode && "java/util/concurrent/ConcurrentHashMap$Segment".equals(owner)
-          && "remove".equals(name) && JavaUtilConcurrentHashMapSegmentAdapter.TC_ORIG_REMOVE_METHOD_DESC.equals(desc)) {
-        // use the un-instrumented version of the segment 'remove' method
-        super.visitMethodInsn(opcode, owner, JavaUtilConcurrentHashMapSegmentAdapter.TC_ORIG_REMOVE_METHOD_NAME, desc);
-      } else {
-        super.visitMethodInsn(opcode, owner, name, desc);
-      }
-    }
-
-    public void visitInsn(int opcode) {
-      if (ARETURN == opcode) {
-        // change the old value return to a void return and swallow the normally returned value
-        super.visitInsn(POP);
-        super.visitInsn(RETURN);
-      } else {
-        super.visitInsn(opcode);
-      }
-    }
-  }
-
-  private static class RemoveLogicalMethodAdapter extends MethodAdapter implements Opcodes {
-    public RemoveLogicalMethodAdapter(MethodVisitor mv) {
-      super(mv);
-    }
-
-    public void visitMethodInsn(int opcode, String owner, String name, String desc) {
-      if (INVOKEVIRTUAL == opcode && "java/util/concurrent/ConcurrentHashMap$Segment".equals(owner)
-          && "remove".equals(name)
-          && JavaUtilConcurrentHashMapSegmentAdapter.TC_NULLOLDVALUE_REMOVE_METHOD_DESC.equals(desc)) {
+          && target.equals(name) && descriptor.equals(desc)) {
         // use the segment remove method that doesn't fault in the old values
-        super.visitMethodInsn(opcode, owner,
-                              JavaUtilConcurrentHashMapSegmentAdapter.TC_NULLOLDVALUE_REMOVE_METHOD_NAME, desc);
+        super.visitMethodInsn(opcode, owner, replacement, desc);
+        matches++;
       } else {
         super.visitMethodInsn(opcode, owner, name, desc);
       }
     }
+    
+    public void visitEnd() {
+      super.visitEnd();
+      Assert.assertTrue("Adapter not applied", matches != 0);
+    }
+  }
 
+  private static class NoReturnRetargetingMethodAdapter extends RetargetingMethodAdapter {
+    private int matches;
+    
+    public NoReturnRetargetingMethodAdapter(MethodVisitor mv, String target, String replacement, String descriptor) {
+      super(mv, target, replacement, descriptor);
+      this.matches = 0;
+    }
+    
     public void visitInsn(int opcode) {
       if (ARETURN == opcode) {
         // change the old value return to a void return and swallow the normally returned value
         super.visitInsn(POP);
         super.visitInsn(RETURN);
+        matches++;
       } else {
         super.visitInsn(opcode);
       }
     }
+    
+    public void visitEnd() {
+      super.visitEnd();
+      Assert.assertTrue("Adapter not applied", matches != 0);      
+    }
   }
-
+  
   private abstract static class AddCheckManagedKeyMethodAdapter extends MethodAdapter implements Opcodes {
     public AddCheckManagedKeyMethodAdapter(MethodVisitor mv) {
       super(mv);

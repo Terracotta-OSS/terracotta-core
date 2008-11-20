@@ -1813,6 +1813,8 @@ public class BootJarTool {
 
     loadTerracottaClass("com.tcclient.util.ConcurrentHashMapEntrySetWrapper");
     loadTerracottaClass("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$IteratorWrapper");
+    loadTerracottaClass("com.tcclient.util.ConcurrentHashMapKeySetWrapper");
+    loadTerracottaClass("com.tcclient.util.ConcurrentHashMapKeySetWrapper$IteratorWrapper");
 
     // java.util.concurrent.ConcurrentHashMap
     {

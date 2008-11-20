@@ -35,9 +35,12 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
   public final static String  TC_ORIG_CLEAR_METHOD_NAME             = ByteCodeUtil.TC_METHOD_PREFIX + "origClear";
   public final static String  TC_ORIG_CLEAR_METHOD_DESC             = "()V";
 
-  public final static String TC_NULLOLDVALUE_REMOVE_METHOD_NAME     = ByteCodeUtil.TC_METHOD_PREFIX + "nulloldvalueRemove";
-  public final static String  TC_NULLOLDVALUE_REMOVE_METHOD_DESC    = "(Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;";
+  public final static String  TC_NULL_RETURN_REMOVE_METHOD_NAME     = "nullReturnRemove";
+  public final static String  TC_NULL_RETURN_REMOVE_METHOD_DESC     = "(Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;";
 
+  public final static String  TC_NULL_RETURN_PUT_METHOD_NAME        = "nullReturnPut";
+  public final static String  TC_NULL_RETURN_PUT_METHOD_DESC        = "(Ljava/lang/Object;ILjava/lang/Object;Z)Ljava/lang/Object;";
+  
   private final static String TC_CLEAR_METHOD_NAME                  = ByteCodeUtil.TC_METHOD_PREFIX + "clear";
   private final static String TC_CLEAR_METHOD_DESC                  = "()V";
 
@@ -84,6 +87,8 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
         return new MulticastMethodVisitor(new MethodVisitor[] {
           // rename the original, totally un-instrumented put method so that it can be used by the CHM applicator
           super.visitMethod(ACC_SYNTHETIC, TC_ORIG_PUT_METHOD_NAME, TC_ORIG_PUT_METHOD_DESC, null, null),
+          // create an adapted put method that returns nulls for the old values and thus doesn't fault them in
+          new PutNullOldValueMethodAdapter(new PutMethodAdapter(new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, super.visitMethod(ACC_SYNTHETIC, TC_NULL_RETURN_PUT_METHOD_NAME, TC_NULL_RETURN_PUT_METHOD_DESC, null, null), false))),
           // adapt the put method
           new PutMethodAdapter(new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, mv, false)),
           // This creates the identical copy of the put() method of Segments except that it does not lock and does
@@ -96,7 +101,7 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
           // rename the original, totally un-instrumented remove method so that it can be used by the CHM applicator
           super.visitMethod(ACC_SYNTHETIC, TC_ORIG_REMOVE_METHOD_NAME, TC_ORIG_REMOVE_METHOD_DESC, null, null),
           // create an adapted remove method that returns nulls for the old values and thus doesn't fault them in
-          new RemoveNullOldValueMethodAdapter(new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, new RemoveMethodAdapter(super.visitMethod(ACC_SYNTHETIC, TC_NULLOLDVALUE_REMOVE_METHOD_NAME, TC_NULLOLDVALUE_REMOVE_METHOD_DESC, null, null)), false)),
+          new RemoveNullOldValueMethodAdapter(new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, new RemoveMethodAdapter(super.visitMethod(ACC_SYNTHETIC, TC_NULL_RETURN_REMOVE_METHOD_NAME, TC_NULL_RETURN_REMOVE_METHOD_DESC, null, null)), false)),
           // adapt the remove method
           new RemoveMethodAdapter(new JavaUtilConcurrentHashMapLazyValuesMethodAdapter(access, desc, mv, false))});
       }
@@ -592,6 +597,154 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
       mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "logicalInvoke",
                          "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
       mv.visitLabel(notManaged);
+    }
+  }
+
+  private static class PutNullOldValueMethodAdapter extends MethodAdapter implements Opcodes {
+    private boolean previousIsHashEntryValue = false;
+    
+    public PutNullOldValueMethodAdapter(MethodVisitor mv) {
+      super(mv);
+    }
+    
+    private void restorePreviousHashEntryValue() {
+      if (previousIsHashEntryValue) {
+        super.visitFieldInsn(GETFIELD, "java/util/concurrent/ConcurrentHashMap$HashEntry", "value", "Ljava/lang/Object;");
+      }
+      previousIsHashEntryValue = false;
+    }
+
+    public void visitFieldInsn(int opcode, String owner, String name, String desc) {
+      if (GETFIELD == opcode
+          && "java/util/concurrent/ConcurrentHashMap$HashEntry".equals(owner)
+          && "value".equals(name)
+          && "Ljava/lang/Object;".equals(desc)) {
+        previousIsHashEntryValue = true;
+      } else {
+        restorePreviousHashEntryValue();
+        super.visitFieldInsn(opcode, owner, name, desc);
+      }
+    }
+
+    public void visitVarInsn(int opcode, int var) {
+      if (previousIsHashEntryValue && ASTORE == opcode) {
+        super.visitInsn(POP);
+        super.visitInsn(ACONST_NULL);
+        previousIsHashEntryValue = false;
+      } else {
+        restorePreviousHashEntryValue();
+      }
+      super.visitVarInsn(opcode, var);
+    }
+
+    public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+      restorePreviousHashEntryValue();
+      return super.visitAnnotation(desc, visible);
+    }
+
+    public AnnotationVisitor visitAnnotationDefault() {
+      restorePreviousHashEntryValue();
+      return super.visitAnnotationDefault();
+    }
+
+    public void visitAttribute(Attribute attr) {
+      restorePreviousHashEntryValue();
+      super.visitAttribute(attr);
+    }
+
+    public void visitCode() {
+      restorePreviousHashEntryValue();
+      super.visitCode();
+    }
+
+    public void visitEnd() {
+      restorePreviousHashEntryValue();
+      super.visitEnd();
+    }
+
+    public void visitFrame(int type, int local, Object[] local2, int stack, Object[] stack2) {
+      restorePreviousHashEntryValue();
+      super.visitFrame(type, local, local2, stack, stack2);
+    }
+
+    public void visitIincInsn(int var, int increment) {
+      restorePreviousHashEntryValue();
+      super.visitIincInsn(var, increment);
+    }
+
+    public void visitInsn(int opcode) {
+      restorePreviousHashEntryValue();
+      super.visitInsn(opcode);
+    }
+
+    public void visitIntInsn(int opcode, int operand) {
+      restorePreviousHashEntryValue();
+      super.visitIntInsn(opcode, operand);
+    }
+
+    public void visitJumpInsn(int opcode, Label label) {
+      restorePreviousHashEntryValue();
+      super.visitJumpInsn(opcode, label);
+    }
+
+    public void visitLabel(Label label) {
+      restorePreviousHashEntryValue();
+      super.visitLabel(label);
+    }
+
+    public void visitLdcInsn(Object cst) {
+      restorePreviousHashEntryValue();
+      super.visitLdcInsn(cst);
+    }
+
+    public void visitLineNumber(int line, Label start) {
+      restorePreviousHashEntryValue();
+      super.visitLineNumber(line, start);
+    }
+
+    public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
+      restorePreviousHashEntryValue();
+      super.visitLocalVariable(name, desc, signature, start, end, index);
+    }
+
+    public void visitLookupSwitchInsn(Label dflt, int[] keys, Label[] labels) {
+      restorePreviousHashEntryValue();
+      super.visitLookupSwitchInsn(dflt, keys, labels);
+    }
+
+    public void visitMaxs(int maxStack, int maxLocals) {
+      restorePreviousHashEntryValue();
+      super.visitMaxs(maxStack, maxLocals);
+    }
+
+    public void visitMethodInsn(int opcode, String owner, String name, String desc) {
+      restorePreviousHashEntryValue();
+      super.visitMethodInsn(opcode, owner, name, desc);
+    }
+
+    public void visitMultiANewArrayInsn(String desc, int dims) {
+      restorePreviousHashEntryValue();
+      super.visitMultiANewArrayInsn(desc, dims);
+    }
+
+    public AnnotationVisitor visitParameterAnnotation(int parameter, String desc, boolean visible) {
+      restorePreviousHashEntryValue();
+      return super.visitParameterAnnotation(parameter, desc, visible);
+    }
+
+    public void visitTableSwitchInsn(int min, int max, Label dflt, Label[] labels) {
+      restorePreviousHashEntryValue();
+      super.visitTableSwitchInsn(min, max, dflt, labels);
+    }
+
+    public void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
+      restorePreviousHashEntryValue();
+      super.visitTryCatchBlock(start, end, handler, type);
+    }
+
+    public void visitTypeInsn(int opcode, String type) {
+      restorePreviousHashEntryValue();
+      super.visitTypeInsn(opcode, type);
     }
   }
 
