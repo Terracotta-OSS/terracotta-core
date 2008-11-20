@@ -24,6 +24,9 @@ public class Jdk15PreInstrumentedConfiguration extends TerracottaConfiguratorMod
       spec.setHonorJDKSubVersionSpecific(true);
       getOrCreateSpec("java.util.concurrent.TimeUnit");
 
+      spec = getOrCreateSpec("java.util.concurrent.atomic.AtomicBoolean");
+      spec.setHonorVolatile(true);
+
       if (!Vm.isIBM()) {
         spec = getOrCreateSpec("java.util.concurrent.atomic.AtomicInteger");
         spec.setHonorVolatile(true);

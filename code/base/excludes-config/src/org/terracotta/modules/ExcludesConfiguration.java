@@ -75,7 +75,6 @@ public class ExcludesConfiguration
       configHelper.addPermanentExcludePattern("java.util.concurrent.Semaphore*");
       configHelper.addPermanentExcludePattern("java.util.concurrent.SynchronousQueue*");
       configHelper.addPermanentExcludePattern("java.util.concurrent.ThreadPoolExecutor*");
-      configHelper.addPermanentExcludePattern("java.util.concurrent.atomic.AtomicBoolean*");
       configHelper.addPermanentExcludePattern("java.util.concurrent.atomic.AtomicIntegerArray*");
       configHelper.addPermanentExcludePattern("java.util.concurrent.atomic.AtomicIntegerFieldUpdater*");
       configHelper.addPermanentExcludePattern("java.util.concurrent.atomic.AtomicLongArray*");
