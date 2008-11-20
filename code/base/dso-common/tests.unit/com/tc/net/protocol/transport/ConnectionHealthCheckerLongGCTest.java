@@ -281,24 +281,28 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
 
   }
 
-  private void getNetInfo(int bindPort) throws SigarException {
-    Sigar s = new Sigar();
-    NetInfo info = s.getNetInfo();
-    NetInterfaceConfig config = s.getNetInterfaceConfig(null);
-    System.out.println(info.toString());
-    System.out.println(config.toString());
+  private void getNetInfo(int bindPort) {
+    try {
+      Sigar s = new Sigar();
+      NetInfo info = s.getNetInfo();
+      NetInterfaceConfig config = s.getNetInterfaceConfig(null);
+      System.out.println(info.toString());
+      System.out.println(config.toString());
 
-    int flags = NetFlags.CONN_TCP | NetFlags.TCP_ESTABLISHED;
+      int flags = NetFlags.CONN_TCP | NetFlags.TCP_ESTABLISHED;
 
-    NetConnection[] connections = s.getNetConnectionList(flags);
+      NetConnection[] connections = s.getNetConnectionList(flags);
 
-    System.out.println("XXX Established connections if any");
-    for (int i = 0; i < connections.length; i++) {
-      long port = connections[i].getLocalPort();
-      long remotePort = connections[i].getRemotePort();
-      if (bindPort == port || bindPort == remotePort) {
-        System.out.println("XXX " + connections[i]);
+      System.out.println("XXX Established connections if any");
+      for (int i = 0; i < connections.length; i++) {
+        long port = connections[i].getLocalPort();
+        long remotePort = connections[i].getRemotePort();
+        if (bindPort == port || bindPort == remotePort) {
+          System.out.println("XXX " + connections[i]);
+        }
       }
+    } catch (SigarException se) {
+      System.out.println("Unable to get Sigar NetInfo: " + se);
     }
   }
 
