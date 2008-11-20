@@ -22,7 +22,7 @@ public class HaConfigImpl implements HaConfig {
 
   private final L2TVSConfigurationSetupManager configSetupManager;
   private final ServerGroup[]                  groups;
-  private Node[]                               thisGroupNodes;
+  private final Node[]                         thisGroupNodes;
   private final Set                            allNodes = new HashSet();
   private final ServerGroup                    activeCoordinatorGroup;
 
@@ -36,6 +36,9 @@ public class HaConfigImpl implements HaConfig {
     }
     int coodinatorIndex = ActiveCoordintorHelper.getCoordinatorGroup(groupsConfig.getActiveServerGroupArray());
     activeCoordinatorGroup = coodinatorIndex != -1 ? groups[coodinatorIndex] : null;
+
+    this.thisGroupNodes = makeThisGroupNodes();
+    makeAllNodes();
   }
 
   public boolean isActiveActive() {
@@ -58,7 +61,7 @@ public class HaConfigImpl implements HaConfig {
     return this.groups;
   }
 
-  public Node[] makeThisGroupNodes() {
+  private Node[] makeThisGroupNodes() {
     ActiveServerGroupConfig asgc = configSetupManager.getActiveServerGroupForThisL2();
     Assert.assertNotNull(asgc);
     String[] l2Names = asgc.getMembers().getMemberArray();
@@ -74,7 +77,6 @@ public class HaConfigImpl implements HaConfig {
       rv[i] = makeNode(l2);
       addNodeToGroup(rv[i], l2Names[i]);
     }
-    this.thisGroupNodes = rv;
     return rv;
   }
 
@@ -82,7 +84,7 @@ public class HaConfigImpl implements HaConfig {
     return this.thisGroupNodes;
   }
 
-  public void makeAllNodes() {
+  private void makeAllNodes() {
     ActiveServerGroupConfig[] asgcs = configSetupManager.activeServerGroupsConfig().getActiveServerGroupArray();
     for (int j = 0; j < asgcs.length; ++j) {
       ActiveServerGroupConfig asgc = asgcs[j];
