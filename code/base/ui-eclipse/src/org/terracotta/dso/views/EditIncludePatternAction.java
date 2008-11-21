@@ -4,11 +4,11 @@
 package org.terracotta.dso.views;
 
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionProvider;
-import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.actions.ActionContext;
 import org.terracotta.dso.actions.ActionUtil;
@@ -30,7 +30,7 @@ public class EditIncludePatternAction extends Action {
     String initialValue = wrapper.toString();
     
     InputDialog dialog = new InputDialog(shell, title, dialogMessage, initialValue, null);
-    if(dialog.open() == Window.OK) {
+    if(dialog.open() == IDialogConstants.OK_ID) {
       String expr = dialog.getValue();
       
       if(expr != null && (expr = expr.trim()) != null && expr.length() > 0) {

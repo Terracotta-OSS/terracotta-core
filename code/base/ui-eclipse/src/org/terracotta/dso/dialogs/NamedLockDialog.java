@@ -12,7 +12,9 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
@@ -45,13 +47,19 @@ public class NamedLockDialog extends MessageDialog {
 
   protected void buttonPressed(int buttonId) {
     if (buttonId == IDialogConstants.OK_ID) {
+      String lockName = m_layout.m_name.getText();
+      if(lockName == null || (lockName = lockName.trim()) == null || lockName.length() == 0) {
+        Display.getCurrent().beep();
+        m_layout.m_name.forceFocus();
+        return;
+      }
       LockLevel.Enum lockLevel;
       if (m_layout.m_read.getSelection()) lockLevel = LockLevel.READ;
       else if (m_layout.m_write.getSelection()) lockLevel = LockLevel.WRITE;
       else if (m_layout.m_synchronousWrite.getSelection()) lockLevel = LockLevel.SYNCHRONOUS_WRITE;
       else lockLevel = LockLevel.CONCURRENT;
 
-      m_valueListener.fireUpdateEvent(new UpdateEvent(new Object[] { m_layout.m_name.getText(), lockLevel }));
+      m_valueListener.fireUpdateEvent(new UpdateEvent(new Object[] { lockName, lockLevel }));
     }
     super.buttonPressed(buttonId);
   }
@@ -93,6 +101,9 @@ public class NamedLockDialog extends MessageDialog {
       nameGroup.setText(NAME);
       nameGroup.setLayout(new GridLayout());
       nameGroup.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+      Label requiredLabel = new Label(nameGroup, SWT.LEFT);
+      requiredLabel.setText("* - required field");
+      requiredLabel.setForeground(requiredLabel.getDisplay().getSystemColor(SWT.COLOR_RED));
       m_name = new Text(nameGroup, SWT.BORDER);
       m_name.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
     }

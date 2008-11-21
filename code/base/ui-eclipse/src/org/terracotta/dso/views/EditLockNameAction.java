@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package org.terracotta.dso.views;
 
@@ -14,27 +15,27 @@ import org.eclipse.ui.actions.ActionContext;
 import org.terracotta.dso.actions.ActionUtil;
 import org.terracotta.ui.util.SelectionUtil;
 
-public class EditLockExpressionAction extends Action {
+public class EditLockNameAction extends Action {
   ConfigViewPart fPart;
 
-  EditLockExpressionAction(ConfigViewPart part) {
-    super("Edit expression...");
+  EditLockNameAction(ConfigViewPart part) {
+    super("Edit name...");
     fPart = part;
   }
 
   public void run() {
-    LockWrapper wrapper = (LockWrapper) SelectionUtil.getSingleElement(getSelection());
+    NamedLockWrapper wrapper = (NamedLockWrapper) SelectionUtil.getSingleElement(getSelection());
     Shell shell = ActionUtil.findSelectedEditorPart().getSite().getShell();
-    String title = "Lock expression pattern";
-    String dialogMessage = "Specify lock expression";
-    String initialValue = wrapper.toString();
+    String title = "Lock name";
+    String dialogMessage = "Specify lock name";
+    String initialValue = wrapper.getLockName();
 
     InputDialog dialog = new InputDialog(shell, title, dialogMessage, initialValue, null);
     if (dialog.open() == IDialogConstants.OK_ID) {
-      String expr = dialog.getValue();
+      String lockName = dialog.getValue();
 
-      if (expr != null && (expr = expr.trim()) != null && expr.length() > 0) {
-        fPart.setLockExpression(expr);
+      if (lockName != null && (lockName = lockName.trim()) != null && lockName.length() > 0) {
+        fPart.setLockName(lockName);
       } else if (MessageDialog.openQuestion(shell, title, "Remove lock '" + wrapper.getMethodExpression() + "'?")) {
         fPart.removeSelectedItem();
       }
@@ -42,12 +43,12 @@ public class EditLockExpressionAction extends Action {
   }
 
   public void setContext(ActionContext context) {
-  /**/
+    /**/
   }
 
   public boolean canActionBeAdded() {
     Object element = SelectionUtil.getSingleElement(getSelection());
-    return element instanceof LockWrapper;
+    return element instanceof NamedLockWrapper;
   }
 
   private ISelection getSelection() {

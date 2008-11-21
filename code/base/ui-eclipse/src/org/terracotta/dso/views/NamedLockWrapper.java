@@ -10,6 +10,14 @@ public class NamedLockWrapper extends LockWrapper {
     super(parent, index);
   }
   
+  String getLockName() {
+    return m_parent.getNamedLockArray(m_index).getLockName();
+  }
+  
+  void setLockName(String lockName) {
+    m_parent.getNamedLockArray(m_index).setLockName(lockName);
+  }
+  
   String getMethodExpression() {
     return m_parent.getNamedLockArray(m_index).getMethodExpression();
   }

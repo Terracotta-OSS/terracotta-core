@@ -453,6 +453,26 @@ public class ConfigViewPart extends ViewPart implements ISelectionChangedListene
     }
   }
 
+  void setLockName(String lockName) {
+    ISelection selection = getSelection();
+    Object element = SelectionUtil.getSingleElement(selection);
+
+    if (element instanceof NamedLockWrapper) {
+      NamedLockWrapper wrapper = (NamedLockWrapper) element;
+      wrapper.setLockName(lockName);
+
+      IProject project = m_javaProject.getProject();
+      fPlugin.removeConfigurationListener(m_configAdapter);
+      fPlugin.fireNamedLockChanged(project, wrapper.getIndex());
+      if (fPlugin.getConfigurationEditor(project) == null) {
+        fPlugin.saveConfiguration(project);
+      }
+      fPlugin.addConfigurationListener(m_configAdapter);
+
+      fConfigViewer.update(element, null);
+    }
+  }
+  
   void setLockLevel(LockLevelAction action) {
     ISelection selection = getSelection();
     Object element = SelectionUtil.getSingleElement(selection);
