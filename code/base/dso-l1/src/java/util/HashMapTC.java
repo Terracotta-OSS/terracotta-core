@@ -292,11 +292,11 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
         return __tc_getAllEntriesSnapshotInternal();
       }
     } else {
-      return __tc_getAllEntriesSnapshotInternal();
+      return super.entrySet();
     }
   }
 
-  public Collection __tc_getAllEntriesSnapshotInternal() {
+  private Collection __tc_getAllEntriesSnapshotInternal() {
     EntrySetWrapper entrySet = (EntrySetWrapper)super.entrySet();
     return new ArrayList(entrySet.__tc_getLocalEntries());
   }
@@ -307,7 +307,7 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
         return __tc_getAllLocalEntriesSnapshotInternal();
       }
     } else {
-      return __tc_getAllLocalEntriesSnapshotInternal();
+      return super.entrySet();
     }
   }
 
