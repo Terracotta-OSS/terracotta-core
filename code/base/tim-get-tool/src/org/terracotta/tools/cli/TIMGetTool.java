@@ -15,6 +15,7 @@ import org.terracotta.modules.tool.commands.InstallCommand;
 import org.terracotta.modules.tool.commands.ListCommand;
 import org.terracotta.modules.tool.commands.UpdateCommand;
 import org.terracotta.modules.tool.config.Config;
+import org.terracotta.modules.tool.util.CommandUtil;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -33,7 +34,14 @@ public class TIMGetTool {
       parse(args);
       configure();
       execute();
-    } catch (CommandException e) {
+    } catch (CommandException e1) {
+      System.out.println(e1.getMessage());
+      System.out.println();
+      try {
+        commandRegistry.executeCommand(CommandUtil.deductNameFromClass(HelpCommand.class), new String[0]);
+      } catch (CommandException e2) {
+        System.out.println(e2.getMessage());
+      }
       System.exit(1);
     } catch (Exception e) {
       System.exit(2);
@@ -85,7 +93,7 @@ public class TIMGetTool {
   private static List<String> commandArgs;
 
   private static void parse(String args[]) throws Exception {
-    commandName = "help";
+    commandName = CommandUtil.deductNameFromClass(HelpCommand.class);
     commandArgs = new ArrayList<String>();
     if (args.length != 0) {
       if (args[0].startsWith("-")) {
