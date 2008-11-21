@@ -9,6 +9,7 @@ import com.tc.admin.AdminClientContext;
 import com.tc.admin.ClusterNode;
 import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.ComponentNode;
+import com.tc.admin.common.ExceptionHelper;
 import com.tc.admin.common.XAbstractAction;
 import com.tc.admin.common.XTreeNode;
 import com.tc.admin.model.IBasicObject;
@@ -21,6 +22,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.Callable;
@@ -108,7 +110,10 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
       m_clusterNode.getClusterModel().addRootCreationListener(RootsNode.this);
       Exception e = getException();
       if (e != null) {
-        m_acc.log(e);
+        Throwable rootCause = ExceptionHelper.getRootCause(e);
+        if (!(rootCause instanceof IOException)) {
+          m_acc.log(e);
+        }
       } else {
         m_roots = getResult();
         initMenu();
@@ -177,7 +182,10 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
     protected void finished() {
       Exception e = getException();
       if (e != null) {
-        m_acc.log(e);
+        Throwable rootCause = ExceptionHelper.getRootCause(e);
+        if (!(rootCause instanceof IOException)) {
+          m_acc.log(e);
+        }
       } else {
         ((RootsPanel) getComponent()).setObjects(m_roots);
         getModel().nodeStructureChanged(RootsNode.this);

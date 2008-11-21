@@ -6,11 +6,13 @@ package com.tc.admin;
 
 import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.ComponentNode;
+import com.tc.admin.common.ExceptionHelper;
 import com.tc.admin.common.XTreeNode;
 import com.tc.admin.model.IClusterModel;
 import com.tc.admin.model.IServer;
 
 import java.awt.Component;
+import java.io.IOException;
 import java.util.concurrent.Callable;
 
 public class ServersNode extends ComponentNode {
@@ -49,7 +51,10 @@ public class ServersNode extends ComponentNode {
     protected void finished() {
       Exception e = getException();
       if (e != null) {
-        m_acc.log(e);
+        Throwable rootCause = ExceptionHelper.getRootCause(e);
+        if (!(rootCause instanceof IOException)) {
+          m_acc.log(e);
+        }
       } else {
         IServer[] clusterServers = getResult();
         for (IServer server : clusterServers) {

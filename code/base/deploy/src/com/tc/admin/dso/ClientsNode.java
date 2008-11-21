@@ -10,6 +10,7 @@ import com.tc.admin.ClusterNode;
 import com.tc.admin.ConnectionContext;
 import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.ComponentNode;
+import com.tc.admin.common.ExceptionHelper;
 import com.tc.admin.common.XTreeModel;
 import com.tc.admin.common.XTreeNode;
 import com.tc.admin.model.ClientConnectionListener;
@@ -19,6 +20,7 @@ import com.tc.admin.model.IClusterModel;
 import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -91,7 +93,10 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
     protected void finished() {
       Exception e = getException();
       if (e != null) {
-        m_acc.log(e);
+        Throwable rootCause = ExceptionHelper.getRootCause(e);
+        if (!(rootCause instanceof IOException)) {
+          m_acc.log(e);
+        }
       } else {
         m_clients = getResult();
         for (int i = 0; i < m_clients.length; i++) {

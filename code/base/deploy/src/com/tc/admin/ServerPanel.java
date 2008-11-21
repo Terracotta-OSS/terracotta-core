@@ -11,6 +11,7 @@ import org.dijon.ScrollPane;
 import org.dijon.TabbedPane;
 
 import com.tc.admin.common.BasicWorker;
+import com.tc.admin.common.ExceptionHelper;
 import com.tc.admin.common.PropertyTable;
 import com.tc.admin.common.PropertyTableModel;
 import com.tc.admin.common.StatusView;
@@ -20,6 +21,7 @@ import com.tc.admin.model.IServer;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -182,7 +184,10 @@ public class ServerPanel extends XContainer {
     protected void finished() {
       Exception e = getException();
       if (e != null) {
-        m_acc.log(e);
+        Throwable rootCause = ExceptionHelper.getRootCause(e);
+        if (!(rootCause instanceof IOException)) {
+          m_acc.log(e);
+        }
       } else {
         ServerState serverState = getResult();
         testSetupPersistenceModeItem();
