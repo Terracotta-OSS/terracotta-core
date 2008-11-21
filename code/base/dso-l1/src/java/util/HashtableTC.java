@@ -802,45 +802,47 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
 
     // XXX:: Calls Hashtable.remove();
     public boolean remove(Object o) {
-      if (__tc_isManaged()) {
-        synchronized (__tc_managed().getResolveLock()) {
+      synchronized (HashtableTC.this) {
+        if (__tc_isManaged()) {
           // Managed version
           int sizeB4 = size();
           HashtableTC.this.__tc_remove_logical(o);
           return (size() != sizeB4);
+        } else {
+          return keys.remove(o);
         }
-      } else {
-        return keys.remove(o);
       }
     }
 
     public boolean removeAll(Collection c) {
-      if (__tc_isManaged()) {
-        boolean modified = false;
-        
-        synchronized (__tc_managed().getResolveLock()) {
-          ManagerUtil.checkWriteAccess(HashtableTC.this);
+      synchronized (HashtableTC.this) {
+        if (__tc_isManaged()) {
+          boolean modified = false;
 
-          if (size() > c.size()) {
-            for (Iterator i = c.iterator(); i.hasNext();) {
-              Entry entry = __tc_removeEntryForKey(i.next());
-              if (entry != null) {
-                ManagerUtil.logicalInvoke(HashtableTC.this, SerializationUtil.REMOVE_KEY_SIGNATURE, new Object[] { entry.getKey() });
-                modified = true;
+          synchronized (__tc_managed().getResolveLock()) {
+            ManagerUtil.checkWriteAccess(HashtableTC.this);
+
+            if (size() > c.size()) {
+              for (Iterator i = c.iterator(); i.hasNext();) {
+                Entry entry = __tc_removeEntryForKey(i.next());
+                if (entry != null) {
+                  ManagerUtil.logicalInvoke(HashtableTC.this, SerializationUtil.REMOVE_KEY_SIGNATURE, new Object[] { entry.getKey() });
+                  modified = true;
+                }
               }
-            }
-          } else {
-            for (Iterator i = iterator(); i.hasNext();) {
-              if (c.contains(i.next())) {
-                i.remove();
-                modified = true;
+            } else {
+              for (Iterator i = iterator(); i.hasNext();) {
+                if (c.contains(i.next())) {
+                  i.remove();
+                  modified = true;
+                }
               }
             }
           }
+          return modified;
+        } else {
+          return super.removeAll(c);
         }
-        return modified;
-      } else {
-        return super.removeAll(c);
       }
     }
     
