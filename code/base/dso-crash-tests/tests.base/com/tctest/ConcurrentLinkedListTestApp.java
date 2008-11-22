@@ -3,6 +3,7 @@
  */
 package com.tctest;
 
+import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -90,7 +91,7 @@ public class ConcurrentLinkedListTestApp extends AbstractTransparentApp {
       // it is right to use the same lock
       synchronized(sharedList) {
         // System.out.println("*** Verify["+i+"] value="+resultList.get(i));
-        Assert.assertTrue(i == resultList.get(i));
+        Assert.assertEquals("Client " + ManagerUtil.getClientID() + " : Result Element " + i, i, resultList.get(i).intValue());
       }
     }
     
