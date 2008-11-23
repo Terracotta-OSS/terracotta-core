@@ -389,7 +389,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     depends :init, :compile
     @internal_config_source['tc.tests.configuration.transparent-tests.mode'] = 'active-active'
     @internal_config_source['test_timeout'] = (30 * 60).to_s
-    run_tests(FixedModuleTypeTestSet.new([ 'dso-crash-tests' ], [ 'system' ]))
+    run_tests(FixedModuleTypeTestSet.new([ 'ent-active-active-tests' ], [ 'system' ]))
   end
   
   # Prepares to run tests in the given module of the given type, then writes out all the information
