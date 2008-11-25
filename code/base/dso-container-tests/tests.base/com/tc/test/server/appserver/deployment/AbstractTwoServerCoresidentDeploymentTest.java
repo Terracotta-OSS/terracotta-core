@@ -93,6 +93,9 @@ public abstract class AbstractTwoServerCoresidentDeploymentTest extends Abstract
         }
       } catch (Exception e) {
         e.printStackTrace();
+        for (int i = 0; i < getServerManagers().length; i++) {
+          getServerManagers()[i].stop(); 
+        }
         throw e;
       }
     }

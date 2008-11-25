@@ -78,6 +78,7 @@ public abstract class AbstractOneServerDeploymentTest extends AbstractDeployment
         }
       } catch (Exception e) {
         e.printStackTrace();
+        getServerManager().stop();
         throw e;
       }
     }
