@@ -33,13 +33,13 @@ public abstract class AbstractTwoServerCoresidentDeploymentTest extends Abstract
   }
 
   public static abstract class TwoServerCoresidentTestSetup extends CoresidentServerTestSetup {
-    private Log logger = LogFactory.getLog(getClass());
+    private Log                    logger = LogFactory.getLog(getClass());
 
-    private final Class testClass;
-    private final String context;
-    private final TcConfigBuilder tcConfigBuilder;
+    private final Class            testClass;
+    private final String           context;
+    private final TcConfigBuilder  tcConfigBuilder;
 
-    private boolean start = true;
+    private boolean                start  = true;
 
     protected WebApplicationServer server0;
     protected WebApplicationServer server1;
@@ -75,26 +75,30 @@ public abstract class AbstractTwoServerCoresidentDeploymentTest extends Abstract
           long l1 = System.currentTimeMillis();
           deployment = makeWAR(serverManager);
           long l2 = System.currentTimeMillis();
-          logger.info("### WAR build " + (l2 - l1) / 1000f + " at " + deployment.getFileSystemPath() + " for " + serverManager);
+          logger.info("### WAR build " + (l2 - l1) / 1000f + " at " + deployment.getFileSystemPath() + " for "
+                      + serverManager);
         }
 
         configureTcConfig(tcConfigBuilder);
         server0 = createServer(deployment, enableContainerDebug(0));
         server1 = createServer(deployment, enableContainerDebug(1));
 
-        TestSuite suite = (TestSuite)getTest();
+        TestSuite suite = (TestSuite) getTest();
         for (int i = 0; i < suite.testCount(); i++) {
           Test t = suite.testAt(i);
           if (t instanceof AbstractTwoServerCoresidentDeploymentTest) {
-            AbstractTwoServerCoresidentDeploymentTest test = (AbstractTwoServerCoresidentDeploymentTest)t;
+            AbstractTwoServerCoresidentDeploymentTest test = (AbstractTwoServerCoresidentDeploymentTest) t;
             test.setServer0(server0);
             test.setServer1(server1);
           }
         }
       } catch (Exception e) {
         e.printStackTrace();
-        for (int i = 0; i < getServerManagers().length; i++) {
-          getServerManagers()[i].stop(); 
+        ServerManager[] managers = getServerManagers();
+        if (managers != null) {
+          for (int i = 0; i < managers.length; i++) {
+            managers[i].stop();
+          }
         }
         throw e;
       }
@@ -108,12 +112,13 @@ public abstract class AbstractTwoServerCoresidentDeploymentTest extends Abstract
       File sandBox = getServerManagers()[0].getSandbox();
       TcConfigBuilder config0 = tcConfigBuilder.copy();
       TcConfigBuilder config1 = tcConfigBuilder.copy();
-      
-      prepareClientConfig(new File(sandBox, "tc-config0.xml"), config0, getServerManagers()[0].getServerTcConfig());      
+
+      prepareClientConfig(new File(sandBox, "tc-config0.xml"), config0, getServerManagers()[0].getServerTcConfig());
       prepareClientConfig(new File(sandBox, "tc-config1.xml"), config1, getServerManagers()[1].getServerTcConfig());
-      
-      //use server_0's sandbox
-      WebApplicationServer server = getServerManagers()[0].makeCoresidentWebApplicationServer(config0, config1, enableDebug);
+
+      // use server_0's sandbox
+      WebApplicationServer server = getServerManagers()[0].makeCoresidentWebApplicationServer(config0, config1,
+                                                                                              enableDebug);
       configureServerParamers(server.getServerParameters());
       server.addWarDeployment(deployment, context);
       if (start) {
@@ -122,7 +127,8 @@ public abstract class AbstractTwoServerCoresidentDeploymentTest extends Abstract
       return server;
     }
 
-    private void prepareClientConfig(File configFile, final TcConfigBuilder clientConfig, final TcConfigBuilder serverTcConfig) throws IOException {
+    private void prepareClientConfig(File configFile, final TcConfigBuilder clientConfig,
+                                     final TcConfigBuilder serverTcConfig) throws IOException {
       clientConfig.setDsoPort(serverTcConfig.getDsoPort());
       clientConfig.setJmxPort(serverTcConfig.getJmxPort());
       clientConfig.setTcConfigFile(configFile);
