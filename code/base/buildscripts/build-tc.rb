@@ -576,6 +576,25 @@ END
     jvmargs = config_source.as_array('jvmargs') || [ ]
     do_run_class(jvm, "eclipsegen.Main", arguments, jvmargs, subtree, FilePath.new(@basedir, build_module_name))    
   end
+  
+  def generate_license
+    fail("Only EE branch checkout can be used for license generation") unless @build_environment.is_ee_branch?
+    build_module_name = 'ent-license-generator'
+    subtree_name = 'src'
+    build_module = @module_set[build_module_name]
+    subtree = build_module.subtree(subtree_name)
+
+    build_module.compile(@jvm_set, @build_results, ant, config_source, @build_environment)
+
+    if config_jre = config_source['jdk']
+      jvm = @jvm_set[config_jre]
+    else
+      jvm = build_module.jdk
+    end
+    arguments = all_remaining_arguments
+    jvmargs = config_source.as_array('jvmargs') || [ ]
+    do_run_class(jvm, "com.tc.license.StandardTerracottaLicenseGenerator", arguments, jvmargs, subtree)    
+  end
 
   # Runs a class, as specified on the command line. Takes one argument, which is the name of the test;
   # you can also set 'jvm' (to point to the JAVA_HOME you want to use), 'module' and 'subtree' to point
