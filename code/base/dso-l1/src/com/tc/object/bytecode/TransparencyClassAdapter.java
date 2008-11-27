@@ -48,6 +48,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     this.physicalClassLogger = new PhysicalClassAdapterLogger(logger);
   }
 
+  @Override
   protected void basicVisit(final int version, final int access, final String name, String signature,
                             final String superClassName, final String[] interfaces) {
 
@@ -107,23 +108,13 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     }
   }
 
+  @Override
   protected FieldVisitor basicVisitField(final int access, final String name, final String desc, String signature,
                                          final Object value) {
-
-    FieldVisitor fieldVisitor = null;
     try {
-
       if ((spec.isClassPortable() && spec.isPhysical() && !ByteCodeUtil.isTCSynthetic(name))
           || (spec.isClassAdaptable() && isRoot(access, name))) {
-        // include the field, but remove final modifier for *most* fields
-        if ((Modifier.isStatic(access) && !isRoot(access, name)) || isMagicSerializationField(access, name, desc)) {
-          fieldVisitor = cv.visitField(access, name, desc, signature, value);
-        } else {
-          fieldVisitor = cv.visitField(~Modifier.FINAL & access, name, desc, signature, value);
-        }
         generateGettersSetters(access, name, desc, Modifier.isStatic(access));
-      } else {
-        fieldVisitor = cv.visitField(access, name, desc, signature, value);
       }
     } catch (RuntimeException e) {
       e.printStackTrace();
@@ -132,35 +123,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
       handleInstrumentationException(e);
       throw e;
     }
-    return fieldVisitor;
-  }
-
-  private static boolean isStatic(int access) {
-    return Modifier.isStatic(access);
-  }
-
-  private static boolean isFinal(int access) {
-    return Modifier.isFinal(access);
-  }
-
-  private static boolean isPrivate(int access) {
-    return Modifier.isPrivate(access);
-  }
-
-  private boolean isMagicSerializationField(int access, String fieldName, String fieldDesc) {
-    // this method tests if the given field is the one the magic fields used by java serialization. If it is, we should
-    // not change any details about this field
-
-    boolean isStatic = isStatic(access);
-    boolean isFinal = isFinal(access);
-    boolean isPrivate = isPrivate(access);
-
-    if (isStatic && isFinal) {
-      if ("J".equals(fieldDesc) && "serialVersionUID".equals(fieldName)) { return true; }
-      if (isPrivate && "serialPersistentFields".equals(fieldName) && "[Ljava/io/ObjectStreamField;".equals(fieldDesc)) { return true; }
-    }
-
-    return false;
+    return cv.visitField(access, name, desc, signature, value);
   }
 
   private void generateGettersSetters(final int fieldAccess, final String name, final String desc, boolean isStatic) {
@@ -210,6 +173,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     return null;
   }
 
+  @Override
   protected MethodVisitor basicVisitMethod(int access, String name, final String desc, String signature,
                                            final String[] exceptions) {
     String originalName = name;
@@ -280,7 +244,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
         mv = cv.visitMethod(access, name, desc, signature, exceptions);
       }
 
-//      return mv == null ? null : new TransparencyCodeAdapter(spec, isAutolock, lockLevel, mv, memberInfo, originalName);
+      // return mv == null ? null : new TransparencyCodeAdapter(spec, isAutolock, lockLevel, mv, memberInfo,
+      // originalName);
       return mv == null ? null : new TransparencyCodeAdapter(spec, ld, mv, memberInfo, originalName);
     } catch (RuntimeException e) {
       handleInstrumentationException(e);
