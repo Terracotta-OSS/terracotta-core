@@ -32,7 +32,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   private ChannelID                   channelID;
   private final ChannelIDProviderImpl cidProvider;
   private final SessionProvider       sessionProvider;
-  private SessionID                   channelSessionID = SessionID.NULL_ID;
+  private volatile SessionID          channelSessionID = SessionID.NULL_ID;
 
   protected ClientMessageChannelImpl(TCMessageFactory msgFactory, TCMessageRouter router,
                                      SessionProvider sessionProvider) {
@@ -48,7 +48,8 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
     synchronized (status) {
       if (status.isOpen()) { throw new IllegalStateException("Channel already open"); }
-      ((MessageTransport) this.sendLayer).initConnectionID(new ConnectionID((((ClientID)getLocalNodeID()).getChannelID().toLong())));
+      ((MessageTransport) this.sendLayer).initConnectionID(new ConnectionID((((ClientID) getLocalNodeID())
+          .getChannelID().toLong())));
       NetworkStackID id = this.sendLayer.open();
       getStatus().open();
       this.channelID = new ChannelID(id.toLong());
@@ -132,7 +133,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
     }
 
   }
-  
+
   // for testing purpose
   protected SessionID getSessionID() {
     return channelSessionID;
