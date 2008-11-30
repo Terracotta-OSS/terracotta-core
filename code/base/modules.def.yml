@@ -30,6 +30,7 @@ modules:
         jdk: J2SE-1.5
       dependencies:
         - common
+        - common-api
   - aspectwerkz:
       options:
         jdk: J2SE-1.5
