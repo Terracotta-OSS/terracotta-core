@@ -52,7 +52,7 @@ public class ReflectorTest extends TCTestCase {
       for (Iterator it = brokenLinks.iterator(); it.hasNext();) {
         keys.append((String) it.next()).append("\n");
       }
-      fail("Broken links found on reflector. Please let Orion or Fiona know.\n" + keys.toString());
+      throw new Exception("Broken links found on reflector. Please let Orion or Fiona know.\n" + keys.toString());
     }
   }
 

@@ -8,11 +8,6 @@
 # to a module-group as below (spring, dso, container, etc...)
 
 modules:
-  - reflector-test:
-      options:
-        jdk: J2SE-1.5
-      dependencies:
-        - common
   - thirdparty-api:
       options:
         jdk: J2SE-1.5
@@ -30,6 +25,11 @@ modules:
         jdk: J2SE-1.5
       dependencies:
         - common-api
+  - reflector-test:
+      options:
+        jdk: J2SE-1.5
+      dependencies:
+        - common
   - aspectwerkz:
       options:
         jdk: J2SE-1.5
