@@ -63,7 +63,7 @@ public class ReflectorTest extends TCTestCase {
       WebConversation wc = new WebConversation();
       WebResponse response = wc.getResource(request);
       String redirectLink = response.getHeaderField("Location");
-      if (redirectLink != null) {
+      if (redirectLink != null && !url.equals(redirectLink)) {
         return isValid(redirectLink);
       } else {
         return response.getResponseCode() == 200;
