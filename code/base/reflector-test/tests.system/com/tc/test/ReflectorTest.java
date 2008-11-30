@@ -10,20 +10,16 @@ import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
 
 import java.net.URL;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import junit.framework.TestCase;
-
 /*
  * Test reflector links INT-404
  */
-public class ReflectorTest extends TestCase {
+public class ReflectorTest extends TCTestCase {
   private static final String reflectorUrl  = "http://svn.terracotta.org/svn/tc/reflector/reflector.properties";
   private Properties          reflector     = new Properties();
   private Set                 brokenLinks   = new HashSet();
@@ -31,14 +27,7 @@ public class ReflectorTest extends TestCase {
 
   protected void setUp() throws Exception {
     URL url = new URL(reflectorUrl);
-
-    Date disabledUntilDate = new SimpleDateFormat("yyyy-MM-dd").parse("2008-01-05");
-
-    if (disabledUntilDate.after(new Date())) {
-      System.out.println("Test disabled till: " + disabledUntilDate);
-    } else {
-      reflector.load(url.openStream());
-    }
+    reflector.load(url.openStream());
 
     // excluded links - no need to check
     excludedLinks.add("iqcs.depguide");
@@ -48,9 +37,13 @@ public class ReflectorTest extends TestCase {
   public void testBrokenLinks() throws Exception {
     for (Iterator it = reflector.entrySet().iterator(); it.hasNext();) {
       Map.Entry e = (Map.Entry) it.next();
-      if (excludedLinks.contains(e.getKey()) || e.toString().indexOf("http:") < 0) continue;
-      System.out.println("Checking link: " + e.getKey() + " = " + e.getValue());
-      assertNotBroken((String) e.getKey(), (String) e.getValue());
+      String desc = (String) e.getKey();
+      String link = ((String) e.getValue()).trim();
+      if (excludedLinks.contains(desc) || !link.startsWith("http:")) continue;
+      System.out.println("Checking link: " + desc + " = " + link);
+      if (!isValid(link)) {
+        brokenLinks.add(desc + " = " + link);
+      }
     }
 
     // report broken links
@@ -63,12 +56,20 @@ public class ReflectorTest extends TestCase {
     }
   }
 
-  private void assertNotBroken(String desc, String link) throws Exception {
-    WebRequest request = new HeadMethodWebRequest(link);
-    WebConversation wc = new WebConversation();
-    WebResponse response = wc.getResource(request);
-    if (response.getResponseCode() != 200) {
-      brokenLinks.add(desc + " = " + link);
+  private static boolean isValid(String url) {
+    try {
+      url = url.trim();
+      WebRequest request = new HeadMethodWebRequest(url);
+      WebConversation wc = new WebConversation();
+      WebResponse response = wc.getResource(request);
+      String redirectLink = response.getHeaderField("Location");
+      if (redirectLink != null) {
+        return isValid(redirectLink);
+      } else {
+        return response.getResponseCode() == 200;
+      }
+    } catch (Exception e) {
+      return false;
     }
   }
 }
