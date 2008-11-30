@@ -7,4 +7,5 @@
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/httpunit-1.6.2.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/junit-3.8.1.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/common-api"/>
 </classpath>
