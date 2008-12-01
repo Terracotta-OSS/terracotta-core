@@ -207,9 +207,7 @@ public abstract class TCObjectImpl implements TCObject {
       }
       if (obj instanceof ObjectID) {
         setReference(fieldName, (ObjectID) obj);
-        if (!field.isFinal()) {
-          ta.__tc_setfield(field.getName(), null);
-        }
+        ta.__tc_setfield(field.getName(), null);
       } else {
         // clean this up
         ta.__tc_setfield(field.getName(), obj);
@@ -287,6 +285,7 @@ public abstract class TCObjectImpl implements TCObject {
     return this.version;
   }
 
+  @Override
   public String toString() {
     return getClass().getName() + "@" + System.identityHashCode(this) + "[objectID=" + objectID + ", TCClass="
            + tcClazz + "]";

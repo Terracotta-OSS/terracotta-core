@@ -201,10 +201,6 @@ public class TestClassFactory implements TCClassFactory {
       throw new ImplementMe();
     }
 
-    public boolean isFinal() {
-      throw new ImplementMe();
-    }
-
     public boolean isPortable() {
       return true;
     }

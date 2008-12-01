@@ -21,7 +21,6 @@ public class GenericTCField implements TCField {
   private final TCClass              tcClass;
   private final boolean              isPortable;
   private final String               fieldName;
-  private final boolean              isFinal;
   private final boolean              isArray;
   private final boolean              canBeReference;
 
@@ -34,8 +33,6 @@ public class GenericTCField implements TCField {
     // special case for synthetic parent field
     portable = portable || fieldName.equals(tcClass.getParentFieldName());
     this.isPortable = portable && !field.getType().getName().startsWith("com.tc.");
-
-    this.isFinal = Modifier.isFinal(field.getModifiers());
     this.isArray = field.getType().isArray();
     this.canBeReference = isReferenceField(field);
   }
@@ -44,19 +41,13 @@ public class GenericTCField implements TCField {
     if (Modifier.isStatic(field.getModifiers())) return false;
     Class type = field.getType();
 
-    if (literalValues.isLiteral(type.getName())) {
-      return !type.isPrimitive();
-    }
+    if (literalValues.isLiteral(type.getName())) { return !type.isPrimitive(); }
 
     return true;
   }
 
   public TCClass getDeclaringTCClass() {
     return tcClass;
-  }
-
-  public boolean isFinal() {
-    return isFinal;
   }
 
   public boolean isPortable() {
@@ -75,6 +66,7 @@ public class GenericTCField implements TCField {
     return this.canBeReference;
   }
 
+  @Override
   public String toString() {
     return getClass().getName() + "(" + getName() + ")";
   }
