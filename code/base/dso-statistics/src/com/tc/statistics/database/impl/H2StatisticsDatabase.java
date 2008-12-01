@@ -47,9 +47,17 @@ public class H2StatisticsDatabase extends AbstractStatisticsDatabase {
   }
 
   public synchronized void open() throws StatisticsDatabaseException {
+    // Prevent H2 to call an explicit System.gc() when trying to access
+    // database files and directory repeatedly
+    // (see org.h2.store.fs.FileSystemDisk). The System.gc() call happens
+    // after 8 retries, hence setting this system property to 8 will prevent
+    // the call from happening (the default is 16).
+    System.setProperty("h2.maxFileRetry", "8");
+
     super.open(H2_JDBC_DRIVER);
   }
 
+  @Override
   protected void openConnection() throws StatisticsDatabaseException {
     String url = H2_URL_PREFIX + new File(dbDir, urlSuffix).getAbsolutePath();
     try {
