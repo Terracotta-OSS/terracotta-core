@@ -189,7 +189,7 @@ public class ActivePassiveServerManager extends MultipleServerManager {
                                                                      "MultipleServersConfigCreator should not be created again"); }
     this.serverConfigCreator = creator;
   }
-  
+
   public MultipleServersConfigCreator getConfigCreator() {
     return this.serverConfigCreator;
   }
@@ -552,6 +552,9 @@ public class ActivePassiveServerManager extends MultipleServerManager {
 
         MBeanServerConnection mbs;
         try {
+          if (jmxConnectors[i] == null) {
+            jmxConnectors[i] = getJMXConnector(jmxPorts[i]);
+          }
           mbs = jmxConnectors[i].getMBeanServerConnection();
         } catch (IOException ioe) {
           System.out.println("Need to recreate jmxConnector for server=[" + dsoPorts[i] + "]...");
