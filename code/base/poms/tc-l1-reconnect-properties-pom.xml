@@ -13,6 +13,7 @@
 
   <groupId>org.terracotta</groupId>
   <artifactId>tc-l1-reconnect-properties</artifactId>
+  <packaging>jar</packaging>
 
   <repositories>
     <repository>

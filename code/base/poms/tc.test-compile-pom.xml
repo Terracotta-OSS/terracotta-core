@@ -13,6 +13,7 @@
 
   <groupId>org.terracotta</groupId>
   <artifactId>tc.test-compile</artifactId>
+  <packaging>jar</packaging>
 
   <dependencies>
     <!--

@@ -13,6 +13,7 @@
 
   <groupId>org.terracotta</groupId>
   <artifactId>terracotta</artifactId>
+  <packaging>jar</packaging>
 
   <dependencies>
     <!--
