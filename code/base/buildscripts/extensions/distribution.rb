@@ -74,7 +74,11 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
       patch_file = FilePath.new(self.dist_directory, patch_file_name)
       ant.tar(:destfile => patch_file.to_s, :compression => 'gzip', :longfile => 'gnu') do
         ant.tarfileset(:dir => Dir.pwd, :includes => patch_files.join(','))
-        ant.tarfileset(:dir => Dir.pwd, :includes => patch_bin_files.join(','), :mode => 755)
+        unless patch_bin_files.empty?
+          ant.tarfileset(:dir => Dir.pwd,
+                         :includes => patch_bin_files.join(','),
+                         :mode => 755)
+        end
       end
       
       if config_source['target']
