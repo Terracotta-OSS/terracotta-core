@@ -10,6 +10,29 @@
   <name>terracotta base</name>
   <packaging>pom</packaging>
 
+  <licenses>
+    <license>
+      <name>Terracotta Public License</name>
+      <url>http://www.terracotta.org/web/display/orgsite/Text+of+Terracotta+Public+License</url>
+      <distribution>repo</distribution>
+      <comments>
+        The Terracotta Public License (we'll call it the "TPL") is based on the
+        Mozilla Public License, version 1.1 (we'll call it the "MPL"), with a
+        few modifications to make it specific to Terracotta, including an
+        attribution clause. The TPL gives you the freedom to use Terracotta,
+        modify its source code, and distribute it for free.
+
+        If you distribute Terracotta, or software that you built with Terracotta,
+        the attribution clause requires you to display the words "Powered by Terracotta"
+        in your user interfaces. To "distribute" means to give or sell software
+        that includes Terracotta code to someone outside of your company or
+        organization. Keep in mind that the attribution clause doesn't apply to
+        most end users of Terracotta. If you're using Terracotta, but not
+        distributing it, then you don't need to display the attribution.
+      </comments>
+    </license>
+  </licenses>
+
   <properties>
     <tcVersion>2.8.0-SNAPSHOT</tcVersion>
   </properties>
