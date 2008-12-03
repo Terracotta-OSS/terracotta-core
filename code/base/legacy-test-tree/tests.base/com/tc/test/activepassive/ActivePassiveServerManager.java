@@ -621,7 +621,9 @@ public class ActivePassiveServerManager extends MultipleServerManager {
     if (isProxyL2groupPorts) proxyL2Managers[activeIndex].proxyDown();
     if (isProxyDsoPorts) {
       proxyL1Managers[activeIndex].proxyDown();
-      proxyL1Managers[activeIndex].startProxyTest();
+      System.out.println("*** Stopping the DSO proxy with proxy port as " + proxyL1Managers[activeIndex].getProxyPort()
+                         + " and DSO port as " + proxyL1Managers[activeIndex].getDsoPort());
+      proxyL1Managers[activeIndex].stopProxyTest();
     }
     debugPrintln("***** Done sleeping after crashing active server ");
 
