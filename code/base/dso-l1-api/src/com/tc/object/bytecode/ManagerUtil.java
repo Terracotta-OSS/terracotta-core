@@ -939,6 +939,10 @@ public class ManagerUtil {
   public static int getSessionLockType(String appName) {
     return ClassProcessorHelper.getSessionLockType(appName);
   }
+  
+  public static boolean isApplicationSessionLocked(String appName) {
+    return ClassProcessorHelper.isApplicationSessionLocked(appName);
+  }
 
   /**
    * Returns true if the field represented by the offset is a portable field, i.e., not static and not dso transient

@@ -188,6 +188,8 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   void addApplicationName(String name);
 
   void addSynchronousWriteApplication(String name);
+  
+  void addSessionLockedApplication(String name);
 
   void addInstrumentationDescriptor(InstrumentedClass classDesc);
 
@@ -237,4 +239,9 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   public ReconnectConfig getL1ReconnectProperties();
 
   boolean useResolveLockWhenClearing(Class clazz);
+
+  /**
+   * Returns true if the web-application is configured for session-locking
+   */
+  public boolean isApplicationSessionLocked(String appName);
 }

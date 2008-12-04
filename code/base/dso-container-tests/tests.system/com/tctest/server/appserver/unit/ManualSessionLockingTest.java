@@ -130,7 +130,7 @@ public class ManualSessionLockingTest extends AbstractOneServerDeploymentTest {
     }
 
     protected void configureTcConfig(TcConfigBuilder tcConfigBuilder) {
-      tcConfigBuilder.addWebApplication(CONTEXT);
+      tcConfigBuilder.addWebApplicationWithSessionLocking(CONTEXT);
     }
   }
 

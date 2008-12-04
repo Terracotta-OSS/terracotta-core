@@ -431,4 +431,13 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     return true;
   }
 
+  public boolean isApplicationSessionLocked(String appName) {
+    return true;
+  }
+
+  public void addSessionLockedApplication(String name) {
+    throw new ImplementMe();
+
+  }  
+
 }

@@ -131,6 +131,9 @@ public class ConfigLoader {
     if (webApplication.getSynchronousWrite()) {
       config.addSynchronousWriteApplication(webApplication.getStringValue());
     }
+    if (webApplication.getSessionLocking()) {
+      config.addSessionLockedApplication(webApplication.getStringValue());
+    }
   }
 
   private void addWebApplications(WebApplications webApplicationsList) {
@@ -180,6 +183,7 @@ public class ConfigLoader {
 
     if (springApp.getSessionSupport()) {
       config.addApplicationName(springApp.getName()); // enable session support
+      config.addSessionLockedApplication(springApp.getName());  //enable session-locking by default
     }
 
     if (springApp.getApplicationContexts() != null) {

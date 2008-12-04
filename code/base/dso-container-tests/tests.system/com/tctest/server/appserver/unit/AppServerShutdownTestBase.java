@@ -108,7 +108,7 @@ public class AppServerShutdownTestBase extends AbstractTwoServerDeploymentTest {
     }
 
     protected void configureTcConfig(TcConfigBuilder clientConfig) {
-      clientConfig.addWebApplication(CONTEXT, true);
+      clientConfig.addWebApplicationWithSynchronousWrite(CONTEXT);
     }
   }
 }

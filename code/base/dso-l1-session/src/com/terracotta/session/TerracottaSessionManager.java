@@ -50,6 +50,7 @@ public class TerracottaSessionManager implements SessionManager {
   private final String                 sessionUrlPathParamTag;
   private final boolean                      usesStandardUrlPathParam;
   private int                          serverHopsDetected = 0;
+  private final boolean                sessionLocking;
 
 
   private static final Set             excludedVHosts     = loadExcludedVHosts();
@@ -72,6 +73,8 @@ public class TerracottaSessionManager implements SessionManager {
     this.logger = ManagerUtil.getLogger("com.tc.tcsession." + contextMgr.getAppName());
     this.reqeustLogEnabled = cp.getRequestLogBenchEnabled();
     this.invalidatorLogEnabled = cp.getInvalidatorLogBenchEnabled();
+    this.sessionLocking = ManagerUtil.isApplicationSessionLocked(contextMgr.getAppName());
+    System.out.println("===============> Session locking: " + sessionLocking);
 
     // XXX: If reasonable, we should move this out of the constructor -- leaking a reference to "this" to another thread
     // within a constructor is a bad practice (note: although "this" isn't explicitly based as arg, it is available and
@@ -115,6 +118,10 @@ public class TerracottaSessionManager implements SessionManager {
     this.usesStandardUrlPathParam = this.sessionUrlPathParamTag.equalsIgnoreCase(";"
                                                                                  + ConfigProperties.defaultCookieName
                                                                                  + "=");
+  }
+  
+  public boolean isApplicationSessionLocked() {
+    return sessionLocking;
   }
 
   private static Set loadExcludedVHosts() {

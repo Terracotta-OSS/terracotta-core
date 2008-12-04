@@ -195,16 +195,33 @@ public class TcConfigBuilder {
   }
 
   public void addWebApplication(String appName) {
-    addWebApplication(appName, false);
+    addWebApplication(appName, false, true);
+  }
+  
+  public void addWebApplicationWithSessionLocking(String appName) {
+    addWebApplication(appName, false, true);
+  }
+  
+  public void addWebApplicationWithoutSessionLocking(String appName) {
+    addWebApplication(appName, false, false);
+  }
+  
+  public void addWebApplicationWithSynchronousWrite(String appName) {
+    addWebApplication(appName, true, true);
+  }
+  
+  public void addWebApplicationWithoutSynchronousWrite(String appName) {
+    addWebApplication(appName, false, true);
   }
 
-  public void addWebApplication(String appName, boolean synchWrite) {
+  public void addWebApplication(String appName, boolean synchWrite, boolean sessionLocking) {
     ensureWebApplications();
     WebApplication wa = tcConfig.getApplication().getDso().getWebApplications().insertNewWebApplication(0);
     wa.setStringValue(appName);
     if (synchWrite) {
       wa.setSynchronousWrite(synchWrite);
     }
+    wa.setSessionLocking(sessionLocking);
   }
 
   public String toString() {
@@ -320,7 +337,7 @@ public class TcConfigBuilder {
     tc.addAutoLock("* com.tctest.*.*(..)", "write", true);
     tc.addAutoLock("* adfad..*()", "read");
     tc.addRoot("com.tc.Test.field", "myField");
-    tc.addWebApplication("events", false);
+    tc.addWebApplication("events", false, true);
     tc.addBootJarClass("java.lang.Local");
     TcConfigBuilder aCopy = tc.copy();
     aCopy.addModule("hung", "huynh");

@@ -133,6 +133,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   private final Set                              applicationNames                   = Collections
                                                                                         .synchronizedSet(new HashSet());
   private final List                             synchronousWriteApplications       = new ArrayList();
+  private final Set                              sessionLockedApplications          = Collections
+                                                                                        .synchronizedSet(new HashSet());
   private final CompoundExpressionMatcher        permanentExcludesMatcher;
   private final CompoundExpressionMatcher        nonportablesMatcher;
   private final List                             autoLockExcludes                   = new CopyOnWriteArrayList();
@@ -1671,6 +1673,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   public void addSynchronousWriteApplication(String name) {
     this.synchronousWriteApplications.add(name);
   }
+  
+  public void addSessionLockedApplication(String name) {
+    this.sessionLockedApplications.add(name);
+  }
 
   public void addUserDefinedBootSpec(String className, TransparencyClassSpec spec) {
     synchronized (specLock) {
@@ -1737,6 +1743,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       if (webApp.equals(appName)) { return LockLevel.SYNCHRONOUS_WRITE; }
     }
     return LockLevel.WRITE;
+  }
+  
+  public boolean isApplicationSessionLocked(String appName) {
+    for (Iterator it = sessionLockedApplications.iterator(); it.hasNext();) {
+      String name = (String) it.next();
+      if (name.equals(appName)) return true;
+    }
+    return false;
   }
 
   public static InputStream getL1PropertiesFromL2Stream(ConnectionInfo[] connectInfo) throws Exception {

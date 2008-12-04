@@ -757,6 +757,10 @@ public class ClassProcessorHelper {
   public static int getSessionLockType(String appName) {
     return globalContext.getSessionLockType(appName);
   }
+  
+  public static boolean isApplicationSessionLocked(String appName) {
+    return globalContext.isApplicationSessionLocked(appName);
+  }
 
   private static void traceNamedLoader(final NamedClassLoader ncl) {
     trace("loader[" + ncl + "] of type[" + ncl.getClass().getName() + "] registered as["

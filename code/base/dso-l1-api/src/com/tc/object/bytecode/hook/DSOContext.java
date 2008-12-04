@@ -59,4 +59,9 @@ public interface DSOContext extends ClassProcessor {
    */
   public URL getClassResource(String className);
 
+  /**
+   * Returns true is web-application is configured for session-locking
+   */
+  public boolean isApplicationSessionLocked(String appName);
+
 }
