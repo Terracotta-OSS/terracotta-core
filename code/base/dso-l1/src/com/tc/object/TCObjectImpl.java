@@ -7,6 +7,7 @@ package com.tc.object;
 import bsh.EvalError;
 import bsh.Interpreter;
 import bsh.ParseException;
+import bsh.TargetError;
 
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.CustomerLogging;
@@ -102,7 +103,7 @@ public abstract class TCObjectImpl implements TCObject {
    * Reconstitutes the object using the data in the DNA strand. XXX: We may need to signal (via a different signature or
    * args) that the hydration is intended to initialize the object from scratch or if it's a delta. We must avoid
    * creating a new instance of the peer object if the strand is just a delta.
-   * 
+   *
    * @throws ClassNotFoundException
    */
   public void hydrate(DNA from, boolean force) throws ClassNotFoundException {
@@ -154,15 +155,21 @@ public abstract class TCObjectImpl implements TCObject {
         // e.getErrorText().
         consoleLogger.error("Unable to parse OnLoad script: " + pojo.getClass() + " error: " + e.getMessage()
                             + " stack: " + e.getScriptStackTrace());
-        logger.error("Unable to parse OnLoad script: " + pojo.getClass() + " error: " + e.getMessage() + " line: "
-                     + " stack: " + e.getScriptStackTrace());
       } catch (EvalError e) {
         // General Error evaluating script
-        consoleLogger.error("OnLoad execute script failed for: " + pojo.getClass() + " error: " + e.getErrorText()
-                            + " line: " + e.getErrorLineNumber() + "; " + e.getMessage() + "; stack: "
-                            + e.getScriptStackTrace());
-        logger.error("OnLoad execute script failed for: " + pojo.getClass() + " error: " + e.getErrorText() + " line: "
-                     + e.getErrorLineNumber() + "; " + e.getMessage() + "; stack: " + e.getScriptStackTrace());
+        Throwable cause = null;
+        if (e instanceof TargetError) {
+          cause = ((TargetError) e).getTarget();
+        }
+
+        String errorMsg = "OnLoad execute script failed for: " + pojo.getClass() + " error: " + e.getErrorText()
+                          + " line: " + e.getErrorLineNumber() + "; " + e.getMessage();
+
+        if (cause != null) {
+          consoleLogger.error(errorMsg, cause);
+        } else {
+          consoleLogger.error(errorMsg);
+        }
       } finally {
         if (adjustTCL) Thread.currentThread().setContextClassLoader(prevLoader);
       }
