@@ -4,14 +4,14 @@
  */
 package com.tc.l2.msg;
 
+import com.tc.io.TCByteBufferInput;
+import com.tc.io.TCByteBufferOutput;
 import com.tc.l2.ha.ClusterState;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.MessageID;
 import com.tc.net.protocol.transport.ConnectionID;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -50,9 +50,9 @@ public class ClusterStateMessage extends AbstractGroupMessage {
     super(type);
     this.connectionID = connID;
   }
-
-  protected void basicReadExternal(int msgType, ObjectInput in) throws IOException {
-    switch (msgType) {
+  
+  protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
+    switch (getType()) {
       case OBJECT_ID:
         nextAvailableObjectID = in.readLong();
         break;
@@ -67,7 +67,7 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         nextAvailableObjectID = in.readLong();
         nextAvailableGID = in.readLong();
         nextAvailableChannelID = in.readLong();
-        clusterID = in.readUTF();
+        clusterID = in.readString();
         int size = in.readInt();
         connectionIDs = new HashSet(size);
         for (int i = 0; i < size; i++) {
@@ -78,12 +78,12 @@ public class ClusterStateMessage extends AbstractGroupMessage {
       case OPERATION_SUCCESS:
         break;
       default:
-        throw new AssertionError("Unknown type : " + msgType);
+        throw new AssertionError("Unknown type : " + getType());
     }
   }
 
-  protected void basicWriteExternal(int msgType, ObjectOutput out) throws IOException {
-    switch (msgType) {
+  protected void basicSerializeTo(TCByteBufferOutput out) {
+    switch (getType()) {
       case OBJECT_ID:
         out.writeLong(nextAvailableObjectID);
         break;
@@ -98,7 +98,7 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         out.writeLong(nextAvailableObjectID);
         out.writeLong(nextAvailableGID);
         out.writeLong(nextAvailableChannelID);
-        out.writeUTF(clusterID);
+        out.writeString(clusterID);
         out.writeInt(connectionIDs.size());
         for (Iterator i = connectionIDs.iterator(); i.hasNext();) {
           ConnectionID conn = (ConnectionID) i.next();
@@ -109,17 +109,17 @@ public class ClusterStateMessage extends AbstractGroupMessage {
       case OPERATION_SUCCESS:
         break;
       default:
-        throw new AssertionError("Unknown type : " + msgType);
+        throw new AssertionError("Unknown type : " + getType());
     }
   }
 
-  private void writeConnectionID(ConnectionID conn, ObjectOutput out) throws IOException {
+  private void writeConnectionID(ConnectionID conn, TCByteBufferOutput out) {
     out.writeLong(conn.getChannelID());
-    out.writeUTF(conn.getServerID());
+    out.writeString(conn.getServerID());
   }
 
-  private ConnectionID readConnectionID(ObjectInput in) throws IOException {
-    return new ConnectionID(in.readLong(), in.readUTF());
+  private ConnectionID readConnectionID(TCByteBufferInput in) throws IOException {
+    return new ConnectionID(in.readLong(), in.readString());
   }
 
   public long getNextAvailableObjectID() {

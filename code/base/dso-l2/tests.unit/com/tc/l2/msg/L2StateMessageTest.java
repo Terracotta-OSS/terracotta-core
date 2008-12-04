@@ -4,17 +4,12 @@
  */
 package com.tc.l2.msg;
 
+import com.tc.io.TCByteBufferInputStream;
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.state.Enrollment;
 import com.tc.l2.state.EnrollmentFactory;
 import com.tc.net.ServerID;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 
 import junit.framework.TestCase;
 
@@ -45,13 +40,12 @@ public class L2StateMessageTest extends TestCase {
   }
 
   private L2StateMessage writeAndRead(L2StateMessage l2sm) throws Exception {
-    ByteArrayOutputStream bo = new ByteArrayOutputStream();
-    ObjectOutput oo = new ObjectOutputStream(bo);
-    oo.writeObject(l2sm);
+    TCByteBufferOutputStream bo = new TCByteBufferOutputStream();
+    l2sm.serializeTo(bo);
     System.err.println("Written : " + l2sm);
-    ByteArrayInputStream bi = new ByteArrayInputStream(bo.toByteArray());
-    ObjectInput oi = new ObjectInputStream(bi);
-    L2StateMessage l2sm1 = (L2StateMessage) oi.readObject();
+    TCByteBufferInputStream bi = new TCByteBufferInputStream(bo.toArray());
+    L2StateMessage l2sm1 = new L2StateMessage();
+    l2sm1.deserializeFrom(bi);
     System.err.println("Read : " + l2sm1);
     return l2sm1;
   }

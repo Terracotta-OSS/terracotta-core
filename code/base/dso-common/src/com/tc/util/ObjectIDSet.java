@@ -4,14 +4,14 @@
  */
 package com.tc.util;
 
+import com.tc.io.TCByteBufferInput;
+import com.tc.io.TCByteBufferOutput;
+import com.tc.io.TCSerializable;
 import com.tc.object.ObjectID;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 
-import java.io.Externalizable;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,7 +30,7 @@ import java.util.SortedSet;
  * <p>
  * This one uses a balanced tree internally to store ranges instead of an ArrayList
  */
-public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintable, Externalizable {
+public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintable, TCSerializable {
 
   /**
    * modCount - number of times this HashMap has been structurally modified Structural modifications are those that
@@ -60,7 +60,8 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
     }
   }
 
-  public void readExternal(ObjectInput in) throws IOException {
+  public Object deserializeFrom(TCByteBufferInput in) throws IOException {
+    if (size != 0) { throw new RuntimeException("deserialize dirty ObjectIDSet"); }
     int _size = in.readInt();
     this.size = _size;
     while (_size > 0) {
@@ -70,9 +71,10 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
       this.ranges.insert(r);
       _size -= r.size();
     }
+    return this;
   }
 
-  public void writeExternal(ObjectOutput out) throws IOException {
+  public void serializeTo(TCByteBufferOutput out) {
     out.writeInt(size);
     for (Iterator i = ranges.iterator(); i.hasNext();) {
       Range r = (Range) i.next();
@@ -427,4 +429,93 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
   public SortedSet tailSet(Object arg0) {
     throw new UnsupportedOperationException();
   }
+
+  // ======================= UnmodifiableobjectIDSet ==================================
+
+  public static ObjectIDSet unmodifiableObjectIDSet(ObjectIDSet s) {
+    return new UnmodifiableObjectIDSet(s);
+  }
+
+  static class UnmodifiableObjectIDSet extends ObjectIDSet {
+    final ObjectIDSet s;
+
+    UnmodifiableObjectIDSet(ObjectIDSet s) {
+      this.s = s;
+    }
+
+    public boolean equals(Object o) {
+      return o == this || s.equals(o);
+    }
+
+    public int hashCode() {
+      return s.hashCode();
+    }
+
+    public int size() {
+      return s.size();
+    }
+
+    public boolean isEmpty() {
+      return s.isEmpty();
+    }
+
+    public boolean contains(Object o) {
+      return s.contains(o);
+    }
+
+    public Object[] toArray() {
+      return s.toArray();
+    }
+
+    public String toString() {
+      return s.toString();
+    }
+
+    public Iterator iterator() {
+      return new Iterator() {
+        Iterator i = s.iterator();
+
+        public boolean hasNext() {
+          return i.hasNext();
+        }
+
+        public Object next() {
+          return i.next();
+        }
+
+        public void remove() {
+          throw new UnsupportedOperationException();
+        }
+      };
+    }
+
+    public boolean add(Object e) {
+      throw new UnsupportedOperationException();
+    }
+
+    public boolean remove(Object o) {
+      throw new UnsupportedOperationException();
+    }
+
+    public boolean containsAll(Collection coll) {
+      return s.containsAll(coll);
+    }
+
+    public boolean addAll(Collection coll) {
+      throw new UnsupportedOperationException();
+    }
+
+    public boolean removeAll(Collection coll) {
+      throw new UnsupportedOperationException();
+    }
+
+    public boolean retainAll(Collection coll) {
+      throw new UnsupportedOperationException();
+    }
+
+    public void clear() {
+      throw new UnsupportedOperationException();
+    }
+  }
+
 }

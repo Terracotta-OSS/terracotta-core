@@ -3,11 +3,11 @@
  */
 package com.tc.net.groups;
 
+import com.tc.io.TCSerializable;
 import com.tc.net.NodeID;
+import com.tc.net.protocol.tcm.TCMessageImpl;
 
-import java.io.Externalizable;
-
-public interface GroupMessage extends Externalizable {
+public interface GroupMessage extends TCSerializable {
 
   public int getType();
     
@@ -18,5 +18,7 @@ public interface GroupMessage extends Externalizable {
   public abstract void setMessageOrginator(NodeID n);
 
   public abstract NodeID messageFrom();
+  
+  public boolean isRecycleOnRead(TCMessageImpl message);
 
 }

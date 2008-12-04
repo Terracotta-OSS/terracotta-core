@@ -4,15 +4,11 @@
  */
 package com.tc.util;
 
+import com.tc.io.TCByteBufferInputStream;
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.object.ObjectID;
 import com.tc.test.TCTestCase;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -173,13 +169,12 @@ public class ObjectIDSetTest extends TCTestCase {
   }
 
   private ObjectIDSet serializeAndRead(ObjectIDSet org) throws Exception {
-    ByteArrayOutputStream bo = new ByteArrayOutputStream();
-    ObjectOutput oo = new ObjectOutputStream(bo);
-    oo.writeObject(org);
+    TCByteBufferOutputStream out = new TCByteBufferOutputStream();
+    org.serializeTo(out);
     System.err.println("Written ObjectIDSet2 size : " + org.size());
-    ByteArrayInputStream bi = new ByteArrayInputStream(bo.toByteArray());
-    ObjectInput oi = new ObjectInputStream(bi);
-    ObjectIDSet oids = (ObjectIDSet) oi.readObject();
+    TCByteBufferInputStream in = new TCByteBufferInputStream(out.toArray());
+    ObjectIDSet oids = new ObjectIDSet();
+    oids.deserializeFrom(in);
     System.err.println("Read  ObjectIDSet2 size : " + oids.size());
     return oids;
   }

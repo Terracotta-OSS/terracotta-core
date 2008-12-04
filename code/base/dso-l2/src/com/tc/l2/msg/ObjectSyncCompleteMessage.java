@@ -5,12 +5,12 @@
 package com.tc.l2.msg;
 
 import com.tc.async.api.OrderedEventContext;
+import com.tc.io.TCByteBufferInput;
+import com.tc.io.TCByteBufferOutput;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.util.Assert;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 public class ObjectSyncCompleteMessage extends AbstractGroupMessage implements OrderedEventContext {
 
@@ -26,16 +26,17 @@ public class ObjectSyncCompleteMessage extends AbstractGroupMessage implements O
     super(type);
     this.sequence = sequence;
   }
-
-  protected void basicReadExternal(int msgType, ObjectInput in) throws IOException {
-    Assert.assertEquals(OBJECT_SYNC_COMPLETE, msgType);
+  
+  protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
+    Assert.assertEquals(OBJECT_SYNC_COMPLETE, getType());
     this.sequence = in.readLong();
   }
 
-  protected void basicWriteExternal(int msgType, ObjectOutput out) throws IOException {
-    Assert.assertEquals(OBJECT_SYNC_COMPLETE, msgType);
+  protected void basicSerializeTo(TCByteBufferOutput out) {
+    Assert.assertEquals(OBJECT_SYNC_COMPLETE, getType());
     out.writeLong(this.sequence);
   }
+
 
   public long getSequenceID() {
     return this.sequence;

@@ -5,20 +5,20 @@
 package com.tc.l2.msg;
 
 import com.tc.async.api.EventContext;
+import com.tc.io.TCByteBufferInput;
+import com.tc.io.TCByteBufferOutput;
 import com.tc.l2.state.Enrollment;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.MessageID;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 public class L2StateMessage extends AbstractGroupMessage implements EventContext {
 
   public static final int START_ELECTION          = 0; // Sent during the start of an election by the initiator
   public static final int ELECTION_RESULT         = 1; // Sent at the end of an election by the initiator
   public static final int RESULT_AGREED           = 2; // Sent in response to ELECTION_RESULT/WON_ALREADY if no
-                                                        // conflict
+  // conflict
   public static final int RESULT_CONFLICT         = 3; // Sent in response to ELECTION_RESULT/WON_ALREADY on conflict
   public static final int ABORT_ELECTION          = 4; // Sent in response to START_ELECTION by already elected ACTIVE
   public static final int ELECTION_WON            = 5; // Sent by the node that wins an election
@@ -43,13 +43,15 @@ public class L2StateMessage extends AbstractGroupMessage implements EventContext
     this.enrollment = e;
   }
 
-  protected void basicReadExternal(int type, ObjectInput in) throws IOException, ClassNotFoundException {
-    this.enrollment = (Enrollment) in.readObject();
+  protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
+    this.enrollment = new Enrollment();
+    this.enrollment.deserializeFrom(in);
   }
 
-  protected void basicWriteExternal(int type, ObjectOutput out) throws IOException {
-    out.writeObject(enrollment);
+  protected void basicSerializeTo(TCByteBufferOutput out) {
+    this.enrollment.serializeTo(out);
   }
+
 
   public Enrollment getEnrollment() {
     return enrollment;

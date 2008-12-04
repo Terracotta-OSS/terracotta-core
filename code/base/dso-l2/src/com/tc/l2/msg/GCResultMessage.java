@@ -5,17 +5,18 @@
 package com.tc.l2.msg;
 
 import com.tc.async.api.EventContext;
+import com.tc.io.TCByteBufferInput;
+import com.tc.io.TCByteBufferOutput;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.util.Assert;
+import com.tc.util.ObjectIDSet;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.SortedSet;
 
 public class GCResultMessage extends AbstractGroupMessage implements EventContext {
   public static final int GC_RESULT = 0;
-  private SortedSet       gcedOids;
+  private ObjectIDSet     gcedOids;
   private int             gcIterationCount;
 
   // To make serialization happy
@@ -23,24 +24,23 @@ public class GCResultMessage extends AbstractGroupMessage implements EventContex
     super(-1);
   }
 
-  public GCResultMessage(int type, int gcIterationCount, SortedSet deleted) {
+  public GCResultMessage(int type, int gcIterationCount, ObjectIDSet deleted) {
     super(type);
     this.gcIterationCount = gcIterationCount;
     this.gcedOids = deleted;
   }
 
-  protected void basicReadExternal(int msgType, ObjectInput in) throws IOException, ClassNotFoundException {
-    Assert.assertEquals(GC_RESULT, msgType);
+  protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
+    Assert.assertEquals(GC_RESULT, getType());
     gcIterationCount = in.readInt();
-    gcedOids = (SortedSet) in.readObject();
+    gcedOids = new ObjectIDSet();
+    gcedOids.deserializeFrom(in);
   }
 
-  protected void basicWriteExternal(int msgType, ObjectOutput out) throws IOException {
-    Assert.assertEquals(GC_RESULT, msgType);
+  protected void basicSerializeTo(TCByteBufferOutput out) {
+    Assert.assertEquals(GC_RESULT, getType());
     out.writeInt(gcIterationCount);
-    // XXX::Directly serializing instead of using writeObjectIDs() to avoid HUGE messages. Since the (wrapped) set is
-    // ObjectIDSet2 and since it has optimized externalization methods, this should result in far less data written out.
-    out.writeObject(gcedOids);
+    gcedOids.serializeTo(out);
   }
 
   public SortedSet getGCedObjectIDs() {

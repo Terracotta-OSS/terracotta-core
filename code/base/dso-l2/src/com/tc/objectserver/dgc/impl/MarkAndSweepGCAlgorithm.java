@@ -16,11 +16,9 @@ import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.SortedSet;
 
 final class MarkAndSweepGCAlgorithm {
 
@@ -97,7 +95,7 @@ final class MarkAndSweepGCAlgorithm {
 
     gcInfo.setCandidateGarbageCount(gcResults.size());
     gcPublisher.fireGCRescue2StartEvent(gcInfo);
-    SortedSet toDelete = Collections.unmodifiableSortedSet(rescue(new ObjectIDSet(gcResults), rescueTimes));
+    ObjectIDSet toDelete = ObjectIDSet.unmodifiableObjectIDSet(rescue(new ObjectIDSet(gcResults), rescueTimes));
     gcInfo.setRescueTimes(rescueTimes);
     gcInfo.setDeleted(toDelete);
 
@@ -120,7 +118,7 @@ final class MarkAndSweepGCAlgorithm {
   private void shortCircuitGCComplete(GarbageCollectionInfo gcInfo, List rescueTimes) {
     gcInfo.setCandidateGarbageCount(0);
     gcInfo.setRescueTimes(rescueTimes);
-    gcInfo.setDeleted(TCCollections.EMPTY_SORTED_SET);
+    gcInfo.setDeleted(TCCollections.EMPTY_OBJECT_ID_SET);
     gcInfo.setPausedStageTime(0);
     gcInfo.setDeleteStageTime(0);
     long endMillis = System.currentTimeMillis();

@@ -9,6 +9,8 @@ import com.tc.async.impl.MockSink;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.bytes.TCByteBufferTestUtil;
+import com.tc.io.TCByteBufferInputStream;
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.l2.context.ManagedObjectSyncContext;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
@@ -17,12 +19,6 @@ import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
@@ -82,13 +78,12 @@ public class ObjectSyncMessageTest extends TestCase {
   }
 
   private ObjectSyncMessage writeAndRead(ObjectSyncMessage osm) throws Exception {
-    ByteArrayOutputStream bo = new ByteArrayOutputStream();
-    ObjectOutput oo = new ObjectOutputStream(bo);
-    oo.writeObject(osm);
+    TCByteBufferOutputStream bo = new TCByteBufferOutputStream();
+    osm.serializeTo(bo);
     System.err.println("Written : " + osm);
-    ByteArrayInputStream bi = new ByteArrayInputStream(bo.toByteArray());
-    ObjectInput oi = new ObjectInputStream(bi);
-    ObjectSyncMessage osm1 = (ObjectSyncMessage) oi.readObject();
+    TCByteBufferInputStream bi = new TCByteBufferInputStream(bo.toArray());
+    ObjectSyncMessage osm1 = new ObjectSyncMessage();
+    osm1.deserializeFrom(bi);
     System.err.println("Read : " + osm1);
     return osm1;
   }

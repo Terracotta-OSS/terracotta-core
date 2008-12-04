@@ -9,6 +9,8 @@ import com.tc.async.api.StageManager;
 import com.tc.async.impl.ConfigurationContextImpl;
 import com.tc.async.impl.StageManagerImpl;
 import com.tc.bytes.TCByteBuffer;
+import com.tc.io.TCByteBufferInput;
+import com.tc.io.TCByteBufferOutput;
 import com.tc.l2.msg.GCResultMessage;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.msg.L2StateMessageFactory;
@@ -44,8 +46,6 @@ import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.ThreadDump;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -720,19 +720,15 @@ public class TCGroupManagerImplTest extends TCTestCase {
       this.msg = message;
     }
 
+    protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
+      msg = in.readString();
+    }
+
+    protected void basicSerializeTo(TCByteBufferOutput out) {
+      out.writeString(msg);
+    }
+
     String msg;
-
-    @Override
-    protected void basicReadExternal(int msgType, ObjectInput in) throws IOException {
-      msg = in.readUTF();
-
-    }
-
-    @Override
-    protected void basicWriteExternal(int msgType, ObjectOutput out) throws IOException {
-      out.writeUTF(msg);
-
-    }
 
     public int hashCode() {
       return msg.hashCode();

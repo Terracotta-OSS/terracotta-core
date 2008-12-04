@@ -4,18 +4,19 @@
  */
 package com.tc.l2.state;
 
+import com.tc.io.TCByteBufferInput;
+import com.tc.io.TCByteBufferOutput;
+import com.tc.io.TCSerializable;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
+import com.tc.net.groups.NodeIDSerializer;
 import com.tc.util.Assert;
 
-import java.io.Externalizable;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Arrays;
 
-public class Enrollment implements Externalizable {
+public class Enrollment implements TCSerializable {
 
   private static final TCLogger logger = TCLogging.getLogger(Enrollment.class);
   private NodeID                nodeID;
@@ -31,6 +32,28 @@ public class Enrollment implements Externalizable {
     this.isNew = isNew;
     Assert.assertNotNull(weights);
     this.weights = weights;
+  }
+
+  public void serializeTo(TCByteBufferOutput out) {
+    NodeIDSerializer nodeIDSerializer = new NodeIDSerializer(this.nodeID);
+    nodeIDSerializer.serializeTo(out);
+    out.writeBoolean(this.isNew);
+    out.writeInt(weights.length);
+    for (int i = 0; i < weights.length; i++) {
+      out.writeLong(weights[i]);
+    }
+  }
+
+  public Object deserializeFrom(TCByteBufferInput in) throws IOException {
+    NodeIDSerializer nodeIDSerializer = new NodeIDSerializer();
+    nodeIDSerializer = (NodeIDSerializer) nodeIDSerializer.deserializeFrom(in);
+    this.nodeID = nodeIDSerializer.getNodeID();
+    this.isNew = in.readBoolean();
+    this.weights = new long[in.readInt()];
+    for (int i = 0; i < weights.length; i++) {
+      weights[i] = in.readLong();
+    }
+    return this;
   }
 
   public NodeID getNodeID() {
@@ -68,24 +91,6 @@ public class Enrollment implements Externalizable {
       // handle it. If two nodes dont agree because of this there will be a re-election
       logger.warn("Two Enrollments with same weights : " + this + " == " + other);
       return false;
-    }
-  }
-
-  public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-    this.nodeID = (NodeID) in.readObject();
-    this.isNew = in.readBoolean();
-    this.weights = new long[in.readInt()];
-    for (int i = 0; i < weights.length; i++) {
-      weights[i] = in.readLong();
-    }
-  }
-
-  public void writeExternal(ObjectOutput out) throws IOException {
-    out.writeObject(this.nodeID);
-    out.writeBoolean(this.isNew);
-    out.writeInt(weights.length);
-    for (int i = 0; i < weights.length; i++) {
-      out.writeLong(weights[i]);
     }
   }
 

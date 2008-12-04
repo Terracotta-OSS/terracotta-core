@@ -6,10 +6,13 @@ package com.tc.l2.msg;
 
 import com.tc.async.api.OrderedEventContext;
 import com.tc.bytes.TCByteBuffer;
+import com.tc.io.TCByteBufferInput;
+import com.tc.io.TCByteBufferOutput;
 import com.tc.lang.Recyclable;
 import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.NodeIDSerializer;
+import com.tc.net.protocol.tcm.TCMessageImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.gtx.GlobalTransactionIDGenerator;
@@ -18,8 +21,6 @@ import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -35,6 +36,7 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
   private Map                    sid2gid;
   private NodeID                 nodeID;
   private long                   sequenceID;
+  private TCMessageImpl          messageWrapper;
 
   /**
    * This message is recycled only at the read end (passive)
@@ -73,17 +75,27 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
     return serializer;
   }
 
-  protected void basicReadExternal(int msgType, ObjectInput in) throws IOException, ClassNotFoundException {
-    Assert.assertEquals(RELAYED_COMMIT_TXN_MSG_TYPE, msgType);
-    this.nodeID = NodeIDSerializer.readNodeID(in);
-    this.serializer = readObjectStringSerializer(in);
-    this.batchData = readByteBuffers(in);
-    this.sid2gid = readServerTxnIDglobalTxnIDMapping(in);
+  protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
+    Assert.assertEquals(RELAYED_COMMIT_TXN_MSG_TYPE, getType());
+    NodeIDSerializer nodeIDSerializer = new NodeIDSerializer();
+    nodeIDSerializer = (NodeIDSerializer) nodeIDSerializer.deserializeFrom(in);
+    this.nodeID = nodeIDSerializer.getNodeID();
+    this.serializer = new ObjectStringSerializer();
+    this.serializer.deserializeFrom(in);
+    this.sid2gid = readServerTxnIDGlobalTxnIDMapping(in);
     this.sequenceID = in.readLong();
     this.lowWaterMark = new GlobalTransactionID(in.readLong());
+    int size = in.readInt();
+    this.batchData = in.duplicateAndLimit(size).toArray();
   }
 
-  private Map readServerTxnIDglobalTxnIDMapping(ObjectInput in) throws IOException {
+  public boolean isRecycleOnRead(TCMessageImpl messages) {
+    // delay recycling for reusing TCByteBuffers in batchData.
+    this.messageWrapper = messages;
+    return false;
+  }
+
+  private Map readServerTxnIDGlobalTxnIDMapping(TCByteBufferInput in) throws IOException {
     int size = in.readInt();
     Map mapping = new HashMap();
     NodeID cid = nodeID;
@@ -95,17 +107,18 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
     return mapping;
   }
 
-  protected void basicWriteExternal(int msgType, ObjectOutput out) throws IOException {
-    Assert.assertEquals(RELAYED_COMMIT_TXN_MSG_TYPE, msgType);
-    NodeIDSerializer.writeNodeID(nodeID, out);
-    writeObjectStringSerializer(out, serializer);
-    writeByteBuffers(out, batchData);
+  protected void basicSerializeTo(TCByteBufferOutput out) {
+    Assert.assertEquals(RELAYED_COMMIT_TXN_MSG_TYPE, getType());
+    NodeIDSerializer nodeIDSerializer = new NodeIDSerializer(nodeID);
+    nodeIDSerializer.serializeTo(out);
+    serializer.serializeTo(out);
     writeServerTxnIDGlobalTxnIDMapping(out);
     out.writeLong(this.sequenceID);
     out.writeLong(this.lowWaterMark.toLong());
+    writeByteBuffers(out, this.batchData);
   }
 
-  private void writeServerTxnIDGlobalTxnIDMapping(ObjectOutput out) throws IOException {
+  private void writeServerTxnIDGlobalTxnIDMapping(TCByteBufferOutput out) {
     out.writeInt(sid2gid.size());
     NodeID cid = nodeID;
     for (Iterator i = sid2gid.entrySet().iterator(); i.hasNext();) {
@@ -133,13 +146,11 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
   }
 
   /**
-   * This message is recycled only at the read end (passive)
+   * Delayed message recycle here only at the read end (passive). this.batchData
+   * due to this.batchData reuses TCByteBuffer from comm.
    */
   public void recycle() {
     Assert.assertTrue(recyclable);
-    for (int i = 0; i < batchData.length; i++) {
-      batchData[i].recycle();
-    }
+    messageWrapper.recycle();
   }
-
 }

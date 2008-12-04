@@ -4,12 +4,11 @@
  */
 package com.tc.l2.msg;
 
+import com.tc.io.TCByteBufferInput;
+import com.tc.io.TCByteBufferOutput;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.MessageID;
 import com.tc.util.Assert;
-
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 public class ObjectSyncResetMessage extends AbstractGroupMessage {
 
@@ -26,17 +25,17 @@ public class ObjectSyncResetMessage extends AbstractGroupMessage {
   }
 
   public ObjectSyncResetMessage(int type, MessageID reqID) {
-    super(type,reqID);
+    super(type, reqID);
   }
 
-  protected void basicReadExternal(int msgType, ObjectInput in) {
-    Assert.assertTrue(msgType == REQUEST_RESET || msgType == OPERATION_SUCCESS);
+  protected void basicDeserializeFrom(TCByteBufferInput in) {
+    Assert.assertTrue(getType() == REQUEST_RESET || getType() == OPERATION_SUCCESS);
   }
 
-  protected void basicWriteExternal(int msgType, ObjectOutput out) {
-    Assert.assertTrue(msgType == REQUEST_RESET || msgType == OPERATION_SUCCESS);
+  protected void basicSerializeTo(TCByteBufferOutput out) {
+    Assert.assertTrue(getType() == REQUEST_RESET || getType() == OPERATION_SUCCESS);
   }
-  
+
   public boolean isResetRequest() {
     return getType() == REQUEST_RESET;
   }

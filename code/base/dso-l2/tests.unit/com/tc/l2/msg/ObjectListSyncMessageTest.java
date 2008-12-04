@@ -4,15 +4,11 @@
  */
 package com.tc.l2.msg;
 
+import com.tc.io.TCByteBufferInputStream;
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.object.ObjectID;
 import com.tc.util.ObjectIDSet;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -54,13 +50,12 @@ public class ObjectListSyncMessageTest extends TestCase {
   }
 
   private ObjectListSyncMessage writeAndRead(ObjectListSyncMessage olsm) throws Exception {
-    ByteArrayOutputStream bo = new ByteArrayOutputStream();
-    ObjectOutput oo = new ObjectOutputStream(bo);
-    oo.writeObject(olsm);
+    TCByteBufferOutputStream bo = new TCByteBufferOutputStream();
+    olsm.serializeTo(bo);
     System.err.println("Written : " + olsm);
-    ByteArrayInputStream bi = new ByteArrayInputStream(bo.toByteArray());
-    ObjectInput oi = new ObjectInputStream(bi);
-    ObjectListSyncMessage olsm1 = (ObjectListSyncMessage) oi.readObject();
+    TCByteBufferInputStream bi = new TCByteBufferInputStream(bo.toArray());
+    ObjectListSyncMessage olsm1 = new ObjectListSyncMessage();
+    olsm1.deserializeFrom(bi);
     System.err.println("Read : " + olsm1);
     return olsm1;
   }

@@ -4,15 +4,14 @@
  */
 package com.tc.object.tx;
 
-import com.tc.io.serializer.TCObjectInputStream;
-import com.tc.io.serializer.TCObjectOutputStream;
+import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCByteBufferFactory;
+import com.tc.io.TCByteBufferInputStream;
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.groups.NodeIDSerializer;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import com.tc.util.Assert;
 
 /**
  * A class that represents a particular client transaction from the server's perspective (ie. the combination of NodeID
@@ -72,16 +71,14 @@ public class ServerTransactionID implements Comparable {
    * Utility method for serialization.
    */
   public byte[] getBytes() {
-    try {
-      ByteArrayOutputStream baos = new ByteArrayOutputStream(64);
-      TCObjectOutputStream tco = new TCObjectOutputStream(baos);
-      NodeIDSerializer.writeNodeID(sourceID, tco);
-      tco.writeLong(txnID.toLong());
-      tco.close();
-      return baos.toByteArray();
-    } catch (IOException e) {
-      throw new AssertionError(e);
-    }
+    TCByteBufferOutputStream out = new TCByteBufferOutputStream(64, false);
+    NodeIDSerializer nodeIDSerializer = new NodeIDSerializer(sourceID);
+    nodeIDSerializer.serializeTo(out);
+    out.writeLong(txnID.toLong());
+    out.close();
+    TCByteBuffer[] bufs = out.toArray();
+    Assert.assertEquals(1, bufs.length);
+    return bufs[0].array();
   }
 
   /**
@@ -89,9 +86,10 @@ public class ServerTransactionID implements Comparable {
    */
   public static ServerTransactionID createFrom(byte[] data) {
     try {
-      ByteArrayInputStream bais = new ByteArrayInputStream(data);
-      TCObjectInputStream tci = new TCObjectInputStream(bais);
-      return new ServerTransactionID(NodeIDSerializer.readNodeID(tci), new TransactionID(tci.readLong()));
+      TCByteBufferInputStream in = new TCByteBufferInputStream(TCByteBufferFactory.wrap(data));
+      NodeIDSerializer nodeIDSerializer = new NodeIDSerializer();
+      nodeIDSerializer.deserializeFrom(in);
+      return new ServerTransactionID(nodeIDSerializer.getNodeID(), new TransactionID(in.readLong()));
     } catch (Exception e) {
       throw new AssertionError(e);
     }

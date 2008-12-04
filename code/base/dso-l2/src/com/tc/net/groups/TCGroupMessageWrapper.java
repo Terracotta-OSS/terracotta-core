@@ -15,8 +15,6 @@ import com.tc.object.msg.DSOMessageBase;
 import com.tc.object.session.SessionID;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 
 /**
  * @author EY
@@ -44,29 +42,33 @@ public class TCGroupMessageWrapper extends DSOMessageBase {
   }
 
   protected void dehydrateValues() {
-    putNVPair(GROUP_MESSAGE_ID, 0); // to do TCMessageImpl nvCount++
-    try {
-      ObjectOutputStream stream = new ObjectOutputStream(getOutputStream());
-      stream.writeObject(this.message);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    putNVPair(GROUP_MESSAGE_ID, this.message.getClass().getName());
+    this.message.serializeTo(getOutputStream());
   }
 
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case GROUP_MESSAGE_ID:
         TCByteBufferInputStream in = getInputStream();
-        in.readInt(); // clear dummy int
-        ObjectInputStream stream = new ObjectInputStream(in);
         try {
-          this.message = (GroupMessage) stream.readObject();
+          this.message = (GroupMessage) Class.forName(in.readString()).newInstance();
+        } catch (InstantiationException e) {
+          throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+          throw new RuntimeException(e);
         } catch (ClassNotFoundException e) {
           throw new RuntimeException(e);
         }
+        this.message.deserializeFrom(in);
         return true;
       default:
         return false;
+    }
+  }
+
+  public void doRecycleOnRead() {
+    if (message.isRecycleOnRead(this)) {
+      super.doRecycleOnRead();
     }
   }
 }

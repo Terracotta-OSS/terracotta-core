@@ -5,6 +5,8 @@
 package com.tc.l2.msg;
 
 import com.tc.async.impl.MockSink;
+import com.tc.io.TCByteBufferInputStream;
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.l2.ha.ClusterState;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
@@ -20,12 +22,6 @@ import com.tc.objectserver.persistence.sleepycat.ConnectionIDFactoryImpl;
 import com.tc.util.State;
 import com.tc.util.sequence.ObjectIDSequence;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -92,13 +88,12 @@ public class ClusterStateMessageTest extends TestCase {
   }
 
   private ClusterStateMessage writeAndRead(ClusterStateMessage csm) throws Exception {
-    ByteArrayOutputStream bo = new ByteArrayOutputStream();
-    ObjectOutput oo = new ObjectOutputStream(bo);
-    oo.writeObject(csm);
+    TCByteBufferOutputStream bo = new TCByteBufferOutputStream();
+    csm.serializeTo(bo);
     System.err.println("Written : " + csm);
-    ByteArrayInputStream bi = new ByteArrayInputStream(bo.toByteArray());
-    ObjectInput oi = new ObjectInputStream(bi);
-    ClusterStateMessage csm1 = (ClusterStateMessage) oi.readObject();
+    TCByteBufferInputStream bi = new TCByteBufferInputStream(bo.toArray());
+    ClusterStateMessage csm1 = new ClusterStateMessage();
+    csm1.deserializeFrom(bi);
     System.err.println("Read : " + csm1);
     return csm1;
   }

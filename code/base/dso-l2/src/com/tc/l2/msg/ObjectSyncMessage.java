@@ -6,7 +6,9 @@ package com.tc.l2.msg;
 
 import com.tc.async.api.OrderedEventContext;
 import com.tc.bytes.TCByteBuffer;
+import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferInputStream;
+import com.tc.io.TCByteBufferOutput;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.NodeIDSerializer;
 import com.tc.object.ObjectID;
@@ -18,8 +20,6 @@ import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -49,48 +49,53 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
     super(type);
   }
 
-  protected void basicReadExternal(int msgType, ObjectInput in) throws IOException, ClassNotFoundException {
-    Assert.assertEquals(MANAGED_OBJECT_SYNC_TYPE, msgType);
-    servertxnID = new ServerTransactionID(NodeIDSerializer.readNodeID(in), new TransactionID(in.readLong()));
-    oids = readObjectIDS(in, new ObjectIDSet());
+  protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
+    Assert.assertEquals(MANAGED_OBJECT_SYNC_TYPE, getType());
+    NodeIDSerializer nodeIDSerializer = new NodeIDSerializer();
+    nodeIDSerializer = (NodeIDSerializer) nodeIDSerializer.deserializeFrom(in);
+    servertxnID = new ServerTransactionID(nodeIDSerializer.getNodeID(), new TransactionID(in.readLong()));
+    oids = new ObjectIDSet();
+    oids.deserializeFrom(in);
     dnaCount = in.readInt();
     readRootsMap(in);
-    serializer = readObjectStringSerializer(in);
+    serializer = new ObjectStringSerializer();
+    serializer.deserializeFrom(in);
     this.dnas = readByteBuffers(in);
     this.sequenceID = in.readLong();
   }
 
-  protected void basicWriteExternal(int msgType, ObjectOutput out) throws IOException {
-    Assert.assertEquals(MANAGED_OBJECT_SYNC_TYPE, msgType);
-    NodeIDSerializer.writeNodeID(servertxnID.getSourceID(), out);
+  protected void basicSerializeTo(TCByteBufferOutput out) {
+    Assert.assertEquals(MANAGED_OBJECT_SYNC_TYPE, getType());
+    NodeIDSerializer nodeIDSerializer = new NodeIDSerializer(servertxnID.getSourceID());
+    nodeIDSerializer.serializeTo(out);
     out.writeLong(servertxnID.getClientTransactionID().toLong());
-    writeObjectIDS(out, oids);
+    oids.serializeTo(out);
     out.writeInt(dnaCount);
     writeRootsMap(out);
-    writeObjectStringSerializer(out, serializer);
+    serializer.serializeTo(out);
     writeByteBuffers(out, dnas);
     recycle(dnas);
     dnas = null;
     out.writeLong(this.sequenceID);
   }
 
-  private void writeRootsMap(ObjectOutput out) throws IOException {
+  private void writeRootsMap(TCByteBufferOutput out) {
     out.writeInt(rootsMap.size());
     for (Iterator i = rootsMap.entrySet().iterator(); i.hasNext();) {
       Entry e = (Entry) i.next();
-      out.writeUTF((String) e.getKey());
+      out.writeString((String) e.getKey());
       out.writeLong(((ObjectID) e.getValue()).toLong());
     }
   }
 
-  private void readRootsMap(ObjectInput in) throws IOException {
+  private void readRootsMap(TCByteBufferInput in) throws IOException {
     int size = in.readInt();
     if (size == 0) {
       this.rootsMap = Collections.EMPTY_MAP;
     } else {
       this.rootsMap = new HashMap(size);
       for (int i = 0; i < size; i++) {
-        this.rootsMap.put(in.readUTF(), new ObjectID(in.readLong()));
+        this.rootsMap.put(in.readString(), new ObjectID(in.readLong()));
       }
     }
   }

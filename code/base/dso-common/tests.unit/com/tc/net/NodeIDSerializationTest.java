@@ -6,14 +6,9 @@ package com.tc.net;
 
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.io.serializer.TCObjectInputStream;
-import com.tc.io.serializer.TCObjectOutputStream;
 import com.tc.net.groups.NodeIDSerializer;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.util.UUID;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 
 import junit.framework.TestCase;
 
@@ -37,14 +32,15 @@ public class NodeIDSerializationTest extends TestCase {
   }
 
   private NodeID dupBySerialization(NodeID orig) throws Exception {
-    ByteArrayOutputStream bout = new ByteArrayOutputStream();
-    TCObjectOutputStream out = new TCObjectOutputStream(bout);
-    NodeIDSerializer.writeNodeID(orig, out);
-    out.flush();
+    TCByteBufferOutputStream out = new TCByteBufferOutputStream();
+    NodeIDSerializer nodeIDSerializer = new NodeIDSerializer(orig);
+    nodeIDSerializer.serializeTo(out);
+    out.close();
 
-    ByteArrayInputStream bin = new ByteArrayInputStream(bout.toByteArray());
-    TCObjectInputStream in = new TCObjectInputStream(bin);
-    NodeID dup = NodeIDSerializer.readNodeID(in);
+    TCByteBufferInputStream in = new TCByteBufferInputStream(out.toArray());
+    NodeIDSerializer nodeIDSerializer2 = new NodeIDSerializer();
+    nodeIDSerializer2.deserializeFrom(in);
+    NodeID dup = nodeIDSerializer2.getNodeID();
     return dup;
   }
 
@@ -69,7 +65,7 @@ public class NodeIDSerializationTest extends TestCase {
     NodeIDSerializer serializer = new NodeIDSerializer(orig);
     TCByteBufferOutputStream out = new TCByteBufferOutputStream();
     serializer.serializeTo(out);
-    out.flush();
+    out.close();
 
     TCByteBufferInputStream in = new TCByteBufferInputStream(out.toArray());
     serializer = new NodeIDSerializer();

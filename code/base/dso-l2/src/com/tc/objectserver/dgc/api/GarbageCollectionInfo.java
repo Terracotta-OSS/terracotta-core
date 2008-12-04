@@ -4,8 +4,9 @@
  */
 package com.tc.objectserver.dgc.api;
 
+import com.tc.util.ObjectIDSet;
+
 import java.util.List;
-import java.util.SortedSet;
 
 public class GarbageCollectionInfo {
 
@@ -39,7 +40,7 @@ public class GarbageCollectionInfo {
 
   private Object              stats                 = null;
 
-  private SortedSet           toDelete              = null;
+  private ObjectIDSet         toDelete              = null;
 
   private List                rescueTimes           = null;
 
@@ -140,12 +141,12 @@ public class GarbageCollectionInfo {
     return this.actualGarbageCount;
   }
 
-  public void setDeleted(SortedSet deleted) {
+  public void setDeleted(ObjectIDSet deleted) {
     this.toDelete = deleted;
     this.actualGarbageCount = deleted.size();
   }
 
-  public SortedSet getDeleted() {
+  public ObjectIDSet getDeleted() {
     return this.toDelete;
   }
 

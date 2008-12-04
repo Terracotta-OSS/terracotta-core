@@ -4,11 +4,11 @@
  */
 package com.tc.net.groups;
 
+import com.tc.io.TCByteBufferInput;
+import com.tc.io.TCByteBufferOutput;
 import com.tc.util.Assert;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 public class GroupZapNodeMessage extends AbstractGroupMessage {
 
@@ -29,21 +29,21 @@ public class GroupZapNodeMessage extends AbstractGroupMessage {
     this.zapNodeType = zapNodeType;
     this.weights = weights;
   }
-
-  protected void basicReadExternal(int msgType, ObjectInput in) throws IOException {
-    Assert.assertEquals(ZAP_NODE_REQUEST, msgType);
+  
+  protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
+    Assert.assertEquals(ZAP_NODE_REQUEST, getType());
     zapNodeType = in.readInt();
-    reason = in.readUTF();
+    reason = in.readString();
     weights = new long[in.readInt()];
     for (int i = 0; i < weights.length; i++) {
       weights[i] = in.readLong();
     }
   }
 
-  protected void basicWriteExternal(int msgType, ObjectOutput out) throws IOException {
-    Assert.assertEquals(ZAP_NODE_REQUEST, msgType);
+  protected void basicSerializeTo(TCByteBufferOutput out) {
+    Assert.assertEquals(ZAP_NODE_REQUEST, getType());
     out.writeInt(zapNodeType);
-    out.writeUTF(reason);
+    out.writeString(reason);
     out.writeInt(weights.length);
     for (int i = 0; i < weights.length; i++) {
       out.writeLong(weights[i]);
