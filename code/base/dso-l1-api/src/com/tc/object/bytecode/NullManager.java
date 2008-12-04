@@ -101,6 +101,10 @@ public final class NullManager implements Manager {
     //
   }
 
+  public void monitorEnterInterruptibly(Object obj, int type) {
+    //
+  }
+
   public final void monitorExit(Object obj) {
     //
   }

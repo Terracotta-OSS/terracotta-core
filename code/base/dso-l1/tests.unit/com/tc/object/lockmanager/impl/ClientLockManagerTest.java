@@ -794,12 +794,7 @@ public class ClientLockManagerTest extends TCTestCase {
   public void testAwardWhenNotPending() throws Exception {
     LockID lockID = new LockID("1");
     ThreadID txID = new ThreadID(1);
-    try {
-      lockManager.awardLock(sessionManager.getSessionID(), lockID, txID, LockLevel.WRITE);
-      fail("Should have thrown an error");
-    } catch (AssertionError e) {
-      // expected
-    }
+    lockManager.awardLock(sessionManager.getSessionID(), lockID, txID, LockLevel.WRITE);
   }
 
   public void testBasics() throws Exception {

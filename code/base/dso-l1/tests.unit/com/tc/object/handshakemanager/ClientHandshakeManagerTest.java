@@ -377,6 +377,10 @@ public class ClientHandshakeManagerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
+    public void lockInterruptibly(LockID id, ThreadID threadID, int lockType, String lockObjectType, String contextInfo) {
+      throw new ImplementMe();      
+    }
+
     public boolean tryLock(LockID id, ThreadID threadID, TimerSpec timeout, int level, String lockObjectType) {
       throw new ImplementMe();
     }

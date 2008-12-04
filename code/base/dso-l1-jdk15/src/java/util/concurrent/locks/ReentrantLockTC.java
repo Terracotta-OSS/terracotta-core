@@ -23,8 +23,8 @@ public class ReentrantLockTC extends ReentrantLock implements TCLock {
   public void lockInterruptibly() throws InterruptedException {
     if (Thread.interrupted()) { throw new InterruptedException(); }
 
+    ManagerUtil.monitorEnterInterruptibly(this, LockLevel.WRITE);
     try {
-      ManagerUtil.monitorEnter(this, LockLevel.WRITE);
       super.lockInterruptibly();
     } catch (InterruptedException e) {
       ManagerUtil.monitorExit(this);

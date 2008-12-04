@@ -36,6 +36,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
   private final CyclicBarrier barrier2           = new CyclicBarrier(2);
   private final CyclicBarrier barrier3           = new CyclicBarrier(3);
   private final CyclicBarrier barrier;
+  private final Exit          exit               = new Exit();
 
   private final Random        random;
 
@@ -85,6 +86,9 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
 
       tryLockTest(root.getUnfairLock());
 
+      if (!lockInterruptiblyTest(root.getUnfairLock()))
+        return;
+      
       System.err.println("Testing fair lock ...");
 
       basicConditionVariableTesting(root.getFairLock(), root.getFairCondition());
@@ -103,6 +107,9 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
 
       tryLockTest(root.getFairLock());
 
+      if (!lockInterruptiblyTest(root.getFairLock()))
+        return;
+      
       barrier.await();
     } catch (Throwable t) {
       notifyError(t);
@@ -578,6 +585,81 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
       }
     }
     barrier.await();
+  }
+
+  private boolean lockInterruptiblyTest(final ReentrantLock lock) throws Exception {
+    //Cleanup the test lock
+    while (lock.isHeldByCurrentThread()) {
+      lock.unlock();
+    }
+
+    if (barrier.await() == 0) {
+      System.out.println("Testing ReentrantLock.lockInterruptibly()...");
+      System.out.println("InterruptedExceptions may be logged.  Without an associated AssertionError they are harmless.");
+      
+    }
+    
+    for (int i = 0; i < 10; i++) {
+      doLockInterruptiblyTestCycle(lock, i);
+      if (exit.shouldExit()) return false;
+    }
+
+    return true;
+  }
+
+  private void doLockInterruptiblyTestCycle(final ReentrantLock lock, int cycle) throws Exception {
+    int index = barrier.await();
+
+    try {
+      if (index == 0) {
+        lock.lockInterruptibly();
+        System.out.print("[" + ManagerUtil.getClientID() + "L");
+        System.out.flush();
+      }
+    } finally {
+      barrier.await();
+    }
+    if (exit.shouldExit()) return;
+
+    try {
+      if (index != 0) {
+        for (int i = 0; i < 10; i++) {
+          final int sleep = 1 << i;
+          Thread t = new Thread() {
+            public void run() {
+              try {
+                lock.lockInterruptibly();
+              } catch (InterruptedException e) {
+                System.out.print(":IL" + ManagerUtil.getClientID());
+              }
+            }
+          };
+          t.start();
+          
+          try {
+            Thread.sleep(sleep);
+          } catch (InterruptedException e) {
+            //
+          }
+          t.interrupt();
+          t.join(1000);
+
+          if (t.isAlive()) {
+            t.stop();
+            exit.toggle();
+            throw new AssertionError("Thread " + t + " failed to respond to an interrupt during lockInterruptibly()");
+          }
+        }
+      }
+    } finally {
+      barrier.await();
+    }
+    if (exit.shouldExit()) return;
+
+    if (index == 0) {
+      lock.unlock();
+      System.out.println(":U]");
+    }
   }
 
   /**
@@ -1199,6 +1281,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
     spec.addRoot("barrier", "barrier");
     spec.addRoot("barrier2", "barrier2");
     spec.addRoot("barrier3", "barrier3");
+    spec.addRoot("exit", "exit");
     spec.addRoot("queue", "queue");
     spec.addRoot("testLockObject", "testLockObject");
   }
@@ -1368,4 +1451,16 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
       return this.name;
     }
   }
+  
+  private static class Exit {
+    private boolean exit = false;
+
+    synchronized boolean shouldExit() {
+      return exit;
+    }
+
+    synchronized void toggle() {
+      exit = true;
+    }
+  }  
 }

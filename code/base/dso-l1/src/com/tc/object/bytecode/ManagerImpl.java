@@ -365,6 +365,15 @@ public class ManagerImpl implements Manager {
     }
   }
 
+  private void beginInterruptibly(String lockID, int type, Object instance, TCObject tcobj, String contextInfo) throws InterruptedException {
+    String lockObjectType = instance == null ? LockContextInfo.NULL_LOCK_OBJECT_TYPE : instance.getClass().getName();
+    
+    boolean locked = this.txManager.beginInterruptibly(lockID, type, lockObjectType, contextInfo);
+    if (locked && runtimeLogger.getLockDebug()) {
+      runtimeLogger.lockAcquired(lockID, type, instance, tcobj);
+    }
+  }
+  
   private boolean tryBegin(String lockID, int type, Object instance, TimerSpec timeout, TCObject tcobj) {
     String lockObjectType = instance == null ? LockContextInfo.NULL_LOCK_OBJECT_TYPE : instance.getClass().getName();
 
@@ -586,6 +595,26 @@ public class ManagerImpl implements Manager {
       Util.printLogAndRethrowError(t, logger);
     }
     return false;
+  }
+  
+  public void monitorEnterInterruptibly(Object obj, int type) throws InterruptedException {
+    if (obj == null) { throw new NullPointerException("monitorEnterInterruptibly called on a null object"); }
+
+    TCObject tco = lookupExistingOrNull(obj);
+
+    try {
+      if (tco != null) {
+        if (tco.autoLockingDisabled()) { return; }
+
+        beginInterruptibly(generateAutolockName(tco), type, obj, tco, LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+      } else if (isLiteralAutolock(obj)) {
+        beginInterruptibly(generateLiteralLockName(obj), type, obj, null, LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+      }
+    } catch (InterruptedException e) {
+      throw e;
+    } catch (Throwable t) {
+      Util.printLogAndRethrowError(t, logger);
+    }    
   }
 
   private TimerSpec createTimerSpecFromNanos(final long timeoutInNanos) {

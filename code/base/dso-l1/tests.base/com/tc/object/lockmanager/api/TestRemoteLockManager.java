@@ -108,6 +108,8 @@ public class TestRemoteLockManager implements RemoteLockManager {
 
     LinkedList myLocks = (LinkedList) locks.get(lockID);
 
+    if (myLocks == null) return;
+    
     Lock current = (Lock) myLocks.getFirst();
     if (current.threadID.equals(threadID)) {
       int count = current.downCount();

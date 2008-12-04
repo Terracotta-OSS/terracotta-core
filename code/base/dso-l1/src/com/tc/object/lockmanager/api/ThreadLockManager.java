@@ -13,6 +13,8 @@ public interface ThreadLockManager {
   
   public boolean tryLock(LockID lockID, TimerSpec timeout, int lockLevel, String lockObjectType);
 
+  public void lockInterruptibly(LockID lockID, int lockLevel, String lockObjectType, String contextInfo) throws InterruptedException;
+
   public void wait(LockID lockID, TimerSpec call, Object object, WaitListener waitListener) throws InterruptedException;
 
   public Notify notify(LockID lockID, boolean all);

@@ -55,6 +55,10 @@ public class ThreadLockManagerImpl implements ThreadLockManager {
     lockManager.lock(lockID, getThreadID(), lockLevel, lockObjectType, contextInfo);
   }
 
+  public void lockInterruptibly(LockID lockID, int lockLevel, String lockObjectType, String contextInfo) throws InterruptedException {
+    lockManager.lockInterruptibly(lockID, getThreadID(), lockLevel, lockObjectType, contextInfo);
+  }
+
   public boolean tryLock(LockID lockID, TimerSpec timeout, int lockLevel, String lockObjectType) {
     return lockManager.tryLock(lockID, getThreadID(), timeout, lockLevel, lockObjectType);
   }

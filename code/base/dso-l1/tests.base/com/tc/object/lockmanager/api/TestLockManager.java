@@ -123,6 +123,10 @@ public class TestLockManager implements ClientLockManager {
     throw new ImplementMe();
   }
 
+  public void lockInterruptibly(LockID id, ThreadID threadID, int lockType, String lockObjectType, String contextInfo) {
+    throw new ImplementMe();
+  }
+
   public boolean tryLock(LockID id, ThreadID threadID, TimerSpec timeout, int lockType, String lockObjectType) {
     throw new ImplementMe();
   }

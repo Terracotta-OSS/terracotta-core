@@ -34,6 +34,15 @@ public interface ClientTransactionManager extends DumpHandler, PrettyPrintable {
   public boolean begin(String lock, int lockLevel, String lockObjectType, String contextInfo);
 
   /**
+   * Begin a thread local transaction (if not interrupted first)
+   * 
+   * @param lock Lock name
+   * @param lockLevel Lock level
+   * @return If begun
+   */
+  public boolean beginInterruptibly(String lockID, int type, String lockObjectType, String contextInfo) throws InterruptedException;
+
+  /**
    * Try with wait() to begin a thread local transaction.
    * 
    * @param lock Lock name

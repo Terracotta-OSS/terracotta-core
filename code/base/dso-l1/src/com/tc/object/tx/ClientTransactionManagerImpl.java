@@ -159,6 +159,44 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     return isLocked;
   }
 
+  public boolean beginInterruptibly(String lockName, int lockLevel, String lockObjectType, String contextInfo) throws InterruptedException {
+    logBeginInterruptibly0(lockName, lockLevel);
+    
+    if (isTransactionLoggingDisabled() || objectManager.isCreationInProgress()) { return true; }
+
+    ClientTransaction currentTransaction = getTransactionOrNull();
+
+    final LockID lockID = lockManager.lockIDFor(lockName);
+
+    pushTxContext(currentTransaction, lockID, lockLevel);
+
+    if (currentTransaction == null) {
+      createTxAndInitContext();
+    } else {
+      currentTransaction.setTransactionContext(this.peekContext());
+    }
+
+    try {
+      lockManager.lockInterruptibly(lockID, lockLevel, lockObjectType, contextInfo);
+    } catch (TCLockUpgradeNotSupportedError e) {
+      popTransaction(lockID);
+      if (peekContext() != null) {
+        currentTransaction.setTransactionContext(peekContext());
+        setTransaction(currentTransaction);
+      }
+      throw e;      
+    } catch (InterruptedException e) {
+      popTransaction(lockID);
+      if (peekContext() != null) {
+        currentTransaction.setTransactionContext(peekContext());
+        setTransaction(currentTransaction);
+      }
+      throw e;      
+    }
+    
+    return true;    
+  }
+  
   public boolean begin(String lockName, int lockLevel, String lockObjectType, String contextInfo) {
     logBegin0(lockName, lockLevel);
 
@@ -261,6 +299,12 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     }
   }
 
+  private void logBeginInterruptibly0(String lockID, int type) {
+    if (logger.isDebugEnabled()) {
+      logger.debug("beginInterruptibly(): lockID=" + (lockID == null ? "null" : lockID) + ", type = " + type);
+    }
+  }
+  
   private void logBegin0(String lockID, int type) {
     if (logger.isDebugEnabled()) {
       logger.debug("begin(): lockID=" + (lockID == null ? "null" : lockID) + ", type = " + type);

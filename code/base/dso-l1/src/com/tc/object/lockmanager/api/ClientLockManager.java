@@ -32,6 +32,8 @@ public interface ClientLockManager extends DumpHandler, PrettyPrintable {
    */
   public void lock(LockID id, ThreadID threadID, int lockType, String lockObjectType, String contextInfo);
 
+  public void lockInterruptibly(LockID id, ThreadID threadID, int lockType, String lockObjectType, String contextInfo) throws InterruptedException;
+
   public boolean tryLock(LockID id, ThreadID threadID, TimerSpec timeout, int lockType, String lockObjectType);
 
   /**

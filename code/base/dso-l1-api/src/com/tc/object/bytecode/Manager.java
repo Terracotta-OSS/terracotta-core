@@ -356,6 +356,16 @@ public interface Manager {
   public boolean tryMonitorEnter(Object obj, long timeoutInNanos, int type);
 
   /**
+   * Enter synchronized monitor (interruptibly)
+   * 
+   * @param obj The object monitor
+   * @param type The lock level
+   * @throws InterruptedException If interrupted while entering or waiting
+   * @throws NullPointerException If obj is null
+   */
+  public void monitorEnterInterruptibly(Object obj, int type) throws InterruptedException;
+
+  /**
    * Get number of locks held locally on this object
    * 
    * @param obj The lock object
