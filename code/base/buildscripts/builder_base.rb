@@ -34,6 +34,44 @@ class TerracottaAnt < Builder::AntBuilder
     taskdef(:name => 'propertyselector', :classname => 'net.sf.antcontrib.property.PropertySelector')
   end
 
+  # Creates a JAR file according to the given options.  Most options are passed
+  # directly to the Ant 'jar' task, so any option understood by the jar task
+  # can be passed into this method.  In addition to these options, the following
+  # options are also available:
+  #
+  # :include_license:: Indicates whether or not the Terracotta license file should
+  #     be included in the JAR.  Defaults to true.
+  # :include_thirdparty_license:: Indicates whether or not the thirdparty license
+  #     file should be included in the JAR.  Defaults to true.
+  def create_jar(jar_file, options, &block)
+    def options.get_and_delete(key, default_value)
+      if self.has_key?(key)
+        result = self[key]
+        self.delete(key)
+      else
+        result = default_value
+      end
+      result
+    end
+
+    include_license = options.get_and_delete(:include_license, true)
+    include_thirdparty_license = options.get_and_delete(:include_thirdparty_license, true)
+
+    options[:destfile] = jar_file.to_s
+    self.jar(options, &block)
+
+    # Now add the license files to the JAR if necessary.
+    static_resources = Registry[:static_resources]
+    license_files = []
+    license_files << static_resources.license_file if include_license
+    license_files << static_resources.thirdparty_license_file if include_thirdparty_license
+    license_files.each do |file|
+      directory = file.directoryname.to_s
+      self.jar(:destfile => jar_file.to_s, :update => 'true',
+               :basedir => directory, :includes => file.filename.to_s)
+    end
+  end
+
   # Fetches the Ant property with the given name; raises an exception if it doesn't exist, unless
   # you specify a default. We also transform the key passed in to make sure it contains only
   # numbers, letters, and underscores; other characters will be replaced with underscores. This is

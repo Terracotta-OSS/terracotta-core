@@ -7,6 +7,6 @@
 class BaseCodeTerracottaBuilder <  TerracottaBuilder
   protected
   def make_package(srcdir, destdir, filename, install_name, internal_name)
-    ant.jar(:basedir => srcdir, :destfile => FilePath.new("#{destdir}", "#{filename}.jar").to_s)
+    ant.create_jar(FilePath.new("#{destdir}", "#{filename}.jar"), :basedir => srcdir)
   end
 end

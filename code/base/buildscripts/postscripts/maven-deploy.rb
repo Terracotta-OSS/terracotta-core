@@ -31,10 +31,10 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
           
           # Inject resource into jar
           inject_file = FilePath.new(product_directory, interpolate(arg['inject']))
-          @ant.jar(:destfile => replacement_file.to_s, 
-            :update => 'true',
-            :basedir => inject_file.directoryname,
-            :includes => inject_file.filename)
+          ant.create_jar(replacement_file,
+                         :update => 'true',
+                         :basedir => inject_file.directoryname,
+                         :includes => inject_file.filename)
         end
 
         artifact = arg['artifact']
