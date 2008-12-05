@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.config.schema;
 
@@ -10,6 +11,7 @@ import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.dynamic.ObjectArrayConfigItem;
 import com.tc.config.schema.dynamic.ObjectArrayXPathBasedConfigItem;
 import com.terracottatech.config.NonDistributedFields;
+import com.terracottatech.config.SessionSupport;
 import com.terracottatech.config.SpringAppContext;
 import com.terracottatech.config.SpringAppContexts;
 import com.terracottatech.config.SpringApplication;
@@ -69,11 +71,11 @@ public class NewSpringApplicationConfigObject extends BaseNewConfigObject implem
       }
       SpringContextBean[] beans = (SpringContextBean[]) NewSpringApplicationConfigObject.translateSpringBeans(ctx
           .getBeans());
-      
+
       String rootName = ctx.getRootName();
-      
+
       boolean locationInfoEnabled = ctx.getEnableLocationInfo();
-      
+
       appContexts[i] = new AppContext(paths, distributedEvents, beans, rootName, locationInfoEnabled);
     }
 
@@ -89,7 +91,13 @@ public class NewSpringApplicationConfigObject extends BaseNewConfigObject implem
     for (int i = 0; i < springApps.length; i++) {
       SpringApps app = springApps[i];
       String name = app.getName();
-      boolean sessionSupport = app.getSessionSupport();
+      boolean sessionSupport = false;
+      boolean sessionLocking = true;
+      SessionSupport sessionSupportEl = app.getSessionSupport();
+      if (sessionSupportEl != null) {
+        sessionSupport = sessionSupportEl.getBooleanValue();
+        sessionLocking = sessionSupportEl.getSessionLocking();
+      }
       Lock[] locks = (Lock[]) ConfigTranslationHelper.translateLocks(app.getLocks());
       InstrumentedClass[] includes = (InstrumentedClass[]) ConfigTranslationHelper.translateIncludes(app
           .getInstrumentedClasses());
@@ -105,7 +113,8 @@ public class NewSpringApplicationConfigObject extends BaseNewConfigObject implem
 
       boolean fastProxy = app.getFastProxy();
 
-      springApp[i] = new SpringApp(sessionSupport, locks, includes, appContexts, name, fastProxy, transientFields);
+      springApp[i] = new SpringApp(sessionSupport, sessionLocking, locks, includes, appContexts, name, fastProxy,
+                                   transientFields);
     }
 
     return springApp;

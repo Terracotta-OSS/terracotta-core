@@ -1,8 +1,8 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.config.schema;
-
 
 import java.util.Arrays;
 
@@ -12,17 +12,19 @@ import java.util.Arrays;
 public class SpringApp {
 
   private boolean             sessionSupport;
+  private boolean             sessionLocking;
   private Lock[]              locks;
   private InstrumentedClass[] includes;
   private AppContext[]        appContexts;
   private String              name;
-  private boolean             fastProxy;  
-  private String[] transientFields;
+  private boolean             fastProxy;
+  private String[]            transientFields;
 
-  public SpringApp(boolean sessionSupport, Lock[] locks, InstrumentedClass[] includes, AppContext[] appContexts,
-      String name, boolean fastProxy, String[] transientFields) {
+  public SpringApp(boolean sessionSupport, boolean sessionLocking, Lock[] locks, InstrumentedClass[] includes,
+                   AppContext[] appContexts, String name, boolean fastProxy, String[] transientFields) {
 
     this.sessionSupport = sessionSupport;
+    this.sessionLocking = sessionLocking;
     this.locks = locks;
     this.includes = includes;
     this.appContexts = appContexts;
@@ -33,6 +35,10 @@ public class SpringApp {
 
   public boolean sessionSupport() {
     return sessionSupport;
+  }
+
+  public boolean sessionLocking() {
+    return sessionLocking;
   }
 
   public Lock[] locks() {
@@ -50,18 +56,18 @@ public class SpringApp {
   public String name() {
     return name;
   }
-  
+
   public boolean fastProxy() {
     return fastProxy;
   }
-  
+
   public String[] transientFields() {
     return transientFields;
   }
 
   public String toString() {
-    return "SPRING: " + name + "\nSESSION: " + sessionSupport + "\nLOCKS:\n\n" + Arrays.asList(locks)
-        + "\nINCLUDES:\n\n" + Arrays.asList(includes) + "\n" + Arrays.asList(appContexts) + "\nFASTPROXY: " + fastProxy
-        + "\nTRANSIENT FIELDS:\n\n" + Arrays.asList(transientFields);
+    return "SPRING: " + name + "\nSESSION: " + sessionSupport + "(session-locking=" + sessionLocking + ")\nLOCKS:\n\n"
+           + Arrays.asList(locks) + "\nINCLUDES:\n\n" + Arrays.asList(includes) + "\n" + Arrays.asList(appContexts)
+           + "\nFASTPROXY: " + fastProxy + "\nTRANSIENT FIELDS:\n\n" + Arrays.asList(transientFields);
   }
 }

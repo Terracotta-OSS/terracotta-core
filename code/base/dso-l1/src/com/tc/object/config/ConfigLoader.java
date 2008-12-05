@@ -181,9 +181,11 @@ public class ConfigLoader {
     loadTransientFields(springApp.getTransientFields());
     loadInstrumentedClasses(springApp.getInstrumentedClasses());
 
-    if (springApp.getSessionSupport()) {
+    if (springApp.getSessionSupport() != null && springApp.getSessionSupport().getBooleanValue()) {
       config.addApplicationName(springApp.getName()); // enable session support
-      config.addSessionLockedApplication(springApp.getName());  //enable session-locking by default
+      if (springApp.getSessionSupport().getSessionLocking()) {
+        config.addSessionLockedApplication(springApp.getName());
+      }
     }
 
     if (springApp.getApplicationContexts() != null) {

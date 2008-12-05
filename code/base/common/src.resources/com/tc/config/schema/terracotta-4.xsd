@@ -448,10 +448,18 @@
     </xs:sequence>
   </xs:complexType>
 
+  <xs:complexType name='session-support'>
+    <xs:simpleContent>
+      <xs:extension base='xs:boolean'>
+        <xs:attribute name="session-locking" type="xs:boolean" use="optional" default="true" />
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
   <xs:complexType name="spring-apps">
     <xs:all>
       <xs:element name="fast-proxy" type="xs:boolean" minOccurs="0" default="false" />
-      <xs:element name="session-support" type="xs:boolean" minOccurs="0" default="false" />
+      <xs:element name="session-support" type="session-support" minOccurs="0" default="false"/>
       <xs:element name="locks" type="locks" minOccurs="0" />
       <xs:element name="instrumented-classes" type="instrumented-classes" minOccurs="0" />
         <xs:element name="application-contexts" type="spring-app-contexts" minOccurs="0" />
