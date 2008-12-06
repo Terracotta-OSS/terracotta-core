@@ -24,6 +24,8 @@ import com.tc.admin.common.ExceptionHelper;
 import com.tc.admin.common.FastFileChooser;
 import com.tc.admin.common.ProgressDialog;
 import com.tc.admin.common.XContainer;
+import com.tc.admin.model.ClientConnectionListener;
+import com.tc.admin.model.IClient;
 import com.tc.admin.model.IClusterModel;
 import com.tc.statistics.beans.StatisticsLocalGathererMBean;
 import com.tc.statistics.beans.StatisticsMBeanNames;
@@ -57,6 +59,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 import javax.management.Notification;
@@ -77,7 +80,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
 
-public class StatsRecorderPanel extends XContainer implements PropertyChangeListener {
+public class StatsRecorderPanel extends XContainer implements PropertyChangeListener, ClientConnectionListener {
   private AdminClientContext           m_acc;
   private StatsRecorderNode            m_statsRecorderNode;
 
@@ -87,7 +90,7 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
   private List                         m_statsSessionsList;
   private DefaultListModel             m_statsSessionsListModel;
   private XContainer                   m_availableStatsArea;
-  private HashMap                      m_statsControls;
+  private HashMap<String, JCheckBox>   m_statsControls;
   private CheckBox                     m_selectAllToggle;
   private Spinner                      m_samplePeriodSpinner;
   private Button                       m_importStatsConfigButton;
@@ -100,6 +103,7 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
   private File                         m_lastExportDir;
   private Button                       m_clearStatsSessionButton;
   private Button                       m_clearAllStatsSessionsButton;
+  private boolean                      m_haveClientStats;
 
   private static final int             DEFAULT_STATS_POLL_PERIOD_SECONDS = 2;
   private static final String          DEFAULT_STATS_CONFIG_FILENAME     = "tc-stats-config.xml";
@@ -158,6 +162,11 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
       initiateStatsGathererConnectWorker();
     }
     clusterModel.addPropertyChangeListener(this);
+    IClient[] clients = clusterModel.getClients();
+    m_haveClientStats = clients.length > 0;
+    if (!m_haveClientStats) {
+      clusterModel.addClientConnectionListener(this);
+    }
   }
 
   public void propertyChange(PropertyChangeEvent evt) {
@@ -271,7 +280,10 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
     public void finished() {
       Exception e = getException();
       if (e != null) {
-        m_acc.log(e);
+        Throwable rootCause = ExceptionHelper.getRootCause(e);
+        if (!(rootCause instanceof IOException)) {
+          m_acc.log(e);
+        }
       } else {
         GathererConnectedState connectedState = getResult();
         String[] allSessions = connectedState.getAllSessions();
@@ -384,19 +396,36 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
 
   private void setupStatsConfigPanel(String[] stats) {
     m_availableStatsArea.removeAll();
+    Map<String, Boolean> selectedStates = new HashMap<String, Boolean>();
     if (m_statsControls == null) {
-      m_statsControls = new HashMap();
+      m_statsControls = new HashMap<String, JCheckBox>();
     } else {
+      Iterator<String> statIter = m_statsControls.keySet().iterator();
+      while (statIter.hasNext()) {
+        String stat = statIter.next();
+        JCheckBox control = m_statsControls.get(stat);
+        if (control != null) {
+          selectedStates.put(stat, control.isSelected());
+        }
+      }
       m_statsControls.clear();
     }
-    for (String stat : stats) {
-      JCheckBox control = new JCheckBox();
-      control.setText(stat);
-      control.setName(stat);
-      m_statsControls.put(stat, control);
-      m_availableStatsArea.add(control);
-      control.setSelected(true);
+    if (stats != null) {
+      for (String stat : stats) {
+        JCheckBox control = new JCheckBox();
+        control.setText(stat);
+        control.setName(stat);
+        m_statsControls.put(stat, control);
+        m_availableStatsArea.add(control);
+        Boolean state = selectedStates.get(stat);
+        if (state == null) {
+          state = m_selectAllToggle.isSelected();
+        }
+        control.setSelected(state);
+      }
     }
+    m_availableStatsArea.revalidate();
+    m_availableStatsArea.repaint();
   }
 
   private class SelectAllHandler implements ActionListener {
@@ -415,11 +444,11 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
   }
 
   private java.util.List<String> getSelectedStats() {
-    Iterator iter = m_statsControls.keySet().iterator();
+    Iterator<String> iter = m_statsControls.keySet().iterator();
     ArrayList<String> statList = new ArrayList<String>();
     while (iter.hasNext()) {
-      String stat = (String) iter.next();
-      JCheckBox control = (JCheckBox) m_statsControls.get(stat);
+      String stat = iter.next();
+      JCheckBox control = m_statsControls.get(stat);
       if (control.isSelected()) {
         statList.add(stat);
       }
@@ -428,19 +457,22 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
   }
 
   private void disableAllStats() {
-    Iterator iter = m_statsControls.keySet().iterator();
+    Iterator<String> iter = m_statsControls.keySet().iterator();
     while (iter.hasNext()) {
-      String stat = (String) iter.next();
-      JCheckBox control = (JCheckBox) m_statsControls.get(stat);
-      control.setSelected(false);
+      JCheckBox control = m_statsControls.get(iter.next());
+      if (control != null) {
+        control.setSelected(false);
+      }
     }
   }
 
   private void setSelectedStats(String[] stats) {
     disableAllStats();
     for (String stat : stats) {
-      JCheckBox control = (JCheckBox) m_statsControls.get(stat);
-      control.setSelected(true);
+      JCheckBox control = m_statsControls.get(stat);
+      if (control != null) {
+        control.setSelected(true);
+      }
     }
   }
 
@@ -470,10 +502,6 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
     }
 
     public void finished() {
-      Exception e = getException();
-      if (e != null) {
-        m_acc.log(e);
-      }
       m_stopGatheringStatsButton.setSelected(false);
       m_statsRecorderNode.notifyChanged();
     }
@@ -498,10 +526,6 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
     }
 
     public void finished() {
-      Exception e = getException();
-      if (e != null) {
-        m_acc.log(e);
-      }
       m_statsRecorderNode.notifyChanged();
     }
   }
@@ -827,7 +851,7 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
     public void actionPerformed(ActionEvent ae) {
       if (m_svtFrame == null) {
         AdminClientPanel topPanel = (AdminClientPanel) getAncestorOfClass(AdminClientPanel.class);
-        if ((m_svtFrame  = topPanel.getSVTFrame()) != null) {
+        if ((m_svtFrame = topPanel.getSVTFrame()) != null) {
           m_svtFrame.addPropertyChangeListener("newStore", this);
         } else {
           // AdminClientPanel.getSVTFrame will open the user's browser on the website page with
@@ -942,6 +966,41 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
 
     String getPassword() {
       return new String(m_passwordField.getPassword());
+    }
+  }
+
+  class UpdateSupportedStatsWorker extends BasicWorker<String[]> {
+    UpdateSupportedStatsWorker() {
+      super(new Callable<String[]>() {
+        public String[] call() {
+          return m_statisticsGathererMBean.getSupportedStatistics();
+        }
+      });
+    }
+
+    public void finished() {
+      Exception e = getException();
+      if (e == null) {
+        setupStatsConfigPanel(getResult());
+      }
+    }
+  }
+
+  public void clientConnected(IClient client) {
+    if (m_statisticsGathererMBean != null && !m_haveClientStats) {
+      m_acc.execute(new UpdateSupportedStatsWorker());
+      m_haveClientStats = true;
+    }
+  }
+
+  public void clientDisconnected(IClient client) {
+    IClusterModel clusterModel = m_statsRecorderNode.getClusterModel();
+    if (clusterModel != null) {
+      IClient[] clients = clusterModel.getClients();
+      m_haveClientStats = clients.length > 0;
+      if (m_statisticsGathererMBean != null && !m_haveClientStats) {
+        m_acc.execute(new UpdateSupportedStatsWorker());
+      }
     }
   }
 }

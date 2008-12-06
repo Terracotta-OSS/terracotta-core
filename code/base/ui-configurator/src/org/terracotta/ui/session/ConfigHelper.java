@@ -199,14 +199,10 @@ public class ConfigHelper {
     return dsoApp;
   }
 
-  public TcConfig load() throws Exception {
+  private TcConfig load() throws Exception {
     File configFile = getConfigFile();
-    TcConfigDocument configDoc;
-
-    configDoc = m_configLoader.parse(configFile, m_xmlOptions);
-    setConfig(configDoc.getTcConfig());
-
-    return m_config;
+    TcConfigDocument configDoc = m_configLoader.parse(configFile, m_xmlOptions);
+    return configDoc.getTcConfig();
   }
 
   /**
@@ -216,13 +212,13 @@ public class ConfigHelper {
     TcConfigDocument configDoc = null;
     TcConfig config = null;
     List errors = new ArrayList();
-    
+
     try {
       configDoc = m_configLoader.parse(xmlText, m_xmlOptions);
       config = configDoc.getTcConfig();
-    } catch(XmlException e) {
+    } catch (XmlException e) {
       errors.addAll(e.getErrors());
-    } catch(IOException ioe) {
+    } catch (IOException ioe) {
       /**/
     }
 
@@ -247,7 +243,7 @@ public class ConfigHelper {
     }
     return writer.toString();
   }
-  
+
   public void save() {
     TcConfigDocument configDoc = TcConfigDocument.Factory.newInstance();
     Reader reader = null;
@@ -281,8 +277,8 @@ public class ConfigHelper {
 
         configDoc.setTcConfig(m_config);
 
-//        reader = configDoc.newReader(getXmlOptions());
-//        text = IOUtils.toString(reader);
+        // reader = configDoc.newReader(getXmlOptions());
+        // text = IOUtils.toString(reader);
         text = configDocumentAsString(configDoc);
       }
     } catch (Exception e) {
@@ -298,12 +294,13 @@ public class ConfigHelper {
     TcConfigDocument configDoc = null;
     Reader reader = null;
     Writer writer = null;
+    TcConfig config = BAD_CONFIG;
 
     try {
       configDoc = m_configLoader.parse(xmlText, m_xmlOptions);
-      m_config = configDoc.getTcConfig();
+      config = configDoc.getTcConfig();
 
-      if (m_config != null) {
+      if (config != null) {
         reader = configDoc.newReader(getXmlOptions());
         writer = new FileWriter(m_configFile);
 
@@ -315,18 +312,20 @@ public class ConfigHelper {
       IOUtils.closeQuietly(reader);
       IOUtils.closeQuietly(writer);
     }
+    setConfig(config);
   }
 
   public void saveAs(File file, String xmlText) {
     TcConfigDocument configDoc = null;
     Reader reader = null;
     Writer writer = null;
+    TcConfig config = BAD_CONFIG;
 
     try {
       configDoc = m_configLoader.parse(xmlText, m_xmlOptions);
-      m_config = configDoc.getTcConfig();
+      config = configDoc.getTcConfig();
 
-      if (m_config != null) {
+      if (config != null) {
         reader = configDoc.newReader(getXmlOptions());
         writer = new FileWriter(file);
 
@@ -338,6 +337,8 @@ public class ConfigHelper {
       IOUtils.closeQuietly(reader);
       IOUtils.closeQuietly(writer);
     }
+
+    setConfig(config);
   }
 
   public void openError(final String msg, final Throwable t) {
@@ -603,7 +604,7 @@ public class ConfigHelper {
     opts.setLoadLineNumbers();
     opts.setSavePrettyPrint();
     opts.setSavePrettyPrintIndent(2);
-//    opts.remove(XmlOptions.LOAD_STRIP_WHITESPACE);
+    // opts.remove(XmlOptions.LOAD_STRIP_WHITESPACE);
     opts.remove(XmlOptions.LOAD_STRIP_COMMENTS);
 
     return opts;
