@@ -50,7 +50,7 @@
 <!--  Terracotta Sessions              -->
 <!-- - - - - - - - - - - - - - - - - - -->
 <script>
-dsoEnabled = <%= System.getProperty("tc.install-root")!=null %>;
+dsoEnabled = <%= Boolean.getBoolean("tc.active") %>;
 cartSize = <bean:write name="displayUserListForm" property="numTasks"/>;
 server1 = "9081";
 server2 = "9082";

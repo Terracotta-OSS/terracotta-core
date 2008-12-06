@@ -22,16 +22,10 @@ final String contextPath=request.getContextPath();
 
 <jsp:setProperty name="cart" property="*" />
 <%
-	cart.processRequest(request);
+  cart.processRequest(request);
 %>
 
-
-<head>
-<title>carts</title>
-<script>var DsoEnabled = <%= System.getProperty("tc.install-root")!=null %>;</script>
-<script>var CartEmpty = <%= cart.getItems().length==0 %>;</script>
-</head>
-
+<head><title>carts</title></head>
 <body bgcolor="white">
 
 <FONT size = 5 COLOR="#CC0000">
@@ -87,7 +81,7 @@ Add Item:
 <!--  Terracotta, Inc.       -->
 <!-- - - - - - - - - - - - - -->
 <script>
-dsoEnabled = <%= System.getProperty("tc.install-root")!=null %>;
+dsoEnabled = <%= Boolean.getBoolean("tc.active") %>;
 cartSize = <%= cart.getItems().length %>;
 server1 = "9081";
 server2 = "9082";
