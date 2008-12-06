@@ -212,11 +212,11 @@ public class TCServerImpl extends SEDA implements TCServer {
   public boolean isGarbageCollectionEnabled() {
     return configurationSetupManager.dsoL2Config().garbageCollectionEnabled().getBoolean();
   }
-  
+
   public int getGarbageCollectionInterval() {
     return configurationSetupManager.dsoL2Config().garbageCollectionInterval().getInt();
   }
-  
+
   public String getConfig() {
     try {
       InputStream is = configurationSetupManager.rawConfigFile();
@@ -343,6 +343,11 @@ public class TCServerImpl extends SEDA implements TCServer {
       startTime = System.currentTimeMillis();
 
       NewCommonL2Config commonL2Config = TCServerImpl.this.configurationSetupManager.commonl2Config();
+
+      if (Runtime.getRuntime().maxMemory() != Long.MAX_VALUE) {
+        consoleLogger.info("Available Max Runtime Memory: " + (Runtime.getRuntime().maxMemory() / 1024 / 1024) + "MB");
+      }
+
       terracottaConnector = new TerracottaConnector();
       startHTTPServer(commonL2Config, terracottaConnector);
 
