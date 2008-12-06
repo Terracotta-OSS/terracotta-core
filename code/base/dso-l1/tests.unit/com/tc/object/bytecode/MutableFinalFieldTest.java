@@ -121,10 +121,21 @@ class FinalFieldType {
     try {
       String output = "";
       FinalFieldType m = new FinalFieldType();
+      Object val = m.getRef();
+      if (null != val) {
+        throw new AssertionError("unexpected initial value: " + val);
+      }
+
       verifyFinalFields(m.getClass());
 
       output += m + " ";
       m.mutate("mutated");
+
+      val = m.getRef();
+      if (! "mutated".equals(val)) {
+        throw new AssertionError("unexpected value: " + val);
+      }
+
       output += m;
       System.out.println(output);
     } catch (Throwable t) {
