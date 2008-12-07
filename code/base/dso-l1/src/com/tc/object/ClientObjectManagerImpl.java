@@ -951,7 +951,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
   }
 
   public ToggleableStrongReference getOrCreateToggleRef(ObjectID id, Object peer) {
-    return referenceManager.getOrCreateFor(id, peer);
+    // We don't need ObjectID param anymore, but it is useful when debugging so I didn't remove it
+    return referenceManager.getOrCreateFor(peer);
   }
 
   private class AddManagedObjectAction implements TraversalAction {

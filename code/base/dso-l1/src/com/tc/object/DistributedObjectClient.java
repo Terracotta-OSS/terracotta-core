@@ -394,7 +394,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     TCObjectFactory objectFactory = new TCObjectFactoryImpl(classFactory);
 
     ToggleableReferenceManager toggleRefMgr = new ToggleableReferenceManager();
-    toggleRefMgr.start();
 
     // setup statistics subsystem
     if (statisticsAgentSubSystem.setup(config.getNewCommonL1Config())) {

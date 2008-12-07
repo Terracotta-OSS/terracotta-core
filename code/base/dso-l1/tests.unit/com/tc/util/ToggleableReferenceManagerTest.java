@@ -4,7 +4,6 @@
  */
 package com.tc.util;
 
-import com.tc.object.ObjectID;
 import com.tc.object.util.ToggleableStrongReference;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -16,9 +15,8 @@ public class ToggleableReferenceManagerTest extends TestCase {
     ToggleableReferenceManager mgr = new ToggleableReferenceManager();
 
     Object peer = new Object();
-    mgr.start();
 
-    ToggleableStrongReference toggleRef = mgr.getOrCreateFor(new ObjectID(1), peer);
+    ToggleableStrongReference toggleRef = mgr.getOrCreateFor(peer);
     toggleRef.strongRef(peer);
     peer = null;
 
@@ -26,14 +24,12 @@ public class ToggleableReferenceManagerTest extends TestCase {
     ThreadUtil.reallySleep(5000);
 
     Assert.assertEquals(1, mgr.size());
-    Assert.assertEquals(0, mgr.clearCount());
 
     toggleRef.clearStrongRef();
     System.gc();
     ThreadUtil.reallySleep(5000);
 
     Assert.assertEquals(0, mgr.size());
-    Assert.assertEquals(1, mgr.clearCount());
   }
 
 }
