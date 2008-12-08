@@ -131,6 +131,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
     // do this after servers and groups have been processed
     validateGroups();
+    validateDSOClusterPersistenceMode();
   }
 
   private void validateGroups() throws ConfigurationSetupException {
@@ -406,10 +407,20 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
   private void validateRestrictions() throws ConfigurationSetupException {
     validateLicenseModuleRestrictions();
-    validateDSOClusterPersistenceMode();
   }
 
   private void validateDSOClusterPersistenceMode() throws ConfigurationSetupException {
+    ActiveServerGroupConfig[] groupArray = this.activeServerGroupsConfig.getActiveServerGroupArray();
+
+    Map<String, Boolean> serversToMode = new HashMap<String, Boolean>();
+    for (int i = 0; i < groupArray.length; i++) {
+      boolean isNwAP = groupArray[i].getHa().isNetworkedActivePassive();
+      String[] members = groupArray[i].getMembers().getMemberArray();
+      for (int j = 0; j < members.length; j++) {
+        serversToMode.put(members[j], isNwAP);
+      }
+    }
+
     if (super.serversBeanRepository().bean() != null) {
       Server[] servers = ((Servers) super.serversBeanRepository().bean()).getServerArray();
       Set badServers = new HashSet();
@@ -428,8 +439,8 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
           L2ConfigData data = configDataFor(name);
 
           Assert.assertNotNull(data);
-          if (!haConfig.isNetworkedActivePassive()
-              && !(data.dsoL2Config().persistenceMode().getObject().equals(PersistenceMode.PERMANENT_STORE))) {
+          boolean isNwAP = serversToMode.get(name);
+          if (!isNwAP && !(data.dsoL2Config().persistenceMode().getObject().equals(PersistenceMode.PERMANENT_STORE))) {
             badServers.add(name);
           }
         }

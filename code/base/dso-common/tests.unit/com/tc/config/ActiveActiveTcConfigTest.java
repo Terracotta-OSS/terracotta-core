@@ -691,6 +691,69 @@ public class ActiveActiveTcConfigTest extends TCTestCase {
     }
   }
   
+  public void testModesOfServer() {
+    try {
+      tcConfig = getTempFile("tc-config-testModesOfServer.xml");
+      String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
+                      + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
+                      + "\n<servers>"
+                      + "\n      <server host=\"%i\" name=\"server1\">"
+                      + "\n      <jmx-port>10000</jmx-port>"
+                      + "\n      <dso-port>11000</dso-port>"
+                      + "\n      <l2-group-port>12000</l2-group-port>"
+                      + "\n      <dso>" 
+                      + "\n        <persistence>"
+                      + "\n          <mode>permanent-store</mode>" 
+                      + "\n        </persistence>" 
+                      + "\n      </dso>"
+                      + "\n      </server>" 
+                      + "\n      <server host=\"%i\" name=\"server2\">" 
+                      + "\n      <jmx-port>10001</jmx-port>"
+                      + "\n      <dso-port>11001</dso-port>"
+                      + "\n      <l2-group-port>12001</l2-group-port>"
+                      + "\n      <dso>" 
+                      + "\n        <persistence>"
+                      + "\n          <mode>temporary-swap-only</mode>" 
+                      + "\n        </persistence>" 
+                      + "\n      </dso>"
+                      + "\n      </server>" 
+                      + "\n      <active-server-groups>" 
+                      + "\n          <active-server-group>"
+                      + "\n              <members>" 
+                      + "\n                <member>server1</member>"
+                      + "\n              </members>"
+                      + "\n              <ha>" 
+                      + "\n                <mode>networked-active-passive</mode>"
+                      + "\n                <networked-active-passive>"
+                      + "\n                  <election-time>5</election-time>"
+                      + "\n                </networked-active-passive>" 
+                      + "\n              </ha>"
+                      + "\n          </active-server-group>" 
+                      + "\n          <active-server-group>"
+                      + "\n              <members>" 
+                      + "\n                <member>server2</member>"
+                      + "\n              </members>"
+                      + "\n              <ha>" 
+                      + "\n                <mode>networked-active-passive</mode>"
+                      + "\n                <networked-active-passive>"
+                      + "\n                  <election-time>5</election-time>"
+                      + "\n                </networked-active-passive>" 
+                      + "\n              </ha>"
+                      + "\n          </active-server-group>" 
+                      + "\n      </active-server-groups>" 
+                      + "\n</servers>"
+                      + "\n</tc:tc-config>";
+      writeConfigFile(config);
+      TestTVSConfigurationSetupManagerFactory factory = new TestTVSConfigurationSetupManagerFactory(
+                                                                                                    TestTVSConfigurationSetupManagerFactory.MODE_DISTRIBUTED_CONFIG,
+                                                                                                    null,
+                                                                                                    new FatalIllegalConfigurationChangeHandler());
+      factory.createL2TVSConfigurationSetupManager(tcConfig, "server1");
+    } catch (Exception e) {
+      throw new AssertionError(e);
+    }
+  }
+  
   private synchronized void writeConfigFile(String fileContents) {
     try {
       FileOutputStream out = new FileOutputStream(tcConfig);
