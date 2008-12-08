@@ -93,7 +93,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   }
 
   // for testing
-  public int getLocksByIDSize() {
+  public synchronized int getLocksByIDSize() {
     return locksByID.size();
   }
 
@@ -499,10 +499,8 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
       lock.awardLock(threadID, level);
     } else if (LockLevel.isGreedy(level)) {
       getOrCreateLock(lockID, MISSING_LOCK_TEXT).awardLock(threadID, level);
-//      throw new AssertionError("awardLock(): Lock not found" + lockID + " :: " + threadID + " :: " + LockLevel.toString(level));
     } else {
       remoteLockManager.releaseLock(lockID, threadID);
-//      throw new AssertionError("awardLock(): Lock not found" + lockID + " :: " + threadID + " :: " + LockLevel.toString(level));
     }
   }
 

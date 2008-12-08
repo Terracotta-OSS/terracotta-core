@@ -219,8 +219,16 @@ class ClientLock implements TimerCallback, LockFlushCallback {
         waitForLockInterruptibly(requesterID, lockType, waitLock);
       } catch (InterruptedException e) {
         synchronized (this) {
-          waitLocksByRequesterID.remove(requesterID);
-          pendingLockRequests.remove(requesterID);
+          // The following is *NOT* meant to be short-circuit logic, do not change '|' for '||'
+          if ((waitLocksByRequesterID.remove(requesterID) == null)
+             | (pendingLockRequests.remove(requesterID) == null)) {
+            /* The lock was awarded by the server without us noticing. Swallow
+             * the exception and return normally.  We also self interrupt 
+             * so that that later code correctly `sees' the exception.
+             */
+            Thread.currentThread().interrupt();
+            return;
+          }
         }
         synchronized (waitLock) {
           waitLock.notifyAll();
@@ -540,7 +548,6 @@ class ClientLock implements TimerCallback, LockFlushCallback {
       if (waitLock == null && !threadID.equals(ThreadID.VM_ID)) {
         // Not waiting for this lock
         remoteLockManager.releaseLock(lockID, threadID);
-//        throw new LockNotPendingError("Attempt to award a lock that isn't pending [lockID: " + lockID + ", level: " + level + ", requesterID: " + threadID + "]");
         return;
       }
       if (LockLevel.isGreedy(level)) {

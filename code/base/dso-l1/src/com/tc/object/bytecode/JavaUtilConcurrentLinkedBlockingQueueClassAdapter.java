@@ -93,7 +93,7 @@ public class JavaUtilConcurrentLinkedBlockingQueueClassAdapter extends ClassAdap
     Label l8 = new Label();
     mv.visitLabel(l8);
     mv.visitVarInsn(ALOAD, 3);
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/concurrent/locks/ReentrantLock", "lockInterruptibly", "()V");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/concurrent/locks/ReentrantLock", "lock", "()V");
     mv.visitLabel(l0);
     mv.visitVarInsn(ALOAD, 0);
     mv.visitVarInsn(ALOAD, 1);
@@ -182,7 +182,7 @@ public class JavaUtilConcurrentLinkedBlockingQueueClassAdapter extends ClassAdap
     Label l7 = new Label();
     mv.visitLabel(l7);
     mv.visitVarInsn(ALOAD, 4);
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/concurrent/locks/ReentrantLock", "lockInterruptibly", "()V");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/concurrent/locks/ReentrantLock", "lock", "()V");
     mv.visitLabel(l0);
     mv.visitVarInsn(ALOAD, 0);
     mv.visitFieldInsn(GETFIELD, "java/util/concurrent/LinkedBlockingQueue", "head",

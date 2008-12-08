@@ -89,7 +89,7 @@ public class LinkedBlockingQueueInterruptTakeTestApp extends AbstractTransparent
   }
 
   public class Thread1 extends Thread {
-    private boolean stop = false;
+    private volatile boolean stop = false;
 
     public Thread1(final String name) {
       super(name);

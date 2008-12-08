@@ -642,7 +642,10 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
             //
           }
           t.interrupt();
-          t.join(1000);
+          /* In crash tests if the L2 crashes at the wrong moment then this thread join
+           * will fail unless we factor in the time for L2 restart in the timeout.
+           */
+          t.join(5 * 60 * 1000);
 
           if (t.isAlive()) {
             t.stop();
