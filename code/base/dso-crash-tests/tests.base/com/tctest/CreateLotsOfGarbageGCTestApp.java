@@ -13,8 +13,8 @@ import com.tctest.runner.AbstractTransparentApp;
  */
 public class CreateLotsOfGarbageGCTestApp extends AbstractTransparentApp {
 
-  private static final int SIZE       = 100;
-  private static final int LOOP_COUNT = 4000;
+  private static final int SIZE       = 50;
+  private static final int LOOP_COUNT = 3000;
 
   private Object[]         array      = new Object[SIZE];
 
