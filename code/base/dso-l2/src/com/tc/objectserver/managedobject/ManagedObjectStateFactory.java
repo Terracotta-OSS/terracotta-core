@@ -56,10 +56,9 @@ public class ManagedObjectStateFactory {
     classNameToStateMap.put(gnu.trove.THashSet.class.getName(), new Byte(ManagedObjectState.SET_TYPE));
     classNameToStateMap.put(java.util.HashSet.class.getName(), new Byte(ManagedObjectState.SET_TYPE));
     classNameToStateMap.put(java.util.LinkedHashSet.class.getName(), new Byte(ManagedObjectState.LINKED_HASHSET_TYPE));
-    classNameToStateMap
-        .put(java.util.Collections.EMPTY_SET.getClass().getName(), new Byte(ManagedObjectState.SET_TYPE));
+    classNameToStateMap.put(java.util.Collections.EMPTY_SET.getClass().getName(), new Byte(ManagedObjectState.SET_TYPE));
     classNameToStateMap.put(java.util.TreeSet.class.getName(), new Byte(ManagedObjectState.TREE_SET_TYPE));
-    classNameToStateMap.put(java.util.LinkedList.class.getName(), new Byte(ManagedObjectState.LIST_TYPE));
+    classNameToStateMap.put(java.util.LinkedList.class.getName(), new Byte(ManagedObjectState.LINKED_LIST_TYPE));
     classNameToStateMap.put(java.util.ArrayList.class.getName(), new Byte(ManagedObjectState.LIST_TYPE));
     classNameToStateMap.put(java.util.Vector.class.getName(), new Byte(ManagedObjectState.LIST_TYPE));
     classNameToStateMap.put(java.util.Stack.class.getName(), new Byte(ManagedObjectState.LIST_TYPE));
@@ -158,6 +157,8 @@ public class ManagedObjectStateFactory {
         return new TreeSetManagedObjectState(classID, persistentCollectionFactory.createPersistentSet(oid));
       case ManagedObjectState.LIST_TYPE:
         return new ListManagedObjectState(classID);
+      case ManagedObjectState.LINKED_LIST_TYPE:
+        return new LinkedListManagedObjectState(classID);
       case ManagedObjectState.QUEUE_TYPE:
         return new QueueManagedObjectState(classID);
       case ManagedObjectState.DATE_TYPE:
@@ -209,6 +210,7 @@ public class ManagedObjectStateFactory {
     }
 
     if (className.startsWith("[")) { return ManagedObjectState.ARRAY_TYPE; }
+    
     Byte type = (Byte) classNameToStateMap.get(className);
     if (type != null) { return type.byteValue(); }
     if (literalValues.isLiteral(className)) { return ManagedObjectState.LITERAL_TYPE; }
@@ -238,6 +240,8 @@ public class ManagedObjectStateFactory {
           return LiteralTypesManagedObjectState.readFrom(in);
         case ManagedObjectState.LIST_TYPE:
           return ListManagedObjectState.readFrom(in);
+        case ManagedObjectState.LINKED_LIST_TYPE:
+          return LinkedListManagedObjectState.readFrom(in);
         case ManagedObjectState.SET_TYPE:
           return SetManagedObjectState.readFrom(in);
         case ManagedObjectState.TREE_SET_TYPE:
