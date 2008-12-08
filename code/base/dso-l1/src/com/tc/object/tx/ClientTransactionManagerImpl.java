@@ -55,7 +55,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
   private static final TCLogger                logger        = TCLogging.getLogger(ClientTransactionManagerImpl.class);
 
   private final ThreadLocal                    transaction   = new ThreadLocal() {
-                                                               protected synchronized Object initialValue() {
+                                                               protected Object initialValue() {
                                                                  return new ThreadTransactionContext();
                                                                }
                                                              };
