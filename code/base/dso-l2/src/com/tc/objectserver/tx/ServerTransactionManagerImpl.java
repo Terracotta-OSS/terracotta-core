@@ -277,10 +277,10 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   private void acknowledge(NodeID waiter, TransactionID txnID) {
     final ServerTransactionID serverTxnID = new ServerTransactionID(waiter, txnID);
     totalPendingTransactions.decrementAndGet();
-    fireTransactionCompleteEvent(serverTxnID);
     if (isActive() && waiter.getNodeType() == NodeID.CLIENT_NODE_TYPE) {
       action.acknowledgeTransaction(serverTxnID);
     }
+    fireTransactionCompleteEvent(serverTxnID);
   }
 
   public void acknowledgement(NodeID waiter, TransactionID txnID, NodeID waitee) {
