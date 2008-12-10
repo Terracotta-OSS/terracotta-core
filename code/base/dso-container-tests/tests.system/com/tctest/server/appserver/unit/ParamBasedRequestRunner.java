@@ -13,16 +13,18 @@ public class ParamBasedRequestRunner implements Runnable {
   private String               param;
   private WebApplicationServer server;
   private WebConversation      conversation;
+  private String               context;
 
-  public ParamBasedRequestRunner(String param, WebApplicationServer server, WebConversation conversation) {
+  public ParamBasedRequestRunner(WebApplicationServer server, WebConversation conversation, String context, String param) {
     this.param = param;
     this.server = server;
     this.conversation = conversation;
+    this.context = context;
   }
 
   public void run() {
     try {
-      DeadlockTestBase.debug("Making param-based-request with param: " + param);
+      debug("Making param-based-request with param: " + param);
       WebResponse response = request(param, conversation);
       String serverResponse = response.getText().trim();
       System.out.println("Server Response (for request with param=" + param + "): " + serverResponse);
@@ -38,7 +40,7 @@ public class ParamBasedRequestRunner implements Runnable {
   }
 
   private WebResponse request(String params, WebConversation con) throws Exception {
-    DeadlockTestBase.debug("Requesting with JSESSIONID: " + con.getCookieValue("JSESSIONID") + " params=" + params);
-    return server.ping("/" + DeadlockTestBase.CONTEXT + "/" + DeadlockTestBase.CONTEXT + "?" + params, con);
+    debug("Requesting with JSESSIONID: " + con.getCookieValue("JSESSIONID") + " params=" + params);
+    return server.ping("/" + context + "/" + context + "?" + params, con);
   }
 }

@@ -26,14 +26,18 @@ public class DeadlockTestWithoutSessionLocking extends DeadlockTestBase {
     WebConversation conversation = new WebConversation();
     Thread requestSessionThenGlobalThread = new Thread(
                                                        new ParamBasedRequestRunner(
+                                                                                   server0,
+                                                                                   conversation,
+                                                                                   CONTEXT,
                                                                                    "cmd="
-                                                                                       + SessionLockingDeadlockServlet.LOCK_SESSION_THEN_GLOBAL,
-                                                                                   server0, conversation));
+                                                                                       + SessionLockingDeadlockServlet.LOCK_SESSION_THEN_GLOBAL));
     Thread requestGlobalThenSessionThread = new Thread(
                                                        new ParamBasedRequestRunner(
+                                                                                   server0,
+                                                                                   conversation,
+                                                                                   CONTEXT,
                                                                                    "cmd="
-                                                                                       + SessionLockingDeadlockServlet.LOCK_GLOBAL_THEN_SESSION,
-                                                                                   server0, conversation));
+                                                                                       + SessionLockingDeadlockServlet.LOCK_GLOBAL_THEN_SESSION));
     super.testSessionLocking(conversation, requestSessionThenGlobalThread, requestGlobalThenSessionThread);
 
     int waitTimeMillis = 30 * 1000;

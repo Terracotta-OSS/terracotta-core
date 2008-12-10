@@ -24,16 +24,22 @@ public class LongRunningRequestsTestWithSessionLocking extends LongRunningReques
 
   public void testSessionLocking() throws Exception {
     WebConversation conversation = new WebConversation();
-    Thread longRunningRequestThread = new Thread(new ParamBasedRequestRunner("cmd="
-                                                                             + LongRunningRequestsServlet.LONG_RUNNING,
-                                                                             server0, conversation));
+    Thread longRunningRequestThread = new Thread(
+                                                 new ParamBasedRequestRunner(
+                                                                             server0,
+                                                                             conversation,
+                                                                             CONTEXT,
+                                                                             "cmd="
+                                                                                 + LongRunningRequestsServlet.LONG_RUNNING));
     Thread[] shortRequestThreads = new Thread[5];
     for (int i = 0; i < shortRequestThreads.length; i++) {
       shortRequestThreads[i] = new Thread(
                                           new ParamBasedRequestRunner(
+                                                                      server0,
+                                                                      conversation,
+                                                                      CONTEXT,
                                                                       "cmd="
-                                                                          + LongRunningRequestsServlet.NORMAL_SHORT_REQUEST,
-                                                                      server0, conversation));
+                                                                          + LongRunningRequestsServlet.NORMAL_SHORT_REQUEST));
     }
     super.testSessionLocking(conversation, longRunningRequestThread, shortRequestThreads);
 
