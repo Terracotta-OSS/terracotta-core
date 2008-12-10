@@ -10,11 +10,11 @@ import com.tc.logging.TCLogger;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.text.StringFormatter;
-import com.tc.util.TCTimerImpl;
 
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeMap;
 
@@ -22,7 +22,7 @@ public class MessageMonitorImpl implements MessageMonitor {
 
   private final Map             counters     = new TreeMap(new TCMessageTypeComparator());
   private final StringFormatter formatter    = new StringFormatter();
-  private final TCTimerImpl     timer;
+  private final Timer           timer;
   private int                   maxTypeWidth = 0;
 
   public static MessageMonitor createMonitor(TCProperties tcProps, TCLogger logger) {
@@ -38,7 +38,7 @@ public class MessageMonitorImpl implements MessageMonitor {
   }
 
   public MessageMonitorImpl() {
-    this.timer = new TCTimerImpl("MessageMonitor logger", true);
+    this.timer = new Timer("MessageMonitor logger", true);
   }
 
   public void startLogging(final TCLogger logger, int intervalSeconds) {

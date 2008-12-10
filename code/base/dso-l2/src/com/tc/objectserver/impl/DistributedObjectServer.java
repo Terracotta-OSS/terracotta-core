@@ -226,7 +226,6 @@ import com.tc.util.ProductInfo;
 import com.tc.util.SequenceValidator;
 import com.tc.util.StartupLock;
 import com.tc.util.TCTimeoutException;
-import com.tc.util.TCTimerImpl;
 import com.tc.util.UUID;
 import com.tc.util.io.TCFileUtils;
 import com.tc.util.runtime.LockInfoByThreadID;
@@ -245,6 +244,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Properties;
 import java.util.Set;
+import java.util.Timer;
 
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
@@ -878,9 +878,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
                                                                                                .getStage(
                                                                                                          ServerConfigurationContext.OBJECT_ID_BATCH_REQUEST_STAGE)
                                                                                                .getSink(),
-                                                                                           new TCTimerImpl(
-                                                                                                           "Reconnect timer",
-                                                                                                           true),
+                                                                                           new Timer("Reconnect timer",
+                                                                                                     true),
                                                                                            reconnectTimeout,
                                                                                            persistent, consoleLogger);
 

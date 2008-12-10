@@ -6,43 +6,27 @@ package com.tc.util;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Timer;
 import java.util.TimerTask;
 
-public class TestTimer implements TCTimer {
+public class TestTimer extends Timer {
 
   public List scheduleCalls       = new ArrayList();
   public List cancelCalls = new ArrayList();
 
   public void cancel() {
     cancelCalls.add(new Object());
+    super.cancel();
   }
 
   public void schedule(TimerTask task, long delay) {
     scheduleCalls.add(new ScheduleCallContext(task, new Long(delay), null, null));
-  }
-
-  public void schedule(TimerTask task, Date time) {
-    return;
-
+    super.schedule(task, delay);
   }
 
   public void schedule(TimerTask task, long delay, long period) {
     scheduleCalls.add(new ScheduleCallContext(task, new Long(delay), null, new Long(period)));
-  }
-
-  public void schedule(TimerTask task, Date firstTime, long period) {
-    return;
-
-  }
-
-  public void scheduleAtFixedRate(TimerTask task, long delay, long period) {
-    return;
-
-  }
-
-  public void scheduleAtFixedRate(TimerTask task, Date firstTime, long period) {
-    return;
-
+    super.schedule(task, delay, period);
   }
 
   public static final class ScheduleCallContext {

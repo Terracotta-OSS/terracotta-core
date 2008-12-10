@@ -18,7 +18,6 @@ import com.tc.util.EqualityComparator;
 import com.tc.util.SameObjectEqualityComparator;
 import com.tc.util.StandardStringifier;
 import com.tc.util.Stringifier;
-import com.tc.util.TCTimerImpl;
 import com.tc.util.diff.Difference;
 import com.tc.util.diff.DifferenceBuilder;
 import com.tc.util.diff.Differenceable;
@@ -66,7 +65,7 @@ public class TCTestCase extends TestCase {
   // This stuff is static since Junit new()'s up an instance of the test case for each test method,
   // and the timeout covers the entire test case (ie. all methods). It wouldn't be very effective to start
   // the timer for each test method given this
-  private static final Timer               timeoutTimer              = new TCTimerImpl("Timeout Thread", true);
+  private static final Timer               timeoutTimer              = new Timer("Timeout Thread", true);
   private static final SynchronizedBoolean timeoutTaskAdded          = new SynchronizedBoolean(false);
 
   private static boolean                   printedProcess            = false;
@@ -140,7 +139,7 @@ public class TCTestCase extends TestCase {
         throw new Exception("Timebomb has expired on " + allDisabledUntil);
       }
     }
-    
+
     final String testMethod = getName();
     if (isTestDisabled(testMethod)) {
       System.out.println("NOTE: Test method " + testMethod + "() is disabled until "

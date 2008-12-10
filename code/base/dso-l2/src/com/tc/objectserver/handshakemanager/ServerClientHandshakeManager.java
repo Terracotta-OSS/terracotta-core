@@ -22,12 +22,12 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.lockmanager.api.LockManager;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.util.SequenceValidator;
-import com.tc.util.TCTimer;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.Timer;
 import java.util.TimerTask;
 
 public class ServerClientHandshakeManager {
@@ -42,7 +42,7 @@ public class ServerClientHandshakeManager {
 
   private State                          state                             = INIT;
 
-  private final TCTimer                  timer;
+  private final Timer                    timer;
   private final ReconnectTimerTask       reconnectTimerTask;
   private final ClientStateManager       clientStateManager;
   private final LockManager              lockManager;
@@ -61,7 +61,7 @@ public class ServerClientHandshakeManager {
   public ServerClientHandshakeManager(TCLogger logger, DSOChannelManager channelManager,
                                       ServerTransactionManager transactionManager, SequenceValidator sequenceValidator,
                                       ClientStateManager clientStateManager, LockManager lockManager,
-                                      Sink lockResponseSink, Sink oidRequestSink, TCTimer timer, long reconnectTimeout,
+                                      Sink lockResponseSink, Sink oidRequestSink, Timer timer, long reconnectTimeout,
                                       boolean persistent, TCLogger consoleLogger) {
     this.logger = logger;
     this.channelManager = channelManager;
@@ -236,6 +236,7 @@ public class ServerClientHandshakeManager {
   synchronized int getUnconnectedClientsSize() {
     return existingUnconnectedClients.size();
   }
+
   /**
    * Notifies handshake manager that the reconnect time has passed.
    * 
@@ -243,26 +244,25 @@ public class ServerClientHandshakeManager {
    */
   private static class ReconnectTimerTask extends TimerTask {
 
-    private final TCTimer                      timer;
+    private final Timer                        timer;
     private final ServerClientHandshakeManager handshakeManager;
-    private long timeToWait;
+    private long                               timeToWait;
 
-    private ReconnectTimerTask(ServerClientHandshakeManager handshakeManager, TCTimer timer) {
+    private ReconnectTimerTask(ServerClientHandshakeManager handshakeManager, Timer timer) {
       this.handshakeManager = handshakeManager;
-      this.timer = timer;   
+      this.timer = timer;
       timeToWait = handshakeManager.reconnectTimeout;
-    }    
-    
+    }
+
     public void setTimeToWait(long timeToWait) {
       this.timeToWait = timeToWait;
     }
 
     public void run() {
       timeToWait -= RECONNECT_WARN_INTERVAL;
-      if (timeToWait > 0 && handshakeManager.getUnconnectedClientsSize() > 0) {  
-        handshakeManager.consoleLogger.info("Reconnect window active.  Waiting for " 
-                                            + handshakeManager.getUnconnectedClientsSize() 
-                                            + " clients to connect. "
+      if (timeToWait > 0 && handshakeManager.getUnconnectedClientsSize() > 0) {
+        handshakeManager.consoleLogger.info("Reconnect window active.  Waiting for "
+                                            + handshakeManager.getUnconnectedClientsSize() + " clients to connect. "
                                             + timeToWait + " ms remaining.");
         if (timeToWait < RECONNECT_WARN_INTERVAL) {
           cancel();
@@ -271,7 +271,7 @@ public class ServerClientHandshakeManager {
           timer.schedule(task, timeToWait);
         }
       } else {
-        timer.cancel();      
+        timer.cancel();
         handshakeManager.notifyTimeout();
       }
     }

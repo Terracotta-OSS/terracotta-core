@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.statistics.logging.impl;
 
@@ -13,7 +14,6 @@ import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.config.StatisticsConfig;
 import com.tc.statistics.logging.StatisticsLogger;
 import com.tc.util.Assert;
-import com.tc.util.TCTimerImpl;
 
 import java.util.Collections;
 import java.util.Date;
@@ -24,20 +24,19 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class StatisticsLoggerImpl implements StatisticsLogger {
-  private final static TCLogger LOGGER = TCLogging.getLogger(StatisticsLoggerImpl.class);
-  private final static TCLogger DSO_LOGGER = CustomerLogging.getDSOGenericLogger();
+  private final static TCLogger  LOGGER     = TCLogging.getLogger(StatisticsLoggerImpl.class);
+  private final static TCLogger  DSO_LOGGER = CustomerLogging.getDSOGenericLogger();
 
-  private final Timer               timer = new TCTimerImpl("Statistics Logger", true);
-  private final StatisticsConfig    config;
-  private final Set                 actions = Collections.synchronizedSet(new LinkedHashSet());
+  private final Timer            timer      = new Timer("Statistics Logger", true);
+  private final StatisticsConfig config;
+  private final Set              actions    = Collections.synchronizedSet(new LinkedHashSet());
 
-  private LogActionDataTask         logTask = null;
+  private LogActionDataTask      logTask    = null;
 
   public StatisticsLoggerImpl(final StatisticsConfig config) {
     Assert.assertNotNull("config", config);
     this.config = config;
   }
-
 
   public StatisticsConfig getConfig() {
     return config;
@@ -65,9 +64,12 @@ public class StatisticsLoggerImpl implements StatisticsLogger {
       disableTimerTasks();
     }
 
-    final int period_seconds = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.CVT_STATISTICS_LOGGING_INTERVAL, DEFAULT_LOGGING_INTERVAL);
+    final int period_seconds = TCPropertiesImpl.getProperties()
+        .getInt(TCPropertiesConsts.CVT_STATISTICS_LOGGING_INTERVAL, DEFAULT_LOGGING_INTERVAL);
     if (period_seconds <= 0) {
-      DSO_LOGGER.info("Statistics logger disabled due to property '" + TCPropertiesConsts.CVT_STATISTICS_LOGGING_INTERVAL + "' not being greater than zero, it was '" + period_seconds + "'");
+      DSO_LOGGER.info("Statistics logger disabled due to property '"
+                      + TCPropertiesConsts.CVT_STATISTICS_LOGGING_INTERVAL + "' not being greater than zero, it was '"
+                      + period_seconds + "'");
       return;
     }
     logTask = new LogActionDataTask();
@@ -122,8 +124,8 @@ public class StatisticsLoggerImpl implements StatisticsLogger {
     public void run() {
       if (!shutdown) {
         synchronized (actions) {
-          for (final Iterator it = actions.iterator(); it.hasNext(); ) {
-            StatisticRetrievalAction action = (StatisticRetrievalAction)it.next();
+          for (final Iterator it = actions.iterator(); it.hasNext();) {
+            StatisticRetrievalAction action = (StatisticRetrievalAction) it.next();
             retrieveAction(new Date(), action);
           }
         }

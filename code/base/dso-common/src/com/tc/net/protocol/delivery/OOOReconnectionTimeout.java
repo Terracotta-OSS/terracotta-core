@@ -9,8 +9,8 @@ import com.tc.net.protocol.transport.MessageTransportListener;
 import com.tc.net.protocol.transport.RestoreConnectionCallback;
 import com.tc.util.Assert;
 import com.tc.util.DebugUtil;
-import com.tc.util.TCTimerImpl;
 
+import java.util.Timer;
 import java.util.TimerTask;
 
 public class OOOReconnectionTimeout implements MessageTransportListener, RestoreConnectionCallback {
@@ -19,7 +19,7 @@ public class OOOReconnectionTimeout implements MessageTransportListener, Restore
 
   private final OnceAndOnlyOnceProtocolNetworkLayer oooLayer;
   private final long                                timeoutMillis;
-  private TCTimerImpl                               timer = null;
+  private Timer                                     timer = null;
 
   public OOOReconnectionTimeout(final OnceAndOnlyOnceProtocolNetworkLayer oooLayer, final long timeoutMillis) {
     this.oooLayer = oooLayer;
@@ -42,7 +42,7 @@ public class OOOReconnectionTimeout implements MessageTransportListener, Restore
     oooLayer.startRestoringConnection();
     oooLayer.notifyTransportDisconnected(transport);
     // start the timer...
-    timer = new TCTimerImpl("ClientConnectionRestoreTimer", true);
+    timer = new Timer("ClientConnectionRestoreTimer", true);
     timer.schedule(new TimeoutTimerTask(transport, this), timeoutMillis);
   }
 

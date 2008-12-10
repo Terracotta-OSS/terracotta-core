@@ -19,7 +19,6 @@ import com.tc.statistics.buffer.exceptions.StatisticsBufferException;
 import com.tc.statistics.config.StatisticsConfig;
 import com.tc.statistics.retrieval.actions.SRAShutdownTimestamp;
 import com.tc.util.Assert;
-import com.tc.util.TCTimerImpl;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -87,7 +86,7 @@ public class StatisticsEmitterMBeanImpl extends AbstractTerracottaMBean implemen
       disableTimer();
     }
 
-    timer = new TCTimerImpl("Statistics Emitter Timer", true);
+    timer = new Timer("Statistics Emitter Timer", true);
     task = new SendStatsTask();
     timer.scheduleAtFixedRate(task, 0, config.getParamLong(StatisticsConfig.KEY_EMITTER_SCHEDULE_INTERVAL));
   }

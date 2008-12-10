@@ -6,12 +6,11 @@ package com.tc.stats.counter;
 
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCounterImpl;
-import com.tc.util.TCTimerImpl;
 
 import java.util.Timer;
 
 public class CounterManagerImpl implements CounterManager {
-  private final Timer timer    = new TCTimerImpl("SampledCounterManager Timer", true);
+  private final Timer timer    = new Timer("SampledCounterManager Timer", true);
   private boolean     shutdown = false;
 
   public CounterManagerImpl() {

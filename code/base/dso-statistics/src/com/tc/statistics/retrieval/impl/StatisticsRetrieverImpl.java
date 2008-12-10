@@ -21,7 +21,6 @@ import com.tc.statistics.retrieval.StatisticsRetriever;
 import com.tc.statistics.retrieval.actions.SRAShutdownTimestamp;
 import com.tc.statistics.retrieval.actions.SRAStartupTimestamp;
 import com.tc.util.Assert;
-import com.tc.util.TCTimerImpl;
 
 import java.util.Collections;
 import java.util.Date;
@@ -33,11 +32,11 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsBufferListener {
-  public static final String        TIMER_NAME = "Statistics Retriever";
+  public static final String        TIMER_NAME                    = "Statistics Retriever";
 
   public final static int           DEFAULT_NOTIFICATION_INTERVAL = 60;
 
-  private final static TCLogger     LOGGER = TCLogging.getLogger(StatisticsRetrieverImpl.class);
+  private final static TCLogger     LOGGER                        = TCLogging.getLogger(StatisticsRetrieverImpl.class);
 
   private Timer                     timer;
 
@@ -175,7 +174,7 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
       disableTimerAndTasks();
     }
 
-    timer = new TCTimerImpl(TIMER_NAME, true);
+    timer = new Timer(TIMER_NAME, true);
     infoTask = new LogRetrievalInProcessTask();
     timer.scheduleAtFixedRate(infoTask, 0, TCPropertiesImpl.getProperties()
         .getInt(TCPropertiesConsts.CVT_RETRIEVER_NOTIFICATION_INTERVAL, DEFAULT_NOTIFICATION_INTERVAL) * 1000);
@@ -194,8 +193,8 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
       try {
         while (!statsTask.isShutdown()
                || (System.currentTimeMillis() - before_shutdown_wait) > shutdown_wait_expiration) { // only wait for a
-                                                                                                    // limited amount of
-                                                                                                    // time
+          // limited amount of
+          // time
           try {
             this.wait(shutdown_wait_expiration); // wait for twice the retriever schedule interval
           } catch (InterruptedException e) {
@@ -216,7 +215,7 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
       infoTask.shutdown();
       infoTask = null;
     }
-    
+
     if (timer != null) {
       timer.cancel();
       timer = null;

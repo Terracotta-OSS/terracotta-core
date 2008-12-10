@@ -11,7 +11,6 @@ import com.tc.object.lockmanager.api.TimerCallback;
 import com.tc.object.tx.TimerSpec;
 import com.tc.object.tx.TimerSpec.Signature;
 import com.tc.util.Assert;
-import com.tc.util.TCTimerImpl;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -19,12 +18,11 @@ import java.util.TimerTask;
 /**
  * Manages timed lock waits
  * 
- * @author teck
  */
 public class TCLockTimerImpl implements TCLockTimer {
   private static final TCLogger logger   = TCLogging.getLogger(TCLockTimer.class);
 
-  private final Timer           timer    = new TCTimerImpl("DSO Lock Object.wait() timer", true);
+  private final Timer           timer    = new Timer("DSO Lock Object.wait() timer", true);
   private boolean               shutdown = false;
 
   public TCLockTimerImpl() {
@@ -64,8 +62,8 @@ public class TCLockTimerImpl implements TCLockTimer {
   private static class TaskImpl extends TimerTask {
 
     private final TimerCallback callback;
-    private final Object            callbackObject;
-    private final TimerSpec    call;
+    private final Object        callbackObject;
+    private final TimerSpec     call;
 
     TaskImpl(TimerCallback callback, TimerSpec call, Object callbackObject) {
       this.callback = callback;

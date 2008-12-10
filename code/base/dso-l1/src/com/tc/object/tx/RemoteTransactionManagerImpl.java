@@ -19,7 +19,6 @@ import com.tc.util.Assert;
 import com.tc.util.SequenceID;
 import com.tc.util.State;
 import com.tc.util.TCAssertionError;
-import com.tc.util.TCTimerImpl;
 import com.tc.util.Util;
 
 import java.util.ArrayList;
@@ -76,9 +75,8 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   private final SessionManager             sessionManager;
   private final TransactionSequencer       sequencer;
   private final DSOClientMessageChannel    channel;
-  private final Timer                      timer                       = new TCTimerImpl(
-                                                                                         "RemoteTransactionManager Flusher",
-                                                                                         true);
+  private final Timer                      timer                       = new Timer("RemoteTransactionManager Flusher",
+                                                                                   true);
 
   public RemoteTransactionManagerImpl(TCLogger logger, final TransactionBatchFactory batchFactory,
                                       TransactionBatchAccounting batchAccounting, LockAccounting lockAccounting,
