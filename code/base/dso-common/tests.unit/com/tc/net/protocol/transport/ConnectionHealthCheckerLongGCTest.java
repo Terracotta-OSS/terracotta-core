@@ -43,6 +43,7 @@ import com.tc.net.proxy.TCPProxy;
 import com.tc.object.session.NullSessionManager;
 import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.test.TCTestCase;
+import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.concurrent.QueueFactory;
@@ -343,7 +344,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
 
     netstat = sigar.getNetStat(serverLsnr.getBindAddress().getAddress(), serverLsnr.getBindPort());
     getNetInfo(serverLsnr.getBindPort());
-    assertTrue(netstat.getTcpEstablished() == 2);
+    Assert.assertEquals(2, netstat.getTcpEstablished());
 
     System.out.println("Sleeping for " + getMinSleepTimeToStartLongGCTest(hcConfig));
     ThreadUtil.reallySleep(getMinSleepTimeToStartLongGCTest(hcConfig));
@@ -358,7 +359,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     ThreadUtil.reallySleep(5000);
     netstat = sigar.getNetStat(serverLsnr.getBindAddress().getAddress(), serverLsnr.getBindPort());
     getNetInfo(serverLsnr.getBindPort());
-    assertTrue(netstat.getTcpEstablished() == 0);
+    Assert.assertEquals(0, netstat.getTcpEstablished());
   }
 
   public void testL1SocketConnectTimeoutL2AndL1Reconnect() throws Exception {
@@ -398,7 +399,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
 
     netstat = sigar.getNetStat(serverLsnr.getBindAddress().getAddress(), serverLsnr.getBindPort());
     getNetInfo(serverLsnr.getBindPort());
-    assertTrue(netstat.getTcpEstablished() == 2);
+    Assert.assertEquals(2, netstat.getTcpEstablished());
 
     System.out.println("Sleeping for " + getMinSleepTimeToStartLongGCTest(hcConfig));
     ThreadUtil.reallySleep(getMinSleepTimeToStartLongGCTest(hcConfig));
@@ -435,7 +436,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     netstat = sigar.getNetStat(serverLsnr.getBindAddress().getAddress(), serverLsnr.getBindPort());
     getNetInfo(serverLsnr.getBindPort());
     System.out.println("XXX reconnect- tcp estd : " + netstat.getTcpEstablished());
-    assertTrue(netstat.getTcpEstablished() == 2);
+    Assert.assertEquals(2, netstat.getTcpEstablished());
   }
 
   public void testL2SocketConnectL1WithProxyDelay() throws Exception {
