@@ -37,8 +37,6 @@ import java.util.Map.Entry;
 
 /**
  * Sends off committed transactions
- * 
- * @author steve
  */
 public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
 
@@ -457,10 +455,15 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
 
   private class RemoteTransactionManagerTimerTask extends TimerTask {
 
+    private TransactionID currentLWM = TransactionID.NULL_ID;
+
     public void run() {
       try {
         TransactionID lwm = getCompletedTransactionIDLowWaterMark();
         if (lwm.isNull()) return;
+        if (currentLWM.toLong() > lwm.toLong()) { throw new AssertionError("Transaction Low watermark moved down from "
+                                                                           + currentLWM + " to " + lwm); }
+        currentLWM = lwm;
         CompletedTransactionLowWaterMarkMessage ctm = channel.getCompletedTransactionLowWaterMarkMessageFactory()
             .newCompletedTransactionLowWaterMarkMessage();
         ctm.initialize(lwm);
