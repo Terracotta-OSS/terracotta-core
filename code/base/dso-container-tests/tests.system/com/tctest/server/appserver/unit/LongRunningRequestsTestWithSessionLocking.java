@@ -15,7 +15,7 @@ import junit.framework.Test;
 public class LongRunningRequestsTestWithSessionLocking extends LongRunningRequestsTestBase {
 
   public LongRunningRequestsTestWithSessionLocking() {
-    // disableAllUntil("2009-01-01");
+    disableAllUntil("2009-01-01");
   }
 
   public static Test suite() {

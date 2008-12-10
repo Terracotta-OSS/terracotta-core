@@ -15,7 +15,7 @@ import junit.framework.Test;
 public class DeadlockTestWithSessionLocking extends DeadlockTestBase {
 
   public DeadlockTestWithSessionLocking() {
-    // disableAllUntil("2009-01-01");
+    disableAllUntil("2009-01-01");
   }
 
   public static Test suite() {
