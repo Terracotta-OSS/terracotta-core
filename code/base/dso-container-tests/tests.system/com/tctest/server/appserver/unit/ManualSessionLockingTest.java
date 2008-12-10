@@ -28,7 +28,7 @@ public class ManualSessionLockingTest extends AbstractOneServerDeploymentTest {
     return new ManualSessionLockingSetup();
   }
 
-  public void testManualLocking() throws Exception {
+  public void testSessionLocking() throws Exception {
     WebConversation conversation = new WebConversation();
     // make a request to create the session first, so that the JSESSIONID cookie is set for the WebConversation
     WebResponse response1 = request(server0, "cmd=" + ManualSessionLockingServlet.CREATE_SESSION, conversation);
