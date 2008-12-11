@@ -88,8 +88,9 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
     this.sessionManager = sessionManager;
     this.channel = channel;
     this.status = RUNNING;
-    this.sequencer = new TransactionSequencer(batchFactory, lockAccounting, numTransactionCounter, numBatchesCounter,
-                                              batchSizeCounter, pendingBatchesSize);
+    this.sequencer = new TransactionSequencer(new TransactionIDGenerator(), batchFactory, lockAccounting,
+                                              numTransactionCounter, numBatchesCounter, batchSizeCounter,
+                                              pendingBatchesSize);
     this.timer.schedule(new RemoteTransactionManagerTimerTask(), COMPLETED_ACK_FLUSH_TIMEOUT,
                         COMPLETED_ACK_FLUSH_TIMEOUT);
     this.outstandingBatchesCounter = outstandingBatchesCounter;
@@ -220,7 +221,8 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
 
   public void commit(ClientTransaction txn) {
     if (!txn.hasChangesOrNotifies()) throw new AssertionError("Attempt to commit an empty transaction.");
-
+    if (!txn.getTransactionID().isNull()) throw new AssertionError(
+                                                                   "Transaction already committed as TransactionID is already assigned");
     long start = System.currentTimeMillis();
 
     sequencer.addTransaction(txn);

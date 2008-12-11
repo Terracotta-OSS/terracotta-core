@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @author steve
+ * Client side transaction : Collects all changes by a single thread under a lock
  */
 public class ClientTransactionImpl extends AbstractClientTransaction {
   private final RuntimeLogger runtimeLogger;
@@ -39,8 +39,8 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   // used to keep things referenced until the transaction is completely ACKED
   private final Map           referenced    = new IdentityHashMap();
 
-  public ClientTransactionImpl(TransactionID txID, RuntimeLogger logger) {
-    super(txID);
+  public ClientTransactionImpl(RuntimeLogger logger) {
+    super();
     this.runtimeLogger = logger;
   }
 
@@ -144,7 +144,7 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   }
 
   public String toString() {
-    return "ClientTransactionImpl [ " + getTransactionID() + " ]";
+    return "ClientTransactionImpl@"+ System.identityHashCode(this) +" [ " + getTransactionID() + " ]";
   }
 
   public int getNotifiesCount() {

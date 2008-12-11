@@ -23,7 +23,7 @@ import java.util.Map;
 
 public class TestClientTransaction implements ClientTransaction {
 
-  public TransactionID txID;
+  public TransactionID txID                 = TransactionID.NULL_ID;
   public LockID        lockID;
   public TxnType       txnType;
   public boolean       hasChangesOrNotifies = true;
@@ -87,6 +87,10 @@ public class TestClientTransaction implements ClientTransaction {
 
   public void setSequenceID(SequenceID sequenceID) {
     this.sequenceID = sequenceID;
+  }
+
+  public void setTransactionID(TransactionID tid) {
+    this.txID = tid;
   }
 
   public SequenceID getSequenceID() {

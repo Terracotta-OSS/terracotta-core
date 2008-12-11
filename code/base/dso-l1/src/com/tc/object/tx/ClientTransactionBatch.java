@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.tx;
 
@@ -9,7 +10,7 @@ import com.tc.util.SequenceID;
 import java.util.Collection;
 
 /**
- * Client representation of a batch of transactions.  Has methods that are only useful in a client context.
+ * Client representation of a batch of transactions. Has methods that are only useful in a client context.
  */
 public interface ClientTransactionBatch extends TransactionBatch {
 
@@ -22,9 +23,11 @@ public interface ClientTransactionBatch extends TransactionBatch {
 
   /**
    * Add the given transaction to this batch.
+   * 
    * @return true if the transaction was folded
    */
-  public boolean addTransaction(ClientTransaction txn, SequenceGenerator sequenceGenerator);
+  public boolean addTransaction(ClientTransaction txn, SequenceGenerator sequenceGenerator,
+                                TransactionIDGenerator transactionIDGenerator);
 
   public void removeTransaction(TransactionID txID);
 

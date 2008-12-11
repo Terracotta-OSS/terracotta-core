@@ -17,23 +17,32 @@ import java.util.List;
  */
 abstract class AbstractClientTransaction implements ClientTransaction {
 
-  private final TransactionID txID;
-  private SequenceID          seqID = SequenceID.NULL_ID;
-  private TransactionContext  transactionContext;
-  private boolean             alreadyCommittedFlag;
+  private TransactionID      txID  = TransactionID.NULL_ID;
+  private SequenceID         seqID = SequenceID.NULL_ID;
+  private TransactionContext transactionContext;
+  private boolean            alreadyCommittedFlag;
 
-  AbstractClientTransaction(TransactionID txID) {
-    this.txID = txID;
-  }
+  public void setSequenceID(SequenceID sequenceID) {
+    if (!seqID.isNull()) {
+      // Formatter
+      throw new AssertionError("Attempt to set sequence id more than once : " + seqID + " : " + sequenceID);
+    }
 
-  public synchronized void setSequenceID(SequenceID sequenceID) {
-    if (!seqID.isNull()) throw new AssertionError("Attempt to set sequence id more than once.");
     if (sequenceID == null || sequenceID.isNull()) throw new AssertionError("Attempt to set sequence id to null: "
                                                                             + sequenceID);
     this.seqID = sequenceID;
   }
 
-  public synchronized SequenceID getSequenceID() {
+  public void setTransactionID(TransactionID txnID) {
+    if (!txID.isNull()) {
+      // Formatter
+      throw new AssertionError("Attempt to set Txn id more than once : " + txID + " : " + txnID);
+    }
+    if (txnID == null || txnID.isNull()) throw new AssertionError("Attempt to set Transaction id to null: " + txnID);
+    this.txID = txnID;
+  }
+
+  public SequenceID getSequenceID() {
     Assert.assertFalse(this.seqID.isNull());
     return this.seqID;
   }
@@ -49,7 +58,7 @@ abstract class AbstractClientTransaction implements ClientTransaction {
   public TxnType getEffectiveType() {
     return transactionContext.getEffectiveType();
   }
-  
+
   public boolean isEffectivelyReadOnly() {
     return transactionContext.isEffectivelyReadOnly();
   }
@@ -58,6 +67,9 @@ abstract class AbstractClientTransaction implements ClientTransaction {
     return transactionContext.getAllLockIDs();
   }
 
+  /**
+   * @return the transaction id for this transaction, null id if the transaction is not yet committed.
+   */
   public TransactionID getTransactionID() {
     return txID;
   }
@@ -67,27 +79,26 @@ abstract class AbstractClientTransaction implements ClientTransaction {
   }
 
   public final void createObject(TCObject source) {
-    if (transactionContext.isEffectivelyReadOnly()) {
-      throw new AssertionError(source.getClass().getName() + " was already checked to have write access!");
-    }
-    
+    if (transactionContext.isEffectivelyReadOnly()) { throw new AssertionError(
+                                                                               source.getClass().getName()
+                                                                                   + " was already checked to have write access!"); }
+
     alreadyCommittedCheck();
     basicCreate(source);
   }
 
   public final void createRoot(String name, ObjectID rootID) {
-    if (transactionContext.isEffectivelyReadOnly()) {
-      throw new AssertionError(name + " was already checked to have write access!");
-    }
+    if (transactionContext.isEffectivelyReadOnly()) { throw new AssertionError(
+                                                                               name
+                                                                                   + " was already checked to have write access!"); }
     alreadyCommittedCheck();
     basicCreateRoot(name, rootID);
   }
 
   public final void fieldChanged(TCObject source, String classname, String fieldname, Object newValue, int index) {
     assertNotReadOnlyTxn();
-    if (source.getTCClass().isEnum()) {
-      throw new AssertionError("fieldChanged() on an enum type " + source.getTCClass().getPeerClass().getName());
-    }
+    if (source.getTCClass().isEnum()) { throw new AssertionError("fieldChanged() on an enum type "
+                                                                 + source.getTCClass().getPeerClass().getName()); }
 
     alreadyCommittedCheck();
     basicFieldChanged(source, classname, fieldname, newValue, index);
@@ -120,9 +131,7 @@ abstract class AbstractClientTransaction implements ClientTransaction {
   }
 
   private void assertNotReadOnlyTxn() {
-    if (transactionContext.isEffectivelyReadOnly()) {
-      throw new AssertionError("fail to perform read only check");
-    }
+    if (transactionContext.isEffectivelyReadOnly()) { throw new AssertionError("fail to perform read only check"); }
   }
 
   public void setAlreadyCommitted() {

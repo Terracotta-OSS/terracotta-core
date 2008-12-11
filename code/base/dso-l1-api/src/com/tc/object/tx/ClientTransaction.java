@@ -60,9 +60,16 @@ public interface ClientTransaction {
   public List getAllLockIDs();
 
   /**
+   * Indicate place in sequence of transactions
+   *
+   * @param sequenceID Identifier
+   */
+  public void setTransactionID(TransactionID tid);
+  
+  /**
    * Get transaction identifier
    *
-   * @return Identifier
+   * @return the transaction Identifier is set, else return TransactionID.NULL_ID
    */
   public TransactionID getTransactionID();
 
@@ -122,7 +129,7 @@ public interface ClientTransaction {
   public void logicalInvoke(TCObject source, int method, Object[] parameters, String methodName);
 
   /**
-   * Check whether transactoin has changes or notifications
+   * Check whether transaction has changes or notifications
    *
    * @return True if has changes or notifies
    */

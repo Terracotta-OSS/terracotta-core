@@ -6,7 +6,7 @@ package com.tc.object.tx;
 import com.tc.object.lockmanager.api.LockID;
 
 /**
- * @author steve
+ * Client Transaction Factory interface
  */
 public interface ClientTransactionFactory {
   public ClientTransaction newNullInstance(LockID id, TxnType type);

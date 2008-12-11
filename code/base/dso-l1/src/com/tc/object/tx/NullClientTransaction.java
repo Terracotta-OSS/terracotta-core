@@ -17,8 +17,8 @@ import java.util.Map;
 
 public class NullClientTransaction extends AbstractClientTransaction {
 
-  public NullClientTransaction(TransactionID transactionID) {
-    super(transactionID);
+  public NullClientTransaction() {
+    super();
   }
 
   public boolean hasChangesOrNotifies() {
@@ -78,7 +78,7 @@ public class NullClientTransaction extends AbstractClientTransaction {
   }
 
   protected void basicLiteralValueChanged(TCObject source, Object newValue, Object oldValue) {
-    // do nothingg
+    // do nothing
   }
 
   public Collection getReferencesOfObjectsInTxn() {

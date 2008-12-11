@@ -56,9 +56,13 @@ public class TransactionSequencer {
   private final SampledCounter          numBatchesCounter;
   private final SampledCounter          batchSizeCounter;
 
-  public TransactionSequencer(TransactionBatchFactory batchFactory, LockAccounting lockAccounting,
-                              SampledCounter numTransactionCounter, SampledCounter numBatchesCounter,
-                              SampledCounter batchSizeCounter, Counter pendingBatchesSize) {
+  private final TransactionIDGenerator  transactionIDGenerator;
+
+  public TransactionSequencer(TransactionIDGenerator transactionIDGenerator, TransactionBatchFactory batchFactory,
+                              LockAccounting lockAccounting, SampledCounter numTransactionCounter,
+                              SampledCounter numBatchesCounter, SampledCounter batchSizeCounter,
+                              Counter pendingBatchesSize) {
+    this.transactionIDGenerator = transactionIDGenerator;
     this.batchFactory = batchFactory;
     this.lockAccounting = lockAccounting;
     this.currentBatch = createNewBatch();
@@ -83,7 +87,7 @@ public class TransactionSequencer {
   }
 
   private boolean addTransactionToBatch(ClientTransaction txn, ClientTransactionBatch batch) {
-    return batch.addTransaction(txn, sequence);
+    return batch.addTransaction(txn, sequence, transactionIDGenerator);
   }
 
   public synchronized void addTransaction(ClientTransaction txn) {
@@ -119,7 +123,9 @@ public class TransactionSequencer {
 
     if (!txn.isConcurrent() && !folded) {
       // It is important to add the lock accounting before exposing the current batch to be sent (ie. put() below)
-      lockAccounting.add(txn.getTransactionID(), txn.getAllLockIDs());
+      TransactionID tid = txn.getTransactionID();
+      assert !tid.isNull();
+      lockAccounting.add(tid, txn.getAllLockIDs());
     }
 
     if (currentBatch.byteSize() > MAX_BYTE_SIZE_FOR_BATCH) {
