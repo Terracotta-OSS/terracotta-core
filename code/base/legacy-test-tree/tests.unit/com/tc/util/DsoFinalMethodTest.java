@@ -5,9 +5,10 @@
 package com.tc.util;
 
 import com.tc.exception.ImplementMe;
-import com.tc.net.protocol.tcm.ChannelIDProvider;
 import com.tc.net.protocol.tcm.TestChannelIDProvider;
 import com.tc.object.BaseDSOTestCase;
+import com.tc.object.ClientIDProvider;
+import com.tc.object.ClientIDProviderImpl;
 import com.tc.object.ClientObjectManagerImpl;
 import com.tc.object.MockTCObject;
 import com.tc.object.ObjectID;
@@ -28,6 +29,7 @@ import com.tc.object.idprovider.impl.ObjectIDProviderImpl;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.object.logging.RuntimeLogger;
+import com.tc.object.tx.ClientTransaction;
 import com.tc.object.tx.MockTransactionManager;
 import com.tc.util.sequence.SimpleSequence;
 
@@ -51,7 +53,8 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
     objectFactory.tcObject = tcObject;
     objectManager = new MockClientObjectManagerImpl(new MockRemoteObjectManagerImpl(), configHelper(),
                                                     new ObjectIDProviderImpl(new SimpleSequence()), new NullCache(),
-                                                    new NullRuntimeLogger(), new TestChannelIDProvider(),
+                                                    new NullRuntimeLogger(),
+                                                    new ClientIDProviderImpl(new TestChannelIDProvider()),
                                                     new MockClassProvider(), new TestClassFactory(), objectFactory);
 
     objectManager.setTransactionManager(new MockTransactionManagerImpl());
@@ -86,15 +89,11 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
   private static class MockClientObjectManagerImpl extends ClientObjectManagerImpl {
     public MockClientObjectManagerImpl(RemoteObjectManager remoteObjectManager,
                                        DSOClientConfigHelper clientConfiguration, ObjectIDProvider idProvider,
-                                       EvictionPolicy cache, RuntimeLogger runtimeLogger, ChannelIDProvider provider,
+                                       EvictionPolicy cache, RuntimeLogger runtimeLogger, ClientIDProvider provider,
                                        ClassProvider classProvider, TCClassFactory classFactory,
                                        TCObjectFactory objectFactory) {
       super(remoteObjectManager, clientConfiguration, idProvider, cache, runtimeLogger, provider, classProvider,
             classFactory, objectFactory, new TestPortability(), null, null);
-    }
-
-    public boolean isPortable(Object obj) {
-      return true;
     }
 
     public Object lookupObject(ObjectID objectID) {
@@ -116,6 +115,10 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
 
     public void createObject(TCObject source) {
       return;
+    }
+
+    public ClientTransaction getCurrentTransaction() {
+      return null;
     }
   }
 

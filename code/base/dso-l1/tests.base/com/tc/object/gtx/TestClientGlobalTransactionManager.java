@@ -12,20 +12,13 @@ import com.tc.object.tx.TransactionID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.Collection;
-import java.util.Collections;
 
 public class TestClientGlobalTransactionManager implements ClientGlobalTransactionManager {
 
-  public final NoExceptionLinkedQueue pauseCalls                     = new NoExceptionLinkedQueue();
-  public final NoExceptionLinkedQueue startingCalls                  = new NoExceptionLinkedQueue();
-  public final NoExceptionLinkedQueue unpauseCalls                   = new NoExceptionLinkedQueue();
-  public final NoExceptionLinkedQueue resendOutstandingCalls         = new NoExceptionLinkedQueue();
-  public final NoExceptionLinkedQueue flushCalls                     = new NoExceptionLinkedQueue();
-  public final NoExceptionLinkedQueue getTransactionSequenceIDsCalls = new NoExceptionLinkedQueue();
-  public final NoExceptionLinkedQueue getTransactionIDsCalls         = new NoExceptionLinkedQueue();
+  public final NoExceptionLinkedQueue flushCalls = new NoExceptionLinkedQueue();
   public Collection                   transactionSequenceIDs;
 
-  public void setLowWatermark(GlobalTransactionID lowWatermark) {
+  public void setLowWatermark(GlobalTransactionID lowWatermark, NodeID nodeID) {
     throw new ImplementMe();
   }
 
@@ -37,46 +30,16 @@ public class TestClientGlobalTransactionManager implements ClientGlobalTransacti
     throw new ImplementMe();
   }
 
-  public void unpause() {
-    unpauseCalls.put(new Object());
-  }
-
-  public void starting() {
-    startingCalls.put(new Object());
-  }
-
-  public void pause() {
-    pauseCalls.put(new Object());
-  }
-
-  public void resendOutstanding() {
-    resendOutstandingCalls.put(new Object());
-  }
-
-  public Collection getTransactionSequenceIDs() {
-    this.getTransactionSequenceIDsCalls.put(new Object());
-    return transactionSequenceIDs;
-  }
-
-  public boolean startApply(NodeID nodeID, TransactionID transactionID, GlobalTransactionID globalTransactionID) {
-    throw new ImplementMe();
-  }
-
   public int size() {
     throw new ImplementMe();
   }
 
-  public Collection getResentTransactionIDs() {
-    this.getTransactionIDsCalls.put(new Object());
-    return Collections.EMPTY_LIST;
-  }
-
-  public void resendOutstandingAndUnpause() {
-    resendOutstanding();
-    unpause();
-  }
-
   public boolean isTransactionsForLockFlushed(LockID lockID, LockFlushCallback callback) {
     return true;
+  }
+
+  public boolean startApply(NodeID clientID, TransactionID transactionID, GlobalTransactionID globalTransactionID,
+                            NodeID remoteGroupID) {
+    throw new ImplementMe();
   }
 }

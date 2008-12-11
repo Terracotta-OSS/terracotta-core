@@ -13,9 +13,12 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 public class GroupID implements NodeID {
-  private static final int    UNINITIALIZED = -1;
-  private static final int    NULL_NUMBER   = -2;
-  public static final GroupID NULL_ID       = new GroupID(NULL_NUMBER);
+  private static final int    UNINITIALIZED     = -1;
+  private static final int    NULL_NUMBER       = -2;
+  private static final int    ALL_GROUPS_NUMBER = Integer.MIN_VALUE;
+
+  public static final GroupID NULL_ID           = new GroupID(NULL_NUMBER);
+  public static final GroupID ALL_GROUPS        = new GroupID(ALL_GROUPS_NUMBER);
 
   private int                 groupNumber;
 

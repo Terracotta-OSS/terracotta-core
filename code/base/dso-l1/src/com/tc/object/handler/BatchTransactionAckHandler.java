@@ -16,7 +16,7 @@ public class BatchTransactionAckHandler extends AbstractEventHandler {
 
   public void handleEvent(EventContext context) {
     BatchTransactionAcknowledgeMessage msg = (BatchTransactionAcknowledgeMessage) context;
-    transactionManager.receivedBatchAcknowledgement(msg.getBatchID());
+    transactionManager.receivedBatchAcknowledgement(msg.getBatchID(), msg.getSourceNodeID());
   }
 
   public void initialize(ConfigurationContext context) {

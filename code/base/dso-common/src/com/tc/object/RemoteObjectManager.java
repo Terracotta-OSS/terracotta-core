@@ -4,6 +4,7 @@
  */
 package com.tc.object;
 
+import com.tc.net.NodeID;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.session.SessionID;
 
@@ -23,25 +24,12 @@ public interface RemoteObjectManager {
 
   public ObjectID retrieveRootID(String name);
 
-  public void addRoot(String name, ObjectID id);
+  public void addRoot(String name, ObjectID id, NodeID nodeID);
 
-  public void addAllObjects(SessionID sessionID, long batchID, Collection dnas);
+  public void addAllObjects(SessionID sessionID, long batchID, Collection dnas, NodeID nodeID);
 
-  public void objectsNotFoundFor(SessionID sessionID, long batchID, Set missingObjectIDs);
+  public void objectsNotFoundFor(SessionID sessionID, long batchID, Set missingObjectIDs, NodeID nodeID);
 
   public void removed(ObjectID id);
-
-  /**
-   * Causes outstanding object and root requests to be re-sent.
-   */
-  public void requestOutstanding();
-
-  public void pause();
-
-  public void clear();
-
-  public void starting();
-
-  public void unpause();
 
 }

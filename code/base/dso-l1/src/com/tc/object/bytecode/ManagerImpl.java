@@ -136,7 +136,7 @@ public class ManagerImpl implements Manager {
   }
 
   public String getClientID() {
-    return String.valueOf(this.dso.getChannel().getChannelIDProvider().getChannelID().toLong());
+    return String.valueOf(this.dso.getChannel().getClientIDProvider().getClientID().toLong());
   }
 
   private void resolveClasses() {

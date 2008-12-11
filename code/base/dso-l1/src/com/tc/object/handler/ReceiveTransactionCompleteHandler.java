@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.handler;
 
@@ -11,14 +12,14 @@ import com.tc.object.msg.AcknowledgeTransactionMessage;
 import com.tc.object.tx.ClientTransactionManager;
 
 /**
- * @author steve
+ * Stage handler for processing transaction completed acknowledgment message at the L1
  */
 public class ReceiveTransactionCompleteHandler extends AbstractEventHandler {
   private ClientTransactionManager transactionManager;
 
   public void handleEvent(EventContext context) {
     AcknowledgeTransactionMessage atm = (AcknowledgeTransactionMessage) context;
-    transactionManager.receivedAcknowledgement(atm.getLocalSessionID(), atm.getRequestID());
+    transactionManager.receivedAcknowledgement(atm.getLocalSessionID(), atm.getRequestID(), atm.getSourceNodeID());
   }
 
   public void initialize(ConfigurationContext context) {

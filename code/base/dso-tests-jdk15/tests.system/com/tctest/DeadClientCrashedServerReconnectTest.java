@@ -13,12 +13,12 @@ import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.object.DistributedObjectClient;
-import com.tc.object.PauseListener;
 import com.tc.object.bytecode.MockClassProvider;
 import com.tc.object.bytecode.NullManager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
+import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.stats.DSOMBean;
 import com.tc.test.proxyconnect.ProxyConnectManager;
@@ -36,14 +36,8 @@ import javax.management.remote.JMXConnector;
 
 public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
 
-  private TestPauseListener pauseListener;
-
   public DeadClientCrashedServerReconnectTest() {
     // this.disableAllUntil("3001-01-01");
-  }
-
-  public void setUp() {
-    pauseListener = new TestPauseListener();
   }
 
   public void testClientsStayDeadAcrossRestarts() throws Exception {
@@ -81,11 +75,10 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
                                                                  new MockClassProvider(), components, NullManager
                                                                      .getInstance(), new Cluster());
     client.setCreateDedicatedMBeanServer(true);
-    client.setPauseListener(pauseListener);
     client.start();
 
     // wait until client handshake is complete...
-    pauseListener.waitUntilUnpaused();
+    waitUntilUnpaused(client);
 
     checkServerHasClients(1, jmxPort);
 
@@ -108,9 +101,12 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
     // give time for jmx server to start up
     Thread.sleep(15 * 1000);
 
-    assertTrue(pauseListener.isPaused());
-
     checkServerHasClients(0, jmxPort);
+  }
+
+  private void waitUntilUnpaused(DistributedObjectClient client) {
+    ClientHandshakeManager mgr = client.getClientHandshakeManager();
+    mgr.waitForHandshake();
   }
 
   private void checkServerHasClients(int clientCount, int jmxPort) throws Exception {
@@ -127,47 +123,4 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
     System.out.println("***** " + clientCount + " clients are connected to the server.");
     jmxConnector.close();
   }
-
-  private static final class TestPauseListener implements PauseListener {
-
-    private boolean paused = true;
-
-    public void waitUntilPaused() throws InterruptedException {
-      waitUntilCondition(true);
-    }
-
-    public void waitUntilUnpaused() throws InterruptedException {
-      waitUntilCondition(false);
-    }
-
-    public boolean isPaused() {
-      synchronized (this) {
-        return paused;
-      }
-    }
-
-    private void waitUntilCondition(boolean b) throws InterruptedException {
-      synchronized (this) {
-        while (b != paused) {
-          wait();
-        }
-      }
-    }
-
-    public void notifyPause() {
-      synchronized (this) {
-        paused = true;
-        notifyAll();
-      }
-    }
-
-    public void notifyUnpause() {
-      synchronized (this) {
-        paused = false;
-        notifyAll();
-      }
-    }
-
-  }
-
 }

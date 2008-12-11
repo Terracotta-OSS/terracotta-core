@@ -5,22 +5,16 @@
 package com.tc.object.tx;
 
 import com.tc.exception.ImplementMe;
+import com.tc.net.NodeID;
 import com.tc.object.lockmanager.api.LockFlushCallback;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.session.SessionID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author steve
- */
 public class TestRemoteTransactionManager implements RemoteTransactionManager {
-  // public final NoExceptionLinkedQueue resendOutstandingContexts = new NoExceptionLinkedQueue();
-  // public final NoExceptionLinkedQueue pauseCalls = new NoExceptionLinkedQueue();
-  // public final NoExceptionLinkedQueue unpauseCalls = new NoExceptionLinkedQueue();
   public final NoExceptionLinkedQueue isChangeListenerCalls = new NoExceptionLinkedQueue();
 
   public List                         ids;
@@ -39,57 +33,21 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
     this.transaction = txn;
   }
 
-  public void receivedAcknowledgement(SessionID sessionID, TransactionID ackTxID) {
+  public void receivedAcknowledgement(SessionID sessionID, TransactionID ackTxID, NodeID nodeID) {
     this.acked = ackTxID;
   }
 
-  public void receivedBatchAcknowledgement(TxnBatchID batchID) {
+  public void receivedBatchAcknowledgement(TxnBatchID batchID, NodeID nodeID) {
     this.batchAcked = batchID;
-  }
-
-  public int getPendingBatchSize() {
-    throw new ImplementMe();
-  }
-
-  public void resendOutstanding() {
-    // this.resendOutstandingContexts.put(new Object());
-    throw new ImplementMe();
-  }
-
-  public void pause() {
-    // this.pauseCalls.put(new Object());
-    throw new ImplementMe();
-  }
-
-  public void unpause() {
-    // this.pauseCalls.put(new Object());
-    throw new ImplementMe();
   }
 
   public void flush(LockID lockID) {
     throw new ImplementMe();
   }
 
-  public Collection getTransactionSequenceIDs() {
-    throw new ImplementMe();
-  }
-
   public void stop() {
     throw new ImplementMe();
 
-  }
-
-  public void starting() {
-    throw new ImplementMe();
-
-  }
-
-  public Collection getResentTransactionIDs() {
-    throw new ImplementMe();
-  }
-
-  public void resendOutstandingAndUnpause() {
-    throw new ImplementMe();
   }
 
   public boolean isTransactionsForLockFlushed(LockID lockID, LockFlushCallback callback) {
@@ -99,4 +57,5 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
   public void stopProcessing() {
     throw new ImplementMe();
   }
+
 }

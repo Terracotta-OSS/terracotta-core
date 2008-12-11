@@ -7,7 +7,11 @@ package com.tc.object;
 import com.tc.exception.TCObjectNotFoundException;
 import com.tc.logging.TCLogger;
 import com.tc.net.ClientID;
+import com.tc.net.GroupID;
+import com.tc.net.NodeID;
 import com.tc.object.dna.api.DNA;
+import com.tc.object.handshakemanager.ClientHandshakeCallback;
+import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.RequestManagedObjectMessage;
 import com.tc.object.msg.RequestManagedObjectMessageFactory;
 import com.tc.object.msg.RequestRootMessage;
@@ -34,13 +38,11 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 /**
- * This class is a kludge but I think it will do the trick for now. It is responsible for any communications to the
- * server for object retrieval and removal
+ * This class is responsible for any communications to the server for object retrieval and removal
  */
-public class RemoteObjectManagerImpl implements RemoteObjectManager {
+public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHandshakeCallback {
 
   private static final State                       PAUSED                    = new State("PAUSED");
-  private static final State                       STARTING                  = new State("STARTING");
   private static final State                       RUNNING                   = new State("RUNNING");
 
   private final LinkedHashMap                      rootRequests              = new LinkedHashMap();
@@ -62,6 +64,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
                                                                                  .getProperties()
                                                                                  .getBoolean(
                                                                                              TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_LOGGING_ENABLED);
+  private final GroupID                            groupID;
   private final int                                defaultDepth;
   private State                                    state                     = RUNNING;
   private ObjectIDSet                              removeObjects             = new ObjectIDSet();
@@ -71,9 +74,10 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
   private long                                     hit                       = 0;
   private long                                     miss                      = 0;
 
-  public RemoteObjectManagerImpl(TCLogger logger, ClientIDProvider cip, RequestRootMessageFactory rrmFactory,
-                                 RequestManagedObjectMessageFactory rmomFactory, ObjectRequestMonitor requestMonitor,
-                                 int defaultDepth, SessionManager sessionManager) {
+  public RemoteObjectManagerImpl(GroupID groupID, TCLogger logger, ClientIDProvider cip,
+                                 RequestRootMessageFactory rrmFactory, RequestManagedObjectMessageFactory rmomFactory,
+                                 ObjectRequestMonitor requestMonitor, int defaultDepth, SessionManager sessionManager) {
+    this.groupID = groupID;
     this.logger = logger;
     this.cip = cip;
     this.rrmFactory = rrmFactory;
@@ -83,26 +87,25 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
     this.sessionManager = sessionManager;
   }
 
-  public synchronized void pause() {
+  public synchronized void pause(NodeID remote, int disconnected) {
     assertNotPaused("Attempt to pause while PAUSED");
     state = PAUSED;
     notifyAll();
   }
 
-  public synchronized void starting() {
-    assertPaused("Attempt to start while not PAUSED");
-    state = STARTING;
-    notifyAll();
+  public void initializeHandshake(NodeID thisNode, NodeID remoteNode, ClientHandshakeMessage handshakeMessage) {
+    // Nop
   }
 
-  public synchronized void unpause() {
-    assertStarting("Attempt to unpause while not STARTING");
+  public synchronized void unpause(NodeID remote, int disconnected) {
+    assertPaused("Attempt to unpause while not PAUSED");
     state = RUNNING;
+    clear();
+    requestOutstanding();
     notifyAll();
   }
 
-  public synchronized void clear() {
-    if (state != STARTING) throw new AssertionError("Attempt to clear while not STARTING: " + state);
+  synchronized void clear() {
     lruDNA.clear();
     for (Iterator i = dnaRequests.entrySet().iterator(); i.hasNext();) {
       Entry e = (Entry) i.next();
@@ -129,16 +132,11 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
     if (state != PAUSED) throw new AssertionError(message + ": " + state);
   }
 
-  private void assertStarting(Object message) {
-    if (state != STARTING) throw new AssertionError(message + ": " + state);
-  }
-
   private void assertNotPaused(Object message) {
     if (state == PAUSED) throw new AssertionError(message + ": " + state);
   }
 
-  public synchronized void requestOutstanding() {
-    assertStarting("Attempt to request outstanding object requests while not STARTING");
+  synchronized void requestOutstanding() {
     for (Iterator i = outstandingObjectRequests.values().iterator(); i.hasNext();) {
       RequestManagedObjectMessage rmom = createRequestManagedObjectMessage((ObjectRequestContext) i.next(),
                                                                            new ObjectIDSet());
@@ -164,7 +162,11 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
 
   public synchronized DNA basicRetrieve(ObjectID id, int depth, ObjectID parentContext) {
     boolean isInterrupted = false;
-
+    if (id.getGroupID() != groupID.getGroupNumber()) {
+      //
+      throw new AssertionError("Looking up in the wrong Remote Manager : " + groupID + " id : " + id + " depth : "
+                               + depth + " parent : " + parentContext);
+    }
     ObjectRequestContext ctxt = new ObjectRequestContextImpl(this.cip.getClientID(),
                                                              new ObjectRequestID(objectRequestIDCounter++), id, depth,
                                                              parentContext);
@@ -219,7 +221,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
   }
 
   private RequestManagedObjectMessage createRequestManagedObjectMessage(ObjectRequestContext ctxt, ObjectIDSet removed) {
-    RequestManagedObjectMessage rmom = rmomFactory.newRequestManagedObjectMessage();
+    RequestManagedObjectMessage rmom = rmomFactory.newRequestManagedObjectMessage(groupID);
     ObjectIDSet requestedObjectIDs = ctxt.getObjectIDs();
     rmom.initialize(ctxt, requestedObjectIDs, removed);
     return rmom;
@@ -251,12 +253,12 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
   }
 
   private RequestRootMessage createRootMessage(String name) {
-    RequestRootMessage rrm = rrmFactory.newRequestRootMessage();
+    RequestRootMessage rrm = rrmFactory.newRequestRootMessage(groupID);
     rrm.initialize(name);
     return rrm;
   }
 
-  public synchronized void addRoot(String name, ObjectID id) {
+  public synchronized void addRoot(String name, ObjectID id, NodeID nodeID) {
     waitUntilRunning();
     if (id.isNull()) {
       rootRequests.remove(name);
@@ -271,9 +273,9 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
     notifyAll();
   }
 
-  public synchronized void addAllObjects(SessionID sessionID, long batchID, Collection dnas) {
+  public synchronized void addAllObjects(SessionID sessionID, long batchID, Collection dnas, NodeID nodeID) {
     waitUntilRunning();
-    if (!sessionManager.isCurrentSession(sessionID)) {
+    if (!sessionManager.isCurrentSession(nodeID, sessionID)) {
       logger.warn("Ignoring DNA added from a different session: " + sessionID + ", " + sessionManager);
       return;
     }
@@ -292,9 +294,9 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
     notifyAll();
   }
 
-  public synchronized void objectsNotFoundFor(SessionID sessionID, long batchID, Set missingOIDs) {
+  public synchronized void objectsNotFoundFor(SessionID sessionID, long batchID, Set missingOIDs, NodeID nodeID) {
     waitUntilRunning();
-    if (!sessionManager.isCurrentSession(sessionID)) {
+    if (!sessionManager.isCurrentSession(nodeID, sessionID)) {
       logger.warn("Ignoring Missing Object IDs " + missingOIDs + " from a different session: " + sessionID + ", "
                   + sessionManager);
       return;

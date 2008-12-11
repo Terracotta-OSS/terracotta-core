@@ -29,18 +29,18 @@ public class LockResponseHandler extends AbstractEventHandler {
   public void handleEvent(EventContext context) {
     final LockResponseMessage msg = (LockResponseMessage) context;
     final SessionID sessionID = msg.getLocalSessionID();
-    if(!sessionManager.isCurrentSession(sessionID)) {
+    if(!sessionManager.isCurrentSession(msg.getSourceNodeID() ,sessionID)) {
       logger.warn("Ignoring " + msg + " from a previous session:" + sessionID + ", " + sessionManager);
       return;
     }
     if (msg.isLockAward()) {
-      lockManager.awardLock(msg.getLocalSessionID(), msg.getLockID(), msg.getThreadID(), msg.getLockLevel());
+      lockManager.awardLock(msg.getSourceNodeID(), msg.getLocalSessionID(), msg.getLockID(), msg.getThreadID(), msg.getLockLevel());
     } else if (msg.isLockRecall()) {
         lockManager.recall(msg.getLockID(), msg.getThreadID(), msg.getLockLevel(), msg.getAwardLeaseTime());
     } else if (msg.isLockWaitTimeout()) {
       lockManager.waitTimedOut(msg.getLockID(), msg.getThreadID());
     } else if (msg.isLockNotAwarded()) {
-      lockManager.cannotAwardLock(msg.getLocalSessionID(), msg.getLockID(), msg.getThreadID(), msg.getLockLevel());
+      lockManager.cannotAwardLock(msg.getSourceNodeID(), msg.getLocalSessionID(), msg.getLockID(), msg.getThreadID(), msg.getLockLevel());
     } else if (msg.isLockInfo()) {
       lockManager.queryLockCommit(msg.getThreadID(), msg.getGlobalLockInfo());
     } else {

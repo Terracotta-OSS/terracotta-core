@@ -4,6 +4,7 @@
  */
 package com.tc.object.tx;
 
+import com.tc.net.GroupID;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.msg.CommitTransactionMessageFactory;
@@ -23,8 +24,8 @@ public class TransactionBatchWriterFactory implements TransactionBatchFactory {
     this.foldingConfig = foldingConfig;
   }
 
-  public synchronized ClientTransactionBatch nextBatch() {
-    return new TransactionBatchWriter(new TxnBatchID(++batchIDSequence), new ObjectStringSerializer(), encoding,
+  public synchronized ClientTransactionBatch nextBatch(GroupID groupID) {
+    return new TransactionBatchWriter(groupID, new TxnBatchID(++batchIDSequence), new ObjectStringSerializer(), encoding,
                                       messageFactory, foldingConfig);
   }
 

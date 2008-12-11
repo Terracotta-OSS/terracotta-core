@@ -12,6 +12,7 @@ import com.tc.io.TCByteBufferOutputStream.Mark;
 import com.tc.lang.Recyclable;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.GroupID;
 import com.tc.object.ObjectID;
 import com.tc.object.TCClass;
 import com.tc.object.TCObject;
@@ -55,6 +56,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
   private static final TCLogger                 logger                 = TCLogging
                                                                            .getLogger(TransactionBatchWriter.class);
 
+  private final GroupID                         groupID;
   private final CommitTransactionMessageFactory commitTransactionMessageFactory;
   private final TxnBatchID                      batchID;
   private final LinkedHashMap                   transactionData        = new LinkedHashMap();
@@ -71,9 +73,10 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
   private int                                   bytesWritten           = 0;
   private int                                   numTxns                = 0;
 
-  public TransactionBatchWriter(TxnBatchID batchID, ObjectStringSerializer serializer, DNAEncoding encoding,
-                                CommitTransactionMessageFactory commitTransactionMessageFactory,
+  public TransactionBatchWriter(GroupID groupID, TxnBatchID batchID, ObjectStringSerializer serializer,
+                                DNAEncoding encoding, CommitTransactionMessageFactory commitTransactionMessageFactory,
                                 FoldingConfig foldingConfig) {
+    this.groupID = groupID;
     this.batchID = batchID;
     this.encoding = encoding;
     this.commitTransactionMessageFactory = commitTransactionMessageFactory;
@@ -318,7 +321,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
   }
 
   public synchronized void send() {
-    CommitTransactionMessage msg = this.commitTransactionMessageFactory.newCommitTransactionMessage();
+    CommitTransactionMessage msg = this.commitTransactionMessageFactory.newCommitTransactionMessage(groupID);
     msg.setBatch(this, serializer);
     msg.send();
   }

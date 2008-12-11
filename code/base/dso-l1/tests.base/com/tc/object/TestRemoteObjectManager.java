@@ -5,6 +5,7 @@
 package com.tc.object;
 
 import com.tc.exception.ImplementMe;
+import com.tc.net.NodeID;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.session.SessionID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
@@ -35,50 +36,23 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
     return (ObjectID) retrieveRootIDResults.take();
   }
 
-  public void addRoot(String name, ObjectID id) {
-    throw new ImplementMe();
-  }
-
-  public void addAllObjects(SessionID sessionID, long batchID, Collection dnas) {
-    throw new ImplementMe();
-  }
-
-  public void addObject(SessionID sessionID, DNA dna) {
-    throw new ImplementMe();
-  }
-
   public void removed(ObjectID id) {
-  // do nothing
-  }
-
-  public void requestOutstanding() {
-    throw new ImplementMe();
-  }
-
-  public void pause() {
-    throw new ImplementMe();
-
-  }
-
-  public void clear() {
-    return;
-  }
-
-  public void unpause() {
-    throw new ImplementMe();
-
-  }
-
-  public void starting() {
-    throw new ImplementMe();
+    // do nothing
   }
 
   public DNA retrieve(ObjectID id, int depth) {
     throw new ImplementMe();
   }
 
-  public void objectsNotFoundFor(SessionID sessionID, long batchID, Set missingObjectIDs) {
+  public void addAllObjects(SessionID sessionID, long batchID, Collection dnas, NodeID nodeID) {
     throw new ImplementMe();
   }
 
+  public void addRoot(String name, ObjectID id, NodeID nodeID) {
+    throw new ImplementMe();
+  }
+
+  public void objectsNotFoundFor(SessionID sessionID, long batchID, Set missingObjectIDs, NodeID nodeID) {
+    throw new ImplementMe();
+  }
 }

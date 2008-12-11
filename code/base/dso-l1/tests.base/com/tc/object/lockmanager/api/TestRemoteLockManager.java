@@ -5,9 +5,10 @@
 package com.tc.object.lockmanager.api;
 
 import com.tc.exception.ImplementMe;
+import com.tc.net.GroupID;
 import com.tc.object.session.SessionProvider;
-import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TimerSpec;
+import com.tc.object.tx.TransactionID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.Arrays;
@@ -34,6 +35,7 @@ public class TestRemoteLockManager implements RemoteLockManager {
   private int                         flushCount              = 0;
   private boolean                     isGreedy                = false;
   public LockResponder                lockResponder           = LOOPBACK_LOCK_RESPONDER;
+  private final GroupID               gid                     = new GroupID(0);
 
   public final NoExceptionLinkedQueue lockRequestCalls        = new NoExceptionLinkedQueue();
   private final SessionProvider       sessionProvider;
@@ -45,7 +47,7 @@ public class TestRemoteLockManager implements RemoteLockManager {
   public void setClientLockManager(ClientLockManager lockManager) {
     this.lockManager = lockManager;
   }
-  
+
   public ClientLockManager getClientLockManager() {
     return lockManager;
   }
@@ -109,7 +111,7 @@ public class TestRemoteLockManager implements RemoteLockManager {
     LinkedList myLocks = (LinkedList) locks.get(lockID);
 
     if (myLocks == null) return;
-    
+
     Lock current = (Lock) myLocks.getFirst();
     if (current.threadID.equals(threadID)) {
       int count = current.downCount();
@@ -133,7 +135,8 @@ public class TestRemoteLockManager implements RemoteLockManager {
     return;
   }
 
-  public void recallCommit(LockID lockID, Collection lockContext, Collection waitContext, Collection pendingRequests, Collection pendingTryLockRequests) {
+  public void recallCommit(LockID lockID, Collection lockContext, Collection waitContext, Collection pendingRequests,
+                           Collection pendingTryLockRequests) {
     return;
   }
 
@@ -166,7 +169,7 @@ public class TestRemoteLockManager implements RemoteLockManager {
 
   private class LoopbackLockResponder implements LockResponder {
     public void respondToLockRequest(LockRequest request) {
-      lockManager.awardLock(sessionProvider.getSessionID(), request.lockID(), request.threadID(), request.lockLevel());
+      lockManager.awardLock(gid, sessionProvider.getSessionID(gid), request.lockID(), request.threadID(), request.lockLevel());
     }
   }
 

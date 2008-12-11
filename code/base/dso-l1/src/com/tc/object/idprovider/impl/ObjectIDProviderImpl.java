@@ -5,6 +5,7 @@ package com.tc.object.idprovider.impl;
 
 import com.tc.object.ObjectID;
 import com.tc.object.idprovider.api.ObjectIDProvider;
+import com.tc.object.tx.ClientTransaction;
 import com.tc.util.sequence.Sequence;
 
 public class ObjectIDProviderImpl implements ObjectIDProvider {
@@ -15,7 +16,7 @@ public class ObjectIDProviderImpl implements ObjectIDProvider {
     this.sequence = sequence;
   }
 
-  public synchronized ObjectID next() {
+  public synchronized ObjectID next(ClientTransaction txn) {
     return new ObjectID(sequence.next());
   }
 }

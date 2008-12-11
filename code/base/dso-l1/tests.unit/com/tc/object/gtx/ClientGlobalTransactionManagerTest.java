@@ -5,6 +5,7 @@
 package com.tc.object.gtx;
 
 import com.tc.net.ClientID;
+import com.tc.net.GroupID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.tx.TestRemoteTransactionManager;
 import com.tc.object.tx.TransactionID;
@@ -26,19 +27,19 @@ public class ClientGlobalTransactionManagerTest extends TestCase {
       ClientID cid = new ClientID(new ChannelID(i));
       TransactionID transactionID = new TransactionID(i);
       // start the apply
-      assertTrue(mgr.startApply(cid, transactionID, gtx1));
+      assertTrue(mgr.startApply(cid, transactionID, gtx1, GroupID.NULL_ID));
       // a further call to startApply should return false, since the apply is already in progress or complete.
-      assertFalse(mgr.startApply(cid, transactionID, gtx1));
+      assertFalse(mgr.startApply(cid, transactionID, gtx1, GroupID.NULL_ID));
 
       if (i > 2) {
         GlobalTransactionID lowWatermark = new GlobalTransactionID(i - 1);
         ClientID chIDBelowWatermark = new ClientID(new ChannelID(i - 2));
         TransactionID txIDBelowWatermark = new TransactionID(i - 2);
         GlobalTransactionID belowLowWatermark = new GlobalTransactionID(i - mgr.getAllowedLowWaterMarkDelta());
-        mgr.setLowWatermark(lowWatermark);
+        mgr.setLowWatermark(lowWatermark, GroupID.NULL_ID);
 
         try {
-          mgr.startApply(chIDBelowWatermark, txIDBelowWatermark, belowLowWatermark);
+          mgr.startApply(chIDBelowWatermark, txIDBelowWatermark, belowLowWatermark, GroupID.NULL_ID);
           fail("Should have thrown an UnknownTransactionError");
         } catch (UnknownTransactionError e) {
           // expected
@@ -55,32 +56,32 @@ public class ClientGlobalTransactionManagerTest extends TestCase {
     GlobalTransactionID gtxID3 = new GlobalTransactionID(3 + mgr.getAllowedLowWaterMarkDelta());
 
     assertEquals(0, mgr.size());
-    assertTrue(mgr.startApply(cid, txID, gtxID1));
+    assertTrue(mgr.startApply(cid, txID, gtxID1, GroupID.NULL_ID));
     assertEquals(1, mgr.size());
 
     // calling startApply with a different GlobalTransactionID should have the same result as calling it with the
     // same GlobalTransactionID.
-    assertFalse(mgr.startApply(cid, txID, gtxID1));
-    assertFalse(mgr.startApply(cid, txID, gtxID2));
+    assertFalse(mgr.startApply(cid, txID, gtxID1, GroupID.NULL_ID));
+    assertFalse(mgr.startApply(cid, txID, gtxID2, GroupID.NULL_ID));
     assertEquals(1, mgr.size());
 
-    // setting the low watermark to a gtxID equal to the lowest recorded for that pair should not remove that pair
-    mgr.setLowWatermark(gtxID1);
-    assertFalse(mgr.startApply(cid, txID, gtxID2));
+    // setting the low Water mark to a gtxID equal to the lowest recorded for that pair should not remove that pair
+    mgr.setLowWatermark(gtxID1, GroupID.NULL_ID);
+    assertFalse(mgr.startApply(cid, txID, gtxID2, GroupID.NULL_ID));
     assertEquals(1, mgr.size());
 
-    // setting the low watermark to a gtxID above the highest recorded for that pair SHOULD remove that pair
+    // setting the low water mark to a gtxID above the highest recorded for that pair SHOULD remove that pair
     // NOTE: The server should never re-send a transaction with the lower GlobalTransactionID: the only reason it will
     // send a different global transaction id is if the server crashed before it was able to commit the earlier global
-    // transaction id => server transaction id mapping. In that case, the server will never send the lower gtx as the
-    // low watermark because the mapping doesn't exist in the server (because it didn't get committed)
-    mgr.setLowWatermark(gtxID3);
+    // transaction id => server transaction id mapping. In that case, the server will never send the lower GTX as the
+    // low water mark because the mapping doesn't exist in the server (because it didn't get committed)
+    mgr.setLowWatermark(gtxID3, GroupID.NULL_ID);
     assertEquals(0, mgr.size());
 
     // NOTE: the following should never happen in practical use, but is useful to make sure that the cleanup is
     // happening properly
     // The mgr should have forgotten about the channel id and transaction id by setting the watermark above the highest
     // global transaction id recorded for that transaction.
-    assertTrue(mgr.startApply(cid, txID, gtxID3));
+    assertTrue(mgr.startApply(cid, txID, gtxID3, GroupID.NULL_ID));
   }
 }

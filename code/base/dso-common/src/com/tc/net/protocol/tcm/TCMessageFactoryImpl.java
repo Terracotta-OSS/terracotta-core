@@ -25,13 +25,13 @@ public class TCMessageFactoryImpl implements TCMessageFactory {
 
   public TCMessage createMessage(MessageChannel source, TCMessageType type) throws UnsupportedMessageTypeException {
     GeneratedMessageFactory factory = lookupFactory(type);
-    return factory.createMessage(sessionProvider.getSessionID(), monitor, new TCByteBufferOutputStream(4, 4096, false),
+    return factory.createMessage(sessionProvider.getSessionID(source.getRemoteNodeID()), monitor, new TCByteBufferOutputStream(4, 4096, false),
                                  source, type);
   }
 
   public TCMessage createMessage(MessageChannel source, TCMessageType type, TCMessageHeader header, TCByteBuffer[] data) {
     GeneratedMessageFactory factory = lookupFactory(type);
-    return factory.createMessage(sessionProvider.getSessionID(), monitor, source, header, data);
+    return factory.createMessage(sessionProvider.getSessionID(source.getRemoteNodeID()), monitor, source, header, data);
   }
 
   public void addClassMapping(TCMessageType type, Class msgClass) {

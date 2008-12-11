@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.async.impl;
 
@@ -15,18 +16,18 @@ import com.tc.object.tx.ClientTransactionManager;
 public class TestClientConfigurationContext extends ClientConfigurationContext {
   public ClientLockManager clientLockManager;
 
-  public TestClientConfigurationContext(){
+  public TestClientConfigurationContext() {
     super(null, null, null, null, null);
   }
-  
+
   public ClientLockManager getLockManager() {
     return clientLockManager;
   }
-  
+
   public TCLogger getLogger(Class clazz) {
     return new NullTCLogger();
   }
-  
+
   public RemoteObjectManager getObjectManager() {
     throw new ImplementMe();
   }

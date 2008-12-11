@@ -44,7 +44,7 @@ public class ClientShutdownManager {
 
   public void execute(boolean fromShutdownHook) {
     closeStatisticsAgent();
-    
+
     closeLocalWork();
 
     if (!fromShutdownHook) {
@@ -53,8 +53,7 @@ public class ClientShutdownManager {
   }
 
   private void closeStatisticsAgent() {
-    if (statisticsAgentSubSystem != null &&
-        statisticsAgentSubSystem.isActive()) {
+    if (statisticsAgentSubSystem != null && statisticsAgentSubSystem.isActive()) {
       try {
         statisticsAgentSubSystem.cleanup();
       } catch (Throwable t) {
@@ -85,7 +84,7 @@ public class ClientShutdownManager {
     // open, but it can die before we start (or in the middle of) flushing the local work
     if (channel.isConnected()) { return false; }
 
-    // If we've connected to a persisent server, we should try to flush
+    // If we've connected to a persistent server, we should try to flush
     if (handshakeManager.serverIsPersistent()) { return false; }
 
     // If we think there is more than one server out there, we should try to flush

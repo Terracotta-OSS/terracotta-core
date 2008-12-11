@@ -16,7 +16,7 @@ import java.io.IOException;
 
 /**
  * This message sent from server to client when a batch of transactions has completely been apply()'d. This does NOT
- * mean that the transactions are complete (ie. this ACK should NOT be used to allow a client side commit to complete).
+ * mean that the transactions are complete (i.e. this ACK should NOT be used to allow a client side commit to complete).
  */
 public class BatchTransactionAcknowledgeMessageImpl extends DSOMessageBase implements
     BatchTransactionAcknowledgeMessage {

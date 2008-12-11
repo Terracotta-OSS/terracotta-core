@@ -4,6 +4,7 @@
 package com.tctest.statistics;
 
 import com.tc.object.DistributedObjectClient;
+import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.server.TCServerImpl;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.util.PortChooser;
@@ -17,11 +18,11 @@ public class L1SRACorrectnessTest extends AbstractAgentSRACorrectnessTestCase {
     final TCServerImpl server = (TCServerImpl)startupServer(dsoPort, jmxPort);
 
     try {
-      final TestPauseListener pauseListener = new TestPauseListener();
-      final DistributedObjectClient client = startupClient(dsoPort, jmxPort, pauseListener);
+      final DistributedObjectClient client = startupClient(dsoPort, jmxPort);
       try {
         // wait until client handshake is complete...
-        pauseListener.waitUntilUnpaused();
+        ClientHandshakeManager handshakerMgr = client.getClientHandshakeManager();
+        handshakerMgr.waitForHandshake();
 
         // verify that all the registered SRA classes are correct
         StatisticsAgentSubSystem agent = client.getStatisticsAgentSubSystem();

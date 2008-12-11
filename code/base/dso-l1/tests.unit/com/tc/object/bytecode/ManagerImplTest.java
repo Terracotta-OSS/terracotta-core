@@ -6,8 +6,9 @@ package com.tc.object.bytecode;
 
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCNonPortableObjectError;
-import com.tc.net.protocol.tcm.ChannelIDProvider;
+import com.tc.net.NodeID;
 import com.tc.object.BaseDSOTestCase;
+import com.tc.object.ClientIDProvider;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
 import com.tc.object.TCClass;
@@ -18,6 +19,7 @@ import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.loaders.StandardClassProvider;
 import com.tc.object.session.SessionID;
+import com.tc.object.tx.ClientTransaction;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.tx.TimerSpec;
 import com.tc.object.tx.TransactionID;
@@ -28,7 +30,6 @@ import com.tc.object.util.ToggleableStrongReference;
 import com.tc.text.PrettyPrinter;
 
 import java.io.Writer;
-import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.List;
@@ -82,14 +83,6 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public void receivedAcknowledgement(SessionID sessionID, TransactionID requestID) {
-      throw new ImplementMe();
-    }
-
-    public void receivedBatchAcknowledgement(TxnBatchID batchID) {
-      throw new ImplementMe();
-    }
-
     public void checkReadAccess(Object context) {
       throw new ImplementMe();
     }
@@ -102,7 +95,7 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public ChannelIDProvider getChannelIDProvider() {
+    public ClientIDProvider getClientIDProvider() {
       throw new ImplementMe();
     }
 
@@ -196,6 +189,18 @@ public class ManagerImplTest extends BaseDSOTestCase {
     public PrettyPrinter prettyPrint(PrettyPrinter out) {
       throw new ImplementMe();
     }
+
+    public ClientTransaction getCurrentTransaction() {
+      throw new ImplementMe();
+    }
+
+    public void receivedAcknowledgement(SessionID sessionID, TransactionID requestID, NodeID nodeID) {
+      throw new ImplementMe();
+    }
+
+    public void receivedBatchAcknowledgement(TxnBatchID batchID, NodeID nodeID) {
+      throw new ImplementMe();
+    }
   }
 
   private static class ObjMgr implements ClientObjectManager {
@@ -265,10 +270,6 @@ public class ManagerImplTest extends BaseDSOTestCase {
       return null;
     }
 
-    public Collection getAllObjectIDsAndClear(Collection c) {
-      throw new ImplementMe();
-    }
-
     public WeakReference createNewPeer(TCClass clazz, DNA dna) {
       throw new ImplementMe();
     }
@@ -289,25 +290,10 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public ReferenceQueue getReferenceQueue() {
-      throw new ImplementMe();
-    }
-
     public void shutdown() {
       throw new ImplementMe();
     }
 
-    public void unpause() {
-      throw new ImplementMe();
-    }
-
-    public void pause() {
-      throw new ImplementMe();
-    }
-
-    public void starting() {
-      throw new ImplementMe();
-    }
 
     public void replaceRootIDIfNecessary(String rootName, ObjectID newRootID) {
       throw new ImplementMe();
@@ -328,7 +314,6 @@ public class ManagerImplTest extends BaseDSOTestCase {
 
     public void addPendingCreateObjectsToTransaction() {
       throw new ImplementMe();
-
     }
 
     public boolean hasPendingCreateObjects() {
@@ -369,12 +354,10 @@ public class ManagerImplTest extends BaseDSOTestCase {
 
     public void dump(Writer writer) {
       throw new ImplementMe();
-
     }
 
     public void dumpToLogger() {
       throw new ImplementMe();
-
     }
 
     public PrettyPrinter prettyPrint(PrettyPrinter out) {

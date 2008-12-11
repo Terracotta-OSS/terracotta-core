@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.tcm;
 
@@ -18,7 +19,9 @@ public class ChannelEventImpl implements ChannelEvent {
   }
 
   public String toString() {
-    return getClass().getName() + "@" + System.identityHashCode(this) + "[type=" + this.type + ", timestamp=" + timestamp + ", channel=undisplayed]";
+    return getClass().getName() + "@" + System.identityHashCode(this) + "[type = " + this.type + ", timestamp = "
+           + timestamp + ", channel  = " + channel + " remote node  : " + channel.getRemoteNodeID();
+
   }
 
   public MessageChannel getChannel() {
@@ -28,7 +31,7 @@ public class ChannelEventImpl implements ChannelEvent {
   public ChannelID getChannelID() {
     return getChannel().getChannelID();
   }
-  
+
   public Date getTimestamp() {
     return timestamp;
   }

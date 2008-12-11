@@ -14,7 +14,6 @@ import com.tc.logging.TCLogger;
 import com.tc.net.ClientID;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
-import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackID;
@@ -44,18 +43,19 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
   private final TCMessageRouter  router;
   private final TCMessageParser  parser;
   private final TCLogger         logger;
-  private NodeID                 localNodeID;
-  private NodeID                 remoteNodeID;
+  private final NodeID           remoteNodeID;
+  private volatile NodeID        localNodeID;
 
   protected NetworkLayer         sendLayer;
 
-  AbstractMessageChannel(TCMessageRouter router, TCLogger logger, TCMessageFactory msgFactory) {
+  AbstractMessageChannel(TCMessageRouter router, TCLogger logger, TCMessageFactory msgFactory, NodeID remoteNodeID) {
     this.router = router;
     this.logger = logger;
     this.msgFactory = msgFactory;
     this.parser = new TCMessageParser(this.msgFactory);
+    this.remoteNodeID = remoteNodeID;
+    // This is set after hand shake for the clients
     this.localNodeID = ClientID.NULL_ID;
-    this.remoteNodeID = ServerID.NULL_ID;
   }
 
   public void addAttachment(String key, Object value, boolean replace) {
@@ -99,10 +99,6 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
 
   public NodeID getRemoteNodeID() {
     return remoteNodeID;
-  }
-
-  public void setRemoteNodeID(NodeID remoteNodeID) {
-    this.remoteNodeID = remoteNodeID;
   }
 
   public TCMessage createMessage(TCMessageType type) {
@@ -309,7 +305,7 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
       }
     }
   }
-  
+
   // for testing purpose
   protected NetworkLayer getSendLayer() {
     return sendLayer;

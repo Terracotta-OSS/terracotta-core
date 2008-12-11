@@ -3,6 +3,10 @@
  */
 package com.tc.object.msg;
 
+import com.tc.net.NodeID;
+
 public interface RequestRootMessageFactory {
-  public RequestRootMessage newRequestRootMessage();
+  
+  public RequestRootMessage newRequestRootMessage(NodeID nodeID);
+
 }

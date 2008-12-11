@@ -15,7 +15,7 @@ public class ReceiveRootIDHandler extends AbstractEventHandler {
 
   public void handleEvent(EventContext context) {
     RequestRootResponseMessage m = (RequestRootResponseMessage) context;
-    this.objectManager.addRoot(m.getRootName(), m.getRootID());
+    this.objectManager.addRoot(m.getRootName(), m.getRootID(), m.getSourceNodeID());
 
   }
 

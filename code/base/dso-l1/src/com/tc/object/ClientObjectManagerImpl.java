@@ -7,12 +7,12 @@ package com.tc.object;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.exception.TCNonPortableObjectError;
 import com.tc.exception.TCRuntimeException;
-import com.tc.logging.ChannelIDLogger;
+import com.tc.logging.ClientIDLogger;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.DumpHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.protocol.tcm.ChannelIDProvider;
+import com.tc.net.NodeID;
 import com.tc.object.appevent.ApplicationEvent;
 import com.tc.object.appevent.ApplicationEventContext;
 import com.tc.object.appevent.NonPortableEventContext;
@@ -27,12 +27,15 @@ import com.tc.object.cache.Evictable;
 import com.tc.object.cache.EvictionPolicy;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.dna.api.DNA;
+import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.idprovider.api.ObjectIDProvider;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.loaders.Namespace;
 import com.tc.object.logging.RuntimeLogger;
+import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.JMXMessage;
 import com.tc.object.net.DSOClientMessageChannel;
+import com.tc.object.tx.ClientTransaction;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.util.IdentityWeakHashMap;
 import com.tc.object.util.ToggleableStrongReference;
@@ -72,11 +75,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class ClientObjectManagerImpl implements ClientObjectManager, PortableObjectProvider, Evictable, DumpHandler,
-    PrettyPrintable {
+public class ClientObjectManagerImpl implements ClientObjectManager, ClientHandshakeCallback, PortableObjectProvider,
+    Evictable, DumpHandler, PrettyPrintable {
 
   private static final State                   PAUSED                 = new State("PAUSED");
-  private static final State                   STARTING               = new State("STARTING");
   private static final State                   RUNNING                = new State("RUNNING");
 
   private static final LiteralValues           literals               = new LiteralValues();
@@ -134,7 +136,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
 
   public ClientObjectManagerImpl(RemoteObjectManager remoteObjectManager, DSOClientConfigHelper clientConfiguration,
                                  ObjectIDProvider idProvider, EvictionPolicy cache, RuntimeLogger runtimeLogger,
-                                 ChannelIDProvider provider, ClassProvider classProvider, TCClassFactory classFactory,
+                                 ClientIDProvider provider, ClassProvider classProvider, TCClassFactory classFactory,
                                  TCObjectFactory objectFactory, Portability portability,
                                  DSOClientMessageChannel channel, ToggleableReferenceManager referenceManager) {
     this.remoteObjectManager = remoteObjectManager;
@@ -145,7 +147,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     this.portability = portability;
     this.channel = channel;
     this.referenceManager = referenceManager;
-    this.logger = new ChannelIDLogger(provider, TCLogging.getLogger(ClientObjectManager.class));
+    this.logger = new ClientIDLogger(provider, TCLogging.getLogger(ClientObjectManager.class));
     this.classProvider = classProvider;
     this.traverseTest = new NewObjectTraverseTest();
     this.traverser = new Traverser(new AddManagedObjectAction(), this);
@@ -172,22 +174,22 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     return classProvider.getClassFor(className, loaderDesc);
   }
 
-  public synchronized void pause() {
+  public synchronized void pause(NodeID remote, int disconnected) {
     assertNotPaused("Attempt to pause while PAUSED");
     state = PAUSED;
     notifyAll();
   }
 
-  public synchronized void starting() {
-    assertPaused("Attempt to start while not PAUSED");
-    state = STARTING;
+  public synchronized void unpause(NodeID remote, int disconnected) {
+    assertPaused("Attempt to unpause while not PAUSED");
+    state = RUNNING;
     notifyAll();
   }
 
-  public synchronized void unpause() {
-    assertStarting("Attempt to unpause while not STARTING");
-    state = RUNNING;
-    notifyAll();
+  public synchronized void initializeHandshake(NodeID thisNode, NodeID remoteNode,
+                                               ClientHandshakeMessage handshakeMessage) {
+    assertPaused("Attempt to initiateHandshake while not PAUSED");
+    addAllObjectIDs(handshakeMessage.getObjectIDs());
   }
 
   private void waitUntilRunning() {
@@ -207,12 +209,12 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     if (state != PAUSED) throw new AssertionError(message + ": " + state);
   }
 
-  private void assertStarting(Object message) {
-    if (state != STARTING) throw new AssertionError(message + ": " + state);
-  }
-
   private void assertNotPaused(Object message) {
     if (state == PAUSED) throw new AssertionError(message + ": " + state);
+  }
+
+  protected synchronized boolean isPaused() {
+    return state == PAUSED;
   }
 
   public TraversedReferences getPortableObjects(Class clazz, Object start, TraversedReferences addTo) {
@@ -555,13 +557,11 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     return basicLookupByID(id);
   }
 
-  public synchronized Collection getAllObjectIDsAndClear(Collection c) {
-    assertStarting("Called when not in STARTING state !");
+  synchronized Set addAllObjectIDs(Set oids) {
     for (Iterator i = idToManaged.keySet().iterator(); i.hasNext();) {
-      c.add(i.next());
+      oids.add(i.next());
     }
-    remoteObjectManager.clear();
-    return c;
+    return oids;
   }
 
   public Object lookupRoot(String rootName) {
@@ -992,7 +992,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     TCObject obj = null;
 
     if ((obj = basicLookup(pojo)) == null) {
-      obj = factory.getNewInstance(nextObjectID(), pojo, pojo.getClass(), true);
+      obj = factory.getNewInstance(nextObjectID(txManager.getCurrentTransaction()), pojo, pojo.getClass(), true);
       txManager.createObject(obj);
       basicAddLocal(obj, false);
       executePostCreateMethod(pojo);
@@ -1016,7 +1016,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     TCObject obj = null;
 
     if ((obj = basicLookup(pojo)) == null) {
-      obj = factory.getNewInstance(nextObjectID(), pojo, pojo.getClass(), true);
+      obj = factory.getNewInstance(nextObjectID(txManager.getCurrentTransaction()), pojo, pojo.getClass(), true);
       pendingCreateTCObjects.add(obj);
       pendingCreatePojos.add(pojo);
       basicAddLocal(obj, false);
@@ -1046,8 +1046,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     return !pendingCreateTCObjects.isEmpty();
   }
 
-  private ObjectID nextObjectID() {
-    return idProvider.next();
+  private ObjectID nextObjectID(ClientTransaction txn) {
+    return idProvider.next(txn);
   }
 
   public WeakReference createNewPeer(TCClass clazz, DNA dna) {

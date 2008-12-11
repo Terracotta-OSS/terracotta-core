@@ -5,10 +5,14 @@
 package com.tc.objectserver.tx;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.exception.ImplementMe;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
+import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.msg.CommitTransactionMessage;
+import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionBatch;
 
 import java.util.ArrayList;
@@ -59,4 +63,31 @@ public class TestCommitTransactionMessage implements CommitTransactionMessage {
     return clientID;
   }
 
+  public void dehydrate() {
+    throw new ImplementMe();
+  }
+
+  public MessageChannel getChannel() {
+    throw new ImplementMe();
+  }
+
+  public NodeID getDestinationNodeID() {
+    throw new ImplementMe();
+  }
+
+  public SessionID getLocalSessionID() {
+    throw new ImplementMe();
+  }
+
+  public TCMessageType getMessageType() {
+    throw new ImplementMe();
+  }
+
+  public int getTotalLength() {
+    throw new ImplementMe();
+  }
+
+  public void hydrate() {
+    throw new ImplementMe();
+  }
 }

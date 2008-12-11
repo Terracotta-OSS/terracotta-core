@@ -5,9 +5,10 @@
 package com.tc.object;
 
 import com.tc.async.api.Sink;
+import com.tc.net.GroupID;
 import com.tc.net.MaxConnectionsExceededException;
+import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ChannelEventListener;
-import com.tc.net.protocol.tcm.ChannelIDProvider;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.msg.AcknowledgeTransactionMessage;
@@ -39,17 +40,21 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     CompletedTransactionLowWaterMarkMessageFactory {
 
   private final ClientMessageChannel channel;
+  private final GroupID              groups[];
+  private ClientIDProvider           clientIDProvider;
 
-  public DSOClientMessageChannelImpl(ClientMessageChannel theChannel) {
+  public DSOClientMessageChannelImpl(ClientMessageChannel theChannel, GroupID[] gids) {
     this.channel = theChannel;
+    this.groups = gids;
+    this.clientIDProvider = new ClientIDProviderImpl(theChannel.getChannelIDProvider());
   }
 
   public void addClassMapping(TCMessageType messageType, Class messageClass) {
     this.channel.addClassMapping(messageType, messageClass);
   }
 
-  public ChannelIDProvider getChannelIDProvider() {
-    return channel.getChannelIDProvider();
+  public ClientIDProvider getClientIDProvider() {
+    return clientIDProvider;
   }
 
   public void addListener(ChannelEventListener listener) {
@@ -80,7 +85,7 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return this;
   }
 
-  public RequestRootMessage newRequestRootMessage() {
+  public RequestRootMessage newRequestRootMessage(NodeID nodeID) {
     return (RequestRootMessage) channel.createMessage(TCMessageType.REQUEST_ROOT_MESSAGE);
   }
 
@@ -88,7 +93,7 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return this;
   }
 
-  public RequestManagedObjectMessage newRequestManagedObjectMessage() {
+  public RequestManagedObjectMessage newRequestManagedObjectMessage(NodeID nodeID) {
     return (RequestManagedObjectMessage) channel.createMessage(TCMessageType.REQUEST_MANAGED_OBJECT_MESSAGE);
   }
 
@@ -100,11 +105,11 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return this;
   }
 
-  public AcknowledgeTransactionMessage newAcknowledgeTransactionMessage() {
+  public AcknowledgeTransactionMessage newAcknowledgeTransactionMessage(NodeID remoteNode) {
     return (AcknowledgeTransactionMessage) channel.createMessage(TCMessageType.ACKNOWLEDGE_TRANSACTION_MESSAGE);
   }
 
-  public ClientHandshakeMessage newClientHandshakeMessage() {
+  public ClientHandshakeMessage newClientHandshakeMessage(NodeID remoteNode) {
     ClientHandshakeMessage rv = (ClientHandshakeMessage) channel.createMessage(TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
     return rv;
   }
@@ -121,7 +126,7 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return (JMXMessage) channel.createMessage(TCMessageType.JMX_MESSAGE);
   }
 
-  public CompletedTransactionLowWaterMarkMessage newCompletedTransactionLowWaterMarkMessage() {
+  public CompletedTransactionLowWaterMarkMessage newCompletedTransactionLowWaterMarkMessage(NodeID remoteID) {
     return (CompletedTransactionLowWaterMarkMessage) channel
         .createMessage(TCMessageType.COMPLETED_TRANSACTION_LOWWATERMARK_MESSAGE);
   }
@@ -130,7 +135,7 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return this;
   }
 
-  public CommitTransactionMessage newCommitTransactionMessage() {
+  public CommitTransactionMessage newCommitTransactionMessage(NodeID remoteNode) {
     return (CommitTransactionMessage) channel.createMessage(TCMessageType.COMMIT_TRANSACTION_MESSAGE);
   }
 
@@ -146,4 +151,7 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return this;
   }
 
+  public GroupID[] getGroupIDs() {
+    return groups;
+  }
 }

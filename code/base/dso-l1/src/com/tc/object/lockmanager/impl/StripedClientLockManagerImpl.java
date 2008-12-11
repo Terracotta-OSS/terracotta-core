@@ -7,6 +7,8 @@ package com.tc.object.lockmanager.impl;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TextDecoratorTCLogger;
 import com.tc.management.ClientLockStatManager;
+import com.tc.net.NodeID;
+import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.lockmanager.api.ClientLockManager;
 import com.tc.object.lockmanager.api.ClientLockManagerConfig;
 import com.tc.object.lockmanager.api.LockID;
@@ -15,29 +17,23 @@ import com.tc.object.lockmanager.api.RemoteLockManager;
 import com.tc.object.lockmanager.api.TCLockTimer;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.lockmanager.api.WaitListener;
+import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
 import com.tc.object.tx.TimerSpec;
 import com.tc.text.PrettyPrinter;
-import com.tc.util.State;
 import com.tc.util.runtime.LockInfoByThreadID;
 
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Collection;
 
-public class StripedClientLockManagerImpl implements ClientLockManager {
+public class StripedClientLockManagerImpl implements ClientLockManager, ClientHandshakeCallback {
 
-  private static final State      RUNNING  = new State("RUNNING");
-  private static final State      STARTING = new State("STARTING");
-  private static final State      PAUSED   = new State("PAUSED");
-
-  private State                   state    = RUNNING;
-
-  private final ClientLockManager lockManagers[];
-  private final int               segmentShift;
-  private final int               segmentMask;
-  private final TCLogger          logger;
+  private final ClientLockManagerImpl lockManagers[];
+  private final int                   segmentShift;
+  private final int                   segmentMask;
+  private final TCLogger              logger;
 
   public StripedClientLockManagerImpl(TCLogger logger, RemoteLockManager remoteLockManager,
                                       SessionManager sessionManager, ClientLockStatManager lockStatManager,
@@ -54,7 +50,7 @@ public class StripedClientLockManagerImpl implements ClientLockManager {
     segmentShift = 32 - sshift;
     segmentMask = ssize - 1;
 
-    lockManagers = new ClientLockManager[ssize];
+    lockManagers = new ClientLockManagerImpl[ssize];
     TCLockTimer waitTimer = new TCLockTimerImpl();
     for (int i = 0; i < lockManagers.length; i++) {
       lockManagers[i] = new ClientLockManagerImpl(new TextDecoratorTCLogger(logger, "LM[" + i + "]"),
@@ -81,50 +77,43 @@ public class StripedClientLockManagerImpl implements ClientLockManager {
    * @param hash the hash code for the key
    * @return the segment
    */
-  final ClientLockManager lockManagerFor(LockID lock) {
+  final ClientLockManagerImpl lockManagerFor(LockID lock) {
     return lockManagerFor(lock.asString());
   }
 
-  private ClientLockManager lockManagerFor(String lockID) {
+  private ClientLockManagerImpl lockManagerFor(String lockID) {
     int hash = hash(lockID.hashCode());
     return lockManagers[(hash >>> segmentShift) & segmentMask];
   }
 
-  public synchronized void starting() {
-    this.state = STARTING;
+  public synchronized void pause(NodeID remote, int disconnected) {
     for (int i = 0; i < lockManagers.length; i++) {
-      lockManagers[i].starting();
+      lockManagers[i].pause(remote, disconnected);
     }
   }
 
-  public synchronized void pause() {
-    this.state = PAUSED;
+  public synchronized void unpause(NodeID remote, int disconnected) {
     for (int i = 0; i < lockManagers.length; i++) {
-      lockManagers[i].pause();
+      lockManagers[i].unpause(remote, disconnected);
     }
   }
 
-  public synchronized void unpause() {
-    this.state = RUNNING;
+  public void initializeHandshake(NodeID thisNode, NodeID remoteNode, ClientHandshakeMessage handshakeMessage) {
     for (int i = 0; i < lockManagers.length; i++) {
-      lockManagers[i].unpause();
+      lockManagers[i].initializeHandshake(thisNode, remoteNode, handshakeMessage);
     }
-  }
-
-  public synchronized boolean isStarting() {
-    return state == STARTING;
   }
 
   public void lock(LockID id, ThreadID threadID, int lockType, String lockObjectType, String contextInfo) {
     lockManagerFor(id).lock(id, threadID, lockType, lockObjectType, contextInfo);
   }
 
-  public void awardLock(SessionID sessionID, LockID id, ThreadID threadID, int type) {
-    lockManagerFor(id).awardLock(sessionID, id, threadID, type);
+  public void awardLock(NodeID nid, SessionID sessionID, LockID id, ThreadID threadID, int type) {
+    lockManagerFor(id).awardLock(nid, sessionID, id, threadID, type);
   }
 
-  public void cannotAwardLock(SessionID sessionID, LockID id, ThreadID threadID, int type) {
-    lockManagerFor(id).cannotAwardLock(sessionID, id, threadID, type);
+  public void cannotAwardLock(NodeID nid, SessionID sessionID, LockID id, ThreadID threadID, int type) {
+    lockManagerFor(id).cannotAwardLock(nid, sessionID, id, threadID, type);
   }
 
   public boolean isLocked(LockID lockID, ThreadID threadID, int lockLevel) {

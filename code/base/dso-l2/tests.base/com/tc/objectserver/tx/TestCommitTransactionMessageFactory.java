@@ -4,6 +4,7 @@
  */
 package com.tc.objectserver.tx;
 
+import com.tc.net.NodeID;
 import com.tc.object.msg.CommitTransactionMessage;
 import com.tc.object.msg.CommitTransactionMessageFactory;
 
@@ -14,7 +15,7 @@ public class TestCommitTransactionMessageFactory implements CommitTransactionMes
 
   public final List messages = new LinkedList();
 
-  public CommitTransactionMessage newCommitTransactionMessage() {
+  public CommitTransactionMessage newCommitTransactionMessage(NodeID remoteNode) {
     CommitTransactionMessage rv = new TestCommitTransactionMessage();
     messages.add(rv);
     return rv;

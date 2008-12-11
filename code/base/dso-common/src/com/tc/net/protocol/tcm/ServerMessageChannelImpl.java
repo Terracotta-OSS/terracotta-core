@@ -24,10 +24,9 @@ public class ServerMessageChannelImpl extends AbstractMessageChannel implements 
    */
   protected ServerMessageChannelImpl(ChannelID sessionID, TCMessageRouter router, TCMessageFactory msgFactory,
                                      final ServerID serverID) {
-    super(router, logger, msgFactory);
+    super(router, logger, msgFactory, new ClientID(sessionID));
     this.sessionID = sessionID;
     setLocalNodeID(serverID);
-    setRemoteNodeID(new ClientID(sessionID));
 
     // server message channels should always be open initially
     this.getStatus().open();

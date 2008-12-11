@@ -9,6 +9,7 @@ import com.tc.bytes.TCByteBufferFactory;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ClientID;
+import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
@@ -39,7 +40,7 @@ public class ServerTxnAckMessageTest extends TestCase {
 
   public void setUp() {
     TestCommitTransactionMessage testCommitTransactionMessage = (TestCommitTransactionMessage) new TestCommitTransactionMessageFactory()
-        .newCommitTransactionMessage();
+        .newCommitTransactionMessage(GroupID.NULL_ID);
     testCommitTransactionMessage.setBatch(new TestTransactionBatch(new TCByteBuffer[] { TCByteBufferFactory
         .getInstance(false, 3452) }), new ObjectStringSerializer());
     testCommitTransactionMessage.setChannelID(new ClientID(new ChannelID(channelId)));

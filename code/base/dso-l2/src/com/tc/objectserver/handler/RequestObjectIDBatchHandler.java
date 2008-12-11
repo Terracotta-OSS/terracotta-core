@@ -7,10 +7,12 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
+import com.tc.exception.TCRuntimeException;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.object.ObjectID;
 import com.tc.object.msg.ObjectIDBatchRequest;
 import com.tc.object.msg.ObjectIDBatchRequestResponseMessage;
 import com.tc.object.net.DSOChannelManager;
@@ -36,6 +38,10 @@ public class RequestObjectIDBatchHandler extends AbstractEventHandler {
       ObjectIDBatchRequestResponseMessage response = (ObjectIDBatchRequestResponseMessage) channel
           .createMessage(TCMessageType.OBJECT_ID_BATCH_REQUEST_RESPONSE_MESSAGE);
       long ids = sequenceProvider.nextObjectIDBatch(batchSize);
+      if (ids > ObjectID.MAX_ID) {
+        // Since we use a byte for GroupId
+        throw new TCRuntimeException("Ran out of ObjectIDs : Max : " + ObjectID.MAX_ID + " Got : " + ids);
+      }
       this.clusterStateMgr.publishNextAvailableObjectID(ids + batchSize);
       response.initialize(ids, ids + batchSize);
       response.send();

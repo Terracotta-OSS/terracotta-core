@@ -50,6 +50,10 @@ public class ClientID implements NodeID {
   public ChannelID getChannelID() {
     return channelID;
   }
+  
+  public long toLong() {
+    return channelID.toLong();
+  }
 
   /**
    * FIXME::Two difference serialization mechanisms are implemented since these classes are used with two different

@@ -3,12 +3,14 @@
  */
 package com.tc.object.session;
 
+import com.tc.net.NodeID;
+
 public interface SessionManager {
   
-  public boolean isCurrentSession(SessionID sessionID);
+  public boolean isCurrentSession(NodeID nid, SessionID sessionID);
 
   /**
    * Tells the session manager to start a new session.
    */
-  public void newSession();
+  public void newSession(NodeID nid);
 }

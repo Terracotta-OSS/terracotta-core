@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.statistics;
 
@@ -15,7 +16,6 @@ import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogging;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.object.DistributedObjectClient;
-import com.tc.object.PauseListener;
 import com.tc.object.bytecode.MockClassProvider;
 import com.tc.object.bytecode.NullManager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
@@ -35,7 +35,7 @@ abstract public class AbstractAgentSRACorrectnessTestCase extends BaseDSOTestCas
   public void checkSRAsInRegistry(final StatisticsAgentSubSystem agent) {
     SRACorrectnessTest testLogic = new SRACorrectnessTest();
     StatisticsRetrievalRegistry registry = agent.getStatisticsRetrievalRegistry();
-    for (StatisticRetrievalAction sra : (Collection<StatisticRetrievalAction>)registry.getRegisteredActionInstances()) {
+    for (StatisticRetrievalAction sra : (Collection<StatisticRetrievalAction>) registry.getRegisteredActionInstances()) {
       testLogic.checkCorrectSRA(sra);
     }
   }
@@ -47,28 +47,28 @@ abstract public class AbstractAgentSRACorrectnessTestCase extends BaseDSOTestCas
     return server;
   }
 
-  protected DistributedObjectClient startupClient(final int dsoPort, final int jmxPort, final TestPauseListener pauseListener) throws ConfigurationSetupException {
+  protected DistributedObjectClient startupClient(final int dsoPort, final int jmxPort)
+      throws ConfigurationSetupException {
     configFactory().addServerToL1Config(null, dsoPort, jmxPort);
     L1TVSConfigurationSetupManager manager = super.createL1ConfigManager();
 
-    DistributedObjectClient client = new DistributedObjectClient(
-      new StandardDSOClientConfigHelperImpl(manager),
-      new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(DistributedObjectClient.class))),
-      new MockClassProvider(),
-      new PreparedComponentsFromL2Connection(manager),
-      NullManager.getInstance(),
-      new Cluster());
-    client.setPauseListener(pauseListener);
+    DistributedObjectClient client = new DistributedObjectClient(new StandardDSOClientConfigHelperImpl(manager),
+                                                                 new TCThreadGroup(new ThrowableHandler(TCLogging
+                                                                     .getLogger(DistributedObjectClient.class))),
+                                                                 new MockClassProvider(),
+                                                                 new PreparedComponentsFromL2Connection(manager),
+                                                                 NullManager.getInstance(), new Cluster());
     client.start();
     return client;
   }
 
-  protected final TCThreadGroup group = new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(DistributedObjectServer.class)));
+  protected final TCThreadGroup group = new TCThreadGroup(new ThrowableHandler(TCLogging
+                                          .getLogger(DistributedObjectServer.class)));
 
   protected class StartAction implements StartupHelper.StartupAction {
     private final int dsoPort;
     private final int jmxPort;
-    private TCServer server = null;
+    private TCServer  server = null;
 
     private StartAction(final int dsoPort, final int jmxPort) {
       this.dsoPort = dsoPort;
@@ -91,53 +91,12 @@ abstract public class AbstractAgentSRACorrectnessTestCase extends BaseDSOTestCas
       ManagedObjectStateFactory.disableSingleton(true);
       TestTVSConfigurationSetupManagerFactory factory = AbstractAgentSRACorrectnessTestCase.this.configFactory();
       L2TVSConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null);
-      ((SettableConfigItem)factory.l2DSOConfig().bind()).setValue("127.0.0.1");
-      ((SettableConfigItem)factory.l2DSOConfig().listenPort()).setValue(dsoPort);
-      ((SettableConfigItem)factory.l2CommonConfig().jmxPort()).setValue(jmxPort);
+      ((SettableConfigItem) factory.l2DSOConfig().bind()).setValue("127.0.0.1");
+      ((SettableConfigItem) factory.l2DSOConfig().listenPort()).setValue(dsoPort);
+      ((SettableConfigItem) factory.l2CommonConfig().jmxPort()).setValue(jmxPort);
 
       server = new TCServerImpl(manager);
       server.start();
-    }
-  }
-
-  protected static final class TestPauseListener implements PauseListener {
-
-    private boolean paused = true;
-
-    public void waitUntilPaused() throws InterruptedException {
-      waitUntilCondition(true);
-    }
-
-    public void waitUntilUnpaused() throws InterruptedException {
-      waitUntilCondition(false);
-    }
-
-    public boolean isPaused() {
-      synchronized (this) {
-        return paused;
-      }
-    }
-
-    private void waitUntilCondition(boolean b) throws InterruptedException {
-      synchronized (this) {
-        while (b != paused) {
-          wait();
-        }
-      }
-    }
-
-    public void notifyPause() {
-      synchronized (this) {
-        paused = true;
-        notifyAll();
-      }
-    }
-
-    public void notifyUnpause() {
-      synchronized (this) {
-        paused = false;
-        notifyAll();
-      }
     }
   }
 }

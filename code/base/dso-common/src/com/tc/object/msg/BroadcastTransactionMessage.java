@@ -5,6 +5,7 @@
 package com.tc.object.msg;
 
 import com.tc.net.NodeID;
+import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
@@ -17,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public interface BroadcastTransactionMessage {
+public interface BroadcastTransactionMessage extends TCMessage {
 
   public void initialize(List chges, Set lookupObjectIDs, ObjectStringSerializer aSerializer, LockID[] lids, long cid,
                         TransactionID txID, NodeID commitID, GlobalTransactionID gtx, TxnType txnType,
@@ -47,7 +48,5 @@ public interface BroadcastTransactionMessage {
   public Map getNewRoots();
 
   public List getDmiDescriptors();
-
-  public void send();
 
 }

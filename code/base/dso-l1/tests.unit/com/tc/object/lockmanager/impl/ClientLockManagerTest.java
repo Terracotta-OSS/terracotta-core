@@ -18,7 +18,8 @@ import com.tc.logging.NullTCLogger;
 import com.tc.logging.TCLogger;
 import com.tc.management.ClientLockStatManager;
 import com.tc.management.L1Info;
-import com.tc.object.lockmanager.api.ClientLockManager;
+import com.tc.net.GroupID;
+import com.tc.net.NodeID;
 import com.tc.object.lockmanager.api.ClientLockManagerConfig;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
@@ -31,6 +32,7 @@ import com.tc.object.lockmanager.api.ThreadLockManager;
 import com.tc.object.lockmanager.api.WaitListener;
 import com.tc.object.lockmanager.api.WaitLockRequest;
 import com.tc.object.lockmanager.api.TestRemoteLockManager.LockResponder;
+import com.tc.object.msg.TestClientHandshakeMessage;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
@@ -54,13 +56,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author steve
- */
 public class ClientLockManagerTest extends TCTestCase {
-  private ClientLockManager     lockManager;
+  private ClientLockManagerImpl lockManager;
   private TestRemoteLockManager rmtLockManager;
   private TestSessionManager    sessionManager;
+  private final GroupID         gid = new GroupID(0);
 
   public ClientLockManagerTest() {
     //
@@ -95,7 +95,7 @@ public class ClientLockManagerTest extends TCTestCase {
 
       public void respondToLockRequest(LockRequest request) {
 
-        clientLockManagerImpl.awardLock(sessionManager.getSessionID(), request.lockID(), ThreadID.VM_ID, LockLevel
+        clientLockManagerImpl.awardLock(gid, sessionManager.getSessionID(gid), request.lockID(), ThreadID.VM_ID, LockLevel
             .makeGreedy(request.lockLevel()));
       }
     };
@@ -140,7 +140,7 @@ public class ClientLockManagerTest extends TCTestCase {
 
       public void respondToLockRequest(LockRequest request) {
 
-        clientLockManagerImpl.awardLock(sessionManager.getSessionID(), request.lockID(), ThreadID.VM_ID, LockLevel
+        clientLockManagerImpl.awardLock(gid, sessionManager.getSessionID(gid), request.lockID(), ThreadID.VM_ID, LockLevel
             .makeGreedy(request.lockLevel()));
       }
     };
@@ -359,10 +359,10 @@ public class ClientLockManagerTest extends TCTestCase {
         this.awardBarrier = awardBarrier;
       }
 
-      public void awardLock(SessionID sessionID, LockID lockID, ThreadID threadID, int level) {
+      public void awardLock(NodeID nid, SessionID sessionID, LockID lockID, ThreadID threadID, int level) {
         try {
           awardBarrier.barrier();
-          super.awardLock(sessionID, lockID, threadID, level);
+          super.awardLock(nid, sessionID, lockID, threadID, level);
         } catch (BrokenBarrierException e) {
           throw new TCRuntimeException(e);
         } catch (InterruptedException e) {
@@ -386,7 +386,7 @@ public class ClientLockManagerTest extends TCTestCase {
       public void run() {
         try {
           requestBarrier.barrier();
-          lockManager.awardLock(sessionManager.getSessionID(), lockID1, ThreadID.VM_ID, LockLevel
+          lockManager.awardLock(gid, sessionManager.getSessionID(gid), lockID1, ThreadID.VM_ID, LockLevel
               .makeGreedy(LockLevel.WRITE));
         } catch (BrokenBarrierException e) {
           throw new TCRuntimeException(e);
@@ -411,7 +411,7 @@ public class ClientLockManagerTest extends TCTestCase {
 
       public void respondToLockRequest(LockRequest request) {
         queue.put(request);
-        lockManager.awardLock(sessionManager.getSessionID(), request.lockID(), ThreadID.VM_ID, LockLevel
+        lockManager.awardLock(gid, sessionManager.getSessionID(gid), request.lockID(), ThreadID.VM_ID, LockLevel
             .makeGreedy(request.lockLevel()));
       }
     };
@@ -475,10 +475,6 @@ public class ClientLockManagerTest extends TCTestCase {
       fail("Waiter thread had exceptions!");
     }
 
-    // pause the lock manager in preparation for pulling interrogating the
-    // state...
-    pauseAndStart();
-
     Set s = new HashSet();
     lockManager.addAllHeldLocksTo(s);
     assertEquals(heldLocks, s);
@@ -495,13 +491,10 @@ public class ClientLockManagerTest extends TCTestCase {
     rmtLockManager.lockResponder = rmtLockManager.NULL_LOCK_RESPONDER;
     assertTrue(rmtLockManager.lockRequestCalls.isEmpty());
 
-    lockManager.unpause();
-
     // now call notified() and make sure that the appropriate waits become
     // pending requests
     lockManager.notified(waitLockRequest.lockID(), waitLockRequest.threadID());
 
-    pauseAndStart();
     // The held locks should be the same
     s.clear();
     lockManager.addAllHeldLocksTo(s);
@@ -520,14 +513,11 @@ public class ClientLockManagerTest extends TCTestCase {
     assertEquals(waitLockRequest.threadID(), lr.threadID());
     assertTrue(waitLockRequest.lockLevel() == lr.lockLevel());
 
-    lockManager.unpause();
-
     // now make sure that if you award the lock, the right stuff happens
-    lockManager.awardLock(sessionManager.getSessionID(), waitLockRequest.lockID(), waitLockRequest.threadID(),
+    lockManager.awardLock(gid, sessionManager.getSessionID(gid), waitLockRequest.lockID(), waitLockRequest.threadID(),
                           waitLockRequest.lockLevel());
     heldLocks.add(waitLockRequest);
 
-    pauseAndStart();
     // the held locks should contain the newly awarded, previously notified
     // lock.
     s.clear();
@@ -572,23 +562,13 @@ public class ClientLockManagerTest extends TCTestCase {
     // lockManager.lock(synchWriteLock, tx3, synchWriteLockLevel);
 
     Set s = new HashSet();
-    try {
-      lockManager.addAllHeldLocksTo(s);
-      fail("Expected an assertion error.");
-    } catch (AssertionError e) {
-      // expected
-    }
-
-    pauseAndStart();
     lockManager.addAllHeldLocksTo(s);
     assertEquals(lockRequests.size(), s.size());
     assertEquals(lockRequests, s);
 
-    lockManager.unpause();
     lockManager.unlock(lockID, tx1);
     lockManager.unlock(readLock, tx2);
     // lockManager.unlock(synchWriteLock, tx3);
-    pauseAndStart();
     assertEquals(0, lockManager.addAllHeldLocksTo(new HashSet()).size());
   }
 
@@ -622,14 +602,6 @@ public class ClientLockManagerTest extends TCTestCase {
     ThreadUtil.reallySleep(200);
 
     Set s = new HashSet();
-    try {
-      lockManager.addAllWaitersTo(s);
-      fail("Expected an assertion error.");
-    } catch (AssertionError e) {
-      // expected
-    }
-
-    pauseAndStart();
     lockManager.addAllWaitersTo(s);
     List waiters = new LinkedList(s);
     String threadDump = l1info.takeThreadDump(System.currentTimeMillis());
@@ -683,8 +655,7 @@ public class ClientLockManagerTest extends TCTestCase {
       }
     };
 
-    assertFalse(lockManager.isStarting());
-    pauseAndStart();
+    pause();
     locker.start();
 
     // wait until the locker has a chance to start up...
@@ -694,21 +665,22 @@ public class ClientLockManagerTest extends TCTestCase {
 
     // make sure it hasn't returned from the lock call.
     assertTrue(lockComplete.peek() == null);
-    // unpause...
-    assertTrue(lockManager.isStarting());
-    lockManager.unpause();
-    assertFalse(lockManager.isStarting());
+
+    unpause();
+
     // make sure the call to lock(..) completes
     System.out.println(lockComplete.take());
     System.out.println("Done testing lock(..)");
 
     // now pause again and allow the locker to call unlock...
-    pauseAndStart();
+    pause();
     flowControl.put("test: lock manager paused, it's ok for locker to call unlock(..)");
     ThreadUtil.reallySleep(500);
     assertTrue(unlockComplete.peek() == null);
-    // now unpause and make sure the locker returns from unlock(..)
-    lockManager.unpause();
+
+    // now UN-pause and make sure the locker returns from unlock(..)
+    unpause();
+
     unlockComplete.take();
     System.out.println("Done testing unlock(..)");
 
@@ -731,7 +703,7 @@ public class ClientLockManagerTest extends TCTestCase {
           public void run() {
             requests.add(request);
             if (respond.get()) {
-              lockManager.awardLock(sessionManager.getSessionID(), request.lockID(), request.threadID(), request
+              lockManager.awardLock(gid, sessionManager.getSessionID(gid), request.lockID(), request.threadID(), request
                   .lockLevel());
             }
             try {
@@ -775,9 +747,9 @@ public class ClientLockManagerTest extends TCTestCase {
     // resend outstanding lock requests and respond to them.
     requests.clear();
     respond.set(true);
-    pauseAndStart();
+
     lockManager.addAllPendingLockRequestsTo(requests);
-    lockManager.unpause();
+
     assertEquals(1, requests.size());
     assertEquals(lr1, requests.get(0));
 
@@ -794,7 +766,7 @@ public class ClientLockManagerTest extends TCTestCase {
   public void testAwardWhenNotPending() throws Exception {
     LockID lockID = new LockID("1");
     ThreadID txID = new ThreadID(1);
-    lockManager.awardLock(sessionManager.getSessionID(), lockID, txID, LockLevel.WRITE);
+    lockManager.awardLock(gid, sessionManager.getSessionID(gid), lockID, txID, LockLevel.WRITE);
   }
 
   public void testBasics() throws Exception {
@@ -1050,9 +1022,13 @@ public class ClientLockManagerTest extends TCTestCase {
     assertEquals(1, rmtLockManager.getUnlockRequestCount());
   }
 
-  private void pauseAndStart() {
-    lockManager.pause();
-    lockManager.starting();
+  private void pause() {
+    lockManager.pause(GroupID.ALL_GROUPS, 1);
+  }
+
+  private void unpause() {
+    lockManager.initializeHandshake(GroupID.NULL_ID, GroupID.ALL_GROUPS, new TestClientHandshakeMessage());
+    lockManager.unpause(GroupID.ALL_GROUPS, 0);
   }
 
   public static void main(String[] args) {

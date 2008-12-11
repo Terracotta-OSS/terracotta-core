@@ -5,7 +5,8 @@
 package com.tc.object.tx;
 
 import com.tc.logging.DumpHandler;
-import com.tc.net.protocol.tcm.ChannelIDProvider;
+import com.tc.net.NodeID;
+import com.tc.object.ClientIDProvider;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.dmi.DmiDescriptor;
@@ -18,9 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Threadlocal based transaction manager interface. Changes go through here to the transaction for the current thread.
- * 
- * @author steve
+ * ThreadLocal based transaction manager interface. Changes go through here to the transaction for the current thread.
  */
 public interface ClientTransactionManager extends DumpHandler, PrettyPrintable {
 
@@ -146,15 +145,17 @@ public interface ClientTransactionManager extends DumpHandler, PrettyPrintable {
    * 
    * @param sessionID Session identifier
    * @param requestID Transaction identifier
+   * @param nodeID
    */
-  public void receivedAcknowledgement(SessionID sessionID, TransactionID requestID);
+  public void receivedAcknowledgement(SessionID sessionID, TransactionID requestID, NodeID nodeID);
 
   /**
    * Record batch acknowledgment
    * 
    * @param batchID Transaction batch identifier
+   * @param nodeID
    */
-  public void receivedBatchAcknowledgement(TxnBatchID batchID);
+  public void receivedBatchAcknowledgement(TxnBatchID batchID, NodeID nodeID);
 
   /**
    * Check whether current transaction has write access
@@ -176,7 +177,7 @@ public interface ClientTransactionManager extends DumpHandler, PrettyPrintable {
    * 
    * @return Provider
    */
-  public ChannelIDProvider getChannelIDProvider();
+  public ClientIDProvider getClientIDProvider();
 
   /**
    * Check whether the lock with this name in this thread is holding the lock at this level
@@ -273,5 +274,10 @@ public interface ClientTransactionManager extends DumpHandler, PrettyPrintable {
    * @param lockName
    */
   public boolean isLockOnTopStack(String lockName);
+
+  /**
+   * @returns the current open transaction for the calling thread, null if no open transaction
+   */
+  public ClientTransaction getCurrentTransaction();
 
 }

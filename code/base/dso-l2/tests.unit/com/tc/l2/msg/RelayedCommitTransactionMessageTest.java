@@ -10,6 +10,7 @@ import com.tc.bytes.TCByteBufferTestUtil;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ClientID;
+import com.tc.net.GroupID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
@@ -36,7 +37,7 @@ public class RelayedCommitTransactionMessageTest extends TestCase {
 
   public void setUp() {
     testCommitTransactionMessage = (TestCommitTransactionMessage) new TestCommitTransactionMessageFactory()
-        .newCommitTransactionMessage();
+        .newCommitTransactionMessage(GroupID.NULL_ID);
     testCommitTransactionMessage.setBatch(new TestTransactionBatch(new TCByteBuffer[] { TCByteBufferFactory
         .getInstance(false, 3452) }), new ObjectStringSerializer());
     testCommitTransactionMessage.setChannelID(new ClientID(new ChannelID(channelId)));

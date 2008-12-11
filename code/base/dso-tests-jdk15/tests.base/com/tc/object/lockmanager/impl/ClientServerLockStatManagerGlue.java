@@ -9,7 +9,6 @@ import com.tc.management.ClientLockStatManager;
 import com.tc.management.L2LockStatsManager;
 import com.tc.management.lock.stats.LockStatisticsMessage;
 import com.tc.management.lock.stats.LockStatisticsResponseMessage;
-import com.tc.object.lockmanager.api.ClientLockManager;
 import com.tc.object.session.SessionProvider;
 import com.tc.objectserver.api.TestSink;
 import com.tc.objectserver.context.LockResponseContext;
@@ -23,7 +22,8 @@ public class ClientServerLockStatManagerGlue extends ClientServerLockManagerGlue
     super(sessionProvider, sink, "ClientServerLockStatManagerGlue");
   }
 
-  public void set(ClientLockManager clmgr, LockManagerImpl slmgr, ClientLockStatManager clientLockStatManager, L2LockStatsManager serverLockStatManager) {
+  public void set(ClientLockManagerImpl clmgr, LockManagerImpl slmgr, ClientLockStatManager clientLockStatManager,
+                  L2LockStatsManager serverLockStatManager) {
     super.set(clmgr, slmgr);
     this.clientLockStatManager = clientLockStatManager;
     this.serverLockStatManager = serverLockStatManager;
@@ -40,18 +40,18 @@ public class ClientServerLockStatManagerGlue extends ClientServerLockManagerGlue
       if (ec instanceof LockResponseContext) {
         LockResponseContext lrc = (LockResponseContext) ec;
         if (lrc.isLockAward()) {
-          clientLockManager.awardLock(sessionProvider.getSessionID(), lrc.getLockID(), lrc.getThreadID(), lrc
+          clientLockManager.awardLock(lrc.getNodeID(), sessionProvider.getSessionID(lrc.getNodeID()), lrc.getLockID(), lrc.getThreadID(), lrc
               .getLockLevel());
         }
       } else if (ec instanceof LockStatisticsMessage) {
-        LockStatisticsMessage lsm = (LockStatisticsMessage)ec;
+        LockStatisticsMessage lsm = (LockStatisticsMessage) ec;
         if (lsm.isLockStatsEnableDisable()) {
           clientLockStatManager.setLockStatisticsConfig(lsm.getTraceDepth(), lsm.getGatherInterval());
         } else if (lsm.isGatherLockStatistics()) {
           clientLockStatManager.requestLockSpecs();
         }
       } else if (ec instanceof LockStatisticsResponseMessage) {
-        LockStatisticsResponseMessage lsrm = (LockStatisticsResponseMessage)ec;
+        LockStatisticsResponseMessage lsrm = (LockStatisticsResponseMessage) ec;
         serverLockStatManager.recordClientStat(lsrm.getSourceNodeID(), lsrm.getStackTraceElements());
       }
     }

@@ -61,14 +61,6 @@ public class TestClientHandshakeMessage implements ClientHandshakeMessage {
     return clientObjectIds;
   }
 
-  public int getCorrelationId(boolean initialize) {
-    throw new ImplementMe();
-  }
-
-  public void setCorrelationId(int id) {
-    throw new ImplementMe();
-  }
-
   public TCMessageType getMessageType() {
     throw new ImplementMe();
   }

@@ -4,6 +4,7 @@
 package com.tc.object.session;
 
 import com.tc.exception.ImplementMe;
+import com.tc.net.NodeID;
 
 
 public class TestSessionManager implements SessionManager, SessionProvider {
@@ -11,20 +12,24 @@ public class TestSessionManager implements SessionManager, SessionProvider {
   public boolean isCurrentSession = true;
   public SessionID sessionID = SessionID.NULL_ID;
   
-  public SessionID getSessionID() {
+  public SessionID getSessionID(NodeID nid) {
     return sessionID;
   }
   
-  public SessionID nextSessionID() {
+  public SessionID nextSessionID(NodeID nid) {
     throw new ImplementMe();
   }
 
-  public void newSession() {
+  public void newSession(NodeID nid) {
     return;
   }
 
-  public boolean isCurrentSession(SessionID theSessionID) {
+  public boolean isCurrentSession(NodeID nid, SessionID theSessionID) {
     return isCurrentSession;
+  }
+
+  public void initProvider(NodeID nid) {
+    return;
   }
 
 }

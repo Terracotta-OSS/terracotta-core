@@ -12,19 +12,17 @@ import com.tc.object.RemoteObjectManager;
 import com.tc.object.msg.ObjectsNotFoundMessage;
 import com.tc.object.msg.RequestManagedObjectResponseMessage;
 
-/**
- * @author steve
- */
 public class ReceiveObjectHandler extends AbstractEventHandler {
   private RemoteObjectManager objectManager;
 
   public void handleEvent(EventContext context) {
     if (context instanceof RequestManagedObjectResponseMessage) {
       RequestManagedObjectResponseMessage m = (RequestManagedObjectResponseMessage) context;
-      objectManager.addAllObjects(m.getLocalSessionID(), m.getBatchID(), m.getObjects());
+      objectManager.addAllObjects(m.getLocalSessionID(), m.getBatchID(), m.getObjects(), m.getSourceNodeID());
     } else {
       ObjectsNotFoundMessage notFound = (ObjectsNotFoundMessage) context;
-      objectManager.objectsNotFoundFor(notFound.getLocalSessionID(), notFound.getBatchID(), notFound.getMissingObjectIDs());
+      objectManager.objectsNotFoundFor(notFound.getLocalSessionID(), notFound.getBatchID(), notFound
+          .getMissingObjectIDs(), notFound.getSourceNodeID());
     }
   }
 

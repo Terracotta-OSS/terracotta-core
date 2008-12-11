@@ -25,8 +25,6 @@ public class ClientCoordinationHandler extends AbstractEventHandler {
   }
 
   public void handleEvent(EventContext context) throws EventHandlerException {
-    // this instanceof stuff is yucky, but these are very low volume events
-
     if (context instanceof ClusterMembershipMessage) {
       handleClusterMembershipMessage((ClusterMembershipMessage) context);
     } else if (context instanceof ClientHandshakeAckMessage) {
@@ -40,9 +38,9 @@ public class ClientCoordinationHandler extends AbstractEventHandler {
 
   private void handlePauseContext(PauseContext ctxt) {
     if (ctxt.getIsPause()) {
-      handshakeManager.pause();
+      handshakeManager.disconnected(ctxt.getRemoteNode());
     } else {
-      handshakeManager.unpause();
+      handshakeManager.connected(ctxt.getRemoteNode());
     }
   }
 

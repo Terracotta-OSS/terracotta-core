@@ -16,6 +16,7 @@ import com.tc.l2.msg.RelayedCommitTransactionMessageFactory;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.net.ClientID;
+import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.ChannelID;
@@ -101,7 +102,7 @@ public class TCGroupSendLargeRelayedCommitTransactionMessageTest extends TCTestC
     int channelId = 2;
 
     testCommitTransactionMessage = (TestCommitTransactionMessage) new TestCommitTransactionMessageFactory()
-        .newCommitTransactionMessage();
+        .newCommitTransactionMessage(GroupID.NULL_ID);
     testCommitTransactionMessage.setChannelID(new ClientID(new ChannelID(channelId)));
     testCommitTransactionMessage.setBatch(new TestTransactionBatch(new TCByteBuffer[] { TCByteBufferFactory
         .getInstance(false, batchSize) }), new ObjectStringSerializer());

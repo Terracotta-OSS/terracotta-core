@@ -9,6 +9,7 @@ import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.net.MaxConnectionsExceededException;
+import com.tc.net.NodeID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.protocol.NetworkStackID;
@@ -16,7 +17,6 @@ import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventImpl;
 import com.tc.net.protocol.tcm.ChannelEventListener;
-import com.tc.net.protocol.tcm.ChannelEventType;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.ChannelIDProvider;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
@@ -36,42 +36,45 @@ import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class ClientGroupMessageChannelImpl extends ClientMessageChannelImpl implements ClientGroupMessageChannel {
-  private static final TCLogger       logger          = TCLogging.getLogger(ClientGroupMessageChannel.class);
+  private static final TCLogger       logger = TCLogging.getLogger(ClientGroupMessageChannel.class);
   private final TCMessageFactory      msgFactory;
   private final SessionProvider       sessionProvider;
 
   private final CommunicationsManager communicationsManager;
-  private final LinkedHashMap         groupChannelMap = new LinkedHashMap();
+  private final Map                   groupChannelMap;
   private final GroupID               coordinatorGroupID;
 
   public ClientGroupMessageChannelImpl(TCMessageFactory msgFactory, SessionProvider sessionProvider,
                                        final int maxReconnectTries, CommunicationsManager communicationsManager,
                                        ConnectionAddressProvider[] addressProviders) {
-    super(msgFactory, null, sessionProvider);
+    super(msgFactory, null, sessionProvider, GroupID.ALL_GROUPS);
     this.msgFactory = msgFactory;
     this.sessionProvider = sessionProvider;
     this.communicationsManager = communicationsManager;
 
     logger.info("Create active channels");
     Assert.assertTrue(addressProviders.length > 0);
-    coordinatorGroupID = createSubChannel(maxReconnectTries, addressProviders[0]);
+    Map channels = new LinkedHashMap();
+    coordinatorGroupID = createSubChannel(channels, maxReconnectTries, addressProviders[0]);
     for (int i = 1; i < addressProviders.length; ++i) {
-      createSubChannel(maxReconnectTries, addressProviders[i]);
+      createSubChannel(channels, maxReconnectTries, addressProviders[i]);
     }
+    this.groupChannelMap = Collections.unmodifiableMap(channels);
   }
 
-  private GroupID createSubChannel(final int maxReconnectTries, ConnectionAddressProvider addressProvider) {
+  private GroupID createSubChannel(Map channels, final int maxReconnectTries, ConnectionAddressProvider addressProvider) {
     ClientMessageChannel channel = this.communicationsManager
         .createClientChannel(this.sessionProvider, maxReconnectTries, null, 0, 10000, addressProvider,
                              TransportHandshakeMessage.NO_CALLBACK_PORT, null, this.msgFactory,
                              new TCMessageRouterImpl());
     GroupID groupID = (GroupID) channel.getRemoteNodeID();
-    groupChannelMap.put(groupID, channel);
+    channels.put(groupID, channel);
     logger.info("Created sub-channel " + groupID + ": " + addressProvider);
     return groupID;
   }
@@ -92,9 +95,9 @@ public class ClientGroupMessageChannelImpl extends ClientMessageChannelImpl impl
     return (GroupID[]) groupChannelMap.keySet().toArray(new GroupID[groupChannelMap.size()]);
   }
 
-  public TCMessage createMessage(GroupID groupID, TCMessageType type) {
-    ClientMessageChannel ch = (ClientMessageChannel) groupChannelMap.get(groupID);
-    Assert.assertNotNull(ch);
+  public TCMessage createMessage(NodeID nodeID, TCMessageType type) {
+    ClientMessageChannel ch = (ClientMessageChannel) groupChannelMap.get(nodeID);
+    if (ch == null) { throw new AssertionError("ClientMessageChannel is null for " + nodeID + " : Type : " + type); }
     TCMessage rv = msgFactory.createMessage(ch, type);
     return rv;
   }
@@ -124,7 +127,7 @@ public class ClientGroupMessageChannelImpl extends ClientMessageChannelImpl impl
         GroupID id = (GroupID) i.next();
         if (id == coordinatorGroupID) continue;
         ch = getChannel(id);
-        if(ch.isOpen()) continue;
+        if (ch.isOpen()) continue;
         ch.setLocalNodeID(getLocalNodeID());
         ch.open();
         logger.info("Opened sub-channel: " + connectionInfo(ch));
@@ -137,7 +140,7 @@ public class ClientGroupMessageChannelImpl extends ClientMessageChannelImpl impl
       throw new MaxConnectionsExceededException(connectionInfo(ch) + " " + e);
     }
 
-    logger.info("all active sub-channels opened");
+    logger.info("All active sub-channels opened");
     return nid;
   }
 
@@ -235,46 +238,33 @@ public class ClientGroupMessageChannelImpl extends ClientMessageChannelImpl impl
 
   /*
    * As a middleman between ClientHandshakeManager and multiple ClientMessageChannels. Bookkeeping sub-channels' events
-   * Notify connected only when all channel connected. Notify disconnected when any channel disconnected Notify closed
-   * when any channel closed
+   * Notify connected every channel connected. Notify disconnected on every channel disconnected
    */
   private class ClientGroupMessageChannelEventListener implements ChannelEventListener {
-    private final ChannelEventListener      listener;
-    private HashSet                         connectedSet = new HashSet();
-    private final ClientGroupMessageChannel groupChannel;
+    private final ChannelEventListener listener;
 
-    public ClientGroupMessageChannelEventListener(ChannelEventListener listener, ClientGroupMessageChannel channel) {
+    public ClientGroupMessageChannelEventListener(ChannelEventListener listener) {
       this.listener = listener;
-      this.groupChannel = channel;
     }
 
     public void notifyChannelEvent(ChannelEvent event) {
-      if (event.getType() == ChannelEventType.TRANSPORT_DISCONNECTED_EVENT) {
-        if (connectedSet.remove(event.getChannel())) {
-          fireEvent(new ChannelEventImpl(ChannelEventType.TRANSPORT_DISCONNECTED_EVENT, groupChannel));
-        }
-      } else if (event.getType() == ChannelEventType.TRANSPORT_CONNECTED_EVENT) {
-        connectedSet.add(event.getChannel());
-        if (connectedSet.size() == groupChannelMap.size()) {
-          fireEvent(new ChannelEventImpl(ChannelEventType.TRANSPORT_CONNECTED_EVENT, groupChannel));
-        }
-      } else if (event.getType() == ChannelEventType.CHANNEL_CLOSED_EVENT) {
-        if (connectedSet.remove(event.getChannel())) {
-          fireEvent(new ChannelEventImpl(ChannelEventType.CHANNEL_CLOSED_EVENT, groupChannel));
-        }
-      }
+      fireEvent(event);
     }
 
     private void fireEvent(ChannelEvent event) {
-      listener.notifyChannelEvent(new ChannelEventImpl(event.getType(), groupChannel));
+      listener.notifyChannelEvent(new ChannelEventImpl(event.getType(), event.getChannel()));
     }
   }
 
   public void addListener(ChannelEventListener listener) {
-    ClientGroupMessageChannelEventListener middleman = new ClientGroupMessageChannelEventListener(listener, this);
+    ClientGroupMessageChannelEventListener middleman = new ClientGroupMessageChannelEventListener(listener);
     for (Iterator i = groupChannelMap.keySet().iterator(); i.hasNext();) {
       getChannel((GroupID) i.next()).addListener(middleman);
     }
+  }
+
+  public GroupID getCoordinatorGroupID() {
+    return coordinatorGroupID;
   }
 
 }

@@ -7,7 +7,8 @@ package com.tc.object.tx;
 import com.tc.exception.ImplementMe;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.protocol.tcm.ChannelIDProvider;
+import com.tc.net.NodeID;
+import com.tc.object.ClientIDProvider;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.dmi.DmiDescriptor;
@@ -104,7 +105,7 @@ public class MockTransactionManager implements ClientTransactionManager {
     throw new ImplementMe();
   }
 
-  public void receivedBatchAcknowledgement(TxnBatchID batchID) {
+  public void receivedBatchAcknowledgement(TxnBatchID batchID, NodeID nodeID) {
     throw new ImplementMe();
   }
 
@@ -116,7 +117,7 @@ public class MockTransactionManager implements ClientTransactionManager {
     //
   }
 
-  public void receivedAcknowledgement(SessionID sessionID, TransactionID requestID) {
+  public void receivedAcknowledgement(SessionID sessionID, TransactionID requestID, NodeID nodeID) {
     throw new ImplementMe();
   }
 
@@ -124,7 +125,7 @@ public class MockTransactionManager implements ClientTransactionManager {
     throw new ImplementMe();
   }
 
-  public ChannelIDProvider getChannelIDProvider() {
+  public ClientIDProvider getClientIDProvider() {
     return null;
   }
 
@@ -230,6 +231,10 @@ public class MockTransactionManager implements ClientTransactionManager {
   }
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    throw new ImplementMe();
+  }
+
+  public ClientTransaction getCurrentTransaction() {
     throw new ImplementMe();
   }
 }

@@ -11,8 +11,8 @@ import com.tc.async.api.Sink;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.protocol.tcm.ChannelIDProvider;
 import com.tc.object.ClientConfigurationContext;
+import com.tc.object.ClientIDProvider;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.event.DmiEventContext;
 import com.tc.object.event.DmiManager;
@@ -44,11 +44,11 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
   private final SessionManager                       sessionManager;
   private final ClientGlobalTransactionManager       gtxManager;
   private final AcknowledgeTransactionMessageFactory atmFactory;
-  private final ChannelIDProvider                    cidProvider;
+  private final ClientIDProvider                     cidProvider;
   private final Sink                                 dmiSink;
   private final DmiManager                           dmiManager;
 
-  public ReceiveTransactionHandler(ChannelIDProvider provider, AcknowledgeTransactionMessageFactory atmFactory,
+  public ReceiveTransactionHandler(ClientIDProvider provider, AcknowledgeTransactionMessageFactory atmFactory,
                                    ClientGlobalTransactionManager gtxManager, SessionManager sessionManager,
                                    Sink dmiSink, DmiManager dmiManager) {
     this.cidProvider = provider;
@@ -62,7 +62,7 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
   public void handleEvent(EventContext context) {
     final BroadcastTransactionMessageImpl btm = (BroadcastTransactionMessageImpl) context;
 
-    if (false) System.err.println(cidProvider.getChannelID() + ": ReceiveTransactionHandler: committer="
+    if (false) System.err.println(cidProvider.getClientID() + ": ReceiveTransactionHandler: committer="
                                   + btm.getCommitterID() + ", " + btm.getTransactionID() + btm.getGlobalTransactionID()
                                   + ", notified: " + btm.addNotifiesTo(new LinkedList()) + ", lookup ObjectIDs: "
                                   + btm.getLookupObjectIDs());
@@ -70,13 +70,14 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
     Assert.eval(btm.getLockIDs().size() > 0);
     GlobalTransactionID lowWaterMark = btm.getLowGlobalTransactionIDWatermark();
     if (!lowWaterMark.isNull()) {
-      gtxManager.setLowWatermark(lowWaterMark);
+      gtxManager.setLowWatermark(lowWaterMark, btm.getSourceNodeID());
     }
-    if (gtxManager.startApply(btm.getCommitterID(), btm.getTransactionID(), btm.getGlobalTransactionID())) {
+    if (gtxManager.startApply(btm.getCommitterID(), btm.getTransactionID(), btm.getGlobalTransactionID(), btm
+        .getSourceNodeID())) {
       Collection changes = btm.getObjectChanges();
       if (changes.size() > 0 || btm.getLookupObjectIDs().size() > 0 || btm.getNewRoots().size() > 0) {
 
-        if (false) System.err.println(cidProvider.getChannelID() + " Applying - committer=" + btm.getCommitterID()
+        if (false) System.err.println(cidProvider.getClientID() + " Applying - committer=" + btm.getCommitterID()
                                       + " , " + btm.getTransactionID() + " , " + btm.getGlobalTransactionID());
 
         try {
@@ -109,8 +110,8 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
 
     // XXX:: This is a potential race condition here 'coz after we decide to send an ACK
     // and before we actually send it, the server may go down and come back up !
-    if (sessionManager.isCurrentSession(btm.getLocalSessionID())) {
-      AcknowledgeTransactionMessage ack = atmFactory.newAcknowledgeTransactionMessage();
+    if (sessionManager.isCurrentSession(btm.getSourceNodeID(), btm.getLocalSessionID())) {
+      AcknowledgeTransactionMessage ack = atmFactory.newAcknowledgeTransactionMessage(btm.getSourceNodeID());
       ack.initialize(btm.getCommitterID(), btm.getTransactionID());
       ack.send();
     }

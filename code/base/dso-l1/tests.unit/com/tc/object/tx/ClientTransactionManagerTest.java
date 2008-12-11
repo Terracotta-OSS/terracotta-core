@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.tx;
 
@@ -8,6 +9,7 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
 import com.tc.config.lock.LockContextInfo;
 import com.tc.management.beans.tx.MockClientTxMonitor;
 import com.tc.net.protocol.tcm.TestChannelIDProvider;
+import com.tc.object.ClientIDProviderImpl;
 import com.tc.object.MockTCObject;
 import com.tc.object.ObjectID;
 import com.tc.object.TestClientObjectManager;
@@ -32,7 +34,7 @@ public class ClientTransactionManagerTest extends TestCase {
     rmtTxnMgr = new TestRemoteTransactionManager();
     objMgr = new TestClientObjectManager();
     lockMgr = new TestLockManager();
-    clientTxnMgr = new ClientTransactionManagerImpl(new TestChannelIDProvider(), objMgr,
+    clientTxnMgr = new ClientTransactionManagerImpl(new ClientIDProviderImpl(new TestChannelIDProvider()), objMgr,
                                                     new ThreadLockManagerImpl(lockMgr), clientTxnFactory, rmtTxnMgr,
                                                     new NullRuntimeLogger(), new MockClientTxMonitor());
   }
@@ -51,7 +53,8 @@ public class ClientTransactionManagerTest extends TestCase {
     }
 
     // Test that we get an exception when checking while only holding a read lock
-    clientTxnMgr.begin("lock", LockLevel.READ, LockContextInfo.NULL_LOCK_OBJECT_TYPE, LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    clientTxnMgr.begin("lock", LockLevel.READ, LockContextInfo.NULL_LOCK_OBJECT_TYPE,
+                       LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     try {
       clientTxnMgr.checkWriteAccess(new Object());
       fail();
@@ -60,21 +63,25 @@ public class ClientTransactionManagerTest extends TestCase {
     }
     clientTxnMgr.commit("lock");
 
-    clientTxnMgr.begin("lock", LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE, LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    clientTxnMgr.begin("lock", LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE,
+                       LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     clientTxnMgr.checkWriteAccess(new Object());
     clientTxnMgr.commit("lock");
 
-    clientTxnMgr.begin("lock", LockLevel.SYNCHRONOUS_WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE, LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    clientTxnMgr.begin("lock", LockLevel.SYNCHRONOUS_WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE,
+                       LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     clientTxnMgr.checkWriteAccess(new Object());
     clientTxnMgr.commit("lock");
 
-    clientTxnMgr.begin("lock", LockLevel.CONCURRENT, LockContextInfo.NULL_LOCK_OBJECT_TYPE, LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    clientTxnMgr.begin("lock", LockLevel.CONCURRENT, LockContextInfo.NULL_LOCK_OBJECT_TYPE,
+                       LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     clientTxnMgr.checkWriteAccess(new Object());
     clientTxnMgr.commit("lock");
   }
 
   public void testDoIllegalReadChange() {
-    clientTxnMgr.begin("lock", LockLevel.READ, LockContextInfo.NULL_LOCK_OBJECT_TYPE, LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    clientTxnMgr.begin("lock", LockLevel.READ, LockContextInfo.NULL_LOCK_OBJECT_TYPE,
+                       LockContextInfo.NULL_LOCK_CONTEXT_INFO);
 
     try {
       clientTxnMgr.fieldChanged(new MockTCObject(new ObjectID(1), new Object()), null, null, null, -1);
