@@ -6,15 +6,13 @@ package com.tc.net;
 
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
-import com.tc.util.Assert;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 public class GroupID implements NodeID {
-  private static final int    UNINITIALIZED     = -1;
-  private static final int    NULL_NUMBER       = -2;
+  private static final int    NULL_NUMBER       = -1;
   private static final int    ALL_GROUPS_NUMBER = Integer.MIN_VALUE;
 
   public static final GroupID NULL_ID           = new GroupID(NULL_NUMBER);
@@ -23,27 +21,25 @@ public class GroupID implements NodeID {
   private int                 groupNumber;
 
   public GroupID() {
-    // To make serialization happy
-    groupNumber = UNINITIALIZED;
+    groupNumber = NULL_NUMBER;
   }
 
-  // satisfy serialization
   public GroupID(int groupNumber) {
     this.groupNumber = groupNumber;
   }
 
-  public int getGroupNumber() {
+  public final int toInt() {
     return groupNumber;
   }
 
   public boolean isNull() {
-    return (groupNumber == UNINITIALIZED);
+    return (groupNumber == NULL_NUMBER);
   }
 
   public boolean equals(Object obj) {
     if (obj instanceof GroupID) {
       GroupID other = (GroupID) obj;
-      return (this.getGroupNumber() == other.getGroupNumber());
+      return (this.toInt() == other.toInt());
     }
     return false;
   }
@@ -61,8 +57,7 @@ public class GroupID implements NodeID {
   }
 
   public void writeExternal(ObjectOutput out) throws IOException {
-    Assert.assertTrue(getGroupNumber() != UNINITIALIZED);
-    out.writeInt(getGroupNumber());
+    out.writeInt(toInt());
   }
 
   /**
@@ -75,8 +70,7 @@ public class GroupID implements NodeID {
   }
 
   public void serializeTo(TCByteBufferOutput serialOutput) {
-    Assert.assertTrue(getGroupNumber() != UNINITIALIZED);
-    serialOutput.writeInt(getGroupNumber());
+    serialOutput.writeInt(toInt());
   }
 
   public byte getNodeType() {
@@ -86,7 +80,7 @@ public class GroupID implements NodeID {
   public int compareTo(Object o) {
     GroupID n = (GroupID) o;
     if (getNodeType() != n.getNodeType()) { return getNodeType() - n.getNodeType(); }
-    return getGroupNumber() - n.getGroupNumber();
+    return toInt() - n.toInt();
   }
 
 }

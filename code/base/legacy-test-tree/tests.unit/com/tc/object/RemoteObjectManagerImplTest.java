@@ -109,7 +109,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
       public void run() {
         System.err.println("Doing a bogus lookup");
         try {
-          manager.retrieve(new ObjectID(ObjectID.MAX_ID, groupID.getGroupNumber()));
+          manager.retrieve(new ObjectID(ObjectID.MAX_ID, groupID.toInt()));
           System.err.println("Didnt throw TCObjectNotFoundException : Not calling barrier()");
         } catch (TCObjectNotFoundException e) {
           System.err.println("Got TCObjectNotFoundException as expected : " + e);
@@ -124,7 +124,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     thread.start();
     ThreadUtil.reallySleep(5000);
     Set missingSet = new HashSet();
-    missingSet.add(new ObjectID(ObjectID.MAX_ID, groupID.getGroupNumber()));
+    missingSet.add(new ObjectID(ObjectID.MAX_ID, groupID.toInt()));
     manager.objectsNotFoundFor(SessionID.NULL_ID, 1, missingSet, groupID);
     barrier.barrier();
   }
