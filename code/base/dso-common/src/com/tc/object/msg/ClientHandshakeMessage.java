@@ -4,8 +4,7 @@
  */
 package com.tc.object.msg;
 
-import com.tc.net.NodeID;
-import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.TryLockContext;
 import com.tc.object.lockmanager.api.WaitContext;
@@ -13,7 +12,7 @@ import com.tc.object.lockmanager.api.WaitContext;
 import java.util.Collection;
 import java.util.Set;
 
-public interface ClientHandshakeMessage {
+public interface ClientHandshakeMessage extends TCMessage {
 
   public Collection getTransactionSequenceIDs();
 
@@ -39,10 +38,6 @@ public interface ClientHandshakeMessage {
 
   public Collection getPendingTryLockContexts();
 
-  public NodeID getSourceNodeID();
-
-  public void send();
-
   public void addTransactionSequenceIDs(Collection transactionSequenceIDs);
 
   public void addResentTransactionIDs(Collection resentTransactionIDs);
@@ -52,7 +47,5 @@ public interface ClientHandshakeMessage {
   public void setIsObjectIDsRequested(boolean request);
 
   public boolean isObjectIDsRequested();
-
-  public MessageChannel getChannel();
 
 }

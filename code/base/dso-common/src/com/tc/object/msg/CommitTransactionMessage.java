@@ -17,6 +17,4 @@ public interface CommitTransactionMessage extends TCMessage {
 
   public TCByteBuffer[] getBatchData();
 
-  public void send();
-
 }

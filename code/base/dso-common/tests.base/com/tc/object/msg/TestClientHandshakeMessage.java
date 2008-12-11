@@ -10,6 +10,7 @@ import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.TestMessageChannel;
+import com.tc.net.protocol.tcm.TestTCMessage;
 import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.TryLockContext;
 import com.tc.object.lockmanager.api.WaitContext;
@@ -22,7 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class TestClientHandshakeMessage implements ClientHandshakeMessage {
+public class TestClientHandshakeMessage extends TestTCMessage implements ClientHandshakeMessage {
   public Set                    clientObjectIds                = new HashSet();
   public Set                    waitContexts                   = new HashSet();
   public NoExceptionLinkedQueue sendCalls                      = new NoExceptionLinkedQueue();
@@ -92,11 +93,6 @@ public class TestClientHandshakeMessage implements ClientHandshakeMessage {
 
   public void addWaitContext(WaitContext ctxt) {
     this.waitContexts.add(ctxt);
-  }
-
-  public void resend() {
-    throw new ImplementMe();
-
   }
 
   public void addPendingLockContext(LockContext ctxt) {

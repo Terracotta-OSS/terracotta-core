@@ -13,7 +13,9 @@ import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.TestChannelIDProvider;
+import com.tc.net.protocol.tcm.TestTCMessage;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.msg.RequestManagedObjectMessage;
 import com.tc.object.msg.RequestManagedObjectMessageFactory;
@@ -489,7 +491,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     }
   }
 
-  private static class TestRequestRootMessage implements RequestRootMessage {
+  private static class TestRequestRootMessage extends TestTCMessage implements RequestRootMessage {
 
     public final NoExceptionLinkedQueue sendQueue = new NoExceptionLinkedQueue();
 
@@ -501,12 +503,12 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
       return;
     }
 
-    public void send() {
-      sendQueue.put(new Object());
+    public TCMessageType getMessageType() {
+      return TCMessageType.REQUEST_ROOT_MESSAGE;
     }
 
-    public NodeID getSourceNodeID() {
-      throw new ImplementMe();
+    public void send() {
+      sendQueue.put(new Object());
     }
 
     public void recycle() {

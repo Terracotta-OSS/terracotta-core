@@ -13,6 +13,4 @@ public interface BatchTransactionAcknowledgeMessage extends TCMessage {
 
   public TxnBatchID getBatchID();
 
-  public void send();
-
 }

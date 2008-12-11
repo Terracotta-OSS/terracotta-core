@@ -13,6 +13,7 @@ import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TestMessageChannel;
+import com.tc.net.protocol.tcm.TestTCMessage;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.object.ObjectID;
 import com.tc.object.lockmanager.api.LockContext;
@@ -441,7 +442,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
 
   }
 
-  private static class TestClientHandshakeAckMessage implements ClientHandshakeAckMessage {
+  private static class TestClientHandshakeAckMessage extends TestTCMessage implements ClientHandshakeAckMessage {
     public final NoExceptionLinkedQueue sendQueue = new NoExceptionLinkedQueue();
     public final ClientID               clientID;
     private boolean                     persistent;
