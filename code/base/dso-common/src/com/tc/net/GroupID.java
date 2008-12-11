@@ -8,8 +8,6 @@ import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 public class GroupID implements NodeID {
   private static final int    NULL_NUMBER       = -1;
@@ -52,18 +50,6 @@ public class GroupID implements NodeID {
     return "GroupID[" + groupNumber + "]";
   }
 
-  public void readExternal(ObjectInput in) throws IOException {
-    groupNumber = in.readInt();
-  }
-
-  public void writeExternal(ObjectOutput out) throws IOException {
-    out.writeInt(toInt());
-  }
-
-  /**
-   * FIXME::Two difference serialization mechanisms are implemented since these classes are used with two different
-   * implementation of comms stack.
-   */
   public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     groupNumber = serialInput.readInt();
     return this;

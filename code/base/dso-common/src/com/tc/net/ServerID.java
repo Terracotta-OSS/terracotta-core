@@ -9,8 +9,6 @@ import com.tc.io.TCByteBufferOutput;
 import com.tc.util.Assert;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Arrays;
 
 public class ServerID implements NodeID {
@@ -70,34 +68,6 @@ public class ServerID implements NodeID {
     return NULL_ID.equals(this);
   }
 
-  /**
-   * FIXME::Two difference serialization mechanisms are implemented since these classes are used with two different
-   * implementation of comms stack.
-   */
-  public void readExternal(ObjectInput in) throws IOException {
-    this.name = in.readUTF();
-    int length = in.readInt();
-    this.uid = new byte[length];
-    int off = 0;
-    while (length > 0) {
-      int read = in.read(this.uid, off, length);
-      off += read;
-      length -= read;
-    }
-  }
-
-  public void writeExternal(ObjectOutput out) throws IOException {
-    Assert.assertTrue(this.name != UNINITIALIZED);
-    out.writeUTF(this.name);
-    int length = this.uid.length;
-    out.writeInt(length);
-    out.write(this.uid);
-  }
-
-  /**
-   * FIXME::Two difference serialization mechanisms are implemented since these classes are used with two different
-   * implementation of comms stack.
-   */
   public Object deserializeFrom(TCByteBufferInput in) throws IOException {
     this.name = in.readString();
     int length = in.readInt();

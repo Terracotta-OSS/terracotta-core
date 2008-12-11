@@ -9,8 +9,6 @@ import com.tc.io.TCByteBufferOutput;
 import com.tc.net.protocol.tcm.ChannelID;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 public class ClientID implements NodeID {
 
@@ -55,23 +53,6 @@ public class ClientID implements NodeID {
     return channelID.toLong();
   }
 
-  /**
-   * FIXME::Two difference serialization mechanisms are implemented since these classes are used with two different
-   * implementation of comms stack.
-   */
-
-  public void readExternal(ObjectInput in) throws IOException {
-    this.channelID = new ChannelID(in.readLong());
-  }
-
-  public void writeExternal(ObjectOutput out) throws IOException {
-    out.writeLong(this.channelID.toLong());
-  }
-
-  /**
-   * FIXME::Two difference serialization mechanisms are implemented since these classes are used with two different
-   * implementation of comms stack.
-   */
   public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     this.channelID = new ChannelID(serialInput.readLong());
     return this;
