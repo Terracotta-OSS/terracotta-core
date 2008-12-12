@@ -10,6 +10,7 @@ import com.tc.config.schema.test.L2SConfigBuilder;
 import com.tc.config.schema.test.SystemConfigBuilder;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.object.config.schema.NewL2DSOConfig;
+import com.tc.process.Exec;
 import com.tc.test.TCTestCase;
 import com.tc.util.ExternalProcessStreamWriter;
 
@@ -49,11 +50,13 @@ public final class ArchiveUtilTest extends TCTestCase {
     // disableAllUntil("2007-02-28");
   }
 
+  @Override
   public void setUp() throws Exception {
     generateMockFiles(getTempDirectory());
     archiveFile = new File(mockDataDir + File.separator + ARCHIVE);
   }
 
+  @Override
   public void tearDown() {
     clear();
   }
@@ -119,7 +122,7 @@ public final class ArchiveUtilTest extends TCTestCase {
 
   private int executeArchiveUtil(String[] args) throws IOException, InterruptedException {
     String[] commandLine = new String[args.length + 4];
-    commandLine[0] = "java";
+    commandLine[0] = Exec.getJavaExecutable();
     commandLine[1] = "-classpath";
     commandLine[2] = System.getProperty("java.class.path");
     commandLine[3] = ArchiveUtil.class.getName();

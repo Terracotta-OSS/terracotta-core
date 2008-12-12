@@ -6,6 +6,8 @@ package com.tc.process;
 
 import org.apache.commons.io.IOUtils;
 
+import com.tc.util.runtime.Os;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -15,6 +17,22 @@ import java.io.OutputStream;
 import java.util.Arrays;
 
 public class Exec {
+
+  public static String getJavaExecutable() {
+    String javaHome = System.getProperty("java.home");
+    if (javaHome == null) { throw new IllegalStateException("java.home system property not set"); }
+
+    File home = new File(javaHome);
+    ensureDir(home);
+
+    File bin = new File(home, "bin");
+    ensureDir(bin);
+
+    File java = new File(bin, "java" + (Os.isWindows() ? ".exe" : ""));
+    if (java.exists() && java.canRead()) { return java.getAbsolutePath(); }
+
+    throw new AssertionError(java.getAbsolutePath() + " cannot be read or does not exist");
+  }
 
   public static Result execute(String cmd[]) throws Exception {
     return execute(cmd, null, null, null);
@@ -92,6 +110,12 @@ public class Exec {
     }
   }
 
+  private static void ensureDir(File dir) {
+    if (!dir.exists()) { throw new AssertionError(dir + " does not exist"); }
+    if (!dir.isDirectory()) { throw new AssertionError(dir + " is not a directory"); }
+    if (!dir.canRead()) { throw new AssertionError(dir + " is not readable"); }
+  }
+
   private static class InputPumper extends Thread {
     private final InputStream  data;
     private final OutputStream output;
@@ -101,6 +125,7 @@ public class Exec {
       this.data = new ByteArrayInputStream(input);
     }
 
+    @Override
     public void run() {
       try {
         IOUtils.copy(data, output);
@@ -137,9 +162,10 @@ public class Exec {
       return exitCode;
     }
 
+    @Override
     public String toString() {
       return "Command: " + Arrays.asList(cmd) + "\n" + "exit code: " + exitCode + "\n" + "stdout: " + stdout + "\n"
-          + "stderr: " + stderr + "\n";
+             + "stderr: " + stderr + "\n";
     }
 
   }
