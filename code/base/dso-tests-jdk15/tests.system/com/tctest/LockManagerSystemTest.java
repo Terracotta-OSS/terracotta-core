@@ -23,6 +23,7 @@ import com.tc.management.lock.stats.TCStackTraceElement;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.net.protocol.tcm.TestMessageChannel;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.gtx.TestClientGlobalTransactionManager;
@@ -518,7 +519,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
 
     protected LockResponseMessage createMessage(EventContext context, TCMessageType messageType) {
       return new LockResponseMessage(new SessionID(100), new NullMessageMonitor(), new TCByteBufferOutputStream(),
-                                     null, messageType);
+                                     new TestMessageChannel(), messageType);
     }
 
     protected void send(LockResponseMessage responseMessage) {
