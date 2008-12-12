@@ -9,8 +9,9 @@ import com.tc.io.TCByteBufferOutput;
 import com.tc.net.protocol.tcm.ChannelID;
 
 import java.io.IOException;
+import java.io.Serializable;
 
-public class ClientID implements NodeID {
+public class ClientID implements NodeID, Serializable {
 
   public static final ClientID NULL_ID = new ClientID(ChannelID.NULL_ID);
 

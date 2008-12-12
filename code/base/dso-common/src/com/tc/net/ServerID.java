@@ -9,9 +9,10 @@ import com.tc.io.TCByteBufferOutput;
 import com.tc.util.Assert;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Arrays;
 
-public class ServerID implements NodeID {
+public class ServerID implements NodeID, Serializable {
 
   public static final ServerID NULL_ID       = new ServerID("NULL-ID", new byte[0]);
 
