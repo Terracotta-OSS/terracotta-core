@@ -4,7 +4,6 @@
  */
 package com.tc.objectserver.lockmanager.api;
 
-import com.tc.net.NodeID;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.tx.TimerSpec;
 
@@ -13,21 +12,15 @@ import java.io.Serializable;
 public class Waiter implements Serializable {
 
   private final long     startTime;
-  private final NodeID   nodeID;
   private final ThreadID threadID;
   private final String   waitInvocation;
   private final String   channelAddr;
 
-  public Waiter(NodeID cid, String channelAddr, ThreadID threadID, TimerSpec call, long startTime) {
-    this.nodeID = cid;
+  public Waiter(String channelAddr, ThreadID threadID, TimerSpec call, long startTime) {
     this.channelAddr = channelAddr;
     this.threadID = threadID;
     this.startTime = startTime;
     this.waitInvocation = call.toString();
-  }
-
-  public NodeID getNodeID() {
-    return nodeID;
   }
 
   public String getChannelAddr() {

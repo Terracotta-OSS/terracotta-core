@@ -172,7 +172,6 @@ public class GreedyLockManagerTest extends TestCase {
     LockHolder holder = holders[0];
     assertEquals(LockLevel.toString(LockLevel.WRITE), holder.getLockLevel());
     assertTrue(holder.getTimeAcquired() >= time);
-    assertEquals(new ClientID(new ChannelID(1)), holder.getNodeID());
     assertEquals("127.0.0.1:6969", holder.getChannelAddr());
     assertEquals(ThreadID.VM_ID, holder.getThreadID());
 
@@ -189,31 +188,16 @@ public class GreedyLockManagerTest extends TestCase {
     LockHolder holder = holders[0];
     assertEquals(LockLevel.toString(LockLevel.READ), holder.getLockLevel());
     assertTrue(holder.getTimeAcquired() >= time);
-    if ((new ClientID(new ChannelID(1))).equals(holder.getNodeID())) {
-      assertEquals("127.0.0.1:6969", holder.getChannelAddr());
-    } else if ((new ClientID(new ChannelID(2))).equals(holder.getNodeID())) {
-      assertEquals("no longer connected", holder.getChannelAddr());
-    } else {
-      fail("Invalid Channel number ! " + holder.getNodeID());
-    }
     assertEquals(ThreadID.VM_ID, holder.getThreadID());
 
     holder = holders[1];
     assertEquals(LockLevel.toString(LockLevel.READ), holder.getLockLevel());
     assertTrue(holder.getTimeAcquired() >= time);
-    if ((new ClientID(new ChannelID(1))).equals(holder.getNodeID())) {
-      assertEquals("127.0.0.1:6969", holder.getChannelAddr());
-    } else if ((new ClientID(new ChannelID(2))).equals(holder.getNodeID())) {
-      assertEquals("no longer connected", holder.getChannelAddr());
-    } else {
-      fail("Invalid Channel number ! " + holder.getNodeID());
-    }
     assertEquals(ThreadID.VM_ID, holder.getThreadID());
 
     ServerLockRequest req = reqs[0];
     assertEquals(LockLevel.toString(LockLevel.WRITE), req.getLockLevel());
     assertTrue(req.getRequestTime() >= time);
-    assertEquals(new ClientID(new ChannelID(3)), req.getNodeID());
     assertEquals("no longer connected", req.getChannelAddr());
     assertEquals(new ThreadID(1), req.getThreadID());
   }
@@ -229,14 +213,12 @@ public class GreedyLockManagerTest extends TestCase {
     LockHolder holder = holders[0];
     assertEquals(LockLevel.toString(LockLevel.WRITE), holder.getLockLevel());
     assertTrue(holder.getTimeAcquired() >= time);
-    assertEquals(new ClientID(new ChannelID(1)), holder.getNodeID());
     assertEquals(ThreadID.VM_ID, holder.getThreadID());
     assertEquals("127.0.0.1:6969", holder.getChannelAddr());
 
     ServerLockRequest req = reqs[0];
     assertEquals(LockLevel.toString(LockLevel.WRITE), req.getLockLevel());
     assertTrue(req.getRequestTime() >= time);
-    assertEquals(new ClientID(new ChannelID(2)), req.getNodeID());
     assertEquals("no longer connected", req.getChannelAddr());
     assertEquals(new ThreadID(1), req.getThreadID());
   }

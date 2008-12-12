@@ -4,7 +4,6 @@
  */
 package com.tc.objectserver.lockmanager.api;
 
-import com.tc.net.NodeID;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.ThreadID;
 
@@ -13,14 +12,12 @@ import java.io.Serializable;
 public class ServerLockRequest implements Serializable {
 
   private final long     requestTime;
-  private final NodeID   nodeID;
   private final ThreadID threadID;
   private final String   lockLevel;
   private final String   channelAddr;
 
-  public ServerLockRequest(NodeID cid, String channelAddr, ThreadID threadID, int level, long requestTime) {
+  public ServerLockRequest(String channelAddr, ThreadID threadID, int level, long requestTime) {
     this.channelAddr = channelAddr;
-    this.nodeID = cid;
     this.threadID = threadID;
     this.requestTime = requestTime;
     this.lockLevel = LockLevel.toString(level);
@@ -28,10 +25,6 @@ public class ServerLockRequest implements Serializable {
 
   public String getChannelAddr() {
     return this.channelAddr;
-  }
-
-  public NodeID getNodeID() {
-    return nodeID;
   }
 
   public String getLockLevel() {

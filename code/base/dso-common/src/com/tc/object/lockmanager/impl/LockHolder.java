@@ -4,7 +4,6 @@
  */
 package com.tc.object.lockmanager.impl;
 
-import com.tc.net.NodeID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.ThreadID;
@@ -15,7 +14,6 @@ public class LockHolder implements Serializable {
   private final static long NON_SET_TIME_MILLIS = -1;
 
   private final LockID      lockID;
-  private final NodeID      nodeID;
   private final ThreadID    threadID;
   private final String      lockLevel;
   private final String      channelAddr;
@@ -25,9 +23,8 @@ public class LockHolder implements Serializable {
   private long              waitTimeInMillis;
   private long              heldTimeInMillis;
 
-  public LockHolder(LockID lockID, NodeID cid, String channelAddr, ThreadID threadID, int level, long timeRequested) {
+  public LockHolder(LockID lockID, String channelAddr, ThreadID threadID, int level, long timeRequested) {
     this.lockID = lockID;
-    this.nodeID = cid;
     this.channelAddr = channelAddr;
     this.threadID = threadID;
     this.timeRequested = timeRequested;
@@ -36,12 +33,12 @@ public class LockHolder implements Serializable {
     this.lockLevel = LockLevel.toString(level);
   }
 
-  public LockHolder(LockID lockID, NodeID cid, String channelAddr, ThreadID threadID, int level) {
-    this(lockID, cid, channelAddr, threadID, level, NON_SET_TIME_MILLIS);
+  public LockHolder(LockID lockID, String channelAddr, ThreadID threadID, int level) {
+    this(lockID, channelAddr, threadID, level, NON_SET_TIME_MILLIS);
   }
-  
-  public LockHolder(LockID lockID, NodeID cid, ThreadID threadID, long timeRequested) {
-    this(lockID, cid, null, threadID, LockLevel.NIL_LOCK_LEVEL, timeRequested);
+
+  public LockHolder(LockID lockID, ThreadID threadID, long timeRequested) {
+    this(lockID, null, threadID, LockLevel.NIL_LOCK_LEVEL, timeRequested);
   }
 
   public LockID getLockID() {
@@ -50,10 +47,6 @@ public class LockHolder implements Serializable {
 
   public String getLockLevel() {
     return this.lockLevel;
-  }
-
-  public NodeID getNodeID() {
-    return nodeID;
   }
 
   public String getChannelAddr() {
@@ -87,7 +80,7 @@ public class LockHolder implements Serializable {
     this.timeReleased = lockTimeReleased;
     getAndSetHeldTimeInMillis();
   }
-  
+
   public void computeWaitAndHeldTimeInMillis() {
     if (timeAcquired <= 0) {
       getAndSetWaitTimeInMillis();
@@ -131,8 +124,6 @@ public class LockHolder implements Serializable {
   public String toString() {
     StringBuffer sb = new StringBuffer("[Lock ID: ");
     sb.append(lockID);
-    sb.append(", Node ID: ");
-    sb.append(nodeID);
     sb.append(", Thread ID: ");
     sb.append(threadID);
     sb.append(", lock level: ");

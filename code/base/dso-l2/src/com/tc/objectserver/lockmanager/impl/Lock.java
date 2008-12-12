@@ -163,7 +163,7 @@ public class Lock {
     for (Iterator i = this.holders.values().iterator(); i.hasNext();) {
       Holder h = (Holder) i.next();
       NodeID cid = h.getNodeID();
-      holds[count] = new LockHolder(h.getLockID(), cid, channelManager.getChannelAddress(cid), h.getThreadID(), h
+      holds[count] = new LockHolder(h.getLockID(), channelManager.getChannelAddress(cid), h.getThreadID(), h
           .getLockLevel(), h.getTimestamp());
       holds[count++].lockAcquired(h.getTimestamp());
     }
@@ -172,7 +172,7 @@ public class Lock {
     for (Iterator i = this.pendingLockRequests.values().iterator(); i.hasNext();) {
       Request r = (Request) i.next();
       NodeID cid = r.getRequesterID();
-      reqs[count++] = new ServerLockRequest(cid, channelManager.getChannelAddress(cid), r.getSourceID(), r
+      reqs[count++] = new ServerLockRequest(channelManager.getChannelAddress(cid), r.getSourceID(), r
           .getLockLevel(), r.getTimestamp());
     }
 
@@ -180,7 +180,7 @@ public class Lock {
     for (Iterator i = this.waiters.values().iterator(); i.hasNext();) {
       LockWaitContext wc = (LockWaitContext) i.next();
       NodeID cid = wc.getNodeID();
-      waits[count++] = new Waiter(cid, channelManager.getChannelAddress(cid), wc.getThreadID(), wc.getTimerSpec(),
+      waits[count++] = new Waiter(channelManager.getChannelAddress(cid), wc.getThreadID(), wc.getTimerSpec(),
                                   wc.getTimestamp());
     }
 

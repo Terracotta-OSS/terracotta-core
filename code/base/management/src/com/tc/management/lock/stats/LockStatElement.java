@@ -362,7 +362,7 @@ public class LockStatElement implements TCSerializable, Serializable, LockTraceE
   }
 
   private LockHolder newLockHolder(LockID lockId, NodeID nodeID, ThreadID threadID, long timeStamp) {
-    return new LockHolder(lockId, nodeID, threadID, timeStamp);
+    return new LockHolder(lockId, threadID, timeStamp);
   }
 
   /**

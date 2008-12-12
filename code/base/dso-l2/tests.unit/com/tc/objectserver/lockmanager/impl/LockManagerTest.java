@@ -157,7 +157,6 @@ public class LockManagerTest extends TestCase {
     Waiter waiter = waiters[0];
     assertEquals(wait.toString(), waiter.getWaitInvocation());
     assertTrue(waiter.getStartTime() >= time);
-    assertEquals(new ClientID(new ChannelID(1)), waiter.getNodeID());
     assertEquals("127.0.0.1:6969", waiter.getChannelAddr());
     assertEquals(new ThreadID(1), waiter.getThreadID());
   }
@@ -173,14 +172,12 @@ public class LockManagerTest extends TestCase {
     LockHolder holder = holders[0];
     assertEquals(LockLevel.toString(LockLevel.READ), holder.getLockLevel());
     assertTrue(holder.getTimeAcquired() >= time);
-    assertEquals(new ClientID(new ChannelID(1)), holder.getNodeID());
     assertEquals("127.0.0.1:6969", holder.getChannelAddr());
     assertEquals(new ThreadID(1), holder.getThreadID());
 
     holder = holders[1];
     assertEquals(LockLevel.toString(LockLevel.READ), holder.getLockLevel());
     assertTrue(holder.getTimeAcquired() >= time);
-    assertEquals(new ClientID(new ChannelID(2)), holder.getNodeID());
     assertEquals("no longer connected", holder.getChannelAddr());
     assertEquals(new ThreadID(1), holder.getThreadID());
 
@@ -203,14 +200,12 @@ public class LockManagerTest extends TestCase {
     LockHolder holder = holders[0];
     assertEquals(LockLevel.toString(LockLevel.WRITE), holder.getLockLevel());
     assertTrue(holder.getTimeAcquired() >= time);
-    assertEquals(new ClientID(new ChannelID(1)), holder.getNodeID());
     assertEquals(new ThreadID(1), holder.getThreadID());
     assertEquals("127.0.0.1:6969", holder.getChannelAddr());
 
     ServerLockRequest req = reqs[0];
     assertEquals(LockLevel.toString(LockLevel.WRITE), req.getLockLevel());
     assertTrue(req.getRequestTime() >= time);
-    assertEquals(new ClientID(new ChannelID(2)), req.getNodeID());
     assertEquals("no longer connected", req.getChannelAddr());
     assertEquals(new ThreadID(1), req.getThreadID());
   }
