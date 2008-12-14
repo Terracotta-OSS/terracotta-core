@@ -147,16 +147,17 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
 
     FileOutputStream fstream = new FileOutputStream(jarLocation);
     JarOutputStream stream = new JarOutputStream(fstream, manifest);
-
-    if (tcXml != null) {
-      stream.putNextEntry(new JarEntry("terracotta.xml"));
-      OutputStreamWriter writer = new OutputStreamWriter(stream, "utf-8");
-      writer.write(tcXml);
-      writer.flush();
-      stream.closeEntry();
+    try {
+      if (tcXml != null) {
+        stream.putNextEntry(new JarEntry("terracotta.xml"));
+        OutputStreamWriter writer = new OutputStreamWriter(stream, "utf-8");
+        writer.write(tcXml);
+        writer.flush();
+        stream.closeEntry();
+      }
+    } finally {
+      stream.close();
     }
-
-    stream.close();
   }
 
   /**
@@ -260,7 +261,45 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
   }
 
   /**
-   * Test add module programmatically with non-default groupId 
+   * <pre>
+   * Test config fragment with good XML syntax but invalid schema 
+   * See DEV-2205 INT-516 DEV-1238
+   * </pre>
+   * 
+   * @author hhuynh
+   */
+  public void testConfigWithInvalidSchema() throws Exception {
+    String badGroupId = "org.terracotta.modules";
+    String badArtifactId = "badconfig";
+    String badVersion = "1.0.0";
+    String badSymbolicName = badGroupId + "." + badArtifactId; // Create bundle jar based on these attributes
+    File tempDir = getTempDirectory();
+    File generatedJar1 = createBundle(tempDir, badGroupId, badArtifactId, badVersion, badSymbolicName, badVersion,
+                                      null, TC_CONFIG_WITH_INVALID_SCHEMA);
+    EmbeddedOSGiRuntime osgiRuntime = null;
+    try {
+      DSOClientConfigHelper configHelper = configHelper();
+      // Add temp dir to list of repository locations to pick up
+      // bundle above
+      configHelper.addRepository(tempDir.getAbsolutePath());
+      configHelper.addModule(badArtifactId, badVersion);
+      ClassProvider classProvider = new MockClassProvider();
+      try {
+        Modules modules = configHelper.getModulesForInitialization();
+        osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
+        ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false);
+        Assert.fail("Should get exception on invalid config");
+      } catch (BundleException e) {
+        checkErrorMessageContainsText(e.getCause(),
+                                      "string value '__ehcache_lock__CacheManager.init' does not match pattern for java-identifier");
+      }
+    } finally {
+      shutdownAndCleanUpJars(osgiRuntime, new File[] { generatedJar1 });
+    }
+  }
+
+  /**
+   * Test add module programmatically with non-default groupId
    */
   public void testNonDefaultGroupId() throws Exception {
     String groupId = "org.foo";
@@ -270,8 +309,7 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
 
     // Create bundle jar based on these attributes
     File tempDir = getTempDirectory();
-    File generatedJar1 = createBundle(tempDir, groupId, artifactId, version, symbolicName, version,
-                                      null, TC_OK_CONFIG);
+    File generatedJar1 = createBundle(tempDir, groupId, artifactId, version, symbolicName, version, null, TC_OK_CONFIG);
 
     EmbeddedOSGiRuntime osgiRuntime = null;
     try {
@@ -287,7 +325,7 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
       ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false);
 
       // should find and load the module without error
-      
+
     } finally {
       shutdownAndCleanUpJars(osgiRuntime, new File[] { generatedJar1 });
     }
@@ -301,10 +339,29 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
   private static final String TC_CONFIG_MISSING_FIRST_CHAR    = "?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
                                                                 + "<xml-fragment>" + "</xml-fragment>";
 
-  private static final String TC_OK_CONFIG = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
-    + "<xml-fragment>" + "<roots>"
-    + "<root><root-name>no_expr</root-name> <field-name>org.foo.bar.SomeClass.someField</field-name></root>"
-    + "</roots>" + "</xml-fragment>";  
+  private static final String TC_OK_CONFIG                    = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
+                                                                + "<xml-fragment>\n"
+                                                                + "<roots>\n"
+                                                                + "<root>\n"
+                                                                + "<root-name>no_expr</root-name>\n"
+                                                                + "<field-name>org.foo.bar.SomeClass.someField</field-name>\n"
+                                                                + "</root>\n" + "</roots>\n" + "</xml-fragment>\n";
+
+  private static final String TC_CONFIG_WITH_INVALID_SCHEMA   = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
+                                                                + "<xml-fragment>\n"
+                                                                + "<roots>\n"
+                                                                + "<root>\n"
+                                                                + "<root-name>no_expr</root-name>\n"
+                                                                + "<field-name>org.foo.bar.SomeClass.someField</field-name>\n"
+                                                                + "</root>\n"
+                                                                + "</roots>\n"
+                                                                + "<locks>\n"
+                                                                + "<named-lock>\n"
+                                                                + "<lock-name>__ehcache_lock__CacheManager.init</lock-name>\n"
+                                                                + "<method-expression>* net.sf.ehcache.CacheManager.init(..)</method-expression>\n"
+                                                                + "<lock-level>write</lock-level>\n"
+                                                                + "</named-lock>\n" + "</locks>\n"
+                                                                + "</xml-fragment>\n";
 
   private void shutdownAndCleanUpJars(EmbeddedOSGiRuntime osgiRuntime, File[] jars) {
     // Shutdown and wait for open jar references to get cleaned up

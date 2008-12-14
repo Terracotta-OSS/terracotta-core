@@ -5,7 +5,9 @@
 package com.tc.plugins;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.xmlbeans.XmlError;
 import org.apache.xmlbeans.XmlException;
+import org.apache.xmlbeans.XmlOptions;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
@@ -80,6 +82,7 @@ public class ModulesLoader {
   private static final TCLogger   consoleLogger      = CustomerLogging.getConsoleLogger();
 
   private static final Object     lock               = new Object();
+  private static final String     NEWLINE            = System.getProperty("line.separator", "\n");
 
   private ModulesLoader() {
     // cannot be instantiated
@@ -298,9 +301,9 @@ public class ModulesLoader {
         final DsoApplication application = DsoApplication.Factory.parse(is);
         if (application != null) {
           final ConfigLoader loader = new ConfigLoader(configHelper, logger);
-          loader.loadDsoConfig(application);
           logConfig(application, bundle, configPath);
-          // loader.loadSpringConfig(application.getSpring());
+          validateBundleFragment(application);
+          loader.loadDsoConfig(application);
         }
         is.close();
       } catch (IOException ioe) {
@@ -327,6 +330,35 @@ public class ModulesLoader {
     }
   }
 
+  /**
+   * DEV-1238 and DEV-2205
+   * 
+   * @author hhuynh
+   */
+  private static void validateBundleFragment(DsoApplication application) throws XmlException {
+    // Create an XmlOptions instance and set the error listener.
+    XmlOptions validateOptions = new XmlOptions();
+    ArrayList errorList = new ArrayList();
+    validateOptions.setErrorListener(errorList);
+
+    // Validate the XML.
+    boolean isValid = application.validate(validateOptions);
+
+    // If the XML isn't valid, loop through the listener's contents,
+    // printing contained messages.
+    if (!isValid) {
+      StringBuilder sb = new StringBuilder();
+      for (int i = 0; i < errorList.size(); i++) {
+        XmlError error = (XmlError) errorList.get(i);
+        sb.append(NEWLINE);
+        sb.append("Parse error: " + error.getMessage());
+      }
+      sb.append(NEWLINE);
+      throw new XmlException(sb.toString());
+    }
+
+  }
+
   private static void logConfig(DsoApplication application, Bundle bundle, String configPath) {
     logger.info("Config loaded from module: " + bundle.getSymbolicName() + " (" + configPath + ")");
     ByteArrayOutputStream bas = new ByteArrayOutputStream();
@@ -334,7 +366,7 @@ public class ModulesLoader {
     try {
       application.save(buf);
       buf.close();
-      logger.info("Here's the config from the module:\n\n" + bas.toString());
+      logger.info(NEWLINE + bas.toString() + NEWLINE);
     } catch (IOException e) {
       logger.warn("Unable to generate a log entry to for the module's config info.");
     }
