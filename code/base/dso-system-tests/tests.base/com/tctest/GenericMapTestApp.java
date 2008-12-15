@@ -827,6 +827,7 @@ public class GenericMapTestApp extends GenericTestApp {
 
       synchronized (map) {
         map.entrySet().remove(new SimpleEntry(E("March", v), E("Mar", v)));
+        map.entrySet().remove(new SimpleEntry(E("April", v), E("Junk", v)));
       }
     }
   }

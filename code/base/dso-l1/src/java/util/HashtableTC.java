@@ -761,12 +761,14 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
 
           Entry entryToRemove = (Entry) o;
 
-          Entry entry = __tc_removeEntryForKey(entryToRemove.getKey());
-          if (entry == null) { return false; }
-
-          ManagerUtil.logicalInvoke(HashtableTC.this, SerializationUtil.REMOVE_KEY_SIGNATURE,
-                                    new Object[] { entry.getKey() });
-          return true;
+          if (entrySet.contains(entryToRemove)) {
+            Entry entry = __tc_removeEntryForKey(entryToRemove.getKey());
+            ManagerUtil.logicalInvoke(HashtableTC.this, SerializationUtil.REMOVE_KEY_SIGNATURE,
+                                      new Object[] { entry.getKey() });
+            return true;
+          } else {
+            return false;
+          }
         }
       } else {
         return entrySet.remove(o);
