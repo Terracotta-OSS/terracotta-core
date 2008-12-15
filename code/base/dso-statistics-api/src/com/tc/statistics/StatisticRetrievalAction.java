@@ -10,7 +10,7 @@ import com.tc.logging.TCLogging;
  * This interface has to be implemented to retrieve data from system, for
  * storage into the CVT. {@code StatisticRetrievalAction} is abbreviated as SRA
  * throughout the CVT.
- * 
+ *
  * The accent is really situated on the 'retrieval' part. Usually, a
  * {@code StatisticRetrievalAction} implementation will interact with
  * another part of the system that is responsible for measuring and sampling
@@ -33,7 +33,7 @@ public interface StatisticRetrievalAction {
 
   /**
    * Retrieves statistics data from the system and formats it as an array of
-   * {@code StatisticData} instances.
+   * {@code StatisticData} instances.
    *
    * Instead of returning {@code null} when data is not available,
    * it's recommended to return {@link #EMPTY_STATISTIC_DATA}.
