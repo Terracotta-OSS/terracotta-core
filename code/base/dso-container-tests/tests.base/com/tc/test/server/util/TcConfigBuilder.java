@@ -39,8 +39,11 @@ public class TcConfigBuilder {
   }
 
   public TcConfigBuilder(String resourcePath) {
+    InputStream in = TcConfigBuilder.class.getResourceAsStream(resourcePath);
+    if (in == null) { throw new IllegalArgumentException("no resource available for " + resourcePath); }
+
     try {
-      tcConfigDocument = new Loader().parse(TcConfigBuilder.class.getResourceAsStream(resourcePath));
+      tcConfigDocument = new Loader().parse(in);
       tcConfig = tcConfigDocument.getTcConfig();
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -197,19 +200,19 @@ public class TcConfigBuilder {
   public void addWebApplication(String appName) {
     addWebApplication(appName, false, true);
   }
-  
+
   public void addWebApplicationWithSessionLocking(String appName) {
     addWebApplication(appName, false, true);
   }
-  
+
   public void addWebApplicationWithoutSessionLocking(String appName) {
     addWebApplication(appName, false, false);
   }
-  
+
   public void addWebApplicationWithSynchronousWrite(String appName) {
     addWebApplication(appName, true, true);
   }
-  
+
   public void addWebApplicationWithoutSynchronousWrite(String appName) {
     addWebApplication(appName, false, true);
   }
@@ -224,6 +227,7 @@ public class TcConfigBuilder {
     wa.setSessionLocking(sessionLocking);
   }
 
+  @Override
   public String toString() {
     return tcConfigDocument.toString();
   }

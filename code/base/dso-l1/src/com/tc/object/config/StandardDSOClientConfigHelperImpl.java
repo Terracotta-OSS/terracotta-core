@@ -151,7 +151,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
    */
   private final List                             instrumentationDescriptors         = new CopyOnWriteArrayList();
 
-  //====================================================================================================================
+  // ====================================================================================================================
   /**
    * The lock for both {@link #userDefinedBootSpecs} and {@link #classSpecs} Maps
    */
@@ -170,7 +170,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
    * @GuardedBy {@link #specLock}
    */
   private final Map                              classSpecs                         = new HashMap();
-  //====================================================================================================================
+  // ====================================================================================================================
 
   private final Map                              customAdapters                     = new ConcurrentHashMap();
 
@@ -908,8 +908,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     LockDefinition lockDefinitions[] = lockDefinitionsFor(memberInfo);
 
-    for (int j = 0; j < lockDefinitions.length; j++) {
-      if (lockDefinitions[j].isAutolock()) {
+    for (LockDefinition lockDefinition : lockDefinitions) {
+      if (lockDefinition.isAutolock()) {
         if (isNotStaticAndIsSynchronized(memberInfo.getModifiers())) {
           helperLogger.logIsLockMethodAutolock();
           return true;
@@ -1010,8 +1010,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   private boolean classContainsAnyRoots(ClassInfo classInfo) {
     FieldInfo[] fields = classInfo.getFields();
-    for (int i = 0; i < fields.length; i++) {
-      FieldInfo fieldInfo = fields[i];
+    for (FieldInfo fieldInfo : fields) {
       if (findMatchingRootDefinition(fieldInfo) != null) { return true; }
     }
 
@@ -1102,8 +1101,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   private void rewriteHashtableAutoLockSpecIfNecessaryInternal(ClassInfo classInfo, String className, String patterns) {
     MemberInfo[] methods = classInfo.getMethods();
-    for (int j = 0; j < methods.length; j++) {
-      MemberInfo methodInfo = methods[j];
+    for (MemberInfo methodInfo : methods) {
       if (patterns.indexOf(methodInfo.getName() + methodInfo.getSignature()) > -1) {
         for (Iterator i = locks.iterator(); i.hasNext();) {
           Lock lock = (Lock) i.next();
@@ -1338,8 +1336,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   public Class getTCPeerClass(Class clazz) {
     if (moduleSpecs != null) {
-      for (int i = 0; i < moduleSpecs.length; i++) {
-        clazz = moduleSpecs[i].getPeerClass(clazz);
+      for (ModuleSpec moduleSpec : moduleSpecs) {
+        clazz = moduleSpec.getPeerClass(clazz);
       }
     }
     return clazz;
@@ -1348,8 +1346,13 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   public boolean isDSOSessions(String name) {
     for (Iterator it = applicationNames.iterator(); it.hasNext();) {
       String appName = (String) it.next();
-      if (name.matches(appName.replaceAll("\\*", "\\.\\*"))) return true;
+      if (name.matches(appName.replaceAll("\\*", "\\.\\*"))) {
+        logger.info("Clustered HTTP sessions IS enabled for [" + name + "]. matched [" + appName + "]");
+        return true;
+      }
     }
+
+    logger.info("Clustered HTTP sessions is NOT enabled for [" + name + "]");
     return false;
   }
 
@@ -1445,8 +1448,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   // TODO: Need to optimize this by identifying the module to query instead of querying all the modules.
   public boolean isPortableModuleClass(Class clazz) {
     if (moduleSpecs != null) {
-      for (int i = 0; i < moduleSpecs.length; i++) {
-        if (moduleSpecs[i].isPortableClass(clazz)) { return true; }
+      for (ModuleSpec moduleSpec : moduleSpecs) {
+        if (moduleSpec.isPortableClass(clazz)) { return true; }
       }
     }
     return false;
@@ -1461,8 +1464,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     if (applicatorSpec == null) {
       if (moduleSpecs != null) {
-        for (int i = 0; i < moduleSpecs.length; i++) {
-          Class applicatorClass = moduleSpecs[i].getChangeApplicatorSpec().getChangeApplicator(clazz);
+        for (ModuleSpec moduleSpec : moduleSpecs) {
+          Class applicatorClass = moduleSpec.getChangeApplicatorSpec().getChangeApplicator(clazz);
           if (applicatorClass != null) { return applicatorClass; }
         }
       }
@@ -1478,8 +1481,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     TransparencyClassSpec spec = getSpec(className);
     if (spec != null) { return spec.isUseNonDefaultConstructor(); }
     if (moduleSpecs != null) {
-      for (int i = 0; i < moduleSpecs.length; i++) {
-        if (moduleSpecs[i].isUseNonDefaultConstructor(clazz)) { return true; }
+      for (ModuleSpec moduleSpec : moduleSpecs) {
+        if (moduleSpec.isUseNonDefaultConstructor(clazz)) { return true; }
       }
     }
     return false;
@@ -1538,8 +1541,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     synchronized (specLock) {
       TransparencyClassSpec[] allSpecs = getAllSpecs(true);
-      for (int i = 0; i < allSpecs.length; i++) {
-        TransparencyClassSpec classSpec = allSpecs[i];
+      for (TransparencyClassSpec classSpec : allSpecs) {
         Assert.assertNotNull(classSpec);
         String cname = classSpec.getClassName().replace('/', '.');
         if (!classSpec.isForeign() && (userDefinedBootSpecs.get(cname) != null)) continue;
@@ -1623,6 +1625,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     transients.add(className + "." + fieldName);
   }
 
+  @Override
   public String toString() {
     return "<StandardDSOClientConfigHelperImpl: " + configSetupManager + ">";
   }
@@ -1673,7 +1676,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   public void addSynchronousWriteApplication(String name) {
     this.synchronousWriteApplications.add(name);
   }
-  
+
   public void addSessionLockedApplication(String name) {
     this.sessionLockedApplications.add(name);
   }
@@ -1744,7 +1747,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
     return LockLevel.WRITE;
   }
-  
+
   public boolean isApplicationSessionLocked(String appName) {
     for (Iterator it = sessionLockedApplications.iterator(); it.hasNext();) {
       String name = (String) it.next();
@@ -1785,9 +1788,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     ConnectionInfoConfigItem connectInfo = (ConnectionInfoConfigItem) serverInfos.createConnectionInfoConfigItem();
     ConnectionInfo[] connections = (ConnectionInfo[]) connectInfo.getObject();
 
-    for (int i = 0; i < connections.length; i++) {
+    for (ConnectionInfo connection : connections) {
       if (serverList.length() > 0) serverList += ", ";
-      serverList += connections[i];
+      serverList += connection;
     }
     String text = "Can't connect to " + (connections.length > 1 ? "any of the servers" : "server") + "[" + serverList
                   + "]. Retrying...\n";
