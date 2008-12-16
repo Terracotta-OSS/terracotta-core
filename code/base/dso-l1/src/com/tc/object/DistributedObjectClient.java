@@ -51,7 +51,7 @@ import com.tc.net.protocol.tcm.MessageMonitorImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
-import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
+import com.tc.net.protocol.transport.HealthCheckerConfigClientImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
@@ -320,7 +320,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     MessageMonitor mm = MessageMonitorImpl.createMonitor(tcProperties, DSO_LOGGER);
 
     communicationsManager = createCommunicationsManager(mm, networkStackHarnessFactory, new NullConnectionPolicy(),
-                                                        new HealthCheckerConfigImpl(l1Properties
+                                                        new HealthCheckerConfigClientImpl(l1Properties
                                                             .getPropertiesFor("healthcheck.l2"), "DSO Client"));
 
     DSO_LOGGER.debug("Created CommunicationsManager.");
@@ -652,9 +652,9 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     GroupID defaultGroups[] = dsoChannel.getGroupIDs();
     assert defaultGroups != null && defaultGroups.length == 1;
     return new RemoteTransactionManagerImpl(defaultGroups[0], new ClientIDLogger(cidProvider, TCLogging
-        .getLogger(RemoteTransactionManagerImpl.class)), txBatchFactory, transactionIDGenerator, sessionManager, dsoChannel,
-                                            outstandingBatchesCounter, numTransactionCounter, numBatchesCounter,
-                                            batchSizeCounter, pendingBatchesSize);
+        .getLogger(RemoteTransactionManagerImpl.class)), txBatchFactory, transactionIDGenerator, sessionManager,
+                                            dsoChannel, outstandingBatchesCounter, numTransactionCounter,
+                                            numBatchesCounter, batchSizeCounter, pendingBatchesSize);
   }
 
   private void setReconnectCloseOnExit(final DSOClientMessageChannel channel) {
