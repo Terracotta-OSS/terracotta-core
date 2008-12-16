@@ -93,7 +93,6 @@ import com.tc.object.bytecode.JavaUtilTreeMapAdapter;
 import com.tc.object.bytecode.JavaUtilWeakHashMapAdapter;
 import com.tc.object.bytecode.LinkedHashMapClassAdapter;
 import com.tc.object.bytecode.LinkedListAdapter;
-import com.tc.object.bytecode.LogManagerAdapter;
 import com.tc.object.bytecode.LogicalClassSerializationAdapter;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.Manager;
@@ -550,7 +549,6 @@ public class BootJarTool {
 
       addLiterals();
 
-      addInstrumentedLogManager();
       addSunStandardLoaders();
       addInstrumentedAccessibleObject();
       addInstrumentedJavaLangThrowable();
@@ -1696,21 +1694,6 @@ public class BootJarTool {
     TransparencyClassSpec spec = configHelper.getOrCreateSpec(className);
     bytes = doDSOTransform(spec.getClassName(), bytes);
     loadClassIntoJar(className, bytes, true);
-  }
-
-  private final void addInstrumentedLogManager() {
-    String className = "java.util.logging.LogManager";
-    byte[] bytes = getSystemBytes(className);
-
-    ClassReader cr = new ClassReader(bytes);
-    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-
-    ClassVisitor cv = new LogManagerAdapter(cw);
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
-
-    bytes = cw.toByteArray();
-
-    loadClassIntoJar(className, bytes, false);
   }
 
   private final void addInstrumentedJavaLangString() {
