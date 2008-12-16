@@ -7,14 +7,14 @@
  *******************************************************************************************/
 package com.tc.backport175.bytecode;
 
-import com.tc.backport175.ReaderException;
-import com.tc.backport175.bytecode.AnnotationElement.Annotation;
-
 import com.tc.asm.AnnotationVisitor;
 import com.tc.asm.ClassReader;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.commons.EmptyVisitor;
+import com.tc.backport175.ReaderException;
+import com.tc.backport175.bytecode.AnnotationElement.Annotation;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -48,7 +48,10 @@ class AnnotationDefaults {
             final byte[] bytes;
             try {
                 bytes = AnnotationReader.getBytecodeFor(annotationClassName, loader);
-            } catch (Exception e) {
+            } catch (ClassNotFoundException e) {
+              return null;
+            } catch (IOException e) {
+              e.printStackTrace();
                 throw new ReaderException("could not retrieve the bytecode from the bytecode provider for class [" + annotationClassName+ "]", e);
             }
             ClassReader cr = new ClassReader(bytes);

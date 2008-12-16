@@ -7,6 +7,8 @@
  *******************************************************************************************/
 package com.tc.backport175.bytecode.spi;
 
+import java.io.IOException;
+
 /**
  * Callback interface that all vendors that wants to be able to control which bytecode is read when retrieving the
  * annotations should implement.
@@ -23,5 +25,5 @@ public interface BytecodeProvider {
      * @return the bytecode
      * @throws Exception upon failure
      */
-    byte[] getBytecode(String className, ClassLoader loader) throws Exception;
+    byte[] getBytecode(String className, ClassLoader loader) throws ClassNotFoundException, IOException;
 }

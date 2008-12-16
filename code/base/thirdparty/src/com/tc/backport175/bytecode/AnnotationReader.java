@@ -7,17 +7,17 @@
  *******************************************************************************************/
 package com.tc.backport175.bytecode;
 
-import com.tc.backport175.Annotation;
-import com.tc.backport175.bytecode.spi.BytecodeProvider;
-import com.tc.backport175.proxy.ProxyFactory;
-
 import com.tc.asm.AnnotationVisitor;
 import com.tc.asm.ClassReader;
 import com.tc.asm.FieldVisitor;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Type;
 import com.tc.asm.commons.EmptyVisitor;
+import com.tc.backport175.Annotation;
+import com.tc.backport175.bytecode.spi.BytecodeProvider;
+import com.tc.backport175.proxy.ProxyFactory;
 
+import java.io.IOException;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
@@ -164,7 +164,7 @@ public class AnnotationReader {
      * @param loader
      * @return the bytecode for a class
      */
-    public static byte[] getBytecodeFor(final String className, final ClassLoader loader) throws Exception {
+    public static byte[] getBytecodeFor(final String className, final ClassLoader loader) throws ClassNotFoundException, IOException {
         return getBytecodeProviderFor(className, loader).getBytecode(className, loader);
     }
 
@@ -1138,10 +1138,12 @@ public class AnnotationReader {
             // annotation default overrides
             if (m_annotationClassName != null) {
                 AnnotationElement.Annotation defaults = AnnotationDefaults.getDefaults(m_annotationClassName, m_loader);
-                AnnotationElement.Annotation annotation = (AnnotationElement.Annotation) m_nestedAnnotationElement;
-                for (Iterator iterator = defaults.getElements().iterator(); iterator.hasNext();) {
-                    AnnotationElement.NamedValue defaultedElement = (AnnotationElement.NamedValue) iterator.next();
-                    annotation.mergeDefaultedElement(defaultedElement);
+                if (defaults != null) {
+                  AnnotationElement.Annotation annotation = (AnnotationElement.Annotation) m_nestedAnnotationElement;
+                  for (Iterator iterator = defaults.getElements().iterator(); iterator.hasNext();) {
+                      AnnotationElement.NamedValue defaultedElement = (AnnotationElement.NamedValue) iterator.next();
+                      annotation.mergeDefaultedElement(defaultedElement);
+                  }
                 }
             }
         }

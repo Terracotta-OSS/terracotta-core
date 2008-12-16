@@ -3,15 +3,6 @@
  */
 package com.tc.aspectwerkz.proxy;
 
-import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-
-import com.tc.backport175.bytecode.AnnotationReader;
-import com.tc.backport175.bytecode.spi.BytecodeProvider;
-
 import com.tc.aspectwerkz.definition.SystemDefinition;
 import com.tc.aspectwerkz.definition.SystemDefinitionContainer;
 import com.tc.aspectwerkz.exception.WrappedRuntimeException;
@@ -22,6 +13,15 @@ import com.tc.aspectwerkz.transform.WeavingStrategy;
 import com.tc.aspectwerkz.transform.inlining.AsmHelper;
 import com.tc.aspectwerkz.transform.inlining.EmittedJoinPoint;
 import com.tc.aspectwerkz.transform.inlining.ProxyWeavingStrategy;
+import com.tc.backport175.bytecode.AnnotationReader;
+import com.tc.backport175.bytecode.spi.BytecodeProvider;
+
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * @author <a href="mailto:jboner@codehaus.org">Jonas Bonér</a>
@@ -50,7 +50,7 @@ public class ProxyCompilerHelper {
     // register the bytecode provider
     // TODO AV - could be optimized ?(f.e. recompile everytime instead of creating many provider)
     AnnotationReader.setBytecodeProviderFor(proxyClassName, loader, new BytecodeProvider() {
-      public byte[] getBytecode(String className, ClassLoader l) throws Exception {
+      public byte[] getBytecode(final String className, final ClassLoader l) throws ClassNotFoundException, IOException {
         return bytes;
       }
     });

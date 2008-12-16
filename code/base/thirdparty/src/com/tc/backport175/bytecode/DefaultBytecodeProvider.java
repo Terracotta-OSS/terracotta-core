@@ -9,8 +9,8 @@ package com.tc.backport175.bytecode;
 
 import com.tc.backport175.bytecode.spi.BytecodeProvider;
 
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Default implementation of the {@link org.codehaus.backport175.reader.bytecode.spi.BytecodeProvider}  interface which
@@ -27,7 +27,7 @@ public class DefaultBytecodeProvider implements BytecodeProvider {
      * @param loader    the class loader that has loaded the class
      * @return the bytecode
      */
-    public byte[] getBytecode(final String className, final ClassLoader loader) throws Exception {
+    public byte[] getBytecode(final String className, final ClassLoader loader) throws ClassNotFoundException, IOException {
         byte[] bytes;
         InputStream in = null;
         try {
@@ -39,10 +39,12 @@ public class DefaultBytecodeProvider implements BytecodeProvider {
             if (in != null) {
                 bytes = toByteArray(in);
             } else {
-                throw new Exception("could not read class [" + className + "] as byte array");
+                throw new ClassNotFoundException("could not read class [" + className + "] as byte array");
             }
         } catch (IOException e) {
-            throw new Exception("could not read class [" + className + "]as byte array due to: " + e.toString());
+            IOException e2 = new IOException("could not read class [" + className + "] as byte array due");
+            e2.initCause(e);
+            throw e2;
         } finally {
             try {
                 in.close();
