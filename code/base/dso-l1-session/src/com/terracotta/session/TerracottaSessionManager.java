@@ -74,7 +74,6 @@ public class TerracottaSessionManager implements SessionManager {
     this.reqeustLogEnabled = cp.getRequestLogBenchEnabled();
     this.invalidatorLogEnabled = cp.getInvalidatorLogBenchEnabled();
     this.sessionLocking = ManagerUtil.isApplicationSessionLocked(contextMgr.getAppName());
-    System.out.println("===============> Session locking: " + sessionLocking);
 
     // XXX: If reasonable, we should move this out of the constructor -- leaking a reference to "this" to another thread
     // within a constructor is a bad practice (note: although "this" isn't explicitly based as arg, it is available and
