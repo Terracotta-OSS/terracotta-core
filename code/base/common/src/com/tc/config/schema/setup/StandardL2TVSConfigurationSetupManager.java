@@ -134,6 +134,10 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     validateDSOClusterPersistenceMode();
   }
 
+  public String getL2Identifier() {
+    return this.thisL2Identifier;
+  }
+
   private void validateGroups() throws ConfigurationSetupException {
     Server[] serverArray = ((Servers) serversBeanRepository().bean()).getServerArray();
     ActiveServerGroupConfig[] groupArray = this.activeServerGroupsConfig.getActiveServerGroupArray();

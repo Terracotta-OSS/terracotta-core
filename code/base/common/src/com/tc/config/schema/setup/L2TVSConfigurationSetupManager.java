@@ -44,6 +44,8 @@ public interface L2TVSConfigurationSetupManager {
   InputStream effectiveConfigFile();
 
   String[] allCurrentlyKnownServers();
+  
+  String getL2Identifier();
 
   NewCommonL2Config commonL2ConfigFor(String name) throws ConfigurationSetupException;
 

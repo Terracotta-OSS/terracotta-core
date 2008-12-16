@@ -368,6 +368,10 @@ public class TCServerImpl extends SEDA implements TCServer {
       if (updateCheckEnabled()) {
         UpdateCheckAction.start(TCServerImpl.this, updateCheckPeriodDays());
       }
+
+      // CDV-1079
+      String l2Identifier = configurationSetupManager.getL2Identifier();
+      if (l2Identifier != null) logger.info("Server started as " + l2Identifier);
     }
   }
 
