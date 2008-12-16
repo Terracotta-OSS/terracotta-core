@@ -55,8 +55,4 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
   public void objectsNotFoundFor(SessionID sessionID, long batchID, Set missingObjectIDs, NodeID nodeID) {
     throw new ImplementMe();
   }
-
-  public void clear() {
-    throw new ImplementMe();
-  }
 }

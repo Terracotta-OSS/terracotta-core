@@ -91,6 +91,10 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
   public synchronized void pause(NodeID remote, int disconnected) {
     assertNotPaused("Attempt to pause while PAUSED");
     state = PAUSED;
+    // XXX:: We are clearing unmaterialized DNAs and removed objects here because on connect we are going to send
+    // the list of objects present in this L1 from Client Object Manager anyways. We can't be clearing the removed 
+    // object IDs in unpause(), then you get MNK-835
+    clear();
     notifyAll();
   }
 
@@ -105,8 +109,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
     notifyAll();
   }
 
-  public synchronized void clear() {
-    assertPaused("Attempt to clear while not PAUSED");
+  synchronized void clear() {
     lruDNA.clear();
     for (Iterator i = dnaRequests.entrySet().iterator(); i.hasNext();) {
       Entry e = (Entry) i.next();

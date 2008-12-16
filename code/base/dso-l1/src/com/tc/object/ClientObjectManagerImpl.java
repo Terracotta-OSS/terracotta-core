@@ -190,9 +190,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
                                                ClientHandshakeMessage handshakeMessage) {
     assertPaused("Attempt to initiateHandshake while not PAUSED");
     addAllObjectIDs(handshakeMessage.getObjectIDs());
-    // XXX:: We are clearing RemoteObjectManager here so that the act of sending the list of object present in the L1
-    // and clearing the rest of removed object IDs is atomic, else you get MNK-835
-    remoteObjectManager.clear();
   }
 
   private void waitUntilRunning() {

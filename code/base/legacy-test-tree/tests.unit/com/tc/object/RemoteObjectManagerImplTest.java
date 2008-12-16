@@ -99,7 +99,6 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     DNA dna = manager.retrieve(new ObjectID(0));
     assertNotNull(dna);
     assertEquals(dnaCollectionCount - 1, manager.getDNACacheSize());
-    manager.pause(GroupID.ALL_GROUPS, 1);
     manager.clear();
     assertEquals(0, manager.getDNACacheSize());
   }
