@@ -321,8 +321,9 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
         synAck = handshakeMessageFactory.createSynAck(connectionId, errorContext, source, isMaxConnectionsExceeded,
                                                       maxConnections);
       } else {
+        int callbackPort = source.getLocalAddress().getPort();
         synAck = handshakeMessageFactory.createSynAck(connectionId, source, isMaxConnectionsExceeded, maxConnections,
-                                                      source.getLocalAddress().getPort());
+                                                      callbackPort);
       }
       sendMessage(synAck);
     }

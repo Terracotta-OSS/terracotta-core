@@ -11,10 +11,9 @@ import com.tc.logging.TCLogging;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
-import com.tc.net.core.event.TCConnectionErrorEvent;
 import com.tc.net.core.event.TCConnectionEvent;
-import com.tc.net.core.event.TCConnectionEventListener;
 import com.tc.net.protocol.NullProtocolAdaptor;
+import com.tc.util.Assert;
 import com.tc.util.State;
 
 /**
@@ -25,14 +24,19 @@ import com.tc.util.State;
  * @author Manoj
  */
 
-class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerContext, TCConnectionEventListener {
+class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerContext,
+    HealthCheckerSocketConnectEventListener {
 
   // Probe State-Flow
+  private static final State                     INIT                       = new State("INIT");
   private static final State                     START                      = new State("START");
   private static final State                     ALIVE                      = new State("ALIVE");
   private static final State                     AWAIT_PINGREPLY            = new State("AWAIT_PINGREPLY");
   private static final State                     SOCKET_CONNECT             = new State("SOCKET_CONNECT");
   private static final State                     DEAD                       = new State("DEAD");
+
+  // constant
+  public static final int                        CONFIG_UPGRADE_FACTOR      = 3;
 
   // Basic Ping probes
   private State                                  currentState;
@@ -45,10 +49,14 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
 
   // Context info
   private final HealthCheckerConfig              config;
+  private final int                              callbackPort;
   private final String                           remoteNodeDesc;
 
   // Socket Connect probes
+  private int                                    intervalTimeElapsedCount   = 0;
+  private int                                    idleTimeElapsedCount       = 0;
   private int                                    socketConnectSuccessCount  = 0;
+  private int                                    configFactor;
   private TCConnection                           presentConnection          = null;
   private HealthCheckerSocketConnect             sockectConnect             = new NullHealthCheckerSocketConnectImpl();
 
@@ -57,7 +65,6 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
 
   public ConnectionHealthCheckerContextImpl(MessageTransportBase mtb, HealthCheckerConfig config,
                                             TCConnectionManager connMgr) {
-    currentState = START;
     this.transport = mtb;
     this.messageFactory = new TransportMessageFactoryImpl();
     this.maxProbeCountWithoutReply = config.getPingProbes();
@@ -67,6 +74,29 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
                                       + config.getHealthCheckerName());
     this.remoteNodeDesc = mtb.getRemoteAddress().getCanonicalStringForm();
     logger.info("Health monitoring agent started for " + remoteNodeDesc);
+    currentState = INIT;
+    callbackPort = transport.getRemoteCallbackPort();
+    configFactor = 1;
+    initCallbackPortVerification();
+  }
+
+  // RMP-343
+  private void initCallbackPortVerification() {
+    if (config.isSocketConnectOnPingFail()) {
+      if (!initSocketConnectProbe()) {
+        // 1. may be callback port not handshaked or
+        // 2. callback port not reachable
+        // error logging already done.
+        changeState(START);
+      } else {
+        // async socket connect to callback port has started. HC state remains at INIT. state change happens on
+        // connection events
+      }
+    } else {
+      logger
+          .info("HealthCheck SocketConnect disabled for " + remoteNodeDesc + ". HealthCheckCallbackPort not verified");
+      changeState(START);
+    }
   }
 
   /* all callers of this method are already synchronized */
@@ -83,16 +113,21 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
       if (this.probeReplyNotRecievedCount.get() > 0) logger.debug("PING_REPLY not received from " + remoteNodeDesc
                                                                   + " for " + this.probeReplyNotRecievedCount
                                                                   + " times (max allowed:"
-                                                                  + this.maxProbeCountWithoutReply + ").");
+                                                                  + getMaxProbeCountWithoutReply() + ").");
     }
 
-    return ((this.probeReplyNotRecievedCount.get() < this.maxProbeCountWithoutReply));
+    return ((this.probeReplyNotRecievedCount.get() < getMaxProbeCountWithoutReply()));
+  }
+
+  private int getMaxProbeCountWithoutReply() {
+    return this.maxProbeCountWithoutReply * this.configFactor;
   }
 
   private boolean initSocketConnectProbe() {
     // trigger the socket connect
-    presentConnection = getNewConnection();
-    sockectConnect = getHealthCheckerSocketConnector(presentConnection);
+    presentConnection = getNewConnection(connectionManager);
+    sockectConnect = getHealthCheckerSocketConnector(presentConnection, transport, logger, config);
+    sockectConnect.addSocketConnectEventListener(this);
     if (sockectConnect.start()) {
       return true;
     } else {
@@ -101,32 +136,71 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     }
   }
 
-  protected TCConnection getNewConnection() {
-    TCConnection connection = connectionManager.createConnection(new NullProtocolAdaptor());
-    connection.addListener(this);
+  protected TCConnection getNewConnection(TCConnectionManager connManager) {
+    TCConnection connection = connManager.createConnection(new NullProtocolAdaptor());
     return connection;
   }
 
-  protected HealthCheckerSocketConnect getHealthCheckerSocketConnector(TCConnection connection) {
-    int callbackPort = transport.getRemoteCallbackPort();
-    if (TransportHandshakeMessage.NO_CALLBACK_PORT == callbackPort) { return new NullHealthCheckerSocketConnectImpl(); }
+  protected HealthCheckerSocketConnect getHealthCheckerSocketConnector(TCConnection connection,
+                                                                       MessageTransportBase transportBase,
+                                                                       TCLogger loger, HealthCheckerConfig cnfg) {
+    if (TransportHandshakeMessage.NO_CALLBACK_PORT == callbackPort) {
+      logger.info("No HealthCheckCallbackPort handshaked for node " + remoteNodeDesc);
+      return new NullHealthCheckerSocketConnectImpl();
+    }
 
-    // TODO: do we need to exchange the address as well? (since it might be different than the remote IP on this conn)
-    TCSocketAddress sa = new TCSocketAddress(transport.getRemoteAddress().getAddress(), callbackPort);
-    return new HealthCheckerSocketConnectImpl(sa, connection, remoteNodeDesc, logger, config.getSocketConnectTimeout());
+    // TODO: do we need to exchange the address as well ??? (since it might be different than the remote IP on this
+    // conn)
+    TCSocketAddress sa = new TCSocketAddress(transportBase.getRemoteAddress().getAddress(), callbackPort);
+    return new HealthCheckerSocketConnectImpl(sa, connection, remoteNodeDesc + "(callbackport:" + callbackPort + ")",
+                                              loger, cnfg.getSocketConnectTimeout());
   }
 
   private void clearPresentConnection() {
-    presentConnection.removeListener(this);
+    sockectConnect.removeSocketConnectEventListener(this);
     presentConnection = null;
   }
 
   public synchronized void refresh() {
     initProbeCycle();
+    initIntervalTimeElapsedCount();
+    initIdleTimeElapsedCount();
     initSocketConnectCycle();
   }
 
+  private void updateConfigFactor(int newFactor) {
+    Assert.eval(newFactor >= 1);
+    int currentConfigFactor = configFactor;
+    configFactor = newFactor;
+    initIntervalTimeElapsedCount();
+    initIdleTimeElapsedCount();
+    logger.info("Config Factor updated from  " + currentConfigFactor + " to " + configFactor);
+  }
+
+  private boolean isIntervalTimeElapsed() {
+    intervalTimeElapsedCount++;
+    if (intervalTimeElapsedCount >= configFactor) {
+      initIntervalTimeElapsedCount();
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  private boolean isIdleTimeElapsed() {
+    idleTimeElapsedCount++;
+    if (idleTimeElapsedCount >= configFactor) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   public synchronized boolean probeIfAlive() {
+
+    if (!isIntervalTimeElapsed()) { return true; }
+    if (!isIdleTimeElapsed()) { return true; }
+
     if (currentState.equals(DEAD)) {
       // connection events might have moved us to DEAD state.
       // all return are done at the bottom
@@ -137,7 +211,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
         changeState(DEAD);
       }
 
-    } else if (currentState.equals(ALIVE) || currentState.equals(AWAIT_PINGREPLY)) {
+    } else if (currentState.equals(START) || currentState.equals(ALIVE) || currentState.equals(AWAIT_PINGREPLY)) {
 
       /* Send Probe again; if not possible move to next state */
       if (canPingProbe()) {
@@ -156,6 +230,13 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
       } else {
         changeState(DEAD);
       }
+    } else if (currentState.equals(INIT)) {
+      // callbackport initial verification not yet done. connection events didn't arrive still. lets probe the status
+      if (!sockectConnect.probeConnectStatus()) {
+        callbackPortVerificationFailed();
+      } else {
+        // verification still in progress
+      }
     }
 
     if (currentState.equals(DEAD)) {
@@ -163,6 +244,20 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
       return false;
     }
     return true;
+  }
+
+  private void callbackPortVerificationFailed() {
+    transport.setRemoteCallbackPort(TransportHandshakeMessage.NO_CALLBACK_PORT);
+    updateConfigFactor(CONFIG_UPGRADE_FACTOR);
+    changeState(START);
+    logger.info("HealthCheckCallbackPort verification FAILED for " + remoteNodeDesc + "(callbackport: " + callbackPort
+                + ")");
+  }
+
+  private void callbackPortVerificationSuccess() {
+    changeState(START);
+    logger.info("HealthCheckCallbackPort verification PASSED for " + remoteNodeDesc + "(callbackport: " + callbackPort
+                + ")");
   }
 
   public synchronized boolean receiveProbe(HealthCheckerProbeMessage message) {
@@ -197,49 +292,22 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
 
   private void initProbeCycle() {
     probeReplyNotRecievedCount.set(0);
-    changeState(ALIVE);
   }
 
   private void initSocketConnectCycle() {
     socketConnectSuccessCount = 0;
   }
 
+  private void initIntervalTimeElapsedCount() {
+    intervalTimeElapsedCount = 0;
+  }
+
+  private void initIdleTimeElapsedCount() {
+    idleTimeElapsedCount = 0;
+  }
+
   private boolean wasInLongGC() {
     return (socketConnectSuccessCount > 0);
-  }
-
-  public synchronized void closeEvent(TCConnectionEvent event) {
-    // hmm
-  }
-
-  public synchronized void connectEvent(TCConnectionEvent event) {
-    if (canAcceptConnectionEvent(event)) {
-      // Async connect goes thru
-      socketConnectSuccessCount++;
-      if (socketConnectSuccessCount < config.getSocketConnectMaxCount()) {
-        logger.warn(remoteNodeDesc + " might be in Long GC. GC count since last ping reply : "
-                    + socketConnectSuccessCount);
-        initProbeCycle();
-      } else {
-        logger.error(remoteNodeDesc + " might be in Long GC. GC count since last ping reply : "
-                     + socketConnectSuccessCount + ". But its too long. No more retries");
-        changeState(DEAD);
-      }
-    }
-  }
-
-  public synchronized void endOfFileEvent(TCConnectionEvent event) {
-    if (canAcceptConnectionEvent(event)) {
-      logger.warn("Socket Connect EOF event:" + event.toString() + " on " + remoteNodeDesc);
-      changeState(DEAD);
-    }
-  }
-
-  public synchronized void errorEvent(TCConnectionErrorEvent errorEvent) {
-    if (canAcceptConnectionEvent(errorEvent)) {
-      logger.error("Socket Connect Error Event:" + errorEvent.toString() + " on " + remoteNodeDesc);
-      changeState(DEAD);
-    }
   }
 
   private boolean canAcceptConnectionEvent(TCConnectionEvent event) {
@@ -254,6 +322,38 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
 
   TCLogger getLogger() {
     return this.logger;
+  }
+
+  public synchronized void notifySocketConnectFail(TCConnectionEvent failureEvent) {
+    if (currentState.equals(INIT)) {
+      callbackPortVerificationFailed();
+    } else {
+      if (canAcceptConnectionEvent(failureEvent)) {
+        logger.warn("Socket Connect error event:" + failureEvent.toString() + " on " + remoteNodeDesc);
+        changeState(DEAD);
+      }
+    }
+  }
+
+  public synchronized void notifySocketConnectSuccess(TCConnectionEvent successEvent) {
+    if (currentState.equals(INIT)) {
+      callbackPortVerificationSuccess();
+    } else {
+      if (canAcceptConnectionEvent(successEvent)) {
+        // Async connect goes thru
+        socketConnectSuccessCount++;
+        if (socketConnectSuccessCount < config.getSocketConnectMaxCount()) {
+          logger.warn(remoteNodeDesc + " might be in Long GC. GC count since last ping reply : "
+                      + socketConnectSuccessCount);
+          initProbeCycle();
+          changeState(ALIVE);
+        } else {
+          logger.error(remoteNodeDesc + " might be in Long GC. GC count since last ping reply : "
+                       + socketConnectSuccessCount + ". But its too long. No more retries");
+          changeState(DEAD);
+        }
+      }
+    }
   }
 
 }

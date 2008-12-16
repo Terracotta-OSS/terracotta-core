@@ -156,7 +156,7 @@ public class TCConnectionManagerTest extends TestCase {
   }
 
   public void testInActiveClientConnections() throws Exception {
-    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(1000, 1000, 5, "testInActiveClientConnections");
+    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(1000, 1000, 5, "testInActiveClientConnections", false);
     this.serverConnMgr = new TCConnectionManagerJDK14(0, hcConfig);
     this.lsnr = this.serverConnMgr.createListener(new TCSocketAddress(0), new ProtocolAdaptorFactory() {
       public TCProtocolAdaptor getInstance() {

@@ -29,7 +29,6 @@ import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageSink;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.MessageTransport;
-import com.tc.net.protocol.transport.TransportHandshakeMessage;
 import com.tc.object.session.SessionProvider;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
@@ -71,7 +70,7 @@ public class ClientGroupMessageChannelImpl extends ClientMessageChannelImpl impl
   private GroupID createSubChannel(Map channels, final int maxReconnectTries, ConnectionAddressProvider addressProvider) {
     ClientMessageChannel channel = this.communicationsManager
         .createClientChannel(this.sessionProvider, maxReconnectTries, null, 0, 10000, addressProvider,
-                             TransportHandshakeMessage.NO_CALLBACK_PORT, null, this.msgFactory,
+                             null, this.msgFactory,
                              new TCMessageRouterImpl());
     GroupID groupID = (GroupID) channel.getRemoteNodeID();
     channels.put(groupID, channel);

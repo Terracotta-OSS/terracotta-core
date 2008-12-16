@@ -128,8 +128,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
         .createClientChannel(new NullSessionManager(), -1 /* Unlimited Tries */, serverLsnr.getBindAddress()
             .getHostAddress(), proxyPort, 1000,
                              new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo(serverLsnr
-                                 .getBindAddress().getHostAddress(), proxyPort) }),
-                             TransportHandshakeMessage.NO_CALLBACK_PORT);
+                                 .getBindAddress().getHostAddress(), proxyPort) }));
 
     clientMsgCh.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     clientMsgCh.routeMessageType(TCMessageType.PING_MESSAGE, new TCMessageSink() {
@@ -163,7 +162,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
   }
 
   public void testL1DisconnectAndL1Reconnect() throws Exception {
-    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(10000, 4000, 2, "ServerCommsHC-Test11");
+    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(10000, 4000, 2, "ServerCommsHC-Test11", false);
     this.setUp(hcConfig, null);
     ClientMessageChannel clientMsgCh = createClientMsgCh();
     clientMsgCh.open();
@@ -212,7 +211,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
   }
 
   public void testL2CloseL1Reconnect() throws Exception {
-    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(10000, 4000, 2, "ServerCommsHC-Test12");
+    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(10000, 4000, 2, "ServerCommsHC-Test12", false);
     this.setUp(hcConfig, null);
     ClientMessageChannel clientMsgCh = createClientMsgCh();
     clientMsgCh.open();

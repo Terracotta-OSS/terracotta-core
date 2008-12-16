@@ -100,8 +100,7 @@ public class ConnectionHealthCheckerTest extends TCTestCase {
                              new ConnectionAddressProvider(
                                                            new ConnectionInfo[] { new ConnectionInfo("localhost",
                                                                                                      serverLsnr
-                                                                                                         .getBindPort()) }),
-                             TransportHandshakeMessage.NO_CALLBACK_PORT);
+                                                                                                         .getBindPort()) }));
     clientMsgCh.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     clientMsgCh.routeMessageType(TCMessageType.PING_MESSAGE, new TCMessageSink() {
 
@@ -134,7 +133,7 @@ public class ConnectionHealthCheckerTest extends TCTestCase {
   }
 
   public void testL1ProbingL2() throws Exception {
-    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(4000, 2000, 1, "ClientCommsHC-Test01");
+    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(4000, 2000, 1, "ClientCommsHC-Test01", false);
     this.setUp(null, hcConfig);
     ClientMessageChannel clientMsgCh = createClientMsgCh();
     clientMsgCh.open();
@@ -205,8 +204,8 @@ public class ConnectionHealthCheckerTest extends TCTestCase {
   }
 
   public void testL1L2ProbingBothsideAndClientClose() throws Exception {
-    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(4000, 2000, 5, "ServerCommsHC-Test03");
-    HealthCheckerConfig hcConfig2 = new HealthCheckerConfigImpl(10000, 4000, 3, "ClientCommsHC-Test03");
+    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(4000, 2000, 5, "ServerCommsHC-Test03", false);
+    HealthCheckerConfig hcConfig2 = new HealthCheckerConfigImpl(10000, 4000, 3, "ClientCommsHC-Test03", false);
     this.setUp(hcConfig, new DisabledHealthCheckerConfigImpl());
 
     CommunicationsManager clientComms1 = new CommunicationsManagerImpl(new NullMessageMonitor(),
@@ -254,7 +253,7 @@ public class ConnectionHealthCheckerTest extends TCTestCase {
   }
 
   public void testL2ProbingL1AndClientUnResponsive() throws Exception {
-    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(5000, 2000, 2, "ServerCommsHC-Test04");
+    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(5000, 2000, 2, "ServerCommsHC-Test04", false);
     this.setUp(hcConfig, null);
     ((CommunicationsManagerImpl) clientComms).setConnHealthChecker(new ConnectionHealthCheckerDummyImpl());
     ClientMessageChannel clientMsgCh = createClientMsgCh();
@@ -285,7 +284,7 @@ public class ConnectionHealthCheckerTest extends TCTestCase {
   }
 
   public void testL1ProbingL2AndServerUnResponsive() throws Exception {
-    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(5000, 2000, 2, "ClientCommsHC-Test05");
+    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(5000, 2000, 2, "ClientCommsHC-Test05", false);
     this.setUp(null, hcConfig);
     ((CommunicationsManagerImpl) serverComms).setConnHealthChecker(new ConnectionHealthCheckerDummyImpl());
     ClientMessageChannel clientMsgCh = createClientMsgCh();
@@ -317,7 +316,7 @@ public class ConnectionHealthCheckerTest extends TCTestCase {
 
   public void testL2L1WrongConfig() throws Exception {
     try {
-      HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(30000, 40000, 3, "ServerCommsHC-Test06");
+      HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(30000, 40000, 3, "ServerCommsHC-Test06", false);
       this.setUp(hcConfig, null);
     } catch (AssertionError e) {
       // Expected.
@@ -327,7 +326,7 @@ public class ConnectionHealthCheckerTest extends TCTestCase {
     closeCommsMgr();
 
     try {
-      HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(30000, 0, 3, "ClientCommsHC-Test06");
+      HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(30000, 0, 3, "ClientCommsHC-Test06", false);
       this.setUp(null, hcConfig);
     } catch (AssertionError e) {
       // Expected.

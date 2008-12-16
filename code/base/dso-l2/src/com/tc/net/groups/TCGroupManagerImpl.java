@@ -437,7 +437,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
       }
     });
     ClientMessageChannel channel = communicationsManager.createClientChannel(sessionProvider, maxReconnectTries, null,
-                                                                             -1, 10000, addrProvider, groupPort);
+                                                                             -1, 10000, addrProvider);
 
     channel.addClassMapping(TCMessageType.GROUP_WRAPPER_MESSAGE, TCGroupMessageWrapper.class);
     channel.routeMessageType(TCMessageType.GROUP_WRAPPER_MESSAGE, receiveGroupMessageStage.getSink(), hydrateStage

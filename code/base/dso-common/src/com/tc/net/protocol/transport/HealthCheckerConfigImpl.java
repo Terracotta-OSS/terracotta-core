@@ -9,7 +9,7 @@ import com.tc.properties.TCProperties;
 /**
  * Main implementation of the Health Checker Config. Health Checker related tc.properties are read and a config data
  * structure is built which is passed on to various health checker modules.
- *
+ * 
  * @author Manoj
  */
 public class HealthCheckerConfigImpl implements HealthCheckerConfig {
@@ -41,18 +41,17 @@ public class HealthCheckerConfigImpl implements HealthCheckerConfig {
     this.socketConnectTimeout = healthCheckerProperties.getInt("socketConnectTimeout");
   }
 
+  // Default Ping-Probe cycles. No SocketConnect check
   public HealthCheckerConfigImpl(String name) {
     this(DEFAULT_PING_IDLETIME, DEFAULT_PING_INTERVAL, DEFAULT_PING_PROBECNT, name, false);
   }
 
-  public HealthCheckerConfigImpl(long idle, long interval, int probes, String name) {
-    this(idle, interval, probes, name, false);
+  // Custom SocketConnect check. Default SocketConnect values
+  public HealthCheckerConfigImpl(long idle, long interval, int probes, String name, boolean socketConnect) {
+    this(idle, interval, probes, name, socketConnect, DEFAULT_SCOKETCONNECT_MAXCOUNT, DEFAULT_SOCKETCONNECT_TIMEOUT);
   }
 
-  public HealthCheckerConfigImpl(long idle, long interval, int probes, String name, boolean extraCheck) {
-    this(idle, interval, probes, name, extraCheck, DEFAULT_SCOKETCONNECT_MAXCOUNT, DEFAULT_SOCKETCONNECT_TIMEOUT);
-  }
-
+  // All Custom values
   public HealthCheckerConfigImpl(long idle, long interval, int probes, String name, boolean extraCheck,
                                  int socketConnectMaxCount, int socketConnectTimeout) {
     this.pingIdleTime = idle;
@@ -97,4 +96,15 @@ public class HealthCheckerConfigImpl implements HealthCheckerConfig {
     return this.socketConnectTimeout;
   }
 
+  public String getCallbackPortListenerBindAddress() {
+    throw new AssertionError("CallbackPort Listener not needed for servers");
+  }
+
+  public int getCallbackPortListenerBindPort() {
+    throw new AssertionError("CallbackPort Listener not needed for servers");
+  }
+
+  public boolean isCallbackPortListenerNeeded() {
+    return false;
+  }
 }

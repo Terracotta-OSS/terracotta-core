@@ -33,4 +33,12 @@ public class NullHealthCheckerSocketConnectImpl implements HealthCheckerSocketCo
     //
   }
 
+  public void addSocketConnectEventListener(HealthCheckerSocketConnectEventListener listener) {
+    //
+  }
+
+  public void removeSocketConnectEventListener(HealthCheckerSocketConnectEventListener listener) {
+    //
+  }
+
 }

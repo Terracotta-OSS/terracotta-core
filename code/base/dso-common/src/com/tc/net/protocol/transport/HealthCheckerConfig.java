@@ -37,4 +37,14 @@ public interface HealthCheckerConfig {
   int getSocketConnectMaxCount();
 
   int getSocketConnectTimeout();
+
+  /**
+   * RMP-343: L2 SocketConnect L1
+   */
+  boolean isCallbackPortListenerNeeded();
+
+  String getCallbackPortListenerBindAddress();
+
+  int getCallbackPortListenerBindPort();
+
 }

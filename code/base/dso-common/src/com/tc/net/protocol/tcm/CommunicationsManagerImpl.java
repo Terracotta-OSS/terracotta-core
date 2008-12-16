@@ -9,6 +9,7 @@ import com.tc.async.impl.NullSink;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.AddressChecker;
 import com.tc.net.GroupID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
@@ -28,6 +29,7 @@ import com.tc.net.protocol.transport.ConnectionHealthCheckerImpl;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionPolicy;
+import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.MessageTransport;
@@ -44,11 +46,14 @@ import com.tc.net.protocol.transport.TransportMessageFactoryImpl;
 import com.tc.net.protocol.transport.WireProtocolAdaptorFactory;
 import com.tc.net.protocol.transport.WireProtocolAdaptorFactoryImpl;
 import com.tc.net.protocol.transport.WireProtocolMessageSink;
+import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionProvider;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -59,10 +64,11 @@ import java.util.Set;
  * @author teck
  */
 public class CommunicationsManagerImpl implements CommunicationsManager {
-  private static final TCLogger                  logger    = TCLogging.getLogger(CommunicationsManager.class);
+  private static final TCLogger                  logger               = TCLogging
+                                                                          .getLogger(CommunicationsManager.class);
 
-  private final SetOnceFlag                      shutdown  = new SetOnceFlag();
-  private final Set                              listeners = new HashSet();
+  private final SetOnceFlag                      shutdown             = new SetOnceFlag();
+  private final Set                              listeners            = new HashSet();
   private final TCConnectionManager              connectionManager;
   private final boolean                          privateConnMgr;
   private final NetworkStackHarnessFactory       stackHarnessFactory;
@@ -70,7 +76,9 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   private final MessageMonitor                   monitor;
   private final ConnectionPolicy                 connectionPolicy;
   private ConnectionHealthChecker                connectionHealthChecker;
-  private ServerID                               serverID  = ServerID.NULL_ID;
+  private ServerID                               serverID             = ServerID.NULL_ID;
+  private int                                    callbackPort         = TransportHandshakeMessage.NO_CALLBACK_PORT;
+  private NetworkListener                        callbackportListener = null;
 
   /**
    * Create a communications manager. This implies that one or more network handling threads will be started on your
@@ -133,6 +141,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
       connectionHealthChecker = new ConnectionHealthCheckerEchoImpl();
     }
     connectionHealthChecker.start();
+    startHealthCheckCallbackPortListener(healthCheckerConfig);
   }
 
   public TCConnectionManager getConnectionManager() {
@@ -163,15 +172,8 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   public ClientMessageChannel createClientChannel(final SessionProvider sessionProvider, final int maxReconnectTries,
                                                   String hostname, int port, final int timeout,
                                                   ConnectionAddressProvider addressProvider) {
-    return createClientChannel(sessionProvider, maxReconnectTries, hostname, port, timeout, addressProvider,
-                               TransportHandshakeMessage.NO_CALLBACK_PORT);
-  }
-
-  public ClientMessageChannel createClientChannel(final SessionProvider sessionProvider, final int maxReconnectTries,
-                                                  String hostname, int port, final int timeout,
-                                                  ConnectionAddressProvider addressProvider, int callbackPort) {
-    return createClientChannel(sessionProvider, maxReconnectTries, hostname, port, timeout, addressProvider,
-                               callbackPort, null, null, null);
+    return createClientChannel(sessionProvider, maxReconnectTries, hostname, port, timeout, addressProvider, null,
+                               null, null);
 
   }
 
@@ -180,32 +182,27 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                                   ConnectionAddressProvider addressProvider,
                                                   MessageTransportFactory transportFactory) {
     return createClientChannel(sessionProvider, maxReconnectTries, hostname, port, timeout, addressProvider,
-                               TransportHandshakeMessage.NO_CALLBACK_PORT, transportFactory, null, null);
+                               transportFactory, null, null);
   }
 
   public ClientMessageChannel createClientChannel(final SessionProvider sessionProvider, final int maxReconnectTries,
                                                   String hostname, int port, final int timeout,
-                                                  ConnectionAddressProvider addressProvider, final int callbackPort,
+                                                  ConnectionAddressProvider addressProvider,
                                                   MessageTransportFactory transportFactory,
                                                   TCMessageFactory messageFactory, TCMessageRouter router) {
 
     TCMessageFactory msgFactory = (messageFactory != null) ? messageFactory : new TCMessageFactoryImpl(sessionProvider,
                                                                                                        monitor);
     TCMessageRouter msgRouter = (router != null) ? router : new TCMessageRouterImpl();
-
-    ClientMessageChannelImpl rv = new ClientMessageChannelImpl(msgFactory, msgRouter, sessionProvider, 
+    ClientMessageChannelImpl rv = new ClientMessageChannelImpl(msgFactory, msgRouter, sessionProvider,
                                                                new GroupID(addressProvider.getGroupId()));
-
     if (transportFactory == null) transportFactory = new MessageTransportFactoryImpl(connectionManager,
                                                                                      addressProvider,
                                                                                      maxReconnectTries, timeout,
                                                                                      callbackPort);
-
     NetworkStackHarness stackHarness = this.stackHarnessFactory.createClientHarness(transportFactory, rv,
                                                                                     new MessageTransportListener[0]);
-
     stackHarness.finalizeStack();
-
     return rv;
   }
 
@@ -259,7 +256,6 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     };
 
     final ChannelManagerImpl channelManager = new ChannelManagerImpl(transportDisconnectRemovesChannel, channelFactory);
-
     return new NetworkListenerImpl(addr, this, channelManager, msgFactory, msgRouter, reuseAddr, connectionIdFactory,
                                    httpSink, wireProtoMsgSnk);
   }
@@ -292,7 +288,6 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
         return rv;
       }
     };
-
     ServerStackProvider stackProvider = new ServerStackProvider(TCLogging.getLogger(ServerStackProvider.class),
                                                                 initialConnectionIDs, stackHarnessFactory,
                                                                 channelFactory, transportFactory,
@@ -301,6 +296,51 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                                                 new WireProtocolAdaptorFactoryImpl(httpSink),
                                                                 wireProtocolMessageSink);
     return connectionManager.createListener(addr, stackProvider, Constants.DEFAULT_ACCEPT_QUEUE_DEPTH, resueAddr);
+  }
+
+  private void startHealthCheckCallbackPortListener(HealthCheckerConfig healthCheckerConfig) {
+    if (!healthCheckerConfig.isCallbackPortListenerNeeded()) {
+      // Callback Port Listeners are not needed for L2s.
+      logger.info("HealtCheck CallbackPort Listener not requested");
+      return;
+    }
+
+    int bindPort = healthCheckerConfig.getCallbackPortListenerBindPort();
+    if (bindPort == TransportHandshakeMessage.NO_CALLBACK_PORT) {
+      logger.info("HealtCheck CallbackPort Listener disabled");
+      return;
+    }
+
+    InetAddress bindAddr;
+    String bindAddress = healthCheckerConfig.getCallbackPortListenerBindAddress();
+    if (bindAddress == null || bindAddress.equals("")) {
+      bindAddress = TCSocketAddress.WILDCARD_IP;
+    }
+
+    try {
+      bindAddr = InetAddress.getByName(bindAddress);
+    } catch (UnknownHostException e) {
+      throw new TCRuntimeException("Cannot create InetAddress instance for " + TCSocketAddress.WILDCARD_IP);
+    }
+    AddressChecker addressChecker = new AddressChecker();
+    if (!addressChecker.isLegalBindAddress(bindAddr)) { throw new TCRuntimeException("Invalid bind address ["
+                                                                                     + bindAddr
+                                                                                     + "]. Local addresses are "
+                                                                                     + addressChecker
+                                                                                         .getAllLocalAddresses()); }
+
+    TCSocketAddress address = new TCSocketAddress(bindAddr, bindPort);
+    NetworkListener callbackPortListener = createListener(new NullSessionManager(), address, true,
+                                                          new DefaultConnectionIdFactory());
+    try {
+      callbackPortListener.start(new HashSet());
+      this.callbackPort = callbackPortListener.getBindPort();
+      this.callbackportListener = callbackPortListener;
+      logger.info("HealthCheck CallbackPort Listener started at " + callbackPortListener.getBindAddress() + ":"
+                  + callbackPort);
+    } catch (IOException ioe) {
+      logger.info("Unable to start HealthCheck CallbackPort Listener at" + address + ": " + ioe);
+    }
   }
 
   void registerListener(NetworkListener lsnr) {
@@ -330,12 +370,16 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     this.connectionHealthChecker.start();
   }
 
+  public NetworkListener getCallbackPortListener() {
+    return this.callbackportListener;
+  }
+
   private class MessageTransportFactoryImpl implements MessageTransportFactory {
     private final TCConnectionManager       connectionMgr;
     private final ConnectionAddressProvider addressProvider;
     private final int                       maxReconnectTries;
     private final int                       timeout;
-    private final int                       callbackPort;
+    private final int                       callbackport;
 
     public MessageTransportFactoryImpl(final TCConnectionManager connectionManager,
                                        final ConnectionAddressProvider addressProvider, final int maxReconnectTries,
@@ -344,7 +388,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
       this.addressProvider = addressProvider;
       this.maxReconnectTries = maxReconnectTries;
       this.timeout = timeout;
-      this.callbackPort = callbackPort;
+      this.callbackport = callbackPort;
     }
 
     public MessageTransport createNewTransport() {
@@ -382,7 +426,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                                                                                 timeout);
       ClientMessageTransport cmt = createClientMessageTransport(clientConnectionEstablisher, handshakeErrorHandler,
                                                                 transportMessageFactory,
-                                                                new WireProtocolAdaptorFactoryImpl(), callbackPort);
+                                                                new WireProtocolAdaptorFactoryImpl(), callbackport);
       cmt.addTransportListener(connectionHealthChecker);
       return cmt;
     }

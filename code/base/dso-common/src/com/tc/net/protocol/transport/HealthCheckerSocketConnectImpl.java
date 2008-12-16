@@ -4,6 +4,8 @@
  */
 package com.tc.net.protocol.transport;
 
+import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
+
 import com.tc.logging.TCLogger;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnection;
@@ -13,6 +15,8 @@ import com.tc.util.Assert;
 import com.tc.util.State;
 
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * When the peer node doesn't reply for the PING probes, an extra check(on demand) is made to make sure if it is really
@@ -28,6 +32,7 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
   private final TCLogger        logger;
   private final int             timeoutInterval;
   private final String          remoteNodeDesc;
+  private final List            listeners                     = new CopyOnWriteArrayList();
   private State                 currentState;
   private short                 socketConnectNoReplyWaitCount = 0;
 
@@ -64,11 +69,12 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
     } catch (IOException e) {
       conn.removeListener(this);
       changeState(SOCKETCONNECT_FAIL);
+      logger.info("Socket Connect to " + remoteNodeDesc + " failed: " + e);
       return false;
     }
 
     if (logger.isDebugEnabled()) {
-      logger.debug("Detecting Long GC for " + remoteNodeDesc + ". Socket Connect triggered");
+      logger.debug("Socket Connect triggered for " + remoteNodeDesc);
     }
     changeState(SOCKETCONNECT_IN_PROGRESS);
     return true;
@@ -81,20 +87,37 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
     }
   }
 
+  public void addSocketConnectEventListener(HealthCheckerSocketConnectEventListener socketConnectListener) {
+    synchronized (listeners) {
+      if (listeners.contains(socketConnectListener)) { throw new AssertionError(
+                                                                                "Attempt to add same socket connect event listener moere than once: "
+                                                                                    + socketConnectListener); }
+      listeners.add(socketConnectListener);
+    }
+  }
+
+  public void removeSocketConnectEventListener(HealthCheckerSocketConnectEventListener socketConnectListener) {
+    synchronized (listeners) {
+      if (!listeners.contains(socketConnectListener)) { throw new AssertionError(
+                                                                                 "Attempt to remove non registered socket connect event listener"); }
+      listeners.remove(socketConnectListener);
+    }
+  }
+
   /*
    * Returns true if connection is still in progress.
    */
   public synchronized boolean probeConnectStatus() {
     if (currentState == SOCKETCONNECT_FAIL) {
       // prev async connect failed
-      logger.info("Socket Connect to " + remoteNodeDesc + " listener port failed. Probably DEAD");
+      logger.info("Socket Connect to " + remoteNodeDesc + " listener port failed. Probably not reachable.");
       return false;
     }
 
     socketConnectNoReplyWaitCount++;
 
     if (socketConnectNoReplyWaitCount > this.timeoutInterval) {
-      logger.info("Socket Connect to " + remoteNodeDesc + " taking long time. probably DEAD");
+      logger.info("Socket Connect to " + remoteNodeDesc + " taking long time. probably not reachable.");
       stop();
       changeState(SOCKETCONNECT_FAIL);
       return false;
@@ -108,25 +131,48 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
     //
   }
 
-  public synchronized void connectEvent(TCConnectionEvent event) {
-    stop();
-    changeState(SOCKETCONNECT_IDLE);
+  public void connectEvent(TCConnectionEvent event) {
+
+    synchronized (this) {
+      stop();
+      changeState(SOCKETCONNECT_IDLE);
+    }
+
+    for (Iterator i = listeners.iterator(); i.hasNext();) {
+      ((HealthCheckerSocketConnectEventListener) i.next()).notifySocketConnectSuccess(event);
+    }
   }
 
-  public synchronized void endOfFileEvent(TCConnectionEvent event) {
+  public void endOfFileEvent(TCConnectionEvent event) {
+
+    synchronized (this) {
+      stop();
+      changeState(SOCKETCONNECT_FAIL);
+    }
+
+    for (Iterator i = listeners.iterator(); i.hasNext();) {
+      ((HealthCheckerSocketConnectEventListener) i.next()).notifySocketConnectFail(event);
+    }
+
     if (logger.isDebugEnabled()) {
       logger.debug("Socket Connect EOF event:" + event.toString() + " on " + remoteNodeDesc);
     }
-    stop();
-    changeState(SOCKETCONNECT_FAIL);
   }
 
-  public synchronized void errorEvent(TCConnectionErrorEvent errorEvent) {
+  public void errorEvent(TCConnectionErrorEvent errorEvent) {
+
+    synchronized (this) {
+      stop();
+      changeState(SOCKETCONNECT_FAIL);
+    }
+
+    for (Iterator i = listeners.iterator(); i.hasNext();) {
+      ((HealthCheckerSocketConnectEventListener) i.next()).notifySocketConnectFail(errorEvent);
+    }
+
     if (logger.isDebugEnabled()) {
       logger.debug("Socket Connect Error Event:" + errorEvent.toString() + " on " + remoteNodeDesc);
     }
-    stop();
-    changeState(SOCKETCONNECT_FAIL);
   }
 
 }

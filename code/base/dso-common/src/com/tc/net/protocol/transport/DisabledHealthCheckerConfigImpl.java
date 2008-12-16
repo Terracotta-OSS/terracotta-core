@@ -43,4 +43,16 @@ public class DisabledHealthCheckerConfigImpl implements HealthCheckerConfig {
     throw new AssertionError("Disabled HealthChecker");
   }
 
+  public String getCallbackPortListenerBindAddress() {
+    throw new AssertionError("Disabled HealthChecker");
+  }
+
+  public int getCallbackPortListenerBindPort() {
+    throw new AssertionError("Disabled HealthChecker");
+  }
+
+  public boolean isCallbackPortListenerNeeded() {
+    return false;
+  }
+
 }

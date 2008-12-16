@@ -40,13 +40,9 @@ public interface CommunicationsManager {
 
   public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
                                                   String hostname, int port, final int timeout,
-                                                  ConnectionAddressProvider addressProvider, int callbackPort,
+                                                  ConnectionAddressProvider addressProvider,
                                                   MessageTransportFactory transportFactory,
                                                   TCMessageFactory msgFactory, TCMessageRouter router);
-
-  public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
-                                                  String hostname, int port, final int timeout,
-                                                  ConnectionAddressProvider addressProvider, int callbackPort);
 
   public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, final int maxReconnectTries,
                                                   String hostname, int port, final int timeout,

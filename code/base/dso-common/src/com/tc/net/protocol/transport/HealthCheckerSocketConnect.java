@@ -9,7 +9,7 @@ import com.tc.net.core.event.TCConnectionEventListener;
 /**
  * Helps HealthChecker in doing extra checks to monitor peer node's health. Here, a socket connect is attempted to some
  * of the peer node's listening port.
- *
+ * 
  * @author Manoj
  */
 public interface HealthCheckerSocketConnect extends TCConnectionEventListener {
@@ -18,5 +18,9 @@ public interface HealthCheckerSocketConnect extends TCConnectionEventListener {
 
   /* Once in a probe interval, the health checker queries to get the connect status if wanted */
   public boolean probeConnectStatus();
+
+  public void addSocketConnectEventListener(HealthCheckerSocketConnectEventListener listener);
+
+  public void removeSocketConnectEventListener(HealthCheckerSocketConnectEventListener listener);
 
 }

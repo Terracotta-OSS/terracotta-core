@@ -238,7 +238,7 @@ public class ClientMessageTransport extends MessageTransportBase {
     }
   }
 
-   private void sendAck() throws IOException {
+  private void sendAck() throws IOException {
     synchronized (status) {
       // DEV-1364 : Connection close might have happened
       if (!status.isSynSent()) throw new IOException();

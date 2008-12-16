@@ -49,7 +49,7 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
   private final int                 listenPort           = pc.chooseRandomPort();
   private final int                 proxyPort            = pc.chooseRandomPort();
 
-  private final int                 clientListenPort     = pc.chooseRandomPort();
+  // private final int clientListenPort = pc.chooseRandomPort();
 
   private final TCPProxy            proxy                = new TCPProxy(proxyPort, TCSocketAddress.LOOPBACK_ADDR,
                                                                         listenPort, 0, false, null);
@@ -59,12 +59,8 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
 
   private CommunicationsManagerImpl clientComms;
   private CommunicationsManagerImpl serverComms;
-
   private ClientMessageChannel      channel;
-
   private HealthCheckerConfig       serverHC;
-
-  private NetworkListener           clientListener;
 
   private static final int          SERVER_PING_PROBES   = 5;
   private static final long         SERVER_PING_INTERVAL = 3000;
@@ -82,7 +78,9 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
 
     serverHC = new HealthCheckerConfigImpl(SERVER_PING_IDLE, SERVER_PING_INTERVAL, SERVER_PING_PROBES, "server-HC",
                                            true, Integer.MAX_VALUE, 2);
-    HealthCheckerConfig clientHC = new HealthCheckerConfigImpl(1000, 1000, Integer.MAX_VALUE, "client-HC");
+    HealthCheckerConfig clientHC = new HealthCheckerConfigClientImpl(1000, 1000, Integer.MAX_VALUE, "client-HC", false,
+                                                                     Integer.MAX_VALUE, 2, TCSocketAddress.WILDCARD_IP,
+                                                                     0);
 
     clientComms = new CommunicationsManagerImpl(new NullMessageMonitor(), new PlainNetworkStackHarnessFactory(),
                                                 new NullConnectionPolicy(), clientHC);
@@ -106,18 +104,12 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
 
     listener.start(Collections.EMPTY_SET);
 
-    clientListener = clientComms.createListener(new NullSessionManager(),
-                                                new TCSocketAddress(TCSocketAddress.WILDCARD_ADDR, clientListenPort),
-                                                true, new DefaultConnectionIdFactory());
-    clientListener.start(Collections.EMPTY_SET);
-
     ConnectionAddressProvider addrProvider = new ConnectionAddressProvider(
                                                                            new ConnectionInfo[] { new ConnectionInfo(
                                                                                                                      host,
                                                                                                                      proxyPort) });
 
-    channel = clientComms.createClientChannel(new NullSessionManager(), -1, host, proxyPort, 30000, addrProvider,
-                                              clientListenPort);
+    channel = clientComms.createClientChannel(new NullSessionManager(), -1, host, proxyPort, 30000, addrProvider);
     channel.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     channel.open();
   }
@@ -138,7 +130,7 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
 
     assertEquals(1, numServerConnections());
 
-    clientListener.stop(Long.MAX_VALUE);
+    clientComms.getCallbackPortListener().stop(Long.MAX_VALUE);
 
     // with the listener stopped, the socket connect will fail and server side health check
     // will consider the client to be DEAD

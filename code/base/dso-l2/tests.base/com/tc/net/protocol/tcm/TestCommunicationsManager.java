@@ -31,15 +31,9 @@ public class TestCommunicationsManager implements CommunicationsManager {
     throw new ImplementMe();
   }
 
-  public ClientGroupMessageChannel createClientGroupChannel(final SessionProvider sessionProvider,
-                                                            final int maxReconnectTries, final int timeout,
-                                                            ConnectionAddressProvider[] addressProviders) {
-    throw new ImplementMe();
-  }
-
   public ClientGroupMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
                                                        String hostname, int port, final int timeout,
-                                                       ConnectionAddressProvider addressProvider, int callbackPort,
+                                                       ConnectionAddressProvider addressProvider,
                                                        MessageTransportFactory transportFactory,
                                                        TCMessageFactory msgFactory, TCMessageRouter router) {
     throw new ImplementMe();
@@ -48,12 +42,6 @@ public class TestCommunicationsManager implements CommunicationsManager {
   public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
                                                   String hostname, int port, final int timeout,
                                                   ConnectionAddressProvider addressProvider) {
-    throw new ImplementMe();
-  }
-
-  public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
-                                                  String hostname, int port, int timeout,
-                                                  ConnectionAddressProvider addressProvider, int callbackPort) {
     throw new ImplementMe();
   }
 
