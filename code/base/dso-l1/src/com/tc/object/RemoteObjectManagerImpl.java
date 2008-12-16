@@ -23,6 +23,7 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.State;
+import com.tc.util.TCCollections;
 import com.tc.util.Util;
 
 import gnu.trove.THashMap;
@@ -94,18 +95,18 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
   }
 
   public void initializeHandshake(NodeID thisNode, NodeID remoteNode, ClientHandshakeMessage handshakeMessage) {
-    // Nop
+    // NOP
   }
 
   public synchronized void unpause(NodeID remote, int disconnected) {
     assertPaused("Attempt to unpause while not PAUSED");
     state = RUNNING;
-    clear();
     requestOutstanding();
     notifyAll();
   }
 
-  synchronized void clear() {
+  public synchronized void clear() {
+    assertPaused("Attempt to clear while not PAUSED");
     lruDNA.clear();
     for (Iterator i = dnaRequests.entrySet().iterator(); i.hasNext();) {
       Entry e = (Entry) i.next();
@@ -138,8 +139,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
 
   synchronized void requestOutstanding() {
     for (Iterator i = outstandingObjectRequests.values().iterator(); i.hasNext();) {
-      RequestManagedObjectMessage rmom = createRequestManagedObjectMessage((ObjectRequestContext) i.next(),
-                                                                           new ObjectIDSet());
+      RequestManagedObjectMessage rmom = createRequestManagedObjectMessage((ObjectRequestContext) i.next());
       rmom.send();
     }
     for (Iterator i = outstandingRootRequests.values().iterator(); i.hasNext();) {
@@ -204,8 +204,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
   }
 
   private void sendRequest(ObjectRequestContext ctxt) {
-    RequestManagedObjectMessage rmom = createRequestManagedObjectMessage(ctxt, removeObjects);
-    removeObjects = new ObjectIDSet();
+    RequestManagedObjectMessage rmom = createRequestManagedObjectMessage(ctxt);
     ObjectID id = null;
     for (Iterator i = ctxt.getObjectIDs().iterator(); i.hasNext();) {
       id = (ObjectID) i.next();
@@ -220,10 +219,15 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
     requestMonitor.notifyObjectRequest(ctxt);
   }
 
-  private RequestManagedObjectMessage createRequestManagedObjectMessage(ObjectRequestContext ctxt, ObjectIDSet removed) {
+  private RequestManagedObjectMessage createRequestManagedObjectMessage(ObjectRequestContext ctxt) {
     RequestManagedObjectMessage rmom = rmomFactory.newRequestManagedObjectMessage(groupID);
     ObjectIDSet requestedObjectIDs = ctxt.getObjectIDs();
-    rmom.initialize(ctxt, requestedObjectIDs, removed);
+    if (removeObjects.isEmpty()) {
+      rmom.initialize(ctxt, requestedObjectIDs, TCCollections.EMPTY_OBJECT_ID_SET);
+    } else {
+      rmom.initialize(ctxt, requestedObjectIDs, removeObjects);
+      removeObjects = new ObjectIDSet();
+    }
     return rmom;
   }
 
@@ -329,8 +333,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
       ObjectRequestContext ctxt = new ObjectRequestContextImpl(this.cip.getClientID(),
                                                                new ObjectRequestID(objectRequestIDCounter++),
                                                                new ObjectIDSet(), -1);
-      RequestManagedObjectMessage rmom = createRequestManagedObjectMessage(ctxt, removeObjects);
-      removeObjects = new ObjectIDSet();
+      RequestManagedObjectMessage rmom = createRequestManagedObjectMessage(ctxt);
       rmom.send();
     }
   }

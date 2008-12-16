@@ -32,4 +32,6 @@ public interface RemoteObjectManager {
 
   public void removed(ObjectID id);
 
+  public void clear();
+
 }
