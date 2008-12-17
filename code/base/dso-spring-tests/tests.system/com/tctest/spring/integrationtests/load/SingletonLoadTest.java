@@ -38,7 +38,7 @@ public class SingletonLoadTest extends SpringDeploymentTest {
   }
 
   public void testFourNodeSingletonLoad() throws Exception {
-    runNodes(4);
+    runNodes(2);
   }
 
   /*
