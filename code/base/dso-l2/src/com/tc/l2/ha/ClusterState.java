@@ -132,7 +132,7 @@ public class ClusterState {
   public void setClusterID(String uid) {
     if (clusterID != null && !clusterID.equals(uid)) {
       logger.error("Cluster ID doesnt match !! Mine : " + clusterID + " Active sent clusterID as : " + uid);
-      throw new AssertionError("ClusterIDs dont match : " + clusterID + " <-> " + uid);
+      throw new ClusterIDMissmatchException(clusterID ,  uid);
     }
     clusterID = uid;
     synchClusterIDToDB();
