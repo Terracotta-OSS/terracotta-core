@@ -42,7 +42,7 @@ public class SystemInitializationAdapter extends ClassAdapter implements ClassAd
       // The important bit with this particular location is that it happens
       // before the jmx remote agent thread is started
       if ((opcode == INVOKESTATIC) && "getProperties".equals(name) && "java/lang/System".equals(owner)) {
-        super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/ClassProcessorHelper", "init", "()V");
+        super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/ClassProcessorHelper", "initialize", "()V");
       }
     }
   }
