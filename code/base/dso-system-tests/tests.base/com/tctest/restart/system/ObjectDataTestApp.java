@@ -32,18 +32,18 @@ import java.util.Map;
 public class ObjectDataTestApp extends AbstractTransparentApp {
   public static final String SYNCHRONOUS_WRITE = "synch-write";
 
-  private int                threadCount       = 10;
-  private int                workSize          = 1 * 100;
-  private int                testObjectDepth   = 1 * 50;
-  // I had to dial this down considerably because this takes a long time to run.
-  private int                iterationCount    = 1 * 2;
-  private List               workQueue         = new ArrayList();
-  private Collection         resultSet         = new HashSet();
-  private SynchronizedInt    complete          = new SynchronizedInt(0);
-  private OutputListener     out;
-  private SynchronizedInt    nodes             = new SynchronizedInt(0);
+  private final int                threadCount       = 10;
+  private final int                workSize          = 1 * 100;
+  private final int                testObjectDepth   = 1 * 50;
+  // Beware when tuning down the iteration count, it might not run long enough to actually do a useful crash test
+  private final int                iterationCount    = 10;
+  private final List               workQueue         = new ArrayList();
+  private final Collection         resultSet         = new HashSet();
+  private final SynchronizedInt    complete          = new SynchronizedInt(0);
+  private final OutputListener     out;
+  private final SynchronizedInt    nodes             = new SynchronizedInt(0);
 
-  public ObjectDataTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
+  public ObjectDataTestApp(final String appId, final ApplicationConfig cfg, final ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     this.out = listenerProvider.getOutputListener();
   }
@@ -91,7 +91,7 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
     }
   }
 
-  private void populateWorkQueue(int size, int depth, List queue) {
+  private void populateWorkQueue(final int size, final int depth, final List queue) {
     System.err.println(" Thread - " + Thread.currentThread().getName() + " inside populateWorkQueue !");
     for (int i = 0; i < size; i++) {
       TestObject to = new TestObject("" + i);
@@ -100,7 +100,7 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
     }
   }
 
-  private void verify(int expectedValue, Collection results) {
+  private void verify(final int expectedValue, final Collection results) {
     synchronized (results) {
       Assert.assertEquals(workSize, results.size());
       int cnt = 0;
@@ -112,7 +112,7 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
     }
   }
 
-  public final void println(Object o) {
+  public final void println(final Object o) {
     try {
       out.println(o);
     } catch (InterruptedException e) {
@@ -120,11 +120,11 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
     }
   }
 
-  public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
+  public static void visitL1DSOConfig(final ConfigVisitor visitor, final DSOClientConfigHelper config) {
     visitL1DSOConfig(visitor, config, new HashMap());
   }
 
-  public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config, Map optionalAttributes) {
+  public static void visitL1DSOConfig(final ConfigVisitor visitor, final DSOClientConfigHelper config, final Map optionalAttributes) {
     boolean isSynchronousWrite = false;
     if (optionalAttributes.size() > 0) {
       isSynchronousWrite = Boolean.valueOf((String) optionalAttributes.get(ObjectDataTestApp.SYNCHRONOUS_WRITE))
@@ -209,7 +209,7 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
     addWriteAutolock(config, isSynchronousWrite, nextIDExpression);
   }
 
-  private static void addWriteAutolock(DSOClientConfigHelper config, boolean isSynchronousWrite, String methodPattern) {
+  private static void addWriteAutolock(final DSOClientConfigHelper config, final boolean isSynchronousWrite, final String methodPattern) {
     if (isSynchronousWrite) {
       config.addSynchronousWriteAutolock(methodPattern);
     } else {
@@ -226,7 +226,7 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
     private final SynchronizedInt complete;
     private final String          appId;
 
-    public WorkerFactory(String appId, List workQueue, Collection results, SynchronizedInt complete) {
+    public WorkerFactory(final String appId, final List workQueue, final Collection results, final SynchronizedInt complete) {
       this.appId = appId;
       this.workQueue = workQueue;
       this.results = results;
@@ -257,7 +257,7 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
     private final SynchronizedInt workCompletedCount = new SynchronizedInt(0);
     private final SynchronizedInt objectChangeCount  = new SynchronizedInt(0);
 
-    public Worker(String name, List workQueue, Collection results, SynchronizedInt complete) {
+    public Worker(final String name, final List workQueue, final Collection results, final SynchronizedInt complete) {
       this.name = name;
       this.workQueue = workQueue;
       this.results = results;
@@ -302,7 +302,7 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
     private final Map barriers;
     private final int nodeCount;
 
-    public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
+    public static void visitL1DSOConfig(final ConfigVisitor visitor, final DSOClientConfigHelper config) {
       String classname = Barriers.class.getName();
       TransparencyClassSpec spec = config.getOrCreateSpec(classname);
       spec.addRoot("barriers", classname + ".barriers");
@@ -317,12 +317,12 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
       config.addWriteAutolock(cyclicBarrierExpression);
     }
 
-    public Barriers(int nodeCount) {
+    public Barriers(final int nodeCount) {
       this.barriers = new HashMap();
       this.nodeCount = nodeCount;
     }
 
-    public int barrier(int barrierID) {
+    public int barrier(final int barrierID) {
       try {
         return getOrCreateBarrier(barrierID).barrier();
       } catch (InterruptedException e) {
@@ -330,7 +330,7 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
       }
     }
 
-    private CyclicBarrier getOrCreateBarrier(int barrierID) {
+    private CyclicBarrier getOrCreateBarrier(final int barrierID) {
       synchronized (barriers) {
         Integer key = new Integer(barrierID);
         CyclicBarrier rv = (CyclicBarrier) barriers.get(key);
@@ -347,18 +347,18 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
   protected static final class TestObject {
     private TestObject child;
     private int        counter;
-    private List       activity = new ArrayList();
-    private String     id;
+    private final List       activity = new ArrayList();
+    private final String     id;
 
-    public TestObject(String id) {
+    public TestObject(final String id) {
       this.id = id;
     }
 
-    private synchronized void addActivity(Object msg) {
+    private synchronized void addActivity(final Object msg) {
       activity.add(msg + "\n");
     }
 
-    public void populate(int count) {
+    public void populate(final int count) {
       TestObject to = this;
       for (int i = 0; i < count; i++) {
         synchronized (to) {
@@ -392,7 +392,7 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
       return changeCounter;
     }
 
-    public boolean validate(int expectedValue) {
+    public boolean validate(final int expectedValue) {
       TestObject to = this;
       do {
         // XXX: This synchronization is here to provide transaction boundaries, not because other threads will be
@@ -413,6 +413,7 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
       return child;
     }
 
+    @Override
     public String toString() {
       return "TestObject@" + System.identityHashCode(this) + "(" + id + ")={ counter = " + counter + " }";
     }
@@ -432,7 +433,7 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
     }
   }
 
-  private static Object take(List workQueue2) {
+  private static Object take(final List workQueue2) {
     synchronized (workQueue2) {
       while (workQueue2.size() == 0) {
         try {
@@ -447,7 +448,7 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
     }
   }
 
-  private static void put(List workQueue2, Object o) {
+  private static void put(final List workQueue2, final Object o) {
     synchronized (workQueue2) {
       workQueue2.add(o);
       workQueue2.notify();
