@@ -19,7 +19,7 @@ public class CallbackDatabaseDirtyAlertAdapter implements CallbackOnExitHandler 
   }
 
   public void callbackOnExit(CallbackOnExitState state) {
-    logger.error(state.getThrowable().getMessage(), state.getThrowable());
+    logger.warn(state.getThrowable().getMessage(), state.getThrowable());
     consoleLogger.warn(state.getThrowable().getMessage());
   }
 }
