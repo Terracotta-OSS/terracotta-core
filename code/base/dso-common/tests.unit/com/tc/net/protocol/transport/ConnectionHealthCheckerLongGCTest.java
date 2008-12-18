@@ -225,7 +225,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
         .getConnHealthChecker();
     assertNotNull(connHC);
 
-    while (!connHC.isRunning() && (connHC.getTotalConnsUnderMonitor() != 1)) {
+    while (!connHC.isRunning() || (connHC.getTotalConnsUnderMonitor() != 1)) {
       System.out.println("Yet to start the connection health cheker thread...");
       ThreadUtil.reallySleep(1000);
     }
@@ -262,7 +262,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
         .getConnHealthChecker();
     assertNotNull(connHC);
 
-    while (!connHC.isRunning() && (connHC.getTotalConnsUnderMonitor() != 1)) {
+    while (!connHC.isRunning() || (connHC.getTotalConnsUnderMonitor() != 1)) {
       System.out.println("Yet to start the connection health cheker thread...");
       ThreadUtil.reallySleep(1000);
     }
@@ -291,29 +291,30 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
 
   }
 
-  private void getNetInfo(int bindPort) {
-    try {
-      Sigar s = new Sigar();
-      NetInfo info = s.getNetInfo();
-      NetInterfaceConfig config = s.getNetInterfaceConfig(null);
-      System.out.println(info.toString());
-      System.out.println(config.toString());
+  // MNK-831
+  private int getNetInfoEstablishedConnectionsCount(int bindPort) throws SigarException {
+    int establishedConnections = 0;
+    Sigar s = new Sigar();
+    NetInfo info = s.getNetInfo();
+    NetInterfaceConfig config = s.getNetInterfaceConfig(null);
+    System.out.println(info.toString());
+    System.out.println(config.toString());
 
-      int flags = NetFlags.CONN_TCP | NetFlags.TCP_ESTABLISHED;
+    int flags = NetFlags.CONN_TCP | NetFlags.TCP_ESTABLISHED;
 
-      NetConnection[] connections = s.getNetConnectionList(flags);
+    NetConnection[] connections = s.getNetConnectionList(flags);
 
-      System.out.println("XXX Established connections if any");
-      for (int i = 0; i < connections.length; i++) {
-        long port = connections[i].getLocalPort();
-        long remotePort = connections[i].getRemotePort();
-        if (bindPort == port || bindPort == remotePort) {
-          System.out.println("XXX " + connections[i]);
-        }
+    System.out.println("XXX Established connections if any");
+    for (int i = 0; i < connections.length; i++) {
+      long port = connections[i].getLocalPort();
+      long remotePort = connections[i].getRemotePort();
+      // not checking bind address
+      if ((bindPort == port || bindPort == remotePort) && connections[i].getState() == NetFlags.TCP_ESTABLISHED) {
+        establishedConnections++;
+        System.out.println("XXX " + connections[i]);
       }
-    } catch (SigarException se) {
-      System.out.println("Unable to get Sigar NetInfo: " + se);
     }
+    return establishedConnections;
   }
 
   public void testL1SocketConnectTimeoutL2() throws Exception {
@@ -336,7 +337,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
         .getConnHealthChecker();
     assertNotNull(connHC);
 
-    while (!connHC.isRunning() && (connHC.getTotalConnsUnderMonitor() != 1)) {
+    while (!connHC.isRunning() || (connHC.getTotalConnsUnderMonitor() != 1)) {
       System.out.println("Yet to start the connection health cheker thread...");
       ThreadUtil.reallySleep(1000);
     }
@@ -351,9 +352,13 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     HealthCheckerConfig upgradedHcConfig = new HealthCheckerConfigImpl(factor * 4000, factor * 2000, factor * 2,
                                                                        "ClientCommsHC-Test33", true);
 
-    netstat = sigar.getNetStat(serverLsnr.getBindAddress().getAddress(), serverLsnr.getBindPort());
-    getNetInfo(serverLsnr.getBindPort());
-    Assert.assertEquals(2, netstat.getTcpEstablished());
+    try {
+      int estCount = getNetInfoEstablishedConnectionsCount(serverLsnr.getBindPort());
+      Assert.assertEquals(2, estCount);
+    } catch (SigarException se) {
+      netstat = sigar.getNetStat(serverLsnr.getBindAddress().getAddress(), serverLsnr.getBindPort());
+      Assert.assertEquals(2, netstat.getTcpEstablished());
+    }
 
     // HC START stage:
     System.out.println("Sleeping for " + getMinSleepTimeToStartLongGCTest(upgradedHcConfig));
@@ -366,10 +371,13 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     ThreadUtil.reallySleep(upgradedHcConfig.getPingIntervalMillis() * 2);
     assertEquals(0, connHC.getTotalConnsUnderMonitor());
 
-    ThreadUtil.reallySleep(5000);
-    netstat = sigar.getNetStat(serverLsnr.getBindAddress().getAddress(), serverLsnr.getBindPort());
-    getNetInfo(serverLsnr.getBindPort());
-    Assert.assertEquals(0, netstat.getTcpEstablished());
+    try {
+      int estCount = getNetInfoEstablishedConnectionsCount(serverLsnr.getBindPort());
+      Assert.assertEquals(0, estCount);
+    } catch (SigarException se) {
+      netstat = sigar.getNetStat(serverLsnr.getBindAddress().getAddress(), serverLsnr.getBindPort());
+      Assert.assertEquals(0, netstat.getTcpEstablished());
+    }
   }
 
   public void testL1SocketConnectTimeoutL2AndL1Reconnect() throws Exception {
@@ -392,7 +400,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
         .getConnHealthChecker();
     assertNotNull(connHC);
 
-    while (!connHC.isRunning() && (connHC.getTotalConnsUnderMonitor() != 1)) {
+    while (!connHC.isRunning() || (connHC.getTotalConnsUnderMonitor() != 1)) {
       System.out.println("Yet to start the connection health cheker thread...");
       ThreadUtil.reallySleep(1000);
     }
@@ -414,58 +422,57 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     HealthCheckerConfig upgradedHcConfig = new HealthCheckerConfigImpl(factor * 4000, factor * 1000, factor * 2,
                                                                        "ClientCommsHC-Test33", true);
 
-    netstat = sigar.getNetStat(serverLsnr.getBindAddress().getAddress(), serverLsnr.getBindPort());
-    getNetInfo(serverLsnr.getBindPort());
-    Assert.assertEquals(2, netstat.getTcpEstablished());
+    try {
+      int estCount = getNetInfoEstablishedConnectionsCount(serverLsnr.getBindPort());
+      Assert.assertEquals(2, estCount);
+    } catch (SigarException se) {
+      netstat = sigar.getNetStat(serverLsnr.getBindAddress().getAddress(), serverLsnr.getBindPort());
+      Assert.assertEquals(2, netstat.getTcpEstablished());
+    }
 
-    // HC START stage:
-    System.out.println("Sleeping for " + getMinSleepTimeToStartLongGCTest(upgradedHcConfig));
-    ThreadUtil.reallySleep(getMinSleepTimeToStartLongGCTest(upgradedHcConfig));
+    proxy.setDelay(3000);
 
-    // set some delay in proxy so that even if reconnect started, we will have sufficient time to check established
-    // connections
-    proxy.setDelay(2000);
-    System.out.println("woke up");
-
-    /*
-     * L1 should have started the Extra Check by now; .INIT stage already figured out that socket connect times out. so
-     * wait for interval time and verify
-     */
-    ThreadUtil.reallySleep(upgradedHcConfig.getPingIntervalMillis() * 2);
-    while (!connHC.isRunning() && (connHC.getTotalConnsUnderMonitor() != 0)) {
-      System.out.println("waiting for client to disconnect");
+    int count = 0;
+    while (!connHC.isRunning() || (connHC.getTotalConnsUnderMonitor() != 0)) {
+      count++;
+      if (count % 10 == 0) System.out.println("waiting for client to disconnect");
       ThreadUtil.reallySleep(1000);
     }
 
+    proxy.setDelay(0);
     /*
      * Client is suppose to start the reconnect immediately after its disconnect. Lets remove the obstacle from the road
      */
-    proxy.setDelay(0);
-    while (!connHC.isRunning() && (connHC.getTotalConnsUnderMonitor() != 1)) {
-      System.out.println("waiting for client to rejoin");
+    count = 0;
+    while (!connHC.isRunning() || (connHC.getTotalConnsUnderMonitor() != 1)) {
+      count++;
+      if (count % 10 == 0) System.out.println("waiting for client to rejoin");
       ThreadUtil.reallySleep(1000);
     }
 
-    // HC INIT stage: callback port verification should fail. wait for it. NOTE: we don't want to wait for ping-probe
-    // cycles as the INIT stage directly starts socket connect
-    System.out.println("Sleeping for " + getINITstageScoketConnectResultTime(upgradedHcConfig));
-    ThreadUtil.reallySleep(getINITstageScoketConnectResultTime(upgradedHcConfig));
+    // let the init socket connect settle down
+    long sleepTime = getINITstageScoketConnectResultTime(upgradedHcConfig);
+    System.out.println("Sleeping for " + sleepTime);
+    ThreadUtil.reallySleep(sleepTime);
 
-    // let the TIME_WAIT happen
-    ThreadUtil.reallySleep(10000);
     /*
      * Client disconnected after it found socket connect timeout. After the successful reconnect there should be no
      * connection leak. DEV-1963
      */
-    netstat = sigar.getNetStat(serverLsnr.getBindAddress().getAddress(), serverLsnr.getBindPort());
-    getNetInfo(serverLsnr.getBindPort());
-    System.out.println("XXX reconnect- tcp estd : " + netstat.getTcpEstablished());
-    Assert.assertEquals(2, netstat.getTcpEstablished());
+    try {
+      int estCount = getNetInfoEstablishedConnectionsCount(serverLsnr.getBindPort());
+      Assert.assertEquals(2, estCount);
+    } catch (SigarException se) {
+      netstat = sigar.getNetStat(serverLsnr.getBindAddress().getAddress(), serverLsnr.getBindPort());
+      Assert.assertEquals(2, netstat.getTcpEstablished());
+    }
   }
 
-  public void testL2SocketConnectL1FailWithProxyDelay() throws Exception {
-    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(5000, 2000, 2, "ServerCommsHC-Test35", false);
-    this.setUp(hcConfig, null);
+  public void testL2SocketConnectL1FailTooLongGC() throws Exception {
+    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(5000, 2000, 2, "ServerCommsHC-Test35", true);
+    HealthCheckerConfig clientHcConfig = new HealthCheckerConfigClientImpl(15000, 5000, 2, "ClientCommsHC-Test35",
+                                                                           false, 5, 5, "0.0.0.0", 0);
+    this.setUp(hcConfig, clientHcConfig);
 
     ClientMessageChannel clientMsgCh = createClientMsgCh();
     clientMsgCh.open();
@@ -475,16 +482,9 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
         .getConnHealthChecker();
     assertNotNull(connHC);
 
-    while (!connHC.isRunning() && (connHC.getTotalConnsUnderMonitor() != 1)) {
+    while (!connHC.isRunning() || (connHC.getTotalConnsUnderMonitor() != 1)) {
       System.out.println("Yet to start the connection health cheker thread...");
       ThreadUtil.reallySleep(1000);
-    }
-
-    SequenceGenerator sq = new SequenceGenerator();
-    for (int i = 1; i <= 5; i++) {
-      PingMessage ping = (PingMessage) clientMsgCh.createMessage(TCMessageType.PING_MESSAGE);
-      ping.initialize(sq);
-      ping.send();
     }
 
     /* Setting a LONG delay on the ROAD :D */
@@ -494,13 +494,15 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     ThreadUtil.reallySleep(getMinSleepTimeToStartLongGCTest(hcConfig));
 
     /*
-     * L2 should have started the Extra Check by now; But L2 will not be able to do socket connect to L1.
+     * L2 should have started the Extra Check by now; L2 SocketConnect to L1 should pass.
      */
-    ThreadUtil.reallySleep(getMinScoketConnectResultTime(hcConfig));
+    assertEquals(1, connHC.getTotalConnsUnderMonitor());
 
-    /* By Now, the client should be chuked out */
+    /*
+     * Though L2 is able to connect, we can't trust the client for too long
+     */
+    ThreadUtil.reallySleep(getFullExtraCheckTime(hcConfig));
     assertEquals(0, connHC.getTotalConnsUnderMonitor());
-
   }
 
   public void testL2SocketConnectL1Pass() throws Exception {
@@ -517,7 +519,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
         .getConnHealthChecker();
     assertNotNull(connHC);
 
-    while (!connHC.isRunning() && (connHC.getTotalConnsUnderMonitor() != 1)) {
+    while (!connHC.isRunning() || (connHC.getTotalConnsUnderMonitor() != 1)) {
       System.out.println("Yet to start the connection health cheker thread...");
       ThreadUtil.reallySleep(1000);
     }
@@ -538,12 +540,6 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
      */
     ThreadUtil.reallySleep(getMinScoketConnectResultTime(hcConfig));
     assertEquals(1, connHC.getTotalConnsUnderMonitor());
-
-    /*
-     * Though L1 is able to connect, we can't trust the client for too long
-     */
-    ThreadUtil.reallySleep(getFullExtraCheckTime(hcConfig));
-    assertEquals(0, connHC.getTotalConnsUnderMonitor());
   }
 
   public void testL2SocketConnectMultipleL1PassAndFail() throws Exception {
@@ -577,7 +573,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
         .getConnHealthChecker();
     assertNotNull(connHC);
 
-    while (!connHC.isRunning() && (connHC.getTotalConnsUnderMonitor() != 2)) {
+    while (!connHC.isRunning() || (connHC.getTotalConnsUnderMonitor() != 2)) {
       System.out.println("Yet to start the connection health cheker thread...");
       ThreadUtil.reallySleep(1000);
     }
@@ -620,14 +616,14 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
         .getConnHealthChecker();
     assertNotNull(connHC);
 
-    while (!connHC.isRunning() && (connHC.getTotalConnsUnderMonitor() != 1)) {
+    while (!connHC.isRunning() || (connHC.getTotalConnsUnderMonitor() != 1)) {
       System.out.println("Yet to start the connection health cheker thread...");
       ThreadUtil.reallySleep(1000);
     }
 
+    ThreadUtil.reallySleep(3000);
     // Client comms mgr should not start callbackport listener as it is disabled.
     assertNull(((CommunicationsManagerImpl) clientComms).getCallbackPortListener());
-
   }
 
   protected void closeCommsMgr() throws Exception {
