@@ -4,11 +4,7 @@
  */
 package com.tc.test;
 
-import com.meterware.httpunit.HeadMethodWebRequest;
-import com.meterware.httpunit.WebConversation;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
-
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -56,20 +52,25 @@ public class ReflectorTest extends TCTestCase {
     }
   }
 
-  private static boolean isValid(String url) {
+  private static boolean isValid(String link) {
+    HttpURLConnection urlConnection = null;
     try {
-      url = url.trim();
-      WebRequest request = new HeadMethodWebRequest(url);
-      WebConversation wc = new WebConversation();
-      WebResponse response = wc.getResource(request);
-      String redirectLink = response.getHeaderField("Location");
+      URL url = new URL(link);
+      urlConnection = (HttpURLConnection) url.openConnection();
+      urlConnection.setRequestMethod("HEAD");
+      urlConnection.connect();
+      String redirectLink = urlConnection.getHeaderField("Location");
       if (redirectLink != null && !url.equals(redirectLink)) {
         return isValid(redirectLink);
       } else {
-        return response.getResponseCode() == 200;
+        return urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK;
       }
     } catch (Exception e) {
       return false;
+    } finally {
+      if (urlConnection != null) {
+        urlConnection.disconnect();
+      }
     }
   }
 }
