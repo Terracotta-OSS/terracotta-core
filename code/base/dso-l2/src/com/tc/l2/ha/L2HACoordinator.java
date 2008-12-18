@@ -206,7 +206,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
       myNodeId = groupManager.join(thisNode, allNodes);
     } catch (GroupException e) {
       logger.error("Caught Exception :", e);
-      throw new AssertionError(e);
+      throw new RuntimeException(e);
     }
     logger.info("This L2 Node ID = " + myNodeId);
     stateManager.startElection();

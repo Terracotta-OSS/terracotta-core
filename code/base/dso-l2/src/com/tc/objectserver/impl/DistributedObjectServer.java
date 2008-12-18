@@ -22,6 +22,7 @@ import com.tc.exception.ZapServerNodeException;
 import com.tc.handler.CallbackDatabaseDirtyAlertAdapter;
 import com.tc.handler.CallbackDirtyDatabaseCleanUpAdapter;
 import com.tc.handler.CallbackDumpAdapter;
+import com.tc.handler.CallbackGroupExceptionHandler;
 import com.tc.handler.LockInfoDumpHandler;
 import com.tc.io.TCFile;
 import com.tc.io.TCFileImpl;
@@ -56,6 +57,7 @@ import com.tc.net.AddressChecker;
 import com.tc.net.NIOWorkarounds;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.groups.GroupException;
 import com.tc.net.groups.Node;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
@@ -919,6 +921,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
 
     if (networkedHA) {
       final Node thisNode = this.haConfig.makeThisNode();
+      CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);
+      threadGroup.addCallbackOnExitExceptionHandler(GroupException.class, handler);
       l2Coordinator.start(thisNode, this.haConfig.getThisGroupNodes());
     } else {
       // In non-network enabled HA, Only active server reached here.
