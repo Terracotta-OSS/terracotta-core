@@ -380,13 +380,8 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
                                                                                       //...entry, newvl
       mv.visitInsn(DUP2);                                                             //...entry, newvl, entry, newvl
       mv.visitInsn(POP);                                                              //...entry, newvl, entry
-      /* The "raw_value" field below is not a real field of HashEntry.  I'm using the field name parameter to pass a
-       * message to the next adapter (JavaUtilConcurrentHashMapLazyValuesMethodAdapter) asking it not to adapt this
-       * particular field get.  I don't want the check for a put of an existing mapping to force a lookup if this is
-       * an ObjectID.  Have a look at the logic in JavaUtilConcurrentHashMapLazyValuesMethodAdapter.visitFieldInsn(...).
-       */
-      mv.visitFieldInsn(GETFIELD, "java/util/concurrent/ConcurrentHashMap$HashEntry",
-                        "raw_value", "Ljava/lang/Object;");                           //...entry, newvl, oldvl
+      mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/concurrent/ConcurrentHashMap$HashEntry",
+                        JavaUtilConcurrentHashMapHashEntryAdapter.GET_VALUE_RAW, "()Ljava/lang/Object;"); //...entry, newvl, oldvl
       mv.visitInsn(DUP2_X1);                                                          //...newvl, oldvl, entry, newvl, oldvl
       mv.visitInsn(POP);                                                              //...newvl, oldvl, entry, newvl
       mv.visitFieldInsn(PUTFIELD, "java/util/concurrent/ConcurrentHashMap$HashEntry",

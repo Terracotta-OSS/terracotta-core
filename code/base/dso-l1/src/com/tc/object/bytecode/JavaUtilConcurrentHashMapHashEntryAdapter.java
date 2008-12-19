@@ -17,7 +17,8 @@ public class JavaUtilConcurrentHashMapHashEntryAdapter extends ClassAdapter impl
 
   static final String         GET_VALUE                    = PREFIX + "getValue";
   static final String         GET_VALUE_STORE_ONLY_NONNULL = PREFIX + "getValueStoreOnlyNonNull";
-
+  static final String         GET_VALUE_RAW                = PREFIX + "getValueRaw";
+  
   public JavaUtilConcurrentHashMapHashEntryAdapter(ClassVisitor cv) {
     super(cv);
   }
@@ -32,7 +33,8 @@ public class JavaUtilConcurrentHashMapHashEntryAdapter extends ClassAdapter impl
     createTCIsFaultedInMethod();
     createLazyGetValueMethods();
     createLazyGetValueInternal();
-
+    createRawGetValueMethod();
+    
     super.visitEnd();
   }
 
@@ -119,6 +121,15 @@ public class JavaUtilConcurrentHashMapHashEntryAdapter extends ClassAdapter impl
     mv.visitEnd();
   }
 
+  private void createRawGetValueMethod() {
+    MethodVisitor mv = super.visitMethod(ACC_SYNCHRONIZED, GET_VALUE_RAW, "()Ljava/lang/Object;", null, null);
+    mv.visitCode();
+    mv.visitVarInsn(ALOAD, 0);
+    mv.visitFieldInsn(GETFIELD, THIS_TYPE, "value", "Ljava/lang/Object;");
+    mv.visitInsn(ARETURN);
+    mv.visitMaxs(0, 0);
+    mv.visitEnd();    
+  }
   /**
    * <code>
      public synchronized void __tc_rawSetValue(Object o) {
