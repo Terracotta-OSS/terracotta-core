@@ -93,7 +93,7 @@ public class ClientGroupMessageChannelTest extends TCTestCase {
       ports[i] = lsnr[i].getBindPort();
     }
     groupChannel = createClientMessageChannel(maxReconnectTries);
-    groupIDs = this.groupChannel.getGroupIDs();
+    groupIDs = this.groupChannel.getOrderedGroupIDs().getGroupIDs();
     for (int i = 0; i < L2_COUNT; ++i) {
       setUpClientReceiveSink(i, groupChannel.getChannel(groupIDs[i]), serverWatcheres[i]);
     }

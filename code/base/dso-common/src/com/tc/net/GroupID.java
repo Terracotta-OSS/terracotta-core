@@ -70,9 +70,10 @@ public class GroupID implements NodeID, Serializable {
   }
 
   public int compareTo(Object o) {
-    GroupID n = (GroupID) o;
+    NodeID n = (NodeID) o;
     if (getNodeType() != n.getNodeType()) { return getNodeType() - n.getNodeType(); }
-    return toInt() - n.toInt();
+    GroupID g = (GroupID) o;
+    return toInt() - g.toInt();
   }
 
 }

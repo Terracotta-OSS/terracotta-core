@@ -6,6 +6,7 @@ package com.tc.net.protocol.clientgroup;
 
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
+import com.tc.net.OrderedGroupIDs;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageImpl;
@@ -15,7 +16,7 @@ public interface ClientGroupMessageChannel extends ClientMessageChannel {
 
   public ClientMessageChannel getChannel(GroupID groupID);
 
-  public GroupID[] getGroupIDs();
+  public OrderedGroupIDs getOrderedGroupIDs();
 
   public GroupID getCoordinatorGroupID();
 
