@@ -5,8 +5,8 @@
 package com.terracotta.session;
 
 import com.tc.logging.TCLogger;
-import com.tc.management.beans.sessions.SessionMonitorMBean;
-import com.tc.management.beans.sessions.SessionMonitorMBean.SessionsComptroller;
+import com.tc.management.beans.sessions.SessionMonitor;
+import com.tc.management.beans.sessions.SessionMonitor.SessionsComptroller;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.properties.TCPropertiesConsts;
@@ -33,7 +33,7 @@ import javax.servlet.http.HttpServletResponse;
 
 public class TerracottaSessionManager implements SessionManager {
 
-  private final SessionMonitorMBean    mBean;
+  private final SessionMonitor         sessionMonitor;
   private final SessionIdGenerator     idGenerator;
   private final SessionCookieWriter    cookieWriter;
   private final SessionDataStore       store;
@@ -87,9 +87,9 @@ public class TerracottaSessionManager implements SessionManager {
 
     // This is disgusting, but right now we have to do this because we don't have an event
     // management infrastructure to boot stuff up
-    mBean = ManagerUtil.getSessionMonitorMBean();
+    sessionMonitor = ManagerUtil.getHttpSessionMonitor();
 
-    mBean.registerSessionsController(new SessionsComptroller() {
+    sessionMonitor.registerSessionsController(new SessionsComptroller() {
       public boolean killSession(final String browserSessionId) {
         SessionId id = idGenerator.makeInstanceFromBrowserId(browserSessionId);
         if (id == null) {
@@ -270,7 +270,7 @@ public class TerracottaSessionManager implements SessionManager {
 
     Assert.inv(!req.isForwarded());
 
-    mBean.requestProcessed();
+    sessionMonitor.requestProcessed();
 
     try {
       if (req.isSessionOwner()) postprocessSession(req);
@@ -419,7 +419,7 @@ public class TerracottaSessionManager implements SessionManager {
     }
 
     store.remove(data.getSessionId());
-    mBean.sessionDestroyed();
+    sessionMonitor.sessionDestroyed();
 
     if (unlock) {
       data.getSessionId().commitLock();
@@ -473,7 +473,7 @@ public class TerracottaSessionManager implements SessionManager {
     SessionData sd = store.createSessionData(id);
     Cookie cookie = cookieWriter.writeCookie(req, res, id);
     eventMgr.fireSessionCreatedEvent(sd);
-    mBean.sessionCreated();
+    sessionMonitor.sessionCreated();
     Assert.post(sd != null);
 
     if (debugSessions) {

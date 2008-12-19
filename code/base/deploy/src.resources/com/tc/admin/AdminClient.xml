@@ -357,30 +357,6 @@
       <item bottom="-1,bottom:s" height="n" left="-1,left:sn" right="-1,right:sn" top="0,bottom:0" width="n" />
     </connections>
   </container>
-  <container tag="SessionMonitorPanel">
-    <children>
-      <scrollpane>
-        <table name="SessionMonitorTable" class="com.tc.admin.sessions.SessionMonitorTable" />
-      </scrollpane>
-    </children>
-    <connections>
-      <item bottom="-1,bottom:sn" height="ns" left="-1,left:sn" right="-1,right:sn" top="-1,top:sn" width="ns" />
-    </connections>
-  </container>
-  <container tag="SessionsProductPanel">
-    <children>
-      <scrollpane>
-        <table name="SessionsProductTable" class="com.tc.admin.sessions.SessionsProductTable" />
-      </scrollpane>
-      <scrollpane>
-        <table name="ClassCreationTable" class="com.tc.admin.common.XObjectTable" />
-      </scrollpane>
-    </children>
-    <connections>
-      <item bottom="1,top:n" height="ns" left="-1,left:n" right="-1,right:n" top="-1,top:n" width="ns" />
-      <item bottom="-1,bottom:n" height="ns" left="-1,left:n" right="-1,right:n" top="0,bottom:n" width="ns" />
-    </connections>
-  </container>
   <container tag="StatusRenderer">
     <children>
       <label class="com.tc.admin.common.XLabel" name="StatusIndicator" />

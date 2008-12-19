@@ -9,7 +9,7 @@ package com.tc.object.bytecode;
 import com.tc.cluster.ClusterEventListener;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
-import com.tc.management.beans.sessions.SessionMonitorMBean;
+import com.tc.management.beans.sessions.SessionMonitor;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.hook.impl.ArrayManager;
@@ -920,10 +920,10 @@ public class ManagerUtil {
   }
 
   /**
-   * @return Session monitor MBean
+   * @return HTTP Session monitor
    */
-  public static SessionMonitorMBean getSessionMonitorMBean() {
-    return getManager().getSessionMonitorMBean();
+  public static SessionMonitor getHttpSessionMonitor() {
+    return getManager().getHttpSessionMonitor();
   }
 
   /**

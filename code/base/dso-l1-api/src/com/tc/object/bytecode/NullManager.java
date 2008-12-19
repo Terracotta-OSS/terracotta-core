@@ -6,7 +6,7 @@ package com.tc.object.bytecode;
 
 import com.tc.cluster.ClusterEventListener;
 import com.tc.logging.TCLogger;
-import com.tc.management.beans.sessions.SessionMonitorMBean;
+import com.tc.management.beans.sessions.SessionMonitor;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.event.DmiManager;
@@ -203,7 +203,7 @@ public final class NullManager implements Manager {
     throw new UnsupportedOperationException();
   }
 
-  public final SessionMonitorMBean getSessionMonitorMBean() {
+  public final SessionMonitor getHttpSessionMonitor() {
     throw new UnsupportedOperationException();
   }
 

@@ -9,19 +9,7 @@ import com.tc.management.TerracottaMBean;
  * MBean for session monitoring of Terracotta-clustered sessions.  This MBean tracks 
  * session creation, session destruction, and requests processed.
  */
-public interface SessionMonitorMBean extends TerracottaMBean {
-
-  /**
-   * Interface to use when killing sessions
-   */
-  public static interface SessionsComptroller {
-    /**
-     * Kill the specified session
-     * @param sessionId Session to kill
-     * @return True if killed
-     */
-    boolean killSession(String sessionId);
-  }
+public interface SessionStatisticsMBean extends TerracottaMBean {
 
   /**
    * Get count of total requests in sample
@@ -55,36 +43,15 @@ public interface SessionMonitorMBean extends TerracottaMBean {
   int getSessionDestructionRatePerMinute();
 
   /**
-   * Reset sampling
-   */
-  void reset();
-
-  /**
    * Force session to expire
    * @param sessionId Session to expire
    * @return True if expired
    */
   boolean expireSession(String sessionId);
 
-  /**
-   * Register a sessions controller
-   * @param comptroller Sessions controller
-   */
-  void registerSessionsController(SessionsComptroller comptroller);
-
-  /**
-   * Event indicating to mbean that a session was created.
-   */
-  void sessionCreated();
-
-  /**
-   * Event indicating to mbean that a session was destroyed.
-   */
-  void sessionDestroyed();
-
-  /**
-   * Event indicating to mbean that a request was processed.
-   */
-  void requestProcessed();
-
+  
+//  /**
+//   * Reset sampling
+//   */
+//  void reset();
 }

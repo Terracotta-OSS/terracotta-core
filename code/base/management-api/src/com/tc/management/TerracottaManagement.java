@@ -5,7 +5,6 @@
 package com.tc.management;
 
 import com.tc.management.beans.MBeanNames;
-import com.tc.management.beans.sessions.SessionMonitorMBean;
 import com.tc.net.TCSocketAddress;
 
 import java.io.IOException;
@@ -162,24 +161,8 @@ public abstract class TerracottaManagement {
     return objectNamePart;
   }
 
-  public static final Set getAllSessionMonitorMBeans(MBeanServerConnection mbs) throws MalformedObjectNameException,
-      NullPointerException, IOException {
-    return mbs.queryNames(new ObjectName(MBeanNames.SESSION_INTERNAL.getCanonicalName() + ",*"), null);
-  }
-
   public static final Set getAllL1DumperMBeans(MBeanServerConnection mbs) throws MalformedObjectNameException,
       NullPointerException, IOException {
     return mbs.queryNames(new ObjectName(MBeanNames.L1DUMPER_INTERNAL.getCanonicalName() + ",*"), null);
-  }
-
-  public static final SessionMonitorMBean getClientSessionMonitorMBean(MBeanServerConnection mbs,
-                                                                       Set sessionMonitorMBeans, String nodeName)
-      throws IOException {
-    for (Iterator iter = sessionMonitorMBeans.iterator(); iter.hasNext();) {
-      ObjectName smObjectName = (ObjectName) iter.next();
-      if (nodeName.equals(smObjectName.getKeyProperty(MBeanKeys.MBEAN_NODE_NAME))) { return (SessionMonitorMBean) TerracottaManagement
-          .findMBean(smObjectName, SessionMonitorMBean.class, mbs); }
-    }
-    throw new AssertionError("No SessionMonitorMBean found for " + nodeName);
   }
 }

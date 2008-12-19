@@ -11,15 +11,15 @@ import javax.management.NotCompliantMBeanException;
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.management.stats.AggregateInteger;
 
-public final class SessionMonitor extends AbstractTerracottaMBean implements SessionMonitorMBean {
+public final class SessionMonitorImpl extends AbstractTerracottaMBean implements SessionMonitor {
 
   final AggregateInteger   requestsProcessed;
   final AggregateInteger   sessionsCreated;
   final AggregateInteger   sessionsDestroyed;
   private final LinkedList sessionsControllers;
 
-  public SessionMonitor() throws NotCompliantMBeanException {
-    super(SessionMonitorMBean.class, false);
+  public SessionMonitorImpl() throws NotCompliantMBeanException {
+    super(SessionStatisticsMBean.class, false);
     requestsProcessed = new AggregateInteger("RequestsProcessed", 100);
     sessionsCreated = new AggregateInteger("CreatedSessionCount", 100);
     sessionsDestroyed = new AggregateInteger("DestroyedSessionCount", 100);

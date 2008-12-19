@@ -25,7 +25,7 @@ import com.tc.logging.ThreadDumpHandler;
 import com.tc.management.ClientLockStatManager;
 import com.tc.management.L1Management;
 import com.tc.management.TCClient;
-import com.tc.management.beans.sessions.SessionMonitorMBean;
+import com.tc.management.beans.sessions.SessionMonitor;
 import com.tc.management.lock.stats.ClientLockStatisticsManagerImpl;
 import com.tc.management.lock.stats.LockStatisticsMessage;
 import com.tc.management.lock.stats.LockStatisticsResponseMessage;
@@ -139,6 +139,7 @@ import com.tc.statistics.retrieval.actions.SRAL1TransactionSize;
 import com.tc.statistics.retrieval.actions.SRAL1TransactionsPerBatch;
 import com.tc.statistics.retrieval.actions.SRAMemoryUsage;
 import com.tc.statistics.retrieval.actions.SRAMessages;
+import com.tc.statistics.retrieval.actions.SRAHttpSessions;
 import com.tc.statistics.retrieval.actions.SRAStageQueueDepths;
 import com.tc.statistics.retrieval.actions.SRASystemProperties;
 import com.tc.stats.counter.Counter;
@@ -276,6 +277,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     registry.registerActionInstance(new SRAL1TransactionsPerBatch(numTransactionCounter, numBatchesCounter));
     registry.registerActionInstance(new SRAL1TransactionSize(batchSizeCounter, numTransactionCounter));
     registry.registerActionInstance(new SRAL1PendingBatchesSize(pendingBatchesSize));
+    registry.registerActionInstance(new SRAHttpSessions());
   }
 
   public synchronized void start() {
@@ -710,8 +712,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     return runtimeLogger;
   }
 
-  public SessionMonitorMBean getSessionMonitorMBean() {
-    return l1Management.findSessionMonitorMBean();
+  public SessionMonitor getHttpSessionMonitor() {
+    return l1Management.getHttpSessionMonitor();
   }
 
   public DmiManager getDmiManager() {

@@ -18,11 +18,10 @@ import com.tc.management.beans.logging.RuntimeLogging;
 import com.tc.management.beans.logging.RuntimeLoggingMBean;
 import com.tc.management.beans.logging.RuntimeOutputOptions;
 import com.tc.management.beans.logging.RuntimeOutputOptionsMBean;
+import com.tc.management.beans.sessions.SessionMonitorImpl;
 import com.tc.management.beans.sessions.SessionMonitor;
-import com.tc.management.beans.sessions.SessionMonitorMBean;
 import com.tc.management.beans.tx.ClientTxMonitor;
 import com.tc.management.beans.tx.ClientTxMonitorMBean;
-import com.tc.management.exposed.SessionsProduct;
 import com.tc.management.exposed.TerracottaCluster;
 import com.tc.management.remote.protocol.ProtocolProvider;
 import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
@@ -60,8 +59,7 @@ public final class L1Management extends TerracottaManagement {
   private MBeanServer                        mBeanServer;
 
   private final ClientTxMonitor              clientTxBean;
-  private final SessionMonitor               internalSessionBean;
-  private final SessionsProduct              publicSessionBean;
+  private final SessionMonitor               httpSessionsMonitor;
   private final TerracottaCluster            clusterBean;
   private final L1Info                       l1InfoBean;
   private final InstrumentationLogging       instrumentationLoggingBean;
@@ -85,8 +83,7 @@ public final class L1Management extends TerracottaManagement {
     try {
       l1DumpBean = new L1Dumper(client);
       clientTxBean = new ClientTxMonitor();
-      internalSessionBean = new SessionMonitor();
-      publicSessionBean = new SessionsProduct(internalSessionBean, clientTxBean);
+      httpSessionsMonitor = new SessionMonitorImpl();
       clusterBean = new TerracottaCluster();
       l1InfoBean = new L1Info(client, rawConfigText);
       instrumentationLoggingBean = new InstrumentationLogging(instrumentationLogger);
@@ -152,8 +149,7 @@ public final class L1Management extends TerracottaManagement {
 
   public Object findMBean(final ObjectName objectName, final Class mBeanInterface) throws IOException {
     if (objectName.equals(MBeanNames.CLIENT_TX_INTERNAL)) return clientTxBean;
-    else if (objectName.equals(MBeanNames.SESSION_INTERNAL)) return internalSessionBean;
-    else if (objectName.equals(L1MBeanNames.SESSION_PRODUCT_PUBLIC)) return publicSessionBean;
+    else if (objectName.equals(L1MBeanNames.HTTP_SESSIONS_PUBLIC)) return httpSessionsMonitor;
     else if (objectName.equals(L1MBeanNames.L1INFO_PUBLIC)) return l1InfoBean;
     else if (objectName.equals(L1MBeanNames.INSTRUMENTATION_LOGGING_PUBLIC)) return instrumentationLoggingBean;
     else if (objectName.equals(L1MBeanNames.RUNTIME_OUTPUT_OPTIONS_PUBLIC)) return runtimeOutputOptionsBean;
@@ -170,8 +166,8 @@ public final class L1Management extends TerracottaManagement {
     return clientTxBean;
   }
 
-  public SessionMonitorMBean findSessionMonitorMBean() {
-    return internalSessionBean;
+  public SessionMonitor getHttpSessionMonitor() {
+    return httpSessionsMonitor;
   }
 
   public TerracottaCluster getTerracottaCluster() {
@@ -230,8 +226,7 @@ public final class L1Management extends TerracottaManagement {
 
     mBeanServer.registerMBean(l1DumpBean, MBeanNames.L1DUMPER_INTERNAL);
     mBeanServer.registerMBean(clientTxBean, MBeanNames.CLIENT_TX_INTERNAL);
-    mBeanServer.registerMBean(internalSessionBean, MBeanNames.SESSION_INTERNAL);
-    mBeanServer.registerMBean(publicSessionBean, L1MBeanNames.SESSION_PRODUCT_PUBLIC);
+    mBeanServer.registerMBean(httpSessionsMonitor, L1MBeanNames.HTTP_SESSIONS_PUBLIC);
     mBeanServer.registerMBean(clusterBean, L1MBeanNames.CLUSTER_BEAN_PUBLIC);
     if (statisticsAgentSubSystem.isActive()) {
       statisticsAgentSubSystem.registerMBeans(mBeanServer);

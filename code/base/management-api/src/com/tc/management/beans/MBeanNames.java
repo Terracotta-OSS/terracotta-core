@@ -14,7 +14,6 @@ import com.tc.management.TerracottaManagement.Type;
 public class MBeanNames {
 
   public static final ObjectName CLIENT_TX_INTERNAL;
-  public static final ObjectName SESSION_INTERNAL;
   public static final ObjectName L1DUMPER_INTERNAL;
 
   static {
@@ -22,9 +21,6 @@ public class MBeanNames {
       CLIENT_TX_INTERNAL = TerracottaManagement.createObjectName(TerracottaManagement.Type.DsoClient,
                                                                  TerracottaManagement.Subsystem.Tx, null,
                                                                  "Client transactions", false);
-      SESSION_INTERNAL = TerracottaManagement.createObjectName(Type.Sessions, Subsystem.None, null, "Session stats",
-                                                               false);
-
       L1DUMPER_INTERNAL = TerracottaManagement.createObjectName(Type.DsoClient, Subsystem.None, null,
                                                                 "DSO Client Dump Bean", false);
     } catch (MalformedObjectNameException mone) {
