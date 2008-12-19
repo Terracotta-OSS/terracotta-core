@@ -462,12 +462,14 @@ public interface TCPropertiesConsts {
    * cvt.statistics.logging.interval       - Interval between logging of statistics data (in seconds).
    * cvt.buffer.randomsuffix.enabled       - If true, add a random suffix when a buffer is created
    * cvt.store.randomsuffix.enabled        - If true, add a random suffix when a store is created
+   * cvt.rest.interface.enabled            - If false, the REST interface for the CVT will be disabled. True by default
    * </code>
    ********************************************************************************************************************/
   public static final String   CVT_RETRIEVER_NOTIFICATION_INTERVAL                    = "cvt.retriever.notification.interval";
   public static final String   CVT_STATISTICS_LOGGING_INTERVAL                        = "cvt.statistics.logging.interval";
   public static final String   CVT_BUFFER_RANDOM_SUFFIX_ENABLED                       = "cvt.buffer.randomsuffix.enabled";
   public static final String   CVT_STORE_RANDOM_SUFFIX_ENABLED                        = "cvt.store.randomsuffix.enabled";
+  public static final String   CVT_REST_INTERFACE_ENABLED                             = "cvt.rest.interface.enabled";
 
   /*********************************************************************************************************************
    * Section : HealthChecker { server->client, server->server (HA), client->server }

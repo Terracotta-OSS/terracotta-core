@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ivy-module version="2.0">
+  <info organisation="ibiblio" module="dso-statistics-tests"/>
+  <dependencies>
+    <dependency name="httpunit" rev="1.6.2"/>
+    <dependency name="nekohtml" rev="1.9.6"/>
+    <dependency name="xercesImpl" rev="2.9.0" org="terracotta"/>
+  </dependencies>
+</ivy-module>
