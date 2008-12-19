@@ -363,28 +363,37 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
     }
 
     public void visitFieldInsn(int opcode, String owner, String name, String desc) {
-      super.visitFieldInsn(opcode, owner, name, desc);
 
       if (PUTFIELD == opcode && "java/util/concurrent/ConcurrentHashMap$HashEntry".equals(owner)
           && "value".equals(name) && "Ljava/lang/Object;".equals(desc)) {
-        addFoundLogicalInvokePutMethodCall();
+        addExistingHashEntryLogicalInvokeCall();
       } else if (PUTFIELD == opcode && CONCURRENT_HASH_MAP_SEGMENT_SLASH.equals(owner)
                  && "count".equals(name) && "I".equals(desc)) {
-        addNotFoundLogicalInvokePutMethodCall();
+        addNewHashEntryLogicalInvokeCall();
+      } else {
+        super.visitFieldInsn(opcode, owner, name, desc);
       }
     }
 
-    private void addFoundLogicalInvokePutMethodCall() {
-      Label notManaged = new Label();
-      Label logicalInvokeLabel = new Label();
+    private void addExistingHashEntryLogicalInvokeCall() {
+      Label skipLogicalInvoke = new Label();
+                                                                                      //...entry, newvl
+      mv.visitInsn(DUP2);                                                             //...entry, newvl, entry, newvl
+      mv.visitInsn(POP);                                                              //...entry, newvl, entry
+      mv.visitFieldInsn(GETFIELD, "java/util/concurrent/ConcurrentHashMap$HashEntry",
+                        "value", "Ljava/lang/Object;");                               //...entry, newvl, oldvl
+      mv.visitInsn(DUP2_X1);                                                          //...newvl, oldvl, entry, newvl, oldvl
+      mv.visitInsn(POP);                                                              //...newvl, oldvl, entry, newvl
+      mv.visitFieldInsn(PUTFIELD, "java/util/concurrent/ConcurrentHashMap$HashEntry",
+                        "value", "Ljava/lang/Object;");                               //...newvl, oldvl
+      mv.visitJumpInsn(IF_ACMPEQ, skipLogicalInvoke);                                 //...
 
-      mv.visitLabel(logicalInvokeLabel);
 
       ByteCodeUtil.pushThis(mv);
       mv.visitFieldInsn(GETFIELD, CONCURRENT_HASH_MAP_SEGMENT_SLASH,
                         PARENT_CONCURRENT_HASH_MAP_FIELD_NAME, "Ljava/util/concurrent/ConcurrentHashMap;");
       mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "isManaged", "(Ljava/lang/Object;)Z");
-      mv.visitJumpInsn(IFEQ, notManaged);
+      mv.visitJumpInsn(IFEQ, skipLogicalInvoke);
       ByteCodeUtil.pushThis(mv);
       mv.visitFieldInsn(GETFIELD, CONCURRENT_HASH_MAP_SEGMENT_SLASH,
                         PARENT_CONCURRENT_HASH_MAP_FIELD_NAME, "Ljava/util/concurrent/ConcurrentHashMap;");
@@ -402,20 +411,18 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
       mv.visitInsn(AASTORE);
       mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "logicalInvoke",
                          "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
-      mv.visitLabel(notManaged);
+      mv.visitLabel(skipLogicalInvoke);
     }
 
-    private void addNotFoundLogicalInvokePutMethodCall() {
-      Label endBlock = new Label();
-      Label logicalInvokeLabel = new Label();
+    private void addNewHashEntryLogicalInvokeCall() {
+      Label skipLogicalInvoke = new Label();
 
-      mv.visitLabel(logicalInvokeLabel);
-
+      mv.visitFieldInsn(PUTFIELD, CONCURRENT_HASH_MAP_SEGMENT_SLASH, "count", "I");
       ByteCodeUtil.pushThis(mv);
       mv.visitFieldInsn(GETFIELD, CONCURRENT_HASH_MAP_SEGMENT_SLASH,
                         PARENT_CONCURRENT_HASH_MAP_FIELD_NAME, "Ljava/util/concurrent/ConcurrentHashMap;");
       mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "isManaged", "(Ljava/lang/Object;)Z");
-      mv.visitJumpInsn(IFEQ, endBlock);
+      mv.visitJumpInsn(IFEQ, skipLogicalInvoke);
       mv.visitVarInsn(ILOAD, 4);
       Label l0 = new Label();
       mv.visitJumpInsn(IFEQ, l0);
@@ -435,7 +442,7 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
       mv.visitInsn(AASTORE);
       mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "logicalInvoke",
                          "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
-      mv.visitJumpInsn(GOTO, endBlock);
+      mv.visitJumpInsn(GOTO, skipLogicalInvoke);
       mv.visitLabel(l0);
       ByteCodeUtil.pushThis(mv);
       mv.visitFieldInsn(GETFIELD, CONCURRENT_HASH_MAP_SEGMENT_SLASH,
@@ -453,7 +460,7 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
       mv.visitInsn(AASTORE);
       mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "logicalInvoke",
                          "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
-      mv.visitLabel(endBlock);
+      mv.visitLabel(skipLogicalInvoke);
     }
   }
 
