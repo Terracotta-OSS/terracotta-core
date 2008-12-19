@@ -29,7 +29,14 @@ class JavaUtilConcurrentHashMapLazyValuesMethodAdapter extends LocalVariablesSor
         visitMethodInsn(INVOKEVIRTUAL, "java/util/concurrent/ConcurrentHashMap$HashEntry",
                         JavaUtilConcurrentHashMapHashEntryAdapter.GET_VALUE, "()Ljava/lang/Object;");
       }
-
+    } else if (GETFIELD == opcode && "java/util/concurrent/ConcurrentHashMap$HashEntry".equals(owner) && "raw_value".equals(name)
+        && "Ljava/lang/Object;".equals(desc)) {
+      /* This is the matching partner to the logic in JavaUtilConcurrentHashMapSegmentAdapter.  If someone tries to do a
+       * GETFIELD on the non-existent "raw_value" field, we take it to mean "Give me a raw field read of the 'value'
+       * field".  So that is what we do.  I consider this slightly nicer than generating a new method just for the sake
+       * of doing an uninstrumented field read in one place in the code.
+       */
+      super.visitFieldInsn(opcode, owner, "value", desc);
     } else if (PUTFIELD == opcode && "java/util/concurrent/ConcurrentHashMap$HashEntry".equals(owner)
                && "value".equals(name) && "Ljava/lang/Object;".equals(desc)) {
       visitMethodInsn(INVOKEVIRTUAL, "java/util/concurrent/ConcurrentHashMap$HashEntry",
