@@ -391,16 +391,6 @@ public class ClassProcessorHelper {
   public static void initialize() {
     if (initState.attemptInit()) {
       try {
-        // This avoids a deadlock (see LKC-853, LKC-1387)
-        java.security.Security.getProviders();
-
-        // Avoid another deadlock (DEV-1047, DEV-1301)
-        // Looking at the sun-jdk17 sources, this deadlock shouldn't happen there
-        LogManager.getLogManager();
-
-        // Workaround bug in NIO on solaris 10
-        NIOWorkarounds.solaris10Workaround();
-
         tcLoader = createTCLoader();
 
         if (USE_GLOBAL_CONTEXT || USE_GLOBAL_CONTEXT) {
@@ -750,7 +740,7 @@ public class ClassProcessorHelper {
   public static int getSessionLockType(String appName) {
     return globalContext.getSessionLockType(appName);
   }
-  
+
   public static boolean isApplicationSessionLocked(String appName) {
     return globalContext.isApplicationSessionLocked(appName);
   }
@@ -770,18 +760,17 @@ public class ClassProcessorHelper {
   }
 
   public static void systemLoaderInitialized() {
+    // This avoids a deadlock (see LKC-853, LKC-1387)
+    java.security.Security.getProviders();
+
+    // Avoid another deadlock (DEV-1047, DEV-1301)
+    // Looking at the sun-jdk17 sources, this deadlock shouldn't happen there
+    LogManager.getLogManager();
+
+    // Workaround bug in NIO on solaris 10
+    NIOWorkarounds.solaris10Workaround();
+
     systemLoaderInitialized = true;
-  }
-
-  private static final boolean inLoggingStaticInit() {
-    StackTraceElement[] stack = new Throwable().getStackTrace();
-    for (int i = 0; i < stack.length; i++) {
-      StackTraceElement frame = stack[i];
-
-      if ("java.util.logging.LogManager".equals(frame.getClassName()) && "<clinit>".equals(frame.getMethodName())) { return true; }
-    }
-
-    return false;
   }
 
   /**
@@ -802,10 +791,10 @@ public class ClassProcessorHelper {
     private static final int INITIALIZING    = 1;
     private static final int INITIALIZED     = 2;
 
-    private int state = NOT_INITIALIZED;
+    private int              state           = NOT_INITIALIZED;
 
     final synchronized boolean attemptInit() {
-      if ((state == NOT_INITIALIZED) && systemLoaderInitialized && !inLoggingStaticInit() ) {
+      if ((state == NOT_INITIALIZED) && systemLoaderInitialized) {
         state = INITIALIZING;
         return true;
       }
