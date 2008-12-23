@@ -64,14 +64,9 @@ class AttributesHelper implements Installable {
   }
 
   public boolean isInstalled(File repository) {
-    System.out.println("[xxx] AttributesHelper.isInstalled(File...)");
     File p0 = new File(repository, installPath().toString());
-    System.out.println("[xxx] repository: " + repository);
-    System.out.println("[xxx] installPath().toString(): " + installPath().toString());
     p0 = new File(p0, filename());
-    System.out.println("[xxx] p0: " + p0 + " " + p0.exists());
     File p1 = new File(repository, filename());
-    System.out.println("[xxx] p1: " + p1 + " " + p1.exists());
     return p0.exists() || p1.exists();
   }
 

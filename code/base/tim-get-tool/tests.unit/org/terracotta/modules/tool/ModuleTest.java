@@ -52,8 +52,6 @@ public final class ModuleTest extends TCTestCase {
     assertNotNull(module);
     List<String> installedList = new ArrayList<String>();
     module.install(new Listener(installedList), InstallOption.SKIP_INSPECT);
-    System.out.println("[xxx] module.isInstalled(): " + module.isInstalled());
-    System.out.println("[xxx] installedList.size(): " + installedList.size());
     assertTrue(module.isInstalled());
 
     assertEquals(1, installedList.size());
@@ -554,7 +552,9 @@ public final class ModuleTest extends TCTestCase {
     thread.setDaemon(true);
     thread.start();
 
-    Thread.sleep(500);
+    // XXX use a cyclic-barrier here instead.
+    // give the fileserver enough time to spin-up...
+    Thread.sleep(5000);
   }
 
   private static class FileServer {
