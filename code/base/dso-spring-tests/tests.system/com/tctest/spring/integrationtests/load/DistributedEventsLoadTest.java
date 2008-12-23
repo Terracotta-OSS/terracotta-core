@@ -8,7 +8,6 @@ import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.ServerTestSetup;
 import com.tc.test.server.appserver.deployment.TestCallback;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
-import com.tc.test.server.appserver.load.LowMemWorkaround;
 import com.tctest.spring.bean.EventManager;
 import com.tctest.spring.integrationtests.SpringDeploymentTest;
 
@@ -39,6 +38,7 @@ public class DistributedEventsLoadTest extends SpringDeploymentTest {
     return new ServerTestSetup(DistributedEventsLoadTest.class);
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     if (deployment == null) {
@@ -47,7 +47,7 @@ public class DistributedEventsLoadTest extends SpringDeploymentTest {
   }
 
   public void testLoad() throws Throwable {
-    publishDistributedEvents(LowMemWorkaround.computeNumberOfNodes(3, 2, appServerInfo()));
+    publishDistributedEvents(2);
   }
 
   private void publishDistributedEvents(final int nodeCount) throws Throwable {
