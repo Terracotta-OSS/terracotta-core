@@ -52,7 +52,10 @@ public final class ModuleTest extends TCTestCase {
     assertNotNull(module);
     List<String> installedList = new ArrayList<String>();
     module.install(new Listener(installedList), InstallOption.SKIP_INSPECT);
+    System.out.println("[xxx] module.isInstalled(): " + module.isInstalled());
+    System.out.println("[xxx] installedList.size(): " + installedList.size());
     assertTrue(module.isInstalled());
+
     assertEquals(1, installedList.size());
     assertTrue(installedList.contains(createModule("foo.bar", "baz", "0.0.0").toString()));
 

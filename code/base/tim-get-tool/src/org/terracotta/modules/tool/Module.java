@@ -114,6 +114,8 @@ public class Module extends AbstractModule implements Installable {
   }
 
   public boolean isInstalled() {
+    System.out.println("[xxx] Module.isInstalled()");
+    System.out.println("[xxx] modules.repository(): " + modules.repository());
     return isInstalled(modules.repository());
   }
 
