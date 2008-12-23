@@ -141,6 +141,7 @@ public class ClientAbscondAfterServerCrashTestApp extends AbstractTransparentApp
       System.out.println("XXX Expecting " + clientCount + " clients. Present connected clients " + actualClientCount
                          + ". sleeping ...");
       ThreadUtil.reallySleep(5000);
+      actualClientCount = mbean.getClients().length;
     }
     System.out.println("XXX " + clientCount + " clients are connected to the server.");
     jmxConnector.close();
