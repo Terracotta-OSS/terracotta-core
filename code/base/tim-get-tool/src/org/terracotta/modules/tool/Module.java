@@ -225,21 +225,23 @@ public class Module extends AbstractModule implements Installable {
     InstallOptionsHelper installOptions = new InstallOptionsHelper(options);
     List<AbstractModule> manifest = null;
 
+    System.out.println("[xxx] Installing: " + this.artifactId + " " + this.version);
     notifyListener(listener, this, InstallNotification.STARTING, StringUtils.EMPTY);
     try {
       manifest = manifest();
     } catch (IllegalStateException e) {
       String message = "Unable to compute manifest for installation: " + e.getMessage();
+      System.out.println("[xxx] ABORTED: " + message);
       notifyListener(listener, this, InstallNotification.ABORTED, message);
       return;
     }
 
     for (AbstractModule entry : manifest) {
       Installable module = (Installable) entry;
-
       File destdir = new File(modules.repository(), module.installPath().toString());
       File destfile = new File(destdir, module.filename());
       if (module.isInstalled(modules.repository()) && !installOptions.overwrite()) {
+        System.out.println("[xxx] SKIPPED: Already installed");
         notifyListener(listener, entry, InstallNotification.SKIPPED, "Already installed");
         continue;
       }
@@ -251,6 +253,7 @@ public class Module extends AbstractModule implements Installable {
           srcfile = modules.download(module, installOptions.verify(), installOptions.inspect());
         } catch (IOException e) {
           String message = "Attempt to download TIM file at " + module.repoUrl() + " failed - " + e.getMessage();
+          System.out.println("[xxx] DOWNLOAD FAILED: " + message);
           notifyListener(listener, entry, InstallNotification.DOWNLOAD_FAILED, message);
           continue;
         }
@@ -260,11 +263,13 @@ public class Module extends AbstractModule implements Installable {
           FileUtils.copyFile(srcfile, destfile);
         } catch (IOException e) {
           String message = destfile + " (" + e.getMessage() + ")";
+          System.out.println("[xxx] INSTALL FAILED: " + message);
           notifyListener(listener, entry, InstallNotification.INSTALL_FAILED, message);
           continue;
         }
       }
 
+      System.out.println("[xxx] OK");
       notifyListener(listener, entry, InstallNotification.INSTALLED, "Ok");
     }
   }
