@@ -22,6 +22,8 @@ import org.mortbay.thread.BoundedThreadPool;
 import org.terracotta.modules.tool.DocumentToAttributes.DependencyType;
 import org.terracotta.modules.tool.util.ChecksumUtil;
 
+import com.tc.test.TCTestCase;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,12 +34,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import junit.framework.TestCase;
-
-public final class ModuleTest extends TestCase {
+public final class ModuleTest extends TCTestCase {
 
   public void testInstall() throws Exception {
-    File basedir = new File(System.getProperty("java.io.tmpdir"), "repo");
+    File basedir = new File(this.getTempDirectory(), "repo");
     int port = 8888;
 
     String datafile = "/testData03.xml";
