@@ -91,6 +91,8 @@ public class JBossLoaderNaming {
 
     if (url == null && origUrl == null) { return null; }
 
+    if (url != null && url.toExternalForm().startsWith(serverTempDir) && origUrl == null) { return null; }
+
     final URL u;
     if ((url == null) || url.toExternalForm().startsWith(serverTempDir)) {
       u = origUrl;

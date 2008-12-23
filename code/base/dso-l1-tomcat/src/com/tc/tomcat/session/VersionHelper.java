@@ -25,8 +25,10 @@ public class VersionHelper {
     serverInfo = (serverInfo == null) ? "null" : serverInfo;
 
     if (serverInfo.startsWith("Sun Java System Application Server Platform Edition 9")
-      || serverInfo.startsWith("Sun Java System Application Server 9")) {
+        || serverInfo.startsWith("Sun Java System Application Server 9")) {
       CURRENT = GLASSFISH;
+    } else if (serverInfo.startsWith("JBossWeb")) {
+      CURRENT = TOMCAT_55;
     } else {
       int lastSlash = serverInfo.lastIndexOf("/");
       if (lastSlash < 0 || serverInfo.endsWith("/")) { throw new AssertionError("Cannot determine tomcat version from "
