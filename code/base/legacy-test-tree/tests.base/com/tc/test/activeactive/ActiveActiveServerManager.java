@@ -127,9 +127,25 @@ public class ActiveActiveServerManager extends MultipleServerManager {
 
   public void startActiveActiveServers() throws Exception {
     int grpCount = setupManger.getActiveServerGroupCount();
+    Thread[] threads = new Thread[grpCount];
     for (int i = 0; i < grpCount; i++) {
-      activePassiveServerManagers[i].startActivePassiveServers();
+      final ActivePassiveServerManager serverManager = activePassiveServerManagers[i];
+
+      Runnable r = new Runnable() {
+        public void run() {
+          try {
+            serverManager.startActivePassiveServers();
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        }
+      };
+
+      threads[i] = new Thread(r);
     }
+
+    for (int i = 0; i < grpCount; i++)
+      threads[i].start();
   }
 
   public List getErrors() {
