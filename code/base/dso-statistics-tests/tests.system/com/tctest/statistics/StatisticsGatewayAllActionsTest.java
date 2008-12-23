@@ -11,7 +11,6 @@ import com.tc.statistics.beans.StatisticsMBeanNames;
 import com.tc.statistics.retrieval.actions.SRAShutdownTimestamp;
 import com.tc.statistics.retrieval.actions.SRAStartupTimestamp;
 import com.tc.util.UUID;
-import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
 
 import java.util.ArrayList;
@@ -20,13 +19,16 @@ import java.util.List;
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
 
-public class StatisticsGatewayAllActionsTest extends TransparentTestBase {
+public class StatisticsGatewayAllActionsTest extends AbstractStatisticsTransparentTestBase {
+  @Override
   protected void duringRunningCluster() throws Exception {
     JMXConnectorProxy jmxc = new JMXConnectorProxy("localhost", getAdminPort());
     MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
 
     StatisticsGatewayMBean stat_gateway = (StatisticsGatewayMBean)MBeanServerInvocationHandler
       .newProxyInstance(mbsc, StatisticsMBeanNames.STATISTICS_GATEWAY, StatisticsGatewayMBean.class, false);
+
+    waitForAllNodesToConnectToGateway(stat_gateway, StatisticsGatewayAllActionsTestApp.NODE_COUNT+1);
 
     List<StatisticData> data = new ArrayList<StatisticData>();
     CollectingNotificationListener listener = new CollectingNotificationListener(StatisticsGatewayAllActionsTestApp.NODE_COUNT + 1);
@@ -71,11 +73,13 @@ public class StatisticsGatewayAllActionsTest extends TransparentTestBase {
     // e.g. SRAMessages, SRAL2FaultsFromDisk, SRADistributedGC
   }
 
+  @Override
   protected Class getApplicationClass() {
     return StatisticsGatewayAllActionsTestApp.class;
   }
 
-  public void doSetUp(TransparentTestIface t) throws Exception {
+  @Override
+  public void doSetUp(final TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(StatisticsGatewayAllActionsTestApp.NODE_COUNT);
     t.initializeTestRunner();
   }

@@ -10,7 +10,6 @@ import com.tc.statistics.beans.StatisticsMBeanNames;
 import com.tc.statistics.retrieval.actions.SRAShutdownTimestamp;
 import com.tc.statistics.retrieval.actions.SRAStartupTimestamp;
 import com.tc.util.UUID;
-import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
 
 import java.util.ArrayList;
@@ -19,13 +18,16 @@ import java.util.List;
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
 
-public class StatisticsGatewayNoActionsTest extends TransparentTestBase {
+public class StatisticsGatewayNoActionsTest extends AbstractStatisticsTransparentTestBase {
+  @Override
   protected void duringRunningCluster() throws Exception {
     JMXConnectorProxy jmxc = new JMXConnectorProxy("localhost", getAdminPort());
     MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
 
     StatisticsGatewayMBean stat_gateway = (StatisticsGatewayMBean)MBeanServerInvocationHandler
         .newProxyInstance(mbsc, StatisticsMBeanNames.STATISTICS_GATEWAY, StatisticsGatewayMBean.class, false);
+
+    waitForAllNodesToConnectToGateway(stat_gateway, StatisticsGatewayNoActionsTestApp.NODE_COUNT+1);
 
     List<StatisticData> data = new ArrayList<StatisticData>();
     CollectingNotificationListener listener = new CollectingNotificationListener(StatisticsGatewayNoActionsTestApp.NODE_COUNT + 1);
@@ -57,7 +59,7 @@ public class StatisticsGatewayNoActionsTest extends TransparentTestBase {
         listener.wait(2000);
       }
     }
-    
+
     // disable the notification and detach the listener
     stat_gateway.disable();
     mbsc.removeNotificationListener(StatisticsMBeanNames.STATISTICS_GATEWAY, listener);
@@ -68,11 +70,13 @@ public class StatisticsGatewayNoActionsTest extends TransparentTestBase {
     assertEquals(SRAShutdownTimestamp.ACTION_NAME, data.get(data.size() - 1).getName());
   }
 
+  @Override
   protected Class getApplicationClass() {
     return StatisticsManagerNoActionsTestApp.class;
   }
 
-  public void doSetUp(TransparentTestIface t) throws Exception {
+  @Override
+  public void doSetUp(final TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(StatisticsGatewayNoActionsTestApp.NODE_COUNT);
     t.initializeTestRunner();
   }

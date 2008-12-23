@@ -9,13 +9,14 @@ import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
 import com.tc.server.TCServerImpl;
 import com.tc.util.Assert;
-import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
 
-public class StatisticsRestInterfaceTest extends TransparentTestBase {
+public class StatisticsRestInterfaceTest extends AbstractStatisticsTransparentTestBase {
 
   @Override
   protected void duringRunningCluster() throws Exception {
+    waitForAllNodesToConnectToGateway(StatisticsRestInterfaceTestApp.NODE_COUNT+1);
+
     final String urlBase = "http://localhost:"+getDsoPort()+TCServerImpl.STATISTICS_GATHERER_SERVLET_PREFIX+"/";
 
     WebConversation wc = new WebConversation();

@@ -11,19 +11,18 @@ import com.tc.statistics.retrieval.actions.SRAShutdownTimestamp;
 import com.tc.statistics.retrieval.actions.SRAStartupTimestamp;
 import com.tc.statistics.retrieval.actions.SRASystemProperties;
 import com.tc.util.UUID;
-import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
 
-public class StatisticsGatewayCaptureStatisticTest extends TransparentTestBase {
+public class StatisticsGatewayCaptureStatisticTest extends AbstractStatisticsTransparentTestBase {
+  @Override
   protected void duringRunningCluster() throws Exception {
     int total_node_count = StatisticsGatewayNoActionsTestApp.NODE_COUNT + 1;
 
@@ -32,6 +31,8 @@ public class StatisticsGatewayCaptureStatisticTest extends TransparentTestBase {
 
     StatisticsGatewayMBean stat_gateway = (StatisticsGatewayMBean)MBeanServerInvocationHandler
         .newProxyInstance(mbsc, StatisticsMBeanNames.STATISTICS_GATEWAY, StatisticsGatewayMBean.class, false);
+
+    waitForAllNodesToConnectToGateway(stat_gateway, total_node_count);
 
     List<StatisticData> data = new ArrayList<StatisticData>();
     CollectingNotificationListener listener = new CollectingNotificationListener(total_node_count);
@@ -77,8 +78,8 @@ public class StatisticsGatewayCaptureStatisticTest extends TransparentTestBase {
 
     // aggregate the data
     Map dataMap = new HashMap();
-    for (Iterator it = data.iterator(); it.hasNext(); ) {
-      StatisticData dataEntry = (StatisticData)it.next();
+    for (Object element : data) {
+      StatisticData dataEntry = (StatisticData)element;
       List dataNameAggregation = (List)dataMap.get(dataEntry.getName());
       if (null == dataNameAggregation) {
         dataNameAggregation = new ArrayList();
@@ -96,12 +97,14 @@ public class StatisticsGatewayCaptureStatisticTest extends TransparentTestBase {
     assertEquals(total_node_count, ((List)dataMap.get(SRAShutdownTimestamp.ACTION_NAME)).size());
   }
 
+  @Override
   protected Class getApplicationClass() {
-    return StatisticsManagerNoActionsTestApp.class;
+    return StatisticsGatewayCaptureStatisticTestApp.class;
   }
 
-  public void doSetUp(TransparentTestIface t) throws Exception {
-    t.getTransparentAppConfig().setClientCount(StatisticsGatewayNoActionsTestApp.NODE_COUNT);
+  @Override
+  public void doSetUp(final TransparentTestIface t) throws Exception {
+    t.getTransparentAppConfig().setClientCount(StatisticsGatewayCaptureStatisticTestApp.NODE_COUNT);
     t.initializeTestRunner();
   }
 }

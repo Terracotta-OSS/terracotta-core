@@ -8,7 +8,7 @@ public class UnknownStatisticsSessionIdException extends RuntimeException {
   private final String sessionId;
 
   public UnknownStatisticsSessionIdException(final String nodeName, final String sessionId, final Throwable e) {
-    super("Error while stopping the capture session with cluster-wide ID '"+sessionId+"' for node '"+nodeName+"'.", e);
+    super("Unknown cluster-wide session ID '"+sessionId+"' on node '"+nodeName+"'.", e);
     this.nodeName = nodeName;
     this.sessionId = sessionId;
   }

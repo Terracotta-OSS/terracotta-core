@@ -78,9 +78,9 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
           .newProxyInstance(mbeanServerConnection, StatisticsMBeanNames.STATISTICS_GATEWAY, StatisticsGatewayMBean.class, false);
 
       // enable the statistics envoy
-      statGateway.enable();
       topologyChangeHandler.setEnabled(true);
       statGateway.setTopologyChangeHandler(topologyChangeHandler);
+      statGateway.enable();
     }
 
     fireConnected(managerHostName, managerPort);
@@ -179,7 +179,7 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
       statGateway.reinitialize();
       sessionId = null;
     }
-    
+
     fireReinitialized();
   }
 
@@ -216,12 +216,12 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
     return statGateway.getSupportedStatistics();
   }
 
-  public StatisticData[] captureStatistic(String name) throws StatisticsGathererException {
+  public StatisticData[] captureStatistic(final String name) throws StatisticsGathererException {
     if (null == sessionId) throw new StatisticsGathererSessionRequiredException();
     return statGateway.captureStatistic(sessionId, name);
   }
 
-  public StatisticData[] retrieveStatisticData(String name) throws StatisticsGathererException {
+  public StatisticData[] retrieveStatisticData(final String name) throws StatisticsGathererException {
     if (null == statGateway) throw new StatisticsGathererConnectionRequiredException();
     return statGateway.retrieveStatisticData(name);
   }
@@ -232,8 +232,8 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
     if (null == sessionId) throw new StatisticsGathererSessionRequiredException();
 
     statGateway.disableAllStatistics(sessionId);
-    for (int i = 0; i < names.length; i++) {
-      statGateway.enableStatistic(sessionId, names[i]);
+    for (String name : names) {
+      statGateway.enableStatistic(sessionId, name);
     }
 
     topologyChangeHandler.setEnabledStatistics(names);
@@ -254,7 +254,7 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
   public boolean isCapturing() {
     return topologyChangeHandler.isCapturingStarted();
   }
-  
+
   public void stopCapturing() throws StatisticsGathererException {
     if (null == sessionId) throw new StatisticsGathererSessionRequiredException();
     statGateway.stopCapturing(sessionId);

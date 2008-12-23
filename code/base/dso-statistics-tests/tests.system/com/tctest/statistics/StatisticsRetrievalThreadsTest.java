@@ -10,7 +10,6 @@ import com.tc.statistics.beans.StatisticsMBeanNames;
 import com.tc.statistics.retrieval.impl.StatisticsRetrieverImpl;
 import com.tc.util.UUID;
 import com.tc.util.runtime.ThreadDumpUtil;
-import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
 
 import java.util.ArrayList;
@@ -21,13 +20,16 @@ import javax.management.MBeanServerInvocationHandler;
 
 import junit.framework.Assert;
 
-public class StatisticsRetrievalThreadsTest extends TransparentTestBase {
+public class StatisticsRetrievalThreadsTest extends AbstractStatisticsTransparentTestBase {
+  @Override
   protected void duringRunningCluster() throws Exception {
     JMXConnectorProxy jmxc = new JMXConnectorProxy("localhost", getAdminPort());
     MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
 
     StatisticsGatewayMBean stat_gateway = (StatisticsGatewayMBean)MBeanServerInvocationHandler
         .newProxyInstance(mbsc, StatisticsMBeanNames.STATISTICS_GATEWAY, StatisticsGatewayMBean.class, false);
+
+    waitForAllNodesToConnectToGateway(stat_gateway, StatisticsRetrievalThreadsTestApp.NODE_COUNT+1);
 
     List<StatisticData> data = new ArrayList<StatisticData>();
     CollectingNotificationListener listener = new CollectingNotificationListener(StatisticsGatewayNoActionsTestApp.NODE_COUNT + 1);
@@ -40,7 +42,7 @@ public class StatisticsRetrievalThreadsTest extends TransparentTestBase {
 
       // start capturing
       stat_gateway.startCapturing(sessionid);
-  
+
       // stop capturing and wait for the last data
       synchronized (listener) {
         stat_gateway.stopCapturing(sessionid);
@@ -59,11 +61,13 @@ public class StatisticsRetrievalThreadsTest extends TransparentTestBase {
     mbsc.removeNotificationListener(StatisticsMBeanNames.STATISTICS_GATEWAY, listener);
   }
 
+  @Override
   protected Class getApplicationClass() {
     return StatisticsManagerNoActionsTestApp.class;
   }
 
-  public void doSetUp(TransparentTestIface t) throws Exception {
+  @Override
+  public void doSetUp(final TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(StatisticsRetrievalThreadsTestApp.NODE_COUNT);
     t.initializeTestRunner();
   }

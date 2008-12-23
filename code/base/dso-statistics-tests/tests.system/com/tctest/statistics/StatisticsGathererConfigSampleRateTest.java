@@ -13,15 +13,17 @@ import com.tc.statistics.store.StatisticsRetrievalCriteria;
 import com.tc.statistics.store.StatisticsStore;
 import com.tc.statistics.store.h2.H2StatisticsStoreImpl;
 import com.tc.util.UUID;
-import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StatisticsGathererConfigSampleRateTest extends TransparentTestBase {
+public class StatisticsGathererConfigSampleRateTest extends AbstractStatisticsTransparentTestBase {
+  @Override
   protected void duringRunningCluster() throws Exception {
+    waitForAllNodesToConnectToGateway(StatisticsGathererTestApp.NODE_COUNT+1);
+
     File tmp_dir = makeTmpDir(getClass());
 
     StatisticsStore store = new H2StatisticsStoreImpl(tmp_dir);
@@ -40,7 +42,7 @@ public class StatisticsGathererConfigSampleRateTest extends TransparentTestBase 
 
     final List<StatisticData> data_list1 = new ArrayList<StatisticData>();
     store.retrieveStatistics(new StatisticsRetrievalCriteria(), new StatisticDataUser() {
-      public boolean useStatisticData(StatisticData data) {
+      public boolean useStatisticData(final StatisticData data) {
         data_list1.add(data);
         return true;
       }
@@ -59,7 +61,7 @@ public class StatisticsGathererConfigSampleRateTest extends TransparentTestBase 
 
     final List<StatisticData> data_list2 = new ArrayList<StatisticData>();
     store.retrieveStatistics(new StatisticsRetrievalCriteria(), new StatisticDataUser() {
-      public boolean useStatisticData(StatisticData data) {
+      public boolean useStatisticData(final StatisticData data) {
         data_list2.add(data);
         return true;
       }
@@ -70,11 +72,13 @@ public class StatisticsGathererConfigSampleRateTest extends TransparentTestBase 
     gatherer.disconnect();
   }
 
+  @Override
   protected Class getApplicationClass() {
     return StatisticsGathererTestApp.class;
   }
 
-  public void doSetUp(TransparentTestIface t) throws Exception {
+  @Override
+  public void doSetUp(final TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(StatisticsGathererTestApp.NODE_COUNT);
     t.initializeTestRunner();
   }

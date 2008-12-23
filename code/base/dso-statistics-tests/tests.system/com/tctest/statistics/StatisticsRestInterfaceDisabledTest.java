@@ -11,12 +11,11 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.TCServerImpl;
 import com.tc.util.Assert;
-import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
 
 import java.util.ArrayList;
 
-public class StatisticsRestInterfaceDisabledTest extends TransparentTestBase {
+public class StatisticsRestInterfaceDisabledTest extends AbstractStatisticsTransparentTestBase {
 
   @Override
   protected void setExtraJvmArgs(final ArrayList jvmArgs) {
@@ -27,6 +26,8 @@ public class StatisticsRestInterfaceDisabledTest extends TransparentTestBase {
 
   @Override
   protected void duringRunningCluster() throws Exception {
+    waitForAllNodesToConnectToGateway(StatisticsRestInterfaceTestApp.NODE_COUNT+1);
+
     final String urlBase = "http://localhost:" + getDsoPort() + TCServerImpl.STATISTICS_GATHERER_SERVLET_PREFIX + "/";
 
     WebConversation wc = new WebConversation();

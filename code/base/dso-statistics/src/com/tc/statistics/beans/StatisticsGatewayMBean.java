@@ -10,4 +10,5 @@ import com.tc.statistics.StatisticsManager;
 public interface StatisticsGatewayMBean extends TerracottaMBean, StatisticsManager {
   public void setTopologyChangeHandler(TopologyChangeHandler handler);
   public void clearTopologyChangeHandler();
+  public long[] getConnectedAgentChannelIDs();
 }

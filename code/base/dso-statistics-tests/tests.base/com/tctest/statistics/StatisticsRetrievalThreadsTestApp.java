@@ -16,9 +16,9 @@ public class StatisticsRetrievalThreadsTestApp extends AbstractTransparentApp {
 
   public static final int NODE_COUNT = 2;
 
-  private CyclicBarrier barrier = new CyclicBarrier(NODE_COUNT);
+  private final CyclicBarrier barrier = new CyclicBarrier(NODE_COUNT);
 
-  public StatisticsRetrievalThreadsTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
+  public StatisticsRetrievalThreadsTestApp(final String appId, final ApplicationConfig cfg, final ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
   }
 
@@ -34,8 +34,8 @@ public class StatisticsRetrievalThreadsTestApp extends AbstractTransparentApp {
     }
   }
 
-  public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    String testClass = StatisticsGathererTestApp.class.getName();
+  public static void visitL1DSOConfig(final ConfigVisitor visitor, final DSOClientConfigHelper config) {
+    String testClass = StatisticsRetrievalThreadsTestApp.class.getName();
 
     config.getOrCreateSpec(testClass)
       .addRoot("barrier", "barrier");

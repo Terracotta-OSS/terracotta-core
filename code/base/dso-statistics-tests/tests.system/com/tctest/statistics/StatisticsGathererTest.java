@@ -14,7 +14,6 @@ import com.tc.statistics.store.StatisticsRetrievalCriteria;
 import com.tc.statistics.store.StatisticsStore;
 import com.tc.statistics.store.h2.H2StatisticsStoreImpl;
 import com.tc.util.UUID;
-import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
 
 import java.io.File;
@@ -23,7 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class StatisticsGathererTest extends TransparentTestBase implements StatisticsGathererListener {
+public class StatisticsGathererTest extends AbstractStatisticsTransparentTestBase implements StatisticsGathererListener {
   private volatile String listenerConnected = null;
   private volatile boolean listenerDisconnected = false;
   private volatile boolean listenerInitialized = false;
@@ -33,7 +32,7 @@ public class StatisticsGathererTest extends TransparentTestBase implements Stati
   private volatile String listenerSessionClosed = null;
   private volatile String[] listenerStatisticsEnabled = null;
 
-  public void connected(String managerHostName, int managerPort) {
+  public void connected(final String managerHostName, final int managerPort) {
     listenerConnected = managerHostName+":"+managerPort;
   }
 
@@ -45,29 +44,32 @@ public class StatisticsGathererTest extends TransparentTestBase implements Stati
     listenerInitialized = true;
   }
 
-  public void capturingStarted(String sessionId) {
+  public void capturingStarted(final String sessionId) {
     listenerCapturingStarted = sessionId;
   }
 
-  public void capturingStopped(String sessionId) {
+  public void capturingStopped(final String sessionId) {
     listenerCapturingStopped = sessionId;
   }
 
-  public void sessionCreated(String sessionId) {
+  public void sessionCreated(final String sessionId) {
     listenerSessionCreated = sessionId;
   }
 
-  public void sessionClosed(String sessionId) {
+  public void sessionClosed(final String sessionId) {
     listenerSessionClosed = sessionId;
   }
 
-  public void statisticsEnabled(String[] names) {
+  public void statisticsEnabled(final String[] names) {
     listenerStatisticsEnabled = names;
   }
 
+  @Override
   protected void duringRunningCluster() throws Exception {
+    waitForAllNodesToConnectToGateway(StatisticsGathererTestApp.NODE_COUNT+1);
+
     File tmp_dir = makeTmpDir(getClass());
-    
+
     StatisticsStore store = new H2StatisticsStoreImpl(tmp_dir);
     StatisticsGatherer gatherer = new StatisticsGathererImpl(store);
     gatherer.addListener(this);
@@ -133,7 +135,7 @@ public class StatisticsGathererTest extends TransparentTestBase implements Stati
     do {
       final List<StatisticData> potential_data_list = new ArrayList<StatisticData>();
       store.retrieveStatistics(new StatisticsRetrievalCriteria(), new StatisticDataUser() {
-        public boolean useStatisticData(StatisticData data) {
+        public boolean useStatisticData(final StatisticData data) {
           potential_data_list.add(data);
           return true;
         }
@@ -145,7 +147,7 @@ public class StatisticsGathererTest extends TransparentTestBase implements Stati
           number_of_shutdowns++;
         }
       }
-      
+
       got_all_shutdowns = (number_of_shutdowns == StatisticsGathererTestApp.NODE_COUNT+1);
       if (got_all_shutdowns) {
         data_list = potential_data_list;
@@ -189,11 +191,13 @@ public class StatisticsGathererTest extends TransparentTestBase implements Stati
     //assertTrue(received_data_names.size() >= statistics.length);
   }
 
+  @Override
   protected Class getApplicationClass() {
     return StatisticsGathererTestApp.class;
   }
 
-  public void doSetUp(TransparentTestIface t) throws Exception {
+  @Override
+  public void doSetUp(final TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(StatisticsGathererTestApp.NODE_COUNT);
     t.initializeTestRunner();
   }
