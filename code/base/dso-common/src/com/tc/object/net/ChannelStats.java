@@ -26,7 +26,7 @@ public interface ChannelStats {
 
   public Counter getCounter(MessageChannel channel, String name);
 
-  public void notifyTransaction(NodeID nodeID);
+  public void notifyTransaction(NodeID nodeID, int numTxns);
 
   public void notifyObjectRemove(MessageChannel channel, int numObjectsRemoved);
 

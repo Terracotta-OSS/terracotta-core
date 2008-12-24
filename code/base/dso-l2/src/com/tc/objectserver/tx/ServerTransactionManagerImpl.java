@@ -91,7 +91,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   private final boolean                                 broadcastStatsLoggingEnabled;
 
   private volatile long                                 lastStatsTime            = 0;
-  private Object                                        statsLock                = new Object();
+  private final Object                                  statsLock                = new Object();
 
   private final ObjectStatsRecorder                     objectStatsRecorder;
 
@@ -180,8 +180,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 
       TransactionAccount tas[] = (TransactionAccount[]) transactionAccounts.values()
           .toArray(new TransactionAccount[transactionAccounts.size()]);
-      for (int i = 0; i < tas.length; i++) {
-        TransactionAccount client = tas[i];
+      for (TransactionAccount client : tas) {
         if (client == deadClientTA) continue;
         for (Iterator it = client.requestersWaitingFor(deadNodeID).iterator(); it.hasNext();) {
           TransactionID reqID = (TransactionID) it.next();
@@ -348,7 +347,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
       }
     }
     if (active) {
-      channelStats.notifyTransaction(sourceID);
+      channelStats.notifyTransaction(sourceID, txn.getNumApplicationTxn());
     }
     transactionRateCounter.increment(txn.getNumApplicationTxn());
 

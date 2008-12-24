@@ -64,6 +64,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
   private ObjectInstanceMonitor              imo;
   private NullPersistenceTransactionProvider ptxp;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     this.action = new TestTransactionAcknowledgeAction();
@@ -79,6 +80,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     this.ptxp = new NullPersistenceTransactionProvider();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
   }
@@ -534,7 +536,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public void notifyTransaction(NodeID nodeID) {
+    public void notifyTransaction(NodeID nodeID, int numTxns) {
       try {
         notifyTransactionContexts.put(nodeID);
       } catch (InterruptedException e) {

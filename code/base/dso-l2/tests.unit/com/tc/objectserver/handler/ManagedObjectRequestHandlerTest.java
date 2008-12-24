@@ -97,7 +97,7 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
       throw new RuntimeException(name);
     }
 
-    public void notifyTransaction(NodeID nodeID) {
+    public void notifyTransaction(NodeID nodeID, int numTxns) {
       throw new ImplementMe();
     }
 
