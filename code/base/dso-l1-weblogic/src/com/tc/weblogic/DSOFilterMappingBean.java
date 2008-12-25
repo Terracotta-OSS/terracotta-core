@@ -24,7 +24,7 @@ public class DSOFilterMappingBean implements FilterMappingBean {
   }
 
   public String[] getDispatchers() {
-    return new String[0];
+    return new String[] { "REQUEST", "ERROR", "INCLUDE", "FORWARD" };
   }
 
   public String getFilterName() {
@@ -76,11 +76,11 @@ public class DSOFilterMappingBean implements FilterMappingBean {
   }
 
   public void setServletNames(String[] as) {
-      throw new AssertionError();
+    throw new AssertionError();
   }
 
   public void setUrlPatterns(String[] as) {
-      throw new AssertionError();
+    throw new AssertionError();
   }
 
 }

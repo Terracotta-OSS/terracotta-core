@@ -9,6 +9,7 @@ import com.meterware.httpunit.WebResponse;
 import com.tc.test.server.appserver.deployment.AbstractOneServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.util.TcConfigBuilder;
+import com.tctest.webapp.servlets.ErrorServlet;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -31,7 +32,7 @@ public class ErrorPageTest extends AbstractOneServerDeploymentTest {
 
     WebResponse response = wc.getResponse(url);
 
-    assertEquals("*** This is the ErrorPageTest error page ***", response.getText().trim());
+    assertEquals("OK", response.getText().trim());
   }
 
   private static class ErrorPageTestTestSetup extends OneServerTestSetup {
@@ -40,11 +41,13 @@ public class ErrorPageTest extends AbstractOneServerDeploymentTest {
       super(ErrorPageTest.class, CONTEXT);
     }
 
+    @Override
     protected void configureWar(DeploymentBuilder builder) {
-      builder.addErrorPage(HttpServletResponse.SC_NOT_FOUND, "/error.html");
-      builder.addResource("/com/tctest/server/appserver/unit/errorpagetest", "error.html", "");
+      builder.addServlet("errorServlet", "/errorServlet/*", ErrorServlet.class, null, false);
+      builder.addErrorPage(HttpServletResponse.SC_NOT_FOUND, "/errorServlet/");
     }
 
+    @Override
     protected void configureTcConfig(TcConfigBuilder tcConfigBuilder) {
       tcConfigBuilder.addWebApplication(CONTEXT);
     }
