@@ -503,7 +503,8 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
   }
 
   public void testL2SocketConnectL1Pass() throws Exception {
-    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(5000, 2000, 1, "ServerCommsHC-Test36", true);
+    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(5000, 2000, 1, "ServerCommsHC-Test36", true,
+                                                               Integer.MAX_VALUE, 2);
     HealthCheckerConfig clientHcConfig = new HealthCheckerConfigClientImpl("ClientCommsHC-Test36");
 
     this.setUp(hcConfig, clientHcConfig);
