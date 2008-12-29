@@ -151,12 +151,12 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
       case AppServerInfo.WEBLOGIC:
         // bumped up because ContainerHibernateTest was failing with WL 9
         parameters.appendJvmArgs("-XX:MaxPermSize=128m");
-        parameters.appendJvmArgs("-Xms128m -Xmx256m");
+        parameters.appendJvmArgs("-Xms128m -Xmx192m");
         break;
       case AppServerInfo.GLASSFISH:
         // bumped up because ContainerHibernateTest, ContinuationsTest was failing with glassfish-v1
         parameters.appendJvmArgs("-XX:MaxPermSize=128m");
-        parameters.appendJvmArgs("-Xms128m -Xmx256m");
+        parameters.appendJvmArgs("-Xms128m -Xmx192m");
         // parameters.appendJvmArgs("-XX:+PrintGCDetails");
         break;
     }
