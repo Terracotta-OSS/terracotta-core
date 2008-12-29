@@ -4,6 +4,8 @@
  */
 package com.tctest.server.appserver.unit;
 
+import org.apache.commons.io.output.TeeOutputStream;
+
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
@@ -19,6 +21,7 @@ import com.tctest.webapp.servlets.CoresidentSimpleTestServlet;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -30,6 +33,7 @@ public class CoresidentSimpleTest extends AbstractTwoServerCoresidentDeploymentT
 
   private static final String              CONTEXT   = "simple";
   private static CoresidentServerTestSetup testSetup = new CoresidentSimpleTestSetup();
+  private int                              clientNum = 0;
 
   public CoresidentSimpleTest() {
     //
@@ -41,6 +45,10 @@ public class CoresidentSimpleTest extends AbstractTwoServerCoresidentDeploymentT
 
   private int spawnExtraCoresidentL1(final OutputStream outputStream, final String cmd, final int partition,
                                      final int map, String extraArgs) throws Exception {
+    // Keep the output in a temp file too in case the process hangs for some reason
+    FileOutputStream fout = new FileOutputStream(getTempFile("client-" + clientNum++ + ".log"));
+    TeeOutputStream tee = new TeeOutputStream(fout, outputStream);
+
     List vmArgs = new ArrayList();
     vmArgs.add("-Dpartition.num=" + partition);
     vmArgs.add("-Dmap.num=" + map);
@@ -53,7 +61,7 @@ public class CoresidentSimpleTest extends AbstractTwoServerCoresidentDeploymentT
                                                                  .getAbsolutePath(), new String[] {}, server0
                                                                  .getWorkingDirectory(), vmArgs, false);
     client.setCoresidentMode(server0.getCoresidentConfigFile().getAbsolutePath());
-    client.writeOutputTo(outputStream);
+    client.writeOutputTo(tee);
     client.start();
 
     final int exitCode = client.waitFor();
