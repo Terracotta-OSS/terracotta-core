@@ -77,18 +77,21 @@ public class TerracottaPipeline extends StandardPipeline {
   }
 
   private SessionManager findOrCreateManager(CoyoteRequest request, String contextPath) {
+    String hostName = request.getHost().getName();
+    String key = hostName + contextPath;
+
     SessionManager rv = null;
     synchronized (mgrs) {
-      rv = (SessionManager) mgrs.get(contextPath);
+      rv = (SessionManager) mgrs.get(key);
       if (rv == null) {
-        rv = createManager(request, contextPath);
-        mgrs.put(contextPath, rv);
+        rv = createManager(request, contextPath, hostName);
+        mgrs.put(key, rv);
       }
     }
     return rv;
   }
 
-  private static SessionManager createManager(CoyoteRequest request, String contextPath) {
+  private static SessionManager createManager(CoyoteRequest request, String contextPath, String hostName) {
     final WebAppConfig webAppConfig = makeWebAppConfig(request.getContext());
     final ClassLoader loader = request.getContext().getLoader().getClassLoader();
     final ConfigProperties cp = new ConfigProperties(webAppConfig, loader);
@@ -99,7 +102,8 @@ public class TerracottaPipeline extends StandardPipeline {
 
     final SessionCookieWriter scw = DefaultCookieWriter.makeInstance(cp);
     final LifecycleEventMgr eventMgr = DefaultLifecycleEventMgr.makeInstance(cp);
-    final ContextMgr contextMgr = DefaultContextMgr.makeInstance(contextPath, request.getContext().getServletContext());
+    final ContextMgr contextMgr = DefaultContextMgr.makeInstance(contextPath, request.getContext().getServletContext(),
+                                                                 hostName);
 
     final SessionManager rv = new TerracottaSessionManager(sig, scw, eventMgr, contextMgr,
                                                            new Tomcat50RequestResponseFactory(), cp);

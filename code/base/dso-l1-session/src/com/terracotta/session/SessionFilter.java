@@ -148,7 +148,19 @@ public class SessionFilter implements Filter {
 
     final SessionCookieWriter scw = DefaultCookieWriter.makeInstance(cp);
     final LifecycleEventMgr eventMgr = DefaultLifecycleEventMgr.makeInstance(cp);
-    final ContextMgr contextMgr = DefaultContextMgr.makeInstance(req, sc);
+
+    String host = req.getHeader("Host");
+    if (host != null) {
+      host = host.trim();
+
+      int colon = host.lastIndexOf(':');
+      if (colon >= 0) {
+        host = host.substring(0, colon);
+      }
+    }
+    if (host == null || host.length() == 0) { throw new RuntimeException("Request is missing \"Host\" header"); }
+
+    final ContextMgr contextMgr = DefaultContextMgr.makeInstance(req, sc, host);
     final SessionManager rv = new TerracottaSessionManager(sig, scw, eventMgr, contextMgr, factory, cp);
     return rv;
   }

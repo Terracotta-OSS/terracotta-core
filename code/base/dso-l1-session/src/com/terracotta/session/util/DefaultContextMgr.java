@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.terracotta.session.util;
 
@@ -13,19 +14,25 @@ public class DefaultContextMgr implements ContextMgr {
 
   private final ServletContext servletContext;
   private final String         appName;
+  private final String         hostName;
 
-  public static DefaultContextMgr makeInstance(HttpServletRequest req, ServletContext servletContext) {
-    return new DefaultContextMgr(computeAppName(req), servletContext);
+  public static DefaultContextMgr makeInstance(HttpServletRequest req, ServletContext servletContext, String hostName) {
+    return new DefaultContextMgr(computeAppName(req), servletContext, hostName);
   }
-  
-  public static DefaultContextMgr makeInstance(String contextPath, ServletContext servletContext) {
-    return new DefaultContextMgr(computeAppName(contextPath), servletContext);
+
+  public static DefaultContextMgr makeInstance(String contextPath, ServletContext servletContext, String hostName) {
+    return new DefaultContextMgr(computeAppName(contextPath), servletContext, hostName);
   }
-  
-  protected DefaultContextMgr(String appName, ServletContext servletContext) {
+
+  protected DefaultContextMgr(String appName, ServletContext servletContext, String hostName) {
+    this.hostName = hostName;
     Assert.pre(appName != null);
     this.servletContext = servletContext;
     this.appName = appName;
+  }
+
+  public String getHostName() {
+    return hostName;
   }
 
   public ServletContext getServletContext() {

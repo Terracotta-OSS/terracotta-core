@@ -68,18 +68,21 @@ public class SessionValve50 extends ValveBase {
   }
 
   private SessionManager findOrCreateManager(CoyoteRequest valveReq, String contextPath) {
+    String hostName = valveReq.getHost().getName();
+    String key = hostName + contextPath;
+
     SessionManager rv = null;
     synchronized (mgrs) {
-      rv = (SessionManager) mgrs.get(contextPath);
+      rv = (SessionManager) mgrs.get(key);
       if (rv == null) {
-        rv = createManager(valveReq, contextPath);
-        mgrs.put(contextPath, rv);
+        rv = createManager(valveReq, contextPath, hostName);
+        mgrs.put(key, rv);
       }
     }
     return rv;
   }
 
-  private static SessionManager createManager(CoyoteRequest valveReq, String contextPath) {
+  private static SessionManager createManager(CoyoteRequest valveReq, String contextPath, String hostName) {
     final WebAppConfig webAppConfig = makeWebAppConfig(valveReq.getContext());
     final ClassLoader loader = valveReq.getContext().getLoader().getClassLoader();
     final ConfigProperties cp = new ConfigProperties(webAppConfig, loader);
@@ -90,8 +93,8 @@ public class SessionValve50 extends ValveBase {
 
     final SessionCookieWriter scw = DefaultCookieWriter.makeInstance(cp);
     final LifecycleEventMgr eventMgr = DefaultLifecycleEventMgr.makeInstance(cp);
-    final ContextMgr contextMgr = DefaultContextMgr
-        .makeInstance(contextPath, valveReq.getContext().getServletContext());
+    final ContextMgr contextMgr = DefaultContextMgr.makeInstance(contextPath,
+                                                                 valveReq.getContext().getServletContext(), hostName);
 
     final SessionManager rv = new TerracottaSessionManager(sig, scw, eventMgr, contextMgr,
                                                            new Tomcat50RequestResponseFactory(), cp);
