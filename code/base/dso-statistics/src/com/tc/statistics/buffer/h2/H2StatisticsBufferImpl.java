@@ -92,7 +92,7 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
 
   private final Set listeners = new CopyOnWriteArraySet();
 
-  public H2StatisticsBufferImpl(final StatisticsConfig config, final File dbDir) throws StatisticsBufferException {
+  public H2StatisticsBufferImpl(final StatisticsConfig config, final File dbDir) {
     Assert.assertNotNull("config", config);
     final String suffix;
     if (TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.CVT_BUFFER_RANDOM_SUFFIX_ENABLED, false)) {
@@ -108,7 +108,7 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
     try {
       this.defaultAgentIp = InetAddress.getLocalHost().getHostAddress();
     } catch (UnknownHostException e) {
-     throw new StatisticsBufferException("Unexpected error while getting localhost address.", e);
+     throw new RuntimeException("Unexpected error while getting localhost address:", e);
     }
   }
 
