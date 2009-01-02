@@ -14,8 +14,6 @@ public interface TerracottaRequest extends HttpServletRequest {
 
   Session getTerracottaSession(boolean createNew);
 
-  boolean isSessionOwner();
-
   boolean isForwarded();
 
   long getRequestStartMillis();

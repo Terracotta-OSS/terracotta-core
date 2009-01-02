@@ -33,6 +33,8 @@ import javax.servlet.http.HttpServletResponse;
 
 public class TerracottaSessionManager implements SessionManager {
 
+  private static final String          WRAP_COUNT_ATTRIBUTE = TerracottaSessionManager.class.getName() + ".WRAP_COUNT";
+
   private final SessionMonitor         sessionMonitor;
   private final SessionIdGenerator     idGenerator;
   private final SessionCookieWriter    cookieWriter;
@@ -51,10 +53,10 @@ public class TerracottaSessionManager implements SessionManager {
   private final String                 sessionCookieName;
   private final String                 sessionUrlPathParamTag;
   private final boolean                usesStandardUrlPathParam;
-  private int                          serverHopsDetected = 0;
+  private int                          serverHopsDetected   = 0;
   private final boolean                sessionLocking;
 
-  private static final Set             excludedVHosts     = loadExcludedVHosts();
+  private static final Set             excludedVHosts       = loadExcludedVHosts();
 
   public TerracottaSessionManager(SessionIdGenerator sig, SessionCookieWriter scw, LifecycleEventMgr eventMgr,
                                   ContextMgr contextMgr, RequestResponseFactory factory, ConfigProperties cp) {
@@ -144,6 +146,32 @@ public class TerracottaSessionManager implements SessionManager {
     return Collections.unmodifiableSet(set);
   }
 
+  private void incrementWrapCount(HttpServletRequest req) {
+    Integer count = (Integer) req.getAttribute(WRAP_COUNT_ATTRIBUTE);
+    if (count == null) {
+      count = Integer.valueOf(1);
+    } else {
+      count = Integer.valueOf(count.intValue() + 1);
+    }
+    req.setAttribute(WRAP_COUNT_ATTRIBUTE, count);
+  }
+
+  private int decrementWrapCount(HttpServletRequest req) {
+    Integer count = (Integer) req.getAttribute(WRAP_COUNT_ATTRIBUTE);
+    if (count == null) { throw new AssertionError("request did not contain expected attribute"); }
+    if (count.intValue() < 1) { throw new AssertionError("unexpected count value: " + count); }
+
+    int rv = count.intValue() - 1;
+
+    if (rv == 0) {
+      req.removeAttribute(WRAP_COUNT_ATTRIBUTE);
+    } else {
+      req.setAttribute(WRAP_COUNT_ATTRIBUTE, Integer.valueOf(rv));
+    }
+
+    return rv;
+  }
+
   public TerracottaRequest preprocess(HttpServletRequest req, HttpServletResponse res) {
     tracker.begin(req);
     TerracottaRequest terracottaRequest = basicPreprocess(req, res);
@@ -154,6 +182,8 @@ public class TerracottaSessionManager implements SessionManager {
   private TerracottaRequest basicPreprocess(HttpServletRequest req, HttpServletResponse res) {
     Assert.pre(req != null);
     Assert.pre(res != null);
+
+    incrementWrapCount(req);
 
     SessionIDSource source = SessionIDSource.NONE;
 
@@ -266,6 +296,9 @@ public class TerracottaSessionManager implements SessionManager {
   private void basicPostprocess(TerracottaRequest req) {
     Assert.pre(req != null);
 
+    int count = decrementWrapCount(req);
+    if (count != 0) return;
+
     // don't do anything for forwarded requests
     if (req.isForwarded()) return;
 
@@ -274,7 +307,7 @@ public class TerracottaSessionManager implements SessionManager {
     sessionMonitor.requestProcessed();
 
     try {
-      if (req.isSessionOwner()) postprocessSession(req);
+      postprocessSession(req);
     } finally {
       if (reqeustLogEnabled) {
         logRequestBench(req);
@@ -285,8 +318,10 @@ public class TerracottaSessionManager implements SessionManager {
   private void logRequestBench(TerracottaRequest req) {
     final String msgPrefix = "REQUEST BENCH: url=[" + req.getRequestURL() + "]";
     String sessionInfo = "";
-    if (req.isSessionOwner()) {
-      final SessionId id = req.getTerracottaSession(false).getSessionId();
+
+    Session tcSession = req.getTerracottaSession(false);
+    if (tcSession != null) {
+      final SessionId id = tcSession.getSessionId();
       sessionInfo = " sid=[" + id.getKey() + "]";
     }
     final String msg = msgPrefix + sessionInfo + " -> " + (System.currentTimeMillis() - req.getRequestStartMillis());
@@ -296,9 +331,11 @@ public class TerracottaSessionManager implements SessionManager {
   private void postprocessSession(TerracottaRequest req) {
     Assert.pre(req != null);
     Assert.pre(!req.isForwarded());
-    Assert.pre(req.isSessionOwner());
     final Session session = req.getTerracottaSession(false);
-    Assert.inv(session != null);
+
+    // session was not accessed on this request
+    if (session == null) return;
+
     session.clearRequest();
     final SessionId id = session.getSessionId();
     final SessionData sd = session.getSessionData();
