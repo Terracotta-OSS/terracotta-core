@@ -677,7 +677,6 @@ class SubtreeTestRun
     
     @ant.junit(
       :printsummary => "yes",
-      :maxmemory => "512m",
       :timeout => @timeout,
       :dir => @cwd.to_s,
       :tempdir => @testrun_results.ant_temp_dir(@subtree).to_s,
