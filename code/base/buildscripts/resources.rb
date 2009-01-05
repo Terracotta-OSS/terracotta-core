@@ -145,6 +145,8 @@ show_test_results <test_run_name>
     <test_run_name> is the name of a test run (e.g., 'testrun-0007')
     or just 'latest'.
 
+    To extend the the test timeout (default 15 minutes) use option
+test_timeout=time_out_value_in_seconds
 
 PACKAGING & DISTRIBUTION
 
