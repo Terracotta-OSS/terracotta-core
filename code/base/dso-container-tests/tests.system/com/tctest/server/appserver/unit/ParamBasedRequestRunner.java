@@ -9,6 +9,8 @@ import com.meterware.httpunit.WebResponse;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tc.util.Assert;
 
+import java.net.ConnectException;
+
 public class ParamBasedRequestRunner implements Runnable {
   private String               param;
   private WebApplicationServer server;
@@ -29,10 +31,13 @@ public class ParamBasedRequestRunner implements Runnable {
       String serverResponse = response.getText().trim();
       System.out.println("Server Response (for request with param=" + param + "): " + serverResponse);
       Assert.assertEquals("OK", serverResponse.trim());
+    } catch (ConnectException e) {
+      // ignored
     } catch (Exception e) {
       debug("Got Exception in ParamBasedRequestRunner (for request with param=" + param + "): " + e);
       e.printStackTrace();
     }
+    System.out.println("ParamBasedRequestRunner (for request with param=" + param + ") finished!!");
   }
 
   protected static void debug(String string) {

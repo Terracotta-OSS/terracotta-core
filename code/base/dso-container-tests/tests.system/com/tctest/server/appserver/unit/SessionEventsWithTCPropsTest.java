@@ -20,8 +20,8 @@ import java.util.Date;
 import junit.framework.Test;
 
 public class SessionEventsWithTCPropsTest extends AbstractOneServerDeploymentTest {
-  private static final String CONTEXT = "SessionEventsWithTCPropsTest";
-  private static final String MAPPING = "ListenerReportingServlet";
+  protected static final String CONTEXT = "SessionEventsWithTCPropsTest";
+  private static final String   MAPPING = "ListenerReportingServlet";
 
   public SessionEventsWithTCPropsTest() {
     // DEV-1117
@@ -101,10 +101,14 @@ public class SessionEventsWithTCPropsTest extends AbstractOneServerDeploymentTes
     return server0.ping("/" + CONTEXT + "/" + MAPPING + "?" + params, wc).getText().trim();
   }
 
-  private static class SessionEventsWithTCPropsTestSetup extends OneServerTestSetup {
+  protected static class SessionEventsWithTCPropsTestSetup extends OneServerTestSetup {
 
     public SessionEventsWithTCPropsTestSetup() {
-      super(SessionEventsWithTCPropsTest.class, CONTEXT);
+      this(SessionEventsWithTCPropsTest.class, CONTEXT);
+    }
+
+    public SessionEventsWithTCPropsTestSetup(Class testClass, String context) {
+      super(testClass, context);
     }
 
     protected void configureWar(DeploymentBuilder builder) {
@@ -115,7 +119,8 @@ public class SessionEventsWithTCPropsTest extends AbstractOneServerDeploymentTes
     }
 
     protected void configureTcConfig(TcConfigBuilder tcConfigBuilder) {
-      tcConfigBuilder.addWebApplication(CONTEXT);
+      if (isSessionLockingTrue()) tcConfigBuilder.addWebApplication(CONTEXT);
+      else tcConfigBuilder.addWebApplicationWithoutSessionLocking(CONTEXT);
       /**
        * these 2 listeners are intentionally commented out and will be set through tc.properties instead making sure
        * they could be picked up by app servers tcConfigBuilder.addInstrumentedClass(AttributeListener.class.getName());

@@ -16,14 +16,14 @@ import com.tctest.webapp.servlets.RequestForwardTestForwarderServlet;
 import junit.framework.Test;
 
 public class RequestForwardTest extends AbstractOneServerDeploymentTest {
-  private static final String CONTEXT  = "RequestForward";
-  private static final String MAPPING1 = "RequestForwardTestForwarderServlet";
-  private static final String MAPPING2 = "RequestForwardTestForwardeeServlet";
+  protected static final String CONTEXT  = "RequestForward";
+  private static final String   MAPPING1 = "RequestForwardTestForwarderServlet";
+  private static final String   MAPPING2 = "RequestForwardTestForwardeeServlet";
 
   public static Test suite() {
     return new RequestForwardTestSetup();
   }
-  
+
   private WebResponse request(WebApplicationServer server, String mapping, String params, WebConversation wc)
       throws Exception {
     return server.ping("/" + CONTEXT + "/" + mapping + "?" + params, wc);
@@ -38,28 +38,32 @@ public class RequestForwardTest extends AbstractOneServerDeploymentTest {
     assertEquals("FORWARD GOT SESSION", response.getText().trim());
   }
 
-   public void testForwardSession() throws Exception {
-     WebConversation conversation = new WebConversation();
-     WebResponse response = request(server0, MAPPING1, "action=0", conversation);
-     assertEquals("INVALID REQUEST", response.getText().trim());
+  public void testForwardSession() throws Exception {
+    WebConversation conversation = new WebConversation();
+    WebResponse response = request(server0, MAPPING1, "action=0", conversation);
+    assertEquals("INVALID REQUEST", response.getText().trim());
 
-     response = request(server0, MAPPING1, "action=n-f-s&target=" + MAPPING2, conversation);
-     assertEquals("FORWARD GOT SESSION", response.getText().trim());
-   }
-  
-   public void testSessionForward() throws Exception {
-     WebConversation conversation = new WebConversation();
-     WebResponse response = request(server0, MAPPING1, "action=0", conversation);
-     assertEquals("INVALID REQUEST", response.getText().trim());
+    response = request(server0, MAPPING1, "action=n-f-s&target=" + MAPPING2, conversation);
+    assertEquals("FORWARD GOT SESSION", response.getText().trim());
+  }
 
-     response = request(server0, MAPPING1, "action=s-f-n&target=" + MAPPING2, conversation);
-     assertEquals("FORWARD DID NOT GET SESSION", response.getText().trim());
-   }
+  public void testSessionForward() throws Exception {
+    WebConversation conversation = new WebConversation();
+    WebResponse response = request(server0, MAPPING1, "action=0", conversation);
+    assertEquals("INVALID REQUEST", response.getText().trim());
 
-  private static class RequestForwardTestSetup extends OneServerTestSetup {
+    response = request(server0, MAPPING1, "action=s-f-n&target=" + MAPPING2, conversation);
+    assertEquals("FORWARD DID NOT GET SESSION", response.getText().trim());
+  }
+
+  protected static class RequestForwardTestSetup extends OneServerTestSetup {
 
     public RequestForwardTestSetup() {
-      super(RequestForwardTest.class, CONTEXT);
+      this(RequestForwardTest.class, CONTEXT);
+    }
+
+    public RequestForwardTestSetup(Class testClass, String context) {
+      super(testClass, context);
     }
 
     protected void configureWar(DeploymentBuilder builder) {
@@ -70,7 +74,8 @@ public class RequestForwardTest extends AbstractOneServerDeploymentTest {
     }
 
     protected void configureTcConfig(TcConfigBuilder tcConfigBuilder) {
-      tcConfigBuilder.addWebApplication(CONTEXT);
+      if (isSessionLockingTrue()) tcConfigBuilder.addWebApplication(CONTEXT);
+      else tcConfigBuilder.addWebApplicationWithoutSessionLocking(CONTEXT);
     }
 
   }

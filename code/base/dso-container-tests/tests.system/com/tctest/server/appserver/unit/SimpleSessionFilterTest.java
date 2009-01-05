@@ -18,9 +18,9 @@ import junit.framework.Test;
 /**
  * Test session filter
  */
-public final class SimpleSessionFilterTest extends AbstractTwoServerDeploymentTest {
-  private static final String CONTEXT = "SimpleSessionFilterTest";
-  private static final String SERVLET = "SimpleSessionFilterServlet";
+public class SimpleSessionFilterTest extends AbstractTwoServerDeploymentTest {
+  protected static final String CONTEXT = "SimpleSessionFilterTest";
+  private static final String   SERVLET = "SimpleSessionFilterServlet";
 
   public static Test suite() {
     return new SimpleSessionFilterTestSetup();
@@ -40,10 +40,14 @@ public final class SimpleSessionFilterTest extends AbstractTwoServerDeploymentTe
     return server.ping("/" + CONTEXT + "/" + SERVLET + "?" + params, con);
   }
 
-  private static class SimpleSessionFilterTestSetup extends TwoServerTestSetup {
+  protected static class SimpleSessionFilterTestSetup extends TwoServerTestSetup {
 
     public SimpleSessionFilterTestSetup() {
-      super(SimpleSessionFilterTest.class, CONTEXT);
+      this(SimpleSessionFilterTest.class, CONTEXT);
+    }
+
+    public SimpleSessionFilterTestSetup(Class testClass, String context) {
+      super(testClass, context);
     }
 
     protected void configureWar(DeploymentBuilder builder) {
@@ -53,7 +57,8 @@ public final class SimpleSessionFilterTest extends AbstractTwoServerDeploymentTe
     }
 
     protected void configureTcConfig(TcConfigBuilder clientConfig) {
-      clientConfig.addWebApplication(CONTEXT);
+      if (isSessionLockingTrue()) clientConfig.addWebApplication(CONTEXT);
+      else clientConfig.addWebApplicationWithoutSessionLocking(CONTEXT);
       clientConfig.addInstrumentedClass(SimpleFilter.class.getName());
     }
   }

@@ -79,4 +79,8 @@ public class ServerTestSetup extends TestSetup {
     }
     return false;
   }
+
+  public boolean isSessionLockingTrue() {
+    return true;
+  }
 }

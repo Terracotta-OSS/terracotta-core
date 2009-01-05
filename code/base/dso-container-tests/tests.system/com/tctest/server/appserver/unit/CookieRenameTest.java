@@ -22,14 +22,14 @@ import junit.framework.Test;
 
 /**
  * Test for CDV-544
- *
+ * 
  * @author hhuynh
  */
 public class CookieRenameTest extends AbstractOneServerDeploymentTest {
-  private static final String CONTEXT        = "CookieRenameTest";
-  private static final String SERVLET        = "CookieRenameServlet";
+  protected static final String CONTEXT        = "CookieRenameTest";
+  private static final String   SERVLET        = "CookieRenameServlet";
 
-  private static final String RENAMED_COOKIE = "MY_SESSION_ID";
+  private static final String   RENAMED_COOKIE = "MY_SESSION_ID";
 
   public CookieRenameTest() {
     //
@@ -161,10 +161,14 @@ public class CookieRenameTest extends AbstractOneServerDeploymentTest {
     return url.substring(url.indexOf(';'));
   }
 
-  private static class CookieRenameTestSetup extends OneServerTestSetup {
+  protected static class CookieRenameTestSetup extends OneServerTestSetup {
 
     public CookieRenameTestSetup() {
-      super(CookieRenameTest.class, CONTEXT);
+      this(CookieRenameTest.class, CONTEXT);
+    }
+
+    public CookieRenameTestSetup(Class testClass, String context) {
+      super(testClass, context);
     }
 
     protected void configureWar(DeploymentBuilder builder) {
@@ -172,7 +176,8 @@ public class CookieRenameTest extends AbstractOneServerDeploymentTest {
     }
 
     protected void configureTcConfig(TcConfigBuilder tcConfigBuilder) {
-      tcConfigBuilder.addWebApplication(CONTEXT);
+      if (isSessionLockingTrue()) tcConfigBuilder.addWebApplication(CONTEXT);
+      else tcConfigBuilder.addWebApplicationWithoutSessionLocking(CONTEXT);
     }
 
     protected void configureServerParamers(StandardAppServerParameters params) {

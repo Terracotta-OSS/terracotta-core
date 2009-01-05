@@ -53,7 +53,7 @@ public class TerracottaSessionManager implements SessionManager {
   private final String                 sessionCookieName;
   private final String                 sessionUrlPathParamTag;
   private final boolean                usesStandardUrlPathParam;
-  private int                          serverHopsDetected   = 0;
+  private int                          serverHopsDetected = 0;
   private final boolean                sessionLocking;
 
   private static final Set             excludedVHosts       = loadExcludedVHosts();
@@ -78,6 +78,9 @@ public class TerracottaSessionManager implements SessionManager {
     this.reqeustLogEnabled = cp.getRequestLogBenchEnabled();
     this.invalidatorLogEnabled = cp.getInvalidatorLogBenchEnabled();
     this.sessionLocking = ManagerUtil.isApplicationSessionLocked(contextMgr.getAppName());
+    idGenerator.initialize(sessionLocking);
+    logger.info("Clustered HTTP sessions with session-locking=" + sessionLocking + " for [" + contextMgr.getAppName()
+                + "]");
 
     // XXX: If reasonable, we should move this out of the constructor -- leaking a reference to "this" to another thread
     // within a constructor is a bad practice (note: although "this" isn't explicitly based as arg, it is available and
@@ -346,32 +349,9 @@ public class TerracottaSessionManager implements SessionManager {
         store.updateTimestampIfNeeded(sd);
       }
     } finally {
-      id.commitLock();
+      if (isApplicationSessionLocked()) id.commitLock();
     }
-  }
-
-  /**
-   * The only use for this method [currently] is by Struts' Include Tag, which can generate a nested request. In this
-   * case we have to release session lock, so that nested request (running, potentially, in another JVM) can acquire it.
-   * {@link TerracottaSessionManager#resumeRequest(Session)} method will re-aquire the lock.
-   */
-  public static void pauseRequest(final Session sess) {
-    Assert.pre(sess != null);
-    final SessionId id = sess.getSessionId();
-    final SessionData sd = sess.getSessionData();
-    sd.finishRequest();
-    id.commitLock();
-  }
-
-  /**
-   * See {@link TerracottaSessionManager#resumeRequest(Session)} for details
-   */
-  public static void resumeRequest(final Session sess) {
-    Assert.pre(sess != null);
-    final SessionId id = sess.getSessionId();
-    final SessionData sd = sess.getSessionData();
-    id.getWriteLock();
-    sd.startRequest();
+    id.commitSessionInvalidatorLock();
   }
 
   private TerracottaRequest wrapRequest(SessionId sessionId, HttpServletRequest req, HttpServletResponse res,
@@ -441,13 +421,16 @@ public class TerracottaSessionManager implements SessionManager {
 
   private void expire(SessionId id) {
     SessionData sd = null;
+    boolean locked = false;
     try {
       sd = store.find(id);
       if (sd != null) {
+        if (!isApplicationSessionLocked()) id.getWriteLock();
+        locked = true;
         expire(id, sd);
       }
     } finally {
-      if (sd != null) id.commitLock();
+      if (sd != null && locked) id.commitLock();
     }
   }
 
@@ -455,12 +438,16 @@ public class TerracottaSessionManager implements SessionManager {
     if (debugInvalidate) {
       logger.info("Session id: " + data.getSessionId().getKey() + " being removed, unlock: " + unlock);
     }
-
-    store.remove(data.getSessionId());
-    sessionMonitor.sessionDestroyed();
-
-    if (unlock) {
-      data.getSessionId().commitLock();
+    if (unlock && !isApplicationSessionLocked()) {
+      data.getSessionId().getWriteLock();
+    }
+    try {
+      store.remove(data.getSessionId());
+      sessionMonitor.sessionDestroyed();
+    } finally {
+      if (unlock) {
+        data.getSessionId().commitLock();
+      }
     }
   }
 
@@ -617,41 +604,58 @@ public class TerracottaSessionManager implements SessionManager {
       boolean rv = false;
 
       if (debugInvalidate) {
-        logger.info("starting tryLock() for " + id.getKey());
+        logger.info("starting trySessionInvalidatorWriteLock() for " + id.getKey());
       }
-      if (!id.tryWriteLock()) {
+      if (!id.trySessionInvalidatorWriteLock()) {
         if (debugInvalidate) {
-          logger.info("tryLock() returned false for " + id.getKey());
+          logger.info("trySessionInvalidatorWriteLock() returned false for " + id.getKey());
         }
         return rv;
       }
 
       if (debugInvalidate) {
-        logger.info("tryLock() obtained for " + id.getKey());
+        logger.info("trySessionInvalidatorWriteLock() obtained for " + id.getKey());
       }
 
       try {
-        final SessionData sd = store.findSessionDataUnlocked(id);
-        if (sd == null) {
+        if (debugInvalidate) {
+          logger.info("starting tryWriteLock() for " + id.getKey());
+        }
+        if (!id.tryWriteLock()) {
           if (debugInvalidate) {
-            logger.info("null session data for " + id.getKey());
+            logger.info("tryWriteLock() returned false for " + id.getKey());
           }
           return rv;
         }
-        if (!sd.isValid(debugInvalidate, logger)) {
-          if (debugInvalidate) {
-            logger.info(id.getKey() + " IS invalid");
+
+        if (debugInvalidate) {
+          logger.info("tryWriteLock() obtained for " + id.getKey());
+        }
+        try {
+          final SessionData sd = store.findSessionDataUnlocked(id);
+          if (sd == null) {
+            if (debugInvalidate) {
+              logger.info("null session data for " + id.getKey());
+            }
+            return rv;
           }
-          expire(id, sd);
-          rv = true;
-        } else {
-          if (debugInvalidate) {
-            logger.info(id.getKey() + " IS NOT invalid, updating timestamp");
+          if (!sd.isValid(debugInvalidate, logger)) {
+            if (debugInvalidate) {
+              logger.info(id.getKey() + " IS invalid");
+            }
+            expire(id, sd);
+            rv = true;
+          } else {
+            if (debugInvalidate) {
+              logger.info(id.getKey() + " IS NOT invalid, updating timestamp");
+            }
+            store.updateTimestampIfNeeded(sd);
           }
-          store.updateTimestampIfNeeded(sd);
+        } finally {
+          id.commitLock();
         }
       } finally {
-        id.commitLock();
+        id.commitSessionInvalidatorLock();
       }
       return rv;
     }

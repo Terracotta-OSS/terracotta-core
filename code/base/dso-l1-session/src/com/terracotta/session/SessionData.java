@@ -5,7 +5,6 @@
 package com.terracotta.session;
 
 import com.tc.logging.TCLogger;
-import com.tc.session.SessionSupport;
 import com.tc.util.Assert;
 import com.terracotta.session.util.ContextMgr;
 import com.terracotta.session.util.LifecycleEventMgr;
@@ -22,7 +21,7 @@ import java.util.Set;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpSessionContext;
 
-public class SessionData implements Session, SessionSupport {
+public class SessionData implements Session {
   private final Map                   attributes         = new HashMap();
   private final Map                   internalAttributes = new HashMap();
   private transient Map               transientAttributes;
@@ -31,7 +30,7 @@ public class SessionData implements Session, SessionSupport {
 
   private long                        lastAccessedTime;
   private long                        maxIdleMillis;
-  private transient long              requestStartMillis;
+  private transient ThreadLocal<Long> requestStartMillis;
 
   private transient SessionId         sessionId;
   private transient LifecycleEventMgr eventMgr;
@@ -47,6 +46,7 @@ public class SessionData implements Session, SessionSupport {
     this.createTime = System.currentTimeMillis();
     this.lastAccessedTime = 0;
     this.timestamp = new Timestamp(System.currentTimeMillis());
+    this.requestStartMillis = new ThreadLocal<Long>();
     setMaxInactiveSeconds(maxIdleSeconds);
   }
 
@@ -167,7 +167,12 @@ public class SessionData implements Session, SessionSupport {
   }
 
   synchronized void startRequest() {
-    requestStartMillis = System.currentTimeMillis();
+    setRequestStartMillis(System.currentTimeMillis());
+  }
+
+  private void setRequestStartMillis(long millis) {
+    if (requestStartMillis == null) requestStartMillis = new ThreadLocal<Long>();
+    requestStartMillis.set(Long.valueOf(millis));
   }
 
   public void setMaxInactiveInterval(int v) {
@@ -179,7 +184,7 @@ public class SessionData implements Session, SessionSupport {
 
   /**
    * returns idle millis.
-   *
+   * 
    * @param logger
    * @param debug
    */
@@ -193,7 +198,7 @@ public class SessionData implements Session, SessionSupport {
       return 0;
     }
 
-    final long requestStart = requestStartMillis;
+    final long requestStart = getRequestStartMillis();
 
     if (requestStart > lastAccess) {
       final long rv = requestStart - lastAccess;
@@ -214,8 +219,12 @@ public class SessionData implements Session, SessionSupport {
     return rv;
   }
 
+  private long getRequestStartMillis() {
+    return null == requestStartMillis || null == requestStartMillis.get() ? 0L : requestStartMillis.get().longValue();
+  }
+
   synchronized void finishRequest() {
-    requestStartMillis = 0;
+    setRequestStartMillis(Long.valueOf(0L));
     lastAccessedTime = System.currentTimeMillis();
   }
 
@@ -360,14 +369,6 @@ public class SessionData implements Session, SessionSupport {
       eventMgr.removeAttribute(this, name, oldVal);
     }
     return oldVal;
-  }
-
-  public void resumeRequest() {
-    TerracottaSessionManager.resumeRequest(this);
-  }
-
-  public void pauseRequest() {
-    TerracottaSessionManager.pauseRequest(this);
   }
 
   private Map getTransientAttributes() {

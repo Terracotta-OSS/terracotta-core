@@ -16,8 +16,8 @@ import java.util.Date;
 import junit.framework.Test;
 
 public class SessionIDFromURLTest extends AbstractOneServerDeploymentTest {
-  private static final String CONTEXT = "SessionIDFromURL";
-  private static final String SERVLET = "SessionIDFromURLServlet";
+  protected static final String CONTEXT = "SessionIDFromURL";
+  private static final String   SERVLET = "SessionIDFromURLServlet";
 
   public static Test suite() {
     return new SessionIDFromURLTestSetup();
@@ -42,10 +42,14 @@ public class SessionIDFromURLTest extends AbstractOneServerDeploymentTest {
     assertEquals("OK", new WebConversation().getResponse(encodedURL).getText().trim());
   }
 
-  private static class SessionIDFromURLTestSetup extends OneServerTestSetup {
+  protected static class SessionIDFromURLTestSetup extends OneServerTestSetup {
 
     public SessionIDFromURLTestSetup() {
-      super(SessionIDFromURLTest.class, CONTEXT);
+      this(SessionIDFromURLTest.class, CONTEXT);
+    }
+
+    public SessionIDFromURLTestSetup(Class testClass, String context) {
+      super(testClass, context);
     }
 
     protected void configureWar(DeploymentBuilder builder) {
@@ -53,7 +57,8 @@ public class SessionIDFromURLTest extends AbstractOneServerDeploymentTest {
     }
 
     protected void configureTcConfig(TcConfigBuilder tcConfigBuilder) {
-      tcConfigBuilder.addWebApplication(CONTEXT);
+      if (isSessionLockingTrue()) tcConfigBuilder.addWebApplication(CONTEXT);
+      else tcConfigBuilder.addWebApplicationWithoutSessionLocking(CONTEXT);
     }
   }
 }

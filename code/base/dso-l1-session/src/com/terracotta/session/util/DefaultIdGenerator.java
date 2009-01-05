@@ -26,6 +26,8 @@ public class DefaultIdGenerator implements SessionIdGenerator {
   private final String        delimiter;
   private final int           lockType;
   private short               nextId     = Short.MIN_VALUE;
+  private boolean             sessionLocking;
+  private boolean             initialized;
 
   public static SessionIdGenerator makeInstance(ConfigProperties cp, int lockType) {
     Assert.pre(cp != null);
@@ -33,6 +35,11 @@ public class DefaultIdGenerator implements SessionIdGenerator {
     final String serverId = cp.getServerId();
     final String delimiter = cp.getDelimiter();
     return new DefaultIdGenerator(idLength, serverId, lockType, delimiter);
+  }
+
+  public synchronized void initialize(boolean sessionLockingFlag) {
+    this.sessionLocking = sessionLockingFlag;
+    this.initialized = true;
   }
 
   // for non-synchronous-write tests
@@ -49,15 +56,18 @@ public class DefaultIdGenerator implements SessionIdGenerator {
     this.idLength = Math.max(idLength, MIN_LENGTH);
     this.serverId = serverId;
     this.delimiter = delimiter;
+    this.initialized = false;
   }
 
   public SessionId generateNewId() {
+    checkIfInitialized();
     final String key = generateKey();
     final String externalId = makeExternalId(key);
-    return new DefaultSessionId(key, null, externalId, lockType, false);
+    return new DefaultSessionId(key, null, externalId, lockType, false, sessionLocking);
   }
 
   public SessionId makeInstanceFromBrowserId(String requestedSessionId) {
+    checkIfInitialized();
     Assert.pre(requestedSessionId != null);
     final int dlmIndex = getDLMIndex(requestedSessionId);
     // everything before dlmIndex is key, everything after is serverId
@@ -65,11 +75,16 @@ public class DefaultIdGenerator implements SessionIdGenerator {
       final String key = requestedSessionId.substring(0, dlmIndex);
       final String requestedServerId = requestedSessionId.substring(dlmIndex + 1);
       final String externalId = makeExternalId(key);
-      return new DefaultSessionId(key, requestedSessionId, externalId, lockType, !requestedServerId.equals(serverId));
+      return new DefaultSessionId(key, requestedSessionId, externalId, lockType, !requestedServerId.equals(serverId),
+                                  sessionLocking);
     } else {
       // DLM is missing. someone is messing with our session ids!
       return null;
     }
+  }
+
+  protected final synchronized void checkIfInitialized() {
+    if (!initialized) { throw new IllegalStateException("SessionIdGenerator is not initialized"); }
   }
 
   protected int getDLMIndex(String requestedSessionId) {
@@ -94,8 +109,9 @@ public class DefaultIdGenerator implements SessionIdGenerator {
   }
 
   public SessionId makeInstanceFromInternalKey(String key) {
+    checkIfInitialized();
     final String externalId = makeExternalId(key);
-    return new DefaultSessionId(key, externalId, externalId, lockType, false);
+    return new DefaultSessionId(key, externalId, externalId, lockType, false, sessionLocking);
   }
 
   /**

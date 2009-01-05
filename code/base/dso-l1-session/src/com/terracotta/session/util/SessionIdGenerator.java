@@ -6,6 +6,8 @@ package com.terracotta.session.util;
 import com.terracotta.session.SessionId;
 
 public interface SessionIdGenerator {
+  
+  void initialize(boolean sessionLocking);
 
   SessionId generateNewId();
 

@@ -40,4 +40,19 @@ public class MockSessionId implements SessionId {
     throw new ImplementMe();
   }
 
+  public void commitSessionInvalidatorLock() {
+    throw new ImplementMe();
+
+  }
+
+  public void getSessionInvalidatorReadLock() {
+    throw new ImplementMe();
+
+  }
+
+  public boolean trySessionInvalidatorWriteLock() {
+    throw new ImplementMe();
+
+  }
+
 }

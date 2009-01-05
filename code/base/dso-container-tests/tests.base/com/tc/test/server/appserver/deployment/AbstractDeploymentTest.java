@@ -187,4 +187,8 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
     return false;
   }
 
+  public boolean isSessionLockingTrue() {
+    return true;
+  }
+
 }

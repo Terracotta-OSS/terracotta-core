@@ -12,7 +12,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public final class InvalidatorServlet extends ListenerReportingServlet {
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+  protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     final String action = req.getParameter("action");
     final String key = req.getParameter("key");
     String reply = "OK";
@@ -35,6 +35,17 @@ public final class InvalidatorServlet extends ListenerReportingServlet {
       req.getSession();
       sleep(1000 * Integer.parseInt(key));
       req.getSession().setMaxInactiveInterval(30 * 60);
+    } else if ("invalidate".equals(action)) {
+      // invalidate the session explicitly
+      req.getSession().invalidate();
+    } else if ("invalidateAndAccess".equals(action)) {
+      req.getSession().invalidate();
+      //create a new session, access and again invalidate
+      if (!req.getSession().isNew()) reply = "OLD SESSION!";
+      else {
+        req.getSession().setAttribute("key", "value");
+        req.getSession().invalidate();
+      }
     } else {
       reply = "INVALID REQUEST";
     }

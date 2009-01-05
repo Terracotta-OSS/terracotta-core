@@ -5,17 +5,16 @@
 package com.tctest.server.appserver.unit;
 
 import com.meterware.httpunit.WebConversation;
-import com.tc.test.server.util.TcConfigBuilder;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.webapp.servlets.SessionLockingDeadlockServlet;
 
 import junit.framework.Test;
 
-public class DeadlockTestWithSessionLocking extends DeadlockTestBase {
+public class DeadlockWithSLTest extends DeadlockTestBase {
 
-  public DeadlockTestWithSessionLocking() {
-    disableAllUntil("2009-01-01");
+  public DeadlockWithSLTest() {
+    //
   }
 
   public static Test suite() {
@@ -43,12 +42,8 @@ public class DeadlockTestWithSessionLocking extends DeadlockTestBase {
     int waitTimeMillis = 30 * 1000;
     ThreadUtil.reallySleep(waitTimeMillis);
 
-    if (requestSessionThenGlobalThread.isAlive()) {
-      requestSessionThenGlobalThread.interrupt();
-      if (requestGlobalThenSessionThread.isAlive()) {
-        requestGlobalThenSessionThread.interrupt();
-      }
-      Assert.fail("Requests are deadlocked. Waiting Request did not complete");
+    if (!requestSessionThenGlobalThread.isAlive() || !requestGlobalThenSessionThread.isAlive()) {
+      Assert.fail("Requests are NOT deadlocked. Requests are supposed to be deadlocked with session-locking=true");
     }
     debug("Test passed");
   }
@@ -56,11 +51,7 @@ public class DeadlockTestWithSessionLocking extends DeadlockTestBase {
   private static class DeadlockTestWithSessionLockingSetup extends DeadlockTestSetupBase {
 
     public DeadlockTestWithSessionLockingSetup() {
-      super(DeadlockTestWithSessionLocking.class, CONTEXT);
-    }
-
-    protected void configureTcConfig(TcConfigBuilder tcConfigBuilder) {
-      tcConfigBuilder.addWebApplicationWithSessionLocking(CONTEXT);
+      super(DeadlockWithSLTest.class, CONTEXT);
     }
   }
 }

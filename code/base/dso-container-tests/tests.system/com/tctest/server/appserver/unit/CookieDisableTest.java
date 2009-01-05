@@ -25,7 +25,7 @@ import junit.framework.Test;
  * @author hhuynh
  */
 public class CookieDisableTest extends AbstractOneServerDeploymentTest {
-  private static final String CONTEXT = "CookieDisableTest";
+  protected static final String CONTEXT = "CookieDisableTest";
 
   public CookieDisableTest() {
     if (appServerInfo().getId() != AppServerInfo.TOMCAT) {
@@ -45,20 +45,24 @@ public class CookieDisableTest extends AbstractOneServerDeploymentTest {
 
     response1 = request(server0, "cmd=query", conversation);
     assertNotEquals("OK", response1.getText().trim());
-    
+
     System.out.println("Cookie names: " + Arrays.asList(conversation.getCookieNames()));
     assertEquals(0, conversation.getCookieNames().length);
-  } 
+  }
 
   private WebResponse request(WebApplicationServer server, String params, WebConversation con) throws Exception {
     return server.ping("/" + CONTEXT + "/ShutdownNormallyServlet?" + params, con);
   }
 
   /** ****** test setup ********* */
-  private static class CookieDisableTestSetup extends OneServerTestSetup {
+  protected static class CookieDisableTestSetup extends OneServerTestSetup {
 
     public CookieDisableTestSetup() {
-      super(CookieDisableTest.class, CONTEXT);
+      this(CookieDisableTest.class, CONTEXT);
+    }
+
+    public CookieDisableTestSetup(Class testClass, String context) {
+      super(testClass, context);
       GenericServer.setDsoEnabled(true);
     }
 
@@ -70,7 +74,8 @@ public class CookieDisableTest extends AbstractOneServerDeploymentTest {
     }
 
     protected void configureTcConfig(TcConfigBuilder clientConfig) {
-      clientConfig.addWebApplication(CONTEXT);
+      if (isSessionLockingTrue()) clientConfig.addWebApplication(CONTEXT);
+      else clientConfig.addWebApplicationWithoutSessionLocking(CONTEXT);
     }
   }
 

@@ -22,12 +22,12 @@ import java.util.Date;
 import junit.framework.Test;
 
 public class SessionBindSequenceTest extends AbstractOneServerDeploymentTest {
-  private static final String CONTEXT                 = "SessionBindSequenceTest";
-  private static final String SERVLET                 = "SessionBindSequenceTestServlet";
+  protected static final String CONTEXT                 = "SessionBindSequenceTest";
+  private static final String   SERVLET                 = "SessionBindSequenceTestServlet";
 
-  private static final int    invalidatorSleepSeconds = 1;
-  private static final int    defaultMaxIdleSeconds   = 5;
-  private static final int    waitFactor              = 4;
+  private static final int      invalidatorSleepSeconds = 1;
+  private static final int      defaultMaxIdleSeconds   = 5;
+  private static final int      waitFactor              = 4;
 
   public static Test suite() {
     return new SessionBindSequenceTestSetup();
@@ -91,9 +91,13 @@ public class SessionBindSequenceTest extends AbstractOneServerDeploymentTest {
     return server.ping("/" + CONTEXT + "/" + SERVLET + "?" + params, wc).getText().trim();
   }
 
-  private static class SessionBindSequenceTestSetup extends OneServerTestSetup {
+  protected static class SessionBindSequenceTestSetup extends OneServerTestSetup {
     public SessionBindSequenceTestSetup() {
-      super(SessionBindSequenceTest.class, CONTEXT);
+      this(SessionBindSequenceTest.class, CONTEXT);
+    }
+
+    public SessionBindSequenceTestSetup(Class testClass, String context) {
+      super(testClass, context);
     }
 
     protected void configureWar(DeploymentBuilder builder) {
@@ -105,7 +109,8 @@ public class SessionBindSequenceTest extends AbstractOneServerDeploymentTest {
     }
 
     protected void configureTcConfig(TcConfigBuilder clientConfig) {
-      clientConfig.addWebApplication(CONTEXT);
+      if (isSessionLockingTrue()) clientConfig.addWebApplication(CONTEXT);
+      else clientConfig.addWebApplicationWithoutSessionLocking(CONTEXT);
       clientConfig.addInstrumentedClass(SessionListener.class.getName());
       clientConfig.addInstrumentedClass(BindingListener.class.getName());
       clientConfig.addInstrumentedClass(BindingSequenceListener.class.getName());

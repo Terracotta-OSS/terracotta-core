@@ -16,8 +16,8 @@ import com.tctest.webapp.servlets.ListenerReportingServlet;
 import junit.framework.Test;
 
 public class SessionEventsTest extends AbstractOneServerDeploymentTest {
-  private static final String CONTEXT = "SessionEventsTest";
-  private static final String MAPPING = "ListenerReportingServlet";
+  protected static final String CONTEXT = "SessionEventsTest";
+  private static final String   MAPPING = "ListenerReportingServlet";
 
   public static Test suite() {
     return new SessionEventsTestSetup();
@@ -88,10 +88,14 @@ public class SessionEventsTest extends AbstractOneServerDeploymentTest {
     return server0.ping("/" + CONTEXT + "/" + MAPPING + "?" + params, wc).getText().trim();
   }
 
-  private static class SessionEventsTestSetup extends OneServerTestSetup {
+  protected static class SessionEventsTestSetup extends OneServerTestSetup {
 
     public SessionEventsTestSetup() {
-      super(SessionEventsTest.class, CONTEXT);
+      this(SessionEventsTest.class, CONTEXT);
+    }
+
+    public SessionEventsTestSetup(Class testClass, String context) {
+      super(testClass, context);
     }
 
     protected void configureWar(DeploymentBuilder builder) {
@@ -102,7 +106,8 @@ public class SessionEventsTest extends AbstractOneServerDeploymentTest {
     }
 
     protected void configureTcConfig(TcConfigBuilder tcConfigBuilder) {
-      tcConfigBuilder.addWebApplication(CONTEXT);
+      if (isSessionLockingTrue()) tcConfigBuilder.addWebApplication(CONTEXT);
+      else tcConfigBuilder.addWebApplicationWithoutSessionLocking(CONTEXT);
       tcConfigBuilder.addInstrumentedClass(AttributeListener.class.getName());
       tcConfigBuilder.addInstrumentedClass(SessionListener.class.getName());
       tcConfigBuilder.addInstrumentedClass(BindingListener.class.getName());

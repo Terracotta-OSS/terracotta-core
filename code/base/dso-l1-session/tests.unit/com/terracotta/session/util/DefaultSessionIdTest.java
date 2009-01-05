@@ -11,21 +11,21 @@ public class DefaultSessionIdTest extends TestCase {
 
   public final void testConstruction() {
     final String id = "SomeSessionId";
-    DefaultSessionId sid = new DefaultSessionId(id, null, id, Manager.LOCK_TYPE_WRITE, false);
+    DefaultSessionId sid = new DefaultSessionId(id, null, id, Manager.LOCK_TYPE_WRITE, false, true);
     assertNull(sid.getRequestedId());
     assertEquals(id, sid.getKey());
     assertEquals(id, sid.getExternalId());
     assertFalse(sid.isServerHop());
     assertTrue(sid.isNew());
 
-    sid = new DefaultSessionId(id, id, id, Manager.LOCK_TYPE_WRITE, false);
+    sid = new DefaultSessionId(id, id, id, Manager.LOCK_TYPE_WRITE, false, true);
     assertEquals(id, sid.getRequestedId());
     assertEquals(id, sid.getExternalId());
     assertEquals(id, sid.getKey());
     assertFalse(sid.isServerHop());
     assertFalse(sid.isNew());
 
-    sid = new DefaultSessionId(id, id + id, id, Manager.LOCK_TYPE_WRITE, true);
+    sid = new DefaultSessionId(id, id + id, id, Manager.LOCK_TYPE_WRITE, true, true);
     assertEquals(id + id, sid.getRequestedId());
     assertEquals(id, sid.getExternalId());
     assertEquals(id, sid.getKey());

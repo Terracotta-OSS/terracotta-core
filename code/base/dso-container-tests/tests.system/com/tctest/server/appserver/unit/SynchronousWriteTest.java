@@ -17,10 +17,10 @@ import junit.framework.Test;
  * Test session with synchronous-write
  */
 public class SynchronousWriteTest extends AbstractTwoServerDeploymentTest {
-  private static final String CONTEXT   = "SynchronousWriteTest";
-  private static final String SERVLET   = "SynchronousWriteTestServlet";
+  protected static final String CONTEXT   = "SynchronousWriteTest";
+  private static final String   SERVLET   = "SynchronousWriteTestServlet";
 
-  private static final int    INTENSITY = 100;
+  private static final int      INTENSITY = 100;
 
   public static Test suite() {
     return new SynchronousWriteTestSetup();
@@ -31,7 +31,7 @@ public class SynchronousWriteTest extends AbstractTwoServerDeploymentTest {
     createTransactions(server0, wc);
     assertEquals("99", request(server1, "server=1&data=99", wc));
     System.out.println("created final request to server 1");
-    
+
   }
 
   private void createTransactions(WebApplicationServer server, WebConversation wc) throws Exception {
@@ -45,10 +45,14 @@ public class SynchronousWriteTest extends AbstractTwoServerDeploymentTest {
     return server.ping("/" + CONTEXT + "/" + SERVLET + "?" + params, con).getText().trim();
   }
 
-  private static class SynchronousWriteTestSetup extends TwoServerTestSetup {
+  protected static class SynchronousWriteTestSetup extends TwoServerTestSetup {
 
     public SynchronousWriteTestSetup() {
-      super(SynchronousWriteTest.class, CONTEXT);
+      this(SynchronousWriteTest.class, CONTEXT);
+    }
+
+    public SynchronousWriteTestSetup(Class testClass, String context) {
+      super(testClass, context);
     }
 
     protected void configureWar(DeploymentBuilder builder) {
@@ -56,7 +60,8 @@ public class SynchronousWriteTest extends AbstractTwoServerDeploymentTest {
     }
 
     protected void configureTcConfig(TcConfigBuilder clientConfig) {
-      clientConfig.addWebApplicationWithSynchronousWrite(CONTEXT);
+      if (isSessionLockingTrue()) clientConfig.addWebApplicationWithSynchronousWrite(CONTEXT);
+      else clientConfig.addWebApplication(CONTEXT, true, false);
     }
   }
 }

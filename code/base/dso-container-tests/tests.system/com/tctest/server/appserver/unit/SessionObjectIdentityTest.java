@@ -14,8 +14,8 @@ import com.tctest.webapp.servlets.SessionObjectIdentityTestServlet;
 import junit.framework.Test;
 
 public class SessionObjectIdentityTest extends AbstractTwoServerDeploymentTest {
-  private static final String CONTEXT = "SessionObjectIdentityTest";
-  private static final String SERVLET = "SessionObjectIdentityTestServlet";
+  protected static final String CONTEXT = "SessionObjectIdentityTest";
+  private static final String   SERVLET = "SessionObjectIdentityTestServlet";
 
   public static Test suite() {
     return new SessionObjectIdentityTestSetup();
@@ -33,9 +33,13 @@ public class SessionObjectIdentityTest extends AbstractTwoServerDeploymentTest {
     response = server1.ping(url + "checkShared", wc);
   }
 
-  private static class SessionObjectIdentityTestSetup extends TwoServerTestSetup {
+  protected static class SessionObjectIdentityTestSetup extends TwoServerTestSetup {
     public SessionObjectIdentityTestSetup() {
-      super(SessionObjectIdentityTest.class, CONTEXT);
+      this(SessionObjectIdentityTest.class, CONTEXT);
+    }
+
+    public SessionObjectIdentityTestSetup(Class testClass, String context) {
+      super(testClass, context);
     }
 
     protected void configureWar(DeploymentBuilder builder) {
@@ -43,7 +47,8 @@ public class SessionObjectIdentityTest extends AbstractTwoServerDeploymentTest {
     }
 
     protected void configureTcConfig(TcConfigBuilder clientConfig) {
-      clientConfig.addWebApplication(CONTEXT);
+      if (isSessionLockingTrue()) clientConfig.addWebApplication(CONTEXT);
+      else clientConfig.addWebApplicationWithoutSessionLocking(CONTEXT);
     }
   }
 }

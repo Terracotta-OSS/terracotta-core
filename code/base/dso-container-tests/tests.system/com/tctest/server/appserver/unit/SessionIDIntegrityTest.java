@@ -20,8 +20,8 @@ import junit.framework.Test;
  * Test to make sure session id is preserved with Terracotta
  */
 public class SessionIDIntegrityTest extends AbstractTwoServerDeploymentTest {
-  private static final String CONTEXT = "SessionIDIntegrityTest";
-  private static final String MAPPING = "SessionIDIntegrityTestServlet";
+  protected static final String CONTEXT = "SessionIDIntegrityTest";
+  private static final String   MAPPING = "SessionIDIntegrityTestServlet";
 
   public static Test suite() {
     return new SessionIDIntegrityTestSetup();
@@ -73,9 +73,13 @@ public class SessionIDIntegrityTest extends AbstractTwoServerDeploymentTest {
     return server.ping("/" + CONTEXT + "/" + MAPPING + "?" + params, wc).getText().trim();
   }
 
-  private static class SessionIDIntegrityTestSetup extends TwoServerTestSetup {
+  protected static class SessionIDIntegrityTestSetup extends TwoServerTestSetup {
     public SessionIDIntegrityTestSetup() {
-      super(SessionIDIntegrityTest.class, CONTEXT);
+      this(SessionIDIntegrityTest.class, CONTEXT);
+    }
+
+    public SessionIDIntegrityTestSetup(Class testClass, String context) {
+      super(testClass, context);
     }
 
     protected void configureWar(DeploymentBuilder builder) {
@@ -83,7 +87,8 @@ public class SessionIDIntegrityTest extends AbstractTwoServerDeploymentTest {
     }
 
     protected void configureTcConfig(TcConfigBuilder clientConfig) {
-      clientConfig.addWebApplication(CONTEXT);
+      if (isSessionLockingTrue()) clientConfig.addWebApplication(CONTEXT);
+      else clientConfig.addWebApplicationWithoutSessionLocking(CONTEXT);
     }
   }
 }

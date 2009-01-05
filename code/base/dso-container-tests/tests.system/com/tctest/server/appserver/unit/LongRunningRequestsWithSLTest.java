@@ -5,21 +5,20 @@
 package com.tctest.server.appserver.unit;
 
 import com.meterware.httpunit.WebConversation;
-import com.tc.test.server.util.TcConfigBuilder;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.webapp.servlets.LongRunningRequestsServlet;
 
 import junit.framework.Test;
 
-public class LongRunningRequestsTestWithoutSessionLocking extends LongRunningRequestsTestBase {
+public class LongRunningRequestsWithSLTest extends LongRunningRequestsTestBase {
 
-  public LongRunningRequestsTestWithoutSessionLocking() {
+  public LongRunningRequestsWithSLTest() {
     //
   }
 
   public static Test suite() {
-    return new LongRunningRequestsTestWithoutSessionLockingSetup();
+    return new LongRunningRequestsTestWithSessionLockingSetup();
   }
 
   public void testSessionLocking() throws Exception {
@@ -49,20 +48,16 @@ public class LongRunningRequestsTestWithoutSessionLocking extends LongRunningReq
     for (int i = 0; i < shortRequestThreads.length; i++) {
       if (!shortRequestThreads[i].isAlive()) {
         Assert
-            .fail("Short Requests are NOT blocked. Short Requests are supposed to be blocked without session-locking");
+            .fail("Short Requests are NOT blocked. Short Requests are supposed to be blocked with session-locking=true");
       }
     }
     debug("Test passed");
   }
 
-  private static class LongRunningRequestsTestWithoutSessionLockingSetup extends LongRunningRequestsTestSetupBase {
+  private static class LongRunningRequestsTestWithSessionLockingSetup extends LongRunningRequestsTestSetupBase {
 
-    public LongRunningRequestsTestWithoutSessionLockingSetup() {
-      super(LongRunningRequestsTestWithoutSessionLocking.class, CONTEXT);
-    }
-
-    protected void configureTcConfig(TcConfigBuilder tcConfigBuilder) {
-      tcConfigBuilder.addWebApplicationWithoutSessionLocking(CONTEXT);
+    public LongRunningRequestsTestWithSessionLockingSetup() {
+      super(LongRunningRequestsWithSLTest.class, CONTEXT);
     }
   }
 }

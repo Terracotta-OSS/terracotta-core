@@ -9,6 +9,7 @@ import com.meterware.httpunit.WebResponse;
 import com.tc.test.server.appserver.deployment.AbstractOneServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
+import com.tc.test.server.util.TcConfigBuilder;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.webapp.servlets.SessionLockingDeadlockServlet;
 
@@ -52,6 +53,11 @@ public abstract class DeadlockTestBase extends AbstractOneServerDeploymentTest {
     protected void configureWar(DeploymentBuilder builder) {
       builder.addServlet("SessionLockingDeadlockServlet", "/" + CONTEXT + "/*", SessionLockingDeadlockServlet.class,
                          null, false);
+    }
+
+    protected void configureTcConfig(TcConfigBuilder tcConfigBuilder) {
+      if (isSessionLockingTrue()) tcConfigBuilder.addWebApplication(CONTEXT);
+      else tcConfigBuilder.addWebApplicationWithoutSessionLocking(CONTEXT);
     }
   }
 

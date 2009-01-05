@@ -18,12 +18,12 @@ import java.util.Set;
 
 public class SessionDataStore {
 
-  private final Map                      store;                // <SessionData>
-  private final Map                      dtmStore;             // <Timestamp>
-  private final int                      maxIdleTimeoutSeconds;
-  private final ContextMgr               ctxMgr;
-  private final LifecycleEventMgr        lifecycleEventMgr;
-  private final SessionManager sessionManager;
+  private final Map               store;                // <SessionData>
+  private final Map               dtmStore;             // <Timestamp>
+  private final int               maxIdleTimeoutSeconds;
+  private final ContextMgr        ctxMgr;
+  private final LifecycleEventMgr lifecycleEventMgr;
+  private final SessionManager    sessionManager;
 
   public SessionDataStore(String appName, int maxIdleTimeoutSeconds, LifecycleEventMgr lifecycleEventMgr,
                           ContextMgr ctxMgr, SessionManager sessionManager) {
@@ -51,39 +51,58 @@ public class SessionDataStore {
 
   /**
    * <ol>
-   * <li>get WRITE_LOCK for sessId
+   * <li>get WRITE_LOCK for sessId (and READ_LOCK for sessionInvalidatorLock)
    * <li>creates session data
    * <li>put newly-created SessionData into the global Map
+   * <li>if session-locking is false, unlock sessId
    * <li>returns newly-created SessionData
    * </ol>
    */
   public SessionData createSessionData(final SessionId sessId) {
     Assert.pre(sessId != null);
     SessionData rv = null;
+    sessId.getSessionInvalidatorReadLock();
     sessId.getWriteLock();
-    rv = new SessionData(maxIdleTimeoutSeconds);
-    rv.associate(sessId, lifecycleEventMgr, ctxMgr, sessionManager);
-    store.put(sessId.getKey(), rv);
-    dtmStore.put(sessId.getKey(), rv.getTimestamp());
-    rv.startRequest();
+    try {
+      rv = new SessionData(maxIdleTimeoutSeconds);
+      rv.associate(sessId, lifecycleEventMgr, ctxMgr, sessionManager);
+      store.put(sessId.getKey(), rv);
+      if (sessionManager.isApplicationSessionLocked()) {
+        ((Manageable) rv).__tc_managed().disableAutoLocking();
+      }
+      dtmStore.put(sessId.getKey(), rv.getTimestamp());
+      rv.startRequest();
+    } finally {
+      if (!sessionManager.isApplicationSessionLocked()) {
+        sessId.commitLock();
+      }
+      Assert
+          .post(sessionManager.isApplicationSessionLocked() == ((Manageable) rv).__tc_managed().autoLockingDisabled());
+    }
     return rv;
   }
 
   /**
    * <ol>
-   * <li>get WRITE_LOCK for sessId
+   * <li>get WRITE_LOCK for sessId (and READ_LOCK for sessionInvalidatorLock)
    * <li>look up SessionData for sessId.getKey() in the global Map
    * <li>if SessionData is invalid, unlock sessId and return null (invalidator will take care of killing this session)
+   * <li>if SessionData is invalid, unlock sessionInvalidatorLock
+   * <li>if session-locking is false, unlock sessId
    * <li>return valid SessionData
    */
   public SessionData find(final SessionId sessId) {
     Assert.pre(sessId != null);
 
     SessionData rv = null;
+    sessId.getSessionInvalidatorReadLock();
     sessId.getWriteLock();
     try {
       rv = (SessionData) store.get(sessId.getKey());
       if (rv != null) {
+        if (sessionManager.isApplicationSessionLocked()) {
+          ((Manageable) rv).__tc_managed().disableAutoLocking();
+        }
         rv.associate(sessId, lifecycleEventMgr, ctxMgr, sessionManager);
         rv.startRequest();
         if (!rv.isValid()) rv = null;
@@ -92,7 +111,16 @@ public class SessionDataStore {
         }
       }
     } finally {
-      if (rv == null) sessId.commitLock();
+      if (rv == null) {
+        sessId.commitLock();
+        sessId.commitSessionInvalidatorLock();
+      } else {
+        if (!sessionManager.isApplicationSessionLocked()) {
+          sessId.commitLock();
+        }
+        Assert.post(sessionManager.isApplicationSessionLocked() == ((Manageable) rv).__tc_managed()
+            .autoLockingDisabled());
+      }
     }
     return rv;
   }
@@ -100,9 +128,7 @@ public class SessionDataStore {
   void updateTimestampIfNeeded(SessionData sd) {
     Assert.pre(sd != null);
 
-    if (sd.neverExpires()) {
-      return;
-    }
+    if (sd.neverExpires()) { return; }
 
     final long now = System.currentTimeMillis();
     final Timestamp t = sd.getTimestamp();
@@ -141,8 +167,12 @@ public class SessionDataStore {
   SessionData findSessionDataUnlocked(final SessionId sessId) {
     final SessionData rv = (SessionData) store.get(sessId.getKey());
     if (rv != null) {
+      if (sessionManager.isApplicationSessionLocked()) {
+        ((Manageable) rv).__tc_managed().disableAutoLocking();
+      }
       rv.associate(sessId, lifecycleEventMgr, ctxMgr, sessionManager);
     }
+    Assert.post(sessionManager.isApplicationSessionLocked() == ((Manageable) rv).__tc_managed().autoLockingDisabled());
     return rv;
   }
 

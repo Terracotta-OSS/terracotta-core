@@ -5,17 +5,16 @@
 package com.tctest.server.appserver.unit;
 
 import com.meterware.httpunit.WebConversation;
-import com.tc.test.server.util.TcConfigBuilder;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.webapp.servlets.SessionLockingDeadlockServlet;
 
 import junit.framework.Test;
 
-public class DeadlockTestWithoutSessionLocking extends DeadlockTestBase {
+public class DeadlockWithoutSLTest extends DeadlockTestBase {
 
-  public DeadlockTestWithoutSessionLocking() {
-    //
+  public DeadlockWithoutSLTest() {
+    // disableAllUntil("2009-01-01");
   }
 
   public static Test suite() {
@@ -43,8 +42,13 @@ public class DeadlockTestWithoutSessionLocking extends DeadlockTestBase {
     int waitTimeMillis = 30 * 1000;
     ThreadUtil.reallySleep(waitTimeMillis);
 
-    if (!requestSessionThenGlobalThread.isAlive() || !requestGlobalThenSessionThread.isAlive()) {
-      Assert.fail("Requests are NOT deadlocked. Requests are supposed to be deadlocked without session-locking");
+    if (requestSessionThenGlobalThread.isAlive()) {
+      requestSessionThenGlobalThread.interrupt();
+      if (requestGlobalThenSessionThread.isAlive()) {
+        requestGlobalThenSessionThread.interrupt();
+      }
+      Assert
+          .fail("Requests are deadlocked. Waiting Request did not complete, requests should not deadlock when session-locking=false");
     }
     debug("Test passed");
   }
@@ -52,11 +56,13 @@ public class DeadlockTestWithoutSessionLocking extends DeadlockTestBase {
   private static class DeadlockTestWithoutSessionLockingSetup extends DeadlockTestSetupBase {
 
     public DeadlockTestWithoutSessionLockingSetup() {
-      super(DeadlockTestWithoutSessionLocking.class, CONTEXT);
+      super(DeadlockWithoutSLTest.class, CONTEXT);
     }
 
-    protected void configureTcConfig(TcConfigBuilder tcConfigBuilder) {
-      tcConfigBuilder.addWebApplicationWithoutSessionLocking(CONTEXT);
+    @Override
+    public boolean isSessionLockingTrue() {
+      return false;
     }
+
   }
 }

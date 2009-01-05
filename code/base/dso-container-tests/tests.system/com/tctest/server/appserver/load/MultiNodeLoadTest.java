@@ -4,6 +4,9 @@
  */
 package com.tctest.server.appserver.load;
 
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
+import com.tc.test.server.appserver.StandardAppServerParameters;
 import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
 import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
@@ -43,7 +46,8 @@ public class MultiNodeLoadTest extends AbstractDeploymentTest {
     if (deployment == null) {
       deployment = makeDeployment();
       configBuilder = new TcConfigBuilder();
-      configBuilder.addWebApplication(CONTEXT);
+      if (isSessionLockingTrue()) configBuilder.addWebApplication(CONTEXT);
+      else configBuilder.addWebApplicationWithoutSessionLocking(CONTEXT);
     }
   }
 
@@ -63,6 +67,9 @@ public class MultiNodeLoadTest extends AbstractDeploymentTest {
 
   private WebApplicationServer createAndStartServer() throws Exception {
     WebApplicationServer server = makeWebApplicationServer(configBuilder);
+    StandardAppServerParameters params = server.getServerParameters();
+    params.appendSysProp(TCPropertiesImpl.SYSTEM_PROP_PREFIX + TCPropertiesConsts.SESSION_DEBUG_INVALIDATE, true);
+
     server.addWarDeployment(deployment, CONTEXT);
     server.start();
     return server;

@@ -19,7 +19,7 @@ import java.util.Map;
 
 import junit.framework.Test;
 
-public final class ServerHopCookieRewriteTest extends AbstractDeploymentTest {
+public class ServerHopCookieRewriteTest extends AbstractDeploymentTest {
   private static final String CONTEXT = "CookieRewrite";
   private static final String MAPPING = "ServerHopCookieRewriteTestServlet";
 
@@ -36,7 +36,8 @@ public final class ServerHopCookieRewriteTest extends AbstractDeploymentTest {
 
   public void testCookieRewrite() throws Exception {
     TcConfigBuilder tcConfigBuilder = new TcConfigBuilder();
-    tcConfigBuilder.addWebApplication(CONTEXT);
+    if (isSessionLockingTrue()) tcConfigBuilder.addWebApplication(CONTEXT);
+    else tcConfigBuilder.addWebApplicationWithoutSessionLocking(CONTEXT);
 
     WebApplicationServer server0 = createServer(tcConfigBuilder);
     server0.start();

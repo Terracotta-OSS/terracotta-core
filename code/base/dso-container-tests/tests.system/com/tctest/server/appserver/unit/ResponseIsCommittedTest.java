@@ -19,8 +19,8 @@ import junit.framework.Test;
 
 public class ResponseIsCommittedTest extends AbstractOneServerDeploymentTest {
 
-  private static final String CONTEXT = "ResponseIsCommitted";
-  private static final String MAPPING = "Servlet";
+  protected static final String CONTEXT = "ResponseIsCommitted";
+  private static final String   MAPPING = "Servlet";
 
   public static Test suite() {
     return new ResponseIsCommittedTestTestSetup();
@@ -56,10 +56,14 @@ public class ResponseIsCommittedTest extends AbstractOneServerDeploymentTest {
     return wc.getResponse(url);
   }
 
-  private static class ResponseIsCommittedTestTestSetup extends OneServerTestSetup {
+  protected static class ResponseIsCommittedTestTestSetup extends OneServerTestSetup {
 
     public ResponseIsCommittedTestTestSetup() {
-      super(ResponseIsCommittedTest.class, CONTEXT);
+      this(ResponseIsCommittedTest.class, CONTEXT);
+    }
+
+    public ResponseIsCommittedTestTestSetup(Class testClass, String context) {
+      super(testClass, context);
     }
 
     protected void configureWar(DeploymentBuilder builder) {
@@ -68,7 +72,8 @@ public class ResponseIsCommittedTest extends AbstractOneServerDeploymentTest {
     }
 
     protected void configureTcConfig(TcConfigBuilder tcConfigBuilder) {
-      tcConfigBuilder.addWebApplication(CONTEXT);
+      if (isSessionLockingTrue()) tcConfigBuilder.addWebApplication(CONTEXT);
+      else tcConfigBuilder.addWebApplicationWithoutSessionLocking(CONTEXT);
     }
 
   }

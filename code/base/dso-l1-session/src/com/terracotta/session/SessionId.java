@@ -32,4 +32,20 @@ public interface SessionId {
   boolean tryWriteLock();
 
   void commitLock();
+
+  /**
+   * Acquires a READ lock on the session-invalidator lock No-Op in case isSessionLockingEnabled() is true
+   */
+  void getSessionInvalidatorReadLock();
+
+  /**
+   * Attempts to acquire a WRITE lock on the session-invalidator lock No-Op in case isSessionLockingEnabled() is true
+   * Returns true if WRITE lock was acquired else returns false
+   */
+  boolean trySessionInvalidatorWriteLock();
+
+  /**
+   * Commits and release the session-invalidator lock No-Op in case isSessionLockingEnabled() is true
+   */
+  void commitSessionInvalidatorLock();
 }

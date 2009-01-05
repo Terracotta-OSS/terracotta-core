@@ -197,22 +197,37 @@ public class TcConfigBuilder {
     tcConfig.getClients().getModules().addRepository(location);
   }
 
+  /**
+   * Adds web-application with default values for synchronous-write (false) and session-locking (true)
+   */
   public void addWebApplication(String appName) {
     addWebApplication(appName, false, true);
   }
 
+  /**
+   * Adds web-application with default value for synchronous-write (false) and session-locking = true
+   */
   public void addWebApplicationWithSessionLocking(String appName) {
     addWebApplication(appName, false, true);
   }
 
+  /**
+   * Adds web-application with default value for synchronous-write (false) and session-locking = false
+   */
   public void addWebApplicationWithoutSessionLocking(String appName) {
     addWebApplication(appName, false, false);
   }
 
+  /**
+   * Adds web-application with synchronous-write = true and default value for session-locking (true)
+   */
   public void addWebApplicationWithSynchronousWrite(String appName) {
     addWebApplication(appName, true, true);
   }
 
+  /**
+   * Adds web-application with synchronous-write = false and default value for session-locking (true)
+   */
   public void addWebApplicationWithoutSynchronousWrite(String appName) {
     addWebApplication(appName, false, true);
   }

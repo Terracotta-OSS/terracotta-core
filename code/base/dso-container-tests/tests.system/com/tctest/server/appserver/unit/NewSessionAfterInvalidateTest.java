@@ -16,8 +16,8 @@ import junit.framework.Test;
 
 public class NewSessionAfterInvalidateTest extends AbstractTwoServerDeploymentTest {
 
-  private static final String CONTEXT = "NewSession";
-  private static final String MAPPING = "new";
+  protected static final String CONTEXT = "NewSession";
+  private static final String   MAPPING = "new";
 
   public static Test suite() {
     return new NewSessionTestSetup();
@@ -37,10 +37,14 @@ public class NewSessionAfterInvalidateTest extends AbstractTwoServerDeploymentTe
     return server.ping("/" + CONTEXT + "/" + MAPPING + "?" + params, con);
   }
 
-  private static class NewSessionTestSetup extends TwoServerTestSetup {
+  protected static class NewSessionTestSetup extends TwoServerTestSetup {
 
     public NewSessionTestSetup() {
-      super(NewSessionAfterInvalidateTest.class, CONTEXT);
+      this(NewSessionAfterInvalidateTest.class, CONTEXT);
+    }
+
+    public NewSessionTestSetup(Class testClass, String context) {
+      super(testClass, context);
     }
 
     protected void configureWar(DeploymentBuilder builder) {
@@ -49,7 +53,8 @@ public class NewSessionAfterInvalidateTest extends AbstractTwoServerDeploymentTe
     }
 
     protected void configureTcConfig(TcConfigBuilder tcConfigBuilder) {
-      tcConfigBuilder.addWebApplication(CONTEXT);
+      if (isSessionLockingTrue()) tcConfigBuilder.addWebApplication(CONTEXT);
+      else tcConfigBuilder.addWebApplicationWithoutSessionLocking(CONTEXT);
     }
 
   }

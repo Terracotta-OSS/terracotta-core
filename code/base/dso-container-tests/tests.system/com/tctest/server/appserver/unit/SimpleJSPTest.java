@@ -15,8 +15,8 @@ import com.tc.test.server.util.TcConfigBuilder;
 import junit.framework.Test;
 
 public class SimpleJSPTest extends AbstractTwoServerDeploymentTest {
-  private static final String CONTEXT  = "simplejsptest";
-  private static final String INDEXJSP = "index.jsp";
+  protected static final String CONTEXT  = "simplejsptest";
+  private static final String   INDEXJSP = "index.jsp";
 
   public SimpleJSPTest() {
     //
@@ -41,10 +41,14 @@ public class SimpleJSPTest extends AbstractTwoServerDeploymentTest {
   }
 
   /** ****** test setup ********* */
-  private static class SimpleJSPTestSetup extends TwoServerTestSetup {
+  protected static class SimpleJSPTestSetup extends TwoServerTestSetup {
 
     public SimpleJSPTestSetup() {
-      super(SimpleJSPTest.class, CONTEXT);
+      this(SimpleJSPTest.class, CONTEXT);
+    }
+
+    public SimpleJSPTestSetup(Class testClass, String context) {
+      super(testClass, context);
     }
 
     protected void configureWar(DeploymentBuilder builder) {
@@ -52,7 +56,8 @@ public class SimpleJSPTest extends AbstractTwoServerDeploymentTest {
     }
 
     protected void configureTcConfig(TcConfigBuilder clientConfig) {
-      clientConfig.addWebApplication(CONTEXT);
+      if (isSessionLockingTrue()) clientConfig.addWebApplication(CONTEXT);
+      else clientConfig.addWebApplicationWithoutSessionLocking(CONTEXT);
       if (appServerInfo().getId() == AppServerInfo.TOMCAT) {
         clientConfig.addInstrumentedClass("org.apache.jsp.index_jsp");
       }

@@ -40,4 +40,8 @@ public class MockSessionManager implements SessionManager {
     //
   }
 
+  public boolean isApplicationSessionLocked() {
+    return true;
+  }
+
 }

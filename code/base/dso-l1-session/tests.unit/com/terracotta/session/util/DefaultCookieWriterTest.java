@@ -29,7 +29,7 @@ public class DefaultCookieWriterTest extends TestCase {
     writer = makeCookieWriter(true, true);
     req = new MockHttpServletRequest();
     res = new MockHttpServletResponse();
-    id = new DefaultSessionId(idValue, idValue, idValue, Manager.LOCK_TYPE_WRITE, false);
+    id = new DefaultSessionId(idValue, idValue, idValue, Manager.LOCK_TYPE_WRITE, false, true);
   }
 
   public final void testConstructor() {

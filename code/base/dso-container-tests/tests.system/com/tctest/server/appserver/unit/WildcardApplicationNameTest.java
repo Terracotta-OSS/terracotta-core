@@ -11,7 +11,6 @@ import junit.framework.Test;
 
 public class WildcardApplicationNameTest extends SimpleSessionTest {
   private static final String CONFIG_FILE_FOR_TEST = "/tc-config-files/wildcard-tc-config.xml";
-  private static final String CONTEXT              = "simple";
   private static final String MAPPING              = "doit";
 
   public static Test suite() {

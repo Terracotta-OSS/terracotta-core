@@ -5,21 +5,20 @@
 package com.tctest.server.appserver.unit;
 
 import com.meterware.httpunit.WebConversation;
-import com.tc.test.server.util.TcConfigBuilder;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.webapp.servlets.LongRunningRequestsServlet;
 
 import junit.framework.Test;
 
-public class LongRunningRequestsTestWithSessionLocking extends LongRunningRequestsTestBase {
+public class LongRunningRequestsWithoutSLTest extends LongRunningRequestsTestBase {
 
-  public LongRunningRequestsTestWithSessionLocking() {
-    disableAllUntil("2009-01-01");
+  public LongRunningRequestsWithoutSLTest() {
+    //
   }
 
   public static Test suite() {
-    return new LongRunningRequestsTestWithSessionLockingSetup();
+    return new LongRunningRequestsTestWithoutSessionLockingSetup();
   }
 
   public void testSessionLocking() throws Exception {
@@ -31,7 +30,7 @@ public class LongRunningRequestsTestWithSessionLocking extends LongRunningReques
                                                                              CONTEXT,
                                                                              "cmd="
                                                                                  + LongRunningRequestsServlet.LONG_RUNNING));
-    Thread[] shortRequestThreads = new Thread[5];
+    Thread[] shortRequestThreads = new Thread[20];
     for (int i = 0; i < shortRequestThreads.length; i++) {
       shortRequestThreads[i] = new Thread(
                                           new ParamBasedRequestRunner(
@@ -48,20 +47,23 @@ public class LongRunningRequestsTestWithSessionLocking extends LongRunningReques
 
     for (int i = 0; i < shortRequestThreads.length; i++) {
       if (shortRequestThreads[i].isAlive()) {
-        Assert.fail("Short Requests are BLOCKED. Short Requests are NOT supposed to be blocked with session-locking");
+        Assert
+            .fail("Short Requests are BLOCKED. Short Requests are NOT supposed to be blocked with session-locking=false");
       }
     }
     debug("Test passed");
   }
 
-  private static class LongRunningRequestsTestWithSessionLockingSetup extends LongRunningRequestsTestSetupBase {
+  private static class LongRunningRequestsTestWithoutSessionLockingSetup extends LongRunningRequestsTestSetupBase {
 
-    public LongRunningRequestsTestWithSessionLockingSetup() {
-      super(LongRunningRequestsTestWithSessionLocking.class, CONTEXT);
+    public LongRunningRequestsTestWithoutSessionLockingSetup() {
+      super(LongRunningRequestsWithoutSLTest.class, CONTEXT);
     }
 
-    protected void configureTcConfig(TcConfigBuilder tcConfigBuilder) {
-      tcConfigBuilder.addWebApplicationWithSessionLocking(CONTEXT);
+    @Override
+    public boolean isSessionLockingTrue() {
+      return false;
     }
+
   }
 }

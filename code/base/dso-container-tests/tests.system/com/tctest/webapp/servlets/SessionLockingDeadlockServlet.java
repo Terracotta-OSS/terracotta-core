@@ -39,7 +39,7 @@ public class SessionLockingDeadlockServlet extends HttpServlet {
         debug("... back from await");
         // wait for the other request to acquire the globalObject lock
         synchronized (globalObject) {
-          debug("Did not deadlock!! Session-locking is working");
+          debug("Did not deadlock!! Session-locking=false is working");
         }
         resp.getWriter().print("OK");
         return;
@@ -53,7 +53,7 @@ public class SessionLockingDeadlockServlet extends HttpServlet {
           debug("... after await");
           HttpSession session = req.getSession(true);
           session.getAttribute("dumbValue");
-          debug("Did not deadlock!! Session-locking is working");
+          debug("Did not deadlock!! Session-locking=false is working");
         }
         resp.getWriter().print("OK");
         return;

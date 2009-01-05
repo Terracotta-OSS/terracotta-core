@@ -21,12 +21,12 @@ import java.util.Date;
 import junit.framework.Test;
 
 public class SessionInvalidatorTest extends AbstractOneServerDeploymentTest {
-  private static final String CONTEXT                 = "SessionInvalidatorTest";
-  private static final String SERVLET                 = "InvalidatorServlet";
+  protected static final String CONTEXT                 = "SessionInvalidatorTest";
+  private static final String   SERVLET                 = "InvalidatorServlet";
 
-  private static final int    invalidatorSleepSeconds = 1;
-  private static final int    defaultMaxIdleSeconds   = 5;
-  private static final int    waitFactor              = 4;
+  private static final int      invalidatorSleepSeconds = 1;
+  private static final int      defaultMaxIdleSeconds   = 5;
+  private static final int      waitFactor              = 4;
 
   public static Test suite() {
     return new SessionInvalidatorTestSetup();
@@ -82,9 +82,21 @@ public class SessionInvalidatorTest extends AbstractOneServerDeploymentTest {
     Thread.sleep(waitFactor * defaultMaxIdleSeconds * 1000);
     checkCallCount("BindingListener.valueUnbound", 2, wc);
     checkCallCount("SessionListener.sessionDestroyed", 2, wc);
+    
+    // add some attribute
+    checkResponse("OK", "action=set&key=attr1", wc);
+    // explicitly invalidate the session...
+    checkResponse("OK", "action=invalidate", wc);
+    // ... and create a new one..
+    checkResponse("OK", "action=isNew", wc);
+    
+    // ... add some attribute ...
+    checkResponse("OK", "action=set&key=attr1", wc);
+    // ... again explicitly invalidate and access session, put an attribute in the session
+    checkResponse("OK", "action=invalidateAndAccess", wc);
   }
 
-  private void checkResponse(String expected, String params, WebConversation wc) throws Exception {
+  protected void checkResponse(String expected, String params, WebConversation wc) throws Exception {
     System.err.println("=== Send Request [" + (new Date()) + "]: params=[" + params + "]");
     String actual = request(server0, params, wc);
     System.err.println("=== Got Response [" + (new Date()) + "]: params=[" + params + "], response=[" + actual + "]");
@@ -100,9 +112,13 @@ public class SessionInvalidatorTest extends AbstractOneServerDeploymentTest {
     return server.ping("/" + CONTEXT + "/" + SERVLET + "?" + params, wc).getText().trim();
   }
 
-  private static class SessionInvalidatorTestSetup extends OneServerTestSetup {
+  protected static class SessionInvalidatorTestSetup extends OneServerTestSetup {
     public SessionInvalidatorTestSetup() {
       super(SessionInvalidatorTest.class, CONTEXT);
+    }
+
+    public SessionInvalidatorTestSetup(Class testClass, String context) {
+      super(testClass, context);
     }
 
     protected void configureWar(DeploymentBuilder builder) {
@@ -113,7 +129,8 @@ public class SessionInvalidatorTest extends AbstractOneServerDeploymentTest {
     }
 
     protected void configureTcConfig(TcConfigBuilder clientConfig) {
-      clientConfig.addWebApplication(CONTEXT);
+      if (isSessionLockingTrue()) clientConfig.addWebApplication(CONTEXT);
+      else clientConfig.addWebApplicationWithoutSessionLocking(CONTEXT);
       clientConfig.addInstrumentedClass(InvalidatorAttributeListener.class.getName());
       clientConfig.addInstrumentedClass(InvalidatorSessionListener.class.getName());
       clientConfig.addInstrumentedClass(InvalidatorBindingListener.class.getName());

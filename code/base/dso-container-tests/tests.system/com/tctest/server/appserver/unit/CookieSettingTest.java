@@ -31,11 +31,11 @@ import junit.framework.Test;
  * @author hhuynh
  */
 public class CookieSettingTest extends AbstractDeploymentTest {
-  private static final String  CONTEXT = "CookieSettingTest";
-  private Deployment           deployment;
-  private TcConfigBuilder      tcConfigBuilder;
-  private WebApplicationServer server0;
-  private WebApplicationServer server1;
+  protected static final String CONTEXT = "CookieSettingTest";
+  private Deployment            deployment;
+  private TcConfigBuilder       tcConfigBuilder;
+  private WebApplicationServer  server0;
+  private WebApplicationServer  server1;
 
   public CookieSettingTest() {
     //
@@ -53,7 +53,8 @@ public class CookieSettingTest extends AbstractDeploymentTest {
     super.setUp();
 
     tcConfigBuilder = new TcConfigBuilder();
-    tcConfigBuilder.addWebApplication(CONTEXT);
+    if (isSessionLockingTrue()) tcConfigBuilder.addWebApplication(CONTEXT);
+    else tcConfigBuilder.addWebApplicationWithoutSessionLocking(CONTEXT);
 
     deployment = makeDeployment();
 

@@ -25,4 +25,6 @@ public interface SessionManager {
 
   void remove(Session data, boolean unlock);
 
+  boolean isApplicationSessionLocked();
+
 }

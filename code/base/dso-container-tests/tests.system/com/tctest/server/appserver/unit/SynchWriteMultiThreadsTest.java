@@ -21,10 +21,10 @@ import junit.framework.Test;
  * Test session synchronous write with heavy load
  */
 public class SynchWriteMultiThreadsTest extends AbstractTwoServerDeploymentTest {
-  private static final String CONTEXT        = "SynchWriteMultiThreadsTest";
-  private static final String SERVLET        = "SynchWriteMultiThreadsTestServlet";
-  private static final int    INTENSITY      = 1000;
-  private static final int    NUM_OF_DRIVERS = 15;
+  protected static final String CONTEXT        = "SynchWriteMultiThreadsTest";
+  private static final String   SERVLET        = "SynchWriteMultiThreadsTestServlet";
+  private static final int      INTENSITY      = 1000;
+  private static final int      NUM_OF_DRIVERS = 15;
 
   public static Test suite() {
     return new SynchWriteMultiThreadsTestSetup();
@@ -105,9 +105,13 @@ public class SynchWriteMultiThreadsTest extends AbstractTwoServerDeploymentTest 
     }
   }
 
-  private static class SynchWriteMultiThreadsTestSetup extends TwoServerTestSetup {
+  protected static class SynchWriteMultiThreadsTestSetup extends TwoServerTestSetup {
     public SynchWriteMultiThreadsTestSetup() {
-      super(SynchWriteMultiThreadsTest.class, CONTEXT);
+      this(SynchWriteMultiThreadsTest.class, CONTEXT);
+    }
+
+    public SynchWriteMultiThreadsTestSetup(Class testClass, String context) {
+      super(testClass, context);
     }
 
     protected void configureWar(DeploymentBuilder builder) {
@@ -115,7 +119,8 @@ public class SynchWriteMultiThreadsTest extends AbstractTwoServerDeploymentTest 
     }
 
     protected void configureTcConfig(TcConfigBuilder clientConfig) {
-      clientConfig.addWebApplicationWithSynchronousWrite(CONTEXT);
+      if (isSessionLockingTrue()) clientConfig.addWebApplicationWithSynchronousWrite(CONTEXT);
+      else clientConfig.addWebApplication(CONTEXT, true, false);
     }
   }
 }

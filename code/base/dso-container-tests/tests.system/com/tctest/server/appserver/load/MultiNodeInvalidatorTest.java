@@ -67,7 +67,8 @@ public class MultiNodeInvalidatorTest extends AbstractDeploymentTest {
       configBuilder = new TcConfigBuilder();
       configBuilder.addRoot(MultiNodeInvalidatorListener.class.getName() + ".sessionIDs", "sessionIDs");
       configBuilder.addAutoLock("* " + MultiNodeInvalidatorListener.class.getName() + ".*(..)", "write");
-      configBuilder.addWebApplication(CONTEXT);
+      if (isSessionLockingTrue()) configBuilder.addWebApplication(CONTEXT);
+      else configBuilder.addWebApplicationWithoutSessionLocking(CONTEXT);
     }
   }
 

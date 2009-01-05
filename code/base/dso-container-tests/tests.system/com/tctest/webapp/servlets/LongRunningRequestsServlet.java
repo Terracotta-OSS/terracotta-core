@@ -13,7 +13,7 @@ import javax.servlet.http.HttpSession;
 
 public class LongRunningRequestsServlet extends HttpServlet {
 
-  public static final int    LONG_RUNNING_REQUEST_DURATION_SECS = 30;
+  public static final int    LONG_RUNNING_REQUEST_DURATION_SECS = 90;
   public static final String CREATE_SESSION                     = "createSession";
   public static final String LONG_RUNNING                       = "longRunning";
   public static final String NORMAL_SHORT_REQUEST               = "shortRequest";
