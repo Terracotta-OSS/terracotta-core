@@ -12,22 +12,22 @@ import com.tc.exception.ExceptionWrapperImpl;
  * @author steve
  */
 public class UnlockedSharedObjectException extends RuntimeException {
-  
+
   private static final ExceptionWrapper wrapper = new ExceptionWrapperImpl();
-  
-  private UnlockedSharedObjectException(String message) {
+
+  private UnlockedSharedObjectException(final String message) {
     super(wrapper.wrap(message));
   }
 
-  public UnlockedSharedObjectException(String message, String threadName, long vmId) {
+  public UnlockedSharedObjectException(final String message, final String threadName, final long vmId) {
     this(UnlockedSharedObjectException.createDisplayableString(message, threadName, vmId));
   }
-  
-  public UnlockedSharedObjectException(String message, String threadName, long vmId, String details) {
-    this(UnlockedSharedObjectException.createDisplayableString(message, threadName, vmId) + "\n    " + details);
+
+  public UnlockedSharedObjectException(final String message, final String threadName, final long vmId, final String details) {
+    this(UnlockedSharedObjectException.createDisplayableString(message, threadName, vmId) + "\n" + details);
   }
-  
-  private static String createDisplayableString(String message, String threadName, long vmId) {
-    return message + "\n\n    Caused by Thread: " + threadName + "  in  VM(" + vmId + ")";
+
+  private static String createDisplayableString(final String message, final String threadName, final long vmId) {
+    return message + "\n\nCaused by Thread: " + threadName + " in VM(" + vmId + ")";
   }
 }
