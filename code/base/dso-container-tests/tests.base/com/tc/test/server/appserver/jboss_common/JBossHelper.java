@@ -6,17 +6,20 @@ package com.tc.test.server.appserver.jboss_common;
 
 import org.apache.commons.io.FileUtils;
 
+import com.tc.test.AppServerInfo;
 import com.tc.util.PortChooser;
 import com.tc.util.ReplaceLine;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 public class JBossHelper {
-  public static void startupActions(File serverDir, Collection sars) throws IOException {
-    writePortsConfig(new PortChooser(), new File(serverDir, "conf/cargo-binding.xml"));
+  public static void startupActions(File serverDir, Collection sars, AppServerInfo appServerInfo) throws IOException {
+    writePortsConfig(new PortChooser(), new File(serverDir, "conf/cargo-binding.xml"), appServerInfo);
 
     for (Iterator i = sars.iterator(); i.hasNext();) {
       File sarFile = (File) i.next();
@@ -25,26 +28,41 @@ public class JBossHelper {
     }
   }
 
-  private static void writePortsConfig(PortChooser pc, File dest) throws IOException {
-    ReplaceLine.Token[] tokens = new ReplaceLine.Token[13];
+  private static void writePortsConfig(PortChooser pc, File dest, AppServerInfo appServerInfo) throws IOException {
+    List<ReplaceLine.Token> tokens = new ArrayList<ReplaceLine.Token>();
+
     int rmiPort = pc.chooseRandomPort();
     int rmiObjPort = new PortChooser().chooseRandomPort();
 
-    tokens[0] = new ReplaceLine.Token(14, "(RmiPort\">[0-9]+)", "RmiPort\">" + rmiPort);
-    tokens[1] = new ReplaceLine.Token(50, "(port=\"[0-9]+)", "port=\"" + rmiPort);
-    tokens[2] = new ReplaceLine.Token(24, "(port=\"[0-9]+)", "port=\"" + pc.chooseRandomPort());
-    tokens[3] = new ReplaceLine.Token(32, "(port=\"[0-9]+)", "port=\"" + rmiObjPort);
-    tokens[4] = new ReplaceLine.Token(64, "(port=\"[0-9]+)", "port=\"" + rmiObjPort);
-    tokens[5] = new ReplaceLine.Token(40, "(port=\"[0-9]+)", "port=\"" + pc.chooseRandomPort());
-    tokens[6] = new ReplaceLine.Token(94, "(port=\"[0-9]+)", "port=\"" + pc.chooseRandomPort());
-    tokens[7] = new ReplaceLine.Token(101, "(port=\"[0-9]+)", "port=\"" + pc.chooseRandomPort());
-    tokens[8] = new ReplaceLine.Token(112, "(port=\"[0-9]+)", "port=\"" + pc.chooseRandomPort());
-    tokens[9] = new ReplaceLine.Token(57, "(port=\"[0-9]+)", "port=\"" + pc.chooseRandomPort());
-    tokens[10] = new ReplaceLine.Token(74, "(port=\"[0-9]+)", "port=\"" + pc.chooseRandomPort());
-    tokens[11] = new ReplaceLine.Token(177, "(select=\"[^\"]+\")", "select=\"" + pc.chooseRandomPort() + "\"");
-    tokens[12] = new ReplaceLine.Token(178, "(select=\"[^\"]+\")", "select=\"" + pc.chooseRandomPort() + "\"");
+    tokens.add(new ReplaceLine.Token(14, "(RmiPort\">[0-9]+)", "RmiPort\">" + rmiPort));
+    tokens.add(new ReplaceLine.Token(50, "(port=\"[0-9]+)", "port=\"" + rmiPort));
+    tokens.add(new ReplaceLine.Token(24, "(port=\"[0-9]+)", "port=\"" + pc.chooseRandomPort()));
+    tokens.add(new ReplaceLine.Token(32, "(port=\"[0-9]+)", "port=\"" + rmiObjPort));
+    tokens.add(new ReplaceLine.Token(64, "(port=\"[0-9]+)", "port=\"" + rmiObjPort));
+    tokens.add(new ReplaceLine.Token(40, "(port=\"[0-9]+)", "port=\"" + pc.chooseRandomPort()));
+    tokens.add(new ReplaceLine.Token(94, "(port=\"[0-9]+)", "port=\"" + pc.chooseRandomPort()));
+    tokens.add(new ReplaceLine.Token(101, "(port=\"[0-9]+)", "port=\"" + pc.chooseRandomPort()));
+    tokens.add(new ReplaceLine.Token(112, "(port=\"[0-9]+)", "port=\"" + pc.chooseRandomPort()));
+    tokens.add(new ReplaceLine.Token(57, "(port=\"[0-9]+)", "port=\"" + pc.chooseRandomPort()));
+    tokens.add(new ReplaceLine.Token(74, "(port=\"[0-9]+)", "port=\"" + pc.chooseRandomPort()));
+    tokens.add(new ReplaceLine.Token(177, "(select=\"[^\"]+\")", "select=\"" + pc.chooseRandomPort() + "\""));
+    tokens.add(new ReplaceLine.Token(178, "(select=\"[^\"]+\")", "select=\"" + pc.chooseRandomPort() + "\""));
 
-    ReplaceLine.parseFile(tokens, dest);
+    // XXX: This isn't great, but it will do for now. Each version of cargo-binding.xml should have it's own definition
+    // for this stuff, as opposed to the conditional logic in here
+    if (appServerInfo.getMajor().equals("4") && appServerInfo.getMinor().startsWith("2")) {
+      tokens.add(new ReplaceLine.Token(39, "(port=\"[0-9]+)", "port=\"" + pc.chooseRandomPort()));
+      tokens.add(new ReplaceLine.Token(56, "(port=\"[0-9]+)", "port=\"" + pc.chooseRandomPort()));
+      tokens.add(new ReplaceLine.Token(62, "(port=\"[0-9]+)", "port=\"" + pc.chooseRandomPort()));
+
+      int ejb3HandlerPort = pc.chooseRandomPort();
+      tokens.add(new ReplaceLine.Token(170, "(:3873)", ":" + ejb3HandlerPort));
+      tokens.add(new ReplaceLine.Token(172, "(port=\"[0-9]+)", "port=\"" + ejb3HandlerPort));
+
+      tokens.add(new ReplaceLine.Token(109, "(port=\"[0-9]+)", "port=\"" + pc.chooseRandomPort()));
+      tokens.add(new ReplaceLine.Token(264, "(port=\"[0-9]+)", "port=\"" + pc.chooseRandomPort()));
+    }
+
+    ReplaceLine.parseFile(tokens.toArray(new ReplaceLine.Token[] {}), dest);
   }
-
 }

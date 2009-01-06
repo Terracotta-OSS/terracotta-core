@@ -8,6 +8,7 @@ import org.apache.commons.io.FileUtils;
 import org.codehaus.cargo.util.internal.log.AbstractLogger;
 import org.codehaus.cargo.util.log.LogLevel;
 
+import com.tc.test.AppServerInfo;
 import com.tc.test.Handle;
 import com.tc.text.Banner;
 
@@ -60,6 +61,10 @@ public abstract class AbstractAppServer implements AppServer {
     return installation.sandboxDirectory();
   }
 
+  protected AppServerInfo appServerInfo() {
+    return installation.appServerInfo();
+  }
+
   /**
    * Implementing classes call this method to assign a series of properties to be available as system properties to the
    * appserver's JVM. Properties are optionally set by calling {@link StandardAppServerParameters}, passing a
@@ -98,6 +103,7 @@ public abstract class AbstractAppServer implements AppServer {
       this.instance = instance;
     }
 
+    @Override
     protected void doLog(LogLevel level, String message, String category) {
       DateFormat FORMAT = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss.SSS");
       String msg = "[" + FORMAT.format(new Date()) + "]" + "[" + level.getLevel() + "][" + instance + "] " + message;
