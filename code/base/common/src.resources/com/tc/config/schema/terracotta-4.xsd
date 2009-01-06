@@ -492,7 +492,7 @@
 
   <xs:complexType name="update-check">
     <xs:all>
-      <xs:element name="enabled" type="xs:boolean" minOccurs="0" default="false"/>
+      <xs:element name="enabled" type="xs:boolean" minOccurs="0" default="true"/>
       <xs:element name="period-days" type="positive-int" minOccurs="0" default="7"/>
     </xs:all>
   </xs:complexType>
