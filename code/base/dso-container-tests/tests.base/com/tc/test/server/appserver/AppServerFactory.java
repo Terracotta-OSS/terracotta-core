@@ -12,6 +12,7 @@ import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.glassfishv1.GlassfishV1AppServerFactory;
 import com.tc.test.server.appserver.glassfishv2.GlassfishV2AppServerFactory;
 import com.tc.test.server.appserver.jboss3x.JBoss3xAppServerFactory;
+import com.tc.test.server.appserver.jboss42x.JBoss42xAppServerFactory;
 import com.tc.test.server.appserver.jboss4x.JBoss4xAppServerFactory;
 import com.tc.test.server.appserver.jetty6x.Jetty6xAppServerFactory;
 import com.tc.test.server.appserver.resin3x.Resin3xAppServerFactory;
@@ -56,6 +57,7 @@ public abstract class AppServerFactory {
     AppServerInfo appServerInfo = TestConfigObject.getInstance().appServerInfo();
     String factoryName = appServerInfo.getName();
     String majorVersion = appServerInfo.getMajor();
+    String minorVersion = appServerInfo.getMinor();
     System.out.println("APPSERVERINFO: " + appServerInfo);
 
     switch (appServerInfo.getId()) {
@@ -73,7 +75,12 @@ public abstract class AppServerFactory {
         break;
       case AppServerInfo.JBOSS:
         if ("3".equals(majorVersion)) return new JBoss3xAppServerFactory(new ProtectedKey());
-        if ("4".equals(majorVersion)) return new JBoss4xAppServerFactory(new ProtectedKey());
+        if ("4".equals(majorVersion)) {
+          if (minorVersion.startsWith("0")) {
+            return new JBoss4xAppServerFactory(new ProtectedKey());
+          } else if (minorVersion.startsWith("2")) { return new JBoss42xAppServerFactory(new ProtectedKey()); }
+        }
+
         break;
       case AppServerInfo.GLASSFISH:
         if ("v1".equals(majorVersion)) return new GlassfishV1AppServerFactory(new ProtectedKey());
