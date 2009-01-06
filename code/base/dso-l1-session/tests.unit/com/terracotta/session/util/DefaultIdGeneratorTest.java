@@ -115,6 +115,7 @@ public class DefaultIdGeneratorTest extends TestCase {
     final String browserId = key + "!" + serverId;
     final String externalId = key + "!" + newServerId;
     DefaultIdGenerator dig = new DefaultIdGenerator(10, newServerId);
+    dig.initialize(true);
     SessionId id = dig.makeInstanceFromBrowserId(browserId);
     assertEquals(key, id.getKey());
     assertEquals(browserId, id.getRequestedId());

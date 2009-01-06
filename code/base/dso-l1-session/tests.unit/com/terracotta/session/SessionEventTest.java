@@ -27,6 +27,7 @@ public class SessionEventTest extends TestCase {
     maxIdleSeconds = 123;
     serverId = "someServerId";
     idGenerator = new DefaultIdGenerator(20, serverId);
+    idGenerator.initialize(true);
     sessionId = idGenerator.generateNewId();
     eventMgr = new MockLifecycleEventMgr();
     contextMgr = new MockContextMgr();
