@@ -209,60 +209,56 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
   }
 
   private void basicSendObjects(ClientID requestedNodeID, Collection objs, ObjectIDSet requestedObjectIDs,
-                                ObjectIDSet missingObjectIDs, boolean isServerInitiated, int maxRequestDepth) {
+                                ObjectIDSet missingObjectIDs, boolean isServerInitiated, int maxRequestDepth) {      
 
-    Map<ClientID, BatchAndSend> messageMap = new HashMap<ClientID, BatchAndSend>();
-
-    /**
-     * will contain the object which are not present in the client out of the returned ones
-     */
-    Map<ClientID, Set<ObjectID>> clientNewIDsMap = new HashMap<ClientID, Set<ObjectID>>();
-
-    LinkedList objectsInOrder = new LinkedList();
-    try {
-
-      Set ids = new HashSet(Math.max((int) (objs.size() / .75f) + 1, 16));
-      for (Iterator i = objs.iterator(); i.hasNext();) {
-        ManagedObject mo = (ManagedObject) i.next();
-        ids.add(mo.getID());
-        if (requestedObjectIDs.contains(mo.getID())) {
-          objectsInOrder.addLast(mo);
-        } else {
-          objectsInOrder.addFirst(mo);
-        }
+    // Create ordered list of objects
+    LinkedList objectsInOrder = new LinkedList();    
+    Set ids = new HashSet(Math.max((int) (objs.size() / .75f) + 1, 16));
+    for (Iterator i = objs.iterator(); i.hasNext();) {
+      ManagedObject mo = (ManagedObject) i.next();
+      ids.add(mo.getID());
+      if (requestedObjectIDs.contains(mo.getID())) {
+        objectsInOrder.addLast(mo);
+      } else {
+        objectsInOrder.addFirst(mo);
       }
+    }
 
-      RequestedObject reqObj = null;
-      Set<ClientID> clientList = null;
-      long batchID = batchIDSequence.next();
+    // Create map of clients and objects to be sent
+    Set<ClientID> clientList = null;
+    long batchID = batchIDSequence.next();
+    RequestedObject reqObj = new RequestedObject(requestedObjectIDs, maxRequestDepth);
+    synchronized (this) {
+      clientList = this.objectRequestCache.remove(reqObj);
+    }
 
-      reqObj = new RequestedObject(requestedObjectIDs, maxRequestDepth);
+    Map<ClientID, Set<ObjectID>> clientNewIDsMap = new HashMap<ClientID, Set<ObjectID>>();    
+    Map<ClientID, BatchAndSend> messageMap = new HashMap<ClientID, BatchAndSend>();    
 
-      synchronized (this) {
-        clientList = this.objectRequestCache.remove(reqObj);
-      }
-
-      // prepare clients
-      for (Iterator iter = clientList.iterator(); iter.hasNext();) {
-        ClientID clientID = (ClientID) iter.next();
-
-        Set newIds = stateManager.addReferences(clientID, ids);
-        clientNewIDsMap.put(clientID, newIds);
-
+    for (Iterator iter = clientList.iterator(); iter.hasNext();) {
+      ClientID clientID = (ClientID) iter.next();
+      try {
         // make batch and send object for each client.
         MessageChannel channel = channelManager.getActiveChannel(clientID);
         messageMap.put(clientID, new BatchAndSend(channel, batchID));
-      }
+        // get set of objects which are not present in the client out of the returned ones
+        Set newIds = stateManager.addReferences(clientID, ids);
+        clientNewIDsMap.put(clientID, newIds);
+      } catch (NoSuchChannelException e) {
+        logger.warn("Not sending objects to client " + clientID + ": " + e);
+      }                
+    }
 
+    // send objects to each client
+    if (!messageMap.isEmpty()) {
       boolean requestDebug = objectStatsRecorder.getRequestDebug();
 
       for (Iterator<Map.Entry<ClientID, Set<ObjectID>>> i = clientNewIDsMap.entrySet().iterator(); i.hasNext();) {
         Map.Entry<ClientID, Set<ObjectID>> entry = i.next();
+        final boolean isLast = !i.hasNext();
         ClientID clientID = entry.getKey();
         Set newIDs = entry.getValue();
-        BatchAndSend batchAndSend = messageMap.get(clientID);
-
-        final boolean isLast = !i.hasNext();
+        BatchAndSend batchAndSend = messageMap.get(clientID);                
 
         for (Iterator iter = objectsInOrder.iterator(); iter.hasNext();) {
           ManagedObject mo = (ManagedObject) iter.next();
@@ -285,7 +281,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
           logger.warn("Server Initiated lookup. Ignoring Missing Objects : " + missingObjectIDs);
         } else {
           for (Iterator<Map.Entry<ClientID, BatchAndSend>> missingIterator = messageMap.entrySet().iterator(); missingIterator
-              .hasNext();) {
+          .hasNext();) {
             Map.Entry<ClientID, BatchAndSend> entry = missingIterator.next();
             ClientID clientID = entry.getKey();
             BatchAndSend batchAndSend = entry.getValue();
@@ -295,14 +291,14 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
         }
       }
 
-    } catch (NoSuchChannelException e) {
-      for (Iterator i = objectsInOrder.iterator(); i.hasNext();) {
-        objectManager.releaseReadOnly((ManagedObject) i.next());
-      }
-    } finally {
       for (Iterator<BatchAndSend> iterator = messageMap.values().iterator(); iterator.hasNext();) {
         BatchAndSend batchAndSend = iterator.next();
         batchAndSend.flush();
+      }
+    } else {
+      // no connected clients to send to
+      for (Iterator i = objectsInOrder.iterator(); i.hasNext();) {
+        objectManager.releaseReadOnly((ManagedObject) i.next());
       }
     }
   }

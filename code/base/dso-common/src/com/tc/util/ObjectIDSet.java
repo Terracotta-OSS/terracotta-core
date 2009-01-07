@@ -158,6 +158,18 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
     }
     return sb.append(']').toString();
   }
+  
+  public String toVerboseString() {
+    
+    StringBuffer sb = new StringBuffer("ObjectIDSet [ ");
+    for(Iterator<ObjectID> iter = iterator(); iter.hasNext();) {
+      sb.append(iter.next() + " , ");
+    }
+    
+    sb.append(" ] ");
+    
+    return sb.toString();
+  }
 
   public String toShortString() {
     StringBuffer sb = new StringBuffer("ObjectIDSet " + getCompressionDetails() + "[");
