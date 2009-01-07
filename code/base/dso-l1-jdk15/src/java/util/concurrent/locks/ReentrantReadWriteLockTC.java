@@ -44,6 +44,12 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
       }
     }
 
+    public void lockInterruptibly() throws InterruptedException {
+      if (ManagerUtil.isManaged(lock)) {
+        ManagerUtil.monitorEnterInterruptibly(lock, lockLevel);
+      }
+    }
+    
     public boolean tryLock() {
       if (ManagerUtil.isManaged(lock)) {
         return ManagerUtil.tryMonitorEnter(lock, 0, lockLevel);
@@ -97,8 +103,8 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
     public void lockInterruptibly() throws InterruptedException {
       if (Thread.interrupted()) { throw new InterruptedException(); }
 
+      dsoLock.lockInterruptibly();
       try {
-        dsoLock.lock();
         super.lockInterruptibly();
       } catch (InterruptedException e) {
         dsoLock.unlock();
@@ -178,8 +184,8 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
     public void lockInterruptibly() throws InterruptedException {
       if (Thread.interrupted()) { throw new InterruptedException(); }
 
+      dsoLock.lockInterruptibly();
       try {
-        dsoLock.lock();
         super.lockInterruptibly();
       } catch (InterruptedException e) {
         dsoLock.unlock();
