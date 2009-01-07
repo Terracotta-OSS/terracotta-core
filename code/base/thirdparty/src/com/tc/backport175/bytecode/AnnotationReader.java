@@ -932,6 +932,8 @@ public class AnnotationReader {
         final byte[] bytes;
         try {
             bytes = getBytecodeFor(className, loader);
+        } catch (ClassNotFoundException e) {
+          return;
         } catch (Exception e) {
           // e.printStackTrace();
           System.err.println("[WARN] " + e.getMessage());
