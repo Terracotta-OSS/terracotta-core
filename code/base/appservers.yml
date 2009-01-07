@@ -16,6 +16,10 @@ tomcat-5.5.*:
     min_version: 1.5.0
     max_version: 999.999.999_999    
 
+jboss-4.2.*:
+    min_version: 1.5.0
+    max_version: 999.999.999_999
+	
 tomcat-6.*: 
     min_version: 1.5.0
     max_version: 999.999.999_999  
