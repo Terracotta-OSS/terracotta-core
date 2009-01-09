@@ -280,6 +280,10 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     registry.registerActionInstance(new SRAHttpSessions());
   }
 
+  protected TunnelingEventHandler createTunnelingEventHandler(ClientMessageChannel ch) {
+    return new TunnelingEventHandler(ch);
+  }
+
   public synchronized void start() {
     TCProperties tcProperties = TCPropertiesImpl.getProperties();
     l1Properties = tcProperties.getPropertiesFor("l1");
@@ -423,7 +427,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     }
 
     // Set up the JMX management stuff
-    final TunnelingEventHandler teh = new TunnelingEventHandler(channel.channel());
+    final TunnelingEventHandler teh = createTunnelingEventHandler(channel.channel());
     l1Management = new L1Management(teh, statisticsAgentSubSystem, runtimeLogger, manager.getInstrumentationLogger(),
                                     config.rawConfigText(), this);
     l1Management.start(createDedicatedMBeanServer);

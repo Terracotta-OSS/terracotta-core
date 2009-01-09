@@ -104,18 +104,16 @@ public final class TunnelingEventHandler extends AbstractEventHandler implements
   }
 
   public void notifyChannelEvent(final ChannelEvent event) {
-    if (event.getChannel() == channel) {
-      if (event.getType() == ChannelEventType.TRANSPORT_CONNECTED_EVENT) {
-        synchronized (jmxReadyLock) {
-          transportConnected = true;
-        }
-        sendJmxReadyMessageIfNecessary();
-      } else if (event.getType() == ChannelEventType.CHANNEL_CLOSED_EVENT
-                 || event.getType() == ChannelEventType.TRANSPORT_DISCONNECTED_EVENT) {
-        reset();
-        synchronized (jmxReadyLock) {
-          transportConnected = false;
-        }
+    if (event.getType() == ChannelEventType.TRANSPORT_CONNECTED_EVENT) {
+      synchronized (jmxReadyLock) {
+        transportConnected = true;
+      }
+      sendJmxReadyMessageIfNecessary();
+    } else if (event.getType() == ChannelEventType.CHANNEL_CLOSED_EVENT
+               || event.getType() == ChannelEventType.TRANSPORT_DISCONNECTED_EVENT) {
+      reset();
+      synchronized (jmxReadyLock) {
+        transportConnected = false;
       }
     }
   }

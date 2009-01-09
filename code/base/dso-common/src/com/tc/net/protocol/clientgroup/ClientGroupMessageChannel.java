@@ -17,6 +17,8 @@ public interface ClientGroupMessageChannel extends ClientMessageChannel {
   public ClientMessageChannel getChannel(GroupID groupID);
 
   public OrderedGroupIDs getOrderedGroupIDs();
+  
+  public ClientMessageChannel getActiveCoordinator();
 
   public GroupID getCoordinatorGroupID();
 
