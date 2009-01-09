@@ -48,7 +48,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ClientTransactionManagerImpl implements ClientTransactionManager {
   private static final TCLogger                logger          = TCLogging
@@ -85,7 +84,12 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
 
   private final boolean                        sendErrors      = System.getProperty("project.name") != null;
 
-  private final List                           locksWithoutTxn = new CopyOnWriteArrayList<LockID>();
+  private final ThreadLocal<List<LockID>>      locksWithoutTxn = new ThreadLocal<List<LockID>>() {
+                                                                 @Override
+                                                                 protected List<LockID> initialValue() {
+                                                                   return new LinkedList<LockID>();
+                                                                 }
+                                                               };
 
   public ClientTransactionManagerImpl(final ClientIDProvider cidProvider, final ClientObjectManager objectManager,
                                       final ThreadLockManager lockManager, final ClientTransactionFactory txFactory,
@@ -209,7 +213,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
 
     final LockID lockID = lockManager.lockIDFor(lockName);
     lockManager.lock(lockID, lockLevel, lockObjectType, contextInfo);
-    locksWithoutTxn.add(lockID);
+    locksWithoutTxn.get().add(lockID);
     return true;
   }
 
@@ -410,10 +414,10 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     if (isTransactionLoggingDisabled() || objectManager.isCreationInProgress()) { return; }
 
     LockID lockID = lockManager.lockIDFor(lockName);
-    // if the lockName is NOT associated with any transactions, just unlock and return
-    if (locksWithoutTxn.contains(lockID)) {
+    // if the current thread holds the lock and the lock is NOT associated with any transactions, just unlock and return
+    if (locksWithoutTxn.get().contains(lockID)) {
       lockManager.unlock(lockID);
-      locksWithoutTxn.remove(lockID);
+      locksWithoutTxn.get().remove(lockID);
       return;
     }
 
