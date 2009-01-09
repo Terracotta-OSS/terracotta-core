@@ -4,19 +4,14 @@
  */
 package com.tctest;
 
-import java.util.Date;
-
 public class TryLockTest extends TransparentTestBase {
-  
-  public TryLockTest() {
-    disableAllUntil(new Date(Long.MAX_VALUE));
-  }
-  
+  @Override
   protected Class getApplicationClass() {
     return TryLockTestApp.class;
   }
 
-  public void doSetUp(TransparentTestIface t) throws Exception {
+  @Override
+  public void doSetUp(final TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(TryLockTestApp.NODE_COUNT);
     t.initializeTestRunner();
   }
