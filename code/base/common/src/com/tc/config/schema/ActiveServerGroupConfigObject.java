@@ -4,6 +4,7 @@
  */
 package com.tc.config.schema;
 
+import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlObject;
 
 import com.tc.config.schema.context.ConfigContext;
@@ -92,10 +93,10 @@ public class ActiveServerGroupConfigObject extends BaseNewConfigObject implement
   }
 
   public static ActiveServerGroup getDefaultActiveServerGroup(DefaultValueProvider defaultValueProvider,
-                                                              MutableBeanRepository serversBeanRepository, Ha commonHa)
-      throws ConfigurationSetupException {
+                                                              MutableBeanRepository serversBeanRepository)
+      throws ConfigurationSetupException, XmlException {
     ActiveServerGroup asg = ActiveServerGroup.Factory.newInstance();
-    asg.setHa(commonHa);
+    asg.setHa(NewHaConfigObject.getDefaultCommonHa(defaultValueProvider, serversBeanRepository));
     Members members = asg.addNewMembers();
     Server[] serverArray = ((Servers) serversBeanRepository.bean()).getServerArray();
 

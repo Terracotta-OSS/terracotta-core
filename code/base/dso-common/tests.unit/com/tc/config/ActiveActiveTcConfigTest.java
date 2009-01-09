@@ -9,19 +9,327 @@ import org.apache.commons.io.IOUtils;
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.ActiveServerGroupsConfig;
 import com.tc.config.schema.MembersConfig;
+import com.tc.config.schema.NewHaConfigObject;
+import com.tc.config.schema.defaults.FromSchemaDefaultValueProvider;
+import com.tc.config.schema.repository.StandardBeanRepository;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
+import com.terracottatech.config.Ha;
+import com.terracottatech.config.Servers;
 
 import java.io.File;
 import java.io.FileOutputStream;
 
 public class ActiveActiveTcConfigTest extends TCTestCase {
   private File tcConfig = null;
+  
+  public void testHA1(){
+    try {
+      tcConfig = getTempFile("tc-config-test.xml");
+      String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
+                      + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
+                      + "\n<servers>"
+                      + "\n      <server name=\"server1\">"
+                      + "\n       <data>/Users/rsingh/terracotta/server1-data</data>"
+                      + "\n       <logs>/Users/rsingh/terracotta/server1-logs</logs>"
+                      + "\n       <statistics>/Users/rsingh/terracotta/server1-stats</statistics>"
+                      + "\n       <dso-port>9510</dso-port>"
+                      + "\n       <jmx-port>9520</jmx-port>"
+                      + "\n       <l2-group-port>9530</l2-group-port>"
+                      + "\n      <dso>" 
+                      + "\n        <persistence>"
+                      + "\n          <mode>permanent-store</mode>" 
+                      + "\n        </persistence>" 
+                      + "\n      </dso>"
+                      + "\n      </server>" 
+                      + "\n      <server name=\"server2\">" 
+                      + "\n       <data>/Users/rsingh/terracotta/server2-data</data>"
+                      + "\n       <logs>/Users/rsingh/terracotta/server2-logs</logs>"
+                      + "\n       <statistics>/Users/rsingh/terracotta/server2-stats</statistics>"
+                      + "\n       <dso-port>9511</dso-port>"
+                      + "\n       <jmx-port>9521</jmx-port>"
+                      + "\n       <l2-group-port>9531</l2-group-port>"
+                      + "\n      <dso>"
+                      + "\n        <persistence>" 
+                      + "\n          <mode>permanent-store</mode>"
+                      + "\n        </persistence>" 
+                      + "\n      </dso>" 
+                      + "\n</server>" 
+                      + "\n<active-server-groups>" 
+                      + "\n   <active-server-group>"
+                      + "\n     <members>" 
+                      + "\n       <member>server1</member>"
+                      + "\n     </members>"
+                      + "\n   <ha>" 
+                      + "\n       <mode>networked-active-passive</mode>"
+                      + "\n       <networked-active-passive>"
+                      + "\n         <election-time>1234</election-time>"
+                      + "\n       </networked-active-passive>" 
+                      + "\n   </ha>"
+                      + "\n   </active-server-group>"
+                      + "\n   <active-server-group>"
+                      + "\n     <members>" 
+                      + "\n       <member>server2</member>"
+                      + "\n     </members>"
+                      + "\n   <ha>" 
+                      + "\n       <mode>disk-based-active-passive</mode>"
+                      + "\n       <networked-active-passive>"
+                      + "\n         <election-time>3451</election-time>"
+                      + "\n       </networked-active-passive>" 
+                      + "\n   </ha>"
+                      + "\n   </active-server-group>"
+                      + "\n</active-server-groups>"
+                      + "\n</servers>"
+                      + "\n</tc:tc-config>";
+      writeConfigFile(config);
+      TestTVSConfigurationSetupManagerFactory factory = new TestTVSConfigurationSetupManagerFactory(
+                                                                                                    TestTVSConfigurationSetupManagerFactory.MODE_CENTRALIZED_CONFIG,
+                                                                                                    null,
+                                                                                                    new FatalIllegalConfigurationChangeHandler());
+      L2TVSConfigurationSetupManager configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server1");
+      Assert.assertEquals(1234, configSetupMgr.haConfig().electionTime());
+      Assert.eval(configSetupMgr.haConfig().haMode().equals("networked-active-passive"));
+      
+      configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server2");
+      Assert.assertEquals(3451, configSetupMgr.haConfig().electionTime());
+      Assert.eval(configSetupMgr.haConfig().haMode().equals("disk-based-active-passive"));
+    } catch (Exception e) {
+      throw new AssertionError(e);
+    }
+  }
+  
+  public void testHA2(){
+    try {
+      tcConfig = getTempFile("tc-config-test.xml");
+      String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
+                      + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
+                      + "\n<servers>"
+                      + "\n      <server name=\"server1\">"
+                      + "\n       <data>/Users/rsingh/terracotta/server1-data</data>"
+                      + "\n       <logs>/Users/rsingh/terracotta/server1-logs</logs>"
+                      + "\n       <statistics>/Users/rsingh/terracotta/server1-stats</statistics>"
+                      + "\n       <dso-port>9510</dso-port>"
+                      + "\n       <jmx-port>9520</jmx-port>"
+                      + "\n       <l2-group-port>9530</l2-group-port>"
+                      + "\n      <dso>" 
+                      + "\n        <persistence>"
+                      + "\n          <mode>permanent-store</mode>" 
+                      + "\n        </persistence>" 
+                      + "\n      </dso>"
+                      + "\n      </server>" 
+                      + "\n      <server name=\"server2\">" 
+                      + "\n       <data>/Users/rsingh/terracotta/server2-data</data>"
+                      + "\n       <logs>/Users/rsingh/terracotta/server2-logs</logs>"
+                      + "\n       <statistics>/Users/rsingh/terracotta/server2-stats</statistics>"
+                      + "\n       <dso-port>9511</dso-port>"
+                      + "\n       <jmx-port>9521</jmx-port>"
+                      + "\n       <l2-group-port>9531</l2-group-port>"
+                      + "\n      <dso>"
+                      + "\n        <persistence>" 
+                      + "\n          <mode>permanent-store</mode>"
+                      + "\n        </persistence>" 
+                      + "\n      </dso>" 
+                      + "\n</server>" 
+                      + "\n<active-server-groups>" 
+                      + "\n   <active-server-group>"
+                      + "\n     <members>" 
+                      + "\n       <member>server1</member>"
+                      + "\n     </members>"
+                      + "\n   <ha>" 
+                      + "\n       <mode>networked-active-passive</mode>"
+                      + "\n       <networked-active-passive>"
+                      + "\n         <election-time>1234</election-time>"
+                      + "\n       </networked-active-passive>" 
+                      + "\n   </ha>"
+                      + "\n   </active-server-group>"
+                      + "\n   <active-server-group>"
+                      + "\n     <members>" 
+                      + "\n       <member>server2</member>"
+                      + "\n     </members>"
+                      + "\n   <ha>" 
+                      + "\n       <mode>disk-based-active-passive</mode>"
+                      + "\n       <networked-active-passive>"
+                      + "\n         <election-time>3451</election-time>"
+                      + "\n       </networked-active-passive>" 
+                      + "\n   </ha>"
+                      + "\n   </active-server-group>"
+                      + "\n</active-server-groups>"
+                      + "\n<ha>"
+                      + "\n       <mode>networked-active-passive</mode>"
+                      + "\n       <networked-active-passive>"
+                      + "\n         <election-time>7891</election-time>"
+                      + "\n       </networked-active-passive>"
+                      + "\n</ha>"
+                      + "\n</servers>"
+                      + "\n</tc:tc-config>";
+      writeConfigFile(config);
+      TestTVSConfigurationSetupManagerFactory factory = new TestTVSConfigurationSetupManagerFactory(
+                                                                                                    TestTVSConfigurationSetupManagerFactory.MODE_CENTRALIZED_CONFIG,
+                                                                                                    null,
+                                                                                                    new FatalIllegalConfigurationChangeHandler());
+      L2TVSConfigurationSetupManager configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server1");
+      Assert.assertEquals(1234, configSetupMgr.haConfig().electionTime());
+      Assert.eval(configSetupMgr.haConfig().haMode().equals("networked-active-passive"));
+      
+      configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server2");
+      Assert.assertEquals(3451, configSetupMgr.haConfig().electionTime());
+      Assert.eval(configSetupMgr.haConfig().haMode().equals("disk-based-active-passive"));
+    } catch (Exception e) {
+      throw new AssertionError(e);
+    }
+  }
+  
+  public void testHA3(){
+    try {
+      tcConfig = getTempFile("tc-config-test.xml");
+      String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
+                      + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
+                      + "\n<servers>"
+                      + "\n      <server name=\"server1\">"
+                      + "\n       <data>/Users/rsingh/terracotta/server1-data</data>"
+                      + "\n       <logs>/Users/rsingh/terracotta/server1-logs</logs>"
+                      + "\n       <statistics>/Users/rsingh/terracotta/server1-stats</statistics>"
+                      + "\n       <dso-port>9510</dso-port>"
+                      + "\n       <jmx-port>9520</jmx-port>"
+                      + "\n       <l2-group-port>9530</l2-group-port>"
+                      + "\n      <dso>" 
+                      + "\n        <persistence>"
+                      + "\n          <mode>permanent-store</mode>" 
+                      + "\n        </persistence>" 
+                      + "\n      </dso>"
+                      + "\n      </server>" 
+                      + "\n      <server name=\"server2\">" 
+                      + "\n       <data>/Users/rsingh/terracotta/server2-data</data>"
+                      + "\n       <logs>/Users/rsingh/terracotta/server2-logs</logs>"
+                      + "\n       <statistics>/Users/rsingh/terracotta/server2-stats</statistics>"
+                      + "\n       <dso-port>9511</dso-port>"
+                      + "\n       <jmx-port>9521</jmx-port>"
+                      + "\n       <l2-group-port>9531</l2-group-port>"
+                      + "\n      <dso>"
+                      + "\n        <persistence>" 
+                      + "\n          <mode>permanent-store</mode>"
+                      + "\n        </persistence>" 
+                      + "\n      </dso>" 
+                      + "\n</server>" 
+                      + "\n<active-server-groups>" 
+                      + "\n   <active-server-group>"
+                      + "\n     <members>" 
+                      + "\n       <member>server1</member>"
+                      + "\n     </members>"
+                      + "\n   <ha>" 
+                      + "\n       <mode>networked-active-passive</mode>"
+                      + "\n       <networked-active-passive>"
+                      + "\n         <election-time>1234</election-time>"
+                      + "\n       </networked-active-passive>" 
+                      + "\n   </ha>"
+                      + "\n   </active-server-group>"
+                      + "\n   <active-server-group>"
+                      + "\n     <members>" 
+                      + "\n       <member>server2</member>"
+                      + "\n     </members>"
+                      + "\n   </active-server-group>"
+                      + "\n</active-server-groups>"
+                      + "\n<ha>"
+                      + "\n       <mode>networked-active-passive</mode>"
+                      + "\n       <networked-active-passive>"
+                      + "\n         <election-time>7891</election-time>"
+                      + "\n       </networked-active-passive>"
+                      + "\n</ha>"
+                      + "\n</servers>"
+                      + "\n</tc:tc-config>";
+      writeConfigFile(config);
+      TestTVSConfigurationSetupManagerFactory factory = new TestTVSConfigurationSetupManagerFactory(
+                                                                                                    TestTVSConfigurationSetupManagerFactory.MODE_CENTRALIZED_CONFIG,
+                                                                                                    null,
+                                                                                                    new FatalIllegalConfigurationChangeHandler());
+      L2TVSConfigurationSetupManager configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server1");
+      Assert.assertEquals(1234, configSetupMgr.haConfig().electionTime());
+      Assert.eval(configSetupMgr.haConfig().haMode().equals("networked-active-passive"));
+      
+      configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server2");
+      Assert.assertEquals(7891, configSetupMgr.haConfig().electionTime());
+      Assert.eval(configSetupMgr.haConfig().haMode().equals("networked-active-passive"));
+    } catch (Exception e) {
+      throw new AssertionError(e);
+    }
+  }
+  
+  public void testHA4(){
+    
+    try {
+      tcConfig = getTempFile("tc-config-test.xml");
+      String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
+                      + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
+                      + "\n<servers>"
+                      + "\n      <server name=\"server1\">"
+                      + "\n       <data>/Users/rsingh/terracotta/server1-data</data>"
+                      + "\n       <logs>/Users/rsingh/terracotta/server1-logs</logs>"
+                      + "\n       <statistics>/Users/rsingh/terracotta/server1-stats</statistics>"
+                      + "\n       <dso-port>9510</dso-port>"
+                      + "\n       <jmx-port>9520</jmx-port>"
+                      + "\n       <l2-group-port>9530</l2-group-port>"
+                      + "\n      <dso>" 
+                      + "\n        <persistence>"
+                      + "\n          <mode>permanent-store</mode>" 
+                      + "\n        </persistence>" 
+                      + "\n      </dso>"
+                      + "\n      </server>" 
+                      + "\n      <server name=\"server2\">" 
+                      + "\n       <data>/Users/rsingh/terracotta/server2-data</data>"
+                      + "\n       <logs>/Users/rsingh/terracotta/server2-logs</logs>"
+                      + "\n       <statistics>/Users/rsingh/terracotta/server2-stats</statistics>"
+                      + "\n       <dso-port>9511</dso-port>"
+                      + "\n       <jmx-port>9521</jmx-port>"
+                      + "\n       <l2-group-port>9531</l2-group-port>"
+                      + "\n      <dso>"
+                      + "\n        <persistence>" 
+                      + "\n          <mode>permanent-store</mode>"
+                      + "\n        </persistence>" 
+                      + "\n      </dso>" 
+                      + "\n</server>" 
+                      + "\n<active-server-groups>" 
+                      + "\n   <active-server-group>"
+                      + "\n     <members>" 
+                      + "\n       <member>server1</member>"
+                      + "\n     </members>"
+                      + "\n   <ha>" 
+                      + "\n       <mode>networked-active-passive</mode>"
+                      + "\n       <networked-active-passive>"
+                      + "\n         <election-time>1234</election-time>"
+                      + "\n       </networked-active-passive>" 
+                      + "\n   </ha>"
+                      + "\n   </active-server-group>"
+                      + "\n   <active-server-group>"
+                      + "\n     <members>" 
+                      + "\n       <member>server2</member>"
+                      + "\n     </members>"
+                      + "\n   </active-server-group>"
+                      + "\n</active-server-groups>"
+                      + "\n</servers>"
+                      + "\n</tc:tc-config>";
+      writeConfigFile(config);
+      TestTVSConfigurationSetupManagerFactory factory = new TestTVSConfigurationSetupManagerFactory(
+                                                                                                    TestTVSConfigurationSetupManagerFactory.MODE_CENTRALIZED_CONFIG,
+                                                                                                    null,
+                                                                                                    new FatalIllegalConfigurationChangeHandler());
+      L2TVSConfigurationSetupManager configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server1");
+      Ha ha = NewHaConfigObject.getDefaultCommonHa(new FromSchemaDefaultValueProvider(), new StandardBeanRepository(Servers.class));
 
+      Assert.assertEquals(1234, configSetupMgr.haConfig().electionTime());
+      Assert.eval(configSetupMgr.haConfig().haMode().equals("networked-active-passive"));
+      
+      configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server2");
+      Assert.assertEquals(ha.getNetworkedActivePassive().getElectionTime(), configSetupMgr.haConfig().electionTime());
+      Assert.eval(configSetupMgr.haConfig().haMode().equals(ha.getMode().toString()));
+    } catch (Exception e) {
+      throw new AssertionError(e);
+    }
+  }
+  
   public void testFakeL2sName() {
     try {
       tcConfig = getTempFile("tc-config-testFakeL2sName.xml");

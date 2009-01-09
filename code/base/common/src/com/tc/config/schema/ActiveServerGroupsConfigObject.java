@@ -4,6 +4,7 @@
  */
 package com.tc.config.schema;
 
+import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlObject;
 
 import com.tc.config.schema.context.ConfigContext;
@@ -15,13 +16,12 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.StandardL2TVSConfigurationSetupManager;
 import com.terracottatech.config.ActiveServerGroup;
 import com.terracottatech.config.ActiveServerGroups;
-import com.terracottatech.config.Ha;
 
 public class ActiveServerGroupsConfigObject extends BaseNewConfigObject implements ActiveServerGroupsConfig {
   private final ActiveServerGroupConfig[] groupConfigArray;
   private final int                       activeServerGroupCount;
 
-  public ActiveServerGroupsConfigObject(ConfigContext context, StandardL2TVSConfigurationSetupManager setupManager) {
+  public ActiveServerGroupsConfigObject(ConfigContext context, StandardL2TVSConfigurationSetupManager setupManager) throws XmlException {
     super(context);
     context.ensureRepositoryProvides(ActiveServerGroups.class);
     final ActiveServerGroups groups = (ActiveServerGroups) context.bean();
@@ -41,7 +41,7 @@ public class ActiveServerGroupsConfigObject extends BaseNewConfigObject implemen
     for (int i = 0; i < groupArray.length; i++) {
       // if no Ha element defined for this group then set it to common ha
       if (!groupArray[i].isSetHa()) {
-        groupArray[i].setHa(setupManager.getCommonHa());
+        groupArray[i].setHa(setupManager.getCommomOrDefaultHa().getHa());
       }
       this.groupConfigArray[i] = new ActiveServerGroupConfigObject(createContext(setupManager, groupArray[i]),
                                                                    setupManager, i);
@@ -68,12 +68,12 @@ public class ActiveServerGroupsConfigObject extends BaseNewConfigObject implemen
   }
 
   public static ActiveServerGroups getDefaultActiveServerGroups(DefaultValueProvider defaultValueProvider,
-                                                                MutableBeanRepository serversBeanRepository, Ha commonHa)
-      throws ConfigurationSetupException {
+                                                                MutableBeanRepository serversBeanRepository)
+      throws ConfigurationSetupException, XmlException {
     ActiveServerGroups asgs = ActiveServerGroups.Factory.newInstance();
     ActiveServerGroup[] groupArray = new ActiveServerGroup[1];
     groupArray[0] = ActiveServerGroupConfigObject.getDefaultActiveServerGroup(defaultValueProvider,
-                                                                              serversBeanRepository, commonHa);
+                                                                              serversBeanRepository);
     asgs.setActiveServerGroupArray(groupArray);
     return asgs;
   }

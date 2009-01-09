@@ -114,24 +114,23 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     }
 
     try {
-      this.haConfig = getHaConfig();
-    } catch (XmlException e1) {
-      throw new ConfigurationSetupException(e1);
-    }
-
-    selectL2((Servers) serversBeanRepository().bean(), "the set of L2s known to us");
-    validateRestrictions();
-
-    // do this last after everything else is setup
-    try {
       this.activeServerGroupsConfig = getActiveServerGroupsConfig();
     } catch (Exception e) {
       throw new ConfigurationSetupException(e);
     }
 
+    selectL2((Servers) serversBeanRepository().bean(), "the set of L2s known to us");
+    validateRestrictions();
+
     // do this after servers and groups have been processed
     validateGroups();
     validateDSOClusterPersistenceMode();
+
+    try {
+      this.haConfig = getHaConfig();
+    } catch (XmlException e) {
+      throw new ConfigurationSetupException(e);
+    }
   }
 
   public String getL2Identifier() {
@@ -177,12 +176,10 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
   }
 
   // make sure there is at most one of these
-  private ActiveServerGroupsConfig getActiveServerGroupsConfig() throws ConfigurationSetupException {
-    if (this.haConfig == null) { throw new ConfigurationSetupException(
-                                                                       "Define haConfig before defining activeServerGroupsConfig in the constructor!"); }
+  private ActiveServerGroupsConfig getActiveServerGroupsConfig() throws ConfigurationSetupException, XmlException {
 
     final ActiveServerGroups defaultActiveServerGroups = ActiveServerGroupsConfigObject
-        .getDefaultActiveServerGroups(defaultValueProvider, serversBeanRepository(), haConfig.getHa());
+        .getDefaultActiveServerGroups(defaultValueProvider, serversBeanRepository());
 
     ChildBeanRepository beanRepository = new ChildBeanRepository(serversBeanRepository(), ActiveServerGroups.class,
                                                                  new ChildBeanFetcher() {
@@ -203,21 +200,18 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
   // make sure there is at most one of these
   private NewHaConfig getHaConfig() throws XmlException {
-    final Ha defaultHa = NewHaConfigObject.getDefaultCommonHa(defaultValueProvider, serversBeanRepository());
-
-    ChildBeanRepository beanRepository = new ChildBeanRepository(serversBeanRepository(), Ha.class,
-                                                                 new ChildBeanFetcher() {
-                                                                   public XmlObject getChild(XmlObject parent) {
-                                                                     Ha ha = ((Servers) parent).getHa();
-                                                                     if (ha == null) {
-                                                                       ha = defaultHa;
-                                                                       ((Servers) parent).setHa(ha);
-                                                                     }
-                                                                     return ha;
-                                                                   }
-                                                                 });
-
-    return new NewHaConfigObject(createContext(beanRepository, configurationCreator.directoryConfigurationLoadedFrom()));
+    NewHaConfig newHaConfig = null;
+    if (this.activeServerGroupsConfig.getActiveServerGroupCount() != 0) {
+      ActiveServerGroupConfig groupConfig = getActiveServerGroupForThisL2();
+      if (groupConfig != null) {
+        newHaConfig = groupConfig.getHa();
+      }
+    }
+    if (newHaConfig == null) {
+      newHaConfig = getCommomOrDefaultHa();
+    }
+    Assert.assertNotNull(newHaConfig);
+    return newHaConfig;
   }
 
   private UpdateCheckConfig getUpdateCheckConfig() throws XmlException {
@@ -257,8 +251,24 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     return configurationCreator.directoryConfigurationLoadedFrom();
   }
 
-  public Ha getCommonHa() {
-    return this.haConfig.getHa();
+  public NewHaConfig getCommomOrDefaultHa() throws XmlException {
+    NewHaConfig newHaConfig = null;
+    final Ha defaultHa = NewHaConfigObject.getDefaultCommonHa(defaultValueProvider, serversBeanRepository());
+    ChildBeanRepository beanRepository = new ChildBeanRepository(serversBeanRepository(), Ha.class,
+                                                                 new ChildBeanFetcher() {
+                                                                   public XmlObject getChild(XmlObject parent) {
+                                                                     Ha ha = ((Servers) parent).getHa();
+                                                                     if (ha == null) {
+                                                                       ha = defaultHa;
+                                                                     }
+                                                                     return ha;
+                                                                   }
+                                                                 });
+
+    newHaConfig = new NewHaConfigObject(createContext(beanRepository, configurationCreator
+        .directoryConfigurationLoadedFrom()));
+    Assert.assertNotNull(newHaConfig);
+    return newHaConfig;
   }
 
   private class L2ConfigData {
