@@ -259,4 +259,8 @@ public final class NullManager implements Manager {
     throw new UnsupportedOperationException();
   }
 
+  public void beginLockWithoutTxn(String lockID, int type) {
+    //
+  }
+
 }

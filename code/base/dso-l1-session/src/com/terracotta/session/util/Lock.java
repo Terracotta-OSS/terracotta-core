@@ -41,7 +41,7 @@ public class Lock {
   }
 
   public void getReadLock() {
-    ManagerUtil.beginLock(lockId, Manager.LOCK_TYPE_READ);
+    ManagerUtil.beginLockWithoutTxn(lockId, Manager.LOCK_TYPE_READ);
   }
 
   public String getLockId() {

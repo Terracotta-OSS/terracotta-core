@@ -199,7 +199,7 @@ public class ManagerImpl implements Manager {
     startupHelper.startUp();
   }
 
-  //NOTE::Using reflection to create EE version, TODO:: find better ways of doing this 
+  // NOTE::Using reflection to create EE version, TODO:: find better ways of doing this
   private DistributedObjectClient createDistributeObjectClientForEE(
                                                                     DSOClientConfigHelper lconfig,
                                                                     TCThreadGroup lgroup,
@@ -342,6 +342,14 @@ public class ManagerImpl implements Manager {
     }
   }
 
+  public void beginLockWithoutTxn(String lockID, int type) {
+    boolean locked = this.txManager.beginLockWithoutTxn(lockID, type, LockContextInfo.NULL_LOCK_OBJECT_TYPE,
+                                                        LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    if (locked && runtimeLogger.getLockDebug()) {
+      runtimeLogger.lockAcquired(lockID, type, null, null);
+    }
+  }
+
   public void beginLock(String lockID, int type, String contextInfo) {
     try {
       begin(lockID, type, null, null, contextInfo);
@@ -365,15 +373,16 @@ public class ManagerImpl implements Manager {
     }
   }
 
-  private void beginInterruptibly(String lockID, int type, Object instance, TCObject tcobj, String contextInfo) throws InterruptedException {
+  private void beginInterruptibly(String lockID, int type, Object instance, TCObject tcobj, String contextInfo)
+      throws InterruptedException {
     String lockObjectType = instance == null ? LockContextInfo.NULL_LOCK_OBJECT_TYPE : instance.getClass().getName();
-    
+
     boolean locked = this.txManager.beginInterruptibly(lockID, type, lockObjectType, contextInfo);
     if (locked && runtimeLogger.getLockDebug()) {
       runtimeLogger.lockAcquired(lockID, type, instance, tcobj);
     }
   }
-  
+
   private boolean tryBegin(String lockID, int type, Object instance, TimerSpec timeout, TCObject tcobj) {
     String lockObjectType = instance == null ? LockContextInfo.NULL_LOCK_OBJECT_TYPE : instance.getClass().getName();
 
@@ -596,7 +605,7 @@ public class ManagerImpl implements Manager {
     }
     return false;
   }
-  
+
   public void monitorEnterInterruptibly(Object obj, int type) throws InterruptedException {
     if (obj == null) { throw new NullPointerException("monitorEnterInterruptibly called on a null object"); }
 
@@ -614,7 +623,7 @@ public class ManagerImpl implements Manager {
       throw e;
     } catch (Throwable t) {
       Util.printLogAndRethrowError(t, logger);
-    }    
+    }
   }
 
   private TimerSpec createTimerSpecFromNanos(final long timeoutInNanos) {

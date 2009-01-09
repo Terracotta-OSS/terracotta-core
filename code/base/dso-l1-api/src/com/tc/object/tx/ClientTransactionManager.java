@@ -39,7 +39,8 @@ public interface ClientTransactionManager extends DumpHandler, PrettyPrintable {
    * @param lockLevel Lock level
    * @return If begun
    */
-  public boolean beginInterruptibly(String lockID, int type, String lockObjectType, String contextInfo) throws InterruptedException;
+  public boolean beginInterruptibly(String lockID, int type, String lockObjectType, String contextInfo)
+      throws InterruptedException;
 
   /**
    * Try with wait() to begin a thread local transaction.
@@ -279,5 +280,7 @@ public interface ClientTransactionManager extends DumpHandler, PrettyPrintable {
    * @returns the current open transaction for the calling thread, null if no open transaction
    */
   public ClientTransaction getCurrentTransaction();
+
+  public boolean beginLockWithoutTxn(String lockName, int lockLevel, String lockObjectType, String contextInfo);
 
 }

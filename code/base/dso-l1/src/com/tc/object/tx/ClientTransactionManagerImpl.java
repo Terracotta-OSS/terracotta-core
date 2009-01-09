@@ -48,44 +48,49 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ClientTransactionManagerImpl implements ClientTransactionManager {
-  private static final TCLogger                logger        = TCLogging.getLogger(ClientTransactionManagerImpl.class);
+  private static final TCLogger                logger          = TCLogging
+                                                                   .getLogger(ClientTransactionManagerImpl.class);
 
-  private final ThreadLocal                    transaction   = new ThreadLocal() {
-                                                              @Override protected Object initialValue() {
-                                                                 return new ThreadTransactionContext();
-                                                               }
-                                                             };
+  private final ThreadLocal                    transaction     = new ThreadLocal() {
+                                                                 @Override
+                                                                 protected Object initialValue() {
+                                                                   return new ThreadTransactionContext();
+                                                                 }
+                                                               };
 
   // We need to remove initialValue() here because read auto locking now calls Manager.isDsoMonitored() which will
   // checks if isTransactionLogging is disabled. If it runs in the context of class loading, it will try to load
   // the class ThreadTransactionContext and thus throws a LinkageError.
-  private final ThreadLocal                    txnLogging    = new ThreadLocal();
+  private final ThreadLocal                    txnLogging      = new ThreadLocal();
 
   private final ClientTransactionFactory       txFactory;
   private final RemoteTransactionManager       remoteTxManager;
   private final ClientObjectManager            objectManager;
   private final ThreadLockManager              lockManager;
   private final NonPortableEventContextFactory appEventContextFactory;
-  private final LiteralValues                  literalValues = new LiteralValues();
+  private final LiteralValues                  literalValues   = new LiteralValues();
 
-  private final WaitListener                   waitListener  = new WaitListener() {
-                                                               public void handleWaitEvent() {
-                                                                 return;
-                                                               }
-                                                             };
+  private final WaitListener                   waitListener    = new WaitListener() {
+                                                                 public void handleWaitEvent() {
+                                                                   return;
+                                                                 }
+                                                               };
 
   private final ClientIDProvider               cidProvider;
 
   private final ClientTxMonitorMBean           txMonitor;
 
-  private final boolean                        sendErrors    = System.getProperty("project.name") != null;
+  private final boolean                        sendErrors      = System.getProperty("project.name") != null;
+
+  private final List                           locksWithoutTxn = new CopyOnWriteArrayList<LockID>();
 
   public ClientTransactionManagerImpl(final ClientIDProvider cidProvider, final ClientObjectManager objectManager,
                                       final ThreadLockManager lockManager, final ClientTransactionFactory txFactory,
-                                      final RemoteTransactionManager remoteTxManager, final RuntimeLogger runtimeLogger,
-                                      final ClientTxMonitorMBean txMonitor) {
+                                      final RemoteTransactionManager remoteTxManager,
+                                      final RuntimeLogger runtimeLogger, final ClientTxMonitorMBean txMonitor) {
     this.cidProvider = cidProvider;
     this.txFactory = txFactory;
     this.remoteTxManager = remoteTxManager;
@@ -130,7 +135,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     }
   }
 
-  public boolean tryBegin(final String lockName, final TimerSpec timeout, final int lockLevel, final String lockObjectType) {
+  public boolean tryBegin(final String lockName, final TimerSpec timeout, final int lockLevel,
+                          final String lockObjectType) {
     logTryBegin0(lockName, lockLevel);
 
     if (isTransactionLoggingDisabled() || objectManager.isCreationInProgress()) { return true; }
@@ -157,7 +163,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     return isLocked;
   }
 
-  public boolean beginInterruptibly(final String lockName, final int lockLevel, final String lockObjectType, final String contextInfo) throws InterruptedException {
+  public boolean beginInterruptibly(final String lockName, final int lockLevel, final String lockObjectType,
+                                    final String contextInfo) throws InterruptedException {
     logBeginInterruptibly0(lockName, lockLevel);
 
     if (isTransactionLoggingDisabled() || objectManager.isCreationInProgress()) { return true; }
@@ -192,6 +199,17 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
       throw e;
     }
 
+    return true;
+  }
+
+  public boolean beginLockWithoutTxn(String lockName, int lockLevel, String lockObjectType, String contextInfo) {
+    logBegin0(lockName, lockLevel);
+
+    if (isTransactionLoggingDisabled() || objectManager.isCreationInProgress()) { return false; }
+
+    final LockID lockID = lockManager.lockIDFor(lockName);
+    lockManager.lock(lockID, lockLevel, lockObjectType, contextInfo);
+    locksWithoutTxn.add(lockID);
     return true;
   }
 
@@ -240,8 +258,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     }
   }
 
-  public void wait(final String lockName, final TimerSpec call, final Object object) throws UnlockedSharedObjectException,
-      InterruptedException {
+  public void wait(final String lockName, final TimerSpec call, final Object object)
+      throws UnlockedSharedObjectException, InterruptedException {
     final ClientTransaction topTxn = getTransactionOrNull();
 
     if (topTxn == null) { throw new IllegalMonitorStateException(getIllegalMonitorStateExceptionMessage()); }
@@ -260,7 +278,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     }
   }
 
-  public void notify(final String lockName, final boolean all, final Object object) throws UnlockedSharedObjectException {
+  public void notify(final String lockName, final boolean all, final Object object)
+      throws UnlockedSharedObjectException {
     final ClientTransaction currentTxn = getTransactionOrNull();
 
     if (currentTxn == null) { throw new IllegalMonitorStateException(getIllegalMonitorStateExceptionMessage()); }
@@ -326,21 +345,19 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     if (tx == null) {
 
       String type = context == null ? null : context.getClass().getName();
-      String errorMsg = "Attempt to access a shared object outside the scope of a shared lock.\n" +
-                        "All access to shared objects must be within the scope of one or more\n"+
-                        "shared locks defined in your Terracotta configuration.";
+      String errorMsg = "Attempt to access a shared object outside the scope of a shared lock.\n"
+                        + "All access to shared objects must be within the scope of one or more\n"
+                        + "shared locks defined in your Terracotta configuration.";
       String details = "";
       if (type != null) {
         details += "Shared Object Type: " + type;
       }
-      details += "\n\nThe cause may be one or more of the following:\n" +
-        " * Terracotta locking was not configured for the shared code.\n" +
-        " * The code itself does not have synchronization that Terracotta\n" +
-        "   can use as a boundary.\n"+
-        " * The class doing the locking must be included for instrumentation.\n" +
-        " * The object was first locked, then shared.\n\n" +
-        "For more information on how to solve this issue, see:\n" +
-        "http://www.terracotta.org/usoe";
+      details += "\n\nThe cause may be one or more of the following:\n"
+                 + " * Terracotta locking was not configured for the shared code.\n"
+                 + " * The code itself does not have synchronization that Terracotta\n" + "   can use as a boundary.\n"
+                 + " * The class doing the locking must be included for instrumentation.\n"
+                 + " * The object was first locked, then shared.\n\n"
+                 + "For more information on how to solve this issue, see:\n" + "http://www.terracotta.org/usoe";
 
       throw new UnlockedSharedObjectException(errorMsg, Thread.currentThread().getName(), cidProvider.getClientID()
           .toLong(), details);
@@ -392,8 +409,15 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     logCommit0();
     if (isTransactionLoggingDisabled() || objectManager.isCreationInProgress()) { return; }
 
-    ClientTransaction tx = getTransaction();
     LockID lockID = lockManager.lockIDFor(lockName);
+    // if the lockName is NOT associated with any transactions, just unlock and return
+    if (locksWithoutTxn.contains(lockID)) {
+      lockManager.unlock(lockID);
+      locksWithoutTxn.remove(lockID);
+      return;
+    }
+
+    ClientTransaction tx = getTransaction();
     if (lockID == null || lockID.isNull()) {
       lockID = tx.getLockID();
     }
@@ -478,7 +502,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     }
   }
 
-  private boolean commitInternal(final LockID lockID, final ClientTransaction currentTransaction, final boolean isWaitContext) {
+  private boolean commitInternal(final LockID lockID, final ClientTransaction currentTransaction,
+                                 final boolean isWaitContext) {
     Assert.assertNotNull("transaction", currentTransaction);
 
     try {
@@ -563,7 +588,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     this.remoteTxManager.receivedBatchAcknowledgement(batchID, nodeID);
   }
 
-  public void apply(final TxnType txType, final List lockIDs, final Collection objectChanges, final Set lookupObjectIDs, final Map newRoots) {
+  public void apply(final TxnType txType, final List lockIDs, final Collection objectChanges,
+                    final Set lookupObjectIDs, final Map newRoots) {
     try {
       disableTransactionLogging();
       basicApply(objectChanges, newRoots, false);
@@ -612,7 +638,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
 
   }
 
-  public void fieldChanged(final TCObject source, final String classname, final String fieldname, final Object newValue, final int index) {
+  public void fieldChanged(final TCObject source, final String classname, final String fieldname,
+                           final Object newValue, final int index) {
     if (isTransactionLoggingDisabled()) { return; }
 
     try {
@@ -723,8 +750,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     }
   }
 
-  private void logFieldChanged0(final TCObject source, final String classname, final String fieldname, final Object newValue,
-                                final ClientTransaction tx) {
+  private void logFieldChanged0(final TCObject source, final String classname, final String fieldname,
+                                final Object newValue, final ClientTransaction tx) {
     if (logger.isDebugEnabled()) logger.debug("fieldChanged(source=" + source + ", classname=" + classname
                                               + ", fieldname=" + fieldname + ", newValue=" + newValue + ", tx=" + tx);
   }

@@ -6,7 +6,7 @@ package com.tctest.server.appserver.unit;
 
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
-import com.tc.object.util.ReadOnlyException;
+import com.tc.object.tx.UnlockedSharedObjectException;
 import com.tc.test.server.appserver.deployment.AbstractOneServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
@@ -40,7 +40,7 @@ public abstract class UnlockedSessionObjectTestBase extends AbstractOneServerDep
       if (isSessionLockingTrue()) {
         Assert.assertEquals("OK", serverResponse);
       } else {
-        Assert.assertEquals(ReadOnlyException.class.getName(), serverResponse);
+        Assert.assertEquals(UnlockedSharedObjectException.class.getName(), serverResponse);
       }
     }
 

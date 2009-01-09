@@ -460,4 +460,9 @@ public interface Manager {
    */
   public boolean overridesHashCode(Object obj);
 
+  /**
+   * Begins a lock without associating any transaction context.
+   */
+  public void beginLockWithoutTxn(String lockID, int type);
+
 }

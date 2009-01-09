@@ -237,4 +237,8 @@ public class MockTransactionManager implements ClientTransactionManager {
   public ClientTransaction getCurrentTransaction() {
     throw new ImplementMe();
   }
+
+  public boolean beginLockWithoutTxn(String lockName, int lockLevel, String lockObjectType, String contextInfo) {
+    throw new ImplementMe();
+  }
 }

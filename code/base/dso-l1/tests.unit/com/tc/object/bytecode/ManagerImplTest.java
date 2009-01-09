@@ -201,6 +201,10 @@ public class ManagerImplTest extends BaseDSOTestCase {
     public void receivedBatchAcknowledgement(TxnBatchID batchID, NodeID nodeID) {
       throw new ImplementMe();
     }
+
+    public boolean beginLockWithoutTxn(String lockName, int lockLevel, String lockObjectType, String contextInfo) {
+      throw new ImplementMe();
+    }
   }
 
   private static class ObjMgr implements ClientObjectManager {
@@ -293,7 +297,6 @@ public class ManagerImplTest extends BaseDSOTestCase {
     public void shutdown() {
       throw new ImplementMe();
     }
-
 
     public void replaceRootIDIfNecessary(String rootName, ObjectID newRootID) {
       throw new ImplementMe();

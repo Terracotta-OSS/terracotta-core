@@ -166,6 +166,13 @@ public class ManagerUtil {
   }
 
   /**
+   * Begins a lock without associating any transaction context.
+   */
+  public static void beginLockWithoutTxn(String lockID, int type) {
+    getManager().beginLockWithoutTxn(lockID, type);
+  }
+
+  /**
    * Begin lock
    * 
    * @param lockID Lock identifier
@@ -514,7 +521,7 @@ public class ManagerUtil {
   public static void monitorEnterInterruptibly(Object obj, int type) throws InterruptedException {
     getManager().monitorEnterInterruptibly(obj, type);
   }
-  
+
   /**
    * Get number of locks held locally on this object
    * 
@@ -951,7 +958,7 @@ public class ManagerUtil {
   public static int getSessionLockType(String appName) {
     return ClassProcessorHelper.getSessionLockType(appName);
   }
-  
+
   public static boolean isApplicationSessionLocked(String appName) {
     return ClassProcessorHelper.isApplicationSessionLocked(appName);
   }
