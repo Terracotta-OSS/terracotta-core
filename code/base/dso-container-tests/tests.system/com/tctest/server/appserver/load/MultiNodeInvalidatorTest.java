@@ -50,8 +50,10 @@ public class MultiNodeInvalidatorTest extends AbstractDeploymentTest {
   }
 
   public MultiNodeInvalidatorTest() {
-    //
+    // for MNK-866
+    disableAllUntil("2009-01-30");
   }
+  
 
   private Deployment makeDeployment() throws Exception {
     DeploymentBuilder builder = makeDeploymentBuilder(CONTEXT + ".war");
