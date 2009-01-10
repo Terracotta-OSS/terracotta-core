@@ -234,11 +234,13 @@ public class Lock {
       if (isPolicyGreedy() && hasGreedyHolders() && !holdsGreedyLock(txn)) {
         recall(requestedLockLevel);
         queueRequest(txn, requestedLockLevel, lockResponseSink, noBlock, lockRequestTimeout, waitTimer, callback);
-      }
 
-      // These requests are the ones in the wire when the greedy lock was given out to the client.
-      // We can safely ignore it as the clients will be able to award it locally.
-      if (!isPolicyGreedy() || !canAwardGreedilyOnTheClient(txn, requestedLockLevel)) {
+        // clean up the lock request immediately since the tryLock has no timeout
+        pendingLockRequests.remove(txn);
+        cannotAwardAndRespond(txn, requestedLockLevel, lockResponseSink);
+      } else if (!isPolicyGreedy() || !canAwardGreedilyOnTheClient(txn, requestedLockLevel)) {
+        // These requests are the ones in the wire when the greedy lock was given out to the client.
+        // We can safely ignore it as the clients will be able to award it locally.
         cannotAwardAndRespond(txn, requestedLockLevel, lockResponseSink);
       }
 

@@ -3,19 +3,15 @@
  */
 package com.tctest;
 
-import java.util.Date;
-
 public class ReentrantReadWriteLockTryLockTest extends TransparentTestBase {
 
-  public ReentrantReadWriteLockTryLockTest() {
-    disableAllUntil(new Date(Long.MAX_VALUE));
-  }
-  
+  @Override
   protected Class getApplicationClass() {
     return ReentrantReadWriteLockTryLockTestApp.class;
   }
 
-  public void doSetUp(TransparentTestIface t) throws Exception {
+  @Override
+  public void doSetUp(final TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(ReentrantReadWriteLockTryLockTestApp.NODE_COUNT);
     t.initializeTestRunner();
   }

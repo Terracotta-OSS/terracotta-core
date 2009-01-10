@@ -158,7 +158,7 @@ public class TryLockTestApp extends AbstractTransparentApp {
 
     boolean tryLock() {
       System.out.println("> "+Thread.currentThread().getName()+" : tryLock - tryLock()");
-      if (ManagerUtil.tryBeginLockWithTimeout(LOCK_ID, 1, Manager.LOCK_TYPE_WRITE)) {
+      if (ManagerUtil.tryBeginLock(LOCK_ID, Manager.LOCK_TYPE_WRITE)) {
         try {
           try {
             Thread.sleep(100);
