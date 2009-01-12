@@ -4,6 +4,7 @@
  */
 package com.tc.object.tx;
 
+import com.tc.logging.LossyTCLogger;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
@@ -46,8 +47,6 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, C
 
   private static final long                FLUSH_WAIT_INTERVAL         = 15 * 1000;
 
-  private static final long                TIMEOUT                     = 30000L;
-
   private static final int                 MAX_OUTSTANDING_BATCHES     = TCPropertiesImpl
                                                                            .getProperties()
                                                                            .getInt(
@@ -56,6 +55,11 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, C
                                                                            .getProperties()
                                                                            .getLong(
                                                                                     TCPropertiesConsts.L1_TRANSACTIONMANAGER_COMPLETED_ACK_FLUSH_TIMEOUT);
+
+  private long                             ackOnExitTimeout            = TCPropertiesImpl
+                                                                           .getProperties()
+                                                                           .getLong(
+                                                                                    TCPropertiesConsts.L1_TRANSACTIONMANAGER_TIMEOUTFORACK_ONEXIT) * 1000;
 
   private static final State               RUNNING                     = new State("RUNNING");
   private static final State               PAUSED                      = new State("PAUSED");
@@ -155,16 +159,19 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, C
 
       sendBatches(true, "stop()");
 
-      int count = 10;
+      long pollInteval = (ackOnExitTimeout > 0) ? (ackOnExitTimeout / 10) : (30 * 1000);
       long t0 = System.currentTimeMillis();
       if (incompleteBatches.size() != 0) {
         try {
           int incompleteBatchesCount = 0;
-          while (status != STOPPED && (t0 + TIMEOUT * count) > System.currentTimeMillis()) {
+          LossyTCLogger lossyLogger = new LossyTCLogger(logger, 5, LossyTCLogger.COUNT_BASED);
+          while ((status != STOPPED)
+                 && ((ackOnExitTimeout <= 0) || (t0 + ackOnExitTimeout) > System.currentTimeMillis())) {
             if (incompleteBatchesCount != incompleteBatches.size()) {
-              logger.debug("stop(): incompleteBatches.size() = " + (incompleteBatchesCount = incompleteBatches.size()));
+              lossyLogger.info("stop(): incompleteBatches.size() = "
+                               + (incompleteBatchesCount = incompleteBatches.size()));
             }
-            lock.wait(TIMEOUT);
+            lock.wait(pollInteval);
           }
         } catch (InterruptedException e) {
           logger.warn("stop(): Interrupted " + e);
@@ -444,6 +451,10 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, C
    */
   TransactionBatchAccounting getBatchAccounting() {
     return batchAccounting;
+  }
+
+  void setAckOnExitTimeout(int seconds) {
+    this.ackOnExitTimeout = seconds * 1000;
   }
 
   private class RemoteTransactionManagerTimerTask extends TimerTask {

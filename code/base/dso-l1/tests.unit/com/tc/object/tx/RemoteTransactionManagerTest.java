@@ -91,6 +91,64 @@ public class RemoteTransactionManagerTest extends TestCase {
     manager.clear();
   }
 
+  public void testAckOnExitTimeoutFinite() throws Exception {
+    final LockID lockID1 = new LockID("lock1");
+    manager.flush(lockID1);
+    TestClientTransaction tx1 = new TestClientTransaction();
+    tx1.lockID = lockID1;
+    tx1.allLockIDs.add(lockID1);
+    tx1.txnType = TxnType.NORMAL;
+
+    int ackOnExitTimeout = 10;
+
+    manager.setAckOnExitTimeout(ackOnExitTimeout);
+    manager.commit(tx1);
+
+    final NoExceptionLinkedQueue flushCalls = new NoExceptionLinkedQueue();
+    Runnable stoper = new Runnable() {
+      public void run() {
+        manager.stop();
+        flushCalls.put(lockID1);
+        System.err.println("Manager stopped");
+      }
+    };
+
+    new Thread(stoper).start();
+    int timeout = ackOnExitTimeout * 1000;
+    System.err.println("Waiting for " + timeout);
+    Object o = flushCalls.poll(timeout + 5000);
+    assertNotNull(o);
+  }
+
+  public void testAckOnExitTimeoutINFinite() throws Exception {
+    final LockID lockID1 = new LockID("lock1");
+    manager.flush(lockID1);
+    TestClientTransaction tx1 = new TestClientTransaction();
+    tx1.lockID = lockID1;
+    tx1.allLockIDs.add(lockID1);
+    tx1.txnType = TxnType.NORMAL;
+
+    int ackOnExitTimeout = 0;
+
+    manager.setAckOnExitTimeout(ackOnExitTimeout);
+    manager.commit(tx1);
+
+    final NoExceptionLinkedQueue flushCalls = new NoExceptionLinkedQueue();
+    Runnable stoper = new Runnable() {
+      public void run() {
+        manager.stop();
+        flushCalls.put(lockID1);
+        System.err.println("Manager stopped");
+      }
+    };
+
+    new Thread(stoper).start();
+    int timeout = 30 * 1000;
+    System.err.println("Waiting for " + timeout);
+    Object o = flushCalls.poll(timeout + 5000);
+    assertNull(o);
+  }
+
   public void testFlush() throws Exception {
     final LockID lockID1 = new LockID("lock1");
     manager.flush(lockID1);

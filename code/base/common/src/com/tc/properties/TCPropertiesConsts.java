@@ -278,6 +278,7 @@ public interface TCPropertiesConsts {
   public static final String   L1_TRANSACTIONMANAGER_FOLDING_OBJECT_LIMIT             = "l1.transactionmanager.folding.object.limit";
   public static final String   L1_TRANSACTIONMANAGER_FOLDING_LOCK_LIMIT               = "l1.transactionmanager.folding.lock.limit";
   public static final String   L1_TRANSACTIONMANAGER_FOLDING_DEBUG                    = "l1.transactionmanager.folding.debug";
+  public static final String   L1_TRANSACTIONMANAGER_TIMEOUTFORACK_ONEXIT             = "l1.transactionmanager.timeoutForAckOnExit";
 
   /*********************************************************************************************************************
    * <code>
