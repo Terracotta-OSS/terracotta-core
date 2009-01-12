@@ -45,7 +45,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
   private TCThreadGroup         threadGroup;
 
   public VirtualTCGroupStateManagerTest() {
-     disableAllUntil("2009-01-14");
+    // disableAllUntil("2009-01-14");
   }
 
   public void setUp() {
@@ -194,19 +194,22 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
       virtualMgr[i] = new VirtualTCGroupManagerImpl(groupMgr[i], virtualNodes);
     }
 
-    ChangeSink[] sinks = new ChangeSink[virtuals];
-    StateManager[] managers = new StateManager[virtuals];
+    ChangeSink[] sinks = new ChangeSink[nodes];
+    StateManager[] managers = new StateManager[nodes];
+    L2StateMessageStage[] msgStages = new L2StateMessageStage[nodes];
+    for (int i = 0; i < nodes; ++i) {
+      managers[i] = createStateManageNode(i, sinks, groupMgr, msgStages);
+    }
+
     ElectionThread[] elections = new ElectionThread[virtuals];
-    L2StateMessageStage[] msgStages = new L2StateMessageStage[virtuals];
     for (int i = 0; i < virtuals; ++i) {
-      managers[i] = createStateManageNode(i, sinks, virtualMgr, msgStages);
       elections[i] = new ElectionThread(managers[i]);
     }
 
     // joining
     System.out.println("*** Start Joining...");
-    for (int i = 0; i < virtuals; ++i) {
-      virtualMgr[i].join(virtualNodes[i], allNodes);
+    for (int i = 0; i < nodes; ++i) {
+      groupMgr[i].join(allNodes[i], allNodes);
     }
     ThreadUtil.reallySleep(1000 * nodes);
 
@@ -283,22 +286,28 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
       virtualMgr[i] = new VirtualTCGroupManagerImpl(groupMgr[i], virtualNodes);
     }
 
-    ChangeSink[] sinks = new ChangeSink[virtuals];
-    StateManager[] managers = new StateManager[virtuals];
+    ChangeSink[] sinks = new ChangeSink[nodes];
+    StateManager[] managers = new StateManager[nodes];
+    L2StateMessageStage[] msgStages = new L2StateMessageStage[nodes];
+    for (int i = 0; i < nodes; ++i) {
+      managers[i] = createStateManageNode(i, sinks, groupMgr, msgStages);
+    }
+    
     ElectionThread[] elections = new ElectionThread[virtuals];
-    L2StateMessageStage[] msgStages = new L2StateMessageStage[virtuals];
     for (int i = 0; i < virtuals; ++i) {
-      managers[i] = createStateManageNode(i, sinks, virtualMgr, msgStages);
       elections[i] = new ElectionThread(managers[i]);
     }
 
     // Joining and Electing
     System.out.println("*** Start Joining and Electing...");
-    virtualMgr[0].join(virtualNodes[0], allNodes);
+    groupMgr[0].join(allNodes[0], allNodes);
     elections[0].start();
     for (int i = 1; i < virtuals; ++i) {
-      virtualMgr[i].join(virtualNodes[i], allNodes);
+      groupMgr[i].join(allNodes[i], allNodes);
       elections[i].start();
+    }
+    for (int i = virtuals + 1; i < nodes; ++i) {
+      groupMgr[i].join(allNodes[i], allNodes);
     }
 
     for (int i = 0; i < virtuals; ++i) {
@@ -343,18 +352,21 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
       virtualMgr[i] = new VirtualTCGroupManagerImpl(groupMgr[i], virtualNodes);
     }
 
-    ChangeSink[] sinks = new ChangeSink[virtuals];
-    final StateManager[] managers = new StateManager[virtuals];
+    ChangeSink[] sinks = new ChangeSink[nodes];
+    final StateManager[] managers = new StateManager[nodes];
+    L2StateMessageStage[] msgStages = new L2StateMessageStage[nodes];
+    for (int i = 0; i < nodes; ++i) {
+      managers[i] = createStateManageNode(i, sinks, groupMgr, msgStages);
+    }
+    
     ElectionThread[] elections = new ElectionThread[virtuals];
-    L2StateMessageStage[] msgStages = new L2StateMessageStage[virtuals];
     for (int i = 0; i < virtuals; ++i) {
-      managers[i] = createStateManageNode(i, sinks, virtualMgr, msgStages);
       elections[i] = new ElectionThread(managers[i]);
     }
 
     // the first node to be the active one
     System.out.println("*** First node joins to be an active node...");
-    ids[0] = virtualMgr[0].join(virtualNodes[0], allNodes);
+    ids[0] = groupMgr[0].join(allNodes[0], allNodes);
     managers[0].startElection();
     ThreadUtil.reallySleep(100);
 
@@ -367,8 +379,8 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
     });
 
     System.out.println("***  Remaining nodes join");
-    for (int i = 1; i < virtuals; ++i) {
-      ids[i] = virtualMgr[i].join(virtualNodes[i], allNodes);
+    for (int i = 1; i < nodes; ++i) {
+      ids[i] = groupMgr[i].join(allNodes[i], allNodes);
     }
 
     ThreadUtil.reallySleep(1000);
@@ -441,12 +453,10 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
     return gm;
   }
 
-  private StateManager createStateManageNode(int localIndex, ChangeSink[] sinks,
-                                             VirtualTCGroupManagerImpl[] virtualMgr, L2StateMessageStage[] messageStage)
-      throws Exception {
-    VirtualTCGroupManagerImpl gm = virtualMgr[localIndex];
-    ((TCGroupManagerImpl) gm.getBaseTCGroupManager())
-        .setDiscover(new TCGroupMemberDiscoveryStatic((TCGroupManagerImpl) gm.getBaseTCGroupManager()));
+  private StateManager createStateManageNode(int localIndex, ChangeSink[] sinks, TCGroupManagerImpl[] groupMgr,
+                                             L2StateMessageStage[] messageStage) throws Exception {
+    TCGroupManagerImpl gm = groupMgr[localIndex];
+    gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm));
 
     MyGroupEventListener gel = new MyGroupEventListener(gm.getLocalNodeID());
     MyListener l = new MyListener();
