@@ -13,7 +13,6 @@ import com.tc.l2.objectserver.ReplicatedTransactionManager;
 import com.tc.l2.state.DummyStateManager;
 import com.tc.l2.state.StateManager;
 import com.tc.net.groups.GroupManager;
-import com.tc.net.groups.Node;
 import com.tc.net.groups.SingleNodeGroupManager;
 
 public class L2HADisabledCooridinator implements L2Coordinator {
@@ -40,8 +39,8 @@ public class L2HADisabledCooridinator implements L2Coordinator {
     return stateMgr;
   }
 
-  public void start(Node thisNode, Node[] allNodes) {
-    // Nop
+  public void start() {
+    // NOP
   }
 
   public ReplicatedTransactionManager getReplicatedTransactionManager() {

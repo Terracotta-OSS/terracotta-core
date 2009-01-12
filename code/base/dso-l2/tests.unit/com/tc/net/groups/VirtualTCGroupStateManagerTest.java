@@ -34,6 +34,7 @@ import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -44,7 +45,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
   private TCThreadGroup         threadGroup;
 
   public VirtualTCGroupStateManagerTest() {
-    // disableAllUntil("2008-03-15");
+     disableAllUntil("2009-01-14");
   }
 
   public void setUp() {
@@ -436,7 +437,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
     TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), node.getHost(), node.getPort(), node
         .getGroupPort(), stageManager);
     ConfigurationContext context = new ConfigurationContextImpl(stageManager);
-    stageManager.startAll(context);
+    stageManager.startAll(context, Collections.EMPTY_LIST);
     return gm;
   }
 

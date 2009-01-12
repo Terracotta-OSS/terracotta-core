@@ -6,14 +6,15 @@ package com.tc.async.impl;
 
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandler;
+import com.tc.async.api.PostInit;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.async.api.StageMonitor;
 import com.tc.logging.DefaultLoggerProvider;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLoggerProvider;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.Stats;
 import com.tc.text.StringFormatter;
 import com.tc.util.Assert;
@@ -35,14 +36,16 @@ import java.util.Map;
  */
 public class StageManagerImpl implements StageManager {
 
-  private static final boolean MONITOR             = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.TC_STAGE_MONITOR_ENABLED);
-  private static final long    MONITOR_DELAY       = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.TC_STAGE_MONITOR_DELAY);
+  private static final boolean MONITOR       = TCPropertiesImpl.getProperties()
+                                                 .getBoolean(TCPropertiesConsts.TC_STAGE_MONITOR_ENABLED);
+  private static final long    MONITOR_DELAY = TCPropertiesImpl.getProperties()
+                                                 .getLong(TCPropertiesConsts.TC_STAGE_MONITOR_DELAY);
 
-  private Map                  stages              = new HashMap();
+  private Map                  stages        = new HashMap();
   private TCLoggerProvider     loggerProvider;
   private final ThreadGroup    group;
-  private String[]             stageNames          = new String[] {};
-  private QueueFactory         queueFactory        = null;
+  private String[]             stageNames    = new String[] {};
+  private QueueFactory         queueFactory  = null;
 
   public StageManagerImpl(ThreadGroup threadGroup, QueueFactory queueFactory) {
     this.loggerProvider = new DefaultLoggerProvider();
@@ -105,7 +108,12 @@ public class StageManagerImpl implements StageManager {
     stage.start(context);
   }
 
-  public synchronized void startAll(ConfigurationContext context) {
+  public synchronized void startAll(ConfigurationContext context, List<PostInit> toInit) {
+    for (Iterator i = toInit.iterator(); i.hasNext();) {
+      PostInit mgr = (PostInit) i.next();
+      mgr.initializeContext(context);
+
+    }
     for (Iterator i = stages.values().iterator(); i.hasNext();) {
       Stage s = (Stage) i.next();
       s.start(context);

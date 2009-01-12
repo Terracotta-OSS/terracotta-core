@@ -21,15 +21,15 @@ import java.util.concurrent.CopyOnWriteArraySet;
 public class VirtualTCGroupManagerImpl implements GroupManager, GroupEventsListener, GroupMessageListener {
   private static final TCLogger                           logger           = TCLogging
                                                                                .getLogger(VirtualTCGroupManagerImpl.class);
-  private final GroupManager                        groupManager;
+  private final GroupManager                              groupManager;
   private final CopyOnWriteArrayList<GroupEventsListener> groupListeners   = new CopyOnWriteArrayList<GroupEventsListener>();
   private final Map<String, GroupMessageListener>         messageListeners = new ConcurrentHashMap<String, GroupMessageListener>();
   private final Set<NodeID>                               groupNodeIDs     = new CopyOnWriteArraySet<NodeID>();
   private final Set<String>                               groupNodes       = new HashSet<String>();
 
-  public VirtualTCGroupManagerImpl(GroupManager groupManager, Node[] thisGroupNodes) {
+  public VirtualTCGroupManagerImpl(GroupManager groupManager, Node[] virtualGroupNodes) {
     this.groupManager = groupManager;
-    for (Node n : thisGroupNodes) {
+    for (Node n : virtualGroupNodes) {
       groupNodes.add(n.getServerNodeName());
     }
     groupManager.registerForGroupEvents(this);
@@ -40,7 +40,8 @@ public class VirtualTCGroupManagerImpl implements GroupManager, GroupEventsListe
   }
 
   public NodeID join(Node thisNode, Node[] allNodes) throws GroupException {
-    return groupManager.join(thisNode, allNodes);
+    //NOP here, the underlying groupManager should have already joined to the entire clustered.
+    return this.groupManager.getLocalNodeID();
   }
 
   public void registerForGroupEvents(GroupEventsListener listener) {
@@ -71,7 +72,7 @@ public class VirtualTCGroupManagerImpl implements GroupManager, GroupEventsListe
   public void sendAll(GroupMessage msg) {
     groupManager.sendAll(msg, groupNodeIDs);
   }
-  
+
   public void sendAll(GroupMessage msg, Set nodeIDs) {
     groupManager.sendAll(msg, nodeIDs);
   }
@@ -79,7 +80,7 @@ public class VirtualTCGroupManagerImpl implements GroupManager, GroupEventsListe
   public GroupResponse sendAllAndWaitForResponse(GroupMessage msg) throws GroupException {
     return groupManager.sendAllAndWaitForResponse(msg, groupNodeIDs);
   }
-  
+
   public GroupResponse sendAllAndWaitForResponse(GroupMessage msg, Set nodeIDs) throws GroupException {
     return groupManager.sendAllAndWaitForResponse(msg, nodeIDs);
   }
@@ -114,7 +115,7 @@ public class VirtualTCGroupManagerImpl implements GroupManager, GroupEventsListe
     groupNodeIDs.remove(nodeID);
     fireNodeEvent(nodeID, false);
   }
-  
+
   /*
    * for testing purpose only
    */
@@ -129,7 +130,8 @@ public class VirtualTCGroupManagerImpl implements GroupManager, GroupEventsListe
   }
 
   private void fireNodeEvent(NodeID nodeID, boolean joined) {
-    if (logger.isDebugEnabled()) logger.debug("VirtualTCGroupManager fireNodeEvent: joined = " + joined + ", node = " + nodeID);
+    if (logger.isDebugEnabled()) logger.debug("VirtualTCGroupManager fireNodeEvent: joined = " + joined + ", node = "
+                                              + nodeID);
     for (GroupEventsListener listener : groupListeners) {
       if (joined) {
         listener.nodeJoined(nodeID);

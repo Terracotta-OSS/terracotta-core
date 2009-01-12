@@ -4,16 +4,22 @@
  */
 package com.tc.objectserver.tx;
 
+import com.tc.async.api.ConfigurationContext;
+import com.tc.async.api.PostInit;
 import com.tc.net.NodeID;
 import com.tc.object.msg.MessageRecyclerImpl;
 import com.tc.object.tx.ServerTransactionID;
+import com.tc.objectserver.core.api.ServerConfigurationContext;
 
 import java.util.Collection;
 import java.util.Set;
 
-public class CommitTransactionMessageRecycler extends MessageRecyclerImpl implements ServerTransactionListener {
+public class CommitTransactionMessageRecycler extends MessageRecyclerImpl implements ServerTransactionListener,
+    PostInit {
 
-  public CommitTransactionMessageRecycler(ServerTransactionManager transactionManager) {
+  public void initializeContext(ConfigurationContext context) {
+    ServerConfigurationContext scc = (ServerConfigurationContext) context;
+    ServerTransactionManager transactionManager = scc.getTransactionManager();
     transactionManager.addTransactionListener(this);
   }
 

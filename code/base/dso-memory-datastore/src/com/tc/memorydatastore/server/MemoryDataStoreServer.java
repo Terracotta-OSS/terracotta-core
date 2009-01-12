@@ -90,7 +90,7 @@ public class MemoryDataStoreServer {
     lsnr.routeMessageType(TCMessageType.MEMORY_DATA_STORE_REQUEST_MESSAGE, memoryDataStoreRequestStage.getSink(),
         hydrateStage.getSink());
 
-    stageManager.startAll(new NullContext(stageManager)); // temporary hack to
+    stageManager.startAll(new NullContext(stageManager), Collections.EMPTY_LIST); // temporary hack to
     // start the stage
     lsnr.start(Collections.EMPTY_SET);
     this.state = STARTED;

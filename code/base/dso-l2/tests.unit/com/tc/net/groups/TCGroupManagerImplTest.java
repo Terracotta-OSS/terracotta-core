@@ -47,6 +47,7 @@ import com.tc.util.runtime.ThreadDump;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -84,7 +85,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
           .getLogger(TCGroupManagerImplTest.class))), new QueueFactory());
       groups[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports[i], groupPorts[i], stageManager);
       ConfigurationContext context = new ConfigurationContextImpl(stageManager);
-      stageManager.startAll(context);
+      stageManager.startAll(context, Collections.EMPTY_LIST);
       groups[i].setDiscover(new TCGroupMemberDiscoveryStatic(groups[i]));
       groups[i].registerForGroupEvents(new TestGroupEventListener(groups[i]));
       System.out.println("Starting " + groups[i]);

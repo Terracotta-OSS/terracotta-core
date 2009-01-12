@@ -34,6 +34,7 @@ import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -390,7 +391,7 @@ public class TCGroupStateManagerTest extends TCTestCase {
                                                    nodes[localIndex].getPort(), nodes[localIndex].getGroupPort(),
                                                    stageManager);
     ConfigurationContext context = new ConfigurationContextImpl(stageManager);
-    stageManager.startAll(context);
+    stageManager.startAll(context, Collections.EMPTY_LIST);
     gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm));
 
     groupMgr[localIndex] = gm;

@@ -24,6 +24,8 @@ import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
 
+import java.util.Collections;
+
 public class TCGroupSendLargeMessageTest extends TCTestCase {
   private final static String LOCALHOST   = "localhost";
   private static final long   millionOids = 1024 * 1024;
@@ -43,7 +45,7 @@ public class TCGroupSendLargeMessageTest extends TCTestCase {
     StageManager stageManager1 = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(null)), new QueueFactory());
     TCGroupManagerImpl gm1 = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, p1, p1 + 1, stageManager1);
     ConfigurationContext context1 = new ConfigurationContextImpl(stageManager1);
-    stageManager1.startAll(context1);
+    stageManager1.startAll(context1, Collections.EMPTY_LIST);
     gm1.setDiscover(new TCGroupMemberDiscoveryStatic(gm1));
     MyListener l1 = new MyListener();
     gm1.registerForMessages(GCResultMessage.class, l1);
@@ -51,7 +53,7 @@ public class TCGroupSendLargeMessageTest extends TCTestCase {
     StageManager stageManager2 = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(null)), new QueueFactory());
     TCGroupManagerImpl gm2 = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, p2, p2 + 1, stageManager2);
     ConfigurationContext context2 = new ConfigurationContextImpl(stageManager2);
-    stageManager2.startAll(context2);
+    stageManager2.startAll(context2, Collections.EMPTY_LIST);
     gm2.setDiscover(new TCGroupMemberDiscoveryStatic(gm2));
     MyListener l2 = new MyListener();
     gm2.registerForMessages(GCResultMessage.class, l2);

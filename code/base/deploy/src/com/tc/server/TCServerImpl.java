@@ -77,7 +77,8 @@ public class TCServerImpl extends SEDA implements TCServer {
   public static final String                   VERSION_SERVLET_PATH                         = "/version";
   public static final String                   CONFIG_SERVLET_PATH                          = "/config";
   public static final String                   STATISTICS_GATHERER_SERVLET_PREFIX           = "/statistics-gatherer";
-  public static final String                   STATISTICS_GATHERER_SERVLET_PATH             = STATISTICS_GATHERER_SERVLET_PREFIX+"/*";
+  public static final String                   STATISTICS_GATHERER_SERVLET_PATH             = STATISTICS_GATHERER_SERVLET_PREFIX
+                                                                                              + "/*";
   public static final String                   L1_RECONNECT_PROPERTIES_FROML2_SERVELET_PATH = "/l1reconnectproperties";
 
   public static final String                   HTTP_AUTHENTICATION_ROLE_STATISTICS          = "statistics";
@@ -112,7 +113,8 @@ public class TCServerImpl extends SEDA implements TCServer {
     this(configurationSetupManager, threadGroup, new ConnectionPolicyImpl(Integer.MAX_VALUE));
   }
 
-  public TCServerImpl(final L2TVSConfigurationSetupManager manager, final TCThreadGroup group, final ConnectionPolicy connectionPolicy) {
+  public TCServerImpl(final L2TVSConfigurationSetupManager manager, final TCThreadGroup group,
+                      final ConnectionPolicy connectionPolicy) {
     super(group, LinkedBlockingQueue.class.getName());
     this.connectionPolicy = connectionPolicy;
     Assert.assertNotNull(manager);
@@ -371,7 +373,6 @@ public class TCServerImpl extends SEDA implements TCServer {
         UpdateCheckAction.start(TCServerImpl.this, updateCheckPeriodDays());
       }
 
-      // CDV-1079
       String l2Identifier = configurationSetupManager.getL2Identifier();
       if (l2Identifier != null) logger.info("Server started as " + l2Identifier);
     }
@@ -400,14 +401,24 @@ public class TCServerImpl extends SEDA implements TCServer {
         .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_FLUSH_LOGGING_ENABLED), tcProps
         .getBoolean(TCPropertiesConsts.L2_TRANSACTIONMANAGER_LOGGING_PRINT_BROADCAST_STATS), tcProps
         .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_PERSISTOR_LOGGING_ENABLED));
-    dsoServer = new DistributedObjectServer(configurationSetupManager, getThreadGroup(), connectionPolicy, httpSink,
-                                            new TCServerInfo(this, state, objectStatsRecorder), objectStatsRecorder,
-                                            state, this);
+    dsoServer = createDistributedObjectServer(configurationSetupManager, connectionPolicy, httpSink,
+                                              new TCServerInfo(this, state, objectStatsRecorder), objectStatsRecorder,
+                                              state, this);
     dsoServer.start();
     registerDSOServer();
   }
 
-  private void startHTTPServer(final NewCommonL2Config commonL2Config, final TerracottaConnector tcConnector) throws Exception {
+  protected DistributedObjectServer createDistributedObjectServer(L2TVSConfigurationSetupManager configSetupManager,
+                                                                ConnectionPolicy policy, Sink httpSink,
+                                                                TCServerInfo serverInfo,
+                                                                ObjectStatsRecorder objectStatsRecorder,
+                                                                L2State l2State, TCServerImpl serverImpl) {
+    return new DistributedObjectServer(configSetupManager, getThreadGroup(), policy, httpSink, serverInfo,
+                                       objectStatsRecorder, l2State, this);
+  }
+
+  private void startHTTPServer(final NewCommonL2Config commonL2Config, final TerracottaConnector tcConnector)
+      throws Exception {
     httpServer = new Server();
     httpServer.addConnector(tcConnector);
 
@@ -435,7 +446,8 @@ public class TCServerImpl extends SEDA implements TCServer {
 
     context.setAttribute(ConfigServlet.CONFIG_ATTRIBUTE, this.configurationSetupManager);
 
-    final boolean cvtRestEnabled = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.CVT_REST_INTERFACE_ENABLED, true);
+    final boolean cvtRestEnabled = TCPropertiesImpl.getProperties()
+        .getBoolean(TCPropertiesConsts.CVT_REST_INTERFACE_ENABLED, true);
     if (cvtRestEnabled) {
       context.setAttribute(StatisticsGathererServlet.GATHERER_ATTRIBUTE, this.statisticsGathererSubSystem);
     }
@@ -467,7 +479,8 @@ public class TCServerImpl extends SEDA implements TCServer {
     if (cvtRestEnabled) {
       createAndAddServlet(servletHandler, StatisticsGathererServlet.class.getName(), STATISTICS_GATHERER_SERVLET_PATH);
     }
-    createAndAddServlet(servletHandler, L1ReconnectPropertiesServlet.class.getName(), L1_RECONNECT_PROPERTIES_FROML2_SERVELET_PATH);
+    createAndAddServlet(servletHandler, L1ReconnectPropertiesServlet.class.getName(),
+                        L1_RECONNECT_PROPERTIES_FROML2_SERVELET_PATH);
 
     if (TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.HTTP_DEFAULT_SERVLET_ENABLED, false)) {
       if (!tcInstallDirValid) {
@@ -501,7 +514,8 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
   }
 
-  private static void createAndAddServlet(final ServletHandler servletHandler, final String servletClassName, final String path) {
+  private static void createAndAddServlet(final ServletHandler servletHandler, final String servletClassName,
+                                          final String path) {
     ServletHolder holder = servletHandler.addServletWithMapping(servletClassName, path);
     holder.setInitParameter("scratchdir", "jsp"); // avoid jetty from creating a "jsp" directory
     servletHandler.addServlet(holder);

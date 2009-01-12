@@ -245,5 +245,6 @@ public interface ClientTransaction {
    * @return List of notify/notifyAll() calls in this transaction
    */
   public List getNotifies();
-
+  
+  
 }

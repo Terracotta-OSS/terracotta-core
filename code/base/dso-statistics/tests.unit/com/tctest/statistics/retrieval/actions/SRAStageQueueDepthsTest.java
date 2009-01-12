@@ -20,6 +20,7 @@ import com.tc.util.Assert;
 import com.tc.util.concurrent.QueueFactory;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 
 import junit.framework.TestCase;
@@ -37,7 +38,7 @@ public class SRAStageQueueDepthsTest extends TestCase {
       createStage(STAGE_NAMES[i]);
     }
 
-    stageManager.startAll(new ConfigurationContextImpl(stageManager));
+    stageManager.startAll(new ConfigurationContextImpl(stageManager), Collections.EMPTY_LIST);
   }
 
   private void createStage(String stageName) {

@@ -7,6 +7,7 @@ package com.tc.objectserver.impl;
 import bsh.EvalError;
 import bsh.Interpreter;
 
+import com.tc.async.api.PostInit;
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
@@ -55,10 +56,14 @@ import com.tc.management.remote.protocol.terracotta.JmxRemoteTunnelMessage;
 import com.tc.management.remote.protocol.terracotta.L1JmxReady;
 import com.tc.net.AddressChecker;
 import com.tc.net.NIOWorkarounds;
+import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.groups.GroupException;
+import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.Node;
+import com.tc.net.groups.SingleNodeGroupManager;
+import com.tc.net.groups.TCGroupManagerImpl;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OOOEventHandler;
@@ -96,7 +101,6 @@ import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
 import com.tc.object.msg.JMXMessage;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockResponseMessage;
-import com.tc.object.msg.MessageRecycler;
 import com.tc.object.msg.ObjectIDBatchRequestMessage;
 import com.tc.object.msg.ObjectIDBatchRequestResponseMessage;
 import com.tc.object.msg.ObjectsNotFoundMessageImpl;
@@ -183,7 +187,6 @@ import com.tc.objectserver.tx.ServerTransactionManagerConfig;
 import com.tc.objectserver.tx.ServerTransactionManagerImpl;
 import com.tc.objectserver.tx.ServerTransactionSequencerImpl;
 import com.tc.objectserver.tx.ServerTransactionSequencerStats;
-import com.tc.objectserver.tx.TransactionBatchManager;
 import com.tc.objectserver.tx.TransactionBatchManagerImpl;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
@@ -242,8 +245,10 @@ import com.tc.util.startuplock.LocationNotCreatedException;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Timer;
@@ -265,7 +270,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
   private static final int                     MAX_DEFAULT_COMM_THREADS = 16;
 
   private final L2TVSConfigurationSetupManager configSetupManager;
-  private final HaConfig                       haConfig;
+  protected final HaConfig                     haConfig;
   private final Sink                           httpSink;
   private NetworkListener                      l1Listener;
   private CommunicationsManager                communicationsManager;
@@ -308,6 +313,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
   private ReconnectConfig                      l1ReconnectConfig;
 
   private GCStatsEventPublisher                gcStatsEventPublisher;
+  private GroupManager                         groupCommManager;
 
   // used by a test
   public DistributedObjectServer(L2TVSConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
@@ -361,6 +367,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
     threadGroup.addCallbackOnExitDefaultHandler(new ThreadDumpHandler(this));
     thisServerNodeID = makeServerNodeID(configSetupManager.dsoL2Config());
     L2LockStatsManager lockStatsManager = new L2LockStatisticsManagerImpl();
+
+    List<PostInit> toInit = new ArrayList<PostInit>();
 
     try {
       this.lockStatisticsMBean = new LockStatisticsMonitor(lockStatsManager);
@@ -423,8 +431,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
 
     l1ReconnectConfig = new L1ReconnectConfigImpl();
 
-    final boolean swapEnabled = true; // 2006-01-31 andrew -- no longer possible to use in-memory only; DSO folks say
-    // it's broken
+    final boolean swapEnabled = true;
     final boolean persistent = persistenceMode.equals(PersistenceMode.PERMANENT_STORE);
 
     TCFile location = new TCFileImpl(this.configSetupManager.commonl2Config().dataPath().getFile());
@@ -681,10 +688,16 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
     ChannelStatsImpl channelStats = new ChannelStatsImpl(sampledCounterManager, channelManager);
     channelManager.addEventListener(channelStats);
 
+    CommitTransactionMessageRecycler recycler = new CommitTransactionMessageRecycler();
+    toInit.add(recycler);
+
     lockManager = new LockManagerImpl(channelManager, lockStatsManager);
     threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter(lockManager));
     ObjectInstanceMonitorImpl instanceMonitor = new ObjectInstanceMonitorImpl();
-    TransactionBatchManager transactionBatchManager = new TransactionBatchManagerImpl();
+
+    TransactionBatchManagerImpl transactionBatchManager = new TransactionBatchManagerImpl(sequenceValidator, recycler);
+    toInit.add(transactionBatchManager);
+
     TransactionAcknowledgeAction taa = new TransactionAcknowledgeActionImpl(channelManager, transactionBatchManager);
     SampledCounter globalTxnCounter = (SampledCounter) sampledCounterManager
         .createCounter(new SampledCounterConfig(1, 300, true, 0L));
@@ -727,8 +740,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
                                                           objectStatsRecorder);
     threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter(transactionManager));
 
-    MessageRecycler recycler = new CommitTransactionMessageRecycler(transactionManager);
-
     stageManager.createStage(ServerConfigurationContext.TRANSACTION_LOOKUP_STAGE, new TransactionLookupHandler(), 1,
                              maxStageSize);
 
@@ -749,9 +760,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
     txnStageCoordinator.lookUpSinks();
 
     Stage processTx = stageManager.createStage(ServerConfigurationContext.PROCESS_TRANSACTION_STAGE,
-                                               new ProcessTransactionHandler(transactionBatchManager,
-                                                                             sequenceValidator, recycler), 1,
-                                               maxStageSize);
+                                               new ProcessTransactionHandler(transactionBatchManager), 1, maxStageSize);
 
     Stage rootRequest = stageManager.createStage(ServerConfigurationContext.MANAGED_ROOT_REQUEST_STAGE,
                                                  new RequestRootHandler(), 1, maxStageSize);
@@ -886,12 +895,13 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
                                                                                            persistent, consoleLogger);
 
     boolean networkedHA = this.haConfig.isNetworkedActivePassive();
+    groupCommManager = createGroupCommManager(networkedHA, configSetupManager, stageManager, thisServerNodeID);
     if (networkedHA) {
 
       logger.info("L2 Networked HA Enabled ");
-      l2Coordinator = new L2HACoordinator(configSetupManager, consoleLogger, this, stageManager, persistor
+      l2Coordinator = new L2HACoordinator(consoleLogger, this, stageManager, groupCommManager, persistor
           .getClusterStateStore(), objectManager, transactionManager, gtxm, channelManager, configSetupManager
-          .haConfig(), recycler, thisServerNodeID);
+          .haConfig(), recycler);
       l2Coordinator.getStateManager().registerForStateChangeEvents(l2State);
     } else {
       l2State.setState(StateManager.ACTIVE_COORDINATOR);
@@ -903,9 +913,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
                                                  txnObjectManager, clientHandshakeManager, channelStats, l2Coordinator,
                                                  new CommitTransactionMessageToTransactionBatchReader(gtxm));
 
-    stageManager.startAll(context);
+    stageManager.startAll(context, toInit);
 
-    // populate the statistics retrieval registry
+    // populate the statistics retrieval register
     populateStatisticsRetrievalRegistry(serverStats, seda.getStageManager(), mm, transactionManager,
                                         serverTransactionSequencerImpl);
 
@@ -919,16 +929,37 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
 
     lockStatsManager.start(channelManager);
 
-    if (networkedHA) {
-      final Node thisNode = this.haConfig.makeThisNode();
-      CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);
-      threadGroup.addCallbackOnExitExceptionHandler(GroupException.class, handler);
-      l2Coordinator.start(thisNode, this.haConfig.getThisGroupNodes());
-    } else {
+    CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);
+    threadGroup.addCallbackOnExitExceptionHandler(GroupException.class, handler);
+
+    startGroupManagers();
+    l2Coordinator.start();
+    if (!networkedHA) {
       // In non-network enabled HA, Only active server reached here.
       startActiveMode();
     }
     setLoggerOnExit();
+  }
+
+  // Overridden by enterprise server
+  protected void startGroupManagers() {
+    try {
+      NodeID myNodeId = groupCommManager.join(this.haConfig.makeThisNode(), this.haConfig.getThisGroupNodes());
+      logger.info("This L2 Node ID = " + myNodeId);
+    } catch (GroupException e) {
+      logger.error("Caught Exception :", e);
+      throw new RuntimeException(e);
+    }
+  }
+
+  // Overridden by enterprise server
+  protected GroupManager createGroupCommManager(boolean networkedHA, L2TVSConfigurationSetupManager configManager,
+                                                StageManager stageManager, ServerID serverNodeID) {
+    if (networkedHA) {
+      return new TCGroupManagerImpl(configManager, stageManager, serverNodeID);
+    } else {
+      return new SingleNodeGroupManager();
+    }
   }
 
   private ServerID makeServerNodeID(NewL2DSOConfig l2DSOConfig) {

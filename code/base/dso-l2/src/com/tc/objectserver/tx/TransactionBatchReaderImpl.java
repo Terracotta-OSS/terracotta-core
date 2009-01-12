@@ -39,6 +39,8 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
   private ObjectStringSerializer             serializer;
   private final GlobalTransactionIDGenerator gtxm;
   private final ServerTransactionFactory     txnFactory;
+  // Used in active -active
+  private final long[]                       highWaterMark;
 
   public TransactionBatchReaderImpl(GlobalTransactionIDGenerator gtxm, TCByteBuffer[] data, NodeID nodeID,
                                     ObjectStringSerializer serializer, ServerTransactionFactory txnFactory)
@@ -49,7 +51,17 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
     this.source = nodeID;
     this.batchID = new TxnBatchID(in.readLong());
     this.numTxns = in.readInt();
+    this.highWaterMark = readLongArray(this.in);
     this.serializer = serializer;
+  }
+
+  private long[] readLongArray(TCByteBufferInputStream input) throws IOException {
+    int size = input.readInt();
+    long larray[] = new long[size];
+    for (int i = 0; i < larray.length; i++) {
+      larray[i] = input.readLong();
+    }
+    return larray;
   }
 
   public NodeID getNodeID() {
@@ -133,4 +145,9 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
   public int getNumTxns() {
     return this.numTxns;
   }
+
+  public long[] getHighWatermark() {
+    return this.highWaterMark;
+  }
+
 }

@@ -310,9 +310,22 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     return out.toArray();
   }
 
-  private void writeHeader(TCByteBufferOutputStream out) {
+  protected void writeHeader(TCByteBufferOutputStream out) {
     out.writeLong(this.batchID.toLong());
     out.writeInt(transactionData.size());
+    writeRemainingHeader(out); 
+  }
+
+  protected void writeRemainingHeader(TCByteBufferOutputStream out) {
+    // This is here so that the format is compatible with active-active
+    writeLongArray(out, new long[0]);
+  }
+
+  protected void writeLongArray(TCByteBufferOutputStream out, long[] ls) {
+    out.writeInt(ls.length);
+    for (int i = 0; i < ls.length; i++) {
+      out.writeLong(ls[i]);
+    }
   }
 
   private TCByteBufferOutputStream newOutputStream() {
@@ -439,12 +452,8 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
 
     int write(ClientTransaction txn) {
       // Holding on the object references, this method could be called more than once for folded transactions.
-
       // By definition on the second and subsequent calls will have repeated object references in it, so put() to the
       // map here to not store dupes.
-
-      // XXX: As an optimization the set of "new" objects could probably be computed when finding the fold target
-      // instead of just always put()'ing here
       for (Iterator i = txn.getReferencesOfObjectsInTxn().iterator(); i.hasNext();) {
         this.references.put(i.next(), null);
       }
