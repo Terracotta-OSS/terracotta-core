@@ -153,22 +153,27 @@ public class LockStatManagerTest extends TestCase {
   }
 
   public void testLockStatsManager() {
-    verifyLockStatsManagerStatistics();
+    try {
+      verifyLockStatsManagerStatistics();
 
-    lockStatManager.setLockStatisticsEnabled(false);
+      lockStatManager.setLockStatisticsEnabled(false);
 
-    LockID l1 = new LockID("1");
-    ThreadID s1 = new ThreadID(0);
+      LockID l1 = new LockID("1");
+      ThreadID s1 = new ThreadID(0);
 
-    final ClientID cid1 = new ClientID(new ChannelID(1));
+      final ClientID cid1 = new ClientID(new ChannelID(1));
 
-    lockManager.requestLock(l1, cid1, s1, LockLevel.WRITE, String.class.getName(), sink);
-    assertEquals(0, lockStatManager.getNumberOfLockRequested(l1));
-    lockManager.unlock(l1, cid1, ThreadID.VM_ID);
+      lockManager.requestLock(l1, cid1, s1, LockLevel.WRITE, String.class.getName(), sink);
+      assertEquals(0, lockStatManager.getNumberOfLockRequested(l1));
+      lockManager.unlock(l1, cid1, ThreadID.VM_ID);
 
-    lockStatManager.setLockStatisticsEnabled(true);
+      lockStatManager.setLockStatisticsEnabled(true);
 
-    verifyLockStatsManagerStatistics();
+      verifyLockStatsManagerStatistics();
+    } catch (Error e) {
+      e.printStackTrace();
+      throw e;
+    }
   }
 
   private void verifyLockStatsManagerStatistics() {
