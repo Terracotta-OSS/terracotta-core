@@ -121,6 +121,7 @@ bundled_components:
         - ent-deploy
         - ent-ui-configurator
         - ent-dso-l1
+        - ent-dso-l2
 bundled_modules:
   - core:
       install_directory: modules
