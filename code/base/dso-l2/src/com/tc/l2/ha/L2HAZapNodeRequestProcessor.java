@@ -11,7 +11,6 @@ import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
-import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.ZapNodeRequestProcessor;
 
@@ -46,8 +45,7 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
     assertOnType(zapNodeType, reason);
     if (stateManager.isActiveCoordinator()
         || (zapNodeType == COMMUNICATION_TO_ACTIVE_ERROR && nodeID.equals(stateManager.getActiveNodeID()))) {
-      consoleLogger
-          .warn("Requesting node to quit : " + getFormatedError(nodeID, zapNodeType));
+      consoleLogger.warn("Requesting node to quit : " + getFormatedError(nodeID, zapNodeType));
       return true;
     } else {
       logger.warn("Not allowing to Zap " + nodeID + " since not in " + StateManager.ACTIVE_COORDINATOR);
@@ -125,12 +123,7 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
     long myWeights[] = factory.generateWeightSequence();
     logger.warn("Possibly two or more Active servers detected in the cluster : My weights = " + toString(myWeights)
                 + " Other servers weights = " + toString(weights));
-    Enrollment mine;
-    try {
-      mine = new Enrollment(groupManager.getLocalNodeID(), false, myWeights);
-    } catch (GroupException e) {
-      throw new AssertionError(e);
-    }
+    Enrollment mine = new Enrollment(groupManager.getLocalNodeID(), false, myWeights);
     Enrollment hisOrHers = new Enrollment(nodeID, false, weights);
     if (hisOrHers.wins(mine)) {
       // The other node has more connected clients, so back off

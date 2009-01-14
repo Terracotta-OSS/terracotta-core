@@ -13,7 +13,7 @@ public interface GroupManager {
 
   public NodeID join(final Node thisNode, final Node[] allNodes) throws GroupException;
   
-  public NodeID getLocalNodeID() throws GroupException;
+  public NodeID getLocalNodeID();
 
   public void sendAll(GroupMessage msg);
   

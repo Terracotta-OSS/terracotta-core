@@ -792,7 +792,7 @@ public class ActiveActiveTcConfigTest extends TCTestCase {
       ActiveServerGroupConfig[] grps = asgs.getActiveServerGroupArray();
 
       Assert.assertEquals(1, grps.length);
-      Assert.assertEquals(0, grps[0].getId());
+      Assert.assertEquals(0, grps[0].getGroupId());
       Assert.assertNotNull(grps[0].getHa());
       Assert.assertEquals(5, grps[0].getHa().electionTime());
 

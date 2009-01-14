@@ -77,7 +77,7 @@ public class ActiveCoordinatorHelperTest extends TCTestCase {
       return null;
     }
 
-    public int getId() {
+    public int getGroupId() {
       return 0;
     }
 

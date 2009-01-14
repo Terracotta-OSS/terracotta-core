@@ -17,6 +17,7 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.lockmanager.api.LockManager;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.tx.ServerTransactionManager;
+import com.tc.objectserver.tx.TransactionBatchManager;
 import com.tc.objectserver.tx.TransactionBatchReaderFactory;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 
@@ -39,6 +40,7 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
   private final TransactionBatchReaderFactory transactionBatchReaderFactory;
   private final TransactionalObjectManager    txnObjectManager;
   private final L2Coordinator                 l2Coordinator;
+  private final TransactionBatchManager       transactionBatchManager;
 
   public ServerConfigurationContextImpl(StageManager stageManager, ObjectManager objectManager,
                                         ObjectRequestManager objectRequestManager, ManagedObjectStore objectStore,
@@ -48,7 +50,8 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
                                         TransactionalObjectManager txnObjectManager,
                                         ServerClientHandshakeManager clientHandshakeManager, ChannelStats channelStats,
                                         L2Coordinator l2Coordinator,
-                                        TransactionBatchReaderFactory transactionBatchReaderFactory) {
+                                        TransactionBatchReaderFactory transactionBatchReaderFactory,
+                                        TransactionBatchManager transactionBatchManager) {
     super(stageManager);
     this.objectManager = objectManager;
     this.objectRequestManager = objectRequestManager;
@@ -62,6 +65,7 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
     this.channelStats = channelStats;
     this.l2Coordinator = l2Coordinator;
     this.transactionBatchReaderFactory = transactionBatchReaderFactory;
+    this.transactionBatchManager = transactionBatchManager;
   }
 
   public L2Coordinator getL2Coordinator() {
@@ -112,4 +116,7 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
     return this.transactionBatchReaderFactory;
   }
 
+  public TransactionBatchManager getTransactionBatchManager() {
+    return this.transactionBatchManager;
+  }
 }

@@ -147,8 +147,8 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
         if (groupArray[j].isMember(serverName)) {
           if (found) { throw new ConfigurationSetupException("Server{" + serverName
                                                              + "} is part of more than 1 active-server-group:  groups{"
-                                                             + gid + "," + groupArray[j].getId() + "}"); }
-          gid = groupArray[j].getId();
+                                                             + gid + "," + groupArray[j].getGroupId() + "}"); }
+          gid = groupArray[j].getGroupId();
           found = true;
         }
       }

@@ -66,7 +66,7 @@ public class ActiveServerGroupConfigObject extends BaseNewConfigObject implement
     return this.membersConfig;
   }
 
-  public int getId() {
+  public int getGroupId() {
     return this.groupId;
   }
 

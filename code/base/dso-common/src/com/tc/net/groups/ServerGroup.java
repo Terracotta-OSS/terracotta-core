@@ -20,7 +20,7 @@ public class ServerGroup {
   private final Map         nodes;
 
   public ServerGroup(final ActiveServerGroupConfig group) {
-    this.groupId = group.getId();
+    this.groupId = group.getGroupId();
     this.members = group.getMembers().getMemberArray();
     this.haMode = group.getHa();
     this.nodes = new HashMap();

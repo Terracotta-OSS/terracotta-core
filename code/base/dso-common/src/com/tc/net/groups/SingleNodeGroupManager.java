@@ -11,11 +11,12 @@ import com.tc.net.ServerID;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /*
  * This is a simple class that is a dummy group manager. All it does is it treats this one node that it runs in as a
- * group. This is needed for two reasons, 1) to easly disable, test the rest of the system and 2) to provide an
- * interface level replacement for tribes in 1.4 JVM
+ * group. This is needed for two reasons, 1) to easily disable, test the rest of the system and 2) to provide an
+ * interface level replacement in disk based active passive where group manager is not needed.
  */
 public class SingleNodeGroupManager implements GroupManager {
 
@@ -31,51 +32,59 @@ public class SingleNodeGroupManager implements GroupManager {
 
   private static final byte[]        CURRENT_NODE_ID = new byte[] { 36, 24, 32 };
 
-  NodeID                             thisNode;
+  private final AtomicBoolean        joined          = new AtomicBoolean(false);
+  private final NodeID               thisNode;
+
+  public SingleNodeGroupManager(NodeID localNodeID) {
+    thisNode = localNodeID;
+  }
+
+  public SingleNodeGroupManager() {
+    this(new ServerID("CurrentNode", CURRENT_NODE_ID));
+  }
 
   public NodeID join(final Node thisN, final Node[] allNodes) throws GroupException {
-    if (thisNode != null) { throw new GroupException("Already Joined !"); }
-    this.thisNode = new ServerID("CurrentNode", CURRENT_NODE_ID);
+    if (!joined.compareAndSet(false, true)) { throw new GroupException("Already Joined"); }
+
     return this.thisNode;
   }
-  
-  public NodeID getLocalNodeID() throws GroupException {
-    if (thisNode == null) { throw new GroupException("Not Joined yet !"); }
+
+  public NodeID getLocalNodeID() {
     return this.thisNode;
   }
 
   public void registerForMessages(Class msgClass, GroupMessageListener listener) {
-    // NOP : Since this doesnt talk to the network, this should never get any message
+    // NOP : Since this doesn't talk to the network, this should never get any message
   }
 
   public void routeMessages(Class msgClass, Sink sink) {
-    // NOP : Since this doesnt talk to the network, this should never get any message
+    // NOP : Since this doesn't talk to the network, this should never get any message
   }
 
   public void sendAll(GroupMessage msg) {
     // NOP : No Network, no one to write to
   }
-  
+
   public void sendAll(GroupMessage msg, Set nodeIDs) {
     // NOP
   }
-  
+
   public GroupResponse sendAllAndWaitForResponse(GroupMessage msg) {
     // NOP : No Network, no one to write to, hen no response too
     return DUMMY_RESPONSE;
   }
-  
+
   public GroupResponse sendAllAndWaitForResponse(GroupMessage msg, Set nodeIDs) {
     // NOP : No Network, no one to write to, hen no response too
     return DUMMY_RESPONSE;
   }
-  
+
   public void sendTo(NodeID node, GroupMessage msg) throws GroupException {
     throw new GroupException("Can't write to Node : " + node + " Node Not found !");
   }
 
   public GroupMessage sendToAndWaitForResponse(NodeID nodeID, GroupMessage msg) {
-    // Comeback
+    // Come back
     return null;
   }
 

@@ -292,7 +292,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
     for (int i = 0; i < nodes; ++i) {
       managers[i] = createStateManageNode(i, sinks, groupMgr, msgStages);
     }
-    
+
     ElectionThread[] elections = new ElectionThread[virtuals];
     for (int i = 0; i < virtuals; ++i) {
       elections[i] = new ElectionThread(managers[i]);
@@ -358,7 +358,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
     for (int i = 0; i < nodes; ++i) {
       managers[i] = createStateManageNode(i, sinks, groupMgr, msgStages);
     }
-    
+
     ElectionThread[] elections = new ElectionThread[virtuals];
     for (int i = 0; i < virtuals; ++i) {
       elections[i] = new ElectionThread(managers[i]);

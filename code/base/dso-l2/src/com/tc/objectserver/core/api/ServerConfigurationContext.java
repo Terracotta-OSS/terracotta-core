@@ -15,6 +15,7 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.lockmanager.api.LockManager;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.tx.ServerTransactionManager;
+import com.tc.objectserver.tx.TransactionBatchManager;
 import com.tc.objectserver.tx.TransactionBatchReaderFactory;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 
@@ -92,5 +93,7 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public ChannelStats getChannelStats();
 
   public TransactionBatchReaderFactory getTransactionBatchReaderFactory();
+
+  public TransactionBatchManager getTransactionBatchManager();
 
 }

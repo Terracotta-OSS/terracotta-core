@@ -116,11 +116,7 @@ public class StateManagerImpl implements StateManager {
   }
 
   private NodeID getLocalNodeID() {
-    try {
-      return groupManager.getLocalNodeID();
-    } catch (GroupException e) {
-      throw new AssertionError(e);
-    }
+    return groupManager.getLocalNodeID();
   }
 
   public void registerForStateChangeEvents(StateChangeListener listener) {
