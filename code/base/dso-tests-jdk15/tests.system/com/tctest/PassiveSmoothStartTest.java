@@ -36,10 +36,6 @@ public class PassiveSmoothStartTest extends TransparentTestBase {
   private File[]           configFiles;
   String[]                 serverDataPath  = new String[SERVERS];
 
-  public PassiveSmoothStartTest() {
-    disableAllUntil("2009-01-14");
-  }
-
   protected Class getApplicationClass() {
     return PassiveSmoothStartTestApp.class;
   }

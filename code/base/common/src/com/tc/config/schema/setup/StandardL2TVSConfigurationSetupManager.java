@@ -122,15 +122,11 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     selectL2((Servers) serversBeanRepository().bean(), "the set of L2s known to us");
     validateRestrictions();
 
+    this.haConfig = getHaConfig();
+
     // do this after servers and groups have been processed
     validateGroups();
     validateDSOClusterPersistenceMode();
-
-    try {
-      this.haConfig = getHaConfig();
-    } catch (XmlException e) {
-      throw new ConfigurationSetupException(e);
-    }
   }
 
   public String getL2Identifier() {
@@ -179,7 +175,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
   private ActiveServerGroupsConfig getActiveServerGroupsConfig() throws ConfigurationSetupException, XmlException {
 
     final ActiveServerGroups defaultActiveServerGroups = ActiveServerGroupsConfigObject
-        .getDefaultActiveServerGroups(defaultValueProvider, serversBeanRepository());
+        .getDefaultActiveServerGroups(defaultValueProvider, serversBeanRepository(), getCommomOrDefaultHa().getHa());
 
     ChildBeanRepository beanRepository = new ChildBeanRepository(serversBeanRepository(), ActiveServerGroups.class,
                                                                  new ChildBeanFetcher() {
@@ -199,7 +195,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
   }
 
   // make sure there is at most one of these
-  private NewHaConfig getHaConfig() throws XmlException {
+  private NewHaConfig getHaConfig() {
     NewHaConfig newHaConfig = null;
     if (this.activeServerGroupsConfig.getActiveServerGroupCount() != 0) {
       ActiveServerGroupConfig groupConfig = getActiveServerGroupForThisL2();
@@ -207,10 +203,6 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
         newHaConfig = groupConfig.getHa();
       }
     }
-    if (newHaConfig == null) {
-      newHaConfig = getCommomOrDefaultHa();
-    }
-    Assert.assertNotNull(newHaConfig);
     return newHaConfig;
   }
 
