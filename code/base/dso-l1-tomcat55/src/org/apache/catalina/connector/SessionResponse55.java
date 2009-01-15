@@ -7,13 +7,9 @@ package org.apache.catalina.connector;
 import com.tc.object.util.OverrideCheck;
 import com.terracotta.session.SessionResponse;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.Locale;
-
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.Cookie;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponseWrapper;
 
 // NOTE: A class adapter adds methods that delegate all override'able methods of tomcat's
 // Response class to the "valveRes" instance
@@ -65,144 +61,21 @@ public class SessionResponse55 extends Response {
   }
 
   // This class delegates all HttpServletResponse methods to the delegate, except for isCommitted()
-  private static class ResponseWrapper implements HttpServletResponse {
-    private final HttpServletResponse  delegate;
+  private static class ResponseWrapper extends HttpServletResponseWrapper {
     private final SessionResponse55 sessResponse55;
 
     ResponseWrapper(HttpServletResponse  delegate, SessionResponse55 sessResponse55) {
-      this.delegate = delegate;
+      super(delegate);
       this.sessResponse55 = sessResponse55;
-    }
-
-    public void addCookie(Cookie cookie) {
-      delegate.addCookie(cookie);
-    }
-
-    public void addDateHeader(String name, long date) {
-      delegate.addDateHeader(name, date);
-    }
-
-    public void addHeader(String name, String value) {
-      delegate.addHeader(name, value);
-    }
-
-    public void addIntHeader(String name, int value) {
-      delegate.addIntHeader(name, value);
-    }
-
-    public boolean containsHeader(String name) {
-      return delegate.containsHeader(name);
-    }
-
-    public String encodeRedirectUrl(String url) {
-      return delegate.encodeRedirectUrl(url);
-    }
-
-    public String encodeRedirectURL(String url) {
-      return delegate.encodeRedirectURL(url);
-    }
-
-    public String encodeUrl(String url) {
-      return delegate.encodeUrl(url);
-    }
-
-    public String encodeURL(String url) {
-      return delegate.encodeURL(url);
-    }
-
-    public void flushBuffer() throws IOException {
-      delegate.flushBuffer();
-    }
-
-    public int getBufferSize() {
-      return delegate.getBufferSize();
-    }
-
-    public String getCharacterEncoding() {
-      return delegate.getCharacterEncoding();
-    }
-
-    public String getContentType() {
-      return delegate.getContentType();
-    }
-
-    public Locale getLocale() {
-      return delegate.getLocale();
-    }
-
-    public ServletOutputStream getOutputStream() throws IOException {
-      return delegate.getOutputStream();
-    }
-
-    public PrintWriter getWriter() throws IOException {
-      return delegate.getWriter();
     }
 
     public boolean isCommitted() {
       return sessResponse55.isCommitted();
     }
 
-    public void reset() {
-      delegate.reset();
+    public ServletResponse getResponse() {
+      return sessResponse55;
     }
-
-    public void resetBuffer() {
-      delegate.resetBuffer();
-    }
-
-    public void sendError(int sc, String msg) throws IOException {
-      delegate.sendError(sc, msg);
-    }
-
-    public void sendError(int sc) throws IOException {
-      delegate.sendError(sc);
-    }
-
-    public void sendRedirect(String location) throws IOException {
-      delegate.sendRedirect(location);
-    }
-
-    public void setBufferSize(int size) {
-      delegate.setBufferSize(size);
-    }
-
-    public void setCharacterEncoding(String charset) {
-      delegate.setCharacterEncoding(charset);
-    }
-
-    public void setContentLength(int len) {
-      delegate.setContentLength(len);
-    }
-
-    public void setContentType(String type) {
-      delegate.setContentType(type);
-    }
-
-    public void setDateHeader(String name, long date) {
-      delegate.setDateHeader(name, date);
-    }
-
-    public void setHeader(String name, String value) {
-      delegate.setHeader(name, value);
-    }
-
-    public void setIntHeader(String name, int value) {
-      delegate.setIntHeader(name, value);
-    }
-
-    public void setLocale(Locale loc) {
-      delegate.setLocale(loc);
-    }
-
-    public void setStatus(int sc, String sm) {
-      delegate.setStatus(sc, sm);
-    }
-
-    public void setStatus(int sc) {
-      delegate.setStatus(sc);
-    }
-
-
 
   }
 
