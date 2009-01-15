@@ -53,7 +53,7 @@ public class TerracottaSessionManager implements SessionManager {
   private final String                 sessionCookieName;
   private final String                 sessionUrlPathParamTag;
   private final boolean                usesStandardUrlPathParam;
-  private int                          serverHopsDetected = 0;
+  private int                          serverHopsDetected   = 0;
   private final boolean                sessionLocking;
 
   private static final Set             excludedVHosts       = loadExcludedVHosts();
@@ -126,7 +126,7 @@ public class TerracottaSessionManager implements SessionManager {
                                                                                  + "=");
   }
 
-  public boolean isApplicationSessionLocked() {
+  public boolean isSessionLockingEnabled() {
     return sessionLocking;
   }
 
@@ -349,9 +349,39 @@ public class TerracottaSessionManager implements SessionManager {
         store.updateTimestampIfNeeded(sd);
       }
     } finally {
-      if (isApplicationSessionLocked()) id.commitLock();
+      if (isSessionLockingEnabled()) id.commitLock();
     }
     id.commitSessionInvalidatorLock();
+  }
+
+  /**
+   * The only use for this method [currently] is by Struts' Include Tag, which can generate a nested request. In this
+   * case we have to release session lock, so that nested request (running, potentially, in another JVM) can acquire it.
+   * {@link TerracottaSessionManager#resumeRequest(Session)} method will re-aquire the lock.
+   * <p />
+   * This method does not do anything when session-locking is <tt>false</tt>
+   */
+  public static void pauseRequest(final Session sess) {
+    Assert.pre(sess != null);
+    if (!sess.isSessionLockingEnabled()) return;
+    final SessionId id = sess.getSessionId();
+    final SessionData sd = sess.getSessionData();
+    sd.finishRequest();
+    id.commitLock();
+  }
+
+  /**
+   * See {@link TerracottaSessionManager#resumeRequest(Session)} for details.
+   * <p />
+   * This method does not do anything when session-locking is <tt>false</tt>
+   */
+  public static void resumeRequest(final Session sess) {
+    Assert.pre(sess != null);
+    if (!sess.isSessionLockingEnabled()) return;
+    final SessionId id = sess.getSessionId();
+    final SessionData sd = sess.getSessionData();
+    id.getWriteLock();
+    sd.startRequest();
   }
 
   private TerracottaRequest wrapRequest(SessionId sessionId, HttpServletRequest req, HttpServletResponse res,
@@ -425,7 +455,7 @@ public class TerracottaSessionManager implements SessionManager {
     try {
       sd = store.find(id);
       if (sd != null) {
-        if (!isApplicationSessionLocked()) id.getWriteLock();
+        if (!isSessionLockingEnabled()) id.getWriteLock();
         locked = true;
         expire(id, sd);
       }
@@ -438,7 +468,7 @@ public class TerracottaSessionManager implements SessionManager {
     if (debugInvalidate) {
       logger.info("Session id: " + data.getSessionId().getKey() + " being removed, unlock: " + unlock);
     }
-    if (unlock && !isApplicationSessionLocked()) {
+    if (unlock && !isSessionLockingEnabled()) {
       data.getSessionId().getWriteLock();
     }
     try {
