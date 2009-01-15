@@ -2,7 +2,7 @@
  * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tc.net.protocol.tcm;
+package com.tc.net.protocol;
 
 import com.tc.async.api.Sink;
 import com.tc.exception.ImplementMe;
@@ -14,6 +14,15 @@ import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.clientgroup.ClientGroupMessageChannel;
+import com.tc.net.protocol.tcm.ChannelEventListener;
+import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.protocol.tcm.ChannelIDProvider;
+import com.tc.net.protocol.tcm.ClientMessageChannel;
+import com.tc.net.protocol.tcm.TCMessage;
+import com.tc.net.protocol.tcm.TCMessageFactory;
+import com.tc.net.protocol.tcm.TCMessageRouter;
+import com.tc.net.protocol.tcm.TCMessageSink;
+import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.session.SessionProvider;
 
 /**

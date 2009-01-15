@@ -1,10 +1,11 @@
-package com.tc.object.tx;
+package com.tc.object.net;
 
 import com.tc.async.api.Sink;
 import com.tc.exception.ImplementMe;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
+import com.tc.net.protocol.TestClientMessageChannel;
 import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
@@ -12,7 +13,6 @@ import com.tc.net.protocol.tcm.MockMessageChannel;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.TestChannelIDProvider;
-import com.tc.net.protocol.tcm.TestClientMessageChannel;
 import com.tc.object.ClientIDProvider;
 import com.tc.object.ClientIDProviderImpl;
 import com.tc.object.msg.AcknowledgeTransactionMessageFactory;
