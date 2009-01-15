@@ -127,7 +127,9 @@ public class NonPortableWalkVisitor implements Visitor, ValueFormatter, WalkTest
   }
   
   public boolean shouldTraverse(MemberValue value) {
-    if (skipVisit(value) || value.isRepeated() || isNeverAdaptable(value) || isTransient(value)) { return false; }
+    if(value.isRepeated()) { return true; }
+    
+    if (skipVisit(value) || isNeverAdaptable(value) || isTransient(value)) { return false; }
 
     if (!isPortable(value) && isSystemType(value)) return false;
 
