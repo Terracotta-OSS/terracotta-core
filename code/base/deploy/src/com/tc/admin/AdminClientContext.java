@@ -4,56 +4,52 @@
  */
 package com.tc.admin;
 
-import org.dijon.ComponentResource;
-import org.dijon.DictionaryResource;
-import org.dijon.Resource;
-
-import com.tc.admin.common.XTreeNode;
-import com.tc.admin.model.IServer;
+import com.tc.admin.options.IOption;
 import com.tc.util.ResourceBundleHelper;
 
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.prefs.Preferences;
 
-public class AdminClientContext {
-  private AdminClient           client;
-  private AdminClientController controller;
-  private ResourceBundleHelper  bundleHelper;
-  private DictionaryResource    topRes;
-  private AbstractNodeFactory   nodeFactory;
-  private Preferences           prefs;
-  private ExecutorService       executorService;
+public class AdminClientContext implements IAdminClientContext {
+  private AdminClient               client;
+  private AdminClientController     controller;
+  private ResourceBundleHelper      bundleHelper;
+  private Preferences               prefs;
+  private final AbstractNodeFactory nodeFactory     = AbstractNodeFactory.getFactory();
+  private final ExecutorService     executorService = Executors.newCachedThreadPool();
+  private Map<String, IOption>      optionMap;
 
-  AdminClientContext(AdminClient client, ResourceBundleHelper bundleHelper, DictionaryResource topRes,
-                     AbstractNodeFactory nodeFactory, Preferences prefs, ExecutorService executorService) {
+  public AdminClientContext(AdminClient client) {
     this.client = client;
-    this.bundleHelper = bundleHelper;
-    this.topRes = topRes;
-    this.nodeFactory = nodeFactory;
-    this.prefs = prefs;
-    this.executorService = executorService;
+    this.bundleHelper = new ResourceBundleHelper(client.getClass());
+    this.prefs = client.loadPrefs();
+    this.optionMap = new LinkedHashMap<String, IOption>();
   }
 
-  public void setController(AdminClientController controller) {
+  public void setAdminClientController(AdminClientController controller) {
     this.controller = controller;
   }
+  
+  public AdminClientController getAdminClientController() {
+    return this.controller;
+  }
 
+  public ApplicationController getApplicationController() {
+    return getAdminClientController();
+  }
+  
   public AdminClient getClient() {
     return this.client;
   }
 
-  public AdminClientController getController() {
-    return this.controller;
-  }
-
   public ResourceBundleHelper getBundleHelper() {
     return this.bundleHelper;
-  }
-
-  public DictionaryResource getTopRes() {
-    return this.topRes;
   }
 
   public AbstractNodeFactory getNodeFactory() {
@@ -64,6 +60,14 @@ public class AdminClientContext {
     return this.prefs;
   }
 
+  public void registerOption(IOption option) {
+    optionMap.put(option.getName(), option);
+  }
+  
+  public Iterator<IOption> options() {
+    return optionMap.values().iterator();
+  }
+  
   public void execute(Runnable r) {
     this.executorService.execute(r);
   }
@@ -74,18 +78,6 @@ public class AdminClientContext {
 
   public Future<?> submit(Runnable task) {
     return this.executorService.submit(task);
-  }
-
-  public ComponentResource getComponent(String path) {
-    return this.topRes.getComponent(path);
-  }
-
-  public Resource childResource(String tag) {
-    return this.topRes.child(tag);
-  }
-
-  public Object resolveResource(String path) {
-    return this.topRes.resolve(path);
   }
 
   public String getMessage(String id) {
@@ -148,59 +140,5 @@ public class AdminClientContext {
     if (this.controller != null) {
       this.controller.unblock();
     }
-  }
-
-  public boolean isExpanded(XTreeNode node) {
-    return this.controller != null ? this.controller.isExpanded(node) : false;
-  }
-
-  public void expand(XTreeNode node) {
-    if (this.controller != null) {
-      this.controller.expand(node);
-    }
-  }
-
-  public void nodeChanged(XTreeNode node) {
-    if (this.controller != null) {
-      this.controller.nodeChanged(node);
-    }
-  }
-
-  public void nodeStructureChanged(XTreeNode node) {
-    if (this.controller != null) {
-      this.controller.nodeStructureChanged(node);
-    }
-  }
-
-  public void remove(XTreeNode node) {
-    if (this.controller != null) {
-      this.controller.remove(node);
-    }
-  }
-
-  public void select(XTreeNode node) {
-    if (this.controller != null) {
-      this.controller.select(node);
-    }
-  }
-
-  public void removeServerLog(IServer server) {
-    if (this.controller != null) {
-      this.controller.removeServerLog(server);
-    }
-  }
-
-  public void addServerLog(IServer server) {
-    if (this.controller != null) {
-      this.controller.addServerLog(server);
-    }
-  }
-
-  public boolean testServerMatch(ClusterNode node) {
-    return this.controller.testServerMatch(node);
-  }
-
-  public void updateServerPrefs() {
-    this.controller.updateServerPrefs();
   }
 }

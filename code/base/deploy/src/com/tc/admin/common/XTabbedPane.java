@@ -4,15 +4,17 @@
  */
 package com.tc.admin.common;
 
-import org.dijon.TabbedPane;
+import javax.swing.JTabbedPane;
 
-public class XTabbedPane extends TabbedPane {
+public class XTabbedPane extends JTabbedPane {
   public XTabbedPane() {
     super();
-    // setOpaque(true);
-    // setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
   }
 
+  public XTabbedPane(int tabPlacement) {
+    super(tabPlacement);
+  }
+  
   public void tearDown() {
     int tabCount = getTabCount();
     for (int i = 0; i < tabCount; i++) {

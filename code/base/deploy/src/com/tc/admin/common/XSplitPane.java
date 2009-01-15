@@ -4,9 +4,7 @@
  */
 package com.tc.admin.common;
 
-import org.dijon.Component;
-import org.dijon.SplitPane;
-
+import java.awt.Component;
 import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -15,9 +13,9 @@ import java.util.prefs.Preferences;
 
 import javax.swing.JSplitPane;
 
-public class XSplitPane extends SplitPane implements PropertyChangeListener {
-  private Integer                m_dividerLocation;
-  private Preferences            m_prefs;
+public class XSplitPane extends JSplitPane implements PropertyChangeListener {
+  private Integer                dividerLocation;
+  private Preferences            prefs;
   private static final double    DEFAULT_DIVIDER_LOCATION = 0.7;
   private static final String    SPLIT_PREF_KEY           = "Split";
   private static final Dimension CHILD_MIN_SIZE           = new Dimension();
@@ -26,13 +24,26 @@ public class XSplitPane extends SplitPane implements PropertyChangeListener {
     super();
   }
 
-  public XSplitPane(int newOrientation, Component newLeftComponent, Component newRightComponent) {
-    super(newOrientation, newLeftComponent, newRightComponent);
+  public XSplitPane(int orientation) {
+    super(orientation);
+    setResizeWeight(0.5);
+    super.setDividerLocation(DEFAULT_DIVIDER_LOCATION);
+  }
+
+  public XSplitPane(int orientation, Component leftComponent, Component rightComponent) {
+    super(orientation, leftComponent, rightComponent);
+    setResizeWeight(0.5);
+    super.setDividerLocation(DEFAULT_DIVIDER_LOCATION);
   }
 
   public void setPreferences(Preferences prefs) {
-    m_prefs = prefs;
-    m_dividerLocation = Integer.valueOf(prefs != null ? prefs.getInt(SPLIT_PREF_KEY, -1) : -1);
+    this.prefs = prefs;
+    dividerLocation = Integer.valueOf(prefs != null ? prefs.getInt(SPLIT_PREF_KEY, -1) : -1);
+  }
+
+  public void setDividerLocation(int dividerLocation) {
+    this.dividerLocation = dividerLocation;
+    super.setDividerLocation(dividerLocation);
   }
 
   public void propertyChange(PropertyChangeEvent pce) {
@@ -40,15 +51,15 @@ public class XSplitPane extends SplitPane implements PropertyChangeListener {
 
     if (isShowing() && JSplitPane.DIVIDER_LOCATION_PROPERTY.equals(propName)) {
       int divLoc = getDividerLocation();
-      if (m_prefs != null) {
-        m_prefs.putInt(SPLIT_PREF_KEY, divLoc);
+      if (prefs != null) {
+        prefs.putInt(SPLIT_PREF_KEY, divLoc);
         try {
-          m_prefs.flush();
+          prefs.flush();
         } catch (BackingStoreException bse) {
           /**/
         }
       }
-      m_dividerLocation = Integer.valueOf(divLoc);
+      dividerLocation = Integer.valueOf(divLoc);
     }
   }
 
@@ -68,12 +79,9 @@ public class XSplitPane extends SplitPane implements PropertyChangeListener {
   }
 
   public void doLayout() {
-    if (m_dividerLocation != null) {
+    if (dividerLocation != null && dividerLocation.intValue() >= 0) {
       // this one takes an absolute integer value
-      setDividerLocation(m_dividerLocation.intValue());
-    } else {
-      // this one takes an relative double value
-      setDividerLocation(DEFAULT_DIVIDER_LOCATION);
+      setDividerLocation(dividerLocation.intValue());
     }
     super.doLayout();
   }

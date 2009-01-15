@@ -15,8 +15,8 @@ import javax.swing.ImageIcon;
 import javax.swing.SwingUtilities;
 
 public class WebAppLinkNode extends XTreeNode {
-  private boolean                m_ready;
-  private boolean                m_armed;
+  private boolean                ready;
+  private boolean                armed;
 
   private static final ImageIcon ICON = new ImageIcon(WebAppLinkNode.class
                                           .getResource("/com/tc/admin/icons/occ_match.gif"));
@@ -33,14 +33,14 @@ public class WebAppLinkNode extends XTreeNode {
   }
 
   public void setReady(boolean isReady) {
-    m_ready = isReady;
+    ready = isReady;
     WebAppLinkNodeRenderer walnr = (WebAppLinkNodeRenderer) getRenderer();
     walnr.setEnabled(isReady);
-    setArmed(m_armed);
+    setArmed(armed);
   }
 
   public boolean isReady() {
-    return m_ready;
+    return ready;
   }
 
   Color getColor() {
@@ -52,7 +52,7 @@ public class WebAppLinkNode extends XTreeNode {
   }
 
   public void setArmed(boolean armed) {
-    m_armed = armed;
+    this.armed = armed;
     WebAppLinkNodeRenderer walnr = (WebAppLinkNodeRenderer) getRenderer();
     Color fg = getColor();
     walnr.setTextSelectionColor(fg);
@@ -61,19 +61,18 @@ public class WebAppLinkNode extends XTreeNode {
   }
 
   public boolean isArmed() {
-    return m_armed;
+    return armed;
   }
 }
 
 class WebAppLinkNodeRenderer extends javax.swing.tree.DefaultTreeCellRenderer {
-  private WebAppLinkNode m_node;
+  private WebAppLinkNode node;
 
   public WebAppLinkNodeRenderer(WebAppLinkNode node) {
     super();
 
-    m_node = node;
+    this.node = node;
 
-    // drawDashedFocusIndicator = false;
     backgroundSelectionColor = getBackgroundNonSelectionColor();
     borderSelectionColor = null;
     textSelectionColor = node.getColor();
@@ -83,7 +82,7 @@ class WebAppLinkNodeRenderer extends javax.swing.tree.DefaultTreeCellRenderer {
   public void paint(Graphics g) {
     super.paint(g);
 
-    if (m_node.isReady() && !m_node.isArmed()) {
+    if (node.isReady() && !node.isArmed()) {
       FontMetrics fm = g.getFontMetrics();
       String text = getText();
       int x = getLabelStart();

@@ -5,7 +5,7 @@
 package com.tc.admin.common;
 
 public class XRootNode extends XTreeNode {
-  private XTreeModel m_model;
+  private XTreeModel model;
 
   public XRootNode() {
     super();
@@ -16,10 +16,10 @@ public class XRootNode extends XTreeNode {
   }
 
   public void setModel(XTreeModel model) {
-    m_model = model;
+    this.model = model;
   }
 
   public XTreeModel getModel() {
-    return m_model;
+    return model;
   }
 }

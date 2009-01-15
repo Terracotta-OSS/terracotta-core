@@ -15,21 +15,20 @@ import java.io.InputStreamReader;
  */
 
 public class InputStreamDrainer extends Thread {
-  private InputStream         m_stream;
-  private StringBuffer        m_buffer;
+  private final InputStream   stream;
+  private final StringBuffer  buffer;
 
   private static final String LINE_SEP = System.getProperty("line.separator");
 
   public InputStreamDrainer(InputStream stream) {
-    m_stream = stream;
+    this.stream = stream;
+    buffer = new StringBuffer();
   }
 
   public void run() {
-    InputStreamReader streamReader = new InputStreamReader(m_stream);
+    InputStreamReader streamReader = new InputStreamReader(stream);
     BufferedReader bufferedReader = new BufferedReader(streamReader);
     String line;
-
-    m_buffer = new StringBuffer();
 
     while (true) {
       try {
@@ -37,7 +36,8 @@ public class InputStreamDrainer extends Thread {
           IOUtils.closeQuietly(bufferedReader);
           return;
         }
-        m_buffer.append(line + LINE_SEP);
+        buffer.append(line);
+        buffer.append(LINE_SEP);
       } catch (Exception e) {
         IOUtils.closeQuietly(bufferedReader);
         return;
@@ -46,6 +46,6 @@ public class InputStreamDrainer extends Thread {
   }
 
   public String getBufferContent() {
-    return m_buffer.toString();
+    return buffer.toString();
   }
 }

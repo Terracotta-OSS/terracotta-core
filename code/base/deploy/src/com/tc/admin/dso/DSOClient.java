@@ -4,7 +4,6 @@
  */
 package com.tc.admin.dso;
 
-import com.tc.admin.AdminClient;
 import com.tc.admin.ConnectionContext;
 import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.management.beans.l1.L1InfoMBean;
@@ -147,15 +146,6 @@ public class DSOClient implements NotificationListener {
     }
 
     return port.intValue();
-  }
-
-  public void refresh() {
-    try {
-      cc.invoke(beanName, "refresh", new Object[] {}, new String[] {});
-      changeHelper.firePropertyChange(new PropertyChangeEvent(this, null, null, null));
-    } catch (Exception e) {
-      AdminClient.getContext().log(e);
-    }
   }
 
   public String toString() {

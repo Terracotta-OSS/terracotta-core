@@ -4,8 +4,6 @@
  */
 package com.tc.admin.common;
 
-import org.dijon.PopupMenu;
-
 import com.tc.object.appevent.NonPortableObjectState;
 
 import java.awt.event.ActionEvent;
@@ -128,7 +126,7 @@ public class NonPortableWalkNode extends XTreeNode {
   public JPopupMenu getPopupMenu() {
     JPopupMenu popupMenu = super.getPopupMenu();
     if (popupMenu == null) {
-      popupMenu = new PopupMenu();
+      popupMenu = new JPopupMenu();
       if (isNeverPortable()) {
         popupMenu.add(new MakeTransientAction());
       } else if (!isPortable()) {

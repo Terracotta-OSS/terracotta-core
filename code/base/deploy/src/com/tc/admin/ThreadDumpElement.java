@@ -4,23 +4,25 @@
  */
 package com.tc.admin;
 
+import com.tc.admin.common.ApplicationContext;
+
 import java.util.concurrent.Future;
 
 import javax.swing.SwingUtilities;
 
 public class ThreadDumpElement extends ThreadDumpTreeNode {
-  private String          m_clientAddr;
-  private ThreadDumpEntry m_threadDumpEntry;
+  private ThreadDumpEntry threadDumpEntry;
 
-  ThreadDumpElement(String clientAddr, Future<String> threadDumpFuture) {
-    super(clientAddr + " " + AdminClient.getContext().format("waiting"));
-    m_clientAddr = clientAddr;
-    m_threadDumpEntry = new ThreadDumpEntry(threadDumpFuture) {
+  ThreadDumpElement(ApplicationContext appContext, String name, Future<String> threadDumpFuture) {
+    super(appContext);
+    setUserObject(name + " " + appContext.format("waiting"));
+    setName(name);
+    threadDumpEntry = new ThreadDumpEntry(appContext, threadDumpFuture) {
       public void run() {
         super.run();
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            setUserObject(m_clientAddr);
+            setUserObject(getName());
             nodeChanged();
           }
         });
@@ -29,23 +31,23 @@ public class ThreadDumpElement extends ThreadDumpTreeNode {
   }
 
   String getThreadDump() {
-    return m_threadDumpEntry.getThreadDump();
+    return threadDumpEntry.getThreadDump();
   }
 
   public boolean isDone() {
-    return m_threadDumpEntry.isDone();
+    return threadDumpEntry.isDone();
   }
 
   public void cancel() {
     if (!isDone()) {
-      m_threadDumpEntry.cancel();
-      setUserObject(m_clientAddr + " "+ AdminClient.getContext().format("canceled"));
+      threadDumpEntry.cancel();
+      setUserObject(getName() + " " + appContext.format("canceled"));
       nodeChanged();
     }
   }
 
   String getContent() {
-    return m_threadDumpEntry.getContent();
+    return threadDumpEntry.getContent();
   }
 
   String getSource() {

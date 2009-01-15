@@ -12,27 +12,30 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 public class ClientsHelper extends BaseHelper {
-  private static ClientsHelper m_helper = new ClientsHelper();
-  private Icon                 m_clientsIcon;
-  private Icon                 m_clientIcon;
+  private static final ClientsHelper helper = new ClientsHelper();
+  private Icon                       clientsIcon;
+  private Icon                       clientIcon;
+
+  private ClientsHelper() {/**/
+  }
 
   public static ClientsHelper getHelper() {
-    return m_helper;
+    return helper;
   }
 
   public Icon getClientsIcon() {
-    if (m_clientsIcon == null) {
+    if (clientsIcon == null) {
       URL url = getClass().getResource(ICONS_PATH + "hierarchicalLayout.gif");
-      m_clientsIcon = new ImageIcon(url);
+      clientsIcon = new ImageIcon(url);
     }
-    return m_clientsIcon;
+    return clientsIcon;
   }
 
   public Icon getClientIcon() {
-    if (m_clientIcon == null) {
+    if (clientIcon == null) {
       URL url = getClass().getResource(ICONS_PATH + "genericvariable_obj.gif");
-      m_clientIcon = new ImageIcon(url);
+      clientIcon = new ImageIcon(url);
     }
-    return m_clientIcon;
+    return clientIcon;
   }
 }

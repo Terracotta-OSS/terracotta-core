@@ -4,88 +4,125 @@
  */
 package com.tc.admin.dso;
 
-import org.dijon.Button;
-import org.dijon.ContainerResource;
-import org.dijon.Label;
-import org.dijon.PopupMenu;
-
-import com.tc.admin.AdminClient;
-import com.tc.admin.AdminClientContext;
+import com.tc.admin.AbstractClusterListener;
+import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.BrowserLauncher;
 import com.tc.admin.common.ExceptionHelper;
+import com.tc.admin.common.RolloverButton;
 import com.tc.admin.common.XAbstractAction;
+import com.tc.admin.common.XButton;
 import com.tc.admin.common.XContainer;
+import com.tc.admin.common.XLabel;
 import com.tc.admin.common.XObjectTable;
+import com.tc.admin.common.XScrollPane;
 import com.tc.admin.model.DGCListener;
 import com.tc.admin.model.IClusterModel;
+import com.tc.admin.model.IServer;
 import com.tc.objectserver.api.GCStats;
 import com.tc.util.ProductInfo;
 
+import java.awt.BorderLayout;
 import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
+import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 
-public class GCStatsPanel extends XContainer implements DGCListener, PropertyChangeListener {
-  private AdminClientContext m_acc;
-  private GCStatsNode        m_gcStatsNode;
-  private XObjectTable       m_table;
-  private Label              m_overviewLabel;
-  private PopupMenu          m_popupMenu;
-  private RunGCAction        m_gcAction;
+public class GCStatsPanel extends XContainer implements DGCListener {
+  private ApplicationContext appContext;
+  private IClusterModel      clusterModel;
+  private XObjectTable       table;
+  private XLabel             overviewLabel;
+  private JPopupMenu         popupMenu;
+  private RunGCAction        gcAction;
+  private boolean            inited;
 
-  public GCStatsPanel(GCStatsNode gcStatsNode) {
-    super();
+  public GCStatsPanel(ApplicationContext appContext, IClusterModel clusterModel) {
+    super(new BorderLayout());
 
-    m_acc = AdminClient.getContext();
-    load((ContainerResource) m_acc.getComponent("GCStatsPanel"));
+    this.appContext = appContext;
+    this.clusterModel = clusterModel;
 
-    m_gcStatsNode = gcStatsNode;
-    m_table = (XObjectTable) findComponent("GCStatsTable");
-    m_table.setModel(new GCStatsTableModel());
+    XContainer topPanel = new XContainer(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridy = gbc.gridx = 0;
+    gbc.weightx = 0.0;
+    gbc.anchor = GridBagConstraints.WEST;
+    gbc.insets = new Insets(3, 3, 3, 3);
 
-    m_gcAction = new RunGCAction();
-    Button runDGCButton = (Button) findComponent("RunGCButton");
-    runDGCButton.setAction(m_gcAction);
+    topPanel.add(overviewLabel = new XLabel(), gbc);
+    overviewLabel.setText(appContext.getString("dso.gcstats.overview.pending"));
+    gbc.gridx++;
 
-    m_overviewLabel = (Label) findComponent("OverviewLabel");
-    m_overviewLabel.setText(m_acc.getString("dso.gcstats.overview.pending"));
+    RolloverButton helpButton = new RolloverButton();
+    helpButton.setIcon(new ImageIcon(getClass().getResource("/com/tc/admin/icons/help.gif")));
+    helpButton.addActionListener(new HelpButtonHandler());
+    helpButton.setFocusable(false);
+    topPanel.add(helpButton);
+    gbc.gridx++;
 
-    ((Button) findComponent("HelpButton")).addActionListener(new HelpButtonHandler());
+    gbc.weightx = 1.0;
+    XButton runDGCButton = new XButton();
+    runDGCButton.setAction(gcAction = new RunGCAction());
+    gbc.anchor = GridBagConstraints.EAST;
+    topPanel.add(runDGCButton, gbc);
 
-    m_popupMenu = new PopupMenu("DGC");
-    m_popupMenu.add(m_gcAction);
-    m_table.add(m_popupMenu);
-    m_table.addMouseListener(new TableMouseHandler());
+    add(topPanel, BorderLayout.NORTH);
 
-    m_acc.execute(new InitWorker());
-    gcStatsNode.getClusterModel().addDGCListener(this);
-    gcStatsNode.getClusterModel().addPropertyChangeListener(this);
+    table = new GCStatsTable();
+    table.setModel(new GCStatsTableModel(appContext));
+    add(new XScrollPane(table), BorderLayout.CENTER);
 
-    m_acc.submit(new InitOverviewTextWorker());
+    popupMenu = new JPopupMenu("DGC");
+    popupMenu.add(gcAction);
+    table.add(popupMenu);
+    table.addMouseListener(new TableMouseHandler());
+
+    clusterModel.addPropertyChangeListener(new ClusterListener(clusterModel));
+    if (clusterModel.isReady()) {
+      IServer activeCoord = clusterModel.getActiveCoordinator();
+      if (activeCoord != null) {
+        activeCoord.addDGCListener(this);
+      }
+      init();
+    }
+  }
+
+  private synchronized IClusterModel getClusterModel() {
+    return clusterModel;
+  }
+
+  private synchronized IServer getActiveCoordinator() {
+    IClusterModel theClusterModel = getClusterModel();
+    return theClusterModel != null ? theClusterModel.getActiveCoordinator() : null;
   }
 
   private class InitOverviewTextWorker extends BasicWorker<String> {
     private InitOverviewTextWorker() {
       super(new Callable<String>() {
         public String call() {
-          IClusterModel clusterModel = m_gcStatsNode.getClusterModel();
-          if (clusterModel.isGarbageCollectionEnabled()) {
-            int seconds = clusterModel.getGarbageCollectionInterval();
-            float minutes = seconds / 60f;
-            return m_acc.format("dso.gcstats.overview.enabled", seconds, minutes);
-          } else {
-            return m_acc.getString("dso.gcstats.overview.enabled");
+          IServer activeCoord = getActiveCoordinator();
+          if (activeCoord != null) {
+            if (activeCoord.isGarbageCollectionEnabled()) {
+              int seconds = activeCoord.getGarbageCollectionInterval();
+              float minutes = seconds / 60f;
+              return appContext.format("dso.gcstats.overview.enabled", seconds, minutes);
+            } else {
+              return appContext.getString("dso.gcstats.overview.enabled");
+            }
           }
+          return "";
         }
       });
     }
@@ -95,10 +132,10 @@ public class GCStatsPanel extends XContainer implements DGCListener, PropertyCha
       if (e != null) {
         Throwable rootCause = ExceptionHelper.getRootCause(e);
         if (!(rootCause instanceof IOException)) {
-          m_acc.log(e);
+          appContext.log(e);
         }
       } else {
-        m_overviewLabel.setText(getResult());
+        overviewLabel.setText(getResult());
       }
     }
   }
@@ -114,25 +151,46 @@ public class GCStatsPanel extends XContainer implements DGCListener, PropertyCha
 
     public void actionPerformed(ActionEvent e) {
       String kitID = getKitID();
-      String loc = AdminClient.getContext().format("console.guide.url", kitID)
-                   + "#AdminConsoleGuide-DistributedGarbageCollection";
+      String loc = appContext.format("console.guide.url", kitID) + "#AdminConsoleGuide-DistributedGarbageCollection";
       BrowserLauncher.openURL(loc);
     }
   }
 
-  public void propertyChange(PropertyChangeEvent evt) {
-    if (IClusterModel.PROP_ACTIVE_SERVER.equals(evt.getPropertyName())) {
-      if (((IClusterModel) evt.getSource()).getActiveServer() != null) {
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            if (m_table != null) {
-              GCStatsTableModel model = (GCStatsTableModel) m_table.getModel();
-              model.clear();
-              model.fireTableDataChanged();
-            }
-          }
-        });
+  private class ClusterListener extends AbstractClusterListener {
+    private ClusterListener(IClusterModel clusterModel) {
+      super(clusterModel);
+    }
+
+    public void handleActiveCoordinator(IServer oldActive, IServer newActive) {
+      if (oldActive != null) {
+        oldActive.removeDGCListener(GCStatsPanel.this);
       }
+      if (newActive != null) {
+        newActive.addDGCListener(GCStatsPanel.this);
+      }
+    }
+
+    public void handleReady() {
+      if (clusterModel.isReady()) {
+        if (!inited) {
+          init();
+        }
+      } else {
+        gcAction.setEnabled(false);
+      }
+    }
+  }
+
+  private void init() {
+    if (table != null) {
+      GCStatsTableModel model = (GCStatsTableModel) table.getModel();
+      model.clear();
+      model.fireTableDataChanged();
+
+      appContext.execute(new InitWorker());
+      appContext.submit(new InitOverviewTextWorker());
+
+      inited = true;
     }
   }
 
@@ -140,7 +198,8 @@ public class GCStatsPanel extends XContainer implements DGCListener, PropertyCha
     private InitWorker() {
       super(new Callable<GCStats[]>() {
         public GCStats[] call() throws Exception {
-          return m_gcStatsNode.getClusterModel().getGCStats();
+          IServer activeCoord = getActiveCoordinator();
+          return activeCoord != null ? activeCoord.getGCStats() : new GCStats[0];
         }
       });
     }
@@ -148,10 +207,10 @@ public class GCStatsPanel extends XContainer implements DGCListener, PropertyCha
     protected void finished() {
       Exception e = getException();
       if (e == null) {
-        GCStatsTableModel model = (GCStatsTableModel) m_table.getModel();
+        GCStatsTableModel model = (GCStatsTableModel) table.getModel();
         model.setGCStats(getResult());
       }
-      m_gcAction.setEnabled(true);
+      gcAction.setEnabled(true);
     }
   }
 
@@ -166,7 +225,7 @@ public class GCStatsPanel extends XContainer implements DGCListener, PropertyCha
 
     public void testPopup(MouseEvent e) {
       if (e.isPopupTrigger()) {
-        m_popupMenu.show(m_table, e.getX(), e.getY());
+        popupMenu.show(table, e.getX(), e.getY());
       }
     }
   }
@@ -174,6 +233,7 @@ public class GCStatsPanel extends XContainer implements DGCListener, PropertyCha
   class RunGCAction extends XAbstractAction {
     RunGCAction() {
       super("Run DGC");
+      setEnabled(false);
     }
 
     public void actionPerformed(ActionEvent ae) {
@@ -186,15 +246,15 @@ public class GCStatsPanel extends XContainer implements DGCListener, PropertyCha
   }
 
   private class ModelUpdater implements Runnable {
-    private GCStats m_gcStats;
+    private GCStats gcStats;
 
     private ModelUpdater(GCStats gcStats) {
-      m_gcStats = gcStats;
+      this.gcStats = gcStats;
     }
 
     public void run() {
-      m_gcAction.setEnabled(m_gcStats.getElapsedTime() != -1);
-      ((GCStatsTableModel) m_table.getModel()).addGCStats(m_gcStats);
+      gcAction.setEnabled(gcStats.getElapsedTime() != -1);
+      ((GCStatsTableModel) table.getModel()).addGCStats(gcStats);
     }
   }
 
@@ -202,7 +262,10 @@ public class GCStatsPanel extends XContainer implements DGCListener, PropertyCha
     private RunGCWorker() {
       super(new Callable<Void>() {
         public Void call() {
-          m_gcStatsNode.getClusterModel().runGC();
+          IServer activeCoord = getActiveCoordinator();
+          if (activeCoord != null) {
+            activeCoord.runGC();
+          }
           return null;
         }
       });
@@ -211,30 +274,33 @@ public class GCStatsPanel extends XContainer implements DGCListener, PropertyCha
     protected void finished() {
       Exception e = getException();
       if (e != null) {
-        Frame frame = (Frame) getAncestorOfClass(Frame.class);
+        Frame frame = (Frame) SwingUtilities.getAncestorOfClass(Frame.class, GCStatsPanel.this);
         Throwable cause = ExceptionHelper.getRootCause(e);
         String msg = cause.getMessage();
         String title = frame.getTitle();
-
         JOptionPane.showMessageDialog(frame, msg, title, JOptionPane.INFORMATION_MESSAGE);
       }
     }
   }
 
   private void runGC() {
-    m_acc.execute(new RunGCWorker());
+    appContext.execute(new RunGCWorker());
   }
 
   public void tearDown() {
-    m_gcStatsNode.getClusterModel().removeDGCListener(this);
-    m_gcStatsNode.getClusterModel().removePropertyChangeListener(this);
+    IServer activeCoord = getActiveCoordinator();
+    if (activeCoord != null) {
+      activeCoord.removeDGCListener(this);
+    }
 
     super.tearDown();
 
-    m_acc = null;
-    m_gcStatsNode = null;
-    m_table = null;
-    m_popupMenu = null;
-    m_gcAction = null;
+    synchronized (this) {
+      appContext = null;
+      clusterModel = null;
+      table = null;
+      popupMenu = null;
+      gcAction = null;
+    }
   }
 }

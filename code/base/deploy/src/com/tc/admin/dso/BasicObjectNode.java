@@ -4,9 +4,8 @@
  */
 package com.tc.admin.dso;
 
-import com.tc.admin.AdminClient;
-import com.tc.admin.AdminClientContext;
 import com.tc.admin.ConnectionContext;
+import com.tc.admin.IAdminClientContext;
 import com.tc.admin.common.XAbstractAction;
 import com.tc.admin.common.XTreeModel;
 import com.tc.admin.common.XTreeNode;
@@ -29,49 +28,50 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
 public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
-  protected IBasicObject      m_object;
-  private boolean             m_resident;
-  private MoreAction          m_moreAction;
-  private LessAction          m_lessAction;
-  private JPopupMenu          m_popupMenu;
-  private int                 m_batchSize;
-  private RefreshAction       m_refreshAction;
+  protected IAdminClientContext adminClientContext;
+  protected IBasicObject        object;
+  private boolean               resident;
+  private MoreAction            moreAction;
+  private LessAction            lessAction;
+  private JPopupMenu            popupMenu;
+  private int                   batchSize;
+  private RefreshAction         refreshAction;
 
-  private static final String REFRESH_ACTION = "RefreshAction";
+  private static final String   REFRESH_ACTION = "RefreshAction";
 
-  public BasicObjectNode(IBasicObject object) {
+  public BasicObjectNode(IAdminClientContext adminClientContext, IBasicObject object) {
     super(object);
 
-    m_object = object;
-    m_batchSize = ConnectionContext.DSO_SMALL_BATCH_SIZE;
+    this.adminClientContext = adminClientContext;
+    this.object = object;
+    batchSize = ConnectionContext.DSO_SMALL_BATCH_SIZE;
     setResident(true);
 
     init();
 
-    if (m_object.getObjectID() != null && !m_object.isCycle()) {
-      addActionBinding(REFRESH_ACTION, m_refreshAction = new RefreshAction());
+    if (object.getObjectID() != null && !object.isCycle()) {
+      addActionBinding(REFRESH_ACTION, refreshAction = new RefreshAction());
     }
   }
 
   public IObject getObject() {
-    return m_object;
+    return object;
   }
 
   public void setResident(boolean resident) {
-    m_resident = resident;
+    this.resident = resident;
   }
 
   public boolean isResident() {
-    return m_resident;
+    return resident;
   }
 
   public boolean isObjectValid() {
-    return m_object.isValid();
+    return object != null && object.isValid();
   }
 
   protected void init() {
-    int count = m_object.getFieldCount();
-
+    int count = object.getFieldCount();
     if (children == null) {
       children = new Vector();
     }
@@ -79,25 +79,25 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
   }
 
   private void initMenu() {
-    m_popupMenu = new JPopupMenu();
-    m_popupMenu.add(m_refreshAction);
+    popupMenu = new JPopupMenu();
+    popupMenu.add(refreshAction);
 
-    if (m_object.isArray() || m_object.isCollection()) {
-      m_popupMenu.add(m_moreAction = new MoreAction());
-      m_popupMenu.add(m_lessAction = new LessAction());
+    if (object.isArray() || object.isCollection()) {
+      popupMenu.add(moreAction = new MoreAction());
+      popupMenu.add(lessAction = new LessAction());
     }
   }
 
   private void testInitMenu() {
-    if (m_popupMenu != null) return;
-    if (m_refreshAction != null) {
+    if (popupMenu != null) return;
+    if (refreshAction != null) {
       initMenu();
     }
   }
 
   public JPopupMenu getPopupMenu() {
     testInitMenu();
-    return m_popupMenu;
+    return popupMenu;
   }
 
   private void fillInChildren() {
@@ -106,7 +106,7 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
 
     for (int i = 0; i < childCount; i++) {
       if (children.elementAt(i) == null) {
-        IObject field = m_object.getField(i);
+        IObject field = object.getField(i);
         XTreeNode child = createFieldNode(field);
 
         children.setElementAt(child, i);
@@ -142,39 +142,37 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
 
   public TreeNode getChildAt(int index) {
     if (children != null && children.elementAt(index) == null) {
-      AdminClientContext acc = AdminClient.getContext();
-
-      acc.block();
+      adminClientContext.block();
       fillInChildren();
-      acc.unblock();
+      adminClientContext.unblock();
     }
 
     return super.getChildAt(index);
   }
 
-  private XTreeNode createFieldNode(IObject object) {
-    if (object instanceof IMapEntry) {
-      return new MapEntryNode((IMapEntry) object);
-    } else if (object instanceof IBasicObject) {
+  private XTreeNode createFieldNode(IObject theObject) {
+    if (theObject instanceof IMapEntry) {
+      return new MapEntryNode((IMapEntry) theObject);
+    } else if (theObject instanceof IBasicObject) {
       BasicObjectTreeModel model = (BasicObjectTreeModel) getModel();
-      return model.newObjectNode((IBasicObject) object);
+      return model.newObjectNode((IBasicObject) theObject);
     } else {
       return new XTreeNode("Collected...");
     }
   }
 
   public int getChildCount() {
-    return m_object != null ? m_object.getFieldCount() : 0;
+    return object != null ? object.getFieldCount() : 0;
   }
 
   public Icon getIcon() {
     RootsHelper helper = RootsHelper.getHelper();
-    return m_object.isCycle() ? helper.getCycleIcon() : helper.getFieldIcon();
+    return object.isCycle() ? helper.getCycleIcon() : helper.getFieldIcon();
   }
 
   public void nodeSelected(TreeSelectionEvent e) {
-    if (m_object.isCycle()) {
-      IObject cycleRoot = m_object.getCycleRoot();
+    if (object.isCycle()) {
+      IObject cycleRoot = object.getCycleRoot();
       XTreeNode parentNode = (XTreeNode) getParent();
 
       while (parentNode != null) {
@@ -200,8 +198,8 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
   public void refreshChildren() {
     tearDownChildren();
 
-    if (m_object != null) {
-      m_object.initFields();
+    if (object != null) {
+      object.initFields();
       children.setSize(getChildCount());
       fillInChildren();
     }
@@ -210,8 +208,7 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
   }
 
   public void refresh() {
-    AdminClientContext acc = AdminClient.getContext();
-    boolean expanded = acc.isExpanded(this);
+    boolean expanded = adminClientContext.getAdminClientController().isExpanded(this);
     XTreeModel model = getModel();
     XTreeNode node;
 
@@ -222,7 +219,7 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
     }
 
     try {
-      m_object.refresh();
+      object.refresh();
     } catch (Exception e) {
       // TODO: ask parent to teardown
       e.printStackTrace();
@@ -232,7 +229,7 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
 
     model.nodeStructureChanged(BasicObjectNode.this);
     if (expanded) {
-      acc.expand(this);
+      adminClientContext.getAdminClientController().expand(this);
     }
   }
 
@@ -243,47 +240,45 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
     }
 
     public void actionPerformed(ActionEvent ae) {
-      AdminClientContext acc = AdminClient.getContext();
-      String name = m_object.getName();
+      String name = object.getName();
 
-      acc.setStatus("Refreshing field " + name + "...");
-      acc.block();
+      adminClientContext.setStatus("Refreshing field " + name + "...");
+      adminClientContext.block();
 
       refresh();
 
-      acc.clearStatus();
-      acc.unblock();
+      adminClientContext.clearStatus();
+      adminClientContext.unblock();
     }
   }
 
   public void nodeClicked(MouseEvent me) {
-    if (m_refreshAction != null) {
-      m_refreshAction.actionPerformed(null);
+    if (refreshAction != null) {
+      refreshAction.actionPerformed(null);
     }
   }
 
   private class MoreAction extends XAbstractAction {
     private MoreAction() {
       super("More");
-      setEnabled(m_object.isArray() || !m_object.isComplete());
+      setEnabled(object.isArray() || !object.isComplete());
     }
 
     public void actionPerformed(ActionEvent ae) {
-      AdminClientContext acc = AdminClient.getContext();
-      String name = m_object.getName();
+      String name = object.getName();
 
       setEnabled(incrementDSOBatchSize() != ConnectionContext.DSO_MAX_BATCH_SIZE);
-      m_lessAction.setEnabled(true);
-      m_object.setBatchSize(m_batchSize);
+      lessAction.setEnabled(true);
+      object.setBatchSize(batchSize);
 
-      acc.setStatus("Refreshing " + name + "...");
-      acc.block();
+      adminClientContext.setStatus("Refreshing " + name + "...");
+      adminClientContext.block();
 
       refresh();
 
-      acc.clearStatus();
-      acc.unblock();
-      acc.nodeChanged(BasicObjectNode.this);
+      adminClientContext.clearStatus();
+      adminClientContext.unblock();
+      nodeChanged();
     }
   }
 
@@ -294,67 +289,66 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
     }
 
     public void actionPerformed(ActionEvent ae) {
-      AdminClientContext acc = AdminClient.getContext();
-      String name = m_object.getName();
+      String name = object.getName();
 
       setEnabled(decrementDSOBatchSize() != ConnectionContext.DSO_SMALL_BATCH_SIZE);
-      m_moreAction.setEnabled(true);
-      m_object.setBatchSize(m_batchSize);
+      moreAction.setEnabled(true);
+      object.setBatchSize(batchSize);
 
-      acc.setStatus("Refreshing " + name + "...");
-      acc.block();
+      adminClientContext.setStatus("Refreshing " + name + "...");
+      adminClientContext.block();
 
       refresh();
 
-      acc.clearStatus();
-      acc.unblock();
-      acc.nodeChanged(BasicObjectNode.this);
+      adminClientContext.clearStatus();
+      adminClientContext.unblock();
+      nodeChanged();
     }
   }
 
   int incrementDSOBatchSize() {
-    switch (m_batchSize) {
+    switch (batchSize) {
       case ConnectionContext.DSO_SMALL_BATCH_SIZE:
-        m_batchSize = ConnectionContext.DSO_MEDIUM_BATCH_SIZE;
+        batchSize = ConnectionContext.DSO_MEDIUM_BATCH_SIZE;
         break;
       case ConnectionContext.DSO_MEDIUM_BATCH_SIZE:
-        m_batchSize = ConnectionContext.DSO_LARGE_BATCH_SIZE;
+        batchSize = ConnectionContext.DSO_LARGE_BATCH_SIZE;
         break;
       case ConnectionContext.DSO_LARGE_BATCH_SIZE:
-        m_batchSize = ConnectionContext.DSO_MAX_BATCH_SIZE;
+        batchSize = ConnectionContext.DSO_MAX_BATCH_SIZE;
         break;
     }
 
-    return m_batchSize;
+    return batchSize;
   }
 
   int decrementDSOBatchSize() {
-    switch (m_batchSize) {
+    switch (batchSize) {
       case ConnectionContext.DSO_MEDIUM_BATCH_SIZE:
-        m_batchSize = ConnectionContext.DSO_SMALL_BATCH_SIZE;
+        batchSize = ConnectionContext.DSO_SMALL_BATCH_SIZE;
         break;
       case ConnectionContext.DSO_LARGE_BATCH_SIZE:
-        m_batchSize = ConnectionContext.DSO_MEDIUM_BATCH_SIZE;
+        batchSize = ConnectionContext.DSO_MEDIUM_BATCH_SIZE;
         break;
       case ConnectionContext.DSO_MAX_BATCH_SIZE:
-        m_batchSize = ConnectionContext.DSO_LARGE_BATCH_SIZE;
+        batchSize = ConnectionContext.DSO_LARGE_BATCH_SIZE;
         break;
     }
 
-    return m_batchSize;
+    return batchSize;
   }
 
   public int resetDSOBatchSize() {
-    return m_batchSize = ConnectionContext.DSO_SMALL_BATCH_SIZE;
+    return batchSize = ConnectionContext.DSO_SMALL_BATCH_SIZE;
   }
 
   public void tearDown() {
     super.tearDown();
 
-    m_object = null;
-    m_moreAction = null;
-    m_lessAction = null;
-    m_refreshAction = null;
-    m_popupMenu = null;
+    object = null;
+    moreAction = null;
+    lessAction = null;
+    refreshAction = null;
+    popupMenu = null;
   }
 }

@@ -4,8 +4,6 @@
  */
 package com.tc.admin.dso;
 
-import com.tc.admin.AdminClient;
-import com.tc.admin.AdminClientContext;
 import com.tc.admin.common.XTreeNode;
 import com.tc.admin.model.IBasicObject;
 import com.tc.admin.model.IMapEntry;
@@ -18,18 +16,18 @@ import javax.swing.SwingUtilities;
 import javax.swing.tree.TreeNode;
 
 public class MapEntryNode extends XTreeNode implements DSOObjectTreeNode {
-  protected IMapEntry m_mapEntry;
-  protected XTreeNode m_keyNode;
-  protected XTreeNode m_valueNode;
+  protected IMapEntry mapEntry;
+  protected XTreeNode keyNode;
+  protected XTreeNode valueNode;
 
   public MapEntryNode(IMapEntry mapEntry) {
     super(mapEntry);
-    m_mapEntry = mapEntry;
+    this.mapEntry = mapEntry;
     init();
   }
 
   public IObject getObject() {
-    return m_mapEntry;
+    return mapEntry;
   }
 
   protected void init() {
@@ -41,17 +39,14 @@ public class MapEntryNode extends XTreeNode implements DSOObjectTreeNode {
 
   public TreeNode getChildAt(int index) {
     if (children != null && children.elementAt(index) == null) {
-      AdminClientContext acc = AdminClient.getContext();
-      acc.block();
       fillInChildren();
-      acc.unblock();
     }
     return super.getChildAt(index);
   }
 
   protected void fillInChildren() {
-    IObject key = m_mapEntry.getKey();
-    IObject value = m_mapEntry.getValue();
+    IObject key = mapEntry.getKey();
+    IObject value = mapEntry.getValue();
     XTreeNode child;
 
     child = newObjectNode(key);
@@ -81,7 +76,6 @@ public class MapEntryNode extends XTreeNode implements DSOObjectTreeNode {
   class AncestorReaper implements Runnable {
     public void run() {
       XTreeNode node = (XTreeNode) getParent();
-
       while (node != null) {
         if (node instanceof BasicObjectNode) {
           BasicObjectNode ftn = (BasicObjectNode) node;
@@ -102,8 +96,8 @@ public class MapEntryNode extends XTreeNode implements DSOObjectTreeNode {
   public void tearDown() {
     super.tearDown();
 
-    m_mapEntry = null;
-    m_keyNode = null;
-    m_valueNode = null;
+    mapEntry = null;
+    keyNode = null;
+    valueNode = null;
   }
 }

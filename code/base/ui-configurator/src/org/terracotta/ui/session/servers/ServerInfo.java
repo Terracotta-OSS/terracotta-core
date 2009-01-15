@@ -20,12 +20,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ServerInfo {
-  private String m_name;
-  private String m_label;
-  private String m_displayName;
-  private String m_startupTrigger;
-  private String m_applicationPath;
-  private List   m_env;
+  private String name;
+  private String label;
+  private String displayName;
+  private String startupTrigger;
+  private String applicationPath;
+  private List   env;
 
   public ServerInfo(Properties props, Properties env) {
     this(props.getProperty("name"), props.getProperty("label"), props.getProperty("display.name"), props
@@ -34,45 +34,45 @@ public class ServerInfo {
   }
 
   public ServerInfo(String name, String label, String displayName, String startupTrigger, String applicationPath) {
-    m_name = name;
-    m_label = label;
-    m_displayName = displayName;
-    m_startupTrigger = startupTrigger;
-    m_applicationPath = applicationPath;
-    m_env = new ArrayList();
+    this.name = name;
+    this.label = label;
+    this.displayName = displayName;
+    this.startupTrigger = startupTrigger;
+    this.applicationPath = applicationPath;
+    env = new ArrayList();
   }
 
   public ServerInfo(ServerInfo info) {
-    m_name = info.getName();
-    m_label = info.getLabel();
-    m_displayName = info.getDisplayName();
-    m_startupTrigger = info.getStartupTrigger();
-    m_applicationPath = info.getApplicationPath();
-    m_env = info.cloneProperties();
+    name = info.getName();
+    label = info.getLabel();
+    displayName = info.getDisplayName();
+    startupTrigger = info.getStartupTrigger();
+    applicationPath = info.getApplicationPath();
+    env = info.cloneProperties();
   }
 
   public String getName() {
-    return m_name;
+    return name;
   }
 
   public String getLabel() {
-    return m_label;
+    return label;
   }
 
   public String getDisplayName() {
-    return m_displayName;
+    return displayName;
   }
 
   public String getStartupTrigger() {
-    return m_startupTrigger;
+    return startupTrigger;
   }
 
   public String getApplicationPath() {
-    return m_applicationPath;
+    return applicationPath;
   }
 
   public List getProperties() {
-    return m_env;
+    return env;
   }
 
   public void setProperties(Properties env) {
@@ -94,7 +94,7 @@ public class ServerInfo {
     ServerProperty property;
 
     for (int i = 0; i < propCount; i++) {
-      property = (ServerProperty) m_env.get(i);
+      property = (ServerProperty) env.get(i);
       props.put(property.getName(), quote(property.getValue()));
     }
 
@@ -103,7 +103,7 @@ public class ServerInfo {
 
   public String[] toEnvironment() {
     ArrayList list = new ArrayList();
-    Iterator iter = m_env.iterator();
+    Iterator iter = env.iterator();
     ServerProperty prop;
 
     while (iter.hasNext()) {
@@ -124,7 +124,7 @@ public class ServerInfo {
     String value;
 
     for (int i = 0; i < propCount; i++) {
-      property = (ServerProperty) m_env.get(i);
+      property = (ServerProperty) env.get(i);
       if ((value = property.getValue()) != null) {
         prefs.put(property.getName(), value);
       }
@@ -164,38 +164,37 @@ public class ServerInfo {
     return null;
   }
 
-  public void addProperty(String name, String value) {
-    ServerProperty prop = getProperty(name);
+  public void addProperty(String propName, String propValue) {
+    ServerProperty prop = getProperty(propName);
 
-    if (value == null || value.length() == 0) {
-      value = getenv(name);
+    if (propValue == null || propValue.length() == 0) {
+      propValue = getenv(propName);
     } else {
       Pattern pattern = Pattern.compile("\\$\\{(.*)\\}(.*)");
-      String[] comps = value.split(",");
+      String[] comps = propValue.split(",");
 
       for (int i = 0; i < comps.length; i++) {
-        value = comps[i];
+        propValue = comps[i];
 
-        if (value.indexOf('$') != -1) {
-          Matcher matcher = pattern.matcher(value);
+        if (propValue.indexOf('$') != -1) {
+          Matcher matcher = pattern.matcher(propValue);
 
           if (matcher.matches()) {
             String var = matcher.group(1);
-
-            if ((value = getenv(var)) == null) {
-              value = System.getProperty(var);
+            if ((propValue = getenv(var)) == null) {
+              propValue = System.getProperty(var);
             }
 
-            if (value != null) {
-              value = value + matcher.group(2);
+            if (propValue != null) {
+              propValue = propValue + matcher.group(2);
               String fileSep = System.getProperty("file.separator");
-              File file = new File(value = StringUtils.replace(value, "/", fileSep));
+              File file = new File(propValue = StringUtils.replace(propValue, "/", fileSep));
 
               if (file.exists()) {
                 try {
-                  value = file.getCanonicalPath();
+                  propValue = file.getCanonicalPath();
                 } catch (IOException ioe) {
-                  value = file.getAbsolutePath();
+                  propValue = file.getAbsolutePath();
                 }
                 break;
               }
@@ -208,37 +207,37 @@ public class ServerInfo {
       }
     }
 
-    if (value == null) {
-      value = "";
+    if (propValue == null) {
+      propValue = "";
     }
 
     if (prop != null) {
-      prop.setValue(value);
+      prop.setValue(propValue);
     } else {
-      m_env.add(prop = new ServerProperty(name, value));
+      env.add(prop = new ServerProperty(propName, propValue));
     }
   }
 
   protected List cloneProperties() {
     ArrayList list = new ArrayList();
-    int count = m_env.size();
+    int count = env.size();
     ServerProperty prop;
 
     for (int i = 0; i < count; i++) {
-      prop = (ServerProperty) m_env.get(i);
+      prop = (ServerProperty) env.get(i);
       list.add(new ServerProperty(prop.getName(), prop.getValue()));
     }
 
     return list;
   }
 
-  public ServerProperty getProperty(String name) {
-    int count = m_env.size();
+  public ServerProperty getProperty(String propName) {
+    int count = env.size();
     ServerProperty prop;
 
     for (int i = 0; i < count; i++) {
-      prop = (ServerProperty) m_env.get(i);
-      if (prop.getName().equals(name)) { return prop; }
+      prop = (ServerProperty) env.get(i);
+      if (prop.getName().equals(propName)) { return prop; }
     }
 
     return null;
@@ -246,14 +245,13 @@ public class ServerInfo {
 
   public void setProperty(String name, String value) {
     ServerProperty prop = getProperty(name);
-
     if (prop != null) {
       prop.setValue(value);
     }
   }
 
   public int propertyCount() {
-    return m_env.size();
+    return env.size();
   }
 
   public String toString() {
@@ -262,12 +260,12 @@ public class ServerInfo {
 
   public String[] validateProperties() {
     ArrayList list = new ArrayList();
-    int count = m_env.size();
+    int count = env.size();
     ServerProperty prop;
     String value;
 
     for (int i = 0; i < count; i++) {
-      prop = (ServerProperty) m_env.get(i);
+      prop = (ServerProperty) env.get(i);
       value = prop.getValue();
 
       if (value == null || value.trim().length() == 0) {

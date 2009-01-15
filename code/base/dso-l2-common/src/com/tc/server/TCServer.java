@@ -5,6 +5,7 @@
 package com.tc.server;
 
 import com.tc.config.schema.L2Info;
+import com.tc.config.schema.ServerGroupInfo;
 
 public interface TCServer {
   void start() throws Exception;
@@ -41,6 +42,8 @@ public interface TCServer {
 
   L2Info[] infoForAllL2s();
 
+  ServerGroupInfo[] serverGroups();
+  
   void startBeanShell(int port);
 
   public int getDSOListenPort();

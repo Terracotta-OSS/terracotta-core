@@ -4,32 +4,39 @@
  */
 package com.tc.admin.common;
 
-import org.dijon.Dialog;
-import org.dijon.DialogResource;
-import org.dijon.Item;
-import org.dijon.Label;
-
-import com.tc.admin.AdminClient;
-
+import java.awt.Container;
 import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 
 import javax.swing.BorderFactory;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
 import javax.swing.JProgressBar;
 import javax.swing.UIManager;
 
-public class ProgressDialog extends Dialog {
+public class ProgressDialog extends JDialog {
   public ProgressDialog(Frame owner, String title, String msg) {
     super(owner, title, false);
-    load((DialogResource) AdminClient.getContext().childResource("ProgressDialog"));
-    setTitle(title);
-    Label msgLabel = (Label) findComponent("MessageLabel");
-    msgLabel.setFont(UIManager.getFont("TextPane.font"));
-    msgLabel.setText(msg);
-    msgLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-    setUndecorated(true);
-    setAlwaysOnTop(true);
+
+    Container cp = getContentPane();
+    cp.setLayout(new GridBagLayout());
+//    ((JComponent) cp).setBorder(BorderFactory.createLoweredBevelBorder());
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = gbc.gridy = 0;
+    gbc.insets = new Insets(5, 5, 5, 5);
+
+    JLabel label = new JLabel(msg);
+    label.setFont(UIManager.getFont("TextPane.font"));
+    label.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    add(label, gbc);
+    gbc.gridy++;
+
     JProgressBar progressBar = new JProgressBar();
     progressBar.setIndeterminate(true);
-    ((Item) findComponent("ProgressBarHolder")).add(progressBar);
+    add(progressBar, gbc);
+
+    setAlwaysOnTop(true);
   }
 }

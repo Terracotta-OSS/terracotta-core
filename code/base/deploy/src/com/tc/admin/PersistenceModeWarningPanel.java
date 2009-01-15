@@ -6,51 +6,64 @@ package com.tc.admin;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.xmlbeans.XmlOptions;
-import org.dijon.Container;
-import org.dijon.ContainerResource;
-import org.dijon.Label;
 
+import com.tc.admin.common.ApplicationContext;
+import com.tc.admin.common.XContainer;
+import com.tc.admin.common.XLabel;
 import com.tc.admin.common.XTextArea;
 import com.terracottatech.config.PersistenceMode;
 import com.terracottatech.config.Servers;
 
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+
 import javax.swing.border.LineBorder;
 
-public class PersistenceModeWarningPanel extends Container {
-  private Label m_warningLabel;
+public class PersistenceModeWarningPanel extends XContainer {
+  private XLabel warningLabel;
 
-  public PersistenceModeWarningPanel(String warning) {
-    super();
-    load(AdminClient.getContext().getComponent("PersistenceModeWarningPanel"));
-    m_warningLabel.setText(warning);
-  }
+  public PersistenceModeWarningPanel(ApplicationContext appContext, String warning) {
+    super(new GridBagLayout());
 
-  public void load(ContainerResource res) {
-    super.load(res);
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = gbc.gridy = 0;
+    gbc.insets = new Insets(5, 5, 5, 5);
+    gbc.anchor = GridBagConstraints.NORTHWEST;
 
-    ((Label) findComponent("IconLabel")).setIcon(LogHelper.getHelper().getAlertIcon());
+    XLabel iconLabel = new XLabel();
+    iconLabel.setIcon(LogHelper.getHelper().getAlertIcon());
+    add(iconLabel, gbc);
+    gbc.gridx++;
 
-    m_warningLabel = (Label) findComponent("WarningLabel");
-    
-    XTextArea configSnippetText = (XTextArea) findComponent("ConfigSnippetText");
+    gbc.anchor = GridBagConstraints.WEST;
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    gbc.weightx = 1.0;
+    add(warningLabel = new XLabel(warning), gbc);
+    gbc.gridy++;
+    gbc.anchor = GridBagConstraints.CENTER;
+
+    XTextArea configSnippetText = new XTextArea();
     Servers servers = Servers.Factory.newInstance();
     servers.addNewServer().addNewDso().addNewPersistence().setMode(PersistenceMode.PERMANENT_STORE);
     String configText = servers.xmlText(new XmlOptions().setSavePrettyPrint().setSavePrettyPrintIndent(3));
     configSnippetText.setColumns(maxLineWidth(configText));
+    configSnippetText.setEditable(false);
     configSnippetText.setText(configText);
-    configSnippetText.setFont(m_warningLabel.getFont());
+    configSnippetText.setFont(warningLabel.getFont());
     configSnippetText.setBorder(LineBorder.createBlackLineBorder());
+    add(configSnippetText, gbc);
   }
 
   private static int maxLineWidth(String source) {
     int result = 0;
-    for(String s : StringUtils.split(source, System.getProperty("line.separator"))) {
+    for (String s : StringUtils.split(source, System.getProperty("line.separator"))) {
       result = Math.max(result, s.length());
     }
     return result;
   }
-  
+
   public void setWarningText(String warning) {
-    m_warningLabel.setText(warning);
+    warningLabel.setText(warning);
   }
 }

@@ -5,23 +5,22 @@
 package com.tc.admin.dso;
 
 import com.tc.admin.AbstractThreadDumpsPanel;
-import com.tc.admin.AdminClient;
+import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.model.IClient;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 public class ClientThreadDumpsPanel extends AbstractThreadDumpsPanel {
-  private ClientThreadDumpsNode m_clientThreadDumpsNode;
+  private IClient client;
 
-  public ClientThreadDumpsPanel(ClientThreadDumpsNode clientThreadDumpsNode) {
-    super();
-    m_clientThreadDumpsNode = clientThreadDumpsNode;
+  public ClientThreadDumpsPanel(ApplicationContext appContext, IClient client) {
+    super(appContext);
+    this.client = client;
   }
 
   protected Future<String> getThreadDumpText() throws Exception {
-    final IClient client = m_clientThreadDumpsNode != null ? m_clientThreadDumpsNode.getClient() : null;
-    return AdminClient.getContext().submitTask(new Callable<String>() {
+    return appContext.submitTask(new Callable<String>() {
       public String call() throws Exception {
         return client != null && client.isReady() ? client.takeThreadDump(System.currentTimeMillis()) : "";
       }
@@ -29,11 +28,11 @@ public class ClientThreadDumpsPanel extends AbstractThreadDumpsPanel {
   }
 
   protected String getNodeName() {
-    return m_clientThreadDumpsNode.getClient().toString();
+    return client.toString();
   }
   
   public void tearDown() {
     super.tearDown();
-    m_clientThreadDumpsNode = null;
+    client = null;
   }
 }

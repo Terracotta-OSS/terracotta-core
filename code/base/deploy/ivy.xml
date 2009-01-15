@@ -8,7 +8,6 @@
 	<dependency name="jcommon" rev="1.0.14" org="terracotta"/>
 	<dependency name="jmxremote_optional" rev="1.0.1_04-b58" org="terracotta"/>
 	<dependency name="jmxremote" rev="1.0.1_04" org="terracotta"/>
-	<dependency name="appframe" rev="1.0" org="terracotta"/>
 	<dependency name="treemap" rev="tc-1.0" org="terracotta"/>
 	<dependency name="jline" rev="0.9.9" org="terracotta"/>
 	<dependency name="commons-httpclient" rev="3.0.1"/>

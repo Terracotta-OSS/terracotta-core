@@ -9,7 +9,6 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.runtime.JVMMemoryManager;
-import com.tc.runtime.MemoryUsage;
 import com.tc.runtime.TCRuntime;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
@@ -182,10 +181,9 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
 
   public Map getStatistics() {
     HashMap map = new HashMap();
-    MemoryUsage usage = manager.getMemoryUsage();
 
-    map.put(MEMORY_USED, new Long(usage.getUsedMemory()));
-    map.put(MEMORY_MAX, new Long(usage.getMaxMemory()));
+    map.put(MEMORY_USED, new Long(getUsedMemory()));
+    map.put(MEMORY_MAX, new Long(getMaxMemory()));
 
     if (cpuSRA != null) {
       StatisticData[] statsData = getCpuUsage();
@@ -195,6 +193,14 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
     }
 
     return map;
+  }
+
+  public long getUsedMemory() {
+    return manager.getMemoryUsage().getUsedMemory();
+  }
+  
+  public long getMaxMemory() {
+    return manager.getMemoryUsage().getMaxMemory();
   }
 
   private long             lastCpuUpdateTime        = System.currentTimeMillis();

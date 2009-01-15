@@ -40,6 +40,10 @@ public interface L1InfoMBean extends TerracottaMBean, NotificationEmitter, Runti
 
   Map getStatistics();
 
+  long getUsedMemory();
+  
+  long getMaxMemory();
+
   StatisticData[] getCpuUsage();
 
 }

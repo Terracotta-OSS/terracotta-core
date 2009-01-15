@@ -4,92 +4,135 @@
  */
 package com.tc.admin;
 
-import org.apache.commons.httpclient.auth.AuthScope;
-
+import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.ComponentNode;
 import com.tc.admin.model.IClusterModel;
-import com.tc.statistics.beans.StatisticsLocalGathererMBean;
+import com.tc.admin.model.IClusterStatsListener;
+import com.tc.admin.model.IServer;
 
+import java.awt.Component;
 import java.util.Map;
 
-public class StatsRecorderNode extends ComponentNode {
-  private ClusterNode        m_clusterNode;
-  private StatsRecorderPanel m_statsRecorderPanel;
-  private String             m_baseLabel;
-  private String             m_recordingSuffix;
-  private AuthScope          m_authScope;
+public class StatsRecorderNode extends ComponentNode implements IClusterStatsListener {
+  protected ApplicationContext appContext;
+  private IClusterModel        clusterModel;
+  private StatsRecorderPanel   statsRecorderPanel;
+  private String               baseLabel;
+  private String               recordingSuffix;
 
-  public StatsRecorderNode(ClusterNode clusterNode) {
+  public StatsRecorderNode(ApplicationContext appContext, IClusterModel clusterModel) {
     super();
-    m_clusterNode = clusterNode;
-    setLabel(m_baseLabel = AdminClient.getContext().getMessage("stats.recorder.node.label"));
-    m_recordingSuffix = AdminClient.getContext().getMessage("stats.recording.suffix");
-    setIcon(ServerHelper.getHelper().getStatsRecorderIcon());
-    setComponent(m_statsRecorderPanel = new StatsRecorderPanel(this));
-  }
 
-  IClusterModel getClusterModel() {
-    return m_clusterNode != null ? m_clusterNode.getClusterModel() : null;
-  }
-  
-  void makeUnavailable() {
-    if(m_clusterNode != null) {
-      m_clusterNode.makeStatsRecorderUnavailable();
+    this.appContext = appContext;
+    this.clusterModel = clusterModel;
+
+    setLabel(baseLabel = appContext.getMessage("stats.recorder.node.label"));
+    recordingSuffix = appContext.getMessage("stats.recording.suffix");
+    setIcon(ServerHelper.getHelper().getStatsRecorderIcon());
+
+    clusterModel.addPropertyChangeListener(new ClusterListener(clusterModel));
+    if (clusterModel.isReady()) {
+      IServer activeCoord = getActiveCoordinator();
+      if (activeCoord != null) {
+        activeCoord.addClusterStatsListener(this);
+      }
     }
   }
 
-  boolean isRecording() {
-    return m_statsRecorderPanel != null && m_statsRecorderPanel.isRecording();
+  public Component getComponent() {
+    if (statsRecorderPanel == null) {
+      statsRecorderPanel = createStatsRecorderPanel(appContext, clusterModel);
+      statsRecorderPanel.setNode(this);
+    }
+    return statsRecorderPanel;
   }
 
-  void testTriggerThreadDumpSRA() {
-    m_statsRecorderPanel.testTriggerThreadDumpSRA();
+  protected StatsRecorderPanel createStatsRecorderPanel(ApplicationContext theAppContext, IClusterModel theClusterModel) {
+    return new StatsRecorderPanel(theAppContext, theClusterModel);
   }
 
-  ConnectionContext getConnectionContext() {
-    return m_clusterNode.getConnectionContext();
+  synchronized IClusterModel getClusterModel() {
+    return clusterModel;
+  }
+
+  synchronized IServer getActiveCoordinator() {
+    IClusterModel theClusterModel = getClusterModel();
+    return theClusterModel != null ? theClusterModel.getActiveCoordinator() : null;
+  }
+
+  private class ClusterListener extends AbstractClusterListener {
+    private ClusterListener(IClusterModel clusterModel) {
+      super(clusterModel);
+    }
+
+    public void handleActiveCoordinator(IServer oldActive, IServer newActive) {
+      if (oldActive != null) {
+        oldActive.removeClusterStatsListener(StatsRecorderNode.this);
+      }
+      if (newActive != null) {
+        if (newActive.isClusterStatsSupported()) {
+          newActive.addClusterStatsListener(StatsRecorderNode.this);
+        }
+      }
+    }
   }
 
   String[] getConnectionCredentials() {
-    return m_clusterNode.getConnectionCredentials();
+    return clusterModel.getConnectionCredentials();
   }
 
   Map<String, Object> getConnectionEnvironment() {
-    return m_clusterNode.getConnectionEnvironment();
-  }
-
-  StatisticsLocalGathererMBean getStatisticsGathererMBean() {
-    return m_clusterNode.getStatisticsGathererMBean();
-  }
-
-  String getStatsExportServletURI() throws Exception {
-    return m_clusterNode.getStatsExportServletURI();
-  }
-
-  AuthScope getAuthScope() throws Exception {
-    if (m_authScope != null) return m_authScope;
-    return m_authScope = m_clusterNode.getAuthScope();
-  }
-
-  String getActiveServerAddress() throws Exception {
-    return m_clusterNode.getHost() + ":" + m_clusterNode.getDSOListenPort();
+    return clusterModel.getConnectionEnvironment();
   }
 
   void showRecording(boolean recording) {
-    setLabel(m_baseLabel + (recording ? m_recordingSuffix : ""));
-    notifyChanged();
-    m_clusterNode.showRecordingStats(recording);
-  }
-
-  void notifyChanged() {
+    setLabel(baseLabel + (recording ? recordingSuffix : ""));
     nodeChanged();
-    m_clusterNode.notifyChanged();
   }
 
   public void tearDown() {
     super.tearDown();
-    m_clusterNode = null;
-    m_statsRecorderPanel = null;
-    m_authScope = null;
+
+    synchronized (this) {
+      appContext = null;
+      clusterModel = null;
+      statsRecorderPanel = null;
+    }
+  }
+
+  /*
+   * IClusterStatsListener implementation
+   */
+  
+  public void allSessionsCleared() {
+    /**/
+  }
+
+  public void connected() {
+    /**/
+  }
+
+  public void disconnected() {
+    /**/
+  }
+
+  public void reinitialized() {
+    /**/
+  }
+
+  public void sessionCleared(String sessionId) {
+    /**/
+  }
+
+  public void sessionCreated(String sessionId) {
+    /**/
+  }
+
+  public void sessionStarted(String sessionId) {
+    showRecording(true);
+  }
+
+  public void sessionStopped(String sessionId) {
+    showRecording(false);
   }
 }

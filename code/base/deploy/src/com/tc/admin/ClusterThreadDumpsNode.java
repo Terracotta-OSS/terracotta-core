@@ -4,40 +4,43 @@
  */
 package com.tc.admin;
 
+import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.ComponentNode;
 
 import java.awt.Component;
 
 public class ClusterThreadDumpsNode extends ComponentNode {
-  protected ClusterNode             m_clusterNode;
-  protected ClusterThreadDumpsPanel m_clusterThreadDumpsPanel;
+  private ApplicationContext          appContext;
+  protected ClusterThreadDumpProvider threadDumpProvider;
+  protected ClusterThreadDumpsPanel   clusterThreadDumpsPanel;
 
-  public ClusterThreadDumpsNode(ClusterNode clusterNode) {
+  public ClusterThreadDumpsNode(ApplicationContext appContext, ClusterThreadDumpProvider threadDumpProvider) {
     super();
-    setLabel(AdminClient.getContext().getString("cluster.thread.dumps"));
-    m_clusterNode = clusterNode;
+    this.appContext = appContext;
+    this.threadDumpProvider = threadDumpProvider;
+    setLabel(appContext.getString("cluster.thread.dumps"));
     setIcon(ServerHelper.getHelper().getThreadDumpsIcon());
   }
 
   protected ClusterThreadDumpsPanel createClusterThreadDumpsPanel() {
-    return new ClusterThreadDumpsPanel(this);
+    return new ClusterThreadDumpsPanel(appContext, threadDumpProvider);
   }
 
   public Component getComponent() {
-    if (m_clusterThreadDumpsPanel == null) {
-      m_clusterThreadDumpsPanel = createClusterThreadDumpsPanel();
+    if (clusterThreadDumpsPanel == null) {
+      clusterThreadDumpsPanel = createClusterThreadDumpsPanel();
     }
-    return m_clusterThreadDumpsPanel;
+    return clusterThreadDumpsPanel;
   }
 
   ClusterThreadDumpEntry takeThreadDump() {
-    return m_clusterNode.takeThreadDump();
+    return threadDumpProvider.takeThreadDump();
   }
 
   public void tearDown() {
-    if (m_clusterThreadDumpsPanel != null) {
-      m_clusterThreadDumpsPanel.tearDown();
-      m_clusterThreadDumpsPanel = null;
+    if (clusterThreadDumpsPanel != null) {
+      clusterThreadDumpsPanel.tearDown();
+      clusterThreadDumpsPanel = null;
     }
     super.tearDown();
   }

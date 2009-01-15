@@ -10,43 +10,43 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 public class BaseHelper {
-  protected Icon                m_refreshIcon;
-  protected Icon                m_threadDumpsIcon;
-  protected Icon                m_runtimeStatsIcon;
-  protected Icon                m_statsRecorderIcon;
-  protected Icon                m_statsRecordingIcon;
+  protected Icon                refreshIcon;
+  protected Icon                threadDumpsIcon;
+  protected Icon                runtimeStatsIcon;
+  protected Icon                statsRecorderIcon;
+  protected Icon                statsRecordingIcon;
 
   protected static final String ICONS_PATH = "/com/tc/admin/icons/";
 
   public Icon getRefreshIcon() {
-    if (m_refreshIcon == null) {
+    if (refreshIcon == null) {
       URL url = getClass().getResource(ICONS_PATH + "refresh.gif");
-      m_refreshIcon = new ImageIcon(url);
+      refreshIcon = new ImageIcon(url);
     }
-    return m_refreshIcon;
+    return refreshIcon;
   }
 
   public Icon getThreadDumpsIcon() {
-    if (m_threadDumpsIcon == null) {
+    if (threadDumpsIcon == null) {
       URL url = getClass().getResource(ICONS_PATH + "thread_view.gif");
-      m_threadDumpsIcon = new ImageIcon(url);
+      threadDumpsIcon = new ImageIcon(url);
     }
-    return m_threadDumpsIcon;
+    return threadDumpsIcon;
   }
 
   public Icon getRuntimeStatsIcon() {
-    if (m_runtimeStatsIcon == null) {
+    if (runtimeStatsIcon == null) {
       URL url = getClass().getResource(ICONS_PATH + "chart_bar.png");
-      m_runtimeStatsIcon = new ImageIcon(url);
+      runtimeStatsIcon = new ImageIcon(url);
     }
-    return m_runtimeStatsIcon;
+    return runtimeStatsIcon;
   }
 
   public Icon getStatsRecorderIcon() {
-    if (m_statsRecorderIcon == null) {
+    if (statsRecorderIcon == null) {
       URL url = getClass().getResource(ICONS_PATH + "camera.png");
-      m_statsRecorderIcon = new ImageIcon(url);
+      statsRecorderIcon = new ImageIcon(url);
     }
-    return m_statsRecorderIcon;
+    return statsRecorderIcon;
   }
 }

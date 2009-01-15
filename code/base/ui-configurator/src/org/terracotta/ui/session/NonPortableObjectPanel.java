@@ -4,43 +4,42 @@
  */
 package org.terracotta.ui.session;
 
-import org.dijon.Button;
-import org.dijon.CheckBox;
-import org.dijon.Container;
-import org.dijon.ContainerResource;
-import org.dijon.Dialog;
-import org.dijon.EmptyBorder;
-import org.dijon.Label;
-import org.dijon.PagedView;
-import org.dijon.RadioButton;
-import org.dijon.TextArea;
-import org.dijon.TextField;
-
 import com.tc.admin.common.AbstractResolutionAction;
 import com.tc.admin.common.AbstractWorkState;
 import com.tc.admin.common.NonPortableMessages;
 import com.tc.admin.common.NonPortableResolutionAction;
 import com.tc.admin.common.NonPortableWalkNode;
 import com.tc.admin.common.NonPortableWorkState;
+import com.tc.admin.common.PagedView;
+import com.tc.admin.common.XButton;
 import com.tc.admin.common.XCellEditor;
 import com.tc.admin.common.XCheckBox;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XLabel;
 import com.tc.admin.common.XList;
+import com.tc.admin.common.XScrollPane;
+import com.tc.admin.common.XSplitPane;
+import com.tc.admin.common.XTextArea;
 import com.tc.admin.common.XTextField;
-import com.tc.admin.common.XTextPane;
 import com.tc.admin.common.XTree;
 import com.tc.admin.common.XTreeCellRenderer;
 import com.tc.admin.common.XTreeNode;
 import com.tc.object.appevent.NonPortableObjectEvent;
 import com.tc.object.appevent.NonPortableObjectState;
 import com.terracottatech.config.Include;
-import com.terracottatech.config.OnLoad;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dialog;
 import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -49,14 +48,17 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.EventObject;
 import java.util.Iterator;
+import java.util.prefs.Preferences;
 
-import javax.swing.ButtonGroup;
+import javax.swing.BorderFactory;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JSplitPane;
 import javax.swing.JTree;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
@@ -74,61 +76,235 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
 public class NonPortableObjectPanel extends XContainer implements TreeSelectionListener {
-  private NonPortableObjectEvent    fEvent;
-  private SessionIntegratorFrame    fMainFrame;
-  private Label                     fMessageLabel;
-  private XList                     fIssueList;
-  private DefaultListModel          fIssueListModel;
-  private IssueListSelectionHandler fIssueListSelectionHandler;
-  private XTree                     fObjectTree;
-  private Container                 fIssueDetailsPanel;
-  private Label                     fSummaryLabel;
-  private XTextPane                 fDescriptionText;
-  private Container                 fResolutionsPanel;
-  private XTree                     fActionTree;
-  private PagedView                 fActionPanel;
-  private TextField                 fIncludePatternField;
-  private CheckBox                  fHonorTransientToggle;
-  private ButtonGroup               fOnLoadGroup;
-  private ActionListener            fOnLoadButtonGroupHandler;
-  private RadioButton               fOnLoadDoNothingToggle;
-  private RadioButton               fOnLoadMethodToggle;
-  private TextField                 fOnLoadMethodField;
-  private RadioButton               fOnLoadCodeToggle;
-  private TextArea                  fOnLoadCodeText;
-  private XList                     fIncludeTypesList;
-  private XList                     fBootTypesList;
-  private Button                    fPreviousIssueButton;
-  private Button                    fNextIssueButton;
-  private Button                    fApplyButton;
-  private Button                    fCancelButton;
-  private ConfigHelper              fConfigHelper;
-  private TcConfig                  fNewConfig;
+  private NonPortableObjectEvent     fEvent;
+  private SessionIntegratorFrame     fMainFrame;
+  private XLabel                     fMessageLabel;
+  private XSplitPane                 fIssuesSplitter;
+  private XList                      fIssueList;
+  private DefaultListModel           fIssueListModel;
+  private IssueListSelectionHandler  fIssueListSelectionHandler;
+  private XTree                      fObjectTree;
+  private XContainer                 fIssueDetailsPanel;
+  private XLabel                     fSummaryLabel;
+  private XTextArea                  fDescriptionText;
+  private XContainer                 fResolutionsPanel;
+  private XTree                      fActionTree;
+  private ActionTreeSelectionHandler fActionTreeSelectionHandler;
+  private PagedView                  fActionPanel;
+  private OnLoadPanel                fOnLoadPanel;
 
-  private static final ImageIcon    NOT_PORTABLE_ICON     = new ImageIcon(NonPortableWalkNode.class
-                                                              .getResource("/com/tc/admin/icons/field_private_obj.gif"));
-  private static final ImageIcon    NEVER_PORTABLE_ICON   = new ImageIcon(NonPortableWalkNode.class
-                                                              .getResource("/com/tc/admin/icons/field_private_obj.gif"));
-  private static final ImageIcon    TRANSIENT_ICON        = new ImageIcon(NonPortableWalkNode.class
-                                                              .getResource("/com/tc/admin/icons/field_public_obj.gif"));
-  private static final ImageIcon    PORTABLE_ICON         = new ImageIcon(NonPortableWalkNode.class
-                                                              .getResource("/com/tc/admin/icons/field_default_obj.gif"));
-  private static final ImageIcon    PRE_INSTRUMENTED_ICON = new ImageIcon(
-                                                                          NonPortableWalkNode.class
-                                                                              .getResource("/com/tc/admin/icons/field_protected_obj.gif"));
-  private static final ImageIcon    OBJ_CYCLE_ICON        = new ImageIcon(NonPortableWalkNode.class
-                                                              .getResource("/com/tc/admin/icons/obj_cycle.gif"));
-  private static final ImageIcon    RESOLVED_ICON         = new ImageIcon(NonPortableWalkNode.class
-                                                              .getResource("/com/tc/admin/icons/installed_ovr.gif"));
-  private static final ImageIcon    BLANK_ICON            = new ImageIcon(NonPortableWalkNode.class
-                                                              .getResource("/com/tc/admin/icons/blank12x12.gif"));
+  private XList                      fIncludeTypesList;
+  private XList                      fBootTypesList;
 
-  public NonPortableObjectPanel(ContainerResource res, SessionIntegratorFrame frame) {
-    super();
-    load(res);
+  private XButton                    fPreviousIssueButton;
+  private XButton                    fNextIssueButton;
+  private XButton                    fApplyButton;
+  private XButton                    fCancelButton;
+  private ConfigHelper               fConfigHelper;
+  private TcConfig                   fNewConfig;
+
+  private static final ImageIcon     NOT_PORTABLE_ICON     = new ImageIcon(
+                                                                           NonPortableWalkNode.class
+                                                                               .getResource("/com/tc/admin/icons/field_private_obj.gif"));
+  private static final ImageIcon     NEVER_PORTABLE_ICON   = new ImageIcon(
+                                                                           NonPortableWalkNode.class
+                                                                               .getResource("/com/tc/admin/icons/field_private_obj.gif"));
+  private static final ImageIcon     TRANSIENT_ICON        = new ImageIcon(NonPortableWalkNode.class
+                                                               .getResource("/com/tc/admin/icons/field_public_obj.gif"));
+  private static final ImageIcon     PORTABLE_ICON         = new ImageIcon(
+                                                                           NonPortableWalkNode.class
+                                                                               .getResource("/com/tc/admin/icons/field_default_obj.gif"));
+  private static final ImageIcon     PRE_INSTRUMENTED_ICON = new ImageIcon(
+                                                                           NonPortableWalkNode.class
+                                                                               .getResource("/com/tc/admin/icons/field_protected_obj.gif"));
+  private static final ImageIcon     OBJ_CYCLE_ICON        = new ImageIcon(NonPortableWalkNode.class
+                                                               .getResource("/com/tc/admin/icons/obj_cycle.gif"));
+  private static final ImageIcon     RESOLVED_ICON         = new ImageIcon(NonPortableWalkNode.class
+                                                               .getResource("/com/tc/admin/icons/installed_ovr.gif"));
+  private static final ImageIcon     BLANK_ICON            = new ImageIcon(NonPortableWalkNode.class
+                                                               .getResource("/com/tc/admin/icons/blank12x12.gif"));
+
+  public NonPortableObjectPanel(SessionIntegratorFrame frame) {
+    super(new GridBagLayout());
+
     fMainFrame = frame;
     fNewConfig = (TcConfig) frame.getConfigHelper().getConfig().copy();
     fConfigHelper = new ConfigCopyHelper();
+
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = gbc.gridy = 0;
+    gbc.insets = new Insets(5, 5, 5, 5);
+    gbc.anchor = GridBagConstraints.NORTH;
+
+    add(fMessageLabel = new XLabel(), gbc);
+    gbc.gridy++;
+
+    gbc.insets = new Insets(1, 1, 1, 1);
+    gbc.fill = GridBagConstraints.BOTH;
+    gbc.weightx = gbc.weighty = 1.0;
+
+    fIssueList = new XList();
+    fIssueList.setModel(fIssueListModel = new DefaultListModel());
+    fIssueList.setCellRenderer(new IssueListCellRenderer());
+    fIssueList.addListSelectionListener(fIssueListSelectionHandler = new IssueListSelectionHandler());
+
+    fObjectTree = new XTree();
+    fObjectTree.setCellRenderer(new ObjectTreeCellRenderer());
+    ((DefaultTreeSelectionModel) fObjectTree.getSelectionModel())
+        .setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+    fObjectTree.addTreeSelectionListener(this);
+
+    Preferences prefs = frame.getPreferences().node(getClass().getSimpleName());
+    fIssuesSplitter = new XSplitPane(JSplitPane.HORIZONTAL_SPLIT, new XScrollPane(fIssueList),
+                                     new XScrollPane(fObjectTree));
+    fIssuesSplitter.setPreferences(prefs.node("IssuesSplitter"));
+    fIssuesSplitter.setResizeWeight(0.5);
+
+    XSplitPane mainSplitter = new XSplitPane(JSplitPane.VERTICAL_SPLIT, fIssuesSplitter, createIssueDetailsPanel());
+    mainSplitter.setResizeWeight(0.5);
+    mainSplitter.setPreferences(prefs.node("MainSplitter"));
+    add(mainSplitter, gbc);
+    gbc.gridy++;
+
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    gbc.weighty = 0.0;
+    add(createButtonPanel(), gbc);
+  }
+
+  public XSplitPane getIssuesSplitter() {
+    return fIssuesSplitter;
+  }
+
+  private JComponent createIssueDetailsPanel() {
+    fIssueDetailsPanel = new XContainer(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = gbc.gridy = 0;
+    gbc.insets = new Insets(1, 1, 1, 1);
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    gbc.weightx = 1.0;
+
+    fSummaryLabel = new XLabel();
+    fSummaryLabel.setHorizontalAlignment(SwingConstants.LEFT);
+    fIssueDetailsPanel.add(fSummaryLabel, gbc);
+    gbc.gridy++;
+
+    gbc.fill = GridBagConstraints.BOTH;
+    gbc.weighty = 1.0;
+    fDescriptionText = new XTextArea();
+    fDescriptionText.setEditable(false);
+    fDescriptionText.setRows(10);
+    fDescriptionText.setColumns(40);
+    fDescriptionText.setWrapStyleWord(true);
+    fDescriptionText.setLineWrap(true);
+    fDescriptionText.setFont(new Font("Dialog", Font.PLAIN, 10));
+    XScrollPane descriptionScroller = new XScrollPane(fDescriptionText);
+    fIssueDetailsPanel.add(descriptionScroller, gbc);
+    gbc.gridy++;
+
+    fIssueDetailsPanel.add(createResolutionsPanel(), gbc);
+
+    fIssueDetailsPanel.setBorder(BorderFactory.createTitledBorder("Issue Details"));
+
+    return fIssueDetailsPanel;
+  }
+
+  private JComponent createResolutionsPanel() {
+    fResolutionsPanel = new XContainer(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = gbc.gridy = 0;
+    gbc.insets = new Insets(1, 1, 1, 1);
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    gbc.weightx = 1.0;
+
+    fResolutionsPanel.add(new XLabel("Resolutions"), gbc);
+    gbc.gridy++;
+
+    gbc.fill = GridBagConstraints.BOTH;
+    gbc.weighty = 1.0;
+    fActionTree = new XTree();
+    fActionTreeSelectionHandler = new ActionTreeSelectionHandler();
+    fActionTree.addTreeSelectionListener(fActionTreeSelectionHandler);
+    fActionTree.setCellRenderer(new ActionTreeNodeRenderer());
+    fActionTree.setCellEditor(new ActionTreeNodeEditor());
+    fActionTree.setRootVisible(true);
+    fActionTree.setEditable(true);
+    ((DefaultTreeModel) fActionTree.getModel()).setRoot(new ActionTreeRootNode());
+    fActionTree.setInvokesStopCellEditing(true);
+    fResolutionsPanel.add(new XScrollPane(fActionTree), gbc);
+    gbc.gridx++;
+
+    fResolutionsPanel.add(createActionPanel(), gbc);
+
+    return fResolutionsPanel;
+  }
+
+  private JComponent createActionPanel() {
+    fActionPanel = new PagedView();
+
+    XContainer emptyPage = new XContainer();
+    emptyPage.setName("EmptyPage");
+    fActionPanel.addPage(emptyPage);
+
+    fOnLoadPanel = new OnLoadPanel();
+    fOnLoadPanel.setName("IncludeRulePage");
+    fActionPanel.addPage(fOnLoadPanel);
+
+    XContainer includeTypesPanel = new XContainer(new GridLayout(0, 1));
+    XContainer includePanel = new XContainer(new BorderLayout());
+    includePanel.add(new XScrollPane(fIncludeTypesList = new XList()));
+    fIncludeTypesList.setVisibleRowCount(3);
+    includePanel.setBorder(BorderFactory.createTitledBorder("Types to be include for instrumentation:"));
+    includeTypesPanel.add(includePanel);
+
+    XContainer bootTypesPanel = new XContainer(new BorderLayout());
+    bootTypesPanel.add(new XScrollPane(fBootTypesList = new XList()));
+    fBootTypesList.setVisibleRowCount(3);
+    bootTypesPanel.setBorder(BorderFactory.createTitledBorder("Types to add to BootJar:"));
+    includeTypesPanel.add(bootTypesPanel);
+    includeTypesPanel.setName("IncludeTypesPage");
+
+    fActionPanel.addPage(includeTypesPanel);
+
+    fActionPanel.setBorder(BorderFactory.createLineBorder(Color.blue));
+    return fActionPanel;
+  }
+
+  private JComponent createButtonPanel() {
+    XContainer buttonPanel = new XContainer(new BorderLayout());
+
+    XContainer buttonGrid = new XContainer(new GridLayout(1, 0, 3, 1));
+
+    buttonGrid.add(fPreviousIssueButton = new XButton("Previous Issue"));
+    fPreviousIssueButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent ae) {
+        gotoPreviousIssue();
+      }
+    });
+
+    buttonGrid.add(fNextIssueButton = new XButton("Next Issue"));
+    fNextIssueButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent ae) {
+        gotoNextIssue();
+      }
+    });
+
+    buttonGrid.add(fApplyButton = new XButton("Apply"));
+    fApplyButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent ae) {
+        apply();
+      }
+    });
+
+    buttonGrid.add(fCancelButton = new XButton("Cancel"));
+    fCancelButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent ae) {
+        cancel();
+      }
+    });
+
+    buttonPanel.add(buttonGrid, BorderLayout.EAST);
+
+    return buttonPanel;
   }
 
   class ConfigCopyHelper extends ConfigHelper {
@@ -137,84 +313,8 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     }
   }
 
-  public void load(ContainerResource res) {
-    super.load(res);
-
-    fMessageLabel = (Label) findComponent("MessageLabel");
-
-    fIssueList = (XList) findComponent("IssueList");
-    fIssueList.setModel(fIssueListModel = new DefaultListModel());
-    fIssueList.setCellRenderer(new IssueListCellRenderer());
-    fIssueList.addListSelectionListener(fIssueListSelectionHandler = new IssueListSelectionHandler());
-    fIssueList.setVisibleRowCount(15);
-
-    fObjectTree = (XTree) findComponent("Tree");
-    fObjectTree.setCellRenderer(new ObjectTreeCellRenderer());
-    ((DefaultTreeSelectionModel) fObjectTree.getSelectionModel())
-        .setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-    fObjectTree.addTreeSelectionListener(this);
-
-    fIssueDetailsPanel = (Container) findComponent("IssueDetailsPanel");
-
-    fSummaryLabel = (Label) findComponent("SummaryLabel");
-    fDescriptionText = (XTextPane) findComponent("DescriptionText");
-    fResolutionsPanel = (Container) findComponent("ResolutionsPanel");
-
-    fActionTree = (XTree) findComponent("ActionTree");
-    fActionTree.addTreeSelectionListener(new ActionTreeSelectionHandler());
-    fActionTree.setCellRenderer(new ActionTreeNodeRenderer());
-    fActionTree.setCellEditor(new ActionTreeNodeEditor());
-    fActionTree.setRootVisible(true);
-    fActionTree.setEditable(true);
-    ((DefaultTreeModel) fActionTree.getModel()).setRoot(new ActionTreeRootNode());
-    fActionTree.setInvokesStopCellEditing(true);
-
-    fActionPanel = (PagedView) findComponent("ActionPanel");
-
-    fIncludePatternField = (TextField) findComponent("PatternField");
-    fHonorTransientToggle = (CheckBox) findComponent("HonorTransientToggle");
-    fOnLoadGroup = new ButtonGroup();
-    fOnLoadButtonGroupHandler = new OnLoadButtonGroupHandler();
-    fOnLoadGroup.add(fOnLoadDoNothingToggle = (RadioButton) findComponent("DoNothingButton"));
-    fOnLoadDoNothingToggle.addActionListener(fOnLoadButtonGroupHandler);
-    fOnLoadGroup.add(fOnLoadMethodToggle = (RadioButton) findComponent("CallMethodButton"));
-    fOnLoadMethodToggle.addActionListener(fOnLoadButtonGroupHandler);
-    fOnLoadGroup.add(fOnLoadCodeToggle = (RadioButton) findComponent("ExecuteCodeButton"));
-    fOnLoadCodeToggle.addActionListener(fOnLoadButtonGroupHandler);
-    fOnLoadMethodField = (TextField) findComponent("CallMethodField");
-    fOnLoadCodeText = (TextArea) findComponent("ExecuteCodeText");
-    fOnLoadCodeText.setRows(3);
-
-    fBootTypesList = (XList) findComponent("BootTypesList");
-    fIncludeTypesList = (XList) findComponent("IncludeTypesList");
-
-    fNextIssueButton = (Button) findComponent("NextIssueButton");
-    fNextIssueButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        gotoNextIssue();
-      }
-    });
-    fPreviousIssueButton = (Button) findComponent("PreviousIssueButton");
-    fPreviousIssueButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        gotoPreviousIssue();
-      }
-    });
-    fApplyButton = (Button) findComponent("ApplyButton");
-    fApplyButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        apply();
-      }
-    });
-    fCancelButton = (Button) findComponent("CancelButton");
-    fCancelButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        cancel();
-      }
-    });
-  }
-
   private void apply() {
+    fActionTreeSelectionHandler.testApplySelectedAction();
     ConfigHelper configHelper = fMainFrame.getConfigHelper();
     configHelper.setConfig(fNewConfig);
     fMainFrame.modelChanged();
@@ -227,7 +327,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
   }
 
   private void close() {
-    Dialog dialog = (Dialog) getAncestorOfClass(Dialog.class);
+    Dialog dialog = (Dialog) SwingUtilities.getAncestorOfClass(Dialog.class, this);
     dialog.setVisible(false);
   }
 
@@ -294,28 +394,28 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     String fieldName = workState.getFieldName();
     boolean isTransientField = fieldName != null && (fConfigHelper.isTransient(fieldName) || workState.isTransient());
 
-    if(workState.isNull() || workState.isRepeated() || isTransientField) return false;
-    
+    if (workState.isNull() || workState.isRepeated() || isTransientField) return false;
+
     if (workState.isNeverPortable() || workState.extendsLogicallyManagedType()) { return true; }
 
     if (workState.hasRequiredBootTypes()) {
       java.util.List types = workState.getRequiredBootTypes();
       for (Iterator iter = types.iterator(); iter.hasNext();) {
-        if (!fConfigHelper.isBootJarClass((String)iter.next())) return true;
+        if (!fConfigHelper.isBootJarClass((String) iter.next())) return true;
       }
     }
 
     if (workState.hasRequiredIncludeTypes()) {
       java.util.List types = workState.getRequiredIncludeTypes();
       for (Iterator iter = types.iterator(); iter.hasNext();) {
-        if (!fConfigHelper.isAdaptable((String)iter.next())) return true;
+        if (!fConfigHelper.isAdaptable((String) iter.next())) return true;
       }
     }
 
-    if(!workState.isPortable() && workState.isSystemType() && !fConfigHelper.isBootJarClass(workState.getTypeName())) return true;
-    
-    if(workState.getExplaination() != null) return true;
-    
+    if (!workState.isPortable() && workState.isSystemType() && !fConfigHelper.isBootJarClass(workState.getTypeName())) return true;
+
+    if (workState.getExplaination() != null) return true;
+
     return !workState.isPortable() && !fConfigHelper.isAdaptable(workState.getTypeName());
   }
 
@@ -505,7 +605,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
 
   void setWorkState(NonPortableWorkState workState) {
     showIssueDetailsPanel();
-    fSummaryLabel.setText("<html><p>"+workState.summary()+"</p></html>");
+    fSummaryLabel.setText("<html><p>" + workState.summary() + "</p></html>");
     fSummaryLabel.setIcon(iconFor(workState));
     fDescriptionText.setText(workState.descriptionFor(fEvent.getNonPortableEventContext()));
     fDescriptionText.select(0, 0);
@@ -563,6 +663,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     void setSelected(boolean selected) {
       AbstractResolutionAction action = getAction();
       if (action != null) {
+        if(action.isSelected() == selected) return;
         action.setSelected(selected);
         if (selected) {
           ((ActionTreeRootNode) getParent()).setSelected(false);
@@ -600,9 +701,14 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     }
 
     void setSelected(boolean selected) {
+      if(fSelected == selected) return;
       if ((fSelected = selected) == true) {
         for (int i = 0; i < getChildCount(); i++) {
           ((ActionTreeNode) getChildAt(i)).setSelected(false);
+        }
+      } else {
+        if (getChildCount() > 0) {
+          ((ActionTreeNode) getChildAt(0)).setSelected(true);
         }
       }
       fireNodeChanged();
@@ -623,7 +729,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     }
   }
 
-  static class ActionTreeCellRendererComponent extends Container {
+  static class ActionTreeCellRendererComponent extends XContainer {
     public XCheckBox checkBox;
     public XLabel    label;
     public Container container;
@@ -633,8 +739,8 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
       setLayout(new FlowLayout(SwingConstants.CENTER, 3, 1));
       add(checkBox = new XCheckBox());
       add(label = new XLabel());
-      checkBox.setBorder(new EmptyBorder());
-      setBorder(new EmptyBorder());
+      checkBox.setBorder(BorderFactory.createEmptyBorder());
+      setBorder(BorderFactory.createEmptyBorder());
       setFocusCycleRoot(true);
     }
 
@@ -695,7 +801,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     CellEditor() {
       super(new XTextField());
       atcrc = new ActionTreeCellRendererComponent();
-      m_editorComponent = atcrc;
+      editorComponent = atcrc;
       atcrc.checkBox.addActionListener(new ActionSelectionHandler());
     }
 
@@ -706,9 +812,10 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     protected void fireEditingStopped() {/**/
     }
 
-    public boolean shouldSelectCell(EventObject event) {
+    public boolean shouldSelectCell(final EventObject event) {
       if (event instanceof MouseEvent) {
         MouseEvent me = (MouseEvent) event;
+        if (me.getID() != MouseEvent.MOUSE_RELEASED) return true;
         Point p = SwingUtilities.convertPoint(fActionTree, new Point(me.getX(), me.getY()), atcrc);
         Component activeComponent = SwingUtilities.getDeepestComponentAt(atcrc, p.x, p.y);
 
@@ -763,35 +870,35 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
   }
 
   private boolean requiresPortabilityAction(NonPortableWorkState workState) {
-    if(workState.isTransient() || workState.extendsLogicallyManagedType()) return false;
-    if(workState.hasRequiredBootTypes()) {
+    if (workState.isTransient() || workState.extendsLogicallyManagedType()) return false;
+    if (workState.hasRequiredBootTypes()) {
       java.util.List types = workState.getRequiredBootTypes();
-      for(Iterator iter = types.iterator(); iter.hasNext();) {
-        if(!fConfigHelper.isBootJarClass((String)iter.next())) return true;
+      for (Iterator iter = types.iterator(); iter.hasNext();) {
+        if (!fConfigHelper.isBootJarClass((String) iter.next())) return true;
       }
     }
-    if(workState.hasNonPortableBaseTypes()) {
+    if (workState.hasNonPortableBaseTypes()) {
       java.util.List types = workState.getNonPortableBaseTypes();
-      for(Iterator iter = types.iterator(); iter.hasNext();) {
-        if(!fConfigHelper.isAdaptable((String)iter.next())) return true;
+      for (Iterator iter = types.iterator(); iter.hasNext();) {
+        if (!fConfigHelper.isAdaptable((String) iter.next())) return true;
       }
     }
     return !fConfigHelper.isAdaptable(workState.getTypeName());
   }
-  
+
   AbstractResolutionAction[] createActions(AbstractWorkState workState) {
     ArrayList<AbstractResolutionAction> list = new ArrayList<AbstractResolutionAction>();
-    
-    if(workState instanceof NonPortableWorkState) {
-      NonPortableWorkState nonPortableWorkState = (NonPortableWorkState)workState;
+
+    if (workState instanceof NonPortableWorkState) {
+      NonPortableWorkState nonPortableWorkState = (NonPortableWorkState) workState;
       String fieldName = nonPortableWorkState.getFieldName();
-  
+
       if (nonPortableWorkState.isNeverPortable() || nonPortableWorkState.isPortable()) {
         if (fieldName != null && !nonPortableWorkState.isTransient() && !fConfigHelper.isTransient(fieldName)) {
           list.add(new MakeTransientAction(nonPortableWorkState));
         }
       } else if (!nonPortableWorkState.isPortable()) {
-        if(requiresPortabilityAction(nonPortableWorkState)) {
+        if (requiresPortabilityAction(nonPortableWorkState)) {
           list.add(new MakePortableAction(nonPortableWorkState));
         }
         if (fieldName != null && !nonPortableWorkState.isTransient() && !fConfigHelper.isTransient(fieldName)) {
@@ -805,11 +912,9 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
 
   AbstractResolutionAction[] getActions(AbstractWorkState state) {
     AbstractResolutionAction[] actions = state.getActions();
-
     if (actions == null) {
       state.setActions(actions = createActions(state));
     }
-
     return actions;
   }
 
@@ -822,12 +927,12 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     if (actions != null && actions.length > 0) {
       for (int i = 0; i < actions.length; i++) {
         action = actions[i];
-
         if (action.isEnabled()) {
           actionTreeRoot.add(new ActionTreeNode(action));
           if (action.isSelected()) {
             ((IssueListItem) fIssueList.getSelectedValue()).setIcon(RESOLVED_ICON);
             fApplyButton.setEnabled(true);
+            actionTreeRoot.fSelected = false;
           }
         }
       }
@@ -864,16 +969,27 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
   }
 
   class ActionTreeSelectionHandler implements TreeSelectionListener {
+    AbstractResolutionAction fLastAction;
+
     public void valueChanged(TreeSelectionEvent e) {
+      if (fLastAction != null) {
+        fLastAction.apply();
+        fLastAction = null;
+      }
       ActionTreeNode actionNode = (ActionTreeNode) fActionTree.getLastSelectedPathComponent();
       if (actionNode != null) {
-        AbstractResolutionAction action = actionNode.getAction();
-
-        if (action != null && action.isSelected()) {
-          action.showControl(NonPortableObjectPanel.this);
+        fLastAction = actionNode.getAction();
+        if (fLastAction != null && fLastAction.isSelected()) {
+          fLastAction.showControl(NonPortableObjectPanel.this);
         } else {
           hideActionPanel();
         }
+      }
+    }
+
+    void testApplySelectedAction() {
+      if (fLastAction != null) {
+        fLastAction.apply();
       }
     }
   }
@@ -881,50 +997,9 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
   void setIncludeTypes(java.util.List<String> types) {
     fIncludeTypesList.setListData(types.toArray(new String[0]));
   }
-  
+
   void setBootTypes(java.util.List<String> types) {
     fBootTypesList.setListData(types.toArray(new String[0]));
-  }
-  
-  void setInclude(Include include) {
-    fIncludePatternField.setText(include.getClassExpression());
-    fHonorTransientToggle.setSelected(include.getHonorTransient());
-    fOnLoadMethodField.setText("");
-    fOnLoadCodeText.setText("");
-    if (include.isSetOnLoad()) {
-      OnLoad onLoad = include.getOnLoad();
-      if (onLoad.isSetMethod()) {
-        fOnLoadMethodToggle.setSelected(true);
-        fOnLoadMethodField.setText(onLoad.getMethod());
-      } else if (onLoad.isSetExecute()) {
-        fOnLoadCodeToggle.setSelected(true);
-        fOnLoadCodeText.setText(onLoad.getExecute());
-      } else {
-        fOnLoadDoNothingToggle.setSelected(false);
-      }
-    } else {
-      fOnLoadDoNothingToggle.setSelected(true);
-    }
-  }
-
-  class OnLoadButtonGroupHandler implements ActionListener {
-    public void actionPerformed(ActionEvent ae) {
-      RadioButton radioButton = (RadioButton) ae.getSource();
-
-      if (radioButton == fOnLoadDoNothingToggle) {
-        fOnLoadMethodField.setText("");
-        fOnLoadMethodField.setEnabled(false);
-
-        fOnLoadCodeText.setText("");
-        fOnLoadCodeText.setEnabled(false);
-      } else if (radioButton == fOnLoadMethodToggle) {
-        fOnLoadCodeText.setText("");
-        fOnLoadCodeText.setEnabled(false);
-      } else {
-        fOnLoadMethodField.setText("");
-        fOnLoadMethodField.setEnabled(false);
-      }
-    }
   }
 
   class MakeTransientAction extends NonPortableResolutionAction {
@@ -941,31 +1016,33 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
       Include include = fConfigHelper.ensureIncludeRuleFor(declaringType);
 
       if (include != null) {
+        fOnLoadPanel.setInclude(include);
         parent.fActionPanel.setPage("IncludeRulePage");
-        parent.setInclude(include);
       }
     }
 
     public String getText() {
-      return NonPortableMessages.getString("DO_NOT_SHARE"); //$NON-NLS-1$
+      return NonPortableMessages.getString("DO_NOT_SHARE");
     }
 
     public void setSelected(boolean selected) {
+      if (!fActionPanel.getPage().equals("IncludeRulePage")) {
+        showControl(NonPortableObjectPanel.this);
+      }
+
       super.setSelected(selected);
 
       int index = fIssueList.getSelectedIndex();
       DefaultMutableTreeNode treeItem = (DefaultMutableTreeNode) fObjectTree.getLastSelectedPathComponent();
-
+      if (fRemovedChildNodes == null) fRemovedChildNodes = new ArrayList<DefaultMutableTreeNode>();
       if (selected) {
         fConfigHelper.ensureTransient(fWorkState.getFieldName());
-        if (fRemovedChildNodes == null) fRemovedChildNodes = new ArrayList<DefaultMutableTreeNode>();
         for (int i = 0; i < treeItem.getChildCount(); i++) {
-          fRemovedChildNodes.add((DefaultMutableTreeNode)treeItem.getChildAt(i));
+          fRemovedChildNodes.add((DefaultMutableTreeNode) treeItem.getChildAt(i));
         }
         treeItem.removeAllChildren();
       } else {
         fConfigHelper.ensureNotTransient(fWorkState.getFieldName());
-
         for (int i = 0; i < fRemovedChildNodes.size(); i++) {
           treeItem.add(fRemovedChildNodes.get(i));
         }
@@ -977,6 +1054,11 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
       fObjectTree.setSelectionPath(new TreePath(treeItem.getPath()));
       fIssueList.setSelectedIndex(index);
       resetSearchButtons();
+      fOnLoadPanel.updateInclude();
+    }
+
+    public void apply() {
+      fOnLoadPanel.updateInclude();
     }
   }
 
@@ -993,21 +1075,25 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     }
 
     public String getText() {
-      return NonPortableMessages.getString("MAKE_PORTABLE"); //$NON-NLS-1$
+      return NonPortableMessages.getString("MAKE_PORTABLE");
     }
 
     public void setSelected(boolean selected) {
+      if (!fActionPanel.getPage().equals("IncludeTypesPage")) {
+        showControl(NonPortableObjectPanel.this);
+      }
+
       super.setSelected(selected);
 
       if (fWorkState.hasRequiredBootTypes()) {
         java.util.List types = fWorkState.getRequiredBootTypes();
         if (selected) {
           for (Iterator iter = types.iterator(); iter.hasNext();) {
-            fConfigHelper.ensureBootJarClass((String)iter.next());
+            fConfigHelper.ensureBootJarClass((String) iter.next());
           }
         } else {
           for (Iterator iter = types.iterator(); iter.hasNext();) {
-            fConfigHelper.ensureNotBootJarClass((String)iter.next());
+            fConfigHelper.ensureNotBootJarClass((String) iter.next());
           }
         }
       }
@@ -1016,11 +1102,11 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
         java.util.List types = fWorkState.getRequiredIncludeTypes();
         if (selected) {
           for (Iterator iter = types.iterator(); iter.hasNext();) {
-            fConfigHelper.ensureAdaptable((String)iter.next());
+            fConfigHelper.ensureAdaptable((String) iter.next());
           }
         } else {
           for (Iterator iter = types.iterator(); iter.hasNext();) {
-            fConfigHelper.ensureNotAdaptable((String)iter.next());
+            fConfigHelper.ensureNotAdaptable((String) iter.next());
           }
         }
       }

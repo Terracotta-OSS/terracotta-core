@@ -4,6 +4,8 @@
  */
 package com.tc.admin;
 
+import com.tc.admin.common.ApplicationContext;
+
 import java.awt.Point;
 import java.util.Date;
 import java.util.concurrent.CancellationException;
@@ -12,30 +14,32 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class ThreadDumpEntry implements Runnable {
-  private Future<String>   m_threadDumpFuture;
-  private String           m_text;
-  private Date             m_time;
-  private Point            m_viewPosition;
+  protected ApplicationContext appContext;
+  private Future<String>       future;
+  private String               text;
+  private Date                 time;
+  private Point                viewPosition;
 
-  private static final int DEFAULT_TIMEOUT_SECONDS = 300;
-  private static final int TIMEOUT_SECONDS         = Integer.getInteger("com.tc.admin.ThreadDumpEntry.timeout",
-                                                                        DEFAULT_TIMEOUT_SECONDS);
+  private static final int     DEFAULT_TIMEOUT_SECONDS = 300;
+  private static final int     TIMEOUT_SECONDS         = Integer.getInteger("com.tc.admin.ThreadDumpEntry.timeout",
+                                                                            DEFAULT_TIMEOUT_SECONDS);
 
-  public ThreadDumpEntry(Future<String> threadDumpFuture) {
-    m_threadDumpFuture = threadDumpFuture;
-    m_time = new Date();
-    AdminClient.getContext().submit(this);
+  public ThreadDumpEntry(ApplicationContext appContext, Future<String> threadDumpFuture) {
+    this.appContext = appContext;
+    this.future = threadDumpFuture;
+    time = new Date();
+    appContext.submit(this);
   }
 
   public void run() {
     String result;
     try {
-      result = m_threadDumpFuture.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      result = future.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
     } catch (TimeoutException e) {
-      m_threadDumpFuture.cancel(true);
-      result = AdminClient.getContext().format("thread.dump.timeout.msg", TIMEOUT_SECONDS);
+      future.cancel(true);
+      result = appContext.format("thread.dump.timeout.msg", TIMEOUT_SECONDS);
     } catch (CancellationException ce) {
-      result = AdminClient.getContext().format("canceled");
+      result = appContext.format("canceled");
     } catch (Exception e) {
       result = e.getMessage();
     }
@@ -43,11 +47,11 @@ public class ThreadDumpEntry implements Runnable {
   }
 
   synchronized void setThreadDump(String text) {
-    m_text = text;
+    this.text = text;
   }
 
   public synchronized String getThreadDump() {
-    return m_text;
+    return text;
   }
 
   public boolean isDone() {
@@ -56,7 +60,7 @@ public class ThreadDumpEntry implements Runnable {
 
   public void cancel() {
     if (!isDone()) {
-      if(!m_threadDumpFuture.cancel(true)) {
+      if (!future.cancel(true)) {
         setThreadDump("Failed to cancel!");
       }
     }
@@ -66,23 +70,23 @@ public class ThreadDumpEntry implements Runnable {
     if (isDone()) {
       return getThreadDump();
     } else {
-      return AdminClient.getContext().format("waiting");
+      return appContext.format("waiting");
     }
   }
 
   public Date getTime() {
-    return new Date(m_time.getTime());
+    return new Date(time.getTime());
   }
 
   public void setViewPosition(Point pos) {
-    m_viewPosition = pos;
+    viewPosition = pos;
   }
 
   public Point getViewPosition() {
-    return m_viewPosition;
+    return viewPosition;
   }
 
   public String toString() {
-    return m_time.toString();
+    return time.toString();
   }
 }

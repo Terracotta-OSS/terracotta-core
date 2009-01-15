@@ -4,13 +4,12 @@
  */
 package com.tc.welcome;
 
-import org.dijon.ApplicationManager;
-import org.dijon.TabbedPane;
-import org.dijon.TextPane;
-
 import com.tc.admin.common.BrowserLauncher;
 import com.tc.admin.common.InputStreamDrainer;
+import com.tc.admin.common.LAFHelper;
 import com.tc.admin.common.Splash;
+import com.tc.admin.common.XTabbedPane;
+import com.tc.admin.common.XTextPane;
 import com.tc.util.ResourceBundleHelper;
 import com.tc.util.runtime.Os;
 
@@ -40,11 +39,11 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 
 public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, PropertyChangeListener {
-  private static String[]             PRODUCTS       = { "Pojo", "Spring", "Sessions" };
-  private static ResourceBundleHelper m_bundleHelper = new ResourceBundleHelper(WelcomeFrame.class);
+  private static String[]             PRODUCTS     = { "Pojo", "Spring", "Sessions" };
+  private static ResourceBundleHelper bundleHelper = new ResourceBundleHelper(WelcomeFrame.class);
 
-  private TabbedPane                  m_tabbedPane;
-  private ArrayList                   m_startupList;
+  private XTabbedPane                 tabbedPane;
+  private ArrayList                   startupList;
 
   public WelcomeFrame(String[] args) {
     super(getBundleString("welcome.title"));
@@ -56,11 +55,11 @@ public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, P
       System.setProperty("com.apple.mrj.application.growbox.intrudes", "false");
     }
 
-    m_startupList = new ArrayList();
+    startupList = new ArrayList();
 
     Container cp = getContentPane();
     cp.setLayout(new BorderLayout());
-    cp.add(m_tabbedPane = new TabbedPane());
+    cp.add(tabbedPane = new XTabbedPane());
 
     addWindowListener(new WindowAdapter() {
       public void windowDeactivated(WindowEvent e) {
@@ -77,8 +76,8 @@ public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, P
     });
 
     for (int i = 0; i < PRODUCTS.length; i++) {
-      TextPane textPane = new TextPane();
-      m_startupList.add(textPane);
+      XTextPane textPane = new XTextPane();
+      startupList.add(textPane);
       textPane.setBackground(Color.WHITE);
       textPane.setEditable(false);
       textPane.addHyperlinkListener(this);
@@ -89,22 +88,22 @@ public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, P
         textPane.setText(ioe.getMessage());
       }
 
-      m_tabbedPane.add(PRODUCTS[i], textPane);
-      m_tabbedPane.setBackgroundAt(i, Color.WHITE);
+      tabbedPane.add(PRODUCTS[i], textPane);
+      tabbedPane.setBackgroundAt(i, Color.WHITE);
     }
   }
 
   private static String getBundleString(String key) {
-    return m_bundleHelper.getString(key);
+    return bundleHelper.getString(key);
   }
 
-  private TextPane getTextPane() {
-    return (TextPane) m_tabbedPane.getSelectedComponent();
+  private XTextPane getTextPane() {
+    return (XTextPane) tabbedPane.getSelectedComponent();
   }
 
   protected void setTextPaneCursor(int type) {
     Cursor c = Cursor.getPredefinedCursor(type);
-    TextPane textPane = getTextPane();
+    XTextPane textPane = getTextPane();
     HTMLEditorKit kit = (HTMLEditorKit) textPane.getEditorKit();
 
     textPane.setCursor(c);
@@ -115,7 +114,7 @@ public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, P
   }
 
   public void hyperlinkUpdate(HyperlinkEvent e) {
-    TextPane textPane = getTextPane();
+    XTextPane textPane = getTextPane();
     HyperlinkEvent.EventType type = e.getEventType();
     Element elem = e.getSourceElement();
 
@@ -131,7 +130,7 @@ public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, P
   }
 
   private String getProduct() {
-    return PRODUCTS[m_tabbedPane.getSelectedIndex()];
+    return PRODUCTS[tabbedPane.getSelectedIndex()];
   }
 
   private void runDSOSampleLauncher() {
@@ -163,9 +162,9 @@ public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, P
 
         openURL("file://" + file.getAbsolutePath());
       }
-    } else if (action.equals("run_console")) {
+    } else if (action.equals("run_dev_center")) {
       startFakeWaitPeriod();
-      runScript("admin");
+      runScript("tdc");
     } else if (action.equals("run_configurator")) {
       startFakeWaitPeriod();
       runScript("sessions-configurator", "tools" + System.getProperty("file.separator") + "sessions");
@@ -182,7 +181,7 @@ public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, P
   }
 
   protected File getProductDirectory() {
-    int index = m_tabbedPane.getSelectedIndex();
+    int index = tabbedPane.getSelectedIndex();
     return new File(getSamplesDir(), PRODUCTS[index].toLowerCase());
   }
 
@@ -253,10 +252,10 @@ public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, P
   }
 
   public void propertyChange(PropertyChangeEvent pce) {
-    TextPane textPane = (TextPane) pce.getSource();
-    m_startupList.remove(textPane);
+    XTextPane textPane = (XTextPane) pce.getSource();
+    startupList.remove(textPane);
 
-    if (m_startupList.isEmpty()) {
+    if (startupList.isEmpty()) {
       pack();
       center();
       Timer t = new Timer(splashProc != null ? 1000 : 0, new ActionListener() {
@@ -282,11 +281,9 @@ public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, P
     }
 
     public void run() {
-      String[] finalArgs;
+      String[] finalArgs = args;
       if (System.getProperty("swing.defaultlaf") == null) {
-        finalArgs = ApplicationManager.parseLAFArgs(args);
-      } else {
-        finalArgs = args;
+        finalArgs = LAFHelper.parseLAFArgs(args);
       }
       WelcomeFrame welcome = new WelcomeFrame(finalArgs);
       welcome.setResizable(false);

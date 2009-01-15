@@ -16,11 +16,10 @@ public class NavTreeModel extends XTreeModel {
   private static final String PORT         = ServersHelper.PORT;
   private static final String AUTO_CONNECT = ServersHelper.AUTO_CONNECT;
 
-  public NavTreeModel() {
+  public NavTreeModel(IAdminClientContext adminClientContext) {
     super();
 
-    AdminClientContext acc = AdminClient.getContext();
-    Preferences prefs = acc.getPrefs().node("AdminClient");
+    Preferences prefs = adminClientContext.getPrefs().node("AdminClient");
     Preferences serverPrefs = prefs.node(SERVERS);
     PrefsHelper prefsHelper = PrefsHelper.getHelper();
     String[] children = prefsHelper.childrenNames(serverPrefs);
@@ -37,14 +36,14 @@ public class NavTreeModel extends XTreeModel {
         host = serverPref.get(HOST, ConnectionContext.DEFAULT_HOST);
         port = serverPref.getInt(PORT, ConnectionContext.DEFAULT_PORT);
         autoConnect = serverPref.getBoolean(AUTO_CONNECT, ConnectionContext.DEFAULT_AUTO_CONNECT);
-        serverNode = acc.getNodeFactory().createClusterNode(host, port, autoConnect);
+        serverNode = adminClientContext.getNodeFactory().createClusterNode(adminClientContext, host, port, autoConnect);
 
         insertNodeInto(serverNode, (XTreeNode) getRoot(), i);
       }
     } else {
-      serverNode = acc.getNodeFactory().createClusterNode();
+      serverNode = adminClientContext.getNodeFactory().createClusterNode(adminClientContext);
       serverNode.setPreferences(serverPrefs.node("server-0"));
-      acc.storePrefs();
+      adminClientContext.storePrefs();
       insertNodeInto(serverNode, (XTreeNode) getRoot(), 0);
     }
   }

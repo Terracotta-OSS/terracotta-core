@@ -12,6 +12,9 @@ public class CommonBundle extends ListResourceBundle {
         { "support.url", "http://www.terracotta.org/kit/reflector?kitID={0}&pageID=SupportServices" },
         { "visit.forums.title", "Visit Terracotta Forums" },
         { "contact.support.title", "Contact Terracotta Technical Support" }, { "waiting", "Waiting..." },
-        { "canceled", "Canceled" }, { "cancel", "Cancel" }, { "delete", "Delete" }, { "delete.all", "Delete All" } };
+        { "canceled", "Canceled" }, { "cancel", "Cancel" }, { "delete", "Delete" }, { "delete.all", "Delete All" },
+        { "ok", "OK" }, { "shutdown", "Shutdown" }, { "details.link.text", "Details >>" },
+        { "back.link.text", "<< Back" }, { "connect.elipses", "Connect..." }, { "disconnect", "Disconnect" },
+        { "next", "Next" }, { "previous", "Previous" }, { "refresh", "Refresh" }, { "options.dialog.title", "Options" } };
   }
 }

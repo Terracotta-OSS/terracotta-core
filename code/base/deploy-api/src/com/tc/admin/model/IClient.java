@@ -10,7 +10,17 @@ import com.tc.management.beans.logging.RuntimeOutputOptionsMBean;
 
 import java.util.Map;
 
+import javax.management.ObjectName;
+
 public interface IClient extends IClusterNode {
+  static final IClient[] NULL_SET                               = {};
+
+  static final String    POLLED_ATTR_PENDING_TRANSACTIONS_COUNT = "PendingTransactionsCount";
+
+  ObjectName getBeanName();
+
+  ObjectName getL1InfoBeanName();
+
   long getChannelID();
 
   String getRemoteAddress();
@@ -26,4 +36,6 @@ public interface IClient extends IClusterNode {
   RuntimeOutputOptionsMBean getRuntimeOutputOptionsBean();
 
   void killClient();
+
+  String dump();
 }

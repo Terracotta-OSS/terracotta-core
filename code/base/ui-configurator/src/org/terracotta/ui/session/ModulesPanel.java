@@ -5,20 +5,27 @@
 package org.terracotta.ui.session;
 
 import org.apache.xmlbeans.XmlString;
-import org.dijon.Button;
-import org.dijon.ContainerResource;
 
+import com.tc.admin.common.XButton;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XObjectTableModel;
+import com.tc.admin.common.XScrollPane;
 import com.tc.admin.common.XTable;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.Module;
 import com.terracottatech.config.Modules;
 
+import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.BorderFactory;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
@@ -29,60 +36,40 @@ import javax.swing.event.TableModelListener;
 
 public class ModulesPanel extends XContainer implements TableModelListener {
 
-  private Modules                m_modules;
-  private Client                 m_dsoClient;
-  private XTable                 m_repositoriesTable;
-  private XTable                 m_modulesTable;
-  private AddModuleDialog        m_addModulesDialog;
-  private RepositoriesTableModel m_repositoriesTableModel;
-  private ModulesTableModel      m_modulesTableModel;
-  private Button                 m_repoAddButton;
-  private Button                 m_repoRemoveButton;
-  private Button                 m_moduleAddButton;
-  private Button                 m_moduleRemoveButton;
-  private ActionListener         m_repoAddListener;
-  private ActionListener         m_repoRemoveListener;
-  private ActionListener         m_moduleAddListener;
-  private ActionListener         m_moduleRemoveListener;
-  private ListSelectionListener  m_repoSelectionListener;
-  private ListSelectionListener  m_moduleSelectionListener;
+  private Modules                modules;
+  private Client                 dsoClient;
+  private XTable                 repositoriesTable;
+  private XTable                 modulesTable;
+  private AddModuleDialog        addModulesDialog;
+  private RepositoriesTableModel repositoriesTableModel;
+  private ModulesTableModel      modulesTableModel;
+  private XButton                repoAddButton;
+  private XButton                repoRemoveButton;
+  private XButton                moduleAddButton;
+  private XButton                moduleRemoveButton;
+  private ActionListener         repoAddListener;
+  private ActionListener         repoRemoveListener;
+  private ActionListener         moduleAddListener;
+  private ActionListener         moduleRemoveListener;
+  private ListSelectionListener  repoSelectionListener;
+  private ListSelectionListener  moduleSelectionListener;
 
   public ModulesPanel() {
-    super();
-  }
+    super(new GridLayout(2, 1));
 
-  public void load(ContainerResource containerRes) {
-    super.load(containerRes);
+    XContainer repoPanel = new XContainer(new BorderLayout());
+    repositoriesTable = new XTable();
+    repositoriesTable.setModel(repositoriesTableModel = new RepositoriesTableModel());
+    repoPanel.add(new XScrollPane(repositoriesTable));
 
-    m_repositoriesTable = (XTable) findComponent("RepositoriesTable");
-    m_repositoriesTable.setModel(m_repositoriesTableModel = new RepositoriesTableModel());
+    XContainer rightPanel = new XContainer(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = gbc.gridy = 0;
+    gbc.insets = new Insets(3, 3, 3, 3);
+    gbc.fill = GridBagConstraints.HORIZONTAL;
 
-    m_modulesTable = (XTable) findComponent("ModulesTable");
-    m_modulesTable.setModel(m_modulesTableModel = new ModulesTableModel());
-    m_addModulesDialog = new AddModuleDialog();
-    m_moduleAddListener = new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        String[] module = m_addModulesDialog.prompt();
-        if (module != null) {
-          internalAddModule(module[0], module[1]);
-        }
-      }
-    };
-
-    m_moduleRemoveButton = (Button) findComponent("RemoveModuleButton");
-    m_moduleRemoveListener = new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        Modules modules = ensureModulesElement();
-        int[] selection = m_modulesTable.getSelectedRows();
-        for (int i = selection.length - 1; i >= 0; i--) {
-          modules.removeModule(selection[i]);
-        }
-        syncModel();
-      }
-    };
-
-    m_repoAddButton = (Button) findComponent("AddRepositoryButton");
-    m_repoAddListener = new ActionListener() {
+    repoAddButton = new XButton("Add...");
+    repoAddListener = new ActionListener() {
       public void actionPerformed(ActionEvent ae) {
         String repoLocation = JOptionPane.showInputDialog("Repository Location (URL)");
         if (repoLocation != null && !(repoLocation = repoLocation.trim()).equals("")) {
@@ -90,51 +77,86 @@ public class ModulesPanel extends XContainer implements TableModelListener {
         }
       }
     };
+    rightPanel.add(repoAddButton, gbc);
+    gbc.gridy++;
 
-    m_repoRemoveButton = (Button) findComponent("RemoveRepositoryButton");
-    m_repoRemoveListener = new ActionListener() {
+    repoRemoveButton = new XButton("Remove");
+    repoRemoveListener = new ActionListener() {
       public void actionPerformed(ActionEvent ae) {
-        Modules modules = ensureModulesElement();
-        int[] selection = m_repositoriesTable.getSelectedRows();
+        Modules theModules = ensureModulesElement();
+        int[] selection = repositoriesTable.getSelectedRows();
         for (int i = selection.length - 1; i >= 0; i--) {
-          modules.removeRepository(selection[i]);
+          theModules.removeRepository(selection[i]);
         }
         syncModel();
       }
     };
+    rightPanel.add(repoRemoveButton, gbc);
+    repoPanel.add(rightPanel, BorderLayout.EAST);
 
-    m_repoSelectionListener = new ListSelectionListener() {
+    repoPanel.setBorder(BorderFactory.createTitledBorder("Repositories"));
+    add(repoPanel);
+
+    XContainer modulesPanel = new XContainer(new BorderLayout());
+    modulesTable = new XTable();
+    modulesTable.setModel(modulesTableModel = new ModulesTableModel());
+    moduleSelectionListener = new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent lse) {
         if (!lse.getValueIsAdjusting()) {
-          int[] sel = m_repositoriesTable.getSelectedRows();
-          m_repoRemoveButton.setEnabled(sel != null && sel.length > 0);
+          int[] sel = modulesTable.getSelectedRows();
+          moduleRemoveButton.setEnabled(sel != null && sel.length > 0);
         }
       }
     };
-    m_moduleSelectionListener = new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent lse) {
-        if (!lse.getValueIsAdjusting()) {
-          int[] sel = m_modulesTable.getSelectedRows();
-          m_moduleRemoveButton.setEnabled(sel != null && sel.length > 0);
+    modulesPanel.add(new XScrollPane(modulesTable));
+
+    rightPanel = new XContainer(new GridBagLayout());
+    gbc.gridx = gbc.gridy = 0;
+    gbc.insets = new Insets(3, 3, 3, 3);
+
+    moduleAddButton = new XButton("Add...");
+    addModulesDialog = new AddModuleDialog();
+    moduleAddListener = new ActionListener() {
+      public void actionPerformed(ActionEvent ae) {
+        String[] module = addModulesDialog.prompt();
+        if (module != null) {
+          internalAddModule(module[0], module[1]);
         }
       }
     };
+    rightPanel.add(moduleAddButton, gbc);
+    gbc.gridy++;
 
-    m_moduleAddButton = (Button) findComponent("AddModuleButton");
+    moduleRemoveButton = new XButton("Remove");
+    moduleRemoveListener = new ActionListener() {
+      public void actionPerformed(ActionEvent ae) {
+        Modules theModules = ensureModulesElement();
+        int[] selection = modulesTable.getSelectedRows();
+        for (int i = selection.length - 1; i >= 0; i--) {
+          theModules.removeModule(selection[i]);
+        }
+        syncModel();
+      }
+    };
+    rightPanel.add(moduleRemoveButton, gbc);
+    modulesPanel.add(rightPanel, BorderLayout.EAST);
+
+    modulesPanel.setBorder(BorderFactory.createTitledBorder("Modules"));
+    add(modulesPanel);
   }
 
   private Modules ensureModulesElement() {
-    if (m_modules == null) {
+    if (modules == null) {
       ensureXmlObject();
     }
-    return m_modules;
+    return modules;
   }
 
   // make sure parent exists
   public void ensureXmlObject() {
-    if (m_modules == null) {
+    if (modules == null) {
       removeListeners();
-      m_modules = m_dsoClient.addNewModules();
+      modules = dsoClient.addNewModules();
       updateChildren();
       addListeners();
     }
@@ -142,14 +164,14 @@ public class ModulesPanel extends XContainer implements TableModelListener {
 
   // match table to xmlbeans
   private void updateChildren() {
-    m_modulesTableModel.clear();
-    m_repositoriesTableModel.clear();
-    if (m_modules != null) {
-      m_repositoriesTableModel.set(m_modules.xgetRepositoryArray());
-      m_modulesTableModel.set(m_modules.getModuleArray());
+    modulesTableModel.clear();
+    repositoriesTableModel.clear();
+    if (modules != null) {
+      repositoriesTableModel.set(modules.xgetRepositoryArray());
+      modulesTableModel.set(modules.getModuleArray());
     } else {
-      m_repositoriesTableModel.fireTableDataChanged();
-      m_modulesTableModel.fireTableDataChanged();
+      repositoriesTableModel.fireTableDataChanged();
+      modulesTableModel.fireTableDataChanged();
     }
   }
 
@@ -160,47 +182,47 @@ public class ModulesPanel extends XContainer implements TableModelListener {
   public void setup(Client dsoClient) {
     setEnabled(true);
     removeListeners();
-    m_dsoClient = dsoClient;
-    m_modules = (m_dsoClient != null) ? m_dsoClient.getModules() : null;
+    this.dsoClient = dsoClient;
+    modules = (dsoClient != null) ? dsoClient.getModules() : null;
     updateChildren();
     addListeners();
   }
 
   public void tearDown() {
     removeListeners();
-    m_dsoClient = null;
-    m_repositoriesTableModel.clear();
+    dsoClient = null;
+    repositoriesTableModel.clear();
     setEnabled(false);
   }
 
   private void removeListeners() {
-    m_modulesTableModel.removeTableModelListener(this);
-    m_repositoriesTableModel.removeTableModelListener(this);
-    m_repositoriesTable.getSelectionModel().removeListSelectionListener(m_repoSelectionListener);
-    m_repoAddButton.removeActionListener(m_repoAddListener);
-    m_repoRemoveButton.removeActionListener(m_repoRemoveListener);
-    m_modulesTable.getSelectionModel().removeListSelectionListener(m_moduleSelectionListener);
-    m_moduleAddButton.removeActionListener(m_moduleAddListener);
-    m_moduleRemoveButton.removeActionListener(m_moduleRemoveListener);
+    modulesTableModel.removeTableModelListener(this);
+    repositoriesTableModel.removeTableModelListener(this);
+    repositoriesTable.getSelectionModel().removeListSelectionListener(repoSelectionListener);
+    repoAddButton.removeActionListener(repoAddListener);
+    repoRemoveButton.removeActionListener(repoRemoveListener);
+    modulesTable.getSelectionModel().removeListSelectionListener(moduleSelectionListener);
+    moduleAddButton.removeActionListener(moduleAddListener);
+    moduleRemoveButton.removeActionListener(moduleRemoveListener);
   }
 
   private void addListeners() {
-    m_modulesTableModel.addTableModelListener(this);
-    m_repositoriesTableModel.addTableModelListener(this);
-    m_repositoriesTable.getSelectionModel().addListSelectionListener(m_repoSelectionListener);
-    m_repoAddButton.addActionListener(m_repoAddListener);
-    m_repoRemoveButton.addActionListener(m_repoRemoveListener);
-    m_modulesTable.getSelectionModel().addListSelectionListener(m_moduleSelectionListener);
-    m_moduleAddButton.addActionListener(m_moduleAddListener);
-    m_moduleRemoveButton.addActionListener(m_moduleRemoveListener);
+    modulesTableModel.addTableModelListener(this);
+    repositoriesTableModel.addTableModelListener(this);
+    repositoriesTable.getSelectionModel().addListSelectionListener(repoSelectionListener);
+    repoAddButton.addActionListener(repoAddListener);
+    repoRemoveButton.addActionListener(repoRemoveListener);
+    modulesTable.getSelectionModel().addListSelectionListener(moduleSelectionListener);
+    moduleAddButton.addActionListener(moduleAddListener);
+    moduleRemoveButton.addActionListener(moduleRemoveListener);
   }
 
   private void internalAddRepositoryLocation(String repoLocation) {
     XmlString elem = ensureModulesElement().addNewRepository();
     elem.setStringValue(repoLocation);
     syncModel();
-    int row = m_repositoriesTableModel.getRowCount() - 1;
-    m_repositoriesTable.setRowSelectionInterval(row, row);
+    int row = repositoriesTableModel.getRowCount() - 1;
+    repositoriesTable.setRowSelectionInterval(row, row);
   }
 
   private void internalAddModule(String name, String version) {
@@ -208,21 +230,24 @@ public class ModulesPanel extends XContainer implements TableModelListener {
     module.setName(name);
     module.setVersion(version);
     syncModel();
-    int row = m_modulesTableModel.getRowCount() - 1;
-    m_modulesTable.setRowSelectionInterval(row, row);
+    int row = modulesTableModel.getRowCount() - 1;
+    modulesTable.setRowSelectionInterval(row, row);
   }
 
   private void syncModel() {
-    if (!hasAnySet() && m_dsoClient.getModules() != null) {
-      m_dsoClient.unsetModules();
-      m_modules = null;
+    if (!hasAnySet() && dsoClient.getModules() != null) {
+      dsoClient.unsetModules();
+      modules = null;
     }
-    SessionIntegratorFrame frame = (SessionIntegratorFrame) getAncestorOfClass(SessionIntegratorFrame.class);
-    frame.modelChanged();
+    SessionIntegratorFrame frame = (SessionIntegratorFrame) SwingUtilities
+        .getAncestorOfClass(SessionIntegratorFrame.class, this);
+    if (frame != null) {
+      frame.modelChanged();
+    }
   }
 
   public boolean hasAnySet() {
-    return m_modules != null && (m_modules.sizeOfRepositoryArray() > 0 || m_modules.sizeOfModuleArray() > 0);
+    return modules != null && (modules.sizeOfRepositoryArray() > 0 || modules.sizeOfModuleArray() > 0);
   }
 
   // --------------------------------------------------------------------------------
@@ -233,7 +258,7 @@ public class ModulesPanel extends XContainer implements TableModelListener {
     }
 
     public void setValueAt(Object value, int row, int col) {
-      m_modules.setRepositoryArray(row, (String) value);
+      modules.setRepositoryArray(row, (String) value);
       super.setValueAt(value, row, col);
     }
   }

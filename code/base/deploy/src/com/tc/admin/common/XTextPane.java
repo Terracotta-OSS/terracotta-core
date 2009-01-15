@@ -4,19 +4,18 @@
  */
 package com.tc.admin.common;
 
-import org.dijon.TextPane;
-
 import javax.swing.JPopupMenu;
+import javax.swing.JTextPane;
 import javax.swing.UIManager;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 
-public class XTextPane extends TextPane {
-  protected TextComponentHelper m_helper;
+public class XTextPane extends JTextPane {
+  protected TextComponentHelper helper;
 
   public XTextPane() {
     super();
-    m_helper = createHelper();
+    helper = createHelper();
   }
 
   protected TextComponentHelper createHelper() {
@@ -24,15 +23,15 @@ public class XTextPane extends TextPane {
   }
 
   protected JPopupMenu createPopup() {
-    return m_helper.createPopup();
+    return helper.createPopup();
   }
 
   public void setPopupMenu(JPopupMenu popupMenu) {
-    m_helper.setPopupMenu(popupMenu);
+    helper.setPopupMenu(popupMenu);
   }
 
   public JPopupMenu getPopupMenu() {
-    return m_helper.getPopupMenu();
+    return helper.getPopupMenu();
   }
 
   public void append(String s) {
@@ -49,10 +48,15 @@ public class XTextPane extends TextPane {
     }
   }
 
-  public void addNotify() {
-    super.addNotify();
+  protected void testInitPopupMenu() {
     if (getPopupMenu() == null) {
       setPopupMenu(createPopup());
     }
+  }
+
+  @Override
+  public void addNotify() {
+    super.addNotify();
+    testInitPopupMenu();
   }
 }

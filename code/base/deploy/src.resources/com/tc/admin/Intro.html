@@ -1,0 +1,79 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<!-- - - - - - - - - - - - - -->
+<!--  Terracotta             -->
+<!--  Intro.html             -->
+<!-- - - - - - - - - - - - - -->
+<html>
+<head>
+<title>Terracotta Developer Console</title>
+<style>
+   body { color:#666666; font-family: sans-serif; margin: 10px 10px }
+   h1 { text-align: right; margin: 0px 0px 20px 0px }
+   a { color:#8B4513; font-weight: bold; text-decoration: underline }
+   a:hover { color:red; text-decoration: none }
+   img.topic { margin-right: 0px}
+   div.main { margin: 10px 0px 0px 30px }
+   div.description { margin: 0px 0px 0px 20px }
+   div.footer { text-align: center; font-size: 95%; margin-top: 15px }
+   </style>
+</head>
+<body>
+
+<h1><img src="/com/tc/welcome/tc-logo.png"><br>Welcome to Terracotta Developer Console</h1>
+
+Gain insight into the state of your Terracotta Cluster before going to production:
+<table cellpadding=10>
+   <tr>
+      <td><a href="RootsNode"><img border=0 src="/com/tc/admin/icons/hierarchicalLayout.gif" class=topic></a></td>
+      <td><a href="RootsNode">Clustered Heap</a>
+         <div class=description>
+         Browser the objects in your clustered heap.
+         </div>
+      </td></tr>
+   <tr>
+      <td><a href="ClassesNode"><img border=0 src="/com/tc/admin/icons/class_obj.gif" class=topic></a></td>
+      <td><a href="ClassesNode">Instance Counts</a>
+         <div class=description>
+         See which types of objects are most often included in the clustered heap.
+         </div>
+      </td></tr>
+   <tr>
+      <td><a href="GCStatsNode"><img border=0 src="/com/tc/admin/icons/trash.gif" class=topic></a></td>
+      <td><a href="GCStatsNode">Garbage Collection</a>
+         <div class=description>
+         See a report of the garbage collection activity or initiate a collections of unused heap objects.
+         </div>
+      </td></tr>
+   <tr>
+      <td><a href="RuntimeStatsNode"><img border=0 src="/com/tc/admin/icons/chart_bar.png" class=topic></a></td>
+      <td><a href="RuntimeStatsNode">Runtime Statistics</a>
+         <div class=description>
+         Monitor important aspects of your clustered server array and connected clients.
+         </div>
+      </td></tr>
+   <tr>
+      <td><a href="LocksNode"><img border=0 src="/com/tc/admin/icons/owned_monitor_obj.gif" class=topic></a></td>
+      <td><a href="LocksNode">Lock Profiler</a>
+         <div class=description>
+         Profile the way your clustered heap is being kept coherent to help determine possible bottlenecks.
+         </div>
+      </td></tr>
+   <tr>
+      <td><a href="ThreadDumpsNode"><img border=0 src="/com/tc/admin/icons/thread_view.gif" class=topic></a></td>
+      <td><a href="ThreadDumpsNode">Cluster-wide Thread Dumps</a>
+         <div class=description>
+         Take snapshots of the state of your clustered processes.
+         </div>
+      </td></tr>
+   <tr>
+      <td><a href="StatsRecorderNode"><img border=0 src="/com/tc/admin/icons/camera.png" class=topic></a></td>
+      <td><a href="StatsRecorderNode">Statistics Recorder</a>
+         <div class=description>
+         Record cluster statistics for later evaluation using the Statistics Visualization Tool.
+         </div>
+      </td></tr>
+</table>
+
+<div class=footer>Copyright &copy; 2008 Terracotta, Inc.</div>
+</body>
+</html>

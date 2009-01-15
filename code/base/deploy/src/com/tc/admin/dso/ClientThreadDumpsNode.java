@@ -4,41 +4,43 @@
  */
 package com.tc.admin.dso;
 
-import com.tc.admin.AdminClient;
+import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.ComponentNode;
 import com.tc.admin.model.IClient;
 
 import java.awt.Component;
 
 public class ClientThreadDumpsNode extends ComponentNode {
-  protected ClientNode             m_clientNode;
-  protected ClientThreadDumpsPanel m_threadDumpsPanel;
+  private ApplicationContext       appContext;
+  protected ClientNode             clientNode;
+  protected ClientThreadDumpsPanel threadDumpsPanel;
 
-  public ClientThreadDumpsNode(ClientNode serverNode) {
-    super(AdminClient.getContext().getString("client.thread.dumps"));
-    m_clientNode = serverNode;
+  public ClientThreadDumpsNode(ApplicationContext appContext, ClientNode serverNode) {
+    super(appContext.getString("client.thread.dumps"));
+    this.appContext = appContext;
+    clientNode = serverNode;
     setIcon(ClientsHelper.getHelper().getThreadDumpsIcon());
   }
 
   protected ClientThreadDumpsPanel createThreadDumpsPanel() {
-    return new ClientThreadDumpsPanel(this);
+    return new ClientThreadDumpsPanel(appContext, getClient());
   }
 
   IClient getClient() {
-    return m_clientNode.getClient();
+    return clientNode.getClient();
   }
 
   public Component getComponent() {
-    if (m_threadDumpsPanel == null) {
-      m_threadDumpsPanel = createThreadDumpsPanel();
+    if (threadDumpsPanel == null) {
+      threadDumpsPanel = createThreadDumpsPanel();
     }
-    return m_threadDumpsPanel;
+    return threadDumpsPanel;
   }
 
   public void tearDown() {
-    if (m_threadDumpsPanel != null) {
-      m_threadDumpsPanel.tearDown();
-      m_threadDumpsPanel = null;
+    if (threadDumpsPanel != null) {
+      threadDumpsPanel.tearDown();
+      threadDumpsPanel = null;
     }
     super.tearDown();
   }

@@ -38,11 +38,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import javax.management.Attribute;
+import javax.management.AttributeList;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
@@ -390,12 +393,12 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     GCStats gcStats = gcStatsPublisher.getLastGarbageCollectorStats();
     return gcStats != null ? gcStats.getActualGarbageCount() : -1;
   }
-  
+
   public long getLastCollectionElapsedTime() {
     GCStats gcStats = gcStatsPublisher.getLastGarbageCollectorStats();
     return gcStats != null ? gcStats.getElapsedTime() : -1;
   }
-  
+
   public Map<ObjectName, Integer> getClientLiveObjectCount() {
     Map<ObjectName, Integer> result = new HashMap<ObjectName, Integer>();
     synchronized (clientObjectNames) {
@@ -434,5 +437,65 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     public void channelRemoved(MessageChannel channel) {
       removeClientMBean(channel);
     }
+  }
+
+  private static class SourcedAttributeList {
+    final ObjectName    objectName;
+    final AttributeList attributeList;
+
+    private SourcedAttributeList(ObjectName objectName, AttributeList attributeList) {
+      this.objectName = objectName;
+      this.attributeList = attributeList;
+    }
+  }
+
+  private class AttributeListTask implements Callable<SourcedAttributeList> {
+    private final ObjectName  objectName;
+    private final Set<String> attributeSet;
+
+    AttributeListTask(ObjectName objectName, Set<String> attributeSet) {
+      this.objectName = objectName;
+      this.attributeSet = attributeSet;
+    }
+
+    public SourcedAttributeList call() throws Exception {
+      AttributeList attributeList = mbeanServer.getAttributes(objectName, attributeSet.toArray(new String[0]));
+      return new SourcedAttributeList(objectName, attributeList);
+    }
+  }
+
+  public Map<ObjectName, Map<String, Object>> getAttributeMap(Map<ObjectName, Set<String>> attributeMap, long timeout,
+                                                              TimeUnit unit) {
+    Map<ObjectName, Map<String, Object>> result = new HashMap<ObjectName, Map<String, Object>>();
+    List<Callable<SourcedAttributeList>> tasks = new ArrayList<Callable<SourcedAttributeList>>();
+    Iterator<ObjectName> onIter = attributeMap.keySet().iterator();
+    while (onIter.hasNext()) {
+      ObjectName on = onIter.next();
+      Set<String> attributeSet = attributeMap.get(on);
+      tasks.add(new AttributeListTask(on, attributeSet));
+    }
+    try {
+      List<Future<SourcedAttributeList>> results = pool.invokeAll(tasks, timeout, unit);
+      Iterator<Future<SourcedAttributeList>> resultIter = results.iterator();
+      while (resultIter.hasNext()) {
+        Future<SourcedAttributeList> future = resultIter.next();
+        if (future.isDone()) {
+          try {
+            SourcedAttributeList sal = future.get();
+            Iterator<Attribute> attrIter = sal.attributeList.iterator();
+            Map<String, Object> onMap = new HashMap<String, Object>();
+            while (attrIter.hasNext()) {
+              Attribute attr = attrIter.next();
+              onMap.put(attr.getName(), attr.getValue());
+            }
+            result.put(sal.objectName, onMap);
+          } catch (ExecutionException ee) {
+            ee.printStackTrace();
+          }
+        }
+      }
+    } catch (InterruptedException ie) {/**/
+    }
+    return result;
   }
 }

@@ -4,17 +4,22 @@
  */
 package com.tc.admin.common;
 
-import org.dijon.ComboBox;
-
+import javax.swing.ComboBoxModel;
+import javax.swing.JComboBox;
 import javax.swing.JPopupMenu;
 
-public class XComboBox extends ComboBox {
-  protected XPopupListener m_popupListener;
+public class XComboBox extends JComboBox {
+  protected XPopupListener popupListener;
 
   public XComboBox() {
     super();
-    m_popupListener = new XPopupListener(this);
+    popupListener = new XPopupListener(this);
     setPopupMenu(createPopup());
+  }
+
+  public XComboBox(ComboBoxModel aModel) {
+    this();
+    setModel(aModel);
   }
 
   protected JPopupMenu createPopup() {
@@ -22,10 +27,10 @@ public class XComboBox extends ComboBox {
   }
 
   public void setPopupMenu(JPopupMenu popupMenu) {
-    m_popupListener.setPopupMenu(popupMenu);
+    popupListener.setPopupMenu(popupMenu);
   }
 
   public JPopupMenu getPopupMenu() {
-    return m_popupListener.getPopupMenu();
+    return popupListener.getPopupMenu();
   }
 }

@@ -17,6 +17,7 @@ import org.jfree.chart.plot.DefaultDrawingSupplier;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.RangeType;
+import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.data.xy.IntervalXYDataset;
@@ -52,6 +53,10 @@ public class DemoChartFactory {
     theme.setRangeGridlinePaint(Color.lightGray);
     theme.setAxisOffset(new RectangleInsets());
     ChartFactory.setChartTheme(theme);
+  }
+
+  public static JFreeChart getXYBarChart(CategoryDataset catagoryDataset, PlotOrientation plotOrientation) {
+    return ChartFactory.createBarChart("", "", "", catagoryDataset, plotOrientation, false, true, false);
   }
 
   public static JFreeChart getXYBarChart(String header, String xLabel, String yLabel, TimeSeries ts) {

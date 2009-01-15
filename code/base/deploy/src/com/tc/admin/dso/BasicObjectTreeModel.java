@@ -4,20 +4,28 @@
  */
 package com.tc.admin.dso;
 
+import com.tc.admin.IAdminClientContext;
 import com.tc.admin.common.XTreeModel;
 import com.tc.admin.common.XTreeNode;
 import com.tc.admin.model.IBasicObject;
-import com.tc.admin.model.IClusterNode;
+import com.tc.admin.model.IClient;
 import com.tc.admin.model.IObject;
 import com.tc.object.ObjectID;
 
 public class BasicObjectTreeModel extends XTreeModel {
-  private IClusterNode m_clusterNode;
+  private IAdminClientContext adminClientContext;
+  private IClient             client;
 
-  public BasicObjectTreeModel(IClusterNode clusterNode, IBasicObject[] roots) {
+  public BasicObjectTreeModel(IAdminClientContext adminClientContext, IBasicObject[] roots) {
+    this(adminClientContext, null, roots);
+  }
+  
+  public BasicObjectTreeModel(IAdminClientContext adminClientContext, IClient client, IBasicObject[] roots) {
     super();
 
-    m_clusterNode = clusterNode;
+    this.adminClientContext = adminClientContext;
+    this.client = client;
+    
     XTreeNode rootNode = (XTreeNode) getRoot();
     if (roots != null && roots.length > 0) {
       for (IBasicObject object : roots) {
@@ -26,23 +34,25 @@ public class BasicObjectTreeModel extends XTreeModel {
     }
   }
 
-  private static boolean isResident(IClusterNode clusterNode, IObject object) {
+  private static boolean isResidentOnClient(IClient client, IObject object) {
+    assert client != null;
     while (object != null) {
       ObjectID oid = object.getObjectID();
-      if (oid != null) { return clusterNode.isResident(oid); }
+      if (oid != null) { return client.isResident(oid); }
       object = object.getParent();
     }
     return false;
   }
 
-  public static BasicObjectNode newObjectNode(IClusterNode clusterNode, IBasicObject object) {
-    BasicObjectNode objectNode = new BasicObjectNode(object);
-    objectNode.setResident(isResident(clusterNode, object));
+  public static BasicObjectNode newObjectNode(IAdminClientContext adminClientContext, IClient client,
+                                              IBasicObject object) {
+    BasicObjectNode objectNode = new BasicObjectNode(adminClientContext, object);
+    objectNode.setResident(client != null ? isResidentOnClient(client, object) : true);
     return objectNode;
   }
 
   public BasicObjectNode newObjectNode(IBasicObject object) {
-    return newObjectNode(m_clusterNode, object);
+    return newObjectNode(adminClientContext, client, object);
   }
 
   public void refresh() {
@@ -57,7 +67,7 @@ public class BasicObjectTreeModel extends XTreeModel {
     int index = parentNode.getChildCount();
     BasicObjectNode newNode = newObjectNode(object);
     insertNodeInto(newNode, parentNode, index);
-    if(parentNode.getChildCount() == 1) {
+    if (parentNode.getChildCount() == 1) {
       reload(); // Huh? Display doesn't update when first child is added? Force it to.
     }
     return newNode;

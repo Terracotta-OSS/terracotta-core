@@ -10,22 +10,20 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 public class HelpHelper extends BaseHelper {
-  private static HelpHelper m_helper = new HelpHelper();
-  private Icon              m_helpIcon;
+  private static HelpHelper helper = new HelpHelper();
+  private Icon              helpIcon;
 
   public static HelpHelper getHelper() {
-    return m_helper;
+    return helper;
   }
 
   public Icon getHelpIcon() {
-    if (m_helpIcon == null) {
+    if (helpIcon == null) {
       URL url = getClass().getResource(ICONS_PATH + "help.gif");
-
       if (url != null) {
-        m_helpIcon = new ImageIcon(url);
+        helpIcon = new ImageIcon(url);
       }
     }
-
-    return m_helpIcon;
+    return helpIcon;
   }
 }

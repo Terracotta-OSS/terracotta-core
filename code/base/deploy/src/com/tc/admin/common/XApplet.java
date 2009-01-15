@@ -4,9 +4,9 @@
  */
 package com.tc.admin.common;
 
-import org.dijon.Applet;
+import javax.swing.JApplet;
 
-public class XApplet extends Applet {
+public class XApplet extends JApplet {
   public XApplet() {
     super();
   }

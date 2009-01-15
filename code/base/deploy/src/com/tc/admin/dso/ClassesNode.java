@@ -4,9 +4,7 @@
  */
 package com.tc.admin.dso;
 
-import com.tc.admin.AdminClient;
-import com.tc.admin.AdminClientContext;
-import com.tc.admin.ClusterNode;
+import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.ComponentNode;
 import com.tc.admin.common.XAbstractAction;
 import com.tc.admin.model.IClusterModel;
@@ -21,48 +19,48 @@ import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 
 public class ClassesNode extends ComponentNode {
-  protected AdminClientContext m_acc;
-  protected ClusterNode        m_clusterNode;
-  protected ClassesPanel       m_classesPanel;
-  protected JPopupMenu         m_popupMenu;
-  protected RefreshAction      m_refreshAction;
+  private ApplicationContext  appContext;
+  protected IClusterModel     clusterModel;
+  protected ClassesPanel      classesPanel;
+  protected JPopupMenu        popupMenu;
+  protected RefreshAction     refreshAction;
 
-  private static final String  REFRESH_ACTION = "RefreshAction";
+  private static final String REFRESH_ACTION = "RefreshAction";
 
-  public ClassesNode(ClusterNode clusterNode) {
+  public ClassesNode(ApplicationContext appContext, IClusterModel clusterModel) {
     super();
-    m_clusterNode = clusterNode;
-    m_acc = AdminClient.getContext();
-    setLabel(m_acc.getMessage("dso.classes"));
+    this.appContext = appContext;
+    this.clusterModel = clusterModel;
+    setLabel(appContext.getMessage("dso.classes"));
     initMenu();
   }
 
   protected ClassesPanel createClassesPanel() {
-    return new ClassesPanel(this);
+    return new ClassesPanel(appContext, clusterModel);
   }
 
   public Component getComponent() {
-    if (m_classesPanel == null) {
-      m_acc.block();
-      m_classesPanel = createClassesPanel();
-      m_acc.unblock();
+    if (classesPanel == null) {
+      appContext.block();
+      classesPanel = createClassesPanel();
+      appContext.unblock();
     }
-    return m_classesPanel;
+    return classesPanel;
   }
 
   IClusterModel getClusterModel() {
-    return m_clusterNode.getClusterModel();
+    return clusterModel;
   }
 
   private void initMenu() {
-    m_refreshAction = new RefreshAction();
-    m_popupMenu = new JPopupMenu("Classes Actions");
-    m_popupMenu.add(m_refreshAction);
-    addActionBinding(REFRESH_ACTION, m_refreshAction);
+    refreshAction = new RefreshAction();
+    popupMenu = new JPopupMenu("Classes Actions");
+    popupMenu.add(refreshAction);
+    addActionBinding(REFRESH_ACTION, refreshAction);
   }
 
   public JPopupMenu getPopupMenu() {
-    return m_popupMenu;
+    return popupMenu;
   }
 
   public Icon getIcon() {
@@ -70,15 +68,15 @@ public class ClassesNode extends ComponentNode {
   }
 
   public void refresh() {
-    if (m_classesPanel != null) {
-      m_classesPanel.refresh();
+    if (classesPanel != null) {
+      classesPanel.refresh();
     }
   }
 
   private class RefreshAction extends XAbstractAction {
     private RefreshAction() {
       super();
-      setName(m_acc.getMessage("refresh.name"));
+      setName(appContext.getMessage("refresh.name"));
       setSmallIcon(ClassesHelper.getHelper().getRefreshIcon());
       setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0, true));
     }
@@ -89,20 +87,20 @@ public class ClassesNode extends ComponentNode {
   }
 
   public void nodeClicked(MouseEvent me) {
-    m_refreshAction.actionPerformed(null);
+    refreshAction.actionPerformed(null);
   }
 
   public void tearDown() {
-    if (m_classesPanel != null) {
-      m_classesPanel.tearDown();
+    if (classesPanel != null) {
+      classesPanel.tearDown();
     }
 
     super.tearDown();
 
-    m_acc = null;
-    m_clusterNode = null;
-    m_classesPanel = null;
-    m_popupMenu = null;
-    m_refreshAction = null;
+    appContext = null;
+    clusterModel = null;
+    classesPanel = null;
+    popupMenu = null;
+    refreshAction = null;
   }
 }

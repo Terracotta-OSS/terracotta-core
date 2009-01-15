@@ -17,61 +17,57 @@ import javax.swing.ImageIcon;
  */
 
 public class RootsHelper extends BaseHelper {
-  private static final RootsHelper m_helper = new RootsHelper();
-  private Icon                     m_rootsIcon;
-  private Icon                     m_fieldIcon;
-  private Icon                     m_cycleIcon;
+  private static final RootsHelper helper = new RootsHelper();
+  private Icon                     rootsIcon;
+  private Icon                     fieldIcon;
+  private Icon                     cycleIcon;
 
+  private RootsHelper() {/**/}
+  
   public static RootsHelper getHelper() {
-    return m_helper;
+    return helper;
   }
 
   public Icon getRootsIcon() {
-    if (m_rootsIcon == null) {
+    if (rootsIcon == null) {
       URL url = getClass().getResource(ICONS_PATH + "hierarchicalLayout.gif");
       if (url != null) {
-        m_rootsIcon = new ImageIcon(url);
+        rootsIcon = new ImageIcon(url);
       }
     }
-    return m_rootsIcon;
+    return rootsIcon;
   }
 
   public Icon getFieldIcon() {
-    if (m_fieldIcon == null) {
+    if (fieldIcon == null) {
       URL url = getClass().getResource(ICONS_PATH + "field_protected_obj.gif");
       if (url != null) {
-        m_fieldIcon = new ImageIcon(url);
+        fieldIcon = new ImageIcon(url);
       }
     }
-    return m_fieldIcon;
+    return fieldIcon;
   }
 
   public Icon getCycleIcon() {
-    if (m_cycleIcon == null) {
+    if (cycleIcon == null) {
       URL url = getClass().getResource(ICONS_PATH + "obj_cycle.gif");
       if (url != null) {
-        m_cycleIcon = new ImageIcon(url);
+        cycleIcon = new ImageIcon(url);
       }
     }
-    return m_cycleIcon;
+    return cycleIcon;
   }
 
   public String[] trimFields(String[] fields) {
     if (fields != null && fields.length > 0) {
       ArrayList list = new ArrayList();
-      String field;
-
-      for (int i = 0; i < fields.length; i++) {
-        field = fields[i];
-
+      for (String field : fields) {
         if (!field.startsWith("this$")) {
           list.add(field);
         }
       }
-
       return (String[]) list.toArray(new String[0]);
     }
-
     return new String[] {};
   }
 }

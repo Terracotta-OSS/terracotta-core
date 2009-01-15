@@ -4,17 +4,15 @@
  */
 package com.tc.admin.common;
 
-import org.dijon.CheckBox;
-
+import javax.swing.JCheckBox;
 import javax.swing.JPopupMenu;
 
-public class XCheckBox extends CheckBox {
-  protected XPopupListener m_popupListener;
+public class XCheckBox extends JCheckBox {
+  protected XPopupListener popupListener;
 
   public XCheckBox() {
     super();
-    m_popupListener = new XPopupListener(this);
-
+    popupListener = new XPopupListener(this);
     JPopupMenu popup = createPopup();
     if (popup != null) {
       setPopupMenu(popup);
@@ -31,10 +29,10 @@ public class XCheckBox extends CheckBox {
   }
 
   public void setPopupMenu(JPopupMenu popupMenu) {
-    m_popupListener.setPopupMenu(popupMenu);
+    popupListener.setPopupMenu(popupMenu);
   }
 
   public JPopupMenu getPopupMenu() {
-    return m_popupListener.getPopupMenu();
+    return popupListener.getPopupMenu();
   }
 }

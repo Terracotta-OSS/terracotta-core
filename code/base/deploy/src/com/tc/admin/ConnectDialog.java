@@ -4,18 +4,19 @@
  */
 package com.tc.admin;
 
-import org.dijon.Button;
-import org.dijon.Container;
-import org.dijon.Dialog;
-import org.dijon.DialogResource;
-import org.dijon.Label;
-import org.dijon.TextField;
+import com.tc.admin.common.ApplicationContext;
+import com.tc.admin.common.WindowHelper;
+import com.tc.admin.common.XButton;
+import com.tc.admin.common.XContainer;
+import com.tc.admin.common.XLabel;
+import com.tc.admin.common.XTextField;
+import com.tc.admin.model.IClusterModel;
 
-import com.tc.admin.model.IServer;
-import com.tc.util.concurrent.ThreadUtil;
-
-import java.awt.BorderLayout;
+import java.awt.Container;
 import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.HierarchyEvent;
@@ -29,88 +30,132 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import javax.management.remote.JMXConnector;
+import javax.swing.BorderFactory;
+import javax.swing.JDialog;
 import javax.swing.JPasswordField;
-import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.WindowConstants;
 
-public final class ConnectDialog extends Dialog implements HierarchyListener {
+public final class ConnectDialog extends JDialog implements HierarchyListener {
+  private ApplicationContext         appContext;
+
   private static final long          DEFAULT_CONNECT_TIMEOUT_MILLIS = 8000;
   public static final long           CONNECT_TIMEOUT_MILLIS         = Long.getLong("com.tc.admin.connect-timeout",
                                                                                    DEFAULT_CONNECT_TIMEOUT_MILLIS)
                                                                         .longValue();
 
-  private AdminClientContext         m_acc;
-  private IServer                    m_server;
-  private long                       m_timeout;
-  private ConnectionListener         m_listener;
-  private AuthenticatingJMXConnector m_jmxc;
-  private Future                     m_connectInitiator;
-  private Timer                      m_hideTimer;
-  private boolean                    m_isAuthenticating;
-  private Exception                  m_error;
-  private Label                      m_label;
-  private Button                     m_cancelButton;
-  private final JTextField           m_usernameField;
-  private final JPasswordField       m_passwordField;
-  private final Button               m_okButton;
-  private final Button               m_authCancelButton;
-  private final Container            m_emptyPanel;
-  private final Container            m_authPanel;
+  private IClusterModel              clusterModel;
+  private long                       timeout;
+  private ConnectionListener         listener;
+  private AuthenticatingJMXConnector jmxc;
+  private Future                     connectInitiator;
+  private Timer                      hideTimer;
+  private boolean                    isAuthenticating;
+  private Exception                  error;
+  private XLabel                     label;
+  private XButton                    cancelButton;
+  private XTextField                 usernameField;
+  private JPasswordField             passwordField;
+  private XButton                    okButton;
+  private XButton                    authCancelButton;
+  private XContainer                 authPanel;
 
-  public ConnectDialog(Frame parent, IServer server, ConnectionListener listener) {
+  public ConnectDialog(ApplicationContext appContext, Frame parent, IClusterModel clusterModel, ConnectionListener listener) {
     super(parent, true);
 
-    m_acc = AdminClient.getContext();
-    m_server = server;
-    m_jmxc = new AuthenticatingJMXConnector(m_server);
-    m_timeout = CONNECT_TIMEOUT_MILLIS;
-    m_listener = listener;
+    this.appContext = appContext;
+    this.clusterModel = clusterModel;
+    this.listener = listener;
 
-    load((DialogResource) m_acc.childResource("ConnectDialog"));
-    m_label = (Label) findComponent("ConnectLabel");
-    m_label.setText("Connecting to " + server + ". Please wait...");
-    pack();
+    jmxc = new AuthenticatingJMXConnector(clusterModel);
+    timeout = CONNECT_TIMEOUT_MILLIS;
 
-    m_cancelButton = (Button) findComponent("CancelButton");
-    m_cancelButton.addActionListener(new CancelButtonHandler());
+    Container cp = getContentPane();
+    cp.setLayout(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = gbc.gridy = 0;
+    gbc.insets = new Insets(8,8,8,8);
 
-    m_emptyPanel = (Container) findComponent("EmptyPanel");
-    m_emptyPanel.setLayout(new BorderLayout());
+    label = new XLabel("Connecting to " + clusterModel + ". Please wait...");
+    cp.add(label, gbc);
+    gbc.gridy++;
 
-    m_authPanel = (Container) AdminClient.getContext().resolveResource("AuthPanel");
+    cancelButton = new XButton(appContext.getString("cancel"));
+    cancelButton.addActionListener(new CancelButtonHandler());
+    cp.add(cancelButton, gbc);
 
-    Container credentialsPanel = (Container) m_authPanel.findComponent("CredentialsPanel");
-    m_authPanel.setVisible(false);
-    this.m_usernameField = (JTextField) credentialsPanel.findComponent("UsernameField");
-    this.m_okButton = (Button) m_authPanel.findComponent("OKButton");
-    this.m_authCancelButton = (Button) m_authPanel.findComponent("CancelButton");
+    gbc.gridwidth = 2;
+    cp.add(authPanel = createAuthPanel(), gbc);
+    authPanel.setVisible(false);
 
-    // must be found last because JPasswordField is not a Dijon Component
-    TextField passwordField = (TextField) credentialsPanel.findComponent("PasswordField");
-    Container passwdHolder = new Container();
-    passwdHolder.setLayout(new BorderLayout());
-    passwdHolder.add(m_passwordField = new JPasswordField());
-    credentialsPanel.replaceChild(passwordField, passwdHolder);
-
-    m_okButton.addActionListener(new OKButtonHandler());
-    m_authCancelButton.addActionListener(new ActionListener() {
+    okButton.addActionListener(new OKButtonHandler());
+    authCancelButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent ae) {
-        m_cancelButton.doClick();
+        cancelButton.doClick();
       }
     });
 
-    m_hideTimer = new Timer(100, new DialogCloserTask());
-    m_hideTimer.setRepeats(false);
+    hideTimer = new Timer(100, new DialogCloserTask());
+    hideTimer.setRepeats(false);
 
     addWindowListener(new WindowAdapter() {
       public void windowClosing(WindowEvent e) {
-        m_cancelButton.doClick();
+        cancelButton.doClick();
       }
     });
 
     setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+    setResizable(false);
+    setTitle(parent.getTitle());
+    pack();
+  }
+
+  private XContainer createAuthPanel() {
+    XContainer panel = new XContainer(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = gbc.gridy = 0;
+    gbc.insets = new Insets(3, 3, 3, 3);
+
+    XContainer buttonPanel = new XContainer(new GridBagLayout());
+    buttonPanel.add(authCancelButton = new XButton(appContext.getString("cancel")), gbc);
+    gbc.gridx++;
+    buttonPanel.add(okButton = new XButton(appContext.getString("ok")), gbc);
+
+    gbc.gridx = gbc.gridy = 0;
+    panel.add(createCredentialsPanel(), gbc);
+    gbc.gridy++;
+
+    panel.add(buttonPanel, gbc);
+
+    return panel;
+  }
+
+  private XContainer createCredentialsPanel() {
+    XContainer credentialsPanel = new XContainer(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = gbc.gridy = 0;
+    gbc.insets = new Insets(3, 3, 3, 3);
+
+    credentialsPanel.add(new XLabel("Username:"), gbc);
+    gbc.gridx++;
+
+    usernameField = new XTextField("controlRole");
+    usernameField.setColumns(16);
+    credentialsPanel.add(usernameField, gbc);
+    gbc.gridx--;
+    gbc.gridy++;
+
+    credentialsPanel.add(new XLabel("Password:"), gbc);
+    gbc.gridx++;
+
+    passwordField = new JPasswordField("R&D");
+    passwordField.setColumns(16);
+    credentialsPanel.add(passwordField, gbc);
+
+    credentialsPanel.setBorder(BorderFactory.createTitledBorder("Credentials"));
+
+    return credentialsPanel;
   }
 
   public void setVisible(boolean visible) {
@@ -123,9 +168,9 @@ public final class ConnectDialog extends Dialog implements HierarchyListener {
 
   class CancelButtonHandler implements ActionListener {
     public void actionPerformed(ActionEvent ae) {
-      m_cancelButton.setEnabled(false);
-      m_connectInitiator.cancel(true);
-      m_error = new RuntimeException("Canceled");
+      cancelButton.setEnabled(false);
+      connectInitiator.cancel(true);
+      error = new RuntimeException("Canceled");
       ConnectDialog.this.setVisible(false);
       fireHandleConnect();
     }
@@ -133,17 +178,17 @@ public final class ConnectDialog extends Dialog implements HierarchyListener {
 
   class OKButtonHandler implements ActionListener {
     public void actionPerformed(ActionEvent ae) {
-      String username = m_usernameField.getText().trim();
-      String password = new String(m_passwordField.getPassword()).trim();
-      m_server.setConnectionCredentials(new String[] { username, password });
+      String username = usernameField.getText().trim();
+      String password = new String(passwordField.getPassword()).trim();
+      clusterModel.setConnectionCredentials(new String[] { username, password });
       disableAuthenticationDialog();
       initiateConnectAction();
     }
   }
 
   private void initiateConnectAction() {
-    m_cancelButton.setEnabled(true);
-    m_connectInitiator = m_acc.submit(new ConnectInitiator());
+    cancelButton.setEnabled(true);
+    connectInitiator = appContext.submit(new ConnectInitiator());
   }
 
   class DialogCloserTask implements ActionListener {
@@ -155,64 +200,68 @@ public final class ConnectDialog extends Dialog implements HierarchyListener {
   }
 
   private void disableAuthenticationDialog() {
-    m_usernameField.setEnabled(false);
-    m_passwordField.setEnabled(false);
-    m_emptyPanel.removeAll();
-    m_usernameField.setText("");
-    m_passwordField.setText("");
-    m_authPanel.setVisible(false);
-    m_authCancelButton.setVisible(false);
-    m_cancelButton.setVisible(true);
+    usernameField.setEnabled(false);
+    passwordField.setEnabled(false);
+    usernameField.setText("");
+    passwordField.setText("");
+    authPanel.setVisible(false);
+    authCancelButton.setVisible(false);
+    cancelButton.setVisible(true);
     pack();
-    center(getOwner());
+    center();
+  }
+
+  public void center() {
+    WindowHelper.center(this, getOwner());
   }
 
   private void enableAuthenticationDialog() {
-    m_emptyPanel.add(m_authPanel);
-    m_cancelButton.setVisible(false);
-    m_authCancelButton.setVisible(true);
-    m_usernameField.setEnabled(true);
-    m_passwordField.setEnabled(true);
-    m_authPanel.setVisible(true);
-    m_authPanel.getRootPane().setDefaultButton(m_okButton);
+    cancelButton.setVisible(false);
+    authCancelButton.setVisible(true);
+    usernameField.setEnabled(true);
+    passwordField.setEnabled(true);
+    authPanel.setVisible(true);
+    if (rootPane != null) {
+      rootPane.setDefaultButton(okButton);
+    }
     pack();
-    center(getOwner());
-    m_usernameField.grabFocus();
+    center();
+    usernameField.grabFocus();
   }
 
-  public void setServer(IServer server) {
-    m_server = server;
-    m_jmxc = new AuthenticatingJMXConnector(m_server);
-    m_label.setText("Connecting to " + server + ". Please wait...");
+  public void setClusterModel(IClusterModel clusterModel) {
+    this.clusterModel = clusterModel;
+    jmxc = new AuthenticatingJMXConnector(clusterModel);
+    label.setText("Connecting to " + clusterModel + ". Please wait...");
     pack();
   }
 
-  public IServer getServer() {
-    return m_server;
+  public IClusterModel getClusterModel() {
+    return clusterModel;
   }
 
   public void setTimeout(long millis) {
-    m_timeout = millis;
+    timeout = millis;
   }
 
   public long getTimeout() {
-    return m_timeout;
+    return timeout;
   }
 
   public void setConnectionListener(ConnectionListener listener) {
-    m_listener = listener;
+    this.listener = listener;
   }
 
   public ConnectionListener getConnectionListener() {
-    return m_listener;
+    return listener;
   }
 
   public JMXConnector getConnector() {
-    return m_jmxc;
+    return jmxc;
   }
 
   public Exception getError() {
-    return m_error;
+    return error;
   }
 
   /**
@@ -231,49 +280,47 @@ public final class ConnectDialog extends Dialog implements HierarchyListener {
   }
 
   protected void fireHandleConnect() {
-    if (m_listener != null) {
+    if (listener != null) {
       try {
-        if (m_error == null) {
-          m_listener.handleConnection();
+        if (error == null) {
+          listener.handleConnection();
         } else {
-          m_listener.handleException();
+          listener.handleException();
         }
       } catch (RuntimeException rte) {
         rte.printStackTrace();
       }
     }
-    m_isAuthenticating = false;
+    isAuthenticating = false;
   }
 
   private class ConnectInitiator implements Runnable {
     public void run() {
-      Future f = m_acc.submitTask(new ConnectAction());
+      Future f = appContext.submitTask(new ConnectAction());
 
-      m_error = null;
+      error = null;
       try {
-        ThreadUtil.reallySleep(3000);
-        f.get(m_timeout, TimeUnit.MILLISECONDS);
-        m_hideTimer.start();
+        f.get(timeout, TimeUnit.MILLISECONDS);
+        hideTimer.start();
         return;
       } catch (TimeoutException te) {
-        m_error = new TimeoutException("Timed-out");
-        m_hideTimer.start();
+        error = new TimeoutException("Timed-out");
+        hideTimer.start();
         return;
       } catch (InterruptedException ie) {
-        ie.printStackTrace();
         // interrupted by CancelButtonHandler
       } catch (Exception e) {
         Throwable cause = e.getCause();
-        if (!m_isAuthenticating && cause instanceof SecurityException) {
-          m_isAuthenticating = true;
+        if (!isAuthenticating && cause instanceof SecurityException) {
+          isAuthenticating = true;
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
               enableAuthenticationDialog();
             }
           });
         } else {
-          m_error = e;
-          m_hideTimer.start();
+          error = e;
+          hideTimer.start();
         }
       }
     }
@@ -281,24 +328,24 @@ public final class ConnectDialog extends Dialog implements HierarchyListener {
 
   class ConnectAction implements Callable<Void> {
     public Void call() throws Exception {
-      m_jmxc.connect();
+      jmxc.connect();
       return null;
     }
   }
 
   void tearDown() {
-    Map env = m_server.getConnectionEnvironment();
+    Map env = clusterModel.getConnectionEnvironment();
     if (env != null) {
       env.clear();
     }
 
-    m_acc = null;
-    m_server = null;
-    m_listener = null;
-    m_jmxc = null;
-    m_connectInitiator = null;
-    m_cancelButton = null;
-    m_hideTimer = null;
-    m_error = null;
+    appContext = null;
+    clusterModel = null;
+    listener = null;
+    jmxc = null;
+    connectInitiator = null;
+    cancelButton = null;
+    hideTimer = null;
+    error = null;
   }
 }

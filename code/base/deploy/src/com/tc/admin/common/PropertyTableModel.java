@@ -15,37 +15,31 @@ import javax.swing.table.AbstractTableModel;
  */
 
 public class PropertyTableModel extends AbstractTableModel {
-  private Class                  m_type;
+  private Class                  type;
+  private Object                 instance;
+  private String[]               fieldNames;
+  private String[]               headings;
+  protected Method[]             getters;
+  protected Method[]             setters;
+  protected Method[]             ops;
 
-  private Object                 m_instance;
+  protected static final HashMap primitiveMap = new HashMap();
 
-  private String[]               m_fieldNames;
+  private static final String    FIELD_HEADER = "Field";
+  private static final String    VALUE_HEADER = "Value";
 
-  private String[]               m_headings;
-
-  protected Method               m_getters[];
-
-  protected Method               m_setters[];
-
-  protected Method               m_ops[];
-
-  protected static final HashMap m_primitiveMap = new HashMap();
-
-  private static final String    FIELD_HEADER   = "Field";
-  private static final String    VALUE_HEADER   = "Value";
-
-  public static final int        FIELD_COLUMN   = 0;
-  public static final int        VALUE_COLUMN   = 1;
-  public static final int        COLUMN_COUNT   = 2;
+  public static final int        FIELD_COLUMN = 0;
+  public static final int        VALUE_COLUMN = 1;
+  public static final int        COLUMN_COUNT = 2;
 
   static {
-    m_primitiveMap.put(Double.TYPE, Double.class);
-    m_primitiveMap.put(Integer.TYPE, Integer.class);
-    m_primitiveMap.put(Boolean.TYPE, Boolean.class);
-    m_primitiveMap.put(Character.TYPE, Character.class);
-    m_primitiveMap.put(Byte.TYPE, Byte.class);
-    m_primitiveMap.put(Float.TYPE, Float.class);
-    m_primitiveMap.put(Long.TYPE, Long.class);
+    primitiveMap.put(Double.TYPE, Double.class);
+    primitiveMap.put(Integer.TYPE, Integer.class);
+    primitiveMap.put(Boolean.TYPE, Boolean.class);
+    primitiveMap.put(Character.TYPE, Character.class);
+    primitiveMap.put(Byte.TYPE, Byte.class);
+    primitiveMap.put(Float.TYPE, Float.class);
+    primitiveMap.put(Long.TYPE, Long.class);
   }
 
   public PropertyTableModel() {
@@ -79,49 +73,49 @@ public class PropertyTableModel extends AbstractTableModel {
   }
 
   public void setInstance(Object instance) {
-    m_instance = instance;
+    this.instance = instance;
     fireTableDataChanged();
   }
 
   public Object getInstance() {
-    return m_instance;
+    return instance;
   }
 
-  public void init(Class type, String[] fields, String[] headings) {
-    m_type = type;
-    m_fieldNames = determineFields(fields);
-    m_headings = determineHeadings(headings);
+  public void init(Class theType, String[] fields, String[] theHeadings) {
+    this.type = theType;
+    fieldNames = determineFields(fields);
+    this.headings = determineHeadings(theHeadings);
 
     setup();
   }
 
   public void setup() {
-    if (m_type != null) {
-      int size = m_fieldNames.length;
+    if (type != null) {
+      int size = fieldNames.length;
 
-      m_setters = new Method[size];
-      m_getters = new Method[size];
-      m_ops = new Method[size];
+      setters = new Method[size];
+      getters = new Method[size];
+      ops = new Method[size];
 
-      for (int i = 0; i < m_fieldNames.length; i++) {
-        determineMethods(i, m_fieldNames[i]);
+      for (int i = 0; i < fieldNames.length; i++) {
+        determineMethods(i, fieldNames[i]);
       }
     }
   }
 
   private Class _mapPrimitive(Class c) {
-    return (Class) m_primitiveMap.get(c);
+    return (Class) primitiveMap.get(c);
   }
 
   /**
    * If fieldNames == null, determine the set of primitive setters and construct a "fieldName" from the method name:
    * void setMyCoolInteger(int) --> MyCoolInteger
    */
-  private String[] determineFields(String fieldNames[]) {
-    if (fieldNames == null) {
-      if (m_type != null) {
+  private String[] determineFields(String theFieldNames[]) {
+    if (theFieldNames == null) {
+      if (type != null) {
         Method method;
-        Method[] methods = m_type.getMethods();
+        Method[] methods = type.getMethods();
         ArrayList fieldList = new ArrayList();
         String methodName;
         Class returnType;
@@ -147,11 +141,11 @@ public class PropertyTableModel extends AbstractTableModel {
           }
         }
 
-        fieldNames = (String[]) fieldList.toArray(new String[] {});
+        theFieldNames = (String[]) fieldList.toArray(new String[] {});
       }
     }
 
-    return fieldNames;
+    return theFieldNames;
   }
 
   /**
@@ -166,7 +160,6 @@ public class PropertyTableModel extends AbstractTableModel {
 
     for (int i = 1; i < len; i++) {
       c = fieldName.charAt(i);
-
       if (Character.isUpperCase(c)) {
         sb.append(" ");
         sb.append(Character.toLowerCase(c));
@@ -178,22 +171,19 @@ public class PropertyTableModel extends AbstractTableModel {
     return sb.toString();
   }
 
-  private String[] determineHeadings(String headings[]) {
-    if (headings == null) {
+  private String[] determineHeadings(String[] theHeadings) {
+    if (theHeadings == null) {
       ArrayList headingList = new ArrayList();
-
-      for (int i = 0; i < m_fieldNames.length; i++) {
-        headingList.add(fieldName2Heading(m_fieldNames[i]));
+      for (int i = 0; i < fieldNames.length; i++) {
+        headingList.add(fieldName2Heading(fieldNames[i]));
       }
-
-      headings = (String[]) headingList.toArray(new String[] {});
+      theHeadings = (String[]) headingList.toArray(new String[] {});
     }
-
-    return headings;
+    return theHeadings;
   }
 
   private void determineMethods(int index, String name) {
-    Method[] methods = m_type.getMethods();
+    Method[] methods = type.getMethods();
     Method method;
     String methodName;
     Class returnType;
@@ -209,7 +199,7 @@ public class PropertyTableModel extends AbstractTableModel {
           && paramTypes.length == 1
           && (paramTypes[0].isPrimitive() || paramTypes[0].equals(String.class)
               || paramTypes[0].equals(java.util.Date.class) || hasEditor(paramTypes[0]))) {
-        m_setters[index] = method;
+        setters[index] = method;
         break;
       }
     }
@@ -224,7 +214,7 @@ public class PropertyTableModel extends AbstractTableModel {
           && paramTypes.length == 0
           && (isPrimitiveOrWrapper(returnType) || returnType.equals(String.class)
               || returnType.equals(java.util.Date.class) || hasEditor(returnType))) {
-        m_getters[index] = method;
+        getters[index] = method;
         break;
       }
     }
@@ -232,20 +222,19 @@ public class PropertyTableModel extends AbstractTableModel {
     for (int i = 0; i < methods.length; i++) {
       method = methods[i];
       methodName = method.getName();
-
       if (name.equals(methodName)) {
-        m_ops[index] = method;
+        ops[index] = method;
         break;
       }
     }
   }
 
   private boolean isPrimitiveOrWrapper(Class c) {
-    return c.isPrimitive() || m_primitiveMap.containsValue(c);
+    return c.isPrimitive() || primitiveMap.containsValue(c);
   }
 
   public int getRowCount() {
-    return m_instance != null ? m_fieldNames.length : 0;
+    return instance != null ? fieldNames.length : 0;
   }
 
   public int getColumnCount() {
@@ -253,7 +242,7 @@ public class PropertyTableModel extends AbstractTableModel {
   }
 
   public boolean isCellEditable(int row, int col) {
-    return (m_setters[row] != null) || (m_ops[row] != null);
+    return (setters[row] != null) || (ops[row] != null);
   }
 
   public String getColumnName(int col) {
@@ -263,7 +252,6 @@ public class PropertyTableModel extends AbstractTableModel {
       case VALUE_COLUMN:
         return VALUE_HEADER;
     }
-
     return "PropertyTableModel: invalid column: " + col;
   }
 
@@ -272,31 +260,27 @@ public class PropertyTableModel extends AbstractTableModel {
   }
 
   public Class getRowClass(int row) {
-    Method method = m_getters[row];
-
+    Method method = getters[row];
     if (method != null) {
       Class rowClass = method.getReturnType();
-
       if (rowClass.isPrimitive()) {
         rowClass = _mapPrimitive(rowClass);
       }
-
       return rowClass;
     }
-
-    return m_ops[row] != null ? Method.class : Object.class;
+    return ops[row] != null ? Method.class : Object.class;
   }
 
   private Object _getFieldValue(int fieldIndex) {
     try {
-      return m_getters[fieldIndex].invoke(m_instance, new Object[] {});
+      return getters[fieldIndex].invoke(instance, new Object[] {});
     } catch (Exception e) {
       return e.getMessage();
     }
   }
 
   public String getFieldHeading(int row) {
-    return m_headings[row] != null ? m_headings[row] : m_fieldNames[row];
+    return headings[row] != null ? headings[row] : fieldNames[row];
   }
 
   public Object getValueAt(int row, int col) {
@@ -305,10 +289,9 @@ public class PropertyTableModel extends AbstractTableModel {
         return getFieldHeading(row);
       }
       case VALUE_COLUMN: {
-        if (m_instance != null) {
+        if (instance != null) {
           Method method;
-
-          if ((method = m_ops[row]) != null) {
+          if ((method = ops[row]) != null) {
             return method;
           } else {
             return _getFieldValue(row);
@@ -321,8 +304,7 @@ public class PropertyTableModel extends AbstractTableModel {
   }
 
   public void setValueAt(Object value, int row, int col) {
-    Method setter = m_setters[col];
-
+    Method setter = setters[col];
     if (setter != null) {
       try {
         setter.invoke(getValueAt(row, col), new Object[] { value });
@@ -335,7 +317,7 @@ public class PropertyTableModel extends AbstractTableModel {
     setInstance(null);
   }
 
-  public boolean hasEditor(Class type) {
+  public boolean hasEditor(Class theType) {
     return false;
   }
 }

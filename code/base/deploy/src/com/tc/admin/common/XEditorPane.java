@@ -4,16 +4,15 @@
  */
 package com.tc.admin.common;
 
-import org.dijon.EditorPane;
-
 import java.io.IOException;
 
+import javax.swing.JEditorPane;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLFrameHyperlinkEvent;
 
-public class XEditorPane extends EditorPane implements HyperlinkListener {
+public class XEditorPane extends JEditorPane implements HyperlinkListener {
   public XEditorPane() {
     super();
     addHyperlinkListener(this);

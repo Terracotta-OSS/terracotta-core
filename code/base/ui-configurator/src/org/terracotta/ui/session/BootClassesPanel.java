@@ -4,18 +4,22 @@
  */
 package org.terracotta.ui.session;
 
-import org.dijon.Button;
-import org.dijon.ContainerResource;
-
+import com.tc.admin.common.XButton;
 import com.tc.admin.common.XContainer;
+import com.tc.admin.common.XScrollPane;
 import com.tc.admin.common.XTable;
 import com.terracottatech.config.AdditionalBootJarClasses;
 import com.terracottatech.config.DsoApplication;
 
+import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
@@ -23,36 +27,39 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 
 public class BootClassesPanel extends XContainer implements TableModelListener {
-  private DsoApplication           m_dsoApp;
-  private AdditionalBootJarClasses m_bootClasses;
-  private XTable                   m_bootClassesTable;
-  private BootClassTableModel      m_bootClassesTableModel;
-  private Button                   m_addButton;
-  private ActionListener           m_addListener;
-  private Button                   m_removeButton;
-  private ActionListener           m_removeListener;
-  private ListSelectionListener    m_bootClassesListener;
+  private DsoApplication           dsoApp;
+  private AdditionalBootJarClasses bootClasses;
+  private XTable                   bootClassesTable;
+  private BootClassTableModel      bootClassesTableModel;
+  private XButton                  addButton;
+  private ActionListener           addListener;
+  private XButton                  removeButton;
+  private ActionListener           removeListener;
+  private ListSelectionListener    bootClassesListener;
 
   public BootClassesPanel() {
-    super();
-  }
+    super(new BorderLayout());
 
-  public void load(ContainerResource containerRes) {
-    super.load(containerRes);
-
-    m_bootClassesTable = (XTable) findComponent("BootClassesTable");
-    m_bootClassesTable.setModel(m_bootClassesTableModel = new BootClassTableModel());
-    m_bootClassesListener = new ListSelectionListener() {
+    bootClassesTable = new XTable();
+    bootClassesTable.setModel(bootClassesTableModel = new BootClassTableModel());
+    bootClassesListener = new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent lse) {
         if (!lse.getValueIsAdjusting()) {
-          int[] sel = m_bootClassesTable.getSelectedRows();
-          m_removeButton.setEnabled(sel != null && sel.length > 0);
+          int[] sel = bootClassesTable.getSelectedRows();
+          removeButton.setEnabled(sel != null && sel.length > 0);
         }
       }
     };
+    add(new XScrollPane(bootClassesTable));
 
-    m_addButton = (Button) findComponent("AddBootClassButton");
-    m_addListener = new ActionListener() {
+    XContainer rightPanel = new XContainer(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = gbc.gridy = 0;
+    gbc.insets = new Insets(3, 3, 3, 3);
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+
+    addButton = new XButton("Add");
+    addListener = new ActionListener() {
       public void actionPerformed(ActionEvent ae) {
         String bootType = JOptionPane.showInputDialog("Boot class");
 
@@ -64,12 +71,14 @@ public class BootClassesPanel extends XContainer implements TableModelListener {
         }
       }
     };
+    rightPanel.add(addButton, gbc);
+    gbc.gridy++;
 
-    m_removeButton = (Button) findComponent("RemoveBootClassButton");
-    m_removeListener = new ActionListener() {
+    removeButton = new XButton("Remove");
+    removeListener = new ActionListener() {
       public void actionPerformed(ActionEvent ae) {
         AdditionalBootJarClasses abjc = ensureAdditionalBootClasses();
-        int[] selection = m_bootClassesTable.getSelectedRows();
+        int[] selection = bootClassesTable.getSelectedRows();
 
         for (int i = selection.length - 1; i >= 0; i--) {
           abjc.removeInclude(selection[i]);
@@ -77,24 +86,27 @@ public class BootClassesPanel extends XContainer implements TableModelListener {
         syncModel();
       }
     };
+    rightPanel.add(removeButton, gbc);
+
+    add(rightPanel, BorderLayout.EAST);
   }
 
   public boolean hasAnySet() {
-    return m_bootClasses != null && m_bootClasses.sizeOfIncludeArray() > 0;
+    return bootClasses != null && bootClasses.sizeOfIncludeArray() > 0;
   }
 
   private AdditionalBootJarClasses ensureAdditionalBootClasses() {
-    if (m_bootClasses == null) {
+    if (bootClasses == null) {
       ensureXmlObject();
     }
-    return m_bootClasses;
+    return bootClasses;
   }
 
   // make sure parent exists
   public void ensureXmlObject() {
-    if (m_bootClasses == null) {
+    if (bootClasses == null) {
       removeListeners();
-      m_bootClasses = m_dsoApp.addNewAdditionalBootJarClasses();
+      bootClasses = dsoApp.addNewAdditionalBootJarClasses();
       updateChildren();
       addListeners();
     }
@@ -102,36 +114,39 @@ public class BootClassesPanel extends XContainer implements TableModelListener {
 
   // write xml and remove if not needed
   private void syncModel() {
-    if (!hasAnySet() && m_dsoApp.getAdditionalBootJarClasses() != null) {
-      m_dsoApp.unsetAdditionalBootJarClasses();
-      m_bootClasses = null;
+    if (!hasAnySet() && dsoApp.getAdditionalBootJarClasses() != null) {
+      dsoApp.unsetAdditionalBootJarClasses();
+      bootClasses = null;
     }
-    SessionIntegratorFrame frame = (SessionIntegratorFrame) getAncestorOfClass(SessionIntegratorFrame.class);
-    frame.modelChanged();
+    SessionIntegratorFrame frame = (SessionIntegratorFrame) SwingUtilities
+        .getAncestorOfClass(SessionIntegratorFrame.class, this);
+    if (frame != null) {
+      frame.modelChanged();
+    }
   }
 
   private void addListeners() {
-    m_bootClassesTableModel.addTableModelListener(this);
-    m_bootClassesTable.getSelectionModel().addListSelectionListener(m_bootClassesListener);
-    m_addButton.addActionListener(m_addListener);
-    m_removeButton.addActionListener(m_removeListener);
+    bootClassesTableModel.addTableModelListener(this);
+    bootClassesTable.getSelectionModel().addListSelectionListener(bootClassesListener);
+    addButton.addActionListener(addListener);
+    removeButton.addActionListener(removeListener);
   }
 
   private void removeListeners() {
-    m_bootClassesTableModel.removeTableModelListener(this);
-    m_bootClassesTable.getSelectionModel().removeListSelectionListener(m_bootClassesListener);
-    m_addButton.removeActionListener(m_addListener);
-    m_removeButton.removeActionListener(m_removeListener);
+    bootClassesTableModel.removeTableModelListener(this);
+    bootClassesTable.getSelectionModel().removeListSelectionListener(bootClassesListener);
+    addButton.removeActionListener(addListener);
+    removeButton.removeActionListener(removeListener);
   }
 
   // match table to xmlbeans
   private void updateChildren() {
-    m_bootClassesTableModel.clear();
+    bootClassesTableModel.clear();
 
-    if (m_bootClasses != null) {
-      String[] bootClasses = m_bootClasses.getIncludeArray();
-      for (int i = 0; i < bootClasses.length; i++) {
-        m_bootClassesTableModel.addBootClass(bootClasses[i]);
+    if (bootClasses != null) {
+      String[] bootTypes = bootClasses.getIncludeArray();
+      for (int i = 0; i < bootTypes.length; i++) {
+        bootClassesTableModel.addBootClass(bootTypes[i]);
       }
     }
   }
@@ -140,8 +155,8 @@ public class BootClassesPanel extends XContainer implements TableModelListener {
     setEnabled(true);
     removeListeners();
 
-    m_dsoApp = dsoApp;
-    m_bootClasses = m_dsoApp != null ? m_dsoApp.getAdditionalBootJarClasses() : null;
+    this.dsoApp = dsoApp;
+    bootClasses = dsoApp != null ? dsoApp.getAdditionalBootJarClasses() : null;
 
     updateChildren();
     addListeners();
@@ -150,10 +165,10 @@ public class BootClassesPanel extends XContainer implements TableModelListener {
   public void tearDown() {
     removeListeners();
 
-    m_dsoApp = null;
-    m_bootClasses = null;
+    dsoApp = null;
+    bootClasses = null;
 
-    m_bootClassesTableModel.clear();
+    bootClassesTableModel.clear();
 
     setEnabled(false);
   }
@@ -194,7 +209,7 @@ public class BootClassesPanel extends XContainer implements TableModelListener {
     }
 
     public void setValueAt(Object value, int row, int col) {
-      m_bootClasses.setIncludeArray(row, (String) value);
+      bootClasses.setIncludeArray(row, (String) value);
       super.setValueAt(value, row, col);
     }
   }
@@ -206,29 +221,29 @@ public class BootClassesPanel extends XContainer implements TableModelListener {
   private void internalAddBootClass(String typeName) {
     ensureAdditionalBootClasses().addInclude(typeName);
     syncModel();
-    int row = m_bootClassesTableModel.getRowCount() - 1;
-    m_bootClassesTable.setRowSelectionInterval(row, row);
+    int row = bootClassesTableModel.getRowCount() - 1;
+    bootClassesTable.setRowSelectionInterval(row, row);
   }
 
   private void internalRemoveBootClass(String typeName) {
-    int row = m_bootClassesTableModel.indexOf(typeName);
+    int row = bootClassesTableModel.indexOf(typeName);
 
     if (row >= 0) {
       ensureAdditionalBootClasses().removeInclude(row);
       syncModel();
       if (row > 0) {
-        row = Math.min(m_bootClassesTableModel.getRowCount() - 1, row);
-        m_bootClassesTable.setRowSelectionInterval(row, row);
+        row = Math.min(bootClassesTableModel.getRowCount() - 1, row);
+        bootClassesTable.setRowSelectionInterval(row, row);
       }
     }
   }
 
   public boolean isBootClass(String typeName) {
-    AdditionalBootJarClasses bootClasses = ensureAdditionalBootClasses();
-    int count = bootClasses.sizeOfIncludeArray();
+    AdditionalBootJarClasses theBootClasses = ensureAdditionalBootClasses();
+    int count = theBootClasses.sizeOfIncludeArray();
 
     for (int i = 0; i < count; i++) {
-      if (typeName.equals(bootClasses.getIncludeArray(i))) { return true; }
+      if (typeName.equals(theBootClasses.getIncludeArray(i))) { return true; }
     }
 
     return false;

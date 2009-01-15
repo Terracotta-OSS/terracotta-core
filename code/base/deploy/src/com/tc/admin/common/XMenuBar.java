@@ -4,9 +4,9 @@
  */
 package com.tc.admin.common;
 
-import org.dijon.MenuBar;
+import javax.swing.JMenuBar;
 
-public class XMenuBar extends MenuBar {
+public class XMenuBar extends JMenuBar {
   public XMenuBar() {
     super();
   }

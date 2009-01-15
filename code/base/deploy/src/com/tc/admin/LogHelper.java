@@ -14,64 +14,64 @@ import javax.swing.ImageIcon;
  */
 
 public class LogHelper extends BaseHelper {
-  private static final LogHelper m_helper = new LogHelper();
-  private Icon                   m_alertIcon;
-  private Icon                   m_warningIcon;
-  private Icon                   m_errorIcon;
-  private Icon                   m_infoIcon;
-  private Icon                   m_blankIcon;
+  private static final LogHelper helper = new LogHelper();
+  private Icon                   alertIcon;
+  private Icon                   warningIcon;
+  private Icon                   errorIcon;
+  private Icon                   infoIcon;
+  private Icon                   blankIcon;
 
   public static LogHelper getHelper() {
-    return m_helper;
+    return helper;
   }
 
   public Icon getAlertIcon() {
-    if (m_alertIcon == null) {
+    if (alertIcon == null) {
       URL url = getClass().getResource(ICONS_PATH + "alert12x12.gif");
       if (url != null) {
-        m_alertIcon = new ImageIcon(url);
+        alertIcon = new ImageIcon(url);
       }
     }
-    return m_alertIcon;
+    return alertIcon;
   }
 
   public Icon getWarningIcon() {
-    if (m_warningIcon == null) {
+    if (warningIcon == null) {
       URL url = getClass().getResource(ICONS_PATH + "warning12x12.gif");
       if (url != null) {
-        m_warningIcon = new ImageIcon(url);
+        warningIcon = new ImageIcon(url);
       }
     }
-    return m_warningIcon;
+    return warningIcon;
   }
 
   public Icon getErrorIcon() {
-    if (m_errorIcon == null) {
+    if (errorIcon == null) {
       URL url = getClass().getResource(ICONS_PATH + "error12x12.gif");
       if (url != null) {
-        m_errorIcon = new ImageIcon(url);
+        errorIcon = new ImageIcon(url);
       }
     }
-    return m_errorIcon;
+    return errorIcon;
   }
 
   public Icon getInfoIcon() {
-    if (m_infoIcon == null) {
+    if (infoIcon == null) {
       URL url = getClass().getResource(ICONS_PATH + "info12x12.gif");
       if (url != null) {
-        m_infoIcon = new ImageIcon(url);
+        infoIcon = new ImageIcon(url);
       }
     }
-    return m_infoIcon;
+    return infoIcon;
   }
 
   public Icon getBlankIcon() {
-    if (m_blankIcon == null) {
+    if (blankIcon == null) {
       URL url = getClass().getResource(ICONS_PATH + "blank12x12.gif");
       if (url != null) {
-        m_blankIcon = new ImageIcon(url);
+        blankIcon = new ImageIcon(url);
       }
     }
-    return m_blankIcon;
+    return blankIcon;
   }
 }

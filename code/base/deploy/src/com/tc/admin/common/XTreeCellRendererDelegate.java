@@ -14,10 +14,10 @@ import javax.swing.tree.TreeCellRenderer;
  */
 
 public class XTreeCellRendererDelegate implements TreeCellRenderer {
-  protected XTreeCellRenderer m_defaultRenderer;
+  protected XTreeCellRenderer defaultRenderer;
 
   public XTreeCellRendererDelegate() {
-    m_defaultRenderer = new XTreeCellRenderer();
+    defaultRenderer = new XTreeCellRenderer();
   }
 
   protected TreeCellRenderer getNodeRenderer(Object value) {
@@ -27,7 +27,7 @@ public class XTreeCellRendererDelegate implements TreeCellRenderer {
       nodeRenderer = ((XTreeNode) value).getRenderer();
     }
 
-    return nodeRenderer != null ? nodeRenderer : m_defaultRenderer;
+    return nodeRenderer != null ? nodeRenderer : defaultRenderer;
   }
 
   public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf,

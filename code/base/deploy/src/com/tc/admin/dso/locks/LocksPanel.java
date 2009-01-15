@@ -4,33 +4,30 @@
  */
 package com.tc.admin.dso.locks;
 
-import org.dijon.Button;
-import org.dijon.ContainerResource;
-import org.dijon.Dialog;
-import org.dijon.Frame;
-import org.dijon.Label;
-import org.dijon.Spinner;
-import org.dijon.TextArea;
-import org.dijon.ToggleButton;
-
-import com.tc.admin.AdminClient;
-import com.tc.admin.AdminClientContext;
 import com.tc.admin.ConnectionContext;
+import com.tc.admin.IAdminClientContext;
 import com.tc.admin.SearchPanel;
 import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.ExceptionHelper;
-import com.tc.admin.common.MBeanServerInvocationProxy;
+import com.tc.admin.common.WindowHelper;
 import com.tc.admin.common.XAbstractAction;
+import com.tc.admin.common.XButton;
 import com.tc.admin.common.XContainer;
+import com.tc.admin.common.XFrame;
+import com.tc.admin.common.XLabel;
 import com.tc.admin.common.XObjectTable;
+import com.tc.admin.common.XScrollPane;
+import com.tc.admin.common.XSpinner;
+import com.tc.admin.common.XSplitPane;
+import com.tc.admin.common.XTabbedPane;
+import com.tc.admin.common.XTextArea;
 import com.tc.admin.dso.BasicObjectSetPanel;
 import com.tc.admin.dso.locks.ServerLockTableModel.LockSpecWrapper;
 import com.tc.admin.model.BasicTcObject;
 import com.tc.admin.model.ClusterModel;
 import com.tc.admin.model.IBasicObject;
 import com.tc.admin.model.IClusterModel;
-import com.tc.management.beans.L2MBeanNames;
-import com.tc.management.beans.LockStatisticsMonitorMBean;
+import com.tc.admin.model.IServer;
 import com.tc.management.lock.stats.LockSpec;
 import com.tc.object.ObjectID;
 import com.tc.object.lockmanager.api.LockID;
@@ -38,6 +35,9 @@ import com.tc.objectserver.mgmt.ManagedObjectFacade;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -52,6 +52,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.concurrent.Callable;
@@ -59,20 +60,22 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import javax.management.MBeanServerInvocationHandler;
-import javax.management.Notification;
-import javax.management.NotificationListener;
+import javax.swing.BorderFactory;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JPopupMenu;
 import javax.swing.JSpinner;
+import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.JToggleButton;
 import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.WindowConstants;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
@@ -82,23 +85,17 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.table.TableModel;
 import javax.swing.tree.TreePath;
 
-/**
- * TODO: Retrieve lock stats from ClusterModel instead of going directly through MBean.
- */
-
-public class LocksPanel extends XContainer implements NotificationListener, PropertyChangeListener {
-  private AdminClientContext          fAdminClientContext;
-  private ConnectionContext           fConnectionContext;
+public class LocksPanel extends XContainer implements PropertyChangeListener {
+  private IAdminClientContext         adminClientContext;
   private LocksNode                   fLocksNode;
-  private LockStatisticsMonitorMBean  fLockStats;
-  private ToggleButton                fEnableButton;
-  private ToggleButton                fDisableButton;
+  private JToggleButton               fEnableButton;
+  private JToggleButton               fDisableButton;
   private boolean                     fLocksPanelEnabled;
-  private Spinner                     fTraceDepthSpinner;
+  private XSpinner                    fTraceDepthSpinner;
   private ChangeListener              fTraceDepthSpinnerChangeListener;
   private Timer                       fTraceDepthChangeTimer;
   private int                         fLastTraceDepth;
-  private Button                      fRefreshButton;
+  private XButton                     fRefreshButton;
   private LockSpecsGetter             fCurrentLockSpecsGetter;
   private JTabbedPane                 fLocksTabbedPane;
   private LockTreeTable               fTreeTable;
@@ -109,9 +106,9 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
   private ServerLockTableModel        fServerLockTableModel;
   private ServerLockSelectionHandler  fServerLockSelectionHandler;
   private SearchPanel                 fServerSearchPanel;
-  private TextArea                    fTraceText;
-  private Label                       fConfigLabel;
-  private TextArea                    fConfigText;
+  private XTextArea                   fTraceText;
+  private TitledBorder                fConfigBorder;
+  private XTextArea                   fConfigText;
   private InspectLockObjectAction     fInspectLockObjectAction;
 
   private static Collection<LockSpec> EMPTY_LOCK_SPEC_COLLECTION = new HashSet<LockSpec>();
@@ -119,29 +116,31 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
   private static final int            STATUS_TIMEOUT_SECONDS     = 3;
   private static final int            REFRESH_TIMEOUT_SECONDS    = Integer.MAX_VALUE;
 
-  public LocksPanel(LocksNode locksNode) {
-    super();
+  public LocksPanel(IAdminClientContext adminClientContext, LocksNode locksNode) {
+    super(new BorderLayout());
 
-    fAdminClientContext = AdminClient.getContext();
-    fConnectionContext = locksNode.getConnectionContext();
+    this.adminClientContext = adminClientContext;
     fLocksNode = locksNode;
 
-    load((ContainerResource) fAdminClientContext.getComponent("LocksPanel"));
+    XContainer topPanel = new XContainer(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = gbc.gridy = 0;
+    gbc.insets = new Insets(3, 3, 3, 3);
 
-    fLockStats = MBeanServerInvocationProxy.newMBeanProxy(fConnectionContext.mbsc, L2MBeanNames.LOCK_STATISTICS,
-                                                          LockStatisticsMonitorMBean.class, false);
+    topPanel.add(new XLabel("Enable lock profiling:"), gbc);
+    gbc.gridx++;
 
-    // We do this to force an early error if the server we're connecting to is old and doesn't
-    // have the LockStatisticsMonitorMBean. DSONode catches the error and doesn't display the LocksNode.
-    fLastTraceDepth = fLockStats.getTraceDepth();
-
-    fEnableButton = (ToggleButton) findComponent("EnableButton");
-    fEnableButton.addActionListener(new EnablementButtonHandler());
-
-    fDisableButton = (ToggleButton) findComponent("DisableButton");
+    topPanel.add(fDisableButton = new JToggleButton("Off"), gbc);
     fDisableButton.addActionListener(new EnablementButtonHandler());
+    gbc.gridx++;
 
-    fTraceDepthSpinner = (Spinner) findComponent("TraceDepthSpinner");
+    topPanel.add(fEnableButton = new JToggleButton("On"), gbc);
+    fEnableButton.addActionListener(new EnablementButtonHandler());
+    gbc.gridx++;
+
+    topPanel.add(new XLabel("Trace depth:"), gbc);
+    gbc.gridx++;
+    topPanel.add(fTraceDepthSpinner = new XSpinner(), gbc);
     fLastTraceDepth = Math.max(0, fLastTraceDepth);
     fTraceDepthSpinner.setModel(new SpinnerNumberModel(Integer.valueOf(fLastTraceDepth), Integer.valueOf(0), null,
                                                        Integer.valueOf(1)));
@@ -150,33 +149,59 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
     fTraceDepthChangeTimer.setRepeats(false);
     fTraceDepthSpinnerChangeListener = new TraceDepthSpinnerChangeListener();
     fTraceDepthSpinner.addChangeListener(fTraceDepthSpinnerChangeListener);
+    gbc.gridx++;
 
-    fRefreshButton = (Button) findComponent("RefreshButton");
+    topPanel.add(fRefreshButton = new XButton(adminClientContext.getString("refresh")), gbc);
     fRefreshButton.addActionListener(new RefreshButtonHandler());
 
-    fInspectLockObjectAction = new InspectLockObjectAction();
-    TableMouseListener tableMouseListener = new TableMouseListener();
+    add(topPanel, BorderLayout.NORTH);
 
-    fLocksTabbedPane = (JTabbedPane) findComponent("LocksTabbedPane");
-    fTreeTableModel = new LockTreeTableModel(EMPTY_LOCK_SPEC_COLLECTION);
-    fTreeTable = (LockTreeTable) findComponent("LockTreeTable");
+    fLocksTabbedPane = new XTabbedPane();
+    TableMouseListener tableMouseListener = new TableMouseListener();
+    fInspectLockObjectAction = new InspectLockObjectAction();
+
+    /** Clients **/
+    ActionListener findNextAction = new FindNextHandler();
+    ActionListener findPreviousAction = new FindPreviousHandler();
+
+    XContainer clientsTop = new XContainer(new BorderLayout());
+    clientsTop.add(new XScrollPane(fTreeTable = new LockTreeTable()), BorderLayout.CENTER);
+    fTreeTableModel = new LockTreeTableModel(adminClientContext, EMPTY_LOCK_SPEC_COLLECTION);
     fTreeTable.setTreeTableModel(fTreeTableModel);
-    fTreeTable.setPreferences(fAdminClientContext.getPrefs().node(fTreeTable.getName()));
+    fTreeTable.setPreferences(adminClientContext.getPrefs().node("LockTreeTable"));
     fClientLockSelectionHandler = new ClientLockSelectionHandler();
     fTreeTable.addTreeSelectionListener(fClientLockSelectionHandler);
     JPopupMenu clientLocksPopup = new JPopupMenu();
     clientLocksPopup.add(fInspectLockObjectAction);
     fTreeTable.setPopupMenu(clientLocksPopup);
     fTreeTable.addMouseListener(tableMouseListener);
-
-    ActionListener findNextAction = new FindNextHandler();
-    ActionListener findPreviousAction = new FindPreviousHandler();
-
-    fClientSearchPanel = (SearchPanel) findComponent("ClientLocksSearchPanel");
+    clientsTop.add(fClientSearchPanel = new SearchPanel(adminClientContext), BorderLayout.SOUTH);
     fClientSearchPanel.setHandlers(findNextAction, findPreviousAction);
 
-    fServerLocksTable = (XObjectTable) findComponent("ServerLocksTable");
-    fServerLockTableModel = new ServerLockTableModel(EMPTY_LOCK_SPEC_COLLECTION);
+    XContainer tracePanel = new XContainer(new BorderLayout());
+    tracePanel.add(new XScrollPane(fTraceText = new XTextArea()));
+    fTraceText.setEditable(false);
+    tracePanel.setBorder(BorderFactory.createTitledBorder("Trace"));
+
+    XContainer configPanel = new XContainer(new BorderLayout());
+    configPanel.add(new XScrollPane(fConfigText = new XTextArea()));
+    fConfigText.setEditable(false);
+    configPanel.setBorder(fConfigBorder = BorderFactory.createTitledBorder("Config"));
+
+    XSplitPane clientsBottom = new XSplitPane(JSplitPane.HORIZONTAL_SPLIT, tracePanel, configPanel);
+    clientsBottom.setResizeWeight(0.5);
+    clientsBottom.setDividerLocation(-1);
+
+    XSplitPane clientsSplitter = new XSplitPane(JSplitPane.VERTICAL_SPLIT, clientsTop, clientsBottom);
+    clientsSplitter.setResizeWeight(0.5);
+    clientsSplitter.setDividerLocation(-1);
+
+    fLocksTabbedPane.addTab("Clients", clientsSplitter);
+
+    /** Server **/
+    XContainer serverPanel = new XContainer(new BorderLayout());
+    fServerLocksTable = new ServerLocksTable();
+    fServerLockTableModel = new ServerLockTableModel(adminClientContext, EMPTY_LOCK_SPEC_COLLECTION);
     fServerLocksTable.setModel(fServerLockTableModel);
     fServerLocksTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     fServerLockSelectionHandler = new ServerLockSelectionHandler();
@@ -185,30 +210,66 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
     serverLocksPopup.add(fInspectLockObjectAction);
     fServerLocksTable.setPopupMenu(serverLocksPopup);
     fServerLocksTable.addMouseListener(tableMouseListener);
+    serverPanel.add(new XScrollPane(fServerLocksTable));
 
-    fServerSearchPanel = (SearchPanel) findComponent("ServerLocksSearchPanel");
-    fServerSearchPanel.setHandlers(findNextAction, findPreviousAction);
+    serverPanel.add(fServerSearchPanel = new SearchPanel(adminClientContext), BorderLayout.SOUTH);
+    fClientSearchPanel.setHandlers(findNextAction, findPreviousAction);
 
-    fTraceText = (TextArea) findComponent("TraceText");
-    fConfigLabel = (Label) findComponent("ConfigLabel");
-    fConfigText = (TextArea) findComponent("ConfigText");
+    fLocksTabbedPane.addTab("Servers", serverPanel);
 
-    try {
-      fConnectionContext.addNotificationListener(L2MBeanNames.LOCK_STATISTICS, this);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+    add(fLocksTabbedPane, BorderLayout.CENTER);
+
+    IClusterModel clusterModel = getClusterModel();
+    clusterModel.addPropertyChangeListener(this);
+    if (clusterModel.isReady()) {
+      clusterModel.getActiveCoordinator().addPropertyChangeListener(this);
+      adminClientContext.execute(new LocksPanelEnabledWorker());
     }
+  }
 
-    fAdminClientContext.execute(new LocksPanelEnabledWorker());
-    locksNode.getClusterModel().addPropertyChangeListener(this);
+  private synchronized IClusterModel getClusterModel() {
+    return fLocksNode != null ? fLocksNode.getClusterModel() : null;
+  }
+
+  private synchronized IServer getActiveCoordinator() {
+    IClusterModel clusterModel = getClusterModel();
+    return clusterModel != null ? clusterModel.getActiveCoordinator() : null;
   }
 
   public void propertyChange(PropertyChangeEvent evt) {
-    if (IClusterModel.PROP_ACTIVE_SERVER.equals(evt.getPropertyName())) {
-      if (((IClusterModel) evt.getSource()).getActiveServer() != null) {
-        if (fAdminClientContext != null) {
-          fAdminClientContext.execute(new NewConnectionContextWorker());
+    String prop = evt.getPropertyName();
+    if (IClusterModel.PROP_ACTIVE_COORDINATOR.equals(prop)) {
+      IServer oldActive = (IServer) evt.getOldValue();
+      if (oldActive != null) {
+        oldActive.removePropertyChangeListener(this);
+      }
+      IServer newActive = (IServer) evt.getNewValue();
+      if (newActive != null) {
+        newActive.addPropertyChangeListener(this);
+        if (adminClientContext != null) {
+          adminClientContext.execute(new NewConnectionContextWorker());
         }
+      }
+    } else if (IServer.PROP_LOCK_STATS_TRACE_DEPTH.equals(prop)) {
+      IServer activeCoord = getActiveCoordinator();
+      int newTraceDepth = activeCoord.getLockProfilerTraceDepth();
+      if (fLastTraceDepth != newTraceDepth) {
+        fLastTraceDepth = newTraceDepth;
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            ((SpinnerNumberModel) fTraceDepthSpinner.getModel()).setValue(Integer.valueOf(fLastTraceDepth));
+          }
+        });
+      }
+    } else if (IServer.PROP_LOCK_STATS_ENABLED.equals(prop)) {
+      IServer activeCoord = getActiveCoordinator();
+      final boolean enabled = activeCoord.isLockProfilingEnabled();
+      if (enabled != fRefreshButton.isEnabled()) {
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            setLocksPanelEnabled(enabled);
+          }
+        });
       }
     }
   }
@@ -235,18 +296,18 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
       try {
         int maxFields = ConnectionContext.DSO_SMALL_BATCH_SIZE;
         ManagedObjectFacade mof = fLocksNode.getClusterModel().lookupFacade(oid, maxFields);
-        Frame frame = (Frame) getAncestorOfClass(Frame.class);
-        Dialog dialog = new Dialog(frame, Long.toString(fObjectID), false);
+        XFrame frame = (XFrame) SwingUtilities.getAncestorOfClass(XFrame.class, LocksPanel.this);
+        JDialog dialog = new JDialog(frame, Long.toString(fObjectID), false);
         ClusterModel clusterModel = (ClusterModel) fLocksNode.getClusterModel();
         BasicTcObject dsoObject = new BasicTcObject(clusterModel, "", mof, mof.getClassName(), null);
         dialog.getContentPane().setLayout(new BorderLayout());
-        dialog.getContentPane().add(new BasicObjectSetPanel(clusterModel, new IBasicObject[] { dsoObject }));
+        dialog.getContentPane().add(new BasicObjectSetPanel(adminClientContext, new IBasicObject[] { dsoObject }));
         dialog.pack();
-        dialog.center(frame);
+        WindowHelper.center(dialog, frame);
         dialog.setVisible(true);
         dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
       } catch (Exception e) {
-        fAdminClientContext.log(e);
+        adminClientContext.log(e);
       }
     }
 
@@ -326,7 +387,7 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
         text = lastNode.getConfigText();
       }
       fConfigText.setText(text);
-      fConfigLabel.setText(lockSpecNode.toString());
+      fConfigBorder.setTitle(lockSpecNode.toString());
       populateTraceText(path);
 
       LockSpec lockSpec = lockSpecNode.getSpec();
@@ -370,7 +431,8 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
     private LocksPanelEnabledWorker() {
       super(new Callable<Boolean>() {
         public Boolean call() throws Exception {
-          return fLockStats.isLockStatisticsEnabled();
+          IServer activeCoord = getActiveCoordinator();
+          return activeCoord != null ? activeCoord.isLockProfilingEnabled() : false;
         }
       }, STATUS_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
@@ -387,8 +449,7 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
         } else {
           msg = rootCause.getMessage();
         }
-        fAdminClientContext
-            .log(new Date() + ": Lock profiler: unable to determine statistics subsystem status: " + msg);
+        adminClientContext.log(new Date() + ": Lock profiler: unable to determine statistics subsystem status: " + msg);
         setLocksPanelEnabled(false);
       } else {
         setLocksPanelEnabled(getResult());
@@ -400,13 +461,9 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
     private NewConnectionContextWorker() {
       super(new Callable<Boolean>() {
         public Boolean call() throws Exception {
-          fConnectionContext = fLocksNode.getConnectionContext();
-          fLockStats = (LockStatisticsMonitorMBean) MBeanServerInvocationHandler
-              .newProxyInstance(fConnectionContext.mbsc, L2MBeanNames.LOCK_STATISTICS,
-                                LockStatisticsMonitorMBean.class, false);
-          fLastTraceDepth = fLockStats.getTraceDepth();
-          fConnectionContext.addNotificationListener(L2MBeanNames.LOCK_STATISTICS, LocksPanel.this);
-          return fLockStats.isLockStatisticsEnabled();
+          IServer activeCoord = getActiveCoordinator();
+          fLastTraceDepth = activeCoord.getLockProfilerTraceDepth();
+          return activeCoord.isLockProfilingEnabled();
         }
       }, STATUS_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
@@ -423,8 +480,7 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
         } else {
           msg = rootCause.getMessage();
         }
-        fAdminClientContext
-            .log(new Date() + ": Lock profiler: unable to determine statistics subsystem status: " + msg);
+        adminClientContext.log(new Date() + ": Lock profiler: unable to determine statistics subsystem status: " + msg);
         setLocksPanelEnabled(false);
       } else {
         ((SpinnerNumberModel) fTraceDepthSpinner.getModel()).setValue(Integer.valueOf(fLastTraceDepth));
@@ -497,7 +553,7 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
 
   private void resetSelectedLockDetails() {
     fConfigText.setText("");
-    fConfigLabel.setText("");
+    fConfigBorder.setTitle("Config");
     fTraceText.setText("");
   }
 
@@ -516,7 +572,10 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
     private LockStatsStateWorker(final boolean lockStatsEnabled) {
       super(new Callable<Void>() {
         public Void call() {
-          fLockStats.setLockStatisticsEnabled(lockStatsEnabled);
+          IServer activeCoord = getActiveCoordinator();
+          if (activeCoord != null) {
+            activeCoord.setLockProfilingEnabled(lockStatsEnabled);
+          }
           return null;
         }
       });
@@ -529,7 +588,7 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
 
   private void toggleLocksPanelEnabled() {
     boolean lockStatsEnabled = fLocksPanelEnabled ? false : true;
-    fAdminClientContext.execute(new LockStatsStateWorker(lockStatsEnabled));
+    adminClientContext.execute(new LockStatsStateWorker(lockStatsEnabled));
   }
 
   private void setLocksPanelEnabled(boolean enabled) {
@@ -550,7 +609,7 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
     final String label = fRefreshButton.getText();
     fRefreshButton.setText("Cancel");
     fCurrentLockSpecsGetter = new LockSpecsGetter(label);
-    fAdminClientContext.submit(fCurrentLockSpecsGetter);
+    adminClientContext.submit(fCurrentLockSpecsGetter);
   }
 
   class LockSpecsGetter extends BasicWorker<Collection<LockSpec>> {
@@ -559,7 +618,9 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
     LockSpecsGetter(String refreshButtonLabel) {
       super(new Callable<Collection<LockSpec>>() {
         public Collection<LockSpec> call() throws Exception {
-          return fLockStats.getLockSpecs();
+          IServer activeCoord = getActiveCoordinator();
+          if (activeCoord != null) { return activeCoord.getLockSpecs(); }
+          return Collections.emptySet();
         }
       }, REFRESH_TIMEOUT_SECONDS, TimeUnit.SECONDS);
       fRefreshButtonLabel = refreshButtonLabel;
@@ -583,14 +644,14 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
         } else {
           msg = rootCause.getMessage();
         }
-        AdminClient.getContext().log(new Date() + ": Lock profiler: failed to refresh: " + msg);
+        adminClientContext.log(new Date() + ": Lock profiler: failed to refresh: " + msg);
       } else {
         Collection<LockSpec> lockSpecs = getResult();
 
-        fTreeTable.setTreeTableModel(fTreeTableModel = new LockTreeTableModel(lockSpecs));
+        fTreeTable.setTreeTableModel(fTreeTableModel = new LockTreeTableModel(adminClientContext, lockSpecs));
         fTreeTable.sort();
 
-        fServerLocksTable.setModel(fServerLockTableModel = new ServerLockTableModel(lockSpecs));
+        fServerLocksTable.setModel(fServerLockTableModel = new ServerLockTableModel(adminClientContext, lockSpecs));
         fServerLocksTable.sort();
       }
 
@@ -619,7 +680,10 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
     private TraceDepthWorker(final int traceDepth) {
       super(new Callable<Void>() {
         public Void call() {
-          fLockStats.setLockStatisticsConfig(fLastTraceDepth = traceDepth, 1);
+          IServer activeCoord = getActiveCoordinator();
+          if (activeCoord != null) {
+            activeCoord.setLockProfilerTraceDepth(fLastTraceDepth = traceDepth);
+          }
           return null;
         }
       });
@@ -638,55 +702,27 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
   }
 
   private void setTraceDepth(int traceDepth) {
-    fAdminClientContext.execute(new TraceDepthWorker(traceDepth));
+    adminClientContext.execute(new TraceDepthWorker(traceDepth));
   }
 
   private int getTraceDepth() {
     return getSpinnerValue(fTraceDepthSpinner);
   }
 
-  public void handleNotification(Notification notification, Object handback) {
-    String type = notification.getType();
-    if (type.equals(LockStatisticsMonitorMBean.TRACE_DEPTH)) {
-      int newTraceDepth = fLockStats.getTraceDepth();
-      if (fLastTraceDepth != newTraceDepth) {
-        fLastTraceDepth = newTraceDepth;
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            ((SpinnerNumberModel) fTraceDepthSpinner.getModel()).setValue(Integer.valueOf(fLastTraceDepth));
-          }
-        });
-      }
-    } else if (type.equals(LockStatisticsMonitorMBean.TRACES_ENABLED)) {
-      final boolean enabled = fLockStats.isLockStatisticsEnabled();
-      if (enabled != fRefreshButton.isEnabled()) {
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            setLocksPanelEnabled(enabled);
-          }
-        });
-      }
-    }
-  }
-
-  public void tearDown() {
-    IClusterModel clusterModel = fLocksNode.getClusterModel();
+  public synchronized void tearDown() {
+    IClusterModel clusterModel = getClusterModel();
     if (clusterModel != null) {
       clusterModel.removePropertyChangeListener(this);
+      IServer activeCoord = clusterModel.getActiveCoordinator();
+      if (activeCoord != null) {
+        activeCoord.removePropertyChangeListener(this);
+      }
     }
 
     super.tearDown();
 
-    try {
-      fConnectionContext.removeNotificationListener(L2MBeanNames.LOCK_STATISTICS, this);
-    } catch (Exception e) {
-      // ignore
-    }
-
-    fAdminClientContext = null;
-    fConnectionContext = null;
+    adminClientContext = null;
     fLocksNode = null;
-    fLockStats = null;
     fEnableButton = null;
     fDisableButton = null;
     fTraceDepthSpinner = null;
@@ -703,7 +739,7 @@ public class LocksPanel extends XContainer implements NotificationListener, Prop
     fServerLockSelectionHandler = null;
     fServerSearchPanel = null;
     fTraceText = null;
-    fConfigLabel = null;
+    fConfigBorder = null;
     fConfigText = null;
   }
 }

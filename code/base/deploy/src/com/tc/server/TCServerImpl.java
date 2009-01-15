@@ -23,9 +23,12 @@ import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.capabilities.AbstractCapabilitiesFactory;
 import com.tc.config.Directories;
+import com.tc.config.schema.ActiveServerGroupConfig;
+import com.tc.config.schema.ActiveServerGroupsConfig;
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.NewCommonL2Config;
 import com.tc.config.schema.NewHaConfig;
+import com.tc.config.schema.ServerGroupInfo;
 import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.messaging.http.ConfigServlet;
 import com.tc.config.schema.setup.ConfigurationSetupException;
@@ -64,7 +67,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.management.InstanceAlreadyExistsException;
@@ -124,6 +129,25 @@ public class TCServerImpl extends SEDA implements TCServer {
     if (!statisticsGathererSubSystem.setup(manager.commonl2Config())) {
       System.exit(1);
     }
+  }
+
+  public ServerGroupInfo[] serverGroups() {
+    L2Info[] l2Infos = infoForAllL2s();
+    ActiveServerGroupsConfig config = this.configurationSetupManager.activeServerGroupsConfig();
+    ActiveServerGroupConfig[] groupArray = config.getActiveServerGroupArray();
+    ServerGroupInfo[] result = new ServerGroupInfo[groupArray.length];
+    for (int i = 0; i < groupArray.length; i++) {
+      ActiveServerGroupConfig serverGroupInfo = groupArray[i];
+      List<L2Info> memberList = new ArrayList<L2Info>();
+      for (L2Info l2Info : l2Infos) {
+        if (serverGroupInfo.isMember(l2Info.name())) {
+          memberList.add(l2Info);
+        }
+      }
+      result[i] = new ServerGroupInfo(memberList.toArray(new L2Info[0]), serverGroupInfo.getGroupName(),
+                                      serverGroupInfo.getGroupId(), i == 0);
+    }
+    return result;
   }
 
   public L2Info[] infoForAllL2s() {

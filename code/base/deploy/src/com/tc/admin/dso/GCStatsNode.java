@@ -4,43 +4,44 @@
  */
 package com.tc.admin.dso;
 
-import com.tc.admin.AdminClient;
-import com.tc.admin.ClusterNode;
+import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.ComponentNode;
 import com.tc.admin.model.IClusterModel;
 
 import java.awt.Component;
 
 public class GCStatsNode extends ComponentNode {
-  protected ClusterNode  m_clusterNode;
-  protected GCStatsPanel m_gcStatsPanel;
+  private ApplicationContext appContext;
+  protected IClusterModel    clusterModel;
+  protected GCStatsPanel     gcStatsPanel;
 
-  public GCStatsNode(ClusterNode clusterNode) {
+  public GCStatsNode(ApplicationContext appContext, IClusterModel clusterModel) {
     super();
-    m_clusterNode = clusterNode;
-    setLabel(AdminClient.getContext().getMessage("dso.gcstats"));
+    this.appContext = appContext;
+    this.clusterModel = clusterModel;
+    setLabel(appContext.getMessage("dso.gcstats"));
     setIcon(DSOHelper.getHelper().getGCIcon());
   }
 
   IClusterModel getClusterModel() {
-    return m_clusterNode.getClusterModel();
+    return clusterModel;
   }
 
   protected GCStatsPanel createGCStatsPanel() {
-    return new GCStatsPanel(this);
+    return new GCStatsPanel(appContext, clusterModel);
   }
 
   public Component getComponent() {
-    if (m_gcStatsPanel == null) {
-      m_gcStatsPanel = createGCStatsPanel();
+    if (gcStatsPanel == null) {
+      gcStatsPanel = createGCStatsPanel();
     }
-    return m_gcStatsPanel;
+    return gcStatsPanel;
   }
 
   public void tearDown() {
-    if (m_gcStatsPanel != null) {
-      m_gcStatsPanel.tearDown();
-      m_gcStatsPanel = null;
+    if (gcStatsPanel != null) {
+      gcStatsPanel.tearDown();
+      gcStatsPanel = null;
     }
     super.tearDown();
   }

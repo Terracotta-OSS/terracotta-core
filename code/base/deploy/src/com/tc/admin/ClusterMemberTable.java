@@ -27,6 +27,8 @@ public class ClusterMemberTable extends XObjectTable {
 
       if (e != null) {
         tip = server.getConnectErrorMessage(e);
+      } else {
+        tip = server.getConnectionStatusString();
       }
     }
 

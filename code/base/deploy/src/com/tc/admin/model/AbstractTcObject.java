@@ -11,17 +11,18 @@ import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.MapEntryFacade;
 
 public abstract class AbstractTcObject implements IObject {
-  protected ManagedObjectFacadeProvider m_facadeProvider;
-  protected String                      m_name;
-  protected IObject                     m_parent;
-  protected int                         m_batchSize;
+  protected ManagedObjectFacadeProvider facadeProvider;
+  protected String                      name;
+  protected IObject                     parent;
+  protected int                         batchSize;
 
-  protected final static LiteralValues  m_literals = new LiteralValues();
+  protected final static LiteralValues  literals = new LiteralValues();
 
   protected AbstractTcObject(ManagedObjectFacadeProvider facadeProvider, String name, IObject parent) {
-    m_facadeProvider = facadeProvider;
-    m_parent = parent;
-    m_batchSize = ConnectionContext.DSO_SMALL_BATCH_SIZE;
+    this.facadeProvider = facadeProvider;
+    this.name = name;
+    this.parent = parent;
+    batchSize = ConnectionContext.DSO_SMALL_BATCH_SIZE;
   }
 
   public abstract Object getFacade();
@@ -31,40 +32,38 @@ public abstract class AbstractTcObject implements IObject {
   }
 
   public String getName() {
-    return m_name;
+    return name;
   }
 
   public IObject getParent() {
-    return m_parent;
+    return parent;
   }
 
   public IObject getRoot() {
     IObject obj = this;
-
     while (obj != null) {
       if (obj.getParent() == null) { return obj; }
       obj = obj.getParent();
     }
-
     return null;
   }
 
   public void setBatchSize(int batchSize) {
-    m_batchSize = batchSize;
+    this.batchSize = batchSize;
   }
 
   public int getBatchSize() {
-    return m_batchSize;
+    return batchSize;
   }
 
   protected IObject newObject(String fieldName, Object value, String type) throws Exception {
     if (value instanceof MapEntryFacade) {
-      return new TcMapEntryObject(m_facadeProvider, fieldName, (MapEntryFacade) value, this);
+      return new TcMapEntryObject(facadeProvider, fieldName, (MapEntryFacade) value, this);
     } else if (value instanceof ObjectID) {
       ObjectID id = (ObjectID) value;
 
       if (!id.isNull()) {
-        value = m_facadeProvider.lookupFacade(id, m_batchSize);
+        value = facadeProvider.lookupFacade(id, batchSize);
         type = ((ManagedObjectFacade) value).getClassName();
       } else {
         value = null;
@@ -76,7 +75,7 @@ public abstract class AbstractTcObject implements IObject {
       }
     }
     type = convertTypeName(type);
-    return new BasicTcObject(m_facadeProvider, fieldName, value, type, this);
+    return new BasicTcObject(facadeProvider, fieldName, value, type, this);
   }
 
   private static final char C_ARRAY = '[';

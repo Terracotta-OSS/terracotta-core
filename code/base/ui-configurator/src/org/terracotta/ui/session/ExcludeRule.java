@@ -6,6 +6,8 @@ package org.terracotta.ui.session;
 import com.terracottatech.config.ClassExpression;
 
 public class ExcludeRule extends Rule {
+  private static final RuleDetail RULE_DETAIL = RuleDetail.NULL_DETAIL;
+  
   public ExcludeRule(ClassExpression expression) {
     super(expression);
   }
@@ -25,6 +27,6 @@ public class ExcludeRule extends Rule {
   public void setDetails(RuleDetail details) {/**/}
   
   public RuleDetail getDetails() {
-    return null;
+    return RULE_DETAIL;
   }
 }

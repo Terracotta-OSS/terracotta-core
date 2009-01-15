@@ -4,45 +4,72 @@
  */
 package com.tc.admin.common;
 
-import org.dijon.ContainerResource;
-import org.dijon.Label;
-
-import com.tc.admin.AdminClient;
-
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 
 import javax.swing.border.LineBorder;
 
 public class StatusView extends XContainer {
-  protected Label m_label;
-  protected Label m_indicator;
+  protected XLabel label;
+  protected XLabel indicator;
 
   public StatusView() {
-    super();
-    load((ContainerResource) AdminClient.getContext().getComponent("StatusRenderer"));
+    super(new GridBagLayout());
+
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = gbc.gridy = 0;
+    gbc.insets = new Insets(1, 3, 1, 3);
+    gbc.anchor = GridBagConstraints.WEST;
+
+    indicator = new XLabel();
+    indicator.setOpaque(true);
+    indicator.setBorder(LineBorder.createBlackLineBorder());
+    indicator.setMinimumSize(new Dimension(10, 10));
+    indicator.setPreferredSize(new Dimension(10, 10));
+    add(indicator, gbc);
+    gbc.gridx++;
+
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    gbc.weightx = 1.0;
+    add(label = new XLabel(), gbc);
   }
 
-  public void load(ContainerResource containerRes) {
-    super.load(containerRes);
-
-    m_label = (Label) findComponent("StatusLabel");
-    m_indicator = (Label) findComponent("StatusIndicator");
-    m_indicator.setOpaque(true);
-    m_indicator.setBorder(LineBorder.createBlackLineBorder());
+  public XLabel getLabel() {
+    return label;
   }
 
-  public void setLabel(String label) {
-    m_label.setText(label);
+  public XLabel getIndicator() {
+    return indicator;
+  }
+
+  public void setForeground(Color fg) {
+    if(label != null) {
+      label.setForeground(fg);
+    }
+    super.setForeground(fg);
+  }
+  
+  public void setText(String text) {
+    label.setText(text);
+    revalidate();
+    repaint();
   }
 
   public void setIndicator(Color color) {
-    m_indicator.setBackground(color);
-    m_indicator.setOpaque(true);
+    indicator.setBackground(color);
+    indicator.setOpaque(true);
+    indicator.setMinimumSize(new Dimension(10, 10));
+    indicator.setPreferredSize(new Dimension(10, 10));
+    revalidate();
+    repaint();
   }
 
   public void tearDown() {
     super.tearDown();
-    m_label = null;
-    m_indicator = null;
+    label = null;
+    indicator = null;
   }
 }

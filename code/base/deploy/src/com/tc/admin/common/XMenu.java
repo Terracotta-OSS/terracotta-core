@@ -4,9 +4,9 @@
  */
 package com.tc.admin.common;
 
-import org.dijon.Menu;
+import javax.swing.JMenu;
 
-public class XMenu extends Menu {
+public class XMenu extends JMenu {
   public XMenu() {
     super();
   }

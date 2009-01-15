@@ -4,7 +4,7 @@
  */
 package com.tc.admin.dso.locks;
 
-import com.tc.admin.AdminClient;
+import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.XObjectTableModel;
 import com.tc.management.lock.stats.LockSpec;
 import com.tc.object.lockmanager.api.LockID;
@@ -16,21 +16,17 @@ import java.util.Comparator;
 import java.util.Iterator;
 
 public class ServerLockTableModel extends XObjectTableModel {
-  private static final String[]            cNames      = (String[]) AdminClient.getContext()
-                                                           .getObject("dso.locks.column.headings");
   private static final String[]            cFields     = { "Name", "Requested", "Hops", "Waiters", "AcquireTime",
       "HeldTime"                                      };
-  private static final String[]            cTips       = (String[]) AdminClient.getContext()
-                                                           .getObject("dso.locks.column.tips");
+  private final String[]                   cTips;
 
-  public static final ServerLockTableModel EMPTY_MODEL = new ServerLockTableModel();
-
-  public ServerLockTableModel() {
-    super(LockSpecWrapper.class, cFields, cNames);
+  public ServerLockTableModel(ApplicationContext appContext) {
+    super(LockSpecWrapper.class, cFields, (String[]) appContext.getObject("dso.locks.column.headings"));
+    cTips = (String[]) appContext.getObject("dso.locks.column.tips");
   }
 
-  public ServerLockTableModel(Collection<LockSpec> lockInfos) {
-    this();
+  public ServerLockTableModel(ApplicationContext appContext, Collection<LockSpec> lockInfos) {
+    this(appContext);
     ArrayList list = new ArrayList<LockSpecWrapper>();
     Iterator<LockSpec> iter = lockInfos.iterator();
     while (iter.hasNext()) {
@@ -48,23 +44,21 @@ public class ServerLockTableModel extends XObjectTableModel {
     fireTableDataChanged();
   }
 
-  public static String columnTip(int column) {
+  public String columnTip(int column) {
     return cTips[column];
   }
 
   public int wrapperIndex(LockID lockID) {
     int count = getRowCount();
-    
-    for(int i = 0; i < count; i++) {
-      LockSpecWrapper wrapper = (LockSpecWrapper)getObjectAt(i);
-      if(wrapper.getLockID().equals(lockID)) {
-        return i;
-      }
+
+    for (int i = 0; i < count; i++) {
+      LockSpecWrapper wrapper = (LockSpecWrapper) getObjectAt(i);
+      if (wrapper.getLockID().equals(lockID)) { return i; }
     }
-    
+
     return -1;
   }
-  
+
   public static class LockSpecWrapper {
     private LockSpec fLockSpec;
     private String   fName;
@@ -82,7 +76,7 @@ public class ServerLockTableModel extends XObjectTableModel {
     public LockID getLockID() {
       return fLockSpec.getLockID();
     }
-    
+
     public String getName() {
       return fName;
     }

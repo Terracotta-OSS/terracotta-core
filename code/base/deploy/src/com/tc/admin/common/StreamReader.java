@@ -15,74 +15,74 @@ import java.io.InputStreamReader;
 import javax.swing.SwingUtilities;
 
 public class StreamReader extends Thread {
-  TextPaneUpdater      m_updater;
-  InputStreamReader    m_streamReader;
-  BufferedReader       m_bufferedReader;
-  volatile boolean     m_stop;
-  OutputStreamListener m_listener;
-  String               m_trigger;
+  TextPaneUpdater      updater;
+  InputStreamReader    streamReader;
+  BufferedReader       bufferedReader;
+  volatile boolean     stop;
+  OutputStreamListener listener;
+  String               trigger;
 
   public StreamReader(InputStream stream, OutputStreamListener listener, String trigger) {
     this(stream, null, listener, trigger);
   }
 
   public StreamReader(InputStream stream, TextPaneUpdater updater, OutputStreamListener listener, String trigger) {
-    m_updater = updater;
-    m_streamReader = new InputStreamReader(stream);
-    m_bufferedReader = new BufferedReader(m_streamReader);
-    m_stop = false;
-    m_listener = listener;
-    m_trigger = trigger;
+    this.updater = updater;
+    this.listener = listener;
+    this.trigger = trigger;
+    streamReader = new InputStreamReader(stream);
+    bufferedReader = new BufferedReader(streamReader);
+    stop = false;
   }
 
   public void setTriggerListener(OutputStreamListener listener) {
-    m_listener = listener;
+    this.listener = listener;
   }
 
   public void setTrigger(String trigger) {
-    m_trigger = trigger;
+    this.trigger = trigger;
   }
 
   public void run() {
     String line;
 
-    while (!m_stop) {
+    while (!stop) {
       try {
-        if ((line = m_bufferedReader.readLine()) == null) {
-          IOUtils.closeQuietly(m_bufferedReader);
+        if ((line = bufferedReader.readLine()) == null) {
+          IOUtils.closeQuietly(bufferedReader);
           return;
         } else {
-          if (m_updater != null) {
+          if (updater != null) {
             update(line);
           }
-          if (m_listener != null && m_trigger != null && StringUtils.contains(line, m_trigger)) {
+          if (listener != null && trigger != null && StringUtils.contains(line, trigger)) {
             SwingUtilities.invokeLater(new Runnable() {
               public void run() {
-                m_listener.triggerEncountered();
+                listener.triggerEncountered();
               }
             });
           }
           continue;
         }
       } catch (IOException ioe) {
-        IOUtils.closeQuietly(m_bufferedReader);
+        IOUtils.closeQuietly(bufferedReader);
         return;
       }
     }
 
-    IOUtils.closeQuietly(m_bufferedReader);
+    IOUtils.closeQuietly(bufferedReader);
   }
 
   private void update(String line) {
     try {
-      m_updater.setLine(line);
-      SwingUtilities.invokeAndWait(m_updater);
+      updater.setLine(line);
+      SwingUtilities.invokeAndWait(updater);
     } catch (Exception e) {/**/
     }
   }
 
   public synchronized void finish() {
-    m_stop = true;
-    IOUtils.closeQuietly(m_bufferedReader);
+    stop = true;
+    IOUtils.closeQuietly(bufferedReader);
   }
 }

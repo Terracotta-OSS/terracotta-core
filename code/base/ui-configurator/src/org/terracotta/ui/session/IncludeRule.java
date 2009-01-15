@@ -29,6 +29,9 @@ public class IncludeRule extends Rule {
   
   public void setHonorTransient(boolean honor) {
     getInclude().setHonorTransient(honor);
+    if(!honor) {
+      getInclude().unsetHonorTransient();
+    }
   }
   
   public OnLoad getOnLoad() {

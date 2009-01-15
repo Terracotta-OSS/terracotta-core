@@ -103,8 +103,10 @@ public class NonPortableWorkState extends AbstractWorkState {
     sb.append(getTypeName());
     if (isNeverPortable()) {
       sb.append(" Never portable");
-    } else {
+    } else if(!isPortable()){
       sb.append(" not portable");
+    } else {
+      sb.append(" is excluded");
     }
     return sb.toString();
   }

@@ -29,28 +29,28 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXServiceURL;
 
 public class ServerConnectionManager implements NotificationListener {
-  private L2Info                             m_l2Info;
-  private boolean                            m_autoConnect;
-  private ConnectionContext                  m_connectCntx;
-  private ConnectionListener                 m_connectListener;
-  private JMXConnectorProxy                  m_jmxConnector;
-  private HashMap<String, Object>            m_connectEnv;
-  private ServerHelper                       m_serverHelper;
-  private volatile boolean                   m_connected;
-  private volatile boolean                   m_started;
-  private volatile boolean                   m_active;
-  private volatile boolean                   m_passiveUninitialized;
-  private volatile boolean                   m_passiveStandby;
-  private Exception                          m_connectException;
-  private ConnectThread                      m_connectThread;
-  private ConnectionMonitorAction            m_connectMonitorAction;
-  private Timer                              m_connectMonitorTimer;
+  private L2Info                             l2Info;
+  private boolean                            autoConnect;
+  private ConnectionContext                  connectCntx;
+  private ConnectionListener                 connectListener;
+  private JMXConnectorProxy                  jmxConnector;
+  private HashMap<String, Object>            connectEnv;
+  private ServerHelper                       serverHelper;
+  private volatile boolean                   connected;
+  private volatile boolean                   started;
+  private volatile boolean                   active;
+  private volatile boolean                   passiveUninitialized;
+  private volatile boolean                   passiveStandby;
+  private Exception                          connectException;
+  private ConnectThread                      connectThread;
+  private ConnectionMonitorAction            connectMonitorAction;
+  private Timer                              connectMonitorTimer;
 
-  private static final Map<String, String[]> m_credentialsMap       = new HashMap<String, String[]>();
+  private static final Map<String, String[]> credentialsMap         = new HashMap<String, String[]>();
 
   private static final int                   CONNECT_MONITOR_PERIOD = 1000;
 
-  private static final Object                m_connectTestLock      = new Object();
+  private static final Object                connectTestLock        = new Object();
 
   static {
     if (!Boolean.getBoolean("javax.management.remote.debug")) {
@@ -73,27 +73,27 @@ public class ServerConnectionManager implements NotificationListener {
   }
 
   public ServerConnectionManager(L2Info l2Info, boolean autoConnect, ConnectionListener listener) {
-    m_autoConnect = autoConnect;
-    m_connectListener = listener;
-    m_serverHelper = ServerHelper.getHelper();
+    this.autoConnect = autoConnect;
+    connectListener = listener;
+    serverHelper = ServerHelper.getHelper();
 
     setL2Info(l2Info);
   }
 
   public void setConnectionListener(ConnectionListener listener) {
-    m_connectListener = listener;
+    connectListener = listener;
   }
 
   public ConnectionListener getConnectionListener() {
-    return m_connectListener;
+    return connectListener;
   }
 
   public L2Info getL2Info() {
-    return m_l2Info;
+    return l2Info;
   }
 
-  private void resetConnectedState() {
-    m_active = m_started = m_passiveUninitialized = m_passiveStandby = false;
+  private synchronized void resetConnectedState() {
+    active = started = passiveUninitialized = passiveStandby = false;
   }
 
   private void resetAllState() {
@@ -105,8 +105,8 @@ public class ServerConnectionManager implements NotificationListener {
     cancelActiveServices();
     resetAllState();
 
-    m_l2Info = l2Info;
-    m_connectCntx = new ConnectionContext(l2Info);
+    this.l2Info = l2Info;
+    connectCntx = new ConnectionContext(l2Info);
 
     try {
       if (isAutoConnect()) {
@@ -117,11 +117,11 @@ public class ServerConnectionManager implements NotificationListener {
   }
 
   public void setHostname(String hostname) {
-    setL2Info(new L2Info(m_l2Info.name(), hostname, m_l2Info.jmxPort()));
+    setL2Info(new L2Info(l2Info.name(), hostname, l2Info.jmxPort()));
   }
 
   public void setJMXPortNumber(int port) {
-    setL2Info(new L2Info(m_l2Info.name(), m_l2Info.host(), port));
+    setL2Info(new L2Info(l2Info.name(), l2Info.host(), port));
   }
 
   public void setCredentials(String username, String password) {
@@ -139,22 +139,22 @@ public class ServerConnectionManager implements NotificationListener {
   }
 
   static void cacheCredentials(ServerConnectionManager scm, String[] credentials) {
-    m_credentialsMap.put(scm.toString(), credentials);
-    m_credentialsMap.put(scm.safeGetHostName(), credentials);
+    credentialsMap.put(scm.toString(), credentials);
+    credentialsMap.put(scm.safeGetHostName(), credentials);
   }
 
   public static String[] getCachedCredentials(ServerConnectionManager scm) {
-    String[] result = m_credentialsMap.get(scm.toString());
+    String[] result = credentialsMap.get(scm.toString());
     if (result == null) {
-      result = m_credentialsMap.get(scm.safeGetHostName());
+      result = credentialsMap.get(scm.safeGetHostName());
     }
     return result;
   }
 
   public void setAutoConnect(boolean autoConnect) {
-    if (m_autoConnect != autoConnect) {
-      if ((m_autoConnect = autoConnect) == true) {
-        if (!m_connected) {
+    if (this.autoConnect != autoConnect) {
+      if ((this.autoConnect = autoConnect) == true) {
+        if (!connected) {
           startConnect();
         }
       } else {
@@ -164,26 +164,26 @@ public class ServerConnectionManager implements NotificationListener {
   }
 
   public boolean isAutoConnect() {
-    return m_autoConnect;
+    return autoConnect;
   }
 
   public void setConnectionContext(ConnectionContext cc) {
-    m_connectCntx = cc;
+    connectCntx = cc;
   }
 
   public ConnectionContext getConnectionContext() {
-    return m_connectCntx;
+    return connectCntx;
   }
 
   public void setJMXConnector(JMXConnector jmxc) throws IOException {
-    m_connectException = null;
-    m_connectCntx.jmxc = jmxc;
-    m_connectCntx.mbsc = jmxc.getMBeanServerConnection();
+    connectException = null;
+    connectCntx.jmxc = jmxc;
+    connectCntx.mbsc = jmxc.getMBeanServerConnection();
     setConnected(true);
   }
 
   public void setConnected(boolean connected) {
-    if (m_connected != connected) {
+    if (isConnected() != connected) {
       synchronized (this) {
         _setConnected(connected);
         if (isConnected() == false) {
@@ -191,10 +191,10 @@ public class ServerConnectionManager implements NotificationListener {
           resetConnectedState();
         } else {
           cacheCredentials(ServerConnectionManager.this, getCredentials());
-          m_started = true;
-          if ((m_active = internalIsActive()) == false) {
-            if ((m_passiveUninitialized = internalIsPassiveUninitialized()) == false) {
-              m_passiveStandby = internalIsPassiveStandby();
+          started = true;
+          if ((active = internalIsActive()) == false) {
+            if ((passiveUninitialized = internalIsPassiveUninitialized()) == false) {
+              passiveStandby = internalIsPassiveStandby();
             }
             addActivationListener();
           }
@@ -202,8 +202,8 @@ public class ServerConnectionManager implements NotificationListener {
       }
 
       // Notify listener that the connection state changed.
-      if (m_connectListener != null) {
-        m_connectListener.handleConnection();
+      if (connectListener != null) {
+        connectListener.handleConnection();
       }
 
       if (connected) {
@@ -219,11 +219,9 @@ public class ServerConnectionManager implements NotificationListener {
    */
   public void disconnect() {
     cancelActiveServices();
-    if (isConnected()) {
-      _setConnected(false);
-      if (m_connectListener != null) {
-        m_connectListener.handleConnection();
-      }
+    _setConnected(false);
+    if (connectListener != null) {
+      connectListener.handleConnection();
     }
   }
 
@@ -231,49 +229,49 @@ public class ServerConnectionManager implements NotificationListener {
    * Since we have all of this infrastructure, turn off the JMXRemote connection monitoring stuff.
    */
   public Map<String, Object> getConnectionEnvironment() {
-    if (m_connectEnv == null) {
-      m_connectEnv = new HashMap<String, Object>();
-      m_connectEnv.put("jmx.remote.x.client.connection.check.period", Integer.valueOf(0));
-      m_connectEnv.put("jmx.remote.default.class.loader", getClass().getClassLoader());
+    if (connectEnv == null) {
+      connectEnv = new HashMap<String, Object>();
+      connectEnv.put("jmx.remote.x.client.connection.check.period", Integer.valueOf(0));
+      connectEnv.put("jmx.remote.default.class.loader", getClass().getClassLoader());
     }
-    return m_connectEnv;
+    return connectEnv;
   }
 
   private void initConnector() {
-    if (m_jmxConnector != null) {
+    if (jmxConnector != null) {
       try {
-        m_jmxConnector.close();
+        jmxConnector.close();
       } catch (Exception e) {/**/
       }
     }
-    m_jmxConnector = new JMXConnectorProxy(getHostname(), getJMXPortNumber(), getConnectionEnvironment());
+    jmxConnector = new JMXConnectorProxy(getHostname(), getJMXPortNumber(), getConnectionEnvironment());
   }
 
   public JMXConnector getJmxConnector() {
     initConnector();
-    return m_jmxConnector;
+    return jmxConnector;
   }
 
   private void startConnect() {
-    if (m_serverHelper == null) return;
+    if (serverHelper == null) return;
     try {
       cancelConnectThread();
       initConnector();
-      m_connectThread = new ConnectThread();
-      m_connectThread.start();
+      connectThread = new ConnectThread();
+      connectThread.start();
     } catch (Exception e) {
-      m_connectException = e;
-      if (m_connectListener != null) {
-        m_connectListener.handleException();
+      connectException = e;
+      if (connectListener != null) {
+        connectListener.handleException();
       }
     }
   }
 
   private void cancelConnectThread() {
-    if (m_connectThread != null && m_connectThread.isAlive()) {
+    if (connectThread != null && connectThread.isAlive()) {
       try {
-        m_connectThread.cancel();
-        m_connectThread = null;
+        connectThread.cancel();
+        connectThread = null;
       } catch (Exception ignore) {/**/
       }
     }
@@ -291,26 +289,26 @@ public class ServerConnectionManager implements NotificationListener {
   }
 
   public boolean testIsConnected() throws Exception {
-    if (m_connectCntx == null) return false;
+    if (connectCntx == null) return false;
 
-    synchronized (m_connectTestLock) {
-      if (m_connectCntx == null) return false;
+    synchronized (connectTestLock) {
+      if (connectCntx == null) return false;
 
-      if (m_connectCntx.jmxc == null) {
+      if (connectCntx.jmxc == null) {
         initConnector();
       }
 
-      m_jmxConnector.connect(getConnectionEnvironment());
-      m_connectCntx.mbsc = m_jmxConnector.getMBeanServerConnection();
-      m_connectCntx.jmxc = m_jmxConnector;
-      m_connectException = null;
+      jmxConnector.connect(getConnectionEnvironment());
+      connectCntx.mbsc = jmxConnector.getMBeanServerConnection();
+      connectCntx.jmxc = jmxConnector;
+      connectException = null;
 
       return true;
     }
   }
 
   class ConnectThread extends Thread {
-    private boolean m_cancel = false;
+    private boolean cancel = false;
 
     ConnectThread() {
       super();
@@ -318,22 +316,20 @@ public class ServerConnectionManager implements NotificationListener {
     }
 
     public void run() {
-      // ThreadUtil.reallySleep(500);
-
-      while (!m_cancel && !m_connected) {
+      while (!cancel && !connected) {
         try {
           boolean isConnected = testIsConnected();
-          if (!m_cancel) {
+          if (!cancel) {
             setConnected(isConnected);
           }
           return;
         } catch (Exception e) {
-          if (m_cancel) {
+          if (cancel) {
             return;
           } else {
-            m_connectException = e;
-            if (m_connectListener != null) {
-              m_connectListener.handleException();
+            connectException = e;
+            if (connectListener != null) {
+              connectListener.handleException();
             }
           }
         }
@@ -350,117 +346,117 @@ public class ServerConnectionManager implements NotificationListener {
     }
 
     void cancel() {
-      m_cancel = true;
+      cancel = true;
     }
   }
 
-  JMXServiceURL getJMXServiceURL() {
-    return m_jmxConnector.getServiceURL();
+  synchronized JMXServiceURL getJMXServiceURL() {
+    return jmxConnector.getServiceURL();
   }
 
-  public String getName() {
-    return m_l2Info.name();
+  public synchronized String getName() {
+    return l2Info.name();
   }
 
-  public String getHostname() {
-    return m_l2Info.host();
+  public synchronized String getHostname() {
+    return l2Info.host();
   }
 
-  public InetAddress getInetAddress() throws UnknownHostException {
-    return m_l2Info.getInetAddress();
+  public synchronized InetAddress getInetAddress() throws UnknownHostException {
+    return l2Info.getInetAddress();
   }
 
-  public String getCanonicalHostName() throws UnknownHostException {
+  public synchronized String getCanonicalHostName() throws UnknownHostException {
     return getInetAddress().getCanonicalHostName();
   }
 
-  public String getHostAddress() throws UnknownHostException {
-    return m_l2Info.getHostAddress();
+  public synchronized String getHostAddress() throws UnknownHostException {
+    return l2Info.getHostAddress();
   }
 
-  public int getJMXPortNumber() {
-    return m_l2Info.jmxPort();
+  public synchronized int getJMXPortNumber() {
+    return l2Info.jmxPort();
   }
 
-  private void _setConnected(boolean connected) {
-    m_connected = connected;
+  private synchronized void _setConnected(boolean isConnected) {
+    this.connected = isConnected;
   }
 
-  public boolean isConnected() {
-    return m_connected;
+  public synchronized boolean isConnected() {
+    return connected;
   }
 
-  public Exception getConnectionException() {
-    return m_connectException;
+  public synchronized Exception getConnectionException() {
+    return connectException;
   }
 
-  public boolean testIsActive() {
+  public synchronized boolean testIsActive() {
     return internalIsActive();
   }
 
-  public boolean isActive() {
-    return m_active;
+  public synchronized boolean isActive() {
+    return active;
   }
 
-  public boolean canShutdown() {
+  public synchronized boolean canShutdown() {
     try {
-      return m_serverHelper.canShutdown(m_connectCntx);
+      return serverHelper.canShutdown(connectCntx);
     } catch (Exception e) {
       return false;
     }
   }
 
-  private boolean internalIsActive() {
+  private synchronized boolean internalIsActive() {
     try {
-      return m_serverHelper.isActive(m_connectCntx);
+      return serverHelper.isActive(connectCntx);
     } catch (Exception e) {
       return false;
     }
   }
 
-  public boolean isStarted() {
-    return m_started;
+  public synchronized boolean isStarted() {
+    return started;
   }
 
   private boolean internalIsPassiveUninitialized() {
     try {
-      return m_serverHelper.isPassiveUninitialized(m_connectCntx);
+      return serverHelper.isPassiveUninitialized(connectCntx);
     } catch (Exception e) {
       return false;
     }
   }
 
-  public boolean isPassiveUninitialized() {
-    return m_passiveUninitialized;
+  public synchronized boolean isPassiveUninitialized() {
+    return passiveUninitialized;
   }
 
   private boolean internalIsPassiveStandby() {
     try {
-      return m_serverHelper.isPassiveStandby(m_connectCntx);
+      return serverHelper.isPassiveStandby(connectCntx);
     } catch (Exception e) {
       return false;
     }
   }
 
-  public boolean isPassiveStandby() {
-    return m_passiveStandby;
+  public synchronized boolean isPassiveStandby() {
+    return passiveStandby;
   }
 
-  void initConnectionMonitor() {
-    if (m_connectMonitorAction == null) {
-      m_connectMonitorAction = new ConnectionMonitorAction();
+  synchronized void initConnectionMonitor() {
+    if (connectMonitorAction == null) {
+      connectMonitorAction = new ConnectionMonitorAction();
     }
-    if (m_connectMonitorTimer == null) {
-      m_connectMonitorTimer = new Timer();
-      m_connectMonitorTimer.schedule(m_connectMonitorAction, CONNECT_MONITOR_PERIOD, CONNECT_MONITOR_PERIOD);
+    if (connectMonitorTimer == null) {
+      connectMonitorTimer = new Timer();
+      connectMonitorTimer.schedule(connectMonitorAction, CONNECT_MONITOR_PERIOD, CONNECT_MONITOR_PERIOD);
     }
   }
 
   private class ConnectionMonitorAction extends TimerTask {
     public void run() {
-      if (m_connectCntx != null && m_connectCntx.isConnected()) {
+      if (connectCntx != null && connectCntx.isConnected()) {
         try {
-          m_connectCntx.testConnection();
+          connectCntx.testConnection();
         } catch (Exception e) {
           cancelConnectionMonitor();
           setConnected(false);
@@ -469,12 +465,12 @@ public class ServerConnectionManager implements NotificationListener {
     }
   }
 
-  void cancelConnectionMonitor() {
-    if (m_connectMonitorTimer != null) {
-      m_connectMonitorTimer.cancel();
-      m_connectMonitorAction.cancel();
-      m_connectMonitorAction = null;
-      m_connectMonitorTimer = null;
+  synchronized void cancelConnectionMonitor() {
+    if (connectMonitorTimer != null) {
+      connectMonitorTimer.cancel();
+      connectMonitorAction.cancel();
+      connectMonitorAction = null;
+      connectMonitorTimer = null;
     }
   }
 
@@ -484,17 +480,19 @@ public class ServerConnectionManager implements NotificationListener {
    */
   void addActivationListener() {
     try {
-      m_connectCntx.addNotificationListener(L2MBeanNames.TC_SERVER_INFO, this);
-      if ((m_active = internalIsActive()) == true) {
-        m_connectCntx.removeNotificationListener(L2MBeanNames.TC_SERVER_INFO, this);
+      connectCntx.addNotificationListener(L2MBeanNames.TC_SERVER_INFO, this);
+      if ((active = internalIsActive()) == true) {
+        connectCntx.removeNotificationListener(L2MBeanNames.TC_SERVER_INFO, this);
       }
     } catch (Exception e) {/**/
     }
   }
 
-  void removeActivationListener() {
+  synchronized void removeActivationListener() {
     try {
-      m_connectCntx.removeNotificationListener(L2MBeanNames.TC_SERVER_INFO, this);
+      if (connectCntx != null) {
+        connectCntx.removeNotificationListener(L2MBeanNames.TC_SERVER_INFO, this);
+      }
     } catch (Exception e) {/**/
     }
   }
@@ -507,21 +505,21 @@ public class ServerConnectionManager implements NotificationListener {
       AttributeChangeNotification acn = (AttributeChangeNotification) notice;
 
       if (acn.getAttributeType().equals("jmx.terracotta.L2.active")) {
-        m_active = true;
+        active = true;
         removeActivationListener();
-        if (m_connectListener != null) {
-          m_connectListener.handleConnection();
+        if (connectListener != null) {
+          connectListener.handleConnection();
         }
       } else if (acn.getAttributeType().equals("jmx.terracotta.L2.passive-uninitialized")) {
-        m_passiveUninitialized = true;
-        if (m_connectListener != null) {
-          m_connectListener.handleConnection();
+        passiveUninitialized = true;
+        if (connectListener != null) {
+          connectListener.handleConnection();
         }
       } else if (acn.getAttributeType().equals("jmx.terracotta.L2.passive-standby")) {
-        m_passiveUninitialized = false;
-        m_passiveStandby = true;
-        if (m_connectListener != null) {
-          m_connectListener.handleConnection();
+        passiveUninitialized = false;
+        passiveStandby = true;
+        if (connectListener != null) {
+          connectListener.handleConnection();
         }
       }
     }
@@ -550,45 +548,45 @@ public class ServerConnectionManager implements NotificationListener {
   }
 
   public String getStatusString() {
-    StringBuffer sb = new StringBuffer(this.toString());
-    sb.append(":");
-    sb.append("connected=");
-    sb.append(m_connected);
-    if (m_connected) {
-      sb.append(",status=");
-      if (m_active) sb.append("active");
-      else if (m_passiveUninitialized) sb.append("passive-uninitialized");
-      else if (m_passiveStandby) sb.append("passive-standby");
-      else if (m_started) sb.append("started");
-      else sb.append("none");
+    StringBuffer sb = new StringBuffer();
+    if (connected) {
+      if (active) sb.append("Active-coordinator");
+      else if (passiveUninitialized) sb.append("Passive-uninitialized");
+      else if (passiveStandby) sb.append("Passive-standby");
+      else if (started) sb.append("Started");
+      else sb.append("unknown");
+    } else {
+      sb.append("Not connected");
     }
     return sb.toString();
   }
 
   public void dump(String prefix) {
-    System.out.println(prefix + this + ":connected=" + m_connected + ",autoConnect=" + m_autoConnect + ",started="
-                       + m_started + ",exception=" + m_connectException);
+    System.out.println(prefix + this + ":connected=" + connected + ",autoConnect=" + autoConnect + ",started="
+                       + started + ",exception=" + connectException);
   }
 
   void cancelActiveServices() {
     cancelConnectThread();
     cancelConnectionMonitor();
 
-    if (m_started) {
+    if (started) {
       removeActivationListener();
     }
-    if (m_connectCntx != null) {
-      m_connectCntx.reset();
+    if (connectCntx != null) {
+      connectCntx.reset();
     }
   }
 
   public void tearDown() {
     cancelActiveServices();
 
-    m_serverHelper = null;
-    m_connectCntx = null;
-    m_connectListener = null;
-    m_connectThread = null;
+    synchronized (this) {
+      serverHelper = null;
+      connectCntx = null;
+      connectListener = null;
+      connectThread = null;
+    }
   }
 
   public int hashCode() {

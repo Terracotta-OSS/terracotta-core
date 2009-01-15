@@ -5,40 +5,21 @@
 package com.tc.admin;
 
 import com.tc.admin.common.XTreeNode;
-import com.tc.admin.model.IServer;
 
-public interface AdminClientController {
-  void setStatus(String msg);
-
-  void clearStatus();
-
+public interface AdminClientController extends ApplicationController {
   void expand(XTreeNode node);
 
   boolean isExpanded(XTreeNode node);
 
+  void expandAll(XTreeNode node);
+  
+  boolean selectNode(XTreeNode startNode, String name);
+  
   void select(XTreeNode node);
 
   boolean isSelected(XTreeNode node);
 
-  void nodeStructureChanged(XTreeNode node);
-
-  void remove(XTreeNode node);
-
-  void nodeChanged(XTreeNode node);
-
   boolean testServerMatch(ClusterNode node);
 
-  void log(String msg);
-
-  void log(Throwable t);
-
-  void block();
-
-  void unblock();
-
   void updateServerPrefs();
-
-  void addServerLog(IServer server);
-
-  void removeServerLog(IServer server);
 }

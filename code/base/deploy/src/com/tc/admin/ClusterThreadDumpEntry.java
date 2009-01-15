@@ -4,18 +4,20 @@
  */
 package com.tc.admin;
 
+import com.tc.admin.common.ApplicationContext;
+
 import java.util.Date;
 import java.util.concurrent.Future;
 
 public class ClusterThreadDumpEntry extends ThreadDumpTreeNode {
-  private String m_text;
+  private String text;
 
-  ClusterThreadDumpEntry() {
-    super(new Date());
+  ClusterThreadDumpEntry(ApplicationContext appContext) {
+    super(appContext, new Date());
   }
 
   void add(String clientAddr, Future<String> threadDump) {
-    add(new ThreadDumpElement(clientAddr, threadDump));
+    add(new ThreadDumpElement(appContext, clientAddr, threadDump));
   }
 
   Date getTime() {
@@ -40,7 +42,7 @@ public class ClusterThreadDumpEntry extends ThreadDumpTreeNode {
   }
 
   String getContent() {
-    if (m_text != null) return m_text;
+    if (text != null) return text;
     String result;
     boolean isDone = isDone();
     if (isDone) {
@@ -60,10 +62,10 @@ public class ClusterThreadDumpEntry extends ThreadDumpTreeNode {
       }
       result = sb.toString();
     } else {
-      result = AdminClient.getContext().format("waiting");
+      result = appContext.format("waiting");
     }
     if (isDone) {
-      m_text = result;
+      text = result;
     }
     return result;
   }

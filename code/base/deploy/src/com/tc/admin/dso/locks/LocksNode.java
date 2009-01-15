@@ -4,42 +4,40 @@
  */
 package com.tc.admin.dso.locks;
 
-import com.tc.admin.AdminClient;
-import com.tc.admin.AdminClientContext;
 import com.tc.admin.ClusterNode;
-import com.tc.admin.ConnectionContext;
+import com.tc.admin.IAdminClientContext;
 import com.tc.admin.common.ComponentNode;
 import com.tc.admin.model.IClusterModel;
+import com.tc.admin.model.IServer;
 
 import javax.swing.Icon;
 
 public class LocksNode extends ComponentNode {
-  private AdminClientContext m_acc;
-  private ClusterNode        m_clusterNode;
-  private LocksPanel         m_locksPanel;
-  private String             m_baseLabel;
-  private String             m_profilingSuffix;
+  private ClusterNode clusterNode;
+  private LocksPanel  locksPanel;
+  private String      baseLabel;
+  private String      profilingSuffix;
 
-  public LocksNode(ClusterNode clusterNode) {
+  public LocksNode(IAdminClientContext adminClientContext, ClusterNode clusterNode) {
     super();
 
-    m_acc = AdminClient.getContext();
-    m_clusterNode = clusterNode;
-    setLabel(m_baseLabel = m_acc.getString("dso.locks"));
-    m_profilingSuffix = m_acc.getString("dso.locks.profiling.suffix");
-    setComponent(m_locksPanel = new LocksPanel(this));
+    this.clusterNode = clusterNode;
+    setLabel(baseLabel = adminClientContext.getString("dso.locks"));
+    profilingSuffix = adminClientContext.getString("dso.locks.profiling.suffix");
+    setComponent(locksPanel = new LocksPanel(adminClientContext, this));
   }
 
   IClusterModel getClusterModel() {
-    return m_clusterNode != null ? m_clusterNode.getClusterModel() : null;
-  }
-  
-  ConnectionContext getConnectionContext() {
-    return m_clusterNode.getConnectionContext();
+    return clusterNode != null ? clusterNode.getClusterModel() : null;
   }
 
+  IServer getActiveCoordinator() {
+    IClusterModel clusterModel = getClusterModel();
+    return clusterModel != null ? clusterModel.getActiveCoordinator() : null;
+  }
+  
   public boolean isProfiling() {
-    return m_locksPanel != null ? m_locksPanel.isProfiling() : false;
+    return locksPanel != null ? locksPanel.isProfiling() : false;
   }
 
   public Icon getIcon() {
@@ -47,13 +45,13 @@ public class LocksNode extends ComponentNode {
   }
 
   public String getBaseLabel() {
-    return m_baseLabel;
+    return baseLabel;
   }
 
   void showProfiling(boolean profiling) {
-    setLabel(m_baseLabel + (profiling ? m_profilingSuffix : ""));
+    setLabel(baseLabel + (profiling ? profilingSuffix : ""));
     notifyChanged();
-    m_clusterNode.showProfilingLocks(profiling);
+    clusterNode.showProfilingLocks(profiling);
   }
 
   void notifyChanged() {
@@ -63,9 +61,8 @@ public class LocksNode extends ComponentNode {
   public void tearDown() {
     super.tearDown();
 
-    m_acc = null;
-    m_clusterNode = null;
-    m_baseLabel = null;
-    m_locksPanel = null;
+    clusterNode = null;
+    baseLabel = null;
+    locksPanel = null;
   }
 }

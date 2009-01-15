@@ -4,64 +4,76 @@
  */
 package org.terracotta.ui.session;
 
-import org.dijon.Button;
-import org.dijon.ContainerResource;
 import org.terracotta.ui.session.pattern.PatternHelper;
 
+import com.tc.admin.common.XButton;
 import com.tc.admin.common.XContainer;
+import com.tc.admin.common.XScrollPane;
 import com.terracottatech.config.ClassExpression;
 import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.Include;
 import com.terracottatech.config.InstrumentedClasses;
 
+import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
 public class InstrumentedClassesPanel extends XContainer implements TableModelListener {
-  private DsoApplication        m_dsoApp;
-  private InstrumentedClasses   m_instrumentedClasses;
-  private RuleTable             m_ruleTable;
-  private RuleModel             m_ruleModel;
-  private Button                m_addRuleButton;
-  private ActionListener        m_addRuleListener;
-  private Button                m_removeRuleButton;
-  private ActionListener        m_removeRuleListener;
-  private Button                m_moveUpButton;
-  private ActionListener        m_moveUpListener;
-  private Button                m_moveDownButton;
-  private ActionListener        m_moveDownListener;
-  private ListSelectionListener m_rulesListener;
+  private DsoApplication        dsoApp;
+  private InstrumentedClasses   instrumentedClasses;
+  private RuleTable             ruleTable;
+  private RuleModel             ruleModel;
+  private XButton               addRuleButton;
+  private ActionListener        addRuleListener;
+  private XButton               removeRuleButton;
+  private ActionListener        removeRuleListener;
+  private XButton               moveUpButton;
+  private ActionListener        moveUpListener;
+  private XButton               moveDownButton;
+  private ActionListener        moveDownListener;
+  private ListSelectionListener rulesListener;
 
   public InstrumentedClassesPanel() {
-    super();
-  }
+    super(new BorderLayout());
 
-  public void load(ContainerResource containerRes) {
-    super.load(containerRes);
+    setBorder(BorderFactory.createTitledBorder("Instrumentation Rules"));
 
-    m_ruleTable = (RuleTable) findComponent("RuleTable");
-    m_ruleTable.setModel(m_ruleModel = new RuleModel());
-    m_rulesListener = new ListSelectionListener() {
+    ruleTable = new RuleTable();
+    ruleTable.setModel(ruleModel = new RuleModel());
+    rulesListener = new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent lse) {
         if (!lse.getValueIsAdjusting()) {
-          int sel = m_ruleTable.getSelectedRow();
-          int rowCount = m_ruleModel.size();
+          int sel = ruleTable.getSelectedRow();
+          int rowCount = ruleModel.size();
 
-          m_removeRuleButton.setEnabled(sel != -1);
-          m_moveUpButton.setEnabled(rowCount > 1 && sel > 0);
-          m_moveDownButton.setEnabled(rowCount > 1 && sel < rowCount - 1);
+          removeRuleButton.setEnabled(sel != -1);
+          moveUpButton.setEnabled(rowCount > 1 && sel > 0);
+          moveDownButton.setEnabled(rowCount > 1 && sel < rowCount - 1);
         }
       }
     };
+    add(new XScrollPane(ruleTable));
 
-    m_addRuleButton = (Button) findComponent("AddRuleButton");
-    m_addRuleListener = new ActionListener() {
+    XContainer rightPanel = new XContainer(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = gbc.gridy = 0;
+    gbc.insets = new Insets(3, 3, 3, 3);
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+
+    addRuleButton = new XButton("Add");
+    addRuleListener = new ActionListener() {
       public void actionPerformed(ActionEvent ae) {
         String include = JOptionPane.showInputDialog("Enter rule expression", "");
 
@@ -73,93 +85,108 @@ public class InstrumentedClassesPanel extends XContainer implements TableModelLi
         }
       }
     };
+    rightPanel.add(addRuleButton, gbc);
+    gbc.gridy++;
 
-    m_removeRuleButton = (Button) findComponent("RemoveRuleButton");
-    m_removeRuleListener = new ActionListener() {
+    removeRuleButton = new XButton("Remove");
+    removeRuleListener = new ActionListener() {
       public void actionPerformed(ActionEvent ae) {
-        int row = m_ruleTable.getSelectedRow();
-        m_ruleModel.removeRuleAt(row);
+        int row = ruleTable.getSelectedRow();
+        ruleModel.removeRuleAt(row);
         syncModel();
-        // m_ruleModel.fireTableDataChanged();
       }
     };
+    rightPanel.add(removeRuleButton, gbc);
+    gbc.gridy++;
 
-    m_moveUpButton = (Button) findComponent("MoveUpButton");
-    m_moveUpListener = new ActionListener() {
+    moveUpButton = new XButton();
+    moveUpButton.setIcon(new ImageIcon(getClass().getResource("/com/tc/admin/icons/view_menu.gif")));
+    moveUpButton.setToolTipText("More general");
+    moveUpListener = new ActionListener() {
       public void actionPerformed(ActionEvent ae) {
-        int newRow = m_ruleTable.moveUp();
+        int newRow = ruleTable.moveUp();
         syncModel();
-        m_ruleTable.setRowSelectionInterval(newRow, newRow);
+        ruleTable.setRowSelectionInterval(newRow, newRow);
       }
     };
+    rightPanel.add(moveUpButton, gbc);
+    gbc.gridy++;
 
-    m_moveDownButton = (Button) findComponent("MoveDownButton");
-    m_moveDownListener = new ActionListener() {
+    moveDownButton = new XButton();
+    moveDownButton.setIcon(new ImageIcon(getClass().getResource("/com/tc/admin/icons/hide_menu.gif")));
+    moveDownButton.setToolTipText("More specific");
+    moveDownListener = new ActionListener() {
       public void actionPerformed(ActionEvent ae) {
-        int newRow = m_ruleTable.moveDown();
+        int newRow = ruleTable.moveDown();
         syncModel();
-        m_ruleTable.setRowSelectionInterval(newRow, newRow);
+        ruleTable.setRowSelectionInterval(newRow, newRow);
 
       }
     };
+    rightPanel.add(moveDownButton, gbc);
+
+    add(rightPanel, BorderLayout.EAST);
   }
 
   public boolean hasAnySet() {
-    return m_instrumentedClasses != null
-           && (m_instrumentedClasses.sizeOfExcludeArray() > 0 || m_instrumentedClasses.sizeOfIncludeArray() > 0);
+    return instrumentedClasses != null
+           && (instrumentedClasses.sizeOfExcludeArray() > 0 || instrumentedClasses.sizeOfIncludeArray() > 0);
   }
 
   private InstrumentedClasses ensureInstrumentedClasses() {
-    if (m_instrumentedClasses == null) {
+    if (instrumentedClasses == null) {
       ensureXmlObject();
     }
-    return m_instrumentedClasses;
+    return instrumentedClasses;
   }
 
   public void ensureXmlObject() {
-    if (m_instrumentedClasses == null) {
+    if (instrumentedClasses == null) {
       removeListeners();
-      m_instrumentedClasses = m_dsoApp.addNewInstrumentedClasses();
+      instrumentedClasses = dsoApp.addNewInstrumentedClasses();
       updateChildren();
       addListeners();
     }
   }
 
   private void syncModel() {
-    SessionIntegratorFrame frame = (SessionIntegratorFrame) getAncestorOfClass(SessionIntegratorFrame.class);
-    frame.modelChanged();
+    SessionIntegratorFrame frame = (SessionIntegratorFrame) SwingUtilities
+        .getAncestorOfClass(SessionIntegratorFrame.class, this);
+    if (frame != null) {
+      frame.modelChanged();
+    }
   }
 
   private void addListeners() {
-    m_ruleModel.addTableModelListener(this);
-    m_ruleTable.getSelectionModel().addListSelectionListener(m_rulesListener);
-    m_addRuleButton.addActionListener(m_addRuleListener);
-    m_removeRuleButton.addActionListener(m_removeRuleListener);
-    m_moveUpButton.addActionListener(m_moveUpListener);
-    m_moveDownButton.addActionListener(m_moveDownListener);
+    ruleModel.addTableModelListener(this);
+    ruleTable.getSelectionModel().addListSelectionListener(rulesListener);
+    addRuleButton.addActionListener(addRuleListener);
+    removeRuleButton.addActionListener(removeRuleListener);
+    moveUpButton.addActionListener(moveUpListener);
+    moveDownButton.addActionListener(moveDownListener);
   }
 
   private void removeListeners() {
-    m_ruleModel.removeTableModelListener(this);
-    m_ruleTable.getSelectionModel().removeListSelectionListener(m_rulesListener);
-    m_addRuleButton.removeActionListener(m_addRuleListener);
-    m_removeRuleButton.removeActionListener(m_removeRuleListener);
-    m_moveUpButton.removeActionListener(m_moveUpListener);
-    m_moveDownButton.removeActionListener(m_moveDownListener);
+    ruleModel.removeTableModelListener(this);
+    ruleTable.getSelectionModel().removeListSelectionListener(rulesListener);
+    addRuleButton.removeActionListener(addRuleListener);
+    removeRuleButton.removeActionListener(removeRuleListener);
+    moveUpButton.removeActionListener(moveUpListener);
+    moveDownButton.removeActionListener(moveDownListener);
   }
 
   private void updateChildren() {
-    m_ruleModel.setInstrumentedClasses(m_instrumentedClasses);
+    ruleModel.setInstrumentedClasses(instrumentedClasses);
   }
 
   public void setup(DsoApplication dsoApp) {
     setEnabled(true);
-    m_moveUpButton.setEnabled(false);
-    m_moveDownButton.setEnabled(false);
+    moveUpButton.setEnabled(false);
+    moveDownButton.setEnabled(false);
     removeListeners();
 
-    m_dsoApp = dsoApp;
-    m_instrumentedClasses = m_dsoApp != null ? m_dsoApp.getInstrumentedClasses() : null;
+    this.dsoApp = dsoApp;
+    instrumentedClasses = dsoApp != null ? dsoApp.getInstrumentedClasses() : null;
 
     updateChildren();
     addListeners();
@@ -168,10 +195,10 @@ public class InstrumentedClassesPanel extends XContainer implements TableModelLi
   public void tearDown() {
     removeListeners();
 
-    m_dsoApp = null;
-    m_instrumentedClasses = null;
+    dsoApp = null;
+    instrumentedClasses = null;
 
-    m_ruleModel.clear();
+    ruleModel.clear();
 
     setEnabled(false);
   }
@@ -193,30 +220,30 @@ public class InstrumentedClassesPanel extends XContainer implements TableModelLi
   }
 
   private void internalAddInclude(String classExpr) {
-    Include include = m_instrumentedClasses.addNewInclude();
+    Include include = instrumentedClasses.addNewInclude();
     include.setClassExpression(classExpr);
     syncModel();
 
-    // int row = m_ruleModel.getRowCount();
-    // m_ruleModel.addInclude(classExpr);
-    // m_ruleModel.fireTableRowsInserted(row, row);
+    // int row = ruleModel.getRowCount();
+    // ruleModel.addInclude(classExpr);
+    // ruleModel.fireTableRowsInserted(row, row);
   }
 
   private void internalRemoveInclude(String classExpr) {
-    int count = m_ruleModel.getRowCount();
+    int count = ruleModel.getRowCount();
     Rule rule;
     String expr;
 
     for (int i = 0; i < count; i++) {
-      rule = m_ruleModel.getRuleAt(i);
+      rule = ruleModel.getRuleAt(i);
 
       if (rule.isIncludeRule()) {
         expr = ((Include) rule).getClassExpression();
 
         if (PatternHelper.getHelper().matchesClass(expr, classExpr)) {
-          m_ruleModel.removeRuleAt(i);
+          ruleModel.removeRuleAt(i);
           syncModel();
-          // m_ruleModel.fireTableRowsDeleted(i, i);
+          // ruleModel.fireTableRowsDeleted(i, i);
           break;
         }
       }
@@ -238,25 +265,25 @@ public class InstrumentedClassesPanel extends XContainer implements TableModelLi
 
   private void internalAddExclude(String expr) {
     if (expr != null && expr.length() > 0) {
-      ClassExpression classExpr = m_instrumentedClasses.addNewExclude();
+      ClassExpression classExpr = instrumentedClasses.addNewExclude();
       classExpr.setStringValue(expr);
       syncModel();
-      // m_ruleModel.addExclude(expr);
+      // ruleModel.addExclude(expr);
     }
   }
 
   private void internalRemoveExclude(String classExpr) {
-    int count = m_ruleModel.size();
+    int count = ruleModel.size();
     Rule rule;
 
     for (int i = 0; i < count; i++) {
-      rule = m_ruleModel.getRuleAt(i);
+      rule = ruleModel.getRuleAt(i);
 
       if (rule.isExcludeRule()) {
         if (PatternHelper.getHelper().matchesClass(rule.getExpression(), classExpr)) {
-          m_ruleModel.removeRuleAt(i);
+          ruleModel.removeRuleAt(i);
           syncModel();
-          // m_ruleModel.fireTableRowsDeleted(i, i);
+          // ruleModel.fireTableRowsDeleted(i, i);
           break;
         }
       }

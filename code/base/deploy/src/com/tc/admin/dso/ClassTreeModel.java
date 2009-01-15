@@ -4,12 +4,13 @@
  */
 package com.tc.admin.dso;
 
+import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.XTreeModel;
 import com.tc.stats.DSOClassInfo;
 
 public class ClassTreeModel extends XTreeModel {
-  public ClassTreeModel(DSOClassInfo[] classInfo) {
-    super(new ClassTreeRoot(classInfo));
+  public ClassTreeModel(ApplicationContext appContext, DSOClassInfo[] classInfo) {
+    super(new ClassTreeRoot(appContext.getMessage("dso.allClasses"), classInfo));
   }
 
   public void setClassInfo(DSOClassInfo[] classInfo) {

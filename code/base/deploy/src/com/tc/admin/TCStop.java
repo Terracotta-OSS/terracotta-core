@@ -27,9 +27,9 @@ import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
 
 public class TCStop {
-  private String             m_host;
-  private int                m_port;
-  private String             m_userName;
+  private String             host;
+  private int                port;
+  private String             userName;
 
   public static final String DEFAULT_HOST = "localhost";
   public static final int    DEFAULT_PORT = 9520;
@@ -89,7 +89,8 @@ public class TCStop {
       String[] servers = manager.allCurrentlyKnownServers();
 
       if (nameSpecified && !Arrays.asList(servers).contains(name)) {
-        System.err.println("The specified configuration of the Terracotta server instance '" + name + "' does not exist; exiting.");
+        System.err.println("The specified configuration of the Terracotta server instance '" + name
+                           + "' does not exist; exiting.");
         System.exit(1);
       }
 
@@ -98,9 +99,10 @@ public class TCStop {
         System.err.println("There is only one Terracotta server instance in this configuration file (" + name
                            + "); stopping it.");
       } else if (name == null && servers != null && servers.length > 1) {
-        System.err.println("There are multiple Terracotta server instances defined in this configuration file; please specify "
-                           + "which one you want to stop, using the '-n' command-line option. Available servers are:\n"
-                           + "    " + ArrayUtils.toString(servers));
+        System.err
+            .println("There are multiple Terracotta server instances defined in this configuration file; please specify "
+                     + "which one you want to stop, using the '-n' command-line option. Available servers are:\n"
+                     + "    " + ArrayUtils.toString(servers));
         System.exit(1);
       }
 
@@ -115,8 +117,8 @@ public class TCStop {
       if (arguments.length == 0) {
         host = DEFAULT_HOST;
         port = DEFAULT_PORT;
-        System.err.println("No host or port provided. Stopping the Terracotta server instance at '" + host + "', port " + port
-                           + " by default.");
+        System.err.println("No host or port provided. Stopping the Terracotta server instance at '" + host + "', port "
+                           + port + " by default.");
       } else if (arguments.length == 1) {
         host = DEFAULT_HOST;
         port = Integer.parseInt(arguments[0]);
@@ -150,17 +152,17 @@ public class TCStop {
   }
 
   public TCStop(String host, int port) {
-    m_host = host;
-    m_port = port;
+    this.host = host;
+    this.port = port;
   }
 
   public TCStop(String host, int port, String userName) {
     this(host, port);
-    m_userName = userName;
+    this.userName = userName;
   }
 
   public void stop() throws IOException {
-    JMXConnector jmxc = CommandLineBuilder.getJMXConnector(m_userName, m_host, m_port);
+    JMXConnector jmxc = CommandLineBuilder.getJMXConnector(userName, host, port);
     MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
 
     if (mbsc != null) {

@@ -4,22 +4,22 @@
  */
 package com.tc.admin;
 
+import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.model.IServer;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 public class ServerThreadDumpsPanel extends AbstractThreadDumpsPanel {
-  private ServerThreadDumpsNode m_serverThreadDumpsNode;
+  private IServer server;
 
-  public ServerThreadDumpsPanel(ServerThreadDumpsNode serverThreadDumpsNode) {
-    super();
-    m_serverThreadDumpsNode = serverThreadDumpsNode;
+  public ServerThreadDumpsPanel(ApplicationContext appContext, IServer server) {
+    super(appContext);
+    this.server = server;
   }
 
   protected Future<String> getThreadDumpText() throws Exception {
-    final IServer server = m_serverThreadDumpsNode != null ? m_serverThreadDumpsNode.getServer() : null;
-    return AdminClient.getContext().submitTask(new Callable<String>() {
+    return appContext.submitTask(new Callable<String>() {
       public String call() throws Exception {
         return server != null ? server.takeThreadDump(System.currentTimeMillis()) : "";
       }
@@ -27,11 +27,11 @@ public class ServerThreadDumpsPanel extends AbstractThreadDumpsPanel {
   }
 
   protected String getNodeName() {
-    return m_serverThreadDumpsNode.getServer().toString();
+    return server.toString();
   }
 
   public void tearDown() {
     super.tearDown();
-    m_serverThreadDumpsNode = null;
+    server = null;
   }
 }

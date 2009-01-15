@@ -4,31 +4,53 @@
  */
 package org.terracotta.ui.session;
 
-import org.dijon.ContainerResource;
-import org.dijon.TextField;
-
 import com.tc.admin.common.XContainer;
+import com.tc.admin.common.XLabel;
+import com.tc.admin.common.XTextField;
+import com.tc.util.concurrent.ThreadUtil;
 
+import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
 
+import javax.swing.BorderFactory;
 import javax.swing.JOptionPane;
 
 public class AddModuleDialog extends XContainer {
-
-  private static SessionIntegratorContext CONTEXT = SessionIntegrator.getContext();
-  private TextField                       m_nameField;
-  private TextField                       m_versionField;
+  private XTextField nameField;
+  private XTextField versionField;
 
   public AddModuleDialog() {
-    super();
-    load(CONTEXT.topRes.findComponent("ModulesDialog"));
-  }
+    super(new BorderLayout());
 
-  public void load(ContainerResource containerRes) {
-    super.load(containerRes);
-    m_nameField = (TextField) findComponent("ModuleNameField");
-    m_versionField = (TextField) findComponent("ModuleVersionField");
+    add(new XLabel("Module Declaration"), BorderLayout.NORTH);
+
+    XContainer panel = new XContainer(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = gbc.gridy = 0;
+    gbc.insets = new Insets(3, 3, 3, 3);
+
+    panel.add(new XLabel("Name"), gbc);
+    gbc.gridx++;
+
+    nameField = new XTextField();
+    nameField.setColumns(20);
+    panel.add(nameField, gbc);
+    gbc.gridx--;
+    gbc.gridy++;
+
+    panel.add(new XLabel("Version"), gbc);
+    gbc.gridx++;
+
+    versionField = new XTextField();
+    versionField.setColumns(20);
+    panel.add(versionField, gbc);
+
+    panel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
+    add(panel);
 
     addHierarchyListener(new HierarchyListener() {
       private volatile boolean working;
@@ -38,13 +60,9 @@ public class AddModuleDialog extends XContainer {
         working = true;
         new Thread() {
           public void run() {
-            try {
-              Thread.sleep(400);
-              m_nameField.requestFocusInWindow();
-              working = false;
-            } catch (Exception e) {
-              // ignore
-            }
+            ThreadUtil.reallySleep(400);
+            nameField.requestFocusInWindow();
+            working = false;
           }
         }.start();
       }
@@ -58,15 +76,15 @@ public class AddModuleDialog extends XContainer {
 
     if (option == JOptionPane.OK_OPTION) {
       String[] values = new String[2];
-      values[0] = m_nameField.getText().trim();
-      values[1] = m_versionField.getText().trim();
+      values[0] = nameField.getText().trim();
+      values[1] = versionField.getText().trim();
       if (!values[0].equals("") || !values[0].equals("")) return values;
     }
     return null;
   }
 
   private void reset() {
-    m_nameField.setText("");
-    m_versionField.setText("");
+    nameField.setText("");
+    versionField.setText("");
   }
 }

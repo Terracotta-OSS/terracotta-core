@@ -4,7 +4,9 @@
  */
 package com.tc.admin;
 
+import com.tc.admin.model.IClusterModel;
 import com.tc.admin.model.IServer;
+import com.tc.admin.model.IServerGroup;
 import com.tc.util.factory.AbstractFactory;
 
 public abstract class AbstractNodeFactory extends AbstractFactory {
@@ -15,9 +17,14 @@ public abstract class AbstractNodeFactory extends AbstractFactory {
     return (AbstractNodeFactory) getFactory(FACTORY_SERVICE_ID, STANDARD_NODE_FACTORY_CLASS);
   }
 
-  public abstract ClusterNode createClusterNode();
+  public abstract ClusterNode createClusterNode(IAdminClientContext adminClientContext);
 
-  public abstract ClusterNode createClusterNode(String host, int jmxPort, boolean autoConnect);
+  public abstract ClusterNode createClusterNode(IAdminClientContext adminClientContext, String host, int jmxPort,
+                                                boolean autoConnect);
 
-  public abstract ServerNode createServerNode(ServersNode serversNode, IServer server);
+  public abstract ServerNode createServerNode(IAdminClientContext adminClientContext, IClusterModel clusterModel,
+                                              IServer server);
+
+  public abstract ServerGroupNode createServerGroupNode(IAdminClientContext adminClientContext,
+                                                        IClusterModel clusterModel, IServerGroup serverGroup);
 }

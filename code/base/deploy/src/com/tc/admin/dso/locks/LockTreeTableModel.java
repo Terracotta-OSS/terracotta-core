@@ -4,6 +4,7 @@
  */
 package com.tc.admin.dso.locks;
 
+import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.treetable.AbstractTreeTableModel;
 import com.tc.admin.common.treetable.TreeTableModel;
 import com.tc.management.lock.stats.LockSpec;
@@ -17,35 +18,35 @@ import javax.swing.SwingConstants;
 import javax.swing.tree.TreePath;
 
 public class LockTreeTableModel extends AbstractTreeTableModel {
-  private static final String[] cNames = { "Lock", "<html>Times<br>Requested</html>", "<html>Times<br>Hopped</html>",
-      "<html>Average<br>Contenders</html>", "<html>Average<br>Acquire Time</html>",
+  private static final String[] cNames      = { "Lock", "<html>Times<br>Requested</html>",
+      "<html>Times<br>Hopped</html>", "<html>Average<br>Contenders</html>", "<html>Average<br>Acquire Time</html>",
       "<html>Average<br>Held Time</html>", "<html>Average Nested<br>Lock Depth</html>" };
-  private static final Class[]  cTypes = { TreeTableModel.class, Long.class, Long.class, Long.class, Long.class,
-      Long.class, Long.class          };
+  private static final Class[]  cTypes      = { TreeTableModel.class, Long.class, Long.class, Long.class, Long.class,
+      Long.class, Long.class               };
+  private String[]              fColumnTips;
 
   private RootLockNode          fRoot;
 
-  public LockTreeTableModel(Collection<LockSpec> lockInfos) {
-    this(new RootLockNode(lockInfos));
+  public LockTreeTableModel(ApplicationContext appContext, Collection<LockSpec> lockInfos) {
+    this(appContext, new RootLockNode(lockInfos));
   }
 
-  public LockTreeTableModel(RootLockNode root) {
+  public LockTreeTableModel(ApplicationContext appContext, RootLockNode root) {
     super(root);
     fRoot = (RootLockNode) getRoot();
+    fColumnTips = (String[]) appContext.getObject("dso.locks.column.tips");
   }
 
   public LockNode getLockNode(LockID lockID) {
     return fRoot.getLockNode(lockID);
   }
-  
+
   public TreePath getLockNodePath(LockID lockID) {
     LockNode lockNode = getLockNode(lockID);
-    if(lockNode != null) {
-      return new TreePath(new Object[]{fRoot, lockNode});
-    }
+    if (lockNode != null) { return new TreePath(new Object[] { fRoot, lockNode }); }
     return null;
   }
-  
+
   public void notifyChanged() {
     fireTreeStructureChanged(this, new TreePath[] { new TreePath(fRoot) }, null, null);
   }
@@ -87,6 +88,10 @@ public class LockTreeTableModel extends AbstractTreeTableModel {
 
   public Class getColumnClass(int column) {
     return cTypes[column];
+  }
+
+  public String getColumnTip(int column) {
+    return fColumnTips[column];
   }
 
   public Object getValueAt(Object node, int column) {

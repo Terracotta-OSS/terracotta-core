@@ -4,8 +4,6 @@
  */
 package com.tc.admin.common;
 
-import com.tc.admin.AdminClient;
-
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -43,7 +41,7 @@ public class MBeanServerInvocationProxy extends MBeanServerInvocationHandler {
 
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     if (reportViolators && SwingUtilities.isEventDispatchThread()) {
-      AdminClient.getContext().log(new Exception("MBean invoked in Swing event dispatch thread"));
+      new Exception("MBean invoked in Swing event dispatch thread").printStackTrace();
     }
     return super.invoke(proxy, method, args);
   }

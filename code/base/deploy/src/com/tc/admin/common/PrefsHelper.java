@@ -7,10 +7,10 @@ package com.tc.admin.common;
 import java.util.prefs.Preferences;
 
 public class PrefsHelper {
-  private static PrefsHelper m_helper = new PrefsHelper();
+  private static final PrefsHelper helper = new PrefsHelper();
 
   public static PrefsHelper getHelper() {
-    return m_helper;
+    return helper;
   }
 
   public Preferences userNodeFor(Object object) {
@@ -26,7 +26,6 @@ public class PrefsHelper {
     try {
       return prefs.keys();
     } catch (Exception e) {
-      e.printStackTrace();
       return new String[] {};
     }
   }
@@ -35,7 +34,6 @@ public class PrefsHelper {
     try {
       return prefs.childrenNames();
     } catch (Exception e) {
-      e.printStackTrace();
       return new String[] {};
     }
   }
@@ -56,10 +54,8 @@ public class PrefsHelper {
 
   public void clearChildren(Preferences prefs) {
     try {
-      String[] names = prefs.childrenNames();
-
-      for (int i = 0; i < names.length; i++) {
-        prefs.node(names[i]).removeNode();
+      for (String name : prefs.childrenNames()) {
+        prefs.node(name).removeNode();
       }
     } catch (Exception e) {/**/
     }

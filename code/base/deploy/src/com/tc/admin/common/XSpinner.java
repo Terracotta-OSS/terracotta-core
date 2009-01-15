@@ -4,23 +4,22 @@
  */
 package com.tc.admin.common;
 
-import org.dijon.Spinner;
-
 import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
+import javax.swing.JSpinner;
 
-public class XSpinner extends Spinner {
-  protected XPopupListener m_popupListener;
+public class XSpinner extends JSpinner {
+  protected XPopupListener popupListener;
 
   public XSpinner() {
     super();
-    m_popupListener = new XPopupListener(this);
+    popupListener = new XPopupListener(this);
     setPopupMenu(createPopup());
   }
 
   public void setEditor(JComponent editor) {
     super.setEditor(editor);
-    m_popupListener.setTarget(editor);
+    popupListener.setTarget(editor);
   }
 
   protected JPopupMenu createPopup() {
@@ -28,10 +27,10 @@ public class XSpinner extends Spinner {
   }
 
   public void setPopupMenu(JPopupMenu popupMenu) {
-    m_popupListener.setPopupMenu(popupMenu);
+    popupListener.setPopupMenu(popupMenu);
   }
 
   public JPopupMenu getPopupMenu() {
-    return m_popupListener.getPopupMenu();
+    return popupListener.getPopupMenu();
   }
 }

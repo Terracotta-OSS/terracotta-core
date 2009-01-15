@@ -32,7 +32,9 @@ public class AdminClientBundle extends ListResourceBundle {
         { "recording.stats.profiling.locks.msg",
             "<html>There is an active statistic recording session<br>and lock profiling is currently enabled.  {0}</html>" },
         { "sessions", "Sessions" },
-        { "title", "Terracotta Administrator Console" },
+        { "title", "Terracotta Developer Console" },
+        { "messages", "Messages" },
+        { "all.nodes", "All Nodes" },
         { "new.cluster.action.label", "New Cluster" },
         { "quit.action.label", "Quit" },
         { "connect.title", "Connect to JMX Server" },
@@ -64,7 +66,11 @@ public class AdminClientBundle extends ListResourceBundle {
                 + "the event of a full cluster restart data is preserved and clients may rejoin the cluster, change "
                 + "the configured persistence mode to <code>permanent-store</code> and restart:</html>" },
         { "dso", "DSO" },
-        { "dso.roots", "Cluster objects" },
+        { "dso.roots", "Object browser" },
+        { "dso.heap", "Clustered heap" },
+        { "dso.diagnostics", "Diagnostics" },
+        { "cluster.topology", "Topology" },
+        { "dso.runtime.stats", "Runtime statistics" },
         { "dso.roots.suffix.singular", "root" },
         { "dso.roots.suffix.plural", "roots" },
         { "dso.client.roots", "Client objects" },
@@ -89,7 +95,7 @@ public class AdminClientBundle extends ListResourceBundle {
         { "dso.roots.refreshing", "Refreshing roots..." },
         { "dso.deadlocks.detect", "Detect deadlocks" },
         { "dso.deadlocks.detecting", "Detecting deadlocks..." },
-        { "dso.classes", "Classes" },
+        { "dso.classes", "Instance counts" },
         { "dso.allClasses", "All classes" },
         { "dso.classes.refreshing", "Refreshing classes..." },
         { "dso.classes.className", "Class" },
@@ -108,6 +114,7 @@ public class AdminClientBundle extends ListResourceBundle {
         { "client.thread.dumps", "Client thread dumps" },
         { "clients", "Clients" },
         { "servers", "Servers" },
+        { "server-groups", "Server groups" },
         { "dso.client.retrieving", "Retrieving new DSO client..." },
         { "dso.client.new", "Added new DSO client: " },
         { "dso.client.detaching", "Detaching DSO client..." },
@@ -117,7 +124,7 @@ public class AdminClientBundle extends ListResourceBundle {
         { "dso.client.channelID", "ChannelID" },
         { "dso.client.liveObjectCount", "Live objects" },
         { "liveObjectCount.tip", "<html>Number of managed objects currently resident,<br>excluding literals</html>" },
-        { "dso.gcstats", "Distributed garbage collection" },
+        { "dso.gcstats", "Garbage collection" },
         { "dso.gcstats.overview.pending", "Getting DGC settings: please wait..." },
         { "dso.gcstats.overview.enabled", "DGC is configured to run: every {0} seconds ({1} minutes)." },
         { "dso.gcstats.overview.disabled", "DGC is disabled in this server array instance's configuration." },
@@ -145,8 +152,8 @@ public class AdminClientBundle extends ListResourceBundle {
         { "file.menu.label", "File" },
         { "tools.menu.label", "Tools" },
         { "help.menu.label", "Help" },
-        { "help.item.label", "AdminConsole Help..." },
-        { "about.action.label", "About Terracotta Console" },
+        { "help.item.label", "DevCenter Help..." },
+        { "about.action.label", "About Terracotta Developer Console" },
         { "update-checker.control.label", "Check For Updates" },
         { "update-checker.action.label", "Update Checker..." },
         { "update-checker.connect.failed.msg", "Unable to connect to update site." },
@@ -161,7 +168,7 @@ public class AdminClientBundle extends ListResourceBundle {
             "version.check.message",
             "<html><h3>Version mismatch for {0}.</h3><br>"
                 + "<table border=0 cellspacing=1><tr><td align=right><b>Terracotta Server instance Version:</b></td><td>{1}"
-                + "</tr><tr><td align=right><b>AdminConsole Version:</b</td><td>{2}"
+                + "</tr><tr><td align=right><b>Developer Console Version:</b</td><td>{2}"
                 + "</td></tr></table><h3>Continue?</h3></html>" },
         { "cpu.usage", "Host CPU" },
         { "object.flush.rate", "Object Flush Rate" },
@@ -175,9 +182,8 @@ public class AdminClientBundle extends ListResourceBundle {
         { "resident.object.message",
             "<html><span style='color:#C0C0C0'>Greyed-out</span> items not resident in this client" },
         { "thread.dump.timeout.msg", "Timed-out after {0} seconds." }, { "roots.inspect.show", "Show..." },
-        { "thread.dump.export.as.text", "Export As Text..." },
-        { "thread.dump.take", "Take Thread Dump" },
-        { "export.all.thread.dumps.dialog.title", "Export All Thread Dumps"},
-        { "export.thread.dump.as.text.dialog.title", "Export Thread Dump As Text"} };
+        { "thread.dump.export.as.text", "Export As Text..." }, { "thread.dump.take", "Take Thread Dump" },
+        { "export.all.thread.dumps.dialog.title", "Export All Thread Dumps" },
+        { "export.thread.dump.as.text.dialog.title", "Export Thread Dump As Text" } };
   }
 }

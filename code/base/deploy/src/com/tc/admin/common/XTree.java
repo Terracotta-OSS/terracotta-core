@@ -4,25 +4,33 @@
  */
 package com.tc.admin.common;
 
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.Enumeration;
 
 import javax.swing.Action;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JPopupMenu;
+import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
+import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeModelListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.plaf.TreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
-public class XTree extends org.dijon.Tree {
-  protected JPopupMenu m_popupMenu;
+public class XTree extends JTree implements TreeModelListener {
+  protected JPopupMenu popupMenu;
 
   public XTree() {
     super();
@@ -30,6 +38,7 @@ public class XTree extends org.dijon.Tree {
     setShowsRootHandles(true);
     setRootVisible(false);
     setCellRenderer(new XTreeCellRendererDelegate());
+    setVisibleRowCount(5);
 
     MouseListener ml = new MouseAdapter() {
       public void mousePressed(MouseEvent e) {
@@ -52,8 +61,8 @@ public class XTree extends org.dijon.Tree {
           XTreeNode node = comp instanceof XTreeNode ? (XTreeNode) comp : null;
           JPopupMenu menu = null;
 
-          if(node != null) menu = node.getPopupMenu();
-          if(menu == null) menu = XTree.this.getPopupMenu();
+          if (node != null) menu = node.getPopupMenu();
+          if (menu == null) menu = XTree.this.getPopupMenu();
           if (menu != null) {
             menu.show(XTree.this, me.getX(), me.getY());
           }
@@ -69,7 +78,7 @@ public class XTree extends org.dijon.Tree {
             ((XTreeNode) comp).nodeClicked(me);
           }
         }
-     }
+      }
     };
     addMouseListener(ml);
 
@@ -94,12 +103,12 @@ public class XTree extends org.dijon.Tree {
 
   public void setPopupMenu(JPopupMenu popupMenu) {
     if (popupMenu != null) {
-      add(m_popupMenu = popupMenu);
+      add(this.popupMenu = popupMenu);
     }
   }
 
   public JPopupMenu getPopupMenu() {
-    return m_popupMenu;
+    return popupMenu;
   }
 
   private Action getAction(KeyStroke ks) {
@@ -127,6 +136,7 @@ public class XTree extends org.dijon.Tree {
     return null;
   }
 
+  @Override
   protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
     Action action = getAction(ks);
 
@@ -137,9 +147,17 @@ public class XTree extends org.dijon.Tree {
     }
   }
 
+  @Override
   public void setModel(TreeModel model) {
+    TreeModel oldModel = getModel();
+    if (oldModel != null) {
+      oldModel.removeTreeModelListener(this);
+    }
     super.setModel(model);
-    selectTop();
+    if (model != null) {
+      model.addTreeModelListener(this);
+      selectTop();
+    }
   }
 
   public void selectTop() {
@@ -154,22 +172,92 @@ public class XTree extends org.dijon.Tree {
   }
 
   public void expandAll() {
-    DefaultMutableTreeNode root = (DefaultMutableTreeNode) getModel().getRoot();
-    DefaultMutableTreeNode node = root.getFirstLeaf();
-    DefaultMutableTreeNode parent;
-
-    while (node != null) {
-      parent = (DefaultMutableTreeNode) node.getParent();
-      if (parent != null) {
-        expandPath(new TreePath(parent.getPath()));
-      }
-      node = node.getNextLeaf();
+    int row = 0;
+    while (row < getRowCount()) {
+      expandRow(row);
+      row++;
     }
-
-    revalidate();
-    repaint();
+  }
+  
+  public Dimension getMaxItemSize() {
+    Dimension result = new Dimension();
+    DefaultMutableTreeNode root = (DefaultMutableTreeNode) getModel().getRoot();
+    Enumeration e = root.preorderEnumeration();
+    while (e.hasMoreElements()) {
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode) e.nextElement();
+      Component comp = getRendererComponent(new TreePath(node.getPath()));
+      if (comp != null) {
+        Dimension d = comp.getPreferredSize();
+        result.width = Math.max(result.width, d.width);
+        result.height = Math.max(result.height, d.height);
+      }
+    }
+    return result;
   }
 
-  public void createOverlayListener() {/**/
+  public Component getRendererComponent(TreePath path) {
+    if (isVisible(path)) {
+      TreeCellRenderer r = getCellRenderer();
+      if (r == null) { return null; }
+      TreeUI treeUI = getUI();
+      if (treeUI != null) {
+        Object obj = path.getLastPathComponent();
+        int row = treeUI.getRowForPath(this, path);
+        boolean selected = false;
+        boolean expanded = true;
+        boolean hasFocus = false;
+        return r.getTreeCellRendererComponent(this, obj, selected, expanded, getModel().isLeaf(obj), row, hasFocus);
+      }
+    }
+    return null;
+  }
+
+  public void createOverlayListener() {
+    /**/
+  }
+
+  public void treeNodesChanged(TreeModelEvent e) {
+    /**/
+  }
+
+  public void treeNodesInserted(TreeModelEvent e) {
+    /**/
+  }
+
+  public void treeNodesRemoved(TreeModelEvent e) {
+    if (e == null) return;
+
+    TreePath parentPath = e.getTreePath();
+    XTreeNode parentNode = (XTreeNode) parentPath.getLastPathComponent();
+    Object[] children = e.getChildren();
+
+    if (children == null) return;
+
+    TreePath selPath = getSelectionPath();
+    int[] indices = e.getChildIndices();
+
+    for (int i = 0; i < children.length; i++) {
+      XTreeNode node = (XTreeNode) children[i];
+      int index = indices[i];
+      TreePath nodePath = parentPath.pathByAddingChild(node);
+
+      if (nodePath.isDescendant(selPath)) {
+        int count = parentNode.getChildCount();
+
+        if (count > 0) {
+          node = (XTreeNode) parentNode.getChildAt(index < count ? index : count - 1);
+        } else {
+          node = parentNode;
+        }
+
+        setSelectionPath(new TreePath(node.getPath()));
+
+        ((XTreeNode) children[i]).tearDown();
+      }
+    }
+  }
+
+  public void treeStructureChanged(TreeModelEvent e) {
+    /**/
   }
 }

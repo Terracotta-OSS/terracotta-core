@@ -4,18 +4,16 @@
  */
 package com.tc.admin.dso;
 
-import com.tc.admin.AdminClient;
 import com.tc.admin.common.XRootNode;
 import com.tc.stats.DSOClassInfo;
 
 public class ClassTreeRoot extends XRootNode implements ClassTreeNode {
-  private Integer             instanceCount;
+  private Integer      instanceCount;
+  private final String baseLabel;
 
-  private static final String NAME = AdminClient.getContext().getMessage("dso.allClasses");
-
-  ClassTreeRoot(DSOClassInfo[] classInfo) {
+  ClassTreeRoot(String baseLabel, DSOClassInfo[] classInfo) {
     super();
-
+    this.baseLabel = baseLabel;
     if (classInfo != null) {
       setClassInfo(classInfo);
     }
@@ -47,7 +45,7 @@ public class ClassTreeRoot extends XRootNode implements ClassTreeNode {
   }
 
   public String getName() {
-    return NAME;
+    return baseLabel;
   }
 
   public String getFullName() {

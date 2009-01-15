@@ -4,22 +4,17 @@
  */
 package com.tc.admin;
 
-import org.apache.commons.httpclient.auth.AuthScope;
-
-import com.tc.admin.common.ComponentNode;
 import com.tc.admin.common.XAbstractAction;
-import com.tc.admin.dso.ClassesNode;
-import com.tc.admin.dso.ClientsNode;
-import com.tc.admin.dso.GCStatsNode;
-import com.tc.admin.dso.RootsNode;
-import com.tc.admin.dso.locks.LocksNode;
+import com.tc.admin.common.XTreeNode;
+import com.tc.admin.dso.ClusteredHeapNode;
+import com.tc.admin.dso.DiagnosticsNode;
 import com.tc.admin.model.ClusterModel;
 import com.tc.admin.model.IClusterModel;
 import com.tc.admin.model.IClusterNode;
+import com.tc.admin.model.IClusterStatsListener;
+import com.tc.admin.model.IProductVersion;
 import com.tc.admin.model.IServer;
-import com.tc.admin.model.ProductVersion;
-import com.tc.admin.model.Server;
-import com.tc.statistics.beans.StatisticsLocalGathererMBean;
+import com.tc.statistics.retrieval.actions.SRAThreadDump;
 
 import java.awt.Color;
 import java.awt.Frame;
@@ -28,6 +23,7 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -36,6 +32,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.prefs.PreferenceChangeEvent;
+import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
 
 import javax.management.remote.JMXConnector;
@@ -48,280 +46,220 @@ import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
-public class ClusterNode extends ComponentNode implements ConnectionListener {
-  private AdminClientContext  m_acc;
-  private ClusterModel        m_clusterModel;
-  private ClusterPanel        m_clusterPanel;
-  private ConnectDialog       m_connectDialog;
-  private JDialog             m_versionMismatchDialog;
-  private AtomicBoolean       m_versionCheckOccurred;
-  private JPopupMenu          m_popupMenu;
-  private ConnectAction       m_connectAction;
-  private DisconnectAction    m_disconnectAction;
-  private DeleteAction        m_deleteAction;
-  private AutoConnectAction   m_autoConnectAction;
-  private JCheckBoxMenuItem   m_autoConnectMenuItem;
+public class ClusterNode extends ClusterElementNode implements ConnectionListener, ClusterThreadDumpProvider,
+    IClusterStatsListener, PropertyChangeListener, PreferenceChangeListener {
+  protected IAdminClientContext adminClientContext;
+  private ClusterModel          clusterModel;
+  private ClusterPanel          clusterPanel;
+  private ConnectDialog         connectDialog;
+  private JDialog               versionMismatchDialog;
+  private AtomicBoolean         versionCheckOccurred;
+  private JPopupMenu            popupMenu;
+  private ConnectAction         connectAction;
+  private DisconnectAction      disconnectAction;
+  private DeleteAction          deleteAction;
+  private AutoConnectAction     autoConnectAction;
+  private JCheckBoxMenuItem     autoConnectMenuItem;
 
-  private LocksNode           m_locksNode;
-  private ClientsNode         m_clientsNode;
-  private StatsRecorderNode   m_statsRecorderNode;
+  private boolean               isRecordingClusterStats;
+  private boolean               isProfilingLocks;
 
-  private static final String CONNECT_ACTION      = "Connect";
-  private static final String DISCONNECT_ACTION   = "Disconnect";
-  private static final String DELETE_ACTION       = "Delete";
-  private static final String AUTO_CONNECT_ACTION = "AutoConnect";
+  private static final String   CONNECT_ACTION      = "Connect";
+  private static final String   DISCONNECT_ACTION   = "Disconnect";
+  private static final String   DELETE_ACTION       = "Delete";
+  private static final String   AUTO_CONNECT_ACTION = "AutoConnect";
 
-  private static final String HOST                = ServersHelper.HOST;
-  private static final String PORT                = ServersHelper.PORT;
-  private static final String AUTO_CONNECT        = ServersHelper.AUTO_CONNECT;
+  private static final String   HOST                = ServersHelper.HOST;
+  private static final String   PORT                = ServersHelper.PORT;
+  private static final String   AUTO_CONNECT        = ServersHelper.AUTO_CONNECT;
 
-  ClusterNode() {
-    this(ConnectionContext.DEFAULT_HOST, ConnectionContext.DEFAULT_PORT, ConnectionContext.DEFAULT_AUTO_CONNECT);
+  ClusterNode(IAdminClientContext adminClientContext) {
+    this(adminClientContext, ConnectionContext.DEFAULT_HOST, ConnectionContext.DEFAULT_PORT,
+         ConnectionContext.DEFAULT_AUTO_CONNECT);
   }
 
-  ClusterNode(final String host, final int jmxPort, final boolean autoConnect) {
-    super();
+  ClusterNode(IAdminClientContext adminClientContext, final String host, final int jmxPort, final boolean autoConnect) {
+    super(new ClusterModel(host, jmxPort, autoConnect));
 
-    m_acc = AdminClient.getContext();
-    m_clusterModel = new ClusterModel(host, jmxPort, autoConnect);
+    this.adminClientContext = adminClientContext;
+    clusterModel = (ClusterModel) getClusterElement();
+    clusterModel.setName("My cluster");
 
-    setLabel(m_acc.getString("cluster.node.label"));
+    setLabel(adminClientContext.getString("cluster.node.label"));
     initMenu(autoConnect);
-    setComponent(m_clusterPanel = createClusterPanel());
+    setComponent(clusterPanel = createClusterPanel());
     setIcon(ServersHelper.getHelper().getServerIcon());
-    m_clusterModel.addPropertyChangeListener(new ClusterPropertyChangeListener());
-    m_versionCheckOccurred = new AtomicBoolean(false);
+    clusterModel.addPropertyChangeListener(new ClusterListener(clusterModel));
+    versionCheckOccurred = new AtomicBoolean(false);
+
+    Preferences prefs = adminClientContext.getPrefs().node("RuntimeStats");
+    prefs.addPreferenceChangeListener(this);
   }
 
-  public IClusterModel getClusterModel() {
-    return m_clusterModel;
+  public synchronized IClusterModel getClusterModel() {
+    return clusterModel;
+  }
+
+  public synchronized IServer getActiveCoordinator() {
+    IClusterModel theClusterModel = getClusterModel();
+    return theClusterModel != null ? theClusterModel.getActiveCoordinator() : null;
   }
 
   boolean isDBBackupSupported() {
-    return getClusterModel().isDBBackupSupported();
+    IServer activeCoord = getActiveCoordinator();
+    return activeCoord != null ? activeCoord.isDBBackupSupported() : false;
   }
 
-  public IServer[] getClusterServers() throws Exception {
-    return m_clusterModel.getClusterServers();
-  }
-
-  private class ClusterPropertyChangeRunnable implements Runnable {
-    PropertyChangeEvent m_pce;
-
-    ClusterPropertyChangeRunnable(PropertyChangeEvent pce) {
-      m_pce = pce;
+  private class ClusterListener extends AbstractClusterListener {
+    private ClusterListener(IClusterModel clusterModel) {
+      super(clusterModel);
     }
 
-    public void run() {
-      String prop = m_pce.getPropertyName();
-      if (IServer.PROP_CONNECTED.equals(prop)) {
-        if (m_clusterModel.isConnected()) {
-          handleConnected();
-        } else {
-          m_acc.removeServerLog(m_clusterModel);
+    public void handleActiveCoordinator(IServer oldActive, IServer newActive) {
+      if (oldActive != null) {
+        oldActive.removeClusterStatsListener(ClusterNode.this);
+        oldActive.removePropertyChangeListener(ClusterNode.this);
+      }
+      if (newActive != null) {
+        if (newActive.isClusterStatsSupported()) {
+          newActive.addClusterStatsListener(ClusterNode.this);
         }
-      } else if (IClusterNode.PROP_READY.equals(prop)) {
-        handleReady();
-      } else if (IServer.PROP_CONNECT_ERROR.equals(prop)) {
-        handleConnectError();
-      } else if (IClusterModel.PROP_ACTIVE_SERVER.equals(prop)) {
-        handleActiveServer();
+        newActive.addPropertyChangeListener(ClusterNode.this);
       }
     }
-  }
 
-  private class ClusterPropertyChangeListener implements PropertyChangeListener {
-    public void propertyChange(PropertyChangeEvent evt) {
-      Runnable r = new ClusterPropertyChangeRunnable(evt);
-      if (SwingUtilities.isEventDispatchThread()) {
-        r.run();
+    protected void handleConnected() {
+      if (clusterModel.isConnected()) {
+        connectAction.setEnabled(false);
       } else {
-        SwingUtilities.invokeLater(r);
+        if (versionMismatchDialog != null) {
+          versionMismatchDialog.setVisible(false);
+        }
+        handleDisconnect();
+        if (clusterModel.hasConnectError()) {
+          reportConnectError(clusterModel.getConnectError());
+        }
       }
     }
+
+    protected void handleReady() {
+      if (clusterModel.isReady()) {
+        if (adminClientContext == null) return;
+        if (!testCheckServerVersion()) {
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              if (clusterModel.isConnected()) {
+                disconnect();
+              }
+            }
+          });
+          return;
+        }
+        handleActivation();
+        clusterPanel.reinitialize();
+        nodeChanged();
+        connectAction.setEnabled(false);
+        disconnectAction.setEnabled(true);
+        adminClientContext.getAdminClientController().unblock();
+        adminClientContext.getAdminClientController().setStatus("Ready");
+      } else {
+        adminClientContext.getAdminClientController().setStatus("Not ready");
+        adminClientContext.getAdminClientController().block();
+      }
+    }
+
   }
 
   private boolean testCheckServerVersion() {
-    if (m_versionCheckOccurred.getAndSet(true)) { return true; }
-    return m_acc.testServerMatch(this);
-  }
-
-  private void handleConnected() {
-    if (m_acc == null) return;
-    if (!testCheckServerVersion()) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          if (m_clusterModel.isConnected()) {
-            disconnect();
-          }
-        }
-      });
-      return;
-    }
-    if (isActive()) {
-      handleActivation();
-    } else if (isPassiveStandby()) {
-      handlePassiveStandby();
-    } else if (isPassiveUninitialized()) {
-      handlePassiveUninitialized();
-    } else if (isStarted()) {
-      handleStarting();
-    }
-
-    m_connectAction.setEnabled(false);
-    m_disconnectAction.setEnabled(true);
-  }
-
-  private void handleDisconnected() {
-    if (m_versionMismatchDialog != null) {
-      m_versionMismatchDialog.setVisible(false);
-    }
-    handleDisconnect();
-  }
-
-  private void handleReady() {
-    if (m_clusterModel.isReady()) {
-      handleConnected();
-    }
-  }
-
-  private void handleActiveServer() {
-    IServer activeServer = m_clusterModel.getActiveServer();
-    if (activeServer != null) {
-      handleNewActive();
-    } else {
-      handleDisconnected();
-    }
-  }
-
-  private void handleConnectError() {
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        reportConnectError();
-      }
-    });
+    if (versionCheckOccurred.getAndSet(true)) { return true; }
+    return adminClientContext.getAdminClientController().testServerMatch(this);
   }
 
   protected ClusterPanel createClusterPanel() {
-    return new ClusterPanel(this);
-  }
-
-  void handleNewActive() {
-    handleActivation();
-    m_acc.addServerLog(m_clusterModel);
-    m_clusterPanel.reinitialize();
-    m_acc.nodeChanged(this);
+    return new ClusterPanel(adminClientContext, this);
   }
 
   String[] getConnectionCredentials() {
-    return m_clusterModel.getConnectionCredentials();
+    return clusterModel.getConnectionCredentials();
   }
 
   Map<String, Object> getConnectionEnvironment() {
-    return m_clusterModel.getConnectionEnvironment();
-  }
-
-  public ConnectionContext getConnectionContext() {
-    return m_clusterModel.getConnectionContext();
+    return clusterModel.getConnectionEnvironment();
   }
 
   void setHost(String host) {
-    m_clusterModel.setHost(host);
+    clusterModel.setHost(host);
   }
 
   String getHost() {
-    return m_clusterModel.getHost();
+    return clusterModel.getHost();
   }
 
   void setPort(int port) {
-    m_clusterModel.setPort(port);
+    clusterModel.setPort(port);
   }
 
   int getPort() {
-    return m_clusterModel.getPort();
+    return clusterModel.getPort();
   }
 
   boolean isAutoConnect() {
-    return m_clusterModel.isAutoConnect();
+    return clusterModel.isAutoConnect();
   }
 
   void setAutoConnect(boolean autoConnect) {
-    m_clusterModel.setAutoConnect(autoConnect);
-  }
-
-  Integer getDSOListenPort() throws Exception {
-    return m_clusterModel.getDSOListenPort();
-  }
-
-  String getStatsExportServletURI() throws Exception {
-    return m_clusterModel.getStatsExportServletURI();
-  }
-
-  AuthScope getAuthScope() throws Exception {
-    return new AuthScope(getHost(), getDSOListenPort());
+    if (autoConnect && !clusterModel.isConnected()) {
+      clusterModel.connect();
+    }
+    clusterModel.setAutoConnect(autoConnect);
+    adminClientContext.getAdminClientController().updateServerPrefs();
   }
 
   private void initMenu(boolean autoConnect) {
-    m_popupMenu = new JPopupMenu("Server Actions");
+    popupMenu = new JPopupMenu("Server Actions");
 
-    m_connectAction = new ConnectAction();
-    m_disconnectAction = new DisconnectAction();
-    m_deleteAction = new DeleteAction();
-    m_autoConnectAction = new AutoConnectAction();
+    connectAction = new ConnectAction();
+    disconnectAction = new DisconnectAction();
+    deleteAction = new DeleteAction();
+    autoConnectAction = new AutoConnectAction();
 
-    addActionBinding(CONNECT_ACTION, m_connectAction);
-    addActionBinding(DISCONNECT_ACTION, m_disconnectAction);
-    addActionBinding(DELETE_ACTION, m_deleteAction);
-    addActionBinding(AUTO_CONNECT_ACTION, m_autoConnectAction);
+    addActionBinding(CONNECT_ACTION, connectAction);
+    addActionBinding(DISCONNECT_ACTION, disconnectAction);
+    addActionBinding(DELETE_ACTION, deleteAction);
+    addActionBinding(AUTO_CONNECT_ACTION, autoConnectAction);
 
-    m_popupMenu.add(m_connectAction);
-    m_popupMenu.add(m_disconnectAction);
-    m_popupMenu.add(new JSeparator());
-    m_popupMenu.add(m_deleteAction);
-    m_popupMenu.add(new JSeparator());
+    popupMenu.add(connectAction);
+    popupMenu.add(disconnectAction);
+    popupMenu.add(new JSeparator());
+    popupMenu.add(deleteAction);
+    popupMenu.add(new JSeparator());
 
-    m_popupMenu.add(m_autoConnectMenuItem = new JCheckBoxMenuItem(m_autoConnectAction));
-    m_autoConnectMenuItem.setSelected(autoConnect);
+    popupMenu.add(autoConnectMenuItem = new JCheckBoxMenuItem(autoConnectAction));
+    autoConnectMenuItem.setSelected(autoConnect);
   }
 
   void setVersionMismatchDialog(JDialog dialog) {
-    m_versionMismatchDialog = dialog;
+    versionMismatchDialog = dialog;
   }
 
   boolean isConnected() {
-    return m_clusterModel.isConnected();
+    return clusterModel.isConnected();
   }
 
-  boolean isStarted() {
-    return m_clusterModel.isStarted();
-  }
-
-  boolean isActive() {
-    return m_clusterModel.isActive();
-  }
-
-  boolean isPassiveUninitialized() {
-    return m_clusterModel.isPassiveUninitialized();
-  }
-
-  boolean isPassiveStandby() {
-    return m_clusterModel.isPassiveStandby();
-  }
-
-  boolean hasConnectionException() {
-    return m_clusterModel.hasConnectError();
+  boolean isReady() {
+    return clusterModel.isReady();
   }
 
   ConnectDialog getConnectDialog(ConnectionListener listener) {
-    if (m_connectDialog == null) {
-      Frame frame = (Frame) m_clusterPanel.getAncestorOfClass(java.awt.Frame.class);
-      m_connectDialog = new ConnectDialog(frame, m_clusterModel, listener);
+    if (connectDialog == null) {
+      Frame frame = (Frame) SwingUtilities.getAncestorOfClass(Frame.class, clusterPanel);
+      connectDialog = new ConnectDialog(adminClientContext, frame, clusterModel, listener);
     } else {
-      m_connectDialog.setServer(m_clusterModel);
-      m_connectDialog.setConnectionListener(listener);
+      connectDialog.setClusterModel(clusterModel);
+      connectDialog.setConnectionListener(listener);
     }
 
-    return m_connectDialog;
+    return connectDialog;
   }
 
   /**
@@ -329,16 +267,17 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
    */
   void connect() {
     try {
+      clusterModel.connect();
       beginConnect();
     } catch (Exception e) {
-      m_acc.log(e);
+      adminClientContext.log(e);
     }
   }
 
   private void beginConnect() throws Exception {
     ConnectDialog cd = getConnectDialog(this);
-    m_clusterModel.refreshCachedCredentials();
-    cd.center((Frame) m_clusterPanel.getAncestorOfClass(java.awt.Frame.class));
+    clusterModel.refreshCachedCredentials();
+    cd.center();
     cd.setVisible(true);
   }
 
@@ -347,10 +286,10 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
    */
   public void handleConnection() {
     JMXConnector jmxc;
-    if ((jmxc = m_connectDialog.getConnector()) != null) {
+    if ((jmxc = connectDialog.getConnector()) != null) {
       try {
-        m_clusterModel.setJMXConnector(jmxc);
-        m_clusterModel.refreshCachedCredentials();
+        clusterModel.setJMXConnector(jmxc);
+        clusterModel.refreshCachedCredentials();
       } catch (IOException ioe) {
         reportConnectError(ioe);
       }
@@ -361,32 +300,28 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
    * Messaged by ConnectDialog.
    */
   public void handleException() {
-    Exception e = m_connectDialog.getError();
+    Exception e = connectDialog.getError();
     if (e != null) {
       reportConnectError(e);
     }
   }
 
-  private void reportConnectError() {
-    reportConnectError(m_clusterModel.getConnectError());
-  }
-
   private void reportConnectError(Exception error) {
-    String msg = Server.getConnectErrorMessage(error, m_clusterModel);
+    String msg = clusterModel.getConnectErrorMessage(error);
 
-    if (msg != null && m_clusterPanel != null) {
+    if (msg != null && clusterPanel != null) {
       boolean autoConnect = isAutoConnect();
       if (autoConnect && error instanceof SecurityException) {
         setAutoConnect(autoConnect = false);
-        m_autoConnectMenuItem.setSelected(false);
-        m_acc.updateServerPrefs();
+        autoConnectMenuItem.setSelected(false);
+        adminClientContext.getAdminClientController().updateServerPrefs();
       }
       if (!autoConnect) {
-        m_clusterPanel.setupConnectButton();
+        clusterPanel.setupConnectButton();
       }
-      m_clusterPanel.setStatusLabel(msg);
+      clusterPanel.setStatusLabel(msg);
     }
-    m_acc.nodeChanged(this);
+    nodeChanged();
   }
 
   /**
@@ -404,17 +339,17 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
   }
 
   private void disconnect(boolean deletingNode) {
-    m_acc.setStatus(m_acc.format("disconnecting.from", this));
+    adminClientContext.setStatus(adminClientContext.format("disconnecting.from", this));
     if (!deletingNode) {
       setAutoConnect(false);
-      m_acc.updateServerPrefs();
-      m_autoConnectMenuItem.setSelected(false);
+      adminClientContext.getAdminClientController().updateServerPrefs();
+      autoConnectMenuItem.setSelected(false);
     }
-    m_clusterModel.disconnect();
+    clusterModel.disconnect();
   }
 
   public JPopupMenu getPopupMenu() {
-    return m_popupMenu;
+    return popupMenu;
   }
 
   public void setPreferences(Preferences prefs) {
@@ -425,7 +360,7 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
 
   private class ConnectAction extends XAbstractAction {
     ConnectAction() {
-      super(m_acc.getString("connect.label"), ServersHelper.getHelper().getConnectIcon());
+      super(adminClientContext.getString("connect.label"), ServersHelper.getHelper().getConnectIcon());
       setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, MENU_SHORTCUT_KEY_MASK, true));
     }
 
@@ -435,18 +370,18 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
   }
 
   DisconnectAction getDisconnectAction() {
-    return m_disconnectAction;
+    return disconnectAction;
   }
 
   class DisconnectAction extends XAbstractAction {
     DisconnectAction() {
-      super(m_acc.getString("disconnect.label"), ServersHelper.getHelper().getDisconnectIcon());
+      super(adminClientContext.getString("disconnect.label"), ServersHelper.getHelper().getDisconnectIcon());
       setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, MENU_SHORTCUT_KEY_MASK, true));
       setEnabled(false);
     }
 
     public void actionPerformed(ActionEvent ae) {
-      boolean recordingStats = haveActiveRecordingSession();
+      boolean recordingStats = recordingClusterStats();
       boolean profilingLocks = isProfilingLocks();
 
       if (recordingStats || profilingLocks) {
@@ -459,9 +394,9 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
           key = "profiling.locks.msg";
         }
 
-        String msg = m_acc.format(key, m_acc.getMessage("disconnect.anyway"));
-        Frame frame = (Frame) m_clusterPanel.getAncestorOfClass(Frame.class);
-        int answer = JOptionPane.showConfirmDialog(m_clusterPanel, msg, frame.getTitle(), JOptionPane.OK_CANCEL_OPTION);
+        String msg = adminClientContext.format(key, adminClientContext.getMessage("disconnect.anyway"));
+        Frame frame = (Frame) SwingUtilities.getAncestorOfClass(Frame.class, clusterPanel);
+        int answer = JOptionPane.showConfirmDialog(clusterPanel, msg, frame.getTitle(), JOptionPane.OK_CANCEL_OPTION);
         if (answer != JOptionPane.OK_OPTION) { return; }
       }
       disconnect();
@@ -481,10 +416,10 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
 
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          AdminClientContext acc = AdminClient.getContext();
-          acc.setStatus(m_acc.format("deleted.server", ClusterNode.this));
-          acc.remove(ClusterNode.this);
-          acc.updateServerPrefs();
+          AdminClientController controller = adminClientContext.getAdminClientController();
+          adminClientContext.setStatus(adminClientContext.format("deleted.server", ClusterNode.this));
+          ((XTreeNode) getParent()).removeChild(ClusterNode.this);
+          controller.updateServerPrefs();
         }
       });
     }
@@ -499,303 +434,306 @@ public class ClusterNode extends ComponentNode implements ConnectionListener {
     public void actionPerformed(ActionEvent ae) {
       JCheckBoxMenuItem menuitem = (JCheckBoxMenuItem) ae.getSource();
       boolean autoConnect = menuitem.isSelected();
-
-      m_connectAction.setEnabled(!autoConnect);
+      connectAction.setEnabled(!autoConnect);
       setAutoConnect(autoConnect);
-      m_clusterPanel.setupConnectButton();
-      m_acc.updateServerPrefs();
+      clusterPanel.setupConnectButton();
+      adminClientContext.getAdminClientController().updateServerPrefs();
     }
   }
 
-  private AtomicBoolean m_addingChildren = new AtomicBoolean(false);
+  private AtomicBoolean addingChildren = new AtomicBoolean(false);
 
   void tryAddChildren() {
-    if (!m_clusterModel.isReady()) { return; }
-    if (m_addingChildren.get()) { return; }
+    if (!clusterModel.isReady()) { return; }
+    if (addingChildren.get()) { return; }
 
     try {
-      m_addingChildren.set(true);
+      addingChildren.set(true);
       if (getChildCount() == 0) {
         addChildren();
-        m_acc.nodeStructureChanged(this);
-        m_acc.expand(this);
-        m_acc.addServerLog(m_clusterModel);
+        AdminClientController controller = adminClientContext.getAdminClientController();
+        nodeStructureChanged();
+        controller.expand(this);
+
+        Enumeration theChildren = children();
+        while (theChildren.hasMoreElements()) {
+          controller.expand((XTreeNode) theChildren.nextElement());
+        }
       }
+    } catch (Throwable t) {
+      t.printStackTrace();
     } finally {
-      m_addingChildren.set(false);
+      addingChildren.set(false);
     }
   }
 
   protected void addChildren() {
-    add(createRootsNode());
-    add(new ClassesNode(this));
-    try {
-      add(m_locksNode = createLocksNode());
-    } catch (Throwable t) {
-      // Need a more specific exception but this means we're trying to connect to an
-      // older version of the server, that doesn't have the LockMonitorMBean we expect.
-    }
-    add(createGCStatsNode());
-    add(createThreadDumpsNode());
-    add(m_statsRecorderNode = createStatsRecorderNode());
-    add(m_clientsNode = createClientsNode());
-    add(createServersNode());
+    add(createClusteredHeapNode());
+    add(createDiagnosticsNode());
+    add(createTopologyNode());
   }
 
-  protected RootsNode createRootsNode() {
-    return new RootsNode(this);
+  protected ClusteredHeapNode createClusteredHeapNode() {
+    return new ClusteredHeapNode(adminClientContext, getClusterModel());
   }
 
-  protected ClusterThreadDumpsNode createThreadDumpsNode() {
-    return new ClusterThreadDumpsNode(this);
+  protected DiagnosticsNode createDiagnosticsNode() {
+    return new DiagnosticsNode(adminClientContext, getClusterModel(), this);
   }
 
-  protected StatsRecorderNode createStatsRecorderNode() {
-    return new StatsRecorderNode(this);
-  }
-
-  void makeStatsRecorderUnavailable() {
-    if (m_statsRecorderNode != null) {
-      m_acc.remove(m_statsRecorderNode);
-      m_statsRecorderNode.tearDown();
-      m_statsRecorderNode = null;
-    }
-  }
-
-  protected GCStatsNode createGCStatsNode() {
-    return new GCStatsNode(this);
-  }
-
-  protected LocksNode createLocksNode() {
-    return new LocksNode(this);
-  }
-
-  protected ServersNode createServersNode() {
-    return new ServersNode(this);
-  }
-
-  protected ClientsNode createClientsNode() {
-    return new ClientsNode(this);
-  }
-
-  public void selectClientNode(String remoteAddr) {
-    m_clientsNode.selectClientNode(remoteAddr);
+  protected TopologyNode createTopologyNode() {
+    return new TopologyNode(adminClientContext, getClusterModel());
   }
 
   void handleStarting() {
-    m_acc.nodeChanged(this);
-    m_clusterPanel.started();
+    nodeChanged();
+    clusterPanel.started();
   }
 
   void handlePassiveUninitialized() {
-    m_acc.nodeChanged(this);
-    m_clusterPanel.passiveUninitialized();
+    nodeChanged();
+    clusterPanel.passiveUninitialized();
   }
 
   void handlePassiveStandby() {
-    m_acc.nodeChanged(this);
-    m_clusterPanel.passiveStandby();
+    nodeChanged();
+    clusterPanel.passiveStandby();
   }
 
   void handleActivation() {
-    m_acc.nodeChanged(this);
+    nodeChanged();
     tryAddChildren();
-    m_clusterPanel.activated();
+    clusterPanel.activated();
+    IServer activeCoord = getActiveCoordinator();
+    if (activeCoord != null) {
+      activeCoord.addPropertyChangeListener(ClusterNode.this);
+    }
   }
 
-  public ProductVersion getProductInfo() {
-    return m_clusterModel.getProductInfo();
+  public IProductVersion getProductInfo() {
+    IServer activeCoord = getActiveCoordinator();
+    return activeCoord != null ? activeCoord.getProductInfo() : null;
   }
 
   public String getProductVersion() {
-    return getProductInfo().version();
+    IProductVersion info = getProductInfo();
+    return info != null ? info.version() : "";
   }
 
   public String getProductBuildID() {
-    return getProductInfo().buildID();
+    IProductVersion info = getProductInfo();
+    return info != null ? info.buildID() : "";
   }
 
   public String getProductLicense() {
-    return getProductInfo().license();
-  }
-
-  String getEnvironment() {
-    return m_clusterModel.getEnvironment();
-  }
-
-  String getConfig() {
-    return m_clusterModel.getConfig();
+    IProductVersion info = getProductInfo();
+    return info != null ? info.license() : "";
   }
 
   long getStartTime() {
-    return m_clusterModel.getStartTime();
+    IServer activeCoord = getActiveCoordinator();
+    return activeCoord != null ? activeCoord.getStartTime() : -1;
   }
 
   long getActivateTime() {
-    return m_clusterModel.getActivateTime();
+    IServer activeCoord = getActiveCoordinator();
+    return activeCoord != null ? activeCoord.getActivateTime() : -1;
   }
 
-  StatisticsLocalGathererMBean getStatisticsGathererMBean() {
-    return m_clusterModel.getStatisticsGathererMBean();
-  }
-
-  boolean haveActiveRecordingSession() {
-    return m_statsRecorderNode != null && m_statsRecorderNode.isRecording();
+  boolean recordingClusterStats() {
+    return isRecordingClusterStats;
   }
 
   boolean isProfilingLocks() {
-    return m_locksNode != null ? m_locksNode.isProfiling() : false;
+    return isProfilingLocks;
   }
 
   boolean haveMonitoringActivity() {
-    return haveActiveRecordingSession() || isProfilingLocks();
+    return recordingClusterStats() || isProfilingLocks();
   }
 
-  private ScheduledExecutorService m_scheduledExecutor;
-  private ScheduledFuture<?>       m_monitoringTaskFuture;
-  private Runnable                 m_monitoringActivityTask;
+  private ScheduledExecutorService scheduledExecutor;
+  private ScheduledFuture<?>       monitoringTaskFuture;
+  private Runnable                 monitoringActivityTask;
   private final long               MONITORING_FEEDBACK_MILLIS = 750;
 
   private synchronized ScheduledExecutorService getScheduledExecutor() {
-    if (m_scheduledExecutor == null) {
-      m_scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
+    if (scheduledExecutor == null) {
+      scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
     }
-    return m_scheduledExecutor;
+    return scheduledExecutor;
   }
 
   private synchronized Runnable getMonitoringActivityTask() {
-    if (m_monitoringActivityTask == null) {
-      m_monitoringActivityTask = new MonitoringActivityTask();
+    if (monitoringActivityTask == null) {
+      monitoringActivityTask = new MonitoringActivityTask();
     }
-    return m_monitoringActivityTask;
+    return monitoringActivityTask;
   }
 
   private class MonitoringActivityTask implements Runnable {
-    private Icon m_defaultIcon  = ServersHelper.getHelper().getServerIcon();
-    private Icon m_activityIcon = ServersHelper.getHelper().getActivityIcon();
+    private Icon defaultIcon  = ServersHelper.getHelper().getServerIcon();
+    private Icon activityIcon = ServersHelper.getHelper().getActivityIcon();
 
     public void run() {
       boolean haveActivity = haveMonitoringActivity();
       setIcon(determineIcon(haveActivity));
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          notifyChanged();
+          nodeChanged();
         }
       });
       if (haveActivity) {
-        m_monitoringTaskFuture = getScheduledExecutor().schedule(this, MONITORING_FEEDBACK_MILLIS,
-                                                                 TimeUnit.MILLISECONDS);
+        monitoringTaskFuture = getScheduledExecutor().schedule(this, MONITORING_FEEDBACK_MILLIS, TimeUnit.MILLISECONDS);
       } else {
-        m_monitoringTaskFuture = null;
+        monitoringTaskFuture = null;
       }
     }
 
     private Icon determineIcon(boolean haveActivity) {
-      Icon icon = m_defaultIcon;
+      Icon icon = defaultIcon;
       if (haveActivity) {
-        icon = (getIcon() == m_defaultIcon) ? m_activityIcon : m_defaultIcon;
+        icon = (getIcon() == defaultIcon) ? activityIcon : defaultIcon;
       }
       return icon;
     }
   }
 
   private synchronized void testStartMonitoringTask() {
-    if (m_monitoringTaskFuture == null) {
-      m_monitoringTaskFuture = getScheduledExecutor().schedule(getMonitoringActivityTask(), MONITORING_FEEDBACK_MILLIS,
-                                                               TimeUnit.MILLISECONDS);
+    if (monitoringTaskFuture == null) {
+      monitoringTaskFuture = getScheduledExecutor().schedule(getMonitoringActivityTask(), MONITORING_FEEDBACK_MILLIS,
+                                                             TimeUnit.MILLISECONDS);
     }
   }
 
   private synchronized void testStopMonitoringTask() {
-    if (m_scheduledExecutor != null) {
-      m_scheduledExecutor.shutdownNow();
-      m_scheduledExecutor = null;
+    if (scheduledExecutor != null) {
+      scheduledExecutor.shutdownNow();
+      scheduledExecutor = null;
       setIcon(ServersHelper.getHelper().getServerIcon());
     }
-    m_monitoringTaskFuture = null;
+    monitoringTaskFuture = null;
   }
 
   public void showRecordingStats(boolean recordingStats) {
+    isRecordingClusterStats = recordingStats;
     testStartMonitoringTask();
   }
 
   public void showProfilingLocks(boolean profilingLocks) {
+    isProfilingLocks = profilingLocks;
     testStartMonitoringTask();
   }
 
   void handleDisconnect() {
-    testStopMonitoringTask();
-    m_acc.select(this);
+    adminClientContext.getAdminClientController().unblock();
 
-    m_locksNode = null;
-    m_clientsNode = null;
+    if (getChildCount() > 0) {
+      testStopMonitoringTask();
+      adminClientContext.getAdminClientController().select(this);
 
-    tearDownChildren();
-    removeAllChildren();
-    m_acc.nodeStructureChanged(this);
-    m_clusterPanel.disconnected();
-    m_versionCheckOccurred.set(false);
+      tearDownChildren();
+      removeAllChildren();
+      nodeStructureChanged();
+      clusterPanel.disconnected();
+      versionCheckOccurred.set(false);
+    }
   }
 
   Color getServerStatusColor() {
-    return getServerStatusColor(m_clusterModel);
+    return ServerHelper.getHelper().getServerStatusColor(getActiveCoordinator());
   }
 
-  static Color getServerStatusColor(Server server) {
-    if (server != null) {
-      if (server.isActive()) {
-        return Color.GREEN;
-      } else if (server.isPassiveStandby()) {
-        return Color.CYAN;
-      } else if (server.isPassiveUninitialized()) {
-        return Color.ORANGE;
-      } else if (server.isStarted()) {
-        return Color.YELLOW;
-      } else if (server.hasConnectError()) { return Color.RED; }
-    }
-    return Color.LIGHT_GRAY;
-  }
-
-  ClusterThreadDumpEntry takeThreadDump() {
-    ClusterThreadDumpEntry tde = new ClusterThreadDumpEntry();
-    Map<IClusterNode, Future<String>> map = m_clusterModel.takeThreadDump();
+  public ClusterThreadDumpEntry takeThreadDump() {
+    ClusterThreadDumpEntry tde = new ClusterThreadDumpEntry(adminClientContext);
+    Map<IClusterNode, Future<String>> map = clusterModel.takeThreadDump();
     Iterator<Map.Entry<IClusterNode, Future<String>>> iter = map.entrySet().iterator();
     while (iter.hasNext()) {
       Map.Entry<IClusterNode, Future<String>> entry = iter.next();
       tde.add(entry.getKey().toString(), entry.getValue());
     }
-    if (m_statsRecorderNode != null) {
-      m_statsRecorderNode.testTriggerThreadDumpSRA();
-    }
+    testTriggerThreadDumpSRA();
     return tde;
   }
 
-  void notifyChanged() {
-    nodeChanged();
+  void testTriggerThreadDumpSRA() {
+    final IServer activeCoord = getActiveCoordinator();
+    if (activeCoord != null && activeCoord.isActiveClusterStatsSession()) {
+      adminClientContext.submit(new Runnable() {
+        public void run() {
+          activeCoord.captureClusterStat(SRAThreadDump.ACTION_NAME);
+        }
+      });
+    }
   }
 
   public void tearDown() {
     testStopMonitoringTask();
-    if (m_connectDialog != null) {
-      m_connectDialog.tearDown();
+    if (connectDialog != null) {
+      connectDialog.tearDown();
     }
-    m_clusterModel.tearDown();
-
-    m_acc = null;
-    m_clusterModel = null;
-    m_clusterPanel = null;
-    m_connectDialog = null;
-    m_popupMenu = null;
-    m_connectAction = null;
-    m_disconnectAction = null;
-    m_deleteAction = null;
-    m_autoConnectAction = null;
-
-    m_locksNode = null;
-    m_clientsNode = null;
-
-    m_monitoringActivityTask = null;
+    clusterModel.tearDown();
 
     super.tearDown();
+
+    synchronized (this) {
+      adminClientContext = null;
+      clusterModel = null;
+      clusterPanel = null;
+      connectDialog = null;
+      popupMenu = null;
+      connectAction = null;
+      disconnectAction = null;
+      deleteAction = null;
+      autoConnectAction = null;
+      monitoringActivityTask = null;
+    }
+  }
+
+  public void allSessionsCleared() {
+    /**/
+  }
+
+  public void connected() {
+    /**/
+  }
+
+  public void disconnected() {
+    /**/
+  }
+
+  public void reinitialized() {
+    /**/
+  }
+
+  public void sessionCleared(String sessionId) {
+    /**/
+  }
+
+  public void sessionCreated(String sessionId) {
+    /**/
+  }
+
+  public void sessionStarted(String sessionId) {
+    showRecordingStats(true);
+  }
+
+  public void sessionStopped(String sessionId) {
+    showRecordingStats(false);
+  }
+
+  public void propertyChange(PropertyChangeEvent evt) {
+    if (IServer.PROP_LOCK_STATS_ENABLED.equals(evt.getPropertyName())) {
+      showProfilingLocks((Boolean) evt.getNewValue());
+    }
+  }
+
+  public void preferenceChange(PreferenceChangeEvent evt) {
+    Preferences prefs = evt.getNode();
+    String key = evt.getKey();
+
+    if (key.equals("poll-periods-seconds")) {
+      clusterModel.setPollPeriod(prefs.getInt(key, 3));
+    }
   }
 }

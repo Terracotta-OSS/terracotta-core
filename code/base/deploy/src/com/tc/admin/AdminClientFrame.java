@@ -4,181 +4,105 @@
  */
 package com.tc.admin;
 
-import org.dijon.Container;
-
 import com.tc.admin.common.XFrame;
 import com.tc.admin.common.XMenuBar;
 import com.tc.admin.common.XTreeNode;
-import com.tc.admin.model.IServer;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.Insets;
-import java.awt.Rectangle;
 import java.awt.Toolkit;
-import java.awt.event.WindowEvent;
 import java.util.prefs.Preferences;
 
 public class AdminClientFrame extends XFrame implements AdminClientController {
-  private AdminClientPanel m_mainPanel;
+  private IAdminClientContext adminClientContext;
+  private AdminClientPanel    mainPanel;
 
-  public AdminClientFrame() {
+  public AdminClientFrame(IAdminClientContext adminClientContext) {
     super();
 
+    this.adminClientContext = adminClientContext;
+
+    setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/com/tc/admin/icons/logo_small.png")));
+
     getContentPane().setLayout(new BorderLayout());
-    getContentPane().add(m_mainPanel = new AdminClientPanel());
+    mainPanel = new AdminClientPanel(adminClientContext);
+    getContentPane().add(mainPanel, BorderLayout.CENTER);
 
     XMenuBar menuBar;
-    m_mainPanel.initMenubar(menuBar = new XMenuBar());
-    setMenubar(menuBar);
+    mainPanel.initMenubar(menuBar = new XMenuBar());
+    setJMenuBar(menuBar);
 
-    setTitle(AdminClient.getContext().getMessage("title"));
+    setTitle(adminClientContext.getMessage("title"));
     setDefaultCloseOperation(EXIT_ON_CLOSE);
   }
 
+  @Override
+  protected boolean shouldClose() {
+    // may terminate after safety checks otherwise don't close
+    mainPanel.handleQuit();
+    return false;
+  }
+
+  public boolean selectNode(XTreeNode startNode, String name) {
+    return mainPanel.selectNode(startNode, name);
+  }
+
   public boolean isExpanded(XTreeNode node) {
-    return m_mainPanel.isExpanded(node);
+    return mainPanel.isExpanded(node);
   }
 
   public void expand(XTreeNode node) {
-    m_mainPanel.expand(node);
+    mainPanel.expand(node);
   }
 
+  public void expandAll(XTreeNode node) {
+    mainPanel.expandAll(node);
+  }
+  
   public boolean isSelected(XTreeNode node) {
-    return m_mainPanel.isSelected(node);
+    return mainPanel.isSelected(node);
   }
 
   public void select(XTreeNode node) {
-    m_mainPanel.select(node);
-  }
-
-  public void remove(XTreeNode node) {
-    m_mainPanel.remove(node);
-  }
-
-  public void nodeStructureChanged(XTreeNode node) {
-    m_mainPanel.nodeStructureChanged(node);
-  }
-
-  public void nodeChanged(XTreeNode node) {
-    m_mainPanel.nodeChanged(node);
+    mainPanel.select(node);
   }
 
   public boolean testServerMatch(ClusterNode node) {
-    return m_mainPanel.testServerMatch(node);
+    return mainPanel.testServerMatch(node);
   }
 
-  private Preferences getPreferences() {
-    return AdminClient.getContext().getPrefs().node("AdminClientFrame");
+  protected Preferences getPreferences() {
+    return adminClientContext.getPrefs().node("AdminClientFrame");
   }
 
-  private void storePreferences() {
-    AdminClient.getContext().storePrefs();
+  protected void storePreferences() {
+    adminClientContext.storePrefs();
   }
 
   public void updateServerPrefs() {
-    m_mainPanel.updateServerPrefs();
-  }
-
-  protected void processWindowEvent(final WindowEvent e) {
-    if (e.getID() == WindowEvent.WINDOW_CLOSING) {
-      System.exit(0);
-    }
-    super.processWindowEvent(e);
+    mainPanel.updateServerPrefs();
   }
 
   public void log(String s) {
-    m_mainPanel.log(s);
+    mainPanel.log(s);
   }
 
   public void log(Throwable t) {
-    m_mainPanel.log(t);
+    mainPanel.log(t);
   }
 
   public void setStatus(String msg) {
-    m_mainPanel.setStatus(msg);
+    mainPanel.setStatus(msg);
   }
 
   public void clearStatus() {
-    m_mainPanel.clearStatus();
+    mainPanel.clearStatus();
   }
 
-  public Container getActivityArea() {
-    return m_mainPanel.getActivityArea();
+  public void showOption(String optionName) {
+    mainPanel.showOption(optionName);
   }
 
-  public Rectangle getDefaultBounds() {
-    Toolkit tk = Toolkit.getDefaultToolkit();
-    Dimension size = tk.getScreenSize();
-    GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-    GraphicsDevice device = env.getDefaultScreenDevice();
-    GraphicsConfiguration config = device.getDefaultConfiguration();
-    Insets insets = tk.getScreenInsets(config);
-
-    size.width -= (insets.left + insets.right);
-    size.height -= (insets.top + insets.bottom);
-
-    int width = (int) (size.width * 0.75f);
-    int height = (int) (size.height * 0.66f);
-
-    // center
-    int x = size.width / 2 - width / 2;
-    int y = size.height / 2 - height / 2;
-
-    return new Rectangle(x, y, width, height);
-  }
-
-  private String getBoundsString() {
-    Rectangle b = getBounds();
-    return b.x + "," + b.y + "," + b.width + "," + b.height;
-  }
-
-  private int parseInt(String s) {
-    try {
-      return Integer.parseInt(s);
-    } catch (Exception e) {
-      return 0;
-    }
-  }
-
-  private Rectangle parseBoundsString(String s) {
-    String[] split = s.split(",");
-    int x = parseInt(split[0]);
-    int y = parseInt(split[1]);
-    int width = parseInt(split[2]);
-    int height = parseInt(split[3]);
-
-    return new Rectangle(x, y, width, height);
-  }
-
-  public void storeBounds() {
-    String name = getName();
-
-    if (name == null) { return; }
-
-    if ((getExtendedState() & NORMAL) != NORMAL) { return; }
-
-    Preferences prefs = getPreferences();
-
-    prefs.put("Bounds", getBoundsString());
-    storePreferences();
-  }
-
-  protected Rectangle getPreferredBounds() {
-    Preferences prefs = getPreferences();
-    String s = prefs.get("Bounds", null);
-
-    return s != null ? parseBoundsString(s) : getDefaultBounds();
-  }
-
-  public void addServerLog(IServer server) {
-    m_mainPanel.addServerLog(server);
-  }
-
-  public void removeServerLog(IServer server) {
-    m_mainPanel.removeServerLog(server);
+  public void showOptions() {
+    mainPanel.showOptions();
   }
 }

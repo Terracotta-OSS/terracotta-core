@@ -186,7 +186,7 @@ public class LockTreeTable extends JTreeTable {
 
       String text = (value == null) ? "" : value.toString();
       setText(text);
-      String tip = ServerLockTableModel.columnTip(column);
+      String tip = ((LockTreeTableModel) getTreeTableModel()).getColumnTip(column);
       setToolTipText(tip);
 
       if (fSortColumn != -1) {

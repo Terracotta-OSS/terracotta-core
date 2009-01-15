@@ -147,7 +147,7 @@ public class XObjectTable extends XTable {
   }
 
   private void internalSetSortColumn(int columnIndex) {
-    if ((sortColumn = columnIndex) != -1) {
+    if (columnIndex < getColumnCount() && (sortColumn = columnIndex) != -1) {
       sort();
     }
   }
@@ -280,11 +280,11 @@ public class XObjectTable extends XTable {
   }
 
   class MethodRenderer extends XTableCellRenderer {
-    protected TableCellEditor m_editor;
+    protected TableCellEditor editor;
 
     public MethodRenderer() {
       super();
-      m_editor = createCellEditor();
+      editor = createCellEditor();
     }
 
     protected TableCellEditor createCellEditor() {
@@ -293,7 +293,7 @@ public class XObjectTable extends XTable {
 
     public java.awt.Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                                                             boolean hasFocus, int row, int col) {
-      return m_editor.getTableCellEditorComponent(table, value, false, row, col);
+      return editor.getTableCellEditorComponent(table, value, false, row, col);
     }
   }
 
@@ -303,7 +303,7 @@ public class XObjectTable extends XTable {
     MethodEditor() {
       super(new XCheckBox());
 
-      m_editorComponent = button = new InvokerButton();
+      editorComponent = button = new InvokerButton();
       button.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ae) {
           int row = button.getRow();
@@ -320,7 +320,7 @@ public class XObjectTable extends XTable {
           }
         }
       });
-      m_clicksToStart = 1;
+      clickCountToStart = 1;
     }
 
     public java.awt.Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row,

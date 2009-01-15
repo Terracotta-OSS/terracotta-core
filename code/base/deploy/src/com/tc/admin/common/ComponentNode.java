@@ -9,8 +9,8 @@ import java.awt.Component;
 import javax.swing.JComponent;
 
 public class ComponentNode extends XTreeNode implements IComponentProvider {
-  private String    m_label;
-  private Component m_component;
+  private String    label;
+  private Component component;
 
   public ComponentNode() {
     super();
@@ -22,24 +22,23 @@ public class ComponentNode extends XTreeNode implements IComponentProvider {
 
   public ComponentNode(String label, Component component) {
     this();
-
     setLabel(label);
     setComponent(component);
   }
 
   public void setLabel(String label) {
-    setUserObject(m_label = label);
+    this.label = label;
   }
 
   public String getLabel() {
-    return m_label;
+    return label;
   }
 
   public void setComponent(Component comp) {
-    if (m_component instanceof XContainer) {
-      ((XContainer) m_component).tearDown();
+    if (component instanceof XContainer) {
+      ((XContainer) component).tearDown();
     }
-    m_component = comp;
+    component = comp;
     if (comp != null) {
       if (comp instanceof JComponent) {
         ((JComponent) comp).revalidate();
@@ -49,12 +48,15 @@ public class ComponentNode extends XTreeNode implements IComponentProvider {
   }
 
   public Component getComponent() {
-    return m_component;
+    return component;
   }
 
+  public String toString() {
+    return label != null ? label : super.toString();
+  }
+  
   public void tearDown() {
     super.tearDown();
-
     setLabel(null);
     setComponent(null);
   }

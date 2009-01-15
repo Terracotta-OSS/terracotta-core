@@ -4,109 +4,185 @@
  */
 package com.tc.admin.dso;
 
-import org.dijon.Button;
-import org.dijon.ContainerResource;
-import org.dijon.Dialog;
-import org.dijon.Frame;
-import org.dijon.Label;
-
-import com.tc.admin.AdminClient;
 import com.tc.admin.ConnectionContext;
+import com.tc.admin.IAdminClientContext;
 import com.tc.admin.common.BrowserLauncher;
+import com.tc.admin.common.RolloverButton;
+import com.tc.admin.common.WindowHelper;
 import com.tc.admin.common.XAbstractAction;
 import com.tc.admin.common.XButton;
 import com.tc.admin.common.XContainer;
+import com.tc.admin.common.XLabel;
 import com.tc.admin.common.XTextField;
 import com.tc.admin.model.BasicTcObject;
 import com.tc.admin.model.IBasicObject;
-import com.tc.admin.model.IClusterModel;
-import com.tc.admin.model.IClusterNode;
+import com.tc.admin.model.IClient;
+import com.tc.admin.model.IClusterModelElement;
+import com.tc.admin.model.ILiveObjectCountProvider;
+import com.tc.admin.model.ManagedObjectFacadeProvider;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.util.ProductInfo;
 
 import java.awt.BorderLayout;
+import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.text.NumberFormat;
 
-import javax.swing.JFormattedTextField;
+import javax.swing.ImageIcon;
+import javax.swing.JDialog;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-public class RootsPanel extends XContainer {
-  protected IClusterModel       m_clusterModel;
-  protected IClusterNode        m_clusterNode;
-  protected Label               m_liveObjectCountValueLabel;
-  protected BasicObjectSetPanel m_objectSetPanel;
-  protected MouseListener       m_objectSetMouseListener;
-  protected XTextField          m_inspectObjectField;
-  protected XButton             m_inspectObjectButton;
+public class RootsPanel extends XContainer implements PropertyChangeListener {
+  protected IAdminClientContext         adminClientContext;
+  protected ManagedObjectFacadeProvider facadeProvider;
+  protected ILiveObjectCountProvider    liveObjectCountProvider;
+  protected IClient                     client;
+  protected XLabel                      liveObjectCountValueLabel;
+  protected XLabel                      explainationLabel;
+  protected BasicObjectSetPanel         objectSetPanel;
+  protected MouseListener               objectSetMouseListener;
+  protected XTextField                  inspectObjectField;
+  protected XButton                     inspectObjectButton;
+
+  private static final ImageIcon        helpIcon = new ImageIcon(RootsPanel.class
+                                                     .getResource("/com/tc/admin/icons/help.gif"));
+
+  public RootsPanel(IAdminClientContext adminClientContext, ManagedObjectFacadeProvider facadeProvider,
+                    ILiveObjectCountProvider liveObjectCountProvider, IBasicObject[] roots) {
+    this(adminClientContext, facadeProvider, liveObjectCountProvider, null, roots);
+  }
   
-  public RootsPanel(IClusterModel clusterModel, IClusterNode clusterNode, IBasicObject[] roots) {
-    super();
+  public RootsPanel(IAdminClientContext adminClientContext, ManagedObjectFacadeProvider facadeProvider,
+                    ILiveObjectCountProvider liveObjectCountProvider, IClient client, IBasicObject[] roots) {
+    super(new BorderLayout());
 
-    load((ContainerResource) AdminClient.getContext().getComponent("RootsPanel"));
+    this.adminClientContext = adminClientContext;
+    this.facadeProvider = facadeProvider;
+    this.liveObjectCountProvider = liveObjectCountProvider;
+    this.client = client;
 
-    m_clusterModel = clusterModel;
-    m_clusterNode = clusterNode;
-    String tip = AdminClient.getContext().getString("liveObjectCount.tip");
-    ((Label) findComponent("LiveObjectCountLabel")).setToolTipText(tip);
-    m_liveObjectCountValueLabel = (Label) findComponent("LiveObjectCountValueLabel");
-    m_liveObjectCountValueLabel.setToolTipText(tip);
-    ((Button) findComponent("HelpButton")).addActionListener(new LiveObjectHelpAction());
-    m_objectSetPanel = (BasicObjectSetPanel) findComponent("ObjectSetPanel");
+    XContainer topPanel = new XContainer(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = gbc.gridy = 0;
+    gbc.insets = new Insets(3, 3, 3, 3);
+    gbc.anchor = GridBagConstraints.WEST;
 
-    m_objectSetPanel.setObjects(clusterNode, roots);
-    m_objectSetMouseListener = new ObjectSetMouseListener();
-    m_objectSetPanel.getTree().addMouseListener(m_objectSetMouseListener);
-    
+    String tip = adminClientContext.getString("liveObjectCount.tip");
+    XLabel liveObjectCountLabel = new XLabel("Live object count:");
+    liveObjectCountLabel.setToolTipText(tip);
+    topPanel.add(liveObjectCountLabel, gbc);
+    gbc.gridx++;
+
+    topPanel.add(liveObjectCountValueLabel = new XLabel("0"), gbc);
+    liveObjectCountValueLabel.setToolTipText(tip);
+    gbc.gridx++;
+
+    RolloverButton helpButton = new RolloverButton();
+    helpButton.setIcon(helpIcon);
+    helpButton.addActionListener(new LiveObjectHelpAction());
+    helpButton.setFocusable(false);
+    topPanel.add(helpButton, gbc);
+    gbc.gridx++;
+
+    gbc.anchor = GridBagConstraints.EAST;
+    gbc.weightx = 1.0;
+    explainationLabel = new XLabel();
+    topPanel.add(explainationLabel, gbc);
+
+    add(topPanel, BorderLayout.NORTH);
+
+    objectSetPanel = new BasicObjectSetPanel();
+    objectSetPanel.setObjects(adminClientContext, client, roots);
+    objectSetMouseListener = new ObjectSetMouseListener();
+    objectSetPanel.getTree().addMouseListener(objectSetMouseListener);
+    add(objectSetPanel, BorderLayout.CENTER);
+
+    XContainer bottomPanel = new XContainer(new GridBagLayout());
+    gbc.gridx = gbc.gridy = 0;
+    gbc.insets = new Insets(3, 3, 3, 3);
+    gbc.weightx = 0.0;
+    gbc.anchor = GridBagConstraints.WEST;
+
+    bottomPanel.add(new XLabel("Inspect object:"), gbc);
+    gbc.gridx++;
+
+    inspectObjectField = new XTextField();
+    inspectObjectField.setColumns(10);
+    inspectObjectField.addActionListener(new InspectFieldHandler());
     InspectObjectAction inspectAction = new InspectObjectAction();
-    m_inspectObjectField = (XTextField) findComponent("InspectObjectField");
-    m_inspectObjectField.setFocusLostBehavior(JFormattedTextField.PERSIST);
-    m_inspectObjectField.addActionListener(new InspectFieldHandler());
-    m_inspectObjectField.getDocument().addDocumentListener(inspectAction);
-    m_inspectObjectButton = (XButton) findComponent("InspectObjectButton");
-    m_inspectObjectButton.addActionListener(inspectAction);
+    inspectObjectField.getDocument().addDocumentListener(inspectAction);
+    bottomPanel.add(inspectObjectField, gbc);
+    gbc.gridx++;
+
+    inspectObjectButton = new XButton("Show...");
+    inspectObjectButton.setEnabled(false);
+    inspectObjectButton.addActionListener(inspectAction);
+    bottomPanel.add(inspectObjectButton, gbc);
+    gbc.gridx++;
+
+    // filler
+    gbc.weightx = 1.0;
+    bottomPanel.add(new XLabel(), gbc);
+
+    add(bottomPanel, BorderLayout.SOUTH);
+
+    if(client != null) {
+      client.addPropertyChangeListener(this);
+    }
+  }
+
+  public void setExplainationText(String text) {
+    explainationLabel.setText(text);
   }
 
   private class InspectFieldHandler implements ActionListener {
     private boolean handling;
-    
+
     public void actionPerformed(ActionEvent ae) {
-      if(!handling && m_inspectObjectButton.isEnabled()) {
+      if (!handling && inspectObjectButton.isEnabled()) {
         handling = true;
-        m_inspectObjectButton.doClick();
+        inspectObjectButton.doClick();
         handling = false;
       }
     }
   }
-  
+
   private class InspectObjectAction extends XAbstractAction implements DocumentListener {
     private long fObjectID;
 
     InspectObjectAction() {
-      super(AdminClient.getContext().getMessage("roots.inspect.show"));
+      super(adminClientContext.getMessage("roots.inspect.show"));
     }
 
     public void actionPerformed(ActionEvent ae) {
       ObjectID oid = new ObjectID(fObjectID);
       try {
         int maxFields = ConnectionContext.DSO_SMALL_BATCH_SIZE;
-        ManagedObjectFacade mof = m_clusterModel.lookupFacade(oid, maxFields);
-        Frame frame = (Frame) getAncestorOfClass(Frame.class);
-        Dialog dialog = new Dialog(frame, Long.toString(fObjectID), false);
-        BasicTcObject dsoObject = new BasicTcObject(m_clusterModel, "", mof, mof.getClassName(), null);
+        ManagedObjectFacade mof = facadeProvider.lookupFacade(oid, maxFields);
+        Frame frame = (Frame) SwingUtilities.getAncestorOfClass(Frame.class, RootsPanel.this);
+        JDialog dialog = new JDialog(frame, Long.toString(fObjectID), false);
+        BasicTcObject dsoObject = new BasicTcObject(facadeProvider, "", mof, mof.getClassName(), null);
         dialog.getContentPane().setLayout(new BorderLayout());
-        dialog.getContentPane().add(new BasicObjectSetPanel(m_clusterModel, new IBasicObject[] { dsoObject }));
+        dialog.getContentPane().add(
+                                    new BasicObjectSetPanel(adminClientContext, client,
+                                                            new IBasicObject[] { dsoObject }));
         dialog.pack();
-        dialog.center(frame);
+        WindowHelper.center(dialog, frame);
         dialog.setVisible(true);
         dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
       } catch (Exception e) {
@@ -115,21 +191,21 @@ public class RootsPanel extends XContainer {
     }
 
     long getLockObjectID() {
-      String text = m_inspectObjectField.getText().trim();
-      if(text.length() > 1 && text.charAt(0) == '@') {
+      String text = inspectObjectField.getText().trim();
+      if (text.length() > 1 && text.charAt(0) == '@') {
         text = text.substring(1);
       }
       try {
         return Long.parseLong(text);
-      } catch(NumberFormatException nfe) {
+      } catch (NumberFormatException nfe) {
         /**/
       }
       return -1;
     }
-    
+
     void handleChanged() {
       fObjectID = getLockObjectID();
-      m_inspectObjectButton.setEnabled(fObjectID != -1);
+      inspectObjectButton.setEnabled(fObjectID != -1);
     }
 
     public void changedUpdate(DocumentEvent e) {
@@ -152,53 +228,73 @@ public class RootsPanel extends XContainer {
   }
 
   private void updateLiveObjectCount() {
-    int count = m_clusterNode.getLiveObjectCount();
-    m_liveObjectCountValueLabel.setText(NumberFormat.getNumberInstance().format(count));
+    int count = liveObjectCountProvider.getLiveObjectCount();
+    liveObjectCountValueLabel.setText(NumberFormat.getNumberInstance().format(count));
   }
 
   public void setObjects(IBasicObject[] roots) {
-    m_objectSetPanel.setObjects(m_clusterNode, roots);
+    objectSetPanel.setObjects(adminClientContext, client, roots);
     updateLiveObjectCount();
   }
 
   public void clearModel() {
-    m_objectSetPanel.clearModel();
+    objectSetPanel.clearModel();
   }
 
   public void refresh() {
     updateLiveObjectCount();
-    m_objectSetPanel.refresh();
+    objectSetPanel.refresh();
   }
 
   public void add(IBasicObject root) {
-    m_objectSetPanel.add(root);
+    objectSetPanel.add(root);
     updateLiveObjectCount();
   }
-  
+
   private class LiveObjectHelpAction implements ActionListener {
     private String getKitID() {
       String kitID = ProductInfo.getInstance().kitID();
-      if(ProductInfo.UNKNOWN_VALUE.equals(kitID)) {
+      if (ProductInfo.UNKNOWN_VALUE.equals(kitID)) {
         kitID = System.getProperty("com.tc.kitID", "42.0");
       }
       return kitID;
     }
-    
+
     public void actionPerformed(ActionEvent e) {
       String kitID = getKitID();
-      String loc = AdminClient.getContext().format("console.guide.url", kitID) + "#AdminConsoleGuide-Roots";
+      String loc = adminClientContext.format("console.guide.url", kitID) + "#AdminConsoleGuide-Roots";
       BrowserLauncher.openURL(loc);
     }
   }
 
   public void tearDown() {
-    m_objectSetPanel.getTree().removeMouseListener(m_objectSetMouseListener);
+    objectSetPanel.getTree().removeMouseListener(objectSetMouseListener);
+    client.removePropertyChangeListener(this);
 
     super.tearDown();
 
-    m_clusterNode = null;
-    m_liveObjectCountValueLabel = null;
-    m_objectSetPanel = null;
-    m_objectSetMouseListener = null;
+    adminClientContext = null;
+    facadeProvider = null;
+    client = null;
+    liveObjectCountValueLabel = null;
+    objectSetPanel = null;
+    objectSetMouseListener = null;
+    inspectObjectField = null;
+    inspectObjectButton = null;
+  }
+
+  public void propertyChange(PropertyChangeEvent evt) {
+    if (client == null) return;
+    String prop = evt.getPropertyName();
+    if (IClusterModelElement.PROP_READY.equals(prop)) {
+      final boolean isReady = client.isReady();
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          objectSetPanel.setEnabled(isReady);
+          inspectObjectField.setEnabled(isReady);
+          inspectObjectButton.setEnabled(isReady);
+        }
+      });
+    }
   }
 }

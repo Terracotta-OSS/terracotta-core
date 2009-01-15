@@ -4,25 +4,24 @@
  */
 package com.tc.admin.dso;
 
-import com.tc.admin.AdminClient;
+import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.XObjectTableModel;
 import com.tc.objectserver.api.GCStats;
 
 public class GCStatsTableModel extends XObjectTableModel {
-
   private static final String[] FIELDS   = { "Iteration", "Type", "Status", "StartDate", "BeginObjectCount",
       "PausedStageTime", "MarkStageTime", "ActualGarbageCount", "DeleteStageTime", "ElapsedTime" };
 
-  private static final String[] HEADERS  = AdminClient.getContext().getMessages(
-                                                                                new String[] { "dso.gcstats.iteration",
-      "dso.gcstats.type", "dso.gcstats.status", "dso.gcstats.startTime", "dso.gcstats.beginObjectCount",
-      "dso.gcstats.pausedStageTime", "dso.gcstats.markStageTime", "dso.gcstats.actualGarbageCount",
-      "dso.gcstats.deleteStageTime", "dso.gcstats.elapsedTime"                 });
+  private final String[]        HEADERS  = { "dso.gcstats.iteration", "dso.gcstats.type", "dso.gcstats.status",
+      "dso.gcstats.startTime", "dso.gcstats.beginObjectCount", "dso.gcstats.pausedStageTime",
+      "dso.gcstats.markStageTime", "dso.gcstats.actualGarbageCount", "dso.gcstats.deleteStageTime",
+      "dso.gcstats.elapsedTime"         };
 
   private static final int      MAX_SIZE = 1500;
 
-  public GCStatsTableModel() {
-    super(GCStatsWrapper.class, FIELDS, HEADERS);
+  public GCStatsTableModel(ApplicationContext appContext) {
+    super();
+    configure(GCStatsWrapper.class, FIELDS, appContext.getMessages(HEADERS));
   }
 
   public void setGCStats(GCStats[] gcStats) {

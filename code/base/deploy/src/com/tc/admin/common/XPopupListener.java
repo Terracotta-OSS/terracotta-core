@@ -15,8 +15,8 @@ import javax.swing.JPopupMenu;
  */
 
 public class XPopupListener extends MouseAdapter {
-  protected JComponent m_target;
-  protected JPopupMenu m_popupMenu;
+  protected JComponent target;
+  protected JPopupMenu popupMenu;
 
   public XPopupListener() {
     super();
@@ -24,21 +24,21 @@ public class XPopupListener extends MouseAdapter {
 
   public XPopupListener(JComponent target) {
     this();
-    m_target = target;
+    this.target = target;
   }
 
   public void setTarget(JComponent target) {
-    if (m_target != null) {
-      if (m_popupMenu != null) {
-        m_target.removeMouseListener(this);
-        m_target.setComponentPopupMenu(null);
+    if (target != null) {
+      if (popupMenu != null) {
+        target.removeMouseListener(this);
+        target.setComponentPopupMenu(null);
       }
     }
 
-    if ((m_target = target) != null) {
-      if (m_popupMenu != null) {
-        m_target.setComponentPopupMenu(m_popupMenu);
-        m_target.addMouseListener(this);
+    if ((this.target = target) != null) {
+      if (popupMenu != null) {
+        target.setComponentPopupMenu(popupMenu);
+        target.addMouseListener(this);
       }
     }
   }
@@ -53,27 +53,27 @@ public class XPopupListener extends MouseAdapter {
 
   public void testPopup(MouseEvent e) {
     if (e.isPopupTrigger()) {
-      m_popupMenu.show(m_target, e.getX(), e.getY());
+      popupMenu.show(target, e.getX(), e.getY());
     }
   }
 
   public void setPopupMenu(JPopupMenu popupMenu) {
-    if (m_popupMenu != null) {
-      if (m_target != null) {
-        m_target.removeMouseListener(this);
-        m_target.remove(m_popupMenu);
+    if (popupMenu != null) {
+      if (target != null) {
+        target.removeMouseListener(this);
+        target.remove(popupMenu);
       }
     }
 
-    if ((m_popupMenu = popupMenu) != null) {
-      if (m_target != null) {
-        m_target.add(popupMenu);
-        m_target.addMouseListener(this);
+    if ((this.popupMenu = popupMenu) != null) {
+      if (target != null) {
+        target.add(popupMenu);
+        target.addMouseListener(this);
       }
     }
   }
 
   public JPopupMenu getPopupMenu() {
-    return m_popupMenu;
+    return popupMenu;
   }
 }

@@ -6,6 +6,7 @@ package com.tc.admin.common;
 
 import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
+import java.util.Enumeration;
 
 import javax.swing.ActionMap;
 import javax.swing.Icon;
@@ -19,10 +20,11 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreeNode;
 
 public class XTreeNode extends DefaultMutableTreeNode {
-  private TreeCellRenderer   m_renderer;
-  private Icon               m_icon;
-  private ActionMap          m_actionMap;
-  private InputMap           m_inputMap;
+  private String             name;
+  private TreeCellRenderer   renderer;
+  private Icon               icon;
+  private ActionMap          actionMap;
+  private InputMap           inputMap;
 
   protected static final int MENU_SHORTCUT_KEY_MASK = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
 
@@ -35,29 +37,72 @@ public class XTreeNode extends DefaultMutableTreeNode {
   }
 
   public TreeCellRenderer getRenderer() {
-    return m_renderer;
+    return renderer;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public String getName() {
+    return name;
   }
 
   public void setRenderer(TreeCellRenderer renderer) {
-    m_renderer = renderer;
+    this.renderer = renderer;
   }
 
   public Icon getIcon() {
-    return m_icon;
+    return icon;
   }
 
   public void setIcon(Icon icon) {
-    m_icon = icon;
+    this.icon = icon;
   }
 
   public JPopupMenu getPopupMenu() {
     return null;
   }
 
+  public void addChild(XTreeNode child) {
+    insertChild(child, getChildCount());
+  }
+  
+  public void insertChild(XTreeNode child, int index) {
+    XTreeModel model = getModel();
+    if (model != null) {
+      model.insertNodeInto(child, this, index);
+    } else {
+      insert(child, index);
+    }
+  }
+
+  public void removeChild(XTreeNode child) {
+    XTreeModel model = getModel();
+    if (model != null) {
+      model.removeNodeFromParent(child);
+    } else {
+      remove(child);
+    }
+  }
+
+  public XTreeNode findNodeByName(String theName) {
+    String key = getName();
+    if (key == null) {
+      key = getClass().getSimpleName();
+    }
+    if (theName.equals(key)) { return this; }
+    Enumeration e = children();
+    while (e.hasMoreElements()) {
+      XTreeNode child = (XTreeNode) e.nextElement();
+      if ((child = child.findNodeByName(theName)) != null) { return child; }
+    }
+    return null;
+  }
+
   public void tearDownChildren() {
     if (children != null) {
       XTreeNode node;
-
       for (int i = getChildCount() - 1; i >= 0; i--) {
         if ((node = (XTreeNode) children.get(i)) != null) {
           node.tearDown();
@@ -74,40 +119,38 @@ public class XTreeNode extends DefaultMutableTreeNode {
   }
 
   public ActionMap getActionMap() {
-    return m_actionMap;
+    return actionMap;
   }
 
   public ActionMap ensureActionMap() {
-    if (m_actionMap == null) {
-      m_actionMap = new ActionMap();
+    if (actionMap == null) {
+      actionMap = new ActionMap();
     }
-
-    return m_actionMap;
+    return actionMap;
   }
 
   public void setActionMap(ActionMap actionMap) {
-    m_actionMap = actionMap;
+    this.actionMap = actionMap;
   }
 
   public InputMap getInputMap() {
-    return m_inputMap;
+    return inputMap;
   }
 
   public InputMap ensureInputMap() {
-    if (m_inputMap == null) {
-      m_inputMap = new InputMap();
+    if (inputMap == null) {
+      inputMap = new InputMap();
     }
 
-    return m_inputMap;
+    return inputMap;
   }
 
   public void setInputMap(InputMap inputMap) {
-    m_inputMap = inputMap;
+    this.inputMap = inputMap;
   }
 
   public void addActionBinding(Object binding, XAbstractAction action) {
     ensureActionMap().put(binding, action);
-
     KeyStroke ks = action.getAccelerator();
     if (ks != null) {
       ensureInputMap().put(ks, binding);
@@ -117,11 +160,9 @@ public class XTreeNode extends DefaultMutableTreeNode {
   public XTreeModel getModel() {
     TreeNode root = getRoot();
     XTreeModel model = null;
-
     if (root instanceof XRootNode) {
       model = ((XRootNode) getRoot()).getModel();
     }
-
     return model;
   }
 
@@ -136,14 +177,14 @@ public class XTreeNode extends DefaultMutableTreeNode {
   public void nodeClicked(MouseEvent me) {/**/
   }
 
-  protected void nodeChanged() {
+  public void nodeChanged() {
     DefaultTreeModel model = getModel();
     if (model != null) {
       model.nodeChanged(this);
     }
   }
 
-  protected void nodeStructureChanged() {
+  public void nodeStructureChanged() {
     DefaultTreeModel model = getModel();
     if (model != null) {
       model.nodeStructureChanged(this);

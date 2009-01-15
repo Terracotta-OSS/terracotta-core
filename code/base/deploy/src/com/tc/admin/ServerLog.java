@@ -4,6 +4,7 @@
  */
 package com.tc.admin;
 
+import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.model.IServer;
 import com.tc.admin.model.ServerLogListener;
 
@@ -17,19 +18,17 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
 public class ServerLog extends LogPane {
-  private IServer                         m_server;
-  private LogListener                     m_logListener;
+  private IServer                         server;
+  private LogListener                     logListener;
 
-  private static final SimpleAttributeSet m_errorIconAttrSet    = new SimpleAttributeSet();
-  private static final SimpleAttributeSet m_warnIconAttrSet     = new SimpleAttributeSet();
-  private static final SimpleAttributeSet m_infoIconAttrSet     = new SimpleAttributeSet();
-  private static final SimpleAttributeSet m_blankIconAttrSet    = new SimpleAttributeSet();
+  private static final SimpleAttributeSet errorIconAttrSet      = new SimpleAttributeSet();
+  private static final SimpleAttributeSet warnIconAttrSet       = new SimpleAttributeSet();
+  private static final SimpleAttributeSet infoIconAttrSet       = new SimpleAttributeSet();
+  private static final SimpleAttributeSet blankIconAttrSet      = new SimpleAttributeSet();
 
-  private static final String             LOG_ERROR             = AdminClient.getContext().getMessage("log.error");
-
-  private static final String             LOG_WARN              = AdminClient.getContext().getMessage("log.warn");
-
-  private static final String             LOG_INFO              = AdminClient.getContext().getMessage("log.info");
+  private final String                    error;
+  private final String                    warn;
+  private final String                    info;
 
   private static final int                DEFAULT_MAX_LOG_LINES = 1000;
 
@@ -37,21 +36,25 @@ public class ServerLog extends LogPane {
                                                                                      DEFAULT_MAX_LOG_LINES).intValue();
 
   static {
-    StyleConstants.setIcon(m_errorIconAttrSet, LogHelper.getHelper().getErrorIcon());
-    StyleConstants.setIcon(m_warnIconAttrSet, LogHelper.getHelper().getWarningIcon());
-    StyleConstants.setIcon(m_infoIconAttrSet, LogHelper.getHelper().getInfoIcon());
-    StyleConstants.setIcon(m_blankIconAttrSet, LogHelper.getHelper().getBlankIcon());
+    StyleConstants.setIcon(errorIconAttrSet, LogHelper.getHelper().getErrorIcon());
+    StyleConstants.setIcon(warnIconAttrSet, LogHelper.getHelper().getWarningIcon());
+    StyleConstants.setIcon(infoIconAttrSet, LogHelper.getHelper().getInfoIcon());
+    StyleConstants.setIcon(blankIconAttrSet, LogHelper.getHelper().getBlankIcon());
   }
 
-  public ServerLog(IServer server) {
+  public ServerLog(ApplicationContext appContext, IServer server) {
     super();
-    m_server = server;
-    server.addServerLogListener(m_logListener = new LogListener());
+    error = appContext.getString("log.error");
+    warn = appContext.getString("log.warn");
+    info = appContext.getString("log.info");
+    this.server = server;
+    server.addServerLogListener(logListener = new LogListener());
     setEditable(false);
+    setName(server.toString());
   }
 
   public IServer getServer() {
-    return m_server;
+    return server;
   }
 
   class LogListener implements ServerLogListener {
@@ -63,10 +66,8 @@ public class ServerLog extends LogPane {
   public void log(Exception e) {
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
-
     e.printStackTrace(pw);
     pw.close();
-
     log(sw.toString());
   }
 
@@ -75,14 +76,14 @@ public class ServerLog extends LogPane {
 
     try {
       int length = doc.getLength();
-      AttributeSet iconAttrSet = m_blankIconAttrSet;
+      AttributeSet iconAttrSet = blankIconAttrSet;
 
-      if (s.indexOf(LOG_ERROR) != -1) {
-        iconAttrSet = m_errorIconAttrSet;
-      } else if (s.indexOf(LOG_WARN) != -1) {
-        iconAttrSet = m_warnIconAttrSet;
-      } else if (s.indexOf(LOG_INFO) != -1) {
-        iconAttrSet = m_infoIconAttrSet;
+      if (s.indexOf(error) != -1) {
+        iconAttrSet = errorIconAttrSet;
+      } else if (s.indexOf(warn) != -1) {
+        iconAttrSet = warnIconAttrSet;
+      } else if (s.indexOf(info) != -1) {
+        iconAttrSet = infoIconAttrSet;
       }
 
       appendToLog(doc, length, " ", iconAttrSet);
@@ -101,12 +102,10 @@ public class ServerLog extends LogPane {
       int length = doc.getLength();
 
       s = doc.getText(0, length);
-
       if ((lineCount = lineCount(s)) > MAX_LOG_LINES) {
         int lines = lineCount - MAX_LOG_LINES;
 
         offset = 0;
-
         for (int i = 0; i < lines; i++) {
           offset = s.indexOf(NEWLINE, offset);
           offset++;
@@ -134,8 +133,8 @@ public class ServerLog extends LogPane {
   }
 
   public void tearDown() {
-    m_server.removeServerLogListener(m_logListener);
-    m_logListener = null;
-    m_server = null;
+    server.removeServerLogListener(logListener);
+    logListener = null;
+    server = null;
   }
 }

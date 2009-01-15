@@ -5,6 +5,7 @@
 package com.tc.server;
 
 import com.tc.config.schema.L2Info;
+import com.tc.config.schema.ServerGroupInfo;
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.statistics.StatisticData;
@@ -115,6 +116,14 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
     return null;
   }
 
+  public long getMaxMemory() {
+    return 0;
+  }
+
+  public long getUsedMemory() {
+    return 0;
+  }
+
   public StatisticData[] getCpuUsage() {
     return null;
   }
@@ -193,6 +202,10 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
 
   public boolean isGarbageCollectionEnabled() {
     return false;
+  }
+
+  public ServerGroupInfo[] getServerGroupInfo() {
+    return null;
   }
 
 }

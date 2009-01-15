@@ -3,4 +3,6 @@
  */
 package org.terracotta.ui.session;
 
-public class RuleDetail {/**/}
+public class RuleDetail {
+  public static final RuleDetail NULL_DETAIL = new RuleDetail();
+}

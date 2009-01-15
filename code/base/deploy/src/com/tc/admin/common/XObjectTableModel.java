@@ -26,30 +26,26 @@ import javax.swing.table.AbstractTableModel;
  */
 
 public class XObjectTableModel extends AbstractTableModel {
-  private Class                  m_type;
+  private Class                  type;
+  private ArrayList              fieldDescriptions;
+  private ArrayList              objects      = new ArrayList();
+  private String[]               fieldNames;
+  private ArrayList              showingFields;
 
-  private ArrayList              m_fieldDescriptions;
-
-  private ArrayList              m_objects      = new ArrayList();
-
-  private String[]               m_fieldNames;
-
-  private ArrayList              m_showingFields;
-
-  protected static final HashMap m_primitiveMap = new HashMap();
+  protected static final HashMap primitiveMap = new HashMap();
 
   static {
-    m_primitiveMap.put(Double.TYPE, Double.class);
-    m_primitiveMap.put(Integer.TYPE, Integer.class);
-    m_primitiveMap.put(Boolean.TYPE, Boolean.class);
-    m_primitiveMap.put(Character.TYPE, Character.class);
-    m_primitiveMap.put(Byte.TYPE, Byte.class);
-    m_primitiveMap.put(Float.TYPE, Float.class);
-    m_primitiveMap.put(Long.TYPE, Long.class);
+    primitiveMap.put(Double.TYPE, Double.class);
+    primitiveMap.put(Integer.TYPE, Integer.class);
+    primitiveMap.put(Boolean.TYPE, Boolean.class);
+    primitiveMap.put(Character.TYPE, Character.class);
+    primitiveMap.put(Byte.TYPE, Byte.class);
+    primitiveMap.put(Float.TYPE, Float.class);
+    primitiveMap.put(Long.TYPE, Long.class);
   }
 
-  public static final int        UP             = SwingConstants.NORTH;
-  public static final int        DOWN           = SwingConstants.SOUTH;
+  public static final int        UP           = SwingConstants.NORTH;
+  public static final int        DOWN         = SwingConstants.SOUTH;
 
   public XObjectTableModel() {
     super();
@@ -57,11 +53,7 @@ public class XObjectTableModel extends AbstractTableModel {
 
   public XObjectTableModel(Class type, String[] fields, String[] headings) {
     super();
-
-    m_type = type;
-    m_fieldNames = Arrays.asList(fields).toArray(new String[0]);
-
-    createColumns(fields, headings);
+    configure(type, fields, headings);
   }
 
   public XObjectTableModel(Class type, String[] fields, String[] headings, Object[] data) {
@@ -92,9 +84,16 @@ public class XObjectTableModel extends AbstractTableModel {
     this(type, fields, headings, c.iterator());
   }
 
+  public void configure(Class theType, String[] fields, String[] headings) {
+    this.type = theType;
+    fieldNames = Arrays.asList(fields).toArray(new String[0]);
+
+    createColumns(fields, headings);
+  }
+
   private void determineMethods(FieldDescription fieldDesc) {
     String name = fieldDesc.getFieldName();
-    Method[] methods = m_type.getMethods();
+    Method[] methods = type.getMethods();
     Method method;
     String methodName;
     Class returnType;
@@ -150,25 +149,25 @@ public class XObjectTableModel extends AbstractTableModel {
 
   private boolean determineSortability(Method getter) {
     if (getter != null) {
-      Class type = getter.getReturnType();
-
-      return Comparable.class.isAssignableFrom(type) || (type.isPrimitive() && !Void.class.equals(type));
+      Class returnType = getter.getReturnType();
+      return Comparable.class.isAssignableFrom(returnType)
+             || (returnType.isPrimitive() && !Void.class.equals(returnType));
     }
 
     return false;
   }
 
   public void createColumns(String[] fields, String[] headings) {
-    if (m_type != null) {
+    if (type != null) {
       FieldDescription fieldDesc;
 
-      m_fieldDescriptions = new ArrayList();
-      m_showingFields = new ArrayList();
+      fieldDescriptions = new ArrayList();
+      showingFields = new ArrayList();
 
-      for (int i = 0; i < m_fieldNames.length; i++) {
+      for (int i = 0; i < fieldNames.length; i++) {
         fieldDesc = new FieldDescription(fields[i], headings[i]);
-        m_fieldDescriptions.add(fieldDesc);
-        m_showingFields.add(fieldDesc);
+        fieldDescriptions.add(fieldDesc);
+        showingFields.add(fieldDesc);
         determineMethods(fieldDesc);
       }
     }
@@ -179,17 +178,15 @@ public class XObjectTableModel extends AbstractTableModel {
   }
 
   public String[] getShowingFields() {
-    String[] fieldNames = new String[getShowingFieldCount()];
-
-    for (int i = 0; i < fieldNames.length; i++) {
-      fieldNames[i] = getShowingFieldDescription(i).getFieldName();
+    String[] showingFieldNames = new String[getShowingFieldCount()];
+    for (int i = 0; i < showingFieldNames.length; i++) {
+      showingFieldNames[i] = getShowingFieldDescription(i).getFieldName();
     }
-
-    return fieldNames;
+    return showingFieldNames;
   }
 
   public FieldDescription getFieldDescription(int index) {
-    return (FieldDescription) m_fieldDescriptions.get(index);
+    return (FieldDescription) fieldDescriptions.get(index);
   }
 
   public FieldDescription getFieldDescription(String fieldName) {
@@ -197,11 +194,11 @@ public class XObjectTableModel extends AbstractTableModel {
   }
 
   public FieldDescription getShowingFieldDescription(int index) {
-    return (FieldDescription) m_showingFields.get(index);
+    return (FieldDescription) showingFields.get(index);
   }
 
   public FieldDescription getShowingFieldDescription(String fieldName) {
-    int size = m_showingFields.size();
+    int size = showingFields.size();
     FieldDescription fieldDesc;
 
     for (int i = 0; i < size; i++) {
@@ -214,7 +211,7 @@ public class XObjectTableModel extends AbstractTableModel {
   }
 
   private Class _mapPrimitive(Class c) {
-    return (Class) m_primitiveMap.get(c);
+    return (Class) primitiveMap.get(c);
   }
 
   public boolean isColumnSortable(int col) {
@@ -262,45 +259,45 @@ public class XObjectTableModel extends AbstractTableModel {
   }
 
   public void clear() {
-    m_objects.clear();
+    objects.clear();
   }
 
   public void add(Object object) {
-    if (m_type != null) {
-      m_objects.add(object);
+    if (type != null) {
+      objects.add(object);
     }
   }
 
   public void add(int index, Object object) {
-    if (m_type != null) {
-      m_objects.add(index, object);
+    if (type != null) {
+      objects.add(index, object);
     }
   }
 
   public void remove(Object object) {
-    if (m_type != null) {
-      m_objects.remove(object);
+    if (type != null) {
+      objects.remove(object);
     }
   }
 
   public void remove(int index) {
-    if (m_type != null) {
-      m_objects.remove(index);
+    if (type != null) {
+      objects.remove(index);
     }
   }
 
-  public void add(Object[] objects) {
-    if (objects != null) {
-      for (int i = 0; i < objects.length; i++) {
-        add(objects[i]);
+  public void add(Object[] theObjects) {
+    if (theObjects != null) {
+      for (Object o : theObjects) {
+        add(o);
       }
     }
   }
 
-  public void remove(Object[] objects) {
-    if (objects != null) {
-      for (int i = 0; i < objects.length; i++) {
-        remove(objects[i]);
+  public void remove(Object[] theObjects) {
+    if (theObjects != null) {
+      for (Object o : theObjects) {
+        remove(o);
       }
     }
   }
@@ -352,11 +349,11 @@ public class XObjectTableModel extends AbstractTableModel {
   }
 
   public int getRowCount() {
-    return m_objects != null ? m_objects.size() : 0;
+    return objects != null ? objects.size() : 0;
   }
 
   public int getColumnCount() {
-    return m_showingFields != null ? m_showingFields.size() : 0;
+    return showingFields != null ? showingFields.size() : 0;
   }
 
   public boolean isCellEditable(int row, int col) {
@@ -366,7 +363,6 @@ public class XObjectTableModel extends AbstractTableModel {
   public String getColumnName(int col) {
     FieldDescription fieldDesc = getShowingFieldDescription(col);
     String heading = fieldDesc.getHeader();
-
     return heading != null ? heading : fieldDesc.getFieldName();
   }
 
@@ -376,16 +372,14 @@ public class XObjectTableModel extends AbstractTableModel {
   }
 
   public Object getObjectAt(int row) {
-    return m_objects.get(row);
+    return objects.get(row);
   }
 
   public int getObjectIndex(Object object) {
     int count = getRowCount();
-
     for (int i = 0; i < count; i++) {
       if (object == getObjectAt(i)) { return i; }
     }
-
     return -1;
   }
 
@@ -446,54 +440,49 @@ public class XObjectTableModel extends AbstractTableModel {
         return (direction == SwingConstants.SOUTH) ? diff : -diff;
       }
     };
-    Collections.sort(m_objects, c);
+    Collections.sort(objects, c);
 
     fireTableDataChanged();
   }
 
-  public boolean hasEditor(Class type) {
+  public boolean hasEditor(Class theType) {
     return false;
   }
 
   public int indexOfField(String fieldName) {
     if (fieldName != null) {
-      for (int i = 0; i < m_fieldNames.length; i++) {
-        if (fieldName.equals(m_fieldNames[i])) { return i; }
+      for (int i = 0; i < fieldNames.length; i++) {
+        if (fieldName.equals(fieldNames[i])) { return i; }
       }
     }
-
     return -1;
   }
 
   protected FieldDescription findDescription(String fieldName) {
-    int size = m_fieldDescriptions.size();
+    int size = fieldDescriptions.size();
     FieldDescription fieldDesc;
-
     for (int i = 0; i < size; i++) {
       fieldDesc = getFieldDescription(i);
       if (fieldName.equals(fieldDesc.getFieldName())) { return fieldDesc; }
     }
-
     return null;
   }
 
-  public void showColumnsExclusive(String[] fieldNames) {
+  public void showColumnsExclusive(String[] theFieldNames) {
     FieldDescription fieldDesc;
-
-    m_showingFields = new ArrayList();
-    for (int i = 0; i < fieldNames.length; i++) {
-      if ((fieldDesc = findDescription(fieldNames[i])) != null) {
-        m_showingFields.add(fieldDesc);
+    showingFields = new ArrayList();
+    for (int i = 0; i < theFieldNames.length; i++) {
+      if ((fieldDesc = findDescription(theFieldNames[i])) != null) {
+        showingFields.add(fieldDesc);
       }
     }
-
     fireTableStructureChanged();
   }
 
   public void showColumn(String fieldName) {
     if (isColumnShowing(fieldName)) { return; }
 
-    int showingCount = m_showingFields.size();
+    int showingCount = showingFields.size();
     int fieldIndex = indexOfField(fieldName);
     FieldDescription targetDesc = getFieldDescription(fieldIndex);
     FieldDescription fieldDesc;
@@ -504,106 +493,99 @@ public class XObjectTableModel extends AbstractTableModel {
       shownIndex = fieldDesc.indexOfField();
 
       if (fieldIndex <= shownIndex) {
-        m_showingFields.add(i, targetDesc);
+        showingFields.add(i, targetDesc);
         fireTableStructureChanged();
         return;
       }
     }
 
-    m_showingFields.add(targetDesc);
+    showingFields.add(targetDesc);
     fireTableStructureChanged();
   }
 
   public void hideColumn(String fieldName) {
     int index = getShowingFieldIndex(fieldName);
-
     if (index != -1) {
-      m_showingFields.remove(index);
+      showingFields.remove(index);
       fireTableStructureChanged();
     }
   }
 
   public boolean isColumnShowing(String fieldName) {
-    int size = m_showingFields.size();
+    int size = showingFields.size();
     FieldDescription fieldDesc;
-
     for (int i = 0; i < size; i++) {
       fieldDesc = getShowingFieldDescription(i);
-
       if (fieldName.equals(fieldDesc.getFieldName())) { return true; }
     }
-
     return false;
   }
 
   public int getShowingFieldIndex(String fieldName) {
-    int size = m_showingFields.size();
+    int size = showingFields.size();
     FieldDescription fieldDesc;
-
     for (int i = 0; i < size; i++) {
       fieldDesc = getShowingFieldDescription(i);
-
       if (fieldName.equals(fieldDesc.getFieldName())) { return i; }
     }
-
     return -1;
   }
 
   class FieldDescription {
-    String  m_fieldName;
-    String  m_header;
-    Method  m_getter;
-    Method  m_setter;
-    Method  m_op;
-    boolean m_sortable;
+    String  fieldName;
+    String  header;
+    Method  getter;
+    Method  setter;
+    Method  op;
+    boolean sortable;
 
     FieldDescription(String fieldName, String header) {
-      m_fieldName = fieldName;
-      m_header = header;
+      this.fieldName = fieldName;
+      this.header = header;
     }
 
     String getFieldName() {
-      return m_fieldName;
+      return fieldName;
     }
 
     int indexOfField() {
-      return XObjectTableModel.this.indexOfField(m_fieldName);
+      return XObjectTableModel.this.indexOfField(fieldName);
     }
 
     String getHeader() {
-      return m_header != null ? m_header : m_fieldName;
+      return header != null ? header : fieldName;
     }
 
     void setGetter(Method getter) {
-      m_getter = getter;
+      this.getter = getter;
     }
 
     Method getGetter() {
-      return m_getter;
+      return getter;
     }
 
     void setSetter(Method setter) {
-      m_setter = setter;
+      this.setter = setter;
     }
 
     Method getSetter() {
-      return m_setter;
+      return setter;
     }
 
     void setOperation(Method op) {
-      m_op = op;
+      this.op = op;
     }
 
     Method getOperation() {
-      return m_op;
+      return op;
     }
 
     void setSortable(boolean sortable) {
-      m_sortable = sortable;
+      this.sortable = sortable;
     }
 
     boolean isSortable() {
-      return m_sortable;
+      return sortable;
     }
   }
 }

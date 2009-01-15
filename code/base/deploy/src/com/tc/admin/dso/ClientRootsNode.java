@@ -4,27 +4,25 @@
  */
 package com.tc.admin.dso;
 
-import org.dijon.Label;
-
-import com.tc.admin.AdminClient;
+import com.tc.admin.IAdminClientContext;
+import com.tc.admin.model.IClient;
+import com.tc.admin.model.IClusterModel;
 
 public class ClientRootsNode extends RootsNode {
-  protected ClientNode m_clientNode;
+  protected IClient client;
 
-  public ClientRootsNode(ClientNode clientNode) {
-    super(clientNode.getClientsNode().getClusterNode());
-    m_clientNode = clientNode;
+  public ClientRootsNode(IAdminClientContext adminClientContext, IClusterModel clusterModel, IClient client) {
+    super(adminClientContext, clusterModel);
+    this.client = client;
   }
 
   String getBaseLabel() {
-    return m_acc.getMessage("dso.client.roots");
+    return adminClientContext.getMessage("dso.client.roots");
   }
-  
+
   protected RootsPanel createRootsPanel() {
-    RootsPanel panel = new RootsPanel(m_clientNode.getClientsNode().getClusterModel(), m_clientNode.getClient(),
-                                      m_roots);
-    Label explainationLabel = (Label) panel.findComponent("ExplainationLabel");
-    explainationLabel.setText(AdminClient.getContext().getMessage("resident.object.message"));
+    RootsPanel panel = new RootsPanel(adminClientContext, clusterModel, client, client, roots);
+    panel.setExplainationText(adminClientContext.getMessage("resident.object.message"));
     return panel;
   }
 }

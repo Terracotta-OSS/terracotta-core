@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.stats;
 
@@ -13,6 +14,8 @@ import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.statistics.StatisticData;
 
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import javax.management.ObjectName;
 
@@ -27,7 +30,7 @@ public interface DSOMBean extends DSOStats, TerracottaMBean {
 
   static final String GC_STATUS_UPDATE = "dso.gc.status.update";
 
-  static final String ROOT_ADDED   = "dso.root.added";
+  static final String ROOT_ADDED       = "dso.root.added";
 
   ObjectName[] getRoots();
 
@@ -41,26 +44,29 @@ public interface DSOMBean extends DSOStats, TerracottaMBean {
   DSOClassInfo[] getClassInfo();
 
   Map<ObjectName, Long> getAllPendingTransactionsCount();
-  
+
   Map<ObjectName, Long> getClientTransactionRates();
-  
+
   Map<ObjectName, StatisticData[]> getL1CpuUsages();
-  
+
   Map<ObjectName, Map> getL1Statistics();
-  
+
   Map<ObjectName, Map> getPrimaryClientStatistics();
-  
+
   ManagedObjectFacade lookupFacade(ObjectID objectID, int limit) throws NoSuchObjectException;
 
   Map<ObjectName, Integer> getClientLiveObjectCount();
-  
+
   int getLiveObjectCount();
-  
+
   long getLastCollectionGarbageCount();
-  
+
   long getLastCollectionElapsedTime();
-  
+
   boolean isResident(NodeID node, ObjectID oid);
-  
-  public GCStats[] getGarbageCollectorStats();
+
+  GCStats[] getGarbageCollectorStats();
+
+  Map<ObjectName, Map<String, Object>> getAttributeMap(Map<ObjectName, Set<String>> attributeMap, long timeout,
+                                                       TimeUnit unit);
 }

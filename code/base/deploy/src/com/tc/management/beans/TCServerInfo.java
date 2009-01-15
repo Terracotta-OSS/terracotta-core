@@ -5,6 +5,7 @@
 package com.tc.management.beans;
 
 import com.tc.config.schema.L2Info;
+import com.tc.config.schema.ServerGroupInfo;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.state.StateChangeListener;
 import com.tc.l2.state.StateManager;
@@ -13,7 +14,6 @@ import com.tc.logging.TCLogging;
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.runtime.JVMMemoryManager;
-import com.tc.runtime.MemoryUsage;
 import com.tc.runtime.TCRuntime;
 import com.tc.server.TCServer;
 import com.tc.statistics.StatisticData;
@@ -229,6 +229,10 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     return server.infoForAllL2s();
   }
 
+  public ServerGroupInfo[] getServerGroupInfo() {
+    return server.serverGroups();
+  }
+  
   public int getDSOListenPort() {
     return server.getDSOListenPort();
   }
@@ -247,12 +251,19 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     return cpuNames = (String[]) list.toArray(EMPTY_CPU_NAMES);
   }
 
+  public long getUsedMemory() {
+    return manager.getMemoryUsage().getUsedMemory();
+  }
+  
+  public long getMaxMemory() {
+    return manager.getMemoryUsage().getMaxMemory();
+  }
+  
   public Map getStatistics() {
     HashMap<String, Object> map = new HashMap<String, Object>();
-    MemoryUsage usage = manager.getMemoryUsage();
 
-    map.put(MEMORY_USED, Long.valueOf(usage.getUsedMemory()));
-    map.put(MEMORY_MAX, Long.valueOf(usage.getMaxMemory()));
+    map.put(MEMORY_USED, Long.valueOf(getUsedMemory()));
+    map.put(MEMORY_MAX, Long.valueOf(getMaxMemory()));
 
     if (cpuSRA != null) {
       StatisticData[] statsData = getCpuUsage();

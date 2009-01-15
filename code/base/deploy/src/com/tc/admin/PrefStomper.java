@@ -16,6 +16,14 @@ public class PrefStomper {
       prefs.node(children[i]).removeNode();
     }
 
+    prefs = Preferences.systemRoot();
+    children = prefs.childrenNames();
+    
+    for (int i = 0; i < children.length; i++) {
+      System.out.println("Removing " + children[i]);
+      prefs.node(children[i]).removeNode();
+    }
+
     prefs.flush();
   }
 }

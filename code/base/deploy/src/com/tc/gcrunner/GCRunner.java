@@ -23,9 +23,9 @@ import javax.management.remote.JMXConnector;
 public class GCRunner {
   private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
 
-  private String                m_host;
-  private int                   m_port;
-  private String                m_userName;
+  private String                host;
+  private int                   port;
+  private String                userName;
 
   public static final String    DEFAULT_HOST  = "localhost";
   public static final int       DEFAULT_PORT  = 9520;
@@ -34,8 +34,10 @@ public class GCRunner {
 
     CommandLineBuilder comandLineBuilder = new CommandLineBuilder(GCRunner.class.getName(), args);
 
-    comandLineBuilder.addOption("n", "hostname", true, "The Terracotta Server instane hostname", String.class, false, "l2-hostname");
-    comandLineBuilder.addOption("p", "jmxport", true, "Terracotta Server instance JMX port", Integer.class, false, "l2-jmx-port");
+    comandLineBuilder.addOption("n", "hostname", true, "The Terracotta Server instane hostname", String.class, false,
+                                "l2-hostname");
+    comandLineBuilder.addOption("p", "jmxport", true, "Terracotta Server instance JMX port", Integer.class, false,
+                                "l2-jmx-port");
     comandLineBuilder.addOption("u", "username", true, "user name", String.class, false);
     comandLineBuilder.addOption("h", "help", String.class, false);
 
@@ -62,8 +64,8 @@ public class GCRunner {
     if (arguments.length == 0) {
       host = DEFAULT_HOST;
       port = DEFAULT_PORT;
-      System.err.println("No host or port provided. Invoking GC on Terracotta server instance at '" + host + "', port " + port
-                         + " by default.");
+      System.err.println("No host or port provided. Invoking GC on Terracotta server instance at '" + host + "', port "
+                         + port + " by default.");
     } else if (arguments.length == 1) {
       host = DEFAULT_HOST;
       try {
@@ -89,18 +91,18 @@ public class GCRunner {
   }
 
   public GCRunner(String host, int port) {
-    m_host = host;
-    m_port = port;
+    this.host = host;
+    this.port = port;
   }
 
   public GCRunner(String host, int port, String userName) {
     this(host, port);
-    m_userName = userName;
+    this.userName = userName;
   }
 
   public void runGC() throws Exception {
     ObjectManagementMonitorMBean mbean = null;
-    final JMXConnector jmxConnector = CommandLineBuilder.getJMXConnector(m_userName, m_host, m_port);
+    final JMXConnector jmxConnector = CommandLineBuilder.getJMXConnector(userName, host, port);
     final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
     mbean = MBeanServerInvocationProxy.newMBeanProxy(mbs, L2MBeanNames.OBJECT_MANAGEMENT,
                                                      ObjectManagementMonitorMBean.class, false);

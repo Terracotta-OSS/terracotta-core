@@ -43,8 +43,8 @@ public class SessionIntegratorBundle extends ListResourceBundle {
         { "cannot.remove.while.running.msg", "You cannot remove webapps while the system is running." },
         { "remove.success.msg", "Successfully removed ''{0}''" }, { "remove.failure.msg", "Unable to remove ''{0}''" },
         { "query.save.config.msg", "The configuration is modified. Save?" },
-        { "configuration.load.failure.msg", "Can't load configuration" },
-        { "start.all.label", "Start all" }, { "restart.all.label", "Restart all" }, { "start.label", "Start" },
-        { "stop.label", "Stop" }, };
+        { "configuration.load.failure.msg", "Can't load configuration" }, { "start.all.label", "Start all" },
+        { "restart.all.label", "Restart all" }, { "start.label", "Start" }, { "stop.label", "Stop" },
+        { "current.webserver", "Current webserver" } };
   }
 }

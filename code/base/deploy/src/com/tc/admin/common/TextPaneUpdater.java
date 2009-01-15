@@ -8,13 +8,13 @@ import javax.swing.JTextPane;
 import javax.swing.text.Document;
 
 public class TextPaneUpdater implements Runnable {
-  JTextPane           m_view;
-  String              m_line;
+  JTextPane                   view;
+  String                      line;
 
-  static final String LINE_SEP = System.getProperty("line.separator");
+  private static final String LINE_SEP = System.getProperty("line.separator");
 
   public TextPaneUpdater(JTextPane view) {
-    m_view = view;
+    this.view = view;
   }
 
   public TextPaneUpdater(JTextPane view, String text) {
@@ -23,14 +23,14 @@ public class TextPaneUpdater implements Runnable {
   }
 
   void setLine(String line) {
-    m_line = line;
+    this.line = line;
   }
 
   public void run() {
     try {
-      Document doc = m_view.getDocument();
-      doc.insertString(doc.getLength(), m_line + LINE_SEP, null);
-      m_view.setCaretPosition(doc.getLength() - 1);
+      Document doc = view.getDocument();
+      doc.insertString(doc.getLength(), line + LINE_SEP, null);
+      view.setCaretPosition(doc.getLength() - 1);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

@@ -9,18 +9,22 @@ import com.tc.admin.common.TextComponentHelper;
 import com.tc.admin.common.TextPaneUpdater;
 import com.tc.admin.common.XTextPane;
 
+import java.awt.Font;
+
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
 public class ProcessOutputView extends XTextPane {
-  private StreamReader         m_errorStreamReader;
-  private StreamReader         m_outputStreamReader;
-  private String               m_listenerTrigger;
-  private OutputStreamListener m_listener;
+  private StreamReader         errorStreamReader;
+  private StreamReader         outputStreamReader;
+  private String               listenerTrigger;
+  private OutputStreamListener listener;
   
   public ProcessOutputView() {
     super();
+    setEditable(false);
+    setFont(new Font("monospaced", Font.PLAIN, 11));
   }
 
   protected TextComponentHelper createHelper() {
@@ -36,56 +40,54 @@ public class ProcessOutputView extends XTextPane {
   }
   
   public void setListener(OutputStreamListener listener) {
-    m_listener = listener;
-    
-    if(m_errorStreamReader != null) {
-      m_errorStreamReader.setTriggerListener(m_listener);
+    this.listener = listener;
+    if(errorStreamReader != null) {
+      errorStreamReader.setTriggerListener(listener);
     }
-    if(m_outputStreamReader != null) {
-      m_outputStreamReader.setTriggerListener(m_listener);
+    if(outputStreamReader != null) {
+      outputStreamReader.setTriggerListener(listener);
     }
   }
   
   public OutputStreamListener getListener() {
-    return m_listener;
+    return listener;
   }
   
   public void setListenerTrigger(String trigger) {
-    m_listenerTrigger = trigger;
-    
-    if(m_errorStreamReader != null) {
-      m_errorStreamReader.setTrigger(trigger);
+    listenerTrigger = trigger;
+    if(errorStreamReader != null) {
+      errorStreamReader.setTrigger(trigger);
     }
-    if(m_outputStreamReader != null) {
-      m_outputStreamReader.setTrigger(trigger);
+    if(outputStreamReader != null) {
+      outputStreamReader.setTrigger(trigger);
     }
   }
   
   public String getListenerTrigger() {
-    return m_listenerTrigger;
+    return listenerTrigger;
   }
   
   public void start(Process process) {
-    if(m_errorStreamReader != null || m_outputStreamReader != null) {
+    if(errorStreamReader != null || outputStreamReader != null) {
       stop();
     }
     
-    m_errorStreamReader = new StreamReader(process.getErrorStream(),
+    errorStreamReader = new StreamReader(process.getErrorStream(),
                                            new TextPaneUpdater(this),
-                                           m_listener,
-                                           m_listenerTrigger);
-    m_errorStreamReader.start();
+                                           listener,
+                                           listenerTrigger);
+    errorStreamReader.start();
     
-    m_outputStreamReader = new StreamReader(process.getInputStream(),
+    outputStreamReader = new StreamReader(process.getInputStream(),
                                             new TextPaneUpdater(this),
-                                            m_listener,
-                                            m_listenerTrigger);
-    m_outputStreamReader.start();
+                                            listener,
+                                            listenerTrigger);
+    outputStreamReader.start();
   }
   
   public void stop() {
-    m_errorStreamReader.finish();
-    m_outputStreamReader.finish();
+    errorStreamReader.finish();
+    outputStreamReader.finish();
   }
 
   public void append(String text) {
@@ -94,7 +96,7 @@ public class ProcessOutputView extends XTextPane {
   
   public void stopAndClear() {
     stop();
-    setContent("");
+    setText("");
   }
   
   class TextClearer implements Runnable {

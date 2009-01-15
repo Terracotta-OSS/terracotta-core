@@ -4,18 +4,15 @@
  */
 package com.tc.welcome;
 
-import org.dijon.ApplicationManager;
-import org.dijon.Frame;
-import org.dijon.Menu;
-import org.dijon.ScrollPane;
-import org.dijon.TextPane;
-
 import com.tc.admin.TCStop;
 import com.tc.admin.common.BrowserLauncher;
+import com.tc.admin.common.LAFHelper;
 import com.tc.admin.common.Splash;
 import com.tc.admin.common.StreamReader;
 import com.tc.admin.common.TextPaneUpdater;
 import com.tc.admin.common.XAbstractAction;
+import com.tc.admin.common.XFrame;
+import com.tc.admin.common.XScrollPane;
 import com.tc.admin.common.XTextPane;
 import com.tc.server.ServerConstants;
 import com.tc.util.ResourceBundleHelper;
@@ -29,7 +26,6 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -46,10 +42,13 @@ import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.JCheckBox;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.JTextPane;
 import javax.swing.JToggleButton;
 import javax.swing.Timer;
 import javax.swing.UIManager;
@@ -64,96 +63,103 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 
 public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener, PropertyChangeListener {
-  private static ResourceBundleHelper m_bundleHelper = new ResourceBundleHelper(DSOSamplesFrame.class);
-  private TextPane                    m_textPane;
-  private TextPane                    m_outputPane;
-  private ArrayList                   m_processList;
+  private static ResourceBundleHelper bundleHelper = new ResourceBundleHelper(DSOSamplesFrame.class);
+  private XTextPane                   textPane;
+  private XTextPane                   outputPane;
+  private ArrayList                   processList;
+
+  static {
+    if (Os.isMac()) {
+      System.setProperty("com.apple.macos.useScreenMenuBar", "true");
+      System.setProperty("apple.laf.useScreenMenuBar", "true");
+      System.setProperty("apple.awt.showGrowBox", "true");
+      System.setProperty("com.apple.mrj.application.growbox.intrudes", "false");
+    }
+  }
 
   public DSOSamplesFrame(String[] args) {
-    super(m_bundleHelper.getString("frame.title"));
+    super(bundleHelper.getString("frame.title"));
 
     Container cp = getContentPane();
     cp.setLayout(new BorderLayout());
 
-    m_textPane = new TextPane();
-    m_textPane.setBackground(Color.WHITE);
-    cp.add(new ScrollPane(m_textPane));
-    m_textPane.setEditable(false);
-    m_textPane.addHyperlinkListener(this);
-    m_textPane.addPropertyChangeListener("page", this);
+    textPane = new XTextPane();
+    textPane.setBackground(Color.WHITE);
+    cp.add(new XScrollPane(textPane));
+    textPane.setEditable(false);
+    textPane.addHyperlinkListener(this);
+    textPane.addPropertyChangeListener("page", this);
 
-    m_processList = new ArrayList();
-    m_outputPane = new XTextPane();
-    m_outputPane.setForeground(Color.GREEN);
-    m_outputPane.setBackground(Color.BLACK);
-    m_outputPane.setFont(Font.decode("Monospaced-plain-10"));
-    ScrollPane scroller = new ScrollPane(m_outputPane);
+    processList = new ArrayList();
+    outputPane = new XTextPane();
+    outputPane.setForeground(Color.GREEN);
+    outputPane.setBackground(Color.BLACK);
+    outputPane.setFont(Font.decode("Monospaced-plain-10"));
+    XScrollPane scroller = new XScrollPane(outputPane);
     scroller.setPreferredSize(new Dimension(500, 200));
     cp.add(scroller, BorderLayout.SOUTH);
     runServer();
 
     try {
-      m_textPane.setPage(DSOSamplesFrame.class.getResource("SamplesPojo.html"));
+      textPane.setPage(DSOSamplesFrame.class.getResource("SamplesPojo.html"));
     } catch (IOException ioe) {
-      m_textPane.setText(ioe.getMessage());
+      textPane.setText(ioe.getMessage());
     }
   }
 
-  protected void initFileMenu(Menu fileMenu) {
+  protected void initFileMenu(JMenu fileMenu) {
     fileMenu.add(new ServersAction());
     super.initFileMenu(fileMenu);
   }
 
   class ServersAction extends XAbstractAction {
-    JPanel        m_panel;
-    JToggleButton m_useLocalToggle;
-    JTextField    m_serversListField;
+    JPanel        panel;
+    JToggleButton useLocalToggle;
+    JTextField    serversListField;
 
     ServersAction() {
-      super(m_bundleHelper.getString("servers.action.name"));
+      super(bundleHelper.getString("servers.action.name"));
     }
 
     private JPanel createPanel() {
-      if (m_panel == null) {
-        m_panel = new JPanel();
-        m_panel.setLayout(new GridLayout(2, 1));
-        m_panel.add(m_useLocalToggle = new JCheckBox(m_bundleHelper.getString("servers.use.local")));
-        m_useLocalToggle.addActionListener(new ActionListener() {
+      if (panel == null) {
+        panel = new JPanel();
+        panel.setLayout(new GridLayout(2, 1));
+        panel.add(useLocalToggle = new JCheckBox(bundleHelper.getString("servers.use.local")));
+        useLocalToggle.addActionListener(new ActionListener() {
           public void actionPerformed(ActionEvent ae) {
-            m_serversListField.setEnabled(!m_useLocalToggle.isSelected());
+            serversListField.setEnabled(!useLocalToggle.isSelected());
           }
         });
         JPanel bottomPanel = new JPanel(new BorderLayout());
         JPanel otherPanel = new JPanel();
         otherPanel.setLayout(new FlowLayout());
-        otherPanel.add(new JLabel(m_bundleHelper.getString("servers.use.remote")));
-        m_serversListField = new JTextField("server1:9510,server2:9510,server3:9510");
-        m_serversListField.setToolTipText(m_bundleHelper.getString("servers.field.tip"));
-        m_serversListField.setPreferredSize(m_serversListField.getPreferredSize());
+        otherPanel.add(new JLabel(bundleHelper.getString("servers.use.remote")));
+        serversListField = new JTextField("server1:9510,server2:9510,server3:9510");
+        serversListField.setToolTipText(bundleHelper.getString("servers.field.tip"));
+        serversListField.setPreferredSize(serversListField.getPreferredSize());
         String prop = System.getProperty("tc.server");
-        m_serversListField.setText(prop);
-        otherPanel.add(m_serversListField);
+        serversListField.setText(prop);
+        otherPanel.add(serversListField);
         bottomPanel.add(otherPanel, BorderLayout.CENTER);
-        JLabel serversListDescription = new JLabel(m_bundleHelper.getString("servers.field.description"));
+        JLabel serversListDescription = new JLabel(bundleHelper.getString("servers.field.description"));
         serversListDescription.setBorder(new EmptyBorder(0, 20, 0, 0));
         bottomPanel.add(serversListDescription, BorderLayout.SOUTH);
-        m_panel.add(bottomPanel);
+        panel.add(bottomPanel);
 
-        m_serversListField.setEnabled(prop != null);
-        m_useLocalToggle.setSelected(prop == null);
+        serversListField.setEnabled(prop != null);
+        useLocalToggle.setSelected(prop == null);
       }
-      return m_panel;
+      return panel;
     }
 
     public void actionPerformed(ActionEvent ae) {
-      JPanel panel = createPanel();
       int result;
-
-      result = JOptionPane.showConfirmDialog(DSOSamplesFrame.this, panel, DSOSamplesFrame.this.getTitle(),
+      result = JOptionPane.showConfirmDialog(DSOSamplesFrame.this, createPanel(), DSOSamplesFrame.this.getTitle(),
                                              JOptionPane.OK_CANCEL_OPTION);
       if (result == JOptionPane.OK_OPTION) {
-        if (!m_useLocalToggle.isSelected()) {
-          System.setProperty("tc.server", m_serversListField.getText());
+        if (!useLocalToggle.isSelected()) {
+          System.setProperty("tc.server", serversListField.getText());
         } else {
           System.getProperties().remove("tc.server");
         }
@@ -163,7 +169,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
 
   private void toOutputPane(String s) {
     try {
-      Document doc = m_outputPane.getDocument();
+      Document doc = outputPane.getDocument();
       doc.insertString(doc.getLength(), s + "\n", null);
     } catch (BadLocationException ble) {
       throw new AssertionError(ble);
@@ -175,11 +181,11 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
   }
 
   private StreamReader createStreamReader(InputStream stream) {
-    return new StreamReader(stream, new TextPaneUpdater(m_outputPane), null, null);
+    return new StreamReader(stream, new TextPaneUpdater(outputPane), null, null);
   }
 
-  private StreamReader createStreamReader(InputStream stream, TextPane textPane) {
-    return new StreamReader(stream, new TextPaneUpdater(textPane), null, null);
+  private StreamReader createStreamReader(InputStream stream, JTextPane theTextPane) {
+    return new StreamReader(stream, new TextPaneUpdater(theTextPane), null, null);
   }
 
   private void stopProcesses() {
@@ -192,7 +198,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
       toOutputPane(e.getMessage());
     }
 
-    Iterator iter = m_processList.iterator();
+    Iterator iter = processList.iterator();
     while (iter.hasNext()) {
       Process p = (Process) iter.next();
 
@@ -289,7 +295,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
       errDrainer.start();
       outDrainer.start();
 
-      m_processList.add(p);
+      processList.add(p);
       startFakeWaitPeriod();
     } catch (Exception e) {
       e.printStackTrace();
@@ -308,18 +314,18 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
           "demo.coordination.Main" };
 
       final Process p = exec(cmdarray, null, dir);
-      XTextPane textPane = new XTextPane();
-      StreamReader errDrainer = createStreamReader(p.getErrorStream(), textPane);
-      StreamReader outDrainer = createStreamReader(p.getInputStream(), textPane);
+      XTextPane streamTextPane = new XTextPane();
+      StreamReader errDrainer = createStreamReader(p.getErrorStream(), streamTextPane);
+      StreamReader outDrainer = createStreamReader(p.getInputStream(), streamTextPane);
 
       errDrainer.start();
       outDrainer.start();
 
-      m_processList.add(p);
+      processList.add(p);
       startFakeWaitPeriod();
 
-      Frame frame = new SampleFrame(this, m_bundleHelper.getString("jvm.coordination"));
-      frame.getContentPane().add(new ScrollPane(textPane));
+      SampleFrame frame = new SampleFrame(this, bundleHelper.getString("jvm.coordination"));
+      frame.getContentPane().add(new XScrollPane(streamTextPane));
       frame.setSize(new Dimension(500, 300));
       frame.setVisible(true);
       frame.addWindowListener(new WindowAdapter() {
@@ -328,7 +334,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
             p.destroy();
           } catch (Exception e) {/**/
           }
-          m_processList.remove(p);
+          processList.remove(p);
         }
       });
     } catch (Exception e) {
@@ -367,18 +373,18 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
           "demo.sharedqueue.Main" };
 
       final Process p = exec(cmdarray, null, dir);
-      XTextPane textPane = new XTextPane();
-      StreamReader errDrainer = createStreamReader(p.getErrorStream(), textPane);
-      StreamReader outDrainer = createStreamReader(p.getInputStream(), textPane);
+      XTextPane streamTextPane = new XTextPane();
+      StreamReader errDrainer = createStreamReader(p.getErrorStream(), streamTextPane);
+      StreamReader outDrainer = createStreamReader(p.getInputStream(), streamTextPane);
 
       errDrainer.start();
       outDrainer.start();
 
-      m_processList.add(p);
+      processList.add(p);
       startFakeWaitPeriod();
 
-      Frame frame = new SampleFrame(this, m_bundleHelper.getString("shared.work.queue"));
-      frame.getContentPane().add(new ScrollPane(textPane));
+      SampleFrame frame = new SampleFrame(this, bundleHelper.getString("shared.work.queue"));
+      frame.getContentPane().add(new XScrollPane(streamTextPane));
       frame.setSize(new Dimension(500, 300));
       frame.setVisible(true);
       frame.addWindowListener(new WindowAdapter() {
@@ -387,7 +393,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
             p.destroy();
           } catch (Exception e) {/**/
           }
-          m_processList.remove(p);
+          processList.remove(p);
         }
       });
     } catch (Exception e) {
@@ -401,7 +407,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
 
     if (elem == null || type == HyperlinkEvent.EventType.ENTERED || type == HyperlinkEvent.EventType.EXITED) { return; }
 
-    if (m_textPane.getCursor().getType() != Cursor.WAIT_CURSOR) {
+    if (textPane.getCursor().getType() != Cursor.WAIT_CURSOR) {
       AttributeSet a = elem.getAttributes();
       AttributeSet anchor = (AttributeSet) a.getAttribute(HTML.Tag.A);
       String action = (String) anchor.getAttribute(HTML.Attribute.HREF);
@@ -412,19 +418,19 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
 
   private void hyperlinkActivated(AttributeSet anchor, String action) {
     if (action.equals("run_jtable")) {
-      toOutputPane(m_bundleHelper.getString("starting.jtable"));
+      toOutputPane(bundleHelper.getString("starting.jtable"));
       runSample("jtable", "demo.jtable.Main");
     } else if (action.equals("run_sharededitor")) {
-      toOutputPane(m_bundleHelper.getString("starting.shared.editor"));
+      toOutputPane(bundleHelper.getString("starting.shared.editor"));
       runSample("sharededitor", "demo.sharededitor.Main");
     } else if (action.equals("run_chatter")) {
-      toOutputPane(m_bundleHelper.getString("starting.chatter"));
+      toOutputPane(bundleHelper.getString("starting.chatter"));
       runSample("chatter", "demo.chatter.Main");
     } else if (action.equals("run_coordination")) {
-      toOutputPane(m_bundleHelper.getString("starting.jvm.coordination"));
+      toOutputPane(bundleHelper.getString("starting.jvm.coordination"));
       runCoordinationSample();
     } else if (action.equals("run_sharedqueue")) {
-      toOutputPane(m_bundleHelper.getString("starting.shared.queue"));
+      toOutputPane(bundleHelper.getString("starting.shared.queue"));
       runSharedQueueSample();
     } else if (action.equals("view_readme")) {
       String name = (String) anchor.getAttribute(HTML.Attribute.NAME);
@@ -446,9 +452,9 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
 
   private void setTextPaneCursor(int type) {
     Cursor c = Cursor.getPredefinedCursor(type);
-    HTMLEditorKit kit = (HTMLEditorKit) m_textPane.getEditorKit();
+    HTMLEditorKit kit = (HTMLEditorKit) textPane.getEditorKit();
 
-    m_textPane.setCursor(c);
+    textPane.setCursor(c);
     kit.setDefaultCursor(c);
 
     int linkType = (type == Cursor.WAIT_CURSOR) ? Cursor.WAIT_CURSOR : Cursor.HAND_CURSOR;
@@ -500,11 +506,9 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
     }
 
     public void run() {
-      String[] finalArgs;
+      String[] finalArgs = args;
       if (System.getProperty("swing.defaultlaf") == null) {
-        finalArgs = ApplicationManager.parseLAFArgs(args);
-      } else {
-        finalArgs = args;
+        finalArgs = LAFHelper.parseLAFArgs(args);
       }
       new DSOSamplesFrame(finalArgs);
     }
@@ -526,32 +530,9 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
   }
 }
 
-class SampleFrame extends Frame {
-  public SampleFrame(Frame parentFrame, String title) {
+class SampleFrame extends XFrame {
+  public SampleFrame(JFrame parentFrame, String title) {
     super(title);
-
-    if (Os.isMac()) {
-      System.setProperty("com.apple.macos.useScreenMenuBar", "true");
-      System.setProperty("apple.laf.useScreenMenuBar", "true");
-      System.setProperty("apple.awt.showGrowBox", "true");
-      System.setProperty("com.apple.mrj.application.growbox.intrudes", "false");
-    }
-
     getContentPane().setLayout(new BorderLayout());
-    setParentFrame(parentFrame);
-  }
-
-  public Rectangle getPreferredBounds() {
-    return null;
-  }
-
-  public Integer getPreferredState() {
-    return null;
-  }
-
-  public void storeBounds() {/**/
-  }
-
-  public void storeState() {/**/
   }
 }

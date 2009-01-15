@@ -17,7 +17,7 @@ import com.terracottatech.config.InstrumentedClasses;
 import java.util.ArrayList;
 
 public class RuleModel extends XObjectTableModel {
-  private InstrumentedClasses   m_instrumentedClasses;
+  private InstrumentedClasses   instrumentedClasses;
 
   private static final String[] INCLUDE_FIELDS  = { "Type", "Expression", "Details" };
 
@@ -29,22 +29,22 @@ public class RuleModel extends XObjectTableModel {
 
   public void setInstrumentedClasses(InstrumentedClasses instrumentedClasses) {
     clear();
-    if ((m_instrumentedClasses = instrumentedClasses) != null) {
-      setRules(m_instrumentedClasses.selectPath("*"));
+    if ((this.instrumentedClasses = instrumentedClasses) != null) {
+      setRules(instrumentedClasses.selectPath("*"));
     }
   }
 
   public void setRules(XmlObject[] objects) {
     ArrayList list = new ArrayList();
     for (int i = 0; i < objects.length; i++) {
-      list.add(new RuleHolder(m_instrumentedClasses, Rule.create(objects[i])));
+      list.add(new RuleHolder(instrumentedClasses, Rule.create(objects[i])));
     }
     set(list.toArray(new RuleHolder[0]));
   }
 
   private void updateRules() {
     clear();
-    setRules(m_instrumentedClasses.selectPath("*"));
+    setRules(instrumentedClasses.selectPath("*"));
   }
 
   public void setValueAt(Object value, int row, int col) {
@@ -67,16 +67,14 @@ public class RuleModel extends XObjectTableModel {
   public void removeRule(int index) {
     Rule rule = getRuleAt(index);
     Node ruleNode = rule.getXmlObject().getDomNode();
-    Node topNode = m_instrumentedClasses.getDomNode();
-
+    Node topNode = instrumentedClasses.getDomNode();
     topNode.removeChild(ruleNode);
-//    updateRules();
   }
 
   public void moveRuleUp(int index) {
     Rule rule = getRuleAt(index);
     Node ruleNode = rule.getXmlObject().getDomNode();
-    Node topNode = m_instrumentedClasses.getDomNode();
+    Node topNode = instrumentedClasses.getDomNode();
     NodeList topNodeList = topNode.getChildNodes();
     int listSize = topNodeList.getLength();
     Node prevNode;
@@ -88,7 +86,6 @@ public class RuleModel extends XObjectTableModel {
           if (prevNode.getNodeType() == Node.ELEMENT_NODE) {
             topNode.removeChild(ruleNode);
             topNode.insertBefore(ruleNode, prevNode);
-//            updateRules();
             return;
           }
         }
@@ -99,7 +96,7 @@ public class RuleModel extends XObjectTableModel {
   public void moveRuleDown(int index) {
     Rule rule = getRuleAt(index);
     Node ruleNode = rule.getXmlObject().getDomNode();
-    Node topNode = m_instrumentedClasses.getDomNode();
+    Node topNode = instrumentedClasses.getDomNode();
     NodeList topNodeList = topNode.getChildNodes();
     int listSize = topNodeList.getLength();
     Node nextNode;
@@ -114,13 +111,11 @@ public class RuleModel extends XObjectTableModel {
               if (nextNode.getNodeType() == Node.ELEMENT_NODE) {
                 topNode.removeChild(ruleNode);
                 topNode.insertBefore(ruleNode, nextNode);
-//                updateRules();
                 return;
               }
             }
             topNode.removeChild(ruleNode);
             topNode.appendChild(ruleNode);
-//            updateRules();
             return;
           }
         }
@@ -133,9 +128,9 @@ public class RuleModel extends XObjectTableModel {
   }
 
   public void addExclude(String expr) {
-    ClassExpression classExpr = m_instrumentedClasses.addNewExclude();
+    ClassExpression classExpr = instrumentedClasses.addNewExclude();
     classExpr.setStringValue(expr);
-    add(new RuleHolder(m_instrumentedClasses, new ExcludeRule(classExpr)));
+    add(new RuleHolder(instrumentedClasses, new ExcludeRule(classExpr)));
   }
 
   public void removeRuleAt(int i) {
@@ -143,9 +138,9 @@ public class RuleModel extends XObjectTableModel {
   }
 
   public void addInclude(String expr) {
-    Include include = m_instrumentedClasses.addNewInclude();
+    Include include = instrumentedClasses.addNewInclude();
     include.setClassExpression(expr);
-    add(new RuleHolder(m_instrumentedClasses, new IncludeRule(include)));
+    add(new RuleHolder(instrumentedClasses, new IncludeRule(include)));
   }
 
   public boolean hasEditor(Class type) {

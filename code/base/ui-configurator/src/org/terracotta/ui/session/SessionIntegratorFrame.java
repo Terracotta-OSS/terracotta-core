@@ -8,19 +8,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.xmlbeans.XmlError;
-import org.dijon.Button;
-import org.dijon.CheckBox;
-import org.dijon.Container;
-import org.dijon.ContainerResource;
-import org.dijon.Dialog;
-import org.dijon.DialogResource;
-import org.dijon.DictionaryResource;
-import org.dijon.EmptyBorder;
-import org.dijon.Frame;
-import org.dijon.Label;
-import org.dijon.Menu;
-import org.dijon.MenuBar;
-import org.dijon.TabbedPane;
 import org.terracotta.ui.session.servers.ServerSelection;
 import org.terracotta.ui.session.servers.ServersDialog;
 
@@ -32,26 +19,35 @@ import com.tc.admin.common.BrowserLauncher;
 import com.tc.admin.common.ContactTerracottaAction;
 import com.tc.admin.common.FastFileChooser;
 import com.tc.admin.common.OutputStreamListener;
+import com.tc.admin.common.WindowHelper;
 import com.tc.admin.common.XAbstractAction;
+import com.tc.admin.common.XButton;
+import com.tc.admin.common.XCheckBox;
+import com.tc.admin.common.XContainer;
+import com.tc.admin.common.XFrame;
+import com.tc.admin.common.XLabel;
+import com.tc.admin.common.XMenu;
+import com.tc.admin.common.XScrollPane;
 import com.tc.admin.common.XSplitPane;
+import com.tc.admin.common.XTabbedPane;
 import com.tc.admin.common.XTree;
 import com.tc.config.Directories;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.object.appevent.NonPortableObjectEvent;
 import com.tc.util.ProductInfo;
+import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.Os;
 import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Insets;
-import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -70,8 +66,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.Socket;
-import java.net.URL;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -86,10 +80,18 @@ import java.util.prefs.Preferences;
 import javax.management.Notification;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
+import javax.swing.Action;
+import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
+import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
+import javax.swing.JSplitPane;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
@@ -99,80 +101,81 @@ import javax.swing.text.Document;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
-public class SessionIntegratorFrame extends Frame implements PropertyChangeListener {
-  private static final boolean       m_debug                     = Boolean.getBoolean("SessionIntegratorFrame.debug");
+public class SessionIntegratorFrame extends XFrame implements PropertyChangeListener {
+  private static final boolean       debug                       = Boolean.getBoolean("SessionIntegratorFrame.debug");
 
-  private ConfigHelper               m_configHelper;
-  private SplashDialog               m_splashDialog;
+  private SessionIntegratorContext   sessionIntegratorContext;
+  private ConfigHelper               configHelper;
+  private SplashDialog               splashDialog;
 
-  private ServersDialog              m_serversDialog;
-  private Properties                 m_properties;
-  private TabbedPane                 m_tabbedPane;
-  private int                        m_lastSelectedTabIndex;
-  private WebAppTreeModel            m_webAppTreeModel;
-  private Button                     m_startButton;
-  private Button                     m_stopButton;
-  private CheckBox                   m_dsoEnabledToggle;
-  private boolean                    m_dsoEnabled;
-  private XTree                      m_webAppTree;
-  private WebAppLinkNode             m_lastArmedLink;
-  private TabbedPane                 m_configTabbedPane;
-  private ConfigTextPane             m_xmlPane;
-  private XmlChangeListener          m_xmlChangeListener;
-  private ConfigProblemTable         m_configProblemTable;
-  private ConfigProblemTableModel    m_configProblemTableModel;
+  private ServersDialog              serversDialog;
+  private Properties                 properties;
+  private XTabbedPane                tabbedPane;
+  private int                        lastSelectedTabIndex;
+  private WebAppTreeModel            webAppTreeModel;
+  private XButton                    startButton;
+  private XButton                    stopButton;
+  private XCheckBox                  dsoEnabledToggle;
+  private boolean                    dsoEnabled;
+  private XTree                      webAppTree;
+  private WebAppLinkNode             lastArmedLink;
+  private XTabbedPane                configTabbedPane;
+  private ConfigTextPane             xmlPane;
+  private XmlChangeListener          xmlChangeListener;
+  private ConfigProblemTable         configProblemTable;
+  private ConfigProblemTableModel    configProblemTableModel;
 
-  private ProcessOutputView          m_l2OutView;
-  private Label                      m_l2Label;
-  private ProcessStatus              m_l2Status;
-  private boolean                    m_handlingAppEvent;
-  private L2StartupListener          m_l2StartupListener;
-  private L2ShutdownListener         m_l2ShutdownListener;
-  private L2ShutdownMonitor          m_l2Monitor;
-  private L2ConnectListener          m_l2ConnectListener;
-  private ServerConnectionManager    m_l2ConnectManager;
+  private ProcessOutputView          l2OutView;
+  private XLabel                     l2Label;
+  private ProcessStatus              l2Status;
+  private boolean                    handlingAppEvent;
+  private L2StartupListener          l2StartupListener;
+  private L2ShutdownListener         l2ShutdownListener;
+  private L2ShutdownMonitor          l2Monitor;
+  private L2ConnectListener          l2ConnectListener;
+  private ServerConnectionManager    l2ConnectManager;
 
-  private CheckBox                   m_webServer1EnabledToggle;
-  private boolean                    m_webServer1Enabled;
-  private ProcessOutputView          m_webServer1OutView;
-  private Label                      m_webServer1Label;
-  private ProcessStatus              m_webServer1Status;
-  private Button                     m_webServer1Control;
-  private WebServer1StartupListener  m_webServer1StartupListener;
-  private WebServer1ShutdownListener m_webServer1ShutdownListener;
-  private WebServerShutdownMonitor   m_webServer1Monitor;
+  private XCheckBox                  webServer1EnabledToggle;
+  private boolean                    webServer1Enabled;
+  private ProcessOutputView          webServer1OutView;
+  private XLabel                     webServer1Label;
+  private ProcessStatus              webServer1Status;
+  private XButton                    webServer1Control;
+  private WebServer1StartupListener  webServer1StartupListener;
+  private WebServer1ShutdownListener webServer1ShutdownListener;
+  private WebServerShutdownMonitor   webServer1Monitor;
 
-  private CheckBox                   m_webServer2EnabledToggle;
-  private boolean                    m_webServer2Enabled;
-  private ProcessOutputView          m_webServer2OutView;
-  private Label                      m_webServer2Label;
-  private ProcessStatus              m_webServer2Status;
-  private Button                     m_webServer2Control;
-  private WebServer2StartupListener  m_webServer2StartupListener;
-  private WebServer2ShutdownListener m_webServer2ShutdownListener;
-  private WebServerShutdownMonitor   m_webServer2Monitor;
+  private XCheckBox                  webServer2EnabledToggle;
+  private boolean                    webServer2Enabled;
+  private ProcessOutputView          webServer2OutView;
+  private XLabel                     webServer2Label;
+  private ProcessStatus              webServer2Status;
+  private XButton                    webServer2Control;
+  private WebServer2StartupListener  webServer2StartupListener;
+  private WebServer2ShutdownListener webServer2ShutdownListener;
+  private WebServerShutdownMonitor   webServer2Monitor;
 
-  private ImageIcon                  m_waitingIcon;
-  private ImageIcon                  m_readyIcon;
-  private ImageIcon                  m_stoppedIcon;
+  private Icon                       waitingIcon;
+  private Icon                       readyIcon;
+  private Icon                       stoppedIcon;
 
-  private Icon                       m_startIcon;
-  private Icon                       m_stopIcon;
+  private Icon                       startIcon;
+  private Icon                       stopIcon;
 
-  private InstrumentedClassesPanel   m_instrumentedClassesPanel;
-  private TransientFieldsPanel       m_transientFieldsPanel;
-  private BootClassesPanel           m_bootClassesPanel;
-  private ModulesPanel               m_modulesPanel;
+  private InstrumentedClassesPanel   instrumentedClassesPanel;
+  private TransientFieldsPanel       transientFieldsPanel;
+  private BootClassesPanel           bootClassesPanel;
+  private ModulesPanel               modulesPanel;
 
-  private ServersAction              m_serversAction;
-  private ImportWebAppAction         m_importAction;
-  private HelpAction                 m_helpAction;
+  private ServersAction              serversAction;
+  private ImportWebAppAction         importAction;
+  private HelpAction                 helpAction;
 
-  private boolean                    m_askRestart;
-  private boolean                    m_restarting;
-  private boolean                    m_quitting;
+  private boolean                    askRestart;
+  private boolean                    restarting;
+  private boolean                    quitting;
 
-  private ServerSelection            m_serverSelection;
+  private ServerSelection            serverSelection;
 
   private static String              SHOW_SPLASH_PREF_KEY        = "ShowSplash";
   private static String              LAST_DIR_PREF_KEY           = "LastDirectory";
@@ -223,236 +226,48 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
   private static final String        FAILED_LABEL                = " [Failed]";
   private static final String        DISABLED_LABEL              = " [Disabled]";
 
-  public SessionIntegratorFrame() {
-    super(SessionIntegrator.getContext().topRes.getFrame("MainFrame"));
+  public SessionIntegratorFrame(SessionIntegratorContext sessionIntegratorContext) {
+    super();
 
+    this.sessionIntegratorContext = sessionIntegratorContext;
+
+    setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/com/tc/admin/icons/logo_small.gif")));
     setTitle(getBundleString("title"));
     setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
-    m_configHelper = createConfigHelper();
+    configHelper = createConfigHelper();
 
     initMenubar();
     loadIcons();
 
-    XSplitPane splitter = (XSplitPane) findComponent("ControlSplitter");
-    if (splitter != null) {
-      splitter.setPreferences(getPreferences().node(splitter.getName()));
-    }
-
-    m_tabbedPane = (TabbedPane) findComponent("MainTabbedPane");
-    m_tabbedPane.addChangeListener(new ChangeListener() {
+    tabbedPane = new XTabbedPane();
+    tabbedPane.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
-        if (m_lastSelectedTabIndex == CONFIG_TAB_INDEX && isXmlModified()) {
+        if (lastSelectedTabIndex == CONFIG_TAB_INDEX && isXmlModified()) {
           if (querySaveConfig(JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-            m_askRestart = isL2Ready();
+            askRestart = isL2Ready();
           }
         }
-        if (m_askRestart) {
+        if (askRestart) {
           String msg = "Configuration has been modified.\n\n" + QUERY_RESTART_MSG;
           queryRestart(msg);
         }
-        m_askRestart = false;
-        m_lastSelectedTabIndex = m_tabbedPane.getSelectedIndex();
+        askRestart = false;
+        lastSelectedTabIndex = tabbedPane.getSelectedIndex();
       }
     });
 
-    m_startButton = (Button) findComponent("StartButton");
-    m_startButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        startSystem();
-      }
-    });
-    m_startIcon = m_startButton.getIcon();
+    getContentPane().add(tabbedPane);
 
-    m_stopButton = (Button) findComponent("StopButton");
-    m_stopButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        stopSystem();
-      }
-    });
-    m_stopIcon = m_stopButton.getIcon();
-
-    m_dsoEnabledToggle = (CheckBox) findComponent("DSOEnabledToggle");
-    m_dsoEnabledToggle.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        setDsoEnabled(m_dsoEnabledToggle.isSelected());
-      }
-    });
-
-    m_webAppTree = (XTree) findComponent("WebAppTree");
-    m_webAppTreeModel = new WebAppTreeModel(this, getWebApps());
-    m_webAppTree.setModel(m_webAppTreeModel);
-    m_webAppTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-    m_webAppTree.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent me) {
-        if (me.getClickCount() == 1) {
-          TreePath path = m_webAppTree.getPathForLocation(me.getX(), me.getY());
-
-          if (path != null) {
-            Object leaf = path.getLastPathComponent();
-
-            if (leaf instanceof WebAppLinkNode) {
-              WebAppLinkNode node = (WebAppLinkNode) leaf;
-
-              if (node.isReady()) {
-                openPage(node.getLink());
-              }
-            }
-          }
-        }
-      }
-    });
-    m_webAppTree.addMouseMotionListener(new MouseMotionAdapter() {
-      public void mouseMoved(MouseEvent me) {
-        TreePath path = m_webAppTree.getPathForLocation(me.getX(), me.getY());
-
-        if (path != null) {
-          Object leaf = path.getLastPathComponent();
-
-          if (leaf instanceof WebAppLinkNode) {
-            WebAppLinkNode node = (WebAppLinkNode) leaf;
-            Cursor c = m_webAppTree.getCursor();
-
-            if (m_lastArmedLink != node) {
-              if (m_lastArmedLink != null) {
-                m_lastArmedLink.setArmed(false);
-              }
-              node.setArmed(true);
-              m_lastArmedLink = node;
-            }
-
-            if (node.isReady() && c != LINK_CURSOR) {
-              m_webAppTree.setCursor(LINK_CURSOR);
-            }
-            return;
-          }
-        }
-
-        if (m_lastArmedLink != null) {
-          m_lastArmedLink.setArmed(false);
-          m_lastArmedLink = null;
-        }
-
-        m_webAppTree.setCursor(null);
-      }
-    });
-
-    m_configTabbedPane = (TabbedPane) findComponent("ConfigTabbedPane");
-    m_configProblemTable = (ConfigProblemTable) findComponent("ConfigProblemTable");
-    m_configProblemTableModel = new ConfigProblemTableModel();
-    m_configProblemTable.setModel(m_configProblemTableModel);
-    m_configProblemTable.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent me) {
-        if (me.getClickCount() == 2) {
-          int row = m_configProblemTable.getSelectedRow();
-          XmlError error = m_configProblemTableModel.getError(row);
-
-          m_xmlPane.selectError(error);
-        }
-      }
-    });
-
-    m_xmlPane = (ConfigTextPane) findComponent("XMLPane");
-    m_xmlChangeListener = new XmlChangeListener();
-//    initXmlPane();
-
-    Container configPaneToolbar = (Container) findComponent("ConfigPaneToolbar");
-    Button button;
-    Insets emptyInsets = new Insets(1, 1, 1, 1);
-    button = (Button) configPaneToolbar.findComponent("SaveButton");
-    button.setAction(m_xmlPane.getSaveAction());
-    button.setText(null);
-    button.setMargin(emptyInsets);
-    button = (Button) configPaneToolbar.findComponent("UndoButton");
-    button.setAction(m_xmlPane.getUndoAction());
-    button.setText(null);
-    button.setMargin(emptyInsets);
-    button = (Button) configPaneToolbar.findComponent("RedoButton");
-    button.setAction(m_xmlPane.getRedoAction());
-    button.setText(null);
-    button.setMargin(emptyInsets);
-
-    button = (Button) configPaneToolbar.findComponent("CutButton");
-    button.setAction(m_xmlPane.getCutAction());
-    button.setText(null);
-    button.setMargin(emptyInsets);
-    button = (Button) configPaneToolbar.findComponent("CopyButton");
-    button.setAction(m_xmlPane.getCopyAction());
-    button.setText(null);
-    button.setMargin(emptyInsets);
-    button = (Button) configPaneToolbar.findComponent("PasteButton");
-    button.setAction(m_xmlPane.getPasteAction());
-    button.setText(null);
-    button.setMargin(emptyInsets);
-
-    m_l2OutView = (ProcessOutputView) findComponent("L2OutView");
-    m_l2Label = (Label) findComponent("L2Label");
-    m_l2Status = new ProcessStatus("L2");
-    m_l2StartupListener = new L2StartupListener();
-    m_l2ShutdownListener = new L2ShutdownListener();
-
-    m_webServer1EnabledToggle = (CheckBox) findComponent("Tomcat1EnabledToggle");
-    m_webServer1OutView = (ProcessOutputView) findComponent("Tomcat1OutView");
-    m_webServer1Label = (Label) findComponent("Tomcat1Label");
-    m_webServer1Status = new ProcessStatus(getWebServer1Label());
-    m_webServer1Control = (Button) findComponent("Tomcat1Control");
-    m_webServer1StartupListener = new WebServer1StartupListener();
-    m_webServer1ShutdownListener = new WebServer1ShutdownListener();
-
-    Preferences prefs = getPreferences();
-
-    m_webServer1Enabled = prefs.getBoolean(WEBSERVER1_ENABLED_PREF_KEY, true);
-    m_webServer1EnabledToggle.setSelected(m_webServer1Enabled);
-    m_webServer1EnabledToggle.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        setWebServer1Enabled(m_webServer1EnabledToggle.isSelected());
-      }
-    });
-    m_webServer1Label.setText(getWebServer1Label());
-    m_webServer1Control.setMargin(new Insets(0, 0, 0, 0));
-    m_webServer1Control.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        disableControls();
-        m_webAppTreeModel.updateLinks(false, isWebServer2Ready());
-        toggleWebServer1();
-      }
-    });
-
-    m_webServer2EnabledToggle = (CheckBox) findComponent("Tomcat2EnabledToggle");
-    m_webServer2OutView = (ProcessOutputView) findComponent("Tomcat2OutView");
-    m_webServer2Label = (Label) findComponent("Tomcat2Label");
-    m_webServer2Status = new ProcessStatus(getWebServer1Label());
-    m_webServer2Control = (Button) findComponent("Tomcat2Control");
-    m_webServer2StartupListener = new WebServer2StartupListener();
-    m_webServer2ShutdownListener = new WebServer2ShutdownListener();
-
-    m_webServer2Enabled = prefs.getBoolean(WEBSERVER2_ENABLED_PREF_KEY, true);
-    m_webServer2EnabledToggle.setSelected(m_webServer2Enabled);
-    m_webServer2EnabledToggle.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        setWebServer2Enabled(m_webServer2EnabledToggle.isSelected());
-      }
-    });
-    m_webServer2Label.setText(getWebServer2Label());
-    m_webServer2Control.setMargin(new Insets(0, 0, 0, 0));
-    m_webServer2Control.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        disableControls();
-        m_webAppTreeModel.updateLinks(isWebServer1Ready(), false);
-        toggleWebServer2();
-      }
-    });
-
-    m_instrumentedClassesPanel = (InstrumentedClassesPanel) findComponent("InstrumentedClassesPanel");
-    m_transientFieldsPanel = (TransientFieldsPanel) findComponent("TransientFieldsPanel");
-    m_bootClassesPanel = (BootClassesPanel) findComponent("BootClassesPanel");
-    m_modulesPanel = (ModulesPanel) findComponent("ModulesPanel");
+    addTab(tabbedPane, "Control", "/com/tc/admin/icons/thread_obj.gif", createControlPanel());
+    addTab(tabbedPane, "Configure", "/com/tc/admin/icons/text_edit.gif", createConfigurePanel());
+    addTab(tabbedPane, "Monitor", "/com/tc/admin/icons/monitor_obj.gif", createMonitorPanel());
 
     initXmlPane();
-//    setupEditorPanels();
 
-    m_startButton.setEnabled(isWebServer1Enabled() || isWebServer2Enabled() || isDsoEnabled());
+    startButton.setEnabled(isWebServer1Enabled() || isWebServer2Enabled() || isDsoEnabled());
 
+    Preferences prefs = getPreferences();
     if (prefs.getBoolean(SHOW_SPLASH_PREF_KEY, true)) {
       addComponentListener(new ComponentAdapter() {
         public void componentShown(ComponentEvent e) {
@@ -467,21 +282,356 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
       }
     });
 
-    m_l2ConnectListener = new L2ConnectListener();
-    m_l2ConnectManager = new ServerConnectionManager("localhost", m_configHelper.getJmxPort(), false,
-                                                     m_l2ConnectListener);
+    l2ConnectListener = new L2ConnectListener();
+    l2ConnectManager = new ServerConnectionManager("localhost", configHelper.getJmxPort(), false, l2ConnectListener);
     testShutdownL2();
     testShutdownWebServer1();
     testShutdownWebServer2();
 
-    setDsoEnabled(m_dsoEnabled = prefs.getBoolean(DSO_ENABLED_PREF_KEY, false));
+    setDsoEnabled(dsoEnabled = prefs.getBoolean(DSO_ENABLED_PREF_KEY, false));
+  }
+
+  private XContainer createControlPanel() {
+    XContainer leftPanel = new XContainer(new BorderLayout());
+    webAppTree = new XTree();
+    webAppTree.setModel(webAppTreeModel = new WebAppTreeModel(this, getWebApps()));
+    webAppTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+    webAppTree.addMouseListener(new TreeMouseListener());
+    webAppTree.addMouseMotionListener(new TreeMouseMotionListener());
+
+    leftPanel.add(new XScrollPane(webAppTree));
+    XContainer topLeftPanel = new XContainer(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = gbc.gridy = 0;
+    gbc.insets = new Insets(5, 5, 5, 5);
+    gbc.anchor = GridBagConstraints.WEST;
+
+    dsoEnabledToggle = new XCheckBox("Terracotta Sessions enabled");
+    dsoEnabledToggle.setSelected(false);
+    dsoEnabledToggle.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent ae) {
+        setDsoEnabled(dsoEnabledToggle.isSelected());
+      }
+    });
+    gbc.gridwidth = 2;
+    topLeftPanel.add(dsoEnabledToggle, gbc);
+    gbc.gridy++;
+
+    startButton = new XButton("Start all");
+    startIcon = newIcon("/com/tc/admin/icons/run_exc.gif");
+    startButton.setIcon(startIcon);
+    startButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent ae) {
+        startSystem();
+      }
+    });
+    gbc.gridwidth = 1;
+    topLeftPanel.add(startButton, gbc);
+    gbc.gridx++;
+
+    stopButton = new XButton("Stop all");
+    stopIcon = newIcon("/com/tc/admin/icons/terminate_co.gif");
+    stopButton.setIcon(stopIcon);
+    stopButton.setEnabled(false);
+    stopButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent ae) {
+        stopSystem();
+      }
+    });
+    topLeftPanel.add(stopButton, gbc);
+
+    // filler
+    gbc.weightx = 1.0;
+    topLeftPanel.add(new XLabel(), gbc);
+
+    leftPanel.add(topLeftPanel, BorderLayout.NORTH);
+
+    XContainer rightPanel = new XContainer(new GridLayout(3, 1));
+    rightPanel.add(createWebServer1Panel());
+    rightPanel.add(createWebServer2Panel());
+    rightPanel.add(createL2Panel());
+
+    XSplitPane splitter = new XSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightPanel);
+    splitter.setPreferences(getPreferences().node("ControlSplitter"));
+    splitter.setResizeWeight(0.1);
+
+    XContainer panel = new XContainer(new BorderLayout());
+    panel.add(splitter, BorderLayout.CENTER);
+
+    return panel;
+  }
+
+  private JComponent createWebServer1Panel() {
+    WebServerPanel webServer1Panel = new WebServerPanel();
+    webServer1EnabledToggle = webServer1Panel.enabledToggle;
+    webServer1Enabled = getPreferences().getBoolean(WEBSERVER1_ENABLED_PREF_KEY, true);
+    webServer1EnabledToggle.setSelected(webServer1Enabled);
+    webServer1EnabledToggle.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent ae) {
+        setWebServer1Enabled(webServer1EnabledToggle.isSelected());
+      }
+    });
+
+    webServer1Label = webServer1Panel.label;
+    webServer1Label.setText(getWebServer1Label());
+
+    webServer1Control = webServer1Panel.controlButton;
+    webServer1Control.setIcon(newIcon("/com/tc/admin/icons/run_exc.gif"));
+    webServer1Control.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent ae) {
+        disableControls();
+        webAppTreeModel.updateLinks(false, isWebServer2Ready());
+        toggleWebServer1();
+      }
+    });
+
+    webServer1OutView = webServer1Panel.outputView;
+    webServer1Status = new ProcessStatus(getWebServer1Label());
+    webServer1StartupListener = new WebServer1StartupListener();
+    webServer1ShutdownListener = new WebServer1ShutdownListener();
+
+    return webServer1Panel;
+  }
+
+  private JComponent createWebServer2Panel() {
+    WebServerPanel webServer2Panel = new WebServerPanel();
+    webServer2EnabledToggle = webServer2Panel.enabledToggle;
+    webServer2Enabled = getPreferences().getBoolean(WEBSERVER2_ENABLED_PREF_KEY, true);
+    webServer2EnabledToggle.setSelected(webServer2Enabled);
+    webServer2EnabledToggle.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent ae) {
+        setWebServer2Enabled(webServer2EnabledToggle.isSelected());
+      }
+    });
+
+    webServer2Label = webServer2Panel.label;
+    webServer2Label.setText(getWebServer2Label());
+
+    webServer2Control = webServer2Panel.controlButton;
+    webServer2Control.setIcon(newIcon("/com/tc/admin/icons/run_exc.gif"));
+    webServer2Control.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent ae) {
+        disableControls();
+        webAppTreeModel.updateLinks(isWebServer1Ready(), false);
+        toggleWebServer2();
+      }
+    });
+
+    webServer2OutView = webServer2Panel.outputView;
+    webServer2Status = new ProcessStatus(getWebServer2Label());
+    webServer2StartupListener = new WebServer2StartupListener();
+    webServer2ShutdownListener = new WebServer2ShutdownListener();
+
+    return webServer2Panel;
+  }
+
+  private static class WebServerPanel extends XContainer {
+    XCheckBox         enabledToggle;
+    XLabel            label;
+    XButton           controlButton;
+    ProcessOutputView outputView;
+
+    private WebServerPanel() {
+      super(new GridBagLayout());
+
+      XContainer topPanel = new XContainer(new GridBagLayout());
+      GridBagConstraints gbc = new GridBagConstraints();
+      gbc.gridx = gbc.gridy = 0;
+      gbc.insets = new Insets(1, 3, 1, 3);
+      gbc.anchor = GridBagConstraints.WEST;
+
+      topPanel.add(enabledToggle = new XCheckBox(), gbc);
+      gbc.gridx++;
+
+      topPanel.add(label = new XLabel(), gbc);
+      gbc.gridx++;
+
+      controlButton = new XButton();
+      controlButton.setVisible(false);
+      controlButton.setMargin(new Insets(0, 0, 0, 0));
+      topPanel.add(controlButton, gbc);
+
+      // filler
+      gbc.weightx = 1.0;
+      topPanel.add(new XLabel(), gbc);
+
+      gbc.gridx = gbc.gridy = 0;
+
+      add(topPanel, gbc);
+      gbc.gridy++;
+
+      gbc.fill = GridBagConstraints.BOTH;
+      gbc.weightx = gbc.weighty = 1.0;
+      add(new XScrollPane(outputView = new ProcessOutputView()), gbc);
+    }
+  }
+
+  private JComponent createL2Panel() {
+    XContainer l2Panel = new XContainer(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = gbc.gridy = 0;
+    gbc.insets = new Insets(3, 3, 3, 3);
+    gbc.anchor = GridBagConstraints.WEST;
+
+    l2Panel.add(l2Label = new XLabel("Terracotta Server"), gbc);
+    gbc.gridx++;
+
+    // filler
+    l2Panel.add(new XLabel(), gbc);
+    gbc.gridx--;
+    gbc.gridy++;
+
+    gbc.weightx = gbc.weighty = 1.0;
+    gbc.fill = GridBagConstraints.BOTH;
+    gbc.anchor = GridBagConstraints.CENTER;
+    l2OutView = new ProcessOutputView();
+    l2Panel.add(new XScrollPane(l2OutView), gbc);
+
+    l2Status = new ProcessStatus("L2");
+    l2StartupListener = new L2StartupListener();
+    l2ShutdownListener = new L2ShutdownListener();
+
+    return l2Panel;
+  }
+
+  private void addTab(XTabbedPane theTabbedPane, String title, String iconPath, JComponent component) {
+    Icon icon = null;
+    if (iconPath != null) {
+      icon = newIcon(iconPath);
+    }
+    theTabbedPane.addTab(title, icon, component);
+  }
+
+  private JComponent createConfigurePanel() {
+    configTabbedPane = new XTabbedPane(SwingConstants.BOTTOM);
+    addTab(configTabbedPane, "Instrumented classes", "/com/tc/admin/icons/class_obj.gif",
+           instrumentedClassesPanel = new InstrumentedClassesPanel());
+    addTab(configTabbedPane, "Transient fields", "/com/tc/admin/icons/transient.gif",
+           transientFieldsPanel = new TransientFieldsPanel());
+    addTab(configTabbedPane, "Boot classes", "/com/tc/admin/icons/jar_obj.gif",
+           bootClassesPanel = new BootClassesPanel());
+    addTab(configTabbedPane, "Modules", "/com/tc/admin/icons/plugin_obj.gif", modulesPanel = new ModulesPanel());
+    configTabbedPane.addTab("tc-config.xml", createConfigTextPanel());
+    return configTabbedPane;
+  }
+
+  private JComponent createConfigTextPanel() {
+    xmlPane = new ConfigTextPane();
+    xmlChangeListener = new XmlChangeListener();
+    XTabbedPane problemsTabbedPane = new XTabbedPane();
+    configProblemTable = new ConfigProblemTable();
+    configProblemTableModel = new ConfigProblemTableModel();
+    configProblemTable.setModel(configProblemTableModel);
+    configProblemTable.addMouseListener(new MouseAdapter() {
+      public void mouseClicked(MouseEvent me) {
+        if (me.getClickCount() == 2) {
+          int row = configProblemTable.getSelectedRow();
+          XmlError error = configProblemTableModel.getError(row);
+          xmlPane.selectError(error);
+        }
+      }
+    });
+    problemsTabbedPane.addTab("Problems", new XScrollPane(configProblemTable));
+
+    XContainer topPanel = new XContainer(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = gbc.gridy = 0;
+    gbc.insets = new Insets(3, 3, 3, 3);
+
+    topPanel.add(createCommandButton(xmlPane.getSaveAction()), gbc);
+    gbc.gridx++;
+
+    topPanel.add(createCommandButton(xmlPane.getUndoAction()), gbc);
+    gbc.gridx++;
+
+    topPanel.add(createCommandButton(xmlPane.getRedoAction()), gbc);
+    gbc.gridx++;
+
+    topPanel.add(createCommandButton(xmlPane.getCutAction()), gbc);
+    gbc.gridx++;
+
+    topPanel.add(createCommandButton(xmlPane.getCopyAction()), gbc);
+    gbc.gridx++;
+
+    topPanel.add(createCommandButton(xmlPane.getPasteAction()), gbc);
+    gbc.gridx++;
+
+    // filler
+    gbc.weightx = 1.0;
+    topPanel.add(new XLabel(), gbc);
+
+    XContainer panel = new XContainer(new BorderLayout());
+    XSplitPane splitter = new XSplitPane(JSplitPane.VERTICAL_SPLIT, new XScrollPane(xmlPane), problemsTabbedPane);
+    panel.add(topPanel, BorderLayout.NORTH);
+    panel.add(splitter, BorderLayout.CENTER);
+
+    return panel;
+  }
+
+  private XButton createCommandButton(Action action) {
+    XButton button = new XButton();
+    button.setAction(action);
+    button.setText(action == null ? "Null Action" : null);
+    button.setFocusable(false);
+    button.setMargin(new Insets(1, 1, 1, 1));
+    return button;
+  }
+
+  private JComponent createMonitorPanel() {
+    return new SessionIntegratorAdminPanel(sessionIntegratorContext);
+  }
+
+  private class TreeMouseListener extends MouseAdapter {
+    public void mouseClicked(MouseEvent me) {
+      if (me.getClickCount() == 1) {
+        TreePath path = webAppTree.getPathForLocation(me.getX(), me.getY());
+        if (path != null) {
+          Object leaf = path.getLastPathComponent();
+          if (leaf instanceof WebAppLinkNode) {
+            WebAppLinkNode node = (WebAppLinkNode) leaf;
+            if (node.isReady()) {
+              openPage(node.getLink());
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private class TreeMouseMotionListener extends MouseMotionAdapter {
+    public void mouseMoved(MouseEvent me) {
+      TreePath path = webAppTree.getPathForLocation(me.getX(), me.getY());
+      if (path != null) {
+        Object leaf = path.getLastPathComponent();
+        if (leaf instanceof WebAppLinkNode) {
+          WebAppLinkNode node = (WebAppLinkNode) leaf;
+          Cursor c = webAppTree.getCursor();
+          if (lastArmedLink != node) {
+            if (lastArmedLink != null) {
+              lastArmedLink.setArmed(false);
+            }
+            node.setArmed(true);
+            lastArmedLink = node;
+          }
+          if (node.isReady() && c != LINK_CURSOR) {
+            webAppTree.setCursor(LINK_CURSOR);
+          }
+          return;
+        }
+      }
+      if (lastArmedLink != null) {
+        lastArmedLink.setArmed(false);
+        lastArmedLink = null;
+      }
+      webAppTree.setCursor(null);
+    }
   }
 
   private ConfigHelper createConfigHelper() {
-    if (m_serverSelection == null) {
-      m_serverSelection = ServerSelection.getInstance();
+    if (serverSelection == null) {
+      serverSelection = new ServerSelection(sessionIntegratorContext);
     }
-    ConfigHelper result = new ConfigHelper(m_serverSelection);
+    ConfigHelper result = new ConfigHelper(serverSelection);
     result.addPropertyChangeListener(this);
     return result;
   }
@@ -492,12 +642,12 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
     }
   }
 
-  static String getBundleString(String key) {
-    return SessionIntegrator.getContext().getMessage(key);
+  private String getBundleString(String key) {
+    return sessionIntegratorContext.getMessage(key);
   }
 
-  static String formatBundleString(String key, Object... args) {
-    return MessageFormat.format(getBundleString(key), args);
+  private String formatBundleString(String key, Object... args) {
+    return sessionIntegratorContext.format(key, args);
   }
 
   static String getTCInstallDir() {
@@ -509,7 +659,7 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
   }
 
   ConfigHelper getConfigHelper() {
-    return m_configHelper;
+    return configHelper;
   }
 
   private static String getScriptExtension() {
@@ -520,35 +670,23 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
     try {
       return Directories.getInstallationRoot().getAbsolutePath();
     } catch (Exception e) {
-      String msg = e.getMessage();
-      String title = getBundleString("title");
-      int msgType = JOptionPane.ERROR_MESSAGE;
-
-      JOptionPane.showMessageDialog(null, msg, title, msgType);
-      e.printStackTrace();
-      System.exit(-1);
+      throw new RuntimeException(e);
     }
-
-    return null;
   }
 
   private void openSplashDialog(ComponentAdapter splashListener) {
-    DictionaryResource topRes = SessionIntegrator.getContext().topRes;
-    DialogResource dialogRes = topRes.getDialog("SplashDialog");
+    splashDialog = new SplashDialog(this, true);
 
-    m_splashDialog = new SplashDialog(this, true);
-
-    m_splashDialog.load(dialogRes);
-    ((Button) m_splashDialog.findComponent("HelpButton")).addActionListener(m_helpAction);
-    ((Button) m_splashDialog.findComponent("ImportButton")).addActionListener(m_importAction);
-    ((Button) m_splashDialog.findComponent("SkipButton")).addActionListener(new ActionListener() {
+    splashDialog.getHelpButton().addActionListener(helpAction);
+    splashDialog.getImportButton().addActionListener(importAction);
+    splashDialog.getSkipButton().addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent ae) {
         checkShowSplashToggle();
-        m_splashDialog.setVisible(false);
+        splashDialog.setVisible(false);
       }
     });
-    m_splashDialog.center(this);
-    m_splashDialog.addWindowListener(new WindowAdapter() {
+    WindowHelper.center(splashDialog, this);
+    splashDialog.addWindowListener(new WindowAdapter() {
       public void windowClosed(WindowEvent we) {
         checkShowSplashToggle();
       }
@@ -556,87 +694,74 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
     if (splashListener != null) {
       removeComponentListener(splashListener);
     }
-    m_splashDialog.setVisible(true);
+    splashDialog.setVisible(true);
   }
 
   private void checkShowSplashToggle() {
-    if (m_splashDialog != null) {
-      CheckBox toggle = (CheckBox) m_splashDialog.findComponent("NoShowSplash");
+    if (splashDialog != null) {
+      JCheckBox toggle = splashDialog.getNoSplashToggle();
       Preferences prefs = getPreferences();
-
       prefs.putBoolean(SHOW_SPLASH_PREF_KEY, !toggle.isSelected());
       storePreferences();
     }
   }
 
   private void loadIcons() {
-    URL url;
-    String iconsPrefix = "/com/tc/admin/icons/";
-    Class clas = getClass();
-
-    if ((url = clas.getResource(iconsPrefix + "progress_task_yellow.gif")) != null) {
-      m_waitingIcon = new ImageIcon(url);
-    }
-
-    if ((url = clas.getResource(iconsPrefix + "progress_task_green.gif")) != null) {
-      m_readyIcon = new ImageIcon(url);
-    }
-
-    if ((url = clas.getResource(iconsPrefix + "progress_task_red.gif")) != null) {
-      m_stoppedIcon = new ImageIcon(url);
-    }
+    waitingIcon = newIcon("/com/tc/admin/icons/progress_task_yellow.gif");
+    readyIcon = newIcon("/com/tc/admin/icons/progress_task_green.gif");
+    stoppedIcon = newIcon("/com/tc/admin/icons/progress_task_red.gif");
   }
 
   private void initMenubar() {
-    MenuBar menuBar = new MenuBar();
-    Menu menu = new Menu(getBundleString("file.menu.label"));
+    JMenuBar menuBar = new JMenuBar();
+    XMenu menu = new XMenu(getBundleString("file.menu.label"));
 
-    menu.add(m_serversAction = new ServersAction());
+    menu.add(serversAction = new ServersAction());
 
-    menu.add(m_importAction = new ImportWebAppAction());
+    menu.add(importAction = new ImportWebAppAction());
     menu.add(new ExportConfigurationAction());
     menu.add(new QuitAction());
     menuBar.add(menu);
 
-    menu = new Menu(getBundleString("output.menu.label"));
+    menu = new XMenu(getBundleString("output.menu.label"));
     menu.add(new ClearOutputAction());
     menuBar.add(menu);
 
-    menu = new Menu(getBundleString("help.menu.label"));
-    menu.add(m_helpAction = new HelpAction());
+    menu = new XMenu(getBundleString("help.menu.label"));
+    menu.add(helpAction = new HelpAction());
     menu.add(new ShowSplashAction());
     menu.addSeparator();
-    
+
     String kitID = ProductInfo.getInstance().kitID();
-    menu.add(new ContactTerracottaAction(getBundleString("visit.forums.title"), formatBundleString("forums.url", kitID)));
-    menu.add(new ContactTerracottaAction(getBundleString("contact.support.title"), formatBundleString("support.url", kitID)));
+    menu
+        .add(new ContactTerracottaAction(getBundleString("visit.forums.title"), formatBundleString("forums.url", kitID)));
+    menu.add(new ContactTerracottaAction(getBundleString("contact.support.title"), formatBundleString("support.url",
+                                                                                                      kitID)));
 
     menu.addSeparator();
     menu.add(new AboutAction());
     menuBar.add(menu);
 
-    setMenubar(menuBar);
+    setJMenuBar(menuBar);
   }
 
   class ClearOutputAction extends XAbstractAction {
     ClearOutputAction() {
       super(getBundleString("clear.all.action.name"));
-      String uri = "/com/tc/admin/icons/clear_co.gif";
-      setSmallIcon(new ImageIcon(getClass().getResource(uri)));
+      setSmallIcon(newIcon("/com/tc/admin/icons/clear_co.gif"));
     }
 
     public void actionPerformed(ActionEvent e) {
-      m_l2OutView.setText("");
-      m_webServer1OutView.setText("");
-      m_webServer2OutView.setText("");
+      l2OutView.setText("");
+      webServer1OutView.setText("");
+      webServer2OutView.setText("");
     }
   }
 
   class HelpAction extends XAbstractAction {
     HelpAction() {
       super(getBundleString("help.action.name"));
-      String uri = "/com/tc/admin/icons/help.gif";
-      setSmallIcon(new ImageIcon(getClass().getResource(uri)));
+      setSmallIcon(newIcon("/com/tc/admin/icons/help.gif"));
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -650,9 +775,9 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
     }
 
     public void actionPerformed(ActionEvent e) {
-      if (m_splashDialog != null) {
-        m_splashDialog.center(SessionIntegratorFrame.this);
-        m_splashDialog.setVisible(true);
+      if (splashDialog != null) {
+        WindowHelper.center(splashDialog, SessionIntegratorFrame.this);
+        splashDialog.setVisible(true);
       } else {
         openSplashDialog(null);
       }
@@ -660,21 +785,21 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
   }
 
   class AboutAction extends XAbstractAction {
-    Dialog m_aboutDialog;
+    AboutDialog aboutDialog;
 
     AboutAction() {
       super(getBundleString("about.action.label"));
     }
 
     public void actionPerformed(ActionEvent ae) {
-      if (m_aboutDialog == null) {
-        if (m_aboutDialog == null) {
-          m_aboutDialog = new AboutDialog(SessionIntegratorFrame.this);
+      if (aboutDialog == null) {
+        if (aboutDialog == null) {
+          aboutDialog = new AboutDialog(SessionIntegratorFrame.this);
         }
 
-        m_aboutDialog.pack();
-        m_aboutDialog.center(SessionIntegratorFrame.this);
-        m_aboutDialog.setVisible(true);
+        aboutDialog.pack();
+        WindowHelper.center(aboutDialog, SessionIntegratorFrame.this);
+        aboutDialog.setVisible(true);
       }
     }
   }
@@ -683,37 +808,34 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
     try {
       openPage("file://" + StringUtils.replace(HELP_DOC, FS, "/"));
     } catch (Exception e) {
-      m_configHelper.openError(getBundleString("show.help.error"), e);
+      configHelper.openError(getBundleString("show.help.error"), e);
     }
   }
 
   class ServersAction extends XAbstractAction {
     ServersAction() {
       super(getBundleString("servers.action.name"));
-      String uri = "/com/tc/admin/icons/thread_obj.gif";
-      setSmallIcon(new ImageIcon(getClass().getResource(uri)));
+      setSmallIcon(newIcon("/com/tc/admin/icons/thread_obj.gif"));
     }
 
     public void actionPerformed(ActionEvent e) {
-      if (m_serversDialog == null) {
-        DialogResource dialogRes = SessionIntegrator.getContext().topRes.getDialog("ServersDialog");
-        m_serversDialog = new ServersDialog(SessionIntegratorFrame.this);
-        m_serversDialog.load(dialogRes);
-        m_serversDialog.addAcceptListener(new ActionListener() {
+      if (serversDialog == null) {
+        serversDialog = new ServersDialog(SessionIntegratorFrame.this, sessionIntegratorContext);
+        serversDialog.addAcceptListener(new ActionListener() {
           public void actionPerformed(ActionEvent ae) {
-            int oldSelectedServerIndex = m_serverSelection.getSelectedServerIndex();
-            m_serversDialog.finishEditing();
-            m_serversDialog.setVisible(false);
-            m_serverSelection.setServers(m_serversDialog.getServers());
-            m_serverSelection.setSelectedServerIndex(m_serversDialog.getSelectedServerIndex());
+            int oldSelectedServerIndex = serverSelection.getSelectedServerIndex();
+            serversDialog.finishEditing();
+            serversDialog.setVisible(false);
+            serverSelection.setServers(serversDialog.getServers());
+            serverSelection.setSelectedServerIndex(serversDialog.getSelectedServerIndex());
 
-            m_webServer1Label.setText(getWebServer1Label());
-            m_webServer2Label.setText(getWebServer2Label());
+            webServer1Label.setText(getWebServer1Label());
+            webServer2Label.setText(getWebServer2Label());
 
             // If the selected server changes, rebuild the webapp tree.
-            if (oldSelectedServerIndex != m_serverSelection.getSelectedServerIndex()) {
-              m_webAppTreeModel = new WebAppTreeModel(SessionIntegratorFrame.this, getWebApps());
-              m_webAppTree.setModel(m_webAppTreeModel);
+            if (oldSelectedServerIndex != serverSelection.getSelectedServerIndex()) {
+              webAppTreeModel = new WebAppTreeModel(SessionIntegratorFrame.this, getWebApps());
+              webAppTree.setModel(webAppTreeModel);
             }
 
             // Each time the user changes anything in the ServersDialog, cause JSP's to be recompiled.
@@ -722,18 +844,18 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
               touch(webApps[i]);
             }
 
-            m_configHelper = createConfigHelper();
-            m_l2ConnectManager.setJMXPortNumber(m_configHelper.getJmxPort());
+            configHelper = createConfigHelper();
+            l2ConnectManager.setJMXPortNumber(configHelper.getJmxPort());
             initXmlPane();
             setupEditorPanels();
           }
         });
       }
 
-      m_serversDialog.setSelection(m_serverSelection);
-      m_serversDialog.center(SessionIntegratorFrame.this);
-      m_serversDialog.setVisible(true);
-      m_serversDialog.toFront();
+      serversDialog.setSelection(serverSelection);
+      WindowHelper.center(serversDialog, SessionIntegratorFrame.this);
+      serversDialog.setVisible(true);
+      serversDialog.toFront();
     }
 
   }
@@ -741,8 +863,7 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
   class ImportWebAppAction extends XAbstractAction {
     ImportWebAppAction() {
       super(getBundleString("import.webapp.action.name"));
-      String uri = "/com/tc/admin/icons/import_wiz.gif";
-      setSmallIcon(new ImageIcon(getClass().getResource(uri)));
+      setSmallIcon(newIcon("/com/tc/admin/icons/import_wiz.gif"));
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -766,15 +887,14 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
     int returnVal = chooser.showSaveDialog(this);
     if (returnVal == JFileChooser.APPROVE_OPTION) {
       File file = chooser.getSelectedFile();
-      m_configHelper.saveAs(file, m_xmlPane.getText());
+      configHelper.saveAs(file, xmlPane.getText());
     }
   }
 
   class ExportConfigurationAction extends XAbstractAction {
     ExportConfigurationAction() {
       super(getBundleString("export.configuration.action.name"));
-      String uri = "/com/tc/admin/icons/export_wiz.gif";
-      setSmallIcon(new ImageIcon(getClass().getResource(uri)));
+      setSmallIcon(newIcon("/com/tc/admin/icons/export_wiz.gif"));
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -797,39 +917,47 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
   }
 
   private void quit() {
-    if (m_quitting) { return; }
+    if (quitting) { return; }
 
     if (isXmlModified()) {
       if (querySaveConfig() == JOptionPane.CANCEL_OPTION) { return; }
     }
 
     if (anyWaiting()) {
-      m_quitting = true;
+      quitting = true;
       showQuittingDialog();
     } else if (anyReady()) {
-      m_quitting = true;
+      quitting = true;
       showQuittingDialog();
 
       try {
-        m_webAppTreeModel.updateLinks(false, false);
+        webAppTreeModel.updateLinks(false, false);
         disableControls();
         stopAll();
       } catch (Exception e) {
-        SessionIntegrator.getContext().client.shutdown();
+        shutdown(-1);
       }
     } else {
-      SessionIntegrator.getContext().client.shutdown();
+      shutdown(0);
     }
   }
 
-  void showQuittingDialog() {
-    Dialog dialog = new Dialog(this, getTitle());
-    Label label = new Label(getBundleString("quitting.dialog.msg"));
+  private void shutdown() {
+    shutdown(0);
+  }
 
-    label.setBorder(new EmptyBorder(10, 20, 10, 20));
+  private void shutdown(int exitCode) {
+    System.exit(exitCode);
+  }
+
+  void showQuittingDialog() {
+    JDialog dialog = new JDialog(this, getTitle());
+    XLabel label = new XLabel(getBundleString("quitting.dialog.msg"));
+
+    label.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
     dialog.getContentPane().add(label);
     dialog.pack();
-    dialog.center(this);
+    WindowHelper.center(dialog, this);
     dialog.setVisible(true);
   }
 
@@ -844,18 +972,18 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
   }
 
   void setXmlModified(boolean xmlModified) {
-    m_xmlModified = xmlModified;
+    this.xmlModified = xmlModified;
 
-    if (m_configTabbedPane != null) {
+    if (configTabbedPane != null) {
       String label = XML_TAB_LABEL + (xmlModified ? "*" : "");
-      m_configTabbedPane.setTitleAt(XML_TAB_INDEX, label);
+      configTabbedPane.setTitleAt(XML_TAB_INDEX, label);
     }
   }
 
-  private boolean m_xmlModified;
+  private boolean xmlModified;
 
   private boolean isXmlModified() {
-    return m_xmlModified;
+    return xmlModified;
   }
 
   private File getLastDirectory() {
@@ -899,7 +1027,7 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
   }
 
   private org.terracotta.ui.session.servers.ServerInfo getSelectedServer() {
-    return m_serverSelection.getSelectedServer();
+    return serverSelection.getSelectedServer();
   }
 
   private String getSelectedServerName() {
@@ -988,13 +1116,13 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
         showPlainMessage(msg);
       }
 
-      if (m_splashDialog != null) {
-        m_splashDialog.setVisible(false);
-        m_splashDialog = null;
+      if (splashDialog != null) {
+        splashDialog.setVisible(false);
+        splashDialog = null;
       }
     } catch (Exception e) {
       String msg = formatBundleString("install.webapp.failure.msg", new Object[] { file });
-      m_configHelper.openError(msg, e);
+      configHelper.openError(msg, e);
     }
   }
 
@@ -1011,9 +1139,9 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
     }
   }
 
-  private static void copyFileToDirectory(File file, File dir, boolean keepDate) throws IOException {
+  private void copyFileToDirectory(File file, File dir, boolean keepDate) throws IOException {
     if (dir.exists() && !dir.isDirectory()) {
-      throw new IllegalArgumentException(getBundleString("destination.not.directory.msg"));
+      throw new IllegalArgumentException(sessionIntegratorContext.getString("destination.not.directory.msg"));
     } else {
       FileUtils.copyFile(file, new File(dir, file.getName()), keepDate);
     }
@@ -1078,7 +1206,7 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
         queryRestart(msg + "\n\n" + (anyReady() ? QUERY_RESTART_MSG : QUERY_START_MSG));
       } catch (Exception e) {
         String msg = formatBundleString("refresh.failure.msg", new Object[] { webApp });
-        m_configHelper.openError(msg, e);
+        configHelper.openError(msg, e);
       }
     }
   }
@@ -1120,7 +1248,7 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
         showPlainMessage(msg);
       } catch (Exception e) {
         String msg = formatBundleString("remove.failure.msg", new Object[] { webApp });
-        m_configHelper.openError(msg, e);
+        configHelper.openError(msg, e);
       }
     }
   }
@@ -1154,23 +1282,23 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
     }
 
     path = StringUtils.replace(path, FS, "/");
-    m_properties.setProperty(name, path);
+    properties.setProperty(name, path);
 
-    File webAppProps = m_serverSelection.getSelectedServerWebAppProperties();
+    File webAppProps = serverSelection.getSelectedServerWebAppProperties();
     FileOutputStream out = new FileOutputStream(webAppProps);
     Exception err = null;
 
     try {
-      m_properties.store(out, null);
+      properties.store(out, null);
 
-      WebAppNode webAppNode = m_webAppTreeModel.add(new WebApp(name, path));
+      WebAppNode webAppNode = webAppTreeModel.add(new WebApp(name, path));
       TreePath webAppPath = new TreePath(webAppNode.getPath());
 
-      m_webAppTree.expandPath(webAppPath);
-      m_webAppTree.setSelectionPath(webAppPath);
+      webAppTree.expandPath(webAppPath);
+      webAppTree.setSelectionPath(webAppPath);
 
-      if (m_configHelper.ensureWebApplication(name)) {
-        m_configHelper.save();
+      if (configHelper.ensureWebApplication(name)) {
+        configHelper.save();
         initXmlPane();
       }
     } catch (Exception e) {
@@ -1191,17 +1319,17 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
       name = name.substring(0, dot);
     }
 
-    m_properties.remove(name);
+    properties.remove(name);
 
-    File webAppProps = m_serverSelection.getSelectedServerWebAppProperties();
+    File webAppProps = serverSelection.getSelectedServerWebAppProperties();
     FileOutputStream out = new FileOutputStream(webAppProps);
     Exception err = null;
 
     try {
-      m_properties.store(out, null);
-      m_webAppTreeModel.remove(name);
-      if (m_configHelper.removeWebApplication(name)) {
-        m_configHelper.save();
+      properties.store(out, null);
+      webAppTreeModel.remove(name);
+      if (configHelper.removeWebApplication(name)) {
+        configHelper.save();
         initXmlPane();
       }
     } catch (Exception e) {
@@ -1214,29 +1342,29 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
   }
 
   void saveAndStart() {
-    m_configHelper.save();
+    configHelper.save();
     setXmlModified(false);
-    m_startButton.doClick();
+    startButton.doClick();
   }
 
   private boolean isDsoEnabled() {
-    return m_dsoEnabled;
+    return dsoEnabled;
   }
 
   private void setDsoEnabled(boolean enabled) {
-    getPreferences().putBoolean(DSO_ENABLED_PREF_KEY, m_dsoEnabled = enabled);
+    getPreferences().putBoolean(DSO_ENABLED_PREF_KEY, dsoEnabled = enabled);
     storePreferences();
 
-    m_dsoEnabledToggle.setSelected(enabled);
+    dsoEnabledToggle.setSelected(enabled);
 
-    m_l2Label.setIcon(null);
-    m_l2Label.setText(L2_LABEL + (enabled ? "" : DISABLED_LABEL));
-    m_l2Label.setEnabled(m_dsoEnabled);
-    m_l2OutView.setEnabled(m_dsoEnabled);
+    l2Label.setIcon(null);
+    l2Label.setText(L2_LABEL + (enabled ? "" : DISABLED_LABEL));
+    l2Label.setEnabled(dsoEnabled);
+    l2OutView.setEnabled(dsoEnabled);
 
     setMonitorTabEnabled(enabled);
 
-    m_startButton.setEnabled(enabled || isWebServer1Enabled() || isWebServer2Enabled());
+    startButton.setEnabled(enabled || isWebServer1Enabled() || isWebServer2Enabled());
 
     if (isL2Ready()) {
       queryRestart();
@@ -1244,23 +1372,23 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
   }
 
   private void selectControlTab() {
-    m_tabbedPane.setSelectedIndex(CONTROL_TAB_INDEX);
+    tabbedPane.setSelectedIndex(CONTROL_TAB_INDEX);
   }
 
   private boolean isConfigTabSelected() {
-    return (m_tabbedPane.getSelectedIndex() == CONFIG_TAB_INDEX);
+    return (tabbedPane.getSelectedIndex() == CONFIG_TAB_INDEX);
   }
 
   private void setConfigTabEnabled(boolean enabled) {
-    m_tabbedPane.setEnabledAt(CONFIG_TAB_INDEX, enabled);
+    tabbedPane.setEnabledAt(CONFIG_TAB_INDEX, enabled);
   }
 
   private void setConfigTabForeground(Color fg) {
-    m_tabbedPane.setForegroundAt(CONFIG_TAB_INDEX, fg);
+    tabbedPane.setForegroundAt(CONFIG_TAB_INDEX, fg);
   }
 
   private void setMonitorTabEnabled(boolean enabled) {
-    m_tabbedPane.setEnabledAt(MONITOR_TAB_INDEX, enabled);
+    tabbedPane.setEnabledAt(MONITOR_TAB_INDEX, enabled);
   }
 
   private int querySaveConfig() {
@@ -1287,83 +1415,83 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
     int answer = showConfirmDialog(msg, type);
 
     if (answer == JOptionPane.YES_OPTION) {
-      m_startButton.doClick();
+      startButton.doClick();
     }
 
     return answer;
   }
 
   private WebApp[] getWebApps() {
-    File webAppProps = m_serverSelection.getSelectedServerWebAppProperties();
+    File webAppProps = serverSelection.getSelectedServerWebAppProperties();
 
-    m_properties = new Properties();
+    properties = new Properties();
 
     try {
-      m_properties.load(new FileInputStream(webAppProps));
+      properties.load(new FileInputStream(webAppProps));
     } catch (IOException ioe) {
-      m_properties.setProperty("Cart", "");
-      m_properties.setProperty("DepartmentTaskList", "");
-      m_properties.setProperty("Townsend", "");
+      properties.setProperty("Cart", "");
+      properties.setProperty("DepartmentTaskList", "");
+      properties.setProperty("Townsend", "");
     }
 
-    Enumeration names = m_properties.keys();
+    Enumeration names = properties.keys();
     ArrayList appList = new ArrayList();
     String name;
 
     while (names.hasMoreElements()) {
       name = (String) names.nextElement();
-      appList.add(new WebApp(name, m_properties.getProperty(name)));
+      appList.add(new WebApp(name, properties.getProperty(name)));
     }
 
     return WebAppComparable.sort((WebApp[]) appList.toArray(new WebApp[0]));
   }
 
   private void disableEditorPanels() {
-    m_instrumentedClassesPanel.setEnabled(false);
-    m_transientFieldsPanel.setEnabled(false);
-    m_bootClassesPanel.setEnabled(false);
-    m_modulesPanel.setEnabled(false);
+    instrumentedClassesPanel.setEnabled(false);
+    transientFieldsPanel.setEnabled(false);
+    bootClassesPanel.setEnabled(false);
+    modulesPanel.setEnabled(false);
   }
-  
+
   private void setupEditorPanels() {
     try {
-      TcConfig config = m_configHelper.getConfig();
+      TcConfig config = configHelper.getConfig();
 
       if (config == ConfigHelper.BAD_CONFIG) {
         disableEditorPanels();
       } else {
         DsoApplication dsoApp = config.getApplication().getDso();
 
-        m_instrumentedClassesPanel.setup(dsoApp);
-        m_transientFieldsPanel.setup(dsoApp);
-        m_bootClassesPanel.setup(dsoApp);
-        m_modulesPanel.setup(config.getClients());
+        instrumentedClassesPanel.setup(dsoApp);
+        transientFieldsPanel.setup(dsoApp);
+        bootClassesPanel.setup(dsoApp);
+        modulesPanel.setup(config.getClients());
       }
     } catch (Exception e) {
-      m_configHelper.openError(getBundleString("configuration.load.failure.msg"), e);
+      configHelper.openError(getBundleString("configuration.load.failure.msg"), e);
     }
   }
 
   private void initXmlPane() {
-    Document xmlDocument = m_xmlPane.getDocument();
+    Document xmlDocument = xmlPane.getDocument();
 
-    xmlDocument.removeDocumentListener(m_xmlChangeListener);
-    m_xmlPane.load(m_configHelper.getConfigFilePath());
-    xmlDocument.addDocumentListener(m_xmlChangeListener);
+    xmlDocument.removeDocumentListener(xmlChangeListener);
+    xmlPane.load(configHelper.getConfigFilePath());
+    xmlDocument.addDocumentListener(xmlChangeListener);
     setXmlModified(false);
   }
 
   private void updateXmlPane() {
-    Document xmlDocument = m_xmlPane.getDocument();
+    Document xmlDocument = xmlPane.getDocument();
 
-    xmlDocument.removeDocumentListener(m_xmlChangeListener);
-    m_xmlPane.set(m_configHelper.getConfigText());
-    xmlDocument.addDocumentListener(m_xmlChangeListener);
+    xmlDocument.removeDocumentListener(xmlChangeListener);
+    xmlPane.set(configHelper.getConfigText());
+    xmlDocument.addDocumentListener(xmlChangeListener);
     setXmlModified(true);
   }
 
   void setConfigErrors(List errorList) {
-    m_configProblemTableModel.setErrors(errorList);
+    configProblemTableModel.setErrors(errorList);
     setConfigTabForeground(errorList.size() > 0 ? Color.RED : null);
   }
 
@@ -1385,7 +1513,7 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
       if (isXmlModified()) {
         if (querySaveConfig() == JOptionPane.CANCEL_OPTION) { return; }
       }
-      m_webAppTreeModel.updateLinks(false, false);
+      webAppTreeModel.updateLinks(false, false);
       disableControls();
       startAll();
     } catch (Exception e) {
@@ -1394,21 +1522,21 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
   }
 
   private void startAll() throws Exception {
-    m_restarting = anyReady();
+    restarting = anyReady();
     startServers();
   }
 
   private void startServers() {
     trace("startServers");
 
-    m_l2Label.setIcon(m_l2Status.isReady() ? m_waitingIcon : null);
+    l2Label.setIcon(l2Status.isReady() ? waitingIcon : null);
 
-    if (m_restarting) {
+    if (restarting) {
       if (isL2Ready()) {
-        m_l2Label.setIcon(m_waitingIcon);
-        m_l2Label.setText(L2_LABEL + WAITING_LABEL);
+        l2Label.setIcon(waitingIcon);
+        l2Label.setText(L2_LABEL + WAITING_LABEL);
 
-        if (m_webServer1Status.isReady() || m_webServer2Status.isReady()) {
+        if (webServer1Status.isReady() || webServer2Status.isReady()) {
           stopWebServers();
         } else {
           startL2();
@@ -1419,12 +1547,12 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
     } else {
       if (isDsoEnabled()) {
         if (isWebServer1Enabled()) {
-          m_webServer1Label.setIcon(m_waitingIcon);
-          m_webServer1Label.setText(getWebServer1Label() + WAITING_LABEL);
+          webServer1Label.setIcon(waitingIcon);
+          webServer1Label.setText(getWebServer1Label() + WAITING_LABEL);
         }
         if (isWebServer2Enabled()) {
-          m_webServer2Label.setIcon(m_waitingIcon);
-          m_webServer2Label.setText(getWebServer2Label() + WAITING_LABEL);
+          webServer2Label.setIcon(waitingIcon);
+          webServer2Label.setText(getWebServer2Label() + WAITING_LABEL);
         }
         startL2();
       } else {
@@ -1434,25 +1562,25 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
   }
 
   private boolean isWebServer1Enabled() {
-    return m_webServer1Enabled;
+    return webServer1Enabled;
   }
 
   private void setWebServer1Enabled(boolean enabled) {
-    getPreferences().putBoolean(WEBSERVER1_ENABLED_PREF_KEY, m_webServer1Enabled = enabled);
+    getPreferences().putBoolean(WEBSERVER1_ENABLED_PREF_KEY, webServer1Enabled = enabled);
     storePreferences();
 
-    m_startButton.setEnabled(enabled || isWebServer2Enabled() || isDsoEnabled());
+    startButton.setEnabled(enabled || isWebServer2Enabled() || isDsoEnabled());
   }
 
   private boolean isWebServer2Enabled() {
-    return m_webServer2Enabled;
+    return webServer2Enabled;
   }
 
   private void setWebServer2Enabled(boolean enabled) {
-    getPreferences().putBoolean(WEBSERVER2_ENABLED_PREF_KEY, m_webServer2Enabled = enabled);
+    getPreferences().putBoolean(WEBSERVER2_ENABLED_PREF_KEY, webServer2Enabled = enabled);
     storePreferences();
 
-    m_startButton.setEnabled(enabled || isWebServer1Enabled() || isDsoEnabled());
+    startButton.setEnabled(enabled || isWebServer1Enabled() || isDsoEnabled());
   }
 
   private String getWebServer1Label() {
@@ -1487,7 +1615,7 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
 
   private boolean isL2Accessible() {
     try {
-      if (m_l2ConnectManager.testIsConnected()) { return true; }
+      if (l2ConnectManager.testIsConnected()) { return true; }
     } catch (Exception e) {/**/
     }
 
@@ -1502,27 +1630,27 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
 
   private void startL2() {
     if (System.getProperty("tc.server") != null) {
-      m_l2OutView.append("Using external Terracotta servers: " + System.getProperty("tc.server"));
+      l2OutView.append("Using external Terracotta servers: " + System.getProperty("tc.server"));
       startWebServers();
       return;
     }
 
     trace("startL2");
 
-    if (m_l2Monitor != null) {
-      m_l2Monitor.cancel();
+    if (l2Monitor != null) {
+      l2Monitor.cancel();
       while (true) {
         try {
-          m_l2Monitor.join(0);
+          l2Monitor.join(0);
           break;
         } catch (InterruptedException ie) {/**/
         }
       }
-      m_l2Monitor = null;
+      l2Monitor = null;
     }
 
     if (isL2Ready()) {
-      m_l2Status.setRestarting(true);
+      l2Status.setRestarting(true);
       restartL2();
       return;
     }
@@ -1535,12 +1663,12 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
   private void _startL2() {
     trace("_startL2");
 
-    m_l2Status.setWaiting();
-    m_l2Label.setIcon(m_waitingIcon);
-    m_l2Label.setText(L2_LABEL + STARTING_LABEL);
-    m_l2OutView.setListener(m_l2StartupListener);
-    m_l2OutView.setListenerTrigger(L2_STARTUP_TRIGGER);
-    startL2AndNotify(L2_STARTUP_SCRIPT, m_l2OutView, m_l2StartupListener);
+    l2Status.setWaiting();
+    l2Label.setIcon(waitingIcon);
+    l2Label.setText(L2_LABEL + STARTING_LABEL);
+    l2OutView.setListener(l2StartupListener);
+    l2OutView.setListenerTrigger(L2_STARTUP_TRIGGER);
+    startL2AndNotify(L2_STARTUP_SCRIPT, l2OutView, l2StartupListener);
   }
 
   private void startL2AndNotify(final String startScript, final ProcessOutputView outView,
@@ -1553,7 +1681,7 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
       IOUtils.closeQuietly(process.getOutputStream());
       new ProcessMonitor(process, new ProcessTerminationListener() {
         public void processTerminated(int exitCode) {
-          if (m_debug) {
+          if (debug) {
             outView.append("L2 terminated with exitCode=" + exitCode);
           }
           if (exitCode != 0) {
@@ -1570,47 +1698,43 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
       return;
     }
 
-    m_l2OutView.start(process);
+    l2OutView.start(process);
 
     new L2StartupMonitor(process, startupListener).start();
   }
 
   class L2StartupMonitor extends Thread {
-    private Process         m_process;
-    private StartupListener m_startupListener;
+    private Process         process;
+    private StartupListener startupListener;
 
     L2StartupMonitor(Process process, StartupListener listener) {
       super();
-
-      m_process = process;
-      m_startupListener = listener;
+      this.process = process;
+      startupListener = listener;
     }
 
     public void run() {
       while (true) {
-        if (m_process != null) {
+        if (process != null) {
           try {
-            int exitCode = m_process.exitValue();
+            int exitCode = process.exitValue();
 
             if (exitCode != 0) {
               SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
-                  m_startupListener.processFailed();
+                  startupListener.processFailed();
                 }
               });
               return;
             } else {
-              m_process = null;
+              process = null;
             }
           } catch (IllegalThreadStateException itse) {/**/
           }
 
           if (isL2Accessible()) { return; }
 
-          try {
-            sleep(1000);
-          } catch (InterruptedException ignore) {/**/
-          }
+          ThreadUtil.reallySleep(1000);
         }
       }
     }
@@ -1620,60 +1744,60 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
     public void processFailed() {
       trace("L2.processFailed");
 
-      if (m_webServer1Status.isReady()) {
+      if (webServer1Status.isReady()) {
         stopWebServer1();
       } else {
-        m_webServer1Label.setIcon(null);
-        m_webServer1Label.setText(getWebServer1Label());
+        webServer1Label.setIcon(null);
+        webServer1Label.setText(getWebServer1Label());
       }
 
-      if (m_webServer2Status.isReady()) {
+      if (webServer2Status.isReady()) {
         stopWebServer2();
       } else {
-        m_webServer2Label.setIcon(null);
-        m_webServer2Label.setText(getWebServer2Label());
+        webServer2Label.setIcon(null);
+        webServer2Label.setText(getWebServer2Label());
       }
 
-      m_l2Label.setIcon(m_stoppedIcon);
-      m_l2Label.setText(L2_LABEL + FAILED_LABEL);
-      m_l2Status.setFailed();
+      l2Label.setIcon(stoppedIcon);
+      l2Label.setText(L2_LABEL + FAILED_LABEL);
+      l2Status.setFailed();
 
       testEnableControls();
     }
 
     public void startupError(Exception e) {
       trace("L2.startupError exception=" + e.getMessage());
-      if (m_debug) e.printStackTrace();
+      if (debug) e.printStackTrace();
 
-      m_webServer1Label.setIcon(null);
-      m_webServer1Label.setText(getWebServer1Label());
-      m_webServer2Label.setIcon(null);
-      m_webServer2Label.setText(getWebServer2Label());
+      webServer1Label.setIcon(null);
+      webServer1Label.setText(getWebServer1Label());
+      webServer2Label.setIcon(null);
+      webServer2Label.setText(getWebServer2Label());
 
-      m_l2Label.setIcon(m_stoppedIcon);
-      m_l2Label.setText(L2_LABEL + FAILED_LABEL);
-      m_l2Status.setFailed();
+      l2Label.setIcon(stoppedIcon);
+      l2Label.setText(L2_LABEL + FAILED_LABEL);
+      l2Status.setFailed();
 
       testEnableControls();
     }
 
     public void triggerEncountered() {
-      m_l2OutView.setListener(null);
+      l2OutView.setListener(null);
       processReady();
     }
 
     public void processReady() {
       trace("L2.processReady");
 
-      m_l2Label.setIcon(m_readyIcon);
-      m_l2Label.setText(L2_LABEL + READY_LABEL);
-      m_l2Status.setReady();
+      l2Label.setIcon(readyIcon);
+      l2Label.setText(L2_LABEL + READY_LABEL);
+      l2Status.setReady();
 
       startWebServers();
       waitForMBean();
 
-      m_l2Monitor = new L2ShutdownMonitor(m_l2ShutdownListener);
-      m_l2Monitor.start();
+      l2Monitor = new L2ShutdownMonitor(l2ShutdownListener);
+      l2Monitor.start();
 
       testEnableControls();
     }
@@ -1689,30 +1813,30 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
 
   private void stopL2(boolean restart) {
     if (System.getProperty("tc.server") != null) {
-      if (m_webServer1Status.isReady() || m_webServer2Status.isReady()) {
+      if (webServer1Status.isReady() || webServer2Status.isReady()) {
         stopWebServers();
       }
       return;
     }
 
-    if (m_l2Monitor != null) {
-      m_l2Monitor.cancel();
+    if (l2Monitor != null) {
+      l2Monitor.cancel();
       while (true) {
         try {
-          m_l2Monitor.join(0);
+          l2Monitor.join(0);
           break;
         } catch (InterruptedException ie) {/**/
         }
       }
-      m_l2Monitor = null;
+      l2Monitor = null;
     }
 
-    m_l2Status.setWaiting();
-    m_l2Label.setIcon(m_waitingIcon);
-    m_l2Label.setText(L2_LABEL + STOPPING_LABEL);
-    m_l2ShutdownListener.setRestart(restart);
+    l2Status.setWaiting();
+    l2Label.setIcon(waitingIcon);
+    l2Label.setText(L2_LABEL + STOPPING_LABEL);
+    l2ShutdownListener.setRestart(restart);
 
-    stopL2AndNotify(L2_SHUTDOWN_SCRIPT, m_l2OutView, m_configHelper.getJmxPort(), m_l2ShutdownListener);
+    stopL2AndNotify(L2_SHUTDOWN_SCRIPT, l2OutView, configHelper.getJmxPort(), l2ShutdownListener);
   }
 
   private void stopL2AndNotify(final String stopScript, final ProcessOutputView outView, final int port,
@@ -1727,29 +1851,29 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
       return;
     }
 
-    m_l2Monitor = new L2ShutdownMonitor(process, shutdownListener);
-    m_l2Monitor.start();
+    l2Monitor = new L2ShutdownMonitor(process, shutdownListener);
+    l2Monitor.start();
   }
 
   class L2ShutdownListener implements ShutdownListener {
-    boolean m_restart = false;
+    boolean restart = false;
 
     void setRestart(boolean restart) {
-      m_restart = restart;
+      this.restart = restart;
     }
 
     public void processError(Exception e) {
       trace("L2.processError");
-      if (m_debug) e.printStackTrace();
+      if (debug) e.printStackTrace();
 
-      if (m_quitting) {
-        m_l2Label.setIcon(m_readyIcon);
-        m_l2Label.setText(L2_LABEL + READY_LABEL);
-        m_l2Status.setReady();
+      if (quitting) {
+        l2Label.setIcon(readyIcon);
+        l2Label.setText(L2_LABEL + READY_LABEL);
+        l2Status.setReady();
       } else {
-        m_l2Label.setIcon(m_stoppedIcon);
-        m_l2Label.setText(L2_LABEL + FAILED_LABEL);
-        m_l2Status.setFailed();
+        l2Label.setIcon(stoppedIcon);
+        l2Label.setText(L2_LABEL + FAILED_LABEL);
+        l2Status.setFailed();
       }
 
       testEnableControls();
@@ -1758,36 +1882,36 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
     public void processFailed(String errorBuf) {
       trace("L2.processFailed");
 
-      m_l2OutView.append(errorBuf);
+      l2OutView.append(errorBuf);
 
-      if (m_quitting) {
-        m_l2Label.setIcon(m_readyIcon);
-        m_l2Label.setText(L2_LABEL + READY_LABEL);
-        m_l2Status.setReady();
+      if (quitting) {
+        l2Label.setIcon(readyIcon);
+        l2Label.setText(L2_LABEL + READY_LABEL);
+        l2Status.setReady();
       } else {
-        m_l2Label.setIcon(m_stoppedIcon);
-        m_l2Label.setText(L2_LABEL + FAILED_LABEL);
-        m_l2Status.setFailed();
+        l2Label.setIcon(stoppedIcon);
+        l2Label.setText(L2_LABEL + FAILED_LABEL);
+        l2Status.setFailed();
       }
 
       testEnableControls();
     }
 
     public void processStopped() {
-      m_l2Monitor = null;
-      m_l2ConnectManager.getConnectionContext().reset();
-      m_l2Status.setInactive();
+      l2Monitor = null;
+      l2ConnectManager.getConnectionContext().reset();
+      l2Status.setInactive();
 
-      if (m_restart) {
+      if (restart) {
         startL2();
-        m_restart = false;
+        restart = false;
       } else {
-        if (m_webServer1Status.isReady() || m_webServer2Status.isReady()) {
+        if (webServer1Status.isReady() || webServer2Status.isReady()) {
           stopWebServers();
         }
 
-        m_l2Label.setIcon(m_stoppedIcon);
-        m_l2Label.setText(L2_LABEL + STOPPED_LABEL);
+        l2Label.setIcon(stoppedIcon);
+        l2Label.setText(L2_LABEL + STOPPED_LABEL);
       }
 
       testEnableControls();
@@ -1795,9 +1919,9 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
   }
 
   class L2ShutdownMonitor extends Thread {
-    private Process          m_process;
-    private ShutdownListener m_shutdownListener;
-    private boolean          m_stop;
+    private Process          process;
+    private ShutdownListener shutdownListener;
+    private boolean          stop;
 
     L2ShutdownMonitor(ShutdownListener listener) {
       this(null, listener);
@@ -1805,44 +1929,43 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
 
     L2ShutdownMonitor(Process process, ShutdownListener listener) {
       super();
-
-      m_process = process;
-      m_shutdownListener = listener;
+      this.process = process;
+      shutdownListener = listener;
     }
 
     public void run() {
       ProcessWaiter waiter = null;
 
-      if (m_process != null) {
-        waiter = new ProcessWaiter(m_process);
+      if (process != null) {
+        waiter = new ProcessWaiter(process);
         waiter.start();
       }
 
-      while (!m_stop) {
-        if (m_process != null) {
+      while (!stop) {
+        if (process != null) {
           try {
-            int exitCode = m_process.exitValue();
+            int exitCode = process.exitValue();
 
             if (exitCode != 0) {
               final String errorBuf = waiter.getErrorBuffer();
               SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
-                  m_shutdownListener.processFailed(errorBuf);
+                  shutdownListener.processFailed(errorBuf);
                 }
               });
               return;
             } else {
-              m_process = null;
+              process = null;
             }
           } catch (IllegalThreadStateException itse) {/**/
           }
         }
 
-        if (!m_stop) {
+        if (!stop) {
           if (!isL2Accessible()) {
             SwingUtilities.invokeLater(new Runnable() {
               public void run() {
-                m_shutdownListener.processStopped();
+                shutdownListener.processStopped();
               }
             });
             return;
@@ -1857,7 +1980,7 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
     }
 
     void cancel() {
-      m_stop = true;
+      stop = true;
     }
   }
 
@@ -1866,7 +1989,7 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
       final Object event = notification.getSource();
 
       if (event instanceof NonPortableObjectEvent) {
-        m_handlingAppEvent = true;
+        handlingAppEvent = true;
 
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
@@ -1881,18 +2004,16 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
   private static final String NON_PORTABLE_DIALOG_SIZE = "NonPortableDialogSize";
 
   private void handleNonPortableReason(NonPortableObjectEvent event) {
-    ContainerResource res = (ContainerResource) SessionIntegrator.getContext().topRes
-        .getComponent("NonPortableObjectPanel");
-    NonPortableObjectPanel panel = new NonPortableObjectPanel(res, this);
-    Dialog dialog = new Dialog(this, this.getTitle(), true);
-    Container cp = (Container) dialog.getContentPane();
+    Preferences prefs = getPreferences();
+    NonPortableObjectPanel panel = new NonPortableObjectPanel(this);
+    JDialog dialog = new JDialog(this, this.getTitle(), true);
+    Container cp = dialog.getContentPane();
     cp.setLayout(new BorderLayout());
     cp.add(panel);
     panel.setEvent(event);
 
-    Preferences prefs = getPreferences();
-    XSplitPane splitter = (XSplitPane) panel.findComponent("IssuesSplitter");
-    splitter.setPreferences(prefs.node(splitter.getName()));
+    XSplitPane splitter = panel.getIssuesSplitter();
+    splitter.setPreferences(prefs.node("IssuesSplitter"));
 
     String s;
     if ((s = prefs.get(NON_PORTABLE_DIALOG_SIZE, null)) != null) {
@@ -1901,11 +2022,11 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
       dialog.pack();
     }
 
-    dialog.center(this);
+    WindowHelper.center(dialog, this);
     dialog.setVisible(true);
     prefs.put(NON_PORTABLE_DIALOG_SIZE, getSizeString(dialog));
     storePreferences();
-    m_handlingAppEvent = false;
+    handlingAppEvent = false;
     return;
   }
 
@@ -1930,8 +2051,8 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
       public void run() {
         while (true) {
           try {
-            if (m_l2ConnectManager.testIsConnected()) {
-              ConnectionContext cc = m_l2ConnectManager.getConnectionContext();
+            if (l2ConnectManager.testIsConnected()) {
+              ConnectionContext cc = l2ConnectManager.getConnectionContext();
               ObjectName on = cc.queryName(L2MBeanNames.DSO_APP_EVENTS.getCanonicalName());
 
               if (on != null) {
@@ -1952,7 +2073,7 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
   }
 
   private boolean isL2Ready() {
-    return m_l2Status.isReady();
+    return l2Status.isReady();
   }
 
   // End -- L2 process control support
@@ -1968,32 +2089,32 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
   }
 
   private void startWebServer1() {
-    if (m_webServer1Monitor != null) {
-      m_webServer1Monitor.cancel();
-      m_webServer1Monitor = null;
+    if (webServer1Monitor != null) {
+      webServer1Monitor.cancel();
+      webServer1Monitor = null;
     }
 
     if (isWebServer1Ready()) {
-      m_webServer1Status.setRestarting(true);
+      webServer1Status.setRestarting(true);
       restartWebServer1();
       return;
     }
 
-    m_webServer1Label.setIcon(m_waitingIcon);
-    m_webServer1Label.setText(getWebServer1Label() + STARTING_LABEL);
-    m_webServer1Status.setWaiting();
-    m_webServer1OutView.setListener(m_webServer1StartupListener);
-    m_webServer1OutView.setListenerTrigger(getSelectedServerStartupTrigger());
-    startWebServerAndNotify(m_webServer1OutView, SERVER1_PORT, m_webServer1StartupListener);
+    webServer1Label.setIcon(waitingIcon);
+    webServer1Label.setText(getWebServer1Label() + STARTING_LABEL);
+    webServer1Status.setWaiting();
+    webServer1OutView.setListener(webServer1StartupListener);
+    webServer1OutView.setListenerTrigger(getSelectedServerStartupTrigger());
+    startWebServerAndNotify(webServer1OutView, SERVER1_PORT, webServer1StartupListener);
   }
 
   class WebServer1StartupListener implements StartupListener, OutputStreamListener {
     public void startupError(Exception e) {
       trace(getSelectedServerLabel() + "1.startupError exception=" + e.getMessage());
 
-      m_webServer1Label.setIcon(m_stoppedIcon);
-      m_webServer1Label.setText(getWebServer1Label() + FAILED_LABEL);
-      m_webServer1Status.setFailed();
+      webServer1Label.setIcon(stoppedIcon);
+      webServer1Label.setText(getWebServer1Label() + FAILED_LABEL);
+      webServer1Status.setFailed();
 
       testEnableControls();
     }
@@ -2001,27 +2122,27 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
     public void processFailed() {
       trace(getSelectedServerLabel() + ".processFailed");
 
-      m_webServer1Label.setIcon(m_stoppedIcon);
-      m_webServer1Label.setText(getWebServer1Label() + FAILED_LABEL);
-      m_webServer1Status.setFailed();
+      webServer1Label.setIcon(stoppedIcon);
+      webServer1Label.setText(getWebServer1Label() + FAILED_LABEL);
+      webServer1Status.setFailed();
 
       testEnableControls();
     }
 
     public void triggerEncountered() {
-      m_webServer1OutView.setListener(null);
+      webServer1OutView.setListener(null);
       processReady();
     }
 
     public void processReady() {
       trace(getSelectedServerLabel() + "1.processReady");
 
-      m_webServer1Status.setReady();
-      m_webServer1Label.setIcon(m_readyIcon);
-      m_webServer1Label.setText(getWebServer1Label() + READY_LABEL);
+      webServer1Status.setReady();
+      webServer1Label.setIcon(readyIcon);
+      webServer1Label.setText(getWebServer1Label() + READY_LABEL);
 
-      m_webServer1Monitor = new WebServerShutdownMonitor(SERVER1_PORT, m_webServer1ShutdownListener);
-      m_webServer1Monitor.start();
+      webServer1Monitor = new WebServerShutdownMonitor(SERVER1_PORT, webServer1ShutdownListener);
+      webServer1Monitor.start();
 
       testEnableControls();
     }
@@ -2032,7 +2153,7 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
   }
 
   private boolean isWebServer1Ready() {
-    return m_webServer1Status.isReady();
+    return webServer1Status.isReady();
   }
 
   private void stopWebServer1() {
@@ -2040,38 +2161,38 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
   }
 
   private void stopWebServer1(boolean restart) {
-    if (m_webServer1Monitor != null) {
-      m_webServer1Monitor.cancel();
-      m_webServer1Monitor = null;
+    if (webServer1Monitor != null) {
+      webServer1Monitor.cancel();
+      webServer1Monitor = null;
     }
 
-    m_webServer1Label.setIcon(m_waitingIcon);
-    m_webServer1Label.setText(getWebServer1Label() + STOPPING_LABEL);
-    m_webServer1Status.setWaiting();
-    m_webServer1ShutdownListener.setRestart(restart);
+    webServer1Label.setIcon(waitingIcon);
+    webServer1Label.setText(getWebServer1Label() + STOPPING_LABEL);
+    webServer1Status.setWaiting();
+    webServer1ShutdownListener.setRestart(restart);
 
-    stopWebServerAndNotify(m_webServer1OutView, SERVER1_PORT, m_webServer1ShutdownListener);
+    stopWebServerAndNotify(webServer1OutView, SERVER1_PORT, webServer1ShutdownListener);
   }
 
   class WebServer1ShutdownListener implements ShutdownListener {
-    boolean m_restart = false;
+    boolean restart = false;
 
     void setRestart(boolean restart) {
-      m_restart = restart;
+      this.restart = restart;
     }
 
     public void processError(Exception e) {
       trace(getSelectedServerLabel() + "1.processError exception=" + e.getMessage());
-      if (m_debug) e.printStackTrace();
+      if (debug) e.printStackTrace();
 
-      if (!m_quitting) {
-        m_webServer1Status.setReady();
-        m_webServer1Label.setIcon(m_readyIcon);
-        m_webServer1Label.setText(getWebServer1Label() + READY_LABEL);
+      if (!quitting) {
+        webServer1Status.setReady();
+        webServer1Label.setIcon(readyIcon);
+        webServer1Label.setText(getWebServer1Label() + READY_LABEL);
       } else {
-        m_webServer1Status.setFailed();
-        m_webServer1Label.setIcon(m_stoppedIcon);
-        m_webServer1Label.setText(getWebServer1Label() + FAILED_LABEL);
+        webServer1Status.setFailed();
+        webServer1Label.setIcon(stoppedIcon);
+        webServer1Label.setText(getWebServer1Label() + FAILED_LABEL);
       }
 
       testEnableControls();
@@ -2080,16 +2201,16 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
     public void processFailed(String errorBuf) {
       trace(getSelectedServerLabel() + "1.processFailed");
 
-      m_webServer1OutView.append(errorBuf);
+      webServer1OutView.append(errorBuf);
 
-      if (!m_quitting) {
-        m_webServer1Status.setReady();
-        m_webServer1Label.setIcon(m_readyIcon);
-        m_webServer1Label.setText(getWebServer1Label() + READY_LABEL);
+      if (!quitting) {
+        webServer1Status.setReady();
+        webServer1Label.setIcon(readyIcon);
+        webServer1Label.setText(getWebServer1Label() + READY_LABEL);
       } else {
-        m_webServer1Status.setFailed();
-        m_webServer1Label.setIcon(m_stoppedIcon);
-        m_webServer1Label.setText(getWebServer1Label() + FAILED_LABEL);
+        webServer1Status.setFailed();
+        webServer1Label.setIcon(stoppedIcon);
+        webServer1Label.setText(getWebServer1Label() + FAILED_LABEL);
       }
 
       testEnableControls();
@@ -2098,19 +2219,19 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
     public void processStopped() {
       trace(getSelectedServerLabel() + "1.processStopped");
 
-      m_webServer1Monitor = null;
-      m_webServer1Status.setInactive();
-      if (m_restarting && isDsoEnabled()) {
-        m_webServer1Label.setText(getWebServer1Label() + WAITING_LABEL);
-        if (m_webServer2Status.isInactive()) {
+      webServer1Monitor = null;
+      webServer1Status.setInactive();
+      if (restarting && isDsoEnabled()) {
+        webServer1Label.setText(getWebServer1Label() + WAITING_LABEL);
+        if (webServer2Status.isInactive()) {
           startL2();
         }
       } else {
-        if (m_restart) {
+        if (restart) {
           startWebServer1();
         } else {
-          m_webServer1Label.setIcon(m_stoppedIcon);
-          m_webServer1Label.setText(getWebServer1Label() + STOPPED_LABEL);
+          webServer1Label.setIcon(stoppedIcon);
+          webServer1Label.setText(getWebServer1Label() + STOPPED_LABEL);
         }
       }
 
@@ -2139,32 +2260,32 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
   }
 
   private void startWebServer2() {
-    if (m_webServer2Monitor != null) {
-      m_webServer2Monitor.cancel();
-      m_webServer2Monitor = null;
+    if (webServer2Monitor != null) {
+      webServer2Monitor.cancel();
+      webServer2Monitor = null;
     }
 
     if (isWebServer2Ready()) {
-      m_webServer2Status.setRestarting(true);
+      webServer2Status.setRestarting(true);
       restartWebServer2();
       return;
     }
 
-    m_webServer2Label.setIcon(m_waitingIcon);
-    m_webServer2Label.setText(getWebServer2Label() + STARTING_LABEL);
-    m_webServer2Status.setWaiting();
-    m_webServer2OutView.setListener(m_webServer2StartupListener);
-    m_webServer2OutView.setListenerTrigger(getSelectedServerStartupTrigger());
-    startWebServerAndNotify(m_webServer2OutView, SERVER2_PORT, m_webServer2StartupListener);
+    webServer2Label.setIcon(waitingIcon);
+    webServer2Label.setText(getWebServer2Label() + STARTING_LABEL);
+    webServer2Status.setWaiting();
+    webServer2OutView.setListener(webServer2StartupListener);
+    webServer2OutView.setListenerTrigger(getSelectedServerStartupTrigger());
+    startWebServerAndNotify(webServer2OutView, SERVER2_PORT, webServer2StartupListener);
   }
 
   class WebServer2StartupListener implements StartupListener, OutputStreamListener {
     public void startupError(Exception e) {
       trace(getSelectedServerLabel() + "2.startupError exception=" + e.getMessage());
 
-      m_webServer2Label.setIcon(m_stoppedIcon);
-      m_webServer2Label.setText(getWebServer2Label() + FAILED_LABEL);
-      m_webServer2Status.setFailed();
+      webServer2Label.setIcon(stoppedIcon);
+      webServer2Label.setText(getWebServer2Label() + FAILED_LABEL);
+      webServer2Status.setFailed();
 
       testEnableControls();
     }
@@ -2172,27 +2293,27 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
     public void processFailed() {
       trace(getSelectedServerLabel() + "2.processFailed");
 
-      m_webServer2Label.setIcon(m_stoppedIcon);
-      m_webServer2Label.setText(getWebServer2Label() + FAILED_LABEL);
-      m_webServer2Status.setFailed();
+      webServer2Label.setIcon(stoppedIcon);
+      webServer2Label.setText(getWebServer2Label() + FAILED_LABEL);
+      webServer2Status.setFailed();
 
       testEnableControls();
     }
 
     public void triggerEncountered() {
-      m_webServer2OutView.setListener(null);
+      webServer2OutView.setListener(null);
       processReady();
     }
 
     public void processReady() {
       trace(getSelectedServerLabel() + "2.processReady");
 
-      m_webServer2Status.setReady();
-      m_webServer2Label.setIcon(m_readyIcon);
-      m_webServer2Label.setText(getWebServer2Label() + READY_LABEL);
+      webServer2Status.setReady();
+      webServer2Label.setIcon(readyIcon);
+      webServer2Label.setText(getWebServer2Label() + READY_LABEL);
 
-      m_webServer2Monitor = new WebServerShutdownMonitor(SERVER2_PORT, m_webServer2ShutdownListener);
-      m_webServer2Monitor.start();
+      webServer2Monitor = new WebServerShutdownMonitor(SERVER2_PORT, webServer2ShutdownListener);
+      webServer2Monitor.start();
 
       testEnableControls();
     }
@@ -2203,7 +2324,7 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
   }
 
   private boolean isWebServer2Ready() {
-    return m_webServer2Status.isReady();
+    return webServer2Status.isReady();
   }
 
   private void stopWebServer2() {
@@ -2211,38 +2332,38 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
   }
 
   private void stopWebServer2(boolean restart) {
-    if (m_webServer2Monitor != null) {
-      m_webServer2Monitor.cancel();
-      m_webServer2Monitor = null;
+    if (webServer2Monitor != null) {
+      webServer2Monitor.cancel();
+      webServer2Monitor = null;
     }
 
-    m_webServer2Label.setIcon(m_waitingIcon);
-    m_webServer2Label.setText(getWebServer2Label() + STOPPING_LABEL);
-    m_webServer2Status.setWaiting();
-    m_webServer2ShutdownListener.setRestart(restart);
+    webServer2Label.setIcon(waitingIcon);
+    webServer2Label.setText(getWebServer2Label() + STOPPING_LABEL);
+    webServer2Status.setWaiting();
+    webServer2ShutdownListener.setRestart(restart);
 
-    stopWebServerAndNotify(m_webServer2OutView, SERVER2_PORT, m_webServer2ShutdownListener);
+    stopWebServerAndNotify(webServer2OutView, SERVER2_PORT, webServer2ShutdownListener);
   }
 
   class WebServer2ShutdownListener implements ShutdownListener {
-    boolean m_restart = false;
+    boolean restart = false;
 
     void setRestart(boolean restart) {
-      m_restart = restart;
+      this.restart = restart;
     }
 
     public void processError(Exception e) {
       trace(getSelectedServerLabel() + "2.processError");
-      if (m_debug) e.printStackTrace();
+      if (debug) e.printStackTrace();
 
-      if (!m_quitting) {
-        m_webServer2Status.setReady();
-        m_webServer2Label.setIcon(m_readyIcon);
-        m_webServer2Label.setText(getWebServer2Label() + READY_LABEL);
+      if (!quitting) {
+        webServer2Status.setReady();
+        webServer2Label.setIcon(readyIcon);
+        webServer2Label.setText(getWebServer2Label() + READY_LABEL);
       } else {
-        m_webServer2Status.setFailed();
-        m_webServer2Label.setIcon(m_stoppedIcon);
-        m_webServer2Label.setText(getWebServer2Label() + FAILED_LABEL);
+        webServer2Status.setFailed();
+        webServer2Label.setIcon(stoppedIcon);
+        webServer2Label.setText(getWebServer2Label() + FAILED_LABEL);
       }
 
       testEnableControls();
@@ -2251,16 +2372,16 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
     public void processFailed(String errorBuf) {
       trace(getSelectedServerLabel() + "2.processFailed");
 
-      m_webServer2OutView.append(errorBuf);
+      webServer2OutView.append(errorBuf);
 
-      if (!m_quitting) {
-        m_webServer2Status.setReady();
-        m_webServer2Label.setIcon(m_readyIcon);
-        m_webServer2Label.setText(getWebServer2Label() + READY_LABEL);
+      if (!quitting) {
+        webServer2Status.setReady();
+        webServer2Label.setIcon(readyIcon);
+        webServer2Label.setText(getWebServer2Label() + READY_LABEL);
       } else {
-        m_webServer2Status.setFailed();
-        m_webServer2Label.setIcon(m_stoppedIcon);
-        m_webServer2Label.setText(getWebServer2Label() + FAILED_LABEL);
+        webServer2Status.setFailed();
+        webServer2Label.setIcon(stoppedIcon);
+        webServer2Label.setText(getWebServer2Label() + FAILED_LABEL);
       }
 
       testEnableControls();
@@ -2269,19 +2390,19 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
     public void processStopped() {
       trace(getSelectedServerLabel() + "2.processStopped");
 
-      m_webServer2Monitor = null;
-      m_webServer2Status.setInactive();
-      if (m_restarting && isDsoEnabled()) {
-        m_webServer2Label.setText(getWebServer2Label() + WAITING_LABEL);
-        if (m_webServer1Status.isInactive()) {
+      webServer2Monitor = null;
+      webServer2Status.setInactive();
+      if (restarting && isDsoEnabled()) {
+        webServer2Label.setText(getWebServer2Label() + WAITING_LABEL);
+        if (webServer1Status.isInactive()) {
           startL2();
         }
       } else {
-        if (m_restart) {
+        if (restart) {
           startWebServer2();
         } else {
-          m_webServer2Label.setIcon(m_stoppedIcon);
-          m_webServer2Label.setText(getWebServer2Label() + STOPPED_LABEL);
+          webServer2Label.setIcon(stoppedIcon);
+          webServer2Label.setText(getWebServer2Label() + STOPPED_LABEL);
         }
       }
 
@@ -2314,7 +2435,7 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
       IOUtils.closeQuietly(process.getOutputStream());
       new ProcessMonitor(process, new ProcessTerminationListener() {
         public void processTerminated(int exitCode) {
-          if (m_debug) {
+          if (debug) {
             outView.append(getSelectedServerLabel() + "-" + port + " terminated with exitCode=" + exitCode);
           }
           if (exitCode != 0) {
@@ -2339,25 +2460,25 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
   }
 
   class WebServerStartupMonitor extends Thread {
-    private Process         m_process;
-    private int             m_port;
-    private StartupListener m_startupListener;
+    private Process         process;
+    private int             port;
+    private StartupListener startupListener;
 
-    WebServerStartupMonitor(Process process, int port, StartupListener listener) {
+    WebServerStartupMonitor(Process process, int port, StartupListener startupListener) {
       super();
 
-      m_process = process;
-      m_port = port;
-      m_startupListener = listener;
+      this.process = process;
+      this.port = port;
+      this.startupListener = startupListener;
     }
 
     public void run() {
       while (true) {
         try {
-          m_process.exitValue();
+          process.exitValue();
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-              m_startupListener.processFailed();
+              startupListener.processFailed();
             }
           });
           return;
@@ -2365,7 +2486,7 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
         }
 
         try {
-          safeCloseSocket(new Socket("localhost", m_port));
+          safeCloseSocket(new Socket("localhost", port));
           return;
         } catch (IOException ioe) {/**/
         }
@@ -2434,58 +2555,58 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
   }
 
   class WebServerShutdownMonitor extends Thread {
-    private Process          m_process;
-    private int              m_port;
-    private ShutdownListener m_shutdownListener;
-    private boolean          m_stop;
+    private Process          process;
+    private int              port;
+    private ShutdownListener shutdownListener;
+    private boolean          stop;
 
     WebServerShutdownMonitor(int port, ShutdownListener listener) {
       this(null, port, listener);
     }
 
-    WebServerShutdownMonitor(Process process, int port, ShutdownListener listener) {
+    WebServerShutdownMonitor(Process process, int port, ShutdownListener shutdownListener) {
       super();
 
-      m_process = process;
-      m_port = port;
-      m_shutdownListener = listener;
+      this.process = process;
+      this.port = port;
+      this.shutdownListener = shutdownListener;
     }
 
     public void run() {
       ProcessWaiter waiter = null;
 
-      if (m_process != null) {
-        waiter = new ProcessWaiter(m_process);
+      if (process != null) {
+        waiter = new ProcessWaiter(process);
         waiter.start();
       }
 
-      while (!m_stop) {
-        if (m_process != null) {
+      while (!stop) {
+        if (process != null) {
           try {
-            int exitCode = m_process.exitValue();
+            int exitCode = process.exitValue();
 
             if (exitCode != 0) {
               final String errorBuf = waiter.getErrorBuffer();
               SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
-                  m_shutdownListener.processFailed(errorBuf);
+                  shutdownListener.processFailed(errorBuf);
                 }
               });
               return;
             } else {
-              m_process = null;
+              process = null;
             }
           } catch (IllegalThreadStateException itse) {/**/
           }
         }
 
-        if (!m_stop) {
+        if (!stop) {
           try {
-            safeCloseSocket(new Socket("localhost", m_port));
+            safeCloseSocket(new Socket("localhost", port));
           } catch (Exception e) {
             SwingUtilities.invokeLater(new Runnable() {
               public void run() {
-                m_shutdownListener.processStopped();
+                shutdownListener.processStopped();
               }
             });
             return;
@@ -2500,20 +2621,20 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
     }
 
     void cancel() {
-      m_stop = true;
+      stop = true;
     }
   }
 
   // End -- Process control support
 
   private void stopAll() throws Exception {
-    if (m_webServer1Status.isReady()) {
+    if (webServer1Status.isReady()) {
       stopWebServer1();
     }
-    if (m_webServer2Status.isReady()) {
+    if (webServer2Status.isReady()) {
       stopWebServer2();
     }
-    if (m_l2Status.isReady()) {
+    if (l2Status.isReady()) {
       stopL2();
     }
   }
@@ -2557,7 +2678,7 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
 
   private void stopSystem() {
     try {
-      m_webAppTreeModel.updateLinks(false, false);
+      webAppTreeModel.updateLinks(false, false);
       disableControls();
       stopAll();
     } catch (Exception e) {
@@ -2566,36 +2687,36 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
   }
 
   private boolean anyReady() {
-    return m_l2Status.isReady() || m_webServer1Status.isReady() || m_webServer2Status.isReady();
+    return l2Status.isReady() || webServer1Status.isReady() || webServer2Status.isReady();
   }
 
   private boolean anyRestarting() {
-    return m_l2Status.isRestarting() || m_webServer1Status.isRestarting() || m_webServer2Status.isRestarting();
+    return l2Status.isRestarting() || webServer1Status.isRestarting() || webServer2Status.isRestarting();
   }
 
   private boolean anyWaiting() {
-    return m_l2Status.isWaiting() || m_webServer1Status.isWaiting() || m_webServer2Status.isWaiting();
+    return l2Status.isWaiting() || webServer1Status.isWaiting() || webServer2Status.isWaiting();
   }
 
   private void disableControls() {
-    m_webServer1EnabledToggle.setEnabled(false);
-    m_webServer2EnabledToggle.setEnabled(false);
-    m_dsoEnabledToggle.setEnabled(false);
+    webServer1EnabledToggle.setEnabled(false);
+    webServer2EnabledToggle.setEnabled(false);
+    dsoEnabledToggle.setEnabled(false);
 
-    m_startButton.setEnabled(false);
-    m_stopButton.setEnabled(false);
+    startButton.setEnabled(false);
+    stopButton.setEnabled(false);
 
-    m_webServer1Control.setVisible(false);
-    m_webServer2Control.setVisible(false);
+    webServer1Control.setVisible(false);
+    webServer2Control.setVisible(false);
 
     selectControlTab();
     setConfigTabEnabled(false);
     setMonitorTabEnabled(false);
 
-    m_serversAction.setEnabled(false);
-    m_importAction.setEnabled(false);
-    m_webAppTreeModel.setRefreshEnabled(false);
-    m_webAppTreeModel.setRemoveEnabled(false);
+    serversAction.setEnabled(false);
+    importAction.setEnabled(false);
+    webAppTreeModel.setRefreshEnabled(false);
+    webAppTreeModel.setRemoveEnabled(false);
 
     setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
   }
@@ -2606,42 +2727,42 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
 
     if (anyRestarting || anyWaiting) { return; }
 
-    m_restarting = false;
+    restarting = false;
 
     boolean anyReady = anyReady();
 
-    if (!anyWaiting && !anyRestarting && anyReady && m_quitting) {
+    if (!anyWaiting && !anyRestarting && anyReady && quitting) {
       stopSystem();
     }
 
     if (!anyWaiting && !anyRestarting && !anyReady) {
-      if (m_quitting) {
-        SessionIntegrator.getContext().client.shutdown();
+      if (quitting) {
+        shutdown();
         return;
       } else {
-        m_serversAction.setEnabled(true);
-        m_importAction.setEnabled(true);
-        m_webAppTreeModel.setRefreshEnabled(true);
-        m_webAppTreeModel.setRemoveEnabled(true);
+        serversAction.setEnabled(true);
+        importAction.setEnabled(true);
+        webAppTreeModel.setRefreshEnabled(true);
+        webAppTreeModel.setRemoveEnabled(true);
       }
     }
 
-    m_webServer1EnabledToggle.setEnabled(!anyWaiting && !anyRestarting && !anyReady);
-    m_webServer2EnabledToggle.setEnabled(!anyWaiting && !anyRestarting && !anyReady);
-    m_dsoEnabledToggle.setEnabled(!anyWaiting && !anyRestarting && !anyReady);
-    m_startButton.setEnabled(!anyWaiting && !anyRestarting);
-    m_stopButton.setEnabled(!anyWaiting && !anyRestarting && anyReady);
+    webServer1EnabledToggle.setEnabled(!anyWaiting && !anyRestarting && !anyReady);
+    webServer2EnabledToggle.setEnabled(!anyWaiting && !anyRestarting && !anyReady);
+    dsoEnabledToggle.setEnabled(!anyWaiting && !anyRestarting && !anyReady);
+    startButton.setEnabled(!anyWaiting && !anyRestarting);
+    stopButton.setEnabled(!anyWaiting && !anyRestarting && anyReady);
 
     if ((!anyWaiting && !anyReady) || anyRestarting) {
-      m_webServer1Control.setVisible(false);
-      m_webServer2Control.setVisible(false);
+      webServer1Control.setVisible(false);
+      webServer2Control.setVisible(false);
 
-      m_startButton.setText(getBundleString("start.all.label"));
+      startButton.setText(getBundleString("start.all.label"));
     } else {
       testEnableWebServer1Control();
       testEnableWebServer2Control();
 
-      m_startButton.setText(getBundleString("restart.all.label"));
+      startButton.setText(getBundleString("restart.all.label"));
     }
 
     if (!anyWaiting && !anyRestarting) {
@@ -2653,150 +2774,78 @@ public class SessionIntegratorFrame extends Frame implements PropertyChangeListe
   }
 
   private void testEnableWebServer1Control() {
-    boolean webServer1NotWaiting = !m_webServer1Status.isWaiting();
-    m_webServer1Control.setVisible(webServer1NotWaiting);
-    m_webServer1Control.setEnabled(webServer1NotWaiting);
+    boolean webServer1NotWaiting = !webServer1Status.isWaiting();
+    webServer1Control.setVisible(webServer1NotWaiting);
+    webServer1Control.setEnabled(webServer1NotWaiting);
     if (webServer1NotWaiting) {
       boolean webServer1Ready = isWebServer1Ready();
 
-      m_webServer1Control.setIcon(webServer1Ready ? m_stopIcon : m_startIcon);
+      webServer1Control.setIcon(webServer1Ready ? stopIcon : startIcon);
 
       String tip = (webServer1Ready ? getBundleString("stop.label") : getBundleString("start.label")) + " "
                    + getWebServer1Label();
-      m_webServer1Control.setToolTipText(tip);
+      webServer1Control.setToolTipText(tip);
     }
   }
 
   private void testEnableWebServer2Control() {
-    boolean webServer2NotWaiting = !m_webServer2Status.isWaiting();
-    m_webServer2Control.setVisible(webServer2NotWaiting);
-    m_webServer2Control.setEnabled(webServer2NotWaiting);
+    boolean webServer2NotWaiting = !webServer2Status.isWaiting();
+    webServer2Control.setVisible(webServer2NotWaiting);
+    webServer2Control.setEnabled(webServer2NotWaiting);
     if (webServer2NotWaiting) {
       boolean webServer2Ready = isWebServer2Ready();
 
-      m_webServer2Control.setIcon(webServer2Ready ? m_stopIcon : m_startIcon);
+      webServer2Control.setIcon(webServer2Ready ? stopIcon : startIcon);
 
       String tip = (webServer2Ready ? getBundleString("stop.label") : getBundleString("start.label")) + " "
                    + getWebServer2Label();
-      m_webServer2Control.setToolTipText(tip);
+      webServer2Control.setToolTipText(tip);
     }
   }
 
   private void updateLinks() {
-    m_webAppTreeModel.updateLinks(isWebServer1Ready(), isWebServer2Ready());
+    webAppTreeModel.updateLinks(isWebServer1Ready(), isWebServer2Ready());
   }
 
   private void saveConfig() {
-    m_xmlPane.save();
+    xmlPane.save();
   }
 
   public void modelChanged() {
     updateXmlPane();
 
-    if (false && isL2Ready() && !m_handlingAppEvent) {
+    if (false && isL2Ready() && !handlingAppEvent) {
       queryRestart();
     }
   }
 
   public void saveXML(String xmlText) {
-    m_configHelper.save(xmlText);
+    configHelper.save(xmlText);
     setXmlModified(false);
 
     if (isConfigTabSelected() && isL2Ready()) {
-      m_askRestart = true;
+      askRestart = true;
     }
   }
 
   private static void trace(String msg) {
-    if (m_debug) {
+    if (debug) {
       System.out.println(msg);
       System.out.flush();
     }
   }
 
+  protected Preferences getPreferences() {
+    return sessionIntegratorContext.getPrefs().node("SessionIntegratorFrame");
+  }
+
+  protected void storePreferences() {
+    sessionIntegratorContext.storePrefs();
+  }
+
   // Everything belows goes into org.terracotta.ui.session.ui.common.Frame
 
-  private Preferences getPreferences() {
-    SessionIntegratorContext cntx = SessionIntegrator.getContext();
-    return cntx.prefs.node("SessionIntegratorFrame");
-  }
-
-  private void storePreferences() {
-    SessionIntegratorContext cntx = SessionIntegrator.getContext();
-    cntx.client.storePrefs();
-  }
-
-  public Rectangle getDefaultBounds() {
-    Toolkit tk = Toolkit.getDefaultToolkit();
-    Dimension size = tk.getScreenSize();
-    GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-    GraphicsDevice device = env.getDefaultScreenDevice();
-    GraphicsConfiguration config = device.getDefaultConfiguration();
-    Insets insets = tk.getScreenInsets(config);
-
-    size.width -= (insets.left + insets.right);
-    size.height -= (insets.top + insets.bottom);
-
-    int width = (int) (size.width * 0.75f);
-    int height = (int) (size.height * 0.66f);
-
-    // center
-    int x = size.width / 2 - width / 2;
-    int y = size.height / 2 - height / 2;
-
-    return new Rectangle(x, y, width, height);
-  }
-
-  private static String getSizeString(java.awt.Window window) {
-    Dimension size = window.getSize();
-    return size.width + "," + size.height;
-  }
-
-  private static String getBoundsString(java.awt.Window window) {
-    Rectangle b = window.getBounds();
-    return b.x + "," + b.y + "," + b.width + "," + b.height;
-  }
-
-  private String getBoundsString() {
-    return getBoundsString(this);
-  }
-
-  private static int parseInt(String s) {
-    try {
-      return Integer.parseInt(s);
-    } catch (Exception e) {
-      return 0;
-    }
-  }
-
-  private static Dimension parseSizeString(String s) {
-    String[] split = s.split(",");
-    int width = parseInt(split[0]);
-    int height = parseInt(split[1]);
-
-    return new Dimension(width, height);
-  }
-
-  private static Rectangle parseBoundsString(String s) {
-    String[] split = s.split(",");
-    int x = parseInt(split[0]);
-    int y = parseInt(split[1]);
-    int width = parseInt(split[2]);
-    int height = parseInt(split[3]);
-
-    return new Rectangle(x, y, width, height);
-  }
-
-  public void storeBounds() {
-    if (getName() != null && (getExtendedState() & NORMAL) == NORMAL) {
-      getPreferences().put("Bounds", getBoundsString());
-      storePreferences();
-    }
-  }
-
-  protected Rectangle getPreferredBounds() {
-    Preferences prefs = getPreferences();
-    String s = prefs.get("Bounds", null);
-    return s != null ? parseBoundsString(s) : getDefaultBounds();
+  private Icon newIcon(String iconPath) {
+    return new ImageIcon(getClass().getResource(iconPath));
   }
 }

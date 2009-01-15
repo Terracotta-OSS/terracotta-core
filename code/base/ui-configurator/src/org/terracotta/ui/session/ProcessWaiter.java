@@ -1,71 +1,72 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package org.terracotta.ui.session;
 
 import com.tc.admin.common.InputStreamDrainer;
+import com.tc.util.concurrent.ThreadUtil;
 
 public class ProcessWaiter extends Thread {
-  private Process            m_process;
-  private Runnable           m_waiter;
-  private InputStreamDrainer m_outReader;
-  private InputStreamDrainer m_errReader;
+  private Process            process;
+  private Runnable           waiter;
+  private InputStreamDrainer outReader;
+  private InputStreamDrainer errReader;
 
   public ProcessWaiter(Process process, Runnable waiter) {
     super();
-    
-    if(process == null)
-      throw new IllegalArgumentException("process is null");
-    
-    m_process = process;
-    m_waiter  = waiter;
+
+    if (process == null) throw new IllegalArgumentException("process is null");
+
+    this.process = process;
+    this.waiter = waiter;
   }
 
   public ProcessWaiter(Process process) {
     this(process, null);
   }
-  
-  public void start(Runnable waiter) {
-    m_waiter = waiter;
+
+  public void start(Runnable theWaiter) {
+    this.waiter = theWaiter;
     start();
   }
-  
+
   public void run() {
-    m_outReader = new InputStreamDrainer(m_process.getInputStream());
-    m_errReader = new InputStreamDrainer(m_process.getErrorStream());
-    
-    m_outReader.start();
-    m_errReader.start();
-    
-    while(true) {
+    outReader = new InputStreamDrainer(process.getInputStream());
+    errReader = new InputStreamDrainer(process.getErrorStream());
+
+    outReader.start();
+    errReader.start();
+
+    while (true) {
       try {
-        if(m_outReader.isAlive()) {
-          m_outReader.join();
+        if (outReader.isAlive()) {
+          outReader.join();
         }
-        if(m_errReader.isAlive()) {
-          m_errReader.join();
+        if (errReader.isAlive()) {
+          errReader.join();
         }
         break;
-      } catch(InterruptedException ie) {/**/}
-      
-      try {sleep(1000);} catch(InterruptedException ie) {/**/}
+      } catch (InterruptedException ie) {/**/
+      }
+      ThreadUtil.reallySleep(1000);
     }
-   
-    if(m_waiter != null) {
-      m_waiter.run();
+
+    if (waiter != null) {
+      waiter.run();
     }
   }
-  
+
   public Process getProcess() {
-    return m_process;
-    
+    return process;
+
   }
-  
+
   public String getOutputBuffer() {
-    return m_outReader.getBufferContent();
+    return outReader.getBufferContent();
   }
 
   public String getErrorBuffer() {
-    return m_errReader != null ? m_errReader.getBufferContent() : null;
+    return errReader != null ? errReader.getBufferContent() : null;
   }
 }

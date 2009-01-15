@@ -10,79 +10,90 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 public class ServersHelper extends BaseHelper {
-  private static ServersHelper m_helper     = new ServersHelper();
-  private Icon                 m_serverIcon;
-  private Icon                 m_connectIcon;
-  private Icon                 m_disconnectIcon;
-  private Icon                 m_deleteIcon;
-  private Icon                 m_backupIcon;
-  private Icon                 m_shutdownIcon;
-  private Icon                 m_activityIcon;
+  private static final ServersHelper helper       = new ServersHelper();
+  private Icon                       serverIcon;
+  private Icon                       serversIcon;
+  private Icon                       connectIcon;
+  private Icon                       disconnectIcon;
+  private Icon                       deleteIcon;
+  private Icon                       backupIcon;
+  private Icon                       shutdownIcon;
+  private Icon                       activityIcon;
 
-  public static final String   SERVERS      = "Servers";
-  public static final String   HOST         = "Host";
-  public static final String   PORT         = "Port";
-  public static final String   AUTO_CONNECT = "AutoConnect";
-  public static final String   SPLIT        = "Split";
+  public static final String         SERVERS      = "Servers";
+  public static final String         HOST         = "Host";
+  public static final String         PORT         = "Port";
+  public static final String         AUTO_CONNECT = "AutoConnect";
+  public static final String         SPLIT        = "Split";
 
+  private ServersHelper() {/**/}
+  
   public static ServersHelper getHelper() {
-    return m_helper;
+    return helper;
+  }
+
+  public Icon getServersIcon() {
+    if (serversIcon == null) {
+      URL url = getClass().getResource(ICONS_PATH + "methpro_obj.gif");
+      serversIcon = new ImageIcon(url);
+    }
+    return serverIcon;
   }
 
   public Icon getServerIcon() {
-    if (m_serverIcon == null) {
+    if (serverIcon == null) {
       URL url = getClass().getResource(ICONS_PATH + "methpro_obj.gif");
-      m_serverIcon = new ImageIcon(url);
+      serverIcon = new ImageIcon(url);
     }
-    return m_serverIcon;
+    return serverIcon;
   }
 
   public Icon getConnectIcon() {
-    if (m_connectIcon == null) {
+    if (connectIcon == null) {
       URL url = getClass().getResource(ICONS_PATH + "newex_wiz.gif");
-      m_connectIcon = new ImageIcon(url);
+      connectIcon = new ImageIcon(url);
     }
-    return m_connectIcon;
+    return connectIcon;
   }
 
   public Icon getDisconnectIcon() {
-    if (m_disconnectIcon == null) {
+    if (disconnectIcon == null) {
       URL url = getClass().getResource(ICONS_PATH + "disconnect_co.gif");
-      m_disconnectIcon = new ImageIcon(url);
+      disconnectIcon = new ImageIcon(url);
     }
-    return m_disconnectIcon;
+    return disconnectIcon;
   }
 
   public Icon getDeleteIcon() {
-    if (m_deleteIcon == null) {
+    if (deleteIcon == null) {
       URL url = getClass().getResource(ICONS_PATH + "rem_co.gif");
-      m_deleteIcon = new ImageIcon(url);
+      deleteIcon = new ImageIcon(url);
     }
-    return m_deleteIcon;
+    return deleteIcon;
   }
 
   public Icon getBackupIcon() {
-    if (m_backupIcon == null) {
+    if (backupIcon == null) {
       URL url = getClass().getResource(ICONS_PATH + "database_save.png");
-      m_backupIcon = new ImageIcon(url);
+      backupIcon = new ImageIcon(url);
     }
-    return m_backupIcon;
+    return backupIcon;
   }
 
   public Icon getShutdownIcon() {
-    if (m_shutdownIcon == null) {
+    if (shutdownIcon == null) {
       URL url = getClass().getResource(ICONS_PATH + "terminate_co.gif");
-      m_shutdownIcon = new ImageIcon(url);
+      shutdownIcon = new ImageIcon(url);
     }
-    return m_shutdownIcon;
+    return shutdownIcon;
   }
-  
+
   public Icon getActivityIcon() {
-    if (m_activityIcon == null) {
+    if (activityIcon == null) {
       URL url = getClass().getResource(ICONS_PATH + "methpri_obj.gif");
-      m_activityIcon = new ImageIcon(url);
+      activityIcon = new ImageIcon(url);
     }
-    return m_activityIcon;
+    return activityIcon;
   }
-  
+
 }

@@ -19,13 +19,13 @@ import javax.management.ObjectName;
 import javax.management.ReflectionException;
 
 public class MBeanHelper {
-  private static final MBeanHelper m_instance = new MBeanHelper();
+  private static final MBeanHelper helper = new MBeanHelper();
 
   protected MBeanHelper() {/**/
   }
 
   public static final MBeanHelper getHelper() {
-    return m_instance;
+    return helper;
   }
 
   public ObjectInstance queryMBean(MBeanServerConnection mbsc, String query) throws IOException,
@@ -34,7 +34,6 @@ public class MBeanHelper {
 
     if (mbsc != null) {
       Set mbeans = mbsc.queryMBeans(new ObjectName(query), null);
-
       if (mbeans != null && mbeans.size() > 0) {
         result = (ObjectInstance) (mbeans.toArray(new ObjectInstance[] {})[0]);
       }
@@ -49,7 +48,6 @@ public class MBeanHelper {
 
     if (mbsc != null) {
       Set names = mbsc.queryNames(new ObjectName(query), null);
-
       if (names != null && names.size() > 0) {
         result = (ObjectName) names.toArray(new ObjectName[] {})[0];
       }
@@ -64,7 +62,6 @@ public class MBeanHelper {
 
     if (mbsc != null) {
       Set names = mbsc.queryNames(new ObjectName(query), null);
-
       if (names != null && names.size() > 0) {
         result = (ObjectName[]) names.toArray(new ObjectName[] {});
       }
@@ -76,52 +73,41 @@ public class MBeanHelper {
   public Object getAttribute(MBeanServerConnection mbsc, ObjectName bean, String attr) throws MBeanException,
       AttributeNotFoundException, InstanceNotFoundException, ReflectionException, IOException {
     if (bean == null) { throw new IllegalArgumentException("ObjectName is null"); }
-
     return mbsc != null ? mbsc.getAttribute(bean, attr) : null;
   }
 
   public long getLongAttribute(MBeanServerConnection mbsc, ObjectName bean, String attr) throws MBeanException,
       AttributeNotFoundException, InstanceNotFoundException, ReflectionException, IOException {
     if (bean == null) { throw new IllegalArgumentException("ObjectName is null"); }
-
     Object obj = getAttribute(mbsc, bean, attr);
-
     if (obj != null && obj instanceof Long) { return ((Long) obj).longValue(); }
-
     return 0L;
   }
 
   public String getStringAttribute(MBeanServerConnection mbsc, ObjectName bean, String attr) throws MBeanException,
       AttributeNotFoundException, InstanceNotFoundException, ReflectionException, IOException {
     if (bean == null) { throw new IllegalArgumentException("ObjectName is null"); }
-
     Object obj = getAttribute(mbsc, bean, attr);
-
     return (obj != null) ? obj.toString() : null;
   }
 
   public boolean getBooleanAttribute(MBeanServerConnection mbsc, ObjectName bean, String attr) throws MBeanException,
       AttributeNotFoundException, InstanceNotFoundException, ReflectionException, IOException {
     if (bean == null) { throw new IllegalArgumentException("ObjectName is null"); }
-
     Object obj = getAttribute(mbsc, bean, attr);
-
     if (obj != null && obj instanceof Boolean) { return ((Boolean) obj).booleanValue(); }
-
     return false;
   }
 
   public Object invoke(MBeanServerConnection mbsc, ObjectName bean, String method, Object[] types, String[] args)
       throws InstanceNotFoundException, MBeanException, ReflectionException, IOException {
     if (bean == null) { throw new IllegalArgumentException("ObjectName is null"); }
-
     return mbsc != null ? mbsc.invoke(bean, method, types, args) : null;
   }
 
   public void addNotificationListener(MBeanServerConnection mbsc, ObjectName bean, NotificationListener listener)
       throws InstanceNotFoundException, IOException {
     if (bean == null) { throw new IllegalArgumentException("ObjectName is null"); }
-
     if (mbsc != null) {
       mbsc.addNotificationListener(bean, listener, null, null);
     }
@@ -130,7 +116,6 @@ public class MBeanHelper {
   public void removeNotificationListener(MBeanServerConnection mbsc, ObjectName bean, NotificationListener listener)
       throws InstanceNotFoundException, ListenerNotFoundException, IOException {
     if (bean == null) { throw new IllegalArgumentException("ObjectName is null"); }
-
     if (mbsc != null) {
       mbsc.removeNotificationListener(bean, listener);
     }

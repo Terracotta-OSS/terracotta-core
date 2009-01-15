@@ -5,6 +5,7 @@
 package com.tc.management.beans;
 
 import com.tc.config.schema.L2Info;
+import com.tc.config.schema.ServerGroupInfo;
 import com.tc.management.RuntimeStatisticConstants;
 import com.tc.management.TerracottaMBean;
 import com.tc.statistics.StatisticData;
@@ -53,6 +54,8 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   L2Info[] getL2Info();
 
+  ServerGroupInfo[] getServerGroupInfo();
+  
   int getDSOListenPort();
 
   String getPersistenceMode();
@@ -67,6 +70,10 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   Map getStatistics();
 
+  long getUsedMemory();
+  
+  long getMaxMemory();
+  
   StatisticData[] getCpuUsage();
 
   String takeThreadDump(long requestMillis);

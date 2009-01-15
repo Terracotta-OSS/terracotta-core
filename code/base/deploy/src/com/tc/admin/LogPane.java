@@ -70,5 +70,4 @@ public class LogPane extends XTextPane {
       setCaretPosition(getDocument().getLength() - 1);
     }
   }
-
 }

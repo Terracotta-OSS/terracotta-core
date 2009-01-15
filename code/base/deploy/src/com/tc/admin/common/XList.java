@@ -4,32 +4,30 @@
  */
 package com.tc.admin.common;
 
-import org.dijon.List;
-
 import java.awt.event.ActionEvent;
 
 import javax.swing.DefaultListModel;
+import javax.swing.JList;
 import javax.swing.JPopupMenu;
 import javax.swing.ListModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-public class XList extends List implements ListSelectionListener {
-  protected XPopupListener m_popupListener;
-  protected DeleteAction   m_deleteAction;
+public class XList extends JList implements ListSelectionListener {
+  protected XPopupListener popupListener;
+  protected DeleteAction   deleteAction;
 
   public XList() {
     super();
-    m_popupListener = new XPopupListener(this);
-    m_popupListener.setPopupMenu(createPopup());
+    popupListener = new XPopupListener(this);
+    popupListener.setPopupMenu(createPopup());
     addListSelectionListener(this);
+    setVisibleRowCount(5);
   }
 
   public JPopupMenu createPopup() {
     JPopupMenu popup = new JPopupMenu("List Actions");
-
-    popup.add(m_deleteAction = createDeleteAction());
-
+    popup.add(deleteAction = createDeleteAction());
     return popup;
   }
 
@@ -44,10 +42,8 @@ public class XList extends List implements ListSelectionListener {
 
     public void actionPerformed(ActionEvent ae) {
       ListModel model = getModel();
-
       if (model instanceof DefaultListModel) {
         int[] rows = getSelectedIndices();
-
         for (int i = rows.length - 1; i >= 0; i--) {
           ((DefaultListModel) model).remove(rows[i]);
         }
@@ -56,6 +52,6 @@ public class XList extends List implements ListSelectionListener {
   }
 
   public void valueChanged(ListSelectionEvent e) {
-    m_deleteAction.setEnabled(!isSelectionEmpty());
+    deleteAction.setEnabled(!isSelectionEmpty());
   }
 }

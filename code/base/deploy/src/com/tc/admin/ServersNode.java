@@ -4,99 +4,59 @@
  */
 package com.tc.admin;
 
-import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.ComponentNode;
-import com.tc.admin.common.ExceptionHelper;
-import com.tc.admin.common.XTreeNode;
 import com.tc.admin.model.IClusterModel;
 import com.tc.admin.model.IServer;
+import com.tc.admin.model.IServerGroup;
 
 import java.awt.Component;
-import java.io.IOException;
-import java.util.concurrent.Callable;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ServersNode extends ComponentNode {
-  protected AdminClientContext m_acc;
-  protected ClusterNode        m_clusterNode;
-  protected ServersPanel       m_serversPanel;
+  protected IAdminClientContext adminClientContext;
+  protected IClusterModel       clusterModel;
+  protected IServer[]           servers;
+  protected ServersPanel        serversPanel;
 
-  public ServersNode(ClusterNode clusterNode) {
+  public ServersNode(IAdminClientContext adminClientContext, IClusterModel clusterModel) {
     super();
-    m_acc = AdminClient.getContext();
-    m_clusterNode = clusterNode;
-    init();
-  }
-
-  IClusterModel getClusterModel() {
-    return m_clusterNode != null ? m_clusterNode.getClusterModel() : null;
-  }
-
-  private void init() {
-    setLabel(m_acc.getMessage("servers"));
-    for (int i = getChildCount() - 1; i >= 0; i--) {
-      m_acc.remove((XTreeNode) getChildAt(i));
-    }
-    m_acc.execute(new InitWorker());
-  }
-
-  private class InitWorker extends BasicWorker<IServer[]> {
-    private InitWorker() {
-      super(new Callable<IServer[]>() {
-        public IServer[] call() throws Exception {
-          return m_clusterNode.getClusterServers();
-        }
-      });
-    }
-
-    protected void finished() {
-      Exception e = getException();
-      if (e != null) {
-        Throwable rootCause = ExceptionHelper.getRootCause(e);
-        if (!(rootCause instanceof IOException)) {
-          m_acc.log(e);
-        }
-      } else {
-        IServer[] clusterServers = getResult();
-        for (IServer server : clusterServers) {
-          ServerNode serverNode = m_acc.getNodeFactory().createServerNode(ServersNode.this, server);
-          add(serverNode);
-          serverNode.handleConnected();
-        }
-        setLabel(m_acc.getMessage("servers") + " (" + getChildCount() + ")");
-        m_acc.nodeChanged(ServersNode.this);
+    this.adminClientContext = adminClientContext;
+    this.clusterModel = clusterModel;
+    IServerGroup[] serverGroups = clusterModel.getServerGroups();
+    List<IServer> serverList = new ArrayList<IServer>();
+    for (IServerGroup group : serverGroups) {
+      IServer[] members = group.getMembers();
+      for (IServer server : members) {
+        ServerNode serverNode = adminClientContext.getNodeFactory().createServerNode(adminClientContext, clusterModel,
+                                                                                     server);
+        add(serverNode);
+        serverList.add(server);
       }
     }
+    servers = serverList.toArray(IServer.NULL_SET);
+    setLabel(adminClientContext.getMessage("servers") + " (" + getChildCount() + ")");
   }
 
   protected ServersPanel createServersPanel() {
-    return new ServersPanel(ServersNode.this);
+    return new ServersPanel(adminClientContext, clusterModel, servers);
   }
 
   public Component getComponent() {
-    if (m_serversPanel == null) {
-      m_serversPanel = createServersPanel();
+    if (serversPanel == null) {
+      serversPanel = createServersPanel();
     }
-    return m_serversPanel;
-  }
-
-  public ConnectionContext getConnectionContext() {
-    return m_clusterNode.getConnectionContext();
+    return serversPanel;
   }
 
   void selectClientNode(String remoteAddr) {
-    m_clusterNode.selectClientNode(remoteAddr);
-  }
-
-  /**
-   * Return any credentials that were used when the initial cluster server was connected.
-   */
-  String[] getParentCredentials() {
-    return m_clusterNode.getConnectionCredentials();
+    // clusterNode.selectClientNode(remoteAddr);
   }
 
   public void tearDown() {
     super.tearDown();
-    m_acc = null;
-    m_clusterNode = null;
+    adminClientContext = null;
+    clusterModel = null;
+    servers = null;
   }
 }

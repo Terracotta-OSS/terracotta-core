@@ -9,7 +9,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 
 public class PropertyTable extends XTable {
-  private PropertyTableModel m_model;
+  private PropertyTableModel model;
 
   public PropertyTable() {
     super();
@@ -17,7 +17,7 @@ public class PropertyTable extends XTable {
 
   public PropertyTable(PropertyTableModel model) {
     super();
-    setModel(m_model = model);
+    setModel(this.model = model);
   }
 
   protected TableModel createDefaultDataModel() {
@@ -26,7 +26,7 @@ public class PropertyTable extends XTable {
 
   public void setModel(TableModel model) {
     if (!(model instanceof PropertyTableModel)) { throw new IllegalArgumentException("Must be a PropertyTableModel"); }
-    super.setModel(m_model = (PropertyTableModel) model);
+    super.setModel(this.model = (PropertyTableModel) model);
   }
 
   public PropertyTableModel getPropertyModel() {
@@ -36,18 +36,16 @@ public class PropertyTable extends XTable {
   public TableCellEditor getCellEditor(int row, int column) {
     switch (column) {
       case PropertyTableModel.VALUE_COLUMN:
-        return getDefaultEditor(m_model.getRowClass(row));
+        return getDefaultEditor(model.getRowClass(row));
     }
-
     return super.getCellEditor(row, column);
   }
 
   public TableCellRenderer getCellRenderer(int row, int column) {
     switch (column) {
       case PropertyTableModel.VALUE_COLUMN:
-        return getDefaultRenderer(m_model.getRowClass(row));
+        return getDefaultRenderer(model.getRowClass(row));
     }
-
     return super.getCellRenderer(row, column);
   }
 }

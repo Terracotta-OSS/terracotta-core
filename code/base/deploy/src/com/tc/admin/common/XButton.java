@@ -4,9 +4,10 @@
  */
 package com.tc.admin.common;
 
-import org.dijon.Button;
+import javax.swing.Icon;
+import javax.swing.JButton;
 
-public class XButton extends Button {
+public class XButton extends JButton {
   public XButton() {
     super();
   }
@@ -14,4 +15,8 @@ public class XButton extends Button {
   public XButton(String label) {
     super(label);
   }
-}
+  
+  public XButton(String label, Icon icon) {
+    super(label, icon);
+  }
+  }

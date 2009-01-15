@@ -6,7 +6,7 @@ package com.tc.admin.model;
 
 import com.tc.util.ProductInfo;
 
-public class ProductVersion {
+public class ProductVersion implements IProductVersion {
 
   private final String version;
   private final String patchLevel;

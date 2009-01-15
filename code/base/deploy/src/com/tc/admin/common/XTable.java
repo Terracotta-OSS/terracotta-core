@@ -4,10 +4,6 @@
  */
 package com.tc.admin.common;
 
-import org.dijon.DefaultTableCellRenderer;
-import org.dijon.Table;
-import org.dijon.TableResource;
-
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -18,18 +14,20 @@ import java.text.NumberFormat;
 import java.util.Date;
 import java.util.prefs.Preferences;
 
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
+import javax.swing.JTable;
 import javax.swing.SwingConstants;
 import javax.swing.Timer;
-import javax.swing.ToolTipManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 
-public class XTable extends Table {
-  protected XPopupListener    m_popupHelper;
-  protected Timer             m_columnPrefsTimer;
+public class XTable extends JTable {
+  protected XPopupListener    popupHelper;
+  protected Timer             columnPrefsTimer;
 
   private static final String COLUMNS_PREF_KEY = "Columns";
 
@@ -50,21 +48,16 @@ public class XTable extends Table {
     setDefaultRenderer(Float.class, new FloatRenderer());
     setDefaultRenderer(Double.class, new FloatRenderer());
 
-    m_popupHelper = new XPopupListener(this);
+    popupHelper = new XPopupListener(this);
 
-    m_columnPrefsTimer = new Timer(1000, new ActionListener() {
+    columnPrefsTimer = new Timer(1000, new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         storeColumnPrefs();
       }
     });
-    m_columnPrefsTimer.setRepeats(false);
+    columnPrefsTimer.setRepeats(false);
 
     getTableHeader().setReorderingAllowed(false);
-  }
-
-  public void load(TableResource tableRes) {
-    super.load(tableRes);
-    ToolTipManager.sharedInstance().registerComponent(this);
   }
 
   public void addNotify() {
@@ -76,19 +69,29 @@ public class XTable extends Table {
     }
   }
 
-  public static class BaseRenderer extends DefaultTableCellRenderer {
-    Format formatter;
-
+  public static class BaseRenderer extends AbstractTableCellRenderer {
+    protected Format formatter;
+    protected XLabel label;
+    
     public BaseRenderer(String format) {
-      super();
-      formatter = new DecimalFormat(format);
+      this(new DecimalFormat(format));
     }
 
     public BaseRenderer(Format formatter) {
       super();
       this.formatter = formatter;
+      label = new XLabel();
+      label.setOpaque(true);
     }
 
+    protected void setText(String text) {
+      label.setText(text);
+    }
+   
+    protected void setIcon(Icon icon) {
+      label.setIcon(icon);
+    }
+    
     public void setValue(Object value) {
       String text = "";
 
@@ -100,26 +103,31 @@ public class XTable extends Table {
 
       setText(text);
     }
+
+    @Override
+    public JComponent getComponent() {
+      return label;
+    }
   }
 
   public static class IntegerRenderer extends BaseRenderer {
     public IntegerRenderer() {
       super("#,##0;(#,##0)");
-      setHorizontalAlignment(SwingConstants.RIGHT);
+      label.setHorizontalAlignment(SwingConstants.RIGHT);
     }
   }
 
   public static class PortNumberRenderer extends BaseRenderer {
     public PortNumberRenderer() {
       super("###0;(###0)");
-      setHorizontalAlignment(SwingConstants.RIGHT);
+      label.setHorizontalAlignment(SwingConstants.RIGHT);
     }
   }
 
   public static class LongRenderer extends BaseRenderer {
     public LongRenderer() {
       super("#,##0;(#,##0)");
-      setHorizontalAlignment(SwingConstants.RIGHT);
+      label.setHorizontalAlignment(SwingConstants.RIGHT);
     }
   }
 
@@ -132,7 +140,7 @@ public class XTable extends Table {
   public static class FloatRenderer extends BaseRenderer {
     public FloatRenderer() {
       super("#,##0.00####;(#,##0.00####)");
-      setHorizontalAlignment(SwingConstants.RIGHT);
+      label.setHorizontalAlignment(SwingConstants.RIGHT);
     }
   }
 
@@ -143,11 +151,11 @@ public class XTable extends Table {
   }
 
   public void setPopupMenu(JPopupMenu popupMenu) {
-    m_popupHelper.setPopupMenu(popupMenu);
+    popupHelper.setPopupMenu(popupMenu);
   }
 
   public JPopupMenu getPopupMenu() {
-    return m_popupHelper.getPopupMenu();
+    return popupHelper.getPopupMenu();
   }
 
   public void setModel(TableModel model) {
@@ -207,11 +215,11 @@ public class XTable extends Table {
     boolean isValid = isValid();
 
     if (isValid) {
-      m_columnPrefsTimer.stop();
+      columnPrefsTimer.stop();
     }
     super.columnMarginChanged(e);
     if (isValid) {
-      m_columnPrefsTimer.start();
+      columnPrefsTimer.start();
     }
   }
 

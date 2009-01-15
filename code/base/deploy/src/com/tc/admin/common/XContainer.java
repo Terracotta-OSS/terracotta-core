@@ -4,12 +4,13 @@
  */
 package com.tc.admin.common;
 
-import org.dijon.Container;
-
+import java.awt.Component;
 import java.awt.LayoutManager;
 
-public class XContainer extends Container {
-  private XTreeNode m_node;
+import javax.swing.JPanel;
+
+public class XContainer extends JPanel {
+  private XTreeNode node;
 
   public XContainer() {
     super();
@@ -25,14 +26,19 @@ public class XContainer extends Container {
   }
 
   public void setNode(XTreeNode node) {
-    m_node = node;
+    this.node = node;
   }
 
   public XTreeNode getNode() {
-    return m_node;
+    return node;
   }
 
   public void tearDown() {
+    for (Component comp : getComponents()) {
+      if (comp instanceof XContainer) {
+        ((XContainer) comp).tearDown();
+      }
+    }
     removeAll();
     setNode(null);
   }

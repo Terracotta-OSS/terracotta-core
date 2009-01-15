@@ -4,7 +4,8 @@
  */
 package com.tc.admin.common;
 
-import org.dijon.DefaultCellEditor;
+import javax.swing.DefaultCellEditor;
+
 
 public class XCellEditor extends DefaultCellEditor {
   public XCellEditor(XCheckBox checkBox) {

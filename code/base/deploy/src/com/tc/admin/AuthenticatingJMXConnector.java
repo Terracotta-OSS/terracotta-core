@@ -1,6 +1,6 @@
 package com.tc.admin;
 
-import com.tc.admin.model.IServer;
+import com.tc.admin.model.IClusterModel;
 
 import java.io.IOException;
 import java.util.Map;
@@ -17,19 +17,19 @@ import javax.security.auth.Subject;
  */
 public final class AuthenticatingJMXConnector implements JMXConnector {
 
-  private IServer      m_server;
-  private JMXConnector m_connector;
+  private IClusterModel clusterModel;
+  private JMXConnector  connector;
 
-  public AuthenticatingJMXConnector(IServer server) {
-    m_server = server;
+  public AuthenticatingJMXConnector(IClusterModel clusterModel) {
+    this.clusterModel = clusterModel;
   }
 
   private synchronized JMXConnector getConnector() {
-    return m_connector;
+    return connector;
   }
 
   private synchronized void setConnector(JMXConnector connector) {
-    this.m_connector = connector;
+    this.connector = connector;
   }
 
   public void addConnectionNotificationListener(NotificationListener arg0, NotificationFilter arg1, Object arg2) {
@@ -41,11 +41,11 @@ public final class AuthenticatingJMXConnector implements JMXConnector {
   }
 
   public void connect() throws IOException {
-    connect(m_server.getConnectionEnvironment());
+    connect(clusterModel.getConnectionEnvironment());
   }
 
   public synchronized void connect(Map env) throws IOException {
-    setConnector(m_server.getJMXConnector());
+    setConnector(clusterModel.getJMXConnector());
     getConnector().connect(env);
   }
 

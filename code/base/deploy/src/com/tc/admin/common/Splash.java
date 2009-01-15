@@ -4,13 +4,10 @@
  */
 package com.tc.admin.common;
 
-import org.dijon.Container;
-import org.dijon.Dialog;
-import org.dijon.Label;
-
 import com.tc.util.runtime.Os;
 
 import java.awt.BorderLayout;
+import java.awt.Container;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.io.File;
@@ -18,24 +15,28 @@ import java.io.IOException;
 
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 
-public class Splash extends Dialog {
+public class Splash extends JDialog {
   public Splash(String title) {
-    super(title);
+    super();
 
-    Label label = new Label(title);
+    setTitle(title);
+    JLabel label = new JLabel(title);
     label.setFont(UIManager.getFont("InternalFrame.titleFont"));
     label.setVerticalTextPosition(SwingConstants.TOP);
     label.setHorizontalTextPosition(SwingConstants.CENTER);
     label.setIcon(new ImageIcon(getClass().getResource("/com/tc/admin/icons/logo.png")));
     label.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-    Container contentPane = (Container) getContentPane();
-    contentPane.setBorder(UIManager.getBorder("InternalFrame.border"));
+    Container contentPane = getContentPane();
+    ((JComponent) contentPane).setBorder(UIManager.getBorder("InternalFrame.border"));
     contentPane.setLayout(new BorderLayout());
     contentPane.add(label, BorderLayout.CENTER);
     JProgressBar progressBar = new JProgressBar();
@@ -46,7 +47,7 @@ public class Splash extends Dialog {
     contentPane.add(progressPanel, BorderLayout.SOUTH);
     setUndecorated(true);
     pack();
-    center();
+    WindowHelper.center(this);
   }
 
   private static File getJavaCmd() {

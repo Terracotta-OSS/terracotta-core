@@ -16,23 +16,23 @@ import javax.management.MBeanNotificationInfo;
 import javax.management.NotificationBroadcasterSupport;
 
 public class StatsSupport extends NotificationBroadcasterSupport implements Serializable {
-  private final Map        m_stats        = new HashMap();
+  private final Map        statMap        = new HashMap();
   private final AtomicLong sequenceNumber = new AtomicLong();
 
   public synchronized void addStatistic(String id, Statistic statistic) {
-    m_stats.put(id, statistic);
+    statMap.put(id, statistic);
   }
 
   public synchronized Statistic getStatistic(String id) {
-    return (Statistic) m_stats.get(id);
+    return (Statistic) statMap.get(id);
   }
 
   public synchronized String[] getStatisticNames() {
-    return (String[]) m_stats.keySet().toArray(new String[m_stats.size()]);
+    return (String[]) statMap.keySet().toArray(new String[statMap.size()]);
   }
 
   public synchronized Statistic[] getStatistics() {
-    return (Statistic[]) m_stats.values().toArray(new Statistic[m_stats.size()]);
+    return (Statistic[]) statMap.values().toArray(new Statistic[statMap.size()]);
   }
 
   public MBeanNotificationInfo[] getNotificationInfo() {

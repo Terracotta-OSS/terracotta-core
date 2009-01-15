@@ -7,14 +7,14 @@ package com.tc.admin.common;
 import java.awt.event.ActionEvent;
 
 public class ContactTerracottaAction extends XAbstractAction {
-  private String m_url;
+  private String url;
 
   public ContactTerracottaAction(String label, String url) {
     super(label);
-    m_url = url;
+    this.url = url;
   }
 
   public void actionPerformed(ActionEvent e) {
-    BrowserLauncher.openURL(m_url);
+    BrowserLauncher.openURL(url);
   }
 }

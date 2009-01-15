@@ -4,18 +4,22 @@
  */
 package org.terracotta.ui.session;
 
-import org.dijon.Button;
-import org.dijon.ContainerResource;
-
+import com.tc.admin.common.XButton;
 import com.tc.admin.common.XContainer;
+import com.tc.admin.common.XScrollPane;
 import com.tc.admin.common.XTable;
 import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.TransientFields;
 
+import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
@@ -23,36 +27,39 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 
 public class TransientFieldsPanel extends XContainer implements TableModelListener {
-  private DsoApplication        m_dsoApp;
-  private TransientFields       m_transientFields;
-  private XTable                m_transientTable;
-  private TransientTableModel   m_transientTableModel;
-  private Button                m_addButton;
-  private ActionListener        m_addListener;
-  private Button                m_removeButton;
-  private ActionListener        m_removeListener;
-  private ListSelectionListener m_transientsListener;
+  private DsoApplication        dsoApp;
+  private TransientFields       transientFields;
+  private XTable                transientTable;
+  private TransientTableModel   transientTableModel;
+  private XButton               addButton;
+  private ActionListener        addListener;
+  private XButton               removeButton;
+  private ActionListener        removeListener;
+  private ListSelectionListener transientsListener;
 
   public TransientFieldsPanel() {
-    super();
-  }
+    super(new BorderLayout());
 
-  public void load(ContainerResource containerRes) {
-    super.load(containerRes);
-
-    m_transientTable = (XTable) findComponent("TransientFieldTable");
-    m_transientTable.setModel(m_transientTableModel = new TransientTableModel());
-    m_transientsListener = new ListSelectionListener() {
+    transientTable = new XTable();
+    transientTable.setModel(transientTableModel = new TransientTableModel());
+    transientsListener = new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent lse) {
         if (!lse.getValueIsAdjusting()) {
-          int[] sel = m_transientTable.getSelectedRows();
-          m_removeButton.setEnabled(sel != null && sel.length > 0);
+          int[] sel = transientTable.getSelectedRows();
+          removeButton.setEnabled(sel != null && sel.length > 0);
         }
       }
     };
+    add(new XScrollPane(transientTable));
 
-    m_addButton = (Button) findComponent("AddTransientButton");
-    m_addListener = new ActionListener() {
+    XContainer rightPanel = new XContainer(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = gbc.gridy = 0;
+    gbc.insets = new Insets(3, 3, 3, 3);
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+
+    addButton = new XButton("Add");
+    addListener = new ActionListener() {
       public void actionPerformed(ActionEvent ae) {
         String field = JOptionPane.showInputDialog("Transient field", "");
 
@@ -64,12 +71,14 @@ public class TransientFieldsPanel extends XContainer implements TableModelListen
         }
       }
     };
+    rightPanel.add(addButton, gbc);
+    gbc.gridy++;
 
-    m_removeButton = (Button) findComponent("RemoveTransientButton");
-    m_removeListener = new ActionListener() {
+    removeButton = new XButton("Remove");
+    removeListener = new ActionListener() {
       public void actionPerformed(ActionEvent ae) {
         TransientFields tf = ensureTransientFields();
-        int[] selection = m_transientTable.getSelectedRows();
+        int[] selection = transientTable.getSelectedRows();
 
         for (int i = selection.length - 1; i >= 0; i--) {
           tf.removeFieldName(selection[i]);
@@ -77,58 +86,64 @@ public class TransientFieldsPanel extends XContainer implements TableModelListen
         syncModel();
       }
     };
+    rightPanel.add(removeButton, gbc);
+
+    add(rightPanel, BorderLayout.EAST);
   }
 
   public boolean hasAnySet() {
-    return m_transientFields != null && m_transientFields.sizeOfFieldNameArray() > 0;
+    return transientFields != null && transientFields.sizeOfFieldNameArray() > 0;
   }
 
   private TransientFields ensureTransientFields() {
-    if (m_transientFields == null) {
+    if (transientFields == null) {
       ensureXmlObject();
     }
-    return m_transientFields;
+    return transientFields;
   }
 
   public void ensureXmlObject() {
-    if (m_transientFields == null) {
+    if (transientFields == null) {
       removeListeners();
-      m_transientFields = m_dsoApp.addNewTransientFields();
+      transientFields = dsoApp.addNewTransientFields();
       updateChildren();
       addListeners();
     }
   }
 
   private void syncModel() {
-    if (!hasAnySet() && m_dsoApp.getTransientFields() != null) {
-      m_dsoApp.unsetTransientFields();
-      m_transientFields = null;
+    if (!hasAnySet() && dsoApp.getTransientFields() != null) {
+      dsoApp.unsetTransientFields();
+      transientFields = null;
     }
-    SessionIntegratorFrame frame = (SessionIntegratorFrame) getAncestorOfClass(SessionIntegratorFrame.class);
-    frame.modelChanged();
+    SessionIntegratorFrame frame = (SessionIntegratorFrame) SwingUtilities
+        .getAncestorOfClass(SessionIntegratorFrame.class, this);
+    if (frame != null) {
+      frame.modelChanged();
+    }
   }
 
   private void addListeners() {
-    m_transientTableModel.addTableModelListener(this);
-    m_transientTable.getSelectionModel().addListSelectionListener(m_transientsListener);
-    m_addButton.addActionListener(m_addListener);
-    m_removeButton.addActionListener(m_removeListener);
+    transientTableModel.addTableModelListener(this);
+    transientTable.getSelectionModel().addListSelectionListener(transientsListener);
+    addButton.addActionListener(addListener);
+    removeButton.addActionListener(removeListener);
   }
 
   private void removeListeners() {
-    m_transientTableModel.removeTableModelListener(this);
-    m_transientTable.getSelectionModel().removeListSelectionListener(m_transientsListener);
-    m_addButton.removeActionListener(m_addListener);
-    m_removeButton.removeActionListener(m_removeListener);
+    transientTableModel.removeTableModelListener(this);
+    transientTable.getSelectionModel().removeListSelectionListener(transientsListener);
+    addButton.removeActionListener(addListener);
+    removeButton.removeActionListener(removeListener);
   }
 
   private void updateChildren() {
-    m_transientTableModel.clear();
+    transientTableModel.clear();
 
-    if (m_transientFields != null) {
-      String[] transients = m_transientFields.getFieldNameArray();
+    if (transientFields != null) {
+      String[] transients = transientFields.getFieldNameArray();
       for (int i = 0; i < transients.length; i++) {
-        m_transientTableModel.addField(transients[i]);
+        transientTableModel.addField(transients[i]);
       }
     }
   }
@@ -137,8 +152,8 @@ public class TransientFieldsPanel extends XContainer implements TableModelListen
     setEnabled(true);
     removeListeners();
 
-    m_dsoApp = dsoApp;
-    m_transientFields = m_dsoApp != null ? m_dsoApp.getTransientFields() : null;
+    this.dsoApp = dsoApp;
+    transientFields = dsoApp != null ? dsoApp.getTransientFields() : null;
 
     updateChildren();
     addListeners();
@@ -147,10 +162,10 @@ public class TransientFieldsPanel extends XContainer implements TableModelListen
   public void tearDown() {
     removeListeners();
 
-    m_dsoApp = null;
-    m_transientFields = null;
+    dsoApp = null;
+    transientFields = null;
 
-    m_transientTableModel.clear();
+    transientTableModel.clear();
 
     setEnabled(false);
   }
@@ -189,7 +204,7 @@ public class TransientFieldsPanel extends XContainer implements TableModelListen
     }
 
     public void setValueAt(Object value, int row, int col) {
-      m_transientFields.setFieldNameArray(row, (String) value);
+      transientFields.setFieldNameArray(row, (String) value);
       super.setValueAt(value, row, col);
     }
   }
@@ -201,19 +216,19 @@ public class TransientFieldsPanel extends XContainer implements TableModelListen
   private void internalAddTransient(String fieldName) {
     ensureTransientFields().addFieldName(fieldName);
     syncModel();
-    int row = m_transientTableModel.getRowCount() - 1;
-    m_transientTable.setRowSelectionInterval(row, row);
+    int row = transientTableModel.getRowCount() - 1;
+    transientTable.setRowSelectionInterval(row, row);
   }
 
   private void internalRemoveTransient(String fieldName) {
-    int row = m_transientTableModel.indexOf(fieldName);
+    int row = transientTableModel.indexOf(fieldName);
 
     if (row >= 0) {
       ensureTransientFields().removeFieldName(row);
       syncModel();
       if (row > 0) {
-        row = Math.min(m_transientTableModel.getRowCount() - 1, row);
-        m_transientTable.setRowSelectionInterval(row, row);
+        row = Math.min(transientTableModel.getRowCount() - 1, row);
+        transientTable.setRowSelectionInterval(row, row);
       }
     }
   }

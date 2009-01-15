@@ -5,22 +5,24 @@
 package com.tc.admin.dso;
 
 import org.apache.xmlbeans.XmlOptions;
-import org.dijon.ContainerResource;
-import org.dijon.TextArea;
 
-import com.tc.admin.AdminClient;
-import com.tc.admin.AdminClientContext;
+import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.XAbstractAction;
 import com.tc.admin.common.XContainer;
+import com.tc.admin.common.XScrollPane;
+import com.tc.admin.common.XTabbedPane;
 import com.tc.admin.common.XTextArea;
 import com.tc.admin.common.XTree;
+import com.tc.admin.model.IClusterModel;
+import com.tc.admin.model.IServer;
 import com.tc.object.LiteralValues;
 import com.tc.stats.DSOClassInfo;
 import com.terracottatech.config.InstrumentedClasses;
 import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -31,13 +33,13 @@ import java.util.concurrent.Callable;
 import javax.swing.KeyStroke;
 
 public class ClassesPanel extends XContainer {
-  protected AdminClientContext m_acc;
-  private ClassesNode           m_classesNode;
-  private ClassesTable          m_table;
-  private XTree                 m_tree;
-  private ClassesTreeMap        m_treeMap;
-  private XTextArea             m_configText;
-  private static XmlOptions     m_xmlOpts;
+  private ApplicationContext    appContext;
+  private IClusterModel         clusterModel;
+  private ClassesTable          table;
+  private XTree                 tree;
+  private ClassesTreeMap        treeMap;
+  private XTextArea             configText;
+  private static XmlOptions     xmlOpts;
 
   private static final String   REFRESH           = "Refresh";
 
@@ -46,43 +48,51 @@ public class ClassesPanel extends XContainer {
   private static LiteralValues  LITERALS          = new LiteralValues();
 
   static {
-    m_xmlOpts = new XmlOptions();
-    m_xmlOpts.setSavePrettyPrint();
-    m_xmlOpts.setSavePrettyPrintIndent(2);
+    xmlOpts = new XmlOptions();
+    xmlOpts.setSavePrettyPrint();
+    xmlOpts.setSavePrettyPrintIndent(2);
   }
 
-  public ClassesPanel(ClassesNode classesNode) {
-    super();
+  public ClassesPanel(ApplicationContext appContext, IClusterModel clusterModel) {
+    super(new BorderLayout());
 
-    m_acc = AdminClient.getContext();
-    load((ContainerResource) m_acc.getComponent("ClassesPanel"));
-    m_classesNode = classesNode;
+    this.appContext = appContext;
+    this.clusterModel = clusterModel;
 
-    m_table = (ClassesTable) findComponent("ClassTable");
+    XTabbedPane tabbedPane = new XTabbedPane();
 
-    m_tree = (XTree) findComponent("ClassTree");
-    m_tree.setShowsRootHandles(true);
-    m_tree.setModel(new ClassTreeModel(new DSOClassInfo[] {}));
-    
-    m_treeMap = (ClassesTreeMap) findComponent("ClassesTreeMap");
-    m_treeMap.setModel((ClassTreeModel) m_tree.getModel());
+    tabbedPane.addTab("Tabular", new XScrollPane(table = new ClassesTable()));
+    table.setModel(new ClassTableModel(appContext));
 
-    TextArea configDescriptionText = (TextArea) findComponent("ClassesConfigDescriptionText");
-    configDescriptionText.setText(AdminClient.getContext().getString("dso.classes.config.desc"));
-    m_configText = (XTextArea) findComponent("ClassesConfigTextArea");
+    tabbedPane.addTab("Hierarchical", new XScrollPane(tree = new XTree()));
+    tree.setShowsRootHandles(true);
+    tree.setModel(new ClassTreeModel(appContext, new DSOClassInfo[] {}));
+
+    tabbedPane.addTab("Map", treeMap = new ClassesTreeMap());
+    treeMap.setModel((ClassTreeModel) tree.getModel());
+
+    XContainer configPanel = new XContainer(new BorderLayout());
+    XTextArea configDescriptionText = new XTextArea();
+    configDescriptionText.setText(appContext.getString("dso.classes.config.desc"));
+    configDescriptionText.setEditable(false);
+    configPanel.add(configDescriptionText, BorderLayout.NORTH);
+    configPanel.add(new XScrollPane(configText = new XTextArea()));
+    tabbedPane.addTab("Config snippet", configPanel);
 
     KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0, true);
     getActionMap().put(REFRESH, new RefreshAction());
     getInputMap().put(ks, REFRESH);
 
+    add(tabbedPane);
+
     init();
   }
 
   private void init() {
-    if (m_acc == null) return;
-    m_acc.execute(new InitWorker());
+    if (appContext == null) return;
+    appContext.execute(new InitWorker());
   }
-  
+
   private class InitWorker extends BasicWorker<DSOClassInfo[]> {
     private InitWorker() {
       super(new Callable<DSOClassInfo[]>() {
@@ -95,57 +105,70 @@ public class ClassesPanel extends XContainer {
     protected void finished() {
       Exception e = getException();
       if (e == null) {
-        DSOClassInfo[] classInfo = getResult();        
-        m_table.setClassInfo(classInfo);
-        ((ClassTreeModel) m_tree.getModel()).setClassInfo(classInfo);
-        m_treeMap.setModel((ClassTreeModel) m_tree.getModel());
+        DSOClassInfo[] classInfo = getResult();
+        table.setClassInfo(classInfo);
+        ((ClassTreeModel) tree.getModel()).setClassInfo(classInfo);
+        treeMap.setModel((ClassTreeModel) tree.getModel());
         updateConfigText();
       }
-   }
+    }
   }
-  
-  private DSOClassInfo[] getClassInfos() {
-    DSOClassInfo[] classInfo = m_classesNode.getClusterModel().getClassInfo();
-    ArrayList<DSOClassInfo> list = new ArrayList<DSOClassInfo>();
 
-    if (classInfo != null) {
-      for (DSOClassInfo info : classInfo) {
-        String className = info.getClassName();
-        if (className.startsWith("com.tcclient")) continue;
-        if (className.startsWith("[")) {
-          int i = 0;
-          while (className.charAt(i) == '[')
-            i++;
-          if (className.charAt(i) == 'L') {
-            className = className.substring(i + 1, className.length() - 1);
-          } else {
-            switch (className.charAt(i)) {
-              case 'Z':
-                className = "boolean";
-                break;
-              case 'I':
-                className = "int";
-                break;
-              case 'F':
-                className = "float";
-                break;
-              case 'C':
-                className = "char";
-                break;
-              case 'D':
-                className = "double";
-                break;
-              case 'B':
-                className = "byte";
-                break;
+  private synchronized IClusterModel getClusterModel() {
+    return clusterModel;
+  }
+
+  private synchronized IServer getActiveCoordinator() {
+    IClusterModel theClusterModel = getClusterModel();
+    return theClusterModel != null ? theClusterModel.getActiveCoordinator() : null;
+  }
+
+  private DSOClassInfo[] getClassInfos() {
+    ArrayList<DSOClassInfo> list = new ArrayList<DSOClassInfo>();
+    IServer activeCoord = getActiveCoordinator();
+
+    if (activeCoord != null) {
+      DSOClassInfo[] classInfo = activeCoord.getClassInfo();
+      if (classInfo != null) {
+        for (DSOClassInfo info : classInfo) {
+          String className = info.getClassName();
+          if (className.startsWith("com.tcclient")) continue;
+          if (className.startsWith("[")) {
+            int i = 0;
+            while (className.charAt(i) == '[')
+              i++;
+            if (className.charAt(i) == 'L') {
+              className = className.substring(i + 1, className.length() - 1);
+            } else {
+              switch (className.charAt(i)) {
+                case 'Z':
+                  className = "boolean";
+                  break;
+                case 'I':
+                  className = "int";
+                  break;
+                case 'F':
+                  className = "float";
+                  break;
+                case 'C':
+                  className = "char";
+                  break;
+                case 'D':
+                  className = "double";
+                  break;
+                case 'B':
+                  className = "byte";
+                  break;
+              }
             }
+            StringBuffer sb = new StringBuffer(className);
+            for (int j = 0; j < i; j++) {
+              sb.append("[]");
+            }
+            className = sb.toString();
           }
-          StringBuffer sb = new StringBuffer(className);
-          for (int j = 0; j < i; j++)
-            sb.append("[]");
-          className = sb.toString();
+          list.add(new DSOClassInfo(className, info.getInstanceCount()));
         }
-        list.add(new DSOClassInfo(className, info.getInstanceCount()));
       }
     }
 
@@ -153,7 +176,7 @@ public class ClassesPanel extends XContainer {
   }
 
   private void updateConfigText() {
-    DSOClassInfo[] classInfo = ((ClassTreeModel) m_tree.getModel()).getClassInfo();
+    DSOClassInfo[] classInfo = ((ClassTreeModel) tree.getModel()).getClassInfo();
     HashMap<String, String> map = new HashMap<String, String>();
     for (DSOClassInfo info : classInfo) {
       String className = info.getClassName();
@@ -175,7 +198,7 @@ public class ClassesPanel extends XContainer {
     TcConfigDocument configDoc = TcConfigDocument.Factory.newInstance();
     TcConfig config = configDoc.addNewTcConfig();
     config.addNewApplication().addNewDso().setInstrumentedClasses(instrumentedClasses);
-    m_configText.setText(config.xmlText(m_xmlOpts));
+    configText.setText(config.xmlText(xmlOpts));
   }
 
   private boolean ignoreClass(String className) {
@@ -195,9 +218,12 @@ public class ClassesPanel extends XContainer {
   public void refresh() {
     init();
   }
-  
+
   public void tearDown() {
-    m_acc = null;
+    synchronized (this) {
+      appContext = null;
+      clusterModel = null;
+    }
     super.tearDown();
   }
 }

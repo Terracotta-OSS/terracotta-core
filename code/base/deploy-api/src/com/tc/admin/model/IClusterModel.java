@@ -4,22 +4,91 @@
  */
 package com.tc.admin.model;
 
+import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Future;
 
-public interface IClusterModel extends IServer {
-  static final String PROP_ACTIVE_SERVER = "activeServer";
+import javax.management.remote.JMXConnector;
 
+public interface IClusterModel extends IClusterModelElement, ManagedObjectFacadeProvider, ILiveObjectCountProvider {
+  static final String PROP_ACTIVE_COORDINATOR = "activeCoordinator";
+  static final String PROP_CONNECTED          = "connected";
+  static final String PROP_CONNECT_ERROR      = "connectError";
+
+  static enum PollScope {
+    ALL_SERVERS,
+    ACTIVE_SERVERS,
+    CLIENTS
+  }
+
+  void setName(String name);
+  
+  String getName();
+  
   void setHost(String host);
 
+  String getHost();
+
   void setPort(int port);
+
+  int getPort();
+
+  String[] getConnectionCredentials();
+
+  Map<String, Object> getConnectionEnvironment();
+
+  JMXConnector getJMXConnector();
+
+  void setJMXConnector(JMXConnector jmxc) throws IOException;
+
+  void setConnectionCredentials(String[] creds);
+
+  void refreshCachedCredentials();
+
+  boolean hasConnectError();
+
+  Exception getConnectError();
+
+  String getConnectErrorMessage(Exception e);
+
+  boolean isConnected();
+
+  boolean isReady();
 
   void addServerStateListener(ServerStateListener listener);
 
   void removeServerStateListener(ServerStateListener listener);
 
-  IServer getActiveServer();
+  void connect();
+  
+  void disconnect();
+  
+  IServer getActiveCoordinator();
 
+  IServerGroup[] getServerGroups();
+
+  IBasicObject[] getRoots();
+
+  IClient[] getClients();
+
+  int getLiveObjectCount();
+  
   Map<IServer, Map<String, Object>> getPrimaryServerStatistics();
 
   Map<IClient, Map<String, Object>> getPrimaryClientStatistics();
+
+  Map<IClient, Long> getClientTransactionRates();
+
+  Map<IClusterNode, Future<String>> takeThreadDump();
+
+  void addPolledAttributeListener(PollScope scope, Set<String> attributes, PolledAttributeListener listener);
+  
+  void addPolledAttributeListener(PollScope scope, String attribute, PolledAttributeListener listener);
+  
+  void removePolledAttributeListener(PollScope scope, Set<String> attributes, PolledAttributeListener listener);  
+  
+  void removePolledAttributeListener(PollScope scope, String attribute, PolledAttributeListener listener);
+  
+  String dump();
 }

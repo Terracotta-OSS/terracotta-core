@@ -4,45 +4,42 @@
  */
 package com.tc.admin.dso;
 
-import com.tc.admin.AdminClient;
+import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.ComponentNode;
 import com.tc.admin.model.IClient;
 
 import java.awt.Component;
 
 public class ClientRuntimeStatsNode extends ComponentNode {
-  private ClientNode                m_clientNode;
-  protected ClientRuntimeStatsPanel m_runtimeStatsPanel;
+  private ApplicationContext        appContext;
+  private IClient                   client;
+  protected ClientRuntimeStatsPanel runtimeStatsPanel;
 
-  public ClientRuntimeStatsNode(ClientNode serverNode) {
+  public ClientRuntimeStatsNode(ApplicationContext appContext, IClient client) {
     super("Runtime statistics");
-    m_clientNode = serverNode;
+    this.appContext = appContext;
+    this.client = client;
     setIcon(ClientsHelper.getHelper().getRuntimeStatsIcon());
   }
 
   protected ClientRuntimeStatsPanel createRuntimeStatsPanel() {
-    return new ClientRuntimeStatsPanel(this);
+    return new ClientRuntimeStatsPanel(appContext, client);
   }
 
   public Component getComponent() {
-    if (m_runtimeStatsPanel == null) {
-      AdminClient.getContext().block();
-      m_runtimeStatsPanel = createRuntimeStatsPanel();
-      AdminClient.getContext().unblock();      
+    if (runtimeStatsPanel == null) {
+      runtimeStatsPanel = createRuntimeStatsPanel();
     }
-    return m_runtimeStatsPanel;
+    return runtimeStatsPanel;
   }
 
-  IClient getClient() {
-    return m_clientNode.getClient();
-  }
-
-  public void tearDown() {
+  public synchronized void tearDown() {
     super.tearDown();
-    if (m_runtimeStatsPanel != null) {
-      m_runtimeStatsPanel.tearDown();
-      m_runtimeStatsPanel = null;
+    if (runtimeStatsPanel != null) {
+      runtimeStatsPanel.tearDown();
+      runtimeStatsPanel = null;
     }
-    m_clientNode = null;
+    appContext = null;
+    client = null;
   }
 }

@@ -90,23 +90,61 @@ public class NonPortableWalkVisitor implements Visitor, ValueFormatter, WalkTest
 
   public String valueAdornment(MemberValue value) {
     if (isTransient(value)) { return " (transient)"; }
-
     Object o = value.getValueObject();
     if (o != null && config.isNeverAdaptable(JavaClassInfo.getClassInfo(o.getClass()))) { return " (never portable)"; }
-
     return null;
   }
-
-  public boolean shouldTraverse(MemberValue val) {
-    if (literals.isLiteralInstance(val.getValueObject())) { return false; }
-    if (isTransient(val)) { return false; }
-
-    Object o = val.getValueObject();
-    if (o != null && config.isNeverAdaptable(JavaClassInfo.getClassInfo(o.getClass()))) { return false; }
-
-    return true;
+  
+  private boolean isNeverAdaptable(Class type) {
+    while (!type.equals(Object.class)) {
+      if (config.isNeverAdaptable(JavaClassInfo.getClassInfo(type))) return true;
+      type = type.getSuperclass();
+    }
+    return false;
   }
 
+  private boolean isNeverAdaptable(MemberValue value) {
+    Object o = value.getValueObject();
+    if (o != null) return isNeverAdaptable(o.getClass());
+    return false;
+  }
+
+  private boolean isPortable(MemberValue value) {
+    Object valueObject = value.getValueObject();
+    if (valueObject != null) return objMgr.isPortableInstance(valueObject);
+    return true;
+  }
+  
+  private boolean isSystemType(MemberValue value) {
+    Object o = value.getValueObject();
+    if (o != null) {
+      return (o.getClass().getClassLoader() == null);
+    } else {
+      Field field = value.getSourceField();
+      if (field != null) return (field.getType().getClassLoader() == null);
+    }
+    return false;
+  }
+  
+  public boolean shouldTraverse(MemberValue value) {
+    if (skipVisit(value) || value.isRepeated() || isNeverAdaptable(value) || isTransient(value)) { return false; }
+
+    if (!isPortable(value) && isSystemType(value)) return false;
+
+    Field field = value.getSourceField();
+    if (field != null) {
+      Class type = field.getType();
+      if (type.isArray() && type.getComponentType().isPrimitive()) { return false; }
+    }
+
+    return !isLiteralInstance(value.getValueObject());
+   }
+
+  private boolean isLiteralInstance(Object obj) {
+    if (obj == null) { return false; }
+    return literals.isLiteralInstance(obj);
+  }
+  
   private boolean isTransient(MemberValue val) {
     Field f = val.getSourceField();
     if (f == null) { return false; }

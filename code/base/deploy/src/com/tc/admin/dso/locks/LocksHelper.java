@@ -12,36 +12,39 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 public class LocksHelper extends BaseHelper {
-  private static LocksHelper m_helper = new LocksHelper();
-  private Icon               m_locksIcon;
-  private Icon               m_lockIcon;
-  private Icon               m_detectDeadlocksIcon;
+  private static final LocksHelper helper = new LocksHelper();
+  private Icon                     locksIcon;
+  private Icon                     lockIcon;
+  private Icon                     detectDeadlocksIcon;
+
+  private LocksHelper() {/**/
+  }
 
   public static LocksHelper getHelper() {
-    return m_helper;
+    return helper;
   }
 
   public Icon getLocksIcon() {
-    if (m_locksIcon == null) {
+    if (locksIcon == null) {
       URL url = getClass().getResource(ICONS_PATH + "owned_monitor_obj.gif");
-      m_locksIcon = new ImageIcon(url);
+      locksIcon = new ImageIcon(url);
     }
-    return m_locksIcon;
+    return locksIcon;
   }
 
   public Icon getLockIcon() {
-    if (m_lockIcon == null) {
+    if (lockIcon == null) {
       URL url = getClass().getResource(ICONS_PATH + "deadlock_view.gif");
-      m_lockIcon = new ImageIcon(url);
+      lockIcon = new ImageIcon(url);
     }
-    return m_lockIcon;
+    return lockIcon;
   }
 
   public Icon getDetectDeadlocksIcon() {
-    if (m_detectDeadlocksIcon == null) {
+    if (detectDeadlocksIcon == null) {
       URL url = getClass().getResource(ICONS_PATH + "insp_sbook.gif");
-      m_detectDeadlocksIcon = new ImageIcon(url);
+      detectDeadlocksIcon = new ImageIcon(url);
     }
-    return m_detectDeadlocksIcon;
+    return detectDeadlocksIcon;
   }
 }

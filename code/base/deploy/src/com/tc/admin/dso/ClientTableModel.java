@@ -4,7 +4,7 @@
  */
 package com.tc.admin.dso;
 
-import com.tc.admin.AdminClient;
+import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.XObjectTableModel;
 import com.tc.admin.model.IClient;
 
@@ -17,13 +17,11 @@ import javax.swing.event.TableModelEvent;
 public class ClientTableModel extends XObjectTableModel {
   private static final String[] FIELDS  = { "Host", "Port", "ChannelID", "LiveObjectCount" };
 
-  private static final String[] HEADERS = { AdminClient.getContext().getMessage("dso.client.host"),
-      AdminClient.getContext().getMessage("dso.client.port"),
-      AdminClient.getContext().getMessage("dso.client.channelID"),
-      AdminClient.getContext().getMessage("dso.client.liveObjectCount") };
+  private static final String[] HEADERS = { "dso.client.host", "dso.client.port", "dso.client.channelID",
+      "dso.client.liveObjectCount"     };
 
-  public ClientTableModel() {
-    super(ClientWrapper.class, FIELDS, HEADERS);
+  public ClientTableModel(ApplicationContext appContext) {
+    super(ClientWrapper.class, FIELDS, appContext.getMessages(HEADERS));
   }
 
   void setClients(IClient[] clients) {
@@ -44,7 +42,7 @@ public class ClientTableModel extends XObjectTableModel {
     int count = getRowCount();
     for (int i = 0; i < count; i++) {
       ClientWrapper wrapper = (ClientWrapper) getObjectAt(i);
-      if (wrapper.m_client == client) {
+      if (wrapper.client == client) {
         remove(i);
         fireTableRowsDeleted(i, i);
         return;
@@ -56,43 +54,45 @@ public class ClientTableModel extends XObjectTableModel {
     int rows = getRowCount();
     for (int i = 0; i < rows; i++) {
       ClientWrapper wrapper = (ClientWrapper) getObjectAt(i);
-      Integer value = map.get(wrapper.m_client);
-      if(value != null) {
-        wrapper.m_liveObjectCount = value.intValue();
+      Integer value = map.get(wrapper.client);
+      if (value != null) {
+        wrapper.liveObjectCount = value.intValue();
       }
     }
     fireTableChanged(new TableModelEvent(this, 0, rows - 1, 3, TableModelEvent.UPDATE));
   }
-
-  public class ClientWrapper {
-    private IClient m_client;
-    private String  m_host;
-    private int     m_port;
-    private long    m_channelID;
-    private int     m_liveObjectCount;
+  
+  public static class ClientWrapper {
+    private IClient client;
+    private String  host;
+    private int     port;
+    private long    channelID;
+    private int     liveObjectCount;
 
     private ClientWrapper(IClient client) {
-      m_client = client;
-      m_host = client.getHost();
-      m_port = client.getPort();
-      m_channelID = client.getChannelID();
-      m_liveObjectCount = client.getLiveObjectCount();
+      this.client = client;
+      host = client.getHost();
+      port = client.getPort();
+      channelID = client.getChannelID();
+      liveObjectCount = client.getLiveObjectCount();
     }
 
     public String getHost() {
-      return m_host;
+      return host;
     }
 
     public int getPort() {
-      return m_port;
+      return port;
     }
 
     public long getChannelID() {
-      return m_channelID;
+      return channelID;
     }
 
     public int getLiveObjectCount() {
-      return m_liveObjectCount;
+      return liveObjectCount;
     }
   }
 }
+
+

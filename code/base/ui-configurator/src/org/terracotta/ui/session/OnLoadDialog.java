@@ -1,159 +1,94 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package org.terracotta.ui.session;
 
-import org.dijon.Button;
-import org.dijon.ButtonGroup;
-import org.dijon.Dialog;
-import org.dijon.DialogResource;
-import org.dijon.Label;
-import org.dijon.PagedView;
-
-import com.tc.admin.common.XTextField;
-import com.tc.admin.common.XTextPane;
+import com.tc.admin.common.WindowHelper;
+import com.tc.admin.common.XButton;
+import com.tc.admin.common.XContainer;
 import com.terracottatech.config.Include;
-import com.terracottatech.config.OnLoad;
 
+import java.awt.BorderLayout;
+import java.awt.Container;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.JDialog;
+
 /*
- * TODO: Merge this with the one in the Eclipse plugin. 
+ * TODO: Merge this with the one in the Eclipse plugin.
  */
 
-public class OnLoadDialog extends Dialog {
-  private Include     m_include;
-  private Label       m_classExprLabel;
-  private ButtonGroup m_selectorGroup;
-  private PagedView   m_pagedView;
-  private XTextField  m_methodNameField;
-  private XTextPane   m_codePane;
-  
-  private static final String NOOP_VIEW    = "NoOp";
-  private static final String CALL_VIEW    = "Call";
-  private static final String EXECUTE_VIEW = "Execute";
+public class OnLoadDialog extends JDialog {
+  private SessionIntegratorFrame parentFrame;
+  private OnLoadPanel            onLoadPanel;
 
-  private static SessionIntegratorContext CONTEXT = SessionIntegrator.getContext();
-  
-  public OnLoadDialog() {
-    super(CONTEXT.frame);
-    load(CONTEXT.topRes.findDialog("OnLoadDialog"));
-  }
+  public OnLoadDialog(final SessionIntegratorFrame parentFrame) {
+    super(parentFrame, true);
 
-  public void load(DialogResource dialogRes) {
-    super.load(dialogRes);
+    this.parentFrame = parentFrame;
 
-    m_classExprLabel = (Label)findComponent("ClassExpressionLabel");
+    if(parentFrame != null) {
+      setTitle(parentFrame.getTitle());
+    }
     
-    m_selectorGroup = (ButtonGroup)findComponent("Selector");
-    m_selectorGroup.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        m_pagedView.setPage(m_selectorGroup.getSelected());
-        m_pagedView.revalidate();
-        m_pagedView.repaint();
-      }
-    });
-    
-    m_pagedView       = (PagedView)findComponent("Views");
-    m_methodNameField = (XTextField)findComponent("MethodNameField");
-    m_codePane        = (XTextPane)findComponent("CodePane");
+    Container cp = getContentPane();
+    cp.setLayout(new BorderLayout());
 
-    Button closeButton = (Button)findComponent("CloseButton");
-    closeButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        String selected = m_selectorGroup.getSelected();
-        
-        if(selected.equals(NOOP_VIEW)) {
-          ensureOnLoadUnset();
-        }
-        else {
-          OnLoad onLoad = ensureOnLoad();
-          
-          if(selected.equals(CALL_VIEW)) {
-            String methodName = m_methodNameField.getText().trim();
-            
-            if(methodName == null || methodName.length() == 0) {
-              ensureOnLoadUnset();
-            }
-            else {
-              if(onLoad.isSetExecute()) {
-                onLoad.unsetExecute();
-              }
-              onLoad.setMethod(methodName);
-            }
-          }
-          else {
-            String code = m_codePane.getText().trim();
-            
-            if(code == null || code.length() == 0) {
-              ensureOnLoadUnset();
-            }
-            else {
-              if(onLoad.isSetMethod()) {
-                onLoad.unsetMethod();
-              }
-              onLoad.setExecute(code);
-            }
-          }
-        }
-        
-        setVisible(false);
-        CONTEXT.frame.modelChanged();
-      }
-    });
+    add(onLoadPanel = new OnLoadPanel());
     
-    Button cancelButton = (Button)findComponent("CancelButton");
+    XContainer buttonPanel = new XContainer(new FlowLayout());
+    XButton closeButton = new XButton("Close");
+    closeButton.addActionListener(new CloseButtonHandler());
+    buttonPanel.add(closeButton);
+
+    XButton cancelButton = new XButton("Cancel");
     cancelButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent ae) {
         setVisible(false);
       }
     });
+    buttonPanel.add(cancelButton);
+
+    cp.add(buttonPanel, BorderLayout.SOUTH);
+
+    pack();
   }
-  
-  private OnLoad ensureOnLoad() {
-    OnLoad onLoad = m_include.getOnLoad();
-    return onLoad != null ? onLoad : m_include.addNewOnLoad();
-  }
-  
-  private void ensureOnLoadUnset() {
-    if(m_include.isSetOnLoad()) {
-      m_include.unsetOnLoad();
+
+  private class CloseButtonHandler implements ActionListener {
+    public void actionPerformed(ActionEvent ae) {
+      onLoadPanel.updateInclude();
+      setVisible(false);
+      if(parentFrame != null) {
+        parentFrame.modelChanged();
+      }
     }
   }
   
   public void setInclude(Include include) {
-    m_include = include;
-    m_classExprLabel.setText(include.getClassExpression());
-    
-    OnLoad onLoad = include.getOnLoad();
-    String view   = NOOP_VIEW;
-    
-    m_codePane.setText(null);
-    m_methodNameField.setText(null);
-    
-    if(onLoad != null) {
-      if(onLoad.isSetExecute()) {
-        view = EXECUTE_VIEW;
-        m_codePane.setText(onLoad.getExecute());
-      }
-      else if(onLoad.isSetMethod()) {
-        view = CALL_VIEW;
-        m_methodNameField.setText(onLoad.getMethod());
-      }
-    }
-    
-    m_pagedView.setPage(view);
-    m_selectorGroup.setSelected(view);
+    onLoadPanel.setInclude(include);
+    pack();
   }
-  
+
   public Include getInclude() {
-    return m_include;
+    return onLoadPanel.getInclude();
+  }
+
+  public void edit(Include theInclude) {
+    setInclude(theInclude);
+    WindowHelper.center(this, getOwner());
+    setVisible(true);
   }
   
-  public void edit(Include include) {
-    setInclude(include);
-    center(getOwner());
-    setVisible(true);
+  public static void main(String[] args) {
+    OnLoadDialog d = new OnLoadDialog(null);
+    d.setTitle("OnLoad Test");
+    d.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+    Include include = Include.Factory.newInstance();
+    include.setClassExpression("com.test.MyClass");
+    d.edit(include);
+    System.out.println(include.xmlText());
   }
 }

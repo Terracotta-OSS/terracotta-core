@@ -6,22 +6,22 @@ package org.terracotta.ui.session;
 
 import org.apache.commons.lang.StringUtils;
 
-import org.dijon.Button;
-import org.dijon.CheckBox;
-import org.dijon.Container;
-import org.dijon.Label;
-import org.dijon.jspring.Layout;
-
+import com.tc.admin.common.PagedView;
 import com.tc.admin.common.XAbstractAction;
+import com.tc.admin.common.XButton;
 import com.tc.admin.common.XCellEditor;
 import com.tc.admin.common.XCheckBox;
 import com.tc.admin.common.XComboBox;
+import com.tc.admin.common.XContainer;
+import com.tc.admin.common.XLabel;
 import com.tc.admin.common.XObjectTable;
 import com.tc.admin.common.XTableCellRenderer;
 import com.terracottatech.config.Include;
 import com.terracottatech.config.OnLoad;
 
 import java.awt.Color;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -32,6 +32,8 @@ import java.awt.event.MouseEvent;
 import javax.swing.ActionMap;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.InputMap;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
@@ -41,7 +43,7 @@ import javax.swing.UIManager;
 import javax.swing.table.TableCellEditor;
 
 public class RuleTable extends XObjectTable {
-  private OnLoadDialog           m_onLoadDialog;
+  private OnLoadDialog           onLoadDialog;
 
   private static final String    MOVE_UP_ACTION   = "MoveUp";
   private static final String    MOVE_DOWN_ACTION = "MoveDown";
@@ -70,20 +72,20 @@ public class RuleTable extends XObjectTable {
   }
 
   public OnLoadDialog getOnLoadDialog() {
-    if (m_onLoadDialog == null) {
-      m_onLoadDialog = new OnLoadDialog();
+    if (onLoadDialog == null) {
+      SessionIntegratorFrame frame = (SessionIntegratorFrame) SwingUtilities
+          .getAncestorOfClass(SessionIntegratorFrame.class, this);
+      onLoadDialog = new OnLoadDialog(frame);
     }
-    return m_onLoadDialog;
+    return onLoadDialog;
   }
 
   class RuleTypeRenderer extends XTableCellRenderer {
     public java.awt.Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                                                             boolean hasFocus, int row, int col) {
       super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
-
       Rule rule = getRuleAt(row);
       setText(rule.isExcludeRule() ? "Exclude" : "Include");
-
       return this;
     }
   }
@@ -94,18 +96,18 @@ public class RuleTable extends XObjectTable {
 
     private final String[]       MODEL_ITEMS  = new String[] { INCLUDE_ITEM, EXCLUDE_ITEM };
 
-    private int                  m_row;
-    private DefaultComboBoxModel m_model;
+    private int                  editorRow;
+    private DefaultComboBoxModel model;
 
     RuleTypeEditor() {
       super(new XComboBox());
-      m_model = new DefaultComboBoxModel(MODEL_ITEMS);
-      ((XComboBox) m_editorComponent).setModel(m_model);
+      model = new DefaultComboBoxModel(MODEL_ITEMS);
+      ((XComboBox) editorComponent).setModel(model);
     }
 
     protected void fireEditingStopped() {
       super.fireEditingStopped();
-      setRowSelectionInterval(m_row, m_row);
+      setRowSelectionInterval(editorRow, editorRow);
     }
 
     public Object getCellEditorValue() {
@@ -116,21 +118,19 @@ public class RuleTable extends XObjectTable {
     public java.awt.Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row,
                                                           int col) {
       super.getTableCellEditorComponent(table, value, isSelected, row, col);
-
       Rule rule = getRuleAt(row);
-      m_model.setSelectedItem(MODEL_ITEMS[rule.getType()]);
-      m_row = row;
-
-      return (java.awt.Component) m_editorComponent;
+      model.setSelectedItem(MODEL_ITEMS[rule.getType()]);
+      this.editorRow = row;
+      return editorComponent;
     }
   }
 
   class RuleDetailRenderer extends XTableCellRenderer {
-    protected TableCellEditor m_editor;
+    protected TableCellEditor editor;
 
     public RuleDetailRenderer() {
       super();
-      m_editor = createCellEditor();
+      editor = createCellEditor();
     }
 
     protected TableCellEditor createCellEditor() {
@@ -139,10 +139,8 @@ public class RuleTable extends XObjectTable {
 
     public java.awt.Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                                                             boolean hasFocus, int row, int col) {
-      JComponent c = (JComponent) m_editor.getTableCellEditorComponent(table, value, isSelected, row, col);
-
+      JComponent c = (JComponent) editor.getTableCellEditorComponent(table, value, isSelected, row, col);
       c.setBorder(hasFocus ? UIManager.getBorder("Table.focusCellHighlightBorder") : null);
-
       return c;
     }
   }
@@ -172,72 +170,82 @@ public class RuleTable extends XObjectTable {
     return tip;
   }
 
-  class OnLoadButton extends Button {
-    int m_row, m_col;
+  class OnLoadButton extends XButton {
+    int row, col;
 
     OnLoadButton(String text) {
       super(text);
-      setMargin(new Insets(0, 2, 0, 2));
     }
 
     void setCell(int row, int col) {
-      m_row = row;
-      m_col = col;
+      this.row = row;
+      this.col = col;
     }
 
     int getRow() {
-      return m_row;
+      return row;
     }
 
     int getCol() {
-      return m_col;
+      return col;
     }
   }
 
   class RuleDetailEditor extends XCellEditor {
-    OnLoadButton m_onLoadButton;
-    XCheckBox    m_honorTransientToggle;
-    Label        m_excludeRenderer;
-    boolean      m_alwaysSelected;
+    PagedView       pagedView;
+    RuleDetailPanel detailPanel;
+    OnLoadButton    onLoadButton;
+    XCheckBox       honorTransientToggle;
+    XLabel          excludeRenderer;
+    boolean         alwaysSelected;
 
     RuleDetailEditor(boolean alwaysSelected) {
       super(new XCheckBox("Honor transient"));
 
-      m_alwaysSelected = alwaysSelected;
+      this.alwaysSelected = alwaysSelected;
 
-      m_honorTransientToggle = (XCheckBox) m_editorComponent;
-      m_honorTransientToggle.addActionListener(new ActionListener() {
+      honorTransientToggle = (XCheckBox) editorComponent;
+      honorTransientToggle.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ae) {
-          boolean honor = m_honorTransientToggle.isSelected();
-          int row = m_onLoadButton.getRow();
-          int col = m_onLoadButton.getCol();
-
+          boolean honor = honorTransientToggle.isSelected();
+          int row = onLoadButton.getRow();
+          int col = onLoadButton.getCol();
           getIncludeRuleAt(row).setHonorTransient(honor);
           getRuleModel().fireTableCellUpdated(row, col);
           setRowSelectionInterval(row, row);
         }
       });
-      m_honorTransientToggle.setMargin(new Insets(0, 0, 0, 0));
+      honorTransientToggle.setMargin(new Insets(0, 0, 0, 0));
 
-      m_onLoadButton = new OnLoadButton("On load...");
-      m_onLoadButton.addActionListener(new ActionListener() {
+      onLoadButton = new OnLoadButton("On load...");
+      onLoadButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ae) {
-          int row = m_onLoadButton.getRow();
+          int row = onLoadButton.getRow();
           getOnLoadDialog().edit(getIncludeAt(row));
+          stopCellEditing();
           setRowSelectionInterval(row, row);
         }
       });
-      m_editorComponent = new RuleDetailPanel(m_honorTransientToggle, m_onLoadButton);
-      m_excludeRenderer = new Label("");
+      pagedView = new PagedView();
 
-      m_clicksToStart = 1;
+      detailPanel = new RuleDetailPanel(honorTransientToggle, onLoadButton);
+      detailPanel.setName("Include");
+      pagedView.addPage(detailPanel);
+
+      excludeRenderer = new XLabel();
+      excludeRenderer.setName("Exclude");
+      pagedView.addPage(excludeRenderer);
+
+      editorComponent = pagedView;
+
+      clickCountToStart = 1;
     }
 
     public java.awt.Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row,
                                                           int col) {
       Rule rule = getRuleAt(row);
 
-      if (m_alwaysSelected) {
+      if (alwaysSelected) {
         isSelected = true;
       }
 
@@ -247,33 +255,34 @@ public class RuleTable extends XObjectTable {
       if (rule.isIncludeRule()) {
         Include include = getIncludeAt(row);
 
-        m_onLoadButton.setCell(row, col);
-        m_onLoadButton.setForeground(table.getForeground());
-        m_onLoadButton.setBackground(table.getBackground());
-        m_onLoadButton.setFont(table.getFont());
-        m_onLoadButton.setToolTipText(buildToolTip(include));
+        onLoadButton.setCell(row, col);
+        onLoadButton.setForeground(table.getForeground());
+        onLoadButton.setBackground(table.getBackground());
+        onLoadButton.setFont(table.getFont());
+        onLoadButton.setToolTipText(buildToolTip(include));
 
-        m_honorTransientToggle.setSelected(include.getHonorTransient());
-        m_honorTransientToggle.setForeground(fg);
-        m_honorTransientToggle.setBackground(bg);
-        m_honorTransientToggle.setFont(table.getFont());
-        m_honorTransientToggle.setOpaque(true);
+        honorTransientToggle.setSelected(include.getHonorTransient());
+        honorTransientToggle.setForeground(fg);
+        honorTransientToggle.setBackground(bg);
+        honorTransientToggle.setFont(table.getFont());
+        honorTransientToggle.setOpaque(true);
 
-        m_editorComponent.setForeground(fg);
-        m_editorComponent.setBackground(bg);
-        m_editorComponent.setOpaque(true);
+        detailPanel.setForeground(fg);
+        detailPanel.setBackground(bg);
 
-        m_editorComponent.setBorder(UIManager.getBorder("Table.focusCellHighlightBorder"));
+        editorComponent.setForeground(fg);
+        editorComponent.setBackground(bg);
+        editorComponent.setOpaque(true);
 
-        return (java.awt.Component) m_editorComponent;
+        pagedView.setPage("Include");
       } else {
-        m_excludeRenderer.setForeground(fg);
-        m_excludeRenderer.setBackground(bg);
-        m_excludeRenderer.setOpaque(true);
-        m_excludeRenderer.setBorder(UIManager.getBorder("Table.focusCellHighlightBorder"));
-
-        return m_excludeRenderer;
+        excludeRenderer.setForeground(fg);
+        excludeRenderer.setBackground(bg);
+        excludeRenderer.setOpaque(true);
+        pagedView.setPage("Exclude");
       }
+
+      return editorComponent;
     }
 
     public boolean stopCellEditing() {
@@ -300,15 +309,12 @@ public class RuleTable extends XObjectTable {
 
   public int moveUp() {
     int row = getSelectedRow();
-
     if (isEditing()) {
       removeEditor();
     }
-
     if (row > 0) {
       getRuleModel().moveRuleUp(row--);
     }
-
     return row;
   }
 
@@ -324,15 +330,12 @@ public class RuleTable extends XObjectTable {
 
   public int moveDown() {
     int row = getSelectedRow();
-
     if (isEditing()) {
       removeEditor();
     }
-
     if (row != -1 && row < getRuleModel().getRowCount() - 1) {
       getRuleModel().moveRuleDown(row++);
     }
-
     return row;
   }
 
@@ -347,16 +350,17 @@ public class RuleTable extends XObjectTable {
   }
 }
 
-class RuleDetailPanel extends Container {
-  RuleDetailPanel(CheckBox checkBox, Button button) {
-    super();
+class RuleDetailPanel extends XContainer {
+  RuleDetailPanel(JCheckBox checkBox, JButton button) {
+    super(new GridBagLayout());
 
-    String[] constraint1 = { "-1,left:ns", "-1,top:s", "1,left:n", "-1,bottom:s", "n", "n" };
-    String[] constraint2 = { "0,right:n", "-1,top:s", "-1,right:ns", "-1,bottom:s", "n", "n" };
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = gbc.gridy = 0;
+    gbc.insets = new Insets(3, 3, 3, 3);
 
-    setLayout(new Layout());
-    add(checkBox, constraint1);
-    add(button, constraint2);
+    add(checkBox, gbc);
+    gbc.gridx++;
+    add(button, gbc);
 
     setBorder(null);
   }

@@ -16,20 +16,57 @@ import javax.swing.ImageIcon;
  */
 
 public class DSOHelper extends BaseHelper {
-  private static final DSOHelper m_helper = new DSOHelper();
-  private Icon                   m_gcIcon;
+  private static final DSOHelper helper = new DSOHelper();
+  private Icon                   gcIcon;
+  private Icon                   topologyIcon;
+  private Icon                   diagnosticsIcon;
+  private Icon                   clusteredHeapIcon;
+
+  private DSOHelper() {/**/
+  }
 
   public static DSOHelper getHelper() {
-    return m_helper;
+    return helper;
   }
 
   public Icon getGCIcon() {
-    if (m_gcIcon == null) {
+    if (gcIcon == null) {
       URL url = getClass().getResource(ICONS_PATH + "trash.gif");
       if (url != null) {
-        m_gcIcon = new ImageIcon(url);
+        gcIcon = new ImageIcon(url);
       }
     }
-    return m_gcIcon;
+    return gcIcon;
   }
+
+  public Icon getTopologyIcon() {
+    if (topologyIcon == null) {
+      URL url = getClass().getResource(ICONS_PATH + "chart_organisation.png");
+      if (url != null) {
+        topologyIcon = new ImageIcon(url);
+      }
+    }
+    return topologyIcon;
+  }
+
+  public Icon getDiagnosticsIcon() {
+    if (diagnosticsIcon == null) {
+      URL url = getClass().getResource(ICONS_PATH + "magnifier.png");
+      if (url != null) {
+        diagnosticsIcon = new ImageIcon(url);
+      }
+    }
+    return diagnosticsIcon;
+  }
+
+  public Icon getClusteredHeapIcon() {
+    if (clusteredHeapIcon == null) {
+      URL url = getClass().getResource(ICONS_PATH + "database.png");
+      if (url != null) {
+        clusteredHeapIcon = new ImageIcon(url);
+      }
+    }
+    return clusteredHeapIcon;
+  }
+  
 }

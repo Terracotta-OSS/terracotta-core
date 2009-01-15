@@ -36,7 +36,7 @@ public class GCStatsTable extends XObjectTable {
       Long l = (Long) value;
       if (l.longValue() == -1) {
         setText("---");
-        getComponent().setBackground(Color.lightGray);
+        label.setBackground(Color.lightGray);
       } else {
         super.setValue(value);
       }

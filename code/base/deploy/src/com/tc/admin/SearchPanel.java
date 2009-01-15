@@ -4,12 +4,15 @@
  */
 package com.tc.admin;
 
-import org.dijon.ContainerResource;
-
-import com.tc.admin.common.XButton;
+import com.tc.admin.common.ApplicationContext;
+import com.tc.admin.common.RolloverButton;
 import com.tc.admin.common.XContainer;
+import com.tc.admin.common.XLabel;
 import com.tc.admin.common.XTextField;
 
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -17,8 +20,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 import javax.swing.AbstractAction;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JFormattedTextField;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.event.DocumentEvent;
@@ -30,8 +33,8 @@ import javax.swing.text.Keymap;
 import javax.swing.text.TextAction;
 
 /**
- * TODO: the text component should be a JTextPane and the feedback mechanism should be a style
- * instead of setting the selection.
+ * TODO: the text component should be a JTextPane and the feedback mechanism should be a style instead of setting the
+ * selection.
  */
 
 public class SearchPanel extends XContainer {
@@ -46,21 +49,47 @@ public class SearchPanel extends XContainer {
 
   public boolean             incremental          = false;
 
-  public SearchPanel() {
-    super();
+  private static ImageIcon   fNextIcon;
+  private static ImageIcon   fPreviousIcon;
+
+  static {
+    fNextIcon = new ImageIcon(SearchPanel.class.getResource("/com/tc/admin/icons/next_nav.gif"));
+    fPreviousIcon = new ImageIcon(SearchPanel.class.getResource("/com/tc/admin/icons/previous_nav.gif"));
   }
 
-  public void load(ContainerResource res) {
-    super.load((ContainerResource) AdminClient.getContext().getComponent("SearchPanel"));
+  public SearchPanel(ApplicationContext appContext) {
+    super(new GridBagLayout());
 
-    fFindField = (XTextField) findComponent("FindField");
-    fFindField.setFocusLostBehavior(JFormattedTextField.PERSIST);
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = gbc.gridy = 0;
+    gbc.anchor = GridBagConstraints.WEST;
+    gbc.insets = new Insets(3, 3, 3, 3);
+
+    add(new XLabel("Find:"), gbc);
+    gbc.gridx++;
+
+    add(fFindField = new XTextField(), gbc);
+    fFindField.setColumns(20);
     fFindField.getDocument().addDocumentListener(new FieldDocListener());
+    gbc.gridx++;
 
-    fFindNextButton = (XButton) findComponent("FindNextButton");
-    fFindPreviousButton = (XButton) findComponent("FindPreviousButton");
+    add(fFindNextButton = new RolloverButton(appContext.getString("next")), gbc);
+    fFindNextButton.setIcon(fNextIcon);
+    fFindNextButton.setEnabled(false);
+    gbc.gridx++;
 
-    setName(res.getName());
+    add(fFindPreviousButton = new RolloverButton(appContext.getString("previous")), gbc);
+    fFindPreviousButton.setIcon(fPreviousIcon);
+    fFindPreviousButton.setEnabled(false);
+
+    // filler
+    gbc.weightx = 1.0;
+    add(new XLabel(""), gbc);
+  }
+
+  public SearchPanel(ApplicationContext appContext, JTextComponent textComponent) {
+    this(appContext);
+    setTextComponent(textComponent);
   }
 
   public void setHandlers(ActionListener findNextHandler, ActionListener findPreviousHandler) {
@@ -149,7 +178,12 @@ public class SearchPanel extends XContainer {
   }
 
   private void testSetEnabled(Document doc) {
-    setEnabled(doc != null && doc.getLength() > 0);
+    boolean hasContent = doc != null && doc.getLength() > 0;
+    setEnabled(hasContent);
+    if (!hasContent) {
+      fFindNextButton.setEnabled(false);
+      fFindPreviousButton.setEnabled(false);
+    }
   }
 
   private class SearchDocListener implements DocumentListener {
@@ -179,7 +213,7 @@ public class SearchPanel extends XContainer {
 
     public void insertUpdate(DocumentEvent e) {
       testSetFieldEnabled(e.getDocument());
-      if(!incremental) return;
+      if (!incremental) return;
       if (fFindField.isFocusOwner() && fTextComponent != null && !fTextComponent.isEditable()) {
         doSearch(true);
       }
@@ -187,7 +221,7 @@ public class SearchPanel extends XContainer {
 
     public void removeUpdate(DocumentEvent e) {
       testSetFieldEnabled(e.getDocument());
-      if(!incremental) return;
+      if (!incremental) return;
       int selStart = fFindField.getSelectionStart();
       int selEnd = fFindField.getSelectionEnd();
       int docLen = fFindField.getDocument().getLength();

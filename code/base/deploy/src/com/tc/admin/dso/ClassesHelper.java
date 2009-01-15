@@ -14,23 +14,24 @@ import javax.swing.ImageIcon;
 import javax.swing.tree.TreeNode;
 
 public class ClassesHelper extends BaseHelper {
-  private static ClassesHelper m_helper = new ClassesHelper();
-  private Icon                 m_classesIcon;
+  private static final ClassesHelper helper = new ClassesHelper();
+  private Icon                       classesIcon;
+
+  private ClassesHelper() {/**/
+  }
 
   public static ClassesHelper getHelper() {
-    return m_helper;
+    return helper;
   }
 
   public Icon getClassesIcon() {
-    if (m_classesIcon == null) {
+    if (classesIcon == null) {
       URL url = getClass().getResource(ICONS_PATH + "class_obj.gif");
-
       if (url != null) {
-        m_classesIcon = new ImageIcon(url);
+        classesIcon = new ImageIcon(url);
       }
     }
-
-    return m_classesIcon;
+    return classesIcon;
   }
 
   ClassTreeBranch testGetBranch(XTreeNode parent, String name) {
@@ -38,10 +39,8 @@ public class ClassesHelper extends BaseHelper {
 
     for (int i = 0; i < parent.getChildCount(); i++) {
       child = (XTreeNode) parent.getChildAt(i);
-
       if (child instanceof ClassTreeBranch && name.equals(((ClassTreeBranch) child).getName())) { return (ClassTreeBranch) child; }
     }
-
     parent.add(child = new ClassTreeBranch(name));
 
     return (ClassTreeBranch) child;
@@ -52,10 +51,8 @@ public class ClassesHelper extends BaseHelper {
 
     for (int i = 0; i < parent.getChildCount(); i++) {
       child = (XTreeNode) parent.getChildAt(i);
-
       if (child instanceof ClassTreeLeaf && name.equals(((ClassTreeLeaf) child).getName())) { return (ClassTreeLeaf) child; }
     }
-
     parent.add(child = new ClassTreeLeaf(name));
 
     return (ClassTreeLeaf) child;
@@ -81,9 +78,7 @@ public class ClassesHelper extends BaseHelper {
 
     for (int i = 1; i < path.length; i++) {
       child = (ClassTreeNode) path[i];
-
       sb.append(child.getName());
-
       if (i < path.length - 1) {
         sb.append(".");
       }

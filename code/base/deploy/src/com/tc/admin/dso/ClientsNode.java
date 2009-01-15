@@ -4,18 +4,16 @@
  */
 package com.tc.admin.dso;
 
-import com.tc.admin.AdminClient;
-import com.tc.admin.AdminClientContext;
-import com.tc.admin.ClusterNode;
 import com.tc.admin.ConnectionContext;
+import com.tc.admin.IAdminClientContext;
 import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.ComponentNode;
 import com.tc.admin.common.ExceptionHelper;
-import com.tc.admin.common.XTreeModel;
 import com.tc.admin.common.XTreeNode;
 import com.tc.admin.model.ClientConnectionListener;
 import com.tc.admin.model.IClient;
 import com.tc.admin.model.IClusterModel;
+import com.tc.admin.model.IServer;
 
 import java.awt.Component;
 import java.beans.PropertyChangeEvent;
@@ -29,31 +27,33 @@ import java.util.concurrent.Callable;
 import javax.swing.SwingUtilities;
 
 public class ClientsNode extends ComponentNode implements ClientConnectionListener, PropertyChangeListener {
-  protected AdminClientContext m_acc;
-  protected ClusterNode        m_clusterNode;
-  protected ConnectionContext  m_cc;
-  protected IClient[]          m_clients;
-  protected ClientsPanel       m_clientsPanel;
+  protected IAdminClientContext adminClientContext;
+  protected IClusterModel       clusterModel;
+  protected ConnectionContext   cc;
+  protected IClient[]           clients;
+  protected ClientsPanel        clientsPanel;
 
-  public ClientsNode(ClusterNode clusterNode) {
+  public ClientsNode(IAdminClientContext adminClientContext, IClusterModel clusterModel) {
     super();
-    m_acc = AdminClient.getContext();
-    m_clusterNode = clusterNode;
-    clusterNode.getClusterModel().addPropertyChangeListener(this);
+    this.adminClientContext = adminClientContext;
+    this.clusterModel = clusterModel;
+    clusterModel.addPropertyChangeListener(this);
     init();
   }
 
-  IClusterModel getClusterModel() {
-    return getClusterNode().getClusterModel();
+  private synchronized IClusterModel getClusterModel() {
+    return clusterModel;
   }
 
-  ClusterNode getClusterNode() {
-    return m_clusterNode;
+  private synchronized IServer getActiveCoordinator() {
+    IClusterModel theClusterModel = getClusterModel();
+    return theClusterModel != null ? theClusterModel.getActiveCoordinator() : null;
   }
 
   public void propertyChange(PropertyChangeEvent evt) {
-    if (IClusterModel.PROP_ACTIVE_SERVER.equals(evt.getPropertyName())) {
-      if (((IClusterModel) evt.getSource()).getActiveServer() != null) {
+    if (IClusterModel.PROP_ACTIVE_COORDINATOR.equals(evt.getPropertyName())) {
+      IServer newActive = (IServer) evt.getNewValue();
+      if (newActive != null) {
         SwingUtilities.invokeLater(new InitRunnable());
       }
     }
@@ -66,26 +66,32 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
   }
 
   private void init() {
-    if (m_clusterNode == null) return;
-    m_clusterNode.getClusterModel().removeClientConnectionListener(this);
-    setLabel(m_acc.getMessage("clients"));
-    m_clients = new IClient[0];
-    for (int i = getChildCount() - 1; i >= 0; i--) {
-      m_acc.remove((XTreeNode) getChildAt(i));
+    IServer activeCoord = getActiveCoordinator();
+    if (activeCoord != null) {
+      activeCoord.removeClientConnectionListener(this);
+      setLabel(adminClientContext.getMessage("clients"));
+      clients = new IClient[0];
+      for (int i = getChildCount() - 1; i >= 0; i--) {
+        removeChild((XTreeNode) getChildAt(i));
+      }
+      if (clientsPanel != null) {
+        clientsPanel.setClients(clients);
+      }
+      adminClientContext.execute(new InitWorker());
     }
-    if (m_clientsPanel != null) {
-      m_clientsPanel.setClients(m_clients);
-    }
-    m_acc.execute(new InitWorker());
   }
 
   private class InitWorker extends BasicWorker<IClient[]> {
     private InitWorker() {
       super(new Callable<IClient[]>() {
         public IClient[] call() throws Exception {
-          IClient[] result = getClusterModel().getClients();
-          getClusterModel().addClientConnectionListener(ClientsNode.this);
-          return result;
+          IServer activeCoord = getActiveCoordinator();
+          if (activeCoord != null) {
+            IClient[] result = getClusterModel().getClients();
+            activeCoord.addClientConnectionListener(ClientsNode.this);
+            return result;
+          }
+          return IClient.NULL_SET;
         }
       });
     }
@@ -95,12 +101,12 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
       if (e != null) {
         Throwable rootCause = ExceptionHelper.getRootCause(e);
         if (!(rootCause instanceof IOException)) {
-          m_acc.log(e);
+          adminClientContext.log(e);
         }
       } else {
-        m_clients = getResult();
-        for (int i = 0; i < m_clients.length; i++) {
-          addClientNode(createClientNode(m_clients[i]));
+        clients = getResult();
+        for (int i = 0; i < clients.length; i++) {
+          addClientNode(createClientNode(clients[i]));
         }
         updateLabel();
       }
@@ -108,18 +114,18 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
   }
 
   protected ClientNode createClientNode(IClient client) {
-    return new ClientNode(this, client);
+    return new ClientNode(adminClientContext, client);
   }
 
-  protected ClientsPanel createClientsPanel(ClientsNode clientsNode, IClient[] clients) {
-    return new ClientsPanel(this, clients);
+  protected ClientsPanel createClientsPanel(ClientsNode clientsNode, IClient[] theClients) {
+    return new ClientsPanel(adminClientContext, getClusterModel(), theClients);
   }
 
   public Component getComponent() {
-    if (m_clientsPanel == null) {
-      m_clientsPanel = createClientsPanel(ClientsNode.this, m_clients);
+    if (clientsPanel == null) {
+      clientsPanel = createClientsPanel(ClientsNode.this, clients);
     }
-    return m_clientsPanel;
+    return clientsPanel;
   }
 
   public void selectClientNode(String remoteAddr) {
@@ -128,97 +134,96 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
       ClientNode ctn = (ClientNode) getChildAt(i);
       String ctnRemoteAddr = ctn.getClient().getRemoteAddress();
       if (ctnRemoteAddr.equals(remoteAddr)) {
-        m_acc.select(ctn);
+        adminClientContext.getAdminClientController().select(ctn);
         return;
       }
     }
   }
 
   private void addClientNode(ClientNode clientNode) {
-    XTreeModel model = getModel();
-    if (model != null) {
-      model.insertNodeInto(clientNode, this, getChildCount());
-    } else {
-      add(clientNode);
+    addChild(clientNode);
+    if (clientsPanel != null) {
+      clientsPanel.add(clientNode.getClient());
     }
-    if (m_clientsPanel != null) {
-      m_clientsPanel.add(clientNode.getClient());
-    }
+    nodeStructureChanged();
   }
 
   private void updateLabel() {
-    setLabel(m_acc.getMessage("clients") + " (" + getChildCount() + ")");
+    setLabel(adminClientContext.getMessage("clients") + " (" + getChildCount() + ")");
     nodeChanged();
   }
 
   public void tearDown() {
-    getClusterModel().removeClientConnectionListener(this);
-    getClusterModel().removePropertyChangeListener(this);
+    IServer activeCoord = getActiveCoordinator();
+    if (activeCoord != null) {
+      activeCoord.removeClientConnectionListener(this);
+    }
+    clusterModel.removePropertyChangeListener(this);
 
-    if (m_clientsPanel != null) {
-      m_clientsPanel.tearDown();
-      m_clientsPanel = null;
+    if (clientsPanel != null) {
+      clientsPanel.tearDown();
+      clientsPanel = null;
     }
 
-    m_acc = null;
-    m_clusterNode = null;
-    m_cc = null;
-    m_clients = null;
+    adminClientContext = null;
+    clusterModel = null;
+    cc = null;
+    clients = null;
 
     super.tearDown();
   }
 
   public void clientConnected(IClient client) {
-    if (m_acc == null) return;
+    if (adminClientContext == null) return;
     SwingUtilities.invokeLater(new ClientConnectedRunnable(client));
   }
 
   private class ClientConnectedRunnable implements Runnable {
-    private IClient m_client;
+    private IClient client;
 
     private ClientConnectedRunnable(IClient client) {
-      m_client = client;
+      this.client = client;
     }
 
     public void run() {
-      if (m_acc == null) return;
-      m_acc.setStatus(m_acc.getMessage("dso.client.retrieving"));
-      List<IClient> list = new ArrayList(Arrays.asList(m_clients));
-      list.add(m_client);
-      m_clients = list.toArray(new IClient[list.size()]);
-      addClientNode(createClientNode(m_client));
+      if (adminClientContext == null) return;
+      adminClientContext.setStatus(adminClientContext.getMessage("dso.client.retrieving"));
+      List<IClient> list = new ArrayList(Arrays.asList(clients));
+      list.add(client);
+      clients = list.toArray(new IClient[list.size()]);
+      addClientNode(createClientNode(client));
       updateLabel();
-      m_acc.setStatus(m_acc.getMessage("dso.client.new") + m_client);
+      adminClientContext.setStatus(adminClientContext.getMessage("dso.client.new") + client);
     }
   }
 
   public void clientDisconnected(IClient client) {
-    if (m_acc == null) return;
+    if (adminClientContext == null) return;
     SwingUtilities.invokeLater(new ClientDisconnectedRunnable(client));
   }
 
   private class ClientDisconnectedRunnable implements Runnable {
-    private IClient m_client;
+    private IClient client;
 
     private ClientDisconnectedRunnable(IClient client) {
-      m_client = client;
+      this.client = client;
     }
 
     public void run() {
-      if (m_acc == null) return;
-      m_acc.setStatus(m_acc.getMessage("dso.client.detaching"));
-      ArrayList<IClient> list = new ArrayList<IClient>(Arrays.asList(m_clients));
-      int nodeIndex = list.indexOf(m_client);
+      if (adminClientContext == null) return;
+      adminClientContext.setStatus(adminClientContext.getMessage("dso.client.detaching"));
+      ArrayList<IClient> list = new ArrayList<IClient>(Arrays.asList(clients));
+      int nodeIndex = list.indexOf(client);
       if (nodeIndex != -1) {
-        list.remove(m_client);
-        m_clients = list.toArray(new IClient[] {});
-        m_acc.remove((XTreeNode) getChildAt(nodeIndex));
-        if (m_clientsPanel != null) {
-          m_clientsPanel.remove(m_client);
+        list.remove(client);
+        clients = list.toArray(new IClient[] {});
+        removeChild((XTreeNode) getChildAt(nodeIndex));
+        if (clientsPanel != null) {
+          clientsPanel.remove(client);
         }
       }
       updateLabel();
-      m_acc.setStatus(m_acc.getMessage("dso.client.detached") + m_client);
+      adminClientContext.setStatus(adminClientContext.getMessage("dso.client.detached") + client);
     }
   }
 

@@ -4,12 +4,11 @@
  */
 package com.tc.admin.common;
 
-import org.dijon.MenuItem;
-
 import javax.swing.Action;
 import javax.swing.Icon;
+import javax.swing.JMenuItem;
 
-public class XMenuItem extends MenuItem {
+public class XMenuItem extends JMenuItem {
   public XMenuItem() {
     super();
   }

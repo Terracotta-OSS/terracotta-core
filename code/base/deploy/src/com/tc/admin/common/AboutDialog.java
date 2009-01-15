@@ -4,33 +4,67 @@
  */
 package com.tc.admin.common;
 
-import org.dijon.ApplicationManager;
-import org.dijon.Button;
-import org.dijon.Dialog;
-import org.dijon.DialogResource;
-import org.dijon.DictionaryResource;
-import org.dijon.Label;
-
 import com.tc.util.ProductInfo;
 
+import java.awt.BorderLayout;
+import java.awt.Container;
 import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.InputStream;
 
-public class AboutDialog extends Dialog implements ActionListener {
+import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JTextArea;
+
+public class AboutDialog extends JDialog implements ActionListener {
+  private JButton                okButton;
+  private JLabel                 versionLabel;
+  private JTextArea              sysInfoTextArea;
+  private JLabel                 copyrightLabel;
+
+  private static final ImageIcon tcIcon = new ImageIcon(AboutDialog.class.getResource("/com/tc/admin/icons/logo.png"));
+
   public AboutDialog(Frame parent) {
     super(parent, true);
 
-    DictionaryResource topRes = loadTopRes();
-    load((DialogResource) topRes.child("AboutDialog"));
     setTitle("About " + parent.getTitle());
+    setResizable(false);
 
-    init(ProductInfo.getInstance());
+    Container cp = getContentPane();
+    cp.setLayout(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = gbc.gridy = 0;
+    gbc.insets = new Insets(5, 5, 5, 5);
 
-    Button okButton = (Button) findComponent("OKButton");
+    add(new XLabel(tcIcon), gbc);
+    gbc.gridy++;
+    add(versionLabel = new XLabel(), gbc);
+    gbc.gridy++;
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    gbc.weightx = 1.0;
+    gbc.insets = new Insets(5, 10, 5, 10);
+    XContainer sysInfoPanel = new XContainer(new BorderLayout());
+    sysInfoPanel.setBorder(BorderFactory.createTitledBorder("System Information"));
+    sysInfoPanel.add(new XScrollPane(sysInfoTextArea = new XTextArea()));
+    sysInfoTextArea.setEditable(false);
+    add(sysInfoPanel, gbc);
+    gbc.gridy++;
+    gbc.insets = new Insets(5, 5, 5, 5);
+    gbc.weightx = 0.0;
+    gbc.fill = GridBagConstraints.NONE;
+    add(copyrightLabel = new XLabel(), gbc);
+    gbc.gridy++;
+    add(okButton = new XButton("OK"), gbc);
     getRootPane().setDefaultButton(okButton);
     okButton.addActionListener(this);
+
+    init(ProductInfo.getInstance());
   }
 
   public void actionPerformed(ActionEvent ae) {
@@ -49,10 +83,6 @@ public class AboutDialog extends Dialog implements ActionListener {
   }
 
   private void init(ProductInfo productInfo) {
-    Label versionLabel = (Label) findComponent("VersionLabel");
-    XTextArea systemInfoArea = (XTextArea) findComponent("SystemInfoTextArea");
-    Label copyrightLabel = (Label) findComponent("CopyrightLabel");
-
     String newLine = System.getProperty("line.separator");
     versionLabel.setText(versionText(productInfo));
     String osInfo = System.getProperty("os.name") + " (" + System.getProperty("os.version") + "/"
@@ -61,23 +91,8 @@ public class AboutDialog extends Dialog implements ActionListener {
     String javaHomeDir = System.getProperty("java.home");
     String javaVMInfo = System.getProperty("java.vm.name") + ", " + System.getProperty("java.vm.version") + " ["
                         + Runtime.getRuntime().maxMemory() / (1024 * 1024) + " MB]";
-
-    systemInfoArea.setText(osInfo + newLine + javaVersion + newLine + javaHomeDir + newLine + javaVMInfo);
-
+    sysInfoTextArea.setText(osInfo + newLine + javaVersion + newLine + javaHomeDir + newLine + javaVMInfo);
     copyrightLabel.setText(productInfo.copyright());
-  }
-
-  private DictionaryResource loadTopRes() {
-    InputStream is = getClass().getResourceAsStream("AboutDialog.xml");
-    DictionaryResource topRes = null;
-
-    try {
-      topRes = ApplicationManager.loadResource(is);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-
-    return topRes;
   }
 
 }

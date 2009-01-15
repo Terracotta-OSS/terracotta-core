@@ -30,7 +30,8 @@ public class ServerLocksTable extends XObjectTable {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
                                                    int row, int column) {
       Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      ((JComponent) c).setToolTipText(ServerLockTableModel.columnTip(column));
+      ServerLockTableModel model = (ServerLockTableModel) table.getModel();
+      ((JComponent) c).setToolTipText(model.columnTip(column));
       return c;
     }
   }

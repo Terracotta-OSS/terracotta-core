@@ -4,65 +4,63 @@
  */
 package com.tc.welcome;
 
-import org.dijon.Frame;
-import org.dijon.Image;
-import org.dijon.Menu;
-import org.dijon.MenuBar;
-import org.dijon.Separator;
-
 import com.tc.admin.common.AboutDialog;
 import com.tc.admin.common.ContactTerracottaAction;
+import com.tc.admin.common.WindowHelper;
 import com.tc.admin.common.XAbstractAction;
+import com.tc.admin.common.XFrame;
 import com.tc.object.tools.BootJarSignature;
 import com.tc.object.tools.UnsupportedVMException;
 import com.tc.util.ProductInfo;
 import com.tc.util.ResourceBundleHelper;
 import com.tc.util.runtime.Os;
 
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.net.URL;
 import java.text.MessageFormat;
 
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
 import javax.swing.WindowConstants;
+import javax.swing.JPopupMenu.Separator;
 import javax.swing.event.HyperlinkListener;
 
-public abstract class HyperlinkFrame extends Frame implements HyperlinkListener {
-  private static ResourceBundleHelper m_bundleHelper = new ResourceBundleHelper(HyperlinkFrame.class);
+public abstract class HyperlinkFrame extends XFrame implements HyperlinkListener {
+  private static ResourceBundleHelper bundleHelper = new ResourceBundleHelper(HyperlinkFrame.class);
 
-  private File                        m_installRoot;
-  private File                        m_bootPath;
-  private File                        m_javaCmd;
-  private File                        m_tcLib;
-  private File                        m_samplesDir;
+  private File                        installRoot;
+  private File                        bootPath;
+  private File                        javaCmd;
+  private File                        tcLib;
+  private File                        samplesDir;
 
   public HyperlinkFrame(String title) {
     super(title);
 
-    MenuBar menubar = new MenuBar();
-    Menu menu;
+    JMenuBar menubar = new JMenuBar();
+    JMenu menu;
 
     setJMenuBar(menubar);
-    menubar.add(menu = new Menu(getBundleString("file.menu.title")));
+    menubar.add(menu = new JMenu(getBundleString("file.menu.title")));
     initFileMenu(menu);
-    menubar.add(menu = new Menu(getBundleString("help.menu.title")));
+    menubar.add(menu = new JMenu(getBundleString("help.menu.title")));
 
     String kitID = ProductInfo.getInstance().kitID();
-    menu.add(new ContactTerracottaAction(getBundleString("visit.forums.title"), formatBundleString("forums.url", kitID)));
-    menu.add(new ContactTerracottaAction(getBundleString("contact.support.title"), formatBundleString("support.url", kitID)));
+    menu
+        .add(new ContactTerracottaAction(getBundleString("visit.forums.title"), formatBundleString("forums.url", kitID)));
+    menu.add(new ContactTerracottaAction(getBundleString("contact.support.title"), formatBundleString("support.url",
+                                                                                                      kitID)));
     menu.add(new Separator());
     menu.add(new AboutAction());
 
-    URL url;
-    String iconPath = "/com/tc/admin/icons/logo_small.png";
-
-    if ((url = HyperlinkFrame.class.getResource(iconPath)) != null) {
-      setIconImage(new Image(url));
-    }
+    setIconImage(Toolkit.getDefaultToolkit().getImage(
+                                                      HyperlinkFrame.class
+                                                          .getResource("/com/tc/admin/icons/logo_small.png")));
 
     setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
@@ -73,44 +71,43 @@ public abstract class HyperlinkFrame extends Frame implements HyperlinkListener 
     });
   }
 
-  protected void initFileMenu(Menu fileMenu) {
+  protected void initFileMenu(JMenu fileMenu) {
     fileMenu.add(new QuitAction());
   }
 
   private String getBundleString(String key) {
-    return m_bundleHelper.getString(key);
+    return bundleHelper.getString(key);
   }
 
   private String formatBundleString(String key, Object... args) {
     return MessageFormat.format(getBundleString(key), args);
   }
-  
+
   protected void quit() {
     Runtime.getRuntime().exit(0);
   }
 
   protected File getInstallRoot() {
-    if (m_installRoot == null) {
-      m_installRoot = new File(System.getProperty("tc.install-root").trim());
+    if (installRoot == null) {
+      installRoot = new File(System.getProperty("tc.install-root").trim());
     }
-    return m_installRoot;
+    return installRoot;
   }
 
   protected String getBootPath() throws UnsupportedVMException {
-    if (m_bootPath == null) {
-      File bootPath = new File(getInstallRoot(), "lib");
-      bootPath = new File(bootPath, "dso-boot");
-      bootPath = new File(bootPath, BootJarSignature.getBootJarNameForThisVM());
-      m_bootPath = bootPath;
+    if (bootPath == null) {
+      File path = new File(getInstallRoot(), "lib");
+      path = new File(path, "dso-boot");
+      path = new File(path, BootJarSignature.getBootJarNameForThisVM());
+      this.bootPath = path;
     }
 
-    return m_bootPath.getAbsolutePath();
+    return bootPath.getAbsolutePath();
   }
 
   protected static String getenv(String key) {
     try {
       Method m = System.class.getMethod("getenv", new Class[] { String.class });
-
       if (m != null) { return (String) m.invoke(null, new Object[] { key }); }
     } catch (Throwable t) {/**/
     }
@@ -124,11 +121,11 @@ public abstract class HyperlinkFrame extends Frame implements HyperlinkListener 
   }
 
   protected File getJavaCmd() {
-    if (m_javaCmd == null) {
-      m_javaCmd = staticGetJavaCmd();
+    if (javaCmd == null) {
+      javaCmd = staticGetJavaCmd();
     }
 
-    return m_javaCmd;
+    return javaCmd;
   }
 
   static File staticGetTCLib() {
@@ -138,17 +135,17 @@ public abstract class HyperlinkFrame extends Frame implements HyperlinkListener 
   }
 
   protected File getTCLib() {
-    if (m_tcLib == null) {
-      m_tcLib = staticGetTCLib();
+    if (tcLib == null) {
+      tcLib = staticGetTCLib();
     }
-    return m_tcLib;
+    return tcLib;
   }
 
   protected File getSamplesDir() {
-    if (m_samplesDir == null) {
-      m_samplesDir = new File(getInstallRoot(), "samples");
+    if (samplesDir == null) {
+      samplesDir = new File(getInstallRoot(), "samples");
     }
-    return m_samplesDir;
+    return samplesDir;
   }
 
   protected Process exec(String[] cmdarray, String[] envp, File dir) {
@@ -172,20 +169,20 @@ public abstract class HyperlinkFrame extends Frame implements HyperlinkListener 
   }
 
   class AboutAction extends XAbstractAction {
-    AboutDialog m_aboutDialog;
+    AboutDialog aboutDialog;
 
     AboutAction() {
       super(getBundleString("about.title.prefix") + getTitle());
     }
 
     public void actionPerformed(ActionEvent ae) {
-      if (m_aboutDialog == null) {
-        m_aboutDialog = new AboutDialog(HyperlinkFrame.this);
+      if (aboutDialog == null) {
+        aboutDialog = new AboutDialog(HyperlinkFrame.this);
       }
 
-      m_aboutDialog.pack();
-      m_aboutDialog.center(HyperlinkFrame.this);
-      m_aboutDialog.setVisible(true);
+      aboutDialog.pack();
+      WindowHelper.center(aboutDialog, HyperlinkFrame.this);
+      aboutDialog.setVisible(true);
     }
   }
 }

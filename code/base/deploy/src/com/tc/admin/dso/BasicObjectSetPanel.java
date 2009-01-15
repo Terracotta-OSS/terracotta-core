@@ -4,41 +4,51 @@
  */
 package com.tc.admin.dso;
 
+import com.tc.admin.IAdminClientContext;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XTree;
 import com.tc.admin.common.XTreeCellRenderer;
 import com.tc.admin.model.IBasicObject;
+import com.tc.admin.model.IClient;
+import com.tc.admin.model.IClusterModelElement;
 import com.tc.admin.model.IClusterNode;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
+import javax.swing.SwingUtilities;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 
-public class BasicObjectSetPanel extends XContainer {
-  private XTree m_tree;
+public class BasicObjectSetPanel extends XContainer implements PropertyChangeListener {
+  private XTree tree;
 
   public BasicObjectSetPanel() {
     super(new BorderLayout());
 
-    m_tree = new XTree();
-    m_tree.setCellRenderer(new BasicObjectCellRenderer());
-    m_tree.setShowsRootHandles(true);
-    m_tree.setVisibleRowCount(10);
-    add(new JScrollPane(m_tree), BorderLayout.CENTER);
+    tree = new XTree();
+    tree.setCellRenderer(new BasicObjectCellRenderer());
+    tree.setShowsRootHandles(true);
+    tree.setVisibleRowCount(10);
+    add(new JScrollPane(tree), BorderLayout.CENTER);
   }
 
-  public BasicObjectSetPanel(IClusterNode clusterNode, IBasicObject[] roots) {
+  public BasicObjectSetPanel(IAdminClientContext adminClientContext, IBasicObject[] roots) {
+    this(adminClientContext, null, roots);
+  }
+
+  public BasicObjectSetPanel(IAdminClientContext adminClientContext, IClient client, IBasicObject[] roots) {
     this();
-    setObjects(clusterNode, roots);
+    setObjects(adminClientContext, client, roots);
   }
 
   XTree getTree() {
-    return m_tree;
+    return tree;
   }
 
   private static class BasicObjectCellRenderer extends XTreeCellRenderer {
@@ -55,20 +65,23 @@ public class BasicObjectSetPanel extends XContainer {
     }
   }
 
-  public void setObjects(IClusterNode clusterNode, IBasicObject[] roots) {
-    m_tree.setModel(new BasicObjectTreeModel(clusterNode, roots));
-    m_tree.revalidate();
-    m_tree.repaint();
+  public void setObjects(IAdminClientContext adminClientContext, IClient client, IBasicObject[] roots) {
+    tree.setModel(new BasicObjectTreeModel(adminClientContext, client, roots));
+    tree.revalidate();
+    tree.repaint();
+    if (client != null) {
+      client.addPropertyChangeListener(this);
+    }
   }
 
   public void clearModel() {
-    m_tree.setModel(new DefaultTreeModel(new DefaultMutableTreeNode()));
-    m_tree.revalidate();
-    m_tree.repaint();
+    tree.setModel(new DefaultTreeModel(new DefaultMutableTreeNode()));
+    tree.revalidate();
+    tree.repaint();
   }
 
   public BasicObjectTreeModel getObjectTreeModel() {
-    return (BasicObjectTreeModel) m_tree.getModel();
+    return (BasicObjectTreeModel) tree.getModel();
   }
 
   public void refresh() {
@@ -77,12 +90,27 @@ public class BasicObjectSetPanel extends XContainer {
 
   public void add(IBasicObject root) {
     getObjectTreeModel().add(root);
-    m_tree.revalidate();
-    m_tree.repaint();
+    tree.revalidate();
+    tree.repaint();
   }
 
   public void tearDown() {
     super.tearDown();
-    m_tree = null;
+    tree = null;
+  }
+
+  public void propertyChange(PropertyChangeEvent evt) {
+    String prop = evt.getPropertyName();
+    if (IClusterModelElement.PROP_READY.equals(prop)) {
+      IClusterNode clusterNode = (IClusterNode) evt.getSource();
+      final boolean isReady = clusterNode.isReady();
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          if (!isReady) {
+            clearModel();
+          }
+        }
+      });
+    }
   }
 }

@@ -4,24 +4,35 @@
  */
 package com.tc.admin;
 
-import com.tc.admin.common.StatusRenderer;
+import com.tc.admin.common.AbstractTableCellRenderer;
+import com.tc.admin.common.ApplicationContext;
+import com.tc.admin.common.StatusView;
 import com.tc.admin.model.IServer;
 
+import javax.swing.JComponent;
 import javax.swing.JTable;
 
-public class ClusterMemberStatusRenderer extends StatusRenderer {
-  ClusterMemberStatusRenderer() {
+public class ClusterMemberStatusRenderer extends AbstractTableCellRenderer {
+  private StatusView statusView;
+
+  ClusterMemberStatusRenderer(ApplicationContext appContext) {
     super();
+    statusView = new StatusView();
   }
 
+  @Override
+  public JComponent getComponent() {
+    return statusView;
+  }
+
+  @Override
   public void setValue(JTable table, int row, int col) {
     if (!(table instanceof ClusterMemberTable)) { throw new RuntimeException("Not a ClusterMemberTable"); }
 
     ClusterMemberTableModel clusterMemberTableModel = (ClusterMemberTableModel) table.getModel();
     IServer server = clusterMemberTableModel.getClusterMemberAt(row);
 
-    m_label.setText(server.getName());
-    m_indicator.setBackground(ServerNode.getServerStatusColor(server));
-    m_indicator.setOpaque(true);
+    statusView.getIndicator().setBackground(ServerHelper.getHelper().getServerStatusColor(server));
+    statusView.getLabel().setText(server.getName());
   }
 }

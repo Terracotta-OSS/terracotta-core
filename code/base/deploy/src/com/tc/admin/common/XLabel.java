@@ -4,14 +4,30 @@
  */
 package com.tc.admin.common;
 
-import org.dijon.Label;
+import javax.swing.Icon;
+import javax.swing.JLabel;
 
-public class XLabel extends Label {
+public class XLabel extends JLabel {
   public XLabel() {
-    super();
+    super("");
   }
 
   public XLabel(String text) {
     super(text);
+  }
+
+  public XLabel(String text, int alignment) {
+    super(text);
+    setHorizontalAlignment(alignment);
+  }
+
+  public XLabel(Icon icon) {
+    super("");
+    setIcon(icon);
+  }
+
+  public XLabel(String text, Icon icon) {
+    this(text);
+    setIcon(icon);
   }
 }

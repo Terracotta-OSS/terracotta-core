@@ -4,7 +4,6 @@
  */
 package com.tc.admin.model;
 
-import com.tc.admin.AdminClient;
 import com.tc.admin.ConnectionContext;
 import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.management.beans.l1.L1InfoMBean;
@@ -17,8 +16,6 @@ import com.tc.stats.DSOClientMBean;
 import com.tc.util.ProductInfo;
 
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.util.Map;
 
 import javax.management.Attribute;
@@ -28,7 +25,7 @@ import javax.management.Notification;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
 
-public class DSOClient implements IClient, NotificationListener {
+public class DSOClient extends BaseClusterNode implements IClient, NotificationListener {
   private ConnectionContext           cc;
   private ObjectName                  beanName;
   private DSOClientMBean              delegate;
@@ -36,8 +33,7 @@ public class DSOClient implements IClient, NotificationListener {
   private String                      remoteAddress;
   private String                      host;
   private Integer                     port;
-  protected PropertyChangeSupport     changeHelper;
-  protected ProductVersion             productInfo;
+  protected ProductVersion            productInfo;
 
   private boolean                     ready;
   private boolean                     isListeningForTunneledBeans;
@@ -52,7 +48,6 @@ public class DSOClient implements IClient, NotificationListener {
     this.delegate = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, beanName, DSOClientMBean.class, true);
     channelID = delegate.getChannelID().toLong();
     remoteAddress = delegate.getRemoteAddress();
-    changeHelper = new PropertyChangeSupport(this);
 
     testSetupTunneledBeans();
   }
@@ -118,33 +113,49 @@ public class DSOClient implements IClient, NotificationListener {
       Boolean newValue = Boolean.valueOf(notification.getMessage());
       Boolean oldValue = Boolean.valueOf(!newValue.booleanValue());
       PropertyChangeEvent pce = new PropertyChangeEvent(this, type, newValue, oldValue);
-      changeHelper.firePropertyChange(pce);
+      propertyChangeSupport.firePropertyChange(pce);
     }
   }
 
   private void fireTunneledBeansRegistered() {
     PropertyChangeEvent pce = new PropertyChangeEvent(this, DSOClientMBean.TUNNELED_BEANS_REGISTERED, null, null);
-    changeHelper.firePropertyChange(pce);
+    propertyChangeSupport.firePropertyChange(pce);
     setReady(true);
+  }
+
+  private void initPolledAttributes() {
+    registerPolledAttribute(new PolledAttribute(getL1InfoBeanName(), POLLED_ATTR_CPU_USAGE));
+    registerPolledAttribute(new PolledAttribute(getL1InfoBeanName(), POLLED_ATTR_USED_MEMORY));
+    registerPolledAttribute(new PolledAttribute(getL1InfoBeanName(), POLLED_ATTR_MAX_MEMORY));
+    registerPolledAttribute(new PolledAttribute(getBeanName(), POLLED_ATTR_OBJECT_FLUSH_RATE));
+    registerPolledAttribute(new PolledAttribute(getBeanName(), POLLED_ATTR_OBJECT_FAULT_RATE));
+    registerPolledAttribute(new PolledAttribute(getBeanName(), POLLED_ATTR_TRANSACTION_RATE));
+    registerPolledAttribute(new PolledAttribute(getBeanName(), POLLED_ATTR_PENDING_TRANSACTIONS_COUNT));
+    registerPolledAttribute(new PolledAttribute(getBeanName(), POLLED_ATTR_LIVE_OBJECT_COUNT));
   }
 
   private void setReady(boolean ready) {
     boolean oldValue;
-
     synchronized (this) {
-      oldValue = this.ready;
+      oldValue = isReady();
       this.ready = ready;
     }
-
-    changeHelper.firePropertyChange(PROP_READY, oldValue, ready);
+    propertyChangeSupport.firePropertyChange(PROP_READY, oldValue, ready);
+    if (ready != oldValue && ready) {
+      initPolledAttributes();
+    }
   }
 
   public synchronized boolean isReady() {
     return ready;
   }
 
-  public ObjectName getObjectName() {
+  public ObjectName getBeanName() {
     return beanName;
+  }
+
+  public ObjectName getL1InfoBeanName() {
+    return delegate.getL1InfoBeanName();
   }
 
   public boolean isTunneledBeansRegistered() {
@@ -186,15 +197,6 @@ public class DSOClient implements IClient, NotificationListener {
     }
 
     return port.intValue();
-  }
-
-  public void refresh() {
-    try {
-      cc.invoke(beanName, "refresh", new Object[] {}, new String[] {});
-      changeHelper.firePropertyChange(new PropertyChangeEvent(this, null, null, null));
-    } catch (Exception e) {
-      AdminClient.getContext().log(e);
-    }
   }
 
   public String toString() {
@@ -273,20 +275,12 @@ public class DSOClient implements IClient, NotificationListener {
     delegate.killClient();
   }
 
-  public void addPropertyChangeListener(PropertyChangeListener listener) {
-    changeHelper.addPropertyChangeListener(listener);
-  }
-
-  public void removePropertyChangeListener(PropertyChangeListener listener) {
-    changeHelper.removePropertyChangeListener(listener);
-  }
-
   public synchronized ProductVersion getProductInfo() {
     if (productInfo == null) {
       String[] attributes = { "Version", "Patched", "PatchLevel", "PatchVersion", "BuildID", "Copyright" };
       String version = ProductInfo.UNKNOWN_VALUE;
       String patchLevel = ProductInfo.UNKNOWN_VALUE;
-      String patchVersion = ProductInfo.UNKNOWN_VALUE;      
+      String patchVersion = ProductInfo.UNKNOWN_VALUE;
       String buildID = ProductInfo.UNKNOWN_VALUE;
       String capabilities = ProductInfo.UNKNOWN_VALUE;
       String copyright = ProductInfo.UNKNOWN_VALUE;
@@ -330,7 +324,7 @@ public class DSOClient implements IClient, NotificationListener {
   public String getProductPatchVersion() {
     return getProductInfo().patchVersion();
   }
-  
+
   public String getProductBuildID() {
     return getProductInfo().buildID();
   }
@@ -365,5 +359,21 @@ public class DSOClient implements IClient, NotificationListener {
     Map result = getL1Statistics();
     result.put("TransactionRate", getTransactionRate());
     return result;
+  }
+
+  public String dump() {
+    StringBuilder sb = new StringBuilder(toString());
+    sb.append(" ready: ");
+    sb.append(isReady());
+    sb.append(" isConnected: ");
+    sb.append(cc.isConnected());
+    return sb.toString();
+  }
+
+  public void tearDown() {
+    if (!isReady()) {
+      stopListeningForTunneledBeans();
+    }
+    super.tearDown();
   }
 }

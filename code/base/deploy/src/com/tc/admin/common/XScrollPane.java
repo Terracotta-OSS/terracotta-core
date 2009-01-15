@@ -4,15 +4,23 @@
  */
 package com.tc.admin.common;
 
-import org.dijon.Component;
-import org.dijon.ScrollPane;
 
-public class XScrollPane extends ScrollPane {
+import java.awt.Component;
+
+import javax.swing.JScrollPane;
+
+public class XScrollPane extends JScrollPane {
   public XScrollPane() {
     super();
   }
 
   public XScrollPane(Component item) {
     super(item);
+  }
+
+  public XScrollPane(Component item, int verticalPolicy, int horizontalPolicy) {
+    super(item);
+    setVerticalScrollBarPolicy(verticalPolicy);
+    setHorizontalScrollBarPolicy(horizontalPolicy);
   }
 }

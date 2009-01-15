@@ -23,9 +23,9 @@ import javax.management.remote.JMXConnector;
  */
 
 public class ServerDBBackupRunner {
-  private String             m_host;
-  private int                m_port;
-  private String             m_userName;
+  private String             host;
+  private int                port;
+  private String             userName;
   public static final String DEFAULT_HOST = "localhost";
   public static final int    DEFAULT_PORT = 9520;
   private JMXConnector       jmxConnector;
@@ -94,13 +94,13 @@ public class ServerDBBackupRunner {
   }
 
   public ServerDBBackupRunner(String host, int port) {
-    m_host = host;
-    m_port = port;
+    this.host = host;
+    this.port = port;
   }
 
   public ServerDBBackupRunner(String host, int port, String userName) {
     this(host, port);
-    m_userName = userName;
+    this.userName = userName;
   }
 
   public void runBackup(String path) throws IOException {
@@ -109,8 +109,8 @@ public class ServerDBBackupRunner {
 
   public void runBackup(String path, NotificationListener listener, NotificationFilter filter, Object obj,
                         boolean closeJMXAndListener) throws IOException {
-    jmxConnector = CommandLineBuilder.getJMXConnector(m_userName, m_host, m_port);
-    MBeanServerConnection mbs = getMBeanServerConnection(jmxConnector, m_host, m_port);
+    jmxConnector = CommandLineBuilder.getJMXConnector(userName, host, port);
+    MBeanServerConnection mbs = getMBeanServerConnection(jmxConnector, host, port);
     if (mbs == null) throw new RuntimeException("");
     ServerDBBackupMBean mbean = getServerDBBackupMBean(mbs);
 
@@ -155,7 +155,7 @@ public class ServerDBBackupRunner {
   }
 
   public void removeListenerAndCloseJMX(NotificationListener listener) {
-    MBeanServerConnection mbs = getMBeanServerConnection(jmxConnector, m_host, m_port);
+    MBeanServerConnection mbs = getMBeanServerConnection(jmxConnector, host, port);
     removeListenerAndCloseJMX(listener, jmxConnector, mbs);
   }
 
@@ -182,8 +182,8 @@ public class ServerDBBackupRunner {
   }
 
   public String getDefaultBackupPath() {
-    final JMXConnector jmxConn = CommandLineBuilder.getJMXConnector(m_userName, m_host, m_port);
-    MBeanServerConnection mbs = getMBeanServerConnection(jmxConn, m_host, m_port);
+    final JMXConnector jmxConn = CommandLineBuilder.getJMXConnector(userName, host, port);
+    MBeanServerConnection mbs = getMBeanServerConnection(jmxConn, host, port);
     if (mbs == null) return null;
     ServerDBBackupMBean mbean = getServerDBBackupMBean(mbs);
 

@@ -5,6 +5,8 @@ package com.tc.admin.model;
 
 
 public interface IBasicObject extends IObject {
+  public static final IBasicObject[] NULL_SET = {};
+  
   int getFieldCount();
   boolean isArray();
   boolean isCollection();

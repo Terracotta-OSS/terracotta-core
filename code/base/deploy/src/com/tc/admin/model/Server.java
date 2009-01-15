@@ -6,18 +6,19 @@ package com.tc.admin.model;
 
 import org.apache.commons.httpclient.auth.AuthScope;
 
-import com.tc.admin.AdminClient;
-import com.tc.admin.AdminClientContext;
 import com.tc.admin.ConnectionContext;
 import com.tc.admin.ConnectionListener;
 import com.tc.admin.ServerConnectionManager;
 import com.tc.admin.common.ExceptionHelper;
 import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.config.schema.L2Info;
+import com.tc.config.schema.ServerGroupInfo;
 import com.tc.management.beans.L2MBeanNames;
+import com.tc.management.beans.LockStatisticsMonitorMBean;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.object.ObjectManagementMonitorMBean;
 import com.tc.management.beans.object.ServerDBBackupMBean;
+import com.tc.management.lock.stats.LockSpec;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.GCStats;
 import com.tc.objectserver.api.NoSuchObjectException;
@@ -25,6 +26,7 @@ import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.beans.StatisticsLocalGathererMBean;
 import com.tc.statistics.beans.StatisticsMBeanNames;
+import com.tc.statistics.config.StatisticsConfig;
 import com.tc.stats.DSOClassInfo;
 import com.tc.stats.DSOMBean;
 import com.tc.stats.DSORootMBean;
@@ -32,12 +34,12 @@ import com.tc.util.ProductInfo;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.text.MessageFormat;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,6 +49,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 
 import javax.management.Attribute;
 import javax.management.AttributeList;
@@ -59,84 +62,136 @@ import javax.naming.CommunicationException;
 import javax.naming.ServiceUnavailableException;
 import javax.swing.event.EventListenerList;
 
-public class Server implements IServer, NotificationListener, ManagedObjectFacadeProvider {
-  protected ServerConnectionManager       m_connectManager;
-  protected String                        m_displayLabel;
-  protected boolean                       m_connected;
-  protected Set<ObjectName>               m_readySet;
-  protected boolean                       m_ready;
-  protected List<DSOClient>               m_clients;
-  private ClientChangeListener            m_clientChangeListener;
-  protected PropertyChangeSupport         m_propertyChangeSupport;
-  protected EventListenerList             m_listenerList;
-  protected List<DSOClient>               m_pendingClients;
-  protected Exception                     m_connectException;
-  protected TCServerInfoMBean             m_serverInfoBean;
-  protected DSOMBean                      m_dsoBean;
-  protected ObjectManagementMonitorMBean  m_objectManagementMonitorBean;
-  protected boolean                       m_serverDBBackupSupported;
-  protected ServerDBBackupMBean           m_serverDBBackupBean;
-  protected ProductVersion                m_productInfo;
-  protected List<IBasicObject>            m_roots;
-  protected Map<ObjectName, IBasicObject> m_rootMap;
-  protected LogListener                   m_logListener;
-  protected long                          m_startTime;
-  protected long                          m_activateTime;
-  protected String                        m_persistenceMode;
-  protected String                        m_failoverMode;
+public class Server extends BaseClusterNode implements IServer, NotificationListener, ManagedObjectFacadeProvider {
+  protected IClusterModel                 clusterModel;
+  protected IServerGroup                  serverGroup;
+  protected final ServerConnectionManager connectManager;
+  protected String                        displayLabel;
+  protected boolean                       connected;
+  protected Set<ObjectName>               readySet;
+  protected boolean                       ready;
+  protected List<DSOClient>               clients;
+  private ClientChangeListener            clientChangeListener;
+  protected EventListenerList             listenerList;
+  protected List<DSOClient>               pendingClients;
+  protected Exception                     connectException;
+  protected TCServerInfoMBean             serverInfoBean;
+  protected DSOMBean                      dsoBean;
+  protected ObjectManagementMonitorMBean  objectManagementMonitorBean;
+  protected boolean                       serverDBBackupSupported;
+  protected ServerDBBackupMBean           serverDBBackupBean;
+  protected ProductVersion                productInfo;
+  protected List<IBasicObject>            roots;
+  protected Map<ObjectName, IBasicObject> rootMap;
+  protected LogListener                   logListener;
+  protected long                          startTime;
+  protected long                          activateTime;
+  protected String                        persistenceMode;
+  protected String                        failoverMode;
+  protected LockStatisticsMonitorMBean    lockProfilerBean;
+  protected boolean                       lockProfilingSupported;
+  protected int                           lockProfilerTraceDepth;
+  protected Boolean                       lockProfilingEnabled;
 
-  public Server() {
-    this(ConnectionContext.DEFAULT_HOST, ConnectionContext.DEFAULT_PORT, ConnectionContext.DEFAULT_AUTO_CONNECT);
+  private StatisticsLocalGathererMBean    clusterStatsBean;
+  private boolean                         clusterStatsSupported;
+
+  private static final PolledAttribute    PA_CPU_USAGE         = new PolledAttribute(L2MBeanNames.TC_SERVER_INFO,
+                                                                                     POLLED_ATTR_CPU_USAGE);
+  private static final PolledAttribute    PA_USED_MEMORY       = new PolledAttribute(L2MBeanNames.TC_SERVER_INFO,
+                                                                                     POLLED_ATTR_USED_MEMORY);
+  private static final PolledAttribute    PA_MAX_MEMORY        = new PolledAttribute(L2MBeanNames.TC_SERVER_INFO,
+                                                                                     POLLED_ATTR_MAX_MEMORY);
+  private static final PolledAttribute    PA_OBJECT_FLUSH_RATE = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                     POLLED_ATTR_OBJECT_FLUSH_RATE);
+  private static final PolledAttribute    PA_OBJECT_FAULT_RATE = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                     POLLED_ATTR_OBJECT_FAULT_RATE);
+  private static final PolledAttribute    PA_TRANSACTION_RATE  = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                     POLLED_ATTR_TRANSACTION_RATE);
+  private static final PolledAttribute    PA_CACHE_MISS_RATE   = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                     POLLED_ATTR_CACHE_MISS_RATE);
+  private static final PolledAttribute    PA_LIVE_OBJECT_COUNT = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                     POLLED_ATTR_LIVE_OBJECT_COUNT);
+
+  public Server(IClusterModel clusterModel) {
+    this(clusterModel, ConnectionContext.DEFAULT_HOST, ConnectionContext.DEFAULT_PORT,
+         ConnectionContext.DEFAULT_AUTO_CONNECT);
   }
 
-  public Server(final String host, final int jmxPort, final boolean autoConnect) {
+  public Server(IClusterModel clusterModel, String host, int jmxPort, boolean autoConnect) {
+    this.clusterModel = clusterModel;
     ConnectionManagerListener cml = new ConnectionManagerListener();
-    m_connectManager = new ServerConnectionManager(host, jmxPort, false, cml);
+    connectManager = new ServerConnectionManager(host, jmxPort, false, cml);
     if (autoConnect) {
       refreshCachedCredentials();
     }
     init();
-    m_connectManager.setAutoConnect(autoConnect);
+    connectManager.setAutoConnect(autoConnect);
   }
 
-  public Server(final L2Info l2Info) {
+  public Server(IClusterModel clusterModel, IServerGroup serverGroup, L2Info l2Info) {
+    super();
+    this.clusterModel = clusterModel;
+    this.serverGroup = serverGroup;
     ConnectionManagerListener cml = new ConnectionManagerListener();
-    m_connectManager = new ServerConnectionManager(l2Info, false, cml);
+    connectManager = new ServerConnectionManager(l2Info, false, cml);
     init();
-    m_connectManager.setAutoConnect(true);
+    connectManager.setAutoConnect(true);
   }
 
-  public String getName() {
-    return getConnectionManager().getName();
+  public IClusterModel getClusterModel() {
+    return clusterModel;
+  }
+
+  public IServerGroup getServerGroup() {
+    return serverGroup;
+  }
+
+  public synchronized String getName() {
+    ServerConnectionManager scm = getConnectionManager();
+    return scm != null ? scm.getName() : "not connected";
   }
 
   private void init() {
-    m_startTime = m_activateTime = -1;
-    m_displayLabel = m_connectManager.toString();
-    m_propertyChangeSupport = new PropertyChangeSupport(this);
-    m_listenerList = new EventListenerList();
-    m_logListener = new LogListener();
-    m_pendingClients = new CopyOnWriteArrayList<DSOClient>();
-    m_clients = new CopyOnWriteArrayList<DSOClient>();
-    m_clientChangeListener = new ClientChangeListener();
-    m_roots = new CopyOnWriteArrayList<IBasicObject>();
-    m_rootMap = new ConcurrentHashMap<ObjectName, IBasicObject>();
-    m_readySet = Collections.synchronizedSet(new HashSet<ObjectName>());
+    startTime = activateTime = -1;
+    displayLabel = connectManager.toString();
+    listenerList = new EventListenerList();
+    logListener = new LogListener();
+    pendingClients = new CopyOnWriteArrayList<DSOClient>();
+    clients = new CopyOnWriteArrayList<DSOClient>();
+    clientChangeListener = new ClientChangeListener();
+    roots = new CopyOnWriteArrayList<IBasicObject>();
+    rootMap = new ConcurrentHashMap<ObjectName, IBasicObject>();
+    readySet = Collections.synchronizedSet(new HashSet<ObjectName>());
     initReadySet();
-    m_ready = false;
+    initPolledAttributes();
+    ready = false;
   }
 
   private void initReadySet() {
-    m_readySet.add(L2MBeanNames.TC_SERVER_INFO);
-    m_readySet.add(L2MBeanNames.DSO);
-    m_readySet.add(L2MBeanNames.SERVER_DB_BACKUP);
-    m_readySet.add(L2MBeanNames.OBJECT_MANAGEMENT);
-    m_readySet.add(L2MBeanNames.LOGGER);
+    readySet.add(L2MBeanNames.TC_SERVER_INFO);
+    readySet.add(L2MBeanNames.DSO);
+    readySet.add(L2MBeanNames.SERVER_DB_BACKUP);
+    readySet.add(L2MBeanNames.OBJECT_MANAGEMENT);
+    readySet.add(L2MBeanNames.LOGGER);
+    readySet.add(L2MBeanNames.LOCK_STATISTICS);
+    readySet.add(StatisticsMBeanNames.STATISTICS_GATHERER);
+  }
+
+  private void initPolledAttributes() {
+    registerPolledAttribute(PA_CPU_USAGE);
+    registerPolledAttribute(PA_USED_MEMORY);
+    registerPolledAttribute(PA_MAX_MEMORY);
+    registerPolledAttribute(PA_OBJECT_FLUSH_RATE);
+    registerPolledAttribute(PA_OBJECT_FAULT_RATE);
+    registerPolledAttribute(PA_TRANSACTION_RATE);
+    registerPolledAttribute(PA_CACHE_MISS_RATE);
+    registerPolledAttribute(PA_LIVE_OBJECT_COUNT);
   }
 
   private void filterReadySet() {
-    synchronized (m_readySet) {
-      Iterator<ObjectName> iter = m_readySet.iterator();
+    synchronized (readySet) {
+      Iterator<ObjectName> iter = readySet.iterator();
       while (iter.hasNext()) {
         ObjectName beanName = iter.next();
         if (isMBeanRegistered(beanName)) {
@@ -146,49 +201,64 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     }
   }
 
-  public L2Info getL2Info() {
-    return getConnectionManager().getL2Info();
+  public synchronized L2Info getL2Info() {
+    ServerConnectionManager scm = getConnectionManager();
+    return scm != null ? scm.getL2Info() : null;
   }
 
   public String getConnectionStatusString() {
-    return getConnectionManager().getStatusString();
+    ServerConnectionManager scm = getConnectionManager();
+    return scm != null ? scm.getStatusString() : "not connected";
   }
 
   private class ConnectionManagerListener implements ConnectionListener {
     public void handleConnection() {
-      setConnected(m_connectManager != null && m_connectManager.isConnected());
+      ServerConnectionManager scm = getConnectionManager();
+      if (scm != null) {
+        boolean isConnected = scm.isConnected();
+        setConnected(isConnected);
+        if (isConnected) {
+          clearConnectError();
+        }
+      }
     }
 
     public void handleException() {
-      if (m_connectManager != null) {
-        setConnectError(m_connectManager.getConnectionException());
+      ServerConnectionManager scm = getConnectionManager();
+      if (scm != null) {
+        setConnectError(scm.getConnectionException());
       }
     }
   }
 
   private synchronized void setupFromDSOBean() throws Exception {
-    for (ObjectName clientBeanName : getDSOBean().getClients()) {
-      if (!haveClient(clientBeanName)) {
-        addClient(clientBeanName);
+    if (isActiveCoordinator()) {
+      for (ObjectName clientBeanName : getDSOBean().getClients()) {
+        if (!haveClient(clientBeanName)) {
+          addClient(clientBeanName);
+        }
+      }
+      for (ObjectName rootBeanName : getDSOBean().getRoots()) {
+        if (!haveRoot(rootBeanName)) {
+          addRoot(rootBeanName);
+        }
       }
     }
 
-    for (ObjectName rootBeanName : getDSOBean().getRoots()) {
-      if (!haveRoot(rootBeanName)) {
-        addRoot(rootBeanName);
-      }
+    ConnectionContext cc = getConnectionContext();
+    if (cc != null) {
+      cc.addNotificationListener(L2MBeanNames.DSO, this);
     }
-
-    getConnectionContext().addNotificationListener(L2MBeanNames.DSO, this);
   }
 
   private void connectionEstablished() {
-    if (m_readySet == null) return;
+    if (readySet == null) return;
     try {
       ObjectName mbsd = getConnectionContext().queryName("JMImplementation:type=MBeanServerDelegate");
       getConnectionContext().addNotificationListener(mbsd, this);
+      testAddLogListener();
       filterReadySet();
-      if (!m_readySet.contains(L2MBeanNames.DSO)) {
+      if (!readySet.contains(L2MBeanNames.DSO)) {
         setupFromDSOBean();
       }
       /*
@@ -197,14 +267,28 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
        * with it not existing. The set of MBeans already registered at connection time are defined by
        * L2Management.registerMBeans.
        */
-      if (!m_readySet.contains(L2MBeanNames.SERVER_DB_BACKUP)) {
-        m_serverDBBackupSupported = true;
+      if (!readySet.contains(L2MBeanNames.SERVER_DB_BACKUP)) {
+        serverDBBackupSupported = true;
         getServerDBBackupBean();
       } else {
-        m_readySet.remove(L2MBeanNames.SERVER_DB_BACKUP);
-        m_serverDBBackupSupported = false;
+        readySet.remove(L2MBeanNames.SERVER_DB_BACKUP);
+        serverDBBackupSupported = false;
       }
-      setReady(m_readySet.isEmpty());
+      if (!readySet.contains(L2MBeanNames.LOCK_STATISTICS)) {
+        lockProfilingSupported = true;
+        getLockProfilerBean();
+      } else {
+        readySet.remove(L2MBeanNames.LOCK_STATISTICS);
+        lockProfilingSupported = false;
+      }
+      if (!readySet.contains(StatisticsMBeanNames.STATISTICS_GATHERER)) {
+        clusterStatsSupported = true;
+        getClusterStatsBean();
+      } else {
+        readySet.remove(StatisticsMBeanNames.STATISTICS_GATHERER);
+        clusterStatsSupported = false;
+      }
+      setReady(readySet.isEmpty());
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -213,9 +297,9 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   protected void setConnected(boolean connected) {
     boolean oldConnected;
     synchronized (this) {
-      if (m_readySet == null) { return; }
-      oldConnected = m_connected;
-      m_connected = connected;
+      if (readySet == null) { return; }
+      oldConnected = isConnected();
+      this.connected = connected;
     }
     firePropertyChange(PROP_CONNECTED, !connected, connected);
     if (connected == true && oldConnected == false) {
@@ -227,25 +311,29 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     }
   }
 
-  public boolean isConnected() {
-    return m_connected;
+  public synchronized boolean isConnected() {
+    return connected;
   }
 
   private void setConnectError(Exception e) {
     Exception oldConnectError;
     synchronized (this) {
-      oldConnectError = m_connectException;
-      m_connectException = e;
+      oldConnectError = connectException;
+      connectException = e;
     }
     firePropertyChange(PROP_CONNECT_ERROR, oldConnectError, e);
   }
 
-  public boolean hasConnectError() {
-    return m_connectException != null;
+  private void clearConnectError() {
+    setConnectError(null);
   }
 
-  public Exception getConnectError() {
-    return m_connectException;
+  public synchronized boolean hasConnectError() {
+    return connectException != null;
+  }
+
+  public synchronized Exception getConnectError() {
+    return connectException;
   }
 
   public String getConnectErrorMessage() {
@@ -261,28 +349,23 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   public static String getConnectErrorMessage(Exception e, ConnectionContext cc) {
-    AdminClientContext acc = AdminClient.getContext();
     String msg = null;
     Throwable cause = ExceptionHelper.getRootCause(e);
 
     if (cause instanceof ServiceUnavailableException) {
-      String tmpl = acc.getMessage("service.unavailable");
-      MessageFormat form = new MessageFormat(tmpl);
+      MessageFormat form = new MessageFormat("Service Unavailable: {0}");
       Object[] args = new Object[] { cc };
       msg = form.format(args);
     } else if (cause instanceof ConnectException) {
-      String tmpl = acc.getMessage("cannot.connect.to");
-      MessageFormat form = new MessageFormat(tmpl);
+      MessageFormat form = new MessageFormat("Unable to connect to {0}");
       Object[] args = new Object[] { cc };
       msg = form.format(args);
     } else if (cause instanceof UnknownHostException || cause instanceof java.rmi.UnknownHostException) {
-      String tmpl = acc.getMessage("unknown.host");
-      MessageFormat form = new MessageFormat(tmpl);
+      MessageFormat form = new MessageFormat("Unknown host: {0}");
       Object[] args = new Object[] { cc.host };
       msg = form.format(args);
     } else if (cause instanceof CommunicationException) {
-      String tmpl = acc.getMessage("cannot.connect.to");
-      MessageFormat form = new MessageFormat(tmpl);
+      MessageFormat form = new MessageFormat("Unable to connect to {0}");
       Object[] args = new Object[] { cc };
       msg = form.format(args);
     } else {
@@ -292,64 +375,78 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     return "<html>" + msg + "</html>";
   }
 
-  ServerConnectionManager getConnectionManager() {
-    return m_connectManager;
+  synchronized ServerConnectionManager getConnectionManager() {
+    return connectManager;
   }
 
   public String[] getConnectionCredentials() {
-    return getConnectionManager().getCredentials();
+    ServerConnectionManager scm = getConnectionManager();
+    return scm != null ? scm.getCredentials() : null;
   }
 
   public Map<String, Object> getConnectionEnvironment() {
-    return getConnectionManager().getConnectionEnvironment();
+    ServerConnectionManager scm = getConnectionManager();
+    return scm != null ? scm.getConnectionEnvironment() : null;
   }
 
-  public ConnectionContext getConnectionContext() {
-    return getConnectionManager().getConnectionContext();
+  public synchronized ConnectionContext getConnectionContext() {
+    ServerConnectionManager scm = getConnectionManager();
+    return scm != null ? scm.getConnectionContext() : null;
   }
 
-  public void setHost(String host) {
-    getConnectionManager().setHostname(host);
-    m_displayLabel = getConnectionManager().toString();
+  public synchronized void setHost(String host) {
+    ServerConnectionManager scm = getConnectionManager();
+    if (scm == null) throw new IllegalStateException("ServerConnectManager is null");
+    if (!host.equals(scm.getHostname())) {
+      scm.setHostname(host);
+      displayLabel = getConnectionManager().toString();
+    }
   }
 
-  public String getHost() {
-    return getConnectionManager().getHostname();
+  public synchronized String getHost() {
+    ServerConnectionManager scm = getConnectionManager();
+    return scm != null ? scm.getHostname() : null;
   }
 
-  public void setPort(int port) {
-    getConnectionManager().setJMXPortNumber(port);
-    m_displayLabel = getConnectionManager().toString();
+  public synchronized void setPort(int port) {
+    ServerConnectionManager scm = getConnectionManager();
+    if (scm == null) throw new IllegalStateException("ServerConnectManager is null");
+    if (port != scm.getJMXPortNumber()) {
+      scm.setJMXPortNumber(port);
+      displayLabel = getConnectionManager().toString();
+    }
   }
 
-  public int getPort() {
-    return getConnectionManager().getJMXPortNumber();
+  public synchronized int getPort() {
+    ServerConnectionManager scm = getConnectionManager();
+    return scm != null ? scm.getJMXPortNumber() : -1;
   }
 
-  public Integer getDSOListenPort() {
-    return getServerInfoBean().getDSOListenPort();
+  public synchronized Integer getDSOListenPort() {
+    TCServerInfoMBean theServerInfoBean = getServerInfoBean();
+    return theServerInfoBean != null ? theServerInfoBean.getDSOListenPort() : Integer.valueOf(-1);
   }
 
   public String getPersistenceMode() {
-    if (m_persistenceMode == null) {
+    if (persistenceMode == null) {
       try {
-        m_persistenceMode = getServerInfoBean().getPersistenceMode();
+        persistenceMode = getServerInfoBean().getPersistenceMode();
       } catch (UndeclaredThrowableException edte) {
-        m_persistenceMode = "unknown";
+        persistenceMode = "unknown";
       }
     }
-    return m_persistenceMode;
+    return persistenceMode;
   }
 
   public String getFailoverMode() {
-    if (m_failoverMode == null) {
+    if (failoverMode == null) {
       try {
-        m_failoverMode = getServerInfoBean().getFailoverMode();
+        failoverMode = getServerInfoBean().getFailoverMode();
       } catch (UndeclaredThrowableException udte) {
-        m_failoverMode = "unknown";
+        failoverMode = "unknown";
       }
     }
-    return m_failoverMode;
+    return failoverMode;
   }
 
   public String getStatsExportServletURI() {
@@ -368,87 +465,110 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     return new AuthScope(getHost(), getDSOListenPort());
   }
 
-  public boolean isStarted() {
-    return m_connectManager != null && m_connectManager.isStarted();
+  public synchronized boolean isStarted() {
+    ServerConnectionManager scm = getConnectionManager();
+    return scm != null && scm.isStarted();
   }
 
-  public boolean isActive() {
-    return m_connectManager != null && m_connectManager.isActive();
+  public synchronized boolean isActive() {
+    ServerConnectionManager scm = getConnectionManager();
+    return scm != null && scm.isActive();
   }
 
-  public boolean isPassiveUninitialized() {
-    return m_connectManager != null && m_connectManager.isPassiveUninitialized();
+  public synchronized boolean testIsActive() {
+    ServerConnectionManager scm = getConnectionManager();
+    return scm != null && scm.testIsActive();
   }
 
-  public boolean isPassiveStandby() {
-    return m_connectManager != null && m_connectManager.isPassiveStandby();
+  public synchronized boolean isPassiveUninitialized() {
+    ServerConnectionManager scm = getConnectionManager();
+    return scm != null && scm.isPassiveUninitialized();
+  }
+
+  public synchronized boolean isPassiveStandby() {
+    ServerConnectionManager scm = getConnectionManager();
+    return scm != null && scm.isPassiveStandby();
   }
 
   public void doShutdown() {
     getServerInfoBean().shutdown();
   }
 
-  public boolean isAutoConnect() {
-    return m_connectManager != null && m_connectManager.isAutoConnect();
+  public synchronized boolean isAutoConnect() {
+    ServerConnectionManager scm = getConnectionManager();
+    return scm != null && scm.isAutoConnect();
   }
 
-  public void setAutoConnect(boolean autoConnect) {
-    assert m_connectManager != null;
-
+  public synchronized void setAutoConnect(boolean autoConnect) {
+    ServerConnectionManager scm = getConnectionManager();
+    if (scm == null) throw new IllegalStateException("ServerConnectionManager is null");
     if (autoConnect) {
       refreshCachedCredentials();
     }
-    getConnectionManager().setAutoConnect(autoConnect);
+    scm.setAutoConnect(autoConnect);
   }
 
-  public void refreshCachedCredentials() {
-    String[] creds = ServerConnectionManager.getCachedCredentials(getConnectionManager());
+  public synchronized void refreshCachedCredentials() {
+    ServerConnectionManager scm = getConnectionManager();
+    if (scm == null) throw new IllegalStateException("ServerConnectionManager is null");
+    String[] creds = ServerConnectionManager.getCachedCredentials(scm);
     if (creds != null) {
       setConnectionCredentials(creds);
     }
   }
 
-  public void setConnectionCredentials(String[] creds) {
-    getConnectionManager().setCredentials(creds);
+  public synchronized void setConnectionCredentials(String[] creds) {
+    ServerConnectionManager scm = getConnectionManager();
+    if (scm == null) throw new IllegalStateException("ServerConnectionManager is null");
+    scm.setCredentials(creds);
   }
 
   public JMXConnector getJMXConnector() {
-    return getConnectionManager().getJmxConnector();
+    ServerConnectionManager scm = getConnectionManager();
+    return scm != null ? scm.getJmxConnector() : null;
   }
 
   public void setJMXConnector(JMXConnector jmxc) throws IOException {
-    getConnectionManager().setJMXConnector(jmxc);
+    ServerConnectionManager scm = getConnectionManager();
+    if (scm == null) throw new IllegalStateException("ServerConnectionManager is null");
+    scm.setJMXConnector(jmxc);
   }
 
   protected synchronized TCServerInfoMBean getServerInfoBean() {
-    if (m_serverInfoBean == null) {
+    if (serverInfoBean == null) {
       ConnectionContext cc = getConnectionContext();
-      m_serverInfoBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, L2MBeanNames.TC_SERVER_INFO,
+      if (cc != null) {
+        serverInfoBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, L2MBeanNames.TC_SERVER_INFO,
                                                                   TCServerInfoMBean.class, false);
+      }
     }
-    return m_serverInfoBean;
+    return serverInfoBean;
   }
 
   protected synchronized DSOMBean getDSOBean() {
-    if (m_dsoBean == null) {
+    if (dsoBean == null) {
       ConnectionContext cc = getConnectionContext();
-      m_dsoBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, L2MBeanNames.DSO, DSOMBean.class, false);
+      if (cc != null) {
+        dsoBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, L2MBeanNames.DSO, DSOMBean.class, false);
+      }
     }
-    return m_dsoBean;
+    return dsoBean;
   }
 
   private synchronized ObjectManagementMonitorMBean getObjectManagementMonitorBean() {
-    if (m_objectManagementMonitorBean == null) {
+    if (objectManagementMonitorBean == null) {
       ConnectionContext cc = getConnectionContext();
-      m_objectManagementMonitorBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, L2MBeanNames.OBJECT_MANAGEMENT,
+      if (cc != null) {
+        objectManagementMonitorBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, L2MBeanNames.OBJECT_MANAGEMENT,
                                                                                ObjectManagementMonitorMBean.class,
                                                                                false);
+      }
     }
-    return m_objectManagementMonitorBean;
+    return objectManagementMonitorBean;
   }
 
-  public synchronized ProductVersion getProductInfo() {
-    if (m_productInfo == null) {
+  public synchronized IProductVersion getProductInfo() {
+    if (productInfo == null) {
       ConnectionContext cc = getConnectionContext();
       String[] attributes = { "Version", "Patched", "PatchLevel", "PatchVersion", "BuildID",
           "DescriptionOfCapabilities", "Copyright" };
@@ -485,9 +605,9 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
       } catch (Exception e) {
         System.err.println(e);
       }
-      m_productInfo = new ProductVersion(version, patchLevel, patchVersion, buildID, capabilities, copyright);
+      productInfo = new ProductVersion(version, patchLevel, patchVersion, buildID, capabilities, copyright);
     }
-    return m_productInfo;
+    return productInfo;
   }
 
   public String getProductVersion() {
@@ -523,25 +643,27 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   public long getStartTime() {
-    if (m_startTime == -1) {
-      m_startTime = getServerInfoBean().getStartTime();
+    if (startTime == -1) {
+      startTime = getServerInfoBean().getStartTime();
     }
-    return m_startTime;
+    return startTime;
   }
 
   public long getActivateTime() {
-    if (m_activateTime == -1) {
-      m_activateTime = getServerInfoBean().getActivateTime();
+    if (activateTime == -1) {
+      activateTime = getServerInfoBean().getActivateTime();
     }
-    return m_activateTime;
+    return activateTime;
   }
 
-  public long getTransactionRate() {
-    return getDSOBean().getTransactionRate();
+  public synchronized long getTransactionRate() {
+    DSOMBean theDsoBean = getDSOBean();
+    return theDsoBean != null ? theDsoBean.getTransactionRate() : null;
   }
 
-  public StatisticData[] getCpuUsage() {
-    return getServerInfoBean().getCpuUsage();
+  public synchronized StatisticData[] getCpuUsage() {
+    TCServerInfoMBean theServerInfoBean = getServerInfoBean();
+    return theServerInfoBean != null ? theServerInfoBean.getCpuUsage() : null;
   }
 
   public String[] getCpuStatNames() {
@@ -553,11 +675,13 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   public synchronized Map getServerStatistics() {
-    return getServerInfoBean().getStatistics();
+    TCServerInfoMBean theServerInfoBean = getServerInfoBean();
+    return theServerInfoBean != null ? theServerInfoBean.getStatistics() : null;
   }
 
-  public Number[] getDSOStatistics(String[] names) {
-    return getDSOBean().getStatistics(names);
+  public synchronized Number[] getDSOStatistics(String[] names) {
+    DSOMBean theDsoBean = getDSOBean();
+    return theDsoBean != null ? theDsoBean.getStatistics(names) : null;
   }
 
   public synchronized Map getPrimaryStatistics() {
@@ -569,10 +693,10 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   public Map<IClient, Long> getAllPendingTransactionsCount() {
     Map<ObjectName, Long> map = getDSOBean().getAllPendingTransactionsCount();
     Map<IClient, Long> result = new HashMap<IClient, Long>();
-    Iterator<DSOClient> clientIter = m_clients.iterator();
+    Iterator<DSOClient> clientIter = clients.iterator();
     while (clientIter.hasNext()) {
       DSOClient client = clientIter.next();
-      result.put(client, map.get(client.getObjectName()));
+      result.put(client, map.get(client.getBeanName()));
     }
     return result;
   }
@@ -580,24 +704,43 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   public Map<IClient, Integer> getClientLiveObjectCount() {
     Map<ObjectName, Integer> map = getDSOBean().getClientLiveObjectCount();
     Map<IClient, Integer> result = new HashMap<IClient, Integer>();
-    Iterator<DSOClient> clientIter = m_clients.iterator();
+    Iterator<DSOClient> clientIter = clients.iterator();
     while (clientIter.hasNext()) {
       DSOClient client = clientIter.next();
-      result.put(client, map.get(client.getObjectName()));
+      result.put(client, map.get(client.getBeanName()));
+    }
+    return result;
+  }
+
+  public Map<IClient, Map<String, Object>> getPrimaryClientStatistics() {
+    Map<ObjectName, Map> map = getDSOBean().getPrimaryClientStatistics();
+    Map<IClient, Map<String, Object>> result = new HashMap<IClient, Map<String, Object>>();
+    for (DSOClient client : getClients()) {
+      result.put(client, map.get(client.getBeanName()));
+    }
+    return result;
+  }
+
+  public Map<IClient, Long> getClientTransactionRates() {
+    Map<ObjectName, Long> map = getDSOBean().getClientTransactionRates();
+    Map<IClient, Long> result = new HashMap<IClient, Long>();
+    for (DSOClient client : getClients()) {
+      result.put(client, map.get(client.getBeanName()));
     }
     return result;
   }
 
   public void addClientConnectionListener(ClientConnectionListener listener) {
-    m_listenerList.add(ClientConnectionListener.class, listener);
+    listenerList.remove(ClientConnectionListener.class, listener);
+    listenerList.add(ClientConnectionListener.class, listener);
   }
 
   public void removeClientConnectionListener(ClientConnectionListener listener) {
-    m_listenerList.remove(ClientConnectionListener.class, listener);
+    listenerList.remove(ClientConnectionListener.class, listener);
   }
 
   protected void fireClientConnected(DSOClient client) {
-    Object[] listeners = m_listenerList.getListenerList();
+    Object[] listeners = listenerList.getListenerList();
     for (int i = listeners.length - 2; i >= 0; i -= 2) {
       if (listeners[i] == ClientConnectionListener.class) {
         ((ClientConnectionListener) listeners[i + 1]).clientConnected(client);
@@ -606,7 +749,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   protected void fireClientDisconnected(DSOClient client) {
-    Object[] listeners = m_listenerList.getListenerList();
+    Object[] listeners = listenerList.getListenerList();
     for (int i = listeners.length - 2; i >= 0; i -= 2) {
       if (listeners[i] == ClientConnectionListener.class) {
         ((ClientConnectionListener) listeners[i + 1]).clientDisconnected(client);
@@ -617,14 +760,14 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   protected void setReady(boolean ready) {
     boolean oldReady;
     synchronized (this) {
-      oldReady = m_ready;
-      m_ready = ready;
+      oldReady = isReady();
+      this.ready = ready;
     }
     firePropertyChange(PROP_READY, oldReady, ready);
   }
 
-  public boolean isReady() {
-    return m_ready;
+  public synchronized boolean isReady() {
+    return ready;
   }
 
   private void beanRegistered(ObjectName beanName) {
@@ -635,22 +778,23 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
         e.printStackTrace();
       }
     }
-    m_readySet.remove(beanName);
-    setReady(m_readySet.isEmpty());
+    readySet.remove(beanName);
+    setReady(readySet.isEmpty());
   }
 
-  private boolean isMBeanRegistered(ObjectName beanName) {
+  private synchronized boolean isMBeanRegistered(ObjectName beanName) {
     try {
-      return getConnectionContext().isRegistered(beanName);
+      ConnectionContext cc = getConnectionContext();
+      return cc != null && cc.isRegistered(beanName);
     } catch (Exception e) {
       return false;
     }
   }
 
   private boolean haveClient(ObjectName objectName) {
-    synchronized (m_clients) {
-      for (DSOClient client : m_clients) {
-        if (client.getObjectName().equals(objectName)) { return true; }
+    synchronized (clients) {
+      for (DSOClient client : clients) {
+        if (client.getBeanName().equals(objectName)) { return true; }
       }
     }
     return false;
@@ -659,11 +803,11 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   private class ClientChangeListener implements PropertyChangeListener {
     public void propertyChange(PropertyChangeEvent evt) {
       final String prop = evt.getPropertyName();
-      if (IClusterNode.PROP_READY.equals(prop)) {
+      if (IClusterModelElement.PROP_READY.equals(prop)) {
         DSOClient client = (DSOClient) evt.getSource();
         synchronized (CLIENT_ADD_LOCK) {
-          if (client.isReady() && !m_clients.contains(client)) {
-            m_clients.add(client);
+          if (client.isReady() && !clients.contains(client)) {
+            clients.add(client);
             fireClientConnected(client);
             client.removePropertyChangeListener(this);
           }
@@ -673,25 +817,26 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   private DSOClient addClient(ObjectName clientBeanName) {
+    assertActiveCoordinator();
     DSOClient client = new DSOClient(getConnectionContext(), clientBeanName);
     if (client.isReady()) {
-      m_clients.add(client);
+      clients.add(client);
       fireClientConnected(client);
     } else {
-      m_pendingClients.add(client);
-      client.addPropertyChangeListener(m_clientChangeListener);
+      pendingClients.add(client);
+      client.addPropertyChangeListener(clientChangeListener);
     }
     return client;
   }
 
   private void removeClient(ObjectName clientBeanName) {
     DSOClient target = null;
-    Iterator<DSOClient> iter = m_clients.iterator();
+    Iterator<DSOClient> iter = clients.iterator();
     while (iter.hasNext()) {
       DSOClient client = iter.next();
-      if (client.getObjectName().equals(clientBeanName)) {
+      if (client.getBeanName().equals(clientBeanName)) {
         target = client;
-        m_clients.remove(client);
+        clients.remove(client);
         break;
       }
     }
@@ -708,7 +853,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     if (DSOMBean.CLIENT_ATTACHED.equals(type)) {
       ObjectName clientObjectName = (ObjectName) notification.getSource();
       synchronized (CLIENT_ADD_LOCK) {
-        if (!haveClient(clientObjectName)) {
+        if (isActiveCoordinator() && !haveClient(clientObjectName)) {
           addClient(clientObjectName);
         }
       }
@@ -718,15 +863,15 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   public void addRootCreationListener(RootCreationListener listener) {
-    m_listenerList.add(RootCreationListener.class, listener);
+    listenerList.add(RootCreationListener.class, listener);
   }
 
   public void removeRootCreationListener(RootCreationListener listener) {
-    m_listenerList.remove(RootCreationListener.class, listener);
+    listenerList.remove(RootCreationListener.class, listener);
   }
 
   protected void fireRootCreated(IBasicObject root) {
-    Object[] listeners = m_listenerList.getListenerList();
+    Object[] listeners = listenerList.getListenerList();
     for (int i = listeners.length - 2; i >= 0; i -= 2) {
       if (listeners[i] == RootCreationListener.class) {
         ((RootCreationListener) listeners[i + 1]).rootCreated(root);
@@ -735,10 +880,12 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   private boolean haveRoot(ObjectName objectName) {
-    return m_rootMap.containsKey(objectName);
+    return rootMap.containsKey(objectName);
   }
 
   private void rootAdded(Notification notification, Object handback) {
+    assertActiveCoordinator();
+
     ObjectName objectName = (ObjectName) notification.getSource();
     IBasicObject newRoot = null;
     synchronized (this) {
@@ -759,23 +906,41 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     }
   }
 
+  private void assertActiveCoordinator() {
+    boolean isActiveCoord = isActiveCoordinator();
+    if (!isActiveCoord) {
+      Thread.dumpStack();
+    }
+    assert isActiveCoord;
+  }
+
+  public boolean isActiveCoordinator() {
+    IServerGroup group = getServerGroup();
+    if (group != null) {
+      IServer activeCoord = group.getActiveServer();
+      return this.equals(activeCoord);
+    }
+    return false;
+  }
+
   private synchronized IBasicObject addRoot(ObjectName rootBeanName) {
+    assertActiveCoordinator();
     ConnectionContext cc = getConnectionContext();
     DSORootMBean rootBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, rootBeanName, DSORootMBean.class, false);
     String fieldName = rootBean.getRootName();
     ManagedObjectFacade facade = safeLookupFacade(rootBean);
     if (facade != null) {
       String type = facade.getClassName();
-      IBasicObject root = new BasicTcObject(this, fieldName, facade, type, null);
-      m_rootMap.put(rootBeanName, root);
-      m_roots.add(root);
+      IBasicObject root = new BasicTcObject(getClusterModel(), fieldName, facade, type, null);
+      rootMap.put(rootBeanName, root);
+      roots.add(root);
       return root;
     }
     return null;
   }
 
   public synchronized IBasicObject[] getRoots() {
-    return m_roots.toArray(new IBasicObject[m_roots.size()]);
+    return roots.toArray(new IBasicObject[roots.size()]);
   }
 
   public void handleNotification(Notification notification, Object handback) {
@@ -787,41 +952,28 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
         beanRegistered(mbsn.getMBeanName());
       }
     } else if (DSOMBean.CLIENT_ATTACHED.equals(type) || DSOMBean.CLIENT_DETACHED.equals(type)) {
-      clientNotification(notification, handback);
+      if (isActiveCoordinator()) {
+        clientNotification(notification, handback);
+      }
     } else if (DSOMBean.ROOT_ADDED.equals(type)) {
-      rootAdded(notification, handback);
+      if (isActiveCoordinator()) {
+        rootAdded(notification, handback);
+      }
     } else if (DSOMBean.GC_STATUS_UPDATE.equals(type)) {
-      fireStatusUpdated((GCStats) notification.getSource());
+      if (isActiveCoordinator()) {
+        fireStatusUpdated((GCStats) notification.getSource());
+      }
     }
   }
 
-  public synchronized void addPropertyChangeListener(PropertyChangeListener listener) {
-    if (listener == null || m_propertyChangeSupport == null) return;
-    m_propertyChangeSupport.removePropertyChangeListener(listener);
-    m_propertyChangeSupport.addPropertyChangeListener(listener);
+  public synchronized String getCanonicalHostName() {
+    ServerConnectionManager scm = getConnectionManager();
+    return scm != null ? scm.safeGetHostName() : "not connected";
   }
 
-  public synchronized void removePropertyChangeListener(PropertyChangeListener listener) {
-    if (listener == null || m_propertyChangeSupport == null) return;
-    m_propertyChangeSupport.removePropertyChangeListener(listener);
-  }
-
-  public void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
-    PropertyChangeSupport pcs;
-    synchronized (this) {
-      pcs = m_propertyChangeSupport;
-    }
-    if (pcs != null) {
-      pcs.firePropertyChange(propertyName, oldValue, newValue);
-    }
-  }
-
-  public String getCanonicalHostName() {
-    return getConnectionManager().safeGetHostName();
-  }
-
-  public String getHostAddress() {
-    return getConnectionManager().safeGetHostAddress();
+  public synchronized String getHostAddress() {
+    ServerConnectionManager scm = getConnectionManager();
+    return scm != null ? scm.safeGetHostAddress() : "not connected";
   }
 
   public StatisticsLocalGathererMBean getStatisticsGathererMBean() {
@@ -830,47 +982,62 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
                                                     StatisticsLocalGathererMBean.class, true);
   }
 
-  public Server[] getClusterServers() {
+  public IServer[] getClusterServers() {
     TCServerInfoMBean serverInfo = getServerInfoBean();
     L2Info[] l2Infos = serverInfo.getL2Info();
     Server[] result = new Server[l2Infos.length];
     for (int i = 0; i < l2Infos.length; i++) {
-      result[i] = new Server(l2Infos[i]);
+      result[i] = new Server(getClusterModel(), getServerGroup(), l2Infos[i]);
+    }
+    return result;
+  }
+
+  public IServerGroup[] getClusterServerGroups() {
+    TCServerInfoMBean serverInfo = getServerInfoBean();
+    ServerGroupInfo[] serverGroupInfos = serverInfo.getServerGroupInfo();
+    ServerGroup[] result = new ServerGroup[serverGroupInfos.length];
+    for (int i = 0; i < serverGroupInfos.length; i++) {
+      result[i] = new ServerGroup(getClusterModel(), serverGroupInfos[i]);
     }
     return result;
   }
 
   public synchronized DSOClient[] getClients() {
-    return m_clients.toArray(new DSOClient[m_clients.size()]);
+    return clients.toArray(new DSOClient[clients.size()]);
   }
 
   protected synchronized void resetBeanProxies() {
-    m_serverInfoBean = null;
-    m_dsoBean = null;
-    m_objectManagementMonitorBean = null;
-    m_serverDBBackupBean = null;
-    m_productInfo = null;
+    serverInfoBean = null;
+    dsoBean = null;
+    objectManagementMonitorBean = null;
+    serverDBBackupBean = null;
+    lockProfilerBean = null;
+    clusterStatsBean = null;
+    productInfo = null;
   }
 
-  public void disconnect() {
-    getConnectionManager().disconnect();
+  public synchronized void disconnect() {
+    ServerConnectionManager scm = getConnectionManager();
+    if (scm != null) {
+      scm.disconnect();
+    }
   }
 
   private void removeAllClients() {
-    DSOClient[] clients = getClients();
-    for (DSOClient client : clients) {
-      m_clients.remove(client);
+    DSOClient[] theClients = getClients();
+    for (DSOClient client : theClients) {
+      clients.remove(client);
       fireClientDisconnected(client);
     }
   }
 
   synchronized void reset() {
-    if (m_roots == null) return;
-    m_startTime = m_activateTime = -1;
-    m_connected = m_ready = false;
+    if (roots == null) return;
+    startTime = activateTime = -1;
+    connected = ready = false;
     initReadySet();
-    m_roots.clear();
-    m_rootMap.clear();
+    roots.clear();
+    rootMap.clear();
     removeAllClients();
     resetBeanProxies();
   }
@@ -879,21 +1046,38 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     reset();
   }
 
-  public String takeThreadDump(long moment) {
-    return getServerInfoBean().takeThreadDump(moment);
+  public synchronized String takeThreadDump(long moment) {
+    TCServerInfoMBean theServerInfoBean = getServerInfoBean();
+    return theServerInfoBean != null ? theServerInfoBean.takeThreadDump(moment) : "not connected";
   }
 
   public void addServerLogListener(ServerLogListener listener) {
-    synchronized (m_listenerList) {
-      m_listenerList.add(ServerLogListener.class, listener);
+    synchronized (listenerList) {
+      listenerList.remove(ServerLogListener.class, listener);
+      listenerList.add(ServerLogListener.class, listener);
       testAddLogListener();
     }
   }
 
+  private void safeRemoveLogListener() {
+    try {
+      ConnectionContext cc = getConnectionContext();
+      if (cc != null) {
+        cc.removeNotificationListener(L2MBeanNames.LOGGER, logListener);
+      }
+    } catch (Exception e) {
+      /**/
+    }
+  }
+
   private void testAddLogListener() {
-    if (m_listenerList.getListenerCount(ServerLogListener.class) == 1) {
+    if (listenerList.getListenerCount(ServerLogListener.class) > 0) {
       try {
-        getConnectionContext().addNotificationListener(L2MBeanNames.LOGGER, m_logListener);
+        ConnectionContext cc = getConnectionContext();
+        if (cc != null) {
+          safeRemoveLogListener();
+          cc.addNotificationListener(L2MBeanNames.LOGGER, logListener);
+        }
       } catch (Exception e) {
         /* connection has probably dropped */
       }
@@ -901,16 +1085,19 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   public void removeServerLogListener(ServerLogListener listener) {
-    synchronized (m_listenerList) {
-      m_listenerList.remove(ServerLogListener.class, listener);
+    synchronized (listenerList) {
+      listenerList.remove(ServerLogListener.class, listener);
       testRemoveLogListener();
     }
   }
 
-  private void testRemoveLogListener() {
-    if (m_listenerList.getListenerCount(ServerLogListener.class) == 0) {
+  private synchronized void testRemoveLogListener() {
+    if (listenerList.getListenerCount(ServerLogListener.class) == 0) {
       try {
-        getConnectionContext().removeNotificationListener(L2MBeanNames.LOGGER, m_logListener);
+        ConnectionContext cc = getConnectionContext();
+        if (cc != null) {
+          cc.removeNotificationListener(L2MBeanNames.LOGGER, logListener);
+        }
       } catch (Exception e) {
         /* connection has probably dropped */
       }
@@ -918,7 +1105,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   private void fireMessageLogged(String logMsg) {
-    Object[] listeners = m_listenerList.getListenerList();
+    Object[] listeners = listenerList.getListenerList();
     for (int i = listeners.length - 2; i >= 0; i -= 2) {
       if (listeners[i] == ServerLogListener.class) {
         ((ServerLogListener) listeners[i + 1]).messageLogged(logMsg);
@@ -932,28 +1119,33 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     }
   }
 
-  public ManagedObjectFacade lookupFacade(ObjectID objectID, int limit) throws NoSuchObjectException {
-    return getDSOBean().lookupFacade(objectID, limit);
+  public synchronized ManagedObjectFacade lookupFacade(ObjectID objectID, int limit) throws NoSuchObjectException {
+    DSOMBean theDsoBean = getDSOBean();
+    return theDsoBean != null ? theDsoBean.lookupFacade(objectID, limit) : null;
   }
 
-  public DSOClassInfo[] getClassInfo() {
-    return getDSOBean().getClassInfo();
+  public synchronized DSOClassInfo[] getClassInfo() {
+    DSOMBean theDsoBean = getDSOBean();
+    return theDsoBean != null ? theDsoBean.getClassInfo() : null;
   }
 
-  public GCStats[] getGCStats() {
-    return getDSOBean().getGarbageCollectorStats();
+  public synchronized GCStats[] getGCStats() {
+    DSOMBean theDsoBean = getDSOBean();
+    return theDsoBean != null ? theDsoBean.getGarbageCollectorStats() : null;
   }
 
   public void addDGCListener(DGCListener listener) {
-    m_listenerList.add(DGCListener.class, listener);
+    listenerList.add(DGCListener.class, listener);
   }
 
   public void removeDGCListener(DGCListener listener) {
-    m_listenerList.remove(DGCListener.class, listener);
+    listenerList.remove(DGCListener.class, listener);
   }
 
   private void fireStatusUpdated(GCStats gcStats) {
-    Object[] listeners = m_listenerList.getListenerList();
+    assertActiveCoordinator();
+
+    Object[] listeners = listenerList.getListenerList();
     for (int i = listeners.length - 2; i >= 0; i -= 2) {
       if (listeners[i] == DGCListener.class) {
         ((DGCListener) listeners[i + 1]).statusUpdate(gcStats);
@@ -961,13 +1153,19 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     }
   }
 
-  public void runGC() {
-    getObjectManagementMonitorBean().runGC();
+  public synchronized void runGC() {
+    assertActiveCoordinator();
+
+    ObjectManagementMonitorMBean oomb = getObjectManagementMonitorBean();
+    if (oomb != null) {
+      oomb.runGC();
+    }
   }
 
-  public int getLiveObjectCount() {
+  public synchronized int getLiveObjectCount() {
     try {
-      return getDSOBean().getLiveObjectCount();
+      DSOMBean theDsoBean = getDSOBean();
+      return theDsoBean != null ? theDsoBean.getLiveObjectCount() : -1;
     } catch (UndeclaredThrowableException ute) {
       return -1;
     }
@@ -977,20 +1175,22 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     return true;
   }
 
-  public ServerDBBackupMBean getServerDBBackupBean() {
-    if (!m_serverDBBackupSupported) return null;
-    if (m_serverDBBackupBean != null) return m_serverDBBackupBean;
+  public synchronized ServerDBBackupMBean getServerDBBackupBean() {
+    if (!serverDBBackupSupported) return null;
+    if (serverDBBackupBean != null) return serverDBBackupBean;
     ConnectionContext cc = getConnectionContext();
-    m_serverDBBackupBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, L2MBeanNames.SERVER_DB_BACKUP,
-                                                                    ServerDBBackupMBean.class, true);
-    if (m_serverDBBackupBean != null && m_serverDBBackupBean.isBackupEnabled()) {
+    if (cc != null) {
       try {
-        cc.addNotificationListener(L2MBeanNames.SERVER_DB_BACKUP, new ServerDBBackupListener());
+        serverDBBackupBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, L2MBeanNames.SERVER_DB_BACKUP,
+                                                                      ServerDBBackupMBean.class, true);
+        if (serverDBBackupBean != null && serverDBBackupBean.isBackupEnabled()) {
+          cc.addNotificationListener(L2MBeanNames.SERVER_DB_BACKUP, new ServerDBBackupListener());
+        }
       } catch (Exception e) {
-        /**/
+        /* Connection probably dropped */
       }
     }
-    return m_serverDBBackupBean;
+    return serverDBBackupBean;
   }
 
   private class ServerDBBackupListener implements NotificationListener {
@@ -1013,15 +1213,16 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   public void addDBBackupListener(DBBackupListener listener) {
-    m_listenerList.add(DBBackupListener.class, listener);
+    removeDBBackupListener(listener);
+    listenerList.add(DBBackupListener.class, listener);
   }
 
   public void removeDBBackupListener(DBBackupListener listener) {
-    m_listenerList.remove(DBBackupListener.class, listener);
+    listenerList.remove(DBBackupListener.class, listener);
   }
 
   private void fireDBBackupStarted() {
-    Object[] listeners = m_listenerList.getListenerList();
+    Object[] listeners = listenerList.getListenerList();
     for (int i = listeners.length - 2; i >= 0; i -= 2) {
       if (listeners[i] == DBBackupListener.class) {
         ((DBBackupListener) listeners[i + 1]).backupStarted();
@@ -1030,7 +1231,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   private void fireDBBackupCompleted() {
-    Object[] listeners = m_listenerList.getListenerList();
+    Object[] listeners = listenerList.getListenerList();
     for (int i = listeners.length - 2; i >= 0; i -= 2) {
       if (listeners[i] == DBBackupListener.class) {
         ((DBBackupListener) listeners[i + 1]).backupCompleted();
@@ -1039,7 +1240,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   private void fireDBBackupFailed(String message) {
-    Object[] listeners = m_listenerList.getListenerList();
+    Object[] listeners = listenerList.getListenerList();
     for (int i = listeners.length - 2; i >= 0; i -= 2) {
       if (listeners[i] == DBBackupListener.class) {
         ((DBBackupListener) listeners[i + 1]).backupFailed(message);
@@ -1048,7 +1249,7 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   private void fireDBBackupProgress(int percentCopied) {
-    Object[] listeners = m_listenerList.getListenerList();
+    Object[] listeners = listenerList.getListenerList();
     for (int i = listeners.length - 2; i >= 0; i -= 2) {
       if (listeners[i] == DBBackupListener.class) {
         ((DBBackupListener) listeners[i + 1]).backupProgress(percentCopied);
@@ -1057,67 +1258,358 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
   }
 
   public synchronized boolean isDBBackupSupported() {
-    return m_serverDBBackupSupported;
+    return serverDBBackupSupported;
   }
 
   private void ensureDBBackupEnabled() {
     if (!isDBBackupSupported()) { throw new IllegalStateException("DBBackup not supported"); }
   }
 
-  public void backupDB() throws IOException {
-    ensureDBBackupEnabled();
-    getServerDBBackupBean().runBackUp();
+  public synchronized void backupDB() throws IOException {
+    ServerDBBackupMBean backupBean = getServerDBBackupBean();
+    if (backupBean != null) {
+      ensureDBBackupEnabled();
+      backupBean.runBackUp();
+    }
   }
 
-  public void backupDB(String path) throws IOException {
-    ensureDBBackupEnabled();
-    getServerDBBackupBean().runBackUp(path);
+  public synchronized void backupDB(String path) throws IOException {
+    ServerDBBackupMBean backupBean = getServerDBBackupBean();
+    if (backupBean != null) {
+      ensureDBBackupEnabled();
+      backupBean.runBackUp(path);
+    }
   }
 
-  public boolean isDBBackupRunning() {
-    ensureDBBackupEnabled();
-    return getServerDBBackupBean().isBackUpRunning();
+  public synchronized boolean isDBBackupRunning() {
+    ServerDBBackupMBean backupBean = getServerDBBackupBean();
+    if (backupBean != null) {
+      ensureDBBackupEnabled();
+      return backupBean.isBackUpRunning();
+    }
+    return false;
   }
 
-  public String getDefaultDBBackupPath() {
-    ensureDBBackupEnabled();
-    return getServerDBBackupBean().getDefaultPathForBackup();
+  public synchronized String getDefaultDBBackupPath() {
+    ServerDBBackupMBean backupBean = getServerDBBackupBean();
+    if (backupBean != null) {
+      ensureDBBackupEnabled();
+      return backupBean.getDefaultPathForBackup();
+    }
+    return "not connected";
   }
 
-  public boolean isDBBackupEnabled() {
-    ensureDBBackupEnabled();
-    return getServerDBBackupBean().isBackupEnabled();
+  public synchronized boolean isDBBackupEnabled() {
+    ServerDBBackupMBean backupBean = getServerDBBackupBean();
+    if (backupBean != null) {
+      ensureDBBackupEnabled();
+      return backupBean.isBackupEnabled();
+    }
+    return false;
   }
 
-  public String getDBHome() {
-    ensureDBBackupEnabled();
-    return getServerDBBackupBean().getDbHome();
+  public synchronized String getDBHome() {
+    ServerDBBackupMBean backupBean = getServerDBBackupBean();
+    if (backupBean != null) {
+      ensureDBBackupEnabled();
+      return backupBean.getDbHome();
+    }
+    return "not connected";
+  }
+
+  public synchronized LockStatisticsMonitorMBean getLockProfilerBean() {
+    if (lockProfilerBean != null) return lockProfilerBean;
+    ConnectionContext cc = getConnectionContext();
+    if (cc != null) {
+      try {
+        lockProfilerBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, L2MBeanNames.LOCK_STATISTICS,
+                                                                    LockStatisticsMonitorMBean.class, true);
+        cc.addNotificationListener(L2MBeanNames.LOCK_STATISTICS, new LockStatsNotificationListener());
+      } catch (Exception e) {
+        lockProfilingSupported = false;
+      }
+    }
+    return lockProfilerBean;
+  }
+
+  private class LockStatsNotificationListener implements NotificationListener {
+    public void handleNotification(Notification notification, Object handback) {
+      String type = notification.getType();
+      if (type.equals(LockStatisticsMonitorMBean.TRACE_DEPTH)) {
+        int oldTraceDepth = lockProfilerTraceDepth;
+        lockProfilerTraceDepth = -1;
+        firePropertyChange(PROP_LOCK_STATS_TRACE_DEPTH, oldTraceDepth, getLockProfilerTraceDepth());
+      } else if (type.equals(LockStatisticsMonitorMBean.TRACES_ENABLED)) {
+        boolean oldLockStatsEnabled = lockProfilingEnabled.booleanValue();
+        lockProfilingEnabled = null;
+        firePropertyChange(PROP_LOCK_STATS_ENABLED, oldLockStatsEnabled, isLockProfilingEnabled());
+      }
+    }
+  }
+
+  public boolean isLockProfilingSupported() {
+    return lockProfilingSupported;
+  }
+
+  public int getLockProfilerTraceDepth() {
+    if (lockProfilerTraceDepth != -1) return lockProfilerTraceDepth;
+    if (lockProfilerBean != null) { return lockProfilerTraceDepth = lockProfilerBean.getTraceDepth(); }
+    return -1;
+  }
+
+  public void setLockProfilerTraceDepth(int traceDepth) {
+    if (lockProfilerBean != null && traceDepth != lockProfilerTraceDepth) {
+      lockProfilerBean.setLockStatisticsConfig(traceDepth, 1);
+    }
+  }
+
+  public boolean isLockProfilingEnabled() {
+    if (lockProfilingEnabled != null) return lockProfilingEnabled.booleanValue();
+    if (lockProfilerBean != null) { return lockProfilingEnabled = Boolean.valueOf(lockProfilerBean
+        .isLockStatisticsEnabled()); }
+    return false;
+  }
+
+  public void setLockProfilingEnabled(boolean lockStatsEnabled) {
+    if (lockProfilerBean != null) {
+      lockProfilerBean.setLockStatisticsEnabled(lockStatsEnabled);
+    }
+  }
+
+  public Collection<LockSpec> getLockSpecs() {
+    if (lockProfilerBean != null) { return lockProfilerBean.getLockSpecs(); }
+    return Collections.emptySet();
+  }
+
+  public synchronized StatisticsLocalGathererMBean getClusterStatsBean() {
+    if (clusterStatsBean != null) return clusterStatsBean;
+    ConnectionContext cc = getConnectionContext();
+    if (cc != null) {
+      try {
+        clusterStatsBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, StatisticsMBeanNames.STATISTICS_GATHERER,
+                                                                    StatisticsLocalGathererMBean.class, true);
+        clusterStatsSupported = clusterStatsBean.isActive();
+        if (clusterStatsSupported) {
+          cc.addNotificationListener(StatisticsMBeanNames.STATISTICS_GATHERER, new ClusterStatsNotificationListener());
+        }
+      } catch (Exception e) {
+        clusterStatsSupported = false;
+      }
+    }
+    return clusterStatsBean;
+  }
+
+  public void addClusterStatsListener(IClusterStatsListener listener) {
+    removeClusterStatsListener(listener);
+    listenerList.add(IClusterStatsListener.class, listener);
+  }
+
+  public void removeClusterStatsListener(IClusterStatsListener listener) {
+    listenerList.remove(IClusterStatsListener.class, listener);
+  }
+
+  private void fireClusterStatsConnected() {
+    Object[] listeners = listenerList.getListenerList();
+    for (int i = listeners.length - 2; i >= 0; i -= 2) {
+      if (listeners[i] == IClusterStatsListener.class) {
+        ((IClusterStatsListener) listeners[i + 1]).connected();
+      }
+    }
+  }
+
+  private void fireClusterStatsSessionCreated(String sessionId) {
+    Object[] listeners = listenerList.getListenerList();
+    for (int i = listeners.length - 2; i >= 0; i -= 2) {
+      if (listeners[i] == IClusterStatsListener.class) {
+        ((IClusterStatsListener) listeners[i + 1]).sessionCreated(sessionId);
+      }
+    }
+  }
+
+  private void fireClusterStatsSessionStarted(String sessionId) {
+    Object[] listeners = listenerList.getListenerList();
+    for (int i = listeners.length - 2; i >= 0; i -= 2) {
+      if (listeners[i] == IClusterStatsListener.class) {
+        ((IClusterStatsListener) listeners[i + 1]).sessionStarted(sessionId);
+      }
+    }
+  }
+
+  private void fireClusterStatsSessionStopped(String sessionId) {
+    Object[] listeners = listenerList.getListenerList();
+    for (int i = listeners.length - 2; i >= 0; i -= 2) {
+      if (listeners[i] == IClusterStatsListener.class) {
+        ((IClusterStatsListener) listeners[i + 1]).sessionStopped(sessionId);
+      }
+    }
+  }
+
+  private void fireClusterStatsSessionCleared(String sessionId) {
+    Object[] listeners = listenerList.getListenerList();
+    for (int i = listeners.length - 2; i >= 0; i -= 2) {
+      if (listeners[i] == IClusterStatsListener.class) {
+        ((IClusterStatsListener) listeners[i + 1]).sessionCleared(sessionId);
+      }
+    }
+  }
+
+  private void fireClusterStatsAllSessionsCleared() {
+    Object[] listeners = listenerList.getListenerList();
+    for (int i = listeners.length - 2; i >= 0; i -= 2) {
+      if (listeners[i] == IClusterStatsListener.class) {
+        ((IClusterStatsListener) listeners[i + 1]).allSessionsCleared();
+      }
+    }
+  }
+
+  private void fireClusterStatsDisconnected() {
+    Object[] listeners = listenerList.getListenerList();
+    for (int i = listeners.length - 2; i >= 0; i -= 2) {
+      if (listeners[i] == IClusterStatsListener.class) {
+        ((IClusterStatsListener) listeners[i + 1]).disconnected();
+      }
+    }
+  }
+
+  private void fireClusterStatsReinitialized() {
+    Object[] listeners = listenerList.getListenerList();
+    for (int i = listeners.length - 2; i >= 0; i -= 2) {
+      if (listeners[i] == IClusterStatsListener.class) {
+        ((IClusterStatsListener) listeners[i + 1]).reinitialized();
+      }
+    }
+  }
+
+  private class ClusterStatsNotificationListener implements NotificationListener {
+    public void handleNotification(Notification notification, Object handback) {
+      String type = notification.getType();
+      Object userData = notification.getUserData();
+
+      if (type.equals(StatisticsLocalGathererMBean.STATISTICS_LOCALGATHERER_STARTEDUP_TYPE)) {
+        fireClusterStatsConnected();
+      } else if (type.equals(StatisticsLocalGathererMBean.STATISTICS_LOCALGATHERER_SESSION_CREATED_TYPE)) {
+        fireClusterStatsSessionCreated((String) userData);
+      } else if (type.equals(StatisticsLocalGathererMBean.STATISTICS_LOCALGATHERER_CAPTURING_STARTED_TYPE)) {
+        fireClusterStatsSessionStarted((String) userData);
+      } else if (type.equals(StatisticsLocalGathererMBean.STATISTICS_LOCALGATHERER_CAPTURING_STOPPED_TYPE)) {
+        fireClusterStatsSessionStopped((String) userData);
+      } else if (type.equals(StatisticsLocalGathererMBean.STATISTICS_LOCALGATHERER_SESSION_CLEARED_TYPE)) {
+        fireClusterStatsSessionCleared((String) userData);
+      } else if (type.equals(StatisticsLocalGathererMBean.STATISTICS_LOCALGATHERER_ALLSESSIONS_CLEARED_TYPE)) {
+        fireClusterStatsAllSessionsCleared();
+      } else if (type.equals(StatisticsLocalGathererMBean.STATISTICS_LOCALGATHERER_SHUTDOWN_TYPE)) {
+        fireClusterStatsDisconnected();
+      } else if (type.equals(StatisticsLocalGathererMBean.STATISTICS_LOCALGATHERER_REINITIALIZED_TYPE)) {
+        fireClusterStatsReinitialized();
+      }
+    }
+  }
+
+  public boolean isClusterStatsSupported() {
+    return clusterStatsSupported;
+  }
+
+  /*
+   * Listener will receive connected message.
+   */
+  public void startupClusterStats() {
+    StatisticsLocalGathererMBean theClusterStatsBean = getClusterStatsBean();
+    if (theClusterStatsBean != null) {
+      theClusterStatsBean.startup();
+    }
+  }
+
+  public String[] getSupportedClusterStats() {
+    StatisticsLocalGathererMBean theClusterStatsBean = getClusterStatsBean();
+    if (theClusterStatsBean != null) { return theClusterStatsBean.getSupportedStatistics(); }
+    return new String[0];
+  }
+
+  public void clearAllClusterStats() {
+    StatisticsLocalGathererMBean theClusterStatsBean = getClusterStatsBean();
+    if (theClusterStatsBean != null) {
+      theClusterStatsBean.clearAllStatistics();
+    }
+  }
+
+  public void clearClusterStatsSession(String sessionId) {
+    StatisticsLocalGathererMBean theClusterStatsBean = getClusterStatsBean();
+    if (theClusterStatsBean != null) {
+      theClusterStatsBean.clearStatistics(sessionId);
+    }
+  }
+
+  public void startClusterStatsSession(String sessionId, String[] statsToRecord, long samplePeriodMillis) {
+    StatisticsLocalGathererMBean theClusterStatsBean = getClusterStatsBean();
+    if (theClusterStatsBean != null) {
+      theClusterStatsBean.createSession(sessionId);
+      theClusterStatsBean.setSessionParam(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL, Long
+          .valueOf(samplePeriodMillis));
+      theClusterStatsBean.enableStatistics(statsToRecord);
+      theClusterStatsBean.startCapturing();
+    }
+  }
+
+  public void endCurrentClusterStatsSession() {
+    StatisticsLocalGathererMBean theClusterStatsBean = getClusterStatsBean();
+    if (theClusterStatsBean != null) {
+      theClusterStatsBean.stopCapturing();
+      theClusterStatsBean.closeSession();
+    }
+  }
+
+  public void captureClusterStat(String sraName) {
+    StatisticsLocalGathererMBean theClusterStatsBean = getClusterStatsBean();
+    if (theClusterStatsBean != null) {
+      theClusterStatsBean.captureStatistic(sraName);
+    }
+  }
+
+  public String[] getAllClusterStatsSessions() {
+    StatisticsLocalGathererMBean theClusterStatsBean = getClusterStatsBean();
+    if (theClusterStatsBean != null) { return theClusterStatsBean.getAvailableSessionIds(); }
+    return new String[0];
+  }
+
+  public boolean isActiveClusterStatsSession() {
+    StatisticsLocalGathererMBean theClusterStatsBean = getClusterStatsBean();
+    if (theClusterStatsBean != null) { return theClusterStatsBean.isCapturing(); }
+    return false;
+  }
+
+  public String getActiveClusterStatsSession() {
+    StatisticsLocalGathererMBean theClusterStatsBean = getClusterStatsBean();
+    if (theClusterStatsBean != null) { return theClusterStatsBean.getActiveSessionId(); }
+    return "";
   }
 
   public String toString() {
-    return m_displayLabel;
+    return displayLabel;
   }
 
   public synchronized void tearDown() {
-    m_clients.clear();
-    m_clients = null;
-    m_readySet.clear();
-    m_readySet = null;
-    m_roots.clear();
-    m_roots = null;
-    m_rootMap.clear();
-    m_rootMap = null;
-    m_pendingClients.clear();
-    m_pendingClients = null;
-    m_clientChangeListener = null;
-    m_propertyChangeSupport = null;
-    m_connectManager.tearDown();
-    m_connectException = null;
-    m_serverInfoBean = null;
-    m_dsoBean = null;
-    m_objectManagementMonitorBean = null;
-    m_productInfo = null;
-    m_logListener = null;
+    super.tearDown();
+
+    clients.clear();
+    clients = null;
+    readySet.clear();
+    readySet = null;
+    roots.clear();
+    roots = null;
+    rootMap.clear();
+    rootMap = null;
+    pendingClients.clear();
+    pendingClients = null;
+    clientChangeListener = null;
+    connectManager.tearDown();
+    connectException = null;
+    serverInfoBean = null;
+    dsoBean = null;
+    objectManagementMonitorBean = null;
+    lockProfilerBean = null;
+    clusterStatsBean = null;
+    productInfo = null;
+    logListener = null;
   }
 
   public void setFaultDebug(boolean faultDebug) {
@@ -1197,4 +1689,15 @@ public class Server implements IServer, NotificationListener, ManagedObjectFacad
     return false;
   }
 
+  public String dump() {
+    StringBuilder sb = new StringBuilder();
+    sb.append(toString());
+    return sb.toString();
+  }
+
+  public Map<ObjectName, Map<String, Object>> getAttributeMap(Map<ObjectName, Set<String>> attributeMap, long timeout,
+                                                              TimeUnit unit) {
+    if (isReady()) { return getDSOBean().getAttributeMap(attributeMap, timeout, unit); }
+    return Collections.emptyMap();
+  }
 }

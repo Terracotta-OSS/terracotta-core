@@ -124,6 +124,7 @@ modules:
         - dso-l2-common
         - dso-statistics-api
         - thirdparty-api
+        - management-api
   - modules-common:
       options:
         jdk: J2SE-1.5

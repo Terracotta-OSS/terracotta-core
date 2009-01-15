@@ -4,16 +4,15 @@
  */
 package com.tc.admin.common;
 
-import org.dijon.TextArea;
-
 import javax.swing.JPopupMenu;
+import javax.swing.JTextArea;
 
-public class XTextArea extends TextArea {
-  protected TextComponentHelper m_helper;
+public class XTextArea extends JTextArea {
+  protected TextComponentHelper helper;
 
   public XTextArea() {
     super();
-    m_helper = createHelper();
+    helper = createHelper();
   }
 
   protected TextComponentHelper createHelper() {
@@ -21,21 +20,29 @@ public class XTextArea extends TextArea {
   }
 
   public JPopupMenu createPopup() {
-    return m_helper.createPopup();
+    return helper.createPopup();
   }
 
   public void setPopupMenu(JPopupMenu popupMenu) {
-    m_helper.setPopupMenu(popupMenu);
+    helper.setPopupMenu(popupMenu);
   }
 
   public JPopupMenu getPopupMenu() {
-    return m_helper.getPopupMenu();
+    return helper.getPopupMenu();
   }
 
+  @Override
   public void addNotify() {
     super.addNotify();
     if (getPopupMenu() == null) {
       setPopupMenu(createPopup());
     }
+  }
+
+  @Override
+  public void setText(String text) {
+    super.setText(text);
+    setCaretPosition(0);
+    moveCaretPosition(0);
   }
 }

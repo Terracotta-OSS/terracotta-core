@@ -4,16 +4,20 @@
  */
 package com.tc.admin.common;
 
-import org.dijon.TextField;
-
 import javax.swing.JPopupMenu;
+import javax.swing.JTextField;
 
-public class XTextField extends TextField {
-  protected TextComponentHelper m_helper;
+public class XTextField extends JTextField {
+  protected TextComponentHelper helper;
 
   public XTextField() {
     super();
-    m_helper = createHelper();
+    helper = createHelper();
+  }
+
+  public XTextField(String text) {
+    this();
+    setText(text);
   }
 
   protected TextComponentHelper createHelper() {
@@ -21,15 +25,15 @@ public class XTextField extends TextField {
   }
 
   protected JPopupMenu createPopup() {
-    return m_helper.createPopup();
+    return helper.createPopup();
   }
 
   public void setPopupMenu(JPopupMenu popupMenu) {
-    m_helper.setPopupMenu(popupMenu);
+    helper.setPopupMenu(popupMenu);
   }
 
   public JPopupMenu getPopupMenu() {
-    return m_helper.getPopupMenu();
+    return helper.getPopupMenu();
   }
 
   public void addNotify() {
@@ -38,6 +42,4 @@ public class XTextField extends TextField {
       setPopupMenu(createPopup());
     }
   }
-  
-  public void selectAll() {/**/}
 }

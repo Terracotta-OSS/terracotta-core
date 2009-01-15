@@ -16,8 +16,7 @@ import java.awt.Color;
 import java.awt.Paint;
 
 public class ClassesTreeMap extends XContainer {
-  private TreeMap          m_treeMap;
-  private ClassesModelNode m_model;
+  private TreeMap treeMap;
 
   public ClassesTreeMap() {
     super(new BorderLayout());
@@ -26,13 +25,8 @@ public class ClassesTreeMap extends XContainer {
   public void setModel(ClassTreeModel treeModel) {
     removeAll();
 
-    m_model = new ClassesModelNode(treeModel);
-    m_treeMap = new TreeMap(m_model);
-
-    ClassesModelSize fSize = new ClassesModelSize();
-    ClassesModelDraw fDraw = new ClassesModelDraw();
-    TMView view = m_treeMap.getView(fSize, fDraw);
-
+    treeMap = new TreeMap(new ClassesModelNode(treeModel));
+    TMView view = treeMap.getView(new ClassesModelSize(), new ClassesModelDraw());
     view.setAlgorithm(TMView.SQUARIFIED);
     view.getAlgorithm().setBorderSize(14);
 
@@ -46,7 +40,6 @@ public class ClassesTreeMap extends XContainer {
 
     public float getSizeOfObject(Object node) {
       if (node instanceof ClassTreeNode) { return ((ClassTreeNode) node).getInstanceCount(); }
-
       return 0.0f;
     }
   }
@@ -67,7 +60,6 @@ public class ClassesTreeMap extends XContainer {
         ClassTreeNode ctn = (ClassTreeNode) node;
         return "<html>" + ctn.getFullName() + "<p>" + ctn.getInstanceCount() + " instances";
       }
-
       return "";
     }
 
