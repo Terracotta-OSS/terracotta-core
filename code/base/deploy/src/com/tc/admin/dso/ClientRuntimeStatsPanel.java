@@ -214,8 +214,6 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel implements Pr
     XYPlot plot = (XYPlot) memoryChart.getPlot();
     NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
     numberAxis.setAutoRangeIncludesZero(true);
-    // DecimalFormat formatter = new DecimalFormat("0M");
-    // numberAxis.setNumberFormatOverride(formatter);
     ChartPanel memoryPanel = createChartPanel(memoryChart);
     parent.add(memoryPanel);
     memoryPanel.setPreferredSize(fDefaultGraphSize);

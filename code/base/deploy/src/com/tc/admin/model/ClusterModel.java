@@ -439,7 +439,9 @@ public class ClusterModel implements IClusterModel {
         Iterator<Future<Collection<NodePollResult>>> resultIter = results.iterator();
         while (resultIter.hasNext()) {
           Future<Collection<NodePollResult>> future = resultIter.next();
-          if (future.isDone()) {
+          if(future.isCancelled()) {
+            System.err.println("Poll task has timed-out; consider increasing the runtime stats poll period.");
+          } else if (future.isDone()) {
             try {
               Iterator<NodePollResult> nodeResult = future.get().iterator();
               while (nodeResult.hasNext()) {

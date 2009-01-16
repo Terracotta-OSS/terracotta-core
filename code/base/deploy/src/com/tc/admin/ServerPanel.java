@@ -34,19 +34,16 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableCellRenderer;
 
 public class ServerPanel extends XContainer {
-  protected ApplicationContext appContext;
-  protected IServer            server;
-  protected ServerListener     serverListener;
-
-  private XTabbedPane          tabbedPane;
-  private StatusView           statusView;
-  protected XContainer         controlArea;
-  private XContainer           restartInfoItem;
-  private PropertyTable        propertyTable;
-
-  private XTextArea            environmentTextArea;
-  private XTextArea            configTextArea;
-  private ServerLoggingPanel   loggingPanel;
+  private ApplicationContext appContext;
+  private IServer            server;
+  private ServerListener     serverListener;
+  private XTabbedPane        tabbedPane;
+  private StatusView         statusView;
+  private XContainer         restartInfoItem;
+  private PropertyTable      propertyTable;
+  private XTextArea          environmentTextArea;
+  private XTextArea          configTextArea;
+  private ServerLoggingPanel loggingPanel;
 
   public ServerPanel(ApplicationContext appContext, IServer server) {
     super(new BorderLayout());
@@ -61,14 +58,10 @@ public class ServerPanel extends XContainer {
     GridBagConstraints gbc = new GridBagConstraints();
     gbc.gridx = gbc.gridy = 0;
     gbc.insets = new Insets(3, 3, 3, 3);
-    gbc.anchor = GridBagConstraints.NORTH;
 
     XContainer topPanel = new XContainer(new GridBagLayout());
     topPanel.add(statusView = new StatusView(), gbc);
     statusView.setText("Not connected");
-    gbc.gridx++;
-
-    topPanel.add(controlArea = new XContainer(), gbc);
     gbc.gridx++;
 
     // topPanel filler
@@ -96,7 +89,7 @@ public class ServerPanel extends XContainer {
     XContainer mainPanelHolder = new XContainer(new BorderLayout());
     mainPanelHolder.add(mainPanel, BorderLayout.NORTH);
 
-    tabbedPane.addTab("Main", mainPanelHolder);
+    tabbedPane.addTab(appContext.getString("node.main"), mainPanelHolder);
 
     /** Environment **/
     XContainer envPanel = new XContainer(new BorderLayout());
@@ -105,7 +98,7 @@ public class ServerPanel extends XContainer {
     environmentTextArea.setFont(new Font("monospaced", Font.PLAIN, 12));
     envPanel.add(new XScrollPane(environmentTextArea));
     envPanel.add(new SearchPanel(appContext, environmentTextArea), BorderLayout.SOUTH);
-    tabbedPane.addTab("Environment", envPanel);
+    tabbedPane.addTab(appContext.getString("node.environment"), envPanel);
 
     /** Config **/
     XContainer configPanel = new XContainer(new BorderLayout());
@@ -114,12 +107,12 @@ public class ServerPanel extends XContainer {
     configTextArea.setFont(new Font("monospaced", Font.PLAIN, 12));
     configPanel.add(new XScrollPane(configTextArea));
     configPanel.add(new SearchPanel(appContext, configTextArea), BorderLayout.SOUTH);
-    tabbedPane.addTab("Config", configPanel);
+    tabbedPane.addTab(appContext.getString("node.config"), configPanel);
 
     /** Logging **/
     loggingPanel = createLoggingPanel(appContext, server);
     if (loggingPanel != null) {
-      tabbedPane.addTab("Logging", loggingPanel);
+      tabbedPane.addTab(appContext.getString("node.logging.settings"), loggingPanel);
     }
 
     hideInfoContent();

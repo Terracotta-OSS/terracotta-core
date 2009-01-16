@@ -15,6 +15,8 @@ public class CommonBundle extends ListResourceBundle {
         { "canceled", "Canceled" }, { "cancel", "Cancel" }, { "delete", "Delete" }, { "delete.all", "Delete All" },
         { "ok", "OK" }, { "shutdown", "Shutdown" }, { "details.link.text", "Details >>" },
         { "back.link.text", "<< Back" }, { "connect.elipses", "Connect..." }, { "disconnect", "Disconnect" },
-        { "next", "Next" }, { "previous", "Previous" }, { "refresh", "Refresh" }, { "options.dialog.title", "Options" } };
+        { "next", "Next" }, { "previous", "Previous" }, { "refresh", "Refresh" },
+        { "options.dialog.title", "Options" }, { "node.environment", "Environment" },
+        { "node.logging.settings", "Logging Settings" }, { "node.config", "Config" }, { "node.main", "Main" } };
   }
 }

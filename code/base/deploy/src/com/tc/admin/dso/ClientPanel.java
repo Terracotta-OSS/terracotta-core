@@ -52,7 +52,7 @@ public class ClientPanel extends XContainer implements PropertyChangeListener {
     propertyTable.setDefaultRenderer(Long.class, renderer);
     propertyTable.setDefaultRenderer(Integer.class, renderer);
     mainPanel.add(new XScrollPane(propertyTable), BorderLayout.CENTER);
-    tabbedPane.addTab("Main", mainPanel);
+    tabbedPane.addTab(appContext.getString("node.main"), mainPanel);
 
     /** Environment **/
     XContainer envPanel = new XContainer(new BorderLayout());
@@ -61,7 +61,7 @@ public class ClientPanel extends XContainer implements PropertyChangeListener {
     environmentTextArea.setFont(new Font("monospaced", Font.PLAIN, 12));
     envPanel.add(new XScrollPane(environmentTextArea));
     envPanel.add(new SearchPanel(appContext, environmentTextArea), BorderLayout.SOUTH);
-    tabbedPane.addTab("Environment", envPanel);
+    tabbedPane.addTab(appContext.getString("node.environment"), envPanel);
 
     /** Config **/
     XContainer configPanel = new XContainer(new BorderLayout());
@@ -70,12 +70,12 @@ public class ClientPanel extends XContainer implements PropertyChangeListener {
     configTextArea.setFont(new Font("monospaced", Font.PLAIN, 12));
     configPanel.add(new XScrollPane(configTextArea));
     configPanel.add(new SearchPanel(appContext, configTextArea), BorderLayout.SOUTH);
-    tabbedPane.addTab("Config", configPanel);
+    tabbedPane.addTab(appContext.getString("node.config"), configPanel);
 
     /** Logging **/
     loggingPanel = createLoggingPanel(appContext, client);
     if (loggingPanel != null) {
-      tabbedPane.addTab("Logging", loggingPanel);
+      tabbedPane.addTab(appContext.getString("node.logging.settings"), loggingPanel);
     }
 
     add(tabbedPane, BorderLayout.CENTER);

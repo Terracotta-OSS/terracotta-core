@@ -180,7 +180,7 @@ public class AdminClientBundle extends ListResourceBundle {
         { "heap.usage.used", "memory used" },
         { "pending.transactions", "Unacknowledged Transaction Broadcasts" },
         { "resident.object.message",
-            "<html><span style='color:#C0C0C0'>Greyed-out</span> items not resident in this client" },
+            "<html>Greyed-out items are not resident in this clients heap: <span style='color:#C0C0C0'>Not resident</span></html>" },
         { "thread.dump.timeout.msg", "Timed-out after {0} seconds." }, { "roots.inspect.show", "Show..." },
         { "thread.dump.export.as.text", "Export As Text..." }, { "thread.dump.take", "Take Thread Dump" },
         { "export.all.thread.dumps.dialog.title", "Export All Thread Dumps" },

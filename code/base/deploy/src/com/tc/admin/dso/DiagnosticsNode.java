@@ -4,6 +4,7 @@
  */
 package com.tc.admin.dso;
 
+import com.tc.admin.AbstractClusterListener;
 import com.tc.admin.ClusterNode;
 import com.tc.admin.ClusterThreadDumpProvider;
 import com.tc.admin.IAdminClientContext;
@@ -29,6 +30,7 @@ import javax.swing.text.html.HTML;
 public class DiagnosticsNode extends ComponentNode implements HyperlinkListener {
   protected IAdminClientContext adminClientContext;
   protected IClusterModel       clusterModel;
+  protected ClusterListener     clusterListener;
   protected XScrollPane         diagnosticsPanel;
   private StatsRecorderNode     statsRecorderNode;
   private int                   statsRecorderNodeIndex;
@@ -50,7 +52,21 @@ public class DiagnosticsNode extends ComponentNode implements HyperlinkListener 
     add(createThreadDumpsNode(clusterNode));
     statsRecorderNodeIndex = getChildCount();
     IServer activeCoord = clusterModel.getActiveCoordinator();
-    setStatsRecorderAvailable(activeCoord.isClusterStatsSupported());
+    if (activeCoord != null) {
+      setStatsRecorderAvailable(activeCoord.isClusterStatsSupported());
+    } else {
+      clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
+    }
+  }
+
+  private class ClusterListener extends AbstractClusterListener {
+    public ClusterListener(IClusterModel clusterModel) {
+      super(clusterModel);
+    }
+
+    protected void handleActiveCoordinator(IServer oldActive, IServer newActive) {
+      setStatsRecorderAvailable(newActive != null && newActive.isClusterStatsSupported());
+    }
   }
 
   protected RuntimeStatsNode createRuntimeStatsNode() {
@@ -118,11 +134,14 @@ public class DiagnosticsNode extends ComponentNode implements HyperlinkListener 
   }
 
   public void tearDown() {
+    clusterModel.removePropertyChangeListener(clusterListener);
+
     super.tearDown();
 
     synchronized (this) {
       adminClientContext = null;
       clusterModel = null;
+      clusterListener = null;
       diagnosticsPanel = null;
     }
   }

@@ -83,7 +83,6 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
 
     this.adminClientContext = adminClientContext;
     clusterModel = (ClusterModel) getClusterElement();
-    clusterModel.setName("My cluster");
 
     setLabel(adminClientContext.getString("cluster.node.label"));
     initMenu(autoConnect);
