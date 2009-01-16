@@ -292,6 +292,7 @@
       <xs:element name="wait-notify-debug" type="xs:boolean" minOccurs="0" default="false" />
       <xs:element name="distributed-method-debug" type="xs:boolean" minOccurs="0" default="false" />
       <xs:element name="new-object-debug" type="xs:boolean" minOccurs="0" default="false" />
+      <xs:element name="named-loader-debug" type="xs:boolean" minOccurs="0" default="false" />
     </xs:all>
   </xs:complexType>
   <xs:complexType name="additional-boot-jar-classes">

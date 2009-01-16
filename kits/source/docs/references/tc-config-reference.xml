@@ -493,6 +493,7 @@
           <wait-notify-debug>false</wait-notify-debug>
           <distributed-method-debug>false</distributed-method-debug>
           <new-object-debug>false</new-object-debug>
+          <named-loader-debug>false</named-loader-debug>
         </runtime-logging>
 
         <!-- This section controls the exact format of the output from

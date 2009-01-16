@@ -26,6 +26,7 @@ import com.tc.object.bytecode.NullManager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
+import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.server.TCServer;
@@ -156,7 +157,8 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
                                                                      .getLogger(DistributedObjectClient.class))),
                                                                  new MockClassProvider(),
                                                                  new PreparedComponentsFromL2Connection(manager),
-                                                                 NullManager.getInstance(), new Cluster());
+                                                                 NullManager.getInstance(), new Cluster(),
+                                                                 new NullRuntimeLogger());
     client.start();
     return client;
   }

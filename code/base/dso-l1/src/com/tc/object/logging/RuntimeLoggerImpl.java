@@ -9,6 +9,7 @@ import com.tc.logging.TCLogger;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.loaders.NamedClassLoader;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.tx.TimerSpec;
 import com.tc.properties.TCPropertiesConsts;
@@ -39,6 +40,8 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
   private boolean        faultDebug;
   private StatsRecorder  faultStatsRecorder;
 
+  private boolean namedLoaderDebug;
+
   public RuntimeLoggerImpl(DSOClientConfigHelper configHelper) {
     this.logger = CustomerLogging.getDSORuntimeLogger();
 
@@ -50,6 +53,7 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
     this.distributedMethodDebug = configHelper.runtimeLoggingOptions().logDistributedMethodDebug().getBoolean();
     this.nonPortableDump = configHelper.runtimeLoggingOptions().logNonPortableDump().getBoolean();
     this.waitNotifyDebug = configHelper.runtimeLoggingOptions().logWaitNotifyDebug().getBoolean();
+    this.namedLoaderDebug = configHelper.runtimeLoggingOptions().logNamedLoaderDebug().getBoolean();
 
     // runtime logging options
     this.fullStack = configHelper.runtimeOutputOptions().doFullStack().getBoolean();
@@ -181,11 +185,18 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
     return this.faultDebug;
   }
 
+  public void setNamedLoaderDebug(boolean value) {
+    this.namedLoaderDebug = value;
+  }
+
+  public boolean getNamedLoaderDebug() {
+    return this.namedLoaderDebug;
+  }
+
   public void updateFaultStats(String type) {
     faultStatsRecorder.updateStats(type, StatsRecorder.SINGLE_INCR);
   }
 
-  
   public void lockAcquired(String lockName, int level, Object instance, TCObject tcObject) {
     boolean isAutoLock = ByteCodeUtil.isAutolockName(lockName);
 
@@ -314,5 +325,14 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
   private static String baseToString(Object obj) {
     if (obj == null) { return null; }
     return obj.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(obj));
+  }
+
+  public void namedLoaderRegistered(NamedClassLoader loader, String name, NamedClassLoader previous) {
+    StringBuffer message = new StringBuffer("loader of type [");
+    message.append(loader.getClass().getName()).append("] with name [").append(name);
+    message.append("] registered (replaced: ").append(previous != null).append(")");
+
+    appendCall(message);
+    logger.info(message);
   }
 }

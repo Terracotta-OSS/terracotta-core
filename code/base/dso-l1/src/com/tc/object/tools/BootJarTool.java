@@ -137,7 +137,6 @@ import com.tc.object.loaders.NamedClassLoader;
 import com.tc.object.loaders.NamedLoaderAdapter;
 import com.tc.object.loaders.Namespace;
 import com.tc.object.loaders.StandardClassLoaderAdapter;
-import com.tc.object.loaders.StandardClassProvider;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.InstrumentationLoggerImpl;
 import com.tc.object.logging.NullInstrumentationLogger;
@@ -491,8 +490,6 @@ public class BootJarTool {
       loadTerracottaClass(TCLogger.class.getName());
       loadTerracottaClass(LogLevel.class.getName());
       loadTerracottaClass(Banner.class.getName());
-      loadTerracottaClass(StandardClassProvider.class.getName());
-      loadTerracottaClass(StandardClassProvider.SystemLoaderHolder.class.getName());
       loadTerracottaClass(Namespace.class.getName());
       loadTerracottaClass(ClassProcessorHelper.class.getName());
       loadTerracottaClass(ClassProcessorHelperJDK15.class.getName());

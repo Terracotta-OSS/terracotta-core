@@ -20,6 +20,7 @@ public class StandardDSORuntimeLoggingOptions extends BaseNewConfigObject implem
   private final BooleanConfigItem logDistributedMethodDebug;
   private final BooleanConfigItem logNewObjectDebug;
   private final BooleanConfigItem logNonPortableDump;
+  private final BooleanConfigItem logNamedLoaderDebug;
 
   public StandardDSORuntimeLoggingOptions(ConfigContext context) {
     super(context);
@@ -31,6 +32,7 @@ public class StandardDSORuntimeLoggingOptions extends BaseNewConfigObject implem
     this.logDistributedMethodDebug = this.context.booleanItem("debugging/runtime-logging/distributed-method-debug");
     this.logNewObjectDebug = this.context.booleanItem("debugging/runtime-logging/new-object-debug");
     this.logNonPortableDump = this.context.booleanItem("debugging/runtime-logging/non-portable-dump");
+    this.logNamedLoaderDebug = this.context.booleanItem("debugging/runtime-logging/named-loader-debug");
   }
 
   public BooleanConfigItem logLockDebug() {
@@ -55,6 +57,10 @@ public class StandardDSORuntimeLoggingOptions extends BaseNewConfigObject implem
 
   public BooleanConfigItem logNonPortableDump() {
     return this.logNonPortableDump;
+  }
+
+  public BooleanConfigItem logNamedLoaderDebug() {
+    return this.logNamedLoaderDebug;
   }
 
 }

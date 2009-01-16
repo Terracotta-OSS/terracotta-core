@@ -20,6 +20,7 @@ import com.tc.object.bytecode.MockClassProvider;
 import com.tc.object.bytecode.NullManager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
+import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.server.TCServer;
@@ -52,12 +53,13 @@ abstract public class AbstractAgentSRACorrectnessTestCase extends BaseDSOTestCas
     configFactory().addServerToL1Config(null, dsoPort, jmxPort);
     L1TVSConfigurationSetupManager manager = super.createL1ConfigManager();
 
-    DistributedObjectClient client = new DistributedObjectClient(new StandardDSOClientConfigHelperImpl(manager),
-                                                                 new TCThreadGroup(new ThrowableHandler(TCLogging
-                                                                     .getLogger(DistributedObjectClient.class))),
-                                                                 new MockClassProvider(),
-                                                                 new PreparedComponentsFromL2Connection(manager),
-                                                                 NullManager.getInstance(), new Cluster());
+    DistributedObjectClient client = new DistributedObjectClient(
+      new StandardDSOClientConfigHelperImpl(manager),
+      new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(DistributedObjectClient.class))),
+      new MockClassProvider(),
+      new PreparedComponentsFromL2Connection(manager),
+      NullManager.getInstance(),
+      new Cluster(), new NullRuntimeLogger());
     client.start();
     return client;
   }

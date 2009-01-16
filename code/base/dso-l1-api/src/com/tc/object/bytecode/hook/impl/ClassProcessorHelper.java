@@ -13,9 +13,7 @@ import com.tc.object.bytecode.hook.ClassLoaderPreProcessorImpl;
 import com.tc.object.bytecode.hook.ClassPostProcessor;
 import com.tc.object.bytecode.hook.ClassPreProcessor;
 import com.tc.object.bytecode.hook.DSOContext;
-import com.tc.object.loaders.ClassProvider;
 import com.tc.object.loaders.NamedClassLoader;
-import com.tc.object.loaders.StandardClassProvider;
 import com.tc.object.partitions.PartitionManager;
 import com.tc.text.Banner;
 import com.tc.util.Assert;
@@ -45,52 +43,47 @@ import java.util.logging.LogManager;
 public class ClassProcessorHelper {
 
   /** Name reserved for apps running as root web app in a container */
-  public static final String                 ROOT_WEB_APP_NAME         = "ROOT";
+  public static final String       ROOT_WEB_APP_NAME         = "ROOT";
 
   // Directory where Terracotta jars (and dependencies) can be found
-  private static final String                TC_INSTALL_ROOT_SYSPROP   = "tc.install-root";
+  private static final String      TC_INSTALL_ROOT_SYSPROP   = "tc.install-root";
 
   // Property to indicate whether the Terracotta classloader is active
-  private static final String                TC_ACTIVE_SYSPROP         = "tc.active";
+  private static final String      TC_ACTIVE_SYSPROP         = "tc.active";
 
   // NOTE: This is not intended to be a public/documented system property,
   // it is for dev use only. It is NOT for QA or customer use
-  private static final String                TC_CLASSPATH_SYSPROP      = "tc.classpath";
+  private static final String      TC_CLASSPATH_SYSPROP      = "tc.classpath";
 
-  private static final String                TC_DSO_GLOBALMODE_SYSPROP = "tc.dso.globalmode";
-
-  private static final String                TC_LOADER_DEBUG_SYSPROP   = "tc.loader.debug";
+  private static final String      TC_DSO_GLOBALMODE_SYSPROP = "tc.dso.globalmode";
 
   // Used for converting resource names into class names
-  private static final String                CLASS_SUFFIX              = ".class";
-  private static final int                   CLASS_SUFFIX_LENGTH       = CLASS_SUFFIX.length();
+  private static final String      CLASS_SUFFIX              = ".class";
+  private static final int         CLASS_SUFFIX_LENGTH       = CLASS_SUFFIX.length();
 
-  private static final boolean               GLOBAL_MODE_DEFAULT       = true;
+  private static final boolean     GLOBAL_MODE_DEFAULT       = true;
 
-  public static final boolean                USE_GLOBAL_CONTEXT;
-  public static final boolean                USE_PARTITIONED_CONTEXT;
+  public static final boolean      USE_GLOBAL_CONTEXT;
+  public static final boolean      USE_PARTITIONED_CONTEXT;
 
-  private static final State                 initState                 = new State();
+  private static final State       initState                 = new State();
 
-  private static final String                tcInstallRootSysProp      = System.getProperty(TC_INSTALL_ROOT_SYSPROP);
+  private static final String      tcInstallRootSysProp      = System.getProperty(TC_INSTALL_ROOT_SYSPROP);
 
   // This map should only hold a weak reference to the loader (key).
   // If we didn't we'd prevent loaders from being GC'd
-  private static final Map                   contextMap                = new WeakHashMap();
-  private static final Map                   partitionedContextMap     = new HashMap();
+  private static final Map         contextMap                = new WeakHashMap();
+  private static final Map         partitionedContextMap     = new HashMap();
 
-  private static final StandardClassProvider globalProvider            = new StandardClassProvider(Boolean
-                                                                           .getBoolean(TC_LOADER_DEBUG_SYSPROP));
+  private static URLClassLoader    tcLoader;
+  private static DSOContext        globalContext;
 
-  private static URLClassLoader              tcLoader;
-  private static DSOContext                  globalContext;
+  private static final boolean     TRACE;
+  private static final PrintStream TRACE_STREAM;
 
-  private static final boolean               TRACE;
-  private static final PrintStream           TRACE_STREAM;
+  private static final String      PARTITIONED_MODE_SEP      = "#";
 
-  private static final String                PARTITIONED_MODE_SEP      = "#";
-
-  private static volatile boolean            systemLoaderInitialized   = false;
+  private static volatile boolean  systemLoaderInitialized   = false;
 
   static {
 
@@ -149,7 +142,7 @@ public class ClassProcessorHelper {
 
   /**
    * Get resource URL
-   * 
+   *
    * @param name Resource name
    * @param cl Loading classloader
    * @return URL to load resource from
@@ -177,7 +170,7 @@ public class ClassProcessorHelper {
 
   /**
    * Get TC class definition
-   * 
+   *
    * @param name Class name
    * @param cl Classloader
    * @return Class bytes
@@ -393,10 +386,6 @@ public class ClassProcessorHelper {
       try {
         tcLoader = createTCLoader();
 
-        if (USE_GLOBAL_CONTEXT || USE_GLOBAL_CONTEXT) {
-          registerStandardLoaders();
-        }
-
         // do this before doing anything with the TC loader
         initTCLogging();
 
@@ -426,8 +415,8 @@ public class ClassProcessorHelper {
 
     String partitionedConfigSpecs[] = tcConfig.split(PARTITIONED_MODE_SEP);
     for (int i = 0; i < partitionedConfigSpecs.length; i++) {
-      Method m = getContextMethod("createContext", new Class[] { String.class, ClassProvider.class });
-      DSOContext context = (DSOContext) m.invoke(null, new Object[] { partitionedConfigSpecs[i], globalProvider });
+      Method m = getContextMethod("createContext", new Class[] { String.class });
+      DSOContext context = (DSOContext) m.invoke(null, new Object[] { partitionedConfigSpecs[i] });
       context.getManager().init();
       synchronized (partitionedContextMap) {
         partitionedContextMap.put("Partition" + i, context);
@@ -443,26 +432,6 @@ public class ClassProcessorHelper {
     }
 
     return 1;
-  }
-
-  private static void registerStandardLoaders() {
-    ClassLoader loader1 = ClassLoader.getSystemClassLoader();
-    ClassLoader loader2 = loader1.getParent();
-    ClassLoader loader3 = loader2.getParent();
-
-    final ClassLoader sunSystemLoader;
-    final ClassLoader extSystemLoader;
-
-    if (loader3 != null) { // user is using alternate system loader
-      sunSystemLoader = loader2;
-      extSystemLoader = loader3;
-    } else {
-      sunSystemLoader = loader1;
-      extSystemLoader = loader2;
-    }
-
-    registerGlobalLoader((NamedClassLoader) sunSystemLoader);
-    registerGlobalLoader((NamedClassLoader) extSystemLoader);
   }
 
   private static void initTCLogging() throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException,
@@ -497,7 +466,15 @@ public class ClassProcessorHelper {
     if (!USE_GLOBAL_CONTEXT && !USE_PARTITIONED_CONTEXT) { throw new IllegalStateException(
                                                                                            "Not global/partitioned DSO mode"); }
     if (TRACE) traceNamedLoader(loader);
-    globalProvider.registerNamedLoader(loader);
+
+    if (USE_PARTITIONED_CONTEXT) {
+      for (Iterator i = partitionedContextMap.values().iterator(); i.hasNext();) {
+        DSOContext context = (DSOContext) i.next();
+        context.getManager().registerNamedLoader(loader);
+      }
+    } else {
+      ManagerUtil.registerNamedLoader(loader);
+    }
   }
 
   /**
@@ -527,7 +504,7 @@ public class ClassProcessorHelper {
 
   /**
    * Check whether this web app is using DSO sessions
-   * 
+   *
    * @param appName Web app name
    * @return True if DSO sessions enabled
    */
@@ -547,7 +524,7 @@ public class ClassProcessorHelper {
 
   /**
    * WARNING: Used by test framework only
-   * 
+   *
    * @param loader Loader
    * @param context DSOContext
    */
@@ -597,7 +574,7 @@ public class ClassProcessorHelper {
 
   /**
    * Get the DSOContext for this classloader
-   * 
+   *
    * @param cl Loader
    * @return Context
    */
@@ -612,8 +589,8 @@ public class ClassProcessorHelper {
 
   private static DSOContext createGlobalContext() {
     try {
-      Method m = getContextMethod("createGlobalContext", new Class[] { ClassProvider.class });
-      DSOContext context = (DSOContext) m.invoke(null, new Object[] { globalProvider });
+      Method m = getContextMethod("createGlobalContext", new Class[] {});
+      DSOContext context = (DSOContext) m.invoke(null, new Object[] {});
       context.getManager().init();
       return context;
     } catch (Throwable t) {
@@ -628,7 +605,7 @@ public class ClassProcessorHelper {
    * XXX::NOTE:: Do NOT optimize to return same input byte array if the class was instrumented (I can't imagine why we
    * would). Our instrumentation in java.lang.ClassLoader checks the returned byte array to see if the class is
    * instrumented or not to maintain the array offset.
-   * 
+   *
    * @param caller Loader defining class
    * @param name Class name
    * @param b Data
@@ -649,8 +626,8 @@ public class ClassProcessorHelper {
     if (isAWDependency(name)) { return b; }
 
     /*
-     * This current initialization strategy has one slight shortcoming.  JVMTI agents cannot
-     * attach while initialization is in progress.
+     * This current initialization strategy has one slight shortcoming. JVMTI agents cannot attach while initialization
+     * is in progress.
      */
     initialize();
 
@@ -670,7 +647,7 @@ public class ClassProcessorHelper {
 
   /**
    * Post process class during definition
-   * 
+   *
    * @param clazz Class being defined
    * @param caller Classloader doing definition
    */
@@ -717,7 +694,7 @@ public class ClassProcessorHelper {
 
   /**
    * Check whether this is an AspectWerkz dependency
-   * 
+   *
    * @param className Class name
    * @return True if AspectWerkz dependency
    */
@@ -733,7 +710,7 @@ public class ClassProcessorHelper {
 
   /**
    * Get type of lock used by sessions
-   * 
+   *
    * @param appName Web app context
    * @return Lock type
    */

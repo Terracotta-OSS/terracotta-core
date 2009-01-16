@@ -5,6 +5,7 @@
 package com.tc.object.logging;
 
 import com.tc.object.TCObject;
+import com.tc.object.loaders.NamedClassLoader;
 import com.tc.object.tx.TimerSpec;
 
 public class NullRuntimeLogger implements RuntimeLogger {
@@ -150,6 +151,18 @@ public class NullRuntimeLogger implements RuntimeLogger {
   }
 
   public void updateFaultStats(String type) {
+    /**/
+  }
+
+  public void namedLoaderRegistered(NamedClassLoader loader, String name, NamedClassLoader previous) {
+    /**/
+  }
+
+  public boolean getNamedLoaderDebug() {
+    return false;
+  }
+
+  public void setNamedLoaderDebug(boolean value) {
     /**/
   }
 
