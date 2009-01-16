@@ -184,6 +184,8 @@ public class AdminClientBundle extends ListResourceBundle {
         { "thread.dump.timeout.msg", "Timed-out after {0} seconds." }, { "roots.inspect.show", "Show..." },
         { "thread.dump.export.as.text", "Export As Text..." }, { "thread.dump.take", "Take Thread Dump" },
         { "export.all.thread.dumps.dialog.title", "Export All Thread Dumps" },
-        { "export.thread.dump.as.text.dialog.title", "Export Thread Dump As Text" } };
+        { "export.thread.dump.as.text.dialog.title", "Export Thread Dump As Text" }, { "classes.tabular", "Tabular" },
+        { "classes.hierarchical", "Hierarchical" }, { "classes.map", "Map" },
+        { "classes.config.snippet", "Config snippet" } };
   }
 }

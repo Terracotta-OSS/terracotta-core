@@ -61,14 +61,14 @@ public class ClassesPanel extends XContainer {
 
     XTabbedPane tabbedPane = new XTabbedPane();
 
-    tabbedPane.addTab("Tabular", new XScrollPane(table = new ClassesTable()));
-    table.setModel(new ClassTableModel(appContext));
+    table = new ClassesTable(new ClassTableModel(appContext));
+    tabbedPane.addTab(appContext.getString("classes.tabular"), new XScrollPane(table));
 
-    tabbedPane.addTab("Hierarchical", new XScrollPane(tree = new XTree()));
+    tabbedPane.addTab(appContext.getString("classes.hierarchical"), new XScrollPane(tree = new XTree()));
     tree.setShowsRootHandles(true);
     tree.setModel(new ClassTreeModel(appContext, new DSOClassInfo[] {}));
 
-    tabbedPane.addTab("Map", treeMap = new ClassesTreeMap());
+    tabbedPane.addTab(appContext.getString("classes.map"), treeMap = new ClassesTreeMap());
     treeMap.setModel((ClassTreeModel) tree.getModel());
 
     XContainer configPanel = new XContainer(new BorderLayout());
@@ -77,7 +77,7 @@ public class ClassesPanel extends XContainer {
     configDescriptionText.setEditable(false);
     configPanel.add(configDescriptionText, BorderLayout.NORTH);
     configPanel.add(new XScrollPane(configText = new XTextArea()));
-    tabbedPane.addTab("Config snippet", configPanel);
+    tabbedPane.addTab(appContext.getString("classes.config.snippet"), configPanel);
 
     KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0, true);
     getActionMap().put(REFRESH, new RefreshAction());
@@ -223,6 +223,10 @@ public class ClassesPanel extends XContainer {
     synchronized (this) {
       appContext = null;
       clusterModel = null;
+      table = null;
+      tree = null;
+      treeMap = null;
+      configText = null;
     }
     super.tearDown();
   }

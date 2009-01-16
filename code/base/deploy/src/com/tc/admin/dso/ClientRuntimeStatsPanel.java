@@ -4,6 +4,7 @@
  */
 package com.tc.admin.dso;
 
+import static com.tc.admin.model.IClient.POLLED_ATTR_PENDING_TRANSACTIONS_COUNT;
 import static com.tc.admin.model.IClusterNode.POLLED_ATTR_CPU_USAGE;
 import static com.tc.admin.model.IClusterNode.POLLED_ATTR_MAX_MEMORY;
 import static com.tc.admin.model.IClusterNode.POLLED_ATTR_OBJECT_FAULT_RATE;
@@ -22,68 +23,88 @@ import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.model.IClient;
-import static com.tc.admin.model.IClient.POLLED_ATTR_PENDING_TRANSACTIONS_COUNT;
+import com.tc.admin.model.IClusterModelElement;
 import com.tc.admin.model.PolledAttributesResult;
 import com.tc.statistics.StatisticData;
 
 import java.awt.GridLayout;
-import java.text.DecimalFormat;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 import javax.swing.border.TitledBorder;
 
-public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
-  private IClient                 client;
+public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel implements PropertyChangeListener {
+  private IClient                  client;
 
-  private TimeSeries              memoryMaxSeries;
-  private TimeSeries              memoryUsedSeries;
+  private TimeSeries               memoryMaxSeries;
+  private TimeSeries               memoryUsedSeries;
 
-  private ChartPanel              cpuPanel;
-  private TimeSeries[]            cpuTimeSeries;
-  private Map<String, TimeSeries> cpuTimeSeriesMap;
+  private ChartPanel               cpuPanel;
+  private TimeSeries[]             cpuTimeSeries;
+  private Map<String, TimeSeries>  cpuTimeSeriesMap;
 
-  private TimeSeries              flushRateSeries;
-  private TimeSeries              faultRateSeries;
-  private TimeSeries              txnRateSeries;
-  private TimeSeries              pendingTxnsSeries;
+  private TimeSeries               flushRateSeries;
+  private TimeSeries               faultRateSeries;
+  private TimeSeries               txnRateSeries;
+  private TimeSeries               pendingTxnsSeries;
 
-  private static final String[]   POLLED_ATTRIBUTES = { POLLED_ATTR_CPU_USAGE, POLLED_ATTR_USED_MEMORY,
-      POLLED_ATTR_MAX_MEMORY, POLLED_ATTR_OBJECT_FLUSH_RATE, POLLED_ATTR_OBJECT_FAULT_RATE,
-      POLLED_ATTR_TRANSACTION_RATE, POLLED_ATTR_PENDING_TRANSACTIONS_COUNT };
+  private static final Set<String> POLLED_ATTRIBUTE_SET = new HashSet(Arrays
+                                                            .asList(POLLED_ATTR_CPU_USAGE, POLLED_ATTR_USED_MEMORY,
+                                                                    POLLED_ATTR_MAX_MEMORY,
+                                                                    POLLED_ATTR_OBJECT_FLUSH_RATE,
+                                                                    POLLED_ATTR_OBJECT_FAULT_RATE,
+                                                                    POLLED_ATTR_TRANSACTION_RATE,
+                                                                    POLLED_ATTR_PENDING_TRANSACTIONS_COUNT));
 
   public ClientRuntimeStatsPanel(ApplicationContext appContext, IClient client) {
     super(appContext);
     this.client = client;
     setup(chartsPanel);
     setName(client.toString());
+    client.addPropertyChangeListener(this);
   }
 
   private synchronized IClient getClient() {
     return client;
   }
 
+  public void propertyChange(PropertyChangeEvent evt) {
+    String prop = evt.getPropertyName();
+    if (prop.equals(IClusterModelElement.PROP_READY)) {
+      Boolean isReady = (Boolean) evt.getNewValue();
+      if (isReady.booleanValue() && isMonitoringRuntimeStats()) {
+        addPolledAttributeListener();
+      }
+    }
+  }
+
   private void addPolledAttributeListener() {
     IClient theClient = getClient();
     if (theClient != null) {
-      theClient.addPolledAttributeListener(new HashSet(Arrays.asList(POLLED_ATTRIBUTES)), this);
+      theClient.addPolledAttributeListener(POLLED_ATTRIBUTE_SET, this);
     }
   }
 
   private void removePolledAttributeListener() {
     IClient theClient = getClient();
     if (theClient != null) {
-      theClient.removePolledAttributeListener(new HashSet(Arrays.asList(POLLED_ATTRIBUTES)), this);
+      theClient.removePolledAttributeListener(POLLED_ATTRIBUTE_SET, this);
     }
   }
 
   public void startMonitoringRuntimeStats() {
-    addPolledAttributeListener();
+    IClient theClient = getClient();
+    if (theClient != null && theClient.isReady()) {
+      addPolledAttributeListener();
+    }
     super.startMonitoringRuntimeStats();
   }
 
@@ -120,10 +141,10 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
       Number n;
 
       if ((n = (Number) result.getPolledAttribute(theClient, POLLED_ATTR_MAX_MEMORY)) != null) {
-        memoryMaxSeries.addOrUpdate(now, n.longValue() / 1024000d);
+        memoryMaxSeries.addOrUpdate(now, n);
       }
       if ((n = (Number) result.getPolledAttribute(theClient, POLLED_ATTR_USED_MEMORY)) != null) {
-        memoryUsedSeries.addOrUpdate(now, n.longValue() / 1024000d);
+        memoryUsedSeries.addOrUpdate(now, n);
       }
 
       if (cpuTimeSeries != null) {
@@ -193,8 +214,8 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     XYPlot plot = (XYPlot) memoryChart.getPlot();
     NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
     numberAxis.setAutoRangeIncludesZero(true);
-    DecimalFormat formatter = new DecimalFormat("0M");
-    numberAxis.setNumberFormatOverride(formatter);
+    // DecimalFormat formatter = new DecimalFormat("0M");
+    // numberAxis.setNumberFormatOverride(formatter);
     ChartPanel memoryPanel = createChartPanel(memoryChart);
     parent.add(memoryPanel);
     memoryPanel.setPreferredSize(fDefaultGraphSize);
@@ -295,6 +316,7 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
   }
 
   public synchronized void tearDown() {
+    client.removePropertyChangeListener(this);
     client = null;
 
     super.tearDown();

@@ -4,6 +4,7 @@
  */
 package com.tc.admin;
 
+import com.tc.admin.common.BasicToggleArrowButton;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XRootNode;
 import com.tc.admin.common.XScrollPane;
@@ -26,13 +27,17 @@ import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.HierarchyListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.util.Enumeration;
 
+import javax.swing.AbstractButton;
 import javax.swing.CellRendererPane;
-import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingConstants;
@@ -43,19 +48,20 @@ import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.event.TreeWillExpandListener;
-import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeSelectionModel;
 import javax.swing.tree.ExpandVetoException;
 import javax.swing.tree.TreePath;
 
 public abstract class ClusterElementChooser extends XContainer implements TreeWillExpandListener, TreeModelListener {
   private IClusterModel     clusterModel;
   private ClusterListener   clusterListener;
-  private JButton           triggerButton;
-  private MouseListener     triggerHandler;
+  private AbstractButton    triggerButton;
+  private TriggerHandler    triggerHandler;
   private XTree             tree;
   private XTreeModel        treeModel;
   private TreePath          selectionPath;
+  private TreeMouseHandler  treeMouseHandler;
   private SelectionRenderer selectionRenderer;
   private CellRendererPane  cellRendererPane;
   private XScrollPane       scroller;
@@ -66,7 +72,8 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
   public ClusterElementChooser(IClusterModel clusterModel, ActionListener listener) {
     super(new GridBagLayout());
 
-    triggerHandler = new TriggerButtonHandler();
+    triggerHandler = new TriggerHandler();
+    treeMouseHandler = new TreeMouseHandler();
 
     setBackground(UIManager.getColor("TextField.background"));
     setBorder(UIManager.getBorder("TextField.border"));
@@ -86,27 +93,20 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
     triggerButton.setRequestFocusEnabled(false);
     triggerButton.resetKeyboardActions();
     triggerButton.setInheritsPopupMenu(true);
-    triggerButton.addMouseListener(triggerHandler);
+    triggerButton.addItemListener(triggerHandler);
 
     popup = new JPopupMenu();
+    popup.addHierarchyListener(triggerHandler);
     popup.setLayout(new BorderLayout());
     tree = new XTree();
     tree.addTreeWillExpandListener(this);
     tree.setModel(treeModel = new XTreeModel());
     treeModel.addTreeModelListener(this);
     popup.add(scroller = new XScrollPane(tree));
-    tree.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 1) {
-          TreePath path = tree.getSelectionPath();
-          if (path != null && acceptPath(path)) {
-            setSelectedPath(path);
-            popup.setVisible(false);
-          }
-        }
-      }
-    });
-
+    tree.addMouseListener(treeMouseHandler);
+    tree.addMouseMotionListener(treeMouseHandler);
+    tree.setSelectionModel(new TreeSelectionModel());
+    
     this.clusterModel = clusterModel;
     this.listenerList = new EventListenerList();
     if (listener != null) {
@@ -116,6 +116,66 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
     clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
     if (clusterModel.isReady()) {
       setupTreeModel();
+    }
+  }
+
+  private class TreeSelectionModel extends DefaultTreeSelectionModel {
+    private TreePath[] filterPaths(TreePath[] paths) {
+      if (paths != null) {
+        TreePath rootPath = new TreePath(treeModel.getRoot());
+        for (int i = 0; i < paths.length; i++) {
+          if (!acceptPath(paths[i])) {
+            paths[i] = rootPath;
+          }
+        }
+      }
+      return paths;
+    }
+
+    public void setSelectionPaths(TreePath[] paths) {
+      super.setSelectionPaths(filterPaths(paths));
+    }
+
+    public void addSelectionPaths(TreePath[] paths) {
+      super.addSelectionPaths(filterPaths(paths));
+    }
+  }
+
+  private class TreeMouseHandler extends MouseAdapter implements MouseMotionListener {
+    public void mouseReleased(MouseEvent e) {
+      Point p = e.getPoint();
+      int selRow = tree.getRowForLocation(p.x, p.y);
+      if (selRow != -1) {
+        TreePath path = tree.getPathForRow(selRow);
+        if (path != null) {
+          if (acceptPath(path)) {
+            setSelectedPath(path);
+            popup.setVisible(false);
+          }
+        }
+      }
+    }
+
+    // MouseMotionListener implementation
+
+    private void handleMouseMotion(MouseEvent e) {
+      Point p = e.getPoint();
+      int selRow = tree.getRowForLocation(p.x, p.y);
+      if (selRow != -1) {
+        TreePath path = tree.getPathForRow(selRow);
+        if (path != null) {
+          tree.setSelectionPath(path);
+          tree.scrollPathToVisible(path);
+        }
+      }
+    }
+
+    public void mouseMoved(MouseEvent e) {
+      handleMouseMotion(e);
+    }
+
+    public void mouseDragged(MouseEvent e) {
+      handleMouseMotion(e);
     }
   }
 
@@ -141,24 +201,39 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
     }
   }
 
-  private class TriggerButtonHandler extends MouseAdapter {
-    public void mousePressed(MouseEvent e) {
+  private class TriggerHandler extends MouseAdapter implements ItemListener, HierarchyListener {
+    public void itemStateChanged(ItemEvent e) {
       togglePopup();
+    }
+
+    public void mousePressed(MouseEvent e) {
+      triggerButton.doClick();
+    }
+
+    public void hierarchyChanged(HierarchyEvent e) {
+      long flags = e.getChangeFlags();
+      if ((flags & HierarchyEvent.SHOWING_CHANGED) != 0) {
+        boolean isPopupShowing = popup.isShowing();
+        if (triggerButton.isSelected() != isPopupShowing) {
+          triggerButton.setSelected(isPopupShowing);
+        }
+      }
     }
   }
 
   protected void togglePopup() {
-    boolean isShowing = popup.isVisible();
-    if (isShowing) {
-      hidePopup();
-    } else {
+    boolean isTriggerSelected = triggerButton.isSelected();
+    if (isTriggerSelected && !popup.isShowing()) {
       showPopup();
+    } else if (!isTriggerSelected && popup.isShowing()) {
+      hidePopup();
     }
   }
 
   protected void showPopup() {
     Point p = getPopupLocation();
     popup.show(this, p.x, p.y);
+    tree.requestFocusInWindow();
   }
 
   protected void hidePopup() {
@@ -295,11 +370,10 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
     throw new ExpandVetoException(event);
   }
 
-  protected JButton createArrowButton() {
-    JButton button = new BasicArrowButton(SwingConstants.SOUTH, UIManager.getColor("ComboBox.buttonBackground"),
-                                          UIManager.getColor("ComboBox.buttonShadow"), UIManager
-                                              .getColor("ComboBox.buttonDarkShadow"), UIManager
-                                              .getColor("ComboBox.buttonHighlight"));
+  protected AbstractButton createArrowButton() {
+    AbstractButton button = new BasicToggleArrowButton(SwingConstants.SOUTH, UIManager
+        .getColor("ComboBox.buttonBackground"), UIManager.getColor("ComboBox.buttonShadow"), UIManager
+        .getColor("ComboBox.buttonDarkShadow"), UIManager.getColor("ComboBox.buttonHighlight"));
     return button;
   }
 
@@ -329,6 +403,8 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
   public void tearDown() {
     clusterModel.removePropertyChangeListener(clusterListener);
     treeModel.removeTreeModelListener(this);
+    tree.removeMouseListener(treeMouseHandler);
+    tree.removeMouseMotionListener(treeMouseHandler);
 
     synchronized (this) {
       clusterModel = null;
@@ -337,6 +413,7 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
       tree = null;
       treeModel = null;
       selectionRenderer = null;
+      treeMouseHandler = null;
       popup = null;
     }
   }

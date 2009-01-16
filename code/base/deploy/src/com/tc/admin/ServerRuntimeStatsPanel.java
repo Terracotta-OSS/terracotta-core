@@ -28,7 +28,6 @@ import com.tc.admin.model.PolledAttributesResult;
 import com.tc.statistics.StatisticData;
 
 import java.awt.GridLayout;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -122,10 +121,14 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     IServer theServer = getServer();
     if (theServer != null) {
       Second now = new Second();
-      memoryMaxSeries.addOrUpdate(now, ((Number) result.getPolledAttribute(theServer, POLLED_ATTR_MAX_MEMORY))
-          .longValue() / 1024000d);
-      memoryUsedSeries.addOrUpdate(now, ((Number) result.getPolledAttribute(theServer, POLLED_ATTR_USED_MEMORY))
-          .longValue() / 1024000d);
+      Number n;
+
+      if ((n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_MAX_MEMORY)) != null) {
+        memoryMaxSeries.addOrUpdate(now, n);
+      }
+      if ((n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_USED_MEMORY)) != null) {
+        memoryUsedSeries.addOrUpdate(now, n);
+      }
 
       if (cpuTimeSeries != null) {
         StatisticData[] cpuUsageData = (StatisticData[]) result.getPolledAttribute(theServer, POLLED_ATTR_CPU_USAGE);
@@ -194,8 +197,8 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     XYPlot plot = (XYPlot) memoryChart.getPlot();
     NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
     numberAxis.setAutoRangeIncludesZero(true);
-    DecimalFormat formatter = new DecimalFormat("0M");
-    numberAxis.setNumberFormatOverride(formatter);
+    // DecimalFormat formatter = new DecimalFormat("0M");
+    // numberAxis.setNumberFormatOverride(formatter);
     ChartPanel memoryPanel = createChartPanel(memoryChart);
     parent.add(memoryPanel);
     memoryPanel.setPreferredSize(fDefaultGraphSize);

@@ -651,7 +651,6 @@ public class ClusterModel implements IClusterModel {
 
   class ConnectServerListener implements PropertyChangeListener {
     public void propertyChange(PropertyChangeEvent evt) {
-      System.err.println(evt.getPropertyName()+"="+evt.getNewValue());
       if (!isConnectListening) { throw new RuntimeException(
                                                             "ConnectServerListener.propertyChange called when not listening"); }
       String prop = evt.getPropertyName();

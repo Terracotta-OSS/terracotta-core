@@ -147,7 +147,8 @@ public class XObjectTable extends XTable {
   }
 
   private void internalSetSortColumn(int columnIndex) {
-    if (columnIndex < getColumnCount() && (sortColumn = columnIndex) != -1) {
+    sortColumn = columnIndex;
+    if (columnIndex < getColumnCount() && sortColumn != -1) {
       sort();
     }
   }

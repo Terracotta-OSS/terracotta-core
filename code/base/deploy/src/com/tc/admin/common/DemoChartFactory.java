@@ -31,6 +31,9 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 
 public class DemoChartFactory {
+  public static final TickUnitSource DEFAULT_TICKS = createStandardTickUnits();
+  public static final TickUnitSource DEFAULT_INTEGER_TICKS = createIntegerTickUnits();
+  
   static {
     // ChartFactory.setChartTheme(StandardChartTheme.createLegacyTheme());
     // ChartFactory.setChartTheme(StandardChartTheme.createDarknessTheme());
@@ -81,7 +84,7 @@ public class DemoChartFactory {
     axis.setDateFormatOverride(new SimpleDateFormat("kk:mm:ss"));
 
     NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
-    numberAxis.setStandardTickUnits(createStandardTickUnits());
+    numberAxis.setStandardTickUnits(DEFAULT_TICKS);
     numberAxis.setRangeType(RangeType.POSITIVE);
     numberAxis.setAutoRangeMinimumSize(50.0);
 
@@ -113,7 +116,7 @@ public class DemoChartFactory {
 
     NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
     numberAxis.setRangeType(RangeType.POSITIVE);
-    numberAxis.setStandardTickUnits(createStandardTickUnits());
+    numberAxis.setStandardTickUnits(DEFAULT_TICKS);
     numberAxis.setAutoRangeMinimumSize(50.0);
 
     return chart;
@@ -144,7 +147,7 @@ public class DemoChartFactory {
 
     NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
     numberAxis.setRangeType(RangeType.POSITIVE);
-    numberAxis.setStandardTickUnits(createStandardTickUnits());
+    numberAxis.setStandardTickUnits(DEFAULT_TICKS);
     numberAxis.setAutoRangeMinimumSize(50.0);
 
     return chart;
