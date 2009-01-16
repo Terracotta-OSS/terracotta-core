@@ -60,10 +60,13 @@ public class StandardClassProvider implements ClassProvider {
 
   public void registerNamedLoader(NamedClassLoader loader) {
     final String name = getName(loader);
-    final NamedClassLoader prev;
+    final WeakReference ref;
+
     synchronized (loaders) {
-      prev = (NamedClassLoader) loaders.put(name, new WeakReference(loader));
+      ref = (WeakReference) loaders.put(name, new WeakReference(loader));
     }
+
+    NamedClassLoader prev = ref == null ? null : (NamedClassLoader) ref.get();
 
     if (runtimeLogger.getNamedLoaderDebug()) {
       runtimeLogger.namedLoaderRegistered(loader, name, prev);
