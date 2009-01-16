@@ -368,10 +368,6 @@ public class ArrayManagerTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public ArrayIndexOutOfBoundsException checkArrayIndex(int index) {
-      throw new ImplementMe();
-    }
-
     public boolean isFieldPortableByOffset(long fieldOffset) {
       throw new ImplementMe();
     }

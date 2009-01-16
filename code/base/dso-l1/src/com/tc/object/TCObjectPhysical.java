@@ -59,16 +59,6 @@ public class TCObjectPhysical extends TCObjectImpl {
   }
 
   @Override
-  public ArrayIndexOutOfBoundsException checkArrayIndex(int index) {
-    Object[] po = (Object[]) getPeerObject();
-    if (index >= po.length || index < 0) {
-      //
-      return new ArrayIndexOutOfBoundsException(index);
-    }
-    return null;
-  }
-
-  @Override
   public final void resolveArrayReference(int index) {
     this.markAccessed();
 

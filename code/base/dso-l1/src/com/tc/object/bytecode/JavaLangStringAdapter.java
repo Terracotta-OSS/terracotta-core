@@ -383,6 +383,7 @@ public class JavaLangStringAdapter extends ClassAdapter implements Opcodes {
     }
     mv.visitInsn(RETURN);
     mv.visitMaxs(0, 0);
+    mv.visitEnd();
     return null;
   }
 
