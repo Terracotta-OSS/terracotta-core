@@ -195,7 +195,8 @@ public class ResentTransactionSequencer implements ServerTransactionListener {
     for (Iterator i = resentTxns.iterator(); i.hasNext();) {
       TransactionDesc desc = (TransactionDesc) i.next();
       long current = desc.getGlobalTransactionID().toLong();
-      if (current < last) { throw new AssertionError("Resent TransactionSequence Ordering error : " + resentTxns); }
+      if (current <= last) { throw new AssertionError("Resent TransactionSequence Ordering error : " + resentTxns
+                                                      + " current = " + current + " last = " + last); }
       last = current;
     }
   }

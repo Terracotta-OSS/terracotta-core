@@ -292,9 +292,9 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, C
     }
   }
 
-  Collection getTransactionSequenceIDs() {
+  List getTransactionSequenceIDs() {
     synchronized (lock) {
-      HashSet sequenceIDs = new HashSet();
+      ArrayList sequenceIDs = new ArrayList();
       // Add list of SequenceIDs that are going to be resent
       List toSend = batchAccounting.addIncompleteBatchIDsTo(new ArrayList());
       for (Iterator i = toSend.iterator(); i.hasNext();) {
@@ -311,9 +311,9 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, C
     }
   }
 
-  Collection getResentTransactionIDs() {
+  List getResentTransactionIDs() {
     synchronized (lock) {
-      HashSet txIDs = new HashSet();
+      ArrayList txIDs = new ArrayList();
       // Add list of TransactionIDs that are going to be resent
       List toSend = batchAccounting.addIncompleteBatchIDsTo(new ArrayList());
       for (Iterator i = toSend.iterator(); i.hasNext();) {

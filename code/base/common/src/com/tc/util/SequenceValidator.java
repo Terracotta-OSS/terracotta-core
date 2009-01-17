@@ -76,6 +76,8 @@ public class SequenceValidator {
       if (sequenceIDs.size() > 0) {
         this.sequenceIDs = new TreeSet(SequenceID.COMPARATOR);
         this.sequenceIDs.addAll(sequenceIDs);
+        // There shouldn't be any duplicates
+        assert this.sequenceIDs.size() == sequenceIDs.size();
         current = new SequenceID(start);
       } else {
         throw new AssertionError("Sequencer should be set to a valid SequenceID Sequence !!!");
