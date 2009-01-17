@@ -25,8 +25,25 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * The whole purpose of this class is to reorder "resent" transactions so that they are broadcased in the exact same
+ * The whole purpose of this class is to reorder "resent" transactions so that they are broadcasted in the exact same
  * order as before (the server crash)
+ * <p>
+ * FIXME::This whole reordering of Resent transaction using GID only partially solves the problem. The reordering is
+ * necessary coz for object like LinkedBlockingQueue which uses 2 locks and some nasty optimizations, one node might do
+ * a put() and that txn might get broadcasted and then then on apply of that put, another node might do a get(). Now the
+ * server might crash even before both the txns (put and the get) gets committed to disk. So when txns are resent, the
+ * server has no way of telling which txn to apply and broadcast first.
+ * <p>
+ * This class is an attempt to do that ordering but is still flawed in that it depends on the GID committed to disk so
+ * only solves the case where at least the put() is committed to disk.
+ * <p>
+ * Two ideas to solve this right.
+ * <p>
+ * 1) On client handshake, resend all the know GID to SID mapping to the server and the server can use all known info.
+ * (Problem is with the txns that were never broadcasted, tx1 and tx3 is broadcasted but not tx2, how do you order them
+ * <p>
+ * 2) Commit GID to SID mapping first to disk before processing txn, atleast dont broadcast till its on disk. It adds a
+ * little latency but on a heavy write system it should matter less.
  */
 public class ResentTransactionSequencer implements ServerTransactionListener {
 
@@ -161,10 +178,13 @@ public class ResentTransactionSequencer implements ServerTransactionListener {
     for (Iterator i = stxIDs.iterator(); i.hasNext();) {
       ServerTransactionID stxID = (ServerTransactionID) i.next();
       GlobalTransactionID gid = gtxm.getGlobalTransactionID(stxID);
-      logger.info("Resent Transaction : " + stxID + " gid = " + gid);
       if (!gid.isNull()) {
-        addOrdered(stxID, gid);
+        logger.info("Resent Transaction : " + stxID + " old gid = " + gid);
+      } else {
+        gid = gtxm.getOrCreateGlobalTransactionID(stxID);
+        logger.info("Resent Transaction : " + stxID + " newly assigned gid = " + gid);
       }
+      addOrdered(stxID, gid);
     }
     assertGidsInOrder();
     logger.info("Resent Txns = " + resentTxns);
