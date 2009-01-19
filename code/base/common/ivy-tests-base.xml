@@ -6,7 +6,7 @@
     <dependency name="linked-child-process" rev="1.0.2" org="org.terracotta"/>
     <dependency name="native-tool" rev="1.0.0-SNAPSHOT" org="org.terracotta"/>
     <dependency name="ant" rev="1.6.5"/>
-    <dependency name="ant-launcher" rev="1.6.5"/>
+    <dependency name="ant" rev="launcher-1.6.5"/>
     <dependency name="ant" rev="junit-1.6.5"/>
     <dependency name="junit" rev="3.8.1"/>
     <dependency name="junit-addons" rev="1.4"/>
