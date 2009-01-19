@@ -9,12 +9,11 @@ import com.tc.test.server.appserver.deployment.ServerTestSetup;
 import junit.framework.Test;
 
 public class MultiNodeInvalidatorWithoutSLTest extends MultiNodeInvalidatorTest {
-  
+
   public MultiNodeInvalidatorWithoutSLTest() {
-    // for MNK-879
-    disableAllUntil("2009-01-30");
+    //
   }
-  
+
   public static Test suite() {
     return new ServerTestSetup(MultiNodeInvalidatorWithoutSLTest.class);
   }

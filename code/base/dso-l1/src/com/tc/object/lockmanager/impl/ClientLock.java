@@ -1258,23 +1258,14 @@ class ClientLock implements TimerCallback, LockFlushCallback {
     return isWaitLockRequest(request) && !isTryLockRequest(request);
   }
 
-  // I wish we were using 1.5 !!!
-  // private void debug(Object o1, Object o2) {
-  // logger.warn(lockID + String.valueOf(o1) + String.valueOf(o2));
+  // private void debug(Object... objs) {
+  // StringBuilder builder = new StringBuilder();
+  // builder.append(lockID).append(" ");
+  // for (Object obj : objs) {
+  // builder.append(String.valueOf(obj)).append(" ");
   // }
-  //
-  // private void debug(Object o1, Object o2, Object o3) {
-  // logger.warn(lockID + String.valueOf(o1) + String.valueOf(o2) + String.valueOf(o3));
+  // logger.warn(builder.toString());
   // }
-  //
-  // private void debug(Object o1, Object o2, Object o3, Object o4) {
-  // logger.warn(lockID + String.valueOf(o1) + String.valueOf(o2) + String.valueOf(o3) + String.valueOf(o4));
-  // }
-  //
-  // private void debug(Object o) {
-  // logger.warn(lockID + String.valueOf(o));
-  // }
-  //
 
   private static class LockHold {
     private static final State HOLDING = new State("HOLDING");
