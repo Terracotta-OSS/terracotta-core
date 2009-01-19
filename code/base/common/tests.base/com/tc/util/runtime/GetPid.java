@@ -4,6 +4,8 @@
  */
 package com.tc.util.runtime;
 
+import org.terracotta.NativeToolHandler;
+
 import com.tc.test.TestConfigObject;
 
 import java.io.File;
@@ -29,7 +31,8 @@ class GetPid {
 
   static {
     boolean ok = false;
-    String nativeLibPath = TestConfigObject.getInstance().executableSearchPath() + File.separator
+    NativeToolHandler toolHandler = new NativeToolHandler();
+    String nativeLibPath = toolHandler.getToolLocation().getAbsolutePath() + File.separator
         + TestConfigObject.getInstance().nativeLibName();
     try {
       System.load(nativeLibPath);

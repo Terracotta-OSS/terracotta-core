@@ -313,7 +313,7 @@ public class TestConfigObject {
     String osname = osName();
     if (osname.startsWith("Windows")) {
       return WINDOWS_NATIVE_LIB_NAME;
-    } else if (osname.startsWith("Darwin")) {
+    } else if (osname.startsWith("Darwin") || osname.startsWith("Mac")) {
       return OSX_NATIVE_LIB_NAME;
     } else {
       return UNIX_NATIVE_LIB_NAME;
