@@ -33,7 +33,7 @@ public class ActiveCoordinatorHelperTest extends TCTestCase {
     members = groups[2].addNewMembers();
     members.addMember("server3");
 
-    Assert.assertEquals(1, ActiveCoordintorHelper.getCoordinatorGroup(groups));
+    Assert.assertEquals(1, ActiveCoordinatorHelper.getCoordinatorGroup(groups));
   }
 
   public void testGetCoordinatorGroup2() {
@@ -43,7 +43,7 @@ public class ActiveCoordinatorHelperTest extends TCTestCase {
     asgcs[1] = new NullActiveServerGroupConfig("timepass");
     asgcs[2] = new NullActiveServerGroupConfig("34444");
 
-    Assert.assertEquals(0, ActiveCoordintorHelper.getCoordinatorGroup(asgcs));
+    Assert.assertEquals(0, ActiveCoordinatorHelper.getCoordinatorGroup(asgcs));
   }
 
   public void testGetGroupNameFrom() {
@@ -52,7 +52,7 @@ public class ActiveCoordinatorHelperTest extends TCTestCase {
       temp[i] = "" + (9 - i);
     }
 
-    String temp2 = ActiveCoordintorHelper.getGroupNameFrom(temp);
+    String temp2 = ActiveCoordinatorHelper.getGroupNameFrom(temp);
 
     String temp3 = "";
     for (int i = 0; i < 10; i++) {

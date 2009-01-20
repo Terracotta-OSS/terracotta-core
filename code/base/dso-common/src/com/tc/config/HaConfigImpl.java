@@ -12,7 +12,7 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.groups.Node;
 import com.tc.net.groups.ServerGroup;
 import com.tc.object.config.schema.NewL2DSOConfig;
-import com.tc.util.ActiveCoordintorHelper;
+import com.tc.util.ActiveCoordinatorHelper;
 import com.tc.util.Assert;
 
 import java.util.HashSet;
@@ -36,7 +36,7 @@ public class HaConfigImpl implements HaConfig {
     for (int i = 0; i < groupCount; i++) {
       this.groups[i] = new ServerGroup(groupsConfig.getActiveServerGroupArray()[i]);
     }
-    int coodinatorIndex = ActiveCoordintorHelper.getCoordinatorGroup(groupsConfig.getActiveServerGroupArray());
+    int coodinatorIndex = ActiveCoordinatorHelper.getCoordinatorGroup(groupsConfig.getActiveServerGroupArray());
     activeCoordinatorGroup = coodinatorIndex != -1 ? groups[coodinatorIndex] : null;
 
     this.thisGroupNodes = makeThisGroupNodes();

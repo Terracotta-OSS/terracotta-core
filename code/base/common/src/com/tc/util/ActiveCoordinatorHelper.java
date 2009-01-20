@@ -9,7 +9,7 @@ import com.terracottatech.config.ActiveServerGroup;
 
 import java.util.Arrays;
 
-public class ActiveCoordintorHelper {
+public class ActiveCoordinatorHelper {
 
   public static int getCoordinatorGroup(ActiveServerGroup[] asg) {
     int grpId = -1;
