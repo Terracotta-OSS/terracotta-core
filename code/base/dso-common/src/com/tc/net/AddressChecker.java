@@ -14,7 +14,7 @@ import java.util.Set;
 
 public class AddressChecker {
 
-  private Set allLocalAddresses;
+  private final Set allLocalAddresses;
 
   public AddressChecker() {
     allLocalAddresses = findAllLocalAddresses();
