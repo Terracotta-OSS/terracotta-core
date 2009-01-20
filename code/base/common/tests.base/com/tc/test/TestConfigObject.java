@@ -5,6 +5,7 @@
 package com.tc.test;
 
 import org.apache.commons.lang.StringUtils;
+import org.terracotta.NativeToolHandler;
 
 import com.tc.config.Directories;
 import com.tc.logging.TCLogger;
@@ -22,8 +23,7 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- * Contains configuration data for tests.
- * </p>
+ * Contains configuration data for tests. </p>
  * <p>
  * This class is a singleton. This is <em>ONLY</em> because this is used all over the place, in JUnit tests.
  */
@@ -69,9 +69,6 @@ public class TestConfigObject {
   private static final String     VARIANT_LIBRARIES_PREFIX         = DYNAMIC_PROPERTIES_PREFIX + "libraries.variants.";
   private static final String     SELECTED_VARIANT_PREFIX          = DYNAMIC_PROPERTIES_PREFIX + "variants.selected.";
   private static final String     DEFAULT_VARIANT_PREFIX           = STATIC_PROPERTIES_PREFIX + "variants.selected.";
-
-  private static final String     EXECUTABLE_SEARCH_PATH           = DYNAMIC_PROPERTIES_PREFIX
-                                                                     + "executable-search-path";
 
   private static final String     JUNIT_TEST_TIMEOUT_INSECONDS     = DYNAMIC_PROPERTIES_PREFIX
                                                                      + "junit-test-timeout-inseconds";
@@ -151,7 +148,7 @@ public class TestConfigObject {
     properties.putAll(System.getProperties());
     appServerInfo = createAppServerInfo();
     extraClassPathForAppServer = linkedChildProcessPath();
-    
+
     // if Emma is enabled, add it to app server classpath
     String emmaLib = properties.getProperty(EMMA_LIB);
     if (emmaLib != null) {
@@ -341,7 +338,9 @@ public class TestConfigObject {
   }
 
   public String executableSearchPath() {
-    String nativeLibDirPath = this.properties.getProperty(EXECUTABLE_SEARCH_PATH);
+    NativeToolHandler toolHandler = new NativeToolHandler();
+
+    String nativeLibDirPath = toolHandler.getToolLocation().getAbsolutePath();
     if (nativeLibDirPath == null) return null;
 
     if (nativeLibDirPath.endsWith(NATIVE_LIB_LINUX_32) || nativeLibDirPath.endsWith(NATIVE_LIB_LINUX_64)) {
@@ -388,7 +387,7 @@ public class TestConfigObject {
   public void addToAppServerClassPath(String cp) {
     extraClassPathForAppServer += File.pathSeparator + cp;
   }
-  
+
   public String linkedChildProcessPath() {
     String out = this.properties.getProperty(LINKED_CHILD_PROCESS_CLASSPATH);
     Assert.assertNotBlank(out);

@@ -37,7 +37,7 @@ public class ThreadDump {
     int pid = 0;
     RuntimeException windowsPidException = null;
     try {
-      pid = GetPid.getPID();
+      pid = GetPid.getInstance().getPid();
     } catch (RuntimeException re) {
       if (Os.isWindows()) {
         if (Vm.isIBM()) {
@@ -59,7 +59,7 @@ public class ThreadDump {
           doIbmDump();
         } catch (Exception e) {
           System.err.println("Got an exception while trying to use the native IBM thread"
-              + " dump facility, using 'standard' method.  Stacktrace is below:");
+                             + " dump facility, using 'standard' method.  Stacktrace is below:");
           ExceptionUtil.dumpFullStackTrace(e, System.err);
           System.err.flush();
           doStandardDump = true;
@@ -90,11 +90,11 @@ public class ThreadDump {
     if (!Os.isUnix()) { throw new AssertionError("unix only"); }
     doUnixDump(0);
   }
-  
+
   public static void dumpProcessGroupMany(int iterations, long delay) {
     for (int i = 0; i < iterations; i++) {
       dumpProcessGroup();
-      
+
       ThreadUtil.reallySleep(delay);
     }
   }
