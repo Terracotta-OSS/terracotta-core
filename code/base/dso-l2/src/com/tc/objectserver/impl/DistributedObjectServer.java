@@ -698,7 +698,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter(lockManager));
     ObjectInstanceMonitorImpl instanceMonitor = new ObjectInstanceMonitorImpl();
 
-    TransactionFilter txnFilter = getTransactionFilter(toInit);
+    TransactionFilter txnFilter = getTransactionFilter(toInit, stageManager, maxStageSize);
     TransactionBatchManagerImpl transactionBatchManager = new TransactionBatchManagerImpl(sequenceValidator, recycler,
                                                                                           txnFilter);
     toInit.add(transactionBatchManager);
@@ -954,7 +954,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
   }
 
   // Overridden by enterprise server
-  protected TransactionFilter getTransactionFilter(List<PostInit> toInit) {
+  protected TransactionFilter getTransactionFilter(List<PostInit> toInit, StageManager stageManager, int maxStageSize) {
     PassThruTransactionFilter txnFilter = new PassThruTransactionFilter();
     toInit.add(txnFilter);
     return txnFilter;

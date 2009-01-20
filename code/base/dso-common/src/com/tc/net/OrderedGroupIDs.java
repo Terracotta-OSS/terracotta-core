@@ -33,4 +33,11 @@ public class OrderedGroupIDs {
     return groupIDs[i];
   }
 
+  public int getGroupIDIndex(GroupID gid) {
+    for (int i = 0; i < groupIDs.length; i++) {
+      if(groupIDs[i].equals(gid)) return i;
+    }
+    return -1;
+  }
+
 }

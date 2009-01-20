@@ -68,12 +68,14 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public static final String OOO_NET_RECEIVE_STAGE                              = "ooo_net_receive_stage";
   public static final String L2_OOO_NET_SEND_STAGE                              = "l2_ooo_net_send_stage";
   public static final String L2_OOO_NET_RECEIVE_STAGE                           = "l2_ooo_net_receive_stage";
-
+  // TODO::Move to enterprise
+  public static final String AA_TRANSACTION_WATERMARK_BROADCAST_STAGE           = "aa_transaction_watermark_broadcast_stage";
+  public static final String AA_TRANSACTION_WATERMARK_RECEIVE_STAGE             = "aa_transaction_watermark_receive_stage";
 
   public L2Coordinator getL2Coordinator();
 
   public ObjectManager getObjectManager();
-  
+
   public ObjectRequestManager getObjectRequestManager();
 
   public LockManager getLockManager();

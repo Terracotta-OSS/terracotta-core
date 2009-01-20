@@ -651,7 +651,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
   }
 
-  private final class TxnsInSystemCompletionListenerCallback implements ServerTransactionListener {
+  private final class TxnsInSystemCompletionListenerCallback extends AbstractServerTransactionListener {
 
     private final TxnsInSystemCompletionLister callback;
     private final Set                          txnsInSystem;
@@ -674,22 +674,6 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 
     public Set getTxnsInSystem() {
       return txnsInSystem;
-    }
-
-    public void addResentServerTransactionIDs(Collection stxIDs) {
-      // NOP
-    }
-
-    public void clearAllTransactionsFor(NodeID deadNode) {
-      // NOP
-    }
-
-    public void incomingTransactions(NodeID source, Set serverTxnIDs) {
-      // NOP
-    }
-
-    public void transactionApplied(ServerTransactionID stxID) {
-      // NOP
     }
 
     public void transactionCompleted(ServerTransactionID stxID) {
@@ -730,10 +714,6 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
         sb.append("....<more> }");
         return sb.toString();
       }
-    }
-
-    public void transactionManagerStarted(Set cids) {
-      // NOP
     }
   }
 }
