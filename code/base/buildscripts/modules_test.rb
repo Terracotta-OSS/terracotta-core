@@ -85,9 +85,7 @@ class BuildSubtree
       write_dynamic_property(file, "bootjars.normal", boot_jar.path) unless boot_jar.nil?
       # Writes out the location of the session CLASSPATH that DSO needs
       write_dynamic_property(file, "session.classpath", sessionSet)
-      # Writes out the location of the path that tests should use to search for executables; currently,
-      # this is just precisely the native library path.
-      write_dynamic_property(file, "executable-search-path", native_library_path(build_results, build_environment, :full))
+
       # The timeout the tests are going to use. This does *not* actually set the timeout;
       # that's set in the Ant <junit> task. Rather, this is so that the test can fire off
       # a thread dump before it's timed out.
