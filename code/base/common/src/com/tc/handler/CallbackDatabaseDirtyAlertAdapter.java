@@ -12,6 +12,9 @@ public class CallbackDatabaseDirtyAlertAdapter implements CallbackOnExitHandler 
 
   private final TCLogger logger;
   private final TCLogger consoleLogger;
+  private final String   consoleMessage = "This Terracotta server instance shut down and failed to wipe its database and restart "
+                                          + "because the database may be corrupt. The database must be manually wiped before the "
+                                          + "Terracotta server instance can be started and allowed to rejoin the cluster.";
 
   public CallbackDatabaseDirtyAlertAdapter(TCLogger logger, TCLogger consoleLogger) {
     this.logger = logger;
@@ -20,6 +23,6 @@ public class CallbackDatabaseDirtyAlertAdapter implements CallbackOnExitHandler 
 
   public void callbackOnExit(CallbackOnExitState state) {
     logger.warn(state.getThrowable().getMessage(), state.getThrowable());
-    consoleLogger.warn(state.getThrowable().getMessage());
+    consoleLogger.warn(consoleMessage + "\n");
   }
 }

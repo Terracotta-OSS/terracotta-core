@@ -22,9 +22,11 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.exception.ZapDirtyDbServerNodeException;
 import com.tc.exception.ZapServerNodeException;
 import com.tc.handler.CallbackDatabaseDirtyAlertAdapter;
-import com.tc.handler.CallbackDirtyDatabaseCleanUpAdapter;
+import com.tc.handler.CallbackDirtyDatabaseExceptionAdapter;
 import com.tc.handler.CallbackDumpAdapter;
 import com.tc.handler.CallbackGroupExceptionHandler;
+import com.tc.handler.CallbackZapDirtyDbExceptionAdapter;
+import com.tc.handler.CallbackZapServerNodeExceptionAdapter;
 import com.tc.handler.LockInfoDumpHandler;
 import com.tc.io.TCFile;
 import com.tc.io.TCFileImpl;
@@ -533,15 +535,18 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
       objectStore = new InMemoryManagedObjectStore(new HashMap());
     }
 
-    CallbackOnExitHandler dirtydbExceptionHandler = new CallbackDirtyDatabaseCleanUpAdapter(logger, persistor
-        .getClusterStateStore());
-    threadGroup.addCallbackOnExitExceptionHandler(CleanDirtyDatabaseException.class, dirtydbExceptionHandler);
-    threadGroup.addCallbackOnExitExceptionHandler(ZapDirtyDbServerNodeException.class, dirtydbExceptionHandler);
-
-    /**
-     * using same CallbackOnExitHandler as in dirtyDb problems for Splitbrain and other Zap-Node events
-     */
-    threadGroup.addCallbackOnExitExceptionHandler(ZapServerNodeException.class, dirtydbExceptionHandler);
+    threadGroup
+        .addCallbackOnExitExceptionHandler(CleanDirtyDatabaseException.class,
+                                           new CallbackDirtyDatabaseExceptionAdapter(logger, consoleLogger, persistor
+                                               .getClusterStateStore()));
+    threadGroup.addCallbackOnExitExceptionHandler(ZapDirtyDbServerNodeException.class,
+                                                  new CallbackZapDirtyDbExceptionAdapter(logger, consoleLogger,
+                                                                                         persistor
+                                                                                             .getClusterStateStore()));
+    threadGroup
+        .addCallbackOnExitExceptionHandler(ZapServerNodeException.class,
+                                           new CallbackZapServerNodeExceptionAdapter(logger, consoleLogger, persistor
+                                               .getClusterStateStore()));
 
     persistenceTransactionProvider = persistor.getPersistenceTransactionProvider();
     PersistenceTransactionProvider transactionStorePTP;
