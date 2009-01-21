@@ -248,6 +248,7 @@ import com.tc.util.startuplock.LocationNotCreatedException;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -383,6 +384,15 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     // perform the DSO network config verification
     NewL2DSOConfig l2DSOConfig = configSetupManager.dsoL2Config();
 
+    // verify user input host name, DEV-2293
+    String host = l2DSOConfig.host().getString();
+    if(NetworkInterface.getByInetAddress(InetAddress.getByName(host)) == null) {
+      String msg = "Unable to find local network interface for " + host;
+      consoleLogger.error(msg);
+      logger.error(msg, new TCRuntimeException(msg));
+      System.exit(-1);
+    }
+    
     String bindAddress = l2DSOConfig.bind().getString();
     if (bindAddress == null) {
       // workaround for CDV-584
