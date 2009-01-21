@@ -206,7 +206,9 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       nodeView.revalidate();
       nodeView.repaint();
 
-      setSelectedClusterNode((ClusterNode) path.getPathComponent(1));
+      if (path != null) {
+        setSelectedClusterNode((ClusterNode) path.getPathComponent(1));
+      }
     }
   }
 

@@ -10,13 +10,10 @@ import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XLabel;
 import com.tc.admin.common.XTreeNode;
 import com.tc.admin.dso.ClientNode;
-import com.tc.admin.dso.ClientThreadDumpsPanel;
 import com.tc.admin.dso.ClientsNode;
-import com.tc.admin.model.ClientConnectionListener;
-import com.tc.admin.model.IClient;
 import com.tc.admin.model.IClusterModel;
-import com.tc.admin.model.IServer;
-import com.tc.admin.model.IServerGroup;
+import com.tc.admin.model.IClusterModelElement;
+import com.tc.admin.model.IClusterNode;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -29,11 +26,9 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 import javax.swing.BorderFactory;
-import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
 
-public class ThreadDumpsPanel extends XContainer implements ActionListener, ClientConnectionListener,
-    PropertyChangeListener {
+public class ThreadDumpsPanel extends XContainer implements ActionListener, PropertyChangeListener {
   private IAdminClientContext       adminClientContext;
   private IClusterModel             clusterModel;
   private ClusterThreadDumpProvider threadDumpProvider;
@@ -109,14 +104,7 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Clie
   }
 
   public void actionPerformed(ActionEvent e) {
-    ElementChooser chsr = (ElementChooser) e.getSource();
-    XTreeNode node = (XTreeNode) chsr.getSelectedObject();
-    String name = node.getName();
-    if (pagedView.hasPage(name)) {
-      pagedView.setPage(name);
-    } else {
-      pagedView.setPage(EMPTY_PAGE);
-    }
+    pagedView.setPage(ALL_NODES_NODE_NAME);
   }
 
   private class ClusterListener extends AbstractClusterListener {
@@ -129,31 +117,6 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Clie
         addNodePanels();
       }
     }
-
-    protected void handleActiveCoordinator(IServer oldActive, IServer newActive) {
-      if (oldActive != null) {
-        oldActive.removeClientConnectionListener(ThreadDumpsPanel.this);
-      }
-      if (newActive != null) {
-        newActive.removeClientConnectionListener(ThreadDumpsPanel.this);
-      }
-    }
-  }
-
-  public void clientConnected(final IClient client) {
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        pagedView.addPage(createClientPanel(client));
-      }
-    });
-  }
-
-  public void clientDisconnected(final IClient client) {
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        pagedView.remove(pagedView.getPage(client.toString()));
-      }
-    });
   }
 
   public void propertyChange(PropertyChangeEvent evt) {
@@ -163,7 +126,7 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Clie
       elementChooser.setSelectedPath(newPage);
     }
   }
-  
+
   private void addNodePanels() {
     pagedView.removeAll();
     XLabel emptyPage = new XLabel();
@@ -171,38 +134,29 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Clie
     pagedView.addPage(emptyPage);
 
     pagedView.addPage(createAllNodesPanel());
-    for (IServerGroup group : clusterModel.getServerGroups()) {
-      for (IServer server : group.getMembers()) {
-        pagedView.addPage(createServerPanel(server));
-
-        if (server.isActiveCoordinator()) {
-          for (IClient client : server.getClients()) {
-            pagedView.addPage(createClientPanel(client));
-          }
-          server.addClientConnectionListener(this);
-        }
-      }
-    }
     elementChooser.setSelectedPath(ALL_NODES_NODE_NAME);
     pagedView.addPropertyChangeListener(this);
     inited = true;
   }
 
   private ClusterThreadDumpsPanel createAllNodesPanel() {
-    ClusterThreadDumpsPanel panel = new ClusterThreadDumpsPanel(adminClientContext, threadDumpProvider);
+    ClusterThreadDumpsPanel panel = new ClusterThreadDumpsPanel(adminClientContext, threadDumpProvider) {
+      public ClusterThreadDumpEntry newEntry() {
+        Object selectedObj = elementChooser.getSelectedObject();
+        if (selectedObj instanceof ClusterElementNode) {
+          ClusterElementNode node = (ClusterElementNode) selectedObj;
+          IClusterModelElement clusterElement = node.getClusterElement();
+          if (clusterElement instanceof IClusterNode) {
+            IClusterNode clusterNode = (IClusterNode) clusterElement;
+            ClusterThreadDumpEntry entry = new ClusterThreadDumpEntry(adminClientContext);
+            entry.add(clusterNode.toString(), clusterModel.takeThreadDump(clusterNode));
+            return entry;
+          }
+        }
+        return super.newEntry();
+      }
+    };
     panel.setName(ALL_NODES_NODE_NAME);
-    return panel;
-  }
-
-  private ServerThreadDumpsPanel createServerPanel(IServer server) {
-    ServerThreadDumpsPanel panel = new ServerThreadDumpsPanel(adminClientContext, server);
-    panel.setName(server.toString());
-    return panel;
-  }
-
-  private ClientThreadDumpsPanel createClientPanel(IClient client) {
-    ClientThreadDumpsPanel panel = new ClientThreadDumpsPanel(adminClientContext, client);
-    panel.setName(client.toString());
     return panel;
   }
 

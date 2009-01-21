@@ -77,6 +77,10 @@ public class ClusterThreadDumpsPanel extends BasicThreadDumpsPanel implements Tr
     return threadDumpButton.getText().equals(appContext.getString("cancel"));
   }
 
+  public ClusterThreadDumpEntry newEntry() {
+    return clusterThreadDumpProvider.takeThreadDump();
+  }
+
   @Override
   public void takeThreadDump() {
     XTreeNode root = (XTreeNode) threadDumpTreeModel.getRoot();
@@ -84,11 +88,9 @@ public class ClusterThreadDumpsPanel extends BasicThreadDumpsPanel implements Tr
       exportButton.setEnabled(false);
       threadDumpButton.setText(appContext.getString("cancel"));
 
-      ClusterThreadDumpEntry tde = clusterThreadDumpProvider.takeThreadDump();
-      threadDumpTreeModel.insertNodeInto(tde, root, root.getChildCount());
-      TreePath treePath = new TreePath(tde.getPath());
-      threadDumpTree.expandPath(treePath);
-      threadDumpTree.setSelectionPath(treePath);
+      ClusterThreadDumpEntry tde = newEntry();
+      threadDumpTreeModel.insertNodeInto(tde, root, 0);
+      threadDumpTree.setSelectionPath(new TreePath(tde.getPath()));
     } else {
       ClusterThreadDumpEntry tde = (ClusterThreadDumpEntry) root.getLastChild();
       tde.cancel();

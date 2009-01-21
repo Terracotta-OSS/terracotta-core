@@ -542,6 +542,10 @@ public class ClusterModel implements IClusterModel {
     });
   }
 
+  public synchronized Future<String> takeThreadDump(IClusterNode node) {
+    return threadDumpFuture(executor, node, System.currentTimeMillis());
+  }
+  
   public synchronized Map<IClusterNode, Future<String>> takeThreadDump() {
     IServer activeCoord = getActiveCoordinator();
 

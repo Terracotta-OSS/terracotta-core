@@ -10,6 +10,10 @@ import com.tc.admin.model.IServer;
 
 import java.awt.Component;
 
+/**
+ * NO LONGER USED - please keep until it's clear I'm no longer needed
+ */
+
 public class ServerThreadDumpsNode extends ComponentNode {
   private ApplicationContext       appContext;
   protected IServer                server;

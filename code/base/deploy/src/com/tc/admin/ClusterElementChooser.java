@@ -345,7 +345,6 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
       root.add(child);
     }
     root.nodeStructureChanged();
-    setSelectedPath(new TreePath(((XTreeNode) root.getFirstChild()).getPath()));
     inited = true;
   }
 
