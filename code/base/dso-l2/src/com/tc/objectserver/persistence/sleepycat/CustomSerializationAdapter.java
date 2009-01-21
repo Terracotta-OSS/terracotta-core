@@ -22,8 +22,6 @@ public class CustomSerializationAdapter implements SerializationAdapter {
   private final ManagedObjectSerializer moSerializer;
   private final StringUTFSerializer     stringSerializer;
 
-  private final Object                  serializerLock = new Object();
-
   public CustomSerializationAdapter(ManagedObjectSerializer moSerializer, StringUTFSerializer stringSerializer) {
     this.moSerializer = moSerializer;
     this.stringSerializer = stringSerializer;
@@ -32,15 +30,11 @@ public class CustomSerializationAdapter implements SerializationAdapter {
   }
 
   public void serializeManagedObject(DatabaseEntry entry, ManagedObject managedObject) throws IOException {
-    synchronized (serializerLock) {
       serialize(entry, managedObject, moSerializer);
-    }
   }
 
   public synchronized void serializeString(DatabaseEntry entry, String string) throws IOException {
-    synchronized (serializerLock) {
       serialize(entry, string, stringSerializer);
-    }
   }
 
   private void serialize(DatabaseEntry entry, Object o, Serializer serializer) throws IOException {
@@ -50,8 +44,7 @@ public class CustomSerializationAdapter implements SerializationAdapter {
     baout.reset();
   }
 
-  public synchronized ManagedObject deserializeManagedObject(DatabaseEntry data) throws IOException,
-      ClassNotFoundException {
+  public ManagedObject deserializeManagedObject(DatabaseEntry data) throws IOException, ClassNotFoundException {
     return (ManagedObject) deserialize(data, moSerializer);
   }
 
