@@ -297,6 +297,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
         if config_source['email']
           `echo #{@script_results.to_s} | mail -s "#{test} failed after pounded for #{count} times" #{config_source['email']}`
         end
+        break
       end
     end
     puts "Pounded for #{upper} without failure."
