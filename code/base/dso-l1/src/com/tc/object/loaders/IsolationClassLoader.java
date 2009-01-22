@@ -36,7 +36,6 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
   private final Manager               manager;
   private final DSOClientConfigHelper config;
   private final Map                   onLoadErrors;
-  private final StandardClassProvider classProvider;
   private final Map                   adapters      = new HashMap();
 
   public IsolationClassLoader(DSOClientConfigHelper config, PreparedComponentsFromL2Connection connectionComponents) {
@@ -53,14 +52,13 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
                                PreparedComponentsFromL2Connection connectionComponents) {
     super(getSystemURLS(), null);
     this.config = config;
-    this.classProvider = new StandardClassProvider();
     this.manager = createManager(startClient, objectManager, txManager, config, connectionComponents);
     this.onLoadErrors = new HashMap();
   }
 
   public void init() {
     manager.initForTests();
-    ClassProcessorHelper.setContext(this, DSOContextImpl.createContext(config, classProvider, manager));
+    ClassProcessorHelper.setContext(this, DSOContextImpl.createContext(config, manager));
   }
 
   private static URL[] getSystemURLS() {
@@ -70,8 +68,9 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
   private Manager createManager(boolean startClient, ClientObjectManager objectManager,
                                 ClientTransactionManager txManager, DSOClientConfigHelper theConfig,
                                 PreparedComponentsFromL2Connection connectionComponents) {
-    classProvider.registerNamedLoader(this);
-    return new ManagerImpl(startClient, objectManager, txManager, theConfig, classProvider, connectionComponents, false);
+    Manager rv = new ManagerImpl(startClient, objectManager, txManager, theConfig, connectionComponents, false);
+    rv.registerNamedLoader(this);
+    return rv;
   }
 
   public void stop() {

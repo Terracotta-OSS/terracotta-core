@@ -89,7 +89,6 @@ import com.tc.object.lockmanager.impl.RemoteLockManagerImpl;
 import com.tc.object.lockmanager.impl.StripedClientLockManagerImpl;
 import com.tc.object.lockmanager.impl.ThreadLockManagerImpl;
 import com.tc.object.logging.RuntimeLogger;
-import com.tc.object.logging.RuntimeLoggerImpl;
 import com.tc.object.msg.AcknowledgeTransactionMessageImpl;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessageImpl;
 import com.tc.object.msg.BroadcastTransactionMessageImpl;
@@ -190,7 +189,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   private CommunicationsManager                    communicationsManager;
   private RemoteTransactionManager                 rtxManager;
   private ClientHandshakeManagerImpl               clientHandshakeManager;
-  private RuntimeLogger                            runtimeLogger;
   private CacheManager                             cacheManager;
   private L1Management                             l1Management;
   private TCProperties                             l1Properties;
@@ -198,10 +196,11 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   private boolean                                  createDedicatedMBeanServer = false;
   private CounterManager                           counterManager;
   private final ThreadIDMap                        threadIDMap;
+  private final RuntimeLogger runtimeLogger;
 
   public DistributedObjectClient(DSOClientConfigHelper config, TCThreadGroup threadGroup, ClassProvider classProvider,
                                  PreparedComponentsFromL2Connection connectionComponents, Manager manager,
-                                 Cluster cluster) {
+                                 Cluster cluster, RuntimeLogger runtimeLogger) {
     super(threadGroup, BoundedLinkedQueue.class.getName());
     Assert.assertNotNull(config);
     this.config = config;
@@ -212,6 +211,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.threadGroup = threadGroup;
     this.statisticsAgentSubSystem = new StatisticsAgentSubSystemImpl();
     this.threadIDMap = ThreadIDMapUtil.getInstance();
+    this.runtimeLogger = runtimeLogger;
   }
 
   public ThreadIDMap getThreadIDMap() {
@@ -342,8 +342,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     channel = createDSOClientMessageChannel(communicationsManager, connectionComponents, sessionProvider);
     ClientIDLoggerProvider cidLoggerProvider = new ClientIDLoggerProvider(channel.getClientIDProvider());
     stageManager.setLoggerProvider(cidLoggerProvider);
-
-    this.runtimeLogger = new RuntimeLoggerImpl(config);
 
     DSO_LOGGER.debug("Created channel.");
 
@@ -710,10 +708,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
   public ClientHandshakeManager getClientHandshakeManager() {
     return clientHandshakeManager;
-  }
-
-  public RuntimeLogger getRuntimeLogger() {
-    return runtimeLogger;
   }
 
   public SessionMonitor getHttpSessionMonitor() {

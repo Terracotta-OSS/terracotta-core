@@ -1,3 +1,0 @@
-handle.exe -- inspects a given file and tells which processes holding a lock on it - www.sysinternals.com
-pv.exe     -- proccess viewer, also give the command line that was run - www.prcview.com
-

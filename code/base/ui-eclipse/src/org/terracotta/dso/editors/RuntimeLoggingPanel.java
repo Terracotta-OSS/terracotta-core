@@ -48,7 +48,8 @@ public class RuntimeLoggingPanel extends ConfigurationEditorPanel implements Xml
     return m_runtimeLogging != null
            && (m_runtimeLogging.isSetLockDebug() || m_runtimeLogging.isSetDistributedMethodDebug()
                || m_runtimeLogging.isSetFieldChangeDebug() || m_runtimeLogging.isSetWaitNotifyDebug()
-               || m_runtimeLogging.isSetNewObjectDebug() || m_runtimeLogging.isSetNonPortableDump());
+               || m_runtimeLogging.isSetNewObjectDebug() || m_runtimeLogging.isSetNonPortableDump() || m_runtimeLogging
+               .isSetNamedLoaderDebug());
   }
 
   private void testRemoveRuntimeLogging() {
@@ -122,6 +123,7 @@ public class RuntimeLoggingPanel extends ConfigurationEditorPanel implements Xml
     private static final String NON_PORTABLE_DUMP        = "Non-portable Dump";
     private static final String WAIT_NOTIFY_DEBUG        = "Wait Notify Debug";
     private static final String NEW_OBJECT_DEBUG         = "New Object Debug";
+    private static final String NAMED_LOADER_DEBUG       = "Named Loader Debug";
 
     private Button              m_lockDebugCheck;
     private Button              m_distributedMethodDebugCheck;
@@ -129,6 +131,7 @@ public class RuntimeLoggingPanel extends ConfigurationEditorPanel implements Xml
     private Button              m_nonPortableDumpCheck;
     private Button              m_waitNotifyDebugCheck;
     private Button              m_newObjectDebugCheck;
+    private Button              m_namedLoaderDebugCheck;
 
     public void reset() {
       m_lockDebugCheck.setSelection(false);
@@ -143,6 +146,8 @@ public class RuntimeLoggingPanel extends ConfigurationEditorPanel implements Xml
       m_waitNotifyDebugCheck.setEnabled(false);
       m_newObjectDebugCheck.setSelection(false);
       m_newObjectDebugCheck.setEnabled(false);
+      m_namedLoaderDebugCheck.setSelection(false);
+      m_namedLoaderDebugCheck.setEnabled(false);
     }
 
     void setRuntimeLogging(RuntimeLogging runtimeLogging) {
@@ -152,6 +157,7 @@ public class RuntimeLoggingPanel extends ConfigurationEditorPanel implements Xml
       ((XmlBooleanToggle) m_nonPortableDumpCheck.getData()).setup(runtimeLogging);
       ((XmlBooleanToggle) m_waitNotifyDebugCheck.getData()).setup(runtimeLogging);
       ((XmlBooleanToggle) m_newObjectDebugCheck.getData()).setup(runtimeLogging);
+      ((XmlBooleanToggle) m_namedLoaderDebugCheck.getData()).setup(runtimeLogging);
     }
 
     private Layout(Composite parent) {
@@ -188,6 +194,10 @@ public class RuntimeLoggingPanel extends ConfigurationEditorPanel implements Xml
       m_newObjectDebugCheck = new Button(runtimeLoggingGroup, SWT.CHECK);
       m_newObjectDebugCheck.setText(NEW_OBJECT_DEBUG);
       initBooleanField(m_newObjectDebugCheck, RuntimeLogging.class, "new-object-debug");
+
+      m_namedLoaderDebugCheck = new Button(runtimeLoggingGroup, SWT.CHECK);
+      m_namedLoaderDebugCheck.setText(NAMED_LOADER_DEBUG);
+      initBooleanField(m_namedLoaderDebugCheck, RuntimeLogging.class, "named-loader-debug");
     }
   }
 }

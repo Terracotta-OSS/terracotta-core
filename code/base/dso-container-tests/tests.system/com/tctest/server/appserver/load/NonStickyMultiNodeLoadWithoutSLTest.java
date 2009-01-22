@@ -8,18 +8,19 @@ import com.tc.test.server.appserver.deployment.ServerTestSetup;
 
 import junit.framework.Test;
 
-public class MultiNodeInvalidatorWithoutSLTest extends MultiNodeInvalidatorTest {
-
-  public MultiNodeInvalidatorWithoutSLTest() {
-    //
-  }
+public class NonStickyMultiNodeLoadWithoutSLTest extends MultiNodeLoadTest {
 
   public static Test suite() {
-    return new ServerTestSetup(MultiNodeInvalidatorWithoutSLTest.class);
+    return new ServerTestSetup(NonStickyMultiNodeLoadWithoutSLTest.class);
   }
 
   @Override
   public boolean isSessionLockingTrue() {
+    return false;
+  }
+
+  @Override
+  boolean isSticky() {
     return false;
   }
 

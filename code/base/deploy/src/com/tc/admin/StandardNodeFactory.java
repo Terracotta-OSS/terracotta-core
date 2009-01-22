@@ -5,10 +5,10 @@
 package com.tc.admin;
 
 import com.tc.admin.model.IClusterModel;
-import com.tc.admin.model.IServer;
 import com.tc.admin.model.IServerGroup;
 
 public class StandardNodeFactory extends AbstractNodeFactory {
+  @Override
   public ClusterNode createClusterNode(IAdminClientContext adminClientContext) {
     return new ClusterNode(adminClientContext);
   }
@@ -17,11 +17,6 @@ public class StandardNodeFactory extends AbstractNodeFactory {
   public ClusterNode createClusterNode(IAdminClientContext adminClientContext, String host, int jmxPort,
                                        boolean autoConnect) {
     return new ClusterNode(adminClientContext, host, jmxPort, autoConnect);
-  }
-
-  @Override
-  public ServerNode createServerNode(IAdminClientContext adminClientContext, IClusterModel clusterModel, IServer server) {
-    return new ServerNode(adminClientContext, clusterModel, server);
   }
 
   @Override

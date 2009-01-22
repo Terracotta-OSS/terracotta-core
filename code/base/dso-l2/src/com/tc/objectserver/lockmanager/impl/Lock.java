@@ -241,7 +241,10 @@ public class Lock {
       } else if (!isPolicyGreedy() || !canAwardGreedilyOnTheClient(txn, requestedLockLevel)) {
         // These requests are the ones in the wire when the greedy lock was given out to the client.
         // We can safely ignore it as the clients will be able to award it locally.
-        cannotAwardAndRespond(txn, requestedLockLevel, lockResponseSink);
+        logger.debug(lockID + " : Lock.requestLock() : Ignoring the Lock request(" + txn + ","
+                     + LockLevel.toString(requestedLockLevel)
+                     + ") message from the a client that has the lock greedily.");
+        return false;
       }
 
       return false;
@@ -1081,21 +1084,13 @@ public class Lock {
     lockStatsManager.recordLockRejected(lockID, nodeID, threadID);
   }
 
-  // I wish we were using 1.5 !!!
-  // private void debug(Object o1, Object o2) {
-  // logger.warn(lockID + String.valueOf(o1) + String.valueOf(o2));
+  // private void debug(Object... objs) {
+  // StringBuilder builder = new StringBuilder();
+  // builder.append(lockID).append(" ");
+  // for (Object obj : objs) {
+  // builder.append(String.valueOf(obj)).append(" ");
   // }
-  //
-  // private void debug(Object o1, Object o2, Object o3) {
-  // logger.warn(lockID + String.valueOf(o1) + String.valueOf(o2) + String.valueOf(o3));
-  // }
-  //
-  // private void debug(Object o1, Object o2, Object o3, Object o4) {
-  // logger.warn(lockID + String.valueOf(o1) + String.valueOf(o2) + String.valueOf(o3) + String.valueOf(o4));
-  // }
-  //
-  // private void debug(Object o) {
-  // logger.warn(lockID + String.valueOf(o));
+  // logger.warn(builder.toString());
   // }
 
 }

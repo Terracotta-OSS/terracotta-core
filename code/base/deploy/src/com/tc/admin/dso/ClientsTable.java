@@ -17,6 +17,8 @@ public class ClientsTable extends XObjectTable {
     super();
     setModel(model = new ClientTableModel(appContext));
     getColumnModel().getColumn(1).setCellRenderer(new XObjectTable.PortNumberRenderer());
+    setSortDirection(UP);
+    setSortColumn(3 /* LiveObjectCount */);
   }
 
   public void addClient(IClient client) {

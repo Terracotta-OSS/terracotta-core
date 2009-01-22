@@ -20,7 +20,7 @@ class TestRunResults
   # build-results directory (usually 'build').
   def self.next_results(build_results)
     root_dir = nil
-    (1..1000).each do |seq|
+    (1..9999).each do |seq|
       trial = FilePath.new(build_results.build_dir, "testrun-%04d" % seq)
       if ! trial.exist?
         root_dir = trial
@@ -30,7 +30,7 @@ class TestRunResults
 
     unless root_dir
       raise("Unable to find an empty testing directory! We tried directories in '#@build_dir' named from " +
-          "'testrun-0001' to 'testrun-1000', but they all existed (?!?).")
+          "'testrun-0001' to 'testrun-9999', but they all existed (?!?).")
     end
     root_dir.ensure_directory
 

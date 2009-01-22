@@ -35,8 +35,7 @@ public class RuntimeLogging extends AbstractTerracottaMBean implements RuntimeLo
 
   public void setDistributedMethodDebug(boolean distributedMethodDebug) {
     runtimeLogger.setDistributedMethodDebug(distributedMethodDebug);
-    sendNotification(new Notification(DISTRIBUTED_METHOD_DEBUG_EVENT_TYPE, this, sequenceNumber.increment(), System
-        .currentTimeMillis(), Boolean.toString(distributedMethodDebug)));
+    sendNotification(DISTRIBUTED_METHOD_DEBUG_EVENT_TYPE, distributedMethodDebug);
   }
 
   public boolean getDistributedMethodDebug() {
@@ -45,8 +44,7 @@ public class RuntimeLogging extends AbstractTerracottaMBean implements RuntimeLo
 
   public void setFieldChangeDebug(boolean fieldChangeDebug) {
     runtimeLogger.setFieldChangeDebug(fieldChangeDebug);
-    sendNotification(new Notification(FIELD_CHANGE_DEBUG_EVENT_TYPE, this, sequenceNumber.increment(), System
-        .currentTimeMillis(), Boolean.toString(fieldChangeDebug)));
+    sendNotification(FIELD_CHANGE_DEBUG_EVENT_TYPE, fieldChangeDebug);
   }
 
   public boolean getFieldChangeDebug() {
@@ -55,8 +53,7 @@ public class RuntimeLogging extends AbstractTerracottaMBean implements RuntimeLo
 
   public void setLockDebug(boolean lockDebug) {
     runtimeLogger.setLockDebug(lockDebug);
-    sendNotification(new Notification(LOCK_DEBUG_EVENT_TYPE, this, sequenceNumber.increment(), System
-        .currentTimeMillis(), Boolean.toString(lockDebug)));
+    sendNotification(LOCK_DEBUG_EVENT_TYPE, lockDebug);
   }
 
   public boolean getLockDebug() {
@@ -65,18 +62,25 @@ public class RuntimeLogging extends AbstractTerracottaMBean implements RuntimeLo
 
   public void setNewObjectDebug(boolean newObjectDebug) {
     runtimeLogger.setNewManagedObjectDebug(newObjectDebug);
-    sendNotification(new Notification(NEW_OBJECT_DEBUG_EVENT_TYPE, this, sequenceNumber.increment(), System
-        .currentTimeMillis(), Boolean.toString(newObjectDebug)));
+    sendNotification(NEW_OBJECT_DEBUG_EVENT_TYPE, newObjectDebug);
   }
 
   public boolean getNewObjectDebug() {
     return runtimeLogger.getNewManagedObjectDebug();
   }
 
+  public boolean getNamedLoaderDebug() {
+    return runtimeLogger.getNamedLoaderDebug();
+  }
+
+  public void setNamedLoaderDebug(boolean namedLoaderDebug) {
+    runtimeLogger.setNamedLoaderDebug(namedLoaderDebug);
+    sendNotification(NAMED_LOADER_DEBUG_EVENT_TYPE, namedLoaderDebug);
+  }
+
   public void setNonPortableDump(boolean nonPortableDump) {
     runtimeLogger.setNonPortableDump(nonPortableDump);
-    sendNotification(new Notification(NON_PORTABLE_DUMP_EVENT_TYPE, this, sequenceNumber.increment(), System
-        .currentTimeMillis(), Boolean.toString(nonPortableDump)));
+    sendNotification(NON_PORTABLE_DUMP_EVENT_TYPE, nonPortableDump);
   }
 
   public boolean getNonPortableDump() {
@@ -85,8 +89,7 @@ public class RuntimeLogging extends AbstractTerracottaMBean implements RuntimeLo
 
   public void setWaitNotifyDebug(boolean waitNotifyDebug) {
     runtimeLogger.setWaitNotifyDebug(waitNotifyDebug);
-    sendNotification(new Notification(WAIT_NOTIFY_DEBUG_EVENT_TYPE, this, sequenceNumber.increment(), System
-        .currentTimeMillis(), Boolean.toString(waitNotifyDebug)));
+    sendNotification(WAIT_NOTIFY_DEBUG_EVENT_TYPE, waitNotifyDebug);
   }
 
   public boolean getWaitNotifyDebug() {
@@ -95,8 +98,7 @@ public class RuntimeLogging extends AbstractTerracottaMBean implements RuntimeLo
 
   public void setFlushDebug(boolean flushDebug) {
     runtimeLogger.setFlushDebug(flushDebug);
-    sendNotification(new Notification(FLUSH_DEBUG_EVENT_TYPE, this, sequenceNumber.increment(), System
-        .currentTimeMillis(), Boolean.toString(flushDebug)));
+    sendNotification(FLUSH_DEBUG_EVENT_TYPE, flushDebug);
   }
 
   public boolean getFlushDebug() {
@@ -105,12 +107,16 @@ public class RuntimeLogging extends AbstractTerracottaMBean implements RuntimeLo
 
   public void setFaultDebug(boolean faultDebug) {
     runtimeLogger.setFaultDebug(faultDebug);
-    sendNotification(new Notification(FAULT_DEBUG_EVENT_TYPE, this, sequenceNumber.increment(), System
-        .currentTimeMillis(), Boolean.toString(faultDebug)));
+    sendNotification(FAULT_DEBUG_EVENT_TYPE, faultDebug);
   }
 
   public boolean getFaultDebug() {
     return runtimeLogger.getFaultDebug();
+  }
+
+  private void sendNotification(String eventType, boolean eventValue) {
+    sendNotification(new Notification(eventType, this, sequenceNumber.increment(), System.currentTimeMillis(), Boolean
+        .toString(eventValue)));
   }
 
   public void reset() {
@@ -120,5 +126,4 @@ public class RuntimeLogging extends AbstractTerracottaMBean implements RuntimeLo
   public MBeanNotificationInfo[] getNotificationInfo() {
     return NOTIFICATION_INFO;
   }
-
 }

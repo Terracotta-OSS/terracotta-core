@@ -13,7 +13,7 @@ import com.tc.config.schema.repository.ChildBeanRepository;
 import com.tc.config.schema.repository.MutableBeanRepository;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.StandardL2TVSConfigurationSetupManager;
-import com.tc.util.ActiveCoordintorHelper;
+import com.tc.util.ActiveCoordinatorHelper;
 import com.terracottatech.config.ActiveServerGroup;
 import com.terracottatech.config.Ha;
 import com.terracottatech.config.Members;
@@ -45,7 +45,7 @@ public class ActiveServerGroupConfigObject extends BaseNewConfigObject implement
 
     String groupName = group.getGroupName();
     if (groupName == null) {
-      groupName = ActiveCoordintorHelper.getGroupNameFrom(group.getMembers().getMemberArray());
+      groupName = ActiveCoordinatorHelper.getGroupNameFrom(group.getMembers().getMemberArray());
     }
 
     this.grpName = groupName;

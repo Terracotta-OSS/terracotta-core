@@ -10,6 +10,10 @@ import com.tc.admin.model.IServer;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
+/**
+ * NO LONGER USED - please keep until it's clear I'm no longer needed
+ */
+
 public class ServerThreadDumpsPanel extends AbstractThreadDumpsPanel {
   private IServer server;
 

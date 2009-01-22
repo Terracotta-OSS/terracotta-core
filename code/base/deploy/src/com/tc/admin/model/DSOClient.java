@@ -140,10 +140,10 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
       oldValue = isReady();
       this.ready = ready;
     }
-    propertyChangeSupport.firePropertyChange(PROP_READY, oldValue, ready);
     if (ready != oldValue && ready) {
       initPolledAttributes();
     }
+    propertyChangeSupport.firePropertyChange(PROP_READY, oldValue, ready);
   }
 
   public synchronized boolean isReady() {

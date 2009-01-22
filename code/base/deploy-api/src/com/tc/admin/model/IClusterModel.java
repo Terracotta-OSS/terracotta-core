@@ -82,6 +82,8 @@ public interface IClusterModel extends IClusterModelElement, ManagedObjectFacade
 
   Map<IClusterNode, Future<String>> takeThreadDump();
 
+  Future<String> takeThreadDump(IClusterNode node);
+  
   void addPolledAttributeListener(PollScope scope, Set<String> attributes, PolledAttributeListener listener);
   
   void addPolledAttributeListener(PollScope scope, String attribute, PolledAttributeListener listener);

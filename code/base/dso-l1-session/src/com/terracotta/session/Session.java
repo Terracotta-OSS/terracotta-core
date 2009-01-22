@@ -17,4 +17,6 @@ public interface Session extends HttpSession {
   public void associateRequest(SessionRequest request);
 
   public void clearRequest();
+
+  public boolean isSessionLockingEnabled();
 }

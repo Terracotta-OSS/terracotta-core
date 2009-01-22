@@ -308,6 +308,7 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
       mv.visitFieldInsn(GETFIELD, spec.getClassNameSlashes(), MANAGED_FIELD_NAME, MANAGED_FIELD_TYPE);
       mv.visitInsn(ARETURN);
       mv.visitMaxs(0, 0);
+      mv.visitEnd();
 
       // add setter
       mv = super.visitMethod(ACC_PUBLIC | ACC_SYNTHETIC, MANAGED_METHOD, "(" + MANAGED_FIELD_TYPE + ")V", null, null);
@@ -316,7 +317,8 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
       mv.visitFieldInsn(PUTFIELD, spec.getClassNameSlashes(), MANAGED_FIELD_NAME, MANAGED_FIELD_TYPE);
       mv.visitInsn(RETURN);
       mv.visitMaxs(0, 0);
-
+      mv.visitEnd();
+      
       // add isManaged() method
       // XXX::FIXME:: This method need to handle TCClonableObjects and TCNonDistributableObjects
       mv = super.visitMethod(ACC_PUBLIC | ACC_SYNTHETIC, IS_MANAGED_METHOD, IS_MANAGED_DESCRIPTION, null, null);
@@ -330,6 +332,7 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
       mv.visitInsn(ICONST_0);
       mv.visitInsn(IRETURN);
       mv.visitMaxs(1, 1);
+      mv.visitEnd();
     }
   }
 
@@ -363,6 +366,7 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
       }
       mv.visitInsn(RETURN);
       mv.visitMaxs(0, 0);
+      mv.visitEnd();
     }
   }
 
@@ -403,6 +407,7 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
       }
       mv.visitInsn(ARETURN);
       mv.visitMaxs(0, 0);
+      mv.visitEnd();
     }
   }
 
@@ -453,6 +458,7 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
 
       mv.visitInsn(RETURN);
       mv.visitMaxs(0, 0);
+      mv.visitEnd();
     }
   }
 
@@ -505,6 +511,7 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
       mv.visitLabel(l1);
       mv.visitInsn(RETURN);
       mv.visitMaxs(0, 0);
+      mv.visitEnd();
     }
   }
 

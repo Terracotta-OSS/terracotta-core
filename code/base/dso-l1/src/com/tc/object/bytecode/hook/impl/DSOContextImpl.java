@@ -61,13 +61,13 @@ public class DSOContextImpl implements DSOContext {
    * Creates a "global" DSO Context. This context is appropriate only when there is only one DSO Context that applies to
    * the entire VM
    */
-  public static DSOContext createGlobalContext(ClassProvider globalProvider) throws ConfigurationSetupException {
+  public static DSOContext createGlobalContext() throws ConfigurationSetupException {
     DSOClientConfigHelper configHelper = getGlobalConfigHelper();
-    Manager manager = new ManagerImpl(configHelper, globalProvider, preparedComponentsFromL2Connection);
-    return new DSOContextImpl(configHelper, globalProvider, manager);
+    Manager manager = new ManagerImpl(configHelper, preparedComponentsFromL2Connection);
+    return new DSOContextImpl(configHelper, manager.getClassProvider(), manager);
   }
 
-  public static DSOContext createContext(String configSpec, ClassProvider globalProvider)
+  public static DSOContext createContext(String configSpec)
       throws ConfigurationSetupException {
     StandardTVSConfigurationSetupManagerFactory factory = new StandardTVSConfigurationSetupManagerFactory(
                                                                                                           (String[]) null,
@@ -85,19 +85,17 @@ public class DSOContextImpl implements DSOContext {
     }
 
     DSOClientConfigHelper configHelper = new StandardDSOClientConfigHelperImpl(config);
-    // StandardClassProvider classProvider = new StandardClassProvider();
-    Manager manager = new ManagerImpl(configHelper, globalProvider, l2Connection);
+    Manager manager = new ManagerImpl(configHelper, l2Connection);
     manager.init();
-    return createContext(configHelper, globalProvider, manager);
+    return createContext(configHelper, manager);
 
   }
 
   /**
    * For tests
    */
-  public static DSOContext createContext(DSOClientConfigHelper configHelper, ClassProvider classProvider,
-                                         Manager manager) {
-    return new DSOContextImpl(configHelper, classProvider, manager);
+  public static DSOContext createContext(DSOClientConfigHelper configHelper, Manager manager) {
+    return new DSOContextImpl(configHelper, manager.getClassProvider(), manager);
   }
 
   public static boolean isDSOSessions(String appName) throws ConfigurationSetupException {
@@ -161,7 +159,7 @@ public class DSOContextImpl implements DSOContext {
   /**
    * XXX::NOTE:: ClassLoader checks the returned byte array to see if the class is instrumented or not to maintain the
    * offset.
-   * 
+   *
    * @return new byte array if the class is instrumented and same input byte array if not.
    * @see ClassLoaderPreProcessorImpl
    */

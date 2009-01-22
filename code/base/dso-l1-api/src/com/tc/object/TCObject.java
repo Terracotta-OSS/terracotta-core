@@ -219,14 +219,6 @@ public interface TCObject extends Cacheable {
   public void hydrate(DNA from, boolean force) throws ClassNotFoundException;
 
   /**
-   * Check whether the specified index is valid
-   *
-   * @param index The array index to check
-   * @return An exception if invalid
-   */
-  public ArrayIndexOutOfBoundsException checkArrayIndex(int index);
-
-  /**
    * Fault in field object if necessary
    *
    * @param fieldName Fully-qualified fieldn name

@@ -8,10 +8,10 @@ import com.tc.admin.common.XObjectTable;
 import com.tc.stats.DSOClassInfo;
 
 public class ClassesTable extends XObjectTable {
-  public ClassesTable() {
-    super();
-    setSortColumn(1 /* instanceCount */);
+  public ClassesTable(ClassTableModel model) {
+    super(model);
     setSortDirection(UP);
+    setSortColumn(1 /* instanceCount */);
   }
 
   public void setClassInfo(DSOClassInfo classInfo[]) {

@@ -22,9 +22,11 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.exception.ZapDirtyDbServerNodeException;
 import com.tc.exception.ZapServerNodeException;
 import com.tc.handler.CallbackDatabaseDirtyAlertAdapter;
-import com.tc.handler.CallbackDirtyDatabaseCleanUpAdapter;
+import com.tc.handler.CallbackDirtyDatabaseExceptionAdapter;
 import com.tc.handler.CallbackDumpAdapter;
 import com.tc.handler.CallbackGroupExceptionHandler;
+import com.tc.handler.CallbackZapDirtyDbExceptionAdapter;
+import com.tc.handler.CallbackZapServerNodeExceptionAdapter;
 import com.tc.handler.LockInfoDumpHandler;
 import com.tc.io.TCFile;
 import com.tc.io.TCFileImpl;
@@ -248,6 +250,7 @@ import com.tc.util.startuplock.LocationNotCreatedException;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -383,6 +386,15 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     // perform the DSO network config verification
     NewL2DSOConfig l2DSOConfig = configSetupManager.dsoL2Config();
 
+    // verify user input host name, DEV-2293
+    String host = l2DSOConfig.host().getString();
+    if(NetworkInterface.getByInetAddress(InetAddress.getByName(host)) == null) {
+      String msg = "Unable to find local network interface for " + host;
+      consoleLogger.error(msg);
+      logger.error(msg, new TCRuntimeException(msg));
+      System.exit(-1);
+    }
+    
     String bindAddress = l2DSOConfig.bind().getString();
     if (bindAddress == null) {
       // workaround for CDV-584
@@ -523,15 +535,18 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
       objectStore = new InMemoryManagedObjectStore(new HashMap());
     }
 
-    CallbackOnExitHandler dirtydbExceptionHandler = new CallbackDirtyDatabaseCleanUpAdapter(logger, persistor
-        .getClusterStateStore());
-    threadGroup.addCallbackOnExitExceptionHandler(CleanDirtyDatabaseException.class, dirtydbExceptionHandler);
-    threadGroup.addCallbackOnExitExceptionHandler(ZapDirtyDbServerNodeException.class, dirtydbExceptionHandler);
-
-    /**
-     * using same CallbackOnExitHandler as in dirtyDb problems for Splitbrain and other Zap-Node events
-     */
-    threadGroup.addCallbackOnExitExceptionHandler(ZapServerNodeException.class, dirtydbExceptionHandler);
+    threadGroup
+        .addCallbackOnExitExceptionHandler(CleanDirtyDatabaseException.class,
+                                           new CallbackDirtyDatabaseExceptionAdapter(logger, consoleLogger, persistor
+                                               .getClusterStateStore()));
+    threadGroup.addCallbackOnExitExceptionHandler(ZapDirtyDbServerNodeException.class,
+                                                  new CallbackZapDirtyDbExceptionAdapter(logger, consoleLogger,
+                                                                                         persistor
+                                                                                             .getClusterStateStore()));
+    threadGroup
+        .addCallbackOnExitExceptionHandler(ZapServerNodeException.class,
+                                           new CallbackZapServerNodeExceptionAdapter(logger, consoleLogger, persistor
+                                               .getClusterStateStore()));
 
     persistenceTransactionProvider = persistor.getPersistenceTransactionProvider();
     PersistenceTransactionProvider transactionStorePTP;

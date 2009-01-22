@@ -28,8 +28,7 @@ public class ServersNode extends ComponentNode {
     for (IServerGroup group : serverGroups) {
       IServer[] members = group.getMembers();
       for (IServer server : members) {
-        ServerNode serverNode = adminClientContext.getNodeFactory().createServerNode(adminClientContext, clusterModel,
-                                                                                     server);
+        ServerNode serverNode = new ServerNode(adminClientContext, clusterModel, server);
         add(serverNode);
         serverList.add(server);
       }

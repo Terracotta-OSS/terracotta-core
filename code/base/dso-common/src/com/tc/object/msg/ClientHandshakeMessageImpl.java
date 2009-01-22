@@ -20,9 +20,11 @@ import com.tc.object.tx.TransactionID;
 import com.tc.util.SequenceID;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 public class ClientHandshakeMessageImpl extends DSOMessageBase implements ClientHandshakeMessage {
@@ -42,8 +44,8 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   private final Set         waitContexts             = new HashSet();
   private final Set         pendingLockContexts      = new HashSet();
   private final Set         pendingTryLockContexts   = new HashSet();
-  private final Set         sequenceIDs              = new HashSet();
-  private final Set         txnIDs                   = new HashSet();
+  private final List        sequenceIDs              = new ArrayList();
+  private final List        txnIDs                   = new ArrayList();
   private boolean           requestObjectIDs;
   private String            clientVersion            = "UNKNOW";
 
@@ -77,11 +79,11 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
     return pendingTryLockContexts;
   }
 
-  public Collection getTransactionSequenceIDs() {
+  public List getTransactionSequenceIDs() {
     return sequenceIDs;
   }
 
-  public Collection getResentTransactionIDs() {
+  public List getResentTransactionIDs() {
     return txnIDs;
   }
 
@@ -93,11 +95,11 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
     return clientVersion;
   }
 
-  public void addTransactionSequenceIDs(Collection seqIDs) {
+  public void addTransactionSequenceIDs(List seqIDs) {
     this.sequenceIDs.addAll(seqIDs);
   }
 
-  public void addResentTransactionIDs(Collection resentTransactionIDs) {
+  public void addResentTransactionIDs(List resentTransactionIDs) {
     this.txnIDs.addAll(resentTransactionIDs);
   }
 

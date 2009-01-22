@@ -105,4 +105,8 @@ public class MockSession implements Session {
     throw new ImplementMe();
   }
 
+  public boolean isSessionLockingEnabled() {
+    return true;
+  }
+
 }

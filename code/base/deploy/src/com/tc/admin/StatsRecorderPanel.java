@@ -289,8 +289,10 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
   }
 
   private void gathererConnected() {
-    statsSessionsListModel.clear();
-    appContext.execute(new GathererConnectedWorker());
+    if (appContext != null) {
+      statsSessionsListModel.clear();
+      appContext.execute(new GathererConnectedWorker());
+    }
   }
 
   private void gathererDisconnected() {

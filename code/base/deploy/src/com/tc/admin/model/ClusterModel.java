@@ -439,7 +439,9 @@ public class ClusterModel implements IClusterModel {
         Iterator<Future<Collection<NodePollResult>>> resultIter = results.iterator();
         while (resultIter.hasNext()) {
           Future<Collection<NodePollResult>> future = resultIter.next();
-          if (future.isDone()) {
+          if(future.isCancelled()) {
+            System.err.println("Poll task has timed-out; consider increasing the runtime stats poll period.");
+          } else if (future.isDone()) {
             try {
               Iterator<NodePollResult> nodeResult = future.get().iterator();
               while (nodeResult.hasNext()) {
@@ -540,6 +542,10 @@ public class ClusterModel implements IClusterModel {
     });
   }
 
+  public synchronized Future<String> takeThreadDump(IClusterNode node) {
+    return threadDumpFuture(executor, node, System.currentTimeMillis());
+  }
+  
   public synchronized Map<IClusterNode, Future<String>> takeThreadDump() {
     IServer activeCoord = getActiveCoordinator();
 
@@ -651,7 +657,6 @@ public class ClusterModel implements IClusterModel {
 
   class ConnectServerListener implements PropertyChangeListener {
     public void propertyChange(PropertyChangeEvent evt) {
-      System.err.println(evt.getPropertyName()+"="+evt.getNewValue());
       if (!isConnectListening) { throw new RuntimeException(
                                                             "ConnectServerListener.propertyChange called when not listening"); }
       String prop = evt.getPropertyName();

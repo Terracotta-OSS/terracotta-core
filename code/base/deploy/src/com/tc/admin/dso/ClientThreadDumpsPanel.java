@@ -11,6 +11,10 @@ import com.tc.admin.model.IClient;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
+/**
+ * NO LONGER USED - please keep until it's clear I'm no longer needed
+ */
+
 public class ClientThreadDumpsPanel extends AbstractThreadDumpsPanel {
   private IClient client;
 

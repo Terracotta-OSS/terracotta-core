@@ -259,10 +259,6 @@ public class MockTCObject implements TCObject {
     throw new ImplementMe();
   }
 
-  public ArrayIndexOutOfBoundsException checkArrayIndex(int index) {
-    throw new ImplementMe();
-  }
-
   public boolean isFieldPortableByOffset(long fieldOffset) {
     throw new ImplementMe();
   }

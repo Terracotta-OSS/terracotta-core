@@ -19,6 +19,7 @@ public interface RuntimeLoggingMBean extends TerracottaMBean, NotificationEmitte
   public static final String NON_PORTABLE_DUMP_EVENT_TYPE        = "tc.logging.runtime.NonPortableDump";
   public static final String WAIT_NOTIFY_DEBUG_EVENT_TYPE        = "tc.logging.runtime.WaitNotifyDebug";
   public static final String NEW_OBJECT_DEBUG_EVENT_TYPE         = "tc.logging.runtime.NewObjectDebug";
+  public static final String NAMED_LOADER_DEBUG_EVENT_TYPE       = "tc.logging.runtime.NamedLoaderDebug";
   public static final String FLUSH_DEBUG_EVENT_TYPE              = "tc.logging.runtime.FlushDebug";
   public static final String FAULT_DEBUG_EVENT_TYPE              = "tc.logging.runtime.FaultDebug";
 
@@ -46,6 +47,10 @@ public interface RuntimeLoggingMBean extends TerracottaMBean, NotificationEmitte
 
   boolean getNewObjectDebug();
 
+  void setNamedLoaderDebug(boolean namedLoaderDebug);
+
+  boolean getNamedLoaderDebug();
+  
   void setFlushDebug(boolean flushDebug);
 
   boolean getFlushDebug();

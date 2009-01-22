@@ -183,7 +183,7 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
 
   private class ManageMonitoringAction implements ActionListener {
     public void actionPerformed(ActionEvent ae) {
-      if (isMonitoring) {
+      if (isMonitoringRuntimeStats()) {
         stopMonitoringRuntimeStats();
       } else {
         startMonitoringRuntimeStats();
@@ -277,13 +277,15 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
   private double getRangeAxisTickWidth(Graphics graphics, XYPlot plot) {
     NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
     RectangleInsets tickLabelInsets = numberAxis.getTickLabelInsets();
-    NumberTickUnit unit = numberAxis.getTickUnit();
-
+//    NumberTickUnit unit = numberAxis.getTickUnit();
+    double upper = 500000000000d;
+    NumberTickUnit unit = (NumberTickUnit) DemoChartFactory.DEFAULT_INTEGER_TICKS.getCeilingTickUnit(upper);
+    
     // look at lower and upper bounds...
     FontMetrics fm = graphics.getFontMetrics(numberAxis.getTickLabelFont());
     Range range = numberAxis.getRange();
     double lower = range.getLowerBound();
-    double upper = range.getUpperBound();
+//    double upper = range.getUpperBound();
     String lowerStr = "";
     String upperStr = "";
     NumberFormat formatter = numberAxis.getNumberFormatOverride();
@@ -303,6 +305,10 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     /* override this */
   }
 
+  protected boolean isMonitoringRuntimeStats() {
+    return isMonitoring;
+  }
+  
   public void startMonitoringRuntimeStats() {
     chartsPanel.setVisible(true);
     isMonitoring = true;

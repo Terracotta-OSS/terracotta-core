@@ -214,10 +214,6 @@ public class NullTCObject implements TCObject {
     // do nothing
   }
 
-  public ArrayIndexOutOfBoundsException checkArrayIndex(int index) {
-    return null;
-  }
-
   public void setArrayReference(int index, ObjectID id) {
     //
   }

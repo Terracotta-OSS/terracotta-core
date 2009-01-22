@@ -34,8 +34,8 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
   public boolean                requestedObjectIDs;
   public NoExceptionLinkedQueue setTransactionSequenceIDsCalls = new NoExceptionLinkedQueue();
   public NoExceptionLinkedQueue setTransactionIDsCalls         = new NoExceptionLinkedQueue();
-  public Collection             transactionSequenceIDs         = new ArrayList();
-  public Collection             transactionIDs                 = new ArrayList();
+  public List                   transactionSequenceIDs         = new ArrayList();
+  public List                   transactionIDs                 = new ArrayList();
   private TestMessageChannel    channel;
   private String                clientVersion;
 
@@ -103,22 +103,22 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
     return pendingLockContexts;
   }
 
-  public Collection getTransactionSequenceIDs() {
+  public List getTransactionSequenceIDs() {
     return this.transactionSequenceIDs;
   }
 
-  public void addTransactionSequenceIDs(Collection ids) {
+  public void addTransactionSequenceIDs(List ids) {
     this.transactionSequenceIDs = ids;
     this.setTransactionSequenceIDsCalls.put(transactionSequenceIDs);
   }
 
-  public void addResentTransactionIDs(Collection resentTransactionIDs) {
+  public void addResentTransactionIDs(List resentTransactionIDs) {
     this.transactionIDs = resentTransactionIDs;
     this.setTransactionIDsCalls.put(resentTransactionIDs);
 
   }
 
-  public Collection getResentTransactionIDs() {
+  public List getResentTransactionIDs() {
     return transactionIDs;
   }
 

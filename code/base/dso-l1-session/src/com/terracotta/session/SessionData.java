@@ -5,6 +5,7 @@
 package com.terracotta.session;
 
 import com.tc.logging.TCLogger;
+import com.tc.session.SessionSupport;
 import com.tc.util.Assert;
 import com.terracotta.session.util.ContextMgr;
 import com.terracotta.session.util.LifecycleEventMgr;
@@ -21,7 +22,7 @@ import java.util.Set;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpSessionContext;
 
-public class SessionData implements Session {
+public class SessionData implements Session, SessionSupport {
   private final Map                   attributes         = new HashMap();
   private final Map                   internalAttributes = new HashMap();
   private transient Map               transientAttributes;
@@ -55,6 +56,11 @@ public class SessionData implements Session {
     this.eventMgr = lifecycleEventMgr;
     this.contextMgr = ctxMgr;
     this.sessionManager = sessionMgr;
+  }
+
+  public boolean isSessionLockingEnabled() {
+    if (null == sessionManager) throw new IllegalStateException("SessionManager is not associated with this Session");
+    return sessionManager.isSessionLockingEnabled();
   }
 
   public void associateRequest(SessionRequest req) {
@@ -369,6 +375,14 @@ public class SessionData implements Session {
       eventMgr.removeAttribute(this, name, oldVal);
     }
     return oldVal;
+  }
+
+  public void resumeRequest() {
+    TerracottaSessionManager.resumeRequest(this);
+  }
+
+  public void pauseRequest() {
+    TerracottaSessionManager.pauseRequest(this);
   }
 
   private Map getTransientAttributes() {

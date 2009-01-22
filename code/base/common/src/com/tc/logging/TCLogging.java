@@ -32,12 +32,13 @@ import java.nio.channels.OverlappingFileLockException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Properties;
 import java.util.Map.Entry;
 
 /**
  * Factory class for obtaining TCLogger instances.
- * 
+ *
  * @author teck
  */
 public class TCLogging {
@@ -50,15 +51,14 @@ public class TCLogging {
 
   private static final String       LOCK_FILE_NAME                     = ".terracotta-logging.lock";
 
-  private static final String       INTERNAL_LOGGER_NAMESPACE          = "com.tc";
-  private static final String       INTERNAL_LOGGER_NAMESPACE_WITH_DOT = INTERNAL_LOGGER_NAMESPACE + ".";
+  private static final String[]     INTERNAL_LOGGER_NAMESPACES         = new String[] { "com.tc", "com.terracottatech",
+      "org.terracotta"                                                };
 
   private static final String       CUSTOMER_LOGGER_NAMESPACE          = "com.terracottatech";
   private static final String       CUSTOMER_LOGGER_NAMESPACE_WITH_DOT = CUSTOMER_LOGGER_NAMESPACE + ".";
 
   private static final String       CONSOLE_LOGGER_NAME                = CUSTOMER_LOGGER_NAMESPACE + ".console";
 
-  private static final String       BENCH_LOGGER_NAME                  = "terracotta.bench";
   private static final String       LOGGING_PROPERTIES_SECTION         = "logging";
   private static final String       MAX_LOG_FILE_SIZE_PROPERTY         = "maxLogFileSize";
   private static final int          DEFAULT_MAX_LOG_FILE_SIZE          = 512;
@@ -95,17 +95,28 @@ public class TCLogging {
   }
 
   public static TCLogger getLogger(String name) {
-    if ((name == null) || !name.startsWith(INTERNAL_LOGGER_NAMESPACE_WITH_DOT)) {
-      // this comment here to make formatter sane
-      throw new IllegalArgumentException("Logger not in valid namepsace (ie. '" + INTERNAL_LOGGER_NAMESPACE_WITH_DOT
-                                         + "' ): " + name);
+    if (name == null) { throw new NullPointerException("Logger cannot be null"); }
+
+    boolean allowedName = false;
+    for (String namespace : INTERNAL_LOGGER_NAMESPACES) {
+      String withDot = namespace + ".";
+      if (name.startsWith(withDot)) {
+        allowedName = true;
+        break;
+      }
+    }
+
+    if (!allowedName) {
+      //
+      throw new IllegalArgumentException("Logger name (" + name + ") not in valid namespace: "
+                                         + Arrays.asList(INTERNAL_LOGGER_NAMESPACES));
     }
 
     return new TCLoggerImpl(name);
   }
 
   /**
-   * This method lets you get a logger w/o any name restrictoins. FOR TESTS ONLY (ie. not for shipping code)
+   * This method lets you get a logger w/o any name restrictions. FOR TESTS ONLY (ie. not for shipping code)
    */
   public static TCLogger getTestingLogger(String name) {
     if (name == null) { throw new IllegalArgumentException("Name cannot be null"); }
@@ -113,15 +124,11 @@ public class TCLogging {
   }
 
   /**
-   * This method lets you get a logger w/o any name restrictoins. FOR TESTS ONLY (ie. not for shipping code)
+   * This method lets you get a logger w/o any name restrictions. FOR TESTS ONLY (ie. not for shipping code)
    */
   public static TCLogger getTestingLogger(Class clazz) {
     if (clazz == null) { throw new IllegalArgumentException("Class cannot be null"); }
     return getTestingLogger(clazz.getName());
-  }
-
-  public static TCLogger getBenchLogger() {
-    return new TCLoggerImpl(BENCH_LOGGER_NAME);
   }
 
   // You want to look at CustomerLogging to get customer facing logger instances
@@ -369,23 +376,26 @@ public class TCLogging {
       Logger jettyLogger = Logger.getLogger("org.mortbay");
       jettyLogger.setLevel(Level.OFF);
 
-      Logger internalLogger = Logger.getLogger(INTERNAL_LOGGER_NAMESPACE);
+      List<Logger> internalLoggers = new ArrayList<Logger>();
+      for (String nameSpace : INTERNAL_LOGGER_NAMESPACES) {
+        internalLoggers.add(Logger.getLogger(nameSpace));
+      }
       Logger customerLogger = Logger.getLogger(CUSTOMER_LOGGER_NAMESPACE);
       Logger consoleLogger = Logger.getLogger(CONSOLE_LOGGER_NAME);
-      Logger benchLogger = Logger.getLogger(BENCH_LOGGER_NAME);
 
       /**
        * Don't add consoleLogger to allLoggers because it's a child of customerLogger, so it shouldn't get any
        * appenders. If you DO add consoleLogger here, you'll see duplicate messages in the log file.
        */
-      allLoggers = new Logger[] { internalLogger, customerLogger, benchLogger };
+      allLoggers = createAllLoggerList(internalLoggers, customerLogger);
 
       console = new TCLoggerImpl(CONSOLE_LOGGER_NAME);
 
-      internalLogger.setLevel(Level.INFO);
+      for (Logger internalLogger : internalLoggers) {
+        internalLogger.setLevel(Level.INFO);
+      }
       customerLogger.setLevel(Level.INFO);
       consoleLogger.setLevel(Level.INFO);
-      benchLogger.setLevel(Level.INFO);
 
       boolean isDev = developmentConfiguration();
 
@@ -431,6 +441,13 @@ public class TCLogging {
   // for test use only!
   public static void addAppender(String loggerName, TCAppender appender) {
     new TCLoggerImpl(loggerName).getLogger().addAppender(new Log4JAappenderToTCAppender(appender));
+  }
+
+  private static Logger[] createAllLoggerList(List<Logger> internalLoggers, Logger customerLogger) {
+    List<Logger> loggers = new ArrayList<Logger>();
+    loggers.addAll(internalLoggers);
+    loggers.add(customerLogger);
+    return loggers.toArray(new Logger[] {});
   }
 
   private static void addToAllLoggers(Appender appender) {

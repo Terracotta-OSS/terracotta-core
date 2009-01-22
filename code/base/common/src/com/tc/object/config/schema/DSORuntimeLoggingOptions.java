@@ -24,4 +24,6 @@ public interface DSORuntimeLoggingOptions extends NewConfig {
 
   BooleanConfigItem logNonPortableDump();
 
+  BooleanConfigItem logNamedLoaderDebug();
+
 }

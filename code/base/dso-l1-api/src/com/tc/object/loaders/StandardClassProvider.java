@@ -5,6 +5,7 @@
 package com.tc.object.loaders;
 
 import com.tc.aspectwerkz.transform.inlining.AsmHelper;
+import com.tc.object.logging.RuntimeLogger;
 
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
@@ -20,14 +21,10 @@ public class StandardClassProvider implements ClassProvider {
   private static final String SYSTEM  = Namespace.getStandardSystemLoaderName();
 
   private final Map           loaders = new HashMap();
-  private final boolean       debug;
+  private final RuntimeLogger runtimeLogger;
 
-  public StandardClassProvider() {
-    this(false);
-  }
-
-  public StandardClassProvider(boolean debug) {
-    this.debug = debug;
+  public StandardClassProvider(RuntimeLogger runtimeLogger) {
+    this.runtimeLogger = runtimeLogger;
   }
 
   public ClassLoader getClassLoader(String desc) {
@@ -63,14 +60,16 @@ public class StandardClassProvider implements ClassProvider {
 
   public void registerNamedLoader(NamedClassLoader loader) {
     final String name = getName(loader);
-    synchronized (loaders) {
-      Object prev = loaders.put(name, new WeakReference(loader));
+    final WeakReference ref;
 
-      if (debug) {
-        Throwable t = new Throwable("INFO: loader of type [" + loader.getClass().getName() + "] with name [" + name
-                                    + "] registered (replaced:" + (prev != null) + ")");
-        t.printStackTrace();
-      }
+    synchronized (loaders) {
+      ref = (WeakReference) loaders.put(name, new WeakReference(loader));
+    }
+
+    NamedClassLoader prev = ref == null ? null : (NamedClassLoader) ref.get();
+
+    if (runtimeLogger.getNamedLoaderDebug()) {
+      runtimeLogger.namedLoaderRegistered(loader, name, prev);
     }
   }
 

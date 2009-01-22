@@ -46,6 +46,7 @@ public class ClientLoggingPanel extends XContainer implements NotificationListen
   protected XCheckBox                  waitNotifyDebugCheckBox;
   protected XCheckBox                  distributedMethodDebugCheckBox;
   protected XCheckBox                  newObjectDebugCheckBox;
+  protected XCheckBox                  namedLoaderDebugCheckBox;
   protected XCheckBox                  flushDebugCheckBox;
   protected XCheckBox                  faultDebugCheckBox;
 
@@ -142,6 +143,10 @@ public class ClientLoggingPanel extends XContainer implements NotificationListen
     newObjectDebugCheckBox.setName("NewObjectDebug");
     gbc.gridy++;
 
+    panel.add(namedLoaderDebugCheckBox = new XCheckBox("NamedLoaderDebug"), gbc);
+    namedLoaderDebugCheckBox.setName("NamedLoaderDebug");
+    gbc.gridy++;
+    
     gbc.anchor = GridBagConstraints.CENTER;
     panel.add(createOutputOptionsPanel(), gbc);
 
@@ -235,6 +240,7 @@ public class ClientLoggingPanel extends XContainer implements NotificationListen
     setupLoggingControl(waitNotifyDebugCheckBox, runtimeLoggingBean);
     setupLoggingControl(distributedMethodDebugCheckBox, runtimeLoggingBean);
     setupLoggingControl(newObjectDebugCheckBox, runtimeLoggingBean);
+    setupLoggingControl(namedLoaderDebugCheckBox, runtimeLoggingBean);
     setupLoggingControl(flushDebugCheckBox, runtimeLoggingBean);
     setupLoggingControl(faultDebugCheckBox, runtimeLoggingBean);
   }
@@ -346,6 +352,7 @@ public class ClientLoggingPanel extends XContainer implements NotificationListen
     waitNotifyDebugCheckBox = null;
     distributedMethodDebugCheckBox = null;
     newObjectDebugCheckBox = null;
+    namedLoaderDebugCheckBox = null;
     flushDebugCheckBox = null;
     faultDebugCheckBox = null;
     autoLockDetailsCheckBox = null;

@@ -148,6 +148,7 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
 
     mv.visitInsn(RETURN);
     mv.visitMaxs(0, 0);
+    mv.visitEnd();
   }
 
   private void createSortedViewSetWrapper(ClassVisitor classVisitor) {
@@ -179,6 +180,7 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
 
     mv.visitInsn(ARETURN);
     mv.visitMaxs(0, 0);
+    mv.visitEnd();
   }
 
   private void createSetIteratorWrapper(ClassVisitor classVisitor) {
@@ -192,6 +194,7 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
                        "(Ljava/util/Iterator;Ljava/util/Set;)V");
     mv.visitInsn(ARETURN);
     mv.visitMaxs(0, 0);
+    mv.visitEnd();
   }
 
   private void createEntrySetWrapper(ClassVisitor classVisitor) {
@@ -209,6 +212,7 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
     mv.visitLabel(l1);
     mv.visitLocalVariable("this", "Ljava/util/Map;", null, l0, l1, 0);
     mv.visitMaxs(5, 1);
+    mv.visitEnd();
   }
 
   private void createKeySetWrapper(ClassVisitor classVisitor) {
@@ -227,6 +231,7 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
     mv.visitLabel(l1);
     mv.visitLocalVariable("this", "Ljava/util/Map;", null, l0, l1, 0);
     mv.visitMaxs(5, 1);
+    mv.visitEnd();
   }
 
   private void createValuesWrapper(ClassVisitor classVisitor) {
@@ -245,6 +250,7 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
     mv.visitLabel(l1);
     mv.visitLocalVariable("this", "Ljava/util/Map;", null, l0, l1, 0);
     mv.visitMaxs(5, 1);
+    mv.visitEnd();
   }
 
   private void createTHashMapPutWrapperMethod(ClassVisitor classVisitor) {
@@ -299,6 +305,7 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
     mv.visitVarInsn(ALOAD, 4);
     mv.visitInsn(ARETURN);
     mv.visitMaxs(0, 0);
+    mv.visitEnd();
   }
 
   private void createHashPutWrapperMethod(ClassVisitor classVisitor, boolean checkWriteAccessRequired) {
@@ -335,6 +342,7 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
     mv.visitVarInsn(ALOAD, params.length + 1);
     mv.visitInsn(ARETURN);
     mv.visitMaxs(0, 0);
+    mv.visitEnd();
   }
 
   private void createHashMapRemoveWrapperMethod(ClassVisitor classVisitor, boolean checkWriteAccessRequired) {
@@ -365,6 +373,7 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
     mv.visitMethodInsn(INVOKEVIRTUAL, ownerSlashes, getNewName(), description);
     mv.visitInsn(ARETURN);
     mv.visitMaxs(0, 0);
+    mv.visitEnd();
   }
 
   private void createIfTrueLogWrapperMethod(ClassVisitor classVisitor) {
@@ -387,6 +396,7 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
     mv.visitVarInsn(returnType.getOpcode(ILOAD), 2);
     mv.visitInsn(returnType.getOpcode(IRETURN));
     mv.visitMaxs(0, 0);
+    mv.visitEnd();
   }
 
   private void createAlwaysLogWrapperMethod(ClassVisitor classVisitor, boolean checkWriteAccessRequired) {
@@ -418,6 +428,7 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
     }
     mv.visitInsn(returnType.getOpcode(IRETURN));
     mv.visitMaxs(0, 0);
+    mv.visitEnd();
   }
 
   protected void addCheckWriteAccessInstrumentedCode(MethodVisitor mv, boolean checkManaged) {

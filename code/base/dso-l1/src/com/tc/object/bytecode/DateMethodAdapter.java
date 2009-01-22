@@ -98,6 +98,7 @@ public class DateMethodAdapter extends LogicalMethodAdapter {
     }
     mv.visitInsn(returnType.getOpcode(IRETURN));
     mv.visitMaxs(0, 0);
+    mv.visitEnd();
 
   }
 
@@ -120,6 +121,7 @@ public class DateMethodAdapter extends LogicalMethodAdapter {
 
     mv.visitInsn(returnType.getOpcode(IRETURN));
     mv.visitMaxs(0, 0);
+    mv.visitEnd();
   }
 
   private void addSetTimeInstrumentedCode(MethodVisitor mv, int variableOffset) {

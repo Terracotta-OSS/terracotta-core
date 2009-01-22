@@ -1,7 +1,7 @@
 Terracotta
 ==========
 
-Documentation: http://www.terracotta.org/kit/reflector?kitID=2.6&pageID=Documentation 
+Documentation: http://www.terracotta.org/web/display/orgsite/Documentation 
 Forums:        http://www.terracottatech.com/forums/
 Mailing Lists: http://lists.terracotta.org
 Services:      http://www.terracottatech.com/support_services.shtml
@@ -26,13 +26,13 @@ Terracotta
 
 Terracotta DSO Eclipse Plug-in
    Follow the installation directions at:
-      - http://www.terracotta.org/eclipse
+      - http://www.terracotta.org/web/display/docs/Eclipse+Plugin+Guide
 
 
 Sign Up
 --------------
 To get the most out of your Terracotta experience, please sign up for a Terracotta account:
-    - http://www.terracotta.org/confluence/display/orgsite/Sign+Up
+    - http://www.terracotta.org/web/display/orgsite/Sign-up
 
 With a Terracotta account, you can:
     - Access all services with a site-wide ID
@@ -63,14 +63,14 @@ sample applications are in the "samples/pojo" directory.
 Administration Tools
 --------------------
 
-The "bin" directory contains a script to start the Terracotta Administration 
+The "bin" directory contains a script to start the Terracotta Developer Console 
 Console.  Launch the Console tool with the following command.
 
 Unix/Linx:
-   ./admin.sh
+   ./dev-console.sh
 
 Windows:
-   admin.bat
+   dev-console.bat
 
 The Console tool provides a view inside the Terracotta Server, letting you see
 activity inside Terracotta at run-time.
@@ -81,7 +81,7 @@ Terracotta Forge
 Terracotta has integration modules (TIMs) that enable integration with many common frameworks,
 such as EHCache and Quartz. For the latest information please visit:
 
-    - http://www.terracotta.org/confluence/display/integrations/Home
+    - http://www.terracotta.org/web/display/orgsite/Integration+Guides
 
 Projects for the Forge can be found at:
     - http://forge.terracotta.org 

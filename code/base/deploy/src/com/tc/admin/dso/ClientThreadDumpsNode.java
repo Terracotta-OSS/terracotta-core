@@ -10,6 +10,10 @@ import com.tc.admin.model.IClient;
 
 import java.awt.Component;
 
+/**
+ * NO LONGER USED - please keep until it's clear I'm no longer needed
+ */
+
 public class ClientThreadDumpsNode extends ComponentNode {
   private ApplicationContext       appContext;
   protected ClientNode             clientNode;

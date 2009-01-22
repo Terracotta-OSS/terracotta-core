@@ -11,7 +11,7 @@ import org.apache.xmlbeans.XmlObject;
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.dynamic.ObjectArrayConfigItem;
 import com.tc.config.schema.dynamic.ObjectArrayXPathBasedConfigItem;
-import com.tc.util.ActiveCoordintorHelper;
+import com.tc.util.ActiveCoordinatorHelper;
 import com.tc.util.Assert;
 import com.terracottatech.config.ActiveServerGroup;
 import com.terracottatech.config.ActiveServerGroups;
@@ -127,7 +127,7 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
             data.setGroupId(i);
             String groupName = asgArray[i].getGroupName();
             if (groupName == null) {
-              groupName = ActiveCoordintorHelper.getGroupNameFrom(asgArray[i].getMembers().getMemberArray());
+              groupName = ActiveCoordinatorHelper.getGroupNameFrom(asgArray[i].getMembers().getMemberArray());
             }
 
             data.setGroupName(groupName);
@@ -135,7 +135,7 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
           }
         }
 
-        coordinatorGrpId = ActiveCoordintorHelper.getCoordinatorGroup(asgArray);
+        coordinatorGrpId = ActiveCoordinatorHelper.getCoordinatorGroup(asgArray);
       }
     };
   }

@@ -71,7 +71,9 @@ class LiveObjectCountGraphPanel extends BaseRuntimeStatsPanel implements PolledA
     final int value = liveObjectCount;
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        timeSeries.addOrUpdate(new Second(), value);
+        if (timeSeries != null) {
+          timeSeries.addOrUpdate(new Second(), value);
+        }
       }
     });
   }

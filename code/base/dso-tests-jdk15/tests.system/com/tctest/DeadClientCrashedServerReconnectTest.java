@@ -19,6 +19,7 @@ import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
+import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.stats.DSOMBean;
 import com.tc.test.proxyconnect.ProxyConnectManager;
@@ -73,7 +74,7 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
                                                                  new TCThreadGroup(new ThrowableHandler(TCLogging
                                                                      .getLogger(DistributedObjectClient.class))),
                                                                  new MockClassProvider(), components, NullManager
-                                                                     .getInstance(), new Cluster());
+                                                                     .getInstance(), new Cluster(), new NullRuntimeLogger());
     client.setCreateDedicatedMBeanServer(true);
     client.start();
 

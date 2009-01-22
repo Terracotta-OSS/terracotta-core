@@ -67,7 +67,11 @@ public class Directories {
     String path = System.getProperty(TC_INSTALL_ROOT_PROPERTY_NAME);
     File theFile = path != null ? new File(path).getAbsoluteFile() : null;
 
-    if (!ignoreCheck) {
+    if (ignoreCheck) {
+      // XXX hack to have enterprise system tests to find license key under <ee-branch>/code/base
+      String baseDir = System.getProperty("tc.base-dir");
+      theFile = new File(baseDir != null ? baseDir : ".", "../../../code/base");
+    } else {
       if (StringUtils.isBlank(path)) {
         // formatting
         throw new FileNotFoundException("The system property '" + TC_INSTALL_ROOT_PROPERTY_NAME
@@ -94,7 +98,7 @@ public class Directories {
               + "', does not seem to actually " + "be the root of the Terracotta installation. (The required "
               + "Terracotta JAR file, '" + searchFile.getAbsolutePath() + "', does not exist or is not a file.)");
         }
-      }
+      }  
     }
 
     return theFile;

@@ -43,7 +43,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
   // MemberInfo memberInfo, String originalName) {
   public TransparencyCodeAdapter(InstrumentationSpec spec, LockDefinition autoLockDefinition, MethodVisitor mv,
                                  MemberInfo memberInfo, String originalName) {
-    super(mv, memberInfo.getModifiers(), originalName, memberInfo.getSignature());
+    super(new ExceptionTableOrderingMethodAdapter(mv), memberInfo.getModifiers(), originalName, memberInfo.getSignature());
     this.spec = spec;
     this.isAutolock = autoLockDefinition != null;
     this.autoLockType = isAutolock ? autoLockDefinition.getLockLevelAsInt() : -1;
@@ -397,44 +397,46 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
         case AALOAD:
           Label end = new Label();
           Label notManaged = new Label();
-          Label noIndexException = new Label();
-          super.visitInsn(DUP2);
-          super.visitInsn(POP);
-          callArrayManagerMethod("getObject", "(Ljava/lang/Object;)Lcom/tc/object/TCObject;");
-          super.visitInsn(DUP);
-          super.visitJumpInsn(IFNULL, notManaged);
-          super.visitInsn(DUP2);
-          super.visitInsn(SWAP);
-          super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject", "checkArrayIndex",
-                                "(I)Ljava/lang/ArrayIndexOutOfBoundsException;");
-          super.visitInsn(DUP);
-          super.visitJumpInsn(IFNULL, noIndexException);
-          super.visitInsn(SWAP);
-          super.visitInsn(POP);
-          super.visitInsn(SWAP);
-          super.visitInsn(POP);
-          super.visitInsn(SWAP);
-          super.visitInsn(POP);
-          super.visitInsn(ATHROW);
-          super.visitLabel(noIndexException);
-          super.visitInsn(POP);
-          super.visitInsn(DUP_X2);
-          super.visitInsn(DUP);
-          super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject", "getResolveLock", "()Ljava/lang/Object;");
-          super.visitInsn(MONITORENTER);
-          super.visitInsn(DUP2);
-          super.visitInsn(SWAP);
-          super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject", "resolveArrayReference", "(I)V");
-          super.visitInsn(POP);
-          super.visitInsn(opCode);
-          super.visitInsn(SWAP);
-          super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject", "getResolveLock", "()Ljava/lang/Object;");
-          super.visitInsn(MONITOREXIT);
-          super.visitJumpInsn(GOTO, end);
-          super.visitLabel(notManaged);
-          super.visitInsn(POP);
-          super.visitInsn(opCode);
-          super.visitLabel(end);
+          
+          Label lockedStart = new Label();
+          Label lockedEnd = new Label();
+          Label unlockException = new Label();
+          super.visitTryCatchBlock(lockedStart, lockedEnd, unlockException, null);
+                                                                                               //..., array, index
+          super.visitInsn(DUP2);                                                               //..., array, index, array, index
+          super.visitInsn(POP);                                                                //..., array, index, array
+          callArrayManagerMethod("getObject", "(Ljava/lang/Object;)Lcom/tc/object/TCObject;"); //..., array, index, tcobj
+          super.visitInsn(DUP);                                                                //..., array, index, tcobj, tcobj
+          super.visitJumpInsn(IFNULL, notManaged);                                             //..., array, index, tcobj
+          super.visitInsn(DUP);                                                                //..., array, index, tcobj, tcobj
+          super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject",
+                                "getResolveLock", "()Ljava/lang/Object;");                     //..., array, index, tcobj, rlock
+          super.visitInsn(DUP);                                                                //..., array, index, tcobj, rlock, rlock
+          int lockSlot = newLocal(Type.getType(Object.class));
+          mv.visitVarInsn(ASTORE, lockSlot);                                                   //..., array, index, tcobj, rlock
+          super.visitInsn(MONITORENTER);                                                       //..., array, index, tcobj
+
+          super.visitLabel(lockedStart);                                                       //..., array, index, tcobj
+          super.visitInsn(DUP2);                                                               //..., array, index, tcobj, index, tcobj
+          super.visitInsn(SWAP);                                                               //..., array, index, tcobj, tcobj, index
+          super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject",
+                                "resolveArrayReference", "(I)V");                              //..., array, index, tcobj
+          super.visitInsn(POP);                                                                //..., array, index
+          super.visitInsn(opCode);                                                             //..., reslt
+          mv.visitVarInsn(ALOAD, lockSlot);                                                    //..., reslt, rlock
+          super.visitInsn(MONITOREXIT);                                                        //..., reslt
+          super.visitLabel(lockedEnd);                                                         //..., reslt
+          super.visitJumpInsn(GOTO, end);                                                      //..., reslt
+          
+          super.visitLabel(unlockException);                                                   //excep
+          mv.visitVarInsn(ALOAD, lockSlot);                                                    //excep, rlock
+          super.visitInsn(MONITOREXIT);                                                        //excep
+          super.visitInsn(ATHROW);                                                             //<--->
+          
+          super.visitLabel(notManaged);                                                        //..., array, index, tcobj
+          super.visitInsn(POP);                                                                //..., array, index
+          super.visitInsn(opCode);                                                             //..., reslt
+          super.visitLabel(end);                                                               //..., reslt
           return;
         case AASTORE:
           callArrayManagerMethod("objectArrayChanged", "([Ljava/lang/Object;ILjava/lang/Object;)V");

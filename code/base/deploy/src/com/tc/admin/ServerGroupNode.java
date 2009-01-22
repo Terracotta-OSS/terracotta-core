@@ -24,8 +24,7 @@ public class ServerGroupNode extends ClusterElementNode {
     this.serverGroup = serverGroup;
 
     for (IServer server : serverGroup.getMembers()) {
-      ServerNode serverNode = adminClientContext.getNodeFactory().createServerNode(adminClientContext, clusterModel,
-                                                                                   server);
+      ServerNode serverNode = new ServerNode(adminClientContext, clusterModel, server);
       add(serverNode);
     }
     setLabel(serverGroup.getName() + " (" + getChildCount() + ")");

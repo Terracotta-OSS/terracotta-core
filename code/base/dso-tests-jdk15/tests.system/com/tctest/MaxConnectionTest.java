@@ -23,6 +23,7 @@ import com.tc.object.bytecode.NullManager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
+import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.server.TCServerImpl;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -42,7 +43,7 @@ public class MaxConnectionTest extends BaseDSOTestCase {
     PreparedComponentsFromL2Connection components = new PreparedComponentsFromL2Connection(manager);
     DistributedObjectClient client = new DistributedObjectClient(configHelper, new TCThreadGroup(new ThrowableHandler(TCLogging
         .getLogger(DistributedObjectClient.class))), new MockClassProvider(), components, NullManager.getInstance(),
-                                       new Cluster());
+                                       new Cluster(), new NullRuntimeLogger());
     client.setCreateDedicatedMBeanServer(true);
     return client;
   }
@@ -66,6 +67,7 @@ public class MaxConnectionTest extends BaseDSOTestCase {
     final boolean[] done = new boolean[] { false };
 
     new Thread() {
+      @Override
       public void run() {
         try {
           newClient().start();
@@ -108,6 +110,7 @@ public class MaxConnectionTest extends BaseDSOTestCase {
     }
   }
 
+  @Override
   public void tearDown() throws Exception {
     if (server != null) {
       server.stop();
