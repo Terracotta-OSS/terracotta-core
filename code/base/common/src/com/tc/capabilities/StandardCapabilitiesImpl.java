@@ -28,4 +28,7 @@ public class StandardCapabilitiesImpl implements Capabilities {
     return "Unlimited capabilities";
   }
 
+  public boolean canHaveMultipleGroups() {
+    return false;
+  }
 }
