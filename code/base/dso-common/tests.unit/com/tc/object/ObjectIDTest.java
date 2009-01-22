@@ -55,7 +55,7 @@ public class ObjectIDTest extends TestCase {
     long seed = sr.nextLong();
     System.err.println("Seed = " + seed);
     Random r = new Random(seed);
-    for (int gid = 0; gid < 128; gid++) {
+    for (int gid = 0; gid < 255; gid++) {
       for (long oid = 0; oid < 600; oid++) {
         groupIDObjectIDTest(gid, oid);
       }
@@ -69,7 +69,7 @@ public class ObjectIDTest extends TestCase {
 
     boolean failed = false;
     try {
-      ObjectID oid = new ObjectID(ObjectID.MAX_ID + 1, 127);
+      ObjectID oid = new ObjectID(ObjectID.MAX_ID + 1, 254);
       System.err.println("Exception No Exception : " + oid);
       failed = true;
     } catch (AssertionError a) {
@@ -77,7 +77,7 @@ public class ObjectIDTest extends TestCase {
     }
     if (failed) { throw new AssertionError("Expected to fail"); }
     try {
-      ObjectID oid = new ObjectID(ObjectID.MAX_ID, 128);
+      ObjectID oid = new ObjectID(ObjectID.MAX_ID, 255);
       System.err.println("Exception No Exception : " + oid);
       failed = true;
     } catch (AssertionError a) {
