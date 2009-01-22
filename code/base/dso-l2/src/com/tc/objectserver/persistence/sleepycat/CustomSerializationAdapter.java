@@ -33,7 +33,7 @@ public class CustomSerializationAdapter implements SerializationAdapter {
       serialize(entry, managedObject, moSerializer);
   }
 
-  public synchronized void serializeString(DatabaseEntry entry, String string) throws IOException {
+  public void serializeString(DatabaseEntry entry, String string) throws IOException {
       serialize(entry, string, stringSerializer);
   }
 
