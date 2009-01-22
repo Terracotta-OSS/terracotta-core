@@ -286,6 +286,21 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     run_tests(SingleTestSet.new(test))
   end
 
+  def pound_this(test)
+    depends :init, :compile
+    upper = 9999
+    (1..upper).each do |count|
+      run_tests(SingleTestSet.new(test))
+      if @script_results.failed?
+        STDERR.puts "Test failed after #{count} runs"
+        if config_source['email']
+          `echo #{@script_results.to_s} | mail -s "#{test} failed after pounded for #{count} times" #{config_source['email']}`
+        end
+      end
+    end
+    puts "Pounded for #{upper} without failure."
+  end
+
   # Runs all test patterns named in the specified file, which typically would be just a list of
   # tests, one to a line.
   def check_file(test_file)
