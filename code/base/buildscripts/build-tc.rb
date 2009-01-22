@@ -290,6 +290,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     depends :init, :compile
     upper = 9999
     (1..upper).each do |count|
+      STDERR.puts "Pounding count: #{count}"
       run_tests(SingleTestSet.new(test))
       if @script_results.failed?
         STDERR.puts "Test failed after #{count} runs"
