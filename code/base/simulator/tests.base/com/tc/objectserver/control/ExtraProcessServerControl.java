@@ -260,6 +260,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
     System.out.println("Shutting down server " + this.name + "...");
     String[] args = getMainClassArguments();
     LinkedJavaProcess stopper = createLinkedJavaProcess("com.tc.admin.TCStop", args);
+    stopper.setJavaArguments((String[]) jvmArgs.toArray(new String[jvmArgs.size()]));
     stopper.start();
 
     ByteArrayOutputStream stopperLog = null;
