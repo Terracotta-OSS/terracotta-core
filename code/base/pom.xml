@@ -35,6 +35,7 @@
 
   <properties>
     <tcVersion>2.8.0-SNAPSHOT</tcVersion>
+    <sigar.version>1.6.0</sigar.version>
   </properties>
 
   <dependencyManagement>
@@ -352,6 +353,56 @@
         <groupId>org.terracotta</groupId>
         <artifactId>tcstats</artifactId>
         <version>${tcVersion}</version>
+      </dependency>
+
+      <!-- SIGAR dependencies -->
+      <dependency>
+        <groupId>org.hyperic</groupId>
+        <artifactId>sigar</artifactId>
+        <version>${sigar.version}</version>
+        <type>jar</type>
+      </dependency>
+      <dependency>
+        <groupId>org.hyperic</groupId>
+        <artifactId>libsigar-amd64-linux</artifactId>
+        <version>${sigar.version}</version>
+        <type>so</type>
+      </dependency>
+      <dependency>
+        <groupId>org.hyperic</groupId>
+        <artifactId>libsigar-sparc-solaris</artifactId>
+        <version>${sigar.version}</version>
+        <type>so</type>
+      </dependency>
+      <dependency>
+        <groupId>org.hyperic</groupId>
+        <artifactId>libsigar-x86-linux</artifactId>
+        <version>${sigar.version}</version>
+        <type>so</type>
+      </dependency>
+      <dependency>
+        <groupId>org.hyperic</groupId>
+        <artifactId>sigar-x86-winnt</artifactId>
+        <version>${sigar.version}</version>
+        <type>dll</type>
+      </dependency>
+      <dependency>
+        <groupId>org.hyperic</groupId>
+        <artifactId>sigar-x86-winnt</artifactId>
+        <version>${sigar.version}</version>
+        <type>lib</type>
+      </dependency>
+      <dependency>
+        <groupId>org.hyperic</groupId>
+        <artifactId>sigar-amd64-winnt</artifactId>
+        <version>${sigar.version}</version>
+        <type>dll</type>
+      </dependency>
+      <dependency>
+        <groupId>org.hyperic</groupId>
+        <artifactId>libsigar-universal-macosx</artifactId>
+        <version>${sigar.version}</version>
+        <type>dylib</type>
       </dependency>
     </dependencies>
   </dependencyManagement>

@@ -8,7 +8,24 @@ import java.io.FilenameFilter;
 import java.net.URL;
 import java.util.Properties;
 
+import org.hyperic.sigar.Sigar;
+import java.io.*;
 public class SigarUtil {
+
+  static {
+    sigarInit();
+  }
+
+  public static Sigar newSigar() {
+try {
+PrintWriter writer = new PrintWriter(new FileWriter("/tmp/SigarUtil.log"));
+writer.println("in SigarUtil.newSigar()");
+writer.close();
+} catch (IOException e) {
+  throw new RuntimeException(e);
+}   return new Sigar();
+  }
+
   private static final String PATH_SEPARATOR = System.getProperty("path.separator");
   private static final String FILE_SEPARATOR = System.getProperty("file.separator");
   private static final String LIBRARY_PATH_PROPERTY = "org.hyperic.sigar.path";
@@ -16,12 +33,13 @@ public class SigarUtil {
   /**
    * Attempts to ensure that Sigar native libraries are in the native library path.
    */
-  public static void sigarInit() {
+  static void sigarInit() {
     // If it's already there, nothing to do (this would be the case with tests run from tcbuild)
     if (isSigarInLibraryPath())
       return;
 
     // Next try the kit installation directory
+    /* Since the native libraries are colocated with sigar.jar, this is unnecessary.
     String installRoot = System.getProperty("tc.install-root");
     if (installRoot != null) {
       File kitLibDirectory = new File(installRoot, "lib");
@@ -30,6 +48,7 @@ public class SigarUtil {
         return;
       }
     }
+    */
 
     // Otherwise, add the appropriate Maven repository directories to the native library path
     addMavenRepositoryToLibraryPath();
@@ -95,7 +114,10 @@ public class SigarUtil {
 
     String result = props.getProperty("sigar.version");
     if (result == null) {
-      result = "";
+      result = System.getProperty("sigar.version");
+      if (result /*still*/ == null) {
+        result = "";
+      }
     }
     return result;
   }

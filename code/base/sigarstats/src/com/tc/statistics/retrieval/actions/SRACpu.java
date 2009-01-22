@@ -10,10 +10,13 @@ import org.hyperic.sigar.SigarException;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
+import com.tc.statistics.retrieval.SigarUtil;
 
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.util.Locale;
+
+import java.io.*;
 
 public class SRACpu implements StatisticRetrievalAction, SRACpuConstants {
   
@@ -22,7 +25,14 @@ public class SRACpu implements StatisticRetrievalAction, SRACpuConstants {
   private final Sigar sigar;
 
   public SRACpu() {
-    sigar = new Sigar();
+try {
+  PrintWriter writer = new PrintWriter(new FileWriter("/tmp/SRACpu.log"));
+  writer.println("in SRACpu");
+  writer.close();
+} catch (IOException e) {
+  e.printStackTrace();
+}
+    sigar = SigarUtil.newSigar();
   }
 
   public StatisticData[] retrieveStatisticData() {
