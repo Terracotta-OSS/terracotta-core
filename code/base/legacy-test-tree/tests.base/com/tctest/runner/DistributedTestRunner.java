@@ -7,7 +7,6 @@ package com.tctest.runner;
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
@@ -15,6 +14,7 @@ import com.tc.logging.TCLogging;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.server.AbstractServerFactory;
 import com.tc.server.TCServer;
 import com.tc.simulator.app.ApplicationBuilder;
 import com.tc.simulator.app.ApplicationConfig;
@@ -33,7 +33,6 @@ import com.tcsimulator.ControlImpl;
 import com.tcsimulator.container.ContainerStateFactoryObject;
 import com.tcsimulator.listener.QueuePrinter;
 
-import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -139,12 +138,10 @@ public class DistributedTestRunner implements ResultsListener {
 
   protected TCServer instantiateTCServer() {
     try {
-      Class tcServerClass = Class.forName("com.tc.server.TCServerImpl");
-      Class[] constructorParameterTypes = { L2TVSConfigurationSetupManager.class, TCThreadGroup.class };
-      Constructor tcServerConstructor = tcServerClass.getConstructor(constructorParameterTypes);
-      Object[] tcServerConstructorArgs = { configFactory.createL2TVSConfigurationSetupManager(null),
-          new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(TCServer.class))) };
-      return (TCServer) tcServerConstructor.newInstance(tcServerConstructorArgs);
+      AbstractServerFactory serverFactory = AbstractServerFactory.getFactory();
+      return serverFactory.createServer(configFactory.createL2TVSConfigurationSetupManager(null),
+                                        new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(TCServer.class))));
+
     } catch (Exception e) {
       throw new RuntimeException("Error while instantiating TCServerImpl from DistributedTestRunner", e);
     }
