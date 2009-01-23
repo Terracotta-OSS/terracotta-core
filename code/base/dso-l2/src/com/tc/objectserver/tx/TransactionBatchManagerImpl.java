@@ -14,7 +14,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
-import com.tc.object.msg.CommitTransactionMessageImpl;
+import com.tc.object.msg.CommitTransactionMessage;
 import com.tc.object.msg.MessageRecycler;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -40,12 +40,13 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
   private TransactionBatchReaderFactory batchReaderFactory;
   private TransactionFilter             filter;
 
-  public TransactionBatchManagerImpl(SequenceValidator sequenceValidator, MessageRecycler recycler, TransactionFilter txnFilter) {
+  public TransactionBatchManagerImpl(SequenceValidator sequenceValidator, MessageRecycler recycler,
+                                     TransactionFilter txnFilter) {
     this.sequenceValidator = sequenceValidator;
     this.messageRecycler = recycler;
     this.filter = txnFilter;
   }
-  
+
   public void initializeContext(ConfigurationContext context) {
     ServerConfigurationContext oscc = (ServerConfigurationContext) context;
     batchReaderFactory = oscc.getTransactionBatchReaderFactory();
@@ -57,10 +58,10 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
     }
   }
 
-  public void addTransactionBatch(CommitTransactionMessageImpl ctm) {
+  public void addTransactionBatch(final CommitTransactionMessage ctm) {
     try {
-      TransactionBatchReader reader = batchReaderFactory.newTransactionBatchReader(ctm);
-      filter.addTransactionBatch(ctm, reader);
+      final TransactionBatchReader reader = batchReaderFactory.newTransactionBatchReader(ctm);
+      filter.addTransactionBatch(new IncomingTransactionBatchContext(ctm, reader));
     } catch (Exception e) {
       logger.error("Error reading transaction batch. : ", e);
       MessageChannel c = ctm.getChannel();
@@ -69,7 +70,9 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
     }
   }
 
-  public void processTransactionBatch(CommitTransactionMessageImpl ctm, TransactionBatchReader reader) {
+  public void processTransactionBatch(IncomingTransactionBatchContext batchContext) {
+    final TransactionBatchReader reader = batchContext.getTransactionReader();
+    final CommitTransactionMessage ctm = batchContext.getCommitTransactionMessage();
     try {
       defineBatch(reader.getNodeID(), reader.getNumTxns());
       ServerTransaction txn;

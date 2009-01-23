@@ -90,4 +90,8 @@ public class TestCommitTransactionMessage implements CommitTransactionMessage {
   public void hydrate() {
     throw new ImplementMe();
   }
+
+  public void recycle() {
+    throw new ImplementMe();
+  }
 }

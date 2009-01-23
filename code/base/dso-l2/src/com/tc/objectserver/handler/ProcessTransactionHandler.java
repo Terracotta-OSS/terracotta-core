@@ -6,7 +6,7 @@ package com.tc.objectserver.handler;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
-import com.tc.object.msg.CommitTransactionMessageImpl;
+import com.tc.object.msg.CommitTransactionMessage;
 import com.tc.objectserver.tx.TransactionBatchManager;
 
 public class ProcessTransactionHandler extends AbstractEventHandler {
@@ -18,7 +18,7 @@ public class ProcessTransactionHandler extends AbstractEventHandler {
   }
 
   public void handleEvent(EventContext context) {
-    final CommitTransactionMessageImpl ctm = (CommitTransactionMessageImpl) context;
+    final CommitTransactionMessage ctm = (CommitTransactionMessage) context;
     transactionBatchManager.addTransactionBatch(ctm);
   }
 

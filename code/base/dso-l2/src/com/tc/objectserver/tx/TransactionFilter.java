@@ -4,10 +4,9 @@
  */
 package com.tc.objectserver.tx;
 
-import com.tc.object.msg.CommitTransactionMessageImpl;
 
 public interface TransactionFilter {
 
-  public void addTransactionBatch(CommitTransactionMessageImpl ctm, TransactionBatchReader reader);
+  public void addTransactionBatch(IncomingTransactionBatchContext incomingTransactionBatchContext);
 
 }
