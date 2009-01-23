@@ -979,7 +979,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
         createMember();
         if (member.isHighPriorityNode()) {
           boolean isAdded = manager.tryAddMember(member);
-          if (isAdded) member.eventFiringInProcess();
+          if (isAdded) member.memberAddingInProcess();
           signalToJoin(isAdded);
         }
       }
@@ -990,7 +990,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
           if (isOkToJoin) {
             isOkToJoin = manager.tryAddMember(member);
             if (isOkToJoin) {
-              member.eventFiringInProcess();
+              member.memberAddingInProcess();
             } else {
               logger.warn("Unexpected bad handshake, abort connection.");
             }
@@ -1033,9 +1033,10 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
 
       public void enter() {
         cancelTimerTask();
+        member.setReady(true);
+        member.notifyMemberAdded();
         manager.fireNodeEvent(member, true);
         member.setJoinedEventFired(true);
-        member.notifyEventFired();
       }
     }
 
@@ -1050,7 +1051,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
       public void enter() {
         cancelTimerTask();
         if (member != null) {
-          member.abortEventFiring();
+          member.abortMemberAdding();
           manager.memberDisappeared(member, disconnectEventNotified);
         } else {
           channel.close();
