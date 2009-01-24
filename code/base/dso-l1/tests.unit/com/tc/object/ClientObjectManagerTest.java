@@ -9,6 +9,7 @@ import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 
 import com.tc.exception.ImplementMe;
+import com.tc.exception.TCObjectNotFoundException;
 import com.tc.net.protocol.tcm.TestChannelIDProvider;
 import com.tc.object.TestClassFactory.MockTCClass;
 import com.tc.object.TestClassFactory.MockTCField;
@@ -31,6 +32,9 @@ import com.tc.object.tx.MockTransactionManager;
 import com.tc.util.Counter;
 import com.tc.util.concurrent.ThreadUtil;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public class ClientObjectManagerTest extends BaseDSOTestCase {
@@ -69,6 +73,39 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
                                       new ClientIDProviderImpl(new TestChannelIDProvider()), classProvider,
                                       classFactory, objectFactory, new PortabilityImpl(clientConfiguration), null, null);
     mgr.setTransactionManager(new MockTransactionManager());
+  }
+
+  public void testObjectNotFoundConcurrentLookup() throws Exception {
+    final ObjectID id = new ObjectID(1);
+    final List errors = Collections.synchronizedList(new ArrayList());
+
+    Runnable lookup = new Runnable() {
+      public void run() {
+        try {
+          mgr.lookup(id);
+        } catch (Throwable t) {
+          System.err.println("got exception: " + t.getClass().getName());
+          errors.add(t);
+        }
+      }
+    };
+
+    Thread t1 = new Thread(lookup);
+    t1.start();
+    Thread t2 = new Thread(lookup);
+    t2.start();
+
+    ThreadUtil.reallySleep(5000);
+
+    remoteObjectManager.retrieveResults.put(TestRemoteObjectManager.THROW_NOT_FOUND);
+    remoteObjectManager.retrieveResults.put(TestRemoteObjectManager.THROW_NOT_FOUND);
+
+    t1.join();
+    t2.join();
+
+    assertEquals(2, errors.size());
+    assertEquals(TCObjectNotFoundException.class, errors.remove(0).getClass());
+    assertEquals(TCObjectNotFoundException.class, errors.remove(0).getClass());
   }
 
   public void testMutualReferenceLookup() {

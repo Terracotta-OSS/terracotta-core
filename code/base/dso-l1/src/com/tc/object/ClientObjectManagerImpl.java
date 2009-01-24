@@ -78,24 +78,26 @@ import java.util.Set;
 public class ClientObjectManagerImpl implements ClientObjectManager, ClientHandshakeCallback, PortableObjectProvider,
     Evictable, DumpHandler, PrettyPrintable {
 
-  private static final State                   PAUSED                 = new State("PAUSED");
-  private static final State                   RUNNING                = new State("RUNNING");
+  private static final long                    CONCURRENT_LOOKUP_TIMED_WAIT = 1000;
+  private static final State                   PAUSED                       = new State("PAUSED");
+  private static final State                   RUNNING                      = new State("RUNNING");
 
-  private static final LiteralValues           literals               = new LiteralValues();
-  private static final TCLogger                staticLogger           = TCLogging.getLogger(ClientObjectManager.class);
+  private static final LiteralValues           literals                     = new LiteralValues();
+  private static final TCLogger                staticLogger                 = TCLogging
+                                                                                .getLogger(ClientObjectManager.class);
 
-  private static final long                    POLL_TIME              = 1000;
-  private static final long                    STOP_WAIT              = POLL_TIME * 3;
+  private static final long                    POLL_TIME                    = 1000;
+  private static final long                    STOP_WAIT                    = POLL_TIME * 3;
 
-  private static final int                     NO_DEPTH               = 0;
+  private static final int                     NO_DEPTH                     = 0;
 
-  private static final int                     COMMIT_SIZE            = 100;
+  private static final int                     COMMIT_SIZE                  = 100;
 
-  private State                                state                  = RUNNING;
-  private final Object                         shutdownLock           = new Object();
-  private final Map                            roots                  = new HashMap();
-  private final Map                            idToManaged            = new HashMap();
-  private final Map                            pojoToManaged          = new IdentityWeakHashMap();
+  private State                                state                        = RUNNING;
+  private final Object                         shutdownLock                 = new Object();
+  private final Map                            roots                        = new HashMap();
+  private final Map                            idToManaged                  = new HashMap();
+  private final Map                            pojoToManaged                = new IdentityWeakHashMap();
   private final ClassProvider                  classProvider;
   private final RemoteObjectManager            remoteObjectManager;
   private final EvictionPolicy                 cache;
@@ -104,35 +106,35 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   private final TraverseTest                   traverseTest;
   private final DSOClientConfigHelper          clientConfiguration;
   private final TCClassFactory                 clazzFactory;
-  private final Set                            rootLookupsInProgress  = new HashSet();
+  private final Set                            rootLookupsInProgress        = new HashSet();
   private final ObjectIDProvider               idProvider;
   private final TCObjectFactory                factory;
 
   private ClientTransactionManager             txManager;
 
-  private StoppableThread                      reaper                 = null;
+  private StoppableThread                      reaper                       = null;
   private final TCLogger                       logger;
   private final RuntimeLogger                  runtimeLogger;
   private final NonPortableEventContextFactory appEventContextFactory;
 
-  private final Collection                     pendingCreateTCObjects = new ArrayList();
-  private final Collection                     pendingCreatePojos     = new ArrayList();
+  private final Collection                     pendingCreateTCObjects       = new ArrayList();
+  private final Collection                     pendingCreatePojos           = new ArrayList();
 
   private final Portability                    portability;
   private final DSOClientMessageChannel        channel;
   private final ToggleableReferenceManager     referenceManager;
-  private final ReferenceQueue                 referenceQueue         = new ReferenceQueue();
+  private final ReferenceQueue                 referenceQueue               = new ReferenceQueue();
 
-  private final boolean                        sendErrors             = System.getProperty("project.name") != null;
+  private final boolean                        sendErrors                   = System.getProperty("project.name") != null;
 
-  private final Map                            objectLatchStateMap    = new HashMap();
-  private final ThreadLocal                    localLookupContext     = new ThreadLocal() {
+  private final Map                            objectLatchStateMap          = new HashMap();
+  private final ThreadLocal                    localLookupContext           = new ThreadLocal() {
 
-                                                                        protected synchronized Object initialValue() {
-                                                                          return new LocalLookupContext();
-                                                                        }
+                                                                              protected synchronized Object initialValue() {
+                                                                                return new LocalLookupContext();
+                                                                              }
 
-                                                                      };
+                                                                            };
 
   public ClientObjectManagerImpl(RemoteObjectManager remoteObjectManager, DSOClientConfigHelper clientConfiguration,
                                  ObjectIDProvider idProvider, EvictionPolicy cache, RuntimeLogger runtimeLogger,
@@ -255,9 +257,11 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     lookupContext.getObjectCreationCount().increment();
   }
 
-  private synchronized void removeCreateInProgress(ObjectID id) {
+  private synchronized void lookupDone(ObjectID id, boolean decrementCount) {
     objectLatchStateMap.remove(id);
-    getLocalLookupContext().getObjectCreationCount().decrement();
+    if (decrementCount) {
+      getLocalLookupContext().getObjectCreationCount().decrement();
+    }
   }
 
   // For testing purposes
@@ -477,7 +481,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
           } else if (ols != null && ols.isLookupState()) {
             // the object is being looked up, wait.
             try {
-              wait();
+              wait(CONCURRENT_LOOKUP_TIMED_WAIT); // using a timed out to avoid needing to catch all notify conditions
             } catch (InterruptedException ie) {
               isInterrupted = true;
             }
@@ -511,12 +515,13 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
           if (runtimeLogger.getFaultDebug()) {
             runtimeLogger.updateFaultStats(dna.getTypeName());
           }
-        } catch (Exception e) {
+        } catch (Throwable t) {
           // remove the object creating in progress from the list.
-          if (createInProgressSet) removeCreateInProgress(id);
-          logger.warn("Exception: ", e);
-          if (e instanceof ClassNotFoundException) { throw (ClassNotFoundException) e; }
-          throw new RuntimeException(e);
+          lookupDone(id, createInProgressSet);
+          logger.warn("Exception: ", t);
+          if (t instanceof ClassNotFoundException) { throw (ClassNotFoundException) t; }
+          if (t instanceof RuntimeException) { throw (RuntimeException) t; }
+          throw new RuntimeException(t);
         }
         basicAddLocal(obj, true);
       }
@@ -871,7 +876,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return tcobj;
   }
 
-  private void basicAddLocal(TCObject obj, boolean removeCreateInProgress) {
+  private void basicAddLocal(TCObject obj, boolean fromLookup) {
     synchronized (this) {
       ObjectID id = obj.getObjectID();
       if (basicHasLocal(id)) { throw Assert.failure("Attempt to add an object that already exists: " + obj); }
@@ -900,7 +905,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
         }
       }
       cache.add(obj);
-      if (removeCreateInProgress) removeCreateInProgress(id);
+      lookupDone(id, fromLookup);
       notifyAll();
     }
   }

@@ -120,13 +120,13 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     }
 
     selectL2((Servers) serversBeanRepository().bean(), "the set of L2s known to us");
-    validateRestrictions();
 
     this.haConfig = getHaConfig();
 
     // do this after servers and groups have been processed
     validateGroups();
     validateDSOClusterPersistenceMode();
+    validateRestrictions();
   }
 
   public String getL2Identifier() {
@@ -484,6 +484,11 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
                                                   + capabilities.describe()
                                                   + ", does not allow you to define DSO roots in your configuration file. Please remove them and try again.");
       }
+    }
+
+    if (!capabilities.canHaveMultipleGroups()) {
+      if (activeServerGroupsConfig.getActiveServerGroupCount() > 1) { throw new ConfigurationSetupException(
+                                                                                                            "Multiple Server groups present in the configuration. But Terracotta Server array is only supported in enterprise version"); }
     }
 
   }

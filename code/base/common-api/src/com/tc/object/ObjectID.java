@@ -43,8 +43,10 @@ public class ObjectID extends AbstractIdentifier implements Serializable {
   }
 
   private static long getObjectID(long oid, int gid) {
-    if (gid > 127 || oid > MAX_ID) throw new AssertionError("Currently only supports upto 128 Groups and " + MAX_ID
-                                                            + " objects : " + gid + "," + oid);
+    if (gid < 0 || gid > 254 || oid < 0 || oid > MAX_ID) throw new AssertionError(
+                                                                                  "Currently only supports upto 255 Groups and "
+                                                                                      + MAX_ID + " objects : " + gid
+                                                                                      + "," + oid);
     long gidLong = (long) gid & 0xFF;
     gidLong = gidLong << 56;
     oid = gidLong | oid;
@@ -57,22 +59,20 @@ public class ObjectID extends AbstractIdentifier implements Serializable {
 
   public int getGroupID() {
     long oid = toLong();
-    if (oid <= MAX_ID) { return 0; }
     long gid = oid & 0xFF00000000000000L;
-    gid = gid >> 56;
+    gid = gid >>> 56;
+    assert gid >= 0 && gid <= 254;
     return (int) gid;
   }
 
   public long getObjectID() {
-    long oid = toLong();
-    if (oid <= MAX_ID) { return oid; }
-    return (oid & 0x00FFFFFFFFFFFFFFL);
+    long oid = toLong() & 0x00FFFFFFFFFFFFFFL;
+    assert oid <= MAX_ID && oid >= 0;
+    return oid;
   }
 
   public String toString() {
-    long oid = toLong();
-    if (oid <= MAX_ID) { return super.toString(); }
+    if (getGroupID() == 0 || toLong() == -1) { return super.toString(); }
     return getIdentifierType() + "=" + "[" + getGroupID() + ":" + getObjectID() + "]";
   }
-
 }

@@ -14,5 +14,6 @@ public interface Capabilities {
   boolean hasHA();
 
   String describe();
-
+  
+  boolean canHaveMultipleGroups();
 }

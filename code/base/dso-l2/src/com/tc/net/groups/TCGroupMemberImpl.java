@@ -28,7 +28,7 @@ public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
   private final AtomicBoolean   ready              = new AtomicBoolean(false);
   private final AtomicBoolean   joined             = new AtomicBoolean(false);
   private volatile boolean      closeEventNotified = false;
-  private volatile boolean      eventFiring        = false;
+  private volatile boolean      memberAdding       = false;
 
   public TCGroupMemberImpl(ServerID localNodeID, ServerID peerNodeID, MessageChannel channel) {
     this.channel = channel;
@@ -96,7 +96,7 @@ public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
   }
 
   public boolean isReady() {
-    waitForEventFired();
+    waitForMemberAdded();
     return (ready.get());
   }
 
@@ -121,24 +121,24 @@ public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
     return (localNodeID.compareTo(peerNodeID) > 0);
   }
 
-  public synchronized void eventFiringInProcess() {
-    eventFiring = true;
+  public synchronized void memberAddingInProcess() {
+    memberAdding = true;
   }
 
-  public synchronized void abortEventFiring() {
-    if (eventFiring) {
-      eventFiring = false;
+  public synchronized void abortMemberAdding() {
+    if (memberAdding) {
+      memberAdding = false;
       notifyAll();
     }
   }
 
-  public synchronized void notifyEventFired() {
-    eventFiring = false;
+  public synchronized void notifyMemberAdded() {
+    memberAdding = false;
     notifyAll();
   }
 
-  private synchronized void waitForEventFired() {
-    while (eventFiring) {
+  private synchronized void waitForMemberAdded() {
+    while (memberAdding) {
       try {
         wait();
       } catch (InterruptedException e) {

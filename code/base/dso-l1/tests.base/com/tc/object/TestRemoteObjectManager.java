@@ -5,12 +5,16 @@
 package com.tc.object;
 
 import com.tc.exception.ImplementMe;
+import com.tc.exception.TCObjectNotFoundException;
 import com.tc.net.NodeID;
 import com.tc.object.dna.api.DNA;
+import com.tc.object.dna.api.DNACursor;
+import com.tc.object.dna.api.DNAException;
 import com.tc.object.session.SessionID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 
 public class TestRemoteObjectManager implements RemoteObjectManager {
@@ -21,14 +25,17 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
   public final NoExceptionLinkedQueue retrieveRootIDCalls   = new NoExceptionLinkedQueue();
   public final NoExceptionLinkedQueue retrieveRootIDResults = new NoExceptionLinkedQueue();
 
+  public static final DNA             THROW_NOT_FOUND       = new ThrowNotFound();
+
   public DNA retrieve(ObjectID id) {
     retrieveCalls.put(id);
-    return (DNA) retrieveResults.take();
+    DNA dna = (DNA) retrieveResults.take();
+    if (dna == THROW_NOT_FOUND) { throw new TCObjectNotFoundException("missing ID", Collections.EMPTY_LIST); }
+    return dna;
   }
 
   public DNA retrieveWithParentContext(ObjectID id, ObjectID parentContext) {
-    retrieveCalls.put(id);
-    return (DNA) retrieveResults.take();
+    return retrieve(id);
   }
 
   public ObjectID retrieveRootID(String name) {
@@ -55,4 +62,48 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
   public void objectsNotFoundFor(SessionID sessionID, long batchID, Set missingObjectIDs, NodeID nodeID) {
     throw new ImplementMe();
   }
+
+  public static class ThrowNotFound implements DNA {
+
+    private ThrowNotFound() {
+      //
+    }
+
+    public int getArraySize() {
+      throw new ImplementMe();
+    }
+
+    public DNACursor getCursor() {
+      throw new ImplementMe();
+    }
+
+    public String getDefiningLoaderDescription() {
+      throw new ImplementMe();
+    }
+
+    public ObjectID getObjectID() throws DNAException {
+      throw new ImplementMe();
+    }
+
+    public ObjectID getParentObjectID() throws DNAException {
+      throw new ImplementMe();
+    }
+
+    public String getTypeName() {
+      throw new ImplementMe();
+    }
+
+    public long getVersion() {
+      throw new ImplementMe();
+    }
+
+    public boolean hasLength() {
+      throw new ImplementMe();
+    }
+
+    public boolean isDelta() {
+      throw new ImplementMe();
+    }
+  }
+
 }

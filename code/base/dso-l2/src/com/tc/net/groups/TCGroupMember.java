@@ -35,9 +35,9 @@ public interface TCGroupMember {
 
   public boolean isHighPriorityNode();
 
-  public void eventFiringInProcess();
+  public void memberAddingInProcess();
 
-  public void abortEventFiring();
+  public void abortMemberAdding();
 
-  public void notifyEventFired();
+  public void notifyMemberAdded();
 }
