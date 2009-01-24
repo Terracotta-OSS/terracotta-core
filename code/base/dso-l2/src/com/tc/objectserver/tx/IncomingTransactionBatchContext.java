@@ -7,7 +7,7 @@ package com.tc.objectserver.tx;
 import com.tc.net.NodeID;
 import com.tc.object.msg.CommitTransactionMessage;
 
-public class IncomingTransactionBatchContext {
+public class IncomingTransactionBatchContext implements TransactionBatchContext {
 
   private final CommitTransactionMessage ctm;
   private final TransactionBatchReader   reader;

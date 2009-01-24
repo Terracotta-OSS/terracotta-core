@@ -70,7 +70,7 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
     }
   }
 
-  public void processTransactionBatch(IncomingTransactionBatchContext batchContext) {
+  public void processTransactionBatch(TransactionBatchContext batchContext) {
     final TransactionBatchReader reader = batchContext.getTransactionReader();
     final CommitTransactionMessage ctm = batchContext.getCommitTransactionMessage();
     try {

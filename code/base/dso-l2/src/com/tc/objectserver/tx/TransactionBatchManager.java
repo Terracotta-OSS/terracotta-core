@@ -18,6 +18,6 @@ public interface TransactionBatchManager {
 
   public void shutdownNode(NodeID nodeID);
 
-  public void processTransactionBatch(IncomingTransactionBatchContext incomingTransactionBatchContext);
+  public void processTransactionBatch(TransactionBatchContext incomingTransactionBatchContext);
 
 }

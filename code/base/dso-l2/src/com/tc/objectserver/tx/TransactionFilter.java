@@ -7,6 +7,6 @@ package com.tc.objectserver.tx;
 
 public interface TransactionFilter {
 
-  public void addTransactionBatch(IncomingTransactionBatchContext incomingTransactionBatchContext);
+  public void addTransactionBatch(TransactionBatchContext transactionBatchContext);
 
 }

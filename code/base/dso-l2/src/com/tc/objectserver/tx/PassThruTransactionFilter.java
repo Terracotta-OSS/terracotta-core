@@ -17,7 +17,7 @@ public class PassThruTransactionFilter implements TransactionFilter, PostInit {
     transactionBatchManager = scc.getTransactionBatchManager();
   }
 
-  public void addTransactionBatch(IncomingTransactionBatchContext incomingTransactionBatchContext) {
-    transactionBatchManager.processTransactionBatch(incomingTransactionBatchContext);
+  public void addTransactionBatch(TransactionBatchContext transactionBatchContext) {
+    transactionBatchManager.processTransactionBatch(transactionBatchContext);
   }
 }
