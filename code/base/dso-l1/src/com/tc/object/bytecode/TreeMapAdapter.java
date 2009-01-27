@@ -69,7 +69,8 @@ public class TreeMapAdapter {
         mv.visitVarInsn(ALOAD, 1);
         mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/TreeMap$Entry", "getKey", "()Ljava/lang/Object;");
         mv.visitInsn(AASTORE);
-        managerHelper.callManagerMethod("logicalInvoke", mv);
+        mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "logicalInvoke",
+                           "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
       }
     }
   }
@@ -83,7 +84,7 @@ public class TreeMapAdapter {
     protected MethodVisitor visitOriginal(ClassVisitor classVisitor) {
       MethodVisitor mv = super.visitOriginal(classVisitor);
       mv.visitVarInsn(ALOAD, 0);
-      managerHelper.callManagerMethod("checkWriteAccess", mv);
+      mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "checkWriteAccess", "(Ljava/lang/Object;)V");
 
       return mv;
     }
@@ -105,7 +106,8 @@ public class TreeMapAdapter {
           mv.visitVarInsn(ALOAD, 0);
           mv.visitLdcInsn(methodName + description);
           ByteCodeUtil.createParametersToArrayByteCode(mv, Type.getArgumentTypes(description));
-          managerHelper.callManagerMethod("logicalInvoke", mv);
+          mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "logicalInvoke",
+                             "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
         }
 
         if ((INVOKEVIRTUAL == opcode) && "setValue".equals(method) && "java/util/TreeMap$Entry".equals(className)) {
@@ -123,7 +125,8 @@ public class TreeMapAdapter {
           mv.visitLdcInsn(new Integer(1));
           mv.visitVarInsn(ALOAD, 2);
           mv.visitInsn(AASTORE);
-          managerHelper.callManagerMethod("logicalInvoke", mv);
+          mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "logicalInvoke",
+                             "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
         }
 
       }

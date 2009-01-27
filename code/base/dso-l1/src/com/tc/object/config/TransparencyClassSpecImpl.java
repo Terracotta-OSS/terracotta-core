@@ -14,7 +14,6 @@ import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.DateMethodAdapter;
 import com.tc.object.bytecode.DistributedMethodCallAdapter;
 import com.tc.object.bytecode.LogicalMethodAdapter;
-import com.tc.object.bytecode.ManagerHelper;
 import com.tc.object.bytecode.MethodAdapter;
 import com.tc.object.bytecode.MethodCreator;
 import com.tc.object.config.schema.IncludeOnLoad;
@@ -259,11 +258,11 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     return memberInfo != null && getMethodAdapter(memberInfo) != null;
   }
 
-  public MethodAdapter customMethodAdapterFor(ManagerHelper managerHelper, int access, String methodName,
+  public MethodAdapter customMethodAdapterFor(int access, String methodName,
                                               String origMethodName, String description, String signature,
                                               String[] exceptions, InstrumentationLogger logger, MemberInfo memberInfo) {
     MethodAdapter ma = getMethodAdapter(memberInfo);
-    ma.initialize(managerHelper, access, className, methodName, origMethodName, description, signature, exceptions,
+    ma.initialize(access, className, methodName, origMethodName, description, signature, exceptions,
                   logger, memberInfo);
     return ma;
   }

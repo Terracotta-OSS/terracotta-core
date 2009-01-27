@@ -16,7 +16,6 @@ public interface MethodAdapter {
 
   /**
    * Initialize the method adapter with resources
-   * @param managerHelper Helper to call methods on the Manager
    * @param access Access modifier for method
    * @param owner Owner class name
    * @param methodName Modified method name
@@ -29,7 +28,7 @@ public interface MethodAdapter {
    * @param instrumentationLogger The logger
    * @param memberInfo Member info
    */
-  public void initialize(ManagerHelper managerHelper, int access, String owner, String methodName,
+  public void initialize(int access, String owner, String methodName,
                          String originalMethodName, String description, String sig, String[] exceptions,
                          InstrumentationLogger instrumentationLogger, MemberInfo memberInfo);
 

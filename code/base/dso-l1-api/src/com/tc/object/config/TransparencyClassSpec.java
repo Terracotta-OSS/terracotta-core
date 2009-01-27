@@ -10,7 +10,6 @@ import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.aspectwerkz.reflect.MethodInfo;
 import com.tc.object.bytecode.ClassAdapterFactory;
-import com.tc.object.bytecode.ManagerHelper;
 import com.tc.object.bytecode.MethodAdapter;
 import com.tc.object.bytecode.MethodCreator;
 import com.tc.object.logging.InstrumentationLogger;
@@ -266,7 +265,6 @@ public interface TransparencyClassSpec {
   /**
    * Get custom method adapter
    * 
-   * @param managerHelper Manager helper
    * @param access Access modifiers
    * @param methodName Method name
    * @param origMethodName Original method name
@@ -277,7 +275,7 @@ public interface TransparencyClassSpec {
    * @param memberInfo Method
    * @return Custom adapter
    */
-  public MethodAdapter customMethodAdapterFor(ManagerHelper managerHelper, int access, String methodName,
+  public MethodAdapter customMethodAdapterFor(int access, String methodName,
                                               String origMethodName, String description, String signature,
                                               String[] exceptions, InstrumentationLogger logger, MemberInfo memberInfo);
 

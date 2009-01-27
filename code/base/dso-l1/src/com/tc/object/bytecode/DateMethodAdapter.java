@@ -77,7 +77,7 @@ public class DateMethodAdapter extends LogicalMethodAdapter {
     mv.visitLdcInsn(getMethodName() + getDescription());
 
     ByteCodeUtil.createParametersToArrayByteCode(mv, params);
-    getManagerHelper().callManagerMethod("logicalInvoke", mv);
+    mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "logicalInvoke", "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
 
     ByteCodeUtil.pushThis(mv);
     mv.visitLdcInsn("setNanos(I)V");
@@ -91,7 +91,7 @@ public class DateMethodAdapter extends LogicalMethodAdapter {
     mv.visitMethodInsn(INVOKESPECIAL, getOwnerSlashes(), "getNanos", "()I");
     mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Integer", "<init>", "(I)V");
     mv.visitInsn(AASTORE);
-    getManagerHelper().callManagerMethod("logicalInvoke", mv);
+    mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "logicalInvoke", "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
 
     if (!returnType.equals(Type.VOID_TYPE)) {
       mv.visitVarInsn(returnType.getOpcode(ILOAD), params.length + 1);
@@ -139,7 +139,7 @@ public class DateMethodAdapter extends LogicalMethodAdapter {
 
     ByteCodeUtil.createParametersToArrayByteCode(mv, setTimeParams, variableOffset);
 
-    getManagerHelper().callManagerMethod("logicalInvoke", mv);
+    mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "logicalInvoke", "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
   }
 
 }

@@ -13,7 +13,6 @@ import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.object.logging.InstrumentationLogger;
 
 public class DistributedMethodCallAdapter implements MethodAdapter, Opcodes {
-  private ManagerHelper         managerHelper;
   private int                   access;
   private String                className;
   private String                methodName;
@@ -81,7 +80,7 @@ public class DistributedMethodCallAdapter implements MethodAdapter, Opcodes {
     mv.visitVarInsn(ILOAD, boolPos);
     Label l7 = new Label();
     mv.visitJumpInsn(IFEQ, l7);
-    managerHelper.callManagerMethod("distributedMethodCallCommit", mv);
+    mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "distributedMethodCallCommit", "()V");
     mv.visitLabel(l7);
     mv.visitVarInsn(RET, pcPos);
     mv.visitMaxs(0, 0);
@@ -96,18 +95,22 @@ public class DistributedMethodCallAdapter implements MethodAdapter, Opcodes {
     ByteCodeUtil.pushThis(mv);
     mv.visitLdcInsn(name + desc);
     ByteCodeUtil.createParametersToArrayByteCode(mv, Type.getArgumentTypes(desc));
-    final String managerMethodName = (runOnAllNodes) ? "distributedMethodCall" : "prunedDistributedMethodCall";
-    managerHelper.callManagerMethod(managerMethodName, mv);
+    if (runOnAllNodes) {
+      mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "distributedMethodCall",
+                         "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)Z");      
+    } else {
+      mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "prunedDistributedMethodCall", 
+                         "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)Z");            
+    }
   }
 
   public boolean doesOriginalNeedAdapting() {
     return true;
   }
 
-  public void initialize(ManagerHelper aManagerHelper, int anAccess, String aClassName, String aMethodName,
+  public void initialize(int anAccess, String aClassName, String aMethodName,
                          String aOriginalMethodName, String aDescription, String sig, String[] anExceptions,
                          InstrumentationLogger logger, MemberInfo info) {
-    this.managerHelper = aManagerHelper;
     this.access = anAccess;
     this.className = aClassName;
     this.methodName = aMethodName;
