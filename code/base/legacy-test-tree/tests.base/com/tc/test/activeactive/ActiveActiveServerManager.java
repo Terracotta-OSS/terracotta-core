@@ -146,6 +146,9 @@ public class ActiveActiveServerManager extends MultipleServerManager {
 
     for (int i = 0; i < grpCount; i++)
       threads[i].start();
+    
+    for (int i = 0; i < grpCount; i++)
+      threads[i].join();
   }
 
   public List getErrors() {
