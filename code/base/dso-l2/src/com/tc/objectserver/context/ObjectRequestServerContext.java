@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.context;
 
@@ -10,18 +11,19 @@ import com.tc.util.ObjectIDSet;
 
 public class ObjectRequestServerContext implements EventContext {
 
-  private final ClientID requestedNodeID;
+  private final ClientID        requestedNodeID;
   private final ObjectRequestID objectRequestID;
-  private final ObjectIDSet lookupIDs;
-  private String requestingThreadName;
-  
-  public ObjectRequestServerContext(ClientID requestNodeID, ObjectRequestID objectRequestID, ObjectIDSet lookupIDs, String requestingThreadName) {
+  private final ObjectIDSet     lookupIDs;
+  private String                requestingThreadName;
+
+  public ObjectRequestServerContext(ClientID requestNodeID, ObjectRequestID objectRequestID, ObjectIDSet lookupIDs,
+                                    String requestingThreadName) {
     this.requestedNodeID = requestNodeID;
     this.objectRequestID = objectRequestID;
     this.lookupIDs = lookupIDs;
     this.requestingThreadName = requestingThreadName;
   }
-  
+
   public ObjectIDSet getLookupIDs() {
     return lookupIDs;
   }

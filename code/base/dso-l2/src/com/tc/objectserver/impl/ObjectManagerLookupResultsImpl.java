@@ -15,14 +15,13 @@ public class ObjectManagerLookupResultsImpl implements ObjectManagerLookupResult
 
   private final Map<ObjectID, ManagedObject> objects;
   private final ObjectIDSet                  lookupPendingObjectIDs;
+  private final ObjectIDSet                  missingObjectIDs;
 
-  public ObjectManagerLookupResultsImpl(Map<ObjectID, ManagedObject> objects) {
-    this(objects, new ObjectIDSet());
-  }
-
-  public ObjectManagerLookupResultsImpl(Map<ObjectID, ManagedObject> objects, ObjectIDSet lookupPendingObjectIDs) {
+  public ObjectManagerLookupResultsImpl(Map<ObjectID, ManagedObject> objects, ObjectIDSet lookupPendingObjectIDs,
+                                        ObjectIDSet missingObjectIDs) {
     this.objects = objects;
     this.lookupPendingObjectIDs = lookupPendingObjectIDs;
+    this.missingObjectIDs = missingObjectIDs;
   }
 
   public Map<ObjectID, ManagedObject> getObjects() {
@@ -31,5 +30,9 @@ public class ObjectManagerLookupResultsImpl implements ObjectManagerLookupResult
 
   public ObjectIDSet getLookupPendingObjectIDs() {
     return lookupPendingObjectIDs;
+  }
+
+  public ObjectIDSet getMissingObjectIDs() {
+    return missingObjectIDs;
   }
 }

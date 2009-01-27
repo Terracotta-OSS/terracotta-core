@@ -5,7 +5,6 @@
 package com.tc.objectserver.context;
 
 import com.tc.async.api.EventContext;
-import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
 import com.tc.util.ObjectIDSet;
 
@@ -20,7 +19,5 @@ public interface ObjectManagerResultsContext extends EventContext {
 
   public void setResults(ObjectManagerLookupResults results);
 
-  public void missingObject(ObjectID oid);
-  
   public boolean updateStats();
 }

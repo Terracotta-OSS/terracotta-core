@@ -152,22 +152,24 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
   }
 
   public String toString() {
+    if (size() <= 10) return toVerboseString();
+    
     StringBuffer sb = new StringBuffer("ObjectIDSet " + getCompressionDetails() + "[");
     for (Iterator i = ranges.iterator(); i.hasNext();) {
       sb.append(' ').append(i.next());
     }
     return sb.append(']').toString();
   }
-  
+
   public String toVerboseString() {
-    
+
     StringBuffer sb = new StringBuffer("ObjectIDSet [ ");
-    for(Iterator<ObjectID> iter = iterator(); iter.hasNext();) {
-      sb.append(iter.next() + " , ");
+    for (Iterator<ObjectID> iter = iterator(); iter.hasNext();) {
+      sb.append(iter.next());
+      if (iter.hasNext()) sb.append(", ");
     }
-    
-    sb.append(" ] ");
-    
+    sb.append(" ]");
+
     return sb.toString();
   }
 
@@ -385,7 +387,7 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
     }
     return modified;
   }
-  
+
   public boolean contains(Object o) {
     if (o instanceof ObjectID) {
       return contains((ObjectID) o);
@@ -454,11 +456,11 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
     UnmodifiableObjectIDSet(ObjectIDSet s) {
       this.s = s;
     }
-    
+
     public Object deserializeFrom(TCByteBufferInput in) throws IOException {
       return s.deserializeFrom(in);
     }
-    
+
     public void serializeTo(TCByteBufferOutput out) {
       s.serializeTo(out);
     }
@@ -536,15 +538,15 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
     public void clear() {
       throw new UnsupportedOperationException();
     }
-    
+
     public String toVerboseString() {
       return s.toVerboseString();
     }
-    
+
     public String toShortString() {
       return s.toShortString();
     }
-    
+
     public PrettyPrinter prettyPrint(PrettyPrinter out) {
       return s.prettyPrint(out);
     }

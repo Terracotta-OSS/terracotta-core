@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.managedobject;
 
@@ -7,6 +8,7 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.impl.ManagedObjectReference;
 import com.tc.util.Assert;
+import com.tc.util.ObjectIDSet;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,7 +18,9 @@ import java.util.Set;
 
 public class ManagedObjectTraverser {
 
-  private enum State {PROCESSED, REACHABLE, REQUIRED, LOOKUP_REQUIRED, LOOKUP_REACHABLE}
+  private enum State {
+    PROCESSED, REACHABLE, REQUIRED, LOOKUP_REQUIRED, LOOKUP_REACHABLE
+  }
 
   private int                        maxReachableObjects;
   private final Map<ObjectID, State> oids = new HashMap<ObjectID, State>();
@@ -55,11 +59,11 @@ public class ManagedObjectTraverser {
     return oidsToLookup;
   }
 
-  public Set<ObjectID> getPendingObjectsToLookup(Set<ManagedObjectReference> lookedUpObjects) {
-    if(lookedUpObjects.size() > 0) {
+  public ObjectIDSet getPendingObjectsToLookup(Set<ManagedObjectReference> lookedUpObjects) {
+    if (lookedUpObjects.size() > 0) {
       markProcessed(lookedUpObjects, false);
     }
-    HashSet<ObjectID> oidsToLookup = new HashSet<ObjectID>(oids.size() < 512 ? oids.size() : 512);
+    ObjectIDSet oidsToLookup = new ObjectIDSet();
     for (final Entry<ObjectID, State> e : oids.entrySet()) {
       State _state = e.getValue();
       Assert.assertTrue(_state != State.REQUIRED);

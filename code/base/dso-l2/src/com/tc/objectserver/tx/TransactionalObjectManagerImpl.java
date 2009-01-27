@@ -460,6 +460,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
 
     public synchronized void setResults(ObjectManagerLookupResults results) {
       lookedUpObjects = results.getObjects();
+      assertNoMissingObjects(results.getMissingObjectIDs());
       resultsSet = true;
       if (pending) {
         TransactionalObjectManagerImpl.this.addProcessedPending(this);
@@ -485,8 +486,9 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       return txn.getNewObjectIDs();
     }
 
-    public void missingObject(ObjectID oid) {
-      throw new AssertionError("Lookup for non-exisistent Object : " + oid + " lookup context is : " + this);
+    private void assertNoMissingObjects(ObjectIDSet missing) {
+      if (!missing.isEmpty()) { throw new AssertionError("Lookup for non-exisistent Objects : " + missing
+                                                         + " lookup context is : " + this); }
     }
 
     public boolean updateStats() {

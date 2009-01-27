@@ -73,6 +73,7 @@ import com.tc.objectserver.tx.TxnsInSystemCompletionLister;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
+import com.tc.util.TCCollections;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.sequence.Sequence;
 import com.tc.util.sequence.SimpleSequence;
@@ -319,12 +320,11 @@ public class ObjectRequestManagerTest extends TestCase {
 
         Set ids = responseContext.getLookupIDs();
         Map resultsMap = new HashMap();
-        for (Iterator iter = ids.iterator(); iter.hasNext();) {
-          ObjectID id = (ObjectID) iter.next();
-          responseContext.missingObject(id);
-        }
+        ObjectIDSet missing = new ObjectIDSet(ids);
 
-        ObjectManagerLookupResults results = new ObjectManagerLookupResultsImpl(resultsMap, new ObjectIDSet());
+        ObjectManagerLookupResults results = new ObjectManagerLookupResultsImpl(resultsMap,
+                                                                                TCCollections.EMPTY_OBJECT_ID_SET,
+                                                                                missing);
         responseContext.setResults(results);
 
         return false;
@@ -1002,7 +1002,9 @@ public class ObjectRequestManagerTest extends TestCase {
         resultsMap.put(id, mo);
       }
 
-      ObjectManagerLookupResults results = new ObjectManagerLookupResultsImpl(resultsMap, new ObjectIDSet());
+      ObjectManagerLookupResults results = new ObjectManagerLookupResultsImpl(resultsMap,
+                                                                              TCCollections.EMPTY_OBJECT_ID_SET,
+                                                                              TCCollections.EMPTY_OBJECT_ID_SET);
       responseContext.setResults(results);
 
       return false;

@@ -22,6 +22,7 @@ import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.ObjectIDSet;
+import com.tc.util.TCCollections;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.io.Writer;
@@ -67,7 +68,9 @@ public class TestObjectManager implements ObjectManager {
 
   private boolean basicLookup(NodeID nodeID, ObjectManagerResultsContext context, int i) {
     if (!makePending) {
-      context.setResults(new ObjectManagerLookupResultsImpl(createLookResults(context.getLookupIDs())));
+      context.setResults(new ObjectManagerLookupResultsImpl(createLookResults(context.getLookupIDs()),
+                                                            TCCollections.EMPTY_OBJECT_ID_SET,
+                                                            TCCollections.EMPTY_OBJECT_ID_SET));
     }
     return !makePending;
   }

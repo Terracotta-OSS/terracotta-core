@@ -1899,6 +1899,8 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     public synchronized void setResults(ObjectManagerLookupResults results) {
       complete = true;
       this.objects.putAll(results.getObjects());
+      if (!results.getMissingObjectIDs().isEmpty()) { throw new AssertionError("Missing Object : "
+                                                                               + results.getMissingObjectIDs()); }
       notifyAll();
     }
 
@@ -1908,10 +1910,6 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
     public ObjectIDSet getNewObjectIDs() {
       return newIDS;
-    }
-
-    public void missingObject(ObjectID oid) {
-      throw new AssertionError("Missing Object : " + oid);
     }
 
     public boolean updateStats() {
