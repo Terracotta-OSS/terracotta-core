@@ -343,6 +343,38 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
   }
 
+  public void testMissingObjects() {
+
+    initObjectManager();
+
+    createObjects(10, 10);
+
+    // Look up two existing objects
+    ObjectIDSet ids = makeObjectIDSet(1, 2);
+    TestResultsContext results = new TestResultsContext(ids, new ObjectIDSet(), true);
+
+    testFaultSinkContext.resetCounter();
+    objectManager.lookupObjectsAndSubObjectsFor(null, results, -1);
+    results.waitTillComplete();
+    assertEquals(0, testFaultSinkContext.getCounter());
+
+    // Now look two missing objects
+    ObjectIDSet missingids = makeObjectIDSet(20, 22);
+    TestResultsContext results2 = new TestResultsContext(missingids, new ObjectIDSet(), true);
+
+    testFaultSinkContext.resetCounter();
+    objectManager.lookupObjectsAndSubObjectsFor(null, results2, -1);
+    results.waitTillComplete();
+    assertEquals(2, testFaultSinkContext.getCounter());
+    assertEquals(missingids, results2.missing);
+
+    // Now release the first two objects
+     objectManager.releaseAll(NULL_TRANSACTION, results.objects.values());
+     
+     // Counter shouldnt be incremented, in other words, missing objects should not be looked up again. 
+    assertEquals(2, testFaultSinkContext.getCounter());
+  }
+
   public void testNewObjectIDs() {
     // this test is to make sure that the list of newly created objects IDs is
     // accurate in the lookup results
