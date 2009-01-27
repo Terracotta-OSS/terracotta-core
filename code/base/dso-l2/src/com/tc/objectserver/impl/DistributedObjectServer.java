@@ -794,7 +794,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     Stage requestLock = stageManager.createStage(ServerConfigurationContext.REQUEST_LOCK_STAGE,
                                                  new RequestLockUnLockHandler(), 1, maxStageSize);
     ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(communicationsManager,
-                                                                                  transactionManager,
                                                                                   transactionBatchManager,
                                                                                   channelManager);
     stageManager.createStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE, channelLifeCycleHandler, 1,
@@ -994,6 +993,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     } else {
       return new SingleNodeGroupManager();
     }
+  }
+  
+  protected TCLogger getLogger() {
+    return logger;
   }
 
   private ServerID makeServerNodeID(NewL2DSOConfig l2DSOConfig) {

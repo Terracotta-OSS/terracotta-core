@@ -124,7 +124,21 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
     return bs.batchComplete(txnID);
   }
 
-  public synchronized void shutdownNode(NodeID nodeID) {
+  public void nodeConnected(NodeID nodeID) {
+    transactionManager.nodeConnected(nodeID);
+  }
+  
+  public void shutdownNode(NodeID nodeID) {
+    if (filter.shutdownNode(nodeID)) {
+      shutdownBatchStats(nodeID);
+      transactionManager.shutdownNode(nodeID);
+    } else {
+      logger.warn("Not clearing shutdownNode : " + nodeID );
+      
+    }
+  }
+
+  private synchronized void shutdownBatchStats(NodeID nodeID) {
     BatchStats bs = (BatchStats) map.get(nodeID);
     if (bs != null) {
       bs.shutdownNode();
