@@ -268,19 +268,19 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
 
       switch (args.length) {
         case 0: {
-          visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "objectWait0", "(Ljava/lang/Object;)V");
+          visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "objectWait", "(Ljava/lang/Object;)V");
           return true;
         }
         case 1: {
           if (args[0].equals(Type.LONG_TYPE)) {
-            visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "objectWait1", "(Ljava/lang/Object;J)V");
+            visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "objectWait", "(Ljava/lang/Object;J)V");
             return true;
           }
           throw new TCInternalError("Unexpected java.lang.Object method signature: " + theMethodName + " + " + desc);
         }
         case 2: {
           if ((args[0].equals(Type.LONG_TYPE)) && (args[1].equals(Type.INT_TYPE))) {
-            visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "objectWait2", "(Ljava/lang/Object;JI)V");
+            visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "objectWait", "(Ljava/lang/Object;JI)V");
             return true;
           }
           throw new TCInternalError("Unexpected java.lang.Object method signature: " + theMethodName + " + " + desc);
@@ -325,7 +325,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
   private void callMonitorEnterWithContextInfo() {
     super.visitLdcInsn(new Integer(autoLockType));
     super.visitLdcInsn(autoLockContextInfo);
-    visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "monitorEnterWithContextInfo", "(Ljava/lang/Object;ILjava/lang/String;)V");
+    visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "monitorEnter", "(Ljava/lang/Object;ILjava/lang/String;)V");
   }
 
   private void visitInsnForReadLock(int opCode) {

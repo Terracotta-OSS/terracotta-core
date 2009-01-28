@@ -105,7 +105,7 @@ public class ReentrantLockTC extends ReentrantLock implements TCLock {
 
   private boolean dsoTryLock() {
     if (ManagerUtil.isManaged(this)) {
-      return ManagerUtil.tryMonitorEnter(this, 0, LockLevel.WRITE);
+      return ManagerUtil.tryMonitorEnter(this, LockLevel.WRITE, 0L);
     } else {
       return true;
     }
@@ -114,7 +114,7 @@ public class ReentrantLockTC extends ReentrantLock implements TCLock {
   public boolean dsoTryLock(long timeout, TimeUnit unit) {
     if (ManagerUtil.isManaged(this)) {
       long timeoutInNanos = TimeUnit.NANOSECONDS.convert(timeout, unit);
-      return ManagerUtil.tryMonitorEnter(this, timeoutInNanos, LockLevel.WRITE);
+      return ManagerUtil.tryMonitorEnter(this, LockLevel.WRITE, timeoutInNanos);
     } else {
       return true;
     }

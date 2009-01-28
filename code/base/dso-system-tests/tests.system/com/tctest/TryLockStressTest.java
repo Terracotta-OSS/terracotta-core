@@ -105,7 +105,7 @@ public class TryLockStressTest extends TransparentTestBase {
               ManagerUtil.commitLock(lock);
             }
           } else if (1 == lock_mode) {
-            if (ManagerUtil.tryBeginLockWithTimeout(lock, random.nextInt(20)*1000, Manager.LOCK_TYPE_WRITE)) {
+            if (ManagerUtil.tryBeginLock(lock, Manager.LOCK_TYPE_WRITE, random.nextInt(20)*1000L)) {
               try {
                 tryLockTimeoutSucceeded = true;
                 ThreadUtil.reallySleep(random.nextInt(5));
