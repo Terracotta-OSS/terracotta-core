@@ -388,7 +388,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
 
     // verify user input host name, DEV-2293
     String host = l2DSOConfig.host().getString();
-    if(NetworkInterface.getByInetAddress(InetAddress.getByName(host)) == null) {
+    InetAddress ip = InetAddress.getByName(host);
+    if(!ip.isLoopbackAddress() && (NetworkInterface.getByInetAddress(ip) == null)) {
       String msg = "Unable to find local network interface for " + host;
       consoleLogger.error(msg);
       logger.error(msg, new TCRuntimeException(msg));
