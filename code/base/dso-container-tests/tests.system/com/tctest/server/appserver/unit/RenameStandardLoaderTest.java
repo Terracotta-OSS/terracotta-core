@@ -8,7 +8,6 @@ import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
 import com.tc.object.tools.BootJarTool;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
-import com.tc.test.AppServerInfo;
 import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.deployment.AbstractOneServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
@@ -26,7 +25,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import junit.framework.Test;
@@ -34,13 +32,6 @@ import junit.framework.Test;
 public class RenameStandardLoaderTest extends AbstractOneServerDeploymentTest {
 
   private static final String CONTEXT = "simple";
-
-  public RenameStandardLoaderTest() {
-    // DEV-1817
-    if (appServerInfo().getId() == AppServerInfo.WEBSPHERE) {
-      disableAllUntil(new Date(Long.MAX_VALUE));
-    }
-  }
 
   public static Test suite() {
     return new RenameStandardLoaderSetup();

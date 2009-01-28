@@ -6,7 +6,6 @@ package com.tctest.server.appserver.unit;
 
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
-import com.tc.test.AppServerInfo;
 import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
 import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
@@ -66,11 +65,8 @@ public class ServerHopCookieRewriteTest extends AbstractDeploymentTest {
   private WebApplicationServer createServer(TcConfigBuilder configBuilder) throws Exception {
     WebApplicationServer server = makeWebApplicationServer(configBuilder);
     server.addWarDeployment(deployment, CONTEXT);
-    int appId = appServerInfo().getId();
-    if (appId != AppServerInfo.WEBSPHERE) {
-      server.getServerParameters().appendSysProp("com.tc.session.delimiter",
-                                                 ServerHopCookieRewriteTestServlet.DEFAULT_DLM);
-    }
+    server.getServerParameters().appendSysProp("com.tc.session.delimiter",
+                                               ServerHopCookieRewriteTestServlet.DEFAULT_DLM);
     return server;
   }
 

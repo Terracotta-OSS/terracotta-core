@@ -14,8 +14,7 @@ public class AppServerInfo {
   public static final int WASCE     = 3;
   public static final int GLASSFISH = 4;
   public static final int JETTY     = 5;
-  public static final int WEBSPHERE = 6;
-  public static final int RESIN     = 7;
+  public static final int RESIN     = 6;
 
   private final int       id;
   private final String    name;
@@ -61,8 +60,6 @@ public class AppServerInfo {
       id = GLASSFISH;
     } else if (name.equals("jetty")) {
       id = JETTY;
-    } else if (name.equals("websphere")) {
-      id = WEBSPHERE;
     } else if (name.equals("resin")) {
       id = RESIN;
     } else {

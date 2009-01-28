@@ -127,7 +127,6 @@ public class CookieSettingTest extends AbstractDeploymentTest {
       if (key.toUpperCase().endsWith("SESSIONID")) {
         switch (appServerInfo().getId()) {
           case AppServerInfo.WEBLOGIC:
-          case AppServerInfo.WEBSPHERE:
             assertEquals(key.toUpperCase(), "CUSTOMSESSIONID");
             break;
           default:
