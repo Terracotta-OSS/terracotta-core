@@ -9,7 +9,7 @@ import java.net.URL;
 import java.util.Properties;
 
 import org.hyperic.sigar.Sigar;
-import java.io.*;
+
 public class SigarUtil {
 
   private static final String PATH_SEPARATOR = System.getProperty("path.separator");
@@ -21,13 +21,7 @@ public class SigarUtil {
   }
 
   public static Sigar newSigar() {
-try {
-PrintWriter writer = new PrintWriter(new FileWriter("/tmp/SigarUtil.log"));
-writer.println("in SigarUtil.newSigar()");
-writer.close();
-} catch (IOException e) {
-  throw new RuntimeException(e);
-}   return new Sigar();
+    return new Sigar();
   }
 
   /**

@@ -16,8 +16,6 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.util.Locale;
 
-import java.io.*;
-
 public class SRACpuCombined implements StatisticRetrievalAction, SRACpuConstants  {
 
   public final static String ACTION_NAME = "cpu combined";
@@ -27,13 +25,6 @@ public class SRACpuCombined implements StatisticRetrievalAction, SRACpuConstants
   private final Sigar sigar;
 
   public SRACpuCombined() {
-try {
-  PrintWriter writer = new PrintWriter(new FileWriter("/tmp/SRACpu.log"));
-  writer.println("in SRACpu");
-  writer.close();
-} catch (IOException e) {
-  e.printStackTrace();
-}
     sigar = SigarUtil.newSigar();
   }
 

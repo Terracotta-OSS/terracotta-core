@@ -16,8 +16,6 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.util.Locale;
 
-import java.io.*;
-
 public class SRACpu implements StatisticRetrievalAction, SRACpuConstants {
   
   private final static String ELEMENT_PREFIX = "cpu ";
@@ -25,13 +23,6 @@ public class SRACpu implements StatisticRetrievalAction, SRACpuConstants {
   private final Sigar sigar;
 
   public SRACpu() {
-try {
-  PrintWriter writer = new PrintWriter(new FileWriter("/tmp/SRACpu.log"));
-  writer.println("in SRACpu");
-  writer.close();
-} catch (IOException e) {
-  e.printStackTrace();
-}
     sigar = SigarUtil.newSigar();
   }
 
