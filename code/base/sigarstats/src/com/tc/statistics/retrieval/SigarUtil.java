@@ -12,6 +12,10 @@ import org.hyperic.sigar.Sigar;
 import java.io.*;
 public class SigarUtil {
 
+  private static final String PATH_SEPARATOR = System.getProperty("path.separator");
+  private static final String FILE_SEPARATOR = System.getProperty("file.separator");
+  private static final String LIBRARY_PATH_PROPERTY = "org.hyperic.sigar.path";
+
   static {
     sigarInit();
   }
@@ -25,10 +29,6 @@ writer.close();
   throw new RuntimeException(e);
 }   return new Sigar();
   }
-
-  private static final String PATH_SEPARATOR = System.getProperty("path.separator");
-  private static final String FILE_SEPARATOR = System.getProperty("file.separator");
-  private static final String LIBRARY_PATH_PROPERTY = "org.hyperic.sigar.path";
 
   /**
    * Attempts to ensure that Sigar native libraries are in the native library path.
