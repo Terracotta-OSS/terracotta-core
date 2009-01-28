@@ -169,9 +169,6 @@ public class ServerManager {
 
     int appId = config.appServerId();
     switch (appId) {
-      case AppServerInfo.WEBSPHERE:
-        aCopy.addModule(TIMUtil.WEBSPHERE_6_1_0_7, TIMUtil.getVersion(TIMUtil.WEBSPHERE_6_1_0_7));
-        break;
       case AppServerInfo.GLASSFISH:
         aCopy.addModule(TIMUtil.GLASSFISH_2_0, TIMUtil.getVersion(TIMUtil.GLASSFISH_2_0));
         break;
