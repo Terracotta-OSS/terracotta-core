@@ -119,6 +119,7 @@ import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
 import com.tc.objectserver.DSOApplicationEvents;
+import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerMBean;
 import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.core.api.DSOGlobalServerStats;
@@ -187,6 +188,7 @@ import com.tc.objectserver.persistence.sleepycat.TCDatabaseException;
 import com.tc.objectserver.tx.CommitTransactionMessageRecycler;
 import com.tc.objectserver.tx.CommitTransactionMessageToTransactionBatchReader;
 import com.tc.objectserver.tx.PassThruTransactionFilter;
+import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.ServerTransactionManagerConfig;
 import com.tc.objectserver.tx.ServerTransactionManagerImpl;
 import com.tc.objectserver.tx.ServerTransactionSequencerImpl;
@@ -388,13 +390,13 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
 
     // verify user input host name, DEV-2293
     String host = l2DSOConfig.host().getString();
-    if(NetworkInterface.getByInetAddress(InetAddress.getByName(host)) == null) {
+    if (NetworkInterface.getByInetAddress(InetAddress.getByName(host)) == null) {
       String msg = "Unable to find local network interface for " + host;
       consoleLogger.error(msg);
       logger.error(msg, new TCRuntimeException(msg));
       System.exit(-1);
     }
-    
+
     String bindAddress = l2DSOConfig.bind().getString();
     if (bindAddress == null) {
       // workaround for CDV-584
@@ -808,9 +810,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
         .createStage(ServerConfigurationContext.RESPOND_TO_OBJECT_REQUEST_STAGE, new RespondToObjectRequestHandler(),
                      4, maxStageSize);
 
-    objectRequestManager = new ObjectRequestManagerImpl(objectManager, channelManager, clientStateManager,
-                                                        transactionManager, objectRequestStage.getSink(),
-                                                        respondToObjectRequestStage.getSink(), objectStatsRecorder);
+    objectRequestManager = createObjectRequestManager(objectManager, channelManager, clientStateManager,
+                                                      transactionManager, objectRequestStage.getSink(),
+                                                      respondToObjectRequestStage.getSink(), objectStatsRecorder);
     Stage oidRequest = stageManager.createStage(ServerConfigurationContext.OBJECT_ID_BATCH_REQUEST_STAGE,
                                                 new RequestObjectIDBatchHandler(objectStore), 1, maxStageSize);
     Stage transactionAck = stageManager.createStage(ServerConfigurationContext.TRANSACTION_ACKNOWLEDGEMENT_STAGE,
@@ -963,6 +965,17 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
   }
 
   // Overridden by enterprise server
+  protected ObjectRequestManager createObjectRequestManager(ObjectManager objectMgr,
+                                                            DSOChannelManager channelManager,
+                                                            ClientStateManager clientStateMgr,
+                                                            ServerTransactionManager transactionMgr,
+                                                            Sink objectRequestSink, Sink respondObjectRequestSink,
+                                                            ObjectStatsRecorder statsRecorder) {
+    return new ObjectRequestManagerImpl(objectMgr, channelManager, clientStateMgr, transactionMgr, objectRequestSink,
+                                        respondObjectRequestSink, statsRecorder);
+  }
+
+  // Overridden by enterprise server
   public void initializeContext(ConfigurationContext cc) {
     // Do any post Init stuff here.
   }
@@ -994,7 +1007,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
       return new SingleNodeGroupManager();
     }
   }
-  
+
   protected TCLogger getLogger() {
     return logger;
   }
