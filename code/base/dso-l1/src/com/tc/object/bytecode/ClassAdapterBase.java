@@ -95,10 +95,10 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
   }
 
   public ClassAdapterBase(ClassInfo classInfo, TransparencyClassSpec spec2, ClassVisitor delegate,
-                          ManagerHelper mgrHelper, ClassLoader caller, Portability p) {
+                          ClassLoader caller, Portability p) {
     super(delegate);
     this.portability = p;
-    this.spec = new InstrumentationSpec(classInfo, spec2, mgrHelper, caller);
+    this.spec = new InstrumentationSpec(classInfo, spec2, caller);
   }
 
   public final void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {

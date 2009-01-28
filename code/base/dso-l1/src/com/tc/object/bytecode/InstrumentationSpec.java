@@ -64,7 +64,6 @@ class InstrumentationSpec {
   private final ClassInfo             classInfo;
   private final Map                   fieldInfoMap;
   private final TransparencyClassSpec spec;
-  private final ManagerHelper         mgrHelper;
 
   private final Set                   classHierarchy;
   private final Map                   shouldOverrideMethods;
@@ -72,10 +71,9 @@ class InstrumentationSpec {
   private final Set                   logicalExtendingFieldSpec;
   private final ClassLoader           caller;
 
-  InstrumentationSpec(ClassInfo classInfo, TransparencyClassSpec spec, ManagerHelper mgrHelper, ClassLoader caller) {
+  InstrumentationSpec(ClassInfo classInfo, TransparencyClassSpec spec, ClassLoader caller) {
     this.classInfo = classInfo;
     this.spec = spec;
-    this.mgrHelper = mgrHelper;
     this.caller = caller;
     this.classHierarchy = new HashSet();
     this.shouldOverrideMethods = new HashMap();
@@ -440,10 +438,6 @@ class InstrumentationSpec {
 
   Collection getShouldOverrideMethods() {
     return shouldOverrideMethods.values();
-  }
-
-  ManagerHelper getManagerHelper() {
-    return mgrHelper;
   }
 
   boolean isInner() {

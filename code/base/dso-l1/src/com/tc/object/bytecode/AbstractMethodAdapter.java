@@ -12,7 +12,6 @@ import com.tc.object.logging.InstrumentationLogger;
 
 public abstract class AbstractMethodAdapter implements MethodAdapter, Opcodes {
 
-  protected ManagerHelper         managerHelper;
   protected int                   access;
   protected String                methodName;
   protected String                originalMethodName;
@@ -31,9 +30,8 @@ public abstract class AbstractMethodAdapter implements MethodAdapter, Opcodes {
 
   public abstract boolean doesOriginalNeedAdapting();
 
-  public void initialize(ManagerHelper mgrHelper, int acc, String own, String method, String origMethodName,
+  public void initialize(int acc, String own, String method, String origMethodName,
                          String desc, String sig, String[] ex, InstrumentationLogger instLogger, MemberInfo info) {
-    this.managerHelper = mgrHelper;
     this.access = acc;
     this.ownerDots = own;
     this.methodName = method;

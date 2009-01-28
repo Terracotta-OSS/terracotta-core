@@ -574,7 +574,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
     }
 
     public boolean updateStats() {
-      return false;
+      return true;
     }
 
     public boolean isServerInitiated() {

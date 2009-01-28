@@ -323,8 +323,7 @@ public class ManagerUtil {
 
   /**
    * Look up object by ID, faulting into the JVM if necessary, This method also passes the parent Object context so that
-   * more intelligent prefetching is possible at the L2. XXX::FIXME:: This method is not called lookupObject() coz
-   * ManagerHelperFactory doesn't allow method overloading.
+   * more intelligent prefetching is possible at the L2.
    *
    * @param id Object identifier of the object we are looking up
    * @param parentContext Object identifier of the parent object

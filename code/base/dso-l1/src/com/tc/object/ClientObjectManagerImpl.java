@@ -424,11 +424,11 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   private void reap(ObjectID objectID) {
     synchronized (this) {
-      if (!basicHasLocal(objectID)) {
+      TCObjectImpl tcobj = (TCObjectImpl) basicLookupByID(objectID);
+      if (tcobj == null) {
         if (logger.isDebugEnabled()) logger.debug(System.identityHashCode(this)
                                                   + " Entry removed before reaper got the chance: " + objectID);
       } else {
-        TCObjectImpl tcobj = (TCObjectImpl) basicLookupByID(objectID);
         if (tcobj.isNull()) {
           idToManaged.remove(objectID);
           cache.remove(tcobj);

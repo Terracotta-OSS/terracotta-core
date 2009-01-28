@@ -24,7 +24,6 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
   private String        ownerSlashes;
   private String        methodName;
   private String        originalMethodName;
-  private ManagerHelper managerHelper;
   private String        description;
   private int           access;
   private String[]      exceptions;
@@ -41,10 +40,9 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
     this.instrumentationType = instrumentationType;
   }
 
-  public void initialize(ManagerHelper aManagerHelper, int anAccess, String aClassName, String aMethodName,
+  public void initialize(int anAccess, String aClassName, String aMethodName,
                          String aOriginalMethodName, String aDescription, String sig, String[] anExceptions,
                          InstrumentationLogger logger, MemberInfo info) {
-    this.managerHelper = aManagerHelper;
     this.ownerSlashes = aClassName.replace('.', '/');
     this.methodName = aMethodName;
     this.originalMethodName = aOriginalMethodName;
@@ -144,7 +142,8 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
     mv.visitLdcInsn(new Integer(0));
     mv.visitVarInsn(ALOAD, 2);
     mv.visitInsn(AASTORE);
-    managerHelper.callManagerMethod("logicalInvoke", mv);
+    mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "logicalInvoke",
+                       "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
 
     mv.visitInsn(RETURN);
     mv.visitMaxs(0, 0);
@@ -300,7 +299,8 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
     mv.visitVarInsn(ALOAD, 2);
     mv.visitInsn(AASTORE);
 
-    managerHelper.callManagerMethod("logicalInvoke", mv);
+    mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "logicalInvoke",
+                       "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
 
     mv.visitVarInsn(ALOAD, 4);
     mv.visitInsn(ARETURN);
@@ -336,7 +336,8 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
     mv.visitMethodInsn(INVOKEVIRTUAL, ownerSlashes + "$Entry", "getKey", "()Ljava/lang/Object;");
     mv.visitVarInsn(ASTORE, 1);
     ByteCodeUtil.createParametersToArrayByteCode(mv, params);
-    managerHelper.callManagerMethod("logicalInvoke", mv);
+    mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "logicalInvoke",
+                       "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
 
     mv.visitLabel(notManaged);
     mv.visitVarInsn(ALOAD, params.length + 1);
@@ -366,7 +367,8 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
     mv.visitMethodInsn(INVOKEVIRTUAL, ownerSlashes + "$Entry", "getKey", "()Ljava/lang/Object;");
     mv.visitVarInsn(ASTORE, 1);
     ByteCodeUtil.createParametersToArrayByteCode(mv, params);
-    managerHelper.callManagerMethod("logicalInvoke", mv);
+    mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "logicalInvoke",
+                       "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
     mv.visitLabel(l2);
     ByteCodeUtil.pushThis(mv);
     mv.visitVarInsn(ALOAD, 1);
@@ -391,7 +393,8 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
     ByteCodeUtil.pushThis(mv);
     mv.visitLdcInsn(methodName + description);
     ByteCodeUtil.createParametersToArrayByteCode(mv, params);
-    managerHelper.callManagerMethod("logicalInvoke", mv);
+    mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "logicalInvoke",
+                       "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
     mv.visitLabel(l1);
     mv.visitVarInsn(returnType.getOpcode(ILOAD), 2);
     mv.visitInsn(returnType.getOpcode(IRETURN));
@@ -421,7 +424,8 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
     mv.visitLdcInsn(originalMethodName + description);
 
     ByteCodeUtil.createParametersToArrayByteCode(mv, params);
-    managerHelper.callManagerMethod("logicalInvoke", mv);
+    mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "logicalInvoke",
+                       "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
 
     if (!returnType.equals(Type.VOID_TYPE)) {
       mv.visitVarInsn(returnType.getOpcode(ILOAD), params.length + 1);
@@ -441,7 +445,7 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
       mv.visitJumpInsn(IFNULL, notManaged);
     }
     ByteCodeUtil.pushThis(mv);
-    managerHelper.callManagerMethod("checkWriteAccess", mv);
+    mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "checkWriteAccess", "(Ljava/lang/Object;)V");
     mv.visitLabel(notManaged);
   }
 
@@ -459,10 +463,6 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
 
   protected String[] getExceptions() {
     return exceptions;
-  }
-
-  protected ManagerHelper getManagerHelper() {
-    return managerHelper;
   }
 
   protected String getMethodName() {

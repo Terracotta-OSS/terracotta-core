@@ -28,7 +28,6 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
   private final boolean              isAutolock;
   private final int                  autoLockType;
   private final String               autoLockContextInfo;
-  private final ManagerHelper        mgrHelper;
   private final InstrumentationSpec  spec;
   private final MemberInfo           memberInfo;
   private boolean                    isConstructor;
@@ -52,7 +51,6 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
     // this.autoLockType = autoLockType;
     this.memberInfo = memberInfo;
 
-    this.mgrHelper = spec.getManagerHelper();
     this.codeSpec = spec.getTransparencyClassSpec().getCodeSpec(memberInfo.getName(), //
                                                                 memberInfo.getSignature(), isAutolock);
 
@@ -259,9 +257,9 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
     if (theMethodName.equals("notify") || theMethodName.equals("notifyAll")) {
       if (args.length == 0) {
         if (theMethodName.endsWith("All")) {
-          mgrHelper.callManagerMethod("objectNotifyAll", this);
+          visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "objectNotifyAll", "(Ljava/lang/Object;)V");
         } else {
-          mgrHelper.callManagerMethod("objectNotify", this);
+          visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "objectNotify", "(Ljava/lang/Object;)V");
         }
         return true;
       }
@@ -270,19 +268,19 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
 
       switch (args.length) {
         case 0: {
-          mgrHelper.callManagerMethod("objectWait0", this);
+          visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "objectWait0", "(Ljava/lang/Object;)V");
           return true;
         }
         case 1: {
           if (args[0].equals(Type.LONG_TYPE)) {
-            mgrHelper.callManagerMethod("objectWait1", this);
+            visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "objectWait1", "(Ljava/lang/Object;J)V");
             return true;
           }
           throw new TCInternalError("Unexpected java.lang.Object method signature: " + theMethodName + " + " + desc);
         }
         case 2: {
           if ((args[0].equals(Type.LONG_TYPE)) && (args[1].equals(Type.INT_TYPE))) {
-            mgrHelper.callManagerMethod("objectWait2", this);
+            visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "objectWait2", "(Ljava/lang/Object;JI)V");
             return true;
           }
           throw new TCInternalError("Unexpected java.lang.Object method signature: " + theMethodName + " + " + desc);
@@ -311,7 +309,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
   private void callTCBeginWithLock(LockDefinition lock, MethodVisitor c) {
     c.visitLdcInsn(ByteCodeUtil.generateNamedLockName(lock.getLockName()));
     c.visitLdcInsn(new Integer(lock.getLockLevelAsInt()));
-    mgrHelper.callManagerMethod("beginLock", c);
+    c.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "beginLock", "(Ljava/lang/String;I)V");
   }
 
   private void callTCCommit(MethodVisitor c) {
@@ -319,7 +317,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
     for (int i = 0; i < locks.length; i++) {
       if (!locks[i].isAutolock()) {
         c.visitLdcInsn(ByteCodeUtil.generateNamedLockName(locks[i].getLockName()));
-        mgrHelper.callManagerMethod("commitLock", c);
+        c.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "commitLock", "(Ljava/lang/String;)V");
       }
     }
   }
@@ -327,7 +325,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
   private void callMonitorEnterWithContextInfo() {
     super.visitLdcInsn(new Integer(autoLockType));
     super.visitLdcInsn(autoLockContextInfo);
-    mgrHelper.callManagerMethod("monitorEnterWithContextInfo", this);
+    visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "monitorEnterWithContextInfo", "(Ljava/lang/Object;ILjava/lang/String;)V");
   }
 
   private void visitInsnForReadLock(int opCode) {
@@ -351,7 +349,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
                               "(Ljava/lang/Object;)Z");
         Label l3 = new Label();
         super.visitJumpInsn(IFEQ, l3);
-        mgrHelper.callManagerMethod("monitorExit", this);
+        visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "monitorExit", "(Ljava/lang/Object;)V");
         Label l4 = new Label();
         super.visitJumpInsn(GOTO, l4);
         super.visitLabel(l3);
@@ -385,7 +383,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
             }
             super.visitInsn(DUP);
             super.visitInsn(opCode);
-            mgrHelper.callManagerMethod("monitorExit", this);
+            visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "monitorExit", "(Ljava/lang/Object;)V");
           } else {
             super.visitInsn(opCode);
           }
@@ -557,7 +555,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
     super.visitInsn(DUP);
     Label l1 = new Label();
     super.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;");
-    mgrHelper.callManagerMethod("isPhysicallyInstrumented", this);
+    visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "isPhysicallyInstrumented", "(Ljava/lang/Class;)Z");
     super.visitJumpInsn(IFEQ, l1);
     swap(fieldType, reference);
     visitMethodInsn(INVOKEVIRTUAL, classname, ByteCodeUtil.fieldSetterMethod(fieldName), sDesc);
@@ -604,7 +602,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
     super.visitInsn(DUP);
     Label l1 = new Label();
     super.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;");
-    mgrHelper.callManagerMethod("isPhysicallyInstrumented", this);
+    visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "isPhysicallyInstrumented", "(Ljava/lang/Class;)Z");
     super.visitJumpInsn(IFEQ, l1);
     visitMethodInsn(INVOKEVIRTUAL, classname, ByteCodeUtil.fieldGetterMethod(fieldName), gDesc);
     Label l2 = new Label();

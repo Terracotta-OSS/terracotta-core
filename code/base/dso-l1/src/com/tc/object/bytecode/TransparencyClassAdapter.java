@@ -41,9 +41,9 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
   private boolean                          supportMethodsCreated;
 
   public TransparencyClassAdapter(ClassInfo classInfo, TransparencyClassSpec spec, final ClassVisitor cv,
-                                  ManagerHelper mgrHelper, InstrumentationLogger instrumentationLogger,
-                                  ClassLoader caller, Portability portability) {
-    super(classInfo, spec, cv, mgrHelper, caller, portability);
+                                  InstrumentationLogger instrumentationLogger, ClassLoader caller,
+                                  Portability portability) {
+    super(classInfo, spec, cv, caller, portability);
     this.instrumentationLogger = instrumentationLogger;
     this.physicalClassLogger = new PhysicalClassAdapterLogger(logger);
   }
@@ -232,8 +232,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
 
       // Visit the original method by either using a custom adapter or a TransparencyCodeAdapter or both.
       if (getTransparencyClassSpec().hasCustomMethodAdapter(memberInfo)) {
-        MethodAdapter ma = getTransparencyClassSpec().customMethodAdapterFor(spec.getManagerHelper(), access, name,
-                                                                             originalName, desc, signature, exceptions,
+        MethodAdapter ma = getTransparencyClassSpec().customMethodAdapterFor(access, name, originalName, desc,
+                                                                             signature, exceptions,
                                                                              instrumentationLogger, memberInfo);
         mv = ma.adapt(cv);
 
@@ -529,7 +529,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
         }
       } else if (!lock.isAutolock()) {
         c.visitLdcInsn(ByteCodeUtil.generateNamedLockName(lock.getLockName()));
-        spec.getManagerHelper().callManagerMethod("commitLock", c);
+        c.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "commitLock", "(Ljava/lang/String;)V");
       }
     }
     c.visitLabel(returnLabel);
@@ -537,33 +537,33 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
 
   private void callTCCommitWithLockName(String lockName, MethodVisitor mv) {
     mv.visitLdcInsn(lockName);
-    spec.getManagerHelper().callManagerMethod("commitLock", mv);
+    mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "commitLock", "(Ljava/lang/String;)V");
   }
 
   private void callTCBeginWithLock(LockDefinition lock, MethodVisitor c) {
     c.visitLdcInsn(ByteCodeUtil.generateNamedLockName(lock.getLockName()));
     c.visitLdcInsn(new Integer(lock.getLockLevelAsInt()));
     c.visitLdcInsn(lock.getLockContextInfo());
-    spec.getManagerHelper().callManagerMethod("beginLockWithContextInfo", c);
+    c.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "beginLockWithContextInfo", "(Ljava/lang/String;ILjava/lang/String;)V");
   }
 
   private void callTCBeginWithLockName(String lockName, int lockLevel, MethodVisitor mv) {
     mv.visitLdcInsn(lockName);
     mv.visitLdcInsn(new Integer(lockLevel));
-    spec.getManagerHelper().callManagerMethod("beginLock", mv);
+    mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "beginLock", "(Ljava/lang/String;I)V");
   }
 
   private void callVolatileBegin(String fieldName, int lockLevel, MethodVisitor mv) {
     getManaged(mv);
     mv.visitLdcInsn(fieldName);
     mv.visitIntInsn(BIPUSH, lockLevel);
-    spec.getManagerHelper().callManagerMethod("beginVolatile", mv);
+    mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "beginVolatile", "(Lcom/tc/object/TCObject;Ljava/lang/String;I)V");
   }
 
   private void callVolatileCommit(String fieldName, MethodVisitor mv) {
     getManaged(mv);
     mv.visitLdcInsn(fieldName);
-    spec.getManagerHelper().callManagerMethod("commitVolatile", mv);
+    mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "commitVolatile", "(Lcom/tc/object/TCObject;Ljava/lang/String;)V");
   }
 
   private void createPlainGetter(int methodAccess, int fieldAccess, String name, String desc) {
@@ -695,7 +695,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
 
       mv.visitLabel(l3);
       mv.visitLdcInsn(rootName);
-      spec.getManagerHelper().callManagerMethod("lookupRoot", mv);
+      mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "lookupRoot", "(Ljava/lang/String;)Ljava/lang/Object;");
       mv.visitVarInsn(ASTORE, 1);
 
       mv.visitVarInsn(ALOAD, 1);
@@ -953,9 +953,11 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
         scv.visitVarInsn(ALOAD, rootInstance);
       }
       if (isDSOFinal) {
-        spec.getManagerHelper().callManagerMethod("lookupOrCreateRoot", scv);
+        scv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "lookupOrCreateRoot",
+                            "(Ljava/lang/String;Ljava/lang/Object;)Ljava/lang/Object;");
       } else {
-        spec.getManagerHelper().callManagerMethod("createOrReplaceRoot", scv);
+        scv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "createOrReplaceRoot",
+                            "(Ljava/lang/String;Ljava/lang/Object;)Ljava/lang/Object;");
       }
 
       int localVar = rootInstance + 1;
@@ -1148,7 +1150,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
   private void callTCMonitorExit(int callingMethodModifier, MethodVisitor c) {
     Assert.eval("Can't call tc monitorenter from a static method.", !Modifier.isStatic(callingMethodModifier));
     ByteCodeUtil.pushThis(c);
-    spec.getManagerHelper().callManagerMethod("monitorExit", c);
+    c.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "monitorExit", "(Ljava/lang/Object;)V");
   }
 
   private void callTCMonitorEnter(int callingMethodModifier, LockDefinition def, MethodVisitor c) {
@@ -1156,7 +1158,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     ByteCodeUtil.pushThis(c);
     c.visitLdcInsn(new Integer(def.getLockLevelAsInt()));
     c.visitLdcInsn(def.getLockContextInfo());
-    spec.getManagerHelper().callManagerMethod("monitorEnterWithContextInfo", c);
+    c.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "monitorEnterWithContextInfo",
+                      "(Ljava/lang/Object;ILjava/lang/String;)V");
   }
 
   private void addPrimitiveTypeZeroCompare(MethodVisitor mv, Type type, Label notZeroLabel) {

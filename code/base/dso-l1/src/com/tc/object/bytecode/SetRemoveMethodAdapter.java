@@ -41,7 +41,7 @@ public class SetRemoveMethodAdapter extends AbstractMethodAdapter implements Opc
     Label notManaged = new Label();
     mv.visitJumpInsn(IFEQ, notManaged);
     mv.visitVarInsn(ALOAD, 0);
-    managerHelper.callManagerMethod("checkWriteAccess", mv);
+    mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "checkWriteAccess", "(Ljava/lang/Object;)V");
     mv.visitVarInsn(ALOAD, 0);
     mv.visitFieldInsn(GETFIELD, type, mapField, "L" + mapFieldType + ";");
     mv.visitTypeInsn(CHECKCAST, mapType);
@@ -63,7 +63,8 @@ public class SetRemoveMethodAdapter extends AbstractMethodAdapter implements Opc
     mv.visitVarInsn(ALOAD, 2);
     mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map$Entry", "getKey", "()Ljava/lang/Object;");
     mv.visitInsn(AASTORE);
-    managerHelper.callManagerMethod("logicalInvoke", mv);
+    mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "logicalInvoke",
+                       "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
     mv.visitInsn(ICONST_1);
     mv.visitInsn(IRETURN);
     mv.visitLabel(notManaged);
