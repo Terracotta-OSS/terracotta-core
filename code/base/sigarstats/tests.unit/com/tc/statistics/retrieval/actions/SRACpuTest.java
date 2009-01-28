@@ -14,13 +14,10 @@ import java.math.BigDecimal;
 import junit.framework.TestCase;
 
 public class SRACpuTest extends TestCase {
-  static {
-    SigarUtil.sigarInit();
-  }
   private Sigar sigar;
 
   public void setUp() {
-    sigar = new Sigar();
+    sigar = SigarUtil.newSigar();
   }
 
   public void tearDown() {
