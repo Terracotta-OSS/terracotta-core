@@ -406,7 +406,6 @@
       <module fileurl="file://$PROJECT_DIR$/clustered-commons-collections-3.1.iml" filepath="$PROJECT_DIR$/clustered-commons-collections-3.1.iml" />
       <module fileurl="file://$PROJECT_DIR$//clustered-glassfish-1.0.iml" filepath="$PROJECT_DIR$//clustered-glassfish-1.0.iml" />
       <module fileurl="file://$PROJECT_DIR$/clustered-surefire-2.3.iml" filepath="$PROJECT_DIR$/clustered-surefire-2.3.iml" />
-      <module fileurl="file://$PROJECT_DIR$/clustered-websphere-6.1.0.7.iml" filepath="$PROJECT_DIR$/clustered-websphere-6.1.0.7.iml" />
       <module fileurl="file://$PROJECT_DIR$/common.iml" filepath="$PROJECT_DIR$/common.iml" />
       <module fileurl="file://$PROJECT_DIR$/common-api.iml" filepath="$PROJECT_DIR$/common-api.iml" />
       <module fileurl="file://$PROJECT_DIR$/dependencies.iml" filepath="$PROJECT_DIR$/dependencies.iml" />

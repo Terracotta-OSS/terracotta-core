@@ -9,12 +9,9 @@ import com.meterware.httpunit.WebResponse;
 import com.tc.test.AppServerInfo;
 import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
-import com.tc.test.server.appserver.deployment.GenericServer;
 import com.tc.test.server.appserver.deployment.ServerTestSetup;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
-import com.tc.test.server.appserver.was6x.Was6xAppServer;
 import com.tc.test.server.util.TcConfigBuilder;
-import com.tc.util.io.TCFileUtils;
 import com.tctest.webapp.servlets.SessionConfigServlet;
 
 import java.util.HashMap;
@@ -158,10 +155,6 @@ public class SessionConfigTest extends AbstractDeploymentTest {
         if (appServerInfo().getMajor().equals("9") || appServerInfo().getMajor().equals("10")) {
           builder.addResourceFullpath(RESOURCE_ROOT, (String) descriptors.get("wl92-10"), "WEB-INF/weblogic.xml");
         }
-        break;
-      case AppServerInfo.WEBSPHERE:
-        Was6xAppServer wasServer = (Was6xAppServer) ((GenericServer) server).getAppServer();
-        wasServer.setExtraScript(TCFileUtils.getResourceFile(RESOURCE_ROOT + "/" + (String) descriptors.get("was61")));
         break;
       default:
         break;

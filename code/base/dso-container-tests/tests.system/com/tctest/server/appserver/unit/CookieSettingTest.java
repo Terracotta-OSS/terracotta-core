@@ -12,12 +12,9 @@ import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.GenericServer;
 import com.tc.test.server.appserver.deployment.ServerTestSetup;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
-import com.tc.test.server.appserver.was6x.Was6xAppServer;
 import com.tc.test.server.util.TcConfigBuilder;
-import com.tc.util.io.TCFileUtils;
 import com.tctest.webapp.servlets.OkServlet;
 
-import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -62,14 +59,12 @@ public class CookieSettingTest extends AbstractDeploymentTest {
     GenericServer.setDsoEnabled(false);
     server0 = makeWebApplicationServer(tcConfigBuilder);
     server0.addWarDeployment(deployment, CONTEXT);
-    setCookieForWebsphere(server0);
     server0.start();
 
     // server1 is enabled with DSO
     GenericServer.setDsoEnabled(true);
     server1 = makeWebApplicationServer(tcConfigBuilder);
     server1.addWarDeployment(deployment, CONTEXT);
-    setCookieForWebsphere(server1);
     server1.start();
   }
 
@@ -103,16 +98,6 @@ public class CookieSettingTest extends AbstractDeploymentTest {
     }
 
     return builder.makeDeployment();
-  }
-
-  private void setCookieForWebsphere(WebApplicationServer server) throws Exception {
-    if (appServerInfo().getId() == AppServerInfo.WEBSPHERE) {
-      System.out.println("Setting cookie for websphere...");
-      File cookieSettingsScript = TCFileUtils
-          .getResourceFile("/com/tctest/server/appserver/unit/cookiesettingtest/cookiesettings.py");
-      Was6xAppServer wasServer = (Was6xAppServer) ((GenericServer) server).getAppServer();
-      wasServer.setExtraScript(cookieSettingsScript);
-    }
   }
 
   private void assertCookie(String expected, String actual) throws Exception {

@@ -670,28 +670,6 @@ modules:
         - simulator
         - thirdparty
         - thirdparty-api
-  - clustered-websphere-6.1.0.7:
-      options:
-        jdk: J2SE-1.5
-        module: true
-      dependencies:
-        - aspectwerkz
-        - common-api
-        - deploy
-        - deploy-api
-        - dso-common
-        - dso-common-jdk15
-        - dso-common-jdk16
-        - dso-l1-api
-        - dso-l2
-        - dso-memory-datastore
-        - legacy-test-tree
-        - management
-        - management-api
-        - modules-common
-        - simulator
-        - thirdparty
-        - thirdparty-api
   - clustered-surefire-2.3:
       options:
         jdk: J2SE-1.5
@@ -834,7 +812,6 @@ module-groups:
     - dso-memory-datastore
   framework:
     - clustered-commons-collections-3.1
-    - clustered-websphere-6.1.0.7
     - excludes-config
     - guimodels-config
     - jdk15-preinst-config
