@@ -8,5 +8,5 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-statistics-api"/>
-	<classpathentry exported="true" kind="lib" path="lib/sigar-1.5.0.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/sigar-1.6.0.jar"/>
 </classpath>
