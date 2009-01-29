@@ -19,9 +19,12 @@ public class ListCommand extends ModuleOperatorCommand {
 
   private static final String OPTION_DETAILS  = "v";
   private static final String LONGOPT_DETAILS = "details";
+  private static final String OPTION_ALL      = "a";
+  private static final String LONGOPT_ALL     = "all";
 
   public ListCommand() {
     options.addOption(OPTION_DETAILS, LONGOPT_DETAILS, false, "Display detailed information");
+    options.addOption(OPTION_ALL, LONGOPT_ALL, false, "Include internal integration modules (hidden by default)");
     arguments.put("keywords", "(OPTIONAL) Space delimited list of keywords used to filter the list.");
   }
 
@@ -65,10 +68,17 @@ public class ListCommand extends ModuleOperatorCommand {
     List<Module> latest = modules.listLatest();
     List<String> keywords = cli.getArgList();
 
+    boolean includeTcInternal = includeTcInternal(cli);
     List<Module> list = new ArrayList<Module>();
     for (Module module : latest) {
       if (!isQualified(keywords, module.symbolicName())) continue;
-      list.add(module);
+      if (includeTcInternal) {
+        list.add(module);
+      } else {
+        if (!module.tcInternalTIM()) {
+          list.add(module);
+        }
+      }
     }
 
     out.println("*** Terracotta Integration Modules for TC " + modules.tcVersion() + " ***\n");
@@ -79,5 +89,9 @@ public class ListCommand extends ModuleOperatorCommand {
 
     if (cli.hasOption('v') || cli.hasOption(LONGOPT_DETAILS)) displayWithDetails(list);
     else display(list);
+  }
+
+  private boolean includeTcInternal(CommandLine cli) {
+    return cli.hasOption("a") || cli.hasOption(LONGOPT_ALL);
   }
 }

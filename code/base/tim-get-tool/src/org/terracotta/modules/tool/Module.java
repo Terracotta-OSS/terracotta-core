@@ -159,6 +159,10 @@ public class Module extends AbstractModule implements Installable {
     return attributesHelper.getAttrValueAsString("vendor", StringUtils.EMPTY);
   }
 
+  public boolean tcInternalTIM() {
+    return Boolean.valueOf(attributesHelper.getAttrValueAsString("tc-internalTIM", "false"));
+  }
+
   /**
    * Retrieve the list of versions of this module. The list returned is sorted in ascending-order, ie: oldest version
    * first. The list returned DOES NOT include the version of this module.
