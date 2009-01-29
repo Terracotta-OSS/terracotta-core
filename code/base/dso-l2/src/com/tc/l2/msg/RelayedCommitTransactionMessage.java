@@ -15,7 +15,6 @@ import com.tc.net.groups.NodeIDSerializer;
 import com.tc.net.protocol.tcm.TCMessageImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
-import com.tc.object.gtx.GlobalTransactionIDGenerator;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
@@ -26,8 +25,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class RelayedCommitTransactionMessage extends AbstractGroupMessage implements OrderedEventContext,
-    GlobalTransactionIDGenerator, Recyclable {
+public class RelayedCommitTransactionMessage extends AbstractGroupMessage implements OrderedEventContext, Recyclable {
 
   public static final int        RELAYED_COMMIT_TXN_MSG_TYPE = 0;
 
@@ -131,9 +129,9 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
     }
   }
 
-  public GlobalTransactionID getOrCreateGlobalTransactionID(ServerTransactionID serverTransactionID) {
+  public GlobalTransactionID getGlobalTransactionIDFor(ServerTransactionID serverTransactionID) {
     GlobalTransactionID gid = (GlobalTransactionID) this.sid2gid.get(serverTransactionID);
-    if (gid == null) { throw new AssertionError("no Mapping found for : " + serverTransactionID); }
+    if (gid == null) { throw new AssertionError("No Mapping found for : " + serverTransactionID); }
     return gid;
   }
 
@@ -146,8 +144,8 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
   }
 
   /**
-   * Delayed message recycle here only at the read end (passive). this.batchData
-   * due to this.batchData reuses TCByteBuffer from comm.
+   * Delayed message recycle here only at the read end (passive). this.batchData due to this.batchData reuses
+   * TCByteBuffer from comm.
    */
   public void recycle() {
     Assert.assertTrue(recyclable);

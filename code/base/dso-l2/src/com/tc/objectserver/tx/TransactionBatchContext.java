@@ -5,11 +5,15 @@
 package com.tc.objectserver.tx;
 
 import com.tc.net.NodeID;
+import com.tc.object.ObjectID;
 import com.tc.object.msg.CommitTransactionMessage;
 
 import java.util.LinkedHashMap;
+import java.util.Set;
 
 public interface TransactionBatchContext {
+
+  public Set<ObjectID> getNewObjectIDs();
 
   public abstract CommitTransactionMessage getCommitTransactionMessage();
 

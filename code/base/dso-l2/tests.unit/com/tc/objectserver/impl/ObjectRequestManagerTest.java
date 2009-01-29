@@ -44,6 +44,7 @@ import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.api.TestSink;
 import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
+import com.tc.objectserver.context.ObjectRequestServerContextImpl;
 import com.tc.objectserver.context.RespondToObjectRequestContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.TestDNA;
@@ -463,7 +464,8 @@ public class ObjectRequestManagerTest extends TestCase {
     objectRequestManager.transactionManagerStarted(new HashSet());
     objectRequestManager.clearAllTransactionsFor(clientID);
 
-    objectRequestManager.requestObjects(clientID, requestID, ids, -1, false, Thread.currentThread().getName());
+    objectRequestManager.requestObjects(new ObjectRequestServerContextImpl(clientID, requestID, ids, Thread
+        .currentThread().getName(), -1, false));
 
     RespondToObjectRequestContext respondToObjectRequestContext = null;
 
@@ -507,7 +509,8 @@ public class ObjectRequestManagerTest extends TestCase {
     objectRequestManager.transactionManagerStarted(new HashSet());
     objectRequestManager.clearAllTransactionsFor(clientID);
 
-    objectRequestManager.requestObjects(clientID, requestID, ids, -1, false, Thread.currentThread().getName());
+    objectRequestManager.requestObjects(new ObjectRequestServerContextImpl(clientID, requestID, ids, Thread
+        .currentThread().getName(), -1, false));
 
     RespondToObjectRequestContext respondToObjectRequestContext = null;
     try {
@@ -646,10 +649,9 @@ public class ObjectRequestManagerTest extends TestCase {
       } catch (Exception e) {
         throw new AssertionError(e);
       }
-      objectRequestManager.requestObjects(clientID, requestID, ids, -1, serverInitiated, Thread.currentThread()
-          .getName());
+      objectRequestManager.requestObjects(new ObjectRequestServerContextImpl(clientID, requestID, ids, Thread
+          .currentThread().getName(), -1, serverInitiated));
     }
-
   }
 
   private static class ObjectResponseThread extends Thread {

@@ -5,10 +5,12 @@
 package com.tc.objectserver.tx;
 
 import com.tc.net.NodeID;
+import com.tc.object.ObjectID;
 import com.tc.object.msg.CommitTransactionMessage;
 import com.tc.object.tx.ServerTransactionID;
 
 import java.util.LinkedHashMap;
+import java.util.Set;
 
 public class IncomingTransactionBatchContext implements TransactionBatchContext {
 
@@ -16,16 +18,22 @@ public class IncomingTransactionBatchContext implements TransactionBatchContext 
   private final NodeID                                                nodeID;
   private final LinkedHashMap<ServerTransactionID, ServerTransaction> txns;
   private final long[]                                                highWatermark;
+  private final Set<ObjectID> newObjectIDs;
 
   public IncomingTransactionBatchContext(NodeID nodeID, CommitTransactionMessage ctm,
                                          LinkedHashMap<ServerTransactionID, ServerTransaction> txns,
-                                         long[] highWatermark) {
+                                         long[] highWatermark, Set<ObjectID> newObjectIDs) {
     this.nodeID = nodeID;
     this.ctm = ctm;
     this.txns = txns;
     this.highWatermark = highWatermark;
+    this.newObjectIDs = newObjectIDs;
   }
-
+  
+  public Set<ObjectID> getNewObjectIDs() {
+    return newObjectIDs;
+  }
+ 
   public CommitTransactionMessage getCommitTransactionMessage() {
     return ctm;
   }

@@ -159,7 +159,7 @@ public class TransactionBatchTest extends TestCase {
 
     TransactionBatchReaderImpl reader = new TransactionBatchReaderImpl(writer.getData(), clientID, serializer,
                                                                        new ActiveServerTransactionFactory());
-    assertEquals(2, reader.getNumTxns());
+    assertEquals(2, reader.getRemainingTxnsToBeRead());
     assertEquals(batchID, reader.getBatchID());
 
     int count = 0;
@@ -251,7 +251,7 @@ public class TransactionBatchTest extends TestCase {
 
     TransactionBatchReaderImpl reader = new TransactionBatchReaderImpl(writer.getData(), clientID, serializer,
                                                                        new ActiveServerTransactionFactory());
-    assertEquals(2, reader.getNumTxns());
+    assertEquals(2, reader.getRemainingTxnsToBeRead());
     assertEquals(new TxnBatchID(1), reader.getBatchID());
 
     int count = 0;

@@ -9,6 +9,7 @@ import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCObjectNotFoundException;
 import com.tc.logging.NullTCLogger;
+import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
@@ -391,7 +392,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     assertTrue(rmom.initializeQueue.isEmpty());
     ObjectRequestContext ctxt = (ObjectRequestContext) initArgs[0];
     assertEquals(cidProvider.getClientID(), ctxt.getClientID());
-    assertEquals(oids, ctxt.getObjectIDs());
+    assertEquals(oids, ctxt.getRequestedObjectIDs());
     // The object id in the request
     assertEquals(oids, initArgs[1]);
     // The proper set of removed object ids
@@ -539,7 +540,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public ObjectIDSet getObjectIDs() {
+    public ObjectIDSet getRequestedObjectIDs() {
       throw new ImplementMe();
     }
 
@@ -574,6 +575,14 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
 
     public String getRequestingThreadName() {
       return "TestThreadDummy";
+    }
+
+    public boolean isServerInitiated() {
+      return false;
+    }
+
+    public ClientID getClientID() {
+      throw new ImplementMe();
     }
 
   }

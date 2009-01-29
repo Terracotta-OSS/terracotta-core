@@ -14,6 +14,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.object.ObjectID;
 import com.tc.object.msg.CommitTransactionMessage;
 import com.tc.object.msg.MessageRecycler;
 import com.tc.object.tx.ServerTransactionID;
@@ -44,7 +45,6 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
   private Sink                           txnRelaySink;
   private TransactionBatchReaderFactory  batchReaderFactory;
   private TransactionFilter              filter;
-  // private ObjectRequestManager requestObjectManager;
   private ServerGlobalTransactionManager gtxm;
 
   public TransactionBatchManagerImpl(SequenceValidator sequenceValidator, MessageRecycler recycler,
@@ -59,7 +59,6 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
     batchReaderFactory = oscc.getTransactionBatchReaderFactory();
     transactionManager = oscc.getTransactionManager();
     replicatedObjectMgr = oscc.getL2Coordinator().getReplicatedObjectManager();
-    // requestObjectManager = oscc.getObjectRequestManager();
     gtxm = oscc.getServerGlobalTransactionManager();
     Stage relayStage = oscc.getStage(ServerConfigurationContext.TRANSACTION_RELAY_STAGE);
     if (relayStage != null) {
@@ -76,9 +75,9 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
       // Transactions should maintain order.
       LinkedHashMap<ServerTransactionID, ServerTransaction> txns = new LinkedHashMap<ServerTransactionID, ServerTransaction>(
                                                                                                                              reader
-                                                                                                                                 .getNumTxns());
+                                                                                                                                 .getRemainingTxnsToBeRead());
       NodeID nodeID = reader.getNodeID();
-      HashSet newObjectIDs = new HashSet();
+      HashSet<ObjectID> newObjectIDs = new HashSet<ObjectID>();
 
       while ((txn = reader.getNextTransaction()) != null) {
         sequenceValidator.setCurrent(nodeID, txn.getClientSequenceID());
@@ -86,7 +85,8 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
         newObjectIDs.addAll(txn.getNewObjectIDs());
       }
 
-      filter.addTransactionBatch(new IncomingTransactionBatchContext(nodeID, ctm, txns, reader.getHighWatermark()));
+      filter.addTransactionBatch(new IncomingTransactionBatchContext(nodeID, ctm, txns, reader.getHighWatermark(),
+                                                                     newObjectIDs));
     } catch (Exception e) {
       logger.error("Error reading transaction batch. : ", e);
       MessageChannel c = ctm.getChannel();
@@ -97,7 +97,7 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
 
   public void processTransactionBatch(TransactionBatchContext batchContext) {
     // This lock is used to make sure the order in which we assign GIDs is the order in which we process transactions.
-    // Even this stage is single threaded today we use this lock to just to make sure.
+    // Even though this stage is single threaded today we use this lock to just to be sure.
     synchronized (lock) {
       final CommitTransactionMessage ctm = batchContext.getCommitTransactionMessage();
       try {

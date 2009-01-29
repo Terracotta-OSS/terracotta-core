@@ -813,7 +813,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
 
     objectRequestManager = createObjectRequestManager(objectManager, channelManager, clientStateManager,
                                                       transactionManager, objectRequestStage.getSink(),
-                                                      respondToObjectRequestStage.getSink(), objectStatsRecorder);
+                                                      respondToObjectRequestStage.getSink(), objectStatsRecorder,
+                                                      toInit, stageManager, maxStageSize);
     Stage oidRequest = stageManager.createStage(ServerConfigurationContext.OBJECT_ID_BATCH_REQUEST_STAGE,
                                                 new RequestObjectIDBatchHandler(objectStore), 1, maxStageSize);
     Stage transactionAck = stageManager.createStage(ServerConfigurationContext.TRANSACTION_ACKNOWLEDGEMENT_STAGE,
@@ -970,7 +971,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
                                                             ClientStateManager clientStateMgr,
                                                             ServerTransactionManager transactionMgr,
                                                             Sink objectRequestSink, Sink respondObjectRequestSink,
-                                                            ObjectStatsRecorder statsRecorder) {
+                                                            ObjectStatsRecorder statsRecorder, List<PostInit> toInit,
+                                                            StageManager stageManager, int maxStageSize) {
     return new ObjectRequestManagerImpl(objectMgr, channelManager, clientStateMgr, transactionMgr, objectRequestSink,
                                         respondObjectRequestSink, statsRecorder);
   }

@@ -7,6 +7,7 @@ package com.tc.object.msg;
 import com.tc.async.api.EventContext;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
+import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -85,7 +86,7 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
     return requestID;
   }
 
-  public ObjectIDSet getObjectIDs() {
+  public ObjectIDSet getRequestedObjectIDs() {
     return objectIDs;
   }
 
@@ -108,4 +109,13 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
   public String getRequestingThreadName() {
     return threadName;
   }
+
+  public boolean isServerInitiated() {
+    return false;
+  }
+
+  public ClientID getClientID() {
+    return (ClientID) getSourceNodeID();
+  }
+
 }

@@ -9,7 +9,6 @@ import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
-import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.msg.RequestManagedObjectMessage;
 import com.tc.util.ObjectIDSet;
 
@@ -28,7 +27,7 @@ public class TestRequestManagedObjectMessage implements RequestManagedObjectMess
     return this.requestID;
   }
 
-  public ObjectIDSet getObjectIDs() {
+  public ObjectIDSet getRequestedObjectIDs() {
     return this.objectIDs;
   }
 
@@ -48,26 +47,6 @@ public class TestRequestManagedObjectMessage implements RequestManagedObjectMess
     //
   }
 
-  public int getCorrelationId(boolean initialize) {
-    return 0;
-  }
-
-  public void setCorrelationId(int id) {
-    //
-  }
-
-  public TCMessageType getMessageType() {
-    return null;
-  }
-
-  public void hydrate() {
-    //
-  }
-
-  public void dehydrate() {
-    //      
-  }
-
   public void send() {
     //      
   }
@@ -80,10 +59,6 @@ public class TestRequestManagedObjectMessage implements RequestManagedObjectMess
     return new ClientID(new ChannelID(0));
   }
 
-  public int getTotalLength() {
-    return 0;
-  }
-
   public int getRequestDepth() {
     return 400;
   }
@@ -94,5 +69,13 @@ public class TestRequestManagedObjectMessage implements RequestManagedObjectMess
 
   public String getRequestingThreadName() {
     return "TestThreadDummy";
+  }
+
+  public boolean isServerInitiated() {
+    return false;
+  }
+
+  public ClientID getClientID() {
+    return new ClientID(new ChannelID(0));
   }
 }

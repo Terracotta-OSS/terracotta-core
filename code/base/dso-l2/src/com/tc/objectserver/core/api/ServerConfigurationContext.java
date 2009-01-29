@@ -72,6 +72,7 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   // TODO::Move to enterprise
   public static final String AA_TRANSACTION_WATERMARK_BROADCAST_STAGE           = "aa_transaction_watermark_broadcast_stage";
   public static final String AA_TRANSACTION_WATERMARK_RECEIVE_STAGE             = "aa_transaction_watermark_receive_stage";
+  public static final String AA_OBJECT_REQUEST_LOOKUP_STAGE                     = "aa_object_request_lookup_stage";
 
   public L2Coordinator getL2Coordinator();
 

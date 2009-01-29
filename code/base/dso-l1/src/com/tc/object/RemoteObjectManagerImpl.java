@@ -209,7 +209,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
   private void sendRequest(ObjectRequestContext ctxt) {
     RequestManagedObjectMessage rmom = createRequestManagedObjectMessage(ctxt);
     ObjectID id = null;
-    for (Iterator i = ctxt.getObjectIDs().iterator(); i.hasNext();) {
+    for (Iterator i = ctxt.getRequestedObjectIDs().iterator(); i.hasNext();) {
       id = (ObjectID) i.next();
       dnaRequests.put(id, null);
     }
@@ -224,7 +224,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
 
   private RequestManagedObjectMessage createRequestManagedObjectMessage(ObjectRequestContext ctxt) {
     RequestManagedObjectMessage rmom = rmomFactory.newRequestManagedObjectMessage(groupID);
-    ObjectIDSet requestedObjectIDs = ctxt.getObjectIDs();
+    ObjectIDSet requestedObjectIDs = ctxt.getRequestedObjectIDs();
     if (removeObjects.isEmpty()) {
       rmom.initialize(ctxt, requestedObjectIDs, TCCollections.EMPTY_OBJECT_ID_SET);
     } else {
@@ -379,7 +379,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
       return this.requestID;
     }
 
-    public ObjectIDSet getObjectIDs() {
+    public ObjectIDSet getRequestedObjectIDs() {
       return this.objectIDs;
     }
 

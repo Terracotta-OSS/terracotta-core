@@ -139,7 +139,7 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
     return this.batchID;
   }
 
-  public int getNumTxns() {
+  public int getRemainingTxnsToBeRead() {
     return this.numTxns;
   }
 

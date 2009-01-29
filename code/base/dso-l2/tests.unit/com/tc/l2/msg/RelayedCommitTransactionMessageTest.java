@@ -80,8 +80,8 @@ public class RelayedCommitTransactionMessageTest extends TestCase {
 
     for (Iterator iter = serverTransactionIDs.iterator(); iter.hasNext();) {
       ServerTransactionID serverTransactionID = (ServerTransactionID) iter.next();
-      assertEquals(rctm.getOrCreateGlobalTransactionID(serverTransactionID), rctm1
-          .getOrCreateGlobalTransactionID(serverTransactionID));
+      assertEquals(rctm.getGlobalTransactionIDFor(serverTransactionID), rctm1
+          .getGlobalTransactionIDFor(serverTransactionID));
     }
 
     TCByteBuffer[] tcbb = rctm.getBatchData();

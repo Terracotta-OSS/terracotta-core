@@ -10,6 +10,7 @@ import com.tc.net.NodeID;
 import com.tc.object.msg.MessageRecyclerImpl;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
 import java.util.Set;
@@ -27,7 +28,7 @@ public class CommitTransactionMessageRecycler extends MessageRecyclerImpl implem
     recycle(stxID);
   }
 
-  public void transactionApplied(ServerTransactionID stxID) {
+  public void transactionApplied(ServerTransactionID stxID, ObjectIDSet newObjectsCreated) {
     return;
   }
 

@@ -8,18 +8,12 @@ import com.tc.lang.Recyclable;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ObjectRequestContext;
-import com.tc.object.ObjectRequestID;
+import com.tc.object.ObjectRequestServerContext;
 import com.tc.util.ObjectIDSet;
 
-public interface RequestManagedObjectMessage extends Recyclable {
-
-  public ObjectRequestID getRequestID();
-
-  public ObjectIDSet getObjectIDs();
+public interface RequestManagedObjectMessage extends ObjectRequestServerContext, Recyclable {
 
   public ObjectIDSet getRemoved();
-
-  public String getRequestingThreadName();
 
   public void initialize(ObjectRequestContext ctxt, ObjectIDSet objectIDs, ObjectIDSet removedIDs);
 
@@ -28,7 +22,5 @@ public interface RequestManagedObjectMessage extends Recyclable {
   public MessageChannel getChannel();
 
   public NodeID getSourceNodeID();
-
-  public int getRequestDepth();
 
 }

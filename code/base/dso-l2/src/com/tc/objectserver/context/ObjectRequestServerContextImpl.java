@@ -7,36 +7,41 @@ package com.tc.objectserver.context;
 import com.tc.async.api.EventContext;
 import com.tc.net.ClientID;
 import com.tc.object.ObjectRequestID;
+import com.tc.object.ObjectRequestServerContext;
 import com.tc.util.ObjectIDSet;
 
-public class ObjectRequestServerContext implements EventContext {
+public class ObjectRequestServerContextImpl implements EventContext, ObjectRequestServerContext {
 
   private final ClientID        requestedNodeID;
   private final ObjectRequestID objectRequestID;
   private final ObjectIDSet     lookupIDs;
-  private String                requestingThreadName;
+  private final String          requestingThreadName;
+  private final int             requestDepth;
+  private final boolean         serverInitiated;
 
-  public ObjectRequestServerContext(ClientID requestNodeID, ObjectRequestID objectRequestID, ObjectIDSet lookupIDs,
-                                    String requestingThreadName) {
+  public ObjectRequestServerContextImpl(ClientID requestNodeID, ObjectRequestID objectRequestID, ObjectIDSet lookupIDs,
+                                        String requestingThreadName, int requestDepth, boolean serverInitiated) {
+    this.requestDepth = requestDepth;
     this.requestedNodeID = requestNodeID;
     this.objectRequestID = objectRequestID;
     this.lookupIDs = lookupIDs;
     this.requestingThreadName = requestingThreadName;
+    this.serverInitiated = serverInitiated;
   }
 
-  public ObjectIDSet getLookupIDs() {
+  public ObjectIDSet getRequestedObjectIDs() {
     return lookupIDs;
   }
 
-  public int getMaxRequestDepth() {
-    return -1;
+  public int getRequestDepth() {
+    return requestDepth;
   }
 
   public ObjectRequestID getRequestID() {
     return objectRequestID;
   }
 
-  public ClientID getRequestedNodeID() {
+  public ClientID getClientID() {
     return requestedNodeID;
   }
 
@@ -45,7 +50,7 @@ public class ObjectRequestServerContext implements EventContext {
   }
 
   public boolean isServerInitiated() {
-    return true;
+    return serverInitiated;
   }
 
 }

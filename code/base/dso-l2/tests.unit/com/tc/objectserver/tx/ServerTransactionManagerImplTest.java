@@ -35,6 +35,7 @@ import com.tc.objectserver.persistence.impl.NullPersistenceTransactionProvider;
 import com.tc.objectserver.persistence.impl.TestTransactionStore;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.CounterImpl;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
@@ -595,7 +596,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     }
   }
 
-  private static class TestServerTransactionListener implements ServerTransactionListener {
+  private static class TestServerTransactionListener extends AbstractServerTransactionListener {
 
     NoExceptionLinkedQueue incomingContext  = new NoExceptionLinkedQueue();
     NoExceptionLinkedQueue appliedContext   = new NoExceptionLinkedQueue();
@@ -605,26 +606,13 @@ public class ServerTransactionManagerImplTest extends TestCase {
       incomingContext.put(new Object[] { source, serverTxnIDs });
     }
 
-    public void transactionApplied(ServerTransactionID stxID) {
+    public void transactionApplied(ServerTransactionID stxID, ObjectIDSet newObjectsCreated) {
       appliedContext.put(stxID);
     }
 
     public void transactionCompleted(ServerTransactionID stxID) {
       completedContext.put(stxID);
     }
-
-    public void addResentServerTransactionIDs(Collection stxIDs) {
-      throw new ImplementMe();
-    }
-
-    public void clearAllTransactionsFor(NodeID deadNode) {
-      throw new ImplementMe();
-    }
-
-    public void transactionManagerStarted(Set cids) {
-      throw new ImplementMe();
-    }
-
   }
 
   public class TestTransactionAcknowledgeAction implements TransactionAcknowledgeAction {
