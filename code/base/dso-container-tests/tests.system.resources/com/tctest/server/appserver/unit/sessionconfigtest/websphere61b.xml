@@ -1,6 +1,0 @@
-import operator
-
-server = AdminConfig.getid('/Server:server1/')
-smgr = AdminConfig.list('SessionManager', server)
-AdminConfig.modify(smgr, [['enableCookies', 'false'], ['enableUrlRewriting', 'false']])
-AdminConfig.save()

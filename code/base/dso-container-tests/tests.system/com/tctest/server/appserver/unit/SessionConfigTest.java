@@ -23,7 +23,7 @@ import junit.framework.Test;
 /**
  * Test session-descriptor setting http://edocs.bea.com/wls/docs81/webapp/weblogic_xml.html#1038173
  * http://edocs.bea.com/wls/docs90/webapp/weblogic_xml.html#1071982
- * 
+ *
  * @author hhuynh
  */
 public class SessionConfigTest extends AbstractDeploymentTest {
@@ -40,7 +40,7 @@ public class SessionConfigTest extends AbstractDeploymentTest {
 
   public SessionConfigTest() {
     runningWithWeblogic = appServerInfo().getId() == AppServerInfo.WEBLOGIC;
-                          
+
   }
 
   public static Test suite() {
@@ -52,7 +52,6 @@ public class SessionConfigTest extends AbstractDeploymentTest {
     if (!runningWithWeblogic) return;
     descriptors.put("wl81", "weblogic81a.xml");
     descriptors.put("wl92-10", "weblogic92a.xml");
-    descriptors.put("was61", "websphere61a.xml");
     init();
 
     WebConversation conversation = new WebConversation();
@@ -69,7 +68,6 @@ public class SessionConfigTest extends AbstractDeploymentTest {
     if (!runningWithWeblogic) return;
     descriptors.put("wl81", "weblogic81b.xml");
     descriptors.put("wl92-10", "weblogic92b.xml");
-    descriptors.put("was61", "websphere61b.xml");
     init();
 
     WebResponse response = request(server, "testcase=testUrlRewritingDisabled", new WebConversation());

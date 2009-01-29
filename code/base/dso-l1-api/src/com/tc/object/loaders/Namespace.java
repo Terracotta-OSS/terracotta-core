@@ -25,7 +25,6 @@ public class Namespace {
   public static final String  JBOSS_NAMESPACE                 = "JBoss" + SEP;
   public static final String  MODULES_NAMESPACE               = "Modules" + SEP;
   public static final String  JETTY_NAMESPACE                 = "Jetty" + SEP;
-  public static final String  WEBSPHERE_NAMESPACE             = "Websphere" + SEP;
   public static final String  GLASSFISH_NAMESPACE             = "Glassfish" + SEP;
 
   private static final String SYSTEM_LOADER_NAME              = STANDARD_NAMESPACE + "system";
@@ -110,7 +109,7 @@ public class Namespace {
 
     if (topLevel.equals(TOMCAT_NAMESPACE) || topLevel.equals(WEBLOGIC_NAMESPACE) || topLevel.equals(GERONIMO_NAMESPACE)
         || topLevel.equals(JBOSS_NAMESPACE) || topLevel.equals(MODULES_NAMESPACE) || topLevel.equals(JETTY_NAMESPACE)
-        || topLevel.equals(WEBSPHERE_NAMESPACE) || topLevel.equals(GLASSFISH_NAMESPACE)) {
+        || topLevel.equals(GLASSFISH_NAMESPACE)) {
       // this check will probably need to evolve over time, it's obviously not fancy enough yet
       return new StringBuffer(topLevel).append(subName).toString();
     }
