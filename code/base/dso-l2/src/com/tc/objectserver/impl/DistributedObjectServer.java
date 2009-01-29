@@ -391,7 +391,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     // verify user input host name, DEV-2293
     String host = l2DSOConfig.host().getString();
     InetAddress ip = InetAddress.getByName(host);
-    if(!ip.isLoopbackAddress() && (NetworkInterface.getByInetAddress(ip) == null)) {
+    if (!ip.isLoopbackAddress() && (NetworkInterface.getByInetAddress(ip) == null)) {
       String msg = "Unable to find local network interface for " + host;
       consoleLogger.error(msg);
       logger.error(msg, new TCRuntimeException(msg));
@@ -933,8 +933,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     context = new ServerConfigurationContextImpl(stageManager, objectManager, objectRequestManager, objectStore,
                                                  lockManager, channelManager, clientStateManager, transactionManager,
                                                  txnObjectManager, clientHandshakeManager, channelStats, l2Coordinator,
-                                                 new CommitTransactionMessageToTransactionBatchReader(gtxm),
-                                                 transactionBatchManager);
+                                                 new CommitTransactionMessageToTransactionBatchReader(),
+                                                 transactionBatchManager, gtxm);
 
     toInit.add(this);
     stageManager.startAll(context, toInit);
@@ -966,8 +966,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
   }
 
   // Overridden by enterprise server
-  protected ObjectRequestManager createObjectRequestManager(ObjectManager objectMgr,
-                                                            DSOChannelManager channelManager,
+  protected ObjectRequestManager createObjectRequestManager(ObjectManager objectMgr, DSOChannelManager channelManager,
                                                             ClientStateManager clientStateMgr,
                                                             ServerTransactionManager transactionMgr,
                                                             Sink objectRequestSink, Sink respondObjectRequestSink,

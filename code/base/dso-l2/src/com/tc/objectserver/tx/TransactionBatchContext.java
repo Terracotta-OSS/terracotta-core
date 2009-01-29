@@ -7,14 +7,18 @@ package com.tc.objectserver.tx;
 import com.tc.net.NodeID;
 import com.tc.object.msg.CommitTransactionMessage;
 
+import java.util.LinkedHashMap;
+
 public interface TransactionBatchContext {
 
   public abstract CommitTransactionMessage getCommitTransactionMessage();
 
-  public abstract TransactionBatchReader getTransactionReader();
-
   public abstract NodeID getSourceNodeID();
 
   public abstract long[] getHighWatermark();
+
+  public abstract int getNumTxns();
+
+  public abstract LinkedHashMap getTransactions();
 
 }

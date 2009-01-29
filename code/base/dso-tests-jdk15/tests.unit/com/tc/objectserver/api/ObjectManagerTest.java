@@ -351,27 +351,27 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
     // Look up two existing objects
     ObjectIDSet ids = makeObjectIDSet(1, 2);
-    TestResultsContext results = new TestResultsContext(ids, new ObjectIDSet(), true);
+    TestResultsContext result1 = new TestResultsContext(ids, new ObjectIDSet(), true);
 
     testFaultSinkContext.resetCounter();
-    objectManager.lookupObjectsAndSubObjectsFor(null, results, -1);
-    results.waitTillComplete();
+    objectManager.lookupObjectsAndSubObjectsFor(null, result1, -1);
+    result1.waitTillComplete();
     assertEquals(0, testFaultSinkContext.getCounter());
 
     // Now look two missing objects
     ObjectIDSet missingids = makeObjectIDSet(20, 22);
-    TestResultsContext results2 = new TestResultsContext(missingids, new ObjectIDSet(), true);
+    TestResultsContext result2 = new TestResultsContext(missingids, new ObjectIDSet(), true);
 
     testFaultSinkContext.resetCounter();
-    objectManager.lookupObjectsAndSubObjectsFor(null, results2, -1);
-    results.waitTillComplete();
+    objectManager.lookupObjectsAndSubObjectsFor(null, result2, -1);
+    result2.waitTillComplete();
     assertEquals(2, testFaultSinkContext.getCounter());
-    assertEquals(missingids, results2.missing);
+    assertEquals(missingids, result2.missing);
 
     // Now release the first two objects
-     objectManager.releaseAll(NULL_TRANSACTION, results.objects.values());
-     
-     // Counter shouldnt be incremented, in other words, missing objects should not be looked up again. 
+    objectManager.releaseAll(NULL_TRANSACTION, result1.objects.values());
+
+    // Counter shouldnt be incremented, in other words, missing objects should not be looked up again.
     assertEquals(2, testFaultSinkContext.getCounter());
   }
 
@@ -1297,12 +1297,11 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
     changes.put(new ObjectID(1), new TestPhysicalDNA(new ObjectID(1)));
 
-    ServerTransaction stxn1 = new ServerTransactionImpl(gtxMgr, new TxnBatchID(1), new TransactionID(1),
-                                                        new SequenceID(1), new LockID[0],
-                                                        new ClientID(new ChannelID(2)), new ArrayList<DNA>(changes
-                                                            .values()), new ObjectStringSerializer(),
-                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                        DmiDescriptor.EMPTY_ARRAY, 1);
+    ServerTransaction stxn1 = new ServerTransactionImpl(new TxnBatchID(1), new TransactionID(1), new SequenceID(1),
+                                                        new LockID[0], new ClientID(new ChannelID(2)),
+                                                        new ArrayList<DNA>(changes.values()),
+                                                        new ObjectStringSerializer(), Collections.EMPTY_MAP,
+                                                        TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1);
     List<ServerTransaction> txns = new ArrayList<ServerTransaction>();
     txns.add(stxn1);
 
@@ -1346,12 +1345,11 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     changes.clear();
     changes.put(new ObjectID(2), new TestPhysicalDNA(new ObjectID(2)));
 
-    ServerTransaction stxn2 = new ServerTransactionImpl(gtxMgr, new TxnBatchID(2), new TransactionID(2),
-                                                        new SequenceID(1), new LockID[0],
-                                                        new ClientID(new ChannelID(2)), new ArrayList<DNA>(changes
-                                                            .values()), new ObjectStringSerializer(),
-                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                        DmiDescriptor.EMPTY_ARRAY, 1);
+    ServerTransaction stxn2 = new ServerTransactionImpl(new TxnBatchID(2), new TransactionID(2), new SequenceID(1),
+                                                        new LockID[0], new ClientID(new ChannelID(2)),
+                                                        new ArrayList<DNA>(changes.values()),
+                                                        new ObjectStringSerializer(), Collections.EMPTY_MAP,
+                                                        TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1);
 
     txns.clear();
     txns.add(stxn2);
@@ -1379,12 +1377,11 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     changes.put(new ObjectID(2), new TestPhysicalDNA(new ObjectID(2), true));
     changes.put(new ObjectID(3), new TestPhysicalDNA(new ObjectID(3)));
 
-    ServerTransaction stxn3 = new ServerTransactionImpl(gtxMgr, new TxnBatchID(2), new TransactionID(2),
-                                                        new SequenceID(1), new LockID[0],
-                                                        new ClientID(new ChannelID(2)), new ArrayList<DNA>(changes
-                                                            .values()), new ObjectStringSerializer(),
-                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                        DmiDescriptor.EMPTY_ARRAY, 1);
+    ServerTransaction stxn3 = new ServerTransactionImpl(new TxnBatchID(2), new TransactionID(2), new SequenceID(1),
+                                                        new LockID[0], new ClientID(new ChannelID(2)),
+                                                        new ArrayList<DNA>(changes.values()),
+                                                        new ObjectStringSerializer(), Collections.EMPTY_MAP,
+                                                        TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1);
 
     txns.clear();
     txns.add(stxn3);

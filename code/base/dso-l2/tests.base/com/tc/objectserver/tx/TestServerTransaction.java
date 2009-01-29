@@ -103,7 +103,7 @@ public final class TestServerTransaction implements ServerTransaction {
 
   public GlobalTransactionID getGlobalTransactionID() {
     if (gtid != null) { return gtid; }
-    throw new ImplementMe();
+    throw new AssertionError("Gid is not set !");
   }
 
   public boolean needsBroadcast() {
@@ -112,6 +112,10 @@ public final class TestServerTransaction implements ServerTransaction {
 
   public int getNumApplicationTxn() {
     return 1;
+  }
+
+  public void setGlobalTransactionID(GlobalTransactionID gid) {
+    throw new ImplementMe();
   }
 
 }

@@ -6,31 +6,44 @@ package com.tc.objectserver.tx;
 
 import com.tc.net.NodeID;
 import com.tc.object.msg.CommitTransactionMessage;
+import com.tc.object.tx.ServerTransactionID;
+
+import java.util.LinkedHashMap;
 
 public class IncomingTransactionBatchContext implements TransactionBatchContext {
 
-  private final CommitTransactionMessage ctm;
-  private final TransactionBatchReader   reader;
+  private final CommitTransactionMessage                              ctm;
+  private final NodeID                                                nodeID;
+  private final LinkedHashMap<ServerTransactionID, ServerTransaction> txns;
+  private final long[]                                                highWatermark;
 
-  public IncomingTransactionBatchContext(CommitTransactionMessage ctm, TransactionBatchReader reader) {
+  public IncomingTransactionBatchContext(NodeID nodeID, CommitTransactionMessage ctm,
+                                         LinkedHashMap<ServerTransactionID, ServerTransaction> txns,
+                                         long[] highWatermark) {
+    this.nodeID = nodeID;
     this.ctm = ctm;
-    this.reader = reader;
+    this.txns = txns;
+    this.highWatermark = highWatermark;
   }
 
   public CommitTransactionMessage getCommitTransactionMessage() {
     return ctm;
   }
 
-  public TransactionBatchReader getTransactionReader() {
-    return reader;
-  }
-
   public NodeID getSourceNodeID() {
-    return ctm.getSourceNodeID();
+    return nodeID;
   }
 
   public long[] getHighWatermark() {
-    return reader.getHighWatermark();
+    return highWatermark;
+  }
+
+  public int getNumTxns() {
+    return txns.size();
+  }
+
+  public LinkedHashMap<ServerTransactionID, ServerTransaction> getTransactions() {
+    return txns;
   }
 
 }

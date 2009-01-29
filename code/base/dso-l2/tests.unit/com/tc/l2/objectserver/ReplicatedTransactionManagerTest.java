@@ -16,6 +16,7 @@ import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
+import com.tc.object.gtx.GlobalTransactionIDAlreadySetException;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.msg.NullMessageRecycler;
 import com.tc.object.tx.TransactionID;
@@ -222,10 +223,14 @@ public class ReplicatedTransactionManagerTest extends TestCase {
       for (int j = oidStart; j < oidStart + objectCount; j++) {
         dnas.add(new TestDNA(new ObjectID(j), !newObjects));
       }
-      ServerTransaction tx = new ServerTransactionImpl(gtxm, batchID, txID, sequenceID, lockIDs, clientID, dnas,
-                                                       serializer, newRoots, txnType, notifies,
-                                                       DmiDescriptor.EMPTY_ARRAY, 1);
+      ServerTransaction tx = new ServerTransactionImpl(batchID, txID, sequenceID, lockIDs, clientID, dnas, serializer,
+                                                       newRoots, txnType, notifies, DmiDescriptor.EMPTY_ARRAY, 1);
       map.put(tx.getServerTransactionID(), tx);
+      try {
+        tx.setGlobalTransactionID(gtxm.getOrCreateGlobalTransactionID(tx.getServerTransactionID()));
+      } catch (GlobalTransactionIDAlreadySetException e) {
+        throw new AssertionError(e);
+      }
     }
     return map;
   }
