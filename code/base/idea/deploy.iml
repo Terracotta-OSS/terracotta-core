@@ -15,7 +15,6 @@
     <orderEntry type="module" module-name="common-api" />
     <orderEntry type="module" module-name="deploy-api" />
     <orderEntry type="module" module-name="dso-common" />
-    <orderEntry type="module" module-name="dso-common-jdk15" />
     <orderEntry type="module" module-name="dso-l1" />
     <orderEntry type="module" module-name="dso-l1-api" />
     <orderEntry type="module" module-name="dso-l2" />
