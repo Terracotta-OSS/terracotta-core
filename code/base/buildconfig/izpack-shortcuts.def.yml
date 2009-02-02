@@ -1,0 +1,138 @@
+programGroup:
+  defaultName: Terracotta-<%= @build_environment.version %>
+  location: applications
+shortcuts:
+- name: Terracotta Welcome
+  description: Start the Terracotta Welcome application
+  programGroup: yes
+  desktop: yes
+  startup: no
+  windows:
+    target: $INSTALL_PATH\welcome.bat
+    applications: yes
+    startMenu: no
+    initialState: noShow
+    iconFile: $INSTALL_PATH/icons/logo_small.ico
+    iconIndex: "0"
+  unix:
+    target: $INSTALL_PATH/welcome.sh
+    initialState: normal
+    type: Application
+    categories: "Terracotta;Development;"
+    encoding: UTF-8
+    iconFile: $INSTALL_PATH/icons/logo_small.png
+- name: Terracotta Developer Console
+  description: Start the Terracotta Developer Console
+  programGroup: yes
+  desktop: yes
+  startup: no
+  windows:
+    target: $INSTALL_PATH\dev-console.bat
+    applications: yes
+    startMenu: no
+    initialState: noShow
+    iconFile: $INSTALL_PATH/icons/logo_small.ico
+    iconIndex: "0"
+  unix:
+    target: $INSTALL_PATH/dev-console.sh
+    initialState: normal
+    type: Application
+    categories: "Terracotta;Development;"
+    encoding: UTF-8
+    iconFile: $INSTALL_PATH/icons/logo_small.png
+- name: Terracotta POJOs Quick Start Guide
+  target: "http://www.terracotta.org/web/display/orgsite/POJO+Quick+Start"
+  description: View the Terracotta POJOs Quick Start Guide
+  programGroup: yes
+  desktop: no
+  startup: no
+  windows:
+    applications: yes
+    startMenu: no
+    initialState: noShow
+    iconFile: $INSTALL_PATH/icons/logo_small.ico
+    iconIndex: "0"
+  unix:
+    type: Link
+    url: "http://www.terracotta.org/web/display/orgsite/POJO+Quick+Start"
+    initialState: normal
+    type: Application
+    categories: "Terracotta;Development;"
+    encoding: UTF-8
+    iconFile: $INSTALL_PATH/icons/logo_small.png
+- name: Terracotta POJOs Quick Start Guide
+  target: "http://www.terracotta.org/web/display/orgsite/Sessions+Quick+Start"
+  description: View the Terracotta POJOs Quick Start Guide
+  programGroup: yes
+  desktop: no
+  startup: no
+  windows:
+    applications: yes
+    startMenu: no
+    initialState: noShow
+    iconFile: $INSTALL_PATH/icons/logo_small.ico
+    iconIndex: "0"
+  unix:
+    type: Link
+    url: "http://www.terracotta.org/web/display/orgsite/Sessions+Quick+Start"
+    initialState: normal
+    type: Application
+    categories: "Terracotta;Development;"
+    encoding: UTF-8
+    iconFile: $INSTALL_PATH/icons/logo_small.png
+- name: Terracotta Sessions Quick Start Guide
+  target: "http://www.terracotta.org/web/display/orgsite/Sessions+Quick+Start"
+  description: View the Terracotta POJOs Quick Start Guide
+  programGroup: yes
+  desktop: no
+  startup: no
+  windows:
+    applications: yes
+    startMenu: no
+    initialState: noShow
+    iconFile: $INSTALL_PATH/icons/logo_small.ico
+    iconIndex: "0"
+  unix:
+    type: Link
+    url: "http://www.terracotta.org/web/display/orgsite/Sessions+Quick+Start"
+    initialState: normal
+    type: Application
+    categories: "Terracotta;Development;"
+    encoding: UTF-8
+    iconFile: $INSTALL_PATH/icons/logo_small.png
+- name: Terracotta Forge
+  target: "http://forge.terracotta.org/"
+  description: Visit the Terracotta Forge
+  programGroup: yes
+  desktop: no
+  startup: no
+  windows:
+    applications: yes
+    startMenu: no
+    initialState: noShow
+    iconFile: $INSTALL_PATH/icons/logo_small.ico
+    iconIndex: "0"
+  unix:
+    type: Link
+    url: "http://forge.terracotta.org/"
+    initialState: normal
+    type: Application
+    categories: "Terracotta;Development;"
+    encoding: UTF-8
+    iconFile: $INSTALL_PATH/icons/logo_small.png
+- name: Uninstall
+  description: Uninstall Terracotta <%= @build_environment.version %>
+  target: java
+  commandLine: "-jar &quot;$INSTALL_PATH/Uninstaller/uninstaller.jar&quot;"
+  programGroup: yes
+  desktop: no
+  startup: no
+  windows:
+    applications: yes
+    startMenu: no
+    initialState: noShow
+  unix:
+    initialState: normal
+    type: Application
+    categories: "Terracotta;Development;"
+    encoding: UTF-8
