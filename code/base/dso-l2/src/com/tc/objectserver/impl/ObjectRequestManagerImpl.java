@@ -14,6 +14,7 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ObjectID;
 import com.tc.object.ObjectRequestID;
+import com.tc.object.ObjectRequestServerContext;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.msg.ObjectsNotFoundMessage;
 import com.tc.object.msg.RequestManagedObjectResponseMessage;
@@ -24,7 +25,7 @@ import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
 import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
-import com.tc.objectserver.context.ObjectRequestServerContext;
+import com.tc.objectserver.context.ObjectRequestServerContextImpl;
 import com.tc.objectserver.context.RespondToObjectRequestContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.l1.api.ClientStateManager;
@@ -110,22 +111,20 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
     }
   }
 
-  public void requestObjects(ClientID clientID, ObjectRequestID requestID, ObjectIDSet ids, int maxRequestDepth,
-                             boolean serverInitiated, String requestingThreadName) {
+  public void requestObjects(ObjectRequestServerContext requestContext) {
     synchronized (this) {
       if (state != STARTED) {
-        LookupContext lookupContext = new LookupContext(clientID, requestID, ids, maxRequestDepth,
-                                                        requestingThreadName, serverInitiated, objectRequestSink,
-                                                        respondObjectRequestSink);
-        pendingRequests.add(lookupContext);
+        pendingRequests.add(requestContext);
         if (logger.isDebugEnabled()) {
           logger.debug("RequestObjectManager is not started, lookup has been added to pending request: "
-                       + lookupContext);
+                       + toString(requestContext));
         }
         return;
       }
     }
-    splitAndRequestObjects(clientID, requestID, ids, maxRequestDepth, serverInitiated, requestingThreadName);
+    splitAndRequestObjects(requestContext.getClientID(), requestContext.getRequestID(), requestContext
+        .getRequestedObjectIDs(), requestContext.getRequestDepth(), requestContext.isServerInitiated(), requestContext
+        .getRequestingThreadName());
   }
 
   public void sendObjects(ClientID requestedNodeID, Collection objs, ObjectIDSet requestedObjectIDs,
@@ -163,15 +162,21 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
   private void processPending() {
     logger.info("Processing Pending Lookups = " + pendingRequests.size());
     for (Iterator iter = pendingRequests.iterator(); iter.hasNext();) {
-      LookupContext lookupContext = (LookupContext) iter.next();
-      logger.info("Processing pending Looking up : " + lookupContext);
-      splitAndRequestObjects(lookupContext.getRequestedNodeID(), lookupContext.getRequestID(), lookupContext
-          .getLookupIDs(), lookupContext.getMaxRequestDepth(), lookupContext.isServerInitiated(), lookupContext
+      ObjectRequestServerContext lookupContext = (ObjectRequestServerContext) iter.next();
+      logger.info("Processing pending Looking up : " + toString(lookupContext));
+      splitAndRequestObjects(lookupContext.getClientID(), lookupContext.getRequestID(), lookupContext
+          .getRequestedObjectIDs(), lookupContext.getRequestDepth(), lookupContext.isServerInitiated(), lookupContext
           .getRequestingThreadName());
     }
+    pendingRequests.clear();
   }
 
-  public synchronized void transactionApplied(ServerTransactionID stxID) {
+  public String toString(ObjectRequestServerContext c) {
+    return c.getClass().getName() + " [ " + c.getClientID() + " :  " + c.getRequestedObjectIDs() + " : "
+           + c.getRequestID() + " : " + c.getRequestDepth() + " : " + c.getRequestingThreadName() + "] ";
+  }
+
+  public synchronized void transactionApplied(ServerTransactionID stxID, ObjectIDSet newObjectsCreated) {
     resentTransactionIDs.remove(stxID);
     moveToStartedIfPossible();
   }
@@ -209,10 +214,10 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
   }
 
   private void basicSendObjects(ClientID requestedNodeID, Collection objs, ObjectIDSet requestedObjectIDs,
-                                ObjectIDSet missingObjectIDs, boolean isServerInitiated, int maxRequestDepth) {      
+                                ObjectIDSet missingObjectIDs, boolean isServerInitiated, int maxRequestDepth) {
 
     // Create ordered list of objects
-    LinkedList objectsInOrder = new LinkedList();    
+    LinkedList objectsInOrder = new LinkedList();
     Set ids = new HashSet(Math.max((int) (objs.size() / .75f) + 1, 16));
     for (Iterator i = objs.iterator(); i.hasNext();) {
       ManagedObject mo = (ManagedObject) i.next();
@@ -232,8 +237,8 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
       clientList = this.objectRequestCache.remove(reqObj);
     }
 
-    Map<ClientID, Set<ObjectID>> clientNewIDsMap = new HashMap<ClientID, Set<ObjectID>>();    
-    Map<ClientID, BatchAndSend> messageMap = new HashMap<ClientID, BatchAndSend>();    
+    Map<ClientID, Set<ObjectID>> clientNewIDsMap = new HashMap<ClientID, Set<ObjectID>>();
+    Map<ClientID, BatchAndSend> messageMap = new HashMap<ClientID, BatchAndSend>();
 
     for (Iterator iter = clientList.iterator(); iter.hasNext();) {
       ClientID clientID = (ClientID) iter.next();
@@ -246,7 +251,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
         clientNewIDsMap.put(clientID, newIds);
       } catch (NoSuchChannelException e) {
         logger.warn("Not sending objects to client " + clientID + ": " + e);
-      }                
+      }
     }
 
     // send objects to each client
@@ -258,7 +263,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
         final boolean isLast = !i.hasNext();
         ClientID clientID = entry.getKey();
         Set newIDs = entry.getValue();
-        BatchAndSend batchAndSend = messageMap.get(clientID);                
+        BatchAndSend batchAndSend = messageMap.get(clientID);
 
         for (Iterator iter = objectsInOrder.iterator(); iter.hasNext();) {
           ManagedObject mo = (ManagedObject) iter.next();
@@ -281,11 +286,11 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
           logger.warn("Server Initiated lookup. Ignoring Missing Objects : " + missingObjectIDs);
         } else {
           for (Iterator<Map.Entry<ClientID, BatchAndSend>> missingIterator = messageMap.entrySet().iterator(); missingIterator
-          .hasNext();) {
+              .hasNext();) {
             Map.Entry<ClientID, BatchAndSend> entry = missingIterator.next();
             ClientID clientID = entry.getKey();
             BatchAndSend batchAndSend = entry.getValue();
-            logger.warn("Sending missing ids: + " + missingObjectIDs.size() + " , to client: " + clientID);
+            logger.warn("Sending missing ids: " + missingObjectIDs.size() + " , to client: " + clientID);
             batchAndSend.sendMissingObjects(missingObjectIDs);
           }
         }
@@ -512,12 +517,13 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
     private final ClientID        clientID;
     private final ObjectRequestID requestID;
     private final ObjectIDSet     lookupIDs;
-    private final ObjectIDSet     missingObjects = new ObjectIDSet();
     private final int             maxRequestDepth;
     private final String          requestingThreadName;
     private final boolean         serverInitiated;
     private final Sink            respondObjectRequestSink;
     private final Sink            objectRequestSink;
+
+    private ObjectIDSet           missingObjects;
     private Map                   objects;
 
     public LookupContext(ClientID clientID, ObjectRequestID requestID, ObjectIDSet lookupIDs, int maxRequestDepth,
@@ -542,19 +548,17 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
       return new ObjectIDSet();
     }
 
-    public void missingObject(ObjectID oid) {
-      missingObjects.add(oid);
-    }
-
     public void setResults(ObjectManagerLookupResults results) {
       objects = results.getObjects();
+      missingObjects = results.getMissingObjectIDs();
+
       if (results.getLookupPendingObjectIDs().size() > 0) {
         if (logger.isDebugEnabled()) {
           logger.debug("LookupPendingObjectIDs = " + results.getLookupPendingObjectIDs() + " , clientID = " + clientID
                        + " , requestID = " + requestID);
         }
-        objectRequestSink.add(new ObjectRequestServerContext(this.clientID, this.requestID, results
-            .getLookupPendingObjectIDs(), this.requestingThreadName));
+        objectRequestSink.add(new ObjectRequestServerContextImpl(this.clientID, this.requestID, results
+            .getLookupPendingObjectIDs(), this.requestingThreadName, -1, true));
       }
       ResponseContext responseContext = new ResponseContext(this.clientID, this.objects.values(), this.lookupIDs,
                                                             this.missingObjects, this.serverInitiated,
@@ -592,13 +596,13 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
 
     @Override
     public String toString() {
-      return "Lookup Context [ clientID = " + clientID + " , requestID = " + requestID + " , ids = " + lookupIDs
-             + " , lookedup objects.size() = " + (objects != null ? objects.size() : 0) + " , missingObjects  = "
-             + missingObjects + " , maxRequestDepth = " + maxRequestDepth + " , requestingThreadName = "
-             + requestingThreadName + " , serverInitiated = " + serverInitiated + " , respondObjectRequestSink = "
-             + respondObjectRequestSink + " ] ";
+      return "Lookup Context@" + System.identityHashCode(this) + "[ clientID = " + clientID + " , requestID = "
+             + requestID + " , ids = " + lookupIDs + " , lookedup objects.size() = "
+             + (objects != null ? objects.size() : 0) + " , missingObjects  = " + missingObjects
+             + " , maxRequestDepth = " + maxRequestDepth + " , requestingThreadName = " + requestingThreadName
+             + " , serverInitiated = " + serverInitiated + " , respondObjectRequestSink = " + respondObjectRequestSink
+             + " ] ";
     }
-
   }
 
   protected static class ResponseContext implements RespondToObjectRequestContext {

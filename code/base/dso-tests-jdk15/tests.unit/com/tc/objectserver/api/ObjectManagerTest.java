@@ -306,10 +306,10 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     // CASE 1: no preFetched objects
     ObjectIDSet ids = makeObjectIDSet(0, 10);
     TestResultsContext results = new TestResultsContext(ids, new ObjectIDSet(), true);
-    testFaultSinkContext.expectedSinkCountDownFrom(10);
+    testFaultSinkContext.resetCounter();
     objectManager.lookupObjectsAndSubObjectsFor(null, results, -1);
     results.waitTillComplete();
-    testFaultSinkContext.waitTillCompleteCountDown();
+    assertEquals(10, testFaultSinkContext.getCounter());
     objectManager.releaseAll(NULL_TRANSACTION, results.objects.values());
 
     // before no objects were pre-fetched, we should expect 0 hits and 10 misses
@@ -318,11 +318,9 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
     // CASE 2: preFetched objects
     ids = makeObjectIDSet(10, 20);
-    // ThreadUtil.reallySleep(5000);
-    testFaultSinkContext.expectedSinkCountUpTo(10);
-    testFaultSinkContext.expectedSinkCountDownFrom(10);
+    testFaultSinkContext.resetCounter();
     objectManager.preFetchObjectsAndCreate(ids, Collections.<ObjectID> emptySet());
-    testFaultSinkContext.waitTillCompleteCountDown();
+    testFaultSinkContext.waitUntillCounterIs(10);
 
     // because objects where prefetched we should have 10 hits, but also 10 moreT
     // misses because the prefetching gets factored in as a miss to bring the total
@@ -330,10 +328,11 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     assertEquals(0, stats.getTotalCacheHits());
     assertEquals(20, stats.getTotalCacheMisses());
 
+    testFaultSinkContext.resetCounter();
     results = new TestResultsContext(ids, new ObjectIDSet(), false);
     objectManager.lookupObjectsAndSubObjectsFor(null, results, -1);
     results.waitTillComplete();
-    testFaultSinkContext.waitTillCompleteCountUp();
+    assertEquals(0, testFaultSinkContext.getCounter());
     objectManager.releaseAll(NULL_TRANSACTION, results.objects.values());
 
     // because objects where prefetched we should have 10 hits, but also 10 more
@@ -342,6 +341,38 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     assertEquals(0, stats.getTotalCacheHits());
     assertEquals(20, stats.getTotalCacheMisses());
 
+  }
+
+  public void testMissingObjects() {
+
+    initObjectManager();
+
+    createObjects(10, 10);
+
+    // Look up two existing objects
+    ObjectIDSet ids = makeObjectIDSet(1, 2);
+    TestResultsContext result1 = new TestResultsContext(ids, new ObjectIDSet(), true);
+
+    testFaultSinkContext.resetCounter();
+    objectManager.lookupObjectsAndSubObjectsFor(null, result1, -1);
+    result1.waitTillComplete();
+    assertEquals(0, testFaultSinkContext.getCounter());
+
+    // Now look two missing objects
+    ObjectIDSet missingids = makeObjectIDSet(20, 22);
+    TestResultsContext result2 = new TestResultsContext(missingids, new ObjectIDSet(), true);
+
+    testFaultSinkContext.resetCounter();
+    objectManager.lookupObjectsAndSubObjectsFor(null, result2, -1);
+    result2.waitTillComplete();
+    assertEquals(2, testFaultSinkContext.getCounter());
+    assertEquals(missingids, result2.missing);
+
+    // Now release the first two objects
+    objectManager.releaseAll(NULL_TRANSACTION, result1.objects.values());
+
+    // Counter shouldnt be incremented, in other words, missing objects should not be looked up again.
+    assertEquals(2, testFaultSinkContext.getCounter());
   }
 
   public void testNewObjectIDs() {
@@ -1266,12 +1297,11 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
     changes.put(new ObjectID(1), new TestPhysicalDNA(new ObjectID(1)));
 
-    ServerTransaction stxn1 = new ServerTransactionImpl(gtxMgr, new TxnBatchID(1), new TransactionID(1),
-                                                        new SequenceID(1), new LockID[0],
-                                                        new ClientID(new ChannelID(2)), new ArrayList<DNA>(changes
-                                                            .values()), new ObjectStringSerializer(),
-                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                        DmiDescriptor.EMPTY_ARRAY, 1);
+    ServerTransaction stxn1 = new ServerTransactionImpl(new TxnBatchID(1), new TransactionID(1), new SequenceID(1),
+                                                        new LockID[0], new ClientID(new ChannelID(2)),
+                                                        new ArrayList<DNA>(changes.values()),
+                                                        new ObjectStringSerializer(), Collections.EMPTY_MAP,
+                                                        TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1);
     List<ServerTransaction> txns = new ArrayList<ServerTransaction>();
     txns.add(stxn1);
 
@@ -1315,12 +1345,11 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     changes.clear();
     changes.put(new ObjectID(2), new TestPhysicalDNA(new ObjectID(2)));
 
-    ServerTransaction stxn2 = new ServerTransactionImpl(gtxMgr, new TxnBatchID(2), new TransactionID(2),
-                                                        new SequenceID(1), new LockID[0],
-                                                        new ClientID(new ChannelID(2)), new ArrayList<DNA>(changes
-                                                            .values()), new ObjectStringSerializer(),
-                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                        DmiDescriptor.EMPTY_ARRAY, 1);
+    ServerTransaction stxn2 = new ServerTransactionImpl(new TxnBatchID(2), new TransactionID(2), new SequenceID(1),
+                                                        new LockID[0], new ClientID(new ChannelID(2)),
+                                                        new ArrayList<DNA>(changes.values()),
+                                                        new ObjectStringSerializer(), Collections.EMPTY_MAP,
+                                                        TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1);
 
     txns.clear();
     txns.add(stxn2);
@@ -1348,12 +1377,11 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     changes.put(new ObjectID(2), new TestPhysicalDNA(new ObjectID(2), true));
     changes.put(new ObjectID(3), new TestPhysicalDNA(new ObjectID(3)));
 
-    ServerTransaction stxn3 = new ServerTransactionImpl(gtxMgr, new TxnBatchID(2), new TransactionID(2),
-                                                        new SequenceID(1), new LockID[0],
-                                                        new ClientID(new ChannelID(2)), new ArrayList<DNA>(changes
-                                                            .values()), new ObjectStringSerializer(),
-                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                        DmiDescriptor.EMPTY_ARRAY, 1);
+    ServerTransaction stxn3 = new ServerTransactionImpl(new TxnBatchID(2), new TransactionID(2), new SequenceID(1),
+                                                        new LockID[0], new ClientID(new ChannelID(2)),
+                                                        new ArrayList<DNA>(changes.values()),
+                                                        new ObjectStringSerializer(), Collections.EMPTY_MAP,
+                                                        TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1);
 
     txns.clear();
     txns.add(stxn3);
@@ -1871,6 +1899,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
   private static class TestResultsContext implements ObjectManagerResultsContext {
     public Map<ObjectID, ManagedObject> objects  = new HashMap<ObjectID, ManagedObject>();
+    public Set<ObjectID>                missing  = new HashSet<ObjectID>();
     boolean                             complete = false;
     private final ObjectIDSet           ids;
     private final ObjectIDSet           newIDS;
@@ -1899,6 +1928,9 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     public synchronized void setResults(ObjectManagerLookupResults results) {
       complete = true;
       this.objects.putAll(results.getObjects());
+      this.missing.addAll(results.getMissingObjectIDs());
+      // if (!results.getMissingObjectIDs().isEmpty()) { throw new AssertionError("Missing Object : "
+      // + results.getMissingObjectIDs()); }
       notifyAll();
     }
 
@@ -1910,14 +1942,9 @@ public class ObjectManagerTest extends BaseDSOTestCase {
       return newIDS;
     }
 
-    public void missingObject(ObjectID oid) {
-      throw new AssertionError("Missing Object : " + oid);
-    }
-
     public boolean updateStats() {
       return updateStats;
     }
-
   }
 
   private static class TestPhysicalDNA implements DNA {
@@ -2380,32 +2407,23 @@ public class ObjectManagerTest extends BaseDSOTestCase {
   }
 
   private static class TestSinkContext implements SinkContext {
-    private final Counter sinkCountDownCounter = new Counter(0);
-    private Counter       sinkCountUpCounter   = new Counter(0);
-    int                   maximumCountUpValue  = 0;
+    private final Counter counter = new Counter(0);
 
-    public void expectedSinkCountDownFrom(int aSinkCount) {
-      this.sinkCountDownCounter.increment(aSinkCount);
+    public int getCounter() {
+      return this.counter.get();
     }
 
-    public synchronized void expectedSinkCountUpTo(int aSinkCount) {
-      this.sinkCountUpCounter = new Counter(0);
-      this.maximumCountUpValue = aSinkCount;
+    public void waitUntillCounterIs(int count) {
+      this.counter.waitUntil(count);
     }
 
-    public void waitTillCompleteCountDown() {
-      sinkCountDownCounter.waitUntil(0);
-    }
-
-    public void waitTillCompleteCountUp() {
-      sinkCountUpCounter.waitUntil(maximumCountUpValue);
+    public void resetCounter() {
+      counter.reset();
     }
 
     public synchronized void postProcess() {
-      sinkCountDownCounter.decrement();
-      sinkCountUpCounter.increment();
+      counter.increment();
     }
-
   }
 
   private static class NullSinkContext implements SinkContext {

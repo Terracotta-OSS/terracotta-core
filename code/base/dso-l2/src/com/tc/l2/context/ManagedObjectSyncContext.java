@@ -57,6 +57,7 @@ public class ManagedObjectSyncContext implements ObjectManagerResultsContext {
 
   public void setResults(ObjectManagerLookupResults results) {
     this.result = results;
+    assertNoMissingObjects(results.getMissingObjectIDs());
     nextSink.add(this);
   }
 
@@ -123,8 +124,9 @@ public class ManagedObjectSyncContext implements ObjectManagerResultsContext {
     return this.sequenceID;
   }
 
-  public void missingObject(ObjectID oid) {
-    throw new AssertionError("Syncing missing Object : " + oid + " " + this);
+  private void assertNoMissingObjects(ObjectIDSet missing) {
+    if (!missing.isEmpty()) { throw new AssertionError("Syncing missing Objects : " + missing + " lookup context is : "
+                                                       + this); }
   }
 
   public String toString() {

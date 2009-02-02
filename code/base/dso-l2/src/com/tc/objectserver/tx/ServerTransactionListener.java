@@ -5,6 +5,7 @@ package com.tc.objectserver.tx;
 
 import com.tc.net.NodeID;
 import com.tc.object.tx.ServerTransactionID;
+import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
 import java.util.Set;
@@ -13,7 +14,7 @@ public interface ServerTransactionListener {
   
   public void incomingTransactions(NodeID source, Set serverTxnIDs);
   
-  public void transactionApplied(ServerTransactionID stxID);
+  public void transactionApplied(ServerTransactionID stxID, ObjectIDSet newObjectsCreated);
   
   public void transactionCompleted(ServerTransactionID stxID);
 

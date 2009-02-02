@@ -13,7 +13,6 @@ import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.DNAImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
-import com.tc.object.gtx.GlobalTransactionIDGenerator;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.Notify;
 import com.tc.object.tx.TransactionID;
@@ -37,15 +36,13 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
   private final NodeID                       source;
   private int                                numTxns;
   private ObjectStringSerializer             serializer;
-  private final GlobalTransactionIDGenerator gtxm;
   private final ServerTransactionFactory     txnFactory;
   // Used in active -active
   private final long[]                       highWaterMark;
 
-  public TransactionBatchReaderImpl(GlobalTransactionIDGenerator gtxm, TCByteBuffer[] data, NodeID nodeID,
+  public TransactionBatchReaderImpl(TCByteBuffer[] data, NodeID nodeID,
                                     ObjectStringSerializer serializer, ServerTransactionFactory txnFactory)
       throws IOException {
-    this.gtxm = gtxm;
     this.txnFactory = txnFactory;
     this.in = new TCByteBufferInputStream(data);
     this.source = nodeID;
@@ -134,7 +131,7 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
     }
 
     numTxns--;
-    return txnFactory.createServerTransaction(gtxm, getBatchID(), txnID, sequenceID, locks, source, dnas, serializer,
+    return txnFactory.createServerTransaction(getBatchID(), txnID, sequenceID, locks, source, dnas, serializer,
                                               newRoots, txnType, notifies, dmis, numApplictionTxn);
   }
 
@@ -142,7 +139,7 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
     return this.batchID;
   }
 
-  public int getNumTxns() {
+  public int getRemainingTxnsToBeRead() {
     return this.numTxns;
   }
 

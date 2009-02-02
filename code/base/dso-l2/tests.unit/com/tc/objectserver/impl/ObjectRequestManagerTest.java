@@ -44,6 +44,7 @@ import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.api.TestSink;
 import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
+import com.tc.objectserver.context.ObjectRequestServerContextImpl;
 import com.tc.objectserver.context.RespondToObjectRequestContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.TestDNA;
@@ -73,6 +74,7 @@ import com.tc.objectserver.tx.TxnsInSystemCompletionLister;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
+import com.tc.util.TCCollections;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.sequence.Sequence;
 import com.tc.util.sequence.SimpleSequence;
@@ -319,12 +321,11 @@ public class ObjectRequestManagerTest extends TestCase {
 
         Set ids = responseContext.getLookupIDs();
         Map resultsMap = new HashMap();
-        for (Iterator iter = ids.iterator(); iter.hasNext();) {
-          ObjectID id = (ObjectID) iter.next();
-          responseContext.missingObject(id);
-        }
+        ObjectIDSet missing = new ObjectIDSet(ids);
 
-        ObjectManagerLookupResults results = new ObjectManagerLookupResultsImpl(resultsMap, new ObjectIDSet());
+        ObjectManagerLookupResults results = new ObjectManagerLookupResultsImpl(resultsMap,
+                                                                                TCCollections.EMPTY_OBJECT_ID_SET,
+                                                                                missing);
         responseContext.setResults(results);
 
         return false;
@@ -463,7 +464,8 @@ public class ObjectRequestManagerTest extends TestCase {
     objectRequestManager.transactionManagerStarted(new HashSet());
     objectRequestManager.clearAllTransactionsFor(clientID);
 
-    objectRequestManager.requestObjects(clientID, requestID, ids, -1, false, Thread.currentThread().getName());
+    objectRequestManager.requestObjects(new ObjectRequestServerContextImpl(clientID, requestID, ids, Thread
+        .currentThread().getName(), -1, false));
 
     RespondToObjectRequestContext respondToObjectRequestContext = null;
 
@@ -507,7 +509,8 @@ public class ObjectRequestManagerTest extends TestCase {
     objectRequestManager.transactionManagerStarted(new HashSet());
     objectRequestManager.clearAllTransactionsFor(clientID);
 
-    objectRequestManager.requestObjects(clientID, requestID, ids, -1, false, Thread.currentThread().getName());
+    objectRequestManager.requestObjects(new ObjectRequestServerContextImpl(clientID, requestID, ids, Thread
+        .currentThread().getName(), -1, false));
 
     RespondToObjectRequestContext respondToObjectRequestContext = null;
     try {
@@ -646,10 +649,9 @@ public class ObjectRequestManagerTest extends TestCase {
       } catch (Exception e) {
         throw new AssertionError(e);
       }
-      objectRequestManager.requestObjects(clientID, requestID, ids, -1, serverInitiated, Thread.currentThread()
-          .getName());
+      objectRequestManager.requestObjects(new ObjectRequestServerContextImpl(clientID, requestID, ids, Thread
+          .currentThread().getName(), -1, serverInitiated));
     }
-
   }
 
   private static class ObjectResponseThread extends Thread {
@@ -1002,7 +1004,9 @@ public class ObjectRequestManagerTest extends TestCase {
         resultsMap.put(id, mo);
       }
 
-      ObjectManagerLookupResults results = new ObjectManagerLookupResultsImpl(resultsMap, new ObjectIDSet());
+      ObjectManagerLookupResults results = new ObjectManagerLookupResultsImpl(resultsMap,
+                                                                              TCCollections.EMPTY_OBJECT_ID_SET,
+                                                                              TCCollections.EMPTY_OBJECT_ID_SET);
       responseContext.setResults(results);
 
       return false;

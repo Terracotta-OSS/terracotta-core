@@ -19,6 +19,7 @@ import com.tc.object.MockTCObject;
 import com.tc.object.ObjectID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.logging.NullRuntimeLogger;
+import com.tc.object.net.MockChannel;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionID;
 import com.tc.stats.counter.Counter;

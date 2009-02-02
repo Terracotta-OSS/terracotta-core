@@ -47,6 +47,7 @@ import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
 import com.tc.util.Counter;
 import com.tc.util.ObjectIDSet;
+import com.tc.util.TCCollections;
 import com.tc.util.concurrent.StoppableThread;
 
 import java.io.PrintWriter;
@@ -468,6 +469,12 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     boolean available = true;
     Set<ObjectID> ids = context.getLookupIDs();
     for (final ObjectID id : ids) {
+      if (context.isMissingObject(id)) {
+        // If we already know the object is missing, don't initiate yet another lookup. this is to avoid repeated
+        // lookups when there are 2 or more missing objects.
+        continue;
+      }
+
       // We don't check available flag before doing calling getOrLookupReference() for two reasons.
       // 1) To get the right hit/miss count and
       // 2) to Fault objects that are not available
@@ -476,12 +483,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         continue;
       } else if (available && (reference.isReferenced() || (reference.isNew() && !newObjectIDs.contains(id)))) {
         available = false;
-        if (!reference.isReferenced() && reference.isNew()) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("Making " + context + " pending since reference " + reference + " is new and not in "
-                         + newObjectIDs);
-          }
-        }
+        // If reference isNew() and not in newObjects, someone (L1) is trying to do a lookup before the object is fully
+        // created, make it pending.
         // Setting only the first referenced object to process Pending. If objects are being faulted in, then this
         // will ensure that we don't run processPending multiple times unnecessarily.
         addBlocked(nodeID, context, maxReachableObjects, id);
@@ -490,9 +493,10 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
 
     if (available) {
-      Set<ObjectID> processLater = addReachableObjectsIfNecessary(nodeID, maxReachableObjects, objects);
+      ObjectIDSet processLater = addReachableObjectsIfNecessary(nodeID, maxReachableObjects, objects);
       ObjectManagerLookupResults results = new ObjectManagerLookupResultsImpl(processObjectsRequest(objects),
-                                                                              new ObjectIDSet(processLater));
+                                                                              processLater, context
+                                                                                  .getMissingObjectIDs());
       context.setResults(results);
     } else {
       context.makeOldRequest();
@@ -507,9 +511,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
   }
 
-  private Set<ObjectID> addReachableObjectsIfNecessary(NodeID nodeID, int maxReachableObjects,
+  private ObjectIDSet addReachableObjectsIfNecessary(NodeID nodeID, int maxReachableObjects,
                                                        Set<ManagedObjectReference> objects) {
-    if (maxReachableObjects <= 0) { return Collections.emptySet(); }
+    if (maxReachableObjects <= 0) { return TCCollections.EMPTY_OBJECT_ID_SET; }
     ManagedObjectTraverser traverser = new ManagedObjectTraverser(maxReachableObjects);
     Set<ManagedObjectReference> lookedUpObjects = objects;
     do {
@@ -931,11 +935,16 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
     private final ObjectManagerResultsContext responseContext;
     private final boolean                     removeOnRelease;
+    private final ObjectIDSet                 missing        = new ObjectIDSet();
     private int                               processedCount = 0;
 
     public ObjectManagerLookupContext(ObjectManagerResultsContext responseContext, boolean removeOnRelease) {
       this.responseContext = responseContext;
       this.removeOnRelease = removeOnRelease;
+    }
+
+    public boolean isMissingObject(ObjectID id) {
+      return missing.contains(id);
     }
 
     public void makeOldRequest() {
@@ -967,12 +976,16 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
 
     public void missingObject(ObjectID oid) {
-      responseContext.missingObject(oid);
+      missing.add(oid);
+    }
+
+    public ObjectIDSet getMissingObjectIDs() {
+      return missing;
     }
 
     public String toString() {
-      return "ObjectManagerLookupContext : [ processed count = " + processedCount + ", responseContext = "
-             + responseContext + "] ";
+      return "ObjectManagerLookupContext@" + System.identityHashCode(this) + " : [ processed count = " + processedCount
+             + ", responseContext = " + responseContext + ", missing = " + missing + " ] ";
     }
 
     public boolean updateStats() {
@@ -1022,6 +1035,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
     public synchronized void setResults(ObjectManagerLookupResults results) {
       resultSet = true;
+      assertMissingObjects(results.getMissingObjectIDs());
       Map objects = results.getObjects();
       Assert.assertTrue(objects.size() == 0 || objects.size() == 1);
       if (objects.size() == 1) {
@@ -1031,8 +1045,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       notifyAll();
     }
 
-    public void missingObject(ObjectID oid) {
-      if (!missingOk) { throw new AssertionError("Lookup of non-exisiting object : " + oid + " " + this); }
+    private void assertMissingObjects(ObjectIDSet missing) {
+      if (!missingOk && !missing.isEmpty()) { throw new AssertionError("Lookup of non-exisiting objects : " + missing
+                                                                       + " " + this); }
     }
 
     public String toString() {

@@ -3,16 +3,12 @@
  */
 package com.tc.objectserver.tx;
 
-import com.tc.exception.ImplementMe;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
-import com.tc.object.gtx.GlobalTransactionID;
-import com.tc.object.gtx.GlobalTransactionIDGenerator;
 import com.tc.object.lockmanager.api.LockID;
-import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
@@ -44,7 +40,6 @@ public class ServerTransactionSequencerTest extends TCTestCase {
   private ClientID                       clientID;
   private ServerTransactionSequencerImpl sequencer;
   private int                            start;
-  private GlobalTransactionIDGenerator   gidGenerator;
 
   public void setUp() throws Exception {
     txnID = 100;
@@ -53,7 +48,6 @@ public class ServerTransactionSequencerTest extends TCTestCase {
     start = 1;
     clientID = new ClientID(new ChannelID(0));
     sequencer = new ServerTransactionSequencerImpl();
-    gidGenerator = new TestGlobalTransactionIDGenerator();
   }
 
   // Test 1
@@ -103,7 +97,7 @@ public class ServerTransactionSequencerTest extends TCTestCase {
     // No more txns
     assertNull(sequencer.getNextTxnLookupContextToProcess());
   }
-  
+
   // Test 4 - Removed it is not valid anymore
 
   // Test 5
@@ -182,25 +176,25 @@ public class ServerTransactionSequencerTest extends TCTestCase {
 
     int lock = 0;
 
-    ServerTransaction txn1 = new ServerTransactionImpl(gidGenerator, new TxnBatchID(batchID), new TransactionID(1),
+    ServerTransaction txn1 = new ServerTransactionImpl(new TxnBatchID(batchID), new TransactionID(1),
                                                        new SequenceID(sqID++), createLocks(lock, lock++), clientID,
                                                        createDNAs(1, 1), new ObjectStringSerializer(),
                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
                                                        DmiDescriptor.EMPTY_ARRAY, 1);
 
-    ServerTransaction txn2 = new ServerTransactionImpl(gidGenerator, new TxnBatchID(batchID), new TransactionID(2),
+    ServerTransaction txn2 = new ServerTransactionImpl(new TxnBatchID(batchID), new TransactionID(2),
                                                        new SequenceID(sqID++), createLocks(lock, lock++), clientID,
                                                        createDNAs(2, 2), new ObjectStringSerializer(),
                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
                                                        DmiDescriptor.EMPTY_ARRAY, 1);
 
-    ServerTransaction txn3 = new ServerTransactionImpl(gidGenerator, new TxnBatchID(batchID), new TransactionID(3),
+    ServerTransaction txn3 = new ServerTransactionImpl(new TxnBatchID(batchID), new TransactionID(3),
                                                        new SequenceID(sqID++), createLocks(lock, lock++), clientID,
                                                        createDNAs(2, 3), new ObjectStringSerializer(),
                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
                                                        DmiDescriptor.EMPTY_ARRAY, 1);
 
-    ServerTransaction txn4 = new ServerTransactionImpl(gidGenerator, new TxnBatchID(batchID), new TransactionID(4),
+    ServerTransaction txn4 = new ServerTransactionImpl(new TxnBatchID(batchID), new TransactionID(4),
                                                        new SequenceID(sqID++), createLocks(lock, lock++), clientID,
                                                        createDNAs(1, 2), new ObjectStringSerializer(),
                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
@@ -328,10 +322,10 @@ public class ServerTransactionSequencerTest extends TCTestCase {
       }
     }
 
-    return new ServerTransactionImpl(gidGenerator, new TxnBatchID(batchID), new TransactionID(txnID++),
-                                     new SequenceID(sqID++), createLocks(lockID, lockID), clientID, new ArrayList(dnas
-                                         .values()), new ObjectStringSerializer(), Collections.EMPTY_MAP,
-                                     TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1);
+    return new ServerTransactionImpl(new TxnBatchID(batchID), new TransactionID(txnID++), new SequenceID(sqID++),
+                                     createLocks(lockID, lockID), clientID, new ArrayList(dnas.values()),
+                                     new ObjectStringSerializer(), Collections.EMPTY_MAP, TxnType.NORMAL,
+                                     new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1);
   }
 
   private List getAllTxnsPossible() {
@@ -349,8 +343,8 @@ public class ServerTransactionSequencerTest extends TCTestCase {
     int j = 3;
     while (count-- > 0) {
       int e = start + j;
-      txns.add(new ServerTransactionImpl(gidGenerator, new TxnBatchID(batchID), new TransactionID(txnID++),
-                                         new SequenceID(sqID++), createLocks(start, e), clientID, createDNAs(start, e),
+      txns.add(new ServerTransactionImpl(new TxnBatchID(batchID), new TransactionID(txnID++), new SequenceID(sqID++),
+                                         createLocks(start, e), clientID, createDNAs(start, e),
                                          new ObjectStringSerializer(), Collections.EMPTY_MAP, TxnType.NORMAL,
                                          new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1));
       start = e + 1;
@@ -364,9 +358,8 @@ public class ServerTransactionSequencerTest extends TCTestCase {
     int j = 3;
     while (count-- > 0) {
       int e = start + j;
-      txns.add(new ServerTransactionImpl(gidGenerator, new TxnBatchID(batchID), new TransactionID(txnID++),
-                                         new SequenceID(sqID++), createLocks(start, e + j), clientID, createDNAs(start,
-                                                                                                                 e),
+      txns.add(new ServerTransactionImpl(new TxnBatchID(batchID), new TransactionID(txnID++), new SequenceID(sqID++),
+                                         createLocks(start, e + j), clientID, createDNAs(start, e),
                                          new ObjectStringSerializer(), Collections.EMPTY_MAP, TxnType.NORMAL,
                                          new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1));
       start = e + 1;
@@ -380,10 +373,10 @@ public class ServerTransactionSequencerTest extends TCTestCase {
     int j = 3;
     while (count-- > 0) {
       int e = start + j;
-      txns.add(new ServerTransactionImpl(gidGenerator, new TxnBatchID(batchID), new TransactionID(txnID++),
-                                         new SequenceID(sqID++), createLocks(start, e), clientID,
-                                         createDNAs(start, e + j), new ObjectStringSerializer(), Collections.EMPTY_MAP,
-                                         TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1));
+      txns.add(new ServerTransactionImpl(new TxnBatchID(batchID), new TransactionID(txnID++), new SequenceID(sqID++),
+                                         createLocks(start, e), clientID, createDNAs(start, e + j),
+                                         new ObjectStringSerializer(), Collections.EMPTY_MAP, TxnType.NORMAL,
+                                         new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1));
       start = e + 1;
     }
     return txns;
@@ -395,10 +388,10 @@ public class ServerTransactionSequencerTest extends TCTestCase {
     int j = 3;
     while (count-- > 0) {
       int e = start + j;
-      txns.add(new ServerTransactionImpl(gidGenerator, new TxnBatchID(batchID), new TransactionID(txnID++),
-                                         new SequenceID(sqID++), createLocks(start, e + j), clientID,
-                                         createDNAs(start, e + j), new ObjectStringSerializer(), Collections.EMPTY_MAP,
-                                         TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1));
+      txns.add(new ServerTransactionImpl(new TxnBatchID(batchID), new TransactionID(txnID++), new SequenceID(sqID++),
+                                         createLocks(start, e + j), clientID, createDNAs(start, e + j),
+                                         new ObjectStringSerializer(), Collections.EMPTY_MAP, TxnType.NORMAL,
+                                         new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1));
       start = e + 1;
     }
     return txns;
@@ -420,17 +413,4 @@ public class ServerTransactionSequencerTest extends TCTestCase {
     return locks;
   }
 
-  private final static class TestGlobalTransactionIDGenerator implements GlobalTransactionIDGenerator {
-
-    long id = 0;
-
-    public GlobalTransactionID getOrCreateGlobalTransactionID(ServerTransactionID serverTransactionID) {
-      return new GlobalTransactionID(id++);
-    }
-
-    public GlobalTransactionID getLowGlobalTransactionIDWatermark() {
-      throw new ImplementMe();
-    }
-
-  }
 }

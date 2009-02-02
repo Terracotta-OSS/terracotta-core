@@ -119,6 +119,7 @@ import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
 import com.tc.objectserver.DSOApplicationEvents;
+import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerMBean;
 import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.core.api.DSOGlobalServerStats;
@@ -187,6 +188,7 @@ import com.tc.objectserver.persistence.sleepycat.TCDatabaseException;
 import com.tc.objectserver.tx.CommitTransactionMessageRecycler;
 import com.tc.objectserver.tx.CommitTransactionMessageToTransactionBatchReader;
 import com.tc.objectserver.tx.PassThruTransactionFilter;
+import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.ServerTransactionManagerConfig;
 import com.tc.objectserver.tx.ServerTransactionManagerImpl;
 import com.tc.objectserver.tx.ServerTransactionSequencerImpl;
@@ -389,13 +391,13 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     // verify user input host name, DEV-2293
     String host = l2DSOConfig.host().getString();
     InetAddress ip = InetAddress.getByName(host);
-    if(!ip.isLoopbackAddress() && (NetworkInterface.getByInetAddress(ip) == null)) {
+    if (!ip.isLoopbackAddress() && (NetworkInterface.getByInetAddress(ip) == null)) {
       String msg = "Unable to find local network interface for " + host;
       consoleLogger.error(msg);
       logger.error(msg, new TCRuntimeException(msg));
       System.exit(-1);
     }
-    
+
     String bindAddress = l2DSOConfig.bind().getString();
     if (bindAddress == null) {
       // workaround for CDV-584
@@ -714,7 +716,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter(lockManager));
     ObjectInstanceMonitorImpl instanceMonitor = new ObjectInstanceMonitorImpl();
 
-    TransactionFilter txnFilter = getTransactionFilter(toInit);
+    TransactionFilter txnFilter = getTransactionFilter(toInit, stageManager, maxStageSize);
     TransactionBatchManagerImpl transactionBatchManager = new TransactionBatchManagerImpl(sequenceValidator, recycler,
                                                                                           txnFilter);
     toInit.add(transactionBatchManager);
@@ -795,7 +797,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     Stage requestLock = stageManager.createStage(ServerConfigurationContext.REQUEST_LOCK_STAGE,
                                                  new RequestLockUnLockHandler(), 1, maxStageSize);
     ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(communicationsManager,
-                                                                                  transactionManager,
                                                                                   transactionBatchManager,
                                                                                   channelManager);
     stageManager.createStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE, channelLifeCycleHandler, 1,
@@ -810,9 +811,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
         .createStage(ServerConfigurationContext.RESPOND_TO_OBJECT_REQUEST_STAGE, new RespondToObjectRequestHandler(),
                      4, maxStageSize);
 
-    objectRequestManager = new ObjectRequestManagerImpl(objectManager, channelManager, clientStateManager,
-                                                        transactionManager, objectRequestStage.getSink(),
-                                                        respondToObjectRequestStage.getSink(), objectStatsRecorder);
+    objectRequestManager = createObjectRequestManager(objectManager, channelManager, clientStateManager,
+                                                      transactionManager, objectRequestStage.getSink(),
+                                                      respondToObjectRequestStage.getSink(), objectStatsRecorder,
+                                                      toInit, stageManager, maxStageSize);
     Stage oidRequest = stageManager.createStage(ServerConfigurationContext.OBJECT_ID_BATCH_REQUEST_STAGE,
                                                 new RequestObjectIDBatchHandler(objectStore), 1, maxStageSize);
     Stage transactionAck = stageManager.createStage(ServerConfigurationContext.TRANSACTION_ACKNOWLEDGEMENT_STAGE,
@@ -932,8 +934,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     context = new ServerConfigurationContextImpl(stageManager, objectManager, objectRequestManager, objectStore,
                                                  lockManager, channelManager, clientStateManager, transactionManager,
                                                  txnObjectManager, clientHandshakeManager, channelStats, l2Coordinator,
-                                                 new CommitTransactionMessageToTransactionBatchReader(gtxm),
-                                                 transactionBatchManager);
+                                                 new CommitTransactionMessageToTransactionBatchReader(),
+                                                 transactionBatchManager, gtxm);
 
     toInit.add(this);
     stageManager.startAll(context, toInit);
@@ -965,12 +967,23 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
   }
 
   // Overridden by enterprise server
+  protected ObjectRequestManager createObjectRequestManager(ObjectManager objectMgr, DSOChannelManager channelManager,
+                                                            ClientStateManager clientStateMgr,
+                                                            ServerTransactionManager transactionMgr,
+                                                            Sink objectRequestSink, Sink respondObjectRequestSink,
+                                                            ObjectStatsRecorder statsRecorder, List<PostInit> toInit,
+                                                            StageManager stageManager, int maxStageSize) {
+    return new ObjectRequestManagerImpl(objectMgr, channelManager, clientStateMgr, transactionMgr, objectRequestSink,
+                                        respondObjectRequestSink, statsRecorder);
+  }
+
+  // Overridden by enterprise server
   public void initializeContext(ConfigurationContext cc) {
     // Do any post Init stuff here.
   }
 
   // Overridden by enterprise server
-  protected TransactionFilter getTransactionFilter(List<PostInit> toInit) {
+  protected TransactionFilter getTransactionFilter(List<PostInit> toInit, StageManager stageManager, int maxStageSize) {
     PassThruTransactionFilter txnFilter = new PassThruTransactionFilter();
     toInit.add(txnFilter);
     return txnFilter;
@@ -995,6 +1008,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     } else {
       return new SingleNodeGroupManager();
     }
+  }
+
+  protected TCLogger getLogger() {
+    return logger;
   }
 
   private ServerID makeServerNodeID(NewL2DSOConfig l2DSOConfig) {

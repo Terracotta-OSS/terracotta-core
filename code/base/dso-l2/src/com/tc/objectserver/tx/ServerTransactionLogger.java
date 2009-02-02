@@ -7,6 +7,7 @@ package com.tc.objectserver.tx;
 import com.tc.logging.TCLogger;
 import com.tc.net.NodeID;
 import com.tc.object.tx.ServerTransactionID;
+import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
 import java.util.Set;
@@ -73,8 +74,8 @@ public class ServerTransactionLogger implements ServerTransactionListener {
     logger.info("Number of pending transactions in the System : " + current);
   }
 
-  public void transactionApplied(ServerTransactionID stxID) {
-    if (verboseLogging) logger.info("transactionApplied: " + stxID);
+  public void transactionApplied(ServerTransactionID stxID, ObjectIDSet newObjectsCreated) {
+    if (verboseLogging) logger.info("transactionApplied: " + stxID + " new Objects created : " + newObjectsCreated);
   }
 
   public void transactionCompleted(ServerTransactionID stxID) {

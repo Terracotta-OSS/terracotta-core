@@ -36,6 +36,7 @@ import com.tc.stats.counter.Counter;
 import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.State;
 
 import java.io.PrintWriter;
@@ -351,14 +352,14 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
     transactionRateCounter.increment(txn.getNumApplicationTxn());
 
-    fireTransactionAppliedEvent(stxnID);
+    fireTransactionAppliedEvent(stxnID, txn.getNewObjectIDs());
   }
 
   public void skipApplyAndCommit(ServerTransaction txn) {
     final NodeID nodeID = txn.getSourceID();
     final TransactionID txnID = txn.getTransactionID();
     TransactionAccount ci = getTransactionAccount(nodeID);
-    fireTransactionAppliedEvent(txn.getServerTransactionID());
+    fireTransactionAppliedEvent(txn.getServerTransactionID(), txn.getNewObjectIDs());
     if (ci.skipApplyAndCommit(txnID)) {
       acknowledge(nodeID, txnID);
     }
@@ -593,11 +594,11 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
   }
 
-  private void fireTransactionAppliedEvent(ServerTransactionID stxID) {
+  private void fireTransactionAppliedEvent(ServerTransactionID stxID, ObjectIDSet newObjectsCreated) {
     for (Iterator iter = txnEventListeners.iterator(); iter.hasNext();) {
       try {
         ServerTransactionListener listener = (ServerTransactionListener) iter.next();
-        listener.transactionApplied(stxID);
+        listener.transactionApplied(stxID, newObjectsCreated);
       } catch (Exception e) {
         logger.error("Exception in Txn listener event callback: ", e);
         throw new AssertionError(e);
@@ -651,7 +652,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
   }
 
-  private final class TxnsInSystemCompletionListenerCallback implements ServerTransactionListener {
+  private final class TxnsInSystemCompletionListenerCallback extends AbstractServerTransactionListener {
 
     private final TxnsInSystemCompletionLister callback;
     private final Set                          txnsInSystem;
@@ -674,22 +675,6 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 
     public Set getTxnsInSystem() {
       return txnsInSystem;
-    }
-
-    public void addResentServerTransactionIDs(Collection stxIDs) {
-      // NOP
-    }
-
-    public void clearAllTransactionsFor(NodeID deadNode) {
-      // NOP
-    }
-
-    public void incomingTransactions(NodeID source, Set serverTxnIDs) {
-      // NOP
-    }
-
-    public void transactionApplied(ServerTransactionID stxID) {
-      // NOP
     }
 
     public void transactionCompleted(ServerTransactionID stxID) {
@@ -730,10 +715,6 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
         sb.append("....<more> }");
         return sb.toString();
       }
-    }
-
-    public void transactionManagerStarted(Set cids) {
-      // NOP
     }
   }
 }

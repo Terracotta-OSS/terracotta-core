@@ -13,7 +13,7 @@ public interface ObjectRequestContext {
 
   public ClientID getClientID();
 
-  public ObjectIDSet getObjectIDs();
+  public ObjectIDSet getRequestedObjectIDs();
 
   public int getRequestDepth();
 

@@ -12,10 +12,10 @@ import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ObjectID;
+import com.tc.object.ObjectRequestServerContext;
 import com.tc.object.msg.RequestManagedObjectMessage;
 import com.tc.object.net.ChannelStats;
 import com.tc.objectserver.api.ObjectRequestManager;
-import com.tc.objectserver.context.ObjectRequestServerContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.stats.counter.Counter;
@@ -48,29 +48,26 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
   public void handleEvent(EventContext context) {
     if (context instanceof RequestManagedObjectMessage) {
       handleEventFromClient((RequestManagedObjectMessage) context);
-    } else if (context instanceof ObjectRequestServerContext) {
+    } else {
       handleEventFromServer((ObjectRequestServerContext) context);
     }
   }
 
   private void handleEventFromServer(ObjectRequestServerContext context) {
-    Collection<ObjectID> ids = context.getLookupIDs();
+    Collection<ObjectID> ids = context.getRequestedObjectIDs();
     // XXX::TODO:: Server initiated lookups are not updated to the channel counter for now
     final int numObjectsRequested = ids.size();
     if (numObjectsRequested != 0) {
       globalObjectRequestCounter.increment(numObjectsRequested);
     }
-    objectRequestManager.requestObjects(context.getRequestedNodeID(), context.getRequestID(), context.getLookupIDs(),
-                                        context.getMaxRequestDepth(), context.isServerInitiated(), context
-                                            .getRequestingThreadName());
+    objectRequestManager.requestObjects(context);
   }
 
   private void handleEventFromClient(RequestManagedObjectMessage rmom) {
     MessageChannel channel = rmom.getChannel();
-    ObjectIDSet requestedIDs = rmom.getObjectIDs();
+    ObjectIDSet requestedIDs = rmom.getRequestedObjectIDs();
     ClientID clientID = (ClientID) rmom.getSourceNodeID();
     ObjectIDSet removedIDs = rmom.getRemoved();
-    int maxRequestDepth = rmom.getRequestDepth();
 
     final int numObjectsRequested = requestedIDs.size();
     if (numObjectsRequested != 0) {
@@ -91,8 +88,7 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
       logger.warn("Time to Remove " + numObjectsRemoved + " is " + t + " ms");
     }
     if (numObjectsRequested > 0) {
-      objectRequestManager.requestObjects(clientID, rmom.getRequestID(), requestedIDs, maxRequestDepth, false, rmom
-          .getRequestingThreadName());
+      objectRequestManager.requestObjects(rmom);
     }
   }
 

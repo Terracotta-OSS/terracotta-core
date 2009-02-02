@@ -25,7 +25,6 @@ import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.TransactionBatchReader;
 import com.tc.objectserver.tx.TransactionBatchReaderFactory;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -75,13 +74,14 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
       final TransactionBatchReader reader = batchReaderFactory.newTransactionBatchReader(commitMessage);
       ServerTransaction txn;
       // XXX:: Order has to be maintained.
-      Map txns = new LinkedHashMap(reader.getNumTxns());
+      Map txns = new LinkedHashMap(reader.getRemainingTxnsToBeRead());
       while ((txn = reader.getNextTransaction()) != null) {
+        txn.setGlobalTransactionID(commitMessage.getGlobalTransactionIDFor(txn.getServerTransactionID()));
         txns.put(txn.getServerTransactionID(), txn);
       }
       rTxnManager.addCommitedTransactions(reader.getNodeID(), txns.keySet(), txns.values(), commitMessage);
       return txns.keySet();
-    } catch (IOException e) {
+    } catch (Exception e) {
       throw new AssertionError(e);
     }
   }

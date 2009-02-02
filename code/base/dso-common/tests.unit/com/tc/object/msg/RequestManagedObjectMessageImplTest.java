@@ -59,7 +59,7 @@ public class RequestManagedObjectMessageImplTest extends TCTestCase {
 
   private void checkMessageValues(TestObjectRequestContext ctxt, Set removedIDs, Set ids,
                                   RequestManagedObjectMessageImpl msg) {
-    assertEquals(ids, new HashSet(msg.getObjectIDs()));
+    assertEquals(ids, new HashSet(msg.getRequestedObjectIDs()));
     assertEquals(ctxt.getRequestID(), msg.getRequestID());
     assertEquals(removedIDs, msg.getRemoved());
   }
@@ -74,7 +74,7 @@ public class RequestManagedObjectMessageImplTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public ObjectIDSet getObjectIDs() {
+    public ObjectIDSet getRequestedObjectIDs() {
       throw new ImplementMe();
     }
 

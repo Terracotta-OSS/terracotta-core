@@ -20,23 +20,20 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.objectserver.context.NodeStateEventContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionBatchManager;
 
 public class ChannelLifeCycleHandler extends AbstractEventHandler implements DSOChannelManagerEventListener {
-  private final ServerTransactionManager transactionManager;
-  private final TransactionBatchManager  transactionBatchManager;
-  private TCLogger                       logger;
-  private final CommunicationsManager    commsManager;
-  private final DSOChannelManager        channelMgr;
-  private Sink                           channelSink;
-  private Sink                           hydrateSink;
-  private Sink                           processTransactionSink;
+  private final TransactionBatchManager transactionBatchManager;
+  private TCLogger                      logger;
+  private final CommunicationsManager   commsManager;
+  private final DSOChannelManager       channelMgr;
+  private Sink                          channelSink;
+  private Sink                          hydrateSink;
+  private Sink                          processTransactionSink;
 
-  public ChannelLifeCycleHandler(CommunicationsManager commsManager, ServerTransactionManager transactionManager,
-                                 TransactionBatchManager transactionBatchManager, DSOChannelManager channelManager) {
+  public ChannelLifeCycleHandler(CommunicationsManager commsManager, TransactionBatchManager transactionBatchManager,
+                                 DSOChannelManager channelManager) {
     this.commsManager = commsManager;
-    this.transactionManager = transactionManager;
     this.transactionBatchManager = transactionBatchManager;
     this.channelMgr = channelManager;
   }
@@ -69,14 +66,13 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler implements DSO
       logger.info("Ignoring transport disconnect for " + nodeID + " while shutting down.");
     } else {
       logger.info(": Received transport disconnect.  Shutting down client " + nodeID);
-      transactionManager.shutdownNode(nodeID);
       transactionBatchManager.shutdownNode(nodeID);
     }
   }
 
   private void nodeConnected(NodeID nodeID) {
     broadcastClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_CONNECTED, nodeID);
-    transactionManager.nodeConnected(nodeID);
+    transactionBatchManager.nodeConnected(nodeID);
   }
 
   private void broadcastClusterMembershipMessage(int eventType, NodeID nodeID) {

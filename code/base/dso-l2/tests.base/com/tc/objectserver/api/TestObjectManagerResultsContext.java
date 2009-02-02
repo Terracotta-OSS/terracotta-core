@@ -27,6 +27,8 @@ public class TestObjectManagerResultsContext implements ObjectManagerResultsCont
 
   public void setResults(ObjectManagerLookupResults results) {
     this.results.putAll(results.getObjects());
+    if (!results.getMissingObjectIDs().isEmpty()) { throw new AssertionError("Missing Objects : "
+                                                                             + results.getMissingObjectIDs()); }
   }
 
   public ObjectIDSet getLookupIDs() {
@@ -35,10 +37,6 @@ public class TestObjectManagerResultsContext implements ObjectManagerResultsCont
 
   public ObjectIDSet getNewObjectIDs() {
     return new ObjectIDSet();
-  }
-
-  public void missingObject(ObjectID oid) {
-    throw new AssertionError("Missing Object : " + oid);
   }
 
   public boolean updateStats() {

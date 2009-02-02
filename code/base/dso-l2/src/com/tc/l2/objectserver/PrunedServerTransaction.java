@@ -103,4 +103,8 @@ public class PrunedServerTransaction implements ServerTransaction {
     return orgTxn.getNumApplicationTxn();
   }
 
+  public void setGlobalTransactionID(GlobalTransactionID gid) {
+    throw new UnsupportedOperationException();
+  }
+
 }

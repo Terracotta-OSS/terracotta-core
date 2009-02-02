@@ -15,7 +15,7 @@ public interface TransactionBatchReader {
 
   public TxnBatchID getBatchID();
 
-  public int getNumTxns();
+  public int getRemainingTxnsToBeRead();
 
   public NodeID getNodeID();
 

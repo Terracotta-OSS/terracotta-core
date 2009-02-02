@@ -12,6 +12,7 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.lockmanager.api.LockManager;
@@ -28,19 +29,20 @@ import com.tc.objectserver.tx.TransactionalObjectManager;
  */
 public class ServerConfigurationContextImpl extends ConfigurationContextImpl implements ServerConfigurationContext {
 
-  private final ObjectManager                 objectManager;
-  private final ObjectRequestManager          objectRequestManager;
-  private final LockManager                   lockManager;
-  private final DSOChannelManager             channelManager;
-  private final ClientStateManager            clientStateManager;
-  private final ServerTransactionManager      transactionManager;
-  private final ManagedObjectStore            objectStore;
-  private final ServerClientHandshakeManager  clientHandshakeManager;
-  private final ChannelStats                  channelStats;
-  private final TransactionBatchReaderFactory transactionBatchReaderFactory;
-  private final TransactionalObjectManager    txnObjectManager;
-  private final L2Coordinator                 l2Coordinator;
-  private final TransactionBatchManager       transactionBatchManager;
+  private final ObjectManager                  objectManager;
+  private final ObjectRequestManager           objectRequestManager;
+  private final LockManager                    lockManager;
+  private final DSOChannelManager              channelManager;
+  private final ClientStateManager             clientStateManager;
+  private final ServerTransactionManager       transactionManager;
+  private final ManagedObjectStore             objectStore;
+  private final ServerClientHandshakeManager   clientHandshakeManager;
+  private final ChannelStats                   channelStats;
+  private final TransactionBatchReaderFactory  transactionBatchReaderFactory;
+  private final TransactionalObjectManager     txnObjectManager;
+  private final L2Coordinator                  l2Coordinator;
+  private final TransactionBatchManager        transactionBatchManager;
+  private final ServerGlobalTransactionManager serverGlobalTransactionManager;
 
   public ServerConfigurationContextImpl(StageManager stageManager, ObjectManager objectManager,
                                         ObjectRequestManager objectRequestManager, ManagedObjectStore objectStore,
@@ -51,7 +53,8 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
                                         ServerClientHandshakeManager clientHandshakeManager, ChannelStats channelStats,
                                         L2Coordinator l2Coordinator,
                                         TransactionBatchReaderFactory transactionBatchReaderFactory,
-                                        TransactionBatchManager transactionBatchManager) {
+                                        TransactionBatchManager transactionBatchManager,
+                                        ServerGlobalTransactionManager serverGlobalTransactionManager) {
     super(stageManager);
     this.objectManager = objectManager;
     this.objectRequestManager = objectRequestManager;
@@ -66,6 +69,7 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
     this.l2Coordinator = l2Coordinator;
     this.transactionBatchReaderFactory = transactionBatchReaderFactory;
     this.transactionBatchManager = transactionBatchManager;
+    this.serverGlobalTransactionManager = serverGlobalTransactionManager;
   }
 
   public L2Coordinator getL2Coordinator() {
@@ -118,5 +122,9 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
 
   public TransactionBatchManager getTransactionBatchManager() {
     return this.transactionBatchManager;
+  }
+
+  public ServerGlobalTransactionManager getServerGlobalTransactionManager() {
+    return this.serverGlobalTransactionManager;
   }
 }

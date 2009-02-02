@@ -117,4 +117,8 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
     return 1;
   }
 
+  public void setGlobalTransactionID(GlobalTransactionID gid) {
+    throw new UnsupportedOperationException();
+  }
+
 }

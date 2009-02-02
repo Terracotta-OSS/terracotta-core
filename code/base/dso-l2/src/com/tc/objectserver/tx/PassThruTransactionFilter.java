@@ -6,7 +6,7 @@ package com.tc.objectserver.tx;
 
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.PostInit;
-import com.tc.object.msg.CommitTransactionMessageImpl;
+import com.tc.net.NodeID;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 
 public class PassThruTransactionFilter implements TransactionFilter, PostInit {
@@ -18,7 +18,11 @@ public class PassThruTransactionFilter implements TransactionFilter, PostInit {
     transactionBatchManager = scc.getTransactionBatchManager();
   }
 
-  public void addTransactionBatch(CommitTransactionMessageImpl ctm, TransactionBatchReader reader) {
-    transactionBatchManager.processTransactionBatch(ctm, reader);
+  public void addTransactionBatch(TransactionBatchContext transactionBatchContext) {
+    transactionBatchManager.processTransactionBatch(transactionBatchContext);
+  }
+
+  public boolean shutdownNode(NodeID nodeID) {
+    return true;
   }
 }

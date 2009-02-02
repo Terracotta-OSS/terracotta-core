@@ -7,7 +7,6 @@ package com.tc.objectserver.tx;
 import com.tc.net.NodeID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
-import com.tc.object.gtx.GlobalTransactionIDGenerator;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
@@ -21,12 +20,12 @@ import java.util.Map;
 
 public class PassiveServerTransactionImpl extends ServerTransactionImpl implements ServerTransaction {
 
-  public PassiveServerTransactionImpl(GlobalTransactionIDGenerator gtxm, TxnBatchID batchID, TransactionID txID,
-                                      SequenceID sequenceID, LockID[] lockIDs, NodeID source, List dnas,
-                                      ObjectStringSerializer serializer, Map newRoots, TxnType transactionType,
-                                      Collection notifies, DmiDescriptor[] dmis, int numApplicationTxn) {
-    super(gtxm, batchID, txID, sequenceID, lockIDs, source, dnas, serializer, newRoots, transactionType, notifies,
-          dmis, numApplicationTxn);
+  public PassiveServerTransactionImpl(TxnBatchID batchID, TransactionID txID, SequenceID sequenceID, LockID[] lockIDs,
+                                      NodeID source, List dnas, ObjectStringSerializer serializer, Map newRoots,
+                                      TxnType transactionType, Collection notifies, DmiDescriptor[] dmis,
+                                      int numApplicationTxn) {
+    super(batchID, txID, sequenceID, lockIDs, source, dnas, serializer, newRoots, transactionType, notifies, dmis,
+          numApplicationTxn);
   }
 
   public DmiDescriptor[] getDmiDescriptors() {

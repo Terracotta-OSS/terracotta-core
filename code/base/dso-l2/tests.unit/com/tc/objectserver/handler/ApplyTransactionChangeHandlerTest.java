@@ -86,7 +86,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
       notifies.add(new Notify(new LockID("" + i), new ThreadID(i), i % 2 == 0));
     }
     SequenceID sequenceID = new SequenceID(1);
-    ServerTransaction tx = new ServerTransactionImpl(gtxm, batchID, txID, sequenceID, lockIDs, cid, dnas, serializer,
+    ServerTransaction tx = new ServerTransactionImpl(batchID, txID, sequenceID, lockIDs, cid, dnas, serializer,
                                                      newRoots, txnType, notifies, DmiDescriptor.EMPTY_ARRAY, 1);
     // call handleEvent with the global transaction reporting that it doesn't need an apply...
     assertTrue(lockManager.notifyCalls.isEmpty());
