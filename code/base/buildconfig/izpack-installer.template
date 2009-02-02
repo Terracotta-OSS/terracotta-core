@@ -23,8 +23,8 @@
    <resources>
       <res id="LicencePanel.licence" src="license.txt" />
       <res id="InfoPanel.info" src="readme.txt" />
-      <res src="../../../buildconfig/windows_shortcuts.xml" id="shortcutSpec.xml" />
-      <res src="../../../buildconfig/unix_shortcuts.xml" id="Unix_shortcutSpec.xml" />
+      <res src="../windows_shortcuts.xml" id="shortcutSpec.xml" />
+      <res src="../unix_shortcuts.xml" id="Unix_shortcutSpec.xml" />
    </resources>
 
    <panels>
