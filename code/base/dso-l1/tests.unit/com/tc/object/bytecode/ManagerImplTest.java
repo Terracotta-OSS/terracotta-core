@@ -4,6 +4,7 @@
  */
 package com.tc.object.bytecode;
 
+import com.tc.config.lock.LockContextInfo;
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCNonPortableObjectError;
 import com.tc.net.NodeID;
@@ -43,7 +44,7 @@ public class ManagerImplTest extends BaseDSOTestCase {
 
     Manager manager = new ManagerImpl(false, objMgr, txnMgr, this.configHelper(), null);
 
-    manager.monitorEnter(getClass(), Manager.LOCK_TYPE_WRITE);
+    manager.monitorEnter(getClass(), Manager.LOCK_TYPE_WRITE, LockContextInfo.NULL_LOCK_CONTEXT_INFO);
 
     manager.monitorExit(getClass());
   }

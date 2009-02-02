@@ -10,6 +10,7 @@ import org.hyperic.sigar.SigarException;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
+import com.tc.statistics.retrieval.SigarUtil;
 
 import java.math.BigDecimal;
 import java.text.NumberFormat;
@@ -22,7 +23,7 @@ public class SRACpu implements StatisticRetrievalAction, SRACpuConstants {
   private final Sigar sigar;
 
   public SRACpu() {
-    sigar = new Sigar();
+    sigar = SigarUtil.newSigar();
   }
 
   public StatisticData[] retrieveStatisticData() {

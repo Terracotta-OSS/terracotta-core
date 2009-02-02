@@ -100,7 +100,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
 
           addWaitOnUnshared();
           try {
-            ManagerUtil.objectWait0(realCondition);
+            ManagerUtil.objectWait(realCondition);
           } finally {
             waitOnUnshared.remove(currentThread);
             waitingThreads.remove(currentThread);
@@ -142,7 +142,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
 
             addWaitOnUnshared();
             try {
-              ManagerUtil.objectWait0(realCondition);
+              ManagerUtil.objectWait(realCondition);
               break;
             } catch (InterruptedException e) {
               isInterrupted = true;

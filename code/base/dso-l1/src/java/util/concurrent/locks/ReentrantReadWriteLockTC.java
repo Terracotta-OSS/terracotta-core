@@ -52,7 +52,7 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
     
     public boolean tryLock() {
       if (ManagerUtil.isManaged(lock)) {
-        return ManagerUtil.tryMonitorEnter(lock, 0, lockLevel);
+        return ManagerUtil.tryMonitorEnter(lock, lockLevel, 0L);
       } else {
         return true;
       }
@@ -61,7 +61,7 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
     public boolean tryLock(long timeout, TimeUnit unit) {
       if (ManagerUtil.isManaged(lock)) {
         long timeoutInNanos = TimeUnit.NANOSECONDS.convert(timeout, unit);
-        boolean rv = ManagerUtil.tryMonitorEnter(lock, timeoutInNanos, lockLevel);
+        boolean rv = ManagerUtil.tryMonitorEnter(lock, lockLevel, timeoutInNanos);
         return rv;
       } else {
         return true;

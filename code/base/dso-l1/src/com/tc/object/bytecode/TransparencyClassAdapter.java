@@ -544,7 +544,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     c.visitLdcInsn(ByteCodeUtil.generateNamedLockName(lock.getLockName()));
     c.visitLdcInsn(new Integer(lock.getLockLevelAsInt()));
     c.visitLdcInsn(lock.getLockContextInfo());
-    c.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "beginLockWithContextInfo", "(Ljava/lang/String;ILjava/lang/String;)V");
+    c.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "beginLock", "(Ljava/lang/String;ILjava/lang/String;)V");
   }
 
   private void callTCBeginWithLockName(String lockName, int lockLevel, MethodVisitor mv) {
@@ -1158,7 +1158,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     ByteCodeUtil.pushThis(c);
     c.visitLdcInsn(new Integer(def.getLockLevelAsInt()));
     c.visitLdcInsn(def.getLockContextInfo());
-    c.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "monitorEnterWithContextInfo",
+    c.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "monitorEnter",
                       "(Ljava/lang/Object;ILjava/lang/String;)V");
   }
 

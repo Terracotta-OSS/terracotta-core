@@ -34,6 +34,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.Map.Entry;
+import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
 
 import junit.framework.Assert;
 
@@ -66,6 +68,7 @@ public class WARBuilder implements DeploymentBuilder {
   private String                 dispatcherServletName = null;
 
   private final TestConfigObject testConfig;
+  private final FileSystemPath   tmpResourcePath;
 
   public WARBuilder(File tempDir, TestConfigObject config) throws IOException {
     this(File.createTempFile("test", ".war", tempDir).getAbsolutePath(), tempDir, config);
@@ -79,6 +82,8 @@ public class WARBuilder implements DeploymentBuilder {
     this.warFileName = warFileName;
     this.tempDirPath = new FileSystemPath(tempDir);
     this.testConfig = config;
+
+    this.tmpResourcePath = tempDirPath.mkdir("tempres");
 
     // this is needed for spring tests
     addDirectoryOrJARContainingClass(WARBuilder.class); // test framework
@@ -172,6 +177,7 @@ public class WARBuilder implements DeploymentBuilder {
 
   void createWARDirectory() throws IOException {
     this.warDirectoryPath = tempDirPath.mkdir("tempwar");
+
     FileSystemPath webInfDir = warDirectoryPath.mkdir("WEB-INF");
     createWebXML(webInfDir);
     if (dispatcherServletName != null) {
@@ -499,12 +505,12 @@ public class WARBuilder implements DeploymentBuilder {
   public DeploymentBuilder addDirectoryOrJARContainingClassOfSelectedVersion(Class type, String[] variantNames) {
     String pathSeparator = System.getProperty("path.separator");
 
-    for (int i = 0; i < variantNames.length; i++) {
-      String selectedVariant = testConfig.selectedVariantFor(variantNames[i]);
-      String path = testConfig.variantLibraryClasspathFor(variantNames[i], selectedVariant);
+    for (String variantName : variantNames) {
+      String selectedVariant = testConfig.selectedVariantFor(variantName);
+      String path = testConfig.variantLibraryClasspathFor(variantName, selectedVariant);
       String[] paths = path.split(pathSeparator);
-      for (int j = 0; j < paths.length; j++) {
-        File filePath = new File(paths[j]);
+      for (String path2 : paths) {
+        File filePath = new File(path2);
         if (!filePath.exists()) { throw new RuntimeException("Variant path doesn't exist: " + filePath); }
         addDirectoryOrJar(new FileSystemPath(filePath));
       }
@@ -519,13 +525,58 @@ public class WARBuilder implements DeploymentBuilder {
 
   public DeploymentBuilder addResource(String location, String includes, String prefix) {
     FileSystemPath path = getResourceDirPath(location, includes);
-    resources.add(new ResourceDefinition(path.getFile(), includes, prefix, null));
+    File srcDir = extractResourceIfNeeded(path, location, includes);
+    resources.add(new ResourceDefinition(srcDir, includes, prefix, null));
     return this;
+  }
+
+  private File extractResourceIfNeeded(FileSystemPath path, String location, String includes) {
+    final File rv;
+
+    if (!path.isDirectory() && path.getFile().getName().endsWith(".jar")) {
+      JarFile jarFile = null;
+      try {
+        jarFile = new JarFile(path.getFile());
+        String dir = location.startsWith("/") ? location.substring(1) : location;
+        ZipEntry entry = jarFile.getEntry(dir + "/" + includes);
+
+        File tmpParent = new File(tmpResourcePath.getFile(), dir);
+        tmpParent.mkdirs();
+
+        InputStream in = null;
+        FileOutputStream fos = null;
+        try {
+          in = jarFile.getInputStream(entry);
+          fos = new FileOutputStream(new File(tmpParent, includes));
+          IOUtils.copy(in, fos);
+        } finally {
+          IOUtils.closeQuietly(in);
+          IOUtils.closeQuietly(fos);
+        }
+        rv = tmpParent;
+      } catch (Exception e) {
+        if (e instanceof RuntimeException) { throw (RuntimeException) e; }
+        throw new RuntimeException(e);
+      } finally {
+        if (jarFile != null) {
+          try {
+            jarFile.close();
+          } catch (IOException ioe) {
+            // ignore
+          }
+        }
+      }
+    } else {
+      rv = path.getFile();
+    }
+
+    return rv;
   }
 
   public DeploymentBuilder addResourceFullpath(String location, String includes, String fullpath) {
     FileSystemPath path = getResourceDirPath(location, includes);
-    resources.add(new ResourceDefinition(path.getFile(), includes, null, fullpath));
+    File srcDir = extractResourceIfNeeded(path, location, includes);
+    resources.add(new ResourceDefinition(srcDir, includes, null, fullpath));
     return this;
   }
 

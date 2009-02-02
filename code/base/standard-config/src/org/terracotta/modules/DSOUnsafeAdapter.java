@@ -71,7 +71,7 @@ public class DSOUnsafeAdapter extends ClassAdapter implements Opcodes, ClassAdap
     pos += params[0].getSize();
     mv.visitVarInsn(params[1].getOpcode(ILOAD), pos + 1);
     mv.visitIntInsn(BIPUSH, LockLevel.WRITE);
-    mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "beginVolatileByOffset",
+    mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "beginVolatile",
                        "(Ljava/lang/Object;JI)V");
   }
 
@@ -80,7 +80,7 @@ public class DSOUnsafeAdapter extends ClassAdapter implements Opcodes, ClassAdap
     mv.visitVarInsn(params[0].getOpcode(ILOAD), pos + 1);
     pos += params[0].getSize();
     mv.visitVarInsn(params[1].getOpcode(ILOAD), pos + 1);
-    mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "commitVolatileByOffset",
+    mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "commitVolatile",
                        "(Ljava/lang/Object;J)V");
   }
 

@@ -15,13 +15,20 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Provides correct sorting of exception handlers based on their catch ranges.
+ * Provides correct sorting of exception handlers based on their catch ranges.  This adapter breaks the visiting order
+ * contract of {@link com.tc.asm.MethodVisitor}.
  * <p>
  * This adapter allows for the simple nesting of exception handlers in ASM.  Without using this adapter an exception
  * handler nested within an existing handler via instrumentation can result in the outer handler having its entry before
  * the inner handler in the method's exception table.  In the case of an intersection of the two catch types (both
  * handlers are potential candidates for catching the exception) the inner handler added by instrumentation will not be
  * executed, the exception will be caught by the outer handler first (See CDV-391).
+ * <p>
+ * Before using this adapter consider {@link com.tc.object.bytecode.TryCatchBlockSortingAdapter}.  This adapter breaks
+ * the contract of MethodVisitor by visiting labels before their associated try/catch blocks.
+ * <code>TryCatchBlockSortingAdapter</code> avoids this by using the ASM tree API.
+ * 
+ * @author Chris Dennis
  */
 public class ExceptionTableOrderingMethodAdapter extends MethodAdapter {
   private static final TCLogger LOGGER = TCLogging.getLogger(ExceptionTableOrderingMethodAdapter.class);

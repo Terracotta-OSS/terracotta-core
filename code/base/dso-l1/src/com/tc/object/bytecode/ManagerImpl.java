@@ -181,7 +181,7 @@ public class ManagerImpl implements Manager {
       }
     };
     lookupExistingOrNull(o);
-    monitorEnter(o, LOCK_TYPE_WRITE);
+    monitorEnter(o, LOCK_TYPE_WRITE, LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     monitorExit(o);
     logicalInvoke(new HashMap(), SerializationUtil.CLEAR_SIGNATURE, new Object[] {});
   }
@@ -290,7 +290,7 @@ public class ManagerImpl implements Manager {
   }
 
   public void logicalInvokeWithTransaction(Object object, Object lockObject, String methodName, Object[] params) {
-    monitorEnter(lockObject, LockLevel.WRITE);
+    monitorEnter(lockObject, LockLevel.WRITE, LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     try {
       logicalInvoke(object, methodName, params);
     } finally {
@@ -353,14 +353,6 @@ public class ManagerImpl implements Manager {
 
       // shouldn't get here
       throw new AssertionError();
-    }
-  }
-
-  public void beginLock(String lockID, int type) {
-    try {
-      begin(lockID, type, null, null, LockContextInfo.NULL_LOCK_CONTEXT_INFO);
-    } catch (Throwable t) {
-      Util.printLogAndRethrowError(t, logger);
     }
   }
 
@@ -469,7 +461,7 @@ public class ManagerImpl implements Manager {
     }
   }
 
-  public void objectWait0(Object obj) throws InterruptedException {
+  public void objectWait(Object obj) throws InterruptedException {
     TCObject tco = lookupExistingOrNull(obj);
 
     if (tco != null) {
@@ -489,7 +481,7 @@ public class ManagerImpl implements Manager {
     }
   }
 
-  public void objectWait1(Object obj, long millis) throws InterruptedException {
+  public void objectWait(Object obj, long millis) throws InterruptedException {
     TCObject tco = lookupExistingOrNull(obj);
     if (tco != null) {
       try {
@@ -508,7 +500,7 @@ public class ManagerImpl implements Manager {
     }
   }
 
-  public void objectWait2(Object obj, long millis, int nanos) throws InterruptedException {
+  public void objectWait(Object obj, long millis, int nanos) throws InterruptedException {
     TCObject tco = lookupExistingOrNull(obj);
 
     if (tco != null) {
@@ -554,10 +546,6 @@ public class ManagerImpl implements Manager {
       return generateAutolockName(tco);
     } else if (isLiteralAutolock(obj)) { return generateLiteralLockName(obj); }
     return null;
-  }
-
-  public void monitorEnter(Object obj, int type) {
-    monitorEnter(obj, type, LockContextInfo.NULL_LOCK_CONTEXT_INFO);
   }
 
   public void monitorEnter(Object obj, int type, String contextInfo) {
@@ -609,7 +597,7 @@ public class ManagerImpl implements Manager {
     }
   }
 
-  public boolean tryMonitorEnter(Object obj, long timeoutInNanos, int type) {
+  public boolean tryMonitorEnter(Object obj, int type, long timeoutInNanos) {
     if (obj == null) { throw new NullPointerException("monitorEnter called on a null object"); }
 
     TCObject tco = lookupExistingOrNull(obj);
@@ -664,7 +652,7 @@ public class ManagerImpl implements Manager {
     return tryBegin(lockID, type, null, null);
   }
 
-  public boolean tryBeginLock(String lockID, long timeoutInNanos, int type) {
+  public boolean tryBeginLock(String lockID, int type, long timeoutInNanos) {
     return tryBegin(lockID, type, null, createTimerSpecFromNanos(timeoutInNanos), null);
   }
 

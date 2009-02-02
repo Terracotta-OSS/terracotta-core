@@ -191,7 +191,7 @@
       </xs:documentation>
     </xs:annotation>
     <xs:all>
-      <xs:element name="root-name" type="java-identifier" minOccurs="0" maxOccurs="1" />
+      <xs:element name="root-name" type="qualified-class-name" minOccurs="0" maxOccurs="1" />
       <xs:element name="field-name" type="qualified-field-name" minOccurs="0" maxOccurs="1" />
       <xs:element name="field-expression" type="field-expression" minOccurs="0" maxOccurs="1" />
     </xs:all>
@@ -200,7 +200,7 @@
       the choice section when xmlbeans actually support substitutionGroups
 
     <xs:sequence minOccurs="1" maxOccurs="1">
-      <xs:element name="root-name" type="java-identifier" minOccurs="0" />
+      <xs:element name="root-name" type="qualified-class-name" minOccurs="0" />
       <xs:choice minOccurs="1" maxOccurs="1">
         <xs:element name="field-name" type="qualified-field-name" />
         <xs:element name="field-expression" type="field-expression" />
@@ -429,7 +429,7 @@
 
   <xs:complexType name="spring-app-context">
     <xs:all>
-      <xs:element name="root-name" type="java-identifier" minOccurs="0"/>
+      <xs:element name="root-name" type="qualified-class-name" minOccurs="0"/>
       <xs:element name="enable-location-info" type="xs:boolean" minOccurs="0"/>
       <xs:element name="paths" type="spring-path" />
       <xs:element name="distributed-events" type="spring-distributed-event" minOccurs="0" />

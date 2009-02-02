@@ -94,7 +94,8 @@ public class DefaultModuleReport extends ModuleReport {
     if (!StringUtils.isEmpty(module.contactAddress())) out.println("Contact  : " + module.contactAddress());
     if (!StringUtils.isEmpty(module.docUrl().toString())) out.println("Docs     : " + module.docUrl());
     out.println("Download : " + module.repoUrl());
-    out.println("Status   : " + module.tcProjectStatus() + "\n ");
+    out.println("Status   : " + module.tcProjectStatus());
+    out.println("Internal : " + module.tcInternalTIM() + "\n");
 
     if (!StringUtils.isEmpty(module.description())) {
       out.println(module.description().replaceAll("\n[ ]+", "\n"));

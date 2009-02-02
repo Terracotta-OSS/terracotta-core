@@ -9,12 +9,9 @@ import com.meterware.httpunit.WebResponse;
 import com.tc.test.AppServerInfo;
 import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
-import com.tc.test.server.appserver.deployment.GenericServer;
 import com.tc.test.server.appserver.deployment.ServerTestSetup;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
-import com.tc.test.server.appserver.was6x.Was6xAppServer;
 import com.tc.test.server.util.TcConfigBuilder;
-import com.tc.util.io.TCFileUtils;
 import com.tctest.webapp.servlets.SessionConfigServlet;
 
 import java.util.HashMap;
@@ -26,7 +23,7 @@ import junit.framework.Test;
 /**
  * Test session-descriptor setting http://edocs.bea.com/wls/docs81/webapp/weblogic_xml.html#1038173
  * http://edocs.bea.com/wls/docs90/webapp/weblogic_xml.html#1071982
- * 
+ *
  * @author hhuynh
  */
 public class SessionConfigTest extends AbstractDeploymentTest {
@@ -39,11 +36,11 @@ public class SessionConfigTest extends AbstractDeploymentTest {
   private WebApplicationServer server;
   private final Map            descriptors        = new HashMap();
   private final Map            extraServerJvmArgs = new HashMap();
-  private final boolean        weblogicOrWebsphere;
+  private boolean              runningWithWeblogic;
 
   public SessionConfigTest() {
-    weblogicOrWebsphere = appServerInfo().getId() == AppServerInfo.WEBLOGIC
-                          || appServerInfo().getId() == AppServerInfo.WEBSPHERE;
+    runningWithWeblogic = appServerInfo().getId() == AppServerInfo.WEBLOGIC;
+
   }
 
   public static Test suite() {
@@ -52,10 +49,9 @@ public class SessionConfigTest extends AbstractDeploymentTest {
 
   // CookieEnabled = false
   public void testCookieDisabled() throws Exception {
-    if (!weblogicOrWebsphere) return;
+    if (!runningWithWeblogic) return;
     descriptors.put("wl81", "weblogic81a.xml");
     descriptors.put("wl92-10", "weblogic92a.xml");
-    descriptors.put("was61", "websphere61a.xml");
     init();
 
     WebConversation conversation = new WebConversation();
@@ -69,10 +65,9 @@ public class SessionConfigTest extends AbstractDeploymentTest {
 
   // CookieEnabled = false, URLRewritingEnabled = false
   public void testUrlRewritingDisabled() throws Exception {
-    if (!weblogicOrWebsphere) return;
+    if (!runningWithWeblogic) return;
     descriptors.put("wl81", "weblogic81b.xml");
     descriptors.put("wl92-10", "weblogic92b.xml");
-    descriptors.put("was61", "websphere61b.xml");
     init();
 
     WebResponse response = request(server, "testcase=testUrlRewritingDisabled", new WebConversation());
@@ -82,7 +77,7 @@ public class SessionConfigTest extends AbstractDeploymentTest {
 
   // TrackingEnabled = false -- only applicable to Weblogic
   public void testTrackingDisabled() throws Exception {
-    if (!weblogicOrWebsphere) return;
+    if (!runningWithWeblogic) return;
     if (appServerInfo().getId() != AppServerInfo.WEBLOGIC) { return; }
     descriptors.put("wl81", "weblogic81c.xml");
     descriptors.put("wl92-10", "weblogic92c.xml");
@@ -158,10 +153,6 @@ public class SessionConfigTest extends AbstractDeploymentTest {
         if (appServerInfo().getMajor().equals("9") || appServerInfo().getMajor().equals("10")) {
           builder.addResourceFullpath(RESOURCE_ROOT, (String) descriptors.get("wl92-10"), "WEB-INF/weblogic.xml");
         }
-        break;
-      case AppServerInfo.WEBSPHERE:
-        Was6xAppServer wasServer = (Was6xAppServer) ((GenericServer) server).getAppServer();
-        wasServer.setExtraScript(TCFileUtils.getResourceFile(RESOURCE_ROOT + "/" + (String) descriptors.get("was61")));
         break;
       default:
         break;

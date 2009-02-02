@@ -24,11 +24,9 @@
     <orderEntry type="module" module-name="common-api" />
     <orderEntry type="module" module-name="deploy" />
     <orderEntry type="module" module-name="dso-common" />
-    <orderEntry type="module" module-name="dso-common-jdk15" />
     <orderEntry type="module" module-name="dso-container-tests" />
     <orderEntry type="module" module-name="dso-l1" />
     <orderEntry type="module" module-name="dso-l1-api" />
-    <orderEntry type="module" module-name="dso-l1-jdk15" />
     <orderEntry type="module" module-name="dso-l1-weblogic" />
     <orderEntry type="module" module-name="dso-l2" />
     <orderEntry type="module" module-name="dso-l2-common" />

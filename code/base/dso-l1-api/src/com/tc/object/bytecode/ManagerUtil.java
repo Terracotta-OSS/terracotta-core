@@ -7,6 +7,7 @@ package com.tc.object.bytecode;
 // import com.partitions.TCNoPartitionError;
 
 import com.tc.cluster.ClusterEventListener;
+import com.tc.config.lock.LockContextInfo;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
 import com.tc.management.beans.sessions.SessionMonitor;
@@ -125,10 +126,8 @@ public class ManagerUtil {
    * @param fieldOffset Field offset in pojo
    * @param type Lock level
    */
-  public static void beginVolatileByOffset(Object pojo, long fieldOffset, int type) {
+  public static void beginVolatile(Object pojo, long fieldOffset, int type) {
     TCObject tcObject = lookupExistingOrNull(pojo);
-    if (tcObject == null) { throw new NullPointerException("beginVolatileByOffset called on a null TCObject"); }
-
     beginVolatile(tcObject, tcObject.getFieldNameByOffset(fieldOffset), type);
   }
 
@@ -138,10 +137,8 @@ public class ManagerUtil {
    * @param pojo Instance containing field
    * @param fieldOffset Field offset in pojo
    */
-  public static void commitVolatileByOffset(Object pojo, long fieldOffset) {
+  public static void commitVolatile(Object pojo, long fieldOffset) {
     TCObject tcObject = lookupExistingOrNull(pojo);
-    if (tcObject == null) { throw new NullPointerException("commitVolatileByOffset called on a null TCObject"); }
-
     commitVolatile(tcObject, tcObject.getFieldNameByOffset(fieldOffset));
   }
 
@@ -163,7 +160,7 @@ public class ManagerUtil {
    * @param type Lock type
    */
   public static void beginLock(String lockID, int type) {
-    getManager().beginLock(lockID, type);
+    beginLock(lockID, type, LockContextInfo.NULL_LOCK_CONTEXT_INFO);
   }
 
   /**
@@ -180,7 +177,7 @@ public class ManagerUtil {
    * @param type Lock type
    * @param contextInfo
    */
-  public static void beginLockWithContextInfo(String lockID, int type, String contextInfo) {
+  public static void beginLock(String lockID, int type, String contextInfo) {
     getManager().beginLock(lockID, type, contextInfo);
   }
 
@@ -203,8 +200,8 @@ public class ManagerUtil {
    * @param timeoutInNanos Timeout in nanoseconds
    * @return True if lock was successful
    */
-  public static boolean tryBeginLockWithTimeout(String lockID, long timeoutInNanos, int type) {
-    return getManager().tryBeginLock(lockID, timeoutInNanos, type);
+  public static boolean tryBeginLock(String lockID, int type, long timeoutInNanos) {
+    return getManager().tryBeginLock(lockID, type, timeoutInNanos);
   }
 
   /**
@@ -430,8 +427,8 @@ public class ManagerUtil {
    *
    * @param obj Instance
    */
-  public static void objectWait0(Object obj) throws InterruptedException {
-    getManager().objectWait0(obj);
+  public static void objectWait(Object obj) throws InterruptedException {
+    getManager().objectWait(obj);
   }
 
   /**
@@ -440,8 +437,8 @@ public class ManagerUtil {
    * @param obj Instance
    * @param millis Wait time
    */
-  public static void objectWait1(Object obj, long millis) throws InterruptedException {
-    getManager().objectWait1(obj, millis);
+  public static void objectWait(Object obj, long millis) throws InterruptedException {
+    getManager().objectWait(obj, millis);
   }
 
   /**
@@ -451,8 +448,8 @@ public class ManagerUtil {
    * @param millis Wait time
    * @param nanos More wait time
    */
-  public static void objectWait2(Object obj, long millis, int nanos) throws InterruptedException {
-    getManager().objectWait2(obj, millis, nanos);
+  public static void objectWait(Object obj, long millis, int nanos) throws InterruptedException {
+    getManager().objectWait(obj, millis, nanos);
   }
 
   /**
@@ -462,7 +459,7 @@ public class ManagerUtil {
    * @param type Lock type
    */
   public static void monitorEnter(Object obj, int type) {
-    getManager().monitorEnter(obj, type);
+    monitorEnter(obj, type, LockContextInfo.NULL_LOCK_CONTEXT_INFO);
   }
 
   /**
@@ -472,7 +469,7 @@ public class ManagerUtil {
    * @param type Lock type
    * @param contextInfo Configuration text of the lock
    */
-  public static void monitorEnterWithContextInfo(Object obj, int type, String contextInfo) {
+  public static void monitorEnter(Object obj, int type, String contextInfo) {
     getManager().monitorEnter(obj, type, contextInfo);
   }
 
@@ -506,8 +503,8 @@ public class ManagerUtil {
    * @return True if entered
    * @throws NullPointerException If obj is null
    */
-  public static boolean tryMonitorEnter(Object obj, long timeoutInNanos, int type) {
-    return getManager().tryMonitorEnter(obj, timeoutInNanos, type);
+  public static boolean tryMonitorEnter(Object obj, int type, long timeoutInNanos) {
+    return getManager().tryMonitorEnter(obj, type, timeoutInNanos);
   }
 
   /**

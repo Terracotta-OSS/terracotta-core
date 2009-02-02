@@ -1,4 +1,4 @@
-<project name="dso-common-jdk15" xmlns:ivy="antlib:org.apache.ivy.ant">
+<project name="dso-common-jdk16" xmlns:ivy="antlib:org.apache.ivy.ant">
   
   <!-- ================================= 
   target: resolve              

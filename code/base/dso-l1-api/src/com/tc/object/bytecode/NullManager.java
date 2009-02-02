@@ -67,10 +67,6 @@ public final class NullManager implements Manager {
     throw new UnsupportedOperationException();
   }
 
-  public final void beginLock(String lockID, int type) {
-    //
-  }
-
   public final void beginLock(String lockID, int type, String lockType) {
     //
   }
@@ -87,20 +83,16 @@ public final class NullManager implements Manager {
     obj.notifyAll();
   }
 
-  public final void objectWait0(Object obj) throws InterruptedException {
+  public final void objectWait(Object obj) throws InterruptedException {
     obj.wait();
   }
 
-  public final void objectWait1(Object obj, long millis) throws InterruptedException {
+  public final void objectWait(Object obj, long millis) throws InterruptedException {
     obj.wait(millis);
   }
 
-  public final void objectWait2(Object obj, long millis, int nanos) throws InterruptedException {
+  public final void objectWait(Object obj, long millis, int nanos) throws InterruptedException {
     obj.wait(millis, nanos);
-  }
-
-  public final void monitorEnter(Object obj, int type) {
-    //
   }
 
   public void monitorEnterInterruptibly(Object obj, int type) {
@@ -175,7 +167,7 @@ public final class NullManager implements Manager {
     throw new UnsupportedOperationException();
   }
 
-  public final boolean tryMonitorEnter(Object obj, long timeoutInNanos, int type) {
+  public final boolean tryMonitorEnter(Object obj, int type, long timeoutInNanos) {
     throw new UnsupportedOperationException();
   }
 
@@ -183,7 +175,7 @@ public final class NullManager implements Manager {
     throw new UnsupportedOperationException();
   }
 
-  public boolean tryBeginLock(String lockID, long timeoutInNanos, int type) {
+  public final boolean tryBeginLock(String lockID, int type, long timeoutInNanos) {
     throw new UnsupportedOperationException();
   }
 

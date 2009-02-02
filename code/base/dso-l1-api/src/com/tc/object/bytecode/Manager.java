@@ -98,14 +98,6 @@ public interface Manager {
    *
    * @param lockID Lock identifier
    * @param type Lock type
-   */
-  public void beginLock(String lockID, int type);
-
-  /**
-   * Begin lock
-   *
-   * @param lockID Lock identifier
-   * @param type Lock type
    * @param contextInfo
    */
   public void beginLock(String lockID, int type, String contextInfo);
@@ -127,7 +119,7 @@ public interface Manager {
    * @param timeoutInNanos Timeout in nanoseconds
    * @return True if lock was successful
    */
-  public boolean tryBeginLock(String lockID, long timeoutInNanos, int type);
+  public boolean tryBeginLock(String lockID, int type, long timeoutInNanos);
 
   /**
    * Commit volatile lock
@@ -204,7 +196,7 @@ public interface Manager {
    *
    * @param obj Instance
    */
-  public void objectWait0(Object obj) throws InterruptedException;
+  public void objectWait(Object obj) throws InterruptedException;
 
   /**
    * Perform timed wait on obj
@@ -212,7 +204,7 @@ public interface Manager {
    * @param obj Instance
    * @param millis Wait time
    */
-  public void objectWait1(Object obj, long millis) throws InterruptedException;
+  public void objectWait(Object obj, long millis) throws InterruptedException;
 
   /**
    * Perform timed wait on obj
@@ -221,15 +213,7 @@ public interface Manager {
    * @param millis Wait time
    * @param nanos More wait time
    */
-  public void objectWait2(Object obj, long millis, int nanos) throws InterruptedException;
-
-  /**
-   * Enter synchronized monitor
-   *
-   * @param obj Object
-   * @param type Lock type
-   */
-  public void monitorEnter(Object obj, int type);
+  public void objectWait(Object obj, long millis, int nanos) throws InterruptedException;
 
   /**
    * Enter synchronized monitor
@@ -355,7 +339,7 @@ public interface Manager {
    * @return True if entered
    * @throws NullPointerException If obj is null
    */
-  public boolean tryMonitorEnter(Object obj, long timeoutInNanos, int type);
+  public boolean tryMonitorEnter(Object obj, int type, long timeoutInNanos);
 
   /**
    * Enter synchronized monitor (interruptibly)

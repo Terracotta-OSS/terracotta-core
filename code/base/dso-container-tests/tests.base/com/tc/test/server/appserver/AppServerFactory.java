@@ -17,7 +17,6 @@ import com.tc.test.server.appserver.jboss4x.JBoss4xAppServerFactory;
 import com.tc.test.server.appserver.jetty6x.Jetty6xAppServerFactory;
 import com.tc.test.server.appserver.resin3x.Resin3xAppServerFactory;
 import com.tc.test.server.appserver.tomcat5x.Tomcat5xAppServerFactory;
-import com.tc.test.server.appserver.was6x.Was6xAppServerFactory;
 import com.tc.test.server.appserver.wasce1x.Wasce1xAppServerFactory;
 import com.tc.test.server.appserver.weblogic10x.Weblogic10xAppServerFactory;
 import com.tc.test.server.appserver.weblogic8x.Weblogic8xAppServerFactory;
@@ -88,9 +87,6 @@ public abstract class AppServerFactory {
         break;
       case AppServerInfo.JETTY:
         if ("6".equals(majorVersion)) return new Jetty6xAppServerFactory(new ProtectedKey());
-        break;
-      case AppServerInfo.WEBSPHERE:
-        if ("6".equals(majorVersion)) return new Was6xAppServerFactory(new ProtectedKey());
         break;
       case AppServerInfo.RESIN:
         if ("3".equals(majorVersion)) return new Resin3xAppServerFactory(new ProtectedKey());
