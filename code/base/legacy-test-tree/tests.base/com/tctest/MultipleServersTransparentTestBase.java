@@ -43,7 +43,6 @@ public abstract class MultipleServersTransparentTestBase extends TransparentTest
   protected void dumpServers() throws Exception {
     if (multipleServerManager != null) {
       multipleServerManager.dumpAllServers(pid, getThreadDumpCount(), getThreadDumpInterval());
-      pid = multipleServerManager.getPid();
     }
     super.dumpServers();
   }
