@@ -131,14 +131,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     return lockManager.isLocked(lockID, lockLevel);
   }
 
-  public void unlock(final String lockName) {
-    final LockID lockID = lockManager.lockIDFor(lockName);
-    if (lockID != null) {
-      lockManager.unlock(lockID);
-      getThreadTransactionContext().removeLock(lockID);
-    }
-  }
-
   public boolean tryBegin(final String lockName, final TimerSpec timeout, final int lockLevel,
                           final String lockObjectType) {
     logTryBegin0(lockName, lockLevel);

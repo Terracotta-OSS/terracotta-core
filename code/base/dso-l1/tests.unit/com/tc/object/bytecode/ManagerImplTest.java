@@ -75,15 +75,7 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public void wait(TimerSpec call, Object object) throws UnlockedSharedObjectException {
-      throw new ImplementMe();
-    }
-
     public void notify(String lockName, boolean all, Object object) throws UnlockedSharedObjectException {
-      throw new ImplementMe();
-    }
-
-    public void checkReadAccess(Object context) {
       throw new ImplementMe();
     }
 
@@ -108,15 +100,6 @@ public class ManagerImplTest extends BaseDSOTestCase {
     }
 
     public void wait(String lockName, TimerSpec call, Object object) throws UnlockedSharedObjectException {
-      throw new ImplementMe();
-
-    }
-
-    // public void lock(String lockName, int lockLevel) {
-    // throw new ImplementMe();
-    // }
-    //
-    public void unlock(String lockName) {
       throw new ImplementMe();
     }
 

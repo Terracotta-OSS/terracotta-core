@@ -9,7 +9,6 @@ import com.tc.util.Assert;
 import com.tc.util.Stack;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -89,17 +88,6 @@ public class ThreadTransactionContext {
       lids.add(tc.getLockID());
     }
     return lids;
-  }
-
-  public void removeLock(LockID id) {
-    for (Iterator i = transactionStack.iterator(); i.hasNext();) {
-      TransactionContext tc = (TransactionContext) i.next();
-      if (id.equals(tc.getLockID())) {
-        i.remove();
-      } else {
-        tc.removeLock(id);
-      }
-    }
   }
 
   public TransactionContext peekContext() {
