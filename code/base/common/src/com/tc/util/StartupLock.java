@@ -134,7 +134,8 @@ public class StartupLock {
         location.forceMkdir();
       } catch (IOException e) {
         throw new LocationNotCreatedException("Could not create location for startup lock: " + location
-                                              + ". Please ensure that this directory can be created.");
+                                              + ". Please ensure that this directory can be created. "
+                                              + e.getMessage());
       }
     }
   }
