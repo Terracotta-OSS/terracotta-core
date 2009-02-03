@@ -26,7 +26,6 @@ module BundledComponents
   def add_skeletons(skeldir, name, platform, directory)
       srcdir = FilePath.new(skeldir, name, platform).to_s
       if File.directory?(srcdir)
-        non_native = @build_environment.is_unix_like? ? ['*.bat', '*.cmd', '*.exe'] : ['*.sh']
         destdir    = FilePath.new(product_directory, directory).ensure_directory
         ant.copy(:todir => destdir.to_s) do
           #ant.fileset(:dir => srcdir, :excludes => "**/.svn/**, **/.*, **/*/#{non_native.join(', **/*/')}")
