@@ -4,6 +4,8 @@
  */
 package com.tc.object.config;
 
+import org.apache.commons.lang.StringUtils;
+
 import com.tc.aspectwerkz.expression.ExpressionContext;
 import com.tc.aspectwerkz.expression.ExpressionVisitor;
 import com.tc.aspectwerkz.expression.PointcutType;
@@ -46,6 +48,7 @@ public class Root {
   public boolean isExpression() {
     return (type == Type.FIELD_EXPR);
   }
+
   public String getClassName() {
     if (type != Type.FIELD_NAME) { throw new IllegalStateException(); }
     return this.className;
@@ -60,9 +63,10 @@ public class Root {
     if (type != Type.FIELD_EXPR) { throw new IllegalStateException(); }
     return this.fieldNameOrExpression;
   }
-  
+
   public String getRootName(FieldInfo fieldInfo) {
-    return rootName == null ? fieldInfo.getDeclaringType().getName() + "." + fieldInfo.getName() : rootName;
+    if (StringUtils.isBlank(rootName)) { return RootNameUtil.getAnnotatedOrDefaultRootName(fieldInfo); }
+    return rootName;
   }
 
   public boolean isDsoFinal(boolean isPrimitive) {
@@ -82,12 +86,10 @@ public class Root {
       ExpressionContext ctxt = expressionHelper.createWithinExpressionContext(ci);
       ExpressionVisitor visitor = expressionHelper.createExpressionVisitor(fieldNameOrExpression);
       return visitor.match(ctxt);
-    } else if (type == Type.FIELD_NAME) {
-      return ci.getName().equals(className);
-    }
+    } else if (type == Type.FIELD_NAME) { return ci.getName().equals(className); }
     throw new AssertionError();
   }
-  
+
   public boolean matches(FieldInfo fi, ExpressionHelper expressionHelper) {
     if (type == Type.FIELD_EXPR) {
       ExpressionVisitor visitor = expressionHelper.createExpressionVisitor("get(" + fieldNameOrExpression + ")");
@@ -101,8 +103,8 @@ public class Root {
   }
 
   public String toString() {
-    return getClass().getName() + "[className=" + className + ", fieldNameOrExpression=" + fieldNameOrExpression + ", rootName="
-           + rootName + ", dsoFinal=" + isDsoFinal() + "]";
+    return getClass().getName() + "[className=" + className + ", fieldNameOrExpression=" + fieldNameOrExpression
+           + ", rootName=" + rootName + ", dsoFinal=" + isDsoFinal() + "]";
   }
 
   private static class Type {
