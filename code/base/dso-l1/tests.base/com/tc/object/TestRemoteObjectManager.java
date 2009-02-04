@@ -106,4 +106,8 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
     }
   }
 
+  public void clear() {
+    throw new ImplementMe();
+  }
+
 }

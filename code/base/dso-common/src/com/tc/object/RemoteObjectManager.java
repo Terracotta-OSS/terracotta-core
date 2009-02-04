@@ -31,5 +31,7 @@ public interface RemoteObjectManager {
   public void objectsNotFoundFor(SessionID sessionID, long batchID, Set missingObjectIDs, NodeID nodeID);
 
   public void removed(ObjectID id);
+  
+  public void clear();
 
 }

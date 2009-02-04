@@ -109,7 +109,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
     notifyAll();
   }
 
-  synchronized void clear() {
+  public synchronized void clear() {
     lruDNA.clear();
     for (Iterator i = dnaRequests.entrySet().iterator(); i.hasNext();) {
       Entry e = (Entry) i.next();

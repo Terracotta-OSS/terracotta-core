@@ -192,6 +192,12 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
                                                ClientHandshakeMessage handshakeMessage) {
     assertPaused("Attempt to initiateHandshake while not PAUSED");
     addAllObjectIDs(handshakeMessage.getObjectIDs());
+    
+    // Ignore objects reaped before handshaking otherwise those won't be in the list sent to L2 at handshaking.
+    // Leave an inconsistent state between L1 and L2. Reaped object is in L1 removeObjects but L2 doesn't aware
+    // and send objects over. This can happen when L2 restarted and other L1 makes object requests before this
+    // L1's first object request to L2.
+    remoteObjectManager.clear();
   }
 
   private void waitUntilRunning() {
