@@ -16,7 +16,9 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     puts "filename: #{internal_name}"
     puts @static_resources.izpack_installer_template.canonicalize.to_s
     puts "-"*80
-    
+
+    izpack_dir = FilePath.new(destdir, 'izpack').ensure_directory
+
     # build the IzPack installer definition file
     template = File.read(@static_resources.izpack_installer_template.canonicalize.to_s)
     files    = Dir.entries(srcdir.to_s).delete_if { |entry| entry =~ /^\./ }
@@ -24,13 +26,13 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     scripts.collect! { |entry| FilePath.new(entry).relative_path_from(srcdir) }
     
     template = ERB.new(template, 0, "%<>").result(binding)
-    config   = File.join(destdir.to_s, 'installer.xml')
+    config   = File.join(izpack_dir.to_s, 'installer.xml')
     File.open(config, 'w') { |out| out << template }
 
     # build the IzPack shortcuts definitions files for each platform
     template = File.read(@static_resources.izpack_shortcuts_template.canonicalize.to_s)
     shortcuts_spec = YAML.load(ERB.new(template, 0, "%<>").result(binding))
-    write_shortcuts_files(destdir, shortcuts_spec)
+    write_shortcuts_files(izpack_dir, shortcuts_spec)
 
     # install IzPack as an Ant task
     ant.taskdef(:name => 'izpack', :classname => 'com.izforge.izpack.ant.IzPackTask') 
