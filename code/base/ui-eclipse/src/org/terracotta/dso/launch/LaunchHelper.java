@@ -75,15 +75,19 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
         }
       });
 
+      final TcPlugin plugin = TcPlugin.getDefault();
       ILaunchConfigurationWorkingCopy wc = config.getWorkingCopy();
       final IJavaProject javaProject = fLaunchDelegate.getJavaProject(wc);
       final IProject project = javaProject.getProject();
+
+      if(!plugin.validateConfigurationFile(project)) {
+        return null;
+      }
 
       if (wc.getAttribute(ATTR_PROJECT_NAME, (String) null) == null) {
         wc.setAttribute(ATTR_PROJECT_NAME, project.getName());
       }
 
-      final TcPlugin plugin = TcPlugin.getDefault();
       String vmArgs = wc.getAttribute(ATTR_VM_ARGUMENTS, "");
       IPath libDirPath = plugin.getLibDirPath();
 

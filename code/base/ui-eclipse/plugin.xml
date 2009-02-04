@@ -1070,6 +1070,11 @@
    </extension>
 
    <extension point="org.eclipse.core.resources.markers"
+      id="ConfigFileNotFoundMarker">
+      <super type="org.terracotta.dso.ConfigProblemMarker"/>
+   </extension>
+
+   <extension point="org.eclipse.core.resources.markers"
       id="RootProblemMarker">
       <super type="org.terracotta.dso.ConfigProblemMarker"/>
    </extension>

@@ -32,6 +32,7 @@
     <!-- Tell DSO to load the RIFE 1.6.0 module. -->
     <modules>
       <module name="tim-rife-1.6.0" version="@tim.version@" />
+      <module name="tim-jetty-6.1" version="@tim.version@" />
     </modules>
   </clients>
   

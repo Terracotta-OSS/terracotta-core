@@ -34,7 +34,7 @@ public class ConfigFileBehavior extends FileBehavior {
           if (element instanceof IFile) {
             IFile file = (IFile) element;
             if ("xml".equals(file.getFileExtension())) {
-              m_selectedValue = file.getProjectRelativePath().toOSString();
+              m_selectedValue = file.getProjectRelativePath().toString();
             }
           }
         }

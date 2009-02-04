@@ -8,8 +8,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.xmlbeans.XmlError;
-import org.terracotta.ui.session.servers.ServerSelection;
-import org.terracotta.ui.session.servers.ServersDialog;
 
 import com.tc.admin.ConnectionContext;
 import com.tc.admin.ConnectionListener;
@@ -34,6 +32,8 @@ import com.tc.admin.common.XTree;
 import com.tc.config.Directories;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.object.appevent.NonPortableObjectEvent;
+import com.tc.object.tools.BootJarSignature;
+import com.tc.object.tools.UnsupportedVMException;
 import com.tc.util.ProductInfo;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.Os;
@@ -61,20 +61,15 @@ import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.prefs.Preferences;
 
 import javax.management.Notification;
@@ -102,129 +97,128 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
 public class SessionIntegratorFrame extends XFrame implements PropertyChangeListener {
-  private static final boolean       debug                       = Boolean.getBoolean("SessionIntegratorFrame.debug");
+  private static final boolean           debug                       = Boolean
+                                                                         .getBoolean("SessionIntegratorFrame.debug");
 
-  private SessionIntegratorContext   sessionIntegratorContext;
-  private ConfigHelper               configHelper;
-  private SplashDialog               splashDialog;
+  private final SessionIntegratorContext sessionIntegratorContext;
+  private final ConfigHelper             configHelper;
+  private SplashDialog                   splashDialog;
 
-  private ServersDialog              serversDialog;
-  private Properties                 properties;
-  private XTabbedPane                tabbedPane;
-  private int                        lastSelectedTabIndex;
-  private WebAppTreeModel            webAppTreeModel;
-  private XButton                    startButton;
-  private XButton                    stopButton;
-  private XCheckBox                  dsoEnabledToggle;
-  private boolean                    dsoEnabled;
-  private XTree                      webAppTree;
-  private WebAppLinkNode             lastArmedLink;
-  private XTabbedPane                configTabbedPane;
-  private ConfigTextPane             xmlPane;
-  private XmlChangeListener          xmlChangeListener;
-  private ConfigProblemTable         configProblemTable;
-  private ConfigProblemTableModel    configProblemTableModel;
+  private final XTabbedPane              tabbedPane;
+  private int                            lastSelectedTabIndex;
+  private WebAppTreeModel                webAppTreeModel;
+  private XButton                        startButton;
+  private XButton                        stopButton;
+  private XCheckBox                      dsoEnabledToggle;
+  private boolean                        dsoEnabled;
+  private XTree                          webAppTree;
+  private WebAppLinkNode                 lastArmedLink;
+  private XTabbedPane                    configTabbedPane;
+  private ConfigTextPane                 xmlPane;
+  private XmlChangeListener              xmlChangeListener;
+  private ConfigProblemTable             configProblemTable;
+  private ConfigProblemTableModel        configProblemTableModel;
 
-  private ProcessOutputView          l2OutView;
-  private XLabel                     l2Label;
-  private ProcessStatus              l2Status;
-  private boolean                    handlingAppEvent;
-  private L2StartupListener          l2StartupListener;
-  private L2ShutdownListener         l2ShutdownListener;
-  private L2ShutdownMonitor          l2Monitor;
-  private L2ConnectListener          l2ConnectListener;
-  private ServerConnectionManager    l2ConnectManager;
+  private ProcessOutputView              l2OutView;
+  private XLabel                         l2Label;
+  private ProcessStatus                  l2Status;
+  private boolean                        handlingAppEvent;
+  private L2StartupListener              l2StartupListener;
+  private L2ShutdownListener             l2ShutdownListener;
+  private L2ShutdownMonitor              l2Monitor;
+  private final L2ConnectListener        l2ConnectListener;
+  private final ServerConnectionManager  l2ConnectManager;
 
-  private XCheckBox                  webServer1EnabledToggle;
-  private boolean                    webServer1Enabled;
-  private ProcessOutputView          webServer1OutView;
-  private XLabel                     webServer1Label;
-  private ProcessStatus              webServer1Status;
-  private XButton                    webServer1Control;
-  private WebServer1StartupListener  webServer1StartupListener;
-  private WebServer1ShutdownListener webServer1ShutdownListener;
-  private WebServerShutdownMonitor   webServer1Monitor;
+  private XCheckBox                      webServer1EnabledToggle;
+  private boolean                        webServer1Enabled;
+  private ProcessOutputView              webServer1OutView;
+  private XLabel                         webServer1Label;
+  private ProcessStatus                  webServer1Status;
+  private XButton                        webServer1Control;
+  private WebServer1StartupListener      webServer1StartupListener;
+  private WebServer1ShutdownListener     webServer1ShutdownListener;
+  private WebServerShutdownMonitor       webServer1Monitor;
 
-  private XCheckBox                  webServer2EnabledToggle;
-  private boolean                    webServer2Enabled;
-  private ProcessOutputView          webServer2OutView;
-  private XLabel                     webServer2Label;
-  private ProcessStatus              webServer2Status;
-  private XButton                    webServer2Control;
-  private WebServer2StartupListener  webServer2StartupListener;
-  private WebServer2ShutdownListener webServer2ShutdownListener;
-  private WebServerShutdownMonitor   webServer2Monitor;
+  private XCheckBox                      webServer2EnabledToggle;
+  private boolean                        webServer2Enabled;
+  private ProcessOutputView              webServer2OutView;
+  private XLabel                         webServer2Label;
+  private ProcessStatus                  webServer2Status;
+  private XButton                        webServer2Control;
+  private WebServer2StartupListener      webServer2StartupListener;
+  private WebServer2ShutdownListener     webServer2ShutdownListener;
+  private WebServerShutdownMonitor       webServer2Monitor;
 
-  private Icon                       waitingIcon;
-  private Icon                       readyIcon;
-  private Icon                       stoppedIcon;
+  private Icon                           waitingIcon;
+  private Icon                           readyIcon;
+  private Icon                           stoppedIcon;
 
-  private Icon                       startIcon;
-  private Icon                       stopIcon;
+  private Icon                           startIcon;
+  private Icon                           stopIcon;
 
-  private InstrumentedClassesPanel   instrumentedClassesPanel;
-  private TransientFieldsPanel       transientFieldsPanel;
-  private BootClassesPanel           bootClassesPanel;
-  private ModulesPanel               modulesPanel;
+  private InstrumentedClassesPanel       instrumentedClassesPanel;
+  private TransientFieldsPanel           transientFieldsPanel;
+  private BootClassesPanel               bootClassesPanel;
+  private ModulesPanel                   modulesPanel;
 
-  private ServersAction              serversAction;
-  private ImportWebAppAction         importAction;
-  private HelpAction                 helpAction;
+  private ImportWebAppAction             importAction;
+  private HelpAction                     helpAction;
 
-  private boolean                    askRestart;
-  private boolean                    restarting;
-  private boolean                    quitting;
+  private boolean                        askRestart;
+  private boolean                        restarting;
+  private boolean                        quitting;
 
-  private ServerSelection            serverSelection;
+  private static String                  SHOW_SPLASH_PREF_KEY        = "ShowSplash";
+  private static String                  LAST_DIR_PREF_KEY           = "LastDirectory";
+  private static String                  DSO_ENABLED_PREF_KEY        = "DsoEnabled";
+  private static String                  WEBSERVER1_ENABLED_PREF_KEY = "WebServer1Enabled";
+  private static String                  WEBSERVER2_ENABLED_PREF_KEY = "WebServer2Enabled";
 
-  private static String              SHOW_SPLASH_PREF_KEY        = "ShowSplash";
-  private static String              LAST_DIR_PREF_KEY           = "LastDirectory";
-  private static String              DSO_ENABLED_PREF_KEY        = "DsoEnabled";
-  private static String              WEBSERVER1_ENABLED_PREF_KEY = "WebServer1Enabled";
-  private static String              WEBSERVER2_ENABLED_PREF_KEY = "WebServer2Enabled";
+  private static final String            BAT_EXTENSION               = ".bat";
+  private static final String            SH_EXTENSION                = ".sh";
+  private static final String            SCRIPT_EXTENSION            = getScriptExtension();
+  private static final String            FS                          = System.getProperty("file.separator");
+  private static final String            DEFAULT_TC_INSTALL_DIR      = getDefaultInstallDir();
+  private static final String            TC_INSTALL_DIR              = System.getProperty("tc.install.dir",
+                                                                                          DEFAULT_TC_INSTALL_DIR);
+  private static final String            DEFAULT_SANDBOX_ROOT        = TC_INSTALL_DIR + FS + "tools" + FS + "sessions"
+                                                                       + FS + "configurator-sandbox";
+  private static final String            SANDBOX_ROOT                = System.getProperty("configurator.sandbox",
+                                                                                          DEFAULT_SANDBOX_ROOT);
+  private static final String            L2_LABEL                    = "Terracotta Server instance";
+  private static final String            L2_STARTUP_SCRIPT           = "start-tc-server" + SCRIPT_EXTENSION;
+  private static final String            L2_SHUTDOWN_SCRIPT          = "stop-tc-server" + SCRIPT_EXTENSION;
+  private static final String            L2_STARTUP_TRIGGER          = "Terracotta Server instance has started up";
+  private static final int               SERVER1_PORT                = 9081;
+  // private static final String WEBSERVER_STARTUP_SCRIPT = "start-web-server" + SCRIPT_EXTENSION;
+  // private static final String WEBSERVER_SHUTDOWN_SCRIPT = "stop-web-server" + SCRIPT_EXTENSION;
+  private static final int               SERVER2_PORT                = 9082;
+  private static final String            HELP_DOC                    = TC_INSTALL_DIR + FS + "docs" + FS
+                                                                       + "TerracottaSessionsQuickStart.html";
 
-  private static final String        BAT_EXTENSION               = ".bat";
-  private static final String        SH_EXTENSION                = ".sh";
-  private static final String        SCRIPT_EXTENSION            = getScriptExtension();
-  private static final String        FS                          = System.getProperty("file.separator");
-  private static final String        DEFAULT_TC_INSTALL_DIR      = getDefaultInstallDir();
-  private static final String        TC_INSTALL_DIR              = System.getProperty("tc.install.dir",
-                                                                                      DEFAULT_TC_INSTALL_DIR);
-  private static final String        DEFAULT_SANDBOX_ROOT        = TC_INSTALL_DIR + FS + "tools" + FS + "sessions" + FS
-                                                                   + "configurator-sandbox";
-  private static final String        SANDBOX_ROOT                = System.getProperty("configurator.sandbox",
-                                                                                      DEFAULT_SANDBOX_ROOT);
-  private static final String        L2_LABEL                    = "Terracotta Server instance";
-  private static final String        L2_STARTUP_SCRIPT           = "start-tc-server" + SCRIPT_EXTENSION;
-  private static final String        L2_SHUTDOWN_SCRIPT          = "stop-tc-server" + SCRIPT_EXTENSION;
-  private static final String        L2_STARTUP_TRIGGER          = "Terracotta Server instance has started up";
-  private static final int           SERVER1_PORT                = 9081;
-  private static final String        WEBSERVER_STARTUP_SCRIPT    = "start-web-server" + SCRIPT_EXTENSION;
-  private static final String        WEBSERVER_SHUTDOWN_SCRIPT   = "stop-web-server" + SCRIPT_EXTENSION;
-  private static final int           SERVER2_PORT                = 9082;
-  private static final String        HELP_DOC                    = TC_INSTALL_DIR + FS + "docs" + FS
-                                                                   + "TerracottaSessionsQuickStart.html";
+  private static final Cursor            LINK_CURSOR                 = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
+  private static final Cursor            STANDARD_CURSOR             = Cursor.getDefaultCursor();
 
-  private static final Cursor        LINK_CURSOR                 = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
-  private static final Cursor        STANDARD_CURSOR             = Cursor.getDefaultCursor();
+  private static final int               CONTROL_TAB_INDEX           = 0;
+  private static final int               CONFIG_TAB_INDEX            = 1;
+  private static final int               MONITOR_TAB_INDEX           = 2;
 
-  private static final int           CONTROL_TAB_INDEX           = 0;
-  private static final int           CONFIG_TAB_INDEX            = 1;
-  private static final int           MONITOR_TAB_INDEX           = 2;
+  private static final int               XML_TAB_INDEX               = 4;
+  private static final String            XML_TAB_LABEL               = "tc-config.xml";
 
-  private static final int           XML_TAB_INDEX               = 4;
-  private static final String        XML_TAB_LABEL               = "tc-config.xml";
+  private static final String            QUERY_START_MSG             = "Start the system?";
+  private static final String            QUERY_RESTART_MSG           = "Restart the system?";
 
-  private static final String        QUERY_START_MSG             = "Start the system?";
-  private static final String        QUERY_RESTART_MSG           = "Restart the system?";
+  private static final String            WAITING_LABEL               = " [Waiting...]";
+  private static final String            STARTING_LABEL              = " [Starting...]";
+  private static final String            STOPPING_LABEL              = " [Stopping...]";
+  private static final String            READY_LABEL                 = " [Ready]";
+  private static final String            STOPPED_LABEL               = " [Stopped]";
+  private static final String            FAILED_LABEL                = " [Failed]";
+  private static final String            DISABLED_LABEL              = " [Disabled]";
 
-  private static final String        WAITING_LABEL               = " [Waiting...]";
-  private static final String        STARTING_LABEL              = " [Starting...]";
-  private static final String        STOPPING_LABEL              = " [Stopping...]";
-  private static final String        READY_LABEL                 = " [Ready]";
-  private static final String        STOPPED_LABEL               = " [Stopped]";
-  private static final String        FAILED_LABEL                = " [Failed]";
-  private static final String        DISABLED_LABEL              = " [Disabled]";
+  // private Process m_jetty1Proc;
+  // private Process m_jetty2Proc;
 
   public SessionIntegratorFrame(SessionIntegratorContext sessionIntegratorContext) {
     super();
@@ -270,6 +264,7 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
     Preferences prefs = getPreferences();
     if (prefs.getBoolean(SHOW_SPLASH_PREF_KEY, true)) {
       addComponentListener(new ComponentAdapter() {
+        @Override
         public void componentShown(ComponentEvent e) {
           openSplashDialog(this);
         }
@@ -277,6 +272,7 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
     }
 
     addWindowListener(new WindowAdapter() {
+      @Override
       public void windowClosing(WindowEvent we) {
         quit();
       }
@@ -523,6 +519,7 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
     configProblemTableModel = new ConfigProblemTableModel();
     configProblemTable.setModel(configProblemTableModel);
     configProblemTable.addMouseListener(new MouseAdapter() {
+      @Override
       public void mouseClicked(MouseEvent me) {
         if (me.getClickCount() == 2) {
           int row = configProblemTable.getSelectedRow();
@@ -582,6 +579,7 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
   }
 
   private class TreeMouseListener extends MouseAdapter {
+    @Override
     public void mouseClicked(MouseEvent me) {
       if (me.getClickCount() == 1) {
         TreePath path = webAppTree.getPathForLocation(me.getX(), me.getY());
@@ -599,6 +597,7 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
   }
 
   private class TreeMouseMotionListener extends MouseMotionAdapter {
+    @Override
     public void mouseMoved(MouseEvent me) {
       TreePath path = webAppTree.getPathForLocation(me.getX(), me.getY());
       if (path != null) {
@@ -628,10 +627,7 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
   }
 
   private ConfigHelper createConfigHelper() {
-    if (serverSelection == null) {
-      serverSelection = new ServerSelection(sessionIntegratorContext);
-    }
-    ConfigHelper result = new ConfigHelper(serverSelection);
+    ConfigHelper result = new ConfigHelper();
     result.addPropertyChangeListener(this);
     return result;
   }
@@ -687,6 +683,7 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
     });
     WindowHelper.center(splashDialog, this);
     splashDialog.addWindowListener(new WindowAdapter() {
+      @Override
       public void windowClosed(WindowEvent we) {
         checkShowSplashToggle();
       }
@@ -715,8 +712,6 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
   private void initMenubar() {
     JMenuBar menuBar = new JMenuBar();
     XMenu menu = new XMenu(getBundleString("file.menu.label"));
-
-    menu.add(serversAction = new ServersAction());
 
     menu.add(importAction = new ImportWebAppAction());
     menu.add(new ExportConfigurationAction());
@@ -810,54 +805,6 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
     } catch (Exception e) {
       configHelper.openError(getBundleString("show.help.error"), e);
     }
-  }
-
-  class ServersAction extends XAbstractAction {
-    ServersAction() {
-      super(getBundleString("servers.action.name"));
-      setSmallIcon(newIcon("/com/tc/admin/icons/thread_obj.gif"));
-    }
-
-    public void actionPerformed(ActionEvent e) {
-      if (serversDialog == null) {
-        serversDialog = new ServersDialog(SessionIntegratorFrame.this, sessionIntegratorContext);
-        serversDialog.addAcceptListener(new ActionListener() {
-          public void actionPerformed(ActionEvent ae) {
-            int oldSelectedServerIndex = serverSelection.getSelectedServerIndex();
-            serversDialog.finishEditing();
-            serversDialog.setVisible(false);
-            serverSelection.setServers(serversDialog.getServers());
-            serverSelection.setSelectedServerIndex(serversDialog.getSelectedServerIndex());
-
-            webServer1Label.setText(getWebServer1Label());
-            webServer2Label.setText(getWebServer2Label());
-
-            // If the selected server changes, rebuild the webapp tree.
-            if (oldSelectedServerIndex != serverSelection.getSelectedServerIndex()) {
-              webAppTreeModel = new WebAppTreeModel(SessionIntegratorFrame.this, getWebApps());
-              webAppTree.setModel(webAppTreeModel);
-            }
-
-            // Each time the user changes anything in the ServersDialog, cause JSP's to be recompiled.
-            WebApp[] webApps = getWebApps();
-            for (int i = 0; i < webApps.length; i++) {
-              touch(webApps[i]);
-            }
-
-            configHelper = createConfigHelper();
-            l2ConnectManager.setJMXPortNumber(configHelper.getJmxPort());
-            initXmlPane();
-            setupEditorPanels();
-          }
-        });
-      }
-
-      serversDialog.setSelection(serverSelection);
-      WindowHelper.center(serversDialog, SessionIntegratorFrame.this);
-      serversDialog.setVisible(true);
-      serversDialog.toFront();
-    }
-
   }
 
   class ImportWebAppAction extends XAbstractAction {
@@ -962,10 +909,12 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
   }
 
   class XmlChangeListener extends DocumentAdapter {
+    @Override
     public void insertUpdate(DocumentEvent e) {
       setXmlModified(true);
     }
 
+    @Override
     public void removeUpdate(DocumentEvent e) {
       setXmlModified(true);
     }
@@ -1026,30 +975,25 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
     return webInf.exists() && new File(webInf, "web.xml").exists();
   }
 
-  private org.terracotta.ui.session.servers.ServerInfo getSelectedServer() {
-    return serverSelection.getSelectedServer();
-  }
-
   private String getSelectedServerName() {
-    return getSelectedServer().getName();
+    return "jetty6.1";
   }
 
   private String getSelectedServerLabel() {
-    return getSelectedServer().getLabel();
+    return "Jetty";
   }
 
   private String getSelectedServerStartupTrigger() {
-    return getSelectedServer().getStartupTrigger();
+    return "Started ";
   }
 
   private String getSelectedServerApplicationPath() {
-    return getSelectedServer().getApplicationPath();
+    return "webapps";
   }
 
   private Map getenv() {
     try {
       Method method = System.class.getMethod("getenv", new Class[] {});
-
       if (method != null) { return (Map) method.invoke(null, new Object[] {}); }
     } catch (Throwable e) {/**/
     }
@@ -1061,20 +1005,12 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
     Map sysEnv = getenv();
 
     if (sysEnv != null) {
-      Map env = new HashMap();
-      Properties serverEnv = getSelectedServer().toProperties();
-
-      env.putAll(sysEnv);
-      env.putAll(serverEnv);
-
       ArrayList list = new ArrayList();
-      Iterator iter = env.keySet().iterator();
-      String key;
-      String val;
+      Iterator iter = sysEnv.keySet().iterator();
 
       while (iter.hasNext()) {
-        key = (String) iter.next();
-        val = (String) env.get(key);
+        String key = (String) iter.next();
+        String val = (String) sysEnv.get(key);
 
         list.add(key + "=" + val);
       }
@@ -1087,10 +1023,10 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
         ioe.printStackTrace();
       }
 
-      return (String[]) list.toArray(new String[env.size()]);
+      return (String[]) list.toArray(new String[0]);
     }
 
-    return getSelectedServer().toEnvironment();
+    return null;
   }
 
   private String getWebServer1Area() {
@@ -1282,15 +1218,9 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
     }
 
     path = StringUtils.replace(path, FS, "/");
-    properties.setProperty(name, path);
 
-    File webAppProps = serverSelection.getSelectedServerWebAppProperties();
-    FileOutputStream out = new FileOutputStream(webAppProps);
     Exception err = null;
-
     try {
-      properties.store(out, null);
-
       WebAppNode webAppNode = webAppTreeModel.add(new WebApp(name, path));
       TreePath webAppPath = new TreePath(webAppNode.getPath());
 
@@ -1301,10 +1231,10 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
         configHelper.save();
         initXmlPane();
       }
+      getPreferences().node("WebApps").put(name, path);
+      storePreferences();
     } catch (Exception e) {
       err = e;
-    } finally {
-      IOUtils.closeQuietly(out);
     }
 
     if (err != null) { throw err; }
@@ -1319,23 +1249,17 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
       name = name.substring(0, dot);
     }
 
-    properties.remove(name);
-
-    File webAppProps = serverSelection.getSelectedServerWebAppProperties();
-    FileOutputStream out = new FileOutputStream(webAppProps);
     Exception err = null;
-
     try {
-      properties.store(out, null);
       webAppTreeModel.remove(name);
       if (configHelper.removeWebApplication(name)) {
         configHelper.save();
         initXmlPane();
       }
+      getPreferences().node("WebApps").remove(name);
+      storePreferences();
     } catch (Exception e) {
       err = e;
-    } finally {
-      IOUtils.closeQuietly(out);
     }
 
     if (err != null) { throw err; }
@@ -1422,25 +1346,29 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
   }
 
   private WebApp[] getWebApps() {
-    File webAppProps = serverSelection.getSelectedServerWebAppProperties();
-
-    properties = new Properties();
+    Preferences webAppsPref = getPreferences().node("WebApps");
+    String[] webAppNames = {};
 
     try {
-      properties.load(new FileInputStream(webAppProps));
-    } catch (IOException ioe) {
-      properties.setProperty("Cart", "");
-      properties.setProperty("DepartmentTaskList", "");
-      properties.setProperty("Townsend", "");
+      webAppNames = webAppsPref.keys();
+    } catch (Exception e) {/**/
     }
 
-    Enumeration names = properties.keys();
-    ArrayList appList = new ArrayList();
-    String name;
+    if (webAppNames.length == 0) {
+      webAppsPref.put("Cart", "");
+      webAppsPref.put("DepartmentTaskList", "");
+      webAppsPref.put("Townsend", "");
+    }
+    storePreferences();
 
-    while (names.hasMoreElements()) {
-      name = (String) names.nextElement();
-      appList.add(new WebApp(name, properties.getProperty(name)));
+    try {
+      webAppNames = webAppsPref.keys();
+    } catch (Exception e) {/**/
+    }
+
+    ArrayList appList = new ArrayList();
+    for (String name : webAppNames) {
+      appList.add(new WebApp(name, webAppsPref.get(name, "")));
     }
 
     return WebAppComparable.sort((WebApp[]) appList.toArray(new WebApp[0]));
@@ -1704,8 +1632,8 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
   }
 
   class L2StartupMonitor extends Thread {
-    private Process         process;
-    private StartupListener startupListener;
+    private Process               process;
+    private final StartupListener startupListener;
 
     L2StartupMonitor(Process process, StartupListener listener) {
       super();
@@ -1713,6 +1641,7 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
       startupListener = listener;
     }
 
+    @Override
     public void run() {
       while (true) {
         if (process != null) {
@@ -1919,9 +1848,9 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
   }
 
   class L2ShutdownMonitor extends Thread {
-    private Process          process;
-    private ShutdownListener shutdownListener;
-    private boolean          stop;
+    private Process                process;
+    private final ShutdownListener shutdownListener;
+    private boolean                stop;
 
     L2ShutdownMonitor(ShutdownListener listener) {
       this(null, listener);
@@ -1933,6 +1862,7 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
       shutdownListener = listener;
     }
 
+    @Override
     public void run() {
       ProcessWaiter waiter = null;
 
@@ -2048,6 +1978,7 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
 
   private void waitForMBean() {
     new Thread() {
+      @Override
       public void run() {
         while (true) {
           try {
@@ -2172,6 +2103,16 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
     webServer1ShutdownListener.setRestart(restart);
 
     stopWebServerAndNotify(webServer1OutView, SERVER1_PORT, webServer1ShutdownListener);
+    // if (m_jetty1Proc != null) {
+    // m_webServer1OutView.append("Terminating jetty:9081...");
+    // try {
+    // stopJetty(9082);
+    // } catch (Exception e) {
+    // m_webServer1OutView.append(e.getMessage());
+    // }
+    // // m_jetty1Proc.destroy();
+    // }
+    // m_jetty1Proc = null;
   }
 
   class WebServer1ShutdownListener implements ShutdownListener {
@@ -2343,6 +2284,16 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
     webServer2ShutdownListener.setRestart(restart);
 
     stopWebServerAndNotify(webServer2OutView, SERVER2_PORT, webServer2ShutdownListener);
+    // if (m_jetty2Proc != null) {
+    // m_webServer1OutView.append("Terminating jetty:9082...");
+    // try {
+    // stopJetty(9083);
+    // } catch (Exception e) {
+    // m_webServer2OutView.append(e.getMessage());
+    // }
+    // // m_jetty2Proc.destroy();
+    // }
+    // m_jetty2Proc = null;
   }
 
   class WebServer2ShutdownListener implements ShutdownListener {
@@ -2428,10 +2379,11 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
 
     Process process;
     try {
-      String dso = isDsoEnabled() ? "dso" : "nodso";
-      String[] args = new String[] { getSelectedServerName(), Integer.toString(port), dso };
+      // String dso = isDsoEnabled() ? "dso" : "nodso";
+      // String[] args = new String[] { getSelectedServerName(), Integer.toString(port), dso };
 
-      process = invokeScript(WEBSERVER_STARTUP_SCRIPT, args);
+      // process = invokeScript(WEBSERVER_STARTUP_SCRIPT, args);
+      process = startJetty(port);
       IOUtils.closeQuietly(process.getOutputStream());
       new ProcessMonitor(process, new ProcessTerminationListener() {
         public void processTerminated(int exitCode) {
@@ -2459,10 +2411,100 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
     return process;
   }
 
+  private static final int STOP_PORT_OFFSET = 100;
+
+  private Process startJetty(int port) throws Exception {
+    String[] env = getSelectedServerEnvironment();
+    File wd = new File(SANDBOX_ROOT, "jetty6.1" + File.separatorChar + port);
+    String bootPath = getBootPath();
+    File jettyHome = getJettyHome();
+    File startJar = new File(jettyHome, "start.jar");
+    String[] cmdarray;
+    int stopPort = port + STOP_PORT_OFFSET;
+    if (isDsoEnabled()) {
+      cmdarray = new String[] { getJavaCmd().getAbsolutePath(), "-Dtc.config=../tc-config.xml",
+          "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(), "-Xbootclasspath/p:" + bootPath,
+          "-Djetty.home=" + jettyHome.getAbsolutePath(), "-DSTOP.PORT=" + stopPort, "-DSTOP.KEY=secret", "-jar",
+          startJar.getAbsolutePath(), "conf.xml" };
+    } else {
+      cmdarray = new String[] { getJavaCmd().getAbsolutePath(), "-Djetty.home=" + jettyHome.getAbsolutePath(),
+          "-DSTOP.PORT=" + stopPort, "-DSTOP.KEY=secret", "-jar", startJar.getAbsolutePath(), "conf.xml" };
+    }
+    return Runtime.getRuntime().exec(cmdarray, env, wd);
+  }
+
+  private Process stopJetty(int port) throws Exception {
+    String[] env = getSelectedServerEnvironment();
+    File wd = new File(SANDBOX_ROOT, "jetty6.1" + File.separatorChar + port);
+    File jettyHome = getJettyHome();
+    File startJar = new File(jettyHome, "start.jar");
+    int stopPort = port + STOP_PORT_OFFSET;
+    String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-Djetty.home=" + jettyHome.getAbsolutePath(),
+        "-DSTOP.PORT=" + stopPort, "-DSTOP.KEY=secret", "-jar", startJar.getAbsolutePath(), "--stop" };
+    return Runtime.getRuntime().exec(cmdarray, env, wd);
+  }
+
+  File m_installRoot;
+
+  protected File getInstallRoot() {
+    if (m_installRoot == null) {
+      m_installRoot = new File(System.getProperty("tc.install-root").trim());
+    }
+    return m_installRoot;
+  }
+
+  File m_jettyHome;
+
+  protected File getJettyHome() {
+    if (m_jettyHome == null) {
+      m_jettyHome = new File(getInstallRoot(), "vendors" + File.separatorChar + "jetty-6.1.15");
+    }
+    return m_jettyHome;
+  }
+
+  File m_bootPath;
+
+  protected String getBootPath() throws UnsupportedVMException {
+    if (m_bootPath == null) {
+      File bootPath = new File(getInstallRoot(), "lib");
+      bootPath = new File(bootPath, "dso-boot");
+      bootPath = new File(bootPath, BootJarSignature.getBootJarNameForThisVM());
+      m_bootPath = bootPath;
+    }
+
+    return m_bootPath.getAbsolutePath();
+  }
+
+  protected static String getenv(String key) {
+    try {
+      Method m = System.class.getMethod("getenv", new Class[] { String.class });
+
+      if (m != null) { return (String) m.invoke(null, new Object[] { key }); }
+    } catch (Throwable t) {/**/
+    }
+
+    return null;
+  }
+
+  static File staticGetJavaCmd() {
+    File javaBin = new File(System.getProperty("java.home"), "bin");
+    return new File(javaBin, "java" + (Os.isWindows() ? ".exe" : ""));
+  }
+
+  File m_javaCmd;
+
+  protected File getJavaCmd() {
+    if (m_javaCmd == null) {
+      m_javaCmd = staticGetJavaCmd();
+    }
+
+    return m_javaCmd;
+  }
+
   class WebServerStartupMonitor extends Thread {
-    private Process         process;
-    private int             port;
-    private StartupListener startupListener;
+    private final Process         process;
+    private final int             port;
+    private final StartupListener startupListener;
 
     WebServerStartupMonitor(Process process, int port, StartupListener startupListener) {
       super();
@@ -2472,6 +2514,7 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
       this.startupListener = startupListener;
     }
 
+    @Override
     public void run() {
       while (true) {
         try {
@@ -2542,9 +2585,7 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
 
     Process process;
     try {
-      String[] args = new String[] { getSelectedServerName(), Integer.toString(port) };
-
-      process = invokeScript(WEBSERVER_SHUTDOWN_SCRIPT, args);
+      process = stopJetty(port);
       IOUtils.closeQuietly(process.getOutputStream());
     } catch (Exception e) {
       shutdownListener.processError(e);
@@ -2555,10 +2596,10 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
   }
 
   class WebServerShutdownMonitor extends Thread {
-    private Process          process;
-    private int              port;
-    private ShutdownListener shutdownListener;
-    private boolean          stop;
+    private Process                process;
+    private final int              port;
+    private final ShutdownListener shutdownListener;
+    private boolean                stop;
 
     WebServerShutdownMonitor(int port, ShutdownListener listener) {
       this(null, port, listener);
@@ -2572,6 +2613,7 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
       this.shutdownListener = shutdownListener;
     }
 
+    @Override
     public void run() {
       ProcessWaiter waiter = null;
 
@@ -2713,7 +2755,6 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
     setConfigTabEnabled(false);
     setMonitorTabEnabled(false);
 
-    serversAction.setEnabled(false);
     importAction.setEnabled(false);
     webAppTreeModel.setRefreshEnabled(false);
     webAppTreeModel.setRemoveEnabled(false);
@@ -2740,7 +2781,6 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
         shutdown();
         return;
       } else {
-        serversAction.setEnabled(true);
         importAction.setEnabled(true);
         webAppTreeModel.setRefreshEnabled(true);
         webAppTreeModel.setRemoveEnabled(true);
@@ -2835,10 +2875,12 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
     }
   }
 
+  @Override
   protected Preferences getPreferences() {
     return sessionIntegratorContext.getPrefs().node("SessionIntegratorFrame");
   }
 
+  @Override
   protected void storePreferences() {
     sessionIntegratorContext.storePrefs();
   }

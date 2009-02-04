@@ -4,6 +4,7 @@
  */
 package org.terracotta.dso.properties;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.swt.SWT;
@@ -52,7 +53,9 @@ public final class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
   private void fillControls() {
     TcPlugin plugin = TcPlugin.getDefault();
     IProject project = getProject();
-    m_configPathField.setText(plugin.getConfigurationFilePath(project));
+    IFile configFile = plugin.getConfigurationFile(project);
+    validateConfigFile(configFile);
+    m_configPathField.setText(configFile != null ? configFile.getProjectRelativePath().toString() : "");
     m_serverOptionsField.setText(plugin.getServerOptions(project));
     m_autoStartServerButton.setSelection(plugin.getAutoStartServerOption(project));
     m_warnConfigProblemsButton.setSelection(plugin.getWarnConfigProblemsOption(project));
@@ -88,6 +91,7 @@ public final class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
         dialog.addValueListener(new UpdateEventListener() {
           public void handleUpdate(UpdateEvent event) {
             m_configPathField.setText((String) event.data);
+            validateConfigFile();
           }
         });
         dialog.open();
@@ -156,7 +160,29 @@ public final class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
   }
 
   public boolean performOk() {
-    updateProject();
-    return true;
+    if (validateConfigFile()) {
+      updateProject();
+      return true;
+    } else {
+      getControl().getDisplay().beep();
+      m_configPathField.forceFocus();
+      return false;
+    }
+  }
+
+  private boolean validateConfigFile() {
+    IProject project = getProject();
+    IFile configFile = project.getFile(m_configPathField.getText());
+    return validateConfigFile(configFile);
+  }
+
+  private boolean validateConfigFile(IFile configFile) {
+    if (configFile == null || !configFile.exists()) {
+      setErrorMessage("Config file not found");
+      return false;
+    } else {
+      setErrorMessage(null);
+      return true;
+    }
   }
 }

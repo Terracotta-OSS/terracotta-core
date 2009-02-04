@@ -102,7 +102,7 @@ public class ClasspathProvider extends StandardClasspathProvider {
       "dso-l2-common",
       "dso-statistics",
       "dso-statistics-api",
-      "tim-update-center",
+      "tim-get-tool",
       "dso-spring"};
 
     for (int i = 0; i < dirs.length; i++) {

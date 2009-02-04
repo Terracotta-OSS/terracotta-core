@@ -78,7 +78,9 @@ public class BaseAction extends Action {
           TcPlugin plugin  = TcPlugin.getDefault();
           IProject project = getProject();
           
-          if(plugin.getConfiguration(project) == TcPlugin.BAD_CONFIG) {
+          if(!plugin.validateConfigurationFile(project)) {
+            return;
+          } else if(plugin.getConfiguration(project) == TcPlugin.BAD_CONFIG) {
             Shell  shell = Display.getDefault().getActiveShell();
             String title = "Terracotta Plugin";
             String msg   = "The configuration source is not parsable and cannot be\n used until these errors are resolved.";

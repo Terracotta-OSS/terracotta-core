@@ -72,15 +72,15 @@
   request.
   <p/>
 
-  If you stop both server nodes you must restart at least one of them for the
-  application to work; but for demonstration purposes you can stop both nodes to see that
+  If you stop all three server nodes you must restart at least one of them for the
+  application to work; but for demonstration purposes you can stop all nodes to see that
   the Terracotta Server maintains the state even when no server nodes are running, then
   allows them to resume with the current conversation state as they are restarted.
   <p/>
 
-  You can stop the server nodes individually by issuing the appropriate <code>stop-tomcat</code>
-  command from the <code>spring/samples/webflow</code> directory. For example, <code>./stop-tomcat1.sh</code>
-  (or <code>stop-tomcat1.bat</code> in Windows) will stop the Tomcat server instance from node1.
+  You can stop the server nodes individually by issuing the appropriate <code>stop-jetty</code>
+  command from the <code>spring/samples/webflow</code> directory. For example, <code>./stop-jetty1.sh</code>
+  (or <code>stop-jetty1.bat</code> in Windows) will stop the web server instance from node1.
   <p/>
 
   <c:choose>

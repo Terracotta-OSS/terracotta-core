@@ -60,9 +60,9 @@
 <body onload="startDemo()">
    <h2>Thread Coordination:
       <% if(request.getServerPort()==8081) { %>
-      Tomcat server node 1
+      Web server node 1
       <% } else { %>
-      Tomcat server node 2
+      Web server node 2
       <% } %>
    </h2>
 
@@ -77,35 +77,34 @@
    <div id="counter" style="font-size: 2em; text-align: center;"></div>
    <p/>
 
-	On each Tomcat server, the Spring-managed CounterService bean starts a
+	On each web server, the Spring-managed CounterService bean starts a
 	thread in the afterPropertiesSet() method. Upon startup, that thread
-	tries to acquire a lock (distributed among the Tomcat server nodes by
+	tries to acquire a lock (distributed among the web server nodes by
 	Terracotta for Spring) by using normal Java synchronization
 	and if it succeeds, it increments a distributed counter value every second
 	(shown above).
    <p/>
 
-	For the purposes of this demonstration, the Tomcat
-	server containing this thread is referred to as the <b><i>active</i></b> Tomcat
-	server since it holds the object monitor by synchronizing on it and is
-	actively incrementing the counter, while the other Tomcat server that is
-	waiting to synchronize on the lock is referred to as <b><i>passive</i></b>.
+	For the purposes of this demonstration, the web server containing this
+        thread is referred to as the <b><i>active</i></b> web server since it
+        holds the object monitor by synchronizing on it and is actively incrementing
+        the counter, while the other web server that is waiting to synchronize
+        on the lock is referred to as <b><i>passive</i></b>.
    <p/>
 
-	When you stop the active Tomcat server node, the [distributed] lock that
-   is held	is released and made available to the passive server. It can
-   then acquire the lock (and become the active server) and start incrementing
-   the distributed counter. When you restart the Tomcat server, it becomes the
-   passive server.
+	When you stop the active web server node, the [distributed] lock that
+        is held is released and made available to the passive server. It can
+        then acquire the lock (and become the active server) and start incrementing
+        the distributed counter. When you restart the web server, it becomes the
+        passive server.
    <p/>
 
-   You can stop the Tomcat server nodes individually by issuing the appropriate <code>stop-tomcat</code>
-   command from the <code>samples/spring/coordination</code> directory. For example, <code>./stop-tomcat1.sh</code>
-   (or <code>stop-tomcat1.bat</code> in Windows) will stop the Tomcat server instance from node 1.
+   You can stop the web server nodes individually by issuing the appropriate <code>stop-jetty</code>
+   command from the <code>samples/spring/coordination</code> directory. For example, <code>./stop-jetty1.sh</code>
+   (or <code>stop-jetty1.bat</code> in Windows) will stop the web server instance from node 1.
    <p/>
 
-   By stopping/re-starting the Tomcat servers you can watch them switch between
-   active and passive.
+   By stopping/re-starting the web servers you can watch them switch between active and passive.
    <p/>
 
 	The source code (CounterService.java) for the bean shows this typical synchronization

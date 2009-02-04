@@ -7,18 +7,18 @@
 -->
 
 <project name="Cart" default="deploy" basedir=".">
-	<property name="bundled.server.home" value="${basedir}/../../../vendors/tomcat5.5"/>
+	<property name="bundled.server.home" value="${basedir}/../../../vendors/jetty-6.1.15"/>
 	<condition property="is.live" value="true">
 		<available file="${bundled.server.home}" type="dir"/>
 	</condition>
 	
 	<property environment="env"/>
-	<condition property="webserver.home" value="${bundled.server.home}" else="${env.TOMCAT_HOME}">
+	<condition property="webserver.home" value="${bundled.server.home}" else="${env.JETTY_HOME}">
 		<istrue value="${is.live}"/>
 	</condition>
 	
 	<property name="warfile"     value="Cart.war"/>
-	<property name="servlet.jar" value="${webserver.home}/common/lib/servlet-api.jar"/>
+	<property name="servlet.jar" value="${basedir}/../../../lib/servlet-api-2.4.jar"/>
 	<property name="src.dir"     value="src"/>
 	<property name="web.dir"     value="web"/>
 	<property name="build.dir"   value="classes"/>
@@ -69,15 +69,7 @@
 
 	<target name="deploy.to.sandbox" if="is.live">
 		<property name="sandbox.home" value="${basedir}/../../../tools/sessions/configurator-sandbox"/>
-		<copy file="${dist.dir}/${warfile}" todir="${sandbox.home}/tomcat5.0/9081/webapps"   verbose="true"/>
-		<copy file="${dist.dir}/${warfile}" todir="${sandbox.home}/tomcat5.0/9082/webapps"   verbose="true"/>
-		<copy file="${dist.dir}/${warfile}" todir="${sandbox.home}/tomcat5.5/9081/webapps"   verbose="true"/>
-		<copy file="${dist.dir}/${warfile}" todir="${sandbox.home}/tomcat5.5/9082/webapps"   verbose="true"/>
-		<copy file="${dist.dir}/${warfile}" todir="${sandbox.home}/tomcat6.0/9081/webapps"   verbose="true"/>
-		<copy file="${dist.dir}/${warfile}" todir="${sandbox.home}/tomcat6.0/9082/webapps"   verbose="true"/>
-		<copy file="${dist.dir}/${warfile}" todir="${sandbox.home}/wls8.1/9081/applications" verbose="true"/>
-		<copy file="${dist.dir}/${warfile}" todir="${sandbox.home}/wls8.1/9082/applications" verbose="true"/>
-		<copy file="${dist.dir}/${warfile}" todir="${sandbox.home}/wls9.2/9081/autodeploy"   verbose="true"/>
-		<copy file="${dist.dir}/${warfile}" todir="${sandbox.home}/wls9.2/9082/autodeploy"   verbose="true"/>
+		<copy file="${dist.dir}/${warfile}" todir="${sandbox.home}/jetty6.1/9081/webapps" verbose="true"/>
+		<copy file="${dist.dir}/${warfile}" todir="${sandbox.home}/jetty6.1/9082/webapps" verbose="true"/>
 	</target>
 </project>

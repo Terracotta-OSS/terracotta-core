@@ -50,11 +50,13 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
+import org.eclipse.jface.preference.PreferenceDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.FindReplaceDocumentAdapter;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
+import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
@@ -69,6 +71,7 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.dialogs.PreferencesUtil;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
@@ -130,6 +133,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * The Terracotta plugin. The whole enchilada centers around this singleton. The primary duties of this class are to
@@ -428,6 +432,8 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
   public ILaunch launchServer(IJavaProject javaProject, String projectName, String serverName, Server server,
                               IProgressMonitor monitor) throws CoreException {
     IProject project = javaProject.getProject();
+    if (!validateConfigurationFile(project)) { return null; }
+
     ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
     String id = ID_JAVA_APPLICATION;
     ILaunchConfigurationType type = manager.getLaunchConfigurationType(id);
@@ -1350,6 +1356,59 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     }
 
     return file;
+  }
+
+  public boolean validateConfigurationFile(final IProject project) {
+    final AtomicBoolean result = new AtomicBoolean(true);
+    IFile configFile = getConfigurationFile(project);
+    if (configFile == null) {
+      setConfigurationFilePath(project, TcPlugin.DEFAULT_CONFIG_FILENAME);
+      configFile = getConfigurationFile(project);
+    }
+    if (!configFile.exists()) {
+      final Display display = Display.getDefault();
+      display.syncExec(new Runnable() {
+        public void run() {
+          try {
+            if (!project.isSynchronized(IResource.DEPTH_INFINITE)) {
+              project.refreshLocal(IResource.DEPTH_INFINITE, null);
+            }
+          } catch (CoreException ce) {
+            /**/
+          }
+          Shell shell = TcPlugin.getActiveWorkbenchShell();
+          String pageId = "org.terracotta.dso.ui.propertyPages.PropertyPage";
+          IJavaProject javaProject = JavaCore.create(project);
+          PreferenceDialog prefDialog = PreferencesUtil.createPropertyDialogOn(shell, javaProject, pageId, null, null);
+          result.set(prefDialog.open() == Window.OK);
+        }
+      });
+    }
+    final String markerType = "org.terracotta.dso.ConfigFileNotFoundMarker";
+    if (result.get()) {
+      try {
+        project.deleteMarkers(markerType, false, IResource.DEPTH_ZERO);
+      } catch (CoreException ce) {
+        /**/
+      }
+    } else {
+      final HashMap<String, Object> map = new HashMap<String, Object>();
+      MarkerUtilities.setMessage(map, "Config file not found");
+      map.put(IMarker.PRIORITY, Integer.valueOf(IMarker.PRIORITY_HIGH));
+      map.put(IMarker.SEVERITY, Integer.valueOf(IMarker.SEVERITY_ERROR));
+      map.put(IMarker.LOCATION, configFile.getFullPath().toString());
+      final Display display = Display.getDefault();
+      display.syncExec(new Runnable() {
+        public void run() {
+          try {
+            MarkerUtilities.createMarker(project, map, markerType);
+          } catch (CoreException ce) {
+            openError("Problem creating marker '" + markerType + "'", ce);
+          }
+        }
+      });
+    }
+    return result.get();
   }
 
   public void setServerOptions(IProject project, String opts) {

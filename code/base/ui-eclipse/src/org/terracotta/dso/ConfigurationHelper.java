@@ -42,6 +42,7 @@ import org.terracotta.dso.editors.ConfigurationEditor;
 
 import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.aspectwerkz.reflect.MethodInfo;
+import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.tc.object.NonInstrumentedClasses;
 import com.terracottatech.config.AdditionalBootJarClasses;
 import com.terracottatech.config.Application;
@@ -3915,7 +3916,7 @@ public class ConfigurationHelper {
           reportConfigProblem(repo, "File URLs have been deprecated - use file path instead",
                               MODULE_REPO_PROBLEM_MARKER);
         } else {
-          File file = new File(repo);
+          File file = new File(ParameterSubstituter.substitute(repo));
           if (!file.exists()) {
             reportConfigProblem(repo, "Repository does not exist", MODULE_REPO_PROBLEM_MARKER);
           } else if (!file.isDirectory()) {

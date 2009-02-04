@@ -24,6 +24,9 @@
   <clients>
     <logs>terracotta/client-logs/spring/events/%D</logs>
     <statistics>terracotta/client-statistics/spring/events/%D</statistics>
+    <modules>
+      <module name="tim-jetty-6.1" version="@tim.version@" />
+    </modules>
   </clients>
 
   <application>

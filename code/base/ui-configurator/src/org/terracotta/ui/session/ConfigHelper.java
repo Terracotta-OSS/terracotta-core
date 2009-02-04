@@ -10,7 +10,6 @@ import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlObject;
 import org.apache.xmlbeans.XmlOptions;
 import org.terracotta.ui.session.pattern.PatternHelper;
-import org.terracotta.ui.session.servers.ServerSelection;
 
 import com.tc.config.Loader;
 import com.tc.config.schema.migrate.ConfigUpdateException;
@@ -47,43 +46,34 @@ import javax.swing.SwingUtilities;
  */
 
 public class ConfigHelper {
-  private Loader                configLoader;
-  private XmlOptions            xmlOptions;
-  private File                  configFile;
-  private TcConfig              config;
-  private PropertyChangeSupport propertyChangeSupport;
+  private final Loader                configLoader;
+  private final XmlOptions            xmlOptions;
+  private final File                  configFile;
+  private TcConfig                    config;
+  private final PropertyChangeSupport propertyChangeSupport;
 
-  private static final String   TC_INSTALL_DIR       = SessionIntegratorFrame.getTCInstallDir();
+  private static final String         TC_INSTALL_DIR       = SessionIntegratorFrame.getTCInstallDir();
 
-  private static final String   TOMCAT_SANDBOX       = SessionIntegratorFrame.getSandBoxRoot();
+  private static final String         SANDBOX              = SessionIntegratorFrame.getSandBoxRoot();
 
-  private static final String   FS                   = System.getProperty("file.separator");
+  private static final String         FS                   = System.getProperty("file.separator");
 
-  private static final String   CUSTOM_BOOT_JAR_PATH = TC_INSTALL_DIR + FS + "lib" + FS + "dso-boot" + FS
-                                                       + getBootJarNameForThisVM();
+  private static final String         CUSTOM_BOOT_JAR_PATH = TC_INSTALL_DIR + FS + "lib" + FS + "dso-boot" + FS
+                                                             + getBootJarNameForThisVM();
 
-  private static final int      DEFAULT_JMX_PORT     = 9520;
+  private static final int            DEFAULT_JMX_PORT     = 9520;
 
-  public static final String    PROP_CONFIG          = "Config";
+  public static final String          PROP_CONFIG          = "Config";
 
-  public static final TcConfig  BAD_CONFIG           = TcConfig.Factory.newInstance();
+  public static final TcConfig        BAD_CONFIG           = TcConfig.Factory.newInstance();
 
   public ConfigHelper() {
     super();
-    init();
-  }
-
-  public ConfigHelper(ServerSelection selection) {
-    super();
-    init();
+    propertyChangeSupport = new PropertyChangeSupport(this);
     configLoader = new Loader();
     xmlOptions = createXmlOptions();
-    configFile = new File(TOMCAT_SANDBOX + FS + selection.getSelectedServer().getName() + FS + "tc-config.xml");
+    configFile = new File(SANDBOX + FS + "jetty6.1" + FS + "tc-config.xml");
     testUpdateConfig();
-  }
-
-  private void init() {
-    propertyChangeSupport = new PropertyChangeSupport(this);
   }
 
   public synchronized void addPropertyChangeListener(PropertyChangeListener listener) {

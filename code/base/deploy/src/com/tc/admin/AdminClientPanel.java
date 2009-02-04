@@ -98,7 +98,7 @@ import javax.swing.undo.UndoManager;
 import javax.swing.undo.UndoableEdit;
 
 public class AdminClientPanel extends XContainer implements AdminClientController, PropertyChangeListener {
-  private IAdminClientContext          adminClientContext;
+  private final IAdminClientContext    adminClientContext;
   protected NavTree                    tree;
   protected XContainer                 nodeView;
   protected ClusterNode                selectedClusterNode;
@@ -734,7 +734,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     UpdateCheckerAction() {
       super(adminClientContext.getMessage("update-checker.action.label"));
 
-      if (isEnabled()) {
+      if (isEnabled() && updateCheckerControlAction.isUpdateCheckEnabled()) {
         AdminClientPanel.this.addHierarchyListener(new HierarchyListener() {
           public void hierarchyChanged(HierarchyEvent e) {
             if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0
@@ -809,6 +809,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
 
     void startUpdateCheck() {
       Thread t = new Thread() {
+        @Override
         public void run() {
           InputStream is = null;
           Object result = null;
@@ -973,6 +974,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       }
     }
 
+    @Override
     public boolean isEnabled() {
       return getUndoManager().canUndo();
     }
@@ -989,6 +991,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       }
     }
 
+    @Override
     public boolean isEnabled() {
       return getUndoManager().canRedo();
     }
@@ -1004,6 +1007,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     }
   }
 
+  @Override
   public String toString() {
     return getName();
   }
@@ -1052,6 +1056,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       return result;
     }
 
+    @Override
     public String toString() {
       return "[path=" + versionDir.getAbsolutePath() + ", version=" + version.toString() + ", qualifier=" + qualifier
              + "]";

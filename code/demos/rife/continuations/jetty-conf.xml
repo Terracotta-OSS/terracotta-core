@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<!DOCTYPE Configure PUBLIC "-//Mort Bay Consulting//DTD Configure//EN" "http://jetty.mortbay.org/configure.dtd">
+
+
+<Configure id="Server" class="org.mortbay.jetty.Server">
+
+    <Set name="Connectors">
+      <Array type="org.mortbay.jetty.Connector">
+        <Item>
+          <New class="org.mortbay.jetty.nio.SelectChannelConnector">
+            <Set name="port"><SystemProperty name="jetty.port" default="8080"/></Set>
+          </New>
+        </Item>
+      </Array>
+    </Set>
+
+    <Set name="handler">
+      <New class="org.mortbay.jetty.webapp.WebAppContext">
+        <Set name="contextPath">/continuations</Set>
+        <Set name="war"><SystemProperty name="webflow.dir" default="."/>/target/continuations.war</Set>
+      </New>
+    </Set>
+    
+</Configure>

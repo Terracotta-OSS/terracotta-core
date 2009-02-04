@@ -51,7 +51,7 @@
   	invocation history.
     <p/>
       
-    You can also switch to the Tomcat server node in port <a href="http://<%= request.getServerName() %>:<%= request.getServerPort() == 8081 ? 8082 : 8081 %>/jmx"><%= request.getServerPort() == 8081 ? 8082 : 8081 %></a> 
+    You can also switch to the web server node listening on port <a href="http://<%= request.getServerName() %>:<%= request.getServerPort() == 8081 ? 8082 : 8081 %>/jmx"><%= request.getServerPort() == 8081 ? 8082 : 8081 %></a> 
     and increment the <code>Clustered Counter</code> value from there.
     <p/>
 

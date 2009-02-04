@@ -35,7 +35,7 @@
   </script>
   </head>
   <body onload="startDemo()">
-    <h2>Events (you are on currently on Tomcat server node <%= request.getServerPort() == 8081 ? "1" : "2" %>)</h2>
+    <h2>Events (you are on currently on web server node <%= request.getServerPort() == 8081 ? "1" : "2" %>)</h2>
 
     <div id="errmsg0" align="center" style="color:red; background-color:yellow; border:2px solid brown; font-size:12pt; padding:5px; display:;">
        You need to have JavaScript enabled.
@@ -48,7 +48,7 @@
 
   	Send a Message (see message history below):
   	<form onsubmit="return validateForm()" method="post" action="<c:url value="/message.html"/>">
-  		<input type="hidden" name="sender" value="Tomcat server node <%= request.getServerPort() == 8081 ? "1" : "2" %>"/>
+  		<input type="hidden" name="sender" value="Web server node <%= request.getServerPort() == 8081 ? "1" : "2" %>"/>
   		<input type="text" size="40" name="message" id="message"/>
   		<input type="submit" name="submit" value="Submit"/ -->
   	</form>
@@ -65,7 +65,7 @@
   	
   	Once you start to create a message history by using the form below, you can click 
   	<a href="http://<%= request.getServerName() %>:<%= request.getServerPort() == 8081 ? 8082 : 8081 %>/events/index.html">here</a>
-  	to switch to the other Tomcat server node to verify that the events were published there, too.
+  	to switch to the other web server node to verify that the events were published there, too.
   	<p/>
   	  
   	Click <a href="<c:url value="/index.html"/>">here</a> to refresh this page.
@@ -78,7 +78,7 @@
 
     <h3>Message History</h3>
   	<c:if test="${empty events}">
-  		No messages have been sent yet on any Tomcat server nodes.
+  		No messages have been sent yet on any web server nodes.
   	</c:if>
   	<c:if test="${! empty events}">
       <table border="1" cellpadding="2" cellspacing="0" width="100%" style="border-collapse:collapse">

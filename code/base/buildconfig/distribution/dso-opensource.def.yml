@@ -35,8 +35,8 @@ bundled_demos:
         - tasklist
         - townsend
 bundled_vendors:
-   - tomcat-5.5.20:
-       install_directory: vendors/tomcat5.5
+   - jetty-6.1.15.rc3:
+       install_directory: vendors/jetty-6.1.15
 bundled_components:
   - base:
       documentations:
@@ -146,13 +146,19 @@ postscripts:
       args:
         - tim-apache-struts-1.1
         - tim-rife-1.6.0
+        - tim-jetty-6.1
   - inject-forge-tims:
       args:
         - tims: 
             - tim-apache-struts-1.1
             - tim-rife-1.6.0
+            - tim-jetty-6.1
         - dest: 
             - samples/rife
+            - samples/spring/events
+            - samples/spring/jmx
+            - samples/spring/coordination
+            - samples/spring/webflow
             - tools/sessions/configurator-sandbox
   - delete-tim-get-index
   - include-schemas:

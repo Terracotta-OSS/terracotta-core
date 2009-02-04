@@ -17,7 +17,7 @@
 <!-- - - - - - - - - - - - - - - -->
 <html>
 <head>
-    <title>Terracotta for Spring &bull; Web Flow (Tomcat server node <%= node %>)</title>
+    <title>Terracotta for Spring &bull; Web Flow (web server node <%= node %>)</title>
     <link rel="shortcut icon" type="image/ico" href="http://www.terracotta.org/favicon.ico">
     <style>
         body  { width: 620px; font-size: 85%; font-family: trebuchet ms, sans-serif; margin: 20px 40px; }
@@ -25,7 +25,7 @@
     </style>
 </head>
 <body>
-  <h2>Spring Web Flow: (you are on Tomcat server node <%= node %>)</h2>
+  <h2>Spring Web Flow: (you are on web server node <%= node %>)</h2>
   Since you've completed the survey, the Spring Webflow conversation is effectively over.
   <p/>
   The "Back" and "Forward" button actions of your browser will no longer yield to previous

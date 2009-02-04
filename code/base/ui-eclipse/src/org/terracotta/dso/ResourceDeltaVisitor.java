@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package org.terracotta.dso;
 
@@ -41,10 +42,9 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Invoked when a project resource change occurs.  First test to see if
- * the config file content changed and, if so, clear the config session
- * information.  Next check if a module has been compiled and, if so, inspect
- * the module for terracotta artifacts.
+ * Invoked when a project resource change occurs. First test to see if the config file content changed and, if so, clear
+ * the config session information. Next check if a module has been compiled and, if so, inspect the module for
+ * terracotta artifacts.
  * 
  * @see org.eclipse.core.resources.IResourceDeltaVisitor
  * @see org.eclipse.ui.IWorkbench.addResourceChangeListener
@@ -145,11 +145,7 @@ public class ResourceDeltaVisitor implements IResourceDeltaVisitor {
             plugin.fileMoved((IFile) res, delta.getMovedFromPath());
           }
         } else if (res instanceof IProject) {
-          IProject aProject = (IProject) res;
-
-          if (plugin.getConfigurationFile(aProject) == null) {
-            plugin.staleProjectAdded(aProject);
-          }
+          plugin.validateConfigurationFile(project);
         }
         break;
       }
@@ -224,19 +220,20 @@ public class ResourceDeltaVisitor implements IResourceDeltaVisitor {
                 try {
                   ILaunch launch = iter.next();
                   Server server = TcPlugin.getDefault().getLaunchedServer(project, launch);
-                  if(server != null) {
+                  if (server != null) {
                     ManageServerAction msa = new ManageServerAction(JavaCore.create(project), server);
                     msa.run(monitor);
                   } else {
                     final String launchName = launch.getLaunchConfiguration().getName();
                     display.syncExec(new Runnable() {
                       public void run() {
-                        String msg = "Unable to locate config element for server '"+launchName+".'  Cancelling client restart.";
+                        String msg = "Unable to locate config element for server '" + launchName
+                                     + ".'  Cancelling client restart.";
                         MessageDialog.openInformation(shell, "Terracotta", msg);
                       }
                     });
                     return Status.OK_STATUS;
-                 }
+                  }
                 } catch (Exception e) {
                   e.printStackTrace();
                 }
