@@ -82,11 +82,6 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
           shortcut = shortcut.dup
           windows = shortcut.delete('windows')
           unix = shortcut.delete('unix')
-          current_platform = if platform == 'windows'
-                               windows
-                             else
-                               unix
-                             end
 
           out.puts("  <shortcut")
           shortcut.merge(platform == 'windows' ? windows : unix).each do |key, value|

@@ -63,12 +63,16 @@ class StaticResources
     FilePath.new(source_root(flavor), 'buildconfig', 'distribution')
   end
 
+  def izpack_resources_directory
+    FilePath.new(@root_directory, 'buildconfig', 'izpack')
+  end
+
   def izpack_installer_template
-    FilePath.new(@root_directory, 'buildconfig', 'izpack-installer.template')
+    FilePath.new(izpack_resources_directory, 'izpack-installer-template.xml')
   end
 
   def izpack_shortcuts_template
-    FilePath.new(@root_directory, 'buildconfig', 'izpack-shortcuts.def.yml')
+    FilePath.new(izpack_resources_directory, 'izpack-shortcuts.def.yml')
   end
 
   def enterprise_modules_file
