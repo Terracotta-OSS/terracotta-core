@@ -22,9 +22,10 @@ public class NIOWorkarounds {
   }
 
   /**
-   * Determine whether this IOException should be ignored on Windows.  Checks 
-   * for an IOException("A non-blocking socket operation could not be completed immediately")
-   * as in http://developer.java.sun.com/developer/bugParade/bugs/4854354.html.
+   * Determine whether this IOException should be ignored on Windows. Checks for an
+   * IOException("A non-blocking socket operation could not be completed immediately") as in
+   * http://developer.java.sun.com/developer/bugParade/bugs/4854354.html.
+   * 
    * @param ioe Exception to check
    * @return True if should be ignored on Windows
    */
@@ -42,10 +43,9 @@ public class NIOWorkarounds {
   }
 
   /**
-   * Workaround bug in Sun VM when select() gets interrupted and throws
-   * IOException("Interrupted system call").
+   * Workaround bug in Sun VM when select() gets interrupted and throws IOException("Interrupted system call"). See Sun
+   * bug 4504001 (http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4504001)
    * 
-   * See Sun bug 4504001 (http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4504001)
    * @param ioe Exception to examine
    * @return True if exception should be ignored on Linux
    */
@@ -59,12 +59,9 @@ public class NIOWorkarounds {
   }
 
   /**
-   * Force use of poll based NIO selector on Solaris 10 to work around 
-   * Sun bug 6322825.  This is done by setting the System property 
-   * java.nio.channels.spi.SelectorProvider to "sun.nio.ch.PollSelectorProvider".  
-   * The workaround is only applied on Solaris 10, JDK < 1.6.  
-   * 
-   * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6322825
+   * Force use of poll based NIO selector on Solaris 10 to work around Sun bug 6322825. This is done by setting the
+   * System property java.nio.channels.spi.SelectorProvider to "sun.nio.ch.PollSelectorProvider". The workaround is only
+   * applied on Solaris 10, JDK < 1.6. See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6322825
    */
   public static void solaris10Workaround() {
     boolean workaround = solaris10Workaround(System.getProperties());
@@ -81,9 +78,9 @@ public class NIOWorkarounds {
   }
 
   /**
-   * Determine whether the Solaris 10 workaround should be applied.
-   * see LKC-2436 and http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6322825
-   *
+   * Determine whether the Solaris 10 workaround should be applied. see LKC-2436 and
+   * http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6322825
+   * 
    * @return true if the workaround should be applied
    */
   static boolean solaris10Workaround(Properties props) {
@@ -110,8 +107,9 @@ public class NIOWorkarounds {
   }
 
   /**
-   * Determine whether the NPE should be ignored due to bug 6427854.  
-   * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6427854
+   * Determine whether the NPE should be ignored due to bug 6427854. See
+   * http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6427854
+   * 
    * @param npe Exception to examine
    * @return True if exception should be ignored
    */
@@ -123,6 +121,7 @@ public class NIOWorkarounds {
 
   /**
    * Apply Solaris 10 workaround if applicable.
+   * 
    * @param args Ignored
    */
   public static void main(String args[]) {
@@ -130,13 +129,16 @@ public class NIOWorkarounds {
   }
 
   /**
-   * Determine whether to retry during connect on Windows 
+   * Determine whether to retry during connect
+   * 
    * @param cse Exception to examine
    * @return True if should retry
    */
-  public static boolean windowsConnectWorkaround(ClosedSelectorException cse) {
-    // see DEV-671
-    if (!Os.isWindows()) { return false; }
+  public static boolean connectWorkaround(ClosedSelectorException cse) {
+    // see DEV-671, DEV-2337
+
+    // it isn't 100% sure, but this sun bug looks like it is the culprit requiring this workaround:
+    // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6645197
 
     StackTraceElement[] stackTrace = cse.getStackTrace();
     if (stackTrace.length < 3) { return false; }

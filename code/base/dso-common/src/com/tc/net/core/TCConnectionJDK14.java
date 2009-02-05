@@ -42,7 +42,7 @@ import java.util.List;
 
 /**
  * JDK14 (nio) implementation of TCConnection
- *
+ * 
  * @author teck
  */
 final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJDK14ChannelWriter {
@@ -135,7 +135,7 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
         commNIOServiceThread.cleanupChannel(newSocket, null);
         throw new TCTimeoutException("Timeout of " + timeout + "ms occured connecting to " + addr, ste);
       } catch (ClosedSelectorException cse) {
-        if (NIOWorkarounds.windowsConnectWorkaround(cse)) {
+        if (NIOWorkarounds.connectWorkaround(cse)) {
           logger.warn("Retrying connect to " + addr + ", attempt " + i);
           ThreadUtil.reallySleep(500);
           continue;
@@ -195,8 +195,8 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     try {
       // Do the read in a loop, instead of calling read(ByteBuffer[]).
       // This seems to avoid memory leaks on sun's 1.4.2 JDK
-      for (int i = 0, n = readBuffers.length; i < n; i++) {
-        ByteBuffer buf = extractNioBuffer(readBuffers[i]);
+      for (TCByteBuffer readBuffer : readBuffers) {
+        ByteBuffer buf = extractNioBuffer(readBuffer);
 
         if (buf.hasRemaining()) {
           final int read = sbc.read(buf);
@@ -260,8 +260,7 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     }
 
     int contextsToRemove = 0;
-    for (int index = 0, n = contextsToWrite.length; index < n; index++) {
-      final WriteContext context = contextsToWrite[index];
+    for (final WriteContext context : contextsToWrite) {
       final ByteBuffer[] buffers = context.clonedData;
 
       long bytesWritten = 0;
@@ -320,8 +319,8 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
 
   static private long bytesRemaining(ByteBuffer[] buffers) {
     long rv = 0;
-    for (int i = 0, n = buffers.length; i < n; i++) {
-      rv += buffers[i].remaining();
+    for (ByteBuffer buffer : buffers) {
+      rv += buffer.remaining();
     }
     return rv;
   }
@@ -434,6 +433,7 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     return connected.get();
   }
 
+  @Override
   public final String toString() {
     StringBuffer buf = new StringBuffer();
 
