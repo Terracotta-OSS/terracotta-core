@@ -56,15 +56,17 @@ public class ManagedObjectFaultHandler extends AbstractEventHandler {
     long t0 = System.nanoTime();
     ManagedObject mo = this.objectStore.getObjectByID(oid);
     long t1 = System.nanoTime();
-    String className = getClassName(mo);
     this.objectManager.addFaultedObject(oid, mo, mfc.isRemoveOnRelease());
     long t2 = System.nanoTime();
     if (LOG_OBJECT_FAULT) {
       // TODO:: Now that this is promoted into an SRA, this should be on all the time. Once SampledCounter is updated to
-      // use CAS change this to always sample faults and deprecate the TC property
+      // use CAS change this to always sample faults and depreciate the TC property
       logStats(t1 - t0, t2 - t1);
     }
     if (this.objectStatsRecorder.getFaultDebug()) {
+      // XXX:: We are accessing ManagedObject after checking it back into ObjectManager. Its is OK to get ClassName
+      // since it wont change but not a good idea to inspect any other state.
+      String className = getClassName(mo);
       updateStats(className);
     }
   }
