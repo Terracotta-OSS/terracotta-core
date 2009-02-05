@@ -1009,8 +1009,6 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     clients.setLogs("terracotta/client-logs");
     clients.setStatistics("terracotta/client-statistics/%D");
 
-    servers.addNewUpdateCheck().setEnabled(true);
-
     return doc;
   }
 

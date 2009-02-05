@@ -11,9 +11,6 @@
        default port (9510).-->
   <servers>
     <server host="%i" name="sample"/>
-    <update-check>
-      <enabled>true</enabled>
-    </update-check>
   </servers>
   
   <!-- Configure DSO for 'development' mode;
