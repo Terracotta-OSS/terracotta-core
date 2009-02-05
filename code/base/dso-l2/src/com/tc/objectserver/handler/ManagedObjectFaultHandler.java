@@ -13,6 +13,7 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.context.ManagedObjectFaultingContext;
 import com.tc.objectserver.core.api.ManagedObject;
+import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
@@ -48,45 +49,54 @@ public class ManagedObjectFaultHandler extends AbstractEventHandler {
     this.faultsCounter = new AtomicLong();
   }
 
+  @Override
   public void handleEvent(EventContext context) {
     ManagedObjectFaultingContext mfc = (ManagedObjectFaultingContext) context;
     ObjectID oid = mfc.getId();
     long t0 = System.nanoTime();
-    ManagedObject mo = objectStore.getObjectByID(oid);
+    ManagedObject mo = this.objectStore.getObjectByID(oid);
     long t1 = System.nanoTime();
-    objectManager.addFaultedObject(oid, mo, mfc.isRemoveOnRelease());
+    String className = getClassName(mo);
+    this.objectManager.addFaultedObject(oid, mo, mfc.isRemoveOnRelease());
     long t2 = System.nanoTime();
     if (LOG_OBJECT_FAULT) {
       // TODO:: Now that this is promoted into an SRA, this should be on all the time. Once SampledCounter is updated to
       // use CAS change this to always sample faults and deprecate the TC property
       logStats(t1 - t0, t2 - t1);
     }
-    if (objectStatsRecorder.getFaultDebug()) {
-      updateStats(mo);
+    if (this.objectStatsRecorder.getFaultDebug()) {
+      updateStats(className);
     }
   }
 
-  private void updateStats(ManagedObject mo) {
-    String className = mo.getManagedObjectState().getClassName();
-    if (className == null) className = "UNKNOWN"; // Could happen on restart scenario
-    objectStatsRecorder.updateFaultStats(className);
+  private String getClassName(ManagedObject mo) {
+    if (mo != null) {
+      ManagedObjectState state = mo.getManagedObjectState();
+      if (state != null) { return state.getClassName(); }
+    }
+    return "UNKNOWN";
+  }
+
+  private void updateStats(String className) {
+    this.objectStatsRecorder.updateFaultStats(className);
   }
 
   private void logStats(long time2Fault, long time2Add) {
-    faultFromDisk.increment();
-    time2FaultFromDisk.increment(time2Fault);
-    time2Add2ObjMgr.increment(time2Add);
-    long count = faultsCounter.incrementAndGet();
+    this.faultFromDisk.increment();
+    this.time2FaultFromDisk.increment(time2Fault);
+    this.time2Add2ObjMgr.increment(time2Add);
+    long count = this.faultsCounter.incrementAndGet();
     if (count % 1000 == 0) {
       logger.info("Number of Objects faulted from disk = " + count);
     }
   }
 
+  @Override
   public void initialize(ConfigurationContext context) {
     super.initialize(context);
     ServerConfigurationContext oscc = (ServerConfigurationContext) context;
-    objectManager = oscc.getObjectManager();
-    objectStore = oscc.getObjectStore();
+    this.objectManager = oscc.getObjectManager();
+    this.objectStore = oscc.getObjectStore();
   }
 
 }
