@@ -134,8 +134,8 @@ packaging:
   - zip:
       assert: '!@build_environment.has_installanywhere && (@build_environment.os_type =~ /^\s*windows\s*$/i)'
   - izpack
-  - installanywhere:
-      assert: '@build_environment.has_installanywhere && (@build_environment.os_type =~ /^\s*windows\s*$/i)'
+#  - installanywhere:
+#      assert: '@build_environment.has_installanywhere && (@build_environment.os_type =~ /^\s*windows\s*$/i)'
 postscripts:
   - fix-bin-perms
   - inject-copyright
