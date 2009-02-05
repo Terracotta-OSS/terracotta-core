@@ -8,6 +8,7 @@ import com.tc.asm.Type;
 import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
+import com.tc.client.AbstractClientFactory;
 import com.tc.cluster.Cluster;
 import com.tc.cluster.ClusterEventListener;
 import com.tc.config.lock.LockContextInfo;
@@ -46,7 +47,6 @@ import com.tc.util.Util;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.runtime.Vm;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashMap;
@@ -55,11 +55,7 @@ import java.util.Map;
 
 public class ManagerImpl implements Manager {
   private static final TCLogger                    logger                       = TCLogging.getLogger(Manager.class);
-
   private static final LiteralValues               literals                     = new LiteralValues();
-
-  private static final String                      DISTRIBUTED_OBJECT_CLIENT_EE = "com.tc.object.EnterpriseDistributedObjectClient";
-
   private final SetOnceFlag                        clientStarted                = new SetOnceFlag();
   private final DSOClientConfigHelper              config;
   private final ClassProvider                      classProvider;
@@ -192,14 +188,11 @@ public class ManagerImpl implements Manager {
 
     StartupAction action = new StartupHelper.StartupAction() {
       public void execute() throws Throwable {
-        if (connectionComponents.isActiveActive()) {
-          // TODO::Find a better a way of doing this
-          dso = createDistributeObjectClientForEE(config, group, classProvider, connectionComponents, ManagerImpl.this,
-                                                  cluster, runtimeLogger);
-        } else {
-          dso = new DistributedObjectClient(config, group, classProvider, connectionComponents, ManagerImpl.this,
-                                            cluster, runtimeLogger);
-        }
+        
+        AbstractClientFactory clientFactory = AbstractClientFactory.getFactory();
+        dso = clientFactory.createClient(config, group, classProvider, connectionComponents, ManagerImpl.this, cluster,
+                                         runtimeLogger);
+        
         if (forTests) {
           dso.setCreateDedicatedMBeanServer(true);
         }
@@ -217,28 +210,6 @@ public class ManagerImpl implements Manager {
 
     StartupHelper startupHelper = new StartupHelper(group, action);
     startupHelper.startUp();
-  }
-
-  // NOTE::Using reflection to create EE version, TODO:: find better ways of doing this
-  private DistributedObjectClient createDistributeObjectClientForEE(
-                                                                    DSOClientConfigHelper lconfig,
-                                                                    TCThreadGroup lgroup,
-                                                                    ClassProvider lclassProvider,
-                                                                    PreparedComponentsFromL2Connection lconnectionComponents,
-                                                                    Manager lmanager, Cluster lcluster,
-                                                                    RuntimeLogger lruntimeLogger) {
-    Class classArgs[] = new Class[] { DSOClientConfigHelper.class, TCThreadGroup.class, ClassProvider.class,
-        PreparedComponentsFromL2Connection.class, Manager.class, Cluster.class, RuntimeLogger.class };
-    Object args[] = new Object[] { lconfig, lgroup, lclassProvider, lconnectionComponents, lmanager, lcluster,
-        lruntimeLogger };
-    try {
-      Class c = Class.forName(DISTRIBUTED_OBJECT_CLIENT_EE);
-      Constructor constructor = c.getConstructor(classArgs);
-      return (DistributedObjectClient) constructor.newInstance(args);
-    } catch (Exception e) {
-      logger.error("Unable to instanciate Client with required capabilities", e);
-      throw new AssertionError(e);
-    }
   }
 
   public void stop() {
