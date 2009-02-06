@@ -342,6 +342,7 @@ public class TerracottaSessionManager implements SessionManager {
     session.clearRequest();
     final SessionId id = session.getSessionId();
     final SessionData sd = session.getSessionData();
+    if (!isSessionLockingEnabled()) id.getWriteLock();
     try {
       if (!session.isValid()) store.remove(id);
       else {
@@ -349,9 +350,9 @@ public class TerracottaSessionManager implements SessionManager {
         store.updateTimestampIfNeeded(sd);
       }
     } finally {
-      if (isSessionLockingEnabled()) id.commitLock();
+      id.commitLock();
+      id.commitSessionInvalidatorLock();
     }
-    id.commitSessionInvalidatorLock();
   }
 
   /**

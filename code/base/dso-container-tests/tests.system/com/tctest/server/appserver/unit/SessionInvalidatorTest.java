@@ -82,18 +82,40 @@ public class SessionInvalidatorTest extends AbstractOneServerDeploymentTest {
     Thread.sleep(waitFactor * defaultMaxIdleSeconds * 1000);
     checkCallCount("BindingListener.valueUnbound", 2, wc);
     checkCallCount("SessionListener.sessionDestroyed", 2, wc);
-    
+
     // add some attribute
     checkResponse("OK", "action=set&key=attr1", wc);
     // explicitly invalidate the session...
     checkResponse("OK", "action=invalidate", wc);
     // ... and create a new one..
     checkResponse("OK", "action=isNew", wc);
-    
+
     // ... add some attribute ...
     checkResponse("OK", "action=set&key=attr1", wc);
     // ... again explicitly invalidate and access session, put an attribute in the session
     checkResponse("OK", "action=invalidateAndAccess", wc);
+
+    // check for sessions frequently used longer than session-max idle time
+    // set session max idle time
+    checkResponse("OK", "action=setmax&key=5", wc);
+    // now, put a string into session...
+    checkResponse("OK", "action=set&key=attr1", wc);
+
+    long now = System.currentTimeMillis();
+    // keep running for at least 10 max session idle time..
+    while ((now + 10 * 5 * 1000) > System.currentTimeMillis()) {
+      // make sure we still got the old session
+      System.out.print('.');
+      String actual = request(server0, "action=isOld", wc);
+      assertTimeDirection();
+      assertEquals("OK", actual);
+
+      // ... and the attribute too
+      actual = request(server0, "action=get&key=attr1", wc);
+      assertTimeDirection();
+      assertEquals("attr1=attr1", actual);
+    }
+    System.out.println();
   }
 
   protected void checkResponse(String expected, String params, WebConversation wc) throws Exception {
