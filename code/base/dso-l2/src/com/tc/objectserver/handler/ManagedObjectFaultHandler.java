@@ -60,7 +60,7 @@ public class ManagedObjectFaultHandler extends AbstractEventHandler {
     long t2 = System.nanoTime();
     if (LOG_OBJECT_FAULT) {
       // TODO:: Now that this is promoted into an SRA, this should be on all the time. Once SampledCounter is updated to
-      // use CAS change this to always sample faults and depreciate the TC property
+      // use CAS change this to always sample faults and deprecate the TC property
       logStats(t1 - t0, t2 - t1);
     }
     if (this.objectStatsRecorder.getFaultDebug()) {
