@@ -13,26 +13,28 @@ public interface HaConfig {
    * Returns true if more than 1 ActiveServerGroup's are defined
    */
   boolean isActiveActive();
-  
+
   /**
-   * Returns true if not active-active and ha mode is set to networked-active-passive 
+   * Returns true if not active-active and ha mode is set to networked-active-passive
    */
   boolean isNetworkedActivePassive();
 
   /**
-   * Returns true if not active-active and not networked-active-passive 
+   * Returns true if not active-active and not networked-active-passive
    */
   boolean isDiskedBasedActivePassive();
 
   ServerGroup getActiveCoordinatorGroup();
-  
+
   ServerGroup[] getAllActiveServerGroups();
 
   Node getThisNode();
-  
+
   ServerGroup getThisGroup();
-  
+
   Node[] getThisGroupNodes();
-  
+
   Node[] getAllNodes();
+
+  boolean isActiveCoordinatorGroup();
 }

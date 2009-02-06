@@ -37,7 +37,7 @@ public class HaConfigImpl implements HaConfig {
       this.groups[i] = new ServerGroup(groupsConfig.getActiveServerGroupArray()[i]);
     }
     int coodinatorIndex = ActiveCoordinatorHelper.getCoordinatorGroup(groupsConfig.getActiveServerGroupArray());
-    activeCoordinatorGroup = coodinatorIndex != -1 ? groups[coodinatorIndex] : null;
+    this.activeCoordinatorGroup = coodinatorIndex != -1 ? this.groups[coodinatorIndex] : null;
 
     this.thisGroupNodes = makeThisGroupNodes();
     this.allNodes = makeAllNodes();
@@ -49,7 +49,7 @@ public class HaConfigImpl implements HaConfig {
     for (int i = 0; i < sg.length; i++) {
       if (sg[i].getGroupId() == activeServerGroupForThisL2.getGroupId()) { return sg[i]; }
     }
-    throw new RuntimeException("Unable to find this group information for " + thisNode + " "
+    throw new RuntimeException("Unable to find this group information for " + this.thisNode + " "
                                + activeServerGroupForThisL2);
   }
 
@@ -66,7 +66,7 @@ public class HaConfigImpl implements HaConfig {
   }
 
   public ServerGroup getActiveCoordinatorGroup() {
-    return activeCoordinatorGroup;
+    return this.activeCoordinatorGroup;
   }
 
   public ServerGroup[] getAllActiveServerGroups() {
@@ -74,7 +74,7 @@ public class HaConfigImpl implements HaConfig {
   }
 
   private Node[] makeThisGroupNodes() {
-    ActiveServerGroupConfig asgc = configSetupManager.getActiveServerGroupForThisL2();
+    ActiveServerGroupConfig asgc = this.configSetupManager.getActiveServerGroupForThisL2();
     Assert.assertNotNull(asgc);
     String[] l2Names = asgc.getMembers().getMemberArray();
     Node[] rv = new Node[l2Names.length];
@@ -82,7 +82,7 @@ public class HaConfigImpl implements HaConfig {
     for (int i = 0; i < l2Names.length; i++) {
       NewL2DSOConfig l2;
       try {
-        l2 = configSetupManager.dsoL2ConfigFor(l2Names[i]);
+        l2 = this.configSetupManager.dsoL2ConfigFor(l2Names[i]);
       } catch (ConfigurationSetupException e) {
         throw new RuntimeException("Error getting l2 config for: " + l2Names[i], e);
       }
@@ -98,14 +98,14 @@ public class HaConfigImpl implements HaConfig {
 
   private Set makeAllNodes() {
     Set allClusterNodes = new HashSet();
-    ActiveServerGroupConfig[] asgcs = configSetupManager.activeServerGroupsConfig().getActiveServerGroupArray();
+    ActiveServerGroupConfig[] asgcs = this.configSetupManager.activeServerGroupsConfig().getActiveServerGroupArray();
     for (int j = 0; j < asgcs.length; ++j) {
       ActiveServerGroupConfig asgc = asgcs[j];
       Assert.assertNotNull(asgc);
       String[] l2Names = asgc.getMembers().getMemberArray();
       for (int i = 0; i < l2Names.length; i++) {
         try {
-          NewL2DSOConfig l2 = configSetupManager.dsoL2ConfigFor(l2Names[i]);
+          NewL2DSOConfig l2 = this.configSetupManager.dsoL2ConfigFor(l2Names[i]);
           allClusterNodes.add(makeNode(l2));
         } catch (ConfigurationSetupException e) {
           throw new RuntimeException("Error getting l2 config for: " + l2Names[i], e);
@@ -116,8 +116,8 @@ public class HaConfigImpl implements HaConfig {
   }
 
   public Node[] getAllNodes() {
-    Assert.assertTrue(allNodes.size() > 0);
-    return (Node[]) allNodes.toArray(new Node[allNodes.size()]);
+    Assert.assertTrue(this.allNodes.size() > 0);
+    return (Node[]) this.allNodes.toArray(new Node[this.allNodes.size()]);
   }
 
   // servers and groups were checked in configSetupManger
@@ -134,20 +134,24 @@ public class HaConfigImpl implements HaConfig {
   }
 
   public Node getThisNode() {
-    return thisNode;
+    return this.thisNode;
   }
 
   public ServerGroup getThisGroup() {
-    return thisGroup;
+    return this.thisGroup;
   }
 
   private Node makeThisNode() {
-    NewL2DSOConfig l2 = configSetupManager.dsoL2Config();
+    NewL2DSOConfig l2 = this.configSetupManager.dsoL2Config();
     return makeNode(l2);
   }
 
   private static Node makeNode(NewL2DSOConfig l2) {
     return new Node(l2.host().getString(), l2.listenPort().getInt(), l2.l2GroupPort().getInt(),
                     TCSocketAddress.WILDCARD_IP);
+  }
+
+  public boolean isActiveCoordinatorGroup() {
+    return this.thisGroup == this.activeCoordinatorGroup;
   }
 }
