@@ -34,7 +34,7 @@ import java.util.Map.Entry;
 
 public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
 
-  private static final int LOOP_COUNT   = 10;
+  private static final int LOOP_COUNT   = 20;
   private static final int DEPTH_COUNT  = 5;
   private static final int BREATH_COUNT = 3;
 
