@@ -46,6 +46,10 @@
       <artifactId>linked-child-process</artifactId>
     </dependency>
     <dependency>
+      <groupId>net.sourceforge</groupId>
+      <artifactId>yamlbeans</artifactId>
+    </dependency>    
+    <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
     </dependency>
