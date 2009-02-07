@@ -16,28 +16,13 @@
 			<jmx-port>9520</jmx-port>
 			<data>terracotta/server-data</data>
 			<logs>terracotta/server-logs</logs>
+			<statistics>terracotta/server-stats</statistics>
 		</server>
 	</servers>
 
 	<clients>
 		<logs>terracotta/client-logs</logs>
-		<dso>
-			<debugging>
-				<runtime-logging>
-					<non-portable-dump>true</non-portable-dump>
-					<lock-debug>false</lock-debug>
-					<wait-notify-debug>false</wait-notify-debug>
-					<distributed-method-debug>false</distributed-method-debug>
-					<new-object-debug>false</new-object-debug>
-					<field-change-debug>false</field-change-debug>
-				</runtime-logging>
-				<runtime-output-options>
-					<auto-lock-details>false</auto-lock-details>
-					<caller>false</caller>
-					<full-stack>false</full-stack>
-				</runtime-output-options>
-			</debugging>
-		</dso>
+		<statistics>terracotta/client-stats</statistics>
 	</clients>
 </tc:tc-config>
 

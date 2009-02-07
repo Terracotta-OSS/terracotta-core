@@ -9,6 +9,7 @@
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/junit-3.8.1.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common-api"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/license-common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty-api"/>
 </classpath>

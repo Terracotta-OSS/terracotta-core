@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ivy-module version="2.0">
+  <info organisation="ibiblio" module="license-common"/>
+  <dependencies>    
+  <dependency name="commons-cli" rev="1.1"/>
+	<dependency name="commons-io" rev="1.2"/>
+	<dependency name="commons-logging" rev="1.0.3"/>
+	<dependency name="log4j" rev="1.2.9"/>
+  <dependency name="yamlbeans" rev="0.9.2" org="terracotta"/>
+  <dependency name="miglayout" rev="3.6.3-swing" org="terracotta"/>
+  </dependencies>
+</ivy-module>

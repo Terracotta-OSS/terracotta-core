@@ -132,13 +132,13 @@ import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvictRequest;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvicted;
+import com.tc.statistics.retrieval.actions.SRAHttpSessions;
 import com.tc.statistics.retrieval.actions.SRAL1OutstandingBatches;
 import com.tc.statistics.retrieval.actions.SRAL1PendingBatchesSize;
 import com.tc.statistics.retrieval.actions.SRAL1TransactionSize;
 import com.tc.statistics.retrieval.actions.SRAL1TransactionsPerBatch;
 import com.tc.statistics.retrieval.actions.SRAMemoryUsage;
 import com.tc.statistics.retrieval.actions.SRAMessages;
-import com.tc.statistics.retrieval.actions.SRAHttpSessions;
 import com.tc.statistics.retrieval.actions.SRAStageQueueDepths;
 import com.tc.statistics.retrieval.actions.SRASystemProperties;
 import com.tc.stats.counter.Counter;
@@ -196,7 +196,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   private boolean                                  createDedicatedMBeanServer = false;
   private CounterManager                           counterManager;
   private final ThreadIDMap                        threadIDMap;
-  private final RuntimeLogger runtimeLogger;
+  private final RuntimeLogger                      runtimeLogger;
 
   public DistributedObjectClient(DSOClientConfigHelper config, TCThreadGroup threadGroup, ClassProvider classProvider,
                                  PreparedComponentsFromL2Connection connectionComponents, Manager manager,
@@ -553,8 +553,9 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         CONSOLE_LOGGER.warn("Connection refused from server: " + e);
         ThreadUtil.reallySleep(5000);
       } catch (MaxConnectionsExceededException e) {
-        CONSOLE_LOGGER.warn("Connection refused MAXIMUM CONNECTIONS TO SERVER EXCEEDED: " + e);
-        ThreadUtil.reallySleep(5000);
+        CONSOLE_LOGGER.fatal(e.getMessage());
+        CONSOLE_LOGGER.fatal("This client is now shutdown.");
+        System.exit(1);
       } catch (IOException ioe) {
         CONSOLE_LOGGER.warn("IOException connecting to server: " + serverHost + ":" + serverPort + ". "
                             + ioe.getMessage());

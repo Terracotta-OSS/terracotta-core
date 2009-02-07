@@ -19,7 +19,7 @@ import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.JARBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
-import com.tc.test.server.util.TcConfigBuilder;
+import com.tc.util.TcConfigBuilder;
 import com.tc.util.runtime.Vm;
 import com.tctest.service.DirectoryMonitor;
 import com.tctest.webapp.servlets.JBossSarServlet;

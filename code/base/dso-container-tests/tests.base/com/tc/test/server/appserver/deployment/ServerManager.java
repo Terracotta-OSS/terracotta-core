@@ -11,9 +11,9 @@ import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.AppServerFactory;
 import com.tc.test.server.appserver.AppServerInstallation;
 import com.tc.test.server.util.AppServerUtil;
-import com.tc.test.server.util.TcConfigBuilder;
 import com.tc.util.PortChooser;
 import com.tc.util.TIMUtil;
+import com.tc.util.TcConfigBuilder;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.Vm;
 
@@ -173,7 +173,8 @@ public class ServerManager {
         aCopy.addModule(TIMUtil.GLASSFISH_2_0, TIMUtil.getVersion(TIMUtil.GLASSFISH_2_0));
         break;
       case AppServerInfo.JETTY:
-        // XXX: Can't do this right now. System tests in tim-jetty use this and add their own jetty module to config (resulting in two jetty TIMs being used!)
+        // XXX: Can't do this right now. System tests in tim-jetty use this and add their own jetty module to config
+        // (resulting in two jetty TIMs being used!)
         // aCopy.addModule(TIMUtil.JETTY_6_1, TIMUtil.getVersion(TIMUtil.JETTY_6_1));
         break;
       default:

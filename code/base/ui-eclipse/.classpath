@@ -18,6 +18,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l2-common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-statistics"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-statistics-api"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/license-common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty-api"/>
 </classpath>

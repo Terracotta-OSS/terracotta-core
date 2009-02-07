@@ -6,11 +6,11 @@ package com.tc.config.schema.setup;
 
 import org.apache.xmlbeans.XmlObject;
 
+import com.tc.config.schema.ConfigTCProperties;
+import com.tc.config.schema.ConfigTCPropertiesFromObject;
 import com.tc.config.schema.IllegalConfigurationChangeHandler;
 import com.tc.config.schema.L2ConfigForL1;
 import com.tc.config.schema.L2ConfigForL1Object;
-import com.tc.config.schema.ConfigTCProperties;
-import com.tc.config.schema.ConfigTCPropertiesFromObject;
 import com.tc.config.schema.NewCommonL1Config;
 import com.tc.config.schema.NewCommonL1ConfigObject;
 import com.tc.config.schema.defaults.DefaultValueProvider;
@@ -95,7 +95,7 @@ public class StandardL1TVSConfigurationSetupManager extends BaseTVSConfiguration
     return this.dsoL1Config;
   }
 
-  private void overwriteTcPropertiesFromConfig(){
+  private void overwriteTcPropertiesFromConfig() {
     TCProperties tcProps = TCPropertiesImpl.getProperties();
     tcProps.overwriteTcPropertiesFromConfig(this.configTCProperties.getTcPropertiesArray());
   }

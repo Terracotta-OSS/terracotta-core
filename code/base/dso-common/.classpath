@@ -9,6 +9,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/common-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-statistics-api"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/license-common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/sigarstats"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty-api"/>
 	<classpathentry exported="true" kind="lib" path="lib/tc-l1-reconnect-properties.jar"/>

@@ -13,7 +13,7 @@ import com.tc.test.server.appserver.deployment.AbstractOneServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.JARBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
-import com.tc.test.server.util.TcConfigBuilder;
+import com.tc.util.TcConfigBuilder;
 import com.tctest.externall1.StandardClasspathDummyClass;
 import com.tctest.externall1.StandardLoaderApp;
 import com.tctest.webapp.servlets.StandardLoaderServlet;

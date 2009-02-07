@@ -7,7 +7,7 @@ package com.tctest.server.appserver.unit;
 import com.meterware.httpunit.WebConversation;
 import com.tc.test.server.appserver.deployment.AbstractOneServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
-import com.tc.test.server.util.TcConfigBuilder;
+import com.tc.util.TcConfigBuilder;
 import com.tctest.webapp.servlets.SessionIDFromURLServlet;
 
 import junit.framework.Test;

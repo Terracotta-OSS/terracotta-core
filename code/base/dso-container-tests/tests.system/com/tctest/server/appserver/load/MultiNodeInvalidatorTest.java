@@ -17,7 +17,7 @@ import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.ServerTestSetup;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tc.test.server.appserver.load.LowMemWorkaround;
-import com.tc.test.server.util.TcConfigBuilder;
+import com.tc.util.TcConfigBuilder;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.webapp.listeners.MultiNodeInvalidatorListener;
 import com.tctest.webapp.servlets.MultiNodeInvalidatorSerlvet;
@@ -52,7 +52,6 @@ public class MultiNodeInvalidatorTest extends AbstractDeploymentTest {
   public MultiNodeInvalidatorTest() {
     //
   }
-  
 
   private Deployment makeDeployment() throws Exception {
     DeploymentBuilder builder = makeDeploymentBuilder(CONTEXT + ".war");

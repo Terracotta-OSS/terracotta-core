@@ -21,7 +21,7 @@ import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.ServerTestSetup;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tc.test.server.appserver.load.Node;
-import com.tc.test.server.util.TcConfigBuilder;
+import com.tc.util.TcConfigBuilder;
 import com.tctest.webapp.servlets.CounterServlet;
 
 import java.io.IOException;
@@ -99,27 +99,28 @@ public final class RequestCountTest extends AbstractDeploymentTest {
     final long beanCutoffTime = start + timeout;
 
     StatisticsGatewayMBean statsGateway;
-    while((statsGateway = (StatisticsGatewayMBean)MBeanServerInvocationHandler
+    while ((statsGateway = (StatisticsGatewayMBean) MBeanServerInvocationHandler
         .newProxyInstance(mbs, StatisticsMBeanNames.STATISTICS_GATEWAY, StatisticsGatewayMBean.class, false)) == null) {
       logger.info("Statistics Gateway bean not found yet...");
       if (System.currentTimeMillis() > beanCutoffTime) {
         final String errMsg = "Unable to find Statistics Gateway MBean within " + timeout + "ms";
         logger.error(errMsg);
-        fail(errMsg);        
+        fail(errMsg);
       }
     }
 
     return statsGateway;
   }
-  
-  private static SessionStatisticsMBean[] getSessionStatisticsMBeans(MBeanServerConnection mbs, int nodeCount) throws IOException, MalformedObjectNameException, NullPointerException {
+
+  private static SessionStatisticsMBean[] getSessionStatisticsMBeans(MBeanServerConnection mbs, int nodeCount)
+      throws IOException, MalformedObjectNameException, NullPointerException {
     final long timeout = 60 * 1000;
     final long start = System.currentTimeMillis();
     final long beanCutoffTime = start + timeout;
     final ObjectName beanName = new ObjectName(L1MBeanNames.HTTP_SESSIONS_PUBLIC.getCanonicalName() + ",*");
     Set beanSet = null;
-    for (beanSet = mbs.queryNames(beanName, null); beanSet.size() != nodeCount;
-         beanSet = mbs.queryNames(beanName, null)) {
+    for (beanSet = mbs.queryNames(beanName, null); beanSet.size() != nodeCount; beanSet = mbs
+        .queryNames(beanName, null)) {
       if (!beanSet.isEmpty()) {
         logger.info("Found some session beans but not all:");
         for (final Iterator pos = beanSet.iterator(); pos.hasNext();) {
@@ -157,18 +158,17 @@ public final class RequestCountTest extends AbstractDeploymentTest {
       }
       mbeans[i] = clientMBean;
     }
-    
+
     return mbeans;
   }
-  
+
   private static final SessionStatisticsMBean getClientSessionStatisticsMBean(MBeanServerConnection mbs,
-                                                                              Set sessionStatisticsMBeans, String nodeName)
-  throws IOException {
+                                                                              Set sessionStatisticsMBeans,
+                                                                              String nodeName) throws IOException {
     for (Iterator iter = sessionStatisticsMBeans.iterator(); iter.hasNext();) {
       ObjectName smObjectName = (ObjectName) iter.next();
-      if (nodeName.equals(smObjectName.getKeyProperty(MBeanKeys.MBEAN_NODE_NAME))) {
-        return (SessionStatisticsMBean) TerracottaManagement.findMBean(smObjectName, SessionStatisticsMBean.class, mbs);
-      }
+      if (nodeName.equals(smObjectName.getKeyProperty(MBeanKeys.MBEAN_NODE_NAME))) { return (SessionStatisticsMBean) TerracottaManagement
+          .findMBean(smObjectName, SessionStatisticsMBean.class, mbs); }
     }
     throw new AssertionError("No SessionStatisticsMBean found for " + nodeName);
   }
@@ -187,7 +187,7 @@ public final class RequestCountTest extends AbstractDeploymentTest {
 
     StatisticsGatewayMBean statsGateway = getStatisticGatewayMBean(mbs);
     SessionStatisticsMBean[] sessionMBeans = getSessionStatisticsMBeans(mbs, nodeCount);
-        
+
     for (int i = 0; i < nodeCount; i++) {
       URL mutateUrl = createUrl(ports[i], "");
       URL validateUrl = createUrl(ports[(i + 1) % nodeCount], "read=true");
@@ -210,7 +210,7 @@ public final class RequestCountTest extends AbstractDeploymentTest {
     for (int i = 0; i < nodeCount; i++) {
       nodes[i].validateMBean(sessionMBeans[i]);
     }
-    
+
     for (int i = 0; i < nodeCount; i++) {
       nodes[i].validateSRA(statsGateway, i);
     }
@@ -242,15 +242,15 @@ public final class RequestCountTest extends AbstractDeploymentTest {
 
       System.err.println("MBean : validated value of " + totalRequests + " for client " + validateUrl);
     }
-    
+
     public void validateSRA(StatisticsGatewayMBean statsGateway, int node) {
 
       StatisticData[] data = statsGateway.retrieveStatisticData(SRAHttpSessions.ACTION_NAME);
-      
+
       assertNotNull("StatisticsData array for HTTP Sessions SRA", data);
 
       String agentDifferentiator = "L1/" + node;
-      
+
       int totalRequests = 0;
       for (int i = 0; i < numRequests.length; i++) {
         totalRequests += numRequests[i];
@@ -258,7 +258,8 @@ public final class RequestCountTest extends AbstractDeploymentTest {
 
       int sraRequestCount = -1;
       for (int i = 0; i < data.length; i++) {
-        if (agentDifferentiator.equals(data[i].getAgentDifferentiator()) && SRAHttpSessions.REQUEST.equals(data[i].getName())) {
+        if (agentDifferentiator.equals(data[i].getAgentDifferentiator())
+            && SRAHttpSessions.REQUEST.equals(data[i].getName())) {
           sraRequestCount = ((Long) data[i].getData()).intValue();
           break;
         }
@@ -267,7 +268,7 @@ public final class RequestCountTest extends AbstractDeploymentTest {
       assertTrue("Request count statistic not found", sraRequestCount >= 0);
 
       assertEquals("Request count reported by SRA is incorrect", totalRequests, sraRequestCount);
-      
+
       assertEquals(1, validateUrls.length);
       final URL validateUrl = validateUrls[0];
 

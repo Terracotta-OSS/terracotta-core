@@ -28,6 +28,7 @@
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/knopflerfish-2.0.1-tc-20080108.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/linked-child-process-1.0.2.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/log4j-1.2.9.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/miglayout-3.6.3-swing.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/native-tool-1.0.0-SNAPSHOT.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/servlet-api-2.4.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/slf4j-nop-1.0.2.jar"/>
@@ -38,7 +39,9 @@
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/xml-resolver-1.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/xmlbeans-jsr173_1.0_api.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/xmlpublic-2.1.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/yamlbeans-0.9.2.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common-api"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/license-common"/>
 	<classpathentry exported="true" kind="lib" path="lib.tests.unit/tctest-xmlbeans-generated.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/tcconfig-xmlbeans-generated.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/tcconfigV1.jar"/>

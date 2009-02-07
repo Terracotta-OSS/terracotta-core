@@ -4,10 +4,8 @@
  */
 package com.tc.test.server.appserver;
 
-import com.tc.config.Directories;
 import com.tc.exception.ImplementMe;
 import com.tc.test.AppServerInfo;
-import com.tc.test.TempDirectoryHelper;
 import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.glassfishv1.GlassfishV1AppServerFactory;
 import com.tc.test.server.appserver.glassfishv2.GlassfishV2AppServerFactory;
@@ -22,10 +20,8 @@ import com.tc.test.server.appserver.weblogic10x.Weblogic10xAppServerFactory;
 import com.tc.test.server.appserver.weblogic8x.Weblogic8xAppServerFactory;
 import com.tc.test.server.appserver.weblogic9x.Weblogic9xAppServerFactory;
 import com.tc.util.Assert;
-import com.tc.util.io.TCFileUtils;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Properties;
 
 /**
@@ -34,11 +30,9 @@ import java.util.Properties;
  * creating a working appserver. Never instantiate specific appserver classes explicitly.
  */
 public abstract class AppServerFactory {
-  private boolean licenseIsSet;
 
   protected AppServerFactory(ProtectedKey protectedKey) {
     Assert.assertNotNull(protectedKey);
-    copyLicenseIfAvailable();
   }
 
   public abstract AppServerParameters createParameters(String instanceName, Properties props);
@@ -95,27 +89,6 @@ public abstract class AppServerFactory {
 
     throw new ImplementMe("App server named '" + factoryName + "' with major version " + majorVersion
                           + " is not yet supported.");
-  }
-
-  private final synchronized void copyLicenseIfAvailable() {
-    if (this.licenseIsSet) return;
-
-    try {
-      File licenseFile = new File(Directories.getLicenseLocation(), "license.lic");
-
-      if (!licenseFile.exists()) {
-        this.licenseIsSet = true;
-        return;
-      }
-
-      TempDirectoryHelper helper = new TempDirectoryHelper(getClass());
-      File toDir = helper.getDirectory();
-      File toFile = new File(toDir, licenseFile.getName());
-      TCFileUtils.copyFile(licenseFile, toFile);
-      this.licenseIsSet = true;
-    } catch (IOException ioe) {
-      throw new RuntimeException("Can't set up license file", ioe);
-    }
   }
 
   protected static class ProtectedKey {

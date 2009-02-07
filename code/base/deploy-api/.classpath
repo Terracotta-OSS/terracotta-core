@@ -6,6 +6,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l2-common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-statistics-api"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/license-common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/management-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty-api"/>
 </classpath>

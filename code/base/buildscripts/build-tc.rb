@@ -596,6 +596,7 @@ END
   
   def generate_license
     fail("Only EE branch checkout can be used for license generation") unless @build_environment.is_ee_branch?
+    depends :init, :compile
     build_module_name = 'ent-license-generator'
     subtree_name = 'src'
     build_module = @module_set[build_module_name]
@@ -610,7 +611,7 @@ END
     end
     arguments = all_remaining_arguments
     jvmargs = config_source.as_array('jvmargs') || [ ]
-    do_run_class(jvm, "com.tc.license.StandardTerracottaLicenseGenerator", arguments, jvmargs, subtree)    
+    do_run_class(jvm, "com.tc.license.generator.EnterpriseLicenseGenerator", arguments, jvmargs, subtree)    
   end
 
   # Runs a class, as specified on the command line. Takes one argument, which is the name of the test;

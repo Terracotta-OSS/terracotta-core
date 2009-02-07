@@ -1,0 +1,12 @@
+
+License type = Commercial
+License number = 123
+Licensee = Big ole company
+Product = EX
+Max clients = 4
+Capabilities = roots, sessions
+Expiration date = 2009-02-03
+
+---------------------------- BEGIN SIGNATURE ---------------------------
+DIGITIALLY SIGNED
+---------------------- END TERRACOTTA LICENSE KEY ----------------------

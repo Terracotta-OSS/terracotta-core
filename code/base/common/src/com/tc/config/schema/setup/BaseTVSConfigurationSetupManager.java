@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.setup;
 
@@ -40,14 +41,13 @@ import java.util.Set;
  * A base class for all TVS configuration setup managers.
  */
 public class BaseTVSConfigurationSetupManager {
-
   private final MutableBeanRepository             clientBeanRepository;
   private final MutableBeanRepository             serversBeanRepository;
   private final MutableBeanRepository             systemBeanRepository;
   private final MutableBeanRepository             tcPropertiesRepository;
   private final ApplicationsRepository            applicationsRepository;
 
-  protected final DefaultValueProvider              defaultValueProvider;
+  protected final DefaultValueProvider            defaultValueProvider;
   private final XmlObjectComparator               xmlObjectComparator;
   private final IllegalConfigurationChangeHandler illegalConfigurationChangeHandler;
 
@@ -90,7 +90,7 @@ public class BaseTVSConfigurationSetupManager {
   protected final MutableBeanRepository tcPropertiesRepository() {
     return this.tcPropertiesRepository;
   }
-  
+
   protected final ApplicationsRepository applicationsRepository() {
     return this.applicationsRepository;
   }
@@ -100,12 +100,9 @@ public class BaseTVSConfigurationSetupManager {
   }
 
   protected final void runConfigurationCreator(ConfigurationCreator configurationCreator)
-    throws ConfigurationSetupException
-  {
-    configurationCreator.createConfigurationIntoRepositories(clientBeanRepository,
-                                                             serversBeanRepository,
-                                                             systemBeanRepository,
-                                                             tcPropertiesRepository,
+      throws ConfigurationSetupException {
+    configurationCreator.createConfigurationIntoRepositories(clientBeanRepository, serversBeanRepository,
+                                                             systemBeanRepository, tcPropertiesRepository,
                                                              applicationsRepository);
   }
 
@@ -167,5 +164,4 @@ public class BaseTVSConfigurationSetupManager {
       }
     }), null));
   }
-
 }

@@ -21,7 +21,6 @@ import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
-import com.tc.capabilities.AbstractCapabilitiesFactory;
 import com.tc.config.Directories;
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.ActiveServerGroupsConfig;
@@ -38,6 +37,7 @@ import com.tc.lang.StartupHelper;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.lang.StartupHelper.StartupAction;
+import com.tc.license.AbstractLicenseResolverFactory;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -105,7 +105,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   private final L2State                        state                                        = new L2State();
 
   private final L2TVSConfigurationSetupManager configurationSetupManager;
-  private final ConnectionPolicy               connectionPolicy;
+  protected final ConnectionPolicy             connectionPolicy;
 
   /**
    * This should only be used for tests.
@@ -174,7 +174,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   public String getDescriptionOfCapabilities() {
-    return AbstractCapabilitiesFactory.getCapabilitiesManager().describe();
+    return AbstractLicenseResolverFactory.getCapabilities().toString();
   }
 
   /**
@@ -433,10 +433,10 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   protected DistributedObjectServer createDistributedObjectServer(L2TVSConfigurationSetupManager configSetupManager,
-                                                                ConnectionPolicy policy, Sink httpSink,
-                                                                TCServerInfo serverInfo,
-                                                                ObjectStatsRecorder objectStatsRecorder,
-                                                                L2State l2State, TCServerImpl serverImpl) {
+                                                                  ConnectionPolicy policy, Sink httpSink,
+                                                                  TCServerInfo serverInfo,
+                                                                  ObjectStatsRecorder objectStatsRecorder,
+                                                                  L2State l2State, TCServerImpl serverImpl) {
     return new DistributedObjectServer(configSetupManager, getThreadGroup(), policy, httpSink, serverInfo,
                                        objectStatsRecorder, l2State, this);
   }

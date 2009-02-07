@@ -8,7 +8,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.tc.test.server.appserver.StandardAppServerParameters;
-import com.tc.test.server.util.TcConfigBuilder;
+import com.tc.util.TcConfigBuilder;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -38,7 +38,7 @@ public abstract class AbstractOneServerDeploymentTest extends AbstractDeployment
     protected OneServerTestSetup(Class testClass, String context) {
       this(testClass, new TcConfigBuilder(), context);
     }
-    
+
     protected OneServerTestSetup(Class testClass, String tcConfigFile, String context) {
       this(testClass, new TcConfigBuilder(tcConfigFile), context);
     }
@@ -49,7 +49,7 @@ public abstract class AbstractOneServerDeploymentTest extends AbstractDeployment
       this.context = context;
       this.tcConfigBuilder = configBuilder;
     }
-    
+
     protected void setStart(boolean start) {
       this.start = start;
     }
@@ -108,7 +108,7 @@ public abstract class AbstractOneServerDeploymentTest extends AbstractDeployment
     protected void configureTcConfig(TcConfigBuilder clientConfig) {
       // override this method to modify tc-config.xml
     }
-    
+
     protected void configureServerParamers(StandardAppServerParameters params) {
       // override this method to modify jvm args for app server
     }

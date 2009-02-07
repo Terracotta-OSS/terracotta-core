@@ -30,6 +30,7 @@ bundled_components:
             exclude-runtime-libraries: true
         - common
         - common-api
+        - license-common
         - deploy
         - deploy-api
         - dso-common

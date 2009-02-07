@@ -6,24 +6,17 @@ package com.tc.object.config.schema;
 
 import org.apache.xmlbeans.XmlObject;
 
-import com.tc.capabilities.AbstractCapabilitiesFactory;
-import com.tc.capabilities.Capabilities;
 import com.tc.config.schema.BaseNewConfigObject;
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.dynamic.BooleanConfigItem;
 import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.dynamic.StringArrayConfigItem;
 import com.tc.config.schema.dynamic.XPathBasedConfigItem;
-import com.tc.logging.CustomerLogging;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.Root;
 import com.terracottatech.config.Roots;
 
 public class NewDSOApplicationConfigObject extends BaseNewConfigObject implements NewDSOApplicationConfig {
-  private static final TCLogger       logger = TCLogging.getLogger(NewDSOApplicationConfigObject.class);
-
   private final ConfigItem            instrumentedClasses;
   private final StringArrayConfigItem transientFields;
   private final ConfigItem            locks;
@@ -92,20 +85,12 @@ public class NewDSOApplicationConfigObject extends BaseNewConfigObject implement
   private static Object translateRoots(XmlObject xmlObject) {
     if (xmlObject == null) return null;
 
-    Capabilities capabilitiesManager = AbstractCapabilitiesFactory.getCapabilitiesManager();
-    if (capabilitiesManager.canClusterPOJOs()) {
-      com.tc.object.config.schema.Root[] out;
-      Root[] theRoots = ((Roots) xmlObject).getRootArray();
-      out = new com.tc.object.config.schema.Root[theRoots == null ? 0 : theRoots.length];
-      for (int i = 0; i < out.length; ++i) {
-        out[i] = new com.tc.object.config.schema.Root(theRoots[i].getRootName(), theRoots[i].getFieldName());
-      }
-      return out;
-    } else {
-      String msg = "Declared roots not a supported capability: " + capabilitiesManager.describe();
-      logger.error(msg);
-      CustomerLogging.getConsoleLogger().error(msg);
-      throw new RuntimeException("msg");
+    com.tc.object.config.schema.Root[] out;
+    Root[] theRoots = ((Roots) xmlObject).getRootArray();
+    out = new com.tc.object.config.schema.Root[theRoots == null ? 0 : theRoots.length];
+    for (int i = 0; i < out.length; ++i) {
+      out[i] = new com.tc.object.config.schema.Root(theRoots[i].getRootName(), theRoots[i].getFieldName());
     }
+    return out;
   }
 }

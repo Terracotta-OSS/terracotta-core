@@ -8,7 +8,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.tc.test.server.appserver.StandardAppServerParameters;
-import com.tc.test.server.util.TcConfigBuilder;
+import com.tc.util.TcConfigBuilder;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;

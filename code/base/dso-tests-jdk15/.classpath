@@ -22,6 +22,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-statistics-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-system-tests"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/legacy-test-tree"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/license-common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/management"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/management-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/simulator"/>

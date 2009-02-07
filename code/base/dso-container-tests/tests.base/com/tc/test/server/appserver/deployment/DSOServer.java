@@ -7,7 +7,7 @@ package com.tc.test.server.appserver.deployment;
 import com.tc.config.schema.test.L2ConfigBuilder;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.objectserver.control.ExtraProcessServerControl;
-import com.tc.test.server.util.TcConfigBuilder;
+import com.tc.util.TcConfigBuilder;
 
 import java.io.File;
 import java.io.FileOutputStream;

@@ -12,4 +12,5 @@
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jetty-6.1.8.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common-api"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/license-common"/>
 </classpath>

@@ -1,0 +1,12 @@
+--------------------- BEGIN TERRACOTTA LICENSE KEY ---------------------
+License type = Trial
+License number = 1
+Licensee = Terracotta Development
+Product = EX/Sessions
+Max clients = 3
+Capabilities = sessions
+Expiration date = 2009-01-01
+
+---------------------------- BEGIN SIGNATURE ---------------------------
+MCwCFD5Jt7+p9gQ9wU4s+TXfp3l9GFLMAhQ7SyJ7hgJzk1P2dfAaQBWj63z/Ww==
+---------------------- END TERRACOTTA LICENSE KEY ----------------------

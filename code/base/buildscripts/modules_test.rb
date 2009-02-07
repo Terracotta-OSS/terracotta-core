@@ -683,6 +683,8 @@ class SubtreeTestRun
       :jvm => tests_jvm.java.to_s) {
       @ant.classpath {
         @ant.pathelement( :path => JavaSystem.getProperty("java.class.path"))
+        # add path to TCJUnitFormatter class
+        @ant.pathelement( :path => FilePath.new(Registry[:basedir].to_s, "..", "..", "buildsystems", "tcbuild-lib").canonicalize.to_s)
       }
       splice_into_ant_junit
       

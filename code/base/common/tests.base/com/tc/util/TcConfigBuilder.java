@@ -1,15 +1,17 @@
-package com.tc.test.server.util;
+package com.tc.util;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.xmlbeans.XmlOptions;
 
 import com.tc.config.Loader;
+import com.tc.util.PortChooser;
 import com.terracottatech.config.Autolock;
 import com.terracottatech.config.Include;
 import com.terracottatech.config.LockLevel;
 import com.terracottatech.config.Module;
 import com.terracottatech.config.QualifiedClassName;
 import com.terracottatech.config.Root;
+import com.terracottatech.config.Server;
 import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.WebApplication;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
@@ -35,7 +37,7 @@ public class TcConfigBuilder {
   }
 
   public TcConfigBuilder() {
-    this("default-tc-config.xml");
+    this("tcconfigbuilder-default.xml");
   }
 
   public TcConfigBuilder(String resourcePath) {
@@ -63,6 +65,20 @@ public class TcConfigBuilder {
   private TcConfigBuilder(TcConfigDocument tcd) {
     tcConfigDocument = tcd;
     tcConfig = tcConfigDocument.getTcConfig();
+  }
+
+  public void randomizePorts() {
+    PortChooser pc = new PortChooser();
+    Server[] servers = tcConfig.getServers().getServerArray();
+    for (Server server : servers) {
+      server.setDsoPort(pc.chooseRandomPort());
+      server.setJmxPort(pc.chooseRandomPort());
+      server.setL2GroupPort(pc.chooseRandomPort());
+    }
+  }
+
+  public InputStream newInputStream() {
+    return tcConfigDocument.newInputStream(getXmlOptions());
   }
 
   public void setDsoHost(String host) {
@@ -345,22 +361,4 @@ public class TcConfigBuilder {
       throw new RuntimeException(e);
     }
   }
-
-  public static void main(String[] args) {
-    TcConfigBuilder tc = new TcConfigBuilder();
-    tc.setDsoPort(3232);
-    tc.addModule("tc", "1.2");
-    tc.addModule("asdfa", "23432");
-    tc.setServerData("c:/temp");
-    tc.setClientLogs("c:/temp/logs");
-    tc.addAutoLock("* com.tctest.*.*(..)", "write", true);
-    tc.addAutoLock("* adfad..*()", "read");
-    tc.addRoot("com.tc.Test.field", "myField");
-    tc.addWebApplication("events", false, true);
-    tc.addBootJarClass("java.lang.Local");
-    TcConfigBuilder aCopy = tc.copy();
-    aCopy.addModule("hung", "huynh");
-    System.out.println(aCopy.toString());
-  }
-
 }

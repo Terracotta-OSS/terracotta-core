@@ -14,7 +14,7 @@ import com.tc.test.server.appserver.deployment.ServerTestSetup;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tc.test.server.appserver.load.LowMemWorkaround;
 import com.tc.test.server.appserver.load.Node;
-import com.tc.test.server.util.TcConfigBuilder;
+import com.tc.util.TcConfigBuilder;
 import com.tctest.webapp.servlets.CounterServlet;
 
 import java.net.URL;

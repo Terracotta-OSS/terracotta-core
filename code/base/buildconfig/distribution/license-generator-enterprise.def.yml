@@ -1,0 +1,15 @@
+name: Terracotta DSO API
+internal_name: license-generator
+kit_name_pattern: license-generator-version
+root_directory: license-generator-version
+bundled_components:
+  - common:
+      module_packages:
+        - license-generator:
+            modules:
+              - license-common
+              - ent-license-generator
+packaging:
+  - zip:
+      assert: '!@build_environment.has_installanywhere && (@build_environment.os_type =~ /^\s*windows\s*$/i)'
+

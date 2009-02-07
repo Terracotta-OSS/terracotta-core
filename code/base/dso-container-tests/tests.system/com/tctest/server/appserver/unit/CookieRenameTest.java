@@ -10,8 +10,8 @@ import com.tc.test.server.appserver.StandardAppServerParameters;
 import com.tc.test.server.appserver.deployment.AbstractOneServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
-import com.tc.test.server.util.TcConfigBuilder;
 import com.tc.util.Assert;
+import com.tc.util.TcConfigBuilder;
 import com.tctest.webapp.servlets.CookieRenameServlet;
 import com.terracotta.session.util.ConfigProperties;
 

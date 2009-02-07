@@ -1,0 +1,48 @@
+Enterprise License Description:
+  "License type":
+    type: String
+    required: true
+    pattern: Commercial|Trial
+    
+  "License number":
+    type: String
+    required: true
+    
+  "Licensee":
+    type: String
+    required: true
+    
+  "Max clients":
+    type: Integer
+    required: true
+    range:
+      min: 1
+  
+  "Product":
+    type: String
+    required: true
+    pattern: EX|EX/Sessions|FX
+  
+  "Expiration date":
+    type: Date
+    required: false
+
+Product capabilities:
+  # Open source product
+  "ES":
+    - roots
+    - sessions
+    
+  "EX":
+    - roots
+    - sessions
+    
+  "EX/Sessions":
+    - sessions
+    
+  "FX":
+    - roots
+    - sessions
+    - TOC
+    - server striping
+    

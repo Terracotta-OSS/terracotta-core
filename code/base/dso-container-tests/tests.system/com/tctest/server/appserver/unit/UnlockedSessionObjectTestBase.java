@@ -10,8 +10,8 @@ import com.tc.object.tx.UnlockedSharedObjectException;
 import com.tc.test.server.appserver.deployment.AbstractOneServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
-import com.tc.test.server.util.TcConfigBuilder;
 import com.tc.util.Assert;
+import com.tc.util.TcConfigBuilder;
 import com.tctest.webapp.servlets.UnlockedSessionObjectServlet;
 
 import java.io.IOException;

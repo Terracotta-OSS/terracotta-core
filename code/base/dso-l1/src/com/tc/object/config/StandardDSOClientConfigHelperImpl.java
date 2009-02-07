@@ -1373,8 +1373,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       }
     }
 
-    return new TransparencyClassAdapter(classInfo, basicGetOrCreateSpec(className, null, false), writer,
-                                        lgr, caller, portability);
+    return new TransparencyClassAdapter(classInfo, basicGetOrCreateSpec(className, null, false), writer, lgr, caller,
+                                        portability);
   }
 
   public ClassAdapter createClassAdapterFor(ClassWriter writer, ClassInfo classInfo, InstrumentationLogger lgr,

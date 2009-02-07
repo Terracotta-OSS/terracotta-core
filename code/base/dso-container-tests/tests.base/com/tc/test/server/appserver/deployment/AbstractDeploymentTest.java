@@ -10,7 +10,7 @@ import org.apache.commons.logging.LogFactory;
 import com.tc.test.AppServerInfo;
 import com.tc.test.TCTestCase;
 import com.tc.test.TestConfigObject;
-import com.tc.test.server.util.TcConfigBuilder;
+import com.tc.util.TcConfigBuilder;
 
 import java.util.ArrayList;
 import java.util.Collection;

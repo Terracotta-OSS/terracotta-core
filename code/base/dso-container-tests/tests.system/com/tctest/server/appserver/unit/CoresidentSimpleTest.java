@@ -13,8 +13,8 @@ import com.tc.test.server.appserver.deployment.AbstractTwoServerCoresidentDeploy
 import com.tc.test.server.appserver.deployment.CoresidentServerTestSetup;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
-import com.tc.test.server.util.TcConfigBuilder;
 import com.tc.util.Assert;
+import com.tc.util.TcConfigBuilder;
 import com.tctest.externall1.PartitionManagerTestApp;
 import com.tctest.webapp.servlets.CoresidentSimpleTestServlet;
 
