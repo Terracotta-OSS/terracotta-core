@@ -8,6 +8,9 @@
 # to a module-group as below (spring, dso, container, etc...)
 
 modules:
+  - junit-formatter:
+      options:
+        jdk: J2SE-1.5
   - license-common:
       options:
         jdk: J2SE-1.5
