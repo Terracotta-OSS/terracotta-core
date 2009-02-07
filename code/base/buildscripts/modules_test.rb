@@ -669,6 +669,8 @@ class SubtreeTestRun
     failed = false
     failure_properties = [ ]
 
+    junit_formatter_classpath = @build_module.module_set['junit-formatter'].subtree('tests.base').classpath(@build_results, :module_only, :runtime)
+
     # Run the tests. Most of the real magic here comes in the 'splice_into_ant_junit'
     # method, which puts the necessary <jvmarg>, <sysproperty>, and so forth elements
     # into the junit task.
@@ -684,7 +686,7 @@ class SubtreeTestRun
       @ant.classpath {
         @ant.pathelement( :path => JavaSystem.getProperty("java.class.path"))
         # add path to TCJUnitFormatter class
-        @ant.pathelement( :path => FilePath.new(Registry[:basedir].to_s, "..", "..", "buildsystems", "tcbuild-lib").canonicalize.to_s)
+        @ant.pathelement( :path => junit_formatter_classpath)
       }
       splice_into_ant_junit
       
