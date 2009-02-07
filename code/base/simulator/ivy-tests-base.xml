@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <ivy-module version="2.0">
   <info organisation="ibiblio" module="simulator-tests-base"/>
-  <dependencies>
-    <dependency name="linked-child-process" rev="1.0.2-SNAPSHOT" org="org.terracotta"/>    
+  <dependencies>   
   </dependencies>
 </ivy-module>
