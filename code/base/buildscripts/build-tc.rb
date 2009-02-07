@@ -79,6 +79,16 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
 
     # Load the XMLBeans task, so we can use it to process config files when needed by that target.
     ant.taskdef(:name => 'xmlbean', :classname => 'org.apache.xmlbeans.impl.tool.XMLBean')
+
+    # print warning if branh name doesn't match between OSS and EE branch
+    branch = @build_environment.current_branch
+    unless @build_environment.ee_svninfo.url =~ /#{branch}$/
+      STDERR.puts("*" * 80)
+      STDERR.puts("  Branch name '#{branch}' doesn't match between EE and OS branches.")
+      STDERR.puts("  EE URL: #{@build_environment.ee_svninfo.url}")
+      STDERR.puts("  OS URL: #{@build_environment.os_svninfo.url} ")
+      STDERR.puts("*" * 80)
+    end
   end
 
 
