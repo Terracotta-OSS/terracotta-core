@@ -12,6 +12,7 @@ import org.apache.xmlbeans.XmlOptions;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.license.AbstractLicenseResolverFactory;
 import com.tc.license.Capabilities;
+import com.tc.license.Capability;
 import com.tc.license.util.LicenseConstants;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
@@ -95,7 +96,7 @@ public class ConfigLoader {
     String fieldExpression = root.getFieldExpression();
 
     Capabilities capabilities = AbstractLicenseResolverFactory.getCapabilities();
-    if (!capabilities.allowRoots()) {
+    if (!capabilities.isLicensed(Capability.ROOTS)) {
       String fieldNameOrExpression = fieldName != null ? fieldName : fieldExpression;
       String message = AbstractLicenseResolverFactory.getLicenseWarning(LicenseConstants.ROOTS, fieldNameOrExpression);
       CustomerLogging.getConsoleLogger().warn(message);
@@ -139,7 +140,7 @@ public class ConfigLoader {
 
   private void addWebApplication(WebApplication webApplication) {
     Capabilities capabilities = AbstractLicenseResolverFactory.getCapabilities();
-    if (!capabilities.allowSessions()) {
+    if (!capabilities.isLicensed(Capability.SESSIONS)) {
       String message = AbstractLicenseResolverFactory.getLicenseWarning(LicenseConstants.SESSIONS, webApplication
           .getStringValue());
       CustomerLogging.getConsoleLogger().warn(message);

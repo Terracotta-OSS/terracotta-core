@@ -1,7 +1,8 @@
 package com.tc.license.util;
 
-import com.tc.license.Capabilities;
+import com.tc.license.Capability;
 
+import java.util.EnumSet;
 import java.util.Map;
 
 import junit.framework.TestCase;
@@ -9,26 +10,26 @@ import junit.framework.TestCase;
 public class LicenseDescriptorTest extends TestCase {
   public void testSupportedCapabilities() {
     LicenseDescriptor d = LicenseDescriptor.getInstance();
-    Capabilities capabilities = d.getCapabilities(LicenseConstants.EX);
+    EnumSet<Capability> capabilities = d.getLicensedCapabilities(LicenseConstants.EX);
     assertEquals(2, capabilities.size());
-    assertTrue(capabilities.allowRoots());
-    assertTrue(capabilities.allowSessions());
+    assertTrue(capabilities.contains(Capability.ROOTS));
+    assertTrue(capabilities.contains(Capability.SESSIONS));
 
-    capabilities = d.getCapabilities(LicenseConstants.EX_SESSIONS);
+    capabilities = d.getLicensedCapabilities(LicenseConstants.EX_SESSIONS);
     assertEquals(1, capabilities.size());
-    assertTrue(capabilities.allowSessions());
+    assertTrue(capabilities.contains(Capability.SESSIONS));
 
-    capabilities = d.getCapabilities(LicenseConstants.FX);
+    capabilities = d.getLicensedCapabilities(LicenseConstants.FX);
     assertEquals(4, capabilities.size());
-    assertTrue(capabilities.allowRoots());
-    assertTrue(capabilities.allowSessions());
-    assertTrue(capabilities.allowTOC());
-    assertTrue(capabilities.allowServerStripping());
+    assertTrue(capabilities.contains(Capability.ROOTS));
+    assertTrue(capabilities.contains(Capability.SESSIONS));
+    assertTrue(capabilities.contains(Capability.TOC));
+    assertTrue(capabilities.contains(Capability.SERVER_STRIPING));
 
-    capabilities = d.getCapabilities(LicenseConstants.ES);
+    capabilities = d.getLicensedCapabilities(LicenseConstants.ES);
     assertEquals(2, capabilities.size());
-    assertTrue(capabilities.allowRoots());
-    assertTrue(capabilities.allowSessions());
+    assertTrue(capabilities.contains(Capability.ROOTS));
+    assertTrue(capabilities.contains(Capability.SESSIONS));
   }
 
   public void testFields() {

@@ -4,6 +4,7 @@
  */
 package com.tc.license.util;
 
+import com.tc.license.Capability;
 import com.tc.license.License;
 import com.tc.license.LicenseFactory;
 
@@ -18,8 +19,8 @@ public class LicenseFactoryTest extends TestCase {
     assertEquals("Big ole company", license.licensee());
     assertEquals("EX", license.product());
     assertEquals(4, license.maxClients());
-    assertTrue(license.capabilities().allowRoots());
-    assertTrue(license.capabilities().allowSessions());
+    assertTrue(license.capabilities().isLicensed(Capability.ROOTS));
+    assertTrue(license.capabilities().isLicensed(Capability.SESSIONS));
     assertNull(license.expirationDate());
   }
 

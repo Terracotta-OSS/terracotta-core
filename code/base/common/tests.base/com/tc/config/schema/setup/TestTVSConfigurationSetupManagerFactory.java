@@ -46,8 +46,7 @@ import java.util.Set;
  * A {@link com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory} that creates config appropriate for usage in
  * tests. This config behaves just like normal config, except that it reads no files; everything is in-memory instead.
  * You can specify whether you want this config to act like centralized config (all at L2), or distributed config (every
- * L1 has its own copy of the config, too).
- * </p>
+ * L1 has its own copy of the config, too). </p>
  * <p>
  * To use this class, simply get the appropriate config object that you need by calling a method (<em>e.g.</em>,
  * {@link #systemConfig()}). Then, call a method on it (like {@link com.tc.config.schema.NewSystemConfig#dsoEnabled()},
@@ -62,11 +61,11 @@ import java.util.Set;
  * primitive type, {@link String}, array of {@link String}s or something like that (specifically, the object types
  * returned by the top-level subclasses of {@link com.tc.config.schema.dynamic.XPathBasedConfigItem}) &mdash; then you
  * need to set an implementation of {@link XmlObject}, not the actual Terracotta-defined types that the real
- * {@link ConfigItem}s return. (This is because we're using the real config system &mdash; see below for details
- * &mdash; and it expects {@link XmlObject}s of the appropriate type so it can translate them to the Terracotta-defined
- * types that we really return.) Fortunately, all XML beans have <code>Factory</code> inner classes that will let you
- * create them. If you then wrap these calls in a function and reuse it, you'll be in fine shape if/when the actual XML
- * beans are changed.
+ * {@link ConfigItem}s return. (This is because we're using the real config system &mdash; see below for details &mdash;
+ * and it expects {@link XmlObject}s of the appropriate type so it can translate them to the Terracotta-defined types
+ * that we really return.) Fortunately, all XML beans have <code>Factory</code> inner classes that will let you create
+ * them. If you then wrap these calls in a function and reuse it, you'll be in fine shape if/when the actual XML beans
+ * are changed.
  * </p>
  * <p>
  * Note: There is no support yet for different L1s having different config, or config that differs from L2's.
@@ -75,8 +74,8 @@ import java.util.Set;
  * <p>
  * If you create new typed subinterfaces of {@link ConfigItem}, you do need to make
  * {@link com.tc.config.schema.TestConfigObjectInvocationHandler.OurSettableConfigItem} implement them. Don't worry,
- * though; the methods can just throw {@link com.tc.util.TCAssertionError}, and don't need to (nor should they)
- * actually do anything.
+ * though; the methods can just throw {@link com.tc.util.TCAssertionError}, and don't need to (nor should they) actually
+ * do anything.
  * </p>
  * <p>
  * If you introduce new config objects or new beans to the system, you'll need to do a lot more, but, then, presumably
@@ -113,17 +112,17 @@ import java.util.Set;
  * the {@link L2S} that wraps them all up together), the {@link com.terracottatech.configV1.System} we use for system
  * config, the {@link Application} for each application's config, and so on.</li>
  * <li>These {@link XmlObject}s are honest-to-God real instances, as created by their factories (for example,
- * {@link L1.Factory}. At the start, they have just enough configuration populated into them to make sure they
- * validate.</li>
+ * {@link L1.Factory}. At the start, they have just enough configuration populated into them to make sure they validate.
+ * </li>
  * <li>This class exposes what look like instances of the normal config objects available to the system. However, these
  * are actually proxies created with {@link java.lang.reflect.Proxy}, using a
  * {@link com.tc.config.schema.TestConfigObjectInvocationHandler}.</li>
  * <li>That invocation handler, in response to method calls, parcels out {@link ConfigItem}s that are instances of
  * {@link com.tc.config.schema.TestConfigObjectInvocationHandler.OurSettableConfigItem}. When you call
- * <code>setValue</code> on them, they do their magic: using the {@link XPath} they get from the corresponding
- * "sample" {@link ConfigItem} (see below), they descend the tree of {@link XmlObject}s, starting at the root, creating
- * children along the way as necessary, and finally set the correct property on the correct bean. (This is conceptually
- * easy but actually full of all kinds of nasty mess; this is why {@link OurSettableConfigItem} is such a messy class.) .</li>
+ * <code>setValue</code> on them, they do their magic: using the {@link XPath} they get from the corresponding "sample"
+ * {@link ConfigItem} (see below), they descend the tree of {@link XmlObject}s, starting at the root, creating children
+ * along the way as necessary, and finally set the correct property on the correct bean. (This is conceptually easy but
+ * actually full of all kinds of nasty mess; this is why {@link OurSettableConfigItem} is such a messy class.) .</li>
  * <li>Okay, but how does it know what XPath to use to descend the tree? That's where the "sample" config objects below
  * (fields in this object) come in. They are actual, real config objects that are created around the bean set, before
  * any values are set &mdash; but that doesn't matter, because the only thing we use them for is to get the
@@ -177,7 +176,8 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
   private boolean                        isConfigDone            = false;
 
   public TestTVSConfigurationSetupManagerFactory(int mode, String l2Identifier,
-                                                 IllegalConfigurationChangeHandler illegalConfigurationChangeHandler) {
+                                                 IllegalConfigurationChangeHandler illegalConfigurationChangeHandler)
+      throws ConfigurationSetupException {
     super(illegalConfigurationChangeHandler);
 
     this.beanSet = new TestConfigBeanSet();
@@ -201,12 +201,8 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
     L1TVSConfigurationSetupManager sampleL1Manager;
     L2TVSConfigurationSetupManager sampleL2Manager;
 
-    try {
-      sampleL1Manager = this.createL1TVSConfigurationSetupManager(new TestConfigurationCreator(this.l1_beanSet, true));
-      sampleL2Manager = this.createL2TVSConfigurationSetupManager(null);
-    } catch (ConfigurationSetupException cse) {
-      throw Assert.failure("Huh?", cse);
-    }
+    sampleL1Manager = this.createL1TVSConfigurationSetupManager(new TestConfigurationCreator(this.l1_beanSet, true));
+    sampleL2Manager = this.createL2TVSConfigurationSetupManager(null);
 
     this.sampleSystem = sampleL2Manager.systemConfig();
     this.sampleL1Common = sampleL1Manager.commonL1Config();
@@ -539,11 +535,12 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
   }
 
   public TestTVSConfigurationSetupManagerFactory(String l2Identifier,
-                                                 IllegalConfigurationChangeHandler illegalConfigurationChangeHandler) {
+                                                 IllegalConfigurationChangeHandler illegalConfigurationChangeHandler) throws ConfigurationSetupException {
     this(MODE_CENTRALIZED_CONFIG, l2Identifier, illegalConfigurationChangeHandler);
   }
 
-  public TestTVSConfigurationSetupManagerFactory(IllegalConfigurationChangeHandler illegalConfigurationChangeHandler) {
+  public TestTVSConfigurationSetupManagerFactory(IllegalConfigurationChangeHandler illegalConfigurationChangeHandler)
+      throws ConfigurationSetupException {
     this(null, illegalConfigurationChangeHandler);
   }
 

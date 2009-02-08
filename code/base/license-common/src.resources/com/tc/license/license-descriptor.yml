@@ -27,7 +27,17 @@ Enterprise License Description:
     type: Date
     required: false
 
-Product capabilities:
+Enterprise capabilities:
+  - roots
+  - sessions
+  - TOC
+  - server striping
+  
+Opensource capabilities:
+  - roots
+  - sessions
+
+Licensed products:
   # Open source product
   "ES":
     - roots

@@ -6,41 +6,36 @@ package com.tc.license;
 
 import java.util.EnumSet;
 
-public class Capabilities {
-  private final EnumSet<Capability> capabilities;
+public final class Capabilities {
+  private final EnumSet<Capability> licensedCapabilities;
+  private final EnumSet<Capability> supportedCapabilities;
 
-  public Capabilities(String capabilities) {
-    this.capabilities = Capability.toSet(capabilities);
+  public Capabilities(String licensedCapabilities, String supportedCapabilities) {
+    this.licensedCapabilities = Capability.toSet(licensedCapabilities);
+    this.supportedCapabilities = Capability.toSet(supportedCapabilities);
   }
 
-  public Capabilities(EnumSet<Capability> set) {
-    this.capabilities = set;
+  public Capabilities(EnumSet<Capability> licensedCapabilities, EnumSet<Capability> supportedCapabilities) {
+    this.licensedCapabilities = licensedCapabilities;
+    this.supportedCapabilities = supportedCapabilities;
   }
 
-  public boolean allowRoots() {
-    return capabilities.contains(Capability.ROOTS);
+  public boolean isSupported(Capability capability) {
+    return supportedCapabilities.contains(capability);
   }
 
-  public boolean allowSessions() {
-    return capabilities.contains(Capability.SESSIONS);
+  public boolean isLicensed(Capability capability) {
+    return licensedCapabilities.contains(capability);
   }
 
-  public boolean allowTOC() {
-    return capabilities.contains(Capability.TOC);
-  }
-
-  public boolean allowServerStripping() {
-    return capabilities.contains(Capability.SERVER_STRIPING);
-  }
-
-  public int size() {
-    return capabilities.size();
+  public int licensedCapabilitiesCount() {
+    return licensedCapabilities.size();
   }
 
   public String toString() {
     StringBuffer sb = new StringBuffer();
     int index = 0;
-    for (Capability c : capabilities) {
+    for (Capability c : licensedCapabilities) {
       if (index > 0) {
         sb.append(", ");
       }

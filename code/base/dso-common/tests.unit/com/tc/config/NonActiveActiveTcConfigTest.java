@@ -17,10 +17,6 @@ import java.io.FileOutputStream;
 public class NonActiveActiveTcConfigTest extends TCTestCase {
   private File tcConfig = null;
   
-  public NonActiveActiveTcConfigTest() {
-    disableAllUntil("2009-02-20");
-  }
-  
   public void testServerInTwoGroups() {
     try {
       tcConfig = getTempFile("tc-config-testServerInTwoGroups.xml");

@@ -69,7 +69,8 @@ public class LicenseFile implements LicenseStore {
     String maxClients = fields.get(LicenseConstants.MAX_CLIENTS);
     String expirationDate = fields.get(LicenseConstants.EXPIRATION_DATE);
     String capabilities = fields.get(LicenseConstants.CAPABILITIES);
-    return LicenseFactory.recreateLicense(type, number, licensee, product, maxClients, expirationDate, capabilities);
+    return LicenseFactory.createEnterpriseLicense(type, number, licensee, product, maxClients, expirationDate,
+                                                  capabilities);
   }
 
 }

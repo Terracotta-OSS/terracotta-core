@@ -1,6 +1,7 @@
 package com.tctest;
 
 import com.tc.config.schema.SettableConfigItem;
+import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.object.config.ConfigVisitor;
@@ -17,7 +18,7 @@ public class L1ReconnectDiabledTestApp extends AbstractTransparentApp {
   public static final String CONFIG_FILE = "config-file";
   public static final String PORT_NUMBER = "port-number";
   public static final String HOST_NAME   = "host-name";
-  public static final String JMX_PORT  = "jmx-port";
+  public static final String JMX_PORT    = "jmx-port";
 
   private ApplicationConfig  appCfg;
 
@@ -34,10 +35,14 @@ public class L1ReconnectDiabledTestApp extends AbstractTransparentApp {
   }
 
   public void run() {
-    testL1ReconnectConfig();
+    try {
+      testL1ReconnectConfig();
+    } catch (ConfigurationSetupException e) {
+      throw new AssertionError(e);
+    }
   }
 
-  private void testL1ReconnectConfig() {
+  private void testL1ReconnectConfig() throws ConfigurationSetupException {
     TestTVSConfigurationSetupManagerFactory factory = new TestTVSConfigurationSetupManagerFactory(
                                                                                                   TestTVSConfigurationSetupManagerFactory.MODE_CENTRALIZED_CONFIG,
                                                                                                   null,

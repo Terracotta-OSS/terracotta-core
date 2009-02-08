@@ -6,6 +6,7 @@ import com.tc.license.util.LicenseException;
 import com.tc.license.util.LicenseField;
 
 import java.util.Date;
+import java.util.EnumSet;
 
 public class LicenseFactory {
 
@@ -26,28 +27,34 @@ public class LicenseFactory {
                                                 String maxClients, String expirationDate) throws LicenseException {
 
     LicenseField productField = createField(LicenseConstants.PRODUCT, product);
-    return createLicense(type, number, licensee, product, maxClients, expirationDate, LicenseDescriptor.getInstance()
-        .getCapabilities((String) productField.getValue()));
+    return createLicenseHelper(type, number, licensee, product, maxClients, expirationDate, LicenseDescriptor
+        .getInstance().getLicensedCapabilities((String) productField.getValue()));
   }
 
   /**
    * <pre>
    * - Call this to recreate a license from raw info without capabilities lookup
-   * - Useful to construct a License object with info reading from the license key
+   * - Useful to construct a License object with info reading from the product key
    * </pre>
    */
-  public static License recreateLicense(String type, String number, String licensee, String product, String maxClients,
-                                        String expirationDate, String capabilities) throws LicenseException {
+  public static License createEnterpriseLicense(String type, String number, String licensee, String product,
+                                                String maxClients, String expirationDate, String licensedCapabilities)
+      throws LicenseException {
 
-    return createLicense(type, number, licensee, product, maxClients, expirationDate, new Capabilities(capabilities));
+    return createLicenseHelper(type, number, licensee, product, maxClients, expirationDate, Capability
+        .toSet(licensedCapabilities));
   }
 
   public static License createOpenSourceLicense() {
-    return new OpenSourceLicense(LicenseDescriptor.getInstance().getOpenSourceCapabilities());
+    LicenseDescriptor descriptor = LicenseDescriptor.getInstance();
+    Capabilities openSourceCapabilities = new Capabilities(descriptor.getLicensedCapabilities(LicenseConstants.ES),
+                                                           descriptor.getOpenSourceCapabilities());
+    return new OpenSourceLicense(openSourceCapabilities);
   }
 
-  private static License createLicense(String type, String number, String licensee, String product, String maxClients,
-                                       String expirationDate, Capabilities capabilities) throws LicenseException {
+  private static License createLicenseHelper(String type, String number, String licensee, String product,
+                                             String maxClients, String expirationDate,
+                                             EnumSet<Capability> licensedCapabilities) throws LicenseException {
 
     LicenseField typeField = createField(LicenseConstants.LICENSE_TYPE, type);
     LicenseField numberField = createField(LicenseConstants.LICENSE_NUMBER, number);
@@ -55,6 +62,9 @@ public class LicenseFactory {
     LicenseField maxClientField = createField(LicenseConstants.MAX_CLIENTS, maxClients);
     LicenseField productField = createField(LicenseConstants.PRODUCT, product);
     LicenseField expiredDateField = createField(LicenseConstants.EXPIRATION_DATE, expirationDate);
+
+    Capabilities capabilities = new Capabilities(licensedCapabilities, LicenseDescriptor.getInstance()
+        .getEnterpriseCapabilities());
 
     License license = new EnterpriseLicense((String) typeField.getValue(), (String) numberField.getValue(),
                                             (String) licenseeField.getValue(), (String) productField.getValue(),

@@ -6,6 +6,7 @@ package com.tc.license.util;
 
 import org.apache.commons.io.IOUtils;
 
+import com.tc.license.Capability;
 import com.tc.license.License;
 import com.tc.license.LicenseFactory;
 
@@ -62,9 +63,9 @@ public class LicenseFileTest extends TestCase {
     assertEquals(4, license.maxClients());
     assertEquals(new SimpleDateFormat(LicenseConstants.DATE_FORMAT).parse("2009-02-03"), license.expirationDate());
     assertEquals("DIGITIALLY SIGNED", license.getSignature());
-    assertEquals(2, license.capabilities().size());
-    assertTrue(license.capabilities().allowRoots());
-    assertTrue(license.capabilities().allowSessions());
+    assertEquals(2, license.capabilities().licensedCapabilitiesCount());
+    assertTrue(license.capabilities().isLicensed(Capability.ROOTS));
+    assertTrue(license.capabilities().isLicensed(Capability.SESSIONS));
   }
 
   public void testMissingMarkings() throws IOException {

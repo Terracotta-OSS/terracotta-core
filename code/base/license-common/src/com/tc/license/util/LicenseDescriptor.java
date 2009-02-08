@@ -3,7 +3,6 @@ package com.tc.license.util;
 import net.sourceforge.yamlbeans.YamlException;
 import net.sourceforge.yamlbeans.YamlReader;
 
-import com.tc.license.Capabilities;
 import com.tc.license.Capability;
 
 import java.io.IOException;
@@ -47,19 +46,20 @@ public class LicenseDescriptor {
     this.descriptionMap = (Map) get(descriptor, LicenseConstants.LICENSE_DESCRIPTION);
   }
 
-  public Capabilities getCapabilities(String product) {
-    Map productCapabilities = (Map) get(descriptor, LicenseConstants.PRODUCT_CAPABILITIES);
-    List capabilitiesList = (List) get(productCapabilities, product);
-    EnumSet<Capability> capabilities = EnumSet.noneOf(Capability.class);
-    for (Iterator it = capabilitiesList.iterator(); it.hasNext();) {
-      String capability = (String) it.next();
-      capabilities.add(Capability.parse(capability));
-    }
-    return new Capabilities(capabilities);
+  public EnumSet<Capability> getLicensedCapabilities(String product) {
+    Map licensedProducts = (Map) get(descriptor, LicenseConstants.LICENSED_PRODUCT);
+    List values = (List) get(licensedProducts, product);
+    return convertToCapabilitySet(values);
   }
 
-  public Capabilities getOpenSourceCapabilities() {
-    return getCapabilities(LicenseConstants.ES);
+  public EnumSet<Capability> getEnterpriseCapabilities() {
+    List values = (List) get(descriptor, LicenseConstants.ENTERPRISE_CAPABILITIES);
+    return convertToCapabilitySet(values);
+  }
+
+  public EnumSet<Capability> getOpenSourceCapabilities() {
+    List values = (List) get(descriptor, LicenseConstants.OPENSOURCE_CAPABILITIES);
+    return convertToCapabilitySet(values);
   }
 
   public Map getDescriptionMap() {
@@ -93,5 +93,14 @@ public class LicenseDescriptor {
     } else {
       throw new RuntimeException("Field " + key + " couldn't be found in resource: " + DESCRIPTOR_RESOURCE);
     }
+  }
+
+  private EnumSet<Capability> convertToCapabilitySet(List values) {
+    EnumSet<Capability> result = EnumSet.noneOf(Capability.class);
+    for (Iterator it = values.iterator(); it.hasNext();) {
+      Capability c = Capability.parse((String) it.next());
+      result.add(c);
+    }
+    return result;
   }
 }
