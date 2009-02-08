@@ -465,14 +465,14 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
   }
 
   public void validateLicenseCapabilities() throws ConfigurationSetupException {
-    Capabilities capabilities = AbstractLicenseResolverFactory.getCapabilities();
-    if (!capabilities.isSupported(Capability.SERVER_STRIPING)) {
-      //
-      throw new ConfigurationSetupException("Server striping is an Enterprise only feature.");
-    }
+    if (activeServerGroupsConfig.getActiveServerGroupCount() > 1) {
+      Capabilities capabilities = AbstractLicenseResolverFactory.getCapabilities();
+      if (!capabilities.isSupported(Capability.SERVER_STRIPING)) {
+        //
+        throw new ConfigurationSetupException("Server striping is an Enterprise only feature.");
+      }
 
-    if (!capabilities.isLicensed(Capability.SERVER_STRIPING)) {
-      if (activeServerGroupsConfig.getActiveServerGroupCount() > 1) {
+      if (!capabilities.isLicensed(Capability.SERVER_STRIPING)) {
         String message = AbstractLicenseResolverFactory.getLicenseWarning(LicenseConstants.SERVER_STRIPING,
                                                                           "active server group count is more than 1");
         consoleLogger.warn(message);
