@@ -40,9 +40,9 @@ shortcuts:
     categories: "Terracotta;Development;"
     encoding: UTF-8
     iconFile: $INSTALL_PATH/icons/logo_small.png
-- name: Terracotta POJOs Quick Start Guide
-  target: "http://www.terracotta.org/web/display/orgsite/POJO+Quick+Start"
-  description: View the Terracotta POJOs Quick Start Guide
+- name: Terracotta Documentation
+  target: "http://www.terracotta.org/web/display/docs/Home"
+  description: View the Terracotta documentation online
   programGroup: "yes"
   desktop: "no"
   startup: "no"
@@ -54,15 +54,15 @@ shortcuts:
     iconIndex: "0"
   unix:
     type: Link
-    url: "http://www.terracotta.org/web/display/orgsite/POJO+Quick+Start"
+    url: "http://www.terracotta.org/web/display/docs/Home"
     initialState: normal
     type: Application
     categories: "Terracotta;Development;"
     encoding: UTF-8
     iconFile: $INSTALL_PATH/icons/logo_small.png
-- name: Terracotta Sessions Quick Start Guide
-  target: "http://www.terracotta.org/web/display/orgsite/Sessions+Quick+Start"
-  description: View the Terracotta Sessions Quick Start Guide
+- name: Terracotta Quick Start Guides
+  target: "http://www.terracotta.org/web/display/orgsite/Tutorials"
+  description: View the Terracotta Quick Start Guides online
   programGroup: "yes"
   desktop: "no"
   startup: "no"
@@ -74,7 +74,7 @@ shortcuts:
     iconIndex: "0"
   unix:
     type: Link
-    url: "http://www.terracotta.org/web/display/orgsite/Sessions+Quick+Start"
+    url: "http://www.terracotta.org/web/display/orgsite/Tutorials"
     initialState: normal
     type: Application
     categories: "Terracotta;Development;"
@@ -95,6 +95,26 @@ shortcuts:
   unix:
     type: Link
     url: "http://forge.terracotta.org/"
+    initialState: normal
+    type: Application
+    categories: "Terracotta;Development;"
+    encoding: UTF-8
+    iconFile: $INSTALL_PATH/icons/logo_small.png
+- name: Terracotta Enterprise
+  target: "http://www.terracotta.org/web/display/enterprise/Home"
+  description: Terracotta Enterprise
+  programGroup: "yes"
+  desktop: "no"
+  startup: "no"
+  windows:
+    applications: "no"
+    startMenu: "no"
+    initialState: noShow
+    iconFile: $INSTALL_PATH/icons/logo_small.ico
+    iconIndex: "0"
+  unix:
+    type: Link
+    url: "http://www.terracotta.org/web/display/enterprise/Home"
     initialState: normal
     type: Application
     categories: "Terracotta;Development;"

@@ -9,10 +9,20 @@
    <info>
       <appname>Terracotta</appname>
       <appversion><%= @build_environment.version %></appversion>
+      <appsubpath>Terracotta-$APP_VER</appsubpath>
       <url>http://www.terracotta.org/</url>
+      <javaversion>1.5</javaversion>
    </info>
 
-   <guiprefs width="640" height="480" resizable="no" />
+   <guiprefs width="640" height="480" resizable="no">
+      <modifier key="useHeadingPanel" value="yes"/>
+      <modifier key="headingLineCount" value="2"/>
+      <modifier key="headingFontSize" value="1.5"/>
+      <modifier key="headingBackgroundColor" value="0x00ffffff"/>
+      <modifier key="headingPanelCounter" value="text"/>
+      <modifier key="headingPanelCounterPos" value="inHeading"/>
+   </guiprefs>
+
 
    <locale>
       <langpack iso3="eng" />
@@ -20,34 +30,44 @@
 
    <native type="izpack" name="ShellLink.dll" />
 
+   <variables>
+      <variable name="DesktopShortcutCheckboxEnabled" value="true" />
+   </variables>
+
    <resources>
+      <!-- <res id="Installer.image" src="../izpack/image.png" /> -->
+      <res id="Heading.image" src="../izpack/HeadingImage.jpg"/>
+      <res id="HTMLInfoPanel.welcome" src="../izpack/hello.html"/>
       <res id="LicencePanel.licence" src="license.txt" />
       <res id="InfoPanel.info" src="readme.txt" />
+      <res id="CustomLangpack.xml_eng" src="../izpack/custom-langpack.eng.xml"/>
       <res src="../izpack/windows_shortcuts.xml" id="shortcutSpec.xml" />
       <res src="../izpack/unix_shortcuts.xml" id="Unix_shortcutSpec.xml" />
    </resources>
 
    <panels>
-      <panel classname="HelloPanel"/>
-      <panel classname="LicencePanel"/>
-      <panel classname="TargetPanel"/>
-      <panel classname="SummaryPanel"/>
-      <panel classname="InstallPanel"/>
-      <panel classname="ShortcutPanel"/>
-      <panel classname="FinishPanel"/>
+      <panel classname="HelloPanel" id="hello"/>
+      <panel classname="LicencePanel" id="licence"/>
+      <panel classname="TargetPanel" id="target"/>
+      <panel classname="SummaryPanel" id="summary"/>
+      <panel classname="InstallPanel" id="install"/>
+      <panel classname="ShortcutPanel" id="shortcuts"/>
+      <panel classname="SimpleFinishPanel" id="finish"/>
    </panels>
 
    <packs>
-      <pack name="Terracotta" required="yes">
-         <description>The base files</description>
+      <% for pack in packs %>
+      <pack name="<%= pack.name %>" required="yes">
+         <description><%= pack.name %> </description>
 
-         <% for entry in files %>
-         <file src="<%= entry %>" targetdir="$INSTALL_PATH" />
+         <% for file in pack.files %>
+         <file src="<%= file %>" targetdir="$INSTALL_PATH" />
          <% end %>
 
-         <% for entry in scripts %>
+         <% for entry in pack.scripts %>
          <executable stage="never" os="unix" targetfile="$INSTALL_PATH/<%= entry %>" />
          <% end %>
       </pack>
+      <% end %>
    </packs>
 </installation>
