@@ -101,7 +101,7 @@ class StaticResources
   def compiled_config_schema_jar(module_set)
     out = nil
 
-    module_set['common'].subtree('src').subtree_only_library_roots(:runtime).each do |root|
+    module_set['common-api'].subtree('src').subtree_only_library_roots(:runtime).each do |root|
       test = FilePath.new(root, "tcconfig-xmlbeans-generated.jar")
       out = test if FileTest.file?(test.to_s)
     end

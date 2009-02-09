@@ -9,7 +9,10 @@
     <dependency name="jetty-util" rev="6.1.8" org="terracotta"/>
     <dependency name="jmxremote" rev="1.0.1_04" org="terracotta"/>
     <dependency name="jmxri" rev="1.2.1" org="terracotta"/>
+    <dependency name="knopflerfish" rev="2.0.1-tc-20080108" org="terracotta"/>
     <dependency name="commons-httpclient" rev="3.0.1"/>
     <dependency name="log4j" rev="1.2.9"/>
+    <dependency name="xbean_xpath" rev="2.1.0" org="terracotta"/>
+    <dependency name="xbean" rev="2.1.0" org="terracotta"/>
   </dependencies>
 </ivy-module>
