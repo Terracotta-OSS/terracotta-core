@@ -162,7 +162,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
 
     Dir.entries(@basedir.to_s).each do |project|
       next unless File.directory?(project)
-      Dir.glob("#{project}/ivy.*").each do |ivyfile|
+      Dir.glob("#{project}/ivy*").each do |ivyfile|
         puts "Resolving Ivy file: #{ivyfile}"
         ant.ivy_resolve(:file => ivyfile)
         ant.ivy_retrieve(:pattern => "#{@basedir.to_s}/dependencies/lib/[artifact]-[revision].[ext]")
