@@ -1,9 +1,6 @@
 <ivysettings>
   <settings defaultResolver="ibiblio-chain"/>
   <resolvers>
-    <filesystem name="tc-dev">
-      <artifact pattern="dependencies/lib/[artifact]-[revision].[ext]"/>
-    </filesystem>
     <url name="tc-repo">
       <artifact pattern="http://download.terracotta.org/buildjars/lib/[artifact]-[revision].[ext]"/>
     </url>
@@ -25,7 +22,6 @@
   </resolvers>
   <modules>
     <module organisation="org.terracotta.*" name=".*" resolver="terracotta-maven2"/>
-    <module organisation="testing" name=".*" resolver="tc-dev"/>
     <module organisation="terracotta" name=".*" resolver="tc-repo"/>
     <module organisation="terracotta-internal" name=".*" resolver="tc-repo-internal"/>
     <module organisation="tc-eclipse" name=".*" resolver="tc-repo-eclipse"/>

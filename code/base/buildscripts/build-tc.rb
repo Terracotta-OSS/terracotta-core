@@ -143,25 +143,30 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   # Download and install dependencies as specified by the various ivy*.xml
   # files in the individual modules.
   def resolve_dependencies
+    if @no_ivy
+      loud_message("--no-ivy option found. Skipping Ivy.")
+      return
+    end
+    
     depends :init
+    ivy_settings_path = File.join(@basedir.to_s, "buildconfig/ivysettings.xml")
+    
+    ant.property(:name => "ivy.resolver.default.check.modified", :value => "false")
+    ant.taskdef(:name => 'ivy_configure',
+      :classname => "org.apache.ivy.ant.IvyConfigure")
+    ant.taskdef(:name => 'ivy_resolve',
+      :classname => "org.apache.ivy.ant.IvyResolve")
+    ant.taskdef(:name => 'ivy_retrieve',
+      :classname => "org.apache.ivy.ant.IvyRetrieve")
+    ant.ivy_configure( :file => ivy_settings_path )
 
-    if (ant_home = ENV['ANT_HOME'])
-      if @no_ivy
-        loud_message("Ivy support disabled.  Skipping dependency resolution.")
-      else
-        puts "--------------------------------------------------------------------------------"
-        puts "Resolving dependencies."
-        build_file = FilePath.new(@static_resources.build_config_directory,
-          'resolve-dependencies', 'build.xml')
-        ant_command = FilePath.new(ant_home, 'bin', 'ant').batch_extension.to_s
-        args = ['-buildfile', "#{build_file.to_s}"]
-        @ant.exec(:executable => ant_command) do
-          @ant.arg(:value => '-buildfile')
-          @ant.arg(:file => build_file.to_s)
-        end
+    Dir.entries(@basedir.to_s).each do |project|
+      next unless File.directory?(project)
+      Dir.glob("#{project}/ivy.*").each do |ivyfile|
+        puts "Resolving Ivy file: #{ivyfile}"
+        ant.ivy_resolve(:file => ivyfile)
+        ant.ivy_retrieve(:pattern => "#{@basedir.to_s}/dependencies/lib/[artifact]-[revision].[ext]")
       end
-    else
-      loud_message("ANT_HOME not set. Skipping dependency resolution.")
     end
   end
 

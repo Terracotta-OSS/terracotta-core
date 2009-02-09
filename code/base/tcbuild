@@ -1,29 +1,29 @@
 #!/bin/sh
 
-#if test ! -f build-tc.rb; then
-#	echo "$0: No 'build-tc.rb' script found. Run this from a directory with a valid 'build-tc.rb' script."
-#fi
-
 if test -z "${JAVA_HOME}"; then
-	JAVA_HOME="${TC_JAVA_HOME_15}"
-	export JAVA_HOME
+	echo "JAVA_HOME is not set"
+  exit 1
 fi
 
-JRUBY_HOME="`dirname $0`/../../buildsystems/jruby-1.1.2-20081015"
-export JRUBY_HOME
+if test -z "${ANT_HOME}"; then
+	echo "ANT_HOME is not set"
+  exit 1
+fi
 
-"${ANT_HOME}/bin/ant" -buildfile "`dirname $0`/buildconfig/build.xml" install-ivy
+build_system_dir=`dirname $0`/../../buildsystems
+
+JRUBY_HOME="$build_system_dir/jruby-1.1.2-20090208"
+export JRUBY_HOME
 
 if test ! -d "${JRUBY_HOME}"; then
 	echo "--------------------------------------------------------------------------------"
 	echo "LOADING JRUBY USING IVY"
 	echo ""
-	"${ANT_HOME}/bin/ant" -buildfile "`dirname $0`/buildconfig/build.xml"
+	"${ANT_HOME}/bin/ant" -buildfile "$build_system_dir/install-jruby-build.xml"
 fi
 
-
-	echo ""
-	echo "--------------------------------------------------------------------------------"
-	echo "RUNNING TCBUILD"
-	echo ""
-	exec /bin/bash "${JRUBY_HOME}/bin/jruby" -Ibuildscripts buildscripts/build-tc.rb "$@"
+echo ""
+echo "--------------------------------------------------------------------------------"
+echo "RUNNING TCBUILD"
+echo ""
+exec /bin/bash "${JRUBY_HOME}/bin/jruby" -Ibuildscripts buildscripts/build-tc.rb "$@"

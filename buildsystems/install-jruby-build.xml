@@ -1,0 +1,12 @@
+<project name="buildsystems" default="install-jruby">
+  <property name="jruby.zip" value="jruby-1.1.2-20090208.zip"/>
+
+  <target name="install-jruby">
+    <get src="http://download.terracotta.org/buildjars/lib/${jruby.zip}"
+         dest="${jruby.zip}"
+         verbose="true"/>
+    <unzip src="${jruby.zip}" dest="."/>
+    <delete file="${jruby.zip}"/>
+  </target>
+  
+</project>
