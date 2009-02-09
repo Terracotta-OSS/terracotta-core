@@ -205,6 +205,14 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
+   * Section : L2 AA Properties
+   * Description : Properties for AA 
+   * </code>
+   ********************************************************************************************************************/
+   public static final String   L2_SERVERARRAY_2PC_ENABLED                             = "l2.serverarray.2pc.enabled";
+
+  /*********************************************************************************************************************
+   * <code>
    * Section : L1 JVM Compatibility Properties
    * Description : This section contains the defaults for the JVM compatibility for the L1
    * TODO : Explain all these parameters
