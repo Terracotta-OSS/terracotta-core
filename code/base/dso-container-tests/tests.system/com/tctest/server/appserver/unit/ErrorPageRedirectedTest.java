@@ -8,7 +8,7 @@ import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
 import com.tc.test.server.appserver.deployment.AbstractOneServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
-import com.tc.test.server.util.TcConfigBuilder;
+import com.tc.util.TcConfigBuilder;
 import com.tctest.webapp.servlets.ErrorRedirectedServlet;
 import com.tctest.webapp.servlets.Redirected;
 
@@ -34,7 +34,7 @@ public class ErrorPageRedirectedTest extends AbstractOneServerDeploymentTest {
 
     WebConversation wc = new WebConversation();
     wc.getClientProperties().setAutoRedirect(false);
-    String url = "http://localhost:" + server0.getPort() + "/" + CONTEXT + "/DOES_NOT_EXIST";
+    String url = "http://localhost:" + this.server0.getPort() + "/" + CONTEXT + "/DOES_NOT_EXIST";
     wc.setExceptionsThrownOnErrorStatus(false);
 
     WebResponse response = wc.getResponse(url);
