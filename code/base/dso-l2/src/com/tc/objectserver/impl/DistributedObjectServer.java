@@ -1094,7 +1094,13 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
       registry.registerActionInstance(new SRAL2PendingTransactions(txnManager));
       registry.registerActionInstance(new SRAServerTransactionSequencer(serverTransactionSequencerStats));
       registry.registerActionInstance(new SRAL1ReferenceCount(this.clientStateManager));
+      populateAdditionalStatisticsRetrivalRegistry(registry);
     }
+  }
+
+  // Overridden by enterprise server
+  protected void populateAdditionalStatisticsRetrivalRegistry(StatisticsRetrievalRegistry registry) {
+    // Add any additional Statistics here
   }
 
   private int getCommWorkerCount(TCProperties props) {
