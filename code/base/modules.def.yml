@@ -368,6 +368,7 @@ modules:
         - dso-l2-common
         - dso-statistics
         - dso-statistics-api
+        - management-api
   - examples:
       options:
         jdk: J2SE-1.5
@@ -397,6 +398,7 @@ modules:
         - dso-l2-common
         - dso-statistics
         - dso-statistics-api
+        - management-api
         - thirdparty
         - thirdparty-api
   - ui-eclipse-33:
