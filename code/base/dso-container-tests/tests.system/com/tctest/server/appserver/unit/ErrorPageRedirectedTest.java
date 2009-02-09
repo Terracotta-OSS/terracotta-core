@@ -11,8 +11,6 @@ import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.util.TcConfigBuilder;
 import com.tctest.webapp.servlets.ErrorRedirectedServlet;
 
-import java.util.Date;
-
 import javax.servlet.http.HttpServletResponse;
 
 import junit.framework.Test;
@@ -20,10 +18,6 @@ import junit.framework.Test;
 public class ErrorPageRedirectedTest extends AbstractOneServerDeploymentTest {
 
   private static final String CONTEXT = "ErrorPageRedirectedTest";
-
-  public ErrorPageRedirectedTest() {
-    disableAllUntil(new Date(Long.MAX_VALUE));
-  }
 
   public static Test suite() {
     return new ErrorPageRedirectedTestSetup();
@@ -47,13 +41,13 @@ public class ErrorPageRedirectedTest extends AbstractOneServerDeploymentTest {
     }
 
     @Override
-    protected void configureWar(DeploymentBuilder builder) {
+    protected void configureWar(final DeploymentBuilder builder) {
       builder.addServlet("errorServlet", "/errorServlet/*", ErrorRedirectedServlet.class, null, false);
       builder.addErrorPage(HttpServletResponse.SC_NOT_FOUND, "/errorServlet/");
     }
 
     @Override
-    protected void configureTcConfig(TcConfigBuilder tcConfigBuilder) {
+    protected void configureTcConfig(final TcConfigBuilder tcConfigBuilder) {
       tcConfigBuilder.addWebApplication(CONTEXT);
     }
 

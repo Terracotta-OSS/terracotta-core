@@ -16,7 +16,7 @@ public class SessionResponse extends HttpServletResponseWrapper implements Terra
   private final TerracottaRequest req;
   private boolean                 isCommitted = false;
 
-  public SessionResponse(TerracottaRequest req, HttpServletResponse res) {
+  public SessionResponse(final TerracottaRequest req, final HttpServletResponse res) {
     super(res);
     Assert.pre(req != null);
     Assert.pre(res != null);
@@ -24,39 +24,33 @@ public class SessionResponse extends HttpServletResponseWrapper implements Terra
     this.req = req;
   }
 
-  public String encodeRedirectUrl(String url) {
+  @Override
+  public String encodeRedirectUrl(final String url) {
     return encodeRedirectURL(url);
   }
 
-  public String encodeUrl(String url) {
+  @Override
+  public String encodeUrl(final String url) {
     return encodeURL(url);
   }
 
+  @Override
   public String encodeRedirectURL(final String url) {
     return req.encodeRedirectURL(url);
   }
 
+  @Override
   public String encodeURL(final String url) {
     return req.encodeURL(url);
   }
 
+  @Override
   public boolean isCommitted() {
     return isCommitted || super.isCommitted();
   }
 
-  public void sendError(int sc) throws IOException {
-    checkCommitted();
-    super.sendError(sc);
-    isCommitted = true;
-  }
-
-  public void sendError(int sc, String msg) throws IOException {
-    checkCommitted();
-    super.sendError(sc, msg);
-    isCommitted = true;
-  }
-
-  public void sendRedirect(String location) throws IOException {
+  @Override
+  public void sendRedirect(final String location) throws IOException {
     checkCommitted();
     super.sendRedirect(location);
     isCommitted = true;
