@@ -13,6 +13,7 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+// TODO: evaluate what to do with this now that there's ClusterEventsNG
 public class Cluster {
 
   private static final TCLogger logger    = TCLogging.getLogger(Cluster.class);
@@ -32,15 +33,15 @@ public class Cluster {
     return nodes;
   }
 
-  public synchronized void thisNodeConnected(final String thisNodeId, String[] nodesCurrentlyInCluster) {
+  public synchronized void thisNodeConnected(final String thisNodeId, final String[] nodesCurrentlyInCluster) {
     // we might get multiple calls in a row, ignore all but the first in a row.
     if (thisNode != null) return;
 
     thisNode = new Node(thisNodeId);
     nodes.put(thisNode.getNodeId(), thisNode);
 
-    for (int i = 0; i < nodesCurrentlyInCluster.length; i++) {
-      Node n = new Node(nodesCurrentlyInCluster[i]);
+    for (String element : nodesCurrentlyInCluster) {
+      Node n = new Node(element);
       nodes.put(n.getNodeId(), n);
     }
 
@@ -59,7 +60,7 @@ public class Cluster {
     thisNode = null;
   }
 
-  public synchronized void nodeConnected(String nodeId) {
+  public synchronized void nodeConnected(final String nodeId) {
     Node n = new Node(nodeId);
 
     // the server should not be sending this event to us
@@ -70,18 +71,19 @@ public class Cluster {
     fireNodeConnectedEvent(nodeId);
   }
 
-  public synchronized void nodeDisconnected(String nodeId) {
+  public synchronized void nodeDisconnected(final String nodeId) {
     nodes.remove(nodeId);
     debug("### Cluster: nodeDisconnected -> " + this);
     fireNodeDisconnectedEvent(nodeId);
   }
 
+  @Override
   public synchronized String toString() {
     // NOTE: this method is used in the error logging
     return "Cluster{ thisNode=" + thisNode + ", nodesInCluster=" + nodes.keySet() + "}";
   }
 
-  public synchronized void addClusterEventListener(ClusterEventListener cel) {
+  public synchronized void addClusterEventListener(final ClusterEventListener cel) {
     // If this assertion is going off, you're (probably) trying to add your listener too early
     assertPre(thisNode != null);
 
@@ -91,7 +93,7 @@ public class Cluster {
     }
   }
 
-  private void fireThisNodeConnectedEvent(ClusterEventListener cel, String[] ids) {
+  private void fireThisNodeConnectedEvent(final ClusterEventListener cel, final String[] ids) {
     try {
       cel.thisNodeConnected(thisNode.getNodeId(), ids);
     } catch (Throwable t) {
@@ -119,7 +121,7 @@ public class Cluster {
     }
   }
 
-  private void fireNodeConnectedEvent(String newNodeId) {
+  private void fireNodeConnectedEvent(final String newNodeId) {
     if (thisNode == null) { return; }
     for (Iterator i = listeners.keySet().iterator(); i.hasNext();) {
       ClusterEventListener l = (ClusterEventListener) i.next();
@@ -131,7 +133,7 @@ public class Cluster {
     }
   }
 
-  private void fireNodeDisconnectedEvent(String nodeId) {
+  private void fireNodeDisconnectedEvent(final String nodeId) {
     if (thisNode == null) { return; }
     for (Iterator i = listeners.keySet().iterator(); i.hasNext();) {
       ClusterEventListener l = (ClusterEventListener) i.next();
@@ -143,7 +145,7 @@ public class Cluster {
     }
   }
 
-  private static void assertPre(boolean b) {
+  private static void assertPre(final boolean b) {
     if (!b) throw new AssertionError("Pre-condition failed!");
   }
 
@@ -154,11 +156,11 @@ public class Cluster {
     return rv;
   }
 
-  private static void debug(String string) {
+  private static void debug(final String string) {
     if (debug) System.err.println(string);
   }
 
-  private void log(Throwable t) {
+  private void log(final Throwable t) {
     logger.error("Unhandled exception in event callback " + this, t);
   }
 }

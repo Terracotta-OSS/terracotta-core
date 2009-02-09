@@ -8,6 +8,8 @@ import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 import com.tc.config.lock.LockContextInfo;
 import com.tc.object.lockmanager.impl.ThreadLockManagerImpl;
 import com.tc.object.tx.TimerSpec;
+import com.tc.util.runtime.NullThreadIDMapImpl;
+import com.tc.util.runtime.ThreadIDManagerImpl;
 
 import junit.framework.TestCase;
 
@@ -16,9 +18,10 @@ public class ThreadLockManagerTest extends TestCase {
   private TestLockManager   lm;
   private ThreadLockManager tlm;
 
+  @Override
   public void setUp() throws Exception {
     lm = new TestLockManager();
-    tlm = new ThreadLockManagerImpl(lm);
+    tlm = new ThreadLockManagerImpl(lm, new ThreadIDManagerImpl(new NullThreadIDMapImpl()));
   }
 
   public void testLockIDFor() {
@@ -74,7 +77,7 @@ public class ThreadLockManagerTest extends TestCase {
     return args;
   }
 
-  private void verifyLockArgs(LockID lockID, ThreadID threadID, int lockLevel, Object[] args) {
+  private void verifyLockArgs(final LockID lockID, final ThreadID threadID, final int lockLevel, final Object[] args) {
     assertEquals(lockID, args[0]);
     assertEquals(threadID, args[1]);
     assertEquals(new Integer(lockLevel), args[2]);
@@ -117,8 +120,8 @@ public class ThreadLockManagerTest extends TestCase {
 
   }
 
-  private void verifyWaitArgs(LockID lockID, ThreadID threadID, TimerSpec call, Object lockObject,
-                              WaitListener waitListener, Object[] args) {
+  private void verifyWaitArgs(final LockID lockID, final ThreadID threadID, final TimerSpec call, final Object lockObject,
+                              final WaitListener waitListener, final Object[] args) {
     assertEquals(lockID, args[0]);
     assertEquals(threadID, args[1]);
     assertEquals(call, args[2]);
@@ -168,7 +171,7 @@ public class ThreadLockManagerTest extends TestCase {
 
   }
 
-  private void verifyNotifyArgs(LockID lockID, ThreadID threadID, boolean notifyAll, Object[] args) {
+  private void verifyNotifyArgs(final LockID lockID, final ThreadID threadID, final boolean notifyAll, final Object[] args) {
     assertEquals(lockID, args[0]);
     assertEquals(threadID, args[1]);
     assertEquals(new Boolean(notifyAll), args[2]);
@@ -210,7 +213,7 @@ public class ThreadLockManagerTest extends TestCase {
     verifyUnlockArgs(lockID, new ThreadID(3), getUnlockArgs());
   }
 
-  private void verifyUnlockArgs(LockID lockID, ThreadID threadID, Object[] args) {
+  private void verifyUnlockArgs(final LockID lockID, final ThreadID threadID, final Object[] args) {
     assertEquals(lockID, args[0]);
     assertEquals(threadID, args[1]);
   }

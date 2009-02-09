@@ -43,6 +43,7 @@ import com.tc.util.Assert;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.LockInfoByThreadID;
+import com.tc.util.runtime.ThreadIDManagerImpl;
 import com.tc.util.runtime.ThreadIDMap;
 import com.tc.util.runtime.ThreadIDMapUtil;
 
@@ -66,6 +67,7 @@ public class ClientLockManagerTest extends TCTestCase {
     //
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     sessionManager = new TestSessionManager();
@@ -93,7 +95,7 @@ public class ClientLockManagerTest extends TCTestCase {
 
     rmtLockManager.lockResponder = new LockResponder() {
 
-      public void respondToLockRequest(LockRequest request) {
+      public void respondToLockRequest(final LockRequest request) {
 
         clientLockManagerImpl.awardLock(gid, sessionManager.getSessionID(gid), request.lockID(), ThreadID.VM_ID, LockLevel
             .makeGreedy(request.lockLevel()));
@@ -138,7 +140,7 @@ public class ClientLockManagerTest extends TCTestCase {
 
     rmtLockManager.lockResponder = new LockResponder() {
 
-      public void respondToLockRequest(LockRequest request) {
+      public void respondToLockRequest(final LockRequest request) {
 
         clientLockManagerImpl.awardLock(gid, sessionManager.getSessionID(gid), request.lockID(), ThreadID.VM_ID, LockLevel
             .makeGreedy(request.lockLevel()));
@@ -327,17 +329,18 @@ public class ClientLockManagerTest extends TCTestCase {
 
   public void testTryLock() {
     class TryLockRemoteLockManager extends TestRemoteLockManager {
-      private CyclicBarrier requestBarrier;
-      private CyclicBarrier awardBarrier;
+      private final CyclicBarrier requestBarrier;
+      private final CyclicBarrier awardBarrier;
 
-      public TryLockRemoteLockManager(SessionProvider sessionProvider, CyclicBarrier requestBarrier,
-                                      CyclicBarrier awardBarrier) {
+      public TryLockRemoteLockManager(final SessionProvider sessionProvider, final CyclicBarrier requestBarrier,
+                                      final CyclicBarrier awardBarrier) {
         super(sessionProvider);
         this.requestBarrier = requestBarrier;
         this.awardBarrier = awardBarrier;
       }
 
-      public void tryRequestLock(LockID lockID, ThreadID threadID, TimerSpec timeout, int type, String lockType) {
+      @Override
+      public void tryRequestLock(final LockID lockID, final ThreadID threadID, final TimerSpec timeout, final int type, final String lockType) {
         try {
           requestBarrier.barrier();
           awardBarrier.barrier();
@@ -350,16 +353,17 @@ public class ClientLockManagerTest extends TCTestCase {
     }
 
     class TryLockClientLockManager extends ClientLockManagerImpl {
-      private CyclicBarrier awardBarrier;
+      private final CyclicBarrier awardBarrier;
 
-      public TryLockClientLockManager(TCLogger logger, RemoteLockManager remoteLockManager,
-                                      SessionManager sessionManager, CyclicBarrier awardBarrier,
-                                      ClientLockManagerConfig config) {
+      public TryLockClientLockManager(final TCLogger logger, final RemoteLockManager remoteLockManager,
+                                      final SessionManager sessionManager, final CyclicBarrier awardBarrier,
+                                      final ClientLockManagerConfig config) {
         super(logger, remoteLockManager, sessionManager, ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER, config);
         this.awardBarrier = awardBarrier;
       }
 
-      public void awardLock(NodeID nid, SessionID sessionID, LockID lockID, ThreadID threadID, int level) {
+      @Override
+      public void awardLock(final NodeID nid, final SessionID sessionID, final LockID lockID, final ThreadID threadID, final int level) {
         try {
           awardBarrier.barrier();
           super.awardLock(nid, sessionID, lockID, threadID, level);
@@ -409,7 +413,7 @@ public class ClientLockManagerTest extends TCTestCase {
 
     rmtLockManager.lockResponder = new LockResponder() {
 
-      public void respondToLockRequest(LockRequest request) {
+      public void respondToLockRequest(final LockRequest request) {
         queue.put(request);
         lockManager.awardLock(gid, sessionManager.getSessionID(gid), request.lockID(), ThreadID.VM_ID, LockLevel
             .makeGreedy(request.lockLevel()));
@@ -575,10 +579,10 @@ public class ClientLockManagerTest extends TCTestCase {
   public void testAddAllOutstandingWaitersTo() throws Exception {
 
     final ThreadIDMap threadIDMap = ThreadIDMapUtil.getInstance();
-    final ThreadLockManager threadLockManager = new ThreadLockManagerImpl(lockManager, threadIDMap);
+    final ThreadLockManager threadLockManager = new ThreadLockManagerImpl(lockManager, new ThreadIDManagerImpl(threadIDMap));
     final LockInfoDumpHandler lockInfoDumpHandler = new LockInfoDumpHandler() {
 
-      public void addAllLocksTo(LockInfoByThreadID lockInfo) {
+      public void addAllLocksTo(final LockInfoByThreadID lockInfo) {
         lockManager.addAllLocksTo(lockInfo);
       }
 
@@ -631,6 +635,7 @@ public class ClientLockManagerTest extends TCTestCase {
 
     final List lockerException = new ArrayList();
     Thread locker = new Thread("LOCKER") {
+      @Override
       public void run() {
         try {
           flowControl.put("locker: Calling lock");
@@ -700,6 +705,7 @@ public class ClientLockManagerTest extends TCTestCase {
     rmtLockManager.lockResponder = new LockResponder() {
       public void respondToLockRequest(final LockRequest request) {
         new Thread() {
+          @Override
           public void run() {
             requests.add(request);
             if (respond.get()) {
@@ -783,6 +789,7 @@ public class ClientLockManagerTest extends TCTestCase {
     final boolean[] done = new boolean[1];
     done[0] = false;
     Thread t = new Thread() {
+      @Override
       public void run() {
         lockManager.lock(lid0, tid1, LockLevel.WRITE, "", LockContextInfo.NULL_LOCK_CONTEXT_INFO);
         System.out.println("Got lock0 for tx1");
@@ -803,11 +810,11 @@ public class ClientLockManagerTest extends TCTestCase {
   public void testAllLockInfoInThreadDump() throws Exception {
 
     final ThreadIDMap threadIDMap = ThreadIDMapUtil.getInstance();
-    final ThreadLockManager threadLockManager = new ThreadLockManagerImpl(lockManager, threadIDMap);
+    final ThreadLockManager threadLockManager = new ThreadLockManagerImpl(lockManager, new ThreadIDManagerImpl(threadIDMap));
 
     final LockInfoDumpHandler lockInfoDumpHandler = new LockInfoDumpHandler() {
 
-      public void addAllLocksTo(LockInfoByThreadID lockInfo) {
+      public void addAllLocksTo(final LockInfoByThreadID lockInfo) {
         lockManager.addAllLocksTo(lockInfo);
       }
 
@@ -844,6 +851,7 @@ public class ClientLockManagerTest extends TCTestCase {
     System.out.println("XXX TERRA Thread : Got READ lock1 for tx0");
 
     Thread t1 = new Thread("yahoo_thread") {
+      @Override
       public void run() {
         threadLockManager.lock(lid3, LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE,
                                LockContextInfo.NULL_LOCK_CONTEXT_INFO);
@@ -871,6 +879,7 @@ public class ClientLockManagerTest extends TCTestCase {
     };
 
     Thread t2 = new Thread("google_thread") {
+      @Override
       public void run() {
         threadLockManager.lock(lid2, LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE,
                                LockContextInfo.NULL_LOCK_CONTEXT_INFO);
@@ -1031,7 +1040,7 @@ public class ClientLockManagerTest extends TCTestCase {
     lockManager.unpause(GroupID.ALL_GROUPS, 0);
   }
 
-  public static void main(String[] args) {
+  public static void main(final String[] args) {
     //
   }
 
@@ -1044,22 +1053,22 @@ public class ClientLockManagerTest extends TCTestCase {
     private final List                   exceptions = new LinkedList();
     private final ThreadLockManager      threadLockManager;
 
-    private LockWaiter(NoExceptionLinkedQueue preWaitSignalQueue, WaitLockRequest request, Object waitObject) {
+    private LockWaiter(final NoExceptionLinkedQueue preWaitSignalQueue, final WaitLockRequest request, final Object waitObject) {
       this(preWaitSignalQueue, request.lockID(), null, request.threadID(), request.getTimerSpec(), waitObject);
     }
 
-    private LockWaiter(NoExceptionLinkedQueue preWaitSignalQueue, LockID lid, ThreadLockManager threadLockManager,
-                       TimerSpec call, Object waitObject) {
+    private LockWaiter(final NoExceptionLinkedQueue preWaitSignalQueue, final LockID lid, final ThreadLockManager threadLockManager,
+                       final TimerSpec call, final Object waitObject) {
       this(preWaitSignalQueue, lid, threadLockManager, null, call, waitObject);
     }
 
-    private LockWaiter(NoExceptionLinkedQueue preWaitSignalQueue, LockID lid, ThreadID threadID, TimerSpec call,
-                       Object waitObject) {
+    private LockWaiter(final NoExceptionLinkedQueue preWaitSignalQueue, final LockID lid, final ThreadID threadID, final TimerSpec call,
+                       final Object waitObject) {
       this(preWaitSignalQueue, lid, null, threadID, call, waitObject);
     }
 
-    private LockWaiter(NoExceptionLinkedQueue preWaitSignalQueue, LockID lid, ThreadLockManager threadLockManager,
-                       ThreadID threadID, TimerSpec call, Object waitObject) {
+    private LockWaiter(final NoExceptionLinkedQueue preWaitSignalQueue, final LockID lid, final ThreadLockManager threadLockManager,
+                       final ThreadID threadID, final TimerSpec call, final Object waitObject) {
       this.preWaitSignalQueue = preWaitSignalQueue;
       this.lid = lid;
       this.tid = threadID;
@@ -1069,6 +1078,7 @@ public class ClientLockManagerTest extends TCTestCase {
       this.setName("LockWaiter");
     }
 
+    @Override
     public void run() {
       try {
         if (threadLockManager != null) {
@@ -1097,12 +1107,13 @@ public class ClientLockManagerTest extends TCTestCase {
     ThreadID tid;
     int      lockType;
 
-    private LockGetter(LockID lid, ThreadID tid, int lockType) {
+    private LockGetter(final LockID lid, final ThreadID tid, final int lockType) {
       this.lid = lid;
       this.tid = tid;
       this.lockType = lockType;
     }
 
+    @Override
     public void run() {
       lockManager.lock(lid, tid, lockType, LockContextInfo.NULL_LOCK_OBJECT_TYPE,
                        LockContextInfo.NULL_LOCK_CONTEXT_INFO);

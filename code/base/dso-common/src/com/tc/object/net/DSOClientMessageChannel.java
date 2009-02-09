@@ -13,6 +13,7 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ClientIDProvider;
 import com.tc.object.msg.AcknowledgeTransactionMessageFactory;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
+import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.msg.CommitTransactionMessageFactory;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessageFactory;
 import com.tc.object.msg.JMXMessage;
@@ -58,6 +59,8 @@ public interface DSOClientMessageChannel {
   public ClientHandshakeMessageFactory getClientHandshakeMessageFactory();
 
   public AcknowledgeTransactionMessageFactory getAcknowledgeTransactionMessageFactory();
+
+  public NodesWithObjectsMessageFactory getClusterMetaDataMessageFactory();
 
   public JMXMessage getJMXMessage();
 

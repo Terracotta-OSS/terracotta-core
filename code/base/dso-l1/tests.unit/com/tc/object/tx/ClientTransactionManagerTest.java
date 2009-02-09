@@ -18,6 +18,8 @@ import com.tc.object.lockmanager.api.TestLockManager;
 import com.tc.object.lockmanager.impl.ThreadLockManagerImpl;
 import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.object.util.ReadOnlyException;
+import com.tc.util.runtime.NullThreadIDMapImpl;
+import com.tc.util.runtime.ThreadIDManagerImpl;
 
 import junit.framework.TestCase;
 
@@ -29,16 +31,18 @@ public class ClientTransactionManagerTest extends TestCase {
   ClientTransactionManagerImpl clientTxnMgr;
   SynchronizedRef              error = new SynchronizedRef(null);
 
+  @Override
   public void setUp() throws Exception {
     clientTxnFactory = new ClientTransactionFactoryImpl(new NullRuntimeLogger());
     rmtTxnMgr = new TestRemoteTransactionManager();
     objMgr = new TestClientObjectManager();
     lockMgr = new TestLockManager();
     clientTxnMgr = new ClientTransactionManagerImpl(new ClientIDProviderImpl(new TestChannelIDProvider()), objMgr,
-                                                    new ThreadLockManagerImpl(lockMgr), clientTxnFactory, rmtTxnMgr,
+                                                    new ThreadLockManagerImpl(lockMgr, new ThreadIDManagerImpl(new NullThreadIDMapImpl())), clientTxnFactory, rmtTxnMgr,
                                                     new NullRuntimeLogger(), new MockClientTxMonitor());
   }
 
+  @Override
   public void tearDown() throws Exception {
     if (error.get() != null) { throw new RuntimeException((Throwable) error.get()); }
   }

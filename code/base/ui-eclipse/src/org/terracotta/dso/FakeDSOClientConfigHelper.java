@@ -48,59 +48,59 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     return null;
   }
 
-  public String[] getMissingRootDeclarations(ClassInfo classInfo) {
+  public String[] getMissingRootDeclarations(final ClassInfo classInfo) {
     return new String[0];
   }
 
-  public void addAutoLockExcludePattern(String expression) {
+  public void addAutoLockExcludePattern(final String expression) {
     /**/
   }
 
-  public void addAutolock(String methodPattern, ConfigLockLevel type) {
+  public void addAutolock(final String methodPattern, final ConfigLockLevel type) {
     /**/
   }
 
-  public void addClassReplacement(String originalClassName, String replacementClassName, URL replacementResource) {
+  public void addClassReplacement(final String originalClassName, final String replacementClassName, final URL replacementResource) {
     /**/
   }
 
-  public void addClassResource(String className, URL resource) {
+  public void addClassResource(final String className, final URL resource) {
     /**/
   }
 
-  public void addCustomAdapter(String name, ClassAdapterFactory adapterFactory) {
+  public void addCustomAdapter(final String name, final ClassAdapterFactory adapterFactory) {
     /**/
   }
 
-  public void addIncludePattern(String classPattern) {
+  public void addIncludePattern(final String classPattern) {
     /**/
   }
 
-  public void addIncludePattern(String classname, boolean honorTransient) {
+  public void addIncludePattern(final String classname, final boolean honorTransient) {
     /**/
   }
 
-  public void addIncludePattern(String expression, boolean honorTransient, boolean oldStyleCallConstructorOnLoad, boolean honorVolatile) {
+  public void addIncludePattern(final String expression, final boolean honorTransient, final boolean oldStyleCallConstructorOnLoad, final boolean honorVolatile) {
     /**/
   }
 
-  public void addLock(String methodPattern, LockDefinition lockDefinition) {
+  public void addLock(final String methodPattern, final LockDefinition lockDefinition) {
     /**/
   }
 
-  public void addPermanentExcludePattern(String pattern) {
+  public void addPermanentExcludePattern(final String pattern) {
     /**/
   }
 
-  public void addReadAutolock(String methodPattern) {
+  public void addReadAutolock(final String methodPattern) {
     /**/
   }
 
-  public void addRoot(String rootName, String rootFieldName) {
+  public void addRoot(final String rootName, final String rootFieldName) {
     /**/
   }
 
-  public void addWriteAutolock(String methodPattern) {
+  public void addWriteAutolock(final String methodPattern) {
     /**/
   }
 
@@ -108,82 +108,82 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     /**/
   }
 
-  public LockDefinition createLockDefinition(String name, ConfigLockLevel level) {
+  public LockDefinition createLockDefinition(final String name, final ConfigLockLevel level) {
     return new LockDefinitionImpl(name, level);
   }
 
-  public TransparencyClassSpec getOrCreateSpec(String className) {
+  public TransparencyClassSpec getOrCreateSpec(final String className) {
     return new TransparencyClassSpecImpl(className, this);
   }
 
-  public TransparencyClassSpec getOrCreateSpec(String className, String applicator) {
+  public TransparencyClassSpec getOrCreateSpec(final String className, final String applicator) {
     return new TransparencyClassSpecImpl(className, this);
   }
 
-  public void addApplicationName(String name) {
+  public void addApplicationName(final String name) {
     /**/
   }
 
-  public void addAspectModule(String classNamePrefix, String moduleName) {
+  public void addAspectModule(final String classNamePrefix, final String moduleName) {
     /**/
   }
 
-  public void addDSOSpringConfig(DSOSpringConfigHelper config) {
+  public void addDSOSpringConfig(final DSOSpringConfigHelper config) {
     /**/
   }
 
-  public void addDistributedMethodCall(DistributedMethodSpec dms) {
+  public void addDistributedMethodCall(final DistributedMethodSpec dms) {
     /**/
   }
 
-  public void addExcludePattern(String expression) {
+  public void addExcludePattern(final String expression) {
     /**/
   }
 
-  public void addIncludeAndLockIfRequired(String expression, boolean honorTransient, boolean oldStyleCallConstructorOnLoad, boolean honorVolatile, String lockExpression, ClassInfo classInfo) {
+  public void addIncludeAndLockIfRequired(final String expression, final boolean honorTransient, final boolean oldStyleCallConstructorOnLoad, final boolean honorVolatile, final String lockExpression, final ClassInfo classInfo) {
     /**/
   }
 
-  public void addInstrumentationDescriptor(InstrumentedClass classDesc) {
+  public void addInstrumentationDescriptor(final InstrumentedClass classDesc) {
     /**/
   }
 
-  public void addRepository(String location) {
+  public void addRepository(final String location) {
     /**/
   }
 
-  public void addModule(String name, String version) {
+  public void addModule(final String name, final String version) {
     /**/
   }
 
-  public void addModule(String groupId, String name, String version) {
+  public void addModule(final String groupId, final String name, final String version) {
     /**/
   }
-  public void addReadAutoSynchronize(String methodPattern) {
-    /**/
-  }
-
-  public void addRoot(Root root, boolean addSpecForClass) {
+  public void addReadAutoSynchronize(final String methodPattern) {
     /**/
   }
 
-  public void addSynchronousWriteApplication(String name) {
+  public void addRoot(final Root root, final boolean addSpecForClass) {
     /**/
   }
 
-  public void addSynchronousWriteAutolock(String methodPattern) {
+  public void addSynchronousWriteApplication(final String name) {
     /**/
   }
 
-  public void addTransient(String className, String fieldName) {
+  public void addSynchronousWriteAutolock(final String methodPattern) {
     /**/
   }
 
-  public void addUserDefinedBootSpec(String className, TransparencyClassSpec spec) {
+  public void addTransient(final String className, final String fieldName) {
     /**/
   }
 
-  public void addWriteAutoSynchronize(String methodPattern) {
+  public void addUserDefinedBootSpec(final String className, final TransparencyClassSpec spec) {
+    /**/
+  }
+
+  public void addWriteAutoSynchronize(final String methodPattern) {
     /**/
   }
 
@@ -199,7 +199,7 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     return null;
   }
 
-  public Class getChangeApplicator(Class clazz) {
+  public Class getChangeApplicator(final Class clazz) {
     return null;
   }
 
@@ -207,7 +207,7 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     return null;
   }
 
-  public URL getClassResource(String className) {
+  public URL getClassResource(final String className) {
     return null;
   }
 
@@ -215,7 +215,7 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     return null;
   }
 
-  public DistributedMethodSpec getDmiSpec(MemberInfo memberInfo) {
+  public DistributedMethodSpec getDmiSpec(final MemberInfo memberInfo) {
     return null;
   }
 
@@ -227,7 +227,7 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     return null;
   }
 
-  public String getLogicalExtendingClassName(String className) {
+  public String getLogicalExtendingClassName(final String className) {
     return null;
   }
 
@@ -239,11 +239,11 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     return null;
   }
 
-  public String getOnLoadMethodIfDefined(ClassInfo classInfo) {
+  public String getOnLoadMethodIfDefined(final ClassInfo classInfo) {
     return null;
   }
 
-  public String getOnLoadScriptIfDefined(ClassInfo classInfo) {
+  public String getOnLoadScriptIfDefined(final ClassInfo classInfo) {
     return null;
   }
 
@@ -251,27 +251,27 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     return null;
   }
 
-  public String getPostCreateMethodIfDefined(String className) {
+  public String getPostCreateMethodIfDefined(final String className) {
     return null;
   }
 
-  public String getPreCreateMethodIfDefined(String className) {
+  public String getPreCreateMethodIfDefined(final String className) {
     return null;
   }
 
-  public int getSessionLockType(String appName) {
+  public int getSessionLockType(final String appName) {
     return 0;
   }
 
-  public TransparencyClassSpec getSpec(String className) {
+  public TransparencyClassSpec getSpec(final String className) {
     return null;
   }
 
-  public Class getTCPeerClass(Class clazz) {
+  public Class getTCPeerClass(final Class clazz) {
     return null;
   }
 
-  public boolean hasIncludeExcludePattern(ClassInfo classInfo) {
+  public boolean hasIncludeExcludePattern(final ClassInfo classInfo) {
     return false;
   }
 
@@ -283,71 +283,71 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     return null;
   }
 
-  public boolean isCallConstructorOnLoad(ClassInfo classInfo) {
+  public boolean isCallConstructorOnLoad(final ClassInfo classInfo) {
     return false;
   }
 
-  public boolean isDSOSessions(String name) {
+  public boolean isDSOSessions(final String name) {
     return false;
   }
 
-  public boolean isLockMethod(MemberInfo memberInfo) {
+  public boolean isLockMethod(final MemberInfo memberInfo) {
     return false;
   }
 
-  public boolean isLogical(String theClass) {
+  public boolean isLogical(final String theClass) {
     return false;
   }
 
-  public boolean isNeverAdaptable(ClassInfo classInfo) {
+  public boolean isNeverAdaptable(final ClassInfo classInfo) {
     return false;
   }
 
-  public boolean isPortableModuleClass(Class clazz) {
+  public boolean isPortableModuleClass(final Class clazz) {
     return false;
   }
 
-  public boolean isRoot(FieldInfo fi) {
+  public boolean isRoot(final FieldInfo fi) {
     return false;
   }
 
-  public boolean isRootDSOFinal(FieldInfo fi) {
+  public boolean isRootDSOFinal(final FieldInfo fi) {
     return false;
   }
 
-  public boolean isTransient(int modifiers, ClassInfo classInfo, String field) {
+  public boolean isTransient(final int modifiers, final ClassInfo classInfo, final String field) {
     return false;
   }
 
-  public boolean isUseNonDefaultConstructor(Class clazz) {
+  public boolean isUseNonDefaultConstructor(final Class clazz) {
     return false;
   }
 
-  public boolean isVolatile(int modifiers, ClassInfo classInfo, String field) {
+  public boolean isVolatile(final int modifiers, final ClassInfo classInfo, final String field) {
     return false;
   }
 
-  public LockDefinition[] lockDefinitionsFor(MemberInfo memberInfo) {
+  public LockDefinition[] lockDefinitionsFor(final MemberInfo memberInfo) {
     return null;
   }
 
-  public boolean matches(Lock lock, MemberInfo methodInfo) {
+  public boolean matches(final Lock lock, final MemberInfo methodInfo) {
     return false;
   }
 
-  public boolean matches(String expression, MemberInfo methodInfo) {
+  public boolean matches(final String expression, final MemberInfo methodInfo) {
     return false;
   }
 
-  public boolean removeCustomAdapter(String name) {
+  public boolean removeCustomAdapter(final String name) {
     return false;
   }
 
-  public void removeSpec(String className) {
+  public void removeSpec(final String className) {
     /**/
   }
 
-  public String rootNameFor(FieldInfo fi) {
+  public String rootNameFor(final FieldInfo fi) {
     return null;
   }
 
@@ -359,55 +359,55 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     return null;
   }
 
-  public void setFaultCount(int count) {
+  public void setFaultCount(final int count) {
     /**/
   }
 
-  public void setModuleSpecs(ModuleSpec[] pluginSpecs) {
+  public void setModuleSpecs(final ModuleSpec[] pluginSpecs) {
     /**/
   }
 
-  public boolean shouldBeAdapted(ClassInfo classInfo) {
+  public boolean shouldBeAdapted(final ClassInfo classInfo) {
     return false;
   }
 
-  public void verifyBootJarContents(File bjf) {
+  public void verifyBootJarContents(final File bjf) {
     /**/
   }
 
-  public void writeTo(DSOApplicationConfigBuilder appConfigBuilder) {
+  public void writeTo(final DSOApplicationConfigBuilder appConfigBuilder) {
     /**/
   }
 
-  public TransparencyClassAdapter createDsoClassAdapterFor(ClassVisitor writer, ClassInfo classInfo,
-                                                           InstrumentationLogger lgr, ClassLoader caller,
-                                                           final boolean forcePortable, boolean honorTransient) {
+  public TransparencyClassAdapter createDsoClassAdapterFor(final ClassVisitor writer, final ClassInfo classInfo,
+                                                           final InstrumentationLogger lgr, final ClassLoader caller,
+                                                           final boolean forcePortable, final boolean honorTransient) {
     return null;
   }
 
-  public ClassAdapter createClassAdapterFor(ClassWriter writer, ClassInfo classInfo, InstrumentationLogger lgr,
-                                            ClassLoader caller) {
+  public ClassAdapter createClassAdapterFor(final ClassWriter writer, final ClassInfo classInfo, final InstrumentationLogger lgr,
+                                            final ClassLoader caller) {
     return null;
   }
 
-  public ClassAdapter createClassAdapterFor(ClassWriter writer, ClassInfo classInfo, InstrumentationLogger lgr,
-                                            ClassLoader caller, boolean disableSuperClassTypeChecking) {
+  public ClassAdapter createClassAdapterFor(final ClassWriter writer, final ClassInfo classInfo, final InstrumentationLogger lgr,
+                                            final ClassLoader caller, final boolean disableSuperClassTypeChecking) {
     return null;
   }
 
-  public void addCustomAdapter(String name, String factoryName) {
+  public void addCustomAdapter(final String name, final String factoryName) {
     /**/
   }
 
-  public void addNonportablePattern(String pattern) {
+  public void addNonportablePattern(final String pattern) {
     /**/
   }
 
-  public ClassAdapterFactory getCustomAdapter(ClassInfo classInfo) {
+  public ClassAdapterFactory getCustomAdapter(final ClassInfo classInfo) {
     return null;
   }
 
-  public boolean hasCustomAdapter(ClassInfo classInfo) {
+  public boolean hasCustomAdapter(final ClassInfo classInfo) {
     return false;
   }
 
@@ -415,11 +415,11 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     return false;
   }
 
-  public void addAutolock(String methodPattern, ConfigLockLevel type, String configurationText) {
+  public void addAutolock(final String methodPattern, final ConfigLockLevel type, final String configurationText) {
     //
   }
 
-  public void addWriteAutolock(String methodPattern, String lockContextInfo) {
+  public void addWriteAutolock(final String methodPattern, final String lockContextInfo) {
     //
   }
 
@@ -427,17 +427,20 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     throw new ImplementMe();
   }
 
-  public boolean useResolveLockWhenClearing(Class clazz) {
+  public boolean useResolveLockWhenClearing(final Class clazz) {
     return true;
   }
 
-  public boolean isApplicationSessionLocked(String appName) {
+  public boolean isApplicationSessionLocked(final String appName) {
     return true;
   }
 
-  public void addSessionLockedApplication(String name) {
+  public void addSessionLockedApplication(final String name) {
     throw new ImplementMe();
 
-  }  
+  }
 
+  public boolean addAnnotationBasedAdapters(final ClassInfo classInfo) {
+    return false;
+  }
 }

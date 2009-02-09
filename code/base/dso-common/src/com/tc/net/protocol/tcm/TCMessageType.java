@@ -60,6 +60,8 @@ public final class TCMessageType {
   public static final int           TYPE_COMPLETED_TRANSACTION_LOWWATERMARK_MESSAGE = 45;
   public static final int           TYPE_GROUP_WRAPPER_MESSAGE                      = 46;
   public static final int           TYPE_GROUP_HANDSHAKE_MESSAGE                    = 47;
+  public static final int           TYPE_NODES_WITH_OBJECTS_MESSAGE                 = 48;
+  public static final int           TYPE_NODES_WITH_OBJECTS_RESPONSE_MESSAGE        = 49;
 
   public static final TCMessageType PING_MESSAGE                                    = new TCMessageType();
   public static final TCMessageType PONG_MESSAGE                                    = new TCMessageType();
@@ -94,8 +96,10 @@ public final class TCMessageType {
   public static final TCMessageType COMPLETED_TRANSACTION_LOWWATERMARK_MESSAGE      = new TCMessageType();
   public static final TCMessageType GROUP_WRAPPER_MESSAGE                           = new TCMessageType();
   public static final TCMessageType GROUP_HANDSHAKE_MESSAGE                         = new TCMessageType();
+  public static final TCMessageType NODES_WITH_OBJECTS_MESSAGE                      = new TCMessageType();
+  public static final TCMessageType NODES_WITH_OBJECTS_RESPONSE_MESSAGE             = new TCMessageType();
 
-  public static TCMessageType getInstance(int i) {
+  public static TCMessageType getInstance(final int i) {
     return (TCMessageType) typeMap.get(i);
   }
 
@@ -111,6 +115,7 @@ public final class TCMessageType {
     return typeName;
   }
 
+  @Override
   public String toString() {
     return typeName + " (" + type + ")";
   }
@@ -132,19 +137,21 @@ public final class TCMessageType {
     // type and name are set automagically in init()
   }
 
-  private void setType(int type) {
+  private void setType(final int type) {
     this.type = type;
   }
 
-  private void setTypeName(String typeName) {
+  private void setTypeName(final String typeName) {
     this.typeName = typeName;
   }
 
+  @Override
   public int hashCode() {
     return this.typeName.hashCode() + type;
   }
 
-  public boolean equals(Object obj) {
+  @Override
+  public boolean equals(final Object obj) {
     if (obj instanceof TCMessageType) {
       TCMessageType other = (TCMessageType) obj;
       return this.typeName.equals(other.typeName) && (this.type == other.type);
@@ -164,8 +171,7 @@ public final class TCMessageType {
     Map mtFields = new HashMap();
     Map intFields = new HashMap();
 
-    for (int i = 0; i < fields.length; i++) {
-      final Field field = fields[i];
+    for (final Field field : fields) {
       final String fName = field.getName();
 
       int modifiers = field.getModifiers();
@@ -248,7 +254,7 @@ public final class TCMessageType {
     System.arraycopy(typeMap.getValues(), 0, rv, 0, rv.length);
 
     Arrays.sort(rv, new Comparator() {
-      public int compare(Object o1, Object o2) {
+      public int compare(final Object o1, final Object o2) {
         int i1 = ((TCMessageType) o1).getType();
         int i2 = ((TCMessageType) o2).getType();
 

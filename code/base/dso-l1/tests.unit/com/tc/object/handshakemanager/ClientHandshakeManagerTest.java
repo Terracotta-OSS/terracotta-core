@@ -6,6 +6,7 @@ package com.tc.object.handshakemanager;
 
 import com.tc.async.impl.NullSink;
 import com.tc.cluster.Cluster;
+import com.tc.cluster.DsoClusterImpl;
 import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
@@ -33,6 +34,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
   private TestClientHandshakeCallback       callback;
   private MockChannel                       channel;
 
+  @Override
   public void setUp() throws Exception {
     chmf = new TestClientHandshakeMessageFactory();
     callback = new TestClientHandshakeCallback();
@@ -46,7 +48,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
 
   private void createHandshakeMgr() {
     mgr = new ClientHandshakeManagerImpl(TCLogging.getLogger(ClientHandshakeManagerImpl.class), channel, chmf,
-                                         new NullSink(), new NullSessionManager(), new Cluster(), clientVersion,
+                                         new NullSink(), new NullSessionManager(), new Cluster(), new DsoClusterImpl(), clientVersion,
                                          Collections.singletonList(callback));
   }
 
@@ -186,7 +188,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     public TestClientHandshakeMessage   message;
     public final NoExceptionLinkedQueue newMessageQueue = new NoExceptionLinkedQueue();
 
-    public ClientHandshakeMessage newClientHandshakeMessage(NodeID remoteNode) {
+    public ClientHandshakeMessage newClientHandshakeMessage(final NodeID remoteNode) {
       newMessageQueue.put(message);
       return message;
     }
@@ -197,7 +199,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
 
     long sequence = 1;
 
-    public synchronized void requestBatch(BatchSequenceReceiver receiver, int size) {
+    public synchronized void requestBatch(final BatchSequenceReceiver receiver, final int size) {
       receiver.setNextBatch(sequence, sequence + size);
       sequence += size;
     }
@@ -211,16 +213,16 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     AtomicInteger initiateHandshake = new AtomicInteger();
     int           disconnected;
 
-    public void initializeHandshake(NodeID thisNode, NodeID remoteNode, ClientHandshakeMessage handshakeMessage) {
+    public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode, final ClientHandshakeMessage handshakeMessage) {
       initiateHandshake.incrementAndGet();
     }
 
-    public void pause(NodeID remoteNode, int disconnectedCount) {
+    public void pause(final NodeID remoteNode, final int disconnectedCount) {
       paused.incrementAndGet();
       this.disconnected = disconnectedCount;
     }
 
-    public void unpause(NodeID remoteNode, int disconnectedCount) {
+    public void unpause(final NodeID remoteNode, final int disconnectedCount) {
       unpaused.incrementAndGet();
       this.disconnected = disconnectedCount;
     }

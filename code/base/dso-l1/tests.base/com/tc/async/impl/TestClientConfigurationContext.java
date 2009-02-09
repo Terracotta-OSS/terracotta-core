@@ -17,25 +17,30 @@ public class TestClientConfigurationContext extends ClientConfigurationContext {
   public ClientLockManager clientLockManager;
 
   public TestClientConfigurationContext() {
-    super(null, null, null, null, null);
+    super(null, null, null, null, null, null);
   }
 
+  @Override
   public ClientLockManager getLockManager() {
     return clientLockManager;
   }
 
-  public TCLogger getLogger(Class clazz) {
+  @Override
+  public TCLogger getLogger(final Class clazz) {
     return new NullTCLogger();
   }
 
+  @Override
   public RemoteObjectManager getObjectManager() {
     throw new ImplementMe();
   }
 
+  @Override
   public ClientTransactionManager getTransactionManager() {
     throw new ImplementMe();
   }
 
+  @Override
   public ClientHandshakeManager getClientHandshakeManager() {
     throw new ImplementMe();
   }

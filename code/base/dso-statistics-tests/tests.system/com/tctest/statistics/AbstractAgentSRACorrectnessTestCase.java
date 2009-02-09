@@ -5,6 +5,7 @@
 package com.tctest.statistics;
 
 import com.tc.cluster.Cluster;
+import com.tc.cluster.DsoClusterImpl;
 import com.tc.config.schema.SettableConfigItem;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
@@ -59,7 +60,7 @@ abstract public class AbstractAgentSRACorrectnessTestCase extends BaseDSOTestCas
       new MockClassProvider(),
       new PreparedComponentsFromL2Connection(manager),
       NullManager.getInstance(),
-      new Cluster(), new NullRuntimeLogger());
+      new Cluster(), new DsoClusterImpl(), new NullRuntimeLogger());
     client.start();
     return client;
   }

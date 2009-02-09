@@ -13,6 +13,7 @@ import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectRequestManager;
+import com.tc.objectserver.clustermetadata.ServerClusterMetaDataManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
@@ -43,8 +44,9 @@ public class TestServerConfigurationContext implements ServerConfigurationContex
   public L2Coordinator                  l2Coordinator;
   public TransactionBatchManager        transactionBatchManager;
   public ServerGlobalTransactionManager serverGlobalTransactionManager;
+  public ServerClusterMetaDataManager   clusterMetaDataManager;
 
-  public void addStage(String name, Stage stage) {
+  public void addStage(final String name, final Stage stage) {
     stages.put(name, stage);
   }
 
@@ -56,7 +58,7 @@ public class TestServerConfigurationContext implements ServerConfigurationContex
     return this.objectRequestManager;
   }
 
-  public void setObjectRequestManager(ObjectRequestManager objectRequestManager) {
+  public void setObjectRequestManager(final ObjectRequestManager objectRequestManager) {
     this.objectRequestManager = objectRequestManager;
   }
 
@@ -84,11 +86,11 @@ public class TestServerConfigurationContext implements ServerConfigurationContex
     return this.clientHandshakeManager;
   }
 
-  public Stage getStage(String name) {
+  public Stage getStage(final String name) {
     return (Stage) this.stages.get(name);
   }
 
-  public TCLogger getLogger(Class clazz) {
+  public TCLogger getLogger(final Class clazz) {
     return TCLogging.getLogger(getClass());
   }
 
@@ -114,6 +116,10 @@ public class TestServerConfigurationContext implements ServerConfigurationContex
 
   public ServerGlobalTransactionManager getServerGlobalTransactionManager() {
     return serverGlobalTransactionManager;
+  }
+
+  public ServerClusterMetaDataManager getClusterMetaDataManager() {
+    return clusterMetaDataManager;
   }
 
 }

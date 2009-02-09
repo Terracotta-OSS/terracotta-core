@@ -17,6 +17,7 @@ import com.tc.object.ClientIDProvider;
 import com.tc.object.ClientIDProviderImpl;
 import com.tc.object.msg.AcknowledgeTransactionMessageFactory;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
+import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.msg.CommitTransactionMessageFactory;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessageFactory;
@@ -25,16 +26,15 @@ import com.tc.object.msg.LockRequestMessageFactory;
 import com.tc.object.msg.ObjectIDBatchRequestMessageFactory;
 import com.tc.object.msg.RequestManagedObjectMessageFactory;
 import com.tc.object.msg.RequestRootMessageFactory;
-import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.session.SessionID;
 
 public class MockChannel implements DSOClientMessageChannel {
 
-  public void addClassMapping(TCMessageType messageType, Class messageClass) {
+  public void addClassMapping(final TCMessageType messageType, final Class messageClass) {
     throw new ImplementMe();
   }
 
-  public void addListener(ChannelEventListener listener) {
+  public void addListener(final ChannelEventListener listener) {
     throw new ImplementMe();
   }
 
@@ -78,6 +78,10 @@ public class MockChannel implements DSOClientMessageChannel {
     throw new ImplementMe();
   }
 
+  public NodesWithObjectsMessageFactory getClusterMetaDataMessageFactory() {
+    throw new ImplementMe();
+  }
+
   public boolean isConnected() {
     throw new ImplementMe();
   }
@@ -86,7 +90,7 @@ public class MockChannel implements DSOClientMessageChannel {
     throw new ImplementMe();
   }
 
-  public void routeMessageType(TCMessageType messageType, Sink destSink, Sink hydrateSink) {
+  public void routeMessageType(final TCMessageType messageType, final Sink destSink, final Sink hydrateSink) {
     throw new ImplementMe();
   }
 
@@ -104,7 +108,7 @@ public class MockChannel implements DSOClientMessageChannel {
   private class NullCompletedTransactionLowWaterMarkMessageFactory implements
       CompletedTransactionLowWaterMarkMessageFactory {
 
-    public CompletedTransactionLowWaterMarkMessage newCompletedTransactionLowWaterMarkMessage(NodeID remoteID) {
+    public CompletedTransactionLowWaterMarkMessage newCompletedTransactionLowWaterMarkMessage(final NodeID remoteID) {
       return new CompletedTransactionLowWaterMarkMessage(new SessionID(0), new NullMessageMonitor(),
                                                          new TCByteBufferOutputStream(4, 4096, false),
                                                          new MockMessageChannel(new ChannelID(0)),

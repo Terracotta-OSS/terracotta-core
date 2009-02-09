@@ -11,6 +11,7 @@ import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectRequestManager;
+import com.tc.objectserver.clustermetadata.ServerClusterMetaDataManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
@@ -24,7 +25,7 @@ import com.tc.objectserver.tx.TransactionalObjectManager;
 
 /**
  * App specific configuration context
- * 
+ *
  * @author steve
  */
 public class ServerConfigurationContextImpl extends ConfigurationContextImpl implements ServerConfigurationContext {
@@ -43,18 +44,20 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
   private final L2Coordinator                  l2Coordinator;
   private final TransactionBatchManager        transactionBatchManager;
   private final ServerGlobalTransactionManager serverGlobalTransactionManager;
+  private final ServerClusterMetaDataManager   serverClusterMetaDataManager;
 
-  public ServerConfigurationContextImpl(StageManager stageManager, ObjectManager objectManager,
-                                        ObjectRequestManager objectRequestManager, ManagedObjectStore objectStore,
-                                        LockManager lockManager, DSOChannelManager channelManager,
-                                        ClientStateManager clientStateManager,
-                                        ServerTransactionManager transactionManager,
-                                        TransactionalObjectManager txnObjectManager,
-                                        ServerClientHandshakeManager clientHandshakeManager, ChannelStats channelStats,
-                                        L2Coordinator l2Coordinator,
-                                        TransactionBatchReaderFactory transactionBatchReaderFactory,
-                                        TransactionBatchManager transactionBatchManager,
-                                        ServerGlobalTransactionManager serverGlobalTransactionManager) {
+  public ServerConfigurationContextImpl(final StageManager stageManager, final ObjectManager objectManager,
+                                        final ObjectRequestManager objectRequestManager, final ManagedObjectStore objectStore,
+                                        final LockManager lockManager, final DSOChannelManager channelManager,
+                                        final ClientStateManager clientStateManager,
+                                        final ServerTransactionManager transactionManager,
+                                        final TransactionalObjectManager txnObjectManager,
+                                        final ServerClientHandshakeManager clientHandshakeManager, final ChannelStats channelStats,
+                                        final L2Coordinator l2Coordinator,
+                                        final TransactionBatchReaderFactory transactionBatchReaderFactory,
+                                        final TransactionBatchManager transactionBatchManager,
+                                        final ServerGlobalTransactionManager serverGlobalTransactionManager,
+                                        final ServerClusterMetaDataManager serverClusterMetaDataManager) {
     super(stageManager);
     this.objectManager = objectManager;
     this.objectRequestManager = objectRequestManager;
@@ -70,6 +73,7 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
     this.transactionBatchReaderFactory = transactionBatchReaderFactory;
     this.transactionBatchManager = transactionBatchManager;
     this.serverGlobalTransactionManager = serverGlobalTransactionManager;
+    this.serverClusterMetaDataManager = serverClusterMetaDataManager;
   }
 
   public L2Coordinator getL2Coordinator() {
@@ -126,5 +130,9 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
 
   public ServerGlobalTransactionManager getServerGlobalTransactionManager() {
     return this.serverGlobalTransactionManager;
+  }
+
+  public ServerClusterMetaDataManager getClusterMetaDataManager() {
+    return serverClusterMetaDataManager;
   }
 }

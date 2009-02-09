@@ -5,6 +5,7 @@
 package com.tc.object.bytecode;
 
 import com.tc.cluster.ClusterEventListener;
+import com.tc.cluster.DsoCluster;
 import com.tc.logging.TCLogger;
 import com.tc.management.beans.sessions.SessionMonitor;
 import com.tc.object.ObjectID;
@@ -55,31 +56,31 @@ public final class NullManager implements Manager {
     //
   }
 
-  public final Object lookupOrCreateRoot(String name, Object object) {
+  public final Object lookupOrCreateRoot(final String name, final Object object) {
     throw new UnsupportedOperationException();
   }
 
-  public final Object lookupOrCreateRootNoDepth(String name, Object obj) {
+  public final Object lookupOrCreateRootNoDepth(final String name, final Object obj) {
     throw new UnsupportedOperationException();
   }
 
-  public final Object createOrReplaceRoot(String name, Object object) {
+  public final Object createOrReplaceRoot(final String name, final Object object) {
     throw new UnsupportedOperationException();
   }
 
-  public final void beginLock(String lockID, int type, String lockType) {
+  public final void beginLock(final String lockID, final int type, final String lockType) {
     //
   }
 
-  public final TCObject lookupExistingOrNull(Object obj) {
+  public final TCObject lookupExistingOrNull(final Object obj) {
     return null;
   }
 
-  public final void objectNotify(Object obj) {
+  public final void objectNotify(final Object obj) {
     obj.notify();
   }
 
-  public final void objectNotifyAll(Object obj) {
+  public final void objectNotifyAll(final Object obj) {
     obj.notifyAll();
   }
 
@@ -95,19 +96,19 @@ public final class NullManager implements Manager {
     obj.wait(millis, nanos);
   }
 
-  public void monitorEnterInterruptibly(Object obj, int type) {
+  public void monitorEnterInterruptibly(final Object obj, final int type) {
     //
   }
 
-  public final void monitorExit(Object obj) {
+  public final void monitorExit(final Object obj) {
     //
   }
 
-  public final void logicalInvoke(Object object, String methodName, Object[] params) {
+  public final void logicalInvoke(final Object object, final String methodName, final Object[] params) {
     //
   }
 
-  public final boolean distributedMethodCall(Object receiver, String method, Object[] params, boolean runOnAllNodes) {
+  public final boolean distributedMethodCall(final Object receiver, final String method, final Object[] params, final boolean runOnAllNodes) {
     return true;
   }
 
@@ -115,55 +116,55 @@ public final class NullManager implements Manager {
     //
   }
 
-  public final void checkWriteAccess(Object context) {
+  public final void checkWriteAccess(final Object context) {
     //
   }
 
-  public final boolean isManaged(Object object) {
+  public final boolean isManaged(final Object object) {
     return false;
   }
 
-  public final boolean isLogical(Object object) {
+  public final boolean isLogical(final Object object) {
     throw new UnsupportedOperationException();
   }
 
-  public final boolean isRoot(Field field) {
+  public final boolean isRoot(final Field field) {
     return false;
   }
 
-  public final Object lookupRoot(String name) {
+  public final Object lookupRoot(final String name) {
     throw new UnsupportedOperationException();
   }
 
-  public final void beginVolatile(TCObject tcObject, String fieldName, int type) {
+  public final void beginVolatile(final TCObject tcObject, final String fieldName, final int type) {
     // do nothing
   }
 
-  public final void commitLock(String lockName) {
+  public final void commitLock(final String lockName) {
     // do nothing
   }
 
-  public final boolean isLocked(Object obj, int lockLevel) {
+  public final boolean isLocked(final Object obj, final int lockLevel) {
     return false;
   }
 
-  public final int queueLength(Object obj) {
+  public final int queueLength(final Object obj) {
     return 0;
   }
 
-  public final void commitVolatile(TCObject tcObject, String fieldName) {
+  public final void commitVolatile(final TCObject tcObject, final String fieldName) {
     //
   }
 
-  public final int waitLength(Object obj) {
+  public final int waitLength(final Object obj) {
     return 0;
   }
 
-  public final boolean isHeldByCurrentThread(Object obj, int lockLevel) {
+  public final boolean isHeldByCurrentThread(final Object obj, final int lockLevel) {
     return false;
   }
 
-  public final void logicalInvokeWithTransaction(Object object, Object lockObject, String methodName, Object[] params) {
+  public final void logicalInvokeWithTransaction(final Object object, final Object lockObject, final String methodName, final Object[] params) {
     throw new UnsupportedOperationException();
   }
 
@@ -171,7 +172,7 @@ public final class NullManager implements Manager {
     throw new UnsupportedOperationException();
   }
 
-  public final boolean tryBeginLock(String lockID, int type) {
+  public final boolean tryBeginLock(final String lockID, final int type) {
     throw new UnsupportedOperationException();
   }
 
@@ -179,11 +180,11 @@ public final class NullManager implements Manager {
     throw new UnsupportedOperationException();
   }
 
-  public final TCObject shareObjectIfNecessary(Object pojo) {
+  public final TCObject shareObjectIfNecessary(final Object pojo) {
     throw new UnsupportedOperationException();
   }
 
-  public final boolean isPhysicallyInstrumented(Class clazz) {
+  public final boolean isPhysicallyInstrumented(final Class clazz) {
     return false;
   }
 
@@ -193,7 +194,7 @@ public final class NullManager implements Manager {
     return "";
   }
 
-  public final TCLogger getLogger(String loggerName) {
+  public final TCLogger getLogger(final String loggerName) {
     throw new UnsupportedOperationException();
   }
 
@@ -201,15 +202,15 @@ public final class NullManager implements Manager {
     throw new UnsupportedOperationException();
   }
 
-  public final TCObject lookupOrCreate(Object obj) {
+  public final TCObject lookupOrCreate(final Object obj) {
     throw new UnsupportedOperationException();
   }
 
-  public final Object lookupObject(ObjectID id) {
+  public final Object lookupObject(final ObjectID id) {
     throw new UnsupportedOperationException();
   }
 
-  public Object lookupObject(ObjectID id, ObjectID parentContext) {
+  public Object lookupObject(final ObjectID id, final ObjectID parentContext) {
     throw new UnsupportedOperationException();
   }
 
@@ -217,7 +218,8 @@ public final class NullManager implements Manager {
     throw new UnsupportedOperationException();
   }
 
-  public final void addClusterEventListener(ClusterEventListener cel) {
+  // TODO: evaluate what to do with this now that there's ClusterEventsNG
+  public final void addClusterEventListener(final ClusterEventListener cel) {
     throw new UnsupportedOperationException();
   }
 
@@ -225,23 +227,23 @@ public final class NullManager implements Manager {
     throw new UnsupportedOperationException();
   }
 
-  public final int localHeldCount(Object obj, int lockLevel) {
+  public final int localHeldCount(final Object obj, final int lockLevel) {
     throw new UnsupportedOperationException();
   }
 
-  public boolean isDsoMonitored(Object obj) {
+  public boolean isDsoMonitored(final Object obj) {
     return false;
   }
 
-  public boolean isDsoMonitorEntered(Object obj) {
+  public boolean isDsoMonitorEntered(final Object obj) {
     return false;
   }
 
-  public boolean isFieldPortableByOffset(Object pojo, long fieldOffset) {
+  public boolean isFieldPortableByOffset(final Object pojo, final long fieldOffset) {
     throw new UnsupportedOperationException();
   }
 
-  public void monitorEnter(Object obj, int type, String contextInfo) {
+  public void monitorEnter(final Object obj, final int type, final String contextInfo) {
     //
   }
 
@@ -249,15 +251,15 @@ public final class NullManager implements Manager {
     return instrumentationLogger;
   }
 
-  public boolean overridesHashCode(Object obj) {
+  public boolean overridesHashCode(final Object obj) {
     throw new UnsupportedOperationException();
   }
 
-  public void beginLockWithoutTxn(String lockID, int type) {
+  public void beginLockWithoutTxn(final String lockID, final int type) {
     //
   }
 
-  public void registerNamedLoader(NamedClassLoader loader) {
+  public void registerNamedLoader(final NamedClassLoader loader) {
     throw new UnsupportedOperationException();
   }
 
@@ -265,4 +267,7 @@ public final class NullManager implements Manager {
     throw new UnsupportedOperationException();
   }
 
+  public DsoCluster getDsoCluster() {
+    throw new UnsupportedOperationException();
+  }
 }

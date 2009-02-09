@@ -29,20 +29,24 @@ public class ClientConfigurationContext extends ConfigurationContextImpl {
   public static final String             LOCK_STATISTICS_ENABLE_DISABLE_STAGE = "lock_statistics_enable_disable_stage";
   public static final String             OOO_NET_SEND_STAGE                   = "ooo_net_send_stage";
   public static final String             OOO_NET_RECEIVE_STAGE                = "ooo_net_receive_stage";
+  public static final String             CLUSTER_METADATA_STAGE               = "cluster_metadata_stage";
+  public static final String             CLUSTER_EVENTS_STAGE                 = "cluster_events_stage";
 
   private final ClientLockManager        lockManager;
   private final RemoteObjectManager      remoteObjectManager;
   private final ClientTransactionManager txManager;
   private final ClientHandshakeManager   clientHandshakeManager;
+  private final ClusterMetaDataManager   clusterMetaDataManager;
 
-  public ClientConfigurationContext(StageManager stageManager, ClientLockManager lockManager,
-                                    RemoteObjectManager remoteObjectManager, ClientTransactionManager txManager,
-                                    ClientHandshakeManager clientHandshakeManager) {
+  public ClientConfigurationContext(final StageManager stageManager, final ClientLockManager lockManager,
+                                    final RemoteObjectManager remoteObjectManager, final ClientTransactionManager txManager,
+                                    final ClientHandshakeManager clientHandshakeManager, final ClusterMetaDataManager clusterMetaDataManager) {
     super(stageManager);
     this.lockManager = lockManager;
     this.remoteObjectManager = remoteObjectManager;
     this.txManager = txManager;
     this.clientHandshakeManager = clientHandshakeManager;
+    this.clusterMetaDataManager = clusterMetaDataManager;
   }
 
   public ClientLockManager getLockManager() {
@@ -59,6 +63,10 @@ public class ClientConfigurationContext extends ConfigurationContextImpl {
 
   public ClientHandshakeManager getClientHandshakeManager() {
     return clientHandshakeManager;
+  }
+
+  public ClusterMetaDataManager getClusterMetaDataManager() {
+    return clusterMetaDataManager;
   }
 
 }

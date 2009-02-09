@@ -15,6 +15,8 @@ import com.tc.object.msg.AcknowledgeTransactionMessage;
 import com.tc.object.msg.AcknowledgeTransactionMessageFactory;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
+import com.tc.object.msg.NodesWithObjectsMessage;
+import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.msg.CommitTransactionMessage;
 import com.tc.object.msg.CommitTransactionMessageFactory;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
@@ -37,19 +39,19 @@ import java.net.UnknownHostException;
 public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, LockRequestMessageFactory,
     RequestRootMessageFactory, RequestManagedObjectMessageFactory, ClientHandshakeMessageFactory,
     ObjectIDBatchRequestMessageFactory, CommitTransactionMessageFactory, AcknowledgeTransactionMessageFactory,
-    CompletedTransactionLowWaterMarkMessageFactory {
+    CompletedTransactionLowWaterMarkMessageFactory, NodesWithObjectsMessageFactory {
 
   private final ClientMessageChannel channel;
   private final GroupID              groups[];
-  private ClientIDProvider           clientIDProvider;
+  private final ClientIDProvider           clientIDProvider;
 
-  public DSOClientMessageChannelImpl(ClientMessageChannel theChannel, GroupID[] gids) {
+  public DSOClientMessageChannelImpl(final ClientMessageChannel theChannel, final GroupID[] gids) {
     this.channel = theChannel;
     this.groups = gids;
     this.clientIDProvider = new ClientIDProviderImpl(theChannel.getChannelIDProvider());
   }
 
-  public void addClassMapping(TCMessageType messageType, Class messageClass) {
+  public void addClassMapping(final TCMessageType messageType, final Class messageClass) {
     this.channel.addClassMapping(messageType, messageClass);
   }
 
@@ -57,11 +59,11 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return clientIDProvider;
   }
 
-  public void addListener(ChannelEventListener listener) {
+  public void addListener(final ChannelEventListener listener) {
     channel.addListener(listener);
   }
 
-  public void routeMessageType(TCMessageType messageType, Sink destSink, Sink hydrateSink) {
+  public void routeMessageType(final TCMessageType messageType, final Sink destSink, final Sink hydrateSink) {
     channel.routeMessageType(messageType, destSink, hydrateSink);
   }
 
@@ -85,7 +87,7 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return this;
   }
 
-  public RequestRootMessage newRequestRootMessage(NodeID nodeID) {
+  public RequestRootMessage newRequestRootMessage(final NodeID nodeID) {
     return (RequestRootMessage) channel.createMessage(TCMessageType.REQUEST_ROOT_MESSAGE);
   }
 
@@ -93,7 +95,7 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return this;
   }
 
-  public RequestManagedObjectMessage newRequestManagedObjectMessage(NodeID nodeID) {
+  public RequestManagedObjectMessage newRequestManagedObjectMessage(final NodeID nodeID) {
     return (RequestManagedObjectMessage) channel.createMessage(TCMessageType.REQUEST_MANAGED_OBJECT_MESSAGE);
   }
 
@@ -105,11 +107,11 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return this;
   }
 
-  public AcknowledgeTransactionMessage newAcknowledgeTransactionMessage(NodeID remoteNode) {
+  public AcknowledgeTransactionMessage newAcknowledgeTransactionMessage(final NodeID remoteNode) {
     return (AcknowledgeTransactionMessage) channel.createMessage(TCMessageType.ACKNOWLEDGE_TRANSACTION_MESSAGE);
   }
 
-  public ClientHandshakeMessage newClientHandshakeMessage(NodeID remoteNode) {
+  public ClientHandshakeMessage newClientHandshakeMessage(final NodeID remoteNode) {
     ClientHandshakeMessage rv = (ClientHandshakeMessage) channel.createMessage(TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
     return rv;
   }
@@ -126,7 +128,7 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return (JMXMessage) channel.createMessage(TCMessageType.JMX_MESSAGE);
   }
 
-  public CompletedTransactionLowWaterMarkMessage newCompletedTransactionLowWaterMarkMessage(NodeID remoteID) {
+  public CompletedTransactionLowWaterMarkMessage newCompletedTransactionLowWaterMarkMessage(final NodeID remoteID) {
     return (CompletedTransactionLowWaterMarkMessage) channel
         .createMessage(TCMessageType.COMPLETED_TRANSACTION_LOWWATERMARK_MESSAGE);
   }
@@ -135,11 +137,19 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return this;
   }
 
-  public CommitTransactionMessage newCommitTransactionMessage(NodeID remoteNode) {
+  public CommitTransactionMessage newCommitTransactionMessage(final NodeID remoteNode) {
     return (CommitTransactionMessage) channel.createMessage(TCMessageType.COMMIT_TRANSACTION_MESSAGE);
   }
 
   public CommitTransactionMessageFactory getCommitTransactionMessageFactory() {
+    return this;
+  }
+
+  public NodesWithObjectsMessage newNodesWithObjectsMessage() {
+    return (NodesWithObjectsMessage) channel.createMessage(TCMessageType.NODES_WITH_OBJECTS_MESSAGE);
+  }
+
+  public NodesWithObjectsMessageFactory getClusterMetaDataMessageFactory() {
     return this;
   }
 

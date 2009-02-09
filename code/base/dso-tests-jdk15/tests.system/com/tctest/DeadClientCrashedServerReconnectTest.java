@@ -5,6 +5,7 @@
 package com.tctest;
 
 import com.tc.cluster.Cluster;
+import com.tc.cluster.DsoClusterImpl;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
@@ -74,7 +75,7 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
                                                                  new TCThreadGroup(new ThrowableHandler(TCLogging
                                                                      .getLogger(DistributedObjectClient.class))),
                                                                  new MockClassProvider(), components, NullManager
-                                                                     .getInstance(), new Cluster(), new NullRuntimeLogger());
+                                                                     .getInstance(), new Cluster(), new DsoClusterImpl(), new NullRuntimeLogger());
     client.setCreateDedicatedMBeanServer(true);
     client.start();
 
@@ -105,12 +106,12 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
     checkServerHasClients(0, jmxPort);
   }
 
-  private void waitUntilUnpaused(DistributedObjectClient client) {
+  private void waitUntilUnpaused(final DistributedObjectClient client) {
     ClientHandshakeManager mgr = client.getClientHandshakeManager();
     mgr.waitForHandshake();
   }
 
-  private void checkServerHasClients(int clientCount, int jmxPort) throws Exception {
+  private void checkServerHasClients(final int clientCount, final int jmxPort) throws Exception {
     JMXConnector jmxConnector = new JMXConnectorProxy("localhost", jmxPort);
     MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
     DSOMBean mbean = (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, L2MBeanNames.DSO, DSOMBean.class,

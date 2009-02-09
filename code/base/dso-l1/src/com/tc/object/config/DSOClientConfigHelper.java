@@ -188,7 +188,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   void addApplicationName(String name);
 
   void addSynchronousWriteApplication(String name);
-  
+
   void addSessionLockedApplication(String name);
 
   void addInstrumentationDescriptor(InstrumentedClass classDesc);
@@ -197,16 +197,16 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   void addRepository(String location);
 
-  /** 
-   * Add module dependency with no groupId, indicating the groupId should be assumed to 
+  /**
+   * Add module dependency with no groupId, indicating the groupId should be assumed to
    * be the default: "org.terracotta.modules".
    * @artifactId Such as tim-foobar
    * @version Such as 1.0.0-SNAPSHOT
    */
   void addModule(String artifactId, String version);
 
-  /** 
-   * Add module dependency 
+  /**
+   * Add module dependency
    * @groupId Such as org.terracotta.modules
    * @artifactId Such as tim-foobar
    * @version Such as 1.0.0-SNAPSHOT
@@ -243,5 +243,13 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   /**
    * Returns true if the web-application is configured for session-locking
    */
-  public boolean isApplicationSessionLocked(String appName);
+  boolean isApplicationSessionLocked(String appName);
+
+  /**
+   * Add class adapters based on annotations that are present on the class
+   *
+   * @return {@code true} when custom adapters were added; or
+   * {@code false} otherwise
+   */
+  boolean addAnnotationBasedAdapters(ClassInfo classInfo);
 }

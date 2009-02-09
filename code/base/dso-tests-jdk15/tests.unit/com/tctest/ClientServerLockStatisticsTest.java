@@ -43,6 +43,7 @@ import com.tc.object.lockmanager.impl.ClientServerLockStatManagerGlue;
 import com.tc.object.lockmanager.impl.TCLockTimerImpl;
 import com.tc.object.msg.AcknowledgeTransactionMessageFactory;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
+import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.msg.CommitTransactionMessageFactory;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessageFactory;
 import com.tc.object.msg.JMXMessage;
@@ -74,7 +75,7 @@ public class ClientServerLockStatisticsTest extends TCTestCase {
   private TestSessionManager              sessionManager;
   private ClientLockStatManager           clientLockStatManager;
   private L2LockStatsManager              serverLockStatManager;
-  private ChannelID                       channelId1 = new ChannelID(1);
+  private final ChannelID                       channelId1 = new ChannelID(1);
   private ClientMessageChannel            channel1;
   private TestSink                        sink;
 
@@ -83,6 +84,7 @@ public class ClientServerLockStatisticsTest extends TCTestCase {
     // disableAllUntil(new Date(Long.MAX_VALUE));
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
@@ -180,7 +182,7 @@ public class ClientServerLockStatisticsTest extends TCTestCase {
     clientLockManager.unlock(lockID1, tx2);
   }
 
-  private void assertStackTraces(LockID lockID, int numOfStackTraces, int depthOfStackTraces) {
+  private void assertStackTraces(final LockID lockID, final int numOfStackTraces, final int depthOfStackTraces) {
     Collection lockSpecs = serverLockStatManager.getLockSpecs();
 
     Assert.assertEquals(1, lockSpecs.size()); // only one client in this test
@@ -191,7 +193,7 @@ public class ClientServerLockStatisticsTest extends TCTestCase {
     }
   }
 
-  private boolean assertStackTracesDepth(Collection traces, int expectedDepthOfStackTraces) {
+  private boolean assertStackTracesDepth(final Collection traces, final int expectedDepthOfStackTraces) {
     if (traces.size() == 0 && expectedDepthOfStackTraces == 0) { return true; }
     if (traces.size() == 0 || expectedDepthOfStackTraces == 0) { return false; }
 
@@ -199,7 +201,7 @@ public class ClientServerLockStatisticsTest extends TCTestCase {
     return assertStackTracesDepth(lse.children(), expectedDepthOfStackTraces - 1);
   }
 
-  private void sleep(long l) {
+  private void sleep(final long l) {
     try {
       Thread.sleep(l);
     } catch (InterruptedException e) {
@@ -207,34 +209,37 @@ public class ClientServerLockStatisticsTest extends TCTestCase {
     }
   }
 
+  @Override
   protected void tearDown() throws Exception {
     clientServerGlue.stop();
     super.tearDown();
   }
 
   private static class TestChannelManager extends NullChannelManager {
-    private MessageChannel channel;
+    private final MessageChannel channel;
 
-    public TestChannelManager(MessageChannel channel) {
+    public TestChannelManager(final MessageChannel channel) {
       this.channel = channel;
     }
 
+    @Override
     public MessageChannel[] getActiveChannels() {
       return new MessageChannel[] { channel };
     }
   }
 
   private static class TestClientMessageChannel extends MockMessageChannel implements ClientMessageChannel {
-    private Sink sink;
+    private final Sink sink;
 
-    public TestClientMessageChannel(ChannelID channelId, Sink sink) {
+    public TestClientMessageChannel(final ChannelID channelId, final Sink sink) {
       super(channelId);
       super.registerType(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE, LockStatisticsResponseMessage.class);
       super.registerType(TCMessageType.LOCK_STAT_MESSAGE, LockStatisticsMessage.class);
       this.sink = sink;
     }
 
-    public TCMessage createMessage(TCMessageType type) {
+    @Override
+    public TCMessage createMessage(final TCMessageType type) {
       Class theClass = super.getRegisteredMessageClass(type);
 
       if (theClass == null) throw new ImplementMe();
@@ -251,12 +256,13 @@ public class ClientServerLockStatisticsTest extends TCTestCase {
       }
     }
 
-    public void send(TCNetworkMessage message) {
+    @Override
+    public void send(final TCNetworkMessage message) {
       super.send(message);
       sink.add(message);
     }
 
-    public void addClassMapping(TCMessageType type, Class msgClass) {
+    public void addClassMapping(final TCMessageType type, final Class msgClass) {
       throw new ImplementMe();
 
     }
@@ -273,17 +279,17 @@ public class ClientServerLockStatisticsTest extends TCTestCase {
       return 0;
     }
 
-    public void routeMessageType(TCMessageType messageType, Sink destSink, Sink hydrateSink) {
+    public void routeMessageType(final TCMessageType messageType, final Sink destSink, final Sink hydrateSink) {
       throw new ImplementMe();
 
     }
 
-    public void routeMessageType(TCMessageType type, TCMessageSink sinkArg) {
+    public void routeMessageType(final TCMessageType type, final TCMessageSink sinkArg) {
       throw new ImplementMe();
 
     }
 
-    public void unrouteMessageType(TCMessageType type) {
+    public void unrouteMessageType(final TCMessageType type) {
       throw new ImplementMe();
 
     }
@@ -291,9 +297,9 @@ public class ClientServerLockStatisticsTest extends TCTestCase {
   }
 
   private static class TestClientChannel implements DSOClientMessageChannel {
-    private ClientMessageChannel clientMessageChannel;
+    private final ClientMessageChannel clientMessageChannel;
 
-    public TestClientChannel(ClientMessageChannel clientMessageChannel) {
+    public TestClientChannel(final ClientMessageChannel clientMessageChannel) {
       this.clientMessageChannel = clientMessageChannel;
     }
 
@@ -301,12 +307,12 @@ public class ClientServerLockStatisticsTest extends TCTestCase {
       return clientMessageChannel;
     }
 
-    public void addClassMapping(TCMessageType messageType, Class messageClass) {
+    public void addClassMapping(final TCMessageType messageType, final Class messageClass) {
       throw new ImplementMe();
 
     }
 
-    public void addListener(ChannelEventListener listener) {
+    public void addListener(final ChannelEventListener listener) {
       throw new ImplementMe();
 
     }
@@ -352,6 +358,10 @@ public class ClientServerLockStatisticsTest extends TCTestCase {
       throw new ImplementMe();
     }
 
+    public NodesWithObjectsMessageFactory getClusterMetaDataMessageFactory() {
+      throw new ImplementMe();
+    }
+
     public boolean isConnected() {
       throw new ImplementMe();
     }
@@ -361,7 +371,7 @@ public class ClientServerLockStatisticsTest extends TCTestCase {
 
     }
 
-    public void routeMessageType(TCMessageType messageType, Sink destSink, Sink hydrateSink) {
+    public void routeMessageType(final TCMessageType messageType, final Sink destSink, final Sink hydrateSink) {
       throw new ImplementMe();
 
     }
@@ -378,12 +388,13 @@ public class ClientServerLockStatisticsTest extends TCTestCase {
   private static class MockL2LockStatManagerImpl extends L2LockStatisticsManagerImpl {
     private final CyclicBarrier barrier;
 
-    public MockL2LockStatManagerImpl(CyclicBarrier barrier) {
+    public MockL2LockStatManagerImpl(final CyclicBarrier barrier) {
       super();
       this.barrier = barrier;
     }
 
-    public void recordClientStat(NodeID nodeID, Collection<TCStackTraceElement> stackTraceElements) {
+    @Override
+    public void recordClientStat(final NodeID nodeID, final Collection<TCStackTraceElement> stackTraceElements) {
       try {
         barrier.await();
         super.recordClientStat(nodeID, stackTraceElements);

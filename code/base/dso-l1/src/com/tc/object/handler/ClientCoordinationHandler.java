@@ -9,6 +9,7 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.EventHandlerException;
 import com.tc.cluster.Cluster;
+import com.tc.cluster.DsoClusterInternal;
 import com.tc.object.ClientConfigurationContext;
 import com.tc.object.context.PauseContext;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
@@ -18,13 +19,16 @@ import com.tc.object.msg.ClusterMembershipMessage;
 public class ClientCoordinationHandler extends AbstractEventHandler {
 
   private ClientHandshakeManager handshakeManager;
-  private final Cluster          cluster;
+  private final Cluster             cluster;
+  private final DsoClusterInternal  dsoCluster;
 
-  public ClientCoordinationHandler(Cluster cluster) {
+  public ClientCoordinationHandler(final Cluster cluster, final DsoClusterInternal dsoCluster) {
     this.cluster = cluster;
+    this.dsoCluster = dsoCluster;
   }
 
-  public void handleEvent(EventContext context) throws EventHandlerException {
+  @Override
+  public void handleEvent(final EventContext context) throws EventHandlerException {
     if (context instanceof ClusterMembershipMessage) {
       handleClusterMembershipMessage((ClusterMembershipMessage) context);
     } else if (context instanceof ClientHandshakeAckMessage) {
@@ -36,7 +40,7 @@ public class ClientCoordinationHandler extends AbstractEventHandler {
     }
   }
 
-  private void handlePauseContext(PauseContext ctxt) {
+  private void handlePauseContext(final PauseContext ctxt) {
     if (ctxt.getIsPause()) {
       handshakeManager.disconnected(ctxt.getRemoteNode());
     } else {
@@ -44,21 +48,24 @@ public class ClientCoordinationHandler extends AbstractEventHandler {
     }
   }
 
-  private void handleClientHandshakeAckMessage(ClientHandshakeAckMessage handshakeAck) {
+  private void handleClientHandshakeAckMessage(final ClientHandshakeAckMessage handshakeAck) {
     handshakeManager.acknowledgeHandshake(handshakeAck);
   }
 
-  private void handleClusterMembershipMessage(ClusterMembershipMessage cmm) throws EventHandlerException {
+  private void handleClusterMembershipMessage(final ClusterMembershipMessage cmm) throws EventHandlerException {
     if (cmm.isNodeConnectedEvent()) {
       cluster.nodeConnected(cmm.getNodeId());
+      dsoCluster.fireNodeJoined(cmm.getNodeId());
     } else if (cmm.isNodeDisconnectedEvent()) {
       cluster.nodeDisconnected(cmm.getNodeId());
+      dsoCluster.fireNodeLeft(cmm.getNodeId());
     } else {
       throw new EventHandlerException("Unknown event type: " + cmm);
     }
   }
 
-  public synchronized void initialize(ConfigurationContext context) {
+  @Override
+  public synchronized void initialize(final ConfigurationContext context) {
     super.initialize(context);
     this.handshakeManager = ((ClientConfigurationContext) context).getClientHandshakeManager();
   }

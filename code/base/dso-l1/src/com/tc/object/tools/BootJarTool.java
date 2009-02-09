@@ -26,6 +26,13 @@ import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo;
 import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
 import com.tc.cluster.ClusterEventListener;
+import com.tc.cluster.DsoCluster;
+import com.tc.cluster.DsoClusterEvent;
+import com.tc.cluster.DsoClusterListener;
+import com.tc.cluster.DsoClusterTopology;
+import com.tc.cluster.DsoNode;
+import com.tc.cluster.exceptions.ClusteredListenerException;
+import com.tc.cluster.exceptions.UnclusteredObjectException;
 import com.tc.config.Directories;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
@@ -40,6 +47,8 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.geronimo.GeronimoLoaderNaming;
 import com.tc.hibernate.HibernateProxyInstance;
 import com.tc.ibatis.IBatisAccessPlanInstance;
+import com.tc.injection.annotations.InjectedDsoInstance;
+import com.tc.injection.exceptions.UnsupportedInjectedDsoInstanceTypeException;
 import com.tc.io.TCByteArrayOutputStream;
 import com.tc.jboss.JBossLoaderNaming;
 import com.tc.logging.CustomerLogging;
@@ -222,7 +231,7 @@ public class BootJarTool {
 
   private static final TCLogger       consoleLogger                    = CustomerLogging.getConsoleLogger();
 
-  public BootJarTool(DSOClientConfigHelper configuration, File outputFile, ClassLoader systemProvider, boolean quiet)
+  public BootJarTool(final DSOClientConfigHelper configuration, final File outputFile, final ClassLoader systemProvider, final boolean quiet)
       throws Exception {
     this.configHelper = configuration;
     this.outputFile = outputFile;
@@ -259,7 +268,7 @@ public class BootJarTool {
     }
   }
 
-  public BootJarTool(DSOClientConfigHelper configuration, File outputFile, ClassLoader systemProvider) throws Exception {
+  public BootJarTool(final DSOClientConfigHelper configuration, final File outputFile, final ClassLoader systemProvider) throws Exception {
     this(configuration, outputFile, systemProvider, false);
   }
 
@@ -281,7 +290,7 @@ public class BootJarTool {
    * Scans the boot JAR file to determine if it is complete and contains only the user-classes that are specified in the
    * tc-config's <additional-boot-jar-classes/> section. Program execution halts if it fails these checks.
    */
-  private final void scanJar(File bootJarFile) {
+  private final void scanJar(final File bootJarFile) {
     String MESSAGE0 = "\nYour boot JAR file might be out of date or invalid.";
     String MESSAGE1 = "\nThe following classes was declared in the <additional-boot-jar-classes/> section "
                       + "of your tc-config file but is not a part of your boot JAR file:";
@@ -326,10 +335,10 @@ public class BootJarTool {
    * Checks if the given bootJarFile is complete; meaning: - All the classes declared in the configurations
    * <additional-boot-jar-classes/> section is present in the boot jar. - And there are no user-classes present in the
    * boot jar that is not declared in the <additional-boot-jar-classes/> section
-   * 
+   *
    * @return <code>true</code> if the boot jar is complete.
    */
-  private final boolean isBootJarComplete(File bootJarFile) {
+  private final boolean isBootJarComplete(final File bootJarFile) {
     try {
       final Map result = compareBootJarContentsToUserSpec(bootJarFile);
       final Set missing = (Set) result.get(MISSING_CLASSES);
@@ -340,7 +349,7 @@ public class BootJarTool {
     }
   }
 
-  private final Map compareBootJarContentsToUserSpec(File bootJarFile) throws InvalidBootJarMetaDataException {
+  private final Map compareBootJarContentsToUserSpec(final File bootJarFile) throws InvalidBootJarMetaDataException {
     try {
       // verify that userspec is valid, eg: no non-existent classes declared
       massageSpecs(getUserDefinedSpecs(getTCSpecs()), false);
@@ -380,7 +389,7 @@ public class BootJarTool {
   /**
    * verify that all of the reference TC classes are in the bootjar
    */
-  private final void verifyJar(File bootJarFile) {
+  private final void verifyJar(final File bootJarFile) {
     try {
       BootJar bootJarLocal = BootJar.getBootJarForReading(bootJarFile);
       Set bootJarClassNames = bootJarLocal.getAllClasses();
@@ -515,6 +524,17 @@ public class BootJarTool {
       loadTerracottaClass(CompressedData.class.getName());
       loadTerracottaClass(TCByteArrayOutputStream.class.getName());
 
+      // cluster meta data and cluster events classes
+      loadTerracottaClass(DsoCluster.class.getName());
+      loadTerracottaClass(DsoClusterEvent.class.getName());
+      loadTerracottaClass(DsoClusterListener.class.getName());
+      loadTerracottaClass(DsoClusterTopology.class.getName());
+      loadTerracottaClass(DsoNode.class.getName());
+      loadTerracottaClass(InjectedDsoInstance.class.getName());
+      loadTerracottaClass(ClusteredListenerException.class.getName());
+      loadTerracottaClass(UnclusteredObjectException.class.getName());
+      loadTerracottaClass(UnsupportedInjectedDsoInstanceTypeException.class.getName());
+
       // These classes need to be specified as literal in order to prevent
       // the static block of IdentityWeakHashMap from executing during generating
       // the boot jar.
@@ -642,25 +662,24 @@ public class BootJarTool {
   private final Map getAllSpecs() {
     Map map = new HashMap();
     TransparencyClassSpec[] allSpecs = configHelper.getAllSpecs();
-    for (int i = 0; i < allSpecs.length; i++) {
-      TransparencyClassSpec spec = allSpecs[i];
+    for (TransparencyClassSpec spec : allSpecs) {
       map.put(spec.getClassName(), spec);
     }
     return Collections.unmodifiableMap(map);
   }
 
-  private void loadClassIntoJar(String className, byte[] data, boolean isPreinstrumented) {
+  private void loadClassIntoJar(final String className, final byte[] data, final boolean isPreinstrumented) {
     loadClassIntoJar(className, data, isPreinstrumented, false);
   }
 
-  private void loadClassIntoJar(String className, byte[] data, boolean isPreinstrumented, boolean isForeign) {
+  private void loadClassIntoJar(final String className, final byte[] data, final boolean isPreinstrumented, final boolean isForeign) {
     Map userSpecs = getUserDefinedSpecs(getAllSpecs());
     if (!isForeign && userSpecs.containsKey(className)) consoleLogger
         .warn(className + " already belongs in the bootjar by default.");
     bootJar.loadClassIntoJar(className, data, isPreinstrumented, isForeign);
   }
 
-  private void adaptAndLoad(String name, ClassAdapterFactory factory) {
+  private void adaptAndLoad(final String name, final ClassAdapterFactory factory) {
     byte[] bytes = getSystemBytes(name);
 
     ClassReader cr = new ClassReader(bytes);
@@ -1254,7 +1273,7 @@ public class BootJarTool {
                   "were automatically included in the boot jar since they are required super classes", "add");
   }
 
-  private final void issueErrors(Set classes, String desc, String verb, String shortDesc) {
+  private final void issueErrors(final Set classes, final String desc, final String verb, final String shortDesc) {
     if (!classes.isEmpty()) {
       Banner.errorBanner("Boot jar creation failed.  The following set of classes " + desc + ". Please " + verb
                          + " them in the <additional-boot-jar-classes> section of the terracotta config: " + classes);
@@ -1262,14 +1281,14 @@ public class BootJarTool {
     }
   }
 
-  private final void issueWarnings(Set classes, String desc, String verb) {
+  private final void issueWarnings(final Set classes, final String desc, final String verb) {
     if (!classes.isEmpty()) {
       Banner.warnBanner("The following set of classes " + desc + ". Please " + verb
                         + " them in the <additional-boot-jar-classes> section of the terracotta config: " + classes);
     }
   }
 
-  private final Map removeAlreadyLoaded(Map specs) {
+  private final Map removeAlreadyLoaded(final Map specs) {
     Map rv = new HashMap(specs);
     for (Iterator i = rv.keySet().iterator(); i.hasNext();) {
       String className = (String) i.next();
@@ -1281,7 +1300,7 @@ public class BootJarTool {
     return Collections.unmodifiableMap(rv);
   }
 
-  private final Map massageSpecs(Map specs, boolean tcSpecs) {
+  private final Map massageSpecs(final Map specs, final boolean tcSpecs) {
     Map rv = new HashMap();
 
     for (Iterator i = specs.values().iterator(); i.hasNext();) {
@@ -1351,7 +1370,7 @@ public class BootJarTool {
     return Collections.unmodifiableMap(rv);
   }
 
-  private final static Class getBootstrapClass(String className) {
+  private final static Class getBootstrapClass(final String className) {
     try {
       return Class.forName(className, false, ClassLoader.getSystemClassLoader());
     } catch (ClassNotFoundException e) {
@@ -1359,7 +1378,7 @@ public class BootJarTool {
     }
   }
 
-  private final void loadBootJarClasses(Map specs, boolean foreignClass) {
+  private final void loadBootJarClasses(final Map specs, final boolean foreignClass) {
     for (Iterator iter = specs.values().iterator(); iter.hasNext();) {
       TransparencyClassSpec spec = (TransparencyClassSpec) iter.next();
       if (foreignClass) spec.markForeign();
@@ -1369,7 +1388,7 @@ public class BootJarTool {
     }
   }
 
-  private final void loadBootJarClasses(Map specs) {
+  private final void loadBootJarClasses(final Map specs) {
     loadBootJarClasses(specs, false);
   }
 
@@ -1377,8 +1396,7 @@ public class BootJarTool {
     Map map = new HashMap();
 
     TransparencyClassSpec[] allSpecs = configHelper.getAllSpecs();
-    for (int i = 0; i < allSpecs.length; i++) {
-      TransparencyClassSpec spec = allSpecs[i];
+    for (TransparencyClassSpec spec : allSpecs) {
       if (spec.isPreInstrumented()) {
         map.put(spec.getClassName(), spec);
       }
@@ -1387,7 +1405,7 @@ public class BootJarTool {
     return Collections.unmodifiableMap(map);
   }
 
-  private final Map getUserDefinedSpecs(Map internalSpecs) {
+  private final Map getUserDefinedSpecs(final Map internalSpecs) {
     Map rv = new HashMap();
     for (Iterator i = configHelper.getAllUserDefinedBootSpecs(); i.hasNext();) {
       TransparencyClassSpec spec = (TransparencyClassSpec) i.next();
@@ -1403,19 +1421,19 @@ public class BootJarTool {
     return Collections.unmodifiableMap(rv);
   }
 
-  private final void loadTerracottaClass(String className) {
+  private final void loadTerracottaClass(final String className) {
     loadClassIntoJar(className, getTerracottaBytes(className), false);
   }
 
-  private final byte[] getTerracottaBytes(String className) {
+  private final byte[] getTerracottaBytes(final String className) {
     return getBytes(className, tcLoader);
   }
 
-  private final byte[] getSystemBytes(String className) {
+  private final byte[] getSystemBytes(final String className) {
     return getBytes(className, systemLoader);
   }
 
-  private final byte[] getBytes(String className, ClassLoader provider) {
+  private final byte[] getBytes(final String className, final ClassLoader provider) {
     try {
       return getBytesForClass(className, provider);
     } catch (Exception e) {
@@ -1424,7 +1442,7 @@ public class BootJarTool {
     return null;
   }
 
-  public static final byte[] getBytesForClass(String className, ClassLoader loader) throws ClassNotFoundException {
+  public static final byte[] getBytesForClass(final String className, final ClassLoader loader) throws ClassNotFoundException {
     InputStream input = null;
     String resource = null;
     try {
@@ -1441,11 +1459,11 @@ public class BootJarTool {
 
   /**
    * Locates the root most cause of an Exception and returns its error message.
-   * 
+   *
    * @param throwable The exception whose root cause message is extracted.
    * @return The message of the root cause of an exception.
    */
-  private static String rootCauseMessage(Throwable throwable) {
+  private static String rootCauseMessage(final Throwable throwable) {
     if (throwable == null) return "";
 
     Throwable rootCause = throwable;
@@ -1457,21 +1475,21 @@ public class BootJarTool {
 
   /**
    * Convenience method. Will delegate to exit(msg, null)
-   * 
+   *
    * @param msg The custom message to print
    */
-  private final void exit(String msg) {
+  private final void exit(final String msg) {
     exit(msg, null);
   }
 
   /**
    * Print custom error message and abort the application. The exit code is set to a non-zero value.
-   * 
+   *
    * @param msg The custom message to print
    * @param throwable The exception that caused the application to abort. If this parameter is not null then the message
    *        from the exception is also printed.
    */
-  private final void exit(String msg, Throwable throwable) {
+  private final void exit(final String msg, final Throwable throwable) {
     if (!WRITE_OUT_TEMP_FILE) {
       bootJar.setCreationErrorOccurred(true);
     }
@@ -1624,7 +1642,7 @@ public class BootJarTool {
     addNonPortableStringBuffer("java.lang.StringBuffer");
   }
 
-  private void addNonPortableStringBuffer(String className) {
+  private void addNonPortableStringBuffer(final String className) {
     TransparencyClassSpec spec = configHelper.getOrCreateSpec(className);
     spec.markPreInstrumented();
 
@@ -2081,7 +2099,7 @@ public class BootJarTool {
     addSerializationInstrumentedCode(spec);
   }
 
-  private final void addSerializationInstrumentedCode(TransparencyClassSpec spec) {
+  private final void addSerializationInstrumentedCode(final TransparencyClassSpec spec) {
     byte[] bytes = getSystemBytes(spec.getClassName());
     spec.markPreInstrumented();
     bytes = doDSOTransform(spec.getClassName(), bytes);
@@ -2103,7 +2121,7 @@ public class BootJarTool {
     mergeClass(tcMapClassNameDots, jMapClassNameDots, instrumentedContext, HashtableClassAdapter.getMethods(), null);
   }
 
-  private final void addInstrumentedLinkedHashMap(Map instrumentedContext) {
+  private final void addInstrumentedLinkedHashMap(final Map instrumentedContext) {
     String jMapClassNameDots = "java.util.LinkedHashMap";
     String tcMapClassNameDots = "java.util.LinkedHashMapTC";
 
@@ -2136,9 +2154,9 @@ public class BootJarTool {
 
   }
 
-  private void mergeReadWriteLockInnerClass(String tcInnerClassNameDots, String jInnerClassNameDots,
-                                            String tcClassNameDots, String jClassNameDots, String srcInnerClassName,
-                                            String targetInnerClassName, Map instrumentedContext, String methodPrefix) {
+  private void mergeReadWriteLockInnerClass(final String tcInnerClassNameDots, final String jInnerClassNameDots,
+                                            final String tcClassNameDots, final String jClassNameDots, final String srcInnerClassName,
+                                            final String targetInnerClassName, final Map instrumentedContext, final String methodPrefix) {
     String tcInnerClassNameSlashes = tcInnerClassNameDots.replace(ChangeClassNameHierarchyAdapter.DOT_DELIMITER,
                                                                   ChangeClassNameHierarchyAdapter.SLASH_DELIMITER);
     byte[] tcData = getSystemBytes(tcInnerClassNameDots);
@@ -2170,8 +2188,8 @@ public class BootJarTool {
     loadClassIntoJar(jInnerClassNameDots, jData, true);
   }
 
-  private void mergeReentrantReadWriteLock(String tcClassNameDots, String jClassNameDots, Map instrumentedContext,
-                                           String methodPrefix) {
+  private void mergeReentrantReadWriteLock(final String tcClassNameDots, final String jClassNameDots, final Map instrumentedContext,
+                                           final String methodPrefix) {
     byte[] tcData = getSystemBytes(tcClassNameDots);
     ClassReader tcCR = new ClassReader(tcData);
     ClassNode tcCN = new ClassNode();
@@ -2215,16 +2233,16 @@ public class BootJarTool {
     addInstrumentedLinkedHashMap(instrumentedContext);
   }
 
-  private final void mergeClass(String tcClassNameDots, String jClassNameDots, Map instrumentedContext,
-                                final MethodNode[] replacedMethods, ClassAdapterFactory[] addlAdapters) {
+  private final void mergeClass(final String tcClassNameDots, final String jClassNameDots, final Map instrumentedContext,
+                                final MethodNode[] replacedMethods, final ClassAdapterFactory[] addlAdapters) {
     byte[] tcData = getSystemBytes(tcClassNameDots);
 
     ClassReader tcCR = new ClassReader(tcData);
     ClassNode tcCN = new ClassNode() {
-      public MethodVisitor visitMethod(int maccess, String mname, String mdesc, String msignature, String[] mexceptions) {
+      @Override
+      public MethodVisitor visitMethod(final int maccess, final String mname, final String mdesc, final String msignature, final String[] mexceptions) {
         if (replacedMethods != null) {
-          for (int i = 0; i < replacedMethods.length; i++) {
-            MethodNode replacedMethod = replacedMethods[i];
+          for (MethodNode replacedMethod : replacedMethods) {
             if (mname.equals(replacedMethod.name) && mdesc.equals(replacedMethod.desc)) {
               methods.add(replacedMethod);
               return null;
@@ -2239,11 +2257,11 @@ public class BootJarTool {
     byte[] jData = getSystemBytes(jClassNameDots);
 
     if (addlAdapters != null) {
-      for (int i = 0; i < addlAdapters.length; i++) {
+      for (ClassAdapterFactory addlAdapter : addlAdapters) {
         ClassReader cr = new ClassReader(jData);
         ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
 
-        ClassVisitor cv = addlAdapters[i].create(cw, null);
+        ClassVisitor cv = addlAdapter.create(cw, null);
         cr.accept(cv, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
         jData = cw.toByteArray();
       }
@@ -2285,12 +2303,12 @@ public class BootJarTool {
     }
   }
 
-  private boolean mergedInnerClassesNeedInstrumentation(String classNameDots) {
+  private boolean mergedInnerClassesNeedInstrumentation(final String classNameDots) {
     return classNameDots.equals("java.util.Hashtable");
   }
 
-  private void changeClassName(String fullClassNameDots, String classNameDotsToBeChanged, String classNameDotsReplaced,
-                               Map instrumentedContext, boolean doDSOTransform) {
+  private void changeClassName(final String fullClassNameDots, final String classNameDotsToBeChanged, final String classNameDotsReplaced,
+                               final Map instrumentedContext, final boolean doDSOTransform) {
     byte[] data = changeClassNameAndGetBytes(fullClassNameDots, classNameDotsToBeChanged, classNameDotsReplaced,
                                              instrumentedContext);
 
@@ -2304,24 +2322,24 @@ public class BootJarTool {
     loadClassIntoJar(replacedClassName, data, true);
   }
 
-  private final byte[] changeClassNameAndGetBytes(String fullClassNameDots, String classNameDotsToBeChanged,
-                                                  String classNameDotsReplaced, Map instrumentedContext) {
+  private final byte[] changeClassNameAndGetBytes(final String fullClassNameDots, final String classNameDotsToBeChanged,
+                                                  final String classNameDotsReplaced, final Map instrumentedContext) {
     return changeClassNameAndGetBytes(fullClassNameDots, classNameDotsToBeChanged, classNameDotsReplaced, null, null,
                                       instrumentedContext);
   }
 
-  private final byte[] changeClassNameAndGetBytes(String fullClassNameDots, String classNameDotsToBeChanged,
-                                                  String classNameDotsReplaced, String srcInnerClassName,
-                                                  String targetInnerClassName, Map instrumentedContext) {
+  private final byte[] changeClassNameAndGetBytes(final String fullClassNameDots, final String classNameDotsToBeChanged,
+                                                  final String classNameDotsReplaced, final String srcInnerClassName,
+                                                  final String targetInnerClassName, final Map instrumentedContext) {
     return changeClassNameAndGetBytes(getSystemBytes(fullClassNameDots), fullClassNameDots, classNameDotsToBeChanged,
                                       classNameDotsReplaced, srcInnerClassName, targetInnerClassName,
                                       instrumentedContext);
   }
 
-  private final byte[] changeClassNameAndGetBytes(byte[] data, String fullClassNameDots,
-                                                  String classNameDotsToBeChanged, String classNameDotsReplaced,
-                                                  String srcInnerClassName, String targetInnerClassName,
-                                                  Map instrumentedContext) {
+  private final byte[] changeClassNameAndGetBytes(byte[] data, final String fullClassNameDots,
+                                                  final String classNameDotsToBeChanged, final String classNameDotsReplaced,
+                                                  final String srcInnerClassName, final String targetInnerClassName,
+                                                  final Map instrumentedContext) {
     ClassReader cr = new ClassReader(data);
     ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
     ClassVisitor cv = new ChangeClassNameRootAdapter(cw, fullClassNameDots, classNameDotsToBeChanged,
@@ -2372,7 +2390,7 @@ public class BootJarTool {
     mergeReentrantLock(tcClassNameDots, jClassNameDots, instrumentedContext);
   }
 
-  private void mergeReentrantLock(String tcClassNameDots, String jClassNameDots, Map instrumentedContext) {
+  private void mergeReentrantLock(final String tcClassNameDots, final String jClassNameDots, final Map instrumentedContext) {
     String methodPrefix = "__RL" + ByteCodeUtil.TC_METHOD_PREFIX;
 
     byte[] tcData = getSystemBytes(tcClassNameDots);
@@ -2427,7 +2445,7 @@ public class BootJarTool {
     loadClassIntoJar("java.lang.ClassLoader", cw.toByteArray(), false);
   }
 
-  protected final byte[] doDSOTransform(String name, byte[] data) {
+  protected final byte[] doDSOTransform(final String name, final byte[] data) {
     // adapts the class on the fly
     ClassReader cr = new ClassReader(data);
     ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
@@ -2439,7 +2457,7 @@ public class BootJarTool {
     return cw.toByteArray();
   }
 
-  private final void adaptClassIfNotAlreadyIncluded(String className, Class adapter) {
+  private final void adaptClassIfNotAlreadyIncluded(final String className, final Class adapter) {
     if (bootJar.classLoaded(className)) { return; }
 
     byte[] orig = getSystemBytes(className);
@@ -2457,7 +2475,7 @@ public class BootJarTool {
     }
   }
 
-  protected void announce(String msg) {
+  protected void announce(final String msg) {
     if (!quiet) consoleLogger.info(msg);
   }
 
@@ -2469,7 +2487,7 @@ public class BootJarTool {
     }
   }
 
-  private final static void showHelpAndExit(Options options, int code) {
+  private final static void showHelpAndExit(final Options options, final int code) {
     new HelpFormatter().printHelp("java " + BootJarTool.class.getName() + " " + MAKE_OR_SCAN_MODE, options);
     System.exit(code);
   }
@@ -2478,7 +2496,7 @@ public class BootJarTool {
   private static final String SCAN_MODE         = "scan";
   private static final String MAKE_OR_SCAN_MODE = "<" + MAKE_MODE + "|" + SCAN_MODE + ">";
 
-  public final static void main(String[] args) {
+  public final static void main(final String[] args) {
     File installDir = getInstallationDir();
     String outputFileOptionMsg = "path to boot JAR file"
                                  + (installDir != null ? "\ndefault: [TC_INSTALL_DIR]/lib/dso-boot" : "");

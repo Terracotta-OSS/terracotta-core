@@ -83,7 +83,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
   private final InstrumentationLogger m_logger;
   private final InstrumentationLogger m_instrumentationLogger;
 
-  public DefaultWeavingStrategy(final DSOClientConfigHelper configHelper, InstrumentationLogger instrumentationLogger) {
+  public DefaultWeavingStrategy(final DSOClientConfigHelper configHelper, final InstrumentationLogger instrumentationLogger) {
     m_configHelper = configHelper;
     m_instrumentationLogger = instrumentationLogger;
     m_logger = new InstrumentationLoggerImpl(m_configHelper.getInstrumentationLoggingOptions());
@@ -101,7 +101,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
    * @param className
    * @param context
    */
-  public void transform(String className, final InstrumentationContext context) {
+  public void transform(final String className, final InstrumentationContext context) {
     try {
       final byte[] bytecode = context.getInitialBytecode();
       InitialClassDumper.INSTANCE.write(className, bytecode);
@@ -303,8 +303,12 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
       }
 
       // ------------------------------------------------
+      // -- Phase Annotation-based - Add custom adapters based on annotations
+      final boolean hasAnnotationsBasedCustomAdapter = m_configHelper.addAnnotationBasedAdapters(classInfo);
+
+      // ------------------------------------------------
       // -- Phase DSO -- DSO clustering
-      if (hasCustomAdapter) {
+      if (hasCustomAdapter || hasAnnotationsBasedCustomAdapter) {
         ClassAdapterFactory factory = m_configHelper.getCustomAdapter(classInfo);
         final ClassReader reader = new ClassReader(context.getCurrentBytecode());
         final ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
@@ -328,11 +332,11 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
 
         // CDV-237
         final String[] missingRoots = m_configHelper.getMissingRootDeclarations(classInfo);
-        for (int i = 0; i < missingRoots.length; i++) {
+        for (String missingRoot : missingRoots) {
           String MESSAGE = "The root expression ''{0}'' meant for the class ''{1}'' "
                            + "has no effect, make sure that it is a valid expression "
                            + "and that it is spelled correctly.";
-          Object[] info = { missingRoots[i], classInfo.getName() };
+          Object[] info = { missingRoot, classInfo.getName() };
           String message = MessageFormat.format(MESSAGE, info);
           consoleLogger.warn(message);
         }
@@ -356,11 +360,11 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
     }
   }
 
-  public static boolean isAdvisable(ClassInfo classInfo, final Set definitions) {
+  public static boolean isAdvisable(final ClassInfo classInfo, final Set definitions) {
     return !classFilter(definitions, getDefaultExpressionContexts(classInfo), classInfo);
   }
 
-  private static ExpressionContext[] getDefaultExpressionContexts(ClassInfo classInfo) {
+  private static ExpressionContext[] getDefaultExpressionContexts(final ClassInfo classInfo) {
     final ExpressionContext[] ctxs = new ExpressionContext[] {
         new ExpressionContext(PointcutType.EXECUTION, classInfo, classInfo),
         new ExpressionContext(PointcutType.CALL, null, classInfo),
@@ -372,10 +376,10 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
     return ctxs;
   }
 
-  private boolean isInstrumentedByDSO(ClassInfo classInfo) {
+  private boolean isInstrumentedByDSO(final ClassInfo classInfo) {
     ClassInfo[] interfaces = classInfo.getInterfaces();
-    for (int i = 0; i < interfaces.length; i++) {
-      if (interfaces[i].getName().equals("com.tc.object.bytecode.TransparentAccess")) { return true; }
+    for (ClassInfo interface1 : interfaces) {
+      if (interface1.getName().equals("com.tc.object.bytecode.TransparentAccess")) { return true; }
     }
     return false;
   }
@@ -392,7 +396,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
     if (classInfo.isInterface()) { return true; }
     return classFilter(definitions, ctxs, classInfo.getName());
   }
-  
+
   private static boolean classFilter(final Set definitions, final ExpressionContext[] ctxs, final String className) {
     for (Iterator defs = definitions.iterator(); defs.hasNext();) {
       if (!classFilter((SystemDefinition) defs.next(), ctxs, className)) { return false; }
@@ -411,7 +415,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
    *        handle that? cache lookup? or custom class level attribute ?
    */
   private static boolean classFilter(final SystemDefinition definition, final ExpressionContext[] ctxs,
-                                     String className) {
+                                     final String className) {
 
     if (definition.inExcludePackage(className)) { return true; }
     if (!definition.inIncludePackage(className)) { return true; }

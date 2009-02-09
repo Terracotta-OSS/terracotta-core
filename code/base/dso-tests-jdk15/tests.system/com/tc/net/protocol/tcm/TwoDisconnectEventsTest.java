@@ -5,6 +5,7 @@
 package com.tc.net.protocol.tcm;
 
 import com.tc.cluster.Cluster;
+import com.tc.cluster.DsoClusterImpl;
 import com.tc.config.schema.SettableConfigItem;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
@@ -108,7 +109,7 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
     }
   }
 
-  private void waitUntilUnpaused(DistributedObjectClient client) {
+  private void waitUntilUnpaused(final DistributedObjectClient client) {
     ClientHandshakeManager mgr = client.getClientHandshakeManager();
     mgr.waitForHandshake();
   }
@@ -117,7 +118,7 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
     private int         receivedCount = 0;
     private PingMessage pingReceived;
 
-    public void putMessage(TCMessage message) throws UnsupportedMessageTypeException {
+    public void putMessage(final TCMessage message) throws UnsupportedMessageTypeException {
 
       PingMessage ping = (PingMessage) message;
 
@@ -158,7 +159,7 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
                                                                  new MockClassProvider(),
                                                                  new PreparedComponentsFromL2Connection(manager),
                                                                  NullManager.getInstance(), new Cluster(),
-                                                                 new NullRuntimeLogger());
+                                                                 new DsoClusterImpl(), new NullRuntimeLogger());
     client.start();
     return client;
   }

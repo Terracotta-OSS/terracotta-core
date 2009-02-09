@@ -5,6 +5,7 @@
 package com.tc.object.bytecode;
 
 import com.tc.cluster.ClusterEventListener;
+import com.tc.cluster.DsoCluster;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
 import com.tc.management.beans.sessions.SessionMonitor;
@@ -419,6 +420,7 @@ public interface Manager {
    */
   public TCProperties getTCProperites();
 
+  // TODO: evaluate what to do with this now that there's ClusterEventsNG
   /**
    * Add listener for cluster events
    *
@@ -460,5 +462,12 @@ public interface Manager {
    * Get the ClassProvider associated with this Manager
    */
   public ClassProvider getClassProvider();
+
+  /**
+   * Retrieves the DSO cluster instance.
+   *
+   * @return the DSO cluster instance for this manager
+   */
+  public DsoCluster getDsoCluster();
 
 }

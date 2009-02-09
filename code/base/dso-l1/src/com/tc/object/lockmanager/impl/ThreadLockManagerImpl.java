@@ -7,88 +7,64 @@ package com.tc.object.lockmanager.impl;
 import com.tc.object.lockmanager.api.ClientLockManager;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.Notify;
-import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.lockmanager.api.ThreadLockManager;
 import com.tc.object.lockmanager.api.WaitListener;
 import com.tc.object.tx.TimerSpec;
-import com.tc.util.runtime.NullThreadIDMapImpl;
-import com.tc.util.runtime.ThreadIDMap;
+import com.tc.util.runtime.ThreadIDManager;
 
 public class ThreadLockManagerImpl implements ThreadLockManager {
 
   private final ClientLockManager lockManager;
-  private final ThreadLocal       threadID;
-  private long                    threadIDSequence;
-  private final ThreadIDMap       threadIDMap;
+  private final ThreadIDManager   threadIDManager;
 
-  public ThreadLockManagerImpl(ClientLockManager lockManager) {
-    this(lockManager, new NullThreadIDMapImpl());
-  }
-
-  public ThreadLockManagerImpl(ClientLockManager lockManager, ThreadIDMap thMap) {
+  public ThreadLockManagerImpl(final ClientLockManager lockManager, final ThreadIDManager threadIDManager) {
     this.lockManager = lockManager;
-    this.threadID = new ThreadLocal();
-    this.threadIDMap = thMap;
+    this.threadIDManager = threadIDManager;
   }
 
-  public LockID lockIDFor(String lockName) {
+  public LockID lockIDFor(final String lockName) {
     return lockManager.lockIDFor(lockName);
   }
 
-  public int queueLength(LockID lockID) {
-    return lockManager.queueLength(lockID, getThreadID());
+  public int queueLength(final LockID lockID) {
+    return lockManager.queueLength(lockID, threadIDManager.getThreadID());
   }
 
-  public int waitLength(LockID lockID) {
-    return lockManager.waitLength(lockID, getThreadID());
+  public int waitLength(final LockID lockID) {
+    return lockManager.waitLength(lockID, threadIDManager.getThreadID());
   }
 
-  public int localHeldCount(LockID lockID, int lockLevel) {
-    return lockManager.localHeldCount(lockID, lockLevel, getThreadID());
+  public int localHeldCount(final LockID lockID, final int lockLevel) {
+    return lockManager.localHeldCount(lockID, lockLevel, threadIDManager.getThreadID());
   }
 
-  public boolean isLocked(LockID lockID, int lockLevel) {
-    return lockManager.isLocked(lockID, getThreadID(), lockLevel);
+  public boolean isLocked(final LockID lockID, final int lockLevel) {
+    return lockManager.isLocked(lockID, threadIDManager.getThreadID(), lockLevel);
   }
 
-  public void lock(LockID lockID, int lockLevel, String lockObjectType, String contextInfo) {
-    lockManager.lock(lockID, getThreadID(), lockLevel, lockObjectType, contextInfo);
+  public void lock(final LockID lockID, final int lockLevel, final String lockObjectType, final String contextInfo) {
+    lockManager.lock(lockID, threadIDManager.getThreadID(), lockLevel, lockObjectType, contextInfo);
   }
 
-  public void lockInterruptibly(LockID lockID, int lockLevel, String lockObjectType, String contextInfo) throws InterruptedException {
-    lockManager.lockInterruptibly(lockID, getThreadID(), lockLevel, lockObjectType, contextInfo);
+  public void lockInterruptibly(final LockID lockID, final int lockLevel, final String lockObjectType, final String contextInfo) throws InterruptedException {
+    lockManager.lockInterruptibly(lockID, threadIDManager.getThreadID(), lockLevel, lockObjectType, contextInfo);
   }
 
-  public boolean tryLock(LockID lockID, TimerSpec timeout, int lockLevel, String lockObjectType) {
-    return lockManager.tryLock(lockID, getThreadID(), timeout, lockLevel, lockObjectType);
+  public boolean tryLock(final LockID lockID, final TimerSpec timeout, final int lockLevel, final String lockObjectType) {
+    return lockManager.tryLock(lockID, threadIDManager.getThreadID(), timeout, lockLevel, lockObjectType);
   }
 
-  public void wait(LockID lockID, TimerSpec call, Object object, WaitListener waitListener) throws InterruptedException {
-    lockManager.wait(lockID, getThreadID(), call, object, waitListener);
+  public void wait(final LockID lockID, final TimerSpec call, final Object object, final WaitListener waitListener) throws InterruptedException {
+    lockManager.wait(lockID, threadIDManager.getThreadID(), call, object, waitListener);
   }
 
-  public Notify notify(LockID lockID, boolean all) {
+  public Notify notify(final LockID lockID, final boolean all) {
     // XXX: HACK HACK HACK: this is here because notifies need to be attached to transactions.
     // this needs to be refactored. --Orion (10/26/05)
-    return lockManager.notify(lockID, getThreadID(), all);
+    return lockManager.notify(lockID, threadIDManager.getThreadID(), all);
   }
 
-  public void unlock(LockID lockID) {
-    lockManager.unlock(lockID, getThreadID());
+  public void unlock(final LockID lockID) {
+    lockManager.unlock(lockID, threadIDManager.getThreadID());
   }
-
-  private ThreadID getThreadID() {
-    ThreadID rv = (ThreadID) threadID.get();
-    if (rv == null) {
-      rv = new ThreadID(nextThreadID(), Thread.currentThread().getName());
-      threadIDMap.addTCThreadID(rv);
-      threadID.set(rv);
-    }
-    return rv;
-  }
-
-  private synchronized long nextThreadID() {
-    return ++threadIDSequence;
-  }
-
 }

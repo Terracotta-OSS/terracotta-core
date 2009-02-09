@@ -4,6 +4,7 @@
  */
 package com.tc.cluster;
 
+// TODO: evaluate what to do with this now that there's ClusterEventsNG
 public class Node {
   private final String nodeId;
 
@@ -15,16 +16,19 @@ public class Node {
     return nodeId;
   }
 
-  public boolean equals(Object obj) {
+  @Override
+  public boolean equals(final Object obj) {
     if (!(obj instanceof Node)) return false;
     Node that = (Node) obj;
     return this.nodeId.equals(that.nodeId);
   }
 
+  @Override
   public int hashCode() {
     return nodeId.hashCode();
   }
 
+  @Override
   public String toString() {
     return nodeId;
   }

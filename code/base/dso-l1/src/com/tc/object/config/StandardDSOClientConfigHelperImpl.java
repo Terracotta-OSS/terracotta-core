@@ -16,6 +16,7 @@ import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo;
+import com.tc.backport175.bytecode.AnnotationElement.Annotation;
 import com.tc.config.schema.NewCommonL1Config;
 import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
 import com.tc.config.schema.setup.ConfigurationSetupException;
@@ -25,6 +26,10 @@ import com.tc.geronimo.transform.HostGBeanAdapter;
 import com.tc.geronimo.transform.MultiParentClassLoaderAdapter;
 import com.tc.geronimo.transform.ProxyMethodInterceptorAdapter;
 import com.tc.geronimo.transform.TomcatClassLoaderAdapter;
+import com.tc.injection.DsoClusterInjectionInstrumentation;
+import com.tc.injection.InjectionInstrumentation;
+import com.tc.injection.InjectionInstrumentationRegistry;
+import com.tc.injection.exceptions.UnsupportedInjectedDsoInstanceTypeException;
 import com.tc.jam.transform.ReflectClassBuilderAdapter;
 import com.tc.jboss.transform.MainAdapter;
 import com.tc.jboss.transform.UCLAdapter;
@@ -156,14 +161,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   /**
    * A map of class names to TransparencyClassSpec
-   * 
+   *
    * @GuardedBy {@link #specLock}
    */
   private final Map                              userDefinedBootSpecs               = new HashMap();
 
   /**
    * A map of class names to TransparencyClassSpec for individual classes
-   * 
+   *
    * @GuardedBy {@link #specLock}
    */
   private final Map                              classSpecs                         = new HashMap();
@@ -193,13 +198,15 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   private ReconnectConfig                        l1ReconnectConfig                  = null;
 
-  public StandardDSOClientConfigHelperImpl(L1TVSConfigurationSetupManager configSetupManager)
+  private final InjectionInstrumentationRegistry injectionRegistry                  = new InjectionInstrumentationRegistry();
+
+  public StandardDSOClientConfigHelperImpl(final L1TVSConfigurationSetupManager configSetupManager)
       throws ConfigurationSetupException {
     this(configSetupManager, true);
   }
 
-  public StandardDSOClientConfigHelperImpl(boolean initializedModulesOnlyOnce,
-                                           L1TVSConfigurationSetupManager configSetupManager)
+  public StandardDSOClientConfigHelperImpl(final boolean initializedModulesOnlyOnce,
+                                           final L1TVSConfigurationSetupManager configSetupManager)
       throws ConfigurationSetupException {
     this(configSetupManager, true);
     if (initializedModulesOnlyOnce) {
@@ -207,7 +214,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  public StandardDSOClientConfigHelperImpl(L1TVSConfigurationSetupManager configSetupManager, boolean interrogateBootJar)
+  public StandardDSOClientConfigHelperImpl(final L1TVSConfigurationSetupManager configSetupManager, final boolean interrogateBootJar)
       throws ConfigurationSetupException {
     this.portability = new PortabilityImpl(this);
     this.configSetupManager = configSetupManager;
@@ -218,6 +225,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
         .commonL1Config().modules() : Modules.Factory.newInstance());
 
     permanentExcludesMatcher = new CompoundExpressionMatcher();
+
+    injectionRegistry.registerInstrumentation("com.tc.cluster.DsoCluster", new DsoClusterInjectionInstrumentation());
 
     // CDV-441 -- This exclude should come before any patterns that do matching that might
     // mandate more class loading (e.g. a superclass/interface match (Foo+))
@@ -276,32 +285,32 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return this.portability;
   }
 
-  public void addAutoLockExcludePattern(String expression) {
+  public void addAutoLockExcludePattern(final String expression) {
     String executionExpression = ExpressionHelper.expressionPattern2ExecutionExpression(expression);
     ExpressionVisitor visitor = expressionHelper.createExpressionVisitor(executionExpression);
     autoLockExcludes.add(visitor);
   }
 
-  public void addPermanentExcludePattern(String pattern) {
+  public void addPermanentExcludePattern(final String pattern) {
     permanentExcludesMatcher.add(new ClassExpressionMatcherImpl(expressionHelper, pattern));
   }
 
-  public LockDefinition createLockDefinition(String name, ConfigLockLevel level) {
+  public LockDefinition createLockDefinition(final String name, final ConfigLockLevel level) {
     return new LockDefinitionImpl(name, level);
   }
 
-  public void addNonportablePattern(String pattern) {
+  public void addNonportablePattern(final String pattern) {
     nonportablesMatcher.add(new ClassExpressionMatcherImpl(expressionHelper, pattern));
   }
 
-  private InstrumentationDescriptor newInstrumentationDescriptor(InstrumentedClass classDesc) {
+  private InstrumentationDescriptor newInstrumentationDescriptor(final InstrumentedClass classDesc) {
     return new InstrumentationDescriptorImpl(classDesc, //
                                              new ClassExpressionMatcherImpl(expressionHelper, //
                                                                             classDesc.classExpression()));
   }
 
   // This is used only for tests right now
-  public void addIncludePattern(String expression) {
+  public void addIncludePattern(final String expression) {
     addIncludePattern(expression, false, false, false);
   }
 
@@ -310,12 +319,12 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   // This is used only for tests right now
-  public void addIncludePattern(String expression, boolean honorTransient) {
+  public void addIncludePattern(final String expression, final boolean honorTransient) {
     addIncludePattern(expression, honorTransient, false, false);
   }
 
-  public void addIncludePattern(String expression, boolean honorTransient, boolean oldStyleCallConstructorOnLoad,
-                                boolean honorVolatile) {
+  public void addIncludePattern(final String expression, final boolean honorTransient, final boolean oldStyleCallConstructorOnLoad,
+                                final boolean honorVolatile) {
     IncludeOnLoad onLoad = new IncludeOnLoad();
     if (oldStyleCallConstructorOnLoad) {
       onLoad.setToCallConstructorOnLoad(true);
@@ -325,9 +334,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     clearAdaptableCache();
   }
 
-  public void addIncludeAndLockIfRequired(String expression, boolean honorTransient,
-                                          boolean oldStyleCallConstructorOnLoad, boolean honorVolatile,
-                                          String lockExpression, ClassInfo classInfo) {
+  public void addIncludeAndLockIfRequired(final String expression, final boolean honorTransient,
+                                          final boolean oldStyleCallConstructorOnLoad, final boolean honorVolatile,
+                                          final String lockExpression, final ClassInfo classInfo) {
     if (hasSpec(classInfo)) { return; }
 
     // The addition of the lock expression and the include need to be atomic -- see LKC-2616
@@ -342,11 +351,11 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   // This is used only for tests right now
-  public void addExcludePattern(String expression) {
+  public void addExcludePattern(final String expression) {
     addInstrumentationDescriptor(new ExcludedInstrumentedClass(expression));
   }
 
-  public void addInstrumentationDescriptor(InstrumentedClass classDesc) {
+  public void addInstrumentationDescriptor(final InstrumentedClass classDesc) {
     this.instrumentationDescriptors.add(0, newInstrumentationDescriptor(classDesc));
   }
 
@@ -354,7 +363,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return !this.instrumentationDescriptors.isEmpty();
   }
 
-  public boolean hasIncludeExcludePattern(ClassInfo classInfo) {
+  public boolean hasIncludeExcludePattern(final ClassInfo classInfo) {
     return getInstrumentationDescriptorFor(classInfo) != DEFAULT_INSTRUMENTATION_DESCRIPTOR;
   }
 
@@ -370,7 +379,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return this.configSetupManager.dsoL1Config().instrumentationLoggingOptions();
   }
 
-  private void doPreInstrumentedAutoconfig(boolean interrogateBootJar) {
+  private void doPreInstrumentedAutoconfig(final boolean interrogateBootJar) {
     TransparencyClassSpec spec = null;
 
     spec = getOrCreateSpec("java.util.TreeMap", "com.tc.object.applicator.TreeMapApplicator");
@@ -552,7 +561,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     markAllSpecsPreInstrumented();
   }
 
-  private void doAutoconfig(boolean interrogateBootJar) throws Exception {
+  private void doAutoconfig(final boolean interrogateBootJar) throws Exception {
     TransparencyClassSpec spec;
 
     addJDK15InstrumentedSpec();
@@ -670,6 +679,27 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
         consoleLogger.warn(msg);
       }
     }
+  }
+
+  public boolean addAnnotationBasedAdapters(final ClassInfo classInfo) {
+    boolean addedAdapters = false;
+    if (Vm.isJDK15Compliant()) {
+      for (FieldInfo fi : classInfo.getFields()) {
+        for (Annotation ann : fi.getAnnotations()) {
+          if ("com.tc.injection.annotations.InjectedDsoInstance".equals(ann.getInterfaceName())) {
+            InjectionInstrumentation instrumentation = injectionRegistry.lookupInstrumentation(fi.getType().getName());
+            if (null == instrumentation) {
+              throw new UnsupportedInjectedDsoInstanceTypeException(classInfo.getName(), fi.getName(), fi.getType().getName());
+            }
+
+            addCustomAdapter(classInfo.getName(), instrumentation.getClassAdapterFactoryForFieldInjection(fi));
+            addedAdapters = true;
+          }
+        }
+      }
+    }
+
+    return addedAdapters;
   }
 
   private void addJDK15InstrumentedSpec() {
@@ -821,7 +851,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  public boolean removeCustomAdapter(String name) {
+  public boolean removeCustomAdapter(final String name) {
     synchronized (customAdapters) {
       Object prev = this.customAdapters.remove(name);
       return prev != null;
@@ -836,13 +866,13 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  public boolean hasCustomAdapter(ClassInfo classInfo) {
+  public boolean hasCustomAdapter(final ClassInfo classInfo) {
     synchronized (customAdapters) {
       return customAdapters.containsKey(classInfo.getName());
     }
   }
 
-  public ClassAdapterFactory getCustomAdapter(ClassInfo classInfo) {
+  public ClassAdapterFactory getCustomAdapter(final ClassInfo classInfo) {
     synchronized (customAdapters) {
       return (ClassAdapterFactory) customAdapters.get(classInfo.getName());
     }
@@ -868,7 +898,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  public URL getClassResource(String className) {
+  public URL getClassResource(final String className) {
     return (URL) this.classResources.get(className);
   }
 
@@ -896,11 +926,11 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return values.iterator();
   }
 
-  public void setFaultCount(int count) {
+  public void setFaultCount(final int count) {
     this.faultCount = count;
   }
 
-  public boolean isLockMethod(MemberInfo memberInfo) {
+  public boolean isLockMethod(final MemberInfo memberInfo) {
     helperLogger.logIsLockMethodBegin(memberInfo.getModifiers(), memberInfo.getDeclaringType().getName(), //
                                       memberInfo.getName(), memberInfo.getSignature());
 
@@ -957,14 +987,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   // }
   // }
 
-  private static boolean isNotStaticAndIsSynchronized(int modifiers) {
+  private static boolean isNotStaticAndIsSynchronized(final int modifiers) {
     return !Modifier.isStatic(modifiers) && Modifier.isSynchronized(modifiers);
   }
 
   /**
    * This is a simplified interface from DSOApplicationConfig. This is used for programmatically generating config.
    */
-  public void addRoot(String rootName, String rootFieldName) {
+  public void addRoot(final String rootName, final String rootFieldName) {
     ClassSpec classSpec;
     try {
       classSpec = ClassUtils.parseFullyQualifiedFieldName(rootFieldName);
@@ -974,7 +1004,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     addRoot(new Root(classSpec.getFullyQualifiedClassName(), classSpec.getShortFieldName(), rootName), false);
   }
 
-  public void addRoot(Root root, boolean addSpecForClass) {
+  public void addRoot(final Root root, final boolean addSpecForClass) {
     if (addSpecForClass) {
       this.getOrCreateSpec(root.getClassName());
     }
@@ -982,23 +1012,23 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     roots.add(root);
   }
 
-  public String rootNameFor(FieldInfo fi) {
+  public String rootNameFor(final FieldInfo fi) {
     Root r = findMatchingRootDefinition(fi);
     if (r != null) { return r.getRootName(fi); }
     throw Assert.failure("No such root for fieldName " + fi.getName() + " in class " + fi.getDeclaringType().getName());
   }
 
-  public boolean isRoot(FieldInfo fi) {
+  public boolean isRoot(final FieldInfo fi) {
     return findMatchingRootDefinition(fi) != null;
   }
 
-  public boolean isRootDSOFinal(FieldInfo fi) {
+  public boolean isRootDSOFinal(final FieldInfo fi) {
     Root r = findMatchingRootDefinition(fi);
     if (r != null) { return r.isDsoFinal(fi.getType().isPrimitive()); }
     throw Assert.failure("No such root for fieldName " + fi.getName() + " in class " + fi.getDeclaringType().getName());
   }
 
-  private Root findMatchingRootDefinition(FieldInfo fi) {
+  private Root findMatchingRootDefinition(final FieldInfo fi) {
     for (Iterator i = roots.iterator(); i.hasNext();) {
       Root r = (Root) i.next();
       if (r.matches(fi, expressionHelper)) { return r; }
@@ -1006,7 +1036,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return null;
   }
 
-  private boolean classContainsAnyRoots(ClassInfo classInfo) {
+  private boolean classContainsAnyRoots(final ClassInfo classInfo) {
     FieldInfo[] fields = classInfo.getFields();
     for (FieldInfo fieldInfo : fields) {
       if (findMatchingRootDefinition(fieldInfo) != null) { return true; }
@@ -1015,7 +1045,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return false;
   }
 
-  public String[] getMissingRootDeclarations(ClassInfo classInfo) {
+  public String[] getMissingRootDeclarations(final ClassInfo classInfo) {
     final List missingRoots = new ArrayList();
     for (final Iterator i = roots.iterator(); i.hasNext();) {
       final Root root = (Root) i.next();
@@ -1097,7 +1127,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     rewriteHashtableAutoLockSpecIfNecessaryInternal(classInfo, realClassName, patterns);
   }
 
-  private void rewriteHashtableAutoLockSpecIfNecessaryInternal(ClassInfo classInfo, String className, String patterns) {
+  private void rewriteHashtableAutoLockSpecIfNecessaryInternal(final ClassInfo classInfo, final String className, final String patterns) {
     MemberInfo[] methods = classInfo.getMethods();
     for (MemberInfo methodInfo : methods) {
       if (patterns.indexOf(methodInfo.getName() + methodInfo.getSignature()) > -1) {
@@ -1115,7 +1145,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  public LockDefinition[] lockDefinitionsFor(MemberInfo memberInfo) {
+  public LockDefinition[] lockDefinitionsFor(final MemberInfo memberInfo) {
     final boolean isAutoLocksExcluded = matchesAutoLockExcludes(memberInfo);
     boolean foundMatchingAutoLock = false;
 
@@ -1142,7 +1172,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return rv;
   }
 
-  private boolean matchesAutoLockExcludes(MemberInfo methodInfo) {
+  private boolean matchesAutoLockExcludes(final MemberInfo methodInfo) {
     ExpressionContext ctxt = expressionHelper.createExecutionExpressionContext(methodInfo);
     for (Iterator i = autoLockExcludes.iterator(); i.hasNext();) {
       ExpressionVisitor visitor = (ExpressionVisitor) i.next();
@@ -1155,11 +1185,11 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return faultCount < 0 ? this.configSetupManager.dsoL1Config().faultCount().getInt() : faultCount;
   }
 
-  private Boolean readAdaptableCache(String name) {
+  private Boolean readAdaptableCache(final String name) {
     return (Boolean) adaptableCache.get(name);
   }
 
-  private boolean cacheIsAdaptable(String name, boolean adaptable) {
+  private boolean cacheIsAdaptable(final String name, final boolean adaptable) {
     adaptableCache.put(name, adaptable ? Boolean.TRUE : Boolean.FALSE);
     return adaptable;
   }
@@ -1168,48 +1198,48 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     this.adaptableCache.clear();
   }
 
-  public void addWriteAutolock(String methodPattern) {
+  public void addWriteAutolock(final String methodPattern) {
     addAutolock(methodPattern, ConfigLockLevel.WRITE);
   }
 
-  public void addWriteAutolock(String methodPattern, String lockContextInfo) {
+  public void addWriteAutolock(final String methodPattern, final String lockContextInfo) {
     addAutolock(methodPattern, ConfigLockLevel.WRITE, lockContextInfo);
   }
 
-  public void addSynchronousWriteAutolock(String methodPattern) {
+  public void addSynchronousWriteAutolock(final String methodPattern) {
     addAutolock(methodPattern, ConfigLockLevel.SYNCHRONOUS_WRITE);
   }
 
-  public void addReadAutolock(String methodPattern) {
+  public void addReadAutolock(final String methodPattern) {
     addAutolock(methodPattern, ConfigLockLevel.READ);
   }
 
-  public void addAutolock(String methodPattern, ConfigLockLevel type) {
+  public void addAutolock(final String methodPattern, final ConfigLockLevel type) {
     LockDefinition lockDefinition = new LockDefinitionImpl(LockDefinition.TC_AUTOLOCK_NAME, type);
     lockDefinition.commit();
     addLock(methodPattern, lockDefinition);
   }
 
-  public void addAutolock(String methodPattern, ConfigLockLevel type, String configurationText) {
+  public void addAutolock(final String methodPattern, final ConfigLockLevel type, final String configurationText) {
     LockDefinition lockDefinition = new LockDefinitionImpl(LockDefinition.TC_AUTOLOCK_NAME, type, configurationText);
     lockDefinition.commit();
     addLock(methodPattern, lockDefinition);
   }
 
-  public void addReadAutoSynchronize(String methodPattern) {
+  public void addReadAutoSynchronize(final String methodPattern) {
     addAutolock(methodPattern, ConfigLockLevel.AUTO_SYNCHRONIZED_READ);
   }
 
-  public void addWriteAutoSynchronize(String methodPattern) {
+  public void addWriteAutoSynchronize(final String methodPattern) {
     addAutolock(methodPattern, ConfigLockLevel.AUTO_SYNCHRONIZED_WRITE);
   }
 
-  public void addLock(String methodPattern, LockDefinition lockDefinition) {
+  public void addLock(final String methodPattern, final LockDefinition lockDefinition) {
     // keep the list in reverse order of add
     locks.add(0, new Lock(methodPattern, lockDefinition));
   }
 
-  public boolean shouldBeAdapted(ClassInfo classInfo) {
+  public boolean shouldBeAdapted(final ClassInfo classInfo) {
     // now check if class is adaptable
     String fullClassName = classInfo.getName();
     Boolean cache = readAdaptableCache(fullClassName);
@@ -1247,17 +1277,17 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return cacheIsAdaptable(fullClassName, desc.isInclude());
   }
 
-  private boolean isTCPatternMatchingHack(ClassInfo classInfo) {
+  private boolean isTCPatternMatchingHack(final ClassInfo classInfo) {
     String fullClassName = classInfo.getName();
     return fullClassName.startsWith("com.tc.") || fullClassName.startsWith("com.terracottatech.");
   }
 
-  public boolean isNeverAdaptable(ClassInfo classInfo) {
+  public boolean isNeverAdaptable(final ClassInfo classInfo) {
     return isTCPatternMatchingHack(classInfo) || permanentExcludesMatcher.match(classInfo)
            || nonportablesMatcher.match(classInfo);
   }
 
-  private InstrumentationDescriptor getInstrumentationDescriptorFor(ClassInfo classInfo) {
+  private InstrumentationDescriptor getInstrumentationDescriptorFor(final ClassInfo classInfo) {
     for (Iterator i = this.instrumentationDescriptors.iterator(); i.hasNext();) {
       InstrumentationDescriptor rv = (InstrumentationDescriptor) i.next();
       if (rv.matches(classInfo)) { return rv; }
@@ -1265,12 +1295,12 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return DEFAULT_INSTRUMENTATION_DESCRIPTOR;
   }
 
-  private String outerClassnameWithoutInner(String fullName) {
+  private String outerClassnameWithoutInner(final String fullName) {
     int indexOfInner = fullName.indexOf('$');
     return indexOfInner < 0 ? fullName : fullName.substring(0, indexOfInner);
   }
 
-  public boolean isTransient(int modifiers, ClassInfo classInfo, String field) {
+  public boolean isTransient(final int modifiers, final ClassInfo classInfo, final String field) {
     if (ByteCodeUtil.isParent(field)) return true;
     if (ClassAdapterBase.isDelegateFieldName(field)) { return false; }
 
@@ -1280,29 +1310,29 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return transients.contains(className + "." + field);
   }
 
-  public boolean isVolatile(int modifiers, ClassInfo classInfo, String field) {
+  public boolean isVolatile(final int modifiers, final ClassInfo classInfo, final String field) {
     return Modifier.isVolatile(modifiers) && isHonorJavaVolatile(classInfo);
   }
 
-  private boolean isHonorJavaTransient(ClassInfo classInfo) {
+  private boolean isHonorJavaTransient(final ClassInfo classInfo) {
     TransparencyClassSpec spec = getSpec(classInfo.getName());
     if (spec != null && spec.isHonorTransientSet()) { return spec.isHonorJavaTransient(); }
     return getInstrumentationDescriptorFor(classInfo).isHonorTransient();
   }
 
-  private boolean isHonorJavaVolatile(ClassInfo classInfo) {
+  private boolean isHonorJavaVolatile(final ClassInfo classInfo) {
     TransparencyClassSpec spec = getSpec(classInfo.getName());
     if (spec != null && spec.isHonorVolatileSet()) { return spec.isHonorVolatile(); }
     return getInstrumentationDescriptorFor(classInfo).isHonorVolatile();
   }
 
-  public boolean isCallConstructorOnLoad(ClassInfo classInfo) {
+  public boolean isCallConstructorOnLoad(final ClassInfo classInfo) {
     TransparencyClassSpec spec = getSpec(classInfo.getName());
     if (spec != null && spec.isCallConstructorSet()) { return spec.isCallConstructorOnLoad(); }
     return getInstrumentationDescriptorFor(classInfo).isCallConstructorOnLoad();
   }
 
-  public String getPreCreateMethodIfDefined(String className) {
+  public String getPreCreateMethodIfDefined(final String className) {
     TransparencyClassSpec spec = getSpec(className);
     if (spec != null) {
       return spec.getPreCreateMethod();
@@ -1311,7 +1341,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  public String getPostCreateMethodIfDefined(String className) {
+  public String getPostCreateMethodIfDefined(final String className) {
     TransparencyClassSpec spec = getSpec(className);
     if (spec != null) {
       return spec.getPostCreateMethod();
@@ -1320,13 +1350,13 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  public String getOnLoadScriptIfDefined(ClassInfo classInfo) {
+  public String getOnLoadScriptIfDefined(final ClassInfo classInfo) {
     TransparencyClassSpec spec = getSpec(classInfo.getName());
     if (spec != null && spec.isExecuteScriptOnLoadSet()) { return spec.getOnLoadExecuteScript(); }
     return getInstrumentationDescriptorFor(classInfo).getOnLoadScriptIfDefined();
   }
 
-  public String getOnLoadMethodIfDefined(ClassInfo classInfo) {
+  public String getOnLoadMethodIfDefined(final ClassInfo classInfo) {
     TransparencyClassSpec spec = getSpec(classInfo.getName());
     if (spec != null && spec.isCallMethodOnLoadSet()) { return spec.getOnLoadMethod(); }
     return getInstrumentationDescriptorFor(classInfo).getOnLoadMethodIfDefined();
@@ -1341,7 +1371,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return clazz;
   }
 
-  public boolean isDSOSessions(String name) {
+  public boolean isDSOSessions(final String name) {
     for (Iterator it = applicationNames.iterator(); it.hasNext();) {
       String appName = (String) it.next();
       if (matchesWildCard(appName, name)) {
@@ -1354,13 +1384,13 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return false;
   }
 
-  private boolean matchesWildCard(String regex, String input) {
+  private boolean matchesWildCard(final String regex, final String input) {
     return input.matches(regex.replaceAll("\\*", "\\.\\*"));
   }
 
-  public TransparencyClassAdapter createDsoClassAdapterFor(ClassVisitor writer, ClassInfo classInfo,
-                                                           InstrumentationLogger lgr, ClassLoader caller,
-                                                           final boolean forcePortable, boolean honorTransient) {
+  public TransparencyClassAdapter createDsoClassAdapterFor(final ClassVisitor writer, final ClassInfo classInfo,
+                                                           final InstrumentationLogger lgr, final ClassLoader caller,
+                                                           final boolean forcePortable, final boolean honorTransient) {
     String className = classInfo.getName();
     TransparencyClassSpec spec = getOrCreateSpec(className);
     spec.setHonorTransient(honorTransient);
@@ -1377,13 +1407,13 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
                                         portability);
   }
 
-  public ClassAdapter createClassAdapterFor(ClassWriter writer, ClassInfo classInfo, InstrumentationLogger lgr,
-                                            ClassLoader caller) {
+  public ClassAdapter createClassAdapterFor(final ClassWriter writer, final ClassInfo classInfo, final InstrumentationLogger lgr,
+                                            final ClassLoader caller) {
     return this.createClassAdapterFor(writer, classInfo, lgr, caller, false);
   }
 
-  public ClassAdapter createClassAdapterFor(ClassWriter writer, ClassInfo classInfo, InstrumentationLogger lgr,
-                                            ClassLoader caller, final boolean forcePortable) {
+  public ClassAdapter createClassAdapterFor(final ClassWriter writer, final ClassInfo classInfo, final InstrumentationLogger lgr,
+                                            final ClassLoader caller, final boolean forcePortable) {
     TransparencyClassSpec spec = getOrCreateSpec(classInfo.getName());
 
     if (forcePortable) {
@@ -1406,7 +1436,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return new SafeSerialVersionUIDAdder(new OverridesHashCodeAdapter(cv));
   }
 
-  private TransparencyClassSpec basicGetOrCreateSpec(String className, String applicator, boolean rememberSpec) {
+  private TransparencyClassSpec basicGetOrCreateSpec(final String className, final String applicator, final boolean rememberSpec) {
     synchronized (specLock) {
       TransparencyClassSpec spec = getSpec(className);
       if (spec == null) {
@@ -1423,7 +1453,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  public TransparencyClassSpec getOrCreateSpec(String className) {
+  public TransparencyClassSpec getOrCreateSpec(final String className) {
     return basicGetOrCreateSpec(className, null, true);
   }
 
@@ -1432,7 +1462,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return basicGetOrCreateSpec(className, applicator, true);
   }
 
-  private void addSpec(TransparencyClassSpec spec) {
+  private void addSpec(final TransparencyClassSpec spec) {
     synchronized (specLock) {
       Assert.eval(!classSpecs.containsKey(spec.getClassName()));
       Assert.assertNotNull(spec);
@@ -1440,13 +1470,13 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  public boolean isLogical(String className) {
+  public boolean isLogical(final String className) {
     TransparencyClassSpec spec = getSpec(className);
     return spec != null && spec.isLogical();
   }
 
   // TODO: Need to optimize this by identifying the module to query instead of querying all the modules.
-  public boolean isPortableModuleClass(Class clazz) {
+  public boolean isPortableModuleClass(final Class clazz) {
     if (moduleSpecs != null) {
       for (ModuleSpec moduleSpec : moduleSpecs) {
         if (moduleSpec.isPortableClass(clazz)) { return true; }
@@ -1455,7 +1485,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return false;
   }
 
-  public Class getChangeApplicator(Class clazz) {
+  public Class getChangeApplicator(final Class clazz) {
     ChangeApplicatorSpec applicatorSpec = null;
     TransparencyClassSpec spec = getSpec(clazz.getName());
     if (spec != null) {
@@ -1475,7 +1505,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   // TODO: Need to optimize this by identifying the module to query instead of querying all the modules.
-  public boolean isUseNonDefaultConstructor(Class clazz) {
+  public boolean isUseNonDefaultConstructor(final Class clazz) {
     String className = clazz.getName();
     if (literalValues.isLiteral(className)) { return true; }
     TransparencyClassSpec spec = getSpec(className);
@@ -1488,7 +1518,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return false;
   }
 
-  public void setModuleSpecs(ModuleSpec[] moduleSpecs) {
+  public void setModuleSpecs(final ModuleSpec[] moduleSpecs) {
     this.moduleSpecs = moduleSpecs;
   }
 
@@ -1497,11 +1527,11 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
    * if (spec == null) return null; return spec.getChangeApplicatorClassName(); }
    */
 
-  public boolean hasSpec(String className) {
+  public boolean hasSpec(final String className) {
     return getSpec(className) != null;
   }
 
-  private boolean hasSpec(ClassInfo classInfo) {
+  private boolean hasSpec(final ClassInfo classInfo) {
     return getSpec(classInfo.getName()) != null;
   }
 
@@ -1533,7 +1563,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  private void scanForMissingClassesDeclaredInConfig(BootJar bootJar) throws BootJarException, IOException {
+  private void scanForMissingClassesDeclaredInConfig(final BootJar bootJar) throws BootJarException, IOException {
     int missingCount = 0;
     int preInstrumentedCount = 0;
     Set preinstClasses = bootJar.getAllPreInstrumentedClasses();
@@ -1569,7 +1599,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
    * This method will: - check the contents of the boot-jar against tc-config.xml - check that all that all the
    * necessary referenced classes are also present in the boot jar
    */
-  public void verifyBootJarContents(File bjf) throws UnverifiedBootJarException {
+  public void verifyBootJarContents(final File bjf) throws UnverifiedBootJarException {
     logger.debug("Verifying boot jar contents...");
     try {
       BootJar bootJar = (bjf == null) ? BootJar.getDefaultBootJarForReading() : BootJar.getBootJarForReading(bjf);
@@ -1585,7 +1615,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  private TransparencyClassSpec[] getAllSpecs(boolean includeBootJarSpecs) {
+  private TransparencyClassSpec[] getAllSpecs(final boolean includeBootJarSpecs) {
     List rv = null;
     synchronized (specLock) {
       rv = new ArrayList(classSpecs.values());
@@ -1603,11 +1633,11 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return getAllSpecs(false);
   }
 
-  public void addDistributedMethodCall(DistributedMethodSpec dms) {
+  public void addDistributedMethodCall(final DistributedMethodSpec dms) {
     this.distributedMethods.add(dms);
   }
 
-  public DistributedMethodSpec getDmiSpec(MemberInfo memberInfo) {
+  public DistributedMethodSpec getDmiSpec(final MemberInfo memberInfo) {
     if (Modifier.isStatic(memberInfo.getModifiers()) || "<init>".equals(memberInfo.getName())
         || "<clinit>".equals(memberInfo.getName())) { return null; }
     for (Iterator i = distributedMethods.iterator(); i.hasNext();) {
@@ -1617,7 +1647,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return null;
   }
 
-  public void addTransient(String className, String fieldName) {
+  public void addTransient(final String className, final String fieldName) {
     if ((className == null) || (fieldName == null)) {
       //
       throw new IllegalArgumentException("class " + className + ", field = " + fieldName);
@@ -1630,11 +1660,11 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return "<StandardDSOClientConfigHelperImpl: " + configSetupManager + ">";
   }
 
-  public void writeTo(DSOApplicationConfigBuilder appConfigBuilder) {
+  public void writeTo(final DSOApplicationConfigBuilder appConfigBuilder) {
     throw new UnsupportedOperationException();
   }
 
-  public void addAspectModule(String classNamePrefix, String moduleName) {
+  public void addAspectModule(final String classNamePrefix, final String moduleName) {
     synchronized (aspectModules) {
       List modules = (List) this.aspectModules.get(classNamePrefix);
       if (modules == null) {
@@ -1649,7 +1679,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return this.aspectModules;
   }
 
-  public void addDSOSpringConfig(DSOSpringConfigHelper config) {
+  public void addDSOSpringConfig(final DSOSpringConfigHelper config) {
     this.springConfigs.add(config);
 
     synchronized (aspectModules) {
@@ -1663,41 +1693,41 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return this.springConfigs;
   }
 
-  public String getLogicalExtendingClassName(String className) {
+  public String getLogicalExtendingClassName(final String className) {
     TransparencyClassSpec spec = getSpec(className);
     if (spec == null || !spec.isLogical()) { return null; }
     return spec.getLogicalExtendingClassName();
   }
 
-  public void addApplicationName(String name) {
+  public void addApplicationName(final String name) {
     applicationNames.add(name);
   }
 
-  public void addSynchronousWriteApplication(String name) {
+  public void addSynchronousWriteApplication(final String name) {
     this.synchronousWriteApplications.add(name);
   }
 
-  public void addSessionLockedApplication(String name) {
+  public void addSessionLockedApplication(final String name) {
     this.sessionLockedApplications.add(name);
   }
 
-  public void addUserDefinedBootSpec(String className, TransparencyClassSpec spec) {
+  public void addUserDefinedBootSpec(final String className, final TransparencyClassSpec spec) {
     synchronized (specLock) {
       userDefinedBootSpecs.put(className, spec);
     }
   }
 
-  public void addRepository(String location) {
+  public void addRepository(final String location) {
     modulesContext.modules.addRepository(location);
   }
 
-  public void addModule(String artifactId, String version) {
+  public void addModule(final String artifactId, final String version) {
     Module newModule = modulesContext.modules.addNewModule();
     newModule.setName(artifactId);
     newModule.setVersion(version);
   }
 
-  public void addModule(String groupId, String artifactId, String version) {
+  public void addModule(final String groupId, final String artifactId, final String version) {
     Module newModule = modulesContext.modules.addNewModule();
     newModule.setGroupId(groupId);
     newModule.setName(artifactId);
@@ -1721,7 +1751,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       this.alwaysInitializedModules = false;
     }
 
-    void setModules(Modules modules) {
+    void setModules(final Modules modules) {
       this.modules = modules;
     }
 
@@ -1740,7 +1770,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  public int getSessionLockType(String appName) {
+  public int getSessionLockType(final String appName) {
     for (Iterator iter = synchronousWriteApplications.iterator(); iter.hasNext();) {
       String webApp = (String) iter.next();
       if (webApp.equals(appName)) { return LockLevel.SYNCHRONOUS_WRITE; }
@@ -1748,7 +1778,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return LockLevel.WRITE;
   }
 
-  public boolean isApplicationSessionLocked(String appName) {
+  public boolean isApplicationSessionLocked(final String appName) {
     for (Iterator it = sessionLockedApplications.iterator(); it.hasNext();) {
       String name = (String) it.next();
       if (matchesWildCard(name, appName)) return true;
@@ -1756,7 +1786,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return false;
   }
 
-  public static InputStream getL1PropertiesFromL2Stream(ConnectionInfo[] connectInfo) throws Exception {
+  public static InputStream getL1PropertiesFromL2Stream(final ConnectionInfo[] connectInfo) throws Exception {
     URLConnection connection = null;
     InputStream l1PropFromL2Stream = null;
     URL theURL = null;
@@ -1850,7 +1880,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return l1ReconnectConfig;
   }
 
-  public boolean useResolveLockWhenClearing(Class clazz) {
+  public boolean useResolveLockWhenClearing(final Class clazz) {
     // If this condition ever needs to be true for any other classes besides ConcurrentHashMap, this setting should be
     // move into the TransparencyClassSpec (as opposed to growing the list of classes here)
     return !clazz.getName().equals("java.util.concurrent.ConcurrentHashMap");
