@@ -61,6 +61,7 @@ class BuildEnvironment < Environment
     when /trunk/ then "trunk"
     when /branches\/private\/([^\/]+)/ then $1
     when /branches\/([^\/]+)/ then $1
+    when /patches\/([^\/]+)/ then $1
     when /tags\/([^\/]+)/ then $1
     else @config_source["branch"]
     end                    
