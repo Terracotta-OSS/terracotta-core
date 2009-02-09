@@ -162,6 +162,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
 
     Dir.entries(@basedir.to_s).each do |project|
       next unless File.directory?(project)
+      next if project =~ /buildconfig/
       Dir.glob("#{project}/ivy*").each do |ivyfile|
         puts "Resolving Ivy file: #{ivyfile}"
         ant.ivy_resolve(:file => ivyfile)
