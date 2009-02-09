@@ -47,6 +47,9 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     os_root_dir = FilePath.new(@basedir.to_s, "..", "..").canonicalize.to_s
     ee_root_dir =  os_root_dir =~ /community/ ? FilePath.new(os_root_dir.to_s, "..").canonicalize.to_s : nil
     @build_environment = BuildEnvironment.new(platform, config_source, os_root_dir, ee_root_dir)
+    if @build_environment.is_ee_branch?
+      @ee_basedir = File.join(ee_root_dir, "code", "base")
+    end
     @static_resources = StaticResources.new(basedir)
     @archive_tag = ArchiveTag.new(@build_environment)
 
@@ -151,24 +154,38 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     depends :init
     ivy_settings_path = File.join(@basedir.to_s, "buildconfig/ivysettings.xml")
     
-    ant.property(:name => "ivy.resolver.default.check.modified", :value => "false")
-    ant.taskdef(:name => 'ivy_configure',
+    @ant.property(:name => "ivy.resolver.default.check.modified", :value => "false")
+    @ant.taskdef(:name => 'ivy_configure',
       :classname => "org.apache.ivy.ant.IvyConfigure")
-    ant.taskdef(:name => 'ivy_resolve',
+    @ant.taskdef(:name => 'ivy_resolve',
       :classname => "org.apache.ivy.ant.IvyResolve")
-    ant.taskdef(:name => 'ivy_retrieve',
+    @ant.taskdef(:name => 'ivy_retrieve',
       :classname => "org.apache.ivy.ant.IvyRetrieve")
-    ant.ivy_configure( :file => ivy_settings_path )
+    @ant.ivy_configure( :file => ivy_settings_path )
 
-    Dir.entries(@basedir.to_s).each do |project|
-      next unless File.directory?(project)
-      next if project =~ /buildconfig/
-      Dir.glob("#{project}/ivy*").each do |ivyfile|
-        puts "Resolving Ivy file: #{ivyfile}"
-        ant.ivy_resolve(:file => ivyfile)
-        ant.ivy_retrieve(:pattern => "#{@basedir.to_s}/dependencies/lib/[artifact]-[revision].[ext]")
+    bases = [@basedir.to_s]
+    if @build_environment.is_ee_branch?
+      bases << @ee_basedir
+    end
+
+    dependencies_pattern = "#{@static_resources.lib_dependencies_directory.to_s}/[artifact]-[revision].[ext]"
+    
+    bases.each do |base|
+      loud_message("resolving base #{base}")
+      Dir.entries(base).each do |project|
+        project_path = File.join(base, project)
+
+        next unless File.directory?(project_path)
+        next if project =~ /buildconfig/
+        
+        Dir.glob("#{project_path}/ivy*.xml").each do |ivyfile|
+          puts "Resolving Ivy file: #{ivyfile}"
+          @ant.ivy_resolve(:file => ivyfile)
+          @ant.ivy_retrieve(:pattern => dependencies_pattern)
+        end
       end
     end
+    
   end
 
   # Show which modules have been defined. Useful for debugging the buildsystem.

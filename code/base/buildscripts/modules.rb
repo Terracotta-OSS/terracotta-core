@@ -93,8 +93,7 @@ class BuildSubtree
     @source_exists = FileTest.directory?(source_root.to_s)
     @resources_exists = FileTest.directory?(resource_root.to_s)
 
-    parent_dir = FilePath.new(@build_module.root, '..').canonicalize
-    @static_resources = StaticResources.new(parent_dir)
+    @static_resources = Registry[:static_resources]
   end
 
   def to_s
