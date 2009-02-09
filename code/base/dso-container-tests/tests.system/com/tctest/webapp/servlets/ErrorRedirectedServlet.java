@@ -12,10 +12,8 @@ import javax.servlet.http.HttpServletResponse;
 
 public class ErrorRedirectedServlet extends HttpServlet {
 
-  public static final String REDIRECTED = "redirected";
-
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-    resp.sendRedirect(REDIRECTED);
+    resp.sendRedirect("anything");
   }
 }

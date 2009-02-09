@@ -10,7 +10,6 @@ import com.tc.test.server.appserver.deployment.AbstractOneServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.util.TcConfigBuilder;
 import com.tctest.webapp.servlets.ErrorRedirectedServlet;
-import com.tctest.webapp.servlets.Redirected;
 
 import java.util.Date;
 
@@ -38,8 +37,7 @@ public class ErrorPageRedirectedTest extends AbstractOneServerDeploymentTest {
     wc.setExceptionsThrownOnErrorStatus(false);
 
     WebResponse response = wc.getResponse(url);
-    System.out.println("GOT RESPONSE: " + response.getText());
-    assertEquals(ErrorRedirectedServlet.REDIRECTED, response.getText().trim());
+    assertEquals(HttpServletResponse.SC_MOVED_TEMPORARILY, response.getResponseCode());
   }
 
   private static class ErrorPageRedirectedTestSetup extends OneServerTestSetup {
@@ -51,7 +49,6 @@ public class ErrorPageRedirectedTest extends AbstractOneServerDeploymentTest {
     @Override
     protected void configureWar(DeploymentBuilder builder) {
       builder.addServlet("errorServlet", "/errorServlet/*", ErrorRedirectedServlet.class, null, false);
-      builder.addServlet("redirected", "/redirected", Redirected.class, null, false);
       builder.addErrorPage(HttpServletResponse.SC_NOT_FOUND, "/errorServlet/");
     }
 
