@@ -70,10 +70,9 @@ public class TCLogging {
   private static final String       CONSOLE_PATTERN_DEVELOPMENT        = "%d [%t] %p %c - %m%n";
   // This next pattern is used when we're *only* logging to the console.
   private static final String       CONSOLE_LOGGING_ONLY_PATTERN       = "[TC] %d %p - %m%n";
-  private static final String       FILE_AND_JMX_PATTERN               = "%d [%t] %p %c - %m%n";
+  public static  final String       FILE_AND_JMX_PATTERN               = "%d [%t] %p %c - %m%n";
 
   private static TCLogger           console;
-  private static JMXAppender        jmxAppender;
   private static Appender           consoleAppender;
   private static DelegatingAppender delegateFileAppender;
   private static DelegatingAppender delegateBufferingAppender;
@@ -84,10 +83,6 @@ public class TCLogging {
   private static File               currentLoggingDirectory;
   private static FileLock           currentLoggingDirectoryFileLock    = null;
   private static boolean            lockingDisabled                    = false;
-
-  public static JMXAppender getJMXAppender() {
-    return jmxAppender;
-  }
 
   public static TCLogger getLogger(Class clazz) {
     if (clazz == null) { throw new IllegalArgumentException("Class cannot be null"); }
@@ -420,12 +415,6 @@ public class TCLogging {
       addToAllLoggers(delegateBufferingAppender);
       buffering = true;
 
-      // all logging goes to JMX based appender
-      jmxAppender = new JMXAppender();
-      jmxAppender.setLayout(new PatternLayout(FILE_AND_JMX_PATTERN));
-      jmxAppender.setName("JMX appender");
-      addToAllLoggers(jmxAppender);
-
       if (!isDev) {
         CustomerLogging.getGenericCustomerLogger().info("New logging session started.");
       }
@@ -450,7 +439,7 @@ public class TCLogging {
     return loggers.toArray(new Logger[] {});
   }
 
-  private static void addToAllLoggers(Appender appender) {
+  public static void addToAllLoggers(Appender appender) {
     for (int i = 0; i < allLoggers.length; ++i)
       allLoggers[i].addAppender(appender);
   }

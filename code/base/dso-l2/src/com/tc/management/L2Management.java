@@ -14,6 +14,7 @@ import com.tc.async.api.Sink;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.CustomerLogging;
+import com.tc.logging.JMXLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.beans.L2Dumper;
@@ -266,7 +267,7 @@ public class L2Management extends TerracottaManagement {
   private void registerMBeans() throws MBeanRegistrationException, NotCompliantMBeanException,
       InstanceAlreadyExistsException {
     mBeanServer.registerMBean(tcServerInfo, L2MBeanNames.TC_SERVER_INFO);
-    mBeanServer.registerMBean(TCLogging.getJMXAppender().getMBean(), L2MBeanNames.LOGGER);
+    mBeanServer.registerMBean(JMXLogging.getJMXAppender().getMBean(), L2MBeanNames.LOGGER);
     mBeanServer.registerMBean(objectManagementBean, L2MBeanNames.OBJECT_MANAGEMENT);
     mBeanServer.registerMBean(serverDbBackupBean, L2MBeanNames.SERVER_DB_BACKUP);
     mBeanServer.registerMBean(lockStatistics, L2MBeanNames.LOCK_STATISTICS);
