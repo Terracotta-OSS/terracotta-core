@@ -192,6 +192,7 @@ public interface TCPropertiesConsts {
   public static final String   L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT           = "l2.nha.tcgroupcomm.l2proxytoport";
   public static final String   L2_NHA_SEND_TIMEOUT_MILLS                              = "l2.nha.send.timeout.millis";
   public static final String   L2_NHA_DIRTYDB_AUTODELETE                              = "l2.nha.dirtydb.autoDelete";
+  public static final String   L2_NHA_DIRTYDB_ROLLING                                 = "l2.nha.dirtydb.rolling";
   public static final String   L2_NHA_AUTORESTART                                     = "l2.nha.autoRestart";
 
   /*********************************************************************************************************************
@@ -538,7 +539,7 @@ public interface TCPropertiesConsts {
    * </code>
    ********************************************************************************************************************/
   public static final String   STATS_PRINTER_INTERVAL                                 = "stats.printer.intervalInMillis";
-  
+
   /*********************************************************************************************************************
    * <code>
    * Section :  EnterpriseLicenseResovler
