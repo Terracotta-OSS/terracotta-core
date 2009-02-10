@@ -62,7 +62,7 @@ public final class EnterpriseLicense implements License {
   }
 
   public String toString() {
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     sb.append(LicenseConstants.LICENSE_TYPE).append(" = ").append(licenseType).append(NEWLINE);
     sb.append(LicenseConstants.LICENSE_NUMBER).append(" = ").append(licenseNumber).append(NEWLINE);
     sb.append(LicenseConstants.LICENSEE).append(" = ").append(licensee).append(NEWLINE);
@@ -80,10 +80,19 @@ public final class EnterpriseLicense implements License {
     return df.format(date);
   }
 
-  public byte[] getCanonicalData() {
-    String data = toString().replaceAll(NEWLINE, "");
+  public final byte[] getCanonicalData() {
+    StringBuilder sb = new StringBuilder();
+    sb.append(LicenseConstants.LICENSE_TYPE).append(licenseType);
+    sb.append(LicenseConstants.LICENSE_NUMBER).append(licenseNumber);
+    sb.append(LicenseConstants.LICENSEE).append(licensee);
+    sb.append(LicenseConstants.PRODUCT).append(product);
+    sb.append(LicenseConstants.MAX_CLIENTS).append(maxClients);
+    sb.append(LicenseConstants.CAPABILITIES).append(capabilities.toString());
+    if (expirationDate != null) {
+      sb.append(LicenseConstants.EXPIRATION_DATE).append(dateToString(expirationDate));
+    }
     try {
-      return data.getBytes(LicenseConstants.CANONICAL_ENCODING);
+      return sb.toString().getBytes(LicenseConstants.CANONICAL_ENCODING);
     } catch (UnsupportedEncodingException e) {
       throw new RuntimeException(e);
     }
