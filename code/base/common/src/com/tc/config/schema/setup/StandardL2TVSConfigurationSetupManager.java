@@ -28,11 +28,8 @@ import com.tc.config.schema.defaults.DefaultValueProvider;
 import com.tc.config.schema.repository.ChildBeanFetcher;
 import com.tc.config.schema.repository.ChildBeanRepository;
 import com.tc.config.schema.utils.XmlObjectComparator;
-import com.tc.license.AbstractLicenseResolverFactory;
-import com.tc.license.Capabilities;
 import com.tc.license.Capability;
-import com.tc.license.util.LicenseConstants;
-import com.tc.logging.CustomerLogging;
+import com.tc.license.LicenseCheck;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.config.schema.NewL2DSOConfig;
@@ -69,9 +66,7 @@ import java.util.Set;
 public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfigurationSetupManager implements
     L2TVSConfigurationSetupManager {
 
-  private static final TCLogger          logger        = TCLogging
-                                                           .getLogger(StandardL2TVSConfigurationSetupManager.class);
-  private static final TCLogger          consoleLogger = CustomerLogging.getConsoleLogger();
+  private static final TCLogger          logger = TCLogging.getLogger(StandardL2TVSConfigurationSetupManager.class);
 
   private final ConfigurationCreator     configurationCreator;
   private NewSystemConfig                systemConfig;
@@ -464,19 +459,9 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     }
   }
 
-  public void validateLicenseCapabilities() throws ConfigurationSetupException {
+  public void validateLicenseCapabilities() {
     if (activeServerGroupsConfig.getActiveServerGroupCount() > 1) {
-      Capabilities capabilities = AbstractLicenseResolverFactory.getCapabilities();
-      if (!capabilities.isSupported(Capability.SERVER_STRIPING)) {
-        //
-        throw new ConfigurationSetupException("Server striping is an Enterprise only feature.");
-      }
-
-      if (!capabilities.isLicensed(Capability.SERVER_STRIPING)) {
-        String message = AbstractLicenseResolverFactory.getLicenseWarning(LicenseConstants.SERVER_STRIPING,
-                                                                          "active server group count is more than 1");
-        consoleLogger.warn(message);
-      }
+      LicenseCheck.checkCapability(Capability.SERVER_STRIPING);
     }
   }
 

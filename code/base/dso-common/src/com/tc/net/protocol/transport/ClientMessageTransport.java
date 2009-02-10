@@ -83,7 +83,7 @@ public class ClientMessageTransport extends MessageTransportBase {
           clearConnection();
           this.addTransportListeners(tl);
           status.reset();
-          throw new MaxConnectionsExceededException("Your licence only allows maximum " + result.maxConnections()
+          throw new MaxConnectionsExceededException("Your product key only allows maximum " + result.maxConnections()
                                                     + " clients to connect.");
         }
         sendAck();

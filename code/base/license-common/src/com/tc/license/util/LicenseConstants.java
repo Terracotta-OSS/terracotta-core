@@ -38,6 +38,6 @@ public class LicenseConstants {
   public static final String INTEGER                 = "Integer";
   public static final String DATE                    = "Date";
   public static final String DATE_FORMAT             = "yyyy-MM-dd";
-  public static final String LICENSE_KEY_FILENAME    = "product.key";
+  public static final String PRODUCT_KEY_FILENAME    = "product.key";
 
 }

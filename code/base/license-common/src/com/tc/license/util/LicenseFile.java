@@ -44,8 +44,7 @@ public class LicenseFile implements LicenseStore {
     List properties = lines.subList(headerIndex + 1, signatureIndex);
     String signatureString = (String) lines.get(signatureIndex + 1);
     Map<String, String> fields = extractLicenseFields(properties);
-    License license;
-    license = getLicenseFromFields(fields);
+    License license = getLicenseFromFields(fields);
     license.setSignature(signatureString);
     return license;
   }

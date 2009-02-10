@@ -17,6 +17,7 @@ import com.tc.cluster.DsoClusterInternal;
 import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.handler.CallbackDumpAdapter;
 import com.tc.lang.TCThreadGroup;
+import com.tc.license.AbstractLicenseResolverFactory;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.ClientIDLoggerProvider;
 import com.tc.logging.CustomerLogging;
@@ -208,9 +209,11 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   private CounterManager                           counterManager;
   private ThreadIDManager                          threadIDManager;
 
-  public DistributedObjectClient(final DSOClientConfigHelper config, final TCThreadGroup threadGroup, final ClassProvider classProvider,
+  public DistributedObjectClient(final DSOClientConfigHelper config, final TCThreadGroup threadGroup,
+                                 final ClassProvider classProvider,
                                  final PreparedComponentsFromL2Connection connectionComponents, final Manager manager,
-                                 final Cluster cluster, final DsoClusterInternal dsoCluster, final RuntimeLogger runtimeLogger) {
+                                 final Cluster cluster, final DsoClusterInternal dsoCluster,
+                                 final RuntimeLogger runtimeLogger) {
     super(threadGroup, BoundedLinkedQueue.class.getName());
     Assert.assertNotNull(config);
     this.config = config;
@@ -482,11 +485,11 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     Stage pauseStage = stageManager.createStage(ClientConfigurationContext.CLIENT_COORDINATION_STAGE,
                                                 new ClientCoordinationHandler(cluster, dsoCluster), 1, maxSize);
 
-//    Stage clusterEventsStage = stageManager.createStage(ClientConfigurationContext.CLUSTER_EVENTS_STAGE,
-                                                //new ClusterEventsHandler(dsoCluster), 1, maxSize);
+    // Stage clusterEventsStage = stageManager.createStage(ClientConfigurationContext.CLUSTER_EVENTS_STAGE,
+    // new ClusterEventsHandler(dsoCluster), 1, maxSize);
 
     Stage clusterMetaDataStage = stageManager.createStage(ClientConfigurationContext.CLUSTER_METADATA_STAGE,
-                                                        new ClusterMetaDataHandler(), 1, maxSize);
+                                                          new ClusterMetaDataHandler(), 1, maxSize);
 
     // Lock statistics
     Stage lockStatisticsStage = stageManager.createStage(ClientConfigurationContext.LOCK_STATISTICS_RESPONSE_STAGE,
@@ -513,7 +516,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     channel.addListener(clientHandshakeManager);
 
     ClientConfigurationContext cc = new ClientConfigurationContext(stageManager, lockManager, remoteObjectManager,
-                                                                   txManager, clientHandshakeManager, clusterMetaDataManager);
+                                                                   txManager, clientHandshakeManager,
+                                                                   clusterMetaDataManager);
     stageManager.startAll(cc, Collections.EMPTY_LIST);
 
     channel.addClassMapping(TCMessageType.BATCH_TRANSACTION_ACK_MESSAGE, BatchTransactionAcknowledgeMessageImpl.class);
@@ -544,7 +548,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     channel.addClassMapping(TCMessageType.COMPLETED_TRANSACTION_LOWWATERMARK_MESSAGE,
                             CompletedTransactionLowWaterMarkMessage.class);
     channel.addClassMapping(TCMessageType.NODES_WITH_OBJECTS_MESSAGE, NodesWithObjectsMessageImpl.class);
-    channel.addClassMapping(TCMessageType.NODES_WITH_OBJECTS_RESPONSE_MESSAGE, NodesWithObjectsResponseMessageImpl.class);
+    channel.addClassMapping(TCMessageType.NODES_WITH_OBJECTS_RESPONSE_MESSAGE,
+                            NodesWithObjectsResponseMessageImpl.class);
 
     DSO_LOGGER.debug("Added class mappings.");
 
@@ -566,8 +571,10 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     channel.routeMessageType(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, jmxRemoteTunnelStage.getSink(),
                              hydrateSink);
     channel.routeMessageType(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, pauseStage.getSink(), hydrateSink);
-    channel.routeMessageType(TCMessageType.NODES_WITH_OBJECTS_RESPONSE_MESSAGE, clusterMetaDataStage.getSink(), hydrateSink);
-//    channel.routeMessageType(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, clusterEventsStage.getSink(), hydrateSink);
+    channel.routeMessageType(TCMessageType.NODES_WITH_OBJECTS_RESPONSE_MESSAGE, clusterMetaDataStage.getSink(),
+                             hydrateSink);
+    // channel.routeMessageType(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, clusterEventsStage.getSink(),
+    // hydrateSink);
 
     final int maxConnectRetries = l1Properties.getInt("max.connect.retries");
     int i = 0;
@@ -584,8 +591,9 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         CONSOLE_LOGGER.warn("Connection refused from server: " + e);
         ThreadUtil.reallySleep(5000);
       } catch (MaxConnectionsExceededException e) {
-        CONSOLE_LOGGER.fatal(e.getMessage());
-        CONSOLE_LOGGER.fatal("This client is now shutdown.");
+        int maxClients = AbstractLicenseResolverFactory.getLicense().maxClients();
+        CONSOLE_LOGGER.fatal("Your product key only allows maximum " + maxClients
+                             + " clients to connect. This client is now shutdown.");
         System.exit(1);
       } catch (IOException ioe) {
         CONSOLE_LOGGER.warn("IOException connecting to server: " + serverHost + ":" + serverPort + ". "
@@ -619,7 +627,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   /*
    * Overwrite this routine to do active-active, TODO:: These should go into some interface
    */
-  protected ClientGlobalTransactionManager createClientGlobalTransactionManager(final RemoteTransactionManager remoteTxnMgr) {
+  protected ClientGlobalTransactionManager createClientGlobalTransactionManager(
+                                                                                final RemoteTransactionManager remoteTxnMgr) {
     return new ClientGlobalTransactionManagerImpl(remoteTxnMgr);
   }
 
@@ -633,9 +642,10 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   /*
    * Overwrite this routine to do active-active, TODO:: These should go into some interface
    */
-  protected RemoteObjectManager createRemoteObjectManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
-                                                          final ObjectRequestMonitor objectRequestMonitor, final int faultCount,
-                                                          final SessionManager sessionManager) {
+  protected RemoteObjectManager createRemoteObjectManager(final TCLogger logger,
+                                                          final DSOClientMessageChannel dsoChannel,
+                                                          final ObjectRequestMonitor objectRequestMonitor,
+                                                          final int faultCount, final SessionManager sessionManager) {
     GroupID defaultGroups[] = dsoChannel.getGroupIDs();
     assert defaultGroups != null && defaultGroups.length == 1;
     return new RemoteObjectManagerImpl(defaultGroups[0], logger, dsoChannel.getClientIDProvider(), dsoChannel
@@ -647,11 +657,15 @@ public class DistributedObjectClient extends SEDA implements TCClient {
    * Overwrite this routine to do active-active, TODO:: These should go into some interface
    */
   protected ClientObjectManagerImpl createObjectManager(final RemoteObjectManager remoteObjectManager,
-                                                        final DSOClientConfigHelper dsoConfig, final ObjectIDProvider idProvider,
+                                                        final DSOClientConfigHelper dsoConfig,
+                                                        final ObjectIDProvider idProvider,
                                                         final ClockEvictionPolicy clockEvictionPolicy,
-                                                        final RuntimeLogger rtLogger, final ClientIDProvider clientIDProvider,
-                                                        final ClassProvider classProviderLocal, final TCClassFactory classFactory,
-                                                        final TCObjectFactory objectFactory, final Portability portability,
+                                                        final RuntimeLogger rtLogger,
+                                                        final ClientIDProvider clientIDProvider,
+                                                        final ClassProvider classProviderLocal,
+                                                        final TCClassFactory classFactory,
+                                                        final TCObjectFactory objectFactory,
+                                                        final Portability portability,
                                                         final DSOClientMessageChannel dsoChannel,
                                                         final ToggleableReferenceManager toggleRefMgr) {
     return new ClientObjectManagerImpl(remoteObjectManager, dsoConfig, idProvider, clockEvictionPolicy, rtLogger,
@@ -664,7 +678,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
    */
   protected ClientLockManager createLockManager(final ClientIDLogger clientIDLogger,
                                                 final RemoteLockManagerImpl remoteLockManagerImpl,
-                                                final SessionManager sessionManager, final ClientLockStatManager lockStatManager,
+                                                final SessionManager sessionManager,
+                                                final ClientLockStatManager lockStatManager,
                                                 final ClientLockManagerConfigImpl clientLockManagerConfigImpl) {
     return new StripedClientLockManagerImpl(clientIDLogger, remoteLockManagerImpl, sessionManager, lockStatManager,
                                             clientLockManagerConfigImpl);
@@ -673,7 +688,9 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   /*
    * Overwrite this routine to do active-active
    */
-  protected RemoteTransactionManager createRemoteTransactionManager(final ClientIDProvider cidProvider, final DNAEncoding encoding,
+  protected RemoteTransactionManager createRemoteTransactionManager(
+                                                                    final ClientIDProvider cidProvider,
+                                                                    final DNAEncoding encoding,
                                                                     final FoldingConfig foldingConfig,
                                                                     final TransactionIDGenerator transactionIDGenerator,
                                                                     final SessionManager sessionManager,
