@@ -76,8 +76,6 @@ public class DsoClusterImpl implements DsoClusterInternal {
   }
 
   public Set<DsoNode> getNodesWithObject(final Object object) throws UnclusteredObjectException {
-    System.out.println(">>>>>> " + currentNode + " - getNodesWithObject("+object+")");
-
     Assert.assertNotNull(clusterMetaDataManager);
 
     if (null == object) {

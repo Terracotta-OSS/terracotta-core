@@ -91,6 +91,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
     if (GroupID.ALL_GROUPS.equals(event.getChannel().getRemoteNodeID())) { throw new AssertionError(
                                                                                                     "Recd event for Group Channel : "
                                                                                                         + event); }
+    System.out.println(">>>>>> ClientHandshakeManagerImpl.notifyChannelEvent("+event+")");
     if (event.getType() == ChannelEventType.TRANSPORT_DISCONNECTED_EVENT) {
       cluster.thisNodeDisconnected();
       dsoCluster.fireOperationsDisabled();
@@ -106,6 +107,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
   public void disconnected(final NodeID remoteNode) {
     logger.info("Disconnected: Pausing from " + getState(remoteNode) + " RemoteNode : " + remoteNode
                 + " Disconnected : " + getDisconnectedCount());
+    System.out.println(">>>>>> ClientHandshakeManagerImpl.disconnected("+remoteNode+")");
     if (getState(remoteNode) == PAUSED) {
       logger.warn("Pause called while already PAUSED for " + remoteNode);
       // ClientMessageChannel moves to next SessionID, need to move to newSession here too.
@@ -121,6 +123,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
   }
 
   public void connected(final NodeID remoteNode) {
+    System.out.println(">>>>>> ClientHandshakeManagerImpl.connected("+remoteNode+")");
     logger.info("Connected: Unpausing from " + getState(remoteNode) + " RemoteNode : " + remoteNode
                 + " Disconnected : " + getDisconnectedCount());
     if (getState(remoteNode) != PAUSED) {
@@ -139,6 +142,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
 
   protected void acknowledgeHandshake(final NodeID remoteID, final boolean persistentServer, final String thisNodeId,
                                       final String[] clusterMembers, final String serverVersion) {
+    System.out.println(">>>>>> ClientHandshakeManagerImpl.acknowledgeHandshake("+remoteID+", "+thisNodeId+")");
     logger.info("Received Handshake ack for this node :" + remoteID);
     if (getState(remoteID) != STARTING) {
       logger.warn("Handshake acknowledged while not STARTING: " + getState(remoteID));

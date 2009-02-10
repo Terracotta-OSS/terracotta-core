@@ -12,7 +12,6 @@ import com.tc.cluster.DsoClusterListener;
 import com.tc.injection.annotations.InjectedDsoInstance;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -22,7 +21,6 @@ import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ClusterEventsTestApp extends AbstractTransparentApp implements DsoClusterListener {
 
@@ -32,8 +30,6 @@ public class ClusterEventsTestApp extends AbstractTransparentApp implements DsoC
 
   private final ApplicationConfig config;
 
-  private final AtomicInteger atomicInt = new AtomicInteger();
-
   @InjectedDsoInstance
   private DsoCluster              cluster;
 
@@ -41,14 +37,12 @@ public class ClusterEventsTestApp extends AbstractTransparentApp implements DsoC
                               final ListenerProvider listenerProvider) {
     super(appId, config, listenerProvider);
     this.config = config;
-    cluster.getNodesWithObject(atomicInt);
     cluster.addClusterListener(this);
   }
 
   public static void visitL1DSOConfig(final ConfigVisitor visitor, final DSOClientConfigHelper config) {
     String testClass = ClusterEventsTestApp.class.getName();
-    TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
-    spec.addRoot("atomicInt", "atomicInt");
+    config.getOrCreateSpec(testClass);
 
     String methodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(methodExpression);

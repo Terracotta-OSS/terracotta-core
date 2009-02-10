@@ -11,6 +11,7 @@ import com.tc.object.msg.NodesWithObjectsResponseMessage;
 import com.tc.objectserver.l1.api.ClientStateManager;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -29,7 +30,13 @@ public class ServerClusterMetaDataManagerImpl implements ServerClusterMetaDataMa
 
     Set<ObjectID> objectIDs = message.getObjectIDs();
     for (ObjectID objectID : objectIDs) {
-      response.put(objectID, clientStateManager.getConnectedClientIDs());
+      Set<NodeID> referencingNodeIDs = new HashSet<NodeID>();
+      for (NodeID nodeID : clientStateManager.getConnectedClientIDs()) {
+        if (clientStateManager.hasReference(nodeID, objectID)) {
+          referencingNodeIDs.add(nodeID);
+        }
+      }
+      response.put(objectID, referencingNodeIDs);
     }
     responseMessage.initialize(message.getThreadID(), response);
     responseMessage.send();
