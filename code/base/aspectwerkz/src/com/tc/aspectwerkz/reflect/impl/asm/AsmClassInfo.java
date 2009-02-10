@@ -708,8 +708,8 @@ public class AsmClassInfo implements ClassInfo {
         // might be more than one dimension
         if (componentName.indexOf('[') > 0) { return getClassInfo(componentName, loader); }
 
-        System.out.println("AW::WARNING - could not load class [" + componentName + "] as a resource in loader ["
-                           + loader + "]");
+//        System.out.println("AW::WARNING - could not load class [" + componentName + "] as a resource in loader ["
+//                           + loader + "]");
 
         NullClassInfo nullInfo = new NullClassInfo();
         nullInfo.setName(componentName.replace('/', '.'));
