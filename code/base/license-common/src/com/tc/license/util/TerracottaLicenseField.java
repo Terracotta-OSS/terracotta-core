@@ -55,7 +55,7 @@ public class TerracottaLicenseField implements LicenseField {
     if (LicenseConstants.STRING.equals(type)) {
       return convertToString(rawValue);
     } else if (LicenseConstants.INTEGER.equals(type)) {
-      return covertToInteger(rawValue);
+      return convertToInteger(rawValue);
     } else if (LicenseConstants.DATE.equals(type)) {
       return convertToDate(rawValue);
     } else {
@@ -64,23 +64,26 @@ public class TerracottaLicenseField implements LicenseField {
   }
 
   private String convertToString(String rawValue) throws LicenseException {
-    if (required && isBlank(rawValue)) {
-      //
-      throw new LicenseException("Field '" + name + "' is required");
+    if (isBlank(rawValue)) {
+      if (required) {
+        throw new LicenseException("Field '" + name + "' is required");
+      } else {
+        return null;
+      }
+    } else {
+      if (pattern != null && !Pattern.matches(pattern, rawValue)) {
+        //
+        throw new LicenseException("Field '" + name + "' doesn't match pattern '" + pattern + "'");
+      }
+      return rawValue;
     }
-
-    if (pattern != null && !Pattern.matches(pattern, rawValue)) {
-      //
-      throw new LicenseException("Field '" + name + "' doesn't match pattern '" + pattern + "'");
-    }
-    return rawValue;
   }
 
   private static boolean isBlank(String s) {
     return s == null || s.trim().length() == 0;
   }
 
-  private Integer covertToInteger(String rawValue) throws LicenseException {
+  private Integer convertToInteger(String rawValue) throws LicenseException {
     if (isBlank(rawValue)) {
       if (required) {
         throw new LicenseException("Field '" + name + "' is required");
@@ -113,8 +116,13 @@ public class TerracottaLicenseField implements LicenseField {
   }
 
   private Date convertToDate(String rawValue) throws LicenseException {
-    if (required && isBlank(rawValue)) throw new LicenseException("Field '" + name + "' is required");
-    if (!isBlank(rawValue)) {
+    if (isBlank(rawValue)) {
+      if (required) {
+        throw new LicenseException("Field '" + name + "' is required");
+      } else {
+        return null;
+      }
+    } else {
       DateFormat df = new SimpleDateFormat(LicenseConstants.DATE_FORMAT);
       df.setLenient(false);
       try {
@@ -123,8 +131,6 @@ public class TerracottaLicenseField implements LicenseField {
         throw new LicenseException("Can't parse field '" + name + "' with pattern '"
                                    + LicenseConstants.DATE_FORMAT.toUpperCase() + "'");
       }
-    } else {
-      return null;
     }
   }
 
