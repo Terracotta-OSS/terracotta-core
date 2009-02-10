@@ -1,10 +1,6 @@
 @echo off
 
-rem
-rem  All content copyright (c) 2003-2008 Terracotta, Inc.,
-rem  except as may otherwise be noted in a separate copyright notice.
-rem  All rights reserved.
-rem
+rem All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
 
 if not ""%1""=="""" goto haveArgs
 echo usage: dso-java [-options] class [args...]
