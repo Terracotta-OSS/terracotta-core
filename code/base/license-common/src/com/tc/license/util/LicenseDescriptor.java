@@ -16,21 +16,17 @@ import java.util.Map;
 import java.util.Set;
 
 public class LicenseDescriptor {
-  private static final String      DESCRIPTOR_RESOURCE = "/com/tc/license/license-descriptor.yml";
-  private final Map                descriptor;
-  private final Map                descriptionMap;
-  private static LicenseDescriptor INSTANCE;
+  private static final String DESCRIPTOR_RESOURCE = "license-descriptor.yml";
+  private final Map           descriptor;
+  private final Map           descriptionMap;
 
-  public static synchronized LicenseDescriptor getInstance() {
-    if (INSTANCE == null) {
-      INSTANCE = new LicenseDescriptor();
-    }
-    return INSTANCE;
+  public LicenseDescriptor() {
+    this(DESCRIPTOR_RESOURCE);
   }
 
-  private LicenseDescriptor() {
-    InputStream in = getClass().getResourceAsStream(DESCRIPTOR_RESOURCE);
-    if (in == null) throw new RuntimeException("Descriptor resource not found: " + DESCRIPTOR_RESOURCE);
+  public LicenseDescriptor(String descriptorResource) {
+    InputStream in = LicenseDescriptor.class.getResourceAsStream(descriptorResource);
+    if (in == null) throw new RuntimeException("Descriptor resource not found: " + descriptorResource);
     YamlReader reader = new YamlReader(new InputStreamReader(in));
     try {
       descriptor = (Map) reader.read();

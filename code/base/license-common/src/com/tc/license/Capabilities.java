@@ -10,14 +10,13 @@ public final class Capabilities {
   private final EnumSet<Capability> licensedCapabilities;
   private final EnumSet<Capability> supportedCapabilities;
 
-  public Capabilities(String licensedCapabilities, String supportedCapabilities) {
-    this.licensedCapabilities = Capability.toSet(licensedCapabilities);
-    this.supportedCapabilities = Capability.toSet(supportedCapabilities);
-  }
-
   public Capabilities(EnumSet<Capability> licensedCapabilities, EnumSet<Capability> supportedCapabilities) {
-    this.licensedCapabilities = licensedCapabilities;
-    this.supportedCapabilities = supportedCapabilities;
+    this.licensedCapabilities = licensedCapabilities.clone();
+    this.supportedCapabilities = supportedCapabilities.clone();
+    if (!this.supportedCapabilities.containsAll(this.licensedCapabilities)) {
+      //
+      throw new AssertionError("Licensed capabilities have to be a subset of supported capabilities");
+    }
   }
 
   public boolean isSupported(Capability capability) {

@@ -20,7 +20,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
 public class TerracottaSigner implements Signer {
-  private static final String LICENSE_PUBLIC_KEY_RESOURCE_NAME = "/com/tc/license/license-public-key.x509";
+  private static final String LICENSE_PUBLIC_KEY_RESOURCE_NAME = "license-public-key.x509";
   private File                privateKeyFile;
 
   public TerracottaSigner() {

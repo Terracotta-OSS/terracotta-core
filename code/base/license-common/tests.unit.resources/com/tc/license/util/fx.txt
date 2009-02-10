@@ -1,0 +1,11 @@
+--------------------- BEGIN TERRACOTTA LICENSE KEY ---------------------
+License type = Trial
+License number = 1
+Licensee = Terracotta Test
+Product = FX
+Max clients = 1
+Capabilities = roots, sessions, TOC, server striping
+
+---------------------------- BEGIN SIGNATURE ---------------------------
+MCwCFE6j6iQzkMq8fkpIqUjpbuMF7QqAAhQiw1eP5+YT1iGuz8vkcU6s/OnMGQ==
+---------------------- END TERRACOTTA LICENSE KEY ----------------------

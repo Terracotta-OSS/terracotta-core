@@ -8,8 +8,9 @@ import java.util.Map;
 import junit.framework.TestCase;
 
 public class LicenseDescriptorTest extends TestCase {
-  public void testSupportedCapabilities() {
-    LicenseDescriptor d = LicenseDescriptor.getInstance();
+  
+  public void testLicensedCapabilities() {
+    LicenseDescriptor d = new LicenseDescriptor();
     EnumSet<Capability> capabilities = d.getLicensedCapabilities(LicenseConstants.EX);
     assertEquals(2, capabilities.size());
     assertTrue(capabilities.contains(Capability.ROOTS));
@@ -33,7 +34,7 @@ public class LicenseDescriptorTest extends TestCase {
   }
 
   public void testFields() {
-    LicenseDescriptor d = LicenseDescriptor.getInstance();
+    LicenseDescriptor d = new LicenseDescriptor();
     Map description = d.getDescriptionMap();
     assertEquals(6, description.size());
     assertNotNull(description.get(LicenseConstants.LICENSE_TYPE));

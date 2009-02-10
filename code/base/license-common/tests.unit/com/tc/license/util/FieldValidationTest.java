@@ -7,7 +7,7 @@ import junit.framework.TestCase;
 public class FieldValidationTest extends TestCase {
 
   public void testRequiredFields() throws Exception {
-    LicenseDescriptor descriptor = LicenseDescriptor.getInstance();
+    LicenseDescriptor descriptor = new LicenseDescriptor();
     requiredfieldTestTemplate(descriptor, LicenseConstants.LICENSE_TYPE);
     requiredfieldTestTemplate(descriptor, LicenseConstants.LICENSE_NUMBER);
     requiredfieldTestTemplate(descriptor, LicenseConstants.LICENSEE);
@@ -16,7 +16,7 @@ public class FieldValidationTest extends TestCase {
   }
 
   public void testLicenseType() throws Exception {
-    LicenseDescriptor descriptor = LicenseDescriptor.getInstance();
+    LicenseDescriptor descriptor = new LicenseDescriptor();
 
     LicenseField field = descriptor.createField(LicenseConstants.LICENSE_TYPE);
     field.setRawValue(LicenseConstants.COMMERCIAL);
@@ -34,7 +34,7 @@ public class FieldValidationTest extends TestCase {
   }
 
   public void testExpirationField() throws Exception {
-    LicenseDescriptor descriptor = LicenseDescriptor.getInstance();
+    LicenseDescriptor descriptor = new LicenseDescriptor();
 
     LicenseField field = descriptor.createField(LicenseConstants.EXPIRATION_DATE);
     field.setRawValue(null);
@@ -59,7 +59,7 @@ public class FieldValidationTest extends TestCase {
   }
 
   public void testProduct() throws Exception {
-    LicenseDescriptor descriptor = LicenseDescriptor.getInstance();
+    LicenseDescriptor descriptor = new LicenseDescriptor();
 
     LicenseField field = descriptor.createField(LicenseConstants.PRODUCT);
     field.setRawValue(LicenseConstants.FX);
@@ -80,7 +80,7 @@ public class FieldValidationTest extends TestCase {
   }
 
   public void testMaxClients() throws Exception {
-    LicenseDescriptor descriptor = LicenseDescriptor.getInstance();
+    LicenseDescriptor descriptor = new LicenseDescriptor();
 
     LicenseField field = descriptor.createField(LicenseConstants.MAX_CLIENTS);
     field.setRawValue("1");
