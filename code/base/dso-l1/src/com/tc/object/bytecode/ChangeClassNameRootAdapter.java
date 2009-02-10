@@ -33,26 +33,13 @@ public class ChangeClassNameRootAdapter extends ChangeClassNameHierarchyAdapter 
   }
 
   private static String replaceClassNameInner(String classNameDots, String srcClassNameDots, String targetClassNameDots) {
-    if (classNameDots == null || classNameDots.length() == 0) { return classNameDots; }
+    if (classNameDots == null) { return classNameDots; }
 
     classNameDots = classNameDots.replace(DOT_DELIMITER, SLASH_DELIMITER);
     srcClassNameDots = srcClassNameDots.replace(DOT_DELIMITER, SLASH_DELIMITER);
     targetClassNameDots = targetClassNameDots.replace(DOT_DELIMITER, SLASH_DELIMITER);
 
-    int index = classNameDots.indexOf(srcClassNameDots);
-    if (index == -1) { return classNameDots; }
-
-    StringBuffer newClassName = new StringBuffer();
-    while (index != -1) {
-      if (index > 0) {
-        newClassName.append(classNameDots.substring(0, index));
-      }
-      newClassName.append(targetClassNameDots);
-      classNameDots = classNameDots.substring(index + srcClassNameDots.length());
-      index = classNameDots.indexOf(srcClassNameDots);
-    }
-    newClassName.append(classNameDots);
-    return newClassName.toString();
+    return classNameDots.replace(srcClassNameDots, targetClassNameDots);
   }
   
   private static String replaceInnerClassName(String classNameDots, String srcInnerClassName, String targetInnerClassName) {
@@ -99,13 +86,16 @@ public class ChangeClassNameRootAdapter extends ChangeClassNameHierarchyAdapter 
   }
 
   public void visitSource(String source, String debug) {
-    int lastIndex = srcClassNameSlashes.lastIndexOf(SLASH_DELIMITER);
-    String srcName = srcClassNameSlashes.substring(lastIndex + 1);
-    lastIndex = targetClassNameSlashes.lastIndexOf(SLASH_DELIMITER);
-    String targetName = targetClassNameSlashes.substring(lastIndex + 1);
+    if (source == null) {
+      super.visitSource(source, debug);
+    } else {
+      int lastIndex = srcClassNameSlashes.lastIndexOf(SLASH_DELIMITER);
+      String srcName = srcClassNameSlashes.substring(lastIndex + 1);
+      lastIndex = targetClassNameSlashes.lastIndexOf(SLASH_DELIMITER);
+      String targetName = targetClassNameSlashes.substring(lastIndex + 1);
 
-    source = replaceClassNameInner(source, srcName, targetName);
-    super.visitSource(source, debug);
+      super.visitSource(source.replace(srcName, targetName), debug);
+    }
   }
 
   public void visitInnerClass(String name, String outerName, String innerName, int access) {
