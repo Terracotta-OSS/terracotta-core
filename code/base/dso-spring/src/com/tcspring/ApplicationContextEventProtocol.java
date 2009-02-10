@@ -179,8 +179,10 @@ public class ApplicationContextEventProtocol {
       context = (AbstractApplicationContext) contexts.get(ctxId);
     }
 
-    logger.debug(ctxId + " Publishing event " + event + " to " + context + " " + Thread.currentThread());
-
+    if (logger.isDebugEnabled()) {
+      logger.debug(ctxId + " Publishing event " + event + " to " + context + " " + Thread.currentThread());
+    }
+    
     if (context != null) {
       publish(context, event);
     }
