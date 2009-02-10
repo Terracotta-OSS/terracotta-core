@@ -63,6 +63,7 @@ class SvnUpdate
     when /trunk/ then "trunk"
     when /branches\/private\/([^\/]+)/ then $1
     when /branches\/([^\/]+)/ then $1
+    when /patches\/([^\/]+)/ then $1
     when /tags\/([^\/]+)/ then $1
     else fail("Can't determine which branch I'm operating on")
     end
