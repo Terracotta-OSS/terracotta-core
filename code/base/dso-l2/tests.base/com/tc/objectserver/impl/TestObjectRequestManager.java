@@ -10,8 +10,11 @@ import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class TestObjectRequestManager implements ObjectRequestManager {
+
+  public LinkedBlockingQueue<ObjectRequestServerContext> requestedObjects = new LinkedBlockingQueue<ObjectRequestServerContext>();
 
   public void sendObjects(ClientID requestedNodeID, Collection objs, ObjectIDSet requestedObjectIDs,
                           ObjectIDSet missingObjectIDs, boolean isServerInitiated, int maxRequestDepth) {
@@ -19,6 +22,11 @@ public class TestObjectRequestManager implements ObjectRequestManager {
   }
 
   public void requestObjects(ObjectRequestServerContext requestContext) {
-    // not implemented
+    try {
+      this.requestedObjects.put(requestContext);
+    } catch (InterruptedException e) {
+      throw new AssertionError(e);
+    }
+
   }
 }
