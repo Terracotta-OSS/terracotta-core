@@ -19,11 +19,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -109,10 +109,10 @@ public class Main {
     if (moduleName == null) {
       return modules;
     } else {
-      for (int i = 0; i < modules.length; i++) {
-        if (modules[i].getName().equals(moduleName)) {
+      for (Module module : modules) {
+        if (module.getName().equals(moduleName)) {
           Module[] temp = new Module[1];
-          temp[0] = modules[i];
+          temp[0] = module;
           return temp;
         }
       }
@@ -127,8 +127,7 @@ public class Main {
     Properties jdtCorePrefs = readProps(new File(source, "org.eclipse.jdt.core.prefs"));
     Properties jdtUiPrefs = readProps(new File(source, "org.eclipse.jdt.ui.prefs"));
 
-    for (int i = 0; i < modules.length; i++) {
-      Module module = modules[i];
+    for (Module module : modules) {
       writeModuleSettings(base, module, jdtCorePrefs, jdtUiPrefs);
     }
   }
@@ -165,8 +164,8 @@ public class Main {
 
   private void writeJdkSpecific(Module module, File modSettings, Properties jdtCorePrefs) throws IOException {
     Properties props = (Properties) jdtCorePrefs.clone();
-    for (Iterator<String> i = jdkConvertKeys.iterator(); i.hasNext();) {
-      props.setProperty(i.next(), module.getJdk().getRaw());
+    for (String string : jdkConvertKeys) {
+      props.setProperty(string, module.getJdk().getRaw());
     }
     props.store(new FileOutputStream(new File(modSettings, "org.eclipse.jdt.core.prefs")), "");
   }
@@ -181,9 +180,7 @@ public class Main {
   }
 
   private void writeClasspathFiles(File base, Module[] modules) throws Exception {
-    for (int i = 0; i < modules.length; i++) {
-      Module module = modules[i];
-
+    for (Module module : modules) {
       File modDir = new File(base, module.getName());
       Util.ensureDir(modDir);
 
@@ -198,9 +195,7 @@ public class Main {
   }
 
   private void writeProjectFiles(File base, Module[] modules) throws Exception {
-    for (int i = 0; i < modules.length; i++) {
-      Module module = modules[i];
-
+    for (Module module : modules) {
       File modDir = new File(base, module.getName());
       Util.ensureDir(modDir);
 
@@ -212,8 +207,7 @@ public class Main {
   private String[] findModuleJars(File modDir) {
     TreeSet<String> rv = new TreeSet<String>();
     File[] listFiles = modDir.listFiles();
-    for (int i = 0; i < listFiles.length; i++) {
-      File file = listFiles[i];
+    for (File file : listFiles) {
       if (file.isDirectory() && libFolders.contains(file.getName())) {
         rv.addAll(getJarsFromDir(file));
       }
@@ -225,8 +219,7 @@ public class Main {
   private Collection<String> getJarsFromDir(File libDir) {
     List<String> rv = new ArrayList<String>();
     File[] listFiles = libDir.listFiles();
-    for (int i = 0; i < listFiles.length; i++) {
-      File file = listFiles[i];
+    for (File file : listFiles) {
       if (file.getName().endsWith(".jar")) {
         rv.add(libDir.getName() + "/" + file.getName());
       }
@@ -265,20 +258,18 @@ public class Main {
     if (isUiEclipse) {
       ps.println("\t<classpathentry kind=\"con\" path=\"org.eclipse.pde.core.requiredPlugins\"/>");
     } else {
-      for (int i = 0; i < jars.length; i++) {
-        String jar = jars[i];
+      for (String jar : jars) {
         ps.println("\t<classpathentry exported=\"true\" kind=\"lib\" path=\"/dependencies/lib/" + jar + "\"/>");
       }
     }
 
     // modules dependencies
-    for (Iterator<String> i = module.getDependencies().iterator(); i.hasNext();) {
-      ps.println("\t<classpathentry combineaccessrules=\"false\" kind=\"src\" path=\"/" + i.next() + "\"/>");
+    for (String string : module.getDependencies()) {
+      ps.println("\t<classpathentry combineaccessrules=\"false\" kind=\"src\" path=\"/" + string + "\"/>");
     }
 
     // extra module jars
-    for (int i = 0; i < moduleJars.length; i++) {
-      String jar = moduleJars[i];
+    for (String jar : moduleJars) {
       ps.println("\t<classpathentry exported=\"true\" kind=\"lib\" path=\"" + jar + "\"/>");
 
     }
@@ -352,41 +343,39 @@ public class Main {
     sourceFolders.add("tests.unit");
 
     libFolders.add("lib");
-    for (Iterator<String> iter = sourceFolders.iterator(); iter.hasNext();) {
-      String src = iter.next();
+    for (String src : sourceFolders) {
       if (!"src".equals(src)) {
         libFolders.add("lib." + src);
       }
     }
 
     Collection<String> res = new ArrayList<String>();
-    for (Iterator<String> iter = sourceFolders.iterator(); iter.hasNext();) {
-      res.add(iter.next() + ".resources");
+    for (String string : sourceFolders) {
+      res.add(string + ".resources");
     }
     sourceFolders.addAll(res);
 
   }
 
   private String[] findSourceFolders(File modDir) {
-    ArrayList<String> rv = new ArrayList<String>();
+    List<String> rv = new ArrayList<String>();
 
     File[] listFiles = modDir.listFiles();
-    for (int i = 0; i < listFiles.length; i++) {
-      File file = listFiles[i];
+    for (File file : listFiles) {
       if (file.isDirectory() && sourceFolders.contains(file.getName())) {
         rv.add(file.getName());
       }
     }
 
+    Collections.sort(rv);
     return rv.toArray(new String[rv.size()]);
   }
 
   private String[] getIvyDependencies(File modDir) throws Exception {
-    TreeSet<String> rv = new TreeSet<String>();
+    SortedSet<String> rv = new TreeSet<String>();
 
     File[] listFiles = modDir.listFiles();
-    for (int i = 0; i < listFiles.length; i++) {
-      File file = listFiles[i];
+    for (File file : listFiles) {
       String name = file.getName();
       if (file.isFile() && name.startsWith("ivy") && name.endsWith(".xml")) {
         rv.addAll(getIvyDeps(file));

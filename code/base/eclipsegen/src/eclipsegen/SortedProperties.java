@@ -15,7 +15,8 @@ import java.util.Vector;
 
 /**
  * This is just like a regular properties object except that the keys will be written in a predictable (sorted) order
- * when store() is called
+ * when store() is called. Also the store() method here does not use the platform specific newline sequence (this is to
+ * prevent needless deltas in source control)
  */
 public class SortedProperties extends Properties {
 
@@ -47,6 +48,7 @@ public class SortedProperties extends Properties {
     }
   }
 
+  @Override
   public void store(OutputStream out, String comments) throws IOException {
     // remove the timestamp -- this code is ugly for sure, but will make it so
     // there isn't needless change when props are rewritten
@@ -63,7 +65,9 @@ public class SortedProperties extends Properties {
     while ((line = br.readLine()) != null) {
       lineNum++;
       if (lineNum != 2) {
-        pw.println(line);
+        pw.print(line);
+        pw.print((char) 13);
+        pw.print((char) 10);
       }
     }
 

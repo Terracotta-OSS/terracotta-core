@@ -18,5 +18,4 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-statistics-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/license-common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/management-api"/>
-	<classpathentry kind="output" path="bin"/>
 </classpath>
