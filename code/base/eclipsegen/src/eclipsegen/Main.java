@@ -238,8 +238,7 @@ public class Main {
     ps.println("<classpath>");
 
     // source folders and resources
-    for (int i = 0; i < src.length; i++) {
-      String path = src[i];
+    for (String path : src) {
       String output = path;
       if (output.endsWith(".resources")) {
         output = output.substring(0, output.lastIndexOf(".resources"));
