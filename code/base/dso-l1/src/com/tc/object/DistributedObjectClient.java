@@ -704,10 +704,21 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     assert defaultGroups != null && defaultGroups.length == 1;
     TransactionBatchFactory txBatchFactory = new TransactionBatchWriterFactory(channel
         .getCommitTransactionMessageFactory(), encoding, foldingConfig);
-    return new RemoteTransactionManagerImpl(defaultGroups[0], new ClientIDLogger(cidProvider, TCLogging
-        .getLogger(RemoteTransactionManagerImpl.class)), txBatchFactory, transactionIDGenerator, sessionManager,
-                                            dsoChannel, outstandingBatchesCounter, numTransactionCounter,
-                                            numBatchesCounter, batchSizeCounter, pendingBatchesSize);
+    return new RemoteTransactionManagerImpl(
+                                            defaultGroups[0],
+                                            new ClientIDLogger(cidProvider, TCLogging
+                                                .getLogger(RemoteTransactionManagerImpl.class)),
+                                            txBatchFactory,
+                                            transactionIDGenerator,
+                                            sessionManager,
+                                            dsoChannel,
+                                            outstandingBatchesCounter,
+                                            numTransactionCounter,
+                                            numBatchesCounter,
+                                            batchSizeCounter,
+                                            pendingBatchesSize,
+                                            TCPropertiesImpl.getProperties()
+                                                .getLong(TCPropertiesConsts.L1_TRANSACTIONMANAGER_TIMEOUTFORACK_ONEXIT) * 1000);
   }
 
   private void setReconnectCloseOnExit(final DSOClientMessageChannel channel) {

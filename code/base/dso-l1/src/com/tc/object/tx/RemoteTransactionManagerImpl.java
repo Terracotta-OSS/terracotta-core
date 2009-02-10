@@ -56,11 +56,6 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, C
                                                                            .getLong(
                                                                                     TCPropertiesConsts.L1_TRANSACTIONMANAGER_COMPLETED_ACK_FLUSH_TIMEOUT);
 
-  private long                             ackOnExitTimeout            = TCPropertiesImpl
-                                                                           .getProperties()
-                                                                           .getLong(
-                                                                                    TCPropertiesConsts.L1_TRANSACTIONMANAGER_TIMEOUTFORACK_ONEXIT) * 1000;
-
   private static final State               RUNNING                     = new State("RUNNING");
   private static final State               PAUSED                      = new State("PAUSED");
   private static final State               STOP_INITIATED              = new State("STOP-INITIATED");
@@ -74,6 +69,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, C
   private final TransactionBatchAccounting batchAccounting             = new TransactionBatchAccounting();
   private final LockAccounting             lockAccounting              = new LockAccounting();
   private final TCLogger                   logger;
+  private final long                       ackOnExitTimeout;
 
   private int                              outStandingBatches          = 0;
   private State                            status;
@@ -89,12 +85,14 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, C
                                       TransactionIDGenerator transactionIDGenerator, SessionManager sessionManager,
                                       DSOClientMessageChannel channel, Counter outstandingBatchesCounter,
                                       SampledCounter numTransactionCounter, SampledCounter numBatchesCounter,
-                                      final SampledCounter batchSizeCounter, final Counter pendingBatchesSize) {
+                                      final SampledCounter batchSizeCounter, final Counter pendingBatchesSize,
+                                      long ackOnExitTimeoutMs) {
     this.groupID = groupID;
     this.logger = logger;
     this.sessionManager = sessionManager;
     this.channel = channel;
     this.status = RUNNING;
+    this.ackOnExitTimeout = ackOnExitTimeoutMs;
     this.sequencer = new TransactionSequencer(groupID, transactionIDGenerator, batchFactory, lockAccounting,
                                               numTransactionCounter, numBatchesCounter, batchSizeCounter,
                                               pendingBatchesSize);
@@ -451,10 +449,6 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, C
    */
   TransactionBatchAccounting getBatchAccounting() {
     return batchAccounting;
-  }
-
-  void setAckOnExitTimeout(int seconds) {
-    this.ackOnExitTimeout = seconds * 1000;
   }
 
   private class RemoteTransactionManagerTimerTask extends TimerTask {
