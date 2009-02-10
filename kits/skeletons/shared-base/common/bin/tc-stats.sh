@@ -1,9 +1,9 @@
 #!/bin/sh
 
 #
-#  All content copyright (c) 2003-2008 Terracotta, Inc.,
-#  except as may otherwise be noted in a separate copyright notice.
-#  All rights reserved.
+# All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+
+
 #
 
 # OS specific support.  $var _must_ be set to either true or false.
