@@ -19,7 +19,6 @@ import com.tc.objectserver.impl.ObjectRequestManagerImpl;
 import com.tc.objectserver.impl.TestObjectManager;
 import com.tc.objectserver.l1.api.TestClientStateManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
-import com.tc.objectserver.tx.TestServerTransactionManager;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.CounterImpl;
 import com.tc.util.ObjectIDSet;
@@ -40,12 +39,10 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
     TestObjectManager objectManager = new TestObjectManager();
     TestDSOChannelManager channelManager = new TestDSOChannelManager();
     TestClientStateManager clientStateManager = new TestClientStateManager();
-    TestServerTransactionManager serverTransactionManager = new TestServerTransactionManager();
     TestSink requestSink = new TestSink();
     TestSink respondSink = new TestSink();
     ObjectRequestManagerImpl objectRequestManager = new ObjectRequestManagerImpl(objectManager, channelManager,
-                                                                                 clientStateManager,
-                                                                                 serverTransactionManager, requestSink,
+                                                                                 clientStateManager, requestSink,
                                                                                  respondSink, new ObjectStatsRecorder());
 
     TestServerConfigurationContext context = new TestServerConfigurationContext();
@@ -102,11 +99,11 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
     }
 
     public void notifyObjectRemove(MessageChannel channel, int numObjectsRemoved) {
-      channelRemCounter.increment(numObjectsRemoved);
+      this.channelRemCounter.increment(numObjectsRemoved);
     }
 
     public void notifyObjectRequest(MessageChannel channel, int numObjectsRequested) {
-      channelReqCounter.increment(numObjectsRequested);
+      this.channelReqCounter.increment(numObjectsRequested);
     }
 
     public void notifyTransactionAckedFrom(NodeID nodeID) {

@@ -9,7 +9,6 @@ import com.tc.io.TCByteBufferOutputStream;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
-import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ObjectID;
@@ -20,7 +19,6 @@ import com.tc.object.msg.ObjectsNotFoundMessage;
 import com.tc.object.msg.RequestManagedObjectResponseMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.NoSuchChannelException;
-import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
 import com.tc.objectserver.api.ObjectRequestManager;
@@ -30,12 +28,9 @@ import com.tc.objectserver.context.RespondToObjectRequestContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
-import com.tc.objectserver.tx.ServerTransactionListener;
-import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.ObjectIDSet;
-import com.tc.util.State;
 import com.tc.util.sequence.Sequence;
 import com.tc.util.sequence.SimpleSequence;
 
@@ -45,140 +40,50 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTransactionListener {
+public class ObjectRequestManagerImpl implements ObjectRequestManager {
 
-  public static final int                SPLIT_SIZE           = TCPropertiesImpl
-                                                                  .getProperties()
-                                                                  .getInt(
-                                                                          TCPropertiesConsts.L2_OBJECTMANAGER_OBJECT_REQUEST_SPLIT_SIZE);
-  public static final boolean            LOGGING_ENABLED      = TCPropertiesImpl
-                                                                  .getProperties()
-                                                                  .getBoolean(
-                                                                              TCPropertiesConsts.L2_OBJECTMANAGER_OBJECT_REQUEST_LOGGING_ENABLED);
+  public static final int           SPLIT_SIZE      = TCPropertiesImpl
+                                                        .getProperties()
+                                                        .getInt(
+                                                                TCPropertiesConsts.L2_OBJECTMANAGER_OBJECT_REQUEST_SPLIT_SIZE);
+  public static final boolean       LOGGING_ENABLED = TCPropertiesImpl
+                                                        .getProperties()
+                                                        .getBoolean(
+                                                                    TCPropertiesConsts.L2_OBJECTMANAGER_OBJECT_REQUEST_LOGGING_ENABLED);
 
-  private final static TCLogger          logger               = TCLogging.getLogger(ObjectRequestManagerImpl.class);
+  private final static TCLogger     logger          = TCLogging.getLogger(ObjectRequestManagerImpl.class);
 
-  private final static State             INIT                 = new State("INITIAL");
-  private final static State             STARTING             = new State("STARTING");
-  private final static State             STARTED              = new State("STARTED");
+  private final ObjectManager       objectManager;
 
-  private final ObjectManager            objectManager;
-  private final ServerTransactionManager transactionManager;
+  private final Sink                respondObjectRequestSink;
+  private final Sink                objectRequestSink;
 
-  private final List                     pendingRequests      = new LinkedList();
-  private final Set                      resentTransactionIDs = new HashSet();
-  private final Sink                     respondObjectRequestSink;
-  private final Sink                     objectRequestSink;
+  private final DSOChannelManager   channelManager;
+  private final ClientStateManager  stateManager;
+  private final Sequence            batchIDSequence = new SimpleSequence();
+  private final ObjectRequestCache  objectRequestCache;
 
-  private volatile State                 state                = INIT;
-  private DSOChannelManager              channelManager;
-  private ClientStateManager             stateManager;
-  private Sequence                       batchIDSequence      = new SimpleSequence();
-  private ObjectRequestCache             objectRequestCache;
-
-  private ObjectStatsRecorder            objectStatsRecorder;
+  private final ObjectStatsRecorder objectStatsRecorder;
 
   public ObjectRequestManagerImpl(ObjectManager objectManager, DSOChannelManager channelManager,
-                                  ClientStateManager stateManager, ServerTransactionManager transactionManager,
-                                  Sink objectRequestSink, Sink respondObjectRequestSink,
-                                  ObjectStatsRecorder objectStatsRecorder) {
+                                  ClientStateManager stateManager, Sink objectRequestSink,
+                                  Sink respondObjectRequestSink, ObjectStatsRecorder objectStatsRecorder) {
     this.objectManager = objectManager;
     this.channelManager = channelManager;
     this.stateManager = stateManager;
-    this.transactionManager = transactionManager;
     this.respondObjectRequestSink = respondObjectRequestSink;
     this.objectRequestSink = objectRequestSink;
     this.objectRequestCache = new ObjectRequestCache(LOGGING_ENABLED);
     this.objectStatsRecorder = objectStatsRecorder;
-    transactionManager.addTransactionListener(this);
-  }
-
-  public synchronized void transactionManagerStarted(Set cids) {
-    state = STARTING;
-    objectManager.start();
-    moveToStartedIfPossible();
-  }
-
-  private void moveToStartedIfPossible() {
-    if (state == STARTING && resentTransactionIDs.isEmpty()) {
-      state = STARTED;
-      transactionManager.removeTransactionListener(this);
-      processPending();
-    }
   }
 
   public void requestObjects(ObjectRequestServerContext requestContext) {
-    synchronized (this) {
-      if (state != STARTED) {
-        pendingRequests.add(requestContext);
-        if (logger.isDebugEnabled()) {
-          logger.debug("RequestObjectManager is not started, lookup has been added to pending request: "
-                       + toString(requestContext));
-        }
-        return;
-      }
-    }
     splitAndRequestObjects(requestContext.getClientID(), requestContext.getRequestID(), requestContext
         .getRequestedObjectIDs(), requestContext.getRequestDepth(), requestContext.isServerInitiated(), requestContext
         .getRequestingThreadName());
-  }
-
-  public void sendObjects(ClientID requestedNodeID, Collection objs, ObjectIDSet requestedObjectIDs,
-                          ObjectIDSet missingObjectIDs, boolean isServerInitiated, int maxRequestDepth) {
-
-    basicSendObjects(requestedNodeID, objs, requestedObjectIDs, missingObjectIDs, isServerInitiated, maxRequestDepth);
-  }
-
-  public synchronized void addResentServerTransactionIDs(Collection sTxIDs) {
-    if (state != INIT) { throw new AssertionError("Cant add Resent transactions after start up ! " + sTxIDs.size()
-                                                  + "Txns : " + state); }
-    resentTransactionIDs.addAll(sTxIDs);
-    logger.info("resentTransactions = " + resentTransactionIDs.size());
-  }
-
-  public void transactionCompleted(ServerTransactionID stxID) {
-    return;
-  }
-
-  public void incomingTransactions(NodeID source, Set serverTxnIDs) {
-    return;
-  }
-
-  public synchronized void clearAllTransactionsFor(NodeID client) {
-    if (state == STARTED) return;
-    for (Iterator iter = resentTransactionIDs.iterator(); iter.hasNext();) {
-      ServerTransactionID stxID = (ServerTransactionID) iter.next();
-      if (stxID.getSourceID().equals(client)) {
-        iter.remove();
-      }
-    }
-    moveToStartedIfPossible();
-  }
-
-  private void processPending() {
-    logger.info("Processing Pending Lookups = " + pendingRequests.size());
-    for (Iterator iter = pendingRequests.iterator(); iter.hasNext();) {
-      ObjectRequestServerContext lookupContext = (ObjectRequestServerContext) iter.next();
-      logger.info("Processing pending Looking up : " + toString(lookupContext));
-      splitAndRequestObjects(lookupContext.getClientID(), lookupContext.getRequestID(), lookupContext
-          .getRequestedObjectIDs(), lookupContext.getRequestDepth(), lookupContext.isServerInitiated(), lookupContext
-          .getRequestingThreadName());
-    }
-    pendingRequests.clear();
-  }
-
-  public String toString(ObjectRequestServerContext c) {
-    return c.getClass().getName() + " [ " + c.getClientID() + " :  " + c.getRequestedObjectIDs() + " : "
-           + c.getRequestID() + " : " + c.getRequestDepth() + " : " + c.getRequestingThreadName() + "] ";
-  }
-
-  public synchronized void transactionApplied(ServerTransactionID stxID, ObjectIDSet newObjectsCreated) {
-    resentTransactionIDs.remove(stxID);
-    moveToStartedIfPossible();
   }
 
   private void splitAndRequestObjects(ClientID clientID, ObjectRequestID requestID, ObjectIDSet ids,
@@ -202,19 +107,19 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
 
     synchronized (this) {
       RequestedObject reqObj = new RequestedObject(split, maxRequestDepth);
-      if (objectRequestCache.add(reqObj, clientID)) {
+      if (this.objectRequestCache.add(reqObj, clientID)) {
         lookupContext = new LookupContext(clientID, requestID, split, maxRequestDepth, requestingThreadName,
-                                          serverInitiated, objectRequestSink, respondObjectRequestSink);
+                                          serverInitiated, this.objectRequestSink, this.respondObjectRequestSink);
       }
     }
 
     if (lookupContext != null) {
-      objectManager.lookupObjectsAndSubObjectsFor(clientID, lookupContext, maxRequestDepth);
+      this.objectManager.lookupObjectsAndSubObjectsFor(clientID, lookupContext, maxRequestDepth);
     }
   }
 
-  private void basicSendObjects(ClientID requestedNodeID, Collection objs, ObjectIDSet requestedObjectIDs,
-                                ObjectIDSet missingObjectIDs, boolean isServerInitiated, int maxRequestDepth) {
+  public void sendObjects(ClientID requestedNodeID, Collection objs, ObjectIDSet requestedObjectIDs,
+                          ObjectIDSet missingObjectIDs, boolean isServerInitiated, int maxRequestDepth) {
 
     // Create ordered list of objects
     LinkedList objectsInOrder = new LinkedList();
@@ -231,7 +136,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
 
     // Create map of clients and objects to be sent
     Set<ClientID> clientList = null;
-    long batchID = batchIDSequence.next();
+    long batchID = this.batchIDSequence.next();
     RequestedObject reqObj = new RequestedObject(requestedObjectIDs, maxRequestDepth);
     synchronized (this) {
       clientList = this.objectRequestCache.remove(reqObj);
@@ -244,10 +149,10 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
       ClientID clientID = (ClientID) iter.next();
       try {
         // make batch and send object for each client.
-        MessageChannel channel = channelManager.getActiveChannel(clientID);
+        MessageChannel channel = this.channelManager.getActiveChannel(clientID);
         messageMap.put(clientID, new BatchAndSend(channel, batchID));
         // get set of objects which are not present in the client out of the returned ones
-        Set newIds = stateManager.addReferences(clientID, ids);
+        Set newIds = this.stateManager.addReferences(clientID, ids);
         clientNewIDsMap.put(clientID, newIds);
       } catch (NoSuchChannelException e) {
         logger.warn("Not sending objects to client " + clientID + ": " + e);
@@ -256,7 +161,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
 
     // send objects to each client
     if (!messageMap.isEmpty()) {
-      boolean requestDebug = objectStatsRecorder.getRequestDebug();
+      boolean requestDebug = this.objectStatsRecorder.getRequestDebug();
 
       for (Iterator<Map.Entry<ClientID, Set<ObjectID>>> i = clientNewIDsMap.entrySet().iterator(); i.hasNext();) {
         Map.Entry<ClientID, Set<ObjectID>> entry = i.next();
@@ -269,10 +174,12 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
           ManagedObject mo = (ManagedObject) iter.next();
           if (newIDs.contains(mo.getID())) {
             batchAndSend.sendObject(mo);
-            if (requestDebug) updateStats(mo);
+            if (requestDebug) {
+              updateStats(mo);
+            }
           }
           if (isLast) {
-            objectManager.releaseReadOnly(mo);
+            this.objectManager.releaseReadOnly(mo);
           }
         }
       }
@@ -303,23 +210,25 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
     } else {
       // no connected clients to send to
       for (Iterator i = objectsInOrder.iterator(); i.hasNext();) {
-        objectManager.releaseReadOnly((ManagedObject) i.next());
+        this.objectManager.releaseReadOnly((ManagedObject) i.next());
       }
     }
   }
 
   protected synchronized int getTotalRequestedObjects() {
-    return objectRequestCache.numberOfRequestedObjects();
+    return this.objectRequestCache.numberOfRequestedObjects();
   }
 
   protected synchronized int getObjectRequestCacheClientSize() {
-    return objectRequestCache.clientSize();
+    return this.objectRequestCache.clientSize();
   }
 
   private void updateStats(ManagedObject mo) {
     String className = mo.getManagedObjectState().getClassName();
-    if (className == null) className = "UNKNOWN";
-    objectStatsRecorder.updateRequestStats(className);
+    if (className == null) {
+      className = "UNKNOWN";
+    }
+    this.objectStatsRecorder.updateRequestStats(className);
   }
 
   protected static class RequestedObject {
@@ -334,13 +243,14 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
     }
 
     public ObjectIDSet getOIdSet() {
-      return oidSet;
+      return this.oidSet;
     }
 
     public int getDepth() {
-      return depth;
+      return this.depth;
     }
 
+    @Override
     public boolean equals(Object obj) {
       if (!(obj instanceof RequestedObject)) { return false; }
       RequestedObject reqObj = (RequestedObject) obj;
@@ -348,12 +258,14 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
       return false;
     }
 
+    @Override
     public int hashCode() {
       return this.oidSet.hashCode();
     }
 
+    @Override
     public String toString() {
-      return "RequestedObject [ " + oidSet + ", depth = " + depth + " ] ";
+      return "RequestedObject [ " + this.oidSet + ", depth = " + this.depth + " ] ";
     }
   }
 
@@ -382,7 +294,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
 
     // for tests
     protected int cacheSize() {
-      return objectRequestMap.size();
+      return this.objectRequestMap.size();
     }
 
     // for tests
@@ -393,7 +305,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
     // for tests
     protected Set<ClientID> clients() {
       Set<ClientID> clients = new LinkedHashSet<ClientID>();
-      for (Iterator<LinkedHashSet<ClientID>> i = objectRequestMap.values().iterator(); i.hasNext();) {
+      for (Iterator<LinkedHashSet<ClientID>> i = this.objectRequestMap.values().iterator(); i.hasNext();) {
         clients.addAll(i.next());
       }
       return clients;
@@ -412,18 +324,18 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
       } else {
 
         if (clientList.add(clientID)) {
-          if (verbose && (++sameClientRequestCount % 100) == 0) {
+          if (this.verbose && (++this.sameClientRequestCount % 100) == 0) {
             // The count keeps track of how many requests were made from the same client that has already been requested
             logger.info("[ObjectRequestCache] same client already made requests. total same client request optimized: "
-                        + sameClientRequestCount);
+                        + this.sameClientRequestCount);
           }
         } else {
-          if (verbose && (++multipleClientRequestCount % 100) == 0) {
+          if (this.verbose && (++this.multipleClientRequestCount % 100) == 0) {
             // The count keeps track of how many requests were made from the multiple clients that has already been
             // requested
             logger
                 .info("[ObjectRequestCache] multiple clients already made requests. total multiple clients request optimized: "
-                      + multipleClientRequestCount);
+                      + this.multipleClientRequestCount);
           }
         }
         return false;
@@ -459,55 +371,55 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
     }
 
     public void sendObject(ManagedObject m) {
-      m.toDNA(out, serializer);
-      sendCount++;
-      if (sendCount > 1000) {
-        RequestManagedObjectResponseMessage responseMessage = (RequestManagedObjectResponseMessage) channel
+      m.toDNA(this.out, this.serializer);
+      this.sendCount++;
+      if (this.sendCount > 1000) {
+        RequestManagedObjectResponseMessage responseMessage = (RequestManagedObjectResponseMessage) this.channel
             .createMessage(TCMessageType.REQUEST_MANAGED_OBJECT_RESPONSE_MESSAGE);
-        responseMessage.initialize(out.toArray(), sendCount, serializer, batchID, batches++);
+        responseMessage.initialize(this.out.toArray(), this.sendCount, this.serializer, this.batchID, this.batches++);
         responseMessage.send();
-        sendCount = 0;
-        serializer = new ObjectStringSerializer();
-        out = new TCByteBufferOutputStream();
+        this.sendCount = 0;
+        this.serializer = new ObjectStringSerializer();
+        this.out = new TCByteBufferOutputStream();
       }
     }
 
     public void flush() {
-      if (sendCount > 0) {
-        RequestManagedObjectResponseMessage responseMessage = (RequestManagedObjectResponseMessage) channel
+      if (this.sendCount > 0) {
+        RequestManagedObjectResponseMessage responseMessage = (RequestManagedObjectResponseMessage) this.channel
             .createMessage(TCMessageType.REQUEST_MANAGED_OBJECT_RESPONSE_MESSAGE);
-        responseMessage.initialize(out.toArray(), sendCount, serializer, batchID, 0);
+        responseMessage.initialize(this.out.toArray(), this.sendCount, this.serializer, this.batchID, 0);
         responseMessage.send();
-        sendCount = 0;
-        serializer = new ObjectStringSerializer();
-        out = new TCByteBufferOutputStream();
+        this.sendCount = 0;
+        this.serializer = new ObjectStringSerializer();
+        this.out = new TCByteBufferOutputStream();
       }
     }
 
     public void sendMissingObjects(Set missingObjectIDs) {
 
       if (missingObjectIDs.size() > 0) {
-        ObjectsNotFoundMessage notFound = (ObjectsNotFoundMessage) channel
+        ObjectsNotFoundMessage notFound = (ObjectsNotFoundMessage) this.channel
             .createMessage(TCMessageType.OBJECTS_NOT_FOUND_RESPONSE_MESSAGE);
-        notFound.initialize(missingObjectIDs, batchID);
+        notFound.initialize(missingObjectIDs, this.batchID);
         notFound.send();
       }
     }
 
     protected int getSendCount() {
-      return sendCount;
+      return this.sendCount;
     }
 
     protected int getBatches() {
-      return batches;
+      return this.batches;
     }
 
     protected ObjectStringSerializer getSerializer() {
-      return serializer;
+      return this.serializer;
     }
 
     protected TCByteBufferOutputStream getOut() {
-      return out;
+      return this.out;
     }
 
   }
@@ -541,7 +453,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
     }
 
     public ObjectIDSet getLookupIDs() {
-      return lookupIDs;
+      return this.lookupIDs;
     }
 
     public ObjectIDSet getNewObjectIDs() {
@@ -549,33 +461,33 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
     }
 
     public void setResults(ObjectManagerLookupResults results) {
-      objects = results.getObjects();
-      missingObjects = results.getMissingObjectIDs();
+      this.objects = results.getObjects();
+      this.missingObjects = results.getMissingObjectIDs();
 
       if (results.getLookupPendingObjectIDs().size() > 0) {
         if (logger.isDebugEnabled()) {
-          logger.debug("LookupPendingObjectIDs = " + results.getLookupPendingObjectIDs() + " , clientID = " + clientID
-                       + " , requestID = " + requestID);
+          logger.debug("LookupPendingObjectIDs = " + results.getLookupPendingObjectIDs() + " , clientID = "
+                       + this.clientID + " , requestID = " + this.requestID);
         }
-        objectRequestSink.add(new ObjectRequestServerContextImpl(this.clientID, this.requestID, results
+        this.objectRequestSink.add(new ObjectRequestServerContextImpl(this.clientID, this.requestID, results
             .getLookupPendingObjectIDs(), this.requestingThreadName, -1, true));
       }
       ResponseContext responseContext = new ResponseContext(this.clientID, this.objects.values(), this.lookupIDs,
                                                             this.missingObjects, this.serverInitiated,
                                                             this.maxRequestDepth);
-      respondObjectRequestSink.add(responseContext);
+      this.respondObjectRequestSink.add(responseContext);
       if (logger.isDebugEnabled()) {
-        logger.debug("Adding to respondSink , clientID = " + clientID + " , requestID = " + requestID + " "
+        logger.debug("Adding to respondSink , clientID = " + this.clientID + " , requestID = " + this.requestID + " "
                      + responseContext);
       }
     }
 
     public ObjectRequestID getRequestID() {
-      return requestID;
+      return this.requestID;
     }
 
     public int getMaxRequestDepth() {
-      return maxRequestDepth;
+      return this.maxRequestDepth;
     }
 
     public boolean updateStats() {
@@ -583,25 +495,25 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
     }
 
     public boolean isServerInitiated() {
-      return serverInitiated;
+      return this.serverInitiated;
     }
 
     public ClientID getRequestedNodeID() {
-      return clientID;
+      return this.clientID;
     }
 
     public String getRequestingThreadName() {
-      return requestingThreadName;
+      return this.requestingThreadName;
     }
 
     @Override
     public String toString() {
-      return "Lookup Context@" + System.identityHashCode(this) + "[ clientID = " + clientID + " , requestID = "
-             + requestID + " , ids = " + lookupIDs + " , lookedup objects.size() = "
-             + (objects != null ? objects.size() : 0) + " , missingObjects  = " + missingObjects
-             + " , maxRequestDepth = " + maxRequestDepth + " , requestingThreadName = " + requestingThreadName
-             + " , serverInitiated = " + serverInitiated + " , respondObjectRequestSink = " + respondObjectRequestSink
-             + " ] ";
+      return "Lookup Context@" + System.identityHashCode(this) + "[ clientID = " + this.clientID + " , requestID = "
+             + this.requestID + " , ids = " + this.lookupIDs + " , lookedup objects.size() = "
+             + (this.objects != null ? this.objects.size() : 0) + " , missingObjects  = " + this.missingObjects
+             + " , maxRequestDepth = " + this.maxRequestDepth + " , requestingThreadName = "
+             + this.requestingThreadName + " , serverInitiated = " + this.serverInitiated
+             + " , respondObjectRequestSink = " + this.respondObjectRequestSink + " ] ";
     }
   }
 
@@ -625,35 +537,35 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
     }
 
     public ClientID getRequestedNodeID() {
-      return requestedNodeID;
+      return this.requestedNodeID;
     }
 
     public Collection getObjs() {
-      return objs;
+      return this.objs;
     }
 
     public ObjectIDSet getRequestedObjectIDs() {
-      return requestedObjectIDs;
+      return this.requestedObjectIDs;
     }
 
     public ObjectIDSet getMissingObjectIDs() {
-      return missingObjectIDs;
+      return this.missingObjectIDs;
     }
 
     public boolean isServerInitiated() {
-      return serverInitiated;
+      return this.serverInitiated;
     }
 
     public int getRequestDepth() {
-      return maxRequestDepth;
+      return this.maxRequestDepth;
     }
 
     @Override
     public String toString() {
 
-      return "ResponseContext [ requestNodeID = " + requestedNodeID + " , objs.size = " + objs.size()
-             + " , requestedObjectIDs = " + requestedObjectIDs + " , missingObjectIDs = " + missingObjectIDs
-             + " , serverInitiated = " + serverInitiated + " ] ";
+      return "ResponseContext [ requestNodeID = " + this.requestedNodeID + " , objs.size = " + this.objs.size()
+             + " , requestedObjectIDs = " + this.requestedObjectIDs + " , missingObjectIDs = " + this.missingObjectIDs
+             + " , serverInitiated = " + this.serverInitiated + " ] ";
     }
 
   }

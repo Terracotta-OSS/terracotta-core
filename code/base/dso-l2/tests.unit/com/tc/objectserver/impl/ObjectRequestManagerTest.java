@@ -33,10 +33,8 @@ import com.tc.object.msg.RequestManagedObjectResponseMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.object.session.SessionID;
-import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.NullObjectInstanceMonitor;
-import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
 import com.tc.objectserver.api.ObjectManagerStatsListener;
@@ -63,14 +61,9 @@ import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
-import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.sleepycat.CustomSerializationAdapterFactory;
 import com.tc.objectserver.persistence.sleepycat.DBEnvironment;
 import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor;
-import com.tc.objectserver.tx.ServerTransaction;
-import com.tc.objectserver.tx.ServerTransactionListener;
-import com.tc.objectserver.tx.ServerTransactionManager;
-import com.tc.objectserver.tx.TxnsInSystemCompletionLister;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
@@ -80,7 +73,6 @@ import com.tc.util.sequence.Sequence;
 import com.tc.util.sequence.SimpleSequence;
 
 import java.io.File;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -146,19 +138,18 @@ public class ObjectRequestManagerTest extends TestCase {
     TestObjectManager objectManager = new TestObjectManager();
     TestDSOChannelManager channelManager = new TestDSOChannelManager();
     TestClientStateManager clientStateManager = new TestClientStateManager();
-    TestServerTransactionManager serverTransactionManager = new TestServerTransactionManager();
     TestSink requestSink = new TestSink();
     TestSink respondSink = new TestSink();
     ObjectRequestManagerImpl objectRequestManager = new ObjectRequestManagerImpl(objectManager, channelManager,
-                                                                                 clientStateManager,
-                                                                                 serverTransactionManager, requestSink,
+                                                                                 clientStateManager, requestSink,
                                                                                  respondSink, new ObjectStatsRecorder());
 
     int objectsToBeRequested = 47;
     int numberOfRequestsMade = objectsToBeRequested / ObjectRequestManagerImpl.SPLIT_SIZE;
-    if (objectsToBeRequested % ObjectRequestManagerImpl.SPLIT_SIZE > 0) numberOfRequestsMade++;
+    if (objectsToBeRequested % ObjectRequestManagerImpl.SPLIT_SIZE > 0) {
+      numberOfRequestsMade++;
+    }
     ObjectIDSet ids = createObjectIDSet(objectsToBeRequested);
-    objectRequestManager.transactionManagerStarted(new HashSet());
 
     List objectRequestThreadList = new ArrayList();
     int numberOfRequestThreads = 10;
@@ -166,7 +157,6 @@ public class ObjectRequestManagerTest extends TestCase {
 
     for (int i = 0; i < numberOfRequestThreads; i++) {
       ClientID clientID = new ClientID(new ChannelID(i));
-      objectRequestManager.clearAllTransactionsFor(clientID);
       ObjectRequestThread objectRequestThread = new ObjectRequestThread(requestBarrier, objectRequestManager, clientID,
                                                                         new ObjectRequestID(i), ids, false);
       objectRequestThreadList.add(objectRequestThread);
@@ -221,19 +211,18 @@ public class ObjectRequestManagerTest extends TestCase {
     TestObjectManager objectManager = new TestObjectManager();
     TestDSOChannelManager channelManager = new TestDSOChannelManager();
     TestClientStateManager clientStateManager = new TestClientStateManager();
-    TestServerTransactionManager serverTransactionManager = new TestServerTransactionManager();
     TestSink requestSink = new TestSink();
     TestSink respondSink = new TestSink();
     ObjectRequestManagerImpl objectRequestManager = new ObjectRequestManagerImpl(objectManager, channelManager,
-                                                                                 clientStateManager,
-                                                                                 serverTransactionManager, requestSink,
+                                                                                 clientStateManager, requestSink,
                                                                                  respondSink, new ObjectStatsRecorder());
 
     int objectsToBeRequested = 100;
     int numberOfRequestsMade = objectsToBeRequested / ObjectRequestManagerImpl.SPLIT_SIZE;
-    if (objectsToBeRequested % ObjectRequestManagerImpl.SPLIT_SIZE > 0) numberOfRequestsMade++;
+    if (objectsToBeRequested % ObjectRequestManagerImpl.SPLIT_SIZE > 0) {
+      numberOfRequestsMade++;
+    }
     ObjectIDSet ids = createObjectIDSet(objectsToBeRequested);
-    objectRequestManager.transactionManagerStarted(new HashSet());
 
     List objectRequestThreadList = new ArrayList();
     int numberOfRequestThreads = 10;
@@ -241,7 +230,6 @@ public class ObjectRequestManagerTest extends TestCase {
 
     for (int i = 0; i < numberOfRequestThreads; i++) {
       ClientID clientID = new ClientID(new ChannelID(i));
-      objectRequestManager.clearAllTransactionsFor(clientID);
       ObjectRequestThread objectRequestThread = new ObjectRequestThread(requestBarrier, objectRequestManager, clientID,
                                                                         new ObjectRequestID(i), ids, false);
       objectRequestThreadList.add(objectRequestThread);
@@ -273,8 +261,6 @@ public class ObjectRequestManagerTest extends TestCase {
     CyclicBarrier responseBarrier = new CyclicBarrier(numberOfResponseThreads);
 
     for (int i = 0; i < numberOfResponseThreads; i++) {
-      ClientID clientID = new ClientID(new ChannelID(i));
-      objectRequestManager.clearAllTransactionsFor(clientID);
       ObjectResponseThread objectResponseThread = new ObjectResponseThread(responseBarrier, objectRequestManager,
                                                                            respondSink);
       objectResponseThreadList.add(objectResponseThread);
@@ -316,6 +302,7 @@ public class ObjectRequestManagerTest extends TestCase {
 
     TestObjectManager objectManager = new TestObjectManager() {
 
+      @Override
       public boolean lookupObjectsAndSubObjectsFor(NodeID nodeID, ObjectManagerResultsContext responseContext,
                                                    int maxCount) {
 
@@ -333,19 +320,18 @@ public class ObjectRequestManagerTest extends TestCase {
     };
     TestDSOChannelManager channelManager = new TestDSOChannelManager();
     TestClientStateManager clientStateManager = new TestClientStateManager();
-    TestServerTransactionManager serverTransactionManager = new TestServerTransactionManager();
     TestSink requestSink = new TestSink();
     TestSink respondSink = new TestSink();
     ObjectRequestManagerImpl objectRequestManager = new ObjectRequestManagerImpl(objectManager, channelManager,
-                                                                                 clientStateManager,
-                                                                                 serverTransactionManager, requestSink,
+                                                                                 clientStateManager, requestSink,
                                                                                  respondSink, new ObjectStatsRecorder());
 
     int objectsToBeRequested = 100;
     int numberOfRequestsMade = objectsToBeRequested / ObjectRequestManagerImpl.SPLIT_SIZE;
-    if (objectsToBeRequested % ObjectRequestManagerImpl.SPLIT_SIZE > 0) numberOfRequestsMade++;
+    if (objectsToBeRequested % ObjectRequestManagerImpl.SPLIT_SIZE > 0) {
+      numberOfRequestsMade++;
+    }
     ObjectIDSet ids = createObjectIDSet(objectsToBeRequested);
-    objectRequestManager.transactionManagerStarted(new HashSet());
 
     List objectRequestThreadList = new ArrayList();
     int numberOfRequestThreads = 10;
@@ -353,7 +339,6 @@ public class ObjectRequestManagerTest extends TestCase {
 
     for (int i = 0; i < numberOfRequestThreads; i++) {
       ClientID clientID = new ClientID(new ChannelID(i));
-      objectRequestManager.clearAllTransactionsFor(clientID);
       ObjectRequestThread objectRequestThread = new ObjectRequestThread(requestBarrier, objectRequestManager, clientID,
                                                                         new ObjectRequestID(i), ids, false);
       objectRequestThreadList.add(objectRequestThread);
@@ -385,8 +370,6 @@ public class ObjectRequestManagerTest extends TestCase {
     CyclicBarrier responseBarrier = new CyclicBarrier(numberOfResponseThreads);
 
     for (int i = 0; i < numberOfResponseThreads; i++) {
-      ClientID clientID = new ClientID(new ChannelID(i));
-      objectRequestManager.clearAllTransactionsFor(clientID);
       ObjectResponseThread objectResponseThread = new ObjectResponseThread(responseBarrier, objectRequestManager,
                                                                            respondSink);
       objectResponseThreadList.add(objectResponseThread);
@@ -446,23 +429,20 @@ public class ObjectRequestManagerTest extends TestCase {
     TestObjectManager objectManager = new TestObjectManager();
     TestDSOChannelManager channelManager = new TestDSOChannelManager();
     TestClientStateManager clientStateManager = new TestClientStateManager();
-    TestServerTransactionManager serverTransactionManager = new TestServerTransactionManager();
     TestSink requestSink = new TestSink();
     TestSink respondSink = new TestSink();
     ObjectRequestManagerImpl objectRequestManager = new ObjectRequestManagerImpl(objectManager, channelManager,
-                                                                                 clientStateManager,
-                                                                                 serverTransactionManager, requestSink,
+                                                                                 clientStateManager, requestSink,
                                                                                  respondSink, new ObjectStatsRecorder());
     ClientID clientID = new ClientID(new ChannelID(1));
     ObjectRequestID requestID = new ObjectRequestID(1);
 
     int objectsToBeRequested = 100;
     int numberOfRequestsMade = objectsToBeRequested / ObjectRequestManagerImpl.SPLIT_SIZE;
-    if (objectsToBeRequested % ObjectRequestManagerImpl.SPLIT_SIZE > 0) numberOfRequestsMade++;
+    if (objectsToBeRequested % ObjectRequestManagerImpl.SPLIT_SIZE > 0) {
+      numberOfRequestsMade++;
+    }
     ObjectIDSet ids = createObjectIDSet(objectsToBeRequested);
-
-    objectRequestManager.transactionManagerStarted(new HashSet());
-    objectRequestManager.clearAllTransactionsFor(clientID);
 
     objectRequestManager.requestObjects(new ObjectRequestServerContextImpl(clientID, requestID, ids, Thread
         .currentThread().getName(), -1, false));
@@ -496,18 +476,14 @@ public class ObjectRequestManagerTest extends TestCase {
     TestObjectManager objectManager = new TestObjectManager();
     TestDSOChannelManager channelManager = new TestDSOChannelManager();
     TestClientStateManager clientStateManager = new TestClientStateManager();
-    TestServerTransactionManager serverTransactionManager = new TestServerTransactionManager();
     TestSink requestSink = new TestSink();
     TestSink respondSink = new TestSink();
     ObjectRequestManagerImpl objectRequestManager = new ObjectRequestManagerImpl(objectManager, channelManager,
-                                                                                 clientStateManager,
-                                                                                 serverTransactionManager, requestSink,
+                                                                                 clientStateManager, requestSink,
                                                                                  respondSink, new ObjectStatsRecorder());
     ClientID clientID = new ClientID(new ChannelID(1));
     ObjectRequestID requestID = new ObjectRequestID(1);
     ObjectIDSet ids = createObjectIDSet(100);
-    objectRequestManager.transactionManagerStarted(new HashSet());
-    objectRequestManager.clearAllTransactionsFor(clientID);
 
     objectRequestManager.requestObjects(new ObjectRequestServerContextImpl(clientID, requestID, ids, Thread
         .currentThread().getName(), -1, false));
@@ -625,12 +601,12 @@ public class ObjectRequestManagerTest extends TestCase {
 
   private static class ObjectRequestThread extends Thread {
 
-    private ObjectRequestManager objectRequestManager;
-    private ClientID             clientID;
-    private ObjectRequestID      requestID;
-    private ObjectIDSet          ids;
-    private boolean              serverInitiated;
-    private CyclicBarrier        barrier;
+    private final ObjectRequestManager objectRequestManager;
+    private final ClientID             clientID;
+    private final ObjectRequestID      requestID;
+    private final ObjectIDSet          ids;
+    private final boolean              serverInitiated;
+    private final CyclicBarrier        barrier;
 
     public ObjectRequestThread(CyclicBarrier barrier, ObjectRequestManager objectRequestManager, ClientID clientID,
                                ObjectRequestID requestID, ObjectIDSet ids, boolean serverInitiated) {
@@ -645,20 +621,22 @@ public class ObjectRequestManagerTest extends TestCase {
     @Override
     public void run() {
       try {
-        barrier.barrier();
+        this.barrier.barrier();
       } catch (Exception e) {
         throw new AssertionError(e);
       }
-      objectRequestManager.requestObjects(new ObjectRequestServerContextImpl(clientID, requestID, ids, Thread
-          .currentThread().getName(), -1, serverInitiated));
+      this.objectRequestManager.requestObjects(new ObjectRequestServerContextImpl(this.clientID, this.requestID,
+                                                                                  this.ids, Thread.currentThread()
+                                                                                      .getName(), -1,
+                                                                                  this.serverInitiated));
     }
   }
 
   private static class ObjectResponseThread extends Thread {
 
-    private ObjectRequestManager objectRequestManager;
-    private TestSink             sink;
-    private CyclicBarrier        barrier;
+    private final ObjectRequestManager objectRequestManager;
+    private final TestSink             sink;
+    private final CyclicBarrier        barrier;
 
     public ObjectResponseThread(CyclicBarrier barrier, ObjectRequestManager objectRequestManager, TestSink sink) {
       this.objectRequestManager = objectRequestManager;
@@ -669,26 +647,27 @@ public class ObjectRequestManagerTest extends TestCase {
     @Override
     public void run() {
       try {
-        barrier.barrier();
+        this.barrier.barrier();
       } catch (Exception e) {
         throw new AssertionError(e);
       }
       RespondToObjectRequestContext respondToObjectRequestContext = null;
-      int respondSinkSize = sink.size();
+      int respondSinkSize = this.sink.size();
       Iterator testReqManObjResMsgIter = TestRequestManagedObjectResponseMessage.sendSet.iterator();
       for (int i = 0; i < respondSinkSize; i++) {
         try {
-          respondToObjectRequestContext = (RespondToObjectRequestContext) sink.take();
+          respondToObjectRequestContext = (RespondToObjectRequestContext) this.sink.take();
         } catch (InterruptedException e) {
           throw new AssertionError(e);
         }
         synchronized (this) {
           System.out.println("in the reponse thread: " + respondToObjectRequestContext);
-          objectRequestManager.sendObjects(respondToObjectRequestContext.getRequestedNodeID(),
-                                           respondToObjectRequestContext.getObjs(), respondToObjectRequestContext
-                                               .getRequestedObjectIDs(), respondToObjectRequestContext
-                                               .getMissingObjectIDs(), respondToObjectRequestContext
-                                               .isServerInitiated(), respondToObjectRequestContext.getRequestDepth());
+          this.objectRequestManager.sendObjects(respondToObjectRequestContext.getRequestedNodeID(),
+                                                respondToObjectRequestContext.getObjs(), respondToObjectRequestContext
+                                                    .getRequestedObjectIDs(), respondToObjectRequestContext
+                                                    .getMissingObjectIDs(), respondToObjectRequestContext
+                                                    .isServerInitiated(), respondToObjectRequestContext
+                                                    .getRequestDepth());
           if (testReqManObjResMsgIter.hasNext()) {
             TestRequestManagedObjectResponseMessage message = (TestRequestManagedObjectResponseMessage) testReqManObjResMsgIter
                 .next();
@@ -697,114 +676,6 @@ public class ObjectRequestManagerTest extends TestCase {
         }
       }
     }
-  }
-
-  private static class TestServerTransactionManager implements ServerTransactionManager {
-
-    protected List listeners = new ArrayList();
-
-    protected List getListeners() {
-      return listeners;
-    }
-
-    public void acknowledgement(NodeID waiter, TransactionID requestID, NodeID waitee) {
-      throw new NotImplementedException(TestServerTransactionManager.class);
-    }
-
-    public void addTransactionListener(ServerTransactionListener listener) {
-      listeners.add(listener);
-    }
-
-    public void addWaitingForAcknowledgement(NodeID waiter, TransactionID requestID, NodeID waitee) {
-      throw new NotImplementedException(TestServerTransactionManager.class);
-    }
-
-    public void apply(ServerTransaction txn, Map objects, BackReferences includeIDs,
-                      ObjectInstanceMonitor instanceMonitor) {
-      throw new NotImplementedException(TestServerTransactionManager.class);
-    }
-
-    public void broadcasted(NodeID waiter, TransactionID requestID) {
-      throw new NotImplementedException(TestServerTransactionManager.class);
-    }
-
-    public void callBackOnTxnsInSystemCompletion(TxnsInSystemCompletionLister l) {
-      throw new NotImplementedException(TestServerTransactionManager.class);
-    }
-
-    public void commit(PersistenceTransactionProvider ptxp, Collection objects, Map newRoots,
-                       Collection appliedServerTransactionIDs) {
-      throw new NotImplementedException(TestServerTransactionManager.class);
-    }
-
-    public int getTotalPendingTransactionsCount() {
-      throw new NotImplementedException(TestServerTransactionManager.class);
-    }
-
-    public void goToActiveMode() {
-      throw new NotImplementedException(TestServerTransactionManager.class);
-    }
-
-    public void incomingTransactions(NodeID nodeID, Set txnIDs, Collection txns, boolean relayed) {
-      throw new NotImplementedException(TestServerTransactionManager.class);
-    }
-
-    public boolean isWaiting(NodeID waiter, TransactionID requestID) {
-      throw new NotImplementedException(TestServerTransactionManager.class);
-    }
-
-    public void nodeConnected(NodeID nodeID) {
-      throw new NotImplementedException(TestServerTransactionManager.class);
-    }
-
-    public void removeTransactionListener(ServerTransactionListener listener) {
-      listeners.remove(listener);
-    }
-
-    public void setResentTransactionIDs(NodeID source, Collection transactionIDs) {
-      throw new NotImplementedException(TestServerTransactionManager.class);
-    }
-
-    public void shutdownNode(NodeID nodeID) {
-      throw new NotImplementedException(TestServerTransactionManager.class);
-    }
-
-    public void skipApplyAndCommit(ServerTransaction txn) {
-      throw new NotImplementedException(TestServerTransactionManager.class);
-    }
-
-    public void start(Set cids) {
-      throw new NotImplementedException(TestServerTransactionManager.class);
-    }
-
-    public void transactionsRelayed(NodeID node, Set serverTxnIDs) {
-      throw new NotImplementedException(TestServerTransactionManager.class);
-    }
-
-    public String dump() {
-      throw new NotImplementedException(TestServerTransactionManager.class);
-    }
-
-    public void dump(Writer writer) {
-      throw new NotImplementedException(TestServerTransactionManager.class);
-    }
-
-    public void dumpToLogger() {
-      throw new NotImplementedException(TestServerTransactionManager.class);
-    }
-
-    public PrettyPrinter prettyPrint(PrettyPrinter out) {
-      throw new NotImplementedException(TestServerTransactionManager.class);
-    }
-
-    public void objectsSynched(NodeID node, ServerTransactionID tid) {
-      throw new NotImplementedException(TestServerTransactionManager.class);
-    }
-
-    public void callBackOnResentTxnsInSystemCompletion(TxnsInSystemCompletionLister l) {
-      throw new NotImplementedException(TestServerTransactionManager.class);
-    }
-
   }
 
   /**
@@ -868,7 +739,7 @@ public class ObjectRequestManagerTest extends TestCase {
 
   private static class TestClientStateManager implements ClientStateManager {
 
-    private Map clientStateMap = new HashMap();
+    private final Map clientStateMap = new HashMap();
 
     public void addReference(NodeID nodeID, ObjectID objectID) {
       throw new NotImplementedException(TestClientStateManager.class);
@@ -900,10 +771,10 @@ public class ObjectRequestManagerTest extends TestCase {
 
     public Set<ObjectID> addReferences(NodeID nodeID, Set<ObjectID> oids) {
 
-      Set<ObjectID> refs = (Set) clientStateMap.get(nodeID);
+      Set<ObjectID> refs = (Set) this.clientStateMap.get(nodeID);
 
       if (refs == null) {
-        clientStateMap.put(nodeID, (refs = new HashSet()));
+        this.clientStateMap.put(nodeID, (refs = new HashSet()));
       }
 
       if (refs.isEmpty()) {
@@ -1088,7 +959,7 @@ public class ObjectRequestManagerTest extends TestCase {
 
     public List                   createMessageContexts = new ArrayList();
     public NoExceptionLinkedQueue sendQueue             = new NoExceptionLinkedQueue();
-    private ChannelID             channelID;
+    private final ChannelID       channelID;
 
     public TestMessageChannel(ChannelID channelID) {
       this.channelID = channelID;
@@ -1108,9 +979,9 @@ public class ObjectRequestManagerTest extends TestCase {
 
     public TCMessage createMessage(TCMessageType type) {
       if (TCMessageType.OBJECTS_NOT_FOUND_RESPONSE_MESSAGE.equals(type)) {
-        return new TestObjectsNotFoundMessage(channelID);
+        return new TestObjectsNotFoundMessage(this.channelID);
       } else if (TCMessageType.REQUEST_MANAGED_OBJECT_RESPONSE_MESSAGE.equals(type)) {
-        return new TestRequestManagedObjectResponseMessage(channelID);
+        return new TestRequestManagedObjectResponseMessage(this.channelID);
       } else {
         return null;
       }
@@ -1121,7 +992,7 @@ public class ObjectRequestManagerTest extends TestCase {
     }
 
     public ChannelID getChannelID() {
-      return channelID;
+      return this.channelID;
     }
 
     public TCSocketAddress getLocalAddress() {
@@ -1153,7 +1024,7 @@ public class ObjectRequestManagerTest extends TestCase {
     }
 
     public void send(TCNetworkMessage message) {
-      sendQueue.put(message);
+      this.sendQueue.put(message);
     }
 
     public NodeID getLocalNodeID() {
@@ -1177,16 +1048,16 @@ public class ObjectRequestManagerTest extends TestCase {
   private static class TestRequestManagedObjectResponseMessage implements RequestManagedObjectResponseMessage,
       Comparable {
 
-    protected static Set sendSet = new TreeSet();
+    protected static Set    sendSet = new TreeSet();
 
-    private ChannelID    channelID;
+    private final ChannelID channelID;
 
     public TestRequestManagedObjectResponseMessage(ChannelID channelID) {
       this.channelID = channelID;
     }
 
     public ChannelID getChannelID() {
-      return channelID;
+      return this.channelID;
     }
 
     public long getBatchID() {
@@ -1263,16 +1134,16 @@ public class ObjectRequestManagerTest extends TestCase {
 
   private static class TestObjectsNotFoundMessage implements ObjectsNotFoundMessage, Comparable {
 
-    protected static Set sendSet = new TreeSet();
+    protected static Set    sendSet = new TreeSet();
 
-    private ChannelID    channelID;
+    private final ChannelID channelID;
 
     public TestObjectsNotFoundMessage(ChannelID channelID) {
       this.channelID = channelID;
     }
 
     public ChannelID getChannelID() {
-      return channelID;
+      return this.channelID;
     }
 
     public long getBatchID() {
