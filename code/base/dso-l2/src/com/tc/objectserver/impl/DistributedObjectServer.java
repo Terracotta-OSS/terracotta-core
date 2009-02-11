@@ -1048,10 +1048,14 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
                                                 final L2TVSConfigurationSetupManager configManager,
                                                 final StageManager stageManager, final ServerID serverNodeID) {
     if (networkedHA) {
-      return new TCGroupManagerImpl(configManager, stageManager, serverNodeID);
+      return new TCGroupManagerImpl(configManager, stageManager, serverNodeID, getHttpSink());
     } else {
       return new SingleNodeGroupManager();
     }
+  }
+
+  protected Sink getHttpSink() {
+    return this.httpSink;
   }
 
   protected TCLogger getLogger() {

@@ -66,7 +66,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -82,6 +81,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   public static final String                                HANDSHAKE_STATE_MACHINE_TAG = "TcGroupCommHandshake";
   private final ReconnectConfig                             l2ReconnectConfig;
 
+  private final Sink                                        httpSink;
   private final ServerID                                    thisNodeID;
   private final int                                         groupPort;
   private final ConnectionPolicy                            connectionPolicy;
@@ -110,20 +110,22 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   private Stage                                             discoveryStage;
   private TCProperties                                      l2Properties;
 
+
   /*
    * Setup a communication manager which can establish channel from either sides.
    */
   public TCGroupManagerImpl(L2TVSConfigurationSetupManager configSetupManager, StageManager stageManager,
-                            ServerID thisNodeID) {
-    this(configSetupManager, new NullConnectionPolicy(), stageManager, thisNodeID);
+                            ServerID thisNodeID, Sink httpSink) {
+    this(configSetupManager, new NullConnectionPolicy(), stageManager, thisNodeID, httpSink);
   }
 
   public TCGroupManagerImpl(L2TVSConfigurationSetupManager configSetupManager, ConnectionPolicy connectionPolicy,
-                            StageManager stageManager, ServerID thisNodeID) {
+                            StageManager stageManager, ServerID thisNodeID, Sink httpSink) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
     this.thisNodeID = thisNodeID;
-    l2ReconnectConfig = new L2ReconnectConfigImpl();
+    this.httpSink = httpSink;
+    this.l2ReconnectConfig = new L2ReconnectConfigImpl();
     this.isUseOOOLayer = l2ReconnectConfig.getReconnectEnabled();
 
     configSetupManager.commonl2Config().changesInItemIgnored(configSetupManager.commonl2Config().dataPath());
@@ -157,7 +159,8 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
                      StageManager stageManager) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
-    l2ReconnectConfig = new L2ReconnectConfigImpl();
+    this.l2ReconnectConfig = new L2ReconnectConfigImpl();
+    this.httpSink = null;
     this.isUseOOOLayer = l2ReconnectConfig.getReconnectEnabled();
     this.groupPort = groupPort;
     thisNodeID = new ServerID(new Node(hostname, port).getServerNodeName(), UUID.getUUID().toString().getBytes());
@@ -198,7 +201,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
                                                           thisNodeID);
 
     groupListener = communicationsManager.createListener(new NullSessionManager(), socketAddress, true,
-                                                         new DefaultConnectionIdFactory());
+                                                         new DefaultConnectionIdFactory(), httpSink);
     // Listen to channel creation/removal
     groupListener.getChannelManager().addEventListener(this);
 
@@ -358,8 +361,8 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
 
   private void notifyAnyPendingRequests(TCGroupMember member) {
     synchronized (pendingRequests) {
-      for (Iterator<GroupResponse> i = pendingRequests.values().iterator(); i.hasNext();) {
-        GroupResponseImpl response = (GroupResponseImpl) i.next();
+      for (GroupResponse groupResponse : pendingRequests.values()) {
+        GroupResponseImpl response = (GroupResponseImpl) groupResponse;
         response.notifyMemberDead(member);
       }
     }
@@ -656,8 +659,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
 
     public synchronized GroupMessage getResponse(NodeID nodeID) {
       Assert.assertTrue(waitFor.isEmpty());
-      for (Iterator<GroupMessage> i = responses.iterator(); i.hasNext();) {
-        GroupMessage msg = i.next();
+      for (GroupMessage msg : responses) {
         if (nodeID.equals(msg.messageFrom())) return msg;
       }
       logger.warn("Missing response message from " + nodeID);
@@ -866,6 +868,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
 
     private synchronized void setTimerTask(long timeout) {
       TimerTask task = new TimerTask() {
+        @Override
         public void run() {
           handshakeTimeout();
         }
@@ -917,6 +920,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
         // override me if you want
       }
 
+      @Override
       public String toString() {
         return name;
       }
@@ -930,11 +934,13 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
         super("Read-Peer-NodeID");
       }
 
+      @Override
       public void enter() {
         setTimerTask(HANDSHAKE_TIMEOUT);
         writeNodeIDMessage();
       }
 
+      @Override
       public void execute(TCGroupHandshakeMessage msg) {
         setPeerNodeID(msg);
         if (!manager.getDiscover().isValidClusterNode(peerNodeID)) {
@@ -974,6 +980,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
         super("Try-Add-Member");
       }
 
+      @Override
       public void enter() {
         createMember();
         if (member.isHighPriorityNode()) {
@@ -983,6 +990,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
         }
       }
 
+      @Override
       public void execute(TCGroupHandshakeMessage msg) {
         boolean isOkToJoin = msg.isOkMessage();
         if (!member.isHighPriorityNode()) {
@@ -1030,6 +1038,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
         super("Success");
       }
 
+      @Override
       public void enter() {
         cancelTimerTask();
         member.setReady(true);
@@ -1047,6 +1056,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
         super("Failure");
       }
 
+      @Override
       public void enter() {
         cancelTimerTask();
         if (member != null) {
