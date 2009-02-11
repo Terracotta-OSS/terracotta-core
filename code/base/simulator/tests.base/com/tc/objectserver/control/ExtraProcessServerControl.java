@@ -222,6 +222,11 @@ public class ExtraProcessServerControl extends ServerControlBase {
     waitUntilStarted();
     System.err.println(this.name + " started.");
   }
+  
+  public void startAndWait(long seconds) throws Exception {
+    startWithoutWait();
+    waitUntilStarted(seconds);
+  }
 
   public void startWithoutWait() throws Exception {
     System.err.println("Starting " + this.name + ", main=" + getMainClassName() + ", main args="
@@ -304,6 +309,15 @@ public class ExtraProcessServerControl extends ServerControlBase {
 
   private void waitUntilStarted() throws Exception {
     while (true) {
+      if (isRunning()) return;
+      Thread.sleep(1000);
+    }
+  }
+
+  private void waitUntilStarted(long timeoutInSeconds) throws InterruptedException {
+    if (timeoutInSeconds < 0) throw new IllegalArgumentException("timeout can't be negative");
+    long timeout = (timeoutInSeconds * 1000) + System.currentTimeMillis();
+    while (System.currentTimeMillis() < timeout) {
       if (isRunning()) return;
       Thread.sleep(1000);
     }
