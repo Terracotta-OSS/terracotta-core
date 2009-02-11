@@ -685,7 +685,16 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     boolean addedAdapters = false;
     if (Vm.isJDK15Compliant()) {
       for (FieldInfo fi : classInfo.getFields()) {
-        for (Annotation ann : fi.getAnnotations()) {
+        
+        Annotation[] annotations;
+        try {
+          annotations = fi.getAnnotations();
+        } catch (Exception e) {
+          logger.warn("Exception reading field annotations on " + classInfo.getName() + " (possibly due to a badly behaved ClassLoader)");
+          return false;
+        }
+        
+        for (Annotation ann : annotations) {
           if ("com.tc.injection.annotations.InjectedDsoInstance".equals(ann.getInterfaceName())) {
             InjectionInstrumentation instrumentation = injectionRegistry.lookupInstrumentation(fi.getType().getName());
             if (null == instrumentation) {
