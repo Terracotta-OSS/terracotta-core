@@ -16,7 +16,6 @@ import com.tc.simulator.app.ErrorContext;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 import com.tc.util.TIMUtil;
-import com.tc.util.runtime.Vm;
 
 import gnu.trove.THashMap;
 import gnu.trove.TObjectFunction;
@@ -43,7 +42,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.Map.Entry;
-
+import java.util.concurrent.ConcurrentHashMap;
 
 public class GenericMapTestApp extends GenericTestApp {
 
@@ -56,19 +55,21 @@ public class GenericMapTestApp extends GenericTestApp {
     super(appId, cfg, listenerProvider, Map.class, 2);
   }
 
+  @Override
   protected Object getTestObject(String test) {
     List maps = (List) sharedMap.get("maps");
 
     // This is just to make sure all the expected maps are here.
     // As new map classes get added to this test, you'll have to adjust this number obviously
-    Assert.assertEquals(24 + (Vm.isJDK15Compliant() ? 1 : 0), maps.size());
+    Assert.assertEquals(25, maps.size());
 
     return maps.iterator();
   }
 
+  @Override
   protected void setupTestObject(String test) {
     List maps = new ArrayList();
-    
+
     maps.add(new HashMap());
     maps.add(new Hashtable());
     maps.add(new TreeMap(new NullTolerantComparator()));
@@ -95,10 +96,7 @@ public class GenericMapTestApp extends GenericTestApp {
     maps.add(new MyProperties());
     maps.add(new MyProperties2());
     maps.add(new MyProperties3());
-
-    if (Vm.isJDK15Compliant()) {
-      maps.add(makeConcurrentHashMap());
-    }
+    maps.add(new ConcurrentHashMap<Object, Object>());
 
     // maps.add(new IdentityHashMap());
     // maps.add(new WeakHashMap());
@@ -141,14 +139,6 @@ public class GenericMapTestApp extends GenericTestApp {
     nonSharedArrayMap.put("arrayforMyProperties2", new Object[4]);
     nonSharedArrayMap.put("arrayforMyProperties3", new Object[4]);
     sharedMap.put("arrayforConcurrentHashMap", new Object[4]);
-  }
-
-  private Object makeConcurrentHashMap() {
-    try {
-      return Class.forName("java.util.concurrent.ConcurrentHashMap").newInstance();
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
@@ -1958,8 +1948,8 @@ public class GenericMapTestApp extends GenericTestApp {
 
   void assertMappingsKeysEqual(Object[] expect, Collection collection) {
     Assert.assertEquals(expect.length, collection.size());
-    for (int i = 0; i < expect.length; i++) {
-      Assert.assertTrue(collection.contains(expect[i]));
+    for (Object element : expect) {
+      Assert.assertTrue(collection.contains(element));
     }
   }
 
@@ -1997,8 +1987,8 @@ public class GenericMapTestApp extends GenericTestApp {
       }
     }
 
-    for (int i = 0; i < expect.length; i++) {
-      Entry entry = (Entry) expect[i];
+    for (Object element : expect) {
+      Entry entry = (Entry) element;
       if (isAccessOrderedLinkedHashMap(map)) {
         synchronized (map) {
           Assert.assertEquals(entry.getValue(), map.get(entry.getKey()));
@@ -2112,10 +2102,12 @@ public class GenericMapTestApp extends GenericTestApp {
       this.equals = equals;
     }
 
+    @Override
     public int hashCode() {
       return equals == null ? 0 : equals.hashCode();
     }
 
+    @Override
     public boolean equals(Object o) {
       if (!(o instanceof Key)) { return false; }
       Key other = (Key) o;
@@ -2172,16 +2164,19 @@ public class GenericMapTestApp extends GenericTestApp {
       return oldValue;
     }
 
+    @Override
     public boolean equals(Object o) {
       if (!(o instanceof Map.Entry)) return false;
       Map.Entry e = (Map.Entry) o;
       return eq(key, e.getKey()) && eq(value, e.getValue());
     }
 
+    @Override
     public int hashCode() {
       return ((key == null) ? 0 : key.hashCode()) ^ ((value == null) ? 0 : value.hashCode());
     }
 
+    @Override
     public String toString() {
       return key + "=" + value;
     }
@@ -2203,6 +2198,7 @@ public class GenericMapTestApp extends GenericTestApp {
       putAll(map);
     }
 
+    @Override
     public Object put(Object arg0, Object arg1) {
       this.key = arg0;
       this.value = arg1;
@@ -2272,6 +2268,7 @@ public class GenericMapTestApp extends GenericTestApp {
       super(comparator);
     }
 
+    @Override
     public Object put(Object arg0, Object arg1) {
       this.key = arg0;
       this.value = arg1;
@@ -2314,6 +2311,7 @@ public class GenericMapTestApp extends GenericTestApp {
       super();
     }
 
+    @Override
     public Object put(Object arg0, Object arg1) {
       this.key = arg0;
       this.value = arg1;
@@ -2355,6 +2353,7 @@ public class GenericMapTestApp extends GenericTestApp {
       super();
     }
 
+    @Override
     public Object put(Object arg0, Object arg1) {
       this.key = arg0;
       this.value = arg1;
@@ -2377,6 +2376,7 @@ public class GenericMapTestApp extends GenericTestApp {
       super();
     }
 
+    @Override
     public synchronized Object get(Object key) {
       this.lastGetKey = key;
       return super.get(key);
@@ -2396,6 +2396,7 @@ public class GenericMapTestApp extends GenericTestApp {
       defaults = newDefaults;
     }
 
+    @Override
     public Object put(Object arg0, Object arg1) {
       return super.put(arg0, arg1);
     }
