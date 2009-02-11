@@ -1063,6 +1063,42 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
+  // test mutations through Map.Entry returned from entrySet().toArray(..)
+  void testEntrySetToArray3(Map map, boolean validate, int v) {
+    // CDV-1130
+    if (map instanceof ConcurrentHashMap) return;
+    if (map instanceof TreeMap) return;
+    if (map instanceof THashMap) return;
+
+    if (validate) {
+      synchronized (map) {
+        Assert.assertEquals(map.getClass().getName(), E("Jan2", v), map.get(E("January", v)));
+        Assert.assertEquals(map.getClass().getName(), E("Feb2", v), map.get(E("February", v)));
+      }
+    } else {
+      synchronized (map) {
+        map.putAll(getOrderSensitiveMappings(v));
+        Object[] entries = map.entrySet().toArray();
+        for (Object o : entries) {
+          Map.Entry entry = (Map.Entry) o;
+          if (entry.getKey().equals(E("January", v))) {
+            entry.setValue(E("Jan2", v));
+            break;
+          }
+        }
+
+        entries = map.entrySet().toArray(new Object[] {});
+        for (Object o : entries) {
+          Map.Entry entry = (Map.Entry) o;
+          if (entry.getKey().equals(E("February", v))) {
+            entry.setValue(E("Feb2", v));
+            break;
+          }
+        }
+      }
+    }
+  }
+
   void testKeySetToArray(Map map, boolean validate, int v) {
     Object[] array = getArray(map);
 
