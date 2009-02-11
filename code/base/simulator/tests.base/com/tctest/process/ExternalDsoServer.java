@@ -128,11 +128,7 @@ public class ExternalDsoServer {
   public void stop() throws Exception {
     Assert.assertNotNull(serverProc);
     Assert.assertNotNull(logOutputStream);
-    stopLogOutputStream();
     serverProc.shutdown();
-  }
-
-  public void stopLogOutputStream() {
     IOUtils.closeQuietly(logOutputStream);
   }
 

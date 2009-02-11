@@ -82,13 +82,13 @@ public class ExternalDsoClient {
   public void stop() throws Exception {
     Assert.assertNotNull(process);
     Assert.assertNotNull(logOutputStream);
-    stopLogOutputStream();
     if (isRunning()) {
       process.destroy();
     }
-  }
-
-  public void stopLogOutputStream() {
+    if (isRunning()) {
+      System.err.println(" WARNING: Dso client " + toString() + " process is still running after calling destroy()");
+    }
+    System.err.println("DSO client " + toString() + " stopped");
     IOUtils.closeQuietly(logOutputStream);
   }
 
