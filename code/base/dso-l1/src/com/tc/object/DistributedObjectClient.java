@@ -17,7 +17,6 @@ import com.tc.cluster.DsoClusterInternal;
 import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.handler.CallbackDumpAdapter;
 import com.tc.lang.TCThreadGroup;
-import com.tc.license.AbstractLicenseResolverFactory;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.ClientIDLoggerProvider;
 import com.tc.logging.CustomerLogging;
@@ -591,9 +590,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         CONSOLE_LOGGER.warn("Connection refused from server: " + e);
         ThreadUtil.reallySleep(5000);
       } catch (MaxConnectionsExceededException e) {
-        int maxClients = AbstractLicenseResolverFactory.getLicense().maxClients();
-        CONSOLE_LOGGER.fatal("Your product key only allows maximum " + maxClients
-                             + " clients to connect. This client is now shutdown.");
+        CONSOLE_LOGGER.fatal(e.getMessage());
+        CONSOLE_LOGGER.fatal("This client is now shutdown");
         System.exit(1);
       } catch (IOException ioe) {
         CONSOLE_LOGGER.warn("IOException connecting to server: " + serverHost + ":" + serverPort + ". "
