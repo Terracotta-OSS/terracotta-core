@@ -10,15 +10,25 @@ if test -z "${ANT_HOME}"; then
   exit 1
 fi
 
+jruby_version=jruby-1.1.2-20090208
 build_system_dir=`dirname $0`/../../buildsystems
+cache_dir=$HOME/.tc
+if [ `uname | grep CYGWIN` ]; then
+  cache_dir=c:/temp/tc
+fi
 
-JRUBY_HOME="$build_system_dir/jruby-1.1.2-20090208"
+# to be removed
+if [ -d "$build_system_dir/$jruby_version" ]; then
+  echo "moving jruby to a new cache $cache_dir. This only done once."
+  banner WAIT
+  mv "$build_system_dir/$jruby_version" "$cache_dir"
+fi
+
+JRUBY_HOME="$cache_dir/$jruby_version"
 export JRUBY_HOME
 
 if test ! -d "${JRUBY_HOME}"; then
-	echo "--------------------------------------------------------------------------------"
-	echo "LOADING JRUBY USING IVY"
-	echo ""
+  echo "JRuby not found at $JRUBY_HOME. Installing..."
 	"${ANT_HOME}/bin/ant" -buildfile "$build_system_dir/install-jruby-build.xml"
 fi
 

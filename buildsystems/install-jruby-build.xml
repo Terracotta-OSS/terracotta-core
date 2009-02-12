@@ -2,11 +2,30 @@
   <property name="jruby.zip" value="jruby-1.1.2-20090208.zip"/>
 
   <target name="install-jruby">
-    <get src="http://download.terracotta.org/buildjars/lib/${jruby.zip}"
-         dest="${jruby.zip}"
-         verbose="true"/>
-    <unzip src="${jruby.zip}" dest="."/>
-    <delete file="${jruby.zip}"/>
+    <condition property="cache.dest" value="C:\temp\tc" else="${user.home}/.tc">
+      <os family="windows"/>
+    </condition>
+    
+    <echo message="JRuby cache: ${cache.dest}"/>
+    
+    <condition property="jruby-zip-not-cached">
+      <not>
+        <available file="${cache.dest}/${jruby.zip}" />
+      </not>
+    </condition>
+    
+    <antcall target="download-jruby"/>
+    <antcall target="unzip-jruby"/>
   </target>
+
+  <target name="download-jruby" if="jruby-zip-not-cached">
+    <get src="http://download.terracotta.org/buildjars/lib/${jruby.zip}"
+         dest="${cache.dest}/${jruby.zip}"
+         verbose="true"/>
+  </target>
+  
+  <target name="unzip-jruby">
+    <unzip src="${cache.dest}/${jruby.zip}" dest="${cache.dest}"/>
+  </target>  
   
 </project>
