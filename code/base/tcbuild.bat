@@ -17,6 +17,10 @@ set build_system_dir=%~dp0..\..\buildsystems
 set cache_dir=c:\temp\tc
 set JRUBY_HOME=%cache_dir%\%jruby_version%
 
+if not exist "%cache_dir%" (
+  mkdir %cache_dir%
+)
+
 if not exist "%JRUBY_HOME%" (
 	echo JRuby not found at %JRUBY_HOME%. Installing...
 	call %ANT_HOME%\bin\ant.bat -buildfile %build_system_dir%\install-jruby-build.xml
