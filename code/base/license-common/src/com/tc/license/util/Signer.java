@@ -4,8 +4,10 @@
  */
 package com.tc.license.util;
 
+import java.io.File;
+
 public interface Signer {
-  public String sign(byte[] content);
+  public String sign(byte[] content, File privateKeyFile);
 
   public boolean verify(byte[] content, String signatureString);
 }

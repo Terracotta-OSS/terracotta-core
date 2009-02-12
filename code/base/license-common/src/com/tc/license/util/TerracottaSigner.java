@@ -21,21 +21,8 @@ import java.security.spec.X509EncodedKeySpec;
 
 public class TerracottaSigner implements Signer {
   private static final String LICENSE_PUBLIC_KEY_RESOURCE_NAME = "license-public-key.x509";
-  private File                privateKeyFile;
 
-  public TerracottaSigner() {
-    //
-  }
-
-  public TerracottaSigner(File privateKeyFile) {
-    this.privateKeyFile = privateKeyFile;
-  }
-
-  public void setPrivateKeyFile(File privateKeyFile) {
-    this.privateKeyFile = privateKeyFile;
-  }
-
-  public String sign(byte[] content) {
+  public String sign(byte[] content, File privateKeyFile) {
     if (privateKeyFile == null) { throw new IllegalStateException("Private key file is needed to sign"); }
     Signature signature = prepareSignSignature(privateKeyFile);
     try {
@@ -81,10 +68,12 @@ public class TerracottaSigner implements Signer {
       //
       throw new IllegalArgumentException("Private key file doesn't exist or unknown");
     }
+    FileInputStream keyInputStream = null;
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     Signature signature;
     try {
-      IOUtils.copy(new FileInputStream(keyFile), baos);
+      keyInputStream = new FileInputStream(keyFile);
+      IOUtils.copy(keyInputStream, baos);
       KeySpec privateKeySpec = new PKCS8EncodedKeySpec(baos.toByteArray());
       KeyFactory factory = KeyFactory.getInstance("DSA");
       PrivateKey privateKey = factory.generatePrivate(privateKeySpec);
@@ -93,6 +82,8 @@ public class TerracottaSigner implements Signer {
       signature.initSign(privateKey);
     } catch (Throwable e) {
       throw new RuntimeException(e);
+    } finally {
+      IOUtils.closeQuietly(keyInputStream);
     }
     return signature;
   }

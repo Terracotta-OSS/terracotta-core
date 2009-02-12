@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public interface LicenseStore {
+public interface LicenseFormat {
   public License load(InputStream in) throws LicenseException, IOException;
 
   public void store(License license, OutputStream out);

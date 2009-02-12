@@ -31,7 +31,7 @@ public class LicenseFileTest extends TestCase {
     license.setSignature("DIGITIALLY SIGNED");
 
     try {
-      LicenseStore licenseStore = new LicenseFile();
+      LicenseFormat licenseStore = new TerracottaLicenseFormat();
       licenseStore.store(license, out);
       out.close();
     } finally {
@@ -54,7 +54,7 @@ public class LicenseFileTest extends TestCase {
   }
 
   public void testLoad() throws Exception {
-    LicenseStore licenseStore = new LicenseFile();
+    LicenseFormat licenseStore = new TerracottaLicenseFormat();
     License license = licenseStore.load(getClass().getResourceAsStream("/com/tc/license/util/LicenseFileTest.txt"));
     assertEquals("Commercial", license.licenseType());
     assertEquals("123", license.licenseNumber());
@@ -69,7 +69,7 @@ public class LicenseFileTest extends TestCase {
   }
 
   public void testMissingMarkings() throws IOException {
-    LicenseStore licenseStore = new LicenseFile();
+    LicenseFormat licenseStore = new TerracottaLicenseFormat();
     try {
       licenseStore.load(getClass().getResourceAsStream("/com/tc/license/util/missingMarkings.txt"));
       fail("Should have thrown LicenseException");

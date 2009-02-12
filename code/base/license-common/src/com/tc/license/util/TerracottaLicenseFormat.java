@@ -18,7 +18,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public class LicenseFile implements LicenseStore {
+public class TerracottaLicenseFormat implements LicenseFormat {
   private static final String LICENSE_HEADER    = "--------------------- BEGIN TERRACOTTA LICENSE KEY ---------------------";
   private static final String LICENSE_SIGNATURE = "---------------------------- BEGIN SIGNATURE ---------------------------";
   private static final String LICENSE_FOOTER    = "---------------------- END TERRACOTTA LICENSE KEY ----------------------";
