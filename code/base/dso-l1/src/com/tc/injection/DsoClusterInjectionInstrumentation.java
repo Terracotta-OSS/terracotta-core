@@ -5,9 +5,10 @@ package com.tc.injection;
 
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
-import com.tc.asm.MethodAdapter;
+import com.tc.asm.Label;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
+import com.tc.asm.commons.AdviceAdapter;
 import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.bytecode.ClassAdapterFactory;
@@ -41,7 +42,7 @@ public class DsoClusterInjectionInstrumentation implements InjectionInstrumentat
       public MethodVisitor visitMethod(final int access, final String name, final String desc, final String signature, final String[] exceptions) {
         if ("<init>".equals(name)) {
           hasConstructor = true;
-          return new DsoClusterConstructorInjection(super.visitMethod(access, name, desc, signature, exceptions));
+          return new DsoClusterConstructorInjection(super.visitMethod(access, name, desc, signature, exceptions), access, name, desc);
         }
 
         return super.visitMethod(access, name, desc, signature, exceptions);
@@ -62,30 +63,28 @@ public class DsoClusterInjectionInstrumentation implements InjectionInstrumentat
       }
 
       private void addFieldInjectionCode(final MethodVisitor mv) {
-//        mv.visitVarInsn(ALOAD, 0);
-//        mv.visitFieldInsn(GETFIELD, ByteCodeUtil.classNameToInternalName(fieldToInjectInto.getDeclaringType().getName()),
-//                          fieldToInjectInto.getName(), 'L'+ByteCodeUtil.classNameToInternalName(fieldToInjectInto.getType().getName())+';');
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitFieldInsn(GETFIELD, ByteCodeUtil.classNameToInternalName(fieldToInjectInto.getDeclaringType().getName()),
+                          fieldToInjectInto.getName(), 'L'+ByteCodeUtil.classNameToInternalName(fieldToInjectInto.getType().getName())+';');
 
-//        Label labelFieldAlreadyInjected = new Label();
-//        mv.visitJumpInsn(IFNULL, labelFieldAlreadyInjected);
+        Label labelFieldAlreadyInjected = new Label();
+        mv.visitJumpInsn(IFNONNULL, labelFieldAlreadyInjected);
         mv.visitVarInsn(ALOAD, 0);
         mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "getManager", "()Lcom/tc/object/bytecode/Manager;");
         mv.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/bytecode/Manager", "getDsoCluster", "()Lcom/tc/cluster/DsoCluster;");
         mv.visitFieldInsn(PUTFIELD, ByteCodeUtil.classNameToInternalName(fieldToInjectInto.getDeclaringType().getName()),
                           fieldToInjectInto.getName(), 'L'+ByteCodeUtil.classNameToInternalName(fieldToInjectInto.getType().getName())+';');
-//        mv.visitLabel(labelFieldAlreadyInjected);
+        mv.visitLabel(labelFieldAlreadyInjected);
       }
 
-      private final class DsoClusterConstructorInjection extends MethodAdapter {
+      private final class DsoClusterConstructorInjection extends AdviceAdapter {
         @Override
-        public void visitCode() {
+        protected void onMethodEnter() {
           addFieldInjectionCode(mv);
-
-          super.visitCode();
         }
 
-        public DsoClusterConstructorInjection(final MethodVisitor mv) {
-          super(mv);
+        public DsoClusterConstructorInjection(final MethodVisitor mv, final int access, final String name, final String desc) {
+          super(mv, access, name, desc);
         }
 
       }
