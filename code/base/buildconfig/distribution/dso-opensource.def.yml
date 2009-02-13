@@ -76,6 +76,8 @@ bundled_components:
             modules:
               - common-api
               - dso-l1-api
+              - license-common
+              - management-api
               - modules-common
               - thirdparty-api
         - terracotta-jmx-api:

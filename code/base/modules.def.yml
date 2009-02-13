@@ -26,12 +26,13 @@ modules:
       options:
         jdk: J2SE-1.5
         javadoc: true
+      dependencies:
+        - license-common        
   - common:
       options:
         jdk: J2SE-1.5
       dependencies:
         - common-api
-        - license-common
   - reflector-test:
       options:
         jdk: J2SE-1.5

@@ -459,7 +459,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     }
   }
 
-  private void validateLicenseCapabilities() {
+  public void validateLicenseCapabilities() {
     if (activeServerGroupsConfig.getActiveServerGroupCount() > 1) {
       LicenseCheck.checkCapability(Capability.SERVER_STRIPING);
     }
