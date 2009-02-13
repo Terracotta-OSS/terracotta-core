@@ -9,10 +9,14 @@ import com.tc.cluster.exceptions.UnclusteredObjectException;
 import com.tc.exception.ImplementMe;
 import com.tc.net.NodeID;
 import com.tc.object.ClusterMetaDataManager;
+import com.tc.object.ObjectID;
 import com.tc.object.bytecode.Manageable;
+import com.tc.object.bytecode.TCMap;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -48,8 +52,7 @@ public class DsoClusterImpl implements DsoClusterInternal {
     }
 
     if (fireThisNodeJoined) {
-      System.out.println(">>>>>> " + currentNode + " - DsoClusterImpl.addClusterListener : fireThisNodeJoined = "
-                         + fireThisNodeJoined);
+      System.out.println(">>>>>> " + currentNode + " - DsoClusterImpl.addClusterListener : fireThisNodeJoined = " + fireThisNodeJoined);
       fireNodeJoined(currentNode.getId());
       fireOperationsEnabled();
     }
@@ -67,14 +70,6 @@ public class DsoClusterImpl implements DsoClusterInternal {
     throw new ImplementMe();
   }
 
-  public <K> Set<K> getKeysForLocalValues(final Map<K, ?> map) throws UnclusteredObjectException {
-    throw new ImplementMe();
-  }
-
-  public <K> Set<K> getKeysForOrphanedValues(final Map<K, ?> map) throws UnclusteredObjectException {
-    throw new ImplementMe();
-  }
-
   public Set<DsoNode> getNodesWithObject(final Object object) throws UnclusteredObjectException {
     Assert.assertNotNull(clusterMetaDataManager);
 
@@ -86,15 +81,16 @@ public class DsoClusterImpl implements DsoClusterInternal {
     if (object instanceof Manageable) {
       Manageable manageable = (Manageable)object;
       if (manageable.__tc_isManaged()) {
-        Set<NodeID> nodeIDs = clusterMetaDataManager.getNodesWithObject(manageable.__tc_managed().getObjectID());
-        if (nodeIDs.isEmpty()) {
+        Set<NodeID> response = clusterMetaDataManager.getNodesWithObject(manageable.__tc_managed().getObjectID());
+        if (response.isEmpty()) {
           return Collections.emptySet();
         }
 
         final Set<DsoNode> result = new HashSet<DsoNode>();
-        for (NodeID nodeID : nodeIDs) {
+        for (NodeID nodeID : response) {
           result.add(getDsoNode(nodeID.toString()));
         }
+
         return result;
       }
     }
@@ -102,8 +98,98 @@ public class DsoClusterImpl implements DsoClusterInternal {
     throw new UnclusteredObjectException(object);
   }
 
+  public Map<?, Set<DsoNode>> getNodesWithObjects(final Object... objects) throws UnclusteredObjectException {
+    Assert.assertNotNull(clusterMetaDataManager);
+
+    if (null == objects || 0 == objects.length) {
+      return Collections.emptyMap();
+    }
+
+    return getNodesWithObjects(Arrays.asList(objects));
+  }
+
   public Map<?, Set<DsoNode>> getNodesWithObjects(final Collection<?> objects) throws UnclusteredObjectException {
+    Assert.assertNotNull(clusterMetaDataManager);
+
+    if (null == objects || 0 == objects.size()) {
+      return Collections.emptyMap();
+    }
+
+    // ensure that all objects in the collection are managed and collect their object IDs
+    // we might have to use ManagerUtil.lookupExistingOrNull(object) here if we need to support literals
+    final HashMap<ObjectID, Object> objectIDMapping = new HashMap<ObjectID, Object>();
+    for (Object object : objects) {
+      if (object != null) {
+        if (!(object instanceof Manageable)) {
+          throw new UnclusteredObjectException(object);
+        } else {
+          Manageable manageable = (Manageable)object;
+          if (!manageable.__tc_isManaged()) {
+            throw new UnclusteredObjectException(object);
+          } else {
+            objectIDMapping.put(manageable.__tc_managed().getObjectID(), object);
+          }
+        }
+      }
+    }
+
+    if (0 == objectIDMapping.size()) {
+      return Collections.emptyMap();
+    }
+
+    // retrieve the object locality information from the L2
+    final Map<ObjectID, Set<NodeID>> response = clusterMetaDataManager.getNodesWithObjects(objectIDMapping.keySet());
+    if (response.isEmpty()) {
+      return Collections.emptyMap();
+    }
+
+    // transform object IDs and node IDs in actual local instances
+    Map<Object, Set<DsoNode>> result = new HashMap<Object, Set<DsoNode>>();
+    for (Map.Entry<ObjectID, Set<NodeID>> entry : response.entrySet()) {
+      final Object object = objectIDMapping.get(entry.getKey());
+      Assert.assertNotNull(object);
+
+      final Set<DsoNode> dsoNodes = new HashSet<DsoNode>();
+      for (NodeID nodeID : entry.getValue()) {
+        dsoNodes.add(getDsoNode(nodeID.toString()));
+      }
+      result.put(object, dsoNodes);
+    }
+
+    return result;
+  }
+
+  public <K> Set<K> getKeysForOrphanedValues(final Map<K, ?> map) throws UnclusteredObjectException {
     throw new ImplementMe();
+  }
+
+  public <K> Set<K> getKeysForLocalValues(final Map<K, ?> map) throws UnclusteredObjectException {
+    if (null == map) {
+      return Collections.emptySet();
+    }
+
+    if (map instanceof Manageable) {
+      Manageable manageable = (Manageable)map;
+      if (manageable.__tc_isManaged()) {
+        if (manageable instanceof TCMap) {
+          final Collection<Map.Entry> localEntries = ((TCMap)manageable).__tc_getAllLocalEntriesSnapshot();
+          if (0 == localEntries.size()) {
+            return Collections.emptySet();
+          }
+
+          final Set<K> result = new HashSet<K>();
+          for (Map.Entry entry : localEntries) {
+            result.add((K)entry.getKey());
+          }
+
+          return result;
+        } else {
+          return Collections.emptySet();
+        }
+      }
+    }
+
+    throw new UnclusteredObjectException(map);
   }
 
   public synchronized boolean isNodeJoined() {

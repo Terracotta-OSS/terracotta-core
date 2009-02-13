@@ -7,12 +7,15 @@ package com.tc.object;
 import com.tc.net.NodeID;
 import com.tc.object.lockmanager.api.ThreadID;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
 public interface ClusterMetaDataManager {
 
   public Set<NodeID> getNodesWithObject(ObjectID id);
+
+  public Map<ObjectID, Set<NodeID>> getNodesWithObjects(Collection<ObjectID> ids);
 
   public void setNodesWithObjectsResponse(ThreadID threadId, Map<ObjectID, Set<NodeID>> response);
 

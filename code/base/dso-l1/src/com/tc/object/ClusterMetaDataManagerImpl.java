@@ -11,6 +11,7 @@ import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.util.Assert;
 import com.tc.util.runtime.ThreadIDManager;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,10 +34,46 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
   public Set<NodeID> getNodesWithObject(final ObjectID objectID) {
     final ThreadID thisThread = threadIDManager.getThreadID();
 
-    final NodesWithObjectsMessage m = cmdmFactory.newNodesWithObjectsMessage();
-    m.setThreadID(thisThread);
-    m.addObjectID(objectID);
-    m.send();
+    Assert.assertFalse(waitObjects.containsKey(thisThread));
+
+    final NodesWithObjectsMessage message = cmdmFactory.newNodesWithObjectsMessage();
+    message.addObjectID(objectID);
+
+    final Map<ObjectID, Set<NodeID>> response = sendMessageAndWait(thisThread, message);
+
+    // no response arrived in time, returning an empty set
+    if (null == response) {
+      return Collections.emptySet();
+    }
+
+    return response.get(objectID);
+  }
+
+  public Map<ObjectID, Set<NodeID>> getNodesWithObjects(final Collection<ObjectID> objectIDs) {
+    final ThreadID thisThread = threadIDManager.getThreadID();
+
+    Assert.assertFalse(waitObjects.containsKey(thisThread));
+
+    final NodesWithObjectsMessage message = cmdmFactory.newNodesWithObjectsMessage();
+    for (ObjectID objectID : objectIDs) {
+      message.addObjectID(objectID);
+    }
+
+    final Map<ObjectID, Set<NodeID>> response = sendMessageAndWait(thisThread, message);
+
+    // no response arrived in time, returning an empty set
+    if (null == response) {
+      return Collections.emptyMap();
+    }
+
+    return response;
+  }
+
+  private Map<ObjectID, Set<NodeID>> sendMessageAndWait(final ThreadID thisThread, final NodesWithObjectsMessage message) {
+    Assert.assertNotNull(message);
+
+    message.setThreadID(thisThread);
+    message.send();
 
     final Object waitObject = new Object();
 
@@ -60,12 +97,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
         response = responses.remove(thisThread);
       }
     }
-
-    // no response arrived in time, returning an empty set
-    if (null == response) {
-      return Collections.emptySet();
-    }
-    return response.get(objectID);
+    return response;
   }
 
   public void setNodesWithObjectsResponse(final ThreadID threadID, final Map<ObjectID, Set<NodeID>> response) {

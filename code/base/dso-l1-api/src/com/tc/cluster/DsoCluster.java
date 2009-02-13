@@ -26,6 +26,8 @@ public interface DsoCluster {
 
   public Set<DsoNode> getNodesWithObject(Object object) throws UnclusteredObjectException;
 
+  public Map<?, Set<DsoNode>> getNodesWithObjects(final Object... objects) throws UnclusteredObjectException;
+
   public Map<?, Set<DsoNode>> getNodesWithObjects(Collection<?> objects) throws UnclusteredObjectException;
 
   public <K> Set<K> getKeysForOrphanedValues(Map<K, ?> map) throws UnclusteredObjectException;
