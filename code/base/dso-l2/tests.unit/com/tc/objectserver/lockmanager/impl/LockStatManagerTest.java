@@ -15,6 +15,11 @@ import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.tx.TimerSpec;
 import com.tc.objectserver.api.TestSink;
 import com.tc.objectserver.lockmanager.api.NullChannelManager;
+import com.tc.stats.counter.CounterManager;
+import com.tc.stats.counter.CounterManagerImpl;
+import com.tc.stats.counter.sampled.SampledCounter;
+import com.tc.stats.counter.sampled.SampledCounterConfig;
+import com.tc.stats.counter.sampled.TimeStampedCounterValue;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.Os;
@@ -49,7 +54,10 @@ public class LockStatManagerTest extends TestCase {
     lockManager = new LockManagerImpl(new NullChannelManager(), lockStatManager);
     lockManager.setLockPolicy(LockManagerImpl.GREEDY_LOCK_POLICY);
     lockManager.start();
-    lockStatManager.start(new NullChannelManager());
+    final CounterManager counterManager = new CounterManagerImpl();
+    final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
+    final SampledCounter lockRecallCounter = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
+    lockStatManager.start(new NullChannelManager(), lockRecallCounter);
   }
 
   @Override
@@ -154,7 +162,8 @@ public class LockStatManagerTest extends TestCase {
 
   public void testLockStatsManager() {
     try {
-      verifyLockStatsManagerStatistics();
+      int runningLockRecallCount = 0;
+      runningLockRecallCount = verifyLockStatsManagerStatistics(runningLockRecallCount);
 
       lockStatManager.setLockStatisticsEnabled(false);
 
@@ -169,14 +178,14 @@ public class LockStatManagerTest extends TestCase {
 
       lockStatManager.setLockStatisticsEnabled(true);
 
-      verifyLockStatsManagerStatistics();
+      verifyLockStatsManagerStatistics(runningLockRecallCount);
     } catch (Error e) {
       e.printStackTrace();
       throw e;
     }
   }
 
-  private void verifyLockStatsManagerStatistics() {
+  private int verifyLockStatsManagerStatistics(int initialLockRecallCount) {
     LockID l1 = new LockID("1");
     ThreadID s1 = new ThreadID(0);
 
@@ -193,6 +202,15 @@ public class LockStatManagerTest extends TestCase {
     assertEquals(2, lockStatManager.getNumberOfLockRequested(l1));
     assertEquals(0, lockStatManager.getNumberOfPendingRequests(l1));
     assertEquals(1, lockStatManager.getNumberOfLockHopRequests(l1));
+    
+    // let the samplecounter collect values
+    ThreadUtil.reallySleep(2000);
+    TimeStampedCounterValue[] lockRecallHistory = lockStatManager.getGlobalLockRecallHistory();
+    int recallCount = 0;
+    for (TimeStampedCounterValue cv : lockRecallHistory) {
+      recallCount += cv.getCounterValue();
+    }
+    assertEquals(1 + initialLockRecallCount, recallCount);
 
     lockManager.tryRequestLock(l1, cid3, s1, LockLevel.WRITE, String.class.getName(), new TimerSpec(0, 0), sink);
     assertEquals(3, lockStatManager.getNumberOfLockRequested(l1));
@@ -206,6 +224,15 @@ public class LockStatManagerTest extends TestCase {
     assertEquals(4, lockStatManager.getNumberOfLockRequested(l1));
     assertEquals(1, lockStatManager.getNumberOfPendingRequests(l1));
     assertEquals(2, lockStatManager.getNumberOfLockHopRequests(l1));
+    
+    // let the samplecounter collect values
+    ThreadUtil.reallySleep(2000);
+    lockRecallHistory = lockStatManager.getGlobalLockRecallHistory();
+    recallCount = 0;
+    for (TimeStampedCounterValue cv : lockRecallHistory) {
+      recallCount += cv.getCounterValue();
+    }
+    assertEquals(2 + initialLockRecallCount, recallCount);
 
     lockManager.unlock(l1, cid2, ThreadID.VM_ID); // grant to c1 greedily again
     assertEquals(1, lockStatManager.getNumberOfPendingRequests(l1));
@@ -216,11 +243,27 @@ public class LockStatManagerTest extends TestCase {
     assertEquals(6, lockStatManager.getNumberOfLockRequested(l1));
     assertEquals(2, lockStatManager.getNumberOfPendingRequests(l1));
     assertEquals(3, lockStatManager.getNumberOfLockHopRequests(l1));
+    // let the samplecounter collect values
+    ThreadUtil.reallySleep(2000);
+    lockRecallHistory = lockStatManager.getGlobalLockRecallHistory();
+    recallCount = 0;
+    for (TimeStampedCounterValue cv : lockRecallHistory) {
+      recallCount += cv.getCounterValue();
+    }
+    assertEquals(3 + initialLockRecallCount, recallCount);
 
     lockManager.unlock(l1, cid1, ThreadID.VM_ID); // grant to c3 greedily with a lease recall
     assertEquals(2, lockStatManager.getNumberOfPendingRequests(l1));
     assertEquals(3, lockStatManager.getNumberOfLockReleased(l1));
     assertEquals(4, lockStatManager.getNumberOfLockHopRequests(l1));
+    // let the samplecounter collect values
+    ThreadUtil.reallySleep(2000);
+    lockRecallHistory = lockStatManager.getGlobalLockRecallHistory();
+    recallCount = 0;
+    for (TimeStampedCounterValue cv : lockRecallHistory) {
+      recallCount += cv.getCounterValue();
+    }
+    assertEquals(4 + initialLockRecallCount, recallCount);
 
     lockManager.unlock(l1, cid3, ThreadID.VM_ID); // grant to c4 greedily
     assertEquals(2, lockStatManager.getNumberOfPendingRequests(l1));
@@ -229,6 +272,14 @@ public class LockStatManagerTest extends TestCase {
     assertEquals(7, lockStatManager.getNumberOfLockRequested(l1));
     assertEquals(2, lockStatManager.getNumberOfPendingRequests(l1));
     assertEquals(5, lockStatManager.getNumberOfLockHopRequests(l1));
+    // let the samplecounter collect values
+    ThreadUtil.reallySleep(2000);
+    lockRecallHistory = lockStatManager.getGlobalLockRecallHistory();
+    recallCount = 0;
+    for (TimeStampedCounterValue cv : lockRecallHistory) {
+      recallCount += cv.getCounterValue();
+    }
+    assertEquals(5 + initialLockRecallCount, recallCount);
 
     lockManager.unlock(l1, cid4, ThreadID.VM_ID); // grant to c3 greedily
     assertEquals(2, lockStatManager.getNumberOfPendingRequests(l1));
@@ -236,6 +287,7 @@ public class LockStatManagerTest extends TestCase {
 
     lockManager.unlock(l1, cid3, ThreadID.VM_ID);
     assertEquals(6, lockStatManager.getNumberOfLockReleased(l1));
+    return recallCount;
   }
 
 }

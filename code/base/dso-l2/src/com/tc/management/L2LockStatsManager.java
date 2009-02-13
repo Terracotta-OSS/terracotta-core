@@ -10,13 +10,15 @@ import com.tc.net.NodeID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.net.DSOChannelManager;
+import com.tc.stats.counter.sampled.SampledCounter;
+import com.tc.stats.counter.sampled.TimeStampedCounterValue;
 
 import java.util.Collection;
 import java.util.Collections;
 
 public interface L2LockStatsManager {
   public final static L2LockStatsManager NULL_LOCK_STATS_MANAGER = new L2LockStatsManager() {
-    public void start(DSOChannelManager channelManager) {
+    public void start(DSOChannelManager channelManager, SampledCounter globalLockRecallCounter) {
       // do nothing
     }
     
@@ -92,9 +94,13 @@ public interface L2LockStatsManager {
       return Collections.EMPTY_LIST;
     }
     
+    public synchronized TimeStampedCounterValue[] getGlobalLockRecallHistory() {
+      return null;
+    }
+    
   };
   
-  public void start(DSOChannelManager channelManager);
+  public void start(DSOChannelManager channelManager, SampledCounter globalLockRecallCounter);
   
   public void setLockStatisticsConfig(int traceDepth, int gatherInterval);
   
@@ -131,4 +137,6 @@ public interface L2LockStatsManager {
   public void clearAllStatsFor(NodeID nodeID);
   
   public void enableStatsForNodeIfNeeded(NodeID nodeID);
+
+  public TimeStampedCounterValue[] getGlobalLockRecallHistory();
 }

@@ -50,6 +50,8 @@ import com.tc.objectserver.handler.RespondToRequestLockHandler;
 import com.tc.objectserver.lockmanager.api.LockManager;
 import com.tc.objectserver.lockmanager.api.NullChannelManager;
 import com.tc.objectserver.lockmanager.impl.LockManagerImpl;
+import com.tc.stats.counter.sampled.SampledCounter;
+import com.tc.stats.counter.sampled.TimeStampedCounterValue;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -504,9 +506,13 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public void start(DSOChannelManager channelManager) {
-      throw new ImplementMe();
+    public void start(DSOChannelManager channelManager, SampledCounter globalLockRecallCounter) {
+      throw new ImplementMe(); 
     }
+
+    public synchronized TimeStampedCounterValue[] getGlobalLockRecallHistory() {
+      return null;
+    }    
 
   }
 

@@ -20,11 +20,13 @@ public class DSOGlobalServerStatsImpl implements DSOGlobalServerStats {
   private final SampledCounter         l2FaultFromDiskCounter;
   private final SampledCounter         time2FaultFromDisk;
   private final SampledCounter         time2Add2ObjMgr;
+  private final SampledCounter         globalLockRecallCounter;
 
   public DSOGlobalServerStatsImpl(SampledCounter flushCounter, SampledCounter faultCounter, SampledCounter txnCounter,
                                   ObjectManagerStatsImpl objMgrStats, SampledCounter broadcastCounter,
                                   SampledCounter changesCounter, SampledCounter l2FaultFromDiskCounter,
-                                  SampledCounter time2FaultFromDisk, SampledCounter time2Add2ObjMgr) {
+                                  SampledCounter time2FaultFromDisk, SampledCounter time2Add2ObjMgr,
+                                  SampledCounter globalLockRecallCounter) {
     this.flushCounter = flushCounter;
     this.faultCounter = faultCounter;
     this.txnCounter = txnCounter;
@@ -34,6 +36,7 @@ public class DSOGlobalServerStatsImpl implements DSOGlobalServerStats {
     this.l2FaultFromDiskCounter = l2FaultFromDiskCounter;
     this.time2FaultFromDisk = time2FaultFromDisk;
     this.time2Add2ObjMgr = time2Add2ObjMgr;
+    this.globalLockRecallCounter = globalLockRecallCounter;
   }
 
   public SampledCounter getObjectFlushCounter() {
@@ -70,5 +73,9 @@ public class DSOGlobalServerStatsImpl implements DSOGlobalServerStats {
 
   public SampledCounter getTime2Add2ObjectMgr() {
     return time2Add2ObjMgr;
+  }
+
+  public SampledCounter getGlobalLockRecallCounter() {
+    return globalLockRecallCounter;
   }
 }

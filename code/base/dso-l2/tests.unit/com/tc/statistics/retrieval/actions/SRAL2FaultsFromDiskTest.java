@@ -48,7 +48,7 @@ public class SRAL2FaultsFromDiskTest extends TCTestCase {
     final SampledCounter time2AddCounter = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
 
     dsoGlobalServerStats = new DSOGlobalServerStatsImpl(null, null, null, null, null, null, faultsFromDisk,
-                                                        time2FaultCounter, time2AddCounter);
+                                                        time2FaultCounter, time2AddCounter, null);
 
     this.managedObjectFaultHandler = new ManagedObjectFaultHandler(faultsFromDisk, time2FaultCounter, time2AddCounter,
                                                                    new ObjectStatsRecorder());

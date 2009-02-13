@@ -17,6 +17,8 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.NoSuchChannelException;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.stats.counter.sampled.SampledCounter;
+import com.tc.stats.counter.sampled.TimeStampedCounterValue;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -30,6 +32,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
 
   private DSOChannelManager     channelManager;
   protected final Set<NodeID>   lockSpecRequestedNodeIDs = new HashSet<NodeID>();
+  private SampledCounter        globalLockRecallCounter;
 
   private final static void sendLockStatisticsEnableDisableMessage(MessageChannel channel, boolean statsEnable,
                                                                    int traceDepth, int gatherInterval) {
@@ -55,8 +58,9 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
         .getBoolean(TCPropertiesConsts.LOCK_STATISTICS_ENABLED, false);
   }
 
-  public synchronized void start(DSOChannelManager dsoChannelManager) {
+  public synchronized void start(DSOChannelManager dsoChannelManager, SampledCounter lockRecallCounter) {
     this.channelManager = dsoChannelManager;
+    this.globalLockRecallCounter = lockRecallCounter == null ? SampledCounter.NULL_SAMPLED_COUNTER : lockRecallCounter;
   }
 
   /**
@@ -105,6 +109,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
   }
 
   public synchronized void recordLockHopRequested(LockID lockID) {
+    globalLockRecallCounter.increment();
     if (!lockStatisticsEnabled) { return; }
 
     ServerLockStatisticsInfoImpl lsc = (ServerLockStatisticsInfoImpl) getLockStatInfo(lockID);
@@ -188,6 +193,10 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
 
     LockStatisticsInfo lsc = getOrCreateLockStatInfo(lockID);
     return lsc.getNumberOfLockHopRequested();
+  }
+
+  public synchronized TimeStampedCounterValue[] getGlobalLockRecallHistory() {
+    return globalLockRecallCounter.getAllSampleValues();
   }
 
   public synchronized Collection<LockSpec> getLockSpecs() {

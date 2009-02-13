@@ -102,7 +102,7 @@ public class ClientServerLockStatisticsTest extends TCTestCase {
     serverLockManager.setLockPolicy(LockManagerImpl.ALTRUISTIC_LOCK_POLICY);
 
     channel1 = new TestClientMessageChannel(channelId1, sink);
-    serverLockStatManager.start(new TestChannelManager(channel1));
+    serverLockStatManager.start(new TestChannelManager(channel1), null);
 
     clientLockStatManager.start(new TestClientChannel(channel1), sink);
     clientServerGlue.set(clientLockManager, serverLockManager, clientLockStatManager, serverLockStatManager);
@@ -114,7 +114,7 @@ public class ClientServerLockStatisticsTest extends TCTestCase {
     serverLockStatManager = new MockL2LockStatManagerImpl(localBarrier);
     serverLockManager = new LockManagerImpl(nullChannelManager, serverLockStatManager);
 
-    serverLockStatManager.start(new TestChannelManager(channel1));
+    serverLockStatManager.start(new TestChannelManager(channel1), null);
     clientServerGlue.set(clientLockManager, serverLockManager, clientLockStatManager, serverLockStatManager);
 
     final LockID l1 = new LockID("1");

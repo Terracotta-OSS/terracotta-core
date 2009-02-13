@@ -217,6 +217,7 @@ import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvictRequest;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvicted;
 import com.tc.statistics.retrieval.actions.SRADistributedGC;
+import com.tc.statistics.retrieval.actions.SRAGlobalLockRecallCount;
 import com.tc.statistics.retrieval.actions.SRAL1ReferenceCount;
 import com.tc.statistics.retrieval.actions.SRAL1ToL2FlushRate;
 import com.tc.statistics.retrieval.actions.SRAL2BroadcastCount;
@@ -752,11 +753,13 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
         .createCounter(new SampledCounterConfig(1, 300, true, 0L));
     SampledCounter globalObjectFlushCounter = (SampledCounter) this.sampledCounterManager
         .createCounter(new SampledCounterConfig(1, 300, true, 0L));
+    SampledCounter globalLockRecallCounter = (SampledCounter) this.sampledCounterManager
+        .createCounter(new SampledCounterConfig(1, 300, true, 0L));
 
     DSOGlobalServerStats serverStats = new DSOGlobalServerStatsImpl(globalObjectFlushCounter, globalObjectFaultCounter,
                                                                     globalTxnCounter, objMgrStats, broadcastCounter,
                                                                     changeCounter, l2FaultFromDisk, time2FaultFromDisk,
-                                                                    time2Add2ObjMgr);
+                                                                    time2Add2ObjMgr, globalLockRecallCounter);
 
     final TransactionStore transactionStore = new TransactionStoreImpl(transactionPersistor,
                                                                        globalTransactionIDSequence);
@@ -969,7 +972,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
       startBeanShell(this.l2Properties.getInt("beanshell.port"));
     }
 
-    lockStatsManager.start(channelManager);
+    lockStatsManager.start(channelManager, globalLockRecallCounter);
 
     CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);
     this.threadGroup.addCallbackOnExitExceptionHandler(GroupException.class, handler);
@@ -1120,6 +1123,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
       registry.registerActionInstance(new SRAL2PendingTransactions(txnManager));
       registry.registerActionInstance(new SRAServerTransactionSequencer(serverTransactionSequencerStats));
       registry.registerActionInstance(new SRAL1ReferenceCount(this.clientStateManager));
+      registry.registerActionInstance(new SRAGlobalLockRecallCount(serverStats));
       populateAdditionalStatisticsRetrivalRegistry(registry);
     }
   }

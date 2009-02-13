@@ -4,8 +4,6 @@
  */
 package com.tc.statistics.retrieval.actions;
 
-import junit.framework.TestCase;
-
 import com.tc.objectserver.core.api.DSOGlobalServerStats;
 import com.tc.objectserver.core.api.DSOGlobalServerStatsImpl;
 import com.tc.statistics.StatisticData;
@@ -17,32 +15,33 @@ import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 
-public class SRAL2TransactionCountTest extends TestCase {
+import junit.framework.TestCase;
 
+public class SRAGlobalLockRecallCountTest extends TestCase {
   private DSOGlobalServerStats dsoGlobalServerStats;
   private CounterIncrementer   counterIncrementer;
 
   protected void setUp() throws Exception {
     final CounterManager counterManager = new CounterManagerImpl();
     final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 10, true, 0L);
-    final SampledCounter transactionCounter = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
+    final SampledCounter lockRecallCounter = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
 
-    dsoGlobalServerStats = new DSOGlobalServerStatsImpl(null, null, transactionCounter, null, null, null, null, null,
-                                                        null, null);
+    dsoGlobalServerStats = new DSOGlobalServerStatsImpl(null, null, null, null, null, null, null, null, null,
+                                                        lockRecallCounter);
 
-    counterIncrementer = new CounterIncrementer(transactionCounter, 200);
+    counterIncrementer = new CounterIncrementer(lockRecallCounter, 200);
     new Thread(counterIncrementer, "Counter Incrementer").start();
   }
 
   public void testRetrieval() {
-    SRAL2TransactionCount sral2TransactionCount = new SRAL2TransactionCount(dsoGlobalServerStats);
-    Assert.assertEquals(StatisticType.SNAPSHOT, sral2TransactionCount.getType());
+    SRAGlobalLockRecallCount sraGlobalLockRecallCount = new SRAGlobalLockRecallCount(dsoGlobalServerStats);
+    Assert.assertEquals(StatisticType.SNAPSHOT, sraGlobalLockRecallCount.getType());
 
     StatisticData[] statisticDatas;
 
-    statisticDatas = sral2TransactionCount.retrieveStatisticData();
+    statisticDatas = sraGlobalLockRecallCount.retrieveStatisticData();
     Assert.assertEquals(1, statisticDatas.length);
-    Assert.assertEquals(SRAL2TransactionCount.ACTION_NAME, statisticDatas[0].getName());
+    Assert.assertEquals(SRAGlobalLockRecallCount.ACTION_NAME, statisticDatas[0].getName());
     Assert.assertNull(statisticDatas[0].getAgentIp());
     Assert.assertNull(statisticDatas[0].getAgentDifferentiator());
     long count1 = (Long) statisticDatas[0].getData();
@@ -50,9 +49,9 @@ public class SRAL2TransactionCountTest extends TestCase {
 
     ThreadUtil.reallySleep(1000);
 
-    statisticDatas = sral2TransactionCount.retrieveStatisticData();
+    statisticDatas = sraGlobalLockRecallCount.retrieveStatisticData();
     Assert.assertEquals(1, statisticDatas.length);
-    Assert.assertEquals(SRAL2TransactionCount.ACTION_NAME, statisticDatas[0].getName());
+    Assert.assertEquals(SRAGlobalLockRecallCount.ACTION_NAME, statisticDatas[0].getName());
     Assert.assertNull(statisticDatas[0].getAgentIp());
     Assert.assertNull(statisticDatas[0].getAgentDifferentiator());
     long count2 = (Long) statisticDatas[0].getData();
@@ -60,13 +59,14 @@ public class SRAL2TransactionCountTest extends TestCase {
 
     ThreadUtil.reallySleep(1000);
 
-    statisticDatas = sral2TransactionCount.retrieveStatisticData();
+    statisticDatas = sraGlobalLockRecallCount.retrieveStatisticData();
     Assert.assertEquals(1, statisticDatas.length);
-    Assert.assertEquals(SRAL2TransactionCount.ACTION_NAME, statisticDatas[0].getName());
+    Assert.assertEquals(SRAGlobalLockRecallCount.ACTION_NAME, statisticDatas[0].getName());
     Assert.assertNull(statisticDatas[0].getAgentIp());
     Assert.assertNull(statisticDatas[0].getAgentDifferentiator());
     long count3 = (Long) statisticDatas[0].getData();
     Assert.eval(count3 >= 0);
+    System.out.println("Test DONE");
   }
 
   protected void tearDown() throws Exception {

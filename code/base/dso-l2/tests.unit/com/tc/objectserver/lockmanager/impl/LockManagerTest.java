@@ -110,7 +110,7 @@ public class LockManagerTest extends TestCase {
 
     lockManager.setLockPolicy(LockManagerImpl.ALTRUISTIC_LOCK_POLICY);
     lockManager.start();
-    lockStatsManager.start(new NullChannelManager());
+    lockStatsManager.start(new NullChannelManager(), null);
 
     lockManager.requestLock(lid1, cid1, tid1, LockLevel.WRITE, String.class.getName(), sink); // hold
     lockManager.requestLock(lid1, cid2, tid1, LockLevel.WRITE, String.class.getName(), sink); // pending
