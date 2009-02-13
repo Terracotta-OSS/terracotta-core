@@ -17,10 +17,12 @@ bundled_components:
             source: tests.base
             filter: "**/*TestApp.class"
             modules:
+              - common-api
               - common
               - dso-container-tests
               - dso-l1
               - legacy-test-tree
+              - license-common
               - simulator
               - dso-system-tests
 packaging:
