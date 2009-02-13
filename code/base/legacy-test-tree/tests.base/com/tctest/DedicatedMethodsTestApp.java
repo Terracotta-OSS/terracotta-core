@@ -31,7 +31,7 @@ public abstract class DedicatedMethodsTestApp extends AbstractTransparentApp {
       final List<String> tests = getTestNames();
 
       for (String test : tests) {
-        if (0 == getBarrierForNodeCoordination().await()) {
+        if (null == getBarrierForNodeCoordination() || 0 == getBarrierForNodeCoordination().await()) {
           System.out.println("Running " + test + " ...");
         }
 
