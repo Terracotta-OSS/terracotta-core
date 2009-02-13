@@ -12,7 +12,6 @@ import org.apache.xmlbeans.XmlOptions;
 import org.terracotta.ui.session.pattern.PatternHelper;
 
 import com.tc.config.Loader;
-import com.tc.config.schema.migrate.ConfigUpdateException;
 import com.tc.object.tools.BootJarSignature;
 import com.terracottatech.config.AdditionalBootJarClasses;
 import com.terracottatech.config.Application;
@@ -73,7 +72,6 @@ public class ConfigHelper {
     configLoader = new Loader();
     xmlOptions = createXmlOptions();
     configFile = new File(SANDBOX + FS + "jetty6.1" + FS + "tc-config.xml");
-    testUpdateConfig();
   }
 
   public synchronized void addPropertyChangeListener(PropertyChangeListener listener) {
@@ -90,19 +88,6 @@ public class ConfigHelper {
   public void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
     if (propertyChangeSupport != null) {
       propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
-    }
-  }
-
-  private void testUpdateConfig() {
-    try {
-      if (configFile.exists()) {
-        if (configLoader.testIsOld(configFile)) {
-          configLoader.updateToCurrent(configFile);
-        }
-      }
-    } catch (ConfigUpdateException cue) {
-      // TODO: we need to handle this
-    } catch (Exception e) {/**/
     }
   }
 

@@ -8,10 +8,6 @@ import org.apache.xmlbeans.SchemaType;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlOptions;
 
-import com.tc.config.schema.migrate.ConfigUpdate;
-import com.tc.config.schema.migrate.V1toV2;
-import com.tc.config.schema.migrate.V2toV3;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -24,13 +20,6 @@ import java.net.URL;
  */
 public final class Loader {
 
-  private final ConfigUpdate[] converters;
-
-  public Loader() {
-    // order newest to oldest -- don't ever hotswap converters
-    converters = new ConfigUpdate[] { new V2toV3(), new V1toV2() };
-  }
-
   private com.terracottatech.config.TcConfigDocument convert(InputStream in, XmlOptions xmlOptions) throws IOException,
       XmlException {
     byte[] data = new byte[in.available()];
@@ -40,27 +29,7 @@ public final class Loader {
     SchemaType type = com.terracottatech.config.TcConfigDocument.type;
     if (xmlOptions == null) xmlOptions = new XmlOptions();
     xmlOptions.setDocumentType(type);
-    try {
-      return com.terracottatech.config.TcConfigDocument.Factory.parse(ain, xmlOptions);
-    } catch (XmlException e) {
-      ain.reset();
-      return com.terracottatech.config.TcConfigDocument.Factory.parse(updateConfig(ain, 0, xmlOptions), xmlOptions);
-    }
-  }
-
-  private synchronized InputStream updateConfig(InputStream in, int index, XmlOptions xmlOptions) throws IOException,
-      XmlException {
-    byte[] data = new byte[in.available()];
-    in.read(data);
-    in.close();
-    ByteArrayInputStream ain = new ByteArrayInputStream(data);
-    try {
-      return converters[index].convert(ain, xmlOptions);
-    } catch (XmlException e) {
-      if (index == converters.length - 1) throw e;
-      ain.reset();
-      return converters[index].convert(updateConfig(ain, index + 1, xmlOptions), xmlOptions);
-    }
+    return com.terracottatech.config.TcConfigDocument.Factory.parse(ain, xmlOptions);
   }
 
   public com.terracottatech.config.TcConfigDocument parse(File file) throws IOException, XmlException {
@@ -99,25 +68,4 @@ public final class Loader {
     return convert(url.openStream(), xmlOptions);
   }
 
-  public boolean testIsOld(File file) {
-    return !testIsCurrent(file);
-  }
-
-  public boolean testIsCurrent(File file) {
-    try {
-      com.terracottatech.config.TcConfigDocument.Factory.parse(new FileInputStream(file));
-      return true;
-    } catch (Exception e) {
-      return false;
-    }
-  }
-
-  public void updateToCurrent(File file) throws IOException, XmlException {
-    XmlOptions options = null;
-    synchronized (converters) {
-      options = converters[0].createDefaultXmlOptions();
-    }
-    com.terracottatech.config.TcConfigDocument doc = convert(new FileInputStream(file), options);
-    doc.save(file);
-  }
 }
