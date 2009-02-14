@@ -21,7 +21,6 @@ if test ! -d "${JRUBY_HOME}"; then
 	"${ANT_HOME}/bin/ant" -buildfile "`dirname $0`/buildconfig/build.xml"
 fi
 
-
 	echo ""
 	echo "--------------------------------------------------------------------------------"
 	echo "RUNNING ECLIPSE2MAVEN"
