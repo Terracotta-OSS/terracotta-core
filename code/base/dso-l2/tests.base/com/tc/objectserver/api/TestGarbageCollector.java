@@ -12,6 +12,8 @@ import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
+import com.tc.objectserver.dgc.impl.GCHook;
+import com.tc.objectserver.dgc.impl.YoungGenChangeCollector;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
@@ -244,11 +246,12 @@ public class TestGarbageCollector implements GarbageCollector {
 
   }
 
-  public void gc() {
+  public void doGC(GCHook hook) {
     collect(null, objectProvider.getRootIDs(), objectProvider.getAllObjectIDs(), new NullLifeCycleState());
     this.requestGCPause();
     this.blockUntilReadyToGC();
     this.deleteGarbage(new GCResultContext(1,TCCollections.EMPTY_OBJECT_ID_SET));
+    
   }
 
   public void addNewReferencesTo(Set rescueIds) {
@@ -300,10 +303,6 @@ public class TestGarbageCollector implements GarbageCollector {
     this.notifyGCComplete();
     return true;
   }
-  
-  public void gcYoung() {
-    throw new ImplementMe();
-  }
 
   public void notifyNewObjectInitalized(ObjectID id) {
     // NOP
@@ -319,6 +318,18 @@ public class TestGarbageCollector implements GarbageCollector {
 
   public boolean requestGCStart() {
     throw new ImplementMe();
+  }
+
+  public YoungGenChangeCollector getYoungGenChangeCollector() {
+    return null;
+  }
+
+  public void startMonitoringReferenceChanges() {
+   //
+  }
+
+  public void stopMonitoringReferenceChanges() {
+   //
   }
 
 }

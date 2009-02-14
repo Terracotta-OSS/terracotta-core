@@ -65,8 +65,8 @@ public class NullGarbageCollector implements GarbageCollector {
     // do nothing null
   }
 
-  public void gc() {
-    // do nothing null
+  public void doGC(GCHook hook) {
+    //
   }
 
   public void addNewReferencesTo(Set rescueIds) {
@@ -113,11 +113,6 @@ public class NullGarbageCollector implements GarbageCollector {
     return true;
   }
   
-
-  public void gcYoung() {
-    // do nothing null
-  }
-
   public void notifyNewObjectInitalized(ObjectID id) {
     // do nothing null
   }
@@ -132,6 +127,19 @@ public class NullGarbageCollector implements GarbageCollector {
 
   public boolean requestGCStart() {
     return false;
+  }
+  
+
+  public YoungGenChangeCollector getYoungGenChangeCollector() {
+    return null;
+  }
+
+  public void startMonitoringReferenceChanges() {
+   //
+  }
+
+  public void stopMonitoringReferenceChanges() {
+   //
   }
 
 }

@@ -7,9 +7,7 @@ package com.tc.objectserver.dgc.api;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.impl.GCTestObjectManager;
 import com.tc.objectserver.core.impl.TestManagedObject;
-import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
-import com.tc.objectserver.dgc.api.GarbageCollector;
-import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
+import com.tc.objectserver.dgc.impl.FullGCHook;
 import com.tc.objectserver.dgc.impl.MarkAndSweepGarbageCollector;
 import com.tc.objectserver.impl.ObjectManagerConfig;
 import com.tc.objectserver.l1.api.TestClientStateManager;
@@ -17,7 +15,6 @@ import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.impl.NullPersistenceTransactionProvider;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -46,8 +43,7 @@ public class GCStatsEventPublisherTest extends TestCase {
     this.lookedUp = new HashSet<ObjectID>();
     this.released = new HashSet<ObjectID>();
     this.objectManager = new GCTestObjectManager(lookedUp, released, transactionProvider);
-    this.collector = new MarkAndSweepGarbageCollector(this.objectManager, new TestClientStateManager(),
-                                                      new ObjectManagerConfig(300000, true, true, true, true, 60000));
+    this.collector = new MarkAndSweepGarbageCollector(new ObjectManagerConfig(300000, true, true, true, true, 60000));
     this.objectManager.setGarbageCollector(collector);
     this.objectManager.start();
     this.root1 = createObject(8);
@@ -57,9 +53,11 @@ public class GCStatsEventPublisherTest extends TestCase {
   }
 
   private TestManagedObject createObject(int refCount) {
-    ObjectID[] ids = new ObjectID[refCount];
+    ArrayList<ObjectID> ids = new ArrayList<ObjectID>(refCount);
 
-    Arrays.fill(ids, ObjectID.NULL_ID);
+    for (int i = 0; i < refCount; i++) {
+      ids.add(ObjectID.NULL_ID);
+    }
 
     TestManagedObject tmo = new TestManagedObject(nextID(), ids);
     objectManager.createObject(tmo.getID(), tmo.getReference());
@@ -83,7 +81,7 @@ public class GCStatsEventPublisherTest extends TestCase {
     TestGarbageCollectionInfoCallsListener listener = new TestGarbageCollectionInfoCallsListener();
     collector.addListener(listener);
     collector.start();
-    collector.gc();
+    collector.doGC(new FullGCHook(collector, objectManager,new TestClientStateManager()));
     collector.stop();
     assertEquals(1, listener.startList.size());
     assertEquals(1, listener.markList.size());
@@ -98,15 +96,13 @@ public class GCStatsEventPublisherTest extends TestCase {
     assertEquals(1, listener.cycleCompletedList.size());
 
   }
-  
-  
-  
+
   public void testGarbageCollectorListenerShortCircuit() {
-   
+
     TestGarbageCollectionInfoCallsListener listener = new TestGarbageCollectionInfoCallsListener();
     collector.addListener(listener);
     collector.start();
-    collector.gc();
+    collector.doGC(new FullGCHook(collector, objectManager,new TestClientStateManager()));
     collector.stop();
     assertEquals(1, listener.startList.size());
     assertEquals(1, listener.markList.size());
@@ -116,7 +112,7 @@ public class GCStatsEventPublisherTest extends TestCase {
     assertEquals(1, listener.cycleCompletedList.size());
 
   }
-  
+
   private static class TestGarbageCollectionInfoCallsListener extends TestGarbageCollectorEventListener {
 
     @Override
@@ -195,6 +191,8 @@ public class GCStatsEventPublisherTest extends TestCase {
     protected List cycleCompletedList  = new ArrayList();
 
     protected List completedList       = new ArrayList();
+    
+    protected List cancelList         =  new ArrayList();
 
     public void garbageCollectorStart(GarbageCollectionInfo info) {
       startList.add(info);
@@ -238,6 +236,10 @@ public class GCStatsEventPublisherTest extends TestCase {
 
     public void garbageCollectorCompleted(GarbageCollectionInfo info) {
       completedList.add(info);
+    }
+
+    public void garbageCollectorCanceled(GarbageCollectionInfo info) {
+      cancelList.add(info);
     }
 
   }

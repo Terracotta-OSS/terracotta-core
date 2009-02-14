@@ -8,7 +8,7 @@ import com.tc.util.ObjectIDSet;
 
 import java.util.List;
 
-public class GarbageCollectionInfo {
+public class GarbageCollectionInfo implements Cloneable {
 
   protected static final long NOT_INITIALIZED       = -1L;
 
@@ -175,4 +175,25 @@ public class GarbageCollectionInfo {
            + actualGarbageCount + " pre rescue count = " + preRescueCount + " rescue 1 count = " + rescue1Count
            + " Garbage  = " + (toDelete == null ? "Not Set " : toDelete.size());
   }
+
+  @Override
+  public Object clone() {
+    GarbageCollectionInfo gcInfo = new GarbageCollectionInfo(this.iteration, this.fullGC);
+    gcInfo.setBeginObjectCount(getBeginObjectCount());
+    gcInfo.setCandidateGarbageCount((int)getCandidateGarbageCount());
+    gcInfo.setDeleted(getDeleted());
+    gcInfo.setDeleteStageTime(getDeleteStageTime());
+    gcInfo.setElapsedTime(getElapsedTime());
+    gcInfo.setMarkStageTime(getMarkStageTime());
+    gcInfo.setObject(getObject());
+    gcInfo.setPausedStageTime(getPausedStageTime());
+    gcInfo.setPreRescueCount(getPreRescueCount());
+    gcInfo.setRescue1Count(getRescue1Count());
+    gcInfo.setStartTime(getStartTime());
+    gcInfo.setTotalMarkCycleTime(getTotalMarkCycleTime());
+    return gcInfo;
+  }
+  
+  
+  
 }

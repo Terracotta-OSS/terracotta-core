@@ -6,16 +6,23 @@ package com.tc.objectserver.dgc.api;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.context.GCResultContext;
-import com.tc.objectserver.core.api.Filter;
+import com.tc.objectserver.dgc.impl.GCHook;
+import com.tc.objectserver.dgc.impl.YoungGenChangeCollector;
 import com.tc.text.PrettyPrintable;
-import com.tc.util.ObjectIDSet;
-import com.tc.util.concurrent.LifeCycleState;
+import com.tc.util.State;
 import com.tc.util.concurrent.StoppableThread;
 
 import java.util.Collection;
 import java.util.Set;
 
 public interface GarbageCollector extends PrettyPrintable {
+
+  public static final State GC_DISABLED = new State("GC_DISABLED");
+  public static final State GC_RUNNING  = new State("GC_RUNNING");
+  public static final State GC_SLEEP    = new State("GC_SLEEP");
+  public static final State GC_PAUSING  = new State("GC_PAUSING");
+  public static final State GC_PAUSED   = new State("GC_PAUSED");
+  public static final State GC_DELETE   = new State("GC_DELETE");
 
   public boolean requestGCStart();
 
@@ -43,23 +50,16 @@ public interface GarbageCollector extends PrettyPrintable {
    * Called by the GC thread. Notifies the garbage collector that GC is complete.
    */
   public void notifyGCComplete();
-  
-  /**
-   * @param traverser Determines whether or not to traverse a given tree node.
-   * @param roots
-   * @param managedObjects
-   * @return An set on the objects that can be deleted
-   */
-  public ObjectIDSet collect(Filter traverser, Collection roots, ObjectIDSet managedObjectIds);
-
-  public ObjectIDSet collect(Filter traverser, Collection roots, ObjectIDSet managedObjectIds, LifeCycleState state);
 
   public void changed(ObjectID changedObject, ObjectID oldReference, ObjectID newReference);
 
-  public void gc();
+  public void doGC(GCHook hook);
 
   public void addNewReferencesTo(Set rescueIds);
 
+  /**
+   * This method is called when the server transitions from PASSIVE to ACTIVE
+   */
   public void start();
 
   public void stop();
@@ -67,9 +67,15 @@ public interface GarbageCollector extends PrettyPrintable {
   public boolean isStarted();
 
   public void setState(StoppableThread st);
-  
+
   public void addListener(GarbageCollectorEventListener listener);
-  
+
+  public void startMonitoringReferenceChanges();
+
+  public void stopMonitoringReferenceChanges();
+
+  public YoungGenChangeCollector getYoungGenChangeCollector();
+
   public boolean deleteGarbage(GCResultContext resultContext);
 
   /**
@@ -91,11 +97,5 @@ public interface GarbageCollector extends PrettyPrintable {
    * interested in doing YoungGen collection could ignore this call.
    */
   public void notifyObjectsEvicted(Collection evicted);
-
-  /**
-   * This is the method called on the collector to do YoungGen collection, collectors that are not interested in doing
-   * YoungGen collection could ignore this call.
-   */
-  public void gcYoung();
 
 }

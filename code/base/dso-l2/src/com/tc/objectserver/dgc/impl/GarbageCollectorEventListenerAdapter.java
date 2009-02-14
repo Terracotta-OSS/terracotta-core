@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.dgc.impl;
 
@@ -9,15 +10,15 @@ import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
 public abstract class GarbageCollectorEventListenerAdapter implements GarbageCollectorEventListener {
 
   public void garbageCollectorCompleted(GarbageCollectionInfo info) {
-    //do nothing
+    // do nothing
   }
 
   public void garbageCollectorCycleCompleted(GarbageCollectionInfo info) {
-   //
+    //
   }
 
   public void garbageCollectorDelete(GarbageCollectionInfo info) {
-   //
+    //
   }
 
   public void garbageCollectorMarkComplete(GarbageCollectionInfo info) {
@@ -29,7 +30,7 @@ public abstract class GarbageCollectorEventListenerAdapter implements GarbageCol
   }
 
   public void garbageCollectorMarkResults(GarbageCollectionInfo info) {
-   //
+    //
   }
 
   public void garbageCollectorPaused(GarbageCollectionInfo info) {
@@ -52,4 +53,7 @@ public abstract class GarbageCollectorEventListenerAdapter implements GarbageCol
     //
   }
 
+  public void garbageCollectorCanceled(GarbageCollectionInfo info) {
+    //
+  }
 }

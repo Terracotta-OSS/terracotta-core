@@ -8,6 +8,7 @@ import com.tc.async.api.EventContext;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
+import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
 
 import java.util.SortedSet;
 
@@ -72,6 +73,18 @@ public class GCResultContext implements EventContext {
                                                                                                                                 GarbageCollectionInfo info) {
                                                                                                  // do nothing
                                                                                                }
+
+                                                                                              public void addListener(
+                                                                                                                      GarbageCollectorEventListener listener) {
+                                                                                                // do nothing
+                                                                                                 
+                                                                                              }
+
+                                                                                              public void fireGCCanceledEvent(
+                                                                                                                              GarbageCollectionInfo info) {
+                                                                                                // do nothing
+                                                                                                 
+                                                                                              }
                                                                                              };
 
   private final int                                   gcIteration;

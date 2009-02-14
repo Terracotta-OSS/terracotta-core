@@ -4,7 +4,6 @@
  */
 package com.tc.objectserver.dgc.api;
 
-
 public interface GarbageCollectorEventListener {
 
   public void garbageCollectorStart(GarbageCollectionInfo info);
@@ -28,5 +27,7 @@ public interface GarbageCollectorEventListener {
   public void garbageCollectorCycleCompleted(GarbageCollectionInfo info);
 
   public void garbageCollectorCompleted(GarbageCollectionInfo info);
+
+  public void garbageCollectorCanceled(GarbageCollectionInfo info);
 
 }

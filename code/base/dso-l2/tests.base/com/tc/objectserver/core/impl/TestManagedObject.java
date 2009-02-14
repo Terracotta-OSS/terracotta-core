@@ -29,8 +29,9 @@ import gnu.trove.TLinkable;
 
 import java.io.ObjectOutput;
 import java.io.Serializable;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -38,22 +39,22 @@ import java.util.Set;
  */
 public class TestManagedObject implements ManagedObject, ManagedObjectReference, Serializable {
   public final NoExceptionLinkedQueue setTransientStateCalls = new NoExceptionLinkedQueue();
-  private ObjectID                    id;
-  private ObjectID[]                  references;
+  private final ObjectID              id;
+  private final ArrayList<ObjectID>   references;
   public boolean                      isDirty;
   public boolean                      isNew;
 
-  public TestManagedObject(ObjectID id, ObjectID[] references) {
+  public TestManagedObject(ObjectID id, ArrayList<ObjectID> references) {
     this.id = id;
     this.references = references;
   }
 
   public TestManagedObject(ObjectID id) {
-    this(id, new ObjectID[0]);
+    this(id, new ArrayList<ObjectID>());
   }
 
   public void setReference(int index, ObjectID id) {
-    this.references[index] = id;
+    this.references.add(index, id);
   }
 
   public ObjectID getID() {
@@ -61,7 +62,7 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
   }
 
   public Set<ObjectID> getObjectReferences() {
-    return new HashSet<ObjectID>(Arrays.asList(references));
+    return new HashSet<ObjectID>(references);
   }
 
   public void apply(DNA dna, TransactionID txID, BackReferences includeIDs, ObjectInstanceMonitor imo) {
@@ -92,8 +93,16 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     this.isDirty = isDirty;
   }
 
-  public void setReferences(ObjectID[] references) {
-    this.references = references;
+  public synchronized void addReferences(Set<ObjectID> ids) {
+    for (Iterator<ObjectID> iter = ids.iterator(); iter.hasNext();) {
+      this.references.add(iter.next());
+    }
+  }
+
+  public synchronized void removeReferences(Set<ObjectID> ids) {
+    for (Iterator<ObjectID> iter = ids.iterator(); iter.hasNext();) {
+      this.references.remove(iter.next());
+    }
   }
 
   public boolean isNew() {
@@ -118,7 +127,7 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     return removeOnRelease;
   }
 
-  boolean referenced;
+  boolean referenced = false;
 
   public void markReference() {
     referenced = true;
@@ -193,7 +202,7 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
 
   public void apply(DNA dna, TransactionID txnID, BackReferences includeIDs, ObjectInstanceMonitor instanceMonitor,
                     boolean ignoreIfOlderDNA) throws DNAException {
-    //TODO: do i need to implement this?
+    // TODO: do i need to implement this?
   }
 
   public long getVersion() {
@@ -203,7 +212,7 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
   public void setIsNew(boolean newFlag) {
     this.isNew = newFlag;
   }
-  
+
   private class NullManagedObjectState extends AbstractManagedObjectState {
     private final byte type = 0;
 

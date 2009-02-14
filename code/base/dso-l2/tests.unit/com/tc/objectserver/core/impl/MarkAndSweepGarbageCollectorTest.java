@@ -6,25 +6,30 @@ package com.tc.objectserver.core.impl;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.Filter;
-import com.tc.objectserver.dgc.api.GarbageCollector;
+import com.tc.objectserver.dgc.impl.FullGCHook;
 import com.tc.objectserver.dgc.impl.MarkAndSweepGarbageCollector;
+import com.tc.objectserver.dgc.impl.YoungGCHook;
 import com.tc.objectserver.impl.ObjectManagerConfig;
+import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.api.TestClientStateManager;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.impl.NullPersistenceTransactionProvider;
-import java.util.Arrays;
+
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+
 import junit.framework.TestCase;
 
 public class MarkAndSweepGarbageCollectorTest extends TestCase {
   protected long                           objectIDCounter     = 0;
   protected TestManagedObject              root1;
   protected TestManagedObject              root2;
-  protected GarbageCollector               collector;
+  protected MarkAndSweepGarbageCollector   collector;
   protected Set                            lookedUp;
   protected Set                            released;
   protected GCTestObjectManager            objectManager;
+  protected ClientStateManager             stateManager;
   protected PersistenceTransactionProvider transactionProvider = new NullPersistenceTransactionProvider();
 
   private Filter                           filter              = new Filter() {
@@ -50,8 +55,8 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     this.lookedUp = new HashSet<ObjectID>();
     this.released = new HashSet<ObjectID>();
     this.objectManager = new GCTestObjectManager(lookedUp, released, transactionProvider);
-    this.collector = new MarkAndSweepGarbageCollector(this.objectManager, new TestClientStateManager(),
-                                                      new ObjectManagerConfig(300000, true, true, true, true, 60000));
+    this.stateManager =  new TestClientStateManager();
+    this.collector = new MarkAndSweepGarbageCollector(new ObjectManagerConfig(300000, true, true, true, true, 60000));
     this.objectManager.setGarbageCollector(collector);
     this.objectManager.start();
     this.root1 = createObject(8);
@@ -65,14 +70,14 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
   }
 
   public void testEmptyRoots() {
-    Set toDelete = collector.collect(filter, objectManager.getRootIDs(), objectManager.getAllObjectIDs());
+    Set toDelete = collector.collect(new FullGCHook(collector, objectManager, stateManager), filter, objectManager.getRootIDs(), objectManager.getAllObjectIDs());
     assertTrue(toDelete.size() == 0);
   }
 
   public void testOneLevelNoGarbage() {
     TestManagedObject tmo = createObject(3);
     root1.setReference(0, tmo.getID());
-    Set toDelete = collector.collect(filter, objectManager.getRootIDs(), objectManager.getAllObjectIDs());
+    Set toDelete = collector.collect(new FullGCHook(collector, objectManager, stateManager),filter, objectManager.getRootIDs(), objectManager.getAllObjectIDs());
     assertTrue(toDelete.size() == 0);
   }
 
@@ -80,7 +85,7 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     TestManagedObject tmo = createObject(3);
     root1.setReference(0, tmo.getID());
     root2.setReference(0, tmo.getID());
-    Set toDelete = collector.collect(filter, objectManager.getRootIDs(), objectManager.getAllObjectIDs());
+    Set toDelete = collector.collect(new FullGCHook(collector, objectManager, stateManager),filter, objectManager.getRootIDs(), objectManager.getAllObjectIDs());
     assertTrue(toDelete.size() == 0);
   }
 
@@ -92,7 +97,7 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
 
     root1.setReference(0, tmo1.getID());
 
-    Set toDelete = collector.collect(filter, objectManager.getRootIDs(), objectManager.getAllObjectIDs());
+    Set toDelete = collector.collect(new FullGCHook(collector, objectManager, stateManager),filter, objectManager.getRootIDs(), objectManager.getAllObjectIDs());
     assertTrue(toDelete.size() == 0);
   }
 
@@ -106,7 +111,7 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
 
     root1.setReference(0, tmo1.getID());
 
-    Set toDelete = collector.collect(filter, objectManager.getRootIDs(), objectManager.getAllObjectIDs());
+    Set toDelete = collector.collect(new FullGCHook(collector, objectManager, stateManager), filter, objectManager.getRootIDs(), objectManager.getAllObjectIDs());
     assertTrue(toDelete.size() == 1);
   }
 
@@ -132,13 +137,13 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     };
 
     // make sure that the filter filters out the sub-graph starting at the reference to tmo2.
-    collector.collect(testFilter, objectManager.getRootIDs(), objectManager.getAllObjectIDs());
+    collector.collect(new FullGCHook(collector, objectManager, stateManager),testFilter, objectManager.getRootIDs(), objectManager.getAllObjectIDs());
     assertTrue(this.lookedUp.contains(tmo1.getID()));
     assertFalse(this.lookedUp.contains(tmo2.getID()));
     assertFalse(this.lookedUp.contains(tmo3.getID()));
 
     // try it with the regular filter to make sure the behavior is actually different.
-    collector.collect(filter, objectManager.getRootIDs(), objectManager.getAllObjectIDs());
+    collector.collect(new FullGCHook(collector, objectManager, stateManager),filter, objectManager.getRootIDs(), objectManager.getAllObjectIDs());
     assertTrue(this.lookedUp.contains(tmo1.getID()));
     assertTrue(this.lookedUp.contains(tmo2.getID()));
     assertTrue(this.lookedUp.contains(tmo3.getID()));
@@ -156,7 +161,7 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
 
     root1.setReference(0, tmo1.getID());
 
-    collector.collect(filter, objectManager.getRootIDs(), objectManager.getAllObjectIDs());
+    collector.collect(new FullGCHook(collector, objectManager, stateManager),filter, objectManager.getRootIDs(), objectManager.getAllObjectIDs());
     assertTrue(lookedUp.equals(released));
   }
 
@@ -184,8 +189,9 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     final TestManagedObject tmo1 = createObject(3);
     createLoopFrom(tmo1, 10);
     root1.setReference(0, tmo1.getID());
-
-    collector.gcYoung();
+    
+    YoungGCHook youngGCHook = new YoungGCHook(collector,objectManager,stateManager);
+    collector.doGC(youngGCHook);
     Set deleted = objectManager.getGCedObjectIDs();
     assertTrue(deleted.isEmpty());
 
@@ -199,37 +205,37 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     createLoopFrom(tmo3, 10);
     root1.setReference(2, tmo3.getID());
 
-    collector.gcYoung();
+    collector.doGC(youngGCHook);
     deleted = objectManager.getGCedObjectIDs();
     assertTrue(deleted.isEmpty());
 
     // evict tmo1, still youngGen returns no garbage
     objectManager.evict(tmo1.getID());
-    collector.gcYoung();
+    collector.doGC(youngGCHook);
     deleted = objectManager.getGCedObjectIDs();
     assertTrue(deleted.isEmpty());
 
     // now make the first loop garbage, still young gen returns no garbage
     root1.setReference(0, ObjectID.NULL_ID);
-    collector.gcYoung();
+    collector.doGC(youngGCHook);
     deleted = objectManager.getGCedObjectIDs();
     assertTrue(deleted.isEmpty());
 
     // now make the second loop garbage
     root1.setReference(1, ObjectID.NULL_ID);
-    collector.gcYoung();
-    deleted = objectManager.getGCedObjectIDs();
+    collector.doGC(youngGCHook);
+     deleted = objectManager.getGCedObjectIDs();
     assertFalse(deleted.isEmpty());
     assertTrue(deleted.contains(tmo2.getID()));
     assertEquals(11, deleted.size());
 
     // perform yet another young generation GC, but no garbage
-    collector.gcYoung();
+    collector.doGC(youngGCHook);
     deleted = objectManager.getGCedObjectIDs();
     assertTrue(deleted.isEmpty());
 
     // perform full GC and find the garbage
-    collector.gc();
+    collector.doGC(new FullGCHook(collector, objectManager, stateManager));
     deleted = objectManager.getGCedObjectIDs();
     assertFalse(deleted.isEmpty());
     assertTrue(deleted.contains(tmo1.getID()));
@@ -242,9 +248,11 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
   }
 
   private TestManagedObject createObject(int refCount) {
-    ObjectID[] ids = new ObjectID[refCount];
+    ArrayList<ObjectID> ids = new ArrayList<ObjectID>(refCount);
 
-    Arrays.fill(ids, ObjectID.NULL_ID);
+    for (int i = 0; i < refCount; i++) {
+      ids.add(ObjectID.NULL_ID);
+    }
 
     TestManagedObject tmo = new TestManagedObject(nextID(), ids);
     objectManager.createObject(tmo.getID(), tmo.getReference());

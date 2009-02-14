@@ -32,6 +32,7 @@ import com.tc.util.SyncObjectIdSet;
 
 import java.io.File;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -107,7 +108,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
     for (int i = 0; i < num; i++) {
       long id = (long) r.nextInt(num * 10) + 1;
       if (ids.add(new Long(id))) {
-        ManagedObject mo = new TestPersistentStateManagedObject(new ObjectID(id), new ObjectID[] {},
+        ManagedObject mo = new TestPersistentStateManagedObject(new ObjectID(id), new ArrayList<ObjectID>(),
                                                                 withPersistentCollectionState);
         objects.add(mo);
         objectStore.addNewObject(mo);
@@ -368,11 +369,11 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
 
     private ManagedObjectState state;
 
-    public TestPersistentStateManagedObject(ObjectID id, ObjectID[] references) {
+    public TestPersistentStateManagedObject(ObjectID id, ArrayList<ObjectID> references) {
       this(id, references, false);
     }
 
-    public TestPersistentStateManagedObject(ObjectID id, ObjectID[] references, boolean isPersistentCollectionMap) {
+    public TestPersistentStateManagedObject(ObjectID id, ArrayList<ObjectID> references, boolean isPersistentCollectionMap) {
       super(id, references);
       byte type = (isPersistentCollectionMap) ? ManagedObjectState.MAP_TYPE : ManagedObjectState.PHYSICAL_TYPE;
       state = new TestManagedObjectState(type);

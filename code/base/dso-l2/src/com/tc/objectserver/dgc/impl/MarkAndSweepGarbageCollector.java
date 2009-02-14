@@ -7,18 +7,13 @@ package com.tc.objectserver.dgc.impl;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
-import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.core.api.ManagedObject;
-import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
 import com.tc.objectserver.impl.ObjectManagerConfig;
-import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
@@ -26,7 +21,6 @@ import com.tc.util.State;
 import com.tc.util.concurrent.LifeCycleState;
 import com.tc.util.concurrent.NullLifeCycleState;
 import com.tc.util.concurrent.StoppableThread;
-import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -44,16 +38,6 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
 
   static final TCLogger                            logger                      = TCLogging
                                                                                    .getLogger(MarkAndSweepGarbageCollector.class);
-
-  private static final long                        THROTTLE_GC_MILLIS          = TCPropertiesImpl
-                                                                                   .getProperties()
-                                                                                   .getLong(
-                                                                                            TCPropertiesConsts.L2_OBJECTMANAGER_DGC_THROTTLE_TIME);
-
-  private static final long                        REQUESTS_PER_THROTTLE       = TCPropertiesImpl
-                                                                                   .getProperties()
-                                                                                   .getLong(
-                                                                                            TCPropertiesConsts.L2_OBJECTMANAGER_DGC_REQUEST_PER_THROTTLE);
 
   private static final ChangeCollector             NULL_CHANGE_COLLECTOR       = new ChangeCollector() {
                                                                                  public void changed(
@@ -107,12 +91,6 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
                                                                                  }
                                                                                };
 
-  private static final Filter                      NULL_FILTER                 = new Filter() {
-                                                                                 public boolean shouldVisit(
-                                                                                                            ObjectID referencedObject) {
-                                                                                   return true;
-                                                                                 }
-                                                                               };
   private static final LifeCycleState              NULL_LIFECYCLE_STATE        = new NullLifeCycleState();
 
   private static final State                       GC_DISABLED                 = new State("GC_DISABLED");
@@ -123,8 +101,6 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
   private static final State                       GC_DELETE                   = new State("GC_DELETE");
 
   private final AtomicInteger                      gcIterationCounter          = new AtomicInteger(0);
-  private final ObjectManager                      objectManager;
-  private final ClientStateManager                 stateManager;
   private final GarbageCollectionInfoPublisherImpl gcPublisher                 = new GarbageCollectionInfoPublisherImpl();
   private final ObjectManagerConfig                objectManagerConfig;
 
@@ -133,28 +109,16 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
   private volatile YoungGenChangeCollector         youngGenReferenceCollector  = NULL_YOUNG_CHANGE_COLLECTOR;
   private volatile LifeCycleState                  gcState                     = new NullLifeCycleState();
   private volatile boolean                         started                     = false;
+  private GCHook                                   gcHook;
 
-  public MarkAndSweepGarbageCollector(ObjectManager objectManager, ClientStateManager stateManager,
-                                      ObjectManagerConfig objectManagerConfig) {
+  public MarkAndSweepGarbageCollector(ObjectManagerConfig objectManagerConfig) {
     this.objectManagerConfig = objectManagerConfig;
-    this.objectManager = objectManager;
-    this.stateManager = stateManager;
     addListener(new GCLoggerEventPublisher(logger, objectManagerConfig.verboseGC()));
   }
 
-  /**
-   * For state transition diagram look here. http://intranet.terracotta.lan/xwiki/bin/view/Main/DGC+Lifecycle
-   */
-  public void gc() {
-    doGC(new FullGCHook(this, this.objectManager, this.stateManager));
-  }
-
-  public void gcYoung() {
-    doGC(new YoungGCHook(this, this.objectManager, this.stateManager, this.youngGenReferenceCollector));
-  }
-
-  private void doGC(GCHook gcHook) {
-    MarkAndSweepGCAlgorithm gcAlgo = new MarkAndSweepGCAlgorithm(this, gcHook, gcPublisher, gcState, gcIterationCounter
+  public void doGC(GCHook hook) {
+    gcHook = hook;
+    MarkAndSweepGCAlgorithm gcAlgo = new MarkAndSweepGCAlgorithm(this, hook, gcPublisher, gcState, gcIterationCounter
         .incrementAndGet());
     gcAlgo.doGC();
   }
@@ -162,19 +126,19 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
   public boolean deleteGarbage(GCResultContext gcResult) {
     if (requestGCDeleteStart()) {
       youngGenReferenceCollector.removeGarbage(gcResult.getGCedObjectIDs());
-      objectManager.notifyGCComplete(gcResult);
+      gcHook.notifyGCComplete(gcResult);
       notifyGCComplete();
       return true;
     }
     return false;
   }
 
-  private void startMonitoringReferenceChanges() {
+  public void startMonitoringReferenceChanges() {
     this.referenceCollector = new NewReferenceCollector();
     this.youngGenReferenceCollector.startMonitoringChanges();
   }
 
-  private void stopMonitoringReferenceChanges() {
+  public void stopMonitoringReferenceChanges() {
     this.referenceCollector = NULL_CHANGE_COLLECTOR;
     this.youngGenReferenceCollector.stopMonitoringChanges();
   }
@@ -202,18 +166,17 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
   /**
    * Used for Tests. TODO:: Re-factor tests and remove this method
    */
-  public ObjectIDSet collect(Filter filter, Collection rootIds, ObjectIDSet managedObjectIds) {
-    return collect(filter, rootIds, managedObjectIds, NULL_LIFECYCLE_STATE);
+  public ObjectIDSet collect(GCHook hook, Filter filter, Collection rootIds, ObjectIDSet managedObjectIds) {
+    return collect(hook, filter, rootIds, managedObjectIds, NULL_LIFECYCLE_STATE);
   }
 
   /**
    * Used for Tests. TODO:: Re-factor tests and remove this method
    */
-  public ObjectIDSet collect(Filter traverser, Collection roots, ObjectIDSet managedObjectIds, LifeCycleState lstate) {
-    MarkAndSweepGCAlgorithm gcAlgo = new MarkAndSweepGCAlgorithm(this,
-                                                                 new FullGCHook(this, objectManager, stateManager),
-                                                                 gcPublisher, gcState, gcIterationCounter
-                                                                     .incrementAndGet());
+  public ObjectIDSet collect(GCHook hook, Filter traverser, Collection roots, ObjectIDSet managedObjectIds,
+                             LifeCycleState lstate) {
+    MarkAndSweepGCAlgorithm gcAlgo = new MarkAndSweepGCAlgorithm(this, hook, gcPublisher, gcState, gcIterationCounter
+        .incrementAndGet());
     return gcAlgo.collect(traverser, roots, managedObjectIds, lstate);
   }
 
@@ -314,156 +277,12 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     return out.print(getClass().getName()).print("[").print(state).print("]");
   }
 
-  private static abstract class AbstractGCHook implements GCHook {
-    protected final MarkAndSweepGarbageCollector collector;
-    protected final ObjectManager                objectManager;
-    protected final ClientStateManager           stateManager;
-
-    protected AbstractGCHook(MarkAndSweepGarbageCollector collector, ObjectManager objectManager,
-                             ClientStateManager stateManager) {
-      this.collector = collector;
-      this.objectManager = objectManager;
-      this.stateManager = stateManager;
-    }
-
-    public void startMonitoringReferenceChanges() {
-      collector.startMonitoringReferenceChanges();
-    }
-
-    public void stopMonitoringReferenceChanges() {
-      collector.stopMonitoringReferenceChanges();
-    }
-
-    public void waitUntilReadyToGC() {
-      objectManager.waitUntilReadyToGC();
-    }
+  public ChangeCollector getChangeCollector() {
+    return referenceCollector;
   }
 
-  private final static class FullGCHook extends AbstractGCHook {
-
-    public FullGCHook(MarkAndSweepGarbageCollector collector, ObjectManager objectManager,
-                      ClientStateManager stateManager) {
-      super(collector, objectManager, stateManager);
-    }
-
-    public String getDescription() {
-      return "Full";
-    }
-
-    public GarbageCollectionInfo getGCInfo(int gcIteration) {
-      return new GarbageCollectionInfo(gcIteration, true);
-    }
-
-    public ObjectIDSet getGCCandidates() {
-      return objectManager.getAllObjectIDs();
-    }
-
-    public Set getRootObjectIDs(ObjectIDSet candidateIDs) {
-      return objectManager.getRootIDs();
-    }
-
-    public Filter getCollectCycleFilter(Set candidateIDs) {
-      return NULL_FILTER;
-    }
-
-    public Set getObjectReferencesFrom(ObjectID id) {
-      throttleIfNecessary();
-      ManagedObject obj = objectManager.getObjectByIDOrNull(id);
-      if (obj == null) {
-        logger.warn("Looked up a new Object before its initialized, skipping : " + id);
-        return Collections.EMPTY_SET;
-      }
-      Set references = obj.getObjectReferences();
-      objectManager.releaseReadOnly(obj);
-      return references;
-    }
-
-    private int request_count = 0;
-
-    private void throttleIfNecessary() {
-      if (THROTTLE_GC_MILLIS > 0 && ++request_count % REQUESTS_PER_THROTTLE == 0) {
-        ThreadUtil.reallySleep(THROTTLE_GC_MILLIS);
-      }
-    }
-
-    public Set getRescueIDs() {
-      Set rescueIds = new ObjectIDSet();
-      stateManager.addAllReferencedIdsTo(rescueIds);
-      int stateManagerIds = rescueIds.size();
-
-      collector.addNewReferencesTo(rescueIds);
-      int referenceCollectorIds = rescueIds.size() - stateManagerIds;
-
-      logger.debug("rescueIds: " + rescueIds.size() + ", stateManagerIds: " + stateManagerIds
-                   + ", additional referenceCollectorIds: " + referenceCollectorIds);
-
-      return rescueIds;
-    }
-  }
-
-  private final static class YoungGCHook extends AbstractGCHook {
-
-    private final YoungGenChangeCollector youngGenReferenceCollector;
-
-    public YoungGCHook(MarkAndSweepGarbageCollector collector, ObjectManager objectManager,
-                       ClientStateManager stateManager, YoungGenChangeCollector youngGenChangeCollector) {
-      super(collector, objectManager, stateManager);
-      this.youngGenReferenceCollector = youngGenChangeCollector;
-    }
-
-    public String getDescription() {
-      return "YoungGen";
-    }
-
-    public GarbageCollectionInfo getGCInfo(int gcIteration) {
-      return new GarbageCollectionInfo(gcIteration, false);
-    }
-
-    public ObjectIDSet getGCCandidates() {
-      return (ObjectIDSet) youngGenReferenceCollector.addYoungGenCandidateObjectIDsTo(new ObjectIDSet());
-    }
-
-    public Set getRootObjectIDs(ObjectIDSet candidateIDs) {
-      Set idsInMemory = objectManager.getObjectIDsInCache();
-      idsInMemory.removeAll(candidateIDs);
-      Set roots = objectManager.getRootIDs();
-      Set youngGenRoots = youngGenReferenceCollector.getRememberedSet();
-      youngGenRoots.addAll(roots);
-      youngGenRoots.addAll(idsInMemory);
-      return youngGenRoots;
-    }
-
-    public Filter getCollectCycleFilter(Set candidateIDs) {
-      return new SelectiveFilter(candidateIDs);
-    }
-
-    public Set getObjectReferencesFrom(ObjectID id) {
-      ManagedObject obj = objectManager.getObjectFromCacheByIDOrNull(id);
-      if (obj == null) {
-        // Not in cache, rescue stage to take care of these inward references.
-        return Collections.EMPTY_SET;
-      }
-      Set references = obj.getObjectReferences();
-      objectManager.releaseReadOnly(obj);
-      return references;
-    }
-
-    public Set getRescueIDs() {
-      Set rescueIds = new ObjectIDSet();
-      stateManager.addAllReferencedIdsTo(rescueIds);
-      int stateManagerIds = rescueIds.size();
-
-      collector.addNewReferencesTo(rescueIds);
-      // Get the new RemeberedSet and rescue that too.
-      Set youngGenRoots = youngGenReferenceCollector.getRememberedSet();
-      rescueIds.addAll(youngGenRoots);
-      int referenceCollectorIds = rescueIds.size() - stateManagerIds;
-
-      logger.debug("rescueIds: " + rescueIds.size() + ", stateManagerIds: " + stateManagerIds
-                   + ", additional referenceCollectorIds: " + referenceCollectorIds);
-
-      return rescueIds;
-    }
+  public YoungGenChangeCollector getYoungGenChangeCollector() {
+    return youngGenReferenceCollector;
   }
 
   private static class NewReferenceCollector implements ChangeCollector {
@@ -584,21 +403,4 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     public Set addNewReferencesTo(Set set);
   }
 
-  private interface YoungGenChangeCollector {
-    public void notifyObjectsEvicted(Collection evicted);
-
-    public void startMonitoringChanges();
-
-    public void stopMonitoringChanges();
-
-    public void removeGarbage(SortedSet ids);
-
-    public Set getRememberedSet();
-
-    public void notifyObjectCreated(ObjectID id);
-
-    public void notifyObjectInitalized(ObjectID id);
-
-    public Set addYoungGenCandidateObjectIDsTo(Set set);
-  }
 }
