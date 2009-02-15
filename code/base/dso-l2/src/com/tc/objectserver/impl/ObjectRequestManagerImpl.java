@@ -42,6 +42,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 
 public class ObjectRequestManagerImpl implements ObjectRequestManager {
 
@@ -86,35 +87,36 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
         .getRequestingThreadName());
   }
 
-  private void splitAndRequestObjects(ClientID clientID, ObjectRequestID requestID, ObjectIDSet ids,
+  private void splitAndRequestObjects(ClientID clientID, ObjectRequestID requestID, SortedSet<ObjectID> ids,
                                       int maxRequestDepth, boolean serverInitiated, String requestingThreadName) {
-    ObjectIDSet split = new ObjectIDSet();
 
+    ObjectIDSet split = new ObjectIDSet();
     for (Iterator<ObjectID> iter = ids.iterator(); iter.hasNext();) {
-      split.add(iter.next());
+      ObjectID id = iter.next();
+      split.add(id);
       if (split.size() >= SPLIT_SIZE || !iter.hasNext()) {
-        basicRequestObjects(clientID, requestID, maxRequestDepth, serverInitiated, requestingThreadName, split);
+        basicRequestObjects(clientID, requestID, serverInitiated, requestingThreadName,
+                            new RequestedObject(split, maxRequestDepth));
         split = new ObjectIDSet();
       }
     }
 
   }
 
-  private void basicRequestObjects(ClientID clientID, ObjectRequestID requestID, int maxRequestDepth,
-                                   boolean serverInitiated, String requestingThreadName, ObjectIDSet split) {
+  private void basicRequestObjects(ClientID clientID, ObjectRequestID requestID, boolean serverInitiated,
+                                   String requestingThreadName, RequestedObject requestedObject) {
 
     LookupContext lookupContext = null;
 
     synchronized (this) {
-      RequestedObject reqObj = new RequestedObject(split, maxRequestDepth);
-      if (this.objectRequestCache.add(reqObj, clientID)) {
-        lookupContext = new LookupContext(clientID, requestID, split, maxRequestDepth, requestingThreadName,
-                                          serverInitiated, this.objectRequestSink, this.respondObjectRequestSink);
+      if (this.objectRequestCache.add(requestedObject, clientID)) {
+        lookupContext = new LookupContext(clientID, requestID, requestedObject.getLookupIDSet(), requestedObject
+            .getMaxDepth(), requestingThreadName, serverInitiated, this.objectRequestSink,
+                                          this.respondObjectRequestSink);
       }
     }
-
     if (lookupContext != null) {
-      this.objectManager.lookupObjectsAndSubObjectsFor(clientID, lookupContext, maxRequestDepth);
+      this.objectManager.lookupObjectsAndSubObjectsFor(clientID, lookupContext, requestedObject.getMaxDepth());
     }
   }
 
@@ -126,8 +128,9 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
     Set ids = new HashSet(Math.max((int) (objs.size() / .75f) + 1, 16));
     for (Iterator i = objs.iterator(); i.hasNext();) {
       ManagedObject mo = (ManagedObject) i.next();
-      ids.add(mo.getID());
-      if (requestedObjectIDs.contains(mo.getID())) {
+      ObjectID id = mo.getID();
+      ids.add(id);
+      if (requestedObjectIDs.contains(id)) {
         objectsInOrder.addLast(mo);
       } else {
         objectsInOrder.addFirst(mo);
@@ -234,19 +237,20 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
   protected static class RequestedObject {
 
     private final ObjectIDSet oidSet;
-
     private final int         depth;
+    private final int         hashCode;
 
-    public RequestedObject(ObjectIDSet oidSet, int depth) {
+    RequestedObject(ObjectIDSet oidSet, int depth) {
       this.oidSet = oidSet;
       this.depth = depth;
+      this.hashCode = oidSet.hashCode();
     }
 
-    public ObjectIDSet getOIdSet() {
+    public ObjectIDSet getLookupIDSet() {
       return this.oidSet;
     }
 
-    public int getDepth() {
+    public int getMaxDepth() {
       return this.depth;
     }
 
@@ -254,13 +258,13 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
     public boolean equals(Object obj) {
       if (!(obj instanceof RequestedObject)) { return false; }
       RequestedObject reqObj = (RequestedObject) obj;
-      if (this.oidSet.equals(reqObj.getOIdSet()) && this.depth == reqObj.getDepth()) { return true; }
+      if (this.oidSet.equals(reqObj.getLookupIDSet()) && this.depth == reqObj.getMaxDepth()) { return true; }
       return false;
     }
 
     @Override
     public int hashCode() {
-      return this.oidSet.hashCode();
+      return this.hashCode;
     }
 
     @Override
@@ -287,7 +291,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
     protected int numberOfRequestedObjects() {
       int val = 0;
       for (Iterator iter = this.objectRequestMap.keySet().iterator(); iter.hasNext();) {
-        val += ((RequestedObject) iter.next()).getOIdSet().size();
+        val += ((RequestedObject) iter.next()).getLookupIDSet().size();
       }
       return val;
     }

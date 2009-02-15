@@ -81,15 +81,17 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
    * This is here for testing, not production use.
    */
   public boolean isEqual(ManagedObject moi) {
-    if (this == moi) return true;
+    if (this == moi) { return true; }
     if (moi instanceof ManagedObjectImpl) {
       ManagedObjectImpl mo = (ManagedObjectImpl) moi;
       boolean rv = true;
-      rv &= id.equals(mo.id);
-      rv &= version == mo.version;
-      rv &= state.equals(mo.state);
+      rv &= this.id.equals(mo.id);
+      rv &= this.version == mo.version;
+      rv &= this.state.equals(mo.state);
       return rv;
-    } else return false;
+    } else {
+      return false;
+    }
   }
 
   private void setBasicIsNew(boolean b) {
@@ -101,11 +103,11 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   }
 
   private synchronized void setFlag(int offset, boolean value) {
-    flags = Conversion.setFlag(flags, offset, value);
+    this.flags = Conversion.setFlag(this.flags, offset, value);
   }
 
   private synchronized boolean getFlag(int offset) {
-    return (flags & offset) == offset;
+    return (this.flags & offset) == offset;
   }
 
   private boolean basicIsNew() {
@@ -133,15 +135,15 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   }
 
   public ObjectID getID() {
-    return id;
+    return this.id;
   }
 
   public Set getObjectReferences() {
-    return state.getObjectReferences();
+    return this.state.getObjectReferences();
   }
 
   public void addObjectReferencesTo(ManagedObjectTraverser traverser) {
-    state.addObjectReferencesTo(traverser);
+    this.state.addObjectReferencesTo(traverser);
   }
 
   public void apply(DNA dna, TransactionID txnID, BackReferences includeIDs, ObjectInstanceMonitor instanceMonitor,
@@ -151,7 +153,7 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     long dna_version = dna.getVersion();
     if (dna_version <= this.version) {
       if (ignoreIfOlderDNA) {
-        logger.info("Ignoring apply of an old DNA for " + getClassname() + " id = " + id + " current version = "
+        logger.info("Ignoring apply of an old DNA for " + getClassname() + " id = " + this.id + " current version = "
                     + this.version + " dna_version = " + dna_version);
         return;
       } else {
@@ -173,17 +175,17 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     this.version = dna_version;
     DNACursor cursor = dna.getCursor();
 
-    if (state == null) {
-      state = getStateFactory().createState(id, dna.getParentObjectID(), dna.getTypeName(),
-                                            dna.getDefiningLoaderDescription(), cursor);
+    if (this.state == null) {
+      this.state = getStateFactory().createState(this.id, dna.getParentObjectID(), dna.getTypeName(),
+                                                 dna.getDefiningLoaderDescription(), cursor);
     }
     try {
       try {
-        state.apply(id, cursor, includeIDs);
+        this.state.apply(this.id, cursor, includeIDs);
       } catch (ClassNotCompatableException cnce) {
         // reinitialize state object and try again
-        reinitializeState(dna.getParentObjectID(), getClassname(), getLoaderDescription(), cursor, state);
-        state.apply(id, cursor, includeIDs);
+        reinitializeState(dna.getParentObjectID(), getClassname(), getLoaderDescription(), cursor, this.state);
+        this.state.apply(this.id, cursor, includeIDs);
       }
     } catch (IOException e) {
       throw new DNAException(e);
@@ -199,7 +201,7 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
 
   private void reinitializeState(ObjectID pid, String className, String loaderDesc, DNACursor cursor,
                                  ManagedObjectState oldState) {
-    state = getStateFactory().recreateState(id, pid, className, loaderDesc, cursor, oldState);
+    this.state = getStateFactory().recreateState(this.id, pid, className, loaderDesc, cursor, oldState);
   }
 
   private ManagedObjectStateFactory getStateFactory() {
@@ -207,10 +209,10 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   }
 
   private void writeObject(ObjectOutputStream out) throws IOException {
-    if (state == null) { throw new AssertionError("Null state:" + this); }
+    if (this.state == null) { throw new AssertionError("Null state:" + this); }
     out.defaultWriteObject();
-    out.writeByte(state.getType());
-    state.writeTo(out);
+    out.writeByte(this.state.getType());
+    this.state.writeTo(out);
   }
 
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -222,20 +224,21 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   }
 
   public ManagedObjectState getManagedObjectState() {
-    return state;
+    return this.state;
   }
 
   /**
    * Writes the data in the object to the DNA strand supplied.
    */
   public void toDNA(TCByteBufferOutputStream out, ObjectStringSerializer serializer) {
-    DNAWriter writer = new ObjectDNAWriterImpl(out, id, getClassname(), serializer, DNA_STORAGE_ENCODING,
-                                               getLoaderDescription(), version, false);
-    state.dehydrate(id, writer);
+    DNAWriter writer = new ObjectDNAWriterImpl(out, this.id, getClassname(), serializer, DNA_STORAGE_ENCODING,
+                                               getLoaderDescription(), this.version, false);
+    this.state.dehydrate(this.id, writer);
     writer.markSectionEnd();
     writer.finalizeHeader();
   }
 
+  @Override
   public String toString() {
     // XXX: Um... this is gross.
     StringWriter writer = new StringWriter();
@@ -248,10 +251,10 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     PrettyPrinter rv = out;
     out = out.print("ManagedObjectImpl").duplicateAndIndent().println();
     out.indent().print("identityHashCode: " + System.identityHashCode(this)).println();
-    out.indent().print("id: " + id).println();
+    out.indent().print("id: " + this.id).println();
     out.indent().print("className: " + getClassname()).println();
-    out.indent().print("version:" + version).println();
-    out.indent().print("state: ").visit(state).println();
+    out.indent().print("version:" + this.version).println();
+    out.indent().print("state: ").visit(this.state).println();
     out.indent().print("isDirty:" + this.basicIsDirty());
     out.indent().print("isNew:" + this.basicIsNew());
     out.indent().print("isReferenced:" + this.isReferenced()).println();
@@ -260,18 +263,18 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   }
 
   public ManagedObjectFacade createFacade(int limit) {
-    return state.createFacade(id, getClassname(), limit);
+    return this.state.createFacade(this.id, getClassname(), limit);
   }
 
   /**
    * This is public for testing
    */
   public String getClassname() {
-    return state == null ? "UNKNOWN" : state.getClassName();
+    return this.state == null ? "UNKNOWN" : this.state.getClassName();
   }
 
   public String getLoaderDescription() {
-    return state == null ? "UNKNOWN" : state.getLoaderDescription();
+    return this.state == null ? "UNKNOWN" : this.state.getLoaderDescription();
   }
 
   public ManagedObjectReference getReference() {
@@ -331,20 +334,20 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   }
 
   public void markAccessed() {
-    accessed++;
+    this.accessed++;
   }
 
   public void clearAccessed() {
-    accessed = 0;
+    this.accessed = 0;
   }
 
   public boolean recentlyAccessed() {
-    return accessed > 0;
+    return this.accessed > 0;
   }
 
   public int accessCount(int factor) {
-    accessed = accessed / factor;
-    return accessed;
+    this.accessed = this.accessed / factor;
+    return this.accessed;
   }
 
   public ObjectID getObjectID() {
@@ -352,11 +355,11 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   }
 
   public TLinkable getNext() {
-    return next;
+    return this.next;
   }
 
   public TLinkable getPrevious() {
-    return previous;
+    return this.previous;
   }
 
   public void setNext(TLinkable next) {
@@ -372,7 +375,7 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   }
 
   public long getVersion() {
-    return version;
+    return this.version;
   }
 
 }

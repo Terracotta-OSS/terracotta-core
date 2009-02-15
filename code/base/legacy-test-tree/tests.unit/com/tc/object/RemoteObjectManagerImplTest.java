@@ -49,6 +49,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
   private RetrieverThreads                       rt;
   private GroupID                                groupID;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     TestChannelIDProvider channelIDProvider = new TestChannelIDProvider();
@@ -61,26 +62,27 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
 
     this.threadGroup = new ThreadGroup(getClass().getName());
     this.groupID = new GroupID(0);
-    manager = new RemoteObjectManagerImpl(groupID, new NullTCLogger(), cidProvider, rrmf, rmomf,
-                                          new NullObjectRequestMonitor(), 500, new NullSessionManager());
-    rt = new RetrieverThreads(Thread.currentThread().getThreadGroup(), manager);
+    this.manager = new RemoteObjectManagerImpl(this.groupID, new NullTCLogger(), this.cidProvider, this.rrmf,
+                                               this.rmomf, new NullObjectRequestMonitor(), 500,
+                                               new NullSessionManager());
+    this.rt = new RetrieverThreads(Thread.currentThread().getThreadGroup(), this.manager);
   }
 
   public void testManagerState() {
 
-    manager.pause(GroupID.ALL_GROUPS, 1);
+    this.manager.pause(GroupID.ALL_GROUPS, 1);
 
     try {
-      manager.pause(GroupID.ALL_GROUPS, 1);
+      this.manager.pause(GroupID.ALL_GROUPS, 1);
       throw new AssertionError("PAUSED even it was in PAUSE state");
     } catch (AssertionError e) {
       // expected assertion
     }
 
-    manager.unpause(GroupID.ALL_GROUPS, 0);
+    this.manager.unpause(GroupID.ALL_GROUPS, 0);
 
     try {
-      manager.unpause(GroupID.ALL_GROUPS, 0);
+      this.manager.unpause(GroupID.ALL_GROUPS, 0);
       throw new AssertionError("UNPAUSED without state being PASUSED");
     } catch (AssertionError e) {
       // expected assertion
@@ -94,23 +96,26 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     for (int i = 0; i < dnaCollectionCount; i++) {
       dnas = new ArrayList();
       dnas.add(new TestDNA(new ObjectID(i)));
-      manager.addAllObjects(new SessionID(i), i, dnas, groupID);
+      this.manager.addAllObjects(new SessionID(i), i, dnas, this.groupID);
     }
-    assertEquals(dnaCollectionCount, manager.getDNACacheSize());
-    DNA dna = manager.retrieve(new ObjectID(0));
+    assertEquals(dnaCollectionCount, this.manager.getDNACacheSize());
+    DNA dna = this.manager.retrieve(new ObjectID(0));
     assertNotNull(dna);
-    assertEquals(dnaCollectionCount - 1, manager.getDNACacheSize());
-    manager.clear();
-    assertEquals(0, manager.getDNACacheSize());
+    assertEquals(dnaCollectionCount - 1, this.manager.getDNACacheSize());
+    this.manager.clear();
+    assertEquals(0, this.manager.getDNACacheSize());
   }
 
   public void testMissingObjectIDsThrowsError() throws Exception {
     final CyclicBarrier barrier = new CyclicBarrier(2);
     Thread thread = new Thread("Test Thread Saro") {
+      @Override
       public void run() {
         System.err.println("Doing a bogus lookup");
         try {
-          manager.retrieve(new ObjectID(ObjectID.MAX_ID, groupID.toInt()));
+          RemoteObjectManagerImplTest.this.manager.retrieve(new ObjectID(ObjectID.MAX_ID,
+                                                                         RemoteObjectManagerImplTest.this.groupID
+                                                                             .toInt()));
           System.err.println("Didnt throw TCObjectNotFoundException : Not calling barrier()");
         } catch (TCObjectNotFoundException e) {
           System.err.println("Got TCObjectNotFoundException as expected : " + e);
@@ -125,8 +130,8 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     thread.start();
     ThreadUtil.reallySleep(5000);
     Set missingSet = new HashSet();
-    missingSet.add(new ObjectID(ObjectID.MAX_ID, groupID.toInt()));
-    manager.objectsNotFoundFor(SessionID.NULL_ID, 1, missingSet, groupID);
+    missingSet.add(new ObjectID(ObjectID.MAX_ID, this.groupID.toInt()));
+    this.manager.objectsNotFoundFor(SessionID.NULL_ID, 1, missingSet, this.groupID);
     barrier.barrier();
   }
 
@@ -135,18 +140,18 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     final Map expectedNotResent = new HashMap();
     TestRequestRootMessage rrm = newRrm();
     assertNoMessageSent(rrm);
-    manager.requestOutstanding();
+    this.manager.requestOutstanding();
     assertNoMessageSent(rrm);
 
     int count = 100;
     for (int i = 0; i < count; i++) {
       newRrm();
       String rootID = "root" + i;
-      rt.startNewRootRetriever(rootID);
-      Object tmp = rrmf.newMessageQueue.take();
+      this.rt.startNewRootRetriever(rootID);
+      Object tmp = this.rrmf.newMessageQueue.take();
       assertFalse(tmp == rrm);
       rrm = (TestRequestRootMessage) tmp;
-      assertTrue(rrmf.newMessageQueue.isEmpty());
+      assertTrue(this.rrmf.newMessageQueue.isEmpty());
       rrm.sendQueue.take();
       assertTrue(rrm.sendQueue.isEmpty());
       if (i % 2 == 0) {
@@ -155,28 +160,28 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
         expectedNotResent.put(rootID, rrm);
       }
     }
-    log("rt.getAliveCount() = " + rt.getAliveCount() + " expectedResent.size() = " + expectedResent.size()
+    log("rt.getAliveCount() = " + this.rt.getAliveCount() + " expectedResent.size() = " + expectedResent.size()
         + " expectedNotResent.size() = " + expectedNotResent.size());
-    assertEquals(count, rt.getAliveCount());
+    assertEquals(count, this.rt.getAliveCount());
     // respond to some of the requests
     int objectIDCount = 1;
     for (Iterator i = expectedNotResent.keySet().iterator(); i.hasNext();) {
       String rootID = (String) i.next();
       log("Adding Root = " + rootID);
-      manager.addRoot(rootID, new ObjectID(objectIDCount++), groupID);
+      this.manager.addRoot(rootID, new ObjectID(objectIDCount++), this.groupID);
     }
     // the threads waiting for the roots we just added should fall through.
-    rt.waitForLowWatermark(count - expectedNotResent.size());
-    assertEquals(count - expectedResent.size(), rt.getAliveCount());
+    this.rt.waitForLowWatermark(count - expectedNotResent.size());
+    assertEquals(count - expectedResent.size(), this.rt.getAliveCount());
 
     // TEST REQUEST OUTSTANDING
-    manager.requestOutstanding();
+    this.manager.requestOutstanding();
 
-    assertFalse(rrmf.newMessageQueue.isEmpty());
+    assertFalse(this.rrmf.newMessageQueue.isEmpty());
 
     // Check the messages we expect to have been resent
     for (Iterator i = expectedResent.values().iterator(); i.hasNext(); i.next()) {
-      rrm = (TestRequestRootMessage) rrmf.newMessageQueue.take();
+      rrm = (TestRequestRootMessage) this.rrmf.newMessageQueue.take();
       assertNotNull(rrm.sendQueue.poll(1));
     }
 
@@ -185,21 +190,23 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
       assertTrue(rrm.sendQueue.isEmpty());
     }
 
-    assertTrue(rrmf.newMessageQueue.isEmpty());
+    assertTrue(this.rrmf.newMessageQueue.isEmpty());
 
     // respond to the rest of the requests
     for (Iterator i = expectedResent.keySet().iterator(); i.hasNext();) {
       String rootID = (String) i.next();
       log("Adding Root = " + rootID);
-      manager.addRoot(rootID, new ObjectID(objectIDCount++), groupID);
+      this.manager.addRoot(rootID, new ObjectID(objectIDCount++), this.groupID);
     }
 
     // all the threads should now be able to complete.
-    rt.waitForLowWatermark(0);
+    this.rt.waitForLowWatermark(0);
   }
 
   private static void log(String s) {
-    if (false) System.err.println(Thread.currentThread().getName() + " :: " + s);
+    if (false) {
+      System.err.println(Thread.currentThread().getName() + " :: " + s);
+    }
   }
 
   public void testRequestOutstandingRequestManagedObjectMessages() throws Exception {
@@ -210,7 +217,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
 
     TestRequestManagedObjectMessage rmom = newRmom();
     assertNoMessageSent(rmom);
-    manager.requestOutstanding();
+    this.manager.requestOutstanding();
     assertNoMessageSent(rmom);
 
     int count = 50;
@@ -218,15 +225,15 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     for (int i = 0; i < count; i++) {
       newRmom();
       ObjectID id = new ObjectID(i);
-      assertTrue(rmomf.newMessageQueue.isEmpty());
-      rt.startNewObjectRetriever(id);
-      Object tmp = rmomf.newMessageQueue.take();
-      assertTrue(rmomf.newMessageQueue.isEmpty());
+      assertTrue(this.rmomf.newMessageQueue.isEmpty());
+      this.rt.startNewObjectRetriever(id);
+      Object tmp = this.rmomf.newMessageQueue.take();
+      assertTrue(this.rmomf.newMessageQueue.isEmpty());
       // make sure we aren't mistakenly using the same message all the time
       assertFalse(rmom == tmp);
       rmom = (TestRequestManagedObjectMessage) tmp;
       rmom.sendQueue.take();
-      assertEquals(i + 1, rt.getAliveCount());
+      assertEquals(i + 1, this.rt.getAliveCount());
       if (i % 2 == 0) {
         expectedResent.put(id, rmom);
       } else {
@@ -238,20 +245,20 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     for (int i = 0; i < count; i++) {
       newRmom();
       ObjectID id = new ObjectID(i);
-      assertTrue(rmomf.newMessageQueue.isEmpty());
-      rt.startNewObjectRetriever(id);
-      assertTrue(rmomf.newMessageQueue.isEmpty());
+      assertTrue(this.rmomf.newMessageQueue.isEmpty());
+      this.rt.startNewObjectRetriever(id);
+      assertTrue(this.rmomf.newMessageQueue.isEmpty());
     }
 
-    assertTrue(rmomf.newMessageQueue.isEmpty());
+    assertTrue(this.rmomf.newMessageQueue.isEmpty());
 
     // now go through all of the messages we don't expect to be resent and respond to their requests
     for (Iterator i = expectedNotResent.keySet().iterator(); i.hasNext();) {
       newRmom();
-      assertTrue(rmomf.newMessageQueue.isEmpty());
-      manager.addObject(new TestDNA((ObjectID) i.next()));
+      assertTrue(this.rmomf.newMessageQueue.isEmpty());
+      this.manager.addObject(new TestDNA((ObjectID) i.next()));
       // collect the messages sent for the secondary threads...
-      Object tmp = rmomf.newMessageQueue.take();
+      Object tmp = this.rmomf.newMessageQueue.take();
       assertFalse(rmom == tmp);
       rmom = (TestRequestManagedObjectMessage) tmp;
       rmom.sendQueue.take();
@@ -260,7 +267,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     }
 
     // now tell it to Re-send outstanding
-    manager.requestOutstanding();
+    this.manager.requestOutstanding();
 
     final Collection c = new LinkedList();
     c.addAll(expectedResent.values());
@@ -268,7 +275,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     // now go through all of the messages we DO expect to be resent and make sure that
     // they WERE resent
     for (Iterator i = c.iterator(); i.hasNext(); i.next()) {
-      rmom = (TestRequestManagedObjectMessage) rmomf.newMessageQueue.take();
+      rmom = (TestRequestManagedObjectMessage) this.rmomf.newMessageQueue.take();
       assertFalse(rmom.sendQueue.isEmpty());
       assertNotNull(rmom.sendQueue.poll(1));
     }
@@ -302,7 +309,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     TestRequestManagedObjectMessage rmom = this.rmomf.message;
     assertNoMessageSent(rmom);
 
-    rt.startNewObjectRetriever(id1);
+    this.rt.startNewObjectRetriever(id1);
 
     waitForMessageSend(rmom);
 
@@ -312,20 +319,20 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     // values
     verifyRmomInit(id1, removed, rmom);
 
-    assertEquals(1, rt.getAliveCount());
+    assertEquals(1, this.rt.getAliveCount());
 
     rmom = newRmom();
 
     // now request the same object id with a different thread.
-    rt.startNewObjectRetriever(id1);
+    this.rt.startNewObjectRetriever(id1);
 
     // but, no message should have been sent.
     assertTrue(rmom.sendQueue.isEmpty());
 
-    assertEquals(2, rt.getAliveCount());
+    assertEquals(2, this.rt.getAliveCount());
 
     // now request a different object id on a different thread
-    rt.startNewObjectRetriever(id2);
+    this.rt.startNewObjectRetriever(id2);
 
     // this thread should send a message with id2, an empty set for the
     // removed
@@ -333,7 +340,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     waitForMessageSend(rmom);
     verifyRmomInit(id2, new HashSet(), rmom);
 
-    assertEquals(3, rt.getAliveCount());
+    assertEquals(3, this.rt.getAliveCount());
 
     assertNoMessageSent(rmom);
     rmom = newRmom();
@@ -347,8 +354,8 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     // especially since we're going to have to optimize this stuff soon
     // anyway. --Orion 8/24/05
 
-    manager.addObject(new TestDNA(id1));
-    rt.waitForLowWatermark(2);
+    this.manager.addObject(new TestDNA(id1));
+    this.rt.waitForLowWatermark(2);
 
     waitForMessageSend(rmom);
     verifyRmomInit(id1, new HashSet(), rmom);
@@ -356,29 +363,29 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     rmom = newRmom();
 
     // the second thread should now create and send a new message
-    manager.addObject(new TestDNA(id1));
-    rt.waitForLowWatermark(1);
+    this.manager.addObject(new TestDNA(id1));
+    this.rt.waitForLowWatermark(1);
 
     // now, allow the third thread to fall through
-    manager.addObject(new TestDNA(id2));
-    rt.waitForLowWatermark(0);
+    this.manager.addObject(new TestDNA(id2));
+    this.rt.waitForLowWatermark(0);
 
     // no-one should have sent any messages
     assertNoMessageSent(rmom);
   }
 
   private void assertNoMessageSent(TestRequestManagedObjectMessage rmom) {
-    assertTrue(rmomf.newMessageQueue.isEmpty());
+    assertTrue(this.rmomf.newMessageQueue.isEmpty());
     assertTrue(rmom.sendQueue.isEmpty());
   }
 
   private void assertNoMessageSent(TestRequestRootMessage rrm) {
-    assertTrue(rrmf.newMessageQueue.isEmpty());
+    assertTrue(this.rrmf.newMessageQueue.isEmpty());
     assertTrue(rrm.sendQueue.isEmpty());
   }
 
   private void waitForMessageSend(TestRequestManagedObjectMessage rmom) {
-    rmomf.newMessageQueue.take();
+    this.rmomf.newMessageQueue.take();
     rmom.sendQueue.take();
   }
 
@@ -391,7 +398,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     oids.add(objectID);
     assertTrue(rmom.initializeQueue.isEmpty());
     ObjectRequestContext ctxt = (ObjectRequestContext) initArgs[0];
-    assertEquals(cidProvider.getClientID(), ctxt.getClientID());
+    assertEquals(this.cidProvider.getClientID(), ctxt.getClientID());
     assertEquals(oids, ctxt.getRequestedObjectIDs());
     // The object id in the request
     assertEquals(oids, initArgs[1]);
@@ -427,55 +434,57 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     }
 
     public int getAliveCount() {
-      synchronized (inProgress) {
-        return inProgress.size();
+      synchronized (this.inProgress) {
+        return this.inProgress.size();
       }
     }
 
     public void waitForLowWatermark(int max) throws InterruptedException {
-      if (getAliveCount() <= max) return;
-      synchronized (inProgress) {
+      if (getAliveCount() <= max) { return; }
+      synchronized (this.inProgress) {
         while (getAliveCount() > max) {
-          inProgress.wait();
+          this.inProgress.wait();
         }
       }
     }
 
     public Thread startNewRootRetriever(final String rootID) {
-      Thread t = new Thread(tg, new Runnable() {
+      Thread t = new Thread(this.tg, new Runnable() {
 
         public void run() {
           log("Starting .. " + rootID);
-          manager.retrieveRootID(rootID);
+          RetrieverThreads.this.manager.retrieveRootID(rootID);
           log("Retrieved  rootID.. " + rootID);
-          synchronized (inProgress) {
-            if (!inProgress.remove(Thread.currentThread())) throw new RuntimeException("Thread not removed!");
-            log("Removed from  inProgress .. size =  " + inProgress.size());
-            inProgress.notifyAll();
+          synchronized (RetrieverThreads.this.inProgress) {
+            if (!RetrieverThreads.this.inProgress.remove(Thread.currentThread())) { throw new RuntimeException(
+                                                                                                               "Thread not removed!"); }
+            log("Removed from  inProgress .. size =  " + RetrieverThreads.this.inProgress.size());
+            RetrieverThreads.this.inProgress.notifyAll();
           }
         }
-      }, "Root retriever thread " + threadCount++);
-      synchronized (inProgress) {
-        inProgress.add(t);
-        log("Added : inProgress size = " + inProgress.size());
+      }, "Root retriever thread " + this.threadCount++);
+      synchronized (this.inProgress) {
+        this.inProgress.add(t);
+        log("Added : inProgress size = " + this.inProgress.size());
       }
       t.start();
       return t;
     }
 
     public Thread startNewObjectRetriever(final ObjectID id) {
-      Thread t = new Thread(tg, new Runnable() {
+      Thread t = new Thread(this.tg, new Runnable() {
 
         public void run() {
-          manager.retrieve(id);
-          synchronized (inProgress) {
-            if (!inProgress.remove(Thread.currentThread())) throw new RuntimeException("Thread not removed!");
-            inProgress.notifyAll();
+          RetrieverThreads.this.manager.retrieve(id);
+          synchronized (RetrieverThreads.this.inProgress) {
+            if (!RetrieverThreads.this.inProgress.remove(Thread.currentThread())) { throw new RuntimeException(
+                                                                                                               "Thread not removed!"); }
+            RetrieverThreads.this.inProgress.notifyAll();
           }
         }
-      }, "Object retriever thread " + threadCount++);
-      synchronized (inProgress) {
-        inProgress.add(t);
+      }, "Object retriever thread " + this.threadCount++);
+      synchronized (this.inProgress) {
+        this.inProgress.add(t);
       }
       t.start();
       return t;
@@ -487,7 +496,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     public TestRequestRootMessage       message;
 
     public RequestRootMessage newRequestRootMessage(NodeID nodeID) {
-      newMessageQueue.put(message);
+      this.newMessageQueue.put(this.message);
       return this.message;
     }
   }
@@ -504,12 +513,14 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
       return;
     }
 
+    @Override
     public TCMessageType getMessageType() {
       return TCMessageType.REQUEST_ROOT_MESSAGE;
     }
 
+    @Override
     public void send() {
-      sendQueue.put(new Object());
+      this.sendQueue.put(new Object());
     }
 
     public void recycle() {
@@ -525,8 +536,8 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     public TestRequestManagedObjectMessage message;
 
     public RequestManagedObjectMessage newRequestManagedObjectMessage(NodeID nodeID) {
-      newMessageQueue.put(message);
-      return message;
+      this.newMessageQueue.put(this.message);
+      return this.message;
     }
   }
 
@@ -548,13 +559,13 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public void initialize(ObjectRequestContext ctxt, ObjectIDSet oids, ObjectIDSet removedIDs) {
+    public void initialize(ObjectRequestContext ctxt, Set<ObjectID> oids, ObjectIDSet removedIDs) {
       this.objectIDs = oids;
       this.initializeQueue.put(new Object[] { ctxt, oids, removedIDs });
     }
 
     public void send() {
-      sendQueue.put(new Object());
+      this.sendQueue.put(new Object());
     }
 
     public MessageChannel getChannel() {

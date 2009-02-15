@@ -59,30 +59,33 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
     this.dmiManager = dmiManager;
   }
 
+  @Override
   public void handleEvent(EventContext context) {
     final BroadcastTransactionMessageImpl btm = (BroadcastTransactionMessageImpl) context;
 
-    if (false) System.err.println(cidProvider.getClientID() + ": ReceiveTransactionHandler: committer="
-                                  + btm.getCommitterID() + ", " + btm.getTransactionID() + btm.getGlobalTransactionID()
-                                  + ", notified: " + btm.addNotifiesTo(new LinkedList()) + ", lookup ObjectIDs: "
-                                  + btm.getLookupObjectIDs());
+    if (false) {
+      System.err.println(this.cidProvider.getClientID() + ": ReceiveTransactionHandler: committer="
+                         + btm.getCommitterID() + ", " + btm.getTransactionID() + btm.getGlobalTransactionID()
+                         + ", notified: " + btm.addNotifiesTo(new LinkedList()));
+    }
 
     Assert.eval(btm.getLockIDs().size() > 0);
     GlobalTransactionID lowWaterMark = btm.getLowGlobalTransactionIDWatermark();
     if (!lowWaterMark.isNull()) {
-      gtxManager.setLowWatermark(lowWaterMark, btm.getSourceNodeID());
+      this.gtxManager.setLowWatermark(lowWaterMark, btm.getSourceNodeID());
     }
-    if (gtxManager.startApply(btm.getCommitterID(), btm.getTransactionID(), btm.getGlobalTransactionID(), btm
+    if (this.gtxManager.startApply(btm.getCommitterID(), btm.getTransactionID(), btm.getGlobalTransactionID(), btm
         .getSourceNodeID())) {
       Collection changes = btm.getObjectChanges();
-      if (changes.size() > 0 || btm.getLookupObjectIDs().size() > 0 || btm.getNewRoots().size() > 0) {
+      if (changes.size() > 0 || btm.getNewRoots().size() > 0) {
 
-        if (false) System.err.println(cidProvider.getClientID() + " Applying - committer=" + btm.getCommitterID()
-                                      + " , " + btm.getTransactionID() + " , " + btm.getGlobalTransactionID());
+        if (false) {
+          System.err.println(this.cidProvider.getClientID() + " Applying - committer=" + btm.getCommitterID() + " , "
+                             + btm.getTransactionID() + " , " + btm.getGlobalTransactionID());
+        }
 
         try {
-          txManager.apply(btm.getTransactionType(), btm.getLockIDs(), changes, btm.getLookupObjectIDs(), btm
-              .getNewRoots());
+          this.txManager.apply(btm.getTransactionType(), btm.getLockIDs(), changes, btm.getNewRoots());
         } catch (TCClassNotFoundException cnfe) {
           logger.warn("transaction apply failed for " + btm.getTransactionID(), cnfe);
         }
@@ -93,7 +96,7 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
     Collection notifies = btm.addNotifiesTo(new LinkedList());
     for (Iterator i = notifies.iterator(); i.hasNext();) {
       LockContext lc = (LockContext) i.next();
-      lockManager.notified(lc.getLockID(), lc.getThreadID());
+      this.lockManager.notified(lc.getLockID(), lc.getThreadID());
     }
 
     List dmis = btm.getDmiDescriptors();
@@ -102,22 +105,23 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
 
       // NOTE: This prepare call must happen before handing off the DMI to the stage, and more
       // importantly before sending ACK below
-      DistributedMethodCall dmc = dmiManager.extract(dd);
+      DistributedMethodCall dmc = this.dmiManager.extract(dd);
       if (dmc != null) {
-        dmiSink.add(new DmiEventContext(dmc));
+        this.dmiSink.add(new DmiEventContext(dmc));
       }
     }
 
     // XXX:: This is a potential race condition here 'coz after we decide to send an ACK
     // and before we actually send it, the server may go down and come back up !
-    if (sessionManager.isCurrentSession(btm.getSourceNodeID(), btm.getLocalSessionID())) {
-      AcknowledgeTransactionMessage ack = atmFactory.newAcknowledgeTransactionMessage(btm.getSourceNodeID());
+    if (this.sessionManager.isCurrentSession(btm.getSourceNodeID(), btm.getLocalSessionID())) {
+      AcknowledgeTransactionMessage ack = this.atmFactory.newAcknowledgeTransactionMessage(btm.getSourceNodeID());
       ack.initialize(btm.getCommitterID(), btm.getTransactionID());
       ack.send();
     }
     btm.recycle();
   }
 
+  @Override
   public void initialize(ConfigurationContext context) {
     super.initialize(context);
     ClientConfigurationContext ccc = (ClientConfigurationContext) context;

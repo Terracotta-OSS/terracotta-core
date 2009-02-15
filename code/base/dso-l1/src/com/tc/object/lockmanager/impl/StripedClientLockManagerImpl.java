@@ -47,15 +47,15 @@ public class StripedClientLockManagerImpl implements ClientLockManager, ClientHa
       ++sshift;
       ssize <<= 1;
     }
-    segmentShift = 32 - sshift;
-    segmentMask = ssize - 1;
+    this.segmentShift = 32 - sshift;
+    this.segmentMask = ssize - 1;
 
-    lockManagers = new ClientLockManagerImpl[ssize];
+    this.lockManagers = new ClientLockManagerImpl[ssize];
     TCLockTimer waitTimer = new TCLockTimerImpl();
-    for (int i = 0; i < lockManagers.length; i++) {
-      lockManagers[i] = new ClientLockManagerImpl(new TextDecoratorTCLogger(logger, "LM[" + i + "]"),
-                                                  remoteLockManager, sessionManager, lockStatManager,
-                                                  clientLockManagerConfig, waitTimer);
+    for (int i = 0; i < this.lockManagers.length; i++) {
+      this.lockManagers[i] = new ClientLockManagerImpl(new TextDecoratorTCLogger(logger, "LM[" + i + "]"),
+                                                       remoteLockManager, sessionManager, lockStatManager,
+                                                       clientLockManagerConfig, waitTimer);
     }
   }
 
@@ -83,24 +83,24 @@ public class StripedClientLockManagerImpl implements ClientLockManager, ClientHa
 
   private ClientLockManagerImpl lockManagerFor(String lockID) {
     int hash = hash(lockID.hashCode());
-    return lockManagers[(hash >>> segmentShift) & segmentMask];
+    return this.lockManagers[(hash >>> this.segmentShift) & this.segmentMask];
   }
 
   public synchronized void pause(NodeID remote, int disconnected) {
-    for (int i = 0; i < lockManagers.length; i++) {
-      lockManagers[i].pause(remote, disconnected);
+    for (int i = 0; i < this.lockManagers.length; i++) {
+      this.lockManagers[i].pause(remote, disconnected);
     }
   }
 
   public synchronized void unpause(NodeID remote, int disconnected) {
-    for (int i = 0; i < lockManagers.length; i++) {
-      lockManagers[i].unpause(remote, disconnected);
+    for (int i = 0; i < this.lockManagers.length; i++) {
+      this.lockManagers[i].unpause(remote, disconnected);
     }
   }
 
   public void initializeHandshake(NodeID thisNode, NodeID remoteNode, ClientHandshakeMessage handshakeMessage) {
-    for (int i = 0; i < lockManagers.length; i++) {
-      lockManagers[i].initializeHandshake(thisNode, remoteNode, handshakeMessage);
+    for (int i = 0; i < this.lockManagers.length; i++) {
+      this.lockManagers[i].initializeHandshake(thisNode, remoteNode, handshakeMessage);
     }
   }
 
@@ -144,10 +144,11 @@ public class StripedClientLockManagerImpl implements ClientLockManager, ClientHa
     lockManagerFor(lockID).recall(lockID, threadID, level, leaseTimeInMs);
   }
 
-  public void lockInterruptibly(LockID id, ThreadID threadID, int lockType, String lockObjectType, String contextInfo) throws InterruptedException {
+  public void lockInterruptibly(LockID id, ThreadID threadID, int lockType, String lockObjectType, String contextInfo)
+      throws InterruptedException {
     lockManagerFor(id).lockInterruptibly(id, threadID, lockType, lockObjectType, contextInfo);
   }
-  
+
   public boolean tryLock(LockID id, ThreadID threadID, TimerSpec timeout, int lockType, String lockObjectType) {
     return lockManagerFor(id).tryLock(id, threadID, timeout, lockType, lockObjectType);
   }
@@ -170,35 +171,35 @@ public class StripedClientLockManagerImpl implements ClientLockManager, ClientHa
   }
 
   public void addAllLocksTo(LockInfoByThreadID lockInfo) {
-    for (int i = 0; i < lockManagers.length; i++) {
-      lockManagers[i].addAllLocksTo(lockInfo);
+    for (int i = 0; i < this.lockManagers.length; i++) {
+      this.lockManagers[i].addAllLocksTo(lockInfo);
     }
   }
 
   public Collection addAllHeldLocksTo(Collection c) {
-    for (int i = 0; i < lockManagers.length; i++) {
-      lockManagers[i].addAllHeldLocksTo(c);
+    for (int i = 0; i < this.lockManagers.length; i++) {
+      this.lockManagers[i].addAllHeldLocksTo(c);
     }
     return c;
   }
 
   public Collection addAllPendingLockRequestsTo(Collection c) {
-    for (int i = 0; i < lockManagers.length; i++) {
-      lockManagers[i].addAllPendingLockRequestsTo(c);
+    for (int i = 0; i < this.lockManagers.length; i++) {
+      this.lockManagers[i].addAllPendingLockRequestsTo(c);
     }
     return c;
   }
 
   public Collection addAllPendingTryLockRequestsTo(Collection c) {
-    for (int i = 0; i < lockManagers.length; i++) {
-      lockManagers[i].addAllPendingTryLockRequestsTo(c);
+    for (int i = 0; i < this.lockManagers.length; i++) {
+      this.lockManagers[i].addAllPendingTryLockRequestsTo(c);
     }
     return c;
   }
 
   public Collection addAllWaitersTo(Collection c) {
-    for (int i = 0; i < lockManagers.length; i++) {
-      lockManagers[i].addAllWaitersTo(c);
+    for (int i = 0; i < this.lockManagers.length; i++) {
+      this.lockManagers[i].addAllWaitersTo(c);
     }
     return c;
   }
@@ -208,28 +209,28 @@ public class StripedClientLockManagerImpl implements ClientLockManager, ClientHa
   }
 
   public void requestLockSpecs() {
-    for (int i = 0; i < lockManagers.length; i++) {
-      lockManagers[i].requestLockSpecs();
+    for (int i = 0; i < this.lockManagers.length; i++) {
+      this.lockManagers[i].requestLockSpecs();
     }
   }
 
   public void setLockStatisticsConfig(int traceDepth, int gatherInterval) {
-    for (int i = 0; i < lockManagers.length; i++) {
-      lockManagers[i].setLockStatisticsConfig(traceDepth, gatherInterval);
+    for (int i = 0; i < this.lockManagers.length; i++) {
+      this.lockManagers[i].setLockStatisticsConfig(traceDepth, gatherInterval);
     }
   }
 
   public void setLockStatisticsEnabled(boolean statEnable) {
-    for (int i = 0; i < lockManagers.length; i++) {
-      lockManagers[i].setLockStatisticsEnabled(statEnable);
+    for (int i = 0; i < this.lockManagers.length; i++) {
+      this.lockManagers[i].setLockStatisticsEnabled(statEnable);
     }
   }
 
   public String dump() {
     StringBuffer sb = new StringBuffer("StripedClientLockManagerImpl : { \n");
-    for (int i = 0; i < lockManagers.length; i++) {
+    for (int i = 0; i < this.lockManagers.length; i++) {
       sb.append('[').append(i).append("] = ");
-      sb.append(lockManagers[i].dump()).append("\n");
+      sb.append(this.lockManagers[i].dump()).append("\n");
     }
     sb.append("}");
     return sb.toString();
@@ -245,14 +246,14 @@ public class StripedClientLockManagerImpl implements ClientLockManager, ClientHa
   }
 
   public void dumpToLogger() {
-    logger.info(dump());
+    this.logger.info(dump());
   }
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.println(getClass().getName());
-    for (int i = 0; i < lockManagers.length; i++) {
+    for (int i = 0; i < this.lockManagers.length; i++) {
       out.indent().println("[ " + i + "] = ");
-      lockManagers[i].prettyPrint(out);
+      this.lockManagers[i].prettyPrint(out);
     }
     return out;
   }

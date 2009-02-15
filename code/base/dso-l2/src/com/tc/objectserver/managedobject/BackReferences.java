@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.managedobject;
 
@@ -11,7 +12,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-//TODO::This class doesnt maintain backreferences anymore. Should be renamed.
+// TODO::This class doesnt maintain backreferences anymore. Should be renamed.
 public class BackReferences {
 
   private final Map nodes;
@@ -19,29 +20,29 @@ public class BackReferences {
   private final Set parents;
 
   public BackReferences() {
-    parents = new HashSet();
-    nodes = new HashMap();
+    this.parents = new HashSet();
+    this.nodes = new HashMap();
   }
 
   public void addBackReference(ObjectID child, ObjectID parent) {
-    if (child.isNull()) return;
+    if (child.isNull()) { return; }
     Node c = getOrCreateNode(child);
     Node p = getOrCreateNode(parent);
     p.addChild(c);
-    parents.add(parent);
+    this.parents.add(parent);
   }
 
   private Node getOrCreateNode(ObjectID id) {
-    Node n = (Node) nodes.get(id);
+    Node n = (Node) this.nodes.get(id);
     if (n == null) {
       n = new Node(id);
-      nodes.put(id, n);
+      this.nodes.put(id, n);
     }
     return n;
   }
 
   public Set getAllParents() {
-    return new HashSet(parents);
+    return new HashSet(this.parents);
   }
 
   public Set addReferencedChildrenTo(Set objectIDs, Set interestedParents) {
@@ -63,14 +64,16 @@ public class BackReferences {
       this.children = new HashSet();
     }
 
+    @Override
     public int hashCode() {
-      return id.hashCode();
-    }
-    
-    public ObjectID getID() {
-      return id;
+      return this.id.hashCode();
     }
 
+    public ObjectID getID() {
+      return this.id;
+    }
+
+    @Override
     public boolean equals(Object o) {
       if (o instanceof Node) {
         Node other = (Node) o;
@@ -80,23 +83,23 @@ public class BackReferences {
     }
 
     public void addChild(Node c) {
-      children.add(c);
+      this.children.add(c);
     }
-    
+
     public Set addAllReferencedChildrenTo(Set objectIDs) {
-      for (Iterator i = children.iterator(); i.hasNext();) {
+      for (Iterator i = this.children.iterator(); i.hasNext();) {
         Node child = (Node) i.next();
-        if(!objectIDs.contains(child.getID())) {
-          objectIDs.add(child.getID());
+        if (objectIDs.add(child.getID())) {
           child.addAllReferencedChildrenTo(objectIDs);
         }
       }
       return objectIDs;
     }
 
+    @Override
     public String toString() {
-      // XXX:: dont just print the contents of children. That might cause a recursive loop
-      return "Node(" + id + ") : children = " + children.size();
+      // Don't just print the contents of children. That might cause a recursive loop
+      return "Node(" + this.id + ") : children = " + this.children.size();
     }
   }
 

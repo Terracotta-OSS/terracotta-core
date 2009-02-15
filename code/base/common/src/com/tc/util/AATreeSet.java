@@ -42,11 +42,11 @@ public class AATreeSet {
    * Construct the tree.
    */
   public AATreeSet() {
-    root = nullNode;
+    this.root = nullNode;
   }
 
   public int size() {
-    return size;
+    return this.size;
   }
 
   /**
@@ -57,10 +57,12 @@ public class AATreeSet {
    * @throws DuplicateItemException if x is already present.
    */
   public boolean insert(Comparable x) {
-    inserted = true;
-    root = insert(x, root);
-    if (inserted) size++;
-    return inserted;
+    this.inserted = true;
+    this.root = insert(x, this.root);
+    if (this.inserted) {
+      this.size++;
+    }
+    return this.inserted;
   }
 
   /**
@@ -70,13 +72,15 @@ public class AATreeSet {
    * @throws ItemNotFoundException if x is not found.
    */
   public Comparable remove(Comparable x) {
-    deletedNode = nullNode;
-    root = remove(x, root);
-    Comparable d = deletedElement;
+    this.deletedNode = nullNode;
+    this.root = remove(x, this.root);
+    Comparable d = this.deletedElement;
     // deletedElement is set to null to free the reference,
     // deletedNode is not freed as it will endup pointing to a valid node.
-    deletedElement = null;
-    if (d != null) size--;
+    this.deletedElement = null;
+    if (d != null) {
+      this.size--;
+    }
     return d;
   }
 
@@ -86,12 +90,13 @@ public class AATreeSet {
    * @return the smallest item or null if empty.
    */
   public Comparable findMin() {
-    if (isEmpty()) return null;
+    if (isEmpty()) { return null; }
 
-    AANode ptr = root;
+    AANode ptr = this.root;
 
-    while (ptr.left != nullNode)
+    while (ptr.left != nullNode) {
       ptr = ptr.left;
+    }
 
     return ptr.element;
   }
@@ -102,12 +107,13 @@ public class AATreeSet {
    * @return the largest item or null if empty.
    */
   public Comparable findMax() {
-    if (isEmpty()) return null;
+    if (isEmpty()) { return null; }
 
-    AANode ptr = root;
+    AANode ptr = this.root;
 
-    while (ptr.right != nullNode)
+    while (ptr.right != nullNode) {
       ptr = ptr.right;
+    }
 
     return ptr.element;
   }
@@ -120,13 +126,17 @@ public class AATreeSet {
    */
 
   public Comparable find(Comparable x) {
-    AANode current = root;
+    AANode current = this.root;
 
     while (current != nullNode) {
       int res = x.compareTo(current.element);
-      if (res < 0) current = current.left;
-      else if (res > 0) current = current.right;
-      else return current.element;
+      if (res < 0) {
+        current = current.left;
+      } else if (res > 0) {
+        current = current.right;
+      } else {
+        return current.element;
+      }
     }
     return null;
   }
@@ -135,8 +145,8 @@ public class AATreeSet {
    * Make the tree logically empty.
    */
   public void clear() {
-    root = nullNode;
-    size = 0;
+    this.root = nullNode;
+    this.size = 0;
   }
 
   /**
@@ -145,7 +155,7 @@ public class AATreeSet {
    * @return true if empty, false otherwise.
    */
   public boolean isEmpty() {
-    return root == nullNode;
+    return this.root == nullNode;
   }
 
   public Iterator iterator() {
@@ -177,7 +187,7 @@ public class AATreeSet {
     } else {
       // XXX:: Not throwing DuplicateItemException as we may want to insert elements without doing a lookup.
       // throw new RuntimeException("DuplicateItemExpection:" + x.toString());
-      inserted = false;
+      this.inserted = false;
       return t;
     }
 
@@ -196,31 +206,33 @@ public class AATreeSet {
   private AANode remove(Comparable x, AANode t) {
     if (t != nullNode) {
       // Step 1: Search down the tree and set lastNode and deletedNode
-      lastNode = t;
+      this.lastNode = t;
       if (x.compareTo(t.element) < 0) {
         t.left = remove(x, t.left);
       } else {
-        deletedNode = t;
+        this.deletedNode = t;
         t.right = remove(x, t.right);
       }
 
       // Step 2: If at the bottom of the tree and
       // x is present, we remove it
-      if (t == lastNode) {
-        if (deletedNode == nullNode || x.compareTo(deletedNode.element) != 0) {
+      if (t == this.lastNode) {
+        if (this.deletedNode == nullNode || x.compareTo(this.deletedNode.element) != 0) {
           // XXX:: Modified to not throw ItemNotFoundException as we want to be able to remove elements without doing a
           // lookup.
           // throw new RuntimeException("ItemNotFoundException : " + x.toString());
         } else {
-          deletedElement = deletedNode.element;
-          deletedNode.element = t.element;
+          this.deletedElement = this.deletedNode.element;
+          this.deletedNode.element = t.element;
           t = t.right;
         }
       }
 
       // Step 3: Otherwise, we are not at the bottom; re-balance
       else if (t.left.level < t.level - 1 || t.right.level < t.level - 1) {
-        if (t.right.level > --t.level) t.right.level = t.level;
+        if (t.right.level > --t.level) {
+          t.right.level = t.level;
+        }
         t = skew(t);
         t.right = skew(t.right);
         t.right.right = skew(t.right.right);
@@ -238,7 +250,9 @@ public class AATreeSet {
    * @return the new root after the rotation.
    */
   private static AANode skew(AANode t) {
-    if (t.left.level == t.level) t = rotateWithLeftChild(t);
+    if (t.left.level == t.level) {
+      t = rotateWithLeftChild(t);
+    }
     return t;
   }
 
@@ -277,25 +291,25 @@ public class AATreeSet {
   }
 
   public String dump() {
-    return "AATree = { " + root.dump() + " }";
+    return "AATree = { " + this.root.dump() + " }";
   }
 
   private static class AANode {
     // Constructors
     AANode(Comparable theElement) {
-      element = theElement;
-      left = right = nullNode;
-      level = 1;
+      this.element = theElement;
+      this.left = this.right = nullNode;
+      this.level = 1;
     }
 
     // XXX:: for debugging - costly operation
     public String dump() {
-      String ds = String.valueOf(element);
-      if (left != nullNode) {
-        ds = ds + "," + left.dump();
+      String ds = String.valueOf(this.element);
+      if (this.left != nullNode) {
+        ds = ds + "," + this.left.dump();
       }
-      if (right != nullNode) {
-        ds = ds + "," + right.dump();
+      if (this.right != nullNode) {
+        ds = ds + "," + this.right.dump();
       }
       return ds;
     }
@@ -305,8 +319,9 @@ public class AATreeSet {
     AANode     right;  // Right child
     int        level;  // Level
 
+    @Override
     public String toString() {
-      return "AANode@" + System.identityHashCode(this) + "{" + element + "}";
+      return "AANode@" + System.identityHashCode(this) + "{" + this.element + "}";
     }
   }
 
@@ -316,7 +331,7 @@ public class AATreeSet {
    */
   private class AATreeSetIterator implements Iterator {
 
-    AANode next = root;
+    AANode next = AATreeSet.this.root;
     // Contains elements while traversing
     Stack  s    = new Stack();
 
@@ -329,22 +344,22 @@ public class AATreeSet {
      */
     public AATreeSetIterator(Comparable c) {
       int result = 0;
-      while (next != nullNode) {
-        result = c.compareTo(next.element);
+      while (this.next != nullNode) {
+        result = c.compareTo(this.next.element);
         if (result < 0) {
-          s.push(next);
-          next = next.left;
+          this.s.push(this.next);
+          this.next = this.next.left;
         } else if (result == 0) {
 
           // We are suppose to retain a Tree { elements >= c} . So, put a
           // "take diversion board" in the left subtree. We need to push the next
           // element here, so that iterator.next can pop and start traversing
           // from the right child
-          s.push(next);
-          next = nullNode;
+          this.s.push(this.next);
+          this.next = nullNode;
           break;
         } else if (result > 0) {
-          next = next.right;
+          this.next = this.next.right;
         }
       }
 
@@ -353,20 +368,20 @@ public class AATreeSet {
     }
 
     public boolean hasNext() {
-      if (next == nullNode && s.size() == 0) return false;
+      if (this.next == nullNode && this.s.size() == 0) { return false; }
       return true;
     }
 
     public Object next() {
-      if (next == nullNode && s.size() == 0) throw new NoSuchElementException();
+      if (this.next == nullNode && this.s.size() == 0) { throw new NoSuchElementException(); }
 
       while (true) {
-        if (next != nullNode) {
-          s.push(next);
-          next = next.left;
+        if (this.next != nullNode) {
+          this.s.push(this.next);
+          this.next = this.next.left;
         } else {
-          AANode current = (AANode) s.pop();
-          next = current.right;
+          AANode current = (AANode) this.s.pop();
+          this.next = current.right;
           return current.element;
         }
       }

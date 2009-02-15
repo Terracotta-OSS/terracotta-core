@@ -20,6 +20,7 @@ import com.tc.util.ObjectIDSet;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.Set;
 
 public class RequestManagedObjectMessageImpl extends DSOMessageBase implements EventContext,
     RequestManagedObjectMessage {
@@ -29,7 +30,7 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
   private final static byte REQUEST_DEPTH_ID           = 5;
   private final static byte REQUESTING_THREAD_NAME     = 6;
 
-  private ObjectIDSet       objectIDs                  = new ObjectIDSet();
+  private final ObjectIDSet objectIDs                  = new ObjectIDSet();
   private ObjectIDSet       removed                    = new ObjectIDSet();
   private ObjectRequestID   requestID;
   private int               requestDepth;
@@ -45,21 +46,23 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
     super(sessionID, monitor, channel, header, data);
   }
 
+  @Override
   protected void dehydrateValues() {
-    for (Iterator i = objectIDs.iterator(); i.hasNext();) {
+    for (Iterator i = this.objectIDs.iterator(); i.hasNext();) {
       ObjectID id = (ObjectID) i.next();
       putNVPair(MANAGED_OBJECT_ID, id.toLong());
     }
 
-    for (Iterator i = removed.iterator(); i.hasNext();) {
+    for (Iterator i = this.removed.iterator(); i.hasNext();) {
       ObjectID id = (ObjectID) i.next();
       putNVPair(MANAGED_OBJECTS_REMOVED_ID, id.toLong());
     }
-    putNVPair(REQUEST_ID, requestID.toLong());
-    putNVPair(REQUEST_DEPTH_ID, requestDepth);
-    putNVPair(REQUESTING_THREAD_NAME, threadName);
+    putNVPair(REQUEST_ID, this.requestID.toLong());
+    putNVPair(REQUEST_DEPTH_ID, this.requestDepth);
+    putNVPair(REQUESTING_THREAD_NAME, this.threadName);
   }
 
+  @Override
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case MANAGED_OBJECT_ID:
@@ -83,18 +86,18 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
   }
 
   public ObjectRequestID getRequestID() {
-    return requestID;
+    return this.requestID;
   }
 
   public ObjectIDSet getRequestedObjectIDs() {
-    return objectIDs;
+    return this.objectIDs;
   }
 
   public ObjectIDSet getRemoved() {
-    return removed;
+    return this.removed;
   }
 
-  public void initialize(ObjectRequestContext ctxt, ObjectIDSet oids, ObjectIDSet removedIDs) {
+  public void initialize(ObjectRequestContext ctxt, Set<ObjectID> oids, ObjectIDSet removedIDs) {
     this.requestID = ctxt.getRequestID();
     this.objectIDs.addAll(oids);
     this.removed = removedIDs;
@@ -103,11 +106,11 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
   }
 
   public int getRequestDepth() {
-    return requestDepth;
+    return this.requestDepth;
   }
 
   public String getRequestingThreadName() {
-    return threadName;
+    return this.threadName;
   }
 
   public boolean isServerInitiated() {

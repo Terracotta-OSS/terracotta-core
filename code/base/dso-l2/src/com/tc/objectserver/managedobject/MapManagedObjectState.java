@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.managedobject;
 
@@ -33,7 +34,7 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
 
   protected MapManagedObjectState(long classID, Map map) {
     super(classID);
-    references = map;
+    this.references = map;
   }
 
   protected MapManagedObjectState(ObjectInput in) throws IOException {
@@ -56,7 +57,7 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
         mapPreProcess(params);
         Object key = getKey(params);
         Object value = getValue(params);
-        references.put(key, value);
+        this.references.put(key, value);
         if (key instanceof ObjectID) {
           ObjectID v = (ObjectID) key;
           getListener().changed(objectID, null, v);
@@ -69,10 +70,10 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
         }
         break;
       case SerializationUtil.REMOVE:
-        references.remove(params[0]);
+        this.references.remove(params[0]);
         break;
       case SerializationUtil.CLEAR:
-        references.clear();
+        this.references.clear();
         break;
       default:
         throw new AssertionError("Invalid action:" + method);
@@ -83,11 +84,10 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
   protected void addBackReferenceForKey(BackReferences includeIDs, ObjectID key, ObjectID map) {
     includeIDs.addBackReference(key, map);
   }
-  
+
   protected void addBackReferenceForValue(BackReferences includeIDs, ObjectID value, ObjectID map) {
     includeIDs.addBackReference(value, map);
   }
-
 
   private Object getKey(Object[] params) {
     // Hack hack big hack for trove maps which replace the key on set as opposed to HashMaps which do not.
@@ -102,12 +102,12 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
   private void mapPreProcess(Object[] params) {
     // Hack hack big hack for trove maps which replace the key on set as opposed to HashMaps which do not.
     if (params.length == 3) {
-      references.remove(params[0]);
+      this.references.remove(params[0]);
     }
   }
 
   public void dehydrate(ObjectID objectID, DNAWriter writer) {
-    for (Iterator i = references.entrySet().iterator(); i.hasNext();) {
+    for (Iterator i = this.references.entrySet().iterator(); i.hasNext();) {
       Entry entry = (Entry) i.next();
       Object key = entry.getKey();
       Object value = entry.getValue();
@@ -115,20 +115,21 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     }
   }
 
+  @Override
   protected void addAllObjectReferencesTo(Set refs) {
     addAllObjectReferencesFromIteratorTo(this.references.keySet().iterator(), refs);
     addAllObjectReferencesFromIteratorTo(this.references.values().iterator(), refs);
   }
-  
+
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     PrettyPrinter rv = out;
     out = out.println("MapManagedObjectState").duplicateAndIndent();
-    out.indent().println("references: " + references);
+    out.indent().println("references: " + this.references);
     return rv;
   }
 
   public ManagedObjectFacade createFacade(ObjectID objectID, String className, int limit) {
-    final int size = references.size();
+    final int size = this.references.size();
 
     if (limit < 0) {
       limit = size;
@@ -140,7 +141,7 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
 
     int index = 0;
 
-    for (Iterator i = references.entrySet().iterator(); i.hasNext() && index < limit; index++) {
+    for (Iterator i = this.references.entrySet().iterator(); i.hasNext() && index < limit; index++) {
       Entry entry = (Entry) i.next();
       Object key = FacadeUtil.processValue(entry.getKey());
       Object value = FacadeUtil.processValue(entry.getValue());
@@ -150,18 +151,19 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     return LogicalManagedObjectFacade.createMapInstance(objectID, className, data, size);
   }
 
+  @Override
   protected void basicWriteTo(ObjectOutput out) throws IOException {
     // CollectionsPersistor will save retrieve data in references map.
-    if (false) throw new IOException();
+    if (false) { throw new IOException(); }
   }
 
   public void setMap(Map map) {
-    if (this.references != null) { throw new AssertionError("The references map is already set ! " + references); }
+    if (this.references != null) { throw new AssertionError("The references map is already set ! " + this.references); }
     this.references = map;
   }
 
   public Map getMap() {
-    return references;
+    return this.references;
   }
 
   // CollectionsPersistor will save retrieve data in references map.
@@ -178,16 +180,17 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     return MAP_TYPE;
   }
 
+  @Override
   protected boolean basicEquals(LogicalManagedObjectState o) {
     MapManagedObjectState mmo = (MapManagedObjectState) o;
-    return references.equals(mmo.references);
+    return this.references.equals(mmo.references);
   }
 
   public PersistableCollection getPersistentCollection() {
-    return (PersistableCollection)getMap();
+    return (PersistableCollection) getMap();
   }
 
   public void setPersistentCollection(PersistableCollection collection) {
-    setMap((Map)collection);
+    setMap((Map) collection);
   }
 }

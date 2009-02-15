@@ -39,6 +39,7 @@ public class LiteralTypesManagedObjectState extends AbstractManagedObjectState i
     super();
   }
 
+  @Override
   public int hashCode() {
     throw new TCRuntimeException("Don't hash me!");
   }
@@ -48,14 +49,15 @@ public class LiteralTypesManagedObjectState extends AbstractManagedObjectState i
       LiteralAction a = (LiteralAction) cursor.getAction();
       // PhysicalAction a = cursor.getPhysicalAction();
       // Assert.assertTrue(a.isLiteralType());
-      reference = a.getObject();
+      this.reference = a.getObject();
     }
   }
 
   public void dehydrate(ObjectID objectID, DNAWriter writer) {
-    writer.addLiteralValue(reference);
+    writer.addLiteralValue(this.reference);
   }
 
+  @Override
   public String toString() {
     // XXX: Um... this is gross.
     StringWriter writer = new StringWriter();
@@ -67,7 +69,7 @@ public class LiteralTypesManagedObjectState extends AbstractManagedObjectState i
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     PrettyPrinter rv = out;
     out = out.print(getClass().getName()).duplicateAndIndent().println();
-    out.indent().print("references: " + reference).println();
+    out.indent().print("references: " + this.reference).println();
     out.indent().print("listener: " + getListener()).println();
     return rv;
   }
@@ -76,7 +78,7 @@ public class LiteralTypesManagedObjectState extends AbstractManagedObjectState i
     // NOTE: limit is ignored for literal object facades
 
     Map dataCopy = new HashMap();
-    dataCopy.put(className, reference);
+    dataCopy.put(className, this.reference);
 
     return new PhysicalManagedObjectFacade(objectID, ObjectID.NULL_ID, className, dataCopy, false, DNA.NULL_ARRAY_SIZE,
                                            false);
@@ -95,7 +97,7 @@ public class LiteralTypesManagedObjectState extends AbstractManagedObjectState i
   }
 
   public void writeTo(ObjectOutput o) throws IOException {
-    o.writeObject(reference);
+    o.writeObject(this.reference);
   }
 
   static LiteralTypesManagedObjectState readFrom(ObjectInput in) throws IOException, ClassNotFoundException {
@@ -104,23 +106,24 @@ public class LiteralTypesManagedObjectState extends AbstractManagedObjectState i
     return lmos;
   }
 
+  @Override
   protected boolean basicEquals(AbstractManagedObjectState o) {
     LiteralTypesManagedObjectState lmos = (LiteralTypesManagedObjectState) o;
-    return reference.equals(lmos.reference);
+    return this.reference.equals(lmos.reference);
   }
 
   public String getClassName() {
-    Assert.assertNotNull(reference);
+    Assert.assertNotNull(this.reference);
 
-    if (reference instanceof ClassInstance) {
+    if (this.reference instanceof ClassInstance) {
       return "java.lang.Class";
-    } else if (reference instanceof ClassLoaderInstance) {
+    } else if (this.reference instanceof ClassLoaderInstance) {
       return "java.lang.ClassLoader";
-    } else if (reference instanceof UTF8ByteDataHolder) {
+    } else if (this.reference instanceof UTF8ByteDataHolder) {
       return "java.lang.String";
-    } else if (reference instanceof EnumInstance) { return "java.lang.Enum"; }
+    } else if (this.reference instanceof EnumInstance) { return "java.lang.Enum"; }
 
-    return reference.getClass().getName();
+    return this.reference.getClass().getName();
   }
 
   public String getLoaderDescription() {

@@ -14,7 +14,6 @@ import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.TestMessageChannel;
-import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
@@ -29,10 +28,8 @@ import com.tc.object.tx.TxnType;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 import junit.framework.TestCase;
 
@@ -43,11 +40,13 @@ public class BroadcastTransactionMessageTest extends TestCase {
   private MessageMonitor                  monitor;
   private MessageChannel                  channel;
 
+  @Override
   public void setUp() throws Exception {
-    monitor = new NullMessageMonitor();
-    channel = new TestMessageChannel();
-    out = new TCByteBufferOutputStream(4, 4096, false);
-    msg = new BroadcastTransactionMessageImpl(new SessionID(0), monitor, out, channel, TCMessageType.BROADCAST_TRANSACTION_MESSAGE);
+    this.monitor = new NullMessageMonitor();
+    this.channel = new TestMessageChannel();
+    this.out = new TCByteBufferOutputStream(4, 4096, false);
+    this.msg = new BroadcastTransactionMessageImpl(new SessionID(0), this.monitor, this.out, this.channel,
+                                                   TCMessageType.BROADCAST_TRANSACTION_MESSAGE);
   }
 
   public void testBasics() throws Exception {
@@ -58,35 +57,33 @@ public class BroadcastTransactionMessageTest extends TestCase {
     LockID[] lockIDs = new LockID[] { new LockID("1") };
     long cid = 10;
     TransactionID txID = new TransactionID(1);
-    ClientID clientID = new ClientID( new ChannelID(1));
+    ClientID clientID = new ClientID(new ChannelID(1));
     GlobalTransactionID gtx = new GlobalTransactionID(2);
     TxnType txnType = TxnType.NORMAL;
     GlobalTransactionID lowGlobalTransactionIDWatermark = new GlobalTransactionID(1);
 
     Collection notified = new LinkedList();
-    Set lookupObjectIDs = new HashSet();
     for (int i = 0; i < 100; i++) {
-      notified.add(new LockContext(new LockID("" + (i + 1)), clientID, new ThreadID(i + 1), LockLevel.WRITE, String.class.getName()));
-      lookupObjectIDs.add(new ObjectID(i));
+      notified.add(new LockContext(new LockID("" + (i + 1)), clientID, new ThreadID(i + 1), LockLevel.WRITE,
+                                   String.class.getName()));
     }
-    msg.initialize(changes, lookupObjectIDs, serializer, lockIDs, cid, txID, clientID, gtx, txnType,
-                   lowGlobalTransactionIDWatermark, notified, new HashMap(), DmiDescriptor.EMPTY_ARRAY);
-    msg.dehydrate();
+    this.msg.initialize(changes, serializer, lockIDs, cid, txID, clientID, gtx, txnType,
+                        lowGlobalTransactionIDWatermark, notified, new HashMap(), DmiDescriptor.EMPTY_ARRAY);
+    this.msg.dehydrate();
 
-    TCByteBuffer[] data = out.toArray();
-    TCMessageHeader header = (TCMessageHeader) msg.getHeader();
-    msg = new BroadcastTransactionMessageImpl(SessionID.NULL_ID, monitor, channel, header, data);
-    msg.hydrate();
+    TCByteBuffer[] data = this.out.toArray();
+    TCMessageHeader header = (TCMessageHeader) this.msg.getHeader();
+    this.msg = new BroadcastTransactionMessageImpl(SessionID.NULL_ID, this.monitor, this.channel, header, data);
+    this.msg.hydrate();
 
-    assertEquals(changes, msg.getObjectChanges());
-    assertEquals(Arrays.asList(lockIDs), msg.getLockIDs());
-    assertEquals(cid, msg.getChangeID());
-    assertEquals(txID, msg.getTransactionID());
-    assertEquals(gtx, msg.getGlobalTransactionID());
-    assertEquals(txnType, msg.getTransactionType());
-    assertEquals(lowGlobalTransactionIDWatermark, msg.getLowGlobalTransactionIDWatermark());
-    assertEquals(notified, msg.addNotifiesTo(new LinkedList()));
-    assertEquals(lookupObjectIDs, msg.getLookupObjectIDs());
+    assertEquals(changes, this.msg.getObjectChanges());
+    assertEquals(Arrays.asList(lockIDs), this.msg.getLockIDs());
+    assertEquals(cid, this.msg.getChangeID());
+    assertEquals(txID, this.msg.getTransactionID());
+    assertEquals(gtx, this.msg.getGlobalTransactionID());
+    assertEquals(txnType, this.msg.getTransactionType());
+    assertEquals(lowGlobalTransactionIDWatermark, this.msg.getLowGlobalTransactionIDWatermark());
+    assertEquals(notified, this.msg.addNotifiesTo(new LinkedList()));
   }
 
 }

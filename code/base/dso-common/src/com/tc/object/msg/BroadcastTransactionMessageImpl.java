@@ -34,12 +34,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author steve
@@ -55,20 +53,18 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   private final static byte      LOW_WATERMARK         = 8;
   private final static byte      SERIALIZER_ID         = 9;
   private final static byte      NOTIFIED              = 10;
-  private final static byte      LOOKUP_OBJECT_IDS     = 11;
-  private final static byte      ROOT_NAME_ID_PAIR     = 12;
-  private final static byte      DMI_ID                = 13;
+  private final static byte      ROOT_NAME_ID_PAIR     = 11;
+  private final static byte      DMI_ID                = 12;
 
   private List                   changes               = new LinkedList();
-  private List                   dmis                  = new LinkedList();
-  private Set                    lookupObjectIDs       = new HashSet();
-  private Collection             notifies              = new LinkedList();
-  private Map                    newRoots              = new HashMap();
+  private final List             dmis                  = new LinkedList();
+  private final Collection       notifies              = new LinkedList();
+  private final Map              newRoots              = new HashMap();
   private List                   lockIDs;
 
   private long                   changeID;
   private TransactionID          transactionID;
-  private NodeID              committerID;
+  private NodeID                 committerID;
   private TxnType                transactionType;
   private GlobalTransactionID    globalTransactionID;
   private GlobalTransactionID    lowWatermark;
@@ -84,59 +80,57 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     super(sessionID, monitor, channel, header, data);
   }
 
+  @Override
   protected void dehydrateValues() {
-    putNVPair(TRANSACTION_TYPE_ID, transactionType.getType());
-    for (Iterator i = lockIDs.iterator(); i.hasNext();) {
+    putNVPair(TRANSACTION_TYPE_ID, this.transactionType.getType());
+    for (Iterator i = this.lockIDs.iterator(); i.hasNext();) {
       LockID lockID = (LockID) i.next();
       putNVPair(LOCK_ID, lockID.asString());
     }
 
-    for (Iterator i = notifies.iterator(); i.hasNext();) {
+    for (Iterator i = this.notifies.iterator(); i.hasNext();) {
       LockContext notified = (LockContext) i.next();
       putNVPair(NOTIFIED, notified);
     }
 
-    putNVPair(SERIALIZER_ID, serializer);
+    putNVPair(SERIALIZER_ID, this.serializer);
 
-    putNVPair(CHANGE_ID, changeID);
-    putNVPair(TRANSACTION_ID, transactionID.toLong());
-    putNVPair(COMMITTER_ID, new NodeIDSerializer(committerID));
-    putNVPair(GLOBAL_TRANSACTION_ID, globalTransactionID.toLong());
-    putNVPair(LOW_WATERMARK, lowWatermark.toLong());
+    putNVPair(CHANGE_ID, this.changeID);
+    putNVPair(TRANSACTION_ID, this.transactionID.toLong());
+    putNVPair(COMMITTER_ID, new NodeIDSerializer(this.committerID));
+    putNVPair(GLOBAL_TRANSACTION_ID, this.globalTransactionID.toLong());
+    putNVPair(LOW_WATERMARK, this.lowWatermark.toLong());
 
-    for (Iterator i = changes.iterator(); i.hasNext();) {
+    for (Iterator i = this.changes.iterator(); i.hasNext();) {
       DNAImpl dna = (DNAImpl) i.next();
       putNVPair(DNA_ID, dna);
     }
-    for (Iterator i = lookupObjectIDs.iterator(); i.hasNext();) {
-      ObjectID oid = (ObjectID) i.next();
-      putNVPair(LOOKUP_OBJECT_IDS, oid.toLong());
-    }
-    for (Iterator i = newRoots.keySet().iterator(); i.hasNext();) {
+    for (Iterator i = this.newRoots.keySet().iterator(); i.hasNext();) {
       String key = (String) i.next();
-      ObjectID value = (ObjectID) newRoots.get(key);
+      ObjectID value = (ObjectID) this.newRoots.get(key);
       putNVPair(ROOT_NAME_ID_PAIR, new RootIDPair(key, value));
     }
-    for (Iterator i = dmis.iterator(); i.hasNext();) {
+    for (Iterator i = this.dmis.iterator(); i.hasNext();) {
       DmiDescriptor dd = (DmiDescriptor) i.next();
       putNVPair(DMI_ID, dd);
     }
   }
 
+  @Override
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case TRANSACTION_TYPE_ID:
         this.transactionType = TxnType.typeFor(getByteValue());
         return true;
       case DNA_ID:
-        this.changes.add(getObject(new DNAImpl(serializer, false)));
+        this.changes.add(getObject(new DNAImpl(this.serializer, false)));
         return true;
       case SERIALIZER_ID:
         this.serializer = (ObjectStringSerializer) getObject(new ObjectStringSerializer());
         return true;
       case LOCK_ID:
-        if (lockIDs == null) {
-          lockIDs = new LinkedList();
+        if (this.lockIDs == null) {
+          this.lockIDs = new LinkedList();
         }
         this.lockIDs.add(new LockID(getStringValue()));
         return true;
@@ -150,7 +144,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
         this.transactionID = new TransactionID(getLongValue());
         return true;
       case COMMITTER_ID:
-        this.committerID = ((NodeIDSerializer)getObject(new NodeIDSerializer())).getNodeID();
+        this.committerID = ((NodeIDSerializer) getObject(new NodeIDSerializer())).getNodeID();
         return true;
       case GLOBAL_TRANSACTION_ID:
         this.globalTransactionID = new GlobalTransactionID(getLongValue());
@@ -158,24 +152,21 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
       case LOW_WATERMARK:
         this.lowWatermark = new GlobalTransactionID(getLongValue());
         return true;
-      case LOOKUP_OBJECT_IDS:
-        this.lookupObjectIDs.add(new ObjectID(getLongValue()));
-        return true;
       case ROOT_NAME_ID_PAIR:
         RootIDPair rootIDPair = (RootIDPair) getObject(new RootIDPair());
         this.newRoots.put(rootIDPair.getRootName(), rootIDPair.getRootID());
         return true;
       case DMI_ID:
         DmiDescriptor dd = (DmiDescriptor) getObject(new DmiDescriptor());
-        dmis.add(dd);
+        this.dmis.add(dd);
         return true;
       default:
         return false;
     }
   }
 
-  public void initialize(List chges, Set objectIDs, ObjectStringSerializer aSerializer, LockID[] lids, long cid,
-                         TransactionID txID, NodeID client, GlobalTransactionID gtx, TxnType txnType,
+  public void initialize(List chges, ObjectStringSerializer aSerializer, LockID[] lids, long cid, TransactionID txID,
+                         NodeID client, GlobalTransactionID gtx, TxnType txnType,
                          GlobalTransactionID lowGlobalTransactionIDWatermark, Collection theNotifies, Map roots,
                          DmiDescriptor[] dmiDescs) {
     Assert.eval(lids.length > 0);
@@ -191,7 +182,6 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     this.lowWatermark = lowGlobalTransactionIDWatermark;
     this.serializer = aSerializer;
     this.notifies.addAll(theNotifies);
-    this.lookupObjectIDs.addAll(objectIDs);
     this.newRoots.putAll(roots);
     for (int i = 0; i < dmiDescs.length; i++) {
       this.dmis.add(dmiDescs[i]);
@@ -199,36 +189,32 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   }
 
   public List getLockIDs() {
-    return lockIDs;
+    return this.lockIDs;
   }
 
   public TxnType getTransactionType() {
-    return transactionType;
+    return this.transactionType;
   }
 
   public Collection getObjectChanges() {
-    Collection versionizedChanges = new ArrayList(changes.size());
-    for (Iterator iter = changes.iterator(); iter.hasNext();) {
-      versionizedChanges.add(new VersionizedDNAWrapper((DNA) iter.next(), globalTransactionID.toLong()));
+    Collection versionizedChanges = new ArrayList(this.changes.size());
+    for (Iterator iter = this.changes.iterator(); iter.hasNext();) {
+      versionizedChanges.add(new VersionizedDNAWrapper((DNA) iter.next(), this.globalTransactionID.toLong()));
 
     }
     return versionizedChanges;
   }
 
-  public Set getLookupObjectIDs() {
-    return lookupObjectIDs;
-  }
-
   public long getChangeID() {
-    return changeID;
+    return this.changeID;
   }
 
   public TransactionID getTransactionID() {
-    return transactionID;
+    return this.transactionID;
   }
 
   public NodeID getCommitterID() {
-    return committerID;
+    return this.committerID;
   }
 
   public GlobalTransactionID getGlobalTransactionID() {
@@ -241,18 +227,21 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   }
 
   public Collection addNotifiesTo(List c) {
-    c.addAll(notifies);
+    c.addAll(this.notifies);
     return c;
   }
 
+  @Override
   public void doRecycleOnRead() {
     // dont recycle yet
   }
 
+  @Override
   protected boolean isOutputStreamRecycled() {
     return true;
   }
 
+  @Override
   public void doRecycleOnWrite() {
     // recycle only those buffers created for this message
     recycleOutputStream();
@@ -276,8 +265,8 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     }
 
     public void serializeTo(TCByteBufferOutput serialOutput) {
-      serialOutput.writeString(rootName);
-      serialOutput.writeLong(rootID.toLong());
+      serialOutput.writeString(this.rootName);
+      serialOutput.writeLong(this.rootID.toLong());
 
     }
 
@@ -288,16 +277,16 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     }
 
     public ObjectID getRootID() {
-      return rootID;
+      return this.rootID;
     }
 
     public String getRootName() {
-      return rootName;
+      return this.rootName;
     }
   }
 
   public List getDmiDescriptors() {
-    return dmis;
+    return this.dmis;
   }
 
 }

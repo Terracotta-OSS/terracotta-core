@@ -42,7 +42,7 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
   private int                    size = 0;
 
   public ObjectIDSet() {
-    ranges = new AATreeSet();
+    this.ranges = new AATreeSet();
   }
 
   public ObjectIDSet(Collection c) {
@@ -61,7 +61,7 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
   }
 
   public Object deserializeFrom(TCByteBufferInput in) throws IOException {
-    if (size != 0) { throw new RuntimeException("deserialize dirty ObjectIDSet"); }
+    if (this.size != 0) { throw new RuntimeException("deserialize dirty ObjectIDSet"); }
     int _size = in.readInt();
     this.size = _size;
     while (_size > 0) {
@@ -75,43 +75,45 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
   }
 
   public void serializeTo(TCByteBufferOutput out) {
-    out.writeInt(size);
-    for (Iterator i = ranges.iterator(); i.hasNext();) {
+    out.writeInt(this.size);
+    for (Iterator i = this.ranges.iterator(); i.hasNext();) {
       Range r = (Range) i.next();
       out.writeLong(r.start);
       out.writeLong(r.end);
     }
   }
 
+  @Override
   public Iterator iterator() {
     return new ObjectIDSetIterator();
   }
 
+  @Override
   public int size() {
-    return size;
+    return this.size;
   }
 
   public boolean contains(ObjectID id) {
     long lid = id.toLong();
-    return (ranges.find(new MyLong(lid)) != null);
+    return (this.ranges.find(new MyLong(lid)) != null);
   }
 
   public boolean remove(ObjectID id) {
     long lid = id.toLong();
 
-    Range current = (Range) ranges.find(new MyLong(lid));
+    Range current = (Range) this.ranges.find(new MyLong(lid));
     if (current == null) {
       // Not found
       return false;
     }
     Range newRange = current.remove(lid);
     if (newRange != null) {
-      ranges.insert(newRange);
+      this.ranges.insert(newRange);
     } else if (current.isNull()) {
-      ranges.remove(current);
+      this.ranges.remove(current);
     }
-    size--;
-    modCount++;
+    this.size--;
+    this.modCount++;
     return true;
   }
 
@@ -119,43 +121,46 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
     long lid = id.toLong();
 
     // Step 1 : Check if the previous number is present, if so add to the same Range.
-    Range prev = (Range) ranges.find(new MyLong(lid - 1));
+    Range prev = (Range) this.ranges.find(new MyLong(lid - 1));
     if (prev != null) {
       boolean isAdded = prev.add(lid);
       if (isAdded) {
-        Range next = (Range) ranges.remove((new MyLong(lid + 1)));
-        if (next != null) prev.merge(next);
-        size++;
-        modCount++;
+        Range next = (Range) this.ranges.remove((new MyLong(lid + 1)));
+        if (next != null) {
+          prev.merge(next);
+        }
+        this.size++;
+        this.modCount++;
       }
       return isAdded;
     }
 
     // Step 2 : Check if the next number is present, if so add to the same Range.
-    Range next = (Range) ranges.find((new MyLong(lid + 1)));
+    Range next = (Range) this.ranges.find((new MyLong(lid + 1)));
     if (next != null) {
       boolean isAdded = next.add(lid);
       if (isAdded) {
-        size++;
-        modCount++;
+        this.size++;
+        this.modCount++;
       }
       return isAdded;
     }
 
     // Step 3: Add a new range for just this number.
-    boolean isAdded = ranges.insert(new Range(lid, lid));
+    boolean isAdded = this.ranges.insert(new Range(lid, lid));
     if (isAdded) {
-      size++;
-      modCount++;
+      this.size++;
+      this.modCount++;
     }
     return isAdded;
   }
 
+  @Override
   public String toString() {
-    if (size() <= 10) return toVerboseString();
-    
+    if (size() <= 10) { return toVerboseString(); }
+
     StringBuffer sb = new StringBuffer("ObjectIDSet " + getCompressionDetails() + "[");
-    for (Iterator i = ranges.iterator(); i.hasNext();) {
+    for (Iterator i = this.ranges.iterator(); i.hasNext();) {
       sb.append(' ').append(i.next());
     }
     return sb.append(']').toString();
@@ -166,7 +171,9 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
     StringBuffer sb = new StringBuffer("ObjectIDSet [ ");
     for (Iterator<ObjectID> iter = iterator(); iter.hasNext();) {
       sb.append(iter.next());
-      if (iter.hasNext()) sb.append(", ");
+      if (iter.hasNext()) {
+        sb.append(", ");
+      }
     }
     sb.append(" ]");
 
@@ -175,18 +182,18 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
 
   public String toShortString() {
     StringBuffer sb = new StringBuffer("ObjectIDSet " + getCompressionDetails() + "[");
-    sb.append(" size  = ").append(size);
+    sb.append(" size  = ").append(this.size);
     return sb.append(']').toString();
   }
 
   private String getCompressionDetails() {
-    return "{ (oids:ranges) = " + size + ":" + ranges.size() + " , compression ratio = " + getCompressionRatio()
-           + " } ";
+    return "{ (oids:ranges) = " + this.size + ":" + this.ranges.size() + " , compression ratio = "
+           + getCompressionRatio() + " } ";
   }
 
   // Range contains two longs instead of 1 long in ObjectID
   private float getCompressionRatio() {
-    return (ranges.size() == 0 ? 1.0f : (size / (ranges.size() * 2.0f)));
+    return (this.ranges.size() == 0 ? 1.0f : (this.size / (this.ranges.size() * 2.0f)));
   }
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
@@ -201,39 +208,40 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
     public long start;
     public long end;
 
+    @Override
     public String toString() {
-      return "Range(" + start + "," + end + ")";
+      return "Range(" + this.start + "," + this.end + ")";
     }
 
     public long size() {
-      return (isNull() ? 0 : end - start + 1); // since it is all inclusive
+      return (isNull() ? 0 : this.end - this.start + 1); // since it is all inclusive
     }
 
     public boolean isNull() {
-      return start > end;
+      return this.start > this.end;
     }
 
     public Range remove(long lid) {
-      if (lid < start || lid > end) { throw new AssertionError("Ranges : Illegal value passed to remove : " + this
-                                                               + " remove called for : " + lid); }
-      if (start == lid) {
-        start++;
+      if (lid < this.start || lid > this.end) { throw new AssertionError("Ranges : Illegal value passed to remove : "
+                                                                         + this + " remove called for : " + lid); }
+      if (this.start == lid) {
+        this.start++;
         return null;
-      } else if (end == lid) {
-        end--;
+      } else if (this.end == lid) {
+        this.end--;
         return null;
       } else {
-        Range newRange = new Range(lid + 1, end);
-        end = lid - 1;
+        Range newRange = new Range(lid + 1, this.end);
+        this.end = lid - 1;
         return newRange;
       }
     }
 
     public void merge(Range other) {
-      if (start == other.end + 1) {
-        start = other.start;
-      } else if (end == other.start - 1) {
-        end = other.end;
+      if (this.start == other.end + 1) {
+        this.start = other.start;
+      } else if (this.end == other.start - 1) {
+        this.end = other.end;
       } else {
         throw new AssertionError("Ranges : Merge is called on non contiguous value : " + this + " and other Range is "
                                  + other);
@@ -241,13 +249,13 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
     }
 
     public boolean add(long lid) {
-      if (lid == start - 1) {
-        start--;
+      if (lid == this.start - 1) {
+        this.start--;
         return true;
-      } else if (lid == end + 1) {
-        end++;
+      } else if (lid == this.end + 1) {
+        this.end++;
         return true;
-      } else if (lid >= start && lid <= end) {
+      } else if (lid >= this.start && lid <= this.end) {
         return false;
       } else {
         throw new AssertionError("Ranges : Add is called on non contiguous value : " + this + " but trying to add "
@@ -260,21 +268,30 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
       this.end = end;
     }
 
+    @Override
     public Object clone() {
-      return new Range(start, end);
+      return new Range(this.start, this.end);
     }
 
     public int compareTo(Object o) {
       if (o instanceof Range) {
         Range other = (Range) o;
-        if (start < other.start) return -1;
-        else if (start == other.start) return 0;
-        else return 1;
+        if (this.start < other.start) {
+          return -1;
+        } else if (this.start == other.start) {
+          return 0;
+        } else {
+          return 1;
+        }
       } else {
         long n = ((MyLong) o).longValue();
-        if (end < n) return -1;
-        else if (n < start) return 1;
-        else return 0;
+        if (this.end < n) {
+          return -1;
+        } else if (n < this.start) {
+          return 1;
+        } else {
+          return 0;
+        }
       }
     }
   }
@@ -288,25 +305,34 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
     }
 
     public long longValue() {
-      return number;
+      return this.number;
     }
 
     public int compareTo(Object o) {
       if (o instanceof Range) {
         Range r = (Range) o;
-        if (number < r.start) return -1;
-        else if (number > r.end) return 1;
-        else return 0;
+        if (this.number < r.start) {
+          return -1;
+        } else if (this.number > r.end) {
+          return 1;
+        } else {
+          return 0;
+        }
       } else {
         long other = ((MyLong) o).longValue();
-        if (number < other) return -1;
-        else if (number > other) return 1;
-        else return 0;
+        if (this.number < other) {
+          return -1;
+        } else if (this.number > other) {
+          return 1;
+        } else {
+          return 0;
+        }
       }
     }
 
+    @Override
     public String toString() {
-      return "MyLong@" + System.identityHashCode(this) + "(" + number + ")";
+      return "MyLong@" + System.identityHashCode(this) + "(" + this.number + ")";
     }
   }
 
@@ -319,58 +345,65 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
     int      expectedModCount;
 
     public ObjectIDSetIterator() {
-      nodes = ranges.iterator();
-      expectedModCount = modCount;
-      idx = 0;
-      if (nodes.hasNext()) current = (Range) nodes.next();
+      this.nodes = ObjectIDSet.this.ranges.iterator();
+      this.expectedModCount = ObjectIDSet.this.modCount;
+      this.idx = 0;
+      if (this.nodes.hasNext()) {
+        this.current = (Range) this.nodes.next();
+      }
     }
 
     public boolean hasNext() {
-      return nodes.hasNext() || (current != null && (current.start + idx) <= current.end);
+      return this.nodes.hasNext() || (this.current != null && (this.current.start + this.idx) <= this.current.end);
     }
 
     public Object next() {
-      if (current == null) throw new NoSuchElementException();
-      if (expectedModCount != modCount) throw new ConcurrentModificationException();
-      ObjectID oid = new ObjectID(current.start + idx);
-      if (current.start + idx == current.end) {
-        idx = 0;
-        if (nodes.hasNext()) {
-          current = (Range) nodes.next();
+      if (this.current == null) { throw new NoSuchElementException(); }
+      if (this.expectedModCount != ObjectIDSet.this.modCount) { throw new ConcurrentModificationException(); }
+      ObjectID oid = new ObjectID(this.current.start + this.idx);
+      if (this.current.start + this.idx == this.current.end) {
+        this.idx = 0;
+        if (this.nodes.hasNext()) {
+          this.current = (Range) this.nodes.next();
         } else {
-          current = null;
+          this.current = null;
         }
       } else {
-        idx++;
+        this.idx++;
       }
-      return (lastReturned = oid);
+      return (this.lastReturned = oid);
     }
 
     public void remove() {
-      if (lastReturned == null) throw new IllegalStateException();
-      if (expectedModCount != modCount) throw new ConcurrentModificationException();
-      ObjectIDSet.this.remove(lastReturned);
-      expectedModCount = modCount;
-      nodes = ranges.tailSetIterator(new MyLong(lastReturned.toLong()));
-      if (nodes.hasNext()) {
-        current = (Range) nodes.next();
-        idx = 0; // TODO:: verify ;; has to be
+      if (this.lastReturned == null) { throw new IllegalStateException(); }
+      if (this.expectedModCount != ObjectIDSet.this.modCount) { throw new ConcurrentModificationException(); }
+      ObjectIDSet.this.remove(this.lastReturned);
+      this.expectedModCount = ObjectIDSet.this.modCount;
+      this.nodes = ObjectIDSet.this.ranges.tailSetIterator(new MyLong(this.lastReturned.toLong()));
+      if (this.nodes.hasNext()) {
+        this.current = (Range) this.nodes.next();
+        this.idx = 0; // TODO:: verify ;; has to be
       } else {
-        current = null;
+        this.current = null;
       }
-      lastReturned = null;
+      this.lastReturned = null;
     }
   }
 
-  /*
-   * Because of the short comings of the iterator (it can't perform remove), this method is overridden FIXME::Once
-   * remove is fixed
+  /**
+   * Even though the iterator now supports remove() we are still sticking with this implementation since it seems faster
+   * than the calling iterator.remove() since the tree re-balances and we create new tail iterators on every remove
+   * which seems costly.
+   * 
+   * @see ObjectIDSetTest.testRemoveAll()
    */
+  @Override
   public boolean removeAll(Collection c) {
     boolean modified = false;
     if (size() > c.size()) {
-      for (Iterator i = c.iterator(); i.hasNext();)
+      for (Iterator i = c.iterator(); i.hasNext();) {
         modified |= remove(i.next());
+      }
     } else {
       // XXX :; yuck !!
       ArrayList toRemove = new ArrayList();
@@ -388,6 +421,7 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
     return modified;
   }
 
+  @Override
   public boolean contains(Object o) {
     if (o instanceof ObjectID) {
       return contains((ObjectID) o);
@@ -396,10 +430,12 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
     }
   }
 
+  @Override
   public boolean add(Object arg0) {
     return add((ObjectID) arg0);
   }
 
+  @Override
   public boolean remove(Object o) {
     if (o instanceof ObjectID) {
       return remove((ObjectID) o);
@@ -408,10 +444,11 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
     }
   }
 
+  @Override
   public void clear() {
     this.size = 0;
-    modCount++;
-    ranges.clear();
+    this.modCount++;
+    this.ranges.clear();
   }
 
   // =======================SortedSet Interface Methods==================================
@@ -421,14 +458,14 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
   }
 
   public Object first() {
-    if (size == 0) throw new NoSuchElementException();
-    Range min = (Range) ranges.findMin();
+    if (this.size == 0) { throw new NoSuchElementException(); }
+    Range min = (Range) this.ranges.findMin();
     return new ObjectID(min.start);
   }
 
   public Object last() {
-    if (size == 0) throw new NoSuchElementException();
-    Range max = (Range) ranges.findMax();
+    if (this.size == 0) { throw new NoSuchElementException(); }
+    Range max = (Range) this.ranges.findMax();
     return new ObjectID(max.end);
   }
 
@@ -457,52 +494,62 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
       this.s = s;
     }
 
+    @Override
     public Object deserializeFrom(TCByteBufferInput in) throws IOException {
-      return s.deserializeFrom(in);
+      return this.s.deserializeFrom(in);
     }
 
+    @Override
     public void serializeTo(TCByteBufferOutput out) {
-      s.serializeTo(out);
+      this.s.serializeTo(out);
     }
 
+    @Override
     public boolean equals(Object o) {
-      return o == this || s.equals(o);
+      return o == this || this.s.equals(o);
     }
 
+    @Override
     public int hashCode() {
-      return s.hashCode();
+      return this.s.hashCode();
     }
 
+    @Override
     public int size() {
-      return s.size();
+      return this.s.size();
     }
 
+    @Override
     public boolean isEmpty() {
-      return s.isEmpty();
+      return this.s.isEmpty();
     }
 
+    @Override
     public boolean contains(Object o) {
-      return s.contains(o);
+      return this.s.contains(o);
     }
 
+    @Override
     public Object[] toArray() {
-      return s.toArray();
+      return this.s.toArray();
     }
 
+    @Override
     public String toString() {
-      return s.toString();
+      return this.s.toString();
     }
 
+    @Override
     public Iterator iterator() {
       return new Iterator() {
-        Iterator i = s.iterator();
+        Iterator i = UnmodifiableObjectIDSet.this.s.iterator();
 
         public boolean hasNext() {
-          return i.hasNext();
+          return this.i.hasNext();
         }
 
         public Object next() {
-          return i.next();
+          return this.i.next();
         }
 
         public void remove() {
@@ -511,44 +558,54 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
       };
     }
 
+    @Override
     public boolean add(Object e) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean remove(Object o) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean containsAll(Collection coll) {
-      return s.containsAll(coll);
+      return this.s.containsAll(coll);
     }
 
+    @Override
     public boolean addAll(Collection coll) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean removeAll(Collection coll) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean retainAll(Collection coll) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void clear() {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public String toVerboseString() {
-      return s.toVerboseString();
+      return this.s.toVerboseString();
     }
 
+    @Override
     public String toShortString() {
-      return s.toShortString();
+      return this.s.toShortString();
     }
 
+    @Override
     public PrettyPrinter prettyPrint(PrettyPrinter out) {
-      return s.prettyPrint(out);
+      return this.s.prettyPrint(out);
     }
   }
 

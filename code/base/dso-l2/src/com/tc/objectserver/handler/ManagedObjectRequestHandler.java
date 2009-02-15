@@ -22,6 +22,7 @@ import com.tc.stats.counter.Counter;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * Converts the request into a call to the objectManager with the proper next steps initialized I'm not convinced that
@@ -45,6 +46,7 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
     this.globalObjectFlushCounter = globalObjectFlushCounter;
   }
 
+  @Override
   public void handleEvent(EventContext context) {
     if (context instanceof RequestManagedObjectMessage) {
       handleEventFromClient((RequestManagedObjectMessage) context);
@@ -58,46 +60,47 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
     // XXX::TODO:: Server initiated lookups are not updated to the channel counter for now
     final int numObjectsRequested = ids.size();
     if (numObjectsRequested != 0) {
-      globalObjectRequestCounter.increment(numObjectsRequested);
+      this.globalObjectRequestCounter.increment(numObjectsRequested);
     }
-    objectRequestManager.requestObjects(context);
+    this.objectRequestManager.requestObjects(context);
   }
 
   private void handleEventFromClient(RequestManagedObjectMessage rmom) {
     MessageChannel channel = rmom.getChannel();
-    ObjectIDSet requestedIDs = rmom.getRequestedObjectIDs();
+    Set<ObjectID> requestedIDs = rmom.getRequestedObjectIDs();
     ClientID clientID = (ClientID) rmom.getSourceNodeID();
     ObjectIDSet removedIDs = rmom.getRemoved();
 
     final int numObjectsRequested = requestedIDs.size();
     if (numObjectsRequested != 0) {
-      globalObjectRequestCounter.increment(numObjectsRequested);
-      channelStats.notifyObjectRequest(channel, numObjectsRequested);
+      this.globalObjectRequestCounter.increment(numObjectsRequested);
+      this.channelStats.notifyObjectRequest(channel, numObjectsRequested);
     }
 
     final int numObjectsRemoved = removedIDs.size();
     if (numObjectsRemoved != 0) {
-      globalObjectFlushCounter.increment(numObjectsRemoved);
-      channelStats.notifyObjectRemove(channel, numObjectsRemoved);
+      this.globalObjectFlushCounter.increment(numObjectsRemoved);
+      this.channelStats.notifyObjectRemove(channel, numObjectsRemoved);
     }
 
     long t = System.currentTimeMillis();
-    stateManager.removeReferences(clientID, removedIDs);
+    this.stateManager.removeReferences(clientID, removedIDs);
     t = System.currentTimeMillis() - t;
     if (t > 1000 || numObjectsRemoved > 100000) {
       logger.warn("Time to Remove " + numObjectsRemoved + " is " + t + " ms");
     }
     if (numObjectsRequested > 0) {
-      objectRequestManager.requestObjects(rmom);
+      this.objectRequestManager.requestObjects(rmom);
     }
   }
 
+  @Override
   public void initialize(ConfigurationContext context) {
     super.initialize(context);
     ServerConfigurationContext oscc = (ServerConfigurationContext) context;
-    stateManager = oscc.getClientStateManager();
-    channelStats = oscc.getChannelStats();
-    objectRequestManager = oscc.getObjectRequestManager();
+    this.stateManager = oscc.getClientStateManager();
+    this.channelStats = oscc.getChannelStats();
+    this.objectRequestManager = oscc.getObjectRequestManager();
   }
 
 }

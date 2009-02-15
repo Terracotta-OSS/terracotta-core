@@ -16,12 +16,11 @@ import com.tc.object.tx.TxnType;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public interface BroadcastTransactionMessage extends TCMessage {
 
-  public void initialize(List chges, Set lookupObjectIDs, ObjectStringSerializer aSerializer, LockID[] lids, long cid,
-                        TransactionID txID, NodeID commitID, GlobalTransactionID gtx, TxnType txnType,
+  public void initialize(List chges, ObjectStringSerializer aSerializer, LockID[] lids, long cid, TransactionID txID,
+                         NodeID commitID, GlobalTransactionID gtx, TxnType txnType,
                          GlobalTransactionID lowGlobalTransactionIDWatermark, Collection notifies, Map newRoots,
                          DmiDescriptor[] dmis);
 
@@ -30,8 +29,6 @@ public interface BroadcastTransactionMessage extends TCMessage {
   public TxnType getTransactionType();
 
   public Collection getObjectChanges();
-
-  public Set getLookupObjectIDs();
 
   public long getChangeID();
 
