@@ -117,16 +117,16 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
   }
 
   public void doGC(GCHook hook) {
-    gcHook = hook;
-    MarkAndSweepGCAlgorithm gcAlgo = new MarkAndSweepGCAlgorithm(this, hook, gcPublisher, gcState, gcIterationCounter
-        .incrementAndGet());
+    this.gcHook = hook;
+    MarkAndSweepGCAlgorithm gcAlgo = new MarkAndSweepGCAlgorithm(this, hook, this.gcPublisher, this.gcState,
+                                                                 this.gcIterationCounter.incrementAndGet());
     gcAlgo.doGC();
   }
 
   public boolean deleteGarbage(GCResultContext gcResult) {
     if (requestGCDeleteStart()) {
-      youngGenReferenceCollector.removeGarbage(gcResult.getGCedObjectIDs());
-      gcHook.notifyGCComplete(gcResult);
+      this.youngGenReferenceCollector.removeGarbage(gcResult.getGCedObjectIDs());
+      this.gcHook.notifyGCComplete(gcResult);
       notifyGCComplete();
       return true;
     }
@@ -144,48 +144,48 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
   }
 
   public void changed(ObjectID changedObject, ObjectID oldReference, ObjectID newReference) {
-    referenceCollector.changed(changedObject, oldReference, newReference);
+    this.referenceCollector.changed(changedObject, oldReference, newReference);
   }
 
   public void notifyObjectCreated(ObjectID id) {
-    youngGenReferenceCollector.notifyObjectCreated(id);
+    this.youngGenReferenceCollector.notifyObjectCreated(id);
   }
 
   public void notifyNewObjectInitalized(ObjectID id) {
-    youngGenReferenceCollector.notifyObjectInitalized(id);
+    this.youngGenReferenceCollector.notifyObjectInitalized(id);
   }
 
   public void notifyObjectsEvicted(Collection evicted) {
-    youngGenReferenceCollector.notifyObjectsEvicted(evicted);
+    this.youngGenReferenceCollector.notifyObjectsEvicted(evicted);
   }
 
   public void addNewReferencesTo(Set rescueIds) {
-    referenceCollector.addNewReferencesTo(rescueIds);
+    this.referenceCollector.addNewReferencesTo(rescueIds);
   }
 
   /**
-   * Used for Tests. TODO:: Re-factor tests and remove this method
+   * Used for Tests.
    */
-  public ObjectIDSet collect(GCHook hook, Filter filter, Collection rootIds, ObjectIDSet managedObjectIds) {
+  ObjectIDSet collect(GCHook hook, Filter filter, Collection rootIds, ObjectIDSet managedObjectIds) {
     return collect(hook, filter, rootIds, managedObjectIds, NULL_LIFECYCLE_STATE);
   }
 
   /**
-   * Used for Tests. TODO:: Re-factor tests and remove this method
+   * Used for Tests.
    */
-  public ObjectIDSet collect(GCHook hook, Filter traverser, Collection roots, ObjectIDSet managedObjectIds,
-                             LifeCycleState lstate) {
-    MarkAndSweepGCAlgorithm gcAlgo = new MarkAndSweepGCAlgorithm(this, hook, gcPublisher, gcState, gcIterationCounter
-        .incrementAndGet());
+  ObjectIDSet collect(GCHook hook, Filter traverser, Collection roots, ObjectIDSet managedObjectIds,
+                      LifeCycleState lstate) {
+    MarkAndSweepGCAlgorithm gcAlgo = new MarkAndSweepGCAlgorithm(this, hook, this.gcPublisher, this.gcState,
+                                                                 this.gcIterationCounter.incrementAndGet());
     return gcAlgo.collect(traverser, roots, managedObjectIds, lstate);
   }
 
   public void start() {
-    if (objectManagerConfig.isYoungGenDGCEnabled()) {
+    if (this.objectManagerConfig.isYoungGenDGCEnabled()) {
       this.youngGenReferenceCollector = new YoungGenChangeCollectorImpl();
     }
     this.started = true;
-    gcState.start();
+    this.gcState.start();
   }
 
   public void stop() {
@@ -206,12 +206,12 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
   }
 
   public void addListener(GarbageCollectorEventListener listener) {
-    gcPublisher.addListener(listener);
+    this.gcPublisher.addListener(listener);
   }
 
   public synchronized boolean requestGCStart() {
-    if (started && state == GC_SLEEP) {
-      state = GC_RUNNING;
+    if (this.started && this.state == GC_SLEEP) {
+      this.state = GC_RUNNING;
       return true;
     }
     // Can't start GC
@@ -219,16 +219,16 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
   }
 
   public synchronized void enableGC() {
-    if (GC_DISABLED == state) {
-      state = GC_SLEEP;
+    if (GC_DISABLED == this.state) {
+      this.state = GC_SLEEP;
     } else {
-      logger.warn("GC is already enabled : " + state);
+      logger.warn("GC is already enabled : " + this.state);
     }
   }
 
   public synchronized boolean disableGC() {
-    if (GC_SLEEP == state) {
-      state = GC_DISABLED;
+    if (GC_SLEEP == this.state) {
+      this.state = GC_DISABLED;
       return true;
     }
     // GC is already running, can't be disabled
@@ -236,13 +236,13 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
   }
 
   public synchronized void notifyReadyToGC() {
-    if (state == GC_PAUSING) {
-      state = GC_PAUSED;
+    if (this.state == GC_PAUSING) {
+      this.state = GC_PAUSED;
     }
   }
 
   public synchronized void notifyGCComplete() {
-    state = GC_SLEEP;
+    this.state = GC_SLEEP;
   }
 
   /**
@@ -250,39 +250,39 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
    * GC_SLEEP to GC_DELETE.
    */
   private synchronized boolean requestGCDeleteStart() {
-    if (state == GC_SLEEP || state == GC_PAUSED) {
-      state = GC_DELETE;
+    if (this.state == GC_SLEEP || this.state == GC_PAUSED) {
+      this.state = GC_DELETE;
       return true;
     }
     return false;
   }
 
   public synchronized void requestGCPause() {
-    state = GC_PAUSING;
+    this.state = GC_PAUSING;
   }
 
   public synchronized boolean isPausingOrPaused() {
-    return GC_PAUSED == state || GC_PAUSING == state;
+    return GC_PAUSED == this.state || GC_PAUSING == this.state;
   }
 
   public synchronized boolean isPaused() {
-    return state == GC_PAUSED;
+    return this.state == GC_PAUSED;
   }
 
   public synchronized boolean isDisabled() {
-    return GC_DISABLED == state;
+    return GC_DISABLED == this.state;
   }
 
   public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
-    return out.print(getClass().getName()).print("[").print(state).print("]");
+    return out.print(getClass().getName()).print("[").print(this.state).print("]");
   }
 
   public ChangeCollector getChangeCollector() {
-    return referenceCollector;
+    return this.referenceCollector;
   }
 
   public YoungGenChangeCollector getYoungGenChangeCollector() {
-    return youngGenReferenceCollector;
+    return this.youngGenReferenceCollector;
   }
 
   private static class NewReferenceCollector implements ChangeCollector {
@@ -290,15 +290,15 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     Set newReferences = new ObjectIDSet();
 
     public void changed(ObjectID changedObject, ObjectID oldReference, ObjectID newReference) {
-      synchronized (newReferences) {
-        newReferences.add(newReference);
+      synchronized (this.newReferences) {
+        this.newReferences.add(newReference);
       }
     }
 
     public Set addNewReferencesTo(Set set) {
       long start = System.currentTimeMillis();
-      synchronized (newReferences) {
-        set.addAll(newReferences);
+      synchronized (this.newReferences) {
+        set.addAll(this.newReferences);
       }
       profile_addNewReferencesTo(start);
       return set;
@@ -327,7 +327,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     private State              state                = DONT_MONITOR_CHANGES;
 
     public synchronized Set addYoungGenCandidateObjectIDsTo(Set set) {
-      for (Iterator i = youngGenObjectIDs.entrySet().iterator(); i.hasNext();) {
+      for (Iterator i = this.youngGenObjectIDs.entrySet().iterator(); i.hasNext();) {
         Entry e = (Entry) i.next();
         if (e.getValue() == INITALIZED) {
           set.add(e.getKey());
@@ -337,16 +337,16 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     }
 
     public synchronized Set getRememberedSet() {
-      return new ObjectIDSet(rememberedSet);
+      return new ObjectIDSet(this.rememberedSet);
     }
 
     public synchronized void notifyObjectCreated(ObjectID id) {
-      Object oldState = youngGenObjectIDs.put(id, UNINITALIZED);
+      Object oldState = this.youngGenObjectIDs.put(id, UNINITALIZED);
       if (oldState != null) { throw new AssertionError(id + " is already present in " + oldState); }
     }
 
     public synchronized void notifyObjectInitalized(ObjectID id) {
-      Object oldState = youngGenObjectIDs.put(id, INITALIZED);
+      Object oldState = this.youngGenObjectIDs.put(id, INITALIZED);
       if (oldState != UNINITALIZED) { throw new AssertionError(id + " is not in " + UNINITALIZED + " but in "
                                                                + oldState); }
     }
@@ -357,14 +357,14 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
         ObjectID id = mo.getID();
         removeReferencesTo(id);
         Set references = mo.getObjectReferences();
-        references.retainAll(youngGenObjectIDs.keySet());
-        rememberedSet.addAll(references);
+        references.retainAll(this.youngGenObjectIDs.keySet());
+        this.rememberedSet.addAll(references);
       }
     }
 
     private void removeReferencesTo(ObjectID id) {
-      youngGenObjectIDs.remove(id);
-      if (state == DONT_MONITOR_CHANGES) {
+      this.youngGenObjectIDs.remove(id);
+      if (this.state == DONT_MONITOR_CHANGES) {
         /**
          * XXX:: We don't want to remove inward reference to Young Gen Objects that are just faulted out of cache
          * (becoming OldGen object) while the DGC is running. If we did it will lead to GCing valid reachable objects
@@ -374,7 +374,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
          * removing inward references as forgetting the fact that a reference existed, then not removing the reference
          * is Monitoring the changes.
          */
-        rememberedSet.remove(id);
+        this.rememberedSet.remove(id);
       }
     }
 
@@ -386,15 +386,15 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     }
 
     public synchronized void startMonitoringChanges() {
-      Assert.assertTrue(state == DONT_MONITOR_CHANGES);
-      state = MONITOR_CHANGES;
+      Assert.assertTrue(this.state == DONT_MONITOR_CHANGES);
+      this.state = MONITOR_CHANGES;
     }
 
     public synchronized void stopMonitoringChanges() {
-      Assert.assertTrue(state == MONITOR_CHANGES);
-      state = DONT_MONITOR_CHANGES;
+      Assert.assertTrue(this.state == MONITOR_CHANGES);
+      this.state = DONT_MONITOR_CHANGES;
       // reset remembered set to the latest set of Young Gen IDs.
-      rememberedSet.retainAll(youngGenObjectIDs.keySet());
+      this.rememberedSet.retainAll(this.youngGenObjectIDs.keySet());
     }
 
   }
