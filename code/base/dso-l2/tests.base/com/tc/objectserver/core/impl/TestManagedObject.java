@@ -17,6 +17,7 @@ import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.impl.ManagedObjectReference;
+import com.tc.objectserver.impl.ObjectManagerImpl;
 import com.tc.objectserver.managedobject.AbstractManagedObjectState;
 import com.tc.objectserver.managedobject.BackReferences;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
@@ -48,12 +49,15 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     this.id = id;
     this.references = references;
   }
+  
+  
 
   public TestManagedObject(ObjectID id) {
     this(id, new ArrayList<ObjectID>());
   }
 
   public void setReference(int index, ObjectID id) {
+    
     this.references.add(index, id);
   }
 
@@ -61,7 +65,7 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     return id;
   }
 
-  public Set<ObjectID> getObjectReferences() {
+  public synchronized Set<ObjectID> getObjectReferences() {
     return new HashSet<ObjectID>(references);
   }
 
@@ -95,7 +99,16 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
 
   public synchronized void addReferences(Set<ObjectID> ids) {
     for (Iterator<ObjectID> iter = ids.iterator(); iter.hasNext();) {
-      this.references.add(iter.next());
+      ObjectID oid = iter.next();
+      this.references.add(oid);
+    }
+  }
+  
+  public synchronized void addReferences(Set<ObjectID> ids, ObjectManagerImpl[] objectManagers ) {
+    for (Iterator<ObjectID> iter = ids.iterator(); iter.hasNext();) {
+      ObjectID oid = iter.next();
+      this.references.add(oid);
+      objectManagers[oid.getGroupID()].changed(null, null, oid);
     }
   }
 
