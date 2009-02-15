@@ -56,7 +56,8 @@ public class ManagedObjectStateFactory {
     classNameToStateMap.put(gnu.trove.THashSet.class.getName(), new Byte(ManagedObjectState.SET_TYPE));
     classNameToStateMap.put(java.util.HashSet.class.getName(), new Byte(ManagedObjectState.SET_TYPE));
     classNameToStateMap.put(java.util.LinkedHashSet.class.getName(), new Byte(ManagedObjectState.LINKED_HASHSET_TYPE));
-    classNameToStateMap.put(java.util.Collections.EMPTY_SET.getClass().getName(), new Byte(ManagedObjectState.SET_TYPE));
+    classNameToStateMap
+        .put(java.util.Collections.EMPTY_SET.getClass().getName(), new Byte(ManagedObjectState.SET_TYPE));
     classNameToStateMap.put(java.util.TreeSet.class.getName(), new Byte(ManagedObjectState.TREE_SET_TYPE));
     classNameToStateMap.put(java.util.LinkedList.class.getName(), new Byte(ManagedObjectState.LINKED_LIST_TYPE));
     classNameToStateMap.put(java.util.ArrayList.class.getName(), new Byte(ManagedObjectState.LIST_TYPE));
@@ -69,9 +70,9 @@ public class ManagedObjectStateFactory {
     classNameToStateMap.put(java.sql.Time.class.getName(), new Byte(ManagedObjectState.DATE_TYPE));
     classNameToStateMap.put(java.sql.Timestamp.class.getName(), new Byte(ManagedObjectState.DATE_TYPE));
     classNameToStateMap.put(java.net.URL.class.getName(), new Byte(ManagedObjectState.URL_TYPE));
-    // These 1.5 classes needs to be compiled in 1.4 !!
-    classNameToStateMap.put("java.util.concurrent.LinkedBlockingQueue", new Byte(ManagedObjectState.QUEUE_TYPE));
-    classNameToStateMap.put("java.util.concurrent.ConcurrentHashMap",
+    classNameToStateMap.put(java.util.concurrent.LinkedBlockingQueue.class.getName(),
+                            new Byte(ManagedObjectState.QUEUE_TYPE));
+    classNameToStateMap.put(java.util.concurrent.ConcurrentHashMap.class.getName(),
                             new Byte(ManagedObjectState.CONCURRENT_HASHMAP_TYPE));
   }
 
@@ -121,11 +122,11 @@ public class ManagedObjectStateFactory {
   }
 
   public StringIndex getStringIndex() {
-    return stringIndex;
+    return this.stringIndex;
   }
 
   public ManagedObjectChangeListener getListener() {
-    return listenerProvider.getListener();
+    return this.listenerProvider.getListener();
   }
 
   public ManagedObjectState createState(ObjectID oid, ObjectID parentID, String className, String loaderDesc,
@@ -136,25 +137,25 @@ public class ManagedObjectStateFactory {
 
     final long classID = getClassID(className, loaderDesc);
 
-    if (type == ManagedObjectState.PHYSICAL_TYPE) { return physicalMOFactory.create(classID, parentID, className,
-                                                                                    loaderDesc, cursor); }
+    if (type == ManagedObjectState.PHYSICAL_TYPE) { return this.physicalMOFactory.create(classID, parentID, className,
+                                                                                         loaderDesc, cursor); }
     switch (type) {
       case ManagedObjectState.ARRAY_TYPE:
         return new ArrayManagedObjectState(classID);
       case ManagedObjectState.MAP_TYPE:
-        return new MapManagedObjectState(classID, persistentCollectionFactory.createPersistentMap(oid));
+        return new MapManagedObjectState(classID, this.persistentCollectionFactory.createPersistentMap(oid));
       case ManagedObjectState.PARTIAL_MAP_TYPE:
-        return new PartialMapManagedObjectState(classID, persistentCollectionFactory.createPersistentMap(oid));
+        return new PartialMapManagedObjectState(classID, this.persistentCollectionFactory.createPersistentMap(oid));
       case ManagedObjectState.LINKED_HASHMAP_TYPE:
         return new LinkedHashMapManagedObjectState(classID);
       case ManagedObjectState.TREE_MAP_TYPE:
-        return new TreeMapManagedObjectState(classID, persistentCollectionFactory.createPersistentMap(oid));
+        return new TreeMapManagedObjectState(classID, this.persistentCollectionFactory.createPersistentMap(oid));
       case ManagedObjectState.LINKED_HASHSET_TYPE:
         return new LinkedHashSetManagedObjectState(classID);
       case ManagedObjectState.SET_TYPE:
-        return new SetManagedObjectState(classID, persistentCollectionFactory.createPersistentSet(oid));
+        return new SetManagedObjectState(classID, this.persistentCollectionFactory.createPersistentSet(oid));
       case ManagedObjectState.TREE_SET_TYPE:
-        return new TreeSetManagedObjectState(classID, persistentCollectionFactory.createPersistentSet(oid));
+        return new TreeSetManagedObjectState(classID, this.persistentCollectionFactory.createPersistentSet(oid));
       case ManagedObjectState.LIST_TYPE:
         return new ListManagedObjectState(classID);
       case ManagedObjectState.LINKED_LIST_TYPE:
@@ -164,7 +165,8 @@ public class ManagedObjectStateFactory {
       case ManagedObjectState.DATE_TYPE:
         return new DateManagedObjectState(classID);
       case ManagedObjectState.CONCURRENT_HASHMAP_TYPE:
-        return new ConcurrentHashMapManagedObjectState(classID, persistentCollectionFactory.createPersistentMap(oid));
+        return new ConcurrentHashMapManagedObjectState(classID, this.persistentCollectionFactory
+            .createPersistentMap(oid));
       case ManagedObjectState.URL_TYPE:
         return new URLManagedObjectState(classID);
     }
@@ -210,7 +212,7 @@ public class ManagedObjectStateFactory {
     }
 
     if (className.startsWith("[")) { return ManagedObjectState.ARRAY_TYPE; }
-    
+
     Byte type = (Byte) classNameToStateMap.get(className);
     if (type != null) { return type.byteValue(); }
     if (literalValues.isLiteral(className)) { return ManagedObjectState.LITERAL_TYPE; }
@@ -218,7 +220,7 @@ public class ManagedObjectStateFactory {
   }
 
   public PhysicalManagedObjectState createPhysicalState(ObjectID parentID, int classId) throws ClassNotFoundException {
-    return physicalMOFactory.create(parentID, classId);
+    return this.physicalMOFactory.create(parentID, classId);
   }
 
   public ManagedObjectState readManagedObjectStateFrom(ObjectInput in, byte type) {
@@ -271,7 +273,7 @@ public class ManagedObjectStateFactory {
                                           DNACursor cursor, ManagedObjectState oldState) {
     Assert.assertEquals(ManagedObjectState.PHYSICAL_TYPE, oldState.getType());
     final long classID = getClassID(className, loaderDesc);
-    return physicalMOFactory.recreate(classID, pid, className, loaderDesc, cursor,
-                                      (PhysicalManagedObjectState) oldState);
+    return this.physicalMOFactory.recreate(classID, pid, className, loaderDesc, cursor,
+                                           (PhysicalManagedObjectState) oldState);
   }
 }

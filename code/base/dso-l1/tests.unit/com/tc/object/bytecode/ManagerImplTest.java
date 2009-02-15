@@ -34,7 +34,6 @@ import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class ManagerImplTest extends BaseDSOTestCase {
 
@@ -55,7 +54,7 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new AssertionError("should not be called");
     }
 
-    public void apply(TxnType txType, List lockIDs, Collection objectChanges, Set lookupObjectIDs, Map newRoots) {
+    public void apply(TxnType txType, List lockIDs, Collection objectChanges, Map newRoots) {
       throw new ImplementMe();
     }
 

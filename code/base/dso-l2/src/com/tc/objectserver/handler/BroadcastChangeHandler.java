@@ -25,7 +25,6 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.stats.counter.sampled.SampledCounter;
-import com.tc.util.ObjectIDSet;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,6 +32,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Broadcast the change to all connected clients
@@ -45,8 +45,8 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
   private Sink                      managedObjectRequestSink;
   private final ObjectStatsRecorder objectStatsRecorder;
 
-  private SampledCounter            broadcastCounter;
-  private SampledCounter            changeCounter;
+  private final SampledCounter      broadcastCounter;
+  private final SampledCounter      changeCounter;
 
   public BroadcastChangeHandler(SampledCounter broadcastCounter, SampledCounter changeCounter,
                                 ObjectStatsRecorder objectStatsRecorder) {
@@ -55,64 +55,68 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
     this.objectStatsRecorder = objectStatsRecorder;
   }
 
+  @Override
   public void handleEvent(EventContext context) {
     BroadcastChangeContext bcc = (BroadcastChangeContext) context;
 
     final NodeID committerID = bcc.getNodeID();
     final TransactionID txnID = bcc.getTransactionID();
 
-    final MessageChannel[] channels = channelManager.getActiveChannels();
+    final MessageChannel[] channels = this.channelManager.getActiveChannels();
 
     for (int i = 0; i < channels.length; i++) {
       MessageChannel client = channels[i];
       // TODO:: make message channel return clientID and short channelManager call.
-      ClientID clientID = channelManager.getClientIDFor(client.getChannelID());
+      ClientID clientID = this.channelManager.getClientIDFor(client.getChannelID());
 
       Map newRoots = bcc.getNewRoots();
       Set notifiedWaiters = bcc.getNewlyPendingWaiters().getNotifiedFor(clientID);
       List prunedChanges = Collections.EMPTY_LIST;
-      ObjectIDSet lookupObjectIDs = new ObjectIDSet();
+      TreeSet lookupObjectIDs = new TreeSet();
 
       if (!clientID.equals(committerID)) {
-        prunedChanges = clientStateManager.createPrunedChangesAndAddObjectIDTo(bcc.getChanges(), bcc.getIncludeIDs(),
-                                                                               clientID, lookupObjectIDs);
+        prunedChanges = this.clientStateManager.createPrunedChangesAndAddObjectIDTo(bcc.getChanges(), bcc
+            .getIncludeIDs(), clientID, lookupObjectIDs);
       }
 
-      if (objectStatsRecorder.getBroadcastDebug()) updateStats(prunedChanges);
+      if (this.objectStatsRecorder.getBroadcastDebug()) {
+        updateStats(prunedChanges);
+      }
 
-      DmiDescriptor[] prunedDmis = pruneDmiDescriptors(bcc.getDmiDescriptors(), clientID, clientStateManager);
+      DmiDescriptor[] prunedDmis = pruneDmiDescriptors(bcc.getDmiDescriptors(), clientID, this.clientStateManager);
       final boolean includeDmi = !clientID.equals(committerID) && prunedDmis.length > 0;
       if (!prunedChanges.isEmpty() || !lookupObjectIDs.isEmpty() || !notifiedWaiters.isEmpty() || !newRoots.isEmpty()
           || includeDmi) {
-        transactionManager.addWaitingForAcknowledgement(committerID, txnID, clientID);
+        this.transactionManager.addWaitingForAcknowledgement(committerID, txnID, clientID);
         if (lookupObjectIDs.size() > 0) {
           this.managedObjectRequestSink.add(new ObjectRequestServerContextImpl(clientID, ObjectRequestID.NULL_ID,
-                                                                           lookupObjectIDs, Thread.currentThread()
-                                                                               .getName(),-1, true));
+                                                                               lookupObjectIDs, Thread.currentThread()
+                                                                                   .getName(), -1, true));
         }
         final DmiDescriptor[] dmi = (includeDmi) ? prunedDmis : DmiDescriptor.EMPTY_ARRAY;
         BroadcastTransactionMessage responseMessage = (BroadcastTransactionMessage) client
             .createMessage(TCMessageType.BROADCAST_TRANSACTION_MESSAGE);
-        responseMessage.initialize(prunedChanges, lookupObjectIDs, bcc.getSerializer(), bcc.getLockIDs(),
-                                   getNextChangeIDFor(clientID), txnID, committerID, bcc.getGlobalTransactionID(), bcc
-                                       .getTransactionType(), bcc.getLowGlobalTransactionIDWatermark(),
-                                   notifiedWaiters, newRoots, dmi);
+        responseMessage.initialize(prunedChanges, bcc.getSerializer(), bcc.getLockIDs(), getNextChangeIDFor(clientID),
+                                   txnID, committerID, bcc.getGlobalTransactionID(), bcc.getTransactionType(), bcc
+                                       .getLowGlobalTransactionIDWatermark(), notifiedWaiters, newRoots, dmi);
 
         responseMessage.send();
 
-        broadcastCounter.increment();
-        changeCounter.increment(prunedChanges.size());
+        this.broadcastCounter.increment();
+        this.changeCounter.increment(prunedChanges.size());
       }
     }
-    transactionManager.broadcasted(committerID, txnID);
+    this.transactionManager.broadcasted(committerID, txnID);
   }
 
   private void updateStats(List prunedChanges) {
     for (Iterator i = prunedChanges.iterator(); i.hasNext();) {
       DNA dna = (DNA) i.next();
       String className = dna.getTypeName();
-      if (className == null) className = "UNKNOWN"; // Could happen on restart scenario
-      objectStatsRecorder.updateBroadcastStats(className);
+      if (className == null) {
+        className = "UNKNOWN"; // Could happen on restart scenario
+      }
+      this.objectStatsRecorder.updateBroadcastStats(className);
     }
   }
 
@@ -138,6 +142,7 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
     return 0;
   }
 
+  @Override
   protected void initialize(ConfigurationContext context) {
     ServerConfigurationContext scc = (ServerConfigurationContext) context;
     this.channelManager = scc.getChannelManager();

@@ -5,7 +5,8 @@
 package com.tc.object;
 
 import com.tc.net.ClientID;
-import com.tc.util.ObjectIDSet;
+
+import java.util.SortedSet;
 
 public interface ObjectRequestContext {
 
@@ -13,7 +14,7 @@ public interface ObjectRequestContext {
 
   public ClientID getClientID();
 
-  public ObjectIDSet getRequestedObjectIDs();
+  public SortedSet<ObjectID> getRequestedObjectIDs();
 
   public int getRequestDepth();
 

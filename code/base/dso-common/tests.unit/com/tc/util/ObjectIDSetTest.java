@@ -39,6 +39,63 @@ public class ObjectIDSetTest extends TCTestCase {
     basicTest(100000, 1000000);
   }
 
+  public void testRemoveAll() {
+    for (int i = 0; i < 10; i++) {
+      timeAndTestRemoveAll();
+    }
+
+  }
+
+  private void timeAndTestRemoveAll() {
+    // HashSet expected = new HashSet();
+    // HashSet big = new HashSet();
+    // HashSet small = new HashSet();
+    TreeSet expected = new TreeSet();
+    TreeSet big = new TreeSet();
+    TreeSet small = new TreeSet();
+    ObjectIDSet oidSet = new ObjectIDSet();
+
+    SecureRandom sr = new SecureRandom();
+    long seed = sr.nextLong();
+    System.err.println("RemoveALL TEST : Seed for Random is " + seed);
+    Random r = new Random(seed);
+
+    for (int i = 0; i < 1000000; i++) {
+      long l = r.nextLong();
+      ObjectID id = new ObjectID(l);
+      if (i % 2 == 0) {
+        // 500,0000
+        big.add(id);
+      }
+      if (i % 3 == 0) {
+        // 333,000
+        oidSet.add(id);
+        expected.add(id);
+      }
+      if (i % 100 == 0) {
+        small.add(id);
+      }
+    }
+
+    long t1 = System.currentTimeMillis();
+    oidSet.removeAll(small);
+    long t2 = System.currentTimeMillis();
+    expected.removeAll(small);
+    long t3 = System.currentTimeMillis();
+    assertEquals(expected, oidSet);
+
+    long t4 = System.currentTimeMillis();
+    oidSet.removeAll(big);
+    long t5 = System.currentTimeMillis();
+    expected.removeAll(big);
+    long t6 = System.currentTimeMillis();
+    assertEquals(expected, oidSet);
+
+    System.err.println("Time taken for removeAll OidSet vs HashSet : " + (t2 - t1) + " : " + (t3 - t2)
+                       + " millis  for small collection, " + (t5 - t4) + " : " + (t6 - t5)
+                       + " millis for large collection");
+  }
+
   public void testSortedSetObjectIDSet() throws Exception {
     SecureRandom sr = new SecureRandom();
     long seed = sr.nextLong();

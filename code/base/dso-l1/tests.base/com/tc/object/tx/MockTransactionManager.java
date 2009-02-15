@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * MockTransactionManager for unit testing.
@@ -43,23 +42,23 @@ public class MockTransactionManager implements ClientTransactionManager {
   private final Counter         loggingCounter = new Counter(0);
 
   public Counter getLoggingCounter() {
-    return loggingCounter;
+    return this.loggingCounter;
   }
 
   public void clearBegins() {
-    begins.clear();
+    this.begins.clear();
   }
 
   public List getBegins() {
     List rv = new ArrayList();
-    rv.addAll(begins);
+    rv.addAll(this.begins);
     return rv;
   }
 
   public boolean begin(String lock, int lockType, String lockObjectType, String contextInfo) {
     // System.err.println(this + ".begin(" + lock + ")");
 
-    begins.add(new Begin(lock, lockType));
+    this.begins.add(new Begin(lock, lockType));
     return true;
   }
 
@@ -105,7 +104,7 @@ public class MockTransactionManager implements ClientTransactionManager {
     throw new ImplementMe();
   }
 
-  public void apply(TxnType txType, List lockIDs, Collection objectChanges, Set lookupObjectIDs, Map newRoots) {
+  public void apply(TxnType txType, List lockIDs, Collection objectChanges, Map newRoots) {
     throw new ImplementMe();
   }
 
@@ -149,26 +148,26 @@ public class MockTransactionManager implements ClientTransactionManager {
   }
 
   public void disableTransactionLogging() {
-    ThreadTransactionLoggingStack txnStack = (ThreadTransactionLoggingStack) txnLogging.get();
+    ThreadTransactionLoggingStack txnStack = (ThreadTransactionLoggingStack) this.txnLogging.get();
     if (txnStack == null) {
       txnStack = new ThreadTransactionLoggingStack();
-      txnLogging.set(txnStack);
+      this.txnLogging.set(txnStack);
     }
     txnStack.increment();
-    loggingCounter.decrement();
+    this.loggingCounter.decrement();
   }
 
   public void enableTransactionLogging() {
-    ThreadTransactionLoggingStack txnStack = (ThreadTransactionLoggingStack) txnLogging.get();
+    ThreadTransactionLoggingStack txnStack = (ThreadTransactionLoggingStack) this.txnLogging.get();
     Assert.assertNotNull(txnStack);
     final int size = txnStack.decrement();
 
     if (size < 0) { throw new AssertionError("size=" + size); }
-    loggingCounter.increment();
+    this.loggingCounter.increment();
   }
 
   public boolean isTransactionLoggingDisabled() {
-    Object txnStack = txnLogging.get();
+    Object txnStack = this.txnLogging.get();
     return (txnStack != null) && (((ThreadTransactionLoggingStack) txnStack).get() > 0);
   }
 

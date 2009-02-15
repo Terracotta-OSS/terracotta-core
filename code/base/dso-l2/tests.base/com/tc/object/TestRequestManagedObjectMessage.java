@@ -12,6 +12,8 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.RequestManagedObjectMessage;
 import com.tc.util.ObjectIDSet;
 
+import java.util.Set;
+
 public class TestRequestManagedObjectMessage implements RequestManagedObjectMessage, EventContext {
 
   private ObjectRequestID requestID;
@@ -43,7 +45,7 @@ public class TestRequestManagedObjectMessage implements RequestManagedObjectMess
     this.removed = rm;
   }
 
-  public void initialize(ObjectRequestContext ctxt, ObjectIDSet oids, ObjectIDSet removedIDs) {
+  public void initialize(ObjectRequestContext ctxt, Set<ObjectID> oids, ObjectIDSet removedIDs) {
     //
   }
 
