@@ -12,6 +12,7 @@ import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.objectserver.control.ExtraProcessServerControl;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.stats.DSOMBean;
 import com.tc.test.GroupData;
 import com.tc.test.MultipleServerManager;
 import com.tc.test.MultipleServersConfigCreator;
@@ -489,6 +490,14 @@ public class ActivePassiveServerManager extends MultipleServerManager {
     return jmxConnector;
   }
 
+  public DSOMBean getDsoMBean(int index) throws IOException {
+    JMXConnectorProxy jmxc = new JMXConnectorProxy(HOST, jmxPorts[index]);
+    MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
+    DSOMBean dsoMBean = (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO,
+                                                                                 DSOMBean.class, false);
+    return dsoMBean;
+  }
+
   public void stopServer(int index) throws Exception {
 
     System.out.println("*** stopping server [" + servers[index].getDsoPort() + "]");
@@ -882,4 +891,13 @@ public class ActivePassiveServerManager extends MultipleServerManager {
   public ProxyConnectManager[] getL1ProxyManagers() {
     return proxyL1Managers;
   }
+  
+  public List<DSOMBean> connectAllDsoMBeans() throws IOException {
+    List<DSOMBean> mbeans = new ArrayList<DSOMBean>();
+    for (int i = 0; i < getServerCount(); i++) {
+      mbeans.add(getDsoMBean(i));
+    }
+    return mbeans;
+  }
+
 }

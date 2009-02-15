@@ -5,6 +5,7 @@
 package com.tc.test.activeactive;
 
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.stats.DSOMBean;
 import com.tc.test.GroupData;
 import com.tc.test.MultipleServerManager;
 import com.tc.test.MultipleServersConfigCreator;
@@ -14,6 +15,7 @@ import com.tc.test.proxyconnect.ProxyConnectManager;
 import com.tc.util.PortChooser;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -146,7 +148,7 @@ public class ActiveActiveServerManager extends MultipleServerManager {
 
     for (int i = 0; i < grpCount; i++)
       threads[i].start();
-    
+
     for (int i = 0; i < grpCount; i++)
       threads[i].join();
   }
@@ -191,5 +193,17 @@ public class ActiveActiveServerManager extends MultipleServerManager {
 
   public ProxyConnectManager[] getL1ProxyManagers() {
     return proxyL1Managers;
+  }
+
+  public List<List<DSOMBean>> connectAllDsoMBeans() throws IOException {
+    int grpCount = setupManger.getActiveServerGroupCount();
+    List<List<DSOMBean>> mbeans = new ArrayList<List<DSOMBean>>(grpCount);
+
+    for (int i = 0; i < grpCount; i++) {
+      ActivePassiveServerManager apsm = activePassiveServerManagers[i];
+      mbeans.add(apsm.connectAllDsoMBeans());
+    }
+
+    return mbeans;
   }
 }
