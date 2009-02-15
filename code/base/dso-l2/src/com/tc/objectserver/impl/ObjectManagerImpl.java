@@ -85,7 +85,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private final Counter                               flushCount               = new Counter();
   private final PendingList                           pending                  = new PendingList();
 
-  protected GarbageCollector                          collector                = new NullGarbageCollector();
+  private GarbageCollector                            collector                = new NullGarbageCollector();
   private int                                         checkedOutCount          = 0;
 
   private volatile boolean                            inShutdown               = false;

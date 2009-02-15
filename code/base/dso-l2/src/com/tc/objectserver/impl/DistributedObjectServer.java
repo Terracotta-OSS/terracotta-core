@@ -216,6 +216,7 @@ import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvictRequest;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvicted;
 import com.tc.statistics.retrieval.actions.SRADistributedGC;
+import com.tc.statistics.retrieval.actions.SRAGlobalLockRecallCount;
 import com.tc.statistics.retrieval.actions.SRAL1ReferenceCount;
 import com.tc.statistics.retrieval.actions.SRAL1ToL2FlushRate;
 import com.tc.statistics.retrieval.actions.SRAL2BroadcastCount;
@@ -667,8 +668,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
                                                swapCache, persistenceTransactionProvider, faultManagedObjectStage
                                                    .getSink(), flushManagedObjectStage.getSink(),
                                                this.objectStatsRecorder);
-    
-    
+
     this.objectManager.setStatsListener(objMgrStats);
     this.gcStatsEventPublisher = new GCStatsEventPublisher();
     managedObjectChangeListenerProvider.setListener(this.objectManager);
@@ -745,9 +745,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     SampledCounter globalObjectFlushCounter = (SampledCounter) this.sampledCounterManager
         .createCounter(new SampledCounterConfig(1, 300, true, 0L));
     SampledCounter globalLockRecallCounter = (SampledCounter) this.sampledCounterManager
-    .createCounter(new SampledCounterConfig(1, 300, true, 0L));
-
-
+        .createCounter(new SampledCounterConfig(1, 300, true, 0L));
 
     DSOGlobalServerStats serverStats = new DSOGlobalServerStatsImpl(globalObjectFlushCounter, globalObjectFaultCounter,
                                                                     globalTxnCounter, objMgrStats, broadcastCounter,
@@ -912,7 +910,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
                                                     this.objectStore, this.lockManager, channelManager,
                                                     this.clientStateManager, this.transactionManager,
                                                     this.txnObjectManager, channelStats, this.l2Coordinator,
-                                                    transactionBatchManager, gtxm, clientHandshakeManager, 
+                                                    transactionBatchManager, gtxm, clientHandshakeManager,
                                                     new ServerClusterMetaDataManagerImpl(this.clientStateManager));
 
     toInit.add(this);
@@ -1103,11 +1101,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     logger.info("Creating server nodeID: " + aNodeID);
     return aNodeID;
   }
-  
-  
 
   protected Sink getHttpSink() {
-    return httpSink;
+    return this.httpSink;
   }
 
   public ServerID getServerNodeID() {
@@ -1161,7 +1157,14 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
       registry.registerActionInstance(new SRAL2PendingTransactions(txnManager));
       registry.registerActionInstance(new SRAServerTransactionSequencer(serverTransactionSequencerStats));
       registry.registerActionInstance(new SRAL1ReferenceCount(this.clientStateManager));
+      registry.registerActionInstance(new SRAGlobalLockRecallCount(serverStats));
+      populateAdditionalStatisticsRetrivalRegistry(registry);
     }
+  }
+
+  // Overridden by enterprise server
+  protected void populateAdditionalStatisticsRetrivalRegistry(StatisticsRetrievalRegistry registry) {
+    // Add any additional Statistics here
   }
 
   private int getCommWorkerCount(TCProperties props) {

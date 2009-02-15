@@ -12,9 +12,9 @@ public class GarbageCollectionInfo implements Cloneable {
 
   protected static final long NOT_INITIALIZED       = -1L;
 
-  private int                 iteration;
+  private final int           iteration;
 
-  private boolean             fullGC;
+  private final boolean       fullGC;
 
   private long                startTime             = NOT_INITIALIZED;
 
@@ -70,7 +70,7 @@ public class GarbageCollectionInfo implements Cloneable {
   }
 
   public boolean isFullGC() {
-    return fullGC;
+    return this.fullGC;
   }
 
   public void setStartTime(long time) {
@@ -151,7 +151,7 @@ public class GarbageCollectionInfo implements Cloneable {
   }
 
   public List getRescueTimes() {
-    return rescueTimes;
+    return this.rescueTimes;
   }
 
   public void setRescueTimes(List rescueTimes) {
@@ -159,41 +159,22 @@ public class GarbageCollectionInfo implements Cloneable {
   }
 
   public Object getObject() {
-    return stats;
+    return this.stats;
   }
 
   public void setObject(Object aGCStats) {
     this.stats = aGCStats;
   }
 
-  public String toString() {
-    return "GarbageCollectionInfo [ Iteration = " + iteration + " ] = " + " type  = "
-           + (fullGC ? " full, " : " young, ") + " startTime = " + startTime + " begin object count = "
-           + beginObjectCount + " markStageTime = " + markStageTime + " pauseStageTime = " + pauseStageTime
-           + " deleteStageTime = " + deleteStageTime + " elapsedTime = " + elapsedTime + " totalMarkCycletime  = "
-           + totalMarkCycleTime + " candiate garabage  count = " + candidateGarbageCount + " actual garbage count  = "
-           + actualGarbageCount + " pre rescue count = " + preRescueCount + " rescue 1 count = " + rescue1Count
-           + " Garbage  = " + (toDelete == null ? "Not Set " : toDelete.size());
-  }
-
   @Override
-  public Object clone() {
-    GarbageCollectionInfo gcInfo = new GarbageCollectionInfo(this.iteration, this.fullGC);
-    gcInfo.setBeginObjectCount(getBeginObjectCount());
-    gcInfo.setCandidateGarbageCount((int)getCandidateGarbageCount());
-    gcInfo.setDeleted(getDeleted());
-    gcInfo.setDeleteStageTime(getDeleteStageTime());
-    gcInfo.setElapsedTime(getElapsedTime());
-    gcInfo.setMarkStageTime(getMarkStageTime());
-    gcInfo.setObject(getObject());
-    gcInfo.setPausedStageTime(getPausedStageTime());
-    gcInfo.setPreRescueCount(getPreRescueCount());
-    gcInfo.setRescue1Count(getRescue1Count());
-    gcInfo.setStartTime(getStartTime());
-    gcInfo.setTotalMarkCycleTime(getTotalMarkCycleTime());
-    return gcInfo;
+  public String toString() {
+    return "GarbageCollectionInfo [ Iteration = " + this.iteration + " ] = " + " type  = "
+           + (this.fullGC ? " full, " : " young, ") + " startTime = " + this.startTime + " begin object count = "
+           + this.beginObjectCount + " markStageTime = " + this.markStageTime + " pauseStageTime = "
+           + this.pauseStageTime + " deleteStageTime = " + this.deleteStageTime + " elapsedTime = " + this.elapsedTime
+           + " totalMarkCycletime  = " + this.totalMarkCycleTime + " candiate garabage  count = "
+           + this.candidateGarbageCount + " actual garbage count  = " + this.actualGarbageCount
+           + " pre rescue count = " + this.preRescueCount + " rescue 1 count = " + this.rescue1Count + " Garbage  = "
+           + (this.toDelete == null ? "Not Set " : this.toDelete.size());
   }
-  
-  
-  
 }
