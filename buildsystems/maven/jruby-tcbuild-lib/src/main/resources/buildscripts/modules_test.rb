@@ -1,5 +1,4 @@
-#
-# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# content copyright (c) 2003-2006 Terracotta, Inc.,
 # except as may otherwise be noted in a separate copyright notice.
 # All rights reserved
 #
@@ -62,11 +61,6 @@ class BuildSubtree
 
             # Builds up the set of classes required for DSO to support sessions
             sessionSet = PathSet.new
-            sessionSet << build_module.module_set['dso-l1-session'].subtree('src').own_classes_only_classpath(build_results)
-            sessionSet << build_module.module_set['dso-l1-tomcat'].subtree('src').own_classes_only_classpath(build_results)
-            sessionSet << build_module.module_set['dso-l1-tomcat50'].subtree('src').own_classes_only_classpath(build_results)
-            sessionSet << build_module.module_set['dso-l1-tomcat55'].subtree('src').own_classes_only_classpath(build_results)
-            sessionSet << build_module.module_set['dso-l1-weblogic'].subtree('src').own_classes_only_classpath(build_results)
             sessionSet << build_module.module_set['dso-l1-session'].subtree('src').own_classes_only_classpath(build_results)
 
             # Writes out the location of the boot JAR for this tree, if one was created.

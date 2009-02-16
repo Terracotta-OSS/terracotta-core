@@ -77,7 +77,7 @@ class BuildSubtree
 
       # Builds up the set of classes required for DSO to support sessions
       sessionSet = PathSet.new
-      %w(session tomcat tomcat50 tomcat55 weblogic).each do |mod|
+      %w(session).each do |mod|
         sessionSet << build_module.module_set["dso-l1-#{mod}"].subtree('src').own_classes_only_classpath(build_results)
       end
 

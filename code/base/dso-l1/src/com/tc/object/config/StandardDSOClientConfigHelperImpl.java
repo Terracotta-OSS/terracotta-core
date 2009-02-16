@@ -28,17 +28,11 @@ import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory;
-import com.tc.geronimo.transform.HostGBeanAdapter;
-import com.tc.geronimo.transform.MultiParentClassLoaderAdapter;
-import com.tc.geronimo.transform.ProxyMethodInterceptorAdapter;
-import com.tc.geronimo.transform.TomcatClassLoaderAdapter;
 import com.tc.injection.DsoClusterInjectionInstrumentation;
 import com.tc.injection.InjectionInstrumentation;
 import com.tc.injection.InjectionInstrumentationRegistry;
 import com.tc.injection.exceptions.UnsupportedInjectedDsoInstanceTypeException;
 import com.tc.jam.transform.ReflectClassBuilderAdapter;
-import com.tc.jboss.transform.MainAdapter;
-import com.tc.jboss.transform.UCLAdapter;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.net.core.ConnectionInfo;
@@ -51,7 +45,6 @@ import com.tc.object.bytecode.AbstractListMethodCreator;
 import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.bytecode.ClassAdapterBase;
 import com.tc.object.bytecode.ClassAdapterFactory;
-import com.tc.object.bytecode.DelegateMethodAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentLocksAQSAdapter;
 import com.tc.object.bytecode.OverridesHashCodeAdapter;
 import com.tc.object.bytecode.SafeSerialVersionUIDAdder;
@@ -75,24 +68,11 @@ import com.tc.object.tools.BootJar;
 import com.tc.object.tools.BootJarException;
 import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
-import com.tc.tomcat.transform.BootstrapAdapter;
-import com.tc.tomcat.transform.CatalinaAdapter;
-import com.tc.tomcat.transform.ContainerBaseAdapter;
-import com.tc.tomcat.transform.JspWriterImplAdapter;
-import com.tc.tomcat.transform.WebAppLoaderAdapter;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
 import com.tc.util.ClassUtils.ClassSpec;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.Vm;
-import com.tc.weblogic.WeblogicHelper;
-import com.tc.weblogic.transform.EJBCodeGeneratorAdapter;
-import com.tc.weblogic.transform.EventsManagerAdapter;
-import com.tc.weblogic.transform.FilterManagerAdapter;
-import com.tc.weblogic.transform.GenericClassLoaderAdapter;
-import com.tc.weblogic.transform.ServerAdapter;
-import com.tc.weblogic.transform.ServletResponseImplAdapter;
-import com.tc.weblogic.transform.WebAppServletContextAdapter;
 import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.L1ReconnectPropertiesDocument;
 import com.terracottatech.config.Module;
@@ -169,14 +149,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   /**
    * A map of class names to TransparencyClassSpec
-   * 
+   *
    * @GuardedBy {@link #specLock}
    */
   private final Map                              userDefinedBootSpecs               = new HashMap();
 
   /**
    * A map of class names to TransparencyClassSpec for individual classes
-   * 
+   *
    * @GuardedBy {@link #specLock}
    */
   private final Map                              classSpecs                         = new HashMap();
@@ -274,7 +254,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     logger.debug("distributed-methods: " + this.distributedMethods);
 
     rewriteHashtableAutoLockSpecIfNecessary();
-    removeTomcatAdapters();
   }
 
   public String rawConfigText() {
@@ -618,24 +597,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     spec.setHonorTransient(true);
     spec.setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
 
-    addWeblogicInstrumentation();
-
-    // BEGIN: tomcat stuff
-    // don't install tomcat-specific adaptors if this sys prop is defined
-    final boolean doTomcat = System.getProperty("com.tc.tomcat.disabled") == null;
-    if (doTomcat) addTomcatCustomAdapters();
-    // END: tomcat stuff
-
-    // Geronimo + WebsphereCE stuff
-    addCustomAdapter("org.apache.geronimo.kernel.basic.ProxyMethodInterceptor", new ProxyMethodInterceptorAdapter());
-    addCustomAdapter("org.apache.geronimo.kernel.config.MultiParentClassLoader", new MultiParentClassLoaderAdapter());
-    addCustomAdapter("org.apache.geronimo.tomcat.HostGBean", new HostGBeanAdapter());
-    addCustomAdapter("org.apache.geronimo.tomcat.TomcatClassLoader", new TomcatClassLoaderAdapter());
-
-    // JBoss adapters
-    addCustomAdapter("org.jboss.mx.loading.UnifiedClassLoader", new UCLAdapter());
-    addCustomAdapter("org.jboss.Main", new MainAdapter());
-
     // TODO for the Event Swing sample only
     LockDefinition ld = new LockDefinitionImpl("setTextArea", ConfigLockLevel.WRITE);
     ld.commit();
@@ -656,35 +617,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
         }
       } finally {
         BootJar.closeQuietly(bootJar);
-      }
-    }
-  }
-
-  private void addWeblogicInstrumentation() {
-    if (WeblogicHelper.isWeblogicPresent()) {
-      if (WeblogicHelper.isSupportedVersion()) {
-        addAspectModule("weblogic.servlet.internal", "com.tc.weblogic.SessionAspectModule");
-
-        if (WeblogicHelper.isWL10()) {
-          // These types get verify errors (if instrumented) in weblogic 10-mp1 (run
-          // InstrumentEverythingInContainerTest to see)
-          addPermanentExcludePattern("kodo.kernel..*");
-        }
-
-        addCustomAdapter("weblogic.Server", new ServerAdapter());
-        addCustomAdapter("weblogic.utils.classloaders.GenericClassLoader", new GenericClassLoaderAdapter());
-        addCustomAdapter("weblogic.ejb20.ejbc.EjbCodeGenerator", new EJBCodeGeneratorAdapter());
-        addCustomAdapter("weblogic.ejb.container.ejbc.EjbCodeGenerator", new EJBCodeGeneratorAdapter());
-        addCustomAdapter("weblogic.servlet.internal.WebAppServletContext", new WebAppServletContextAdapter());
-        addCustomAdapter("weblogic.servlet.internal.EventsManager", new EventsManagerAdapter());
-        addCustomAdapter("weblogic.servlet.internal.FilterManager", new FilterManagerAdapter());
-        addCustomAdapter("weblogic.servlet.internal.ServletResponseImpl", new ServletResponseImplAdapter());
-        addCustomAdapter("weblogic.servlet.internal.TerracottaServletResponseImpl",
-                         new DelegateMethodAdapter("weblogic.servlet.internal.ServletResponseImpl", "nativeResponse"));
-      } else {
-        final String msg = "weblogic instrumentation NOT being added since this appears to be an unsupported version";
-        logger.warn(msg);
-        consoleLogger.warn(msg);
       }
     }
   }
@@ -848,26 +780,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     spec = getOrCreateSpec("java.util.concurrent.LinkedBlockingQueue",
                            "com.tc.object.applicator.LinkedBlockingQueueApplicator");
-  }
-
-  private void addTomcatCustomAdapters() {
-    addCustomAdapter("org.apache.jasper.runtime.JspWriterImpl", new JspWriterImplAdapter());
-    addCustomAdapter("org.apache.catalina.loader.WebappLoader", new WebAppLoaderAdapter());
-    addCustomAdapter("org.apache.catalina.startup.Catalina", new CatalinaAdapter());
-    addCustomAdapter("org.apache.catalina.startup.Bootstrap", new BootstrapAdapter());
-    addCustomAdapter("org.apache.catalina.core.ContainerBase", new ContainerBaseAdapter());
-    addCustomAdapter("org.apache.catalina.connector.SessionRequest55",
-                     new DelegateMethodAdapter("org.apache.catalina.connector.Request", "valveReq"));
-    addCustomAdapter("org.apache.catalina.connector.SessionResponse55",
-                     new DelegateMethodAdapter("org.apache.catalina.connector.Response", "valveRes"));
-  }
-
-  private void removeTomcatAdapters() {
-    // XXX: hack to avoid problems with coresident L1 (this can be removed when session support becomes a 1st class
-    // module)
-    if (applicationNames.isEmpty()) {
-      removeCustomAdapter("org.apache.catalina.core.ContainerBase");
-    }
   }
 
   public boolean removeCustomAdapter(final String name) {

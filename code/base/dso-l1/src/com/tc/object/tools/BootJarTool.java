@@ -44,13 +44,11 @@ import com.tc.exception.TCNotSupportedMethodException;
 import com.tc.exception.TCObjectNotFoundException;
 import com.tc.exception.TCObjectNotSharableException;
 import com.tc.exception.TCRuntimeException;
-import com.tc.geronimo.GeronimoLoaderNaming;
 import com.tc.hibernate.HibernateProxyInstance;
 import com.tc.ibatis.IBatisAccessPlanInstance;
 import com.tc.injection.annotations.InjectedDsoInstance;
 import com.tc.injection.exceptions.UnsupportedInjectedDsoInstanceTypeException;
 import com.tc.io.TCByteArrayOutputStream;
-import com.tc.jboss.JBossLoaderNaming;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.LogLevel;
 import com.tc.logging.NullTCLogger;
@@ -154,9 +152,7 @@ import com.tc.object.util.OverrideCheck;
 import com.tc.object.util.ToggleableStrongReference;
 import com.tc.plugins.ModulesLoader;
 import com.tc.properties.TCProperties;
-import com.tc.session.SessionSupport;
 import com.tc.text.Banner;
-import com.tc.tomcat.TomcatLoaderNaming;
 import com.tc.util.AbstractIdentifier;
 import com.tc.util.Assert;
 import com.tc.util.DebugUtil;
@@ -443,7 +439,6 @@ public class BootJarTool {
       addInstrumentedWeakHashMap();
 
       loadTerracottaClass(DebugUtil.class.getName());
-      loadTerracottaClass(SessionSupport.class.getName());
       loadTerracottaClass(TCMap.class.getName());
       if (Vm.isJDK15Compliant()) {
         loadTerracottaClass("com.tc.util.concurrent.locks.TCLock");
@@ -490,9 +485,6 @@ public class BootJarTool {
       loadTerracottaClass(AbstractIdentifier.class.getName());
       loadTerracottaClass(TLinkable.class.getName());
       loadTerracottaClass(SessionsHelper.class.getName());
-      loadTerracottaClass(GeronimoLoaderNaming.class.getName());
-      loadTerracottaClass(JBossLoaderNaming.class.getName());
-      loadTerracottaClass(TomcatLoaderNaming.class.getName());
       loadTerracottaClass(TCLogger.class.getName());
       loadTerracottaClass(LogLevel.class.getName());
       loadTerracottaClass(Banner.class.getName());
