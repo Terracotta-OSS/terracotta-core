@@ -7,7 +7,7 @@ package com.tc.objectserver.dgc.api;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.impl.GCTestObjectManager;
 import com.tc.objectserver.core.impl.TestManagedObject;
-import com.tc.objectserver.dgc.impl.FullGCHook;
+import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
 import com.tc.objectserver.dgc.impl.MarkAndSweepGarbageCollector;
 import com.tc.objectserver.impl.ObjectManagerConfig;
 import com.tc.objectserver.l1.api.TestClientStateManager;
@@ -38,13 +38,15 @@ public class GCStatsEventPublisherTest extends TestCase {
   /*
    * @see TestCase#setUp()
    */
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     this.lookedUp = new HashSet<ObjectID>();
     this.released = new HashSet<ObjectID>();
-    this.objectManager = new GCTestObjectManager(lookedUp, released, transactionProvider);
-    this.collector = new MarkAndSweepGarbageCollector(new ObjectManagerConfig(300000, true, true, true, true, 60000));
-    this.objectManager.setGarbageCollector(collector);
+    this.objectManager = new GCTestObjectManager(this.lookedUp, this.released, this.transactionProvider);
+    this.collector = new MarkAndSweepGarbageCollector(new ObjectManagerConfig(300000, true, true, true, true, 60000),
+                                                      this.objectManager, new TestClientStateManager());
+    this.objectManager.setGarbageCollector(this.collector);
     this.objectManager.start();
     this.root1 = createObject(8);
     this.root2 = createObject(8);
@@ -60,12 +62,12 @@ public class GCStatsEventPublisherTest extends TestCase {
     }
 
     TestManagedObject tmo = new TestManagedObject(nextID(), ids);
-    objectManager.createObject(tmo.getID(), tmo.getReference());
+    this.objectManager.createObject(tmo.getID(), tmo.getReference());
     return tmo;
   }
 
   private ObjectID nextID() {
-    return new ObjectID(objectIDCounter++);
+    return new ObjectID(this.objectIDCounter++);
   }
 
   public void testGarbageCollectorListener() {
@@ -76,13 +78,13 @@ public class GCStatsEventPublisherTest extends TestCase {
     tmo1.setReference(0, tmo2.getID());
     tmo2.setReference(0, tmo1.getID());
 
-    root1.setReference(0, tmo1.getID());
+    this.root1.setReference(0, tmo1.getID());
 
     TestGarbageCollectionInfoCallsListener listener = new TestGarbageCollectionInfoCallsListener();
-    collector.addListener(listener);
-    collector.start();
-    collector.doGC(new FullGCHook(collector, objectManager,new TestClientStateManager()));
-    collector.stop();
+    this.collector.addListener(listener);
+    this.collector.start();
+    this.collector.doGC(GCType.FULL_GC);
+    this.collector.stop();
     assertEquals(1, listener.startList.size());
     assertEquals(1, listener.markList.size());
     assertEquals(1, listener.markResultsList.size());
@@ -100,10 +102,10 @@ public class GCStatsEventPublisherTest extends TestCase {
   public void testGarbageCollectorListenerShortCircuit() {
 
     TestGarbageCollectionInfoCallsListener listener = new TestGarbageCollectionInfoCallsListener();
-    collector.addListener(listener);
-    collector.start();
-    collector.doGC(new FullGCHook(collector, objectManager,new TestClientStateManager()));
-    collector.stop();
+    this.collector.addListener(listener);
+    this.collector.start();
+    this.collector.doGC(GCType.FULL_GC);
+    this.collector.stop();
     assertEquals(1, listener.startList.size());
     assertEquals(1, listener.markList.size());
     assertEquals(1, listener.markResultsList.size());
@@ -191,55 +193,55 @@ public class GCStatsEventPublisherTest extends TestCase {
     protected List cycleCompletedList  = new ArrayList();
 
     protected List completedList       = new ArrayList();
-    
-    protected List cancelList         =  new ArrayList();
+
+    protected List cancelList          = new ArrayList();
 
     public void garbageCollectorStart(GarbageCollectionInfo info) {
-      startList.add(info);
+      this.startList.add(info);
     }
 
     public void garbageCollectorMark(GarbageCollectionInfo info) {
-      markList.add(info);
+      this.markList.add(info);
     }
 
     public void garbageCollectorMarkResults(GarbageCollectionInfo info) {
-      markResultsList.add(info);
+      this.markResultsList.add(info);
     }
 
     public void garbageCollectorRescue1Complete(GarbageCollectionInfo info) {
-      rescue1CompleteList.add(info);
+      this.rescue1CompleteList.add(info);
     }
 
     public void garbageCollectorPausing(GarbageCollectionInfo info) {
-      pausingList.add(info);
+      this.pausingList.add(info);
     }
 
     public void garbageCollectorPaused(GarbageCollectionInfo info) {
-      pausedList.add(info);
+      this.pausedList.add(info);
     }
 
     public void garbageCollectorRescue2Start(GarbageCollectionInfo info) {
-      rescue2StartList.add(info);
+      this.rescue2StartList.add(info);
     }
 
     public void garbageCollectorMarkComplete(GarbageCollectionInfo info) {
-      markCompleteList.add(info);
+      this.markCompleteList.add(info);
     }
 
     public void garbageCollectorDelete(GarbageCollectionInfo info) {
-      deleteList.add(info);
+      this.deleteList.add(info);
     }
 
     public void garbageCollectorCycleCompleted(GarbageCollectionInfo info) {
-      cycleCompletedList.add(info);
+      this.cycleCompletedList.add(info);
     }
 
     public void garbageCollectorCompleted(GarbageCollectionInfo info) {
-      completedList.add(info);
+      this.completedList.add(info);
     }
 
     public void garbageCollectorCanceled(GarbageCollectionInfo info) {
-      cancelList.add(info);
+      this.cancelList.add(info);
     }
 
   }

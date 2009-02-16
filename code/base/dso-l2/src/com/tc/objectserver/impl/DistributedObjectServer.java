@@ -673,11 +673,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     this.gcStatsEventPublisher = new GCStatsEventPublisher();
     managedObjectChangeListenerProvider.setListener(this.objectManager);
 
-    this.l2Management.findObjectManagementMonitorMBean()
-        .registerGCController(
-                              new GCComptrollerImpl(this.objectManager.getGarbageCollector(), this.objectManager,
-                                                    this.clientStateManager));
-
     TCProperties cacheManagerProperties = this.l2Properties.getPropertiesFor("cachemanager");
     CacheConfig cacheConfig = new CacheConfigImpl(cacheManagerProperties);
     TCMemoryManagerImpl tcMemManager = new TCMemoryManagerImpl(cacheConfig.getSleepInterval(), cacheConfig
@@ -890,12 +885,14 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     boolean networkedHA = this.haConfig.isNetworkedActivePassive();
     this.groupCommManager = createGroupCommManager(networkedHA, this.configSetupManager, stageManager,
                                                    this.thisServerNodeID);
-    
+
     // initialize the garbage collector
     initGarbageCollector(toInit, objectManagerConfig, this.threadGroup, this.objectManager, this.clientStateManager,
                          stageManager, maxStageSize);
+    this.l2Management.findObjectManagementMonitorMBean().registerGCController(
+                                                                              new GCComptrollerImpl(this.objectManager
+                                                                                  .getGarbageCollector()));
 
-    
     if (networkedHA) {
 
       logger.info("L2 Networked HA Enabled ");
@@ -908,7 +905,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
       this.l2Coordinator = new L2HADisabledCooridinator(this.groupCommManager);
     }
 
-   
     this.context = createServerConfigurationContext(stageManager, this.objectManager, this.objectRequestManager,
                                                     this.objectStore, this.lockManager, channelManager,
                                                     this.clientStateManager, this.transactionManager,
@@ -1033,15 +1029,16 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
   protected void initGarbageCollector(List<PostInit> toInit, ObjectManagerConfig objectManagerConfig, TCThreadGroup tg,
                                       ObjectManager objectMgr, ClientStateManager stateManager,
                                       StageManager stageManager, int maxStageSize) {
-    MarkAndSweepGarbageCollector markAndSweepGarbageCollector = new MarkAndSweepGarbageCollector(objectManagerConfig);
+    MarkAndSweepGarbageCollector markAndSweepGarbageCollector = new MarkAndSweepGarbageCollector(objectManagerConfig,
+                                                                                                 objectMgr,
+                                                                                                 stateManager);
     objectMgr.setGarbageCollector(markAndSweepGarbageCollector);
     markAndSweepGarbageCollector
         .addListener(new GCStatisticsAgentSubSystemEventListener(getStatisticsAgentSubSystem()));
     markAndSweepGarbageCollector.addListener(getGcStatsEventPublisher());
 
     if (objectManagerConfig.startGCThread()) {
-      StoppableThread st = new GarbageCollectorThread(tg, "DGC", markAndSweepGarbageCollector, objectMgr, stateManager,
-                                                      objectManagerConfig);
+      StoppableThread st = new GarbageCollectorThread(tg, "DGC", markAndSweepGarbageCollector, objectManagerConfig);
       st.setDaemon(true);
       markAndSweepGarbageCollector.setState(st);
     }

@@ -6,16 +6,17 @@ package com.tc.objectserver.dgc.api;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.context.GCResultContext;
-import com.tc.objectserver.dgc.impl.GCHook;
-import com.tc.objectserver.dgc.impl.YoungGenChangeCollector;
 import com.tc.text.PrettyPrintable;
 import com.tc.util.State;
 import com.tc.util.concurrent.StoppableThread;
 
 import java.util.Collection;
-import java.util.Set;
 
 public interface GarbageCollector extends PrettyPrintable {
+
+  public static enum GCType {
+    YOUNG_GEN_GC, FULL_GC
+  }
 
   public static final State GC_DISABLED = new State("GC_DISABLED");
   public static final State GC_RUNNING  = new State("GC_RUNNING");
@@ -53,9 +54,7 @@ public interface GarbageCollector extends PrettyPrintable {
 
   public void changed(ObjectID changedObject, ObjectID oldReference, ObjectID newReference);
 
-  public void doGC(GCHook hook);
-
-  public void addNewReferencesTo(Set rescueIds);
+  public void doGC(GCType type);
 
   /**
    * This method is called when the server transitions from PASSIVE to ACTIVE
@@ -69,12 +68,6 @@ public interface GarbageCollector extends PrettyPrintable {
   public void setState(StoppableThread st);
 
   public void addListener(GarbageCollectorEventListener listener);
-
-  public void startMonitoringReferenceChanges();
-
-  public void stopMonitoringReferenceChanges();
-
-  public YoungGenChangeCollector getYoungGenChangeCollector();
 
   public boolean deleteGarbage(GCResultContext resultContext);
 

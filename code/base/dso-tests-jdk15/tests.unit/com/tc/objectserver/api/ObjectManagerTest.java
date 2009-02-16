@@ -45,15 +45,12 @@ import com.tc.objectserver.context.ManagedObjectFaultingContext;
 import com.tc.objectserver.context.ManagedObjectFlushingContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.context.RecallObjectsContext;
-import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.TestDNA;
 import com.tc.objectserver.core.impl.TestManagedObject;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
-import com.tc.objectserver.dgc.impl.FullGCHook;
-import com.tc.objectserver.dgc.impl.GCHook;
-import com.tc.objectserver.dgc.impl.YoungGenChangeCollector;
+import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
 import com.tc.objectserver.gtx.TestGlobalTransactionManager;
 import com.tc.objectserver.impl.InMemoryManagedObjectStore;
 import com.tc.objectserver.impl.ObjectInstanceMonitorImpl;
@@ -768,9 +765,9 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     TestSink faultSink = new TestSink();
     TestSink flushSink = new TestSink();
     this.config.paranoid = paranoid;
-    this.objectManager = new ObjectManagerImpl(this.config, this.clientStateManager, store,
-                                               new LRUEvictionPolicy(100), this.persistenceTransactionProvider,
-                                               faultSink, flushSink, this.objectStatsRecorder);
+    this.objectManager = new ObjectManagerImpl(this.config, this.clientStateManager, store, new LRUEvictionPolicy(100),
+                                               this.persistenceTransactionProvider, faultSink, flushSink,
+                                               this.objectStatsRecorder);
     new TestMOFaulter(this.objectManager, store, faultSink, new NullSinkContext()).start();
     new TestMOFlusher(this.objectManager, flushSink, new NullSinkContext()).start();
 
@@ -1231,7 +1228,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
     gc.allow_blockUntilReadyToGC_ToProceed();
 
-    objectManager.getGarbageCollector().doGC(new FullGCHook(objectManager.getGarbageCollector(),objectManager,clientStateManager));
+    this.objectManager.getGarbageCollector().doGC(GCType.FULL_GC);
     assertTrue(gc.isCollected());
 
     gc.reset();
@@ -2192,38 +2189,16 @@ public class ObjectManagerTest extends BaseDSOTestCase {
       return;
     }
 
-    public void requestGCDeleteStart() {
-      return;
-    }
-
-    public void blockUntilReadyToGC() {
-      return;
-    }
-
-    public ObjectIDSet collect(Filter traverser, Collection roots, ObjectIDSet managedObjectIds) {
-      throw this.toThrow;
-    }
-
     public PrettyPrinter prettyPrint(PrettyPrinter out) {
       return out.print(getClass().getName());
     }
 
-    public ObjectIDSet collect(Filter traverser, Collection roots, ObjectIDSet managedObjectIds, LifeCycleState state) {
-      return collect(traverser, roots, managedObjectIds);
-    }
-
     public void changed(ObjectID changedObject, ObjectID oldReference, ObjectID newReference) {
       // do nothing
-
     }
 
-    public void doGC(GCHook hook) {
+    public void doGC(GCType type) {
       throw this.toThrow;
-    }
-  
-    public void addNewReferencesTo(Set rescueIds) {
-      // do nothing
-
     }
 
     public void start() {
@@ -2240,10 +2215,6 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
     public void addListener(GarbageCollectorEventListener listener) {
       //
-    }
-
-    public GCStats[] getGarbageCollectorStats() {
-      return null;
     }
 
     public boolean disableGC() {
@@ -2266,7 +2237,6 @@ public class ObjectManagerTest extends BaseDSOTestCase {
       return true;
     }
 
-
     public void notifyNewObjectInitalized(ObjectID id) {
       // NOP
     }
@@ -2282,19 +2252,6 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     public boolean requestGCStart() {
       return true;
     }
-
-    public void startMonitoringReferenceChanges() {
-    // NOP 
-    }
-
-    public void stopMonitoringReferenceChanges() {
-     //NOP
-    }
-
-    public YoungGenChangeCollector getYoungGenChangeCollector() {
-      return null;
-    }
-
   }
 
   private class TestThreadGroup extends ThreadGroup {
@@ -2320,7 +2277,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
   private class GCCaller implements Runnable {
 
     public void run() {
-      objectManager.getGarbageCollector().doGC(new FullGCHook(objectManager.getGarbageCollector(),objectManager,clientStateManager));
+      ObjectManagerTest.this.objectManager.getGarbageCollector().doGC(GCType.FULL_GC);
     }
   }
 

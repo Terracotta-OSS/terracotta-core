@@ -6,16 +6,10 @@ package com.tc.objectserver.dgc.impl;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.context.GCResultContext;
-import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
-import com.tc.objectserver.dgc.impl.GarbageCollectorThread;
 import com.tc.objectserver.impl.ObjectManagerConfig;
-import com.tc.objectserver.impl.TestObjectManager;
-import com.tc.objectserver.l1.api.TestClientStateManager;
 import com.tc.text.PrettyPrinter;
-import com.tc.util.ObjectIDSet;
-import com.tc.util.concurrent.LifeCycleState;
 import com.tc.util.concurrent.StoppableThread;
 
 import java.util.Collection;
@@ -43,7 +37,7 @@ public class GarbageCollectorThreadTest extends TestCase {
     CatchExceptionThreadGroup tg = new CatchExceptionThreadGroup("gc thread group");
     TestGarbageCollector collector = new TestGarbageCollector();
 
-    GarbageCollectorThread garbageCollectorThread = new GarbageCollectorThread(tg, "YoungGCOnThread", collector, new TestObjectManager(), new TestClientStateManager(), config);
+    GarbageCollectorThread garbageCollectorThread = new GarbageCollectorThread(tg, "YoungGCOnThread", collector, config);
     garbageCollectorThread.start();
 
     try {
@@ -59,14 +53,15 @@ public class GarbageCollectorThreadTest extends TestCase {
     }
 
   }
-  
+
   public void testYoungGCOff() {
 
     ObjectManagerConfig config = new ObjectManagerConfig(FULL_GC_FREQUENCY, true, true, true, false, -1);
     CatchExceptionThreadGroup tg = new CatchExceptionThreadGroup("gc thread group");
     TestGarbageCollector collector = new TestGarbageCollector();
 
-    GarbageCollectorThread garbageCollectorThread = new GarbageCollectorThread(tg, "YoungGCOffThread", collector, new TestObjectManager(), new TestClientStateManager(), config);
+    GarbageCollectorThread garbageCollectorThread = new GarbageCollectorThread(tg, "YoungGCOffThread", collector,
+                                                                               config);
     garbageCollectorThread.start();
 
     try {
@@ -85,7 +80,7 @@ public class GarbageCollectorThreadTest extends TestCase {
 
   private static final class CatchExceptionThreadGroup extends ThreadGroup {
 
-    private Set<Throwable> exceptions = new HashSet<Throwable>();
+    private final Set<Throwable> exceptions = new HashSet<Throwable>();
 
     public CatchExceptionThreadGroup(String name) {
       super(name);
@@ -93,11 +88,11 @@ public class GarbageCollectorThreadTest extends TestCase {
 
     @Override
     public void uncaughtException(Thread t, Throwable e) {
-      exceptions.add(e);
+      this.exceptions.add(e);
     }
 
     public Set<Throwable> getExceptions() {
-      return exceptions;
+      return this.exceptions;
     }
 
   }
@@ -106,26 +101,14 @@ public class GarbageCollectorThreadTest extends TestCase {
 
     private long lastYoungGC = System.currentTimeMillis();
 
-    private long lastFullGC = System.currentTimeMillis();
+    private long lastFullGC  = System.currentTimeMillis();
 
     public void addListener(GarbageCollectorEventListener listener) {
       //
     }
 
-    public void addNewReferencesTo(Set rescueIds) {
-      //
-    }
-
     public void changed(ObjectID changedObject, ObjectID oldReference, ObjectID newReference) {
       //
-    }
-
-    public ObjectIDSet collect(Filter traverser, Collection roots, ObjectIDSet managedObjectIds) {
-      return null;
-    }
-
-    public ObjectIDSet collect(Filter traverser, Collection roots, ObjectIDSet managedObjectIds, LifeCycleState state) {
-      return null;
     }
 
     public boolean deleteGarbage(GCResultContext resultContext) {
@@ -140,13 +123,11 @@ public class GarbageCollectorThreadTest extends TestCase {
       //    
     }
 
-    public void doGC(GCHook hook) {
-      //
-      
-      if(hook instanceof FullGCHook) {
+    public void doGC(GCType type) {
+      if (GCType.FULL_GC.equals(type)) {
         long startTime = System.currentTimeMillis();
         System.out.println("[ " + Thread.currentThread().getName() + " ] calling full GC");
-        long diff = startTime - lastFullGC;
+        long diff = startTime - this.lastFullGC;
         if (diff > FULL_GC_FREQUENCY + GC_FREQUENCY_TOLERANCE) { throw new AssertionError(
                                                                                           "young gc frequency is not correct [diff = "
                                                                                               + diff
@@ -154,14 +135,12 @@ public class GarbageCollectorThreadTest extends TestCase {
                                                                                               + FULL_GC_FREQUENCY
                                                                                               + GC_FREQUENCY_TOLERANCE
                                                                                               + " ] "); }
-
-        lastYoungGC = startTime;
-        lastFullGC = startTime;
-  
-      } else {
+        this.lastYoungGC = startTime;
+        this.lastFullGC = startTime;
+      } else if (GCType.YOUNG_GEN_GC.equals(type)) {
         long startTime = System.currentTimeMillis();
         System.out.println("[ " + Thread.currentThread().getName() + " ] calling young GC");
-        long diff = startTime - lastYoungGC;
+        long diff = startTime - this.lastYoungGC;
         if (diff > YOUNG_GC_FREQUENCY + GC_FREQUENCY_TOLERANCE) { throw new AssertionError(
                                                                                            "young gc frequency is not correct [diff = "
                                                                                                + diff
@@ -169,12 +148,12 @@ public class GarbageCollectorThreadTest extends TestCase {
                                                                                                + YOUNG_GC_FREQUENCY
                                                                                                + GC_FREQUENCY_TOLERANCE
                                                                                                + " ] "); }
-
-        lastYoungGC = startTime;
-        
+        this.lastYoungGC = startTime;
+      } else {
+        throw new AssertionError("Unknown GCType : " + type);
       }
-     }
-  
+    }
+
     public boolean isDisabled() {
       return false;
     }
@@ -235,17 +214,16 @@ public class GarbageCollectorThreadTest extends TestCase {
       return true;
     }
 
-
     public YoungGenChangeCollector getYoungGenChangeCollector() {
-     return null;
+      return null;
     }
 
     public void startMonitoringReferenceChanges() {
-     //
+      //
     }
 
     public void stopMonitoringReferenceChanges() {
-     //
+      //
     }
 
   }

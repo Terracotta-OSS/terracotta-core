@@ -5,15 +5,14 @@
 package com.tc.objectserver.dgc.impl;
 
 import com.tc.objectserver.api.ObjectManager;
-import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.l1.api.ClientStateManager;
 
 public abstract class AbstractGCHook implements GCHook {
-  protected final GarbageCollector   collector;
-  protected final ObjectManager      objectManager;
-  protected final ClientStateManager stateManager;
+  protected final MarkAndSweepGarbageCollector collector;
+  protected final ObjectManager                objectManager;
+  protected final ClientStateManager           stateManager;
 
-  protected AbstractGCHook(GarbageCollector collector, ObjectManager objectManager,
+  protected AbstractGCHook(MarkAndSweepGarbageCollector collector, ObjectManager objectManager,
                            ClientStateManager stateManager) {
     this.collector = collector;
     this.objectManager = objectManager;
@@ -21,14 +20,14 @@ public abstract class AbstractGCHook implements GCHook {
   }
 
   public void startMonitoringReferenceChanges() {
-    collector.startMonitoringReferenceChanges();
+    this.collector.startMonitoringReferenceChanges();
   }
 
   public void stopMonitoringReferenceChanges() {
-    collector.stopMonitoringReferenceChanges();
+    this.collector.stopMonitoringReferenceChanges();
   }
 
   public void waitUntilReadyToGC() {
-    objectManager.waitUntilReadyToGC();
+    this.objectManager.waitUntilReadyToGC();
   }
 }

@@ -11,6 +11,9 @@ import java.util.Set;
 import java.util.SortedSet;
 
 public interface YoungGenChangeCollector {
+
+  public final YoungGenChangeCollector NULL_YOUNG_CHANGE_COLLECTOR = new NullYoungGenChangeCollector();
+
   public void notifyObjectsEvicted(Collection evicted);
 
   public void startMonitoringChanges();
