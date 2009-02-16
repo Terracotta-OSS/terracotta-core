@@ -33,25 +33,19 @@ import com.tc.management.lock.stats.LockStatisticsResponseMessage;
 import com.tc.management.remote.protocol.terracotta.JmxRemoteTunnelMessage;
 import com.tc.management.remote.protocol.terracotta.L1JmxReady;
 import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
-import com.tc.net.GroupID;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OOOEventHandler;
 import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl;
-import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
-import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
 import com.tc.net.protocol.tcm.HydrateHandler;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.MessageMonitorImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
-import com.tc.net.protocol.transport.ConnectionPolicy;
-import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.HealthCheckerConfigClientImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.bytecode.Manager;
@@ -66,7 +60,6 @@ import com.tc.object.event.DmiManager;
 import com.tc.object.event.DmiManagerImpl;
 import com.tc.object.field.TCFieldFactory;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
-import com.tc.object.gtx.ClientGlobalTransactionManagerImpl;
 import com.tc.object.handler.BatchTransactionAckHandler;
 import com.tc.object.handler.ClientCoordinationHandler;
 import com.tc.object.handler.ClusterMetaDataHandler;
@@ -81,14 +74,12 @@ import com.tc.object.handler.ReceiveTransactionHandler;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
 import com.tc.object.idprovider.api.ObjectIDProvider;
-import com.tc.object.idprovider.impl.ObjectIDClientHandshakeRequester;
 import com.tc.object.idprovider.impl.ObjectIDProviderImpl;
 import com.tc.object.idprovider.impl.RemoteObjectIDBatchSequenceProvider;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.lockmanager.api.ClientLockManager;
 import com.tc.object.lockmanager.impl.ClientLockManagerConfigImpl;
 import com.tc.object.lockmanager.impl.RemoteLockManagerImpl;
-import com.tc.object.lockmanager.impl.StripedClientLockManagerImpl;
 import com.tc.object.lockmanager.impl.ThreadLockManagerImpl;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.msg.AcknowledgeTransactionMessageImpl;
@@ -120,9 +111,6 @@ import com.tc.object.tx.ClientTransactionFactoryImpl;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.tx.ClientTransactionManagerImpl;
 import com.tc.object.tx.RemoteTransactionManager;
-import com.tc.object.tx.RemoteTransactionManagerImpl;
-import com.tc.object.tx.TransactionBatchFactory;
-import com.tc.object.tx.TransactionBatchWriterFactory;
 import com.tc.object.tx.TransactionIDGenerator;
 import com.tc.object.tx.TransactionBatchWriter.FoldingConfig;
 import com.tc.properties.ReconnectConfig;
@@ -177,36 +165,37 @@ import java.util.List;
  */
 public class DistributedObjectClient extends SEDA implements TCClient {
 
-  private static final TCLogger                    DSO_LOGGER                 = CustomerLogging.getDSOGenericLogger();
-  private static final TCLogger                    CONSOLE_LOGGER             = CustomerLogging.getConsoleLogger();
+  protected static final TCLogger                    DSO_LOGGER                 = CustomerLogging.getDSOGenericLogger();
+  private static final TCLogger                      CONSOLE_LOGGER             = CustomerLogging.getConsoleLogger();
 
-  private final DSOClientConfigHelper              config;
-  private final ClassProvider                      classProvider;
-  private final PreparedComponentsFromL2Connection connectionComponents;
-  private final Manager                            manager;
-  private final Cluster                            cluster;
-  private final DsoClusterInternal                 dsoCluster;
-  private final TCThreadGroup                      threadGroup;
-  private final StatisticsAgentSubSystemImpl       statisticsAgentSubSystem;
+  private final DSOClientBuilder                     dsoClientBuilder;
+  private final DSOClientConfigHelper                config;
+  private final ClassProvider                        classProvider;
+  private final Manager                              manager;
+  private final Cluster                              cluster;
+  private final DsoClusterInternal                   dsoCluster;
+  private final TCThreadGroup                        threadGroup;
+  private final StatisticsAgentSubSystemImpl         statisticsAgentSubSystem;
+  private final RuntimeLogger                        runtimeLogger;
+  private final ThreadIDMap                          threadIDMap;
 
-  private final RuntimeLogger                      runtimeLogger;
-  private final ThreadIDMap                        threadIDMap;
+  protected final PreparedComponentsFromL2Connection connectionComponents;
 
-  private DSOClientMessageChannel                  channel;
-  private ClientLockManager                        lockManager;
-  private ClientObjectManagerImpl                  objectManager;
-  private ClientTransactionManager                 txManager;
-  private CommunicationsManager                    communicationsManager;
-  private RemoteTransactionManager                 rtxManager;
-  private ClientHandshakeManagerImpl               clientHandshakeManager;
-  private ClusterMetaDataManager                   clusterMetaDataManager;
-  private CacheManager                             cacheManager;
-  private L1Management                             l1Management;
-  private TCProperties                             l1Properties;
-  private DmiManager                               dmiManager;
-  private boolean                                  createDedicatedMBeanServer = false;
-  private CounterManager                           counterManager;
-  private ThreadIDManager                          threadIDManager;
+  private DSOClientMessageChannel                    channel;
+  private ClientLockManager                          lockManager;
+  private ClientObjectManagerImpl                    objectManager;
+  private ClientTransactionManager                   txManager;
+  private CommunicationsManager                      communicationsManager;
+  private RemoteTransactionManager                   rtxManager;
+  private ClientHandshakeManagerImpl                 clientHandshakeManager;
+  private ClusterMetaDataManager                     clusterMetaDataManager;
+  private CacheManager                               cacheManager;
+  private L1Management                               l1Management;
+  private TCProperties                               l1Properties;
+  private DmiManager                                 dmiManager;
+  private boolean                                    createDedicatedMBeanServer = false;
+  private CounterManager                             counterManager;
+  private ThreadIDManager                            threadIDManager;
 
   public DistributedObjectClient(final DSOClientConfigHelper config, final TCThreadGroup threadGroup,
                                  final ClassProvider classProvider,
@@ -225,6 +214,15 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.statisticsAgentSubSystem = new StatisticsAgentSubSystemImpl();
     this.threadIDMap = ThreadIDMapUtil.getInstance();
     this.runtimeLogger = runtimeLogger;
+    this.dsoClientBuilder = createClientBuilder();
+  }
+
+  protected DSOClientBuilder createClientBuilder() {
+    if (connectionComponents.isActiveActive()) {
+      throw new AssertionError("Active Server Arrays cannot be handled by CE Client");
+    } else {
+      return new StandardDSOClientBuilder();
+    }
   }
 
   public ThreadIDMap getThreadIDMap() {
@@ -241,30 +239,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
   public void setCreateDedicatedMBeanServer(final boolean createDedicatedMBeanServer) {
     this.createDedicatedMBeanServer = createDedicatedMBeanServer;
-  }
-
-  /*
-   * Overwrite this routine to do active-active channel
-   */
-  protected DSOClientMessageChannel createDSOClientMessageChannel(final CommunicationsManager commMgr,
-                                                                  final PreparedComponentsFromL2Connection connComp,
-                                                                  final SessionProvider sessionProvider) {
-    ClientMessageChannel cmc;
-    ConfigItem connectionInfoItem = connComp.createConnectionInfoConfigItem();
-    ConnectionInfo[] connectionInfo = (ConnectionInfo[]) connectionInfoItem.getObject();
-    ConnectionAddressProvider cap = new ConnectionAddressProvider(connectionInfo);
-    cmc = commMgr.createClientChannel(sessionProvider, -1, null, 0, 10000, cap);
-    return new DSOClientMessageChannelImpl(cmc, new GroupID[] { new GroupID(cap.getGroupId()) });
-  }
-
-  /*
-   * Overwrite this routine to do active-active channel
-   */
-  protected CommunicationsManager createCommunicationsManager(final MessageMonitor monitor,
-                                                              final NetworkStackHarnessFactory stackHarnessFactory,
-                                                              final ConnectionPolicy connectionPolicy,
-                                                              final HealthCheckerConfig aConfig) {
-    return new CommunicationsManagerImpl(monitor, stackHarnessFactory, connectionPolicy, aConfig);
   }
 
   private void populateStatisticsRetrievalRegistry(final StatisticsRetrievalRegistry registry,
@@ -291,10 +265,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     registry.registerActionInstance(new SRAL1TransactionSize(batchSizeCounter, numTransactionCounter));
     registry.registerActionInstance(new SRAL1PendingBatchesSize(pendingBatchesSize));
     registry.registerActionInstance(new SRAHttpSessions());
-  }
-
-  protected TunnelingEventHandler createTunnelingEventHandler(final ClientMessageChannel ch) {
-    return new TunnelingEventHandler(ch);
   }
 
   public synchronized void start() {
@@ -338,9 +308,10 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     MessageMonitor mm = MessageMonitorImpl.createMonitor(tcProperties, DSO_LOGGER);
 
-    communicationsManager = createCommunicationsManager(mm, networkStackHarnessFactory, new NullConnectionPolicy(),
-                                                        new HealthCheckerConfigClientImpl(l1Properties
-                                                            .getPropertiesFor("healthcheck.l2"), "DSO Client"));
+    communicationsManager = dsoClientBuilder
+        .createCommunicationsManager(mm, networkStackHarnessFactory, new NullConnectionPolicy(),
+                                     new HealthCheckerConfigClientImpl(l1Properties.getPropertiesFor("healthcheck.l2"),
+                                                                       "DSO Client"));
 
     DSO_LOGGER.debug("Created CommunicationsManager.");
 
@@ -352,7 +323,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     int timeout = tcProperties.getInt(TCPropertiesConsts.L1_SOCKET_CONNECT_TIMEOUT);
     if (timeout < 0) { throw new IllegalArgumentException("invalid socket time value: " + timeout); }
 
-    channel = createDSOClientMessageChannel(communicationsManager, connectionComponents, sessionProvider);
+    channel = dsoClientBuilder.createDSOClientMessageChannel(communicationsManager, connectionComponents,
+                                                             sessionProvider);
     ClientIDLoggerProvider cidLoggerProvider = new ClientIDLoggerProvider(channel.getClientIDProvider());
     stageManager.setLoggerProvider(cidLoggerProvider);
 
@@ -373,19 +345,21 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     Counter outstandingBatchesCounter = counterManager.createCounter(new CounterConfig(0));
     Counter pendingBatchesSize = counterManager.createCounter(new CounterConfig(0));
 
-    rtxManager = createRemoteTransactionManager(channel.getClientIDProvider(), encoding, FoldingConfig
+    rtxManager = dsoClientBuilder.createRemoteTransactionManager(channel.getClientIDProvider(), encoding, FoldingConfig
         .createFromProperties(tcProperties), new TransactionIDGenerator(), sessionManager, channel,
-                                                outstandingBatchesCounter, numTransactionCounter, numBatchesCounter,
-                                                batchSizeCounter, pendingBatchesSize);
+                                                                 outstandingBatchesCounter, numTransactionCounter,
+                                                                 numBatchesCounter, batchSizeCounter,
+                                                                 pendingBatchesSize);
 
-    ClientGlobalTransactionManager gtxManager = createClientGlobalTransactionManager(rtxManager);
+    ClientGlobalTransactionManager gtxManager = dsoClientBuilder.createClientGlobalTransactionManager(rtxManager);
 
     ClientLockStatManager lockStatManager = new ClientLockStatisticsManagerImpl();
 
-    lockManager = createLockManager(new ClientIDLogger(channel.getClientIDProvider(), TCLogging
+    lockManager = dsoClientBuilder.createLockManager(new ClientIDLogger(channel.getClientIDProvider(), TCLogging
         .getLogger(ClientLockManager.class)), new RemoteLockManagerImpl(channel.getLockRequestMessageFactory(),
                                                                         gtxManager), sessionManager, lockStatManager,
-                                    new ClientLockManagerConfigImpl(l1Properties.getPropertiesFor("lockmanager")));
+                                                     new ClientLockManagerConfigImpl(l1Properties
+                                                         .getPropertiesFor("lockmanager")));
     threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter(lockManager));
 
     RemoteObjectIDBatchSequenceProvider remoteIDProvider = new RemoteObjectIDBatchSequenceProvider(channel
@@ -407,14 +381,14 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                           batchSizeCounter, pendingBatchesSize);
     }
 
-    RemoteObjectManager remoteObjectManager = createRemoteObjectManager(new ClientIDLogger(channel
-        .getClientIDProvider(), TCLogging.getLogger(RemoteObjectManager.class)), channel,
-                                                                        new NullObjectRequestMonitor(), faultCount,
-                                                                        sessionManager);
+    RemoteObjectManager remoteObjectManager = dsoClientBuilder
+        .createRemoteObjectManager(new ClientIDLogger(channel.getClientIDProvider(), TCLogging
+            .getLogger(RemoteObjectManager.class)), channel, new NullObjectRequestMonitor(), faultCount, sessionManager);
 
-    objectManager = createObjectManager(remoteObjectManager, config, idProvider, new ClockEvictionPolicy(-1),
-                                        runtimeLogger, channel.getClientIDProvider(), classProvider, classFactory,
-                                        objectFactory, config.getPortability(), channel, toggleRefMgr);
+    objectManager = dsoClientBuilder.createObjectManager(remoteObjectManager, config, idProvider,
+                                                         new ClockEvictionPolicy(-1), runtimeLogger, channel
+                                                             .getClientIDProvider(), classProvider, classFactory,
+                                                         objectFactory, config.getPortability(), channel, toggleRefMgr);
     threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter(objectManager));
     TCProperties cacheManagerProperties = l1Properties.getPropertiesFor("cachemanager");
     CacheConfig cacheConfig = new CacheConfigImpl(cacheManagerProperties);
@@ -441,7 +415,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     clusterMetaDataManager = new ClusterMetaDataManagerImpl(threadIDManager, channel.getClusterMetaDataMessageFactory());
 
     // Set up the JMX management stuff
-    final TunnelingEventHandler teh = createTunnelingEventHandler(channel.channel());
+    final TunnelingEventHandler teh = dsoClientBuilder.createTunnelingEventHandler(channel.channel());
     l1Management = new L1Management(teh, statisticsAgentSubSystem, runtimeLogger, manager.getInstrumentationLogger(),
                                     config.rawConfigText(), this);
     l1Management.start(createDedicatedMBeanServer);
@@ -506,7 +480,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     clientHandshakeCallbacks.add(objectManager);
     clientHandshakeCallbacks.add(remoteObjectManager);
     clientHandshakeCallbacks.add(rtxManager);
-    clientHandshakeCallbacks.add(getObjectIDClientHandshakeRequester(sequence));
+    clientHandshakeCallbacks.add(dsoClientBuilder.getObjectIDClientHandshakeRequester(sequence));
     ProductInfo pInfo = ProductInfo.getInstance();
     clientHandshakeManager = new ClientHandshakeManagerImpl(new ClientIDLogger(channel.getClientIDProvider(), TCLogging
         .getLogger(ClientHandshakeManagerImpl.class)), channel, channel.getClientHandshakeMessageFactory(), pauseStage
@@ -620,103 +594,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
       setReconnectCloseOnExit(channel);
     }
     setLoggerOnExit();
-  }
-
-  /*
-   * Overwrite this routine to do active-active, TODO:: These should go into some interface
-   */
-  protected ClientGlobalTransactionManager createClientGlobalTransactionManager(
-                                                                                final RemoteTransactionManager remoteTxnMgr) {
-    return new ClientGlobalTransactionManagerImpl(remoteTxnMgr);
-  }
-
-  /*
-   * Overwrite this routine to do active-active, TODO:: These should go into some interface
-   */
-  protected ObjectIDClientHandshakeRequester getObjectIDClientHandshakeRequester(final BatchSequence sequence) {
-    return new ObjectIDClientHandshakeRequester(sequence);
-  }
-
-  /*
-   * Overwrite this routine to do active-active, TODO:: These should go into some interface
-   */
-  protected RemoteObjectManager createRemoteObjectManager(final TCLogger logger,
-                                                          final DSOClientMessageChannel dsoChannel,
-                                                          final ObjectRequestMonitor objectRequestMonitor,
-                                                          final int faultCount, final SessionManager sessionManager) {
-    GroupID defaultGroups[] = dsoChannel.getGroupIDs();
-    assert defaultGroups != null && defaultGroups.length == 1;
-    return new RemoteObjectManagerImpl(defaultGroups[0], logger, dsoChannel.getClientIDProvider(), dsoChannel
-        .getRequestRootMessageFactory(), dsoChannel.getRequestManagedObjectMessageFactory(), objectRequestMonitor,
-                                       faultCount, sessionManager);
-  }
-
-  /*
-   * Overwrite this routine to do active-active, TODO:: These should go into some interface
-   */
-  protected ClientObjectManagerImpl createObjectManager(final RemoteObjectManager remoteObjectManager,
-                                                        final DSOClientConfigHelper dsoConfig,
-                                                        final ObjectIDProvider idProvider,
-                                                        final ClockEvictionPolicy clockEvictionPolicy,
-                                                        final RuntimeLogger rtLogger,
-                                                        final ClientIDProvider clientIDProvider,
-                                                        final ClassProvider classProviderLocal,
-                                                        final TCClassFactory classFactory,
-                                                        final TCObjectFactory objectFactory,
-                                                        final Portability portability,
-                                                        final DSOClientMessageChannel dsoChannel,
-                                                        final ToggleableReferenceManager toggleRefMgr) {
-    return new ClientObjectManagerImpl(remoteObjectManager, dsoConfig, idProvider, clockEvictionPolicy, rtLogger,
-                                       clientIDProvider, classProviderLocal, classFactory, objectFactory, portability,
-                                       dsoChannel, toggleRefMgr);
-  }
-
-  /*
-   * Overwrite this routine to do active-active, TODO:: These should go into some interface
-   */
-  protected ClientLockManager createLockManager(final ClientIDLogger clientIDLogger,
-                                                final RemoteLockManagerImpl remoteLockManagerImpl,
-                                                final SessionManager sessionManager,
-                                                final ClientLockStatManager lockStatManager,
-                                                final ClientLockManagerConfigImpl clientLockManagerConfigImpl) {
-    return new StripedClientLockManagerImpl(clientIDLogger, remoteLockManagerImpl, sessionManager, lockStatManager,
-                                            clientLockManagerConfigImpl);
-  }
-
-  /*
-   * Overwrite this routine to do active-active
-   */
-  protected RemoteTransactionManager createRemoteTransactionManager(
-                                                                    final ClientIDProvider cidProvider,
-                                                                    final DNAEncoding encoding,
-                                                                    final FoldingConfig foldingConfig,
-                                                                    final TransactionIDGenerator transactionIDGenerator,
-                                                                    final SessionManager sessionManager,
-                                                                    final DSOClientMessageChannel dsoChannel,
-                                                                    final Counter outstandingBatchesCounter,
-                                                                    final SampledCounter numTransactionCounter,
-                                                                    final SampledCounter numBatchesCounter,
-                                                                    final SampledCounter batchSizeCounter,
-                                                                    final Counter pendingBatchesSize) {
-    GroupID defaultGroups[] = dsoChannel.getGroupIDs();
-    assert defaultGroups != null && defaultGroups.length == 1;
-    TransactionBatchFactory txBatchFactory = new TransactionBatchWriterFactory(channel
-        .getCommitTransactionMessageFactory(), encoding, foldingConfig);
-    return new RemoteTransactionManagerImpl(
-                                            defaultGroups[0],
-                                            new ClientIDLogger(cidProvider, TCLogging
-                                                .getLogger(RemoteTransactionManagerImpl.class)),
-                                            txBatchFactory,
-                                            transactionIDGenerator,
-                                            sessionManager,
-                                            dsoChannel,
-                                            outstandingBatchesCounter,
-                                            numTransactionCounter,
-                                            numBatchesCounter,
-                                            batchSizeCounter,
-                                            pendingBatchesSize,
-                                            TCPropertiesImpl.getProperties()
-                                                .getLong(TCPropertiesConsts.L1_TRANSACTIONMANAGER_TIMEOUTFORACK_ONEXIT) * 1000);
   }
 
   private void setReconnectCloseOnExit(final DSOClientMessageChannel channel) {
