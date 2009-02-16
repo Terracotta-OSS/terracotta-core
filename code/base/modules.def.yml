@@ -228,18 +228,6 @@ modules:
         - management-api
         - thirdparty
         - thirdparty-api
-  - dso-l1-session:
-      options:
-        jdk: J2SE-1.5
-      dependencies:
-        - common
-        - common-api
-        - license-common
-        - dso-common
-        - dso-l1
-        - dso-l1-api
-        - management
-        - management-api
   - dso-memory-datastore:
       options:
         jdk: J2SE-1.5
@@ -627,7 +615,6 @@ modules:
         - dso-common-jdk16
         - dso-l1
         - dso-l1-api
-        - dso-l1-session
         - dso-l2
         - dso-l2-common
         - dso-statistics
@@ -720,7 +707,6 @@ module-groups:
     - dso-common
     - dso-common-jdk16
     - dso-l1
-    - dso-l1-session
     - dso-l2-common
     - dso-l2
     - deploy

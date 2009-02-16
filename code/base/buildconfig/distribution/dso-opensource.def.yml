@@ -63,10 +63,6 @@ bundled_components:
           - 1.4
           - 1.5
       module_packages:
-        - tc-session:
-            install_directory: lib/session
-            modules:
-              - dso-l1-session
         - terracotta-api-version-PREALPHA:
             install_directory: lib
             modules:
@@ -186,9 +182,6 @@ postscripts:
         - artifact: tcstats
           file: lib/tcstats-xmlbeans-generated.jar
           pom: poms/tcstats-pom.xml
-        - artifact: tc-session
-          file: lib/session/tc-session.jar
-          pom: poms/tc-session-pom.xml
         - artifact: terracotta-api
           file: lib/terracotta-api-version-PREALPHA.jar
           pom: poms/terracotta-api-pom.xml

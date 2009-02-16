@@ -59,14 +59,8 @@ class BuildSubtree
                 write_dynamic_property(file, "appserver.home", container_home)
             end
 
-            # Builds up the set of classes required for DSO to support sessions
-            sessionSet = PathSet.new
-            sessionSet << build_module.module_set['dso-l1-session'].subtree('src').own_classes_only_classpath(build_results)
-
             # Writes out the location of the boot JAR for this tree, if one was created.
             write_dynamic_property(file, "bootjars.normal", boot_jar.path) unless boot_jar.nil?
-            # Writes out the location of the session CLASSPATH that DSO needs
-            write_dynamic_property(file, "session.classpath", sessionSet)
             # Writes out the location of the path that tests should use to search for executables; currently,
             # this is just precisely the native library path.
             write_dynamic_property(file, "executable-search-path", native_library_path(build_results, build_environment, :full))

@@ -75,16 +75,8 @@ class BuildSubtree
         write_dynamic_property(file, "appserver.home", container_home)
       end
 
-      # Builds up the set of classes required for DSO to support sessions
-      sessionSet = PathSet.new
-      %w(session).each do |mod|
-        sessionSet << build_module.module_set["dso-l1-#{mod}"].subtree('src').own_classes_only_classpath(build_results)
-      end
-
       # Writes out the location of the boot JAR for this tree, if one was created.
       write_dynamic_property(file, "bootjars.normal", boot_jar.path) unless boot_jar.nil?
-      # Writes out the location of the session CLASSPATH that DSO needs
-      write_dynamic_property(file, "session.classpath", sessionSet)
 
       # The timeout the tests are going to use. This does *not* actually set the timeout;
       # that's set in the Ant <junit> task. Rather, this is so that the test can fire off
@@ -123,7 +115,7 @@ class BuildSubtree
       if Registry[:emma]
         write_dynamic_property(file, "emma.lib", Registry[:emma_lib])
       end
-      
+
       # Write out which variant values are available for each variant name, and write out which libraries
       # should be included if the given variant is set to each of the possible values. Right now, this is
       # *all* that variants do -- they do not *ever* actually change the CLASSPATH of what we spawn, because
@@ -301,12 +293,12 @@ class SubtreeTestRun
     @use_dso_boot_jar = buildconfig['include-dso-boot-jar'] =~ /^\s*true\s*$/i
     @needs_dso_boot_jar = @use_dso_boot_jar || (buildconfig['build-dso-boot-jar'] =~ /^\s*true\s*$/i)
     @timeout = (@config_source["test_timeout"] || buildconfig["timeout"] || DEFAULT_TEST_TIMEOUT_SECONDS.to_s).to_i * 1000
-        
+
     # add 10m to timeout if running on slow mo Solaris
     if @build_environment.os_type(:nice) =~ /Solaris/
-      @timeout += (10 * 60 * 1000) 
+      @timeout += (10 * 60 * 1000)
     end
-        
+
     @extra_jvmargs = @config_source.as_array('jvmargs') || []
     if buildconfig['jvmargs']
       jvmargs = buildconfig['jvmargs'].split(/\s*,\s*/)
@@ -406,8 +398,8 @@ class SubtreeTestRun
         if Registry[:emma]
           from = boot_jar.path.to_s.gsub(/\\/, "/")
           to   = @testrun_results.boot_jar_directory(@subtree).ensure_directory.to_s.gsub(/\\/, "/")
-        
-          if ENV['OS'] =~ /Windows/i 
+
+          if ENV['OS'] =~ /Windows/i
             from = `cygpath -u #{from}`.chomp
             to = `cygpath -u #{to}`.chomp
           end
@@ -487,7 +479,7 @@ class SubtreeTestRun
 
   def download_appserver_if_needed
     return unless requires_container?
-    appserver_home = @config_source['tc.tests.configuration.appserver.home']      
+    appserver_home = @config_source['tc.tests.configuration.appserver.home']
     if appserver_home
       if File.exist?(appserver_home)
         puts "** Appserver home is specified #{appserver_home}"
@@ -497,7 +489,7 @@ class SubtreeTestRun
       end
     end
 
-    urls = @config_source['tc.tests.configuration.appserver.repository'].to_s.split(/,/)      
+    urls = @config_source['tc.tests.configuration.appserver.repository'].to_s.split(/,/)
     fail("Neither [tc.tests.configuration.appserver.home] OR [tc.tests.configuration.appserver.repository] was specified!") unless urls
 
     appserver = @config_source['tc.tests.configuration.appserver.factory.name'] + "-" +
@@ -515,16 +507,16 @@ class SubtreeTestRun
       os_name = "win32" if os_name =~ /windows/
       # pick a URL that is live
       url = nil
-      urls.each do | u |          
-        testurl = "#{u}/#{@config_source['tc.tests.configuration.appserver.factory.name']}/#{os_name}/#{appserver}.zip"          
+      urls.each do | u |
+        testurl = "#{u}/#{@config_source['tc.tests.configuration.appserver.factory.name']}/#{os_name}/#{appserver}.zip"
         if isLive?(testurl)
           url = testurl
           break
         end
       end
-        
+
       fail("Can't find any URL that container appserver #{appserver}") unless url
-        
+
       appserver_zip_path = appserver_home + ".zip"
       @ant.get(:src => url, :dest => appserver_zip_path)
       # we don't use @ant.unzip because it doesn't preserve executable bit of .sh files
@@ -534,7 +526,7 @@ class SubtreeTestRun
       end
       @ant.delete(:file => appserver_zip_path)
     end
-    @internal_config_source['tc.tests.configuration.appserver.home'] = appserver_home      
+    @internal_config_source['tc.tests.configuration.appserver.home'] = appserver_home
   end
 
   # The list of system properties that *must* be set directly on the spawned JVM, rather than
@@ -674,7 +666,7 @@ class SubtreeTestRun
     # Run the tests. Most of the real magic here comes in the 'splice_into_ant_junit'
     # method, which puts the necessary <jvmarg>, <sysproperty>, and so forth elements
     # into the junit task.
-    
+
     @ant.junit(
       :printsummary => "yes",
       :timeout => @timeout,
@@ -689,7 +681,7 @@ class SubtreeTestRun
         @ant.pathelement( :path => junit_formatter_classpath)
       }
       splice_into_ant_junit
-      
+
       # formatter that outputs result to console
       @ant.formatter(:type => "xml")
       @ant.formatter(:classname => 'com.tc.test.TCJUnitFormatter', :usefile => false)
@@ -897,7 +889,7 @@ END
       @jvmargs << '-Demma.coverage.out.merge=true'
       @jvmargs << "-Demma.coverage.out.file=#{Registry[:emma_coverage_dir]}/coverage.ce"
     end
-    
+
     @jvmargs.each do |jvmarg|
       @ant.jvmarg(:value => jvmarg)
     end
@@ -978,7 +970,7 @@ END
       response = nil
       Net::HTTP.start(url.host, url.port) { |http|
         response = http.head(url.path.size > 0 ? url.path : "/")
-      }  
+      }
       return response.code == "200"
     rescue
       return false

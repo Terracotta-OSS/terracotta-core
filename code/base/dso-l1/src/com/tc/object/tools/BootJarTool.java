@@ -126,7 +126,6 @@ import com.tc.object.bytecode.hook.DSOContext;
 import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.object.bytecode.hook.impl.ClassProcessorHelperJDK15;
 import com.tc.object.bytecode.hook.impl.JavaLangArrayHelpers;
-import com.tc.object.bytecode.hook.impl.SessionsHelper;
 import com.tc.object.bytecode.hook.impl.Util;
 import com.tc.object.cache.Cacheable;
 import com.tc.object.compression.CompressedData;
@@ -484,7 +483,6 @@ public class BootJarTool {
       loadTerracottaClass(ObjectID.class.getName());
       loadTerracottaClass(AbstractIdentifier.class.getName());
       loadTerracottaClass(TLinkable.class.getName());
-      loadTerracottaClass(SessionsHelper.class.getName());
       loadTerracottaClass(TCLogger.class.getName());
       loadTerracottaClass(LogLevel.class.getName());
       loadTerracottaClass(Banner.class.getName());
