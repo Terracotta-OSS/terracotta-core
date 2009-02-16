@@ -19,6 +19,8 @@ public class PersistentCollectionsUtil {
       case ManagedObjectState.CONCURRENT_HASHMAP_TYPE:
       case ManagedObjectState.SET_TYPE:
       case ManagedObjectState.TREE_SET_TYPE:
+      // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
+      case ManagedObjectState.CONCURRENT_STRING_MAP_TYPE:
         return true;
       default:
         return false;
@@ -32,6 +34,8 @@ public class PersistentCollectionsUtil {
       case ManagedObjectState.PARTIAL_MAP_TYPE:
       case ManagedObjectState.TREE_MAP_TYPE:
       case ManagedObjectState.CONCURRENT_HASHMAP_TYPE:
+      // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
+      case ManagedObjectState.CONCURRENT_STRING_MAP_TYPE:
         return (PersistableCollection) collectionFactory.createPersistentMap(id);
       case ManagedObjectState.SET_TYPE:
       case ManagedObjectState.TREE_SET_TYPE:
