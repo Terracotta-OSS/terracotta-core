@@ -75,8 +75,10 @@ public class YoungGCHook extends AbstractGCHook {
     rescueIds.addAll(youngGenRoots);
     int referenceCollectorIds = rescueIds.size() - stateManagerIds;
 
-    logger.debug("rescueIds: " + rescueIds.size() + ", stateManagerIds: " + stateManagerIds
-                 + ", additional referenceCollectorIds: " + referenceCollectorIds);
+    if (logger.isDebugEnabled()) {
+      logger.debug("rescueIds: " + rescueIds.size() + ", stateManagerIds: " + stateManagerIds
+                   + ", additional referenceCollectorIds: " + referenceCollectorIds);
+    }
 
     return rescueIds;
   }
