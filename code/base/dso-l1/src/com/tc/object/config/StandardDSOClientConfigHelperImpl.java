@@ -4,6 +4,11 @@
  */
 package com.tc.object.config;
 
+import org.terracotta.groupConfigForL1.ServerGroup;
+import org.terracotta.groupConfigForL1.ServerGroupsDocument;
+import org.terracotta.groupConfigForL1.ServerInfo;
+import org.terracotta.groupConfigForL1.ServerGroupsDocument.ServerGroups;
+
 import EDU.oswego.cs.dl.util.concurrent.ConcurrentHashMap;
 import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
 
@@ -19,6 +24,7 @@ import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo;
 import com.tc.backport175.bytecode.AnnotationElement.Annotation;
 import com.tc.config.schema.NewCommonL1Config;
 import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
+import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory;
@@ -97,8 +103,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Modifier;
+import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.UnknownHostException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -161,14 +169,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   /**
    * A map of class names to TransparencyClassSpec
-   *
+   * 
    * @GuardedBy {@link #specLock}
    */
   private final Map                              userDefinedBootSpecs               = new HashMap();
 
   /**
    * A map of class names to TransparencyClassSpec for individual classes
-   *
+   * 
    * @GuardedBy {@link #specLock}
    */
   private final Map                              classSpecs                         = new HashMap();
@@ -214,8 +222,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  public StandardDSOClientConfigHelperImpl(final L1TVSConfigurationSetupManager configSetupManager, final boolean interrogateBootJar)
-      throws ConfigurationSetupException {
+  public StandardDSOClientConfigHelperImpl(final L1TVSConfigurationSetupManager configSetupManager,
+                                           final boolean interrogateBootJar) throws ConfigurationSetupException {
     this.portability = new PortabilityImpl(this);
     this.configSetupManager = configSetupManager;
     helperLogger = new DSOClientConfigHelperLogger(logger);
@@ -323,8 +331,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     addIncludePattern(expression, honorTransient, false, false);
   }
 
-  public void addIncludePattern(final String expression, final boolean honorTransient, final boolean oldStyleCallConstructorOnLoad,
-                                final boolean honorVolatile) {
+  public void addIncludePattern(final String expression, final boolean honorTransient,
+                                final boolean oldStyleCallConstructorOnLoad, final boolean honorVolatile) {
     IncludeOnLoad onLoad = new IncludeOnLoad();
     if (oldStyleCallConstructorOnLoad) {
       onLoad.setToCallConstructorOnLoad(true);
@@ -685,21 +693,23 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     boolean addedAdapters = false;
     if (Vm.isJDK15Compliant()) {
       for (FieldInfo fi : classInfo.getFields()) {
-        
+
         Annotation[] annotations;
         try {
           annotations = fi.getAnnotations();
         } catch (Exception e) {
-          logger.warn("Exception reading field annotations on " + classInfo.getName() + " (possibly due to a badly behaved ClassLoader)");
+          logger.warn("Exception reading field annotations on " + classInfo.getName()
+                      + " (possibly due to a badly behaved ClassLoader)");
           return false;
         }
-        
+
         for (Annotation ann : annotations) {
           if ("com.tc.injection.annotations.InjectedDsoInstance".equals(ann.getInterfaceName())) {
             InjectionInstrumentation instrumentation = injectionRegistry.lookupInstrumentation(fi.getType().getName());
-            if (null == instrumentation) {
-              throw new UnsupportedInjectedDsoInstanceTypeException(classInfo.getName(), fi.getName(), fi.getType().getName());
-            }
+            if (null == instrumentation) { throw new UnsupportedInjectedDsoInstanceTypeException(classInfo.getName(),
+                                                                                                 fi.getName(), fi
+                                                                                                     .getType()
+                                                                                                     .getName()); }
 
             addCustomAdapter(classInfo.getName(), instrumentation.getClassAdapterFactoryForFieldInjection(fi));
             addedAdapters = true;
@@ -1136,7 +1146,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     rewriteHashtableAutoLockSpecIfNecessaryInternal(classInfo, realClassName, patterns);
   }
 
-  private void rewriteHashtableAutoLockSpecIfNecessaryInternal(final ClassInfo classInfo, final String className, final String patterns) {
+  private void rewriteHashtableAutoLockSpecIfNecessaryInternal(final ClassInfo classInfo, final String className,
+                                                               final String patterns) {
     MemberInfo[] methods = classInfo.getMethods();
     for (MemberInfo methodInfo : methods) {
       if (patterns.indexOf(methodInfo.getName() + methodInfo.getSignature()) > -1) {
@@ -1416,13 +1427,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
                                         portability);
   }
 
-  public ClassAdapter createClassAdapterFor(final ClassWriter writer, final ClassInfo classInfo, final InstrumentationLogger lgr,
-                                            final ClassLoader caller) {
+  public ClassAdapter createClassAdapterFor(final ClassWriter writer, final ClassInfo classInfo,
+                                            final InstrumentationLogger lgr, final ClassLoader caller) {
     return this.createClassAdapterFor(writer, classInfo, lgr, caller, false);
   }
 
-  public ClassAdapter createClassAdapterFor(final ClassWriter writer, final ClassInfo classInfo, final InstrumentationLogger lgr,
-                                            final ClassLoader caller, final boolean forcePortable) {
+  public ClassAdapter createClassAdapterFor(final ClassWriter writer, final ClassInfo classInfo,
+                                            final InstrumentationLogger lgr, final ClassLoader caller,
+                                            final boolean forcePortable) {
     TransparencyClassSpec spec = getOrCreateSpec(classInfo.getName());
 
     if (forcePortable) {
@@ -1445,7 +1457,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return new SafeSerialVersionUIDAdder(new OverridesHashCodeAdapter(cv));
   }
 
-  private TransparencyClassSpec basicGetOrCreateSpec(final String className, final String applicator, final boolean rememberSpec) {
+  private TransparencyClassSpec basicGetOrCreateSpec(final String className, final String applicator,
+                                                     final boolean rememberSpec) {
     synchronized (specLock) {
       TransparencyClassSpec spec = getSpec(className);
       if (spec == null) {
@@ -1795,15 +1808,16 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return false;
   }
 
-  public static InputStream getL1PropertiesFromL2Stream(final ConnectionInfo[] connectInfo) throws Exception {
+  public static InputStream getPropertiesFromL2Stream(ConnectionInfo[] connectInfo, String message,
+                                                      String httpPathExtension) throws Exception {
     URLConnection connection = null;
     InputStream l1PropFromL2Stream = null;
     URL theURL = null;
     for (int i = 0; i < connectInfo.length; i++) {
       ConnectionInfo ci = connectInfo[i];
       try {
-        theURL = new URL("http", ci.getHostname(), ci.getPort(), "/l1reconnectproperties");
-        String text = "Trying to get L1 Reconnect Properties from " + theURL.toString();
+        theURL = new URL("http", ci.getHostname(), ci.getPort(), httpPathExtension);
+        String text = "Trying to get " + message + " from " + theURL.toString();
         logger.info(text);
         connection = theURL.openConnection();
         l1PropFromL2Stream = connection.getInputStream();
@@ -1816,6 +1830,126 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       }
     }
     return null;
+  }
+
+  private static ServerGroups getServerGroupsFromL2(PreparedComponentsFromL2Connection serverInfos) {
+    InputStream in = null;
+    String serverList = "";
+    boolean loggedInConsole = false;
+
+    ConnectionInfoConfigItem connectInfo = (ConnectionInfoConfigItem) serverInfos.createConnectionInfoConfigItem();
+    ConnectionInfo[] connections = (ConnectionInfo[]) connectInfo.getObject();
+
+    for (ConnectionInfo connection : connections) {
+      if (serverList.length() > 0) serverList += ", ";
+      serverList += connection;
+    }
+    String text = "Can't connect to " + (connections.length > 1 ? "any of the servers" : "server") + "[" + serverList
+                  + "]. Retrying...\n";
+
+    while (in == null) {
+      try {
+        in = getPropertiesFromL2Stream(connections, "Cluster topology", "/groupinfo");
+
+        if (in == null) {
+          if (loggedInConsole == false) {
+            consoleLogger.warn(text);
+            loggedInConsole = true;
+          }
+          if (connections.length > 1) logger.warn(text);
+          ThreadUtil.reallySleep(1000);
+        }
+      } catch (Exception e) {
+        throw new AssertionError(e);
+      }
+    }
+
+    ServerGroupsDocument serversGrpDocument;
+    try {
+      if (in.markSupported()) in.mark(100);
+      serversGrpDocument = ServerGroupsDocument.Factory.parse(in);
+    } catch (Exception e) {
+      if (in.markSupported()) {
+        byte[] l1prop = new byte[100];
+        int bytesRead = -1;
+        try {
+          in.reset();
+          bytesRead = in.read(l1prop, 0, l1prop.length);
+        } catch (IOException ioe) {
+          throw new AssertionError(e);
+        }
+        if (bytesRead > 0) logger.error("Error parsing l1 properties from server : " + new String(l1prop) + "...");
+      }
+      String errorMessage = "Client might not be connected to right listener. Please check if Client is configured with right Server address and DSO port.";
+      consoleLogger.error(errorMessage);
+      logger.error(errorMessage);
+      throw new AssertionError(e);
+    }
+
+    return serversGrpDocument.getServerGroups();
+  }
+
+  public void validateGroupInfo() throws ConfigurationSetupException {
+    PreparedComponentsFromL2Connection connectionComponents = new PreparedComponentsFromL2Connection(configSetupManager);
+    ServerGroups serverGroupsFromL2 = getServerGroupsFromL2(connectionComponents);
+
+    ConfigItem[] connectionInfoItems = connectionComponents.createConnectionInfoConfigItemByGroup();
+    HashSet<ConnectionInfo> connInfoFromL1 = new HashSet<ConnectionInfo>();
+    for (int i = 0; i < connectionInfoItems.length; i++) {
+      ConnectionInfo[] connectionInfo = (ConnectionInfo[]) connectionInfoItems[i].getObject();
+      for (int j = 0; j < connectionInfo.length; j++) {
+        ConnectionInfo connectionIn = new ConnectionInfo(getIpAddressOfServer(connectionInfo[j].getHostname()),
+                                                         connectionInfo[j].getPort(), i * j + j, connectionInfo[j]
+                                                             .getGroupName());
+        connInfoFromL1.add(connectionIn);
+      }
+    }
+
+    HashSet<ConnectionInfo> connInfoFromL2 = new HashSet<ConnectionInfo>();
+    ServerGroup[] grpArray = serverGroupsFromL2.getServerGroupArray();
+    for (int i = 0; i < grpArray.length; i++) {
+      String grpName = grpArray[i].getGroupName();
+      ServerInfo[] serverInfos = grpArray[i].getServerInfoArray();
+      for (int j = 0; j < serverInfos.length; j++) {
+        ConnectionInfo connectionIn = new ConnectionInfo(getIpAddressOfServer(serverInfos[j].getName()), serverInfos[j]
+            .getDsoPort().intValue(), i * j + j, grpName);
+        connInfoFromL2.add(connectionIn);
+      }
+    }
+
+    String errMsg = "The client config and the server config doesn't match.";
+    if (connInfoFromL1.size() != connInfoFromL2.size()) { throw new ConfigurationSetupException(errMsg); }
+
+    /**
+     * This check is there because of TC_SERVER env variable
+     */
+    if (connInfoFromL1.size() == 1) {
+      ConnectionInfo[] temp = new ConnectionInfo[1];
+      connInfoFromL1.toArray(temp);
+      int portFromL1 = temp[0].getPort();
+      connInfoFromL2.toArray(temp);
+      int portFromL2 = temp[0].getPort();
+      if (portFromL1 == portFromL2) {
+        return;
+      } else {
+        throw new ConfigurationSetupException(errMsg);
+      }
+    }
+
+    if (!connInfoFromL1.containsAll(connInfoFromL2)) { throw new ConfigurationSetupException(errMsg); }
+  }
+
+  private String getIpAddressOfServer(String name) throws ConfigurationSetupException {
+    InetAddress address;
+    try {
+      address = InetAddress.getByName(name);
+      if (address.isLoopbackAddress()) {
+        address = InetAddress.getLocalHost();
+      }
+    } catch (UnknownHostException e) {
+      throw new ConfigurationSetupException(e.getMessage());
+    }
+    return address.getHostAddress();
   }
 
   private void setupL1ReconnectProperties() {
@@ -1836,7 +1970,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     while (in == null) {
       try {
-        in = getL1PropertiesFromL2Stream(connections);
+        in = getPropertiesFromL2Stream(connections, "L1 Reconnect Properties", "/l1reconnectproperties");
 
         if (in == null) {
           if (loggedInConsole == false) {

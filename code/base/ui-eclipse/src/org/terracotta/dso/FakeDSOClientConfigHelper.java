@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package org.terracotta.dso;
 
@@ -60,7 +61,8 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     /**/
   }
 
-  public void addClassReplacement(final String originalClassName, final String replacementClassName, final URL replacementResource) {
+  public void addClassReplacement(final String originalClassName, final String replacementClassName,
+                                  final URL replacementResource) {
     /**/
   }
 
@@ -80,7 +82,8 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     /**/
   }
 
-  public void addIncludePattern(final String expression, final boolean honorTransient, final boolean oldStyleCallConstructorOnLoad, final boolean honorVolatile) {
+  public void addIncludePattern(final String expression, final boolean honorTransient,
+                                final boolean oldStyleCallConstructorOnLoad, final boolean honorVolatile) {
     /**/
   }
 
@@ -140,7 +143,9 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     /**/
   }
 
-  public void addIncludeAndLockIfRequired(final String expression, final boolean honorTransient, final boolean oldStyleCallConstructorOnLoad, final boolean honorVolatile, final String lockExpression, final ClassInfo classInfo) {
+  public void addIncludeAndLockIfRequired(final String expression, final boolean honorTransient,
+                                          final boolean oldStyleCallConstructorOnLoad, final boolean honorVolatile,
+                                          final String lockExpression, final ClassInfo classInfo) {
     /**/
   }
 
@@ -159,6 +164,7 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
   public void addModule(final String groupId, final String name, final String version) {
     /**/
   }
+
   public void addReadAutoSynchronize(final String methodPattern) {
     /**/
   }
@@ -385,13 +391,14 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     return null;
   }
 
-  public ClassAdapter createClassAdapterFor(final ClassWriter writer, final ClassInfo classInfo, final InstrumentationLogger lgr,
-                                            final ClassLoader caller) {
+  public ClassAdapter createClassAdapterFor(final ClassWriter writer, final ClassInfo classInfo,
+                                            final InstrumentationLogger lgr, final ClassLoader caller) {
     return null;
   }
 
-  public ClassAdapter createClassAdapterFor(final ClassWriter writer, final ClassInfo classInfo, final InstrumentationLogger lgr,
-                                            final ClassLoader caller, final boolean disableSuperClassTypeChecking) {
+  public ClassAdapter createClassAdapterFor(final ClassWriter writer, final ClassInfo classInfo,
+                                            final InstrumentationLogger lgr, final ClassLoader caller,
+                                            final boolean disableSuperClassTypeChecking) {
     return null;
   }
 
@@ -437,7 +444,10 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
 
   public void addSessionLockedApplication(final String name) {
     throw new ImplementMe();
+  }
 
+  public void validateGroupInfo() {
+    //
   }
 
   public boolean addAnnotationBasedAdapters(final ClassInfo classInfo) {

@@ -15,6 +15,7 @@ import com.tc.async.api.StageManager;
 import com.tc.cluster.Cluster;
 import com.tc.cluster.DsoClusterInternal;
 import com.tc.config.schema.dynamic.ConfigItem;
+import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.handler.CallbackDumpAdapter;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.ClientIDLogger;
@@ -268,6 +269,19 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   }
 
   public synchronized void start() {
+    // Check config topology
+    boolean toCheckTopology = TCPropertiesImpl.getProperties()
+        .getBoolean(TCPropertiesConsts.L1_L2_CONFIG_MATCH_ENABLED);
+    if (toCheckTopology) {
+      try {
+        config.validateGroupInfo();
+      } catch (ConfigurationSetupException e) {
+        CONSOLE_LOGGER.error(e.getMessage());
+        DSO_LOGGER.error("", e);
+        System.exit(1);
+      }
+    }
+
     TCProperties tcProperties = TCPropertiesImpl.getProperties();
     l1Properties = tcProperties.getPropertiesFor("l1");
     int maxSize = tcProperties.getInt(TCPropertiesConsts.L1_SEDA_STAGE_SINK_CAPACITY);
