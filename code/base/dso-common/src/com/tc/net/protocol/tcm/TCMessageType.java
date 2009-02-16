@@ -62,6 +62,8 @@ public final class TCMessageType {
   public static final int           TYPE_GROUP_HANDSHAKE_MESSAGE                    = 47;
   public static final int           TYPE_NODES_WITH_OBJECTS_MESSAGE                 = 48;
   public static final int           TYPE_NODES_WITH_OBJECTS_RESPONSE_MESSAGE        = 49;
+  public static final int           TYPE_KEYS_FOR_ORPHANED_VALUES_MESSAGE           = 50;
+  public static final int           TYPE_KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE  = 51;
 
   public static final TCMessageType PING_MESSAGE                                    = new TCMessageType();
   public static final TCMessageType PONG_MESSAGE                                    = new TCMessageType();
@@ -98,6 +100,8 @@ public final class TCMessageType {
   public static final TCMessageType GROUP_HANDSHAKE_MESSAGE                         = new TCMessageType();
   public static final TCMessageType NODES_WITH_OBJECTS_MESSAGE                      = new TCMessageType();
   public static final TCMessageType NODES_WITH_OBJECTS_RESPONSE_MESSAGE             = new TCMessageType();
+  public static final TCMessageType KEYS_FOR_ORPHANED_VALUES_MESSAGE                = new TCMessageType();
+  public static final TCMessageType KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE       = new TCMessageType();
 
   public static TCMessageType getInstance(final int i) {
     return (TCMessageType) typeMap.get(i);

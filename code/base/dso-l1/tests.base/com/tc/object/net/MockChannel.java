@@ -17,12 +17,13 @@ import com.tc.object.ClientIDProvider;
 import com.tc.object.ClientIDProviderImpl;
 import com.tc.object.msg.AcknowledgeTransactionMessageFactory;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
-import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.msg.CommitTransactionMessageFactory;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessageFactory;
 import com.tc.object.msg.JMXMessage;
+import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
 import com.tc.object.msg.LockRequestMessageFactory;
+import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.msg.ObjectIDBatchRequestMessageFactory;
 import com.tc.object.msg.RequestManagedObjectMessageFactory;
 import com.tc.object.msg.RequestRootMessageFactory;
@@ -78,7 +79,11 @@ public class MockChannel implements DSOClientMessageChannel {
     throw new ImplementMe();
   }
 
-  public NodesWithObjectsMessageFactory getClusterMetaDataMessageFactory() {
+  public NodesWithObjectsMessageFactory getNodesWithObjectsMessageFactory() {
+    throw new ImplementMe();
+  }
+
+  public KeysForOrphanedValuesMessageFactory getKeysForOrphanedValuesMessageFactory() {
     throw new ImplementMe();
   }
 

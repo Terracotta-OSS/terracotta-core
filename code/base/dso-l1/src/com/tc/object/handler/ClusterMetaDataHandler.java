@@ -8,6 +8,7 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.object.ClientConfigurationContext;
 import com.tc.object.ClusterMetaDataManager;
+import com.tc.object.msg.KeysForOrphanedValuesResponseMessage;
 import com.tc.object.msg.NodesWithObjectsResponseMessage;
 
 public class ClusterMetaDataHandler extends AbstractEventHandler {
@@ -18,7 +19,10 @@ public class ClusterMetaDataHandler extends AbstractEventHandler {
   public void handleEvent(final EventContext context) {
     if (context instanceof NodesWithObjectsResponseMessage) {
       NodesWithObjectsResponseMessage message = (NodesWithObjectsResponseMessage)context;
-      clusterMetaDataManager.setNodesWithObjectsResponse(message.getThreadID(), message.getNodesWithObjects());
+      clusterMetaDataManager.setResponse(message.getThreadID(), message.getNodesWithObjects());
+    } else if (context instanceof KeysForOrphanedValuesResponseMessage) {
+      KeysForOrphanedValuesResponseMessage message = (KeysForOrphanedValuesResponseMessage)context;
+      clusterMetaDataManager.setResponse(message.getThreadID(), message.getKeys());
     } else {
       throw new AssertionError("unknown event type: " + context.getClass().getName());
     }

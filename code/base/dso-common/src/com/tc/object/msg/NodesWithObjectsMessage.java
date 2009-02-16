@@ -4,19 +4,13 @@
  */
 package com.tc.object.msg;
 
-import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.ObjectID;
-import com.tc.object.lockmanager.api.ThreadID;
 
 import java.util.Set;
 
-public interface NodesWithObjectsMessage extends TCMessage {
+public interface NodesWithObjectsMessage extends ClusterMetaDataMessage {
 
   public Set<ObjectID> getObjectIDs();
-
-  public ThreadID getThreadID();
-
-  public void setThreadID(ThreadID threadID);
 
   public void addObjectID(ObjectID objectID);
 

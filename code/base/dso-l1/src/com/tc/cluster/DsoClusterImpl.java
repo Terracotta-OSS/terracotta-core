@@ -160,7 +160,25 @@ public class DsoClusterImpl implements DsoClusterInternal {
   }
 
   public <K> Set<K> getKeysForOrphanedValues(final Map<K, ?> map) throws UnclusteredObjectException {
-    throw new ImplementMe();
+    Assert.assertNotNull(clusterMetaDataManager);
+
+    if (null == map) {
+      return Collections.emptySet();
+    }
+
+    if (map instanceof Manageable) {
+      Manageable manageable = (Manageable)map;
+      if (manageable.__tc_isManaged()) {
+        if (manageable instanceof TCMap) {
+          clusterMetaDataManager.getKeysForOrphanedValues(manageable.__tc_managed().getObjectID());
+          return Collections.emptySet();
+        } else {
+          return Collections.emptySet();
+        }
+      }
+    }
+
+    throw new UnclusteredObjectException(map);
   }
 
   public <K> Set<K> getKeysForLocalValues(final Map<K, ?> map) throws UnclusteredObjectException {

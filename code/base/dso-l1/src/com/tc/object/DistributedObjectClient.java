@@ -92,6 +92,8 @@ import com.tc.object.msg.ClusterMembershipMessage;
 import com.tc.object.msg.CommitTransactionMessageImpl;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
 import com.tc.object.msg.JMXMessage;
+import com.tc.object.msg.KeysForOrphanedValuesMessageImpl;
+import com.tc.object.msg.KeysForOrphanedValuesResponseMessageImpl;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockResponseMessage;
 import com.tc.object.msg.NodesWithObjectsMessageImpl;
@@ -426,7 +428,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     threadIDManager = new ThreadIDManagerImpl(threadIDMap);
 
     // Cluster meta data
-    clusterMetaDataManager = new ClusterMetaDataManagerImpl(threadIDManager, channel.getClusterMetaDataMessageFactory());
+    clusterMetaDataManager = new ClusterMetaDataManagerImpl(threadIDManager, channel
+        .getNodesWithObjectsMessageFactory(), channel.getKeysForOrphanedValuesMessageFactory());
 
     // Set up the JMX management stuff
     final TunnelingEventHandler teh = dsoClientBuilder.createTunnelingEventHandler(channel.channel());
@@ -471,9 +474,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     // more likely an AssertionError
     Stage pauseStage = stageManager.createStage(ClientConfigurationContext.CLIENT_COORDINATION_STAGE,
                                                 new ClientCoordinationHandler(cluster, dsoCluster), 1, maxSize);
-
-    // Stage clusterEventsStage = stageManager.createStage(ClientConfigurationContext.CLUSTER_EVENTS_STAGE,
-    // new ClusterEventsHandler(dsoCluster), 1, maxSize);
 
     Stage clusterMetaDataStage = stageManager.createStage(ClientConfigurationContext.CLUSTER_METADATA_STAGE,
                                                           new ClusterMetaDataHandler(), 1, maxSize);
@@ -537,6 +537,9 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     channel.addClassMapping(TCMessageType.NODES_WITH_OBJECTS_MESSAGE, NodesWithObjectsMessageImpl.class);
     channel.addClassMapping(TCMessageType.NODES_WITH_OBJECTS_RESPONSE_MESSAGE,
                             NodesWithObjectsResponseMessageImpl.class);
+    channel.addClassMapping(TCMessageType.KEYS_FOR_ORPHANED_VALUES_MESSAGE, KeysForOrphanedValuesMessageImpl.class);
+    channel.addClassMapping(TCMessageType.KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE,
+                            KeysForOrphanedValuesResponseMessageImpl.class);
 
     DSO_LOGGER.debug("Added class mappings.");
 
@@ -560,8 +563,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     channel.routeMessageType(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, pauseStage.getSink(), hydrateSink);
     channel.routeMessageType(TCMessageType.NODES_WITH_OBJECTS_RESPONSE_MESSAGE, clusterMetaDataStage.getSink(),
                              hydrateSink);
-    // channel.routeMessageType(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, clusterEventsStage.getSink(),
-    // hydrateSink);
+    channel.routeMessageType(TCMessageType.KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE, clusterMetaDataStage.getSink(),
+                             hydrateSink);
 
     final int maxConnectRetries = l1Properties.getInt("max.connect.retries");
     int i = 0;

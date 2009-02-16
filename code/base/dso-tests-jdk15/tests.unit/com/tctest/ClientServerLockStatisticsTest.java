@@ -43,11 +43,12 @@ import com.tc.object.lockmanager.impl.ClientServerLockStatManagerGlue;
 import com.tc.object.lockmanager.impl.TCLockTimerImpl;
 import com.tc.object.msg.AcknowledgeTransactionMessageFactory;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
-import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.msg.CommitTransactionMessageFactory;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessageFactory;
 import com.tc.object.msg.JMXMessage;
+import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
 import com.tc.object.msg.LockRequestMessageFactory;
+import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.msg.ObjectIDBatchRequestMessageFactory;
 import com.tc.object.msg.RequestManagedObjectMessageFactory;
 import com.tc.object.msg.RequestRootMessageFactory;
@@ -358,7 +359,11 @@ public class ClientServerLockStatisticsTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public NodesWithObjectsMessageFactory getClusterMetaDataMessageFactory() {
+    public NodesWithObjectsMessageFactory getNodesWithObjectsMessageFactory() {
+      throw new ImplementMe();
+    }
+
+    public KeysForOrphanedValuesMessageFactory getKeysForOrphanedValuesMessageFactory() {
       throw new ImplementMe();
     }
 

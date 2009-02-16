@@ -4,8 +4,8 @@
  */
 package com.tc.object.msg;
 
-public interface NodesWithObjectsMessageFactory {
+public interface KeysForOrphanedValuesMessageFactory {
 
-  public NodesWithObjectsMessage newNodesWithObjectsMessage();
+  public KeysForOrphanedValuesMessage newKeysForOrphanedValuesMessage();
 
 }

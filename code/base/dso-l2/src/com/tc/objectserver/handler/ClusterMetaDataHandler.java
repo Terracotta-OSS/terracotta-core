@@ -6,9 +6,11 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
+import com.tc.object.msg.KeysForOrphanedValuesMessage;
 import com.tc.object.msg.NodesWithObjectsMessage;
 import com.tc.objectserver.clustermetadata.ServerClusterMetaDataManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.util.Assert;
 
 public class ClusterMetaDataHandler extends AbstractEventHandler {
 
@@ -16,8 +18,13 @@ public class ClusterMetaDataHandler extends AbstractEventHandler {
 
   @Override
   public void handleEvent(final EventContext context) {
-    final NodesWithObjectsMessage metaDataMsg = ((NodesWithObjectsMessage) context);
-    this.clusterMetaDataManager.handleMessage(metaDataMsg);
+    if (context instanceof NodesWithObjectsMessage) {
+      this.clusterMetaDataManager.handleMessage((NodesWithObjectsMessage)context);
+    } else if (context instanceof KeysForOrphanedValuesMessage) {
+      this.clusterMetaDataManager.handleMessage((KeysForOrphanedValuesMessage)context);
+    } else {
+      Assert.fail("Unknown event type "+context.getClass().getName());
+    }
   }
 
   @Override

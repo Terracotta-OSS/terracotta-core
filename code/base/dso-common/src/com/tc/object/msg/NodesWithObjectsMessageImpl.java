@@ -21,20 +21,22 @@ import java.util.Set;
 
 public class NodesWithObjectsMessageImpl extends DSOMessageBase implements NodesWithObjectsMessage {
 
-  private static final byte   THREAD_ID = 1;
+  private static final byte   THREAD_ID         = 1;
   private static final byte   MANAGED_OBJECT_ID = 2;
 
   private final Set<ObjectID> objectIDs         = new HashSet<ObjectID>();
 
-  private ThreadID threadID;
+  private ThreadID            threadID;
 
-  public NodesWithObjectsMessageImpl(final SessionID sessionID, final MessageMonitor monitor, final TCByteBufferOutputStream out,
-                                    final MessageChannel channel, final TCMessageType messageType) {
+  public NodesWithObjectsMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
+                                     final TCByteBufferOutputStream out, final MessageChannel channel,
+                                     final TCMessageType messageType) {
     super(sessionID, monitor, out, channel, messageType);
   }
 
-  public NodesWithObjectsMessageImpl(final SessionID sessionID, final MessageMonitor monitor, final MessageChannel channel,
-                                    final TCMessageHeader header, final TCByteBuffer[] data) {
+  public NodesWithObjectsMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
+                                     final MessageChannel channel, final TCMessageHeader header,
+                                     final TCByteBuffer[] data) {
     super(sessionID, monitor, channel, header, data);
   }
 
