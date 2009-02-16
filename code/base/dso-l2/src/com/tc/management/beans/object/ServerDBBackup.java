@@ -127,6 +127,9 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
     } catch (IOException e) {
       backupFailed(e);
       throw e;
+    } catch (Exception e) {
+      backupFailed(e);
+      throw new RuntimeException(e);
     } finally {
       isBackupRunning.set(false);
     }
