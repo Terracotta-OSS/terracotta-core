@@ -890,6 +890,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     boolean networkedHA = this.haConfig.isNetworkedActivePassive();
     this.groupCommManager = createGroupCommManager(networkedHA, this.configSetupManager, stageManager,
                                                    this.thisServerNodeID);
+    
+    // initialize the garbage collector
+    initGarbageCollector(toInit, objectManagerConfig, this.threadGroup, this.objectManager, this.clientStateManager,
+                         stageManager, maxStageSize);
+
+    
     if (networkedHA) {
 
       logger.info("L2 Networked HA Enabled ");
@@ -902,10 +908,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
       this.l2Coordinator = new L2HADisabledCooridinator(this.groupCommManager);
     }
 
-    // initialize the garbage collector
-    initGarbageCollector(toInit, objectManagerConfig, this.threadGroup, this.objectManager, this.clientStateManager,
-                         stageManager, maxStageSize);
-
+   
     this.context = createServerConfigurationContext(stageManager, this.objectManager, this.objectRequestManager,
                                                     this.objectStore, this.lockManager, channelManager,
                                                     this.clientStateManager, this.transactionManager,
