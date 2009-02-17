@@ -29,12 +29,14 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
           @ant.copy(:tofile => replacement_file.to_s, :file => file.to_s)
           file = replacement_file
           
-          # Inject resource into jar
-          inject_file = FilePath.new(product_directory, interpolate(arg['inject']))
-          ant.create_jar(replacement_file,
+          arg['inject'].each do |inject| 
+            # Inject resource into jar
+            inject_file = FilePath.new(product_directory, interpolate(inject))
+            ant.create_jar(replacement_file,
                          :update => 'true',
                          :basedir => inject_file.directoryname,
                          :includes => inject_file.filename)
+            end
         end
 
         artifact = arg['artifact']
