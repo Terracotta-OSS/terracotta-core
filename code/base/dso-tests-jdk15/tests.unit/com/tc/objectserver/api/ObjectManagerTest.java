@@ -94,6 +94,7 @@ import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
 import com.tc.util.TCCollections;
 import com.tc.util.concurrent.LifeCycleState;
+import com.tc.util.concurrent.NullLifeCycleState;
 import com.tc.util.concurrent.StoppableThread;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -2163,7 +2164,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
   private class ExplodingGarbageCollector implements GarbageCollector {
 
     private final RuntimeException toThrow;
-    private LifeCycleState         gcState;
+    private LifeCycleState         gcState = new NullLifeCycleState();
 
     public ExplodingGarbageCollector(RuntimeException toThrow) {
       this.toThrow = toThrow;
