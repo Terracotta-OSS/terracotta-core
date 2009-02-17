@@ -8,6 +8,7 @@ import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
+import com.tc.util.Assert;
 
 import java.math.BigDecimal;
 
@@ -28,6 +29,7 @@ public class SRAL1TransactionsPerBatch implements StatisticRetrievalAction {
   private final SampledRateCounter transactionsPerBatchCounter;
 
   public SRAL1TransactionsPerBatch(SampledRateCounter transactionsPerBatchCounter) {
+    Assert.assertNotNull(transactionsPerBatchCounter);
     this.transactionsPerBatchCounter = transactionsPerBatchCounter;
   }
 
