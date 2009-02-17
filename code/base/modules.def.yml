@@ -685,6 +685,7 @@ modules:
         - simulator
         - thirdparty
         - thirdparty-api
+        - tim-get-tool
   - eclipsegen:
       options:
         jdk: J2SE-1.5
