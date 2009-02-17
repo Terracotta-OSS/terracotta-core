@@ -129,6 +129,7 @@ import com.tc.objectserver.core.api.DSOGlobalServerStatsImpl;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerConfigurationContextImpl;
 import com.tc.objectserver.core.impl.ServerManagementContext;
+import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.dgc.impl.GCComptrollerImpl;
 import com.tc.objectserver.dgc.impl.GCStatisticsAgentSubSystemEventListener;
 import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
@@ -887,8 +888,16 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
                                                    this.thisServerNodeID);
 
     // initialize the garbage collector
-    initGarbageCollector(toInit, objectManagerConfig, this.threadGroup, this.objectManager, this.clientStateManager,
-                         stageManager, maxStageSize);
+    GarbageCollector gc = createGarbageCollector(toInit, objectManagerConfig, this.objectManager,
+                                                 this.clientStateManager, stageManager, maxStageSize);
+    gc.addListener(new GCStatisticsAgentSubSystemEventListener(getStatisticsAgentSubSystem()));
+    gc.addListener(getGcStatsEventPublisher());
+    this.objectManager.setGarbageCollector(gc);
+    if (objectManagerConfig.startGCThread()) {
+      StoppableThread st = new GarbageCollectorThread(this.threadGroup, "DGC-Thread", gc, objectManagerConfig);
+      st.setDaemon(true);
+      gc.setState(st);
+    }
     this.l2Management.findObjectManagementMonitorMBean().registerGCController(
                                                                               new GCComptrollerImpl(this.objectManager
                                                                                   .getGarbageCollector()));
@@ -1026,23 +1035,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
   }
 
   // Overridden by enterprise server
-  protected void initGarbageCollector(List<PostInit> toInit, ObjectManagerConfig objectManagerConfig, TCThreadGroup tg,
-                                      ObjectManager objectMgr, ClientStateManager stateManager,
-                                      StageManager stageManager, int maxStageSize) {
-    MarkAndSweepGarbageCollector markAndSweepGarbageCollector = new MarkAndSweepGarbageCollector(objectManagerConfig,
-                                                                                                 objectMgr,
-                                                                                                 stateManager);
-    objectMgr.setGarbageCollector(markAndSweepGarbageCollector);
-    markAndSweepGarbageCollector
-        .addListener(new GCStatisticsAgentSubSystemEventListener(getStatisticsAgentSubSystem()));
-    markAndSweepGarbageCollector.addListener(getGcStatsEventPublisher());
-
-    if (objectManagerConfig.startGCThread()) {
-      StoppableThread st = new GarbageCollectorThread(tg, "DGC", markAndSweepGarbageCollector, objectManagerConfig);
-      st.setDaemon(true);
-      markAndSweepGarbageCollector.setState(st);
-    }
-
+  protected GarbageCollector createGarbageCollector(List<PostInit> toInit, ObjectManagerConfig objectManagerConfig,
+                                                    ObjectManager objectMgr, ClientStateManager stateManager,
+                                                    StageManager stageManager, int maxStageSize) {
+    return new MarkAndSweepGarbageCollector(objectManagerConfig, objectMgr, stateManager);
   }
 
   // Overridden by enterprise server
