@@ -205,7 +205,7 @@ public class ManagerImpl implements Manager {
         objectManager = dso.getObjectManager();
         txManager = dso.getTransactionManager();
         methodCallManager = dso.getDmiManager();
-        dsoCluster.init(dso.getClusterMetaDataManager());
+        dsoCluster.init(dso.getClusterMetaDataManager(), objectManager);
 
         shutdownManager = new ClientShutdownManager(objectManager, dso.getRemoteTransactionManager(), dso
             .getStageManager(), dso.getCommunicationsManager(), dso.getChannel(), dso.getClientHandshakeManager(), dso

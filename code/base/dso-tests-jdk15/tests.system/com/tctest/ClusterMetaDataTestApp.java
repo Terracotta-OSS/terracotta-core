@@ -477,16 +477,20 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
 
     if (1 == nodeId) {
       synchronized (map) {
-        map.put("key1", new SomePojo());
-        map.put("key2", new SomePojo());
+        map.put("key1", "value1");
+        map.put(new MyMojo("mojo uno"), 4);
         map.put("key3", new SomePojo());
+        map.put(new MyMojo("mojo dos"), new SomePojo());
       }
     }
 
     barrier.await();
 
     if (2 == nodeId) {
-      final Set<String> keys = cluster.getKeysForOrphanedValues(map);
+      final Set keys = cluster.getKeysForOrphanedValues(map);
+      for (Object key : keys) {
+        System.out.println(">>>>>> ClusterMetaDataTestApp.testGetKeysForOrphanedValues : "+key);
+      }
       Assert.assertNotNull(keys);
     }
 

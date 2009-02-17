@@ -19,8 +19,8 @@ import java.io.IOException;
 
 public class KeysForOrphanedValuesMessageImpl extends DSOMessageBase implements KeysForOrphanedValuesMessage {
 
-  private static final byte THREAD_ID         = 1;
-  private static final byte MANAGED_OBJECT_ID = 2;
+  private static final byte THREAD_ID     = 1;
+  private static final byte MAP_OBJECT_ID = 2;
 
   private ObjectID          mapObjectID;
 
@@ -59,7 +59,7 @@ public class KeysForOrphanedValuesMessageImpl extends DSOMessageBase implements 
     Assert.assertNotNull(threadID);
 
     putNVPair(THREAD_ID, threadID.toLong());
-    putNVPair(MANAGED_OBJECT_ID, mapObjectID.toLong());
+    putNVPair(MAP_OBJECT_ID, mapObjectID.toLong());
   }
 
   @Override
@@ -68,7 +68,7 @@ public class KeysForOrphanedValuesMessageImpl extends DSOMessageBase implements 
       case THREAD_ID:
         threadID = new ThreadID(getLongValue());
         return true;
-      case MANAGED_OBJECT_ID:
+      case MAP_OBJECT_ID:
         mapObjectID = new ObjectID(getLongValue());
         return true;
       default:

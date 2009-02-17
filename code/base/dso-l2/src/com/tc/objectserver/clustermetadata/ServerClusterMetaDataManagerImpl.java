@@ -60,15 +60,29 @@ public class ServerClusterMetaDataManagerImpl implements ServerClusterMetaDataMa
     KeysForOrphanedValuesResponseMessage responseMessage = (KeysForOrphanedValuesResponseMessage) message.getChannel()
         .createMessage(TCMessageType.KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE);
 
-    final Set<ObjectID> response = new HashSet<ObjectID>();
+    final Set<Object> response = new HashSet<Object>();
 
     final ManagedObject managedMap = objectManager.getObjectByIDOrNull(message.getMapObjectID());
     try {
       final ManagedObjectState state = managedMap.getManagedObjectState();
       if (state instanceof PartialMapManagedObjectState) {
+        final Set<NodeID> connectedClients = clientStateManager.getConnectedClientIDs();
+
         Map realMap = ((PartialMapManagedObjectState) state).getMap();
         for (Map.Entry entry : (Set<Map.Entry>)realMap.entrySet()) {
-          System.out.println(">>> KeysForOrphanedValuesMessage entry : "+entry.getKey()+" , "+entry.getValue()+" - "+(entry.getKey() instanceof ManagedObject)+" , "+(entry.getValue() instanceof ManagedObject));
+          if (entry.getValue() instanceof ObjectID) {
+            boolean isOrphan = true;
+            for (NodeID nodeID : connectedClients) {
+              if (clientStateManager.hasReference(nodeID, (ObjectID)entry.getValue())) {
+                isOrphan = false;
+                break;
+              }
+            }
+
+            if (isOrphan) {
+              response.add(entry.getKey());
+            }
+          }
         }
       } else {
         logger.error("Received keys for orphaned values message for object '" + message.getMapObjectID()
