@@ -3,9 +3,7 @@ package com.tc.objectserver.managedobject;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNACursor;
@@ -63,11 +61,6 @@ public class ConcurrentStringMapManagedObjectState extends PartialMapManagedObje
   @Override
   protected void basicWriteTo(ObjectOutput out) throws IOException {
     out.writeInt(dsoLockType);
-    out.writeInt(references.size());
-    for (Map.Entry e : (Set<Map.Entry>) references.entrySet()) {
-      out.writeObject(e.getKey());
-      out.writeObject(e.getValue());
-    }
   }
 
   @Override
@@ -82,17 +75,9 @@ public class ConcurrentStringMapManagedObjectState extends PartialMapManagedObje
     super.dehydrate(objectID, writer);
   }
 
-  static MapManagedObjectState readFrom(ObjectInput in) throws IOException, ClassNotFoundException {
+  static MapManagedObjectState readFrom(ObjectInput in) throws IOException {
     ConcurrentStringMapManagedObjectState csmMos = new ConcurrentStringMapManagedObjectState(in);
     csmMos.dsoLockType = in.readInt();
-    int size = in.readInt();
-    Map map = new HashMap(size);
-    for (int i = 0; i < size; i++) {
-      Object key = in.readObject();
-      Object value = in.readObject();
-      map.put(key, value);
-    }
-    csmMos.setMap(map);
     return csmMos;
   }
 }
