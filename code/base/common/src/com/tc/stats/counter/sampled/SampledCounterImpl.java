@@ -15,13 +15,13 @@ import java.util.TimerTask;
  * A counter that keeps sampled values
  */
 public class SampledCounterImpl extends CounterImpl implements SampledCounter {
-  private final LossyStack        history;
-  private final boolean           resetOnSample;
-  private final TimerTask         samplerTask;
-  private final long              intervalMillis;
-  private TimeStampedCounterValue min;
-  private TimeStampedCounterValue max;
-  private Double                  average = null;
+  protected final LossyStack        history;
+  protected final boolean           resetOnSample;
+  private final TimerTask           samplerTask;
+  private final long                intervalMillis;
+  protected TimeStampedCounterValue min;
+  protected TimeStampedCounterValue max;
+  protected Double                  average = null;
 
   public SampledCounterImpl(SampledCounterConfig config) {
     super(config.getInitialValue());
@@ -64,7 +64,7 @@ public class SampledCounterImpl extends CounterImpl implements SampledCounter {
   synchronized void recordSample() {
     final long sample;
     if (resetOnSample) {
-      sample = getAndSet(0L);
+      sample = getAndReset();
     } else {
       sample = getValue();
     }
@@ -90,6 +90,12 @@ public class SampledCounterImpl extends CounterImpl implements SampledCounter {
 
   public synchronized TimeStampedCounterValue getMax() {
     return this.max;
+  }
+
+  public synchronized long getAndReset() {
+    long prevVal = getValue();
+    setValue(0L);
+    return prevVal;
   }
 
   public synchronized double getAverage() {
