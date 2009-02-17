@@ -288,6 +288,34 @@ public class SampledRateCounterTest extends TestCase {
     long value = counter.getAndReset();
     assertEquals(3L, value);
     assertEquals(0L, counter.getValue());
+
+    counter.setNumeratorValue(0);
+    counter.setDenominatorValue(0);
+    assertEquals(0L, counter.getValue());
+
+    counter.setNumeratorValue(1);
+    counter.setDenominatorValue(0);
+    assertEquals(0L, counter.getValue());
+
+    counter.setNumeratorValue(0);
+    counter.setDenominatorValue(1);
+    assertEquals(0L, counter.getValue());
+
+    counter.setNumeratorValue(10);
+    counter.setDenominatorValue(2);
+    assertEquals(5L, counter.getValue());
+
+    counter.setNumeratorValue(-10);
+    counter.setDenominatorValue(2);
+    assertEquals(-5L, counter.getValue());
+
+    counter.setNumeratorValue(10);
+    counter.setDenominatorValue(-2);
+    assertEquals(-5L, counter.getValue());
+
+    counter.setNumeratorValue(-10);
+    counter.setDenominatorValue(-2);
+    assertEquals(5L, counter.getValue());
   }
 
 }

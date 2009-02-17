@@ -13,7 +13,7 @@ import com.tc.net.GroupID;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.Counter;
-import com.tc.stats.counter.sampled.SampledCounter;
+import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.SequenceID;
 import com.tc.util.Util;
@@ -53,17 +53,16 @@ public class TransactionSequencer {
 
   private final LockAccounting          lockAccounting;
   private final Counter                 pendingBatchesSize;
-  private final SampledCounter          numTransactionsCounter;
-  private final SampledCounter          numBatchesCounter;
-  private final SampledCounter          batchSizeCounter;
+  private final SampledRateCounter      transactionSizeCounter;
+  private final SampledRateCounter      transactionsPerBatchCounter;
 
   private final GroupID                 groupID;
   private final TransactionIDGenerator  transactionIDGenerator;
 
   public TransactionSequencer(GroupID groupID, TransactionIDGenerator transactionIDGenerator,
                               TransactionBatchFactory batchFactory, LockAccounting lockAccounting,
-                              SampledCounter numTransactionCounter, SampledCounter numBatchesCounter,
-                              SampledCounter batchSizeCounter, Counter pendingBatchesSize) {
+                              Counter pendingBatchesSize, SampledRateCounter transactionSizeCounter,
+                              SampledRateCounter transactionsPerBatchCounter) {
 
     this.groupID = groupID;
     this.transactionIDGenerator = transactionIDGenerator;
@@ -75,9 +74,8 @@ public class TransactionSequencer {
     if (LOGGING_ENABLED) {
       log_settings();
     }
-    this.numBatchesCounter = numBatchesCounter;
-    this.numTransactionsCounter = numTransactionCounter;
-    this.batchSizeCounter = batchSizeCounter;
+    this.transactionSizeCounter = transactionSizeCounter;
+    this.transactionsPerBatchCounter = transactionsPerBatchCounter;
     this.pendingBatchesSize = pendingBatchesSize;
   }
 
@@ -121,11 +119,16 @@ public class TransactionSequencer {
    */
   private void addTxnInternal(ClientTransaction txn) {
     this.txnsPerBatch++;
-    this.numTransactionsCounter.increment();
+    final int numTransactionsDelta = 1;
+    int numBatchesDelta = 0;
 
     boolean folded = addTransactionToBatch(txn, this.currentBatch);
 
-    this.batchSizeCounter.setValue(this.currentBatch.byteSize());
+    synchronized (transactionSizeCounter) {
+      // transactionSize = batchSize / number of transactions
+      this.transactionSizeCounter.setNumeratorValue(this.currentBatch.byteSize());
+      this.transactionSizeCounter.increment(0, numTransactionsDelta);
+    }
 
     if (!txn.isConcurrent() && !folded) {
       // It is important to add the lock accounting before exposing the current batch to be sent (ie. put() below)
@@ -142,10 +145,9 @@ public class TransactionSequencer {
       }
       this.currentBatch = createNewBatch();
       this.txnsPerBatch = 0;
-      // do not set the value of numTransactionsCounter to zero here, as it will be sampled every second (the frequency
-      // of the SampledCounter)
-      this.numBatchesCounter.increment();
+      numBatchesDelta = 1;
     }
+    this.transactionsPerBatchCounter.increment(numTransactionsDelta, numBatchesDelta);
     throttle();
   }
 

@@ -32,7 +32,7 @@ import com.tc.object.tx.RemoteTransactionManager;
 import com.tc.object.tx.TransactionIDGenerator;
 import com.tc.object.tx.TransactionBatchWriter.FoldingConfig;
 import com.tc.stats.counter.Counter;
-import com.tc.stats.counter.sampled.SampledCounter;
+import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.util.ToggleableReferenceManager;
 import com.tc.util.sequence.BatchSequence;
 
@@ -76,10 +76,9 @@ public interface DSOClientBuilder {
                                                           final SessionManager sessionManager,
                                                           final DSOClientMessageChannel dsoChannel,
                                                           final Counter outstandingBatchesCounter,
-                                                          final SampledCounter numTransactionCounter,
-                                                          final SampledCounter numBatchesCounter,
-                                                          final SampledCounter batchSizeCounter,
-                                                          final Counter pendingBatchesSize);
+                                                          final Counter pendingBatchesSize,
+                                                          SampledRateCounter transactionSizeCounter,
+                                                          SampledRateCounter transactionPerBatchCounter);
 
   ObjectIDClientHandshakeRequester getObjectIDClientHandshakeRequester(final BatchSequence sequence);
 

@@ -12,5 +12,9 @@ public interface SampledRateCounter extends SampledCounter {
   public void decrement(long numerator, long denominator);
 
   public void setValue(long numerator, long denominator);
+  
+  public void setNumeratorValue(long newValue);
+  
+  public void setDenominatorValue(long newValue);
 
 }

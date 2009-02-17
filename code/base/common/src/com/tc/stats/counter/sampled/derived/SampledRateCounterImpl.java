@@ -31,6 +31,14 @@ public class SampledRateCounterImpl extends SampledCounterImpl implements Sample
     this.denominatorValue -= denominator;
   }
 
+  public synchronized void setDenominatorValue(long newValue) {
+    this.denominatorValue = newValue;
+  }
+
+  public synchronized void setNumeratorValue(long newValue) {
+    this.numeratorValue = newValue;
+  }
+
   public long getValue() {
     return denominatorValue == 0 ? 0 : (numeratorValue / denominatorValue);
   }

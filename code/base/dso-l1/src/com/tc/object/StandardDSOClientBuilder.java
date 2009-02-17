@@ -45,7 +45,7 @@ import com.tc.object.tx.TransactionBatchWriter.FoldingConfig;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.Counter;
-import com.tc.stats.counter.sampled.SampledCounter;
+import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.util.ToggleableReferenceManager;
 import com.tc.util.sequence.BatchSequence;
 
@@ -120,10 +120,9 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                                                  final SessionManager sessionManager,
                                                                  final DSOClientMessageChannel dsoChannel,
                                                                  final Counter outstandingBatchesCounter,
-                                                                 final SampledCounter numTransactionCounter,
-                                                                 final SampledCounter numBatchesCounter,
-                                                                 final SampledCounter batchSizeCounter,
-                                                                 final Counter pendingBatchesSize) {
+                                                                 final Counter pendingBatchesSize,
+                                                                 SampledRateCounter transactionSizeCounter,
+                                                                 SampledRateCounter transactionsPerBatchCounter) {
     GroupID defaultGroups[] = dsoChannel.getGroupIDs();
     assert defaultGroups != null && defaultGroups.length == 1;
     TransactionBatchFactory txBatchFactory = new TransactionBatchWriterFactory(dsoChannel
@@ -137,10 +136,9 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                             sessionManager,
                                             dsoChannel,
                                             outstandingBatchesCounter,
-                                            numTransactionCounter,
-                                            numBatchesCounter,
-                                            batchSizeCounter,
                                             pendingBatchesSize,
+                                            transactionSizeCounter,
+                                            transactionsPerBatchCounter,
                                             TCPropertiesImpl.getProperties()
                                                 .getLong(TCPropertiesConsts.L1_TRANSACTIONMANAGER_TIMEOUTFORACK_ONEXIT) * 1000);
   }

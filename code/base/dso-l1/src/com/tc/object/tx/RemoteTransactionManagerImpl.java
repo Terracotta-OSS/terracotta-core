@@ -19,7 +19,7 @@ import com.tc.object.session.SessionManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.Counter;
-import com.tc.stats.counter.sampled.SampledCounter;
+import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.util.Assert;
 import com.tc.util.SequenceID;
 import com.tc.util.State;
@@ -84,9 +84,8 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, C
   public RemoteTransactionManagerImpl(GroupID groupID, TCLogger logger, final TransactionBatchFactory batchFactory,
                                       TransactionIDGenerator transactionIDGenerator, SessionManager sessionManager,
                                       DSOClientMessageChannel channel, Counter outstandingBatchesCounter,
-                                      SampledCounter numTransactionCounter, SampledCounter numBatchesCounter,
-                                      final SampledCounter batchSizeCounter, final Counter pendingBatchesSize,
-                                      long ackOnExitTimeoutMs) {
+                                      final Counter pendingBatchesSize, SampledRateCounter transactionSizeCounter,
+                                      SampledRateCounter transactionsPerBatchCounter, long ackOnExitTimeoutMs) {
     this.groupID = groupID;
     this.logger = logger;
     this.sessionManager = sessionManager;
@@ -94,8 +93,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, C
     this.status = RUNNING;
     this.ackOnExitTimeout = ackOnExitTimeoutMs;
     this.sequencer = new TransactionSequencer(groupID, transactionIDGenerator, batchFactory, this.lockAccounting,
-                                              numTransactionCounter, numBatchesCounter, batchSizeCounter,
-                                              pendingBatchesSize);
+                                              pendingBatchesSize, transactionSizeCounter, transactionsPerBatchCounter);
     this.timer.schedule(new RemoteTransactionManagerTimerTask(), COMPLETED_ACK_FLUSH_TIMEOUT,
                         COMPLETED_ACK_FLUSH_TIMEOUT);
     this.outstandingBatchesCounter = outstandingBatchesCounter;
