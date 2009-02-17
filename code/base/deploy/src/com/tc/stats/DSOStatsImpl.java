@@ -25,6 +25,7 @@ public class DSOStatsImpl extends StatsSupport implements DSOStats {
   private final SampledCounter       flushRate;
   private final ObjectManagerStats   objMgrStats;
   private final SampledCounter       txnRate;
+  private final SampledCounter       globalLockRecallRate;
 
   public DSOStatsImpl(ServerManagementContext context) {
     this.serverStats = context.getServerStats();
@@ -32,28 +33,33 @@ public class DSOStatsImpl extends StatsSupport implements DSOStats {
     this.faultRate = serverStats.getObjectFaultCounter();
     this.flushRate = serverStats.getObjectFlushCounter();
     this.txnRate = serverStats.getTransactionCounter();
+    this.globalLockRecallRate = serverStats.getGlobalLockRecallCounter();
   }
 
   public long getObjectFaultRate() {
     return faultRate.getValue();
   }
-  
+
   public long getObjectFlushRate() {
     return flushRate.getValue();
   }
-  
+
   public long getTransactionRate() {
     return txnRate.getValue();
   }
-  
+
   public double getCacheHitRatio() {
     return objMgrStats.getCacheHitRatio();
   }
-  
+
   public long getCacheMissRate() {
     return objMgrStats.getCacheMissRate().getCounterValue();
   }
-  
+
+  public long getGlobalLockRecallRate() {
+    return globalLockRecallRate.getValue();
+  }
+
   public Number[] getStatistics(String[] names) {
     int count = names.length;
     Number[] result = new Number[count];

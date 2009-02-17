@@ -16,15 +16,23 @@ import java.util.Properties;
  * Global configuration for the TIM Update Center application.
  */
 public class Config {
-  public static final String KEYSPACE = "org.terracotta.modules.tool.";
 
-  private String             tcVersion;
-  private boolean            includeSnapshots;
-  private URL                proxyUrl;
-  private File               modulesDirectory;
-  private URL                dataFileUrl;
-  private File               dataFile;
-  private long               dataCacheExpirationInSeconds;
+  public static final String  KEYSPACE          = "org.terracotta.modules.tool.";
+
+  public static final String  TC_VERSION        = "tcVersion";
+  public static final String  INCLUDE_SNAPSHOTS = "includeSnapshots";
+  public static final String PROXY_URL         = "proxyUrl";
+  public static final String MODULES_DIR       = "modulesDir";
+  public static final String DATA_FILE_URL     = "dataFileUrl";
+  public static final String DATA_FILE         = "dataFile";
+
+  private String              tcVersion;
+  private boolean             includeSnapshots;
+  private URL                 proxyUrl;
+  private File                modulesDirectory;
+  private URL                 dataFileUrl;
+  private File                dataFile;
+  private long                dataCacheExpirationInSeconds;
 
   // We need to declare this no arg contructor so it can be Guice'd
   Config() {
@@ -33,24 +41,24 @@ public class Config {
 
   public Config(Properties properties) {
     properties = new PropertiesInterpolator().interpolated(properties);
-    this.setTcVersion(getProperty(properties, "tcVersion"));
-    this.setIncludeSnapshots(Boolean.parseBoolean(getProperty(properties, "includeSnapshots")));
+    this.setTcVersion(getProperty(properties, TC_VERSION));
+    this.setIncludeSnapshots(Boolean.parseBoolean(getProperty(properties, INCLUDE_SNAPSHOTS)));
 
-    String path = getProperty(properties, "dataFile");
+    String path = getProperty(properties, DATA_FILE);
     if (StringUtils.isEmpty(path)) path = new File(System.getProperty("java.io.tmpdir"), "tim-get.index").toString();
     this.setDataFile(new File(path));
 
-    this.setDataFileUrl(createUrl(getProperty(properties, "dataFileUrl"), "dataFileUrl is not a valid URL"));
-    this.setModulesDirectory(new File(getProperty(properties, "modulesDir")));
+    this.setDataFileUrl(createUrl(getProperty(properties, DATA_FILE_URL), "dataFileUrl is not a valid URL"));
+    this.setModulesDirectory(new File(getProperty(properties, MODULES_DIR)));
     this.setDataCacheExpirationInSeconds(Long.parseLong(getProperty(properties, "dataCacheExpirationInSeconds")));
 
     try {
-      this.setDataFileUrl(new URL(getProperty(properties, "dataFileUrl")));
+      this.setDataFileUrl(new URL(getProperty(properties, DATA_FILE_URL)));
     } catch (MalformedURLException e) {
       throw new InvalidConfigurationException("dataFileUrl is not a valid URL", e);
     }
 
-    String proxy = getProperty(properties, "proxyUrl");
+    String proxy = getProperty(properties, PROXY_URL);
     if (proxy != null) this.setProxyUrl(createUrl(proxy, "Proxy URL is not a valid URL"));
   }
 

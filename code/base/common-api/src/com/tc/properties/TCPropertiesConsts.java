@@ -209,7 +209,7 @@ public interface TCPropertiesConsts {
    * Description : Properties for AA 
    * </code>
    ********************************************************************************************************************/
-   public static final String   L2_SERVERARRAY_2PC_ENABLED                             = "l2.serverarray.2pc.enabled";
+  public static final String   L2_SERVERARRAY_2PC_ENABLED                             = "l2.serverarray.2pc.enabled";
 
   /*********************************************************************************************************************
    * <code>
@@ -219,6 +219,14 @@ public interface TCPropertiesConsts {
    * </code>
    ********************************************************************************************************************/
   public static final String   L1_JVM_CHECK_COMPATIBILITY                             = "l1.jvm.check.compatibility";
+
+  /*********************************************************************************************************************
+   * <code>
+   * Section : L1 L2 Config match Property
+   * Description : This property will check if the client has to match server config i.e. check cluster topology
+   * </code>
+   ********************************************************************************************************************/
+  public static final String   L1_L2_CONFIG_MATCH_ENABLED                             = "l1.l2.config.validation.enabled";
 
   /*********************************************************************************************************************
    * <code>

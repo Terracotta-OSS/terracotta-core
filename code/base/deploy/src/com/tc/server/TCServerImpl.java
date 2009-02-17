@@ -30,6 +30,7 @@ import com.tc.config.schema.NewHaConfig;
 import com.tc.config.schema.ServerGroupInfo;
 import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.messaging.http.ConfigServlet;
+import com.tc.config.schema.messaging.http.GroupInfoServlet;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.l2.state.StateManager;
@@ -81,6 +82,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   public static final String                   VERSION_SERVLET_PATH                         = "/version";
   public static final String                   CONFIG_SERVLET_PATH                          = "/config";
+  public static final String                   GROUP_INFO_SERVLET_PATH                      = "/groupinfo";
   public static final String                   STATISTICS_GATHERER_SERVLET_PREFIX           = "/statistics-gatherer";
   public static final String                   STATISTICS_GATHERER_SERVLET_PATH             = STATISTICS_GATHERER_SERVLET_PREFIX
                                                                                               + "/*";
@@ -469,6 +471,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
 
     context.setAttribute(ConfigServlet.CONFIG_ATTRIBUTE, this.configurationSetupManager);
+    context.setAttribute(GroupInfoServlet.GROUP_INFO_ATTRIBUTE, this.configurationSetupManager);
 
     final boolean cvtRestEnabled = TCPropertiesImpl.getProperties()
         .getBoolean(TCPropertiesConsts.CVT_REST_INTERFACE_ENABLED, true);
@@ -500,6 +503,8 @@ public class TCServerImpl extends SEDA implements TCServer {
 
     createAndAddServlet(servletHandler, VersionServlet.class.getName(), VERSION_SERVLET_PATH);
     createAndAddServlet(servletHandler, ConfigServlet.class.getName(), CONFIG_SERVLET_PATH);
+    createAndAddServlet(servletHandler, GroupInfoServlet.class.getName(), GROUP_INFO_SERVLET_PATH);
+    
     if (cvtRestEnabled) {
       createAndAddServlet(servletHandler, StatisticsGathererServlet.class.getName(), STATISTICS_GATHERER_SERVLET_PATH);
     }

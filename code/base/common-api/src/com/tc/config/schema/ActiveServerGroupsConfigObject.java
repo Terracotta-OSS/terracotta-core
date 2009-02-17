@@ -14,9 +14,9 @@ import com.tc.config.schema.repository.ChildBeanRepository;
 import com.tc.config.schema.repository.MutableBeanRepository;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.StandardL2TVSConfigurationSetupManager;
-import com.terracottatech.config.ActiveServerGroup;
-import com.terracottatech.config.ActiveServerGroups;
 import com.terracottatech.config.Ha;
+import com.terracottatech.config.MirrorGroup;
+import com.terracottatech.config.MirrorGroups;
 
 public class ActiveServerGroupsConfigObject extends BaseNewConfigObject implements ActiveServerGroupsConfig {
   private final ActiveServerGroupConfig[] groupConfigArray;
@@ -25,13 +25,13 @@ public class ActiveServerGroupsConfigObject extends BaseNewConfigObject implemen
   public ActiveServerGroupsConfigObject(ConfigContext context, StandardL2TVSConfigurationSetupManager setupManager)
       throws XmlException {
     super(context);
-    context.ensureRepositoryProvides(ActiveServerGroups.class);
-    final ActiveServerGroups groups = (ActiveServerGroups) context.bean();
+    context.ensureRepositoryProvides(MirrorGroups.class);
+    final MirrorGroups groups = (MirrorGroups) context.bean();
 
     if (groups == null) { throw new AssertionError(
                                                    "ActiveServerGroups is null!  This should never happen since we make sure default is used."); }
 
-    final ActiveServerGroup[] groupArray = groups.getActiveServerGroupArray();
+    final MirrorGroup[] groupArray = groups.getMirrorGroupArray();
 
     if (groupArray == null || groupArray.length == 0) { throw new AssertionError(
                                                                                  "ActiveServerGroup array is null!  This should never happen since we make sure default is used."); }
@@ -59,9 +59,9 @@ public class ActiveServerGroupsConfigObject extends BaseNewConfigObject implemen
   }
 
   private final ConfigContext createContext(StandardL2TVSConfigurationSetupManager setupManager,
-                                            final ActiveServerGroup group) {
+                                            final MirrorGroup group) {
     ChildBeanRepository beanRepository = new ChildBeanRepository(setupManager.serversBeanRepository(),
-                                                                 ActiveServerGroup.class, new ChildBeanFetcher() {
+                                                                 MirrorGroup.class, new ChildBeanFetcher() {
                                                                    public XmlObject getChild(XmlObject parent) {
                                                                      return group;
                                                                    }
@@ -69,14 +69,14 @@ public class ActiveServerGroupsConfigObject extends BaseNewConfigObject implemen
     return setupManager.createContext(beanRepository, setupManager.getConfigFilePath());
   }
 
-  public static ActiveServerGroups getDefaultActiveServerGroups(DefaultValueProvider defaultValueProvider,
+  public static MirrorGroups getDefaultActiveServerGroups(DefaultValueProvider defaultValueProvider,
                                                                 MutableBeanRepository serversBeanRepository, Ha commonHa)
       throws ConfigurationSetupException {
-    ActiveServerGroups asgs = ActiveServerGroups.Factory.newInstance();
-    ActiveServerGroup[] groupArray = new ActiveServerGroup[1];
+    MirrorGroups asgs = MirrorGroups.Factory.newInstance();
+    MirrorGroup[] groupArray = new MirrorGroup[1];
     groupArray[0] = ActiveServerGroupConfigObject.getDefaultActiveServerGroup(defaultValueProvider,
                                                                               serversBeanRepository, commonHa);
-    asgs.setActiveServerGroupArray(groupArray);
+    asgs.setMirrorGroupArray(groupArray);
     return asgs;
   }
 

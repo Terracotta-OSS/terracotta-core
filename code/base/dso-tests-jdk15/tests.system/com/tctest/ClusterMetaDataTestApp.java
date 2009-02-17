@@ -472,6 +472,35 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
     }
   }
 
+  void testGetKeysForOrphanedValues() throws InterruptedException, BrokenBarrierException {
+    final int nodeId = barrier.await();
+
+    if (1 == nodeId) {
+      synchronized (map) {
+        map.put("key1", "value1");
+        map.put(new MyMojo("mojo uno"), 4);
+        map.put("key3", new SomePojo());
+        map.put(new MyMojo("mojo dos"), new SomePojo());
+      }
+    }
+
+    barrier.await();
+
+    if (2 == nodeId) {
+      final Set keys = cluster.getKeysForOrphanedValues(map);
+      for (Object key : keys) {
+        System.out.println(">>>>>> ClusterMetaDataTestApp.testGetKeysForOrphanedValues : "+key);
+      }
+      Assert.assertNotNull(keys);
+    }
+
+    if (0 == barrier.await()) {
+      synchronized (map) {
+        map.clear();
+      }
+    }
+  }
+
   @Override
   protected CyclicBarrier getBarrierForNodeCoordination() {
     return barrier;

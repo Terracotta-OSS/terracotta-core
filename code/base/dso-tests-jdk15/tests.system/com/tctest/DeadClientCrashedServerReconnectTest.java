@@ -22,6 +22,9 @@ import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.objectserver.control.ServerControl;
+import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.DSOMBean;
 import com.tc.test.proxyconnect.ProxyConnectManager;
 import com.tc.test.proxyconnect.ProxyConnectManagerImpl;
@@ -37,9 +40,12 @@ import javax.management.MBeanServerInvocationHandler;
 import javax.management.remote.JMXConnector;
 
 public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
+  private final TCProperties tcProps;
 
   public DeadClientCrashedServerReconnectTest() {
-    // this.disableAllUntil("3001-01-01");
+    tcProps = TCPropertiesImpl.getProperties();
+    tcProps.setProperty(TCPropertiesConsts.L1_L2_CONFIG_MATCH_ENABLED, "false");
+    System.out.println("L1 and L2 config match check disabled temporarily as we use proxy");
   }
 
   public void testClientsStayDeadAcrossRestarts() throws Exception {
@@ -75,7 +81,8 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
                                                                  new TCThreadGroup(new ThrowableHandler(TCLogging
                                                                      .getLogger(DistributedObjectClient.class))),
                                                                  new MockClassProvider(), components, NullManager
-                                                                     .getInstance(), new Cluster(), new DsoClusterImpl(), new NullRuntimeLogger());
+                                                                     .getInstance(), new Cluster(),
+                                                                 new DsoClusterImpl(), new NullRuntimeLogger());
     client.setCreateDedicatedMBeanServer(true);
     client.start();
 
@@ -124,5 +131,13 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
 
     System.out.println("***** " + clientCount + " clients are connected to the server.");
     jmxConnector.close();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    super.tearDown();
+    tcProps.setProperty(TCPropertiesConsts.L1_L2_CONFIG_MATCH_ENABLED, "true");
+    System.out.println("Re-enabling L1 and L2 config match check");
+
   }
 }

@@ -4,6 +4,7 @@
 package com.tc.statistics.retrieval.actions;
 
 import com.tc.stats.counter.Counter;
+import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -38,7 +39,11 @@ public class CounterIncrementer implements Runnable {
   public void run() {
     while (incrementCounter) {
       int delta = getDelta();
-      counter.increment(delta);
+      if (counter instanceof SampledRateCounter) {
+        int delta2 = getDelta();
+        ((SampledRateCounter) counter).increment(delta + delta2, delta);
+      }
+      else counter.increment(delta);
       Assert.eval(delta >= minDelta && delta < maxDelta);
       ThreadUtil.reallySleep(intervalMillis);
     }

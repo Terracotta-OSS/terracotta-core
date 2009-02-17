@@ -26,8 +26,8 @@ import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.CounterConfig;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
-import com.tc.stats.counter.sampled.SampledCounter;
-import com.tc.stats.counter.sampled.SampledCounterConfig;
+import com.tc.stats.counter.sampled.derived.SampledRateCounter;
+import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.SequenceID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
@@ -54,22 +54,24 @@ public class RemoteTransactionManagerTest extends TestCase {
   private LinkedQueue                  batchSendQueue;
   private TransactionBatchAccounting   batchAccounting;
   private CounterManager               counterManager;
-  private SampledCounter               numTransactionCounter, numBatchesCounter, batchSizeCounter;
+  private SampledRateCounter           transactionsPerBatchCounter, transactionSizeCounter;
   private Counter                      outstandingBatchCounter, pendingBatchesSize;
 
   public void setUp() throws Exception {
     batchFactory = new TestTransactionBatchFactory();
     counterManager = new CounterManagerImpl();
-    numTransactionCounter = (SampledCounter) counterManager.createCounter(new SampledCounterConfig(1, 900, true, 0L));
-    numBatchesCounter = (SampledCounter) counterManager.createCounter(new SampledCounterConfig(1, 900, true, 0L));
-    batchSizeCounter = (SampledCounter) counterManager.createCounter(new SampledCounterConfig(1, 900, true, 0L));
+    transactionSizeCounter = (SampledRateCounter) counterManager.createCounter(new SampledRateCounterConfig(1, 900,
+                                                                                                            true));
+    transactionsPerBatchCounter = (SampledRateCounter) counterManager.createCounter(new SampledRateCounterConfig(1,
+                                                                                                                 900,
+                                                                                                                 true));
     outstandingBatchCounter = counterManager.createCounter(new CounterConfig(0));
     pendingBatchesSize = counterManager.createCounter(new CounterConfig(0));
 
     manager = new RemoteTransactionManagerImpl(GroupID.NULL_ID, logger, batchFactory, new TransactionIDGenerator(),
                                                new NullSessionManager(), new MockChannel(), outstandingBatchCounter,
-                                               numTransactionCounter, numBatchesCounter, batchSizeCounter,
-                                               pendingBatchesSize, 0);
+                                               pendingBatchesSize, transactionSizeCounter, transactionsPerBatchCounter,
+                                               0);
     batchAccounting = manager.getBatchAccounting();
     number = new SynchronizedInt(0);
     error = new SynchronizedRef(null);
@@ -95,8 +97,8 @@ public class RemoteTransactionManagerTest extends TestCase {
     final int ackOnExitTimeout = 10;
     manager = new RemoteTransactionManagerImpl(GroupID.NULL_ID, logger, batchFactory, new TransactionIDGenerator(),
                                                new NullSessionManager(), new MockChannel(), outstandingBatchCounter,
-                                               numTransactionCounter, numBatchesCounter, batchSizeCounter,
-                                               pendingBatchesSize, ackOnExitTimeout * 1000);
+                                               pendingBatchesSize, transactionSizeCounter, transactionsPerBatchCounter,
+                                               ackOnExitTimeout * 1000);
     batchAccounting = manager.getBatchAccounting();
 
     final LockID lockID1 = new LockID("lock1");
@@ -129,8 +131,8 @@ public class RemoteTransactionManagerTest extends TestCase {
     final int ackOnExitTimeout = 0;
     manager = new RemoteTransactionManagerImpl(GroupID.NULL_ID, logger, batchFactory, new TransactionIDGenerator(),
                                                new NullSessionManager(), new MockChannel(), outstandingBatchCounter,
-                                               numTransactionCounter, numBatchesCounter, batchSizeCounter,
-                                               pendingBatchesSize, ackOnExitTimeout * 1000);
+                                               pendingBatchesSize, transactionSizeCounter, transactionsPerBatchCounter,
+                                               ackOnExitTimeout * 1000);
     batchAccounting = manager.getBatchAccounting();
 
     final LockID lockID1 = new LockID("lock1");

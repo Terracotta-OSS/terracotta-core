@@ -450,7 +450,7 @@ public class ClientGroupMessageChannelTest extends TCTestCase {
   private ClientGroupMessageChannel createClientMessageChannel(int maxReconnectTries) {
     ConnectionAddressProvider[] addrs = new ConnectionAddressProvider[L2_COUNT];
     for (int i = 0; i < L2_COUNT; ++i) {
-      addrs[i] = new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo("localhost", ports[i], i) });
+      addrs[i] = new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo("localhost", ports[i], i, null) });
     }
     ClientGroupMessageChannel ch = clientComms.createClientGroupChannel(new NullSessionManager(), maxReconnectTries,
                                                                         WAIT, addrs);

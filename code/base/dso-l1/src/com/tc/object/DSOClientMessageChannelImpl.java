@@ -15,15 +15,17 @@ import com.tc.object.msg.AcknowledgeTransactionMessage;
 import com.tc.object.msg.AcknowledgeTransactionMessageFactory;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
-import com.tc.object.msg.NodesWithObjectsMessage;
-import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.msg.CommitTransactionMessage;
 import com.tc.object.msg.CommitTransactionMessageFactory;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessageFactory;
 import com.tc.object.msg.JMXMessage;
+import com.tc.object.msg.KeysForOrphanedValuesMessage;
+import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockRequestMessageFactory;
+import com.tc.object.msg.NodesWithObjectsMessage;
+import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.msg.ObjectIDBatchRequestMessage;
 import com.tc.object.msg.ObjectIDBatchRequestMessageFactory;
 import com.tc.object.msg.RequestManagedObjectMessage;
@@ -39,11 +41,11 @@ import java.net.UnknownHostException;
 public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, LockRequestMessageFactory,
     RequestRootMessageFactory, RequestManagedObjectMessageFactory, ClientHandshakeMessageFactory,
     ObjectIDBatchRequestMessageFactory, CommitTransactionMessageFactory, AcknowledgeTransactionMessageFactory,
-    CompletedTransactionLowWaterMarkMessageFactory, NodesWithObjectsMessageFactory {
+    CompletedTransactionLowWaterMarkMessageFactory, NodesWithObjectsMessageFactory, KeysForOrphanedValuesMessageFactory {
 
   private final ClientMessageChannel channel;
   private final GroupID              groups[];
-  private final ClientIDProvider           clientIDProvider;
+  private final ClientIDProvider     clientIDProvider;
 
   public DSOClientMessageChannelImpl(final ClientMessageChannel theChannel, final GroupID[] gids) {
     this.channel = theChannel;
@@ -120,6 +122,14 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return this;
   }
 
+  public NodesWithObjectsMessageFactory getNodesWithObjectsMessageFactory() {
+    return this;
+  }
+
+  public KeysForOrphanedValuesMessageFactory getKeysForOrphanedValuesMessageFactory() {
+    return this;
+  }
+
   public ObjectIDBatchRequestMessage newObjectIDBatchRequestMessage() {
     return (ObjectIDBatchRequestMessage) channel.createMessage(TCMessageType.OBJECT_ID_BATCH_REQUEST_MESSAGE);
   }
@@ -149,8 +159,8 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return (NodesWithObjectsMessage) channel.createMessage(TCMessageType.NODES_WITH_OBJECTS_MESSAGE);
   }
 
-  public NodesWithObjectsMessageFactory getClusterMetaDataMessageFactory() {
-    return this;
+  public KeysForOrphanedValuesMessage newKeysForOrphanedValuesMessage() {
+    return (KeysForOrphanedValuesMessage) channel.createMessage(TCMessageType.KEYS_FOR_ORPHANED_VALUES_MESSAGE);
   }
 
   public boolean isConnected() {

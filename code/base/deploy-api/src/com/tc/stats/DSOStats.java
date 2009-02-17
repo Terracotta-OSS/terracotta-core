@@ -4,7 +4,6 @@
  */
 package com.tc.stats;
 
-
 public interface DSOStats {
 
   Number[] getStatistics(String[] names);
@@ -18,5 +17,7 @@ public interface DSOStats {
   long getObjectFaultRate();
 
   long getObjectFlushRate();
+
+  long getGlobalLockRecallRate();
 
 }

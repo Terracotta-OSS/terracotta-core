@@ -8,6 +8,7 @@ import com.tc.cluster.exceptions.ClusteredListenerException;
 import com.tc.cluster.exceptions.UnclusteredObjectException;
 import com.tc.exception.ImplementMe;
 import com.tc.net.NodeID;
+import com.tc.object.ClientObjectManager;
 import com.tc.object.ClusterMetaDataManager;
 import com.tc.object.ObjectID;
 import com.tc.object.bytecode.Manageable;
@@ -34,12 +35,14 @@ public class DsoClusterImpl implements DsoClusterInternal {
   private final List<DsoClusterListener> listeners            = new CopyOnWriteArrayList<DsoClusterListener>();
 
   private ClusterMetaDataManager         clusterMetaDataManager;
+  private ClientObjectManager            clientObjectManager;
 
   private boolean                        isNodeJoined         = false;
   private boolean                        areOperationsEnabled = false;
 
-  public void init(final ClusterMetaDataManager manager) {
-    this.clusterMetaDataManager = manager;
+  public void init(final ClusterMetaDataManager metaDataManager, final ClientObjectManager objectManager) {
+    this.clusterMetaDataManager = metaDataManager;
+    this.clientObjectManager = objectManager;
   }
 
   public void addClusterListener(final DsoClusterListener listener) throws ClusteredListenerException {
@@ -160,7 +163,37 @@ public class DsoClusterImpl implements DsoClusterInternal {
   }
 
   public <K> Set<K> getKeysForOrphanedValues(final Map<K, ?> map) throws UnclusteredObjectException {
-    throw new ImplementMe();
+    Assert.assertNotNull(clusterMetaDataManager);
+
+    if (null == map) {
+      return Collections.emptySet();
+    }
+
+    if (map instanceof Manageable) {
+      Manageable manageable = (Manageable)map;
+      if (manageable.__tc_isManaged()) {
+        if (manageable instanceof TCMap) {
+          final Set<K> result = new HashSet<K>();
+          final Set keys = clusterMetaDataManager.getKeysForOrphanedValues(manageable.__tc_managed().getObjectID());
+          for (Object key : keys) {
+            if (key instanceof ObjectID) {
+              try {
+                result.add((K)clientObjectManager.lookupObject((ObjectID)key));
+              } catch (ClassNotFoundException e) {
+                Assert.fail("Unexpected ClassNotFoundException for key '"+key+"' : "+e.getMessage());
+              }
+            } else {
+              result.add((K)key);
+            }
+          }
+          return result;
+        } else {
+          return Collections.emptySet();
+        }
+      }
+    }
+
+    throw new UnclusteredObjectException(map);
   }
 
   public <K> Set<K> getKeysForLocalValues(final Map<K, ?> map) throws UnclusteredObjectException {

@@ -11,25 +11,25 @@ import com.tc.config.schema.MembersConfig;
 import com.tc.config.schema.NewHaConfig;
 import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.test.TCTestCase;
-import com.terracottatech.config.ActiveServerGroup;
 import com.terracottatech.config.Members;
+import com.terracottatech.config.MirrorGroup;
 
 public class ActiveCoordinatorHelperTest extends TCTestCase {
 
   public void testGetCoordinatorGroup1() {
-    ActiveServerGroup[] groups = new ActiveServerGroup[3];
+    MirrorGroup[] groups = new MirrorGroup[3];
 
-    groups[0] = ActiveServerGroup.Factory.newInstance();
+    groups[0] = MirrorGroup.Factory.newInstance();
     groups[0].setGroupName("15");
     Members members = groups[0].addNewMembers();
     members.addMember("server1");
 
-    groups[1] = ActiveServerGroup.Factory.newInstance();
+    groups[1] = MirrorGroup.Factory.newInstance();
     groups[1].setGroupName("13");
     members = groups[1].addNewMembers();
     members.addMember("server2");
 
-    groups[2] = ActiveServerGroup.Factory.newInstance();
+    groups[2] = MirrorGroup.Factory.newInstance();
     members = groups[2].addNewMembers();
     members.addMember("server3");
 

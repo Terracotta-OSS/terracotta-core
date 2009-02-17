@@ -13,9 +13,9 @@ import com.tc.config.schema.dynamic.ObjectArrayConfigItem;
 import com.tc.config.schema.dynamic.ObjectArrayXPathBasedConfigItem;
 import com.tc.util.ActiveCoordinatorHelper;
 import com.tc.util.Assert;
-import com.terracottatech.config.ActiveServerGroup;
-import com.terracottatech.config.ActiveServerGroups;
 import com.terracottatech.config.Members;
+import com.terracottatech.config.MirrorGroup;
+import com.terracottatech.config.MirrorGroups;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 import com.terracottatech.config.System;
@@ -97,19 +97,19 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
       }
 
       private void organizeByGroup(XmlObject xmlObject) {
-        ActiveServerGroups asgs = ((Servers) xmlObject).getActiveServerGroups();
+        MirrorGroups asgs = ((Servers) xmlObject).getMirrorGroups();
         if (asgs == null) {
-          asgs = ((Servers) xmlObject).addNewActiveServerGroups();
+          asgs = ((Servers) xmlObject).addNewMirrorGroups();
         }
-        ActiveServerGroup[] asgArray = asgs.getActiveServerGroupArray();
+        MirrorGroup[] asgArray = asgs.getMirrorGroupArray();
         if (asgArray == null || asgArray.length == 0) {
-          ActiveServerGroup group = asgs.addNewActiveServerGroup();
+          MirrorGroup group = asgs.addNewMirrorGroup();
           Members members = group.addNewMembers();
           for (Iterator iter = l2DataByName.keySet().iterator(); iter.hasNext();) {
             String host = (String) iter.next();
             members.addMember(host);
           }
-          asgArray = asgs.getActiveServerGroupArray();
+          asgArray = asgs.getMirrorGroupArray();
         }
         Assert.assertNotNull(asgArray);
         Assert.assertTrue(asgArray.length >= 1);

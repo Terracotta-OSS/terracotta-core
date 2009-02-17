@@ -77,6 +77,10 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
           case ManagedObjectState.URL_TYPE:
             testURL();
             break;
+          // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
+          case ManagedObjectState.CONCURRENT_STRING_MAP_TYPE:
+            testConcurrentStringMap();
+            break;
           default:
             throw new AssertionError("Type " + type
                                      + " does not have a test case in ManagedObjectStateSerializationTest.");
@@ -301,6 +305,21 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
     serializationValidation(state, cursor, ManagedObjectState.URL_TYPE);
   }
 
+  // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
+  public void testConcurrentStringMap() throws Exception {
+    String className = "org.terracotta.modules.concurrent.collections.ConcurrentStringMapDso";
+    TestDNACursor cursor = new TestDNACursor();
+    
+    cursor.addPhysicalAction(ConcurrentStringMapManagedObjectState.DSO_LOCK_TYPE_FIELDNAME, new Integer(42), false);
+
+    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2001), new ObjectID(2003) });
+    cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2002), new ObjectID(2004) });
+   
+    ManagedObjectState state = applyValidation(className, cursor);
+    
+    serializationValidation(state, cursor, ManagedObjectState.CONCURRENT_STRING_MAP_TYPE);
+  }
+  
   public interface MyProxyInf1 {
     public int getValue();
 

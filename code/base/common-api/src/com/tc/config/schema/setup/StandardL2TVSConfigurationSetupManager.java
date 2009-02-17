@@ -38,10 +38,10 @@ import com.tc.object.config.schema.PersistenceMode;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
-import com.terracottatech.config.ActiveServerGroups;
 import com.terracottatech.config.Application;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.Ha;
+import com.terracottatech.config.MirrorGroups;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 import com.terracottatech.config.System;
@@ -144,14 +144,14 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
       for (int j = 0; j < groupArray.length; j++) {
         if (groupArray[j].isMember(serverName)) {
           if (found) { throw new ConfigurationSetupException("Server{" + serverName
-                                                             + "} is part of more than 1 active-server-group:  groups{"
+                                                             + "} is part of more than 1 mirror-group:  groups{"
                                                              + gid + "," + groupArray[j].getGroupId() + "}"); }
           gid = groupArray[j].getGroupId();
           found = true;
         }
       }
       if (!found) { throw new ConfigurationSetupException("Server{" + serverName
-                                                          + "} is not part of any active-server-group."); }
+                                                          + "} is not part of any mirror-group."); }
     }
   }
 
@@ -163,7 +163,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
         if (list.contains(grpName)) { throw new ConfigurationSetupException(
                                                                             "Group Name {"
                                                                                 + grpName
-                                                                                + "} is part of more than 1 active-server-group groups"); }
+                                                                                + "} is part of more than 1 mirror-group groups"); }
         list.add(grpName);
       }
     }
@@ -172,18 +172,18 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
   // make sure there is at most one of these
   private ActiveServerGroupsConfig getActiveServerGroupsConfig() throws ConfigurationSetupException, XmlException {
 
-    final ActiveServerGroups defaultActiveServerGroups = ActiveServerGroupsConfigObject
+    final MirrorGroups defaultActiveServerGroups = ActiveServerGroupsConfigObject
         .getDefaultActiveServerGroups(defaultValueProvider, serversBeanRepository(), getCommomOrDefaultHa().getHa());
 
-    ChildBeanRepository beanRepository = new ChildBeanRepository(serversBeanRepository(), ActiveServerGroups.class,
+    ChildBeanRepository beanRepository = new ChildBeanRepository(serversBeanRepository(), MirrorGroups.class,
                                                                  new ChildBeanFetcher() {
                                                                    public XmlObject getChild(XmlObject parent) {
-                                                                     ActiveServerGroups activeServerGroups = ((Servers) parent)
-                                                                         .getActiveServerGroups();
+                                                                     MirrorGroups activeServerGroups = ((Servers) parent)
+                                                                         .getMirrorGroups();
                                                                      if (activeServerGroups == null) {
                                                                        activeServerGroups = defaultActiveServerGroups;
                                                                        ((Servers) parent)
-                                                                           .setActiveServerGroups(activeServerGroups);
+                                                                           .setMirrorGroups(activeServerGroups);
                                                                      }
                                                                      return activeServerGroups;
                                                                    }

@@ -16,8 +16,8 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.ext.LexicalHandler;
 
 import com.tc.exception.ImplementMe;
-import com.terracottatech.config.ActiveServerGroups;
 import com.terracottatech.config.Ha;
+import com.terracottatech.config.MirrorGroups;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 import com.terracottatech.config.UpdateCheck;
@@ -272,15 +272,15 @@ public class MockServers implements Servers {
     throw new ImplementMe();
   }
 
-  public ActiveServerGroups addNewActiveServerGroups() {
+  public MirrorGroups addNewMirrorGroups() {
     throw new ImplementMe();
   }
 
-  public ActiveServerGroups[] getActiveServerGroupsArray() {
+  public MirrorGroups[] getMirrorGroupsArray() {
     throw new ImplementMe();
   }
 
-  public ActiveServerGroups getActiveServerGroupsArray(int arg0) {
+  public MirrorGroups getMirrorGroupsArray(int arg0) {
     throw new ImplementMe();
   }
 
@@ -296,7 +296,7 @@ public class MockServers implements Servers {
     throw new ImplementMe();    
   }
   
-  public ActiveServerGroups insertNewActiveServerGroups(int arg0) {
+  public MirrorGroups insertNewMirrorGroups(int arg0) {
     throw new ImplementMe();
   }
   
@@ -312,11 +312,11 @@ public class MockServers implements Servers {
     throw new ImplementMe();
   }
 
-  public void setActiveServerGroupsArray(ActiveServerGroups[] arg0) {
+  public void setMirrorGroupsArray(MirrorGroups[] arg0) {
     throw new ImplementMe();
   }
 
-  public void setActiveServerGroupsArray(int arg0, ActiveServerGroups arg1) {
+  public void setActiveServerGroupsArray(int arg0, MirrorGroups arg1) {
     throw new ImplementMe();
   }
 
@@ -364,7 +364,7 @@ public class MockServers implements Servers {
     throw new ImplementMe();
   }
 
-  public ActiveServerGroups getActiveServerGroups() {
+  public MirrorGroups getMirrorGroups() {
     throw new ImplementMe();
   }
 
@@ -376,7 +376,7 @@ public class MockServers implements Servers {
     throw new ImplementMe();
   }
 
-  public boolean isSetActiveServerGroups() {
+  public boolean isSetMirrorGroups() {
     throw new ImplementMe();
   }
 
@@ -388,7 +388,7 @@ public class MockServers implements Servers {
     throw new ImplementMe();
   }
 
-  public void setActiveServerGroups(ActiveServerGroups arg0) {
+  public void setMirrorGroups(MirrorGroups arg0) {
     throw new ImplementMe();
     
   }
@@ -403,7 +403,7 @@ public class MockServers implements Servers {
     
   }
 
-  public void unsetActiveServerGroups() {
+  public void unsetMirrorGroups() {
     throw new ImplementMe();
     
   }

@@ -57,6 +57,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
   private static final boolean              ENABLE_DEBUGGER = Boolean.getBoolean(GenericServer.class.getName()
                                                                                  + ".ENABLE_DEBUGGER");
   private static final ThreadLocal          dsoEnabled      = new ThreadLocal() {
+                                                              @Override
                                                               protected Object initialValue() {
                                                                 return Boolean.TRUE;
                                                               }
@@ -110,7 +111,6 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
 
       parameters.appendJvmArgs("-Xbootclasspath/p:" + bootJarFile.getAbsolutePath());
       parameters.appendSysProp("tc.classpath", writeTerracottaClassPathFile());
-      parameters.appendSysProp("tc.session.classpath", config.sessionClasspath());
     }
 
     if (!Vm.isIBM() && !(Os.isMac() && Vm.isJDK14())) {
@@ -131,9 +131,9 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     String[] params = { "tc.classloader.writeToDisk", "tc.objectmanager.dumpHierarchy", "aspectwerkz.deployment.info",
         "aspectwerkz.details", "aspectwerkz.gen.closures", "aspectwerkz.dump.pattern", "aspectwerkz.dump.closures",
         "aspectwerkz.dump.factories", "aspectwerkz.aspectmodules" };
-    for (int i = 0; i < params.length; i++) {
-      if (Boolean.getBoolean(params[i])) {
-        parameters.appendSysProp(params[i], true);
+    for (String param : params) {
+      if (Boolean.getBoolean(param)) {
+        parameters.appendSysProp(param, true);
       }
     }
 
@@ -284,6 +284,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     return this;
   }
 
+  @Override
   protected void doStart() throws Exception {
     try {
       result = getAppServer().start(parameters);
@@ -304,6 +305,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     }
   }
 
+  @Override
   protected void doStop() throws Exception {
     try {
       server.stop();
@@ -380,8 +382,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
       // XXX: total hack to make RequestCountTest pass on 1.4 VMs
       String[] paths = System.getProperty("java.class.path").split(File.pathSeparator);
       StringBuffer cp = new StringBuffer();
-      for (int i = 0; i < paths.length; i++) {
-        String path = paths[i];
+      for (String path : paths) {
         if (path.endsWith("jboss-jmx-4.0.5.jar")) {
           continue;
         }
@@ -405,6 +406,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     return this;
   }
 
+  @Override
   public String toString() {
     return "Generic Server" + (result != null ? "; port:" + result.serverPort() : "");
   }

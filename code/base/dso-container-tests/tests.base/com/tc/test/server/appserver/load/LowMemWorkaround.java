@@ -8,6 +8,7 @@ import org.hyperic.sigar.Mem;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 
+import com.tc.statistics.retrieval.SigarUtil;
 import com.tc.test.AppServerInfo;
 import com.tc.text.Banner;
 
@@ -17,7 +18,7 @@ public class LowMemWorkaround {
 
   public static int computeNumberOfNodes(int defaultNum, int lowMemNum, AppServerInfo appServerInfo) {
     try {
-      Sigar sigar = new Sigar();
+      Sigar sigar = SigarUtil.newSigar();
 
       Mem mem = sigar.getMem();
 

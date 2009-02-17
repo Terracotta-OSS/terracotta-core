@@ -4,7 +4,6 @@
  */
 package com.tc.object.msg;
 
-
 public interface NodesWithObjectsMessageFactory {
 
   public NodesWithObjectsMessage newNodesWithObjectsMessage();

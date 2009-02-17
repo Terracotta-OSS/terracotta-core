@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.msg;
 
@@ -24,20 +25,24 @@ import java.util.Set;
 
 public class NodesWithObjectsResponseMessageImpl extends DSOMessageBase implements NodesWithObjectsResponseMessage {
 
-  private final static byte THREAD_ID = 1;
-  private final static byte MANAGED_OBJECT_ID = 2;
-  private final static byte NODE_ID = 3;
+  private final static byte          THREAD_ID         = 1;
+  private final static byte          MANAGED_OBJECT_ID = 2;
+  private final static byte          NODE_ID           = 3;
 
-  private ThreadID threadID;
+  private ThreadID                   threadID;
   private Map<ObjectID, Set<NodeID>> nodesWithObjects;
 
-  private Set<NodeID> lastHydratedNodeIDSet;
+  private Set<NodeID>                lastHydratedNodeIDSet;
 
-  public NodesWithObjectsResponseMessageImpl(final SessionID sessionID, final MessageMonitor monitor, final TCByteBufferOutputStream out, final MessageChannel channel, final TCMessageType type) {
+  public NodesWithObjectsResponseMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
+                                             final TCByteBufferOutputStream out, final MessageChannel channel,
+                                             final TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
 
-  public NodesWithObjectsResponseMessageImpl(final SessionID sessionID, final MessageMonitor monitor, final MessageChannel channel, final TCMessageHeader header, final TCByteBuffer[] data) {
+  public NodesWithObjectsResponseMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
+                                             final MessageChannel channel, final TCMessageHeader header,
+                                             final TCByteBuffer[] data) {
     super(sessionID, monitor, channel, header, data);
   }
 

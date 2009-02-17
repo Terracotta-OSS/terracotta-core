@@ -11,6 +11,7 @@ import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.config.schema.NewCommonL1Config;
+import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.object.Portability;
 import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.TransparencyClassAdapter;
@@ -198,8 +199,9 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   void addRepository(String location);
 
   /**
-   * Add module dependency with no groupId, indicating the groupId should be assumed to
-   * be the default: "org.terracotta.modules".
+   * Add module dependency with no groupId, indicating the groupId should be assumed to be the default:
+   * "org.terracotta.modules".
+   * 
    * @artifactId Such as tim-foobar
    * @version Such as 1.0.0-SNAPSHOT
    */
@@ -207,6 +209,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   /**
    * Add module dependency
+   * 
    * @groupId Such as org.terracotta.modules
    * @artifactId Such as tim-foobar
    * @version Such as 1.0.0-SNAPSHOT
@@ -238,6 +241,8 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   public ReconnectConfig getL1ReconnectProperties();
 
+  public void validateGroupInfo() throws ConfigurationSetupException;
+
   boolean useResolveLockWhenClearing(Class clazz);
 
   /**
@@ -247,9 +252,8 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   /**
    * Add class adapters based on annotations that are present on the class
-   *
-   * @return {@code true} when custom adapters were added; or
-   * {@code false} otherwise
+   * 
+   * @return {@code true} when custom adapters were added; or {@code false} otherwise
    */
   boolean addAnnotationBasedAdapters(ClassInfo classInfo);
 }

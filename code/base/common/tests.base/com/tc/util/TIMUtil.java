@@ -7,9 +7,7 @@ package com.tc.util;
 import com.tc.bundles.BundleSpec;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.Properties;
-import java.util.Set;
 
 /**
  * Terracotta Integration Module Util This should be the only source where the TIM names and versions are defined. Check
@@ -17,10 +15,25 @@ import java.util.Set;
  */
 public class TIMUtil {
   public static final String      COMMONS_COLLECTIONS_3_1;
-  public static final String      GLASSFISH_2_0;
   public static final String      SUREFIRE_2_3;
   public static final String      MODULES_COMMON;
   public static final String      JETTY_6_1;
+
+  public static final String      TOMCAT_5_0;
+  public static final String      TOMCAT_5_5;
+  public static final String      TOMCAT_6_0;
+
+  public static final String      JBOSS_3_2;
+  public static final String      JBOSS_4_0;
+  public static final String      JBOSS_4_2;
+
+  public static final String      WEBLOGIC_9;
+  public static final String      WEBLOGIC_10;
+
+  public static final String      WASCE_1_0;
+
+  public static final String      GLASSFISH_V1;
+  public static final String      GLASSFISH_V2;
 
   private static final Properties modules = new Properties();
 
@@ -31,10 +44,21 @@ public class TIMUtil {
       throw new RuntimeException(e);
     }
     COMMONS_COLLECTIONS_3_1 = lookup(".*commons-collections-3.1");
-    GLASSFISH_2_0 = lookup(".*glassfish-2.0");
     SUREFIRE_2_3 = lookup(".*surefire-2.3");
     MODULES_COMMON = lookup("modules-common");
-    JETTY_6_1 = lookup("tim-jetty-6.1");
+    JETTY_6_1 = "tim-jetty-6.1";
+
+    TOMCAT_5_0 = "tim-tomcat-5.0";
+    TOMCAT_5_5 = "tim-tomcat-5.5";
+    TOMCAT_6_0 = "tim-tomcat-6.0";
+    JBOSS_3_2 = "tim-jboss-3.2";
+    JBOSS_4_0 = "tim-jboss-4.0";
+    JBOSS_4_2 = "tim-jboss-4.2";
+    WEBLOGIC_9 = "tim-weblogic-9";
+    WEBLOGIC_10 = "tim-weblogic-10";
+    WASCE_1_0 = "tim-wasce-1.0";
+    GLASSFISH_V1 = "tim-glassfish-v1";
+    GLASSFISH_V2 = "tim-glassfish-v2";
   }
 
   private TIMUtil() {
@@ -50,11 +74,11 @@ public class TIMUtil {
   /**
    * @param pattern: java regular expression
    */
-  public static String searchModuleName(String pattern) {
+  private static String searchModuleName(String pattern) {
     if (modules.containsKey(pattern)) { return pattern; }
     String name = null;
-    for (Iterator it = modules.keySet().iterator(); it.hasNext();) {
-      String moduleName = (String) it.next();
+    for (Object element : modules.keySet()) {
+      String moduleName = (String) element;
       if (moduleName.matches(pattern)) {
         name = moduleName;
         break;
@@ -67,20 +91,5 @@ public class TIMUtil {
     String spec = modules.getProperty(moduleName);
     BundleSpec bundleSpec = BundleSpec.newInstance(spec);
     return bundleSpec.getVersion();
-  }
-
-  public static String getGroupId(String moduleName) {
-    String spec = modules.getProperty(moduleName);
-    BundleSpec bundleSpec = BundleSpec.newInstance(spec);
-    return bundleSpec.getGroupId();
-  }
-
-  public static BundleSpec getBundleSpec(String moduleName) {
-    String spec = modules.getProperty(moduleName);
-    return BundleSpec.newInstance(spec);
-  }
-
-  public static Set getModuleNames() {
-    return modules.keySet();
   }
 }

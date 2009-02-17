@@ -17,6 +17,8 @@ public interface ClusterMetaDataManager {
 
   public Map<ObjectID, Set<NodeID>> getNodesWithObjects(Collection<ObjectID> ids);
 
-  public void setNodesWithObjectsResponse(ThreadID threadId, Map<ObjectID, Set<NodeID>> response);
+  public Set<ObjectID> getKeysForOrphanedValues(ObjectID mapObjectID);
+
+  public void setResponse(ThreadID threadId, Object response);
 
 }

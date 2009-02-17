@@ -31,9 +31,7 @@ public class TIMGetTool {
   public static void main(String args[]) {
     prologue();
     try {
-      parse(args);
-      configure();
-      execute();
+      mainWithExceptions(args);
     } catch (CommandException e1) {
       System.out.println(e1.getMessage());
       System.out.println();
@@ -46,6 +44,12 @@ public class TIMGetTool {
     } catch (Exception e) {
       System.exit(2);
     }
+  }
+
+  public static void mainWithExceptions(String args[]) throws Exception {
+    parse(args);
+    configure();
+    execute();
   }
 
   private static Config createConfig() throws Exception {
