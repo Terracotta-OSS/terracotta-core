@@ -14,9 +14,9 @@ import com.tc.config.schema.repository.MutableBeanRepository;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.StandardL2TVSConfigurationSetupManager;
 import com.tc.util.ActiveCoordinatorHelper;
-import com.terracottatech.config.ActiveServerGroup;
 import com.terracottatech.config.Ha;
 import com.terracottatech.config.Members;
+import com.terracottatech.config.MirrorGroup;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 
@@ -38,8 +38,8 @@ public class ActiveServerGroupConfigObject extends BaseNewConfigObject implement
   public ActiveServerGroupConfigObject(ConfigContext context, StandardL2TVSConfigurationSetupManager setupManager,
                                        int groupId) {
     super(context);
-    context.ensureRepositoryProvides(ActiveServerGroup.class);
-    ActiveServerGroup group = (ActiveServerGroup) context.bean();
+    context.ensureRepositoryProvides(MirrorGroup.class);
+    MirrorGroup group = (MirrorGroup) context.bean();
 
     this.groupId = groupId;
 
@@ -71,7 +71,7 @@ public class ActiveServerGroupConfigObject extends BaseNewConfigObject implement
   }
 
   private final ConfigContext createContext(StandardL2TVSConfigurationSetupManager setupManager, boolean isMembers,
-                                            final ActiveServerGroup group) {
+                                            final MirrorGroup group) {
     if (isMembers) {
       ChildBeanRepository beanRepository = new ChildBeanRepository(setupManager.serversBeanRepository(), Members.class,
                                                                    new ChildBeanFetcher() {
@@ -91,10 +91,10 @@ public class ActiveServerGroupConfigObject extends BaseNewConfigObject implement
     }
   }
 
-  public static ActiveServerGroup getDefaultActiveServerGroup(DefaultValueProvider defaultValueProvider,
+  public static MirrorGroup getDefaultActiveServerGroup(DefaultValueProvider defaultValueProvider,
                                                               MutableBeanRepository serversBeanRepository, Ha commonHa)
       throws ConfigurationSetupException {
-    ActiveServerGroup asg = ActiveServerGroup.Factory.newInstance();
+    MirrorGroup asg = MirrorGroup.Factory.newInstance();
     asg.setHa(commonHa);
     Members members = asg.addNewMembers();
     Server[] serverArray = ((Servers) serversBeanRepository.bean()).getServerArray();

@@ -24,13 +24,13 @@ public class GroupConfigBuilder extends BaseConfigBuilder {
   public String toString() {
     String out = "";
 
-    out += openElement("active-server-group");
+    out += openElement("mirror-group");
 
     out += this.members.toString();
 
     out += this.ha.toString();
 
-    out += closeElement("active-server-group");
+    out += closeElement("mirror-group");
 
     return out;
   }

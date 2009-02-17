@@ -37,13 +37,13 @@ public class GroupsConfigBuilder extends BaseConfigBuilder {
   public String toString() {
     String out = "";
 
-    out += openElement("active-server-groups");
+    out += openElement("mirror-groups");
 
     for (Iterator iter = this.groups.iterator(); iter.hasNext();) {
       GroupConfigBuilder group = (GroupConfigBuilder) iter.next();
       out += group.toString();
     }
-    out += closeElement("active-server-groups");
+    out += closeElement("mirror-groups");
 
     return out;
   }

@@ -24,10 +24,10 @@ import com.tc.object.config.schema.NewL1DSOConfig;
 import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.test.GroupData;
 import com.tc.util.Assert;
-import com.terracottatech.config.ActiveServerGroup;
-import com.terracottatech.config.ActiveServerGroups;
 import com.terracottatech.config.Application;
 import com.terracottatech.config.Members;
+import com.terracottatech.config.MirrorGroup;
+import com.terracottatech.config.MirrorGroups;
 import com.terracottatech.config.PersistenceMode;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
@@ -328,10 +328,10 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
     Assert.assertNotNull(beanSetArg);
 
     Servers l2s = beanSetArg.serversBean();
-    ActiveServerGroups groups = l2s.getActiveServerGroups();
+    MirrorGroups groups = l2s.getMirrorGroups();
     Assert.assertNotNull(groups);
     if (groups != null) {
-      ActiveServerGroup[] groupArray = groups.getActiveServerGroupArray();
+      MirrorGroup[] groupArray = groups.getMirrorGroupArray();
 
       if (groupArray.length == 1) {
         Members members = groupArray[0].getMembers();
@@ -340,8 +340,8 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
         Assert.assertNotNull(memberNames);
 
         if (memberNames.length == 1 && memberNames[0].equals(TestConfigBeanSet.DEFAULT_SERVER_NAME)) {
-          groups.removeActiveServerGroup(0);
-          Assert.assertEquals(0, groups.getActiveServerGroupArray().length);
+          groups.removeMirrorGroup(0);
+          Assert.assertEquals(0, groups.getMirrorGroupArray().length);
         }
       }
     }
@@ -433,9 +433,9 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
     Assert.assertTrue(groupId >= 0);
     cleanBeanSetServerGroupsIfNeeded(l1_beanSet);
 
-    ActiveServerGroups groups = l1_beanSet.serversBean().getActiveServerGroups();
+    MirrorGroups groups = l1_beanSet.serversBean().getMirrorGroups();
     if (groups != null) {
-      ActiveServerGroup group = groups.addNewActiveServerGroup();
+      MirrorGroup group = groups.addNewMirrorGroup();
       Members newMembers = group.addNewMembers();
       for (int i = 0; i < members.length; i++) {
         String memberName = members[i];
