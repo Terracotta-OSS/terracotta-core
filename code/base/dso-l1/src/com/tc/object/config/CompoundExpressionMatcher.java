@@ -3,12 +3,11 @@
  */
 package com.tc.object.config;
 
-import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
-
 import com.tc.aspectwerkz.reflect.ClassInfo;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class CompoundExpressionMatcher implements ClassExpressionMatcher {
 
