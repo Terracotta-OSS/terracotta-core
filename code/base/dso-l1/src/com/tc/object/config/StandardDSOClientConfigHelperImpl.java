@@ -9,9 +9,6 @@ import org.terracotta.groupConfigForL1.ServerGroupsDocument;
 import org.terracotta.groupConfigForL1.ServerInfo;
 import org.terracotta.groupConfigForL1.ServerGroupsDocument.ServerGroups;
 
-import EDU.oswego.cs.dl.util.concurrent.ConcurrentHashMap;
-import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
-
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.ClassWriter;
@@ -97,6 +94,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfigHelper, DSOClientConfigHelper {
 
@@ -149,14 +148,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   /**
    * A map of class names to TransparencyClassSpec
-   *
+   * 
    * @GuardedBy {@link #specLock}
    */
   private final Map                              userDefinedBootSpecs               = new HashMap();
 
   /**
    * A map of class names to TransparencyClassSpec for individual classes
-   *
+   * 
    * @GuardedBy {@link #specLock}
    */
   private final Map                              classSpecs                         = new HashMap();
@@ -166,7 +165,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   private final ClassReplacementMapping          classReplacements                  = new ClassReplacementMappingImpl();
 
-  private final Map                              classResources                     = new ConcurrentHashMap();
+  private final Map<String, Resource>            classResources                     = new ConcurrentHashMap<String, Resource>();
 
   private final Map                              aspectModules                      = new ConcurrentHashMap();
 
@@ -821,16 +820,25 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return classReplacements;
   }
 
-  public void addClassResource(final String className, final URL resource) {
-    URL prev = (URL) this.classResources.put(className, resource);
-    if ((prev != null) && (!prev.equals(resource))) {
+  public void addClassResource(final String className, final URL resource, final boolean targetSystemLoaderOnly) {
+    Resource prev = this.classResources.put(className, new Resource(resource, targetSystemLoaderOnly));
+    if ((prev != null) && (!prev.getResource().equals(resource))) {
       // we want to know if modules more than one module is trying to export the same class
       throw new AssertionError("Attempting to replace mapping for " + className + ", from " + prev + " to " + resource);
     }
   }
 
-  public URL getClassResource(final String className) {
-    return (URL) this.classResources.get(className);
+  public URL getClassResource(final String className, final ClassLoader caller) {
+    Resource res = this.classResources.get(className);
+    if (res == null) return null;
+    if (res.isTargetSystemLoaderOnly()) {
+      if (caller == ClassLoader.getSystemClassLoader()) {
+        return res.getResource();
+      } else {
+        return null;
+      }
+    }
+    return res.getResource();
   }
 
   private void markAllSpecsPreInstrumented() {
@@ -1941,4 +1949,22 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return !clazz.getName().equals("java.util.concurrent.ConcurrentHashMap");
   }
 
+  private static class Resource {
+
+    private final URL     resource;
+    private final boolean targetSystemLoaderOnly;
+
+    Resource(URL resource, boolean targetSystemLoaderOnly) {
+      this.resource = resource;
+      this.targetSystemLoaderOnly = targetSystemLoaderOnly;
+    }
+
+    URL getResource() {
+      return resource;
+    }
+
+    boolean isTargetSystemLoaderOnly() {
+      return targetSystemLoaderOnly;
+    }
+  }
 }

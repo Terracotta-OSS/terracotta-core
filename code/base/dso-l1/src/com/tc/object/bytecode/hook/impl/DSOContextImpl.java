@@ -67,8 +67,7 @@ public class DSOContextImpl implements DSOContext {
     return new DSOContextImpl(configHelper, manager.getClassProvider(), manager);
   }
 
-  public static DSOContext createContext(String configSpec)
-      throws ConfigurationSetupException {
+  public static DSOContext createContext(String configSpec) throws ConfigurationSetupException {
     StandardTVSConfigurationSetupManagerFactory factory = new StandardTVSConfigurationSetupManagerFactory(
                                                                                                           (String[]) null,
                                                                                                           false,
@@ -159,7 +158,7 @@ public class DSOContextImpl implements DSOContext {
   /**
    * XXX::NOTE:: ClassLoader checks the returned byte array to see if the class is instrumented or not to maintain the
    * offset.
-   *
+   * 
    * @return new byte array if the class is instrumented and same input byte array if not.
    * @see ClassLoaderPreProcessorImpl
    */
@@ -277,12 +276,12 @@ public class DSOContextImpl implements DSOContext {
   public int getSessionLockType(String appName) {
     return configHelper.getSessionLockType(appName);
   }
-  
+
   public boolean isApplicationSessionLocked(String appName) {
     return configHelper.isApplicationSessionLocked(appName);
   }
 
-  public URL getClassResource(String className) {
-    return configHelper.getClassResource(className);
+  public URL getClassResource(String className, ClassLoader caller) {
+    return configHelper.getClassResource(className, caller);
   }
 }

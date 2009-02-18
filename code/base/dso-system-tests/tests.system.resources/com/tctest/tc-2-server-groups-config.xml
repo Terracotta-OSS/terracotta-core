@@ -26,8 +26,8 @@
 			<jmx-port>1321</jmx-port>
 			<l2-group-port>1331</l2-group-port>
 		</server>
-		<active-server-groups>
-			<active-server-group>
+		<mirror-groups>
+			<mirror-group>
 				<members>
 					<member>server1</member>
 				</members>
@@ -37,8 +37,8 @@
 						<election-time>5</election-time>
 					</networked-active-passive>
 				</ha>
-			</active-server-group>
-			<active-server-group>
+			</mirror-group>
+			<mirror-group>
 				<members>
 					<member>server2</member>
 				</members>
@@ -48,8 +48,8 @@
 						<election-time>5</election-time>
 					</networked-active-passive>
 				</ha>
-			</active-server-group>
-		</active-server-groups>
+			</mirror-group>
+		</mirror-groups>
 	</servers>
 
 	<system>

@@ -4,40 +4,37 @@
  */
 package com.tc.statistics.retrieval.actions;
 
-import junit.framework.TestCase;
-
 import com.tc.objectserver.core.api.DSOGlobalServerStats;
 import com.tc.objectserver.core.api.DSOGlobalServerStatsImpl;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticType;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
-import com.tc.stats.counter.sampled.SampledCounter;
-import com.tc.stats.counter.sampled.SampledCounterConfig;
+import com.tc.stats.counter.sampled.derived.SampledRateCounter;
+import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.math.BigDecimal;
 
+import junit.framework.TestCase;
+
 public class SRAL2ChangesPerBroadcastTest extends TestCase {
 
   private DSOGlobalServerStats dsoGlobalServerStats;
-  private CounterIncrementer   broadcastCounterIncrementer;
   private CounterIncrementer   changesCounterIncrementer;
 
   protected void setUp() throws Exception {
     final CounterManager counterManager = new CounterManagerImpl();
-    final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 10, true, 0L);
-    final SampledCounter broadcastCounter = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
-    final SampledCounter changesCounter = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
+    final SampledRateCounterConfig sampledRateCounterConfig = new SampledRateCounterConfig(1, 10, true);
+    final SampledRateCounter changesPerBroadcast = (SampledRateCounter) counterManager
+        .createCounter(sampledRateCounterConfig);
 
-    dsoGlobalServerStats = new DSOGlobalServerStatsImpl(null, null, null, null, broadcastCounter, changesCounter, null,
-                                                        null, null, null);
+    dsoGlobalServerStats = new DSOGlobalServerStatsImpl(null, null, null, null, null, null, null, null, null,
+                                                        changesPerBroadcast);
 
-    changesCounterIncrementer = new CounterIncrementer(changesCounter, 200);
-    broadcastCounterIncrementer = new CounterIncrementer(broadcastCounter, 200);
-    new Thread(broadcastCounterIncrementer, "Broadcast Counter Incrementer").start();
-    new Thread(changesCounterIncrementer, "Changes Counter Incrementer").start();
+    changesCounterIncrementer = new CounterIncrementer(changesPerBroadcast, 200);
+    new Thread(changesCounterIncrementer, "ChangesPerBroadcast Counter Incrementer").start();
   }
 
   public void testRetrieval() {
@@ -76,8 +73,6 @@ public class SRAL2ChangesPerBroadcastTest extends TestCase {
   }
 
   protected void tearDown() throws Exception {
-    broadcastCounterIncrementer.stopCounterIncrement();
-    broadcastCounterIncrementer = null;
     changesCounterIncrementer.stopCounterIncrement();
     changesCounterIncrementer = null;
     dsoGlobalServerStats = null;

@@ -66,7 +66,7 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     /**/
   }
 
-  public void addClassResource(final String className, final URL resource) {
+  public void addClassResource(final String className, final URL resource, final boolean targetSystemLoader) {
     /**/
   }
 
@@ -213,7 +213,7 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     return null;
   }
 
-  public URL getClassResource(final String className) {
+  public URL getClassResource(final String className, final ClassLoader caller) {
     return null;
   }
 

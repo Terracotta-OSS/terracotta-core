@@ -231,7 +231,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   ClassReplacementMapping getClassReplacementMapping();
 
-  URL getClassResource(String className);
+  URL getClassResource(String className, ClassLoader caller);
 
   boolean hasCustomAdapter(ClassInfo classInfo);
 

@@ -75,7 +75,7 @@ public class ManagedObjectStateFactory {
     classNameToStateMap.put(java.util.concurrent.ConcurrentHashMap.class.getName(),
                             new Byte(ManagedObjectState.CONCURRENT_HASHMAP_TYPE));
     // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
-    classNameToStateMap.put("org.terracotta.modules.concurrent.collections.ConcurrentStringMapDso",
+    classNameToStateMap.put("org.terracotta.modules.concurrent.collections.ConcurrentStringMapDsoInstrumented",
                             new Byte(ManagedObjectState.CONCURRENT_STRING_MAP_TYPE));
   }
 

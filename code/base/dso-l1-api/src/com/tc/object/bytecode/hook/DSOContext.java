@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.bytecode.hook;
 
@@ -10,8 +11,7 @@ import java.net.URL;
 import java.util.Collection;
 
 /**
- * The idea behind DSOContext is to encapsulate a DSO "world" in a client VM.  But this 
- * idea has not been fully realized.
+ * The idea behind DSOContext is to encapsulate a DSO "world" in a client VM. But this idea has not been fully realized.
  */
 public interface DSOContext extends ClassProcessor {
 
@@ -25,12 +25,14 @@ public interface DSOContext extends ClassProcessor {
 
   /**
    * The DSOSpringConfigHelpers in the DSO
+   * 
    * @return Collection of DSOSpringConfigHelper
    */
   public Collection getDSOSpringConfigHelpers();
 
   /**
    * Add include and lock
+   * 
    * @param expression Class expression
    * @param callConstructorOnLoad True to call constructor on load
    * @param lockExpression Lock expression
@@ -39,7 +41,8 @@ public interface DSOContext extends ClassProcessor {
   public void addInclude(String expression, boolean callConstructorOnLoad, String lockExpression, ClassInfo classInfo);
 
   /**
-   * Add transient field 
+   * Add transient field
+   * 
    * @param beanClassName Bean class name
    * @param fieldName
    */
@@ -47,17 +50,20 @@ public interface DSOContext extends ClassProcessor {
 
   /**
    * Get type of locks used by sessions
+   * 
    * @param appName Web app anem
    * @return Lock type
    */
   public int getSessionLockType(String appName);
-  
+
   /**
-   * Get url to class file 
+   * Get url to class file
+   * 
    * @param className Class name
+   * @param caller the requesting class loader
    * @return URL to class itself
    */
-  public URL getClassResource(String className);
+  public URL getClassResource(String className, ClassLoader caller);
 
   /**
    * Returns true is web-application is configured for session-locking

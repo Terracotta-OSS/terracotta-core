@@ -2589,6 +2589,7 @@ public class BootJarTool {
       }
     } catch (Exception e) {
       consoleLogger.fatal("BootJarTool: " + e.getMessage());
+      consoleLogger.fatal(e);
       System.exit(1);
     }
   }
