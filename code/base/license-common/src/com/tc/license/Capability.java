@@ -2,6 +2,7 @@ package com.tc.license;
 
 import com.tc.license.util.LicenseConstants;
 
+import java.util.Arrays;
 import java.util.EnumSet;
 
 public enum Capability {
@@ -23,7 +24,7 @@ public enum Capability {
     if (LicenseConstants.SESSIONS.equals(name)) return SESSIONS;
     if (LicenseConstants.TOC.equals(name)) return TOC;
     if (LicenseConstants.SERVER_STRIPING.equals(name)) return SERVER_STRIPING;
-    throw new IllegalArgumentException("No enum const found with name: " + name);
+    throw new IllegalArgumentException("Capability unknown: " + name + ". Valid: " + Arrays.asList(Capability.values()));
   }
 
   public static EnumSet<Capability> toSet(String capabilities) {
