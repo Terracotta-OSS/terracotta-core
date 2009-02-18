@@ -6,40 +6,34 @@ package com.tc.util;
 
 public class TickerTokenHandleImpl implements TickerTokenHandle {
 
-  boolean                complete = false;
-  private Object         lock     = new Object();
+  private boolean        complete = false;
   private TickerTokenKey key;
 
-  public void waitTillComplete() {
-    if (!complete) {
-      synchronized (lock) {
-        try {
-          lock.wait();
-        } catch (InterruptedException e) {
-          throw new AssertionError(e);
-        }
+  public synchronized void waitTillComplete() {
+    while (!this.complete) {
+      try {
+        wait();
+      } catch (InterruptedException e) {
+        throw new AssertionError(e);
       }
     }
-    complete = false;
   }
 
-  public void complete() {
-    complete = true;
-    synchronized (lock) {
-      lock.notifyAll();
-    }
+  public synchronized void complete() {
+    this.complete = true;
+    notifyAll();
   }
 
   public void cancel() {
     complete();
   }
 
-  public TickerTokenKey getKey() {
-    return key;
+  public synchronized TickerTokenKey getKey() {
+    return this.key;
   }
 
-  public void setKey(TickerTokenKey key) {
-    this.key = key;
+  public synchronized void setKey(TickerTokenKey aKey) {
+    Assert.assertNull(this.key);
+    this.key = aKey;
   }
-
 }
