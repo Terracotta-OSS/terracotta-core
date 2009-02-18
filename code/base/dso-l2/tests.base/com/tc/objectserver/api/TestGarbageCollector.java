@@ -31,6 +31,7 @@ public class TestGarbageCollector implements GarbageCollector {
   private boolean             collected        = false;
   private boolean             isPausing        = false;
   private boolean             isPaused         = false;
+  private boolean             isStarted        = false;
 
   private LinkedQueue         collectCalls;
   private LinkedQueue         notifyReadyToGCCalls;
@@ -197,6 +198,7 @@ public class TestGarbageCollector implements GarbageCollector {
     try {
       this.isPausing = false;
       this.isPaused = false;
+      this.isStarted = false;
       this.notifyGCCompleteCalls.put(new Object());
     } catch (InterruptedException e) {
       throw new AssertionError(e);
@@ -240,8 +242,7 @@ public class TestGarbageCollector implements GarbageCollector {
   }
 
   public void changed(ObjectID changedObject, ObjectID oldReference, ObjectID newReference) {
-    throw new ImplementMe();
-
+    //
   }
 
   public void doGC(GCType type) {
@@ -302,6 +303,10 @@ public class TestGarbageCollector implements GarbageCollector {
   }
 
   public boolean requestGCStart() {
-    throw new ImplementMe();
+    if (!isStarted) {
+      isStarted = true;
+      return true;
+    }
+    return false;
   }
 }
