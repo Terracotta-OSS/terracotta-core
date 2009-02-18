@@ -26,7 +26,7 @@ public abstract class TickerTokenManager {
   private final Map<TickerTokenKey, TickerTokenHandle> tokenHandleMap    = Collections
                                                                              .synchronizedMap(new HashMap<TickerTokenKey, TickerTokenHandle>());
 
-  private final Timer                                  timer             = new Timer("Ticker Token Timer", false);
+  private final Timer                                  timer             = new Timer("Ticker Token Timer", true);
 
   private final int                                    totalTickers;
   private final Counter                                tickerCounter     = new Counter();
