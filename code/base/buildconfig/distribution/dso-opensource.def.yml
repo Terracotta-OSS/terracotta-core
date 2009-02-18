@@ -63,7 +63,7 @@ bundled_components:
           - 1.4
           - 1.5
       module_packages:
-        - terracotta-api-version-PREALPHA:
+        - terracotta-tim-api:
             install_directory: lib
             modules:
               - common-api
@@ -184,9 +184,9 @@ postscripts:
         - artifact: tcstats
           file: lib/tcstats-xmlbeans-generated.jar
           pom: poms/tcstats-pom.xml
-        - artifact: terracotta-api
-          file: lib/terracotta-api-version-PREALPHA.jar
-          pom: poms/terracotta-api-pom.xml
+        - artifact: terracotta-tim-api
+          file: lib/terracotta-tim-api.jar
+          pom: poms/terracotta-tim-api-pom.xml
           inject: 
             - lib/resources/build-data.txt
         - artifact: terracotta-jmx-api

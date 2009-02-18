@@ -1,11 +1,11 @@
 name: Terracotta DSO API
 internal_name: api
-kit_name_pattern: terracotta-api-version-PREALPHA-bundle
-root_directory: terracotta-api-version
+kit_name_pattern: terracotta-tim-api-version-bundle
+root_directory: terracotta-tim-api-version
 bundled_components:
   - base:
       module_packages:
-        - terracotta-api-version-PREALPHA:
+        - terracotta-tim-api-version:
             modules:
               - common-api
               - dso-l1-api
@@ -13,7 +13,7 @@ bundled_components:
               - management-api
               - modules-common
               - thirdparty-api
-        - tc.test-compile-version-PREALPHA:
+        - terracotta-test-api-version:
             source: tests.base
             filter: "**/*TestApp.class"
             modules:
@@ -21,10 +21,10 @@ bundled_components:
               - common
               - dso-container-tests
               - dso-l1
+              - dso-system-tests
               - legacy-test-tree
               - license-common
               - simulator
-              - dso-system-tests
 packaging:
   - mvn
 postscripts:
@@ -36,13 +36,13 @@ postscripts:
         - version-PREALPHA
   - maven-deploy:
       args:
-        - artifact: terracotta-api
-          file: terracotta-api-version-PREALPHA.jar
-          pom: poms/terracotta-api-pom.xml
+        - artifact: terracotta-tim-api
+          file: terracotta-tim-api-version.jar
+          pom: poms/terracotta-tim-api-pom.xml
           inject: 
             - lib/resources/build-data.txt
-        - artifact: tc.test-compile
-          file: tc.test-compile-version-PREALPHA.jar
-          pom: poms/tc.test-compile-pom.xml
+        - artifact: terracotta-test-api
+          file: terracotta-test-api-version.jar
+          pom: poms/terracotta-test-api-pom.xml
           inject: 
             - lib/resources/build-data.txt
