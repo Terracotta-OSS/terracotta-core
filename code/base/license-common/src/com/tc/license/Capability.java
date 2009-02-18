@@ -34,4 +34,17 @@ public enum Capability {
     }
     return set;
   }
+
+  public static String convertToString(EnumSet<Capability> set) {
+    StringBuffer sb = new StringBuffer();
+    int index = 0;
+    for (Capability c : set) {
+      if (index > 0) {
+        sb.append(", ");
+      }
+      sb.append(c.toString());
+      index++;
+    }
+    return sb.toString();
+  }
 }
