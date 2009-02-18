@@ -7,7 +7,7 @@ import com.tc.util.msg.TickerTokenMessage;
 
 import java.util.Queue;
 
-public class TestTickerTokenManager extends TickerTokenManager {
+public class TestTickerTokenManager extends TickerTokenManagerImpl {
   
   private final Queue<TickerTokenMessage> mQueue;
   
