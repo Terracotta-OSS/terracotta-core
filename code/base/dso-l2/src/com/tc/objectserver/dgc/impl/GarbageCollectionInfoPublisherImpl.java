@@ -37,6 +37,10 @@ public class GarbageCollectionInfoPublisherImpl implements GarbageCollectionInfo
     this.garbageCollectionEventListeners.add(listener);
   }
 
+  public void removeListener(GarbageCollectorEventListener listener) {
+    this.garbageCollectionEventListeners.remove(listener);
+  }
+
   public void fireGCStartEvent(GarbageCollectionInfo info) {
     for (Iterator iter = this.garbageCollectionEventListeners.iterator(); iter.hasNext();) {
       GarbageCollectorEventListener listener = (GarbageCollectorEventListener) iter.next();

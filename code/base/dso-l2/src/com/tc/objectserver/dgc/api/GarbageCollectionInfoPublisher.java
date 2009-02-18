@@ -6,6 +6,8 @@ package com.tc.objectserver.dgc.api;
 
 public interface GarbageCollectionInfoPublisher {
 
+  public void removeListener(GarbageCollectorEventListener listener);
+
   public void addListener(GarbageCollectorEventListener listener);
 
   public void fireGCStartEvent(GarbageCollectionInfo info);

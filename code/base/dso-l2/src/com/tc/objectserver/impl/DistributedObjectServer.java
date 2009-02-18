@@ -903,7 +903,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     GarbageCollector gc = createGarbageCollector(toInit, objectManagerConfig, this.objectManager,
                                                  this.clientStateManager, stageManager, maxStageSize);
     gc.addListener(new GCStatisticsAgentSubSystemEventListener(getStatisticsAgentSubSystem()));
-    gc.addListener(getGcStatsEventPublisher());
     this.objectManager.setGarbageCollector(gc);
     if (objectManagerConfig.startGCThread()) {
       StoppableThread st = new GarbageCollectorThread(this.threadGroup, "DGC-Thread", gc, objectManagerConfig);
@@ -1060,7 +1059,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
   protected GarbageCollector createGarbageCollector(List<PostInit> toInit, ObjectManagerConfig objectManagerConfig,
                                                     ObjectManager objectMgr, ClientStateManager stateManager,
                                                     StageManager stageManager, int maxStageSize) {
-    return new MarkAndSweepGarbageCollector(objectManagerConfig, objectMgr, stateManager);
+    MarkAndSweepGarbageCollector gc = new MarkAndSweepGarbageCollector(objectManagerConfig, objectMgr, stateManager);
+    gc.addListener(getGcStatsEventPublisher());
+    return gc;
   }
 
   // Overridden by enterprise server
