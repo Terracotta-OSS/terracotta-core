@@ -1,6 +1,6 @@
 name: Terracotta DSO
 internal_name: dso
-kit_name_pattern: terracotta-platform-version
+kit_name_pattern: terracotta-version
 root_directory: terracotta-version
 bundled_jres:
   - jre15:
