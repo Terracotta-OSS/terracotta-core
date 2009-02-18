@@ -27,7 +27,7 @@ public class SRAGlobalLockRecallCountTest extends TestCase {
     final SampledCounter lockRecallCounter = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
 
     dsoGlobalServerStats = new DSOGlobalServerStatsImpl(null, null, null, null, null, null, null, null,
-                                                        lockRecallCounter, null);
+                                                        lockRecallCounter, null, null);
 
     counterIncrementer = new CounterIncrementer(lockRecallCounter, 200);
     new Thread(counterIncrementer, "Counter Incrementer").start();

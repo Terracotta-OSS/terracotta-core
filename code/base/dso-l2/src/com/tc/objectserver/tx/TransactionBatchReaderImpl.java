@@ -18,6 +18,8 @@ import com.tc.object.lockmanager.api.Notify;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
+import com.tc.objectserver.core.api.DSOGlobalServerStats;
+import com.tc.util.Assert;
 import com.tc.util.SequenceID;
 
 import java.io.IOException;
@@ -40,8 +42,8 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
   // Used in active -active
   private final long[]                       highWaterMark;
 
-  public TransactionBatchReaderImpl(TCByteBuffer[] data, NodeID nodeID,
-                                    ObjectStringSerializer serializer, ServerTransactionFactory txnFactory)
+  public TransactionBatchReaderImpl(TCByteBuffer[] data, NodeID nodeID, ObjectStringSerializer serializer,
+                                    ServerTransactionFactory txnFactory, DSOGlobalServerStats globalSeverStats)
       throws IOException {
     this.txnFactory = txnFactory;
     this.in = new TCByteBufferInputStream(data);
@@ -50,6 +52,10 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
     this.numTxns = in.readInt();
     this.highWaterMark = readLongArray(this.in);
     this.serializer = serializer;
+    Assert.assertNotNull(globalSeverStats);
+    Assert.assertNotNull(globalSeverStats.getTransactionSizeCounter());
+    // transactionSize = Sum of Size of transactions / number of transactions
+    globalSeverStats.getTransactionSizeCounter().increment(in.getTotalLength(), numTxns);
   }
 
   private long[] readLongArray(TCByteBufferInputStream input) throws IOException {

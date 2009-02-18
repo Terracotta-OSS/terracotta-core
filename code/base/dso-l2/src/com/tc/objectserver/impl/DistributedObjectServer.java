@@ -760,12 +760,15 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     SampledRateCounterConfig sampledRateCounterConfig = new SampledRateCounterConfig(1, 300, true);
     SampledRateCounter changesPerBroadcast = (SampledRateCounter) this.sampledCounterManager
         .createCounter(sampledRateCounterConfig);
+    SampledRateCounter transactionSizeCounter = (SampledRateCounter) this.sampledCounterManager
+        .createCounter(sampledRateCounterConfig);
+
 
     DSOGlobalServerStats serverStats = new DSOGlobalServerStatsImpl(globalObjectFlushCounter, globalObjectFaultCounter,
                                                                     globalTxnCounter, objMgrStats, broadcastCounter,
                                                                     l2FaultFromDisk, time2FaultFromDisk,
                                                                     time2Add2ObjMgr, globalLockRecallCounter,
-                                                                    changesPerBroadcast);
+                                                                    changesPerBroadcast, transactionSizeCounter);
 
     final TransactionStore transactionStore = new TransactionStoreImpl(transactionPersistor,
                                                                        globalTransactionIDSequence);
@@ -960,12 +963,20 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
       this.l2Coordinator = new L2HADisabledCooridinator(this.groupCommManager);
     }
 
-    this.context = new ServerConfigurationContextImpl(stageManager, this.objectManager, this.objectRequestManager,
-                                                      this.objectStore, this.lockManager, channelManager,
-                                                      this.clientStateManager, this.transactionManager,
-                                                      this.txnObjectManager, handshakeManager, channelStats,
+    this.context = new ServerConfigurationContextImpl(
+                                                      stageManager,
+                                                      this.objectManager,
+                                                      this.objectRequestManager,
+                                                      this.objectStore,
+                                                      this.lockManager,
+                                                      channelManager,
+                                                      this.clientStateManager,
+                                                      this.transactionManager,
+                                                      this.txnObjectManager,
+                                                      handshakeManager,
+                                                      channelStats,
                                                       this.l2Coordinator,
-                                                      new CommitTransactionMessageToTransactionBatchReader(),
+                                                      new CommitTransactionMessageToTransactionBatchReader(serverStats),
                                                       transactionBatchManager, gtxm, clusterMetaDataManager);
 
     toInit.add(this);
