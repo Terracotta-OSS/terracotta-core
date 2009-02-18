@@ -49,16 +49,18 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     this.id = id;
     this.references = references;
   }
-  
-  
 
   public TestManagedObject(ObjectID id) {
     this(id, new ArrayList<ObjectID>());
   }
 
   public void setReference(int index, ObjectID id) {
-    
-    this.references.add(index, id);
+
+    if (index < this.references.size()) {
+      this.references.set(index, id);
+    } else {
+      this.references.add(index, id);
+    }
   }
 
   public ObjectID getID() {
@@ -103,8 +105,8 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
       this.references.add(oid);
     }
   }
-  
-  public synchronized void addReferences(Set<ObjectID> ids, ObjectManagerImpl[] objectManagers ) {
+
+  public synchronized void addReferences(Set<ObjectID> ids, ObjectManagerImpl[] objectManagers) {
     for (Iterator<ObjectID> iter = ids.iterator(); iter.hasNext();) {
       ObjectID oid = iter.next();
       this.references.add(oid);
@@ -201,6 +203,7 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     return new NullManagedObjectState();
   }
 
+  @Override
   public String toString() {
     return "TestManagedObject[" + id + "]";
   }
@@ -229,6 +232,7 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
   private class NullManagedObjectState extends AbstractManagedObjectState {
     private final byte type = 0;
 
+    @Override
     protected boolean basicEquals(AbstractManagedObjectState o) {
       throw new UnsupportedOperationException();
     }
