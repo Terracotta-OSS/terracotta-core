@@ -17,7 +17,7 @@ import java.util.List;
  */
 public class MockSink implements Sink {
 
-  public BoundedLinkedQueue queue = new BoundedLinkedQueue();
+  public BoundedLinkedQueue queue = new BoundedLinkedQueue(Integer.MAX_VALUE);
 
   public EventContext take() {
     try {
@@ -28,12 +28,16 @@ public class MockSink implements Sink {
   }
 
   public boolean addLossy(EventContext context) {
-    try {
-      this.queue.put(context);
-    } catch (Exception e) {
-      throw new AssertionError(e);
+    if (queue.size() < 1) {
+      try {
+        this.queue.put(context);
+      } catch (Exception e) {
+        throw new AssertionError(e);
+      }
+      return true;
+    } else {
+      return false;
     }
-    return true;
   }
 
   public void addMany(Collection contexts) {
