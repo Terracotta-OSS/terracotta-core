@@ -239,6 +239,8 @@ import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
+import com.tc.stats.counter.sampled.derived.SampledRateCounter;
+import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
 import com.tc.util.Assert;
 import com.tc.util.CommonShutDownHook;
 import com.tc.util.PortChooser;
@@ -748,8 +750,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
 
     SampledCounter broadcastCounter = (SampledCounter) this.sampledCounterManager
         .createCounter(new SampledCounterConfig(1, 300, true, 0L));
-    SampledCounter changeCounter = (SampledCounter) this.sampledCounterManager
-        .createCounter(new SampledCounterConfig(1, 300, true, 0L));
 
     SampledCounter globalObjectFaultCounter = (SampledCounter) this.sampledCounterManager
         .createCounter(new SampledCounterConfig(1, 300, true, 0L));
@@ -757,11 +757,15 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
         .createCounter(new SampledCounterConfig(1, 300, true, 0L));
     SampledCounter globalLockRecallCounter = (SampledCounter) this.sampledCounterManager
         .createCounter(new SampledCounterConfig(1, 300, true, 0L));
+    SampledRateCounterConfig sampledRateCounterConfig = new SampledRateCounterConfig(1, 300, true);
+    SampledRateCounter changesPerBroadcast = (SampledRateCounter) this.sampledCounterManager
+        .createCounter(sampledRateCounterConfig);
 
     DSOGlobalServerStats serverStats = new DSOGlobalServerStatsImpl(globalObjectFlushCounter, globalObjectFaultCounter,
                                                                     globalTxnCounter, objMgrStats, broadcastCounter,
-                                                                    changeCounter, l2FaultFromDisk, time2FaultFromDisk,
-                                                                    time2Add2ObjMgr, globalLockRecallCounter);
+                                                                    l2FaultFromDisk, time2FaultFromDisk,
+                                                                    time2Add2ObjMgr, globalLockRecallCounter,
+                                                                    changesPerBroadcast);
 
     final TransactionStore transactionStore = new TransactionStoreImpl(transactionPersistor,
                                                                        globalTransactionIDSequence);
@@ -815,8 +819,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     Stage rootRequest = stageManager.createStage(ServerConfigurationContext.MANAGED_ROOT_REQUEST_STAGE,
                                                  new RequestRootHandler(), 1, maxStageSize);
 
-    BroadcastChangeHandler broadcastChangeHandler = new BroadcastChangeHandler(broadcastCounter, changeCounter,
-                                                                               this.objectStatsRecorder);
+    BroadcastChangeHandler broadcastChangeHandler = new BroadcastChangeHandler(broadcastCounter,
+                                                                               this.objectStatsRecorder,
+                                                                               changesPerBroadcast);
     stageManager.createStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE, broadcastChangeHandler, 1,
                              maxStageSize);
     stageManager.createStage(ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE,

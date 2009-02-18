@@ -25,6 +25,7 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.stats.counter.sampled.SampledCounter;
+import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,13 +47,13 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
   private final ObjectStatsRecorder objectStatsRecorder;
 
   private final SampledCounter      broadcastCounter;
-  private final SampledCounter      changeCounter;
+  private final SampledRateCounter  changesPerBroadcast;
 
-  public BroadcastChangeHandler(SampledCounter broadcastCounter, SampledCounter changeCounter,
-                                ObjectStatsRecorder objectStatsRecorder) {
+  public BroadcastChangeHandler(SampledCounter broadcastCounter, ObjectStatsRecorder objectStatsRecorder,
+                                SampledRateCounter changesPerBroadcast) {
     this.broadcastCounter = broadcastCounter;
-    this.changeCounter = changeCounter;
     this.objectStatsRecorder = objectStatsRecorder;
+    this.changesPerBroadcast = changesPerBroadcast;
   }
 
   @Override
@@ -103,7 +104,8 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
         responseMessage.send();
 
         this.broadcastCounter.increment();
-        this.changeCounter.increment(prunedChanges.size());
+        // changesPerBroadcast = number of changes/number of broadcasts
+        changesPerBroadcast.increment(prunedChanges.size(), 1);
       }
     }
     this.transactionManager.broadcasted(committerID, txnID);

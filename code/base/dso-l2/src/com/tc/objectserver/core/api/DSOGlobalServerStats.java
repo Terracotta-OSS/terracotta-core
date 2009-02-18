@@ -6,6 +6,7 @@ package com.tc.objectserver.core.api;
 
 import com.tc.objectserver.api.ObjectManagerStats;
 import com.tc.stats.counter.sampled.SampledCounter;
+import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 
 public interface DSOGlobalServerStats {
 
@@ -19,8 +20,6 @@ public interface DSOGlobalServerStats {
 
   SampledCounter getBroadcastCounter();
 
-  SampledCounter getChangesCounter();
-
   SampledCounter getL2FaultFromDiskCounter();
 
   SampledCounter getTime2FaultFromDisk();
@@ -28,4 +27,6 @@ public interface DSOGlobalServerStats {
   SampledCounter getTime2Add2ObjectMgr();
   
   SampledCounter getGlobalLockRecallCounter();
+  
+  SampledRateCounter getChangesPerBroadcastCounter();
 }
