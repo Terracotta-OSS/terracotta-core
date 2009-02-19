@@ -7,6 +7,7 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -14,6 +15,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -63,13 +65,30 @@ public class Main {
     String moduleName = null;
     if (args.length == 1) {
       moduleName = args[0];
+    } else {
+      System.out.print("Do you want to run for all modules ? [N/y] : ");
+      String input = readLine();
+      if (!input.toLowerCase().equals("y") && !input.toLowerCase().equals("yes")) {
+        System.out.println("Didn't think so.");
+        System.exit(-1);
+      }
     }
     new Main().generate(moduleName);
     System.out.println("Done!");
   }
 
+  private static String readLine() {
+    InputStreamReader isr = new InputStreamReader(System.in);
+    BufferedReader br = new BufferedReader(isr);
+    try {
+      return br.readLine();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   private void generate(String moduleName) throws Exception {
-    System.err.println("reading " + ossModulesFile);
+    System.err.println("reading " + this.ossModulesFile);
 
     File ossBase = new File(this.ossModulesFile).getParentFile();
 
@@ -78,8 +97,8 @@ public class Main {
     File entBase = null;
     Module[] entModules = null;
     if (this.isEnterprise) {
-      System.err.println("reading " + entModulesFile);
-      entBase = new File(entModulesFile).getParentFile();
+      System.err.println("reading " + this.entModulesFile);
+      entBase = new File(this.entModulesFile).getParentFile();
       entModules = getModules(moduleName, loadModules(this.entModulesFile));
     }
 
@@ -288,7 +307,7 @@ public class Main {
     File file = new File(modDir, ".project");
 
     // don't overwrite existing .project files (they might be customized)
-    if (file.exists()) return;
+    if (file.exists()) { return; }
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     PrintStream ps = new PrintStream(baos);
