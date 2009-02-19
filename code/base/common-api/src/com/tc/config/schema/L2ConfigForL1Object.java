@@ -152,9 +152,10 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
     return this.l2Data;
   }
 
-  public ObjectArrayConfigItem[] getL2DataByGroup() {
+  public synchronized ObjectArrayConfigItem[] getL2DataByGroup() {
     if (l2DataByGroup == null) createL2DataByGroup();
 
+    Assert.assertNoNullElements(l2DataByGroup);
     return l2DataByGroup;
   }
 
