@@ -6,6 +6,7 @@ package com.tc.objectserver.dgc.api;
 
 import com.tc.util.ObjectIDSet;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class GarbageCollectionInfo implements Cloneable {
@@ -42,7 +43,7 @@ public class GarbageCollectionInfo implements Cloneable {
 
   private ObjectIDSet         toDelete              = null;
 
-  private List                rescueTimes           = null;
+  private List                rescueTimes           = new ArrayList();
 
   public GarbageCollectionInfo(int iteration, boolean fullGC) {
     this.iteration = iteration;

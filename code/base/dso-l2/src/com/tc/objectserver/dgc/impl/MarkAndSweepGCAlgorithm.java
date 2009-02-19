@@ -40,7 +40,7 @@ final class MarkAndSweepGCAlgorithm {
   void doGC() {
     while (!collector.requestGCStart()) {
       MarkAndSweepGarbageCollector.logger.info(gcHook.getDescription()
-                  + " DGC: It is either disabled or is already running. Waiting for 1 min before checking again ...");
+                  + "AA-DGC: It is either disabled or is already running. Waiting for 1 min before checking again ...");
       ThreadUtil.reallySleep(60000);
     }
 
