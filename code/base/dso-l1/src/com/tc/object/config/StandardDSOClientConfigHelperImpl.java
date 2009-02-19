@@ -88,6 +88,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -135,6 +136,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   private final Map                              adaptableCache                     = Collections
                                                                                         .synchronizedMap(new HashMap());
 
+  private final Set<TimCapability>               timCapabilities                    = Collections
+                                                                                        .synchronizedSet(EnumSet
+                                                                                            .noneOf(TimCapability.class));
+
   /**
    * A list of InstrumentationDescriptor representing include/exclude patterns
    */
@@ -148,14 +153,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   /**
    * A map of class names to TransparencyClassSpec
-   * 
+   *
    * @GuardedBy {@link #specLock}
    */
   private final Map                              userDefinedBootSpecs               = new HashMap();
 
   /**
    * A map of class names to TransparencyClassSpec for individual classes
-   * 
+   *
    * @GuardedBy {@link #specLock}
    */
   private final Map                              classSpecs                         = new HashMap();
@@ -180,8 +185,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   private ModuleSpec[]                           moduleSpecs                        = null;
 
   private final ModulesContext                   modulesContext                     = new ModulesContext();
-
-  private volatile boolean                       allowCGLIBInstrumentation          = false;
 
   private ReconnectConfig                        l1ReconnectConfig                  = null;
 
@@ -257,10 +260,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   public String rawConfigText() {
     return configSetupManager.rawConfigText();
-  }
-
-  public void allowCGLIBInstrumentation() {
-    this.allowCGLIBInstrumentation = true;
   }
 
   public boolean reflectionEnabled() {
@@ -1192,9 +1191,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
 
     if (fullClassName.indexOf(CGLIB_PATTERN) >= 0) {
-      if (!allowCGLIBInstrumentation) {
+      if (!isCapabilityEnabled(TimCapability.CGLIB)) {
         logger.error("Refusing to instrument CGLIB generated proxy type " + fullClassName
-                     + " (CGLIB terracotta plugin not installed)");
+                     + " (CGLIB integration module not enabled)");
         return cacheIsAdaptable(fullClassName, false);
       }
     }
@@ -1215,6 +1214,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     InstrumentationDescriptor desc = getInstrumentationDescriptorFor(classInfo);
     return cacheIsAdaptable(fullClassName, desc.isInclude());
+  }
+
+  private boolean isCapabilityEnabled(TimCapability cap) {
+    return timCapabilities.contains(cap);
+  }
+
+  public void enableCapability(TimCapability cap) {
+    timCapabilities.add(cap);
   }
 
   private boolean isTCPatternMatchingHack(final ClassInfo classInfo) {

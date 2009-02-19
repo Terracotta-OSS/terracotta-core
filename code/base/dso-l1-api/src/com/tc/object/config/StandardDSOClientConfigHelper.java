@@ -10,9 +10,9 @@ import java.net.URL;
 
 public interface StandardDSOClientConfigHelper {
 
-  // HACK: available only in StandardDSOClientConfigHelper
+  void enableCapability(TimCapability cap);
 
-  void allowCGLIBInstrumentation();
+  // HACK: available only in StandardDSOClientConfigHelper
 
   void addAspectModule(String classNamePrefix, String moduleName);
 
