@@ -82,7 +82,7 @@ public class ClusterMetaDataOrphanedValuesTest extends TransparentTestBase {
     out.getServers().getL2s()[0].setJMXPort(adminPort);
     out.getServers().getL2s()[0].setPersistenceMode(L2ConfigBuilder.PERSISTENCE_MODE_PERMANENT_STORE);
 
-    out.getClient().setFaultCount(0);
+    out.getClient().setFaultCount(1);
 
     InstrumentedClassConfigBuilder instrumented1 = new InstrumentedClassConfigBuilderImpl();
     instrumented1.setClassExpression(testClassName + "*");
