@@ -472,35 +472,6 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
     }
   }
 
-  void testGetKeysForOrphanedValues() throws InterruptedException, BrokenBarrierException {
-    final int nodeId = barrier.await();
-
-    if (1 == nodeId) {
-      synchronized (map) {
-        map.put("key1", "value1");
-        map.put(new MyMojo("mojo uno"), 4);
-        map.put("key3", new SomePojo());
-        map.put(new MyMojo("mojo dos"), new SomePojo());
-      }
-    }
-
-    barrier.await();
-
-    if (2 == nodeId) {
-      final Set keys = cluster.getKeysForOrphanedValues(map);
-      for (Object key : keys) {
-        System.out.println(">>>>>> ClusterMetaDataTestApp.testGetKeysForOrphanedValues : "+key);
-      }
-      Assert.assertNotNull(keys);
-    }
-
-    if (0 == barrier.await()) {
-      synchronized (map) {
-        map.clear();
-      }
-    }
-  }
-
   @Override
   protected CyclicBarrier getBarrierForNodeCoordination() {
     return barrier;
@@ -519,12 +490,25 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
 
     config.addWriteAutolock("* " + SomePojo.class.getName() + "*.*(..)");
 
+    config.addWriteAutolock("* " + AbstractMojo.class.getName() + "*.*(..)");
+
     config.addWriteAutolock("* " + YourMojo.class.getName() + "*.*(..)");
+
+    config.addWriteAutolock("* " + MyMojo.class.getName() + "*.*(..)");
   }
 
   public static class SomePojo {
     private YourMojo yourMojo;
     private MyMojo   myMojo;
+
+    public SomePojo() {
+      // default constructor
+    }
+
+    public SomePojo(final YourMojo yourMojo, final MyMojo myMojo) {
+      this.yourMojo = yourMojo;
+      this.myMojo = myMojo;
+    }
 
     public synchronized YourMojo getYourMojo() {
       return yourMojo;
@@ -543,34 +527,48 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
     }
   }
 
-  public static class YourMojo {
-    private String mojo;
+  public static abstract class AbstractMojo {
 
-    public YourMojo(final String mojo) {
-      this.mojo = mojo;
-    }
+    protected String mojo;
 
     public synchronized String getMojo() {
       return mojo;
     }
 
     public synchronized void setMojo(final String mojo) {
+      this.mojo = mojo;
+    }
+
+    @Override
+    public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((mojo == null) ? 0 : mojo.hashCode());
+      return result;
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+      if (this == obj) return true;
+      if (obj == null) return false;
+      if (getClass() != obj.getClass()) return false;
+      MyMojo other = (MyMojo) obj;
+      if (mojo == null) {
+        if (other.mojo != null) return false;
+      } else if (!mojo.equals(other.mojo)) return false;
+      return true;
+    }
+
+  }
+
+  public static class YourMojo extends AbstractMojo {
+    public YourMojo(final String mojo) {
       this.mojo = mojo;
     }
   }
 
-  public static class MyMojo {
-    private String mojo;
-
+  public static class MyMojo extends AbstractMojo {
     public MyMojo(final String mojo) {
-      this.mojo = mojo;
-    }
-
-    public synchronized String getMojo() {
-      return mojo;
-    }
-
-    public synchronized void setMojo(final String mojo) {
       this.mojo = mojo;
     }
   }

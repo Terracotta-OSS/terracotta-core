@@ -16,154 +16,154 @@ import java.util.Map;
  */
 public class L1ConfigBuilder extends BaseConfigBuilder {
 
-  private List modules = new ArrayList();
-  private List repos = new ArrayList();
+  private final List modules = new ArrayList();
+  private final List repos = new ArrayList();
 
   public L1ConfigBuilder() {
     super(1, ALL_PROPERTIES);
   }
 
-  public void setILClass(boolean use) {
+  public void setILClass(final boolean use) {
     setProperty("class", use);
   }
 
-  public void setILClass(String use) {
+  public void setILClass(final String use) {
     setProperty("class", use);
   }
 
-  public void setILHierarchy(boolean use) {
+  public void setILHierarchy(final boolean use) {
     setProperty("hierarchy", use);
   }
 
-  public void setILHierarchy(String use) {
+  public void setILHierarchy(final String use) {
     setProperty("hierarchy", use);
   }
 
-  public void setILLocks(boolean use) {
+  public void setILLocks(final boolean use) {
     setProperty("locks", use);
   }
 
-  public void setILLocks(String use) {
+  public void setILLocks(final String use) {
     setProperty("locks", use);
   }
 
-  public void setILTransientRoot(boolean use) {
+  public void setILTransientRoot(final boolean use) {
     setProperty("transient-root", use);
   }
 
-  public void setILTransientRoot(String use) {
+  public void setILTransientRoot(final String use) {
     setProperty("transient-root", use);
   }
 
-  public void setILRoots(boolean use) {
+  public void setILRoots(final boolean use) {
     setProperty("roots", use);
   }
 
-  public void setILRoots(String use) {
+  public void setILRoots(final String use) {
     setProperty("roots", use);
   }
 
-  public void setILDistributedMethods(boolean use) {
+  public void setILDistributedMethods(final boolean use) {
     setProperty("distributed-methods", use);
   }
 
-  public void setILDistributedMethods(String use) {
+  public void setILDistributedMethods(final String use) {
     setProperty("distributed-methods", use);
   }
 
-  public void setRLLockDebug(boolean use) {
+  public void setRLLockDebug(final boolean use) {
     setProperty("lock-debug", use);
   }
 
-  public void setRLLockDebug(String use) {
+  public void setRLLockDebug(final String use) {
     setProperty("lock-debug", use);
   }
 
-  public void setRLPartialInstrumentation(boolean use) {
+  public void setRLPartialInstrumentation(final boolean use) {
     setProperty("partial-instrumentation", use);
   }
 
-  public void setRLPartialInstrumentation(String use) {
+  public void setRLPartialInstrumentation(final String use) {
     setProperty("partial-instrumentation", use);
   }
 
-  public void setRLNonPortableWarning(boolean use) {
+  public void setRLNonPortableWarning(final boolean use) {
     setProperty("non-portable-warning", use);
   }
 
-  public void setRLNonPortableWarning(String use) {
+  public void setRLNonPortableWarning(final String use) {
     setProperty("non-portable-warning", use);
   }
 
-  public void setRLWaitNotifyDebug(boolean use) {
+  public void setRLWaitNotifyDebug(final boolean use) {
     setProperty("wait-notify-debug", use);
   }
 
-  public void setRLWaitNotifyDebug(String use) {
+  public void setRLWaitNotifyDebug(final String use) {
     setProperty("wait-notify-debug", use);
   }
 
-  public void setRLDistributedMethodDebug(boolean use) {
+  public void setRLDistributedMethodDebug(final boolean use) {
     setProperty("distributed-method-debug", use);
   }
 
-  public void setRLDistributedMethodDebug(String use) {
+  public void setRLDistributedMethodDebug(final String use) {
     setProperty("distributed-method-debug", use);
   }
 
-  public void setRLNewObjectDebug(boolean use) {
+  public void setRLNewObjectDebug(final boolean use) {
     setProperty("new-object-debug", use);
   }
 
-  public void setRLNewObjectDebug(String use) {
+  public void setRLNewObjectDebug(final String use) {
     setProperty("new-object-debug", use);
   }
 
-  public void setROOAutoLockDetails(boolean use) {
+  public void setROOAutoLockDetails(final boolean use) {
     setProperty("auto-lock-details", use);
   }
 
-  public void setROOAutoLockDetails(String use) {
+  public void setROOAutoLockDetails(final String use) {
     setProperty("auto-lock-details", use);
   }
 
-  public void setROOCaller(boolean use) {
+  public void setROOCaller(final boolean use) {
     setProperty("caller", use);
   }
 
-  public void setROOCaller(String use) {
+  public void setROOCaller(final String use) {
     setProperty("caller", use);
   }
 
-  public void setROOFullStack(boolean use) {
+  public void setROOFullStack(final boolean use) {
     setProperty("full-stack", use);
   }
 
-  public void setROOFullStack(String use) {
+  public void setROOFullStack(final String use) {
     setProperty("full-stack", use);
   }
 
-  public void setMaxInMemoryObjectCount(int value) {
-    setProperty("max-in-memory-object-count", value);
+  public void setFaultCount(final int value) {
+    setProperty("fault-count", value);
   }
 
-  public void setMaxInMemoryObjectCount(String value) {
-    setProperty("max-in-memory-object-count", value);
+  public void setFaultCount(final String value) {
+    setProperty("fault-count", value);
   }
 
-  public void setLogs(String value) {
+  public void setLogs(final String value) {
     setProperty("logs", value);
   }
 
-  public void addRepository(String location) {
+  public void addRepository(final String location) {
     repos.add(location);
   }
-  
-  public void addModule(String name, String version) {
+
+  public void addModule(final String name, final String version) {
     addModule(name, "org.terracotta.modules", version);
   }
-  
-  public void addModule(String name, String groupId, String version) {
+
+  public void addModule(final String name, final String groupId, final String version) {
     modules.add(new Module(name, groupId, version));
   }
 
@@ -179,15 +179,15 @@ public class L1ConfigBuilder extends BaseConfigBuilder {
         moduleElement.append(loc);
         moduleElement.append(closeElement("repository"));
       }
-  
+
       for (Iterator it = modules.iterator(); it.hasNext();) {
         Module m = (Module) it.next();
         moduleElement.append(selfCloseElement("module", m.asAttribute()));
       }
-  
+
       moduleElement.append(closeElement("modules"));
     }
-    
+
     return moduleElement.toString();
   }
 
@@ -200,14 +200,15 @@ public class L1ConfigBuilder extends BaseConfigBuilder {
 
   private static final String[] DSO_DEBUGGING               = concat(new Object[] { DSO_INSTRUMENTATION_LOGGING,
       DSO_RUNTIME_LOGGING, DSO_RUNTIME_OUTPUT_OPTIONS      });
-  private static final String[] DSO                         = concat(new Object[] { "max-in-memory-object-count",
+  private static final String[] DSO                         = concat(new Object[] { "fault-count",
       DSO_DEBUGGING                                        });
   private static final String[] MODULE_ATTRIBUTES           = new String[] { "name", "group-id", "version" };
   private static final String[] ALL_PROPERTIES              = concat(new Object[] { "modules", "logs", DSO });
 
+  @Override
   public String toString() {
     return  addModuleElement()
-        + element("logs") + openElement("dso", DSO) + element("max-in-memory-object-count")
+        + element("logs") + openElement("dso", DSO) + element("fault-count")
         + openElement("debugging", DSO_DEBUGGING)
         + elementGroup("instrumentation-logging", DSO_INSTRUMENTATION_LOGGING)
         + elementGroup("runtime-logging", DSO_RUNTIME_LOGGING)
@@ -220,11 +221,11 @@ public class L1ConfigBuilder extends BaseConfigBuilder {
   }
 
   private static class Module {
-    private String name;
-    private String groupId;
-    private String version;
+    private final String name;
+    private final String groupId;
+    private final String version;
 
-    public Module(String name, String groupId, String version) {
+    public Module(final String name, final String groupId, final String version) {
       this.name = name;
       this.groupId = groupId;
       this.version = version;
@@ -239,7 +240,7 @@ public class L1ConfigBuilder extends BaseConfigBuilder {
     }
   }
 
-  public static void main(String[] args) {
+  public static void main(final String[] args) {
     L1ConfigBuilder builder = new L1ConfigBuilder();
     System.err.println(builder);
 

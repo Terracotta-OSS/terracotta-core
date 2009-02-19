@@ -423,7 +423,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     threadIDManager = new ThreadIDManagerImpl(threadIDMap);
 
     // Cluster meta data
-    clusterMetaDataManager = new ClusterMetaDataManagerImpl(threadIDManager, channel
+    clusterMetaDataManager = new ClusterMetaDataManagerImpl(encoding, threadIDManager, channel
         .getNodesWithObjectsMessageFactory(), channel.getKeysForOrphanedValuesMessageFactory());
 
     // Set up the JMX management stuff
