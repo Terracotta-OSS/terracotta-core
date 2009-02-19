@@ -273,8 +273,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(dsoPort);
     ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(adminPort);
     configFactory().addServerToL1Config(null, dsoProxyPort, -1);
-    //disable L1 L2 Config Validation Check
-    configFactory().addTcPropertyToConfig("l1.l2.config.validation.enabled", "false");
+    disableL1L2ConfigValidationCheck();
   }
 
   protected void setupL1ProxyConnectTest(ProxyConnectManager mgr) {
@@ -283,6 +282,14 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
      */
     mgr.setProxyWaitTime(20 * 1000);
     mgr.setProxyDownTime(100);
+  }
+
+  /**
+   * When L1s are intended to connect to proxy ports, the config is different from that of L2's. Disabling the L1 config
+   * validation check for proxy connect scenarios.
+   */
+  private void disableL1L2ConfigValidationCheck() throws Exception {
+    configFactory().addTcPropertyToConfig("l1.l2.config.validation.enabled", "false");
   }
 
   protected void setupL2ProxyConnectTest(ProxyConnectManager[] managers) {
@@ -295,7 +302,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     }
   }
 
-  protected void setupL1ProxyConnectTest(ProxyConnectManager[] managers) {
+  protected void setupL1ProxyConnectTest(ProxyConnectManager[] managers) throws Exception {
     /*
      * subclass can overwrite to change the test parameters.
      */
@@ -303,6 +310,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       managers[i].setProxyWaitTime(20 * 1000);
       managers[i].setProxyDownTime(100);
     }
+    disableL1L2ConfigValidationCheck();
   }
 
   protected boolean useExternalProcess() {
