@@ -4,8 +4,6 @@
  */
 package com.tc.objectserver.api;
 
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
-
 import com.tc.async.impl.MockSink;
 import com.tc.exception.ImplementMe;
 import com.tc.lang.TCThreadGroup;
@@ -48,8 +46,6 @@ import com.tc.objectserver.context.RecallObjectsContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.TestDNA;
 import com.tc.objectserver.core.impl.TestManagedObject;
-import com.tc.objectserver.dgc.api.GarbageCollector;
-import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
 import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
 import com.tc.objectserver.gtx.TestGlobalTransactionManager;
 import com.tc.objectserver.impl.InMemoryManagedObjectStore;
@@ -88,14 +84,10 @@ import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.stats.counter.sampled.SampledCounterImpl;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.Counter;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
 import com.tc.util.TCCollections;
-import com.tc.util.concurrent.LifeCycleState;
-import com.tc.util.concurrent.NullLifeCycleState;
-import com.tc.util.concurrent.StoppableThread;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.File;
@@ -2150,119 +2142,6 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
   }
 
-  private class ExplodingGarbageCollector implements GarbageCollector {
-
-    private final RuntimeException toThrow;
-    private LifeCycleState         gcState = new NullLifeCycleState();
-
-    public ExplodingGarbageCollector(RuntimeException toThrow) {
-      this.toThrow = toThrow;
-    }
-
-    public boolean isPausingOrPaused() {
-      return false;
-    }
-
-    public boolean isPaused() {
-      return false;
-    }
-
-    public void notifyReadyToGC() {
-      return;
-    }
-
-    public void requestGCPause() {
-      return;
-    }
-
-    public void notifyGCComplete() {
-      return;
-    }
-
-    public PrettyPrinter prettyPrint(PrettyPrinter out) {
-      return out.print(getClass().getName());
-    }
-
-    public void changed(ObjectID changedObject, ObjectID oldReference, ObjectID newReference) {
-      // do nothing
-    }
-
-    public void doGC(GCType type) {
-      throw this.toThrow;
-    }
-
-    public void start() {
-      this.gcState.start();
-    }
-
-    public void stop() {
-      // do nothing
-    }
-
-    public void setState(StoppableThread st) {
-      this.gcState = st;
-    }
-
-    public void addListener(GarbageCollectorEventListener listener) {
-      //
-    }
-
-    public boolean disableGC() {
-      return false;
-    }
-
-    public void enableGC() {
-      // do nothing
-    }
-
-    public boolean isDisabled() {
-      return false;
-    }
-
-    public boolean isStarted() {
-      return false;
-    }
-
-    public boolean deleteGarbage(GCResultContext resultContext) {
-      return true;
-    }
-
-    public void notifyNewObjectInitalized(ObjectID id) {
-      // NOP
-    }
-
-    public void notifyObjectCreated(ObjectID id) {
-      // NOP
-    }
-
-    public void notifyObjectsEvicted(Collection evicted) {
-      // NOP
-    }
-
-    public boolean requestGCStart() {
-      return true;
-    }
-  }
-
-  private class TestThreadGroup extends ThreadGroup {
-
-    private final LinkedQueue exceptionQueue;
-
-    public TestThreadGroup(LinkedQueue exceptionQueue) {
-      super("test thread group");
-      this.exceptionQueue = exceptionQueue;
-    }
-
-    @Override
-    public void uncaughtException(Thread t, Throwable e) {
-      try {
-        this.exceptionQueue.put(e);
-      } catch (InterruptedException ie) {
-        fail(ie);
-      }
-    }
-
-  }
 
   private class GCCaller implements Runnable {
 
