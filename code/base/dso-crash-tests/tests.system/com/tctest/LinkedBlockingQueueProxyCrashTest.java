@@ -4,8 +4,6 @@
  */
 package com.tctest;
 
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.proxyconnect.ProxyConnectManager;
 
 public class LinkedBlockingQueueProxyCrashTest extends TransparentTestBase {
@@ -17,7 +15,6 @@ public class LinkedBlockingQueueProxyCrashTest extends TransparentTestBase {
   }
 
   public void doSetUp(TransparentTestIface t) throws Exception {
-    TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L1_L2_CONFIG_MATCH_ENABLED, "false");
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
   }

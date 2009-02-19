@@ -4,8 +4,6 @@
  */
 package com.tctest.restart.system;
 
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.MultipleServersCrashMode;
 import com.tc.test.MultipleServersPersistenceMode;
 import com.tc.test.MultipleServersSharedDataMode;
@@ -23,7 +21,6 @@ public class ObjectDataActivePassiveL1ReconnectTest extends ActivePassiveTranspa
   }
 
   public void doSetUp(TransparentTestIface t) throws Exception {
-    TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L1_L2_CONFIG_MATCH_ENABLED, "false");
     t.getTransparentAppConfig().setClientCount(clientCount).setIntensity(1);
     t.initializeTestRunner();
   }
