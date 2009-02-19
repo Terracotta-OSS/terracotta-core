@@ -124,12 +124,13 @@ public class TCPropertiesImpl implements TCProperties {
   }
 
   public synchronized void overwriteTcPropertiesFromConfig(TcProperty[] tcProperties) {
-    if (initialized) return;
-
     applyConfigOverrides(tcProperties);
 
-    // tc properties are now fully initialized
-    initialized = true;
+    if (!initialized) {
+      initialized = true;
+    } else {
+      return;
+    }
 
     // flip the logger proxy to the real deal
     try {
@@ -244,8 +245,7 @@ public class TCPropertiesImpl implements TCProperties {
     String val = props.getProperty(key);
     if (val == null && !missingOkay) { throw new AssertionError("TCProperties : Property not found for " + key); }
     if (!initialized) {
-      logger.info("The property \"" + key + "\" was read before initialization completed. \"" + key + "\" = "
-                  + val);
+      logger.info("The property \"" + key + "\" was read before initialization completed. \"" + key + "\" = " + val);
     }
     return val;
   }

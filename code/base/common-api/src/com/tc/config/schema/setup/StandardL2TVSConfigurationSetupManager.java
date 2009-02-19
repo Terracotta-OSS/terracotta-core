@@ -46,8 +46,8 @@ import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 import com.terracottatech.config.System;
 import com.terracottatech.config.TcConfigDocument;
+import com.terracottatech.config.TcProperties;
 import com.terracottatech.config.UpdateCheck;
-import com.terracottatech.config.TcConfigDocument.TcConfig.TcProperties;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;

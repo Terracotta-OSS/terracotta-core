@@ -26,7 +26,7 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.DsoClientData;
-import com.terracottatech.config.TcConfigDocument.TcConfig.TcProperties;
+import com.terracottatech.config.TcProperties;
 
 /**
  * The standard implementation of {@link com.tc.config.schema.setup.L1TVSConfigurationSetupManager}.
@@ -94,7 +94,7 @@ public class StandardL1TVSConfigurationSetupManager extends BaseTVSConfiguration
   public NewL1DSOConfig dsoL1Config() {
     return this.dsoL1Config;
   }
-
+  
   private void overwriteTcPropertiesFromConfig() {
     TCProperties tcProps = TCPropertiesImpl.getProperties();
     tcProps.overwriteTcPropertiesFromConfig(this.configTCProperties.getTcPropertiesArray());

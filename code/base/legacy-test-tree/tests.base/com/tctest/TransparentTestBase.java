@@ -273,6 +273,8 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(dsoPort);
     ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(adminPort);
     configFactory().addServerToL1Config(null, dsoProxyPort, -1);
+    //disable L1 L2 Config Validation Check
+    configFactory().addTcPropertyToConfig("l1.l2.config.validation.enabled", "false");
   }
 
   protected void setupL1ProxyConnectTest(ProxyConnectManager mgr) {
