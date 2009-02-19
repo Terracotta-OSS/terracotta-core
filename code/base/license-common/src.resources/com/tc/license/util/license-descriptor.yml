@@ -21,7 +21,7 @@ Enterprise License Description:
   "Product":
     type: String
     required: true
-    pattern: EX|EX/Sessions|FX
+    pattern: EX|EX/Sessions|FX|Custom
   
   "Expiration date":
     type: Date
@@ -51,6 +51,12 @@ Licensed products:
     - sessions
     
   "FX":
+    - roots
+    - sessions
+    - TOC
+    - server striping
+  
+  "Custom":
     - roots
     - sessions
     - TOC

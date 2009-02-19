@@ -18,6 +18,7 @@ import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.handler.CallbackDumpAdapter;
 import com.tc.lang.TCThreadGroup;
+import com.tc.license.LicenseCheck;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.ClientIDLoggerProvider;
 import com.tc.logging.CustomerLogging;
@@ -576,7 +577,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         ThreadUtil.reallySleep(5000);
       } catch (MaxConnectionsExceededException e) {
         CONSOLE_LOGGER.fatal(e.getMessage());
-        CONSOLE_LOGGER.fatal("This client is now shutdown");
+        CONSOLE_LOGGER.fatal(LicenseCheck.EXIT_MESSAGE);
         System.exit(1);
       } catch (IOException ioe) {
         CONSOLE_LOGGER.warn("IOException connecting to server: " + serverHost + ":" + serverPort + ". "
