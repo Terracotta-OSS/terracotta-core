@@ -598,6 +598,7 @@ END
   # This is to ensure that modules that are not assigned to a group are executed by
   # the 'alltests' monkey.
   def check_nogroup
+    depends :init, :compile
     groupless = @module_set.find_all { |mod| mod.groups.empty? }.map { |mod| mod.name }
     run_tests(FixedModuleTypeTestSet.new(groupless, %w(all)))
   end
