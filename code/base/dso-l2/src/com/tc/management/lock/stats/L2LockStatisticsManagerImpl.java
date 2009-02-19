@@ -15,10 +15,12 @@ import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.NoSuchChannelException;
+import com.tc.objectserver.core.api.DSOGlobalServerStats;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.TimeStampedCounterValue;
+import com.tc.util.Assert;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -32,6 +34,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
 
   private DSOChannelManager     channelManager;
   protected final Set<NodeID>   lockSpecRequestedNodeIDs = new HashSet<NodeID>();
+  private SampledCounter        globalLockCounter;
   private SampledCounter        globalLockRecallCounter;
 
   private final static void sendLockStatisticsEnableDisableMessage(MessageChannel channel, boolean statsEnable,
@@ -58,8 +61,11 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
         .getBoolean(TCPropertiesConsts.LOCK_STATISTICS_ENABLED, false);
   }
 
-  public synchronized void start(DSOChannelManager dsoChannelManager, SampledCounter lockRecallCounter) {
+  public synchronized void start(DSOChannelManager dsoChannelManager, DSOGlobalServerStats serverStats) {
     this.channelManager = dsoChannelManager;
+    SampledCounter lockCounter = serverStats == null ? null : serverStats.getGlobalLockCounter();
+    this.globalLockCounter = lockCounter == null ? SampledCounter.NULL_SAMPLED_COUNTER : lockCounter;
+    SampledCounter lockRecallCounter = serverStats == null ? null : serverStats.getGlobalLockRecallCounter();
     this.globalLockRecallCounter = lockRecallCounter == null ? SampledCounter.NULL_SAMPLED_COUNTER : lockRecallCounter;
   }
 
@@ -127,6 +133,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
 
   public synchronized void recordLockAwarded(LockID lockID, NodeID nodeID, ThreadID threadID, boolean isGreedy,
                                              long awardedTimeInMillis) {
+    globalLockCounter.increment();
     if (!lockStatisticsEnabled) { return; }
 
     int depth = super.incrementNestedDepth(new LockKey(nodeID, threadID));

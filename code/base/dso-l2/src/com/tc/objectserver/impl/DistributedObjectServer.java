@@ -637,17 +637,18 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     l2DSOConfig.changesInItemIgnored(l2DSOConfig.garbageCollectionVerbose());
     boolean verboseGC = l2DSOConfig.garbageCollectionVerbose().getBoolean();
     this.sampledCounterManager = new CounterManagerImpl();
+    SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
     SampledCounter objectCreationRate = (SampledCounter) this.sampledCounterManager
-        .createCounter(new SampledCounterConfig(1, 300, true, 0L));
+        .createCounter(sampledCounterConfig);
     SampledCounter objectFaultRate = (SampledCounter) this.sampledCounterManager
-        .createCounter(new SampledCounterConfig(1, 300, true, 0L));
+        .createCounter(sampledCounterConfig);
     ObjectManagerStatsImpl objMgrStats = new ObjectManagerStatsImpl(objectCreationRate, objectFaultRate);
     SampledCounter l2FaultFromDisk = (SampledCounter) this.sampledCounterManager
-        .createCounter(new SampledCounterConfig(1, 300, true, 0L));
+        .createCounter(sampledCounterConfig);
     SampledCounter time2FaultFromDisk = (SampledCounter) this.sampledCounterManager
-        .createCounter(new SampledCounterConfig(1, 300, true, 0L));
+        .createCounter(sampledCounterConfig);
     SampledCounter time2Add2ObjMgr = (SampledCounter) this.sampledCounterManager
-        .createCounter(new SampledCounterConfig(1, 300, true, 0L));
+        .createCounter(sampledCounterConfig);
 
     SequenceValidator sequenceValidator = new SequenceValidator(0);
     // Server initiated request processing queues shouldn't have any max queue size.
@@ -746,29 +747,30 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
 
     TransactionAcknowledgeAction taa = new TransactionAcknowledgeActionImpl(channelManager, transactionBatchManager);
     SampledCounter globalTxnCounter = (SampledCounter) this.sampledCounterManager
-        .createCounter(new SampledCounterConfig(1, 300, true, 0L));
+        .createCounter(sampledCounterConfig);
 
     SampledCounter broadcastCounter = (SampledCounter) this.sampledCounterManager
-        .createCounter(new SampledCounterConfig(1, 300, true, 0L));
+        .createCounter(sampledCounterConfig);
 
     SampledCounter globalObjectFaultCounter = (SampledCounter) this.sampledCounterManager
-        .createCounter(new SampledCounterConfig(1, 300, true, 0L));
+        .createCounter(sampledCounterConfig);
     SampledCounter globalObjectFlushCounter = (SampledCounter) this.sampledCounterManager
-        .createCounter(new SampledCounterConfig(1, 300, true, 0L));
+        .createCounter(sampledCounterConfig);
     SampledCounter globalLockRecallCounter = (SampledCounter) this.sampledCounterManager
-        .createCounter(new SampledCounterConfig(1, 300, true, 0L));
+        .createCounter(sampledCounterConfig);
     SampledRateCounterConfig sampledRateCounterConfig = new SampledRateCounterConfig(1, 300, true);
     SampledRateCounter changesPerBroadcast = (SampledRateCounter) this.sampledCounterManager
         .createCounter(sampledRateCounterConfig);
     SampledRateCounter transactionSizeCounter = (SampledRateCounter) this.sampledCounterManager
         .createCounter(sampledRateCounterConfig);
+    SampledCounter globalLockCount = (SampledCounter) this.sampledCounterManager.createCounter(sampledCounterConfig);
 
 
     DSOGlobalServerStats serverStats = new DSOGlobalServerStatsImpl(globalObjectFlushCounter, globalObjectFaultCounter,
                                                                     globalTxnCounter, objMgrStats, broadcastCounter,
                                                                     l2FaultFromDisk, time2FaultFromDisk,
                                                                     time2Add2ObjMgr, globalLockRecallCounter,
-                                                                    changesPerBroadcast, transactionSizeCounter);
+                                                                    changesPerBroadcast, transactionSizeCounter, globalLockCount);
 
     final TransactionStore transactionStore = new TransactionStoreImpl(transactionPersistor,
                                                                        globalTransactionIDSequence);
@@ -997,7 +999,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
       startBeanShell(this.l2Properties.getInt("beanshell.port"));
     }
 
-    lockStatsManager.start(channelManager, globalLockRecallCounter);
+    lockStatsManager.start(channelManager, serverStats);
 
     CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);
     this.threadGroup.addCallbackOnExitExceptionHandler(GroupException.class, handler);
