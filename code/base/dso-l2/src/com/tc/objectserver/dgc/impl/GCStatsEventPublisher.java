@@ -31,7 +31,7 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
   public GCStats getLastGarbageCollectorStats() {
     return (GCStats) gcHistory.peek();
   }
-  
+
   public void garbageCollectorStart(GarbageCollectionInfo info) {
     GCStatsImpl gcStats = getGCStats(info);
     fireGCStatsEvent(gcStats);
@@ -65,6 +65,13 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
   public void garbageCollectorCompleted(GarbageCollectionInfo info) {
     GCStatsImpl gcStats = getGCStats(info);
     gcStats.setCompleteState();
+    push(gcStats);
+    fireGCStatsEvent(gcStats);
+  }
+
+  public void garbageCollectorCanceled(GarbageCollectionInfo info) {
+    GCStatsImpl gcStats = getGCStats(info);
+    gcStats.setCanceledState();
     push(gcStats);
     fireGCStatsEvent(gcStats);
   }
