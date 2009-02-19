@@ -20,7 +20,6 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.TimeStampedCounterValue;
-import com.tc.util.Assert;
 
 import java.io.Serializable;
 import java.util.Collection;
