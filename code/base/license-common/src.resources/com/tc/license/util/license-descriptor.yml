@@ -2,7 +2,7 @@ Enterprise License Description:
   "License type":
     type: String
     required: true
-    pattern: Commercial|Trial
+    pattern: Trial|Commercial
     
   "License number":
     type: String
