@@ -1,12 +1,7 @@
 name: Terracotta DSO
 internal_name: dso
-kit_name_pattern: terracotta-platform-version-ee
+kit_name_pattern: terracotta-version-ee
 root_directory: terracotta-version-ee
-bundled_jres:
-  - jre15:
-      assert: '@build_environment.os_type =~ /^\s*windows\s*$/i'
-      install_directory: jre
-      version: 1.5.0_15
 bundled_demos:
   - rife:
       install_directory: samples/rife
@@ -56,14 +51,8 @@ bundled_components:
         references:
           - tc-config-reference
   - common:
-      bootjar:
-        assert: '@build_environment.os_type =~ /^\s*windows\s*$/i'
-        install_directory: lib/dso-boot
-        compiler_versions:
-          - 1.4
-          - 1.5
       module_packages:
-        - terracotta-api-version-PREALPHA:
+        - terracotta-tim-api-version:
             install_directory: lib
             modules:
               - common-api
@@ -179,9 +168,9 @@ postscripts:
         - artifact: tcconfig
           file: lib/tcconfig-xmlbeans-generated.jar
           pom: poms/tcconfig-pom.xml
-        - artifact: terracotta-api
-          file: lib/terracotta-api-version-PREALPHA.jar
-          pom: poms/terracotta-api-pom.xml
+        - artifact: terracotta-tim-api
+          file: lib/terracotta-tim-api.jar
+          pom: poms/terracotta-tim-api-pom.xml
           inject: 
             - lib/resources/build-data.txt
         - artifact: terracotta-jmx-api

@@ -25,8 +25,10 @@ public interface DSOGlobalServerStats {
   SampledCounter getTime2FaultFromDisk();
 
   SampledCounter getTime2Add2ObjectMgr();
-  
+
   SampledCounter getGlobalLockRecallCounter();
-  
+
   SampledRateCounter getChangesPerBroadcastCounter();
+
+  SampledRateCounter getTransactionSizeCounter();
 }

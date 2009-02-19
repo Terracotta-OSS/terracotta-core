@@ -136,6 +136,10 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return getStats().getGlobalLockRecallRate();
   }
 
+  public long getTransactionSizeRate() {
+    return getStats().getTransactionSizeRate();
+  }
+
   public Number[] getStatistics(String[] names) {
     return getStats().getStatistics(names);
   }

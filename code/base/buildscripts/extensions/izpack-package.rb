@@ -57,7 +57,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     ant.taskdef(:name => 'izpack', :classname => 'com.izforge.izpack.ant.IzPackTask') 
 
     # build the package
-    installer_package_name = FilePath.new(destdir.to_s, "#{filename}.jar")
+    installer_package_name = FilePath.new(destdir.to_s, "#{install_name}-installer.jar")
     ant.izpack(
       :installerType    => 'standard', 
       :inheritAll       => true, 

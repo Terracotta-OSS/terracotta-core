@@ -39,7 +39,7 @@ public class SampledRateCounterImpl extends SampledCounterImpl implements Sample
     this.numeratorValue = newValue;
   }
 
-  public long getValue() {
+  public synchronized long getValue() {
     return denominatorValue == 0 ? 0 : (numeratorValue / denominatorValue);
   }
 
@@ -51,7 +51,7 @@ public class SampledRateCounterImpl extends SampledCounterImpl implements Sample
 
   // ====== unsupported operations. These operations need multiple params for this class
 
-  public synchronized long getAndSet(long newValue) {
+  public long getAndSet(long newValue) {
     throw new UnsupportedOperationException(OPERATION_NOT_SUPPORTED_MSG);
   }
 
