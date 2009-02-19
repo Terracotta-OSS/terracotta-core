@@ -886,17 +886,6 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     }
   }
 
-  public void testExplodingGarbageCollector() throws Exception {
-    LinkedQueue exceptionQueue = new LinkedQueue();
-    TestThreadGroup tg = new TestThreadGroup(exceptionQueue);
-    initObjectManager(tg);
-    RuntimeException toThrow = new RuntimeException();
-    this.objectManager.setGarbageCollector(new ExplodingGarbageCollector(toThrow));
-    this.objectManager.start();
-    Object o = exceptionQueue.poll(30 * 1000);
-    assertEquals(toThrow, o);
-  }
-
   public void testObjectManagerBasics() {
     initObjectManager();
     final ObjectID id = new ObjectID(0);
