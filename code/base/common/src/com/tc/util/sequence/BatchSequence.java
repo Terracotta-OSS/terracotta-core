@@ -73,4 +73,8 @@ public final class BatchSequence implements BatchSequenceReceiver, Sequence {
   public synchronized boolean hasNext() {
     return nextBatch.hasNext();
   }
+  
+  public synchronized BatchSequenceProvider getProvider() {
+    return remoteProvider;
+  }
 }

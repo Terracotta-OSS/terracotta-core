@@ -20,6 +20,7 @@ import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.idprovider.api.ObjectIDProvider;
 import com.tc.object.idprovider.impl.ObjectIDClientHandshakeRequester;
+import com.tc.object.idprovider.impl.RemoteObjectIDBatchSequenceProvider;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.lockmanager.api.ClientLockManager;
 import com.tc.object.lockmanager.impl.ClientLockManagerConfigImpl;
@@ -35,6 +36,7 @@ import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.util.ToggleableReferenceManager;
 import com.tc.util.sequence.BatchSequence;
+import com.tc.util.sequence.BatchSequenceReceiver;
 
 public interface DSOClientBuilder {
 
@@ -80,6 +82,12 @@ public interface DSOClientBuilder {
                                                           SampledRateCounter transactionSizeCounter,
                                                           SampledRateCounter transactionPerBatchCounter);
 
-  ObjectIDClientHandshakeRequester getObjectIDClientHandshakeRequester(final BatchSequence sequence);
+  ObjectIDClientHandshakeRequester getObjectIDClientHandshakeRequester(final BatchSequenceReceiver sequence);
+  
+  BatchSequence[] createSequences(RemoteObjectIDBatchSequenceProvider remoteIDProvider, int requestSize);
+
+  ObjectIDProvider createObjectIdProvider(BatchSequence[] sequences);
+
+  BatchSequenceReceiver getBatchReceiver(BatchSequence[] sequences);
 
 }
