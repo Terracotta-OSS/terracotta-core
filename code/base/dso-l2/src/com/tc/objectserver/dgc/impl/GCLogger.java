@@ -79,7 +79,7 @@ public class GCLogger {
 
   public void log_complete(long iteration, int deleteGarbageSize, long elapsed) {
     if (verboseGC()) {
-      logGC(iteration, "delete complete : removed " + deleteGarbageSize + " objects in " + elapsed + " ms.");
+      logGC(iteration, "delete completed : removed " + deleteGarbageSize + " objects in " + elapsed + " ms.");
     }
   }
 

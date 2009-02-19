@@ -6,15 +6,18 @@ package com.tc.objectserver.context;
 
 import com.tc.async.api.EventContext;
 import com.tc.object.ObjectID;
+import com.tc.objectserver.core.impl.GarbageCollectionID;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.impl.GarbageCollectionInfoPublisherImpl;
+import com.tc.util.UUID;
 
 import java.util.SortedSet;
 
 public class GCResultContext implements EventContext {
 
-  private static final GarbageCollectionInfo   NULL_GARBAGE_COLLECTION_INFO = new GarbageCollectionInfo(-1, true);
+  private static final GarbageCollectionInfo   NULL_GARBAGE_COLLECTION_INFO = new GarbageCollectionInfo(new GarbageCollectionID(-1,UUID.getUUID()
+                                                                                                                                    .toString()),true);
 
   private final int                            gcIteration;
   private final SortedSet<ObjectID>            gcedOids;

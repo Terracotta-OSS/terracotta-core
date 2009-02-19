@@ -24,6 +24,7 @@ import com.tc.net.groups.GroupMessageListener;
 import com.tc.net.groups.GroupResponse;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.context.GCResultContext;
+import com.tc.objectserver.core.impl.GarbageCollectionID;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.impl.GCLogger;
@@ -34,6 +35,7 @@ import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TxnsInSystemCompletionLister;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
+import com.tc.util.UUID;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.sequence.SequenceGenerator;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorException;
@@ -141,7 +143,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
                   + gcMsg);
       return;
     }
-    GarbageCollectionInfo info = new GarbageCollectionInfo(gcMsg.getGCIterationCount(), true);
+    GarbageCollectionInfo info = new GarbageCollectionInfo(new GarbageCollectionID(gcMsg.getGCIterationCount(), UUID.getUUID().toString()), true);
     info.setDeleted(new ObjectIDSet(gcedOids));
 
     info.setStartTime(System.currentTimeMillis());

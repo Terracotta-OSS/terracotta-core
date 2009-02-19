@@ -10,9 +10,11 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.core.api.ManagedObject;
+import com.tc.objectserver.core.impl.GarbageCollectionID;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.util.ObjectIDSet;
+import com.tc.util.UUID;
 
 import java.util.Set;
 
@@ -31,8 +33,8 @@ public class YoungGCHook extends AbstractGCHook {
     return "YoungGen";
   }
 
-  public GarbageCollectionInfo getGCInfo(int gcIteration) {
-    return new GarbageCollectionInfo(gcIteration, false);
+  public GarbageCollectionInfo createGCInfo(int gcIteration) {
+    return new GarbageCollectionInfo(new GarbageCollectionID(gcIteration, UUID.getUUID().toString()), false);
   }
 
   public ObjectIDSet getGCCandidates() {

@@ -44,7 +44,7 @@ final class MarkAndSweepGCAlgorithm {
       ThreadUtil.reallySleep(60000);
     }
 
-    GarbageCollectionInfo gcInfo = gcHook.getGCInfo(gcIteration);
+    GarbageCollectionInfo gcInfo = gcHook.createGCInfo(gcIteration);
     long startMillis = System.currentTimeMillis();
     gcInfo.setStartTime(startMillis);
     gcPublisher.fireGCStartEvent(gcInfo);

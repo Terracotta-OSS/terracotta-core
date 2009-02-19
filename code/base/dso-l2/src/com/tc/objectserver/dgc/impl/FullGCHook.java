@@ -10,11 +10,13 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.core.api.ManagedObject;
+import com.tc.objectserver.core.impl.GarbageCollectionID;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.ObjectIDSet;
+import com.tc.util.UUID;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Set;
@@ -47,8 +49,8 @@ public class FullGCHook extends AbstractGCHook {
     return "Full";
   }
 
-  public GarbageCollectionInfo getGCInfo(int gcIteration) {
-    return new GarbageCollectionInfo(gcIteration, true);
+  public GarbageCollectionInfo createGCInfo(int gcIteration) {
+    return new GarbageCollectionInfo(new GarbageCollectionID(gcIteration, UUID.getUUID().toString()), true);
   }
 
   public ObjectIDSet getGCCandidates() {

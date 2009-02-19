@@ -4,6 +4,7 @@
  */
 package com.tc.objectserver.dgc.api;
 
+import com.tc.objectserver.core.impl.GarbageCollectionID;
 import com.tc.util.ObjectIDSet;
 
 import java.util.ArrayList;
@@ -11,42 +12,32 @@ import java.util.List;
 
 public class GarbageCollectionInfo implements Cloneable {
 
-  protected static final long NOT_INITIALIZED       = -1L;
+  protected static final long       NOT_INITIALIZED       = -1L;
 
-  private final int           iteration;
+  private final GarbageCollectionID gcID;
+  private final int                 iteration;
+  private final boolean             fullGC;
+  private long                      startTime             = NOT_INITIALIZED;
+  private long                      beginObjectCount      = NOT_INITIALIZED;
+  private long                      markStageTime         = NOT_INITIALIZED;
+  private long                      pauseStageTime        = NOT_INITIALIZED;
+  private long                      deleteStageTime       = NOT_INITIALIZED;
+  private long                      elapsedTime           = NOT_INITIALIZED;
+  private long                      totalMarkCycleTime    = NOT_INITIALIZED;
+  private long                      candidateGarbageCount = NOT_INITIALIZED;
+  private long                      actualGarbageCount    = NOT_INITIALIZED;
+  private long                      preRescueCount        = NOT_INITIALIZED;
+  private long                      rescue1Count          = NOT_INITIALIZED;
 
-  private final boolean       fullGC;
+  private Object                    stats                 = null;
 
-  private long                startTime             = NOT_INITIALIZED;
+  private ObjectIDSet               toDelete              = null;
 
-  private long                beginObjectCount      = NOT_INITIALIZED;
+  private List                      rescueTimes           = new ArrayList();
 
-  private long                markStageTime         = NOT_INITIALIZED;
-
-  private long                pauseStageTime        = NOT_INITIALIZED;
-
-  private long                deleteStageTime       = NOT_INITIALIZED;
-
-  private long                elapsedTime           = NOT_INITIALIZED;
-
-  private long                totalMarkCycleTime    = NOT_INITIALIZED;
-
-  private long                candidateGarbageCount = NOT_INITIALIZED;
-
-  private long                actualGarbageCount    = NOT_INITIALIZED;
-
-  private long                preRescueCount        = NOT_INITIALIZED;
-
-  private long                rescue1Count          = NOT_INITIALIZED;
-
-  private Object              stats                 = null;
-
-  private ObjectIDSet         toDelete              = null;
-
-  private List                rescueTimes           = new ArrayList();
-
-  public GarbageCollectionInfo(int iteration, boolean fullGC) {
-    this.iteration = iteration;
+  public GarbageCollectionInfo(GarbageCollectionID id, boolean fullGC) {
+    this.gcID = id;
+    this.iteration = (int)id.toLong();
     this.fullGC = fullGC;
   }
 
@@ -159,6 +150,10 @@ public class GarbageCollectionInfo implements Cloneable {
     this.rescueTimes = rescueTimes;
   }
 
+  public GarbageCollectionID getGarbageCollectionID() {
+    return gcID;
+  }
+  
   public Object getObject() {
     return this.stats;
   }
@@ -178,4 +173,5 @@ public class GarbageCollectionInfo implements Cloneable {
            + " pre rescue count = " + this.preRescueCount + " rescue 1 count = " + this.rescue1Count + " Garbage  = "
            + (this.toDelete == null ? "Not Set " : this.toDelete.size());
   }
+
 }
