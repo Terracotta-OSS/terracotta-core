@@ -206,4 +206,8 @@ public class ActiveActiveServerManager extends MultipleServerManager {
 
     return mbeans;
   }
+
+  public GroupData[] getGroupsData() {
+    return this.groupsData;
+  }
 }

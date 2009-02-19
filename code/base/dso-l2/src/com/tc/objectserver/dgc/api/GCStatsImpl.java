@@ -19,7 +19,7 @@ public class GCStatsImpl implements GCStats, Serializable {
   private static final State            GC_PAUSE              = new State("PAUSE");
   private static final State            GC_MARK_COMPLETE      = new State("MARK_COMPLETE");
   private static final State            GC_DELETE             = new State("DELETE");
-  private static final State            GC_COMPLETE           = new State("COMPLETE");
+  public static final State             GC_COMPLETE           = new State("COMPLETE");
 
   private static final long             NOT_INITIALIZED       = -1L;
   private static final String           YOUNG_GENERATION      = "Young";
