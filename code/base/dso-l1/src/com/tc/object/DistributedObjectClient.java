@@ -18,6 +18,7 @@ import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.handler.CallbackDumpAdapter;
 import com.tc.lang.TCThreadGroup;
+import com.tc.license.LicenseCheck;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.ClientIDLoggerProvider;
 import com.tc.logging.CustomerLogging;
@@ -75,7 +76,6 @@ import com.tc.object.handler.ReceiveTransactionHandler;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
 import com.tc.object.idprovider.api.ObjectIDProvider;
-import com.tc.object.idprovider.impl.ObjectIDProviderImpl;
 import com.tc.object.idprovider.impl.RemoteObjectIDBatchSequenceProvider;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.lockmanager.api.ClientLockManager;
@@ -154,6 +154,7 @@ import com.tc.util.runtime.ThreadIDManagerImpl;
 import com.tc.util.runtime.ThreadIDMap;
 import com.tc.util.runtime.ThreadIDMapUtil;
 import com.tc.util.sequence.BatchSequence;
+import com.tc.util.sequence.BatchSequenceReceiver;
 import com.tc.util.sequence.Sequence;
 import com.tc.util.sequence.SimpleSequence;
 
@@ -374,10 +375,15 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     RemoteObjectIDBatchSequenceProvider remoteIDProvider = new RemoteObjectIDBatchSequenceProvider(channel
         .getObjectIDBatchRequestMessageFactory());
-    BatchSequence sequence = new BatchSequence(remoteIDProvider, l1Properties
+
+    // create Sequences
+    BatchSequence[] sequences = dsoClientBuilder.createSequences(remoteIDProvider, l1Properties
         .getInt("objectmanager.objectid.request.size"));
-    ObjectIDProvider idProvider = new ObjectIDProviderImpl(sequence);
-    remoteIDProvider.setBatchSequenceReceiver(sequence);
+    // get Sequence Receiver -- passing in sequences
+    BatchSequenceReceiver batchSequenceReceiver = dsoClientBuilder.getBatchReceiver(sequences);
+    // create object id provider
+    ObjectIDProvider idProvider = dsoClientBuilder.createObjectIdProvider(sequences);
+    remoteIDProvider.setBatchSequenceReceiver(batchSequenceReceiver);
 
     TCClassFactory classFactory = new TCClassFactoryImpl(new TCFieldFactory(config), config, classProvider, encoding);
     TCObjectFactory objectFactory = new TCObjectFactoryImpl(classFactory);
@@ -422,7 +428,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     threadIDManager = new ThreadIDManagerImpl(threadIDMap);
 
     // Cluster meta data
-    clusterMetaDataManager = new ClusterMetaDataManagerImpl(threadIDManager, channel
+    clusterMetaDataManager = new ClusterMetaDataManagerImpl(encoding, threadIDManager, channel
         .getNodesWithObjectsMessageFactory(), channel.getKeysForOrphanedValuesMessageFactory());
 
     // Set up the JMX management stuff
@@ -488,7 +494,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     clientHandshakeCallbacks.add(objectManager);
     clientHandshakeCallbacks.add(remoteObjectManager);
     clientHandshakeCallbacks.add(rtxManager);
-    clientHandshakeCallbacks.add(dsoClientBuilder.getObjectIDClientHandshakeRequester(sequence));
+    clientHandshakeCallbacks.add(dsoClientBuilder.getObjectIDClientHandshakeRequester(batchSequenceReceiver));
     ProductInfo pInfo = ProductInfo.getInstance();
     clientHandshakeManager = new ClientHandshakeManagerImpl(new ClientIDLogger(channel.getClientIDProvider(), TCLogging
         .getLogger(ClientHandshakeManagerImpl.class)), channel, channel.getClientHandshakeMessageFactory(), pauseStage
@@ -576,7 +582,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         ThreadUtil.reallySleep(5000);
       } catch (MaxConnectionsExceededException e) {
         CONSOLE_LOGGER.fatal(e.getMessage());
-        CONSOLE_LOGGER.fatal("This client is now shutdown");
+        CONSOLE_LOGGER.fatal(LicenseCheck.EXIT_MESSAGE);
         System.exit(1);
       } catch (IOException ioe) {
         CONSOLE_LOGGER.warn("IOException connecting to server: " + serverHost + ":" + serverPort + ". "

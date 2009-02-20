@@ -31,4 +31,6 @@ public interface DSOGlobalServerStats {
   SampledRateCounter getChangesPerBroadcastCounter();
 
   SampledRateCounter getTransactionSizeCounter();
+
+  SampledCounter getGlobalLockCounter();
 }

@@ -217,7 +217,7 @@ public class TransactionBatchTest extends TestCase {
     SampledRateCounter transactionSizeCounter = (SampledRateCounter) counterManager
         .createCounter(new SampledRateCounterConfig(1, 10, true));
     DSOGlobalServerStats stats = new DSOGlobalServerStatsImpl(null, null, null, null, null, null, null, null, null,
-                                                              null, transactionSizeCounter);
+                                                              null, transactionSizeCounter, null);
     return stats;
   }
 

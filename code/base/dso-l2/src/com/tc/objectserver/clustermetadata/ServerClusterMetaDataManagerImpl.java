@@ -4,6 +4,7 @@
  */
 package com.tc.objectserver.clustermetadata;
 
+import com.tc.io.serializer.TCObjectOutputStream;
 import com.tc.logging.TCLogger;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.TCMessageType;
@@ -18,6 +19,7 @@ import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.managedobject.PartialMapManagedObjectState;
 
+import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -62,7 +64,7 @@ public class ServerClusterMetaDataManagerImpl implements ServerClusterMetaDataMa
 
     final Set<Object> response = new HashSet<Object>();
 
-    final ManagedObject managedMap = objectManager.getObjectByIDOrNull(message.getMapObjectID());
+    final ManagedObject managedMap = objectManager.getObjectByID(message.getMapObjectID());
     try {
       final ManagedObjectState state = managedMap.getManagedObjectState();
       if (state instanceof PartialMapManagedObjectState) {
@@ -72,6 +74,7 @@ public class ServerClusterMetaDataManagerImpl implements ServerClusterMetaDataMa
         for (Map.Entry entry : (Set<Map.Entry>)realMap.entrySet()) {
           if (entry.getValue() instanceof ObjectID) {
             boolean isOrphan = true;
+
             for (NodeID nodeID : connectedClients) {
               if (clientStateManager.hasReference(nodeID, (ObjectID)entry.getValue())) {
                 isOrphan = false;
@@ -92,7 +95,17 @@ public class ServerClusterMetaDataManagerImpl implements ServerClusterMetaDataMa
       objectManager.releaseReadOnly(managedMap);
     }
 
-    responseMessage.initialize(message.getThreadID(), response);
+    // write the DNA of the orphaned keys into a byte array
+    final ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
+    final TCObjectOutputStream objectOut = new TCObjectOutputStream(bytesOut);
+    objectOut.writeInt(response.size());
+    for (Object key : response) {
+      objectOut.writeObject(key);
+    }
+    objectOut.flush();
+
+    // create and send the response message
+    responseMessage.initialize(message.getThreadID(), bytesOut.toByteArray());
     responseMessage.send();
   }
 }

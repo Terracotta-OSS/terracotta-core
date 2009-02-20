@@ -6,12 +6,10 @@ package com.tc.object.msg;
 
 import com.tc.object.lockmanager.api.ThreadID;
 
-import java.util.Set;
-
 public interface KeysForOrphanedValuesResponseMessage extends ClusterMetaDataResponseMessage {
 
-  public void initialize(ThreadID threadID, Set response);
+  public void initialize(ThreadID threadID, byte[] orphanedKeysDNA);
 
-  public Set getKeys();
+  public byte[] getOrphanedKeysDNA();
 
 }

@@ -155,6 +155,7 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
   public synchronized ObjectArrayConfigItem[] getL2DataByGroup() {
     if (l2DataByGroup == null) createL2DataByGroup();
 
+    Assert.assertNoNullElements(l2DataByGroup);
     return l2DataByGroup;
   }
 

@@ -27,6 +27,7 @@ import com.tc.object.config.LockDefinitionImpl;
 import com.tc.object.config.ModuleSpec;
 import com.tc.object.config.Root;
 import com.tc.object.config.StandardDSOClientConfigHelper;
+import com.tc.object.config.TimCapability;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.TransparencyClassSpecImpl;
 import com.tc.object.config.schema.DSOInstrumentationLoggingOptions;
@@ -104,10 +105,6 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
   }
 
   public void addWriteAutolock(final String methodPattern) {
-    /**/
-  }
-
-  public void allowCGLIBInstrumentation() {
     /**/
   }
 
@@ -402,10 +399,6 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     return null;
   }
 
-  public void addCustomAdapter(final String name, final String factoryName) {
-    /**/
-  }
-
   public void addNonportablePattern(final String pattern) {
     /**/
   }
@@ -452,5 +445,9 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
 
   public boolean addAnnotationBasedAdapters(final ClassInfo classInfo) {
     return false;
+  }
+
+  public void enableCapability(TimCapability cap) {
+    //
   }
 }

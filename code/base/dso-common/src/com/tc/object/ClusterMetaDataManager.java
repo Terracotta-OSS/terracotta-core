@@ -5,6 +5,7 @@
 package com.tc.object;
 
 import com.tc.net.NodeID;
+import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.lockmanager.api.ThreadID;
 
 import java.util.Collection;
@@ -13,11 +14,13 @@ import java.util.Set;
 
 public interface ClusterMetaDataManager {
 
+  public DNAEncoding getEncoding();
+
   public Set<NodeID> getNodesWithObject(ObjectID id);
 
   public Map<ObjectID, Set<NodeID>> getNodesWithObjects(Collection<ObjectID> ids);
 
-  public Set<ObjectID> getKeysForOrphanedValues(ObjectID mapObjectID);
+  public Set<?> getKeysForOrphanedValues(ObjectID mapObjectID);
 
   public void setResponse(ThreadID threadId, Object response);
 

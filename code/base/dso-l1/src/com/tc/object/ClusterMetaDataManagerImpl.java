@@ -5,6 +5,7 @@
 package com.tc.object;
 
 import com.tc.net.NodeID;
+import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.msg.ClusterMetaDataMessage;
 import com.tc.object.msg.KeysForOrphanedValuesMessage;
@@ -22,6 +23,7 @@ import java.util.Set;
 
 public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
 
+  private final DNAEncoding                         encoding;
   private final ThreadIDManager                     threadIDManager;
   private final NodesWithObjectsMessageFactory      nwoFactory;
   private final KeysForOrphanedValuesMessageFactory kfovFactory;
@@ -29,12 +31,18 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
   private final Map<ThreadID, WaitForResponse>      waitObjects = new HashMap<ThreadID, WaitForResponse>();
   private final Map<ThreadID, Object>               responses   = new HashMap<ThreadID, Object>();
 
-  public ClusterMetaDataManagerImpl(final ThreadIDManager threadIDManager,
+  public ClusterMetaDataManagerImpl(final DNAEncoding encoding,
+                                    final ThreadIDManager threadIDManager,
                                     final NodesWithObjectsMessageFactory nwoFactory,
                                     final KeysForOrphanedValuesMessageFactory kfovFactory) {
+    this.encoding = encoding;
     this.threadIDManager = threadIDManager;
     this.nwoFactory = nwoFactory;
     this.kfovFactory = kfovFactory;
+  }
+
+  public DNAEncoding getEncoding() {
+    return encoding;
   }
 
   public Set<NodeID> getNodesWithObject(final ObjectID objectID) {
@@ -63,11 +71,11 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     return response;
   }
 
-  public Set<ObjectID> getKeysForOrphanedValues(final ObjectID mapObjectID) {
+  public Set<?> getKeysForOrphanedValues(final ObjectID mapObjectID) {
     final KeysForOrphanedValuesMessage message = kfovFactory.newKeysForOrphanedValuesMessage();
     message.setMapObjectID(mapObjectID);
 
-    final Set<ObjectID> response = sendMessageAndWait(message);
+    final Set<?> response = sendMessageAndWait(message);
 
     // no response arrived in time, returning an empty set
     if (null == response) { return Collections.emptySet(); }

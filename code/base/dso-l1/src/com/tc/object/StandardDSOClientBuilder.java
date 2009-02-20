@@ -27,6 +27,8 @@ import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.gtx.ClientGlobalTransactionManagerImpl;
 import com.tc.object.idprovider.api.ObjectIDProvider;
 import com.tc.object.idprovider.impl.ObjectIDClientHandshakeRequester;
+import com.tc.object.idprovider.impl.ObjectIDProviderImpl;
+import com.tc.object.idprovider.impl.RemoteObjectIDBatchSequenceProvider;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.lockmanager.api.ClientLockManager;
 import com.tc.object.lockmanager.impl.ClientLockManagerConfigImpl;
@@ -46,8 +48,10 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
+import com.tc.util.Assert;
 import com.tc.util.ToggleableReferenceManager;
 import com.tc.util.sequence.BatchSequence;
+import com.tc.util.sequence.BatchSequenceReceiver;
 
 public class StandardDSOClientBuilder implements DSOClientBuilder {
 
@@ -143,8 +147,23 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                                 .getLong(TCPropertiesConsts.L1_TRANSACTIONMANAGER_TIMEOUTFORACK_ONEXIT) * 1000);
   }
 
-  public ObjectIDClientHandshakeRequester getObjectIDClientHandshakeRequester(final BatchSequence sequence) {
+  public ObjectIDClientHandshakeRequester getObjectIDClientHandshakeRequester(final BatchSequenceReceiver sequence) {
     return new ObjectIDClientHandshakeRequester(sequence);
+  }
+
+  public BatchSequence[] createSequences(RemoteObjectIDBatchSequenceProvider remoteIDProvider, int requestSize) {
+    return new BatchSequence[] { new BatchSequence(remoteIDProvider, requestSize) };
+  }
+
+  public ObjectIDProvider createObjectIdProvider(BatchSequence[] sequences) {
+    Assert.assertTrue(sequences.length == 1);
+
+    return new ObjectIDProviderImpl(sequences[0]);
+  }
+
+  public BatchSequenceReceiver getBatchReceiver(BatchSequence[] sequences) {
+    Assert.assertTrue(sequences.length == 1);
+    return sequences[0];
   }
 
 }

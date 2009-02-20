@@ -24,15 +24,6 @@ fi
 JRUBY_HOME="$cache_dir/$jruby_version"
 export JRUBY_HOME
 
-# to be removed
-if [ -d "$build_system_dir/$jruby_version" ]; then
-  if [ ! -d $JRUBY_HOME ]; then
-    echo "moving jruby to a new cache $cache_dir. This only done once."
-    banner WAIT
-    mv "$build_system_dir/$jruby_version" "$cache_dir"
-  fi
-fi
-
 if [ ! -d "${JRUBY_HOME}" ]; then
   echo "JRuby not found at $JRUBY_HOME. Installing..."
 	"${ANT_HOME}/bin/ant" -buildfile "$build_system_dir/install-jruby-build.xml"

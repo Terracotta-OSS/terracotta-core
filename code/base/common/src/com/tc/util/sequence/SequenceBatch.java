@@ -24,6 +24,10 @@ public class SequenceBatch {
   public long current() {
     return next - 1;
   }
+  
+  public long end() {
+    return end;
+  }
 
   public String toString() {
     return "SequenceBatch@" + System.identityHashCode(this) + "[ next = " + next + " , end = " + end + " ]";

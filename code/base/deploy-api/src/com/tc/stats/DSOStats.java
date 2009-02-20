@@ -21,5 +21,7 @@ public interface DSOStats {
   long getGlobalLockRecallRate();
   
   long getTransactionSizeRate();
+  
+  long getBroadcastRate();
 
 }

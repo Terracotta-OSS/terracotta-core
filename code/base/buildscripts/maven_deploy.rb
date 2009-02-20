@@ -3,7 +3,6 @@ class MavenDeploy
   include MavenConstants
 
   def initialize(options = {})
-    @packaging = options[:packaging] || 'jar'
     @generate_pom = options.boolean(:generate_pom, true)
     @group_id = options[:group_id] || DEFAULT_GROUP_ID
     @repository_url = options[:repository_url] || MAVEN_REPO_LOCAL
@@ -11,9 +10,16 @@ class MavenDeploy
     @snapshot = options.boolean(:snapshot)
   end
 
-  def deploy_file(file, artifact_id, version, pom_file = nil, dry_run = false)
+  def deploy_file(file, artifact_id, version, pom_file = nil, packaging = nil, dry_run = false)
     unless File.exist?(file)
       raise("Bad 'file' argument passed to deploy_file.  File does not exist: #{file}")
+    end
+
+    packaging ||= case file
+      when /pom.*\.xml$/: 'pom'
+      when /\.jar/: 'jar'
+      else
+        File.extname(file)[1..-1]
     end
 
     command = dry_run ? ['echo'] : []
@@ -28,7 +34,7 @@ class MavenDeploy
     end
 
     command_args = {
-      'packaging' => @packaging,
+      'packaging' => packaging,
       'groupId' => @group_id,
       'artifactId' => artifact_id,
       'file' => file,

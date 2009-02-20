@@ -10,7 +10,7 @@ import com.tc.net.NodeID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.net.DSOChannelManager;
-import com.tc.stats.counter.sampled.SampledCounter;
+import com.tc.objectserver.core.api.DSOGlobalServerStats;
 import com.tc.stats.counter.sampled.TimeStampedCounterValue;
 
 import java.util.Collection;
@@ -18,7 +18,7 @@ import java.util.Collections;
 
 public interface L2LockStatsManager {
   public final static L2LockStatsManager NULL_LOCK_STATS_MANAGER = new L2LockStatsManager() {
-    public void start(DSOChannelManager channelManager, SampledCounter globalLockRecallCounter) {
+    public void start(DSOChannelManager channelManager, DSOGlobalServerStats serverStats) {
       // do nothing
     }
     
@@ -100,7 +100,7 @@ public interface L2LockStatsManager {
     
   };
   
-  public void start(DSOChannelManager channelManager, SampledCounter globalLockRecallCounter);
+  public void start(DSOChannelManager channelManager, DSOGlobalServerStats serverStats);
   
   public void setLockStatisticsConfig(int traceDepth, int gatherInterval);
   

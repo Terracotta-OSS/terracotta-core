@@ -29,6 +29,7 @@ import com.terracottatech.config.Members;
 import com.terracottatech.config.MirrorGroup;
 import com.terracottatech.config.MirrorGroups;
 import com.terracottatech.config.PersistenceMode;
+import com.terracottatech.config.Property;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 import com.terracottatech.config.PersistenceMode.Enum;
@@ -182,7 +183,7 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
 
     this.beanSet = new TestConfigBeanSet();
     this.l1_beanSet = new TestConfigBeanSet();
-
+    
     this.l2ConfigurationCreator = new TestConfigurationCreator(this.beanSet, true);
 
     this.mode = mode;
@@ -388,7 +389,13 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
 
     isConfigDone = true;
   }
-
+  
+  public void addTcPropertyToConfig(String propertyName, String propertyValue) {
+    Property tcProps =  l1_beanSet.tcPropertiesBean().addNewProperty();
+    tcProps.setName(propertyName);
+    tcProps.setValue(propertyValue);
+  }
+  
   private void addServerToL1Config(String name, int dsoPort, int jmxPort, boolean cleanGroupsBeanSet) {
     Assert.assertTrue(dsoPort >= 0);
     cleanBeanSetServersIfNeeded(l1_beanSet);
