@@ -8,37 +8,27 @@ import com.tc.async.api.EventContext;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.impl.GarbageCollectionID;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
-import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
-import com.tc.objectserver.dgc.impl.GarbageCollectionInfoPublisherImpl;
-import com.tc.util.UUID;
 
 import java.util.SortedSet;
 
 public class GCResultContext implements EventContext {
 
-  private static final GarbageCollectionInfo   NULL_GARBAGE_COLLECTION_INFO = new GarbageCollectionInfo(new GarbageCollectionID(-1,UUID.getUUID()
-                                                                                                                                    .toString()),true);
+  private static final GarbageCollectionInfo   NULL_GARBAGE_COLLECTION_INFO = new GarbageCollectionInfo(GarbageCollectionID.NULL_ID, true);
 
-  private final int                            gcIteration;
   private final SortedSet<ObjectID>            gcedOids;
   private final GarbageCollectionInfo          gcInfo;
-  private final GarbageCollectionInfoPublisher gcPublisher;
-
-  public GCResultContext(int gcIteration, SortedSet gcedOids) {
-    this(gcIteration, gcedOids, NULL_GARBAGE_COLLECTION_INFO,
-         GarbageCollectionInfoPublisherImpl.NULL_GARBAGE_COLLECCTION_INFO_PUBLISHER);
+ 
+  public GCResultContext(SortedSet gcedOids) {
+    this(gcedOids, NULL_GARBAGE_COLLECTION_INFO);
   }
 
-  public GCResultContext(int gcIteration, SortedSet gcedOids, GarbageCollectionInfo gcInfo,
-                         GarbageCollectionInfoPublisher gcPublisher) {
-    this.gcIteration = gcIteration;
+  public GCResultContext(SortedSet gcedOids, GarbageCollectionInfo gcInfo) {
     this.gcedOids = gcedOids;
     this.gcInfo = gcInfo;
-    this.gcPublisher = gcPublisher;
   }
 
   public int getGCIterationCount() {
-    return this.gcIteration;
+    return this.gcInfo.getIteration();
   }
 
   public SortedSet<ObjectID> getGCedObjectIDs() {
@@ -49,12 +39,8 @@ public class GCResultContext implements EventContext {
     return this.gcInfo;
   }
 
-  public GarbageCollectionInfoPublisher getGCPublisher() {
-    return this.gcPublisher;
-  }
-
   @Override
   public String toString() {
-    return "GCResultContext [ " + this.gcIteration + " , " + this.gcedOids.size() + " ]";
+    return "GCResultContext [ " + this.gcInfo.getIteration() + " , " + this.gcedOids.size() + " ]";
   }
 }

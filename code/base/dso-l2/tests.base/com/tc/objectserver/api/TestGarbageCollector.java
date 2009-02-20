@@ -10,6 +10,7 @@ import com.tc.exception.ImplementMe;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.core.api.Filter;
+import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
 import com.tc.text.PrettyPrinter;
@@ -249,7 +250,7 @@ public class TestGarbageCollector implements GarbageCollector {
     collect(null, this.objectProvider.getRootIDs(), this.objectProvider.getAllObjectIDs(), new NullLifeCycleState());
     this.requestGCPause();
     this.blockUntilReadyToGC();
-    this.deleteGarbage(new GCResultContext(1, TCCollections.EMPTY_OBJECT_ID_SET));
+    this.deleteGarbage(new GCResultContext(TCCollections.EMPTY_OBJECT_ID_SET, new GarbageCollectionInfo()));
   }
 
   public void start() {

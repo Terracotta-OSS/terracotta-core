@@ -24,18 +24,12 @@ import com.tc.net.groups.GroupMessageListener;
 import com.tc.net.groups.GroupResponse;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.context.GCResultContext;
-import com.tc.objectserver.core.impl.GarbageCollectionID;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
-import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
-import com.tc.objectserver.dgc.impl.GCLogger;
-import com.tc.objectserver.dgc.impl.GCLoggerEventPublisher;
-import com.tc.objectserver.dgc.impl.GarbageCollectionInfoPublisherImpl;
 import com.tc.objectserver.dgc.impl.GarbageCollectorEventListenerAdapter;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TxnsInSystemCompletionLister;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
-import com.tc.util.UUID;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.sequence.SequenceGenerator;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorException;
@@ -52,19 +46,18 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, GroupMessageListener,
     L2ObjectStateListener {
 
-  private static final TCLogger                logger        = TCLogging.getLogger(ReplicatedObjectManagerImpl.class);
+  private static final TCLogger              logger        = TCLogging.getLogger(ReplicatedObjectManagerImpl.class);
 
-  private final ObjectManager                  objectManager;
-  private final GroupManager                   groupManager;
-  private final StateManager                   stateManager;
-  private final L2ObjectStateManager           l2ObjectStateManager;
-  private final ReplicatedTransactionManager   rTxnManager;
-  private final ServerTransactionManager       transactionManager;
-  private final Sink                           objectsSyncRequestSink;
-  private final SequenceGenerator              sequenceGenerator;
-  private final GCMonitor                      gcMonitor;
-  private final AtomicLong                     gcIdGenerator = new AtomicLong();
-  private final GarbageCollectionInfoPublisher publisher     = new GarbageCollectionInfoPublisherImpl();
+  private final ObjectManager                objectManager;
+  private final GroupManager                 groupManager;
+  private final StateManager                 stateManager;
+  private final L2ObjectStateManager         l2ObjectStateManager;
+  private final ReplicatedTransactionManager rTxnManager;
+  private final ServerTransactionManager     transactionManager;
+  private final Sink                         objectsSyncRequestSink;
+  private final SequenceGenerator            sequenceGenerator;
+  private final GCMonitor                    gcMonitor;
+  private final AtomicLong                   gcIdGenerator = new AtomicLong();
 
   public ReplicatedObjectManagerImpl(GroupManager groupManager, StateManager stateManager,
                                      L2ObjectStateManager l2ObjectStateManager,
@@ -81,7 +74,6 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     this.sequenceGenerator = sequenceGenerator;
     this.gcMonitor = new GCMonitor();
     this.objectManager.getGarbageCollector().addListener(gcMonitor);
-    this.publisher.addListener(new GCLoggerEventPublisher(new GCLogger(TCLogging.getLogger(ReplicatedObjectManagerImpl.class), true)));
     l2ObjectStateManager.registerForL2ObjectStateChangeEvents(this);
     this.groupManager.registerForMessages(ObjectListSyncMessage.class, this);
   }
@@ -143,12 +135,8 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
                   + gcMsg);
       return;
     }
-    GarbageCollectionInfo info = new GarbageCollectionInfo(new GarbageCollectionID(gcMsg.getGCIterationCount(), UUID.getUUID().toString()), true);
-    info.setDeleted(new ObjectIDSet(gcedOids));
-
-    info.setStartTime(System.currentTimeMillis());
     boolean deleted = objectManager.getGarbageCollector()
-        .deleteGarbage(new GCResultContext(gcMsg.getGCIterationCount(), gcedOids, info, publisher));
+        .deleteGarbage(new GCResultContext(gcedOids, gcMsg.getGCInfo()));
     if (deleted) {
       logger.info("Removed " + gcedOids.size() + " objects from passive ObjectManager from last GC from Active");
     } else {
@@ -271,9 +259,9 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     Map     syncingPassives = new HashMap();
 
     @Override
-    public void garbageCollectorCycleCompleted(GarbageCollectionInfo info) {
+    public void garbageCollectorCycleCompleted(GarbageCollectionInfo info, ObjectIDSet toDeleted) {
       Map toAdd = null;
-      notifyGCResultToPassives(info.getIteration(), info.getDeleted());
+      notifyGCResultToPassives(info, toDeleted);
       synchronized (this) {
         if (syncingPassives.isEmpty()) return;
         toAdd = new LinkedHashMap();
@@ -293,9 +281,9 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       add2L2StateManager(toAdd);
     }
 
-    private void notifyGCResultToPassives(int iteration, final ObjectIDSet deleted) {
+    private void notifyGCResultToPassives(GarbageCollectionInfo gcInfo, final ObjectIDSet deleted) {
       if (deleted.isEmpty()) return;
-      final GCResultMessage msg = GCResultMessageFactory.createGCResultMessage(iteration, deleted);
+      final GCResultMessage msg = GCResultMessageFactory.createGCResultMessage(gcInfo, deleted);
       final long id = gcIdGenerator.incrementAndGet();
       transactionManager.callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionLister() {
         public void onCompletion() {

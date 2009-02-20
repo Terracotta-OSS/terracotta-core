@@ -7,6 +7,7 @@ package com.tc.objectserver.dgc.impl;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
+import com.tc.util.ObjectIDSet;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -104,10 +105,10 @@ public class GarbageCollectionInfoPublisherImpl implements GarbageCollectionInfo
     }
   }
 
-  public void fireGCCycleCompletedEvent(GarbageCollectionInfo info) {
+  public void fireGCCycleCompletedEvent(GarbageCollectionInfo info, ObjectIDSet toDelete) {
     for (Iterator iter = this.garbageCollectionEventListeners.iterator(); iter.hasNext();) {
       GarbageCollectorEventListener listener = (GarbageCollectorEventListener) iter.next();
-      listener.garbageCollectorCycleCompleted(info);
+      listener.garbageCollectorCycleCompleted(info, toDelete);
     }
   }
 

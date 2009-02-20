@@ -29,21 +29,22 @@ public class GarbageDisposeHandler extends AbstractEventHandler {
   private final ManagedObjectPersistor         managedObjectPersistor;
   private final PersistenceTransactionProvider persistenceTransactionProvider;
   private final int                            deleteBatchSize;
+  private final GarbageCollectionInfoPublisher publisher;
 
-  public GarbageDisposeHandler(ManagedObjectPersistor managedObjectPersistor,
+  public GarbageDisposeHandler(GarbageCollectionInfoPublisher publisher, ManagedObjectPersistor managedObjectPersistor,
                                PersistenceTransactionProvider persistenceTransactionProvider, int deleteBatchSize) {
     this.managedObjectPersistor = managedObjectPersistor;
     this.persistenceTransactionProvider = persistenceTransactionProvider;
     this.deleteBatchSize = deleteBatchSize;
+    this.publisher = publisher;
   }
 
   public void handleEvent(EventContext context) {
     GCResultContext gcResult = (GCResultContext) context;
     GarbageCollectionInfo gcInfo = gcResult.getGCInfo();
-    GarbageCollectionInfoPublisher gcPublisher = gcResult.getGCPublisher();
     
     
-    gcPublisher.fireGCDeleteEvent(gcInfo);
+    publisher.fireGCDeleteEvent(gcInfo);
     long start = System.currentTimeMillis();
     SortedSet sortedGarbage = gcResult.getGCedObjectIDs();
 
@@ -67,7 +68,7 @@ public class GarbageDisposeHandler extends AbstractEventHandler {
     long endMillis = System.currentTimeMillis();
     gcInfo.setElapsedTime(endMillis - gcInfo.getStartTime());
 
-    gcPublisher.fireGCCompletedEvent(gcInfo);
+    publisher.fireGCCompletedEvent(gcInfo);
    
   }
 

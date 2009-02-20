@@ -8,11 +8,13 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.core.impl.GCTestObjectManager;
 import com.tc.objectserver.core.impl.TestManagedObject;
 import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
+import com.tc.objectserver.dgc.impl.GarbageCollectionInfoPublisherImpl;
 import com.tc.objectserver.dgc.impl.MarkAndSweepGarbageCollector;
 import com.tc.objectserver.impl.ObjectManagerConfig;
 import com.tc.objectserver.l1.api.TestClientStateManager;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.impl.NullPersistenceTransactionProvider;
+import com.tc.util.ObjectIDSet;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -45,7 +47,7 @@ public class GCStatsEventPublisherTest extends TestCase {
     this.released = new HashSet<ObjectID>();
     this.objectManager = new GCTestObjectManager(this.lookedUp, this.released, this.transactionProvider);
     this.collector = new MarkAndSweepGarbageCollector(new ObjectManagerConfig(300000, true, true, true, true, 60000),
-                                                      this.objectManager, new TestClientStateManager());
+                                                      this.objectManager, new TestClientStateManager(), new GarbageCollectionInfoPublisherImpl());
     this.objectManager.setGarbageCollector(this.collector);
     this.objectManager.start();
     this.root1 = createObject(8);
@@ -93,8 +95,6 @@ public class GCStatsEventPublisherTest extends TestCase {
     assertEquals(1, listener.pausedList.size());
     assertEquals(1, listener.rescue2StartList.size());
     assertEquals(1, listener.markCompleteList.size());
-    assertEquals(1, listener.deleteList.size());
-    assertEquals(1, listener.completedList.size());
     assertEquals(1, listener.cycleCompletedList.size());
 
   }
@@ -157,8 +157,6 @@ public class GCStatsEventPublisherTest extends TestCase {
     public void garbageCollectorMarkComplete(GarbageCollectionInfo info) {
       super.garbageCollectorMarkComplete(info);
       assertFalse(info.getPausedStageTime() == GarbageCollectionInfo.NOT_INITIALIZED);
-      assertTrue(info.getDeleted() != null);
-      assertTrue(info.getRescueTimes() != null);
     }
 
     @Override
@@ -232,7 +230,7 @@ public class GCStatsEventPublisherTest extends TestCase {
       this.deleteList.add(info);
     }
 
-    public void garbageCollectorCycleCompleted(GarbageCollectionInfo info) {
+    public void garbageCollectorCycleCompleted(GarbageCollectionInfo info, ObjectIDSet toDelete) {
       this.cycleCompletedList.add(info);
     }
 

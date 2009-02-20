@@ -14,7 +14,6 @@ import com.tc.objectserver.core.impl.GarbageCollectionID;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.util.ObjectIDSet;
-import com.tc.util.UUID;
 
 import java.util.Set;
 
@@ -33,8 +32,8 @@ public class YoungGCHook extends AbstractGCHook {
     return "YoungGen";
   }
 
-  public GarbageCollectionInfo createGCInfo(int gcIteration) {
-    return new GarbageCollectionInfo(new GarbageCollectionID(gcIteration, UUID.getUUID().toString()), false);
+  public GarbageCollectionInfo createGCInfo(GarbageCollectionID id) {
+    return new GarbageCollectionInfo(id, false);
   }
 
   public ObjectIDSet getGCCandidates() {

@@ -6,6 +6,7 @@ package com.tc.objectserver.dgc.impl;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.Filter;
+import com.tc.objectserver.core.impl.GarbageCollectionID;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.util.ObjectIDSet;
 
@@ -16,9 +17,9 @@ public interface GCHook {
   public ObjectIDSet getGCCandidates();
 
   public ObjectIDSet getRootObjectIDs(ObjectIDSet candidateIDs);
-
-  public GarbageCollectionInfo createGCInfo(int gcIteration);
-
+  
+  public GarbageCollectionInfo createGCInfo(GarbageCollectionID id);
+  
   public String getDescription();
 
   public void startMonitoringReferenceChanges();

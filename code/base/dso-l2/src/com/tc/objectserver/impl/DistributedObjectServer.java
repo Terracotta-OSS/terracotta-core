@@ -131,10 +131,12 @@ import com.tc.objectserver.core.api.DSOGlobalServerStatsImpl;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerConfigurationContextImpl;
 import com.tc.objectserver.core.impl.ServerManagementContext;
+import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.dgc.impl.GCComptrollerImpl;
 import com.tc.objectserver.dgc.impl.GCStatisticsAgentSubSystemEventListener;
 import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
+import com.tc.objectserver.dgc.impl.GarbageCollectionInfoPublisherImpl;
 import com.tc.objectserver.dgc.impl.GarbageCollectorThread;
 import com.tc.objectserver.dgc.impl.MarkAndSweepGarbageCollector;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
@@ -487,6 +489,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     final TransactionPersistor transactionPersistor;
     final Sequence globalTransactionIDSequence;
     logger.debug("server swap enabled: " + swapEnabled);
+    final GarbageCollectionInfoPublisher gcPublisher = new GarbageCollectionInfoPublisherImpl();
     final ManagedObjectChangeListenerProviderImpl managedObjectChangeListenerProvider = new ManagedObjectChangeListenerProviderImpl();
     if (swapEnabled) {
       File dbhome = new File(this.configSetupManager.commonl2Config().dataPath().getFile(),
@@ -536,9 +539,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
                                  + " Accepted Values are : <LRU>/<LFU> Please check tc.properties");
       }
       int gcDeleteThreads = this.l2Properties.getInt("seda.gcdeletestage.threads");
+      
       Sink gcDisposerSink = stageManager.createStage(
                                                      ServerConfigurationContext.GC_DELETE_FROM_DISK_STAGE,
-                                                     new GarbageDisposeHandler(this.persistor
+                                                     new GarbageDisposeHandler(gcPublisher, this.persistor
                                                          .getManagedObjectPersistor(), this.persistor
                                                          .getPersistenceTransactionProvider(), objManagerProperties
                                                          .getInt("deleteBatchSize")), gcDeleteThreads, maxStageSize)
@@ -911,7 +915,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
 
     // initialize the garbage collector
     GarbageCollector gc = createGarbageCollector(toInit, objectManagerConfig, this.objectManager,
-                                                 this.clientStateManager, stageManager, maxStageSize);
+                                                 this.clientStateManager, stageManager, maxStageSize, gcPublisher);
     gc.addListener(new GCStatisticsAgentSubSystemEventListener(getStatisticsAgentSubSystem()));
     this.objectManager.setGarbageCollector(gc);
     if (objectManagerConfig.startGCThread()) {
@@ -1067,8 +1071,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
   // Overridden by enterprise server
   protected GarbageCollector createGarbageCollector(List<PostInit> toInit, ObjectManagerConfig objectManagerConfig,
                                                     ObjectManager objectMgr, ClientStateManager stateManager,
-                                                    StageManager stageManager, int maxStageSize) {
-    MarkAndSweepGarbageCollector gc = new MarkAndSweepGarbageCollector(objectManagerConfig, objectMgr, stateManager);
+                                                    StageManager stageManager, int maxStageSize, GarbageCollectionInfoPublisher gcPublisher) {
+    MarkAndSweepGarbageCollector gc = new MarkAndSweepGarbageCollector(objectManagerConfig, objectMgr, stateManager, gcPublisher);
     gc.addListener(getGcStatsEventPublisher());
     return gc;
   }

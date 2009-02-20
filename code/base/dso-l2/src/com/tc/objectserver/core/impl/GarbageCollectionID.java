@@ -12,7 +12,9 @@ import com.tc.util.AbstractIdentifier;
 
 public class GarbageCollectionID extends AbstractIdentifier {
 
-  private String                          uuid;
+  public static final String NULL_UUID       = "NULL-UUID";
+
+  private final String                          uuid;
 
   /**
    * The NULL ObjectID
@@ -24,6 +26,7 @@ public class GarbageCollectionID extends AbstractIdentifier {
    */
   private GarbageCollectionID() {
     super();
+    uuid = NULL_UUID;
   }
 
   /**
@@ -50,11 +53,6 @@ public class GarbageCollectionID extends AbstractIdentifier {
     return "GarbageCollectionID";
   }
 
-  // TODO::Remove this and make gcIteration as long
-  public int getIteration() {
-    return (int) toLong();
-  }
-
   public String toString() {
     return getIdentifierType() + "=" + "[" + getIdentifier() + "]";
   }
@@ -68,7 +66,7 @@ public class GarbageCollectionID extends AbstractIdentifier {
   public boolean equals(Object obj) {
     if (obj instanceof GarbageCollectionID) {
       GarbageCollectionID id = (GarbageCollectionID) obj;
-      return getIdentifier().equals(id.getIdentifier());
+      return getUUID().equals(id.getUUID()) && toLong() == id.toLong();
     }
     return false;
   }

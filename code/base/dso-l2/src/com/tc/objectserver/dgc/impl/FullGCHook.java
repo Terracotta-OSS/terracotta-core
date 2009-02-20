@@ -16,7 +16,6 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.ObjectIDSet;
-import com.tc.util.UUID;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Set;
@@ -49,8 +48,8 @@ public class FullGCHook extends AbstractGCHook {
     return "Full";
   }
 
-  public GarbageCollectionInfo createGCInfo(int gcIteration) {
-    return new GarbageCollectionInfo(new GarbageCollectionID(gcIteration, UUID.getUUID().toString()), true);
+  public GarbageCollectionInfo createGCInfo(GarbageCollectionID id) {
+    return new GarbageCollectionInfo(id, true);
   }
 
   public ObjectIDSet getGCCandidates() {

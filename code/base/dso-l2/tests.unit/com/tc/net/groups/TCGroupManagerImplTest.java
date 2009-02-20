@@ -36,6 +36,7 @@ import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
+import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.test.TCTestCase;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.PortChooser;
@@ -279,14 +280,14 @@ public class TCGroupManagerImplTest extends TCTestCase {
     for (long i = 1; i <= 100; ++i) {
       oidSet.add(new ObjectID(i));
     }
-    GCResultMessage message = new GCResultMessage(GCResultMessage.GC_RESULT, 1, oidSet);
+    GCResultMessage message = new GCResultMessage(GCResultMessage.GC_RESULT, new GarbageCollectionInfo(), oidSet);
     return (message);
   }
 
   private boolean cmpGCResultMessage(GCResultMessage o1, GCResultMessage o2) {
     return (o1.getType() == o2.getType() && o1.getMessageID().equals(o2.getMessageID())
-            && o1.getGCedObjectIDs().equals(o2.getGCedObjectIDs()) && o1.getGCIterationCount() == o2
-        .getGCIterationCount());
+            && o1.getGCedObjectIDs().equals(o2.getGCedObjectIDs()) && o1.getGCInfo().getGarbageCollectionID().toLong() == o2
+        .getGCInfo().getGarbageCollectionID().toLong());
   }
 
   public void testSendToAll() throws Exception {

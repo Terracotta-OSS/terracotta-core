@@ -46,6 +46,7 @@ import com.tc.objectserver.context.RecallObjectsContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.TestDNA;
 import com.tc.objectserver.core.impl.TestManagedObject;
+import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
 import com.tc.objectserver.gtx.TestGlobalTransactionManager;
 import com.tc.objectserver.impl.InMemoryManagedObjectStore;
@@ -1458,7 +1459,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     assertTrue(gc.isPaused());
 
     // Complete gc
-    gc.deleteGarbage(new GCResultContext(1, TCCollections.EMPTY_OBJECT_ID_SET));
+    gc.deleteGarbage(new GCResultContext(TCCollections.EMPTY_OBJECT_ID_SET, new GarbageCollectionInfo()));
 
     // Lookup context should have been fired
     loc = (LookupEventContext) this.coordinator.lookupSink.queue.take();

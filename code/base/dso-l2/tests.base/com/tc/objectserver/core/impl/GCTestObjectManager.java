@@ -17,6 +17,7 @@ import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.api.GarbageCollector;
+import com.tc.objectserver.dgc.impl.GarbageCollectionInfoPublisherImpl;
 import com.tc.objectserver.impl.ManagedObjectReference;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
@@ -174,11 +175,12 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
     return mo;
   }
 
+  //TODO: just garbage collector complete interface.
   public void notifyGCComplete(GCResultContext resultContext) {
 
     
     GarbageCollectionInfo gcInfo = resultContext.getGCInfo();
-    GarbageCollectionInfoPublisher gcPublisher = resultContext.getGCPublisher();
+    GarbageCollectionInfoPublisher gcPublisher = new GarbageCollectionInfoPublisherImpl();
     
      
     gcPublisher.fireGCDeleteEvent(gcInfo);

@@ -10,6 +10,7 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.core.api.Filter;
+import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
 import com.tc.objectserver.impl.ObjectManagerConfig;
@@ -29,28 +30,29 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class MarkAndSweepGarbageCollector implements GarbageCollector {
 
-  static final TCLogger                            logger                     = TCLogging
-                                                                                  .getLogger(MarkAndSweepGarbageCollector.class);
+  static final TCLogger                        logger                     = TCLogging
+                                                                              .getLogger(MarkAndSweepGarbageCollector.class);
 
-  private static final LifeCycleState              NULL_LIFECYCLE_STATE       = new NullLifeCycleState();
+  private static final LifeCycleState          NULL_LIFECYCLE_STATE       = new NullLifeCycleState();
 
-  private final AtomicInteger                      gcIterationCounter         = new AtomicInteger(0);
-  private final GarbageCollectionInfoPublisherImpl gcPublisher                = new GarbageCollectionInfoPublisherImpl();
-  private final ObjectManagerConfig                objectManagerConfig;
-  private final ClientStateManager                 stateManager;
-  private final ObjectManager                      objectManager;
+  private final AtomicInteger                  gcIterationCounter         = new AtomicInteger(0);
+  private final GarbageCollectionInfoPublisher gcPublisher;
+  private final ObjectManagerConfig            objectManagerConfig;
+  private final ClientStateManager             stateManager;
+  private final ObjectManager                  objectManager;
 
-  private State                                    state                      = GC_SLEEP;
-  private volatile ChangeCollector                 referenceCollector         = ChangeCollector.NULL_CHANGE_COLLECTOR;
-  private volatile YoungGenChangeCollector         youngGenReferenceCollector = YoungGenChangeCollector.NULL_YOUNG_CHANGE_COLLECTOR;
-  private volatile LifeCycleState                  gcState                    = new NullLifeCycleState();
-  private volatile boolean                         started                    = false;
+  private State                                state                      = GC_SLEEP;
+  private volatile ChangeCollector             referenceCollector         = ChangeCollector.NULL_CHANGE_COLLECTOR;
+  private volatile YoungGenChangeCollector     youngGenReferenceCollector = YoungGenChangeCollector.NULL_YOUNG_CHANGE_COLLECTOR;
+  private volatile LifeCycleState              gcState                    = new NullLifeCycleState();
+  private volatile boolean                     started                    = false;
 
   public MarkAndSweepGarbageCollector(ObjectManagerConfig objectManagerConfig, ObjectManager objectMgr,
-                                      ClientStateManager stateManager) {
+                                      ClientStateManager stateManager, GarbageCollectionInfoPublisher gcPublisher) {
     this.objectManagerConfig = objectManagerConfig;
     this.objectManager = objectMgr;
     this.stateManager = stateManager;
+    this.gcPublisher = gcPublisher;
     addListener(new GCLoggerEventPublisher(new GCLogger(logger, objectManagerConfig.verboseGC())));
   }
 

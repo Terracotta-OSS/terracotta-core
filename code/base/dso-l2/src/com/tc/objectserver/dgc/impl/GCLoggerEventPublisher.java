@@ -5,6 +5,7 @@
 package com.tc.objectserver.dgc.impl;
 
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
+import com.tc.util.ObjectIDSet;
 
 public class GCLoggerEventPublisher extends GarbageCollectorEventListenerAdapter {
 
@@ -16,62 +17,62 @@ public class GCLoggerEventPublisher extends GarbageCollectorEventListenerAdapter
   
   @Override
   public void garbageCollectorStart(GarbageCollectionInfo info) {
-    gcLogger.log_start(info.getIteration(), info.isFullGC());
+    gcLogger.log_start(info.getGarbageCollectionID(), info.isFullGC());
   }
 
   @Override
   public void garbageCollectorMark(GarbageCollectionInfo info) {
-    gcLogger.log_markStart(info.getIteration(), info.getBeginObjectCount());
+    gcLogger.log_markStart(info.getGarbageCollectionID(), info.getBeginObjectCount());
   }
 
   @Override
   public void garbageCollectorMarkResults(GarbageCollectionInfo info) {
-    gcLogger.log_markResults(info.getIteration(), info.getPreRescueCount());
+    gcLogger.log_markResults(info.getGarbageCollectionID(), info.getPreRescueCount());
   }
 
   @Override
   public void garbageCollectorRescue1Complete(GarbageCollectionInfo info) {
-    gcLogger.log_rescue_complete(info.getIteration(), 1, info.getRescue1Count());
+    gcLogger.log_rescue_complete(info.getGarbageCollectionID(), 1, info.getRescue1Count());
   }
 
   @Override
   public void garbageCollectorPausing(GarbageCollectionInfo info) {
-    gcLogger.log_quiescing(info.getIteration());
+    gcLogger.log_quiescing(info.getGarbageCollectionID());
   }
 
   @Override
   public void garbageCollectorPaused(GarbageCollectionInfo info) {
-    gcLogger.log_paused(info.getIteration());
+    gcLogger.log_paused(info.getGarbageCollectionID());
   }
 
   @Override
   public void garbageCollectorRescue2Start(GarbageCollectionInfo info) {
-    gcLogger.log_rescue_start(info.getIteration(), 2, info.getCandidateGarbageCount());
+    gcLogger.log_rescue_start(info.getGarbageCollectionID(), 2, info.getCandidateGarbageCount());
   }
 
   @Override
   public void garbageCollectorMarkComplete(GarbageCollectionInfo info) {
-    gcLogger.log_markComplete( info.getIteration(), info.getCandidateGarbageCount());
+    gcLogger.log_markComplete(info.getGarbageCollectionID(), info.getCandidateGarbageCount());
   }
 
   @Override
-  public void garbageCollectorCycleCompleted(GarbageCollectionInfo info) {
-    gcLogger.log_cycleComplete(info.getIteration(), info, info.getRescueTimes());
+  public void garbageCollectorCycleCompleted(GarbageCollectionInfo info, ObjectIDSet toDelete) {
+    gcLogger.log_cycleComplete(info.getGarbageCollectionID(), info);
   }
 
   @Override
   public void garbageCollectorDelete(GarbageCollectionInfo info) {
-    gcLogger.log_deleteStart(info.getIteration(), info.getDeleted().size());
+    gcLogger.log_deleteStart(info.getGarbageCollectionID(), info.getCandidateGarbageCount());
   }
   
   @Override
   public void garbageCollectorCompleted(GarbageCollectionInfo info) {
-    gcLogger.log_complete(info.getIteration(), info.getDeleted().size(), info.getElapsedTime());
+    gcLogger.log_complete(info.getGarbageCollectionID(), info.getActualGarbageCount(), info.getElapsedTime());
   }
 
   @Override
   public void garbageCollectorCanceled(GarbageCollectionInfo info) {
-    gcLogger.log_canceled(info.getIteration());
+    gcLogger.log_canceled(info.getGarbageCollectionID());
   }
 
   

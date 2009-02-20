@@ -6,6 +6,7 @@ package com.tc.objectserver.dgc.impl;
 
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
+import com.tc.util.ObjectIDSet;
 
 public abstract class GarbageCollectorEventListenerAdapter implements GarbageCollectorEventListener {
 
@@ -13,7 +14,7 @@ public abstract class GarbageCollectorEventListenerAdapter implements GarbageCol
     // do nothing
   }
 
-  public void garbageCollectorCycleCompleted(GarbageCollectionInfo info) {
+  public void garbageCollectorCycleCompleted(GarbageCollectionInfo info, ObjectIDSet toDelete) {
     //
   }
 
