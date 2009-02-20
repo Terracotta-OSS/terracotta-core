@@ -96,6 +96,7 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
       });
     }
 
+    @Override
     protected void finished() {
       Exception e = getException();
       if (e != null) {
@@ -121,6 +122,7 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
     return new ClientsPanel(adminClientContext, getClusterModel(), theClients);
   }
 
+  @Override
   public Component getComponent() {
     if (clientsPanel == null) {
       clientsPanel = createClientsPanel(ClientsNode.this, clients);
@@ -148,11 +150,12 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
     nodeStructureChanged();
   }
 
-  private void updateLabel() {
+  protected void updateLabel() {
     setLabel(adminClientContext.getMessage("clients") + " (" + getChildCount() + ")");
     nodeChanged();
   }
 
+  @Override
   public void tearDown() {
     IServer activeCoord = getActiveCoordinator();
     if (activeCoord != null) {
@@ -179,7 +182,7 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
   }
 
   private class ClientConnectedRunnable implements Runnable {
-    private IClient client;
+    private final IClient client;
 
     private ClientConnectedRunnable(IClient client) {
       this.client = client;
@@ -203,7 +206,7 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
   }
 
   private class ClientDisconnectedRunnable implements Runnable {
-    private IClient client;
+    private final IClient client;
 
     private ClientDisconnectedRunnable(IClient client) {
       this.client = client;

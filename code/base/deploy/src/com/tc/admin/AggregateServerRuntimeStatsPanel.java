@@ -68,11 +68,13 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     }
   }
 
+  @Override
   public void startMonitoringRuntimeStats() {
     addPolledAttributeListener();
     super.startMonitoringRuntimeStats();
   }
 
+  @Override
   public void stopMonitoringRuntimeStats() {
     removePolledAttributeListener();
     super.stopMonitoringRuntimeStats();
@@ -96,20 +98,20 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
       long txn = 0L;
       long cacheMiss = 0L;
       Number n;
-      
+
       for (IServerGroup group : theClusterModel.getServerGroups()) {
         for (IServer theServer : group.getMembers()) {
           if (theServer.isReady()) {
-            if((n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OBJECT_FLUSH_RATE)) != null) {
+            if ((n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OBJECT_FLUSH_RATE)) != null) {
               flush += n.longValue();
             }
-            if((n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OBJECT_FAULT_RATE)) != null) {
+            if ((n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OBJECT_FAULT_RATE)) != null) {
               fault += n.longValue();
             }
-            if((n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_TRANSACTION_RATE)) != null) {
+            if ((n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_TRANSACTION_RATE)) != null) {
               txn += n.longValue();
             }
-            if((n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_CACHE_MISS_RATE)) != null) {
+            if ((n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_CACHE_MISS_RATE)) != null) {
               cacheMiss += n.longValue();
             }
           }
@@ -123,6 +125,7 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     }
   }
 
+  @Override
   protected synchronized void setup(XContainer chartsPanel) {
     chartsPanel.setLayout(new GridLayout(0, 2));
     setupTxnRatePanel(chartsPanel);
@@ -136,7 +139,8 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     ChartPanel flushRatePanel = createChartPanel(createChart(flushRateSeries, false));
     parent.add(flushRatePanel);
     flushRatePanel.setPreferredSize(fDefaultGraphSize);
-    flushRatePanel.setBorder(new TitledBorder(appContext.getString("object.flush.rate")));
+    flushRatePanel.setBorder(new TitledBorder(appContext.getString("aggregate.server.stats.flush.rate")));
+    flushRatePanel.setToolTipText(appContext.getString("aggregate.server.stats.flush.rate.tip"));
   }
 
   private void setupFaultRatePanel(XContainer parent) {
@@ -144,7 +148,8 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     ChartPanel faultRatePanel = createChartPanel(createChart(faultRateSeries, false));
     parent.add(faultRatePanel);
     faultRatePanel.setPreferredSize(fDefaultGraphSize);
-    faultRatePanel.setBorder(new TitledBorder(appContext.getString("object.fault.rate")));
+    faultRatePanel.setBorder(new TitledBorder(appContext.getString("aggregate.server.stats.fault.rate")));
+    faultRatePanel.setToolTipText(appContext.getString("aggregate.server.stats.fault.rate.tip"));
   }
 
   private void setupTxnRatePanel(XContainer parent) {
@@ -152,7 +157,8 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     ChartPanel txnRatePanel = createChartPanel(createChart(txnRateSeries, false));
     parent.add(txnRatePanel);
     txnRatePanel.setPreferredSize(fDefaultGraphSize);
-    txnRatePanel.setBorder(new TitledBorder(appContext.getString("transaction.rate")));
+    txnRatePanel.setBorder(new TitledBorder(appContext.getString("aggregate.server.stats.transaction.rate")));
+    txnRatePanel.setToolTipText(appContext.getString("aggregate.server.stats.transaction.rate.tip"));
   }
 
   private void setupCacheMissRatePanel(XContainer parent) {
@@ -160,7 +166,8 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     ChartPanel cacheMissRatePanel = createChartPanel(createChart(cacheMissRateSeries, false));
     parent.add(cacheMissRatePanel);
     cacheMissRatePanel.setPreferredSize(fDefaultGraphSize);
-    cacheMissRatePanel.setBorder(new TitledBorder(appContext.getString("cache.miss.rate")));
+    cacheMissRatePanel.setBorder(new TitledBorder(appContext.getString("aggregate.server.stats.cache.miss.rate")));
+    cacheMissRatePanel.setToolTipText(appContext.getString("aggregate.server.stats.cache.miss.rate.tip"));
   }
 
   private void clearAllTimeSeries() {
@@ -188,6 +195,7 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     }
   }
 
+  @Override
   public synchronized void tearDown() {
     stopMonitoringRuntimeStats();
     clusterModel = null;

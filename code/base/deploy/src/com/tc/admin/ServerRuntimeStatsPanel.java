@@ -87,11 +87,13 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     }
   }
 
+  @Override
   public void startMonitoringRuntimeStats() {
     addPolledAttributeListener();
     super.startMonitoringRuntimeStats();
   }
 
+  @Override
   public void stopMonitoringRuntimeStats() {
     removePolledAttributeListener();
     super.stopMonitoringRuntimeStats();
@@ -148,6 +150,7 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     }
   }
 
+  @Override
   protected synchronized void setup(XContainer chartsPanel) {
     chartsPanel.setLayout(new GridLayout(0, 2));
     setupMemoryPanel(chartsPanel);
@@ -163,7 +166,8 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     ChartPanel flushRatePanel = createChartPanel(createChart(flushRateSeries, false));
     parent.add(flushRatePanel);
     flushRatePanel.setPreferredSize(fDefaultGraphSize);
-    flushRatePanel.setBorder(new TitledBorder(appContext.getString("object.flush.rate")));
+    flushRatePanel.setBorder(new TitledBorder(appContext.getString("server.stats.flush.rate")));
+    flushRatePanel.setToolTipText(appContext.getString("server.stats.flush.rate.tip"));
   }
 
   private void setupFaultRatePanel(XContainer parent) {
@@ -171,7 +175,8 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     ChartPanel faultRatePanel = createChartPanel(createChart(faultRateSeries, false));
     parent.add(faultRatePanel);
     faultRatePanel.setPreferredSize(fDefaultGraphSize);
-    faultRatePanel.setBorder(new TitledBorder(appContext.getString("object.fault.rate")));
+    faultRatePanel.setBorder(new TitledBorder(appContext.getString("server.stats.fault.rate")));
+    faultRatePanel.setToolTipText(appContext.getString("server.stats.fault.rate.tip"));
   }
 
   private void setupTxnRatePanel(XContainer parent) {
@@ -179,7 +184,8 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     ChartPanel txnRatePanel = createChartPanel(createChart(txnRateSeries, false));
     parent.add(txnRatePanel);
     txnRatePanel.setPreferredSize(fDefaultGraphSize);
-    txnRatePanel.setBorder(new TitledBorder(appContext.getString("transaction.rate")));
+    txnRatePanel.setBorder(new TitledBorder(appContext.getString("server.stats.transaction.rate")));
+    txnRatePanel.setToolTipText(appContext.getString("server.stats.transaction.rate.tip"));
   }
 
   private void setupCacheMissRatePanel(XContainer parent) {
@@ -187,7 +193,8 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     ChartPanel cacheMissRatePanel = createChartPanel(createChart(cacheMissRateSeries, false));
     parent.add(cacheMissRatePanel);
     cacheMissRatePanel.setPreferredSize(fDefaultGraphSize);
-    cacheMissRatePanel.setBorder(new TitledBorder(appContext.getString("cache.miss.rate")));
+    cacheMissRatePanel.setBorder(new TitledBorder(appContext.getString("server.stats.cache.miss.rate")));
+    cacheMissRatePanel.setToolTipText(appContext.getString("server.stats.cache.miss.rate.tip"));
   }
 
   private void setupMemoryPanel(XContainer parent) {
@@ -200,7 +207,8 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     ChartPanel memoryPanel = createChartPanel(memoryChart);
     parent.add(memoryPanel);
     memoryPanel.setPreferredSize(fDefaultGraphSize);
-    memoryPanel.setBorder(new TitledBorder(appContext.getString("heap.usage")));
+    memoryPanel.setBorder(new TitledBorder(appContext.getString("server.stats.heap.usage")));
+    memoryPanel.setToolTipText(appContext.getString("server.stats.heap.usage.tip"));
   }
 
   private synchronized void setupCpuSeries(int processorCount) {
@@ -233,6 +241,7 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
       });
     }
 
+    @Override
     protected void finished() {
       Exception e = getException();
       if (e != null) {
@@ -256,7 +265,8 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     cpuPanel = createChartPanel(null);
     parent.add(cpuPanel);
     cpuPanel.setPreferredSize(fDefaultGraphSize);
-    cpuPanel.setBorder(new TitledBorder(appContext.getString("cpu.usage")));
+    cpuPanel.setBorder(new TitledBorder(appContext.getString("server.stats.cpu.usage")));
+    cpuPanel.setToolTipText(appContext.getString("server.stats.cpu.usage.tip"));
     appContext.execute(new CpuPanelWorker());
   }
 
@@ -299,6 +309,7 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     }
   }
 
+  @Override
   public synchronized void tearDown() {
     stopMonitoringRuntimeStats();
     server = null;

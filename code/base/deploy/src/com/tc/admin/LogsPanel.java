@@ -15,10 +15,10 @@ import javax.swing.Icon;
 import javax.swing.JComponent;
 
 public class LogsPanel extends XContainer {
-  private IAdminClientContext   adminClientContext;
-  private XTabbedPane           tabbedPane;
-  private LiveObjectCountViewer liveObjectCountViewer;
-  private LogViewer             logViewer;
+  private final IAdminClientContext adminClientContext;
+  private XTabbedPane               tabbedPane;
+  private LiveObjectCountViewer     liveObjectCountViewer;
+  private LogViewer                 logViewer;
 
   public LogsPanel(IAdminClientContext adminClientContext) {
     super(new BorderLayout());
@@ -48,7 +48,8 @@ public class LogsPanel extends XContainer {
     logViewer.add(clusterModel);
 
     if (liveObjectCountViewer == null) {
-      add("LiveObjectCount", liveObjectCountViewer = new LiveObjectCountViewer(adminClientContext));
+      add(adminClientContext.getString("live.object.count"),
+          liveObjectCountViewer = new LiveObjectCountViewer(adminClientContext));
     }
     liveObjectCountViewer.add(clusterModel);
   }

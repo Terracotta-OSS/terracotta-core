@@ -93,7 +93,7 @@ public class ClientPanel extends XContainer implements PropertyChangeListener {
     String patchLevel = client.getProductPatchLevel();
     String[] fields = { "Host", "Port", "ChannelID", "ProductVersion", "ProductBuildID" };
     List<String> fieldList = new ArrayList(Arrays.asList(fields));
-    String[] headings = { "Host", "Port", "Channel ID", "Version", "Build" };
+    String[] headings = { "Host", "Port", "Client ID", "Version", "Build" };
     List<String> headingList = new ArrayList(Arrays.asList(headings));
     if (patchLevel != null && patchLevel.length() > 0) {
       fieldList.add("ProductPatchVersion");
@@ -138,6 +138,7 @@ public class ClientPanel extends XContainer implements PropertyChangeListener {
     }
   }
 
+  @Override
   public void tearDown() {
     super.tearDown();
 

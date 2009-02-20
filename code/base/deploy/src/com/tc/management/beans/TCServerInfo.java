@@ -129,7 +129,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   public boolean isGarbageCollectionEnabled() {
     return server.isGarbageCollectionEnabled();
   }
-  
+
   public int getGarbageCollectionInterval() {
     return server.getGarbageCollectionInterval();
   }
@@ -152,6 +152,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
                                                             "Server cannot be shutdown because it is not fully started."); }
     final Timer timer = new Timer();
     final TimerTask task = new TimerTask() {
+      @Override
       public void run() {
         server.shutdown();
       }
@@ -159,6 +160,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     timer.schedule(task, 1000);
   }
 
+  @Override
   public MBeanNotificationInfo[] getNotificationInfo() {
     return Arrays.asList(NOTIFICATION_INFO).toArray(EMPTY_NOTIFICATION_INFO);
   }
@@ -167,6 +169,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     server.startBeanShell(port);
   }
 
+  @Override
   public String toString() {
     if (isStarted()) {
       return "starting, startTime(" + getStartTime() + ")";
@@ -232,9 +235,13 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   public ServerGroupInfo[] getServerGroupInfo() {
     return server.serverGroups();
   }
-  
+
   public int getDSOListenPort() {
     return server.getDSOListenPort();
+  }
+
+  public int getDSOGroupPort() {
+    return server.getDSOGroupPort();
   }
 
   public String[] getCpuStatNames() {
@@ -254,11 +261,11 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   public long getUsedMemory() {
     return manager.getMemoryUsage().getUsedMemory();
   }
-  
+
   public long getMaxMemory() {
     return manager.getMemoryUsage().getMaxMemory();
   }
-  
+
   public Map getStatistics() {
     HashMap<String, Object> map = new HashMap<String, Object>();
 

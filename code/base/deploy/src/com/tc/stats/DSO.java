@@ -139,7 +139,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   public long getTransactionSizeRate() {
     return getStats().getTransactionSizeRate();
   }
-  
+
   public long getBroadcastRate() {
     return getStats().getBroadcastRate();
   }

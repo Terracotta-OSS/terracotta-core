@@ -19,9 +19,9 @@ public interface DSOStats {
   long getObjectFlushRate();
 
   long getGlobalLockRecallRate();
-  
+
   long getTransactionSizeRate();
-  
+
   long getBroadcastRate();
 
 }

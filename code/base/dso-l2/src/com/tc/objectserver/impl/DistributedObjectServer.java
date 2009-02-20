@@ -639,17 +639,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     boolean verboseGC = l2DSOConfig.garbageCollectionVerbose().getBoolean();
     this.sampledCounterManager = new CounterManagerImpl();
     SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
-    SampledCounter objectCreationRate = (SampledCounter) this.sampledCounterManager
-        .createCounter(sampledCounterConfig);
-    SampledCounter objectFaultRate = (SampledCounter) this.sampledCounterManager
-        .createCounter(sampledCounterConfig);
+    SampledCounter objectCreationRate = (SampledCounter) this.sampledCounterManager.createCounter(sampledCounterConfig);
+    SampledCounter objectFaultRate = (SampledCounter) this.sampledCounterManager.createCounter(sampledCounterConfig);
     ObjectManagerStatsImpl objMgrStats = new ObjectManagerStatsImpl(objectCreationRate, objectFaultRate);
-    SampledCounter l2FaultFromDisk = (SampledCounter) this.sampledCounterManager
-        .createCounter(sampledCounterConfig);
-    SampledCounter time2FaultFromDisk = (SampledCounter) this.sampledCounterManager
-        .createCounter(sampledCounterConfig);
-    SampledCounter time2Add2ObjMgr = (SampledCounter) this.sampledCounterManager
-        .createCounter(sampledCounterConfig);
+    SampledCounter l2FaultFromDisk = (SampledCounter) this.sampledCounterManager.createCounter(sampledCounterConfig);
+    SampledCounter time2FaultFromDisk = (SampledCounter) this.sampledCounterManager.createCounter(sampledCounterConfig);
+    SampledCounter time2Add2ObjMgr = (SampledCounter) this.sampledCounterManager.createCounter(sampledCounterConfig);
 
     SequenceValidator sequenceValidator = new SequenceValidator(0);
     // Server initiated request processing queues shouldn't have any max queue size.
@@ -747,11 +742,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     toInit.add(transactionBatchManager);
 
     TransactionAcknowledgeAction taa = new TransactionAcknowledgeActionImpl(channelManager, transactionBatchManager);
-    SampledCounter globalTxnCounter = (SampledCounter) this.sampledCounterManager
-        .createCounter(sampledCounterConfig);
+    SampledCounter globalTxnCounter = (SampledCounter) this.sampledCounterManager.createCounter(sampledCounterConfig);
 
-    SampledCounter broadcastCounter = (SampledCounter) this.sampledCounterManager
-        .createCounter(sampledCounterConfig);
+    SampledCounter broadcastCounter = (SampledCounter) this.sampledCounterManager.createCounter(sampledCounterConfig);
 
     SampledCounter globalObjectFaultCounter = (SampledCounter) this.sampledCounterManager
         .createCounter(sampledCounterConfig);
@@ -766,12 +759,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
         .createCounter(sampledRateCounterConfig);
     SampledCounter globalLockCount = (SampledCounter) this.sampledCounterManager.createCounter(sampledCounterConfig);
 
-
     DSOGlobalServerStats serverStats = new DSOGlobalServerStatsImpl(globalObjectFlushCounter, globalObjectFaultCounter,
                                                                     globalTxnCounter, objMgrStats, broadcastCounter,
                                                                     l2FaultFromDisk, time2FaultFromDisk,
                                                                     time2Add2ObjMgr, globalLockRecallCounter,
-                                                                    changesPerBroadcast, transactionSizeCounter, globalLockCount);
+                                                                    changesPerBroadcast, transactionSizeCounter,
+                                                                    globalLockCount);
 
     final TransactionStore transactionStore = new TransactionStoreImpl(transactionPersistor,
                                                                        globalTransactionIDSequence);
@@ -920,7 +913,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     this.l1Listener.addClassMapping(TCMessageType.NODES_WITH_OBJECTS_MESSAGE, NodesWithObjectsMessageImpl.class);
     this.l1Listener.addClassMapping(TCMessageType.NODES_WITH_OBJECTS_RESPONSE_MESSAGE,
                                     NodesWithObjectsResponseMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.KEYS_FOR_ORPHANED_VALUES_MESSAGE, KeysForOrphanedValuesMessageImpl.class);
+    this.l1Listener.addClassMapping(TCMessageType.KEYS_FOR_ORPHANED_VALUES_MESSAGE,
+                                    KeysForOrphanedValuesMessageImpl.class);
     this.l1Listener.addClassMapping(TCMessageType.KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE,
                                     KeysForOrphanedValuesResponseMessageImpl.class);
 
@@ -1230,6 +1224,13 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
 
   public InetAddress getListenAddr() {
     return this.l1Listener.getBindAddress();
+  }
+
+  public int getGroupPort() {
+    NewL2DSOConfig l2DSOConfig = this.configSetupManager.dsoL2Config();
+    int configValue = l2DSOConfig.l2GroupPort().getInt();
+    if (configValue != 0) { return configValue; }
+    return -1;
   }
 
   public synchronized void stop() {

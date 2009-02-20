@@ -21,6 +21,7 @@ import com.tc.admin.model.IServer;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -41,6 +42,7 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
   private IClusterModel       clusterModel;
   private ClusterListener     clusterListener;
   private IBasicObject[]      roots;
+  private XLabel              currentViewLabel;
   private ElementChooser      elementChooser;
   private PagedView           pagedView;
   private boolean             inited;
@@ -63,6 +65,15 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
     gbc.insets = new Insets(3, 3, 3, 3);
     gbc.anchor = GridBagConstraints.EAST;
 
+    Font headerFont = new Font("Serif", Font.BOLD, 12);
+    XLabel headerLabel = new XLabel(adminClientContext.getString("current.view.type"));
+    topPanel.add(headerLabel, gbc);
+    headerLabel.setFont(headerFont);
+    gbc.gridx++;
+
+    topPanel.add(currentViewLabel = new XLabel(), gbc);
+    gbc.gridx++;
+
     // filler
     gbc.weightx = 1.0;
     gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -72,7 +83,9 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
     gbc.weightx = 0.0;
     gbc.fill = GridBagConstraints.NONE;
 
-    topPanel.add(new XLabel("Filter by:"), gbc);
+    headerLabel = new XLabel(adminClientContext.getString("select.view"));
+    topPanel.add(headerLabel, gbc);
+    headerLabel.setFont(headerFont);
     gbc.gridx++;
 
     topPanel.add(elementChooser = new ElementChooser(), gbc);
@@ -91,14 +104,22 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
       super(clusterModel, ObjectBrowser.this);
     }
 
+    @Override
     protected XTreeNode[] createTopLevelNodes() {
-      ComponentNode clusterHeapNode = new ComponentNode("Cluster Heap");
+      XTreeNode aggregateNode = new XTreeNode(adminClientContext.getString("aggregate.view"));
+      ComponentNode clusterHeapNode = new ComponentNode(adminClientContext.getString("object.browser.cluster.heap"));
       clusterHeapNode.setName(CLUSTER_HEAP_NODE_NAME);
-      ClientsNode clientsNode = new ClientsNode(adminClientContext, clusterModel);
-      clientsNode.setLabel("Client View");
-      return new XTreeNode[] { clusterHeapNode, clientsNode };
+      aggregateNode.add(clusterHeapNode);
+      ClientsNode clientsNode = new ClientsNode(adminClientContext, clusterModel) {
+        @Override
+        protected void updateLabel() {/**/
+        }
+      };
+      clientsNode.setLabel(adminClientContext.getString("runtime.stats.per.client.view"));
+      return new XTreeNode[] { aggregateNode, clientsNode };
     }
 
+    @Override
     protected boolean acceptPath(TreePath path) {
       Object o = path.getLastPathComponent();
       return !(o instanceof ClientsNode);
@@ -142,6 +163,9 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
     } else {
       pagedView.setPage(EMPTY_PAGE);
     }
+    TreePath path = elementChooser.getSelectedPath();
+    Object type = path.getPathComponent(1);
+    currentViewLabel.setText(type.toString());
   }
 
   private class ClusterListener extends AbstractClusterListener {
@@ -149,12 +173,14 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
       super(clusterModel);
     }
 
+    @Override
     protected void handleReady() {
       if (!inited && clusterModel.isReady()) {
         addNodePanels();
       }
     }
 
+    @Override
     protected void handleActiveCoordinator(IServer oldActive, IServer newActive) {
       if (oldActive != null) {
         oldActive.removeClientConnectionListener(ObjectBrowser.this);
@@ -225,6 +251,7 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
     return clusterModel;
   }
 
+  @Override
   public void tearDown() {
     clusterModel.removePropertyChangeListener(clusterListener);
     pagedView.removePropertyChangeListener(this);

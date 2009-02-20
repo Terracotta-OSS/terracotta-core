@@ -68,7 +68,7 @@ public class DSOStatsImpl extends StatsSupport implements DSOStats {
   public long getTransactionSizeRate() {
     return transactionSizeRate.getMostRecentSample().getCounterValue();
   }
-  
+
   public long getBroadcastRate() {
     return broadcastRate.getMostRecentSample().getCounterValue();
   }

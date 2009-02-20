@@ -27,9 +27,9 @@ public class ServerGroupsNode extends ComponentNode {
       add(groupNode);
     }
     setLabel(adminClientContext.getMessage("server-groups") + " (" + getChildCount() + ")");
-
   }
 
+  @Override
   public Component getComponent() {
     if (serverGroupsPanel == null) {
       serverGroupsPanel = createServerGroupsPanel();
@@ -41,6 +41,7 @@ public class ServerGroupsNode extends ComponentNode {
     return new ServerGroupsPanel(adminClientContext, clusterModel, serverGroups);
   }
 
+  @Override
   public void tearDown() {
     super.tearDown();
     adminClientContext = null;

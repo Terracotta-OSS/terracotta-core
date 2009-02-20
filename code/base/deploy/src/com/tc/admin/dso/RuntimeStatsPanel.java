@@ -24,6 +24,7 @@ import com.tc.admin.model.IServerGroup;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -41,6 +42,7 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
   private IAdminClientContext adminClientContext;
   private IClusterModel       clusterModel;
   private ClusterListener     clusterListener;
+  private XLabel              currentViewLabel;
   private ElementChooser      elementChooser;
   private PagedView           pagedView;
   private boolean             inited;
@@ -63,6 +65,15 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
     gbc.insets = new Insets(3, 3, 3, 3);
     gbc.anchor = GridBagConstraints.EAST;
 
+    Font headerFont = new Font("Serif", Font.BOLD, 12);
+    XLabel headerLabel = new XLabel(adminClientContext.getString("current.view.type"));
+    topPanel.add(headerLabel, gbc);
+    headerLabel.setFont(headerFont);
+    gbc.gridx++;
+
+    topPanel.add(currentViewLabel = new XLabel(), gbc);
+    gbc.gridx++;
+
     // filler
     gbc.weightx = 1.0;
     gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -72,7 +83,9 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
     gbc.weightx = 0.0;
     gbc.fill = GridBagConstraints.NONE;
 
-    topPanel.add(new XLabel("View:"), gbc);
+    headerLabel = new XLabel(adminClientContext.getString("select.view"));
+    topPanel.add(headerLabel, gbc);
+    headerLabel.setFont(headerFont);
     gbc.gridx++;
 
     topPanel.add(elementChooser = new ElementChooser(), gbc);
@@ -92,18 +105,25 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
       super(clusterModel, RuntimeStatsPanel.this);
     }
 
+    @Override
     protected XTreeNode[] createTopLevelNodes() {
-      ComponentNode aggregateServerStatsNode = new ComponentNode("Aggregate Server Stats");
-      ClientsNode clientsNode = new ClientsNode(adminClientContext, clusterModel);
+      XTreeNode aggregateViewsNode = new XTreeNode(adminClientContext.getString("aggregate.view"));
+      ComponentNode aggregateServerStatsNode = new ComponentNode(adminClientContext
+          .getString("runtime.stats.aggregate.server.stats"));
+      aggregateViewsNode.add(aggregateServerStatsNode);
+      ClientsNode clientsNode = new ClientsNode(adminClientContext, clusterModel) {
+        @Override
+        protected void updateLabel() {/**/
+        }
+      };
       ServerGroupsNode serverGroupsNode = new ServerGroupsNode(adminClientContext, clusterModel);
-
       aggregateServerStatsNode.setName(AGGREGATE_SERVER_STATS_NODE_NAME);
-      clientsNode.setLabel("Per Client View");
-      serverGroupsNode.setLabel("Per Server View");
-
-      return new XTreeNode[] { aggregateServerStatsNode, clientsNode, serverGroupsNode };
+      clientsNode.setLabel(adminClientContext.getString("runtime.stats.per.client.view"));
+      serverGroupsNode.setLabel(adminClientContext.getString("runtime.stats.per.server.view"));
+      return new XTreeNode[] { aggregateViewsNode, clientsNode, serverGroupsNode };
     }
 
+    @Override
     protected boolean acceptPath(TreePath path) {
       Object o = path.getLastPathComponent();
       if (o instanceof XTreeNode) {
@@ -124,6 +144,9 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
     } else {
       pagedView.setPage(EMPTY_PAGE);
     }
+    TreePath path = elementChooser.getSelectedPath();
+    Object type = path.getPathComponent(1);
+    currentViewLabel.setText(type.toString());
   }
 
   private class ClusterListener extends AbstractClusterListener {
@@ -131,12 +154,14 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
       super(clusterModel);
     }
 
+    @Override
     protected void handleReady() {
       if (!inited && clusterModel.isReady()) {
         addNodePanels();
       }
     }
 
+    @Override
     protected void handleActiveCoordinator(IServer oldActive, IServer newActive) {
       if (oldActive != null) {
         oldActive.removeClientConnectionListener(RuntimeStatsPanel.this);
@@ -217,6 +242,7 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
     return clusterModel;
   }
 
+  @Override
   public void tearDown() {
     clusterModel.removePropertyChangeListener(clusterListener);
     pagedView.removePropertyChangeListener(this);
@@ -229,6 +255,7 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
       elementChooser.tearDown();
       elementChooser = null;
       pagedView = null;
+      currentViewLabel = null;
     }
   }
 }

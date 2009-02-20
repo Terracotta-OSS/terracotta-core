@@ -15,17 +15,16 @@ public interface IClusterModel extends IClusterModelElement, ManagedObjectFacade
   static final String PROP_ACTIVE_COORDINATOR = "activeCoordinator";
   static final String PROP_CONNECTED          = "connected";
   static final String PROP_CONNECT_ERROR      = "connectError";
+  static final String PROP_AUTO_CONNECT       = "autoConnect";
 
   static enum PollScope {
-    ALL_SERVERS,
-    ACTIVE_SERVERS,
-    CLIENTS
+    ALL_SERVERS, ACTIVE_SERVERS, CLIENTS
   }
 
   void setName(String name);
-  
+
   String getName();
-  
+
   void setHost(String host);
 
   String getHost();
@@ -61,9 +60,13 @@ public interface IClusterModel extends IClusterModelElement, ManagedObjectFacade
   void removeServerStateListener(ServerStateListener listener);
 
   void connect();
-  
+
   void disconnect();
-  
+
+  boolean isAutoConnect();
+
+  void setAutoConnect(boolean autoConnect);
+
   IServer getActiveCoordinator();
 
   IServerGroup[] getServerGroups();
@@ -73,7 +76,7 @@ public interface IClusterModel extends IClusterModelElement, ManagedObjectFacade
   IClient[] getClients();
 
   int getLiveObjectCount();
-  
+
   Map<IServer, Map<String, Object>> getPrimaryServerStatistics();
 
   Map<IClient, Map<String, Object>> getPrimaryClientStatistics();
@@ -83,14 +86,14 @@ public interface IClusterModel extends IClusterModelElement, ManagedObjectFacade
   Map<IClusterNode, Future<String>> takeThreadDump();
 
   Future<String> takeThreadDump(IClusterNode node);
-  
+
   void addPolledAttributeListener(PollScope scope, Set<String> attributes, PolledAttributeListener listener);
-  
+
   void addPolledAttributeListener(PollScope scope, String attribute, PolledAttributeListener listener);
-  
-  void removePolledAttributeListener(PollScope scope, Set<String> attributes, PolledAttributeListener listener);  
-  
+
+  void removePolledAttributeListener(PollScope scope, Set<String> attributes, PolledAttributeListener listener);
+
   void removePolledAttributeListener(PollScope scope, String attribute, PolledAttributeListener listener);
-  
+
   String dump();
 }

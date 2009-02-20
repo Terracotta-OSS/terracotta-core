@@ -55,15 +55,17 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   L2Info[] getL2Info();
 
   ServerGroupInfo[] getServerGroupInfo();
-  
+
   int getDSOListenPort();
+
+  int getDSOGroupPort();
 
   String getPersistenceMode();
 
   String getFailoverMode();
 
   boolean isGarbageCollectionEnabled();
-  
+
   int getGarbageCollectionInterval();
 
   String[] getCpuStatNames();
@@ -71,9 +73,9 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   Map getStatistics();
 
   long getUsedMemory();
-  
+
   long getMaxMemory();
-  
+
   StatisticData[] getCpuUsage();
 
   String takeThreadDump(long requestMillis);
@@ -91,17 +93,17 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   void setRequestDebug(boolean requestDebug);
 
   boolean getRequestDebug();
-  
+
   void setFlushDebug(boolean flushDebug);
 
   boolean getFlushDebug();
-  
+
   void setBroadcastDebug(boolean broadcastDebug);
 
   boolean getBroadcastDebug();
- 
+
   void setCommitDebug(boolean commitDebug);
 
   boolean getCommitDebug();
-  
+
 }

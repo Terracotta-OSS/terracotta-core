@@ -31,14 +31,15 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 
 public class DemoChartFactory {
-  public static final TickUnitSource DEFAULT_TICKS = createStandardTickUnits();
+  public static final TickUnitSource DEFAULT_TICKS         = createStandardTickUnits();
   public static final TickUnitSource DEFAULT_INTEGER_TICKS = createIntegerTickUnits();
-  
+
   static {
     // ChartFactory.setChartTheme(StandardChartTheme.createLegacyTheme());
     // ChartFactory.setChartTheme(StandardChartTheme.createDarknessTheme());
 
     StandardChartTheme theme = new StandardChartTheme("Terracotta") {
+      @Override
       public void apply(JFreeChart chart) {
         super.apply(chart);
         chart.setBackgroundPaint(null);
@@ -70,6 +71,12 @@ public class DemoChartFactory {
   public static JFreeChart getXYBarChart(String header, String xLabel, String yLabel, TimeSeries[] timeseries) {
     IntervalXYDataset dataset = createTimeSeriesDataset(timeseries);
     return createXYBarChart(header, xLabel, yLabel, dataset, true);
+  }
+
+  public static JFreeChart getXYBarChart(String header, String xLabel, String yLabel, TimeSeries[] timeseries,
+                                         boolean legend) {
+    IntervalXYDataset dataset = createTimeSeriesDataset(timeseries);
+    return createXYBarChart(header, xLabel, yLabel, dataset, legend);
   }
 
   private static JFreeChart createXYBarChart(String header, String xLabel, String yLabel, IntervalXYDataset dataset,

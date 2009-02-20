@@ -272,6 +272,11 @@ public class TCServerImpl extends SEDA implements TCServer {
     throw new IllegalStateException("DSO Server not running");
   }
 
+  public int getDSOGroupPort() {
+    if (dsoServer != null) { return dsoServer.getGroupPort(); }
+    throw new IllegalStateException("DSO Server not running");
+  }
+
   public DistributedObjectServer getDSOServer() {
     return dsoServer;
   }
@@ -504,7 +509,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     createAndAddServlet(servletHandler, VersionServlet.class.getName(), VERSION_SERVLET_PATH);
     createAndAddServlet(servletHandler, ConfigServlet.class.getName(), CONFIG_SERVLET_PATH);
     createAndAddServlet(servletHandler, GroupInfoServlet.class.getName(), GROUP_INFO_SERVLET_PATH);
-    
+
     if (cvtRestEnabled) {
       createAndAddServlet(servletHandler, StatisticsGathererServlet.class.getName(), STATISTICS_GATHERER_SERVLET_PATH);
     }

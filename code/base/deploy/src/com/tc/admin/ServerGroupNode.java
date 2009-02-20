@@ -27,14 +27,14 @@ public class ServerGroupNode extends ClusterElementNode {
       ServerNode serverNode = new ServerNode(adminClientContext, clusterModel, server);
       add(serverNode);
     }
-    setLabel(serverGroup.getName() + " (" + getChildCount() + ")");
-
+    setLabel(adminClientContext.getString("mirror.group") + " (" + serverGroup.getName() + ")");
   }
 
   protected ServersPanel createServerGroupPanel() {
     return new ServersPanel(adminClientContext, clusterModel, serverGroup.getMembers());
   }
 
+  @Override
   public Component getComponent() {
     if (serverGroupPanel == null) {
       serverGroupPanel = createServerGroupPanel();
@@ -42,6 +42,7 @@ public class ServerGroupNode extends ClusterElementNode {
     return serverGroupPanel;
   }
 
+  @Override
   public void tearDown() {
     super.tearDown();
     adminClientContext = null;
