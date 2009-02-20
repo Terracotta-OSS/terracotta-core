@@ -44,6 +44,7 @@ import java.util.Map.Entry;
 public class HashMapTCTest extends TCTestCase {
   private ClassLoader origThreadContextClassLoader;
 
+  @Override
   protected void setUp() throws Exception {
     ClassLoader loader = getClass().getClassLoader();
     InvocationHandler handler = new InvocationHandler() {
@@ -52,7 +53,7 @@ public class HashMapTCTest extends TCTestCase {
         if ("getNewCommonL1Config".equals(name) || "getInstrumentationLoggingOptions".equals(name)
             || "instrumentationLoggingOptions".equals(name) || "getLogicalExtendingClassName".equals(name)
             || "createDsoClassAdapterFor".equals(name) || "getModulesForInitialization".equals(name)
-            || "verifyBootJarContents".equals(name)) {
+            || "verifyBootJarContents".equals(name) || "validateSessionConfig".equals(name)) {
           return null;
         } else if ("shouldBeAdapted".equals(name)) {
           return Boolean.FALSE;
@@ -92,6 +93,7 @@ public class HashMapTCTest extends TCTestCase {
     Thread.currentThread().setContextClassLoader(classLoader);
   }
 
+  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
 
@@ -630,16 +632,19 @@ public class HashMapTCTest extends TCTestCase {
       return oldValue;
     }
 
+    @Override
     public boolean equals(Object o) {
       if (!(o instanceof Map.Entry)) return false;
       Map.Entry e = (Map.Entry) o;
       return eq(key, e.getKey()) && eq(value, e.getValue());
     }
 
+    @Override
     public int hashCode() {
       return ((key == null) ? 0 : key.hashCode()) ^ ((value == null) ? 0 : value.hashCode());
     }
 
+    @Override
     public String toString() {
       return key + "=" + value;
     }
@@ -661,10 +666,12 @@ public class HashMapTCTest extends TCTestCase {
       return this.i;
     }
 
+    @Override
     public int hashCode() {
       return i;
     }
 
+    @Override
     public boolean equals(Object obj) {
       if (obj == null) return false;
       if (!(obj instanceof HashKey)) return false;
@@ -684,16 +691,19 @@ public class HashMapTCTest extends TCTestCase {
       return this.i;
     }
 
+    @Override
     public int hashCode() {
       return i;
     }
 
+    @Override
     public boolean equals(Object obj) {
       if (obj == null) return false;
       if (!(obj instanceof HashValue)) return false;
       return ((HashValue) obj).i == i;
     }
 
+    @Override
     public String toString() {
       return super.toString() + ", i: " + i;
     }
