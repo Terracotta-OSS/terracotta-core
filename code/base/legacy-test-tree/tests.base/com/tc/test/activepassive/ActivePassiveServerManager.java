@@ -891,7 +891,15 @@ public class ActivePassiveServerManager extends MultipleServerManager {
   public ProxyConnectManager[] getL1ProxyManagers() {
     return proxyL1Managers;
   }
-  
+
+  public ServerControl[] getServerControls() {
+    ServerControl[] serverControls = new ServerControl[serverCount];
+    for (int i = 0; i < serverCount; i++) {
+      serverControls[i] = servers[i].getServerControl();
+    }
+    return serverControls;
+  }
+
   public List<DSOMBean> connectAllDsoMBeans() throws IOException {
     List<DSOMBean> mbeans = new ArrayList<DSOMBean>();
     for (int i = 0; i < getServerCount(); i++) {
