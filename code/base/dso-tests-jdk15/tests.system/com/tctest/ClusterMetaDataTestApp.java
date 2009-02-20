@@ -268,7 +268,7 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
     Assert.assertEquals(2, yourMojoNodeSet.size());
     DsoNode otherNodeWithYourMojo = null;
     for (DsoNode node : yourMojoNodeSet) {
-      if (node != currentNode) {
+      if (!node.equals(currentNode)) {
         otherNodeWithYourMojo = node;
         break;
       }
@@ -281,7 +281,7 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
     Assert.assertEquals(2, myMojoNodeSet.size());
     DsoNode otherNodeWithMyMojo = null;
     for (DsoNode node : myMojoNodeSet) {
-      if (node != currentNode) {
+      if (!node.equals(currentNode)) {
         otherNodeWithMyMojo = node;
         break;
       }
@@ -370,7 +370,7 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
     Assert.assertEquals(2, key1NodeSet.size());
     DsoNode otherNodeWithKey1Value = null;
     for (DsoNode node : key1NodeSet) {
-      if (node != currentNode) {
+      if (!node.equals(currentNode)) {
         otherNodeWithKey1Value = node;
         break;
       }
@@ -383,7 +383,7 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
     Assert.assertEquals(2, key2NodeSet.size());
     DsoNode otherNodeWithKey2Value = null;
     for (DsoNode node : key2NodeSet) {
-      if (node != currentNode) {
+      if (!node.equals(currentNode)) {
         otherNodeWithKey2Value = node;
         break;
       }
