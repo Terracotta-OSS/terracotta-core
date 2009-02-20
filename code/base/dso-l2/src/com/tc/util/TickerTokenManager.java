@@ -7,9 +7,11 @@ public interface TickerTokenManager {
 
   public abstract int getId();
 
-  public abstract TickerTokenHandle startTicker(Class tickerTokenType, TickerTokenHandle handle);
+  public abstract TickerTokenHandle createHandle(String identifier);
 
-  public abstract void cancelTicker(TickerTokenHandle handle);
+  public abstract void startTicker(Class tickerTokenType, String identifier);
+
+  public abstract void cancelTicker(String identifier);
 
   public abstract void send(TickerToken token);
 

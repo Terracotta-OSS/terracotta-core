@@ -8,6 +8,15 @@ public class TickerTokenHandleImpl implements TickerTokenHandle {
 
   private boolean        complete = false;
   private TickerTokenKey key;
+  private String         identifier;
+
+  public String getIdentifier() {
+    return identifier;
+  }
+
+  public void setIdentifier(String identifier) {
+    this.identifier = identifier;
+  }
 
   public synchronized void waitTillComplete() {
     while (!this.complete) {
@@ -18,6 +27,11 @@ public class TickerTokenHandleImpl implements TickerTokenHandle {
       }
     }
   }
+  
+  public synchronized boolean isComplete() {
+    return this.complete;
+  }
+  
 
   public synchronized void complete() {
     this.complete = true;

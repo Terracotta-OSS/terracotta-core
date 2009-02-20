@@ -26,6 +26,9 @@ public abstract class TickerTokenManagerImpl implements TickerTokenManager {
   private final Map<TickerTokenKey, TickerTokenHandle> tokenHandleMap    = Collections
                                                                              .synchronizedMap(new HashMap<TickerTokenKey, TickerTokenHandle>());
 
+  private final Map<String, TickerTokenHandle>         lookupMap         = Collections
+                                                                             .synchronizedMap(new HashMap<String, TickerTokenHandle>());
+
   private final Timer                                  timer             = new Timer("Ticker Token Timer", true);
 
   private final int                                    totalTickers;
@@ -49,29 +52,40 @@ public abstract class TickerTokenManagerImpl implements TickerTokenManager {
     factoryMap.put(tokenClass, factory);
   }
 
-  public TickerTokenHandle startTicker(Class tickerTokenType, TickerTokenHandle handle) {
-    int startTick = tickerCounter.increment();
-    TickerTask task = new TickerTask(startTick, this.totalTickers, this, getTickerTokenFactory(tickerTokenType),
-                                     timerTaskMap);
-    timer.schedule(task, timerPeriod, timerPeriod);
-    TickerTokenKey key = new TickerTokenKey(tickerTokenType, id, startTick);
-    tokenHandleMap.put(key, handle);
-    timerTaskMap.put(key, task);
-    handle.setKey(key);
+  public TickerTokenHandle createHandle(String identifier) {
+    TickerTokenHandle handle = new TickerTokenHandleImpl();
+    lookupMap.put(identifier, handle);
     return handle;
   }
 
-  public void cancelTicker(TickerTokenHandle handle) {
+  public void startTicker(Class tickerTokenType, String identifier) {
+    int startTick = tickerCounter.increment();
+    TickerTokenHandle handle = null;
+    if ((handle = lookupMap.get(identifier)) != null) {
+      TickerTask task = new TickerTask(startTick, this.totalTickers, this, getTickerTokenFactory(tickerTokenType),
+                                       timerTaskMap);
+      timer.schedule(task, timerPeriod, timerPeriod);
+      TickerTokenKey key = new TickerTokenKey(tickerTokenType, id, startTick);
+      tokenHandleMap.put(key, handle);
+      timerTaskMap.put(key, task);
+      handle.setKey(key);
+    }
+  }
+
+  public void cancelTicker(String identifier) {
     TimerTask timerTask = null;
 
-    TickerTokenKey key = handle.getKey();
-    if (key != null) {
-      if ((timerTask = timerTaskMap.remove(key)) != null) {
-        timerTask.cancel();
-        tokenHandleMap.remove(key);
+    TickerTokenHandle handle = null;
+    if ((handle = lookupMap.remove(identifier)) != null) {
+      TickerTokenKey key = handle.getKey();
+      if (key != null) {
+        if ((timerTask = timerTaskMap.remove(key)) != null) {
+          timerTask.cancel();
+          tokenHandleMap.remove(key);
+        }
       }
+      handle.complete();
     }
-    handle.complete();
   }
 
   public void send(TickerToken token) {
@@ -114,7 +128,10 @@ public abstract class TickerTokenManagerImpl implements TickerTokenManager {
   }
 
   private TickerTokenHandle removeCompleteHandler(TickerToken token) {
-    return tokenHandleMap.remove(new TickerTokenKey(token.getClass(), token.getPrimaryID(), token.getStartTick()));
+    TickerTokenHandle handle = tokenHandleMap.remove(new TickerTokenKey(token.getClass(), token.getPrimaryID(), token
+        .getStartTick()));
+    lookupMap.remove(handle.getIdentifier());
+    return handle;
   }
 
   private TimerTask removeTimer(TickerToken token) {

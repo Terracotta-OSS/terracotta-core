@@ -95,6 +95,7 @@ public class GCStatsEventPublisherTest extends TestCase {
     assertEquals(1, listener.pausedList.size());
     assertEquals(1, listener.rescue2StartList.size());
     assertEquals(1, listener.markCompleteList.size());
+    assertEquals(1, listener.completedList.size());
     assertEquals(1, listener.cycleCompletedList.size());
 
   }
