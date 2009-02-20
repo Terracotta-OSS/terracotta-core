@@ -10,6 +10,7 @@ import com.tc.object.appevent.ApplicationEvent;
 import com.tc.object.appevent.ApplicationEventContext;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.dna.api.DNA;
+import com.tc.object.loaders.LoaderDescription;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.util.ToggleableStrongReference;
 import com.tc.text.PrettyPrinter;
@@ -153,7 +154,7 @@ public class TestClientObjectManager implements ClientObjectManager {
     return txManager;
   }
 
-  public Class getClassFor(String className, String loaderDesc) {
+  public Class getClassFor(String className, LoaderDescription loaderDesc) {
     throw new ImplementMe();
   }
 

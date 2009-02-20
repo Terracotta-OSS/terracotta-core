@@ -10,6 +10,7 @@ import com.tc.logging.DumpHandler;
 import com.tc.object.appevent.ApplicationEvent;
 import com.tc.object.appevent.ApplicationEventContext;
 import com.tc.object.dna.api.DNA;
+import com.tc.object.loaders.LoaderDescription;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.util.ToggleableStrongReference;
 import com.tc.text.PrettyPrintable;
@@ -29,7 +30,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
    * @return Class, never null
    * @throws ClassNotFoundException If class not found
    */
-  public Class getClassFor(String className, String loaderDesc) throws ClassNotFoundException;
+  public Class getClassFor(String className, LoaderDescription loaderDesc) throws ClassNotFoundException;
 
   /**
    * Determine whether this instance is managed.

@@ -15,6 +15,7 @@ import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.impl.ProxyInstance;
 import com.tc.object.field.TCField;
 import com.tc.object.field.TCFieldFactory;
+import com.tc.object.loaders.LoaderDescription;
 import com.tc.object.loaders.Namespace;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
@@ -61,7 +62,7 @@ public class TCClassImpl implements TCClass {
   private final String                   parentFieldName;
   private final Map                      declaredTCFieldsByName = new HashMap();
   private final Map                      tcFieldsByName         = new HashMap();
-  private final String                   loaderDesc;
+  private final LoaderDescription        loaderDesc;
   private Constructor                    constructor            = null;
   private final Field                    parentField;
   private final static SerializationUtil SERIALIZATION_UTIL     = new SerializationUtil();
@@ -76,7 +77,7 @@ public class TCClassImpl implements TCClass {
   private final boolean                  useResolveLockWhileClearing;
 
   TCClassImpl(TCFieldFactory factory, TCClassFactory clazzFactory, ClientObjectManager objectManager, Class peer,
-              Class logicalSuperClass, String loaderDesc, String logicalExtendingClassName, boolean isLogical,
+              Class logicalSuperClass, LoaderDescription loaderDesc, String logicalExtendingClassName, boolean isLogical,
               boolean isCallConstructor, String onLoadScript, String onLoadMethod, boolean useNonDefaultConstructor,
               boolean useResolveLockWhileClearing) {
     this.clazzFactory = clazzFactory;
@@ -309,7 +310,7 @@ public class TCClassImpl implements TCClass {
     return indexed;
   }
 
-  public String getDefiningLoaderDescription() {
+  public LoaderDescription getDefiningLoaderDescription() {
     return loaderDesc;
   }
 

@@ -20,13 +20,13 @@ import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
 import com.tc.util.ClassUtils.ClassSpec;
 import com.terracottatech.config.AdditionalBootJarClasses;
+import com.terracottatech.config.AppGroup;
+import com.terracottatech.config.AppGroups;
 import com.terracottatech.config.Autolock;
 import com.terracottatech.config.ClassExpression;
 import com.terracottatech.config.DistributedMethods;
 import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.Include;
-import com.terracottatech.config.InjectedField;
-import com.terracottatech.config.InjectedInstances;
 import com.terracottatech.config.InstrumentedClasses;
 import com.terracottatech.config.LockLevel;
 import com.terracottatech.config.Locks;
@@ -58,27 +58,27 @@ public class ConfigLoader {
   private final DSOClientConfigHelper config;
   private final TCLogger              logger;
 
-  public ConfigLoader(final DSOClientConfigHelper config, final TCLogger logger) {
+  public ConfigLoader(DSOClientConfigHelper config, TCLogger logger) {
     this.config = config;
     this.logger = logger;
   }
 
-  public void loadDsoConfig(final DsoApplication dsoApplication) throws ConfigurationSetupException {
+  public void loadDsoConfig(DsoApplication dsoApplication) throws ConfigurationSetupException {
     if (dsoApplication == null) return;
 
     addRoots(dsoApplication.getRoots());
     addWebApplications(dsoApplication.getWebApplications());
+    addAppGroups(dsoApplication.getAppGroups());
 
     loadLocks(dsoApplication.getLocks());
     loadTransientFields(dsoApplication.getTransientFields());
-    loadInjectedInstances(dsoApplication.getInjectedInstances());
     loadInstrumentedClasses(dsoApplication.getInstrumentedClasses());
     loadDistributedMethods(dsoApplication.getDistributedMethods());
 
     addAdditionalBootJarClasses(dsoApplication.getAdditionalBootJarClasses());
   }
 
-  public void loadSpringConfig(final SpringApplication springApplication) throws ConfigurationSetupException {
+  public void loadSpringConfig(SpringApplication springApplication) throws ConfigurationSetupException {
     if (springApplication != null) {
       SpringApps[] springApps = springApplication.getJeeApplicationArray();
       for (int i = 0; springApps != null && i < springApps.length; i++) {
@@ -90,7 +90,7 @@ public class ConfigLoader {
     }
   }
 
-  private void addRoot(final Root root) throws ConfigurationSetupException {
+  private void addRoot(Root root) throws ConfigurationSetupException {
 
     LicenseCheck.checkCapability(Capability.ROOTS);
 
@@ -125,7 +125,7 @@ public class ConfigLoader {
     }
   }
 
-  private void addRoots(final Roots rootsList) throws ConfigurationSetupException {
+  private void addRoots(Roots rootsList) throws ConfigurationSetupException {
     if (rootsList != null && rootsList.getRootArray() != null) {
       Root[] roots = rootsList.getRootArray();
       for (int i = 0; i < roots.length; ++i) {
@@ -134,7 +134,7 @@ public class ConfigLoader {
     }
   }
 
-  private void addWebApplication(final WebApplication webApplication) {
+  private void addWebApplication(WebApplication webApplication) {
     LicenseCheck.checkCapability(Capability.SESSIONS);
 
     config.addApplicationName(webApplication.getStringValue());
@@ -146,16 +146,38 @@ public class ConfigLoader {
     }
   }
 
-  private void addWebApplications(final WebApplications webApplicationsList) {
+  private void addWebApplications(WebApplications webApplicationsList) {
     if (webApplicationsList != null && webApplicationsList.getWebApplicationArray() != null) {
       WebApplication[] webApplications = webApplicationsList.getWebApplicationArray();
-      for (WebApplication webApplication : webApplications) {
-        addWebApplication(webApplication);
+      for (int i = 0; i < webApplications.length; i++) {
+        addWebApplication(webApplications[i]);
       }
     }
   }
 
-  private void addAdditionalBootJarClasses(final AdditionalBootJarClasses additionalBootJarClassesList) {
+  private void addAppGroup(AppGroup appGroup) {
+    if (appGroup != null) {
+      String appGroupName = appGroup.getName();
+      if (appGroupName != null && appGroupName.length() > 0) {
+        String[] webAppNames = appGroup.getWebApplicationArray();
+        String[] namedClassloaders = appGroup.getNamedClassloaderArray();
+        config.addToAppGroup(appGroupName, namedClassloaders, webAppNames);
+      }
+    }
+  }
+  
+  private void addAppGroups(AppGroups appGroups) {
+    if (appGroups != null) {
+      AppGroup[] appGroupArray = appGroups.getAppGroupArray();
+      if (appGroupArray != null) {
+        for (AppGroup appGroup : appGroupArray) {
+          addAppGroup(appGroup);
+        }
+      }
+    }
+  }
+
+  private void addAdditionalBootJarClasses(AdditionalBootJarClasses additionalBootJarClassesList) {
     // XXX
     if (additionalBootJarClassesList == null) return;
 
@@ -168,7 +190,7 @@ public class ConfigLoader {
     }
   }
 
-  private void addAdditionalBootJarClass(final String className) {
+  private void addAdditionalBootJarClass(String className) {
     TransparencyClassSpec spec = config.getSpec(className);
     if (spec == null) {
       spec = new TransparencyClassSpecImpl(className, config);
@@ -185,11 +207,10 @@ public class ConfigLoader {
     }
   }
 
-  private void loadSpringApp(final SpringApps springApp) throws ConfigurationSetupException {
+  private void loadSpringApp(SpringApps springApp) throws ConfigurationSetupException {
     // TODO scope the following by app namespace https://jira.terracotta.lan/jira/browse/LKC-2284
     loadLocks(springApp.getLocks());
     loadTransientFields(springApp.getTransientFields());
-    loadInjectedInstances(springApp.getInjectedInstances());
     loadInstrumentedClasses(springApp.getInstrumentedClasses());
 
     if (springApp.getSessionSupport() != null && springApp.getSessionSupport().getBooleanValue()) {
@@ -204,7 +225,7 @@ public class ConfigLoader {
     }
   }
 
-  private void loadSpringAppContexts(final SpringApps springApp) {
+  private void loadSpringAppContexts(SpringApps springApp) {
     String appName = springApp.getName();
     boolean fastProxy = springApp.getFastProxy();
     SpringAppContext[] applicationContexts = springApp.getApplicationContexts().getApplicationContextArray();
@@ -254,7 +275,7 @@ public class ConfigLoader {
     }
   }
 
-  private ConfigLockLevel getLockLevel(final LockLevel.Enum lockLevel, final boolean autoSynchronized) {
+  private ConfigLockLevel getLockLevel(LockLevel.Enum lockLevel, boolean autoSynchronized) {
     if (lockLevel == null || LockLevel.WRITE.equals(lockLevel)) {
       return autoSynchronized ? ConfigLockLevel.AUTO_SYNCHRONIZED_WRITE : ConfigLockLevel.WRITE;
     } else if (LockLevel.CONCURRENT.equals(lockLevel)) {
@@ -266,7 +287,7 @@ public class ConfigLoader {
     throw Assert.failure("Unknown lock level " + lockLevel);
   }
 
-  private static void gatherNamespaces(final XmlObject x, final Map nsMap) {
+  private static void gatherNamespaces(XmlObject x, Map nsMap) {
     XmlCursor c = x.newCursor();
     while (!c.isContainer())
       c.toNextToken();
@@ -274,11 +295,11 @@ public class ConfigLoader {
     c.dispose();
   }
 
-  private static String xmlObject2Text(final XmlObject xmlObject, final XmlOptions options) {
+  private static String xmlObject2Text(XmlObject xmlObject, XmlOptions options) {
     return xmlObject.xmlText(options);
   }
 
-  private void loadLocks(final Locks lockList) {
+  private void loadLocks(Locks lockList) {
     if (lockList == null) return;
 
     XmlOptions options = new XmlOptions();
@@ -306,7 +327,7 @@ public class ConfigLoader {
     }
   }
 
-  private void loadTransientFields(final TransientFields transientFieldsList) throws ConfigurationSetupException {
+  private void loadTransientFields(TransientFields transientFieldsList) throws ConfigurationSetupException {
     if (transientFieldsList != null) {
       String[] transientFields = transientFieldsList.getFieldNameArray();
       try {
@@ -320,7 +341,7 @@ public class ConfigLoader {
     }
   }
 
-  private void loadInstrumentedClasses(final InstrumentedClasses instrumentedClasses) throws ConfigurationSetupException {
+  private void loadInstrumentedClasses(InstrumentedClasses instrumentedClasses) throws ConfigurationSetupException {
     if (instrumentedClasses != null) {
       // Call selectPath() rather than using getIncludeArray and getExcludeArray(),
       // because we need to preserve the relative order of includes and excludes.
@@ -351,27 +372,13 @@ public class ConfigLoader {
     }
   }
 
-  private void loadDistributedMethods(final DistributedMethods distributedMethods) {
+  private void loadDistributedMethods(DistributedMethods distributedMethods) {
     if (distributedMethods != null) {
       MethodExpression[] methodExpressions = distributedMethods.getMethodExpressionArray();
       for (int i = 0; methodExpressions != null && i < methodExpressions.length; i++) {
         final MethodExpression me = methodExpressions[i];
         final DistributedMethodSpec dms = new DistributedMethodSpec(me.getStringValue(), me.getRunOnAllNodes());
         config.addDistributedMethodCall(dms);
-      }
-    }
-  }
-
-  private void loadInjectedInstances(final InjectedInstances injectedInstancesList) throws ConfigurationSetupException {
-    if (injectedInstancesList != null) {
-      InjectedField[] injectedFields = injectedInstancesList.getInjectedFieldArray();
-      try {
-        for (InjectedField injectedField : injectedFields) {
-          ClassSpec spec = ClassUtils.parseFullyQualifiedFieldName(injectedField.getFieldName());
-          config.addInjectedField(spec.getFullyQualifiedClassName(), spec.getShortFieldName(), injectedField.getInstanceType());
-        }
-      } catch (ParseException e) {
-        throw new ConfigurationSetupException(e.getLocalizedMessage(), e);
       }
     }
   }

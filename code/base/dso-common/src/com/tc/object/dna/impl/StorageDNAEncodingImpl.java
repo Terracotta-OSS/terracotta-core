@@ -4,6 +4,7 @@
 package com.tc.object.dna.impl;
 
 import com.tc.object.loaders.ClassProvider;
+import com.tc.object.loaders.LoaderDescription;
 import com.tc.object.loaders.NamedClassLoader;
 
 public class StorageDNAEncodingImpl extends BaseDNAEncodingImpl {
@@ -32,19 +33,27 @@ public class StorageDNAEncodingImpl extends BaseDNAEncodingImpl {
       throw new AssertionError();
     }
 
-    public String getLoaderDescriptionFor(Class clazz) {
+    public LoaderDescription getLoaderDescriptionFor(Class clazz) {
       throw new AssertionError();
     }
 
-    public ClassLoader getClassLoader(String loaderDesc) {
+    public ClassLoader getClassLoader(LoaderDescription loaderDesc) {
       throw new AssertionError();
     }
 
-    public String getLoaderDescriptionFor(ClassLoader loader) {
+    public LoaderDescription getLoaderDescriptionFor(ClassLoader loader) {
       throw new AssertionError();
     }
 
     public void registerNamedLoader(NamedClassLoader loader) {
+      throw new AssertionError();
+    }
+
+    public Class getClassFor(String className, LoaderDescription desc) throws ClassNotFoundException {
+      throw new ClassNotFoundException();
+    }
+
+    public void registerNamedLoader(NamedClassLoader loader, String appGroup) {
       throw new AssertionError();
     }
   }

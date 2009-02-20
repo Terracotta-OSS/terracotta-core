@@ -12,6 +12,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiClassSpec;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.loaders.ClassProvider;
+import com.tc.object.loaders.LoaderDescription;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.util.Assert;
@@ -146,7 +147,7 @@ public class DmiManagerImpl implements DmiManager {
     Assert.pre(classSpecs != null);
     for (int i = 0; i < classSpecs.length; i++) {
       DmiClassSpec s = classSpecs[i];
-      classProvider.getClassFor(s.getClassName(), s.getClassLoaderDesc());
+      classProvider.getClassFor(s.getClassName(), LoaderDescription.fromString(s.getClassLoaderDesc()));
     }
   }
 
@@ -169,7 +170,7 @@ public class DmiManagerImpl implements DmiManager {
   private static Object getClassSpec(ClassProvider classProvider, Object obj) {
     Assert.pre(classProvider != null);
     Assert.pre(obj != null);
-    final String classLoader = classProvider.getLoaderDescriptionFor(obj.getClass());
+    final String classLoader = classProvider.getLoaderDescriptionFor(obj.getClass()).toDelimitedString();
     final String className = obj.getClass().getName();
     return new DmiClassSpec(classLoader, className);
   }

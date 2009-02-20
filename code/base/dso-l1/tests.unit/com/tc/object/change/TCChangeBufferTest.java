@@ -41,7 +41,9 @@ public class TCChangeBufferTest extends TestCase {
     TCByteBufferOutputStream output = new TCByteBufferOutputStream();
 
     DNAWriter writer = new DNAWriterImpl(output, mockTCObject.getObjectID(), mockTCObject.getTCClass().getName(),
-                                         serializer, encoding, mockTCObject.getTCClass().getDefiningLoaderDescription(), false);
+                                         serializer, encoding, 
+                                         mockTCObject.getTCClass().getDefiningLoaderDescription().toDelimitedString(), 
+                                         false);
 
     buffer.writeTo(writer);
     writer.markSectionEnd();
@@ -81,7 +83,9 @@ public class TCChangeBufferTest extends TestCase {
 
     TCByteBufferOutputStream output = new TCByteBufferOutputStream();
     DNAWriter writer = new DNAWriterImpl(output, mockTCObject.getObjectID(), mockTCObject.getTCClass().getName(),
-                                         serializer, encoding, mockTCObject.getTCClass().getDefiningLoaderDescription(), false);
+                                         serializer, encoding, 
+                                         mockTCObject.getTCClass().getDefiningLoaderDescription().toDelimitedString(), 
+                                         false);
 
     buffer.writeTo(writer);
     writer.markSectionEnd();
@@ -121,7 +125,9 @@ public class TCChangeBufferTest extends TestCase {
     TCByteBufferOutputStream output = new TCByteBufferOutputStream();
 
     DNAWriter writer = new DNAWriterImpl(output, mockTCObject.getObjectID(), mockTCObject.getTCClass().getName(),
-                                         serializer, encoding, mockTCObject.getTCClass().getDefiningLoaderDescription(), false);
+                                         serializer, encoding, 
+                                         mockTCObject.getTCClass().getDefiningLoaderDescription().toDelimitedString(), 
+                                         false);
 
     buffer.writeTo(writer);
     writer.markSectionEnd();

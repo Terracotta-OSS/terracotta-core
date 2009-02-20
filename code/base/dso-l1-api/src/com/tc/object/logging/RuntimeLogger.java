@@ -80,6 +80,6 @@ public interface RuntimeLogger {
 
   void distributedMethodCallError(String obj, String methodName, String params, Throwable error);
 
-  void namedLoaderRegistered(NamedClassLoader loader, String name, NamedClassLoader previous);
+  void namedLoaderRegistered(NamedClassLoader loader, String name, String appGroup, NamedClassLoader previous);
 
 }

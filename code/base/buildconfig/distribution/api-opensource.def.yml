@@ -1,11 +1,11 @@
 name: Terracotta DSO API
 internal_name: api
-kit_name_pattern: terracotta-api-api.version-bundle
-root_directory: terracotta-api-api.version
+kit_name_pattern: terracotta-tim-api-version-bundle
+root_directory: terracotta-tim-api-version
 bundled_components:
   - base:
       module_packages:
-        - terracotta-tim-api-api.version:
+        - terracotta-tim-api-version:
             modules:
               - common-api
               - dso-l1-api
@@ -13,7 +13,7 @@ bundled_components:
               - management-api
               - modules-common
               - thirdparty-api
-        - terracotta-test-api-api.version:
+        - terracotta-test-api-version:
             source: tests.base
             filter: "**/*TestApp.class"
             modules:
@@ -26,11 +26,14 @@ bundled_components:
               - license-common
               - simulator
 packaging:
-  - tar
+  - mvn
 postscripts:
   - make-build-data:
       args:
         - lib/resources
+  - make-terracotta-api-pom:
+      args:
+        - version-PREALPHA
   - maven-deploy:
       args:
         - artifact: terracotta-tim-api

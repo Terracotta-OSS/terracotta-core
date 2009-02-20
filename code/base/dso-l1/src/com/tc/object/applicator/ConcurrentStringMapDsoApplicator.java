@@ -11,6 +11,7 @@ import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.PhysicalAction;
+import com.tc.object.loaders.LoaderDescription;
 import com.tc.util.Assert;
 
 //XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
@@ -40,7 +41,8 @@ public class ConcurrentStringMapDsoApplicator extends PartialHashMapApplicator {
        * Otherwise we get ClassCastExceptions when we try and store the result in the ConcurrentStringMap
        * instance.
        */
-      Class csmClazz = objectManager.getClassFor(CSM_DSO_CLASSNAME, dna.getDefiningLoaderDescription());
+      LoaderDescription desc = LoaderDescription.fromString(dna.getDefiningLoaderDescription());
+      Class csmClazz = objectManager.getClassFor(CSM_DSO_CLASSNAME, desc);
       Constructor cons = csmClazz.getDeclaredConstructor(Integer.TYPE);
       cons.setAccessible(true);
       return cons.newInstance(physicalAction.getObject());

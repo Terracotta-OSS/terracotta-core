@@ -102,6 +102,30 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   boolean isDSOSessions(String name);
 
+  /**
+   * Examine the app-groups part of the config to determine an appGroup name
+   * given the specified loader description. If the loader name is specified,
+   * &lt;named-classloader&gt; elements will be searched for a match; if a web
+   * app name is specified, &lt;web-application&gt; elements will be searched;
+   * if both are specified, both will be searched, but if a conflict is found
+   * an exception will be thrown.
+   * @param classLoaderName a full classloader name, such as "Tomcat.Catalina:localhost:/events",
+   * or null to ignore &lt;named-classloader&gt; elements in the config.
+   * @param appName a web application name, such as "events", or null to ignore &lt;web-application&gt;
+   * elements in the config.
+   * @return an app-group name, or null if no match was found
+   * @throws com.tc.config.schema.setup.ConfigurationSetupException if a conflict was detected
+   */
+  String getAppGroup(String classLoaderName, String appName);
+  
+  /**
+   * Add entries to an app-group. All the specified named classloaders and all
+   * the specified web application names will be added to the app group.
+   * @param namedClassloaders an array of names of NamedClassLoader, or null if none are being added
+   * @param webAppNames an array of names of web-applications, or null if none are being added.
+   */
+  void addToAppGroup(String appGroup, String[] namedClassloaders, String[] webAppNames);
+  
   DSORuntimeLoggingOptions runtimeLoggingOptions();
 
   DSORuntimeOutputOptions runtimeOutputOptions();

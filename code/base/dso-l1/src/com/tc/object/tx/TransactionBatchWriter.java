@@ -492,8 +492,9 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
         DNAWriter writer = (DNAWriter) writers.get(oid);
         if (writer == null) {
           TCClass tcc = tco.getTCClass();
-          writer = new DNAWriterImpl(output, oid, tcc.getExtendingClassName(), serializer, encoding, tcc
-              .getDefiningLoaderDescription(), !isNew);
+          // TODO: move LoaderDescription into DNA
+          String desc = tcc.getDefiningLoaderDescription().toDelimitedString();
+          writer = new DNAWriterImpl(output, oid, tcc.getExtendingClassName(), serializer, encoding, desc, !isNew);
 
           writers.put(oid, writer);
         } else {

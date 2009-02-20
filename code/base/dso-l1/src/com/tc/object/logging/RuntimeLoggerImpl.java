@@ -327,9 +327,12 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
     return obj.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(obj));
   }
 
-  public void namedLoaderRegistered(NamedClassLoader loader, String name, NamedClassLoader previous) {
+  public void namedLoaderRegistered(NamedClassLoader loader, String name, String appGroup, NamedClassLoader previous) {
     StringBuffer message = new StringBuffer("loader of type [");
     message.append(loader.getClass().getName()).append("] with name [").append(name);
+    if (appGroup != null) {
+      message.append("] in app group [").append(appGroup);
+    }
     message.append("] registered (replaced: ").append(previous != null).append(")");
 
     appendCall(message);

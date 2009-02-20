@@ -10,6 +10,7 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.field.TCField;
 import com.tc.object.field.TCFieldFactory;
+import com.tc.object.loaders.LoaderDescription;
 import com.tc.objectserver.core.api.TestDNAWriter;
 
 import java.lang.reflect.Constructor;
@@ -186,7 +187,7 @@ public class TCObjectImplTest extends BaseDSOTestCase {
       return addTo;
     }
 
-    public String getDefiningLoaderDescription() {
+    public LoaderDescription getDefiningLoaderDescription() {
       throw new ImplementMe();
     }
 

@@ -1,5 +1,5 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * All content copyright (c) 2003-2009 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
 package com.tc.object.bytecode;
@@ -132,8 +132,8 @@ public class ManagerImpl implements Manager {
       extSystemLoader = loader2;
     }
 
-    registerNamedLoader((NamedClassLoader) sunSystemLoader);
-    registerNamedLoader((NamedClassLoader) extSystemLoader);
+    registerNamedLoader((NamedClassLoader) sunSystemLoader, null);
+    registerNamedLoader((NamedClassLoader) extSystemLoader, null);
   }
 
   public SessionMonitor getHttpSessionMonitor() {
@@ -937,8 +937,10 @@ public class ManagerImpl implements Manager {
     return this.portability.overridesHashCode(obj);
   }
 
-  public void registerNamedLoader(final NamedClassLoader loader) {
-    this.classProvider.registerNamedLoader(loader);
+  public void registerNamedLoader(final NamedClassLoader loader, String webAppName) {
+    String loaderName = loader.__tc_getClassLoaderName();
+    String appGroup = config.getAppGroup(loaderName, webAppName);
+    this.classProvider.registerNamedLoader(loader, appGroup);
   }
 
   public ClassProvider getClassProvider() {

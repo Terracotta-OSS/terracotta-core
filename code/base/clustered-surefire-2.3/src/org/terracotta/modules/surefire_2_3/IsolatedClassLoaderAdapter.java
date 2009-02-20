@@ -71,10 +71,11 @@ public class IsolatedClassLoaderAdapter extends ClassAdapter implements ClassAda
             Label l1 = new Label();
             mv.visitJumpInsn(IFNONNULL, l1);
 
+            mv.visitInsn(ACONST_NULL); // this is not a webapp context classloader
             mv.visitVarInsn(ALOAD, 0);
             mv.visitTypeInsn(CHECKCAST, "com/tc/object/loaders/NamedClassLoader");
             mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/ClassProcessorHelper",
-                               "registerGlobalLoader", "(Lcom/tc/object/loaders/NamedClassLoader;)V");
+                               "registerGlobalLoader", "(Lcom/tc/object/loaders/NamedClassLoader;Ljava/lang/String;)V");
 
             mv.visitLabel(l1);
           }

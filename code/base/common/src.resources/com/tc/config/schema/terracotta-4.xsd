@@ -256,6 +256,33 @@
     </xs:simpleContent>
   </xs:complexType>
 
+  <xs:complexType name="app-groups">
+    <xs:sequence>
+      <xs:element name="app-group" type="app-group" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="app-group">
+    <xs:annotation>
+      <xs:documentation>
+        Identifies a set of web applications and/or named classloaders which can be substituted
+        at runtime for the purpose of loading shared data into different applications. For example,
+        two web applications running on different Terracotta nodes can share the same root, by
+        declaring both web applications to be in the same app-group; or a web application and a 
+        command-line application can share a root by declaring the web application and the standard
+        system classloader to be in the same app-group. It is an error to declare the same 
+        application in more than one app-group. Each Terracotta client node can only run at most
+        one application per app-group; for example, if web-applications A and B are in the same
+        app-group, it is an error to deploy both A and B to the same app server instance.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="web-application" type="xs:token" minOccurs="0" maxOccurs="unbounded" />
+      <xs:element name="named-classloader" type="xs:token" minOccurs="0" maxOccurs="unbounded" />
+    </xs:sequence>
+    <xs:attribute name="name" type="xs:string" use="required" />
+  </xs:complexType>
+  
   <xs:complexType name="instrumentation-logging">
     <xs:all>
       <xs:element name="class" type="xs:boolean" minOccurs="0" default="false" />
@@ -402,6 +429,7 @@
 
       <xs:element name="additional-boot-jar-classes" type="additional-boot-jar-classes" minOccurs="0" />
       <xs:element name="web-applications" type="web-applications" minOccurs="0" />
+      <xs:element name="app-groups" type="app-groups" minOccurs="0" />
 
       <xs:element name="dso-reflection-enabled" type="xs:boolean" minOccurs="0" default="true"/>
     </xs:all>
