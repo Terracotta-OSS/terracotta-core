@@ -13,7 +13,11 @@ set SANDBOX="%SANDBOX:"=%"
 
 set TC_INSTALL_DIR=%SANDBOX%\..\..\..
 
-if not defined JAVA_HOME set JAVA_HOME="%TC_INSTALL_DIR%\jre"
+if not defined JAVA_HOME (
+  echo Environment variable JAVA_HOME needs to be set
+  exit /b 1
+)
+
 set JAVA_HOME="%JAVA_HOME:"=%"
 
 if not defined CATALINA_HOME (
