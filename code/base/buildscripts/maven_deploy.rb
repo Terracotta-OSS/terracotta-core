@@ -15,7 +15,12 @@ class MavenDeploy
       raise("Bad 'file' argument passed to deploy_file.  File does not exist: #{file}")
     end
 
-    packaging ||= file =~ /pom.*\.xml$/ ? 'pom' : File.extname(file)
+    packaging ||= case file
+      when /pom.*\.xml$/: 'pom'
+      when /\.jar/: 'jar'
+      else
+        File.extname(file)[1..-1]
+    end
 
     command = dry_run ? ['echo'] : []
     command << FilePath.new('mvn').batch_extension.to_s << '-B' << '-N'
