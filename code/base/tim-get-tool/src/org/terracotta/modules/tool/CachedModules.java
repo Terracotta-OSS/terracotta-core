@@ -21,7 +21,6 @@ import com.google.inject.name.Named;
 import com.tc.bundles.OSGiToMaven;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -121,14 +120,14 @@ public class CachedModules implements Modules {
 
   private void loadData() {
     if ((modules == null) || modules.isEmpty()) {
-      InputStream datafile = null;
+      InputStream dataStream = null;
       try {
-        datafile = new FileInputStream(dataLoader.getDataFile());
-        loadData(datafile);
+        dataStream = dataLoader.openDataStream();
+        loadData(dataStream);
       } catch (Exception e) {
         throw new RuntimeException("Unable to read TIM index: " + e.getMessage());
       } finally {
-        IOUtils.closeQuietly(datafile);
+        IOUtils.closeQuietly(dataStream);
       }
     }
   }

@@ -12,10 +12,14 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.zip.GZIPInputStream;
 
 /**
  * Utility class used for loading a data file from a remote and/or local location. The DataLoader will cache the local
@@ -46,22 +50,20 @@ public class DataLoader {
 
   }
 
-  private URL                remoteDataUrl;
+  private final URL          remoteDataUrl;
   private final File         localDataFile;
+  private final boolean      isGzipped;
   private CacheRefreshPolicy cacheRefreshPolicy = CacheRefreshPolicy.ON_EXPIRATION;
 
   @Inject
   @Named(ConfigAnnotation.DOWNLOADUTIL_INSTANCE)
   private final DownloadUtil downloader;
 
-  public DataLoader(File localDataFile) {
+  public DataLoader(URL remoteDataUrl, File localDataFile) {
     this.localDataFile = localDataFile;
     this.downloader = new DownloadUtil();
-  }
-
-  public DataLoader(URL remoteDataUrl, File localDataFile) {
-    this(localDataFile);
     this.remoteDataUrl = remoteDataUrl;
+    this.isGzipped = remoteDataUrl.toString().endsWith(".gz");
   }
 
   @Inject
@@ -93,7 +95,7 @@ public class DataLoader {
    * If this method returns normally, the returned File object is guaranteed
    * to refer to a file that {@link File#exists()}.
    */
-  public File getDataFile() throws IOException {
+  private File getDataFile() throws IOException {
     try {
       if (!isLocalDataFresh()) {
         loadDataFile();
@@ -114,7 +116,7 @@ public class DataLoader {
    * 
    * @throws IOException
    */
-  public boolean isLocalDataFresh() throws IOException {
+  private boolean isLocalDataFresh() throws IOException {
     if (!localDataFile.exists()) return false;
 
     if (remoteDataUrl == null) return true;
@@ -132,27 +134,35 @@ public class DataLoader {
     return false;
   }
 
-  public boolean isRemoteDataModified() throws IOException {
+  private boolean isRemoteDataModified() throws IOException {
     URLConnection connection = remoteDataUrl.openConnection(downloader.getProxy());
     return connection.getLastModified() > localDataFile.lastModified();
   }
 
-  public boolean isLocalDataFileExpired() {
+  private boolean isLocalDataFileExpired() {
     return false && localDataFileAge() > cacheRefreshPolicy.getExpirationInSeconds();
   }
 
   /**
    * Returns the age of the local data file in seconds. If the file does not exist, returns Long.MAX_VALUE.
    */
-  public long localDataFileAge() {
+  private long localDataFileAge() {
     if (!localDataFile.exists()) return Long.MAX_VALUE;
     double age = System.currentTimeMillis() - localDataFile.lastModified();
     return Math.round(age / 1000.0);
   }
 
-  public void loadDataFile() throws IOException {
+  private void loadDataFile() throws IOException {
     if (this.remoteDataUrl == null) return;
     downloader.download(this.remoteDataUrl, localDataFile, DownloadOption.CREATE_INTERVENING_DIRECTORIES,
                         DownloadOption.OVERWRITE_EXISTING);
+  }
+
+  public InputStream openDataStream() throws FileNotFoundException, IOException {
+    if (isGzipped) {
+      return new GZIPInputStream(new FileInputStream(getDataFile()));
+    } else {
+      return new FileInputStream(getDataFile());
+    }
   }
 }
