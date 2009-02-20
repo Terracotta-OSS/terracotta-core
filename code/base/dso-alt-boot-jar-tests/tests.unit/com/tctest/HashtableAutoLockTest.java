@@ -45,7 +45,7 @@ public class HashtableAutoLockTest extends TCTestCase {
         if ("getNewCommonL1Config".equals(name) || "getInstrumentationLoggingOptions".equals(name)
             || "instrumentationLoggingOptions".equals(name) || "getLogicalExtendingClassName".equals(name)
             || "createDsoClassAdapterFor".equals(name) || "getModulesForInitialization".equals(name)
-            || "verifyBootJarContents".equals(name)) {
+            || "verifyBootJarContents".equals(name) || "validateSessionConfig".equals(name)) {
           return null;
         } else if ("shouldBeAdapted".equals(name)) {
           return Boolean.FALSE;
