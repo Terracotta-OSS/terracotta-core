@@ -13,22 +13,29 @@ import java.io.IOException;
 
 public class GarbageCollectionInfo implements Cloneable, TCSerializable {
 
-  protected static final long NOT_INITIALIZED       = -1L;
-  private GarbageCollectionID gcID                  = GarbageCollectionID.NULL_ID;
-  private boolean             fullGC;
-  private long                startTime             = NOT_INITIALIZED;
-  private long                beginObjectCount      = NOT_INITIALIZED;
-  private long                markStageTime         = NOT_INITIALIZED;
-  private long                pauseStageTime        = NOT_INITIALIZED;
-  private long                deleteStageTime       = NOT_INITIALIZED;
-  private long                elapsedTime           = NOT_INITIALIZED;
-  private long                totalMarkCycleTime    = NOT_INITIALIZED;
-  private long                candidateGarbageCount = NOT_INITIALIZED;
-  private long                actualGarbageCount    = NOT_INITIALIZED;
-  private long                preRescueCount        = NOT_INITIALIZED;
-  private long                rescue1Count          = NOT_INITIALIZED;
-  private long                rescue1Time           = NOT_INITIALIZED;
-  private long                rescue2Time           = NOT_INITIALIZED;
+  protected static final long               NOT_INITIALIZED       = -1L;
+  protected static final long               NULL_INITIALIZED      = -2;
+  private GarbageCollectionID               gcID                  = GarbageCollectionID.NULL_ID;
+  private boolean                           fullGC;
+  private long                              startTime             = NOT_INITIALIZED;
+  private long                              beginObjectCount      = NOT_INITIALIZED;
+  private long                              markStageTime         = NOT_INITIALIZED;
+  private long                              pauseStageTime        = NOT_INITIALIZED;
+  private long                              deleteStageTime       = NOT_INITIALIZED;
+  private long                              elapsedTime           = NOT_INITIALIZED;
+  private long                              totalMarkCycleTime    = NOT_INITIALIZED;
+  private long                              candidateGarbageCount = NOT_INITIALIZED;
+  private long                              actualGarbageCount    = NOT_INITIALIZED;
+  private long                              preRescueCount        = NOT_INITIALIZED;
+  private long                              rescue1Count          = NOT_INITIALIZED;
+  private long                              rescue1Time           = NOT_INITIALIZED;
+  private long                              rescue2Time           = NOT_INITIALIZED;
+
+  public static final GarbageCollectionInfo NULL_INFO             = new GarbageCollectionInfo(
+                                                                                              new GarbageCollectionID(
+                                                                                                                      NULL_INITIALIZED,
+                                                                                                                      "NULL INITIALIZED"),
+                                                                                              false);
 
   public GarbageCollectionInfo() {
     // for serialization
