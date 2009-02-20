@@ -226,6 +226,7 @@ import com.tc.statistics.retrieval.actions.SRAL2BroadcastCount;
 import com.tc.statistics.retrieval.actions.SRAL2BroadcastPerTransaction;
 import com.tc.statistics.retrieval.actions.SRAL2ChangesPerBroadcast;
 import com.tc.statistics.retrieval.actions.SRAL2FaultsFromDisk;
+import com.tc.statistics.retrieval.actions.SRAL2GlobalLockCount;
 import com.tc.statistics.retrieval.actions.SRAL2PendingTransactions;
 import com.tc.statistics.retrieval.actions.SRAL2ToL1FaultRate;
 import com.tc.statistics.retrieval.actions.SRAL2TransactionCount;
@@ -1151,6 +1152,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
       registry.registerActionInstance(new SRAServerTransactionSequencer(serverTransactionSequencerStats));
       registry.registerActionInstance(new SRAL1ReferenceCount(this.clientStateManager));
       registry.registerActionInstance(new SRAGlobalLockRecallCount(serverStats));
+      registry.registerActionInstance(new SRAL2GlobalLockCount(serverStats));
       populateAdditionalStatisticsRetrivalRegistry(registry);
     }
   }

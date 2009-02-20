@@ -42,15 +42,15 @@ public class DSOStatsImpl extends StatsSupport implements DSOStats {
   }
 
   public long getObjectFaultRate() {
-    return faultRate.getValue();
+    return faultRate.getMostRecentSample().getCounterValue();
   }
 
   public long getObjectFlushRate() {
-    return flushRate.getValue();
+    return flushRate.getMostRecentSample().getCounterValue();
   }
 
   public long getTransactionRate() {
-    return txnRate.getValue();
+    return txnRate.getMostRecentSample().getCounterValue();
   }
 
   public double getCacheHitRatio() {
@@ -62,7 +62,7 @@ public class DSOStatsImpl extends StatsSupport implements DSOStats {
   }
 
   public long getGlobalLockRecallRate() {
-    return globalLockRecallRate.getValue();
+    return globalLockRecallRate.getMostRecentSample().getCounterValue();
   }
 
   public long getTransactionSizeRate() {

@@ -1,6 +1,5 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
- * notice. All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
  */
 package com.tc.statistics.retrieval.actions;
 
@@ -13,19 +12,19 @@ import com.tc.stats.counter.sampled.TimeStampedCounterValue;
 import com.tc.util.Assert;
 
 /**
- * This statistics gives the rate of global lock recalls happening per second.
+ * This statistics gives the number of locks awarded globally
  * <p/>
- * The number of lock recalls that is happening is sampled every second presently
+ * The number of locks that is happening is sampled every second presently
  */
-public class SRAGlobalLockRecallCount implements StatisticRetrievalAction {
+public class SRAL2GlobalLockCount implements StatisticRetrievalAction {
 
-  public static final String   ACTION_NAME = "l2 lock recalls";
+  public static final String ACTION_NAME = "l2 lock count";
 
-  private final SampledCounter globalLockRecallCounter;
+  private final SampledCounter lockCounter;
 
-  public SRAGlobalLockRecallCount(final DSOGlobalServerStats serverStats) {
+  public SRAL2GlobalLockCount(final DSOGlobalServerStats serverStats) {
     Assert.assertNotNull("serverStats", serverStats);
-    globalLockRecallCounter = serverStats.getGlobalLockRecallCounter();
+    lockCounter = serverStats.getGlobalLockCounter();
   }
 
   public String getName() {
@@ -37,7 +36,7 @@ public class SRAGlobalLockRecallCount implements StatisticRetrievalAction {
   }
 
   public StatisticData[] retrieveStatisticData() {
-    TimeStampedCounterValue value = globalLockRecallCounter.getMostRecentSample();
+    TimeStampedCounterValue value = lockCounter.getMostRecentSample();
     return new StatisticData[] { new StatisticData(ACTION_NAME, value.getCounterValue()) };
   }
 }
