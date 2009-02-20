@@ -153,14 +153,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   /**
    * A map of class names to TransparencyClassSpec
-   *
+   * 
    * @GuardedBy {@link #specLock}
    */
   private final Map                              userDefinedBootSpecs               = new HashMap();
 
   /**
    * A map of class names to TransparencyClassSpec for individual classes
-   *
+   * 
    * @GuardedBy {@link #specLock}
    */
   private final Map                              classSpecs                         = new HashMap();
@@ -1216,6 +1216,12 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return cacheIsAdaptable(fullClassName, desc.isInclude());
   }
 
+  public void validateSessionConfig() {
+    if (this.applicationNames.size() > 0 && !isCapabilityEnabled(TimCapability.SESSIONS)) {
+      logger.warn("One or more web applications are listed in configuration, but no container TIMs have been loaded");
+    }
+  }
+
   private boolean isCapabilityEnabled(TimCapability cap) {
     return timCapabilities.contains(cap);
   }
@@ -1974,4 +1980,5 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       return targetSystemLoaderOnly;
     }
   }
+
 }

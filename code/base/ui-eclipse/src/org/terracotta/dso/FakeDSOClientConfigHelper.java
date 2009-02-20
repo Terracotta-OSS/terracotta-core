@@ -450,4 +450,8 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
   public void enableCapability(TimCapability cap) {
     //
   }
+
+  public void validateSessionConfig() {
+    //
+  }
 }
