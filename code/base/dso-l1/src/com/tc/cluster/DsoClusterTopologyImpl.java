@@ -3,12 +3,12 @@
  */
 package com.tc.cluster;
 
+import com.tc.util.Assert;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
-import junit.framework.Assert;
 
 public class DsoClusterTopologyImpl implements DsoClusterTopology {
   private final Map<String, DsoNode> nodes = new HashMap<String, DsoNode>();
