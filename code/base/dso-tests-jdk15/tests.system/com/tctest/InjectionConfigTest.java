@@ -4,7 +4,7 @@
  */
 package com.tctest;
 
-public class InjectionTest extends TransparentTestBase {
+public class InjectionConfigTest extends TransparentTestBase {
 
   @Override
   public void doSetUp(final TransparentTestIface t) throws Exception {
@@ -14,6 +14,6 @@ public class InjectionTest extends TransparentTestBase {
 
   @Override
   protected Class getApplicationClass() {
-    return InjectionTestApp.class;
+    return InjectionConfigTestApp.class;
   }
 }

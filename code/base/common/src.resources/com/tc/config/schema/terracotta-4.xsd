@@ -297,6 +297,26 @@
     </xs:sequence>
   </xs:complexType>
 
+  <xs:complexType name="injected-instances">
+    <xs:sequence>
+      <xs:element name="injected-field" type="injected-field" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="injected-field">
+    <xs:annotation>
+      <xs:documentation>
+        Declares a class field into which an instance will be injected by DSO.
+        The type of the instance is by default specified by the type of the field, but it
+        can also be specified by the instance-type element if needed.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:all>
+      <xs:element name="field-name" type="qualified-field-name" minOccurs="1" maxOccurs="1" />
+      <xs:element name="instance-type" type="qualified-class-name" minOccurs="0" maxOccurs="1" />
+    </xs:all>
+  </xs:complexType>
+
   <xs:complexType name="runtime-output-options">
     <xs:all>
       <xs:element name="auto-lock-details" type="xs:boolean" minOccurs="0" default="false" />
@@ -374,6 +394,7 @@
     <xs:all>
       <xs:element name="instrumented-classes" type="instrumented-classes" minOccurs="0" />
       <xs:element name="transient-fields" type="transient-fields" minOccurs="0" />
+      <xs:element name="injected-instances" type="injected-instances" minOccurs="0" />
 
       <xs:element name="locks" type="locks" minOccurs="0" />
       <xs:element name="roots" type="roots" minOccurs="0" />
@@ -449,6 +470,7 @@
       <xs:element name="instrumented-classes" type="instrumented-classes" minOccurs="0" />
         <xs:element name="application-contexts" type="spring-app-contexts" minOccurs="0" />
       <xs:element name="transient-fields" type="transient-fields" minOccurs="0" />
+      <xs:element name="injected-instances" type="injected-instances" minOccurs="0" />
     </xs:all>
     <xs:attribute name="name" type="xs:string" use="required" />
   </xs:complexType>

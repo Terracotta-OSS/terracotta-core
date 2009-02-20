@@ -88,6 +88,8 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   boolean isTransient(int modifiers, ClassInfo classInfo, String field);
 
+  String getInjectedFieldType(ClassInfo classInfo, String field);
+
   boolean isVolatile(int modifiers, ClassInfo classInfo, String field);
 
   String rootNameFor(FieldInfo fi);
@@ -137,6 +139,8 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   boolean matches(final String expression, final MemberInfo methodInfo);
 
   void addTransient(String className, String fieldName);
+
+  void addInjectedField(String className, String fieldName, String instanceType);
 
   String getOnLoadScriptIfDefined(ClassInfo classInfo);
 
@@ -203,7 +207,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   /**
    * Add module dependency with no groupId, indicating the groupId should be assumed to be the default:
    * "org.terracotta.modules".
-   * 
+   *
    * @artifactId Such as tim-foobar
    * @version Such as 1.0.0-SNAPSHOT
    */
@@ -211,14 +215,12 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   /**
    * Add module dependency
-   * 
+   *
    * @groupId Such as org.terracotta.modules
    * @artifactId Such as tim-foobar
    * @version Such as 1.0.0-SNAPSHOT
    */
   void addModule(String groupId, String artifactId, String version);
-
-  boolean removeCustomAdapter(String name);
 
   // HACK: is also in IStandardDSOClientConfigHelper
   /**
@@ -235,9 +237,9 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   URL getClassResource(String className, ClassLoader caller);
 
-  boolean hasCustomAdapter(ClassInfo classInfo);
+  boolean hasCustomAdapters(ClassInfo classInfo);
 
-  ClassAdapterFactory getCustomAdapter(ClassInfo classInfo);
+  Collection<ClassAdapterFactory> getCustomAdapters(ClassInfo classInfo);
 
   boolean reflectionEnabled();
 
@@ -253,9 +255,9 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   boolean isApplicationSessionLocked(String appName);
 
   /**
-   * Add class adapters based on annotations that are present on the class
-   * 
+   * Add class adapters based on configuration that are present on the class
+   *
    * @return {@code true} when custom adapters were added; or {@code false} otherwise
    */
-  boolean addAnnotationBasedAdapters(ClassInfo classInfo);
+  boolean addClassConfigBasedAdapters(ClassInfo classInfo);
 }

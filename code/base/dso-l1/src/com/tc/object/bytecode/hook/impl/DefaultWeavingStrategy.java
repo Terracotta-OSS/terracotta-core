@@ -51,6 +51,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -137,7 +138,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
       }
 
       final boolean isDsoAdaptable = m_configHelper.shouldBeAdapted(classInfo);
-      final boolean hasCustomAdapter = m_configHelper.hasCustomAdapter(classInfo);
+      final boolean hasCustomAdapters = m_configHelper.hasCustomAdapters(classInfo);
 
       // TODO match on (within, null, classInfo) should be equivalent to those ones.
       final Set definitions = context.getDefinitions();
@@ -145,7 +146,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
       // has AW aspects?
       final boolean isAdvisable = isAdvisable(classInfo, definitions);
 
-      if (!isAdvisable && !isDsoAdaptable && !hasCustomAdapter) {
+      if (!isAdvisable && !isDsoAdaptable && !hasCustomAdapters) {
         context.setCurrentBytecode(context.getInitialBytecode());
         return;
       }
@@ -155,7 +156,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
       }
 
       // handle replacement classes
-      if (isDsoAdaptable || hasCustomAdapter) {
+      if (isDsoAdaptable || hasCustomAdapters) {
         ClassReplacementMapping mapping = m_configHelper.getClassReplacementMapping();
         String replacementClassName = mapping.getReplacementClassName(className);
 
@@ -303,18 +304,20 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
       }
 
       // ------------------------------------------------
-      // -- Phase Annotation-based - Add custom adapters based on annotations
-      final boolean hasAnnotationsBasedCustomAdapter = m_configHelper.addAnnotationBasedAdapters(classInfo);
+      // -- Phase class config-based - Add custom adapters based on class configuration
+      final boolean hasClassConfigBasedCustomAdapters = m_configHelper.addClassConfigBasedAdapters(classInfo);
 
       // ------------------------------------------------
       // -- Phase DSO -- DSO clustering
-      if (hasCustomAdapter || hasAnnotationsBasedCustomAdapter) {
-        ClassAdapterFactory factory = m_configHelper.getCustomAdapter(classInfo);
-        final ClassReader reader = new ClassReader(context.getCurrentBytecode());
-        final ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
-        ClassVisitor adapter = factory.create(writer, context.getLoader());
-        reader.accept(adapter, ClassReader.SKIP_FRAMES);
-        context.setCurrentBytecode(writer.toByteArray());
+      if (hasCustomAdapters || hasClassConfigBasedCustomAdapters) {
+        Collection<ClassAdapterFactory> factories = m_configHelper.getCustomAdapters(classInfo);
+        for (ClassAdapterFactory factory : factories) {
+          final ClassReader reader = new ClassReader(context.getCurrentBytecode());
+          final ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
+          ClassVisitor adapter = factory.create(writer, context.getLoader());
+          reader.accept(adapter, ClassReader.SKIP_FRAMES);
+          context.setCurrentBytecode(writer.toByteArray());
+        }
       }
 
       if (isDsoAdaptable) {
