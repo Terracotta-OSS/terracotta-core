@@ -172,6 +172,21 @@ public class GarbageCollectionInfo implements Cloneable, TCSerializable {
            + this.rescue1Count + " rescue2Time = " + rescue2Time;
   }
 
+  @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof GarbageCollectionInfo) {
+      GarbageCollectionInfo other = (GarbageCollectionInfo) obj;
+      return (this.gcID.equals(other.gcID) && this.fullGC == other.fullGC && this.startTime == other.startTime
+              && this.beginObjectCount == other.beginObjectCount && this.markStageTime == other.markStageTime
+              && this.pauseStageTime == other.pauseStageTime && this.deleteStageTime == other.deleteStageTime
+              && this.elapsedTime == other.elapsedTime && this.totalMarkCycleTime == other.totalMarkCycleTime
+              && this.candidateGarbageCount == other.candidateGarbageCount
+              && this.preRescueCount == other.preRescueCount && this.rescue1Count == other.rescue1Count
+              && this.rescue1Time == other.rescue1Time && this.rescue2Time == other.rescue2Time);
+    }
+    return false;
+  }
+
   public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
 
     long iterationCount = serialInput.readLong();
