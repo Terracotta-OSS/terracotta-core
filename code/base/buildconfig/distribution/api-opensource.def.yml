@@ -39,10 +39,12 @@ postscripts:
         - artifact: terracotta-tim-api
           file: terracotta-tim-api-version.jar
           pom: poms/terracotta-tim-api-pom.xml
+          version: api.version
           inject: 
             - lib/resources/build-data.txt
         - artifact: terracotta-test-api
           file: terracotta-test-api-version.jar
           pom: poms/terracotta-test-api-pom.xml
+          version: api.version
           inject: 
             - lib/resources/build-data.txt
