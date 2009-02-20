@@ -26,14 +26,11 @@ bundled_components:
               - license-common
               - simulator
 packaging:
-  - mvn
+  - tar
 postscripts:
   - make-build-data:
       args:
         - lib/resources
-  - make-terracotta-api-pom:
-      args:
-        - version-PREALPHA
   - maven-deploy:
       args:
         - artifact: terracotta-tim-api
