@@ -6,16 +6,17 @@ package com.tc.util;
 
 public class TickerTokenHandleImpl implements TickerTokenHandle {
 
-  private boolean        complete = false;
-  private TickerTokenKey key;
-  private String         identifier;
+  private final TickerTokenKey key;
+  private final String         identifier;
+  private boolean              complete = false;
 
-  public String getIdentifier() {
-    return identifier;
+  public TickerTokenHandleImpl(String identifier, TickerTokenKey key) {
+    this.identifier = identifier;
+    this.key = key;
   }
 
-  public void setIdentifier(String identifier) {
-    this.identifier = identifier;
+  public String getIdentifier() {
+    return this.identifier;
   }
 
   public synchronized void waitTillComplete() {
@@ -27,11 +28,10 @@ public class TickerTokenHandleImpl implements TickerTokenHandle {
       }
     }
   }
-  
+
   public synchronized boolean isComplete() {
     return this.complete;
   }
-  
 
   public synchronized void complete() {
     this.complete = true;
@@ -42,12 +42,12 @@ public class TickerTokenHandleImpl implements TickerTokenHandle {
     complete();
   }
 
-  public synchronized TickerTokenKey getKey() {
+  public TickerTokenKey getKey() {
     return this.key;
   }
 
-  public synchronized void setKey(TickerTokenKey aKey) {
-    Assert.assertNull(this.key);
-    this.key = aKey;
+  @Override
+  public synchronized String toString() {
+    return "TickerTokenHandleImpl [ " + this.identifier + " , " + this.key + " ] : completed :  " + this.complete;
   }
 }

@@ -7,18 +7,14 @@ package com.tc.util;
 public interface TickerTokenHandle {
 
   public boolean isComplete();
-  
+
   public void complete();
 
   public void cancel();
-
-  public void setKey(TickerTokenKey key);
 
   public TickerTokenKey getKey();
 
   public String getIdentifier();
 
-  public void setIdentifier(String identifier);
-  
   public void waitTillComplete();
 }

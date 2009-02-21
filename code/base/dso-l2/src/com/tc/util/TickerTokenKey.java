@@ -20,21 +20,20 @@ public class TickerTokenKey {
   }
 
   public Class getClassType() {
-    return classType;
+    return this.classType;
   }
 
   public int getPrimaryID() {
-    return primaryID;
+    return this.primaryID;
   }
 
   public int getStartTick() {
-    return startTick;
+    return this.startTick;
   }
 
-  
   @Override
   public int hashCode() {
-    return classType.hashCode();
+    return this.classType.hashCode() + this.primaryID + this.startTick;
   }
 
   @Override
@@ -45,6 +44,11 @@ public class TickerTokenKey {
           .getStartTick());
     }
     return false;
+  }
+
+  @Override
+  public String toString() {
+    return "TickerTokenKey : {" + this.classType.getName() + " : " + this.primaryID + " : " + this.startTick + "}";
   }
 
 }

@@ -11,28 +11,29 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class TickerTokenManagerImpl implements TickerTokenManager {
 
-  private final int                                    id;
-  private final int                                    timerPeriod;
+  private final int                                                  id;
+  private final int                                                  timerPeriod;
 
-  private final Map<Class, TickerTokenFactory>         factoryMap        = Collections
-                                                                             .synchronizedMap(new HashMap<Class, TickerTokenFactory>());
-  private final Map<Class, TickerTokenProcessor>       tokenProcessorMap = Collections
-                                                                             .synchronizedMap(new HashMap<Class, TickerTokenProcessor>());
-  private final Map<TickerTokenKey, TimerTask>         timerTaskMap      = Collections
-                                                                             .synchronizedMap(new HashMap<TickerTokenKey, TimerTask>());
-  private final Map<TickerTokenKey, TickerTokenHandle> tokenHandleMap    = Collections
-                                                                             .synchronizedMap(new HashMap<TickerTokenKey, TickerTokenHandle>());
+  private final Map<Class, TickerTokenFactory>                       factoryMap        = Collections
+                                                                                           .synchronizedMap(new HashMap<Class, TickerTokenFactory>());
+  private final Map<Class, TickerTokenProcessor>                     tokenProcessorMap = Collections
+                                                                                           .synchronizedMap(new HashMap<Class, TickerTokenProcessor>());
+  private final Map<TickerTokenKey, TimerTask>                       timerTaskMap      = Collections
+                                                                                           .synchronizedMap(new HashMap<TickerTokenKey, TimerTask>());
+  private final ConcurrentHashMap<TickerTokenKey, TickerTokenHandle> tokenHandleMap    = new ConcurrentHashMap<TickerTokenKey, TickerTokenHandle>();
 
-  private final Map<String, TickerTokenHandle>         lookupMap         = Collections
-                                                                             .synchronizedMap(new HashMap<String, TickerTokenHandle>());
+  private final ConcurrentHashMap<String, TickerTokenHandle>         lookupMap         = new ConcurrentHashMap<String, TickerTokenHandle>();
 
-  private final Timer                                  timer             = new Timer("Ticker Token Timer", true);
+  private final Timer                                                timer             = new Timer(
+                                                                                                   "Ticker Token Timer",
+                                                                                                   true);
 
-  private final int                                    totalTickers;
-  private final Counter                                tickerCounter     = new Counter();
+  private final int                                                  totalTickers;
+  private final Counter                                              tickerCounter     = new Counter();
 
   public TickerTokenManagerImpl(int id, int totalTickers, int timerPeriod) {
     this.id = id;
@@ -41,48 +42,51 @@ public abstract class TickerTokenManagerImpl implements TickerTokenManager {
   }
 
   public int getId() {
-    return id;
+    return this.id;
   }
 
   public void registerTickerTokenProcessor(Class tokenClass, TickerTokenProcessor processor) {
-    tokenProcessorMap.put(tokenClass, processor);
+    this.tokenProcessorMap.put(tokenClass, processor);
   }
 
   public void registerTickerTokenFactory(Class tokenClass, TickerTokenFactory factory) {
-    factoryMap.put(tokenClass, factory);
+    this.factoryMap.put(tokenClass, factory);
   }
 
-  public TickerTokenHandle createHandle(String identifier) {
-    TickerTokenHandle handle = new TickerTokenHandleImpl();
-    lookupMap.put(identifier, handle);
+  private TickerTokenHandle createHandle(String identifier, Class tickerTokenType) {
+    int startTick = this.tickerCounter.increment();
+    TickerTokenKey key = new TickerTokenKey(tickerTokenType, this.id, startTick);
+    TickerTokenHandle handle = new TickerTokenHandleImpl(identifier, key);
+    if (this.lookupMap.putIfAbsent(identifier, handle) != null) {
+      // One already exists for the identifier
+      throw new TickerTokenException("Cant create Handle with same identifier : " + identifier
+                                     + " when a current ticker exists. " + this.lookupMap);
+    }
     return handle;
   }
 
-  public void startTicker(Class tickerTokenType, String identifier) {
-    int startTick = tickerCounter.increment();
-    TickerTokenHandle handle = null;
-    if ((handle = lookupMap.get(identifier)) != null) {
-      TickerTask task = new TickerTask(startTick, this.totalTickers, this, getTickerTokenFactory(tickerTokenType),
-                                       timerTaskMap);
-      timer.schedule(task, timerPeriod, timerPeriod);
-      TickerTokenKey key = new TickerTokenKey(tickerTokenType, id, startTick);
-      tokenHandleMap.put(key, handle);
-      timerTaskMap.put(key, task);
-      handle.setKey(key);
+  public TickerTokenHandle startTicker(String identifier, Class tickerTokenType) {
+    TickerTokenHandle handle = createHandle(identifier, tickerTokenType);
+    TickerTokenKey key = handle.getKey();
+    if ((this.tokenHandleMap.putIfAbsent(key, handle)) == null) {
+      TickerTask task = new TickerTask(key.getStartTick(), this.totalTickers, this, getTickerTokenFactory(key
+          .getClassType()), this.timerTaskMap);
+      this.timer.schedule(task, this.timerPeriod, this.timerPeriod);
+    } else {
+      throw new TickerTokenException("Duplicate Handle with same identifier : " + identifier);
     }
+    return handle;
   }
 
   public void cancelTicker(String identifier) {
-    TimerTask timerTask = null;
 
-    TickerTokenHandle handle = null;
-    if ((handle = lookupMap.remove(identifier)) != null) {
+    TickerTokenHandle handle;
+    if ((handle = this.lookupMap.remove(identifier)) != null) {
       TickerTokenKey key = handle.getKey();
-      if (key != null) {
-        if ((timerTask = timerTaskMap.remove(key)) != null) {
-          timerTask.cancel();
-          tokenHandleMap.remove(key);
-        }
+      TimerTask timerTask;
+      if ((timerTask = this.timerTaskMap.remove(key)) != null) {
+        timerTask.cancel();
+        this.tokenHandleMap.remove(key);
       }
       handle.complete();
     }
@@ -100,10 +104,9 @@ public abstract class TickerTokenManagerImpl implements TickerTokenManager {
     processor.processToken(token);
 
     int primaryID = token.getPrimaryID();
-    if (id == primaryID) {
+    if (this.id == primaryID) {
       if (validCompleteToken(token)) {
         synchronized (this) {
-
           if (token.evaluateComplete()) {
             complete(token);
           }
@@ -115,31 +118,31 @@ public abstract class TickerTokenManagerImpl implements TickerTokenManager {
   }
 
   private TickerTokenFactory getTickerTokenFactory(Class tokenClass) {
-    TickerTokenFactory factory = factoryMap.get(tokenClass);
+    TickerTokenFactory factory = this.factoryMap.get(tokenClass);
     if (factory == null) { throw new AssertionError("factory for token class: " + tokenClass + " is not registered"); }
     return factory;
   }
 
   private TickerTokenProcessor getTickerTokenProcessor(Class tokenClass) {
-    TickerTokenProcessor handler = tokenProcessorMap.get(tokenClass);
+    TickerTokenProcessor handler = this.tokenProcessorMap.get(tokenClass);
     if (handler == null) { throw new AssertionError("token handler for token class: " + tokenClass
                                                     + " is not registered"); }
     return handler;
   }
 
   private TickerTokenHandle removeCompleteHandler(TickerToken token) {
-    TickerTokenHandle handle = tokenHandleMap.remove(new TickerTokenKey(token.getClass(), token.getPrimaryID(), token
-        .getStartTick()));
-    lookupMap.remove(handle.getIdentifier());
+    TickerTokenHandle handle = this.tokenHandleMap.remove(new TickerTokenKey(token.getClass(), token.getPrimaryID(),
+                                                                             token.getStartTick()));
+    this.lookupMap.remove(handle.getIdentifier());
     return handle;
   }
 
   private TimerTask removeTimer(TickerToken token) {
-    return timerTaskMap.remove(new TickerTokenKey(token));
+    return this.timerTaskMap.remove(new TickerTokenKey(token));
   }
 
   private boolean validCompleteToken(TickerToken token) {
-    return tokenHandleMap.get(new TickerTokenKey(token.getClass(), token.getPrimaryID(), token.getStartTick())) != null;
+    return this.tokenHandleMap.get(new TickerTokenKey(token.getClass(), token.getPrimaryID(), token.getStartTick())) != null;
   }
 
   private void complete(TickerToken token) {
@@ -170,9 +173,9 @@ public abstract class TickerTokenManagerImpl implements TickerTokenManager {
     @Override
     public void run() {
 
-      TickerToken token = factory.createTriggerToken(manager.getId(), startTick, totalTickers);
-      timerTaskMap.put(new TickerTokenKey(token), this);
-      manager.send(token);
+      TickerToken token = this.factory.createTriggerToken(this.manager.getId(), this.startTick, this.totalTickers);
+      this.timerTaskMap.put(new TickerTokenKey(token), this);
+      this.manager.send(token);
 
     }
 
