@@ -41,17 +41,17 @@ public class GarbageCollectionInfo implements Cloneable, TCSerializable {
     // for serialization
   }
 
+  public GarbageCollectionInfo(GarbageCollectionID id, boolean fullGC) {
+    this.gcID = id;
+    this.fullGC = fullGC;
+  }
+
   public void setCandidateGarbageCount(long candidateGarbageCount) {
     this.candidateGarbageCount = candidateGarbageCount;
   }
 
   public void setActualGarbageCount(long actualGarbageCount) {
     this.actualGarbageCount = actualGarbageCount;
-  }
-
-  public GarbageCollectionInfo(GarbageCollectionID id, boolean fullGC) {
-    this.gcID = id;
-    this.fullGC = fullGC;
   }
 
   public long getRescue1Count() {
