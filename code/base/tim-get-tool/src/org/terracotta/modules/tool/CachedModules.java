@@ -166,6 +166,16 @@ public class CachedModules implements Modules {
     return list;
   }
 
+  public Module findLatest(String artifactId, String groupId) {
+    for (Module module : listLatest()) {
+      boolean foundArtifactId = module.artifactId().equals(artifactId);
+      boolean foundGroupId = (groupId == null) ? true : module.groupId().equals(groupId);
+      if (!foundArtifactId || !foundGroupId) continue;
+      return module;
+    }
+    return null;
+  }
+
   public Module get(String groupId, String artifactId, String version) {
     Map<String, Object> attributes = new HashMap<String, Object>();
     attributes.put("groupId", groupId);
