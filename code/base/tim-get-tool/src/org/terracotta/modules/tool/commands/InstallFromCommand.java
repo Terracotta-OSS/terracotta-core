@@ -73,7 +73,7 @@ public class InstallFromCommand extends ModuleOperatorCommand {
     File tcConfigPath = new File(args.get(0));
     if (!tcConfigPath.exists() || !tcConfigPath.isFile()) {
       out.println("File '" + tcConfigPath + "' doesn't exist or not a file.");
-      // return;
+      return;
     }
 
     List<Module> neededToInstalledModules;
