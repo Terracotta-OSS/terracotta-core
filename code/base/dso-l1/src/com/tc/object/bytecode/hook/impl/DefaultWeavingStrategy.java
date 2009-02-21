@@ -305,18 +305,21 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
 
       // ------------------------------------------------
       // -- Phase class config-based - Add custom adapters based on class configuration
-      final boolean hasClassConfigBasedCustomAdapters = m_configHelper.addClassConfigBasedAdapters(classInfo);
+      final boolean hasClassConfigBasedCustomAdapters;
+      synchronized (m_configHelper) {
+        hasClassConfigBasedCustomAdapters = m_configHelper.addClassConfigBasedAdapters(classInfo);
 
-      // ------------------------------------------------
-      // -- Phase DSO -- DSO clustering
-      if (hasCustomAdapters || hasClassConfigBasedCustomAdapters) {
-        Collection<ClassAdapterFactory> factories = m_configHelper.getCustomAdapters(classInfo);
-        for (ClassAdapterFactory factory : factories) {
-          final ClassReader reader = new ClassReader(context.getCurrentBytecode());
-          final ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
-          ClassVisitor adapter = factory.create(writer, context.getLoader());
-          reader.accept(adapter, ClassReader.SKIP_FRAMES);
-          context.setCurrentBytecode(writer.toByteArray());
+        // ------------------------------------------------
+        // -- Phase DSO -- DSO clustering
+        if (hasCustomAdapters || hasClassConfigBasedCustomAdapters) {
+          Collection<ClassAdapterFactory> factories = m_configHelper.getCustomAdapters(classInfo);
+          for (ClassAdapterFactory factory : factories) {
+            final ClassReader reader = new ClassReader(context.getCurrentBytecode());
+            final ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
+            ClassVisitor adapter = factory.create(writer, context.getLoader());
+            reader.accept(adapter, ClassReader.SKIP_FRAMES);
+            context.setCurrentBytecode(writer.toByteArray());
+          }
         }
       }
 
