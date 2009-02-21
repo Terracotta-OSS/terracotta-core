@@ -213,6 +213,18 @@ public class ActiveActiveServerManager extends MultipleServerManager {
 
     return mbeans;
   }
+  
+  public List<List<DSOMBean>> connectAllL2ServerMBeans() throws IOException {
+    int grpCount = setupManger.getActiveServerGroupCount();
+    List<List<DSOMBean>> mbeans = new ArrayList<List<DSOMBean>>(grpCount);
+
+    for (int i = 0; i < grpCount; i++) {
+      ActivePassiveServerManager apsm = activePassiveServerManagers[i];
+      mbeans.add(apsm.connectAllL2ServerMBeans());
+    }
+
+    return mbeans;
+  }
 
   public GroupData[] getGroupsData() {
     return this.groupsData;

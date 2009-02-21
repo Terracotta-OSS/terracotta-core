@@ -40,6 +40,7 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
 
   public void garbageCollectorStart(GarbageCollectionInfo info) {
     GCStatsImpl gcStats = getGCStats(info);
+    push(info.getGarbageCollectionID(), gcStats);
     fireGCStatsEvent(gcStats);
   }
 
@@ -71,14 +72,12 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
   public void garbageCollectorCompleted(GarbageCollectionInfo info) {
     GCStatsImpl gcStats = getGCStats(info);
     gcStats.setCompleteState();
-    push(info.getGarbageCollectionID(), gcStats);
     fireGCStatsEvent(gcStats);
   }
 
   public void garbageCollectorCanceled(GarbageCollectionInfo info) {
     GCStatsImpl gcStats = getGCStats(info);
     gcStats.setCanceledState();
-    push(info.getGarbageCollectionID(), gcStats);
     fireGCStatsEvent(gcStats);
   }
 
@@ -86,7 +85,7 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
     GCStatsImpl gcStats = null;
     if ((gcStats = gcHistory.get(info.getGarbageCollectionID())) == null) {
       gcStats = new GCStatsImpl(info.getIteration(), info.isFullGC(), info.getStartTime());
-      gcHistory.put(info.getGarbageCollectionID(), gcStats);
+      push(info.getGarbageCollectionID(), gcStats);
     }
     gcStats.setActualGarbageCount(info.getActualGarbageCount());
     gcStats.setBeginObjectCount(info.getBeginObjectCount());

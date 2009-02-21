@@ -497,6 +497,14 @@ public class ActivePassiveServerManager extends MultipleServerManager {
                                                                                  DSOMBean.class, false);
     return dsoMBean;
   }
+  
+  public DSOMBean getL2ServerMBean(int index) throws IOException {
+    JMXConnectorProxy jmxc = new JMXConnectorProxy(HOST, jmxPorts[index]);
+    MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
+    DSOMBean dsoMBean = (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO_SERVER,
+                                                                                 DSOMBean.class, false);
+    return dsoMBean;
+  }
 
   public void stopServer(int index) throws Exception {
 
@@ -904,6 +912,14 @@ public class ActivePassiveServerManager extends MultipleServerManager {
     List<DSOMBean> mbeans = new ArrayList<DSOMBean>();
     for (int i = 0; i < getServerCount(); i++) {
       mbeans.add(getDsoMBean(i));
+    }
+    return mbeans;
+  }
+  
+  public List<DSOMBean> connectAllL2ServerMBeans() throws IOException {
+    List<DSOMBean> mbeans = new ArrayList<DSOMBean>();
+    for (int i = 0; i < getServerCount(); i++) {
+      mbeans.add(getL2ServerMBean(i));
     }
     return mbeans;
   }
