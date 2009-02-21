@@ -270,6 +270,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
       exec_section :bundled_demos
       exec_section :bundled_jres
     end
+    puts "EXEC POSTSCRIPTS"
     exec_section :postscripts
   end
 
