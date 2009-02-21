@@ -20,6 +20,7 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.field.TCFieldFactory;
 import com.tc.object.loaders.ClassProvider;
+import com.tc.object.loaders.LoaderDescription;
 import com.tc.util.ClassUtils;
 import com.tc.util.runtime.Vm;
 
@@ -56,7 +57,7 @@ public class TCClassFactoryImpl implements TCClassFactory {
     synchronized (classes) {
       TCClass rv = (TCClass) classes.get(clazz);
       if (rv == null) {
-        String loaderDesc = classProvider.getLoaderDescriptionFor(clazz);
+        LoaderDescription loaderDesc = classProvider.getLoaderDescriptionFor(clazz);
         String className = clazz.getName();
         ClassInfo classInfo = JavaClassInfo.getClassInfo(clazz);
         rv = new TCClassImpl(fieldFactory,

@@ -43,7 +43,7 @@ public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, P
   private static ResourceBundleHelper bundleHelper = new ResourceBundleHelper(WelcomeFrame.class);
 
   private XTabbedPane                 tabbedPane;
-  private ArrayList                   startupList;
+  private final ArrayList             startupList;
 
   public WelcomeFrame(String[] args) {
     super(getBundleString("welcome.title"));
@@ -62,14 +62,17 @@ public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, P
     cp.add(tabbedPane = new XTabbedPane());
 
     addWindowListener(new WindowAdapter() {
+      @Override
       public void windowDeactivated(WindowEvent e) {
         setTextPaneCursor(Cursor.DEFAULT_CURSOR);
       }
 
+      @Override
       public void windowActivated(WindowEvent e) {
         setTextPaneCursor(Cursor.DEFAULT_CURSOR);
       }
 
+      @Override
       public void windowGainedFocus(WindowEvent e) {
         setTextPaneCursor(Cursor.DEFAULT_CURSOR);
       }
@@ -164,7 +167,7 @@ public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, P
       }
     } else if (action.equals("run_dev_center")) {
       startFakeWaitPeriod();
-      runScript("tdc");
+      runScript("dev-console");
     } else if (action.equals("run_configurator")) {
       startFakeWaitPeriod();
       runScript("sessions-configurator", "tools" + System.getProperty("file.separator") + "sessions");

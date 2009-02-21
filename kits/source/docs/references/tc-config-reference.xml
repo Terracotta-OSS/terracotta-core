@@ -723,6 +723,30 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
           <root-name>rootTwo</root-name>
         </root>
       </roots>
+      
+      <!-- This section specifies the instances that are injected
+         into your application by Terracotta DSO. These injected instances
+         allow you to access DSO-specific information or functionalities.
+      -->
+      <injected-instances>
+        <!-- Inject an instance into a field of a class. The type of this
+           field determines what kind of instance will be injected. Check
+           the Terracotta documentation to learn about all supported
+           types. -->
+      	<injected-field>
+          <!-- The name of the field into which to inject the instance.
+             This must be the fully-qualified name of a field. -->
+      	  <field-name>com.mycompany.pkgc.AnotherClass.theField</field-name>
+      	</injected-field>
+      	
+      	<injected-field>
+      	  <field-name>com.mycompany.pkgc.AnotherClass.anotherField</field-name>
+      	  <!-- Allows you to specify which instance type needs to be injected
+      	     in case the type of the field by itself doesn't allow Terracotta
+      	     DSO to determine the injected instance type univocally. -->
+      	  <instance-type>com.tc.cluster.DsoCluster</instance-type>
+      	</injected-field>
+      </injected-instances>
 
       <!-- This section specifies methods to invoke in a distributed 
          fashion via Terracotta DSO. When a method matching one of the

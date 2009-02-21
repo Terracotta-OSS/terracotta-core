@@ -272,6 +272,11 @@ public class TCServerImpl extends SEDA implements TCServer {
     throw new IllegalStateException("DSO Server not running");
   }
 
+  public int getDSOGroupPort() {
+    if (dsoServer != null) { return dsoServer.getGroupPort(); }
+    throw new IllegalStateException("DSO Server not running");
+  }
+
   public DistributedObjectServer getDSOServer() {
     return dsoServer;
   }

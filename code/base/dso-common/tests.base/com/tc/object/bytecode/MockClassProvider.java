@@ -4,33 +4,39 @@
 package com.tc.object.bytecode;
 
 import com.tc.object.loaders.ClassProvider;
+import com.tc.object.loaders.LoaderDescription;
 import com.tc.object.loaders.NamedClassLoader;
 
 
 public class MockClassProvider implements ClassProvider {
+  
+  public static final LoaderDescription MOCK_LOADER = new LoaderDescription(null, "mock");
 
   public MockClassProvider() {
     super();
   }
 
-  public Class getClassFor(String className, String loaderDesc) throws ClassNotFoundException {
-    return getClass().getClassLoader().loadClass(className);
-
+  public LoaderDescription getLoaderDescriptionFor(Class clazz) {
+    return MOCK_LOADER;
   }
 
-  public String getLoaderDescriptionFor(Class clazz) {
-    return "";
-  }
-
-  public ClassLoader getClassLoader(String loaderDesc) {
+  public ClassLoader getClassLoader(LoaderDescription desc) {
     return getClass().getClassLoader();
   }
 
-  public String getLoaderDescriptionFor(ClassLoader loader) {
-    return "";
+  public Class getClassFor(String className, LoaderDescription desc) throws ClassNotFoundException {
+    return getClass().getClassLoader().loadClass(className);
+  }
+  
+  public LoaderDescription getLoaderDescriptionFor(ClassLoader loader) {
+    return MOCK_LOADER;
   }
 
   public void registerNamedLoader(NamedClassLoader loader) {
+    // do nothing
+  }
+
+  public void registerNamedLoader(NamedClassLoader loader, String appGroup) {
     // do nothing
   }
 

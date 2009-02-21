@@ -154,7 +154,7 @@ public class NullRuntimeLogger implements RuntimeLogger {
     /**/
   }
 
-  public void namedLoaderRegistered(NamedClassLoader loader, String name, NamedClassLoader previous) {
+  public void namedLoaderRegistered(NamedClassLoader loader, String name, String appGroup, NamedClassLoader previous) {
     /**/
   }
 

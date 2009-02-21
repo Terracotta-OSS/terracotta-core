@@ -977,7 +977,12 @@ public class ManagerUtil {
     return getManager().overridesHashCode(obj);
   }
 
-  public static void registerNamedLoader(NamedClassLoader loader) {
-    getManager().registerNamedLoader(loader);
+  /**
+   * @param webAppName if this is a web application loader, the name of the associated web app
+   * as it would be declared in a web-application element in the Terracotta config; or null,
+   * if this is not a web application loader.
+   */
+  public static void registerNamedLoader(NamedClassLoader loader, String webAppName) {
+    getManager().registerNamedLoader(loader, webAppName);
   }
 }

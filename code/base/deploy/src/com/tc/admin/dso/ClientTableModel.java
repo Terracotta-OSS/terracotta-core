@@ -17,7 +17,7 @@ import javax.swing.event.TableModelEvent;
 public class ClientTableModel extends XObjectTableModel {
   private static final String[] FIELDS  = { "Host", "Port", "ChannelID", "LiveObjectCount" };
 
-  private static final String[] HEADERS = { "dso.client.host", "dso.client.port", "dso.client.channelID",
+  private static final String[] HEADERS = { "dso.client.host", "dso.client.port", "dso.client.clientID",
       "dso.client.liveObjectCount"     };
 
   public ClientTableModel(ApplicationContext appContext) {
@@ -61,13 +61,13 @@ public class ClientTableModel extends XObjectTableModel {
     }
     fireTableChanged(new TableModelEvent(this, 0, rows - 1, 3, TableModelEvent.UPDATE));
   }
-  
+
   public static class ClientWrapper {
-    private IClient client;
-    private String  host;
-    private int     port;
-    private long    channelID;
-    private int     liveObjectCount;
+    private final IClient client;
+    private final String  host;
+    private final int     port;
+    private final long    channelID;
+    private int           liveObjectCount;
 
     private ClientWrapper(IClient client) {
       this.client = client;
@@ -94,5 +94,3 @@ public class ClientTableModel extends XObjectTableModel {
     }
   }
 }
-
-

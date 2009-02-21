@@ -21,34 +21,35 @@
 
 <h1><img src="/com/tc/welcome/tc-logo.png"><br>Terracotta Developer Console: Diagnostics</h1>
 
-All things related to root-cause analysis of your troubled cluster:
+<p>Contains real-time performance metrics and lock analysis tools to diagnose problems and recognize and interpret trends. Historical views are provided with adjustable graphs and statistics recording and playback.
+
 <table cellpadding=10>
    <tr>
-      <td><a href="RuntimeStatsNode"><img border=0 src="/com/tc/admin/icons/chart_bar.png" class=topic></a></td>
+      <td valign=top><a href="RuntimeStatsNode"><img border=0 src="/com/tc/admin/icons/chart_bar.png" class=topic></a></td>
       <td><a href="RuntimeStatsNode">Runtime Statistics</a>
          <div class=description>
-         Monitor important aspects of your clustered server array and connected clients.
+         Real-time cluster statistics. Gauge the health of hosts, server instances, and clients. Monitor host resources, server-instance and client object faulting and flushing, and cache and transaction efficiency.
          </div>
       </td></tr>
    <tr>
-      <td><a href="LocksNode"><img border=0 src="/com/tc/admin/icons/owned_monitor_obj.gif" class=topic></a></td>
+      <td valign=top><a href="LocksNode"><img border=0 src="/com/tc/admin/icons/owned_monitor_obj.gif" class=topic></a></td>
       <td><a href="LocksNode">Lock Profiler</a>
          <div class=description>
-         Profile the way your clustered heap is being kept coherent to help determine possible bottlenecks.
+         Analyze lock-use patterns and statistics to help diagnose performance issues and failures. Locate deadlocks, expose code with low locality of reference, pinpoint areas of high lock contention.
          </div>
       </td></tr>
    <tr>
-      <td><a href="ThreadDumpsNode"><img border=0 src="/com/tc/admin/icons/thread_view.gif" class=topic></a></td>
+      <td valign=top><a href="ThreadDumpsNode"><img border=0 src="/com/tc/admin/icons/thread_view.gif" class=topic></a></td>
       <td><a href="ThreadDumpsNode">Cluster-wide Thread Dumps</a>
          <div class=description>
-         Take snapshots of the state of your clustered processes.
+         Take a thread dump for individual clients, server instances, or the entire cluster. Store, search, and export thread dumps.
          </div>
       </td></tr>
    <tr>
-      <td><a href="StatsRecorderNode"><img border=0 src="/com/tc/admin/icons/camera.png" class=topic></a></td>
+      <td valign=top><a href="StatsRecorderNode"><img border=0 src="/com/tc/admin/icons/camera.png" class=topic></a></td>
       <td><a href="StatsRecorderNode">Statistics Recorder</a>
          <div class=description>
-         Record cluster statistics for later evaluation using the Statistics Visualization Tool.
+         Configure and manage the recording of statistics for your entire cluster. Obtain detailed information about every node in a running Terracotta cluster and correlate the results. Start, stop, view, and export recording sessions. View recorded information in the Snapshot Visualization Tool.
          </div>
       </td></tr>
 </table>

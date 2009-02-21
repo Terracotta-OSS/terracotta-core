@@ -27,7 +27,7 @@ public class ClusteredHeapNode extends ComponentNode implements HyperlinkListene
 
   public ClusteredHeapNode(IAdminClientContext adminClientContext, IClusterModel clusterModel) {
     super(adminClientContext.getString("dso.heap"));
-    
+
     this.adminClientContext = adminClientContext;
     this.clusterModel = clusterModel;
 
@@ -52,6 +52,7 @@ public class ClusteredHeapNode extends ComponentNode implements HyperlinkListene
     return clusterModel;
   }
 
+  @Override
   public Component getComponent() {
     if (clusteredHeapPanel == null) {
       XTextPane textPane = new XTextPane();
@@ -63,13 +64,12 @@ public class ClusteredHeapNode extends ComponentNode implements HyperlinkListene
       }
       textPane.setEditable(false);
       textPane.addHyperlinkListener(this);
-
     }
     return clusteredHeapPanel;
   }
 
   public void hyperlinkUpdate(HyperlinkEvent e) {
-    XTextPane textPane = (XTextPane)e.getSource();
+    XTextPane textPane = (XTextPane) e.getSource();
     HyperlinkEvent.EventType type = e.getEventType();
     Element elem = e.getSourceElement();
 
@@ -82,10 +82,12 @@ public class ClusteredHeapNode extends ComponentNode implements HyperlinkListene
     }
   }
 
+  @Override
   public Icon getIcon() {
     return DSOHelper.getHelper().getClusteredHeapIcon();
   }
 
+  @Override
   public void tearDown() {
     super.tearDown();
 

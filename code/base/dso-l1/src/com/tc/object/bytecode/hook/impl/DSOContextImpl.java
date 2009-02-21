@@ -112,6 +112,7 @@ public class DSOContextImpl implements DSOContext {
 
     try {
       ModulesLoader.initModules(configHelper, classProvider, false);
+      configHelper.validateSessionConfig();
       validateBootJar();
     } catch (Exception e) {
       consoleLogger.fatal(e.getMessage());

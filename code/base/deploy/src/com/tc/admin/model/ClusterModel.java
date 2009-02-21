@@ -121,12 +121,17 @@ public class ClusterModel implements IClusterModel {
     }
   }
 
-  public boolean isAutoConnect() {
+  public synchronized boolean isAutoConnect() {
     return this.autoConnect;
   }
 
   public void setAutoConnect(boolean autoConnect) {
-    this.autoConnect = autoConnect;
+    boolean oldAutoConnect;
+    synchronized (this) {
+      oldAutoConnect = isAutoConnect();
+      this.autoConnect = autoConnect;
+    }
+    firePropertyChange(PROP_AUTO_CONNECT, oldAutoConnect, autoConnect);
     if (isConnectListening) {
       connectServer.setAutoConnect(autoConnect);
     }
@@ -439,9 +444,7 @@ public class ClusterModel implements IClusterModel {
         Iterator<Future<Collection<NodePollResult>>> resultIter = results.iterator();
         while (resultIter.hasNext()) {
           Future<Collection<NodePollResult>> future = resultIter.next();
-          if (future.isCancelled()) {
-            System.err.println("Poll task has timed-out; consider increasing the runtime stats poll period.");
-          } else if (future.isDone()) {
+          if (future.isDone()) {
             try {
               Iterator<NodePollResult> nodeResult = future.get().iterator();
               while (nodeResult.hasNext()) {

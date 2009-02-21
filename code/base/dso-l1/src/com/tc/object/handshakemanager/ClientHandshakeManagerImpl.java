@@ -148,7 +148,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
     checkClientServerVersionMatch(serverVersion);
     this.serverIsPersistent = persistentServer;
     cluster.thisNodeConnected(thisNodeId, clusterMembers);
-    dsoCluster.fireThisNodeJoined(thisNodeId);
+    dsoCluster.fireThisNodeJoined(thisNodeId, clusterMembers);
     changeToRunning(remoteID);
     unpauseCallbacks(remoteID, getDisconnectedCount());
   }

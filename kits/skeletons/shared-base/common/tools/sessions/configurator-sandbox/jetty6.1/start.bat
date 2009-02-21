@@ -13,6 +13,13 @@ set SANDBOX="%SANDBOX:"=%"
 
 set TC_INSTALL_DIR=%SANDBOX%\..\..\..
 
+if not defined JAVA_HOME (
+  echo Environment variable JAVA_HOME needs to be set
+  exit /b 1
+)
+
+set JAVA_HOME="%JAVA_HOME:"=%"
+
 rem --------------------------------------------------------------------
 rem - The Configurator passes 'nodso' as the second argument to this
 rem - script if you've disabled DSO in its GUI...
@@ -34,7 +41,6 @@ set JAVA_OPTS=%OPTS% %JAVA_OPTS%
 
 cd %SANDBOX%
 set CLASSPATH=%CLASSPATH:"=%
-set JAVA_HOME=%JAVA_HOME:"=%
 set JETTY_CP=%TC_INSTALL_DIR\lib\jetty-6.1.8.jar;%TC_INSTALL_DIR%\lib\servlet-api-2.4.jar
 
 call "%JAVA_HOME%\bin\java" -cp %JETTY_CP% org.mortbay.jetty.Server %1/conf.xml

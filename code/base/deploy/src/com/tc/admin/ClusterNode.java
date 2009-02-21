@@ -115,6 +115,19 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
     }
 
     @Override
+    protected PropertyChangeRunnable createPropertyChangeRunnable(PropertyChangeEvent evt) {
+      return new PropertyChangeRunnable(evt) {
+        @Override
+        public void run() {
+          super.run();
+          if (IClusterModel.PROP_AUTO_CONNECT.equals(pce.getPropertyName())) {
+            autoConnectMenuItem.setSelected(clusterModel.isAutoConnect());
+          }
+        }
+      };
+    }
+
+    @Override
     public void handleActiveCoordinator(IServer oldActive, IServer newActive) {
       if (oldActive != null) {
         oldActive.removeClusterStatsListener(ClusterNode.this);
@@ -167,7 +180,6 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
         adminClientContext.getAdminClientController().setStatus("Not ready");
       }
     }
-
   }
 
   private boolean testCheckServerVersion() {
@@ -201,18 +213,6 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
 
   int getPort() {
     return clusterModel.getPort();
-  }
-
-  boolean isAutoConnect() {
-    return clusterModel.isAutoConnect();
-  }
-
-  void setAutoConnect(boolean autoConnect) {
-    if (autoConnect && !clusterModel.isConnected()) {
-      clusterModel.connect();
-    }
-    clusterModel.setAutoConnect(autoConnect);
-    adminClientContext.getAdminClientController().updateServerPrefs();
   }
 
   private void initMenu(boolean autoConnect) {
@@ -404,7 +404,7 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
     }
   }
 
-  private class DeleteAction extends XAbstractAction {
+  private class DeleteAction extends XAbstractAction implements Runnable {
     DeleteAction() {
       super("Delete", ServersHelper.getHelper().getDeleteIcon());
       setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, MENU_SHORTCUT_KEY_MASK, true));
@@ -414,27 +414,41 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
       if (isConnected()) {
         disconnectForDelete();
       }
+      SwingUtilities.invokeLater(this);
+    }
 
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          AdminClientController controller = adminClientContext.getAdminClientController();
-          adminClientContext.setStatus(adminClientContext.format("deleted.server", ClusterNode.this));
-          ((XTreeNode) getParent()).removeChild(ClusterNode.this);
-          controller.updateServerPrefs();
-        }
-      });
+    public void run() {
+      AdminClientController controller = adminClientContext.getAdminClientController();
+      adminClientContext.setStatus(adminClientContext.format("deleted.server", ClusterNode.this));
+      ((XTreeNode) getParent()).removeChild(ClusterNode.this);
+      controller.updateServerPrefs();
     }
   }
 
-  private class AutoConnectAction extends XAbstractAction {
+  boolean isAutoConnect() {
+    return clusterModel.isAutoConnect();
+  }
+
+  void setAutoConnect(boolean autoConnect) {
+    if (autoConnect && !clusterModel.isConnected()) {
+      clusterModel.connect();
+    }
+    clusterModel.setAutoConnect(autoConnect);
+    adminClientContext.getAdminClientController().updateServerPrefs();
+  }
+
+  private class AutoConnectAction extends XAbstractAction implements Runnable {
     AutoConnectAction() {
       super("Auto-connect");
       setShortDescription("Attempt to connect automatically");
     }
 
     public void actionPerformed(ActionEvent ae) {
-      JCheckBoxMenuItem menuitem = (JCheckBoxMenuItem) ae.getSource();
-      boolean autoConnect = menuitem.isSelected();
+      SwingUtilities.invokeLater(this);
+    }
+
+    public void run() {
+      boolean autoConnect = autoConnectMenuItem.isSelected();
       connectAction.setEnabled(!autoConnect);
       setAutoConnect(autoConnect);
       clusterPanel.setupConnectButton();

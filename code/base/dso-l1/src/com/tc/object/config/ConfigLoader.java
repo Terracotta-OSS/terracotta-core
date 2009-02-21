@@ -20,6 +20,8 @@ import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
 import com.tc.util.ClassUtils.ClassSpec;
 import com.terracottatech.config.AdditionalBootJarClasses;
+import com.terracottatech.config.AppGroup;
+import com.terracottatech.config.AppGroups;
 import com.terracottatech.config.Autolock;
 import com.terracottatech.config.ClassExpression;
 import com.terracottatech.config.DistributedMethods;
@@ -66,6 +68,7 @@ public class ConfigLoader {
 
     addRoots(dsoApplication.getRoots());
     addWebApplications(dsoApplication.getWebApplications());
+    addAppGroups(dsoApplication.getAppGroups());
 
     loadLocks(dsoApplication.getLocks());
     loadTransientFields(dsoApplication.getTransientFields());
@@ -148,6 +151,28 @@ public class ConfigLoader {
       WebApplication[] webApplications = webApplicationsList.getWebApplicationArray();
       for (int i = 0; i < webApplications.length; i++) {
         addWebApplication(webApplications[i]);
+      }
+    }
+  }
+
+  private void addAppGroup(AppGroup appGroup) {
+    if (appGroup != null) {
+      String appGroupName = appGroup.getName();
+      if (appGroupName != null && appGroupName.length() > 0) {
+        String[] webAppNames = appGroup.getWebApplicationArray();
+        String[] namedClassloaders = appGroup.getNamedClassloaderArray();
+        config.addToAppGroup(appGroupName, namedClassloaders, webAppNames);
+      }
+    }
+  }
+  
+  private void addAppGroups(AppGroups appGroups) {
+    if (appGroups != null) {
+      AppGroup[] appGroupArray = appGroups.getAppGroupArray();
+      if (appGroupArray != null) {
+        for (AppGroup appGroup : appGroupArray) {
+          addAppGroup(appGroup);
+        }
       }
     }
   }

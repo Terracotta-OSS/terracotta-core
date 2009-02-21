@@ -96,22 +96,26 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   private StatisticsLocalGathererMBean    clusterStatsBean;
   private boolean                         clusterStatsSupported;
 
-  private static final PolledAttribute    PA_CPU_USAGE         = new PolledAttribute(L2MBeanNames.TC_SERVER_INFO,
-                                                                                     POLLED_ATTR_CPU_USAGE);
-  private static final PolledAttribute    PA_USED_MEMORY       = new PolledAttribute(L2MBeanNames.TC_SERVER_INFO,
-                                                                                     POLLED_ATTR_USED_MEMORY);
-  private static final PolledAttribute    PA_MAX_MEMORY        = new PolledAttribute(L2MBeanNames.TC_SERVER_INFO,
-                                                                                     POLLED_ATTR_MAX_MEMORY);
-  private static final PolledAttribute    PA_OBJECT_FLUSH_RATE = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                     POLLED_ATTR_OBJECT_FLUSH_RATE);
-  private static final PolledAttribute    PA_OBJECT_FAULT_RATE = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                     POLLED_ATTR_OBJECT_FAULT_RATE);
-  private static final PolledAttribute    PA_TRANSACTION_RATE  = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                     POLLED_ATTR_TRANSACTION_RATE);
-  private static final PolledAttribute    PA_CACHE_MISS_RATE   = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                     POLLED_ATTR_CACHE_MISS_RATE);
-  private static final PolledAttribute    PA_LIVE_OBJECT_COUNT = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                     POLLED_ATTR_LIVE_OBJECT_COUNT);
+  private static final PolledAttribute    PA_CPU_USAGE           = new PolledAttribute(L2MBeanNames.TC_SERVER_INFO,
+                                                                                       POLLED_ATTR_CPU_USAGE);
+  private static final PolledAttribute    PA_USED_MEMORY         = new PolledAttribute(L2MBeanNames.TC_SERVER_INFO,
+                                                                                       POLLED_ATTR_USED_MEMORY);
+  private static final PolledAttribute    PA_MAX_MEMORY          = new PolledAttribute(L2MBeanNames.TC_SERVER_INFO,
+                                                                                       POLLED_ATTR_MAX_MEMORY);
+  private static final PolledAttribute    PA_OBJECT_FLUSH_RATE   = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                       POLLED_ATTR_OBJECT_FLUSH_RATE);
+  private static final PolledAttribute    PA_OBJECT_FAULT_RATE   = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                       POLLED_ATTR_OBJECT_FAULT_RATE);
+  private static final PolledAttribute    PA_TRANSACTION_RATE    = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                       POLLED_ATTR_TRANSACTION_RATE);
+  private static final PolledAttribute    PA_CACHE_MISS_RATE     = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                       POLLED_ATTR_CACHE_MISS_RATE);
+  private static final PolledAttribute    PA_LIVE_OBJECT_COUNT   = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                       POLLED_ATTR_LIVE_OBJECT_COUNT);
+  private static final PolledAttribute    PA_LOCK_RECALL_RATE    = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                       POLLED_ATTR_LOCK_RECALL_RATE);
+  private static final PolledAttribute    PA_LOCK_BROADCAST_RATE = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                       POLLED_ATTR_BROADCAST_RATE);
 
   public Server(IClusterModel clusterModel) {
     this(clusterModel, ConnectionContext.DEFAULT_HOST, ConnectionContext.DEFAULT_PORT,
@@ -187,6 +191,8 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     registerPolledAttribute(PA_TRANSACTION_RATE);
     registerPolledAttribute(PA_CACHE_MISS_RATE);
     registerPolledAttribute(PA_LIVE_OBJECT_COUNT);
+    registerPolledAttribute(PA_LOCK_RECALL_RATE);
+    registerPolledAttribute(PA_LOCK_BROADCAST_RATE);
   }
 
   private void filterReadySet() {
@@ -427,6 +433,11 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     return theServerInfoBean != null ? theServerInfoBean.getDSOListenPort() : Integer.valueOf(-1);
   }
 
+  public synchronized Integer getDSOGroupPort() {
+    TCServerInfoMBean theServerInfoBean = getServerInfoBean();
+    return theServerInfoBean != null ? theServerInfoBean.getDSOGroupPort() : Integer.valueOf(-1);
+  }
+
   public String getPersistenceMode() {
     if (persistenceMode == null) {
       try {
@@ -450,19 +461,20 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   }
 
   public String getStatsExportServletURI() {
-    Integer dsoPort = getDSOListenPort();
-    Object[] args = new Object[] { getHost(), dsoPort.toString() };
-    return MessageFormat.format("http://{0}:{1}/statistics-gatherer/retrieveStatistics", args);
+    Integer port = isActive() ? getDSOListenPort() : getDSOGroupPort();
+    Object[] args = new Object[] { getHost(), port.toString() };
+    return MessageFormat.format("http://{0}:{1}/statistics-gatherer/retrieveStatistics?format=zip", args);
   }
 
   public String getStatsExportServletURI(String sessionId) {
-    Integer dsoPort = getDSOListenPort();
-    Object[] args = new Object[] { getHost(), dsoPort.toString(), sessionId };
+    Integer port = isActive() ? getDSOListenPort() : getDSOGroupPort();
+    Object[] args = new Object[] { getHost(), port.toString(), sessionId };
     return MessageFormat.format("http://{0}:{1}/stats-export?session={2}", args);
   }
 
   AuthScope getAuthScope() throws Exception {
-    return new AuthScope(getHost(), getDSOListenPort());
+    Integer port = isActive() ? getDSOListenPort() : getDSOGroupPort();
+    return new AuthScope(getHost(), port);
   }
 
   public synchronized boolean isStarted() {

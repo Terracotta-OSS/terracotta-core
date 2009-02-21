@@ -141,7 +141,7 @@ public class ModulesLoader {
         Assert.assertTrue(payload instanceof Bundle);
         Bundle bundle = (Bundle) payload;
         if (bundle != null) {
-          if (!forBootJar) registerClassLoader(classProvider, bundle);
+          if (!forBootJar) registerClassLoader(configHelper, classProvider, bundle);
           loadConfiguration(configHelper, bundle);
         }
       }
@@ -210,13 +210,14 @@ public class ModulesLoader {
     return modules;
   }
 
-  private static void registerClassLoader(final ClassProvider classProvider, final Bundle bundle)
+  private static void registerClassLoader(final DSOClientConfigHelper config, final ClassProvider classProvider, final Bundle bundle)
       throws BundleException {
     NamedClassLoader ncl = getClassLoader(bundle);
 
     String loaderName = Namespace.createLoaderName(Namespace.MODULES_NAMESPACE, ncl.toString());
     ncl.__tc_setClassLoaderName(loaderName);
-    classProvider.registerNamedLoader(ncl);
+    String appGroup = config.getAppGroup(loaderName, null);
+    classProvider.registerNamedLoader(ncl, appGroup);
   }
 
   private static NamedClassLoader getClassLoader(Bundle bundle) throws BundleException {

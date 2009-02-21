@@ -28,7 +28,7 @@ public class AbstractClusterListener implements PropertyChangeListener {
     return new PropertyChangeRunnable(evt);
   }
 
-  private class PropertyChangeRunnable implements Runnable {
+  protected class PropertyChangeRunnable implements Runnable {
     protected final PropertyChangeEvent pce;
 
     PropertyChangeRunnable(PropertyChangeEvent pce) {
@@ -41,7 +41,7 @@ public class AbstractClusterListener implements PropertyChangeListener {
         handleConnected();
       } else if (IClusterModelElement.PROP_READY.equals(prop)) {
         handleReady();
-      } else if(IClusterModel.PROP_ACTIVE_COORDINATOR.equals(prop)) {
+      } else if (IClusterModel.PROP_ACTIVE_COORDINATOR.equals(prop)) {
         IServer oldActive = (IServer) pce.getOldValue();
         IServer newActive = (IServer) pce.getNewValue();
         handleActiveCoordinator(oldActive, newActive);

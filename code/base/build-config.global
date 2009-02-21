@@ -39,3 +39,11 @@ tc.tests.configuration.appserver.repository=http://download.terracotta.org/appse
 maven.version=3.0.0-SNAPSHOT
 maven.snapshot=true
 
+# the API version is specified for our -api Maven artifacts 
+# (in the buildconfig/distributed/* files).  It is 
+# independent (but related) to the maven version.
+# Changes in the digits indicates:
+#   - 1st - breaking change in the API, coincident with change in 1st digit of maven.version
+#   - 2nd - breaking change in the API, coincident with change in 2nd or 3rd digit of maven.version
+#   - 3rd - major or minor Terracotta release without breaking change
+api.version=1.0.0-SNAPSHOT

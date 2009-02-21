@@ -171,6 +171,7 @@ postscripts:
         - artifact: terracotta-tim-api
           file: lib/terracotta-tim-api.jar
           pom: poms/terracotta-tim-api-pom.xml
+          version: api.version
           inject: 
             - lib/resources/build-data.txt
         - artifact: terracotta-jmx-api

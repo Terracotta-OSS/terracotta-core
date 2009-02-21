@@ -4,8 +4,8 @@
  */
 package com.tc.cluster;
 
-import java.util.Set;
+import java.util.Collection;
 
 public interface DsoClusterTopology {
-  public Set<DsoNode> getNodes();
+  public Collection<DsoNode> getNodes();
 }

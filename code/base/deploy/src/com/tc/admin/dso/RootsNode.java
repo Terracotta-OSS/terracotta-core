@@ -46,6 +46,12 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
     this.clusterModel = clusterModel;
     setLabel(adminClientContext.getMessage("dso.roots"));
     clusterModel.addPropertyChangeListener(this);
+    if (clusterModel.isReady()) {
+      IServer activeCoord = clusterModel.getActiveCoordinator();
+      if (activeCoord != null) {
+        activeCoord.addRootCreationListener(this);
+      }
+    }
     init();
   }
 
@@ -105,6 +111,7 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
       });
     }
 
+    @Override
     protected void finished() {
       if (adminClientContext == null) return;
       Exception e = getException();
@@ -128,6 +135,7 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
     return new ObjectBrowser(adminClientContext, getClusterModel(), roots);
   }
 
+  @Override
   public Component getComponent() {
     if (objectBrowserPanel == null) {
       objectBrowserPanel = createObjectBrowserPanel();
@@ -153,10 +161,12 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
     addActionBinding(REFRESH_ACTION, refreshAction);
   }
 
+  @Override
   public JPopupMenu getPopupMenu() {
     return popupMenu;
   }
 
+  @Override
   public Icon getIcon() {
     return RootsHelper.getHelper().getRootsIcon();
   }
@@ -175,6 +185,7 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
       });
     }
 
+    @Override
     protected void finished() {
       Exception e = getException();
       if (e != null) {
@@ -183,7 +194,9 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
           adminClientContext.log(e);
         }
       } else {
-        objectBrowserPanel.setObjects(roots);
+        if (objectBrowserPanel != null) {
+          objectBrowserPanel.setObjects(roots);
+        }
         updateLabel();
       }
       adminClientContext.unblock();
@@ -210,12 +223,14 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
     }
   }
 
+  @Override
   public void nodeClicked(MouseEvent me) {
     if (refreshAction != null) {
       refreshAction.actionPerformed(null);
     }
   }
 
+  @Override
   public void tearDown() {
     clusterModel.removePropertyChangeListener(this);
     IServer activeCoord = clusterModel.getActiveCoordinator();
@@ -244,7 +259,7 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
   }
 
   private class RootCreatedRunnable implements Runnable {
-    private IBasicObject root;
+    private final IBasicObject root;
 
     private RootCreatedRunnable(IBasicObject root) {
       this.root = root;
@@ -252,12 +267,12 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
 
     public void run() {
       adminClientContext.setStatus(adminClientContext.getMessage("dso.root.retrieving"));
-
       ArrayList<IBasicObject> list = new ArrayList<IBasicObject>(Arrays.asList(roots));
       list.add(root);
       roots = list.toArray(new IBasicObject[list.size()]);
-      objectBrowserPanel.add(root);
-
+      if (objectBrowserPanel != null) {
+        objectBrowserPanel.add(root);
+      }
       adminClientContext.setStatus(adminClientContext.getMessage("dso.root.new") + root);
       updateLabel();
     }

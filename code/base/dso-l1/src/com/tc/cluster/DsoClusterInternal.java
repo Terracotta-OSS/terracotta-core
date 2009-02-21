@@ -5,7 +5,7 @@ package com.tc.cluster;
 
 public interface DsoClusterInternal extends DsoCluster {
 
-  public void fireThisNodeJoined(String nodeId);
+  public void fireThisNodeJoined(String nodeId, String[] clusterMembers);
 
   public void fireThisNodeLeft();
 

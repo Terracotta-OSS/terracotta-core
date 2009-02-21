@@ -19,13 +19,13 @@ rem All content copyright Terracotta, Inc., unless otherwise indicated. All righ
 ::
 
 if not defined JAVA_HOME (
-   set TC_JAVA_HOME="%TC_INSTALL_DIR%\jre"
-) else (
-   set TC_JAVA_HOME=%JAVA_HOME%
+  echo Environment variable JAVA_HOME needs to be set
+  exit /b 1
 )
-set TC_JAVA_HOME="%TC_JAVA_HOME:"=%"
 
-set TC_JAVACMD=%TC_JAVA_HOME%\bin\java
+set JAVA_HOME="%JAVA_HOME:"=%"
+
+set TC_JAVACMD=%JAVA_HOME%\bin\java
 set TC_JAR=%TC_INSTALL_DIR%\lib\tc.jar
 
 if defined DSO_BOOT_JAR goto tc_set_dso_boot_jar__1_1

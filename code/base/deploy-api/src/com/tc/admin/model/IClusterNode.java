@@ -70,7 +70,7 @@ public interface IClusterNode extends IClusterModelElement, ILiveObjectCountProv
   void removePolledAttributeListener(String name, PolledAttributeListener listener);
 
   void removePolledAttributeListener(Set<String> names, PolledAttributeListener listener);
-  
+
   void removePolledAttributeListener(PolledAttribute polledAttribute, PolledAttributeListener listener);
 
   void removePolledAttributeListener(ObjectName objectName, Set<String> attributeSet, PolledAttributeListener listener);

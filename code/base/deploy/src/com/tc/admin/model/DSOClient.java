@@ -26,11 +26,11 @@ import javax.management.NotificationListener;
 import javax.management.ObjectName;
 
 public class DSOClient extends BaseClusterNode implements IClient, NotificationListener {
-  private ConnectionContext           cc;
-  private ObjectName                  beanName;
-  private DSOClientMBean              delegate;
-  private long                        channelID;
-  private String                      remoteAddress;
+  private final ConnectionContext     cc;
+  private final ObjectName            beanName;
+  private final DSOClientMBean        delegate;
+  private final long                  channelID;
+  private final String                remoteAddress;
   private String                      host;
   private Integer                     port;
   protected ProductVersion            productInfo;
@@ -199,6 +199,7 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     return port.intValue();
   }
 
+  @Override
   public String toString() {
     return getRemoteAddress();
   }
@@ -370,6 +371,7 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     return sb.toString();
   }
 
+  @Override
   public void tearDown() {
     if (!isReady()) {
       stopListeningForTunneledBeans();

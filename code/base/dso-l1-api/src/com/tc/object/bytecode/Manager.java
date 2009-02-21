@@ -454,9 +454,11 @@ public interface Manager {
   public void beginLockWithoutTxn(String lockID, int type);
 
   /**
-   * Register the given named classloader with Terracotta
+   * Register a named classloader with Terracotta.
+   * @param webAppName corresponds to the name of a web-application in the TC config, or null
+   * if the classloader being registered is not associated with a web application.
    */
-  public void registerNamedLoader(NamedClassLoader loader);
+  public void registerNamedLoader(NamedClassLoader loader, String webAppName);
 
   /**
    * Get the ClassProvider associated with this Manager

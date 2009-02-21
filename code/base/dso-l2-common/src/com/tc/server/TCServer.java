@@ -21,31 +21,34 @@ public interface TCServer {
   long getStartTime();
 
   void updateActivateTime();
-  
+
   long getActivateTime();
 
   boolean canShutdown();
-  
+
   void shutdown();
 
   boolean isGarbageCollectionEnabled();
-  
+
   int getGarbageCollectionInterval();
 
   String getConfig();
-  
+
   String getPersistenceMode();
-  
+
   String getFailoverMode();
-  
+
   String getDescriptionOfCapabilities();
 
   L2Info[] infoForAllL2s();
 
   ServerGroupInfo[] serverGroups();
-  
+
   void startBeanShell(int port);
 
-  public int getDSOListenPort();
-  public void dump();
+  int getDSOListenPort();
+
+  int getDSOGroupPort();
+
+  void dump();
 }

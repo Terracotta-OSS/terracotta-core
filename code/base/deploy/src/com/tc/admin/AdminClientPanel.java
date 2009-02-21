@@ -206,7 +206,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       nodeView.revalidate();
       nodeView.repaint();
 
-      if (path != null) {
+      if (path != null && path.getPathCount() > 1) {
         setSelectedClusterNode((ClusterNode) path.getPathComponent(1));
       }
     }
@@ -511,12 +511,16 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     setStatus("");
   }
 
-  class NewClusterAction extends XAbstractAction {
+  class NewClusterAction extends XAbstractAction implements Runnable {
     NewClusterAction() {
       super(adminClientContext.getMessage("new.cluster.action.label"));
     }
 
     public void actionPerformed(ActionEvent ae) {
+      SwingUtilities.invokeLater(this);
+    }
+
+    public void run() {
       XTreeModel model = (XTreeModel) tree.getModel();
       XTreeNode root = (XTreeNode) model.getRoot();
       int index = root.getChildCount();
@@ -536,6 +540,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       storePreferences();
 
       clusterNode.getClusterModel().addPropertyChangeListener(AdminClientPanel.this);
+      adminClientContext.setStatus(adminClientContext.format("added.server", clusterNode));
     }
   }
 
@@ -1107,7 +1112,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
 
   private Class getSVTFrameType() throws ClassNotFoundException {
     ClassLoader cl = getSVTClassLoader();
-    if (cl != null) {
+    if (false && cl != null) {
       return cl.loadClass(SNAPSHOT_VISUALIZER_TYPE);
     } else {
       return Class.forName(SNAPSHOT_VISUALIZER_TYPE);

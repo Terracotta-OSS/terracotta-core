@@ -46,17 +46,17 @@ import javax.swing.text.html.HTML;
 public class ClusterPanel extends XContainer implements HyperlinkListener {
   private IAdminClientContext adminClientContext;
   private ClusterNode         clusterNode;
-  private XContainer          connectedPanel;
-  private XContainer          disconnectedPanel;
-  private XButton             disconnectButton;
+  private final XContainer    connectedPanel;
+  private final XContainer    disconnectedPanel;
+  private final XButton       disconnectButton;
   private XLabel              connectSummaryLabel;
   private PagedView           pagedView;
-  private XTextPane           introPane;
+  private final XTextPane     introPane;
   private String              originalHost;
   private int                 originalPort;
   private JTextField          hostField;
   private JTextField          portField;
-  private JCheckBox           autoConnectToggle;
+  private final JCheckBox     autoConnectToggle;
   private JButton             connectButton;
   static private ImageIcon    connectIcon;
   static private ImageIcon    disconnectIcon;
@@ -178,6 +178,7 @@ public class ClusterPanel extends XContainer implements HyperlinkListener {
     adminClientContext.getAdminClientController().selectNode(clusterNode, action);
   }
 
+  @Override
   public void addNotify() {
     super.addNotify();
     JRootPane rootPane = getRootPane();
@@ -264,8 +265,12 @@ public class ClusterPanel extends XContainer implements HyperlinkListener {
     }
   }
 
-  class AutoConnectHandler implements ActionListener {
+  class AutoConnectHandler implements ActionListener, Runnable {
     public void actionPerformed(ActionEvent ae) {
+      SwingUtilities.invokeLater(this);
+    }
+
+    public void run() {
       boolean autoConnect = autoConnectToggle.isSelected();
       clusterNode.setAutoConnect(autoConnect);
       if (!clusterNode.isConnected()) {
@@ -333,6 +338,7 @@ public class ClusterPanel extends XContainer implements HyperlinkListener {
       });
     }
 
+    @Override
     protected void finished() {
       Exception e = getException();
       if (e != null) {
@@ -352,7 +358,7 @@ public class ClusterPanel extends XContainer implements HyperlinkListener {
     setupConnectButton();
     setStatusLabel(adminClientContext.format(labelKey, time.toString()));
     testShowProductInfo();
-    connectSummaryLabel.setText("Connect via " + hostField.getText() + ":" + portField.getText() + " at " + time);
+    connectSummaryLabel.setText("Connect to " + hostField.getText() + ":" + portField.getText() + " at " + time);
     pagedView.setPage(CONNECTED_PAGE);
   }
 
@@ -373,6 +379,7 @@ public class ClusterPanel extends XContainer implements HyperlinkListener {
       });
     }
 
+    @Override
     protected void finished() {
       Exception e = getException();
       if (e != null) {
@@ -444,6 +451,7 @@ public class ClusterPanel extends XContainer implements HyperlinkListener {
       });
     }
 
+    @Override
     protected void finished() {
       Exception e = getException();
       if (e != null) {
@@ -470,6 +478,7 @@ public class ClusterPanel extends XContainer implements HyperlinkListener {
     repaint();
   }
 
+  @Override
   public void tearDown() {
     super.tearDown();
 

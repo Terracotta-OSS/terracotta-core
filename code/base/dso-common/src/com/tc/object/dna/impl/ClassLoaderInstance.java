@@ -4,6 +4,7 @@
 package com.tc.object.dna.impl;
 
 import com.tc.object.loaders.ClassProvider;
+import com.tc.object.loaders.LoaderDescription;
 
 import java.io.Serializable;
 
@@ -25,7 +26,7 @@ public class ClassLoaderInstance implements Serializable {
 
   public ClassLoader asClassLoader(ClassProvider classProvider) {
     String classLoaderdef = loaderDef.asString();
-    return classProvider.getClassLoader(classLoaderdef);
+    return classProvider.getClassLoader(LoaderDescription.fromString(classLoaderdef));
   }
 
   public int hashCode() {

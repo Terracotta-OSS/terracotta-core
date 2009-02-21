@@ -114,7 +114,7 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
 
   public void encodeClassLoader(ClassLoader value, TCDataOutput output) {
     output.writeByte(TYPE_ID_JAVA_LANG_CLASSLOADER);
-    writeString(classProvider.getLoaderDescriptionFor(value), output);
+    writeString(classProvider.getLoaderDescriptionFor(value).toDelimitedString(), output);
   }
 
   /**
@@ -160,7 +160,7 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
         output.writeByte(TYPE_ID_ENUM);
         Class enumClass = getEnumDeclaringClass(value);
         writeString(enumClass.getName(), output);
-        writeString(classProvider.getLoaderDescriptionFor(enumClass), output);
+        writeString(classProvider.getLoaderDescriptionFor(enumClass).toDelimitedString(), output);
 
         Object name = getEnumName(value);
         writeString((String) name, output);
@@ -180,7 +180,7 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
         output.writeByte(TYPE_ID_JAVA_LANG_CLASS);
         Class c = (Class) value;
         writeString(c.getName(), output);
-        writeString(classProvider.getLoaderDescriptionFor(c), output);
+        writeString(classProvider.getLoaderDescriptionFor(c).toDelimitedString(), output);
         break;
       case LiteralValues.JAVA_LANG_CLASS_HOLDER:
         output.writeByte(TYPE_ID_JAVA_LANG_CLASS_HOLDER);

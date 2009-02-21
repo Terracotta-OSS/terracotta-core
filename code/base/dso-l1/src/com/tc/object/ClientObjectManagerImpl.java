@@ -30,6 +30,7 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.idprovider.api.ObjectIDProvider;
 import com.tc.object.loaders.ClassProvider;
+import com.tc.object.loaders.LoaderDescription;
 import com.tc.object.loaders.Namespace;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.msg.ClientHandshakeMessage;
@@ -172,8 +173,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     new LocalLookupContext();
   }
 
-  public Class getClassFor(String className, String loaderDesc) throws ClassNotFoundException {
-    return classProvider.getClassFor(className, loaderDesc);
+  public Class getClassFor(String className, LoaderDescription desc) throws ClassNotFoundException {
+    return classProvider.getClassFor(className, desc);
   }
 
   public synchronized void pause(NodeID remote, int disconnected) {
@@ -508,8 +509,10 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
         try {
           DNA dna = noDepth ? remoteObjectManager.retrieve(id, NO_DEPTH) : (parentContext == null ? remoteObjectManager
               .retrieve(id) : remoteObjectManager.retrieveWithParentContext(id, parentContext));
+          // TODO: make DNA.getDefiningLoaderDescription() return LoaderDescription
+          LoaderDescription desc = LoaderDescription.fromString(dna.getDefiningLoaderDescription());
           obj = factory.getNewInstance(id, classProvider.getClassFor(Namespace.parseClassNameIfNecessary(dna
-              .getTypeName()), dna.getDefiningLoaderDescription()), false);
+              .getTypeName()), desc), false);
 
           // object is retrieved, now you want to make this as Creation in progress
           markCreateInProgress(ols, obj, lookupContext);

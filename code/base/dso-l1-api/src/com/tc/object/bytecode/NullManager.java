@@ -259,7 +259,7 @@ public final class NullManager implements Manager {
     //
   }
 
-  public void registerNamedLoader(final NamedClassLoader loader) {
+  public void registerNamedLoader(final NamedClassLoader loader, String webAppName) {
     throw new UnsupportedOperationException();
   }
 

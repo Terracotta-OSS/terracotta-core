@@ -8,12 +8,19 @@ goto end
 
 :haveArgs
 setlocal
+if not defined JAVA_HOME (
+  echo Environment variable JAVA_HOME needs to be set
+  exit /b 1
+)
+
+set JAVA_HOME="%JAVA_HOME:"=%"
+
 set TC_INSTALL_DIR=%~d0%~p0..
 set TC_INSTALL_DIR="%TC_INSTALL_DIR:"=%"
 
 call %TC_INSTALL_DIR%\bin\dso-env.bat -q
 echo Starting Terracotta client...
-%TC_JAVA_HOME%\bin\java %TC_JAVA_OPTS% %JAVA_OPTS% %*
+%JAVA_HOME%\bin\java %TC_JAVA_OPTS% %JAVA_OPTS% %*
 endlocal
 
 :end

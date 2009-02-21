@@ -5,6 +5,7 @@ import org.apache.xmlbeans.XmlOptions;
 
 import com.tc.config.Loader;
 import com.tc.util.PortChooser;
+import com.terracottatech.config.AppGroup;
 import com.terracottatech.config.Autolock;
 import com.terracottatech.config.Include;
 import com.terracottatech.config.LockLevel;
@@ -212,6 +213,18 @@ public class TcConfigBuilder {
     ensureModules();
     tcConfig.getClients().getModules().addRepository(location);
   }
+  
+  public void addAppGroup(String name, String[] namedClassLoaders, String[] webAppNames) {
+    ensureAppGroups();
+    AppGroup ag = tcConfig.getApplication().getDso().getAppGroups().addNewAppGroup();
+    ag.setName(name);
+    if (namedClassLoaders != null) {
+      ag.setNamedClassloaderArray(namedClassLoaders);
+    }
+    if (webAppNames != null) {
+      ag.setWebApplicationArray(webAppNames);
+    }
+  }
 
   /**
    * Adds web-application with default values for synchronous-write (false) and session-locking (true)
@@ -308,6 +321,13 @@ public class TcConfigBuilder {
   private void ensureApplication() {
     if (!tcConfig.isSetApplication()) {
       tcConfig.addNewApplication();
+    }
+  }
+
+  private void ensureAppGroups() {
+    ensureDso();
+    if (!tcConfig.getApplication().getDso().isSetAppGroups()) {
+      tcConfig.getApplication().getDso().addNewAppGroups();
     }
   }
 
