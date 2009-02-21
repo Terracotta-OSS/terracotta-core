@@ -6,6 +6,7 @@ package com.tc.test.activeactive;
 
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.objectserver.control.ServerControl;
+import com.tc.stats.DGCMBean;
 import com.tc.stats.DSOMBean;
 import com.tc.test.GroupData;
 import com.tc.test.MultipleServerManager;
@@ -214,13 +215,13 @@ public class ActiveActiveServerManager extends MultipleServerManager {
     return mbeans;
   }
   
-  public List<List<DSOMBean>> connectAllL2ServerMBeans() throws IOException {
+  public List<List<DGCMBean>> connectAllLocalDGCMBeans() throws IOException {
     int grpCount = setupManger.getActiveServerGroupCount();
-    List<List<DSOMBean>> mbeans = new ArrayList<List<DSOMBean>>(grpCount);
+    List<List<DGCMBean>> mbeans = new ArrayList<List<DGCMBean>>(grpCount);
 
     for (int i = 0; i < grpCount; i++) {
       ActivePassiveServerManager apsm = activePassiveServerManagers[i];
-      mbeans.add(apsm.connectAllL2ServerMBeans());
+      mbeans.add(apsm.connectAllLocalDGCMBeans());
     }
 
     return mbeans;

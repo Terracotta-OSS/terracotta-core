@@ -12,6 +12,7 @@ import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.objectserver.control.ExtraProcessServerControl;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.stats.DGCMBean;
 import com.tc.stats.DSOMBean;
 import com.tc.test.GroupData;
 import com.tc.test.MultipleServerManager;
@@ -498,12 +499,12 @@ public class ActivePassiveServerManager extends MultipleServerManager {
     return dsoMBean;
   }
   
-  public DSOMBean getL2ServerMBean(int index) throws IOException {
+  public DGCMBean getLocalDGCMBean(int index) throws IOException {
     JMXConnectorProxy jmxc = new JMXConnectorProxy(HOST, jmxPorts[index]);
     MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
-    DSOMBean dsoMBean = (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO_SERVER,
+    DGCMBean dgcMBean = (DGCMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.LOCAL_DGC_STATS,
                                                                                  DSOMBean.class, false);
-    return dsoMBean;
+    return dgcMBean;
   }
 
   public void stopServer(int index) throws Exception {
@@ -916,10 +917,10 @@ public class ActivePassiveServerManager extends MultipleServerManager {
     return mbeans;
   }
   
-  public List<DSOMBean> connectAllL2ServerMBeans() throws IOException {
-    List<DSOMBean> mbeans = new ArrayList<DSOMBean>();
+  public List<DGCMBean> connectAllLocalDGCMBeans() throws IOException {
+    List<DGCMBean> mbeans = new ArrayList<DGCMBean>();
     for (int i = 0; i < getServerCount(); i++) {
-      mbeans.add(getL2ServerMBean(i));
+      mbeans.add(getLocalDGCMBean(i));
     }
     return mbeans;
   }

@@ -7,7 +7,6 @@ package com.tc.stats;
 import com.tc.management.TerracottaMBean;
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
-import com.tc.objectserver.api.GCStats;
 import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.lockmanager.api.LockMBean;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
@@ -24,7 +23,7 @@ import javax.management.ObjectName;
  * aggregating statistical, configuration, and operational child interfaces.
  */
 
-public interface DSOMBean extends DSOStats, TerracottaMBean {
+public interface DSOMBean extends DSOStats, DGCMBean, TerracottaMBean {
 
   DSOStats getStats();
 
@@ -59,13 +58,7 @@ public interface DSOMBean extends DSOStats, TerracottaMBean {
 
   int getLiveObjectCount();
 
-  long getLastCollectionGarbageCount();
-
-  long getLastCollectionElapsedTime();
-
   boolean isResident(NodeID node, ObjectID oid);
-
-  GCStats[] getGarbageCollectorStats();
 
   Map<ObjectName, Map<String, Object>> getAttributeMap(Map<ObjectName, Set<String>> attributeMap, long timeout,
                                                        TimeUnit unit);
