@@ -17,7 +17,6 @@ import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.api.GarbageCollector;
-import com.tc.objectserver.dgc.impl.GarbageCollectionInfoPublisherImpl;
 import com.tc.objectserver.impl.ManagedObjectReference;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
@@ -47,11 +46,17 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
   protected Set                            lookedUp            = null;
   protected Set                            released            = null;
   protected PersistenceTransactionProvider transactionProvider = null;
+  protected GarbageCollectionInfoPublisher gcPublisher;
+  
   
   public GCTestObjectManager(Set lookedUp, Set released, PersistenceTransactionProvider transactionProvider) {
     this.lookedUp = lookedUp;
     this.released = released;
     this.transactionProvider = transactionProvider;
+  }
+  
+  public void setPublisher(GarbageCollectionInfoPublisher gcPublisher) {
+    this.gcPublisher = gcPublisher;
   }
 
   public ManagedObject getObjectByID(ObjectID id) {
@@ -180,8 +185,6 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
 
     
     GarbageCollectionInfo gcInfo = resultContext.getGCInfo();
-    GarbageCollectionInfoPublisher gcPublisher = new GarbageCollectionInfoPublisherImpl();
-    
      
     gcPublisher.fireGCDeleteEvent(gcInfo);
     long start = System.currentTimeMillis();

@@ -46,8 +46,10 @@ public class GCStatsEventPublisherTest extends TestCase {
     this.lookedUp = new HashSet<ObjectID>();
     this.released = new HashSet<ObjectID>();
     this.objectManager = new GCTestObjectManager(this.lookedUp, this.released, this.transactionProvider);
+    GarbageCollectionInfoPublisher gcPublisher = new GarbageCollectionInfoPublisherImpl();
     this.collector = new MarkAndSweepGarbageCollector(new ObjectManagerConfig(300000, true, true, true, true, 60000),
-                                                      this.objectManager, new TestClientStateManager(), new GarbageCollectionInfoPublisherImpl());
+                                                      this.objectManager, new TestClientStateManager(), gcPublisher);
+    this.objectManager.setPublisher(gcPublisher);
     this.objectManager.setGarbageCollector(this.collector);
     this.objectManager.start();
     this.root1 = createObject(8);
