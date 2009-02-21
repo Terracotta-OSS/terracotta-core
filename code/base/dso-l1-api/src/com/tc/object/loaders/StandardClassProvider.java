@@ -19,8 +19,8 @@ import java.util.Set;
 public class StandardClassProvider implements ClassProvider {
 
   private static final String BOOT    = Namespace.getStandardBootstrapLoaderName();
-  private static final String EXT     = Namespace.getStandardExtensionsLoaderName();
-  private static final String SYSTEM  = Namespace.getStandardSystemLoaderName();
+  // private static final String EXT     = Namespace.getStandardExtensionsLoaderName();
+  // private static final String SYSTEM  = Namespace.getStandardSystemLoaderName();
   
   private static final LoaderDescription BOOT_DESC = new LoaderDescription(null, BOOT);
 
@@ -61,11 +61,19 @@ public class StandardClassProvider implements ClassProvider {
 
   public Class getClassFor(final String className, LoaderDescription desc) throws ClassNotFoundException {
     final ClassLoader loader = lookupLoader(desc);
+    
     if (loader == null) { 
       throw new ClassNotFoundException("No registered loader for description: " + desc
                                        + ", trying to load " + className); 
     }
 
+    // debugging
+//    StringBuilder sb = new StringBuilder();
+//    sb.append("APPGROUPS: SCP.getClassFor([").append(className);
+//    sb.append("], [").append(desc.toString()).append("]) -> loader [");
+//    sb.append(((NamedClassLoader)loader).__tc_getClassLoaderName()).append("]");
+//    System.out.println(sb.toString());
+    
     try {
       return Class.forName(className, false, loader);
     } catch (ClassNotFoundException e) {
@@ -153,7 +161,8 @@ public class StandardClassProvider implements ClassProvider {
   }
 
   private boolean isStandardLoader(String desc) {
-    return BOOT.equals(desc) || EXT.equals(desc) || SYSTEM.equals(desc);
+    // EXT and SYSTEM get registered at startup like normal loaders; no need to special-case
+    return BOOT.equals(desc); // || EXT.equals(desc) || SYSTEM.equals(desc);
   }
 
   private ClassLoader lookupLoader(LoaderDescription desc) {
