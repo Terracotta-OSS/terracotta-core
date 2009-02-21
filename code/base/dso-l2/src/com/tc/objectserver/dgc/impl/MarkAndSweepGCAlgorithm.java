@@ -126,6 +126,7 @@ final class MarkAndSweepGCAlgorithm {
     gcInfo.setRescue2Time(0);
     gcInfo.setPausedStageTime(0);
     gcInfo.setDeleteStageTime(0);
+    gcInfo.setActualGarbageCount(0);
     long endMillis = System.currentTimeMillis();
     gcInfo.setTotalMarkCycleTime(endMillis - gcInfo.getStartTime());
     gcInfo.setElapsedTime(endMillis - gcInfo.getStartTime());
