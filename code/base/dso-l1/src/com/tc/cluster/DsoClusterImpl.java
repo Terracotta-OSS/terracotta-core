@@ -12,6 +12,7 @@ import com.tc.object.ClusterMetaDataManager;
 import com.tc.object.ObjectID;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.TCMap;
+import com.tc.util.Assert;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,8 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
-
-import junit.framework.Assert;
 
 public class DsoClusterImpl implements DsoClusterInternal {
 
