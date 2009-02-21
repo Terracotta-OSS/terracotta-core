@@ -126,10 +126,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
   }
 
   public GCStatsEventPublisher getLocalDGCStatsEventPublisher() {
-    // XXX: EntServerImpl->registerDSOMBeans might call this method if started with no active active; check the config
-    // and donot register extra mbeans in that case
-    // throw new AssertionError("Not supported");
-    return null;
+    throw new AssertionError("Not supported");
   }
 
 }
