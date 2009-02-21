@@ -33,7 +33,7 @@ public class DsoClusterTopologyImpl implements DsoClusterTopology {
   DsoNode getAndRemoveDsoNode(final String nodeId) {
     synchronized (this) {
       DsoNode node = nodes.remove(nodeId);
-      Assert.assertNotNull(node);
+      // Assert.assertNotNull(node);
       return node;
     }
   }
