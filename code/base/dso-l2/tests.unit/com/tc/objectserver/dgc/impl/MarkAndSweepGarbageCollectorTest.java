@@ -8,6 +8,7 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.core.impl.GCTestObjectManager;
 import com.tc.objectserver.core.impl.TestManagedObject;
+import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
 import com.tc.objectserver.impl.ObjectManagerConfig;
 import com.tc.objectserver.l1.api.ClientStateManager;
@@ -58,8 +59,11 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     this.objectManager = new GCTestObjectManager(this.lookedUp, this.released, this.transactionProvider);
     this.stateManager = new TestClientStateManager();
     this.collector = new MarkAndSweepGarbageCollector(new ObjectManagerConfig(300000, true, true, true, true, 60000),
-                                                      this.objectManager, this.stateManager, new GarbageCollectionInfoPublisherImpl());
+                                                      this.objectManager, this.stateManager,
+                                                      new GarbageCollectionInfoPublisherImpl());
     this.objectManager.setGarbageCollector(this.collector);
+    GarbageCollectionInfoPublisher gcPublisher = new GarbageCollectionInfoPublisherImpl();
+    this.objectManager.setPublisher(gcPublisher);
     this.objectManager.start();
     this.root1 = createObject(8);
     this.root2 = createObject(8);
