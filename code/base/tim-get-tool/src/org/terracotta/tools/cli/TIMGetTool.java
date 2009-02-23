@@ -15,6 +15,7 @@ import org.terracotta.modules.tool.commands.InstallCommand;
 import org.terracotta.modules.tool.commands.InstallFromCommand;
 import org.terracotta.modules.tool.commands.ListCommand;
 import org.terracotta.modules.tool.commands.UpdateCommand;
+import org.terracotta.modules.tool.commands.UpgradeCommand;
 import org.terracotta.modules.tool.config.Config;
 import org.terracotta.modules.tool.util.CommandUtil;
 
@@ -77,6 +78,7 @@ public class TIMGetTool {
       commandRegistry.addCommand(injector.getInstance(InstallFromCommand.class));
       commandRegistry.addCommand(injector.getInstance(ListCommand.class));
       commandRegistry.addCommand(injector.getInstance(UpdateCommand.class));
+      commandRegistry.addCommand(injector.getInstance(UpgradeCommand.class));
     } catch (Exception e) {
       Throwable rootCause = rootCause(e);
       throw new Exception("Initialization error: " + rootCause.getClass() + ": " + rootCause.getMessage());

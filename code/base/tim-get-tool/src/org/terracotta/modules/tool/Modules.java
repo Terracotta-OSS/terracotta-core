@@ -85,6 +85,11 @@ public interface Modules {
   List<Module> find(List<String> args);
 
   /**
+   * Find last version of a module that matches artifactId and groupId
+   * Return null if not found
+   */
+  Module findLatest(String artifactId, String groupId);
+  /**
    * Download a module.
    * 
    * @param module The module to download
