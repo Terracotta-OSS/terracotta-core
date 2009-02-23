@@ -12,7 +12,7 @@
   </parent>
 
   <groupId>org.terracotta</groupId>
-  <artifactId>terracotta-api</artifactId>
+  <artifactId>terracotta-tim-api</artifactId>
   <packaging>jar</packaging>
 
   <dependencies>
