@@ -92,8 +92,6 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
                                                                                                     "Recd event for Group Channel : "
                                                                                                         + event); }
     if (event.getType() == ChannelEventType.TRANSPORT_DISCONNECTED_EVENT) {
-      cluster.thisNodeDisconnected();
-      dsoCluster.fireOperationsDisabled();
       pauseSink.add(new PauseContext(true, event.getChannel().getRemoteNodeID()));
     } else if (event.getType() == ChannelEventType.TRANSPORT_CONNECTED_EVENT) {
       pauseSink.add(new PauseContext(false, event.getChannel().getRemoteNodeID()));
@@ -116,6 +114,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
       sessionManager.newSession(remoteNode);
       logger.info("ClientHandshakeManager moves to " + sessionManager);
 
+      cluster.thisNodeDisconnected();
       dsoCluster.fireOperationsDisabled();
     }
   }

@@ -255,7 +255,6 @@ public class DsoClusterImpl implements DsoClusterInternal {
   }
 
   public void fireOperationsEnabled() {
-    // only fire this event when the node has already confirmed its connection through a handshake
     if (currentNode != null) {
       synchronized (this) {
         areOperationsEnabled = true;
