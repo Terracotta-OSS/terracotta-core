@@ -4,32 +4,61 @@
  */
 package com.tc.cluster;
 
+import com.tc.net.NodeID;
 import com.tc.util.Assert;
 
-public class DsoNodeImpl implements DsoNode {
+public class DsoNodeImpl implements DsoNodeInternal {
 
-  private final String id;
+  private final transient DsoClusterImpl cluster;
 
-  public DsoNodeImpl(final String id) {
+  private final NodeID                   id;
+
+  private DsoNodeMetaData                metaData;
+
+  public DsoNodeImpl(final DsoClusterImpl cluster, final NodeID id) {
+    Assert.assertNotNull(cluster);
     Assert.assertNotNull(id);
+    this.cluster = cluster;
     this.id = id;
   }
 
   public String getId() {
+    return id.toString();
+  }
+
+  public NodeID getNodeID() {
     return id;
   }
 
   public String getIp() {
-    throw new UnsupportedOperationException();
+    synchronized (this) {
+      if (null == metaData) {
+        cluster.retrieveMetaDataForDsoNode(this);
+      }
+
+      return metaData.getIp();
+    }
   }
 
   public String getHostname() {
-    throw new UnsupportedOperationException();
+    synchronized (this) {
+      if (null == metaData) {
+        cluster.retrieveMetaDataForDsoNode(this);
+      }
+
+      return metaData.getHostname();
+    }
+  }
+
+  public void setMetaData(final DsoNodeMetaData metaData) {
+    synchronized (this) {
+      this.metaData = metaData;
+    }
   }
 
   @Override
   public String toString() {
-    return id;
+    return id.toString();
   }
 
   @Override

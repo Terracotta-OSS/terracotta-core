@@ -8,8 +8,10 @@ import com.tc.async.impl.NullSink;
 import com.tc.cluster.Cluster;
 import com.tc.cluster.DsoClusterImpl;
 import com.tc.logging.TCLogging;
+import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
+import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.msg.TestClientHandshakeMessage;
@@ -87,7 +89,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
 
     // make sure RuntimeException is thrown if client/server versions don't match and version checking is enabled
     try {
-      mgr.acknowledgeHandshake(group, false, "1", new String[] {}, clientVersion + "a.b.c");
+      mgr.acknowledgeHandshake(group, false, new ClientID(new ChannelID(1)), new ClientID[] {}, clientVersion + "a.b.c");
       if (checkVersionMatchEnabled()) {
         fail();
       }
@@ -98,7 +100,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     }
 
     // now ACK for real
-    mgr.acknowledgeHandshake(group, false, "1", new String[] {}, clientVersion);
+    mgr.acknowledgeHandshake(group, false, new ClientID(new ChannelID(1)), new ClientID[] {}, clientVersion);
 
     assertEquals(1, callback.paused.get());
     assertEquals(1, callback.initiateHandshake.get());
@@ -144,7 +146,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     assertFalse(done.get());
 
     // now ACK for real
-    mgr.acknowledgeHandshake(g0, false, "1", new String[] {}, clientVersion);
+    mgr.acknowledgeHandshake(g0, false, new ClientID(new ChannelID(1)), new ClientID[] {}, clientVersion);
 
     assertEquals(1, callback.paused.get());
     assertEquals(1, callback.initiateHandshake.get());
@@ -161,13 +163,13 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     assertEquals(1, callback.unpaused.get());
     assertEquals(2, callback.disconnected);
 
-    mgr.acknowledgeHandshake(g1, false, "1", new String[] {}, clientVersion);
+    mgr.acknowledgeHandshake(g1, false, new ClientID(new ChannelID(1)), new ClientID[] {}, clientVersion);
     assertEquals(1, callback.paused.get());
     assertEquals(3, callback.initiateHandshake.get());
     assertEquals(2, callback.unpaused.get());
     assertEquals(1, callback.disconnected);
 
-    mgr.acknowledgeHandshake(g2, false, "1", new String[] {}, clientVersion);
+    mgr.acknowledgeHandshake(g2, false, new ClientID(new ChannelID(1)), new ClientID[] {}, clientVersion);
     assertEquals(1, callback.paused.get());
     assertEquals(3, callback.initiateHandshake.get());
     assertEquals(3, callback.unpaused.get());

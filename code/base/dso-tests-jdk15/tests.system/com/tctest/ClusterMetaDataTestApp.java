@@ -40,6 +40,11 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
     super(appId, config, listenerProvider);
   }
 
+  void testNodeMetaData() {
+    Assert.assertNotNull(cluster.getCurrentNode().getIp());
+    Assert.assertNotNull(cluster.getCurrentNode().getHostname());
+  }
+
   void testGetNodesWithObjectUnclustered() {
     final Object unclustered = new Object();
     try {

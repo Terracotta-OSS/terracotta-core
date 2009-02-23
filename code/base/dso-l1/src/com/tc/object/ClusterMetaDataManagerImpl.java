@@ -4,12 +4,16 @@
  */
 package com.tc.object;
 
+import com.tc.cluster.DsoNodeInternal;
+import com.tc.cluster.DsoNodeMetaData;
 import com.tc.net.NodeID;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.msg.ClusterMetaDataMessage;
 import com.tc.object.msg.KeysForOrphanedValuesMessage;
 import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
+import com.tc.object.msg.NodeMetaDataMessage;
+import com.tc.object.msg.NodeMetaDataMessageFactory;
 import com.tc.object.msg.NodesWithObjectsMessage;
 import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.util.Assert;
@@ -27,18 +31,20 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
   private final ThreadIDManager                     threadIDManager;
   private final NodesWithObjectsMessageFactory      nwoFactory;
   private final KeysForOrphanedValuesMessageFactory kfovFactory;
+  private final NodeMetaDataMessageFactory          nmdmFactory;
 
   private final Map<ThreadID, WaitForResponse>      waitObjects = new HashMap<ThreadID, WaitForResponse>();
   private final Map<ThreadID, Object>               responses   = new HashMap<ThreadID, Object>();
 
-  public ClusterMetaDataManagerImpl(final DNAEncoding encoding,
-                                    final ThreadIDManager threadIDManager,
+  public ClusterMetaDataManagerImpl(final DNAEncoding encoding, final ThreadIDManager threadIDManager,
                                     final NodesWithObjectsMessageFactory nwoFactory,
-                                    final KeysForOrphanedValuesMessageFactory kfovFactory) {
+                                    final KeysForOrphanedValuesMessageFactory kfovFactory,
+                                    final NodeMetaDataMessageFactory nmdmFactory) {
     this.encoding = encoding;
     this.threadIDManager = threadIDManager;
     this.nwoFactory = nwoFactory;
     this.kfovFactory = kfovFactory;
+    this.nmdmFactory = nmdmFactory;
   }
 
   public DNAEncoding getEncoding() {
@@ -81,6 +87,13 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     if (null == response) { return Collections.emptySet(); }
 
     return response;
+  }
+
+  public void retrieveMetaDataForDsoNode(final DsoNodeInternal node) {
+    final NodeMetaDataMessage message = nmdmFactory.newNodeMetaDataMessage();
+    message.setNodeID(node.getNodeID());
+    DsoNodeMetaData metaData = (DsoNodeMetaData) sendMessageAndWait(message);
+    node.setMetaData(metaData);
   }
 
   private <R> R sendMessageAndWait(final ClusterMetaDataMessage message) {

@@ -6,6 +6,7 @@ package com.tc.cluster;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.NodeID;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -33,15 +34,15 @@ public class Cluster {
     return nodes;
   }
 
-  public synchronized void thisNodeConnected(final String thisNodeId, final String[] nodesCurrentlyInCluster) {
+  public synchronized void thisNodeConnected(final NodeID thisNodeId, final NodeID[] nodesCurrentlyInCluster) {
     // we might get multiple calls in a row, ignore all but the first in a row.
     if (thisNode != null) return;
 
-    thisNode = new Node(thisNodeId);
+    thisNode = new Node(thisNodeId.toString());
     nodes.put(thisNode.getNodeId(), thisNode);
 
-    for (String element : nodesCurrentlyInCluster) {
-      Node n = new Node(element);
+    for (NodeID element : nodesCurrentlyInCluster) {
+      Node n = new Node(element.toString());
       nodes.put(n.getNodeId(), n);
     }
 

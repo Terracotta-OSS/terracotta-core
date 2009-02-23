@@ -18,6 +18,7 @@ import com.tc.object.msg.CompletedTransactionLowWaterMarkMessageFactory;
 import com.tc.object.msg.JMXMessage;
 import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
 import com.tc.object.msg.LockRequestMessageFactory;
+import com.tc.object.msg.NodeMetaDataMessageFactory;
 import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.msg.ObjectIDBatchRequestMessageFactory;
 import com.tc.object.msg.RequestManagedObjectMessageFactory;
@@ -64,6 +65,8 @@ public interface DSOClientMessageChannel {
   public NodesWithObjectsMessageFactory getNodesWithObjectsMessageFactory();
 
   public KeysForOrphanedValuesMessageFactory getKeysForOrphanedValuesMessageFactory();
+
+  public NodeMetaDataMessageFactory getNodeMetaDataMessageFactory();
 
   public JMXMessage getJMXMessage();
 

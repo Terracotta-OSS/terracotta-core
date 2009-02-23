@@ -24,6 +24,8 @@ import com.tc.object.msg.KeysForOrphanedValuesMessage;
 import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockRequestMessageFactory;
+import com.tc.object.msg.NodeMetaDataMessage;
+import com.tc.object.msg.NodeMetaDataMessageFactory;
 import com.tc.object.msg.NodesWithObjectsMessage;
 import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.msg.ObjectIDBatchRequestMessage;
@@ -41,7 +43,8 @@ import java.net.UnknownHostException;
 public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, LockRequestMessageFactory,
     RequestRootMessageFactory, RequestManagedObjectMessageFactory, ClientHandshakeMessageFactory,
     ObjectIDBatchRequestMessageFactory, CommitTransactionMessageFactory, AcknowledgeTransactionMessageFactory,
-    CompletedTransactionLowWaterMarkMessageFactory, NodesWithObjectsMessageFactory, KeysForOrphanedValuesMessageFactory {
+    CompletedTransactionLowWaterMarkMessageFactory, NodesWithObjectsMessageFactory,
+    KeysForOrphanedValuesMessageFactory, NodeMetaDataMessageFactory {
 
   private final ClientMessageChannel channel;
   private final GroupID              groups[];
@@ -130,6 +133,10 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return this;
   }
 
+  public NodeMetaDataMessageFactory getNodeMetaDataMessageFactory() {
+    return this;
+  }
+
   public ObjectIDBatchRequestMessage newObjectIDBatchRequestMessage() {
     return (ObjectIDBatchRequestMessage) channel.createMessage(TCMessageType.OBJECT_ID_BATCH_REQUEST_MESSAGE);
   }
@@ -161,6 +168,10 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
 
   public KeysForOrphanedValuesMessage newKeysForOrphanedValuesMessage() {
     return (KeysForOrphanedValuesMessage) channel.createMessage(TCMessageType.KEYS_FOR_ORPHANED_VALUES_MESSAGE);
+  }
+
+  public NodeMetaDataMessage newNodeMetaDataMessage() {
+    return (NodeMetaDataMessage) channel.createMessage(TCMessageType.NODE_META_DATA_MESSAGE);
   }
 
   public boolean isConnected() {

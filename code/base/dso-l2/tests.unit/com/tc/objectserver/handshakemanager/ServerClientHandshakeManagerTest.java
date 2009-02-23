@@ -67,18 +67,19 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
   private static long                  LONG_RECONNECT_TIMEOUT = ServerClientHandshakeManager.RECONNECT_WARN_INTERVAL * 2;
   private static long                  DEFAULT_RECONNECT_TIMEOUT = SHORT_RECONNECT_TIMEOUT;
 
+  @Override
   public void setUp() {
     existingUnconnectedClients = new HashSet();
     clientStateManager = new TestClientStateManager();
     lockManager = new TestLockManager();
     lockResponseSink = new TestSink();
-    objectIDRequestSink = new TestSink();    
+    objectIDRequestSink = new TestSink();
     timer = new TestTimer();
     channelManager = new TestChannelManager();
     sequenceValidator = new SequenceValidator(0);
   }
 
-  private void initHandshakeManager(long reconnectTimeout) {
+  private void initHandshakeManager(final long reconnectTimeout) {
     TCLogger logger = TCLogging.getLogger(ServerClientHandshakeManager.class);
     this.hm = new ServerClientHandshakeManager(logger, channelManager, new TestServerTransactionManager(),
                                                sequenceValidator, clientStateManager, lockManager, lockResponseSink,
@@ -86,7 +87,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     this.hm.setStarting(convertToConnectionIds(existingUnconnectedClients));
   }
 
-  private Set convertToConnectionIds(Set s) {
+  private Set convertToConnectionIds(final Set s) {
     HashSet ns = new HashSet();
     for (Iterator i = s.iterator(); i.hasNext();) {
       ClientID cid = (ClientID) i.next();
@@ -103,7 +104,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
   public void testTimeout1() throws Exception {
     doTimeoutTest(SHORT_RECONNECT_TIMEOUT);
   }
-  
+
   public void testTimeout2() throws Exception {
     doTimeoutTest(MEDIUM_RECONNECT_TIMEOUT);
   }
@@ -112,7 +113,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     doTimeoutTest(LONG_RECONNECT_TIMEOUT);
   }
 
-  private void doTimeoutTest(long reconnectTimeout) throws ClientHandshakeException {
+  private void doTimeoutTest(final long reconnectTimeout) throws ClientHandshakeException {
     ClientID clientID = new ClientID(new ChannelID(100));
 
     existingUnconnectedClients.add(clientID);
@@ -231,8 +232,8 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     // client state manager.
     assertTrue(handshake.clientObjectIds.size() > 0);
     assertEquals(handshake.clientObjectIds.size(), clientStateManager.addReferenceCalls.size());
-    for (Iterator i = clientStateManager.addReferenceCalls.iterator(); i.hasNext();) {
-      TestClientStateManager.AddReferenceContext ctxt = (AddReferenceContext) i.next();
+    for (Object element : clientStateManager.addReferenceCalls) {
+      TestClientStateManager.AddReferenceContext ctxt = (AddReferenceContext) element;
       assertTrue(handshake.clientObjectIds.remove(ctxt.objectID));
     }
     assertTrue(handshake.clientObjectIds.isEmpty());
@@ -346,7 +347,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     assertTrue(hm.isStarted());
   }
 
-  private TestClientHandshakeMessage newClientHandshakeMessage(ClientID clientID) {
+  private TestClientHandshakeMessage newClientHandshakeMessage(final ClientID clientID) {
     TestClientHandshakeMessage handshake = new TestClientHandshakeMessage();
     handshake.clientID = clientID;
     ArrayList sequenceIDs = new ArrayList();
@@ -360,13 +361,13 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     public final List closeAllChannelIDs = new ArrayList();
     public final Map  handshakeMessages  = new HashMap();
     public final Set  clientIDs          = new HashSet();
-    private String    serverVersion      = "N/A";
+    private final String    serverVersion      = "N/A";
 
-    public void closeAll(Collection theChannelIDs) {
+    public void closeAll(final Collection theChannelIDs) {
       closeAllChannelIDs.addAll(theChannelIDs);
     }
 
-    public MessageChannel getActiveChannel(NodeID id) {
+    public MessageChannel getActiveChannel(final NodeID id) {
       return null;
     }
 
@@ -378,15 +379,15 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       return null;
     }
 
-    public boolean isValidID(ChannelID channelID) {
+    public boolean isValidID(final ChannelID channelID) {
       return false;
     }
 
-    public String getChannelAddress(NodeID nid) {
+    public String getChannelAddress(final NodeID nid) {
       return null;
     }
 
-    public Collection getMessages(ClientID clientID) {
+    public Collection getMessages(final ClientID clientID) {
       Collection msgs = (Collection) this.handshakeMessages.get(clientID);
       if (msgs == null) {
         msgs = new ArrayList();
@@ -395,17 +396,17 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       return msgs;
     }
 
-    private ClientHandshakeAckMessage newClientHandshakeAckMessage(ClientID clientID) {
+    private ClientHandshakeAckMessage newClientHandshakeAckMessage(final ClientID clientID) {
       ClientHandshakeAckMessage msg = new TestClientHandshakeAckMessage(clientID);
       getMessages(clientID).add(msg);
       return msg;
     }
 
-    public BatchTransactionAcknowledgeMessage newBatchTransactionAcknowledgeMessage(NodeID nid) {
+    public BatchTransactionAcknowledgeMessage newBatchTransactionAcknowledgeMessage(final NodeID nid) {
       throw new ImplementMe();
     }
 
-    public void addEventListener(DSOChannelManagerEventListener listener) {
+    public void addEventListener(final DSOChannelManagerEventListener listener) {
       throw new ImplementMe();
     }
 
@@ -413,13 +414,13 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       return this.clientIDs;
     }
 
-    public boolean isActiveID(NodeID nodeID) {
+    public boolean isActiveID(final NodeID nodeID) {
       throw new ImplementMe();
     }
 
-    public void makeChannelActive(ClientID clientID, boolean persistent) {
+    public void makeChannelActive(final ClientID clientID, final boolean persistent) {
       ClientHandshakeAckMessage ackMsg = newClientHandshakeAckMessage(clientID);
-      ackMsg.initialize(persistent, getAllClientIDsString(), clientID.toString(), serverVersion);
+      ackMsg.initialize(persistent, getAllClientIDsString(), clientID, serverVersion);
       ackMsg.send();
     }
 
@@ -432,11 +433,11 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       return s;
     }
 
-    public void makeChannelActiveNoAck(MessageChannel channel) {
+    public void makeChannelActiveNoAck(final MessageChannel channel) {
       //
     }
 
-    public ClientID getClientIDFor(ChannelID channelID) {
+    public ClientID getClientIDFor(final ChannelID channelID) {
       return new ClientID(channelID);
     }
 
@@ -449,12 +450,13 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     private final TestMessageChannel    channel;
     private String                      serverVersion;
 
-    private TestClientHandshakeAckMessage(ClientID clientID) {
+    private TestClientHandshakeAckMessage(final ClientID clientID) {
       this.clientID = clientID;
       this.channel = new TestMessageChannel();
       this.channel.channelID = clientID.getChannelID();
     }
 
+    @Override
     public void send() {
       sendQueue.put(new Object());
     }
@@ -463,20 +465,21 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       return persistent;
     }
 
-    public void initialize(boolean isPersistent, Set allNodes, String thisNodeID, String sv) {
+    public void initialize(final boolean isPersistent, final Set<ClientID> allNodes, final ClientID thisNodeID, final String sv) {
       this.persistent = isPersistent;
       this.serverVersion = sv;
     }
 
+    @Override
     public MessageChannel getChannel() {
       return channel;
     }
 
-    public String[] getAllNodes() {
+    public ClientID[] getAllNodes() {
       throw new ImplementMe();
     }
 
-    public String getThisNodeId() {
+    public ClientID getThisNodeId() {
       throw new ImplementMe();
     }
 
@@ -484,6 +487,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       return serverVersion;
     }
 
+    @Override
     public NodeID getSourceNodeID() {
       return this.clientID;
     }

@@ -7,7 +7,6 @@ package com.tc.object.msg;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.NodeID;
-import com.tc.net.groups.NodeIDSerializer;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -62,7 +61,7 @@ public class NodesWithObjectsResponseMessageImpl extends DSOMessageBase implemen
       putNVPair(MANAGED_OBJECT_ID, entry.getKey().toLong());
 
       for (NodeID nodeID : entry.getValue()) {
-        putNVPair(NODE_ID, new NodeIDSerializer(nodeID));
+        putNVPair(NODE_ID, nodeID);
       }
     }
   }
@@ -84,7 +83,7 @@ public class NodesWithObjectsResponseMessageImpl extends DSOMessageBase implemen
         return true;
       case NODE_ID:
         Assert.assertNotNull(lastHydratedNodeIDSet);
-        NodeID nodeID = ((NodeIDSerializer) getObject(new NodeIDSerializer())).getNodeID();
+        NodeID nodeID = getNodeIDValue();
         lastHydratedNodeIDSet.add(nodeID);
         return true;
       default:

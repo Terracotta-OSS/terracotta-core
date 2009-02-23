@@ -96,6 +96,8 @@ import com.tc.object.msg.KeysForOrphanedValuesMessageImpl;
 import com.tc.object.msg.KeysForOrphanedValuesResponseMessageImpl;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockResponseMessage;
+import com.tc.object.msg.NodeMetaDataMessageImpl;
+import com.tc.object.msg.NodeMetaDataResponseMessageImpl;
 import com.tc.object.msg.NodesWithObjectsMessageImpl;
 import com.tc.object.msg.NodesWithObjectsResponseMessageImpl;
 import com.tc.object.msg.ObjectIDBatchRequestMessage;
@@ -429,7 +431,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     // Cluster meta data
     clusterMetaDataManager = new ClusterMetaDataManagerImpl(encoding, threadIDManager, channel
-        .getNodesWithObjectsMessageFactory(), channel.getKeysForOrphanedValuesMessageFactory());
+        .getNodesWithObjectsMessageFactory(), channel.getKeysForOrphanedValuesMessageFactory(), channel
+        .getNodeMetaDataMessageFactory());
 
     // Set up the JMX management stuff
     final TunnelingEventHandler teh = dsoClientBuilder.createTunnelingEventHandler(channel.channel());
@@ -540,6 +543,9 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     channel.addClassMapping(TCMessageType.KEYS_FOR_ORPHANED_VALUES_MESSAGE, KeysForOrphanedValuesMessageImpl.class);
     channel.addClassMapping(TCMessageType.KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE,
                             KeysForOrphanedValuesResponseMessageImpl.class);
+    channel.addClassMapping(TCMessageType.NODE_META_DATA_MESSAGE, NodeMetaDataMessageImpl.class);
+    channel.addClassMapping(TCMessageType.NODE_META_DATA_RESPONSE_MESSAGE,
+                            NodeMetaDataResponseMessageImpl.class);
 
     DSO_LOGGER.debug("Added class mappings.");
 
@@ -564,6 +570,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     channel.routeMessageType(TCMessageType.NODES_WITH_OBJECTS_RESPONSE_MESSAGE, clusterMetaDataStage.getSink(),
                              hydrateSink);
     channel.routeMessageType(TCMessageType.KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE, clusterMetaDataStage.getSink(),
+                             hydrateSink);
+    channel.routeMessageType(TCMessageType.NODE_META_DATA_RESPONSE_MESSAGE, clusterMetaDataStage.getSink(),
                              hydrateSink);
 
     final int maxConnectRetries = l1Properties.getInt("max.connect.retries");

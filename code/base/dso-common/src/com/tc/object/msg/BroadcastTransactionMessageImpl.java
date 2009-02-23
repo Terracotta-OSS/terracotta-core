@@ -10,7 +10,6 @@ import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.io.TCSerializable;
 import com.tc.net.NodeID;
-import com.tc.net.groups.NodeIDSerializer;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -70,13 +69,13 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   private GlobalTransactionID    lowWatermark;
   private ObjectStringSerializer serializer;
 
-  public BroadcastTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
-                                         MessageChannel channel, TCMessageType type) {
+  public BroadcastTransactionMessageImpl(final SessionID sessionID, final MessageMonitor monitor, final TCByteBufferOutputStream out,
+                                         final MessageChannel channel, final TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
 
-  public BroadcastTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel,
-                                         TCMessageHeader header, TCByteBuffer[] data) {
+  public BroadcastTransactionMessageImpl(final SessionID sessionID, final MessageMonitor monitor, final MessageChannel channel,
+                                         final TCMessageHeader header, final TCByteBuffer[] data) {
     super(sessionID, monitor, channel, header, data);
   }
 
@@ -97,7 +96,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
 
     putNVPair(CHANGE_ID, this.changeID);
     putNVPair(TRANSACTION_ID, this.transactionID.toLong());
-    putNVPair(COMMITTER_ID, new NodeIDSerializer(this.committerID));
+    putNVPair(COMMITTER_ID, this.committerID);
     putNVPair(GLOBAL_TRANSACTION_ID, this.globalTransactionID.toLong());
     putNVPair(LOW_WATERMARK, this.lowWatermark.toLong());
 
@@ -117,7 +116,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   }
 
   @Override
-  protected boolean hydrateValue(byte name) throws IOException {
+  protected boolean hydrateValue(final byte name) throws IOException {
     switch (name) {
       case TRANSACTION_TYPE_ID:
         this.transactionType = TxnType.typeFor(getByteValue());
@@ -144,7 +143,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
         this.transactionID = new TransactionID(getLongValue());
         return true;
       case COMMITTER_ID:
-        this.committerID = ((NodeIDSerializer) getObject(new NodeIDSerializer())).getNodeID();
+        this.committerID = getNodeIDValue();
         return true;
       case GLOBAL_TRANSACTION_ID:
         this.globalTransactionID = new GlobalTransactionID(getLongValue());
@@ -165,10 +164,10 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     }
   }
 
-  public void initialize(List chges, ObjectStringSerializer aSerializer, LockID[] lids, long cid, TransactionID txID,
-                         NodeID client, GlobalTransactionID gtx, TxnType txnType,
-                         GlobalTransactionID lowGlobalTransactionIDWatermark, Collection theNotifies, Map roots,
-                         DmiDescriptor[] dmiDescs) {
+  public void initialize(final List chges, final ObjectStringSerializer aSerializer, final LockID[] lids, final long cid, final TransactionID txID,
+                         final NodeID client, final GlobalTransactionID gtx, final TxnType txnType,
+                         final GlobalTransactionID lowGlobalTransactionIDWatermark, final Collection theNotifies, final Map roots,
+                         final DmiDescriptor[] dmiDescs) {
     Assert.eval(lids.length > 0);
     Assert.assertNotNull(txnType);
 
@@ -183,8 +182,8 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     this.serializer = aSerializer;
     this.notifies.addAll(theNotifies);
     this.newRoots.putAll(roots);
-    for (int i = 0; i < dmiDescs.length; i++) {
-      this.dmis.add(dmiDescs[i]);
+    for (DmiDescriptor dmiDesc : dmiDescs) {
+      this.dmis.add(dmiDesc);
     }
   }
 
@@ -226,7 +225,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     return this.lowWatermark;
   }
 
-  public Collection addNotifiesTo(List c) {
+  public Collection addNotifiesTo(final List c) {
     c.addAll(this.notifies);
     return c;
   }
@@ -259,18 +258,18 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
       super();
     }
 
-    public RootIDPair(String rootName, ObjectID rootID) {
+    public RootIDPair(final String rootName, final ObjectID rootID) {
       this.rootName = rootName;
       this.rootID = rootID;
     }
 
-    public void serializeTo(TCByteBufferOutput serialOutput) {
+    public void serializeTo(final TCByteBufferOutput serialOutput) {
       serialOutput.writeString(this.rootName);
       serialOutput.writeLong(this.rootID.toLong());
 
     }
 
-    public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
+    public Object deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
       this.rootName = serialInput.readString();
       this.rootID = new ObjectID(serialInput.readLong());
       return this;

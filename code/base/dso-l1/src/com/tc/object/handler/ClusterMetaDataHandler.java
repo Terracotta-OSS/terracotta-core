@@ -7,12 +7,14 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.bytes.TCByteBufferFactory;
+import com.tc.cluster.DsoNodeMetaData;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCDataInput;
 import com.tc.object.ClientConfigurationContext;
 import com.tc.object.ClusterMetaDataManager;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.msg.KeysForOrphanedValuesResponseMessage;
+import com.tc.object.msg.NodeMetaDataResponseMessage;
 import com.tc.object.msg.NodesWithObjectsResponseMessage;
 
 import java.util.HashSet;
@@ -25,27 +27,38 @@ public class ClusterMetaDataHandler extends AbstractEventHandler {
   @Override
   public void handleEvent(final EventContext context) {
     if (context instanceof NodesWithObjectsResponseMessage) {
-      NodesWithObjectsResponseMessage message = (NodesWithObjectsResponseMessage)context;
-      clusterMetaDataManager.setResponse(message.getThreadID(), message.getNodesWithObjects());
+      handleNodesWithObjectsResponseMessage((NodesWithObjectsResponseMessage)context);
     } else if (context instanceof KeysForOrphanedValuesResponseMessage) {
-      KeysForOrphanedValuesResponseMessage message = (KeysForOrphanedValuesResponseMessage)context;
-
-      final DNAEncoding encoding = clusterMetaDataManager.getEncoding();
-      final TCDataInput input = new TCByteBufferInputStream(TCByteBufferFactory.wrap(message.getOrphanedKeysDNA()));
-      final Set keys = new HashSet();
-      try {
-        final int size = input.readInt();
-        for (int i = 0; i < size; i++) {
-          keys.add(encoding.decode(input));
-        }
-      } catch (Exception e) {
-        getLogger().error("Keys for orphaned values response decoding error: ", e);
-      }
-
-      clusterMetaDataManager.setResponse(message.getThreadID(), keys);
+      handleKeysForOrphanedValuesResponseMessage((KeysForOrphanedValuesResponseMessage)context);
+    } else if (context instanceof NodeMetaDataResponseMessage) {
+      handleNodeMetaDataResponseMessage((NodeMetaDataResponseMessage)context);
     } else {
-      throw new AssertionError("unknown event type: " + context.getClass().getName());
+      throw new AssertionError("Unknown event type: " + context.getClass().getName());
     }
+  }
+
+  private void handleNodesWithObjectsResponseMessage(final NodesWithObjectsResponseMessage message) {
+    clusterMetaDataManager.setResponse(message.getThreadID(), message.getNodesWithObjects());
+  }
+
+  private void handleKeysForOrphanedValuesResponseMessage(final KeysForOrphanedValuesResponseMessage message) {
+    final DNAEncoding encoding = clusterMetaDataManager.getEncoding();
+    final TCDataInput input = new TCByteBufferInputStream(TCByteBufferFactory.wrap(message.getOrphanedKeysDNA()));
+    final Set keys = new HashSet();
+    try {
+      final int size = input.readInt();
+      for (int i = 0; i < size; i++) {
+        keys.add(encoding.decode(input));
+      }
+    } catch (Exception e) {
+      getLogger().error("Keys for orphaned values response decoding error: ", e);
+    }
+
+    clusterMetaDataManager.setResponse(message.getThreadID(), keys);
+  }
+
+  private void handleNodeMetaDataResponseMessage(final NodeMetaDataResponseMessage message) {
+    clusterMetaDataManager.setResponse(message.getThreadID(), new DsoNodeMetaData(message.getIp(), message.getHostname()));
   }
 
   @Override

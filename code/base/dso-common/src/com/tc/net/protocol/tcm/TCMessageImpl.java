@@ -9,6 +9,7 @@ import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.io.TCSerializable;
 import com.tc.net.NodeID;
+import com.tc.net.groups.NodeIDSerializer;
 import com.tc.net.protocol.AbstractTCNetworkMessage;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
@@ -34,8 +35,8 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
   /**
    * Creates a new TCMessage to write data into (ie. to send to the network)
    */
-  protected TCMessageImpl(MessageMonitor monitor, TCByteBufferOutputStream output, MessageChannel channel,
-                          TCMessageType type) {
+  protected TCMessageImpl(final MessageMonitor monitor, final TCByteBufferOutputStream output, final MessageChannel channel,
+                          final TCMessageType type) {
     super(new TCMessageHeaderImpl(type), false);
     this.monitor = monitor;
     this.type = type;
@@ -46,17 +47,17 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
 
     // write out a zero. When dehydrated, this space will be replaced with the NV count
     this.out.writeInt(0);
-    
+
     this.isOutgoing = true;
   }
 
   /**
    * Creates a new TCMessage object backed by the given data array (used when messages are read from the network)
-   * 
+   *
    * @param header
    * @param data
    */
-  protected TCMessageImpl(MessageMonitor monitor, MessageChannel channel, TCMessageHeader header, TCByteBuffer[] data) {
+  protected TCMessageImpl(final MessageMonitor monitor, final MessageChannel channel, final TCMessageHeader header, final TCByteBuffer[] data) {
     super(header, data);
     this.monitor = monitor;
     this.type = TCMessageType.getInstance(header.getMessageType());
@@ -74,7 +75,7 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
     return this.messageVersion;
   }
 
-  protected void setMessageVersion(int version) {
+  protected void setMessageVersion(final int version) {
     this.messageVersion = version;
   }
 
@@ -183,10 +184,10 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
   /**
    * Subclasses *really* must implement this to set appropriate instance variables with the value of the given name.
    * Return false if the given name is unknown to your message class
-   * 
+   *
    * @param name
    */
-  protected boolean hydrateValue(byte name) throws IOException {
+  protected boolean hydrateValue(final byte name) throws IOException {
     if (false) { throw new IOException("silence compiler warning"); }
     return false;
   }
@@ -223,7 +224,11 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
     return bbis.readShort();
   }
 
-  protected Object getObject(TCSerializable target) throws IOException {
+  protected NodeID getNodeIDValue() throws IOException {
+    return ((NodeIDSerializer) getObject(new NodeIDSerializer())).getNodeID();
+  }
+
+  protected Object getObject(final TCSerializable target) throws IOException {
     return target.deserializeFrom(bbis);
   }
 
@@ -243,73 +248,79 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
     return bytes;
   }
 
-  protected void putNVPair(byte name, boolean value) {
+  protected void putNVPair(final byte name, final boolean value) {
     nvCount++;
     out.write(name);
     out.writeBoolean(value);
   }
 
-  protected void putNVPair(byte name, byte value) {
+  protected void putNVPair(final byte name, final byte value) {
     nvCount++;
     out.write(name);
     out.writeByte(value);
   }
 
-  protected void putNVPair(byte name, char value) {
+  protected void putNVPair(final byte name, final char value) {
     nvCount++;
     out.write(name);
     out.writeChar(value);
   }
 
-  protected void putNVPair(byte name, double value) {
+  protected void putNVPair(final byte name, final double value) {
     nvCount++;
     out.write(name);
     out.writeDouble(value);
   }
 
-  protected void putNVPair(byte name, float value) {
+  protected void putNVPair(final byte name, final float value) {
     nvCount++;
     out.write(name);
     out.writeFloat(value);
   }
 
-  protected void putNVPair(byte name, int value) {
+  protected void putNVPair(final byte name, final int value) {
     nvCount++;
     out.write(name);
     out.writeInt(value);
   }
 
-  protected void putNVPair(byte name, long value) {
+  protected void putNVPair(final byte name, final long value) {
     nvCount++;
     out.write(name);
     out.writeLong(value);
   }
 
-  protected void putNVPair(byte name, short value) {
+  protected void putNVPair(final byte name, final short value) {
     nvCount++;
     out.write(name);
     out.writeShort(value);
   }
 
-  protected void putNVPair(byte name, String value) {
+  protected void putNVPair(final byte name, final String value) {
     nvCount++;
     out.write(name);
     out.writeString(value);
   }
 
-  protected void putNVPair(byte name, TCSerializable object) {
+  protected void putNVPair(final byte name, final NodeID nodeID) {
+    nvCount++;
+    out.write(name);
+    new NodeIDSerializer(nodeID).serializeTo(out);
+  }
+
+  protected void putNVPair(final byte name, final TCSerializable object) {
     nvCount++;
     out.write(name);
     object.serializeTo(out);
   }
 
-  protected void putNVPair(byte name, TCByteBuffer[] data) {
+  protected void putNVPair(final byte name, final TCByteBuffer[] data) {
     nvCount++;
     out.write(name);
     out.write(data);
   }
 
-  protected void putNVPair(byte name, byte[] bytes) {
+  protected void putNVPair(final byte name, final byte[] bytes) {
     nvCount++;
     out.write(name);
     out.writeInt(bytes.length);
@@ -343,7 +354,7 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
   /*
    * send with payload from a dehydrated message
    */
-  public void cloneAndSend(TCMessageImpl message) {
+  public void cloneAndSend(final TCMessageImpl message) {
     if (isSent.attemptSet()) {
       dehydrate(message.getPayload());
       basicSend();

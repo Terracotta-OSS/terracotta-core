@@ -4,6 +4,8 @@
  */
 package com.tc.cluster;
 
+import com.tc.net.ClientID;
+import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.test.TCTestCase;
 
 import java.util.Arrays;
@@ -14,16 +16,17 @@ public class ClusterTest extends TCTestCase {
   private Cluster           cluster;
   private TestEventListener cel;
 
+  @Override
   protected void setUp() throws Exception {
     cluster = new Cluster();
     cel = new TestEventListener();
   }
 
   public void testGetThisNode() {
-    final String thisNodeId = "xxxyyyzzz";
-    cluster.thisNodeConnected(thisNodeId, new String[] { "someNode" });
+    final ClientID thisNodeId = new ClientID(new ChannelID(1));
+    cluster.thisNodeConnected(thisNodeId, new ClientID[] { new ClientID(new ChannelID(2)) });
     assertNotNull(cluster.getThisNode());
-    assertEquals(thisNodeId, cluster.getThisNode().getNodeId());
+    assertEquals(thisNodeId.toString(), cluster.getThisNode().getNodeId());
   }
 
   public void testGetNodes() {
@@ -33,37 +36,37 @@ public class ClusterTest extends TCTestCase {
     assertTrue(nodes.isEmpty());
 
     // 1
-    final String thisNodeId = "1";
-    cluster.thisNodeConnected(thisNodeId, new String[] { thisNodeId });
+    final ClientID thisNodeId = new ClientID(new ChannelID(1));
+    cluster.thisNodeConnected(thisNodeId, new ClientID[] { thisNodeId });
     nodes = cluster.getNodes();
     assertNotNull(nodes);
     assertEquals(1, nodes.size());
-    assertNotNull(nodes.get(thisNodeId));
+    assertNotNull(nodes.get(thisNodeId.toString()));
   }
 
   public void testThisNodeConnected() {
-    final String thisNodeId = "1";
-    final String[] nodeIds = new String[] { thisNodeId };
+    final ClientID thisNodeId = new ClientID(new ChannelID(1));
+    final ClientID[] nodeIds = new ClientID[] { thisNodeId };
     cluster.thisNodeConnected(thisNodeId, nodeIds);
 
     // if this node is connected, adding a cel should result in an immediate callback
     cluster.addClusterEventListener(cel);
     assertEquals("thisNodeConnected", cel.getLastMethodCalled());
-    assertEquals(thisNodeId, cel.getLastString());
-    assertTrue(Arrays.equals(nodeIds, cel.getLastStringArray()));
-    
+    assertEquals(thisNodeId.toString(), cel.getLastString());
+    assertTrue(Arrays.equals(new String[] { thisNodeId.toString() }, cel.getLastStringArray()));
+
     // should not fire multiple thisNodeConnected events in a row...
     cel.reset();
     cluster.thisNodeConnected(thisNodeId, nodeIds);
     assertNull(cel.getLastMethodCalled());
-    
+
     // but it should be fired after thisNodeDisconnected...
     cluster.thisNodeDisconnected();
     cluster.thisNodeConnected(thisNodeId, nodeIds);
     assertEquals("thisNodeConnected", cel.getLastMethodCalled());
-    assertEquals(thisNodeId, cel.getLastString());
-    assertTrue(Arrays.equals(nodeIds, cel.getLastStringArray()));
-    
+    assertEquals(thisNodeId.toString(), cel.getLastString());
+    assertTrue(Arrays.equals(new String[] { thisNodeId.toString() }, cel.getLastStringArray()));
+
 
     // no callback if cel is added again
     cel.reset();
@@ -74,15 +77,15 @@ public class ClusterTest extends TCTestCase {
   }
 
   public void testThisNodeDisconnected() {
-    final String thisNodeId = "1";
-    final String[] nodeIds = new String[] { thisNodeId };
+    final ClientID thisNodeId = new ClientID(new ChannelID(1));
+    final ClientID[] nodeIds = new ClientID[] { thisNodeId };
     cluster.thisNodeConnected(thisNodeId, nodeIds);
 
     cluster.addClusterEventListener(cel);
 
     assertEquals("thisNodeConnected", cel.getLastMethodCalled());
-    assertEquals(thisNodeId, cel.getLastString());
-    assertTrue(Arrays.equals(nodeIds, cel.getLastStringArray()));
+    assertEquals(thisNodeId.toString(), cel.getLastString());
+    assertTrue(Arrays.equals(new String[] { thisNodeId.toString() }, cel.getLastStringArray()));
 
     cluster.thisNodeDisconnected();
     assertEquals("thisNodeDisconnected", cel.getLastMethodCalled());
@@ -93,13 +96,13 @@ public class ClusterTest extends TCTestCase {
 
   public void testNodeConnected() {
     // prime cluster
-    final String thisNodeId = "1";
-    final String[] nodeIds = new String[] { thisNodeId };
+    final ClientID thisNodeId = new ClientID(new ChannelID(1));
+    final ClientID[] nodeIds = new ClientID[] { thisNodeId };
     cluster.thisNodeConnected(thisNodeId, nodeIds);
     cluster.addClusterEventListener(cel);
     assertEquals("thisNodeConnected", cel.getLastMethodCalled());
-    assertEquals(thisNodeId, cel.getLastString());
-    assertTrue(Arrays.equals(nodeIds, cel.getLastStringArray()));
+    assertEquals(thisNodeId.toString(), cel.getLastString());
+    assertTrue(Arrays.equals(new String[] { thisNodeId.toString() }, cel.getLastStringArray()));
     cel.reset();
 
     // now cause nodeConnected event
@@ -120,8 +123,8 @@ public class ClusterTest extends TCTestCase {
   }
 
   public void testAddSameListenerTwice() {
-    final String thisNodeId = "1";
-    final String[] nodesCurrentlyInCluster = new String[] { thisNodeId };
+    final ClientID thisNodeId = new ClientID(new ChannelID(1));
+    final ClientID[] nodesCurrentlyInCluster = new ClientID[] { thisNodeId };
     cluster.thisNodeConnected(thisNodeId, nodesCurrentlyInCluster);
 
     TestEventListener listener = new TestEventListener();
@@ -136,8 +139,8 @@ public class ClusterTest extends TCTestCase {
   }
 
   public void testCallbackOnluOnNewListener() {
-    final String thisNodeId = "1";
-    final String[] nodesCurrentlyInCluster = new String[] { thisNodeId };
+    final ClientID thisNodeId = new ClientID(new ChannelID(1));
+    final ClientID[] nodesCurrentlyInCluster = new ClientID[] { thisNodeId };
     cluster.thisNodeConnected(thisNodeId, nodesCurrentlyInCluster);
 
     TestEventListener listener = new TestEventListener();
@@ -154,15 +157,15 @@ public class ClusterTest extends TCTestCase {
   }
 
   public void testClientExceptionSafety() {
-    final String thisNodeId = "1";
-    final String[] nodesCurrentlyInCluster = new String[] { thisNodeId };
+    final ClientID thisNodeId = new ClientID(new ChannelID(1));
+    final ClientID[] nodesCurrentlyInCluster = new ClientID[] { thisNodeId };
     cluster.thisNodeConnected(thisNodeId, nodesCurrentlyInCluster);
 
     cluster.addClusterEventListener(new TestEventListenerWithExceptions());
 
     cluster.thisNodeDisconnected();
     cluster.nodeConnected("2");
-    cluster.nodeDisconnected(thisNodeId);
+    cluster.nodeDisconnected(thisNodeId.toString());
   }
 
   private static class TestEventListener implements ClusterEventListener {
@@ -171,23 +174,23 @@ public class ClusterTest extends TCTestCase {
     private String[] lastStringArray  = null;
     private String   lastMethodCalled = null;
 
-    public void nodeConnected(String nodeId) {
+    public void nodeConnected(final String nodeId) {
       lastString = nodeId;
       lastMethodCalled = "nodeConnected";
     }
 
-    public void nodeDisconnected(String nodeId) {
+    public void nodeDisconnected(final String nodeId) {
       lastString = nodeId;
       lastMethodCalled = "nodeDisconnected";
     }
 
-    public void thisNodeConnected(String thisNodeId, String[] nodesCurrentlyInCluster) {
+    public void thisNodeConnected(final String thisNodeId, final String[] nodesCurrentlyInCluster) {
       lastString = thisNodeId;
       lastStringArray = nodesCurrentlyInCluster;
       lastMethodCalled = "thisNodeConnected";
     }
 
-    public void thisNodeDisconnected(String thisNodeId) {
+    public void thisNodeDisconnected(final String thisNodeId) {
       lastString = thisNodeId;
       lastMethodCalled = "thisNodeDisconnected";
     }
@@ -214,19 +217,19 @@ public class ClusterTest extends TCTestCase {
 
   private static class TestEventListenerWithExceptions implements ClusterEventListener {
 
-    public void nodeConnected(String nodeId) {
+    public void nodeConnected(final String nodeId) {
       throw new RuntimeException("nodeConnected");
     }
 
-    public void nodeDisconnected(String nodeId) {
+    public void nodeDisconnected(final String nodeId) {
       throw new RuntimeException("nodeDisconnected");
     }
 
-    public void thisNodeConnected(String thisNodeId, String[] nodesCurrentlyInCluster) {
+    public void thisNodeConnected(final String thisNodeId, final String[] nodesCurrentlyInCluster) {
       throw new RuntimeException("thisNodeConnected");
     }
 
-    public void thisNodeDisconnected(String thisNodeId) {
+    public void thisNodeDisconnected(final String thisNodeId) {
       throw new RuntimeException("thisNodeDisconnected");
     }
   }

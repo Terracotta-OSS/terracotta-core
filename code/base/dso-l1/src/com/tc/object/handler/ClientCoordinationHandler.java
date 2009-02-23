@@ -54,10 +54,10 @@ public class ClientCoordinationHandler extends AbstractEventHandler {
 
   private void handleClusterMembershipMessage(final ClusterMembershipMessage cmm) throws EventHandlerException {
     if (cmm.isNodeConnectedEvent()) {
-      cluster.nodeConnected(cmm.getNodeId());
+      cluster.nodeConnected(cmm.getNodeId().toString());
       dsoCluster.fireNodeJoined(cmm.getNodeId());
     } else if (cmm.isNodeDisconnectedEvent()) {
-      cluster.nodeDisconnected(cmm.getNodeId());
+      cluster.nodeDisconnected(cmm.getNodeId().toString());
       dsoCluster.fireNodeLeft(cmm.getNodeId());
     } else {
       throw new EventHandlerException("Unknown event type: " + cmm);

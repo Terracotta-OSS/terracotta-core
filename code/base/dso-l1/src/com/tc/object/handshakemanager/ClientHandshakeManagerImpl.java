@@ -136,8 +136,8 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
         .getThisNodeId(), handshakeAck.getAllNodes(), handshakeAck.getServerVersion());
   }
 
-  protected void acknowledgeHandshake(final NodeID remoteID, final boolean persistentServer, final String thisNodeId,
-                                      final String[] clusterMembers, final String serverVersion) {
+  protected void acknowledgeHandshake(final NodeID remoteID, final boolean persistentServer, final NodeID thisNodeId,
+                                      final NodeID[] clusterMembers, final String serverVersion) {
     logger.info("Received Handshake ack for this node :" + remoteID);
     if (getState(remoteID) != STARTING) {
       logger.warn("Handshake acknowledged while not STARTING: " + getState(remoteID));

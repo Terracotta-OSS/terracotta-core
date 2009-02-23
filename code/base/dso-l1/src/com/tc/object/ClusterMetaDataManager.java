@@ -4,6 +4,7 @@
  */
 package com.tc.object;
 
+import com.tc.cluster.DsoNodeInternal;
 import com.tc.net.NodeID;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.lockmanager.api.ThreadID;
@@ -21,6 +22,8 @@ public interface ClusterMetaDataManager {
   public Map<ObjectID, Set<NodeID>> getNodesWithObjects(Collection<ObjectID> ids);
 
   public Set<?> getKeysForOrphanedValues(ObjectID mapObjectID);
+
+  public void retrieveMetaDataForDsoNode(DsoNodeInternal node);
 
   public void setResponse(ThreadID threadId, Object response);
 

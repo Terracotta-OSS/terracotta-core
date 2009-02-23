@@ -104,6 +104,8 @@ import com.tc.object.msg.KeysForOrphanedValuesMessageImpl;
 import com.tc.object.msg.KeysForOrphanedValuesResponseMessageImpl;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockResponseMessage;
+import com.tc.object.msg.NodeMetaDataMessageImpl;
+import com.tc.object.msg.NodeMetaDataResponseMessageImpl;
 import com.tc.object.msg.NodesWithObjectsMessageImpl;
 import com.tc.object.msg.NodesWithObjectsResponseMessageImpl;
 import com.tc.object.msg.ObjectIDBatchRequestMessage;
@@ -145,7 +147,7 @@ import com.tc.objectserver.handler.BroadcastChangeHandler;
 import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.handler.ClientHandshakeHandler;
 import com.tc.objectserver.handler.ClientLockStatisticsHandler;
-import com.tc.objectserver.handler.ClusterMetaDataHandler;
+import com.tc.objectserver.handler.ServerClusterMetaDataHandler;
 import com.tc.objectserver.handler.CommitTransactionChangeHandler;
 import com.tc.objectserver.handler.GarbageDisposeHandler;
 import com.tc.objectserver.handler.GlobalTransactionIDBatchRequestHandler;
@@ -331,17 +333,17 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
   private Stage                                  hydrateStage;
 
   // used by a test
-  public DistributedObjectServer(L2TVSConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
-                                 ConnectionPolicy connectionPolicy, TCServerInfoMBean tcServerInfoMBean,
-                                 ObjectStatsRecorder objectStatsRecorder) {
+  public DistributedObjectServer(final L2TVSConfigurationSetupManager configSetupManager, final TCThreadGroup threadGroup,
+                                 final ConnectionPolicy connectionPolicy, final TCServerInfoMBean tcServerInfoMBean,
+                                 final ObjectStatsRecorder objectStatsRecorder) {
     this(configSetupManager, threadGroup, connectionPolicy, new NullSink(), tcServerInfoMBean, objectStatsRecorder,
          new L2State(), new SEDA(threadGroup));
 
   }
 
-  public DistributedObjectServer(L2TVSConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
-                                 ConnectionPolicy connectionPolicy, Sink httpSink, TCServerInfoMBean tcServerInfoMBean,
-                                 ObjectStatsRecorder objectStatsRecorder, L2State l2State, SEDA seda) {
+  public DistributedObjectServer(final L2TVSConfigurationSetupManager configSetupManager, final TCThreadGroup threadGroup,
+                                 final ConnectionPolicy connectionPolicy, final Sink httpSink, final TCServerInfoMBean tcServerInfoMBean,
+                                 final ObjectStatsRecorder objectStatsRecorder, final L2State l2State, final SEDA seda) {
     // This assertion is here because we want to assume that all threads spawned by the server (including any created in
     // 3rd party libs) inherit their thread group from the current thread . Consider this before removing the assertion.
     // Even in tests, we probably don't want different thread group configurations
@@ -359,7 +361,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     this.serverBuilder = createServerBuilder(haConfig, logger);
   }
 
-  protected DSOServerBuilder createServerBuilder(HaConfig config, TCLogger tcLogger) {
+  protected DSOServerBuilder createServerBuilder(final HaConfig config, final TCLogger tcLogger) {
     Assert.assertEquals(config.isActiveActive(), false);
     return new StandardDSOServerBuilder(tcLogger);
   }
@@ -785,7 +787,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
 
     ServerClusterMetaDataManager clusterMetaDataManager = new ServerClusterMetaDataManagerImpl(logger,
                                                                                                this.clientStateManager,
-                                                                                               this.objectManager);
+                                                                                               this.objectManager,
+                                                                                               channelManager);
 
     stageManager.createStage(ServerConfigurationContext.TRANSACTION_LOOKUP_STAGE, new TransactionLookupHandler(), 1,
                              maxStageSize);
@@ -873,7 +876,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
                      new ClientLockStatisticsHandler(lockStatsManager), 1, 1);
 
     Stage clusterMetaDataStage = stageManager.createStage(ServerConfigurationContext.CLUSTER_METADATA_STAGE,
-                                                          new ClusterMetaDataHandler(), 1, maxStageSize);
+                                                          new ServerClusterMetaDataHandler(), 1, maxStageSize);
 
     initClassMappings();
     initRouteMessages(processTx, rootRequest, requestLock, objectRequestStage, oidRequest, transactionAck,
@@ -987,10 +990,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     }
   }
 
-  protected void initRouteMessages(Stage processTx, Stage rootRequest, Stage requestLock, Stage objectRequestStage,
-                                   Stage oidRequest, Stage transactionAck, Stage clientHandshake,
-                                   final Stage txnLwmStage, Stage jmxEventsStage, final Stage jmxRemoteTunnelStage,
-                                   final Stage clientLockStatisticsRespondStage, Stage clusterMetaDataStage) {
+  protected void initRouteMessages(final Stage processTx, final Stage rootRequest, final Stage requestLock, final Stage objectRequestStage,
+                                   final Stage oidRequest, final Stage transactionAck, final Stage clientHandshake,
+                                   final Stage txnLwmStage, final Stage jmxEventsStage, final Stage jmxRemoteTunnelStage,
+                                   final Stage clientLockStatisticsRespondStage, final Stage clusterMetaDataStage) {
     Sink hydrateSink = this.hydrateStage.getSink();
     this.l1Listener.routeMessageType(TCMessageType.COMMIT_TRANSACTION_MESSAGE, processTx.getSink(), hydrateSink);
     this.l1Listener.routeMessageType(TCMessageType.LOCK_REQUEST_MESSAGE, requestLock.getSink(), hydrateSink);
@@ -1013,6 +1016,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     this.l1Listener.routeMessageType(TCMessageType.NODES_WITH_OBJECTS_MESSAGE, clusterMetaDataStage.getSink(),
                                      hydrateSink);
     this.l1Listener.routeMessageType(TCMessageType.KEYS_FOR_ORPHANED_VALUES_MESSAGE, clusterMetaDataStage.getSink(),
+                                     hydrateSink);
+    this.l1Listener.routeMessageType(TCMessageType.NODE_META_DATA_MESSAGE, clusterMetaDataStage.getSink(),
                                      hydrateSink);
 
   }
@@ -1056,14 +1061,17 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
                                     KeysForOrphanedValuesMessageImpl.class);
     this.l1Listener.addClassMapping(TCMessageType.KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE,
                                     KeysForOrphanedValuesResponseMessageImpl.class);
-
+    this.l1Listener.addClassMapping(TCMessageType.NODE_META_DATA_MESSAGE,
+                                    NodeMetaDataMessageImpl.class);
+    this.l1Listener.addClassMapping(TCMessageType.NODE_META_DATA_RESPONSE_MESSAGE,
+                                    NodeMetaDataResponseMessageImpl.class);
   }
 
   protected TCLogger getLogger() {
     return logger;
   }
 
-  private ServerID makeServerNodeID(NewL2DSOConfig l2DSOConfig) {
+  private ServerID makeServerNodeID(final NewL2DSOConfig l2DSOConfig) {
     String nodeName = new Node(l2DSOConfig.host().getString(), l2DSOConfig.listenPort().getInt()).getServerNodeName();
     ServerID aNodeID = new ServerID(nodeName, UUID.getUUID().toString().getBytes());
     logger.info("Creating server nodeID: " + aNodeID);
@@ -1080,7 +1088,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
   }
 
   // for testing purpose only
-  public void addClassMapping(TCMessageType type, Class msgClass) {
+  public void addClassMapping(final TCMessageType type, final Class msgClass) {
     this.l1Listener.addClassMapping(type, msgClass);
   }
 
@@ -1146,7 +1154,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     return true;
   }
 
-  private static String format(NetworkListener listener) {
+  private static String format(final NetworkListener listener) {
     StringBuilder sb = new StringBuilder(listener.getBindAddress().getHostAddress());
     sb.append(':');
     sb.append(listener.getBindPort());
@@ -1161,7 +1169,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     return true;
   }
 
-  public void startBeanShell(int port) {
+  public void startBeanShell(final int port) {
     try {
       Interpreter i = new Interpreter();
       i.set("dsoServer", this);
@@ -1340,7 +1348,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     return this.gcStatsEventPublisher;
   }
 
-  private void startJMXServer(InetAddress bind, int jmxPort, Sink remoteEventsSink) throws Exception {
+  private void startJMXServer(final InetAddress bind, int jmxPort, final Sink remoteEventsSink) throws Exception {
     if (jmxPort == 0) {
       jmxPort = new PortChooser().chooseRandomPort();
     }
@@ -1374,7 +1382,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     return this.l1ReconnectConfig;
   }
 
-  public void addAllLocksTo(LockInfoByThreadID lockInfo) {
+  public void addAllLocksTo(final LockInfoByThreadID lockInfo) {
     // this feature not implemented for server. DEV-1949
   }
 
@@ -1382,7 +1390,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, P
     return new NullThreadIDMapImpl();
   }
 
-  public void initializeContext(ConfigurationContext contex) {
+  public void initializeContext(final ConfigurationContext contex) {
     // context init here
   }
 }

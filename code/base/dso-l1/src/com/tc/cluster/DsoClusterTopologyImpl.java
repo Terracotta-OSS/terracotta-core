@@ -3,6 +3,7 @@
  */
 package com.tc.cluster;
 
+import com.tc.net.NodeID;
 import com.tc.util.Assert;
 
 import java.util.Collection;
@@ -11,15 +12,21 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class DsoClusterTopologyImpl implements DsoClusterTopology {
-  private final Map<String, DsoNode> nodes = new HashMap<String, DsoNode>();
+  private final transient DsoClusterImpl     cluster;
 
-  public Collection<DsoNode> getNodes() {
+  private final Map<NodeID, DsoNodeInternal> nodes = new HashMap<NodeID, DsoNodeInternal>();
+
+  public DsoClusterTopologyImpl(final DsoClusterImpl cluster) {
+    this.cluster = cluster;
+  }
+
+  public Collection<? extends DsoNode> getNodes() {
     return Collections.unmodifiableCollection(nodes.values());
   }
 
-  DsoNode getDsoNode(final String nodeId) {
+  DsoNodeInternal getDsoNode(final NodeID nodeId) {
     synchronized (this) {
-      DsoNode node = nodes.get(nodeId);
+      DsoNodeInternal node = nodes.get(nodeId);
       if (null == node) {
         node = registerDsoNode(nodeId);
       }
@@ -30,17 +37,17 @@ public class DsoClusterTopologyImpl implements DsoClusterTopology {
     }
   }
 
-  DsoNode getAndRemoveDsoNode(final String nodeId) {
+  DsoNodeInternal getAndRemoveDsoNode(final NodeID nodeId) {
     synchronized (this) {
-      DsoNode node = nodes.remove(nodeId);
+      DsoNodeInternal node = nodes.remove(nodeId);
       // Assert.assertNotNull(node);
       return node;
     }
   }
 
-  DsoNode registerDsoNode(final String nodeId) {
+  DsoNodeInternal registerDsoNode(final NodeID nodeId) {
     synchronized (this) {
-      final DsoNode node = new DsoNodeImpl(nodeId);
+      final DsoNodeInternal node = new DsoNodeImpl(cluster, nodeId);
       nodes.put(nodeId, node);
       return node;
     }

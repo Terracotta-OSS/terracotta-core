@@ -7,7 +7,6 @@ package com.tc.object.msg;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.NodeID;
-import com.tc.net.groups.NodeIDSerializer;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -27,25 +26,27 @@ public class AcknowledgeTransactionMessageImpl extends DSOMessageBase implements
   private TransactionID     requestID;
   private NodeID            requesterID;
 
-  public AcknowledgeTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
-                                           MessageChannel channel, TCMessageType type) {
+  public AcknowledgeTransactionMessageImpl(final SessionID sessionID, final MessageMonitor monitor, final TCByteBufferOutputStream out,
+                                           final MessageChannel channel, final TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
 
-  public AcknowledgeTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel,
-                                           TCMessageHeader header, TCByteBuffer[] data) {
+  public AcknowledgeTransactionMessageImpl(final SessionID sessionID, final MessageMonitor monitor, final MessageChannel channel,
+                                           final TCMessageHeader header, final TCByteBuffer[] data) {
     super(sessionID, monitor, channel, header, data);
   }
 
+  @Override
   protected void dehydrateValues() {
     putNVPair(REQUEST_ID, requestID.toLong());
-    putNVPair(REQUESTER_ID, new NodeIDSerializer(requesterID));
+    putNVPair(REQUESTER_ID, requesterID);
   }
 
-  protected boolean hydrateValue(byte name) throws IOException {
+  @Override
+  protected boolean hydrateValue(final byte name) throws IOException {
     switch (name) {
       case REQUESTER_ID:
-        requesterID = ((NodeIDSerializer) getObject(new NodeIDSerializer())).getNodeID();
+        requesterID = getNodeIDValue();
         return true;
       case REQUEST_ID:
         requestID = new TransactionID(getLongValue());
@@ -55,7 +56,7 @@ public class AcknowledgeTransactionMessageImpl extends DSOMessageBase implements
     }
   }
 
-  public void initialize(NodeID nid, TransactionID txID) {
+  public void initialize(final NodeID nid, final TransactionID txID) {
     this.requesterID = nid;
     this.requestID = txID;
   }

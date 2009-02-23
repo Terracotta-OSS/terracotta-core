@@ -26,10 +26,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class DsoClusterImpl implements DsoClusterInternal {
 
-  private volatile DsoNode               currentNode;
+  private volatile DsoNodeInternal       currentNode;
 
-  private final DsoClusterTopologyImpl   topology             = new DsoClusterTopologyImpl();
-
+  private final DsoClusterTopologyImpl   topology             = new DsoClusterTopologyImpl(this);
   private final List<DsoClusterListener> listeners            = new CopyOnWriteArrayList<DsoClusterListener>();
 
   private ClusterMetaDataManager         clusterMetaDataManager;
@@ -53,7 +52,7 @@ public class DsoClusterImpl implements DsoClusterInternal {
     }
 
     if (fireThisNodeJoined) {
-      fireNodeJoined(currentNode.getId());
+      fireNodeJoined(currentNode.getNodeID());
       fireOperationsEnabled();
     }
   }
@@ -84,7 +83,7 @@ public class DsoClusterImpl implements DsoClusterInternal {
 
         final Set<DsoNode> result = new HashSet<DsoNode>();
         for (NodeID nodeID : response) {
-          result.add(topology.getDsoNode(nodeID.toString()));
+          result.add(topology.getDsoNode(nodeID));
         }
 
         return result;
@@ -139,7 +138,7 @@ public class DsoClusterImpl implements DsoClusterInternal {
 
       final Set<DsoNode> dsoNodes = new HashSet<DsoNode>();
       for (NodeID nodeID : entry.getValue()) {
-        dsoNodes.add(topology.getDsoNode(nodeID.toString()));
+        dsoNodes.add(topology.getDsoNode(nodeID));
       }
       result.put(object, dsoNodes);
     }
@@ -204,6 +203,12 @@ public class DsoClusterImpl implements DsoClusterInternal {
     throw new UnclusteredObjectException(map);
   }
 
+  public void retrieveMetaDataForDsoNode(final DsoNodeInternal node) {
+    Assert.assertNotNull(clusterMetaDataManager);
+
+    clusterMetaDataManager.retrieveMetaDataForDsoNode(node);
+  }
+
   public synchronized boolean isNodeJoined() {
     return isNodeJoined;
   }
@@ -212,7 +217,7 @@ public class DsoClusterImpl implements DsoClusterInternal {
     return areOperationsEnabled;
   }
 
-  public void fireThisNodeJoined(final String nodeId, final String[] clusterMembers) {
+  public void fireThisNodeJoined(final NodeID nodeId, final NodeID[] clusterMembers) {
     synchronized (this) {
       // we might get multiple calls in a row, ignore all but the first in a row.
       if (currentNode != null) return;
@@ -220,7 +225,7 @@ public class DsoClusterImpl implements DsoClusterInternal {
       currentNode = topology.registerDsoNode(nodeId);
       isNodeJoined = true;
 
-      for (String otherNodeId : clusterMembers) {
+      for (NodeID otherNodeId : clusterMembers) {
         topology.registerDsoNode(otherNodeId);
       }
     }
@@ -237,17 +242,17 @@ public class DsoClusterImpl implements DsoClusterInternal {
       isNodeJoined = false;
     }
 
-    fireNodeLeft(currentNode.getId());
+    fireNodeLeft(currentNode.getNodeID());
   }
 
-  public void fireNodeJoined(final String nodeId) {
+  public void fireNodeJoined(final NodeID nodeId) {
     final DsoClusterEvent event = new DsoClusterEventImpl(topology.getDsoNode(nodeId));
     for (DsoClusterListener listener : listeners) {
       listener.nodeJoined(event);
     }
   }
 
-  public void fireNodeLeft(final String nodeId) {
+  public void fireNodeLeft(final NodeID nodeId) {
     final DsoClusterEvent event = new DsoClusterEventImpl(topology.getAndRemoveDsoNode(nodeId));
     for (DsoClusterListener listener : listeners) {
       listener.nodeLeft(event);

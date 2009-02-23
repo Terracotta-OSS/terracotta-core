@@ -7,12 +7,17 @@ package com.tc.objectserver.clustermetadata;
 import com.tc.io.serializer.TCObjectOutputStream;
 import com.tc.logging.TCLogger;
 import com.tc.net.NodeID;
+import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ObjectID;
 import com.tc.object.msg.KeysForOrphanedValuesMessage;
 import com.tc.object.msg.KeysForOrphanedValuesResponseMessage;
+import com.tc.object.msg.NodeMetaDataMessage;
+import com.tc.object.msg.NodeMetaDataResponseMessage;
 import com.tc.object.msg.NodesWithObjectsMessage;
 import com.tc.object.msg.NodesWithObjectsResponseMessage;
+import com.tc.object.net.DSOChannelManager;
+import com.tc.object.net.NoSuchChannelException;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
@@ -20,6 +25,7 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.managedobject.PartialMapManagedObjectState;
 
 import java.io.ByteArrayOutputStream;
+import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -30,12 +36,14 @@ public class ServerClusterMetaDataManagerImpl implements ServerClusterMetaDataMa
   private final TCLogger           logger;
   private final ClientStateManager clientStateManager;
   private final ObjectManager      objectManager;
+  private final DSOChannelManager  channelManager;
 
   public ServerClusterMetaDataManagerImpl(final TCLogger logger, final ClientStateManager clientStateManager,
-                                          final ObjectManager objectManager) {
+                                          final ObjectManager objectManager, final DSOChannelManager channelManager) {
     this.logger = logger;
     this.clientStateManager = clientStateManager;
     this.objectManager = objectManager;
+    this.channelManager = channelManager;
   }
 
   public void handleMessage(final NodesWithObjectsMessage message) {
@@ -71,12 +79,12 @@ public class ServerClusterMetaDataManagerImpl implements ServerClusterMetaDataMa
         final Set<NodeID> connectedClients = clientStateManager.getConnectedClientIDs();
 
         Map realMap = ((PartialMapManagedObjectState) state).getMap();
-        for (Map.Entry entry : (Set<Map.Entry>)realMap.entrySet()) {
+        for (Map.Entry entry : (Set<Map.Entry>) realMap.entrySet()) {
           if (entry.getValue() instanceof ObjectID) {
             boolean isOrphan = true;
 
             for (NodeID nodeID : connectedClients) {
-              if (clientStateManager.hasReference(nodeID, (ObjectID)entry.getValue())) {
+              if (clientStateManager.hasReference(nodeID, (ObjectID) entry.getValue())) {
                 isOrphan = false;
                 break;
               }
@@ -89,7 +97,7 @@ public class ServerClusterMetaDataManagerImpl implements ServerClusterMetaDataMa
         }
       } else {
         logger.error("Received keys for orphaned values message for object '" + message.getMapObjectID()
-                    + "' whose managed state isn't a partial map, returning an empty set.");
+                     + "' whose managed state isn't a partial map, returning an empty set.");
       }
     } finally {
       objectManager.releaseReadOnly(managedMap);
@@ -106,6 +114,29 @@ public class ServerClusterMetaDataManagerImpl implements ServerClusterMetaDataMa
 
     // create and send the response message
     responseMessage.initialize(message.getThreadID(), bytesOut.toByteArray());
+    responseMessage.send();
+  }
+
+  public void handleMessage(final NodeMetaDataMessage message) {
+    NodeMetaDataResponseMessage responseMessage = (NodeMetaDataResponseMessage) message.getChannel()
+        .createMessage(TCMessageType.NODE_META_DATA_RESPONSE_MESSAGE);
+
+    String ip;
+    String hostname;
+
+    try {
+      final MessageChannel channel = channelManager.getActiveChannel(message.getNodeID());
+      final InetAddress address = channel.getRemoteAddress().getAddress();
+      ip = address.getHostAddress();
+      hostname = address.getHostName();
+    } catch (NoSuchChannelException e) {
+      logger.error("Couldn't find channel for node  '" + message.getNodeID()
+                   + "' sending empty meta data as a response");
+      ip = null;
+      hostname = null;
+    }
+
+    responseMessage.initialize(message.getThreadID(), ip, hostname);
     responseMessage.send();
   }
 }

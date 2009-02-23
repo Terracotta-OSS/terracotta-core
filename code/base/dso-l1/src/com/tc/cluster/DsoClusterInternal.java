@@ -3,15 +3,17 @@
  */
 package com.tc.cluster;
 
+import com.tc.net.NodeID;
+
 public interface DsoClusterInternal extends DsoCluster {
 
-  public void fireThisNodeJoined(String nodeId, String[] clusterMembers);
+  public void fireThisNodeJoined(NodeID nodeId, NodeID[] clusterMembers);
 
   public void fireThisNodeLeft();
 
-  public void fireNodeJoined(String nodeId);
+  public void fireNodeJoined(NodeID nodeId);
 
-  public void fireNodeLeft(String nodeId);
+  public void fireNodeLeft(NodeID nodeId);
 
   public void fireOperationsEnabled();
 
