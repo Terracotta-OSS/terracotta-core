@@ -8,16 +8,20 @@ import org.apache.commons.io.IOUtils;
 import org.apache.tools.ant.filters.StringInputStream;
 
 import com.tc.config.schema.builder.InstrumentedClassConfigBuilder;
+import com.tc.config.schema.builder.LockConfigBuilder;
+import com.tc.config.schema.builder.RootConfigBuilder;
 import com.tc.config.schema.test.InstrumentedClassConfigBuilderImpl;
 import com.tc.config.schema.test.L2ConfigBuilder;
+import com.tc.config.schema.test.LockConfigBuilderImpl;
+import com.tc.config.schema.test.RootConfigBuilderImpl;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
-import com.tctest.runner.AbstractTransparentApp;
 import com.tctest.runner.TransparentAppConfig;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.Date;
 
 public class ClusterEventsTest extends TransparentTestBase {
 
@@ -25,6 +29,10 @@ public class ClusterEventsTest extends TransparentTestBase {
   private int              port;
   private File             configFile;
   private int              adminPort;
+
+  public ClusterEventsTest() {
+    disableAllUntil(new Date(Long.MAX_VALUE));
+  }
 
   @Override
   public void doSetUp(final TransparentTestIface t) throws Exception {
@@ -65,9 +73,6 @@ public class ClusterEventsTest extends TransparentTestBase {
   }
 
   public static TerracottaConfigBuilder createConfig(final int port, final int adminPort) {
-    String testClassName = ClusterEventsTestApp.class.getName();
-    String testClassSuperName = AbstractTransparentApp.class.getName();
-
     TerracottaConfigBuilder out = new TerracottaConfigBuilder();
 
     out.getServers().getL2s()[0].setDSOPort(port);
@@ -75,12 +80,41 @@ public class ClusterEventsTest extends TransparentTestBase {
     out.getServers().getL2s()[0].setPersistenceMode(L2ConfigBuilder.PERSISTENCE_MODE_PERMANENT_STORE);
 
     InstrumentedClassConfigBuilder instrumented1 = new InstrumentedClassConfigBuilderImpl();
-    instrumented1.setClassExpression(testClassName + "*");
+    instrumented1.setClassExpression(ClusterEventsTestApp.class.getName());
 
+    String testEventsL1Client = "com.tctest.ClusterEventsL1Client";
     InstrumentedClassConfigBuilder instrumented2 = new InstrumentedClassConfigBuilderImpl();
-    instrumented2.setClassExpression(testClassSuperName + "*");
+    instrumented2.setClassExpression(testEventsL1Client);
 
-    out.getApplication().getDSO().setInstrumentedClasses(new InstrumentedClassConfigBuilder[] { instrumented1, instrumented2 });
+    String testEventsListenerClass = "com.tctest.ClusterEventsTestListener";
+    InstrumentedClassConfigBuilder instrumented3 = new InstrumentedClassConfigBuilderImpl();
+    instrumented3.setClassExpression(testEventsListenerClass);
+
+    String testStateClass = "com.tctest.ClusterEventsTestState";
+    InstrumentedClassConfigBuilder instrumented4 = new InstrumentedClassConfigBuilderImpl();
+    instrumented4.setClassExpression(testStateClass);
+
+    out.getApplication().getDSO().setInstrumentedClasses(new InstrumentedClassConfigBuilder[] { instrumented1, instrumented2, instrumented3, instrumented4 });
+
+    RootConfigBuilder root = new RootConfigBuilderImpl();
+    root.setFieldName(testStateClass+".listeners");
+    root.setRootName("listeners");
+
+    out.getApplication().getDSO().setRoots(new RootConfigBuilder[] { root });
+
+    LockConfigBuilder lock1 =  new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
+    lock1.setLockLevel(LockConfigBuilder.LEVEL_WRITE);
+    lock1.setMethodExpression("* " + ClusterEventsTestApp.class.getName() + "*.*(..)");
+
+    LockConfigBuilder lock2 =  new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
+    lock2.setLockLevel(LockConfigBuilder.LEVEL_WRITE);
+    lock2.setMethodExpression("* " + testEventsListenerClass + "*.*(..)");
+
+    LockConfigBuilder lock3 =  new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
+    lock3.setLockLevel(LockConfigBuilder.LEVEL_WRITE);
+    lock3.setMethodExpression("* " + testStateClass + "*.*(..)");
+
+    out.getApplication().getDSO().setLocks(new LockConfigBuilder[] { lock1, lock2, lock3 } );
 
     return out;
   }
