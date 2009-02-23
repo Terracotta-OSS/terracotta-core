@@ -8,6 +8,7 @@ import com.tc.async.api.EventContext;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.net.groups.AbstractGroupMessage;
+import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 
@@ -15,45 +16,52 @@ import java.io.IOException;
 import java.util.SortedSet;
 
 public class GCResultMessage extends AbstractGroupMessage implements EventContext {
-  public static final int GC_RESULT = 0;
-  private ObjectIDSet     gcedOids;
-  private int             gcIterationCount;
+  public static final int       GC_RESULT = 0;
+  private ObjectIDSet           gcedOids;
+  private GarbageCollectionInfo gcInfo;
 
   // To make serialization happy
   public GCResultMessage() {
     super(-1);
   }
 
-  public GCResultMessage(int type, int gcIterationCount, ObjectIDSet deleted) {
+  public GCResultMessage(int type, GarbageCollectionInfo gcInfo, ObjectIDSet deleted) {
     super(type);
-    this.gcIterationCount = gcIterationCount;
+    this.gcInfo = gcInfo;
     this.gcedOids = deleted;
   }
 
+  public int getGCIterationCount() {
+    return (int)gcInfo.getGarbageCollectionID().toLong();
+  }
+  
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
     Assert.assertEquals(GC_RESULT, getType());
-    gcIterationCount = in.readInt();
-    gcedOids = new ObjectIDSet();
-    gcedOids.deserializeFrom(in);
+    this.gcInfo = new GarbageCollectionInfo();
+    this.gcInfo.deserializeFrom(in);
+    this.gcedOids = new ObjectIDSet();
+    this.gcedOids.deserializeFrom(in);
   }
 
   protected void basicSerializeTo(TCByteBufferOutput out) {
     Assert.assertEquals(GC_RESULT, getType());
-    out.writeInt(gcIterationCount);
-    gcedOids.serializeTo(out);
+    this.gcInfo.serializeTo(out);
+    this.gcedOids.serializeTo(out);
   }
 
   public SortedSet getGCedObjectIDs() {
     return gcedOids;
   }
 
-  public int getGCIterationCount() {
-    return gcIterationCount;
+  public GarbageCollectionInfo getGCInfo() {
+    return gcInfo;
   }
 
   public String toString() {
-    return "GCResultMessage@" + System.identityHashCode(this) + " : GC Iteration Count = " + gcIterationCount
+    return "GCResultMessage@" + System.identityHashCode(this) + " : GC Info = " + gcInfo
            + " Result size = " + (gcedOids == null ? "null" : "" + gcedOids.size());
   }
+
+ 
 
 }

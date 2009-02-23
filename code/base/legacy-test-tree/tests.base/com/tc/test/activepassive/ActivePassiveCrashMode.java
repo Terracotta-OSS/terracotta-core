@@ -14,6 +14,6 @@ public class ActivePassiveCrashMode extends MultipleServersCrashMode {
 
   public void checkMode() {
     if (!mode.equals(CRASH_AFTER_MUTATE) && !mode.equals(CONTINUOUS_ACTIVE_CRASH) && !mode.equals(RANDOM_SERVER_CRASH)
-        && !mode.equals(AP_CUSTOMIZED_CRASH)) { throw new AssertionError("Unrecognized crash mode [" + mode + "]"); }
+        && !mode.equals(AP_CUSTOMIZED_CRASH)  && !mode.equals(NO_CRASH)) { throw new AssertionError("Unrecognized crash mode [" + mode + "]"); }
   }
 }

@@ -14,13 +14,6 @@ public class GCStatsImpl implements GCStats, Serializable {
   private static final long             serialVersionUID      = -4177683133067698672L;
   private static final SimpleDateFormat printFormat           = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss z");
 
-  private static final State            GC_START              = new State("START");
-  private static final State            GC_MARK               = new State("MARK");
-  private static final State            GC_PAUSE              = new State("PAUSE");
-  private static final State            GC_MARK_COMPLETE      = new State("MARK_COMPLETE");
-  private static final State            GC_DELETE             = new State("DELETE");
-  private static final State            GC_COMPLETE           = new State("COMPLETE");
-
   private static final long             NOT_INITIALIZED       = -1L;
   private static final String           YOUNG_GENERATION      = "Young";
   private static final String           FULL_GENERATION       = "Full";
@@ -33,7 +26,7 @@ public class GCStatsImpl implements GCStats, Serializable {
   private long                          markStageTime         = NOT_INITIALIZED;
   private long                          pausedStageTime       = NOT_INITIALIZED;
   private long                          deleteStageTime       = NOT_INITIALIZED;
-  private State                         state                 = GC_START;
+  private State                         state                 = GCStats.GC_START;
   private final boolean                 fullGC;
 
   public GCStatsImpl(int number, boolean fullGC, long startTime) {
@@ -64,6 +57,10 @@ public class GCStatsImpl implements GCStats, Serializable {
 
   public synchronized void setDeleteState() {
     this.state = GC_DELETE;
+  }
+
+  public synchronized void setCanceledState() {
+    this.state = GC_CANCELED;
   }
 
   public synchronized long getStartTime() {

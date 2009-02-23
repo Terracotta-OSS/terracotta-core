@@ -46,11 +46,17 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
   protected Set                            lookedUp            = null;
   protected Set                            released            = null;
   protected PersistenceTransactionProvider transactionProvider = null;
+  protected GarbageCollectionInfoPublisher gcPublisher;
+  
   
   public GCTestObjectManager(Set lookedUp, Set released, PersistenceTransactionProvider transactionProvider) {
     this.lookedUp = lookedUp;
     this.released = released;
     this.transactionProvider = transactionProvider;
+  }
+  
+  public void setPublisher(GarbageCollectionInfoPublisher gcPublisher) {
+    this.gcPublisher = gcPublisher;
   }
 
   public ManagedObject getObjectByID(ObjectID id) {
@@ -174,12 +180,11 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
     return mo;
   }
 
+  //TODO: just garbage collector complete interface.
   public void notifyGCComplete(GCResultContext resultContext) {
 
     
     GarbageCollectionInfo gcInfo = resultContext.getGCInfo();
-    GarbageCollectionInfoPublisher gcPublisher = resultContext.getGCPublisher();
-    
      
     gcPublisher.fireGCDeleteEvent(gcInfo);
     long start = System.currentTimeMillis();

@@ -46,6 +46,7 @@ import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
+import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.UUID;
 
@@ -174,7 +175,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
     for (long i = 1; i <= 100; ++i) {
       oidSet.add(new ObjectID(i));
     }
-    GroupMessage sendMesg = new GCResultMessage(GCResultMessage.GC_RESULT, 1, oidSet);
+    GroupMessage sendMesg = new GCResultMessage(GCResultMessage.GC_RESULT,  new GarbageCollectionInfo(), oidSet);
     sendGroupMessage(sendMesg);
   }
 

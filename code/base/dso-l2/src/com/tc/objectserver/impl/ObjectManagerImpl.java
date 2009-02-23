@@ -26,7 +26,6 @@ import com.tc.objectserver.context.ManagedObjectFlushingContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.dgc.api.GarbageCollector;
-import com.tc.objectserver.dgc.impl.GarbageCollectorThread;
 import com.tc.objectserver.dgc.impl.NullGarbageCollector;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
@@ -48,7 +47,6 @@ import com.tc.util.Assert;
 import com.tc.util.Counter;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
-import com.tc.util.concurrent.StoppableThread;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -92,9 +90,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private volatile boolean                            inShutdown               = false;
 
-  private ClientStateManager                          stateManager;
+  private final ClientStateManager                    stateManager;
   private final ObjectManagerConfig                   config;
-  private final ThreadGroup                           gcThreadGroup;
   private ObjectManagerStatsListener                  stats                    = new NullObjectManagerStatsListener();
   private final PersistenceTransactionProvider        persistenceTransactionProvider;
   private final Sink                                  faultSink;
@@ -104,15 +101,13 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private final ObjectStatsRecorder                   objectStatsRecorder;
 
-  public ObjectManagerImpl(ObjectManagerConfig config, ThreadGroup gcThreadGroup, ClientStateManager stateManager,
-                           ManagedObjectStore objectStore, EvictionPolicy cache,
-                           PersistenceTransactionProvider persistenceTransactionProvider, Sink faultSink,
-                           Sink flushSink, ObjectStatsRecorder objectStatsRecorder) {
+  public ObjectManagerImpl(ObjectManagerConfig config, ClientStateManager stateManager, ManagedObjectStore objectStore,
+                           EvictionPolicy cache, PersistenceTransactionProvider persistenceTransactionProvider,
+                           Sink faultSink, Sink flushSink, ObjectStatsRecorder objectStatsRecorder) {
     this.faultSink = faultSink;
     this.flushSink = flushSink;
     Assert.assertNotNull(objectStore);
     this.config = config;
-    this.gcThreadGroup = gcThreadGroup;
     this.stateManager = stateManager;
     this.objectStore = objectStore;
     this.evictionPolicy = cache;
@@ -130,17 +125,17 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   public void start() {
-    collector.start();
+    this.collector.start();
   }
 
   public synchronized void stop() {
     this.inShutdown = true;
 
-    collector.stop();
+    this.collector.stop();
 
     // flush the cache to stable persistence.
     Set<ManagedObject> toFlush = new HashSet<ManagedObject>();
-    for (final ManagedObjectReference ref : references.values()) {
+    for (final ManagedObjectReference ref : this.references.values()) {
       ManagedObject obj = ref.getObject();
       if (!obj.isNew()) toFlush.add(obj);
     }
@@ -150,14 +145,14 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.println(getClass().getName());
-    out.indent().print("collector: ").visit(collector).println();
-    out.indent().print("references: ").visit(references).println();
+    out.indent().print("collector: ").visit(this.collector).println();
+    out.indent().print("references: ").visit(this.references).println();
 
-    out.indent().println("checkedOutCount: " + checkedOutCount);
-    out.indent().print("pending: ").visit(pending).println();
+    out.indent().println("checkedOutCount: " + this.checkedOutCount);
+    out.indent().print("pending: ").visit(this.pending).println();
 
-    out.indent().print("objectStore: ").duplicateAndIndent().visit(objectStore).println();
-    out.indent().print("stateManager: ").duplicateAndIndent().visit(stateManager).println();
+    out.indent().print("objectStore: ").duplicateAndIndent().visit(this.objectStore).println();
+    out.indent().print("stateManager: ").duplicateAndIndent().visit(this.stateManager).println();
     try {
 
       StringBuffer rootBuff = new StringBuffer();
@@ -176,7 +171,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   public ObjectID lookupRootID(String name) {
     syncAssertNotInShutdown();
-    return objectStore.getRootID(name);
+    return this.objectStore.getRootID(name);
   }
 
   public boolean lookupObjectsAndSubObjectsFor(NodeID nodeID, ObjectManagerResultsContext responseContext,
@@ -194,7 +189,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
                                                                 int maxReachableObjects) {
     syncAssertNotInShutdown();
 
-    if (collector.isPausingOrPaused()) {
+    if (this.collector.isPausingOrPaused()) {
       makePending(nodeID, new ObjectManagerLookupContext(responseContext, false), maxReachableObjects);
       return false;
     }
@@ -203,12 +198,12 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   public Iterator getRoots() {
     syncAssertNotInShutdown();
-    return objectStore.getRoots().iterator();
+    return this.objectStore.getRoots().iterator();
   }
 
   public Iterator getRootNames() {
     syncAssertNotInShutdown();
-    return objectStore.getRootNames().iterator();
+    return this.objectStore.getRootNames().iterator();
   }
 
   /**
@@ -273,27 +268,27 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   private synchronized boolean isObjectInCache(ObjectID id) {
-    return references.containsKey(id);
+    return this.references.containsKey(id);
   }
 
   private void markReferenced(ManagedObjectReference reference) {
     if (reference.isReferenced()) { throw new AssertionError("Attempt to mark an already referenced object: "
                                                              + reference); }
     reference.markReference();
-    checkedOutCount++;
+    this.checkedOutCount++;
   }
 
   private void unmarkReferenced(ManagedObjectReference reference) {
     if (!reference.isReferenced()) { throw new AssertionError("Attempt to unmark an unreferenced object: " + reference); }
     reference.unmarkReference();
-    checkedOutCount--;
+    this.checkedOutCount--;
   }
 
   /**
    * Retrieves materialized references.
    */
   private ManagedObjectReference getReference(ObjectID id) {
-    return references.get(id);
+    return this.references.get(id);
   }
 
   /**
@@ -309,22 +304,22 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       // Check to see if the retrieve was complete and the Object is missing
       FaultingManagedObjectReference fmr = (FaultingManagedObjectReference) rv;
       if (!fmr.isFaultingInProgress()) {
-        references.remove(id);
+        this.references.remove(id);
         logger.warn("Request for non-existent object : " + id + " context = " + context);
         context.missingObject(id);
         return null;
       }
-      if (context.updateStats()) stats.cacheMiss();
+      if (context.updateStats()) this.stats.cacheMiss();
     } else {
-      if (context.updateStats()) stats.cacheHit();
+      if (context.updateStats()) this.stats.cacheHit();
       if (!context.removeOnRelease()) {
         if (rv.isRemoveOnRelease()) {
           // This Object is faulted in by GC or Management interface with removeOnRelease = true, but before they got a
           // chance to grab it, a regular request for object is received. Take corrective action.
           rv.setRemoveOnRelease(false);
-          evictionPolicy.add(rv);
+          this.evictionPolicy.add(rv);
         } else {
-          evictionPolicy.markReferenced(rv);
+          this.evictionPolicy.markReferenced(rv);
         }
       }
     }
@@ -334,18 +329,18 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private ManagedObjectReference initiateFaultingFor(ObjectID id, boolean removeOnRelease) {
     // Request Faulting in a different stage and give back a "Referenced" proxy
     ManagedObjectFaultingContext mofc = new ManagedObjectFaultingContext(id, removeOnRelease);
-    faultSink.add(mofc);
+    this.faultSink.add(mofc);
 
     // don't account for a cache "miss" unless this was a real request
     // originating from a client
-    stats.cacheMiss();
+    this.stats.cacheMiss();
     return addNewReference(new FaultingManagedObjectReference(id));
   }
 
   public synchronized void addFaultedObject(ObjectID oid, ManagedObject mo, boolean removeOnRelease) {
     if (mo == null) {
       FaultingManagedObjectReference fmor;
-      ManagedObjectReference mor = references.get(oid);
+      ManagedObjectReference mor = this.references.get(oid);
       if (mor == null || !(mor instanceof FaultingManagedObjectReference) || !oid.equals(mor.getObjectID())) {
         // Format
         throw new AssertionError("ManagedObjectReference is not what was expected : " + mor + " oid : " + oid);
@@ -354,7 +349,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       fmor.faultingFailed();
     } else {
       Assert.assertEquals(oid, mo.getID());
-      ManagedObjectReference mor = references.remove(oid);
+      ManagedObjectReference mor = this.references.remove(oid);
       if (mor == null || !(mor instanceof FaultingManagedObjectReference) || !oid.equals(mor.getObjectID())) {
         // Format
         throw new AssertionError("ManagedObjectReference is not what was expected : " + mor + " oid : " + oid);
@@ -375,10 +370,10 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       ManagedObjectReference rv = getReference(id);
       if (rv == null) {
         // This object is not in the cache, initiate faulting for the object
-        if (++preFetchedCount % 1000 == 0) logger.info("Prefetched " + preFetchedCount + " objects");
+        if (++this.preFetchedCount % 1000 == 0) logger.info("Prefetched " + this.preFetchedCount + " objects");
         initiateFaultingFor(id, false);
       } else {
-        stats.cacheHit();
+        this.stats.cacheHit();
       }
     }
   }
@@ -391,20 +386,20 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   private ManagedObjectReference addNewReference(ManagedObjectReference newReference) {
-    Object oldRef = references.put(newReference.getObjectID(), newReference);
+    Object oldRef = this.references.put(newReference.getObjectID(), newReference);
     if (oldRef != null) { throw new AssertionError("Object was not null. Reference already present : old = " + oldRef
                                                    + " : new = " + newReference); }
     Assert.assertTrue(newReference.getNext() == null && newReference.getPrevious() == null);
 
     if (!newReference.isRemoveOnRelease()) {
-      evictionPolicy.add(newReference);
+      this.evictionPolicy.add(newReference);
     }
     return newReference;
   }
 
   private synchronized void reapCache(Collection removalCandidates, Collection<ManagedObject> toFlush,
                                       Collection<ManagedObjectReference> removedObjects) {
-    while (collector.isPausingOrPaused()) {
+    while (this.collector.isPausingOrPaused()) {
       try {
         this.wait();
       } catch (InterruptedException e) {
@@ -416,15 +411,15 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       // It is possible that before the cache evictor has a chance to mark the reference, the GC could come and remove
       // the reference, hence we check in references map again
       if (removalCandidate != null && !removalCandidate.isReferenced() && !removalCandidate.isNew()
-          && references.containsKey(removalCandidate.getObjectID())) {
-        evictionPolicy.remove(removalCandidate);
+          && this.references.containsKey(removalCandidate.getObjectID())) {
+        this.evictionPolicy.remove(removalCandidate);
         if (removalCandidate.getObject().isDirty()) {
-          Assert.assertFalse(config.paranoid());
+          Assert.assertFalse(this.config.paranoid());
           markReferenced(removalCandidate);
           toFlush.add(removalCandidate.getObject());
         } else {
           // paranoid mode or the object is not dirty - just remove from reference
-          removedObjects.add(references.remove(removalCandidate.getObjectID()));
+          removedObjects.add(this.references.remove(removalCandidate.getObjectID()));
         }
       }
     }
@@ -433,16 +428,16 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   private void notifyCollectorEvictedObjects(Collection evicted) {
-    collector.notifyObjectsEvicted(evicted);
+    this.collector.notifyObjectsEvicted(evicted);
   }
 
   private void evicted(Collection managedObjects) {
     synchronized (this) {
-      checkedOutCount -= managedObjects.size();
+      this.checkedOutCount -= managedObjects.size();
       for (Iterator i = managedObjects.iterator(); i.hasNext();) {
         ManagedObject mo = (ManagedObject) i.next();
         ObjectID oid = mo.getID();
-        Object o = references.remove(oid);
+        Object o = this.references.remove(oid);
         if (o == null) {
           logger.warn("Object ID : " + mo.getID()
                       + " was mapped to null but should have been mapped to a reference of  " + mo);
@@ -512,7 +507,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   private ObjectIDSet addReachableObjectsIfNecessary(NodeID nodeID, int maxReachableObjects,
-                                                       Set<ManagedObjectReference> objects) {
+                                                     Set<ManagedObjectReference> objects) {
     if (maxReachableObjects <= 0) { return TCCollections.EMPTY_OBJECT_ID_SET; }
     ManagedObjectTraverser traverser = new ManagedObjectTraverser(maxReachableObjects);
     Set<ManagedObjectReference> lookedUpObjects = objects;
@@ -521,7 +516,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       lookedUpObjects = new HashSet<ManagedObjectReference>();
       Set<ObjectID> lookupObjectIDs = traverser.getObjectsToLookup();
       if (lookupObjectIDs.isEmpty()) break;
-      stateManager.removeReferencedFrom(nodeID, lookupObjectIDs);
+      this.stateManager.removeReferencedFrom(nodeID, lookupObjectIDs);
       for (final ObjectID id : lookupObjectIDs) {
         ManagedObjectReference newRef = getReference(id);
         // Note : Objects are looked up only if it is in the memory and not referenced
@@ -536,9 +531,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   public void releaseReadOnly(ManagedObject object) {
-    if (config.paranoid() && !object.isNew() && object.isDirty()) { throw new AssertionError(
-                                                                                             "Object is dirty after a read-only checkout "
-                                                                                                 + object); }
+    if (this.config.paranoid() && !object.isNew() && object.isDirty()) { throw new AssertionError(
+                                                                                                  "Object is dirty after a read-only checkout "
+                                                                                                      + object); }
     synchronized (this) {
       basicReleaseReadOnly(object);
       postRelease();
@@ -546,7 +541,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   public void release(PersistenceTransaction persistenceTransaction, ManagedObject object) {
-    if (config.paranoid()) flushAndCommit(persistenceTransaction, object);
+    if (this.config.paranoid()) flushAndCommit(persistenceTransaction, object);
     synchronized (this) {
       basicRelease(object);
       postRelease();
@@ -556,7 +551,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   public synchronized void releaseAllReadOnly(Collection<ManagedObject> objects) {
     for (final ManagedObject mo : objects) {
-      if (config.paranoid() && !mo.isNew() && mo.isDirty()) {
+      if (this.config.paranoid() && !mo.isNew() && mo.isDirty()) {
         // It is possible to release new just created objects before it has a chance to get applied because of a recall
         // due to a GC. Check out ObjectManagerTest.testRecallNewObjects()
         throw new AssertionError("ObjectManager.releaseAll() called on dirty old objects : " + mo
@@ -578,7 +573,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
    * not for client lookups.
    */
   public void releaseAll(PersistenceTransaction persistenceTransaction, Collection<ManagedObject> managedObjects) {
-    if (config.paranoid()) flushAllAndCommit(persistenceTransaction, managedObjects);
+    if (this.config.paranoid()) flushAllAndCommit(persistenceTransaction, managedObjects);
     synchronized (this) {
       for (final ManagedObject managedObject : managedObjects) {
         basicRelease(managedObject);
@@ -589,57 +584,57 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private void removeAllObjectsByID(Set<ObjectID> toDelete) {
     for (final ObjectID id : toDelete) {
-      ManagedObjectReference ref = references.remove(id);
+      ManagedObjectReference ref = this.references.remove(id);
       while (ref != null && ref.isReferenced()) {
         // This is possible if the cache manager is evicting this *unreachable* object or somehow the admin console is
         // looking up this object.
         logger.warn("Reference : " + ref + " was referenced. So waiting to remove !");
         // reconcile
-        references.put(id, ref);
+        this.references.put(id, ref);
         try {
           wait();
         } catch (InterruptedException e) {
           throw new AssertionError(e);
         }
-        ref = references.remove(id);
+        ref = this.references.remove(id);
       }
       if (ref != null) {
         if (ref.isNew()) { throw new AssertionError("GCed Reference is still new : " + ref); }
-        evictionPolicy.remove(ref);
+        this.evictionPolicy.remove(ref);
       }
     }
   }
 
   public synchronized int getCheckedOutCount() {
-    return checkedOutCount;
+    return this.checkedOutCount;
   }
 
   public Set getRootIDs() {
-    return objectStore.getRoots();
+    return this.objectStore.getRoots();
   }
 
   public Map getRootNamesToIDsMap() {
-    return objectStore.getRootNamesToIDsMap();
+    return this.objectStore.getRootNamesToIDsMap();
   }
 
   public ObjectIDSet getAllObjectIDs() {
-    return objectStore.getAllObjectIDs();
+    return this.objectStore.getAllObjectIDs();
   }
 
   public synchronized ObjectIDSet getObjectIDsInCache() {
     ObjectIDSet ids = new ObjectIDSet();
-    ids.addAll(references.keySet());
+    ids.addAll(this.references.keySet());
     return ids;
   }
 
   public int getLiveObjectCount() {
-    return objectStore.getObjectCount();
+    return this.objectStore.getObjectCount();
   }
 
   private void postRelease() {
-    if (collector.isPausingOrPaused()) {
+    if (this.collector.isPausingOrPaused()) {
       checkAndNotifyGC();
-    } else if (pending.size() > 0) {
+    } else if (this.pending.size() > 0) {
       processPendingLookups();
     }
     notifyAll();
@@ -662,14 +657,14 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private void updateNewFlagAndCreateIfNecessary(ManagedObject object) {
     if (object.isNew()) {
-      objectStore.addNewObject(object);
+      this.objectStore.addNewObject(object);
       object.setIsNew(false);
       fireNewObjectinitialized(object.getID());
     }
   }
 
   private void fireNewObjectinitialized(ObjectID id) {
-    collector.notifyNewObjectInitalized(id);
+    this.collector.notifyNewObjectInitalized(id);
   }
 
   private void removeReferenceIfNecessary(ManagedObjectReference mor) {
@@ -678,26 +673,26 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         logger.error(mor + " is DIRTY");
         throw new AssertionError(mor + " is DIRTY");
       }
-      Object removed = references.remove(mor.getObjectID());
+      Object removed = this.references.remove(mor.getObjectID());
       Assert.assertNotNull(removed);
     }
   }
 
   private void checkAndNotifyGC() {
-    if (checkedOutCount == 0) {
-      logger.info("Notifying GC : pending = " + pending.size() + " checkedOutCount = " + checkedOutCount);
-      collector.notifyReadyToGC();
+    if (this.checkedOutCount == 0) {
+      // logger.info("Notifying GC : pending = " + pending.size() + " checkedOutCount = " + checkedOutCount);
+      this.collector.notifyReadyToGC();
     }
   }
 
   public synchronized void waitUntilReadyToGC() {
     checkAndNotifyGC();
-    txnObjectMgr.recallAllCheckedoutObject();
+    this.txnObjectMgr.recallAllCheckedoutObject();
     int count = 0;
-    while (!collector.isPaused()) {
+    while (!this.collector.isPaused()) {
       if (count++ > 2) {
         logger.warn("Still waiting for object to be checked back in. collector state is not paused. checkout count = "
-                    + checkedOutCount);
+                    + this.checkedOutCount);
       }
       try {
         this.wait(10000);
@@ -715,16 +710,16 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       processPendingLookups();
       notifyAll();
     }
-    objectStore.removeAllObjectsByID(gcResult);
+    this.objectStore.removeAllObjectsByID(gcResult);
   }
 
   private void flushAndCommit(PersistenceTransaction persistenceTransaction, ManagedObject managedObject) {
-    objectStore.commitObject(persistenceTransaction, managedObject);
+    this.objectStore.commitObject(persistenceTransaction, managedObject);
     persistenceTransaction.commit();
   }
 
   private void flushAllAndCommit(PersistenceTransaction persistenceTransaction, Collection managedObjects) {
-    objectStore.commitAllObjects(persistenceTransaction, managedObjects);
+    this.objectStore.commitAllObjects(persistenceTransaction, managedObjects);
     persistenceTransaction.commit();
   }
 
@@ -760,20 +755,28 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     // Not adding to the store yet since this transaction containing the new objects is not yet applied.
     // objectStore.addNewObject(object);
     addNewReference(object, false);
-    stats.newObjectCreated();
+    this.stats.newObjectCreated();
     fireObjectCreated(oid);
   }
 
   private void fireObjectCreated(ObjectID id) {
-    collector.notifyObjectCreated(id);
+    this.collector.notifyObjectCreated(id);
+  }
+
+  public ManagedObjectStore getObjectStore() {
+    return this.objectStore;
+  }
+
+  public ClientStateManager getClientStateManager() {
+    return this.stateManager;
   }
 
   public void createRoot(String rootName, ObjectID id) {
     syncAssertNotInShutdown();
     PersistenceTransaction tx = newTransaction();
-    objectStore.addNewRoot(tx, rootName, id);
+    this.objectStore.addNewRoot(tx, rootName, id);
     tx.commit();
-    stats.newObjectCreated();
+    this.stats.newObjectCreated();
     // This change needs to be notified so that new roots are not missedout
     changed(null, null, id);
   }
@@ -792,13 +795,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       this.collector.stop();
     }
     this.collector = newCollector;
-
-    if ((!config.doGC() || config.gcThreadSleepTime() <= 0)
-        && (!config.isYoungGenDGCEnabled() || config.getYoungGenDGCFrequencyInMillis() <= 0)) return;
-
-    StoppableThread st = new GarbageCollectorThread(this.gcThreadGroup, "DGC", newCollector, this.config);
-    st.setDaemon(true);
-    newCollector.setState(st);
   }
 
   private Map<ObjectID, ManagedObject> processObjectsRequest(Collection<ManagedObjectReference> objects) {
@@ -818,7 +814,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   private void processPendingLookups() {
-    List<Pending> lp = pending.getAndResetPendingRequests();
+    List<Pending> lp = this.pending.getAndResetPendingRequests();
     for (final Pending p : lp) {
       basicLookupObjectsFor(p.getNodeID(), p.getRequestContext(), p.getMaxReachableObjects());
     }
@@ -826,23 +822,23 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private void addBlocked(NodeID nodeID, ObjectManagerLookupContext context, int maxReachableObjects,
                           ObjectID blockedOid) {
-    pending.makeBlocked(blockedOid, new Pending(nodeID, context, maxReachableObjects));
+    this.pending.makeBlocked(blockedOid, new Pending(nodeID, context, maxReachableObjects));
     if (context.getProcessedCount() % 500 == 499) {
-      logger.warn("Reached " + context.getProcessedCount() + " Pending size : " + pending.size()
+      logger.warn("Reached " + context.getProcessedCount() + " Pending size : " + this.pending.size()
                   + " : basic look up for : " + context + " maxReachable depth : " + maxReachableObjects);
     }
   }
 
   private void makeUnBlocked(ObjectID id) {
-    pending.makeUnBlocked(id);
+    this.pending.makeUnBlocked(id);
   }
 
   private boolean isBlocked(ObjectID id) {
-    return pending.isBlocked(id);
+    return this.pending.isBlocked(id);
   }
 
   private void makePending(NodeID nodeID, ObjectManagerLookupContext context, int maxReachableObjects) {
-    pending.addPending(new Pending(nodeID, context, maxReachableObjects));
+    this.pending.addPending(new Pending(nodeID, context, maxReachableObjects));
   }
 
   private void syncAssertNotInShutdown() {
@@ -859,13 +855,13 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     if (toEvict <= 0) return;
 
     // This could be a costly call, so call just once
-    Collection removalCandidates = evictionPolicy.getRemovalCandidates(toEvict);
+    Collection removalCandidates = this.evictionPolicy.getRemovalCandidates(toEvict);
 
     HashSet<ManagedObject> toFlush = new HashSet<ManagedObject>();
     ArrayList<ManagedObjectReference> removed = new ArrayList<ManagedObjectReference>();
     reapCache(removalCandidates, toFlush, removed);
 
-    if (objectStatsRecorder.getFlushDebug()) {
+    if (this.objectStatsRecorder.getFlushDebug()) {
       updateFlushStats(toFlush, removed);
     }
 
@@ -889,22 +885,22 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     while (flushIter.hasNext()) {
       String className = flushIter.next().getManagedObjectState().getClassName();
       if (className == null) className = "UNKNOWN";
-      objectStatsRecorder.updateFlushStats(className);
+      this.objectStatsRecorder.updateFlushStats(className);
     }
     Iterator<ManagedObjectReference> removedIter = removedObjects.iterator();
     while (removedIter.hasNext()) {
       String className = removedIter.next().getObject().getManagedObjectState().getClassName();
       if (className == null) className = "UNKNOWN";
-      objectStatsRecorder.updateFlushStats(className);
+      this.objectStatsRecorder.updateFlushStats(className);
     }
   }
 
   private void waitUntilFlushComplete() {
-    flushCount.waitUntil(0);
+    this.flushCount.waitUntil(0);
   }
 
   private void initateFlushRequest(Collection toFlush) {
-    flushCount.increment(toFlush.size());
+    this.flushCount.increment(toFlush.size());
     for (Iterator i = toFlush.iterator(); i.hasNext();) {
       int count = 0;
       ManagedObjectFlushingContext mofc = new ManagedObjectFlushingContext();
@@ -913,7 +909,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         count++;
         // i.remove();
       }
-      flushSink.add(mofc);
+      this.flushSink.add(mofc);
     }
   }
 
@@ -922,13 +918,13 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     int size = objects2Flush.size();
     flushAllAndCommit(tx, objects2Flush);
     evicted(objects2Flush);
-    flushCount.decrement(size);
+    this.flushCount.decrement(size);
   }
 
   // XXX:: This is not synchronized and might not give us the right number. Performance over accuracy. This is to be
   // used only in evictCache method.
   private int references_size() {
-    return references.size();
+    return this.references.size();
   }
 
   private static class ObjectManagerLookupContext implements ObjectManagerResultsContext {
@@ -944,53 +940,55 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
 
     public boolean isMissingObject(ObjectID id) {
-      return missing.contains(id);
+      return this.missing.contains(id);
     }
 
     public void makeOldRequest() {
-      processedCount++;
+      this.processedCount++;
     }
 
     public int getProcessedCount() {
-      return processedCount;
+      return this.processedCount;
     }
 
     public boolean isNewRequest() {
-      return processedCount == 0;
+      return this.processedCount == 0;
     }
 
     public boolean removeOnRelease() {
-      return removeOnRelease;
+      return this.removeOnRelease;
     }
 
     public ObjectIDSet getLookupIDs() {
-      return responseContext.getLookupIDs();
+      return this.responseContext.getLookupIDs();
     }
 
     public ObjectIDSet getNewObjectIDs() {
-      return responseContext.getNewObjectIDs();
+      return this.responseContext.getNewObjectIDs();
     }
 
     public void setResults(ObjectManagerLookupResults results) {
-      responseContext.setResults(results);
+      this.responseContext.setResults(results);
     }
 
     public void missingObject(ObjectID oid) {
-      missing.add(oid);
+      this.missing.add(oid);
     }
 
     public ObjectIDSet getMissingObjectIDs() {
-      return missing;
+      return this.missing;
     }
 
+    @Override
     public String toString() {
-      return "ObjectManagerLookupContext@" + System.identityHashCode(this) + " : [ processed count = " + processedCount
-             + ", responseContext = " + responseContext + ", missing = " + missing + " ] ";
+      return "ObjectManagerLookupContext@" + System.identityHashCode(this) + " : [ processed count = "
+             + this.processedCount + ", responseContext = " + this.responseContext + ", missing = " + this.missing
+             + " ] ";
     }
 
     public boolean updateStats() {
       // We only want to update the stats the first time we process this request.
-      return responseContext.updateStats() && isNewRequest();
+      return this.responseContext.updateStats() && isNewRequest();
     }
   }
 
@@ -1007,51 +1005,52 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       this.lookupID = id;
       this.missingOk = missingOk;
       this.lookupNewObjects = lookupNewObjects;
-      lookupIDs.add(id);
+      this.lookupIDs.add(id);
     }
 
     public synchronized ManagedObject getLookedUpObject() {
-      while (!resultSet) {
+      while (!this.resultSet) {
         try {
           wait();
         } catch (InterruptedException e) {
           throw new AssertionError(e);
         }
       }
-      return result;
+      return this.result;
     }
 
     public ObjectIDSet getLookupIDs() {
-      return lookupIDs;
+      return this.lookupIDs;
     }
 
     public ObjectIDSet getNewObjectIDs() {
-      if (lookupNewObjects) {
-        return lookupIDs;
+      if (this.lookupNewObjects) {
+        return this.lookupIDs;
       } else {
         return new ObjectIDSet();
       }
     }
 
     public synchronized void setResults(ObjectManagerLookupResults results) {
-      resultSet = true;
+      this.resultSet = true;
       assertMissingObjects(results.getMissingObjectIDs());
       Map objects = results.getObjects();
       Assert.assertTrue(objects.size() == 0 || objects.size() == 1);
       if (objects.size() == 1) {
-        result = (ManagedObject) objects.get(lookupID);
-        Assert.assertNotNull(result);
+        this.result = (ManagedObject) objects.get(this.lookupID);
+        Assert.assertNotNull(this.result);
       }
       notifyAll();
     }
 
     private void assertMissingObjects(ObjectIDSet missing) {
-      if (!missingOk && !missing.isEmpty()) { throw new AssertionError("Lookup of non-exisiting objects : " + missing
-                                                                       + " " + this); }
+      if (!this.missingOk && !missing.isEmpty()) { throw new AssertionError("Lookup of non-exisiting objects : "
+                                                                            + missing + " " + this); }
     }
 
+    @Override
     public String toString() {
-      return "WaitForLookupContext [ " + lookupID + ", missingOK = " + missingOk + "]";
+      return "WaitForLookupContext [ " + this.lookupID + ", missingOK = " + this.missingOk + "]";
     }
 
     public boolean updateStats() {
@@ -1071,8 +1070,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       this.maxReachableObjects = maxReachableObjects;
     }
 
+    @Override
     public String toString() {
-      return "ObjectManagerImpl.Pending[groupingKey=" + groupingKey + "]";
+      return "ObjectManagerImpl.Pending[groupingKey=" + this.groupingKey + "]";
 
     }
 
@@ -1081,11 +1081,11 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
 
     public ObjectManagerLookupContext getRequestContext() {
-      return context;
+      return this.context;
     }
 
     public int getMaxReachableObjects() {
-      return maxReachableObjects;
+      return this.maxReachableObjects;
     }
 
   }
@@ -1096,44 +1096,45 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     int                          blockedCount = 0;
 
     public void makeBlocked(ObjectID blockedOid, Pending pd) {
-      List<Pending> blockedRequests = blocked.get(blockedOid);
+      List<Pending> blockedRequests = this.blocked.get(blockedOid);
       if (blockedRequests == null) {
         blockedRequests = new ArrayList<Pending>(1);
-        blocked.put(blockedOid, blockedRequests);
+        this.blocked.put(blockedOid, blockedRequests);
       }
       blockedRequests.add(pd);
-      blockedCount++;
+      this.blockedCount++;
     }
 
     public boolean isBlocked(ObjectID id) {
-      return blocked.containsKey(id);
+      return this.blocked.containsKey(id);
     }
 
     public void makeUnBlocked(ObjectID id) {
-      List<Pending> blockedRequests = blocked.remove(id);
+      List<Pending> blockedRequests = this.blocked.remove(id);
       if (blockedRequests != null) {
-        pending.addAll(blockedRequests);
-        blockedCount -= blockedRequests.size();
+        this.pending.addAll(blockedRequests);
+        this.blockedCount -= blockedRequests.size();
       }
     }
 
     public List<Pending> getAndResetPendingRequests() {
-      List<Pending> rv = pending;
-      pending = new ArrayList<Pending>();
+      List<Pending> rv = this.pending;
+      this.pending = new ArrayList<Pending>();
       return rv;
     }
 
     public void addPending(Pending pd) {
-      pending.add(pd);
+      this.pending.add(pd);
     }
 
     public int size() {
-      return pending.size();
+      return this.pending.size();
     }
 
+    @Override
     public String toString() {
-      return "PendingList { pending lookups = " + pending.size() + ", blocked count = " + blockedCount
-             + ", blocked oids = " + blocked.keySet() + " } ";
+      return "PendingList { pending lookups = " + this.pending.size() + ", blocked count = " + this.blockedCount
+             + ", blocked oids = " + this.blocked.keySet() + " } ";
     }
   }
 
@@ -1141,7 +1142,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
    * ManagedObjectChangeListener interface
    */
   public void changed(ObjectID changedObject, ObjectID oldReference, ObjectID newReference) {
-    collector.changed(changedObject, oldReference, newReference);
+    this.collector.changed(changedObject, oldReference, newReference);
   }
 
   private static Set<ManagedObjectReference> createNewSet() {

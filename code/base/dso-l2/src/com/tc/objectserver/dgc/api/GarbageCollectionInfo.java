@@ -4,49 +4,54 @@
  */
 package com.tc.objectserver.dgc.api;
 
-import com.tc.util.ObjectIDSet;
+import com.tc.io.TCByteBufferInput;
+import com.tc.io.TCByteBufferOutput;
+import com.tc.io.TCSerializable;
+import com.tc.objectserver.core.impl.GarbageCollectionID;
 
-import java.util.List;
+import java.io.IOException;
 
-public class GarbageCollectionInfo {
+public class GarbageCollectionInfo implements Cloneable, TCSerializable {
 
-  protected static final long NOT_INITIALIZED       = -1L;
+  protected static final long               NOT_INITIALIZED       = -1L;
+  protected static final long               NULL_INITIALIZED      = -2;
+  private GarbageCollectionID               gcID                  = GarbageCollectionID.NULL_ID;
+  private boolean                           fullGC;
+  private long                              startTime             = NOT_INITIALIZED;
+  private long                              beginObjectCount      = NOT_INITIALIZED;
+  private long                              markStageTime         = NOT_INITIALIZED;
+  private long                              pauseStageTime        = NOT_INITIALIZED;
+  private long                              deleteStageTime       = NOT_INITIALIZED;
+  private long                              elapsedTime           = NOT_INITIALIZED;
+  private long                              totalMarkCycleTime    = NOT_INITIALIZED;
+  private long                              candidateGarbageCount = NOT_INITIALIZED;
+  private long                              actualGarbageCount    = NOT_INITIALIZED;
+  private long                              preRescueCount        = NOT_INITIALIZED;
+  private long                              rescue1Count          = NOT_INITIALIZED;
+  private long                              rescue1Time           = NOT_INITIALIZED;
+  private long                              rescue2Time           = NOT_INITIALIZED;
 
-  private int                 iteration;
+  public static final GarbageCollectionInfo NULL_INFO             = new GarbageCollectionInfo(
+                                                                                              new GarbageCollectionID(
+                                                                                                                      NULL_INITIALIZED,
+                                                                                                                      "NULL INITIALIZED"),
+                                                                                              false);
 
-  private boolean             fullGC;
+  public GarbageCollectionInfo() {
+    // for serialization
+  }
 
-  private long                startTime             = NOT_INITIALIZED;
-
-  private long                beginObjectCount      = NOT_INITIALIZED;
-
-  private long                markStageTime         = NOT_INITIALIZED;
-
-  private long                pauseStageTime        = NOT_INITIALIZED;
-
-  private long                deleteStageTime       = NOT_INITIALIZED;
-
-  private long                elapsedTime           = NOT_INITIALIZED;
-
-  private long                totalMarkCycleTime    = NOT_INITIALIZED;
-
-  private long                candidateGarbageCount = NOT_INITIALIZED;
-
-  private long                actualGarbageCount    = NOT_INITIALIZED;
-
-  private long                preRescueCount        = NOT_INITIALIZED;
-
-  private long                rescue1Count          = NOT_INITIALIZED;
-
-  private Object              stats                 = null;
-
-  private ObjectIDSet         toDelete              = null;
-
-  private List                rescueTimes           = null;
-
-  public GarbageCollectionInfo(int iteration, boolean fullGC) {
-    this.iteration = iteration;
+  public GarbageCollectionInfo(GarbageCollectionID id, boolean fullGC) {
+    this.gcID = id;
     this.fullGC = fullGC;
+  }
+
+  public void setCandidateGarbageCount(long candidateGarbageCount) {
+    this.candidateGarbageCount = candidateGarbageCount;
+  }
+
+  public void setActualGarbageCount(long actualGarbageCount) {
+    this.actualGarbageCount = actualGarbageCount;
   }
 
   public long getRescue1Count() {
@@ -65,12 +70,13 @@ public class GarbageCollectionInfo {
     this.preRescueCount = count;
   }
 
+  // TODO: see if we can remove this.
   public int getIteration() {
-    return this.iteration;
+    return (int) this.gcID.toLong();
   }
 
   public boolean isFullGC() {
-    return fullGC;
+    return this.fullGC;
   }
 
   public void setStartTime(long time) {
@@ -141,38 +147,92 @@ public class GarbageCollectionInfo {
     return this.actualGarbageCount;
   }
 
-  public void setDeleted(ObjectIDSet deleted) {
-    this.toDelete = deleted;
-    this.actualGarbageCount = deleted.size();
+  public long getRescue1Time() {
+    return rescue1Time;
   }
 
-  public ObjectIDSet getDeleted() {
-    return this.toDelete;
+  public void setRescue1Time(long rescue1Time) {
+    this.rescue1Time = rescue1Time;
   }
 
-  public List getRescueTimes() {
-    return rescueTimes;
+  public long getRescue2Time() {
+    return rescue2Time;
   }
 
-  public void setRescueTimes(List rescueTimes) {
-    this.rescueTimes = rescueTimes;
+  public void setRescue2Time(long rescue2Time) {
+    this.rescue2Time = rescue2Time;
   }
 
-  public Object getObject() {
-    return stats;
+  public GarbageCollectionID getGarbageCollectionID() {
+    return gcID;
   }
 
-  public void setObject(Object aGCStats) {
-    this.stats = aGCStats;
-  }
-
+  @Override
   public String toString() {
-    return "GarbageCollectionInfo [ Iteration = " + iteration + " ] = " + " type  = "
-           + (fullGC ? " full, " : " young, ") + " startTime = " + startTime + " begin object count = "
-           + beginObjectCount + " markStageTime = " + markStageTime + " pauseStageTime = " + pauseStageTime
-           + " deleteStageTime = " + deleteStageTime + " elapsedTime = " + elapsedTime + " totalMarkCycletime  = "
-           + totalMarkCycleTime + " candiate garabage  count = " + candidateGarbageCount + " actual garbage count  = "
-           + actualGarbageCount + " pre rescue count = " + preRescueCount + " rescue 1 count = " + rescue1Count
-           + " Garbage  = " + (toDelete == null ? "Not Set " : toDelete.size());
+    return "GarbageCollectionInfo [ Iteration = " + this.gcID.toLong() + " ] = " + " type  = "
+           + (this.fullGC ? " full, " : " young, ") + " startTime = " + this.startTime + " begin object count = "
+           + this.beginObjectCount + " markStageTime = " + this.markStageTime + " pauseStageTime = "
+           + this.pauseStageTime + " deleteStageTime = " + this.deleteStageTime + " elapsedTime = " + this.elapsedTime
+           + " totalMarkCycletime  = " + this.totalMarkCycleTime + " candiate garabage  count = "
+           + this.candidateGarbageCount + " actual garbage count  = " + this.actualGarbageCount
+           + " pre rescue count = " + this.preRescueCount + " rescue1Time = " + rescue1Time + " rescue 1 count = "
+           + this.rescue1Count + " rescue2Time = " + rescue2Time;
   }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof GarbageCollectionInfo) {
+      GarbageCollectionInfo other = (GarbageCollectionInfo) obj;
+      return (this.gcID.equals(other.gcID) && this.fullGC == other.fullGC && this.startTime == other.startTime
+              && this.beginObjectCount == other.beginObjectCount && this.markStageTime == other.markStageTime
+              && this.pauseStageTime == other.pauseStageTime && this.deleteStageTime == other.deleteStageTime
+              && this.elapsedTime == other.elapsedTime && this.totalMarkCycleTime == other.totalMarkCycleTime
+              && this.candidateGarbageCount == other.candidateGarbageCount
+              && this.preRescueCount == other.preRescueCount && this.rescue1Count == other.rescue1Count
+              && this.rescue1Time == other.rescue1Time && this.rescue2Time == other.rescue2Time);
+    }
+    return false;
+  }
+
+  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
+
+    long iterationCount = serialInput.readLong();
+    String uuidString = serialInput.readString();
+    this.gcID = new GarbageCollectionID(iterationCount, uuidString);
+    this.fullGC = serialInput.readBoolean();
+    this.startTime = serialInput.readLong();
+    this.beginObjectCount = serialInput.readLong();
+    this.markStageTime = serialInput.readLong();
+    this.pauseStageTime = serialInput.readLong();
+    this.deleteStageTime = serialInput.readLong();
+    this.elapsedTime = serialInput.readLong();
+    this.totalMarkCycleTime = serialInput.readLong();
+    this.candidateGarbageCount = serialInput.readLong();
+    this.actualGarbageCount = serialInput.readLong();
+    this.preRescueCount = serialInput.readLong();
+    this.rescue1Count = serialInput.readLong();
+    this.rescue1Time = serialInput.readLong();
+    this.rescue2Time = serialInput.readLong();
+    return this;
+  }
+
+  public void serializeTo(TCByteBufferOutput serialOutput) {
+    serialOutput.writeLong(this.gcID.toLong());
+    serialOutput.writeString(this.gcID.getUUID());
+    serialOutput.writeBoolean(this.fullGC);
+    serialOutput.writeLong(this.startTime);
+    serialOutput.writeLong(this.beginObjectCount);
+    serialOutput.writeLong(this.markStageTime);
+    serialOutput.writeLong(this.pauseStageTime);
+    serialOutput.writeLong(this.deleteStageTime);
+    serialOutput.writeLong(this.elapsedTime);
+    serialOutput.writeLong(this.totalMarkCycleTime);
+    serialOutput.writeLong(this.candidateGarbageCount);
+    serialOutput.writeLong(this.actualGarbageCount);
+    serialOutput.writeLong(this.preRescueCount);
+    serialOutput.writeLong(this.rescue1Count);
+    serialOutput.writeLong(this.rescue1Time);
+    serialOutput.writeLong(this.rescue2Time);
+  }
+
 }

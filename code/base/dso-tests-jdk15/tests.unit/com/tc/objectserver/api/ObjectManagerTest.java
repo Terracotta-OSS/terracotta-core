@@ -46,6 +46,8 @@ import com.tc.objectserver.context.RecallObjectsContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.TestDNA;
 import com.tc.objectserver.core.impl.TestManagedObject;
+import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
+import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
 import com.tc.objectserver.gtx.TestGlobalTransactionManager;
 import com.tc.objectserver.impl.InMemoryManagedObjectStore;
 import com.tc.objectserver.impl.ObjectInstanceMonitorImpl;
@@ -173,7 +175,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
   private void initObjectManager(ThreadGroup threadGroup, EvictionPolicy cache, ManagedObjectStore store) {
     TestSink faultSink = new TestSink();
     TestSink flushSink = new TestSink();
-    this.objectManager = new ObjectManagerImpl(this.config, threadGroup, this.clientStateManager, store, cache,
+    this.objectManager = new ObjectManagerImpl(this.config, this.clientStateManager, store, cache,
                                                this.persistenceTransactionProvider, faultSink, flushSink,
                                                this.objectStatsRecorder);
     this.testFaultSinkContext = new TestSinkContext();
@@ -757,9 +759,9 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     TestSink faultSink = new TestSink();
     TestSink flushSink = new TestSink();
     this.config.paranoid = paranoid;
-    this.objectManager = new ObjectManagerImpl(this.config, createThreadGroup(), this.clientStateManager, store,
-                                               new LRUEvictionPolicy(100), this.persistenceTransactionProvider,
-                                               faultSink, flushSink, this.objectStatsRecorder);
+    this.objectManager = new ObjectManagerImpl(this.config, this.clientStateManager, store, new LRUEvictionPolicy(100),
+                                               this.persistenceTransactionProvider, faultSink, flushSink,
+                                               this.objectStatsRecorder);
     new TestMOFaulter(this.objectManager, store, faultSink, new NullSinkContext()).start();
     new TestMOFlusher(this.objectManager, flushSink, new NullSinkContext()).start();
 
@@ -881,7 +883,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
   public void testObjectManagerBasics() {
     initObjectManager();
     final ObjectID id = new ObjectID(0);
-    ManagedObject mo = new TestManagedObject(id, new ObjectID[0]);
+    ManagedObject mo = new TestManagedObject(id, new ArrayList<ObjectID>());
     this.objectManager.createObject(mo);
     assertFalse(this.objectManager.isReferenced(id));
     ManagedObject mo2 = this.objectManager.getObjectByID(id);
@@ -1004,8 +1006,8 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
     ObjectIDSet objectIDs = new ObjectIDSet();
 
-    ManagedObject mo = new TestManagedObject(id, new ObjectID[0]);
-    ManagedObject mo1 = new TestManagedObject(id1, new ObjectID[0]);
+    ManagedObject mo = new TestManagedObject(id, new ArrayList<ObjectID>());
+    ManagedObject mo1 = new TestManagedObject(id1, new ArrayList<ObjectID>());
     this.objectManager.createObject(mo);
     this.objectManager.createObject(mo1);
 
@@ -1145,7 +1147,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
   private void createObjects(int num) {
     for (int i = 0; i < num; i++) {
-      TestManagedObject mo = new TestManagedObject(new ObjectID(i), new ObjectID[] {});
+      TestManagedObject mo = new TestManagedObject(new ObjectID(i), new ArrayList<ObjectID>());
       this.objectManager.createObject(mo);
       this.objectStore.addNewObject(mo);
     }
@@ -1202,14 +1204,14 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     this.objectManager.setGarbageCollector(gc);
     this.objectManager.start();
     final ObjectID id = new ObjectID(0);
-    ManagedObject mo = new TestManagedObject(id, new ObjectID[3]);
+    ManagedObject mo = new TestManagedObject(id, new ArrayList<ObjectID>(3));
     this.objectManager.createObject(mo);
 
     assertFalse(gc.isCollected());
 
     gc.allow_blockUntilReadyToGC_ToProceed();
 
-    this.objectManager.getGarbageCollector().gc();
+    this.objectManager.getGarbageCollector().doGC(GCType.FULL_GC);
     assertTrue(gc.isCollected());
 
     gc.reset();
@@ -1457,7 +1459,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     assertTrue(gc.isPaused());
 
     // Complete gc
-    gc.deleteGarbage(new GCResultContext(1, TCCollections.EMPTY_OBJECT_ID_SET));
+    gc.deleteGarbage(new GCResultContext(TCCollections.EMPTY_OBJECT_ID_SET, new GarbageCollectionInfo()));
 
     // Lookup context should have been fired
     loc = (LookupEventContext) this.coordinator.lookupSink.queue.take();
@@ -2145,7 +2147,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
   private class GCCaller implements Runnable {
 
     public void run() {
-      ObjectManagerTest.this.objectManager.getGarbageCollector().gc();
+      ObjectManagerTest.this.objectManager.getGarbageCollector().doGC(GCType.FULL_GC);
     }
   }
 

@@ -6,18 +6,18 @@ package com.tc.objectserver.dgc.impl;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.core.api.Filter;
+import com.tc.objectserver.core.impl.GarbageCollectionID;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
+import com.tc.util.UUID;
 import com.tc.util.concurrent.LifeCycleState;
 import com.tc.util.concurrent.ThreadUtil;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
 final class MarkAndSweepGCAlgorithm {
@@ -27,6 +27,7 @@ final class MarkAndSweepGCAlgorithm {
   private final GarbageCollector               collector;
   private final GarbageCollectionInfoPublisher gcPublisher;
   private final LifeCycleState                 gcState;
+  private final String                         uuid = UUID.getUUID().toString();
 
   public MarkAndSweepGCAlgorithm(GarbageCollector collector, GCHook gcHook,
                                  GarbageCollectionInfoPublisher gcPublisher, LifeCycleState gcState, int gcIteration) {
@@ -40,11 +41,12 @@ final class MarkAndSweepGCAlgorithm {
   void doGC() {
     while (!collector.requestGCStart()) {
       MarkAndSweepGarbageCollector.logger.info(gcHook.getDescription()
-                  + " DGC: It is either disabled or is already running. Waiting for 1 min before checking again ...");
+                  + "AA-DGC: It is either disabled or is already running. Waiting for 1 min before checking again ...");
       ThreadUtil.reallySleep(60000);
     }
 
-    GarbageCollectionInfo gcInfo = gcHook.getGCInfo(gcIteration);
+    GarbageCollectionID gcID = new GarbageCollectionID(gcIteration, uuid);
+    GarbageCollectionInfo gcInfo = gcHook.createGCInfo(gcID);
     long startMillis = System.currentTimeMillis();
     gcInfo.setStartTime(startMillis);
     gcPublisher.fireGCStartEvent(gcInfo);
@@ -66,9 +68,11 @@ final class MarkAndSweepGCAlgorithm {
 
     if (gcState.isStopRequested()) { return; }
 
-    List rescueTimes = new ArrayList();
-
-    gcResults = rescue(gcResults, rescueTimes);
+   
+    long startRescue1 = System.currentTimeMillis();
+    gcResults = rescue(gcResults);
+    long rescue1Time = System.currentTimeMillis() - startRescue1;
+    gcInfo.setRescue1Time(rescue1Time);
     gcInfo.setRescue1Count(gcResults.size());
     gcInfo.setMarkStageTime(System.currentTimeMillis() - startMillis);
     gcPublisher.fireGCRescue1CompleteEvent(gcInfo);
@@ -77,7 +81,7 @@ final class MarkAndSweepGCAlgorithm {
       // No garbage, short circuit GC cycle, don't pass objectMgr etc.
       gcHook.stopMonitoringReferenceChanges();
       collector.notifyGCComplete();
-      shortCircuitGCComplete(gcInfo, rescueTimes);
+      shortCircuitGCComplete(gcInfo);
       return;
     }
 
@@ -95,10 +99,11 @@ final class MarkAndSweepGCAlgorithm {
 
     gcInfo.setCandidateGarbageCount(gcResults.size());
     gcPublisher.fireGCRescue2StartEvent(gcInfo);
-    ObjectIDSet toDelete = ObjectIDSet.unmodifiableObjectIDSet(rescue(new ObjectIDSet(gcResults), rescueTimes));
-    gcInfo.setRescueTimes(rescueTimes);
-    gcInfo.setDeleted(toDelete);
-
+    long startRescue2 = System.currentTimeMillis();  
+    ObjectIDSet toDelete = ObjectIDSet.unmodifiableObjectIDSet(rescue(new ObjectIDSet(gcResults)));
+    long rescue2Time = System.currentTimeMillis() - startRescue2;
+    gcInfo.setRescue2Time(rescue2Time);
+  
     if (gcState.isStopRequested()) { return; }
 
     gcHook.stopMonitoringReferenceChanges();
@@ -108,23 +113,24 @@ final class MarkAndSweepGCAlgorithm {
     gcPublisher.fireGCMarkCompleteEvent(gcInfo);
 
     // Delete Garbage
-    collector.deleteGarbage(new GCResultContext(gcIteration, toDelete, gcInfo, gcPublisher));
+    collector.deleteGarbage(new GCResultContext(toDelete, gcInfo));
 
     long endMillis = System.currentTimeMillis();
     gcInfo.setTotalMarkCycleTime(endMillis - gcInfo.getStartTime());
-    gcPublisher.fireGCCycleCompletedEvent(gcInfo);
+    gcPublisher.fireGCCycleCompletedEvent(gcInfo, toDelete);
   }
 
-  private void shortCircuitGCComplete(GarbageCollectionInfo gcInfo, List rescueTimes) {
+  private void shortCircuitGCComplete(GarbageCollectionInfo gcInfo) {
     gcInfo.setCandidateGarbageCount(0);
-    gcInfo.setRescueTimes(rescueTimes);
-    gcInfo.setDeleted(TCCollections.EMPTY_OBJECT_ID_SET);
+    gcInfo.setRescue1Time(0);
+    gcInfo.setRescue2Time(0);
     gcInfo.setPausedStageTime(0);
     gcInfo.setDeleteStageTime(0);
+    gcInfo.setActualGarbageCount(0);
     long endMillis = System.currentTimeMillis();
     gcInfo.setTotalMarkCycleTime(endMillis - gcInfo.getStartTime());
     gcInfo.setElapsedTime(endMillis - gcInfo.getStartTime());
-    gcPublisher.fireGCCycleCompletedEvent(gcInfo);
+    gcPublisher.fireGCCycleCompletedEvent(gcInfo, new ObjectIDSet());
     gcPublisher.fireGCCompletedEvent(gcInfo);
   }
 
@@ -172,14 +178,12 @@ final class MarkAndSweepGCAlgorithm {
     }
   }
 
-  private ObjectIDSet rescue(final ObjectIDSet gcResults, final List rescueTimes) {
-    long start = System.currentTimeMillis();
+  private ObjectIDSet rescue(final ObjectIDSet gcResults) {
     Set rescueIds = gcHook.getRescueIDs();
     rescueIds.retainAll(gcResults);
 
     Filter rescueFilter = new SelectiveFilter(gcResults);
     ObjectIDSet rv = collect(rescueFilter, rescueIds, gcResults, gcState);
-    rescueTimes.add(new Long(System.currentTimeMillis() - start));
     return rv;
   }
 

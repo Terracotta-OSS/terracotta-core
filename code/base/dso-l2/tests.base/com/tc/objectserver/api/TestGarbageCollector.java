@@ -10,6 +10,7 @@ import com.tc.exception.ImplementMe;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.core.api.Filter;
+import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
 import com.tc.text.PrettyPrinter;
@@ -27,18 +28,19 @@ import java.util.List;
 import java.util.Set;
 
 public class TestGarbageCollector implements GarbageCollector {
-  public ObjectIDSet    collectedObjects = new ObjectIDSet();
-  private boolean       collected        = false;
-  private boolean       isPausing        = false;
-  private boolean       isPaused         = false;
+  public ObjectIDSet          collectedObjects = new ObjectIDSet();
+  private boolean             collected        = false;
+  private boolean             isPausing        = false;
+  private boolean             isPaused         = false;
+  private boolean             isStarted        = false;
 
-  private LinkedQueue   collectCalls;
-  private LinkedQueue   notifyReadyToGCCalls;
-  private LinkedQueue   notifyGCCompleteCalls;
-  private LinkedQueue   requestGCCalls;
-  private LinkedQueue   blockUntilReadyToGCCalls;
-  private LinkedQueue   blockUntilReadyToGCQueue;
-  private ObjectManager objectProvider;
+  private LinkedQueue         collectCalls;
+  private LinkedQueue         notifyReadyToGCCalls;
+  private LinkedQueue         notifyGCCompleteCalls;
+  private LinkedQueue         requestGCCalls;
+  private LinkedQueue         blockUntilReadyToGCCalls;
+  private LinkedQueue         blockUntilReadyToGCQueue;
+  private final ObjectManager objectProvider;
 
   public TestGarbageCollector(ObjectManager objectProvider) {
     initQueues();
@@ -46,12 +48,12 @@ public class TestGarbageCollector implements GarbageCollector {
   }
 
   private void initQueues() {
-    collectCalls = new LinkedQueue();
-    notifyReadyToGCCalls = new LinkedQueue();
-    notifyGCCompleteCalls = new LinkedQueue();
-    requestGCCalls = new LinkedQueue();
-    blockUntilReadyToGCCalls = new LinkedQueue();
-    blockUntilReadyToGCQueue = new LinkedQueue();
+    this.collectCalls = new LinkedQueue();
+    this.notifyReadyToGCCalls = new LinkedQueue();
+    this.notifyGCCompleteCalls = new LinkedQueue();
+    this.requestGCCalls = new LinkedQueue();
+    this.blockUntilReadyToGCCalls = new LinkedQueue();
+    this.blockUntilReadyToGCQueue = new LinkedQueue();
   }
 
   private List drainQueue(LinkedQueue queue) {
@@ -67,29 +69,29 @@ public class TestGarbageCollector implements GarbageCollector {
   }
 
   public synchronized void reset() {
-    collectedObjects.clear();
-    collected = false;
-    isPausing = false;
+    this.collectedObjects.clear();
+    this.collected = false;
+    this.isPausing = false;
     initQueues();
   }
 
-  public ObjectIDSet collect(Filter filter, Collection rootIds, ObjectIDSet managedObjectIds) {
+  private ObjectIDSet collect(Filter filter, Collection rootIds, ObjectIDSet managedObjectIds) {
     try {
-      collectCalls.put(new CollectCallContext(filter, rootIds, managedObjectIds, objectProvider));
+      this.collectCalls.put(new CollectCallContext(filter, rootIds, managedObjectIds, this.objectProvider));
     } catch (InterruptedException e) {
       throw new AssertionError(e);
     }
     this.collected = true;
-    return collectedObjects;
+    return this.collectedObjects;
   }
 
   public boolean collectWasCalled() {
-    return collectCalls.peek() != null;
+    return this.collectCalls.peek() != null;
   }
 
   public boolean waitForCollectToBeCalled(long timeout) {
     try {
-      return collectCalls.poll(timeout) != null;
+      return this.collectCalls.poll(timeout) != null;
     } catch (InterruptedException e) {
       throw new AssertionError(e);
     }
@@ -97,14 +99,14 @@ public class TestGarbageCollector implements GarbageCollector {
 
   public CollectCallContext getNextCollectCall() {
     try {
-      return (CollectCallContext) collectCalls.take();
+      return (CollectCallContext) this.collectCalls.take();
     } catch (InterruptedException e) {
       throw new AssertionError(e);
     }
   }
 
   public List getCollectCalls() {
-    return drainQueue(collectCalls);
+    return drainQueue(this.collectCalls);
   }
 
   public static class CollectCallContext {
@@ -127,29 +129,29 @@ public class TestGarbageCollector implements GarbageCollector {
   }
 
   public synchronized boolean isPausingOrPaused() {
-    return isPausing || isPaused;
+    return this.isPausing || this.isPaused;
   }
 
   public synchronized boolean isPaused() {
-    return isPaused;
+    return this.isPaused;
   }
 
   public void notifyReadyToGC() {
     try {
-      isPaused = true;
-      notifyReadyToGCCalls.put(new Object());
+      this.isPaused = true;
+      this.notifyReadyToGCCalls.put(new Object());
     } catch (InterruptedException e) {
       throw new AssertionError(e);
     }
   }
 
   public boolean notifyReadyToGC_WasCalled() {
-    return notifyReadyToGCCalls.peek() != null;
+    return this.notifyReadyToGCCalls.peek() != null;
   }
 
   public boolean waitFor_notifyReadyToGC_ToBeCalled(long timeout) {
     try {
-      return notifyReadyToGCCalls.poll(timeout) != null;
+      return this.notifyReadyToGCCalls.poll(timeout) != null;
     } catch (InterruptedException e) {
       throw new AssertionError(e);
     }
@@ -157,8 +159,8 @@ public class TestGarbageCollector implements GarbageCollector {
 
   public void blockUntilReadyToGC() {
     try {
-      blockUntilReadyToGCCalls.put(new Object());
-      blockUntilReadyToGCQueue.take();
+      this.blockUntilReadyToGCCalls.put(new Object());
+      this.blockUntilReadyToGCQueue.take();
     } catch (InterruptedException e) {
       throw new AssertionError(e);
     }
@@ -166,8 +168,8 @@ public class TestGarbageCollector implements GarbageCollector {
 
   public void allow_blockUntilReadyToGC_ToProceed() {
     try {
-      Assert.eval("queue was not empty!", blockUntilReadyToGCQueue.peek() == null);
-      blockUntilReadyToGCQueue.put(new Object());
+      Assert.eval("queue was not empty!", this.blockUntilReadyToGCQueue.peek() == null);
+      this.blockUntilReadyToGCQueue.put(new Object());
     } catch (InterruptedException e) {
       throw new AssertionError(e);
     }
@@ -175,7 +177,7 @@ public class TestGarbageCollector implements GarbageCollector {
 
   public void waitUntil_blockUntilReadyToGC_IsCalled() {
     try {
-      blockUntilReadyToGCCalls.take();
+      this.blockUntilReadyToGCCalls.take();
     } catch (InterruptedException e) {
       throw new AssertionError(e);
     }
@@ -183,21 +185,22 @@ public class TestGarbageCollector implements GarbageCollector {
 
   public boolean waitFor_blockUntilReadyToGC_ToBeCalled(int timeout) {
     try {
-      return blockUntilReadyToGCCalls.poll(timeout) != null;
+      return this.blockUntilReadyToGCCalls.poll(timeout) != null;
     } catch (InterruptedException e) {
       throw new AssertionError(e);
     }
   }
 
   public boolean blockUntilReadyToGC_WasCalled() {
-    return blockUntilReadyToGCCalls.peek() != null;
+    return this.blockUntilReadyToGCCalls.peek() != null;
   }
 
   public void notifyGCComplete() {
     try {
-      isPausing = false;
-      isPaused = false;
-      notifyGCCompleteCalls.put(new Object());
+      this.isPausing = false;
+      this.isPaused = false;
+      this.isStarted = false;
+      this.notifyGCCompleteCalls.put(new Object());
     } catch (InterruptedException e) {
       throw new AssertionError(e);
     }
@@ -206,7 +209,7 @@ public class TestGarbageCollector implements GarbageCollector {
 
   public void waitUntil_notifyGCComplete_IsCalled() {
     try {
-      notifyGCCompleteCalls.take();
+      this.notifyGCCompleteCalls.take();
     } catch (InterruptedException e) {
       throw new AssertionError(e);
     }
@@ -214,7 +217,7 @@ public class TestGarbageCollector implements GarbageCollector {
 
   public boolean waitFor_notifyGCComplete_ToBeCalled(long timeout) {
     try {
-      return notifyGCCompleteCalls.poll(timeout) != null;
+      return this.notifyGCCompleteCalls.poll(timeout) != null;
     } catch (InterruptedException e) {
       throw new AssertionError(e);
     }
@@ -222,9 +225,9 @@ public class TestGarbageCollector implements GarbageCollector {
 
   public void requestGCPause() {
     try {
-      isPausing = true;
-      isPaused = false;
-      requestGCCalls.put(new Object());
+      this.isPausing = true;
+      this.isPaused = false;
+      this.requestGCCalls.put(new Object());
     } catch (InterruptedException e) {
       throw new AssertionError(e);
     }
@@ -235,25 +238,19 @@ public class TestGarbageCollector implements GarbageCollector {
     return out.print(getClass().getName());
   }
 
-  public ObjectIDSet collect(Filter traverser, Collection roots, ObjectIDSet managedObjectIds, LifeCycleState state) {
+  private ObjectIDSet collect(Filter traverser, Collection roots, ObjectIDSet managedObjectIds, LifeCycleState state) {
     return collect(traverser, roots, managedObjectIds);
   }
 
   public void changed(ObjectID changedObject, ObjectID oldReference, ObjectID newReference) {
-    throw new ImplementMe();
-
+    //
   }
 
-  public void gc() {
-    collect(null, objectProvider.getRootIDs(), objectProvider.getAllObjectIDs(), new NullLifeCycleState());
+  public void doGC(GCType type) {
+    collect(null, this.objectProvider.getRootIDs(), this.objectProvider.getAllObjectIDs(), new NullLifeCycleState());
     this.requestGCPause();
     this.blockUntilReadyToGC();
-    this.deleteGarbage(new GCResultContext(1,TCCollections.EMPTY_OBJECT_ID_SET));
-  }
-
-  public void addNewReferencesTo(Set rescueIds) {
-    throw new ImplementMe();
-
+    this.deleteGarbage(new GCResultContext(TCCollections.EMPTY_OBJECT_ID_SET, new GarbageCollectionInfo()));
   }
 
   public void start() {
@@ -262,20 +259,14 @@ public class TestGarbageCollector implements GarbageCollector {
 
   public void stop() {
     throw new ImplementMe();
-
   }
 
   public void setState(StoppableThread st) {
     throw new ImplementMe();
-
   }
 
   public void addListener(GarbageCollectorEventListener listener) {
     //
-  }
-
-  public GCStats[] getGarbageCollectorStats() {
-    return null;
   }
 
   public boolean disableGC() {
@@ -284,7 +275,6 @@ public class TestGarbageCollector implements GarbageCollector {
 
   public void enableGC() {
     throw new ImplementMe();
-
   }
 
   public boolean isDisabled() {
@@ -300,10 +290,6 @@ public class TestGarbageCollector implements GarbageCollector {
     this.notifyGCComplete();
     return true;
   }
-  
-  public void gcYoung() {
-    throw new ImplementMe();
-  }
 
   public void notifyNewObjectInitalized(ObjectID id) {
     // NOP
@@ -318,7 +304,10 @@ public class TestGarbageCollector implements GarbageCollector {
   }
 
   public boolean requestGCStart() {
-    throw new ImplementMe();
+    if (!isStarted) {
+      isStarted = true;
+      return true;
+    }
+    return false;
   }
-
 }

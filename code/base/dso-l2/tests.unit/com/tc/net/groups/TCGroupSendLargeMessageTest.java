@@ -17,9 +17,12 @@ import com.tc.net.NodeID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.ObjectID;
+import com.tc.objectserver.core.impl.GarbageCollectionID;
+import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.test.TCTestCase;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.PortChooser;
+import com.tc.util.UUID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
@@ -98,7 +101,7 @@ public class TCGroupSendLargeMessageTest extends TCTestCase {
     for (long i = 1; i <= oidsCount; ++i) {
       oidSet.add(new ObjectID(i));
     }
-    final GCResultMessage msg1 = GCResultMessageFactory.createGCResultMessage(1, oidSet);
+    final GCResultMessage msg1 = GCResultMessageFactory.createGCResultMessage(createGarbageCollectionInfo(1), oidSet);
     gm1.sendAll(msg1);
 
     GCResultMessage msg2 = (GCResultMessage) l2.take();
@@ -110,7 +113,7 @@ public class TCGroupSendLargeMessageTest extends TCTestCase {
     for (long i = (oidsCount + 1); i <= (oidsCount * 2); ++i) {
       oidSet.add(new ObjectID(i));
     }
-    final GCResultMessage msg3 = GCResultMessageFactory.createGCResultMessage(2, oidSet);
+    final GCResultMessage msg3 = GCResultMessageFactory.createGCResultMessage(createGarbageCollectionInfo(2), oidSet);
     gm2.sendAll(msg3);
 
     GCResultMessage msg4 = (GCResultMessage) l1.take();
@@ -118,6 +121,10 @@ public class TCGroupSendLargeMessageTest extends TCTestCase {
     assertEquals(msg3.getGCedObjectIDs(), msg4.getGCedObjectIDs());
     assertEquals(msg3.getGCIterationCount(), msg4.getGCIterationCount());
 
+  }
+
+  private GarbageCollectionInfo createGarbageCollectionInfo(long iteration) {
+    return new GarbageCollectionInfo(new GarbageCollectionID(iteration, UUID.getUUID().toString()), true);
   }
 
   private static final class MyListener implements GroupMessageListener {

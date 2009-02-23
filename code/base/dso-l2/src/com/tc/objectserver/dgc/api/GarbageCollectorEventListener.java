@@ -4,6 +4,7 @@
  */
 package com.tc.objectserver.dgc.api;
 
+import com.tc.util.ObjectIDSet;
 
 public interface GarbageCollectorEventListener {
 
@@ -25,8 +26,10 @@ public interface GarbageCollectorEventListener {
 
   public void garbageCollectorDelete(GarbageCollectionInfo info);
 
-  public void garbageCollectorCycleCompleted(GarbageCollectionInfo info);
+  public void garbageCollectorCycleCompleted(GarbageCollectionInfo info, ObjectIDSet toDelete);
 
   public void garbageCollectorCompleted(GarbageCollectionInfo info);
+
+  public void garbageCollectorCanceled(GarbageCollectionInfo info);
 
 }

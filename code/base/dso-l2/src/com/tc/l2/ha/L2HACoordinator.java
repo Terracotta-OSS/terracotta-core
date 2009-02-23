@@ -145,6 +145,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     this.rTxnManager = new ReplicatedTransactionManagerImpl(groupManager, orderedObjectsSyncSink, transactionManager,
                                                             gtxm, recycler);
 
+    
     this.rObjectManager = new ReplicatedObjectManagerImpl(groupManager, stateManager, l2ObjectStateManager,
                                                           rTxnManager, objectManager, transactionManager,
                                                           objectsSyncRequestSink, sequenceGenerator);

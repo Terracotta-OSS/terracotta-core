@@ -32,6 +32,9 @@ public class ObjectRequestServerContextImpl implements EventContext, ObjectReque
     this.serverInitiated = serverInitiated;
   }
 
+  /**
+   * This is mutated outside, don't give a copy
+   */
   public SortedSet<ObjectID> getRequestedObjectIDs() {
     return this.lookupIDs;
   }

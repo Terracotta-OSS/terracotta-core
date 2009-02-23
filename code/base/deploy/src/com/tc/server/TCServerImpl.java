@@ -98,7 +98,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   private volatile long                        startTime                                    = -1;
   private volatile long                        activateTime                                 = -1;
 
-  private DistributedObjectServer              dsoServer;
+  protected DistributedObjectServer            dsoServer;
   private Server                               httpServer;
   private TerracottaConnector                  terracottaConnector;
   private StatisticsGathererSubSystem          statisticsGathererSubSystem;
@@ -567,9 +567,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     ServerManagementContext mgmtContext = dsoServer.getManagementContext();
     ServerConfigurationContext configContext = dsoServer.getContext();
     MBeanServer mBeanServer = dsoServer.getMBeanServer();
-    GCStatsEventPublisher gcStatsPublisher = dsoServer.getGcStatsEventPublisher();
-    DSOMBean dso = new DSO(mgmtContext, configContext, mBeanServer, gcStatsPublisher);
-    mBeanServer.registerMBean(dso, L2MBeanNames.DSO);
+    registerDSOMBeans(mgmtContext, configContext, mBeanServer);
     mBeanServer.registerMBean(mgmtContext.getDSOAppEventsMBean(), L2MBeanNames.DSO_APP_EVENTS);
     StatisticsLocalGathererMBeanImpl local_gatherer = new StatisticsLocalGathererMBeanImpl(statisticsGathererSubSystem,
                                                                                            configurationSetupManager
@@ -577,6 +575,14 @@ public class TCServerImpl extends SEDA implements TCServer {
                                                                                            configurationSetupManager
                                                                                                .dsoL2Config());
     mBeanServer.registerMBean(local_gatherer, StatisticsMBeanNames.STATISTICS_GATHERER);
+  }
+
+  protected void registerDSOMBeans(ServerManagementContext mgmtContext, ServerConfigurationContext configContext,
+                                   MBeanServer mBeanServer) throws NotCompliantMBeanException,
+      InstanceAlreadyExistsException, MBeanRegistrationException {
+    GCStatsEventPublisher gcStatsPublisher = dsoServer.getGcStatsEventPublisher();
+    DSOMBean dso = new DSO(mgmtContext, configContext, mBeanServer, gcStatsPublisher);
+    mBeanServer.registerMBean(dso, L2MBeanNames.DSO);
   }
 
   // TODO: check that this is not needed then remove

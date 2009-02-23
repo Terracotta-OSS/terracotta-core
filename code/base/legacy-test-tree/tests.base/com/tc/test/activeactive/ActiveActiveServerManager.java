@@ -5,15 +5,21 @@
 package com.tc.test.activeactive;
 
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.objectserver.control.ServerControl;
+import com.tc.stats.DGCMBean;
+import com.tc.stats.DSOMBean;
 import com.tc.test.GroupData;
 import com.tc.test.MultipleServerManager;
 import com.tc.test.MultipleServersConfigCreator;
+import com.tc.test.MultipleServersCrashMode;
+import com.tc.test.activepassive.ActivePassiveCrashMode;
 import com.tc.test.activepassive.ActivePassiveServerManager;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 import com.tc.test.proxyconnect.ProxyConnectManager;
 import com.tc.util.PortChooser;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -113,7 +119,11 @@ public class ActiveActiveServerManager extends MultipleServerManager {
     testSetupManager.setMaxCrashCount(setupManger.getMaxCrashCount());
     testSetupManager.setServerCount(setupManger.getGroupMemberCount(grpIndex));
     ActiveActiveCrashMode mode = new ActiveActiveCrashMode(setupManger.getServerCrashMode());
-    testSetupManager.setServerCrashMode(mode);
+    if (mode.getMode().equals(MultipleServersCrashMode.AA_CUSTOMIZED_CRASH)) {
+      testSetupManager.setServerCrashMode(new ActivePassiveCrashMode(MultipleServersCrashMode.AP_CUSTOMIZED_CRASH));
+    } else {
+      testSetupManager.setServerCrashMode(new ActivePassiveCrashMode(mode.getMode()));
+    }
     testSetupManager.setServerCrashWaitTimeInSec(setupManger.getServerCrashWaitTimeInSec());
     testSetupManager.setServerPersistenceMode(setupManger.getServerPersistenceMode());
     testSetupManager.setServerShareDataMode(setupManger.getGroupServerShareDataMode(grpIndex));
@@ -146,7 +156,7 @@ public class ActiveActiveServerManager extends MultipleServerManager {
 
     for (int i = 0; i < grpCount; i++)
       threads[i].start();
-    
+
     for (int i = 0; i < grpCount; i++)
       threads[i].join();
   }
@@ -191,5 +201,47 @@ public class ActiveActiveServerManager extends MultipleServerManager {
 
   public ProxyConnectManager[] getL1ProxyManagers() {
     return proxyL1Managers;
+  }
+
+  public List<List<DSOMBean>> connectAllDsoMBeans() throws IOException {
+    int grpCount = setupManger.getActiveServerGroupCount();
+    List<List<DSOMBean>> mbeans = new ArrayList<List<DSOMBean>>(grpCount);
+
+    for (int i = 0; i < grpCount; i++) {
+      ActivePassiveServerManager apsm = activePassiveServerManagers[i];
+      mbeans.add(apsm.connectAllDsoMBeans());
+    }
+
+    return mbeans;
+  }
+  
+  public List<List<DGCMBean>> connectAllLocalDGCMBeans() throws IOException {
+    int grpCount = setupManger.getActiveServerGroupCount();
+    List<List<DGCMBean>> mbeans = new ArrayList<List<DGCMBean>>(grpCount);
+
+    for (int i = 0; i < grpCount; i++) {
+      ActivePassiveServerManager apsm = activePassiveServerManagers[i];
+      mbeans.add(apsm.connectAllLocalDGCMBeans());
+    }
+
+    return mbeans;
+  }
+
+  public GroupData[] getGroupsData() {
+    return this.groupsData;
+  }
+
+  public ServerControl[] getServerControls() {
+    ServerControl[] controls = new ServerControl[setupManger.getServerCount()];
+    int count = 0;
+    for (int i = 0; i < activePassiveServerManagers.length; i++) {
+      ServerControl[] managers = activePassiveServerManagers[i].getServerControls();
+      for (int j = 0; j < managers.length; j++) {
+        controls[count] = managers[j];
+        count++;
+      }
+    }
+
+    return controls;
   }
 }

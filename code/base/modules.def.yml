@@ -114,6 +114,7 @@ modules:
       options:
         jdk: J2SE-1.5
       dependencies:
+        - common
         - common-api
         - license-common
         - dso-common

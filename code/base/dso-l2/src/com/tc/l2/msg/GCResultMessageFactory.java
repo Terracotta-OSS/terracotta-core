@@ -4,12 +4,13 @@
  */
 package com.tc.l2.msg;
 
+import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.util.ObjectIDSet;
 
 public class GCResultMessageFactory {
 
-  public static GCResultMessage createGCResultMessage(int gcIterationCount, ObjectIDSet deleted) {
-    return new GCResultMessage(GCResultMessage.GC_RESULT, gcIterationCount, deleted);
+  public static GCResultMessage createGCResultMessage(GarbageCollectionInfo gcInfo,  ObjectIDSet deleted) {
+    return new GCResultMessage(GCResultMessage.GC_RESULT, gcInfo, deleted);
   }
 
 }

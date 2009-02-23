@@ -56,7 +56,7 @@ public class TransactionStoreImpl implements TransactionStore {
         this.sids.remove(stxnID);
         this.ids.remove(gtx.getGlobalTransactionID());
       } else {
-        persistor.saveGlobalTransactionDescriptor(transaction, gtx);
+        this.persistor.saveGlobalTransactionDescriptor(transaction, gtx);
         gtx.commitComplete();
       }
     }
@@ -74,7 +74,7 @@ public class TransactionStoreImpl implements TransactionStore {
   }
 
   public GlobalTransactionDescriptor getOrCreateTransactionDescriptor(ServerTransactionID serverTransactionID) {
-    GlobalTransactionDescriptor rv = sids.get(serverTransactionID);
+    GlobalTransactionDescriptor rv = this.sids.get(serverTransactionID);
     if (rv == null) {
       rv = new GlobalTransactionDescriptor(serverTransactionID, getNextGlobalTransactionID());
       basicAdd(rv);
@@ -102,7 +102,7 @@ public class TransactionStoreImpl implements TransactionStore {
         // different GID. It needs to reconsile. It is ok to just remove it from ids since even if it was commited, when
         // completeTxns arrive, it will be removed from the DB. If the 3'rd passive crashes before that, when it come
         // back up the DB is wiped out.
-        ids.remove(prevDesc.getGlobalTransactionID());
+        this.ids.remove(prevDesc.getGlobalTransactionID());
         gtx.saveStateFrom(prevDesc);
         logger.warn("Remapped new desc " + gtx + " for the same SID. old = " + prevDesc);
       } else {
@@ -110,13 +110,13 @@ public class TransactionStoreImpl implements TransactionStore {
       }
     }
     if (!gid.isNull()) {
-      ids.put(gid, gtx);
+      this.ids.put(gid, gtx);
     }
   }
 
   public GlobalTransactionID getLeastGlobalTransactionID() {
-    synchronized (ids) {
-      return (GlobalTransactionID) ((ids.isEmpty()) ? GlobalTransactionID.NULL_ID : ids.firstKey());
+    synchronized (this.ids) {
+      return (GlobalTransactionID) ((this.ids.isEmpty()) ? GlobalTransactionID.NULL_ID : this.ids.firstKey());
     }
   }
 
@@ -124,12 +124,12 @@ public class TransactionStoreImpl implements TransactionStore {
    * This method clears the server transaction ids less than the low water mark, for that particular node.
    */
   public void clearCommitedTransactionsBelowLowWaterMark(PersistenceTransaction tx, ServerTransactionID stxIDs) {
-    Collection gidDescs = sids.clearCommitedSidsBelowLowWaterMark(stxIDs);
+    Collection gidDescs = this.sids.clearCommitedSidsBelowLowWaterMark(stxIDs);
     removeGlobalTransactionDescs(gidDescs, tx);
   }
 
   public void shutdownNode(PersistenceTransaction tx, NodeID nid) {
-    Collection gidDescs = sids.removeAll(nid);
+    Collection gidDescs = this.sids.removeAll(nid);
     logger.info("shutdownClient() : Removing txns from DB : " + gidDescs.size());
     removeGlobalTransactionDescs(gidDescs, tx);
   }
@@ -141,16 +141,16 @@ public class TransactionStoreImpl implements TransactionStore {
     SortedSet<ServerTransactionID> toRemove = new TreeSet<ServerTransactionID>();
     for (Iterator i = gidDescs.iterator(); i.hasNext();) {
       GlobalTransactionDescriptor gd = (GlobalTransactionDescriptor) i.next();
-      ids.remove(gd.getGlobalTransactionID());
+      this.ids.remove(gd.getGlobalTransactionID());
       toRemove.add(gd.getServerTransactionID());
     }
     if (!gidDescs.isEmpty()) {
-      persistor.deleteAllGlobalTransactionDescriptors(tx, toRemove);
+      this.persistor.deleteAllGlobalTransactionDescriptors(tx, toRemove);
     }
   }
 
   public void shutdownAllClientsExcept(PersistenceTransaction tx, Set cids) {
-    Collection gidDescs = sids.removeAllExcept(cids);
+    Collection gidDescs = this.sids.removeAllExcept(cids);
     logger.info("shutdownAllClientsExcept() : Removing txns from DB : " + gidDescs.size());
     removeGlobalTransactionDescs(gidDescs, tx);
   }
@@ -164,20 +164,20 @@ public class TransactionStoreImpl implements TransactionStore {
   // Used in Passive server
   public void clearCommitedTransactionsBelowLowWaterMark(PersistenceTransaction tx, GlobalTransactionID lowWaterMark) {
     SortedSet<ServerTransactionID> toRemove = new TreeSet<ServerTransactionID>();
-    synchronized (ids) {
-      Map lowerThanLWM = ids.headMap(lowWaterMark);
+    synchronized (this.ids) {
+      Map lowerThanLWM = this.ids.headMap(lowWaterMark);
       for (Iterator i = lowerThanLWM.values().iterator(); i.hasNext();) {
         GlobalTransactionDescriptor gd = (GlobalTransactionDescriptor) i.next();
         if (gd.complete()) {
           i.remove();
           ServerTransactionID sid = gd.getServerTransactionID();
-          sids.remove(sid);
+          this.sids.remove(sid);
           toRemove.add(sid);
         }
       }
     }
     if (!toRemove.isEmpty()) {
-      persistor.deleteAllGlobalTransactionDescriptors(tx, toRemove);
+      this.persistor.deleteAllGlobalTransactionDescriptors(tx, toRemove);
     }
   }
 }

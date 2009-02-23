@@ -1,10 +1,12 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.dgc.impl;
 
 import com.tc.management.beans.object.ObjectManagementMonitor.GCComptroller;
 import com.tc.objectserver.dgc.api.GarbageCollector;
+import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
 
 public class GCComptrollerImpl implements GCComptroller {
 
@@ -15,15 +17,15 @@ public class GCComptrollerImpl implements GCComptroller {
   }
 
   public boolean isGCStarted() {
-    return collector.isStarted();
+    return this.collector.isStarted();
   }
 
   public boolean isGCDisabled() {
-    return collector.isDisabled();
+    return this.collector.isDisabled();
   }
 
   public void startGC() {
-    collector.gc();
+    this.collector.doGC(GCType.FULL_GC);
   }
 
 }

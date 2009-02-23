@@ -17,21 +17,33 @@ import java.util.List;
  */
 public class MockSink implements Sink {
 
-  public BoundedLinkedQueue queue = new BoundedLinkedQueue();
+  public BoundedLinkedQueue queue = new BoundedLinkedQueue(Integer.MAX_VALUE);
 
-  public boolean addLossy(EventContext context) {
+  public EventContext take() {
     try {
-      queue.put(context);
-    } catch (Exception e) {
+      return (EventContext) this.queue.take();
+    } catch (InterruptedException e) {
       throw new AssertionError(e);
     }
-    return true;
+  }
+
+  public boolean addLossy(EventContext context) {
+    if (queue.size() < 1) {
+      try {
+        this.queue.put(context);
+      } catch (Exception e) {
+        throw new AssertionError(e);
+      }
+      return true;
+    } else {
+      return false;
+    }
   }
 
   public void addMany(Collection contexts) {
     for (Iterator i = contexts.iterator(); i.hasNext();)
       try {
-        queue.put(contexts);
+        this.queue.put(contexts);
       } catch (Exception e) {
         throw new AssertionError(e);
       }
@@ -39,7 +51,7 @@ public class MockSink implements Sink {
 
   public void add(EventContext context) {
     try {
-      queue.put(context);
+      this.queue.put(context);
     } catch (Exception e) {
       throw new AssertionError(e);
     }
@@ -54,7 +66,7 @@ public class MockSink implements Sink {
   }
 
   public int size() {
-    return queue.size();
+    return this.queue.size();
   }
 
   public void turnTracingOn() {
