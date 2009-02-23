@@ -41,6 +41,11 @@ import junit.framework.Assert;
 public class ServerManager {
 
   private static final String         SESSION_TIM_TESTS_PROPERTIES = "/com/tctest/session-tim/tests.properties";
+
+  // The internal repository is listed first since it is the preferred repo
+  private static final String[]       TIM_GET_URLS                 = {
+      "http://forge-dev.terracotta.lan/api/index.xml.gz", "http://forge.terracotta.org/api/index.xml.gz" };
+
   protected final static TCLogger     logger                       = TCLogging.getLogger(ServerManager.class);
   private static int                  appServerIndex               = 0;
   private final boolean               DEBUG_MODE                   = false;
@@ -363,6 +368,7 @@ public class ServerManager {
       try {
         return runTimGet(name);
       } catch (Exception e) {
+        if (e instanceof RuntimeException) throw (RuntimeException) e;
         throw new RuntimeException(e);
       }
     }
@@ -386,20 +392,31 @@ public class ServerManager {
   }
 
   private String runTimGet(String name) throws Exception {
-    System.setProperty(Config.KEYSPACE + Config.TC_VERSION, ProductInfo.getInstance().mavenArtifactsVersion());
-    System.setProperty(Config.KEYSPACE + Config.INCLUDE_SNAPSHOTS, "true");
-    System.setProperty(Config.KEYSPACE + Config.MODULES_DIR, getTimGetModulesDir());
-    System.setProperty(Config.KEYSPACE + Config.DATA_FILE, new File(this.sandbox, "tim-get.index").getAbsolutePath());
-    TIMGetTool.mainWithExceptions(new String[] { "install", name });
+    for (String url : TIM_GET_URLS) {
+      try {
+        System.setProperty(Config.KEYSPACE + Config.TC_VERSION, ProductInfo.getInstance().mavenArtifactsVersion());
+        System.setProperty(Config.KEYSPACE + Config.INCLUDE_SNAPSHOTS, "true");
+        System.setProperty(Config.KEYSPACE + Config.MODULES_DIR, getTimGetModulesDir());
+        System.setProperty(Config.KEYSPACE + Config.DATA_FILE, new File(this.sandbox, "tim-get.index")
+            .getAbsolutePath());
+        System.setProperty(Config.KEYSPACE + Config.DATA_FILE_URL, url);
 
-    // This is a bit of hack, but without some mods to tim-get I'm not sure how to determine the version
-    File src = new File(getTimGetModulesDir() + "/org/terracotta/modules/" + name);
-    if (!src.isDirectory()) { throw new RuntimeException(src + " is not a directory"); }
+        TIMGetTool.mainWithExceptions(new String[] { "install", name });
 
-    String[] entries = src.list();
-    if (entries.length != 1) { throw new RuntimeException("unexpected directory contents [" + Arrays.asList(entries)
-                                                          + "] in " + src); }
-    return entries[0];
+        // This is a bit of hack, but without some mods to tim-get I'm not sure how to determine the version
+        File src = new File(getTimGetModulesDir() + "/org/terracotta/modules/" + name);
+        if (!src.isDirectory()) { throw new RuntimeException(src + " is not a directory"); }
+
+        String[] entries = src.list();
+        if (entries.length != 1) { throw new RuntimeException("unexpected directory contents ["
+                                                              + Arrays.asList(entries) + "] in " + src); }
+        return entries[0];
+      } catch (Exception e) {
+        Banner.errorBanner("Error using url [" + url + "] for tim-get, moving on to the next one");
+        e.printStackTrace();
+      }
+    }
+
+    throw new RuntimeException("Unable to resolve TIM with name " + name + " from any repository");
   }
-
 }
