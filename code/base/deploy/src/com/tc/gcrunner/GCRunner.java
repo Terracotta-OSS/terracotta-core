@@ -6,9 +6,12 @@ package com.tc.gcrunner;
 
 import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.cli.CommandLineBuilder;
+import com.tc.config.schema.L2Info;
+import com.tc.config.schema.ServerGroupInfo;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.management.beans.L2MBeanNames;
+import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.object.ObjectManagementMonitorMBean;
 
 import java.io.IOException;
@@ -101,6 +104,11 @@ public class GCRunner {
   }
 
   public void runGC() throws Exception {
+    if (setActiveCoordinatorJmxPortAndHost()) {
+      consoleLogger.info("DGC can only be called on server " + host + " with JMX port " + port
+                         + ". So the request is being redirected.");
+    }
+
     ObjectManagementMonitorMBean mbean = null;
     final JMXConnector jmxConnector = CommandLineBuilder.getJMXConnector(userName, host, port);
     final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
@@ -112,5 +120,54 @@ public class GCRunner {
       // DEV-1168
       consoleLogger.error((e.getCause() == null ? e.getMessage() : e.getCause().getMessage()));
     }
+  }
+
+  private boolean setActiveCoordinatorJmxPortAndHost() throws Exception {
+    boolean isChanged = false;
+    ServerGroupInfo[] serverGrpInfos = null;
+    TCServerInfoMBean mbean = null;
+    final JMXConnector jmxConnector = CommandLineBuilder.getJMXConnector(userName, host, port);
+    final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
+    mbean = MBeanServerInvocationProxy.newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);
+    serverGrpInfos = mbean.getServerGroupInfo();
+    L2Info[] activeGrpServerInfos = null;
+    for (int i = 0; i < serverGrpInfos.length; i++) {
+      if (serverGrpInfos[i].isCoordinator()) {
+        activeGrpServerInfos = serverGrpInfos[i].members();
+      }
+    }
+
+    jmxConnector.close();
+
+    for (int i = 0; i < activeGrpServerInfos.length; i++) {
+      if (isActive(activeGrpServerInfos[i].host(), activeGrpServerInfos[i].jmxPort())) {
+        isChanged = true;
+        this.host = activeGrpServerInfos[i].host();
+        this.port = activeGrpServerInfos[i].jmxPort();
+        break;
+      }
+    }
+
+    return isChanged;
+  }
+
+  private boolean isActive(String hostname, int jmxPort) throws Exception {
+    TCServerInfoMBean mbean = null;
+    boolean isActive = false;
+    JMXConnector jmxConnector = null;
+
+    try {
+      jmxConnector = CommandLineBuilder.getJMXConnector(userName, hostname, jmxPort);
+      final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
+      mbean = MBeanServerInvocationProxy
+          .newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);
+      isActive = mbean.isActive();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    } finally {
+      if (jmxConnector != null) jmxConnector.close();
+    }
+
+    return isActive;
   }
 }
