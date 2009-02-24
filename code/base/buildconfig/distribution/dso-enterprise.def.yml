@@ -52,7 +52,7 @@ bundled_components:
           - tc-config-reference
   - common:
       module_packages:
-        - terracotta-tim-api-version:
+        - terracotta-tim-api:
             install_directory: lib
             modules:
               - common-api
