@@ -9,8 +9,6 @@ import com.tc.objectserver.context.CommitTransactionContext;
 import com.tc.objectserver.context.RecallObjectsContext;
 import com.tc.text.PrettyPrinter;
 
-
-import java.io.Writer;
 import java.util.Collection;
 
 public class NullTransactionalObjectManager implements TransactionalObjectManager {
@@ -46,10 +44,6 @@ public class NullTransactionalObjectManager implements TransactionalObjectManage
 
   public String dump() {
     return null;
-  }
-
-  public void dump(Writer writer) {
-    // Nop
   }
 
   public void dumpToLogger() {

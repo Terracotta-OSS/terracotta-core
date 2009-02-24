@@ -24,8 +24,6 @@ import com.tc.object.tx.TimerSpec;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.runtime.LockInfoByThreadID;
 
-import java.io.IOException;
-import java.io.Writer;
 import java.util.Collection;
 
 public class StripedClientLockManagerImpl implements ClientLockManager, ClientHandshakeCallback {
@@ -87,20 +85,20 @@ public class StripedClientLockManagerImpl implements ClientLockManager, ClientHa
   }
 
   public synchronized void pause(NodeID remote, int disconnected) {
-    for (int i = 0; i < this.lockManagers.length; i++) {
-      this.lockManagers[i].pause(remote, disconnected);
+    for (ClientLockManagerImpl lockManager : this.lockManagers) {
+      lockManager.pause(remote, disconnected);
     }
   }
 
   public synchronized void unpause(NodeID remote, int disconnected) {
-    for (int i = 0; i < this.lockManagers.length; i++) {
-      this.lockManagers[i].unpause(remote, disconnected);
+    for (ClientLockManagerImpl lockManager : this.lockManagers) {
+      lockManager.unpause(remote, disconnected);
     }
   }
 
   public void initializeHandshake(NodeID thisNode, NodeID remoteNode, ClientHandshakeMessage handshakeMessage) {
-    for (int i = 0; i < this.lockManagers.length; i++) {
-      this.lockManagers[i].initializeHandshake(thisNode, remoteNode, handshakeMessage);
+    for (ClientLockManagerImpl lockManager : this.lockManagers) {
+      lockManager.initializeHandshake(thisNode, remoteNode, handshakeMessage);
     }
   }
 
@@ -171,35 +169,35 @@ public class StripedClientLockManagerImpl implements ClientLockManager, ClientHa
   }
 
   public void addAllLocksTo(LockInfoByThreadID lockInfo) {
-    for (int i = 0; i < this.lockManagers.length; i++) {
-      this.lockManagers[i].addAllLocksTo(lockInfo);
+    for (ClientLockManagerImpl lockManager : this.lockManagers) {
+      lockManager.addAllLocksTo(lockInfo);
     }
   }
 
   public Collection addAllHeldLocksTo(Collection c) {
-    for (int i = 0; i < this.lockManagers.length; i++) {
-      this.lockManagers[i].addAllHeldLocksTo(c);
+    for (ClientLockManagerImpl lockManager : this.lockManagers) {
+      lockManager.addAllHeldLocksTo(c);
     }
     return c;
   }
 
   public Collection addAllPendingLockRequestsTo(Collection c) {
-    for (int i = 0; i < this.lockManagers.length; i++) {
-      this.lockManagers[i].addAllPendingLockRequestsTo(c);
+    for (ClientLockManagerImpl lockManager : this.lockManagers) {
+      lockManager.addAllPendingLockRequestsTo(c);
     }
     return c;
   }
 
   public Collection addAllPendingTryLockRequestsTo(Collection c) {
-    for (int i = 0; i < this.lockManagers.length; i++) {
-      this.lockManagers[i].addAllPendingTryLockRequestsTo(c);
+    for (ClientLockManagerImpl lockManager : this.lockManagers) {
+      lockManager.addAllPendingTryLockRequestsTo(c);
     }
     return c;
   }
 
   public Collection addAllWaitersTo(Collection c) {
-    for (int i = 0; i < this.lockManagers.length; i++) {
-      this.lockManagers[i].addAllWaitersTo(c);
+    for (ClientLockManagerImpl lockManager : this.lockManagers) {
+      lockManager.addAllWaitersTo(c);
     }
     return c;
   }
@@ -209,20 +207,20 @@ public class StripedClientLockManagerImpl implements ClientLockManager, ClientHa
   }
 
   public void requestLockSpecs() {
-    for (int i = 0; i < this.lockManagers.length; i++) {
-      this.lockManagers[i].requestLockSpecs();
+    for (ClientLockManagerImpl lockManager : this.lockManagers) {
+      lockManager.requestLockSpecs();
     }
   }
 
   public void setLockStatisticsConfig(int traceDepth, int gatherInterval) {
-    for (int i = 0; i < this.lockManagers.length; i++) {
-      this.lockManagers[i].setLockStatisticsConfig(traceDepth, gatherInterval);
+    for (ClientLockManagerImpl lockManager : this.lockManagers) {
+      lockManager.setLockStatisticsConfig(traceDepth, gatherInterval);
     }
   }
 
   public void setLockStatisticsEnabled(boolean statEnable) {
-    for (int i = 0; i < this.lockManagers.length; i++) {
-      this.lockManagers[i].setLockStatisticsEnabled(statEnable);
+    for (ClientLockManagerImpl lockManager : this.lockManagers) {
+      lockManager.setLockStatisticsEnabled(statEnable);
     }
   }
 
@@ -234,15 +232,6 @@ public class StripedClientLockManagerImpl implements ClientLockManager, ClientHa
     }
     sb.append("}");
     return sb.toString();
-  }
-
-  public void dump(Writer writer) {
-    try {
-      writer.write(dump());
-      writer.flush();
-    } catch (IOException e) {
-      throw new AssertionError(e);
-    }
   }
 
   public void dumpToLogger() {

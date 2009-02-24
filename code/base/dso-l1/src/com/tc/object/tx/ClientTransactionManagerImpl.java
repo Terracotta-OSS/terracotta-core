@@ -37,10 +37,8 @@ import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
 import com.tc.util.Util;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.io.Writer;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -906,15 +904,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     new PrettyPrinterImpl(pw).visit(this);
     writer.flush();
     return writer.toString();
-  }
-
-  public void dump(final Writer writer) {
-    try {
-      writer.write(dump());
-      writer.flush();
-    } catch (IOException e) {
-      throw new AssertionError(e);
-    }
   }
 
   public void dumpToLogger() {

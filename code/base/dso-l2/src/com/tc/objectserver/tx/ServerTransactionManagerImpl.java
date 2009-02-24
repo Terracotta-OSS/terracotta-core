@@ -41,7 +41,6 @@ import com.tc.util.State;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -139,12 +138,6 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     new PrettyPrinterImpl(pw).visit(this);
     writer.flush();
     return writer.toString();
-  }
-
-  public void dump(Writer writer) {
-    PrintWriter pw = new PrintWriter(writer);
-    pw.write(dump());
-    pw.flush();
   }
 
   public void dumpToLogger() {

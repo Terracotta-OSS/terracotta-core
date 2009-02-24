@@ -3,6 +3,7 @@
  */
 package com.tc.objectserver.impl;
 
+import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.PostInit;
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
@@ -44,8 +45,6 @@ import java.util.List;
 
 public class StandardDSOServerBuilder implements DSOServerBuilder {
 
-  private GarbageCollector gc;
-
   public StandardDSOServerBuilder(TCLogger logger) {
     logger.info("Standard DSO Server created");
   }
@@ -57,13 +56,10 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                                  ObjectManager objectManager, ClientStateManager clientStateManger,
                                                  GCStatsEventPublisher gcEventListener,
                                                  StatisticsAgentSubSystem statsAgentSubSystem) {
-    gc = new MarkAndSweepGarbageCollector(objectManagerConfig, objectMgr, stateManager, gcPublisher);
+    MarkAndSweepGarbageCollector gc = new MarkAndSweepGarbageCollector(objectManagerConfig, objectMgr, stateManager,
+                                                                       gcPublisher);
     gc.addListener(gcEventListener);
     return gc;
-  }
-
-  public GarbageCollector getGarbageCollector() {
-    return this.gc;
   }
 
   public GroupManager createGroupCommManager(boolean networkedHA, L2TVSConfigurationSetupManager configManager,
@@ -127,6 +123,14 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
 
   public GCStatsEventPublisher getLocalDGCStatsEventPublisher() {
     throw new AssertionError("Not supported");
+  }
+
+  public void dump() {
+    // Nothing to dump
+  }
+
+  public void initializeContext(ConfigurationContext context) {
+    // Nothing to initialize here
   }
 
 }

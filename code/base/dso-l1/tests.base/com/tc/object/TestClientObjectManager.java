@@ -16,7 +16,6 @@ import com.tc.object.util.ToggleableStrongReference;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 
-import java.io.Writer;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.Collection;
@@ -37,7 +36,7 @@ public class TestClientObjectManager implements ClientObjectManager {
   private ClientTransactionManager txManager;
 
   public void add(Object id, TCObject tc) {
-    objects.put(id, tc);
+    this.objects.put(id, tc);
     this.object2TCObject.put(tc.getPeerObject(), tc);
   }
 
@@ -50,7 +49,7 @@ public class TestClientObjectManager implements ClientObjectManager {
   }
 
   public boolean isManaged(Object pojo) {
-    return this.object2TCObject.containsKey(pojo) || isManaged;
+    return this.object2TCObject.containsKey(pojo) || this.isManaged;
   }
 
   public boolean isPortableInstance(Object pojo) {
@@ -71,8 +70,8 @@ public class TestClientObjectManager implements ClientObjectManager {
     // System.out.println(this + ".lookupOrCreate(" + obj + ")");
     TCObject rv = lookup(obj);
     if (rv == null) {
-      rv = new MockTCObject(new ObjectID(idSequence++), obj);
-      object2TCObject.put(obj, rv);
+      rv = new MockTCObject(new ObjectID(this.idSequence++), obj);
+      this.object2TCObject.put(obj, rv);
       if (obj instanceof Manageable) {
         ((Manageable) obj).__tc_managed(rv);
       }
@@ -81,7 +80,7 @@ public class TestClientObjectManager implements ClientObjectManager {
   }
 
   private synchronized TCObject lookup(Object obj) {
-    TCObject rv = (TCObject) object2TCObject.get(obj);
+    TCObject rv = (TCObject) this.object2TCObject.get(obj);
     return rv;
   }
 
@@ -101,13 +100,13 @@ public class TestClientObjectManager implements ClientObjectManager {
   }
 
   public Collection getAllObjectIDsAndClear(Collection c) {
-    c.addAll(objects.keySet());
+    c.addAll(this.objects.keySet());
     return c;
   }
 
   public TCObject lookup(ObjectID id) {
     System.out.println(this + ".lookup(" + id + ")");
-    return (TCObject) objects.get(id);
+    return (TCObject) this.objects.get(id);
   }
 
   public WeakReference createNewPeer(TCClass clazz, int size, ObjectID id, ObjectID parentID) {
@@ -115,11 +114,11 @@ public class TestClientObjectManager implements ClientObjectManager {
   }
 
   public Object lookupObject(ObjectID id) {
-    return ((TCObject) objects.get(id)).getPeerObject();
+    return ((TCObject) this.objects.get(id)).getPeerObject();
   }
 
   public Object lookupObject(ObjectID id, ObjectID parentContext) {
-    return ((TCObject) objects.get(id)).getPeerObject();
+    return ((TCObject) this.objects.get(id)).getPeerObject();
   }
 
   public TCClass getOrCreateClass(Class clazz) {
@@ -151,7 +150,7 @@ public class TestClientObjectManager implements ClientObjectManager {
   }
 
   public ClientTransactionManager getTransactionManager() {
-    return txManager;
+    return this.txManager;
   }
 
   public Class getClassFor(String className, LoaderDescription loaderDesc) {
@@ -251,14 +250,8 @@ public class TestClientObjectManager implements ClientObjectManager {
     throw new ImplementMe();
   }
 
-  public void dump(Writer writer) {
-    throw new ImplementMe();
-
-  }
-
   public void dumpToLogger() {
     throw new ImplementMe();
-
   }
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
@@ -266,7 +259,7 @@ public class TestClientObjectManager implements ClientObjectManager {
   }
 
   public WeakReference newWeakObjectReference(ObjectID objectID, Object peer) {
-    return new WeakObjectReference(objectID, peer, referenceQueue);
+    return new WeakObjectReference(objectID, peer, this.referenceQueue);
   }
 
 }

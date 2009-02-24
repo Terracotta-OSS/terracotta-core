@@ -30,7 +30,6 @@ import com.tc.object.tx.UnlockedSharedObjectException;
 import com.tc.object.util.ToggleableStrongReference;
 import com.tc.text.PrettyPrinter;
 
-import java.io.Writer;
 import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.List;
@@ -159,14 +158,8 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public void dump(Writer writer) {
-      throw new ImplementMe();
-
-    }
-
     public void dumpToLogger() {
       throw new ImplementMe();
-
     }
 
     public PrettyPrinter prettyPrint(PrettyPrinter out) {
@@ -335,10 +328,6 @@ public class ManagerImplTest extends BaseDSOTestCase {
     }
 
     public String dump() {
-      throw new ImplementMe();
-    }
-
-    public void dump(Writer writer) {
       throw new ImplementMe();
     }
 

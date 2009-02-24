@@ -41,10 +41,8 @@ import com.tc.util.State;
 import com.tc.util.Util;
 import com.tc.util.runtime.LockInfoByThreadID;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -709,15 +707,6 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     new PrettyPrinterImpl(pw).visit(this);
     writer.flush();
     return writer.toString();
-  }
-
-  public void dump(Writer writer) {
-    try {
-      writer.write(dump());
-      writer.flush();
-    } catch (IOException e) {
-      throw new AssertionError(e);
-    }
   }
 
   public void dumpToLogger() {

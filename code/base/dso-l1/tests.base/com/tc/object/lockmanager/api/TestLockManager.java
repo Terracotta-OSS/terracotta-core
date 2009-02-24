@@ -12,7 +12,6 @@ import com.tc.object.tx.TimerSpec;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.runtime.LockInfoByThreadID;
 
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -25,11 +24,11 @@ public class TestLockManager implements ClientLockManager {
   public final List unlockCalls    = new LinkedList();
 
   public void unlock(LockID id, ThreadID threadID) {
-    unlockCalls.add(new Object[] { id, threadID });
+    this.unlockCalls.add(new Object[] { id, threadID });
   }
 
   public LockID lockIDFor(String id) {
-    lockIDForCalls.add(id);
+    this.lockIDForCalls.add(id);
     return new LockID(id);
   }
 
@@ -38,15 +37,15 @@ public class TestLockManager implements ClientLockManager {
   }
 
   public void lock(LockID id, ThreadID threadID, int lockType, String lockObjectType, String contextInfo) {
-    locks.add(new Object[] { id, threadID, new Integer(lockType) });
+    this.locks.add(new Object[] { id, threadID, new Integer(lockType) });
   }
 
   public void wait(LockID lockID, ThreadID transactionID, TimerSpec call, Object waitLock, WaitListener listener) {
-    waitCalls.add(new Object[] { lockID, transactionID, call, waitLock, listener });
+    this.waitCalls.add(new Object[] { lockID, transactionID, call, waitLock, listener });
   }
 
   public Notify notify(LockID lockID, ThreadID threadID, boolean all) {
-    notifyCalls.add(new Object[] { lockID, threadID, new Boolean(all) });
+    this.notifyCalls.add(new Object[] { lockID, threadID, new Boolean(all) });
     return Notify.NULL;
   }
 
@@ -63,7 +62,7 @@ public class TestLockManager implements ClientLockManager {
   }
 
   public boolean isLocked(LockID lockID, ThreadID threadID, int lockLevel) {
-    return lockIDForCalls.contains(lockID.asString());
+    return this.lockIDForCalls.contains(lockID.asString());
   }
 
   public int localHeldCount(LockID lockID, int lockLevel, ThreadID threadID) {
@@ -107,10 +106,6 @@ public class TestLockManager implements ClientLockManager {
   }
 
   public String dump() {
-    throw new ImplementMe();
-  }
-
-  public void dump(Writer writer) {
     throw new ImplementMe();
   }
 

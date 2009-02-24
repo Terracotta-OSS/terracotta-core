@@ -50,7 +50,6 @@ import com.tc.util.TCCollections;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -137,7 +136,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     Set<ManagedObject> toFlush = new HashSet<ManagedObject>();
     for (final ManagedObjectReference ref : this.references.values()) {
       ManagedObject obj = ref.getObject();
-      if (!obj.isNew()) toFlush.add(obj);
+      if (!obj.isNew()) {
+        toFlush.add(obj);
+      }
     }
     PersistenceTransaction tx = newTransaction();
     flushAllAndCommit(tx, toFlush);
@@ -309,9 +310,13 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         context.missingObject(id);
         return null;
       }
-      if (context.updateStats()) this.stats.cacheMiss();
+      if (context.updateStats()) {
+        this.stats.cacheMiss();
+      }
     } else {
-      if (context.updateStats()) this.stats.cacheHit();
+      if (context.updateStats()) {
+        this.stats.cacheHit();
+      }
       if (!context.removeOnRelease()) {
         if (rv.isRemoveOnRelease()) {
           // This Object is faulted in by GC or Management interface with removeOnRelease = true, but before they got a
@@ -370,7 +375,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       ManagedObjectReference rv = getReference(id);
       if (rv == null) {
         // This object is not in the cache, initiate faulting for the object
-        if (++this.preFetchedCount % 1000 == 0) logger.info("Prefetched " + this.preFetchedCount + " objects");
+        if (++this.preFetchedCount % 1000 == 0) {
+          logger.info("Prefetched " + this.preFetchedCount + " objects");
+        }
         initiateFaultingFor(id, false);
       } else {
         this.stats.cacheHit();
@@ -515,7 +522,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       traverser.traverse(lookedUpObjects);
       lookedUpObjects = new HashSet<ManagedObjectReference>();
       Set<ObjectID> lookupObjectIDs = traverser.getObjectsToLookup();
-      if (lookupObjectIDs.isEmpty()) break;
+      if (lookupObjectIDs.isEmpty()) {
+        break;
+      }
       this.stateManager.removeReferencedFrom(nodeID, lookupObjectIDs);
       for (final ObjectID id : lookupObjectIDs) {
         ManagedObjectReference newRef = getReference(id);
@@ -541,7 +550,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   public void release(PersistenceTransaction persistenceTransaction, ManagedObject object) {
-    if (this.config.paranoid()) flushAndCommit(persistenceTransaction, object);
+    if (this.config.paranoid()) {
+      flushAndCommit(persistenceTransaction, object);
+    }
     synchronized (this) {
       basicRelease(object);
       postRelease();
@@ -573,7 +584,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
    * not for client lookups.
    */
   public void releaseAll(PersistenceTransaction persistenceTransaction, Collection<ManagedObject> managedObjects) {
-    if (this.config.paranoid()) flushAllAndCommit(persistenceTransaction, managedObjects);
+    if (this.config.paranoid()) {
+      flushAllAndCommit(persistenceTransaction, managedObjects);
+    }
     synchronized (this) {
       for (final ManagedObject managedObject : managedObjects) {
         basicRelease(managedObject);
@@ -735,12 +748,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return writer.toString();
   }
 
-  public void dump(Writer writer) {
-    PrintWriter pw = new PrintWriter(writer);
-    pw.write(dump());
-    pw.flush();
-  }
-
   // This method is for tests only
   public synchronized boolean isReferenced(ObjectID id) {
     ManagedObjectReference reference = getReference(id);
@@ -846,13 +853,13 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   private void assertNotInShutdown() {
-    if (this.inShutdown) throw new ShutdownError();
+    if (this.inShutdown) { throw new ShutdownError(); }
   }
 
   public void evictCache(CacheStats stat) {
     int size = references_size();
     int toEvict = stat.getObjectCountToEvict(size);
-    if (toEvict <= 0) return;
+    if (toEvict <= 0) { return; }
 
     // This could be a costly call, so call just once
     Collection removalCandidates = this.evictionPolicy.getRemovalCandidates(toEvict);
@@ -884,13 +891,17 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     Iterator<ManagedObject> flushIter = toFlush.iterator();
     while (flushIter.hasNext()) {
       String className = flushIter.next().getManagedObjectState().getClassName();
-      if (className == null) className = "UNKNOWN";
+      if (className == null) {
+        className = "UNKNOWN";
+      }
       this.objectStatsRecorder.updateFlushStats(className);
     }
     Iterator<ManagedObjectReference> removedIter = removedObjects.iterator();
     while (removedIter.hasNext()) {
       String className = removedIter.next().getObject().getManagedObjectState().getClassName();
-      if (className == null) className = "UNKNOWN";
+      if (className == null) {
+        className = "UNKNOWN";
+      }
       this.objectStatsRecorder.updateFlushStats(className);
     }
   }

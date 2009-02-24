@@ -8,6 +8,7 @@ import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.l2.api.L2Coordinator;
+import com.tc.management.beans.TCDumper;
 import com.tc.net.ServerID;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.net.ChannelStatsImpl;
@@ -35,7 +36,7 @@ import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 
 import java.util.List;
 
-public interface DSOServerBuilder {
+public interface DSOServerBuilder extends TCDumper, PostInit {
 
   TransactionFilter getTransactionFilter(List<PostInit> toInit, StageManager stageManager, int maxStageSize);
 
@@ -73,8 +74,6 @@ public interface DSOServerBuilder {
                                                               DSOGlobalServerStats serverStats);
 
   GroupManager getClusterGroupCommManager();
-
-  GarbageCollector getGarbageCollector();
 
   GCStatsEventPublisher getLocalDGCStatsEventPublisher();
 
