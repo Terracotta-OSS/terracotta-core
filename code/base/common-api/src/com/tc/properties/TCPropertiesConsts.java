@@ -205,11 +205,18 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section : L2 AA Properties
-   * Description : Properties for AA 
+   * Section : L2 Server Array Properties
    * </code>
    ********************************************************************************************************************/
   public static final String   L2_SERVERARRAY_2PC_ENABLED                             = "l2.serverarray.2pc.enabled";
+
+  /*********************************************************************************************************************
+   * <code>
+   * Section : L1 Server Array Properties
+   * </code>
+   ********************************************************************************************************************/
+  public static final String   L1_SERVERARRAY_OBJECTCREATIONSTRATEGY                  = "l1.serverarray.objectCreationStrategy";
+  public static final String   L1_SERVERARRAY_GROUPAFFINITY                           = "l1.serverarray.objectCreationStrategy.groupAffinity";
 
   /*********************************************************************************************************************
    * <code>
