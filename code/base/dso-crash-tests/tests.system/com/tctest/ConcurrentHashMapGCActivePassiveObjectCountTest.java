@@ -25,6 +25,16 @@ public class ConcurrentHashMapGCActivePassiveObjectCountTest extends GCAndActive
     // disableAllUntil("2009-03-01");
   }
 
+  /*
+   * skip running on normal mode
+   */
+  @Override
+  public void test() throws Exception {
+    if (isMultipleServerTest()) {
+      super.test();
+    }
+  }
+
   @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setAttribute(ConcurrentHashMapSwappingTestApp.GC_TEST_KEY, "true");
