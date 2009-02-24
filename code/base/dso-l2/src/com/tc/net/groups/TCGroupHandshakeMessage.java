@@ -83,8 +83,7 @@ public class TCGroupHandshakeMessage extends DSOMessageBase {
         messageType = getByteValue();
         return true;
       case NODE_ID:
-        nodeID = new ServerID();
-        getObject(nodeID);
+        nodeID = (ServerID) getNodeIDValue();
         return true;
       case HANDSHAKE_MESSAGE_ID:
         message = getIntValue();
