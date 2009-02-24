@@ -8,21 +8,18 @@ import org.apache.commons.io.IOUtils;
 import org.apache.tools.ant.filters.StringInputStream;
 
 import com.tc.config.schema.builder.InstrumentedClassConfigBuilder;
-import com.tc.config.schema.builder.LockConfigBuilder;
-import com.tc.config.schema.builder.RootConfigBuilder;
 import com.tc.config.schema.test.InstrumentedClassConfigBuilderImpl;
 import com.tc.config.schema.test.L2ConfigBuilder;
-import com.tc.config.schema.test.LockConfigBuilderImpl;
-import com.tc.config.schema.test.RootConfigBuilderImpl;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
+import com.tctest.runner.AbstractTransparentApp;
 import com.tctest.runner.TransparentAppConfig;
 
 import java.io.File;
 import java.io.FileOutputStream;
 
-public class ClusterEventsTest extends TransparentTestBase {
+public class ClusterEventsOperationsTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 1;
   private int              port;
@@ -34,14 +31,14 @@ public class ClusterEventsTest extends TransparentTestBase {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
     TransparentAppConfig cfg = t.getTransparentAppConfig();
-    cfg.setAttribute(ClusterEventsTestApp.CONFIG_FILE, configFile.getAbsolutePath());
-    cfg.setAttribute(ClusterEventsTestApp.PORT_NUMBER, String.valueOf(port));
-    cfg.setAttribute(ClusterEventsTestApp.HOST_NAME, "localhost");
+    cfg.setAttribute(ClusterEventsOperationsTestApp.CONFIG_FILE, configFile.getAbsolutePath());
+    cfg.setAttribute(ClusterEventsOperationsTestApp.PORT_NUMBER, String.valueOf(port));
+    cfg.setAttribute(ClusterEventsOperationsTestApp.HOST_NAME, "localhost");
   }
 
   @Override
   protected Class getApplicationClass() {
-    return ClusterEventsTestApp.class;
+    return ClusterEventsOperationsTestApp.class;
   }
 
   @Override
@@ -68,6 +65,9 @@ public class ClusterEventsTest extends TransparentTestBase {
   }
 
   public static TerracottaConfigBuilder createConfig(final int port, final int adminPort) {
+    String testClassName = ClusterEventsOperationsTestApp.class.getName();
+    String testClassSuperName = AbstractTransparentApp.class.getName();
+
     TerracottaConfigBuilder out = new TerracottaConfigBuilder();
 
     out.getServers().getL2s()[0].setDSOPort(port);
@@ -75,41 +75,16 @@ public class ClusterEventsTest extends TransparentTestBase {
     out.getServers().getL2s()[0].setPersistenceMode(L2ConfigBuilder.PERSISTENCE_MODE_PERMANENT_STORE);
 
     InstrumentedClassConfigBuilder instrumented1 = new InstrumentedClassConfigBuilderImpl();
-    instrumented1.setClassExpression(ClusterEventsTestApp.class.getName());
+    instrumented1.setClassExpression(testClassName + "*");
 
-    String testEventsL1Client = ClusterEventsL1Client.class.getName();
     InstrumentedClassConfigBuilder instrumented2 = new InstrumentedClassConfigBuilderImpl();
-    instrumented2.setClassExpression(testEventsL1Client);
+    instrumented2.setClassExpression(testClassSuperName + "*");
 
     String testEventsListenerClass = ClusterEventsTestListener.class.getName();
     InstrumentedClassConfigBuilder instrumented3 = new InstrumentedClassConfigBuilderImpl();
     instrumented3.setClassExpression(testEventsListenerClass);
 
-    String testStateClass = ClusterEventsTestState.class.getName();
-    InstrumentedClassConfigBuilder instrumented4 = new InstrumentedClassConfigBuilderImpl();
-    instrumented4.setClassExpression(testStateClass);
-
-    out.getApplication().getDSO().setInstrumentedClasses(new InstrumentedClassConfigBuilder[] { instrumented1, instrumented2, instrumented3, instrumented4 });
-
-    RootConfigBuilder root = new RootConfigBuilderImpl();
-    root.setFieldName(testStateClass+".listeners");
-    root.setRootName("listeners");
-
-    out.getApplication().getDSO().setRoots(new RootConfigBuilder[] { root });
-
-    LockConfigBuilder lock1 =  new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
-    lock1.setLockLevel(LockConfigBuilder.LEVEL_WRITE);
-    lock1.setMethodExpression("* " + ClusterEventsTestApp.class.getName() + "*.*(..)");
-
-    LockConfigBuilder lock2 =  new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
-    lock2.setLockLevel(LockConfigBuilder.LEVEL_WRITE);
-    lock2.setMethodExpression("* " + testEventsListenerClass + "*.*(..)");
-
-    LockConfigBuilder lock3 =  new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
-    lock3.setLockLevel(LockConfigBuilder.LEVEL_WRITE);
-    lock3.setMethodExpression("* " + testStateClass + "*.*(..)");
-
-    out.getApplication().getDSO().setLocks(new LockConfigBuilder[] { lock1, lock2, lock3 } );
+    out.getApplication().getDSO().setInstrumentedClasses(new InstrumentedClassConfigBuilder[] { instrumented1, instrumented2, instrumented3 });
 
     return out;
   }

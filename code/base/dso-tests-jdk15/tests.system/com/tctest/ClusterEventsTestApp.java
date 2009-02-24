@@ -10,16 +10,18 @@ import com.tc.cluster.DsoCluster;
 import com.tc.injection.annotations.InjectedDsoInstance;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.loaders.IsolationClassLoader;
+import com.tc.object.tools.BootJarTool;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.util.Assert;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class ClusterEventsTestApp extends AbstractTransparentApp {
 
@@ -46,14 +48,14 @@ public class ClusterEventsTestApp extends AbstractTransparentApp {
     config.getOrCreateSpec(testMainClass);
     config.addWriteAutolock("* " + testMainClass + "*.*(..)");
 
-    String testEventsL1Client = "com.tctest.ClusterEventsL1Client";
+    String testEventsL1Client = ClusterEventsL1Client.class.getName();
     config.getOrCreateSpec(testEventsL1Client);
 
-    String testEventsListenerClass = "com.tctest.ClusterEventsTestListener";
+    String testEventsListenerClass = ClusterEventsTestListener.class.getName();
     config.getOrCreateSpec(testEventsListenerClass);
     config.addWriteAutolock("* " + testEventsListenerClass + "*.*(..)");
 
-    String testStateClass = "com.tctest.ClusterEventsTestState";
+    String testStateClass = ClusterEventsTestState.class.getName();
     config.getOrCreateSpec(testStateClass).addRoot("listeners", "listeners");
     config.addWriteAutolock("* " + testStateClass + "*.*(..)");
   }
@@ -68,31 +70,40 @@ public class ClusterEventsTestApp extends AbstractTransparentApp {
 
   private void runTest() throws Throwable {
     Thread.sleep(5000);
-/*
-    config.getServerControl().crash();
-    while (config.getServerControl().isRunning()) {
-      Thread.sleep(5000);
-    }
 
-    config.getServerControl().start();
-    while (!config.getServerControl().isRunning()) {
-      Thread.sleep(5000);
-    }
-*/
     spawnNewClient(1);
+
+    waitUntilOnlyOneNodeInTopology();
 
     spawnNewClient(2);
 
+    waitUntilOnlyOneNodeInTopology();
+
+    Assert.assertEquals(3, state.getListeners().size());
+
+    List<String> node0Events = state.getListeners().get("ClientID[0]").getOccurredEvents();
+    Assert.assertEquals(6, node0Events.size());
+    Assert.assertEquals("ClientID[0] JOINED", node0Events.get(0));
+    Assert.assertEquals("ClientID[0] ENABLED", node0Events.get(1));
+    Assert.assertEquals("ClientID[1] JOINED", node0Events.get(2));
+    Assert.assertEquals("ClientID[1] LEFT", node0Events.get(3));
+    Assert.assertEquals("ClientID[2] JOINED", node0Events.get(4));
+    Assert.assertEquals("ClientID[2] LEFT", node0Events.get(5));
+
+    List<String> node1Events = state.getListeners().get("ClientID[1]").getOccurredEvents();
+    Assert.assertEquals(2, node1Events.size());
+    Assert.assertEquals("ClientID[1] JOINED", node1Events.get(0));
+    Assert.assertEquals("ClientID[1] ENABLED", node1Events.get(1));
+
+    List<String> node2Events = state.getListeners().get("ClientID[2]").getOccurredEvents();
+    Assert.assertEquals(2, node2Events.size());
+    Assert.assertEquals("ClientID[2] JOINED", node2Events.get(0));
+    Assert.assertEquals("ClientID[2] ENABLED", node2Events.get(1));
+  }
+
+  private void waitUntilOnlyOneNodeInTopology() throws InterruptedException {
     while (cluster.getClusterTopology().getNodes().size() > 1) {
       Thread.sleep(1000);
-    }
-
-    for (Map.Entry<String, ClusterEventsTestListener> entry : state.getListeners().entrySet()) {
-      System.out.println(entry.getKey());
-      System.out.println(entry.getValue());
-      for (String event : entry.getValue().getOccurredEvents()) {
-        System.out.println(event);
-      }
     }
   }
 
@@ -100,11 +111,12 @@ public class ClusterEventsTestApp extends AbstractTransparentApp {
     final String hostName = config.getAttribute(HOST_NAME);
     final int port = Integer.parseInt(config.getAttribute(PORT_NUMBER));
     final File configFile = new File(config.getAttribute(CONFIG_FILE));
-    File workingDir = new File(configFile.getParentFile(), "client-"+id);
+    File workingDir = new File(configFile.getParentFile(), "client-" + id);
     FileUtils.forceMkdir(workingDir);
 
     List jvmArgs = new ArrayList();
     addTestTcPropertiesFile(jvmArgs);
+    jvmArgs.add("-D" + BootJarTool.SYSTEM_CLASSLOADER_NAME_PROPERTY + "=" + IsolationClassLoader.loaderName());
     ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, ClusterEventsL1Client.class, configFile
         .getAbsolutePath(), new String[0], workingDir, jvmArgs);
     client.start();

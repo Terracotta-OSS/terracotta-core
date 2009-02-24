@@ -43,6 +43,8 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
   void testNodeMetaData() {
     Assert.assertNotNull(cluster.getCurrentNode().getIp());
     Assert.assertNotNull(cluster.getCurrentNode().getHostname());
+    Assert.assertEquals("127.0.0.1", cluster.getCurrentNode().getIp());
+    Assert.assertEquals("localhost", cluster.getCurrentNode().getHostname());
   }
 
   void testGetNodesWithObjectUnclustered() {
