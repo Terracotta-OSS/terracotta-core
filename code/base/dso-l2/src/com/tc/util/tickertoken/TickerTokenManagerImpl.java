@@ -2,9 +2,10 @@
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tc.util;
+package com.tc.util.tickertoken;
 
-import com.tc.util.msg.TickerTokenMessage;
+import com.tc.util.Counter;
+import com.tc.util.tickertoken.msg.TickerTokenMessage;
 
 import java.util.Collections;
 import java.util.HashMap;

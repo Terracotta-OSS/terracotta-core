@@ -2,13 +2,13 @@
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tc.util.handler;
+package com.tc.util.tickertoken.handler;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
-import com.tc.util.TickerToken;
-import com.tc.util.TickerTokenManager;
-import com.tc.util.msg.TickerTokenMessage;
+import com.tc.util.tickertoken.TickerToken;
+import com.tc.util.tickertoken.TickerTokenManager;
+import com.tc.util.tickertoken.msg.TickerTokenMessage;
 
 public class TickerTokenMessageHandler extends AbstractEventHandler {
 

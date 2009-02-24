@@ -2,7 +2,7 @@
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tc.util;
+package com.tc.util.tickertoken;
 
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
@@ -16,10 +16,10 @@ import java.io.ObjectOutputStream;
 
 public abstract class TickerTokenImpl implements TickerToken, TCSerializable {
 
-  protected int                   primaryID;
-  protected int                   startTick;
-  protected int                   totalTickers;
- 
+  protected int primaryID;
+  protected int startTick;
+  protected int totalTickers;
+
   public TickerTokenImpl() {
     //
   }

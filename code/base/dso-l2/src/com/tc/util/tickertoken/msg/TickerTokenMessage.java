@@ -2,12 +2,12 @@
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tc.util.msg;
+package com.tc.util.tickertoken.msg;
 
 import com.tc.async.api.EventContext;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.MessageID;
-import com.tc.util.TickerToken;
+import com.tc.util.tickertoken.TickerToken;
 
 
 public abstract class TickerTokenMessage extends AbstractGroupMessage implements EventContext {
