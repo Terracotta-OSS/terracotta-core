@@ -130,6 +130,7 @@ public class AdminClientBundle extends ListResourceBundle {
         { "dso.client.liveObjectCount", "Live objects" },
         { "live.object.count", "Live Object Count" },
         { "liveObjectCount.tip", "<html>Number of managed objects currently resident,<br>excluding literals</html>" },
+        { "cluster.dashboard", "Dashboard" },
         { "dso.gcstats", "Garbage collection" },
         { "dso.gcstats.overview.pending", "Getting DGC settings: please wait..." },
         { "dso.gcstats.overview.enabled", "DGC is configured to run: every {0} seconds ({1} minutes)." },

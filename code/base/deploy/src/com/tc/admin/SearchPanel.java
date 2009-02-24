@@ -180,10 +180,12 @@ public class SearchPanel extends XContainer {
   private void testSetEnabled(Document doc) {
     boolean hasContent = doc != null && doc.getLength() > 0;
     setEnabled(hasContent);
-    if (!hasContent) {
-      fFindNextButton.setEnabled(false);
-      fFindPreviousButton.setEnabled(false);
-    }
+    // if (!hasContent) {
+    // fFindNextButton.setEnabled(false);
+    // fFindPreviousButton.setEnabled(false);
+    // }
+    fFindNextButton.setEnabled(hasContent);
+    fFindPreviousButton.setEnabled(hasContent);
   }
 
   private class SearchDocListener implements DocumentListener {

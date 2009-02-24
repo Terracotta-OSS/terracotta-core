@@ -29,4 +29,5 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/simulator"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty-api"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/tim-get-tool"/>
 </classpath>

@@ -9,6 +9,7 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.AxisSpace;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.axis.NumberTickUnit;
+import org.jfree.chart.plot.Plot;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.Range;
 import org.jfree.data.time.Second;
@@ -295,11 +296,14 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
       ChartPanel chartPanel = (ChartPanel) comp;
       JFreeChart chart = chartPanel.getChart();
       if (chart == null) continue;
-      XYPlot plot = ((XYPlot) chart.getPlot());
-      plotList.add(plot);
-      if (plot.getRangeAxis().isVisible()) {
-        double rangeAxisTickWidth = getRangeAxisTickWidth(chartPanel.getGraphics(), plot);
-        fixedRangeAxisSpace = Math.max(fixedRangeAxisSpace, rangeAxisTickWidth);
+      Plot plot = chart.getPlot();
+      if (plot instanceof XYPlot) {
+        XYPlot xyPlot = ((XYPlot) chart.getPlot());
+        plotList.add(xyPlot);
+        if (xyPlot.getRangeAxis().isVisible()) {
+          double rangeAxisTickWidth = getRangeAxisTickWidth(chartPanel.getGraphics(), xyPlot);
+          fixedRangeAxisSpace = Math.max(fixedRangeAxisSpace, rangeAxisTickWidth);
+        }
       }
     }
 

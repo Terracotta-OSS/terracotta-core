@@ -44,6 +44,8 @@ public interface DSOMBean extends DSOStats, DGCMBean, TerracottaMBean {
 
   Map<ObjectName, Long> getAllPendingTransactionsCount();
 
+  long getPendingTransactionsCount();
+
   Map<ObjectName, Long> getClientTransactionRates();
 
   Map<ObjectName, StatisticData[]> getL1CpuUsages();

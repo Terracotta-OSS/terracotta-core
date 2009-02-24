@@ -302,6 +302,21 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return map;
   }
 
+  /**
+   * Sum of all unacknowledged client transactions
+   */
+  public long getPendingTransactionsCount() {
+    long result = 0;
+    synchronized (clientObjectNames) {
+      Iterator<ObjectName> iter = clientObjectNames.iterator();
+      while (iter.hasNext()) {
+        ObjectName clientBeanName = iter.next();
+        result += clientMap.get(clientBeanName).getPendingTransactionsCount();
+      }
+    }
+    return result;
+  }
+
   public Map<ObjectName, Long> getClientTransactionRates() {
     Map<ObjectName, Long> result = new HashMap<ObjectName, Long>();
     synchronized (clientObjectNames) {

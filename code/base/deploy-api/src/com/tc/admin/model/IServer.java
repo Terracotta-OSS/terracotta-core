@@ -21,16 +21,18 @@ import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 
 public interface IServer extends IClusterNode, ManagedObjectFacadeProvider {
-  static final IServer[] NULL_SET                     = {};
+  static final IServer[] NULL_SET                               = {};
 
-  static final String    PROP_CONNECTED               = "connected";
-  static final String    PROP_CONNECT_ERROR           = "connectError";
-  static final String    PROP_LOCK_STATS_TRACE_DEPTH  = "lockStatsTraceDepth";
-  static final String    PROP_LOCK_STATS_ENABLED      = "lockStatsEnabled";
+  static final String    PROP_CONNECTED                         = "connected";
+  static final String    PROP_CONNECT_ERROR                     = "connectError";
+  static final String    PROP_LOCK_STATS_TRACE_DEPTH            = "lockStatsTraceDepth";
+  static final String    PROP_LOCK_STATS_ENABLED                = "lockStatsEnabled";
 
-  static final String    POLLED_ATTR_CACHE_MISS_RATE  = "CacheMissRate";
-  static final String    POLLED_ATTR_LOCK_RECALL_RATE = "GlobalLockRecallRate";
-  static final String    POLLED_ATTR_BROADCAST_RATE   = "BroadcastRate";
+  static final String    POLLED_ATTR_CACHE_MISS_RATE            = "CacheMissRate";
+  static final String    POLLED_ATTR_LOCK_RECALL_RATE           = "GlobalLockRecallRate";
+  static final String    POLLED_ATTR_BROADCAST_RATE             = "BroadcastRate";
+  static final String    POLLED_ATTR_TRANSACTION_SIZE_RATE      = "TransactionSizeRate";
+  static final String    POLLED_ATTR_PENDING_TRANSACTIONS_COUNT = "PendingTransactionsCount";
 
   IClusterModel getClusterModel();
 

@@ -96,26 +96,33 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   private StatisticsLocalGathererMBean    clusterStatsBean;
   private boolean                         clusterStatsSupported;
 
-  private static final PolledAttribute    PA_CPU_USAGE           = new PolledAttribute(L2MBeanNames.TC_SERVER_INFO,
-                                                                                       POLLED_ATTR_CPU_USAGE);
-  private static final PolledAttribute    PA_USED_MEMORY         = new PolledAttribute(L2MBeanNames.TC_SERVER_INFO,
-                                                                                       POLLED_ATTR_USED_MEMORY);
-  private static final PolledAttribute    PA_MAX_MEMORY          = new PolledAttribute(L2MBeanNames.TC_SERVER_INFO,
-                                                                                       POLLED_ATTR_MAX_MEMORY);
-  private static final PolledAttribute    PA_OBJECT_FLUSH_RATE   = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                       POLLED_ATTR_OBJECT_FLUSH_RATE);
-  private static final PolledAttribute    PA_OBJECT_FAULT_RATE   = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                       POLLED_ATTR_OBJECT_FAULT_RATE);
-  private static final PolledAttribute    PA_TRANSACTION_RATE    = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                       POLLED_ATTR_TRANSACTION_RATE);
-  private static final PolledAttribute    PA_CACHE_MISS_RATE     = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                       POLLED_ATTR_CACHE_MISS_RATE);
-  private static final PolledAttribute    PA_LIVE_OBJECT_COUNT   = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                       POLLED_ATTR_LIVE_OBJECT_COUNT);
-  private static final PolledAttribute    PA_LOCK_RECALL_RATE    = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                       POLLED_ATTR_LOCK_RECALL_RATE);
-  private static final PolledAttribute    PA_LOCK_BROADCAST_RATE = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                       POLLED_ATTR_BROADCAST_RATE);
+  private static final PolledAttribute    PA_CPU_USAGE                  = new PolledAttribute(
+                                                                                              L2MBeanNames.TC_SERVER_INFO,
+                                                                                              POLLED_ATTR_CPU_USAGE);
+  private static final PolledAttribute    PA_USED_MEMORY                = new PolledAttribute(
+                                                                                              L2MBeanNames.TC_SERVER_INFO,
+                                                                                              POLLED_ATTR_USED_MEMORY);
+  private static final PolledAttribute    PA_MAX_MEMORY                 = new PolledAttribute(
+                                                                                              L2MBeanNames.TC_SERVER_INFO,
+                                                                                              POLLED_ATTR_MAX_MEMORY);
+  private static final PolledAttribute    PA_OBJECT_FLUSH_RATE          = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                              POLLED_ATTR_OBJECT_FLUSH_RATE);
+  private static final PolledAttribute    PA_OBJECT_FAULT_RATE          = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                              POLLED_ATTR_OBJECT_FAULT_RATE);
+  private static final PolledAttribute    PA_TRANSACTION_RATE           = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                              POLLED_ATTR_TRANSACTION_RATE);
+  private static final PolledAttribute    PA_CACHE_MISS_RATE            = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                              POLLED_ATTR_CACHE_MISS_RATE);
+  private static final PolledAttribute    PA_LIVE_OBJECT_COUNT          = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                              POLLED_ATTR_LIVE_OBJECT_COUNT);
+  private static final PolledAttribute    PA_LOCK_RECALL_RATE           = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                              POLLED_ATTR_LOCK_RECALL_RATE);
+  private static final PolledAttribute    PA_BROADCAST_RATE             = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                              POLLED_ATTR_BROADCAST_RATE);
+  private static final PolledAttribute    PA_TRANSACTION_SIZE_RATE      = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                              POLLED_ATTR_TRANSACTION_SIZE_RATE);
+  private static final PolledAttribute    PA_PENDING_TRANSACTIONS_COUNT = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                              POLLED_ATTR_PENDING_TRANSACTIONS_COUNT);
 
   public Server(IClusterModel clusterModel) {
     this(clusterModel, ConnectionContext.DEFAULT_HOST, ConnectionContext.DEFAULT_PORT,
@@ -192,7 +199,9 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     registerPolledAttribute(PA_CACHE_MISS_RATE);
     registerPolledAttribute(PA_LIVE_OBJECT_COUNT);
     registerPolledAttribute(PA_LOCK_RECALL_RATE);
-    registerPolledAttribute(PA_LOCK_BROADCAST_RATE);
+    registerPolledAttribute(PA_BROADCAST_RATE);
+    registerPolledAttribute(PA_TRANSACTION_SIZE_RATE);
+    registerPolledAttribute(PA_PENDING_TRANSACTIONS_COUNT);
   }
 
   private void filterReadySet() {

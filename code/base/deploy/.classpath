@@ -10,6 +10,7 @@
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jcommon-1.0.14.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jetty-6.1.8.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jetty-util-6.1.8.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jfreechart-1.0.11-experimental.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jfreechart-1.0.11.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jline-0.9.9.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jmxremote-1.0.1_04.jar"/>

@@ -13,26 +13,26 @@ import java.awt.BorderLayout;
 import java.util.HashMap;
 import java.util.Map;
 
-public class LiveObjectCountViewer extends XContainer {
+public class DashboardViewer extends XContainer {
   private ApplicationContext                            appContext;
-  private Map<IClusterModel, LiveObjectCountGraphPanel> graphPanelMap;
+  private Map<IClusterModel, DashboardPanel> panelMap;
   private PagedView                                     pagedView;
 
-  public LiveObjectCountViewer(ApplicationContext appContext) {
+  public DashboardViewer(ApplicationContext appContext) {
     super(new BorderLayout());
     this.appContext = appContext;
-    graphPanelMap = new HashMap<IClusterModel, LiveObjectCountGraphPanel>();
+    panelMap = new HashMap<IClusterModel, DashboardPanel>();
     add(pagedView = new PagedView(), BorderLayout.CENTER);
   }
 
   public void add(IClusterModel clusterModel) {
-    LiveObjectCountGraphPanel graphPanel = new LiveObjectCountGraphPanel(appContext, clusterModel);
-    graphPanelMap.put(clusterModel, graphPanel);
+    DashboardPanel graphPanel = new DashboardPanel(appContext, clusterModel);
+    panelMap.put(clusterModel, graphPanel);
     pagedView.addPage(graphPanel);
   }
 
   public void remove(IClusterModel clusterModel) {
-    pagedView.addPage(graphPanelMap.remove(clusterModel));
+    pagedView.addPage(panelMap.remove(clusterModel));
   }
 
   public void select(IClusterModel clusterModel) {
@@ -40,7 +40,7 @@ public class LiveObjectCountViewer extends XContainer {
   }
 
   public boolean isEmpty() {
-    return graphPanelMap.isEmpty();
+    return panelMap.isEmpty();
   }
 
   @Override
@@ -49,8 +49,8 @@ public class LiveObjectCountViewer extends XContainer {
 
     synchronized (this) {
       appContext = null;
-      graphPanelMap.clear();
-      graphPanelMap = null;
+      panelMap.clear();
+      panelMap = null;
       pagedView = null;
     }
   }

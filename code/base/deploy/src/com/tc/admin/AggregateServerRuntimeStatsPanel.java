@@ -5,49 +5,104 @@
 package com.tc.admin;
 
 import static com.tc.admin.model.IClusterModel.PollScope.ACTIVE_SERVERS;
+import static com.tc.admin.model.IClusterNode.POLLED_ATTR_LIVE_OBJECT_COUNT;
 import static com.tc.admin.model.IClusterNode.POLLED_ATTR_OBJECT_FAULT_RATE;
 import static com.tc.admin.model.IClusterNode.POLLED_ATTR_OBJECT_FLUSH_RATE;
 import static com.tc.admin.model.IClusterNode.POLLED_ATTR_TRANSACTION_RATE;
+import static com.tc.admin.model.IServer.POLLED_ATTR_BROADCAST_RATE;
 import static com.tc.admin.model.IServer.POLLED_ATTR_CACHE_MISS_RATE;
+import static com.tc.admin.model.IServer.POLLED_ATTR_LOCK_RECALL_RATE;
 
 import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.data.time.TimeSeries;
 
 import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.dso.BaseRuntimeStatsPanel;
+import com.tc.admin.dso.DGCIntervalMarker;
+import com.tc.admin.model.DGCListener;
 import com.tc.admin.model.IClusterModel;
 import com.tc.admin.model.IServer;
 import com.tc.admin.model.IServerGroup;
 import com.tc.admin.model.PolledAttributesResult;
+import com.tc.objectserver.api.GCStats;
 
 import java.awt.GridLayout;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+import javax.swing.BorderFactory;
+import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
 
-public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
+public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel implements DGCListener {
   private IClusterModel            clusterModel;
+  private ClusterListener          clusterListener;
 
   private TimeSeries               flushRateSeries;
   private TimeSeries               faultRateSeries;
   private TimeSeries               txnRateSeries;
   private TimeSeries               cacheMissRateSeries;
+  private XYPlot                   liveObjectCountPlot;
+  private String                   liveObjectCountTitlePattern;
+  private TitledBorder             liveObjectCountTitle;
+  private TimeSeries               liveObjectCountSeries;
+  private TimeSeries               lockRecallRateSeries;
+  private TimeSeries               broadcastRateSeries;
 
   private static final Set<String> POLLED_ATTRIBUTE_SET = new HashSet(Arrays.asList(POLLED_ATTR_OBJECT_FLUSH_RATE,
                                                                                     POLLED_ATTR_OBJECT_FAULT_RATE,
                                                                                     POLLED_ATTR_TRANSACTION_RATE,
-                                                                                    POLLED_ATTR_CACHE_MISS_RATE));
+                                                                                    POLLED_ATTR_CACHE_MISS_RATE,
+                                                                                    POLLED_ATTR_LIVE_OBJECT_COUNT,
+                                                                                    POLLED_ATTR_LOCK_RECALL_RATE,
+                                                                                    POLLED_ATTR_BROADCAST_RATE));
 
   public AggregateServerRuntimeStatsPanel(ApplicationContext appContext, IClusterModel clusterModel) {
     super(appContext);
     this.clusterModel = clusterModel;
     setup(chartsPanel);
     setName(clusterModel.toString());
+    clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
+    if (clusterModel.isReady()) {
+      IServer activeCoord = clusterModel.getActiveCoordinator();
+      if (activeCoord != null) {
+        activeCoord.addDGCListener(this);
+      }
+    }
+  }
+
+  private class ClusterListener extends AbstractClusterListener {
+    private ClusterListener(IClusterModel clusterModel) {
+      super(clusterModel);
+    }
+
+    @Override
+    public void handleActiveCoordinator(IServer oldActive, IServer newActive) {
+      if (oldActive != null) {
+        oldActive.removeDGCListener(AggregateServerRuntimeStatsPanel.this);
+      }
+      if (newActive != null) {
+        newActive.addDGCListener(AggregateServerRuntimeStatsPanel.this);
+      }
+    }
+
+    @Override
+    public void handleReady() {
+      if (clusterModel.isReady()) {
+        startMonitoringRuntimeStats();
+      } else {
+        stopMonitoringRuntimeStats();
+      }
+    }
   }
 
   synchronized IClusterModel getClusterModel() {
@@ -70,8 +125,10 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
 
   @Override
   public void startMonitoringRuntimeStats() {
-    addPolledAttributeListener();
-    super.startMonitoringRuntimeStats();
+    if (clusterModel.isReady()) {
+      addPolledAttributeListener();
+      super.startMonitoringRuntimeStats();
+    }
   }
 
   @Override
@@ -97,6 +154,9 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
       long fault = 0L;
       long txn = 0L;
       long cacheMiss = 0L;
+      long liveObjectCount = 0;
+      long lockRecallRate = 0;
+      long broadcastRate = 0;
       Number n;
 
       for (IServerGroup group : theClusterModel.getServerGroups()) {
@@ -114,6 +174,15 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
             if ((n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_CACHE_MISS_RATE)) != null) {
               cacheMiss += n.longValue();
             }
+            if ((n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_LIVE_OBJECT_COUNT)) != null) {
+              liveObjectCount += n.longValue();
+            }
+            if ((n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_LOCK_RECALL_RATE)) != null) {
+              lockRecallRate += n.longValue();
+            }
+            if ((n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_BROADCAST_RATE)) != null) {
+              broadcastRate += n.longValue();
+            }
           }
         }
       }
@@ -122,6 +191,11 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
       updateSeries(faultRateSeries, Long.valueOf(fault));
       updateSeries(txnRateSeries, Long.valueOf(txn));
       updateSeries(cacheMissRateSeries, Long.valueOf(cacheMiss));
+      updateSeries(liveObjectCountSeries, Long.valueOf(liveObjectCount));
+      updateSeries(lockRecallRateSeries, Long.valueOf(lockRecallRate));
+      updateSeries(broadcastRateSeries, Long.valueOf(broadcastRate));
+
+      liveObjectCountTitle.setTitle(MessageFormat.format(liveObjectCountTitlePattern, liveObjectCount));
     }
   }
 
@@ -132,6 +206,38 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     setupCacheMissRatePanel(chartsPanel);
     setupFlushRatePanel(chartsPanel);
     setupFaultRatePanel(chartsPanel);
+    setupLiveObjectCountPanel(chartsPanel);
+    setupLockRecallRatePanel(chartsPanel);
+  }
+
+  private void setupLiveObjectCountPanel(XContainer parent) {
+    liveObjectCountSeries = createTimeSeries("LiveObjectCount");
+    JFreeChart chart = createChart(liveObjectCountSeries, false);
+    ChartPanel liveObjectCountPanel = createChartPanel(chart);
+    parent.add(liveObjectCountPanel);
+    liveObjectCountPanel.setPreferredSize(fDefaultGraphSize);
+    liveObjectCountTitlePattern = appContext.getString("dso.client.liveObjectCount");
+    liveObjectCountTitle = BorderFactory.createTitledBorder("Live Object Count");
+    liveObjectCountPanel.setBorder(liveObjectCountTitle);
+    liveObjectCountPanel.setToolTipText("Total instance count");
+    liveObjectCountPlot = (XYPlot) chart.getPlot();
+  }
+
+  private void setupLockRecallRatePanel(XContainer parent) {
+    lockRecallRateSeries = createTimeSeries("LockRecallRate");
+    broadcastRateSeries = createTimeSeries("BroadcastRate");
+    JFreeChart chart = createXYBarChart(new TimeSeries[] { lockRecallRateSeries, broadcastRateSeries }, false);
+    XYPlot plot = (XYPlot) chart.getPlot();
+    NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
+    numberAxis.setAutoRangeMinimumSize(10.0);
+    XYBarRenderer renderer = (XYBarRenderer) plot.getRenderer();
+    renderer.setDrawBarOutline(false);
+    renderer.setShadowVisible(false);
+    ChartPanel recallRatePanel = createChartPanel(chart);
+    parent.add(recallRatePanel);
+    recallRatePanel.setPreferredSize(fDefaultGraphSize);
+    recallRatePanel.setBorder(new TitledBorder("Lock Recall/Change Broadcast Rate"));
+    recallRatePanel.setToolTipText("Global Lock Recalls");
   }
 
   private void setupFlushRatePanel(XContainer parent) {
@@ -170,6 +276,24 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     cacheMissRatePanel.setToolTipText(appContext.getString("aggregate.server.stats.cache.miss.rate.tip"));
   }
 
+  public void statusUpdate(GCStats gcStats) {
+    SwingUtilities.invokeLater(new ModelUpdater(gcStats));
+  }
+
+  private class ModelUpdater implements Runnable {
+    private final GCStats gcStats;
+
+    private ModelUpdater(GCStats gcStats) {
+      this.gcStats = gcStats;
+    }
+
+    public void run() {
+      if (gcStats.getElapsedTime() != -1) {
+        liveObjectCountPlot.addDomainMarker(new DGCIntervalMarker(gcStats));
+      }
+    }
+  }
+
   private void clearAllTimeSeries() {
     ArrayList<TimeSeries> list = new ArrayList<TimeSeries>();
     if (flushRateSeries != null) {
@@ -188,6 +312,18 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
       list.add(cacheMissRateSeries);
       cacheMissRateSeries = null;
     }
+    if (liveObjectCountSeries != null) {
+      list.add(liveObjectCountSeries);
+      liveObjectCountSeries = null;
+    }
+    if (lockRecallRateSeries != null) {
+      list.add(lockRecallRateSeries);
+      lockRecallRateSeries = null;
+    }
+    if (broadcastRateSeries != null) {
+      list.add(broadcastRateSeries);
+      broadcastRateSeries = null;
+    }
 
     Iterator<TimeSeries> iter = list.iterator();
     while (iter.hasNext()) {
@@ -197,8 +333,12 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
 
   @Override
   public synchronized void tearDown() {
+    clusterModel.removePropertyChangeListener(clusterListener);
+
     stopMonitoringRuntimeStats();
     clusterModel = null;
+    clusterListener = null;
+    liveObjectCountPlot = null;
     super.tearDown();
     clearAllTimeSeries();
   }
