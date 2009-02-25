@@ -358,7 +358,7 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
         addServerToL1Config(grpData[i].getServerNames()[j], grpData[i].getDsoPorts()[j], grpData[i].getJmxPorts()[j],
                             false);
 
-      addServerGroupToL1Config(i, grpData[i].getServerNames());
+      addServerGroupToL1Config(i, grpData[i].getGroupName(), grpData[i].getServerNames());
     }
 
     isConfigDone = true;
@@ -431,10 +431,10 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
       memberNames[i] = serverArray[i].getName();
     }
 
-    addServerGroupToL1Config(0, memberNames);
+    addServerGroupToL1Config(0, "default-group", memberNames);
   }
 
-  private void addServerGroupToL1Config(int groupId, String[] members) {
+  private void addServerGroupToL1Config(int groupId, String groupName, String[] members) {
     Assert.assertNotNull(members);
     Assert.assertTrue(members.length > 0);
     Assert.assertTrue(groupId >= 0);
@@ -443,6 +443,7 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
     MirrorGroups groups = l1_beanSet.serversBean().getMirrorGroups();
     if (groups != null) {
       MirrorGroup group = groups.addNewMirrorGroup();
+      group.setGroupName(groupName);
       Members newMembers = group.addNewMembers();
       for (int i = 0; i < members.length; i++) {
         String memberName = members[i];

@@ -86,24 +86,27 @@ public class ActivePassiveServerManager extends MultipleServerManager {
   // this is used when active-active tests are run. This will help in differentiating between the names in the different
   // groups
   private int                        startIndexOfServer = 0;
+  private final String               groupName;
 
   // Should be called directly when an active-passive test is to be run.
   public ActivePassiveServerManager(boolean isActivePassiveTest, File tempDir, PortChooser portChooser,
                                     String configModel, MultipleServersTestSetupManager setupManger, File javaHome,
                                     TestTVSConfigurationSetupManagerFactory configFactory, List extraJvmArgs,
                                     boolean isProxyL2GroupPorts, boolean isProxyDsoPorts) throws Exception {
-    this(isActivePassiveTest, tempDir, portChooser, configModel, setupManger, javaHome, configFactory, extraJvmArgs,
-         isProxyL2GroupPorts, isProxyDsoPorts, false, 0);
+    this("active-passive-group", isActivePassiveTest, tempDir, portChooser, configModel, setupManger, javaHome,
+         configFactory, extraJvmArgs, isProxyL2GroupPorts, isProxyDsoPorts, false, 0);
   }
 
   // Should be called directly when an active-active test is to be run. In case of active active config is not written
-  public ActivePassiveServerManager(boolean isActivePassiveTest, File tempDir, PortChooser portChooser,
-                                    String configModel, MultipleServersTestSetupManager setupManger, File javaHome,
+  public ActivePassiveServerManager(String groupName, boolean isActivePassiveTest, File tempDir,
+                                    PortChooser portChooser, String configModel,
+                                    MultipleServersTestSetupManager setupManger, File javaHome,
                                     TestTVSConfigurationSetupManagerFactory configFactory, List extraJvmArgs,
                                     boolean isProxyL2GroupPorts, boolean isProxyDsoPorts, boolean isActiveActive,
                                     int startIndexOfServer) throws Exception {
     super(setupManger);
 
+    this.groupName = groupName;
     this.isProxyL2groupPorts = isProxyL2GroupPorts;
     this.isProxyDsoPorts = isProxyDsoPorts;
     this.jvmArgs = extraJvmArgs;
@@ -498,7 +501,7 @@ public class ActivePassiveServerManager extends MultipleServerManager {
                                                                                  DSOMBean.class, false);
     return dsoMBean;
   }
-  
+
   public DGCMBean getLocalDGCMBean(int index) throws IOException {
     JMXConnectorProxy jmxc = new JMXConnectorProxy(HOST, jmxPorts[index]);
     MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
@@ -765,6 +768,10 @@ public class ActivePassiveServerManager extends MultipleServerManager {
     return serverCount;
   }
 
+  public String getGroupName() {
+    return groupName;
+  }
+
   public int[] getDsoPorts() {
     return dsoPorts;
   }
@@ -916,7 +923,7 @@ public class ActivePassiveServerManager extends MultipleServerManager {
     }
     return mbeans;
   }
-  
+
   public List<DGCMBean> connectAllLocalDGCMBeans() throws IOException {
     List<DGCMBean> mbeans = new ArrayList<DGCMBean>();
     for (int i = 0; i < getServerCount(); i++) {

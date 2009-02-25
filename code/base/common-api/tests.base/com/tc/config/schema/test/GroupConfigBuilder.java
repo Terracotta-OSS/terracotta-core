@@ -4,13 +4,18 @@
  */
 package com.tc.config.schema.test;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class GroupConfigBuilder extends BaseConfigBuilder {
 
+  private final String         groupName;
   private MembersConfigBuilder members;
   private HaConfigBuilder      ha;
 
-  public GroupConfigBuilder() {
+  public GroupConfigBuilder(String groupName) {
     super(5, new String[0]);
+    this.groupName = groupName;
   }
 
   public void setMembers(MembersConfigBuilder members) {
@@ -24,7 +29,10 @@ public class GroupConfigBuilder extends BaseConfigBuilder {
   public String toString() {
     String out = "";
 
-    out += openElement("mirror-group");
+    Map attr = new HashMap();
+    attr.put("group-name", groupName);
+
+    out += openElement("mirror-group", attr);
 
     out += this.members.toString();
 

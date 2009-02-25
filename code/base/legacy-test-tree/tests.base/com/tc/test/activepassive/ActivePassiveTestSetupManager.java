@@ -30,4 +30,9 @@ public class ActivePassiveTestSetupManager extends MultipleServersTestSetupManag
     if (groupIndex != 0) throw new AssertionError("Only one group can be present in case of Active Passive Tests");
     return getServerCount();
   }
+
+  public String getGroupName(int groupIndex) {
+    if (groupIndex != 0) throw new AssertionError("Only one group can be present in case of Active Passive Tests");
+    return getGroupName(groupIndex);
+  }
 }

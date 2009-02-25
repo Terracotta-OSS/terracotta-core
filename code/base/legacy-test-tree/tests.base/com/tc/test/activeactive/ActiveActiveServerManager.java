@@ -49,7 +49,8 @@ public class ActiveActiveServerManager extends MultipleServerManager {
     int noOfServers = 0;
     for (int i = 0; i < groupCount; i++) {
       ActivePassiveTestSetupManager activePasssiveTestSetupManager = createActivePassiveTestSetupManager(i);
-      activePassiveServerManagers[i] = new ActivePassiveServerManager(true, tempDir, portChooser, configModel,
+      activePassiveServerManagers[i] = new ActivePassiveServerManager(setupManger.getGroupName(i), true, tempDir,
+                                                                      portChooser, configModel,
                                                                       activePasssiveTestSetupManager, javaHome,
                                                                       configFactory, extraJvmArgs, isProxyL2GroupPorts,
                                                                       isProxyDsoPorts, true, noOfServers);
@@ -83,9 +84,9 @@ public class ActiveActiveServerManager extends MultipleServerManager {
     // Create the groups by getting the server names from the ActivePassiveServerManager
     GroupData[] groups = new GroupData[activePassiveServerManagers.length];
     for (int i = 0; i < groups.length; i++) {
-      groups[i] = new GroupData(activePassiveServerManagers[i].getDsoPorts(), activePassiveServerManagers[i]
-          .getJmxPorts(), activePassiveServerManagers[i].getL2GroupPorts(), activePassiveServerManagers[i]
-          .getServerNames());
+      groups[i] = new GroupData(activePassiveServerManagers[i].getGroupName(), activePassiveServerManagers[i]
+          .getDsoPorts(), activePassiveServerManagers[i].getJmxPorts(), activePassiveServerManagers[i]
+          .getL2GroupPorts(), activePassiveServerManagers[i].getServerNames());
     }
     return groups;
   }
@@ -214,7 +215,7 @@ public class ActiveActiveServerManager extends MultipleServerManager {
 
     return mbeans;
   }
-  
+
   public List<List<DGCMBean>> connectAllLocalDGCMBeans() throws IOException {
     int grpCount = setupManger.getActiveServerGroupCount();
     List<List<DGCMBean>> mbeans = new ArrayList<List<DGCMBean>>(grpCount);
