@@ -4,7 +4,6 @@
  */
 package com.tc.client;
 
-import com.tc.cluster.Cluster;
 import com.tc.cluster.DsoClusterInternal;
 import com.tc.lang.TCThreadGroup;
 import com.tc.object.DistributedObjectClient;
@@ -20,9 +19,9 @@ public class StandardClientFactory extends AbstractClientFactory {
   public DistributedObjectClient createClient(final DSOClientConfigHelper config, final TCThreadGroup threadGroup,
                                               final ClassProvider classProvider,
                                               final PreparedComponentsFromL2Connection connectionComponents,
-                                              final Manager manager, final Cluster cluster,
-                                              final DsoClusterInternal dsoCluster, final RuntimeLogger runtimeLogger) {
-    return new DistributedObjectClient(config, threadGroup, classProvider, connectionComponents, manager, cluster,
-                                       dsoCluster, runtimeLogger);
+                                              final Manager manager, final DsoClusterInternal dsoCluster,
+                                              final RuntimeLogger runtimeLogger) {
+    return new DistributedObjectClient(config, threadGroup, classProvider, connectionComponents, manager, dsoCluster,
+                                       runtimeLogger);
   }
 }

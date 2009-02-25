@@ -5,7 +5,6 @@
 package com.tc.object.handshakemanager;
 
 import com.tc.async.impl.NullSink;
-import com.tc.cluster.Cluster;
 import com.tc.cluster.DsoClusterImpl;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
@@ -50,7 +49,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
 
   private void createHandshakeMgr() {
     mgr = new ClientHandshakeManagerImpl(TCLogging.getLogger(ClientHandshakeManagerImpl.class), channel, chmf,
-                                         new NullSink(), new NullSessionManager(), new Cluster(), new DsoClusterImpl(), clientVersion,
+                                         new NullSink(), new NullSessionManager(), new DsoClusterImpl(), clientVersion,
                                          Collections.singletonList(callback));
   }
 

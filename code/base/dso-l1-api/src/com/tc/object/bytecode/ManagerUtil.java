@@ -6,7 +6,6 @@ package com.tc.object.bytecode;
 
 // import com.partitions.TCNoPartitionError;
 
-import com.tc.cluster.ClusterEventListener;
 import com.tc.config.lock.LockContextInfo;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
@@ -63,7 +62,7 @@ public class ManagerUtil {
    * @param loggerName Logger name
    * @return The logger
    */
-  public static TCLogger getLogger(String loggerName) {
+  public static TCLogger getLogger(final String loggerName) {
     return getManager().getLogger(loggerName);
   }
 
@@ -73,7 +72,7 @@ public class ManagerUtil {
    * @param clazz Class
    * @return True if physically instrumented
    */
-  public static boolean isPhysicallyInstrumented(Class clazz) {
+  public static boolean isPhysicallyInstrumented(final Class clazz) {
     return getManager().isPhysicallyInstrumented(clazz);
   }
 
@@ -93,7 +92,7 @@ public class ManagerUtil {
    * @param object Root object to use if none exists yet
    * @return The root object actually used, may or may not == object
    */
-  public static Object lookupOrCreateRoot(String name, Object object) {
+  public static Object lookupOrCreateRoot(final String name, final Object object) {
     return getManager().lookupOrCreateRoot(name, object);
   }
 
@@ -104,7 +103,7 @@ public class ManagerUtil {
    * @param obj Root object to use if none exists yet
    * @return The root object actually used, may or may not == object
    */
-  public static Object lookupOrCreateRootNoDepth(String name, Object obj) {
+  public static Object lookupOrCreateRootNoDepth(final String name, final Object obj) {
     return getManager().lookupOrCreateRootNoDepth(name, obj);
   }
 
@@ -115,7 +114,7 @@ public class ManagerUtil {
    * @param object Root object
    * @return Root object used
    */
-  public static Object createOrReplaceRoot(String rootName, Object object) {
+  public static Object createOrReplaceRoot(final String rootName, final Object object) {
     return getManager().createOrReplaceRoot(rootName, object);
   }
 
@@ -126,7 +125,7 @@ public class ManagerUtil {
    * @param fieldOffset Field offset in pojo
    * @param type Lock level
    */
-  public static void beginVolatile(Object pojo, long fieldOffset, int type) {
+  public static void beginVolatile(final Object pojo, final long fieldOffset, final int type) {
     TCObject tcObject = lookupExistingOrNull(pojo);
     beginVolatile(tcObject, tcObject.getFieldNameByOffset(fieldOffset), type);
   }
@@ -137,7 +136,7 @@ public class ManagerUtil {
    * @param pojo Instance containing field
    * @param fieldOffset Field offset in pojo
    */
-  public static void commitVolatile(Object pojo, long fieldOffset) {
+  public static void commitVolatile(final Object pojo, final long fieldOffset) {
     TCObject tcObject = lookupExistingOrNull(pojo);
     commitVolatile(tcObject, tcObject.getFieldNameByOffset(fieldOffset));
   }
@@ -149,7 +148,7 @@ public class ManagerUtil {
    * @param fieldName Field name holding volatile object
    * @param type Lock type
    */
-  public static void beginVolatile(TCObject tcObject, String fieldName, int type) {
+  public static void beginVolatile(final TCObject tcObject, final String fieldName, final int type) {
     getManager().beginVolatile(tcObject, fieldName, type);
   }
 
@@ -159,14 +158,14 @@ public class ManagerUtil {
    * @param lockID Lock identifier
    * @param type Lock type
    */
-  public static void beginLock(String lockID, int type) {
+  public static void beginLock(final String lockID, final int type) {
     beginLock(lockID, type, LockContextInfo.NULL_LOCK_CONTEXT_INFO);
   }
 
   /**
    * Begins a lock without associating any transaction context.
    */
-  public static void beginLockWithoutTxn(String lockID, int type) {
+  public static void beginLockWithoutTxn(final String lockID, final int type) {
     getManager().beginLockWithoutTxn(lockID, type);
   }
 
@@ -177,7 +176,7 @@ public class ManagerUtil {
    * @param type Lock type
    * @param contextInfo
    */
-  public static void beginLock(String lockID, int type, String contextInfo) {
+  public static void beginLock(final String lockID, final int type, final String contextInfo) {
     getManager().beginLock(lockID, type, contextInfo);
   }
 
@@ -188,7 +187,7 @@ public class ManagerUtil {
    * @param type Lock type
    * @return True if lock was successful
    */
-  public static boolean tryBeginLock(String lockID, int type) {
+  public static boolean tryBeginLock(final String lockID, final int type) {
     return getManager().tryBeginLock(lockID, type);
   }
 
@@ -200,7 +199,7 @@ public class ManagerUtil {
    * @param timeoutInNanos Timeout in nanoseconds
    * @return True if lock was successful
    */
-  public static boolean tryBeginLock(String lockID, int type, long timeoutInNanos) {
+  public static boolean tryBeginLock(final String lockID, final int type, final long timeoutInNanos) {
     return getManager().tryBeginLock(lockID, type, timeoutInNanos);
   }
 
@@ -210,7 +209,7 @@ public class ManagerUtil {
    * @param tcObject Volatile object TCObject
    * @param fieldName Field holding the volatile object
    */
-  public static void commitVolatile(TCObject tcObject, String fieldName) {
+  public static void commitVolatile(final TCObject tcObject, final String fieldName) {
     getManager().commitVolatile(tcObject, fieldName);
   }
 
@@ -219,7 +218,7 @@ public class ManagerUtil {
    *
    * @param lockID Lock name
    */
-  public static void commitLock(String lockID) {
+  public static void commitLock(final String lockID) {
     getManager().commitLock(lockID);
   }
 
@@ -229,7 +228,7 @@ public class ManagerUtil {
    * @param pojo The object instance
    * @return The TCObject
    */
-  public static TCObject lookupExistingOrNull(Object pojo) {
+  public static TCObject lookupExistingOrNull(final Object pojo) {
     return getManager().lookupExistingOrNull(pojo);
   }
 
@@ -237,7 +236,7 @@ public class ManagerUtil {
    * @param pojo Object instance
    * @return TCObject for pojo
    */
-  public static TCObject shareObjectIfNecessary(Object pojo) {
+  public static TCObject shareObjectIfNecessary(final Object pojo) {
     return getManager().shareObjectIfNecessary(pojo);
   }
 
@@ -248,7 +247,7 @@ public class ManagerUtil {
    * @param methodName The method to call
    * @param params The parameters to the method
    */
-  public static void logicalInvoke(Object object, String methodName, Object[] params) {
+  public static void logicalInvoke(final Object object, final String methodName, final Object[] params) {
     getManager().logicalInvoke(object, methodName, params);
   }
 
@@ -260,7 +259,7 @@ public class ManagerUtil {
    * @param methodName The method to call
    * @param params The parameters to the method
    */
-  public static void logicalInvokeWithTransaction(Object object, Object lockObject, String methodName, Object[] params) {
+  public static void logicalInvokeWithTransaction(final Object object, final Object lockObject, final String methodName, final Object[] params) {
     getManager().logicalInvokeWithTransaction(object, lockObject, methodName, params);
   }
 
@@ -278,7 +277,7 @@ public class ManagerUtil {
    * @param method The method to call
    * @param params The parameter values
    */
-  public static boolean prunedDistributedMethodCall(Object receiver, String method, Object[] params) {
+  public static boolean prunedDistributedMethodCall(final Object receiver, final String method, final Object[] params) {
     return getManager().distributedMethodCall(receiver, method, params, false);
   }
 
@@ -289,7 +288,7 @@ public class ManagerUtil {
    * @param method The method to call
    * @param params The parameter values
    */
-  public static boolean distributedMethodCall(Object receiver, String method, Object[] params) {
+  public static boolean distributedMethodCall(final Object receiver, final String method, final Object[] params) {
     return getManager().distributedMethodCall(receiver, method, params, true);
   }
 
@@ -299,7 +298,7 @@ public class ManagerUtil {
    * @param name Name of root
    * @return Root object
    */
-  public static Object lookupRoot(String name) {
+  public static Object lookupRoot(final String name) {
     return getManager().lookupRoot(name);
   }
 
@@ -310,7 +309,7 @@ public class ManagerUtil {
    * @return The actual object
    * @throws TCClassNotFoundException If a class is not found during faulting
    */
-  public static Object lookupObject(ObjectID id) {
+  public static Object lookupObject(final ObjectID id) {
     try {
       return getManager().lookupObject(id);
     } catch (ClassNotFoundException e) {
@@ -327,7 +326,7 @@ public class ManagerUtil {
    * @return The actual object
    * @throws TCClassNotFoundException If a class is not found during faulting
    */
-  public static Object lookupObjectWithParentContext(ObjectID id, ObjectID parentContext) {
+  public static Object lookupObjectWithParentContext(final ObjectID id, final ObjectID parentContext) {
     try {
       return getManager().lookupObject(id, parentContext);
     } catch (ClassNotFoundException e) {
@@ -341,7 +340,7 @@ public class ManagerUtil {
    * @param obj The object instance
    * @return The TCObject
    */
-  public static TCObject lookupOrCreate(Object obj) {
+  public static TCObject lookupOrCreate(final Object obj) {
     return getManager().lookupOrCreate(obj);
   }
 
@@ -351,7 +350,7 @@ public class ManagerUtil {
    * @param context Context object
    * @throws com.tc.object.util.ReadOnlyException If in read-only transaction
    */
-  public static void checkWriteAccess(Object context) {
+  public static void checkWriteAccess(final Object context) {
     getManager().checkWriteAccess(context);
   }
 
@@ -361,7 +360,7 @@ public class ManagerUtil {
    * @param obj Instance
    * @return True if managed
    */
-  public static boolean isManaged(Object obj) {
+  public static boolean isManaged(final Object obj) {
     return getManager().isManaged(obj);
   }
 
@@ -371,7 +370,7 @@ public class ManagerUtil {
    * @param obj Instance
    * @return True if shared
    */
-  public static boolean isDsoMonitored(Object obj) {
+  public static boolean isDsoMonitored(final Object obj) {
     return getManager().isDsoMonitored(obj);
   }
 
@@ -380,7 +379,7 @@ public class ManagerUtil {
    *
    * @return True if required
    */
-  public static boolean isDsoMonitorEntered(Object obj) {
+  public static boolean isDsoMonitorEntered(final Object obj) {
     return getManager().isDsoMonitorEntered(obj);
   }
 
@@ -390,7 +389,7 @@ public class ManagerUtil {
    * @param obj Instance
    * @return True if logically instrumented
    */
-  public static boolean isLogical(Object obj) {
+  public static boolean isLogical(final Object obj) {
     return getManager().isLogical(obj);
   }
 
@@ -400,7 +399,7 @@ public class ManagerUtil {
    * @param field Field
    * @return True if root
    */
-  public static boolean isRoot(Field field) {
+  public static boolean isRoot(final Field field) {
     return getManager().isRoot(field);
   }
 
@@ -409,7 +408,7 @@ public class ManagerUtil {
    *
    * @param obj Instance
    */
-  public static void objectNotify(Object obj) {
+  public static void objectNotify(final Object obj) {
     getManager().objectNotify(obj);
   }
 
@@ -418,7 +417,7 @@ public class ManagerUtil {
    *
    * @param obj Instance
    */
-  public static void objectNotifyAll(Object obj) {
+  public static void objectNotifyAll(final Object obj) {
     getManager().objectNotifyAll(obj);
   }
 
@@ -427,7 +426,7 @@ public class ManagerUtil {
    *
    * @param obj Instance
    */
-  public static void objectWait(Object obj) throws InterruptedException {
+  public static void objectWait(final Object obj) throws InterruptedException {
     getManager().objectWait(obj);
   }
 
@@ -437,7 +436,7 @@ public class ManagerUtil {
    * @param obj Instance
    * @param millis Wait time
    */
-  public static void objectWait(Object obj, long millis) throws InterruptedException {
+  public static void objectWait(final Object obj, final long millis) throws InterruptedException {
     getManager().objectWait(obj, millis);
   }
 
@@ -448,7 +447,7 @@ public class ManagerUtil {
    * @param millis Wait time
    * @param nanos More wait time
    */
-  public static void objectWait(Object obj, long millis, int nanos) throws InterruptedException {
+  public static void objectWait(final Object obj, final long millis, final int nanos) throws InterruptedException {
     getManager().objectWait(obj, millis, nanos);
   }
 
@@ -458,7 +457,7 @@ public class ManagerUtil {
    * @param obj Object
    * @param type Lock type
    */
-  public static void monitorEnter(Object obj, int type) {
+  public static void monitorEnter(final Object obj, final int type) {
     monitorEnter(obj, type, LockContextInfo.NULL_LOCK_CONTEXT_INFO);
   }
 
@@ -469,7 +468,7 @@ public class ManagerUtil {
    * @param type Lock type
    * @param contextInfo Configuration text of the lock
    */
-  public static void monitorEnter(Object obj, int type, String contextInfo) {
+  public static void monitorEnter(final Object obj, final int type, final String contextInfo) {
     getManager().monitorEnter(obj, type, contextInfo);
   }
 
@@ -478,7 +477,7 @@ public class ManagerUtil {
    *
    * @param obj Object
    */
-  public static void monitorExit(Object obj) {
+  public static void monitorExit(final Object obj) {
     getManager().monitorExit(obj);
   }
 
@@ -490,7 +489,7 @@ public class ManagerUtil {
    * @return True if locked at this level
    * @throws NullPointerException If obj is null
    */
-  public static boolean isLocked(Object obj, int lockLevel) {
+  public static boolean isLocked(final Object obj, final int lockLevel) {
     return getManager().isLocked(obj, lockLevel);
   }
 
@@ -503,7 +502,7 @@ public class ManagerUtil {
    * @return True if entered
    * @throws NullPointerException If obj is null
    */
-  public static boolean tryMonitorEnter(Object obj, int type, long timeoutInNanos) {
+  public static boolean tryMonitorEnter(final Object obj, final int type, final long timeoutInNanos) {
     return getManager().tryMonitorEnter(obj, type, timeoutInNanos);
   }
 
@@ -515,7 +514,7 @@ public class ManagerUtil {
    * @throws NullPointerException If obj is null
    * @throws InterruptedException If interrupted while entering or waiting
    */
-  public static void monitorEnterInterruptibly(Object obj, int type) throws InterruptedException {
+  public static void monitorEnterInterruptibly(final Object obj, final int type) throws InterruptedException {
     getManager().monitorEnterInterruptibly(obj, type);
   }
 
@@ -527,7 +526,7 @@ public class ManagerUtil {
    * @return Lock count
    * @throws NullPointerException If obj is null
    */
-  public static int localHeldCount(Object obj, int lockLevel) {
+  public static int localHeldCount(final Object obj, final int lockLevel) {
     return getManager().localHeldCount(obj, lockLevel);
   }
 
@@ -539,7 +538,7 @@ public class ManagerUtil {
    * @return True if held by current thread
    * @throws NullPointerException If obj is null
    */
-  public static boolean isHeldByCurrentThread(Object obj, int lockLevel) {
+  public static boolean isHeldByCurrentThread(final Object obj, final int lockLevel) {
     return getManager().isHeldByCurrentThread(obj, lockLevel);
   }
 
@@ -550,7 +549,7 @@ public class ManagerUtil {
    * @return Number of waiters
    * @throws NullPointerException If obj is null
    */
-  public static int queueLength(Object obj) {
+  public static int queueLength(final Object obj) {
     return getManager().queueLength(obj);
   }
 
@@ -561,7 +560,7 @@ public class ManagerUtil {
    * @return Number of waiters
    * @throws NullPointerException If obj is null
    */
-  public static int waitLength(Object obj) {
+  public static int waitLength(final Object obj) {
     return getManager().waitLength(obj);
   }
 
@@ -585,7 +584,7 @@ public class ManagerUtil {
    * @throws NullPointerException If array is null
    * @throws IllegalArgumentException If array is not an array type
    */
-  public static Object get(Object array, int index) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
+  public static Object get(final Object array, final int index) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
     return ArrayManager.get(array, index);
   }
 
@@ -600,7 +599,7 @@ public class ManagerUtil {
    * @throws IllegalArgumentException If array is an unexpected array type
    * @throws ArrayIndexOutOfBoundsException If index is not in valid range for array
    */
-  public static void setImpl(Object array, int index, Object value) throws IllegalArgumentException,
+  public static void setImpl(final Object array, final int index, final Object value) throws IllegalArgumentException,
       ArrayIndexOutOfBoundsException {
     set(array, index, value);
   }
@@ -616,7 +615,7 @@ public class ManagerUtil {
    * @throws IllegalArgumentException If array is an unexpected array type
    * @throws ArrayIndexOutOfBoundsException If index is not in valid range for array
    */
-  public static void set(Object array, int index, Object value) throws IllegalArgumentException,
+  public static void set(final Object array, final int index, final Object value) throws IllegalArgumentException,
       ArrayIndexOutOfBoundsException {
     if (array == null) throw new NullPointerException();
 
@@ -649,7 +648,7 @@ public class ManagerUtil {
    * @throws IllegalArgumentException If array is an unexpected array type
    * @throws ArrayIndexOutOfBoundsException If index is not in valid range for array
    */
-  public static void setBoolean(Object array, int index, boolean z) throws IllegalArgumentException,
+  public static void setBoolean(final Object array, final int index, final boolean z) throws IllegalArgumentException,
       ArrayIndexOutOfBoundsException {
     if (array == null) throw new NullPointerException();
 
@@ -670,7 +669,7 @@ public class ManagerUtil {
    * @throws IllegalArgumentException If array is an unexpected array type
    * @throws ArrayIndexOutOfBoundsException If index is not in valid range for array
    */
-  public static void setByte(Object array, int index, byte b) throws IllegalArgumentException,
+  public static void setByte(final Object array, final int index, final byte b) throws IllegalArgumentException,
       ArrayIndexOutOfBoundsException {
     if (array == null) throw new NullPointerException();
 
@@ -688,7 +687,7 @@ public class ManagerUtil {
    * @throws IllegalArgumentException If array is an unexpected array type
    * @throws ArrayIndexOutOfBoundsException If index is not in valid range for array
    */
-  public static void setChar(Object array, int index, char c) throws IllegalArgumentException,
+  public static void setChar(final Object array, final int index, final char c) throws IllegalArgumentException,
       ArrayIndexOutOfBoundsException {
     if (array == null) throw new NullPointerException();
 
@@ -706,7 +705,7 @@ public class ManagerUtil {
    * @throws IllegalArgumentException If array is an unexpected array type
    * @throws ArrayIndexOutOfBoundsException If index is not in valid range for array
    */
-  public static void setShort(Object array, int index, short s) throws IllegalArgumentException,
+  public static void setShort(final Object array, final int index, final short s) throws IllegalArgumentException,
       ArrayIndexOutOfBoundsException {
     if (array == null) throw new NullPointerException();
 
@@ -724,7 +723,7 @@ public class ManagerUtil {
    * @throws IllegalArgumentException If array is an unexpected array type
    * @throws ArrayIndexOutOfBoundsException If index is not in valid range for array
    */
-  public static void setInt(Object array, int index, int i) throws IllegalArgumentException,
+  public static void setInt(final Object array, final int index, final int i) throws IllegalArgumentException,
       ArrayIndexOutOfBoundsException {
     if (array == null) throw new NullPointerException();
 
@@ -742,7 +741,7 @@ public class ManagerUtil {
    * @throws IllegalArgumentException If array is an unexpected array type
    * @throws ArrayIndexOutOfBoundsException If index is not in valid range for array
    */
-  public static void setLong(Object array, int index, long l) throws IllegalArgumentException,
+  public static void setLong(final Object array, final int index, final long l) throws IllegalArgumentException,
       ArrayIndexOutOfBoundsException {
     if (array == null) throw new NullPointerException();
 
@@ -760,7 +759,7 @@ public class ManagerUtil {
    * @throws IllegalArgumentException If array is an unexpected array type
    * @throws ArrayIndexOutOfBoundsException If index is not in valid range for array
    */
-  public static void setFloat(Object array, int index, float f) throws IllegalArgumentException,
+  public static void setFloat(final Object array, final int index, final float f) throws IllegalArgumentException,
       ArrayIndexOutOfBoundsException {
     if (array == null) throw new NullPointerException();
 
@@ -778,7 +777,7 @@ public class ManagerUtil {
    * @throws IllegalArgumentException If array is an unexpected array type
    * @throws ArrayIndexOutOfBoundsException If index is not in valid range for array
    */
-  public static void setDouble(Object array, int index, double d) throws IllegalArgumentException,
+  public static void setDouble(final Object array, final int index, final double d) throws IllegalArgumentException,
       ArrayIndexOutOfBoundsException {
     if (array == null) throw new NullPointerException();
 
@@ -793,7 +792,7 @@ public class ManagerUtil {
    * @param index The index into array
    * @param value The new value
    */
-  public static void objectArrayChanged(Object[] array, int index, Object value) {
+  public static void objectArrayChanged(final Object[] array, final int index, final Object value) {
     ArrayManager.objectArrayChanged(array, index, value);
   }
 
@@ -804,7 +803,7 @@ public class ManagerUtil {
    * @param index The index into array
    * @param value The new value
    */
-  public static void shortArrayChanged(short[] array, int index, short value) {
+  public static void shortArrayChanged(final short[] array, final int index, final short value) {
     ArrayManager.shortArrayChanged(array, index, value);
   }
 
@@ -815,7 +814,7 @@ public class ManagerUtil {
    * @param index The index into array
    * @param value The new value
    */
-  public static void longArrayChanged(long[] array, int index, long value) {
+  public static void longArrayChanged(final long[] array, final int index, final long value) {
     ArrayManager.longArrayChanged(array, index, value);
   }
 
@@ -826,7 +825,7 @@ public class ManagerUtil {
    * @param index The index into array
    * @param value The new value
    */
-  public static void intArrayChanged(int[] array, int index, int value) {
+  public static void intArrayChanged(final int[] array, final int index, final int value) {
     ArrayManager.intArrayChanged(array, index, value);
   }
 
@@ -837,7 +836,7 @@ public class ManagerUtil {
    * @param index The index into array
    * @param value The new value
    */
-  public static void floatArrayChanged(float[] array, int index, float value) {
+  public static void floatArrayChanged(final float[] array, final int index, final float value) {
     ArrayManager.floatArrayChanged(array, index, value);
   }
 
@@ -848,7 +847,7 @@ public class ManagerUtil {
    * @param index The index into array
    * @param value The new value
    */
-  public static void doubleArrayChanged(double[] array, int index, double value) {
+  public static void doubleArrayChanged(final double[] array, final int index, final double value) {
     ArrayManager.doubleArrayChanged(array, index, value);
   }
 
@@ -859,7 +858,7 @@ public class ManagerUtil {
    * @param index The index into array
    * @param value The new value
    */
-  public static void charArrayChanged(char[] array, int index, char value) {
+  public static void charArrayChanged(final char[] array, final int index, final char value) {
     ArrayManager.charArrayChanged(array, index, value);
   }
 
@@ -870,7 +869,7 @@ public class ManagerUtil {
    * @param index The index into array
    * @param value The new value
    */
-  public static void byteOrBooleanArrayChanged(Object array, int index, byte value) {
+  public static void byteOrBooleanArrayChanged(final Object array, final int index, final byte value) {
     ArrayManager.byteOrBooleanArrayChanged(array, index, value);
   }
 
@@ -884,7 +883,7 @@ public class ManagerUtil {
    * @param length Number of items to copy
    * @throws NullPointerException If src or dest is null
    */
-  public static void arraycopy(Object src, int srcPos, Object dest, int destPos, int length) {
+  public static void arraycopy(final Object src, final int srcPos, final Object dest, final int destPos, final int length) {
     ArrayManager.arraycopy(src, srcPos, dest, destPos, length);
   }
 
@@ -894,7 +893,7 @@ public class ManagerUtil {
    * @param array The array instance
    * @return The TCObject
    */
-  public static TCObject getObject(Object array) {
+  public static TCObject getObject(final Object array) {
     return ArrayManager.getObject(array);
   }
 
@@ -908,7 +907,7 @@ public class ManagerUtil {
    * @param length Number of items to copy
    * @param tco TCObject for dest array
    */
-  public static void charArrayCopy(char[] src, int srcPos, char[] dest, int destPos, int length, TCObject tco) {
+  public static void charArrayCopy(final char[] src, final int srcPos, final char[] dest, final int destPos, final int length, final TCObject tco) {
     ArrayManager.charArrayCopy(src, srcPos, dest, destPos, length, tco);
   }
 
@@ -919,7 +918,7 @@ public class ManagerUtil {
    * @param obj TCObject
    * @throws NullPointerException if array or tco are null
    */
-  public static void register(Object array, TCObject obj) {
+  public static void register(final Object array, final TCObject obj) {
     ArrayManager.register(array, obj);
   }
 
@@ -938,25 +937,16 @@ public class ManagerUtil {
   }
 
   /**
-   * Add listener for cluster events
-   *
-   * @param cel Listener
-   */
-  public static void addClusterEventListener(ClusterEventListener cel) {
-    getManager().addClusterEventListener(cel);
-  }
-
-  /**
    * Get session lock type for the specified app (usually WRITE or SYNCHRONOUS_WRITE)
    *
    * @param appName Web app name
    * @return Lock type
    */
-  public static int getSessionLockType(String appName) {
+  public static int getSessionLockType(final String appName) {
     return ClassProcessorHelper.getSessionLockType(appName);
   }
 
-  public static boolean isApplicationSessionLocked(String appName) {
+  public static boolean isApplicationSessionLocked(final String appName) {
     return ClassProcessorHelper.isApplicationSessionLocked(appName);
   }
 
@@ -967,11 +957,11 @@ public class ManagerUtil {
    * @param fieldOffset The index
    * @return true if the field is portable and false otherwise
    */
-  public static boolean isFieldPortableByOffset(Object pojo, long fieldOffset) {
+  public static boolean isFieldPortableByOffset(final Object pojo, final long fieldOffset) {
     return getManager().isFieldPortableByOffset(pojo, fieldOffset);
   }
 
-  public static boolean overridesHashCode(Object obj) {
+  public static boolean overridesHashCode(final Object obj) {
     // NOTE: The absence of the OverridesHashCode interface should not be relied upon
     if (obj instanceof OverridesHashCode) { return true; }
     return getManager().overridesHashCode(obj);
@@ -982,7 +972,7 @@ public class ManagerUtil {
    * as it would be declared in a web-application element in the Terracotta config; or null,
    * if this is not a web application loader.
    */
-  public static void registerNamedLoader(NamedClassLoader loader, String webAppName) {
+  public static void registerNamedLoader(final NamedClassLoader loader, final String webAppName) {
     getManager().registerNamedLoader(loader, webAppName);
   }
 }

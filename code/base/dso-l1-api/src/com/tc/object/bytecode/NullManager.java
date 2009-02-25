@@ -4,7 +4,6 @@
  */
 package com.tc.object.bytecode;
 
-import com.tc.cluster.ClusterEventListener;
 import com.tc.cluster.DsoCluster;
 import com.tc.logging.TCLogger;
 import com.tc.management.beans.sessions.SessionMonitor;
@@ -84,15 +83,15 @@ public final class NullManager implements Manager {
     obj.notifyAll();
   }
 
-  public final void objectWait(Object obj) throws InterruptedException {
+  public final void objectWait(final Object obj) throws InterruptedException {
     obj.wait();
   }
 
-  public final void objectWait(Object obj, long millis) throws InterruptedException {
+  public final void objectWait(final Object obj, final long millis) throws InterruptedException {
     obj.wait(millis);
   }
 
-  public final void objectWait(Object obj, long millis, int nanos) throws InterruptedException {
+  public final void objectWait(final Object obj, final long millis, final int nanos) throws InterruptedException {
     obj.wait(millis, nanos);
   }
 
@@ -168,7 +167,7 @@ public final class NullManager implements Manager {
     throw new UnsupportedOperationException();
   }
 
-  public final boolean tryMonitorEnter(Object obj, int type, long timeoutInNanos) {
+  public final boolean tryMonitorEnter(final Object obj, final int type, final long timeoutInNanos) {
     throw new UnsupportedOperationException();
   }
 
@@ -176,7 +175,7 @@ public final class NullManager implements Manager {
     throw new UnsupportedOperationException();
   }
 
-  public final boolean tryBeginLock(String lockID, int type, long timeoutInNanos) {
+  public final boolean tryBeginLock(final String lockID, final int type, final long timeoutInNanos) {
     throw new UnsupportedOperationException();
   }
 
@@ -218,11 +217,6 @@ public final class NullManager implements Manager {
     throw new UnsupportedOperationException();
   }
 
-  // TODO: evaluate what to do with this now that there's ClusterEventsNG
-  public final void addClusterEventListener(final ClusterEventListener cel) {
-    throw new UnsupportedOperationException();
-  }
-
   public final DmiManager getDmiManager() {
     throw new UnsupportedOperationException();
   }
@@ -259,7 +253,7 @@ public final class NullManager implements Manager {
     //
   }
 
-  public void registerNamedLoader(final NamedClassLoader loader, String webAppName) {
+  public void registerNamedLoader(final NamedClassLoader loader, final String webAppName) {
     throw new UnsupportedOperationException();
   }
 

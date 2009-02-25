@@ -31,14 +31,15 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler implements DSO
   private Sink                          hydrateSink;
   private Sink                          processTransactionSink;
 
-  public ChannelLifeCycleHandler(CommunicationsManager commsManager, TransactionBatchManager transactionBatchManager,
-                                 DSOChannelManager channelManager) {
+  public ChannelLifeCycleHandler(final CommunicationsManager commsManager, final TransactionBatchManager transactionBatchManager,
+                                 final DSOChannelManager channelManager) {
     this.commsManager = commsManager;
     this.transactionBatchManager = transactionBatchManager;
     this.channelMgr = channelManager;
   }
 
-  public void handleEvent(EventContext context) {
+  @Override
+  public void handleEvent(final EventContext context) {
     NodeStateEventContext event = (NodeStateEventContext) context;
 
     switch (event.getType()) {
@@ -60,7 +61,7 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler implements DSO
    * These methods are called for both L1 and L2 when this server is in active mode. For L1s we go thru the cleanup of
    * sinks (@see below), for L2s group events will trigger this eventually.
    */
-  private void nodeDisconnected(NodeID nodeID) {
+  private void nodeDisconnected(final NodeID nodeID) {
     broadcastClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_DISCONNECTED, nodeID);
     if (commsManager.isInShutdown()) {
       logger.info("Ignoring transport disconnect for " + nodeID + " while shutting down.");
@@ -70,26 +71,28 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler implements DSO
     }
   }
 
-  private void nodeConnected(NodeID nodeID) {
+  private void nodeConnected(final NodeID nodeID) {
     broadcastClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_CONNECTED, nodeID);
     transactionBatchManager.nodeConnected(nodeID);
   }
 
-  private void broadcastClusterMembershipMessage(int eventType, NodeID nodeID) {
-    MessageChannel[] channels = channelMgr.getActiveChannels();
-    for (int i = 0; i < channels.length; i++) {
-      MessageChannel channel = channels[i];
-
-      if (!channelMgr.getClientIDFor(channel.getChannelID()).equals(nodeID)) {
-        ClusterMembershipMessage cmm = (ClusterMembershipMessage) channel
-            .createMessage(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE);
-        cmm.initialize(eventType, nodeID, channels);
-        cmm.send();
+  private void broadcastClusterMembershipMessage(final int eventType, final NodeID nodeID) {
+    // only broadcast cluster membership messages for L1 nodes
+    if (NodeID.CLIENT_NODE_TYPE == nodeID.getNodeType()) {
+      MessageChannel[] channels = channelMgr.getActiveChannels();
+      for (MessageChannel channel : channels) {
+        if (!channelMgr.getClientIDFor(channel.getChannelID()).equals(nodeID)) {
+          ClusterMembershipMessage cmm = (ClusterMembershipMessage) channel
+              .createMessage(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE);
+          cmm.initialize(eventType, nodeID, channels);
+          cmm.send();
+        }
       }
     }
   }
 
-  public void initialize(ConfigurationContext context) {
+  @Override
+  public void initialize(final ConfigurationContext context) {
     super.initialize(context);
     ServerConfigurationContext scc = (ServerConfigurationContext) context;
     this.logger = scc.getLogger(ChannelLifeCycleHandler.class);
@@ -98,11 +101,11 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler implements DSO
     processTransactionSink = scc.getStage(ServerConfigurationContext.PROCESS_TRANSACTION_STAGE).getSink();
   }
 
-  public void channelCreated(MessageChannel channel) {
+  public void channelCreated(final MessageChannel channel) {
     channelSink.add(new NodeStateEventContext(NodeStateEventContext.CREATE, new ClientID(channel.getChannelID())));
   }
 
-  public void channelRemoved(MessageChannel channel) {
+  public void channelRemoved(final MessageChannel channel) {
     // We want all the messages in the system from this client to reach its destinations before processing this request.
     // esp. hydrate stage and process transaction stage. This goo is for that.
     final NodeStateEventContext disconnectEvent = new NodeStateEventContext(NodeStateEventContext.REMOVE,

@@ -9,8 +9,6 @@ import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
 import com.tc.client.AbstractClientFactory;
-import com.tc.cluster.Cluster;
-import com.tc.cluster.ClusterEventListener;
 import com.tc.cluster.DsoCluster;
 import com.tc.cluster.DsoClusterImpl;
 import com.tc.config.lock.LockContextInfo;
@@ -65,8 +63,6 @@ public class ManagerImpl implements Manager {
   private final PreparedComponentsFromL2Connection connectionComponents;
   private final Thread                             shutdownAction;
   private final Portability                        portability;
-  // TODO: evaluate what to do with this now that there's ClusterEventsNG
-  private final Cluster                            cluster;
   private final DsoClusterImpl                     dsoCluster;
   private final RuntimeLogger                      runtimeLogger;
 
@@ -101,8 +97,6 @@ public class ManagerImpl implements Manager {
     this.instrumentationLogger = new InstrumentationLoggerImpl(config.instrumentationLoggingOptions());
     this.startClient = startClient;
     this.connectionComponents = connectionComponents;
-    // TODO: evaluate what to do with this now that there's ClusterEventsNG
-    this.cluster = new Cluster();
     this.dsoCluster = new DsoClusterImpl();
     if (shutdownActionRequired) {
       shutdownAction = new Thread(new ShutdownAction());
@@ -195,7 +189,7 @@ public class ManagerImpl implements Manager {
     StartupAction action = new StartupHelper.StartupAction() {
       public void execute() throws Throwable {
         AbstractClientFactory clientFactory = AbstractClientFactory.getFactory();
-        dso = clientFactory.createClient(config, group, classProvider, connectionComponents, ManagerImpl.this, cluster,
+        dso = clientFactory.createClient(config, group, classProvider, connectionComponents, ManagerImpl.this,
                                          dsoCluster, runtimeLogger);
 
         if (forTests) {
@@ -919,11 +913,6 @@ public class ManagerImpl implements Manager {
     }
   }
 
-  // TODO: evaluate what to do with this now that there's ClusterEventsNG
-  public void addClusterEventListener(final ClusterEventListener cel) {
-    cluster.addClusterEventListener(cel);
-  }
-
   public DmiManager getDmiManager() {
     return this.methodCallManager;
   }
@@ -937,7 +926,7 @@ public class ManagerImpl implements Manager {
     return this.portability.overridesHashCode(obj);
   }
 
-  public void registerNamedLoader(final NamedClassLoader loader, String webAppName) {
+  public void registerNamedLoader(final NamedClassLoader loader, final String webAppName) {
     String loaderName = loader.__tc_getClassLoaderName();
     String appGroup = config.getAppGroup(loaderName, webAppName);
     this.classProvider.registerNamedLoader(loader, appGroup);

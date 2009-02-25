@@ -20,8 +20,9 @@ public class DsoClusterTopologyImpl implements DsoClusterTopology {
     this.cluster = cluster;
   }
 
-  public Collection<? extends DsoNode> getNodes() {
-    return Collections.unmodifiableCollection(nodes.values());
+  public Collection<DsoNode> getNodes() {
+    // yucky cast hack for generics
+    return (Collection)Collections.unmodifiableCollection(nodes.values());
   }
 
   DsoNodeInternal getDsoNode(final NodeID nodeId) {
@@ -40,7 +41,7 @@ public class DsoClusterTopologyImpl implements DsoClusterTopology {
   DsoNodeInternal getAndRemoveDsoNode(final NodeID nodeId) {
     synchronized (this) {
       DsoNodeInternal node = nodes.remove(nodeId);
-      // Assert.assertNotNull(node);
+      Assert.assertNotNull(node);
       return node;
     }
   }

@@ -7,7 +7,8 @@ package com.tctest.restart.system;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
-import com.tc.cluster.ClusterEventListener;
+import com.tc.cluster.DsoClusterEvent;
+import com.tc.cluster.DsoClusterListener;
 import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.object.bytecode.ManagerUtil;
@@ -27,26 +28,27 @@ import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.remote.JMXConnector;
 
-public class ClientAbscondAfterServerCrashTestApp extends AbstractTransparentApp implements ClusterEventListener {
+public class ClientAbscondAfterServerCrashTestApp extends AbstractTransparentApp implements DsoClusterListener {
 
-  public static String        HOST_NAME      = "host-name";
-  public static String        DSO_PORT       = "dso-port";
-  public static String        ADMIN_PORT     = "jmx-port";
-  public static String        CONFIG_FILE    = "config-file";
-  public static String        CLIENT1_SPACE  = "client1-workspace";
-  public static String        CLIENT2_SPACE  = "client2-workspace";
+  public static String              HOST_NAME     = "host-name";
+  public static String              DSO_PORT      = "dso-port";
+  public static String              ADMIN_PORT    = "jmx-port";
+  public static String              CONFIG_FILE   = "config-file";
+  public static String              CLIENT1_SPACE = "client1-workspace";
+  public static String              CLIENT2_SPACE = "client2-workspace";
 
-  private SynchronizedInt     nodesConnected = new SynchronizedInt(0);
-  private SynchronizedBoolean serverCrashed  = new SynchronizedBoolean(false);
+  private final SynchronizedInt     nodesJoined   = new SynchronizedInt(0);
+  private final SynchronizedBoolean serverCrashed = new SynchronizedBoolean(false);
 
-  private ServerControl       myBoss;
-  private ApplicationConfig   appConfig;
-  private ExtraL1ProcessControl client1, client2;
+  private ServerControl             myBoss;
+  private final ApplicationConfig   appConfig;
+  private ExtraL1ProcessControl     client1, client2;
 
-  public ClientAbscondAfterServerCrashTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
+  public ClientAbscondAfterServerCrashTestApp(final String appId, final ApplicationConfig cfg,
+                                              final ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     appConfig = cfg;
-    ManagerUtil.addClusterEventListener(this);
+    ManagerUtil.getManager().getDsoCluster().addClusterListener(this);
   }
 
   public void run() {
@@ -77,7 +79,7 @@ public class ClientAbscondAfterServerCrashTestApp extends AbstractTransparentApp
 
     // Wait till all clients join the game
     try {
-      while (nodesConnected.compareTo(3) != 0) {
+      while (nodesJoined.compareTo(3) != 0) {
         ThreadUtil.reallySleep(1000);
       }
       checkServerHasClients(3, Integer.parseInt(appConfig.getAttribute(ADMIN_PORT)));
@@ -121,7 +123,7 @@ public class ClientAbscondAfterServerCrashTestApp extends AbstractTransparentApp
   }
 
   public static class AbscondingClient {
-    public static void main(String args[]) {
+    public static void main(final String args[]) {
       System.out.println("XXX CLIENT" + args[0] + "STARTED");
       try {
         Thread.sleep(Long.MAX_VALUE);
@@ -131,7 +133,7 @@ public class ClientAbscondAfterServerCrashTestApp extends AbstractTransparentApp
     }
   }
 
-  private void checkServerHasClients(int clientCount, int jmxPort) throws Exception {
+  private void checkServerHasClients(final int clientCount, final int jmxPort) throws Exception {
     JMXConnector jmxConnector = new JMXConnectorProxy("localhost", jmxPort);
     MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
     DSOMBean mbean = (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, L2MBeanNames.DSO, DSOMBean.class,
@@ -147,24 +149,24 @@ public class ClientAbscondAfterServerCrashTestApp extends AbstractTransparentApp
     jmxConnector.close();
   }
 
-  public void nodeConnected(String nodeId) {
-    System.out.println("XXX Node Connected : " + nodeId);
-    nodesConnected.increment();
+  public void nodeJoined(final DsoClusterEvent event) {
+    System.out.println("XXX Node Joined");
+    nodesJoined.increment();
   }
 
-  public void nodeDisconnected(String nodeId) {
-    System.out.println("XXX Node Dis-Connected : " + nodeId);
-    nodesConnected.decrement();
+  public void nodeLeft(final DsoClusterEvent event) {
+    System.out.println("XXX Node Left");
+    nodesJoined.decrement();
   }
 
-  public void thisNodeConnected(String thisNodeId, String[] nodesCurrentlyInCluster) {
-    System.out.println("XXX This Node Connected : " + thisNodeId);
-    nodesConnected.increment();
-  }
-
-  public void thisNodeDisconnected(String thisNodeId) {
-    System.out.println("XXX This Node Dis-Connected : " + thisNodeId);
+  public void operationsDisabled(final DsoClusterEvent event) {
+    System.out.println("XXX Operations Disabled");
     serverCrashed.set(true);
-    nodesConnected.decrement();
+    nodesJoined.decrement();
+  }
+
+  public void operationsEnabled(final DsoClusterEvent event) {
+    System.out.println("XXX Operations Enabled");
+    nodesJoined.increment();
   }
 }

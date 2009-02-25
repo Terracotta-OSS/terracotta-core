@@ -8,7 +8,6 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.EventHandlerException;
-import com.tc.cluster.Cluster;
 import com.tc.cluster.DsoClusterInternal;
 import com.tc.object.ClientConfigurationContext;
 import com.tc.object.context.PauseContext;
@@ -19,11 +18,9 @@ import com.tc.object.msg.ClusterMembershipMessage;
 public class ClientCoordinationHandler extends AbstractEventHandler {
 
   private ClientHandshakeManager handshakeManager;
-  private final Cluster             cluster;
   private final DsoClusterInternal  dsoCluster;
 
-  public ClientCoordinationHandler(final Cluster cluster, final DsoClusterInternal dsoCluster) {
-    this.cluster = cluster;
+  public ClientCoordinationHandler(final DsoClusterInternal dsoCluster) {
     this.dsoCluster = dsoCluster;
   }
 
@@ -54,10 +51,8 @@ public class ClientCoordinationHandler extends AbstractEventHandler {
 
   private void handleClusterMembershipMessage(final ClusterMembershipMessage cmm) throws EventHandlerException {
     if (cmm.isNodeConnectedEvent()) {
-      cluster.nodeConnected(cmm.getNodeId().toString());
       dsoCluster.fireNodeJoined(cmm.getNodeId());
     } else if (cmm.isNodeDisconnectedEvent()) {
-      cluster.nodeDisconnected(cmm.getNodeId().toString());
       dsoCluster.fireNodeLeft(cmm.getNodeId());
     } else {
       throw new EventHandlerException("Unknown event type: " + cmm);

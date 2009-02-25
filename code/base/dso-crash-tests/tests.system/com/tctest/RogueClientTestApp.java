@@ -8,11 +8,13 @@ import org.apache.commons.io.FileUtils;
 
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
-import com.tc.cluster.ClusterEventListener;
+import com.tc.cluster.DsoCluster;
+import com.tc.cluster.DsoClusterEvent;
+import com.tc.cluster.DsoClusterListener;
 import com.tc.exception.TCRuntimeException;
+import com.tc.injection.annotations.InjectedDsoInstance;
 import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
-import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -56,13 +58,13 @@ public class RogueClientTestApp extends AbstractTransparentApp {
   public static final int                          TYPE_CONSUMER    = 1;
   public static final int                          TYPE_PRODUCER    = 2;
 
-  private ApplicationConfig                        appConfig;
+  private final ApplicationConfig                  appConfig;
   private JMXConnectorProxy                        jmxc;
   private MBeanServerConnection                    mbsc;
   private DSOMBean                                 dsoMBean;
   private ExtraL1ProcessControl                    client;
 
-  public RogueClientTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
+  public RogueClientTestApp(final String appId, final ApplicationConfig cfg, final ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     appConfig = cfg;
   }
@@ -74,7 +76,7 @@ public class RogueClientTestApp extends AbstractTransparentApp {
     return;
   }
 
-  public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
+  public static void visitL1DSOConfig(final ConfigVisitor visitor, final DSOClientConfigHelper config) {
     String testClass = RogueClientTestApp.class.getName();
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
     config.addIncludePattern(testClass + "$*", false, false, true);
@@ -87,7 +89,7 @@ public class RogueClientTestApp extends AbstractTransparentApp {
     spec.addRoot("nodeId", "nodeId");
   }
 
-  private void testRogueClients(int nodeRunner) {
+  private void testRogueClients(final int nodeRunner) {
 
     if (nodeRunner == TOTAL_L1_PROCESS) {
       RogueClientCoordinator clientCoordinator = new RogueClientCoordinator();
@@ -124,19 +126,19 @@ public class RogueClientTestApp extends AbstractTransparentApp {
   }
 
   public static class L1Client {
-    private int           clientId;
-    private int           type;
+    private final int     clientId;
+    private final int     type;
 
     // redeclaring so that the barriers get shared between the L1s and the coordinator
     private CyclicBarrier barrier;
     private CyclicBarrier finished;
 
-    public L1Client(int id, int type) {
+    public L1Client(final int id, final int type) {
       this.clientId = id;
       this.type = type;
     }
 
-    public static void main(String args[]) {
+    public static void main(final String args[]) {
       if (args.length != 2) { throw new AssertionError("Usage : Client <id> <type>"); }
 
       L1Client client = new L1Client(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
@@ -224,12 +226,14 @@ public class RogueClientTestApp extends AbstractTransparentApp {
    * Coordinator
    */
 
-  private class RogueClientCoordinator implements ClusterEventListener {
+  private class RogueClientCoordinator implements DsoClusterListener {
 
-    int            participantCount                        = TOTAL_L1_PROCESS;
-    private int    totalNoOfPendingTransactionsForClient[] = new int[participantCount];
-    private int    totalNoOfDisconnectedClients            = 0;
-    private String coordinatorNodeId;
+    @InjectedDsoInstance
+    private DsoCluster cluster;
+
+    int                participantCount                        = TOTAL_L1_PROCESS;
+    private final int  totalNoOfPendingTransactionsForClient[] = new int[participantCount];
+    private int        totalNoOfDisconnectedClients            = 0;
 
     public void startRogueClientCoordinator() {
       try {
@@ -241,7 +245,7 @@ public class RogueClientTestApp extends AbstractTransparentApp {
 
       System.out.println("All Clients got spawned.");
 
-      ManagerUtil.addClusterEventListener(this);
+      cluster.addClusterListener(this);
       jmxc = new JMXConnectorProxy("localhost", Integer.valueOf(appConfig.getAttribute(JMX_PORT)));
       try {
         mbsc = jmxc.getMBeanServerConnection();
@@ -272,7 +276,7 @@ public class RogueClientTestApp extends AbstractTransparentApp {
       Assert.eval(dsoMBean.getClients().length == TOTAL_L1_PROCESS);
 
       for (int i = 0; i < TOTAL_L1_PROCESS; i++) {
-        if (!clients[i].getNodeID().equals(this.coordinatorNodeId)) {
+        if (!clients[i].getNodeID().equals(cluster.getCurrentNode().getId())) {
           clients[i].killClient();
         }
       }
@@ -295,24 +299,22 @@ public class RogueClientTestApp extends AbstractTransparentApp {
       return clients;
     }
 
-    public void nodeConnected(String aNodeId) {
+    public void nodeJoined(final DsoClusterEvent event) {
       // we are not asserting for connection
       // do nothing
     }
 
-    public void nodeDisconnected(String aNodeId) {
-      // node got disconnected
+    public void nodeLeft(final DsoClusterEvent event) {
       totalNoOfDisconnectedClients++;
     }
 
-    public void thisNodeConnected(String thisNodeId, String[] nodesCurrentlyInCluster) {
-      this.coordinatorNodeId = thisNodeId;
-    }
-
-    public void thisNodeDisconnected(String thisNodeId) {
+    public void operationsDisabled(final DsoClusterEvent event) {
       // do nothing
     }
 
+    public void operationsEnabled(final DsoClusterEvent event) {
+      // do nothing
+    }
   }
 
   /**
@@ -338,13 +340,13 @@ public class RogueClientTestApp extends AbstractTransparentApp {
    */
 
   private static class MyNode {
-    private int id;
+    private final int id;
 
     public MyNode() {
       this(-1);
     }
 
-    public MyNode(int id) {
+    public MyNode(final int id) {
       this.id = id;
     }
 

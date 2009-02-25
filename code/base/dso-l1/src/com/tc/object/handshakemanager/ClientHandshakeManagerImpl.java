@@ -5,7 +5,6 @@
 package com.tc.object.handshakemanager;
 
 import com.tc.async.api.Sink;
-import com.tc.cluster.Cluster;
 import com.tc.cluster.DsoClusterInternal;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
@@ -41,7 +40,6 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
   private final TCLogger                      logger;
   private final Sink                          pauseSink;
   private final SessionManager                sessionManager;
-  private final Cluster                       cluster;
   private final DsoClusterInternal            dsoCluster;
   private final String                        clientVersion;
   private final Map                           groupStates        = new HashMap();
@@ -51,13 +49,12 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
 
   public ClientHandshakeManagerImpl(final TCLogger logger, final DSOClientMessageChannel channel,
                                     final ClientHandshakeMessageFactory chmf, final Sink pauseSink, final SessionManager sessionManager,
-                                    final Cluster cluster, final DsoClusterInternal dsoCluster, final String clientVersion, final Collection callbacks) {
+                                    final DsoClusterInternal dsoCluster, final String clientVersion, final Collection callbacks) {
     this.logger = logger;
     this.cidp = channel.getClientIDProvider();
     this.chmf = chmf;
     this.pauseSink = pauseSink;
     this.sessionManager = sessionManager;
-    this.cluster = cluster;
     this.dsoCluster = dsoCluster;
     this.clientVersion = clientVersion;
     this.callBacks = callbacks;
@@ -96,7 +93,6 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
     } else if (event.getType() == ChannelEventType.TRANSPORT_CONNECTED_EVENT) {
       pauseSink.add(new PauseContext(false, event.getChannel().getRemoteNodeID()));
     } else if (event.getType() == ChannelEventType.CHANNEL_CLOSED_EVENT) {
-      cluster.thisNodeDisconnected();
       dsoCluster.fireOperationsDisabled();
     }
   }
@@ -114,7 +110,6 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
       sessionManager.newSession(remoteNode);
       logger.info("ClientHandshakeManager moves to " + sessionManager);
 
-      cluster.thisNodeDisconnected();
       dsoCluster.fireOperationsDisabled();
     }
   }
@@ -146,8 +141,8 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
 
     checkClientServerVersionMatch(serverVersion);
     this.serverIsPersistent = persistentServer;
-    cluster.thisNodeConnected(thisNodeId, clusterMembers);
     dsoCluster.fireThisNodeJoined(thisNodeId, clusterMembers);
+    dsoCluster.fireOperationsEnabled();
     changeToRunning(remoteID);
     unpauseCallbacks(remoteID, getDisconnectedCount());
   }

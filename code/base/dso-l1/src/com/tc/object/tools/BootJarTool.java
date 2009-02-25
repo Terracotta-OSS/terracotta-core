@@ -25,7 +25,6 @@ import com.tc.asm.tree.MethodNode;
 import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo;
 import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
-import com.tc.cluster.ClusterEventListener;
 import com.tc.cluster.DsoCluster;
 import com.tc.cluster.DsoClusterEvent;
 import com.tc.cluster.DsoClusterListener;
@@ -507,7 +506,6 @@ public class BootJarTool {
       loadTerracottaClass(Util.class.getName());
       loadTerracottaClass(NIOWorkarounds.class.getName());
       loadTerracottaClass(TCProperties.class.getName());
-      loadTerracottaClass(ClusterEventListener.class.getName());
       loadTerracottaClass(OverrideCheck.class.getName());
       loadTerracottaClass(JavaLangStringTC.class.getName());
       loadTerracottaClass(StringCompressionUtil.class.getName());

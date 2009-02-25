@@ -18,8 +18,8 @@ import com.tc.management.beans.logging.RuntimeLogging;
 import com.tc.management.beans.logging.RuntimeLoggingMBean;
 import com.tc.management.beans.logging.RuntimeOutputOptions;
 import com.tc.management.beans.logging.RuntimeOutputOptionsMBean;
-import com.tc.management.beans.sessions.SessionMonitorImpl;
 import com.tc.management.beans.sessions.SessionMonitor;
+import com.tc.management.beans.sessions.SessionMonitorImpl;
 import com.tc.management.beans.tx.ClientTxMonitor;
 import com.tc.management.beans.tx.ClientTxMonitorMBean;
 import com.tc.management.exposed.TerracottaCluster;
@@ -147,6 +147,7 @@ public final class L1Management extends TerracottaManagement {
     registrationThread.start();
   }
 
+  @Override
   public Object findMBean(final ObjectName objectName, final Class mBeanInterface) throws IOException {
     if (objectName.equals(MBeanNames.CLIENT_TX_INTERNAL)) return clientTxBean;
     else if (objectName.equals(L1MBeanNames.HTTP_SESSIONS_PUBLIC)) return httpSessionsMonitor;
@@ -168,10 +169,6 @@ public final class L1Management extends TerracottaManagement {
 
   public SessionMonitor getHttpSessionMonitor() {
     return httpSessionsMonitor;
-  }
-
-  public TerracottaCluster getTerracottaCluster() {
-    return clusterBean;
   }
 
   public L1InfoMBean findL1InfoMBean() {

@@ -4,18 +4,14 @@
  */
 package com.tctest;
 
-import org.apache.commons.io.FileUtils;
-
+import com.tc.management.exposed.TerracottaClusterMBean;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 import com.tctest.runner.AbstractTransparentApp;
 
-import java.io.File;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,11 +20,13 @@ import java.util.Set;
 
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
+import javax.management.MBeanServerInvocationHandler;
 import javax.management.MBeanServerNotification;
 import javax.management.Notification;
 import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
+import javax.management.RuntimeMBeanException;
 
 public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp implements NotificationListener {
 
@@ -36,16 +34,16 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
   public static final String      PORT_NUMBER    = "port-number";
   public static final String      HOST_NAME      = "host-name";
 
-  private final ApplicationConfig config;
+//  private final ApplicationConfig config;
 
   private MBeanServer             server         = null;
   private ObjectName              clusterBean    = null;
-  private List                    clusterBeanBag = new ArrayList();
-  private Map                     eventsCount    = new HashMap();
+  private final List                    clusterBeanBag = new ArrayList();
+  private final Map                     eventsCount    = new HashMap();
 
-  public ClusterMembershipEventJMXTestApp(String appId, ApplicationConfig config, ListenerProvider listenerProvider) {
+  public ClusterMembershipEventJMXTestApp(final String appId, final ApplicationConfig config, final ListenerProvider listenerProvider) {
     super(appId, config, listenerProvider);
-    this.config = config;
+//    this.config = config;
 
     try {
       registerMBeanListener();
@@ -54,7 +52,7 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
     }
   }
 
-  public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
+  public static void visitL1DSOConfig(final ConfigVisitor visitor, final DSOClientConfigHelper config) {
     String testClass = ClusterMembershipEventJMXTestApp.class.getName();
     String methodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(methodExpression);
@@ -70,6 +68,32 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
   }
 
   private void runTest() throws Throwable {
+    TerracottaClusterMBean cluster = (TerracottaClusterMBean)MBeanServerInvocationHandler
+      .newProxyInstance(server, clusterBean, TerracottaClusterMBean.class, false);
+
+    try {
+      cluster.getNodeId();
+      Assert.fail("Expected UnsupportedOperationException");
+    } catch (RuntimeMBeanException e) {
+      Assert.assertTrue(e.getCause() instanceof UnsupportedOperationException);
+    }
+
+    try {
+      cluster.getNodesInCluster();
+      Assert.fail("Expected UnsupportedOperationException");
+    } catch (RuntimeMBeanException e) {
+      Assert.assertTrue(e.getCause() instanceof UnsupportedOperationException);
+    }
+
+    try {
+      cluster.isConnected();
+      Assert.fail("Expected UnsupportedOperationException");
+    } catch (RuntimeMBeanException e) {
+      Assert.assertTrue(e.getCause() instanceof UnsupportedOperationException);
+    }
+
+    // Disabling entire test since JMX event notifications have been deprecated
+    /*
     config.getServerControl().crash();
     while (config.getServerControl().isRunning()) {
       Thread.sleep(5000);
@@ -91,6 +115,7 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
       Assert.assertTrue(((Integer) eventsCount.get("com.tc.cluster.event.thisNodeDisconnected")).intValue() >= 1);
       Assert.assertTrue(((Integer) eventsCount.get("com.tc.cluster.event.thisNodeConnected")).intValue() >= 1);
     }
+    */
   }
 
   private void registerMBeanListener() throws Exception {
@@ -109,7 +134,7 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
 
     // listener for newly registered MBeans
     NotificationListener listener = new NotificationListener() {
-      public void handleNotification(Notification notification, Object handback) {
+      public void handleNotification(final Notification notification, final Object handback) {
         synchronized (clusterBeanBag) {
           clusterBeanBag.add(handback);
           clusterBeanBag.notifyAll();
@@ -119,7 +144,7 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
 
     // filter to let only clusterBean passed through
     NotificationFilter filter = new NotificationFilter() {
-      public boolean isNotificationEnabled(Notification notification) {
+      public boolean isNotificationEnabled(final Notification notification) {
         if (notification.getType().equals("JMX.mbean.registered")
             && ((MBeanServerNotification) notification).getMBeanName().equals(clusterBean)) return true;
         return false;
@@ -145,10 +170,15 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
     server.removeNotificationListener(delegateName, listener);
 
     // now that we have the clusterBean, add listener for membership events
-    server.addNotificationListener(clusterBean, this, null, clusterBean);
+    try {
+      server.addNotificationListener(clusterBean, this, null, clusterBean);
+      Assert.fail("Expected UnsupportedOperationException");
+    } catch (UnsupportedOperationException e) {
+      // expected
+    }
   }
 
-  public void handleNotification(Notification notification, Object handback) {
+  public void handleNotification(final Notification notification, final Object handback) {
     synchronized (eventsCount) {
       String msgType = notification.getType();
       if (eventsCount.containsKey(msgType)) {
@@ -162,16 +192,16 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
     }
   }
 
-  private static void echo(String msg) {
+  private static void echo(final String msg) {
     System.out.println(msg);
   }
 
   public static class L1Client {
-    public static void main(String args[]) {
+    public static void main(final String args[]) {
       // nothing to do
     }
   }
-
+  /*
   private ExtraL1ProcessControl spawnNewClient() throws Exception {
     final String hostName = config.getAttribute(HOST_NAME);
     final int port = Integer.parseInt(config.getAttribute(PORT_NUMBER));
@@ -191,7 +221,7 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
     return client;
   }
 
-  private void addTestTcPropertiesFile(List jvmArgs) {
+  private void addTestTcPropertiesFile(final List jvmArgs) {
     URL url = getClass().getResource("/com/tc/properties/tests.properties");
     if (url == null) { return; }
     String pathToTestTcProperties = url.getPath();
@@ -199,5 +229,5 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
     System.err.println("\n##### -Dcom.tc.properties=" + pathToTestTcProperties);
     jvmArgs.add("-Dcom.tc.properties=" + pathToTestTcProperties);
   }
-
+ */
 }

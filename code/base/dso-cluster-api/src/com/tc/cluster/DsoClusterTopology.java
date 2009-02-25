@@ -7,5 +7,5 @@ package com.tc.cluster;
 import java.util.Collection;
 
 public interface DsoClusterTopology {
-  public Collection<? extends DsoNode> getNodes();
+  public Collection<DsoNode> getNodes();
 }

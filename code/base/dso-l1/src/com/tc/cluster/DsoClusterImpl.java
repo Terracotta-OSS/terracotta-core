@@ -6,6 +6,8 @@ package com.tc.cluster;
 
 import com.tc.cluster.exceptions.ClusteredListenerException;
 import com.tc.cluster.exceptions.UnclusteredObjectException;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ClusterMetaDataManager;
@@ -26,6 +28,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class DsoClusterImpl implements DsoClusterInternal {
 
+  private static final TCLogger          LOGGER               = TCLogging.getLogger(DsoClusterImpl.class);
+
   private volatile DsoNodeInternal       currentNode;
 
   private final DsoClusterTopologyImpl   topology             = new DsoClusterTopologyImpl(this);
@@ -34,8 +38,8 @@ public class DsoClusterImpl implements DsoClusterInternal {
   private ClusterMetaDataManager         clusterMetaDataManager;
   private ClientObjectManager            clientObjectManager;
 
-  private boolean                        isNodeJoined         = false;
-  private boolean                        areOperationsEnabled = false;
+  private volatile boolean               isNodeJoined         = false;
+  private volatile boolean               areOperationsEnabled = false;
 
   public void init(final ClusterMetaDataManager metaDataManager, final ClientObjectManager objectManager) {
     this.clusterMetaDataManager = metaDataManager;
@@ -43,17 +47,19 @@ public class DsoClusterImpl implements DsoClusterInternal {
   }
 
   public void addClusterListener(final DsoClusterListener listener) throws ClusteredListenerException {
-    final boolean fireThisNodeJoined;
-    synchronized (this) {
-      fireThisNodeJoined = (currentNode != null);
-      if (null == listeners || listeners.contains(listener)) { return; }
+    if (null == listeners) { return; }
 
+    synchronized (this) {
+      if (listeners.contains(listener)) { return; }
       listeners.add(listener);
     }
 
-    if (fireThisNodeJoined) {
-      fireNodeJoined(currentNode.getNodeID());
-      fireOperationsEnabled();
+    if (isNodeJoined) {
+      fireNodeJoinedInternal(new DsoClusterEventImpl(currentNode), listener);
+    }
+
+    if (areOperationsEnabled) {
+      fireOperationsEnabledInternal(new DsoClusterEventImpl(currentNode), listener);
     }
   }
 
@@ -234,11 +240,20 @@ public class DsoClusterImpl implements DsoClusterInternal {
   }
 
   public void fireThisNodeLeft() {
+    boolean fireOperationsDisabled = false;
     synchronized (this) {
-      if (null == currentNode) {
-        // client channels closed before we knew the currentNode. Skip the disconnect event in this case
-        return;
+      if (areOperationsEnabled) {
+        fireOperationsDisabled = true;
+        areOperationsEnabled = false;
       }
+    }
+
+    if (fireOperationsDisabled) {
+      fireOperationsDisabledInternal();
+    }
+
+    synchronized (this) {
+      if (!isNodeJoined) { return; }
       isNodeJoined = false;
     }
 
@@ -248,38 +263,73 @@ public class DsoClusterImpl implements DsoClusterInternal {
   public void fireNodeJoined(final NodeID nodeId) {
     final DsoClusterEvent event = new DsoClusterEventImpl(topology.getDsoNode(nodeId));
     for (DsoClusterListener listener : listeners) {
+      fireNodeJoinedInternal(event, listener);
+    }
+  }
+
+  private void fireNodeJoinedInternal(final DsoClusterEvent event, final DsoClusterListener listener) {
+    try {
       listener.nodeJoined(event);
+    } catch (Throwable e) {
+      log(e);
     }
   }
 
   public void fireNodeLeft(final NodeID nodeId) {
     final DsoClusterEvent event = new DsoClusterEventImpl(topology.getAndRemoveDsoNode(nodeId));
     for (DsoClusterListener listener : listeners) {
-      listener.nodeLeft(event);
+      try {
+        listener.nodeLeft(event);
+      } catch (Throwable e) {
+        log(e);
+      }
     }
   }
 
   public void fireOperationsEnabled() {
     if (currentNode != null) {
       synchronized (this) {
+        if (areOperationsEnabled) { return; }
         areOperationsEnabled = true;
       }
 
       final DsoClusterEvent event = new DsoClusterEventImpl(currentNode);
       for (DsoClusterListener listener : listeners) {
-        listener.operationsEnabled(event);
+        fireOperationsEnabledInternal(event, listener);
       }
+    }
+  }
+
+  private void fireOperationsEnabledInternal(final DsoClusterEvent event, final DsoClusterListener listener) {
+    try {
+      listener.operationsEnabled(event);
+    } catch (Throwable e) {
+      log(e);
     }
   }
 
   public void fireOperationsDisabled() {
     synchronized (this) {
+      if (!areOperationsEnabled) { return; }
+
       areOperationsEnabled = false;
     }
 
+    fireOperationsDisabledInternal();
+  }
+
+  private void fireOperationsDisabledInternal() {
     final DsoClusterEvent event = new DsoClusterEventImpl(currentNode);
     for (DsoClusterListener listener : listeners) {
-      listener.operationsDisabled(event);
+      try {
+        listener.operationsDisabled(event);
+      } catch (Throwable e) {
+        log(e);
+      }
     }
+  }
+
+  private void log(final Throwable t) {
+    LOGGER.error("Unhandled exception in event callback " + this, t);
   }
 }

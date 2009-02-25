@@ -4,7 +4,6 @@
  */
 package com.tc.object.bytecode;
 
-import com.tc.cluster.ClusterEventListener;
 import com.tc.cluster.DsoCluster;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
@@ -419,14 +418,6 @@ public interface Manager {
    * @return TCProperties
    */
   public TCProperties getTCProperites();
-
-  // TODO: evaluate what to do with this now that there's ClusterEventsNG
-  /**
-   * Add listener for cluster events
-   *
-   * @param cel Listener
-   */
-  public void addClusterEventListener(ClusterEventListener cel);
 
   /**
    * @return DMI manager

@@ -4,10 +4,10 @@
  */
 package com.tctest;
 
-import com.tc.cluster.ClusterEventListener;
+import com.tc.cluster.DsoCluster;
+import com.tc.injection.annotations.InjectedDsoInstance;
 import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
-import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.spec.SynchronizedIntSpec;
@@ -32,16 +32,16 @@ public class DSOClientMBeanNodeIDTestApp extends AbstractTransparentApp {
   public static final String    JMX_PORT    = "jmx-port";
   // private static final int TOTAL_L1_PROCESS = 2;
 
-  private ApplicationConfig     appConfig;
+  private final ApplicationConfig     appConfig;
 
   // private final CyclicBarrier barrier = new CyclicBarrier(TOTAL_L1_PROCESS);
 
-  public DSOClientMBeanNodeIDTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
+  public DSOClientMBeanNodeIDTestApp(final String appId, final ApplicationConfig cfg, final ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     appConfig = cfg;
   }
 
-  public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
+  public static void visitL1DSOConfig(final ConfigVisitor visitor, final DSOClientConfigHelper config) {
     String testClass = DSOClientMBeanNodeIDTestApp.class.getName();
     config.addIncludePattern(testClass + "$*", false, false, true);
     config.addWriteAutolock("* " + testClass + "*.*(..)");
@@ -54,13 +54,14 @@ public class DSOClientMBeanNodeIDTestApp extends AbstractTransparentApp {
     coordinator.startDSOClientMBeanCoordinator();
   }
 
-  private class DSOClientMBeanCoordinator implements ClusterEventListener {
+  private class DSOClientMBeanCoordinator {
+
+    @InjectedDsoInstance
+    private DsoCluster            cluster;
     private DSOMBean              dsoMBean;
     private MBeanServerConnection mbsc;
-    private String                nodeID;
 
     public void startDSOClientMBeanCoordinator() {
-      ManagerUtil.addClusterEventListener(this);
       JMXConnectorProxy jmxc = new JMXConnectorProxy("localhost", Integer.valueOf(appConfig.getAttribute(JMX_PORT)));
       try {
         mbsc = jmxc.getMBeanServerConnection();
@@ -73,7 +74,7 @@ public class DSOClientMBeanNodeIDTestApp extends AbstractTransparentApp {
       DSOClientMBean[] clients = getDSOClientMBeans();
 
       Assert.eval(dsoMBean.getClients().length == 1);
-      Assert.eval(clients[0].getNodeID().equals(this.nodeID));
+      Assert.eval(clients[0].getNodeID().equals(cluster.getCurrentNode().getId()));
 
     }
 
@@ -87,25 +88,6 @@ public class DSOClientMBeanNodeIDTestApp extends AbstractTransparentApp {
       }
       return clients;
     }
-
-    public void nodeConnected(String aNodeId) {
-      // we are not asserting for connection
-      // do nothing
-    }
-
-    public void nodeDisconnected(String aNodeId) {
-      // node got disconnected
-    }
-
-    public void thisNodeConnected(String thisNodeId, String[] nodesCurrentlyInCluster) {
-      // do nothing
-      this.nodeID = thisNodeId;
-    }
-
-    public void thisNodeDisconnected(String thisNodeId) {
-      // do nothing
-    }
-
   }
 
 }

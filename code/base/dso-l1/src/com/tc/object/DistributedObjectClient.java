@@ -12,7 +12,6 @@ import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
-import com.tc.cluster.Cluster;
 import com.tc.cluster.DsoClusterInternal;
 import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.setup.ConfigurationSetupException;
@@ -178,7 +177,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   private final DSOClientConfigHelper                config;
   private final ClassProvider                        classProvider;
   private final Manager                              manager;
-  private final Cluster                              cluster;
   private final DsoClusterInternal                   dsoCluster;
   private final TCThreadGroup                        threadGroup;
   private final StatisticsAgentSubSystemImpl         statisticsAgentSubSystem;
@@ -206,7 +204,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   public DistributedObjectClient(final DSOClientConfigHelper config, final TCThreadGroup threadGroup,
                                  final ClassProvider classProvider,
                                  final PreparedComponentsFromL2Connection connectionComponents, final Manager manager,
-                                 final Cluster cluster, final DsoClusterInternal dsoCluster,
+                                 final DsoClusterInternal dsoCluster,
                                  final RuntimeLogger runtimeLogger) {
     super(threadGroup, BoundedLinkedQueue.class.getName());
     Assert.assertNotNull(config);
@@ -214,7 +212,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.classProvider = classProvider;
     this.connectionComponents = connectionComponents;
     this.manager = manager;
-    this.cluster = cluster;
     this.dsoCluster = dsoCluster;
     this.threadGroup = threadGroup;
     this.statisticsAgentSubSystem = new StatisticsAgentSubSystemImpl();
@@ -476,7 +473,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     // processed before the client handshake ack, and this client would get a faulty view of the cluster at best, or
     // more likely an AssertionError
     Stage pauseStage = stageManager.createStage(ClientConfigurationContext.CLIENT_COORDINATION_STAGE,
-                                                new ClientCoordinationHandler(cluster, dsoCluster), 1, maxSize);
+                                                new ClientCoordinationHandler(dsoCluster), 1, maxSize);
 
     Stage clusterMetaDataStage = stageManager.createStage(ClientConfigurationContext.CLUSTER_METADATA_STAGE,
                                                           new ClusterMetaDataHandler(), 1, maxSize);
@@ -501,7 +498,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     ProductInfo pInfo = ProductInfo.getInstance();
     clientHandshakeManager = new ClientHandshakeManagerImpl(new ClientIDLogger(channel.getClientIDProvider(), TCLogging
         .getLogger(ClientHandshakeManagerImpl.class)), channel, channel.getClientHandshakeMessageFactory(), pauseStage
-        .getSink(), sessionManager, cluster, dsoCluster, pInfo.version(), Collections
+        .getSink(), sessionManager, dsoCluster, pInfo.version(), Collections
         .unmodifiableCollection(clientHandshakeCallbacks));
     channel.addListener(clientHandshakeManager);
 
@@ -614,7 +611,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
       statisticsAgentSubSystem.setDefaultAgentDifferentiator("L1/" + channel.channel().getChannelID().toLong());
     }
 
-    cluster.addClusterEventListener(l1Management.getTerracottaCluster());
     if (useOOOLayer) {
       setReconnectCloseOnExit(channel);
     }

@@ -4,7 +4,6 @@
  */
 package com.tc.client;
 
-import com.tc.cluster.Cluster;
 import com.tc.cluster.DsoClusterInternal;
 import com.tc.lang.TCThreadGroup;
 import com.tc.object.DistributedObjectClient;
@@ -26,6 +25,6 @@ public abstract class AbstractClientFactory extends AbstractFactory {
   public abstract DistributedObjectClient createClient(DSOClientConfigHelper config, TCThreadGroup threadGroup,
                                                        ClassProvider classProvider,
                                                        PreparedComponentsFromL2Connection connectionComponents,
-                                                       Manager manager, Cluster cluster, DsoClusterInternal dsoCluster,
+                                                       Manager manager, DsoClusterInternal dsoCluster,
                                                        RuntimeLogger runtimeLogger);
 }

@@ -4,7 +4,6 @@
  */
 package com.tctest;
 
-import com.tc.cluster.Cluster;
 import com.tc.cluster.DsoClusterImpl;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.lang.TCThreadGroup;
@@ -81,7 +80,7 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
                                                                  new TCThreadGroup(new ThrowableHandler(TCLogging
                                                                      .getLogger(DistributedObjectClient.class))),
                                                                  new MockClassProvider(), components, NullManager
-                                                                     .getInstance(), new Cluster(),
+                                                                     .getInstance(),
                                                                  new DsoClusterImpl(), new NullRuntimeLogger());
     client.setCreateDedicatedMBeanServer(true);
     client.start();
