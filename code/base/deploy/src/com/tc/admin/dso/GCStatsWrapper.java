@@ -8,7 +8,7 @@ import com.tc.objectserver.api.GCStats;
 
 import java.util.Date;
 
-public class GCStatsWrapper implements GCStats {
+public class GCStatsWrapper implements GCStats, Comparable {
   private GCStats gcStats;
   private Date    startDate;
 
@@ -20,7 +20,7 @@ public class GCStatsWrapper implements GCStats {
     this.gcStats = gcStats;
     startDate = new Date(gcStats.getStartTime());
   }
-  
+
   public int getIteration() {
     return gcStats.getIteration();
   }
@@ -64,9 +64,16 @@ public class GCStatsWrapper implements GCStats {
   public long getDeleteStageTime() {
     return gcStats.getDeleteStageTime();
   }
-  
+
   // No longer used
   public long getCandidateGarbageCount() {
     return gcStats.getCandidateGarbageCount();
+  }
+
+  public int compareTo(Object o) {
+    if (!GCStatsWrapper.class.isAssignableFrom(o.getClass())) { throw new ClassCastException("Not a GCStatsWrapper"); }
+    Integer iter = Integer.valueOf(getIteration());
+    Integer otherIter = Integer.valueOf(((GCStatsWrapper) o).getIteration());
+    return otherIter.compareTo(iter);
   }
 }
