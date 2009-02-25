@@ -32,6 +32,9 @@ import com.tc.aspectwerkz.transform.inlining.weaver.LabelToLineNumberVisitor;
 import com.tc.aspectwerkz.transform.inlining.weaver.MethodCallVisitor;
 import com.tc.aspectwerkz.transform.inlining.weaver.MethodExecutionVisitor;
 import com.tc.aspectwerkz.transform.inlining.weaver.StaticInitializationVisitor;
+import com.tc.backport175.bytecode.AnnotationReader;
+import com.tc.backport175.bytecode.AnnotationReader.ClassKey;
+import com.tc.backport175.bytecode.spi.BytecodeProvider;
 import com.tc.exception.TCLogicalSubclassNotPortableException;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
@@ -58,6 +61,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * A weaving strategy implementing a weaving scheme based on statical compilation, and no reflection.
@@ -78,13 +83,23 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
     }
   }
 
-  private static final TCLogger       consoleLogger = CustomerLogging.getConsoleLogger();
+  private static final TCLogger                   consoleLogger = CustomerLogging.getConsoleLogger();
 
-  private final DSOClientConfigHelper m_configHelper;
-  private final InstrumentationLogger m_logger;
-  private final InstrumentationLogger m_instrumentationLogger;
+  private static final AnnotationByteCodeProvider BYTECODE_PROVIDER;
 
-  public DefaultWeavingStrategy(final DSOClientConfigHelper configHelper, final InstrumentationLogger instrumentationLogger) {
+  static {
+    BYTECODE_PROVIDER = new AnnotationByteCodeProvider(AnnotationReader.getDefaultBytecodeProvider());
+
+    // register our own global bytecode provider for the annotation reading stuff in backport175
+    AnnotationReader.setDefaultBytecodeProvider(BYTECODE_PROVIDER);
+  }
+
+  private final DSOClientConfigHelper             m_configHelper;
+  private final InstrumentationLogger             m_logger;
+  private final InstrumentationLogger             m_instrumentationLogger;
+
+  public DefaultWeavingStrategy(final DSOClientConfigHelper configHelper,
+                                final InstrumentationLogger instrumentationLogger) {
     m_configHelper = configHelper;
     m_instrumentationLogger = instrumentationLogger;
     m_logger = new InstrumentationLoggerImpl(m_configHelper.getInstrumentationLoggingOptions());
@@ -103,9 +118,18 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
    * @param context
    */
   public void transform(final String className, final InstrumentationContext context) {
+    ClassKey key = new ClassKey(className, context.getLoader());
+    BYTECODE_PROVIDER.put(key, context.getInitialBytecode());
     try {
-      final byte[] bytecode = context.getInitialBytecode();
-      InitialClassDumper.INSTANCE.write(className, bytecode);
+      transformInternal(className, context);
+    } finally {
+      BYTECODE_PROVIDER.clear(key);
+    }
+  }
+
+  private void transformInternal(final String className, final InstrumentationContext context) {
+    try {
+      InitialClassDumper.INSTANCE.write(className, context.getInitialBytecode());
 
       final ClassLoader loader = context.getLoader();
 
@@ -120,7 +144,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
         }
       }
 
-      ClassInfo classInfo = AsmClassInfo.getClassInfo(className, bytecode, loader);
+      ClassInfo classInfo = AsmClassInfo.getClassInfo(className, context.getCurrentBytecode(), loader);
 
       // skip Java reflect proxies for which we cannot get the resource as a stream
       // which leads to warnings when using annotation matching
@@ -452,4 +476,33 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
   private static boolean hasPointcut(final SystemDefinition definition, final ExpressionContext ctx) {
     return definition.hasPointcut(ctx);
   }
+
+  private static class AnnotationByteCodeProvider implements BytecodeProvider {
+
+    private final ConcurrentMap<ClassKey, byte[]> bytes = new ConcurrentHashMap<ClassKey, byte[]>();
+    private final BytecodeProvider                defaultBytecodeProvider;
+
+    public AnnotationByteCodeProvider(BytecodeProvider defaultBytecodeProvider) {
+      this.defaultBytecodeProvider = defaultBytecodeProvider;
+    }
+
+    public void clear(ClassKey key) {
+      bytes.remove(key);
+    }
+
+    public void put(ClassKey key, byte[] bytecode) {
+      bytes.put(key, bytecode);
+    }
+
+    public byte[] getBytecode(String className, ClassLoader loader) throws ClassNotFoundException, IOException {
+      ClassKey key = new ClassKey(className, loader);
+
+      byte[] data = bytes.get(key);
+      if (data != null) { return data.clone(); }
+
+      return defaultBytecodeProvider.getBytecode(className, loader);
+    }
+
+  }
+
 }

@@ -50,11 +50,11 @@ public class AnnotationReader {
     private static final String INIT_METHOD_NAME = "<init>";
 
     private static final Map CLASS_SPECIFIC_BYTECODE_PROVIDER = new WeakHashMap();
-    private static BytecodeProvider BYTECODE_PROVIDER = new DefaultBytecodeProvider();
+    private static volatile BytecodeProvider            BYTECODE_PROVIDER                = new DefaultBytecodeProvider();
 
-    /**
-     * Key is ClassKey, value is WeakReference of AnnotationReader 
-     */
+  /**
+   * Key is ClassKey, value is WeakReference of AnnotationReader
+   */
     private static final Map READERS = new WeakHashMap();
 
     private final ClassKey m_classKey;
@@ -995,7 +995,7 @@ public class AnnotationReader {
         }
 
     }
-    
+
     /**
      * Returns the annotation visitor to use.
      * <p/>
@@ -1031,7 +1031,7 @@ public class AnnotationReader {
           return reader.createAnnotationVisitor(annotation);
       }
     }
-    
+
     static final class AnnotationRetrievingMethodVisitor extends EmptyVisitor {
       private final MemberKey key;
       private final AnnotationReader reader;
@@ -1054,7 +1054,7 @@ public class AnnotationReader {
           return reader.createAnnotationVisitor(annotation);
       }
     }
-    
+
     static final class AnnotationRetrievingFieldVisitor extends EmptyVisitor {
       private final MemberKey    key;
       private final AnnotationReader reader;
@@ -1078,15 +1078,15 @@ public class AnnotationReader {
       }
 
     }
-    
+
 
     static class AnnotationBuilderVisitor implements AnnotationVisitor {
 
         private final AnnotationElement.NestedAnnotationElement m_nestedAnnotationElement;
 
-        /**
-         * ClassLoader from which both the annotated element and its annoation(s) are visible
-         */ 
+    /**
+     * ClassLoader from which both the annotated element and its annoation(s) are visible
+     */
         private final ClassLoader m_loader;
 
         /**
