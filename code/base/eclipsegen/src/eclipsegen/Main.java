@@ -7,7 +7,6 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -15,7 +14,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -65,26 +63,9 @@ public class Main {
     String moduleName = null;
     if (args.length == 1) {
       moduleName = args[0];
-    } else {
-      System.out.print("Do you want to run for all modules ? [N/y] : ");
-      String input = readLine();
-      if (!input.toLowerCase().equals("y") && !input.toLowerCase().equals("yes")) {
-        System.out.println("Didn't think so.");
-        System.exit(-1);
-      }
     }
     new Main().generate(moduleName);
     System.out.println("Done!");
-  }
-
-  private static String readLine() {
-    InputStreamReader isr = new InputStreamReader(System.in);
-    BufferedReader br = new BufferedReader(isr);
-    try {
-      return br.readLine();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   private void generate(String moduleName) throws Exception {
@@ -125,17 +106,12 @@ public class Main {
   }
 
   private Module[] getModules(String moduleName, Module[] modules) {
-    if (moduleName == null) {
-      return modules;
-    } else {
-      for (Module module : modules) {
-        if (module.getName().equals(moduleName)) {
-          Module[] temp = new Module[1];
-          temp[0] = module;
-          return temp;
-        }
-      }
+    if (moduleName == null) { return modules; }
+
+    for (Module module : modules) {
+      if (module.getName().equals(moduleName)) { return new Module[] { module }; }
     }
+
     return null;
   }
 
