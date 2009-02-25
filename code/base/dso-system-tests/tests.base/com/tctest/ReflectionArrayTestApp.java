@@ -16,7 +16,7 @@ import com.tc.util.Assert;
 
 import java.lang.reflect.Array;
 
-public class ReflectionArrayTestApp extends GenericTestApp {
+public class ReflectionArrayTestApp extends GenericTransparentApp {
   public ReflectionArrayTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider, DataRoot.class);
   }

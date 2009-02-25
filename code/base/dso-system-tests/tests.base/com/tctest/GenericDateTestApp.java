@@ -18,7 +18,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GenericDateTestApp extends GenericTestApp {
+public class GenericDateTestApp extends GenericTransparentApp {
   private static java.util.Date referenceDate      = createDate("Feb 20, 2006");
   private static java.util.Date alternateDate      = createDate("Feb 22, 2006");
   private static Timestamp      referenceTimestamp = createTimestamp("Feb 20, 2006 03:20:20");

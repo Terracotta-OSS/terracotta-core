@@ -44,7 +44,7 @@ import java.util.TreeMap;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class GenericMapTestApp extends GenericTestApp {
+public class GenericMapTestApp extends GenericTransparentApp {
 
   private static final int LITERAL_VARIANT   = 1;
   private static final int OBJECT_VARIANT    = 2;

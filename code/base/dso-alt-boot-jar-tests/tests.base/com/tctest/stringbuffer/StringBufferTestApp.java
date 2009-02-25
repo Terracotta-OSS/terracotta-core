@@ -11,7 +11,7 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tctest.GenericTestApp;
+import com.tctest.GenericTransparentApp;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -20,7 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
-public class StringBufferTestApp extends GenericTestApp {
+public class StringBufferTestApp extends GenericTransparentApp {
 
   public StringBufferTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider, StringBuddy.class);

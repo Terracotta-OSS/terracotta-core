@@ -23,7 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public abstract class GenericTestApp extends AbstractErrorCatchingTransparentApp {
+public abstract class GenericTransparentApp extends AbstractErrorCatchingTransparentApp {
 
   private static final String METHOD_PREFIX  = "test";
   private static final String METHOD_PATTERN = "^" + METHOD_PREFIX + ".*$";
@@ -40,11 +40,11 @@ public abstract class GenericTestApp extends AbstractErrorCatchingTransparentApp
 
   private transient boolean   mutator;
 
-  public GenericTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider, Class type) {
+  public GenericTransparentApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider, Class type) {
     this(appId, cfg, listenerProvider, type, 1);
   }
 
-  public GenericTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider, Class type, int variants) {
+  public GenericTransparentApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider, Class type, int variants) {
     super(appId, cfg, listenerProvider);
 
     final int count = getParticipantCount();
@@ -219,7 +219,7 @@ public abstract class GenericTestApp extends AbstractErrorCatchingTransparentApp
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    String testClass = GenericTestApp.class.getName();
+    String testClass = GenericTransparentApp.class.getName();
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
     config.getOrCreateSpec(Exit.class.getName());
 

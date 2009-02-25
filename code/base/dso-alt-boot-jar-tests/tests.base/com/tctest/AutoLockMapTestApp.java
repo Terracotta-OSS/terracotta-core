@@ -29,7 +29,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.Map.Entry;
 
-public class AutoLockMapTestApp extends GenericTestApp {
+public class AutoLockMapTestApp extends GenericTransparentApp {
 
   public AutoLockMapTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider, Map.class);
