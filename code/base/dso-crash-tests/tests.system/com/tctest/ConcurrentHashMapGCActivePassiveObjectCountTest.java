@@ -29,10 +29,8 @@ public class ConcurrentHashMapGCActivePassiveObjectCountTest extends GCAndActive
    * skip running on normal mode
    */
   @Override
-  public void test() throws Exception {
-    if (isMultipleServerTest()) {
-      super.test();
-    }
+  protected boolean canRunNormal() {
+    return false;
   }
 
   @Override
