@@ -70,6 +70,10 @@ bundled_components:
               - dso-l2-common
               - dso-statistics-api
               - management-api
+        - terracotta-api:
+            install_directory: lib
+            modules:
+              - dso-cluster-api             
       # NOTE: this section also controls what goes into the 'tc.jar' file
       modules:
         - aspectwerkz:
@@ -83,6 +87,7 @@ bundled_components:
         - dso-common-jdk16
         - dso-l1
         - dso-l1-api
+        - dso-cluster-api
         - dso-l2
         - dso-l2-common
         - dso-spring:
@@ -184,4 +189,8 @@ postscripts:
           pom: poms/terracotta-jmx-api-pom.xml
           inject: 
             - lib/resources/build-data.txt
+        - artifact: terracotta-api
+          file: lib/terracotta-api.jar
+          pom: poms/terracotta-api-pom.xml
+          version: api.version           
           

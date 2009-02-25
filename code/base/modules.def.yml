@@ -57,6 +57,10 @@ modules:
         - common
         - common-api
         - license-common
+  - dso-cluster-api:
+      options:
+        jdk: J2SE-1.5
+        javadoc: true
   - dso-l1-api:
       options:
         jdk: J2SE-1.5
@@ -68,6 +72,7 @@ modules:
         - license-common
         - dso-statistics-api
         - thirdparty-api
+        - dso-cluster-api
   - dso-common:
       options:
         jdk: J2SE-1.5
@@ -76,6 +81,7 @@ modules:
         - common-api
         - license-common
         - dso-l1-api
+        - dso-cluster-api
         - thirdparty-api
         - dso-statistics-api
         - sigarstats
@@ -223,6 +229,7 @@ modules:
         - dso-common
         - dso-common-jdk16
         - dso-l1-api
+        - dso-cluster-api
         - dso-statistics
         - dso-statistics-api
         - management
@@ -453,6 +460,7 @@ modules:
         - dso-common-jdk16
         - dso-l1
         - dso-l1-api
+        - dso-cluster-api
         - dso-l2
         - dso-l2-common
         - dso-memory-datastore
@@ -502,6 +510,7 @@ modules:
         - dso-common-jdk16
         - dso-l1
         - dso-l1-api
+        - dso-cluster-api
         - dso-l2
         - dso-l2-common
         - dso-statistics
@@ -527,6 +536,7 @@ modules:
         - dso-common-jdk16
         - dso-l1
         - dso-l1-api
+        - dso-cluster-api
         - dso-l2
         - dso-l2-common
         - dso-memory-datastore

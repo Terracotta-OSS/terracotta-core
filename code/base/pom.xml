@@ -167,6 +167,17 @@
        </exclusions>
       </dependency>
       <dependency>
+        <groupId>jfree</groupId>
+        <artifactId>jfreechart</artifactId>
+        <version>1.0.11-experimental</version>
+       <exclusions>
+         <exclusion>
+           <groupId>gnujaxp</groupId>
+           <artifactId>gnujaxp</artifactId>
+         </exclusion>
+       </exclusions>
+      </dependency>      
+      <dependency>
         <groupId>org.dijon</groupId>
         <artifactId>appframe</artifactId>
         <version>1.0</version>

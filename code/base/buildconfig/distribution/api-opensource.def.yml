@@ -5,6 +5,9 @@ root_directory: terracotta-api-api.version
 bundled_components:
   - base:
       module_packages:
+        - terracotta-api-api.version:
+            modules:
+              - dso-cluster-api    
         - terracotta-tim-api-api.version:
             modules:
               - common-api
@@ -33,6 +36,10 @@ postscripts:
         - lib/resources
   - maven-deploy:
       args:
+        - artifact: terracotta-api
+          file: terracotta-api-api.version.jar
+          pom: poms/terracotta-api-pom.xml
+          version: api.version  
         - artifact: terracotta-tim-api
           file: terracotta-tim-api-api.version.jar
           pom: poms/terracotta-tim-api-pom.xml
