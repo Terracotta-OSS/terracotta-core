@@ -19,11 +19,11 @@ import java.util.concurrent.Future;
 import java.util.prefs.Preferences;
 
 public class SessionIntegratorContext implements ApplicationContext {
-  public SessionIntegrator      client;
-  public ResourceBundleHelper   bundleHelper;
-  public Preferences            prefs;
-  private final ExecutorService executorService = Executors.newCachedThreadPool();
-  private Map<String, IOption>  optionMap;
+  public SessionIntegrator           client;
+  public ResourceBundleHelper        bundleHelper;
+  public Preferences                 prefs;
+  private final ExecutorService      executorService = Executors.newCachedThreadPool();
+  private final Map<String, IOption> optionMap;
 
   SessionIntegratorContext(SessionIntegrator client) {
     this.client = client;
@@ -64,6 +64,10 @@ public class SessionIntegratorContext implements ApplicationContext {
 
   public Iterator<IOption> options() {
     return optionMap.values().iterator();
+  }
+
+  public IOption getOption(String name) {
+    return optionMap.get(name);
   }
 
   public Object getObject(String id) {

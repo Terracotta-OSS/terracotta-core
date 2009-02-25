@@ -153,6 +153,9 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     logArea = new LogPane();
     logsPanel.add(adminClientContext.getString("messages"), logArea);
 
+    initNavTreeMenu();
+    registerOptions();
+
     tree.setModel(new NavTreeModel(adminClientContext));
 
     StatusCleaner statusCleaner = new StatusCleaner();
@@ -161,9 +164,6 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
 
     getActionMap().put(UNDO, undoCmd = new UndoAction());
     getActionMap().put(REDO, redoCmd = new RedoAction());
-
-    initNavTreeMenu();
-    registerOptions();
 
     XRootNode root = tree.getRootNode();
     int count = root.getChildCount();

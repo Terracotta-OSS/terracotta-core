@@ -14,6 +14,7 @@ import com.tc.admin.model.IClusterNode;
 import com.tc.admin.model.IClusterStatsListener;
 import com.tc.admin.model.IProductVersion;
 import com.tc.admin.model.IServer;
+import com.tc.admin.options.RuntimeStatsOption;
 import com.tc.statistics.retrieval.actions.SRAThreadDump;
 
 import java.awt.Color;
@@ -91,7 +92,11 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
     clusterModel.addPropertyChangeListener(new ClusterListener(clusterModel));
     versionCheckOccurred = new AtomicBoolean(false);
 
-    Preferences prefs = adminClientContext.getPrefs().node("RuntimeStats");
+    RuntimeStatsOption runtimeStatsOption = (RuntimeStatsOption) adminClientContext.getOption(RuntimeStatsOption.NAME);
+    if (runtimeStatsOption != null) {
+      clusterModel.setPollPeriod(runtimeStatsOption.getPollPeriodSeconds());
+    }
+    Preferences prefs = adminClientContext.getPrefs().node(RuntimeStatsOption.NAME);
     prefs.addPreferenceChangeListener(this);
   }
 
