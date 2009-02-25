@@ -10,8 +10,6 @@ import com.tc.cluster.DsoCluster;
 import com.tc.injection.annotations.InjectedDsoInstance;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.loaders.IsolationClassLoader;
-import com.tc.object.tools.BootJarTool;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -116,7 +114,6 @@ public class ClusterEventsTestApp extends AbstractTransparentApp {
 
     List jvmArgs = new ArrayList();
     addTestTcPropertiesFile(jvmArgs);
-    jvmArgs.add("-D" + BootJarTool.SYSTEM_CLASSLOADER_NAME_PROPERTY + "=" + IsolationClassLoader.loaderName());
     ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, ClusterEventsL1Client.class, configFile
         .getAbsolutePath(), new String[0], workingDir, jvmArgs);
     client.start();

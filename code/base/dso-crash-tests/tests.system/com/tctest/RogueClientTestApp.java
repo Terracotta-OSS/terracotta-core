@@ -19,8 +19,6 @@ import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.spec.SynchronizedIntSpec;
-import com.tc.object.loaders.IsolationClassLoader;
-import com.tc.object.tools.BootJarTool;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -102,7 +100,6 @@ public class RogueClientTestApp extends AbstractTransparentApp {
         final File configFile = new File(appConfig.getAttribute(CONFIG_FILE));
         File workingDir = new File(configFile.getParentFile(), "l1client" + nodeRunner);
         List jvmArgs = new ArrayList();
-        jvmArgs.add("-D" + BootJarTool.SYSTEM_CLASSLOADER_NAME_PROPERTY + "=" + IsolationClassLoader.loaderName());
         jvmArgs.add("-Dtc.node-name=node" + nodeRunner);
         jvmArgs.add("-Dtc.config=" + configFile.getAbsolutePath());
         // System.out.println("-Dtc.config=" + configFile.getAbsolutePath());

@@ -147,7 +147,7 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
   }
 
   public static String loaderName() {
-    return IsolationClassLoader.class.getName();
+    return Namespace.getIsolationLoaderName();
   }
 
   public void __tc_setClassLoaderName(String name) {

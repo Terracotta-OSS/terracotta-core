@@ -18,13 +18,14 @@ import java.util.Set;
  */
 public class StandardClassProvider implements ClassProvider {
 
-  private static final String BOOT    = Namespace.getStandardBootstrapLoaderName();
-  // private static final String EXT     = Namespace.getStandardExtensionsLoaderName();
-  // private static final String SYSTEM  = Namespace.getStandardSystemLoaderName();
+  private static final String BOOT      = Namespace.getStandardBootstrapLoaderName();
+  // private static final String EXT       = Namespace.getStandardExtensionsLoaderName();
+  private static final String SYSTEM    = Namespace.getStandardSystemLoaderName();
+  private static final String ISOLATION = Namespace.getIsolationLoaderName();
   
   private static final LoaderDescription BOOT_DESC = new LoaderDescription(null, BOOT);
 
-  // The following four maps need to be maintained in synchrony.  We achieve this
+  // Modifications to the following fields must be done atomically.  We achieve this
   // by synchronizing on 'this' all methods that access them.
   
   /** map loader name to loader */
@@ -44,6 +45,14 @@ public class StandardClassProvider implements ClassProvider {
    * loader description; if it has zero or more than one child, the value is null.
    */
   private final Map<String, String> uniqueChildInAppGroup = new HashMap<String, String>();
+  
+  /**
+   * If an IsolationClassLoader has been registered, without an explicit app-group, save
+   * it here so it can be substituted for the system classloader.
+   */
+  private NamedClassLoader isolationClassLoader;
+  
+  // END fields requiring atomicity
   
   private final RuntimeLogger runtimeLogger;
 
@@ -108,7 +117,7 @@ public class StandardClassProvider implements ClassProvider {
       prevRef = loaders.put(name, new WeakReference<NamedClassLoader>(loader));
       loaderDescriptions.put(name, new LoaderDescription(appGroup, name));
       
-      if (appGroup != null && appGroup.length() > 0) {
+      if (appGroup != null) {
         Set<String> descs = appGroups.get(appGroup);
         if (descs == null) {
           descs = new HashSet<String>();
@@ -120,6 +129,10 @@ public class StandardClassProvider implements ClassProvider {
         updateAllChildRelationships(appGroup);
       } else {
         uniqueChildInAppGroup.put(name, null);
+        
+        if (ISOLATION.equals(name)) {
+          isolationClassLoader = loader;
+        }
       }
       
     }
@@ -160,13 +173,13 @@ public class StandardClassProvider implements ClassProvider {
     return new RuntimeException("No loader description for " + loader);
   }
 
-  private boolean isStandardLoader(String desc) {
+  private boolean isBootLoader(String desc) {
     // EXT and SYSTEM get registered at startup like normal loaders; no need to special-case
     return BOOT.equals(desc); // || EXT.equals(desc) || SYSTEM.equals(desc);
   }
 
   private ClassLoader lookupLoader(LoaderDescription desc) {
-    if (isStandardLoader(desc.name())) {
+    if (isBootLoader(desc.name())) {
       return SystemLoaderHolder.loader;
     } else {
       return lookupLoaderWithAppGroup(desc);
@@ -198,6 +211,17 @@ public class StandardClassProvider implements ClassProvider {
    * app-group if necessary.
    */
   private ClassLoader lookupLoaderWithAppGroup(LoaderDescription desc) {
+    // Testing support: allow substitution of IsolationClassLoader for system classloader,
+    // unless they were explicitly registered within app-groups.
+    if (SYSTEM.equals(desc.name()) && null == desc.appGroup()) {
+      if (null != isolationClassLoader) {
+        return (ClassLoader)isolationClassLoader;
+      }
+    } else if (ISOLATION.equals(desc.name()) && null == desc.appGroup() &&
+        null == loaderDescriptions.get(desc.name())) {
+      return SystemLoaderHolder.loader;
+    }
+    
     // if (the DNA specifies an app-group, 
     //     and there is a loader that exactly matches both the app-group and the name, 
     //     and there is exactly one loader registered in that app-group that is a *child* of the exact match) { 

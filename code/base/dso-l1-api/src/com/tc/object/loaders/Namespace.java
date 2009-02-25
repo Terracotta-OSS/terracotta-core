@@ -27,9 +27,11 @@ public class Namespace {
   public static final String  JETTY_NAMESPACE                 = "Jetty" + SEP;
   public static final String  GLASSFISH_NAMESPACE             = "Glassfish" + SEP;
 
+  // Well-known loader names.  These names may be hard-coded into test cases: take care if you change them.
   private static final String SYSTEM_LOADER_NAME              = STANDARD_NAMESPACE + "system";
   private static final String EXT_LOADER_NAME                 = STANDARD_NAMESPACE + "ext";
   private static final String BOOT_LOADER_NAME                = STANDARD_NAMESPACE + "bootstrap";
+  private static final String ISOLATION_LOADER_NAME           = "com.tc.object.loaders.IsolationClassLoader";
 
   /**
    * @return Normal system class loader name
@@ -52,6 +54,13 @@ public class Namespace {
     return BOOT_LOADER_NAME;
   }
 
+  /**
+   * @return Isolation class loader name - used only for testing
+   */
+  public static String getIsolationLoaderName() {
+    return ISOLATION_LOADER_NAME;
+  }
+  
   /**
    * @return Separator between loader and class name
    */

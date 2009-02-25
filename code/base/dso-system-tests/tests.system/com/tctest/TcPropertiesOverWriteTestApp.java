@@ -11,8 +11,6 @@ import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.spec.SynchronizedIntSpec;
-import com.tc.object.loaders.IsolationClassLoader;
-import com.tc.object.tools.BootJarTool;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
@@ -64,7 +62,6 @@ public class TcPropertiesOverWriteTestApp extends AbstractTransparentApp {
       final File configFile = new File(appConfig.getAttribute(CONFIG_FILE));
       File workingDir = new File(configFile.getParentFile(), "l1client");
       List jvmArgs = new ArrayList();
-      jvmArgs.add("-D" + BootJarTool.SYSTEM_CLASSLOADER_NAME_PROPERTY + "=" + IsolationClassLoader.loaderName());
       jvmArgs.add("-Dtc.node-name=node123");
       jvmArgs.add("-Dtc.config=" + configFile.getAbsolutePath());
       setJvmArgsTcProperties(jvmArgs);
