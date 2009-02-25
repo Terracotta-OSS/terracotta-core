@@ -114,9 +114,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   private final DSOClientConfigHelperLogger                  helperLogger;
 
   private final L1TVSConfigurationSetupManager               configSetupManager;
-  
-  private final Map                              classLoaderNameToAppGroup          = new ConcurrentHashMap();
-  private final Map                              webAppNameToAppGroup               = new ConcurrentHashMap();
+
+  private final Map                                          classLoaderNameToAppGroup          = new ConcurrentHashMap();
+  private final Map                                          webAppNameToAppGroup               = new ConcurrentHashMap();
 
   private final List                                         locks                              = new CopyOnWriteArrayList();
   private final List                                         roots                              = new CopyOnWriteArrayList();
@@ -1231,7 +1231,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   public void validateSessionConfig() {
     if (this.applicationNames.size() > 0 && !isCapabilityEnabled(TimCapability.SESSIONS)) {
-      logger.warn("One or more web applications are listed in configuration, but no container TIMs have been loaded");
+      logger
+          .warn("One or more web applications are listed in the Terracotta configuration file, but no container TIMs have been loaded.\n"
+                + "See http://www.terracotta.org/tim-warning for more information. ");
     }
   }
 
@@ -1344,7 +1346,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
     return clazz;
   }
-  
+
   public String getAppGroup(String loaderName, String appName) {
     // treat empty strings as null
     if (loaderName != null && loaderName.length() == 0) {
@@ -1353,19 +1355,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     if (appName != null && appName.length() == 0) {
       appName = null;
     }
-    if (loaderName == null && appName == null) {
-      return null;
-    }
-    String nclAppGroup = (loaderName == null) ? null : (String)classLoaderNameToAppGroup.get(loaderName);
-    String waAppGroup = (appName == null) ? null : (String)webAppNameToAppGroup.get(appName);
-    if (nclAppGroup == null) {
-      return waAppGroup;
-    }
+    if (loaderName == null && appName == null) { return null; }
+    String nclAppGroup = (loaderName == null) ? null : (String) classLoaderNameToAppGroup.get(loaderName);
+    String waAppGroup = (appName == null) ? null : (String) webAppNameToAppGroup.get(appName);
+    if (nclAppGroup == null) { return waAppGroup; }
     if (waAppGroup != null && !nclAppGroup.equals(waAppGroup)) {
-      logger.error("App-group configuration conflict: web-application " + appName +
-                   " is declared to be in app-group " + waAppGroup + 
-                   " but its classloader is " + loaderName + 
-                   " which is declared to be in app-group " + nclAppGroup);
+      logger.error("App-group configuration conflict: web-application " + appName + " is declared to be in app-group "
+                   + waAppGroup + " but its classloader is " + loaderName + " which is declared to be in app-group "
+                   + nclAppGroup);
     }
     return nclAppGroup;
   }
@@ -1657,9 +1654,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   public void addInjectedField(final String className, final String fieldName, final String instanceType) {
-    if ((className == null) || (fieldName == null)) {
-      throw new IllegalArgumentException("class " + className + ", field = " + fieldName);
-    }
+    if ((className == null) || (fieldName == null)) { throw new IllegalArgumentException("class " + className
+                                                                                         + ", field = " + fieldName); }
 
     final String fullyQualifiedFieldName = className + "." + fieldName;
     if (null == instanceType) {
@@ -1716,23 +1712,24 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   public void addApplicationName(final String name) {
     applicationNames.add(name);
   }
-  
+
   public void addToAppGroup(String appGroup, String[] namedClassloaders, String[] webAppNames) {
     if (namedClassloaders != null) {
       for (String namedClassloader : namedClassloaders) {
-        String oldGroup = (String)classLoaderNameToAppGroup.put(namedClassloader, appGroup);
+        String oldGroup = (String) classLoaderNameToAppGroup.put(namedClassloader, appGroup);
         if (oldGroup != null) {
-          logger.error("Configuration error: named-classloader \"" + namedClassloader + "\" was declared in app-group \"" + oldGroup +
-                       "\" and also in app-group \"" + appGroup + "\"");
+          logger
+              .error("Configuration error: named-classloader \"" + namedClassloader + "\" was declared in app-group \""
+                     + oldGroup + "\" and also in app-group \"" + appGroup + "\"");
         }
       }
     }
     if (webAppNames != null) {
       for (String webAppName : webAppNames) {
-        String oldGroup = (String)webAppNameToAppGroup.put(webAppName, appGroup);
+        String oldGroup = (String) webAppNameToAppGroup.put(webAppName, appGroup);
         if (oldGroup != null) {
-          logger.error("Configuration error: web-application \"" + webAppName + "\" was declared in app-group \"" + oldGroup +
-                       "\" and also in app-group \"" + appGroup + "\"");
+          logger.error("Configuration error: web-application \"" + webAppName + "\" was declared in app-group \""
+                       + oldGroup + "\" and also in app-group \"" + appGroup + "\"");
         }
       }
     }
