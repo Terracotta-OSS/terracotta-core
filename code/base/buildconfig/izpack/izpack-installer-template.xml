@@ -14,7 +14,7 @@
       <javaversion>1.5</javaversion>
    </info>
 
-   <guiprefs width="640" height="480" resizable="no">
+   <guiprefs width="700" height="530" resizable="no">
       <modifier key="useHeadingPanel" value="yes"/>
       <modifier key="headingLineCount" value="2"/>
       <modifier key="headingFontSize" value="1.5"/>
@@ -35,8 +35,11 @@
    </variables>
 
    <resources>
-      <!-- <res id="Installer.image" src="../izpack/image.png" /> -->
-      <res id="Heading.image" src="../izpack/HeadingImage.jpg"/>
+      <res id="Installer.image.0" src="../izpack/tech_solutions.gif" />
+      <res id="Installer.image.2" src="../izpack/dev_console.gif" />
+      <res id="Installer.image.4" src="../izpack/training_and_services.gif" />
+      <res id="Installer.image.6" src="../izpack/terracotta_fx.gif" />
+      <res id="Heading.image" src="../izpack/logo_rgb_padded.png"/>
       <res id="LicencePanel.licence" src="license.txt" />
       <res id="InfoPanel.info" src="readme.txt" />
       <res src="../izpack/windows_shortcuts.xml" id="shortcutSpec.xml" />
