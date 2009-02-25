@@ -14,7 +14,7 @@ import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
 
 public class TerracottaCluster extends AbstractTerracottaMBean implements TerracottaClusterMBean {
-  private static final TCLogger          LOGGER               = TCLogging.getLogger(TerracottaCluster.class);
+  private static final TCLogger LOGGER = TCLogging.getLogger(TerracottaCluster.class);
 
   public TerracottaCluster() throws NotCompliantMBeanException {
     super(TerracottaClusterMBean.class, true);
@@ -43,12 +43,13 @@ public class TerracottaCluster extends AbstractTerracottaMBean implements Terrac
   }
 
   @Override
-  public void addNotificationListener(final NotificationListener listener, final NotificationFilter filter, final Object obj) {
+  public void addNotificationListener(final NotificationListener listener, final NotificationFilter filter,
+                                      final Object obj) {
     throw createUnsupportedOperationException();
   }
 
   @Override
   public MBeanNotificationInfo[] getNotificationInfo() {
-    throw createUnsupportedOperationException();
+    return new MBeanNotificationInfo[] {};
   }
 }
