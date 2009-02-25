@@ -194,18 +194,7 @@ public class ResolverTest extends TestCase {
 
   private Collection jarFiles() {
     String jarFileDir = repoPropToFile();
-    Collection files = jarFiles(new File(jarFileDir));
-    
-    // Filter modules-base as it will have a different version number that matches the api
-    Iterator iter = files.iterator();
-    while(iter.hasNext()) {
-      File file = (File) iter.next();
-      if(file.getName().contains("modules-base")) {
-        iter.remove();
-      }
-    }
-    
-    return files;
+    return jarFiles(new File(jarFileDir));
   }
 
   private Collection jarFiles(File directory) {
@@ -214,9 +203,17 @@ public class ResolverTest extends TestCase {
 
   private void resolveJars(String[] repos, Collection jars, boolean expected) {
     for (Iterator i = jars.iterator(); i.hasNext();) {
-      File jar = new File(i.next().toString());
-      String version = "3.0.0-SNAPSHOT";
-      String name = jar.getName().replaceAll("-" + version + ".jar", "");
+      String fileName = ((File) i.next()).toString();
+      File jar = new File(fileName);
+
+      String jarName = jar.getName();
+      jarName = jarName.substring(0, jarName.lastIndexOf(".jar"));
+      int versionIndex = jarName.lastIndexOf("-SNAPSHOT");
+      if(versionIndex >= 0) {
+        versionIndex = jarName.lastIndexOf("-", versionIndex-1);
+      }
+      String version = jarName.substring(versionIndex+1);
+      String name = jarName.substring(0, versionIndex);
       resolve(repos, name, version, expected);
     }
   }
