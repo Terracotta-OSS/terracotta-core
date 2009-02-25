@@ -28,7 +28,7 @@ public abstract class MultipleServerManager {
 
   public abstract void dumpAllServers(int currentPid, int dumpCount, long dumpInterval) throws Exception;
 
-  public MultipleServersTestSetupManager getMultipleServersTestManager() {
+  public MultipleServersTestSetupManager getMultipleServersTestSetupManager() {
     return setupManger;
   }
 

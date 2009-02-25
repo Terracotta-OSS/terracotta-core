@@ -254,7 +254,7 @@ public class DistributedTestRunner implements ResultsListener {
   }
 
   private boolean shouldCrashActiveServersAfterMutate() {
-    MultipleServersTestSetupManager testSetupManager = serverManager.getMultipleServersTestManager();
+    MultipleServersTestSetupManager testSetupManager = serverManager.getMultipleServersTestSetupManager();
     if (testSetupManager.getServerCrashMode().equals(MultipleServersCrashMode.CRASH_AFTER_MUTATE)) return true;
     return false;
   }
