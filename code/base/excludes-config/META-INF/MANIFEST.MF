@@ -10,5 +10,5 @@ Bundle-SymbolicName: org.terracotta.modules.excludes-config
 Bundle-Vendor: Terracotta, Inc.
 Bundle-Version: 3.0.0.SNAPSHOT
 Import-Package: org.terracotta.modules.configuration
-Require-Bundle: org.terracotta.modules.modules-common;bundle-version:=3.0.0.SNAPSHOT
+Require-Bundle: org.terracotta.modules.modules-base;bundle-version:=1.0.0.SNAPSHOT
 Terracotta-RequireVersion: 3.0.0.SNAPSHOT

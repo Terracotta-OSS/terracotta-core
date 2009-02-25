@@ -29,13 +29,13 @@ public class BundleSpecTest extends TestCase {
     validate(reqs[1], true);
 
     reqs = make("foo.bar.baz.widget;bundle-version:=\"[1.0.0, 2.0.0]\"");
-    validate(reqs[0], false);
+    validate(reqs[0], true);
     
     reqs = make("foo.bar.baz.widget;bundle-version:=\"[1.0.0,]\""); 
-    validate(reqs[0], false);
+    validate(reqs[0], true);
 
     reqs = make("foo.bar.baz.widget;bundle-version:=\"(1.0.0,)\""); 
-    validate(reqs[0], false);
+    validate(reqs[0], true);
 
     reqs = make("foo.bar.baz.widget;resolution:=optional"); 
     validate(reqs[0], false);
@@ -107,5 +107,12 @@ public class BundleSpecTest extends TestCase {
       specs[i] = BundleSpec.newInstance(requirements[i]);
     }
     return specs;
+  }
+  
+  public void testVersionCheck() {
+    BundleSpec spec = new BundleSpecImpl("org.terracotta.modules.modules-base;bundle-version:=\"[1.0.0.SNAPSHOT,1.1.0.SNAPSHOT)\"");
+    assertEquals(true, spec.isVersionSpecified());
+    assertEquals(false, spec.isVersionSpecifiedAbsolute());
+    assertEquals(true, spec.isCompatible("org.terracotta.modules.modules-base", "1.0.0.SNAPSHOT"));
   }
 }

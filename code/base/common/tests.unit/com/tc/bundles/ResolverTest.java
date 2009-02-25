@@ -34,7 +34,7 @@ public class ResolverTest extends TestCase {
     String flatRepoUrl = makeFlatRepo("modules.1");
     resolveBundles(new String[] { flatRepoUrl }, jarFiles(), PASS);
   }
-
+  
   public void testResolveBundleInFlatRepoWithSpaces() throws IOException {
     String flatRepoUrl = makeFlatRepo("modules 1");
     resolveBundles(new String[] { flatRepoUrl }, jarFiles(), PASS);
@@ -112,6 +112,26 @@ public class ResolverTest extends TestCase {
           .resolveRepositoryLocation(repo[i]));
     }
   }
+  
+//  public void testResolveBestVersion() throws Exception {
+//    String flatRepoUrl = makeRepoDir("versionRepo");
+//    
+//    // create jars for different versions
+//    
+//    
+//    // resolve a version range to find best match version
+//    
+//    String flatRepoUrl = makeFlatRepo("modules.1");
+//    for (Iterator i = jars.iterator(); i.hasNext();) {
+//      JarFile jar = new JarFile((File) i.next());
+//      Manifest manifest = jar.getManifest();
+//      String[] reqmts = BundleSpec.getRequirements(manifest);
+//      for (int j = 0; j < reqmts.length; j++) {
+//        BundleSpec spec = BundleSpec.newInstance(reqmts[j]);
+//        resolveBundle(repos, spec, expected);
+//      }
+//    }
+//  }
 
   private String makeRepoDir(String repoName) {
     String repoUrl = System.getProperty(TestConfigObject.TC_BASE_DIR) + File.separator + "build" + File.separator
@@ -174,7 +194,18 @@ public class ResolverTest extends TestCase {
 
   private Collection jarFiles() {
     String jarFileDir = repoPropToFile();
-    return jarFiles(new File(jarFileDir));
+    Collection files = jarFiles(new File(jarFileDir));
+    
+    // Filter modules-base as it will have a different version number that matches the api
+    Iterator iter = files.iterator();
+    while(iter.hasNext()) {
+      File file = (File) iter.next();
+      if(file.getName().contains("modules-base")) {
+        iter.remove();
+      }
+    }
+    
+    return files;
   }
 
   private Collection jarFiles(File directory) {

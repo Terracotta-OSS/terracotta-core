@@ -4,6 +4,8 @@
  */
 package com.tc.bundles;
 
+import org.knopflerfish.framework.VersionRange;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -103,12 +105,13 @@ final class BundleSpecImpl extends BundleSpec {
     // and if no specific bundle-version required/specified so it must be compatible with the version
     if (!isVersionSpecified()) return true;
 
-    // // otherwise check if the version is within range of the specified required version
-    // final Version target = new Version(version);
-    // VersionRange range = new VersionRange(getVersionSpec());
-    // return range.withinRange(target);
+    // otherwise check if the version is within range of the specified required version
+    final Version target = new Version(version);
+    VersionRange range = new VersionRange(getVersionSpec());
+    return range.withinRange(target);
 
     // check for equality - we don't support version ranges yet
-    return getVersion().equals(version);
+//    return getVersion().equals(version);
   }
+  
 }

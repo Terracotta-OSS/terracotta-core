@@ -59,7 +59,7 @@ bundled_components:
               - dso-l1-api
               - license-common
               - management-api
-              - modules-common
+              - modules-base
               - thirdparty-api
         - terracotta-jmx-api:
             install_directory: lib
@@ -97,7 +97,7 @@ bundled_components:
         - sigarstats
         - management
         - management-api
-        - modules-common
+        - modules-base
         - thirdparty
         - thirdparty-api
         - tim-get-tool:
@@ -120,7 +120,7 @@ bundled_modules:
         - jdk15-preinst-config
         - spring-config
         - standard-config
-        - modules-common
+        - modules-base
 packaging:
   - tar:
       assert: '@build_environment.os_type !~ /^\s*windows\s*$/i'

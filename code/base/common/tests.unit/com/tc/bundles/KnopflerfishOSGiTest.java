@@ -112,7 +112,18 @@ public class KnopflerfishOSGiTest extends TestCase {
       file = new File(repo);
     }
     
-    return FileUtils.listFiles(file, new String[] { "jar" }, true);
+    Collection files = FileUtils.listFiles(file, new String[] { "jar" }, true);
+    
+    // Filter modules-base as it will have a different version number that matches the api
+    Iterator iter = files.iterator();
+    while(iter.hasNext()) {
+      File module = (File) iter.next();
+      if(module.getName().contains("modules-base")) {
+        iter.remove();
+      }
+    }
+    
+    return files;
   }
 
   /**

@@ -141,7 +141,7 @@ modules:
         - dso-statistics-api
         - thirdparty-api
         - management-api
-  - modules-common:
+  - modules-base:
       options:
         jdk: J2SE-1.5
         module: true
@@ -157,7 +157,7 @@ modules:
         - common-api
         - license-common
         - dso-l1-api
-        - modules-common
+        - modules-base
   - guimodels-config:
       options:
         jdk: J2SE-1.5
@@ -166,7 +166,7 @@ modules:
         - common-api
         - license-common
         - dso-l1-api
-        - modules-common
+        - modules-base
   - jdk15-preinst-config:
       options:
         jdk: J2SE-1.5
@@ -175,7 +175,7 @@ modules:
         - common-api
         - license-common
         - dso-l1-api
-        - modules-common
+        - modules-base
   - spring-config:
       options:
         jdk: J2SE-1.5
@@ -184,7 +184,7 @@ modules:
         - common-api
         - license-common
         - dso-l1-api
-        - modules-common
+        - modules-base
         - thirdparty-api
   - standard-config:
       options:
@@ -194,7 +194,7 @@ modules:
         - common-api
         - license-common
         - dso-l1-api
-        - modules-common
+        - modules-base
         - thirdparty-api
   - sigarstats:
       options:
@@ -610,7 +610,7 @@ modules:
         - common-api
         - license-common
         - dso-l1-api
-        - modules-common
+        - modules-base
         - thirdparty-api
   - dso-container-tests:
       options:
@@ -633,7 +633,7 @@ modules:
         - legacy-test-tree
         - management
         - management-api
-        - modules-common
+        - modules-base
         - sigarstats
         - simulator
         - thirdparty
@@ -692,7 +692,7 @@ modules:
         - legacy-test-tree
         - management
         - management-api
-        - modules-common
+        - modules-base
         - simulator
         - thirdparty
         - thirdparty-api
@@ -740,7 +740,7 @@ module-groups:
     - jdk15-preinst-config
     - spring-config
     - standard-config
-    - modules-common
+    - modules-base
   gui:
     - ui-configurator
     - ui-eclipse

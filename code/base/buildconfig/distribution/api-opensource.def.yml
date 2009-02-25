@@ -14,7 +14,7 @@ bundled_components:
               - dso-l1-api
               - license-common
               - management-api
-              - modules-common
+              - modules-base
               - thirdparty-api
         - terracotta-test-api-api.version:
             source: tests.base

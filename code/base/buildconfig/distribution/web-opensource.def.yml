@@ -36,7 +36,7 @@ bundled_components:
         - sigarstats
         - management
         - management-api
-        - modules-common
+        - modules-base
         - thirdparty
         - thirdparty-api
         - tim-get-tool:
@@ -65,7 +65,7 @@ bundled_modules:
         - jdk15-preinst-config
         - spring-config
         - standard-config
-        - modules-common
+        - modules-base
 packaging:
   - tar
 postscripts:

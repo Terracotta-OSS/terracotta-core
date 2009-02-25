@@ -8,9 +8,9 @@ import org.apache.commons.io.FileUtils;
 import org.osgi.framework.BundleException;
 
 import com.tc.bundles.exception.BundleSpecException;
+import com.tc.bundles.exception.MissingBundleException;
 import com.tc.bundles.exception.MissingDefaultRepositoryException;
 import com.tc.bundles.exception.UnreadableBundleException;
-import com.tc.bundles.exception.MissingBundleException;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.MessageFormat;
-import java.util.ArrayList; // import java.util.Collection;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -199,6 +199,10 @@ public class Resolver {
 
   private File findJar(String groupId, String name, String version, Locator locator) {
     if (logger.isDebugEnabled()) logger.debug("Resolving location of " + groupId + ":" + name + ":" + version);
+    
+    File bestFile = null;
+    org.osgi.framework.Version bestVersion = null;
+    
     final List paths = ResolverUtils.searchPathnames(repositories, groupId, name, version);
     for (Iterator i = paths.iterator(); i.hasNext();) {
 
@@ -210,9 +214,22 @@ public class Resolver {
         warn(Message.WARN_FILE_IGNORED_MISSING_MANIFEST, new Object[] { bundle.getName() });
         continue;
       }
-      if (locator.check(bundle, manifest)) return bundle;
+      if (locator.check(bundle, manifest)) {
+        String currentVersionStr = manifest.getMainAttributes().getValue(BUNDLE_VERSION);
+        if(bestFile == null) {
+          bestFile = bundle;
+          bestVersion = new org.osgi.framework.Version(currentVersionStr);
+        } else {
+          org.osgi.framework.Version currentVersion = new org.osgi.framework.Version(currentVersionStr);
+          if(currentVersion.compareTo(bestVersion) > 0) {
+            bestFile = bundle;
+            bestVersion = currentVersion;
+          }
+        }
+      }
     }
-    return null;
+    
+    return bestFile;
   }
 
   protected File resolveBundle(final BundleSpec spec) {
@@ -325,7 +342,7 @@ public class Resolver {
 
   static void validateBundleSpec(final BundleSpec spec) throws BundleException {
     if (!spec.isVersionSpecified()) throw BundleSpecException.unspecifiedVersion(spec);
-    if (!spec.isVersionSpecifiedAbsolute()) throw BundleSpecException.absoluteVersionRequired(spec);
+//    if (!spec.isVersionSpecifiedAbsolute()) throw BundleSpecException.absoluteVersionRequired(spec);
   }
 
   private void ensureBundle(final BundleSpec spec, Stack dependencyStack) throws BundleException {

@@ -18,6 +18,6 @@ public class TestModuleCommonConfigurator extends TerracottaConfiguratorModule {
   }
   
   protected String getExportedBundleName() {
-    return "org.terracotta.modules.modules-common";
+    return "org.terracotta.modules.modules-base";
   }
 }
