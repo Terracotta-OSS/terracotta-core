@@ -482,15 +482,15 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
     private final ConcurrentMap<ClassKey, byte[]> bytes = new ConcurrentHashMap<ClassKey, byte[]>();
     private final BytecodeProvider                defaultBytecodeProvider;
 
-    public AnnotationByteCodeProvider(BytecodeProvider defaultBytecodeProvider) {
+    AnnotationByteCodeProvider(BytecodeProvider defaultBytecodeProvider) {
       this.defaultBytecodeProvider = defaultBytecodeProvider;
     }
 
-    public void clear(ClassKey key) {
+    void clear(ClassKey key) {
       bytes.remove(key);
     }
 
-    public void put(ClassKey key, byte[] bytecode) {
+    void put(ClassKey key, byte[] bytecode) {
       bytes.put(key, bytecode);
     }
 
