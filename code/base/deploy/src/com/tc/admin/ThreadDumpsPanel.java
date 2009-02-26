@@ -26,6 +26,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 import javax.swing.BorderFactory;
+import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreePath;
 
 public class ThreadDumpsPanel extends XContainer implements ActionListener, PropertyChangeListener {
@@ -36,8 +37,6 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Prop
   private ElementChooser            elementChooser;
   private PagedView                 pagedView;
   private boolean                   inited;
-
-  private static final String       EMPTY_PAGE          = "EmptyPage";
 
   private static final String       ALL_NODES_NODE_NAME = "AllNodesNode";
 
@@ -66,7 +65,7 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Prop
     gbc.weightx = 0.0;
     gbc.fill = GridBagConstraints.NONE;
 
-    topPanel.add(new XLabel("Take thread dump for:"), gbc);
+    topPanel.add(new XLabel(adminClientContext.getString("take.thread.dump.for")), gbc);
     gbc.gridx++;
 
     topPanel.add(elementChooser = new ElementChooser(), gbc);
@@ -86,13 +85,24 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Prop
       super(clusterModel, ThreadDumpsPanel.this);
     }
 
+    @Override
     protected XTreeNode[] createTopLevelNodes() {
-      ComponentNode allNodesNode = new ComponentNode("All Nodes");
-      allNodesNode.setName(ALL_NODES_NODE_NAME);
-      return new XTreeNode[] { allNodesNode, new ClientsNode(adminClientContext, clusterModel),
-          new ServerGroupsNode(adminClientContext, clusterModel) };
+      XTreeNode aggregateViewsNode = new XTreeNode(adminClientContext.getString("aggregate.view"));
+      ComponentNode clusterDumpNode = new ComponentNode("Cluster Dump");
+      clusterDumpNode.setName(ALL_NODES_NODE_NAME);
+      aggregateViewsNode.add(clusterDumpNode);
+      ClientsNode clientsNode = new ClientsNode(adminClientContext, clusterModel) {
+        @Override
+        protected void updateLabel() {/**/
+        }
+      };
+      clientsNode.setLabel(adminClientContext.getString("runtime.stats.per.client.view"));
+      ServerGroupsNode serverGroupsNode = new ServerGroupsNode(adminClientContext, clusterModel);
+      serverGroupsNode.setLabel(adminClientContext.getString("runtime.stats.per.server.view"));
+      return new XTreeNode[] { aggregateViewsNode, clientsNode, serverGroupsNode };
     }
 
+    @Override
     protected boolean acceptPath(TreePath path) {
       Object o = path.getLastPathComponent();
       if (o instanceof XTreeNode) {
@@ -100,6 +110,12 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Prop
         return ALL_NODES_NODE_NAME.equals(node.getName()) || node instanceof ClientNode || node instanceof ServerNode;
       }
       return false;
+    }
+
+    @Override
+    public void treeNodesRemoved(TreeModelEvent e) {
+      setSelectedPath(ALL_NODES_NODE_NAME);
+      treeModelChanged();
     }
   }
 
@@ -112,6 +128,7 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Prop
       super(clusterModel);
     }
 
+    @Override
     protected void handleReady() {
       if (!inited && clusterModel.isReady()) {
         addNodePanels();
@@ -129,10 +146,6 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Prop
 
   private void addNodePanels() {
     pagedView.removeAll();
-    XLabel emptyPage = new XLabel();
-    emptyPage.setName(EMPTY_PAGE);
-    pagedView.addPage(emptyPage);
-
     pagedView.addPage(createAllNodesPanel());
     elementChooser.setSelectedPath(ALL_NODES_NODE_NAME);
     pagedView.addPropertyChangeListener(this);
@@ -141,6 +154,7 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Prop
 
   private ClusterThreadDumpsPanel createAllNodesPanel() {
     ClusterThreadDumpsPanel panel = new ClusterThreadDumpsPanel(adminClientContext, threadDumpProvider) {
+      @Override
       public ClusterThreadDumpEntry newEntry() {
         Object selectedObj = elementChooser.getSelectedObject();
         if (selectedObj instanceof ClusterElementNode) {
@@ -164,6 +178,7 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Prop
     return clusterModel;
   }
 
+  @Override
   public void tearDown() {
     clusterModel.removePropertyChangeListener(clusterListener);
     pagedView.removePropertyChangeListener(this);

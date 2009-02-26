@@ -217,6 +217,7 @@ public class AdminClientBundle extends ListResourceBundle {
             "<html>Greyed-out items are not resident in this clients heap: <span style='color:#C0C0C0'>Not resident</span></html>" },
         { "thread.dump.timeout.msg", "Timed-out after {0} seconds." }, { "roots.inspect.show", "Show..." },
         { "thread.dump.export.as.text", "Export As Text..." }, { "thread.dump.take", "Take Thread Dump" },
+        { "take.thread.dump.for", "Take thread dump for:" },
         { "export.all.thread.dumps.dialog.title", "Export All Thread Dumps" },
         { "export.thread.dump.as.text.dialog.title", "Export Thread Dump As Text" }, { "classes.tabular", "Tabular" },
         { "classes.hierarchical", "Hierarchical" }, { "classes.map", "Map" },
@@ -224,6 +225,10 @@ public class AdminClientBundle extends ListResourceBundle {
         { "select.view", "Select View:" }, { "aggregate.view", "Aggregate View" },
         { "object.browser.cluster.heap", "Cluster Heap" },
         { "runtime.stats.aggregate.server.stats", "Aggregrate Server Stats" },
-        { "runtime.stats.per.server.view", "Per Server View" }, { "runtime.stats.per.client.view", "Per Client View" }, };
+        { "runtime.stats.per.server.view", "Per Server View" }, { "runtime.stats.per.client.view", "Per Client View" },
+        { "dashboard.txn-rate", "Write Txn/s" }, { "dashboard.lock-recall-rate", "Lock Recall/s" },
+        { "dashboard.object-creation-rate", "Objects Created/s" }, { "dashboard.broadcast-rate", "Broadcasts/s" },
+        { "dashboard.fault-rate", "Faults/s" }, { "dashboard.flush-rate", "Flushes/s" },
+        { "dashboard.txn-size-rate", "Txn Size KB/s" }, { "dashboard.unacked-txns", "Unacked Txns" } };
   }
 }

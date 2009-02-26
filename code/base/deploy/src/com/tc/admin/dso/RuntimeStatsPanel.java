@@ -49,8 +49,6 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
 
   private static final String AGGREGATE_SERVER_STATS_NODE_NAME = "AggregateServerStatsNode";
 
-  private static final String EMPTY_PAGE                       = "EmptyPage";
-
   public RuntimeStatsPanel(IAdminClientContext adminClientContext, IClusterModel clusterModel) {
     super(new BorderLayout());
 
@@ -110,15 +108,15 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
       XTreeNode aggregateViewsNode = new XTreeNode(adminClientContext.getString("aggregate.view"));
       ComponentNode aggregateServerStatsNode = new ComponentNode(adminClientContext
           .getString("runtime.stats.aggregate.server.stats"));
+      aggregateServerStatsNode.setName(AGGREGATE_SERVER_STATS_NODE_NAME);
       aggregateViewsNode.add(aggregateServerStatsNode);
       ClientsNode clientsNode = new ClientsNode(adminClientContext, clusterModel) {
         @Override
         protected void updateLabel() {/**/
         }
       };
-      ServerGroupsNode serverGroupsNode = new ServerGroupsNode(adminClientContext, clusterModel);
-      aggregateServerStatsNode.setName(AGGREGATE_SERVER_STATS_NODE_NAME);
       clientsNode.setLabel(adminClientContext.getString("runtime.stats.per.client.view"));
+      ServerGroupsNode serverGroupsNode = new ServerGroupsNode(adminClientContext, clusterModel);
       serverGroupsNode.setLabel(adminClientContext.getString("runtime.stats.per.server.view"));
       return new XTreeNode[] { aggregateViewsNode, clientsNode, serverGroupsNode };
     }
@@ -139,10 +137,9 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
     ElementChooser chsr = (ElementChooser) e.getSource();
     XTreeNode node = (XTreeNode) chsr.getSelectedObject();
     String name = node.getName();
+    System.err.println("newPage=" + name);
     if (pagedView.hasPage(name)) {
       pagedView.setPage(name);
-    } else {
-      pagedView.setPage(EMPTY_PAGE);
     }
     TreePath path = elementChooser.getSelectedPath();
     Object type = path.getPathComponent(1);
@@ -198,10 +195,6 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
 
   private void addNodePanels() {
     pagedView.removeAll();
-    XLabel emptyPage = new XLabel();
-    emptyPage.setName(EMPTY_PAGE);
-    pagedView.addPage(emptyPage);
-
     pagedView.addPage(createAggregateServerStatsPanel());
     for (IServerGroup group : clusterModel.getServerGroups()) {
       for (IServer server : group.getMembers()) {

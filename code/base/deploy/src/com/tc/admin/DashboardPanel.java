@@ -37,30 +37,30 @@ import java.util.Set;
 import javax.swing.BorderFactory;
 
 class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeListener {
-  private IClusterModel             clusterModel;
-  private ClusterListener           clusterListener;
+  private IClusterModel            clusterModel;
+  private ClusterListener          clusterListener;
 
-  private final DefaultValueDataset txnRateDataset;
-  private final DefaultValueDataset creationRateDataset;
-  private final DefaultValueDataset broadcastRateDataset;
-  private final DefaultValueDataset lockRecallRateDataset;
-  private final DefaultValueDataset flushRateDataset;
-  private final DefaultValueDataset faultRateDataset;
-  private final DefaultValueDataset txnSizeRateDataset;
-  private final DefaultValueDataset pendingTxnsDataset;
+  private DefaultValueDataset      txnRateDataset;
+  private DefaultValueDataset      creationRateDataset;
+  private DefaultValueDataset      broadcastRateDataset;
+  private DefaultValueDataset      lockRecallRateDataset;
+  private DefaultValueDataset      flushRateDataset;
+  private DefaultValueDataset      faultRateDataset;
+  private DefaultValueDataset      txnSizeRateDataset;
+  private DefaultValueDataset      pendingTxnsDataset;
 
-  private long                      lastObjectCount;
-  private long                      lastObjectCountTime  = -1;
+  private long                     lastObjectCount;
+  private long                     lastObjectCountTime  = -1;
 
-  private static final Set<String>  POLLED_ATTRIBUTE_SET = new HashSet(Arrays
-                                                             .asList(POLLED_ATTR_OBJECT_FLUSH_RATE,
-                                                                     POLLED_ATTR_OBJECT_FAULT_RATE,
-                                                                     POLLED_ATTR_LIVE_OBJECT_COUNT,
-                                                                     POLLED_ATTR_LOCK_RECALL_RATE,
-                                                                     POLLED_ATTR_TRANSACTION_RATE,
-                                                                     POLLED_ATTR_TRANSACTION_SIZE_RATE,
-                                                                     POLLED_ATTR_BROADCAST_RATE,
-                                                                     POLLED_ATTR_PENDING_TRANSACTIONS_COUNT));
+  private static final Set<String> POLLED_ATTRIBUTE_SET = new HashSet(Arrays
+                                                            .asList(POLLED_ATTR_OBJECT_FLUSH_RATE,
+                                                                    POLLED_ATTR_OBJECT_FAULT_RATE,
+                                                                    POLLED_ATTR_LIVE_OBJECT_COUNT,
+                                                                    POLLED_ATTR_LOCK_RECALL_RATE,
+                                                                    POLLED_ATTR_TRANSACTION_RATE,
+                                                                    POLLED_ATTR_TRANSACTION_SIZE_RATE,
+                                                                    POLLED_ATTR_BROADCAST_RATE,
+                                                                    POLLED_ATTR_PENDING_TRANSACTIONS_COUNT));
 
   public DashboardPanel(ApplicationContext appContext, IClusterModel clusterModel) {
     super(appContext);
@@ -168,7 +168,7 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
     lockRecallRateDataset.setValue(Integer.valueOf(lockRecallRate));
     faultRateDataset.setValue(Integer.valueOf(faultRate));
     flushRateDataset.setValue(Integer.valueOf(flushRate));
-    txnSizeRateDataset.setValue(Integer.valueOf(txnSizeRate));
+    txnSizeRateDataset.setValue(Double.valueOf(txnSizeRate / 1000d));
     pendingTxnsDataset.setValue(Integer.valueOf(pendingTxnsCount));
   }
 
@@ -217,59 +217,59 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
 
     ranges = new StandardDialRange[] { new StandardDialRange(4000, 4500, Color.orange),
         new StandardDialRange(4500, 5000, Color.red) };
-    chart = DemoChartFactory.createDial("Write Txn/s", txnRateDataset, defScale, ranges);
+    chart = DemoChartFactory.createDial(appContext.getString("dashboard.txn-rate"), txnRateDataset, defScale, ranges);
     runtimeStatsPanel.add(chartPanel = createChartPanel(chart));
     chartPanel.setPreferredSize(majorPrefSize);
     chartPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
 
     ranges = new StandardDialRange[] { new StandardDialRange(4000, 4500, Color.orange),
         new StandardDialRange(4500, 5000, Color.red) };
-    chart = DemoChartFactory.createDial("Lock Recall/s", lockRecallRateDataset, defScale, ranges,
-                                        minorPointerFillPaint, minorPointerOutlinePaint);
+    chart = DemoChartFactory.createDial(appContext.getString("dashboard.lock-recall-rate"), lockRecallRateDataset,
+                                        defScale, ranges, minorPointerFillPaint, minorPointerOutlinePaint);
     runtimeStatsPanel.add(chartPanel = createChartPanel(chart));
     chartPanel.setPreferredSize(minorPrefSize);
 
     ranges = new StandardDialRange[] { new StandardDialRange(400, 450, Color.orange),
         new StandardDialRange(450, 500, Color.red) };
     scale = DemoChartFactory.createStandardDialScale(0, 500, startAngle, extent, 100, 4);
-    chart = DemoChartFactory.createDial("Objects Created/s", creationRateDataset, scale, ranges, minorPointerFillPaint,
-                                        minorPointerOutlinePaint);
+    chart = DemoChartFactory.createDial(appContext.getString("dashboard.object-creation-rate"), creationRateDataset,
+                                        scale, ranges, minorPointerFillPaint, minorPointerOutlinePaint);
     runtimeStatsPanel.add(chartPanel = createChartPanel(chart));
     chartPanel.setPreferredSize(minorPrefSize);
 
     ranges = new StandardDialRange[] { new StandardDialRange(4000, 4500, Color.orange),
         new StandardDialRange(4500, 5000, Color.red) };
-    chart = DemoChartFactory.createDial("Broadcasts/s", broadcastRateDataset, defScale, ranges, minorPointerFillPaint,
-                                        minorPointerOutlinePaint);
+    chart = DemoChartFactory.createDial(appContext.getString("dashboard.broadcast-rate"), broadcastRateDataset,
+                                        defScale, ranges, minorPointerFillPaint, minorPointerOutlinePaint);
     runtimeStatsPanel.add(chartPanel = createChartPanel(chart));
     chartPanel.setPreferredSize(minorPrefSize);
 
     ranges = new StandardDialRange[] { new StandardDialRange(80, 90, Color.orange),
         new StandardDialRange(90, 100, Color.red) };
     scale = DemoChartFactory.createStandardDialScale(0, 100, startAngle, extent, 10, 4);
-    chart = DemoChartFactory.createDial("Faults/s", faultRateDataset, scale, ranges, minorPointerFillPaint,
-                                        minorPointerOutlinePaint);
+    chart = DemoChartFactory.createDial(appContext.getString("dashboard.fault-rate"), faultRateDataset, scale, ranges,
+                                        minorPointerFillPaint, minorPointerOutlinePaint);
     runtimeStatsPanel.add(chartPanel = createChartPanel(chart));
     chartPanel.setPreferredSize(minorPrefSize);
 
-    chart = DemoChartFactory.createDial("Flushes/s", flushRateDataset, scale, ranges, minorPointerFillPaint,
-                                        minorPointerOutlinePaint);
+    chart = DemoChartFactory.createDial(appContext.getString("dashboard.flush-rate"), flushRateDataset, scale, ranges,
+                                        minorPointerFillPaint, minorPointerOutlinePaint);
     runtimeStatsPanel.add(chartPanel = createChartPanel(chart));
     chartPanel.setPreferredSize(minorPrefSize);
 
     ranges = new StandardDialRange[] { new StandardDialRange(200, 400, Color.orange),
         new StandardDialRange(400, 500, Color.red) };
     scale = DemoChartFactory.createStandardDialScale(0, 500, startAngle, extent, 100, 4);
-    chart = DemoChartFactory.createDial("Txn Size/s", txnSizeRateDataset, scale, ranges, minorPointerFillPaint,
-                                        minorPointerOutlinePaint);
+    chart = DemoChartFactory.createDial(appContext.getString("dashboard.txn-size-rate"), txnSizeRateDataset, scale,
+                                        ranges, minorPointerFillPaint, minorPointerOutlinePaint);
     runtimeStatsPanel.add(chartPanel = createChartPanel(chart));
     chartPanel.setPreferredSize(minorPrefSize);
 
     ranges = new StandardDialRange[] { new StandardDialRange(80, 90, Color.orange),
         new StandardDialRange(90, 100, Color.red) };
     scale = DemoChartFactory.createStandardDialScale(0, 100, startAngle, extent, 10, 4);
-    chart = DemoChartFactory.createDial("Unacked Txns", pendingTxnsDataset, scale, ranges, minorPointerFillPaint,
-                                        minorPointerOutlinePaint);
+    chart = DemoChartFactory.createDial(appContext.getString("dashboard.unacked-txns"), pendingTxnsDataset, scale,
+                                        ranges, minorPointerFillPaint, minorPointerOutlinePaint);
     runtimeStatsPanel.add(chartPanel = createChartPanel(chart));
     chartPanel.setPreferredSize(minorPrefSize);
   }
@@ -289,6 +289,15 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
       appContext = null;
       clusterModel = null;
       clusterListener = null;
+
+      txnRateDataset = null;
+      creationRateDataset = null;
+      broadcastRateDataset = null;
+      lockRecallRateDataset = null;
+      flushRateDataset = null;
+      faultRateDataset = null;
+      txnSizeRateDataset = null;
+      pendingTxnsDataset = null;
     }
   }
 }

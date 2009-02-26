@@ -48,7 +48,6 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
   private boolean             inited;
 
   private static final String CLUSTER_HEAP_NODE_NAME = "ClusterHeapNode";
-  private static final String EMPTY_PAGE             = "EmptyPage";
 
   public ObjectBrowser(IAdminClientContext adminClientContext, IClusterModel clusterModel, IBasicObject[] roots) {
     super(new BorderLayout());
@@ -122,7 +121,11 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
     @Override
     protected boolean acceptPath(TreePath path) {
       Object o = path.getLastPathComponent();
-      return !(o instanceof ClientsNode);
+      if (o instanceof XTreeNode) {
+        XTreeNode node = (XTreeNode) o;
+        return CLUSTER_HEAP_NODE_NAME.equals(node.getName()) || node instanceof ClientNode;
+      }
+      return false;
     }
   }
 
@@ -160,8 +163,6 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
     String name = node.getName();
     if (pagedView.hasPage(name)) {
       pagedView.setPage(name);
-    } else {
-      pagedView.setPage(EMPTY_PAGE);
     }
     TreePath path = elementChooser.getSelectedPath();
     Object type = path.getPathComponent(1);
@@ -217,10 +218,6 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
 
   private void addNodePanels() {
     pagedView.removeAll();
-    XLabel emptyPage = new XLabel();
-    emptyPage.setName(EMPTY_PAGE);
-    pagedView.addPage(emptyPage);
-
     pagedView.addPage(createClusterHeapPanel());
     IServer activeCoord = clusterModel.getActiveCoordinator();
     if (activeCoord != null) {
