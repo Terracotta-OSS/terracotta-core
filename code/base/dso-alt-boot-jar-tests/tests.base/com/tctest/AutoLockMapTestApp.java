@@ -4,8 +4,6 @@
  */
 package com.tctest;
 
-import org.apache.commons.collections.FastHashMap;
-
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -13,7 +11,6 @@ import com.tc.object.tx.UnlockedSharedObjectException;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tc.util.TIMUtil;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -45,16 +42,10 @@ public class AutoLockMapTestApp extends GenericTransparentApp {
     List maps = new ArrayList();
     maps.add(new HashMap());
     maps.add(new Hashtable());
-    maps.add(new FastHashMap());
-    FastHashMap fm = new FastHashMap();
-    fm.setFast(true);
-    maps.add(fm);
     maps.add(new Properties());
 
     sharedMap.put("maps", maps);
     sharedMap.put("arrayforHashtable", new Object[4]);
-    sharedMap.put("arrayforFastHashMap", new Object[4]);
-    sharedMap.put("arrayforFastHashMapWithFast", new Object[4]);
     sharedMap.put("arrayforProperties", new Object[4]);
   }
 
@@ -174,7 +165,6 @@ public class AutoLockMapTestApp extends GenericTransparentApp {
    */
 
   void testEntrySetIterator(Map map, boolean validate) throws Exception {
-    if ((map instanceof FastHashMap) && (!((FastHashMap) map).getFast())) { return; }
     if (map instanceof HashMap) { return; }
 
     if (validate) {
@@ -222,7 +212,6 @@ public class AutoLockMapTestApp extends GenericTransparentApp {
   }
 
   void testKeySetIterator(Map map, boolean validate) throws Exception {
-    if ((map instanceof FastHashMap) && (!((FastHashMap) map).getFast())) { return; }
     if (map instanceof HashMap) { return; }
 
     if (validate) {
@@ -327,7 +316,6 @@ public class AutoLockMapTestApp extends GenericTransparentApp {
   }
 
   void testValuesIterator(Map map, boolean validate) throws Exception {
-    if ((map instanceof FastHashMap) && (!((FastHashMap) map).getFast())) { return; }
     if (map instanceof HashMap) { return; }
 
     if (validate) {
@@ -463,8 +451,6 @@ public class AutoLockMapTestApp extends GenericTransparentApp {
   }
 
   void testHashMapPut(Map map, boolean validate) {
-    if (!(map instanceof HashMap) || (map instanceof FastHashMap)) { return; }
-
     if (validate) {
       Assert.assertEquals(0, map.size());
     } else {
@@ -513,20 +499,12 @@ public class AutoLockMapTestApp extends GenericTransparentApp {
 
   private Object[] getArray(Map map) {
     if (map instanceof Properties) { return (Object[]) sharedMap.get("arrayforProperties"); }
-    if (map instanceof FastHashMap) {
-      if (((FastHashMap) map).getFast()) {
-        return (Object[]) sharedMap.get("arrayforFastHashMapWithFast");
-      } else {
-        return (Object[]) sharedMap.get("arrayforFastHashMap");
-      }
-    } else if (map instanceof Hashtable) { return (Object[]) sharedMap.get("arrayforHashtable"); }
+    if (map instanceof Hashtable) { return (Object[]) sharedMap.get("arrayforHashtable"); }
 
     return null;
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    config.addModule(TIMUtil.COMMONS_COLLECTIONS_3_1, TIMUtil.getVersion(TIMUtil.COMMONS_COLLECTIONS_3_1));
-
     String testClass = AutoLockMapTestApp.class.getName();
     config.getOrCreateSpec(testClass);
     String readOnlyMethodExpression = "* " + testClass + "*.*ReadOnly*(..)";

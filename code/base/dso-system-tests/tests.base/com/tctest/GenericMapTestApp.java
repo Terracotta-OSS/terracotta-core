@@ -15,7 +15,6 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.app.ErrorContext;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tc.util.TIMUtil;
 
 import gnu.trove.THashMap;
 import gnu.trove.TObjectFunction;
@@ -75,10 +74,6 @@ public class GenericMapTestApp extends GenericTransparentApp {
     maps.add(new TreeMap(new NullTolerantComparator()));
     maps.add(new LinkedHashMap());
     maps.add(new THashMap());
-    maps.add(new FastHashMap());
-    FastHashMap fm = new FastHashMap();
-    fm.setFast(true);
-    maps.add(fm);
     maps.add(new Properties());
     maps.add(new MyHashMap(11));
     maps.add(new MyHashMap(new HashMap()));
@@ -92,7 +87,6 @@ public class GenericMapTestApp extends GenericTransparentApp {
     maps.add(new MyLinkedHashMap2());
     maps.add(new MyLinkedHashMap3(true));
     maps.add(new MyTHashMap());
-    maps.add(new MyFastHashMap());
     maps.add(new MyProperties());
     maps.add(new MyProperties2());
     maps.add(new MyProperties3());
@@ -143,7 +137,6 @@ public class GenericMapTestApp extends GenericTransparentApp {
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClass = GenericMapTestApp.class.getName();
-    config.addModule(TIMUtil.COMMONS_COLLECTIONS_3_1, TIMUtil.getVersion(TIMUtil.COMMONS_COLLECTIONS_3_1));
     config.getOrCreateSpec(testClass);
     String methodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(methodExpression);

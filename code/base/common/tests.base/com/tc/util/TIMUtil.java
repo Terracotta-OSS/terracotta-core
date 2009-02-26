@@ -14,7 +14,6 @@ import java.util.Properties;
  * content of integration-modules.properties
  */
 public class TIMUtil {
-  public static final String      COMMONS_COLLECTIONS_3_1;
   public static final String      SUREFIRE_2_3;
   public static final String      MODULES_BASE;
   public static final String      JETTY_6_1;
@@ -43,7 +42,6 @@ public class TIMUtil {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-    COMMONS_COLLECTIONS_3_1 = lookup(".*commons-collections-3.1");
     SUREFIRE_2_3 = lookup(".*surefire-2.3");
     MODULES_BASE = lookup("modules-base");
     JETTY_6_1 = "tim-jetty-6.1";
