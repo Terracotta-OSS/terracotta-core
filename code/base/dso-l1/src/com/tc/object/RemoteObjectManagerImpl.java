@@ -43,6 +43,8 @@ import java.util.Map.Entry;
  */
 public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHandshakeCallback {
 
+  private static final long                        RETRIVE_WAIT_INTERVAL     = 15000;
+
   private static final State                       PAUSED                    = new State("PAUSED");
   private static final State                       RUNNING                   = new State("RUNNING");
 
@@ -174,6 +176,8 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
                                                              new ObjectRequestID(this.objectRequestIDCounter++), id,
                                                              depth, parentContext);
     boolean inMemory = true;
+    long startTime = System.currentTimeMillis();
+    long totalTime = 0;
     while (!this.dnaRequests.containsKey(id) || this.dnaRequests.get(id) == null || this.missingObjectIDs.contains(id)) {
       waitUntilRunning();
       if (this.missingObjectIDs.contains(id)) {
@@ -186,8 +190,15 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
       }
 
       if (this.dnaRequests.get(id) == null) {
+        long current = System.currentTimeMillis();
+        if (current - startTime >= RETRIVE_WAIT_INTERVAL) {
+          totalTime += current - startTime;
+          startTime = current;
+          this.logger.warn("Still waiting for " + totalTime + " ms to retrieve " + id + " depth : " + depth
+                           + " parent : " + parentContext);
+        }
         try {
-          wait();
+          wait(RETRIVE_WAIT_INTERVAL);
         } catch (InterruptedException e) {
           isInterrupted = true;
         }
@@ -209,8 +220,8 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
   private void sendRequest(ObjectRequestContext ctxt) {
     RequestManagedObjectMessage rmom = createRequestManagedObjectMessage(ctxt);
     ObjectID id = null;
-    for (Iterator i = ctxt.getRequestedObjectIDs().iterator(); i.hasNext();) {
-      id = (ObjectID) i.next();
+    for (ObjectID element : ctxt.getRequestedObjectIDs()) {
+      id = element;
       this.dnaRequests.put(id, null);
     }
     // XXX:: This is a little weird that we add only the last ObjectID to the outstandingObjectRequests map
