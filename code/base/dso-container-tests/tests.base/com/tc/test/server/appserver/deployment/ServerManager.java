@@ -220,11 +220,17 @@ public class ServerManager {
         }
         break;
       }
-      case AppServerInfo.JETTY:
-        // XXX: Can't do this right now. System tests in tim-jetty use this and add their own jetty module to config
-        // (resulting in two jetty TIMs being used!)
-        // aCopy.addModule(TIMUtil.JETTY_6_1, TIMUtil.resolveSessionTIMVersion(TIMUtil.JETTY_6_1));
+      case AppServerInfo.JETTY: {
+        AppServerInfo info = config.appServerInfo();
+        String major = info.getMajor();
+        String minor = info.getMinor();
+        if (major.equals("6") || minor.startsWith("1.")) {
+          aCopy.addModule(TIMUtil.JETTY_6_1, resolveContainerTIM(TIMUtil.JETTY_6_1));
+        } else {
+          throw new RuntimeException("unexpected version: " + info);
+        }
         break;
+      }
       case AppServerInfo.WASCE: {
         AppServerInfo info = config.appServerInfo();
         String major = info.getMajor();

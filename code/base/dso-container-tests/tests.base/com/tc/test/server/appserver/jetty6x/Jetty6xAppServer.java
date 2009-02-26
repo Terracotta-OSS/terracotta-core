@@ -1,9 +1,6 @@
 package com.tc.test.server.appserver.jetty6x;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.tools.ant.Project;
-import org.apache.tools.ant.taskdefs.Zip;
 
 import com.tc.lcp.CargoLinkedChildProcess;
 import com.tc.lcp.HeartBeatService;
@@ -39,7 +36,9 @@ public class Jetty6xAppServer extends AbstractAppServer {
   private static final String JETTY_MAIN_CLASS   = "org.mortbay.start.Main";
   private static final long   START_STOP_TIMEOUT = 240 * 1000;
 
-  private static final String target             = "<SystemProperty name=\"jetty.home\" default=\".\"/>/webapps";
+  private static final String webAppTarget       = "<SystemProperty name=\"jetty.home\" default=\".\"/>/webapps";
+  private static final String contextsTarget     = "<SystemProperty name=\"jetty.home\" default=\".\"/>/contexts";
+  private static final String eofTarget          = "</Configure>";
 
   private String              configFile;
   private String              instanceName;
@@ -83,12 +82,23 @@ public class Jetty6xAppServer extends AbstractAppServer {
   private AppServerResult startJetty(AppServerParameters params) throws Exception {
     prepareDeployment(params);
 
+    // Find the jetty-terracotta module jar
+    File tcModuleDir = new File(this.serverInstallDirectory() + File.separator + "lib" + File.separator + "terracotta");
+    if (!tcModuleDir.isDirectory()) { throw new IllegalStateException(tcModuleDir + " is not a directory"); }
+    String[] jars = tcModuleDir.list();
+    if (jars.length != 1) { throw new IllegalStateException("wrong number of jars found in " + tcModuleDir + ": "
+                                                            + Arrays.asList(jars)); }
+    File tcModuleJar = new File(tcModuleDir, jars[0]);
+    System.err.println("Found terracotta module jar: " + tcModuleJar);
+
     String[] jvmargs = params.jvmArgs().replaceAll("'", "").split("\\s+");
     List cmd = new ArrayList(Arrays.asList(jvmargs));
     cmd.add(0, JAVA_CMD);
     cmd.add("-cp");
     cmd.add(this.serverInstallDirectory() + File.separator + "start.jar" + File.pathSeparator
             + TestConfigObject.getInstance().extraClassPathForAppServer());
+
+    cmd.add("-Djetty.class.path=" + tcModuleJar.getAbsolutePath());
     cmd.add("-Djetty.home=" + this.serverInstallDirectory());
     cmd.add("-Djetty.port=" + jetty_port);
     cmd.add("-DSTOP.PORT=" + stop_port);
@@ -126,6 +136,7 @@ public class Jetty6xAppServer extends AbstractAppServer {
     instanceName = params.instanceName();
     instanceDir = new File(sandboxDirectory(), instanceName);
     ensureDirectory(instanceDir);
+    ensureDirectory(getContextsDirectory());
 
     File wars_dir = getWarsDirectory();
     ensureDirectory(wars_dir);
@@ -139,8 +150,8 @@ public class Jetty6xAppServer extends AbstractAppServer {
       while (war_entries_it.hasNext()) {
         Map.Entry war_entry = (Map.Entry) war_entries_it.next();
         File war_file = (File) war_entry.getValue();
-        File dest = new File(wars_dir, war_file.getName());
-        createServerSpecificWar(war_file, dest);
+        String context = (String) war_entry.getKey();
+        writeContextFile(war_file, context);
       }
     }
 
@@ -159,31 +170,16 @@ public class Jetty6xAppServer extends AbstractAppServer {
     createConfigFile();
   }
 
-  private void createServerSpecificWar(File src, File dest) throws Exception {
-    FileUtils.copyFile(src, dest);
+  private void writeContextFile(File war, String context) throws IOException {
+    String warShortName = war.getName().toLowerCase().replace(".war", "");
 
-    File tmpDir = new File(instanceDir, "tmp");
-    File webInf = new File(tmpDir, "WEB-INF");
-    ensureDirectory(webInf);
-    writeJettyXml(webInf, instanceName);
-
-    Zip zip = new Zip();
-    zip.setUpdate(true);
-    zip.setDestFile(dest);
-    zip.setBasedir(tmpDir);
-    zip.setProject(new Project());
-    zip.execute();
-  }
-
-  static private void writeJettyXml(File dest, String name) throws IOException {
     FileOutputStream fos = null;
     try {
-      fos = new FileOutputStream(new File(dest, "jetty-web.xml"));
-      fos.write(jettyWebXmlText(name).getBytes());
+      fos = new FileOutputStream(new File(getContextsDirectory(), warShortName + ".xml"));
+      fos.write(contextFile(war.getAbsolutePath(), context).getBytes());
     } finally {
       IOUtils.closeQuietly(fos);
     }
-
   }
 
   private static void ensureDirectory(File dir) throws Exception {
@@ -191,8 +187,12 @@ public class Jetty6xAppServer extends AbstractAppServer {
                                                                       + dir.getAbsolutePath()); }
   }
 
-  protected File getWarsDirectory() {
+  private File getWarsDirectory() {
     return new File(instanceDir, "war");
+  }
+
+  private File getContextsDirectory() {
+    return new File(instanceDir, "contexts");
   }
 
   private void createConfigFile() throws Exception {
@@ -211,12 +211,27 @@ public class Jetty6xAppServer extends AbstractAppServer {
         buffer.append(line).append("\n");
       }
 
-      int startIndex = buffer.indexOf(target);
+      int startIndex = buffer.indexOf(webAppTarget);
       if (startIndex > 0) {
-        int endIndex = startIndex + target.length();
+        int endIndex = startIndex + webAppTarget.length();
         buffer.replace(startIndex, endIndex, getWarsDirectory().getAbsolutePath());
       } else {
-        throw new RuntimeException("Can't find target: " + target);
+        throw new RuntimeException("Can't find target: " + webAppTarget);
+      }
+
+      startIndex = buffer.indexOf(eofTarget);
+      if (startIndex > 0) {
+        buffer.insert(startIndex, jettyXmlAddition(instanceName));
+      } else {
+        throw new RuntimeException("Can't find target: " + eofTarget);
+      }
+
+      startIndex = buffer.indexOf(contextsTarget);
+      if (startIndex > 0) {
+        int endIndex = startIndex + contextsTarget.length();
+        buffer.replace(startIndex, endIndex, getContextsDirectory().getAbsolutePath());
+      } else {
+        throw new RuntimeException("Can't find target: " + contextsTarget);
       }
 
       configFile = new File(instanceDir, "jetty.xml").getAbsolutePath();
@@ -229,20 +244,46 @@ public class Jetty6xAppServer extends AbstractAppServer {
     }
   }
 
-  private static String jettyWebXmlText(String workerName) {
+  private String jettyXmlAddition(String workerName) {
+    String s = "";
+    s += "  <Set name=\"sessionIdManager\">\n";
+    s += "    <New id=\"tcIdMgr\" class=\"org.mortbay.terracotta.servlet.TerracottaSessionIdManager\">\n";
+    s += "      <Arg><Ref id=\"Server\"/></Arg>\n";
+    s += "      <Set name=\"workerName\">" + workerName + "</Set>\n";
+    s += "    </New>\n";
+    s += "  </Set>\n";
+    s += "  \n";
+    s += "  <Call name=\"setAttribute\">\n";
+    s += "    <Arg>tcIdMgr</Arg>\n";
+    s += "    <Arg><Ref id=\"tcIdMgr\"/></Arg>\n";
+    s += "  </Call>\n";
+    return s;
+  }
+
+  private static String contextFile(String warFile, String contextPath) {
     String s = "<?xml version=\"1.0\"  encoding=\"ISO-8859-1\"?>\n";
     s += "<Configure class=\"org.mortbay.jetty.webapp.WebAppContext\">\n";
-    s += "  <Get name=\"sessionHandler\">\n";
-    s += "    <Get name=\"sessionManager\">\n";
-    s += "      <Call name=\"setIdManager\">\n";
-    s += "        <Arg>\n";
-    s += "          <New class=\"org.mortbay.jetty.servlet.HashSessionIdManager\">\n";
-    s += "            <Set name=\"WorkerName\">" + workerName + "</Set>\n";
-    s += "          </New>\n";
-    s += "        </Arg>\n";
-    s += "      </Call>\n";
-    s += "    </Get>\n";
-    s += "  </Get>\n";
+    s += "  <Set name=\"contextPath\">/" + contextPath + "</Set>\n";
+    s += "  <Set name=\"war\">" + warFile + "</Set>\n";
+    s += "\n";
+    s += "  <Property name=\"Server\">\n";
+    s += "    <Call id=\"tcIdMgr\" name=\"getAttribute\">\n";
+    s += "      <Arg>tcIdMgr</Arg>\n";
+    s += "    </Call>\n";
+    s += "  </Property>\n";
+    s += "\n";
+    s += "  <New id=\"tcmgr\" class=\"org.mortbay.terracotta.servlet.TerracottaSessionManager\">\n";
+    s += "    <Set name=\"idManager\">\n";
+    s += "      <Ref id=\"tcIdMgr\"/>\n";
+    s += "    </Set>\n";
+    s += "  </New>\n";
+    s += "\n";
+    s += "  <Set name=\"sessionHandler\">\n";
+    s += "    <New class=\"org.mortbay.terracotta.servlet.TerracottaSessionHandler\">\n";
+    s += "      <Arg><Ref id=\"tcmgr\"/></Arg>\n";
+    s += "    </New>\n";
+    s += "  </Set>\n";
+    s += "  \n";
     s += "</Configure>\n";
     return s;
   }
