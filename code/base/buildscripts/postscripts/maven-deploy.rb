@@ -39,6 +39,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
             end
         end
 
+        group = arg['groupId']
         artifact = arg['artifact']
         version = arg[MAVEN_VERSION_CONFIG_KEY] || config_source[MAVEN_VERSION_CONFIG_KEY] ||
           config_source['version'] || build_environment.version
@@ -50,7 +51,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
           version = arg[versionKey] || config_source[versionKey]
         end
 
-        maven.deploy_file(file.to_s, artifact, version, arg['pom'])
+        maven.deploy_file(file.to_s, group, artifact, version, arg['pom'])
         
         # clean up injected file if it existed
         if arg['inject'] 

@@ -160,30 +160,36 @@ postscripts:
         - samples/sessions
   - maven-deploy:
       args:
-        - artifact: parent
+        - groupId: org.terracotta
+          artifact: parent
           srcfile: pom.xml
           pom: pom.xml
-        - artifact: terracotta
+        - groupId: org.terracotta
+          artifact: terracotta
           file: lib/tc.jar
           pom: poms/terracotta-pom.xml
           inject: 
             - lib/resources/build-data.txt
             - lib/resources/tim-get.properties
-        - artifact: tcconfig
+        - groupId: org.terracotta
+          artifact: tcconfig
           file: lib/tcconfig-xmlbeans-generated.jar
           pom: poms/tcconfig-pom.xml
-        - artifact: terracotta-tim-api
+        - groupId: org.terracotta.api
+          artifact: tim-api
           file: lib/terracotta-tim-api.jar
           pom: poms/terracotta-tim-api-pom.xml
           version: api.version
           inject: 
             - lib/resources/build-data.txt
-        - artifact: terracotta-jmx-api
+        - groupId: org.terracotta
+          artifact: terracotta-jmx-api
           file: lib/terracotta-jmx-api.jar
           pom: poms/terracotta-jmx-api-pom.xml
           inject:  
             - lib/resources/build-data.txt
-        - artifact: terracotta-api
+        - groupId: org.terracotta.api
+          artifact: api
           file: lib/terracotta-api.jar
           pom: poms/terracotta-api-pom.xml
           version: api.version            

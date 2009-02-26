@@ -11,8 +11,8 @@
     <version>3.0.0-SNAPSHOT</version>
   </parent>
 
-  <groupId>org.terracotta</groupId>
-  <artifactId>terracotta-test-api</artifactId>
+  <groupId>org.terracotta.api</groupId>
+  <artifactId>test-api</artifactId>
   <packaging>jar</packaging>
 
   <dependencies>

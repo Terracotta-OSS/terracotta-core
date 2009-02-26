@@ -4,13 +4,12 @@ class MavenDeploy
 
   def initialize(options = {})
     @generate_pom = options.boolean(:generate_pom, true)
-    @group_id = options[:group_id] || DEFAULT_GROUP_ID
     @repository_url = options[:repository_url] || MAVEN_REPO_LOCAL
     @repository_id = options[:repository_id]
     @snapshot = options.boolean(:snapshot)
   end
 
-  def deploy_file(file, artifact_id, version, pom_file = nil, packaging = nil, dry_run = false)
+  def deploy_file(file, group_id, artifact_id, version, pom_file = nil, packaging = nil, dry_run = false)
     unless File.exist?(file)
       raise("Bad 'file' argument passed to deploy_file.  File does not exist: #{file}")
     end
@@ -28,14 +27,14 @@ class MavenDeploy
     if @snapshot
       #version.sub!(/.SNAPSHOT$/, '-SNAPSHOT') || version += '-SNAPSHOT'
       if version !~ /.SNAPSHOT$/
-        loud_message("SKIPPING NON-SNAPSHOT ARTIFACT: #{@group_id}.#{artifact_id}-#{version}")
+        loud_message("SKIPPING NON-SNAPSHOT ARTIFACT: #{group_id}.#{artifact_id}-#{version}")
         return
       end
     end
 
     command_args = {
       'packaging' => packaging,
-      'groupId' => @group_id,
+      'groupId' => group_id,
       'artifactId' => artifact_id,
       'file' => file,
       'version' => version,
