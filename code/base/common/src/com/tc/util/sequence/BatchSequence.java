@@ -1,5 +1,6 @@
 /**
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util.sequence;
 
@@ -7,18 +8,17 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.util.sequence.BatchSequenceProvider;
 
 /**
- * This Sequence deals with batches. It keeps a next batch around to avoid
- * pauses and always requests a new next batch as soon as the old next batch is
- * promoted to current batch
+ * This Sequence deals with batches. It keeps a next batch around to avoid pauses and always requests a new next batch
+ * as soon as the old next batch is promoted to current batch
  * 
  * @author steve, orion
  */
 public final class BatchSequence implements BatchSequenceReceiver, Sequence {
-  
-  private static final SequenceBatch NULL_SEQUENCE_BATCH = new SequenceBatch(0, 0);
-  
-  private SequenceBatch               current   = NULL_SEQUENCE_BATCH;
-  private SequenceBatch               nextBatch = NULL_SEQUENCE_BATCH;
+
+  private static final SequenceBatch  NULL_SEQUENCE_BATCH = new SequenceBatch(0, 0);
+
+  private SequenceBatch               current             = NULL_SEQUENCE_BATCH;
+  private SequenceBatch               nextBatch           = NULL_SEQUENCE_BATCH;
   private boolean                     requestInProgress;
   private final BatchSequenceProvider remoteProvider;
   private final int                   batchSize;
@@ -43,7 +43,7 @@ public final class BatchSequence implements BatchSequenceReceiver, Sequence {
     while (!current.hasNext() && !nextBatch.hasNext()) {
       if (!requestInProgress) requestNextBatch();
       try {
-        this.wait();
+        if (!current.hasNext() && !nextBatch.hasNext()) this.wait();
       } catch (InterruptedException ie) {
         throw new TCRuntimeException(ie);
       }
@@ -73,7 +73,7 @@ public final class BatchSequence implements BatchSequenceReceiver, Sequence {
   public synchronized boolean hasNext() {
     return nextBatch.hasNext();
   }
-  
+
   public synchronized BatchSequenceProvider getProvider() {
     return remoteProvider;
   }
