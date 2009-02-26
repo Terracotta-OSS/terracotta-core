@@ -137,7 +137,6 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
     ElementChooser chsr = (ElementChooser) e.getSource();
     XTreeNode node = (XTreeNode) chsr.getSelectedObject();
     String name = node.getName();
-    System.err.println("newPage=" + name);
     if (pagedView.hasPage(name)) {
       pagedView.setPage(name);
     }
