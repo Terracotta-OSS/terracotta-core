@@ -383,6 +383,18 @@
       </dependency>
       <dependency>
         <groupId>org.hyperic</groupId>
+        <artifactId>libsigar-amd64-solaris</artifactId>
+        <version>${sigar.version}</version>
+        <type>so</type>
+      </dependency>
+      <dependency>
+        <groupId>org.hyperic</groupId>
+        <artifactId>libsigar-x86-solaris</artifactId>
+        <version>${sigar.version}</version>
+        <type>so</type>
+      </dependency>      
+      <dependency>
+        <groupId>org.hyperic</groupId>
         <artifactId>libsigar-x86-linux</artifactId>
         <version>${sigar.version}</version>
         <type>so</type>
