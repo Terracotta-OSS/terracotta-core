@@ -38,10 +38,10 @@ import javax.management.MBeanServerInvocationHandler;
 import javax.management.remote.JMXConnector;
 
 public class ActivePassiveServerManager extends MultipleServerManager {
-  private static final String        HOST               = "localhost";
-  private static final String        SERVER_NAME        = "testserver";
-  private static final boolean       DEBUG              = false;
-  private static final int           NULL_VAL           = -1;
+  private static final String        HOST                = "localhost";
+  private static final String        SERVER_NAME         = "testserver";
+  private static final boolean       DEBUG               = false;
+  private static final int           NULL_VAL            = -1;
 
   private final File                 tempDir;
   private final PortChooser          portChooser;
@@ -65,16 +65,16 @@ public class ActivePassiveServerManager extends MultipleServerManager {
 
   private final List                 errors;
 
-  private int                        activeIndex        = NULL_VAL;
-  private int                        lastCrashedIndex   = NULL_VAL;
+  private int                        activeIndex         = NULL_VAL;
+  private int                        lastCrashedIndex    = NULL_VAL;
   private ActivePassiveServerCrasher serverCrasher;
   private int                        maxCrashCount;
   private final TestState            testState;
   private Random                     random;
   private long                       seed;
   private final File                 javaHome;
-  private int                        pid                = -1;
-  private List                       jvmArgs            = null;
+  private int                        pid                 = -1;
+  private List                       jvmArgs             = null;
   private final boolean              isProxyL2groupPorts;
   private final int[]                proxyL2GroupPorts;
   protected ProxyConnectManager[]    proxyL2Managers;
@@ -85,15 +85,16 @@ public class ActivePassiveServerManager extends MultipleServerManager {
 
   // this is used when active-active tests are run. This will help in differentiating between the names in the different
   // groups
-  private int                        startIndexOfServer = 0;
+  private int                        startIndexOfServer  = 0;
   private final String               groupName;
+  private static final String        ACTIVEPASSIVE_GROUP = "active-passive-group";
 
   // Should be called directly when an active-passive test is to be run.
   public ActivePassiveServerManager(boolean isActivePassiveTest, File tempDir, PortChooser portChooser,
                                     String configModel, MultipleServersTestSetupManager setupManger, File javaHome,
                                     TestTVSConfigurationSetupManagerFactory configFactory, List extraJvmArgs,
                                     boolean isProxyL2GroupPorts, boolean isProxyDsoPorts) throws Exception {
-    this("active-passive-group", isActivePassiveTest, tempDir, portChooser, configModel, setupManger, javaHome,
+    this(ACTIVEPASSIVE_GROUP, isActivePassiveTest, tempDir, portChooser, configModel, setupManger, javaHome,
          configFactory, extraJvmArgs, isProxyL2GroupPorts, isProxyDsoPorts, false, 0);
   }
 
@@ -146,8 +147,8 @@ public class ActivePassiveServerManager extends MultipleServerManager {
 
     if (!isActiveActive) {
       GroupData[] groupList = new GroupData[1];
-      groupList[0] = new GroupData(dsoPorts, jmxPorts, (isProxyL2GroupPorts) ? proxyL2GroupPorts : l2GroupPorts,
-                                   serverNames);
+      groupList[0] = new GroupData(ACTIVEPASSIVE_GROUP, dsoPorts, jmxPorts, (isProxyL2GroupPorts) ? proxyL2GroupPorts
+          : l2GroupPorts, serverNames);
       MultipleServersConfigCreator serversConfigCreator = new MultipleServersConfigCreator(this.setupManger, groupList,
                                                                                            this.configModel,
                                                                                            configFile, this.tempDir,
@@ -794,7 +795,8 @@ public class ActivePassiveServerManager extends MultipleServerManager {
       debugPrintln("******* adding to L1 config: serverName=[" + serverNames[i] + "] dsoPort=["
                    + (isProxyDsoPorts ? proxyDsoPorts[i] : dsoPorts[i]) + "] jmxPort=[" + jmxPorts[i] + "]");
     }
-    configFactory.addServersAndGroupToL1Config(serverNames, isProxyDsoPorts ? proxyDsoPorts : dsoPorts, jmxPorts);
+    configFactory.addServersAndGroupToL1Config(ACTIVEPASSIVE_GROUP, serverNames, isProxyDsoPorts ? proxyDsoPorts
+        : dsoPorts, jmxPorts);
   }
 
   public void crashServer() throws Exception {
