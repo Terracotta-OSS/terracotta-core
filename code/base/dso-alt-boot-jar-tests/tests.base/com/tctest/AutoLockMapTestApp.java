@@ -451,6 +451,8 @@ public class AutoLockMapTestApp extends GenericTransparentApp {
   }
 
   void testHashMapPut(Map map, boolean validate) {
+    if (!(map instanceof HashMap)) return;
+    
     if (validate) {
       Assert.assertEquals(0, map.size());
     } else {
