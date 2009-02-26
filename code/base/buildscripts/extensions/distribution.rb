@@ -229,9 +229,6 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   require 'extensions/bundled-modules'
   include BundledModules
 
-  require 'extensions/bundled-jres'
-  include BundledJREs
-
   require 'extensions/packaging'
   include Packaging
 
@@ -268,7 +265,6 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     else
       exec_section :bundled_vendors
       exec_section :bundled_demos
-      exec_section :bundled_jres
     end
     puts "EXEC POSTSCRIPTS"
     exec_section :postscripts

@@ -124,10 +124,5 @@ class BuildEnvironment < Environment
   def default_jvmargs
     [ ]
   end
-  
-  IA_LOCATION = "C:\\Program Files\\Macrovision\\InstallAnywhere 8.0 Enterprise"
-  
-  def has_installanywhere
-    File.exist?(IA_LOCATION)
-  end
+
 end

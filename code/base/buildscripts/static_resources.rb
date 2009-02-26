@@ -87,11 +87,6 @@ class StaticResources
     FilePath.new(@root_directory, '..', '..', 'kits')
   end
 
-  def ia_project_directory(flavor)
-    (flavor !~ /opensource/i) ? FilePath.new(@root_directory, '..', '..', '..', 'kits', 'source', 'installer') :
-      FilePath.new(kits_directory, 'source', 'installer')
-  end
-
   def jrefactory_config_directory
     FilePath.new(@root_directory, "buildconfig")
   end
@@ -178,11 +173,6 @@ class StaticResources
   def vendors_url
     default_url = "http://download.terracotta.org/bundled-vendors"
     ENV["TC_VENDORS_URL"].nil? ? default_url : ENV["TC_VENDORS_URL"]
-  end
-
-  def jre_url
-    default_url = "http://download.terracotta.org/bundled-jre/sun"
-    ENV["TC_JRE_URL"].nil? ? default_url : ENV["TC_JRE_URL"]
   end
 
   def docflex_home

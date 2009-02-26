@@ -361,9 +361,6 @@ modules:
         jdk: J2SE-1.5
       dependencies:
         - ui-eclipse
-  - installer:
-      options:
-        jdk: J2SE-1.5
   - tim-get-tool:
       options:
         jdk: J2SE-1.5
@@ -720,4 +717,3 @@ module-groups:
     - ui-eclipse
     - ui-eclipse-33
     - ui-eclipse-34
-    - installer

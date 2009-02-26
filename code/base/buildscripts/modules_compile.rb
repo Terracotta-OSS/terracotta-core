@@ -77,7 +77,7 @@ class BuildSubtree
         if Registry[:emma]
           prepare_emma_dir(build_results)
           
-          unless %w(thirdparty thirdparty-api installer).include?(build_module.name) || 
+          unless %w(thirdparty thirdparty-api).include?(build_module.name) || 
               build_module.name =~ /test/ ||
               name =~ /test/
             ant.java(
