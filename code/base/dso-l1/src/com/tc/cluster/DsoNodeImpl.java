@@ -13,7 +13,7 @@ public class DsoNodeImpl implements DsoNodeInternal {
 
   private final NodeID                   id;
 
-  private DsoNodeMetaData                metaData;
+  private volatile DsoNodeMetaData       metaData;
 
   public DsoNodeImpl(final DsoClusterImpl cluster, final NodeID id) {
     Assert.assertNotNull(cluster);
@@ -31,29 +31,20 @@ public class DsoNodeImpl implements DsoNodeInternal {
   }
 
   public String getIp() {
-    synchronized (this) {
-      if (null == metaData) {
-        cluster.retrieveMetaDataForDsoNode(this);
-      }
-
-      return metaData.getIp();
-    }
+    return getOrRetrieveMetaData().getIp();
   }
 
   public String getHostname() {
-    synchronized (this) {
-      if (null == metaData) {
-        cluster.retrieveMetaDataForDsoNode(this);
-      }
+    return getOrRetrieveMetaData().getHostname();
+  }
 
-      return metaData.getHostname();
-    }
+  private DsoNodeMetaData getOrRetrieveMetaData() {
+    if (metaData != null) { return metaData; }
+    return cluster.retrieveMetaDataForDsoNode(this);
   }
 
   public void setMetaData(final DsoNodeMetaData metaData) {
-    synchronized (this) {
-      this.metaData = metaData;
-    }
+    this.metaData = metaData;
   }
 
   @Override

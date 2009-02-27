@@ -10,47 +10,62 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class DsoClusterTopologyImpl implements DsoClusterTopology {
-  private final transient DsoClusterImpl     cluster;
+  private final transient DsoClusterImpl         cluster;
 
-  private final Map<NodeID, DsoNodeInternal> nodes = new HashMap<NodeID, DsoNodeInternal>();
+  private final Map<NodeID, DsoNodeInternal>     nodes          = new HashMap<NodeID, DsoNodeInternal>();
+
+  private final ReentrantReadWriteLock           nodesLock      = new ReentrantReadWriteLock();
+  private final ReentrantReadWriteLock.ReadLock  nodesReadLock  = nodesLock.readLock();
+  private final ReentrantReadWriteLock.WriteLock nodesWriteLock = nodesLock.writeLock();
 
   public DsoClusterTopologyImpl(final DsoClusterImpl cluster) {
     this.cluster = cluster;
   }
 
   public Collection<DsoNode> getNodes() {
-    // yucky cast hack for generics
-    return (Collection)Collections.unmodifiableCollection(nodes.values());
-  }
-
-  DsoNodeInternal getDsoNode(final NodeID nodeId) {
-    synchronized (this) {
-      DsoNodeInternal node = nodes.get(nodeId);
-      if (null == node) {
-        node = registerDsoNode(nodeId);
-      }
-
-      Assert.assertNotNull(node);
-
-      return node;
+    nodesReadLock.lock();
+    try {
+      // yucky cast hack for generics
+      return (Collection) Collections.unmodifiableCollection(nodes.values());
+    } finally {
+      nodesReadLock.unlock();
     }
   }
 
+  DsoNodeInternal getDsoNode(final NodeID nodeId) {
+    nodesReadLock.lock();
+    try {
+      DsoNodeInternal node = nodes.get(nodeId);
+      if (node != null) { return node; }
+    } finally {
+      nodesReadLock.unlock();
+    }
+
+    return registerDsoNode(nodeId);
+  }
+
   DsoNodeInternal getAndRemoveDsoNode(final NodeID nodeId) {
-    synchronized (this) {
+    nodesWriteLock.lock();
+    try {
       DsoNodeInternal node = nodes.remove(nodeId);
       Assert.assertNotNull(node);
       return node;
+    } finally {
+      nodesWriteLock.unlock();
     }
   }
 
   DsoNodeInternal registerDsoNode(final NodeID nodeId) {
-    synchronized (this) {
-      final DsoNodeInternal node = new DsoNodeImpl(cluster, nodeId);
+    final DsoNodeInternal node = new DsoNodeImpl(cluster, nodeId);
+    nodesWriteLock.lock();
+    try {
       nodes.put(nodeId, node);
       return node;
+    } finally {
+      nodesWriteLock.unlock();
     }
   }
 }

@@ -89,11 +89,12 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     return response;
   }
 
-  public void retrieveMetaDataForDsoNode(final DsoNodeInternal node) {
+  public DsoNodeMetaData retrieveMetaDataForDsoNode(final DsoNodeInternal node) {
     final NodeMetaDataMessage message = nmdmFactory.newNodeMetaDataMessage();
     message.setNodeID(node.getNodeID());
     DsoNodeMetaData metaData = (DsoNodeMetaData) sendMessageAndWait(message);
     node.setMetaData(metaData);
+    return metaData;
   }
 
   private <R> R sendMessageAndWait(final ClusterMetaDataMessage message) {

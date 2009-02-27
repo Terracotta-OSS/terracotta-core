@@ -25,21 +25,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class DsoClusterImpl implements DsoClusterInternal {
 
-  private static final TCLogger          LOGGER               = TCLogging.getLogger(DsoClusterImpl.class);
+  private static final TCLogger                  LOGGER               = TCLogging.getLogger(DsoClusterImpl.class);
 
-  private volatile DsoNodeInternal       currentNode;
+  private volatile DsoNodeInternal               currentNode;
 
-  private final DsoClusterTopologyImpl   topology             = new DsoClusterTopologyImpl(this);
-  private final List<DsoClusterListener> listeners            = new CopyOnWriteArrayList<DsoClusterListener>();
+  private final DsoClusterTopologyImpl           topology             = new DsoClusterTopologyImpl(this);
+  private final List<DsoClusterListener>         listeners            = new CopyOnWriteArrayList<DsoClusterListener>();
 
-  private ClusterMetaDataManager         clusterMetaDataManager;
-  private ClientObjectManager            clientObjectManager;
+  private final ReentrantReadWriteLock           stateLock            = new ReentrantReadWriteLock();
+  private final ReentrantReadWriteLock.ReadLock  stateReadLock        = stateLock.readLock();
+  private final ReentrantReadWriteLock.WriteLock stateWriteLock       = stateLock.writeLock();
 
-  private volatile boolean               isNodeJoined         = false;
-  private volatile boolean               areOperationsEnabled = false;
+  private ClusterMetaDataManager                 clusterMetaDataManager;
+  private ClientObjectManager                    clientObjectManager;
+
+  private boolean                                isNodeJoined         = false;
+  private boolean                                areOperationsEnabled = false;
 
   public void init(final ClusterMetaDataManager metaDataManager, final ClientObjectManager objectManager) {
     this.clusterMetaDataManager = metaDataManager;
@@ -49,9 +54,12 @@ public class DsoClusterImpl implements DsoClusterInternal {
   public void addClusterListener(final DsoClusterListener listener) throws ClusteredListenerException {
     if (null == listeners) { return; }
 
-    synchronized (this) {
+    stateWriteLock.lock();
+    try {
       if (listeners.contains(listener)) { return; }
       listeners.add(listener);
+    } finally {
+      stateWriteLock.unlock();
     }
 
     if (isNodeJoined) {
@@ -63,12 +71,22 @@ public class DsoClusterImpl implements DsoClusterInternal {
     }
   }
 
-  public synchronized void removeClusterListener(final DsoClusterListener listener) {
-    listeners.remove(listener);
+  public void removeClusterListener(final DsoClusterListener listener) {
+    stateWriteLock.lock();
+    try {
+      listeners.remove(listener);
+    } finally {
+      stateWriteLock.unlock();
+    }
   }
 
-  public synchronized DsoNode getCurrentNode() {
-    return currentNode;
+  public DsoNode getCurrentNode() {
+    stateReadLock.lock();
+    try {
+      return currentNode;
+    } finally {
+      stateReadLock.unlock();
+    }
   }
 
   public DsoClusterTopology getClusterTopology() {
@@ -209,22 +227,33 @@ public class DsoClusterImpl implements DsoClusterInternal {
     throw new UnclusteredObjectException(map);
   }
 
-  public void retrieveMetaDataForDsoNode(final DsoNodeInternal node) {
+  public DsoNodeMetaData retrieveMetaDataForDsoNode(final DsoNodeInternal node) {
     Assert.assertNotNull(clusterMetaDataManager);
 
-    clusterMetaDataManager.retrieveMetaDataForDsoNode(node);
+    return clusterMetaDataManager.retrieveMetaDataForDsoNode(node);
   }
 
-  public synchronized boolean isNodeJoined() {
-    return isNodeJoined;
+  public boolean isNodeJoined() {
+    stateReadLock.lock();
+    try {
+      return isNodeJoined;
+    } finally {
+      stateReadLock.unlock();
+    }
   }
 
-  public synchronized boolean areOperationsEnabled() {
-    return areOperationsEnabled;
+  public boolean areOperationsEnabled() {
+    stateReadLock.lock();
+    try {
+      return areOperationsEnabled;
+    } finally {
+      stateReadLock.unlock();
+    }
   }
 
   public void fireThisNodeJoined(final NodeID nodeId, final NodeID[] clusterMembers) {
-    synchronized (this) {
+    stateWriteLock.lock();
+    try {
       // we might get multiple calls in a row, ignore all but the first in a row.
       if (currentNode != null) return;
 
@@ -234,6 +263,8 @@ public class DsoClusterImpl implements DsoClusterInternal {
       for (NodeID otherNodeId : clusterMembers) {
         topology.registerDsoNode(otherNodeId);
       }
+    } finally {
+      stateWriteLock.unlock();
     }
 
     fireNodeJoined(nodeId);
@@ -241,20 +272,26 @@ public class DsoClusterImpl implements DsoClusterInternal {
 
   public void fireThisNodeLeft() {
     boolean fireOperationsDisabled = false;
-    synchronized (this) {
+    stateWriteLock.lock();
+    try {
       if (areOperationsEnabled) {
         fireOperationsDisabled = true;
         areOperationsEnabled = false;
       }
+    } finally {
+      stateWriteLock.unlock();
     }
 
     if (fireOperationsDisabled) {
       fireOperationsDisabledInternal();
     }
 
-    synchronized (this) {
+    stateWriteLock.lock();
+    try {
       if (!isNodeJoined) { return; }
       isNodeJoined = false;
+    } finally {
+      stateWriteLock.unlock();
     }
 
     fireNodeLeft(currentNode.getNodeID());
@@ -288,9 +325,12 @@ public class DsoClusterImpl implements DsoClusterInternal {
 
   public void fireOperationsEnabled() {
     if (currentNode != null) {
-      synchronized (this) {
+      stateWriteLock.lock();
+      try {
         if (areOperationsEnabled) { return; }
         areOperationsEnabled = true;
+      } finally {
+        stateWriteLock.unlock();
       }
 
       final DsoClusterEvent event = new DsoClusterEventImpl(currentNode);
@@ -309,10 +349,13 @@ public class DsoClusterImpl implements DsoClusterInternal {
   }
 
   public void fireOperationsDisabled() {
-    synchronized (this) {
+    stateWriteLock.lock();
+    try {
       if (!areOperationsEnabled) { return; }
 
       areOperationsEnabled = false;
+    } finally {
+      stateWriteLock.unlock();
     }
 
     fireOperationsDisabledInternal();

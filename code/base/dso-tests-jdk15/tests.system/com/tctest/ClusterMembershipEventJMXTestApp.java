@@ -74,6 +74,8 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
     try {
       cluster.getNodeId();
       Assert.fail("Expected UnsupportedOperationException");
+    } catch (UnsupportedOperationException e) {
+      // expected
     } catch (RuntimeMBeanException e) {
       Assert.assertTrue(e.getCause() instanceof UnsupportedOperationException);
     }
@@ -81,6 +83,8 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
     try {
       cluster.getNodesInCluster();
       Assert.fail("Expected UnsupportedOperationException");
+    } catch (UnsupportedOperationException e) {
+      // expected
     } catch (RuntimeMBeanException e) {
       Assert.assertTrue(e.getCause() instanceof UnsupportedOperationException);
     }
@@ -88,6 +92,8 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
     try {
       cluster.isConnected();
       Assert.fail("Expected UnsupportedOperationException");
+    } catch (UnsupportedOperationException e) {
+      // expected
     } catch (RuntimeMBeanException e) {
       Assert.assertTrue(e.getCause() instanceof UnsupportedOperationException);
     }
