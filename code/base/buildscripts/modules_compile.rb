@@ -108,6 +108,7 @@ class BuildSubtree
       ant.copy(:todir => resources_dir) do
         ant.filterset do
           ant.filter(:token => 'tc.version',        :value => config_source['maven.version'])
+          ant.filter(:token => 'api.version',       :value => config_source['api.version'])
           ant.filter(:token => 'include.snapshots', :value => !(config_source['final_kit'] == 'true'))
         end
         ant.fileset(:dir => resource_root.to_s, :includes => '**/*.properties')
