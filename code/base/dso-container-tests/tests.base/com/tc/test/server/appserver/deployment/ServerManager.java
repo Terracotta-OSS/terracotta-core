@@ -398,6 +398,12 @@ public class ServerManager {
   }
 
   private String runTimGet(String name) throws Exception {
+    String mavenArtifactsVersion = ProductInfo.getInstance().mavenArtifactsVersion();
+    if (mavenArtifactsVersion.equals(ProductInfo.UNKNOWN_VALUE)) {
+      // One way this happens is when spring tests are run from eclipse (which can most likely be fixed BTW)
+      throw new AssertionError("Refusing to run tim-get for artifactsVersion: " + mavenArtifactsVersion);
+    }
+
     for (String url : TIM_GET_URLS) {
       try {
         System.setProperty(Config.KEYSPACE + Config.TC_VERSION, ProductInfo.getInstance().mavenArtifactsVersion());
@@ -423,6 +429,7 @@ public class ServerManager {
       }
     }
 
-    throw new RuntimeException("Unable to resolve TIM with name " + name + " from any repository");
+    throw new RuntimeException("Unable to resolve TIM with name " + name
+                               + " from any repository using artifactVersion " + mavenArtifactsVersion);
   }
 }
