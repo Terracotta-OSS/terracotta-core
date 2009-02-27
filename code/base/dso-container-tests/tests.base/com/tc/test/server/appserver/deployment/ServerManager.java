@@ -44,7 +44,7 @@ public class ServerManager {
 
   // The internal repository is listed first since it is the preferred repo
   private static final String[]       TIM_GET_URLS                 = {
-      "http://forge-dev.terracotta.lan/api/index.xml.gz", "http://forge.terracotta.org/api/index.xml.gz" };
+      "http://forge-stage.terracotta.lan/api/index-internal.xml.gz", "http://forge.terracotta.org/api/index.xml.gz" };
 
   protected final static TCLogger     logger                       = TCLogging.getLogger(ServerManager.class);
   private static int                  appServerIndex               = 0;
