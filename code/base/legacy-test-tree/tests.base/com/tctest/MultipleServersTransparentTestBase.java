@@ -10,6 +10,8 @@ import com.tctest.runner.DistributedTestRunner;
 import com.tctest.runner.DistributedTestRunnerConfig;
 import com.tctest.runner.TransparentAppConfig;
 
+import java.util.ArrayList;
+
 public abstract class MultipleServersTransparentTestBase extends TransparentTestBase {
 
   /**
@@ -31,6 +33,12 @@ public abstract class MultipleServersTransparentTestBase extends TransparentTest
 
   protected boolean canRun() {
     return super.canRun() || isMultipleServerTest();
+  }
+
+  @Override
+  protected void setExtraJvmArgs(final ArrayList jvmArgs) {
+    // limit L2 heap size for all active-active and active-passive tests
+    jvmArgs.add("-Xmx256m");
   }
 
   public void test() throws Exception {
