@@ -26,27 +26,27 @@ public abstract class AbstractGroupMessage implements GroupMessage {
 
   protected AbstractGroupMessage(int type) {
     this.type = type;
-    id = getNextID();
-    requestID = MessageID.NULL_ID;
+    this.id = getNextID();
+    this.requestID = MessageID.NULL_ID;
   }
 
   protected AbstractGroupMessage(int type, MessageID requestID) {
     this.type = type;
-    id = getNextID();
+    this.id = getNextID();
     this.requestID = requestID;
   }
 
   final public void serializeTo(TCByteBufferOutput serialOutput) {
-    serialOutput.writeInt(type);
-    serialOutput.writeLong(id.toLong());
-    serialOutput.writeLong(requestID.toLong());
+    serialOutput.writeInt(this.type);
+    serialOutput.writeLong(this.id.toLong());
+    serialOutput.writeLong(this.requestID.toLong());
     basicSerializeTo(serialOutput);
   }
 
   final public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
-    type = serialInput.readInt();
-    id = new MessageID(serialInput.readLong());
-    requestID = new MessageID(serialInput.readLong());
+    this.type = serialInput.readInt();
+    this.id = new MessageID(serialInput.readLong());
+    this.requestID = new MessageID(serialInput.readLong());
     basicDeserializeFrom(serialInput);
     return this;
   }
@@ -64,15 +64,15 @@ public abstract class AbstractGroupMessage implements GroupMessage {
   }
 
   public int getType() {
-    return type;
+    return this.type;
   }
 
   public MessageID getMessageID() {
-    return id;
+    return this.id;
   }
 
   public MessageID inResponseTo() {
-    return requestID;
+    return this.requestID;
   }
 
   public void setMessageOrginator(NodeID n) {
@@ -80,26 +80,25 @@ public abstract class AbstractGroupMessage implements GroupMessage {
   }
 
   public NodeID messageFrom() {
-    return messageOrginator;
+    return this.messageOrginator;
   }
 
   protected void writeByteBuffers(TCByteBufferOutput out, TCByteBuffer[] buffers) {
     int total = 0;
-    for (int i = 0; i < buffers.length; i++) {
-      total += buffers[i].limit();
+    for (TCByteBuffer buffer : buffers) {
+      total += buffer.remaining();
     }
     out.writeInt(total);
-    for (int i = 0; i < buffers.length; i++) {
-      TCByteBuffer buffer = buffers[i];
-      out.write(buffer.array(), buffer.arrayOffset(), buffer.limit());
+    for (TCByteBuffer buffer : buffers) {
+      out.write(buffer.array(), buffer.arrayOffset(), buffer.remaining());
     }
   }
 
   protected TCByteBuffer[] readByteBuffers(TCByteBufferInput in) throws IOException {
     int total = in.readInt();
     TCByteBuffer buffers[] = TCByteBufferFactory.getFixedSizedInstancesForLength(false, total);
-    for (int i = 0; i < buffers.length; i++) {
-      byte bytes[] = buffers[i].array();
+    for (TCByteBuffer buffer : buffers) {
+      byte bytes[] = buffer.array();
       int start = 0;
       int length = Math.min(bytes.length, total);
       total -= length;
@@ -108,7 +107,7 @@ public abstract class AbstractGroupMessage implements GroupMessage {
         start += read;
         length -= read;
       }
-      buffers[i].rewind();
+      buffer.rewind();
     }
     return buffers;
   }
