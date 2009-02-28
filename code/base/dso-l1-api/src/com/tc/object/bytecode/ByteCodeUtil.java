@@ -53,9 +53,6 @@ public class ByteCodeUtil implements Opcodes {
   public static final String  NAMEDCLASSLOADER_CLASS            = "com/tc/object/loaders/NamedClassLoader";
   public static final String  NAMEDCLASSLOADER_TYPE             = "L" + NAMEDCLASSLOADER_CLASS + ";";
 
-  public static final String  WEBAPPCONFIG_CLASS                = "com/terracotta/session/WebAppConfig";
-  public static final String  WEBAPPCONFIG_TYPE                 = "L" + WEBAPPCONFIG_CLASS + ";";
-
   public static Class[] purgeTCInterfaces(final Class[] interfaces) {
     if ((interfaces == null) || (interfaces.length == 0)) { return interfaces; }
 
