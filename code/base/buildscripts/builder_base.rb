@@ -170,7 +170,12 @@ class TerracottaBuilder
       Registry[:emma_lib] = "#{Registry[:emma_home]}/lib/emma.jar"
       puts "EMMA_HOME: #{Registry[:emma_home]}"
     end
-    
+
+    # XXX: this is a hack to get around jruby script converting JAVA_HOME to unix path
+    if `uname` =~ /CYGWIN/i
+      ENV['JAVA_HOME'] = `cygpath -w #{ENV['JAVA_HOME']}`.strip
+    end
+
     reset
   end
 
