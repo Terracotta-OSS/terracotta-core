@@ -8,6 +8,7 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
+import com.tc.io.TCByteBufferInput.Mark;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
@@ -53,22 +54,22 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
   }
 
   public String getTypeName() {
-    return typeName;
+    return this.typeName;
   }
 
   // This method is there for debugging/logging stats. Should never be used otherwise.
   public void setTypeClassName(String className) {
-    if (typeName == null) {
-      typeName = className;
+    if (this.typeName == null) {
+      this.typeName = className;
     }
   }
 
   public ObjectID getObjectID() throws DNAException {
-    return id;
+    return this.id;
   }
 
   public ObjectID getParentObjectID() throws DNAException {
-    return parentID;
+    return this.parentID;
   }
 
   public DNACursor getCursor() {
@@ -85,18 +86,18 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
   }
 
   public boolean next(DNAEncoding encoding) throws IOException, ClassNotFoundException {
-    boolean hasNext = actionCount > 0;
+    boolean hasNext = this.actionCount > 0;
     if (hasNext) {
       parseNext(encoding);
-      actionCount--;
+      this.actionCount--;
     } else {
-      if (input.available() > 0) { throw new IOException(input.available() + " bytes remaining (expect 0)"); }
+      if (this.input.available() > 0) { throw new IOException(this.input.available() + " bytes remaining (expect 0)"); }
     }
     return hasNext;
   }
 
   private void parseNext(DNAEncoding encoding) throws IOException, ClassNotFoundException {
-    byte recordType = input.readByte();
+    byte recordType = this.input.readByte();
 
     switch (recordType) {
       case BaseDNAEncodingImpl.PHYSICAL_ACTION_TYPE:
@@ -128,43 +129,43 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
   }
 
   private void parseSubArray(DNAEncoding encoding) throws IOException, ClassNotFoundException {
-    int startPos = input.readInt();
-    Object subArray = encoding.decode(input);
-    currentAction = new PhysicalAction(subArray, startPos);
+    int startPos = this.input.readInt();
+    Object subArray = encoding.decode(this.input);
+    this.currentAction = new PhysicalAction(subArray, startPos);
   }
 
   private void parseEntireArray(DNAEncoding encoding) throws IOException, ClassNotFoundException {
-    Object array = encoding.decode(input);
-    currentAction = new PhysicalAction(array);
+    Object array = encoding.decode(this.input);
+    this.currentAction = new PhysicalAction(array);
   }
 
   private void parseLiteralValue(DNAEncoding encoding) throws IOException, ClassNotFoundException {
-    Object value = encoding.decode(input);
-    currentAction = new LiteralAction(value);
+    Object value = encoding.decode(this.input);
+    this.currentAction = new LiteralAction(value);
   }
 
   private void parseArrayElement(DNAEncoding encoding) throws IOException, ClassNotFoundException {
-    int index = input.readInt();
-    Object value = encoding.decode(input);
-    currentAction = new PhysicalAction(index, value, value instanceof ObjectID);
+    int index = this.input.readInt();
+    Object value = encoding.decode(this.input);
+    this.currentAction = new PhysicalAction(index, value, value instanceof ObjectID);
   }
 
   private void parsePhysical(DNAEncoding encoding, boolean isReference) throws IOException, ClassNotFoundException {
-    String fieldName = serializer.readFieldName(input);
+    String fieldName = this.serializer.readFieldName(this.input);
 
-    Object value = encoding.decode(input);
-    currentAction = new PhysicalAction(fieldName, value, value instanceof ObjectID || isReference);
+    Object value = encoding.decode(this.input);
+    this.currentAction = new PhysicalAction(fieldName, value, value instanceof ObjectID || isReference);
   }
 
   private void parseLogical(DNAEncoding encoding) throws IOException, ClassNotFoundException {
-    int method = input.readInt();
-    int paramCount = input.read();
-    if (paramCount < 0) throw new AssertionError("Invalid param count:" + paramCount);
+    int method = this.input.readInt();
+    int paramCount = this.input.read();
+    if (paramCount < 0) { throw new AssertionError("Invalid param count:" + paramCount); }
     Object[] params = new Object[paramCount];
     for (int i = 0; i < params.length; i++) {
-      params[i] = encoding.decode(input);
+      params[i] = encoding.decode(this.input);
     }
-    currentAction = new LogicalAction(method, params);
+    this.currentAction = new LogicalAction(method, params);
   }
 
   public LogicalAction getLogicalAction() {
@@ -179,6 +180,7 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
     return this.currentAction;
   }
 
+  @Override
   public String toString() {
     try {
       StringBuffer buf = new StringBuffer();
@@ -188,9 +190,9 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
       buf.append("  id->" + getObjectID() + "\n");
       buf.append("  version->" + getVersion() + "\n");
       buf.append("  isDelta->" + isDelta() + "\n");
-      buf.append("  actionCount->" + actionCount + "\n");
-      buf.append("  actionCount (orig)->" + origActionCount + "\n");
-      buf.append("  deserialized?->" + wasDeserialized + "\n");
+      buf.append("  actionCount->" + this.actionCount + "\n");
+      buf.append("  actionCount (orig)->" + this.origActionCount + "\n");
+      buf.append("  deserialized?->" + this.wasDeserialized + "\n");
       buf.append("}\n");
       return buf.toString();
     } catch (Exception e) {
@@ -199,7 +201,7 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
   }
 
   public int getArraySize() {
-    return arrayLength;
+    return this.arrayLength;
   }
 
   public boolean hasLength() {
@@ -207,66 +209,66 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
   }
 
   public long getVersion() {
-    return version;
+    return this.version;
   }
 
   /*
    * This methods is synchronized coz both broadcast stage and L2 sync objects stage accesses it simultaneously
    */
   public synchronized void serializeTo(TCByteBufferOutput serialOutput) {
-    serialOutput.write(dataOut);
+    serialOutput.write(this.dataOut);
   }
 
   public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
     this.wasDeserialized = true;
 
-    serialInput.mark();
+    Mark mark = serialInput.mark();
     int dnaLength = serialInput.readInt();
-    if (dnaLength <= 0) throw new IOException("Invalid length:" + dnaLength);
+    if (dnaLength <= 0) { throw new IOException("Invalid length:" + dnaLength); }
 
-    serialInput.tcReset();
+    serialInput.tcReset(mark);
 
     this.input = serialInput.duplicateAndLimit(dnaLength);
     serialInput.skip(dnaLength);
 
-    if (createOutput) {
+    if (this.createOutput) {
       // this is optional (it's only needed on the server side for txn broadcasts)
-      this.dataOut = input.toArray();
+      this.dataOut = this.input.toArray();
     }
 
     // skip over the length
-    input.readInt();
+    this.input.readInt();
 
-    this.actionCount = input.readInt();
-    this.origActionCount = actionCount;
+    this.actionCount = this.input.readInt();
+    this.origActionCount = this.actionCount;
 
-    if (actionCount < 0) throw new IOException("Invalid action count:" + actionCount);
+    if (this.actionCount < 0) { throw new IOException("Invalid action count:" + this.actionCount); }
 
-    final byte flags = input.readByte();
+    final byte flags = this.input.readByte();
 
-    this.id = new ObjectID(input.readLong());
+    this.id = new ObjectID(this.input.readLong());
 
     this.isDelta = Conversion.getFlag(flags, DNA.IS_DELTA);
 
-    if (!isDelta) {
-      this.typeName = serializer.readString(input);
-      this.loaderDesc = serializer.readString(input);
+    if (!this.isDelta) {
+      this.typeName = this.serializer.readString(this.input);
+      this.loaderDesc = this.serializer.readString(this.input);
     }
 
     if (Conversion.getFlag(flags, DNA.HAS_VERSION)) {
-      this.version = input.readLong();
+      this.version = this.input.readLong();
     } else {
       this.version = DNA.NULL_VERSION;
     }
 
     if (Conversion.getFlag(flags, DNA.HAS_PARENT_ID)) {
-      this.parentID = new ObjectID(input.readLong());
+      this.parentID = new ObjectID(this.input.readLong());
     } else {
       this.parentID = ObjectID.NULL_ID;
     }
 
     if (Conversion.getFlag(flags, DNA.HAS_ARRAY_LENGTH)) {
-      this.arrayLength = input.readInt();
+      this.arrayLength = this.input.readInt();
     } else {
       this.arrayLength = DNA.NULL_ARRAY_SIZE;
     }

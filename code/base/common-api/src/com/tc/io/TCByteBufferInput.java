@@ -1,13 +1,16 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.io;
 
 import com.tc.bytes.TCByteBuffer;
 
-import java.io.IOException;
+public interface TCByteBufferInput extends TCDataInput {
 
-public interface TCByteBufferInput  extends TCDataInput {
+  public interface Mark {
+    // This is just a Marker interface as far as anyone is concerned
+  }
 
   /**
    * Duplicate this stream. The resulting stream will share data with the source stream (ie. no copying), but the two
@@ -24,6 +27,8 @@ public interface TCByteBufferInput  extends TCDataInput {
 
   public TCByteBuffer[] toArray();
 
+  public TCByteBuffer[] toArray(Mark start, Mark end);
+
   /**
    * Artificially limit the length of this input stream starting at the current read position. This operation is
    * destructive to the stream contents (ie. data trimmed off by setting limit can never be read with this stream).
@@ -38,10 +43,12 @@ public interface TCByteBufferInput  extends TCDataInput {
 
   public void mark(int readlimit);
 
-  // XXX: This is a TC special version of mark() to be used in conjunction with tcReset()...We should eventually
-  // implement the general purpose mark(int) method as specified by InputStream. NOTE: It has some unusual semantics
-  // that make it a little trickier to implement (in our case) than you might think (specifially the readLimit field)
-  public void mark();
+  /**
+   * This is a TC special version of mark() to be used in conjunction with tcReset()...We should eventually implement
+   * the general purpose mark(int) method as specified by InputStream. NOTE: It has some unusual semantics that make it
+   * a little trickier to implement (in our case) than you might think (specifically the readLimit field)
+   */
+  public Mark mark();
 
   public boolean markSupported();
 
@@ -52,12 +59,11 @@ public interface TCByteBufferInput  extends TCDataInput {
   public void reset();
 
   /**
-   * Reset this input stream to the position recorded by the last call to mark(). This method discards the previous
-   * value of the mark
+   * Reset this input stream to the position recorded by the mark that is passed an input parameter.
    * 
-   * @throws IOException if mark() has never been called on this stream
+   * @throws IllegalArgumentException if m is null or if it was not created against this stream.
    */
-  public void tcReset();
+  public void tcReset(Mark m);
 
   public long skip(long skip);
 
