@@ -68,7 +68,7 @@ class TerracottaAnt < Builder::AntBuilder
     license_files.each do |file|
       directory = file.directoryname.to_s
       self.jar(:destfile => jar_file.to_s, :update => 'true',
-               :basedir => directory, :includes => file.filename.to_s)
+        :basedir => directory, :includes => file.filename.to_s)
     end
   end
 
@@ -172,8 +172,12 @@ class TerracottaBuilder
     end
 
     # XXX: this is a hack to get around jruby script converting JAVA_HOME to unix path
-    if `uname` =~ /CYGWIN/i
-      ENV['JAVA_HOME'] = `cygpath -w #{ENV['JAVA_HOME']}`.strip
+    begin
+      if `uname` =~ /CYGWIN/i
+        ENV['JAVA_HOME'] = `cygpath -w #{ENV['JAVA_HOME']}`.strip
+      end
+    rescue
+      # do nothing
     end
 
     reset
@@ -264,7 +268,7 @@ class TerracottaBuilder
     prefix = 'org.terracotta.modules.tool'
     include_snapshots = @config_source['final_kit'] == 'true' ? false : true
     java_opts = ["-D#{prefix}.includeSnapshots=#{include_snapshots}",
-                 "-D#{prefix}.dataFile=#{self.tim_get_index_file}"]
+      "-D#{prefix}.dataFile=#{self.tim_get_index_file}"]
     if index_url = @config_source['tim-get.index.url']
       java_opts << "-D#{prefix}.dataFileUrl=#{index_url}"
     end
