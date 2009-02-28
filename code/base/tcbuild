@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if test -z "${JAVA_HOME}"; then
 	echo "JAVA_HOME is not set"
