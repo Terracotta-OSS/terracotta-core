@@ -29,6 +29,7 @@ final class YoungGenChangeCollectorImpl implements YoungGenChangeCollector {
 
   private final Map          youngGenObjectIDs    = new HashMap();
   private final Set          rememberedSet        = new ObjectIDSet();
+  private final Set          evictedIDAtGcSet     = new ObjectIDSet();
 
   private State              state                = DONT_MONITOR_CHANGES;
 
@@ -53,8 +54,7 @@ final class YoungGenChangeCollectorImpl implements YoungGenChangeCollector {
 
   public synchronized void notifyObjectInitalized(ObjectID id) {
     Object oldState = this.youngGenObjectIDs.put(id, INITALIZED);
-    if (oldState != UNINITALIZED) { throw new AssertionError(id + " is not in " + UNINITALIZED + " but in "
-                                                             + oldState); }
+    if (oldState != UNINITALIZED) { throw new AssertionError(id + " is not in " + UNINITALIZED + " but in " + oldState); }
   }
 
   public synchronized void notifyObjectsEvicted(Collection evicted) {
@@ -69,18 +69,20 @@ final class YoungGenChangeCollectorImpl implements YoungGenChangeCollector {
   }
 
   private void removeReferencesTo(ObjectID id) {
-    this.youngGenObjectIDs.remove(id);
     if (this.state == DONT_MONITOR_CHANGES) {
+      this.youngGenObjectIDs.remove(id);
       /**
        * XXX:: We don't want to remove inward reference to Young Gen Objects that are just faulted out of cache
        * (becoming OldGen object) while the DGC is running. If we did it will lead to GCing valid reachable objects
        * since YoungGen only looks us the objects in memory.
        * <p>
        * This seems counter-intuitive to not remove inward pointers when in MONITOR_CHANGES state, but if you think of
-       * removing inward references as forgetting the fact that a reference existed, then not removing the reference
-       * is Monitoring the changes.
+       * removing inward references as forgetting the fact that a reference existed, then not removing the reference is
+       * Monitoring the changes.
        */
       this.rememberedSet.remove(id);
+    } else {
+      evictedIDAtGcSet.add(id);
     }
   }
 
@@ -99,7 +101,14 @@ final class YoungGenChangeCollectorImpl implements YoungGenChangeCollector {
   public synchronized void stopMonitoringChanges() {
     Assert.assertTrue(this.state == MONITOR_CHANGES);
     this.state = DONT_MONITOR_CHANGES;
-    // reset remembered set to the latest set of Young Gen IDs.
-    this.rememberedSet.retainAll(this.youngGenObjectIDs.keySet());
+
+    // remove reaped objectIDs at last GC
+    // and reset remembered set to the latest set of Young Gen IDs
+    for (Iterator i = evictedIDAtGcSet.iterator(); i.hasNext();) {
+      ObjectID oid = (ObjectID) i.next();
+      youngGenObjectIDs.remove(oid);
+      rememberedSet.remove(oid);
+    }
+    evictedIDAtGcSet.clear();
   }
 }
