@@ -50,25 +50,26 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
   private TestLockManager               lockManager;
   private MockSink                      broadcastSink;
 
+  @Override
   public void setUp() throws Exception {
-    instanceMonitor = new ObjectInstanceMonitorImpl();
-    transactionManager = new TestServerTransactionManager();
-    lockManager = new TestLockManager();
-    gtxm = new TestGlobalTransactionManager();
-    handler = new ApplyTransactionChangeHandler(instanceMonitor, gtxm);
+    this.instanceMonitor = new ObjectInstanceMonitorImpl();
+    this.transactionManager = new TestServerTransactionManager();
+    this.lockManager = new TestLockManager();
+    this.gtxm = new TestGlobalTransactionManager();
+    this.handler = new ApplyTransactionChangeHandler(this.instanceMonitor, this.gtxm);
 
     MockStage stageBo = new MockStage("Bo");
     MockStage stageCo = new MockStage("Co");
-    broadcastSink = stageBo.sink;
+    this.broadcastSink = stageBo.sink;
     TestServerConfigurationContext context = new TestServerConfigurationContext();
-    context.transactionManager = transactionManager;
+    context.transactionManager = this.transactionManager;
     context.txnObjectManager = new NullTransactionalObjectManager();
     context.l2Coordinator = new L2HADisabledCooridinator();
     context.addStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE, stageBo);
     context.addStage(ServerConfigurationContext.COMMIT_CHANGES_STAGE, stageCo);
-    context.lockManager = lockManager;
+    context.lockManager = this.lockManager;
 
-    handler.initializeContext(context);
+    this.handler.initializeContext(context);
   }
 
   public void testLockManagerNotifyIsCalled() throws Exception {
@@ -87,24 +88,25 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     }
     SequenceID sequenceID = new SequenceID(1);
     ServerTransaction tx = new ServerTransactionImpl(batchID, txID, sequenceID, lockIDs, cid, dnas, serializer,
-                                                     newRoots, txnType, notifies, DmiDescriptor.EMPTY_ARRAY, 1);
+                                                     newRoots, txnType, notifies, DmiDescriptor.EMPTY_ARRAY, 1,
+                                                     new long[0]);
     // call handleEvent with the global transaction reporting that it doesn't need an apply...
-    assertTrue(lockManager.notifyCalls.isEmpty());
-    assertTrue(broadcastSink.queue.isEmpty());
-    handler.handleEvent(getApplyTxnContext(tx));
+    assertTrue(this.lockManager.notifyCalls.isEmpty());
+    assertTrue(this.broadcastSink.queue.isEmpty());
+    this.handler.handleEvent(getApplyTxnContext(tx));
     // even if the transaction has already been applied, the notifies must be applied, since they aren't persistent.
-    assertEquals(notifies.size(), lockManager.notifyCalls.size());
-    lockManager.notifyCalls.clear();
-    assertNotNull(broadcastSink.queue.take());
+    assertEquals(notifies.size(), this.lockManager.notifyCalls.size());
+    this.lockManager.notifyCalls.clear();
+    assertNotNull(this.broadcastSink.queue.take());
 
     // call handleEvent with the global transaction reporting that it DOES need an apply...
-    handler.handleEvent(getApplyTxnContext(tx));
+    this.handler.handleEvent(getApplyTxnContext(tx));
 
-    assertEquals(notifies.size(), lockManager.notifyCalls.size());
+    assertEquals(notifies.size(), this.lockManager.notifyCalls.size());
     NotifiedWaiters notifiedWaiters = null;
     for (Iterator i = notifies.iterator(); i.hasNext();) {
       Notify notify = (Notify) i.next();
-      Object[] args = (Object[]) lockManager.notifyCalls.remove(0);
+      Object[] args = (Object[]) this.lockManager.notifyCalls.remove(0);
       assertEquals(notify.getLockID(), args[0]);
       assertEquals(cid, args[1]);
       assertEquals(notify.getThreadID(), args[2]);
@@ -117,7 +119,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     }
 
     // next, check to see that the handler puts the newly pending waiters into the broadcast context.
-    BroadcastChangeContext bctxt = (BroadcastChangeContext) broadcastSink.queue.take();
+    BroadcastChangeContext bctxt = (BroadcastChangeContext) this.broadcastSink.queue.take();
     assertNotNull(bctxt);
     assertEquals(notifiedWaiters, bctxt.getNewlyPendingWaiters());
   }

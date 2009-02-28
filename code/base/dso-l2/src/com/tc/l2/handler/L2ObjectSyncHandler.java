@@ -74,7 +74,7 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
       final TransactionBatchReader reader = batchReaderFactory.newTransactionBatchReader(commitMessage);
       ServerTransaction txn;
       // XXX:: Order has to be maintained.
-      Map txns = new LinkedHashMap(reader.getRemainingTxnsToBeRead());
+      Map txns = new LinkedHashMap(reader.getNumberForTxns());
       while ((txn = reader.getNextTransaction()) != null) {
         txn.setGlobalTransactionID(commitMessage.getGlobalTransactionIDFor(txn.getServerTransactionID()));
         txns.put(txn.getServerTransactionID(), txn);

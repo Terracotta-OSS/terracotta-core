@@ -16,10 +16,10 @@ public interface TransactionBatchManager {
 
   public boolean batchComponentComplete(NodeID committerID, TransactionID txnID) throws NoSuchBatchException;
 
-  public void processTransactionBatch(TransactionBatchContext incomingTransactionBatchContext);
-
   public void nodeConnected(NodeID nodeID);
 
   public void shutdownNode(NodeID nodeID);
+
+  public void processTransactions(TransactionBatchContext batchContext);
 
 }

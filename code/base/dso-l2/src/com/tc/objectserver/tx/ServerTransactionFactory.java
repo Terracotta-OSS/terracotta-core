@@ -21,6 +21,7 @@ public interface ServerTransactionFactory {
   public ServerTransaction createServerTransaction(TxnBatchID batchID, TransactionID txnID, SequenceID sequenceID,
                                                    LockID[] locks, NodeID source, List dnas,
                                                    ObjectStringSerializer serializer, Map newRoots, TxnType txnType,
-                                                   List notifies, DmiDescriptor[] dmis, int numApplictionTxn);
+                                                   List notifies, DmiDescriptor[] dmis, int numApplictionTxn,
+                                                   long[] highwaterMarks);
 
 }

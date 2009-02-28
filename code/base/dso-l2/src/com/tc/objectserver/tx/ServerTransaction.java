@@ -21,8 +21,6 @@ import java.util.Map;
 
 /**
  * Represents an atomic change to the states of objects on the server
- *
- * @author steve
  */
 
 public interface ServerTransaction extends GlobalTransaction {
@@ -61,4 +59,6 @@ public interface ServerTransaction extends GlobalTransaction {
    */
   public int getNumApplicationTxn();
 
+  // Used in active-active
+  public long[] getHighWaterMarks();
 }

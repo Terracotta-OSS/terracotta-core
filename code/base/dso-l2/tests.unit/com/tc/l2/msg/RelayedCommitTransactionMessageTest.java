@@ -33,37 +33,38 @@ public class RelayedCommitTransactionMessageTest extends TestCase {
   private TestCommitTransactionMessage testCommitTransactionMessage;
   private List                         transactions;
   private List                         serverTransactionIDs;
-  private final int                    channelId = 2;
+  private final ClientID               cid = new ClientID(new ChannelID(2));
 
+  @Override
   public void setUp() {
-    testCommitTransactionMessage = (TestCommitTransactionMessage) new TestCommitTransactionMessageFactory()
+    this.testCommitTransactionMessage = (TestCommitTransactionMessage) new TestCommitTransactionMessageFactory()
         .newCommitTransactionMessage(GroupID.NULL_ID);
-    testCommitTransactionMessage.setBatch(new TestTransactionBatch(new TCByteBuffer[] { TCByteBufferFactory
+    this.testCommitTransactionMessage.setBatch(new TestTransactionBatch(new TCByteBuffer[] { TCByteBufferFactory
         .getInstance(false, 3452) }), new ObjectStringSerializer());
-    testCommitTransactionMessage.setChannelID(new ClientID(new ChannelID(channelId)));
+    this.testCommitTransactionMessage.setChannelID(this.cid);
 
-    serverTransactionIDs = new ArrayList();
-    ClientID cid = new ClientID(new ChannelID(channelId));
-    ServerTransactionID stid1 = new ServerTransactionID(cid, new TransactionID(4234));
-    ServerTransactionID stid2 = new ServerTransactionID(cid, new TransactionID(6543));
-    ServerTransactionID stid3 = new ServerTransactionID(cid, new TransactionID(1654));
-    ServerTransactionID stid4 = new ServerTransactionID(cid, new TransactionID(3460));
-    serverTransactionIDs.add(stid1);
-    serverTransactionIDs.add(stid2);
-    serverTransactionIDs.add(stid3);
-    serverTransactionIDs.add(stid4);
+    this.serverTransactionIDs = new ArrayList();
+    ServerTransactionID stid1 = new ServerTransactionID(this.cid, new TransactionID(4234));
+    ServerTransactionID stid2 = new ServerTransactionID(this.cid, new TransactionID(6543));
+    ServerTransactionID stid3 = new ServerTransactionID(this.cid, new TransactionID(1654));
+    ServerTransactionID stid4 = new ServerTransactionID(this.cid, new TransactionID(3460));
+    this.serverTransactionIDs.add(stid1);
+    this.serverTransactionIDs.add(stid2);
+    this.serverTransactionIDs.add(stid3);
+    this.serverTransactionIDs.add(stid4);
 
-    transactions = new ArrayList();
-    transactions.add(new TestServerTransaction(stid1, new TxnBatchID(32), new GlobalTransactionID(23)));
-    transactions.add(new TestServerTransaction(stid2, new TxnBatchID(12), new GlobalTransactionID(54)));
-    transactions.add(new TestServerTransaction(stid3, new TxnBatchID(43), new GlobalTransactionID(55)));
-    transactions.add(new TestServerTransaction(stid4, new TxnBatchID(9), new GlobalTransactionID(78)));
+    this.transactions = new ArrayList();
+    this.transactions.add(new TestServerTransaction(stid1, new TxnBatchID(32), new GlobalTransactionID(23)));
+    this.transactions.add(new TestServerTransaction(stid2, new TxnBatchID(12), new GlobalTransactionID(54)));
+    this.transactions.add(new TestServerTransaction(stid3, new TxnBatchID(43), new GlobalTransactionID(55)));
+    this.transactions.add(new TestServerTransaction(stid4, new TxnBatchID(9), new GlobalTransactionID(78)));
   }
 
+  @Override
   public void tearDown() {
-    testCommitTransactionMessage = null;
-    transactions = null;
-    serverTransactionIDs = null;
+    this.testCommitTransactionMessage = null;
+    this.transactions = null;
+    this.serverTransactionIDs = null;
   }
 
   private void validate(RelayedCommitTransactionMessage rctm, RelayedCommitTransactionMessage rctm1) {
@@ -78,7 +79,7 @@ public class RelayedCommitTransactionMessageTest extends TestCase {
     GlobalTransactionID lwm1 = rctm1.getLowGlobalTransactionIDWatermark();
     assertEquals(lwm, lwm1);
 
-    for (Iterator iter = serverTransactionIDs.iterator(); iter.hasNext();) {
+    for (Iterator iter = this.serverTransactionIDs.iterator(); iter.hasNext();) {
       ServerTransactionID serverTransactionID = (ServerTransactionID) iter.next();
       assertEquals(rctm.getGlobalTransactionIDFor(serverTransactionID), rctm1
           .getGlobalTransactionIDFor(serverTransactionID));
@@ -103,8 +104,9 @@ public class RelayedCommitTransactionMessageTest extends TestCase {
 
   public void testBasicSerialization() throws Exception {
     RelayedCommitTransactionMessage rctm = RelayedCommitTransactionMessageFactory
-        .createRelayedCommitTransactionMessage(testCommitTransactionMessage, transactions, 420,
-                                               new GlobalTransactionID(49));
+        .createRelayedCommitTransactionMessage(this.cid, this.testCommitTransactionMessage.getBatchData(),
+                                               this.transactions, 420, new GlobalTransactionID(49),
+                                               this.testCommitTransactionMessage.getSerializer());
     RelayedCommitTransactionMessage rctm1 = writeAndRead(rctm);
     validate(rctm, rctm1);
   }

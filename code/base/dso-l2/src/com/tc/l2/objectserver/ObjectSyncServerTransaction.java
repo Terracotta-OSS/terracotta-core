@@ -25,6 +25,8 @@ import java.util.Map;
 
 public class ObjectSyncServerTransaction implements ServerTransaction {
 
+  private static final long[]       EMPTY_LONG_ARRAY = new long[0];
+
   private final TransactionID       txnID;
   private final ObjectIDSet         oids;
   private final List                changes;
@@ -54,11 +56,11 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
   }
 
   public List getChanges() {
-    return changes;
+    return this.changes;
   }
 
   public NodeID getSourceID() {
-    return serverID;
+    return this.serverID;
   }
 
   public SequenceID getClientSequenceID() {
@@ -74,18 +76,18 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
   }
 
   public Map getNewRoots() {
-    return rootsMap;
+    return this.rootsMap;
   }
 
   public ObjectIDSet getObjectIDs() {
-    return oids;
+    return this.oids;
   }
 
   /*
    * All objects contained in ObjectSync Message are new Objects for the passive
    */
   public ObjectIDSet getNewObjectIDs() {
-    return oids;
+    return this.oids;
   }
 
   public ObjectStringSerializer getSerializer() {
@@ -93,11 +95,11 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
   }
 
   public ServerTransactionID getServerTransactionID() {
-    return serverTxnID;
+    return this.serverTxnID;
   }
 
   public TransactionID getTransactionID() {
-    return txnID;
+    return this.txnID;
   }
 
   public TxnType getTransactionType() {
@@ -119,6 +121,10 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
 
   public void setGlobalTransactionID(GlobalTransactionID gid) {
     throw new UnsupportedOperationException();
+  }
+
+  public long[] getHighWaterMarks() {
+    return EMPTY_LONG_ARRAY;
   }
 
 }

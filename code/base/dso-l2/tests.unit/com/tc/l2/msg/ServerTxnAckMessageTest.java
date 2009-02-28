@@ -38,23 +38,24 @@ public class ServerTxnAckMessageTest extends TestCase {
   private final int            channelId = 2;
   private final NodeID         nodeID    = new ServerID("foo", "foobar".getBytes());
 
+  @Override
   public void setUp() {
     TestCommitTransactionMessage testCommitTransactionMessage = (TestCommitTransactionMessage) new TestCommitTransactionMessageFactory()
         .newCommitTransactionMessage(GroupID.NULL_ID);
     testCommitTransactionMessage.setBatch(new TestTransactionBatch(new TCByteBuffer[] { TCByteBufferFactory
         .getInstance(false, 3452) }), new ObjectStringSerializer());
-    testCommitTransactionMessage.setChannelID(new ClientID(new ChannelID(channelId)));
+    testCommitTransactionMessage.setChannelID(new ClientID(new ChannelID(this.channelId)));
 
-    serverTransactionIDs = new HashSet();
-    ClientID cid = new ClientID(new ChannelID(channelId));
+    this.serverTransactionIDs = new HashSet();
+    ClientID cid = new ClientID(new ChannelID(this.channelId));
     ServerTransactionID stid1 = new ServerTransactionID(cid, new TransactionID(4234));
     ServerTransactionID stid2 = new ServerTransactionID(cid, new TransactionID(6543));
     ServerTransactionID stid3 = new ServerTransactionID(cid, new TransactionID(1654));
     ServerTransactionID stid4 = new ServerTransactionID(cid, new TransactionID(3460));
-    serverTransactionIDs.add(stid1);
-    serverTransactionIDs.add(stid2);
-    serverTransactionIDs.add(stid3);
-    serverTransactionIDs.add(stid4);
+    this.serverTransactionIDs.add(stid1);
+    this.serverTransactionIDs.add(stid2);
+    this.serverTransactionIDs.add(stid3);
+    this.serverTransactionIDs.add(stid4);
 
     List transactions = new ArrayList();
     transactions.add(new TestServerTransaction(stid1, new TxnBatchID(32), new GlobalTransactionID(23)));
@@ -62,15 +63,18 @@ public class ServerTxnAckMessageTest extends TestCase {
     transactions.add(new TestServerTransaction(stid3, new TxnBatchID(43), new GlobalTransactionID(55)));
     transactions.add(new TestServerTransaction(stid4, new TxnBatchID(9), new GlobalTransactionID(78)));
 
-    relayedCommitTransactionMessage = RelayedCommitTransactionMessageFactory
-        .createRelayedCommitTransactionMessage(testCommitTransactionMessage, transactions, 700,
-                                               new GlobalTransactionID(99));
-    relayedCommitTransactionMessage.setMessageOrginator(nodeID);
+    this.relayedCommitTransactionMessage = RelayedCommitTransactionMessageFactory
+        .createRelayedCommitTransactionMessage(testCommitTransactionMessage.getSourceNodeID(),
+                                               testCommitTransactionMessage.getBatchData(), transactions, 700,
+                                               new GlobalTransactionID(99), testCommitTransactionMessage
+                                                   .getSerializer());
+    this.relayedCommitTransactionMessage.setMessageOrginator(this.nodeID);
   }
 
+  @Override
   public void tearDown() {
-    relayedCommitTransactionMessage = null;
-    serverTransactionIDs = null;
+    this.relayedCommitTransactionMessage = null;
+    this.serverTransactionIDs = null;
   }
 
   private void validate(ServerTxnAckMessage stam, ServerTxnAckMessage stam1) {
@@ -89,7 +93,7 @@ public class ServerTxnAckMessageTest extends TestCase {
     }
     assertTrue(acked1.isEmpty());
 
-    assertEquals(stam.getDestinationID(), nodeID);
+    assertEquals(stam.getDestinationID(), this.nodeID);
   }
 
   private ServerTxnAckMessage writeAndRead(ServerTxnAckMessage stam) throws Exception {
@@ -104,8 +108,8 @@ public class ServerTxnAckMessageTest extends TestCase {
   }
 
   public void testBasicSerialization() throws Exception {
-    ServerTxnAckMessage stam = ServerTxnAckMessageFactory.createServerTxnAckMessage(relayedCommitTransactionMessage,
-                                                                                    serverTransactionIDs);
+    ServerTxnAckMessage stam = ServerTxnAckMessageFactory
+        .createServerTxnAckMessage(this.relayedCommitTransactionMessage, this.serverTransactionIDs);
     ServerTxnAckMessage stam1 = writeAndRead(stam);
     validate(stam, stam1);
   }

@@ -17,27 +17,24 @@ public class OrderedGroupIDs {
 
   public OrderedGroupIDs(GroupID[] gids) {
     TreeSet<GroupID> sorted = new TreeSet<GroupID>(Arrays.asList(gids));
-    groupIDs = sorted.toArray(new GroupID[sorted.size()]);
+    this.groupIDs = sorted.toArray(new GroupID[sorted.size()]);
 
   }
 
   public GroupID[] getGroupIDs() {
-    return groupIDs;
+    return this.groupIDs;
   }
 
   public int length() {
-    return groupIDs.length;
+    return this.groupIDs.length;
   }
 
   public GroupID getGroup(int i) {
-    return groupIDs[i];
+    return this.groupIDs[i];
   }
 
   public int getGroupIDIndex(GroupID gid) {
-    for (int i = 0; i < groupIDs.length; i++) {
-      if(groupIDs[i].equals(gid)) return i;
-    }
-    return -1;
+    return Arrays.binarySearch(this.groupIDs, gid);
   }
 
 }

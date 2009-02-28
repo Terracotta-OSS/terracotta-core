@@ -118,8 +118,10 @@ public class TCGroupSendLargeRelayedCommitTransactionMessageTest extends TCTestC
     }
 
     RelayedCommitTransactionMessage osm = RelayedCommitTransactionMessageFactory
-        .createRelayedCommitTransactionMessage(testCommitTransactionMessage, transactions, 420,
-                                               new GlobalTransactionID(49));
+        .createRelayedCommitTransactionMessage(testCommitTransactionMessage.getSourceNodeID(),
+                                               testCommitTransactionMessage.getBatchData(), transactions, 420,
+                                               new GlobalTransactionID(49), testCommitTransactionMessage
+                                                   .getSerializer());
     return osm;
   }
 
@@ -173,11 +175,11 @@ public class TCGroupSendLargeRelayedCommitTransactionMessageTest extends TCTestC
     NoExceptionLinkedQueue queue = new NoExceptionLinkedQueue();
 
     public void messageReceived(NodeID fromNode, GroupMessage msg) {
-      queue.put(msg);
+      this.queue.put(msg);
     }
 
     public GroupMessage take() {
-      return (GroupMessage) queue.take();
+      return (GroupMessage) this.queue.take();
     }
   }
 }

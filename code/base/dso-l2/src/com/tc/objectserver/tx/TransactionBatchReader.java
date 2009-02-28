@@ -4,21 +4,31 @@
  */
 package com.tc.objectserver.tx;
 
+import com.tc.bytes.TCByteBuffer;
 import com.tc.net.NodeID;
+import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TxnBatchID;
 
 import java.io.IOException;
 
 public interface TransactionBatchReader {
-  
+
   public ServerTransaction getNextTransaction() throws IOException;
 
   public TxnBatchID getBatchID();
 
-  public int getRemainingTxnsToBeRead();
+  public int getNumberForTxns();
 
   public NodeID getNodeID();
 
-  public long[] getHighWatermark();
+  public TCByteBuffer[] getBackingBuffers();
+
+  /**
+   * @return the backing byte buffer that contains transactions from "from" to "to" inclusive.
+   */
+  public TCByteBuffer[] getBackingBuffers(ServerTransactionID from, ServerTransactionID to);
+
+  public ObjectStringSerializer getSerializer();
 
 }

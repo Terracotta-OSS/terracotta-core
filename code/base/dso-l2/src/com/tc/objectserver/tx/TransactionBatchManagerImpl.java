@@ -8,7 +8,6 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.PostInit;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
-import com.tc.l2.context.IncomingTransactionContext;
 import com.tc.l2.objectserver.ReplicatedObjectManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -17,6 +16,7 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ObjectID;
 import com.tc.object.msg.CommitTransactionMessage;
 import com.tc.object.msg.MessageRecycler;
+import com.tc.object.net.DSOChannelManager;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -24,10 +24,11 @@ import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.util.Assert;
 import com.tc.util.SequenceValidator;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class TransactionBatchManagerImpl implements TransactionBatchManager, PostInit {
@@ -44,8 +45,9 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
   private ReplicatedObjectManager        replicatedObjectMgr;
   private Sink                           txnRelaySink;
   private TransactionBatchReaderFactory  batchReaderFactory;
-  private TransactionFilter              filter;
+  private final TransactionFilter        filter;
   private ServerGlobalTransactionManager gtxm;
+  private DSOChannelManager              dsoChannelManager;
 
   public TransactionBatchManagerImpl(SequenceValidator sequenceValidator, MessageRecycler recycler,
                                      TransactionFilter txnFilter) {
@@ -56,37 +58,40 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
 
   public void initializeContext(ConfigurationContext context) {
     ServerConfigurationContext oscc = (ServerConfigurationContext) context;
-    batchReaderFactory = oscc.getTransactionBatchReaderFactory();
-    transactionManager = oscc.getTransactionManager();
-    replicatedObjectMgr = oscc.getL2Coordinator().getReplicatedObjectManager();
-    gtxm = oscc.getServerGlobalTransactionManager();
+    this.batchReaderFactory = oscc.getTransactionBatchReaderFactory();
+    this.transactionManager = oscc.getTransactionManager();
+    this.replicatedObjectMgr = oscc.getL2Coordinator().getReplicatedObjectManager();
+    this.gtxm = oscc.getServerGlobalTransactionManager();
+    this.dsoChannelManager = oscc.getChannelManager();
     Stage relayStage = oscc.getStage(ServerConfigurationContext.TRANSACTION_RELAY_STAGE);
     if (relayStage != null) {
-      txnRelaySink = relayStage.getSink();
+      this.txnRelaySink = relayStage.getSink();
     }
   }
 
   public void addTransactionBatch(final CommitTransactionMessage ctm) {
     try {
-      final TransactionBatchReader reader = batchReaderFactory.newTransactionBatchReader(ctm);
+      final TransactionBatchReader reader = this.batchReaderFactory.newTransactionBatchReader(ctm);
 
       ServerTransaction txn;
 
       // Transactions should maintain order.
-      LinkedHashMap<ServerTransactionID, ServerTransaction> txns = new LinkedHashMap<ServerTransactionID, ServerTransaction>(
-                                                                                                                             reader
-                                                                                                                                 .getRemainingTxnsToBeRead());
+      ArrayList<ServerTransaction> txns = new ArrayList<ServerTransaction>(reader.getNumberForTxns());
+      HashSet<ServerTransactionID> txnIDs = new HashSet(reader.getNumberForTxns());
       NodeID nodeID = reader.getNodeID();
       HashSet<ObjectID> newObjectIDs = new HashSet<ObjectID>();
 
       while ((txn = reader.getNextTransaction()) != null) {
-        sequenceValidator.setCurrent(nodeID, txn.getClientSequenceID());
-        txns.put(txn.getServerTransactionID(), txn);
+        this.sequenceValidator.setCurrent(nodeID, txn.getClientSequenceID());
+        txns.add(txn);
+        txnIDs.add(txn.getServerTransactionID());
         newObjectIDs.addAll(txn.getNewObjectIDs());
       }
 
-      filter.addTransactionBatch(new IncomingTransactionBatchContext(nodeID, ctm, txns, reader.getHighWatermark(),
-                                                                     newObjectIDs));
+      defineBatch(nodeID, txns.size());
+      this.messageRecycler.addMessage(ctm, txnIDs);
+
+      this.filter.addTransactionBatch(new IncomingTransactionBatchContext(nodeID, txnIDs, reader, txns, newObjectIDs));
     } catch (Exception e) {
       logger.error("Error reading transaction batch. : ", e);
       MessageChannel c = ctm.getChannel();
@@ -95,40 +100,32 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
     }
   }
 
-  public void processTransactionBatch(TransactionBatchContext batchContext) {
+  public void processTransactions(TransactionBatchContext batchContext) {
+    List<ServerTransaction> txns = batchContext.getTransactions();
+    NodeID nodeID = batchContext.getSourceNodeID();
     // This lock is used to make sure the order in which we assign GIDs is the order in which we process transactions.
     // Even though this stage is single threaded today we use this lock to just to be sure.
-    synchronized (lock) {
-      final CommitTransactionMessage ctm = batchContext.getCommitTransactionMessage();
+    synchronized (this.lock) {
       try {
-        NodeID nodeID = batchContext.getSourceNodeID();
-        defineBatch(nodeID, batchContext.getNumTxns());
-
-        // Transactions should maintain order.
-        LinkedHashMap<ServerTransactionID, ServerTransaction> txns = batchContext.getTransactions();
-
         /*
          * NOTE:: GlobalTransactionID id assigned in the process transaction stage. The transaction could be re-ordered
          * before apply. This is not a problem because for an transaction to be re-ordered, it should not have any
          * common objects between them. hence if g1 is the first TXN and g2 is the second TXN, g2 will be applied before
          * g1, only when g2 has no common objects with g1. If this is not true then we can't assign GID here.
          */
-        for (Iterator<ServerTransaction> i = txns.values().iterator(); i.hasNext();) {
-          ServerTransaction txn = i.next();
-          txn.setGlobalTransactionID(gtxm.getOrCreateGlobalTransactionID(txn.getServerTransactionID()));
+        for (ServerTransaction txn : txns) {
+          txn.setGlobalTransactionID(this.gtxm.getOrCreateGlobalTransactionID(txn.getServerTransactionID()));
         }
-        messageRecycler.addMessage(ctm, txns.keySet());
-        if (replicatedObjectMgr.relayTransactions()) {
-          transactionManager.incomingTransactions(nodeID, txns.keySet(), txns.values(), true);
-          txnRelaySink.add(new IncomingTransactionContext(nodeID, ctm, txns));
+        if (this.replicatedObjectMgr.relayTransactions()) {
+          this.transactionManager.incomingTransactions(nodeID, batchContext.getTransactionIDs(), txns, true);
+          this.txnRelaySink.add(batchContext);
         } else {
-          transactionManager.incomingTransactions(nodeID, txns.keySet(), txns.values(), false);
+          this.transactionManager.incomingTransactions(nodeID, batchContext.getTransactionIDs(), txns, false);
         }
       } catch (Exception e) {
         logger.error("Error reading transaction batch. : ", e);
-        MessageChannel c = ctm.getChannel();
-        logger.error("Closing channel " + c.getChannelID() + " due to previous errors !");
-        c.close();
+        logger.error("Closing channel " + nodeID + " due to previous errors !");
+        this.dsoChannelManager.closeAll(Collections.singletonList(nodeID));
       }
     }
   }
@@ -139,28 +136,28 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
   }
 
   private BatchStats getOrCreateStats(NodeID nid) {
-    BatchStats bs = (BatchStats) map.get(nid);
+    BatchStats bs = (BatchStats) this.map.get(nid);
     if (bs == null) {
       bs = new BatchStats(nid);
-      map.put(nid, bs);
+      this.map.put(nid, bs);
     }
     return bs;
   }
 
   public synchronized boolean batchComponentComplete(NodeID nid, TransactionID txnID) {
-    BatchStats bs = (BatchStats) map.get(nid);
+    BatchStats bs = (BatchStats) this.map.get(nid);
     Assert.assertNotNull(bs);
     return bs.batchComplete(txnID);
   }
 
   public void nodeConnected(NodeID nodeID) {
-    transactionManager.nodeConnected(nodeID);
+    this.transactionManager.nodeConnected(nodeID);
   }
 
   public void shutdownNode(NodeID nodeID) {
-    if (filter.shutdownNode(nodeID)) {
+    if (this.filter.shutdownNode(nodeID)) {
       shutdownBatchStats(nodeID);
-      transactionManager.shutdownNode(nodeID);
+      this.transactionManager.shutdownNode(nodeID);
     } else {
       logger.warn("Not clearing shutdownNode : " + nodeID);
 
@@ -168,14 +165,14 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
   }
 
   private synchronized void shutdownBatchStats(NodeID nodeID) {
-    BatchStats bs = (BatchStats) map.get(nodeID);
+    BatchStats bs = (BatchStats) this.map.get(nodeID);
     if (bs != null) {
       bs.shutdownNode();
     }
   }
 
   private void cleanUp(NodeID nodeID) {
-    map.remove(nodeID);
+    this.map.remove(nodeID);
   }
 
   public class BatchStats {
@@ -192,19 +189,23 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
     }
 
     public void defineBatch(int numTxns) {
-      long adjustedTotal = (long) (batchCount * avg) + numTxns;
-      txnCount += numTxns;
-      batchCount++;
-      avg = adjustedTotal / batchCount;
-      if (false) log_stats();
+      long adjustedTotal = (long) (this.batchCount * this.avg) + numTxns;
+      this.txnCount += numTxns;
+      this.batchCount++;
+      this.avg = adjustedTotal / this.batchCount;
+      if (false) {
+        log_stats();
+      }
     }
 
     private void log_stats() {
       logger.info(this);
     }
 
+    @Override
     public String toString() {
-      return "BatchStats : " + nodeID + " : batch count = " + batchCount + " txnCount = " + txnCount + " avg = " + avg;
+      return "BatchStats : " + this.nodeID + " : batch count = " + this.batchCount + " txnCount = " + this.txnCount
+             + " avg = " + this.avg;
     }
 
     private void log_stats(float thresh) {
@@ -212,31 +213,33 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
     }
 
     public boolean batchComplete(TransactionID txnID) {
-      if (txnCount <= 0) {
+      if (this.txnCount <= 0) {
         // this is possible when the passive server moves to active.
         logger.info("Not decrementing txnCount : " + txnID + " : " + this.toString());
       } else {
-        txnCount--;
+        this.txnCount--;
       }
-      if (killed) {
+      if (this.killed) {
         // return true only when all TXNs are ACKed. Note new batches may still be in network read queue
-        if (txnCount == 0) {
-          cleanUp(nodeID);
+        if (this.txnCount == 0) {
+          cleanUp(this.nodeID);
           return true;
         } else {
           return false;
         }
       }
-      float threshold = (avg * (batchCount - 1));
+      float threshold = (this.avg * (this.batchCount - 1));
 
-      if (false) log_stats(threshold);
+      if (false) {
+        log_stats(threshold);
+      }
 
-      if (txnCount <= threshold) {
-        if (batchCount <= 0) {
+      if (this.txnCount <= threshold) {
+        if (this.batchCount <= 0) {
           // this is possible when the passive server moves to active.
           logger.info("Not decrementing batchCount : " + txnID + " : " + this.toString());
         } else {
-          batchCount--;
+          this.batchCount--;
         }
         return true;
       } else {
@@ -246,8 +249,8 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
 
     public void shutdownNode() {
       this.killed = true;
-      if (txnCount == 0) {
-        cleanUp(nodeID);
+      if (this.txnCount == 0) {
+        cleanUp(this.nodeID);
       }
     }
   }

@@ -51,13 +51,15 @@ public class ReplicatedTransactionManagerTest extends TestCase {
   TestGlobalTransactionManager     gtxm;
   ClientID                         clientID;
 
+  @Override
   public void setUp() throws Exception {
-    clientID = new ClientID(new ChannelID(1));
-    grpMgr = new SingleNodeGroupManager();
-    txnMgr = new TestServerTransactionManager();
-    gtxm = new TestGlobalTransactionManager();
-    rtm = new ReplicatedTransactionManagerImpl(grpMgr, new OrderedSink(TCLogging
-        .getLogger(ReplicatedTransactionManagerTest.class), new MockSink()), txnMgr, gtxm, new NullMessageRecycler());
+    this.clientID = new ClientID(new ChannelID(1));
+    this.grpMgr = new SingleNodeGroupManager();
+    this.txnMgr = new TestServerTransactionManager();
+    this.gtxm = new TestGlobalTransactionManager();
+    this.rtm = new ReplicatedTransactionManagerImpl(this.grpMgr, new OrderedSink(TCLogging
+        .getLogger(ReplicatedTransactionManagerTest.class), new MockSink()), this.txnMgr, this.gtxm,
+                                                    new NullMessageRecycler());
   }
 
   /**
@@ -70,72 +72,72 @@ public class ReplicatedTransactionManagerTest extends TestCase {
     knownIds.add(new ObjectID(2));
 
     // two objects are already present
-    rtm.init(knownIds);
+    this.rtm.init(knownIds);
 
     NullRecyclableMessage message = new NullRecyclableMessage();
 
     LinkedHashMap txns = createTxns(1, 1, 2, false);
-    rtm.addCommitedTransactions(clientID, txns.keySet(), txns.values(), message);
+    this.rtm.addCommitedTransactions(this.clientID, txns.keySet(), txns.values(), message);
 
     // Since both are know oids, transactions should pass thru
     assertAndClear(txns.values());
 
     // create a txn containing a new Object (OID 3)
     txns = createTxns(1, 3, 1, true);
-    rtm.addCommitedTransactions(clientID, txns.keySet(), txns.values(), message);
+    this.rtm.addCommitedTransactions(this.clientID, txns.keySet(), txns.values(), message);
 
     // Should go thru too
     assertAndClear(txns.values());
 
     // Now create a txn with all three objects
     txns = createTxns(1, 1, 3, false);
-    rtm.addCommitedTransactions(clientID, txns.keySet(), txns.values(), message);
+    this.rtm.addCommitedTransactions(this.clientID, txns.keySet(), txns.values(), message);
 
     // Since all are known oids, transactions should pass thru
     assertAndClear(txns.values());
 
     // Now create a txn with all unknown ObjectIDs (4,5,6)
     txns = createTxns(1, 4, 3, false);
-    rtm.addCommitedTransactions(clientID, txns.keySet(), txns.values(), message);
+    this.rtm.addCommitedTransactions(this.clientID, txns.keySet(), txns.values(), message);
 
     // None should be sent thru
-    assertTrue(txnMgr.incomingTxns.isEmpty());
+    assertTrue(this.txnMgr.incomingTxns.isEmpty());
 
     // Create more txns with all unknown ObjectIDs (7,8,9)
     LinkedHashMap txns1 = createTxns(1, 7, 1, false);
-    rtm.addCommitedTransactions(clientID, txns1.keySet(), txns1.values(), message);
+    this.rtm.addCommitedTransactions(this.clientID, txns1.keySet(), txns1.values(), message);
     LinkedHashMap txns2 = createTxns(1, 8, 2, false);
-    rtm.addCommitedTransactions(clientID, txns2.keySet(), txns2.values(), message);
+    this.rtm.addCommitedTransactions(this.clientID, txns2.keySet(), txns2.values(), message);
 
     // None should be sent thru
-    assertTrue(txnMgr.incomingTxns.isEmpty());
+    assertTrue(this.txnMgr.incomingTxns.isEmpty());
 
     // Now create Object Sync Txn for 4,5,6
     LinkedHashMap syncTxns = createTxns(1, 4, 3, true);
-    rtm.addObjectSyncTransaction((ServerTransaction) syncTxns.values().iterator().next());
+    this.rtm.addObjectSyncTransaction((ServerTransaction) syncTxns.values().iterator().next());
 
     // One Compound Transaction containing the object DNA and the delta DNA should be sent to the
     // transactionalObjectManager
-    assertTrue(txnMgr.incomingTxns.size() == 1);
-    ServerTransaction gotTxn = (ServerTransaction) txnMgr.incomingTxns.remove(0);
+    assertTrue(this.txnMgr.incomingTxns.size() == 1);
+    ServerTransaction gotTxn = (ServerTransaction) this.txnMgr.incomingTxns.remove(0);
     assertContainsAllAndRemove((ServerTransaction) syncTxns.values().iterator().next(), gotTxn);
     assertContainsAllVersionizedAndRemove((ServerTransaction) txns.values().iterator().next(), gotTxn);
     assertTrue(gotTxn.getChanges().isEmpty());
 
     // Now send transaction complete for txn1, with new Objects (10), this should clear pending changes for 7
     txns = createTxns(1, 10, 1, true);
-    rtm.addCommitedTransactions(clientID, txns.keySet(), txns.values(), message);
-    rtm.clearTransactionsBelowLowWaterMark(getNextLowWaterMark(txns1.values()));
+    this.rtm.addCommitedTransactions(this.clientID, txns.keySet(), txns.values(), message);
+    this.rtm.clearTransactionsBelowLowWaterMark(getNextLowWaterMark(txns1.values()));
     assertAndClear(txns.values());
 
     // Now create Object Sync txn for 7,8,9
     syncTxns = createTxns(1, 7, 3, true);
-    rtm.addObjectSyncTransaction((ServerTransaction) syncTxns.values().iterator().next());
+    this.rtm.addObjectSyncTransaction((ServerTransaction) syncTxns.values().iterator().next());
 
     // One Compound Transaction containing the object DNA for 7 and object DNA and the delta DNA for 8,9 should be sent
     // to the transactionalObjectManager
-    assertTrue(txnMgr.incomingTxns.size() == 1);
-    gotTxn = (ServerTransaction) txnMgr.incomingTxns.remove(0);
+    assertTrue(this.txnMgr.incomingTxns.size() == 1);
+    gotTxn = (ServerTransaction) this.txnMgr.incomingTxns.remove(0);
     List changes = gotTxn.getChanges();
     assertEquals(5, changes.size());
     DNA dna = (DNA) changes.get(0);
@@ -198,8 +200,8 @@ public class ReplicatedTransactionManagerTest extends TestCase {
   }
 
   private void assertAndClear(Collection txns) {
-    assertEquals(new ArrayList(txns), txnMgr.incomingTxns);
-    txnMgr.incomingTxns.clear();
+    assertEquals(new ArrayList(txns), this.txnMgr.incomingTxns);
+    this.txnMgr.incomingTxns.clear();
   }
 
   long bid = 0;
@@ -209,7 +211,7 @@ public class ReplicatedTransactionManagerTest extends TestCase {
   private LinkedHashMap createTxns(int txnCount, int oidStart, int objectCount, boolean newObjects) {
     LinkedHashMap map = new LinkedHashMap();
 
-    TxnBatchID batchID = new TxnBatchID(bid++);
+    TxnBatchID batchID = new TxnBatchID(this.bid++);
     LockID[] lockIDs = new LockID[] { new LockID("1") };
     ObjectStringSerializer serializer = null;
     Map newRoots = Collections.unmodifiableMap(new HashMap());
@@ -218,16 +220,17 @@ public class ReplicatedTransactionManagerTest extends TestCase {
 
     for (int i = 0; i < txnCount; i++) {
       List dnas = new LinkedList();
-      SequenceID sequenceID = new SequenceID(sid++);
-      TransactionID txID = new TransactionID(tid++);
+      SequenceID sequenceID = new SequenceID(this.sid++);
+      TransactionID txID = new TransactionID(this.tid++);
       for (int j = oidStart; j < oidStart + objectCount; j++) {
         dnas.add(new TestDNA(new ObjectID(j), !newObjects));
       }
-      ServerTransaction tx = new ServerTransactionImpl(batchID, txID, sequenceID, lockIDs, clientID, dnas, serializer,
-                                                       newRoots, txnType, notifies, DmiDescriptor.EMPTY_ARRAY, 1);
+      ServerTransaction tx = new ServerTransactionImpl(batchID, txID, sequenceID, lockIDs, this.clientID, dnas,
+                                                       serializer, newRoots, txnType, notifies,
+                                                       DmiDescriptor.EMPTY_ARRAY, 1, new long[0]);
       map.put(tx.getServerTransactionID(), tx);
       try {
-        tx.setGlobalTransactionID(gtxm.getOrCreateGlobalTransactionID(tx.getServerTransactionID()));
+        tx.setGlobalTransactionID(this.gtxm.getOrCreateGlobalTransactionID(tx.getServerTransactionID()));
       } catch (GlobalTransactionIDAlreadySetException e) {
         throw new AssertionError(e);
       }

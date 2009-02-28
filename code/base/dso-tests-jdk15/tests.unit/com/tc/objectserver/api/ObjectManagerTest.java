@@ -1283,7 +1283,8 @@ public class ObjectManagerTest extends BaseDSOTestCase {
                                                         new LockID[0], new ClientID(new ChannelID(2)),
                                                         new ArrayList<DNA>(changes.values()),
                                                         new ObjectStringSerializer(), Collections.EMPTY_MAP,
-                                                        TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1);
+                                                        TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1,
+                                                        new long[0]);
     List<ServerTransaction> txns = new ArrayList<ServerTransaction>();
     txns.add(stxn1);
 
@@ -1331,7 +1332,8 @@ public class ObjectManagerTest extends BaseDSOTestCase {
                                                         new LockID[0], new ClientID(new ChannelID(2)),
                                                         new ArrayList<DNA>(changes.values()),
                                                         new ObjectStringSerializer(), Collections.EMPTY_MAP,
-                                                        TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1);
+                                                        TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1,
+                                                        new long[0]);
 
     txns.clear();
     txns.add(stxn2);
@@ -1363,7 +1365,8 @@ public class ObjectManagerTest extends BaseDSOTestCase {
                                                         new LockID[0], new ClientID(new ChannelID(2)),
                                                         new ArrayList<DNA>(changes.values()),
                                                         new ObjectStringSerializer(), Collections.EMPTY_MAP,
-                                                        TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1);
+                                                        TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1,
+                                                        new long[0]);
 
     txns.clear();
     txns.add(stxn3);
@@ -2142,7 +2145,6 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     }
 
   }
-
 
   private class GCCaller implements Runnable {
 

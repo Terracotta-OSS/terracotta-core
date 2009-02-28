@@ -19,7 +19,7 @@ public class PassThruTransactionFilter implements TransactionFilter, PostInit {
   }
 
   public void addTransactionBatch(TransactionBatchContext transactionBatchContext) {
-    transactionBatchManager.processTransactionBatch(transactionBatchContext);
+    transactionBatchManager.processTransactions(transactionBatchContext);
   }
 
   public boolean shutdownNode(NodeID nodeID) {

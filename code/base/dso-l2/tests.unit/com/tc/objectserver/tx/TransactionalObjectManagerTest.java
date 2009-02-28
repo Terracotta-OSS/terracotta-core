@@ -44,12 +44,14 @@ public class TransactionalObjectManagerTest extends TCTestCase {
   private TransactionalObjectManagerImpl txObjectManager;
   private TestGlobalTransactionManager   gtxMgr;
 
+  @Override
   public void setUp() {
-    objectManager = new TestObjectManager();
-    sequencer = new ServerTransactionSequencerImpl();
-    coordinator = new TestTransactionalStageCoordinator();
-    gtxMgr = new TestGlobalTransactionManager();
-    txObjectManager = new TransactionalObjectManagerImpl(objectManager, sequencer, gtxMgr, coordinator);
+    this.objectManager = new TestObjectManager();
+    this.sequencer = new ServerTransactionSequencerImpl();
+    this.coordinator = new TestTransactionalStageCoordinator();
+    this.gtxMgr = new TestGlobalTransactionManager();
+    this.txObjectManager = new TransactionalObjectManagerImpl(this.objectManager, this.sequencer, this.gtxMgr,
+                                                              this.coordinator);
   }
 
   // This test is added to reproduce a failure. More test are needed for TransactionalObjectManager
@@ -60,74 +62,72 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     changes.put(new ObjectID(1), new TestDNA(new ObjectID(1)));
     changes.put(new ObjectID(2), new TestDNA(new ObjectID(2)));
 
-    ServerTransaction stxn1 = new ServerTransactionImpl(new TxnBatchID(1), new TransactionID(1),
-                                                        new SequenceID(1), new LockID[0],
-                                                        new ClientID(new ChannelID(2)),
+    ServerTransaction stxn1 = new ServerTransactionImpl(new TxnBatchID(1), new TransactionID(1), new SequenceID(1),
+                                                        new LockID[0], new ClientID(new ChannelID(2)),
                                                         new ArrayList(changes.values()), new ObjectStringSerializer(),
                                                         Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                        DmiDescriptor.EMPTY_ARRAY, 1);
+                                                        DmiDescriptor.EMPTY_ARRAY, 1, new long[0]);
     List txns = new ArrayList();
     txns.add(stxn1);
 
-    txObjectManager.addTransactions(txns);
+    this.txObjectManager.addTransactions(txns);
 
     // Lookup context should have been fired
-    LookupEventContext loc = (LookupEventContext) coordinator.lookupSink.queue.take();
+    LookupEventContext loc = (LookupEventContext) this.coordinator.lookupSink.queue.take();
     assertNotNull(loc);
-    assertTrue(coordinator.lookupSink.queue.isEmpty());
+    assertTrue(this.coordinator.lookupSink.queue.isEmpty());
 
-    txObjectManager.lookupObjectsForTransactions();
+    this.txObjectManager.lookupObjectsForTransactions();
 
     // for txn1 - ObjectID 1, 2
-    Object args[] = (Object[]) objectManager.lookupObjectForCreateIfNecessaryContexts.take();
+    Object args[] = (Object[]) this.objectManager.lookupObjectForCreateIfNecessaryContexts.take();
     assertNotNull(args);
 
     // Apply should have been called as we have Object 1, 2
-    ApplyTransactionContext aoc = (ApplyTransactionContext) coordinator.applySink.queue.take();
+    ApplyTransactionContext aoc = (ApplyTransactionContext) this.coordinator.applySink.queue.take();
     assertTrue(stxn1 == aoc.getTxn());
     assertNotNull(aoc);
-    assertTrue(coordinator.applySink.queue.isEmpty());
+    assertTrue(this.coordinator.applySink.queue.isEmpty());
 
     // Next txn
     changes.put(new ObjectID(3), new TestDNA(new ObjectID(3)));
     changes.put(new ObjectID(4), new TestDNA(new ObjectID(4)));
 
-    ServerTransaction stxn2 = new ServerTransactionImpl(new TxnBatchID(2), new TransactionID(2),
-                                                        new SequenceID(1), new LockID[0],
-                                                        new ClientID(new ChannelID(2)),
+    ServerTransaction stxn2 = new ServerTransactionImpl(new TxnBatchID(2), new TransactionID(2), new SequenceID(1),
+                                                        new LockID[0], new ClientID(new ChannelID(2)),
                                                         new ArrayList(changes.values()), new ObjectStringSerializer(),
                                                         Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                        DmiDescriptor.EMPTY_ARRAY, 1);
+                                                        DmiDescriptor.EMPTY_ARRAY, 1, new long[0]);
 
     txns.clear();
     txns.add(stxn2);
 
-    txObjectManager.addTransactions(txns);
+    this.txObjectManager.addTransactions(txns);
 
     // Lookup context should have been fired
-    loc = (LookupEventContext) coordinator.lookupSink.queue.take();
+    loc = (LookupEventContext) this.coordinator.lookupSink.queue.take();
     assertNotNull(loc);
-    assertTrue(coordinator.lookupSink.queue.isEmpty());
+    assertTrue(this.coordinator.lookupSink.queue.isEmpty());
 
-    objectManager.makePending = true;
-    txObjectManager.lookupObjectsForTransactions();
+    this.objectManager.makePending = true;
+    this.txObjectManager.lookupObjectsForTransactions();
 
     // for txn2, ObjectID 3, 4
-    args = (Object[]) objectManager.lookupObjectForCreateIfNecessaryContexts.take();
+    args = (Object[]) this.objectManager.lookupObjectForCreateIfNecessaryContexts.take();
     assertNotNull(args);
 
     // Apply and commit complete for the first transaction
-    txObjectManager.applyTransactionComplete(stxn1.getServerTransactionID());
-    ApplyCompleteEventContext acec = (ApplyCompleteEventContext) coordinator.applyCompleteSink.queue.take();
+    this.txObjectManager.applyTransactionComplete(stxn1.getServerTransactionID());
+    ApplyCompleteEventContext acec = (ApplyCompleteEventContext) this.coordinator.applyCompleteSink.queue.take();
     assertNotNull(acec);
-    assertTrue(coordinator.applyCompleteSink.queue.isEmpty());
+    assertTrue(this.coordinator.applyCompleteSink.queue.isEmpty());
 
-    txObjectManager.processApplyComplete();
-    CommitTransactionContext ctc = (CommitTransactionContext) coordinator.commitSink.queue.take();
+    this.txObjectManager.processApplyComplete();
+    CommitTransactionContext ctc = (CommitTransactionContext) this.coordinator.commitSink.queue.take();
     assertNotNull(ctc);
-    assertTrue(coordinator.commitSink.queue.isEmpty());
+    assertTrue(this.coordinator.commitSink.queue.isEmpty());
 
-    txObjectManager.commitTransactionsComplete(ctc);
+    this.txObjectManager.commitTransactionsComplete(ctc);
     Collection applied = ctc.getAppliedServerTransactionIDs();
     assertTrue(applied.size() == 1);
     assertEquals(stxn1.getServerTransactionID(), applied.iterator().next());
@@ -148,36 +148,36 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     assertEquals(expected, recd);
 
     // Process the request for 3, 4
-    objectManager.makePending = false;
-    objectManager.processPending(args);
+    this.objectManager.makePending = false;
+    this.objectManager.processPending(args);
 
     // Lookup context should have been fired
-    loc = (LookupEventContext) coordinator.lookupSink.queue.take();
+    loc = (LookupEventContext) this.coordinator.lookupSink.queue.take();
     assertNotNull(loc);
-    assertTrue(coordinator.lookupSink.queue.isEmpty());
+    assertTrue(this.coordinator.lookupSink.queue.isEmpty());
 
     // Dont give out 1,2
-    objectManager.makePending = true;
-    txObjectManager.lookupObjectsForTransactions();
+    this.objectManager.makePending = true;
+    this.txObjectManager.lookupObjectsForTransactions();
 
     // for txn2, ObjectID 1, 2
-    args = (Object[]) objectManager.lookupObjectForCreateIfNecessaryContexts.take();
+    args = (Object[]) this.objectManager.lookupObjectForCreateIfNecessaryContexts.take();
     assertNotNull(args);
 
     // Apply should not have been called as we dont have Obejct 1, 2
-    assertTrue(coordinator.applySink.queue.isEmpty());
+    assertTrue(this.coordinator.applySink.queue.isEmpty());
 
     // now do a recall.
-    txObjectManager.recallAllCheckedoutObject();
-    RecallObjectsContext roc = (RecallObjectsContext) coordinator.recallSink.queue.take();
+    this.txObjectManager.recallAllCheckedoutObject();
+    RecallObjectsContext roc = (RecallObjectsContext) this.coordinator.recallSink.queue.take();
     assertNotNull(roc);
-    assertTrue(coordinator.recallSink.queue.isEmpty());
+    assertTrue(this.coordinator.recallSink.queue.isEmpty());
 
     // process recall
-    txObjectManager.recallCheckedoutObject(roc);
+    this.txObjectManager.recallCheckedoutObject(roc);
 
     // check 2 and only 2 object are released
-    Collection released = (Collection) objectManager.releaseAllQueue.take();
+    Collection released = (Collection) this.objectManager.releaseAllQueue.take();
     assertNotNull(released);
 
     System.err.println("Released = " + released);
@@ -207,74 +207,72 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     changes.put(new ObjectID(1), new TestDNA(new ObjectID(1)));
     changes.put(new ObjectID(2), new TestDNA(new ObjectID(2)));
 
-    ServerTransaction stxn1 = new ServerTransactionImpl(new TxnBatchID(1), new TransactionID(1),
-                                                        new SequenceID(1), new LockID[0],
-                                                        new ClientID(new ChannelID(2)),
+    ServerTransaction stxn1 = new ServerTransactionImpl(new TxnBatchID(1), new TransactionID(1), new SequenceID(1),
+                                                        new LockID[0], new ClientID(new ChannelID(2)),
                                                         new ArrayList(changes.values()), new ObjectStringSerializer(),
                                                         Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                        DmiDescriptor.EMPTY_ARRAY, 1);
+                                                        DmiDescriptor.EMPTY_ARRAY, 1, new long[0]);
     List txns = new ArrayList();
     txns.add(stxn1);
 
-    txObjectManager.addTransactions(txns);
+    this.txObjectManager.addTransactions(txns);
 
     // Lookup context should have been fired
-    LookupEventContext loc = (LookupEventContext) coordinator.lookupSink.queue.take();
+    LookupEventContext loc = (LookupEventContext) this.coordinator.lookupSink.queue.take();
     assertNotNull(loc);
-    assertTrue(coordinator.lookupSink.queue.isEmpty());
+    assertTrue(this.coordinator.lookupSink.queue.isEmpty());
 
-    txObjectManager.lookupObjectsForTransactions();
+    this.txObjectManager.lookupObjectsForTransactions();
 
     // for txn1 - ObjectID 1, 2
-    Object args[] = (Object[]) objectManager.lookupObjectForCreateIfNecessaryContexts.take();
+    Object args[] = (Object[]) this.objectManager.lookupObjectForCreateIfNecessaryContexts.take();
     assertNotNull(args);
 
     // Apply should have been called as we have Obejct 1, 2
-    ApplyTransactionContext aoc = (ApplyTransactionContext) coordinator.applySink.queue.take();
+    ApplyTransactionContext aoc = (ApplyTransactionContext) this.coordinator.applySink.queue.take();
     assertTrue(stxn1 == aoc.getTxn());
     assertNotNull(aoc);
-    assertTrue(coordinator.applySink.queue.isEmpty());
+    assertTrue(this.coordinator.applySink.queue.isEmpty());
 
     // Next txn
     changes.put(new ObjectID(3), new TestDNA(new ObjectID(3)));
     changes.put(new ObjectID(4), new TestDNA(new ObjectID(4)));
 
-    ServerTransaction stxn2 = new ServerTransactionImpl(new TxnBatchID(2), new TransactionID(2),
-                                                        new SequenceID(1), new LockID[0],
-                                                        new ClientID(new ChannelID(2)),
+    ServerTransaction stxn2 = new ServerTransactionImpl(new TxnBatchID(2), new TransactionID(2), new SequenceID(1),
+                                                        new LockID[0], new ClientID(new ChannelID(2)),
                                                         new ArrayList(changes.values()), new ObjectStringSerializer(),
                                                         Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                        DmiDescriptor.EMPTY_ARRAY, 1);
+                                                        DmiDescriptor.EMPTY_ARRAY, 1, new long[0]);
 
     txns.clear();
     txns.add(stxn2);
 
-    txObjectManager.addTransactions(txns);
+    this.txObjectManager.addTransactions(txns);
 
     // Lookup context should have been fired
-    loc = (LookupEventContext) coordinator.lookupSink.queue.take();
+    loc = (LookupEventContext) this.coordinator.lookupSink.queue.take();
     assertNotNull(loc);
-    assertTrue(coordinator.lookupSink.queue.isEmpty());
+    assertTrue(this.coordinator.lookupSink.queue.isEmpty());
 
-    objectManager.makePending = true;
-    txObjectManager.lookupObjectsForTransactions();
+    this.objectManager.makePending = true;
+    this.txObjectManager.lookupObjectsForTransactions();
 
     // for txn2, ObjectID 3, 4
-    args = (Object[]) objectManager.lookupObjectForCreateIfNecessaryContexts.take();
+    args = (Object[]) this.objectManager.lookupObjectForCreateIfNecessaryContexts.take();
     assertNotNull(args);
 
     // Apply and commit complete for the first transaction
-    txObjectManager.applyTransactionComplete(stxn1.getServerTransactionID());
-    ApplyCompleteEventContext acec = (ApplyCompleteEventContext) coordinator.applyCompleteSink.queue.take();
+    this.txObjectManager.applyTransactionComplete(stxn1.getServerTransactionID());
+    ApplyCompleteEventContext acec = (ApplyCompleteEventContext) this.coordinator.applyCompleteSink.queue.take();
     assertNotNull(acec);
-    assertTrue(coordinator.applyCompleteSink.queue.isEmpty());
+    assertTrue(this.coordinator.applyCompleteSink.queue.isEmpty());
 
-    txObjectManager.processApplyComplete();
-    CommitTransactionContext ctc = (CommitTransactionContext) coordinator.commitSink.queue.take();
+    this.txObjectManager.processApplyComplete();
+    CommitTransactionContext ctc = (CommitTransactionContext) this.coordinator.commitSink.queue.take();
     assertNotNull(ctc);
-    assertTrue(coordinator.commitSink.queue.isEmpty());
+    assertTrue(this.coordinator.commitSink.queue.isEmpty());
 
-    txObjectManager.commitTransactionsComplete(ctc);
+    this.txObjectManager.commitTransactionsComplete(ctc);
     Collection applied = ctc.getAppliedServerTransactionIDs();
     assertTrue(applied.size() == 1);
     assertEquals(stxn1.getServerTransactionID(), applied.iterator().next());
@@ -295,95 +293,93 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     assertEquals(expected, recd);
 
     // Process the request for 3, 4
-    objectManager.makePending = false;
-    objectManager.processPending(args);
+    this.objectManager.makePending = false;
+    this.objectManager.processPending(args);
 
     // Lookup context should have been fired
-    loc = (LookupEventContext) coordinator.lookupSink.queue.take();
+    loc = (LookupEventContext) this.coordinator.lookupSink.queue.take();
     assertNotNull(loc);
-    assertTrue(coordinator.lookupSink.queue.isEmpty());
+    assertTrue(this.coordinator.lookupSink.queue.isEmpty());
 
     // Dont give out 1,2
-    objectManager.makePending = true;
-    txObjectManager.lookupObjectsForTransactions();
+    this.objectManager.makePending = true;
+    this.txObjectManager.lookupObjectsForTransactions();
 
     // for txn2, ObjectID 1, 2
-    args = (Object[]) objectManager.lookupObjectForCreateIfNecessaryContexts.take();
+    args = (Object[]) this.objectManager.lookupObjectForCreateIfNecessaryContexts.take();
     assertNotNull(args);
 
     // Apply should not have been called as we dont have Obejct 1, 2
-    assertTrue(coordinator.applySink.queue.isEmpty());
+    assertTrue(this.coordinator.applySink.queue.isEmpty());
 
     // --------------------------------This is where its differernt from case 1-------------------------
     // Process the request for 5 and 6
     changes.clear();
     changes.put(new ObjectID(5), new TestDNA(new ObjectID(5)));
-    ServerTransaction stxn3 = new ServerTransactionImpl(new TxnBatchID(3), new TransactionID(3),
-                                                        new SequenceID(2), new LockID[0],
-                                                        new ClientID(new ChannelID(2)),
+    ServerTransaction stxn3 = new ServerTransactionImpl(new TxnBatchID(3), new TransactionID(3), new SequenceID(2),
+                                                        new LockID[0], new ClientID(new ChannelID(2)),
                                                         new ArrayList(changes.values()), new ObjectStringSerializer(),
                                                         Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                        DmiDescriptor.EMPTY_ARRAY, 1);
+                                                        DmiDescriptor.EMPTY_ARRAY, 1, new long[0]);
 
     txns.clear();
     txns.add(stxn3);
-    txObjectManager.addTransactions(txns);
+    this.txObjectManager.addTransactions(txns);
 
     // Lookup context should have been fired
-    loc = (LookupEventContext) coordinator.lookupSink.queue.take();
+    loc = (LookupEventContext) this.coordinator.lookupSink.queue.take();
     assertNotNull(loc);
-    assertTrue(coordinator.lookupSink.queue.isEmpty());
+    assertTrue(this.coordinator.lookupSink.queue.isEmpty());
 
-    objectManager.makePending = false;
-    txObjectManager.lookupObjectsForTransactions();
+    this.objectManager.makePending = false;
+    this.txObjectManager.lookupObjectsForTransactions();
 
     // for txn3 - ObjectID 5
-    args = (Object[]) objectManager.lookupObjectForCreateIfNecessaryContexts.take();
+    args = (Object[]) this.objectManager.lookupObjectForCreateIfNecessaryContexts.take();
     assertNotNull(args);
 
     // Apply should have been called as we have Object 5
-    aoc = (ApplyTransactionContext) coordinator.applySink.queue.take();
+    aoc = (ApplyTransactionContext) this.coordinator.applySink.queue.take();
     assertTrue(stxn3 == aoc.getTxn());
     assertNotNull(aoc);
-    assertTrue(coordinator.applySink.queue.isEmpty());
+    assertTrue(this.coordinator.applySink.queue.isEmpty());
 
     // Next Txn , Object 5, 6
     changes.put(new ObjectID(6), new TestDNA(new ObjectID(6)));
-    ServerTransaction stxn4 = new ServerTransactionImpl(new TxnBatchID(4), new TransactionID(4),
-                                                        new SequenceID(3), new LockID[0],
-                                                        new ClientID(new ChannelID(2)),
+    ServerTransaction stxn4 = new ServerTransactionImpl(new TxnBatchID(4), new TransactionID(4), new SequenceID(3),
+                                                        new LockID[0], new ClientID(new ChannelID(2)),
                                                         new ArrayList(changes.values()), new ObjectStringSerializer(),
                                                         Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                        DmiDescriptor.EMPTY_ARRAY, 1);
+                                                        DmiDescriptor.EMPTY_ARRAY, 1, new long[0]);
 
     txns.clear();
     txns.add(stxn4);
-    txObjectManager.addTransactions(txns);
+    this.txObjectManager.addTransactions(txns);
 
     // Lookup context should have been fired
-    loc = (LookupEventContext) coordinator.lookupSink.queue.take();
+    loc = (LookupEventContext) this.coordinator.lookupSink.queue.take();
     assertNotNull(loc);
-    assertTrue(coordinator.lookupSink.queue.isEmpty());
+    assertTrue(this.coordinator.lookupSink.queue.isEmpty());
 
-    objectManager.makePending = true;
-    txObjectManager.lookupObjectsForTransactions();
+    this.objectManager.makePending = true;
+    this.txObjectManager.lookupObjectsForTransactions();
 
     // for txn4, ObjectID 6
-    args = (Object[]) objectManager.lookupObjectForCreateIfNecessaryContexts.take();
+    args = (Object[]) this.objectManager.lookupObjectForCreateIfNecessaryContexts.take();
     assertNotNull(args);
 
     // Apply and commit complete for the 3'rd transaction
-    txObjectManager.applyTransactionComplete(stxn3.getServerTransactionID());
-    acec = (ApplyCompleteEventContext) coordinator.applyCompleteSink.queue.take();
+    this.txObjectManager.applyTransactionComplete(stxn3.getServerTransactionID());
+    acec = (ApplyCompleteEventContext) this.coordinator.applyCompleteSink.queue.take();
     assertNotNull(acec);
-    assertTrue(coordinator.applyCompleteSink.queue.isEmpty());
+    assertTrue(this.coordinator.applyCompleteSink.queue.isEmpty());
 
-    txObjectManager.processApplyComplete();
-    ctc = (CommitTransactionContext) coordinator.commitSink.queue.take();
+    this.txObjectManager.processApplyComplete();
+    ctc = (CommitTransactionContext) this.coordinator.commitSink.queue.take();
     assertNotNull(ctc);
-    assertTrue(coordinator.commitSink.queue.isEmpty());
+    assertTrue(this.coordinator.commitSink.queue.isEmpty());
 
-    txObjectManager.commitTransactionsComplete(ctc);
+    this.txObjectManager.commitTransactionsComplete(ctc);
     applied = ctc.getAppliedServerTransactionIDs();
     assertTrue(applied.size() == 1);
     assertEquals(stxn3.getServerTransactionID(), applied.iterator().next());
@@ -402,29 +398,29 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     assertEquals(expected, recd);
 
     // Process the request for 6, still 1 and 2 is not given out
-    objectManager.makePending = false;
-    objectManager.processPending(args);
+    this.objectManager.makePending = false;
+    this.objectManager.processPending(args);
 
     // Lookup context should have been fired
-    loc = (LookupEventContext) coordinator.lookupSink.queue.take();
+    loc = (LookupEventContext) this.coordinator.lookupSink.queue.take();
     assertNotNull(loc);
-    assertTrue(coordinator.lookupSink.queue.isEmpty());
+    assertTrue(this.coordinator.lookupSink.queue.isEmpty());
 
     // Now before look up thread got a chance to execute, recall gets executed.
-    objectManager.makePending = true; // Since we dont want to give out 5 when we do a recall commit
+    this.objectManager.makePending = true; // Since we dont want to give out 5 when we do a recall commit
     // -------------------------------------------------------------------------------------------------
 
     // now do a recall.
-    txObjectManager.recallAllCheckedoutObject();
-    RecallObjectsContext roc = (RecallObjectsContext) coordinator.recallSink.queue.take();
+    this.txObjectManager.recallAllCheckedoutObject();
+    RecallObjectsContext roc = (RecallObjectsContext) this.coordinator.recallSink.queue.take();
     assertNotNull(roc);
-    assertTrue(coordinator.recallSink.queue.isEmpty());
+    assertTrue(this.coordinator.recallSink.queue.isEmpty());
 
     // process recall
-    txObjectManager.recallCheckedoutObject(roc);
+    this.txObjectManager.recallCheckedoutObject(roc);
 
     // check that all 3 objects (3,4,6) are released -- different from case 1
-    Collection released = (Collection) objectManager.releaseAllQueue.take();
+    Collection released = (Collection) this.objectManager.releaseAllQueue.take();
     assertNotNull(released);
 
     System.err.println("Released = " + released);
@@ -445,5 +441,4 @@ public class TransactionalObjectManagerTest extends TCTestCase {
 
     assertEquals(ids_expected, ids_recd);
   }
-
 }

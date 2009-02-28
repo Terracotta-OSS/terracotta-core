@@ -174,7 +174,7 @@ public class TransactionBatchTest extends TestCase {
     ThreadUtil.reallySleep(2000);
     assertTransactionSize(writer.getData(), 2, stats.getTransactionSizeCounter());
     
-    assertEquals(2, reader.getRemainingTxnsToBeRead());
+    assertEquals(2, reader.getNumberForTxns());
     assertEquals(batchID, reader.getBatchID());
 
     int count = 0;
@@ -280,7 +280,7 @@ public class TransactionBatchTest extends TestCase {
     ThreadUtil.reallySleep(2000);
     assertTransactionSize(writer.getData(), 2, stats.getTransactionSizeCounter());
     
-    assertEquals(2, reader.getRemainingTxnsToBeRead());
+    assertEquals(2, reader.getNumberForTxns());
     assertEquals(new TxnBatchID(1), reader.getBatchID());
 
     int count = 0;
