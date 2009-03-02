@@ -16,7 +16,6 @@ module BundledDemos
 
     unless manifest.empty?
       # copy demo sources but exclude non-native scripts
-      non_native = @build_environment.is_unix_like? ? ['*.bat', '*.cmd', '*.exe'] : ['*.sh']
       destdir    = FilePath.new(product_directory, directory).ensure_directory
       includes   = ["#{manifest}#{wildcard}", (Dir.entries(srcdir.to_s).delete_if { |entry|
             #File.directory?(FilePath.new(srcdir, entry).to_s) || non_native.include?(entry.gsub(/.+\./, '*.'))
