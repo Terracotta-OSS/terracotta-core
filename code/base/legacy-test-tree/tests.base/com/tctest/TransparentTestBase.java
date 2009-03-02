@@ -288,7 +288,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
    * When L1s are intended to connect to proxy ports, the config is different from that of L2's. Disabling the L1 config
    * validation check for proxy connect scenarios.
    */
-  private void disableL1L2ConfigValidationCheck() throws Exception {
+  protected void disableL1L2ConfigValidationCheck() throws Exception {
     configFactory().addTcPropertyToConfig("l1.l2.config.validation.enabled", "false");
   }
 

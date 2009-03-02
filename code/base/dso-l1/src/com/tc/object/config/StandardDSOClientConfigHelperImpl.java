@@ -158,14 +158,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   /**
    * A map of class names to TransparencyClassSpec
-   *
+   * 
    * @GuardedBy {@link #specLock}
    */
   private final Map                                          userDefinedBootSpecs               = new HashMap();
 
   /**
    * A map of class names to TransparencyClassSpec for individual classes
-   *
+   * 
    * @GuardedBy {@link #specLock}
    */
   private final Map                                          classSpecs                         = new HashMap();
@@ -1939,7 +1939,11 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       }
     }
 
-    if (!connInfoFromL1.containsAll(connInfoFromL2)) { throw new ConfigurationSetupException(errMsg); }
+    if (!connInfoFromL1.containsAll(connInfoFromL2)) {
+      logger.info("L1 connection info: " + connInfoFromL1);
+      logger.info("L2 connection info: " + connInfoFromL2);
+      throw new ConfigurationSetupException(errMsg);
+    }
   }
 
   private String getIpAddressOfServer(final String name) throws ConfigurationSetupException {
