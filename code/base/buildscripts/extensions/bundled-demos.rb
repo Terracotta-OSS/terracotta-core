@@ -32,6 +32,19 @@ module BundledDemos
         fail "The demo `#{name}/#{entry}' was not copied. Please check to make sure that the sources for this demo exist.'" unless demos.include? entry
         demo_directory = FilePath.new(product_directory, directory, entry).to_s
         Dir.chdir(demo_directory) do
+          # pretty print the source files for the demo
+          ant.java(
+            :classname   => 'org.acm.seguin.tools.builder.PrettyPrinter',
+            :classpath   => JavaSystem.getProperty('java.class.path'),
+            :fork        => true,
+            :failonerror => true,
+            :dir         => Dir.getwd) do
+            ant.jvmarg(:value => "-Djava.awt.headless=true")
+            ant.arg(:line => "-u")
+            ant.arg(:line => "-config #{@static_resources.jrefactory_config_directory.to_s}")
+            ant.arg(:line => "src")
+          end
+
           # and make sure it can be rebuilt
           begin
             build_script = 'build.xml'
