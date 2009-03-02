@@ -21,10 +21,31 @@ public class DsoClusterInjectionInstrumentation implements InjectionInstrumentat
 
   private final static class Factory implements ClassAdapterFactory {
     private final FieldInfo fieldToInjectInto;
+    private final String identityString;
 
     private Factory(final FieldInfo fieldToInjectInto) {
       this.fieldToInjectInto = fieldToInjectInto;
+      this.identityString = fieldToInjectInto.getDeclaringType().getName()+"."+fieldToInjectInto.getName();
     }
+
+    @Override
+    public int hashCode() {
+      return identityString.hashCode();
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+      if (this == obj) return true;
+      if (obj == null) return false;
+      if (getClass() != obj.getClass()) return false;
+      Factory other = (Factory) obj;
+      if (fieldToInjectInto == null) {
+        if (other.fieldToInjectInto != null) return false;
+      }
+      return identityString.equals(other.identityString);
+    }
+
+
 
     public ClassAdapter create(final ClassVisitor visitor, final ClassLoader loader) {
       return new Adapter(visitor, loader);

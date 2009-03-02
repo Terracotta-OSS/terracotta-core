@@ -158,14 +158,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   /**
    * A map of class names to TransparencyClassSpec
-   * 
+   *
    * @GuardedBy {@link #specLock}
    */
   private final Map                                          userDefinedBootSpecs               = new HashMap();
 
   /**
    * A map of class names to TransparencyClassSpec for individual classes
-   * 
+   *
    * @GuardedBy {@link #specLock}
    */
   private final Map                                          classSpecs                         = new HashMap();
@@ -651,6 +651,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   private void addFieldInjectionAdapter(final ClassInfo classInfo, final FieldInfo fi, String type) {
+
     if (null == type || 0 == type.length()) {
       type = fi.getType().getName();
     }
@@ -794,7 +795,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     synchronized (customAdapters) {
       Collection<ClassAdapterFactory> adapters = customAdapters.get(name);
       if (null == adapters) {
-        adapters = new ArrayList<ClassAdapterFactory>();
+        adapters = new HashSet<ClassAdapterFactory>();
         customAdapters.put(name, adapters);
       }
       adapters.add(factory);
@@ -1706,7 +1707,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     applicationNames.add(name);
   }
 
-  public void addToAppGroup(String appGroup, String[] namedClassloaders, String[] webAppNames) {
+  public void addToAppGroup(final String appGroup, final String[] namedClassloaders, final String[] webAppNames) {
     if (namedClassloaders != null) {
       for (String namedClassloader : namedClassloaders) {
         String oldGroup = (String) classLoaderNameToAppGroup.put(namedClassloader, appGroup);
