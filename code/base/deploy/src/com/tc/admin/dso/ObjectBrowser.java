@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import javax.swing.BorderFactory;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
 
@@ -45,9 +46,15 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
   private XLabel              currentViewLabel;
   private ElementChooser      elementChooser;
   private PagedView           pagedView;
+  private final XContainer    mainPanel;
+  private final XContainer    messagePanel;
+  private XLabel              messageLabel;
   private boolean             inited;
 
   private static final String CLUSTER_HEAP_NODE_NAME = "ClusterHeapNode";
+
+  private static final String NOT_READY_MESSAGE      = "Cluster is not yet ready for action.  Are all the mirror groups active?";
+  private static final String INITIALIZING_MESSAGE   = "Initializing...";
 
   public ObjectBrowser(IAdminClientContext adminClientContext, IClusterModel clusterModel, IBasicObject[] roots) {
     super(new BorderLayout());
@@ -56,7 +63,23 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
     this.clusterModel = clusterModel;
     this.roots = roots;
 
-    add(pagedView = new PagedView(), BorderLayout.CENTER);
+    mainPanel = createMainPanel();
+    messagePanel = createMessagePanel();
+
+    add(messagePanel);
+
+    clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
+    if (clusterModel.isReady()) {
+      addNodePanels();
+    } else {
+      messageLabel.setText(NOT_READY_MESSAGE);
+    }
+  }
+
+  private XContainer createMainPanel() {
+    XContainer panel = new XContainer(new BorderLayout());
+
+    panel.add(pagedView = new PagedView(), BorderLayout.CENTER);
 
     XContainer topPanel = new XContainer(new GridBagLayout());
     GridBagConstraints gbc = new GridBagConstraints();
@@ -90,12 +113,18 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
     topPanel.add(elementChooser = new ElementChooser(), gbc);
 
     topPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.black));
-    add(topPanel, BorderLayout.NORTH);
+    panel.add(topPanel, BorderLayout.NORTH);
 
-    clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
-    if (clusterModel.isReady()) {
-      addNodePanels();
-    }
+    return panel;
+  }
+
+  private XContainer createMessagePanel() {
+    XContainer panel = new XContainer(new BorderLayout());
+    panel.add(messageLabel = new XLabel());
+    messageLabel.setText(INITIALIZING_MESSAGE);
+    messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    messageLabel.setFont(new Font("Dialog", Font.PLAIN, 14));
+    return panel;
   }
 
   private class ElementChooser extends ClusterElementChooser {
@@ -176,8 +205,15 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
 
     @Override
     protected void handleReady() {
-      if (!inited && clusterModel.isReady()) {
-        addNodePanels();
+      removeAll();
+      if (clusterModel.isReady()) {
+        if (!inited) {
+          addNodePanels();
+        }
+        add(mainPanel);
+      } else {
+        messageLabel.setText(NOT_READY_MESSAGE);
+        add(messagePanel);
       }
     }
 

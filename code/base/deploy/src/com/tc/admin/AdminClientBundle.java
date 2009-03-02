@@ -135,6 +135,7 @@ public class AdminClientBundle extends ListResourceBundle {
         { "dso.gcstats.overview.pending", "Getting DGC settings: please wait..." },
         { "dso.gcstats.overview.enabled", "DGC is configured to run: every {0} seconds ({1} minutes)." },
         { "dso.gcstats.overview.disabled", "DGC is disabled in this server array instance's configuration." },
+        { "dso.gcstats.overview.not-ready", "Cluster is not yet ready." },
         { "map.entry", "MapEntry" },
         { "log.error", "ERROR" },
         { "log.warn", "WARN" },

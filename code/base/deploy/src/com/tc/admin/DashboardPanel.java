@@ -80,9 +80,11 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
     setup(chartsPanel);
 
     clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
-    if (clusterModel.isReady()) {
+    boolean ready = clusterModel.isReady();
+    if (ready) {
       startMonitoringRuntimeStats();
     }
+    chartsPanel.setVisible(ready);
   }
 
   private class ClusterListener extends AbstractClusterListener {
@@ -92,11 +94,13 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
 
     @Override
     public void handleReady() {
-      if (clusterModel.isReady()) {
+      boolean ready = clusterModel.isReady();
+      if (ready) {
         startMonitoringRuntimeStats();
       } else {
         stopMonitoringRuntimeStats();
       }
+      chartsPanel.setVisible(ready);
     }
   }
 

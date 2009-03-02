@@ -31,7 +31,7 @@ public class AbstractClusterListener implements PropertyChangeListener {
   protected class PropertyChangeRunnable implements Runnable {
     protected final PropertyChangeEvent pce;
 
-    PropertyChangeRunnable(PropertyChangeEvent pce) {
+    protected PropertyChangeRunnable(PropertyChangeEvent pce) {
       this.pce = pce;
     }
 

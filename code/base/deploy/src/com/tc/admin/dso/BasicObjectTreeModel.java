@@ -13,19 +13,19 @@ import com.tc.admin.model.IObject;
 import com.tc.object.ObjectID;
 
 public class BasicObjectTreeModel extends XTreeModel {
-  private IAdminClientContext adminClientContext;
-  private IClient             client;
+  private final IAdminClientContext adminClientContext;
+  private final IClient             client;
 
   public BasicObjectTreeModel(IAdminClientContext adminClientContext, IBasicObject[] roots) {
     this(adminClientContext, null, roots);
   }
-  
+
   public BasicObjectTreeModel(IAdminClientContext adminClientContext, IClient client, IBasicObject[] roots) {
     super();
 
     this.adminClientContext = adminClientContext;
     this.client = client;
-    
+
     XTreeNode rootNode = (XTreeNode) getRoot();
     if (roots != null && roots.length > 0) {
       for (IBasicObject object : roots) {

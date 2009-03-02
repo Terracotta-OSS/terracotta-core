@@ -93,7 +93,7 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
     add(topPanel, BorderLayout.NORTH);
 
     clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
-    if (clusterModel.isReady()) {
+    if (clusterModel.isConnected()) {
       addNodePanels();
     }
   }
@@ -151,8 +151,8 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
     }
 
     @Override
-    protected void handleReady() {
-      if (!inited && clusterModel.isReady()) {
+    protected void handleConnected() {
+      if (!inited && clusterModel.isConnected()) {
         addNodePanels();
       }
     }

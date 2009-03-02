@@ -75,7 +75,7 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Prop
     add(topPanel, BorderLayout.NORTH);
 
     clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
-    if (clusterModel.isReady()) {
+    if (clusterModel.isConnected()) {
       addNodePanels();
     }
   }
@@ -130,7 +130,7 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Prop
 
     @Override
     protected void handleReady() {
-      if (!inited && clusterModel.isReady()) {
+      if (!inited && clusterModel.isConnected()) {
         addNodePanels();
       }
     }

@@ -70,6 +70,7 @@ public class SearchPanel extends XContainer {
 
     add(fFindField = new XTextField(), gbc);
     fFindField.setColumns(20);
+    fFindField.setMinimumSize(fFindField.getPreferredSize());
     fFindField.getDocument().addDocumentListener(new FieldDocListener());
     gbc.gridx++;
 

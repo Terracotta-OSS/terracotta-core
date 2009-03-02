@@ -405,8 +405,13 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
   }
 
   public void expand(XTreeNode node) {
-    if (node != null && node.getParent() != null) {
-      tree.expandPath(new TreePath(node.getPath()));
+    if (node != null) {
+      TreeNode parentNode = node.getParent();
+      if (parentNode != null) {
+        TreePath path = new TreePath(node.getPath());
+        tree.expandPath(path.getParentPath());
+        tree.expandPath(path);
+      }
     }
   }
 

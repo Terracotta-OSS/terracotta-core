@@ -469,10 +469,12 @@ public class ClusterPanel extends XContainer implements HyperlinkListener {
   }
 
   private void showProductInfo(IProductVersion productInfo) {
-    productInfoPanel.init(productInfo.version(), productInfo.patchLevel(), productInfo.copyright());
-    productInfoPanel.setVisible(true);
-    revalidate();
-    repaint();
+    if (productInfo != null) {
+      productInfoPanel.init(productInfo.version(), productInfo.patchLevel(), productInfo.copyright());
+      productInfoPanel.setVisible(true);
+      revalidate();
+      repaint();
+    }
   }
 
   private void hideProductInfo() {

@@ -68,7 +68,7 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
   protected XContainer                chartsPanel;
   private XButton                     manageMonitoringButton;
   private XButton                     clearSamplesButton;
-  private final JButton               configureOptionsButton;
+  private JButton                     configureOptionsButton;
   protected AxisSpace                 rangeAxisSpace;
   private boolean                     autoStart;
   private boolean                     hasAutoStarted;
@@ -95,6 +95,8 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
   private final ArrayList<TimeSeries> allSeries;
   private final ArrayList<JFreeChart> allCharts;
 
+  private final boolean               showControls                            = false;
+
   private static final String         HYPERIC_INSTRUCTIONS_URI                = "/com/tc/admin/HypericInstructions.html";
 
   public BaseRuntimeStatsPanel(ApplicationContext appContext) {
@@ -108,33 +110,35 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
 
     add(chartsPanel = new XContainer());
 
-    XContainer bottomPanel = new XContainer(new GridBagLayout());
-    GridBagConstraints gbc = new GridBagConstraints();
-    gbc.gridx = gbc.gridy = 0;
-    gbc.insets = new Insets(3, 3, 3, 3);
+    if (showControls) {
+      XContainer bottomPanel = new XContainer(new GridBagLayout());
+      GridBagConstraints gbc = new GridBagConstraints();
+      gbc.gridx = gbc.gridy = 0;
+      gbc.insets = new Insets(3, 3, 3, 3);
 
-    configureOptionsButton = LinkButton.makeLink("Configure Runtime Statistics", new ConfigureOptionsAction());
-    bottomPanel.add(configureOptionsButton, gbc);
-    gbc.gridx++;
+      configureOptionsButton = LinkButton.makeLink("Configure Runtime Statistics", new ConfigureOptionsAction());
+      bottomPanel.add(configureOptionsButton, gbc);
+      gbc.gridx++;
 
-    gbc.weightx = 1.0;
-    gbc.anchor = GridBagConstraints.EAST;
+      gbc.weightx = 1.0;
+      gbc.anchor = GridBagConstraints.EAST;
 
-    manageMonitoringButton = new XButton();
-    manageMonitoringButton.setIcon(fStartIcon);
-    manageMonitoringButton.addActionListener(new ManageMonitoringAction());
-    bottomPanel.add(manageMonitoringButton, gbc);
-    gbc.gridx++;
+      manageMonitoringButton = new XButton();
+      manageMonitoringButton.setIcon(fStartIcon);
+      manageMonitoringButton.addActionListener(new ManageMonitoringAction());
+      bottomPanel.add(manageMonitoringButton, gbc);
+      gbc.gridx++;
 
-    gbc.weightx = 0.0;
-    gbc.anchor = GridBagConstraints.CENTER;
+      gbc.weightx = 0.0;
+      gbc.anchor = GridBagConstraints.CENTER;
 
-    clearSamplesButton = new XButton();
-    clearSamplesButton.setIcon(fClearIcon);
-    clearSamplesButton.addActionListener(new ClearSamplesAction());
-    bottomPanel.add(clearSamplesButton, gbc);
+      clearSamplesButton = new XButton();
+      clearSamplesButton.setIcon(fClearIcon);
+      clearSamplesButton.addActionListener(new ClearSamplesAction());
+      bottomPanel.add(clearSamplesButton, gbc);
 
-    add(bottomPanel, BorderLayout.SOUTH);
+      add(bottomPanel, BorderLayout.SOUTH);
+    }
 
     Preferences prefs = appContext.getPrefs().node("RuntimeStats");
     prefs.addPreferenceChangeListener(this);
@@ -356,14 +360,17 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
   }
 
   public void startMonitoringRuntimeStats() {
-    chartsPanel.setVisible(true);
     isMonitoring = true;
-    manageMonitoringButton.setIcon(fStopIcon);
+    if (showControls) {
+      manageMonitoringButton.setIcon(fStopIcon);
+    }
   }
 
   public void stopMonitoringRuntimeStats() {
     isMonitoring = false;
-    manageMonitoringButton.setIcon(fStartIcon);
+    if (showControls) {
+      manageMonitoringButton.setIcon(fStartIcon);
+    }
   }
 
   private void clearAllRuntimeStatsSamples() {
@@ -465,7 +472,7 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     appContext = null;
     chartsPanel = null;
     manageMonitoringButton = null;
+    configureOptionsButton = null;
     clearSamplesButton = null;
   }
-
 }

@@ -839,7 +839,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
 
   private DSOClient addClient(ObjectName clientBeanName) {
     assertActiveCoordinator();
-    DSOClient client = new DSOClient(getConnectionContext(), clientBeanName);
+    DSOClient client = new DSOClient(getConnectionContext(), clientBeanName, clusterModel);
     if (client.isReady()) {
       clients.add(client);
       fireClientConnected(client);
@@ -1192,8 +1192,13 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     }
   }
 
-  public boolean isResident(ObjectID oid) {
-    return true;
+  public boolean isResidentOnClient(IClient client, ObjectID oid) {
+    try {
+      DSOMBean theDsoBean = getDSOBean();
+      return theDsoBean != null ? theDsoBean.isResident(client.getClientID(), oid) : false;
+    } catch (UndeclaredThrowableException ute) {
+      return false;
+    }
   }
 
   public synchronized ServerDBBackupMBean getServerDBBackupBean() {

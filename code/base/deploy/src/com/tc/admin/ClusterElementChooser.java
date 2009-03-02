@@ -69,6 +69,8 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
   private boolean                 inited;
   private final EventListenerList listenerList;
 
+  private static final int        DEFAULT_SELECTION_RENDERER_WIDTH = 120;
+
   public ClusterElementChooser(IClusterModel clusterModel, ActionListener listener) {
     super(new GridBagLayout());
 
@@ -113,7 +115,7 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
     }
 
     clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
-    if (clusterModel.isReady()) {
+    if (clusterModel.isConnected()) {
       setupTreeModel();
     }
   }
@@ -157,8 +159,8 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
           if (acceptPath(path)) {
             setSelectedPath(path);
           }
-          popup.setVisible(false);
         }
+        popup.setVisible(false);
       }
     }
 
@@ -210,12 +212,16 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
 
   private class TriggerHandler extends MouseAdapter implements ItemListener, HierarchyListener {
     public void itemStateChanged(ItemEvent e) {
-      togglePopup();
+      if (triggerButton.isSelected()) {
+        showPopup();
+      }
     }
 
     @Override
-    public void mousePressed(MouseEvent e) {
-      triggerButton.doClick();
+    public void mouseReleased(MouseEvent e) {
+      if (!popup.isShowing()) {
+        showPopup();
+      }
     }
 
     public void hierarchyChanged(HierarchyEvent e) {
@@ -223,18 +229,11 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
       if ((flags & HierarchyEvent.SHOWING_CHANGED) != 0) {
         boolean isPopupShowing = popup.isShowing();
         if (triggerButton.isSelected() != isPopupShowing) {
+          triggerButton.removeItemListener(this);
           triggerButton.setSelected(isPopupShowing);
+          triggerButton.addItemListener(this);
         }
       }
-    }
-  }
-
-  protected void togglePopup() {
-    boolean isTriggerSelected = triggerButton.isSelected();
-    if (isTriggerSelected && !popup.isShowing()) {
-      showPopup();
-    } else if (!isTriggerSelected && popup.isShowing()) {
-      hidePopup();
     }
   }
 
@@ -306,15 +305,19 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
 
     Dimension popupSize = popup.getPreferredSize();
     popupSize.height = 200;
+    popupSize.width = getWidth();
 
-    int x = getBounds().width - popupSize.width;
+    int x = 0;
     Rectangle popupBounds = computePopupBounds(x, getBounds().height, popupSize.width, popupSize.height);
+
     Dimension scrollSize = popupBounds.getSize();
     Point popupLocation = popupBounds.getLocation();
 
     scroller.setMaximumSize(scrollSize);
     scroller.setPreferredSize(scrollSize);
     scroller.setMinimumSize(scrollSize);
+
+    popup.setSize(popupSize);
 
     return popupLocation;
   }
@@ -350,8 +353,8 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
     }
 
     @Override
-    protected void handleReady() {
-      if (!inited && clusterModel.isReady()) {
+    protected void handleConnected() {
+      if (!inited && clusterModel.isConnected()) {
         setupTreeModel();
       }
     }
@@ -400,7 +403,11 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
 
   protected void treeModelChanged() {
     tree.expandAll();
-    selectionRenderer.setPreferredSize(tree.getMaxItemSize());
+    Dimension tps = tree.getPreferredSize();
+    Dimension srps = selectionRenderer.getPreferredSize();
+    srps.width = Math.max(tps.width, DEFAULT_SELECTION_RENDERER_WIDTH);
+    srps.height = tree.getRowHeight();
+    selectionRenderer.setPreferredSize(srps);
     revalidate();
     repaint();
 

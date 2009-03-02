@@ -28,6 +28,7 @@ import com.tc.admin.common.XList;
 import com.tc.admin.common.XScrollPane;
 import com.tc.admin.common.XSpinner;
 import com.tc.admin.common.XTabbedPane;
+import com.tc.admin.common.XTextArea;
 import com.tc.admin.model.ClientConnectionListener;
 import com.tc.admin.model.IClient;
 import com.tc.admin.model.IClusterModel;
@@ -39,6 +40,7 @@ import com.terracottatech.config.TcStatsConfigDocument;
 import com.terracottatech.config.TcStatsConfigDocument.TcStatsConfig;
 
 import java.awt.BorderLayout;
+import java.awt.Font;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -60,6 +62,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
@@ -84,19 +88,21 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
+import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
 
-public class StatsRecorderPanel extends XContainer implements PropertyChangeListener, ClientConnectionListener,
-    IClusterStatsListener {
+public class StatsRecorderPanel extends XContainer implements ClientConnectionListener, IClusterStatsListener {
   private ApplicationContext         appContext;
   private IClusterModel              clusterModel;
+  private ClusterListener            clusterListener;
   private JToggleButton              startGatheringStatsButton;
   private JToggleButton              stopGatheringStatsButton;
   private XList                      statsSessionsList;
@@ -117,8 +123,18 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
   private boolean                    haveClientStats;
   private AuthScope                  authScope;
 
+  private final XContainer           mainPanel;
+  private final XContainer           messagePanel;
+  private final XContainer           errorPanel;
+
+  private XLabel                     messageLabel;
+  private XTextArea                  errorText;
+
   private static final int           DEFAULT_STATS_POLL_PERIOD_SECONDS = 5;
   private static final String        DEFAULT_STATS_CONFIG_FILENAME     = "tc-stats-config.xml";
+
+  private static final String        NOT_READY_MESSAGE                 = "Cluster is not yet ready for action.  Are all the mirror groups active?";
+  private static final String        INITIALIZING_MESSAGE              = "Initializing...";
 
   public StatsRecorderPanel(ApplicationContext appContext, IClusterModel clusterModel) {
     super(new BorderLayout());
@@ -126,20 +142,22 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
     this.appContext = appContext;
     this.clusterModel = clusterModel;
 
-    add(createTopPanel(), BorderLayout.NORTH);
-    add(createCenterPanel(), BorderLayout.CENTER);
-    add(createBottomPanel(), BorderLayout.SOUTH);
+    mainPanel = createMainPanel();
+    messagePanel = createMessagePanel();
+    errorPanel = createErrorPanel();
 
-    setVisible(false);
+    add(messagePanel);
 
     if (clusterModel != null) {
-      clusterModel.addPropertyChangeListener(this);
+      clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
       if (clusterModel.isReady()) {
         IServer activeCoord = clusterModel.getActiveCoordinator();
         if (activeCoord != null) {
           activeCoord.addClusterStatsListener(this);
         }
         initiateStatsGathererConnectWorker();
+      } else {
+        messageLabel.setText(NOT_READY_MESSAGE);
       }
     }
   }
@@ -151,6 +169,30 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
   private synchronized IServer getActiveCoordinator() {
     IClusterModel theClusterModel = getClusterModel();
     return theClusterModel != null ? theClusterModel.getActiveCoordinator() : null;
+  }
+
+  private XContainer createMessagePanel() {
+    XContainer panel = new XContainer(new BorderLayout());
+    panel.add(messageLabel = new XLabel());
+    messageLabel.setText(INITIALIZING_MESSAGE);
+    messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    messageLabel.setFont(new Font("Dialog", Font.PLAIN, 14));
+    return panel;
+  }
+
+  private XContainer createErrorPanel() {
+    XContainer panel = new XContainer(new BorderLayout());
+    panel.add(new JScrollPane(errorText = new XTextArea()));
+    errorText.setEditable(false);
+    return panel;
+  }
+
+  private XContainer createMainPanel() {
+    XContainer panel = new XContainer(new BorderLayout());
+    panel.add(createTopPanel(), BorderLayout.NORTH);
+    panel.add(createCenterPanel(), BorderLayout.CENTER);
+    panel.add(createBottomPanel(), BorderLayout.SOUTH);
+    return panel;
   }
 
   private XContainer createTopPanel() {
@@ -242,19 +284,39 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
     return panel;
   }
 
-  public void propertyChange(PropertyChangeEvent evt) {
-    if (IClusterModel.PROP_ACTIVE_COORDINATOR.equals(evt.getPropertyName())) {
-      IServer oldActive = (IServer) evt.getOldValue();
+  private class ClusterListener extends AbstractClusterListener {
+    private ClusterListener(IClusterModel clusterModel) {
+      super(clusterModel);
+    }
+
+    @Override
+    protected void handleReady() {
+      if (clusterModel.isReady()) {
+        IServer activeCoord = clusterModel.getActiveCoordinator();
+        if (activeCoord != null) {
+          messageLabel.setText(INITIALIZING_MESSAGE);
+          initiateStatsGathererConnectWorker();
+          activeCoord.addClientConnectionListener(StatsRecorderPanel.this);
+          activeCoord.addClusterStatsListener(StatsRecorderPanel.this);
+        }
+      } else {
+        removeAll();
+        messageLabel.setText(NOT_READY_MESSAGE);
+        add(messagePanel);
+      }
+    }
+
+    @Override
+    protected void handleActiveCoordinator(IServer oldActive, IServer newActive) {
       if (oldActive != null) {
-        oldActive.removeClientConnectionListener(this);
-        oldActive.removeClusterStatsListener(this);
+        oldActive.removeClientConnectionListener(StatsRecorderPanel.this);
+        oldActive.removeClusterStatsListener(StatsRecorderPanel.this);
       }
 
-      IServer newActive = (IServer) evt.getOldValue();
       if (newActive != null) {
         initiateStatsGathererConnectWorker();
-        newActive.addClientConnectionListener(this);
-        newActive.addClusterStatsListener(this);
+        newActive.addClientConnectionListener(StatsRecorderPanel.this);
+        newActive.addClusterStatsListener(StatsRecorderPanel.this);
       }
     }
   }
@@ -289,9 +351,23 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
       if (e != null) {
         if (isAlreadyConnectedException(e)) {
           gathererConnected();
+        } else {
+          showError(e);
         }
       }
     }
+  }
+
+  private void showError(Throwable t) {
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
+    t.printStackTrace(pw);
+    pw.close();
+    errorText.setText(sw.toString());
+    removeAll();
+    add(errorPanel);
+    revalidate();
+    repaint();
   }
 
   private void gathererConnected() {
@@ -363,7 +439,7 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
       if (e != null) {
         Throwable rootCause = ExceptionHelper.getRootCause(e);
         if (!(rootCause instanceof IOException)) {
-          appContext.log(e);
+          showError(e);
         }
       } else {
         GathererConnectedState connectedState = getResult();
@@ -386,7 +462,8 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
         viewStatsButton.setEnabled(haveAnySessions);
         init(sessionInProgress);
         setupStatsConfigPanel(supportedStats);
-        setVisible(true);
+        removeAll();
+        add(mainPanel);
       }
     }
   }
@@ -902,7 +979,7 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
               InvocationTargetException ite = getException();
               if (ite != null) {
                 Throwable cause = ite.getCause();
-                appContext.log(cause != null ? cause : ite);
+                showError(cause != null ? cause : ite);
                 return;
               }
             }
@@ -941,7 +1018,7 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
             InvocationTargetException ite = getException();
             if (ite != null) {
               Throwable cause = ite.getCause();
-              appContext.log(cause != null ? cause : ite);
+              showError(cause != null ? cause : ite);
               return;
             }
           }
@@ -1036,7 +1113,7 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
   public void tearDown() {
     IClusterModel theClusterModel = getClusterModel();
     if (theClusterModel != null) {
-      theClusterModel.removePropertyChangeListener(this);
+      theClusterModel.removePropertyChangeListener(clusterListener);
       IServer activeCoord = theClusterModel.getActiveCoordinator();
       if (activeCoord != null) {
         activeCoord.removeClusterStatsListener(this);
@@ -1118,6 +1195,8 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
       Exception e = getException();
       if (e == null) {
         setupStatsConfigPanel(getResult());
+      } else {
+        showError(e);
       }
     }
   }

@@ -143,6 +143,8 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
           newActive.addClusterStatsListener(ClusterNode.this);
         }
         newActive.addPropertyChangeListener(ClusterNode.this);
+      } else {
+        handleDisconnect();
       }
     }
 
@@ -150,6 +152,7 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
     protected void handleConnected() {
       if (clusterModel.isConnected()) {
         connectAction.setEnabled(false);
+        handleStarting();
       } else {
         if (versionMismatchDialog != null) {
           versionMismatchDialog.setVisible(false);
@@ -181,10 +184,14 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
         connectAction.setEnabled(false);
         disconnectAction.setEnabled(true);
         adminClientContext.getAdminClientController().setStatus("Ready");
-      } else {
+      } else if (determineConnected()) {
         adminClientContext.getAdminClientController().setStatus("Not ready");
       }
     }
+  }
+
+  private boolean determineConnected() {
+    return clusterModel.determineConnected();
   }
 
   private boolean testCheckServerVersion() {
@@ -464,7 +471,7 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
   private final AtomicBoolean addingChildren = new AtomicBoolean(false);
 
   void tryAddChildren() {
-    if (!clusterModel.isReady()) { return; }
+    // if (!clusterModel.isReady()) { return; }
     if (addingChildren.get()) { return; }
 
     try {
@@ -479,6 +486,7 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
         while (theChildren.hasMoreElements()) {
           controller.expand((XTreeNode) theChildren.nextElement());
         }
+        controller.expandAll(topologyNode);
       }
     } catch (Throwable t) {
       t.printStackTrace();
@@ -487,10 +495,12 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
     }
   }
 
+  TopologyNode topologyNode;
+
   protected void addChildren() {
     add(createClusteredHeapNode());
     add(createDiagnosticsNode());
-    add(createTopologyNode());
+    add(topologyNode = createTopologyNode());
   }
 
   protected ClusteredHeapNode createClusteredHeapNode() {
@@ -507,16 +517,23 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
 
   void handleStarting() {
     nodeChanged();
+    tryAddChildren();
     clusterPanel.started();
+    IServer activeCoord = getActiveCoordinator();
+    if (activeCoord != null) {
+      activeCoord.addPropertyChangeListener(ClusterNode.this);
+    }
   }
 
   void handlePassiveUninitialized() {
     nodeChanged();
+    tryAddChildren();
     clusterPanel.passiveUninitialized();
   }
 
   void handlePassiveStandby() {
     nodeChanged();
+    tryAddChildren();
     clusterPanel.passiveStandby();
   }
 
@@ -706,6 +723,7 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
       deleteAction = null;
       autoConnectAction = null;
       monitoringActivityTask = null;
+      topologyNode = null;
     }
   }
 

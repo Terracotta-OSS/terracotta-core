@@ -39,6 +39,7 @@ public class ClassesNode extends ComponentNode {
     return new ClassesPanel(appContext, clusterModel);
   }
 
+  @Override
   public Component getComponent() {
     if (classesPanel == null) {
       appContext.block();
@@ -59,16 +60,19 @@ public class ClassesNode extends ComponentNode {
     addActionBinding(REFRESH_ACTION, refreshAction);
   }
 
+  @Override
   public JPopupMenu getPopupMenu() {
     return popupMenu;
   }
 
+  @Override
   public Icon getIcon() {
     return ClassesHelper.getHelper().getClassesIcon();
   }
 
   public void refresh() {
-    if (classesPanel != null) {
+    IClusterModel theClusterModel = getClusterModel();
+    if (theClusterModel != null && theClusterModel.isReady() && classesPanel != null) {
       classesPanel.refresh();
     }
   }
@@ -86,10 +90,12 @@ public class ClassesNode extends ComponentNode {
     }
   }
 
+  @Override
   public void nodeClicked(MouseEvent me) {
     refreshAction.actionPerformed(null);
   }
 
+  @Override
   public void tearDown() {
     if (classesPanel != null) {
       classesPanel.tearDown();

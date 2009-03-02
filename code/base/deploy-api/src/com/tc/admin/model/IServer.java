@@ -130,6 +130,8 @@ public interface IServer extends IClusterNode, ManagedObjectFacadeProvider {
 
   Map<IClient, Integer> getClientLiveObjectCount();
 
+  boolean isResidentOnClient(IClient client, ObjectID oid);
+
   String getStatsExportServletURI();
 
   String getStatsExportServletURI(String sessionId);

@@ -23,6 +23,7 @@ public class XTreeNode extends DefaultMutableTreeNode {
   private String             name;
   private TreeCellRenderer   renderer;
   private Icon               icon;
+  private boolean            enabled                = true;
   private ActionMap          actionMap;
   private InputMap           inputMap;
 
@@ -67,7 +68,7 @@ public class XTreeNode extends DefaultMutableTreeNode {
   public void addChild(XTreeNode child) {
     insertChild(child, getChildCount());
   }
-  
+
   public void insertChild(XTreeNode child, int index) {
     XTreeModel model = getModel();
     if (model != null) {
@@ -110,6 +111,22 @@ public class XTreeNode extends DefaultMutableTreeNode {
         }
       }
     }
+  }
+
+  public void setEnabled(boolean enabled) {
+    this.enabled = enabled;
+
+    Enumeration e = children();
+    while (e.hasMoreElements()) {
+      XTreeNode child = (XTreeNode) e.nextElement();
+      child.setEnabled(enabled);
+    }
+
+    nodeChanged();
+  }
+
+  public boolean isEnabled() {
+    return enabled;
   }
 
   public void tearDown() {

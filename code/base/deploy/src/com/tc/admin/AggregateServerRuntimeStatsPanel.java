@@ -224,9 +224,9 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
   }
 
   private void setupLockRecallRatePanel(XContainer parent) {
-    lockRecallRateSeries = createTimeSeries("LockRecallRate");
-    broadcastRateSeries = createTimeSeries("BroadcastRate");
-    JFreeChart chart = createXYBarChart(new TimeSeries[] { lockRecallRateSeries, broadcastRateSeries }, false);
+    lockRecallRateSeries = createTimeSeries("Lock Recall Rate");
+    broadcastRateSeries = createTimeSeries("Change Broadcast Rate");
+    JFreeChart chart = createXYBarChart(new TimeSeries[] { lockRecallRateSeries, broadcastRateSeries }, true);
     XYPlot plot = (XYPlot) chart.getPlot();
     NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
     numberAxis.setAutoRangeMinimumSize(10.0);
@@ -236,7 +236,7 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
     ChartPanel recallRatePanel = createChartPanel(chart);
     parent.add(recallRatePanel);
     recallRatePanel.setPreferredSize(fDefaultGraphSize);
-    recallRatePanel.setBorder(new TitledBorder("Lock Recall/Change Broadcast Rate"));
+    recallRatePanel.setBorder(new TitledBorder("Lock Recalls/Change Broadcasts"));
     recallRatePanel.setToolTipText("Global Lock Recalls");
   }
 

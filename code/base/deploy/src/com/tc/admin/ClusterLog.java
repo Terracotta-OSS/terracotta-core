@@ -81,7 +81,7 @@ public class ClusterLog extends XContainer implements ActionListener {
     setName(clusterModel.toString());
 
     clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
-    if (clusterModel.isReady()) {
+    if (clusterModel.isConnected()) {
       addNodePanels();
     }
   }
@@ -91,10 +91,12 @@ public class ClusterLog extends XContainer implements ActionListener {
       super(clusterModel, ClusterLog.this);
     }
 
+    @Override
     protected XTreeNode[] createTopLevelNodes() {
       return new XTreeNode[] { new ServerGroupsNode(adminClientContext, clusterModel) };
     }
 
+    @Override
     protected boolean acceptPath(TreePath path) {
       Object o = path.getLastPathComponent();
       return o instanceof ServerNode;
@@ -117,12 +119,21 @@ public class ClusterLog extends XContainer implements ActionListener {
       super(clusterModel);
     }
 
-    protected void handleReady() {
-      if (!inited && clusterModel.isReady()) {
+    @Override
+    protected void handleConnected() {
+      if (!inited && clusterModel.isConnected()) {
         addNodePanels();
       }
     }
+
+    @Override
+    protected void handleActiveCoordinator(IServer oldActive, IServer newActive) {
+      if (newActive != null) {
+        elementChooser.setSelectedPath(newActive.toString());
+      }
+    }
   }
+
   private void addNodePanels() {
     pagedView.removeAll();
     XLabel emptyPage = new XLabel();
@@ -135,7 +146,7 @@ public class ClusterLog extends XContainer implements ActionListener {
       }
     }
     IServer activeCoord = clusterModel.getActiveCoordinator();
-    if(activeCoord != null) {
+    if (activeCoord != null) {
       elementChooser.setSelectedPath(activeCoord.toString());
     }
     inited = true;
@@ -147,10 +158,12 @@ public class ClusterLog extends XContainer implements ActionListener {
                                                  ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     JScrollBar scrollBar = scroller.getVerticalScrollBar();
     scrollBar.addMouseListener(new MouseAdapter() {
+      @Override
       public void mousePressed(MouseEvent e) {
         serverLog.setAutoScroll(false);
       }
 
+      @Override
       public void mouseReleased(MouseEvent e) {
         boolean autoScroll = shouldAutoScroll(scroller, serverLog);
         serverLog.setAutoScroll(autoScroll);
@@ -177,6 +190,7 @@ public class ClusterLog extends XContainer implements ActionListener {
       }
     });
     serverLog.addKeyListener(new KeyAdapter() {
+      @Override
       public void keyPressed(KeyEvent e) {
         int keyCode = e.getKeyCode();
         if (keyCode == KeyEvent.VK_ENTER) {
@@ -200,6 +214,7 @@ public class ClusterLog extends XContainer implements ActionListener {
     return clusterModel;
   }
 
+  @Override
   public void tearDown() {
     clusterModel.removePropertyChangeListener(clusterListener);
     elementChooser.removeActionListener(this);

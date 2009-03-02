@@ -54,6 +54,7 @@ import javax.swing.SwingUtilities;
 public class GCStatsPanel extends XContainer implements DGCListener {
   private ApplicationContext appContext;
   private IClusterModel      clusterModel;
+  private ClusterListener    clusterListener;
   private XObjectTable       table;
   private XLabel             overviewLabel;
   private JPopupMenu         popupMenu;
@@ -116,13 +117,15 @@ public class GCStatsPanel extends XContainer implements DGCListener {
     chartPanel.setPreferredSize(new Dimension(0, 200));
     add(chartPanel, BorderLayout.SOUTH);
 
-    clusterModel.addPropertyChangeListener(new ClusterListener(clusterModel));
+    clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
     if (clusterModel.isReady()) {
       IServer activeCoord = clusterModel.getActiveCoordinator();
       if (activeCoord != null) {
         activeCoord.addDGCListener(this);
       }
       init();
+    } else {
+      overviewLabel.setText(appContext.getString("dso.gcstats.overview.not-ready"));
     }
   }
 
@@ -152,6 +155,7 @@ public class GCStatsPanel extends XContainer implements DGCListener {
           return "";
         }
       });
+      overviewLabel.setText(appContext.getString("dso.gcstats.overview.pending"));
     }
 
     @Override
@@ -191,6 +195,7 @@ public class GCStatsPanel extends XContainer implements DGCListener {
 
     @Override
     public void handleActiveCoordinator(IServer oldActive, IServer newActive) {
+      System.err.println("handleActiveCoordinator oldServer=" + oldActive + " newActive=" + newActive);
       if (oldActive != null) {
         oldActive.removeDGCListener(GCStatsPanel.this);
       }
@@ -204,10 +209,13 @@ public class GCStatsPanel extends XContainer implements DGCListener {
       if (clusterModel.isReady()) {
         if (!inited) {
           init();
+        } else {
+          appContext.submit(new InitOverviewTextWorker());
         }
       } else {
-        gcAction.setEnabled(false);
+        overviewLabel.setText(appContext.getString("dso.gcstats.overview.not-ready"));
       }
+      gcAction.setEnabled(clusterModel != null && clusterModel.isReady());
     }
   }
 
@@ -272,7 +280,7 @@ public class GCStatsPanel extends XContainer implements DGCListener {
   class RunGCAction extends XAbstractAction {
     RunGCAction() {
       super("Run DGC");
-      setEnabled(false);
+      setEnabled(clusterModel != null && clusterModel.isReady());
     }
 
     public void actionPerformed(ActionEvent ae) {
@@ -332,6 +340,8 @@ public class GCStatsPanel extends XContainer implements DGCListener {
 
   @Override
   public void tearDown() {
+    Thread.dumpStack();
+    clusterModel.removePropertyChangeListener(clusterListener);
     IServer activeCoord = getActiveCoordinator();
     if (activeCoord != null) {
       activeCoord.removeDGCListener(this);
@@ -342,6 +352,7 @@ public class GCStatsPanel extends XContainer implements DGCListener {
     synchronized (this) {
       appContext = null;
       clusterModel = null;
+      clusterListener = null;
       table = null;
       popupMenu = null;
       gcAction = null;

@@ -4,6 +4,8 @@
  */
 package com.tc.admin.model;
 
+import com.tc.object.ObjectID;
+
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
@@ -74,6 +76,8 @@ public interface IClusterModel extends IClusterModelElement, ManagedObjectFacade
   IBasicObject[] getRoots();
 
   IClient[] getClients();
+
+  boolean isResidentOnClient(IClient client, ObjectID oid);
 
   int getLiveObjectCount();
 

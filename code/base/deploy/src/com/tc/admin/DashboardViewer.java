@@ -14,9 +14,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class DashboardViewer extends XContainer {
-  private ApplicationContext                            appContext;
+  private ApplicationContext                 appContext;
   private Map<IClusterModel, DashboardPanel> panelMap;
-  private PagedView                                     pagedView;
+  private PagedView                          pagedView;
 
   public DashboardViewer(ApplicationContext appContext) {
     super(new BorderLayout());
@@ -26,9 +26,9 @@ public class DashboardViewer extends XContainer {
   }
 
   public void add(IClusterModel clusterModel) {
-    DashboardPanel graphPanel = new DashboardPanel(appContext, clusterModel);
-    panelMap.put(clusterModel, graphPanel);
-    pagedView.addPage(graphPanel);
+    DashboardPanel dashboardPanel = new DashboardPanel(appContext, clusterModel);
+    panelMap.put(clusterModel, dashboardPanel);
+    pagedView.addPage(dashboardPanel);
   }
 
   public void remove(IClusterModel clusterModel) {

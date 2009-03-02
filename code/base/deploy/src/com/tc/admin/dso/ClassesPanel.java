@@ -6,16 +6,19 @@ package com.tc.admin.dso;
 
 import org.apache.xmlbeans.XmlOptions;
 
+import com.tc.admin.AbstractClusterListener;
 import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.XAbstractAction;
 import com.tc.admin.common.XContainer;
+import com.tc.admin.common.XLabel;
 import com.tc.admin.common.XScrollPane;
 import com.tc.admin.common.XTabbedPane;
 import com.tc.admin.common.XTextArea;
 import com.tc.admin.common.XTree;
 import com.tc.admin.model.IClusterModel;
 import com.tc.admin.model.IServer;
+import com.tc.admin.model.IServerGroup;
 import com.tc.object.LiteralValues;
 import com.tc.stats.DSOClassInfo;
 import com.terracottatech.config.InstrumentedClasses;
@@ -23,29 +26,40 @@ import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 import java.awt.BorderLayout;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 import javax.swing.KeyStroke;
+import javax.swing.SwingConstants;
 
 public class ClassesPanel extends XContainer {
-  private ApplicationContext    appContext;
-  private IClusterModel         clusterModel;
-  private ClassesTable          table;
-  private XTree                 tree;
-  private ClassesTreeMap        treeMap;
-  private XTextArea             configText;
-  private static XmlOptions     xmlOpts;
+  private ApplicationContext          appContext;
+  private IClusterModel               clusterModel;
+  private ClusterListener             clusterListener;
+  private ClassesTable                table;
+  private XTree                       tree;
+  private ClassesTreeMap              treeMap;
+  private XTextArea                   configText;
+  private static XmlOptions           xmlOpts;
+  private final XContainer            mainPanel;
+  private final XContainer            messagePanel;
+  private XLabel                      messageLabel;
 
-  private static final String   REFRESH           = "Refresh";
+  private static final String         REFRESH           = "Refresh";
 
-  private static final String[] IGNORE_CLASS_LIST = { "com.tcclient", "java." };
+  private static final String[]       IGNORE_CLASS_LIST = { "com.tcclient", "java." };
 
-  private static LiteralValues  LITERALS          = new LiteralValues();
+  private static LiteralValues        LITERALS          = new LiteralValues();
+
+  private static final DSOClassInfo[] EMPTY_INFO        = {};
+
+  private static final String         NOT_READY_MESSAGE = "Cluster is not yet ready for action.  Are all the mirror groups active?";
 
   static {
     xmlOpts = new XmlOptions();
@@ -59,6 +73,19 @@ public class ClassesPanel extends XContainer {
     this.appContext = appContext;
     this.clusterModel = clusterModel;
 
+    mainPanel = createMainPanel();
+    messagePanel = createMessagePanel();
+
+    clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
+    if (clusterModel.isReady()) {
+      init();
+    } else {
+      add(messagePanel);
+    }
+  }
+
+  private XContainer createMainPanel() {
+    XContainer panel = new XContainer(new BorderLayout());
     XTabbedPane tabbedPane = new XTabbedPane();
 
     table = new ClassesTable(new ClassTableModel(appContext));
@@ -83,14 +110,41 @@ public class ClassesPanel extends XContainer {
     getActionMap().put(REFRESH, new RefreshAction());
     getInputMap().put(ks, REFRESH);
 
-    add(tabbedPane);
+    panel.add(tabbedPane);
+    return panel;
+  }
 
-    init();
+  private XContainer createMessagePanel() {
+    XContainer panel = new XContainer(new BorderLayout());
+    panel.add(messageLabel = new XLabel());
+    messageLabel.setText(NOT_READY_MESSAGE);
+    messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    messageLabel.setFont(new Font("Dialog", Font.PLAIN, 14));
+    return panel;
+  }
+
+  private class ClusterListener extends AbstractClusterListener {
+    private ClusterListener(IClusterModel clusterModel) {
+      super(clusterModel);
+    }
+
+    @Override
+    public void handleReady() {
+      if (clusterModel.isReady()) {
+        init();
+      } else {
+        removeAll();
+        add(messagePanel);
+      }
+    }
   }
 
   private void init() {
-    if (appContext == null) return;
-    appContext.execute(new InitWorker());
+    if (appContext != null) {
+      removeAll();
+      add(mainPanel);
+      appContext.execute(new InitWorker());
+    }
   }
 
   private class InitWorker extends BasicWorker<DSOClassInfo[]> {
@@ -102,6 +156,7 @@ public class ClassesPanel extends XContainer {
       });
     }
 
+    @Override
     protected void finished() {
       Exception e = getException();
       if (e == null) {
@@ -118,61 +173,69 @@ public class ClassesPanel extends XContainer {
     return clusterModel;
   }
 
-  private synchronized IServer getActiveCoordinator() {
-    IClusterModel theClusterModel = getClusterModel();
-    return theClusterModel != null ? theClusterModel.getActiveCoordinator() : null;
-  }
-
   private DSOClassInfo[] getClassInfos() {
-    ArrayList<DSOClassInfo> list = new ArrayList<DSOClassInfo>();
-    IServer activeCoord = getActiveCoordinator();
+    Map<String, Integer> map = new HashMap<String, Integer>();
+    IClusterModel theClusterModel = getClusterModel();
 
-    if (activeCoord != null) {
-      DSOClassInfo[] classInfo = activeCoord.getClassInfo();
-      if (classInfo != null) {
-        for (DSOClassInfo info : classInfo) {
-          String className = info.getClassName();
-          if (className.startsWith("com.tcclient")) continue;
-          if (className.startsWith("[")) {
-            int i = 0;
-            while (className.charAt(i) == '[')
-              i++;
-            if (className.charAt(i) == 'L') {
-              className = className.substring(i + 1, className.length() - 1);
-            } else {
-              switch (className.charAt(i)) {
-                case 'Z':
-                  className = "boolean";
-                  break;
-                case 'I':
-                  className = "int";
-                  break;
-                case 'F':
-                  className = "float";
-                  break;
-                case 'C':
-                  className = "char";
-                  break;
-                case 'D':
-                  className = "double";
-                  break;
-                case 'B':
-                  className = "byte";
-                  break;
+    if (theClusterModel != null) {
+      for (IServerGroup group : theClusterModel.getServerGroups()) {
+        IServer server = group.getActiveServer();
+
+        if (server != null) {
+          DSOClassInfo[] classInfo = server.getClassInfo();
+          if (classInfo != null) {
+            for (DSOClassInfo info : classInfo) {
+              String className = info.getClassName();
+              if (className.startsWith("com.tcclient")) continue;
+              if (className.startsWith("[")) {
+                int i = 0;
+                while (className.charAt(i) == '[')
+                  i++;
+                if (className.charAt(i) == 'L') {
+                  className = className.substring(i + 1, className.length() - 1);
+                } else {
+                  switch (className.charAt(i)) {
+                    case 'Z':
+                      className = "boolean";
+                      break;
+                    case 'I':
+                      className = "int";
+                      break;
+                    case 'F':
+                      className = "float";
+                      break;
+                    case 'C':
+                      className = "char";
+                      break;
+                    case 'D':
+                      className = "double";
+                      break;
+                    case 'B':
+                      className = "byte";
+                      break;
+                  }
+                }
+                StringBuffer sb = new StringBuffer(className);
+                for (int j = 0; j < i; j++) {
+                  sb.append("[]");
+                }
+                className = sb.toString();
               }
+              map.put(className, Integer.valueOf(info.getInstanceCount()));
             }
-            StringBuffer sb = new StringBuffer(className);
-            for (int j = 0; j < i; j++) {
-              sb.append("[]");
-            }
-            className = sb.toString();
           }
-          list.add(new DSOClassInfo(className, info.getInstanceCount()));
         }
       }
     }
 
-    return list.toArray(new DSOClassInfo[0]);
+    ArrayList<DSOClassInfo> list = new ArrayList<DSOClassInfo>();
+    Iterator<Map.Entry<String, Integer>> entries = map.entrySet().iterator();
+    while (entries.hasNext()) {
+      Map.Entry<String, Integer> entry = entries.next();
+      list.add(new DSOClassInfo(entry.getKey(), entry.getValue()));
+    }
+
+    return list.toArray(EMPTY_INFO);
   }
 
   private void updateConfigText() {
@@ -219,15 +282,20 @@ public class ClassesPanel extends XContainer {
     init();
   }
 
+  @Override
   public void tearDown() {
+    clusterModel.removePropertyChangeListener(clusterListener);
+
+    super.tearDown();
+
     synchronized (this) {
       appContext = null;
       clusterModel = null;
+      clusterListener = null;
       table = null;
       tree = null;
       treeMap = null;
       configText = null;
     }
-    super.tearDown();
   }
 }

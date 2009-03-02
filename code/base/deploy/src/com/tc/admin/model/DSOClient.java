@@ -10,6 +10,7 @@ import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.management.beans.logging.InstrumentationLoggingMBean;
 import com.tc.management.beans.logging.RuntimeLoggingMBean;
 import com.tc.management.beans.logging.RuntimeOutputOptionsMBean;
+import com.tc.net.ClientID;
 import com.tc.object.ObjectID;
 import com.tc.statistics.StatisticData;
 import com.tc.stats.DSOClientMBean;
@@ -28,8 +29,10 @@ import javax.management.ObjectName;
 public class DSOClient extends BaseClusterNode implements IClient, NotificationListener {
   private final ConnectionContext     cc;
   private final ObjectName            beanName;
+  private final ClientID              clientId;
+  private final IClusterModel         clusterModel;
   private final DSOClientMBean        delegate;
-  private final long                  channelID;
+  private final long                  channelId;
   private final String                remoteAddress;
   private String                      host;
   private Integer                     port;
@@ -42,11 +45,13 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
   private RuntimeLoggingMBean         runtimeLoggingBean;
   private RuntimeOutputOptionsMBean   runtimeOutputOptionsBean;
 
-  public DSOClient(ConnectionContext cc, ObjectName beanName) {
+  public DSOClient(ConnectionContext cc, ObjectName beanName, IClusterModel clusterModel) {
     this.cc = cc;
     this.beanName = beanName;
+    this.clusterModel = clusterModel;
     this.delegate = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, beanName, DSOClientMBean.class, true);
-    channelID = delegate.getChannelID().toLong();
+    channelId = delegate.getChannelID().toLong();
+    clientId = delegate.getClientID();
     remoteAddress = delegate.getRemoteAddress();
 
     testSetupTunneledBeans();
@@ -150,6 +155,10 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     return ready;
   }
 
+  public IClusterModel getClusterModel() {
+    return clusterModel;
+  }
+
   public ObjectName getBeanName() {
     return beanName;
   }
@@ -163,7 +172,11 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
   }
 
   public long getChannelID() {
-    return channelID;
+    return channelId;
+  }
+
+  public ClientID getClientID() {
+    return clientId;
   }
 
   public String getRemoteAddress() {
@@ -269,7 +282,7 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
   }
 
   public boolean isResident(ObjectID oid) {
-    return delegate.isResident(oid);
+    return clusterModel.isResidentOnClient(this, oid);
   }
 
   public void killClient() {
