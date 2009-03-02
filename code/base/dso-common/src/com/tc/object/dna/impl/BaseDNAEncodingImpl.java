@@ -15,8 +15,8 @@ import com.tc.object.compression.CompressedData;
 import com.tc.object.compression.StringCompressionUtil;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.loaders.ClassProvider;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.StringTCUtil;
 
@@ -26,8 +26,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
@@ -336,7 +334,7 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
     CompressedData compressedInfo = StringCompressionUtil.compressBin(uncompressed);
     byte[] compressed = compressedInfo.getCompressedData();
     int compressedSize = compressedInfo.getCompressedSize();
-    
+
     // XXX:: We are writing the original string's uncompressed byte[] length so that we save a couple of copies when
     // decompressing
     output.writeInt(uncompressed.length);
@@ -351,7 +349,7 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
                   + " to  bytes : " + compressed.length);
     }
   }
-  
+
   private void writeByteArray(byte[] bytes, int offset, int length, TCDataOutput output) {
     output.writeInt(length);
     output.write(bytes, offset, length);
@@ -463,82 +461,12 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
   // return array;
   // }
 
-  private Object readStackTraceElement(TCDataInput input) throws IOException, ClassNotFoundException {
+  private Object readStackTraceElement(TCDataInput input) throws IOException {
     String className = input.readString();
     String methodName = input.readString();
     String fileName = input.readString();
     int lineNumber = input.readInt();
-    return createStackTraceElement(className, fileName, methodName, lineNumber);
-  }
-
-  /*
-   * This method uses reflection as 1.4 doesnt have a public constructor for stack trace element and 1.5 removed the
-   * private no arg constructor. XXX::This is an ugly hack that I would like to getaway from
-   */
-  private Object createStackTraceElement(String className, String fileName, String methodName, int lineNumber)
-      throws ClassNotFoundException, IOException {
-    Class clazz = Class.forName("java.lang.StackTraceElement");
-    Constructor constructors[] = clazz.getDeclaredConstructors();
-    for (int i = 0; i < constructors.length; i++) {
-      Class[] types = constructors[i].getParameterTypes();
-      if (types.length == 0) {
-        // This is 1.4
-        return createStackTraceElementJDK14(clazz, constructors[i], className, fileName, methodName, lineNumber);
-      } else if (types.length == 4 && types[0] == String.class && types[1] == String.class && types[2] == String.class
-                 && types[3] == int.class) {
-        // This is 1.5
-        return createStackTraceElementJDK15(clazz, constructors[i], className, fileName, methodName, lineNumber);
-      }
-    }
-    throw new ClassNotFoundException("java.lang.StackTraceElement : Both known constructors not found !");
-  }
-
-  private Object createStackTraceElementJDK14(Class clazz, Constructor constructor, String className, String fileName,
-                                              String methodName, int lineNumber) throws IOException {
-    try {
-      constructor.setAccessible(true);
-      Object i = constructor.newInstance(new Object[0]);
-      Field[] fields = clazz.getDeclaredFields();
-      byte set = 0x00;
-      for (int j = 0; j < fields.length; j++) {
-        fields[j].setAccessible(true);
-        if ("declaringClass".equalsIgnoreCase(fields[j].getName())) {
-          fields[j].set(i, className);
-          set |= 0x01;
-        } else if ("methodName".equalsIgnoreCase(fields[j].getName())) {
-          fields[j].set(i, methodName);
-          set |= 0x02;
-        } else if ("fileName".equalsIgnoreCase(fields[j].getName())) {
-          fields[j].set(i, fileName);
-          set |= 0x04;
-        } else if ("lineNumber".equalsIgnoreCase(fields[j].getName())) {
-          fields[j].setInt(i, lineNumber);
-          set |= 0x08;
-        }
-      }
-      Assert.assertTrue(set == 0x0F);
-      return i;
-    } catch (Exception ex) {
-      IOException ioe = new IOException();
-      ioe.initCause(ex);
-      throw ioe;
-    }
-  }
-
-  private Object createStackTraceElementJDK15(Class clazz, Constructor constructor, String className, String fileName,
-                                              String methodName, int lineNumber) throws IOException {
-    try {
-      Object params[] = new Object[4];
-      params[0] = className;
-      params[1] = methodName;
-      params[2] = fileName;
-      params[3] = new Integer(lineNumber);
-      return constructor.newInstance(params);
-    } catch (Exception ex) {
-      IOException ioe = new IOException();
-      ioe.initCause(ex);
-      throw ioe;
-    }
+    return new StackTraceElement(className, methodName, fileName, lineNumber);
   }
 
   public void encodeArray(Object value, TCDataOutput output) {
