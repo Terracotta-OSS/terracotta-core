@@ -654,6 +654,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       if (!reference.isAnonymous()) {
         String fullyQualifiedFieldname = reference.getFullyQualifiedReferenceName();
         reason.setUltimateNonPortableFieldName(fullyQualifiedFieldname);
+        reason.addDetail(NonPortableFieldSetContext.FIELD_NAME_LABEL, fullyQualifiedFieldname);
       }
       dumpObjectHierarchy(context.getPojo(), context);
       if (this.sendErrors) {
