@@ -32,11 +32,13 @@ public class IsolatedClassLoaderAdapter extends ClassAdapter implements ClassAda
     return new IsolatedClassLoaderAdapter(visitor);
   }
 
+  @Override
   public MethodVisitor visitMethod(int access, final String name, final String desc, String signature,
                                    String[] exceptions) {
     MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 
     if (name.equals("<init>")) { return new MethodAdapter(mv) {
+      @Override
       public void visitInsn(int opcode) {
         if (opcode == RETURN) {
           if (Type.getArgumentTypes(desc).length > 0) {
@@ -71,9 +73,9 @@ public class IsolatedClassLoaderAdapter extends ClassAdapter implements ClassAda
             Label l1 = new Label();
             mv.visitJumpInsn(IFNONNULL, l1);
 
-            mv.visitInsn(ACONST_NULL); // this is not a webapp context classloader
             mv.visitVarInsn(ALOAD, 0);
             mv.visitTypeInsn(CHECKCAST, "com/tc/object/loaders/NamedClassLoader");
+            mv.visitInsn(ACONST_NULL); // this is not a webapp context classloader
             mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/ClassProcessorHelper",
                                "registerGlobalLoader", "(Lcom/tc/object/loaders/NamedClassLoader;Ljava/lang/String;)V");
 
@@ -87,6 +89,7 @@ public class IsolatedClassLoaderAdapter extends ClassAdapter implements ClassAda
     return mv;
   }
 
+  @Override
   public void visitEnd() {
     MethodVisitor mv = cv.visitMethod(ACC_PUBLIC, "__tc_getClassLoaderName", "()Ljava/lang/String;", null, null);
     mv.visitCode();
