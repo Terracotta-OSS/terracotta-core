@@ -684,7 +684,7 @@ module-groups:
     - dso-spring-aj
     - dso-spring-tests
     - dso-spring-crash-tests
-  dso:
+  dso1:
     - common
     - thirdparty
     - aspectwerkz
@@ -694,9 +694,10 @@ module-groups:
     - dso-l2-common
     - dso-l2
     - deploy
-    - simulator
+    - simulator   
+    - legacy-test-tree    
+  dso2:
     - examples
-    - legacy-test-tree
     - dso-system-tests
     - dso-alt-boot-jar-tests
     - dso-tests-jdk15
