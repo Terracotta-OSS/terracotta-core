@@ -5,7 +5,7 @@
 package com.tctest;
 
 import com.tc.cluster.DsoCluster;
-import com.tc.cluster.mock.MockDsoCluster;
+import com.tc.cluster.simulation.SimulatedDsoCluster;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.simulator.app.ApplicationConfig;
@@ -52,11 +52,11 @@ public class InjectionConfigTestApp extends DedicatedMethodsTestApp {
   }
 
   public static class ClassWithConfigInjectedInstanceNotEmpty {
-    private final DsoCluster cluster = new MockDsoCluster();
+    private final DsoCluster cluster = new SimulatedDsoCluster();
 
     public void checkCluster() {
       Assert.assertNotNull(cluster);
-      Assert.assertFalse(cluster instanceof MockDsoCluster);
+      Assert.assertFalse(cluster instanceof SimulatedDsoCluster);
     }
   }
 

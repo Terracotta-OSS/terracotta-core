@@ -8,6 +8,7 @@ import com.tc.cluster.DsoClusterEvent;
 import com.tc.cluster.DsoClusterListener;
 import com.tc.cluster.DsoClusterTopology;
 import com.tc.cluster.DsoNode;
+import com.tc.cluster.simulation.SimulatedDsoCluster;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -19,12 +20,12 @@ import java.util.Set;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
-public class MockDsoClusterTest extends TestCase {
+public class SimulatedDsoClusterTest extends TestCase {
   DsoCluster cluster;
 
   @Override
   public void setUp() {
-    cluster = new MockDsoCluster();
+    cluster = new SimulatedDsoCluster();
   }
 
   public void testCurrentNode() {

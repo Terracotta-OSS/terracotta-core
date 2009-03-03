@@ -1,11 +1,11 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
-package com.tc.cluster.mock;
+package com.tc.cluster.simulation;
 
 import com.tc.cluster.DsoNode;
 
-class MockDsoNode implements DsoNode {
+class SimulatedDsoNode implements DsoNode {
 
   public String getId() {
     return "Client[1]";
