@@ -11,10 +11,6 @@ import java.util.ArrayList;
  * Unit test for {@link Assert}.
  */
 public class AssertTest extends TCTestCase {
-
-  public void testFailure() {
-    fail("Die you vermint!");
-  }
   
   public void testAssertNoBlankElements() {
     try {
