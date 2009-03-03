@@ -117,7 +117,7 @@ public final class ModuleTest extends TCTestCase {
     assertFalse(module.isInstalled());
   }
 
-  public void testManifest() {
+  public void testManifest() throws IOException {
     Modules modules;
     String tcVersion = "0.0.0";
     modules = loadModules("/testData02.xml", tcVersion);
@@ -149,7 +149,7 @@ public final class ModuleTest extends TCTestCase {
     assertTrue(entries.contains("foo.bar:baz:0.0.7"));
   }
 
-  public void testBadManifest() {
+  public void testBadManifest() throws IOException {
     Modules modules;
     String tcVersion = "0.0.0";
     modules = loadModules("/testData02.xml", tcVersion);
@@ -167,7 +167,7 @@ public final class ModuleTest extends TCTestCase {
     }
   }
 
-  public void testVersions() {
+  public void testVersions() throws IOException {
     Modules modules;
     String tcVersion = "0.0.0";
 
@@ -198,7 +198,7 @@ public final class ModuleTest extends TCTestCase {
     assertTrue(module.versions().isEmpty());
   }
 
-  public void testIsLatest() {
+  public void testIsLatest() throws IOException {
     Modules modules;
     String tcVersion = "0.0.0";
     modules = loadModules("/testData02.xml", tcVersion);
@@ -232,7 +232,7 @@ public final class ModuleTest extends TCTestCase {
     assertTrue(module.isLatest());
   }
 
-  public void testSiblings() {
+  public void testSiblings() throws IOException {
     Modules modules;
     String tcVersion = "0.0.0";
 
@@ -499,8 +499,13 @@ public final class ModuleTest extends TCTestCase {
     return new Module(null, attributes);
   }
 
-  private Modules loadModules(String testData, String tcVersion) {
-    File tmpdir = new File(System.getProperty("java.io.tmpdir"));
+  @Override
+  protected boolean cleanTempDir() {
+    return false;
+  }
+
+  private Modules loadModules(String testData, String tcVersion) throws IOException {
+    File tmpdir = this.getTempDirectory();
     File repodir = new File(tmpdir, "modules");
     try {
       return new CachedModules(tcVersion, true, repodir, getClass().getResourceAsStream(testData));
