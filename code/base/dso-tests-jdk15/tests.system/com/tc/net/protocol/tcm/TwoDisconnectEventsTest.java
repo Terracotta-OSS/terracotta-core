@@ -35,6 +35,9 @@ import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.tc.util.concurrent.ThreadUtil;
 
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
+
 public class TwoDisconnectEventsTest extends BaseDSOTestCase {
 
   public void testTwoDisconnectEvents() throws Exception {
@@ -114,8 +117,7 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
   }
 
   private class PingMessageSink implements TCMessageSink {
-    private int         receivedCount = 0;
-    private PingMessage pingReceived;
+    Queue<PingMessage>  queue         = new LinkedBlockingQueue<PingMessage>();
 
     public void putMessage(final TCMessage message) throws UnsupportedMessageTypeException {
 
@@ -126,16 +128,15 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
       } catch (Exception e) {
         //
       }
-      ++receivedCount;
-      pingReceived = ping;
+      queue.add(ping);
     }
 
     public int getReceivedCount() {
-      return receivedCount;
+      return queue.size();
     }
 
     public PingMessage getReceivedPing() {
-      return pingReceived;
+      return queue.peek();
     }
 
   }
@@ -157,8 +158,8 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
                                                                      .getLogger(DistributedObjectClient.class))),
                                                                  new MockClassProvider(),
                                                                  new PreparedComponentsFromL2Connection(manager),
-                                                                 NullManager.getInstance(),
-                                                                 new DsoClusterImpl(), new NullRuntimeLogger());
+                                                                 NullManager.getInstance(), new DsoClusterImpl(),
+                                                                 new NullRuntimeLogger());
     client.start();
     return client;
   }
