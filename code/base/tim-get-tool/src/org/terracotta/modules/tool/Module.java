@@ -158,6 +158,10 @@ public class Module extends AbstractModule implements Installable {
     return attributesHelper.getAttrValueAsString("tc-version", null);
   }
 
+  public String apiVersion() {
+    return attributesHelper.getAttrValueAsString("api-version", null);
+  }
+
   public String vendor() {
     return attributesHelper.getAttrValueAsString("vendor", StringUtils.EMPTY);
   }
