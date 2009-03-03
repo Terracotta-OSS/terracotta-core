@@ -90,7 +90,7 @@ public abstract class AbstractGroupMessage implements GroupMessage {
     }
     out.writeInt(total);
     for (TCByteBuffer buffer : buffers) {
-      out.write(buffer.array(), buffer.arrayOffset(), buffer.remaining());
+      out.write(buffer.array(), buffer.arrayOffset() + buffer.position(), buffer.remaining());
     }
   }
 
