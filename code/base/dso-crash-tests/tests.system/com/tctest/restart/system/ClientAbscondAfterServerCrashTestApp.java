@@ -79,9 +79,7 @@ public class ClientAbscondAfterServerCrashTestApp extends AbstractTransparentApp
 
     // Wait till all clients join the game
     try {
-      while (nodesJoined.compareTo(3) != 0) {
-        ThreadUtil.reallySleep(1000);
-      }
+      //checkServerHasClients waits till the clients join
       checkServerHasClients(3, Integer.parseInt(appConfig.getAttribute(ADMIN_PORT)));
     } catch (Exception e) {
       throw new AssertionError(e);

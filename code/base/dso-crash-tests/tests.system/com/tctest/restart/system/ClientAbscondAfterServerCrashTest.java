@@ -4,6 +4,8 @@
  */
 package com.tctest.restart.system;
 
+import org.apache.commons.io.FileUtils;
+
 import com.tc.config.schema.test.L2ConfigBuilder;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.util.PortChooser;
@@ -68,8 +70,10 @@ public class ClientAbscondAfterServerCrashTest extends TransparentTestBase {
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(1).setIntensity(1);
     t.initializeTestRunner();
-    client1Workspace = getTempDirectory();
-    client2Workspace = getTempDirectory();
+    client1Workspace = getTempFile("client-1");
+    client2Workspace = getTempFile("client-2");
+    FileUtils.forceMkdir(client1Workspace);
+    FileUtils.forceMkdir(client2Workspace);
     TransparentAppConfig txAppConfig = t.getTransparentAppConfig();
 
     txAppConfig.setAttribute(ClientAbscondAfterServerCrashTestApp.HOST_NAME, "localhost");
