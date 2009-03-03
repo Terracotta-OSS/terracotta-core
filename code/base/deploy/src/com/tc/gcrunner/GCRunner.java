@@ -15,6 +15,7 @@ import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.object.ObjectManagementMonitorMBean;
 
 import java.io.IOException;
+import java.net.InetAddress;
 
 import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
@@ -104,7 +105,7 @@ public class GCRunner {
   }
 
   public void runGC() throws Exception {
-    if (setActiveCoordinatorJmxPortAndHost()) {
+    if (!setActiveCoordinatorJmxPortAndHost(host, port)) {
       consoleLogger.info("DGC can only be called on server " + host + " with JMX port " + port
                          + ". So the request is being redirected.");
     }
@@ -122,14 +123,8 @@ public class GCRunner {
     }
   }
 
-  private boolean setActiveCoordinatorJmxPortAndHost() throws Exception {
-    boolean isChanged = false;
-    ServerGroupInfo[] serverGrpInfos = null;
-    TCServerInfoMBean mbean = null;
-    final JMXConnector jmxConnector = CommandLineBuilder.getJMXConnector(userName, host, port);
-    final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
-    mbean = MBeanServerInvocationProxy.newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);
-    serverGrpInfos = mbean.getServerGroupInfo();
+  private boolean setActiveCoordinatorJmxPortAndHost(String host, int jmxPort) throws Exception {
+    ServerGroupInfo[] serverGrpInfos = getServerGroupInfo();
     L2Info[] activeGrpServerInfos = null;
     for (int i = 0; i < serverGrpInfos.length; i++) {
       if (serverGrpInfos[i].isCoordinator()) {
@@ -137,18 +132,34 @@ public class GCRunner {
       }
     }
 
-    jmxConnector.close();
-
+    boolean isActiveFound = false;
     for (int i = 0; i < activeGrpServerInfos.length; i++) {
       if (isActive(activeGrpServerInfos[i].host(), activeGrpServerInfos[i].jmxPort())) {
-        isChanged = true;
+        isActiveFound = true;
         this.host = activeGrpServerInfos[i].host();
         this.port = activeGrpServerInfos[i].jmxPort();
         break;
       }
     }
 
-    return isChanged;
+    if (!isActiveFound) { throw new Exception("No Active coordinator could be found"); }
+
+    String activeCordinatorIp = getIpAddressOfServer(this.host);
+    String ipOfHostnamePassed = getIpAddressOfServer(host);
+
+    if (activeCordinatorIp.equals(ipOfHostnamePassed) && this.port == jmxPort) { return true; }
+    return false;
+  }
+
+  private ServerGroupInfo[] getServerGroupInfo() throws Exception {
+    ServerGroupInfo[] serverGrpInfos = null;
+    TCServerInfoMBean mbean = null;
+    final JMXConnector jmxConnector = CommandLineBuilder.getJMXConnector(userName, host, port);
+    final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
+    mbean = MBeanServerInvocationProxy.newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);
+    serverGrpInfos = mbean.getServerGroupInfo();
+    jmxConnector.close();
+    return serverGrpInfos;
   }
 
   private boolean isActive(String hostname, int jmxPort) throws Exception {
@@ -169,5 +180,14 @@ public class GCRunner {
     }
 
     return isActive;
+  }
+
+  private String getIpAddressOfServer(final String name) throws Exception {
+    InetAddress address;
+    address = InetAddress.getByName(name);
+    if (address.isLoopbackAddress()) {
+      address = InetAddress.getLocalHost();
+    }
+    return address.getHostAddress();
   }
 }
