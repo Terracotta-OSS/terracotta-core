@@ -13,7 +13,6 @@ import com.tc.cluster.simulation.SimulatedDsoCluster;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -83,9 +82,8 @@ public class SimulatedDsoClusterTest extends TestCase {
 
     final Set<String> keysForLocalValues = cluster.getKeysForLocalValues(testMap);
     Assert.assertEquals(2, keysForLocalValues.size());
-    final Iterator<String> keysForLocalValuesIt = keysForLocalValues.iterator();
-    Assert.assertEquals("key1", keysForLocalValuesIt.next());
-    Assert.assertEquals("key2", keysForLocalValuesIt.next());
+    Assert.assertTrue(keysForLocalValues.contains("key1"));
+    Assert.assertTrue(keysForLocalValues.contains("key2"));
   }
 
   public void testMetaDataGetKeysForOrphanedValues() {
