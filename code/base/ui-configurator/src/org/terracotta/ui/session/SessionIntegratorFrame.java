@@ -61,7 +61,9 @@ import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringReader;
 import java.lang.reflect.Method;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -1061,18 +1063,63 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
       configHelper.openError(msg, e);
     }
   }
+  
+  private static String contextFile(String warFile, String contextPath) {
+    String s = "<?xml version=\"1.0\"  encoding=\"ISO-8859-1\"?>\n";
+    s += "<Configure class=\"org.mortbay.jetty.webapp.WebAppContext\">\n";
+    s += "  <Set name=\"contextPath\">/" + contextPath + "</Set>\n";
+    s += "  <Set name=\"war\"><SystemProperty name=\"user.dir\"/>/webapps/" + warFile + "</Set>\n";
+    s += "\n";
+    s += "  <Property name=\"Server\">\n";
+    s += "    <Call id=\"tcIdMgr\" name=\"getAttribute\">\n";
+    s += "      <Arg>tcIdMgr</Arg>\n";
+    s += "    </Call>\n";
+    s += "  </Property>\n";
+    s += "\n";
+    s += "  <New id=\"tcmgr\" class=\"org.mortbay.terracotta.servlet.TerracottaSessionManager\">\n";
+    s += "    <Set name=\"idManager\">\n";
+    s += "      <Ref id=\"tcIdMgr\"/>\n";
+    s += "    </Set>\n";
+    s += "  </New>\n";
+    s += "\n";
+    s += "  <Set name=\"sessionHandler\">\n";
+    s += "    <New class=\"org.mortbay.terracotta.servlet.TerracottaSessionHandler\">\n";
+    s += "      <Arg><Ref id=\"tcmgr\"/></Arg>\n";
+    s += "    </New>\n";
+    s += "  </Set>\n";
+    s += "  \n";
+    s += "</Configure>\n";
+    return s;
+  }
+  
+  private void createJettyContext(File file, File webAppsDir) throws Exception {
+    File contextDir = new File(webAppsDir.getParentFile(), "contexts");
+    String name = file.getName();
+    String contextPath = name;
+    if(!file.isDirectory()) {
+      int dot = name.indexOf('.');
+      if(dot != -1) {
+        contextPath = name.substring(0, dot);
+      }
+    }
+    FileWriter fw = new FileWriter(new File(contextDir, contextPath+".xml"));
+    IOUtils.copy(new StringReader(contextFile(file.getName(), contextPath)), fw);
+    fw.close();
+  }
 
   private void installWebAppFile(File file) throws Exception {
-    String webServer1Area = getWebServer1Area();
-    String webServer2Area = getWebServer2Area();
+    File webServer1Area = new File(getWebServer1Area());
+    File webServer2Area = new File(getWebServer2Area());
 
     if (file.isFile()) {
-      copyFileToDirectory(file, new File(webServer1Area), false);
-      copyFileToDirectory(file, new File(webServer2Area), false);
+      copyFileToDirectory(file, webServer1Area, false);
+      copyFileToDirectory(file, webServer2Area, false);
     } else if (file.isDirectory()) {
-      copyDirectory(file, new File(webServer1Area));
-      copyDirectory(file, new File(webServer2Area));
+      copyDirectory(file, webServer1Area);
+      copyDirectory(file, webServer2Area);
     }
+    createJettyContext(file, webServer1Area);
+    createJettyContext(file, webServer2Area);    
   }
 
   private void copyFileToDirectory(File file, File dir, boolean keepDate) throws IOException {
@@ -1099,12 +1146,19 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
 
     if (fileName.endsWith(".war")) {
       String name = webApp.getName();
-
       safeDeleteFile(new File(webServer1Area, name));
       safeDeleteFile(new File(webServer2Area, name));
     }
+    removeJettyContexts(webApp);
   }
 
+  private void removeJettyContexts(WebApp webApp) {
+    File webServer1Area = new File(getWebServer1Area());
+    safeDeleteFile(new File(webServer1Area.getParentFile(), "contexts"+"/"+webApp.getName()+".xml"));
+    File webServer2Area = new File(getWebServer2Area());
+    safeDeleteFile(new File(webServer2Area.getParentFile(), "contexts"+"/"+webApp.getName()+".xml"));    
+  }
+  
   private static void safeDeleteFile(File file) {
     if (file.exists()) {
       try {
@@ -2413,6 +2467,14 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
 
   private static final int STOP_PORT_OFFSET = 100;
 
+  private File findJettyTerracottaJar(File jettyHome) {
+    File tcLibDir = new File(jettyHome, "lib/terracotta");
+    for (File file : tcLibDir.listFiles()) {
+      if (file.getName().endsWith(".jar")) { return file; }
+    }
+    throw new RuntimeException("Can't find Jetty Terracotta Library in '" + tcLibDir + "'");
+  }
+
   private Process startJetty(int port) throws Exception {
     String[] env = getSelectedServerEnvironment();
     File wd = new File(SANDBOX_ROOT, "jetty6.1" + File.separatorChar + port);
@@ -2422,10 +2484,12 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
     String[] cmdarray;
     int stopPort = port + STOP_PORT_OFFSET;
     if (isDsoEnabled()) {
-      cmdarray = new String[] { getJavaCmd().getAbsolutePath(), "-Dtc.config=../tc-config.xml",
+      File jettyTerracottaJar = findJettyTerracottaJar(jettyHome);
+      cmdarray = new String[] { getJavaCmd().getAbsolutePath(),
+          "-Djetty.class.path=" + jettyTerracottaJar.getAbsolutePath(), "-Dtc.config=../tc-config.xml",
           "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(), "-Xbootclasspath/p:" + bootPath,
           "-Djetty.home=" + jettyHome.getAbsolutePath(), "-DSTOP.PORT=" + stopPort, "-DSTOP.KEY=secret", "-jar",
-          startJar.getAbsolutePath(), "conf.xml" };
+          startJar.getAbsolutePath(), "tc-conf.xml" };
     } else {
       cmdarray = new String[] { getJavaCmd().getAbsolutePath(), "-Djetty.home=" + jettyHome.getAbsolutePath(),
           "-DSTOP.PORT=" + stopPort, "-DSTOP.KEY=secret", "-jar", startJar.getAbsolutePath(), "conf.xml" };

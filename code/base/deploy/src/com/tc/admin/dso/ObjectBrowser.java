@@ -66,12 +66,14 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
     mainPanel = createMainPanel();
     messagePanel = createMessagePanel();
 
-    add(messagePanel);
-
     clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
     if (clusterModel.isReady()) {
       addNodePanels();
+      removeAll();
+      add(mainPanel);
+      
     } else {
+      add(messagePanel);
       messageLabel.setText(NOT_READY_MESSAGE);
     }
   }
@@ -215,6 +217,8 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
         messageLabel.setText(NOT_READY_MESSAGE);
         add(messagePanel);
       }
+      revalidate();
+      repaint();
     }
 
     @Override
