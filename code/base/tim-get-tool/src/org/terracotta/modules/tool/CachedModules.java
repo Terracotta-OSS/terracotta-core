@@ -10,6 +10,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
+import org.terracotta.modules.tool.config.Config;
 import org.terracotta.modules.tool.config.ConfigAnnotation;
 import org.terracotta.modules.tool.util.ChecksumUtil;
 import org.terracotta.modules.tool.util.DataLoader;
@@ -23,6 +24,7 @@ import com.tc.bundles.OSGiToMaven;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,6 +44,9 @@ public class CachedModules implements Modules {
   @Inject
   @Named(ConfigAnnotation.TERRACOTTA_VERSION)
   private String             tcVersion;
+
+  @Inject
+  private Config              config;
 
   @Inject
   @Named(ConfigAnnotation.INCLUDE_SNAPSHOTS)
@@ -108,10 +113,10 @@ public class CachedModules implements Modules {
   /**
    * XXX: This constructor is used for tests only
    */
-  CachedModules(String tcVersion, boolean includeSnapshots, File repository, InputStream inputStream)
-      throws JDOMException, IOException {
-    this.tcVersion = tcVersion;
-    this.includeSnapshots = includeSnapshots;
+  CachedModules(Config config, File repository, InputStream inputStream) throws JDOMException, IOException {
+    this.config = config;
+    this.tcVersion = config.getTcVersion();
+    this.includeSnapshots = config.getIncludeSnapshots();
     this.repository = repository;
     this.dataLoader = null;
     this.downloader = new DownloadUtil();
@@ -139,7 +144,7 @@ public class CachedModules implements Modules {
     modules = new ArrayList<Module>();
     List<Element> children = document.getRootElement().getChildren();
     for (Element child : children) {
-      Module module = new Module(this, DocumentToAttributes.transform(child));
+      Module module = new Module(this, DocumentToAttributes.transform(child), relativeUrlBase());
       modules.add(module);
     }
   }
@@ -181,7 +186,7 @@ public class CachedModules implements Modules {
     attributes.put("groupId", groupId);
     attributes.put("artifactId", artifactId);
     attributes.put("version", version);
-    Module module = new Module(null, attributes);
+    Module module = new Module(null, attributes, relativeUrlBase());
     int index = list().indexOf(module);
     return (index == -1) ? null : list().get(index);
   }
@@ -259,4 +264,7 @@ public class CachedModules implements Modules {
     return tcVersion;
   }
 
+  public URI relativeUrlBase() {
+    return config.getRelativeUrlBase();
+  }
 }

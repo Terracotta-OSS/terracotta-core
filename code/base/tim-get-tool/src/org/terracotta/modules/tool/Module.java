@@ -15,6 +15,7 @@ import com.google.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,16 +29,18 @@ public class Module extends AbstractModule implements Installable {
   private final Modules             modules;
   private final Map<String, Object> attributes;
   private final AttributesHelper    attributesHelper;
+  private final URI                 relativeUrlBase;
 
-  public Module(Modules modules, Element module) {
-    this(modules, DocumentToAttributes.transform(module));
+  public Module(Modules modules, Element module, URI relativeUrlBase) {
+    this(modules, DocumentToAttributes.transform(module), relativeUrlBase);
   }
 
   @Inject
-  Module(Modules modules, Map<String, Object> attributes) {
+  Module(Modules modules, Map<String, Object> attributes, URI relativeUrlBase) {
     this.modules = modules;
     this.attributes = attributes;
-    this.attributesHelper = new AttributesHelper(this.attributes);
+    this.relativeUrlBase = relativeUrlBase;
+    this.attributesHelper = new AttributesHelper(this.attributes, this.relativeUrlBase);
 
     groupId = attributesHelper.getAttrValueAsString("groupId", StringUtils.EMPTY);
     artifactId = attributesHelper.getAttrValueAsString("artifactId", StringUtils.EMPTY);
@@ -79,7 +82,7 @@ public class Module extends AbstractModule implements Installable {
       for (Map<String, Object> dependencyAttributes : dependencies) {
         DependencyType type = (DependencyType) dependencyAttributes.get("_dependencyType");
         if (DependencyType.INSTANCE.equals(type)) {
-          list.add(new BasicModule(this, dependencyAttributes));
+          list.add(new BasicModule(this, dependencyAttributes, this.relativeUrlBase));
           continue;
         } else if (DependencyType.REFERENCE.equals(type)) {
           list.add(new Reference(this, dependencyAttributes));

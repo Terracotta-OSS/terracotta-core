@@ -40,6 +40,9 @@ class AppContext implements Module, ConfigAnnotation {
     // binder.bindConstant().annotatedWith(TerracottaVersion.class).to(config.getTcVersion());
     binder.bindConstant().annotatedWith(Names.named(TERRACOTTA_VERSION)).to(config.getTcVersion());
 
+    // Inject the relativeUrlBase anywhere @Named(ConfigAnnotation.RELATIVE_URL_BASE) is used
+    binder.bindConstant().annotatedWith(Names.named(RELATIVE_URL_BASE)).to(config.getRelativeUrlBase().toString());
+
     // Inject the includeSnapshots anywhere the @IncludeSnapshots is used
     binder.bindConstant().annotatedWith(Names.named(INCLUDE_SNAPSHOTS)).to(config.getIncludeSnapshots());
 

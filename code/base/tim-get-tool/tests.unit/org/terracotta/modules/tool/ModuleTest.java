@@ -20,6 +20,7 @@ import org.mortbay.jetty.handler.ResourceHandler;
 import org.mortbay.jetty.nio.SelectChannelConnector;
 import org.mortbay.thread.BoundedThreadPool;
 import org.terracotta.modules.tool.DocumentToAttributes.DependencyType;
+import org.terracotta.modules.tool.config.Config;
 import org.terracotta.modules.tool.util.ChecksumUtil;
 
 import com.tc.test.TCTestCase;
@@ -35,6 +36,11 @@ import java.util.List;
 import java.util.Map;
 
 public final class ModuleTest extends TCTestCase {
+  protected Config testConfig;
+
+  public void setUp() {
+    testConfig = TestConfig.createTestConfig();
+  }
 
   public void testInstall() throws Exception {
     File basedir = new File(this.getTempDirectory(), "repo");
@@ -79,6 +85,7 @@ public final class ModuleTest extends TCTestCase {
     assertTrue(installedList.contains(createModule("foo.bar", "zoo", "0.0.0").toString()));
 
     tcVersion = "0.0.1";
+    testConfig.setTcVersion(tcVersion);
     modules = loadModules(datafile, tcVersion);
 
     module = modules.get("foo.bar", "baz", "0.0.2");
@@ -92,6 +99,7 @@ public final class ModuleTest extends TCTestCase {
 
   public void testIsInstalled() throws IOException {
     String tcVersion = "0.0.2";
+    testConfig.setTcVersion(tcVersion);
     Modules modules = loadModules("/testData02.xml", tcVersion);
     Module module = modules.get("foo.bar", "zoo", "0.0.0");
     assertNotNull(module);
@@ -189,6 +197,7 @@ public final class ModuleTest extends TCTestCase {
     assertEquals("0.0.4", versions.get(2));
 
     tcVersion = "0.0.1";
+    testConfig.setTcVersion(tcVersion);
     modules = loadModules("/testData02.xml", tcVersion);
     list = modules.list();
     assertFalse(list.isEmpty());
@@ -223,6 +232,7 @@ public final class ModuleTest extends TCTestCase {
     assertTrue(module.isLatest());
 
     tcVersion = "0.0.1";
+    testConfig.setTcVersion(tcVersion);
     modules = loadModules("/testData02.xml", tcVersion);
     list = modules.list();
     assertFalse(list.isEmpty());
@@ -262,7 +272,7 @@ public final class ModuleTest extends TCTestCase {
       assertEquals(2, modules.size());
 
       // tim-ehache-1.3
-      Module module = new Module(null, modules.get(0));
+      Module module = new Module(null, modules.get(0), testConfig.getRelativeUrlBase());
       assertEquals("tim-ehcache-1.3", module.artifactId());
       assertEquals("1.0.2", module.version());
       assertEquals("org.terracotta.modules", module.groupId());
@@ -272,8 +282,7 @@ public final class ModuleTest extends TCTestCase {
       assertEquals("Copyright (c) 2007 Terracotta, Inc.", module.copyright());
       assertEquals("Terracotta Integration Module", module.category());
       assertEquals("Terracotta Integration Module for clustering Ehcache", module.description());
-      assertEquals(
-                   "http://forge-dev.terracotta.lan/repo/org/terracotta/modules/tim-ehcache-1.3/1.0.2/tim-ehcache-1.3-1.0.2.jar",
+      assertEquals("http://forge-dev.terracotta.lan/repo/org/terracotta/modules/tim-ehcache-1.3/1.0.2/tim-ehcache-1.3-1.0.2.jar",
                    module.repoUrl().toString());
       assertEquals(FilenameUtils.separatorsToSystem("org/terracotta/modules/tim-ehcache-1.3/1.0.2"), module
           .installPath().toString());
@@ -306,7 +315,7 @@ public final class ModuleTest extends TCTestCase {
       assertEquals("org.terracotta.modules", reference.groupId());
 
       // tim-ehache-commons
-      module = new Module(null, modules.get(1));
+      module = new Module(null, modules.get(1), testConfig.getRelativeUrlBase());
       assertEquals("tim-ehcache-commons", module.artifactId());
       assertEquals("1.0.2", module.version());
       assertEquals("org.terracotta.modules", module.groupId());
@@ -391,7 +400,6 @@ public final class ModuleTest extends TCTestCase {
       assertTrue(dependencies.get(0) instanceof BasicModule);
       assertTrue(dependencies.get(1) instanceof Reference);
     } catch (NullPointerException e) {
-      e.printStackTrace();
       fail("Should not have thrown an NPE, all of the attributes values are valid");
     }
 
@@ -496,7 +504,7 @@ public final class ModuleTest extends TCTestCase {
     for (String key : Arrays.asList(excludes)) {
       attributes.remove(key);
     }
-    return new Module(null, attributes);
+    return new Module(null, attributes, testConfig.getRelativeUrlBase());
   }
 
   @Override
@@ -505,10 +513,11 @@ public final class ModuleTest extends TCTestCase {
   }
 
   private Modules loadModules(String testData, String tcVersion) throws IOException {
+    testConfig.setTcVersion(tcVersion);
     File tmpdir = this.getTempDirectory();
     File repodir = new File(tmpdir, "modules");
     try {
-      return new CachedModules(tcVersion, true, repodir, getClass().getResourceAsStream(testData));
+      return new CachedModules(testConfig, repodir, getClass().getResourceAsStream(testData));
     } catch (Exception e) {
       fail("Unable to load test data: " + testData);
     }

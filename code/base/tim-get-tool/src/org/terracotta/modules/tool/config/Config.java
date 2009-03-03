@@ -9,6 +9,8 @@ import org.terracotta.modules.tool.util.PropertiesInterpolator;
 
 import java.io.File;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Properties;
 
@@ -19,14 +21,16 @@ public class Config {
 
   public static final String  KEYSPACE          = "org.terracotta.modules.tool.";
 
-  public static final String  TC_VERSION        = "tcVersion";
-  public static final String  INCLUDE_SNAPSHOTS = "includeSnapshots";
+  public static final String TC_VERSION        = "tcVersion";
+  public static final String RELATIVE_URL_BASE = "relativeUrlBase";
+  public static final String INCLUDE_SNAPSHOTS = "includeSnapshots";
   public static final String PROXY_URL         = "proxyUrl";
   public static final String MODULES_DIR       = "modulesDir";
   public static final String DATA_FILE_URL     = "dataFileUrl";
   public static final String DATA_FILE         = "dataFile";
 
   private String              tcVersion;
+  private URI                 relativeUrlBase;
   private boolean             includeSnapshots;
   private URL                 proxyUrl;
   private File                modulesDirectory;
@@ -42,6 +46,12 @@ public class Config {
   public Config(Properties properties) {
     properties = new PropertiesInterpolator().interpolated(properties);
     this.setTcVersion(getProperty(properties, TC_VERSION));
+
+    try {
+      this.setRelativeUrlBase(new URI(getProperty(properties, RELATIVE_URL_BASE)));
+    } catch (URISyntaxException e) {
+      throw new InvalidConfigurationException(RELATIVE_URL_BASE + " is not a valid URL");
+    }
     this.setIncludeSnapshots(Boolean.parseBoolean(getProperty(properties, INCLUDE_SNAPSHOTS)));
 
     String path = getProperty(properties, DATA_FILE);
@@ -92,6 +102,14 @@ public class Config {
 
   public void setTcVersion(String tcVersion) {
     this.tcVersion = tcVersion;
+  }
+
+  public URI getRelativeUrlBase() {
+    return relativeUrlBase;
+  }
+
+  public void setRelativeUrlBase(URI relativeUrlBase) {
+    this.relativeUrlBase = relativeUrlBase;
   }
 
   public File getModulesDirectory() {

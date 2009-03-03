@@ -12,12 +12,11 @@ public class Reference extends AbstractModule {
 
   private final Module              owner;
   private final Map<String, Object> attributes;
-  private final AttributesHelper    attributesHelper;
 
   public Reference(Module owner, Map<String, Object> attributes) {
     this.owner = owner;
     this.attributes = attributes;
-    this.attributesHelper = new AttributesHelper(this.attributes);
+    AttributesHelper attributesHelper = new AttributesHelper(this.attributes);
 
     groupId = attributesHelper.getAttrValueAsString("groupId", StringUtils.EMPTY);
     artifactId = attributesHelper.getAttrValueAsString("artifactId", StringUtils.EMPTY);
