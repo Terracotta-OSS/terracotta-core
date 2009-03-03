@@ -195,7 +195,9 @@ public class GCStatsPanel extends XContainer implements DGCListener {
 
     @Override
     public void handleActiveCoordinator(IServer oldActive, IServer newActive) {
-      System.err.println("handleActiveCoordinator oldServer=" + oldActive + " newActive=" + newActive);
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
       if (oldActive != null) {
         oldActive.removeDGCListener(GCStatsPanel.this);
       }
@@ -206,6 +208,9 @@ public class GCStatsPanel extends XContainer implements DGCListener {
 
     @Override
     public void handleReady() {
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
       if (clusterModel.isReady()) {
         if (!inited) {
           init();
@@ -244,6 +249,9 @@ public class GCStatsPanel extends XContainer implements DGCListener {
 
     @Override
     protected void finished() {
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
       Exception e = getException();
       if (e == null) {
         GCStatsTableModel model = (GCStatsTableModel) table.getModel();
@@ -289,6 +297,9 @@ public class GCStatsPanel extends XContainer implements DGCListener {
   }
 
   public void statusUpdate(GCStats gcStats) {
+    IClusterModel theClusterModel = getClusterModel();
+    if (theClusterModel == null) { return; }
+
     SwingUtilities.invokeLater(new ModelUpdater(gcStats));
   }
 
@@ -300,6 +311,9 @@ public class GCStatsPanel extends XContainer implements DGCListener {
     }
 
     public void run() {
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
       gcAction.setEnabled(gcStats.getElapsedTime() != -1);
       ((GCStatsTableModel) table.getModel()).addGCStats(gcStats);
       if (gcAction.isEnabled()) {
@@ -323,6 +337,9 @@ public class GCStatsPanel extends XContainer implements DGCListener {
 
     @Override
     protected void finished() {
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
       Exception e = getException();
       if (e != null) {
         Frame frame = (Frame) SwingUtilities.getAncestorOfClass(Frame.class, GCStatsPanel.this);
@@ -340,7 +357,6 @@ public class GCStatsPanel extends XContainer implements DGCListener {
 
   @Override
   public void tearDown() {
-    Thread.dumpStack();
     clusterModel.removePropertyChangeListener(clusterListener);
     IServer activeCoord = getActiveCoordinator();
     if (activeCoord != null) {
