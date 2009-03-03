@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ivy-module version="2.0">  
+  <info organisation="ibiblio" module="dso-cluster-api-tests"/>
+  
+  <dependencies>
+    <dependency name="junit" rev="3.8.1"/>
+    <dependency name="junit-addons" rev="1.4"/>
+  </dependencies>
+</ivy-module>

@@ -88,6 +88,13 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   boolean isTransient(int modifiers, ClassInfo classInfo, String field);
 
+  /**
+   * Indicates whether a particular field of a class will be injected by DSO.
+   *
+   * @return {@code true} when the field is injected; or {@code false} otherwise
+   */
+  boolean isInjectedField(String className, String fieldName);
+
   String getInjectedFieldType(ClassInfo classInfo, String field);
 
   boolean isVolatile(int modifiers, ClassInfo classInfo, String field);
@@ -117,7 +124,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
    * @throws com.tc.config.schema.setup.ConfigurationSetupException if a conflict was detected
    */
   String getAppGroup(String classLoaderName, String appName);
-  
+
   /**
    * Add entries to an app-group. All the specified named classloaders and all
    * the specified web application names will be added to the app group.
@@ -125,7 +132,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
    * @param webAppNames an array of names of web-applications, or null if none are being added.
    */
   void addToAppGroup(String appGroup, String[] namedClassloaders, String[] webAppNames);
-  
+
   DSORuntimeLoggingOptions runtimeLoggingOptions();
 
   DSORuntimeOutputOptions runtimeOutputOptions();

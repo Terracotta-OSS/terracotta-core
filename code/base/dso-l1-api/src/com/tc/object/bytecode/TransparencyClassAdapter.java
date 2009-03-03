@@ -40,16 +40,16 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
 
   private boolean                          supportMethodsCreated;
 
-  public TransparencyClassAdapter(ClassInfo classInfo, TransparencyClassSpec spec, final ClassVisitor cv,
-                                  InstrumentationLogger instrumentationLogger, ClassLoader caller,
-                                  Portability portability) {
+  public TransparencyClassAdapter(final ClassInfo classInfo, final TransparencyClassSpec spec, final ClassVisitor cv,
+                                  final InstrumentationLogger instrumentationLogger, final ClassLoader caller,
+                                  final Portability portability) {
     super(classInfo, spec, cv, caller, portability);
     this.instrumentationLogger = instrumentationLogger;
     this.physicalClassLogger = new PhysicalClassAdapterLogger(logger);
   }
 
   @Override
-  protected void basicVisit(final int version, final int access, final String name, String signature,
+  protected void basicVisit(final int version, final int access, final String name, final String signature,
                             final String superClassName, final String[] interfaces) {
 
     try {
@@ -70,13 +70,13 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     }
   }
 
-  private void handleInstrumentationException(Throwable e) {
+  private void handleInstrumentationException(final Throwable e) {
     logger.fatal(e);
     logger.fatal("Calling System.exit(1)");
     System.exit(1);
   }
 
-  private boolean isRoot(int access, String fieldName) {
+  private boolean isRoot(final int access, final String fieldName) {
     try {
       FieldInfo fieldInfo = spec.getFieldInfo(fieldName);
       boolean isRoot = fieldInfo == null ? false : getTransparencyClassSpec().isRootInThisClass(fieldInfo);
@@ -96,7 +96,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     }
   }
 
-  private String rootNameFor(String className, String fieldName) {
+  private String rootNameFor(final String className, final String fieldName) {
     try {
       return getTransparencyClassSpec().rootNameFor(spec.getFieldInfo(fieldName));
     } catch (RuntimeException e) {
@@ -109,7 +109,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
   }
 
   @Override
-  protected FieldVisitor basicVisitField(final int access, final String name, final String desc, String signature,
+  protected FieldVisitor basicVisitField(final int access, final String name, final String desc, final String signature,
                                          final Object value) {
     try {
       if ((spec.isClassPortable() && spec.isPhysical() && !ByteCodeUtil.isTCSynthetic(name))
@@ -126,7 +126,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     return cv.visitField(access, name, desc, signature, value);
   }
 
-  private void generateGettersSetters(final int fieldAccess, final String name, final String desc, boolean isStatic) {
+  private void generateGettersSetters(final int fieldAccess, final String name, final String desc, final boolean isStatic) {
     boolean isTransient = getTransparencyClassSpec().isTransient(fieldAccess, spec.getClassInfo(), name);
     // Plain getter and setters are generated for transient fields as other instrumented classes might call them.
     boolean createPlainAccessors = isTransient && !isStatic;
@@ -157,12 +157,12 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     }
   }
 
-  private boolean isPrimitive(Type t) {
+  private boolean isPrimitive(final Type t) {
     return ByteCodeUtil.isPrimitive(t);
   }
 
-  private MethodVisitor ignoreMethodIfNeeded(int access, String name, final String desc, String signature,
-                                             final String[] exceptions, MemberInfo memberInfo) {
+  private MethodVisitor ignoreMethodIfNeeded(final int access, final String name, final String desc, final String signature,
+                                             final String[] exceptions, final MemberInfo memberInfo) {
     if (name.startsWith(ByteCodeUtil.TC_METHOD_PREFIX) || doNotInstrument.contains(name + desc)
         || getTransparencyClassSpec().doNotInstrument(name)) {
       if (!getTransparencyClassSpec().hasCustomMethodAdapter(memberInfo)) {
@@ -174,7 +174,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
   }
 
   @Override
-  protected MethodVisitor basicVisitMethod(int access, String name, final String desc, String signature,
+  protected MethodVisitor basicVisitMethod(int access, String name, final String desc, final String signature,
                                            final String[] exceptions) {
     String originalName = name;
     MethodVisitor mv = null;
@@ -256,7 +256,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     }
   }
 
-  private boolean isAutoSynchronized(LockDefinition ld) {
+  private boolean isAutoSynchronized(final LockDefinition ld) {
     if (ld == null) { return false; }
 
     ConfigLockLevel lockLevel = ld.getLockLevel();
@@ -273,14 +273,14 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
   // super.basicVisitEnd();
   // }
 
-  private void logCustomerLockMethod(String name, final String desc, LockDefinition[] locks) {
+  private void logCustomerLockMethod(final String name, final String desc, final LockDefinition[] locks) {
     if (instrumentationLogger.getLockInsertion()) {
       instrumentationLogger.lockInserted(this.spec.getClassNameDots(), name, desc, locks);
     }
   }
 
-  private void createLockMethod(int access, String name, String desc, String signature, final String[] exceptions,
-                                LockDefinition[] locks, boolean skipLocalJVMLock) {
+  private void createLockMethod(int access, final String name, final String desc, final String signature, final String[] exceptions,
+                                final LockDefinition[] locks, final boolean skipLocalJVMLock) {
     try {
       physicalClassLogger.logCreateLockMethodBegin(access, name, desc, signature, exceptions, locks);
       doNotInstrument.add(name + desc);
@@ -302,11 +302,11 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     }
   }
 
-  private String getTCSyncMethodName(String name) {
+  private String getTCSyncMethodName(final String name) {
     return ByteCodeUtil.SYNC_METHOD_RENAME_PREFIX + name;
   }
 
-  private void createSyncMethod(int access, String name, String desc, String signature, final String[] exceptions) {
+  private void createSyncMethod(final int access, final String name, final String desc, final String signature, final String[] exceptions) {
     Type returnType = Type.getReturnType(desc);
     // access should have the synchronized modifier
     MethodVisitor mv = cv.visitMethod(access, getTCSyncMethodName(name), desc, signature, exceptions);
@@ -324,8 +324,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     mv.visitEnd();
   }
 
-  private void recreateMethod(int access, String name, String desc, String signature, final String[] exceptions,
-                              LockDefinition[] locks, boolean skipLocalJVMLock) {
+  private void recreateMethod(final int access, final String name, final String desc, final String signature, final String[] exceptions,
+                              final LockDefinition[] locks, final boolean skipLocalJVMLock) {
     Type returnType = Type.getReturnType(desc);
     physicalClassLogger.logCreateLockMethodVoidBegin(access, name, desc, signature, exceptions, locks);
     MethodVisitor c = cv.visitMethod(access & (~Modifier.SYNCHRONIZED), name, desc, signature, exceptions);
@@ -355,8 +355,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     c.visitEnd();
   }
 
-  private int addBooleanLocalVariablesIfMoreThanOneLock(int access, String desc, LockDefinition[] locks,
-                                                        MethodVisitor c, int[] localBooleanVariables) {
+  private int addBooleanLocalVariablesIfMoreThanOneLock(final int access, final String desc, final LockDefinition[] locks,
+                                                        final MethodVisitor c, final int[] localBooleanVariables) {
     int nextLocalVariable = ByteCodeUtil.getFirstLocalVariableOffset(access, desc);
     if (locks.length > 1) {
       for (int i = 0; i < locks.length; i++) {
@@ -368,8 +368,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     return nextLocalVariable;
   }
 
-  private void startDsoLockTryBlock(int access, String name, String desc, LockDefinition[] locks, MethodVisitor c,
-                                    int[] localBooleanVariables, Label startTryBlockLabel) {
+  private void startDsoLockTryBlock(final int access, final String name, final String desc, final LockDefinition[] locks, final MethodVisitor c,
+                                    final int[] localBooleanVariables, final Label startTryBlockLabel) {
     if (locks.length > 1) {
       c.visitLabel(startTryBlockLabel);
       callTCBeginWithLocks(access, name, desc, locks, c, localBooleanVariables);
@@ -382,8 +382,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
   /**
    * Creates a tc lock method for the given method that returns void.
    */
-  private void addDsoLockMethodInsnVoid(int access, String name, String desc, String signature,
-                                        final String[] exceptions, LockDefinition[] locks, MethodVisitor c) {
+  private void addDsoLockMethodInsnVoid(final int access, final String name, final String desc, final String signature,
+                                        final String[] exceptions, final LockDefinition[] locks, final MethodVisitor c) {
     int[] localBooleanVariables = new int[locks.length];
     int localVariableOffset = addBooleanLocalVariablesIfMoreThanOneLock(access, desc, locks, c, localBooleanVariables);
 
@@ -421,7 +421,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     }
   }
 
-  private void handleInstrumentationException(RuntimeException e) {
+  private void handleInstrumentationException(final RuntimeException e) {
     // XXX: Yucky.
     if (e instanceof DefinitionException) {
       logger.fatal(e.getLocalizedMessage());
@@ -438,7 +438,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     System.exit(1);
   }
 
-  private void callRenamedMethod(int callingMethodModifier, String name, String desc, MethodVisitor c) {
+  private void callRenamedMethod(final int callingMethodModifier, final String name, final String desc, final MethodVisitor c) {
     // Call the renamed original method.
     ByteCodeUtil.prepareStackForMethodCall(callingMethodModifier, desc, c);
     if (Modifier.isStatic(callingMethodModifier)) {
@@ -451,9 +451,9 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
   /**
    * Creates a tc lock method for the given method that returns a value (doesn't return void).
    */
-  private void addDsoLockMethodInsnReturn(int access, String name, String desc, String signature,
-                                          final String[] exceptions, LockDefinition[] locks, Type returnType,
-                                          MethodVisitor c) {
+  private void addDsoLockMethodInsnReturn(final int access, final String name, final String desc, final String signature,
+                                          final String[] exceptions, final LockDefinition[] locks, final Type returnType,
+                                          final MethodVisitor c) {
     int[] localBooleanVariables = new int[locks.length];
     int localVariableOffset = addBooleanLocalVariablesIfMoreThanOneLock(access, desc, locks, c, localBooleanVariables);
 
@@ -489,8 +489,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
 
   }
 
-  private void callTCBeginWithLocks(int access, String name, String desc, LockDefinition[] locks, MethodVisitor c,
-                                    int[] localBooleanVariables) {
+  private void callTCBeginWithLocks(final int access, final String name, final String desc, final LockDefinition[] locks, final MethodVisitor c,
+                                    final int[] localBooleanVariables) {
     physicalClassLogger.logCallTCBeginWithLocksStart(access, name, desc, locks, c);
     for (int i = 0; i < locks.length; i++) {
       LockDefinition lock = locks[i];
@@ -513,8 +513,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     }
   }
 
-  private void callTCCommit(int access, String name, String desc, LockDefinition[] locks, MethodVisitor c,
-                            int[] localBooleanVariables) {
+  private void callTCCommit(final int access, final String name, final String desc, final LockDefinition[] locks, final MethodVisitor c,
+                            final int[] localBooleanVariables) {
     physicalClassLogger.logCallTCCommitBegin(access, name, desc, locks, c);
     Label returnLabel = new Label();
     for (int i = 0; i < locks.length; i++) {
@@ -535,38 +535,38 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     c.visitLabel(returnLabel);
   }
 
-  private void callTCCommitWithLockName(String lockName, MethodVisitor mv) {
+  private void callTCCommitWithLockName(final String lockName, final MethodVisitor mv) {
     mv.visitLdcInsn(lockName);
     mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "commitLock", "(Ljava/lang/String;)V");
   }
 
-  private void callTCBeginWithLock(LockDefinition lock, MethodVisitor c) {
+  private void callTCBeginWithLock(final LockDefinition lock, final MethodVisitor c) {
     c.visitLdcInsn(ByteCodeUtil.generateNamedLockName(lock.getLockName()));
     c.visitLdcInsn(new Integer(lock.getLockLevelAsInt()));
     c.visitLdcInsn(lock.getLockContextInfo());
     c.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "beginLock", "(Ljava/lang/String;ILjava/lang/String;)V");
   }
 
-  private void callTCBeginWithLockName(String lockName, int lockLevel, MethodVisitor mv) {
+  private void callTCBeginWithLockName(final String lockName, final int lockLevel, final MethodVisitor mv) {
     mv.visitLdcInsn(lockName);
     mv.visitLdcInsn(new Integer(lockLevel));
     mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "beginLock", "(Ljava/lang/String;I)V");
   }
 
-  private void callVolatileBegin(String fieldName, int lockLevel, MethodVisitor mv) {
+  private void callVolatileBegin(final String fieldName, final int lockLevel, final MethodVisitor mv) {
     getManaged(mv);
     mv.visitLdcInsn(fieldName);
     mv.visitIntInsn(BIPUSH, lockLevel);
     mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "beginVolatile", "(Lcom/tc/object/TCObject;Ljava/lang/String;I)V");
   }
 
-  private void callVolatileCommit(String fieldName, MethodVisitor mv) {
+  private void callVolatileCommit(final String fieldName, final MethodVisitor mv) {
     getManaged(mv);
     mv.visitLdcInsn(fieldName);
     mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "commitVolatile", "(Lcom/tc/object/TCObject;Ljava/lang/String;)V");
   }
 
-  private void createPlainGetter(int methodAccess, int fieldAccess, String name, String desc) {
+  private void createPlainGetter(final int methodAccess, final int fieldAccess, final String name, final String desc) {
     boolean isVolatile = isVolatile(fieldAccess, name);
 
     String gDesc = "()" + desc;
@@ -616,8 +616,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     gv.visitEnd();
   }
 
-  private void checkReturnObjectType(String fieldName, String rootName, String targetType, int loadVariableNumber,
-                                     Label matchLabel, MethodVisitor mv) {
+  private void checkReturnObjectType(final String fieldName, final String rootName, final String targetType, final int loadVariableNumber,
+                                     final Label matchLabel, final MethodVisitor mv) {
     mv.visitVarInsn(ALOAD, loadVariableNumber);
     mv.visitTypeInsn(INSTANCEOF, targetType);
     mv.visitJumpInsn(IFNE, matchLabel);
@@ -662,7 +662,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
 
   }
 
-  private void createRootGetter(int methodAccess, String name, String desc) {
+  private void createRootGetter(final int methodAccess, final String name, final String desc) {
     Type t = Type.getType(desc);
     boolean isPrimitive = isPrimitive(t);
     boolean isDSOFinal = isRootDSOFinal(name);
@@ -735,11 +735,11 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     }
   }
 
-  private boolean isVolatile(int access, String fieldName) {
+  private boolean isVolatile(final int access, final String fieldName) {
     return getTransparencyClassSpec().isVolatile(access, spec.getClassInfo(), fieldName);
   }
 
-  private void createInstrumentedGetter(int methodAccess, int fieldAccess, String name, String desc) {
+  private void createInstrumentedGetter(final int methodAccess, final int fieldAccess, final String name, final String desc) {
     try {
       Assert.eval(!getTransparencyClassSpec().isLogical());
       boolean isVolatile = isVolatile(fieldAccess, name);
@@ -816,12 +816,12 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     }
   }
 
-  private void getManaged(MethodVisitor mv) {
+  private void getManaged(final MethodVisitor mv) {
     mv.visitVarInsn(ALOAD, 0);
     mv.visitMethodInsn(INVOKEVIRTUAL, spec.getClassNameSlashes(), MANAGED_METHOD, "()" + MANAGED_FIELD_TYPE);
   }
 
-  private void createPlainSetter(int methodAccess, int fieldAccess, String name, String desc) {
+  private void createPlainSetter(final int methodAccess, final int fieldAccess, final String name, final String desc) {
     boolean isVolatile = isVolatile(fieldAccess, name);
 
     String sDesc = "(" + desc + ")V";
@@ -874,7 +874,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     scv.visitEnd();
   }
 
-  private void createInstrumentedSetter(int methodAccess, int fieldAccess, String name, String desc) {
+  private void createInstrumentedSetter(final int methodAccess, final int fieldAccess, final String name, final String desc) {
     try {
       Type t = Type.getType(desc);
       if (isRoot(methodAccess, name)) {
@@ -894,7 +894,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     }
   }
 
-  private void createObjectSetter(int methodAccess, int fieldAccess, String name, String desc) {
+  private void createObjectSetter(final int methodAccess, final int fieldAccess, final String name, final String desc) {
     try {
       if (isRoot(methodAccess, name)) {
         boolean isStaticRoot = Modifier.isStatic(methodAccess);
@@ -914,11 +914,11 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     }
   }
 
-  private boolean isRootDSOFinal(String name) {
+  private boolean isRootDSOFinal(final String name) {
     return spec.getTransparencyClassSpec().isRootDSOFinal(spec.getFieldInfo(name));
   }
 
-  private void createRootSetter(int methodAccess, String name, String desc, boolean isStatic) {
+  private void createRootSetter(final int methodAccess, final String name, final String desc, final boolean isStatic) {
     Type t = Type.getType(desc);
     boolean isPrimitive = isPrimitive(t);
     boolean isDSOFinal = isRootDSOFinal(name);
@@ -996,15 +996,15 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     }
   }
 
-  private void callGetFieldInsn(boolean isStatic, String name, String desc, MethodVisitor mv) {
+  private void callGetFieldInsn(final boolean isStatic, final String name, final String desc, final MethodVisitor mv) {
     int getInsn = isStatic ? GETSTATIC : GETFIELD;
 
     if (!isStatic) ByteCodeUtil.pushThis(mv);
     mv.visitFieldInsn(getInsn, spec.getClassNameSlashes(), name, desc);
   }
 
-  private void callPutFieldInsn(boolean isStatic, Type targetType, int localVar, String name, String desc,
-                                MethodVisitor mv) {
+  private void callPutFieldInsn(final boolean isStatic, final Type targetType, final int localVar, final String name, final String desc,
+                                final MethodVisitor mv) {
     int putInsn = isStatic ? PUTSTATIC : PUTFIELD;
 
     if (!isStatic) ByteCodeUtil.pushThis(mv);
@@ -1021,16 +1021,16 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     mv.visitFieldInsn(putInsn, spec.getClassNameSlashes(), name, desc);
   }
 
-  private void generateCodeForVolatileTransactionBegin(Label l1, Label l2, Label l3, Label l4, String fieldName,
-                                                       int lockLevel, MethodVisitor scv) {
+  private void generateCodeForVolatileTransactionBegin(final Label l1, final Label l2, final Label l3, final Label l4, final String fieldName,
+                                                       final int lockLevel, final MethodVisitor scv) {
     scv.visitTryCatchBlock(l4, l1, l1, null);
     scv.visitTryCatchBlock(l2, l3, l1, null);
     scv.visitLabel(l4);
     callVolatileBegin(fieldName, lockLevel, scv);
   }
 
-  private void generateCodeForVolativeTransactionCommit(Label l1, Label l2, MethodVisitor scv, int newVar1,
-                                                        int newVar2, String fieldName) {
+  private void generateCodeForVolativeTransactionCommit(final Label l1, final Label l2, final MethodVisitor scv, final int newVar1,
+                                                        final int newVar2, final String fieldName) {
     scv.visitJumpInsn(GOTO, l2);
     scv.visitLabel(l1);
     scv.visitVarInsn(ASTORE, newVar2);
@@ -1046,24 +1046,48 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     scv.visitJumpInsn(JSR, l5);
   }
 
-  private void createObjectFieldSetter(int methodAccess, int fieldAccess, String name, String desc) {
+  private boolean isInjected(final String fieldName) {
+    return getTransparencyClassSpec().isInjectedField(fieldName);
+  }
+
+
+  private void createObjectFieldSetter(final int methodAccess, final int fieldAccess, final String name, final String desc) {
     try {
       boolean isVolatile = isVolatile(fieldAccess, name);
       Label l1 = new Label();
       Label l2 = new Label();
       Label l4 = new Label();
 
-      // generates setter method
+      // Generates setter method
       String sDesc = "(" + desc + ")V";
       MethodVisitor scv = cv.visitMethod(methodAccess, ByteCodeUtil.fieldSetterMethod(name), sDesc, null, null);
       getManaged(scv);
       scv.visitInsn(DUP);
       scv.visitVarInsn(ASTORE, 2);
-      Label l0 = new Label();
-      scv.visitJumpInsn(IFNULL, l0);
+
+      // In case this field is injected by DSO, only allow the value to be set once.
+      // This will be done the first time by the injection class adapters and users
+      // shouldn't be able to replace this with their own instance afterwards.
+      // This allows non instrumented code to use mock instances for testing and
+      // instrumented code to always have the DSO instance.
+      Label labelMethodEnd = new Label();
+      Label labelFieldNotYetInjected = new Label();
+      if (isInjected(name)) {
+        scv.visitVarInsn(ALOAD, 0);
+        scv.visitFieldInsn(GETFIELD, spec.getClassNameSlashes(), name, desc);
+
+        scv.visitJumpInsn(IFNULL, labelFieldNotYetInjected);
+        scv.visitInsn(POP);
+        scv.visitJumpInsn(GOTO, labelMethodEnd);
+        scv.visitLabel(labelFieldNotYetInjected);
+      }
+
+      // Handle null arguments
+      Label labelArgumentIsNull = new Label();
+      scv.visitJumpInsn(IFNULL, labelArgumentIsNull);
 
       if (isVolatile) {
-        generateCodeForVolatileTransactionBegin(l1, l2, l0, l4, spec.getClassNameDots() + "." + name, LockLevel.WRITE,
+        generateCodeForVolatileTransactionBegin(l1, l2, labelArgumentIsNull, l4, spec.getClassNameDots() + "." + name, LockLevel.WRITE,
                                                 scv);
       }
 
@@ -1079,10 +1103,11 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
         generateCodeForVolativeTransactionCommit(l1, l2, scv, 3, 4, spec.getClassNameDots() + "." + name);
       }
 
-      scv.visitLabel(l0);
+      scv.visitLabel(labelArgumentIsNull);
       scv.visitVarInsn(ALOAD, 0);
       scv.visitVarInsn(ALOAD, 1);
       scv.visitFieldInsn(PUTFIELD, spec.getClassNameSlashes(), name, desc);
+      scv.visitLabel(labelMethodEnd);
       scv.visitInsn(RETURN);
       scv.visitMaxs(0, 0);
       scv.visitEnd();
@@ -1094,7 +1119,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     }
   }
 
-  private void createLiteralSetter(int methodAccess, int fieldAccess, String name, String desc) {
+  private void createLiteralSetter(final int methodAccess, final int fieldAccess, final String name, final String desc) {
     try {
       // generates setter method
       boolean isVolatile = isVolatile(fieldAccess, name);
@@ -1147,13 +1172,13 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     }
   }
 
-  private void callTCMonitorExit(int callingMethodModifier, MethodVisitor c) {
+  private void callTCMonitorExit(final int callingMethodModifier, final MethodVisitor c) {
     Assert.eval("Can't call tc monitorenter from a static method.", !Modifier.isStatic(callingMethodModifier));
     ByteCodeUtil.pushThis(c);
     c.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "monitorExit", "(Ljava/lang/Object;)V");
   }
 
-  private void callTCMonitorEnter(int callingMethodModifier, LockDefinition def, MethodVisitor c) {
+  private void callTCMonitorEnter(final int callingMethodModifier, final LockDefinition def, final MethodVisitor c) {
     Assert.eval("Can't call tc monitorexit from a static method.", !Modifier.isStatic(callingMethodModifier));
     ByteCodeUtil.pushThis(c);
     c.visitLdcInsn(new Integer(def.getLockLevelAsInt()));
@@ -1162,7 +1187,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
                       "(Ljava/lang/Object;ILjava/lang/String;)V");
   }
 
-  private void addPrimitiveTypeZeroCompare(MethodVisitor mv, Type type, Label notZeroLabel) {
+  private void addPrimitiveTypeZeroCompare(final MethodVisitor mv, final Type type, final Label notZeroLabel) {
     switch (type.getSort()) {
       case Type.LONG:
         mv.visitInsn(LCONST_0);

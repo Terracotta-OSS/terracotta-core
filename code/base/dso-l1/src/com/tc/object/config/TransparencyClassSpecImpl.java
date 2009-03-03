@@ -62,8 +62,8 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
   private ClassAdapterFactory         customClassAdapter         = null;
   private TransparencyCodeSpec        defaultCodeSpec            = null;
 
-  public TransparencyClassSpecImpl(String className, DSOClientConfigHelper configuration,
-                                   String changeApplicatorClassName) {
+  public TransparencyClassSpecImpl(final String className, final DSOClientConfigHelper configuration,
+                                   final String changeApplicatorClassName) {
     this.configuration = configuration;
     this.className = className;
     this.changeApplicatorClassName = changeApplicatorClassName;
@@ -71,7 +71,7 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     this.isLogical = true;
   }
 
-  public TransparencyClassSpecImpl(String className, DSOClientConfigHelper configuration) {
+  public TransparencyClassSpecImpl(final String className, final DSOClientConfigHelper configuration) {
     this.className = className;
     this.configuration = configuration;
     this.isLogical = false;
@@ -80,33 +80,33 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     this.changeApplicatorSpec = null;
   }
 
-  public TransparencyClassSpec getClassSpec(String clazzName) {
+  public TransparencyClassSpec getClassSpec(final String clazzName) {
     String name = clazzName.replace('/', '.');
     return configuration.getSpec(name);
   }
 
-  public boolean hasPhysicallyPortableSpecs(ClassInfo classInfo) {
+  public boolean hasPhysicallyPortableSpecs(final ClassInfo classInfo) {
     String name = classInfo.getName();
     return configuration.shouldBeAdapted(classInfo) && !configuration.isLogical(name)
            && (configuration.getSpec(name) != null)
            && (configuration.getSpec(name).getInstrumentationAction() != ADAPTABLE);
   }
 
-  public TransparencyClassSpec addRoot(String variableName, String rootName) {
+  public TransparencyClassSpec addRoot(final String variableName, final String rootName) {
     configuration.addRoot(new Root(className, variableName, rootName), false);
     return this;
   }
 
-  public TransparencyClassSpec addRoot(String variableName, String rootName, boolean dsoFinal) {
+  public TransparencyClassSpec addRoot(final String variableName, final String rootName, final boolean dsoFinal) {
     configuration.addRoot(new Root(className, variableName, rootName, dsoFinal), false);
     return this;
   }
 
-  public void addDoNotInstrument(String methodName) {
+  public void addDoNotInstrument(final String methodName) {
     nonInstrumentedMethods.add(methodName);
   }
 
-  public boolean doNotInstrument(String methodName) {
+  public boolean doNotInstrument(final String methodName) {
     return nonInstrumentedMethods.contains(methodName);
   }
 
@@ -128,14 +128,14 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     return preInstrumented;
   }
 
-  public synchronized LockDefinition[] lockDefinitionsFor(MemberInfo memberInfo) {
+  public synchronized LockDefinition[] lockDefinitionsFor(final MemberInfo memberInfo) {
     return configuration.lockDefinitionsFor(memberInfo);
   }
 
-  public synchronized LockDefinition autoLockDefinitionFor(MethodInfo methodInfo) {
+  public synchronized LockDefinition autoLockDefinitionFor(final MethodInfo methodInfo) {
     LockDefinition[] lds = lockDefinitionsFor(methodInfo);
-    for (int i = 0; i < lds.length; i++) {
-      if (lds[i].isAutolock()) { return lds[i]; }
+    for (LockDefinition ld : lds) {
+      if (ld.isAutolock()) { return ld; }
     }
     throw new AssertionError("Can't be an autolock and not have an autolock def:" //
                              + methodInfo.getName() + methodInfo.getSignature() + " className:" + className);
@@ -144,15 +144,15 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
   /**
    * returns null if no LockDefinitions exists that makes the method autolocked.
    */
-  public LockDefinition getAutoLockDefinition(LockDefinition lds[]) {
+  public LockDefinition getAutoLockDefinition(final LockDefinition lds[]) {
     if (lds == null) return null;
-    for (int i = 0; i < lds.length; i++) {
-      if (lds[i].isAutolock()) { return lds[i]; }
+    for (LockDefinition ld : lds) {
+      if (ld.isAutolock()) { return ld; }
     }
     return null;
   }
 
-  public LockDefinition getNonAutoLockDefinition(LockDefinition lds[]) {
+  public LockDefinition getNonAutoLockDefinition(final LockDefinition lds[]) {
     if (lds == null) return null;
     for (int i = 0; i < lds.length; i++) {
       if (!lds[i].isAutolock()) { return lds[i]; }
@@ -160,12 +160,12 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     return null;
   }
 
-  public TransparencyClassSpec addSupportMethodCreator(MethodCreator creator) {
+  public TransparencyClassSpec addSupportMethodCreator(final MethodCreator creator) {
     supportMethodCreators.add(creator);
     return this;
   }
 
-  public TransparencyClassSpec addDistributedMethodCall(String methodName, String description, boolean runOnAllNodes) {
+  public TransparencyClassSpec addDistributedMethodCall(final String methodName, final String description, final boolean runOnAllNodes) {
     if ("<init>".equals(methodName) || "<clinit>".equals(methodName)) { throw new AssertionError(
                                                                                                  "Initializers of class "
                                                                                                      + className
@@ -181,12 +181,12 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     return this;
   }
 
-  public TransparencyClassSpec addTransient(String variableName) {
+  public TransparencyClassSpec addTransient(final String variableName) {
     configuration.addTransient(className, variableName);
     return this;
   }
 
-  public TransparencyClassSpec addMethodAdapter(String method, MethodAdapter adapter) {
+  public TransparencyClassSpec addMethodAdapter(final String method, final MethodAdapter adapter) {
     methodAdapters.put(method, adapter);
     return this;
   }
@@ -195,7 +195,7 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     return className;
   }
 
-  public void createClassSupportMethods(ClassVisitor classVisitor) {
+  public void createClassSupportMethods(final ClassVisitor classVisitor) {
     for (Iterator i = supportMethodCreators.iterator(); i.hasNext();) {
       MethodCreator mc = (MethodCreator) i.next();
       mc.createMethods(classVisitor);
@@ -214,38 +214,42 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     return TransparencyClassSpecUtil.ignoreChecks(className);
   }
 
-  public boolean isRootInThisClass(FieldInfo fieldInfo) {
+  public boolean isRootInThisClass(final FieldInfo fieldInfo) {
     return configuration.isRoot(fieldInfo);
   }
 
-  public boolean isRoot(FieldInfo fieldInfo) {
+  public boolean isRoot(final FieldInfo fieldInfo) {
     return configuration.isRoot(fieldInfo);
   }
 
-  public boolean isRootDSOFinal(FieldInfo fieldInfo) {
+  public boolean isRootDSOFinal(final FieldInfo fieldInfo) {
     return configuration.isRootDSOFinal(fieldInfo);
   }
 
-  public boolean isTransient(int access, ClassInfo classInfo, String fieldName) {
+  public boolean isInjectedField(final String fieldName) {
+    return configuration.isInjectedField(className, fieldName);
+  }
+
+  public boolean isTransient(final int access, final ClassInfo classInfo, final String fieldName) {
     return configuration.isTransient(access, classInfo, fieldName);
   }
 
-  public boolean isVolatile(int access, ClassInfo classInfo, String fieldName) {
+  public boolean isVolatile(final int access, final ClassInfo classInfo, final String fieldName) {
     return configuration.isVolatile(access, classInfo, fieldName);
   }
 
-  public String rootNameFor(FieldInfo fieldInfo) {
+  public String rootNameFor(final FieldInfo fieldInfo) {
     return configuration.rootNameFor(fieldInfo);
   }
 
-  public boolean isLockMethod(MemberInfo memberInfo) {
+  public boolean isLockMethod(final MemberInfo memberInfo) {
     return configuration.isLockMethod(memberInfo);
   }
 
   /**
    * returns null if no LockDefinitions exists that makes the method locked.
    */
-  public LockDefinition getLockMethodLockDefinition(int access, LockDefinition lds[]) {
+  public LockDefinition getLockMethodLockDefinition(final int access, final LockDefinition lds[]) {
     if (lds == null) return null;
     for (int i = 0; i < lds.length; i++) {
       if ((lds[i].isAutolock() && Modifier.isSynchronized(access) && !Modifier.isStatic(access))
@@ -254,20 +258,20 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     return null;
   }
 
-  public boolean hasCustomMethodAdapter(MemberInfo memberInfo) {
+  public boolean hasCustomMethodAdapter(final MemberInfo memberInfo) {
     return memberInfo != null && getMethodAdapter(memberInfo) != null;
   }
 
-  public MethodAdapter customMethodAdapterFor(int access, String methodName,
-                                              String origMethodName, String description, String signature,
-                                              String[] exceptions, InstrumentationLogger logger, MemberInfo memberInfo) {
+  public MethodAdapter customMethodAdapterFor(final int access, final String methodName,
+                                              final String origMethodName, final String description, final String signature,
+                                              final String[] exceptions, final InstrumentationLogger logger, final MemberInfo memberInfo) {
     MethodAdapter ma = getMethodAdapter(memberInfo);
     ma.initialize(access, className, methodName, origMethodName, description, signature, exceptions,
                   logger, memberInfo);
     return ma;
   }
 
-  private MethodAdapter getMethodAdapter(MemberInfo memberInfo) {
+  private MethodAdapter getMethodAdapter(final MemberInfo memberInfo) {
     if (memberInfo == null) { return null; }
     DistributedMethodSpec dms = configuration.getDmiSpec(memberInfo);
     if (dms != null) { return new DistributedMethodCallAdapter(dms.runOnAllNodes()); }
@@ -282,7 +286,7 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     return this.logicalExtendingClassName;
   }
 
-  public void moveToLogical(TransparencyClassSpec superClassSpec) {
+  public void moveToLogical(final TransparencyClassSpec superClassSpec) {
     this.isLogical = true;
     String superClassLogicalExtendingClassName = superClassSpec.getLogicalExtendingClassName();
     if (superClassLogicalExtendingClassName == null) {
@@ -293,88 +297,88 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     this.logicalExtendingClassName = superClassLogicalExtendingClassName;
   }
 
-  public void addAlwaysLogSpec(String name) {
+  public void addAlwaysLogSpec(final String name) {
     methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.ALWAYS_LOG));
   }
 
-  public void addIfTrueLogSpec(String name) {
+  public void addIfTrueLogSpec(final String name) {
     methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.IF_TRUE_LOG));
   }
 
-  public void addSetIteratorWrapperSpec(String name) {
+  public void addSetIteratorWrapperSpec(final String name) {
     methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.SET_ITERATOR_WRAPPER_LOG));
   }
 
-  public void addViewSetWrapperSpec(String name) {
+  public void addViewSetWrapperSpec(final String name) {
     methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.SORTED_SET_VIEW_WRAPPER_LOG));
   }
 
-  public void addEntrySetWrapperSpec(String name) {
+  public void addEntrySetWrapperSpec(final String name) {
     methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.ENTRY_SET_WRAPPER_LOG));
   }
 
-  public void addKeySetWrapperSpec(String name) {
+  public void addKeySetWrapperSpec(final String name) {
     methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.KEY_SET_WRAPPER_LOG));
   }
 
-  public void addValuesWrapperSpec(String name) {
+  public void addValuesWrapperSpec(final String name) {
     methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.VALUES_WRAPPER_LOG));
   }
 
-  public void addHashMapPutLogSpec(String name) {
+  public void addHashMapPutLogSpec(final String name) {
     methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.HASHMAP_PUT_LOG));
   }
 
-  public void addHashtablePutLogSpec(String name) {
+  public void addHashtablePutLogSpec(final String name) {
     methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.HASHTABLE_PUT_LOG));
   }
 
-  public void addTHashMapPutLogSpec(String name) {
+  public void addTHashMapPutLogSpec(final String name) {
     methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.THASHMAP_PUT_LOG));
   }
 
-  public void addTObjectHashRemoveAtLogSpec(String name) {
+  public void addTObjectHashRemoveAtLogSpec(final String name) {
     methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.TOBJECTHASH_REMOVE_AT_LOG));
   }
 
-  public void addHashtableClearLogSpec(String name) {
+  public void addHashtableClearLogSpec(final String name) {
     methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.HASHTABLE_CLEAR_LOG));
   }
 
-  public void addHashtableRemoveLogSpec(String name) {
+  public void addHashtableRemoveLogSpec(final String name) {
     methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.HASHTABLE_REMOVE_LOG));
   }
 
-  public void addHashMapRemoveLogSpec(String name) {
+  public void addHashMapRemoveLogSpec(final String name) {
     methodAdapters.put(name, new LogicalMethodAdapter(name, MethodSpec.HASHMAP_REMOVE_LOG));
   }
 
-  public void addArrayCopyMethodCodeSpec(String name) {
+  public void addArrayCopyMethodCodeSpec(final String name) {
     TransparencyCodeSpec codeSpec = new TransparencyCodeSpecImpl();
     codeSpec.setArraycopyInstrumentationReq(true);
     codeSpec.setArrayOperatorInstrumentationReq(true);
     codeSpecs.put(name, codeSpec);
   }
 
-  public void disableWaitNotifyCodeSpec(String name) {
+  public void disableWaitNotifyCodeSpec(final String name) {
     TransparencyCodeSpec codeSpec = TransparencyCodeSpecImpl.getDefaultPhysicalCodeSpec();
     codeSpec.setWaitNotifyInstrumentationReq(false);
     codeSpecs.put(name, codeSpec);
   }
 
-  public void addDateMethodLogSpec(String name) {
+  public void addDateMethodLogSpec(final String name) {
     methodAdapters.put(name, new DateMethodAdapter(name, MethodSpec.DATE_ADD_SET_TIME_WRAPPER_LOG));
   }
 
-  public void addDateMethodLogSpec(String name, int methodSpec) {
+  public void addDateMethodLogSpec(final String name, final int methodSpec) {
     methodAdapters.put(name, new DateMethodAdapter(name, methodSpec));
   }
 
-  public void addMethodCodeSpec(String name, TransparencyCodeSpec codeSpec) {
+  public void addMethodCodeSpec(final String name, final TransparencyCodeSpec codeSpec) {
     codeSpecs.put(name, codeSpec);
   }
 
-  public TransparencyClassSpec setHonorVolatile(boolean b) {
+  public TransparencyClassSpec setHonorVolatile(final boolean b) {
     flags.put(HONOR_VOLATILE_KEY, new Boolean(b));
     return this;
   }
@@ -389,22 +393,22 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     return ((Boolean) flag).booleanValue();
   }
 
-  public TransparencyClassSpec setHonorTransient(boolean b) {
+  public TransparencyClassSpec setHonorTransient(final boolean b) {
     flags.put(HONOR_TRANSIENT_KEY, new Boolean(b));
     return this;
   }
 
-  public TransparencyClassSpec setCallConstructorOnLoad(boolean b) {
+  public TransparencyClassSpec setCallConstructorOnLoad(final boolean b) {
     onLoad.setToCallConstructorOnLoad(b);
     return this;
   }
 
-  public TransparencyClassSpec setExecuteScriptOnLoad(String script) {
+  public TransparencyClassSpec setExecuteScriptOnLoad(final String script) {
     onLoad.setExecuteScriptOnLoad(script);
     return this;
   }
 
-  public TransparencyClassSpec setCallMethodOnLoad(String method) {
+  public TransparencyClassSpec setCallMethodOnLoad(final String method) {
     onLoad.setMethodCallOnLoad(method);
     return this;
   }
@@ -429,7 +433,7 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     return flags.containsKey(HONOR_TRANSIENT_KEY);
   }
 
-  public TransparencyCodeSpec getCodeSpec(String methodName, String description, boolean isAutolock) {
+  public TransparencyCodeSpec getCodeSpec(final String methodName, final String description, final boolean isAutolock) {
     TransparencyCodeSpec spec = (TransparencyCodeSpec) codeSpecs.get(methodName + description);
     if (spec != null) { return spec; }
     if (defaultCodeSpec != null) { return defaultCodeSpec; }
@@ -456,11 +460,11 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     return this.useNonDefaultConstructor;
   }
 
-  public void setUseNonDefaultConstructor(boolean useNonDefaultConstructor) {
+  public void setUseNonDefaultConstructor(final boolean useNonDefaultConstructor) {
     this.useNonDefaultConstructor = useNonDefaultConstructor;
   }
 
-  public void setInstrumentationAction(byte action) {
+  public void setInstrumentationAction(final byte action) {
     this.instrumentationAction = action;
   }
 
@@ -472,7 +476,7 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     return honorJDKSubVersionSpecific;
   }
 
-  public void setHonorJDKSubVersionSpecific(boolean honorJDKSubVersionSpecific) {
+  public void setHonorJDKSubVersionSpecific(final boolean honorJDKSubVersionSpecific) {
     this.honorJDKSubVersionSpecific = honorJDKSubVersionSpecific;
   }
 
@@ -484,15 +488,15 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     return postCreateMethod;
   }
 
-  public void setPreCreateMethod(String preCreateMethod) {
+  public void setPreCreateMethod(final String preCreateMethod) {
     this.preCreateMethod = preCreateMethod;
   }
 
-  public void setPostCreateMethod(String postCreateMethod) {
+  public void setPostCreateMethod(final String postCreateMethod) {
     this.postCreateMethod = postCreateMethod;
   }
 
-  public void setCustomClassAdapter(ClassAdapterFactory customClassAdapter) {
+  public void setCustomClassAdapter(final ClassAdapterFactory customClassAdapter) {
     this.customClassAdapter = customClassAdapter;
   }
 
@@ -504,7 +508,7 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     return this.changeApplicatorClassName;
   }
 
-  public void setDefaultCodeSpec(TransparencyCodeSpec codeSpec) {
+  public void setDefaultCodeSpec(final TransparencyCodeSpec codeSpec) {
     this.defaultCodeSpec = codeSpec;
   }
 

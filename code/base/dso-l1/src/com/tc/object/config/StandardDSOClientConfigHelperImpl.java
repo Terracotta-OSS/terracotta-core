@@ -122,8 +122,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   private final List                                         roots                              = new CopyOnWriteArrayList();
   private final Set                                          transients                         = Collections
                                                                                                     .synchronizedSet(new HashSet());
-  private final Map<String, String>                          injectedFields                     = Collections
-                                                                                                    .synchronizedMap(new HashMap<String, String>());
+  private final Map<String, String>                          injectedFields                     = new ConcurrentHashMap<String, String>();
 
   private final Set                                          applicationNames                   = Collections
                                                                                                     .synchronizedSet(new HashSet());
@@ -620,6 +619,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   public boolean addClassConfigBasedAdapters(final ClassInfo classInfo) {
     boolean addedAdapters = false;
 
+    fields:
     for (FieldInfo fi : classInfo.getFields()) {
 
       if (Vm.isJDK15Compliant()) {
@@ -634,8 +634,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
         for (Annotation ann : annotations) {
           if ("com.tc.injection.annotations.InjectedDsoInstance".equals(ann.getInterfaceName())) {
+            addInjectedField(classInfo.getName(), fi.getName(), "");
             addFieldInjectionAdapter(classInfo, fi, "");
             addedAdapters = true;
+            continue fields;
           }
         }
       }
@@ -1640,7 +1642,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   public void addTransient(final String className, final String fieldName) {
-    if ((className == null) || (fieldName == null)) {
+    if (null == className || null == fieldName) {
       //
       throw new IllegalArgumentException("class " + className + ", field = " + fieldName);
     }
@@ -1648,7 +1650,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   public void addInjectedField(final String className, final String fieldName, final String instanceType) {
-    if ((className == null) || (fieldName == null)) { throw new IllegalArgumentException("class " + className
+    if (null == className || null == fieldName) { throw new IllegalArgumentException("class " + className
                                                                                          + ", field = " + fieldName); }
 
     final String fullyQualifiedFieldName = className + "." + fieldName;
@@ -1657,6 +1659,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     } else {
       injectedFields.put(fullyQualifiedFieldName, instanceType);
     }
+  }
+
+  public boolean isInjectedField(final String className, final String fieldName) {
+    if (null == className || null == fieldName) { throw new IllegalArgumentException("class " + className
+                                                                                         + ", field = " + fieldName); }
+
+    final String fullyQualifiedFieldName = className + "." + fieldName;
+    return injectedFields.containsKey(fullyQualifiedFieldName);
   }
 
   @Override

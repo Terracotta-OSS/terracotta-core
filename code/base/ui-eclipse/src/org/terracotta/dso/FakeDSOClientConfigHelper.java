@@ -460,11 +460,15 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     return null;
   }
 
-  public void addToAppGroup(String appGroup, String[] namedClassloaders, String[] webAppNames) {
+  public void addToAppGroup(final String appGroup, final String[] namedClassloaders, final String[] webAppNames) {
     //
   }
 
-  public String getAppGroup(String classLoaderName, String appName) {
+  public String getAppGroup(final String classLoaderName, final String appName) {
     return null;
+  }
+
+  public boolean isInjectedField(final String className, final String fieldName) {
+    return false;
   }
 }
