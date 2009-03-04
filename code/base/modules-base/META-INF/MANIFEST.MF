@@ -10,4 +10,4 @@ Bundle-SymbolicName: org.terracotta.modules.modules-base
 Bundle-Vendor: Terracotta, Inc.
 Bundle-Version: 1.0.0.SNAPSHOT
 Export-Package: org.terracotta.modules.configuration
-Terracotta-RequireVersion: 3.0.0.SNAPSHOT
+Terracotta-RequireVersion: 3.1.0.SNAPSHOT

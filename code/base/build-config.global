@@ -36,7 +36,7 @@ tc.tests.configuration.appserver.repository=http://download.terracotta.org/appse
 
 #tc.tests.configuration.appserver.home=C:/tomcat-5.5.23
 
-maven.version=3.0.0-SNAPSHOT
+maven.version=3.1.0-SNAPSHOT
 maven.snapshot=true
 
 # the API version is specified for our -api Maven artifacts 
@@ -46,4 +46,4 @@ maven.snapshot=true
 #   - 1st - breaking change in the API, coincident with change in 1st digit of maven.version
 #   - 2nd - breaking change in the API, coincident with change in 2nd or 3rd digit of maven.version
 #   - 3rd - major or minor Terracotta release without breaking change
-api.version=1.0.0-SNAPSHOT
+api.version=1.1.0-SNAPSHOT
