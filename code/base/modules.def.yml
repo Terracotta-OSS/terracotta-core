@@ -675,6 +675,8 @@ modules:
 
 # these groups are used by the monkeys to run tests in each module.
 module-groups:
+  license:
+    - license-common
   reflector:
     - reflector-test
   container:
@@ -695,13 +697,13 @@ module-groups:
     - dso-l2
     - deploy
     - simulator   
-    - legacy-test-tree    
+    - dso-tests-jdk15
+    - dso-crash-tests
   dso2:
+    - legacy-test-tree  
     - examples
     - dso-system-tests
     - dso-alt-boot-jar-tests
-    - dso-tests-jdk15
-    - dso-crash-tests
     - dso-statistics
     - dso-statistics-tests
     - management
