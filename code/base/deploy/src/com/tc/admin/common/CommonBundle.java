@@ -17,6 +17,9 @@ public class CommonBundle extends ListResourceBundle {
         { "back.link.text", "<< Back" }, { "connect.elipses", "Connect..." }, { "disconnect", "Disconnect" },
         { "next", "Next" }, { "previous", "Previous" }, { "refresh", "Refresh" },
         { "options.dialog.title", "Options" }, { "node.environment", "Environment" },
-        { "node.logging.settings", "Logging Settings" }, { "node.config", "Config" }, { "node.main", "Main" } };
+        { "node.logging.settings", "Logging Settings" }, { "node.config", "Config" }, { "node.main", "Main" },
+        { "copyright", "Copyright Terracotta, Inc. All rights reserved." }, 
+        { "about.prefix", "About "},
+        { "system.info", "System Information"}, };
   }
 }
