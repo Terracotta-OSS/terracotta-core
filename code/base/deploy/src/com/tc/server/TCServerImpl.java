@@ -180,7 +180,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   public String getDescriptionOfCapabilities() {
-    return AbstractLicenseResolverFactory.getCapabilities().toString();
+    return AbstractLicenseResolverFactory.getCapabilities().getLicensedCapabilitiesAsString();
   }
 
   /**
