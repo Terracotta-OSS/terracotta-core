@@ -13,6 +13,8 @@ import com.tc.admin.common.XTextField;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -23,9 +25,12 @@ import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JTextField;
+import javax.swing.JViewport;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultEditorKit;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
@@ -303,11 +308,27 @@ public class SearchPanel extends XContainer {
 
     if (index != -1) {
       fTextComponent.select(index, index + searchText.length());
+      centerSelection(fTextComponent);
       if (!fTextComponent.isFocusOwner()) {
         fTextComponent.requestFocusInWindow();
       }
     } else {
       Toolkit.getDefaultToolkit().beep();
+    }
+  }
+
+  private static void centerSelection(JTextComponent textComponent) {
+    JViewport viewport = (JViewport) SwingUtilities.getAncestorOfClass(JViewport.class, textComponent);
+    if (viewport != null) {
+      try {
+        Rectangle r = textComponent.modelToView(textComponent.getCaretPosition());
+        int extentHeight = viewport.getExtentSize().height;
+        int viewHeight = viewport.getViewSize().height;
+        int y = Math.max(0, r.y - (extentHeight / 2));
+        y = Math.min(y, viewHeight - extentHeight);
+        viewport.setViewPosition(new Point(0, y));
+      } catch (BadLocationException ble) {/**/
+      }
     }
   }
 }
