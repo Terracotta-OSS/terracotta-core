@@ -34,5 +34,5 @@ set TC_CONFIG_PATH=tc-config.xml
 call %TC_INSTALL_DIR%\bin\dso-env.bat -q "%TC_CONFIG%"
 set OPTS=%TC_JAVA_OPTS% -Djava.awt.Window.locationByPlatform=true
 set JAVA_OPTS=%OPTS% %JAVA_OPTS%
-start "chatter" /B %JAVA_HOME%\bin\java %JAVA_OPTS% -cp classes demo.chatter.Main %*
+start "chatter" %JAVA_HOME%\bin\java %JAVA_OPTS% -cp classes demo.chatter.Main %*
 endlocal
