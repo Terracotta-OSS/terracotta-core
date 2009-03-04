@@ -2,32 +2,28 @@
  * All content copyright (c) 2003-2009 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tc.cluster;
+package com.tcclient.cluster;
 
-import com.tc.net.NodeID;
-import com.tc.util.Assert;
+import com.tc.object.bytecode.ManagerUtil;
 
-public class DsoNodeImpl implements DsoNodeInternal {
+public class DsoNodeImpl implements DsoNodeInternal, Comparable {
 
-  private final transient DsoClusterImpl cluster;
+  private final String             id;
+  private final long               channelId;
 
-  private final NodeID                   id;
+  private volatile DsoNodeMetaData metaData;
 
-  private volatile DsoNodeMetaData       metaData;
-
-  public DsoNodeImpl(final DsoClusterImpl cluster, final NodeID id) {
-    Assert.assertNotNull(cluster);
-    Assert.assertNotNull(id);
-    this.cluster = cluster;
+  public DsoNodeImpl(final String id, final long channelId) {
     this.id = id;
+    this.channelId = channelId;
   }
 
   public String getId() {
-    return id.toString();
+    return id;
   }
 
-  public NodeID getNodeID() {
-    return id;
+  public long getChannelId() {
+    return channelId;
   }
 
   public String getIp() {
@@ -40,7 +36,7 @@ public class DsoNodeImpl implements DsoNodeInternal {
 
   private DsoNodeMetaData getOrRetrieveMetaData() {
     if (metaData != null) { return metaData; }
-    return cluster.retrieveMetaDataForDsoNode(this);
+    return ((DsoClusterInternal) ManagerUtil.getManager().getDsoCluster()).retrieveMetaDataForDsoNode(this);
   }
 
   public void setMetaData(final DsoNodeMetaData metaData) {
@@ -68,5 +64,9 @@ public class DsoNodeImpl implements DsoNodeInternal {
     } else {
       return id.equals(other.id);
     }
+  }
+
+  public int compareTo(final Object o) {
+    return id.compareTo(((DsoNodeImpl)o).id);
   }
 }

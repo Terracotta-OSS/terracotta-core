@@ -65,6 +65,9 @@
           <class-expression>demo.chatter.User</class-expression>
           <honor-transient>true</honor-transient>
         </include>
+        <include>
+          <class-expression>demo.chatter.Main</class-expression>
+        </include>
       </instrumented-classes>
       <!--This section makes it so that calls made to this method from any instance of the app
            also happen across all instances of the app at the time of the call.-->
@@ -86,6 +89,11 @@
           <method-expression>* demo.chatter.ChatManager.*(..)</method-expression>
         </autolock>
       </locks>
+	  <injected-instances>      
+	      <injected-field> 
+	         <field-name>demo.chatter.Main.cluster</field-name> 
+	      </injected-field>
+	  </injected-instances> 
     </dso>
   </application>
 </tc:tc-config>

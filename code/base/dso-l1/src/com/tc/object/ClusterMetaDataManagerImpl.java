@@ -4,9 +4,9 @@
  */
 package com.tc.object;
 
-import com.tc.cluster.DsoNodeInternal;
-import com.tc.cluster.DsoNodeMetaData;
+import com.tc.net.ClientID;
 import com.tc.net.NodeID;
+import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.msg.ClusterMetaDataMessage;
@@ -18,6 +18,8 @@ import com.tc.object.msg.NodesWithObjectsMessage;
 import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.util.Assert;
 import com.tc.util.runtime.ThreadIDManager;
+import com.tcclient.cluster.DsoNodeInternal;
+import com.tcclient.cluster.DsoNodeMetaData;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -91,7 +93,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
 
   public DsoNodeMetaData retrieveMetaDataForDsoNode(final DsoNodeInternal node) {
     final NodeMetaDataMessage message = nmdmFactory.newNodeMetaDataMessage();
-    message.setNodeID(node.getNodeID());
+    message.setNodeID(new ClientID(new ChannelID(node.getChannelId())));
     DsoNodeMetaData metaData = (DsoNodeMetaData) sendMessageAndWait(message);
     node.setMetaData(metaData);
     return metaData;

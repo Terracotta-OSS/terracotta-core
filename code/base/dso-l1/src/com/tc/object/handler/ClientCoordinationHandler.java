@@ -8,12 +8,12 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.EventHandlerException;
-import com.tc.cluster.DsoClusterInternal;
 import com.tc.object.ClientConfigurationContext;
 import com.tc.object.context.PauseContext;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.ClusterMembershipMessage;
+import com.tcclient.cluster.DsoClusterInternal;
 
 public class ClientCoordinationHandler extends AbstractEventHandler {
 

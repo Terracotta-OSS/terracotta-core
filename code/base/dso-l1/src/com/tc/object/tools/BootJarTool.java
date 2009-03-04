@@ -167,6 +167,10 @@ import com.tc.util.runtime.UnknownJvmVersionException;
 import com.tc.util.runtime.UnknownRuntimeVersionException;
 import com.tc.util.runtime.Vm;
 import com.tc.util.runtime.VmVersion;
+import com.tcclient.cluster.DsoClusterInternal;
+import com.tcclient.cluster.DsoNodeImpl;
+import com.tcclient.cluster.DsoNodeInternal;
+import com.tcclient.cluster.DsoNodeMetaData;
 import com.tcclient.util.HashtableEntrySetWrapper;
 import com.tcclient.util.MapEntrySetWrapper;
 
@@ -514,10 +518,28 @@ public class BootJarTool {
 
       // cluster meta data and cluster events classes
       loadTerracottaClass(DsoCluster.class.getName());
+      loadTerracottaClass(DsoClusterInternal.class.getName());
       loadTerracottaClass(DsoClusterEvent.class.getName());
       loadTerracottaClass(DsoClusterListener.class.getName());
       loadTerracottaClass(DsoClusterTopology.class.getName());
       loadTerracottaClass(DsoNode.class.getName());
+      loadTerracottaClass(DsoNodeInternal.class.getName());
+      {
+        TransparencyClassSpec spec = configHelper.getOrCreateSpec(DsoNodeImpl.class.getName());
+        spec.markPreInstrumented();
+        spec.setHonorTransient(true);
+        byte[] bytes = getTerracottaBytes(spec.getClassName());
+        bytes = doDSOTransform(spec.getClassName(), bytes);
+        loadClassIntoJar(spec.getClassName(), bytes, spec.isPreInstrumented());
+      }
+      {
+        TransparencyClassSpec spec = configHelper.getOrCreateSpec(DsoNodeMetaData.class.getName());
+        spec.markPreInstrumented();
+        spec.setHonorTransient(true);
+        byte[] bytes = getTerracottaBytes(spec.getClassName());
+        bytes = doDSOTransform(spec.getClassName(), bytes);
+        loadClassIntoJar(spec.getClassName(), bytes, spec.isPreInstrumented());
+      }
       loadTerracottaClass(InjectedDsoInstance.class.getName());
       loadTerracottaClass(ClusteredListenerException.class.getName());
       loadTerracottaClass(UnclusteredObjectException.class.getName());

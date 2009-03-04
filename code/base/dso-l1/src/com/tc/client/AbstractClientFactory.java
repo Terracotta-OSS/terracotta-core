@@ -4,7 +4,6 @@
  */
 package com.tc.client;
 
-import com.tc.cluster.DsoClusterInternal;
 import com.tc.lang.TCThreadGroup;
 import com.tc.object.DistributedObjectClient;
 import com.tc.object.bytecode.Manager;
@@ -13,6 +12,7 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.util.factory.AbstractFactory;
+import com.tcclient.cluster.DsoClusterInternal;
 
 public abstract class AbstractClientFactory extends AbstractFactory {
   private static String FACTORY_SERVICE_ID            = "com.tc.client.ClientFactory";

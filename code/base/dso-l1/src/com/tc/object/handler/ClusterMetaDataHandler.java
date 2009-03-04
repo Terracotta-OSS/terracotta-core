@@ -7,7 +7,6 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.bytes.TCByteBufferFactory;
-import com.tc.cluster.DsoNodeMetaData;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCDataInput;
 import com.tc.object.ClientConfigurationContext;
@@ -16,6 +15,7 @@ import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.msg.KeysForOrphanedValuesResponseMessage;
 import com.tc.object.msg.NodeMetaDataResponseMessage;
 import com.tc.object.msg.NodesWithObjectsResponseMessage;
+import com.tcclient.cluster.DsoNodeMetaData;
 
 import java.util.HashSet;
 import java.util.Set;

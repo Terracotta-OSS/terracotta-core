@@ -5,7 +5,6 @@
 package com.tc.object.handshakemanager;
 
 import com.tc.async.api.Sink;
-import com.tc.cluster.DsoClusterInternal;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
@@ -23,6 +22,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.State;
 import com.tc.util.Util;
+import com.tcclient.cluster.DsoClusterInternal;
 
 import java.util.Collection;
 import java.util.HashMap;

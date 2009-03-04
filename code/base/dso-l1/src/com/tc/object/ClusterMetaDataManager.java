@@ -4,11 +4,11 @@
  */
 package com.tc.object;
 
-import com.tc.cluster.DsoNodeInternal;
-import com.tc.cluster.DsoNodeMetaData;
 import com.tc.net.NodeID;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.lockmanager.api.ThreadID;
+import com.tcclient.cluster.DsoNodeInternal;
+import com.tcclient.cluster.DsoNodeMetaData;
 
 import java.util.Collection;
 import java.util.Map;

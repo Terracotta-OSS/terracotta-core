@@ -8,13 +8,18 @@ import com.tc.cluster.exceptions.ClusteredListenerException;
 import com.tc.cluster.exceptions.UnclusteredObjectException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.ClientID;
 import com.tc.net.NodeID;
+import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ClusterMetaDataManager;
 import com.tc.object.ObjectID;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.TCMap;
 import com.tc.util.Assert;
+import com.tcclient.cluster.DsoClusterInternal;
+import com.tcclient.cluster.DsoNodeInternal;
+import com.tcclient.cluster.DsoNodeMetaData;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -33,7 +38,7 @@ public class DsoClusterImpl implements DsoClusterInternal {
 
   private volatile DsoNodeInternal               currentNode;
 
-  private final DsoClusterTopologyImpl           topology             = new DsoClusterTopologyImpl(this);
+  private final DsoClusterTopologyImpl           topology             = new DsoClusterTopologyImpl();
   private final List<DsoClusterListener>         listeners            = new CopyOnWriteArrayList<DsoClusterListener>();
 
   private final ReentrantReadWriteLock           stateLock            = new ReentrantReadWriteLock();
@@ -294,7 +299,7 @@ public class DsoClusterImpl implements DsoClusterInternal {
       stateWriteLock.unlock();
     }
 
-    fireNodeLeft(currentNode.getNodeID());
+    fireNodeLeft(new ClientID(new ChannelID(currentNode.getChannelId())));
   }
 
   public void fireNodeJoined(final NodeID nodeId) {

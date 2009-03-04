@@ -4,7 +4,6 @@
  */
 package com.tc.client;
 
-import com.tc.cluster.DsoClusterInternal;
 import com.tc.lang.TCThreadGroup;
 import com.tc.object.DistributedObjectClient;
 import com.tc.object.bytecode.Manager;
@@ -12,6 +11,7 @@ import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.logging.RuntimeLogger;
+import com.tcclient.cluster.DsoClusterInternal;
 
 public class StandardClientFactory extends AbstractClientFactory {
 

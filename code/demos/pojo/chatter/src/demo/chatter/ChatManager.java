@@ -3,6 +3,9 @@
  */
 package demo.chatter;
 
+import com.tc.cluster.DsoClusterTopology;
+import com.tc.cluster.DsoNode;
+
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -13,11 +16,11 @@ import java.util.TreeMap;
  */
 class ChatManager {
 
-  private final Map<String, User>         users;
+  private final Map<DsoNode, User>        users;
   private volatile transient ChatListener listener;
 
   public ChatManager() {
-    this.users = new TreeMap<String, User>();
+    this.users = new TreeMap<DsoNode, User>();
     init();
   }
 
@@ -31,51 +34,51 @@ class ChatManager {
     }
   }
 
-  public void send(Message msg) {
+  public void send(final Message msg) {
     sendNewMessageEvent(msg);
   }
 
-  public void registerUser(User user) {
+  public void registerUser(final User user) {
     synchronized (users) {
-      users.put(user.getNodeId(), user);
+      users.put(user.getNode(), user);
     }
     sendNewUserEvent(user.getName());
   }
 
-  public void removeUser(String nodeId) {
+  public void removeUser(final DsoNode node) {
     synchronized (users) {
-      users.remove(nodeId);
+      users.remove(node);
     }
   }
 
   /**
-   * Normally the user list is maintained via JMX notifications received in each node. This method will ensure that the
+   * Normally the user list is maintained via cluster events received in each node. This method will ensure that the
    * list is consistent even if all clients crash simultaneously
    */
-  public void retainNodes(NodeListProvider listProvider) {
+  public void retainNodes(final DsoClusterTopology topology) {
     synchronized (users) {
-      users.keySet().retainAll(listProvider.getNodeList());
+      users.keySet().retainAll(topology.getNodes());
     }
   }
 
-  private void sendNewUserEvent(String username) {
+  private void sendNewUserEvent(final String username) {
     this.listener.newUser(username);
   }
 
-  private void sendNewMessageEvent(Message message) {
+  private void sendNewMessageEvent(final Message message) {
     this.listener.newMessage(message);
   }
 
-  public void setLocalListener(ChatListener listener) {
+  public void setLocalListener(final ChatListener listener) {
     this.listener = listener;
   }
 
   private static class NullChatListener implements ChatListener {
-    public void newMessage(Message message) {
+    public void newMessage(final Message message) {
       //
     }
 
-    public void newUser(String username) {
+    public void newUser(final String username) {
       //
     }
   }

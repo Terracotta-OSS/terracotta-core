@@ -12,7 +12,6 @@ import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
-import com.tc.cluster.DsoClusterInternal;
 import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.handler.CallbackDumpAdapter;
@@ -158,6 +157,7 @@ import com.tc.util.sequence.BatchSequence;
 import com.tc.util.sequence.BatchSequenceReceiver;
 import com.tc.util.sequence.Sequence;
 import com.tc.util.sequence.SimpleSequence;
+import com.tcclient.cluster.DsoClusterInternal;
 
 import java.io.IOException;
 import java.net.ConnectException;
