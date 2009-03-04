@@ -56,7 +56,7 @@ module BundledDemos
               File.delete('DO-NOT-PRE-COMPILE')
             else
               ant_script = @static_resources.ant_script
-              if @build_environment
+              if ENV['OS'] =~ /Windows/i
                 ant_script += ".bat"
                 ant_script.gsub!(/\\/, "/")
               end
