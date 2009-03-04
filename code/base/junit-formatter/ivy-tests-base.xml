@@ -6,13 +6,8 @@
   </configurations>
   <dependencies>
     <dependency name="ant" rev="1.7.1" org="terracotta" conf="compile->default"/>
-    <dependency name="ant" rev="junit-1.7.1" org="terracotta" conf="compile->default"/>
+    <dependency name="ant-junit" rev="1.7.1" org="terracotta" conf="compile->default"/>
     <dependency name="junit" rev="3.8.1" conf="compile->default"/>
   </dependencies>
   
-  <conflicts>
-    <!-- this will prevent ivy from being dumb and evicting the
-         ant-junit dependency -->
-    <manager name="all"/>
-  </conflicts>
 </ivy-module>

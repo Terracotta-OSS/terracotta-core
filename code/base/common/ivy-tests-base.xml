@@ -6,16 +6,11 @@
     <dependency name="linked-child-process" rev="1.0.2" org="org.terracotta"/>
     <dependency name="native-tool" rev="1.0.0-SNAPSHOT" org="org.terracotta"/>
     <dependency name="ant" rev="1.7.1" org="terracotta"/>
-    <dependency name="ant" rev="launcher-1.7.1" org="terracotta"/>
-    <dependency name="ant" rev="junit-1.7.1" org="terracotta"/>
+    <dependency name="ant-launcher" rev="1.7.1" org="terracotta"/>
+    <dependency name="ant-junit" rev="1.7.1" org="terracotta"/>
     <dependency name="junit" rev="3.8.1"/>
     <dependency name="junit-addons" rev="1.4"/>
     <dependency name="hsqldb" rev="1.7.2.2"/>
   </dependencies>
   
-  <conflicts>
-    <!-- this will prevent ivy from being dumb and evicting the
-         ant-junit dependency -->
-    <manager name="all"/>
-  </conflicts>
 </ivy-module>

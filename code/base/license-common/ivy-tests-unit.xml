@@ -6,9 +6,4 @@
     <dependency name="junit" rev="3.8.1"/>
   </dependencies>
   
-  <conflicts>
-    <!-- this will prevent ivy from being dumb and evicting the
-         ant-junit dependency -->
-    <manager name="all"/>
-  </conflicts>
 </ivy-module>
