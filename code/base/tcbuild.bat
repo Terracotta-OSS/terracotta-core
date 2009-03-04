@@ -20,7 +20,7 @@ set build_system_dir=%CD%
 cd %old_CD%
 set cache_dir=c:\temp\tc
 set JRUBY_HOME=%cache_dir%\%jruby_version%
-set extra_jruby_cp=%CLASSPATH%
+set extra_jruby_cp=
 FOR %%F IN (%build_system_dir%\jruby-lib\*.jar) DO (
   SET extra_jruby_cp=!extra_jruby_cp!;%%F%
 )
