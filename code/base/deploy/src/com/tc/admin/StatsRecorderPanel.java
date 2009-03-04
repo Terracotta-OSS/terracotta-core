@@ -303,6 +303,8 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
         removeAll();
         messageLabel.setText(NOT_READY_MESSAGE);
         add(messagePanel);
+        revalidate();
+        repaint();
       }
     }
 
@@ -464,6 +466,8 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
         setupStatsConfigPanel(supportedStats);
         removeAll();
         add(mainPanel);
+        revalidate();
+        repaint();
       }
     }
   }

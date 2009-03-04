@@ -1366,8 +1366,8 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
         lockProfilerTraceDepth = -1;
         firePropertyChange(PROP_LOCK_STATS_TRACE_DEPTH, oldTraceDepth, getLockProfilerTraceDepth());
       } else if (type.equals(LockStatisticsMonitorMBean.TRACES_ENABLED)) {
-        boolean oldLockStatsEnabled = lockProfilingEnabled.booleanValue();
-        lockProfilingEnabled = null;
+        boolean oldLockStatsEnabled = lockProfilingEnabled != null ? lockProfilingEnabled.booleanValue() : false;
+        lockProfilingEnabled = null; 
         firePropertyChange(PROP_LOCK_STATS_ENABLED, oldLockStatsEnabled, isLockProfilingEnabled());
       }
     }
