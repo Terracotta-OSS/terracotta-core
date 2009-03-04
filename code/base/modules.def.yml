@@ -675,8 +675,6 @@ modules:
 
 # these groups are used by the monkeys to run tests in each module.
 module-groups:
-  license:
-    - license-common
   reflector:
     - reflector-test
   container:
@@ -708,15 +706,3 @@ module-groups:
     - dso-statistics-tests
     - management
     - dso-memory-datastore
-  framework:
-    - excludes-config
-    - guimodels-config
-    - jdk15-preinst-config
-    - spring-config
-    - standard-config
-    - modules-base
-  gui:
-    - ui-configurator
-    - ui-eclipse
-    - ui-eclipse-33
-    - ui-eclipse-34
