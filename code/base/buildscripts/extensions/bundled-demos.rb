@@ -57,7 +57,8 @@ module BundledDemos
             else
               ant_script = @static_resources.ant_script
               ant_script += ".bat" unless @build_environment.is_unix_like?
-              ant.exec(:executable => ant_script, :dir => Dir.getwd)
+              system(ant_script)
+              fail("Error running ant in #{Dir.getwd}") unless $? == 0
             end
           rescue AntBuildScriptError => error
             fail "There was a problem compiling the demo `#{name}/#{entry}';\n#{error.message}"
