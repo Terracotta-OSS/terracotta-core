@@ -35,6 +35,7 @@ import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
+import com.tc.util.StringUtil;
 import com.tc.util.Util;
 
 import java.io.PrintWriter;
@@ -286,17 +287,21 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
   }
 
   private String getIllegalMonitorStateExceptionMessage() {
-    StringBuffer errorMsg = new StringBuffer("An IllegalStateMonitor is usually caused by one of the following:");
-    errorMsg.append("\n");
+    StringBuffer errorMsg = new StringBuffer("An IllegalMonitorStateException is usually caused by one of the following:");
+    errorMsg.append(StringUtil.LINE_SEPARATOR);
     errorMsg.append("1) No synchronization");
-    errorMsg.append("\n");
+    errorMsg.append(StringUtil.LINE_SEPARATOR);
     errorMsg.append("2) The object synchronized is not the same as the object waited/notified");
-    errorMsg.append("\n");
+    errorMsg.append(StringUtil.LINE_SEPARATOR);
     errorMsg
         .append("3) The object being waited/notified on is a Terracotta distributed object, but no Terracotta auto-lock has been specified.");
-    errorMsg.append("\n\n");
+    errorMsg.append(StringUtil.LINE_SEPARATOR);
+    errorMsg.append("4) Read-level or named locks are being used where write-level locks or autolocks are necessary.");
+    errorMsg.append(StringUtil.LINE_SEPARATOR);
+    errorMsg.append("5) A lock has been specified but was applied to an object before that object was shared.");
+    errorMsg.append(StringUtil.LINE_SEPARATOR).append(StringUtil.LINE_SEPARATOR);
     errorMsg.append("For more information on this issue, please visit our Troubleshooting Guide at:");
-    errorMsg.append("\n");
+    errorMsg.append(StringUtil.LINE_SEPARATOR);
     errorMsg.append("http://terracotta.org/kit/troubleshooting");
 
     return Util.getFormattedMessage(errorMsg.toString());
