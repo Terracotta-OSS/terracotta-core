@@ -157,14 +157,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   /**
    * A map of class names to TransparencyClassSpec
-   * 
+   *
    * @GuardedBy {@link #specLock}
    */
   private final Map                                          userDefinedBootSpecs               = new HashMap();
 
   /**
    * A map of class names to TransparencyClassSpec for individual classes
-   * 
+   *
    * @GuardedBy {@link #specLock}
    */
   private final Map                                          classSpecs                         = new HashMap();
@@ -1557,7 +1557,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   private void scanForMissingClassesDeclaredInConfig(final BootJar bootJar) throws BootJarException, IOException {
-    int missingCount = 0;
     int preInstrumentedCount = 0;
     Set preinstClasses = bootJar.getAllPreInstrumentedClasses();
     int bootJarPopulation = preinstClasses.size();
