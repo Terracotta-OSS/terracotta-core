@@ -29,7 +29,6 @@ import com.tc.cluster.DsoCluster;
 import com.tc.cluster.DsoClusterEvent;
 import com.tc.cluster.DsoClusterListener;
 import com.tc.cluster.DsoClusterTopology;
-import com.tc.cluster.DsoNode;
 import com.tc.cluster.exceptions.ClusteredListenerException;
 import com.tc.cluster.exceptions.UnclusteredObjectException;
 import com.tc.config.Directories;
@@ -168,6 +167,7 @@ import com.tc.util.runtime.UnknownRuntimeVersionException;
 import com.tc.util.runtime.Vm;
 import com.tc.util.runtime.VmVersion;
 import com.tcclient.cluster.DsoClusterInternal;
+import com.tcclient.cluster.DsoNode;
 import com.tcclient.cluster.DsoNodeImpl;
 import com.tcclient.cluster.DsoNodeInternal;
 import com.tcclient.cluster.DsoNodeMetaData;
@@ -516,35 +516,6 @@ public class BootJarTool {
       loadTerracottaClass(CompressedData.class.getName());
       loadTerracottaClass(TCByteArrayOutputStream.class.getName());
 
-      // cluster meta data and cluster events classes
-      loadTerracottaClass(DsoCluster.class.getName());
-      loadTerracottaClass(DsoClusterInternal.class.getName());
-      loadTerracottaClass(DsoClusterEvent.class.getName());
-      loadTerracottaClass(DsoClusterListener.class.getName());
-      loadTerracottaClass(DsoClusterTopology.class.getName());
-      loadTerracottaClass(DsoNode.class.getName());
-      loadTerracottaClass(DsoNodeInternal.class.getName());
-      {
-        TransparencyClassSpec spec = configHelper.getOrCreateSpec(DsoNodeImpl.class.getName());
-        spec.markPreInstrumented();
-        spec.setHonorTransient(true);
-        byte[] bytes = getTerracottaBytes(spec.getClassName());
-        bytes = doDSOTransform(spec.getClassName(), bytes);
-        loadClassIntoJar(spec.getClassName(), bytes, spec.isPreInstrumented());
-      }
-      {
-        TransparencyClassSpec spec = configHelper.getOrCreateSpec(DsoNodeMetaData.class.getName());
-        spec.markPreInstrumented();
-        spec.setHonorTransient(true);
-        byte[] bytes = getTerracottaBytes(spec.getClassName());
-        bytes = doDSOTransform(spec.getClassName(), bytes);
-        loadClassIntoJar(spec.getClassName(), bytes, spec.isPreInstrumented());
-      }
-      loadTerracottaClass(InjectedDsoInstance.class.getName());
-      loadTerracottaClass(ClusteredListenerException.class.getName());
-      loadTerracottaClass(UnclusteredObjectException.class.getName());
-      loadTerracottaClass(UnsupportedInjectedDsoInstanceTypeException.class.getName());
-
       // These classes need to be specified as literal in order to prevent
       // the static block of IdentityWeakHashMap from executing during generating
       // the boot jar.
@@ -583,6 +554,8 @@ public class BootJarTool {
       addTreeMap();
       addObjectStreamClass();
 
+      addClusterEventsAndMetaDataClasses();
+
       addIBMSpecific();
 
       Map internalSpecs = getTCSpecs();
@@ -612,6 +585,37 @@ public class BootJarTool {
     } catch (BootJarHandlerException e) {
       exit(e.getMessage(), e.getCause());
     }
+  }
+
+  private void addClusterEventsAndMetaDataClasses() {
+    loadTerracottaClass(DsoCluster.class.getName());
+    loadTerracottaClass(DsoClusterInternal.class.getName());
+    loadTerracottaClass(DsoClusterEvent.class.getName());
+    loadTerracottaClass(DsoClusterListener.class.getName());
+    loadTerracottaClass(DsoClusterTopology.class.getName());
+    loadTerracottaClass(DsoNode.class.getName());
+    loadTerracottaClass(DsoNodeInternal.class.getName());
+    {
+      TransparencyClassSpec spec = configHelper.getOrCreateSpec(DsoNodeImpl.class.getName());
+      spec.markPreInstrumented();
+      spec.setHonorTransient(true);
+      spec.setHonorVolatile(true);
+      byte[] bytes = getTerracottaBytes(spec.getClassName());
+      bytes = doDSOTransform(spec.getClassName(), bytes);
+      loadClassIntoJar(spec.getClassName(), bytes, spec.isPreInstrumented());
+    }
+    {
+      TransparencyClassSpec spec = configHelper.getOrCreateSpec(DsoNodeMetaData.class.getName());
+      spec.markPreInstrumented();
+      spec.setHonorTransient(true);
+      byte[] bytes = getTerracottaBytes(spec.getClassName());
+      bytes = doDSOTransform(spec.getClassName(), bytes);
+      loadClassIntoJar(spec.getClassName(), bytes, spec.isPreInstrumented());
+    }
+    loadTerracottaClass(InjectedDsoInstance.class.getName());
+    loadTerracottaClass(ClusteredListenerException.class.getName());
+    loadTerracottaClass(UnclusteredObjectException.class.getName());
+    loadTerracottaClass(UnsupportedInjectedDsoInstanceTypeException.class.getName());
   }
 
   private void addObjectStreamClass() {

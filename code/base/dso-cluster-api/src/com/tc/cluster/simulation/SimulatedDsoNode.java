@@ -3,7 +3,7 @@
  */
 package com.tc.cluster.simulation;
 
-import com.tc.cluster.DsoNode;
+import com.tcclient.cluster.DsoNode;
 
 class SimulatedDsoNode implements DsoNode {
 

@@ -4,7 +4,7 @@
 package demo.chatter;
 
 import com.tc.cluster.DsoClusterTopology;
-import com.tc.cluster.DsoNode;
+import com.tcclient.cluster.DsoNode;
 
 import java.util.Map;
 import java.util.TreeMap;

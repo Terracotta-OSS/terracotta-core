@@ -4,6 +4,8 @@
  */
 package com.tc.cluster;
 
+import com.tcclient.cluster.DsoNode;
+
 import java.util.Collection;
 
 public interface DsoClusterTopology {

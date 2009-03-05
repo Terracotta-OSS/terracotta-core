@@ -4,6 +4,8 @@
  */
 package com.tc.cluster;
 
+import com.tcclient.cluster.DsoNode;
+
 public interface DsoClusterEvent {
   public DsoNode getNode();
 }

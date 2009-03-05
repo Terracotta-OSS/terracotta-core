@@ -141,9 +141,11 @@ function renderJobs(wq)
          errmsg = "Click the <b>Start</b> button to populate the queue";
       else
       {
-         errmsg = "There are " + (wq.childNodes.length) + " jobs in the queue";
-         if (wq.childNodes.length > maxshown) 
-            errmsg += " (" + (wq.childNodes.length - maxshown) + " is not shown)";
+    	 var jobCount = wq.childNodes.length;
+         errmsg = "There " + (1 == jobCount ? "is " : "are ") + (jobCount) + (1 == jobCount ? " job" : " jobs") + " in the queue";
+         var notShownCount = wq.childNodes.length - maxshown;
+         if (notShownCount > 0) 
+            errmsg += " (" + (notShownCount) + (1 == notShownCount ? " is" : " are") + " not shown)";
       }
       document.getElementById("errmsg1").innerHTML = errmsg;
    }

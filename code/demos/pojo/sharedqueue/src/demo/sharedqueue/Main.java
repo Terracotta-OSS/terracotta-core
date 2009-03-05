@@ -7,14 +7,6 @@ import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import javax.management.MBeanServer;
-import javax.management.MBeanServerFactory;
-import javax.management.MBeanServerNotification;
-import javax.management.Notification;
-import javax.management.NotificationFilter;
-import javax.management.NotificationListener;
-import javax.management.ObjectName;
-
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.Server;
@@ -23,20 +15,30 @@ import org.mortbay.jetty.handler.ContextHandler;
 import org.mortbay.jetty.handler.HandlerCollection;
 import org.mortbay.jetty.handler.ResourceHandler;
 
-public class Main {
+import com.tc.cluster.DsoCluster;
+import com.tc.cluster.DsoClusterEvent;
+import com.tc.cluster.DsoClusterListener;
+import com.tc.injection.annotations.InjectedDsoInstance;
+import com.tcclient.cluster.DsoNode;
+
+public class Main implements DsoClusterListener {
+
 	private final File cwd = new File(System.getProperty("user.dir"));
 
 	private int lastPortUsed;
-
 	private demo.sharedqueue.Queue queue;
-
 	private Worker worker;
 
+	@InjectedDsoInstance
+	private DsoCluster cluster;
+
 	public final void start(int port) throws Exception {
-		String nodeId = registerForNotifications();
+		cluster.addClusterListener(this);
+
+		DsoNode node = cluster.getCurrentNode();
 		port = setPort(port);
 
-		System.out.println("DSO SharedQueue (node " + nodeId + ")");
+		System.out.println("DSO SharedQueue (node " + node + ")");
 		System.out.println("Open your browser and go to - http://"
 				+ getHostName() + ":" + port + "/webapp\n");
 
@@ -46,7 +48,7 @@ public class Main {
 		server.setConnectors(new Connector[] { connector });
 
 		queue = new Queue(port);
-		worker = queue.createWorker(nodeId);
+		worker = queue.createWorker(node);
 
 		ResourceHandler resourceHandler = new ResourceHandler();
 		resourceHandler.setResourceBase(".");
@@ -88,7 +90,7 @@ public class Main {
 		Thread reaper = new Thread(new Runnable() {
 			public void run() {
 				while (true) {
-					Main.this.queue.reap();
+					queue.reap();
 					try {
 						Thread.sleep(1000);
 					} catch (InterruptedException ie) {
@@ -100,13 +102,13 @@ public class Main {
 		reaper.start();
 	}
 
-	public final static void main(String[] args) throws Exception {
+	public final static void main(final String[] args) throws Exception {
 		int port = -1;
 		try {
 			port = Integer.parseInt(args[0]);
 		} catch (Exception e) {
 		}
-		(new Main()).start(port);
+		new Main().start(port);
 	}
 
 	static final String getHostName() {
@@ -118,93 +120,25 @@ public class Main {
 		}
 	}
 
-	/**
-	 * Registers this client for JMX notifications.
-	 * 
-	 * @returns This clients Node ID
-	 */
-	private final String registerForNotifications() throws Exception {
-		java.util.List servers = MBeanServerFactory.findMBeanServer(null);
-		if (servers.size() == 0) {
-			System.err
-					.println("WARNING: No JMX servers found, unable to register for notifications.");
-			return "0";
+	public void nodeLeft(final DsoClusterEvent event) {
+		DsoNode node = event.getNode();
+		Worker worker = queue.getWorker(node);
+		if (worker != null) {
+			worker.markForExpiration();
+		} else {
+			System.err.println("Worker for node: " + node + " not found.");
 		}
+	}
 
-		MBeanServer server = (MBeanServer) servers.get(0);
-		final ObjectName clusterBean = new ObjectName(
-				"org.terracotta:type=Terracotta Cluster,name=Terracotta Cluster Bean");
-		ObjectName delegateName = ObjectName
-				.getInstance("JMImplementation:type=MBeanServerDelegate");
-		final java.util.List clusterBeanBag = new java.util.ArrayList();
+	public void nodeJoined(final DsoClusterEvent event) {
+		// unused
+	}
 
-		// listener for newly registered MBeans
-		NotificationListener listener0 = new NotificationListener() {
-			public void handleNotification(Notification notification,
-					Object handback) {
-				synchronized (clusterBeanBag) {
-					clusterBeanBag.add(handback);
-					clusterBeanBag.notifyAll();
-				}
-			}
-		};
+	public void operationsDisabled(final DsoClusterEvent event) {
+		// unused
+	}
 
-		// filter to let only clusterBean passed through
-		NotificationFilter filter0 = new NotificationFilter() {
-			public boolean isNotificationEnabled(Notification notification) {
-				if (notification.getType().equals("JMX.mbean.registered")
-						&& ((MBeanServerNotification) notification)
-								.getMBeanName().equals(clusterBean))
-					return true;
-				return false;
-			}
-		};
-
-		// add our listener for clusterBean's registration
-		server.addNotificationListener(delegateName, listener0, filter0,
-				clusterBean);
-
-		// because of race condition, clusterBean might already have registered
-		// before we registered the listener
-		java.util.Set allObjectNames = server.queryNames(null, null);
-
-		if (!allObjectNames.contains(clusterBean)) {
-			synchronized (clusterBeanBag) {
-				while (clusterBeanBag.isEmpty()) {
-					clusterBeanBag.wait();
-				}
-			}
-		}
-
-		// clusterBean is now registered, no need to listen for it
-		server.removeNotificationListener(delegateName, listener0);
-
-		// listener for clustered bean events
-		NotificationListener listener1 = new NotificationListener() {
-			public void handleNotification(Notification notification,
-					Object handback) {
-				String nodeId = notification.getMessage();
-				Worker worker = Main.this.queue.getWorker(nodeId);
-				if (worker != null) {
-					worker.markForExpiration();
-				} else {
-					System.err.println("Worker for nodeId: " + nodeId
-							+ " not found.");
-				}
-			}
-		};
-
-		// filter for nodeDisconnected notifications only
-		NotificationFilter filter1 = new NotificationFilter() {
-			public boolean isNotificationEnabled(Notification notification) {
-				return notification.getType().equals(
-						"com.tc.cluster.event.nodeDisconnected");
-			}
-		};
-
-		// now that we have the clusterBean, add listener for membership events
-		server.addNotificationListener(clusterBean, listener1, filter1,
-				clusterBean);
-		return (server.getAttribute(clusterBean, "NodeId")).toString();
+	public void operationsEnabled(final DsoClusterEvent event) {
+		// unused
 	}
 }

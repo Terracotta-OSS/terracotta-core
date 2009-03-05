@@ -7,6 +7,7 @@ package com.tc.cluster;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.test.TCTestCase;
+import com.tcclient.cluster.DsoNode;
 
 import java.util.Collection;
 import java.util.Iterator;

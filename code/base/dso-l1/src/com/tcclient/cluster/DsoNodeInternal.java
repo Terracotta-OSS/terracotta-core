@@ -4,8 +4,6 @@
  */
 package com.tcclient.cluster;
 
-import com.tc.cluster.DsoNode;
-
 public interface DsoNodeInternal extends DsoNode {
 
   public long getChannelId();

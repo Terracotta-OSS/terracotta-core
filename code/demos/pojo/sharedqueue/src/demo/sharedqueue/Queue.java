@@ -10,22 +10,21 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 
+import com.tcclient.cluster.DsoNode;
+
 public class Queue {
-	private List queue = Collections.synchronizedList(new LinkedList());
-
-	private List workers = Collections.synchronizedList(new LinkedList());
-
-	private List completedJobs = Collections.synchronizedList(new LinkedList());
-
-	private int nextJobId;
-
-	private int port;
 
 	private static final int MAX_HISTORY_LENGTH = 15;
-
 	private static final int MAX_QUEUE_LENGTH = 150;
 
-	public Queue(int port) {
+	private List<Job> queue = Collections.synchronizedList(new LinkedList<Job>());
+	private List<Worker> workers = Collections.synchronizedList(new LinkedList<Worker>());
+	private List<Job> completedJobs = Collections.synchronizedList(new LinkedList<Job>());
+
+	private int nextJobId;
+	private int port;
+
+	public Queue(final int port) {
 		this.port = port;
 		this.nextJobId = 1;
 	}
@@ -39,7 +38,7 @@ public class Queue {
 					throw new RuntimeException(e);
 				}
 			}
-			return (Job) queue.remove(0);
+			return queue.remove(0);
 		}
 	}
 
@@ -47,9 +46,7 @@ public class Queue {
 		// the list of jobs in the queue
 		String data = "<workqueue>";
 		synchronized (queue) {
-			ListIterator i = queue.listIterator();
-			while (i.hasNext()) {
-				Job job = (Job) i.next();
+			for (Job job : queue) {
 				data += job.toXml();
 			}
 		}
@@ -58,9 +55,7 @@ public class Queue {
 		// the list of completed jobs
 		data += "<completed>";
 		synchronized (completedJobs) {
-			ListIterator i = completedJobs.listIterator();
-			while (i.hasNext()) {
-				Job job = (Job) i.next();
+			for (Job job : completedJobs) {
 				data += job.toXml();
 			}
 		}
@@ -69,9 +64,7 @@ public class Queue {
 		// the list of registered job consumers
 		data += "<consumers>";
 		synchronized (workers) {
-			ListIterator i = workers.listIterator();
-			while (i.hasNext()) {
-				Worker worker = (Worker) i.next();
+			for (Worker worker : workers) {
 				data += worker.toXml();
 			}
 		}
@@ -79,9 +72,9 @@ public class Queue {
 		return data;
 	}
 
-	public final Worker createWorker(String nodeId) {
+	public final Worker createWorker(final DsoNode node) {
 		synchronized (workers) {
-			Worker worker = new Worker(this, port, nodeId);
+			Worker worker = new Worker(this, port, node);
 			workers.add(worker);
 			Thread t = new Thread(worker);
 			t.setDaemon(true);
@@ -90,12 +83,10 @@ public class Queue {
 		}
 	}
 
-	public final Worker getWorker(String nodeId) {
+	public final Worker getWorker(final DsoNode node) {
 		synchronized (workers) {
-			ListIterator i = workers.listIterator();
-			while (i.hasNext()) {
-				Worker worker = (Worker) i.next();
-				if (worker.getNodeId().equals(nodeId)) {
+			for (Worker worker : workers) {
+				if (worker.getNode().equals(node)) {
 					return worker;
 				}
 			}
@@ -103,7 +94,7 @@ public class Queue {
 		return null;
 	}
 
-	public final void log(Job job) {
+	public final void log(final Job job) {
 		synchronized (completedJobs) {
 			completedJobs.add(0, job);
 			if (completedJobs.size() > MAX_HISTORY_LENGTH) {
@@ -114,9 +105,9 @@ public class Queue {
 
 	public final void reap() {
 		synchronized (workers) {
-			ListIterator i = workers.listIterator();
+			ListIterator<Worker> i = workers.listIterator();
 			while (i.hasNext()) {
-				Worker worker = (Worker) i.next();
+				Worker worker = i.next();
 				if (worker.expire()) {
 					i.remove();
 				}
@@ -127,16 +118,15 @@ public class Queue {
 	public final void addJob() {
 		synchronized (queue) {
 			if (queue.size() < MAX_QUEUE_LENGTH) {
-				Job job = new Job(Queue.getHostName() + " " + this.port,
-						this.nextJobId);
-				this.nextJobId = this.nextJobId < 999 ? this.nextJobId + 1 : 1;
+				Job job = new Job(Queue.getHostName() + " " + port, nextJobId);
+				nextJobId = nextJobId < 999 ? nextJobId + 1 : 1;
 				queue.add(job);
 				queue.notifyAll();
 			}
 		}
 	}
 
-	public final void addJob(Job job) {
+	public final void addJob(final Job job) {
 		synchronized (queue) {
 			queue.add(job);
 			queue.notifyAll();

@@ -7,8 +7,8 @@ import com.tc.cluster.DsoCluster;
 import com.tc.cluster.DsoClusterEvent;
 import com.tc.cluster.DsoClusterListener;
 import com.tc.cluster.DsoClusterTopology;
-import com.tc.cluster.DsoNode;
 import com.tc.cluster.simulation.SimulatedDsoCluster;
+import com.tcclient.cluster.DsoNode;
 
 import java.util.Arrays;
 import java.util.Collection;

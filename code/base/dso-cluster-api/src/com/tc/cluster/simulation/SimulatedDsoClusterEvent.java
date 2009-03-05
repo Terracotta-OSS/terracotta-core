@@ -4,7 +4,7 @@
 package com.tc.cluster.simulation;
 
 import com.tc.cluster.DsoClusterEvent;
-import com.tc.cluster.DsoNode;
+import com.tcclient.cluster.DsoNode;
 
 class SimulatedDsoClusterEvent implements DsoClusterEvent {
 

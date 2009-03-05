@@ -6,6 +6,7 @@ package com.tc.cluster;
 
 import com.tc.cluster.exceptions.ClusteredListenerException;
 import com.tc.cluster.exceptions.UnclusteredObjectException;
+import com.tcclient.cluster.DsoNode;
 
 import java.util.Collection;
 import java.util.Map;

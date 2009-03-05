@@ -5,7 +5,6 @@
 package com.tctest;
 
 import com.tc.cluster.DsoCluster;
-import com.tc.cluster.DsoNode;
 import com.tc.cluster.exceptions.UnclusteredObjectException;
 import com.tc.injection.annotations.InjectedDsoInstance;
 import com.tc.object.config.ConfigVisitor;
@@ -14,6 +13,7 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tcclient.cluster.DsoNode;
 
 import java.util.Arrays;
 import java.util.Collection;

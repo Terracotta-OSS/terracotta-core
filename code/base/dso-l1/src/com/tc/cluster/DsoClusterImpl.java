@@ -18,6 +18,7 @@ import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.TCMap;
 import com.tc.util.Assert;
 import com.tcclient.cluster.DsoClusterInternal;
+import com.tcclient.cluster.DsoNode;
 import com.tcclient.cluster.DsoNodeInternal;
 import com.tcclient.cluster.DsoNodeMetaData;
 

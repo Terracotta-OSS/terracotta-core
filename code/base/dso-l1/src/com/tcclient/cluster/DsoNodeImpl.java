@@ -36,6 +36,9 @@ public class DsoNodeImpl implements DsoNodeInternal, Comparable {
 
   private DsoNodeMetaData getOrRetrieveMetaData() {
     if (metaData != null) { return metaData; }
+    // Doing this through the manager API to not have to keep a reference
+    // to the cluster instance in the node instance. This makes it easier to
+    // share DsoNodeImpl instances.
     return ((DsoClusterInternal) ManagerUtil.getManager().getDsoCluster()).retrieveMetaDataForDsoNode(this);
   }
 

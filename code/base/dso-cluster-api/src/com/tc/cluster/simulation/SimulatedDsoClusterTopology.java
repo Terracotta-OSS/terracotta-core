@@ -4,7 +4,7 @@
 package com.tc.cluster.simulation;
 
 import com.tc.cluster.DsoClusterTopology;
-import com.tc.cluster.DsoNode;
+import com.tcclient.cluster.DsoNode;
 
 import java.util.ArrayList;
 import java.util.Collection;
