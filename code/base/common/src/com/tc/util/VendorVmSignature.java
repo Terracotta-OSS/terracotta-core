@@ -18,6 +18,7 @@ public class VendorVmSignature {
   private static final String OS_SOLARIS_SPARC    = "solaris";
   private static final String OS_MAC_OSX          = "osx";
   private static final String OS_SOLARIS_X86      = "solaris-x86";
+  private static final String OS_SOLARIS_AMD64    = "solaris-amd64";
   private static final String OS_AIX              = "aix";
 
   private static final String VM_VENDOR_SUN       = "hotspot";
@@ -106,6 +107,8 @@ public class VendorVmSignature {
           return OS_SOLARIS_SPARC;
         } else if (lowerCaseArch.indexOf("86") > -1) {
           return OS_SOLARIS_X86;
+        } else if ("amd64".equals(lowerCaseArch)) {
+          return OS_SOLARIS_AMD64;
         } else {
           throw new VendorVmSignatureException("Unknown Solaris architecture: " + "(\"os.arch\" = " + arch + ")");
         }
