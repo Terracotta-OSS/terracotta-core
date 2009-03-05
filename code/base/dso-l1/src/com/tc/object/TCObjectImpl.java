@@ -9,6 +9,7 @@ import bsh.Interpreter;
 import bsh.ParseException;
 import bsh.TargetError;
 
+import com.tc.injection.DsoClusterInjectionInstrumentation;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
@@ -52,7 +53,7 @@ public abstract class TCObjectImpl implements TCObject {
   private byte                  flags                       = 0;
   private static final TCLogger consoleLogger               = CustomerLogging.getConsoleLogger();
 
-  protected TCObjectImpl(ObjectID id, Object peer, TCClass clazz, boolean isNew) {
+  protected TCObjectImpl(final ObjectID id, final Object peer, final TCClass clazz, final boolean isNew) {
     this.objectID = id;
     this.tcClazz = clazz;
     if (peer != null) {
@@ -82,7 +83,7 @@ public abstract class TCObjectImpl implements TCObject {
     return peerObject == null ? null : peerObject.get();
   }
 
-  protected void setPeerObject(WeakReference pojo) {
+  protected void setPeerObject(final WeakReference pojo) {
     this.peerObject = pojo;
     Object realPojo;
     if ((realPojo = peerObject.get()) instanceof Manageable) {
@@ -95,7 +96,7 @@ public abstract class TCObjectImpl implements TCObject {
     return tcClazz;
   }
 
-  public void dehydrate(DNAWriter writer) {
+  public void dehydrate(final DNAWriter writer) {
     tcClazz.dehydrate(this, writer, getPeerObject());
   }
 
@@ -106,7 +107,7 @@ public abstract class TCObjectImpl implements TCObject {
    *
    * @throws ClassNotFoundException
    */
-  public void hydrate(DNA from, boolean force) throws ClassNotFoundException {
+  public void hydrate(final DNA from, final boolean force) throws ClassNotFoundException {
     synchronized (getResolveLock()) {
       boolean isNewLoad = isNull();
       createPeerObjectIfNecessary(from);
@@ -126,11 +127,21 @@ public abstract class TCObjectImpl implements TCObject {
     }
   }
 
-  private void performOnLoadActionIfNecessary(Object pojo) {
+  private void performOnLoadActionIfNecessary(final Object pojo) {
     TCClass tcc = getTCClass();
-    if (tcc.hasOnLoadExecuteScript() || tcc.hasOnLoadMethod()) {
-      String eval = tcc.hasOnLoadExecuteScript() ? tcc.getOnLoadExecuteScript() : "self." + tcc.getOnLoadMethod()
-                                                                                  + "()";
+    if (tcc.hasOnLoadInjection() || tcc.hasOnLoadExecuteScript() || tcc.hasOnLoadMethod()) {
+      String eval = "";
+
+      if (tcc.hasOnLoadInjection()) {
+        eval += "self." + DsoClusterInjectionInstrumentation.TC_INJECTION_METHOD_NAME + "();\n";
+      }
+
+      if (tcc.hasOnLoadExecuteScript()) {
+        eval += tcc.getOnLoadExecuteScript();
+      } else if (tcc.hasOnLoadMethod()) {
+        eval += "self." + tcc.getOnLoadMethod() + "()";
+      }
+
       resolveAllReferences();
 
       final ClassLoader prevLoader = Thread.currentThread().getContextClassLoader();
@@ -176,30 +187,30 @@ public abstract class TCObjectImpl implements TCObject {
     }
   }
 
-  private synchronized void setFlag(int offset, boolean value) {
+  private synchronized void setFlag(final int offset, final boolean value) {
     flags = Conversion.setFlag(flags, offset, value);
   }
 
-  private synchronized boolean getFlag(int offset) {
+  private synchronized boolean getFlag(final int offset) {
     return Conversion.getFlag(flags, offset);
   }
 
-  private void createPeerObjectIfNecessary(DNA from) {
+  private void createPeerObjectIfNecessary(final DNA from) {
     if (isNull()) {
       // TODO: set created and modified version id
       setPeerObject(getObjectManager().createNewPeer(tcClazz, from));
     }
   }
 
-  public ObjectID setReference(String fieldName, ObjectID id) {
+  public ObjectID setReference(final String fieldName, final ObjectID id) {
     throw new AssertionError("shouldn't be called");
   }
 
-  public void setArrayReference(int index, ObjectID id) {
+  public void setArrayReference(final int index, final ObjectID id) {
     throw new AssertionError("shouldn't be called");
   }
 
-  public void setValue(String fieldName, Object obj) {
+  public void setValue(final String fieldName, final Object obj) {
     try {
       TransparentAccess ta = (TransparentAccess) getPeerObject();
       if (ta == null) {
@@ -225,7 +236,7 @@ public abstract class TCObjectImpl implements TCObject {
     }
   }
 
-  public final int clearReferences(int toClear) {
+  public final int clearReferences(final int toClear) {
     if (tcClazz.useResolveLockWhileClearing()) {
       synchronized (getResolveLock()) {
         return basicClearReferences(toClear);
@@ -235,7 +246,7 @@ public abstract class TCObjectImpl implements TCObject {
     }
   }
 
-  private int basicClearReferences(int toClear) {
+  private int basicClearReferences(final int toClear) {
     try {
       Object po = getPeerObject();
       Assert.assertFalse(isNew()); // Shouldn't clear new Objects
@@ -252,19 +263,19 @@ public abstract class TCObjectImpl implements TCObject {
     return objectID; // Save a field by using this one as the lock
   }
 
-  public void resolveArrayReference(int index) {
+  public void resolveArrayReference(final int index) {
     throw new AssertionError("shouldn't be called");
   }
 
-  public void clearArrayReference(int index) {
+  public void clearArrayReference(final int index) {
     clearReference(Integer.toString(index));
   }
 
-  public void clearReference(String fieldName) {
+  public void clearReference(final String fieldName) {
     // do nothing
   }
 
-  public void resolveReference(String fieldName) {
+  public void resolveReference(final String fieldName) {
     // do nothing
   }
 
@@ -272,15 +283,15 @@ public abstract class TCObjectImpl implements TCObject {
     // override me
   }
 
-  public void literalValueChanged(Object newValue, Object oldValue) {
+  public void literalValueChanged(final Object newValue, final Object oldValue) {
     throw new UnsupportedOperationException();
   }
 
-  public void setLiteralValue(Object newValue) {
+  public void setLiteralValue(final Object newValue) {
     throw new UnsupportedOperationException();
   }
 
-  public synchronized void setVersion(long version) {
+  public synchronized void setVersion(final long version) {
     this.version = version;
   }
 
@@ -294,7 +305,7 @@ public abstract class TCObjectImpl implements TCObject {
            + tcClazz + "]";
   }
 
-  public void objectFieldChanged(String classname, String fieldname, Object newValue, int index) {
+  public void objectFieldChanged(final String classname, final String fieldname, final Object newValue, final int index) {
     try {
       this.markAccessed();
       if (index == NULL_INDEX) {
@@ -309,52 +320,52 @@ public abstract class TCObjectImpl implements TCObject {
     }
   }
 
-  public void objectFieldChangedByOffset(String classname, long fieldOffset, Object newValue, int index) {
+  public void objectFieldChangedByOffset(final String classname, final long fieldOffset, final Object newValue, final int index) {
     String fieldname = tcClazz.getFieldNameByOffset(fieldOffset);
     objectFieldChanged(classname, fieldname, newValue, index);
   }
 
-  public boolean isFieldPortableByOffset(long fieldOffset) {
+  public boolean isFieldPortableByOffset(final long fieldOffset) {
     return tcClazz.isPortableField(fieldOffset);
   }
 
-  public String getFieldNameByOffset(long fieldOffset) {
+  public String getFieldNameByOffset(final long fieldOffset) {
     return tcClazz.getFieldNameByOffset(fieldOffset);
   }
 
-  public void booleanFieldChanged(String classname, String fieldname, boolean newValue, int index) {
+  public void booleanFieldChanged(final String classname, final String fieldname, final boolean newValue, final int index) {
     objectFieldChanged(classname, fieldname, new Boolean(newValue), index);
   }
 
-  public void byteFieldChanged(String classname, String fieldname, byte newValue, int index) {
+  public void byteFieldChanged(final String classname, final String fieldname, final byte newValue, final int index) {
     objectFieldChanged(classname, fieldname, new Byte(newValue), index);
   }
 
-  public void charFieldChanged(String classname, String fieldname, char newValue, int index) {
+  public void charFieldChanged(final String classname, final String fieldname, final char newValue, final int index) {
     objectFieldChanged(classname, fieldname, new Character(newValue), index);
   }
 
-  public void doubleFieldChanged(String classname, String fieldname, double newValue, int index) {
+  public void doubleFieldChanged(final String classname, final String fieldname, final double newValue, final int index) {
     objectFieldChanged(classname, fieldname, new Double(newValue), index);
   }
 
-  public void floatFieldChanged(String classname, String fieldname, float newValue, int index) {
+  public void floatFieldChanged(final String classname, final String fieldname, final float newValue, final int index) {
     objectFieldChanged(classname, fieldname, new Float(newValue), index);
   }
 
-  public void intFieldChanged(String classname, String fieldname, int newValue, int index) {
+  public void intFieldChanged(final String classname, final String fieldname, final int newValue, final int index) {
     objectFieldChanged(classname, fieldname, new Integer(newValue), index);
   }
 
-  public void longFieldChanged(String classname, String fieldname, long newValue, int index) {
+  public void longFieldChanged(final String classname, final String fieldname, final long newValue, final int index) {
     objectFieldChanged(classname, fieldname, new Long(newValue), index);
   }
 
-  public void shortFieldChanged(String classname, String fieldname, short newValue, int index) {
+  public void shortFieldChanged(final String classname, final String fieldname, final short newValue, final int index) {
     objectFieldChanged(classname, fieldname, new Short(newValue), index);
   }
 
-  public void objectArrayChanged(int startPos, Object[] array, int length) {
+  public void objectArrayChanged(final int startPos, final Object[] array, final int length) {
     this.markAccessed();
     for (int i = 0; i < length; i++) {
       clearArrayReference(startPos + i);
@@ -362,16 +373,16 @@ public abstract class TCObjectImpl implements TCObject {
     getObjectManager().getTransactionManager().arrayChanged(this, startPos, array, length);
   }
 
-  public void primitiveArrayChanged(int startPos, Object array, int length) {
+  public void primitiveArrayChanged(final int startPos, final Object array, final int length) {
     this.markAccessed();
     getObjectManager().getTransactionManager().arrayChanged(this, startPos, array, length);
   }
 
-  public void setNext(TLinkable link) {
+  public void setNext(final TLinkable link) {
     this.next = link;
   }
 
-  public void setPrevious(TLinkable link) {
+  public void setPrevious(final TLinkable link) {
     this.previous = link;
   }
 
@@ -395,7 +406,7 @@ public abstract class TCObjectImpl implements TCObject {
     return getFlag(ACCESSED_OFFSET);
   }
 
-  public int accessCount(int factor) {
+  public int accessCount(final int factor) {
     // TODO:: Implement when needed
     throw new UnsupportedOperationException();
   }
@@ -423,7 +434,7 @@ public abstract class TCObjectImpl implements TCObject {
     return getFlag(AUTOLOCKS_DISABLED_OFFSET);
   }
 
-  private void setEvictionInProgress(boolean value) {
+  private void setEvictionInProgress(final boolean value) {
     setFlag(EVICTION_IN_PROGRESS_OFFSET, value);
   }
 

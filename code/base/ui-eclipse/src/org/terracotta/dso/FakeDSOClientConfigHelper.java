@@ -471,4 +471,8 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
   public boolean isInjectedField(final String className, final String fieldName) {
     return false;
   }
+
+  public boolean hasOnLoadInjection(final ClassInfo classInfo) {
+    return false;
+  }
 }

@@ -1,13 +1,14 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.config;
 
 import com.tc.aspectwerkz.reflect.ClassInfo;
 
 /**
- * Describes the configuration policy for instrumenation of classes.
- * 
+ * Describes the configuration policy for instrumentation of classes.
+ *
  * @author orion
  */
 interface InstrumentationDescriptor {
@@ -30,7 +31,7 @@ interface InstrumentationDescriptor {
    * @return true if the class should be instrumented so that the java transient keyword is honored.
    */
   public boolean isHonorTransient();
-  
+
   /**
    * @return true if the class should be instrumented so that the java volatile keyword is honored.
    */

@@ -18,7 +18,7 @@ public class MockTCClass implements TCClass {
   private final boolean isIndexed;
   private final boolean isLogical;
 
-  public MockTCClass(boolean isIndexed, boolean isLogical) {
+  public MockTCClass(final boolean isIndexed, final boolean isLogical) {
     this.isIndexed = isIndexed;
     this.isLogical = isLogical;
   }
@@ -27,7 +27,7 @@ public class MockTCClass implements TCClass {
     throw new ImplementMe();
   }
 
-  public TraversedReferences getPortableObjects(Object pojo, TraversedReferences addTo) {
+  public TraversedReferences getPortableObjects(final Object pojo, final TraversedReferences addTo) {
     throw new ImplementMe();
   }
 
@@ -51,7 +51,7 @@ public class MockTCClass implements TCClass {
     return this.isLogical;
   }
 
-  public TCField getField(String fieldName) {
+  public TCField getField(final String fieldName) {
     throw new ImplementMe();
   }
 
@@ -59,11 +59,11 @@ public class MockTCClass implements TCClass {
     return this.isIndexed;
   }
 
-  public void hydrate(TCObject tcObject, DNA dna, Object pojo, boolean force) {
+  public void hydrate(final TCObject tcObject, final DNA dna, final Object pojo, final boolean force) {
     throw new ImplementMe();
   }
 
-  public void dehydrate(TCObject tcObject, DNAWriter writer, Object pojo) {
+  public void dehydrate(final TCObject tcObject, final DNAWriter writer, final Object pojo) {
     throw new ImplementMe();
   }
 
@@ -83,7 +83,7 @@ public class MockTCClass implements TCClass {
     throw new ImplementMe();
   }
 
-  public TCObject createTCObject(ObjectID id, Object peer, boolean isNew) {
+  public TCObject createTCObject(final ObjectID id, final Object peer, final boolean isNew) {
     throw new ImplementMe();
   }
 
@@ -108,7 +108,7 @@ public class MockTCClass implements TCClass {
     return false;
   }
 
-  public Object getNewInstanceFromNonDefaultConstructor(DNA dna) {
+  public Object getNewInstanceFromNonDefaultConstructor(final DNA dna) {
     throw new ImplementMe();
   }
 
@@ -116,7 +116,7 @@ public class MockTCClass implements TCClass {
     return getClass();
   }
 
-  public String getFieldNameByOffset(long fieldOffset) {
+  public String getFieldNameByOffset(final long fieldOffset) {
     throw new ImplementMe();
   }
 
@@ -136,12 +136,16 @@ public class MockTCClass implements TCClass {
     return false;
   }
 
-  public boolean isPortableField(long fieldOffset) {
+  public boolean isPortableField(final long fieldOffset) {
     throw new ImplementMe();
   }
 
   public boolean useResolveLockWhileClearing() {
     return true;
+  }
+
+  public boolean hasOnLoadInjection() {
+    return false;
   }
 
 }

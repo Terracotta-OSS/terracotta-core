@@ -47,6 +47,7 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
   private String                      changeApplicatorClassName;
   private ChangeApplicatorSpec        changeApplicatorSpec;
   private boolean                     isLogical;
+  private boolean                     onLoadInjection;
   private final IncludeOnLoad         onLoad                     = new IncludeOnLoad();
   private boolean                     preInstrumented;
   private boolean                     foreign;
@@ -512,4 +513,12 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     this.defaultCodeSpec = codeSpec;
   }
 
+  public boolean hasOnLoadInjection() {
+    return onLoadInjection;
+  }
+
+  public TransparencyClassSpec setHasOnLoadInjection(final boolean flag) {
+    this.onLoadInjection = flag;
+    return this;
+  }
 }

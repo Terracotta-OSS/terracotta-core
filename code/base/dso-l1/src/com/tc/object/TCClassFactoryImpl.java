@@ -45,15 +45,15 @@ public class TCClassFactoryImpl implements TCClassFactory {
   private final ClassProvider         classProvider;
   private final DNAEncoding           encoding;
 
-  public TCClassFactoryImpl(TCFieldFactory fieldFactory, DSOClientConfigHelper config, ClassProvider classProvider,
-                            DNAEncoding dnaEncoding) {
+  public TCClassFactoryImpl(final TCFieldFactory fieldFactory, final DSOClientConfigHelper config,
+                            final ClassProvider classProvider, final DNAEncoding dnaEncoding) {
     this.fieldFactory = fieldFactory;
     this.config = config;
     this.classProvider = classProvider;
     this.encoding = dnaEncoding;
   }
 
-  public TCClass getOrCreate(Class clazz, ClientObjectManager objectManager) {
+  public TCClass getOrCreate(final Class clazz, final ClientObjectManager objectManager) {
     synchronized (classes) {
       TCClass rv = (TCClass) classes.get(clazz);
       if (rv == null) {
@@ -64,11 +64,11 @@ public class TCClassFactoryImpl implements TCClassFactory {
                              this,
                              objectManager,
                              config.getTCPeerClass(clazz),
-                             getLogicalSuperClassWithDefaultConstructor(clazz), //
+                             getLogicalSuperClassWithDefaultConstructor(clazz),
                              loaderDesc, config.getLogicalExtendingClassName(className), config.isLogical(className),
-                             config.isCallConstructorOnLoad(classInfo), config.getOnLoadScriptIfDefined(classInfo),
-                             config.getOnLoadMethodIfDefined(classInfo), config.isUseNonDefaultConstructor(clazz),
-                             config.useResolveLockWhenClearing(clazz));
+                             config.isCallConstructorOnLoad(classInfo), config.hasOnLoadInjection(classInfo),
+                             config.getOnLoadScriptIfDefined(classInfo), config.getOnLoadMethodIfDefined(classInfo),
+                             config.isUseNonDefaultConstructor(clazz), config.useResolveLockWhenClearing(clazz));
         classes.put(clazz, rv);
       }
       return rv;
@@ -102,7 +102,7 @@ public class TCClassFactoryImpl implements TCClassFactory {
     return null;
   }
 
-  public ChangeApplicator createApplicatorFor(TCClass clazz, boolean indexed) {
+  public ChangeApplicator createApplicatorFor(final TCClass clazz, final boolean indexed) {
     if (indexed) { return new ArrayApplicator(encoding); }
     String name = clazz.getName();
     Class applicatorClazz = config.getChangeApplicator(clazz.getPeerClass());

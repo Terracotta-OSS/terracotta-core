@@ -173,6 +173,8 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   void addInjectedField(String className, String fieldName, String instanceType);
 
+  boolean hasOnLoadInjection(ClassInfo classInfo);
+
   String getOnLoadScriptIfDefined(ClassInfo classInfo);
 
   String getPreCreateMethodIfDefined(String className);

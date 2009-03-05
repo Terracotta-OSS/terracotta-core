@@ -41,6 +41,7 @@ import javax.swing.text.StyleConstants;
  * @author Terracotta, Inc.
  */
 public class Main extends JFrame implements ActionListener, ChatListener, DsoClusterListener {
+
   private DsoCluster       cluster;
 
   private final User       localUser;

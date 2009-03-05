@@ -61,17 +61,17 @@ public class TCObjectImplTest extends BaseDSOTestCase {
 
     public TCObject   managed;
 
-    public TestObject(String test1, TestObject test2) {
+    public TestObject(final String test1, final TestObject test2) {
       this.test1 = test1;
       this.test2 = test2;
     }
 
-    public void __tc_getallfields(Map map) {
+    public void __tc_getallfields(final Map map) {
       map.put(getClass().getName() + "." + "test1", test1);
       map.put(getClass().getName() + "." + "test2", test2);
     }
 
-    public void __tc_setfield(String fieldName, Object value) {
+    public void __tc_setfield(final String fieldName, final Object value) {
       if (fieldName.equals(TestObject.class.getName() + ".test1")) {
         test1 = (String) value;
       }
@@ -80,7 +80,7 @@ public class TCObjectImplTest extends BaseDSOTestCase {
       }
     }
 
-    public void __tc_managed(TCObject b) {
+    public void __tc_managed(final TCObject b) {
       this.managed = b;
     }
 
@@ -88,11 +88,11 @@ public class TCObjectImplTest extends BaseDSOTestCase {
       return managed;
     }
 
-    public Object __tc_getmanagedfield(String name) {
+    public Object __tc_getmanagedfield(final String name) {
       throw new ImplementMe();
     }
 
-    public void __tc_setmanagedfield(String name, Object value) {
+    public void __tc_setmanagedfield(final String name, final Object value) {
       throw new ImplementMe();
     }
 
@@ -111,12 +111,12 @@ public class TCObjectImplTest extends BaseDSOTestCase {
       return "className.this$0";
     }
 
-    public TestTCClass(TestClientObjectManager objectManager) throws Exception {
+    public TestTCClass(final TestClientObjectManager objectManager) throws Exception {
       this.objectManager = objectManager;
       fieldFactory = new TCFieldFactory(configHelper());
       Field[] flds = TestObject.class.getDeclaredFields();
-      for (int i = 0; i < flds.length; i++) {
-        fields.put(TestObject.class.getName() + "." + flds[i].getName(), fieldFactory.getInstance(this, flds[i]));
+      for (Field fld : flds) {
+        fields.put(TestObject.class.getName() + "." + fld.getName(), fieldFactory.getInstance(this, fld));
       }
     }
 
@@ -140,7 +140,7 @@ public class TCObjectImplTest extends BaseDSOTestCase {
       return false;
     }
 
-    public TCField getDeclaredField(String name) {
+    public TCField getDeclaredField(final String name) {
       try {
         return (TCField) fields.get(name);
       } catch (Exception e) {
@@ -148,16 +148,16 @@ public class TCObjectImplTest extends BaseDSOTestCase {
       }
     }
 
-    public TCField getField(String name) {
+    public TCField getField(final String name) {
       return getDeclaredField(name);
     }
 
-    public TCField getField(String classname, String fieldname) {
+    public TCField getField(final String classname, final String fieldname) {
       // TODO Auto-generated method stub
       return null;
     }
 
-    public TCField getField(Field field) {
+    public TCField getField(final Field field) {
       // TODO Auto-generated method stub
       return null;
     }
@@ -167,11 +167,11 @@ public class TCObjectImplTest extends BaseDSOTestCase {
       return false;
     }
 
-    public void hydrate(TCObject tcObject, DNA dna, Object pojo, boolean force) {
+    public void hydrate(final TCObject tcObject, final DNA dna, final Object pojo, final boolean force) {
       //
     }
 
-    public void dehydrate(TCObject tcObject, DNAWriter writer, Object pojo) {
+    public void dehydrate(final TCObject tcObject, final DNAWriter writer, final Object pojo) {
       //
     }
 
@@ -183,7 +183,7 @@ public class TCObjectImplTest extends BaseDSOTestCase {
       return null;
     }
 
-    public TraversedReferences getPortableObjects(Object pojo, TraversedReferences addTo) {
+    public TraversedReferences getPortableObjects(final Object pojo, final TraversedReferences addTo) {
       return addTo;
     }
 
@@ -199,7 +199,7 @@ public class TCObjectImplTest extends BaseDSOTestCase {
       return false;
     }
 
-    public TCObject createTCObject(ObjectID id, Object peer, boolean isNew) {
+    public TCObject createTCObject(final ObjectID id, final Object peer, final boolean isNew) {
       throw new ImplementMe();
     }
 
@@ -224,7 +224,7 @@ public class TCObjectImplTest extends BaseDSOTestCase {
       return false;
     }
 
-    public Object getNewInstanceFromNonDefaultConstructor(DNA dna) {
+    public Object getNewInstanceFromNonDefaultConstructor(final DNA dna) {
       return null;
     }
 
@@ -232,7 +232,7 @@ public class TCObjectImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public String getFieldNameByOffset(long fieldOffset) {
+    public String getFieldNameByOffset(final long fieldOffset) {
       throw new ImplementMe();
     }
 
@@ -252,12 +252,16 @@ public class TCObjectImplTest extends BaseDSOTestCase {
       return false;
     }
 
-    public boolean isPortableField(long fieldOffset) {
+    public boolean isPortableField(final long fieldOffset) {
       throw new ImplementMe();
     }
 
     public boolean useResolveLockWhileClearing() {
       return true;
+    }
+
+    public boolean hasOnLoadInjection() {
+      return false;
     }
   }
 }

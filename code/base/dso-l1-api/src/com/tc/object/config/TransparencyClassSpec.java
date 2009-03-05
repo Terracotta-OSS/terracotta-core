@@ -489,6 +489,14 @@ public interface TransparencyClassSpec {
   public TransparencyClassSpec setCallMethodOnLoad(String method);
 
   /**
+   * Sets whether injection should happen on load
+   *
+   * @param flag true or false
+   * @return this
+   */
+  public TransparencyClassSpec setHasOnLoadInjection(boolean flag);
+
+  /**
    * @return True if call constructor flag is set
    */
   public boolean isCallConstructorSet();
@@ -537,6 +545,11 @@ public interface TransparencyClassSpec {
    * @return Get on load execute script to execute
    */
   public String getOnLoadExecuteScript();
+
+  /**
+   * @return True of injection should occur on class load
+   */
+  public boolean hasOnLoadInjection();
 
   /**
    * @return True if should use non-default constrcutor

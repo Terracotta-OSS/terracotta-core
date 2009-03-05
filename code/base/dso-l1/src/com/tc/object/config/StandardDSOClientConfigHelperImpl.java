@@ -660,6 +660,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     if (null == instrumentation) { throw new UnsupportedInjectedDsoInstanceTypeException(classInfo.getName(), fi
         .getName(), fi.getType().getName()); }
 
+    TransparencyClassSpec spec = getOrCreateSpec(classInfo.getName());
+    spec.setHasOnLoadInjection(true);
     addCustomAdapter(classInfo.getName(), instrumentation.getClassAdapterFactoryForFieldInjection(fi));
   }
 
@@ -1319,6 +1321,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     } else {
       return null;
     }
+  }
+
+  public boolean hasOnLoadInjection(final ClassInfo classInfo) {
+    TransparencyClassSpec spec = getSpec(classInfo.getName());
+    if (spec != null) { return spec.hasOnLoadInjection(); }
+    // we don't delegate to the instrumentation descriptor since onload injection
+    // can't be specified through configuration
+    return false;
   }
 
   public String getOnLoadScriptIfDefined(final ClassInfo classInfo) {
