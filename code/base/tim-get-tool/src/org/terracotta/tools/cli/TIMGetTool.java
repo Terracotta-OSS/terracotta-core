@@ -44,6 +44,7 @@ public class TIMGetTool {
       }
       System.exit(1);
     } catch (Exception e) {
+      System.err.println("Internal error: " + e.getMessage());
       System.exit(2);
     }
   }

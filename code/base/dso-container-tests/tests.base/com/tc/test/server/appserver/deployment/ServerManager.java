@@ -42,9 +42,25 @@ public class ServerManager {
 
   private static final String         SESSION_TIM_TESTS_PROPERTIES = "/com/tctest/session-tim/tests.properties";
 
+  private static class TimGetUrls {
+    private final String url;
+    private final String relativeUrlBase;
+    public TimGetUrls(String url, String relativeUrlBase) {
+      this.url = url;
+      this.relativeUrlBase = relativeUrlBase;
+    }
+    public String getUrl() {
+      return url;
+    }
+    public String getRelativeUrlBase() {
+      return relativeUrlBase;
+    }
+  }
   // The internal repository is listed first since it is the preferred repo
-  private static final String[]       TIM_GET_URLS                 = {
-      "http://forge-stage.terracotta.lan/api/index-internal.xml.gz", "http://forge.terracotta.org/api/index.xml.gz" };
+  private static final TimGetUrls[]   TIM_GET_URLS                 = {
+      new TimGetUrls("http://forge-stage.terracotta.lan/api/2/index.xml.gz", "http://kong.terracotta.lan/maven2"),
+      new TimGetUrls("http://forge.terracotta.org/api/2/index.xml.gz", "http://download.terracotta.org/maven2")
+  };
 
   protected final static TCLogger     logger                       = TCLogging.getLogger(ServerManager.class);
   private static int                  appServerIndex               = 0;
@@ -404,14 +420,15 @@ public class ServerManager {
       throw new AssertionError("Refusing to run tim-get for artifactsVersion: " + mavenArtifactsVersion);
     }
 
-    for (String url : TIM_GET_URLS) {
+    for (TimGetUrls urls : TIM_GET_URLS) {
       try {
         System.setProperty(Config.KEYSPACE + Config.TC_VERSION, ProductInfo.getInstance().mavenArtifactsVersion());
         System.setProperty(Config.KEYSPACE + Config.INCLUDE_SNAPSHOTS, "true");
         System.setProperty(Config.KEYSPACE + Config.MODULES_DIR, getTimGetModulesDir());
         System.setProperty(Config.KEYSPACE + Config.DATA_FILE, new File(this.sandbox, "tim-get.index")
             .getAbsolutePath());
-        System.setProperty(Config.KEYSPACE + Config.DATA_FILE_URL, url);
+        System.setProperty(Config.KEYSPACE + Config.DATA_FILE_URL, urls.getUrl());
+        System.setProperty(Config.KEYSPACE + Config.RELATIVE_URL_BASE, urls.getRelativeUrlBase());
 
         TIMGetTool.mainWithExceptions(new String[] { "install", name });
 
@@ -424,7 +441,7 @@ public class ServerManager {
                                                               + Arrays.asList(entries) + "] in " + src); }
         return entries[0];
       } catch (Exception e) {
-        Banner.errorBanner("Error using url [" + url + "] for tim-get, moving on to the next one");
+        Banner.errorBanner("Error using url [" + urls.getUrl() + "] for tim-get, moving on to the next one");
         e.printStackTrace();
       }
     }

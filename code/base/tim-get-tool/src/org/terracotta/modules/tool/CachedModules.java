@@ -12,6 +12,7 @@ import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 import org.terracotta.modules.tool.config.Config;
 import org.terracotta.modules.tool.config.ConfigAnnotation;
+import org.terracotta.modules.tool.config.InvalidConfigurationException;
 import org.terracotta.modules.tool.util.ChecksumUtil;
 import org.terracotta.modules.tool.util.DataLoader;
 import org.terracotta.modules.tool.util.DownloadUtil;
@@ -36,6 +37,7 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 public class CachedModules implements Modules {
+  static final String FORMAT_VERSION = "2";
 
   private List<Module>       modules;
   private List<Module>       qualifiedModules;
@@ -46,6 +48,7 @@ public class CachedModules implements Modules {
   private String             tcVersion;
 
   @Inject
+  @Named(ConfigAnnotation.CONFIG_INSTANCE)
   private Config              config;
 
   @Inject
@@ -141,11 +144,20 @@ public class CachedModules implements Modules {
     if (modules != null) return;
 
     Document document = new SAXBuilder().build(inputStream);
+    validateFormatVersion(document.getRootElement().getAttributeValue("format-version"));
     modules = new ArrayList<Module>();
     List<Element> children = document.getRootElement().getChildren();
     for (Element child : children) {
       Module module = new Module(this, DocumentToAttributes.transform(child), relativeUrlBase());
       modules.add(module);
+    }
+  }
+
+  private void validateFormatVersion(String formatVersion) {
+    if (!FORMAT_VERSION.equals(formatVersion)) {
+      String message = "Format version '" + formatVersion +
+          "' does not match expected format version '" + FORMAT_VERSION + "'";
+      throw new InvalidConfigurationException(message);
     }
   }
 

@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<modules>
+<modules format-version='2'>
   <module artifactId='baz' version='0.0.0' groupId='foo.bar'>
     <tc-version>0.0.0</tc-version>
     <repoURL>

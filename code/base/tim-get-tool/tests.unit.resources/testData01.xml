@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<modules>
+<modules format-version='2'>
   <module artifactId='tim-ehcache-1.3' version='1.0.2' groupId='org.terracotta.modules'>
     <tc-version>2.5.2</tc-version>
     <website>http://forge-dev.terracotta.lan/releases/projects/tim-ehcache/</website>
