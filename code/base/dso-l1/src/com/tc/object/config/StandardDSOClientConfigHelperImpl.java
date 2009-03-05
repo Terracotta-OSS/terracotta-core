@@ -157,14 +157,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   /**
    * A map of class names to TransparencyClassSpec
-   *
+   * 
    * @GuardedBy {@link #specLock}
    */
   private final Map                                          userDefinedBootSpecs               = new HashMap();
 
   /**
    * A map of class names to TransparencyClassSpec for individual classes
-   *
+   * 
    * @GuardedBy {@link #specLock}
    */
   private final Map                                          classSpecs                         = new HashMap();
@@ -619,8 +619,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   public boolean addClassConfigBasedAdapters(final ClassInfo classInfo) {
     boolean addedAdapters = false;
 
-    fields:
-    for (FieldInfo fi : classInfo.getFields()) {
+    fields: for (FieldInfo fi : classInfo.getFields()) {
 
       if (Vm.isJDK15Compliant()) {
         Annotation[] annotations;
@@ -1562,6 +1561,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     int preInstrumentedCount = 0;
     Set preinstClasses = bootJar.getAllPreInstrumentedClasses();
     int bootJarPopulation = preinstClasses.size();
+    List<String> missingClasses = new ArrayList<String>();
 
     synchronized (specLock) {
       TransparencyClassSpec[] allSpecs = getAllSpecs(true);
@@ -1572,20 +1572,18 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
         if (classSpec.isPreInstrumented()) {
           preInstrumentedCount++;
           if (!(preinstClasses.contains(classSpec.getClassName()) || classSpec.isHonorJDKSubVersionSpecific())) {
-            String message = "* " + classSpec.getClassName() + "... missing";
-            missingCount++;
-            logger.info(message);
+            missingClasses.add(classSpec.getClassName());
           }
         }
       }
     }
 
-    if (missingCount > 0) {
-      logger.info("Number of classes in the DSO boot jar:" + bootJarPopulation);
-      logger.info("Number of classes expected to be in the DSO boot jar:" + preInstrumentedCount);
-      logger.info("Number of classes found missing from the DSO boot jar:" + missingCount);
-      throw new IncompleteBootJarException("Incomplete DSO boot jar; " + missingCount
-                                           + " pre-instrumented class(es) found missing.");
+    if (missingClasses.size() > 0) {
+      logger.error("Number of classes in the DSO boot jar:" + bootJarPopulation);
+      logger.error("Number of classes expected to be in the DSO boot jar:" + preInstrumentedCount);
+      logger.error("Missing classes: " + missingClasses);
+      throw new IncompleteBootJarException("Incomplete DSO boot jar; " + missingClasses.size()
+                                           + " pre-instrumented class(es) found missing");
     }
   }
 
@@ -1651,7 +1649,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   public void addInjectedField(final String className, final String fieldName, final String instanceType) {
     if (null == className || null == fieldName) { throw new IllegalArgumentException("class " + className
-                                                                                         + ", field = " + fieldName); }
+                                                                                     + ", field = " + fieldName); }
 
     final String fullyQualifiedFieldName = className + "." + fieldName;
     if (null == instanceType) {
@@ -1663,7 +1661,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   public boolean isInjectedField(final String className, final String fieldName) {
     if (null == className || null == fieldName) { throw new IllegalArgumentException("class " + className
-                                                                                         + ", field = " + fieldName); }
+                                                                                     + ", field = " + fieldName); }
 
     final String fullyQualifiedFieldName = className + "." + fieldName;
     return injectedFields.containsKey(fullyQualifiedFieldName);
