@@ -145,6 +145,10 @@ postscripts:
             - tim-jetty-6.1
         - dest: 
             - samples/rife
+            - samples/spring/events
+            - samples/spring/jmx
+            - samples/spring/coordination
+            - samples/spring/webflow
             - tools/sessions/configurator-sandbox
   - delete-tim-get-index
   - include-schemas:
