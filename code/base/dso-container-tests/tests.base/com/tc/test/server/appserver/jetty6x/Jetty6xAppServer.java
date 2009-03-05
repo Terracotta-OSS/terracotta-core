@@ -12,6 +12,7 @@ import com.tc.test.server.ServerResult;
 import com.tc.test.server.appserver.AbstractAppServer;
 import com.tc.test.server.appserver.AppServerParameters;
 import com.tc.test.server.appserver.AppServerResult;
+import com.tc.test.server.appserver.deployment.GenericServer;
 import com.tc.test.server.util.AppServerUtil;
 import com.tc.util.PortChooser;
 
@@ -98,7 +99,9 @@ public class Jetty6xAppServer extends AbstractAppServer {
     cmd.add(this.serverInstallDirectory() + File.separator + "start.jar" + File.pathSeparator
             + TestConfigObject.getInstance().extraClassPathForAppServer());
 
-    cmd.add("-Djetty.class.path=" + tcModuleJar.getAbsolutePath());
+    if (GenericServer.dsoEnabled()) {
+      cmd.add("-Djetty.class.path=" + tcModuleJar.getAbsolutePath());
+    }
     cmd.add("-Djetty.home=" + this.serverInstallDirectory());
     cmd.add("-Djetty.port=" + jetty_port);
     cmd.add("-DSTOP.PORT=" + stop_port);
@@ -114,6 +117,7 @@ public class Jetty6xAppServer extends AbstractAppServer {
     final String nodeLogFile = new File(instanceDir + ".log").getAbsolutePath();
 
     runner = new Thread("runner for " + instanceName) {
+      @Override
       public void run() {
         try {
           Result result = Exec.execute(cmdArray, nodeLogFile, null, instanceDir);
@@ -221,7 +225,9 @@ public class Jetty6xAppServer extends AbstractAppServer {
 
       startIndex = buffer.indexOf(eofTarget);
       if (startIndex > 0) {
-        buffer.insert(startIndex, jettyXmlAddition(instanceName));
+        if (GenericServer.dsoEnabled()) {
+          buffer.insert(startIndex, jettyXmlAddition(instanceName));
+        }
       } else {
         throw new RuntimeException("Can't find target: " + eofTarget);
       }
@@ -266,24 +272,28 @@ public class Jetty6xAppServer extends AbstractAppServer {
     s += "  <Set name=\"contextPath\">/" + contextPath + "</Set>\n";
     s += "  <Set name=\"war\">" + warFile + "</Set>\n";
     s += "\n";
-    s += "  <Property name=\"Server\">\n";
-    s += "    <Call id=\"tcIdMgr\" name=\"getAttribute\">\n";
-    s += "      <Arg>tcIdMgr</Arg>\n";
-    s += "    </Call>\n";
-    s += "  </Property>\n";
-    s += "\n";
-    s += "  <New id=\"tcmgr\" class=\"org.mortbay.terracotta.servlet.TerracottaSessionManager\">\n";
-    s += "    <Set name=\"idManager\">\n";
-    s += "      <Ref id=\"tcIdMgr\"/>\n";
-    s += "    </Set>\n";
-    s += "  </New>\n";
-    s += "\n";
-    s += "  <Set name=\"sessionHandler\">\n";
-    s += "    <New class=\"org.mortbay.terracotta.servlet.TerracottaSessionHandler\">\n";
-    s += "      <Arg><Ref id=\"tcmgr\"/></Arg>\n";
-    s += "    </New>\n";
-    s += "  </Set>\n";
-    s += "  \n";
+
+    if (GenericServer.dsoEnabled()) {
+      s += "  <Property name=\"Server\">\n";
+      s += "    <Call id=\"tcIdMgr\" name=\"getAttribute\">\n";
+      s += "      <Arg>tcIdMgr</Arg>\n";
+      s += "    </Call>\n";
+      s += "  </Property>\n";
+      s += "\n";
+      s += "  <New id=\"tcmgr\" class=\"org.mortbay.terracotta.servlet.TerracottaSessionManager\">\n";
+      s += "    <Set name=\"idManager\">\n";
+      s += "      <Ref id=\"tcIdMgr\"/>\n";
+      s += "    </Set>\n";
+      s += "  </New>\n";
+      s += "\n";
+      s += "  <Set name=\"sessionHandler\">\n";
+      s += "    <New class=\"org.mortbay.terracotta.servlet.TerracottaSessionHandler\">\n";
+      s += "      <Arg><Ref id=\"tcmgr\"/></Arg>\n";
+      s += "    </New>\n";
+      s += "  </Set>\n";
+      s += "\n";
+    }
+
     s += "</Configure>\n";
     return s;
   }

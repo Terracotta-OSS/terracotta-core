@@ -165,7 +165,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     }
   }
 
-  private static boolean dsoEnabled() {
+  public static boolean dsoEnabled() {
     return ((Boolean) dsoEnabled.get()).booleanValue();
   }
 
