@@ -16,10 +16,12 @@ import junit.framework.TestCase;
 public class SRACpuTest extends TestCase {
   private Sigar sigar;
 
+  @Override
   public void setUp() {
     sigar = SigarUtil.newSigar();
   }
 
+  @Override
   public void tearDown() {
     sigar.close();
   }
@@ -58,12 +60,15 @@ public class SRACpuTest extends TestCase {
 
     // assert that the cpu usage was higher during the second data collection
     for (int i = 0; i < cpuCount; i++) {
+      System.out.println("test values for cpu " + i + ": " + values1[i][0] + " < " + values2[i][0] + ", "
+                         + values1[i][1] + " > " + values2[i][1]);
       assertTrue(values1[i][0].compareTo(values2[i][0]) < 0);
       assertTrue(values1[i][1].compareTo(values2[i][1]) > 0);
     }
   }
 
   private class UseCpuThread extends Thread {
+    @Override
     public void run() {
       for (int i = 0; i < Integer.MAX_VALUE; i++) {
         if (0 == i % 1000) {
@@ -76,7 +81,7 @@ public class SRACpuTest extends TestCase {
     }
   }
 
-  private BigDecimal[][] assertCpuData(int cpuCount, StatisticData[] data) throws Exception {
+  private BigDecimal[][] assertCpuData(final int cpuCount, final StatisticData[] data) throws Exception {
     BigDecimal[][] values = new BigDecimal[cpuCount][6];
     assertEquals(cpuCount * 6, data.length);
     for (int i = 0; i < data.length; i++) {
