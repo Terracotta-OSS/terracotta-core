@@ -61,31 +61,31 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
   }
 
   public ClientIDProvider getClientIDProvider() {
-    return clientIDProvider;
+    return this.clientIDProvider;
   }
 
   public void addListener(final ChannelEventListener listener) {
-    channel.addListener(listener);
+    this.channel.addListener(listener);
   }
 
   public void routeMessageType(final TCMessageType messageType, final Sink destSink, final Sink hydrateSink) {
-    channel.routeMessageType(messageType, destSink, hydrateSink);
+    this.channel.routeMessageType(messageType, destSink, hydrateSink);
   }
 
   public ClientMessageChannel channel() {
-    return channel;
+    return this.channel;
   }
 
   public void open() throws TCTimeoutException, UnknownHostException, IOException, MaxConnectionsExceededException {
-    channel.open();
+    this.channel.open();
   }
 
   public void close() {
-    channel.close();
+    this.channel.close();
   }
 
   public LockRequestMessage newLockRequestMessage() {
-    return (LockRequestMessage) channel.createMessage(TCMessageType.LOCK_REQUEST_MESSAGE);
+    return (LockRequestMessage) this.channel.createMessage(TCMessageType.LOCK_REQUEST_MESSAGE);
   }
 
   public LockRequestMessageFactory getLockRequestMessageFactory() {
@@ -93,7 +93,7 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
   }
 
   public RequestRootMessage newRequestRootMessage(final NodeID nodeID) {
-    return (RequestRootMessage) channel.createMessage(TCMessageType.REQUEST_ROOT_MESSAGE);
+    return (RequestRootMessage) this.channel.createMessage(TCMessageType.REQUEST_ROOT_MESSAGE);
   }
 
   public RequestRootMessageFactory getRequestRootMessageFactory() {
@@ -101,7 +101,7 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
   }
 
   public RequestManagedObjectMessage newRequestManagedObjectMessage(final NodeID nodeID) {
-    return (RequestManagedObjectMessage) channel.createMessage(TCMessageType.REQUEST_MANAGED_OBJECT_MESSAGE);
+    return (RequestManagedObjectMessage) this.channel.createMessage(TCMessageType.REQUEST_MANAGED_OBJECT_MESSAGE);
   }
 
   public RequestManagedObjectMessageFactory getRequestManagedObjectMessageFactory() {
@@ -113,11 +113,12 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
   }
 
   public AcknowledgeTransactionMessage newAcknowledgeTransactionMessage(final NodeID remoteNode) {
-    return (AcknowledgeTransactionMessage) channel.createMessage(TCMessageType.ACKNOWLEDGE_TRANSACTION_MESSAGE);
+    return (AcknowledgeTransactionMessage) this.channel.createMessage(TCMessageType.ACKNOWLEDGE_TRANSACTION_MESSAGE);
   }
 
   public ClientHandshakeMessage newClientHandshakeMessage(final NodeID remoteNode) {
-    ClientHandshakeMessage rv = (ClientHandshakeMessage) channel.createMessage(TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
+    ClientHandshakeMessage rv = (ClientHandshakeMessage) this.channel
+        .createMessage(TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
     return rv;
   }
 
@@ -138,15 +139,15 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
   }
 
   public ObjectIDBatchRequestMessage newObjectIDBatchRequestMessage() {
-    return (ObjectIDBatchRequestMessage) channel.createMessage(TCMessageType.OBJECT_ID_BATCH_REQUEST_MESSAGE);
+    return (ObjectIDBatchRequestMessage) this.channel.createMessage(TCMessageType.OBJECT_ID_BATCH_REQUEST_MESSAGE);
   }
 
   public JMXMessage getJMXMessage() {
-    return (JMXMessage) channel.createMessage(TCMessageType.JMX_MESSAGE);
+    return (JMXMessage) this.channel.createMessage(TCMessageType.JMX_MESSAGE);
   }
 
   public CompletedTransactionLowWaterMarkMessage newCompletedTransactionLowWaterMarkMessage(final NodeID remoteID) {
-    return (CompletedTransactionLowWaterMarkMessage) channel
+    return (CompletedTransactionLowWaterMarkMessage) this.channel
         .createMessage(TCMessageType.COMPLETED_TRANSACTION_LOWWATERMARK_MESSAGE);
   }
 
@@ -155,7 +156,7 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
   }
 
   public CommitTransactionMessage newCommitTransactionMessage(final NodeID remoteNode) {
-    return (CommitTransactionMessage) channel.createMessage(TCMessageType.COMMIT_TRANSACTION_MESSAGE);
+    return (CommitTransactionMessage) this.channel.createMessage(TCMessageType.COMMIT_TRANSACTION_MESSAGE);
   }
 
   public CommitTransactionMessageFactory getCommitTransactionMessageFactory() {
@@ -163,19 +164,19 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
   }
 
   public NodesWithObjectsMessage newNodesWithObjectsMessage() {
-    return (NodesWithObjectsMessage) channel.createMessage(TCMessageType.NODES_WITH_OBJECTS_MESSAGE);
+    return (NodesWithObjectsMessage) this.channel.createMessage(TCMessageType.NODES_WITH_OBJECTS_MESSAGE);
   }
 
   public KeysForOrphanedValuesMessage newKeysForOrphanedValuesMessage() {
-    return (KeysForOrphanedValuesMessage) channel.createMessage(TCMessageType.KEYS_FOR_ORPHANED_VALUES_MESSAGE);
+    return (KeysForOrphanedValuesMessage) this.channel.createMessage(TCMessageType.KEYS_FOR_ORPHANED_VALUES_MESSAGE);
   }
 
   public NodeMetaDataMessage newNodeMetaDataMessage() {
-    return (NodeMetaDataMessage) channel.createMessage(TCMessageType.NODE_META_DATA_MESSAGE);
+    return (NodeMetaDataMessage) this.channel.createMessage(TCMessageType.NODE_META_DATA_MESSAGE);
   }
 
   public boolean isConnected() {
-    return channel.isConnected();
+    return this.channel.isConnected();
   }
 
   public CompletedTransactionLowWaterMarkMessageFactory getCompletedTransactionLowWaterMarkMessageFactory() {
@@ -183,6 +184,6 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
   }
 
   public GroupID[] getGroupIDs() {
-    return groups;
+    return this.groups;
   }
 }

@@ -43,7 +43,7 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
 
   public DeadClientCrashedServerReconnectTest() {
     tcProps = TCPropertiesImpl.getProperties();
-    tcProps.setProperty(TCPropertiesConsts.L1_L2_CONFIG_MATCH_ENABLED, "false");
+    tcProps.setProperty(TCPropertiesConsts.L1_L2_CONFIG_VALIDATION_ENABLED, "false");
     System.out.println("L1 and L2 config match check disabled temporarily as we use proxy");
   }
 
@@ -135,7 +135,7 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
   @Override
   protected void tearDown() throws Exception {
     super.tearDown();
-    tcProps.setProperty(TCPropertiesConsts.L1_L2_CONFIG_MATCH_ENABLED, "true");
+    tcProps.setProperty(TCPropertiesConsts.L1_L2_CONFIG_VALIDATION_ENABLED, "true");
     System.out.println("Re-enabling L1 and L2 config match check");
 
   }

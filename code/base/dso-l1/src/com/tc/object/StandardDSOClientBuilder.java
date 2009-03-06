@@ -155,7 +155,7 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
     return new BatchSequence[] { new BatchSequence(remoteIDProvider, requestSize) };
   }
 
-  public ObjectIDProvider createObjectIdProvider(BatchSequence[] sequences) {
+  public ObjectIDProvider createObjectIdProvider(BatchSequence[] sequences, ClientIDProvider cidProvider) {
     Assert.assertTrue(sequences.length == 1);
 
     return new ObjectIDProviderImpl(sequences[0]);

@@ -83,10 +83,10 @@ public interface DSOClientBuilder {
                                                           SampledRateCounter transactionPerBatchCounter);
 
   ObjectIDClientHandshakeRequester getObjectIDClientHandshakeRequester(final BatchSequenceReceiver sequence);
-  
+
   BatchSequence[] createSequences(RemoteObjectIDBatchSequenceProvider remoteIDProvider, int requestSize);
 
-  ObjectIDProvider createObjectIdProvider(BatchSequence[] sequences);
+  ObjectIDProvider createObjectIdProvider(BatchSequence[] sequences, ClientIDProvider clientIDProvider);
 
   BatchSequenceReceiver getBatchReceiver(BatchSequence[] sequences);
 
