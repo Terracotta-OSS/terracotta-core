@@ -44,7 +44,7 @@ public class ClusterModel implements IClusterModel {
   protected EventListenerList                                  listenerList;
 
   private IServer                                              activeCoordinator;
-  private boolean                                              userDisconnecting;
+  // private boolean userDisconnecting;
   protected PropertyChangeSupport                              propertyChangeSupport;
 
   protected ConnectServerListener                              connectServerListener;
@@ -239,16 +239,16 @@ public class ClusterModel implements IClusterModel {
 
   public boolean determineReady() {
     for (IServerGroup group : serverGroups) {
-      if (group.getActiveServer() == null) { return false; }
+      if (!group.isReady()) { return false; }
     }
     return serverGroups != IServerGroup.NULL_SET;
   }
 
   public boolean determineConnected() {
     for (IServerGroup group : serverGroups) {
-      if (group.getActiveServer() != null) { return true; }
+      if (group.isConnected()) { return true; }
     }
-    return serverGroups != IServerGroup.NULL_SET;
+    return false;
   }
 
   protected void setReady(boolean ready) {
@@ -291,7 +291,7 @@ public class ClusterModel implements IClusterModel {
       scheduledExecutor = new ScheduledThreadPoolExecutor(1);
       setScheduledExecutor(scheduledExecutor);
       scheduledExecutor.schedule(new PollTask(), pollPeriodSeconds, TimeUnit.SECONDS);
-    } else {
+    } else if (scheduledExecutor != null) {
       scheduledExecutor.shutdownNow();
       scheduledExecutor = null;
     }
@@ -493,12 +493,12 @@ public class ClusterModel implements IClusterModel {
     return connectServer.getConnectErrorMessage(e);
   }
 
-  private synchronized boolean isUserDisconnecting() {
-    return userDisconnecting;
-  }
+  // private synchronized boolean isUserDisconnecting() {
+  // return userDisconnecting;
+  // }
 
   private synchronized void setUserDisconnecting(boolean userDisconnecting) {
-    this.userDisconnecting = userDisconnecting;
+    // this.userDisconnecting = userDisconnecting;
   }
 
   public synchronized void addServerStateListener(ServerStateListener listener) {
@@ -657,10 +657,8 @@ public class ClusterModel implements IClusterModel {
         if (!server.isReady()) {
           clearActiveCoordinator();
           setReady(false);
-          setConnected(!isUserDisconnecting() && determineConnected());
+          // setConnected(!isUserDisconnecting() && determineConnected());
         }
-      } else if (IServer.PROP_CONNECTED.equals(prop)) {
-        // setConnected((Boolean) evt.getNewValue());
       }
     }
   }
@@ -670,11 +668,6 @@ public class ClusterModel implements IClusterModel {
       if (!isConnectListening) { throw new RuntimeException(
                                                             "ConnectServerListener.propertyChange called when not listening"); }
       String prop = evt.getPropertyName();
-      if (IServer.PROP_CONNECT_ERROR.equals(prop)) {
-        if (connectServer.hasConnectError()) {
-          // System.err.println(connectServer.getConnectErrorMessage());
-        }
-      }
       if (IServer.PROP_CONNECTED.equals(prop)) {
         if (connectServer.isConnected()) {
           serverGroups = connectServer.getClusterServerGroups();
@@ -709,6 +702,8 @@ public class ClusterModel implements IClusterModel {
           setActiveCoordinator(group.getActiveServer());
         }
         setReady(determineReady());
+      } else if (IServerGroup.PROP_CONNECTED.equals(prop)) {
+        setConnected(determineConnected());
       }
     }
   }

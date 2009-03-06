@@ -291,6 +291,9 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
 
     @Override
     protected void handleReady() {
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
       if (clusterModel.isReady()) {
         IServer activeCoord = clusterModel.getActiveCoordinator();
         if (activeCoord != null) {
@@ -310,6 +313,9 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
 
     @Override
     protected void handleActiveCoordinator(IServer oldActive, IServer newActive) {
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
       if (oldActive != null) {
         oldActive.removeClientConnectionListener(StatsRecorderPanel.this);
         oldActive.removeClusterStatsListener(StatsRecorderPanel.this);
@@ -1118,6 +1124,8 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
     IClusterModel theClusterModel = getClusterModel();
     if (theClusterModel != null) {
       theClusterModel.removePropertyChangeListener(clusterListener);
+      clusterListener.tearDown();
+
       IServer activeCoord = theClusterModel.getActiveCoordinator();
       if (activeCoord != null) {
         activeCoord.removeClusterStatsListener(this);

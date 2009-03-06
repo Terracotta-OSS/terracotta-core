@@ -273,11 +273,11 @@ public class DemoChartFactory {
     return new JFreeChart(plot);
   }
 
-  private static TimeSeriesCollection createTimeSeriesDataset(TimeSeries s1) {
+  public static TimeSeriesCollection createTimeSeriesDataset(TimeSeries s1) {
     return createTimeSeriesDataset(new TimeSeries[] { s1 });
   }
 
-  private static TimeSeriesCollection createTimeSeriesDataset(TimeSeries[] series) {
+  public static TimeSeriesCollection createTimeSeriesDataset(TimeSeries[] series) {
     TimeSeriesCollection dataset = new TimeSeriesCollection();
 
     for (int i = 0; i < series.length; i++) {

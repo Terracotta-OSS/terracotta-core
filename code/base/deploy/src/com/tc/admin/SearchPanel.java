@@ -74,7 +74,7 @@ public class SearchPanel extends XContainer {
     gbc.gridx++;
 
     add(fFindField = new XTextField(), gbc);
-    fFindField.setColumns(20);
+    fFindField.setColumns(16);
     fFindField.setMinimumSize(fFindField.getPreferredSize());
     fFindField.getDocument().addDocumentListener(new FieldDocListener());
     gbc.gridx++;
@@ -274,8 +274,8 @@ public class SearchPanel extends XContainer {
   }
 
   private void doSearch(boolean next) {
-    String searchText = getSearchText();
-    String fullText = fTextComponent.getText();
+    String searchText = getSearchText().toLowerCase();
+    String fullText = fTextComponent.getText().toLowerCase();
     int selStart = fTextComponent.getSelectionStart();
     int selEnd = fTextComponent.getSelectionEnd();
     int index = -1;
@@ -295,7 +295,7 @@ public class SearchPanel extends XContainer {
       while (true) {
         fullText = fullText.substring(0, Math.min(fullText.length(), selEnd));
         if ((index = fullText.lastIndexOf(searchText)) == -1) {
-          fullText = fTextComponent.getText();
+          fullText = fTextComponent.getText().toLowerCase();
           index = fullText.lastIndexOf(searchText);
           break;
         } else if (index == selStart && searchText.length() == Math.abs(selStart - selEnd)) {

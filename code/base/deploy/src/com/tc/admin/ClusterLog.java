@@ -121,6 +121,9 @@ public class ClusterLog extends XContainer implements ActionListener {
 
     @Override
     protected void handleConnected() {
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
       if (!inited && clusterModel.isConnected()) {
         addNodePanels();
       }
@@ -128,6 +131,9 @@ public class ClusterLog extends XContainer implements ActionListener {
 
     @Override
     protected void handleActiveCoordinator(IServer oldActive, IServer newActive) {
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
       if (newActive != null) {
         elementChooser.setSelectedPath(newActive.toString());
       }
@@ -217,6 +223,8 @@ public class ClusterLog extends XContainer implements ActionListener {
   @Override
   public void tearDown() {
     clusterModel.removePropertyChangeListener(clusterListener);
+    clusterListener.tearDown();
+
     elementChooser.removeActionListener(this);
 
     synchronized (this) {

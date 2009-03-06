@@ -237,6 +237,8 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
   @Override
   public void tearDown() {
     clusterModel.removePropertyChangeListener(clusterListener);
+    clusterListener.tearDown();
+
     pagedView.removePropertyChangeListener(this);
     elementChooser.removeActionListener(this);
 

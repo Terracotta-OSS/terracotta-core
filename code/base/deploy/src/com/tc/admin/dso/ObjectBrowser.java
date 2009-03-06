@@ -71,7 +71,7 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
       addNodePanels();
       removeAll();
       add(mainPanel);
-      
+
     } else {
       add(messagePanel);
       messageLabel.setText(NOT_READY_MESSAGE);
@@ -207,6 +207,9 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
 
     @Override
     protected void handleReady() {
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
       removeAll();
       if (clusterModel.isReady()) {
         if (!inited) {
@@ -291,6 +294,8 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
   @Override
   public void tearDown() {
     clusterModel.removePropertyChangeListener(clusterListener);
+    clusterListener.tearDown();
+
     pagedView.removePropertyChangeListener(this);
     elementChooser.removeActionListener(this);
 

@@ -130,6 +130,9 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Prop
 
     @Override
     protected void handleReady() {
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
       if (!inited && clusterModel.isConnected()) {
         addNodePanels();
       }
@@ -181,6 +184,8 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Prop
   @Override
   public void tearDown() {
     clusterModel.removePropertyChangeListener(clusterListener);
+    clusterListener.tearDown();
+
     pagedView.removePropertyChangeListener(this);
     elementChooser.removeActionListener(this);
 

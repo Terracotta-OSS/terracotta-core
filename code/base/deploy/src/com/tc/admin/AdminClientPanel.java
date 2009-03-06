@@ -1117,7 +1117,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
 
   private Class getSVTFrameType() throws ClassNotFoundException {
     ClassLoader cl = getSVTClassLoader();
-    if (false && cl != null) {
+    if (cl != null) {
       return cl.loadClass(SNAPSHOT_VISUALIZER_TYPE);
     } else {
       return Class.forName(SNAPSHOT_VISUALIZER_TYPE);

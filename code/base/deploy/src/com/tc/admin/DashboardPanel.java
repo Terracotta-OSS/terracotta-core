@@ -19,6 +19,7 @@ import org.jfree.data.general.DefaultValueDataset;
 import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.DemoChartFactory;
 import com.tc.admin.common.XContainer;
+import com.tc.admin.common.XLabel;
 import com.tc.admin.dso.BaseRuntimeStatsPanel;
 import com.tc.admin.model.IClusterModel;
 import com.tc.admin.model.IServer;
@@ -26,15 +27,20 @@ import com.tc.admin.model.IServerGroup;
 import com.tc.admin.model.PolledAttributeListener;
 import com.tc.admin.model.PolledAttributesResult;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Paint;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.swing.BorderFactory;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 
 class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeListener {
   private IClusterModel            clusterModel;
@@ -51,6 +57,12 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
 
   private long                     lastObjectCount;
   private long                     lastObjectCountTime  = -1;
+
+  private final XContainer         messagePanel;
+  private XLabel                   messageLabel;
+
+  private static final String      NOT_READY_MESSAGE    = "Cluster is not yet ready for action.  Are all the mirror groups active?";
+  private static final String      INITIALIZING_MESSAGE = "Initializing...";
 
   private static final Set<String> POLLED_ATTRIBUTE_SET = new HashSet(Arrays
                                                             .asList(POLLED_ATTR_OBJECT_FLUSH_RATE,
@@ -76,15 +88,28 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
     txnSizeRateDataset = new DefaultValueDataset();
     pendingTxnsDataset = new DefaultValueDataset();
 
+    messagePanel = createMessagePanel();
+
     setName(clusterModel.toString());
     setup(chartsPanel);
 
     clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
-    boolean ready = clusterModel.isReady();
-    if (ready) {
+    if (clusterModel.isReady()) {
       startMonitoringRuntimeStats();
+    } else {
+      remove(chartsPanel);
+      messageLabel.setText(NOT_READY_MESSAGE);
+      add(messagePanel);
     }
-    chartsPanel.setVisible(ready);
+  }
+
+  private XContainer createMessagePanel() {
+    XContainer panel = new XContainer(new BorderLayout());
+    panel.add(messageLabel = new XLabel());
+    messageLabel.setText(INITIALIZING_MESSAGE);
+    messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    messageLabel.setFont(new Font("Dialog", Font.PLAIN, 14));
+    return panel;
   }
 
   private class ClusterListener extends AbstractClusterListener {
@@ -94,13 +119,20 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
 
     @Override
     public void handleReady() {
-      boolean ready = clusterModel.isReady();
-      if (ready) {
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
+      removeAll();
+      if (clusterModel.isReady()) {
+        add(chartsPanel);
         startMonitoringRuntimeStats();
       } else {
         stopMonitoringRuntimeStats();
+        messageLabel.setText(NOT_READY_MESSAGE);
+        add(messagePanel);
       }
-      chartsPanel.setVisible(ready);
+      revalidate();
+      repaint();
     }
   }
 
@@ -108,72 +140,79 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
    * Implementation of PolledAttributeListener.
    */
   @Override
-  public void attributesPolled(PolledAttributesResult result) {
-    int liveObjectCount = 0;
-    int txnRate = 0;
-    int lockRecallRate = 0;
-    int broadcastRate = 0;
-    int flushRate = 0;
-    int faultRate = 0;
-    int txnSizeRate = 0;
-    int pendingTxnsCount = 0;
+  public void attributesPolled(final PolledAttributesResult result) {
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        int liveObjectCount = 0;
+        int txnRate = 0;
+        int lockRecallRate = 0;
+        int broadcastRate = 0;
+        int flushRate = 0;
+        int faultRate = 0;
+        int txnSizeRate = 0;
+        int pendingTxnsCount = 0;
 
-    for (IServerGroup group : clusterModel.getServerGroups()) {
-      IServer activeServer = group.getActiveServer();
-      if (activeServer != null) {
-        Number nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_TRANSACTION_RATE);
-        if (nodeValue != null) {
-          txnRate += nodeValue.intValue();
+        for (IServerGroup group : clusterModel.getServerGroups()) {
+          IServer activeServer = group.getActiveServer();
+          if (activeServer != null) {
+            Number nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_TRANSACTION_RATE);
+            if (nodeValue != null) {
+              txnRate += nodeValue.intValue();
+            }
+            nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_LIVE_OBJECT_COUNT);
+            if (nodeValue != null) {
+              liveObjectCount += nodeValue.intValue();
+            }
+            nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_LOCK_RECALL_RATE);
+            if (nodeValue != null) {
+              lockRecallRate += nodeValue.intValue();
+            }
+            nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_BROADCAST_RATE);
+            if (nodeValue != null) {
+              broadcastRate += nodeValue.intValue();
+            }
+            nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_OBJECT_FLUSH_RATE);
+            if (nodeValue != null) {
+              flushRate += nodeValue.intValue();
+            }
+            nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_OBJECT_FAULT_RATE);
+            if (nodeValue != null) {
+              faultRate += nodeValue.intValue();
+            }
+            nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_TRANSACTION_SIZE_RATE);
+            if (nodeValue != null) {
+              txnSizeRate += nodeValue.intValue();
+            }
+            nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_PENDING_TRANSACTIONS_COUNT);
+            if (nodeValue != null) {
+              pendingTxnsCount += nodeValue.intValue();
+            }
+          }
         }
-        nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_LIVE_OBJECT_COUNT);
-        if (nodeValue != null) {
-          liveObjectCount += nodeValue.intValue();
+
+        double creationRate = 0;
+        long now = System.currentTimeMillis();
+        if (lastObjectCountTime != -1) {
+          double newObjectsCount = liveObjectCount - lastObjectCount;
+          double timeDiff = now - (double) lastObjectCountTime;
+          creationRate = (newObjectsCount / timeDiff) * 1000;
         }
-        nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_LOCK_RECALL_RATE);
-        if (nodeValue != null) {
-          lockRecallRate += nodeValue.intValue();
-        }
-        nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_BROADCAST_RATE);
-        if (nodeValue != null) {
-          broadcastRate += nodeValue.intValue();
-        }
-        nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_OBJECT_FLUSH_RATE);
-        if (nodeValue != null) {
-          flushRate += nodeValue.intValue();
-        }
-        nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_OBJECT_FAULT_RATE);
-        if (nodeValue != null) {
-          faultRate += nodeValue.intValue();
-        }
-        nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_TRANSACTION_SIZE_RATE);
-        if (nodeValue != null) {
-          txnSizeRate += nodeValue.intValue();
-        }
-        nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_PENDING_TRANSACTIONS_COUNT);
-        if (nodeValue != null) {
-          pendingTxnsCount += nodeValue.intValue();
-        }
+        lastObjectCount = liveObjectCount;
+        lastObjectCountTime = now;
+
+        txnRateDataset.setValue(Double.valueOf(txnRate));
+        creationRateDataset.setValue(Double.valueOf(creationRate));
+        broadcastRateDataset.setValue(Double.valueOf(broadcastRate));
+        lockRecallRateDataset.setValue(Double.valueOf(lockRecallRate));
+        faultRateDataset.setValue(Double.valueOf(faultRate));
+        flushRateDataset.setValue(Double.valueOf(flushRate));
+        txnSizeRateDataset.setValue(Double.valueOf(txnSizeRate / 1000d));
+        pendingTxnsDataset.setValue(Integer.valueOf(pendingTxnsCount));
+
+        revalidate();
+        repaint();
       }
-    }
-
-    double creationRate = 0;
-    long now = System.currentTimeMillis();
-    if (lastObjectCountTime != -1) {
-      double newObjectsCount = liveObjectCount - lastObjectCount;
-      double timeDiff = now - (double) lastObjectCountTime;
-      creationRate = (newObjectsCount / timeDiff) * 1000;
-    }
-    lastObjectCount = liveObjectCount;
-    lastObjectCountTime = now;
-
-    txnRateDataset.setValue(Integer.valueOf(txnRate));
-    creationRateDataset.setValue(Double.valueOf(creationRate));
-    broadcastRateDataset.setValue(Integer.valueOf(broadcastRate));
-    lockRecallRateDataset.setValue(Integer.valueOf(lockRecallRate));
-    faultRateDataset.setValue(Integer.valueOf(faultRate));
-    flushRateDataset.setValue(Integer.valueOf(flushRate));
-    txnSizeRateDataset.setValue(Double.valueOf(txnSizeRate / 1000d));
-    pendingTxnsDataset.setValue(Integer.valueOf(pendingTxnsCount));
+    });
   }
 
   private void addPolledAttributeListener() {
@@ -204,8 +243,42 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
     super.stopMonitoringRuntimeStats();
   }
 
+  public static ChartPanel createDialChartPanel(JFreeChart chart) {
+    boolean useBuffer = false;
+    boolean properties = false;
+    boolean save = false;
+    boolean print = false;
+    boolean zoom = false;
+    boolean tooltips = true;
+
+    ChartPanel chartPanel = new ChartPanel(chart, ChartPanel.DEFAULT_WIDTH, ChartPanel.DEFAULT_HEIGHT,
+        ChartPanel.DEFAULT_MINIMUM_DRAW_WIDTH, ChartPanel.DEFAULT_MINIMUM_DRAW_HEIGHT,
+        ChartPanel.DEFAULT_MAXIMUM_DRAW_WIDTH, ChartPanel.DEFAULT_MAXIMUM_DRAW_HEIGHT, useBuffer, properties, save,
+        print, zoom, tooltips) {
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension dim = getParent().getSize();
+        dim.width = Math.min(dim.width, dim.height);
+        dim.height = Math.min(dim.width, dim.height);
+        return dim;
+      }
+
+      @Override
+      public Dimension getMaximumSize() {
+        return getPreferredSize();
+      }
+
+      @Override
+      public Dimension getMinimumSize() {
+        return getPreferredSize();
+      }
+    };
+    return chartPanel;
+  }
+
   @Override
   protected void setup(XContainer runtimeStatsPanel) {
+    // runtimeStatsPanel.setLayout(new FlowLayout());
     runtimeStatsPanel.setLayout(new GridLayout(1, 0));
 
     JFreeChart chart;
@@ -213,69 +286,78 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
     double startAngle = -140, extent = -260;
     StandardDialScale defScale = DemoChartFactory.createStandardDialScale(0, 5000, startAngle, extent, 1000, 4);
     StandardDialScale scale;
-    ChartPanel chartPanel;
-    Dimension majorPrefSize = new Dimension(160, 160);
-    Dimension minorPrefSize = new Dimension(130, 130);
+    XContainer chartHolder;
     Paint minorPointerFillPaint = Color.black;
     Paint minorPointerOutlinePaint = Color.black;
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.fill = GridBagConstraints.BOTH;
+    gbc.weightx = 0.0;
+    gbc.weighty = 0.0;
 
     ranges = new StandardDialRange[] { new StandardDialRange(4000, 4500, Color.orange),
         new StandardDialRange(4500, 5000, Color.red) };
     chart = DemoChartFactory.createDial(appContext.getString("dashboard.txn-rate"), txnRateDataset, defScale, ranges);
-    runtimeStatsPanel.add(chartPanel = createChartPanel(chart));
-    chartPanel.setPreferredSize(majorPrefSize);
-    chartPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
+    chartHolder = new XContainer(new GridBagLayout());
+    chartHolder.add(createDialChartPanel(chart), gbc);
+    runtimeStatsPanel.add(chartHolder);
 
     ranges = new StandardDialRange[] { new StandardDialRange(4000, 4500, Color.orange),
         new StandardDialRange(4500, 5000, Color.red) };
     chart = DemoChartFactory.createDial(appContext.getString("dashboard.lock-recall-rate"), lockRecallRateDataset,
                                         defScale, ranges, minorPointerFillPaint, minorPointerOutlinePaint);
-    runtimeStatsPanel.add(chartPanel = createChartPanel(chart));
-    chartPanel.setPreferredSize(minorPrefSize);
+    chartHolder = new XContainer(new GridBagLayout());
+    chartHolder.add(createDialChartPanel(chart), gbc);
+    runtimeStatsPanel.add(chartHolder);
 
-    ranges = new StandardDialRange[] { new StandardDialRange(400, 450, Color.orange),
-        new StandardDialRange(450, 500, Color.red) };
-    scale = DemoChartFactory.createStandardDialScale(0, 500, startAngle, extent, 100, 4);
+    ranges = new StandardDialRange[] { new StandardDialRange(5000, 6000, Color.orange),
+        new StandardDialRange(6000, 7000, Color.red) };
+    scale = DemoChartFactory.createStandardDialScale(0, 7000, startAngle, extent, 1000, 4);
     chart = DemoChartFactory.createDial(appContext.getString("dashboard.object-creation-rate"), creationRateDataset,
                                         scale, ranges, minorPointerFillPaint, minorPointerOutlinePaint);
-    runtimeStatsPanel.add(chartPanel = createChartPanel(chart));
-    chartPanel.setPreferredSize(minorPrefSize);
+    chartHolder = new XContainer(new GridBagLayout());
+    chartHolder.add(createDialChartPanel(chart), gbc);
+    runtimeStatsPanel.add(chartHolder);
 
     ranges = new StandardDialRange[] { new StandardDialRange(4000, 4500, Color.orange),
         new StandardDialRange(4500, 5000, Color.red) };
     chart = DemoChartFactory.createDial(appContext.getString("dashboard.broadcast-rate"), broadcastRateDataset,
                                         defScale, ranges, minorPointerFillPaint, minorPointerOutlinePaint);
-    runtimeStatsPanel.add(chartPanel = createChartPanel(chart));
-    chartPanel.setPreferredSize(minorPrefSize);
+    chartHolder = new XContainer(new GridBagLayout());
+    chartHolder.add(createDialChartPanel(chart), gbc);
+    runtimeStatsPanel.add(chartHolder);
 
-    ranges = new StandardDialRange[] { new StandardDialRange(80, 90, Color.orange),
-        new StandardDialRange(90, 100, Color.red) };
-    scale = DemoChartFactory.createStandardDialScale(0, 100, startAngle, extent, 10, 4);
+    ranges = new StandardDialRange[] { new StandardDialRange(4000, 4500, Color.orange),
+        new StandardDialRange(4500, 5000, Color.red) };
+    scale = DemoChartFactory.createStandardDialScale(0, 5000, startAngle, extent, 1000, 4);
     chart = DemoChartFactory.createDial(appContext.getString("dashboard.fault-rate"), faultRateDataset, scale, ranges,
                                         minorPointerFillPaint, minorPointerOutlinePaint);
-    runtimeStatsPanel.add(chartPanel = createChartPanel(chart));
-    chartPanel.setPreferredSize(minorPrefSize);
+    chartHolder = new XContainer(new GridBagLayout());
+    chartHolder.add(createDialChartPanel(chart), gbc);
+    runtimeStatsPanel.add(chartHolder);
 
     chart = DemoChartFactory.createDial(appContext.getString("dashboard.flush-rate"), flushRateDataset, scale, ranges,
                                         minorPointerFillPaint, minorPointerOutlinePaint);
-    runtimeStatsPanel.add(chartPanel = createChartPanel(chart));
-    chartPanel.setPreferredSize(minorPrefSize);
+    chartHolder = new XContainer(new GridBagLayout());
+    chartHolder.add(createDialChartPanel(chart), gbc);
+    runtimeStatsPanel.add(chartHolder);
 
-    ranges = new StandardDialRange[] { new StandardDialRange(200, 400, Color.orange),
-        new StandardDialRange(400, 500, Color.red) };
-    scale = DemoChartFactory.createStandardDialScale(0, 500, startAngle, extent, 100, 4);
+    ranges = new StandardDialRange[] { new StandardDialRange(60, 80, Color.orange),
+        new StandardDialRange(80, 100, Color.red) };
+    scale = DemoChartFactory.createStandardDialScale(0, 100, startAngle, extent, 10, 4);
     chart = DemoChartFactory.createDial(appContext.getString("dashboard.txn-size-rate"), txnSizeRateDataset, scale,
                                         ranges, minorPointerFillPaint, minorPointerOutlinePaint);
-    runtimeStatsPanel.add(chartPanel = createChartPanel(chart));
-    chartPanel.setPreferredSize(minorPrefSize);
+    chartHolder = new XContainer(new GridBagLayout());
+    chartHolder.add(createDialChartPanel(chart), gbc);
+    runtimeStatsPanel.add(chartHolder);
 
-    ranges = new StandardDialRange[] { new StandardDialRange(80, 90, Color.orange),
+    ranges = new StandardDialRange[] { new StandardDialRange(60, 90, Color.orange),
         new StandardDialRange(90, 100, Color.red) };
     scale = DemoChartFactory.createStandardDialScale(0, 100, startAngle, extent, 10, 4);
     chart = DemoChartFactory.createDial(appContext.getString("dashboard.unacked-txns"), pendingTxnsDataset, scale,
                                         ranges, minorPointerFillPaint, minorPointerOutlinePaint);
-    runtimeStatsPanel.add(chartPanel = createChartPanel(chart));
-    chartPanel.setPreferredSize(minorPrefSize);
+    chartHolder = new XContainer(new GridBagLayout());
+    chartHolder.add(createDialChartPanel(chart), gbc);
+    runtimeStatsPanel.add(chartHolder);
   }
 
   private synchronized IClusterModel getClusterModel() {
@@ -285,6 +367,8 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
   @Override
   public void tearDown() {
     clusterModel.removePropertyChangeListener(clusterListener);
+    clusterListener.tearDown();
+
     clusterModel.removePolledAttributeListener(ACTIVE_SERVERS, POLLED_ATTRIBUTE_SET, this);
 
     super.tearDown();

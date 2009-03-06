@@ -143,8 +143,6 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
           newActive.addClusterStatsListener(ClusterNode.this);
         }
         newActive.addPropertyChangeListener(ClusterNode.this);
-      } else {
-        handleDisconnect();
       }
     }
 
@@ -160,6 +158,9 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
         handleDisconnect();
         if (clusterModel.hasConnectError()) {
           reportConnectError(clusterModel.getConnectError());
+        }
+        if (isAutoConnect()) {
+          clusterModel.connect();
         }
       }
     }
@@ -471,7 +472,6 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
   private final AtomicBoolean addingChildren = new AtomicBoolean(false);
 
   void tryAddChildren() {
-    // if (!clusterModel.isReady()) { return; }
     if (addingChildren.get()) { return; }
 
     try {
@@ -489,7 +489,7 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
         controller.expandAll(topologyNode);
       }
     } catch (Throwable t) {
-      t.printStackTrace();
+      adminClientContext.log(t);
     } finally {
       addingChildren.set(false);
     }

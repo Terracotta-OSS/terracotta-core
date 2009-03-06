@@ -13,9 +13,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class LogViewer extends XContainer {
-  private IAdminClientContext            adminClientContext;
-  private Map<IClusterModel, ClusterLog> logMap;
-  private PagedView                      pagedView;
+  private final IAdminClientContext            adminClientContext;
+  private final Map<IClusterModel, ClusterLog> logMap;
+  private PagedView                            pagedView;
 
   public LogViewer(IAdminClientContext adminClientContext) {
     super(new BorderLayout());
@@ -31,7 +31,7 @@ public class LogViewer extends XContainer {
   }
 
   public void remove(IClusterModel clusterModel) {
-    pagedView.addPage(logMap.remove(clusterModel));
+    pagedView.remove(logMap.remove(clusterModel));
   }
 
   public boolean isEmpty() {

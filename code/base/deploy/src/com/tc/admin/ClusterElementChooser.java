@@ -238,9 +238,6 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
   }
 
   protected void showPopup() {
-    if (popup.isVisible()) {
-      hidePopup();
-    }
     Point p = getPopupLocation();
     popup.show(this, p.x, p.y);
     tree.requestFocusInWindow();
@@ -354,6 +351,9 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
 
     @Override
     protected void handleConnected() {
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
       if (!inited && clusterModel.isConnected()) {
         setupTreeModel();
       }
@@ -435,6 +435,8 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
   @Override
   public void tearDown() {
     clusterModel.removePropertyChangeListener(clusterListener);
+    clusterListener.tearDown();
+
     treeModel.removeTreeModelListener(this);
     tree.removeMouseListener(treeMouseHandler);
     tree.removeMouseMotionListener(treeMouseHandler);

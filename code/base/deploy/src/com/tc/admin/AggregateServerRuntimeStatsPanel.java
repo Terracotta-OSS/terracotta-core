@@ -17,7 +17,6 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.data.time.TimeSeries;
 
 import com.tc.admin.common.ApplicationContext;
@@ -97,6 +96,9 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
 
     @Override
     public void handleReady() {
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
       if (clusterModel.isReady()) {
         startMonitoringRuntimeStats();
       } else {
@@ -226,13 +228,10 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
   private void setupLockRecallRatePanel(XContainer parent) {
     lockRecallRateSeries = createTimeSeries("Lock Recall Rate");
     broadcastRateSeries = createTimeSeries("Change Broadcast Rate");
-    JFreeChart chart = createXYBarChart(new TimeSeries[] { lockRecallRateSeries, broadcastRateSeries }, true);
+    JFreeChart chart = createChart(new TimeSeries[] { lockRecallRateSeries, broadcastRateSeries }, true);
     XYPlot plot = (XYPlot) chart.getPlot();
     NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
     numberAxis.setAutoRangeMinimumSize(10.0);
-    XYBarRenderer renderer = (XYBarRenderer) plot.getRenderer();
-    renderer.setDrawBarOutline(false);
-    renderer.setShadowVisible(false);
     ChartPanel recallRatePanel = createChartPanel(chart);
     parent.add(recallRatePanel);
     recallRatePanel.setPreferredSize(fDefaultGraphSize);
@@ -334,6 +333,7 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
   @Override
   public synchronized void tearDown() {
     clusterModel.removePropertyChangeListener(clusterListener);
+    clusterListener.tearDown();
 
     stopMonitoringRuntimeStats();
     clusterModel = null;

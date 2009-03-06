@@ -14,17 +14,18 @@ import java.beans.PropertyChangeSupport;
 import javax.swing.event.EventListenerList;
 
 public class ServerGroup implements IServerGroup {
-  private final IClusterModel    clusterModel;
-  private final Server[]         members;
-  private final boolean          isCoordinator;
-  private final String           name;
-  private final int              id;
+  private final IClusterModel         clusterModel;
+  private final Server[]              members;
+  private final boolean               isCoordinator;
+  private final String                name;
+  private final int                   id;
+  private boolean                     connected;
 
-  private IServer                activeServer;
-  private PropertyChangeSupport  propertyChangeSupport;
-  private ActiveServerListener   activeServerListener;
-  private PropertyChangeListener serverPropertyChangeListener;
-  private EventListenerList      listenerList;
+  private IServer                     activeServer;
+  private final PropertyChangeSupport propertyChangeSupport;
+  private ActiveServerListener        activeServerListener;
+  private PropertyChangeListener      serverPropertyChangeListener;
+  private final EventListenerList     listenerList;
 
   public ServerGroup(IClusterModel clusterModel, ServerGroupInfo info) {
     this.clusterModel = clusterModel;
@@ -67,6 +68,22 @@ public class ServerGroup implements IServerGroup {
     for (IServer server : getMembers()) {
       server.setConnectionCredentials(creds);
     }
+  }
+
+  protected void setConnected(boolean connected) {
+    boolean oldConnected;
+    synchronized (this) {
+      oldConnected = isConnected();
+      this.connected = connected;
+    }
+    if (!connected) {
+      clearActiveServer();
+    }
+    firePropertyChange(PROP_CONNECTED, oldConnected, connected);
+  }
+
+  public synchronized boolean isConnected() {
+    return connected;
   }
 
   private void setActiveServer(IServer theActiveServer) {
@@ -121,11 +138,12 @@ public class ServerGroup implements IServerGroup {
 
   public void disconnect() {
     for (IServer member : getMembers()) {
-      member.removePropertyChangeListener(serverPropertyChangeListener);
+      if (member.isConnected()) {
+        member.disconnect();
+      }
     }
-    IServer theActiveServer = getActiveServer();
-    if (theActiveServer != null) {
-      theActiveServer.disconnect();
+    for (IServer member : getMembers()) {
+      member.removePropertyChangeListener(serverPropertyChangeListener);
     }
   }
 
@@ -138,6 +156,7 @@ public class ServerGroup implements IServerGroup {
         if (server.isActive()) {
           setActiveServer(server);
         }
+        setConnected(determineConnected());
       }
     }
   }
@@ -207,6 +226,7 @@ public class ServerGroup implements IServerGroup {
     activeServer = null;
   }
 
+  @Override
   public String toString() {
     return dump();
   }
@@ -238,6 +258,14 @@ public class ServerGroup implements IServerGroup {
   }
 
   public boolean isReady() {
-    return getActiveServer() != null;
+    IServer theActiveServer = getActiveServer();
+    return theActiveServer != null;
+  }
+
+  private boolean determineConnected() {
+    for (IServer server : getMembers()) {
+      if (server.isConnected()) { return true; }
+    }
+    return false;
   }
 }
