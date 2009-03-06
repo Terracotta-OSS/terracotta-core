@@ -20,7 +20,6 @@ module BundledVendors
     srcdir = getCachedVendorDir(url, name)
     fail "The source for the named vendor set: `#{name}' does not exists in #{srcdir}" unless File.directory?(srcdir)
     # copy vendor sources and binaries but exclude non-native scripts
-    non_native = @build_environment.is_unix_like? ? ['*.bat', '*.cmd', '*.exe'] : '*.sh'
     destdir    = FilePath.new(product_directory, directory).ensure_directory
     ant.copy(:todir => destdir.to_s) do
       ant.fileset(:dir => srcdir.to_s, :excludes => "**/.svn/**, **/.*")

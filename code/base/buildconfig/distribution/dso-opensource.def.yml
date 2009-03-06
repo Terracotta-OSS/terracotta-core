@@ -30,7 +30,7 @@ bundled_demos:
         - tasklist
         - townsend
 bundled_vendors:
-   - jetty-6.1.15.rc3:
+   - jetty-6.1.15:
        install_directory: vendors/jetty-6.1.15
 bundled_components:
   - base:
