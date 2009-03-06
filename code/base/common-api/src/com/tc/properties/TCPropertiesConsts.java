@@ -216,7 +216,7 @@ public interface TCPropertiesConsts {
    * </code>
    ********************************************************************************************************************/
   public static final String   L1_SERVERARRAY_OBJECTCREATIONSTRATEGY                  = "l1.serverarray.objectCreationStrategy";
-  public static final String   L1_SERVERARRAY_GROUPAFFINITY                           = "l1.serverarray.objectCreationStrategy.groupAffinity";
+  public static final String   L1_SERVERARRAY_GROUPAFFINITY                           = "l1.serverarray.objectCreationStrategy.groupAffinity.groupName";
 
   /*********************************************************************************************************************
    * <code>
