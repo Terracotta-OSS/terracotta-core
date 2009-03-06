@@ -12,28 +12,35 @@ import com.tctest.YoungGCTestAndActivePassiveTest;
 
 import java.util.ArrayList;
 
-
-
 public class CreateRescueCandidatesYoungGCTest extends YoungGCTestAndActivePassiveTest {
 
- 
   public CreateRescueCandidatesYoungGCTest() {
-   //
+    //
   }
-  
+
   protected boolean canRunActivePassive() {
     return true;
   }
-  
+
+  // force to use external process to run normal mode
+  protected boolean useExternalProcess() {
+    if (isRunNormalMode()) {
+      return true;
+    } else {
+      return super.useExternalProcess();
+    }
+  }
+
   // start only 1 L1
   protected int getNodeCount() {
     return 3;
   }
-  
+
   protected void setExtraJvmArgs(final ArrayList jvmArgs) {
-     jvmArgs.add("-verbosegc");
+    jvmArgs.add("-verbose:gc");
+    jvmArgs.add("-XX:+PrintGCTimeStamps");
   }
-  
+
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
     setupManager.setServerCrashMode(MultipleServersCrashMode.CONTINUOUS_ACTIVE_CRASH);
@@ -49,6 +56,5 @@ public class CreateRescueCandidatesYoungGCTest extends YoungGCTestAndActivePassi
   protected int getGarbageCollectionInterval() {
     return 180;
   }
-  
-  
+
 }
