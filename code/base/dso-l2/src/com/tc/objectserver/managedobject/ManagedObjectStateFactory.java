@@ -172,9 +172,10 @@ public class ManagedObjectStateFactory {
             .createPersistentMap(oid));
       case ManagedObjectState.URL_TYPE:
         return new URLManagedObjectState(classID);
-      // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
+        // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
       case ManagedObjectState.CONCURRENT_STRING_MAP_TYPE:
-        return new ConcurrentStringMapManagedObjectState(classID, persistentCollectionFactory.createPersistentMap(oid));
+        return new ConcurrentStringMapManagedObjectState(classID, this.persistentCollectionFactory
+            .createPersistentMap(oid));
     }
     // Unreachable
     throw new AssertionError("Type : " + type + " is unknown !");
@@ -264,7 +265,7 @@ public class ManagedObjectStateFactory {
           return URLManagedObjectState.readFrom(in);
         case ManagedObjectState.LINKED_HASHSET_TYPE:
           return LinkedHashSetManagedObjectState.readFrom(in);
-        // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
+          // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
         case ManagedObjectState.CONCURRENT_STRING_MAP_TYPE:
           return ConcurrentStringMapManagedObjectState.readFrom(in);
         default:

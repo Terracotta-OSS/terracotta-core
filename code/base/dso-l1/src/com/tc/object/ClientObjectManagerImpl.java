@@ -1010,8 +1010,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     TCObject obj = null;
 
     if ((obj = basicLookup(pojo)) == null) {
-      obj = this.factory.getNewInstance(nextObjectID(this.txManager.getCurrentTransaction()), pojo, pojo.getClass(),
-                                        true);
+      obj = this.factory.getNewInstance(nextObjectID(this.txManager.getCurrentTransaction(), pojo), pojo, pojo
+          .getClass(), true);
       this.txManager.createObject(obj);
       basicAddLocal(obj, false);
       executePostCreateMethod(pojo);
@@ -1035,8 +1035,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     TCObject obj = null;
 
     if ((obj = basicLookup(pojo)) == null) {
-      obj = this.factory.getNewInstance(nextObjectID(this.txManager.getCurrentTransaction()), pojo, pojo.getClass(),
-                                        true);
+      obj = this.factory.getNewInstance(nextObjectID(this.txManager.getCurrentTransaction(), pojo), pojo, pojo
+          .getClass(), true);
       this.pendingCreateTCObjects.add(obj);
       this.pendingCreatePojos.add(pojo);
       basicAddLocal(obj, false);
@@ -1066,8 +1066,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return !this.pendingCreateTCObjects.isEmpty();
   }
 
-  private ObjectID nextObjectID(ClientTransaction txn) {
-    return this.idProvider.next(txn);
+  private ObjectID nextObjectID(ClientTransaction txn, Object pojo) {
+    return this.idProvider.next(txn, pojo);
   }
 
   public WeakReference createNewPeer(TCClass clazz, DNA dna) {

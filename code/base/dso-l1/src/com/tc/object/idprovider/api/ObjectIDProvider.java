@@ -12,6 +12,6 @@ import com.tc.object.tx.ClientTransaction;
  */
 public interface ObjectIDProvider {
 
-  public ObjectID next(ClientTransaction txn);
+  public ObjectID next(ClientTransaction txn, Object pojo);
 
 }

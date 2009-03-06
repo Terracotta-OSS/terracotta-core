@@ -5,7 +5,6 @@
 package com.tc.util.sequence;
 
 import com.tc.exception.TCRuntimeException;
-import com.tc.util.sequence.BatchSequenceProvider;
 
 /**
  * This Sequence deals with batches. It keeps a next batch around to avoid pauses and always requests a new next batch
@@ -30,35 +29,39 @@ public final class BatchSequence implements BatchSequenceReceiver, Sequence {
 
   public synchronized long next() {
     requestMoreIDsIfNecessary();
-    return current.next();
+    return this.current.next();
   }
 
   public synchronized long current() {
-    return current.current();
+    return this.current.current();
   }
 
   private void requestMoreIDsIfNecessary() {
 
     // This should only happen the first time
-    while (!current.hasNext() && !nextBatch.hasNext()) {
-      if (!requestInProgress) requestNextBatch();
+    while (!this.current.hasNext() && !this.nextBatch.hasNext()) {
+      if (!this.requestInProgress) {
+        requestNextBatch();
+      }
       try {
-        if (!current.hasNext() && !nextBatch.hasNext()) this.wait();
+        if (!this.current.hasNext() && !this.nextBatch.hasNext()) {
+          this.wait();
+        }
       } catch (InterruptedException ie) {
         throw new TCRuntimeException(ie);
       }
     }
 
     // This is the more normal case
-    if (!current.hasNext()) {
-      this.current = nextBatch;
+    if (!this.current.hasNext()) {
+      this.current = this.nextBatch;
       this.nextBatch = NULL_SEQUENCE_BATCH;
       requestNextBatch();
     }
   }
 
   private void requestNextBatch() {
-    remoteProvider.requestBatch(this, batchSize);
+    this.remoteProvider.requestBatch(this, this.batchSize);
     this.requestInProgress = true;
   }
 
@@ -71,10 +74,10 @@ public final class BatchSequence implements BatchSequenceReceiver, Sequence {
   // The currentBatch is not considered here as we want to greedily get the next set even if the
   // current set has some available.
   public synchronized boolean hasNext() {
-    return nextBatch.hasNext();
+    return this.nextBatch.hasNext();
   }
 
   public synchronized BatchSequenceProvider getProvider() {
-    return remoteProvider;
+    return this.remoteProvider;
   }
 }

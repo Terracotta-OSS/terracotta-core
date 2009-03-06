@@ -23,12 +23,12 @@ public final class CommitTransactionMessageToTransactionBatchReader implements T
   // Used by active server
   public TransactionBatchReader newTransactionBatchReader(CommitTransactionMessage ctm) throws IOException {
     return new TransactionBatchReaderImpl(ctm.getBatchData(), ctm.getSourceNodeID(), ctm.getSerializer(),
-                                          activeTxnFactory, globalSeverStats);
+                                          this.activeTxnFactory, this.globalSeverStats);
   }
 
   // Used by passive server
   public TransactionBatchReader newTransactionBatchReader(RelayedCommitTransactionMessage ctm) throws IOException {
     return new TransactionBatchReaderImpl(ctm.getBatchData(), ctm.getClientID(), ctm.getSerializer(),
-                                          passiveTxnFactory, globalSeverStats);
+                                          this.passiveTxnFactory, this.globalSeverStats);
   }
 }
