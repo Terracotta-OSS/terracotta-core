@@ -36,7 +36,7 @@ public class ConcurrentHashMapBadKeyDeadlockTest extends TransparentTestBase {
   }
   
   public ConcurrentHashMapBadKeyDeadlockTest() {
-    this.disableAllUntil("2010-03-01");
+    //this.disableAllUntil("2010-03-01");
   }
 
   public static class App extends AbstractErrorCatchingTransparentApp {
@@ -90,12 +90,13 @@ public class ConcurrentHashMapBadKeyDeadlockTest extends TransparentTestBase {
         }
         for (int i = 0; i < classes.length; ++i) {
           assertNotNull(classes[i]);
+          assertNotNull(mapRoot.get(classes[i]));
         }
         assertEquals(INNER_CLASSES, mapRoot.size());
       }
 
       // On each thread, call size() and mutate individual entries repeatedly
-      barrier.await();
+      index = barrier.await();
 
       Random r = new Random();
       final long start = System.currentTimeMillis();

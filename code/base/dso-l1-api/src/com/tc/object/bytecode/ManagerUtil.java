@@ -363,7 +363,7 @@ public class ManagerUtil {
   public static boolean isManaged(final Object obj) {
     return getManager().isManaged(obj);
   }
-
+  
   /**
    * Check whether an object is shared
    *
@@ -482,6 +482,21 @@ public class ManagerUtil {
   }
 
   /**
+   * @return true if obj is an instance of a {@link com.tc.object.LiteralValues literal type}, 
+   * e.g., Class, Integer, etc.
+   */
+  public static boolean isLiteralInstance(Object obj) {
+    return getManager().isLiteralInstance(obj);
+  }
+  
+  /**
+   * @return a hash code that will be the same on all nodes
+   */
+  public static int calculateDsoHashCode(final Object obj) {
+    return getManager().calculateDsoHashCode(obj);
+  }
+
+  /**
    * Check whether an object is locked at this lockLevel
    *
    * @param obj Lock
@@ -492,7 +507,7 @@ public class ManagerUtil {
   public static boolean isLocked(final Object obj, final int lockLevel) {
     return getManager().isLocked(obj, lockLevel);
   }
-
+  
   /**
    * Try to enter monitor for specified object
    *

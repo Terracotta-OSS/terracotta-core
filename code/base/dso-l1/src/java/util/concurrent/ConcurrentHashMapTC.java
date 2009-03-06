@@ -29,6 +29,7 @@ import java.util.Set;
 
 @SuppressWarnings("unchecked")
 public abstract class ConcurrentHashMapTC extends ConcurrentHashMap implements TCMap, Clearable, Manageable {
+  
   private boolean evictionEnabled = true;
 
   // These abstract methods are merely here so that they can be referenced by
@@ -54,17 +55,12 @@ public abstract class ConcurrentHashMapTC extends ConcurrentHashMap implements T
    * won't work correctly
    */
   protected int __tc_hash(Object obj) {
-    int i = obj.hashCode();
+    int i;
 
     if (__tc_isManaged()) {
-      boolean useObjectIDHashCode = !ManagerUtil.overridesHashCode(obj);
-
-      if (useObjectIDHashCode) {
-        TCObject tcobject = ManagerUtil.shareObjectIfNecessary(obj);
-        if (tcobject != null) {
-          i = tcobject.getObjectID().hashCode();
-        }
-      }
+      i = ManagerUtil.calculateDsoHashCode(obj);
+    } else {
+      i = obj.hashCode();
     }
 
     i += ~(i << 9);
@@ -75,8 +71,28 @@ public abstract class ConcurrentHashMapTC extends ConcurrentHashMap implements T
     return i;
   }
 
-  boolean __tc_isDsoHashRequired(Object obj) {
-    return __tc_isManaged() && ManagerUtil.lookupExistingOrNull(obj) == null && !ManagerUtil.overridesHashCode(obj);
+  /**
+   * Check whether the given object might possibly be a CHM key. If a CHM is shared, then we will
+   * only use keys that have stable hash codes across all nodes. Such a key must either itself be
+   * shared, or it must be a literal, or it must override hashCode() (which doesn't really guarantee
+   * anything, but we can hope...). If an object could not possibly be a CHM key then we can short-
+   * circuit lookups.
+   * @return true if the object could plausibly be a lookup key.
+   */
+  boolean __tc_isPossibleKey(Object obj) {
+    if (!__tc_isManaged()) {
+      return true;
+    }
+    if (ManagerUtil.isLiteralInstance(obj)) {
+      return true;
+    }
+    if (ManagerUtil.lookupExistingOrNull(obj) != null) {
+      return true;
+    }
+    if (ManagerUtil.overridesHashCode(obj)) {
+      return true;
+    }
+    return false;
   }
 
   /*

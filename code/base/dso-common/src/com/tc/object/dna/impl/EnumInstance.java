@@ -26,4 +26,27 @@ public class EnumInstance implements Serializable {
   public String toString() {
     return enumName.asString();
   }
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((classInstance == null) ? 0 : classInstance.hashCode());
+    result = prime * result + ((enumName == null) ? 0 : enumName.hashCode());
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) return true;
+    if (!(obj instanceof EnumInstance)) return false;
+    EnumInstance other = (EnumInstance) obj;
+    if (classInstance == null) {
+      if (other.classInstance != null) return false;
+    } else if (!classInstance.equals(other.classInstance)) return false;
+    if (enumName == null) {
+      if (other.enumName != null) return false;
+    } else if (!enumName.equals(other.enumName)) return false;
+    return true;
+  }
 }

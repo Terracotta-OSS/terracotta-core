@@ -555,7 +555,7 @@ public class ManagerImpl implements Manager {
       Util.printLogAndRethrowError(t, logger);
     }
   }
-
+  
   public boolean isLocked(final Object obj, final int lockLevel) {
     if (obj == null) { throw new NullPointerException("isLocked called on a null object"); }
 
@@ -746,7 +746,28 @@ public class ManagerImpl implements Manager {
       }
     }
   }
-
+  
+  public int calculateDsoHashCode(final Object obj) {
+    if (literals.isLiteralInstance(obj)) {
+      // isLiteralInstance() returns false for array types, so we don't need recursion here.
+      return literals.calculateDsoHashCode(obj);
+    } 
+    if (overridesHashCode(obj)) {
+      return obj.hashCode();
+    }
+    // obj does not have a stable hashCode(); share it and use hash code of its ObjectID
+    TCObject tcobject = shareObjectIfNecessary(obj);
+    if (tcobject != null) {
+      return tcobject.getObjectID().hashCode();
+    }
+    // A not-shareable, not-literal object?  Hmm, seems we shouldn't get here.
+    throw Assert.failure("Cannot calculate stable DSO hash code for an object that is not literal and not shareable");
+  }
+  
+  public boolean isLiteralInstance(final Object obj) {
+    return literals.isLiteralInstance(obj);
+  }
+  
   public boolean isManaged(final Object obj) {
     if (obj instanceof Manageable) {
       TCObject tcobj = ((Manageable) obj).__tc_managed();

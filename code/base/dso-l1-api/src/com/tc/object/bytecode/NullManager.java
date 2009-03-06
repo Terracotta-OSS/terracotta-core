@@ -122,6 +122,14 @@ public final class NullManager implements Manager {
   public final boolean isManaged(final Object object) {
     return false;
   }
+  
+  public final boolean isLiteralInstance(final Object object) {
+    return false;
+  }
+  
+  public final int calculateDsoHashCode(final Object object) {
+    return 0;
+  }
 
   public final boolean isLogical(final Object object) {
     throw new UnsupportedOperationException();
@@ -142,11 +150,11 @@ public final class NullManager implements Manager {
   public final void commitLock(final String lockName) {
     // do nothing
   }
-
+  
   public final boolean isLocked(final Object obj, final int lockLevel) {
     return false;
   }
-
+  
   public final int queueLength(final Object obj) {
     return 0;
   }
