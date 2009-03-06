@@ -831,7 +831,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   public void addClassResource(final String className, final URL resource, final boolean targetSystemLoaderOnly) {
     Resource prev = this.classResources.put(className, new Resource(resource, targetSystemLoaderOnly));
-    if ((prev != null) && (!prev.getResource().equals(resource))) {
+    // CDV-1053: don't call URL.equals() which can block
+    if ((prev != null) && (!prev.getResource().toString().equals(resource.toString()))) {
       // we want to know if modules more than one module is trying to export the same class
       throw new AssertionError("Attempting to replace mapping for " + className + ", from " + prev + " to " + resource);
     }
