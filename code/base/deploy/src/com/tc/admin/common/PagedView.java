@@ -7,14 +7,15 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 
 public class PagedView extends XContainer implements ComponentListener {
-  private String currentPage;
-  
+  private String             currentPage;
+
   public static final String PROP_CURRENT_PAGE = "CurrentPage";
-  
+
   public PagedView() {
     super(new CardLayout());
   }
 
+  @Override
   public void setLayout(LayoutManager layout) {
     if (layout == null || !(layout instanceof CardLayout)) {
       layout = new CardLayout();
@@ -29,6 +30,7 @@ public class PagedView extends XContainer implements ComponentListener {
       ((CardLayout) getLayout()).show(this, page);
       firePropertyChange(PROP_CURRENT_PAGE, oldPage, page);
     }
+    repaint();
   }
 
   public String getPage() {
@@ -56,12 +58,14 @@ public class PagedView extends XContainer implements ComponentListener {
     page.addComponentListener(this);
   }
 
+  @Override
   public Component add(Component comp) {
     super.add(comp, comp.getName(), -1);
     comp.addComponentListener(this);
     return comp;
   }
 
+  @Override
   public Component add(Component comp, int index) {
     super.add(comp, comp.getName(), index);
     comp.addComponentListener(this);
@@ -76,17 +80,19 @@ public class PagedView extends XContainer implements ComponentListener {
     }
   }
 
+  @Override
   public void remove(Component comp) {
     super.remove(comp);
     comp.removeComponentListener(this);
   }
-  
+
+  @Override
   public void remove(int index) {
     Component comp = getComponent(index);
     super.remove(index);
     comp.removeComponentListener(this);
   }
-  
+
   public void componentHidden(ComponentEvent e) {
     /**/
   }

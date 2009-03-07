@@ -7,6 +7,7 @@ package com.tc.admin;
 import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.PagedView;
 import com.tc.admin.common.XContainer;
+import com.tc.admin.common.XLabel;
 import com.tc.admin.model.IClusterModel;
 
 import java.awt.BorderLayout;
@@ -18,17 +19,24 @@ public class DashboardViewer extends XContainer {
   private Map<IClusterModel, DashboardPanel> panelMap;
   private PagedView                          pagedView;
 
+  private static final String                EMPTY_PAGE = "EmptyPage";
+
   public DashboardViewer(ApplicationContext appContext) {
     super(new BorderLayout());
     this.appContext = appContext;
     panelMap = new HashMap<IClusterModel, DashboardPanel>();
     add(pagedView = new PagedView(), BorderLayout.CENTER);
+
+    XLabel nilPage = new XLabel();
+    nilPage.setName(EMPTY_PAGE);
+    pagedView.addPage(nilPage);
   }
 
   public void add(IClusterModel clusterModel) {
     DashboardPanel dashboardPanel = new DashboardPanel(appContext, clusterModel);
     panelMap.put(clusterModel, dashboardPanel);
     pagedView.addPage(dashboardPanel);
+    select(clusterModel);
   }
 
   public void remove(IClusterModel clusterModel) {
@@ -36,7 +44,11 @@ public class DashboardViewer extends XContainer {
   }
 
   public void select(IClusterModel clusterModel) {
-    pagedView.setPage(clusterModel.toString());
+    String pageName = clusterModel.toString();
+    if (!pagedView.hasPage(pageName)) {
+      pageName = EMPTY_PAGE;
+    }
+    pagedView.setPage(pageName);
   }
 
   public boolean isEmpty() {
