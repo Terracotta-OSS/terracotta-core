@@ -218,7 +218,7 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
     ChartPanel liveObjectCountPanel = createChartPanel(chart);
     parent.add(liveObjectCountPanel);
     liveObjectCountPanel.setPreferredSize(fDefaultGraphSize);
-    liveObjectCountTitlePattern = appContext.getString("dso.client.liveObjectCount");
+    liveObjectCountTitlePattern = appContext.getString("dso.client.liveObjectCount") + " ({0})";
     liveObjectCountTitle = BorderFactory.createTitledBorder("Live Object Count");
     liveObjectCountPanel.setBorder(liveObjectCountTitle);
     liveObjectCountPanel.setToolTipText("Total instance count");
