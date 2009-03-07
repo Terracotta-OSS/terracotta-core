@@ -1063,7 +1063,7 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
       configHelper.openError(msg, e);
     }
   }
-  
+
   private static String contextFile(String warFile, String contextPath) {
     String s = "<?xml version=\"1.0\"  encoding=\"ISO-8859-1\"?>\n";
     s += "<Configure class=\"org.mortbay.jetty.webapp.WebAppContext\">\n";
@@ -1091,18 +1091,18 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
     s += "</Configure>\n";
     return s;
   }
-  
+
   private void createJettyContext(File file, File webAppsDir) throws Exception {
     File contextDir = new File(webAppsDir.getParentFile(), "contexts");
     String name = file.getName();
     String contextPath = name;
-    if(!file.isDirectory()) {
+    if (!file.isDirectory()) {
       int dot = name.indexOf('.');
-      if(dot != -1) {
+      if (dot != -1) {
         contextPath = name.substring(0, dot);
       }
     }
-    FileWriter fw = new FileWriter(new File(contextDir, contextPath+".xml"));
+    FileWriter fw = new FileWriter(new File(contextDir, contextPath + ".xml"));
     IOUtils.copy(new StringReader(contextFile(file.getName(), contextPath)), fw);
     fw.close();
   }
@@ -1119,7 +1119,7 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
       copyDirectory(file, webServer2Area);
     }
     createJettyContext(file, webServer1Area);
-    createJettyContext(file, webServer2Area);    
+    createJettyContext(file, webServer2Area);
   }
 
   private void copyFileToDirectory(File file, File dir, boolean keepDate) throws IOException {
@@ -1154,11 +1154,11 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
 
   private void removeJettyContexts(WebApp webApp) {
     File webServer1Area = new File(getWebServer1Area());
-    safeDeleteFile(new File(webServer1Area.getParentFile(), "contexts"+"/"+webApp.getName()+".xml"));
+    safeDeleteFile(new File(webServer1Area.getParentFile(), "contexts" + "/" + webApp.getName() + ".xml"));
     File webServer2Area = new File(getWebServer2Area());
-    safeDeleteFile(new File(webServer2Area.getParentFile(), "contexts"+"/"+webApp.getName()+".xml"));    
+    safeDeleteFile(new File(webServer2Area.getParentFile(), "contexts" + "/" + webApp.getName() + ".xml"));
   }
-  
+
   private static void safeDeleteFile(File file) {
     if (file.exists()) {
       try {
@@ -2519,9 +2519,19 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
 
   File m_jettyHome;
 
+  /**
+   * Locate Jetty installation in kit.
+   */
   protected File getJettyHome() {
     if (m_jettyHome == null) {
-      m_jettyHome = new File(getInstallRoot(), "vendors" + File.separatorChar + "jetty-6.1.15");
+      File vendorsDir = new File(getInstallRoot(), "vendors");
+      for (File file : vendorsDir.listFiles()) {
+        if (file.isDirectory() && file.getName().startsWith("jetty-")) {
+          m_jettyHome = file;
+          return m_jettyHome;
+        }
+      }
+      throw new RuntimeException("Can't find Jetty installation under '" + vendorsDir + '"');
     }
     return m_jettyHome;
   }
