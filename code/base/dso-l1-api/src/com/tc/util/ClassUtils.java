@@ -19,9 +19,9 @@ public class ClassUtils {
   private static final Class FIELD_CLASS = Field.class;
 
   /**
-   * Convert fully-qualified field name like "mypackage.MyClass.myField" into a specification which 
-   * contains the fully-qualified class name and the field name.  
-   * @param fieldName Fully-qualified field name 
+   * Convert fully-qualified field name like "mypackage.MyClass.myField" into a specification which
+   * contains the fully-qualified class name and the field name.
+   * @param fieldName Fully-qualified field name
    * @return Specification of class/field names
    * @throws ParseException If the fieldName is not properly formatted
    */
@@ -62,7 +62,7 @@ public class ClassUtils {
     if (arrayClass == null) { throw new NullPointerException(); }
     if (!arrayClass.isArray()) { throw new IllegalArgumentException(arrayClass + " is not an array type"); }
   }
-  
+
   /**
    * Determine whether test is a primitive array
    * @param test The object
@@ -76,26 +76,18 @@ public class ClassUtils {
   }
 
   /**
-   * Determine whether c is an enum (JDK 1.4 friendly)
-   * @param c Class  
+   * Determine whether the class is an enum as far as DSO is concerned
+   * @param c Class
    * @return True if enum
    */
-  public static boolean isEnum(Class c) {
-    // a jdk1.4 friendly (but still fast) check for enums
-    Class superClass = c.getSuperclass();
-    if (superClass == null) return false;
-    if (((c.getModifiers() & 0x00004000) != 0) && isSubclassOfEnum(superClass)) { return true; }
-    return false;
-  }
-  
-  private static boolean isSubclassOfEnum(Class c) {
-    String name = c.getName();
-    while (!"java.lang.Enum".equals(name)) {
+  public static boolean isDsoEnum(Class c) {
+    // we don't just return c.isEnum() since that is false for specialized enum types
+
+    while(c.getSuperclass() != null) {
+      if (c.isEnum()) return true;
       c = c.getSuperclass();
-      if (c == null) { return false; }
-      name = c.getName();
     }
-    return true;
+    return false;
   }
 
   /**

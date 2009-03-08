@@ -125,7 +125,7 @@ public class PortabilityImpl implements Portability {
     String clazzName = clazz.getName();
 
     boolean bool = literalValues.isLiteral(clazzName) || config.isLogical(clazzName) || clazz.isArray()
-                   || Proxy.isProxyClass(clazz) || ClassUtils.isEnum(clazz) || isClassPhysicallyInstrumented(clazz)
+                   || Proxy.isProxyClass(clazz) || ClassUtils.isDsoEnum(clazz) || isClassPhysicallyInstrumented(clazz)
                    || isInstrumentationNotNeeded(clazzName) || ClassUtils.isPortableReflectionClass(clazz)
                    || config.isPortableModuleClass(clazz);
     portableCache.put(clazz, Boolean.valueOf(bool));
@@ -178,7 +178,7 @@ public class PortabilityImpl implements Portability {
 
     // Enums do technically override hashCode() but the reason they do it is to
     // guarantee identity hash codes (so for our purposes it should not claim to override)
-    if (!ClassUtils.isEnum(clazz)) {
+    if (!ClassUtils.isDsoEnum(clazz)) {
       while (c != OBJECT_CLASS) {
         try {
           c.getDeclaredMethod("hashCode", EMPTY_CLASS_ARRAY);

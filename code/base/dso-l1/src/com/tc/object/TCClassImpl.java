@@ -102,7 +102,7 @@ public class TCClassImpl implements TCClass {
     this.onLoadScript = onLoadScript;
     this.onLoadMethod = onLoadMethod;
     this.superclazz = findSuperClass(peer);
-    this.isEnum = ClassUtils.isEnum(peer);
+    this.isEnum = ClassUtils.isDsoEnum(peer);
     this.logicalExtendingClassName = logicalExtendingClassName;
 
     this.applicator = createApplicator();

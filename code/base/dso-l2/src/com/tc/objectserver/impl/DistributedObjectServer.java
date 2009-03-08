@@ -1364,14 +1364,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
     this.l2Management = new L2Management(this.tcServerInfoMBean, this.lockStatisticsMBean,
                                          this.statisticsAgentSubSystem, this.statisticsGateway,
                                          this.configSetupManager, this, bind, jmxPort, remoteEventsSink);
-
-    /*
-     * Some tests use this if they run with jdk1.4 and start multiple in-process DistributedObjectServers. When we no
-     * longer support 1.4, this can be removed. See com.tctest.LockManagerSystemTest.
-     */
-    if (!Boolean.getBoolean("org.terracotta.server.disableJmxConnector")) {
-      this.l2Management.start();
-    }
+    this.l2Management.start();
   }
 
   private void stopJMXServer() throws Exception {

@@ -30,13 +30,10 @@ import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.util.concurrent.SetOnceFlag;
-import com.tc.util.runtime.Vm;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.lang.management.ManagementFactory;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.management.InstanceAlreadyExistsException;
@@ -188,8 +185,7 @@ public final class L1Management extends TerracottaManagement {
   }
 
   private void attemptToRegister(final boolean createDedicatedMBeanServer) throws InstanceAlreadyExistsException,
-      MBeanRegistrationException, NotCompliantMBeanException, SecurityException, IllegalArgumentException,
-      NoSuchMethodException, ClassNotFoundException, IllegalAccessException, InvocationTargetException {
+      MBeanRegistrationException, NotCompliantMBeanException {
     synchronized (mBeanServerLock) {
       if (mBeanServer == null) {
         if (createDedicatedMBeanServer) {
@@ -198,24 +194,7 @@ public final class L1Management extends TerracottaManagement {
           }
           mBeanServer = MBeanServerFactory.createMBeanServer();
         } else {
-          if (Vm.isJDK14()) {
-            List mBeanServers = MBeanServerFactory.findMBeanServer(null);
-            if (mBeanServers != null && !mBeanServers.isEmpty()) {
-              mBeanServer = (MBeanServer) mBeanServers.get(0);
-            } else {
-              if (logger.isDebugEnabled()) {
-                logger.debug("attemptToRegister(): Inside a 1.4 runtime, try to create an MBeanServer");
-              }
-              mBeanServer = MBeanServerFactory.createMBeanServer();
-            }
-          } else {
-            // CDV-260: Make sure to use java.lang.management.ManagementFactory.getPlatformMBeanServer() on JDK 1.5+
-            if (logger.isDebugEnabled()) {
-              logger
-                  .debug("attemptToRegister(): Inside a 1.5+ runtime, trying to get the platform default MBeanServer");
-            }
-            mBeanServer = getPlatformDefaultMBeanServer();
-          }
+          mBeanServer = getPlatformDefaultMBeanServer();
         }
         addJMXConnectors();
       }
@@ -266,12 +245,8 @@ public final class L1Management extends TerracottaManagement {
     }
   }
 
-  private MBeanServer getPlatformDefaultMBeanServer() throws SecurityException, NoSuchMethodException,
-      ClassNotFoundException, IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-    // 1.5+, this code is irritating since this class needs to compile against 1.4
-    Class managementFactoryClass = Class.forName("java.lang.management.ManagementFactory");
-    Method getPlatformMBeanServerMethod = managementFactoryClass.getDeclaredMethod("getPlatformMBeanServer",
-                                                                                   new Class[0]);
-    return (MBeanServer) getPlatformMBeanServerMethod.invoke(null, new Object[0]);
+  private MBeanServer getPlatformDefaultMBeanServer() {
+    return ManagementFactory.getPlatformMBeanServer();
   }
+
 }

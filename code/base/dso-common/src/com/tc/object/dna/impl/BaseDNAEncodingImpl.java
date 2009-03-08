@@ -4,7 +4,6 @@
  */
 package com.tc.object.dna.impl;
 
-import com.tc.exception.TCRuntimeException;
 import com.tc.io.TCDataInput;
 import com.tc.io.TCDataOutput;
 import com.tc.logging.TCLogger;
@@ -26,8 +25,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Currency;
@@ -115,29 +112,6 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
     writeString(classProvider.getLoaderDescriptionFor(value).toDelimitedString(), output);
   }
 
-  /**
-   * The reason that we use reflection here is that Enum is a jdk 1.5 construct and this project is jdk 1.4 compliance.
-   */
-  private Object getEnumName(Object enumObject) {
-    try {
-      Method m = enumObject.getClass().getMethod("name", new Class[0]);
-      m.setAccessible(true);
-      Object val;
-      val = m.invoke(enumObject, new Object[0]);
-      return val;
-    } catch (IllegalArgumentException e) {
-      throw new TCRuntimeException(e);
-    } catch (IllegalAccessException e) {
-      throw new TCRuntimeException(e);
-    } catch (InvocationTargetException e) {
-      throw new TCRuntimeException(e);
-    } catch (SecurityException e) {
-      throw new TCRuntimeException(e);
-    } catch (NoSuchMethodException e) {
-      throw new TCRuntimeException(e);
-    }
-  }
-
   public void encode(Object value, TCDataOutput output) {
     if (value == null) {
       // Normally Null values should have already been converted to null ObjectID, but this is not true when there are
@@ -156,12 +130,10 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
         break;
       case LiteralValues.ENUM:
         output.writeByte(TYPE_ID_ENUM);
-        Class enumClass = getEnumDeclaringClass(value);
+        Class enumClass = ((Enum)value).getDeclaringClass();
         writeString(enumClass.getName(), output);
         writeString(classProvider.getLoaderDescriptionFor(enumClass).toDelimitedString(), output);
-
-        Object name = getEnumName(value);
-        writeString((String) name, output);
+        writeString(((Enum) value).name(), output);
         break;
       case LiteralValues.ENUM_HOLDER:
         output.writeByte(TYPE_ID_ENUM_HOLDER);
@@ -717,50 +689,6 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
     return rv;
   }
 
-  /**
-   * The reason that we use reflection here is because Enum is a jdk 1.5 construct and this project is jdk 1.4
-   * compliance.
-   */
-  private Class getEnumDeclaringClass(Object enumObj) {
-    try {
-      Method m = enumObj.getClass().getMethod("getDeclaringClass", new Class[0]);
-      Object enumDeclaringClass = m.invoke(enumObj, new Object[0]);
-      return (Class) enumDeclaringClass;
-    } catch (SecurityException e) {
-      throw new TCRuntimeException(e);
-    } catch (NoSuchMethodException e) {
-      throw new TCRuntimeException(e);
-    } catch (IllegalArgumentException e) {
-      throw new TCRuntimeException(e);
-    } catch (IllegalAccessException e) {
-      throw new TCRuntimeException(e);
-    } catch (InvocationTargetException e) {
-      throw new TCRuntimeException(e);
-    }
-  }
-
-  /**
-   * The reason that we use reflection here is because Enum is a jdk 1.5 construct and this project is jdk 1.4
-   * compliance.
-   */
-  private Object enumValueOf(Class enumType, String enumName) {
-    try {
-      Method m = enumType.getMethod("valueOf", new Class[] { Class.class, String.class });
-      Object enumObj = m.invoke(null, new Object[] { enumType, enumName });
-      return enumObj;
-    } catch (SecurityException e) {
-      throw new TCRuntimeException(e);
-    } catch (NoSuchMethodException e) {
-      throw new TCRuntimeException(e);
-    } catch (IllegalArgumentException e) {
-      throw new TCRuntimeException(e);
-    } catch (IllegalAccessException e) {
-      throw new TCRuntimeException(e);
-    } catch (InvocationTargetException e) {
-      throw new TCRuntimeException(e);
-    }
-  }
-
   private Object readCurrency(TCDataInput input, byte type) throws IOException {
     byte[] data = readByteArray(input);
     String currencyCode = new String(data, "UTF-8");
@@ -774,9 +702,8 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
 
     if (useStringEnumRead(type)) {
       Class enumType = new ClassInstance(name, def).asClass(classProvider);
-
       String enumName = new String(data, "UTF-8");
-      return enumValueOf(enumType, enumName);
+      return Enum.valueOf(enumType, enumName);
     } else {
       ClassInstance clazzInstance = new ClassInstance(name, def);
       UTF8ByteDataHolder enumName = new UTF8ByteDataHolder(data);
