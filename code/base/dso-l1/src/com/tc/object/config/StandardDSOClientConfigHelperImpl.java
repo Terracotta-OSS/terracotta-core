@@ -1229,7 +1229,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   public void validateSessionConfig() {
     if (this.applicationNames.size() > 0 && !isCapabilityEnabled(TimCapability.SESSIONS)) {
-      logger
+      consoleLogger
           .warn("One or more web applications are listed in the Terracotta configuration file, but no container TIMs have been loaded.\n"
                 + "See http://www.terracotta.org/tim-warning for more information. ");
     }
