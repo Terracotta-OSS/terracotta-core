@@ -7,6 +7,7 @@ package java.util.concurrent.locks;
 import com.tc.exception.TCNotSupportedMethodException;
 import com.tc.exception.TCObjectNotSharableException;
 import com.tc.object.bytecode.ManagerUtil;
+import com.tc.object.bytecode.NotClearable;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.util.concurrent.locks.TCLock;
 import com.tcclient.util.concurrent.locks.ConditionObject;
@@ -14,7 +15,7 @@ import com.tcclient.util.concurrent.locks.ConditionObject;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
-public class ReentrantLockTC extends ReentrantLock implements TCLock {
+public class ReentrantLockTC extends ReentrantLock implements TCLock, NotClearable {
   public void lock() {
     ManagerUtil.monitorEnter(this, LockLevel.WRITE);
     super.lock();

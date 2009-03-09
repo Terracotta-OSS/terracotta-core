@@ -9,6 +9,7 @@ import com.tc.exception.TCObjectNotSharableException;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.ManagerUtil;
+import com.tc.object.bytecode.NotClearable;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.util.concurrent.locks.TCLock;
 import com.tcclient.util.concurrent.locks.ConditionObject;
@@ -16,7 +17,7 @@ import com.tcclient.util.concurrent.locks.ConditionObject;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
-public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
+public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock implements NotClearable {
   private ReentrantReadWriteLock.ReadLock  readerLock;
   private ReentrantReadWriteLock.WriteLock writerLock;
   private Sync                             sync;
@@ -29,7 +30,7 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
     return readerLock;
   }
 
-  private static class DsoLock {
+  private static class DsoLock implements NotClearable {
     private final Object lock;
     private final int    lockLevel;
 
@@ -49,7 +50,7 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
         ManagerUtil.monitorEnterInterruptibly(lock, lockLevel);
       }
     }
-    
+
     public boolean tryLock() {
       if (ManagerUtil.isManaged(lock)) {
         return ManagerUtil.tryMonitorEnter(lock, lockLevel, 0L);
@@ -85,7 +86,7 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
 
   }
 
-  public static class ReadLock extends ReentrantReadWriteLock.ReadLock implements Manageable {
+  public static class ReadLock extends ReentrantReadWriteLock.ReadLock implements Manageable, NotClearable {
     private volatile transient TCObject $__tc_MANAGED;
     private transient DsoLock           dsoLock;
     private Sync                        sync;
@@ -166,7 +167,7 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
     }
   }
 
-  public static class WriteLock extends ReentrantReadWriteLock.WriteLock implements TCLock, Manageable {
+  public static class WriteLock extends ReentrantReadWriteLock.WriteLock implements TCLock, Manageable, NotClearable {
     private volatile transient TCObject $__tc_MANAGED;
     private transient DsoLock           dsoLock;
     private Sync                        sync;

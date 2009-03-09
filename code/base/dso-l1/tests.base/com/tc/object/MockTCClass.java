@@ -148,4 +148,8 @@ public class MockTCClass implements TCClass {
     return false;
   }
 
+  public boolean isNotClearable() {
+    return false;
+  }
+
 }

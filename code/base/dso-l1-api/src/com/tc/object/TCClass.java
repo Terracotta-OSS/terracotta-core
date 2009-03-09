@@ -237,4 +237,9 @@ public interface TCClass {
    * Returns true if the resolve lock should be held while clearing references
    */
   public boolean useResolveLockWhileClearing();
+
+  /**
+   * Returns true if instances of this type should NOT be cleared by the memory manager
+   */
+  public boolean isNotClearable();
 }

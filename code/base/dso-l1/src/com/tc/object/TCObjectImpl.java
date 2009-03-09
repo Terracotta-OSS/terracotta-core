@@ -442,8 +442,8 @@ public abstract class TCObjectImpl implements TCObject {
     return getFlag(EVICTION_IN_PROGRESS_OFFSET);
   }
 
-  public synchronized boolean canEvict() {
-    boolean canEvict = isEvictable() && !(isNew() || isEvictionInProgress());
+  public final synchronized boolean canEvict() {
+    boolean canEvict = isEvictable() && !tcClazz.isNotClearable() && !(isNew() || isEvictionInProgress());
     if (canEvict) {
       setEvictionInProgress(true);
     }

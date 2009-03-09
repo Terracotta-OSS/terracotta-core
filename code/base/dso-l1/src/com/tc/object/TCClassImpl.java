@@ -10,6 +10,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.applicator.ChangeApplicator;
+import com.tc.object.bytecode.NotClearable;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.impl.ProxyInstance;
@@ -76,6 +77,7 @@ public class TCClassImpl implements TCClass {
   private final String                   logicalExtendingClassName;
   private final Class                    logicalSuperClass;
   private final boolean                  useResolveLockWhileClearing;
+  private boolean                        isNotClearable;
 
   TCClassImpl(final TCFieldFactory factory, final TCClassFactory clazzFactory, final ClientObjectManager objectManager,
               final Class peer, final Class logicalSuperClass, final LoaderDescription loaderDesc,
@@ -114,10 +116,15 @@ public class TCClassImpl implements TCClass {
     this.logicalSuperClass = logicalSuperClass;
     this.offsetToFieldNames = getFieldOffsets(peer);
     this.useResolveLockWhileClearing = useResolveLockWhileClearing;
+    this.isNotClearable = NotClearable.class.isAssignableFrom(peer);
   }
 
   public Field getParentField() {
     return parentField;
+  }
+
+  public boolean isNotClearable() {
+    return isNotClearable;
   }
 
   public boolean isNonStaticInner() {

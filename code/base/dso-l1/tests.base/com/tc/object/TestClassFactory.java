@@ -179,6 +179,10 @@ public class TestClassFactory implements TCClassFactory {
     public boolean hasOnLoadInjection() {
       return false;
     }
+
+    public boolean isNotClearable() {
+      return false;
+    }
   }
 
   public static class MockTCField implements TCField {

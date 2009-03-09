@@ -263,5 +263,9 @@ public class TCObjectImplTest extends BaseDSOTestCase {
     public boolean hasOnLoadInjection() {
       return false;
     }
+
+    public boolean isNotClearable() {
+      return false;
+    }
   }
 }

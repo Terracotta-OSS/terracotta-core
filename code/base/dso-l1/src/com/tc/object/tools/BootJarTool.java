@@ -64,6 +64,7 @@ import com.tc.object.TCObject;
 import com.tc.object.bytecode.AAFairDistributionPolicyMarker;
 import com.tc.object.bytecode.AbstractStringBuilderAdapter;
 import com.tc.object.bytecode.AccessibleObjectAdapter;
+import com.tc.object.bytecode.AddInterfacesAdapter;
 import com.tc.object.bytecode.ArrayListAdapter;
 import com.tc.object.bytecode.AtomicIntegerAdapter;
 import com.tc.object.bytecode.AtomicLongAdapter;
@@ -105,6 +106,7 @@ import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.MergeTCToJavaClassAdapter;
+import com.tc.object.bytecode.NotClearable;
 import com.tc.object.bytecode.NullManager;
 import com.tc.object.bytecode.NullTCObject;
 import com.tc.object.bytecode.OverridesHashCode;
@@ -337,7 +339,7 @@ public class BootJarTool {
    * Checks if the given bootJarFile is complete; meaning: - All the classes declared in the configurations
    * <additional-boot-jar-classes/> section is present in the boot jar. - And there are no user-classes present in the
    * boot jar that is not declared in the <additional-boot-jar-classes/> section
-   * 
+   *
    * @return <code>true</code> if the boot jar is complete.
    */
   private final boolean isBootJarComplete(final File bootJarFile) {
@@ -479,6 +481,7 @@ public class BootJarTool {
       loadTerracottaClass(Manageable.class.getName());
       loadTerracottaClass(AAFairDistributionPolicyMarker.class.getName());
       loadTerracottaClass(Clearable.class.getName());
+      loadTerracottaClass(NotClearable.class.getName());
       loadTerracottaClass(OverridesHashCode.class.getName());
       loadTerracottaClass(Manager.class.getName());
       loadTerracottaClass(InstrumentationLogger.class.getName());
@@ -1488,7 +1491,7 @@ public class BootJarTool {
 
   /**
    * Locates the root most cause of an Exception and returns its error message.
-   * 
+   *
    * @param throwable The exception whose root cause message is extracted.
    * @return The message of the root cause of an exception.
    */
@@ -1504,7 +1507,7 @@ public class BootJarTool {
 
   /**
    * Convenience method. Will delegate to exit(msg, null)
-   * 
+   *
    * @param msg The custom message to print
    */
   private final void exit(final String msg) {
@@ -1513,7 +1516,7 @@ public class BootJarTool {
 
   /**
    * Print custom error message and abort the application. The exit code is set to a non-zero value.
-   * 
+   *
    * @param msg The custom message to print
    * @param throwable The exception that caused the application to abort. If this parameter is not null then the message
    *        from the exception is also printed.
@@ -1899,6 +1902,7 @@ public class BootJarTool {
 
       TransparencyClassSpec spec = this.configHelper.getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$Segment");
       bytes = doDSOTransform(spec.getClassName(), bytes);
+      bytes = addNotClearableInterface(bytes);
       loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$Segment", bytes, spec.isPreInstrumented());
     }
 
@@ -1958,6 +1962,14 @@ public class BootJarTool {
       loadClassIntoJar("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper", bytes, spec
           .isPreInstrumented());
     }
+  }
+
+  private byte[] addNotClearableInterface(byte[] bytes) {
+    ClassReader cr = new ClassReader(bytes);
+    ClassWriter cw = new ClassWriter(cr, 0);
+    cr.accept(new AddInterfacesAdapter(cw, new String[] { NotClearable.class.getName().replace('.', '/') }),
+              ClassReader.SKIP_FRAMES);
+    return cw.toByteArray();
   }
 
   private final void addInstrumentedJavaUtilConcurrentLinkedBlockingQueue() {
