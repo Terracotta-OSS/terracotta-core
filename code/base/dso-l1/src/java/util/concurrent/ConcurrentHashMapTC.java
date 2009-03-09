@@ -29,7 +29,7 @@ import java.util.Set;
 
 @SuppressWarnings("unchecked")
 public abstract class ConcurrentHashMapTC extends ConcurrentHashMap implements TCMap, Clearable, Manageable {
-  
+
   private boolean evictionEnabled = true;
 
   // These abstract methods are merely here so that they can be referenced by
@@ -72,26 +72,18 @@ public abstract class ConcurrentHashMapTC extends ConcurrentHashMap implements T
   }
 
   /**
-   * Check whether the given object might possibly be a CHM key. If a CHM is shared, then we will
-   * only use keys that have stable hash codes across all nodes. Such a key must either itself be
-   * shared, or it must be a literal, or it must override hashCode() (which doesn't really guarantee
-   * anything, but we can hope...). If an object could not possibly be a CHM key then we can short-
-   * circuit lookups.
+   * Check whether the given object might possibly be a CHM key. If a CHM is shared, then we will only use keys that
+   * have stable hash codes across all nodes. Such a key must either itself be shared, or it must be a literal, or it
+   * must override hashCode() (which doesn't really guarantee anything, but we can hope...). If an object could not
+   * possibly be a CHM key then we can short- circuit lookups.
+   * 
    * @return true if the object could plausibly be a lookup key.
    */
   boolean __tc_isPossibleKey(Object obj) {
-    if (!__tc_isManaged()) {
-      return true;
-    }
-    if (ManagerUtil.isLiteralInstance(obj)) {
-      return true;
-    }
-    if (ManagerUtil.lookupExistingOrNull(obj) != null) {
-      return true;
-    }
-    if (ManagerUtil.overridesHashCode(obj)) {
-      return true;
-    }
+    if (!__tc_isManaged()) { return true; }
+    if (ManagerUtil.isLiteralInstance(obj)) { return true; }
+    if (ManagerUtil.lookupExistingOrNull(obj) != null) { return true; }
+    if (ManagerUtil.overridesHashCode(obj)) { return true; }
     return false;
   }
 
@@ -111,14 +103,14 @@ public abstract class ConcurrentHashMapTC extends ConcurrentHashMap implements T
    * CHM-wide locking methods
    */
   private void __tc_fullyWriteLock() {
-    for (int i = 0; i < segments.length; i++) {
-      segments[i].lock();
+    for (Segment segment : segments) {
+      segment.lock();
     }
   }
 
   private void __tc_fullyWriteUnlock() {
-    for (int i = 0; i < segments.length; i++) {
-      segments[i].unlock();
+    for (Segment segment : segments) {
+      segment.unlock();
     }
   }
 
@@ -187,9 +179,8 @@ public abstract class ConcurrentHashMapTC extends ConcurrentHashMap implements T
       int cleared = 0;
       for (Iterator i = __tc_delegateEntrySet().iterator(); i.hasNext() && toClear > cleared;) {
         Map.Entry e = (Map.Entry) i.next();
-        if (((TCMapEntry) e).__tc_isValueFaultedIn() && e.getValue() instanceof Manageable) {
-          Manageable m = (Manageable) e.getValue();
-          TCObject tcObject = m.__tc_managed();
+        if (((TCMapEntry) e).__tc_isValueFaultedIn()) {
+          TCObject tcObject = ManagerUtil.lookupExistingOrNull(e.getValue());
           if (tcObject != null && !tcObject.recentlyAccessed()) {
             ((TCMapEntry) e).__tc_rawSetValue(tcObject.getObjectID());
             cleared++;
@@ -202,13 +193,13 @@ public abstract class ConcurrentHashMapTC extends ConcurrentHashMap implements T
     }
   }
 
+  @Override
   public void putAll(Map t) {
     if (__tc_isManaged()) {
-      if (t.isEmpty())
-        return;
-      
-      for (Iterator i = t.entrySet().iterator(); i.hasNext(); ) {
-        Entry e = (Entry)i.next();
+      if (t.isEmpty()) return;
+
+      for (Iterator i = t.entrySet().iterator(); i.hasNext();) {
+        Entry e = (Entry) i.next();
         __tc_put_logical(e.getKey(), e.getValue());
       }
     } else {

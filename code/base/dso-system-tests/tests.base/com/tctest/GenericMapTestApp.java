@@ -7,6 +7,9 @@ package com.tctest;
 import org.apache.commons.collections.FastHashMap;
 
 import com.tc.exception.TCNonPortableObjectError;
+import com.tc.object.bytecode.Clearable;
+import com.tc.object.bytecode.ManagerUtil;
+import com.tc.object.bytecode.TCMap;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.tx.UnlockedSharedObjectException;
@@ -1902,6 +1905,41 @@ public class GenericMapTestApp extends GenericTransparentApp {
       synchronized (map) {
         // puts count as access on access order linked hash maps
         map.put(E("Second", v), "New Second Value");
+      }
+    }
+  }
+
+  void testClearable(Map map, boolean validate, int v) {
+    // The instance of check should be okay once CDV-1184 is fixed
+    // if (!(map instanceof Clearable)) return;
+    boolean found = false;
+    for (Class iface : map.getClass().getInterfaces()) {
+      if (iface.equals(Clearable.class)) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) return;
+
+    Clearable clearable = (Clearable) map;
+
+    if (validate) {
+      // turn of clearing temporarily to make sure we can observe the value being locally present
+      clearable.setEvictionEnabled(false);
+      byte[] array = (byte[]) map.get("byte array");
+      TCMap tcMap = (TCMap) map;
+      Assert.assertEquals(map.getClass().getName(), 1, tcMap.__tc_getAllLocalEntriesSnapshot().size());
+
+      // clear it out and verify
+      clearable.setEvictionEnabled(true);
+      ManagerUtil.lookupExistingOrNull(array).clearAccessed();
+      int cleared = clearable.__tc_clearReferences(1);
+      Assert.assertEquals(map.getClass().getName(), 1, cleared);
+      Assert.assertEquals(map.getClass().getName(), 0, tcMap.__tc_getAllLocalEntriesSnapshot().size());
+
+    } else {
+      synchronized (map) {
+        map.put("byte array", new byte[] {});
       }
     }
   }
