@@ -60,8 +60,8 @@ public class SRACpuTest extends TestCase {
 
     // assert that the cpu usage was higher during the second data collection
     for (int i = 0; i < cpuCount; i++) {
-      System.out.println("test values for cpu " + i + ": " + values1[i][0] + " < " + values2[i][0] + ", "
-                         + values1[i][1] + " > " + values2[i][1]);
+      System.out.println("test values for cpu " + i + ": " + values1[i][0] + " <= " + values2[i][0] + ", "
+                         + values1[i][1] + " >= " + values2[i][1]);
       assertTrue(values1[i][0].compareTo(values2[i][0]) <= 0);
       assertTrue(values1[i][1].compareTo(values2[i][1]) >= 0);
     }
