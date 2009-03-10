@@ -207,12 +207,12 @@ public class L1ConfigBuilder extends BaseConfigBuilder {
   private static final String[] DSO                         = concat(new Object[] { "fault-count",
       DSO_DEBUGGING                                        });
   private static final String[] MODULE_ATTRIBUTES           = new String[] { "name", "group-id", "version" };
-  private static final String[] ALL_PROPERTIES              = concat(new Object[] { "modules", "logs", DSO });
+  private static final String[] ALL_PROPERTIES              = concat(new Object[] { "modules", "logs", "statistics", DSO });
 
   @Override
   public String toString() {
     return  addModuleElement()
-        + element("logs") + openElement("dso", DSO) + element("fault-count")
+        + element("logs") + element("statistics") + openElement("dso", DSO) + element("fault-count")
         + openElement("debugging", DSO_DEBUGGING)
         + elementGroup("instrumentation-logging", DSO_INSTRUMENTATION_LOGGING)
         + elementGroup("runtime-logging", DSO_RUNTIME_LOGGING)
