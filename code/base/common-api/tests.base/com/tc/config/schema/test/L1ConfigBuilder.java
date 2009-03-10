@@ -155,6 +155,10 @@ public class L1ConfigBuilder extends BaseConfigBuilder {
     setProperty("logs", value);
   }
 
+  public void setStatistics(final String value) {
+    setProperty("statistics", value);
+  }
+
   public void addRepository(final String location) {
     repos.add(location);
   }
