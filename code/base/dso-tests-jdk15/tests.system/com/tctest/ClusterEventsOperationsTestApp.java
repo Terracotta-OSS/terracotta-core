@@ -83,7 +83,14 @@ public class ClusterEventsOperationsTestApp extends AbstractTransparentApp {
 
     waitUntilOnlyOneNodeInTopology();
 
+    // wait for all cluster events to be delivered
+    Thread.sleep(5000);
+
     List<String> events = listener.getOccurredEvents();
+    System.out.println("Occurred events");
+    for (String e : events) {
+      System.out.println(e);
+    }
     Assert.assertEquals(6, events.size());
     Assert.assertEquals("ClientID[0] JOINED", events.get(0));
     Assert.assertEquals("ClientID[0] ENABLED", events.get(1));
