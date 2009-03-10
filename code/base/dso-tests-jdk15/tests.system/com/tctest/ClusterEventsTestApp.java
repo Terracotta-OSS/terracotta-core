@@ -79,7 +79,14 @@ public class ClusterEventsTestApp extends AbstractTransparentApp {
 
     Assert.assertEquals(3, state.getListeners().size());
 
+    // wait for all cluster events to be delivered
+    Thread.sleep(5000);
+
     List<String> node0Events = state.getListeners().get("ClientID[0]").getOccurredEvents();
+    System.out.println("Events at ClientID[0]");
+    for (String e : node0Events) {
+      System.out.println(e);
+    }
     Assert.assertEquals(6, node0Events.size());
     Assert.assertEquals("ClientID[0] JOINED", node0Events.get(0));
     Assert.assertEquals("ClientID[0] ENABLED", node0Events.get(1));
@@ -89,11 +96,19 @@ public class ClusterEventsTestApp extends AbstractTransparentApp {
     Assert.assertEquals("ClientID[2] LEFT", node0Events.get(5));
 
     List<String> node1Events = state.getListeners().get("ClientID[1]").getOccurredEvents();
+    System.out.println("Events at ClientID[1]");
+    for (String e : node1Events) {
+      System.out.println(e);
+    }
     Assert.assertEquals(2, node1Events.size());
     Assert.assertEquals("ClientID[1] JOINED", node1Events.get(0));
     Assert.assertEquals("ClientID[1] ENABLED", node1Events.get(1));
 
     List<String> node2Events = state.getListeners().get("ClientID[2]").getOccurredEvents();
+    System.out.println("Events at ClientID[2]");
+    for (String e : node2Events) {
+      System.out.println(e);
+    }
     Assert.assertEquals(2, node2Events.size());
     Assert.assertEquals("ClientID[2] JOINED", node2Events.get(0));
     Assert.assertEquals("ClientID[2] ENABLED", node2Events.get(1));
