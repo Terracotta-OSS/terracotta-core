@@ -13,6 +13,11 @@ import com.tctest.YoungGCTestAndActivePassiveTest;
 import java.util.ArrayList;
 
 public class CreateRescueCandidatesYoungGCTest extends YoungGCTestAndActivePassiveTest {
+  private final long LOW_FREE_MEMORY    = 20 * 1024 * 1024;
+  private final long MIDDLE_FREE_MEMORY = 40 * 1024 * 1024;
+  private final int  LOW_APP_NODES      = 1;
+  private final int  MIDDLE_APP_NODES   = 2;
+  private final int  HIGH_APP_NODES     = 3;
 
   public CreateRescueCandidatesYoungGCTest() {
     //
@@ -31,12 +36,21 @@ public class CreateRescueCandidatesYoungGCTest extends YoungGCTestAndActivePassi
     }
   }
 
-  // start only 1 L1
-  protected int getNodeCount() {
-    return 3;
-  }
-
   protected void setExtraJvmArgs(final ArrayList jvmArgs) {
+    super.setExtraJvmArgs(jvmArgs);
+
+    // set client instance according to available free memory
+    long freemem = Runtime.getRuntime().freeMemory();
+    int app_count;
+    if (freemem < LOW_FREE_MEMORY) {
+      app_count = LOW_APP_NODES;
+    } else if (freemem < MIDDLE_FREE_MEMORY) {
+      app_count = MIDDLE_APP_NODES;
+    } else {
+      app_count = HIGH_APP_NODES;
+    }
+    gcConfigHelper.setNodeCount(app_count);
+
     jvmArgs.add("-verbose:gc");
     jvmArgs.add("-XX:+PrintGCTimeStamps");
   }
