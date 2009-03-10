@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class InstallFromCommand extends ModuleOperatorCommand {
@@ -101,6 +102,7 @@ public class InstallFromCommand extends ModuleOperatorCommand {
     List<Module> list = new ArrayList<Module>();
     TcConfigDocument tcConfigDocument = new Loader().parse(tcConfigPath);
     TcConfig tcConfig = tcConfigDocument.getTcConfig();
+    if (tcConfig.getClients() == null || tcConfig.getClients().getModules() == null) { return Collections.EMPTY_LIST; }
     com.terracottatech.config.Module[] xmlModules = tcConfig.getClients().getModules().getModuleArray();
     for (com.terracottatech.config.Module xmlModule : xmlModules) {
       List<Module> found = modules.find(Arrays.asList(new String[] { xmlModule.getName(), xmlModule.getVersion(),

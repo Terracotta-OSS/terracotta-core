@@ -87,6 +87,10 @@ public class UpgradeCommand extends ModuleOperatorCommand {
     boolean foundNewer = false;
     TcConfigDocument tcConfigDocument = new Loader().parse(tcConfigPath);
     TcConfig tcConfig = tcConfigDocument.getTcConfig();
+    if (tcConfig.getClients() == null || tcConfig.getClients().getModules() == null) {
+      out.print("Found no module to upgrade.");
+      return;
+    }
     com.terracottatech.config.Module[] xmlModules = tcConfig.getClients().getModules().getModuleArray();
     for (com.terracottatech.config.Module xmlModule : xmlModules) {
       out.print("Parsing module: " + xmlModule.getName() + "-" + xmlModule.getVersion());
