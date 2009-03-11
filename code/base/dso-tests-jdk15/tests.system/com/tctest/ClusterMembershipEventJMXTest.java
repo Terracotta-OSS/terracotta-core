@@ -26,11 +26,8 @@ public class ClusterMembershipEventJMXTest extends TransparentTestBase {
   private File             configFile;
   private int              adminPort;
 
-  public ClusterMembershipEventJMXTest() {
-//    this.disableAllUntil("2007-06-25");
-  }
-
-  public void doSetUp(TransparentTestIface t) throws Exception {
+  @Override
+  public void doSetUp(final TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
     TransparentAppConfig cfg = t.getTransparentAppConfig();
@@ -39,10 +36,12 @@ public class ClusterMembershipEventJMXTest extends TransparentTestBase {
     cfg.setAttribute(ClusterMembershipEventJMXTestApp.HOST_NAME, "localhost");
   }
 
+  @Override
   protected Class getApplicationClass() {
     return ClusterMembershipEventJMXTestApp.class;
   }
 
+  @Override
   public void setUp() throws Exception {
     PortChooser pc = new PortChooser();
     port = pc.chooseRandomPort();
@@ -65,7 +64,7 @@ public class ClusterMembershipEventJMXTest extends TransparentTestBase {
     }
   }
 
-  public static TerracottaConfigBuilder createConfig(int port, int adminPort) {
+  public static TerracottaConfigBuilder createConfig(final int port, final int adminPort) {
     String testClassName = ClusterMembershipEventJMXTestApp.class.getName();
     String testClassSuperName = AbstractTransparentApp.class.getName();
 

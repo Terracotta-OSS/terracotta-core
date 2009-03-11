@@ -22,7 +22,24 @@ public class TerracottaCluster extends AbstractTerracottaMBean implements Terrac
 
   private UnsupportedOperationException createUnsupportedOperationException() {
     final String msg = "JMX Cluster Events have been deprecated. You can now use DsoCluster instance injection and DsoClusterListener in plain Java from within your application.";
-    LOGGER.error(msg);
+    final StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+    for (StackTraceElement element : stackTrace) {
+      final String className = element.getClassName();
+      // Only log the unsupported operation exception if a user application tried to
+      // add a notification listener.
+      // We can't do this all the time since the standard JMX server adds a notification listener
+      // for all MBeans that are registered, resulting in confusing log messages. The exception is
+      // swallowed though, so it still makes sense to throw it.
+      // The stack trace is captured through the current thread static method to ensure that we have
+      // the whole stack and that it isn't limited by the maximum stack trace depth of exceptions.
+      if (!className.startsWith("com.tc.") &&
+          !className.startsWith("com.sun.") &&
+          !className.startsWith("java.") &&
+          !className.startsWith("javax.")) {
+        LOGGER.error(msg);
+        break;
+      }
+    }
     return new UnsupportedOperationException(msg);
   }
 
