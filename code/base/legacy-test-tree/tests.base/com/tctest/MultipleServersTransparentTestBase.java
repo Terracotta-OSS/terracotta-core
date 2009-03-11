@@ -37,8 +37,10 @@ public abstract class MultipleServersTransparentTestBase extends TransparentTest
 
   @Override
   protected void setExtraJvmArgs(final ArrayList jvmArgs) {
-    // limit L2 heap size for all active-active and active-passive tests
-    jvmArgs.add("-Xmx256m");
+    if (isMultipleServerTest()) {
+      // limit L2 heap size for all active-active and active-passive tests
+      jvmArgs.add("-Xmx256m");
+    }
   }
 
   public void test() throws Exception {
