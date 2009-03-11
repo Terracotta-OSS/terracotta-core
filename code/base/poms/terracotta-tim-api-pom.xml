@@ -32,11 +32,6 @@
       <groupId>org.terracotta</groupId>
       <artifactId>tcstats</artifactId>
     </dependency>
-
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>linked-child-process</artifactId>
-    </dependency>
     <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
@@ -44,10 +39,6 @@
     <dependency>
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>commons-collections</groupId>
-      <artifactId>commons-collections</artifactId>
     </dependency>
     <dependency>
       <groupId>commons-lang</groupId>
@@ -78,10 +69,6 @@
       <artifactId>jmxremote_optional</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.beanshell</groupId>
-      <artifactId>bsh</artifactId>
-    </dependency>
-    <dependency>
       <groupId>xmlbeans</groupId>
       <artifactId>xbean</artifactId>
     </dependency>
@@ -90,24 +77,12 @@
       <artifactId>xbean_xpath</artifactId>
     </dependency>
     <dependency>
-      <groupId>xmlbeans</groupId>
-      <artifactId>xmlpublic</artifactId>
-    </dependency>
-    <dependency>
       <groupId>knopflerfish-tc</groupId>
       <artifactId>knopflerfish-tc</artifactId>
     </dependency>
     <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>servlet-api</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.mortbay.jetty</groupId>
       <artifactId>jetty-util</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.mortbay.jetty</groupId>
-      <artifactId>jetty</artifactId>
     </dependency>
     <dependency>
       <groupId>concurrent</groupId>
@@ -116,50 +91,6 @@
     <dependency>
       <groupId>trove</groupId>
       <artifactId>trove</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>berkeleydb</groupId>
-      <artifactId>je</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>jline</groupId>
-      <artifactId>jline</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>jfree</groupId>
-      <artifactId>jfreechart</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.dijon</groupId>
-      <artifactId>appframe</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>treemap</groupId>
-      <artifactId>treemap</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>tomcat</groupId>
-      <artifactId>catalina</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.tomcat</groupId>
-      <artifactId>tribes</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.tomcat</groupId>
-      <artifactId>juli</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>stax</groupId>
-      <artifactId>stax</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>dom4j</groupId>
-      <artifactId>dom4j</artifactId>
     </dependency>
   </dependencies>
 
