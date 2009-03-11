@@ -56,6 +56,9 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     Registry[:build_environment] = @build_environment
     Registry[:static_resources] = @static_resources
 
+    @filters_def = load_yaml_erb(@static_resources.global_filters_file.to_s, binding)
+    Registry[:filters_def] = @filters_def
+
     handle_appserver_overwite()
 
     # Figure out which JVMs we're using.

@@ -72,6 +72,29 @@ class TerracottaAnt < Builder::AntBuilder
     end
   end
 
+  # Performs a filtered copy from src_dir to dest_dir. Filtering is controlled
+  # by the filters_def hash.
+  def filtered_copy(src_dir, dest_dir, filters_def = Registry[:filters_def])
+    self.copy(:todir => dest_dir.to_s) do
+      self.filterset do
+        filters_def['filters'].each do |filter|
+          token = filter.keys.first
+          value = filter[token]
+          self.filter(:token => token, :value => value)
+        end
+      end
+
+      filters_def['filtered_files'].each do |includes_pattern|
+        self.fileset(:dir => src_dir.to_s, :includes => includes_pattern)
+      end
+    end
+
+    self.copy(:todir => dest_dir.to_s) do
+      self.fileset(:dir => src_dir.to_s, :includes => '**/*',
+                   :excludes => filters_def['filtered_files'].join(','))
+    end
+  end
+
   # Fetches the Ant property with the given name; raises an exception if it doesn't exist, unless
   # you specify a default. We also transform the key passed in to make sure it contains only
   # numbers, letters, and underscores; other characters will be replaced with underscores. This is

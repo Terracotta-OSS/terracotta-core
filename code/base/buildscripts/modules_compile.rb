@@ -103,23 +103,13 @@ class BuildSubtree
       end
     end
 
-    if @resources_exists
-      resources_dir = build_results.classes_directory(self).to_s
-      ant.copy(:todir => resources_dir) do
-        ant.filterset do
-          ant.filter(:token => 'tc.version',        :value => config_source['maven.version'])
-          ant.filter(:token => 'api.version',       :value => config_source['api.version'])
-          ant.filter(:token => 'include.snapshots', :value => !(config_source['final_kit'] == 'true'))
-        end
-        ant.fileset(:dir => resource_root.to_s, :includes => '**/*.properties')
-        ant.fileset(:dir => resource_root.to_s, :includes => '**/*.xml')
-      end
-      ant.copy(:todir => resources_dir) do
-        ant.fileset(:dir => resource_root.to_s, :includes => '**/*', :excludes => '**/*.properties')
-      end
-    end
-    
     create_data_file(config_source, build_results.classes_directory(self).to_s, :build_data)
+  end
+
+  def copy_resources
+    if @resources_exists
+      Registry[:ant].filtered_copy(resource_root, Registry[:build_results].classes_directory(self).to_s)
+    end
   end
 
   private
@@ -149,6 +139,7 @@ class BuildModule
   def compile(jvm_set, build_results, ant, config_source, build_environment)
     @subtrees.each do |subtree|
       subtree.compile(jvm_set, build_results, ant, config_source, build_environment)
+      subtree.copy_resources
     end
 
     if self.module?
@@ -165,9 +156,13 @@ class BuildModule
   # Creates a JAR file for a pluggable module and stores it in build/modules.  Returns a
   # ModuleInfo object describing the module.
   def create_module_jar(ant, build_results)
-    basedir  = build_results.classes_directory(subtree('src')).ensure_directory
+    basedir = build_results.classes_directory(subtree('src')).ensure_directory
+    src_meta_inf_dir = FilePath.new(self.root, 'META-INF')
+    dest_meta_inf_dir = FilePath.new(basedir, 'META-INF')
+    ant.filtered_copy(src_meta_inf_dir, dest_meta_inf_dir)
     module_info = build_results.module_info(self)
     ant.create_jar(module_info.jarfile, :basedir => basedir.to_s, :manifest => module_info.manifest.to_s)
     module_info
   end
+
 end

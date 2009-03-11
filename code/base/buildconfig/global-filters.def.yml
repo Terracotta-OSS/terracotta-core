@@ -1,0 +1,18 @@
+filtered_files:
+  - **/*.properties
+  - **/*.xml
+  - **/MANIFEST.MF
+filters:
+  - include.snapshots: <%= !(config_source['final_kit'] == 'true') %>
+
+  # automatically define all config_source values as filters
+  <% for key in config_source.keys %>
+  <% value = config_source[key] %>
+  - <%= key %>: <%= value %>
+  # Anywhere there is a config_source value that ends with -SNAPSHOT, assume it
+  # is a version number and define an additional filter fit for OSGi manifest entries.
+  <% if value =~ /(.+)-SNAPSHOT$/ %>
+  - <%= key + ".OSGi" %>: <%= $1 + ".SNAPSHOT" %>
+  <% end %>
+  <% end %>
+

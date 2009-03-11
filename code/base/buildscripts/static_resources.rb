@@ -59,6 +59,10 @@ class StaticResources
     FilePath.new(@root_directory, 'buildconfig')
   end
 
+  def global_filters_file
+    FilePath.new(build_config_directory, 'global-filters.def.yml')
+  end
+
   def distribution_config_directory(flavor)
     FilePath.new(source_root(flavor), 'buildconfig', 'distribution')
   end

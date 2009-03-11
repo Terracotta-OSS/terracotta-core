@@ -163,7 +163,7 @@ class BuildResults
   # "config bundle"
   def module_info(build_module)
     if build_module.module?
-      module_metainf_dir = FilePath.new(build_module.root, "META-INF").to_s
+      module_metainf_dir = FilePath.new(self.classes_directory(build_module.subtree('src')), 'META-INF')
       manifest = FilePath.new(module_metainf_dir, "MANIFEST.MF")
       module_version = extract_version_from_manifest(manifest.to_s).gsub(/\.SNAPSHOT/,'-SNAPSHOT')
       artifact = build_module.name
