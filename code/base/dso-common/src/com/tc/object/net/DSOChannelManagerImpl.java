@@ -115,7 +115,7 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
       MessageChannel channel = ackMsg.getChannel();
       synchronized (activeChannels) {
         activeChannels.put(clientID, channel);
-        ackMsg.initialize(persistent, getAllActiveClientIDsString(), clientID, serverVersion);
+        ackMsg.initialize(persistent, getAllActiveClientIDs(), clientID, serverVersion);
         ackMsg.send();
       }
       fireChannelCreatedEvent(channel);
@@ -124,15 +124,15 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
     }
   }
 
-  private Set<ClientID> getAllActiveClientIDsString() {
-    Set<ClientID> clientIDStrings = new HashSet<ClientID>();
+  private Set<ClientID> getAllActiveClientIDs() {
+    Set<ClientID> clientIDs = new HashSet<ClientID>();
     synchronized (activeChannels) {
       for (Iterator i = activeChannels.keySet().iterator(); i.hasNext();) {
         ClientID cid = (ClientID) i.next();
-        clientIDStrings.add(cid);
+        clientIDs.add(cid);
       }
     }
-    return clientIDStrings;
+    return clientIDs;
   }
 
   public void makeChannelActiveNoAck(final MessageChannel channel) {
