@@ -19,7 +19,7 @@
 
 	<target name="build" depends="init" description="build the source ">
 		<javac target="1.5" source="1.5" srcdir="${src.dir}" destdir="${build.dir}"
-			classpath="../../../lib/terracotta-api.jar" />
+			classpath="../../../lib/tc.jar" />
 		<delete dir="${build.dir}/com" />
 		<copy todir="${build.images.dir}">
 			<fileset dir="${images.dir}" />
