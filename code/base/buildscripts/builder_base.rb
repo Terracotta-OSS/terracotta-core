@@ -291,7 +291,7 @@ class TerracottaBuilder
     prefix = 'org.terracotta.modules.tool'
     include_snapshots = @config_source['final_kit'] == 'true' ? false : true
     java_opts = ["-D#{prefix}.includeSnapshots=#{include_snapshots}",
-      "-D#{prefix}.dataFile=#{self.tim_get_index_file}"]
+      "-D#{prefix}.cache=#{self.tim_get_index_cache}"]
     if index_url = @config_source['tim-get.index.url']
       java_opts << "-D#{prefix}.dataFileUrl=#{index_url}"
     end
@@ -312,13 +312,13 @@ class TerracottaBuilder
     result
   end
 
-  def tim_get_index_file
+  def tim_get_index_cache
     require 'tmpdir'
-    File.join(Dir.tmpdir, 'tim-get.index')
+    File.join(Dir.tmpdir, 'tcbuild-tim-get')
   end
 
-  def delete_tim_get_index_file
-    File.delete(tim_get_index_file) if File.exists?(tim_get_index_file)
+  def delete_tim_get_index_cache
+    FileUtils.rm_rf(tim_get_index_cache) if File.exists?(tim_get_index_cache)
   end
 
   # Where should we archive the build to? Returns nil if none. Value comes from the config source.
