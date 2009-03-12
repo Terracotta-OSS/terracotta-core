@@ -8,6 +8,7 @@ import com.tc.test.MultipleServersCrashMode;
 import com.tc.test.MultipleServersPersistenceMode;
 import com.tc.test.MultipleServersSharedDataMode;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
+import com.tc.util.runtime.Os;
 import com.tctest.YoungGCTestAndActivePassiveTest;
 
 import java.util.ArrayList;
@@ -42,7 +43,7 @@ public class CreateRescueCandidatesYoungGCTest extends YoungGCTestAndActivePassi
     // set client instance according to available free memory
     long freemem = Runtime.getRuntime().freeMemory();
     int app_count;
-    if (freemem < LOW_FREE_MEMORY) {
+    if (Os.isSolaris() || freemem < LOW_FREE_MEMORY) {
       app_count = LOW_APP_NODES;
     } else if (freemem < MIDDLE_FREE_MEMORY) {
       app_count = MIDDLE_APP_NODES;
