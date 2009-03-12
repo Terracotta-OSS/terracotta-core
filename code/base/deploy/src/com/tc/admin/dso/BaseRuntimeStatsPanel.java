@@ -17,6 +17,7 @@ import org.jfree.data.time.TimeSeries;
 import org.jfree.ui.RectangleInsets;
 
 import com.tc.admin.common.ApplicationContext;
+import com.tc.admin.common.BasicChartPanel;
 import com.tc.admin.common.BrowserLauncher;
 import com.tc.admin.common.DemoChartFactory;
 import com.tc.admin.common.LinkButton;
@@ -154,7 +155,7 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     boolean zoom = false;
     boolean tooltips = true;
 
-    ChartPanel chartPanel = new ChartPanel(chart, ChartPanel.DEFAULT_WIDTH, ChartPanel.DEFAULT_HEIGHT,
+    BasicChartPanel chartPanel = new BasicChartPanel(chart, ChartPanel.DEFAULT_WIDTH, ChartPanel.DEFAULT_HEIGHT,
         ChartPanel.DEFAULT_MINIMUM_DRAW_WIDTH, ChartPanel.DEFAULT_MINIMUM_DRAW_HEIGHT,
         ChartPanel.DEFAULT_MAXIMUM_DRAW_WIDTH, ChartPanel.DEFAULT_MAXIMUM_DRAW_HEIGHT, useBuffer, properties, save,
         print, zoom, tooltips) {

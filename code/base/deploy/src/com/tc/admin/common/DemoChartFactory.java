@@ -233,7 +233,6 @@ public class DemoChartFactory {
     dvi.setRadius(0.68);
     dvi.setOutlinePaint(Color.black);
     dvi.setOutlineStroke(new BasicStroke(2.0f));
-    // dvi.setBackgroundPaint(new Color(240, 240, 240));
     if (scale != null) {
       dvi.setTemplateValue(Double.valueOf(scale.getUpperBound()));
     }
@@ -255,13 +254,6 @@ public class DemoChartFactory {
     cap.setFillPaint(Color.black);
     plot.setCap(cap);
 
-    // set the background
-    // GradientPaint gp = new GradientPaint(new Point(), new Color(255, 255, 255), new Point(), new Color(255, 255,
-    // 255));
-    //
-    // DialBackground db = new DialBackground(gp);
-    // db.setGradientPaintTransformer(new StandardGradientPaintTransformer(GradientPaintTransformType.VERTICAL));
-    // plot.setBackground(db);
     plot.setBackground(new DialBackground(Color.white));
 
     for (StandardDialRange range : ranges) {

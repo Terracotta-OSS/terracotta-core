@@ -16,7 +16,6 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.data.time.Second;
 import org.jfree.data.time.TimeSeries;
 
 import com.tc.admin.common.ApplicationContext;
@@ -139,15 +138,8 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel implements Pr
   private synchronized void handleSysStats(PolledAttributesResult result) {
     IClient theClient = getClient();
     if (theClient != null) {
-      Second now = new Second();
-      Number n;
-
-      if ((n = (Number) result.getPolledAttribute(theClient, POLLED_ATTR_MAX_MEMORY)) != null) {
-        memoryMaxSeries.addOrUpdate(now, n);
-      }
-      if ((n = (Number) result.getPolledAttribute(theClient, POLLED_ATTR_USED_MEMORY)) != null) {
-        memoryUsedSeries.addOrUpdate(now, n);
-      }
+      updateSeries(memoryMaxSeries, (Number) result.getPolledAttribute(theClient, POLLED_ATTR_MAX_MEMORY));
+      updateSeries(memoryUsedSeries, (Number) result.getPolledAttribute(theClient, POLLED_ATTR_USED_MEMORY));
 
       if (cpuTimeSeries != null) {
         StatisticData[] cpuUsageData = (StatisticData[]) result.getPolledAttribute(theClient, POLLED_ATTR_CPU_USAGE);
@@ -156,10 +148,7 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel implements Pr
             StatisticData cpuData = cpuUsageData[i];
             TimeSeries timeSeries = cpuTimeSeriesMap.get(cpuData.getElement());
             if (timeSeries != null) {
-              Object data = cpuData.getData();
-              if (data != null) {
-                timeSeries.addOrUpdate(now, ((Number) data).doubleValue());
-              }
+              updateSeries(timeSeries, (Number) cpuData.getData());
             }
           }
         }

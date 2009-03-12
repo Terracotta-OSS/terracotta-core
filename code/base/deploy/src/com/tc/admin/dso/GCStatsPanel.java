@@ -106,19 +106,20 @@ public class GCStatsPanel extends XContainer implements DGCListener {
     table.add(popupMenu);
     table.addMouseListener(new TableMouseHandler());
 
-    dgcTimeSeries = new TimeSeries("Elapsed Time", Second.class);
-    JFreeChart chart = DemoChartFactory.getXYLineChart("", "", "Elapsed Time (s.)", new TimeSeries[] { dgcTimeSeries },
-                                                       true);
+    String dgcTimeSeriesName = appContext.getString("dso.gcstats.graph.elapsedTime");
+    dgcTimeSeries = new TimeSeries(dgcTimeSeriesName, Second.class);
+    JFreeChart chart = DemoChartFactory.getXYLineChart("", "", dgcTimeSeriesName + " (s.)",
+                                                       new TimeSeries[] { dgcTimeSeries }, true);
     XYPlot plot = (XYPlot) chart.getPlot();
     DateAxis axis = (DateAxis) plot.getDomainAxis();
     axis.setFixedAutoRange(0.0);
-    releasedObjectsSeries = new TimeSeries("Released Objects", Second.class);
+    releasedObjectsSeries = new TimeSeries(appContext.getString("dso.gcstats.graph.freedObjectCount"), Second.class);
     IntervalXYDataset dataset = DemoChartFactory.createTimeSeriesDataset(releasedObjectsSeries);
     plot.setDataset(1, dataset);
     XYBarRenderer xyBarRenderer = new XYBarRenderer();
     plot.setRenderer(1, xyBarRenderer);
     xyBarRenderer.setShadowVisible(false);
-    NumberAxis garbageCountAxis = new NumberAxis("Garbage Count");
+    NumberAxis garbageCountAxis = new NumberAxis(releasedObjectsSeries.getKey().toString());
     plot.setRangeAxis(1, garbageCountAxis);
     garbageCountAxis.setRangeType(RangeType.POSITIVE);
     garbageCountAxis.setStandardTickUnits(DemoChartFactory.DEFAULT_TICKS);

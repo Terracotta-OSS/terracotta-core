@@ -156,6 +156,8 @@ public class AdminClientBundle extends ListResourceBundle {
         { "dso.gcstats.markStageTime", "<html>Mark<br>stage (ms.)</html>" },
         { "dso.gcstats.actualGarbageCount", "<html>Garbage<br>count</html>" },
         { "dso.gcstats.deleteStageTime", "<html>Delete<br>stage (ms.)</html>" },
+        { "dso.gcstats.graph.elapsedTime", "Elapsed Time" },
+        { "dso.gcstats.graph.freedObjectCount", "Freed Objects" },
         { "dso.all.statistics", "All statistics" },
         { "file.menu.label", "File" },
         { "tools.menu.label", "Tools" },
@@ -230,6 +232,7 @@ public class AdminClientBundle extends ListResourceBundle {
         { "dashboard.txn-rate", "Write Txn/s" }, { "dashboard.lock-recall-rate", "Lock Recall/s" },
         { "dashboard.object-creation-rate", "Objects Created/s" }, { "dashboard.broadcast-rate", "Broadcasts/s" },
         { "dashboard.fault-rate", "Faults/s" }, { "dashboard.flush-rate", "Flushes/s" },
-        { "dashboard.txn-size-rate", "Txn Size KB/s" }, { "dashboard.unacked-txns", "Unacked Txns" } };
+        { "dashboard.txn-size-rate", "Txn Size KB/s" }, { "dashboard.unacked-txns", "Unacked Txns" },
+        { "dashboard.transactions", "Transactions" }, { "dashboard.impeding-factors", "Impeding Factors" } };
   }
 }

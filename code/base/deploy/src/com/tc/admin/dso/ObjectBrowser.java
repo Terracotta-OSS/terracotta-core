@@ -89,7 +89,7 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
     gbc.insets = new Insets(3, 3, 3, 3);
     gbc.anchor = GridBagConstraints.EAST;
 
-    Font headerFont = new Font("Serif", Font.BOLD, 12);
+    Font headerFont = new Font("Dialog", Font.BOLD, 12);
     XLabel headerLabel = new XLabel(adminClientContext.getString("current.view.type"));
     topPanel.add(headerLabel, gbc);
     headerLabel.setFont(headerFont);

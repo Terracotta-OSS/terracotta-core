@@ -5,6 +5,7 @@ package com.tc.admin.dso;
 
 import org.jfree.chart.plot.IntervalMarker;
 
+import com.tc.admin.common.ToolTipProvider;
 import com.tc.objectserver.api.GCStats;
 
 import java.awt.BasicStroke;
@@ -13,7 +14,7 @@ import java.awt.event.MouseEvent;
 import java.text.DateFormat;
 import java.util.Date;
 
-public class DGCIntervalMarker extends IntervalMarker {
+public class DGCIntervalMarker extends IntervalMarker implements ToolTipProvider {
   private final GCStats dgcInfo;
   private String        fToolTip;
 

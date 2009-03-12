@@ -17,6 +17,7 @@ import com.tc.admin.model.IClusterNode;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -65,7 +66,10 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Prop
     gbc.weightx = 0.0;
     gbc.fill = GridBagConstraints.NONE;
 
-    topPanel.add(new XLabel(adminClientContext.getString("take.thread.dump.for")), gbc);
+    Font labelFont = new Font("SanSerif", Font.BOLD, 12);
+    XLabel label = new XLabel(adminClientContext.getString("take.thread.dump.for"));
+    topPanel.add(label, gbc);
+    label.setFont(labelFont);
     gbc.gridx++;
 
     topPanel.add(elementChooser = new ElementChooser(), gbc);

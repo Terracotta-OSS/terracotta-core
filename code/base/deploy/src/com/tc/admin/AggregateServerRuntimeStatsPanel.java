@@ -18,6 +18,7 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.time.TimeSeries;
+import org.jfree.ui.Layer;
 
 import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.XContainer;
@@ -147,57 +148,86 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
     }
   }
 
+  private Object getPolledAttribute(PolledAttributesResult par, IServer server, String attr) {
+    Object result = par.getPolledAttribute(server, attr);
+    if (result == null) {
+      appContext.log("No poll result for " + server + ": " + attr);
+    }
+    return result;
+  }
+
   private synchronized void handleDSOStats(PolledAttributesResult result) {
     IClusterModel theClusterModel = getClusterModel();
     if (theClusterModel != null) {
       tmpDate.setTime(System.currentTimeMillis());
 
-      long flush = 0L;
-      long fault = 0L;
-      long txn = 0L;
-      long cacheMiss = 0L;
+      long flush = 0;
+      long fault = 0;
+      long txn = 0;
+      long cacheMiss = 0;
       long liveObjectCount = 0;
       long lockRecallRate = 0;
       long broadcastRate = 0;
       Number n;
 
       for (IServerGroup group : theClusterModel.getServerGroups()) {
-        for (IServer theServer : group.getMembers()) {
-          if (theServer.isReady()) {
-            if ((n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OBJECT_FLUSH_RATE)) != null) {
-              flush += n.longValue();
-            }
-            if ((n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OBJECT_FAULT_RATE)) != null) {
-              fault += n.longValue();
-            }
-            if ((n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_TRANSACTION_RATE)) != null) {
-              txn += n.longValue();
-            }
-            if ((n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_CACHE_MISS_RATE)) != null) {
-              cacheMiss += n.longValue();
-            }
-            if ((n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_LIVE_OBJECT_COUNT)) != null) {
-              liveObjectCount += n.longValue();
-            }
-            if ((n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_LOCK_RECALL_RATE)) != null) {
-              lockRecallRate += n.longValue();
-            }
-            if ((n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_BROADCAST_RATE)) != null) {
-              broadcastRate += n.longValue();
-            }
+        IServer theServer = group.getActiveServer();
+        if (theServer.isReady()) {
+          n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_OBJECT_FLUSH_RATE);
+          if (n != null) {
+            if (flush >= 0) flush += n.longValue();
+          } else {
+            flush = -1;
+          }
+          n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_OBJECT_FAULT_RATE);
+          if (n != null) {
+            if (fault >= 0) fault += n.longValue();
+          } else {
+            fault = -1;
+          }
+          n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_TRANSACTION_RATE);
+          if (n != null) {
+            if (txn >= 0) txn += n.longValue();
+          } else {
+            txn = -1;
+          }
+          n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_CACHE_MISS_RATE);
+          if (n != null) {
+            if (cacheMiss >= 0) cacheMiss += n.longValue();
+          } else {
+            cacheMiss = -1;
+          }
+          n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_LIVE_OBJECT_COUNT);
+          if (n != null) {
+            if (liveObjectCount >= 0) liveObjectCount += n.longValue();
+          } else {
+            liveObjectCount = -1;
+          }
+          n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_LOCK_RECALL_RATE);
+          if (n != null) {
+            if (lockRecallRate >= 0) lockRecallRate += n.longValue();
+          } else {
+            lockRecallRate = -1;
+          }
+          n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_BROADCAST_RATE);
+          if (n != null) {
+            if (broadcastRate >= 0) broadcastRate += n.longValue();
+          } else {
+            broadcastRate = -1;
           }
         }
       }
 
-      updateSeries(flushRateSeries, Long.valueOf(flush));
-      updateSeries(faultRateSeries, Long.valueOf(fault));
-      updateSeries(txnRateSeries, Long.valueOf(txn));
-      updateSeries(cacheMissRateSeries, Long.valueOf(cacheMiss));
-      updateSeries(liveObjectCountSeries, Long.valueOf(liveObjectCount));
-      updateSeries(lockRecallRateSeries, Long.valueOf(lockRecallRate));
-      updateSeries(broadcastRateSeries, Long.valueOf(broadcastRate));
-
-      liveObjectCountTitle.setTitle(MessageFormat.format(liveObjectCountTitlePattern, liveObjectCount));
+      if (flush != -1) updateSeries(flushRateSeries, Long.valueOf(flush));
+      if (fault != -1) updateSeries(faultRateSeries, Long.valueOf(fault));
+      if (txn != -1) updateSeries(txnRateSeries, Long.valueOf(txn));
+      if (cacheMiss != -1) updateSeries(cacheMissRateSeries, Long.valueOf(cacheMiss));
+      if (liveObjectCount != -1) {
+        updateSeries(liveObjectCountSeries, Long.valueOf(liveObjectCount));
+        liveObjectCountTitle.setTitle(MessageFormat.format(liveObjectCountTitlePattern, liveObjectCount));
+      }
+      if (lockRecallRate != -1) updateSeries(lockRecallRateSeries, Long.valueOf(lockRecallRate));
+      if (broadcastRate != -1) updateSeries(broadcastRateSeries, Long.valueOf(broadcastRate));
     }
   }
 
@@ -288,7 +318,7 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
 
     public void run() {
       if (gcStats.getElapsedTime() != -1) {
-        liveObjectCountPlot.addDomainMarker(new DGCIntervalMarker(gcStats));
+        liveObjectCountPlot.addDomainMarker(new DGCIntervalMarker(gcStats), Layer.BACKGROUND);
       }
     }
   }
