@@ -52,15 +52,6 @@ bundled_components:
           - tc-config-reference
   - common:
       module_packages:
-        - terracotta-tim-api:
-            install_directory: lib
-            modules:
-              - common-api
-              - dso-l1-api
-              - license-common
-              - management-api
-              - modules-base
-              - thirdparty-api
         - terracotta-jmx-api:
             install_directory: lib
             modules:
@@ -69,11 +60,7 @@ bundled_components:
               - dso-l1-api
               - dso-l2-common
               - dso-statistics-api
-              - management-api
-        - terracotta-api:
-            install_directory: lib
-            modules:
-              - dso-cluster-api             
+              - management-api           
       # NOTE: this section also controls what goes into the 'tc.jar' file
       modules:
         - aspectwerkz:
