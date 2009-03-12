@@ -131,27 +131,42 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     return this.thisL2Identifier;
   }
 
+  private void verifyPortUsed(Set<String> serverPorts, String hostname, int port) throws ConfigurationSetupException {
+    String hostport = hostname + ":" + port;
+    if (port != 0 && !serverPorts.add(hostport)) {
+      throw new ConfigurationSetupException(hostport + " is duplicated in configuration.");
+    } 
+  }
+
+  private void verifyServerPortUsed(Set<String> serverPorts, Server server) throws ConfigurationSetupException {
+    String hostname = server.getHost();
+    verifyPortUsed(serverPorts, hostname, server.getDsoPort());
+    verifyPortUsed(serverPorts, hostname, server.getJmxPort());
+    verifyPortUsed(serverPorts, hostname, server.getL2GroupPort());
+  }
+
   private void validateGroups() throws ConfigurationSetupException {
     Server[] serverArray = ((Servers) serversBeanRepository().bean()).getServerArray();
     ActiveServerGroupConfig[] groupArray = this.activeServerGroupsConfig.getActiveServerGroupArray();
+    Set<String> serverPorts = new HashSet<String>();
 
     validateGroupNames(groupArray);
 
     for (int i = 0; i < serverArray.length; i++) {
+      verifyServerPortUsed(serverPorts, serverArray[i]);
       String serverName = serverArray[i].getName();
       boolean found = false;
       int gid = -1;
       for (int j = 0; j < groupArray.length; j++) {
         if (groupArray[j].isMember(serverName)) {
           if (found) { throw new ConfigurationSetupException("Server{" + serverName
-                                                             + "} is part of more than 1 mirror-group:  groups{"
-                                                             + gid + "," + groupArray[j].getGroupId() + "}"); }
+                                                             + "} is part of more than 1 mirror-group:  groups{" + gid
+                                                             + "," + groupArray[j].getGroupId() + "}"); }
           gid = groupArray[j].getGroupId();
           found = true;
         }
       }
-      if (!found) { throw new ConfigurationSetupException("Server{" + serverName
-                                                          + "} is not part of any mirror-group."); }
+      if (!found) { throw new ConfigurationSetupException("Server{" + serverName + "} is not part of any mirror-group."); }
     }
   }
 
