@@ -80,8 +80,8 @@ public final class Weblogic9xAppServer extends WeblogicAppServerBase {
         try {
           String[] resources = new String[] { "security/SerializedSystemIni.dat" };
           for (String resource : resources) {
-            File dest = new File(getConfiguration().getHome(), "linux/" + resource);
-            copyResource(resource, dest);
+            File dest = new File(getConfiguration().getHome(), resource);
+            copyResource("linux/" + resource, dest);
           }
         } catch (IOException e) {
           throw new RuntimeException(e);
