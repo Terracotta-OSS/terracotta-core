@@ -68,7 +68,7 @@ public class DataLoader {
 
   @Inject
   public DataLoader(@Named(ConfigAnnotation.CONFIG_INSTANCE) Config config) {
-    this(config.getDataFileUrl(), config.getDataFile());
+    this(config.getDataFileUrl(), config.getIndexFile());
     setCacheRefreshPolicy(CacheRefreshPolicy.ON_EXPIRATION.setExpirationInSeconds(config
         .getDataCacheExpirationInSeconds()));
   }

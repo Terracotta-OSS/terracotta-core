@@ -19,7 +19,7 @@ import java.util.Properties;
  */
 public class Config {
 
-  public static final String  KEYSPACE          = "org.terracotta.modules.tool.";
+  public static final String KEYSPACE          = "org.terracotta.modules.tool.";
 
   public static final String TC_VERSION        = "tcVersion";
   public static final String RELATIVE_URL_BASE = "relativeUrlBase";
@@ -27,16 +27,16 @@ public class Config {
   public static final String PROXY_URL         = "proxyUrl";
   public static final String MODULES_DIR       = "modulesDir";
   public static final String DATA_FILE_URL     = "dataFileUrl";
-  public static final String DATA_FILE         = "dataFile";
+  public static final String CACHE             = "cache";
 
-  private String              tcVersion;
-  private URI                 relativeUrlBase;
-  private boolean             includeSnapshots;
-  private URL                 proxyUrl;
-  private File                modulesDirectory;
-  private URL                 dataFileUrl;
-  private File                dataFile;
-  private long                dataCacheExpirationInSeconds;
+  private String             tcVersion;
+  private URI                relativeUrlBase;
+  private boolean            includeSnapshots;
+  private URL                proxyUrl;
+  private File               modulesDirectory;
+  private URL                dataFileUrl;
+  private File               indexFile;
+  private long               dataCacheExpirationInSeconds;
 
   // We need to declare this no arg contructor so it can be Guice'd
   Config() {
@@ -54,19 +54,15 @@ public class Config {
     }
     this.setIncludeSnapshots(Boolean.parseBoolean(getProperty(properties, INCLUDE_SNAPSHOTS)));
 
-    String path = getProperty(properties, DATA_FILE);
-    if (StringUtils.isEmpty(path)) path = new File(System.getProperty("java.io.tmpdir"), "tim-get.index").toString();
-    this.setDataFile(new File(path));
-
-    this.setDataFileUrl(createUrl(getProperty(properties, DATA_FILE_URL), "dataFileUrl is not a valid URL"));
+    String dataUrl = getProperty(properties, DATA_FILE_URL);
+    this.setDataFileUrl(createUrl(dataUrl, "dataFileUrl is not a valid URL"));
     this.setModulesDirectory(new File(getProperty(properties, MODULES_DIR)));
     this.setDataCacheExpirationInSeconds(Long.parseLong(getProperty(properties, "dataCacheExpirationInSeconds")));
 
-    try {
-      this.setDataFileUrl(new URL(getProperty(properties, DATA_FILE_URL)));
-    } catch (MalformedURLException e) {
-      throw new InvalidConfigurationException("dataFileUrl is not a valid URL", e);
-    }
+    String cachePath = getProperty(properties, CACHE);
+    if (StringUtils.isEmpty(cachePath)) cachePath = System.getProperty("java.io.tmpdir");
+    cachePath = cachePath + File.separator + "tim-get";
+    this.setIndexFile(new File(cachePath, new File(dataUrl).getName()));
 
     String proxy = getProperty(properties, PROXY_URL);
     if (proxy != null) this.setProxyUrl(createUrl(proxy, "Proxy URL is not a valid URL"));
@@ -128,12 +124,12 @@ public class Config {
     this.dataFileUrl = dataFileUrl;
   }
 
-  public File getDataFile() {
-    return dataFile;
+  public File getIndexFile() {
+    return indexFile;
   }
 
-  public void setDataFile(File dataFileDirectory) {
-    this.dataFile = dataFileDirectory;
+  public void setIndexFile(File file) {
+    this.indexFile = file;
   }
 
   public long getDataCacheExpirationInSeconds() {

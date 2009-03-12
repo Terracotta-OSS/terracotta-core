@@ -40,33 +40,36 @@ import junit.framework.Assert;
 
 public class ServerManager {
 
-  private static final String         SESSION_TIM_TESTS_PROPERTIES = "/com/tctest/session-tim/tests.properties";
+  private static final String SESSION_TIM_TESTS_PROPERTIES = "/com/tctest/session-tim/tests.properties";
 
   private static class TimGetUrls {
     private final String url;
     private final String relativeUrlBase;
+
     public TimGetUrls(String url, String relativeUrlBase) {
       this.url = url;
       this.relativeUrlBase = relativeUrlBase;
     }
+
     public String getUrl() {
       return url;
     }
+
     public String getRelativeUrlBase() {
       return relativeUrlBase;
     }
   }
+
   // The internal repository is listed first since it is the preferred repo
-  private static final TimGetUrls[]   TIM_GET_URLS                 = {
+  private static final TimGetUrls[]   TIM_GET_URLS   = {
       new TimGetUrls("http://forge-stage.terracotta.lan/api/2/index.xml.gz", "http://kong.terracotta.lan/maven2"),
-      new TimGetUrls("http://forge.terracotta.org/api/2/index.xml.gz", "http://download.terracotta.org/maven2")
-  };
+      new TimGetUrls("http://forge.terracotta.org/api/2/index.xml.gz", "http://download.terracotta.org/maven2") };
 
-  protected final static TCLogger     logger                       = TCLogging.getLogger(ServerManager.class);
-  private static int                  appServerIndex               = 0;
-  private final boolean               DEBUG_MODE                   = false;
+  protected final static TCLogger     logger         = TCLogging.getLogger(ServerManager.class);
+  private static int                  appServerIndex = 0;
+  private final boolean               DEBUG_MODE     = false;
 
-  private List                        serversToStop                = new ArrayList();
+  private List                        serversToStop  = new ArrayList();
   private DSOServer                   dsoServer;
 
   private final TestConfigObject      config;
@@ -77,13 +80,12 @@ public class ServerManager {
   private final File                  installDir;
   private final File                  warDir;
   private final File                  tcConfigFile;
-  private final TcConfigBuilder       serverTcConfig               = new TcConfigBuilder();
+  private final TcConfigBuilder       serverTcConfig = new TcConfigBuilder();
   private final Collection            jvmArgs;
   private final boolean               useTimGet;
-  private final Map<String, String>   resolved                     = Collections
-                                                                       .synchronizedMap(new HashMap<String, String>());
+  private final Map<String, String>   resolved       = Collections.synchronizedMap(new HashMap<String, String>());
 
-  private static int                  serverCounter                = 0;
+  private static int                  serverCounter  = 0;
 
   public ServerManager(final Class testClass, Collection extraJvmArgs) throws Exception {
     config = TestConfigObject.getInstance();
@@ -425,8 +427,7 @@ public class ServerManager {
         System.setProperty(Config.KEYSPACE + Config.TC_VERSION, ProductInfo.getInstance().mavenArtifactsVersion());
         System.setProperty(Config.KEYSPACE + Config.INCLUDE_SNAPSHOTS, "true");
         System.setProperty(Config.KEYSPACE + Config.MODULES_DIR, getTimGetModulesDir());
-        System.setProperty(Config.KEYSPACE + Config.DATA_FILE, new File(this.sandbox, "tim-get.index")
-            .getAbsolutePath());
+        System.setProperty(Config.KEYSPACE + Config.CACHE, this.sandbox.getAbsolutePath());
         System.setProperty(Config.KEYSPACE + Config.DATA_FILE_URL, urls.getUrl());
         System.setProperty(Config.KEYSPACE + Config.RELATIVE_URL_BASE, urls.getRelativeUrlBase());
 
