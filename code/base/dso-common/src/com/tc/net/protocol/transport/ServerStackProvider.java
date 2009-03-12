@@ -18,7 +18,6 @@ import com.tc.net.protocol.StackNotFoundException;
 import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.ServerMessageChannelFactory;
-import com.tc.properties.TCPropertiesConsts;
 import com.tc.util.Assert;
 
 import java.util.ArrayList;
@@ -231,17 +230,13 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
           isSynced = true;
         } catch (StackNotFoundException e) {
           handleHandshakeError(new TransportHandshakeErrorContext(
-                                                                  "Unable to find communications stack. "
+                                                                  "Client Cannot Reconnect "
                                                                       + e.getMessage()
-                                                                      + ". This is usually caused by a client that is not connected to the cluster."
-                                                                      + " While that client is being rejected, everything else should proceed as normal."
-                                                                      + " Some possible reasons for this situation might be:"
-                                                                      + " the client is from a previous run and can't safely join this newer run; or"
-                                                                      + " the client couldn't reconnect (configurable through several TC properties: '"
-                                                                      + TCPropertiesConsts.L2_L1RECONNECT_ENABLED
-                                                                      + "', '"
-                                                                      + TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS
-                                                                      + "', ...)", e));
+                                                                      + " Restart the client to allow it to rejoin the cluster."
+                                                                      + " Many client reconnection failures can be avoided by"
+                                                                      + " configuring the Terracotta server array for \"permanent-store\""
+                                                                      + " and tuning reconnection parameters. For more information,"
+                                                                      + " see http://www.terracotta.org/ha", e));
         }
       }
       return isSynced;
