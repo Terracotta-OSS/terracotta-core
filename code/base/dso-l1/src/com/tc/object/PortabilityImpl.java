@@ -4,8 +4,6 @@
  */
 package com.tc.object;
 
-import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
-
 import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
 import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -18,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PortabilityImpl implements Portability {
 
@@ -26,9 +25,9 @@ public class PortabilityImpl implements Portability {
   private static final NonInstrumentedClasses nonInstrumentedClasses = new NonInstrumentedClasses();
   private static final LiteralValues          literalValues          = new LiteralValues();
 
-  private final Map                           portableCache          = new ConcurrentReaderHashMap();
-  private final Map                           physicalCache          = new ConcurrentReaderHashMap();
-  private final Map                           hashcodeCache          = new ConcurrentReaderHashMap();
+  private final Map<Class, Boolean>           portableCache          = new ConcurrentHashMap<Class, Boolean>();
+  private final Map<Class, Boolean>           physicalCache          = new ConcurrentHashMap<Class, Boolean>();
+  private final Map<Class, Boolean>           hashcodeCache          = new ConcurrentHashMap<Class, Boolean>();
 
   private final DSOClientConfigHelper         config;
 
@@ -119,7 +118,7 @@ public class PortabilityImpl implements Portability {
    * for the object to be portable. For Logical Objects it still queries the config.
    */
   public boolean isPortableClass(final Class clazz) {
-    Boolean isPortable = (Boolean) portableCache.get(clazz);
+    Boolean isPortable = portableCache.get(clazz);
     if (isPortable != null) { return isPortable.booleanValue(); }
 
     String clazzName = clazz.getName();
@@ -141,14 +140,12 @@ public class PortabilityImpl implements Portability {
     // the interface in question. It specifically does *NOT* walk the class hierarchy looking
     // for the interface. This always means you can't just say instanceof here
 
-    Boolean isPhysicalAdapted = (Boolean) physicalCache.get(clazz);
+    Boolean isPhysicalAdapted = physicalCache.get(clazz);
     if (isPhysicalAdapted != null) { return isPhysicalAdapted.booleanValue(); }
 
     boolean rv = false;
-    Class interfaces[] = clazz.getInterfaces();
-    if (interfaces == null || interfaces.length == 0) return false;
-    for (int i = 0; i < interfaces.length; i++) {
-      if (interfaces[i] == TransparentAccess.class) {
+    for (Class iface : clazz.getInterfaces()) {
+      if (iface == TransparentAccess.class) {
         rv = true;
         break;
       }
@@ -169,7 +166,7 @@ public class PortabilityImpl implements Portability {
   }
 
   public boolean overridesHashCode(final Class clazz) {
-    Boolean overridesHashCode = (Boolean) hashcodeCache.get(clazz);
+    Boolean overridesHashCode = hashcodeCache.get(clazz);
     if (overridesHashCode != null) { return overridesHashCode.booleanValue(); }
 
     boolean rv = false;
