@@ -675,6 +675,9 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
         Module[] allModules = tmpModules.getModuleArray();
         ModuleInfo origModuleInfo = modulesConfig.getOrAdd(origModule);
 
+        // forge default modules to be resolved
+        resolver.resolve(new Module[] {});
+
         for (Module module : allModules) {
           ModuleInfo moduleInfo = modulesConfig.getOrAdd(module);
           try {
@@ -695,13 +698,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
       final Resolver resolver = new Resolver(ResolverUtils.urlsToStrings(osgiRuntime.getRepositories()));
       Module[] allModules = modulesCopy.getModuleArray();
 
-      for (Module module : allModules) {
-        try {
-          resolver.resolve(module);
-        } catch (BundleException be) {
-          /**/
-        }
-      }
+      resolver.resolve(allModules);
 
       final File[] locations = resolver.getResolvedFiles();
       for (File location : locations) {
