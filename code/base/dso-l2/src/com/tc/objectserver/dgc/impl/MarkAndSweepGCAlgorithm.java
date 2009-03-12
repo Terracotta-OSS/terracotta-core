@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.dgc.impl;
 
@@ -29,8 +30,8 @@ final class MarkAndSweepGCAlgorithm {
   private final LifeCycleState                 gcState;
   private final String                         uuid = UUID.getUUID().toString();
 
-  public MarkAndSweepGCAlgorithm(GarbageCollector collector, GCHook gcHook,
-                                 GarbageCollectionInfoPublisher gcPublisher, LifeCycleState gcState, int gcIteration) {
+  public MarkAndSweepGCAlgorithm(GarbageCollector collector, GCHook gcHook, GarbageCollectionInfoPublisher gcPublisher,
+                                 LifeCycleState gcState, int gcIteration) {
     this.collector = collector;
     this.gcHook = gcHook;
     this.gcPublisher = gcPublisher;
@@ -40,8 +41,9 @@ final class MarkAndSweepGCAlgorithm {
 
   void doGC() {
     while (!collector.requestGCStart()) {
-      MarkAndSweepGarbageCollector.logger.info(gcHook.getDescription()
-                  + "AA-DGC: It is either disabled or is already running. Waiting for 1 min before checking again ...");
+      MarkAndSweepGarbageCollector.logger
+          .info(gcHook.getDescription()
+                + "AA-DGC: It is either disabled or is already running. Waiting for 1 min before checking again ...");
       ThreadUtil.reallySleep(60000);
     }
 
@@ -68,7 +70,6 @@ final class MarkAndSweepGCAlgorithm {
 
     if (gcState.isStopRequested()) { return; }
 
-   
     long startRescue1 = System.currentTimeMillis();
     gcResults = rescue(gcResults);
     long rescue1Time = System.currentTimeMillis() - startRescue1;
@@ -78,7 +79,7 @@ final class MarkAndSweepGCAlgorithm {
     gcPublisher.fireGCRescue1CompleteEvent(gcInfo);
 
     if (gcResults.isEmpty()) {
-      // No garbage, short circuit GC cycle, don't pass objectMgr etc.
+      // No garbage, short circuit DGC cycle, don't pass objectMgr etc.
       gcHook.stopMonitoringReferenceChanges();
       collector.notifyGCComplete();
       shortCircuitGCComplete(gcInfo);
@@ -99,11 +100,11 @@ final class MarkAndSweepGCAlgorithm {
 
     gcInfo.setCandidateGarbageCount(gcResults.size());
     gcPublisher.fireGCRescue2StartEvent(gcInfo);
-    long startRescue2 = System.currentTimeMillis();  
+    long startRescue2 = System.currentTimeMillis();
     ObjectIDSet toDelete = ObjectIDSet.unmodifiableObjectIDSet(rescue(new ObjectIDSet(gcResults)));
     long rescue2Time = System.currentTimeMillis() - startRescue2;
     gcInfo.setRescue2Time(rescue2Time);
-  
+
     if (gcState.isStopRequested()) { return; }
 
     gcHook.stopMonitoringReferenceChanges();
@@ -188,12 +189,13 @@ final class MarkAndSweepGCAlgorithm {
   }
 
   private void logstart_collect(Collection rootIds, Set managedObjectIds) {
-    if (MarkAndSweepGarbageCollector.logger.isDebugEnabled()) MarkAndSweepGarbageCollector.logger.debug("collect(): rootIds=" + rootIds.size() + ", managedObjectIds="
-                                              + managedObjectIds.size());
+    if (MarkAndSweepGarbageCollector.logger.isDebugEnabled()) MarkAndSweepGarbageCollector.logger
+        .debug("collect(): rootIds=" + rootIds.size() + ", managedObjectIds=" + managedObjectIds.size());
   }
 
   private void profile_collect(long start) {
-    if (MarkAndSweepGarbageCollector.logger.isDebugEnabled()) MarkAndSweepGarbageCollector.logger.debug("collect: " + (System.currentTimeMillis() - start) + " ms.");
+    if (MarkAndSweepGarbageCollector.logger.isDebugEnabled()) MarkAndSweepGarbageCollector.logger
+        .debug("collect: " + (System.currentTimeMillis() - start) + " ms.");
   }
 
 }

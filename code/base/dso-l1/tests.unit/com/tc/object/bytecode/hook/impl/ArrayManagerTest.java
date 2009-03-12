@@ -30,6 +30,7 @@ public class ArrayManagerTest extends TestCase {
   private static final List errors         = new ArrayList();
   private Object[]          arrays;
 
+  @Override
   protected void setUp() throws Exception {
     for (int i = 0; i < 100; i++) {
       TCObject tco = new FakeTCObject();
@@ -41,6 +42,7 @@ public class ArrayManagerTest extends TestCase {
     arrays = registerdPairs.keySet().toArray();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
 
@@ -156,6 +158,7 @@ public class ArrayManagerTest extends TestCase {
       this.withGC = withGC;
     }
 
+    @Override
     void work() throws Throwable {
       if (r.nextBoolean()) {
         Object array = arrays[r.nextInt(arrays.length)];
@@ -167,7 +170,7 @@ public class ArrayManagerTest extends TestCase {
       }
 
       if (withGC && (System.currentTimeMillis() % 255) == 0) {
-        System.out.println(Thread.currentThread().getName() + " doing GC");
+        System.out.println(Thread.currentThread().getName() + " doing DGC");
         System.gc();
       }
 
@@ -175,6 +178,7 @@ public class ArrayManagerTest extends TestCase {
   }
 
   private class AddNew extends Base {
+    @Override
     void work() {
       Object newArray = new Object[] {};
       ArrayManager.getObject(newArray);

@@ -58,39 +58,31 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
     return gcRunner.isGCRunning();
   }
 
-	public synchronized void runGC() {
-		if (!isEnabled()) {
-			logger.warn(
-					"Cannot run DGC because mBean is not enabled.");
-		}
-		if (gcController == null) {
-			throw new RuntimeException("Failure: see log for more information");
-		}
-		
-		if (!gcController.isGCStarted()) {
-			logger.warn(
-					"Cannot run DGC externally because this server "
-							+ "is in PASSIVE state and DGC is disabled.");
-		}
-		// XXX::Note:: There is potencially a rare here, one could check to see
-		// if it is disabled and before GC is started it could be disabled. In
-		// which case it will not be run, just logged in the log file.
-		if (gcController.isGCDisabled()) {
-			throw new UnsupportedOperationException(
-					"Cannot run DGC externally because PASSIVE server(s) are currently synching state "
-							+ "with this ACTIVE server and DGC is disabled.");
-		}
-		if (isGCRunning()) {
-			logger.warn(
-					"Cannot run DGC because DGC is already running.");
-		}
+  public synchronized void runGC() {
+    if (!isEnabled()) {
+      logger.warn("Cannot run DGC because mBean is not enabled.");
+    }
+    if (gcController == null) { throw new RuntimeException("Failure: see log for more information"); }
+
+    if (!gcController.isGCStarted()) {
+      logger.warn("Cannot run DGC externally because this server " + "is in PASSIVE state and DGC is disabled.");
+    }
+    // XXX::Note:: There is potencially a rare here, one could check to see
+    // if it is disabled and before DGC is started it could be disabled. In
+    // which case it will not be run, just logged in the log file.
+    if (gcController.isGCDisabled()) { throw new UnsupportedOperationException(
+                                                                               "Cannot run DGC externally because PASSIVE server(s) are currently synching state "
+                                                                                   + "with this ACTIVE server and DGC is disabled."); }
+    if (isGCRunning()) {
+      logger.warn("Cannot run DGC because DGC is already running.");
+    }
 
     if (!gcController.isGCStarted()) {
       logger.warn("Cannot run DGC externally because this server " + "is in PASSIVE state and DGC is disabled.");
       return;
     }
     // XXX::Note:: There is potencially a rare here, one could check to see
-    // if it is disabled and before GC is started it could be disabled. In
+    // if it is disabled and before DGC is started it could be disabled. In
     // which case it will not be run, just logged in the log file.
     if (gcController.isGCDisabled()) {
       logger.warn("Cannot run DGC externally because PASSIVE server(s) are currently synching state "
@@ -103,7 +95,7 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
     }
 
     Thread gcRunnerThread = new Thread(gcRunner);
-    gcRunnerThread.setName("GCRunnerThread");
+    gcRunnerThread.setName("DGCRunnerThread");
     gcRunnerThread.start();
   }
 
@@ -114,7 +106,7 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
   public void registerGCController(GCComptroller controller) {
     if (isEnabled()) {
       if (gcController != null) {
-        logger.warn("Registering new gc-controller while one already registered. Old : " + gcController);
+        logger.warn("Registering new dgc-controller while one already registered. Old : " + gcController);
       }
       gcController = controller;
     }

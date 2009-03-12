@@ -143,8 +143,9 @@ public class GCStatsImpl implements GCStats, Serializable {
     }
   }
 
+  @Override
   public String toString() {
-    return "GCStats[ iteration: " + getIteration() + "; type: " + getType() + "; status: " + getStatus()
+    return "DGCStats[ iteration: " + getIteration() + "; type: " + getType() + "; status: " + getStatus()
            + " ] : startTime = " + formatAsDate(this.startTime) + "; elapsedTime = " + formatTime(this.elapsedTime)
            + "; markStageTime = " + formatTime(markStageTime) + "; pausedStageTime = "
            + formatTime(this.pausedStageTime) + "; deleteStageTime = " + formatTime(this.deleteStageTime)

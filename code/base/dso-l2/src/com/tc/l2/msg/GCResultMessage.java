@@ -32,9 +32,10 @@ public class GCResultMessage extends AbstractGroupMessage implements EventContex
   }
 
   public int getGCIterationCount() {
-    return (int)gcInfo.getGarbageCollectionID().toLong();
+    return (int) gcInfo.getGarbageCollectionID().toLong();
   }
-  
+
+  @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
     Assert.assertEquals(GC_RESULT, getType());
     this.gcInfo = new GarbageCollectionInfo();
@@ -43,6 +44,7 @@ public class GCResultMessage extends AbstractGroupMessage implements EventContex
     this.gcedOids.deserializeFrom(in);
   }
 
+  @Override
   protected void basicSerializeTo(TCByteBufferOutput out) {
     Assert.assertEquals(GC_RESULT, getType());
     this.gcInfo.serializeTo(out);
@@ -57,11 +59,10 @@ public class GCResultMessage extends AbstractGroupMessage implements EventContex
     return gcInfo;
   }
 
+  @Override
   public String toString() {
-    return "GCResultMessage@" + System.identityHashCode(this) + " : GC Info = " + gcInfo
-           + " Result size = " + (gcedOids == null ? "null" : "" + gcedOids.size());
+    return "DGCResultMessage@" + System.identityHashCode(this) + " : DGC Info = " + gcInfo + " Result size = "
+           + (gcedOids == null ? "null" : "" + gcedOids.size());
   }
-
- 
 
 }

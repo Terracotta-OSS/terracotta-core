@@ -38,7 +38,7 @@ public class MessageRecyclerImpl implements MessageRecycler {
       message.recycle();
     }
     if (this.messages.size() > MAX_MESSAGES_TO_HOLD) {
-      // Let GC take care of it. We don't want a OOME !
+      // Let DGC take care of it. We don't want a OOME !
       RecycleItem ri = (RecycleItem) this.messages.removeLast();
       remove(ri);
     }

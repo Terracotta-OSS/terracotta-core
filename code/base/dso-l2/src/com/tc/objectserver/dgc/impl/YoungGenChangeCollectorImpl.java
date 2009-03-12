@@ -102,7 +102,7 @@ final class YoungGenChangeCollectorImpl implements YoungGenChangeCollector {
     Assert.assertTrue(this.state == MONITOR_CHANGES);
     this.state = DONT_MONITOR_CHANGES;
 
-    // remove reaped objectIDs at last GC
+    // remove reaped objectIDs at last DGC
     // and reset remembered set to the latest set of Young Gen IDs
     for (Iterator i = evictedIDAtGcSet.iterator(); i.hasNext();) {
       ObjectID oid = (ObjectID) i.next();

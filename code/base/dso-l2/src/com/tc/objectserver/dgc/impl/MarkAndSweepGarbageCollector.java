@@ -141,7 +141,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     int count = 0;
     while (!this.gcState.stopAndWait(5000) && (count < 6)) {
       count++;
-      logger.warn("GC Thread did not stop");
+      logger.warn("DGC Thread did not stop");
     }
   }
 
@@ -162,7 +162,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
       this.state = GC_RUNNING;
       return true;
     }
-    // Can't start GC
+    // Can't start DGC
     return false;
   }
 
@@ -170,7 +170,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     if (GC_DISABLED == this.state) {
       this.state = GC_SLEEP;
     } else {
-      logger.warn("GC is already enabled : " + this.state);
+      logger.warn("DGC is already enabled : " + this.state);
     }
   }
 
@@ -179,7 +179,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
       this.state = GC_DISABLED;
       return true;
     }
-    // GC is already running, can't be disabled
+    // DGC is already running, can't be disabled
     return false;
   }
 

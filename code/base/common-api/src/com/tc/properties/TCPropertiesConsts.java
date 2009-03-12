@@ -350,7 +350,7 @@ public interface TCPropertiesConsts {
    * Section : Common Logging properties for both L1 and L2
    * Description : Logging attributes that can be overridden.
    * maxBackups       - The maximum number of backup log files to keep maxLogFileSize - The maximum size of a log file in megabytes
-   * longgc.threshold - GC taking greater than the time mentioned will be logged
+   * longgc.threshold - DGC taking greater than the time mentioned will be logged
    * </code>
    ********************************************************************************************************************/
   public static final String   LOGGING_MAXBACKUPS                                                 = "logging.maxBackups";

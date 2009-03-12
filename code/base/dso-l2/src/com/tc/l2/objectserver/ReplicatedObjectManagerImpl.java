@@ -131,16 +131,16 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   public void handleGCResult(GCResultMessage gcMsg) {
     SortedSet gcedOids = gcMsg.getGCedObjectIDs();
     if (stateManager.isActiveCoordinator()) {
-      logger.warn("Received GC Result from " + gcMsg.messageFrom() + " While this node is ACTIVE. Ignoring result : "
+      logger.warn("Received DGC Result from " + gcMsg.messageFrom() + " While this node is ACTIVE. Ignoring result : "
                   + gcMsg);
       return;
     }
     boolean deleted = objectManager.getGarbageCollector()
         .deleteGarbage(new GCResultContext(gcedOids, gcMsg.getGCInfo()));
     if (deleted) {
-      logger.info("Removed " + gcedOids.size() + " objects from passive ObjectManager from last GC from Active");
+      logger.info("Removed " + gcedOids.size() + " objects from passive ObjectManager from last DGC from Active");
     } else {
-      logger.info("Skipped removing garbage since gc is either running or disabled. garbage : " + gcMsg);
+      logger.info("Skipped removing garbage since DGC is either running or disabled. garbage : " + gcMsg);
     }
   }
 
@@ -269,9 +269,9 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
           Entry e = (Entry) i.next();
           if (e.getValue() != ADDED) {
             NodeID nodeID = (NodeID) e.getKey();
-            logger.info("GC Completed : Starting scheduled passive sync for " + nodeID);
+            logger.info("DGC Completed : Starting scheduled passive sync for " + nodeID);
             disableGCIfPossible();
-            // Shouldn't happen as this is in GC call back after GC completion
+            // Shouldn't happen as this is in DGC call back after DGC completion
             assertGCDisabled();
             toAdd.put(nodeID, e.getValue());
             e.setValue(ADDED);
@@ -290,8 +290,9 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
           groupManager.sendAll(msg);
         }
 
+        @Override
         public String toString() {
-          return "com.tc.l2.objectserver.ReplicatedObjectManagerImpl.GCMonitor ( " + id + " ) : GC result size = "
+          return "com.tc.l2.objectserver.ReplicatedObjectManagerImpl.GCMonitor ( " + id + " ) : DGC result size = "
                  + deleted.size();
         }
       });
@@ -311,7 +312,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     private void disableGCIfPossible() {
       if (!disabled) {
         disabled = objectManager.getGarbageCollector().disableGC();
-        logger.info((disabled ? "GC is disabled." : "GC is is not disabled."));
+        logger.info((disabled ? "DGC is disabled." : "DGC is is not disabled."));
       }
     }
 
@@ -319,14 +320,14 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       while (!disabled) {
         disabled = objectManager.getGarbageCollector().disableGC();
         if (!disabled) {
-          logger.warn("GC is running. Waiting for it to complete before disabling it...");
+          logger.warn("DGC is running. Waiting for it to complete before disabling it...");
           ThreadUtil.reallySleep(3000); // FIXME:: use wait notify instead
         }
       }
     }
 
     private void assertGCDisabled() {
-      if (!disabled) { throw new AssertionError("GC is not disabled"); }
+      if (!disabled) { throw new AssertionError("DGC is not disabled"); }
     }
 
     public void add2L2StateManagerWhenGCDisabled(NodeID nodeID, Set oids) {
@@ -343,7 +344,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
           toAdd = true;
         } else {
           logger
-              .info("Couldnt disable GC, probably because GC is currently running. So scheduling passive sync up for later after GC completion");
+              .info("Couldnt disable DGC, probably because DGC is currently running. So scheduling passive sync up for later after DGC completion");
           syncingPassives.put(nodeID, oids);
         }
       }
@@ -364,7 +365,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
 
     private void enableGCIfNecessary() {
       if (syncingPassives.isEmpty() && disabled) {
-        logger.info("Reenabling GC as all passive are synced up");
+        logger.info("Reenabling DGC as all passive are synced up");
         objectManager.getGarbageCollector().enableGC();
         disabled = false;
       }
@@ -383,7 +384,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     public void disableAndAdd2L2StateManager(Map nodeID2ObjectIDs) {
       synchronized (this) {
         if (nodeID2ObjectIDs.size() > 0 && !disabled) {
-          logger.info("Disabling GC since " + nodeID2ObjectIDs.size() + " passives [" + nodeID2ObjectIDs.keySet()
+          logger.info("Disabling DGC since " + nodeID2ObjectIDs.size() + " passives [" + nodeID2ObjectIDs.keySet()
                       + "] needs to sync up");
           disableGC();
           assertGCDisabled();

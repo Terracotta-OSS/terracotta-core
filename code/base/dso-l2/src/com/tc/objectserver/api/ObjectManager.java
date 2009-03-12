@@ -93,12 +93,12 @@ public interface ObjectManager extends ManagedObjectProvider {
   public void setGarbageCollector(GarbageCollector gc);
 
   /**
-   * Called by GC thread (in object manager)
+   * Called by DGC thread (in object manager)
    */
   public void waitUntilReadyToGC();
 
   /**
-   * Called by GC thread (in object manager)
+   * Called by DGC thread (in object manager)
    * 
    * @param resultContext
    */

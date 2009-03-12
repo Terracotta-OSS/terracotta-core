@@ -384,7 +384,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     }
   }
 
-  // recall from ObjectManager on GC start
+  // recall from ObjectManager on DGC start
   public void recallAllCheckedoutObject() {
     this.txnStageCoordinator.initiateRecallAll();
   }

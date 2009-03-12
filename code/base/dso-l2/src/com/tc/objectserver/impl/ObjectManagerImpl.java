@@ -319,7 +319,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       }
       if (!context.removeOnRelease()) {
         if (rv.isRemoveOnRelease()) {
-          // This Object is faulted in by GC or Management interface with removeOnRelease = true, but before they got a
+          // This Object is faulted in by DGC or Management interface with removeOnRelease = true, but before they got a
           // chance to grab it, a regular request for object is received. Take corrective action.
           rv.setRemoveOnRelease(false);
           this.evictionPolicy.add(rv);
@@ -415,7 +415,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
     for (final Object cand : removalCandidates) {
       ManagedObjectReference removalCandidate = (ManagedObjectReference) cand;
-      // It is possible that before the cache evictor has a chance to mark the reference, the GC could come and remove
+      // It is possible that before the cache evictor has a chance to mark the reference, the DGC could come and remove
       // the reference, hence we check in references map again
       if (removalCandidate != null && !removalCandidate.isReferenced() && !removalCandidate.isNew()
           && this.references.containsKey(removalCandidate.getObjectID())) {
@@ -564,7 +564,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     for (final ManagedObject mo : objects) {
       if (this.config.paranoid() && !mo.isNew() && mo.isDirty()) {
         // It is possible to release new just created objects before it has a chance to get applied because of a recall
-        // due to a GC. Check out ObjectManagerTest.testRecallNewObjects()
+        // due to a DGC. Check out ObjectManagerTest.testRecallNewObjects()
         throw new AssertionError("ObjectManager.releaseAll() called on dirty old objects : " + mo
                                  + " total objects size : " + objects.size());
       }
@@ -612,7 +612,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         ref = this.references.remove(id);
       }
       if (ref != null) {
-        if (ref.isNew()) { throw new AssertionError("GCed Reference is still new : " + ref); }
+        if (ref.isNew()) { throw new AssertionError("DGCed Reference is still new : " + ref); }
         this.evictionPolicy.remove(ref);
       }
     }
@@ -693,7 +693,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private void checkAndNotifyGC() {
     if (this.checkedOutCount == 0) {
-      // logger.info("Notifying GC : pending = " + pending.size() + " checkedOutCount = " + checkedOutCount);
+      // logger.info("Notifying DGC : pending = " + pending.size() + " checkedOutCount = " + checkedOutCount);
       this.collector.notifyReadyToGC();
     }
   }
@@ -873,13 +873,13 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
 
     int evicted = (toFlush.size() + removed.size());
-    // Let GC work for us
+    // Let DGC work for us
     removed = null;
     removalCandidates = null;
 
     if (!toFlush.isEmpty()) {
       initateFlushRequest(toFlush);
-      toFlush = null; // make GC work
+      toFlush = null; // make DGC work
       waitUntilFlushComplete();
     }
 

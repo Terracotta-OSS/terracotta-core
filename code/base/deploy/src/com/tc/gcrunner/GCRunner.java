@@ -21,7 +21,7 @@ import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
 
 /**
- * Application that runs gc by interacting with ObjectManagementMonitorMBean. Expects 2 args: (1) hostname of machine
+ * Application that runs dgc by interacting with ObjectManagementMonitorMBean. Expects 2 args: (1) hostname of machine
  * running DSO server (2) jmx server port number
  */
 public class GCRunner {
@@ -68,8 +68,8 @@ public class GCRunner {
     if (arguments.length == 0) {
       host = DEFAULT_HOST;
       port = DEFAULT_PORT;
-      System.err.println("No host or port provided. Invoking GC on Terracotta server instance at '" + host + "', port "
-                         + port + " by default.");
+      System.err.println("No host or port provided. Invoking DGC on Terracotta server instance at '" + host
+                         + "', port " + port + " by default.");
     } else if (arguments.length == 1) {
       host = DEFAULT_HOST;
       try {

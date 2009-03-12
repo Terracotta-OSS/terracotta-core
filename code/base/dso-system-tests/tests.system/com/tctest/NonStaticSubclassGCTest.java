@@ -30,16 +30,15 @@ import java.util.List;
  * <br>
  * <code>
  * class EnclosingType {
- *
+ * 
  * static abstract class AbstractBase {
  *   //
  * }
- *
+ * 
  * class NonStatic extends AbstractBase {
  *   //
  * }
- * </code>
- * <br>
+ * </code> <br>
  * Then in another client a field is added in the AbstractBase class and shared. This test simulates this scenario <br>
  * <br>
  * Note: I'm pretty sure the same problem exists if simply a field is added to NonStatic, but I wanted to model the
@@ -49,11 +48,13 @@ public class NonStaticSubclassGCTest extends GCTestBase {
 
   private static final String GC_INTERVAL = NonStaticSubclassGCTest.class.getName() + ".GC_INTERVAL";
 
+  @Override
   protected void setupConfig(TestTVSConfigurationSetupManagerFactory configFactory) {
     super.setupConfig(configFactory);
     configFactory.setPersistenceMode(PersistenceMode.PERMANENT_STORE);
   }
 
+  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setAttribute(GC_INTERVAL, new Integer(gcConfigHelper.getGarbageCollectionInterval()));
     super.doSetUp(t);
@@ -63,6 +64,7 @@ public class NonStaticSubclassGCTest extends GCTestBase {
     return 2;
   }
 
+  @Override
   protected Class getApplicationClass() {
     return App.class;
   }
@@ -79,6 +81,7 @@ public class NonStaticSubclassGCTest extends GCTestBase {
       gcInterval = ((Integer) cfg.getAttributeObject(GC_INTERVAL)).intValue() * 1000;
     }
 
+    @Override
     protected void runTest() throws Throwable {
       IsolationClassLoader loader = (IsolationClassLoader) getClass().getClassLoader();
 
@@ -110,7 +113,7 @@ public class NonStaticSubclassGCTest extends GCTestBase {
 
       barrier.barrier();
 
-      // sleep for a few GC cycles to make sure DGC runs on these bad state objects
+      // sleep for a few DGC cycles to make sure DGC runs on these bad state objects
       ThreadUtil.reallySleep(gcInterval * 5);
     }
 
@@ -145,6 +148,7 @@ public class NonStaticSubclassGCTest extends GCTestBase {
         super(cv);
       }
 
+      @Override
       public void visitEnd() {
         super.visitField(ACC_PUBLIC, "newField", "Ljava/lang/Object;", null, null);
         super.visitEnd();

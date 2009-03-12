@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test.transactions;
 
@@ -13,13 +14,14 @@ public class StandardTransactionalObjectTest extends TCTestCase {
 
   private TransactionalObject trans;
 
+  @Override
   public void setUp() throws Exception {
     this.trans = new StandardTransactionalObject("test-object", "foo");
   }
 
   /**
-   * This tests for a very specific case, where we could end up GCing old data that we might need later &mdash; this is
-   * what the GC slop in {@link StandardTransactionalObject} is for.
+   * This tests for a very specific case, where we could end up DGCing old data that we might need later &mdash; this is
+   * what the DGC slop in {@link StandardTransactionalObject} is for.
    */
   public void testMixedSpecifiedAndUnspecifiedTimes() throws Exception {
     TransactionalObject.Context write6615 = this.trans.startWrite("6615");

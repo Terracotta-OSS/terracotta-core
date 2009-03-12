@@ -164,7 +164,8 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
       }
       missingOids.removeAll(oids); // @see above comment
       totalObjectsSynced += oids.size();
-      syncingContext = new ManagedObjectSyncContext(nodeID, oids, !missingOids.isEmpty(), sink, totalObjectsToSync, totalObjectsSynced);
+      syncingContext = new ManagedObjectSyncContext(nodeID, oids, !missingOids.isEmpty(), sink, totalObjectsToSync,
+                                                    totalObjectsSynced);
       return syncingContext;
     }
 
@@ -193,13 +194,13 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
         }
       }
       totalObjectsToSync = missingOids.size();
-      existingOids = null; // Let GC work for us
+      existingOids = null; // Let DGC work for us
       missingRoots.values().retainAll(this.missingOids);
       logger.info(nodeID + " : is missing " + missingOids.size() + " out of " + objectCount
                   + " objects of which missing roots = " + missingRoots.size());
       if (!missingHere.isEmpty()) {
         // XXX:: This is possible because some message (Transaction message with new object creation or object delete
-        // message from GC) from previous active reached the other node and not this node and the active crashed
+        // message from DGC) from previous active reached the other node and not this node and the active crashed
         logger.warn("Object IDs MISSING HERE : " + missingHere.size() + " : " + missingHere);
       }
       int missingCount = missingOids.size();
@@ -215,6 +216,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
       return nodeID;
     }
 
+    @Override
     public String toString() {
       return "L2StateObjectImpl [ " + nodeID + " ] : " + (missingOids != null ? "missing = " + missingOids.size() : "")
              + " state = " + state;

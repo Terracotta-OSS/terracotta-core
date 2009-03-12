@@ -26,15 +26,15 @@ public class GCLogger {
   }
 
   public void log_start(GarbageCollectionID id, boolean fullGC) {
-    if (verboseGC()) logGC(id, (fullGC ? "Full GC" : "YoungGen GC") + " start ");
+    if (verboseGC()) logGC(id, (fullGC ? "Full DGC" : "YoungGen DGC") + " start ");
   }
 
   public void log_markStart(GarbageCollectionID id, long size) {
-    if (verboseGC()) logGC(id, "pre-GC managed id count: " + size);
+    if (verboseGC()) logGC(id, "pre-DGC managed id count: " + size);
   }
 
   public void log_markResults(GarbageCollectionID id, long size) {
-    if (verboseGC()) logGC(id, "pre-rescue GC results: " + size);
+    if (verboseGC()) logGC(id, "pre-rescue DGC results: " + size);
   }
 
   public void log_quiescing(GarbageCollectionID id) {
@@ -46,7 +46,7 @@ public class GCLogger {
   }
 
   public void log_rescue_complete(GarbageCollectionID id, int pass, long count) {
-    if (verboseGC()) logGC(id, "rescue pass " + pass + " completed. gc candidates = " + count + " objects...");
+    if (verboseGC()) logGC(id, "rescue pass " + pass + " completed. DGC candidates = " + count + " objects...");
   }
 
   public void log_rescue_start(GarbageCollectionID id, int pass, long count) {
@@ -69,7 +69,7 @@ public class GCLogger {
       logGC(id, "paused gc time  : " + gcInfo.getPausedStageTime() + " ms.");
       logGC(id, "delete in-memory garbage time  : " + gcInfo.getDeleteStageTime() + " ms.");
       logGC(id, "total mark cycle time   : " + gcInfo.getTotalMarkCycleTime() + " ms.");
-      logGC(id, "" + (gcInfo.isFullGC() ? "Full GC" : "YoungGen GC") + " STOP ");
+      logGC(id, "" + (gcInfo.isFullGC() ? "Full DGC" : "YoungGen DGC") + " STOP ");
     } else {
       logGC(id, "complete : " + gcInfo);
     }
