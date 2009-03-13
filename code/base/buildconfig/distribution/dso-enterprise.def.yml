@@ -70,7 +70,7 @@ bundled_components:
               - dso-l2-common
               - dso-statistics-api
               - management-api
-        - terracotta-api:
+        - api-api.version:
             install_directory: lib
             modules:
               - dso-cluster-api              
