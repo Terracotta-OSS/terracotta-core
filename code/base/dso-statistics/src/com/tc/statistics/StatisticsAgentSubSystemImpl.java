@@ -143,7 +143,6 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
       return false;
     }
     String infoMsg = "Statistics buffer: '" + stat_path.getAbsolutePath() + "'.";
-    CONSOLE_LOGGER.info(infoMsg);
     DSO_LOGGER.info(infoMsg);
 
     // create the statistics emitter mbean
