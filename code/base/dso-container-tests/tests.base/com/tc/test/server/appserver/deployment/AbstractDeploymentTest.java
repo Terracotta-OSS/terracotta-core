@@ -45,6 +45,7 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
     return isAllDisabled() || shouldDisableForJavaVersion() || shouldDisableForVariants();
   }
 
+  @Override
   protected void beforeTimeout() throws Throwable {
     getServerManager().timeout();
   }
@@ -64,6 +65,7 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
     return Collections.EMPTY_LIST;
   }
 
+  @Override
   public void runBare() throws Throwable {
     if (shouldDisable()) { return; }
     super.runBare();
@@ -80,6 +82,7 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
     return serverManager;
   }
 
+  @Override
   protected void tearDown() throws Exception {
     if (shouldKillAppServersEachRun()) {
       ServerManagerUtil.stopAllWebServers(serverManager);
@@ -136,10 +139,11 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
     ServerManagerUtil.stopAllWebServers(getServerManager());
   }
 
-  public boolean isWithPersistentStore() {
+  protected boolean isWithPersistentStore() {
     return false;
   }
 
+  @Override
   protected final boolean cleanTempDir() {
     return false;
   }
