@@ -195,7 +195,7 @@ postscripts:
             - lib/resources/build-data.txt
         - groupId: org.terracotta.api
           artifact: api
-          file: lib/terracotta-api.jar
+          file: lib/api-api.version.jar
           pom: poms/terracotta-api-pom.xml
           version: api.version
   - delete-api-jars

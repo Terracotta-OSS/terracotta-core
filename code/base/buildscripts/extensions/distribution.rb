@@ -102,6 +102,9 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   end
 
   def dist_maven(flavor = 'OPENSOURCE')
+    # we never publish Enterprise artifacts to maven repo
+    fail("Can't publish Enterprise artifacts") unless flavor == 'OPENSOURCE'
+
     unless config_source[MAVEN_REPO_CONFIG_KEY]
       @internal_config_source[MAVEN_REPO_CONFIG_KEY] = MAVEN_REPO_LOCAL
     end
