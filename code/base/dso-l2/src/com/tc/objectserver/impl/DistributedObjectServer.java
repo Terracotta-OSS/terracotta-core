@@ -43,6 +43,7 @@ import com.tc.logging.ThreadDumpHandler;
 import com.tc.management.L2LockStatsManager;
 import com.tc.management.L2Management;
 import com.tc.management.RemoteJMXProcessor;
+import com.tc.management.TCGarbageCollectorInfo;
 import com.tc.management.beans.L2State;
 import com.tc.management.beans.LockStatisticsMonitor;
 import com.tc.management.beans.LockStatisticsMonitorMBean;
@@ -404,6 +405,15 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
     } catch (NotCompliantMBeanException ncmbe) {
       throw new TCRuntimeException("Unable to construct the " + LockStatisticsMonitor.class.getName()
                                    + " MBean; this is a programming error. Please go fix that class.", ncmbe);
+    }
+
+    // CDV-1181 warn if using CMS
+    TCGarbageCollectorInfo gcInfo = new TCGarbageCollectorInfo();
+    for (String gcname : gcInfo.getGcNames()) {
+      logger.info("GarbageCollector: " + gcname);
+    }
+    if (gcInfo.isCMS()) {
+      logger.warn(TCGarbageCollectorInfo.CMS_WARN_MESG);
     }
 
     // perform the DSO network config verification
