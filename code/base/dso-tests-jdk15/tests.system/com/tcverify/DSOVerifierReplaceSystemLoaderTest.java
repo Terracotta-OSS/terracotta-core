@@ -9,6 +9,10 @@ import java.util.Collection;
 
 public class DSOVerifierReplaceSystemLoaderTest extends DSOVerifierTest {
 
+  public DSOVerifierReplaceSystemLoaderTest() {
+    disableAllUntil("2009-03-17");
+  }
+
   protected String getMainClass() {
     return Client.class.getName();
   }
