@@ -10,6 +10,7 @@ import com.tc.management.AbstractTerracottaMBean;
 
 import java.util.Iterator;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 import javax.management.NotCompliantMBeanException;
@@ -121,10 +122,10 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
     objectIdsFetcher = fetcher;
   }
 
-  public Set getAllObjectIds() {
+  public SortedSet getAllObjectIds() {
     Set set = objectIdsFetcher.getAllObjectIds();
-    TreeSet treeSet = new TreeSet();
-    for(Iterator iter = set.iterator(); iter.hasNext();) {
+    SortedSet treeSet = new TreeSet();
+    for (Iterator iter = set.iterator(); iter.hasNext();) {
       treeSet.add(iter.next());
     }
     return treeSet;
