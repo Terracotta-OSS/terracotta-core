@@ -162,7 +162,7 @@ public class GCRunner {
     return serverGrpInfos;
   }
 
-  private boolean isActive(String hostname, int jmxPort) throws Exception {
+  private boolean isActive(String hostname, int jmxPort) {
     TCServerInfoMBean mbean = null;
     boolean isActive = false;
     JMXConnector jmxConnector = null;
@@ -174,9 +174,15 @@ public class GCRunner {
           .newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);
       isActive = mbean.isActive();
     } catch (Exception e) {
-      throw new RuntimeException(e);
+      return false;
     } finally {
-      if (jmxConnector != null) jmxConnector.close();
+      if (jmxConnector != null) {
+        try {
+          jmxConnector.close();
+        } catch (Exception e) {
+          // System.out.println("Exception while trying to close the JMX connector for port no: " + jmxPort);
+        }
+      }
     }
 
     return isActive;
