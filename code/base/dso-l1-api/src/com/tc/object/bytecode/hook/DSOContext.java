@@ -25,14 +25,14 @@ public interface DSOContext extends ClassProcessor {
 
   /**
    * The DSOSpringConfigHelpers in the DSO
-   * 
+   *
    * @return Collection of DSOSpringConfigHelper
    */
   public Collection getDSOSpringConfigHelpers();
 
   /**
    * Add include and lock
-   * 
+   *
    * @param expression Class expression
    * @param callConstructorOnLoad True to call constructor on load
    * @param lockExpression Lock expression
@@ -42,7 +42,7 @@ public interface DSOContext extends ClassProcessor {
 
   /**
    * Add transient field
-   * 
+   *
    * @param beanClassName Bean class name
    * @param fieldName
    */
@@ -50,7 +50,7 @@ public interface DSOContext extends ClassProcessor {
 
   /**
    * Get type of locks used by sessions
-   * 
+   *
    * @param appName Web app anem
    * @return Lock type
    */
@@ -58,12 +58,13 @@ public interface DSOContext extends ClassProcessor {
 
   /**
    * Get url to class file
-   * 
+   *
    * @param className Class name
-   * @param caller the requesting class loader
+   * @param loader the calling classloader
+   * @param hideSystemResources true if resources destined only for the system class loader should be hidden
    * @return URL to class itself
    */
-  public URL getClassResource(String className, ClassLoader caller);
+  public URL getClassResource(String className, ClassLoader loader, boolean hideSystemResources);
 
   /**
    * Returns true is web-application is configured for session-locking

@@ -838,16 +838,13 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  public URL getClassResource(final String className, final ClassLoader caller) {
+  public URL getClassResource(final String className, ClassLoader loader, boolean hideSystemLoaderOnlyResources) {
     Resource res = this.classResources.get(className);
     if (res == null) return null;
-    if (res.isTargetSystemLoaderOnly()) {
-      if (caller == ClassLoader.getSystemClassLoader()) {
-        return res.getResource();
-      } else {
-        return null;
-      }
-    }
+
+    if (res.isTargetSystemLoaderOnly()
+        && (ClassLoader.getSystemClassLoader() != loader || hideSystemLoaderOnlyResources)) { return null; }
+
     return res.getResource();
   }
 

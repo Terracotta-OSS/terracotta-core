@@ -210,7 +210,7 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     return null;
   }
 
-  public URL getClassResource(final String className, final ClassLoader caller) {
+  public URL getClassResource(String className, ClassLoader loader, boolean hideSystemResources) {
     return null;
   }
 

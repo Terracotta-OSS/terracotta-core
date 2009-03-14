@@ -159,7 +159,7 @@ public class DSOContextImpl implements DSOContext {
   /**
    * XXX::NOTE:: ClassLoader checks the returned byte array to see if the class is instrumented or not to maintain the
    * offset.
-   * 
+   *
    * @return new byte array if the class is instrumented and same input byte array if not.
    * @see ClassLoaderPreProcessorImpl
    */
@@ -282,7 +282,7 @@ public class DSOContextImpl implements DSOContext {
     return configHelper.isApplicationSessionLocked(appName);
   }
 
-  public URL getClassResource(String className, ClassLoader caller) {
-    return configHelper.getClassResource(className, caller);
+  public URL getClassResource(String className, ClassLoader loader, boolean hideSystemResources) {
+    return configHelper.getClassResource(className, loader, hideSystemResources);
   }
 }

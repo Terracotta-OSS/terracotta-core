@@ -1777,11 +1777,24 @@ public class BootJarTool {
 
   private final void addSunStandardLoaders() {
     byte[] orig = getSystemBytes("sun.misc.Launcher$AppClassLoader");
+
     ClassReader cr = new ClassReader(orig);
     ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
     ClassVisitor cv = new StandardClassLoaderAdapter(cw, Namespace.getStandardSystemLoaderName(),
                                                      SYSTEM_CLASSLOADER_NAME_PROPERTY);
     cr.accept(cv, ClassReader.SKIP_FRAMES);
+
+    byte[] tcData = getSystemBytes("sun.misc.AppClassLoaderTC");
+    ClassReader tcCR = new ClassReader(tcData);
+    ClassNode tcCN = new ClassNode();
+    tcCR.accept(tcCN, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+
+    cr = new ClassReader(cw.toByteArray());
+    cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+    cv = new MergeTCToJavaClassAdapter(cw, null, "sun.misc.Launcher$AppClassLoader", "sun.misc.AppClassLoaderTC", tcCN,
+                                       new HashMap(), ByteCodeUtil.TC_METHOD_PREFIX, false);
+    cr.accept(cv, ClassReader.SKIP_FRAMES);
+
     loadClassIntoJar("sun.misc.Launcher$AppClassLoader", cw.toByteArray(), false);
 
     orig = getSystemBytes("sun.misc.Launcher$ExtClassLoader");

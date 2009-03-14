@@ -142,7 +142,7 @@ public class ClassProcessorHelper {
 
   /**
    * Get resource URL
-   * 
+   *
    * @param name Resource name
    * @param cl Loading classloader
    * @return URL to load resource from
@@ -153,7 +153,7 @@ public class ClassProcessorHelper {
       className = name.substring(0, name.length() - CLASS_SUFFIX_LENGTH).replace('/', '.');
     }
 
-    URL resource = getClassResource(className, cl);
+    URL resource = getClassResource(className, cl, false);
 
     if (null == resource) {
       if (!isAWRuntimeDependency(className)) { return null; }
@@ -169,15 +169,15 @@ public class ClassProcessorHelper {
   }
 
   /**
-   * Get TC class definition
-   * 
+   * Get the exported class if defined. This method is called from java.lang.ClassLoader.loadClassInternal()
+   *
    * @param name Class name
    * @param cl Classloader
    * @return Class bytes
    * @throws ClassNotFoundException If class not found
    */
-  public static byte[] getTCClass(String name, ClassLoader cl) throws ClassNotFoundException {
-    URL resource = getClassResource(name, cl);
+  public static byte[] loadClassInternalHook(String name, ClassLoader cl) throws ClassNotFoundException {
+    URL resource = getClassResource(name, cl, true);
 
     if (null == resource) {
       if (!isAWRuntimeDependency(name)) { return null; }
@@ -189,6 +189,14 @@ public class ClassProcessorHelper {
 
     return getResourceBytes(resource);
   }
+
+
+  public static byte[] systemLoaderFindClassHook(String name) throws ClassNotFoundException {
+    URL resource = getClassResource(name, ClassLoader.getSystemClassLoader(), false);
+    if (resource == null) { return null; }
+    return getResourceBytes(resource);
+  }
+
 
   private static byte[] getResourceBytes(URL url) throws ClassNotFoundException {
     InputStream is = null;
@@ -220,10 +228,10 @@ public class ClassProcessorHelper {
     }
   }
 
-  private static URL getClassResource(String name, ClassLoader cl) {
+  private static URL getClassResource(String name, ClassLoader cl, boolean hideSystemResources) {
     if (name != null) {
       DSOContext context = getContext(cl);
-      if (context != null) { return context.getClassResource(name, cl); }
+      if (context != null) { return context.getClassResource(name, cl, hideSystemResources); }
     }
 
     return null;
@@ -460,12 +468,13 @@ public class ClassProcessorHelper {
       }
     }
   }
-  
+
   /**
    * @deprecated here so that old code is not broken. New classloader adapters should be
    * registered with {@link #registerGlobalLoader(NamedClassLoader, String)} to support
    * classloader app-group substitution.
    */
+  @Deprecated
   public static void registerGlobalLoader(NamedClassLoader loader) {
     registerGlobalLoader(loader, null);
   }
@@ -514,12 +523,12 @@ public class ClassProcessorHelper {
       t.printStackTrace();
     }
   }
-  
+
   /**
-   * Given a context path, trim and condition it to be usable by methods 
-   * such as {@link #isDSOSessions(String)}
-   * @param context a servlet context path, as from HttpServletContext#getPath();
-   * null, "", "/", or "//" will be interpreted as ROOT context.
+   * Given a context path, trim and condition it to be usable by methods such as {@link #isDSOSessions(String)}
+   *
+   * @param context a servlet context path, as from HttpServletContext#getPath(); null, "", "/", or "//" will be
+   *        interpreted as ROOT context.
    * @return a non-null, non-empty string
    */
   public static String computeAppName(String context) {
@@ -543,7 +552,7 @@ public class ClassProcessorHelper {
 
   /**
    * Check whether this web app is using DSO sessions
-   * 
+   *
    * @param appName Web app name
    * @return True if DSO sessions enabled
    */
@@ -563,7 +572,7 @@ public class ClassProcessorHelper {
 
   /**
    * WARNING: Used by test framework only
-   * 
+   *
    * @param loader Loader
    * @param context DSOContext
    */
@@ -613,7 +622,7 @@ public class ClassProcessorHelper {
 
   /**
    * Get the DSOContext for this classloader
-   * 
+   *
    * @param cl Loader
    * @return Context
    */
@@ -644,7 +653,7 @@ public class ClassProcessorHelper {
    * XXX::NOTE:: Do NOT optimize to return same input byte array if the class was instrumented (I can't imagine why we
    * would). Our instrumentation in java.lang.ClassLoader checks the returned byte array to see if the class is
    * instrumented or not to maintain the array offset.
-   * 
+   *
    * @param caller Loader defining class
    * @param name Class name
    * @param b Data
@@ -686,7 +695,7 @@ public class ClassProcessorHelper {
 
   /**
    * Post process class during definition
-   * 
+   *
    * @param clazz Class being defined
    * @param caller Classloader doing definition
    */
@@ -733,7 +742,7 @@ public class ClassProcessorHelper {
 
   /**
    * Check whether this is an AspectWerkz dependency
-   * 
+   *
    * @param className Class name
    * @return True if AspectWerkz dependency
    */
@@ -749,7 +758,7 @@ public class ClassProcessorHelper {
 
   /**
    * Get type of lock used by sessions
-   * 
+   *
    * @param appName Web app context
    * @return Lock type
    */
@@ -827,5 +836,7 @@ public class ClassProcessorHelper {
     }
 
   }
+
+
 
 }
