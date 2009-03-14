@@ -2,9 +2,9 @@ Terracotta
 ==========
 
 Documentation: http://www.terracotta.org/web/display/orgsite/Documentation 
-Forums:        http://www.terracottatech.com/forums/
+Forums:        http://forums.terracotta.org
 Mailing Lists: http://lists.terracotta.org
-Services:      http://www.terracottatech.com/support_services.shtml
+Services:      http://www.terracotta.org/web/display/enterprise/Support
 
 
 Getting Started
@@ -15,7 +15,7 @@ Below are abbreviated install steps for Terracotta.
 Terracotta
    Unix/Linux:
       - Unzip/untar the Terracotta software.
-      - cd into the the top-level directory.
+      - cd into the top-level directory.
       - Launch the Welcome tool by entering the command:
            ./welcome.sh
    Windows:
