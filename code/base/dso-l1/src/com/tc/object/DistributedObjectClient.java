@@ -26,7 +26,6 @@ import com.tc.logging.ThreadDumpHandler;
 import com.tc.management.ClientLockStatManager;
 import com.tc.management.L1Management;
 import com.tc.management.TCClient;
-import com.tc.management.TCGarbageCollectorInfo;
 import com.tc.management.beans.sessions.SessionMonitor;
 import com.tc.management.lock.stats.ClientLockStatisticsManagerImpl;
 import com.tc.management.lock.stats.LockStatisticsMessage;
@@ -270,14 +269,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   }
 
   public synchronized void start() {
-    // CDV-1181 warn if using CMS
-    TCGarbageCollectorInfo gcInfo = new TCGarbageCollectorInfo();
-    for (String gcname : gcInfo.getGcNames()) {
-      DSO_LOGGER.info("GarbageCollector: " + gcname);
-    }
-    if (gcInfo.isCMS()) {
-      DSO_LOGGER.warn(TCGarbageCollectorInfo.CMS_WARN_MESG);
-    }
 
     // Check config topology
     boolean toCheckTopology = TCPropertiesImpl.getProperties()
@@ -432,6 +423,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     long timeOut = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.LOGGING_LONG_GC_THRESHOLD);
     LongGCLogger gcLogger = new LongGCLogger(DSO_LOGGER, timeOut);
     tcMemManager.registerForMemoryEvents(gcLogger);
+    // CDV-1181 warn if using CMS
+    tcMemManager.checkGarbageCollectors();
 
     if (cacheManagerProperties.getBoolean("enabled")) {
       this.cacheManager = new CacheManager(this.objectManager, cacheConfig, getThreadGroup(),

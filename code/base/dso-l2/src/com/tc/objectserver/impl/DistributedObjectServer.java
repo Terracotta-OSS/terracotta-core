@@ -43,7 +43,6 @@ import com.tc.logging.ThreadDumpHandler;
 import com.tc.management.L2LockStatsManager;
 import com.tc.management.L2Management;
 import com.tc.management.RemoteJMXProcessor;
-import com.tc.management.TCGarbageCollectorInfo;
 import com.tc.management.beans.L2State;
 import com.tc.management.beans.LockStatisticsMonitor;
 import com.tc.management.beans.LockStatisticsMonitorMBean;
@@ -407,15 +406,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
                                    + " MBean; this is a programming error. Please go fix that class.", ncmbe);
     }
 
-    // CDV-1181 warn if using CMS
-    TCGarbageCollectorInfo gcInfo = new TCGarbageCollectorInfo();
-    for (String gcname : gcInfo.getGcNames()) {
-      logger.info("GarbageCollector: " + gcname);
-    }
-    if (gcInfo.isCMS()) {
-      logger.warn(TCGarbageCollectorInfo.CMS_WARN_MESG);
-    }
-
     // perform the DSO network config verification
     NewL2DSOConfig l2DSOConfig = this.configSetupManager.dsoL2Config();
 
@@ -703,6 +693,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
     long timeOut = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.LOGGING_LONG_GC_THRESHOLD);
     LongGCLogger gcLogger = new LongGCLogger(logger, timeOut);
     tcMemManager.registerForMemoryEvents(gcLogger);
+    // CDV-1181 warn if using CMS
+    tcMemManager.checkGarbageCollectors();
 
     if (cacheManagerProperties.getBoolean("enabled")) {
       this.cacheManager = new CacheManager(this.objectManager, cacheConfig, this.threadGroup,

@@ -12,14 +12,18 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.util.runtime.Os;
 
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
 import java.util.Iterator;
 import java.util.List;
 
 public class TCMemoryManagerImpl implements TCMemoryManager {
 
-  private static final TCLogger logger    = TCLogging.getLogger(TCMemoryManagerImpl.class);
+  private static final TCLogger logger        = TCLogging.getLogger(TCMemoryManagerImpl.class);
+  private final String          CMS_NAME      = "ConcurrentMarkSweep";
+  private final String          CMS_WARN_MESG = "Terracotta does not recommend ConcurrentMarkSweep Collector.";
 
-  private final List            listeners = new CopyOnWriteArrayList();
+  private final List            listeners     = new CopyOnWriteArrayList();
 
   private int                   leastCount;
   private final long            sleepInterval;
@@ -35,6 +39,22 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
     this.monitorOldGenOnly = monitorOldGenOnly;
     this.leastCount = leastCount;
     this.sleepInterval = sleepInterval;
+  }
+
+  // CDV-1181 warn if using CMS
+  public void checkGarbageCollectors() {
+    List<GarbageCollectorMXBean> gcmbeans = ManagementFactory.getGarbageCollectorMXBeans();
+    boolean foundCMS = false;
+    for (GarbageCollectorMXBean mbean : gcmbeans) {
+      String gcname = mbean.getName();
+      logger.info("GarbageCollector: " + gcname);
+      if (CMS_NAME.equals(gcname)) {
+        foundCMS = true;
+      }
+    }
+    if (foundCMS) {
+      logger.warn(CMS_WARN_MESG);
+    }
   }
 
   private void verifyInput(long sleep, int lc) {
