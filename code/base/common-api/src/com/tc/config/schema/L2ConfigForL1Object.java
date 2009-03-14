@@ -11,6 +11,7 @@ import org.apache.xmlbeans.XmlObject;
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.dynamic.ObjectArrayConfigItem;
 import com.tc.config.schema.dynamic.ObjectArrayXPathBasedConfigItem;
+import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.util.ActiveCoordinatorHelper;
 import com.tc.util.Assert;
 import com.terracottatech.config.Members;
@@ -128,6 +129,10 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
           }
           for (int j = 0; j < members.length; j++) {
             L2Data data = (L2Data) L2ConfigForL1Object.this.l2DataByName.get(members[j]);
+            if (data == null) { throw new RuntimeException(
+                                                           "The member \""
+                                                               + members[j]
+                                                               + "\" is not persent in the server section. Please verify the configuration."); }
             Assert.assertNotNull(data);
             data.setGroupId(i);
             String groupName = asgArray[i].getGroupName();
