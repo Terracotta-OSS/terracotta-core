@@ -59,8 +59,6 @@ public class ClassesPanel extends XContainer {
 
   private static final DSOClassInfo[] EMPTY_INFO        = {};
 
-  private static final String         NOT_READY_MESSAGE = "Cluster is not yet ready for action.  Are all the mirror groups active?";
-
   static {
     xmlOpts = new XmlOptions();
     xmlOpts.setSavePrettyPrint();
@@ -117,9 +115,9 @@ public class ClassesPanel extends XContainer {
   private XContainer createMessagePanel() {
     XContainer panel = new XContainer(new BorderLayout());
     panel.add(messageLabel = new XLabel());
-    messageLabel.setText(NOT_READY_MESSAGE);
+    messageLabel.setText(appContext.getString("cluster.not.ready.msg"));
     messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
-    messageLabel.setFont(new Font("Dialog", Font.PLAIN, 14));
+    messageLabel.setFont((Font) appContext.getObject("message.label.font"));
     return panel;
   }
 

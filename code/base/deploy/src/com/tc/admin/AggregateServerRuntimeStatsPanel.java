@@ -52,6 +52,7 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
   private TimeSeries               txnRateSeries;
   private TimeSeries               cacheMissRateSeries;
   private XYPlot                   liveObjectCountPlot;
+  private DGCIntervalMarker        currentDGCMarker;
   private String                   liveObjectCountTitlePattern;
   private TitledBorder             liveObjectCountTitle;
   private TimeSeries               liveObjectCountSeries;
@@ -317,8 +318,14 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
     }
 
     public void run() {
+      if (currentDGCMarker == null) {
+        currentDGCMarker = new DGCIntervalMarker(gcStats);
+        liveObjectCountPlot.addDomainMarker(currentDGCMarker, Layer.BACKGROUND);
+      } else {
+        currentDGCMarker.setGCStats(gcStats);
+      }
       if (gcStats.getElapsedTime() != -1) {
-        liveObjectCountPlot.addDomainMarker(new DGCIntervalMarker(gcStats), Layer.BACKGROUND);
+        currentDGCMarker = null;
       }
     }
   }

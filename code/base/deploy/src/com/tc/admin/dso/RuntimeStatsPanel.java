@@ -63,7 +63,7 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
     gbc.insets = new Insets(3, 3, 3, 3);
     gbc.anchor = GridBagConstraints.EAST;
 
-    Font headerFont = new Font("Dialog", Font.BOLD, 12);
+    Font headerFont = (Font) adminClientContext.getObject("header.label.font");
     XLabel headerLabel = new XLabel(adminClientContext.getString("current.view.type"));
     topPanel.add(headerLabel, gbc);
     headerLabel.setFont(headerFont);

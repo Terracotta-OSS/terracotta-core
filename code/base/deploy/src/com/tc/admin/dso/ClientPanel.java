@@ -58,7 +58,7 @@ public class ClientPanel extends XContainer implements PropertyChangeListener {
     XContainer envPanel = new XContainer(new BorderLayout());
     environmentTextArea = new XTextArea();
     environmentTextArea.setEditable(false);
-    environmentTextArea.setFont(new Font("monospaced", Font.PLAIN, 12));
+    environmentTextArea.setFont((Font) appContext.getObject("textarea.font"));
     envPanel.add(new XScrollPane(environmentTextArea));
     envPanel.add(new SearchPanel(appContext, environmentTextArea), BorderLayout.SOUTH);
     tabbedPane.addTab(appContext.getString("node.environment"), envPanel);
@@ -67,7 +67,7 @@ public class ClientPanel extends XContainer implements PropertyChangeListener {
     XContainer configPanel = new XContainer(new BorderLayout());
     configTextArea = new XTextArea();
     configTextArea.setEditable(false);
-    configTextArea.setFont(new Font("monospaced", Font.PLAIN, 12));
+    configTextArea.setFont((Font) appContext.getObject("textarea.font"));
     configPanel.add(new XScrollPane(configTextArea));
     configPanel.add(new SearchPanel(appContext, configTextArea), BorderLayout.SOUTH);
     tabbedPane.addTab(appContext.getString("node.config"), configPanel);

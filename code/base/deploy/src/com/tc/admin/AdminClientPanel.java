@@ -1141,15 +1141,19 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     return svtFrame;
   }
 
-  public void propertyChange(PropertyChangeEvent evt) {
+  public void propertyChange(final PropertyChangeEvent evt) {
     String prop = evt.getPropertyName();
     if (IClusterModel.PROP_CONNECTED.equals(prop)) {
-      IClusterModel clusterModel = (IClusterModel) evt.getSource();
-      if (clusterModel.isConnected()) {
-        addClusterLog(clusterModel);
-      } else {
-        removeClusterLog(clusterModel);
-      }
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          IClusterModel clusterModel = (IClusterModel) evt.getSource();
+          if (clusterModel.isConnected()) {
+            addClusterLog(clusterModel);
+          } else {
+            removeClusterLog(clusterModel);
+          }
+        }
+      });
     }
   }
 }

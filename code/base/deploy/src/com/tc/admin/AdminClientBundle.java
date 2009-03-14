@@ -233,6 +233,7 @@ public class AdminClientBundle extends ListResourceBundle {
         { "dashboard.object-creation-rate", "Objects Created/s" }, { "dashboard.broadcast-rate", "Broadcasts/s" },
         { "dashboard.fault-rate", "Faults/s" }, { "dashboard.flush-rate", "Flushes/s" },
         { "dashboard.txn-size-rate", "Txn Size KB/s" }, { "dashboard.unacked-txns", "Unacked Txns" },
-        { "dashboard.transactions", "Transactions" }, { "dashboard.impeding-factors", "Impeding Factors" } };
+        { "dashboard.transactions", "Transactions" }, { "dashboard.impeding-factors", "Impeding Factors" },
+        { "dashboard.dial.tip.format", "<html>{0}:<br>Max={1}, Average={2}</html>" } };
   }
 }

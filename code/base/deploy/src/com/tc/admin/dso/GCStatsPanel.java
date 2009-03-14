@@ -127,6 +127,7 @@ public class GCStatsPanel extends XContainer implements DGCListener {
     NumberAxis elapsedTimeAxis = (NumberAxis) plot.getRangeAxis();
     elapsedTimeAxis.setAutoRangeMinimumSize(10);
     elapsedTimeAxis.setStandardTickUnits(DemoChartFactory.DEFAULT_INTEGER_TICKS);
+    elapsedTimeAxis.setLabelFont(garbageCountAxis.getLabelFont());
 
     plot.mapDatasetToRangeAxis(1, 1);
 

@@ -34,16 +34,16 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableCellRenderer;
 
 public class ServerPanel extends XContainer {
-  private ApplicationContext appContext;
-  private IServer            server;
-  private ServerListener     serverListener;
-  private XTabbedPane        tabbedPane;
-  private StatusView         statusView;
-  private XContainer         restartInfoItem;
-  private PropertyTable      propertyTable;
-  private XTextArea          environmentTextArea;
-  private XTextArea          configTextArea;
-  private ServerLoggingPanel loggingPanel;
+  private ApplicationContext   appContext;
+  private IServer              server;
+  private final ServerListener serverListener;
+  private XTabbedPane          tabbedPane;
+  private StatusView           statusView;
+  private XContainer           restartInfoItem;
+  private PropertyTable        propertyTable;
+  private XTextArea            environmentTextArea;
+  private XTextArea            configTextArea;
+  private ServerLoggingPanel   loggingPanel;
 
   public ServerPanel(ApplicationContext appContext, IServer server) {
     super(new BorderLayout());
@@ -95,7 +95,7 @@ public class ServerPanel extends XContainer {
     XContainer envPanel = new XContainer(new BorderLayout());
     environmentTextArea = new XTextArea();
     environmentTextArea.setEditable(false);
-    environmentTextArea.setFont(new Font("monospaced", Font.PLAIN, 12));
+    environmentTextArea.setFont((Font) appContext.getObject("textarea.font"));
     envPanel.add(new XScrollPane(environmentTextArea));
     envPanel.add(new SearchPanel(appContext, environmentTextArea), BorderLayout.SOUTH);
     tabbedPane.addTab(appContext.getString("node.environment"), envPanel);
@@ -104,7 +104,7 @@ public class ServerPanel extends XContainer {
     XContainer configPanel = new XContainer(new BorderLayout());
     configTextArea = new XTextArea();
     configTextArea.setEditable(false);
-    configTextArea.setFont(new Font("monospaced", Font.PLAIN, 12));
+    configTextArea.setFont((Font) appContext.getObject("textarea.font"));
     configPanel.add(new XScrollPane(configTextArea));
     configPanel.add(new SearchPanel(appContext, configTextArea), BorderLayout.SOUTH);
     tabbedPane.addTab(appContext.getString("node.config"), configPanel);
@@ -140,6 +140,7 @@ public class ServerPanel extends XContainer {
       super(server);
     }
 
+    @Override
     protected void handleConnectError() {
       IServer theServer = getServer();
       if (theServer != null) {
@@ -156,6 +157,7 @@ public class ServerPanel extends XContainer {
      * activated() under the presumption that a non-active server won't be saying anything.
      */
 
+    @Override
     protected void handleStarting() {
       ApplicationContext theAppContext = getApplicationContext();
       if (theAppContext != null) {
@@ -163,6 +165,7 @@ public class ServerPanel extends XContainer {
       }
     }
 
+    @Override
     protected void handleActivation() {
       ApplicationContext theAppContext = getApplicationContext();
       if (theAppContext != null) {
@@ -170,6 +173,7 @@ public class ServerPanel extends XContainer {
       }
     }
 
+    @Override
     protected void handlePassiveStandby() {
       ApplicationContext theAppContext = getApplicationContext();
       if (theAppContext != null) {
@@ -177,6 +181,7 @@ public class ServerPanel extends XContainer {
       }
     }
 
+    @Override
     protected void handlePassiveUninitialized() {
       ApplicationContext theAppContext = getApplicationContext();
       if (theAppContext != null) {
@@ -184,6 +189,7 @@ public class ServerPanel extends XContainer {
       }
     }
 
+    @Override
     protected void handleDisconnected() {
       disconnected();
     }
@@ -198,15 +204,15 @@ public class ServerPanel extends XContainer {
   }
 
   private static class ServerState {
-    private Date    fStartDate;
-    private Date    fActivateDate;
-    private String  fVersion;
-    private String  fPatchLevel;
-    private String  fCopyright;
-    private String  fPersistenceMode;
-    private String  fEnvironment;
-    private String  fConfig;
-    private Integer fDSOListenPort;
+    private final Date    fStartDate;
+    private final Date    fActivateDate;
+    private final String  fVersion;
+    private final String  fPatchLevel;
+    private final String  fCopyright;
+    private final String  fPersistenceMode;
+    private final String  fEnvironment;
+    private final String  fConfig;
+    private final Integer fDSOListenPort;
 
     ServerState(Date startDate, Date activateDate, String version, String patchLevel, String copyright,
                 String persistenceMode, String environment, String config, Integer dsoListenPort) {
@@ -283,6 +289,7 @@ public class ServerPanel extends XContainer {
       });
     }
 
+    @Override
     protected void finished() {
       Exception e = getException();
       if (e != null) {
@@ -308,6 +315,7 @@ public class ServerPanel extends XContainer {
   }
 
   private class StartedWorker extends ServerStateWorker {
+    @Override
     protected void finished() {
       IServer theServer = getServer();
       if (theServer == null) return;
@@ -324,6 +332,7 @@ public class ServerPanel extends XContainer {
   }
 
   private class ActivatedWorker extends ServerStateWorker {
+    @Override
     protected void finished() {
       IServer theServer = getServer();
       if (theServer == null) return;
@@ -340,6 +349,7 @@ public class ServerPanel extends XContainer {
   }
 
   private class PassiveUninitializedWorker extends ServerStateWorker {
+    @Override
     protected void finished() {
       IServer theServer = getServer();
       if (theServer == null) return;
@@ -353,6 +363,7 @@ public class ServerPanel extends XContainer {
   }
 
   private class PassiveStandbyWorker extends ServerStateWorker {
+    @Override
     protected void finished() {
       IServer theServer = getServer();
       if (theServer == null) return;
@@ -495,6 +506,7 @@ public class ServerPanel extends XContainer {
     repaint();
   }
 
+  @Override
   public synchronized void tearDown() {
     statusView.tearDown();
 

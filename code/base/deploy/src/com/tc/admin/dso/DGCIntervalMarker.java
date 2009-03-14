@@ -15,13 +15,25 @@ import java.text.DateFormat;
 import java.util.Date;
 
 public class DGCIntervalMarker extends IntervalMarker implements ToolTipProvider {
-  private final GCStats dgcInfo;
-  private String        fToolTip;
+  private GCStats dgcInfo;
+  private String  fToolTip;
 
   public DGCIntervalMarker(GCStats dgcInfo) {
     super(dgcInfo.getStartTime(), dgcInfo.getStartTime() + dgcInfo.getElapsedTime(), Color.yellow,
           new BasicStroke(0.5f), Color.yellow, new BasicStroke(0.5f), 0.3f);
-    this.dgcInfo = dgcInfo;
+    setGCStats(dgcInfo);
+  }
+
+  public void setGCStats(GCStats dgcStats) {
+    this.dgcInfo = dgcStats;
+    double endValue;
+    if (dgcInfo.getElapsedTime() == -1) {
+      endValue = dgcInfo.getStartTime() + 100000000;
+    } else {
+      endValue = dgcInfo.getStartTime() + dgcInfo.getElapsedTime();
+    }
+    setEndValue(endValue);
+    fToolTip = null;
   }
 
   public GCStats getGCStats() {
@@ -47,15 +59,21 @@ public class DGCIntervalMarker extends IntervalMarker implements ToolTipProvider
       buildRow(sb, "type", dgcInfo.getType());
     }
     buildRow(sb, "start time", DateFormat.getInstance().format(new Date(dgcInfo.getStartTime())));
-    buildRow(sb, "total elapsed time", dgcInfo.getElapsedTime());
-    buildRow(sb, "begin object count", dgcInfo.getBeginObjectCount());
+    if (dgcInfo.getElapsedTime() != -1) {
+      buildRow(sb, "total elapsed time", dgcInfo.getElapsedTime());
+    }
+    if (dgcInfo.getBeginObjectCount() != -1) {
+      buildRow(sb, "begin object count", dgcInfo.getBeginObjectCount());
+    }
     if (dgcInfo.getPausedStageTime() != -1) {
       buildRow(sb, "paused stage time", dgcInfo.getPausedStageTime());
     }
     if (dgcInfo.getMarkStageTime() != -1) {
       buildRow(sb, "mark stage time", dgcInfo.getMarkStageTime());
     }
-    buildRow(sb, "garbage count", dgcInfo.getActualGarbageCount());
+    if (dgcInfo.getActualGarbageCount() != -1) {
+      buildRow(sb, "garbage count", dgcInfo.getActualGarbageCount());
+    }
     if (dgcInfo.getDeleteStageTime() != -1) {
       buildRow(sb, "delete stage time", dgcInfo.getDeleteStageTime());
     }

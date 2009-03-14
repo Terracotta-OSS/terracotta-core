@@ -53,9 +53,6 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
 
   private static final String CLUSTER_HEAP_NODE_NAME = "ClusterHeapNode";
 
-  private static final String NOT_READY_MESSAGE      = "Cluster is not yet ready for action.  Are all the mirror groups active?";
-  private static final String INITIALIZING_MESSAGE   = "Initializing...";
-
   public ObjectBrowser(IAdminClientContext adminClientContext, IClusterModel clusterModel, IBasicObject[] roots) {
     super(new BorderLayout());
 
@@ -74,7 +71,7 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
 
     } else {
       add(messagePanel);
-      messageLabel.setText(NOT_READY_MESSAGE);
+      messageLabel.setText(adminClientContext.getString("cluster.not.ready.msg"));
     }
   }
 
@@ -89,7 +86,7 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
     gbc.insets = new Insets(3, 3, 3, 3);
     gbc.anchor = GridBagConstraints.EAST;
 
-    Font headerFont = new Font("Dialog", Font.BOLD, 12);
+    Font headerFont = (Font) adminClientContext.getObject("header.label.font");
     XLabel headerLabel = new XLabel(adminClientContext.getString("current.view.type"));
     topPanel.add(headerLabel, gbc);
     headerLabel.setFont(headerFont);
@@ -123,9 +120,9 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
   private XContainer createMessagePanel() {
     XContainer panel = new XContainer(new BorderLayout());
     panel.add(messageLabel = new XLabel());
-    messageLabel.setText(INITIALIZING_MESSAGE);
+    messageLabel.setText(adminClientContext.getString("initializing"));
     messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
-    messageLabel.setFont(new Font("Dialog", Font.PLAIN, 14));
+    messageLabel.setFont((Font) adminClientContext.getObject("message.label.font"));
     return panel;
   }
 
@@ -217,7 +214,7 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
         }
         add(mainPanel);
       } else {
-        messageLabel.setText(NOT_READY_MESSAGE);
+        messageLabel.setText(adminClientContext.getString("cluster.not.ready.msg"));
         add(messagePanel);
       }
       revalidate();

@@ -67,8 +67,7 @@ public abstract class BasicThreadDumpsPanel extends XContainer {
     contentArea.add(textScroller = new XScrollPane(textArea = new XTextArea()));
     textArea.setEditable(false);
     textArea.setLineWrap(false);
-    Font f = textArea.getFont();
-    textArea.setFont(new Font("monospaced", f != null ? f.getStyle() : Font.PLAIN, f != null ? f.getSize() : 12));
+    textArea.setFont((Font) appContext.getObject("textarea.font"));
     contentArea.add(new SearchPanel(appContext, textArea), BorderLayout.SOUTH);
 
     deleteAction = new DeleteAction();
@@ -162,6 +161,7 @@ public abstract class BasicThreadDumpsPanel extends XContainer {
     }
   }
 
+  @Override
   public void tearDown() {
     super.tearDown();
 

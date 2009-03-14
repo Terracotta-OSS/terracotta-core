@@ -66,10 +66,9 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Prop
     gbc.weightx = 0.0;
     gbc.fill = GridBagConstraints.NONE;
 
-    Font labelFont = new Font("SanSerif", Font.BOLD, 12);
     XLabel label = new XLabel(adminClientContext.getString("take.thread.dump.for"));
     topPanel.add(label, gbc);
-    label.setFont(labelFont);
+    label.setFont((Font) adminClientContext.getObject("header.label.font"));
     gbc.gridx++;
 
     topPanel.add(elementChooser = new ElementChooser(), gbc);

@@ -133,9 +133,6 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
   private static final int           DEFAULT_STATS_POLL_PERIOD_SECONDS = 5;
   private static final String        DEFAULT_STATS_CONFIG_FILENAME     = "tc-stats-config.xml";
 
-  private static final String        NOT_READY_MESSAGE                 = "Cluster is not yet ready for action.  Are all the mirror groups active?";
-  private static final String        INITIALIZING_MESSAGE              = "Initializing...";
-
   public StatsRecorderPanel(ApplicationContext appContext, IClusterModel clusterModel) {
     super(new BorderLayout());
 
@@ -157,7 +154,7 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
         }
         initiateStatsGathererConnectWorker();
       } else {
-        messageLabel.setText(NOT_READY_MESSAGE);
+        messageLabel.setText(appContext.getString("cluster.not.ready.msg"));
       }
     }
   }
@@ -174,9 +171,9 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
   private XContainer createMessagePanel() {
     XContainer panel = new XContainer(new BorderLayout());
     panel.add(messageLabel = new XLabel());
-    messageLabel.setText(INITIALIZING_MESSAGE);
+    messageLabel.setText(appContext.getString("initializing"));
     messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
-    messageLabel.setFont(new Font("Dialog", Font.PLAIN, 14));
+    messageLabel.setFont((Font) appContext.getObject("message.label.font"));
     return panel;
   }
 
@@ -297,14 +294,14 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
       if (clusterModel.isReady()) {
         IServer activeCoord = clusterModel.getActiveCoordinator();
         if (activeCoord != null) {
-          messageLabel.setText(INITIALIZING_MESSAGE);
+          messageLabel.setText(appContext.getString("initializing"));
           initiateStatsGathererConnectWorker();
           activeCoord.addClientConnectionListener(StatsRecorderPanel.this);
           activeCoord.addClusterStatsListener(StatsRecorderPanel.this);
         }
       } else {
         removeAll();
-        messageLabel.setText(NOT_READY_MESSAGE);
+        messageLabel.setText(appContext.getString("cluster.not.ready.msg"));
         add(messagePanel);
         revalidate();
         repaint();
