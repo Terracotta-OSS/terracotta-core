@@ -49,6 +49,7 @@ import com.tc.management.beans.LockStatisticsMonitorMBean;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.object.ServerDBBackup;
+import com.tc.management.beans.object.ObjectManagementMonitor.ObjectIdsFetcher;
 import com.tc.management.lock.stats.L2LockStatisticsManagerImpl;
 import com.tc.management.lock.stats.LockStatisticsMessage;
 import com.tc.management.lock.stats.LockStatisticsResponseMessage;
@@ -935,6 +936,11 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
     this.l2Management.findObjectManagementMonitorMBean().registerGCController(
                                                                               new GCComptrollerImpl(this.objectManager
                                                                                   .getGarbageCollector()));
+    this.l2Management.findObjectManagementMonitorMBean().registerObjectIdFetcher(new ObjectIdsFetcher() {
+      public Set getAllObjectIds() {
+        return objectManager.getAllObjectIDs();
+      }
+    });
 
     if (networkedHA) {
 

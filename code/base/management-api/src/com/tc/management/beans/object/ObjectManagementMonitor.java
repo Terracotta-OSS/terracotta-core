@@ -8,6 +8,10 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.AbstractTerracottaMBean;
 
+import java.util.Iterator;
+import java.util.Set;
+import java.util.TreeSet;
+
 import javax.management.NotCompliantMBeanException;
 
 public class ObjectManagementMonitor extends AbstractTerracottaMBean implements ObjectManagementMonitorMBean {
@@ -17,6 +21,7 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
   private volatile GCComptroller gcController;
 
   private final GCRunner         gcRunner;
+  private ObjectIdsFetcher       objectIdsFetcher;
 
   public ObjectManagementMonitor() throws NotCompliantMBeanException {
     super(ObjectManagementMonitorMBean.class, false);
@@ -112,12 +117,29 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
     }
   }
 
+  public void registerObjectIdFetcher(ObjectIdsFetcher fetcher) {
+    objectIdsFetcher = fetcher;
+  }
+
+  public Set getAllObjectIds() {
+    Set set = objectIdsFetcher.getAllObjectIds();
+    TreeSet treeSet = new TreeSet();
+    for(Iterator iter = set.iterator(); iter.hasNext();) {
+      treeSet.add(iter.next());
+    }
+    return treeSet;
+  }
+
   public static interface GCComptroller {
     void startGC();
 
     boolean isGCDisabled();
 
     boolean isGCStarted();
+  }
+
+  public static interface ObjectIdsFetcher {
+    Set getAllObjectIds();
   }
 
   static interface GCRunner extends Runnable {

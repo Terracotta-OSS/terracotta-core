@@ -5,10 +5,13 @@ package com.tc.management.beans.object;
 
 import com.tc.management.TerracottaMBean;
 
+import java.util.Set;
+
 public interface ObjectManagementMonitorMBean extends TerracottaMBean {
   
   void runGC();
   
   boolean isGCRunning();
   
+  Set getAllObjectIds();
 }
