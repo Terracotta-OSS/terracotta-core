@@ -20,7 +20,7 @@ public class AppClassLoaderTC extends Launcher.AppClassLoader {
 
   @Override
   protected Class<?> findClass(String name) throws ClassNotFoundException {
-    byte[] data = ClassProcessorHelper.systemLoaderFindClassHook(name);
+    byte[] data = ClassProcessorHelper.systemLoaderFindClassHook(name, this);
     if (data != null) { return defineClass(name, data, 0, data.length); }
 
     return super.findClass(name);

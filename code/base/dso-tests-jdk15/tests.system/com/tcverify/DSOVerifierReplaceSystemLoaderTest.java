@@ -9,16 +9,15 @@ import java.util.Collection;
 
 public class DSOVerifierReplaceSystemLoaderTest extends DSOVerifierTest {
 
-  public DSOVerifierReplaceSystemLoaderTest() {
-    disableAllUntil("2009-03-17");
-  }
-
   protected String getMainClass() {
     return Client.class.getName();
   }
 
   protected Collection<String> getExtraJvmArgs() {
-    return Arrays.asList(new String[] { "-Djava.system.class.loader=" + SystemLoader.class.getName() /*, "-XX:+TraceClassLoading" */ });
+    return Arrays.asList(new String[] { "-Djava.system.class.loader=" + SystemLoader.class.getName() /*
+                                                                                                      * ,
+                                                                                                      * "-XX:+TraceClassLoading"
+                                                                                                      */});
   }
 
   public static class SystemLoader extends ClassLoader {

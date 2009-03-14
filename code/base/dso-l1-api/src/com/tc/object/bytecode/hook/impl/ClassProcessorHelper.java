@@ -191,8 +191,8 @@ public class ClassProcessorHelper {
   }
 
 
-  public static byte[] systemLoaderFindClassHook(String name) throws ClassNotFoundException {
-    URL resource = getClassResource(name, ClassLoader.getSystemClassLoader(), false);
+  public static byte[] systemLoaderFindClassHook(String name, ClassLoader loader) throws ClassNotFoundException {
+    URL resource = getClassResource(name, loader, false);
     if (resource == null) { return null; }
     return getResourceBytes(resource);
   }
