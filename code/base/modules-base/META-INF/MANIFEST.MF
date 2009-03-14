@@ -11,3 +11,4 @@ Bundle-Vendor: Terracotta, Inc.
 Bundle-Version: @api.version.OSGi@
 Export-Package: org.terracotta.modules.configuration
 Terracotta-RequireVersion: @maven.version@
+Terracotta-InternalTIM: true
