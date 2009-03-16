@@ -10,11 +10,10 @@ import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.management.L2LockStatsManager;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
-import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.lockmanager.api.TCLockTimer;
+import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.lockmanager.impl.TCLockTimerImpl;
 import com.tc.object.tx.TimerSpec;
 import com.tc.objectserver.lockmanager.api.LockAwardContext;
@@ -34,12 +33,14 @@ import junit.framework.TestCase;
 
 public class LockTest extends TestCase {
 
-  private Sink            sink;
-  private long            uniqueId = 100000L;
-  private TCLockTimer       waitTimer;
-  private LockManagerImpl lockMgr  = new LockManagerImpl(new NullChannelManager(), L2LockStatsManager.NULL_LOCK_STATS_MANAGER);
-  private NotifiedWaiters notifiedWaiters;
+  private Sink                  sink;
+  private long                  uniqueId = 100000L;
+  private TCLockTimer           waitTimer;
+  private final LockManagerImpl lockMgr  = new LockManagerImpl(new NullChannelManager(),
+                                                               L2LockStatsManager.NULL_LOCK_STATS_MANAGER);
+  private NotifiedWaiters       notifiedWaiters;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     this.notifiedWaiters = new NotifiedWaiters();
@@ -55,7 +56,7 @@ public class LockTest extends TestCase {
   }
 
   public void testUpgrade() throws Exception {
-    ClientID cid1 = new ClientID(new ChannelID(1));
+    ClientID cid1 = new ClientID(1);
     ThreadID txnId1 = new ThreadID(1);
     ThreadID txnId2 = new ThreadID(2);
     ThreadID txnId3 = new ThreadID(3);
@@ -93,7 +94,7 @@ public class LockTest extends TestCase {
     Holder holder = (Holder) lock.getHoldersCollection().toArray()[0];
     assertEquals(cid1, holder.getNodeID());
     assertEquals(txnId1, holder.getThreadID());
-    //assertFalse(holder.isUpgrade());
+    // assertFalse(holder.isUpgrade());
 
     // add some other pending lock requests
     lock.requestLock(thread2, LockLevel.READ, sink);
@@ -119,7 +120,6 @@ public class LockTest extends TestCase {
     assertEquals(txnId3, holder.getThreadID());
     assertEquals(LockLevel.WRITE, holder.getLockLevel());
 
-
     // release the write lock
     lock.removeCurrentHold(thread3);
     assertEquals(0, lock.getPendingCount());
@@ -131,7 +131,7 @@ public class LockTest extends TestCase {
   }
 
   public void testMonitorStateAssertions() throws Exception {
-    ClientID cid1 = new ClientID(new ChannelID(1));
+    ClientID cid1 = new ClientID(1);
     ThreadID txnId1 = new ThreadID(1);
 
     ServerThreadContext thread1 = makeTxn(cid1, txnId1);
@@ -161,10 +161,10 @@ public class LockTest extends TestCase {
   }
 
   public void testIllegalMonitorState() {
-    ClientID goodClientID = new ClientID(new ChannelID(1));
+    ClientID goodClientID = new ClientID(1);
     ThreadID goodTxnId = new ThreadID(1);
 
-    ClientID badDClientID = new ClientID(new ChannelID(2));
+    ClientID badDClientID = new ClientID(2);
     ThreadID badTxnId = new ThreadID(2);
 
     ServerThreadContext good = makeTxn(goodClientID, goodTxnId);
@@ -247,7 +247,7 @@ public class LockTest extends TestCase {
   }
 
   public void testTimedWaitWithNotify() throws Exception {
-    ClientID cid1 = new ClientID(new ChannelID(1));
+    ClientID cid1 = new ClientID(1);
     ThreadID txnId1 = new ThreadID(1);
     ThreadID txnId2 = new ThreadID(2);
 
@@ -281,7 +281,7 @@ public class LockTest extends TestCase {
 
   public void testTimedWait2() throws Exception {
     // excercise the 2 arg version of wait
-    ClientID cid1 = new ClientID(new ChannelID(1));
+    ClientID cid1 = new ClientID(1);
     ThreadID txnId1 = new ThreadID(1);
     lockMgr.start();
 
@@ -312,7 +312,7 @@ public class LockTest extends TestCase {
   }
 
   public void testTimedWaitsDontFireWhenLockManagerIsStopped() throws Exception {
-    ClientID cid1 = new ClientID(new ChannelID(1));
+    ClientID cid1 = new ClientID(1);
     ThreadID txnId1 = new ThreadID(1);
     lockMgr.start();
 
@@ -350,7 +350,7 @@ public class LockTest extends TestCase {
   }
 
   public void testTimedWaits() throws Exception {
-    ClientID cid1 = new ClientID(new ChannelID(1));
+    ClientID cid1 = new ClientID(1);
     ThreadID txnId1 = new ThreadID(1);
     ThreadID txnId2 = new ThreadID(2);
     lockMgr.start();
@@ -425,7 +425,7 @@ public class LockTest extends TestCase {
   }
 
   public void testWait() throws Exception {
-    ClientID cid1 = new ClientID(new ChannelID(1));
+    ClientID cid1 = new ClientID(1);
     ThreadID txnId1 = new ThreadID(1);
 
     ServerThreadContext thread1 = makeTxn(cid1, txnId1);
@@ -444,7 +444,7 @@ public class LockTest extends TestCase {
   }
 
   public void testWaitOnAndNotify() throws Exception {
-    ClientID cid1 = new ClientID(new ChannelID(1));
+    ClientID cid1 = new ClientID(1);
 
     ServerThreadContext thread1 = makeTxn(cid1, new ThreadID(1));
     ServerThreadContext thread2 = makeTxn(cid1, new ThreadID(2));
@@ -488,7 +488,7 @@ public class LockTest extends TestCase {
     }
 
     assertEquals(thread1, holder.getThreadContext());
-    //assertFalse(holder.isUpgrade());
+    // assertFalse(holder.isUpgrade());
     assertEquals(LockLevel.WRITE, holder.getLockLevel());
   }
 
@@ -551,7 +551,7 @@ public class LockTest extends TestCase {
   }
 
   private ClientID getUniqueClientID() {
-    return new ClientID(new ChannelID(uniqueId++));
+    return new ClientID(uniqueId++);
   }
 
   private ThreadID getUniqueTransactionID() {

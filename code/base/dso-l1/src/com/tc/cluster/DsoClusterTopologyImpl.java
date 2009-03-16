@@ -54,7 +54,7 @@ public class DsoClusterTopologyImpl implements DsoClusterTopology {
       DsoNodeInternal node = nodes.remove(nodeId);
       // Disabling this assertion until cluster events properly support AA
       // Assert.assertNotNull(node);
-      LOGGER.warn("there was no existing node for ID "+nodeId);
+      LOGGER.warn("there was no existing node for ID " + nodeId);
       return node;
     } finally {
       nodesWriteLock.unlock();
@@ -63,7 +63,7 @@ public class DsoClusterTopologyImpl implements DsoClusterTopology {
 
   DsoNodeInternal registerDsoNode(final NodeID nodeId) {
     final ClientID clientId = (ClientID) nodeId;
-    final DsoNodeInternal node = new DsoNodeImpl(clientId.toString(), clientId.getChannelID().toLong());
+    final DsoNodeInternal node = new DsoNodeImpl(clientId.toString(), clientId.toLong());
     nodesWriteLock.lock();
     try {
       nodes.put(nodeId, node);

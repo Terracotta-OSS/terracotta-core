@@ -5,7 +5,6 @@
 package com.tc.cluster;
 
 import com.tc.net.ClientID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.test.TCTestCase;
 import com.tcclient.cluster.DsoNode;
 
@@ -23,8 +22,8 @@ public class DsoClusterTest extends TCTestCase {
   }
 
   public void testGetThisNode() {
-    final ClientID thisNodeId = new ClientID(new ChannelID(1));
-    cluster.fireThisNodeJoined(thisNodeId, new ClientID[] { new ClientID(new ChannelID(2)) });
+    final ClientID thisNodeId = new ClientID(1);
+    cluster.fireThisNodeJoined(thisNodeId, new ClientID[] { new ClientID(2) });
     assertNotNull(cluster.getCurrentNode());
     assertEquals(thisNodeId.toString(), cluster.getCurrentNode().getId());
   }
@@ -36,7 +35,7 @@ public class DsoClusterTest extends TCTestCase {
     assertTrue(nodes.isEmpty());
 
     // 1
-    final ClientID thisNodeId = new ClientID(new ChannelID(1));
+    final ClientID thisNodeId = new ClientID(1);
     cluster.fireThisNodeJoined(thisNodeId, new ClientID[] { thisNodeId });
     nodes = cluster.getClusterTopology().getNodes();
     assertNotNull(nodes);
@@ -45,7 +44,7 @@ public class DsoClusterTest extends TCTestCase {
   }
 
   public void testThisNodeJoined() {
-    final ClientID thisNodeId = new ClientID(new ChannelID(1));
+    final ClientID thisNodeId = new ClientID(1);
     final ClientID[] nodeIds = new ClientID[] { thisNodeId };
     cluster.fireThisNodeJoined(thisNodeId, nodeIds);
 
@@ -80,7 +79,7 @@ public class DsoClusterTest extends TCTestCase {
   }
 
   public void testNodeIDCantChange() {
-    final ClientID thisNodeId = new ClientID(new ChannelID(1));
+    final ClientID thisNodeId = new ClientID(1);
     final ClientID[] nodeIds = new ClientID[] { thisNodeId };
     cluster.fireThisNodeJoined(thisNodeId, nodeIds);
 
@@ -91,7 +90,7 @@ public class DsoClusterTest extends TCTestCase {
     cluster.fireThisNodeLeft();
     listener.reset();
 
-    final ClientID otherNodeId = new ClientID(new ChannelID(2));
+    final ClientID otherNodeId = new ClientID(2);
     final ClientID[] otherNodeIds = new ClientID[] { otherNodeId };
     cluster.fireThisNodeJoined(otherNodeId, otherNodeIds);
     assertTrue(listener.getOccurredEvents().isEmpty());
@@ -101,7 +100,7 @@ public class DsoClusterTest extends TCTestCase {
   }
 
   public void testThisNodeLeft() {
-    final ClientID thisNodeId = new ClientID(new ChannelID(1));
+    final ClientID thisNodeId = new ClientID(1);
     final ClientID[] nodeIds = new ClientID[] { thisNodeId };
     cluster.fireThisNodeJoined(thisNodeId, nodeIds);
     cluster.fireOperationsEnabled();
@@ -122,7 +121,7 @@ public class DsoClusterTest extends TCTestCase {
 
   public void testNodeConnected() {
     // prime cluster
-    final ClientID thisNodeId = new ClientID(new ChannelID(1));
+    final ClientID thisNodeId = new ClientID(1);
     final ClientID[] nodeIds = new ClientID[] { thisNodeId };
     cluster.fireThisNodeJoined(thisNodeId, nodeIds);
 
@@ -131,7 +130,7 @@ public class DsoClusterTest extends TCTestCase {
 
     // now cause node joined event
     listener.reset();
-    final ClientID otherNodeId = new ClientID(new ChannelID(2));
+    final ClientID otherNodeId = new ClientID(2);
     cluster.fireNodeJoined(otherNodeId);
     assertEquals(1, listener.getOccurredEvents().size());
     assertEquals("ClientID[2] JOINED", listener.getOccurredEvents().get(0));
@@ -144,7 +143,7 @@ public class DsoClusterTest extends TCTestCase {
   }
 
   public void testAddSameListenerTwice() {
-    final ClientID thisNodeId = new ClientID(new ChannelID(1));
+    final ClientID thisNodeId = new ClientID(1);
     final ClientID[] nodesCurrentlyInCluster = new ClientID[] { thisNodeId };
     cluster.fireThisNodeJoined(thisNodeId, nodesCurrentlyInCluster);
     cluster.fireOperationsEnabled();
@@ -163,7 +162,7 @@ public class DsoClusterTest extends TCTestCase {
   }
 
   public void testCallbackOnlyOnNewListener() {
-    final ClientID thisNodeId = new ClientID(new ChannelID(1));
+    final ClientID thisNodeId = new ClientID(1);
     final ClientID[] nodesCurrentlyInCluster = new ClientID[] { thisNodeId };
     cluster.fireThisNodeJoined(thisNodeId, nodesCurrentlyInCluster);
     cluster.fireOperationsEnabled();
@@ -186,15 +185,15 @@ public class DsoClusterTest extends TCTestCase {
   }
 
   public void testClientExceptionSafety() {
-    final ClientID thisNodeId = new ClientID(new ChannelID(1));
+    final ClientID thisNodeId = new ClientID(1);
     final ClientID[] nodesCurrentlyInCluster = new ClientID[] { thisNodeId };
     cluster.fireThisNodeJoined(thisNodeId, nodesCurrentlyInCluster);
 
     cluster.addClusterListener(new TestEventListenerWithExceptions());
 
     cluster.fireOperationsEnabled();
-    cluster.fireNodeJoined(new ClientID(new ChannelID(2)));
-    cluster.fireNodeLeft(new ClientID(new ChannelID(2)));
+    cluster.fireNodeJoined(new ClientID(2));
+    cluster.fireNodeLeft(new ClientID(2));
     cluster.fireOperationsDisabled();
     cluster.fireThisNodeLeft();
   }

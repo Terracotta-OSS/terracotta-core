@@ -31,7 +31,7 @@ public class MockMessageChannel implements MessageChannelInternal {
   LinkedQueue              closedCalls = new LinkedQueue();
   private long             lastClosedCallTimestamp;
 
-  private Map              knownMessageTypes;
+  private final Map        knownMessageTypes;
 
   private int              numSends;
   private TCNetworkMessage lastSentMessage;
@@ -43,7 +43,7 @@ public class MockMessageChannel implements MessageChannelInternal {
     this.channelId = channelId;
     this.knownMessageTypes = new HashMap();
     reset();
-    source = new ClientID(channelId);
+    source = new ClientID(channelId.toLong());
   }
 
   public void registerType(TCMessageType messageType, Class theClass) {

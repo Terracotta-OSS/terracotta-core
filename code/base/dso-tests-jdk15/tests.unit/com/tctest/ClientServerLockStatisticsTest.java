@@ -77,7 +77,7 @@ public class ClientServerLockStatisticsTest extends TCTestCase {
   private TestSessionManager              sessionManager;
   private ClientLockStatManager           clientLockStatManager;
   private L2LockStatsManager              serverLockStatManager;
-  private final ChannelID                       channelId1 = new ChannelID(1);
+  private final ChannelID                 channelId1 = new ChannelID(1);
   private ClientMessageChannel            channel1;
   private TestSink                        sink;
 
@@ -125,7 +125,7 @@ public class ClientServerLockStatisticsTest extends TCTestCase {
 
     Thread t1 = new Thread(new Runnable() {
       public void run() {
-        serverLockManager.clearAllLocksFor(new ClientID(channelId1));
+        serverLockManager.clearAllLocksFor(new ClientID(channelId1.toLong()));
         try {
           localBarrier.await();
         } catch (InterruptedException e) {

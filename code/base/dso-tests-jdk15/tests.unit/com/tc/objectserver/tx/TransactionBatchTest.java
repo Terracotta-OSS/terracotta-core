@@ -9,7 +9,6 @@ import com.tc.config.TcProperty;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ApplicatorDNAEncodingImpl;
 import com.tc.object.MockTCObject;
 import com.tc.object.ObjectID;
@@ -59,11 +58,12 @@ import junit.framework.TestCase;
 
 public class TransactionBatchTest extends TestCase {
 
-  private DNAEncoding                         encoding = new ApplicatorDNAEncodingImpl(new MockClassProvider());
+  private final DNAEncoding                   encoding = new ApplicatorDNAEncodingImpl(new MockClassProvider());
 
   private TransactionBatchWriter              writer;
   private TestCommitTransactionMessageFactory messageFactory;
 
+  @Override
   public void setUp() throws Exception {
     messageFactory = new TestCommitTransactionMessageFactory();
     writer = newWriter(new ObjectStringSerializer());
@@ -127,7 +127,7 @@ public class TransactionBatchTest extends TestCase {
   public void testWriteRead() throws IOException {
     ObjectStringSerializer serializer = new ObjectStringSerializer();
     TestCommitTransactionMessageFactory mf = new TestCommitTransactionMessageFactory();
-    ClientID clientID = new ClientID(new ChannelID(69));
+    ClientID clientID = new ClientID(69);
     TxnBatchID batchID = new TxnBatchID(42);
 
     List tx1Notifies = new LinkedList();
@@ -173,7 +173,7 @@ public class TransactionBatchTest extends TestCase {
     // let transactionSize counter sample
     ThreadUtil.reallySleep(2000);
     assertTransactionSize(writer.getData(), 2, stats.getTransactionSizeCounter());
-    
+
     assertEquals(2, reader.getNumberForTxns());
     assertEquals(batchID, reader.getBatchID());
 
@@ -226,7 +226,7 @@ public class TransactionBatchTest extends TestCase {
 
     writer = newWriter(serializer, true, 0, 0);
 
-    ClientID clientID = new ClientID(new ChannelID(69));
+    ClientID clientID = new ClientID(69);
 
     LockID lid1 = new LockID("1");
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
@@ -279,7 +279,7 @@ public class TransactionBatchTest extends TestCase {
     // let transactionSize counter sample
     ThreadUtil.reallySleep(2000);
     assertTransactionSize(writer.getData(), 2, stats.getTransactionSizeCounter());
-    
+
     assertEquals(2, reader.getNumberForTxns());
     assertEquals(new TxnBatchID(1), reader.getBatchID());
 

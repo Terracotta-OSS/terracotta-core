@@ -8,7 +8,6 @@ import com.tc.management.L2LockStatsManager;
 import com.tc.management.lock.stats.L2LockStatisticsManagerImpl;
 import com.tc.management.lock.stats.LockSpec;
 import com.tc.net.ClientID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.ThreadID;
@@ -77,9 +76,9 @@ public class LockStatManagerTest extends TestCase {
     lockManager.setLockPolicy(LockManagerImpl.ALTRUISTIC_LOCK_POLICY);
     try {
       LockID l1 = new LockID("1");
-      final ClientID cid1 = new ClientID(new ChannelID(1));
+      final ClientID cid1 = new ClientID(1);
       ThreadID s1 = new ThreadID(0);
-      final ClientID cid2 = new ClientID(new ChannelID(2));
+      final ClientID cid2 = new ClientID(2);
       ThreadID s2 = new ThreadID(1);
 
       lockManager.requestLock(l1, cid1, s1, LockLevel.WRITE, String.class.getName(), sink);
@@ -107,9 +106,9 @@ public class LockStatManagerTest extends TestCase {
   public void testLockHeldAggregateDuration() {
     try {
       LockID l1 = new LockID("1");
-      final ClientID cid1 = new ClientID(new ChannelID(1));
+      final ClientID cid1 = new ClientID(1);
       ThreadID s1 = new ThreadID(0);
-      final ClientID cid2 = new ClientID(new ChannelID(2));
+      final ClientID cid2 = new ClientID(2);
       ThreadID s2 = new ThreadID(1);
 
       lockManager.requestLock(l1, cid1, s1, LockLevel.WRITE, String.class.getName(), sink);
@@ -148,7 +147,7 @@ public class LockStatManagerTest extends TestCase {
     try {
       LockID l1 = new LockID("1");
       LockID l2 = new LockID("2");
-      final ClientID cid1 = new ClientID(new ChannelID(1));
+      final ClientID cid1 = new ClientID(1);
       ThreadID s1 = new ThreadID(0);
 
       lockManager.requestLock(l1, cid1, s1, LockLevel.WRITE, String.class.getName(), sink);
@@ -177,7 +176,7 @@ public class LockStatManagerTest extends TestCase {
       LockID l1 = new LockID("1");
       ThreadID s1 = new ThreadID(0);
 
-      final ClientID cid1 = new ClientID(new ChannelID(1));
+      final ClientID cid1 = new ClientID(1);
 
       lockManager.requestLock(l1, cid1, s1, LockLevel.WRITE, String.class.getName(), sink);
       assertEquals(0, lockStatManager.getNumberOfLockRequested(l1));
@@ -197,10 +196,10 @@ public class LockStatManagerTest extends TestCase {
     ThreadID s1 = new ThreadID(0);
     SampledCounter globalLockCounter = serverStats.getGlobalLockCounter();
 
-    final ClientID cid1 = new ClientID(new ChannelID(1));
-    final ClientID cid2 = new ClientID(new ChannelID(2));
-    final ClientID cid3 = new ClientID(new ChannelID(3));
-    final ClientID cid4 = new ClientID(new ChannelID(4));
+    final ClientID cid1 = new ClientID(1);
+    final ClientID cid2 = new ClientID(2);
+    final ClientID cid3 = new ClientID(3);
+    final ClientID cid4 = new ClientID(4);
 
     long lastSampleTime = System.currentTimeMillis();
     lastSampleTime = sampleAndAssertLockCount(lastSampleTime, globalLockCounter, 0);
@@ -211,7 +210,7 @@ public class LockStatManagerTest extends TestCase {
     assertEquals(0, lockStatManager.getNumberOfPendingRequests(l1));
 
     lockManager.requestLock(l1, cid2, s1, LockLevel.WRITE, String.class.getName(), sink); // c2 should pend and issue a
-                                                                                          // recall
+    // recall
     assertEquals(2, lockStatManager.getNumberOfLockRequested(l1));
     assertEquals(0, lockStatManager.getNumberOfPendingRequests(l1));
     assertEquals(1, lockStatManager.getNumberOfLockHopRequests(l1));
@@ -236,7 +235,7 @@ public class LockStatManagerTest extends TestCase {
     assertEquals(1, lockStatManager.getNumberOfLockReleased(l1));
 
     lockManager.requestLock(l1, cid1, s1, LockLevel.WRITE, String.class.getName(), sink); // c1 request again and issue
-                                                                                          // a recall
+    // a recall
     assertEquals(4, lockStatManager.getNumberOfLockRequested(l1));
     assertEquals(1, lockStatManager.getNumberOfPendingRequests(l1));
     assertEquals(2, lockStatManager.getNumberOfLockHopRequests(l1));

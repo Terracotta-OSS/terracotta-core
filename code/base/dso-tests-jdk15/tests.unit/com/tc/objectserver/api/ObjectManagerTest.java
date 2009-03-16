@@ -11,7 +11,6 @@ import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
@@ -379,7 +378,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     ids.add((id1 = new ObjectID(1)));
     ObjectID id2;
     ids.add((id2 = new ObjectID(2)));
-    ClientID key = new ClientID(new ChannelID(0));
+    ClientID key = new ClientID(0);
 
     this.objectManager.createNewObjects(ids);
 
@@ -768,7 +767,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     ObjectID id = new ObjectID(1);
     ObjectIDSet ids = new ObjectIDSet();
     ids.add(id);
-    ClientID key = new ClientID(new ChannelID(0));
+    ClientID key = new ClientID(0);
 
     this.objectManager.createNewObjects(ids);
     TestResultsContext responseContext = new TestResultsContext(ids, ids);
@@ -1280,11 +1279,10 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     changes.put(new ObjectID(1), new TestPhysicalDNA(new ObjectID(1)));
 
     ServerTransaction stxn1 = new ServerTransactionImpl(new TxnBatchID(1), new TransactionID(1), new SequenceID(1),
-                                                        new LockID[0], new ClientID(new ChannelID(2)),
-                                                        new ArrayList<DNA>(changes.values()),
-                                                        new ObjectStringSerializer(), Collections.EMPTY_MAP,
-                                                        TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1,
-                                                        new long[0]);
+                                                        new LockID[0], new ClientID(2), new ArrayList<DNA>(changes
+                                                            .values()), new ObjectStringSerializer(),
+                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
+                                                        DmiDescriptor.EMPTY_ARRAY, 1, new long[0]);
     List<ServerTransaction> txns = new ArrayList<ServerTransaction>();
     txns.add(stxn1);
 
@@ -1329,11 +1327,10 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     changes.put(new ObjectID(2), new TestPhysicalDNA(new ObjectID(2)));
 
     ServerTransaction stxn2 = new ServerTransactionImpl(new TxnBatchID(2), new TransactionID(2), new SequenceID(1),
-                                                        new LockID[0], new ClientID(new ChannelID(2)),
-                                                        new ArrayList<DNA>(changes.values()),
-                                                        new ObjectStringSerializer(), Collections.EMPTY_MAP,
-                                                        TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1,
-                                                        new long[0]);
+                                                        new LockID[0], new ClientID(2), new ArrayList<DNA>(changes
+                                                            .values()), new ObjectStringSerializer(),
+                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
+                                                        DmiDescriptor.EMPTY_ARRAY, 1, new long[0]);
 
     txns.clear();
     txns.add(stxn2);
@@ -1362,11 +1359,10 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     changes.put(new ObjectID(3), new TestPhysicalDNA(new ObjectID(3)));
 
     ServerTransaction stxn3 = new ServerTransactionImpl(new TxnBatchID(2), new TransactionID(2), new SequenceID(1),
-                                                        new LockID[0], new ClientID(new ChannelID(2)),
-                                                        new ArrayList<DNA>(changes.values()),
-                                                        new ObjectStringSerializer(), Collections.EMPTY_MAP,
-                                                        TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1,
-                                                        new long[0]);
+                                                        new LockID[0], new ClientID(2), new ArrayList<DNA>(changes
+                                                            .values()), new ObjectStringSerializer(),
+                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
+                                                        DmiDescriptor.EMPTY_ARRAY, 1, new long[0]);
 
     txns.clear();
     txns.add(stxn3);

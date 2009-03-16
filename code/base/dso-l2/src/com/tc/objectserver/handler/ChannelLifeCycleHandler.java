@@ -31,7 +31,8 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler implements DSO
   private Sink                          hydrateSink;
   private Sink                          processTransactionSink;
 
-  public ChannelLifeCycleHandler(final CommunicationsManager commsManager, final TransactionBatchManager transactionBatchManager,
+  public ChannelLifeCycleHandler(final CommunicationsManager commsManager,
+                                 final TransactionBatchManager transactionBatchManager,
                                  final DSOChannelManager channelManager) {
     this.commsManager = commsManager;
     this.transactionBatchManager = transactionBatchManager;
@@ -102,14 +103,16 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler implements DSO
   }
 
   public void channelCreated(final MessageChannel channel) {
-    channelSink.add(new NodeStateEventContext(NodeStateEventContext.CREATE, new ClientID(channel.getChannelID())));
+    channelSink.add(new NodeStateEventContext(NodeStateEventContext.CREATE, new ClientID(channel.getChannelID()
+        .toLong())));
   }
 
   public void channelRemoved(final MessageChannel channel) {
     // We want all the messages in the system from this client to reach its destinations before processing this request.
     // esp. hydrate stage and process transaction stage. This goo is for that.
     final NodeStateEventContext disconnectEvent = new NodeStateEventContext(NodeStateEventContext.REMOVE,
-                                                                            new ClientID(channel.getChannelID()));
+                                                                            new ClientID(channel.getChannelID()
+                                                                                .toLong()));
     InBandMoveToNextSink context1 = new InBandMoveToNextSink(disconnectEvent, channelSink);
     InBandMoveToNextSink context2 = new InBandMoveToNextSink(context1, processTransactionSink);
     hydrateSink.add(context2);

@@ -4,7 +4,6 @@
 package com.tc.objectserver.tx;
 
 import com.tc.net.ClientID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
@@ -47,7 +46,7 @@ public class ServerTransactionSequencerTest extends TCTestCase {
     this.sqID = 100;
     this.batchID = 100;
     this.start = 1;
-    this.clientID = new ClientID(new ChannelID(0));
+    this.clientID = new ClientID(0);
     this.sequencer = new ServerTransactionSequencerImpl();
   }
 

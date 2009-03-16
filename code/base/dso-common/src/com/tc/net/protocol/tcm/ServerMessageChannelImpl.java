@@ -24,7 +24,7 @@ public class ServerMessageChannelImpl extends AbstractMessageChannel implements 
    */
   protected ServerMessageChannelImpl(ChannelID sessionID, TCMessageRouter router, TCMessageFactory msgFactory,
                                      final ServerID serverID) {
-    super(router, logger, msgFactory, new ClientID(sessionID));
+    super(router, logger, msgFactory, new ClientID(sessionID.toLong()));
     this.sessionID = sessionID;
     setLocalNodeID(serverID);
 
@@ -36,6 +36,7 @@ public class ServerMessageChannelImpl extends AbstractMessageChannel implements 
     return sessionID;
   }
 
+  @Override
   public NetworkStackID open() {
     throw new UnsupportedOperationException("Server channels don't support open()");
   }

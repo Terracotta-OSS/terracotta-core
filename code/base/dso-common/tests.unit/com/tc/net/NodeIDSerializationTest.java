@@ -7,7 +7,6 @@ package com.tc.net;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.groups.NodeIDSerializer;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.util.UUID;
 
 import junit.framework.TestCase;
@@ -25,7 +24,7 @@ public class NodeIDSerializationTest extends TestCase {
     assertTrue(n3.equals(n4));
     assertTrue(n4 instanceof GroupID);
 
-    NodeID n5 = new ClientID(new ChannelID(1000));
+    NodeID n5 = new ClientID(1000);
     NodeID n6 = dupBySerialization(n5);
     assertTrue(n5.equals(n6));
     assertTrue(n6 instanceof ClientID);
@@ -55,7 +54,7 @@ public class NodeIDSerializationTest extends TestCase {
     assertTrue(n3.equals(n4));
     assertTrue(n4 instanceof GroupID);
 
-    NodeID n5 = new ClientID(new ChannelID(1000));
+    NodeID n5 = new ClientID(1000);
     NodeID n6 = dupByTCSerializable(n5);
     assertTrue(n5.equals(n6));
     assertTrue(n6 instanceof ClientID);

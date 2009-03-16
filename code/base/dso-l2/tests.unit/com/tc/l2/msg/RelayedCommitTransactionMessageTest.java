@@ -11,7 +11,6 @@ import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.msg.TestTransactionBatch;
@@ -33,7 +32,7 @@ public class RelayedCommitTransactionMessageTest extends TestCase {
   private TestCommitTransactionMessage testCommitTransactionMessage;
   private List                         transactions;
   private List                         serverTransactionIDs;
-  private final ClientID               cid = new ClientID(new ChannelID(2));
+  private final ClientID               cid = new ClientID(2);
 
   @Override
   public void setUp() {

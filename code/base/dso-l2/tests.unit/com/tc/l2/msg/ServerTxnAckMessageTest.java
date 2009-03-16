@@ -13,7 +13,6 @@ import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.msg.TestTransactionBatch;
@@ -44,10 +43,10 @@ public class ServerTxnAckMessageTest extends TestCase {
         .newCommitTransactionMessage(GroupID.NULL_ID);
     testCommitTransactionMessage.setBatch(new TestTransactionBatch(new TCByteBuffer[] { TCByteBufferFactory
         .getInstance(false, 3452) }), new ObjectStringSerializer());
-    testCommitTransactionMessage.setChannelID(new ClientID(new ChannelID(this.channelId)));
+    testCommitTransactionMessage.setChannelID(new ClientID(this.channelId));
 
     this.serverTransactionIDs = new HashSet();
-    ClientID cid = new ClientID(new ChannelID(this.channelId));
+    ClientID cid = new ClientID(this.channelId);
     ServerTransactionID stid1 = new ServerTransactionID(cid, new TransactionID(4234));
     ServerTransactionID stid2 = new ServerTransactionID(cid, new TransactionID(6543));
     ServerTransactionID stid3 = new ServerTransactionID(cid, new TransactionID(1654));

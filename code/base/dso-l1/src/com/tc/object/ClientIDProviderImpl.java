@@ -16,7 +16,7 @@ public class ClientIDProviderImpl implements ClientIDProvider {
   }
 
   public ClientID getClientID() {
-    return new ClientID(channelIDProvider.getChannelID());
+    return new ClientID(channelIDProvider.getChannelID().toLong());
   }
 
 }

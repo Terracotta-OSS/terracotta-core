@@ -25,6 +25,7 @@ public class GlobalTransactionManagerImplTest extends TestCase {
   private TestPersistenceTransactionProvider ptxp;
   private ServerGlobalTransactionManager     gtxm;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     transactionStore = new TestTransactionStore();
@@ -35,7 +36,7 @@ public class GlobalTransactionManagerImplTest extends TestCase {
   }
 
   public void testStartAndCommitApply() throws Exception {
-    ClientID cid = new ClientID(new ChannelID(1));
+    ClientID cid = new ClientID(1);
     ServerTransactionID stxID1 = new ServerTransactionID(cid, new TransactionID(1));
     ServerTransactionID stxID2 = new ServerTransactionID(cid, new TransactionID(2));
 
@@ -71,7 +72,7 @@ public class GlobalTransactionManagerImplTest extends TestCase {
   public void testReapplyTransactionsAcrossRestart() throws Exception {
     ChannelID channel1 = new ChannelID(1);
     TransactionID tx1 = new TransactionID(1);
-    ServerTransactionID stxid = new ServerTransactionID(new ClientID(channel1), tx1);
+    ServerTransactionID stxid = new ServerTransactionID(new ClientID(channel1.toLong()), tx1);
 
     GlobalTransactionID gid1 = gtxm.getOrCreateGlobalTransactionID(stxid);
     assertNextGlobalTXWasCalled(stxid);
@@ -124,7 +125,7 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     assertNextGlobalTxNotCalled();
 
     // APPLY A NEW TRANSACTION
-    ServerTransactionID stxid2 = new ServerTransactionID(new ClientID(channel1), new TransactionID(2));
+    ServerTransactionID stxid2 = new ServerTransactionID(new ClientID(channel1.toLong()), new TransactionID(2));
     GlobalTransactionID gid4 = gtxm.getOrCreateGlobalTransactionID(stxid2);
     assertNextGlobalTXWasCalled(stxid2);
     assertNotSame(gid3, gid4);

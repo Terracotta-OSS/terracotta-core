@@ -5,7 +5,6 @@
 package com.tc.objectserver.tx;
 
 import com.tc.net.ClientID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ObjectID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
@@ -23,25 +22,26 @@ public class MetaServerTransactionSequencerTest extends TestCase {
   private int                        bid;
   private int                        sid;
 
+  @Override
   protected void setUp() throws Exception {
     sequencer = new MetaServerTransactionSequencerImpl();
   }
 
   public void testBasic() throws Exception {
-    List txnContexts = createSomeTxnsFrom(new ClientID(new ChannelID(5)), 10);
+    List txnContexts = createSomeTxnsFrom(new ClientID(5), 10);
     sequencer.addTransactionLookupContexts(txnContexts);
     assertEquals(1, sequencer.getTxnSequencersCount());
 
-    txnContexts = createSomeTxnsFrom(new ClientID(new ChannelID(6)), 10);
+    txnContexts = createSomeTxnsFrom(new ClientID(6), 10);
     sequencer.addTransactionLookupContexts(txnContexts);
     assertEquals(2, sequencer.getTxnSequencersCount());
 
-    txnContexts = createSomeTxnsFrom(new ClientID(new ChannelID(5)), 10);
+    txnContexts = createSomeTxnsFrom(new ClientID(5), 10);
     sequencer.addTransactionLookupContexts(txnContexts);
     assertEquals(2, sequencer.getTxnSequencersCount());
 
-    txnContexts = createSomeTxnsFrom(new ClientID(new ChannelID(5)), 10);
-    List txnContexts1 = createSomeTxnsFrom(new ClientID(new ChannelID(7)), 10);
+    txnContexts = createSomeTxnsFrom(new ClientID(5), 10);
+    List txnContexts1 = createSomeTxnsFrom(new ClientID(7), 10);
     txnContexts.addAll(txnContexts1);
     sequencer.addTransactionLookupContexts(txnContexts);
     assertEquals(3, sequencer.getTxnSequencersCount());
@@ -127,7 +127,7 @@ public class MetaServerTransactionSequencerTest extends TestCase {
   private List createSomeTxnsFrom(ClientID clientID, int count) {
     TestServerTransaction stxn = new TestServerTransaction(new ServerTransactionID(clientID, new TransactionID(sid++)),
                                                            new TxnBatchID(bid++));
-    stxn.oids.add(new ObjectID(clientID.getChannelID().toLong()));
+    stxn.oids.add(new ObjectID(clientID.toLong()));
 
     ArrayList txns = new ArrayList();
     while (count-- > 0) {

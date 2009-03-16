@@ -11,7 +11,6 @@ import org.apache.xmlbeans.XmlObject;
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.dynamic.ObjectArrayConfigItem;
 import com.tc.config.schema.dynamic.ObjectArrayXPathBasedConfigItem;
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.util.ActiveCoordinatorHelper;
 import com.tc.util.Assert;
 import com.terracottatech.config.Members;

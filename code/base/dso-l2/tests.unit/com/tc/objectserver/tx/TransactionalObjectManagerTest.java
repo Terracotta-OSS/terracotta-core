@@ -5,7 +5,6 @@
 package com.tc.objectserver.tx;
 
 import com.tc.net.ClientID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
@@ -63,7 +62,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     changes.put(new ObjectID(2), new TestDNA(new ObjectID(2)));
 
     ServerTransaction stxn1 = new ServerTransactionImpl(new TxnBatchID(1), new TransactionID(1), new SequenceID(1),
-                                                        new LockID[0], new ClientID(new ChannelID(2)),
+                                                        new LockID[0], new ClientID(2),
                                                         new ArrayList(changes.values()), new ObjectStringSerializer(),
                                                         Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
                                                         DmiDescriptor.EMPTY_ARRAY, 1, new long[0]);
@@ -94,7 +93,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     changes.put(new ObjectID(4), new TestDNA(new ObjectID(4)));
 
     ServerTransaction stxn2 = new ServerTransactionImpl(new TxnBatchID(2), new TransactionID(2), new SequenceID(1),
-                                                        new LockID[0], new ClientID(new ChannelID(2)),
+                                                        new LockID[0], new ClientID(2),
                                                         new ArrayList(changes.values()), new ObjectStringSerializer(),
                                                         Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
                                                         DmiDescriptor.EMPTY_ARRAY, 1, new long[0]);
@@ -208,7 +207,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     changes.put(new ObjectID(2), new TestDNA(new ObjectID(2)));
 
     ServerTransaction stxn1 = new ServerTransactionImpl(new TxnBatchID(1), new TransactionID(1), new SequenceID(1),
-                                                        new LockID[0], new ClientID(new ChannelID(2)),
+                                                        new LockID[0], new ClientID(2),
                                                         new ArrayList(changes.values()), new ObjectStringSerializer(),
                                                         Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
                                                         DmiDescriptor.EMPTY_ARRAY, 1, new long[0]);
@@ -239,7 +238,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     changes.put(new ObjectID(4), new TestDNA(new ObjectID(4)));
 
     ServerTransaction stxn2 = new ServerTransactionImpl(new TxnBatchID(2), new TransactionID(2), new SequenceID(1),
-                                                        new LockID[0], new ClientID(new ChannelID(2)),
+                                                        new LockID[0], new ClientID(2),
                                                         new ArrayList(changes.values()), new ObjectStringSerializer(),
                                                         Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
                                                         DmiDescriptor.EMPTY_ARRAY, 1, new long[0]);
@@ -317,7 +316,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     changes.clear();
     changes.put(new ObjectID(5), new TestDNA(new ObjectID(5)));
     ServerTransaction stxn3 = new ServerTransactionImpl(new TxnBatchID(3), new TransactionID(3), new SequenceID(2),
-                                                        new LockID[0], new ClientID(new ChannelID(2)),
+                                                        new LockID[0], new ClientID(2),
                                                         new ArrayList(changes.values()), new ObjectStringSerializer(),
                                                         Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
                                                         DmiDescriptor.EMPTY_ARRAY, 1, new long[0]);
@@ -347,7 +346,7 @@ public class TransactionalObjectManagerTest extends TCTestCase {
     // Next Txn , Object 5, 6
     changes.put(new ObjectID(6), new TestDNA(new ObjectID(6)));
     ServerTransaction stxn4 = new ServerTransactionImpl(new TxnBatchID(4), new TransactionID(4), new SequenceID(3),
-                                                        new LockID[0], new ClientID(new ChannelID(2)),
+                                                        new LockID[0], new ClientID(2),
                                                         new ArrayList(changes.values()), new ObjectStringSerializer(),
                                                         Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
                                                         DmiDescriptor.EMPTY_ARRAY, 1, new long[0]);

@@ -39,7 +39,8 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
   private final CopyOnWriteArrayMap activeChannels = new CopyOnWriteArrayMap(
                                                                              new CopyOnWriteArrayMap.TypedArrayFactory() {
 
-                                                                               public Object[] createTypedArray(final int size) {
+                                                                               public Object[] createTypedArray(
+                                                                                                                final int size) {
                                                                                  return new MessageChannel[size];
                                                                                }
 
@@ -68,7 +69,7 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
     for (Iterator i = clientIDs.iterator(); i.hasNext();) {
       ClientID id = (ClientID) i.next();
 
-      MessageChannel channel = genericChannelManager.getChannel(id.getChannelID());
+      MessageChannel channel = genericChannelManager.getChannel(new ChannelID(id.toLong()));
       if (channel != null) {
         channel.close();
       }
@@ -100,7 +101,7 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
   }
 
   private ClientHandshakeAckMessage newClientHandshakeAckMessage(final ClientID clientID) throws NoSuchChannelException {
-    MessageChannelInternal channel = genericChannelManager.getChannel(clientID.getChannelID());
+    MessageChannelInternal channel = genericChannelManager.getChannel(new ChannelID(clientID.toLong()));
     if (channel == null) { throw new NoSuchChannelException(); }
     return (ClientHandshakeAckMessage) channel.createMessage(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE);
   }
@@ -182,7 +183,7 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
   }
 
   public ClientID getClientIDFor(final ChannelID channelID) {
-    return new ClientID(channelID);
+    return new ClientID(channelID.toLong());
   }
 
 }

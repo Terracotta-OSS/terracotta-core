@@ -10,7 +10,6 @@ import com.tc.exception.ImplementMe;
 import com.tc.exception.TCRuntimeException;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
@@ -148,7 +147,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     this.transactionManager.addTransactionListener(l2);
 
     Set txns = new HashSet();
-    ClientID cid1 = new ClientID(new ChannelID(1));
+    ClientID cid1 = new ClientID(1);
     List dnas = Collections.unmodifiableList(new LinkedList());
     ObjectStringSerializer serializer = null;
     Map newRoots = Collections.unmodifiableMap(new HashMap());
@@ -243,14 +242,14 @@ public class ServerTransactionManagerImplTest extends TestCase {
    * acks are being waited for, a concurrent modification exception was thrown.
    */
   public void test2ClientsDisconnectAtTheSameTime() throws Exception {
-    ClientID cid1 = new ClientID(new ChannelID(1));
+    ClientID cid1 = new ClientID(1);
     TransactionID tid1 = new TransactionID(1);
     TransactionID tid2 = new TransactionID(2);
     TransactionID tid3 = new TransactionID(3);
-    ClientID cid2 = new ClientID(new ChannelID(2));
-    ClientID cid3 = new ClientID(new ChannelID(3));
-    ClientID cid4 = new ClientID(new ChannelID(4));
-    ClientID cid5 = new ClientID(new ChannelID(5));
+    ClientID cid2 = new ClientID(2);
+    ClientID cid3 = new ClientID(3);
+    ClientID cid4 = new ClientID(4);
+    ClientID cid5 = new ClientID(5);
 
     LockID[] lockIDs = new LockID[0];
     List dnas = Collections.unmodifiableList(new LinkedList());
@@ -328,7 +327,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
   }
 
   public void tests() throws Exception {
-    ClientID cid1 = new ClientID(new ChannelID(1));
+    ClientID cid1 = new ClientID(1);
     TransactionID tid1 = new TransactionID(1);
     TransactionID tid2 = new TransactionID(2);
     TransactionID tid3 = new TransactionID(3);
@@ -336,8 +335,8 @@ public class ServerTransactionManagerImplTest extends TestCase {
     TransactionID tid5 = new TransactionID(5);
     TransactionID tid6 = new TransactionID(6);
 
-    ClientID cid2 = new ClientID(new ChannelID(2));
-    ClientID cid3 = new ClientID(new ChannelID(3));
+    ClientID cid2 = new ClientID(2);
+    ClientID cid3 = new ClientID(3);
 
     LockID[] lockIDs = new LockID[0];
     List dnas = Collections.unmodifiableList(new LinkedList());

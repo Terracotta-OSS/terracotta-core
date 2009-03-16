@@ -10,7 +10,6 @@ import com.tc.lang.Recyclable;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.groups.SingleNodeGroupManager;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
@@ -53,7 +52,7 @@ public class ReplicatedTransactionManagerTest extends TestCase {
 
   @Override
   public void setUp() throws Exception {
-    this.clientID = new ClientID(new ChannelID(1));
+    this.clientID = new ClientID(1);
     this.grpMgr = new SingleNodeGroupManager();
     this.txnMgr = new TestServerTransactionManager();
     this.gtxm = new TestGlobalTransactionManager();

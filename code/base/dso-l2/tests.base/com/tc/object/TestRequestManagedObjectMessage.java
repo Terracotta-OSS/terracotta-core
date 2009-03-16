@@ -7,7 +7,6 @@ package com.tc.object;
 import com.tc.async.api.EventContext;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.RequestManagedObjectMessage;
 import com.tc.util.ObjectIDSet;
@@ -58,7 +57,7 @@ public class TestRequestManagedObjectMessage implements RequestManagedObjectMess
   }
 
   public NodeID getSourceNodeID() {
-    return new ClientID(new ChannelID(0));
+    return new ClientID(0);
   }
 
   public int getRequestDepth() {
@@ -78,6 +77,6 @@ public class TestRequestManagedObjectMessage implements RequestManagedObjectMess
   }
 
   public ClientID getClientID() {
-    return new ClientID(new ChannelID(0));
+    return new ClientID(0);
   }
 }

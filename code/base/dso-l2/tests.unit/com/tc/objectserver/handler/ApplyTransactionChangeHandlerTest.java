@@ -8,7 +8,6 @@ import com.tc.async.impl.MockSink;
 import com.tc.async.impl.MockStage;
 import com.tc.l2.ha.L2HADisabledCooridinator;
 import com.tc.net.ClientID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.lockmanager.api.LockID;
@@ -76,7 +75,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     TxnBatchID batchID = new TxnBatchID(1);
     TransactionID txID = new TransactionID(1);
     LockID[] lockIDs = new LockID[] { new LockID("1") };
-    ClientID cid = new ClientID(new ChannelID(1));
+    ClientID cid = new ClientID(1);
     List dnas = Collections.unmodifiableList(new LinkedList());
     ObjectStringSerializer serializer = null;
     Map newRoots = Collections.unmodifiableMap(new HashMap());

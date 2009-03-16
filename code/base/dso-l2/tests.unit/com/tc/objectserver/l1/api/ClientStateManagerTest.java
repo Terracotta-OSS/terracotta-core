@@ -6,7 +6,6 @@ package com.tc.objectserver.l1.api;
 
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.TestDNA;
 import com.tc.objectserver.l1.impl.ClientStateManagerImpl;
@@ -42,8 +41,8 @@ public class ClientStateManagerTest extends TestCase {
     Set testSet = new HashSet();
     Set lookupObjectIDs = new HashSet();
 
-    ClientID cid0 = new ClientID(new ChannelID(0));
-    ClientID cid1 = new ClientID(new ChannelID(1));
+    ClientID cid0 = new ClientID(0);
+    ClientID cid1 = new ClientID(1);
     stateManager.startupNode(cid1);
     assertTrue(stateManager.createPrunedChangesAndAddObjectIDTo(changes, new BackReferences(), cid1, lookupObjectIDs)
         .size() == 0);

@@ -10,7 +10,6 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ClusterMetaDataManager;
 import com.tc.object.ObjectID;
@@ -300,7 +299,7 @@ public class DsoClusterImpl implements DsoClusterInternal {
       stateWriteLock.unlock();
     }
 
-    fireNodeLeft(new ClientID(new ChannelID(currentNode.getChannelId())));
+    fireNodeLeft(new ClientID(currentNode.getChannelId()));
   }
 
   public void fireNodeJoined(final NodeID nodeId) {

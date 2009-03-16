@@ -7,7 +7,6 @@ package com.tc.object.msg;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ClientID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
@@ -57,7 +56,7 @@ public class BroadcastTransactionMessageTest extends TestCase {
     LockID[] lockIDs = new LockID[] { new LockID("1") };
     long cid = 10;
     TransactionID txID = new TransactionID(1);
-    ClientID clientID = new ClientID(new ChannelID(1));
+    ClientID clientID = new ClientID(1);
     GlobalTransactionID gtx = new GlobalTransactionID(2);
     TxnType txnType = TxnType.NORMAL;
     GlobalTransactionID lowGlobalTransactionIDWatermark = new GlobalTransactionID(1);

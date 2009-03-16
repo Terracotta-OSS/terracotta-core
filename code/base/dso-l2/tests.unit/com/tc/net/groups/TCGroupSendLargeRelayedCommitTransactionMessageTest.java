@@ -19,7 +19,6 @@ import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
@@ -104,13 +103,13 @@ public class TCGroupSendLargeRelayedCommitTransactionMessageTest extends TCTestC
 
     testCommitTransactionMessage = (TestCommitTransactionMessage) new TestCommitTransactionMessageFactory()
         .newCommitTransactionMessage(GroupID.NULL_ID);
-    testCommitTransactionMessage.setChannelID(new ClientID(new ChannelID(channelId)));
+    testCommitTransactionMessage.setChannelID(new ClientID(channelId));
     testCommitTransactionMessage.setBatch(new TestTransactionBatch(new TCByteBuffer[] { TCByteBufferFactory
         .getInstance(false, batchSize) }), new ObjectStringSerializer());
 
     serverTransactionIDs = new ArrayList();
     transactions = new ArrayList();
-    ClientID cid = new ClientID(new ChannelID(channelId));
+    ClientID cid = new ClientID(channelId);
     for (long i = 10; i < 20; ++i) {
       ServerTransactionID stid = new ServerTransactionID(cid, new TransactionID(i));
       serverTransactionIDs.add(stid);

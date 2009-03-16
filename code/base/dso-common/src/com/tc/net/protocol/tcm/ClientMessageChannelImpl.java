@@ -44,18 +44,18 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
     this.sessionProvider.initProvider(remoteNodeID);
   }
 
+  @Override
   public NetworkStackID open() throws TCTimeoutException, UnknownHostException, IOException,
       MaxConnectionsExceededException {
     final ChannelStatus status = getStatus();
 
     synchronized (status) {
       if (status.isOpen()) { throw new IllegalStateException("Channel already open"); }
-      ((MessageTransport) this.sendLayer).initConnectionID(new ConnectionID((((ClientID) getLocalNodeID())
-          .getChannelID().toLong())));
+      ((MessageTransport) this.sendLayer).initConnectionID(new ConnectionID((((ClientID) getLocalNodeID()).toLong())));
       NetworkStackID id = this.sendLayer.open();
       getStatus().open();
       this.channelID = new ChannelID(id.toLong());
-      setLocalNodeID(new ClientID(this.channelID));
+      setLocalNodeID(new ClientID(id.toLong()));
       this.cidProvider.setChannelID(this.channelID);
       this.channelSessionID = sessionProvider.getSessionID(getRemoteNodeID());
       return id;
@@ -88,6 +88,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   /*
    * Session message filter. To drop old session msgs when session changed.
    */
+  @Override
   public void send(final TCNetworkMessage message) {
     if (channelSessionID == ((DSOMessageBase) message).getLocalSessionID()) {
       super.send(message);
@@ -97,11 +98,13 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
     }
   }
 
+  @Override
   public void notifyTransportConnected(MessageTransport transport) {
     super.notifyTransportConnected(transport);
     connectCount++;
   }
 
+  @Override
   public void notifyTransportDisconnected(MessageTransport transport) {
     // Move channel to new session
     channelSessionID = sessionProvider.nextSessionID(getRemoteNodeID());
@@ -109,11 +112,13 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
     this.fireTransportDisconnectedEvent();
   }
 
+  @Override
   public void notifyTransportConnectAttempt(MessageTransport transport) {
     super.notifyTransportConnectAttempt(transport);
     connectAttemptCount++;
   }
 
+  @Override
   public void notifyTransportClosed(MessageTransport transport) {
     //
   }

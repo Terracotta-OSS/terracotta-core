@@ -9,7 +9,6 @@ import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.EnvironmentConfig;
 import com.tc.net.ClientID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
@@ -34,6 +33,7 @@ public class TransactionPersistorTest extends TCTestCase {
   private DatabaseConfig    dbcfg;
   private static int        count = 0;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     ecfg = new EnvironmentConfig();
@@ -72,12 +72,13 @@ public class TransactionPersistorTest extends TCTestCase {
                                                                                                                                    .getEnvironment());
     final TransactionPersistorImpl tpl = new TransactionPersistorImpl(env.getTransactionDatabase(),
                                                                       persistenceTransactionProvider);
-    final ServerTransactionID sid = new ServerTransactionID(new ClientID(new ChannelID(9)), new TransactionID(10));
+    final ServerTransactionID sid = new ServerTransactionID(new ClientID(9), new TransactionID(10));
     final GlobalTransactionDescriptor gtd = new GlobalTransactionDescriptor(sid, new GlobalTransactionID(909));
     final CyclicBarrier cb = new CyclicBarrier(2);
     final Exception ex[] = new Exception[2];
 
     Thread t1 = new Thread() {
+      @Override
       public void run() {
         try {
           Collection gdts = tpl.loadAllGlobalTransactionDescriptors();
@@ -98,6 +99,7 @@ public class TransactionPersistorTest extends TCTestCase {
     };
 
     Thread t2 = new Thread() {
+      @Override
       public void run() {
         try {
           PersistenceTransaction pt = persistenceTransactionProvider.newTransaction();
@@ -124,6 +126,7 @@ public class TransactionPersistorTest extends TCTestCase {
     if (ex[1] != null) throw ex[1];
   }
 
+  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
   }

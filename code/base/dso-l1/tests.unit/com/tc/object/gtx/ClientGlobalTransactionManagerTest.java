@@ -6,7 +6,6 @@ package com.tc.object.gtx;
 
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.tx.TestRemoteTransactionManager;
 import com.tc.object.tx.TransactionID;
 
@@ -16,6 +15,7 @@ public class ClientGlobalTransactionManagerTest extends TestCase {
 
   private ClientGlobalTransactionManagerImpl mgr;
 
+  @Override
   public void setUp() {
     mgr = new ClientGlobalTransactionManagerImpl(new TestRemoteTransactionManager());
   }
@@ -24,7 +24,7 @@ public class ClientGlobalTransactionManagerTest extends TestCase {
     int max = 5;
     for (int i = 100; i <= max; i++) {
       GlobalTransactionID gtx1 = new GlobalTransactionID(i);
-      ClientID cid = new ClientID(new ChannelID(i));
+      ClientID cid = new ClientID(i);
       TransactionID transactionID = new TransactionID(i);
       // start the apply
       assertTrue(mgr.startApply(cid, transactionID, gtx1, GroupID.NULL_ID));
@@ -33,7 +33,7 @@ public class ClientGlobalTransactionManagerTest extends TestCase {
 
       if (i > 2) {
         GlobalTransactionID lowWatermark = new GlobalTransactionID(i - 1);
-        ClientID chIDBelowWatermark = new ClientID(new ChannelID(i - 2));
+        ClientID chIDBelowWatermark = new ClientID(i - 2);
         TransactionID txIDBelowWatermark = new TransactionID(i - 2);
         GlobalTransactionID belowLowWatermark = new GlobalTransactionID(i - mgr.getAllowedLowWaterMarkDelta());
         mgr.setLowWatermark(lowWatermark, GroupID.NULL_ID);
@@ -49,7 +49,7 @@ public class ClientGlobalTransactionManagerTest extends TestCase {
   }
 
   public void testCleanup() throws Exception {
-    ClientID cid = new ClientID(new ChannelID(1));
+    ClientID cid = new ClientID(1);
     TransactionID txID = new TransactionID(1);
     GlobalTransactionID gtxID1 = new GlobalTransactionID(1);
     GlobalTransactionID gtxID2 = new GlobalTransactionID(2);

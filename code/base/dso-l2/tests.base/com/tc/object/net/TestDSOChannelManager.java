@@ -80,6 +80,6 @@ public class TestDSOChannelManager implements DSOChannelManager {
   }
 
   public ClientID getClientIDFor(ChannelID channelID) {
-    return new ClientID(channelID);
+    return new ClientID(channelID.toLong());
   }
 }

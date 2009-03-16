@@ -34,7 +34,7 @@ public class TestMessageChannel implements MessageChannel {
 
   public NodeID getLocalNodeID() {
     if (source == ClientID.NULL_ID) {
-      source = new ClientID(getChannelID());
+      source = new ClientID(getChannelID().toLong());
     }
     return source;
   }

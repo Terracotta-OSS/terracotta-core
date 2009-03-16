@@ -93,7 +93,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
 
   public DsoNodeMetaData retrieveMetaDataForDsoNode(final DsoNodeInternal node) {
     final NodeMetaDataMessage message = nmdmFactory.newNodeMetaDataMessage();
-    message.setNodeID(new ClientID(new ChannelID(node.getChannelId())));
+    message.setNodeID(new ClientID(new ChannelID(node.getChannelId()).toLong()));
     DsoNodeMetaData metaData = (DsoNodeMetaData) sendMessageAndWait(message);
     node.setMetaData(metaData);
     return metaData;

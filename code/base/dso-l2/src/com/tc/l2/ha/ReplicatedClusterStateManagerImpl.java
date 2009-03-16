@@ -19,7 +19,6 @@ import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupMessage;
 import com.tc.net.groups.GroupMessageListener;
 import com.tc.net.groups.GroupResponse;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
@@ -176,8 +175,8 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   private void sendChannelLifeCycleEventsIfNecessary(ClusterStateMessage msg) {
     if (msg.getType() == ClusterStateMessage.NEW_CONNECTION_CREATED) {
       // Not really needed, but just in case
-      channelLifeCycleSink.add(new NodeStateEventContext(NodeStateEventContext.CREATE, new ClientID(new ChannelID(msg
-          .getConnectionID().getChannelID()))));
+      channelLifeCycleSink.add(new NodeStateEventContext(NodeStateEventContext.CREATE, new ClientID(msg
+          .getConnectionID().getChannelID())));
     } else if (msg.getType() == ClusterStateMessage.CONNECTION_DESTROYED) {
       // this is needed to clean up some data structures internally
       // NOTE :: It is ok to add this event context directly to the channel life cycle handler (and not wrap around a
@@ -185,8 +184,8 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
       // server transaction manager.
       // XXX::FIXME:: The above statement is true only when this event is fixed to be fired from active after all txns
       // are acked in the active.
-      channelLifeCycleSink.add(new NodeStateEventContext(NodeStateEventContext.REMOVE, new ClientID(new ChannelID(msg
-          .getConnectionID().getChannelID()))));
+      channelLifeCycleSink.add(new NodeStateEventContext(NodeStateEventContext.REMOVE, new ClientID(msg
+          .getConnectionID().getChannelID())));
     }
   }
 

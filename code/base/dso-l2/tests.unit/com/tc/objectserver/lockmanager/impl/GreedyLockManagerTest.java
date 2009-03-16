@@ -54,15 +54,16 @@ import junit.framework.TestCase;
  * @author steve
  */
 public class GreedyLockManagerTest extends TestCase {
-  private TestSink         sink;
-  private LockManagerImpl  lockManager;
-  private Random           random     = new Random();
+  private TestSink               sink;
+  private LockManagerImpl        lockManager;
+  private final Random           random     = new Random();
 
-  final int                numLocks   = 100;
-  final int                numThreads = 30;
-  private LockID[]         locks      = makeUniqueLocks(numLocks);
-  private ServerThreadID[] txns       = makeUniqueTxns(numThreads);
+  final int                      numLocks   = 100;
+  final int                      numThreads = 30;
+  private final LockID[]         locks      = makeUniqueLocks(numLocks);
+  private final ServerThreadID[] txns       = makeUniqueTxns(numThreads);
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     resetLockManager();
@@ -88,6 +89,7 @@ public class GreedyLockManagerTest extends TestCase {
     }
   }
 
+  @Override
   protected void tearDown() throws Exception {
     assertEquals(0, lockManager.getLockCount());
     super.tearDown();
@@ -108,6 +110,7 @@ public class GreedyLockManagerTest extends TestCase {
       return null;
     }
 
+    @Override
     public String getChannelAddress(NodeID nid) {
       if (cid.equals(nid)) { return "127.0.0.1:6969"; }
       return "no longer connected";
@@ -119,9 +122,9 @@ public class GreedyLockManagerTest extends TestCase {
     MessageChannel channel = new TestMessageChannel();
 
     final long start = System.currentTimeMillis();
-    ClientID cid1 = new ClientID(new ChannelID(1));
-    ClientID cid2 = new ClientID(new ChannelID(2));
-    ClientID cid3 = new ClientID(new ChannelID(3));
+    ClientID cid1 = new ClientID(1);
+    ClientID cid2 = new ClientID(2);
+    ClientID cid3 = new ClientID(3);
     LockID lid1 = new LockID("1");
     LockID lid2 = new LockID("2");
     LockID lid3 = new LockID("3");
@@ -245,7 +248,7 @@ public class GreedyLockManagerTest extends TestCase {
 
   public void testReestablishWait() throws Exception {
     LockID lockID1 = new LockID("my lock");
-    ClientID cid1 = new ClientID(new ChannelID(1));
+    ClientID cid1 = new ClientID(1);
     ThreadID tx1 = new ThreadID(1);
     ThreadID tx2 = new ThreadID(2);
 
@@ -312,7 +315,7 @@ public class GreedyLockManagerTest extends TestCase {
 
   public void testReestablishLockAfterReestablishWait() throws Exception {
     LockID lockID1 = new LockID("my lock");
-    ClientID cid1 = new ClientID(new ChannelID(1));
+    ClientID cid1 = new ClientID(1);
     ThreadID tx1 = new ThreadID(1);
     ThreadID tx2 = new ThreadID(2);
     int requestedLevel = LockLevel.WRITE;
@@ -343,7 +346,7 @@ public class GreedyLockManagerTest extends TestCase {
 
   public void testReestablishReadLock() throws Exception {
     LockID lockID1 = new LockID("my lock");
-    ClientID cid1 = new ClientID(new ChannelID(1));
+    ClientID cid1 = new ClientID(1);
     ThreadID tx1 = new ThreadID(1);
     ThreadID tx2 = new ThreadID(2);
     ThreadID tx3 = new ThreadID(3);
@@ -402,8 +405,8 @@ public class GreedyLockManagerTest extends TestCase {
 
     LockID lockID1 = new LockID("my lock");
     LockID lockID2 = new LockID("my other lock");
-    ClientID cid1 = new ClientID(new ChannelID(1));
-    ClientID cid2 = new ClientID(new ChannelID(2));
+    ClientID cid1 = new ClientID(1);
+    ClientID cid2 = new ClientID(2);
     ThreadID tx1 = new ThreadID(1);
     ThreadID tx2 = new ThreadID(2);
     int requestedLevel = LockLevel.WRITE;
@@ -458,7 +461,7 @@ public class GreedyLockManagerTest extends TestCase {
 
   public void testWaitTimeoutsIgnoredDuringStartup() throws Exception {
     LockID lockID = new LockID("my lcok");
-    ClientID cid1 = new ClientID(new ChannelID(1));
+    ClientID cid1 = new ClientID(1);
     ThreadID tx1 = new ThreadID(1);
     try {
       long waitTime = 1000;
@@ -480,7 +483,7 @@ public class GreedyLockManagerTest extends TestCase {
 
   public void testOffDoesNotBlockUntilNoOutstandingLocksViaUnlock() throws Exception {
     List queue = sink.getInternalQueue();
-    ClientID cid1 = new ClientID(new ChannelID(1));
+    ClientID cid1 = new ClientID(1);
     LockID lock1 = new LockID("1");
     ThreadID tx1 = new ThreadID(1);
 
@@ -503,7 +506,7 @@ public class GreedyLockManagerTest extends TestCase {
 
   public void testOffStopsGrantingNewLocks() throws Exception {
     List queue = sink.getInternalQueue();
-    ClientID cid = new ClientID(new ChannelID(1));
+    ClientID cid = new ClientID(1);
     LockID lockID = new LockID("1");
     ThreadID txID = new ThreadID(1);
     try {
@@ -534,7 +537,7 @@ public class GreedyLockManagerTest extends TestCase {
 
   public void testRequestDoesntGrantPendingLocks() throws Exception {
     List queue = sink.getInternalQueue();
-    ClientID cid = new ClientID(new ChannelID(1));
+    ClientID cid = new ClientID(1);
     LockID lockID = new LockID("1");
     ThreadID txID = new ThreadID(1);
 
@@ -544,7 +547,7 @@ public class GreedyLockManagerTest extends TestCase {
       // the pending locks but instead a recall is issued
       lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, null, sink);
       queue.clear();
-      lockManager.requestLock(lockID, new ClientID(new ChannelID(2)), new ThreadID(2), LockLevel.WRITE, null, sink);
+      lockManager.requestLock(lockID, new ClientID(2), new ThreadID(2), LockLevel.WRITE, null, sink);
       // the second lock should be pending but a recall should be issued.
       assertEquals(1, queue.size());
       LockResponseContext lrc = (LockResponseContext) sink.take();
@@ -561,7 +564,7 @@ public class GreedyLockManagerTest extends TestCase {
 
   public void testUnlockIgnoredDuringShutdown() throws Exception {
     List queue = sink.getInternalQueue();
-    ClientID cid = new ClientID(new ChannelID(1));
+    ClientID cid = new ClientID(1);
     LockID lockID = new LockID("1");
     ThreadID txID = new ThreadID(1);
     try {
@@ -570,7 +573,7 @@ public class GreedyLockManagerTest extends TestCase {
       // the pending locks but instead a recall is issued
       lockManager.requestLock(lockID, cid, txID, LockLevel.WRITE, null, sink);
       queue.clear();
-      lockManager.requestLock(lockID, new ClientID(new ChannelID(2)), new ThreadID(2), LockLevel.WRITE, null, sink);
+      lockManager.requestLock(lockID, new ClientID(2), new ThreadID(2), LockLevel.WRITE, null, sink);
       // the second lock should be pending but a recall should be issued.
       assertEquals(1, queue.size());
       LockResponseContext lrc = (LockResponseContext) sink.take();
@@ -604,7 +607,7 @@ public class GreedyLockManagerTest extends TestCase {
 
     LockID l1 = new LockID("1");
     LockID l2 = new LockID("2");
-    ClientID c1 = new ClientID(new ChannelID(1));
+    ClientID c1 = new ClientID(1);
 
     ThreadID s1 = new ThreadID(1);
     ThreadID s2 = new ThreadID(2);
@@ -657,7 +660,7 @@ public class GreedyLockManagerTest extends TestCase {
     LockID l4 = new LockID("4");
     LockID l5 = new LockID("5");
 
-    ClientID c1 = new ClientID(new ChannelID(1));
+    ClientID c1 = new ClientID(1);
     ThreadID s1 = new ThreadID(1);
     ThreadID s2 = new ThreadID(2);
 
@@ -769,7 +772,7 @@ public class GreedyLockManagerTest extends TestCase {
   private ServerThreadID[] makeUniqueTxns(int num) {
     ServerThreadID[] rv = new ServerThreadID[num];
     for (int i = 0; i < num; i++) {
-      rv[i] = new ServerThreadID(new ClientID(new ChannelID(i)), new ThreadID(i));
+      rv[i] = new ServerThreadID(new ClientID(i), new ThreadID(i));
     }
     return rv;
   }
@@ -806,7 +809,7 @@ public class GreedyLockManagerTest extends TestCase {
     LockID l1 = new LockID("L1");
     LockID l2 = new LockID("L2");
     LockID l3 = new LockID("L3");
-    ClientID c0 = new ClientID(new ChannelID(0));
+    ClientID c0 = new ClientID(0);
     ThreadID s1 = new ThreadID(1);
     ThreadID s2 = new ThreadID(2);
     ThreadID s3 = new ThreadID(3);
@@ -852,6 +855,7 @@ public class GreedyLockManagerTest extends TestCase {
       this.shutdownSteps = shutdownSteps;
     }
 
+    @Override
     public void run() {
       try {
         shutdownSteps.put(new Object());
@@ -925,26 +929,26 @@ public class GreedyLockManagerTest extends TestCase {
     public void close() {
       throw new ImplementMe();
     }
-    
+
     public ClientID getLocalNodeID() {
       throw new ImplementMe();
     }
-    
+
     public void setLocalNodeID(ClientID source) {
       throw new ImplementMe();
     }
-    
+
     public NodeID getRemoteNodeID() {
       throw new ImplementMe();
     }
-    
+
     public void setRemoteNodeID(NodeID destination) {
       throw new ImplementMe();
     }
 
     public void setLocalNodeID(NodeID source) {
       throw new ImplementMe();
-      
+
     }
 
   }

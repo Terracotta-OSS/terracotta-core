@@ -7,6 +7,7 @@ package com.tc.object.msg;
 import com.tc.exception.ImplementMe;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
+import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.TestMessageChannel;
@@ -39,21 +40,24 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
   private TestMessageChannel    channel;
   private String                clientVersion;
 
+  @Override
   public void send() {
     sendCalls.put(new Object());
   }
 
+  @Override
   public MessageChannel getChannel() {
     synchronized (this) {
       if (channel == null) {
         channel = new TestMessageChannel();
-        channel.channelID = clientID.getChannelID();
+        channel.channelID = new ChannelID(clientID.toLong());
       }
 
       return channel;
     }
   }
 
+  @Override
   public NodeID getSourceNodeID() {
     return this.clientID;
   }
@@ -62,18 +66,22 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
     return clientObjectIds;
   }
 
+  @Override
   public TCMessageType getMessageType() {
     throw new ImplementMe();
   }
 
+  @Override
   public void hydrate() {
     //
   }
 
+  @Override
   public void dehydrate() {
     //
   }
 
+  @Override
   public int getTotalLength() {
     // TODO Auto-generated method stub
     return 0;

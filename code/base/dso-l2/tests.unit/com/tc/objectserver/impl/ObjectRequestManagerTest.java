@@ -156,7 +156,7 @@ public class ObjectRequestManagerTest extends TestCase {
     CyclicBarrier requestBarrier = new CyclicBarrier(numberOfRequestThreads);
 
     for (int i = 0; i < numberOfRequestThreads; i++) {
-      ClientID clientID = new ClientID(new ChannelID(i));
+      ClientID clientID = new ClientID(i);
       ObjectRequestThread objectRequestThread = new ObjectRequestThread(requestBarrier, objectRequestManager, clientID,
                                                                         new ObjectRequestID(i), ids, false);
       objectRequestThreadList.add(objectRequestThread);
@@ -229,7 +229,7 @@ public class ObjectRequestManagerTest extends TestCase {
     CyclicBarrier requestBarrier = new CyclicBarrier(numberOfRequestThreads);
 
     for (int i = 0; i < numberOfRequestThreads; i++) {
-      ClientID clientID = new ClientID(new ChannelID(i));
+      ClientID clientID = new ClientID(i);
       ObjectRequestThread objectRequestThread = new ObjectRequestThread(requestBarrier, objectRequestManager, clientID,
                                                                         new ObjectRequestID(i), ids, false);
       objectRequestThreadList.add(objectRequestThread);
@@ -338,7 +338,7 @@ public class ObjectRequestManagerTest extends TestCase {
     CyclicBarrier requestBarrier = new CyclicBarrier(numberOfRequestThreads);
 
     for (int i = 0; i < numberOfRequestThreads; i++) {
-      ClientID clientID = new ClientID(new ChannelID(i));
+      ClientID clientID = new ClientID(i);
       ObjectRequestThread objectRequestThread = new ObjectRequestThread(requestBarrier, objectRequestManager, clientID,
                                                                         new ObjectRequestID(i), ids, false);
       objectRequestThreadList.add(objectRequestThread);
@@ -434,7 +434,7 @@ public class ObjectRequestManagerTest extends TestCase {
     ObjectRequestManagerImpl objectRequestManager = new ObjectRequestManagerImpl(objectManager, channelManager,
                                                                                  clientStateManager, requestSink,
                                                                                  respondSink, new ObjectStatsRecorder());
-    ClientID clientID = new ClientID(new ChannelID(1));
+    ClientID clientID = new ClientID(1);
     ObjectRequestID requestID = new ObjectRequestID(1);
 
     int objectsToBeRequested = 100;
@@ -481,7 +481,7 @@ public class ObjectRequestManagerTest extends TestCase {
     ObjectRequestManagerImpl objectRequestManager = new ObjectRequestManagerImpl(objectManager, channelManager,
                                                                                  clientStateManager, requestSink,
                                                                                  respondSink, new ObjectStatsRecorder());
-    ClientID clientID = new ClientID(new ChannelID(1));
+    ClientID clientID = new ClientID(1);
     ObjectRequestID requestID = new ObjectRequestID(1);
     ObjectIDSet ids = createObjectIDSet(100);
 
@@ -503,7 +503,7 @@ public class ObjectRequestManagerTest extends TestCase {
   }
 
   public void testContexts() {
-    ClientID clientID = new ClientID(new ChannelID(1));
+    ClientID clientID = new ClientID(1);
     ObjectRequestID objectRequestID = new ObjectRequestID(1);
     ObjectIDSet ids = createObjectIDSet(100);
     ObjectIDSet missingIds = new ObjectIDSet();
@@ -535,8 +535,8 @@ public class ObjectRequestManagerTest extends TestCase {
     Assert.eval(reqObj1.equals(reqObj2));
     Assert.eval(reqObj1.hashCode() == reqObj2.hashCode());
 
-    ClientID clientID1 = new ClientID(new ChannelID(1));
-    ClientID clientID2 = new ClientID(new ChannelID(2));
+    ClientID clientID1 = new ClientID(1);
+    ClientID clientID2 = new ClientID(2);
 
     boolean testAdd = c.add(reqObj1, clientID1);
     Assert.assertTrue(testAdd);
@@ -692,7 +692,7 @@ public class ObjectRequestManagerTest extends TestCase {
     }
 
     public MessageChannel getActiveChannel(NodeID id) {
-      return new TestMessageChannel(((ClientID) id).getChannelID());
+      return new TestMessageChannel(new ChannelID(((ChannelID) id).toLong()));
     }
 
     public MessageChannel[] getActiveChannels() {
