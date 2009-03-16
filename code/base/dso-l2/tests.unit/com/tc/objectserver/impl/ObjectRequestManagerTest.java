@@ -692,7 +692,7 @@ public class ObjectRequestManagerTest extends TestCase {
     }
 
     public MessageChannel getActiveChannel(NodeID id) {
-      return new TestMessageChannel(new ChannelID(((ChannelID) id).toLong()));
+      return new TestMessageChannel(new ChannelID(((ClientID) id).toLong()));
     }
 
     public MessageChannel[] getActiveChannels() {
