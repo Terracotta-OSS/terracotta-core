@@ -62,6 +62,12 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
   public void run() {
     try {
       barrier.await();
+      System.err.println("Testing toString on shared lock - A");
+      toStringTest(root.getFairLock(), 0, 1);
+      System.err.println("Testing toString on shared lock - B");
+      toStringTest(root.getFairLock(), 1, 0);
+      System.err.println("Testing toString on unshared lock");
+      toStringTest(new ReentrantLock(), 0, 1);
 
       sharedUnSharedTesting();
       multipleReentrantLocksTesting();
@@ -114,6 +120,40 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
     } catch (Throwable t) {
       notifyError(t);
     }
+  }
+
+  private void toStringTest(ReentrantLock lock, int lockedByNode, int watcherNode) throws Exception {
+    Assert.assertTrue(lockedByNode == 0 || lockedByNode == 1);
+    Assert.assertTrue(watcherNode == 0 || watcherNode == 1);
+    int index = barrier.await();
+    if (index == lockedByNode) {
+      System.err.println(index + " Lock just before locking: " + lock.toString());
+      barrier2.await();
+      lock.lock();
+      System.err.println(index + " Locked");
+      barrier2.await();
+      try {
+        System.err.println(index + " Lock after locking: " + lock.toString());
+      } finally {
+        System.err.println(index + " Unlocking lock...");
+        barrier2.await();
+        lock.unlock();
+        System.err.println(index + " Unlocked");
+        barrier2.await();
+        System.err.println(index + " Lock after unlock: " + lock.toString());
+      }
+    } else if (index == watcherNode) {
+      System.err.println(index + " Lock just before locking: " + lock.toString());
+      barrier2.await();
+      barrier2.await();
+      System.err.println(index + " Lock after locking (by other node/thread): " + lock.toString());
+      barrier2.await();
+      barrier2.await();
+      System.err.println(index + " Lock after unlock: " + lock.toString());
+    } else {
+      System.err.println(index + " Not participating in toStringTest :(");
+    }
+    barrier.await();
   }
 
   private void tryLockTest(final ReentrantLock lock) throws Exception {

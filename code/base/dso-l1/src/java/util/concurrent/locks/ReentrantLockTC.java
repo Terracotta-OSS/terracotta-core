@@ -91,14 +91,15 @@ public class ReentrantLockTC extends ReentrantLock implements TCLock, NotClearab
       return super.isLocked();
     }
   }
-
+  
   private String getLockState() {
-    return (isLocked() ? (isHeldByCurrentThread() ? "[Locked by current thread "+getOwner().getName()+"]" : "[Locked by other thread "+getOwner().getName()+"]") : "[Unlocked]");
+    return isLocked() ? (isHeldByCurrentThread() ? "[Locked by current thread]" : "[Locked by other thread]") : "[Unlocked]";
   }
 
   public String toString() {
     if (ManagerUtil.isManaged(this)) {
-      return (new StringBuilder()).append(super.toString()).append(getLockState()).toString();
+      String objectString = getClass().getName() + "@" + Integer.toHexString(hashCode());
+      return (new StringBuilder()).append(objectString).append(getLockState()).toString();
     } else {
       return super.toString();
     }
