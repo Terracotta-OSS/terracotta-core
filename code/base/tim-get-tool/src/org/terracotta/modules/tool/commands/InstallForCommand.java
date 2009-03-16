@@ -22,7 +22,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class InstallFromCommand extends ModuleOperatorCommand {
+public class InstallForCommand extends ModuleOperatorCommand {
 
   private static final String             LONGOPT_OVERWRITE = "overwrite";
   private static final String             LONGOPT_FORCE     = "force";
@@ -31,7 +31,7 @@ public class InstallFromCommand extends ModuleOperatorCommand {
 
   private final Collection<InstallOption> installOptions;
 
-  public InstallFromCommand() {
+  public InstallForCommand() {
     options.addOption(buildOption(LONGOPT_OVERWRITE, "Install anyway, even if already installed"));
     options.addOption(buildOption(LONGOPT_FORCE, "Synonym to overwrite"));
     options.addOption(buildOption(LONGOPT_PRETEND, "Do not perform actual installation"));
@@ -42,7 +42,7 @@ public class InstallFromCommand extends ModuleOperatorCommand {
 
   @Override
   public String name() {
-    return "install-from";
+    return "install-for";
   }
 
   @Override

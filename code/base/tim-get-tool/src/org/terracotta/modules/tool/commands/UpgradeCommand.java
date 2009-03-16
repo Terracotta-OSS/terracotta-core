@@ -12,6 +12,7 @@ import org.terracotta.modules.tool.InstallOption;
 import org.terracotta.modules.tool.Module;
 
 import com.tc.config.Loader;
+import com.tc.util.StringUtil;
 import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
@@ -51,7 +52,8 @@ public class UpgradeCommand extends ModuleOperatorCommand {
 
   @Override
   public String description() {
-    return "Upgrade your tc-config.xml to latest versions of TIMs and install them if needed";
+    return "Upgrade your tc-config.xml to latest versions of TIMs and " + StringUtil.LINE_SEPARATOR
+           + "                  install them if needed";
   }
 
   public void execute(CommandLine cli) {

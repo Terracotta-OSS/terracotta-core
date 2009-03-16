@@ -51,7 +51,7 @@ public class HelpCommand extends AbstractCommand {
       for (String name : list) {
         try {
           Command cmd = commandRegistry.getCommand(name);
-          out.println(StringUtils.leftPad(cmd.name(), 10) + "   " + cmd.description());
+          out.println(StringUtils.leftPad(cmd.name(), 15) + "   " + cmd.description());
         } catch (UnknownCommandException e) {
           //
         }
@@ -64,9 +64,9 @@ public class HelpCommand extends AbstractCommand {
 
       out.println();
       out.println("Properties file:");
-      out.println("   For most cases there is no need to edit it, but there is a tim-get.properties ");
-      out.println("   file in the lib/resources folder that dictates " + scriptName + "'s");
-      out.println("   behavior - read the file for details.");
+      out.println("   For most cases there is no need to edit it, but there is a  ");
+      out.println("   tim-get.properties file in the lib/resources folder that ");
+      out.println("   dictates " + scriptName + "'s behavior. Read the file for details.");
       return;
     }
 

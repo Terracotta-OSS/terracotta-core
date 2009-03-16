@@ -12,7 +12,7 @@ import org.terracotta.modules.tool.commands.CommandRegistry;
 import org.terracotta.modules.tool.commands.HelpCommand;
 import org.terracotta.modules.tool.commands.InfoCommand;
 import org.terracotta.modules.tool.commands.InstallCommand;
-import org.terracotta.modules.tool.commands.InstallFromCommand;
+import org.terracotta.modules.tool.commands.InstallForCommand;
 import org.terracotta.modules.tool.commands.ListCommand;
 import org.terracotta.modules.tool.commands.UpdateCommand;
 import org.terracotta.modules.tool.commands.UpgradeCommand;
@@ -76,7 +76,7 @@ public class TIMGetTool {
       commandRegistry.addCommand(injector.getInstance(HelpCommand.class));
       commandRegistry.addCommand(injector.getInstance(InfoCommand.class));
       commandRegistry.addCommand(injector.getInstance(InstallCommand.class));
-      commandRegistry.addCommand(injector.getInstance(InstallFromCommand.class));
+      commandRegistry.addCommand(injector.getInstance(InstallForCommand.class));
       commandRegistry.addCommand(injector.getInstance(ListCommand.class));
       commandRegistry.addCommand(injector.getInstance(UpdateCommand.class));
       commandRegistry.addCommand(injector.getInstance(UpgradeCommand.class));
