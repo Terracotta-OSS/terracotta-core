@@ -48,6 +48,7 @@ public class H2StatisticsStoreTest extends TestCase {
 
   private Random random = new Random();
 
+  @Override
   public void setUp() throws Exception {
     tmpDir = createTmpDir();
     store = new H2StatisticsStoreImpl(tmpDir);
@@ -64,6 +65,7 @@ public class H2StatisticsStoreTest extends TestCase {
     return tmp_dir;
   }
 
+  @Override
   public void tearDown() throws Exception {
     store.close();
   }
@@ -282,7 +284,7 @@ public class H2StatisticsStoreTest extends TestCase {
 
     final int[] count = new int[] {0};
     store.retrieveStatistics(new StatisticsRetrievalCriteria(), new StatisticDataUser() {
-      public boolean useStatisticData(StatisticData data) {
+      public boolean useStatisticData(final StatisticData data) {
         count[0]++;
         return true;
       }
@@ -301,7 +303,7 @@ public class H2StatisticsStoreTest extends TestCase {
       .data("stuff"));
     count[0] = 0;
     store.retrieveStatistics(new StatisticsRetrievalCriteria(), new StatisticDataUser() {
-      public boolean useStatisticData(StatisticData data) {
+      public boolean useStatisticData(final StatisticData data) {
         count[0]++;
         return true;
       }
@@ -317,7 +319,7 @@ public class H2StatisticsStoreTest extends TestCase {
       .data("stuff2"));
     count[0] = 0;
     store.retrieveStatistics(new StatisticsRetrievalCriteria(), new StatisticDataUser() {
-      public boolean useStatisticData(StatisticData data) {
+      public boolean useStatisticData(final StatisticData data) {
         count[0]++;
         return true;
       }
@@ -333,7 +335,7 @@ public class H2StatisticsStoreTest extends TestCase {
       .data("stuff3"));
     count[0] = 0;
     store.retrieveStatistics(new StatisticsRetrievalCriteria(), new StatisticDataUser() {
-      public boolean useStatisticData(StatisticData data) {
+      public boolean useStatisticData(final StatisticData data) {
         count[0]++;
         return true;
       }
@@ -344,7 +346,7 @@ public class H2StatisticsStoreTest extends TestCase {
   public void testRetrieveStatistics() throws Exception {
     String sessionid1 = "34987";
     String sessionid2 = "9367";
-    
+
     Date before = new Date();
     Thread.sleep(500);
     populateBufferWithStatistics(sessionid1, sessionid2);
@@ -529,7 +531,7 @@ public class H2StatisticsStoreTest extends TestCase {
       .data(new BigDecimal("6828.577")));
 
     store.retrieveStatistics(new StatisticsRetrievalCriteria().sessionId("sessionid1"), new StatisticDataUser() {
-        public boolean useStatisticData(StatisticData data) {
+        public boolean useStatisticData(final StatisticData data) {
           assertTrue(data.getData() instanceof String);
           assertEquals("string", data.getData());
           return true;
@@ -537,7 +539,7 @@ public class H2StatisticsStoreTest extends TestCase {
       });
 
     store.retrieveStatistics(new StatisticsRetrievalCriteria().sessionId("sessionid2"), new StatisticDataUser() {
-        public boolean useStatisticData(StatisticData data) {
+        public boolean useStatisticData(final StatisticData data) {
           assertTrue(data.getData() instanceof Date);
           assertEquals(date_data, data.getData());
           return true;
@@ -545,7 +547,7 @@ public class H2StatisticsStoreTest extends TestCase {
       });
 
     store.retrieveStatistics(new StatisticsRetrievalCriteria().sessionId("sessionid3"), new StatisticDataUser() {
-        public boolean useStatisticData(StatisticData data) {
+        public boolean useStatisticData(final StatisticData data) {
           assertTrue(data.getData() instanceof Long);
           assertEquals(new Long(28756L), data.getData());
           return true;
@@ -553,7 +555,7 @@ public class H2StatisticsStoreTest extends TestCase {
       });
 
     store.retrieveStatistics(new StatisticsRetrievalCriteria().sessionId("sessionid4"), new StatisticDataUser() {
-        public boolean useStatisticData(StatisticData data) {
+        public boolean useStatisticData(final StatisticData data) {
           assertTrue(data.getData() instanceof BigDecimal);
           assertEquals(0, new BigDecimal("6828.577").compareTo((BigDecimal)data.getData()));
           return true;
@@ -781,7 +783,7 @@ public class H2StatisticsStoreTest extends TestCase {
     db.parse(new InputSource(new StringReader(result2)));
 
     StringWriter writer3 = new StringWriter();
-    store.aggregateStatisticsData(writer3, TextualDataFormat.XML, "somesession1", "D1", new String[] {"stat1","stat2"}, null, new Long(3000));
+    store.aggregateStatisticsData(writer3, TextualDataFormat.XML, "somesession1", "D1", new String[] {"stat1","stat2"}, null, new Long(10000));
     String result3 = writer3.getBuffer().toString();
     System.out.println("result3 : "+result3);
     String[] result3b = StringUtils.split(result3, '\n');
@@ -789,10 +791,10 @@ public class H2StatisticsStoreTest extends TestCase {
 
     db.parse(new InputSource(new StringReader(result3)));
 
-    Thread.sleep(4000);
+    Thread.sleep(11000);
 
     StringWriter writer4 = new StringWriter();
-    store.aggregateStatisticsData(writer4, TextualDataFormat.XML, "somesession1", "D1", new String[] {"stat1","stat2"}, null, new Long(3000));
+    store.aggregateStatisticsData(writer4, TextualDataFormat.XML, "somesession1", "D1", new String[] {"stat1","stat2"}, null, new Long(10000));
     String result4 = writer4.getBuffer().toString();
     System.out.println("result4 : "+result4);
     String[] result4b = StringUtils.split(result4, '\n');
@@ -811,14 +813,14 @@ public class H2StatisticsStoreTest extends TestCase {
     final int[] count_before = new int[] {0};
 
     store.retrieveStatistics(new StatisticsRetrievalCriteria(), new StatisticDataUser() {
-      public boolean useStatisticData(StatisticData data) {
+      public boolean useStatisticData(final StatisticData data) {
         txt_buffer_before.append(data.toString());
         txt_buffer_before.append("\n");
         count_before[0]++;
         return true;
       }
     });
-    
+
     ByteArrayOutputStream os = new ByteArrayOutputStream();
     store.retrieveStatisticsAsCsvStream(os, "", new StatisticsRetrievalCriteria(), false);
     String csv_buffer = os.toString("UTF-8");
@@ -826,7 +828,7 @@ public class H2StatisticsStoreTest extends TestCase {
     store.reinitialize();
 
     store.retrieveStatistics(new StatisticsRetrievalCriteria(), new StatisticDataUser() {
-      public boolean useStatisticData(StatisticData data) {
+      public boolean useStatisticData(final StatisticData data) {
         fail("The store should be empty.");
         return true;
       }
@@ -864,14 +866,14 @@ public class H2StatisticsStoreTest extends TestCase {
     final StringBuffer txt_buffer_after = new StringBuffer();
     final int[] count_after = new int[] {0};
     store.retrieveStatistics(new StatisticsRetrievalCriteria(), new StatisticDataUser() {
-      public boolean useStatisticData(StatisticData data) {
+      public boolean useStatisticData(final StatisticData data) {
         txt_buffer_after.append(data.toString());
         txt_buffer_after.append("\n");
         count_after[0]++;
         return true;
       }
     });
-    
+
     assertEquals(txt_buffer_before.toString(), txt_buffer_after.toString());
     assertEquals(count_before[0], count_after[0]);
   }
@@ -942,22 +944,22 @@ public class H2StatisticsStoreTest extends TestCase {
 
     private boolean limitWithExceptions = false;
 
-    public TestStaticticConsumer countLimit1(int countLimit) {
+    public TestStaticticConsumer countLimit1(final int countLimit) {
       this.countLimit1 = countLimit;
       return this;
     }
 
-    public TestStaticticConsumer countLimit2(int countLimit) {
+    public TestStaticticConsumer countLimit2(final int countLimit) {
       this.countLimit2 = countLimit;
       return this;
     }
 
-    public TestStaticticConsumer limitWithExceptions(boolean limitWithExceptionsArg) {
+    public TestStaticticConsumer limitWithExceptions(final boolean limitWithExceptionsArg) {
       this.limitWithExceptions = limitWithExceptionsArg;
       return this;
     }
 
-    public boolean useStatisticData(StatisticData data) {
+    public boolean useStatisticData(final StatisticData data) {
       StatisticData previous = (StatisticData)lastDataPerSession.get(data.getSessionId());
       if (previous != null) {
         assertTrue(previous.getMoment().compareTo(data.getMoment()) <= 0);
@@ -997,7 +999,7 @@ public class H2StatisticsStoreTest extends TestCase {
       return true;
     }
 
-    public void ensureCorrectCounts(int count1, int count2) {
+    public void ensureCorrectCounts(final int count1, final int count2) {
       assertEquals(count1, statCount1);
       assertEquals(count2, statCount2);
     }
@@ -1024,7 +1026,7 @@ public class H2StatisticsStoreTest extends TestCase {
       closed = true;
     }
 
-    public void sessionCleared(String sessionId) {
+    public void sessionCleared(final String sessionId) {
       sessionCleared = sessionId;
     }
 
