@@ -64,7 +64,7 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
     return gcRunner.isGCRunning();
   }
 
-  public synchronized void runGC() {
+  public synchronized boolean runGC() {
     if (!isEnabled()) {
       logger.warn("Cannot run DGC because mBean is not enabled.");
     }
@@ -85,7 +85,7 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
 
     if (!gcController.isGCStarted()) {
       logger.warn("Cannot run DGC externally because this server " + "is in PASSIVE state and DGC is disabled.");
-      return;
+      return false;
     }
     // XXX::Note:: There is potencially a rare here, one could check to see
     // if it is disabled and before DGC is started it could be disabled. In
@@ -93,16 +93,18 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
     if (gcController.isGCDisabled()) {
       logger.warn("Cannot run DGC externally because PASSIVE server(s) are currently synching state "
                   + "with this ACTIVE server and DGC is disabled.");
-      return;
+      return false;
     }
     if (isGCRunning()) {
       logger.warn("Cannot run DGC because DGC is already running.");
-      return;
+      return false;
     }
 
     Thread gcRunnerThread = new Thread(gcRunner);
     gcRunnerThread.setName("DGCRunnerThread");
     gcRunnerThread.start();
+    
+    return true;
   }
 
   public synchronized void reset() {

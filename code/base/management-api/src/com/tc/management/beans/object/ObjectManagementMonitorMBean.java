@@ -10,7 +10,7 @@ import java.util.SortedSet;
 
 public interface ObjectManagementMonitorMBean extends TerracottaMBean {
 
-  void runGC();
+  boolean runGC();
 
   boolean isGCRunning();
 
