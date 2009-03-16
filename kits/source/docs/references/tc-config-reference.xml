@@ -813,6 +813,22 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
         <web-application>ROOT</web-application>
       </web-applications>
 
+      <!-- In order to share common classes between different applications, 
+         declare the applications to be in the same app-group. The applications
+         must be run on separate Terracotta nodes; sharing data between different
+         applications in the same node (e.g., the same app server instance) is
+         not supported. In order to use a named-classloader element you need to
+         know the name of the classloader; see the named-loader-debug property in
+         order to record all registered classloader names in the log file.
+      -->
+      <app-groups> 
+        <app-group name="petstore-group"> 
+          <web-application>petstore</web-application> 
+          <web-application>billing_app</web-application> 
+          <named-classloader>Standard.system</named-classloader> 
+        </app-group> 
+      </app-groups> 
+      
       <!-- When enabled, the default, mutations to shared objects made
          through reflection behave like normal shared object changes. When
          disabled, changes made to shared objects via reflection are not
