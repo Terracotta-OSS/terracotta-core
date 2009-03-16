@@ -831,7 +831,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
                                                  new RequestLockUnLockHandler(), 1, maxStageSize);
     ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(this.communicationsManager,
                                                                                   transactionBatchManager,
-                                                                                  channelManager);
+                                                                                  channelManager, l2State);
     stageManager.createStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE, channelLifeCycleHandler, 1,
                              maxStageSize);
     channelManager.addEventListener(channelLifeCycleHandler);

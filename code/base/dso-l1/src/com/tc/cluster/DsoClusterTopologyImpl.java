@@ -3,10 +3,9 @@
  */
 package com.tc.cluster;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
+import com.tc.util.Assert;
 import com.tcclient.cluster.DsoNode;
 import com.tcclient.cluster.DsoNodeImpl;
 import com.tcclient.cluster.DsoNodeInternal;
@@ -18,8 +17,6 @@ import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class DsoClusterTopologyImpl implements DsoClusterTopology {
-  private static final TCLogger                  LOGGER         = TCLogging.getLogger(DsoClusterTopologyImpl.class);
-
   private final Map<NodeID, DsoNodeInternal>     nodes          = new HashMap<NodeID, DsoNodeInternal>();
 
   private final ReentrantReadWriteLock           nodesLock      = new ReentrantReadWriteLock();
@@ -36,7 +33,16 @@ public class DsoClusterTopologyImpl implements DsoClusterTopology {
     }
   }
 
-  DsoNodeInternal getDsoNode(final NodeID nodeId) {
+  boolean containsDsoNode(final NodeID nodeId) {
+    nodesReadLock.lock();
+    try {
+      return nodes.containsKey(nodeId);
+    } finally {
+      nodesReadLock.unlock();
+    }
+  }
+
+  DsoNodeInternal getAndRegisterDsoNode(final NodeID nodeId) {
     nodesReadLock.lock();
     try {
       DsoNodeInternal node = nodes.get(nodeId);
@@ -52,9 +58,7 @@ public class DsoClusterTopologyImpl implements DsoClusterTopology {
     nodesWriteLock.lock();
     try {
       DsoNodeInternal node = nodes.remove(nodeId);
-      // Disabling this assertion until cluster events properly support AA
-      // Assert.assertNotNull(node);
-      LOGGER.warn("there was no existing node for ID " + nodeId);
+      Assert.assertNotNull(node);
       return node;
     } finally {
       nodesWriteLock.unlock();

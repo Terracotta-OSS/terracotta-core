@@ -26,6 +26,9 @@ import com.tc.object.lockmanager.api.ClientLockManager;
 import com.tc.object.lockmanager.impl.ClientLockManagerConfigImpl;
 import com.tc.object.lockmanager.impl.RemoteLockManagerImpl;
 import com.tc.object.logging.RuntimeLogger;
+import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
+import com.tc.object.msg.NodeMetaDataMessageFactory;
+import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
@@ -35,6 +38,7 @@ import com.tc.object.tx.TransactionBatchWriter.FoldingConfig;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.util.ToggleableReferenceManager;
+import com.tc.util.runtime.ThreadIDManager;
 import com.tc.util.sequence.BatchSequence;
 import com.tc.util.sequence.BatchSequenceReceiver;
 
@@ -56,6 +60,13 @@ public interface DSOClientBuilder {
   RemoteObjectManager createRemoteObjectManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
                                                 final ObjectRequestMonitor objectRequestMonitor, final int faultCount,
                                                 final SessionManager sessionManager);
+
+  ClusterMetaDataManager createClusterMetaDataManager(final DSOClientMessageChannel dsoChannel,
+                                                      final DNAEncoding encoding,
+                                                      final ThreadIDManager threadIDManager,
+                                                      final NodesWithObjectsMessageFactory nwoFactory,
+                                                      final KeysForOrphanedValuesMessageFactory kfovFactory,
+                                                      final NodeMetaDataMessageFactory nmdmFactory);
 
   ClientObjectManagerImpl createObjectManager(final RemoteObjectManager remoteObjectManager,
                                               final DSOClientConfigHelper dsoConfig, final ObjectIDProvider idProvider,

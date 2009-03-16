@@ -10,7 +10,6 @@ import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.object.dna.api.DNA;
-import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.RequestManagedObjectMessage;
 import com.tc.object.msg.RequestManagedObjectMessageFactory;
@@ -41,9 +40,9 @@ import java.util.Map.Entry;
 /**
  * This class is responsible for any communications to the server for object retrieval and removal
  */
-public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHandshakeCallback {
+public class RemoteObjectManagerImpl implements RemoteObjectManager {
 
-  private static final long                        RETRIVE_WAIT_INTERVAL     = 15000;
+  private static final long                        RETRIEVE_WAIT_INTERVAL     = 15000;
 
   private static final State                       PAUSED                    = new State("PAUSED");
   private static final State                       RUNNING                   = new State("RUNNING");
@@ -77,9 +76,9 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
   private long                                     hit                       = 0;
   private long                                     miss                      = 0;
 
-  public RemoteObjectManagerImpl(GroupID groupID, TCLogger logger, ClientIDProvider cip,
-                                 RequestRootMessageFactory rrmFactory, RequestManagedObjectMessageFactory rmomFactory,
-                                 ObjectRequestMonitor requestMonitor, int defaultDepth, SessionManager sessionManager) {
+  public RemoteObjectManagerImpl(final GroupID groupID, final TCLogger logger, final ClientIDProvider cip,
+                                 final RequestRootMessageFactory rrmFactory, final RequestManagedObjectMessageFactory rmomFactory,
+                                 final ObjectRequestMonitor requestMonitor, final int defaultDepth, final SessionManager sessionManager) {
     this.groupID = groupID;
     this.logger = logger;
     this.cip = cip;
@@ -90,7 +89,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
     this.sessionManager = sessionManager;
   }
 
-  public synchronized void pause(NodeID remote, int disconnected) {
+  public synchronized void pause(final NodeID remote, final int disconnected) {
     assertNotPaused("Attempt to pause while PAUSED");
     this.state = PAUSED;
     // XXX:: We are clearing unmaterialized DNAs and removed objects here because on connect we are going to send
@@ -100,11 +99,11 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
     notifyAll();
   }
 
-  public void initializeHandshake(NodeID thisNode, NodeID remoteNode, ClientHandshakeMessage handshakeMessage) {
+  public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode, final ClientHandshakeMessage handshakeMessage) {
     // NOP
   }
 
-  public synchronized void unpause(NodeID remote, int disconnected) {
+  public synchronized void unpause(final NodeID remote, final int disconnected) {
     assertPaused("Attempt to unpause while not PAUSED");
     this.state = RUNNING;
     requestOutstanding();
@@ -134,11 +133,11 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
     Util.selfInterruptIfNeeded(isInterrupted);
   }
 
-  private void assertPaused(Object message) {
+  private void assertPaused(final Object message) {
     if (this.state != PAUSED) { throw new AssertionError(message + ": " + this.state); }
   }
 
-  private void assertNotPaused(Object message) {
+  private void assertNotPaused(final Object message) {
     if (this.state == PAUSED) { throw new AssertionError(message + ": " + this.state); }
   }
 
@@ -153,19 +152,19 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
     }
   }
 
-  public DNA retrieve(ObjectID id) {
+  public DNA retrieve(final ObjectID id) {
     return basicRetrieve(id, this.defaultDepth, ObjectID.NULL_ID);
   }
 
-  public DNA retrieveWithParentContext(ObjectID id, ObjectID parentContext) {
+  public DNA retrieveWithParentContext(final ObjectID id, final ObjectID parentContext) {
     return basicRetrieve(id, this.defaultDepth, parentContext);
   }
 
-  public DNA retrieve(ObjectID id, int depth) {
+  public DNA retrieve(final ObjectID id, final int depth) {
     return basicRetrieve(id, depth, ObjectID.NULL_ID);
   }
 
-  public synchronized DNA basicRetrieve(ObjectID id, int depth, ObjectID parentContext) {
+  public synchronized DNA basicRetrieve(final ObjectID id, final int depth, final ObjectID parentContext) {
     boolean isInterrupted = false;
     if (id.getGroupID() != this.groupID.toInt()) {
       //
@@ -191,14 +190,14 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
 
       if (this.dnaRequests.get(id) == null) {
         long current = System.currentTimeMillis();
-        if (current - startTime >= RETRIVE_WAIT_INTERVAL) {
+        if (current - startTime >= RETRIEVE_WAIT_INTERVAL) {
           totalTime += current - startTime;
           startTime = current;
           this.logger.warn("Still waiting for " + totalTime + " ms to retrieve " + id + " depth : " + depth
                            + " parent : " + parentContext);
         }
         try {
-          wait(RETRIVE_WAIT_INTERVAL);
+          wait(RETRIEVE_WAIT_INTERVAL);
         } catch (InterruptedException e) {
           isInterrupted = true;
         }
@@ -217,7 +216,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
     return (DNA) this.dnaRequests.remove(id);
   }
 
-  private void sendRequest(ObjectRequestContext ctxt) {
+  private void sendRequest(final ObjectRequestContext ctxt) {
     RequestManagedObjectMessage rmom = createRequestManagedObjectMessage(ctxt);
     ObjectID id = null;
     for (ObjectID element : ctxt.getRequestedObjectIDs()) {
@@ -233,7 +232,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
     this.requestMonitor.notifyObjectRequest(ctxt);
   }
 
-  private RequestManagedObjectMessage createRequestManagedObjectMessage(ObjectRequestContext ctxt) {
+  private RequestManagedObjectMessage createRequestManagedObjectMessage(final ObjectRequestContext ctxt) {
     RequestManagedObjectMessage rmom = this.rmomFactory.newRequestManagedObjectMessage(this.groupID);
     Set<ObjectID> requestedObjectIDs = ctxt.getRequestedObjectIDs();
     if (this.removeObjects.isEmpty()) {
@@ -245,7 +244,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
     return rmom;
   }
 
-  public synchronized ObjectID retrieveRootID(String name) {
+  public synchronized ObjectID retrieveRootID(final String name) {
 
     if (!this.rootRequests.containsKey(name)) {
       RequestRootMessage rrm = createRootMessage(name);
@@ -270,13 +269,13 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
     return (ObjectID) (this.rootRequests.containsKey(name) ? this.rootRequests.get(name) : ObjectID.NULL_ID);
   }
 
-  private RequestRootMessage createRootMessage(String name) {
+  private RequestRootMessage createRootMessage(final String name) {
     RequestRootMessage rrm = this.rrmFactory.newRequestRootMessage(this.groupID);
     rrm.initialize(name);
     return rrm;
   }
 
-  public synchronized void addRoot(String name, ObjectID id, NodeID nodeID) {
+  public synchronized void addRoot(final String name, final ObjectID id, final NodeID nodeID) {
     waitUntilRunning();
     if (id.isNull()) {
       this.rootRequests.remove(name);
@@ -292,7 +291,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
     notifyAll();
   }
 
-  public synchronized void addAllObjects(SessionID sessionID, long batchID, Collection dnas, NodeID nodeID) {
+  public synchronized void addAllObjects(final SessionID sessionID, final long batchID, final Collection dnas, final NodeID nodeID) {
     waitUntilRunning();
     if (!this.sessionManager.isCurrentSession(nodeID, sessionID)) {
       this.logger.warn("Ignoring DNA added from a different session: " + sessionID + ", " + this.sessionManager);
@@ -313,7 +312,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
     notifyAll();
   }
 
-  public synchronized void objectsNotFoundFor(SessionID sessionID, long batchID, Set missingOIDs, NodeID nodeID) {
+  public synchronized void objectsNotFoundFor(final SessionID sessionID, final long batchID, final Set missingOIDs, final NodeID nodeID) {
     waitUntilRunning();
     if (!this.sessionManager.isCurrentSession(nodeID, sessionID)) {
       this.logger.warn("Ignoring Missing Object IDs " + missingOIDs + " from a different session: " + sessionID + ", "
@@ -326,7 +325,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
   }
 
   // Used only for testing
-  synchronized void addObject(DNA dna) {
+  synchronized void addObject(final DNA dna) {
     if (!this.removeObjects.contains(dna.getObjectID())) {
       basicAddObject(dna);
     }
@@ -338,12 +337,12 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
     return this.lruDNA.size();
   }
 
-  private void basicAddObject(DNA dna) {
+  private void basicAddObject(final DNA dna) {
     this.dnaRequests.put(dna.getObjectID(), dna);
     this.outstandingObjectRequests.remove(dna.getObjectID());
   }
 
-  public synchronized void removed(ObjectID id) {
+  public synchronized void removed(final ObjectID id) {
     this.dnaRequests.remove(id);
     this.removeObjects.add(id);
     if (this.removeObjects.size() >= REMOVE_OBJECTS_THRESHOLD) {
@@ -367,8 +366,8 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
 
     private final int             depth;
 
-    private ObjectRequestContextImpl(ClientID clientID, ObjectRequestID requestID, ObjectID objectID, int depth,
-                                     ObjectID parentContext) {
+    private ObjectRequestContextImpl(final ClientID clientID, final ObjectRequestID requestID, final ObjectID objectID, final int depth,
+                                     final ObjectID parentContext) {
       this(clientID, requestID, new ObjectIDSet(), depth);
       this.objectIDs.add(objectID);
       // XXX:: This is a hack for now. This parent context could be exposed to the L2 to make it more elegant.
@@ -377,7 +376,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
       }
     }
 
-    private ObjectRequestContextImpl(ClientID clientID, ObjectRequestID requestID, ObjectIDSet objectIDs, int depth) {
+    private ObjectRequestContextImpl(final ClientID clientID, final ObjectRequestID requestID, final ObjectIDSet objectIDs, final int depth) {
       this.timestamp = System.currentTimeMillis();
       this.clientID = clientID;
       this.requestID = requestID;
@@ -423,7 +422,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
       this.oids2BatchID.clear();
     }
 
-    public synchronized void add(long batchID, Collection objs) {
+    public synchronized void add(final long batchID, final Collection objs) {
       Long key = new Long(batchID);
       Map m = (Map) this.dnas.get(key);
       if (m == null) {
@@ -437,7 +436,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, ClientHands
       }
     }
 
-    public synchronized void remove(ObjectID id) {
+    public synchronized void remove(final ObjectID id) {
       Long batchID = (Long) this.oids2BatchID.remove(id);
       if (batchID != null) {
         Map m = (Map) this.dnas.get(batchID);

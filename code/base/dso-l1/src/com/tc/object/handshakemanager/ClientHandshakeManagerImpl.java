@@ -48,8 +48,9 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
   private volatile boolean                    serverIsPersistent = false;
 
   public ClientHandshakeManagerImpl(final TCLogger logger, final DSOClientMessageChannel channel,
-                                    final ClientHandshakeMessageFactory chmf, final Sink pauseSink, final SessionManager sessionManager,
-                                    final DsoClusterInternal dsoCluster, final String clientVersion, final Collection callbacks) {
+                                    final ClientHandshakeMessageFactory chmf, final Sink pauseSink,
+                                    final SessionManager sessionManager, final DsoClusterInternal dsoCluster,
+                                    final String clientVersion, final Collection callbacks) {
     this.logger = logger;
     this.cidp = channel.getClientIDProvider();
     this.chmf = chmf;
@@ -68,7 +69,6 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
     for (GroupID groupID : groupIDs) {
       groupStates.put(groupID, state);
     }
-
   }
 
   public void initiateHandshake(final NodeID remoteNode) {
@@ -97,6 +97,10 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
     }
   }
 
+  private synchronized boolean isOnlyOneGroupDisconnected() {
+    return 1 == disconnected;
+  }
+
   public void disconnected(final NodeID remoteNode) {
     logger.info("Disconnected: Pausing from " + getState(remoteNode) + " RemoteNode : " + remoteNode
                 + " Disconnected : " + getDisconnectedCount());
@@ -110,7 +114,10 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
       sessionManager.newSession(remoteNode);
       logger.info("ClientHandshakeManager moves to " + sessionManager);
 
-      dsoCluster.fireOperationsDisabled();
+      // only send the operations disabled event when this was the first group to disconnect
+      if (isOnlyOneGroupDisconnected()) {
+        dsoCluster.fireOperationsDisabled();
+      }
     }
   }
 
@@ -122,13 +129,15 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
       return;
     }
     initiateHandshake(remoteNode);
-
-    dsoCluster.fireOperationsEnabled();
   }
 
   public void acknowledgeHandshake(final ClientHandshakeAckMessage handshakeAck) {
     acknowledgeHandshake(handshakeAck.getSourceNodeID(), handshakeAck.getPersistentServer(), handshakeAck
         .getThisNodeId(), handshakeAck.getAllNodes(), handshakeAck.getServerVersion());
+  }
+
+  private synchronized boolean areAllGroupsConnected() {
+    return 0 == disconnected;
   }
 
   protected void acknowledgeHandshake(final NodeID remoteID, final boolean persistentServer, final NodeID thisNodeId,
@@ -141,10 +150,14 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
 
     checkClientServerVersionMatch(serverVersion);
     this.serverIsPersistent = persistentServer;
-    dsoCluster.fireThisNodeJoined(thisNodeId, clusterMembers);
-    dsoCluster.fireOperationsEnabled();
     changeToRunning(remoteID);
     unpauseCallbacks(remoteID, getDisconnectedCount());
+
+    // only send out out these events when no groups are paused anymore
+    if (areAllGroupsConnected()) {
+      dsoCluster.fireThisNodeJoined(thisNodeId, clusterMembers);
+      dsoCluster.fireOperationsEnabled();
+    }
   }
 
   protected void checkClientServerVersionMatch(final String serverVersion) {
@@ -223,5 +236,4 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
   private int getDisconnectedCount() {
     return disconnected;
   }
-
 }

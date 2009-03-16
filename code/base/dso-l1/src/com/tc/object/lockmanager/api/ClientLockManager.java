@@ -6,6 +6,7 @@ package com.tc.object.lockmanager.api;
 
 import com.tc.logging.DumpHandler;
 import com.tc.net.NodeID;
+import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.lockmanager.impl.GlobalLockInfo;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TimerSpec;
@@ -14,9 +15,9 @@ import com.tc.util.runtime.LockInfoByThreadID;
 
 /**
  * Simple lock manager for the client
- * 
+ *
  */
-public interface ClientLockManager extends DumpHandler, PrettyPrintable {
+public interface ClientLockManager extends DumpHandler, PrettyPrintable, ClientHandshakeCallback {
 
   /**
    * obtain a lock

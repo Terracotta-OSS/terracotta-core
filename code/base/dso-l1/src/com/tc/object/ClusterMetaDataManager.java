@@ -6,6 +6,7 @@ package com.tc.object;
 
 import com.tc.net.NodeID;
 import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tcclient.cluster.DsoNodeInternal;
 import com.tcclient.cluster.DsoNodeMetaData;
@@ -14,7 +15,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-public interface ClusterMetaDataManager {
+public interface ClusterMetaDataManager extends ClientHandshakeCallback {
 
   public DNAEncoding getEncoding();
 

@@ -7,6 +7,7 @@ package com.tc.object.lockmanager.api;
 import com.tc.exception.ImplementMe;
 import com.tc.net.NodeID;
 import com.tc.object.lockmanager.impl.GlobalLockInfo;
+import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TimerSpec;
 import com.tc.text.PrettyPrinter;
@@ -23,73 +24,79 @@ public class TestLockManager implements ClientLockManager {
   public final List notifyCalls    = new LinkedList();
   public final List unlockCalls    = new LinkedList();
 
-  public void unlock(LockID id, ThreadID threadID) {
+  public void unlock(final LockID id, final ThreadID threadID) {
     this.unlockCalls.add(new Object[] { id, threadID });
   }
 
-  public LockID lockIDFor(String id) {
+  public LockID lockIDFor(final String id) {
     this.lockIDForCalls.add(id);
     return new LockID(id);
   }
 
-  public void awardLock(NodeID nid, SessionID sessionID, LockID id, ThreadID threadID, int type) {
+  public void awardLock(final NodeID nid, final SessionID sessionID, final LockID id, final ThreadID threadID,
+                        final int type) {
     return;
   }
 
-  public void lock(LockID id, ThreadID threadID, int lockType, String lockObjectType, String contextInfo) {
+  public void lock(final LockID id, final ThreadID threadID, final int lockType, final String lockObjectType,
+                   final String contextInfo) {
     this.locks.add(new Object[] { id, threadID, new Integer(lockType) });
   }
 
-  public void wait(LockID lockID, ThreadID transactionID, TimerSpec call, Object waitLock, WaitListener listener) {
+  public void wait(final LockID lockID, final ThreadID transactionID, final TimerSpec call, final Object waitLock,
+                   final WaitListener listener) {
     this.waitCalls.add(new Object[] { lockID, transactionID, call, waitLock, listener });
   }
 
-  public Notify notify(LockID lockID, ThreadID threadID, boolean all) {
+  public Notify notify(final LockID lockID, final ThreadID threadID, final boolean all) {
     this.notifyCalls.add(new Object[] { lockID, threadID, new Boolean(all) });
     return Notify.NULL;
   }
 
-  public void notified(LockID lockID, ThreadID threadID) {
+  public void notified(final LockID lockID, final ThreadID threadID) {
     return;
   }
 
-  public void recall(LockID lockID, ThreadID threadID, int level, int leaseTimeInMs) {
+  public void recall(final LockID lockID, final ThreadID threadID, final int level, final int leaseTimeInMs) {
     return;
   }
 
-  public void waitTimedOut(LockID lockID, ThreadID threadID) {
+  public void waitTimedOut(final LockID lockID, final ThreadID threadID) {
     return;
   }
 
-  public boolean isLocked(LockID lockID, ThreadID threadID, int lockLevel) {
+  public boolean isLocked(final LockID lockID, final ThreadID threadID, final int lockLevel) {
     return this.lockIDForCalls.contains(lockID.asString());
   }
 
-  public int localHeldCount(LockID lockID, int lockLevel, ThreadID threadID) {
+  public int localHeldCount(final LockID lockID, final int lockLevel, final ThreadID threadID) {
     throw new ImplementMe();
   }
 
-  public void queryLockCommit(ThreadID threadID, GlobalLockInfo globalLockInfo) {
+  public void queryLockCommit(final ThreadID threadID, final GlobalLockInfo globalLockInfo) {
     throw new ImplementMe();
   }
 
-  public int waitLength(LockID lockID, ThreadID threadID) {
+  public int waitLength(final LockID lockID, final ThreadID threadID) {
     throw new ImplementMe();
   }
 
-  public void lockInterruptibly(LockID id, ThreadID threadID, int lockType, String lockObjectType, String contextInfo) {
+  public void lockInterruptibly(final LockID id, final ThreadID threadID, final int lockType,
+                                final String lockObjectType, final String contextInfo) {
     throw new ImplementMe();
   }
 
-  public boolean tryLock(LockID id, ThreadID threadID, TimerSpec timeout, int lockType, String lockObjectType) {
+  public boolean tryLock(final LockID id, final ThreadID threadID, final TimerSpec timeout, final int lockType,
+                         final String lockObjectType) {
     throw new ImplementMe();
   }
 
-  public int queueLength(LockID lockID, ThreadID threadID) {
+  public int queueLength(final LockID lockID, final ThreadID threadID) {
     throw new ImplementMe();
   }
 
-  public void cannotAwardLock(NodeID nid, SessionID sessionID, LockID id, ThreadID threadID, int type) {
+  public void cannotAwardLock(final NodeID nid, final SessionID sessionID, final LockID id, final ThreadID threadID,
+                              final int type) {
     throw new ImplementMe();
   }
 
@@ -97,11 +104,11 @@ public class TestLockManager implements ClientLockManager {
     throw new ImplementMe();
   }
 
-  public void setLockStatisticsConfig(int traceDepth, int gatherInterval) {
+  public void setLockStatisticsConfig(final int traceDepth, final int gatherInterval) {
     throw new ImplementMe();
   }
 
-  public void setLockStatisticsEnabled(boolean statEnable) {
+  public void setLockStatisticsEnabled(final boolean statEnable) {
     throw new ImplementMe();
   }
 
@@ -113,11 +120,24 @@ public class TestLockManager implements ClientLockManager {
     throw new ImplementMe();
   }
 
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+  public PrettyPrinter prettyPrint(final PrettyPrinter out) {
     throw new ImplementMe();
   }
 
-  public void addAllLocksTo(LockInfoByThreadID lockIcnfo) {
+  public void addAllLocksTo(final LockInfoByThreadID lockIcnfo) {
+    throw new ImplementMe();
+  }
+
+  public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
+                                  final ClientHandshakeMessage handshakeMessage) {
+    throw new ImplementMe();
+  }
+
+  public void pause(final NodeID remoteNode, final int disconnected) {
+    throw new ImplementMe();
+  }
+
+  public void unpause(final NodeID remoteNode, final int disconnected) {
     throw new ImplementMe();
   }
 }

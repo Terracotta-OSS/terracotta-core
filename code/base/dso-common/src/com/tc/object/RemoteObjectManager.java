@@ -6,6 +6,7 @@ package com.tc.object;
 
 import com.tc.net.NodeID;
 import com.tc.object.dna.api.DNA;
+import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.session.SessionID;
 
 import java.util.Collection;
@@ -14,7 +15,7 @@ import java.util.Set;
 /**
  * Local representation of the remote object manager
  */
-public interface RemoteObjectManager {
+public interface RemoteObjectManager extends ClientHandshakeCallback {
 
   public DNA retrieve(ObjectID id);
 
@@ -31,7 +32,7 @@ public interface RemoteObjectManager {
   public void objectsNotFoundFor(SessionID sessionID, long batchID, Set missingObjectIDs, NodeID nodeID);
 
   public void removed(ObjectID id);
-  
+
   public void clear();
 
 }

@@ -112,7 +112,7 @@ public class DsoClusterImpl implements DsoClusterInternal {
 
         final Set<DsoNode> result = new HashSet<DsoNode>();
         for (NodeID nodeID : response) {
-          result.add(topology.getDsoNode(nodeID));
+          result.add(topology.getAndRegisterDsoNode(nodeID));
         }
 
         return result;
@@ -167,7 +167,7 @@ public class DsoClusterImpl implements DsoClusterInternal {
 
       final Set<DsoNode> dsoNodes = new HashSet<DsoNode>();
       for (NodeID nodeID : entry.getValue()) {
-        dsoNodes.add(topology.getDsoNode(nodeID));
+        dsoNodes.add(topology.getAndRegisterDsoNode(nodeID));
       }
       result.put(object, dsoNodes);
     }
@@ -259,7 +259,7 @@ public class DsoClusterImpl implements DsoClusterInternal {
   public void fireThisNodeJoined(final NodeID nodeId, final NodeID[] clusterMembers) {
     stateWriteLock.lock();
     try {
-      // we might get multiple calls in a row, ignore all but the first in a row.
+      // we might get multiple calls in a row, ignore all but the first one
       if (currentNode != null) return;
 
       currentNode = topology.registerDsoNode(nodeId);
@@ -303,7 +303,11 @@ public class DsoClusterImpl implements DsoClusterInternal {
   }
 
   public void fireNodeJoined(final NodeID nodeId) {
-    final DsoClusterEvent event = new DsoClusterEventImpl(topology.getDsoNode(nodeId));
+    if (topology.containsDsoNode(nodeId)) {
+      return;
+    }
+
+    final DsoClusterEvent event = new DsoClusterEventImpl(topology.getAndRegisterDsoNode(nodeId));
     for (DsoClusterListener listener : listeners) {
       fireNodeJoinedInternal(event, listener);
     }
@@ -318,6 +322,10 @@ public class DsoClusterImpl implements DsoClusterInternal {
   }
 
   public void fireNodeLeft(final NodeID nodeId) {
+    if (!topology.containsDsoNode(nodeId)) {
+      return;
+    }
+
     final DsoClusterEvent event = new DsoClusterEventImpl(topology.getAndRemoveDsoNode(nodeId));
     for (DsoClusterListener listener : listeners) {
       try {

@@ -163,11 +163,11 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return this;
   }
 
-  public NodesWithObjectsMessage newNodesWithObjectsMessage() {
+  public NodesWithObjectsMessage newNodesWithObjectsMessage(final NodeID nodeID) {
     return (NodesWithObjectsMessage) this.channel.createMessage(TCMessageType.NODES_WITH_OBJECTS_MESSAGE);
   }
 
-  public KeysForOrphanedValuesMessage newKeysForOrphanedValuesMessage() {
+  public KeysForOrphanedValuesMessage newKeysForOrphanedValuesMessage(final NodeID nodeID) {
     return (KeysForOrphanedValuesMessage) this.channel.createMessage(TCMessageType.KEYS_FOR_ORPHANED_VALUES_MESSAGE);
   }
 

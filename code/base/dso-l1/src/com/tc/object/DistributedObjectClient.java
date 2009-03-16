@@ -71,6 +71,7 @@ import com.tc.object.handler.ReceiveObjectHandler;
 import com.tc.object.handler.ReceiveRootIDHandler;
 import com.tc.object.handler.ReceiveTransactionCompleteHandler;
 import com.tc.object.handler.ReceiveTransactionHandler;
+import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
 import com.tc.object.idprovider.api.ObjectIDProvider;
@@ -440,9 +441,10 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.threadIDManager = new ThreadIDManagerImpl(this.threadIDMap);
 
     // Cluster meta data
-    this.clusterMetaDataManager = new ClusterMetaDataManagerImpl(encoding, this.threadIDManager, this.channel
-        .getNodesWithObjectsMessageFactory(), this.channel.getKeysForOrphanedValuesMessageFactory(), this.channel
-        .getNodeMetaDataMessageFactory());
+    this.clusterMetaDataManager = this.dsoClientBuilder
+        .createClusterMetaDataManager(this.channel, encoding, this.threadIDManager, this.channel
+            .getNodesWithObjectsMessageFactory(), this.channel.getKeysForOrphanedValuesMessageFactory(), this.channel
+            .getNodeMetaDataMessageFactory());
 
     // Set up the JMX management stuff
     final TunnelingEventHandler teh = this.dsoClientBuilder.createTunnelingEventHandler(this.channel.channel());
@@ -507,12 +509,13 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     final Stage jmxRemoteTunnelStage = stageManager.createStage(ClientConfigurationContext.JMXREMOTE_TUNNEL_STAGE, teh,
                                                                 1, maxSize);
 
-    List clientHandshakeCallbacks = new ArrayList();
+    List<ClientHandshakeCallback> clientHandshakeCallbacks = new ArrayList<ClientHandshakeCallback>();
     clientHandshakeCallbacks.add(this.lockManager);
     clientHandshakeCallbacks.add(this.objectManager);
     clientHandshakeCallbacks.add(remoteObjectManager);
     clientHandshakeCallbacks.add(this.rtxManager);
     clientHandshakeCallbacks.add(this.dsoClientBuilder.getObjectIDClientHandshakeRequester(batchSequenceReceiver));
+    clientHandshakeCallbacks.add(this.clusterMetaDataManager);
     ProductInfo pInfo = ProductInfo.getInstance();
     this.clientHandshakeManager = new ClientHandshakeManagerImpl(
                                                                  new ClientIDLogger(

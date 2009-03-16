@@ -4,8 +4,10 @@
  */
 package com.tc.object.msg;
 
+import com.tc.net.NodeID;
+
 public interface KeysForOrphanedValuesMessageFactory {
 
-  public KeysForOrphanedValuesMessage newKeysForOrphanedValuesMessage();
+  public KeysForOrphanedValuesMessage newKeysForOrphanedValuesMessage(NodeID nodeID);
 
 }

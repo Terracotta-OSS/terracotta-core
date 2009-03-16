@@ -10,6 +10,7 @@ import com.tc.net.NodeID;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAException;
+import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
@@ -27,39 +28,39 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
 
   public static final DNA             THROW_NOT_FOUND       = new ThrowNotFound();
 
-  public DNA retrieve(ObjectID id) {
+  public DNA retrieve(final ObjectID id) {
     retrieveCalls.put(id);
     DNA dna = (DNA) retrieveResults.take();
     if (dna == THROW_NOT_FOUND) { throw new TCObjectNotFoundException("missing ID", Collections.EMPTY_LIST); }
     return dna;
   }
 
-  public DNA retrieveWithParentContext(ObjectID id, ObjectID parentContext) {
+  public DNA retrieveWithParentContext(final ObjectID id, final ObjectID parentContext) {
     return retrieve(id);
   }
 
-  public ObjectID retrieveRootID(String name) {
+  public ObjectID retrieveRootID(final String name) {
     retrieveRootIDCalls.put(name);
     return (ObjectID) retrieveRootIDResults.take();
   }
 
-  public void removed(ObjectID id) {
+  public void removed(final ObjectID id) {
     // do nothing
   }
 
-  public DNA retrieve(ObjectID id, int depth) {
+  public DNA retrieve(final ObjectID id, final int depth) {
     throw new ImplementMe();
   }
 
-  public void addAllObjects(SessionID sessionID, long batchID, Collection dnas, NodeID nodeID) {
+  public void addAllObjects(final SessionID sessionID, final long batchID, final Collection dnas, final NodeID nodeID) {
     throw new ImplementMe();
   }
 
-  public void addRoot(String name, ObjectID id, NodeID nodeID) {
+  public void addRoot(final String name, final ObjectID id, final NodeID nodeID) {
     throw new ImplementMe();
   }
 
-  public void objectsNotFoundFor(SessionID sessionID, long batchID, Set missingObjectIDs, NodeID nodeID) {
+  public void objectsNotFoundFor(final SessionID sessionID, final long batchID, final Set missingObjectIDs, final NodeID nodeID) {
     throw new ImplementMe();
   }
 
@@ -108,6 +109,21 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
 
   public void clear() {
     throw new ImplementMe();
+  }
+
+  public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode, final ClientHandshakeMessage handshakeMessage) {
+    throw new ImplementMe();
+
+  }
+
+  public void pause(final NodeID remoteNode, final int disconnected) {
+    throw new ImplementMe();
+
+  }
+
+  public void unpause(final NodeID remoteNode, final int disconnected) {
+    throw new ImplementMe();
+
   }
 
 }

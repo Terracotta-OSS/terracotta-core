@@ -35,6 +35,9 @@ import com.tc.object.lockmanager.impl.ClientLockManagerConfigImpl;
 import com.tc.object.lockmanager.impl.RemoteLockManagerImpl;
 import com.tc.object.lockmanager.impl.StripedClientLockManagerImpl;
 import com.tc.object.logging.RuntimeLogger;
+import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
+import com.tc.object.msg.NodeMetaDataMessageFactory;
+import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
@@ -50,6 +53,7 @@ import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.util.Assert;
 import com.tc.util.ToggleableReferenceManager;
+import com.tc.util.runtime.ThreadIDManager;
 import com.tc.util.sequence.BatchSequence;
 import com.tc.util.sequence.BatchSequenceReceiver;
 
@@ -91,6 +95,18 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                        faultCount, sessionManager);
   }
 
+  public ClusterMetaDataManager createClusterMetaDataManager(final DSOClientMessageChannel dsoChannel,
+                                                             final DNAEncoding encoding,
+                                                             final ThreadIDManager threadIDManager,
+                                                             final NodesWithObjectsMessageFactory nwoFactory,
+                                                             final KeysForOrphanedValuesMessageFactory kfovFactory,
+                                                             final NodeMetaDataMessageFactory nmdmFactory) {
+    GroupID defaultGroups[] = dsoChannel.getGroupIDs();
+    assert defaultGroups != null && defaultGroups.length == 1;
+    return new ClusterMetaDataManagerImpl(defaultGroups[0], encoding, threadIDManager, nwoFactory, kfovFactory,
+                                          nmdmFactory);
+  }
+
   public ClientObjectManagerImpl createObjectManager(final RemoteObjectManager remoteObjectManager,
                                                      final DSOClientConfigHelper dsoConfig,
                                                      final ObjectIDProvider idProvider,
@@ -125,8 +141,8 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                                                  final DSOClientMessageChannel dsoChannel,
                                                                  final Counter outstandingBatchesCounter,
                                                                  final Counter pendingBatchesSize,
-                                                                 SampledRateCounter transactionSizeCounter,
-                                                                 SampledRateCounter transactionsPerBatchCounter) {
+                                                                 final SampledRateCounter transactionSizeCounter,
+                                                                 final SampledRateCounter transactionsPerBatchCounter) {
     GroupID defaultGroups[] = dsoChannel.getGroupIDs();
     assert defaultGroups != null && defaultGroups.length == 1;
     TransactionBatchFactory txBatchFactory = new TransactionBatchWriterFactory(dsoChannel
@@ -151,17 +167,17 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
     return new ObjectIDClientHandshakeRequester(sequence);
   }
 
-  public BatchSequence[] createSequences(RemoteObjectIDBatchSequenceProvider remoteIDProvider, int requestSize) {
+  public BatchSequence[] createSequences(final RemoteObjectIDBatchSequenceProvider remoteIDProvider, final int requestSize) {
     return new BatchSequence[] { new BatchSequence(remoteIDProvider, requestSize) };
   }
 
-  public ObjectIDProvider createObjectIdProvider(BatchSequence[] sequences, ClientIDProvider cidProvider) {
+  public ObjectIDProvider createObjectIdProvider(final BatchSequence[] sequences, final ClientIDProvider cidProvider) {
     Assert.assertTrue(sequences.length == 1);
 
     return new ObjectIDProviderImpl(sequences[0]);
   }
 
-  public BatchSequenceReceiver getBatchReceiver(BatchSequence[] sequences) {
+  public BatchSequenceReceiver getBatchReceiver(final BatchSequence[] sequences) {
     Assert.assertTrue(sequences.length == 1);
     return sequences[0];
   }

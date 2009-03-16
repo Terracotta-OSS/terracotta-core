@@ -17,8 +17,8 @@ import com.tcclient.cluster.DsoClusterInternal;
 
 public class ClientCoordinationHandler extends AbstractEventHandler {
 
-  private ClientHandshakeManager handshakeManager;
-  private final DsoClusterInternal  dsoCluster;
+  private ClientHandshakeManager   handshakeManager;
+  private final DsoClusterInternal dsoCluster;
 
   public ClientCoordinationHandler(final DsoClusterInternal dsoCluster) {
     this.dsoCluster = dsoCluster;

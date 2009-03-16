@@ -8,6 +8,7 @@ import com.tc.exception.ImplementMe;
 import com.tc.net.NodeID;
 import com.tc.object.lockmanager.api.LockFlushCallback;
 import com.tc.object.lockmanager.api.LockID;
+import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
@@ -25,7 +26,7 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
   public TxnBatchID                   batchAcked;
   public ClientTransaction            transaction;
 
-  public void commit(ClientTransaction txn) {
+  public void commit(final ClientTransaction txn) {
     this.ids = txn.getAllLockIDs();
     this.changes = txn.getChangeBuffers();
     this.txID = txn.getTransactionID();
@@ -33,15 +34,15 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
     this.transaction = txn;
   }
 
-  public void receivedAcknowledgement(SessionID sessionID, TransactionID ackTxID, NodeID nodeID) {
+  public void receivedAcknowledgement(final SessionID sessionID, final TransactionID ackTxID, final NodeID nodeID) {
     this.acked = ackTxID;
   }
 
-  public void receivedBatchAcknowledgement(TxnBatchID batchID, NodeID nodeID) {
+  public void receivedBatchAcknowledgement(final TxnBatchID batchID, final NodeID nodeID) {
     this.batchAcked = batchID;
   }
 
-  public void flush(LockID lockID) {
+  public void flush(final LockID lockID) {
     throw new ImplementMe();
   }
 
@@ -50,7 +51,7 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
 
   }
 
-  public boolean isTransactionsForLockFlushed(LockID lockID, LockFlushCallback callback) {
+  public boolean isTransactionsForLockFlushed(final LockID lockID, final LockFlushCallback callback) {
     throw new ImplementMe();
   }
 
@@ -58,4 +59,16 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
     throw new ImplementMe();
   }
 
+  public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
+                                  final ClientHandshakeMessage handshakeMessage) {
+    throw new ImplementMe();
+  }
+
+  public void pause(final NodeID remoteNode, final int disconnected) {
+    throw new ImplementMe();
+  }
+
+  public void unpause(final NodeID remoteNode, final int disconnected) {
+    throw new ImplementMe();
+  }
 }
