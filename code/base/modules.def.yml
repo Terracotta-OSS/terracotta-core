@@ -512,6 +512,7 @@ modules:
         - dso-l2-common
         - dso-statistics
         - dso-statistics-api
+        - dso-cluster-api
         - dso-system-tests
         - legacy-test-tree
         - management
