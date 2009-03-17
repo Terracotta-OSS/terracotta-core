@@ -6,6 +6,7 @@ bundled_components:
   - base:
       module_packages:
         - terracotta-api-api.version:
+            javadoc: true
             modules:
               - dso-cluster-api    
         - terracotta-tim-api-api.version:
@@ -55,3 +56,4 @@ postscripts:
           version: api.version
           inject: 
             - lib/resources/build-data.txt
+  - delete-lib

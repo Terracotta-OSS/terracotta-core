@@ -24,14 +24,14 @@ module BundledComponents
   end
 
   def add_skeletons(skeldir, name, platform, directory)
-      srcdir = FilePath.new(skeldir, name, platform).to_s
-      if File.directory?(srcdir)
-        destdir    = FilePath.new(product_directory, directory).ensure_directory
-        ant.copy(:todir => destdir.to_s) do
-          #ant.fileset(:dir => srcdir, :excludes => "**/.svn/**, **/.*, **/*/#{non_native.join(', **/*/')}")
-          ant.fileset(:dir => srcdir, :excludes => "**/.svn/**, **/.*")
-        end
+    srcdir = FilePath.new(skeldir, name, platform).to_s
+    if File.directory?(srcdir)
+      destdir    = FilePath.new(product_directory, directory).ensure_directory
+      ant.copy(:todir => destdir.to_s) do
+        #ant.fileset(:dir => srcdir, :excludes => "**/.svn/**, **/.*, **/*/#{non_native.join(', **/*/')}")
+        ant.fileset(:dir => srcdir, :excludes => "**/.svn/**, **/.*")
       end
+    end
   end
 
   def add_binaries(component, libdir=libpath(component), destdir=libpath(component))
@@ -53,12 +53,12 @@ module BundledComponents
 
       kit_resource_files = kit_resources.join(',')
       a_module.subtree('src').copy_classes(@build_results, runtime_classes_dir, ant,
-                                           :excludes => kit_resource_files)
+        :excludes => kit_resource_files)
 
       unless kit_resources.empty?
         kit_resources_dir = FilePath.new(destdir, 'resources').ensure_directory
         a_module.subtree('src').copy_classes(@build_results, kit_resources_dir, ant,
-                                            :includes => kit_resource_files)
+          :includes => kit_resource_files)
       end
     end
 
@@ -67,8 +67,8 @@ module BundledComponents
       ant.create_jar(jarfile, :basedir => runtime_classes_dir.to_s, :excludes => '**/build-data.txt') do
         libfiles  = Dir.entries(libdir.to_s).delete_if { |item| /\.jar$/ !~ item } << "resources/"
         ant.manifest do
-           ant.attribute(:name => 'Class-Path', :value => libfiles.sort.join(' '))
-           ant.attribute(:name => 'Main-Class', :value => 'com.tc.cli.CommandLineMain')
+          ant.attribute(:name => 'Class-Path', :value => libfiles.sort.join(' '))
+          ant.attribute(:name => 'Main-Class', :value => 'com.tc.cli.CommandLineMain')
         end 
       end
     end
@@ -100,9 +100,23 @@ module BundledComponents
       module_package.keys.each do |name|
         src      = module_package[name]['source'] || 'src'
         excludes = module_package[name]['filter'] || ''
+        javadoc  = module_package[name]['javadoc']
         module_package[name]['modules'].each do |module_name|
           a_module = @module_set[module_name]
           a_module.subtree(src).copy_classes(@build_results, runtime_classes_dir, ant, :excludes => excludes)
+          if javadoc
+            puts "Generating javadoc for #{a_module.name}"
+            javadoc_destdir = FilePath.new(File.dirname(destdir.to_s), "javadoc").ensure_directory
+            ant.javadoc(:destdir => javadoc_destdir.to_s,
+              :author => true, :version => true, :use => true, :defaultexcludes => "true",
+              :bottom => "<i>All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.</i>",
+              :doctitle => "Terracotta API", :windowtitle => "Terracotta API Documentation") do
+              ant.fileset(:dir => a_module.name, :defaultexcludes => true) do
+                ant.include(:name => 'src/**')
+              end
+            end
+            puts "Done javadoc"
+          end
         end
         libdir  = FilePath.new(File.dirname(destdir.to_s), *(module_package[name]['install_directory'] || '').split('/')).ensure_directory
         jarfile = FilePath.new(libdir, interpolate("#{name}.jar"))
