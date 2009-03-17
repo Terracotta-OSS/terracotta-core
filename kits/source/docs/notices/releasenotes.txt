@@ -2,12 +2,11 @@
 Nightly Build from Trunk
 
 
-Documentation: http://www.terracotta.org/confluence/display/docs1/Terracotta+Product+Documentation
+Documentation: http://www.terracotta.org/web/display/docs/Home
 Forums:        http://forums.terracotta.org/forums/forums/list.page
 Mailing Lists: http://lists.terracotta.org
-Support:       http://www.terracotta.org/confluence/display/orgsite/Support
+Support:       http://www.terracotta.org/web/display/enterprise/Support
 
 
-
-Copyright (c) 2007, Terracotta, Inc.
+Copyright Terracotta, Inc. All rights reserved. 
 http://www.terracotta.org
