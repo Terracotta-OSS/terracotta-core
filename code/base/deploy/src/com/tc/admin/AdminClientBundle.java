@@ -4,6 +4,7 @@
  */
 package com.tc.admin;
 
+import java.awt.Font;
 import java.util.ListResourceBundle;
 import java.util.ResourceBundle;
 
@@ -115,7 +116,7 @@ public class AdminClientBundle extends ListResourceBundle {
         { "cluster.thread.dumps", "Cluster thread dumps" },
         { "server.thread.dumps", "Server thread dumps" },
         { "client.thread.dumps", "Client thread dumps" },
-        { "clients", "Clients" },
+        { "connected-clients", "Connected clients" },
         { "servers", "Servers" },
         { "server-groups", "Server Array" },
         { "mirror.group", "Mirror group" },
@@ -162,7 +163,7 @@ public class AdminClientBundle extends ListResourceBundle {
         { "file.menu.label", "File" },
         { "tools.menu.label", "Tools" },
         { "help.menu.label", "Help" },
-        { "help.item.label", "DevCenter Help..." },
+        { "help.item.label", "Developer Console Help..." },
         { "about.action.label", "About Terracotta Developer Console" },
         { "update-checker.control.label", "Check For Updates" },
         { "update-checker.action.label", "Update Checker..." },
@@ -177,25 +178,25 @@ public class AdminClientBundle extends ListResourceBundle {
         {
             "version.check.message",
             "<html><h3>Version mismatch for {0}.</h3><br>"
-                + "<table border=0 cellspacing=1><tr><td align=right><b>Terracotta Server instance Version:</b></td><td>{1}"
+                + "<table border=0 cellspacing=1><tr><td align=right><b>Terracotta Server Instance Version:</b></td><td>{1}"
                 + "</tr><tr><td align=right><b>Developer Console Version:</b</td><td>{2}"
                 + "</td></tr></table><h3>Continue?</h3></html>" },
         { "aggregate.server.stats.flush.rate", "Client Flush Rate" },
         { "aggregate.server.stats.flush.rate.tip", "All clients -> Server Array" },
         { "aggregate.server.stats.fault.rate", "Client Fault Rate" },
-        { "aggregate.server.stats.fault.rate.tip", "Server Array -> All clients" },
+        { "aggregate.server.stats.fault.rate.tip", "Server Array -> All connected clients" },
         { "aggregate.server.stats.transaction.rate", "Write Transaction Rate" },
-        { "aggregate.server.stats.transaction.rate.tip", "All clients -> Server Array" },
+        { "aggregate.server.stats.transaction.rate.tip", "All connected clients -> Server Array" },
         { "aggregate.server.stats.cache.miss.rate", "Cache Miss Rate" },
         { "aggregate.server.stats.cache.miss.rate.tip", "All disks -> Server Array" },
         { "server.stats.cpu.usage", "Host CPU Usage" },
         { "server.stats.cpu.usage.tip", "Total CPU usage of the host system" },
         { "server.stats.flush.rate", "Client Flush Rate" },
-        { "server.stats.flush.rate.tip", "All clients -> This server instance" },
+        { "server.stats.flush.rate.tip", "All connected clients -> This server instance" },
         { "server.stats.fault.rate", "Client Fault Rate" },
-        { "server.stats.fault.rate.tip", "This server instance -> All clients" },
+        { "server.stats.fault.rate.tip", "This server instance -> All connected clients" },
         { "server.stats.transaction.rate", "Write Transaction Rate" },
-        { "server.stats.transaction.rate.tip", "All clients -> This server instance" },
+        { "server.stats.transaction.rate.tip", "All connected clients -> This server instance" },
         { "server.stats.cache.miss.rate", "Cache Miss Rate" },
         { "server.stats.cache.miss.rate.tip", "Disk -> This server instance" },
         { "server.stats.heap.usage", "Heap Usage" },
@@ -234,6 +235,7 @@ public class AdminClientBundle extends ListResourceBundle {
         { "dashboard.fault-rate", "Faults/s" }, { "dashboard.flush-rate", "Flushes/s" },
         { "dashboard.txn-size-rate", "Txn Size KB/s" }, { "dashboard.unacked-txns", "Unacked Txns" },
         { "dashboard.transactions", "Transactions" }, { "dashboard.impeding-factors", "Impeding Factors" },
-        { "dashboard.dial.tip.format", "<html>{0}:<br>Max={1}, Average={2}</html>" } };
+        { "dashboard.dial.tip.format", "<html>{0}:<br>Max={1}, Average={2}</html>" },
+        { "dashboard.header.label.font", new Font("SansSerif", Font.PLAIN, 11) }, };
   }
 }

@@ -8,6 +8,7 @@ import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.XCheckBox;
 import com.tc.admin.common.XContainer;
+import com.tc.admin.common.XLabel;
 import com.tc.admin.model.IServer;
 
 import java.awt.GridBagConstraints;
@@ -42,6 +43,9 @@ public class ServerLoggingPanel extends XContainer implements NotificationListen
 
     GridBagConstraints gbc = new GridBagConstraints();
     gbc.gridx = gbc.gridy = 0;
+    gbc.weightx = 1.0;
+    gbc.weighty = 0.0;
+    gbc.fill = GridBagConstraints.BOTH;
     gbc.anchor = GridBagConstraints.WEST;
 
     add(faultDebugCheckBox = new XCheckBox("FaultDebug"), gbc);
@@ -67,6 +71,11 @@ public class ServerLoggingPanel extends XContainer implements NotificationListen
     add(commitDebugCheckBox = new XCheckBox("CommitDebug"), gbc);
     commitDebugCheckBox.setName("CommitDebug");
     commitDebugCheckBox.setToolTipText("Commit to database");
+    gbc.gridy++;
+    gbc.weighty = 1.0;
+
+    // filler
+    add(new XLabel(), gbc);
 
     loggingControlMap = new HashMap<String, XCheckBox>();
     loggingChangeHandler = new LoggingChangeHandler();
@@ -100,7 +109,7 @@ public class ServerLoggingPanel extends XContainer implements NotificationListen
 
   private void setLoggingControl(XCheckBox checkBox, Object bean) {
     ApplicationContext theAppContext = getApplicationContext();
-    if(theAppContext == null) return;
+    if (theAppContext == null) return;
     try {
       Class beanClass = bean.getClass();
       Method setter = beanClass.getMethod("get" + checkBox.getName(), new Class[0]);
@@ -116,7 +125,7 @@ public class ServerLoggingPanel extends XContainer implements NotificationListen
       super(new Callable<Void>() {
         public Void call() throws Exception {
           ApplicationContext theAppContext = getApplicationContext();
-          if(theAppContext == null) return null;
+          if (theAppContext == null) return null;
           Class beanClass = loggingBean.getClass();
           Method setter = beanClass.getMethod("set" + attrName, new Class[] { Boolean.TYPE });
           setter.invoke(loggingBean, new Object[] { Boolean.valueOf(enabled) });
@@ -125,9 +134,10 @@ public class ServerLoggingPanel extends XContainer implements NotificationListen
       });
     }
 
+    @Override
     protected void finished() {
       ApplicationContext theAppContext = getApplicationContext();
-      if(theAppContext == null) return;
+      if (theAppContext == null) return;
       Exception e = getException();
       if (e != null) {
         theAppContext.log(e);
@@ -158,9 +168,10 @@ public class ServerLoggingPanel extends XContainer implements NotificationListen
     }
   }
 
+  @Override
   public synchronized void tearDown() {
     super.tearDown();
-    
+
     appContext = null;
     server = null;
 

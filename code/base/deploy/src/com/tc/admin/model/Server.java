@@ -1367,7 +1367,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
         firePropertyChange(PROP_LOCK_STATS_TRACE_DEPTH, oldTraceDepth, getLockProfilerTraceDepth());
       } else if (type.equals(LockStatisticsMonitorMBean.TRACES_ENABLED)) {
         boolean oldLockStatsEnabled = lockProfilingEnabled != null ? lockProfilingEnabled.booleanValue() : false;
-        lockProfilingEnabled = null; 
+        lockProfilingEnabled = null;
         firePropertyChange(PROP_LOCK_STATS_ENABLED, oldLockStatsEnabled, isLockProfilingEnabled());
       }
     }
@@ -1720,6 +1720,10 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   public String dump() {
     StringBuilder sb = new StringBuilder();
     sb.append(toString());
+    sb.append(" ready: ");
+    sb.append(isReady());
+    sb.append(" isConnected: ");
+    sb.append(isConnected());
     return sb.toString();
   }
 

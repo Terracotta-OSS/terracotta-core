@@ -24,25 +24,29 @@
 
 <p>Contains detailed information about the clients and server arrays. Mirror Groups (sets of active-"hot" standby server instances) are listed under Server Arrays, while Terracotta server instances are listed under their parent mirror group. Each server instance has a colored status icon:
 <br><br>
-<table border=1 cellspacing=0 cellpadding=0 style="text-align:center">
- <tr><td>Green</td><td>active server</td></tr>
- <tr><td>Red</td><td>unreachable</td></tr>
- <tr><td>Yellow</td><td>starting or disk-based standby</td></tr>
- <tr><td>Orange</td><td>initializing (network-based only)</td></tr>
- <tr><td>Cyan</td><td>network-based standby</td></tr>
-</table>
+  <table border=0 cellspacing=0 cellpadding=0 width="100%">
+    <tr><td align="center">
+      <table border=0 cellspacing=0 cellpadding=3 style="text-align:left">
+       <tr><td><img border=0 src="starting.png"></td><td>Starting or disk-based standby</td></tr>
+       <tr><td><img border=0 src="initializing.png"></td><td>Initializing (network-based only)</td></tr>
+       <tr><td><img border=0 src="standby.png"></td><td>Network-based standby</td></tr>
+       <tr><td><img border=0 src="active.png"></td><td>Active server</td></tr>
+       <tr><td><img border=0 src="unreachable.png"></td><td>Unreachable</td></tr>
+      </table>
+    </td></tr>
+  </table>
 
 <table cellpadding=10>
    <tr>
       <td valign=top><a href="ClientsNode"><img border=0 src="/com/tc/admin/icons/chart_bar.png" class=topic></a></td>
-      <td><a href="ClientsNode">Connected Clients</a>
+      <td><a href="ClientsNode">Connected clients</a>
          <div class=description>
          View a table of clients currently in the cluster. The table, which automatically refreshes, displays a live-object count per client. Choose a client in the navigation list to view information panels about that client.
          </div>
       </td></tr>
    <tr>
       <td valign=top><a href="ServerGroupsNode"><img border=0 src="/com/tc/admin/icons/owned_monitor_obj.gif" class=topic></a></td>
-      <td><a href="ServerGroupsNode">Server Array</a>
+      <td><a href="ServerGroupsNode">Server array</a>
          <div class=description>
          Cluster server arrays are arranged in Terracotta mirror groups (sets of active-"hot" standby server instances), each containing individual Terracotta server instances. Choose a server-array to display a table of its mirror groups. Select a mirror group to display a table of its server instances. Select a server instance to display information panels about that server instance.<br> 
          A warning appears in the Main server-instance panel if it is not configured to persist data across failures. This mode is useful in certain development environments to meet data storage constraints.
@@ -50,6 +54,6 @@
       </td></tr>
 </table>
 
-<div class=footer>Copyright &copy; 2008 Terracotta, Inc.</div>
+<div class=footer>Copyright &copy; Terracotta, Inc.</div>
 </body>
 </html>

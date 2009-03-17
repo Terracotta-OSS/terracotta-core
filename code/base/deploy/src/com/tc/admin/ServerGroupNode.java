@@ -4,6 +4,7 @@
  */
 package com.tc.admin;
 
+import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.model.IClusterModel;
 import com.tc.admin.model.IServer;
 import com.tc.admin.model.IServerGroup;
@@ -11,27 +12,27 @@ import com.tc.admin.model.IServerGroup;
 import java.awt.Component;
 
 public class ServerGroupNode extends ClusterElementNode {
-  protected IAdminClientContext adminClientContext;
-  protected IClusterModel       clusterModel;
-  protected IServerGroup        serverGroup;
-  protected ServersPanel        serverGroupPanel;
+  protected ApplicationContext appContext;
+  protected IClusterModel      clusterModel;
+  protected IServerGroup       serverGroup;
+  protected ServersPanel       serverGroupPanel;
 
-  public ServerGroupNode(IAdminClientContext adminClientContext, IClusterModel clusterModel, IServerGroup serverGroup) {
+  public ServerGroupNode(ApplicationContext appContext, IClusterModel clusterModel, IServerGroup serverGroup) {
     super(serverGroup);
 
-    this.adminClientContext = adminClientContext;
+    this.appContext = appContext;
     this.clusterModel = clusterModel;
     this.serverGroup = serverGroup;
 
     for (IServer server : serverGroup.getMembers()) {
-      ServerNode serverNode = new ServerNode(adminClientContext, clusterModel, server);
+      ServerNode serverNode = new ServerNode(appContext, clusterModel, server);
       add(serverNode);
     }
-    setLabel(adminClientContext.getString("mirror.group") + " (" + serverGroup.getName() + ")");
+    setLabel(appContext.getString("mirror.group") + " (" + serverGroup.getName() + ")");
   }
 
   protected ServersPanel createServerGroupPanel() {
-    return new ServersPanel(adminClientContext, clusterModel, serverGroup.getMembers());
+    return new ServersPanel(appContext, clusterModel, serverGroup.getMembers());
   }
 
   @Override
@@ -45,7 +46,7 @@ public class ServerGroupNode extends ClusterElementNode {
   @Override
   public void tearDown() {
     super.tearDown();
-    adminClientContext = null;
+    appContext = null;
     serverGroup = null;
     serverGroupPanel = null;
   }

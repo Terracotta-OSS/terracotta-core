@@ -29,6 +29,7 @@ import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XLabel;
 import com.tc.admin.common.XObjectTable;
 import com.tc.admin.common.XScrollPane;
+import com.tc.admin.common.XSplitPane;
 import com.tc.admin.model.DGCListener;
 import com.tc.admin.model.IClusterModel;
 import com.tc.admin.model.IServer;
@@ -51,6 +52,7 @@ import java.util.concurrent.Callable;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
+import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 
 public class GCStatsPanel extends XContainer implements DGCListener {
@@ -95,11 +97,12 @@ public class GCStatsPanel extends XContainer implements DGCListener {
     gbc.anchor = GridBagConstraints.EAST;
     topPanel.add(runDGCButton, gbc);
 
-    add(topPanel, BorderLayout.NORTH);
+    XContainer gcStatsPanel = new XContainer(new BorderLayout());
+    gcStatsPanel.add(topPanel, BorderLayout.NORTH);
 
     table = new GCStatsTable();
     table.setModel(new GCStatsTableModel(appContext));
-    add(new XScrollPane(table), BorderLayout.CENTER);
+    gcStatsPanel.add(new XScrollPane(table), BorderLayout.CENTER);
 
     popupMenu = new JPopupMenu("DGC");
     popupMenu.add(gcAction);
@@ -134,7 +137,10 @@ public class GCStatsPanel extends XContainer implements DGCListener {
     ChartPanel chartPanel = BaseRuntimeStatsPanel.createChartPanel(chart);
     chartPanel.setMinimumSize(new Dimension(0, 0));
     chartPanel.setPreferredSize(new Dimension(0, 200));
-    add(chartPanel, BorderLayout.SOUTH);
+
+    XSplitPane splitter = new XSplitPane(JSplitPane.VERTICAL_SPLIT, gcStatsPanel, chartPanel);
+    splitter.setPreferences(appContext.getPrefs().node("GCStatsPanel/Split"));
+    add(splitter);
 
     clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
     if (clusterModel.isReady()) {

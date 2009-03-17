@@ -60,7 +60,7 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
   private IClusterModel            clusterModel;
   private ClusterListener          clusterListener;
 
-  private final int                dialRangeScaleFactor;
+  private int                      dialRangeScaleFactor;
 
   private DialInfo                 txnRateDialInfo;
   private DialInfo                 creationRateDialInfo;
@@ -96,9 +96,27 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
     super(appContext);
 
     this.clusterModel = clusterModel;
+    setName(clusterModel.toString());
 
-    dialRangeScaleFactor = Integer.getInteger("com.tc.admin.dashboard.dial-range-scale-factor", clusterModel
-        .getServerGroups().length);
+    messagePanel = createMessagePanel();
+
+    clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
+    if (clusterModel.isConnected()) {
+      setup();
+    }
+    if (clusterModel.isReady()) {
+      startMonitoringRuntimeStats();
+    } else {
+      remove(chartsPanel);
+      messageLabel.setText(appContext.getString("cluster.not.ready.msg"));
+      add(messagePanel);
+    }
+  }
+
+  private void setup() {
+    IServerGroup[] serverGroups = clusterModel.getServerGroups();
+    dialRangeScaleFactor = Integer.getInteger("com.tc.admin.dashboard.dial-range-scale-factor",
+                                              serverGroups != null ? serverGroups.length : 1);
 
     txnRateDialInfo = new DialInfo("Transaction Rate", scale(5000));
     creationRateDialInfo = new DialInfo("Object Creation Rate", scale(7000));
@@ -109,19 +127,7 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
     txnSizeRateDialInfo = new DialInfo("Transaction Volume Rate", scale(100));
     pendingTxnsDialInfo = new DialInfo("Unacknowledged Client Transactions", scale(100));
 
-    messagePanel = createMessagePanel();
-
-    setName(clusterModel.toString());
     setup(chartsPanel);
-
-    clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
-    if (clusterModel.isReady()) {
-      startMonitoringRuntimeStats();
-    } else {
-      remove(chartsPanel);
-      messageLabel.setText(appContext.getString("cluster.not.ready.msg"));
-      add(messagePanel);
-    }
   }
 
   private int scale(int value) {
@@ -140,6 +146,23 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
   private class ClusterListener extends AbstractClusterListener {
     private ClusterListener(IClusterModel clusterModel) {
       super(clusterModel);
+    }
+
+    @Override
+    public void handleConnected() {
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
+      if (clusterModel.isConnected()) {
+        setup();
+      } else {
+        removeAll();
+        messageLabel.setText(appContext.getString("cluster.not.ready.msg"));
+        add(messagePanel);
+        messagePanel.revalidate();
+      }
+      revalidate();
+      repaint();
     }
 
     @Override
@@ -258,9 +281,6 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
         if (flushRate != -1) flushRateDialInfo.setValue(Double.valueOf(flushRate));
         if (txnSizeRate != -1) txnSizeRateDialInfo.setValue(Double.valueOf(txnSizeRate / 1000d));
         if (pendingTxnsCount != -1) pendingTxnsDialInfo.setValue(Integer.valueOf(pendingTxnsCount));
-
-        // chartsPanel.revalidate();
-        // chartsPanel.repaint();
       }
     });
   }
@@ -314,8 +334,8 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
       mySize.width = Math.min(origSize.width, origSize.height);
       mySize.height = Math.min(mySize.width, origSize.height);
 
-      myInsets.left = myInsets.right = (origSize.width - mySize.width) / 2;
-      myInsets.top = myInsets.bottom = (origSize.height - mySize.height) / 2;
+      myInsets.left = myInsets.right = Math.max(0, (origSize.width - mySize.width) / 2);
+      myInsets.top = myInsets.bottom = Math.max(0, (origSize.height - mySize.height) / 2);
 
       border.updateInsets();
     }
@@ -357,7 +377,6 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
   public static JFreeChart createDial(String dialLabel, DialInfo dialInfo, StandardDialScale scale,
                                       StandardDialRange[] ranges) {
     DialPlot plot = new DialPlot();
-    plot.setView(0.0, 0.0, 1.0, 1.0);
     plot.setDialFrame(new StandardDialFrame());
 
     plot.setDataset(0, dialInfo.maxDataset);
@@ -373,7 +392,6 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
     plot.addPointer(pointer);
 
     DialTextAnnotation text = new DialTextAnnotation(dialLabel);
-    text.setFont(new Font("DialogInput", Font.PLAIN, 14));
     text.setRadius(0.17);
     plot.addLayer(text);
 
@@ -381,7 +399,6 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
 
     DialValueIndicator dvi = new DialValueIndicator(2);
     dvi.setNumberFormat(new DecimalFormat("#,###"));
-    dvi.setFont(new Font("Monospaced", Font.PLAIN, 14));
     dvi.setRadius(0.68);
     dvi.setOutlinePaint(Color.black);
     if (scale != null) {
@@ -412,19 +429,22 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
 
   @Override
   protected void setup(XContainer runtimeStatsPanel) {
+    runtimeStatsPanel.removeAll();
+
     JFreeChart chart;
     StandardDialRange[] ranges;
     double startAngle = -140, extent = -260;
     StandardDialScale defScale = DemoChartFactory.createStandardDialScale(0, scale(5000), startAngle, extent,
                                                                           scale(1000), 4);
     StandardDialScale scale;
-    Font labelFont = (Font) appContext.getObject("header.label.font");
+    Font labelFont = (Font) appContext.getObject("dashboard.header.label.font");
 
     GridBagConstraints gbc = new GridBagConstraints();
     gbc.fill = GridBagConstraints.BOTH;
     gbc.weightx = gbc.weighty = 1.0;
     gbc.gridx = gbc.gridy = 0;
-    gbc.insets = new Insets(1, 1, 1, 1);
+    gbc.insets = new Insets(0, 0, 0, 0);
+    gbc.ipadx = gbc.ipady = 5;
 
     runtimeStatsPanel.setLayout(new GridBagLayout());
 
@@ -436,6 +456,7 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
     p.setFillPaint(Color.red);
     p.setOutlinePaint(Color.red);
     runtimeStatsPanel.add(createDialChartPanel(chart, txnRateDialInfo), gbc);
+    gbc.ipadx = gbc.ipady = 0;
     gbc.gridx++;
 
     ranges = new StandardDialRange[] { new StandardDialRange(scale(5000), scale(6000), Color.orange),
@@ -485,17 +506,20 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
     gbc.gridy++;
     gbc.fill = GridBagConstraints.HORIZONTAL;
     gbc.weighty = 0.0;
-    gbc.ipadx = 0;
 
     XLabel label = new XLabel(appContext.getString("dashboard.transactions"));
     label.setFont(labelFont);
     label.setBorder(BorderFactory.createEtchedBorder());
     label.setHorizontalAlignment(SwingConstants.CENTER);
+    label.setPreferredSize(new Dimension(0, 0));
+    Dimension minSize = label.getMinimumSize();
+    minSize.width = (int) (minSize.width * 0.6d);
+    label.setMinimumSize(minSize);
     runtimeStatsPanel.add(label, gbc);
 
     gbc.gridx++;
     gbc.gridwidth = GridBagConstraints.REMAINDER;
-    gbc.ipadx = 0;
+    gbc.weightx = 1.0;
 
     label = new XLabel(appContext.getString("dashboard.impeding-factors"));
     label.setFont(labelFont);

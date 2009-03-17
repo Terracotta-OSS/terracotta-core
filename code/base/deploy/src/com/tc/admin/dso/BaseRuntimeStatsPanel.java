@@ -64,28 +64,28 @@ import javax.swing.text.html.HTML;
 
 public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisticConstants, PolledAttributeListener,
     PreferenceChangeListener, HierarchyListener {
-  protected ApplicationContext        appContext;
+  protected ApplicationContext          appContext;
 
-  protected XContainer                chartsPanel;
-  private XButton                     manageMonitoringButton;
-  private XButton                     clearSamplesButton;
-  private JButton                     configureOptionsButton;
-  protected AxisSpace                 rangeAxisSpace;
-  private boolean                     autoStart;
-  private boolean                     hasAutoStarted;
-  private boolean                     isMonitoring;
+  protected XContainer                  chartsPanel;
+  private XButton                       manageMonitoringButton;
+  private XButton                       clearSamplesButton;
+  private JButton                       configureOptionsButton;
+  protected AxisSpace                   rangeAxisSpace;
+  private boolean                       autoStart;
+  private boolean                       hasAutoStarted;
+  private boolean                       isMonitoring;
 
-  protected static final Dimension    fDefaultGraphSize                       = new Dimension(0, 65);
+  protected static final Dimension      fDefaultGraphSize                       = new Dimension(0, 65);
 
-  private static final int            DEFAULT_POLL_PERIOD_SECS                = 3;
-  private static final int            DEFAULT_SAMPLE_HISTORY_MINUTES          = 5;
+  private static final int              DEFAULT_POLL_PERIOD_SECS                = 3;
+  private static final int              DEFAULT_SAMPLE_HISTORY_MINUTES          = 5;
 
-  private static final String         DEFAULT_POLL_PERIOD_SECONDS_PREF_KEY    = "poll-periods-seconds";
-  private static final String         DEFAULT_SAMPLE_HISTORY_MINUTES_PREF_KEY = "sample-history-minutes";
+  private static final String           DEFAULT_POLL_PERIOD_SECONDS_PREF_KEY    = "poll-periods-seconds";
+  private static final String           DEFAULT_SAMPLE_HISTORY_MINUTES_PREF_KEY = "sample-history-minutes";
 
-  private static final ImageIcon      fStartIcon;
-  private static final ImageIcon      fStopIcon;
-  private static final ImageIcon      fClearIcon;
+  private static final ImageIcon        fStartIcon;
+  private static final ImageIcon        fStopIcon;
+  private static final ImageIcon        fClearIcon;
 
   static {
     fStartIcon = new ImageIcon(BaseRuntimeStatsPanel.class.getResource("/com/tc/admin/icons/resume_co.gif"));
@@ -93,12 +93,12 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     fClearIcon = new ImageIcon(BaseRuntimeStatsPanel.class.getResource("/com/tc/admin/icons/clear_co.gif"));
   }
 
-  private final ArrayList<TimeSeries> allSeries;
-  private final ArrayList<JFreeChart> allCharts;
+  protected final ArrayList<TimeSeries> allSeries;
+  protected final ArrayList<JFreeChart> allCharts;
 
-  private final boolean               showControls                            = false;
+  private final boolean                 showControls                            = false;
 
-  private static final String         HYPERIC_INSTRUCTIONS_URI                = "/com/tc/admin/HypericInstructions.html";
+  private static final String           HYPERIC_INSTRUCTIONS_URI                = "/com/tc/admin/HypericInstructions.html";
 
   public BaseRuntimeStatsPanel(ApplicationContext appContext) {
     super(new BorderLayout());

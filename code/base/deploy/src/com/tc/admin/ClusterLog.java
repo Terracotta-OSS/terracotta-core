@@ -4,6 +4,7 @@
  */
 package com.tc.admin;
 
+import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.PagedView;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XLabel;
@@ -37,7 +38,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
 
 public class ClusterLog extends XContainer implements ActionListener {
-  private IAdminClientContext adminClientContext;
+  private ApplicationContext  appContext;
   private IClusterModel       clusterModel;
   private ClusterListener     clusterListener;
   private ElementChooser      elementChooser;
@@ -46,10 +47,10 @@ public class ClusterLog extends XContainer implements ActionListener {
 
   private static final String EMPTY_PAGE = "EmptyPage";
 
-  public ClusterLog(IAdminClientContext adminClientContext, IClusterModel clusterModel) {
+  public ClusterLog(ApplicationContext appContext, IClusterModel clusterModel) {
     super(new BorderLayout());
 
-    this.adminClientContext = adminClientContext;
+    this.appContext = appContext;
     this.clusterModel = clusterModel;
 
     add(pagedView = new PagedView(), BorderLayout.CENTER);
@@ -93,7 +94,7 @@ public class ClusterLog extends XContainer implements ActionListener {
 
     @Override
     protected XTreeNode[] createTopLevelNodes() {
-      return new XTreeNode[] { new ServerGroupsNode(adminClientContext, clusterModel) };
+      return new XTreeNode[] { new ServerGroupsNode(appContext, clusterModel) };
     }
 
     @Override
@@ -159,7 +160,7 @@ public class ClusterLog extends XContainer implements ActionListener {
   }
 
   private JScrollPane createServerLog(IServer server) {
-    final ServerLog serverLog = new ServerLog(adminClientContext, server);
+    final ServerLog serverLog = new ServerLog(appContext, server);
     final JScrollPane scroller = new JScrollPane(serverLog, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                  ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     JScrollBar scrollBar = scroller.getVerticalScrollBar();
@@ -228,7 +229,7 @@ public class ClusterLog extends XContainer implements ActionListener {
     elementChooser.removeActionListener(this);
 
     synchronized (this) {
-      adminClientContext = null;
+      appContext = null;
       clusterModel = null;
       clusterListener = null;
       elementChooser.tearDown();

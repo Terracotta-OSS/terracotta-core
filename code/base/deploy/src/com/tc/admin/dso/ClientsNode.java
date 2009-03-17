@@ -69,7 +69,7 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
     IServer activeCoord = getActiveCoordinator();
     if (activeCoord != null) {
       activeCoord.removeClientConnectionListener(this);
-      setLabel(adminClientContext.getMessage("clients"));
+      setLabel(adminClientContext.getMessage("connected-clients"));
       clients = new IClient[0];
       for (int i = getChildCount() - 1; i >= 0; i--) {
         removeChild((XTreeNode) getChildAt(i));
@@ -151,7 +151,7 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
   }
 
   protected void updateLabel() {
-    setLabel(adminClientContext.getMessage("clients") + " (" + getChildCount() + ")");
+    setLabel(adminClientContext.getMessage("connected-clients") + " (" + getChildCount() + ")");
     nodeChanged();
   }
 

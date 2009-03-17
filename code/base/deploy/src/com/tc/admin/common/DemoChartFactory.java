@@ -41,10 +41,14 @@ import java.awt.Paint;
 import java.awt.Stroke;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.ResourceBundle;
 
 public class DemoChartFactory {
   public static final TickUnitSource DEFAULT_TICKS         = createStandardTickUnits();
   public static final TickUnitSource DEFAULT_INTEGER_TICKS = createIntegerTickUnits();
+  public static final ResourceBundle bundle                = ResourceBundle
+                                                               .getBundle("com.tc.admin.common.CommonBundle");
+  private static final Font          regularFont           = (Font) bundle.getObject("chart.regular.font");
 
   static {
     // ChartFactory.setChartTheme(StandardChartTheme.createLegacyTheme());
@@ -55,6 +59,13 @@ public class DemoChartFactory {
       public void apply(JFreeChart chart) {
         super.apply(chart);
         chart.setBackgroundPaint(null);
+      }
+
+      @Override
+      public void applyToValueAxis(ValueAxis axis) {
+        super.applyToValueAxis(axis);
+        axis.setTickLabelFont(regularFont);
+        axis.setLabelFont(regularFont);
       }
     };
     DefaultDrawingSupplier drawingSupplier = new DefaultDrawingSupplier(
@@ -68,6 +79,9 @@ public class DemoChartFactory {
     theme.setDomainGridlinePaint(Color.lightGray);
     theme.setRangeGridlinePaint(Color.lightGray);
     theme.setAxisOffset(new RectangleInsets());
+    theme.setRegularFont(regularFont);
+    theme.setLargeFont((Font) bundle.getObject("chart.large.font"));
+    theme.setExtraLargeFont((Font) bundle.getObject("chart.extra-large.font"));
     ChartFactory.setChartTheme(theme);
   }
 
@@ -101,11 +115,15 @@ public class DemoChartFactory {
     DateAxis axis = (DateAxis) plot.getDomainAxis();
     axis.setFixedAutoRange(30000.0);
     axis.setDateFormatOverride(new SimpleDateFormat("kk:mm:ss"));
+    axis.setTickLabelFont(regularFont);
+    axis.setLabelFont(regularFont);
 
     NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
     numberAxis.setStandardTickUnits(DEFAULT_TICKS);
     numberAxis.setRangeType(RangeType.POSITIVE);
     numberAxis.setAutoRangeMinimumSize(50.0);
+    numberAxis.setTickLabelFont(regularFont);
+    numberAxis.setLabelFont(regularFont);
 
     return chart;
   }
@@ -129,6 +147,8 @@ public class DemoChartFactory {
 
     ValueAxis axis = plot.getDomainAxis();
     axis.setFixedAutoRange(30000.0);
+    axis.setTickLabelFont(regularFont);
+    axis.setLabelFont(regularFont);
     if (axis instanceof DateAxis) {
       ((DateAxis) axis).setDateFormatOverride(new SimpleDateFormat("h:mm:ss"));
     }
@@ -137,6 +157,8 @@ public class DemoChartFactory {
     numberAxis.setRangeType(RangeType.POSITIVE);
     numberAxis.setStandardTickUnits(DEFAULT_TICKS);
     numberAxis.setAutoRangeMinimumSize(50.0);
+    numberAxis.setTickLabelFont(regularFont);
+    numberAxis.setLabelFont(regularFont);
 
     return chart;
   }
@@ -160,6 +182,8 @@ public class DemoChartFactory {
 
     ValueAxis axis = plot.getDomainAxis();
     axis.setFixedAutoRange(30000.0);
+    axis.setTickLabelFont(regularFont);
+    axis.setLabelFont(regularFont);
     if (axis instanceof DateAxis) {
       ((DateAxis) axis).setDateFormatOverride(new SimpleDateFormat("h:mm:ss"));
     }
@@ -168,6 +192,8 @@ public class DemoChartFactory {
     numberAxis.setRangeType(RangeType.POSITIVE);
     numberAxis.setStandardTickUnits(DEFAULT_TICKS);
     numberAxis.setAutoRangeMinimumSize(50.0);
+    numberAxis.setTickLabelFont(regularFont);
+    numberAxis.setLabelFont(regularFont);
 
     return chart;
   }
@@ -178,8 +204,8 @@ public class DemoChartFactory {
                                                     minorTickCount);
     scale.setTickRadius(0.88);
     scale.setTickLabelOffset(0.20);
-    scale.setTickLabelFont(new Font("Dialog", Font.PLAIN, 12));
-    scale.setTickLabelFormatter(new DecimalFormat("#"));
+    scale.setTickLabelFont(new Font("Dialog", Font.PLAIN, 10));
+    scale.setTickLabelFormatter(new DecimalFormat("#,###"));
     return scale;
   }
 
