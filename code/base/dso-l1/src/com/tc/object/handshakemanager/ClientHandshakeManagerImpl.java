@@ -5,6 +5,7 @@
 package com.tc.object.handshakemanager;
 
 import com.tc.async.api.Sink;
+import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
@@ -32,6 +33,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
   private static final State                        PAUSED             = new State("PAUSED");
   private static final State                        STARTING           = new State("STARTING");
   private static final State                        RUNNING            = new State("RUNNING");
+  private static final TCLogger                     CONSOLE_LOGGER     = CustomerLogging.getConsoleLogger();
 
   private final Collection<ClientHandshakeCallback> callBacks;
   private final ClientIDProvider                    cidp;
@@ -165,7 +167,8 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
     if (checkVersionMatches && !this.clientVersion.equals(serverVersion)) {
       final String msg = "Client/Server Version Mismatch Error: Client Version: " + this.clientVersion
                          + ", Server Version: " + serverVersion + ".  Terminating client now.";
-      throw new RuntimeException(msg);
+      CONSOLE_LOGGER.error(msg);
+      System.exit(-1);
     }
   }
 
