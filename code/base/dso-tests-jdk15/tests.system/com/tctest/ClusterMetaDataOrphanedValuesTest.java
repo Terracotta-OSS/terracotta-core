@@ -73,9 +73,6 @@ public class ClusterMetaDataOrphanedValuesTest extends TransparentTestBase {
   }
 
   public static TerracottaConfigBuilder createConfig(final int port, final int adminPort) {
-    String testClassName = ClusterMetaDataOrphanedValuesTestApp.class.getName();
-    String testClassSuperName = AbstractTransparentApp.class.getName();
-
     TerracottaConfigBuilder out = new TerracottaConfigBuilder();
 
     out.getServers().getL2s()[0].setDSOPort(port);
@@ -83,6 +80,9 @@ public class ClusterMetaDataOrphanedValuesTest extends TransparentTestBase {
     out.getServers().getL2s()[0].setPersistenceMode(L2ConfigBuilder.PERSISTENCE_MODE_PERMANENT_STORE);
 
     out.getClient().setFaultCount(1);
+
+    String testClassName = ClusterMetaDataOrphanedValuesTestApp.class.getName();
+    String testClassSuperName = AbstractTransparentApp.class.getName();
 
     InstrumentedClassConfigBuilder instrumented1 = new InstrumentedClassConfigBuilderImpl();
     instrumented1.setClassExpression(testClassName + "*");

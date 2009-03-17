@@ -26,7 +26,9 @@ import java.util.concurrent.CyclicBarrier;
 
 public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
 
-  private final CyclicBarrier barrier = new CyclicBarrier(ClusterMetaDataTest.NODE_COUNT);
+  public static final int NODE_COUNT = 3;
+
+  private final CyclicBarrier barrier = new CyclicBarrier(NODE_COUNT);
 
   private final SomePojo      pojo    = new SomePojo();
   private final Map           map     = new HashMap();

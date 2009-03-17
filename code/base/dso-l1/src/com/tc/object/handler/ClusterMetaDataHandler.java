@@ -42,19 +42,23 @@ public class ClusterMetaDataHandler extends AbstractEventHandler {
   }
 
   private void handleKeysForOrphanedValuesResponseMessage(final KeysForOrphanedValuesResponseMessage message) {
-    final DNAEncoding encoding = clusterMetaDataManager.getEncoding();
-    final TCDataInput input = new TCByteBufferInputStream(TCByteBufferFactory.wrap(message.getOrphanedKeysDNA()));
-    final Set keys = new HashSet();
-    try {
-      final int size = input.readInt();
-      for (int i = 0; i < size; i++) {
-        keys.add(encoding.decode(input));
+    if (message.getOrphanedKeysDNA() != null) {
+      final DNAEncoding encoding = clusterMetaDataManager.getEncoding();
+      final TCDataInput input = new TCByteBufferInputStream(TCByteBufferFactory.wrap(message.getOrphanedKeysDNA()));
+      final Set keys = new HashSet();
+      try {
+        final int size = input.readInt();
+        for (int i = 0; i < size; i++) {
+          keys.add(encoding.decode(input));
+        }
+      } catch (Exception e) {
+        getLogger().error("Keys for orphaned values response decoding error: ", e);
       }
-    } catch (Exception e) {
-      getLogger().error("Keys for orphaned values response decoding error: ", e);
-    }
 
-    clusterMetaDataManager.setResponse(message.getThreadID(), keys);
+      clusterMetaDataManager.setResponse(message.getThreadID(), keys);
+    } else {
+      clusterMetaDataManager.setResponse(message.getThreadID(), message.getOrphanedValuesObjectIDs());
+    }
   }
 
   private void handleNodeMetaDataResponseMessage(final NodeMetaDataResponseMessage message) {

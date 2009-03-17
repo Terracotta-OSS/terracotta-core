@@ -24,20 +24,9 @@ import java.io.FileOutputStream;
 
 public class ClusterEventsTest extends TransparentTestBase {
 
-  private static final int NODE_COUNT = 1;
-  private int              port;
-  private File             configFile;
-  private int              adminPort;
-
-  @Override
-  public void doSetUp(final TransparentTestIface t) throws Exception {
-    t.getTransparentAppConfig().setClientCount(NODE_COUNT);
-    t.initializeTestRunner();
-    TransparentAppConfig cfg = t.getTransparentAppConfig();
-    cfg.setAttribute(ClusterEventsTestApp.CONFIG_FILE, configFile.getAbsolutePath());
-    cfg.setAttribute(ClusterEventsTestApp.PORT_NUMBER, String.valueOf(port));
-    cfg.setAttribute(ClusterEventsTestApp.HOST_NAME, "localhost");
-  }
+  private int  port;
+  private File configFile;
+  private int  adminPort;
 
   @Override
   protected Class getApplicationClass() {
@@ -54,6 +43,16 @@ public class ClusterEventsTest extends TransparentTestBase {
 
     setUpControlledServer(configFactory(), configHelper(), port, adminPort, configFile.getAbsolutePath());
     doSetUp(this);
+  }
+
+  @Override
+  public void doSetUp(final TransparentTestIface t) throws Exception {
+    t.getTransparentAppConfig().setClientCount(ClusterEventsTestApp.NODE_COUNT);
+    t.initializeTestRunner();
+    TransparentAppConfig cfg = t.getTransparentAppConfig();
+    cfg.setAttribute(ClusterEventsTestApp.CONFIG_FILE, configFile.getAbsolutePath());
+    cfg.setAttribute(ClusterEventsTestApp.PORT_NUMBER, String.valueOf(port));
+    cfg.setAttribute(ClusterEventsTestApp.HOST_NAME, "localhost");
   }
 
   private synchronized void writeConfigFile() {
@@ -89,27 +88,29 @@ public class ClusterEventsTest extends TransparentTestBase {
     InstrumentedClassConfigBuilder instrumented4 = new InstrumentedClassConfigBuilderImpl();
     instrumented4.setClassExpression(testStateClass);
 
-    out.getApplication().getDSO().setInstrumentedClasses(new InstrumentedClassConfigBuilder[] { instrumented1, instrumented2, instrumented3, instrumented4 });
+    out.getApplication().getDSO().setInstrumentedClasses(
+                                                         new InstrumentedClassConfigBuilder[] { instrumented1,
+                                                             instrumented2, instrumented3, instrumented4 });
 
     RootConfigBuilder root = new RootConfigBuilderImpl();
-    root.setFieldName(testStateClass+".listeners");
+    root.setFieldName(testStateClass + ".listeners");
     root.setRootName("listeners");
 
     out.getApplication().getDSO().setRoots(new RootConfigBuilder[] { root });
 
-    LockConfigBuilder lock1 =  new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
+    LockConfigBuilder lock1 = new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
     lock1.setLockLevel(LockConfigBuilder.LEVEL_WRITE);
     lock1.setMethodExpression("* " + ClusterEventsTestApp.class.getName() + "*.*(..)");
 
-    LockConfigBuilder lock2 =  new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
+    LockConfigBuilder lock2 = new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
     lock2.setLockLevel(LockConfigBuilder.LEVEL_WRITE);
     lock2.setMethodExpression("* " + testEventsListenerClass + "*.*(..)");
 
-    LockConfigBuilder lock3 =  new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
+    LockConfigBuilder lock3 = new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
     lock3.setLockLevel(LockConfigBuilder.LEVEL_WRITE);
     lock3.setMethodExpression("* " + testStateClass + "*.*(..)");
 
-    out.getApplication().getDSO().setLocks(new LockConfigBuilder[] { lock1, lock2, lock3 } );
+    out.getApplication().getDSO().setLocks(new LockConfigBuilder[] { lock1, lock2, lock3 });
 
     return out;
   }

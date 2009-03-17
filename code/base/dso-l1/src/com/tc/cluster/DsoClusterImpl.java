@@ -185,7 +185,7 @@ public class DsoClusterImpl implements DsoClusterInternal {
       if (manageable.__tc_isManaged()) {
         if (manageable instanceof TCMap) {
           final Set<K> result = new HashSet<K>();
-          final Set keys = clusterMetaDataManager.getKeysForOrphanedValues(manageable.__tc_managed().getObjectID());
+          final Set keys = clusterMetaDataManager.getKeysForOrphanedValues((TCMap)map);
           for (Object key : keys) {
             if (key instanceof ObjectID) {
               try {

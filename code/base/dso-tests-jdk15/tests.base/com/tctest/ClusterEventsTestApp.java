@@ -23,6 +23,8 @@ import java.util.List;
 
 public class ClusterEventsTestApp extends AbstractTransparentApp {
 
+  public static final int              NODE_COUNT  = 1;
+
   public static final String           CONFIG_FILE = "config-file";
   public static final String           PORT_NUMBER = "port-number";
   public static final String           HOST_NAME   = "host-name";

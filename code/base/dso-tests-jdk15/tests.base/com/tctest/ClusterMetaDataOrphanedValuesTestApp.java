@@ -61,11 +61,11 @@ public class ClusterMetaDataOrphanedValuesTestApp extends AbstractTransparentApp
   private void runTest() throws Throwable {
     Thread.sleep(5000);
 
-    spawnNewClient();
+    Assert.assertEquals("The test L1Client did not exit with a success status", 0, spawnNewClient());
 
     Thread.sleep(5000);
 
-    spawnNewClient();
+    Assert.assertEquals("The test L1Client did not exit with a success status", 0, spawnNewClient());
   }
 
   public static class L1Client {
@@ -75,10 +75,10 @@ public class ClusterMetaDataOrphanedValuesTestApp extends AbstractTransparentApp
     private final Map  map = new HashMap();
 
     public static void main(final String args[]) {
-      new L1Client();
+      new L1Client().runTest();
     }
 
-    public L1Client() {
+    public void runTest() {
       synchronized (map) {
         if (0 == map.size()) {
           map.put("key1", new SomePojo(new YourMojo("mojo uno"), new MyMojo("mojo dos")));
@@ -105,7 +105,7 @@ public class ClusterMetaDataOrphanedValuesTestApp extends AbstractTransparentApp
     }
   }
 
-  private ExtraL1ProcessControl spawnNewClient() throws Exception {
+  private int spawnNewClient() throws Exception {
     final String hostName = config.getAttribute(HOST_NAME);
     final int port = Integer.parseInt(config.getAttribute(PORT_NUMBER));
     final File configFile = new File(config.getAttribute(CONFIG_FILE));
@@ -119,9 +119,8 @@ public class ClusterMetaDataOrphanedValuesTestApp extends AbstractTransparentApp
     client.start();
     client.mergeSTDERR();
     client.mergeSTDOUT();
-    client.waitFor();
-    System.err.println("\n### Started New Client");
-    return client;
+    System.err.println("\n### Started new client - Waiting for end");
+    return client.waitFor();
   }
 
   private void addTestTcPropertiesFile(final List jvmArgs) {

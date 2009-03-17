@@ -8,6 +8,8 @@ import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.object.bytecode.Manageable;
+import com.tc.object.bytecode.TCMap;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.msg.ClientHandshakeMessage;
@@ -101,8 +103,10 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     return response;
   }
 
-  public Set<?> getKeysForOrphanedValues(final ObjectID mapObjectID) {
+  public Set<?> getKeysForOrphanedValues(final TCMap tcMap) {
     waitUntilRunning();
+
+    final ObjectID mapObjectID = ((Manageable)tcMap).__tc_managed().getObjectID();
 
     final KeysForOrphanedValuesMessage message = kfovFactory.newKeysForOrphanedValuesMessage(groupID);
     message.setMapObjectID(mapObjectID);
@@ -135,7 +139,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     }
   }
 
-  private Set<?> sendKeysForOrphanedValuesMessageAndWait(final KeysForOrphanedValuesMessage message) {
+  public Set sendKeysForOrphanedValuesMessageAndWait(final KeysForOrphanedValuesMessage message) {
     final ThreadID thisThread = threadIDManager.getThreadID();
     outstandingKeysForOrphanedValuesRequests.put(thisThread, message);
     try {

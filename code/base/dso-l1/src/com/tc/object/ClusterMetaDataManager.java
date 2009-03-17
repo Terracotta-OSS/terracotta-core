@@ -5,6 +5,7 @@
 package com.tc.object;
 
 import com.tc.net.NodeID;
+import com.tc.object.bytecode.TCMap;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.lockmanager.api.ThreadID;
@@ -23,7 +24,7 @@ public interface ClusterMetaDataManager extends ClientHandshakeCallback {
 
   public Map<ObjectID, Set<NodeID>> getNodesWithObjects(Collection<ObjectID> ids);
 
-  public Set<?> getKeysForOrphanedValues(ObjectID mapObjectID);
+  public Set<?> getKeysForOrphanedValues(TCMap tcMap);
 
   public DsoNodeMetaData retrieveMetaDataForDsoNode(DsoNodeInternal node);
 

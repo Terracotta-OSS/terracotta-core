@@ -26,6 +26,7 @@ import com.tc.objectserver.managedobject.PartialMapManagedObjectState;
 
 import java.io.ByteArrayOutputStream;
 import java.net.InetAddress;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -70,50 +71,82 @@ public class ServerClusterMetaDataManagerImpl implements ServerClusterMetaDataMa
     KeysForOrphanedValuesResponseMessage responseMessage = (KeysForOrphanedValuesResponseMessage) message.getChannel()
         .createMessage(TCMessageType.KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE);
 
-    final Set<Object> response = new HashSet<Object>();
+    // handle the message for non active-active, ie. there's only one server group and this has knowledge about
+    // state of the map and its values
+    if (message.getMapObjectID() != null) {
+      final Set<Object> response = new HashSet<Object>();
 
-    final ManagedObject managedMap = objectManager.getObjectByID(message.getMapObjectID());
-    try {
-      final ManagedObjectState state = managedMap.getManagedObjectState();
-      if (state instanceof PartialMapManagedObjectState) {
-        final Set<NodeID> connectedClients = clientStateManager.getConnectedClientIDs();
+      final ManagedObject managedMap = objectManager.getObjectByID(message.getMapObjectID());
+      try {
+        final ManagedObjectState state = managedMap.getManagedObjectState();
+        if (state instanceof PartialMapManagedObjectState) {
+          final Set<NodeID> connectedClients = clientStateManager.getConnectedClientIDs();
 
-        Map realMap = ((PartialMapManagedObjectState) state).getMap();
-        for (Map.Entry entry : (Set<Map.Entry>) realMap.entrySet()) {
-          if (entry.getValue() instanceof ObjectID) {
-            boolean isOrphan = true;
+          Map realMap = ((PartialMapManagedObjectState) state).getMap();
+          for (Map.Entry entry : (Set<Map.Entry>) realMap.entrySet()) {
+            if (entry.getValue() instanceof ObjectID) {
+              boolean isOrphan = true;
 
-            for (NodeID nodeID : connectedClients) {
-              if (clientStateManager.hasReference(nodeID, (ObjectID) entry.getValue())) {
-                isOrphan = false;
-                break;
+              for (NodeID nodeID : connectedClients) {
+                if (clientStateManager.hasReference(nodeID, (ObjectID) entry.getValue())) {
+                  isOrphan = false;
+                  break;
+                }
+              }
+
+              if (isOrphan) {
+                response.add(entry.getKey());
               }
             }
+          }
+        } else {
+          logger.error("Received keys for orphaned values message for object '" + message.getMapObjectID()
+                       + "' whose managed state isn't a partial map, returning an empty set.");
+        }
+      } finally {
+        objectManager.releaseReadOnly(managedMap);
+      }
 
-            if (isOrphan) {
-              response.add(entry.getKey());
-            }
+      // write the DNA of the orphaned keys into a byte array
+      final ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
+      final TCObjectOutputStream objectOut = new TCObjectOutputStream(bytesOut);
+      objectOut.writeInt(response.size());
+      for (Object key : response) {
+        objectOut.writeObject(key);
+      }
+      objectOut.flush();
+
+      responseMessage.initialize(message.getThreadID(), bytesOut.toByteArray());
+
+    }
+    // handle the message for active-active, this group receives the map values that it knows the state for and reports
+    // whether they're orphans
+    else if (message.getMapValueObjectIDs() != null) {
+
+      final Set<ObjectID> response = new HashSet<ObjectID>();
+
+      final Collection<ObjectID> objectIDs = message.getMapValueObjectIDs();
+      final Set<NodeID> connectedClients = clientStateManager.getConnectedClientIDs();
+      for (ObjectID objectID : objectIDs) {
+        boolean isOrphan = true;
+
+        for (NodeID nodeID : connectedClients) {
+          if (clientStateManager.hasReference(nodeID, objectID)) {
+            isOrphan = false;
+            break;
           }
         }
-      } else {
-        logger.error("Received keys for orphaned values message for object '" + message.getMapObjectID()
-                     + "' whose managed state isn't a partial map, returning an empty set.");
+
+        if (isOrphan) {
+          response.add(objectID);
+        }
       }
-    } finally {
-      objectManager.releaseReadOnly(managedMap);
+
+      responseMessage.initialize(message.getThreadID(), response);
+    } else {
+      logger.error("Received keys for orphaned values message without a map ID or map value IDs.");
     }
 
-    // write the DNA of the orphaned keys into a byte array
-    final ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-    final TCObjectOutputStream objectOut = new TCObjectOutputStream(bytesOut);
-    objectOut.writeInt(response.size());
-    for (Object key : response) {
-      objectOut.writeObject(key);
-    }
-    objectOut.flush();
-
-    // create and send the response message
-    responseMessage.initialize(message.getThreadID(), bytesOut.toByteArray());
     responseMessage.send();
   }
 

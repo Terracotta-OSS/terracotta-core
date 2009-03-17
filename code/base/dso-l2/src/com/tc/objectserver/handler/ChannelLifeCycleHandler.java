@@ -9,8 +9,8 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.impl.InBandMoveToNextSink;
+import com.tc.config.HaConfig;
 import com.tc.logging.TCLogger;
-import com.tc.management.beans.L2State;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.CommunicationsManager;
@@ -27,7 +27,7 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler implements DSO
   private final TransactionBatchManager transactionBatchManager;
   private final CommunicationsManager   commsManager;
   private final DSOChannelManager       channelMgr;
-  private final L2State                 l2State;
+  private final HaConfig                haConfig;
 
   private TCLogger                      logger;
   private Sink                          channelSink;
@@ -36,11 +36,11 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler implements DSO
 
   public ChannelLifeCycleHandler(final CommunicationsManager commsManager,
                                  final TransactionBatchManager transactionBatchManager,
-                                 final DSOChannelManager channelManager, final L2State l2State) {
+                                 final DSOChannelManager channelManager, final HaConfig haConfig) {
     this.commsManager = commsManager;
     this.transactionBatchManager = transactionBatchManager;
     this.channelMgr = channelManager;
-    this.l2State = l2State;
+    this.haConfig = haConfig;
   }
 
   @Override
@@ -83,8 +83,7 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler implements DSO
 
   private void broadcastClusterMembershipMessage(final int eventType, final NodeID nodeID) {
     // only broadcast cluster membership messages for L1 nodes when the current server is the active coordinator
-    if (l2State.isActiveCoordinator() &&
-        NodeID.CLIENT_NODE_TYPE == nodeID.getNodeType()) {
+    if (haConfig.isActiveCoordinatorGroup() && NodeID.CLIENT_NODE_TYPE == nodeID.getNodeType()) {
       MessageChannel[] channels = channelMgr.getActiveChannels();
       for (MessageChannel channel : channels) {
         if (!channelMgr.getClientIDFor(channel.getChannelID()).equals(nodeID)) {
