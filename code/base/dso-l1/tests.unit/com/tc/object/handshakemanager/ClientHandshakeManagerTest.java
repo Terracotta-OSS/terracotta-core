@@ -23,7 +23,8 @@ import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.sequence.BatchSequenceProvider;
 import com.tc.util.sequence.BatchSequenceReceiver;
 
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -36,33 +37,35 @@ public class ClientHandshakeManagerTest extends TCTestCase {
 
   @Override
   public void setUp() throws Exception {
-    chmf = new TestClientHandshakeMessageFactory();
-    callback = new TestClientHandshakeCallback();
-    channel = new MockChannel();
+    this.chmf = new TestClientHandshakeMessageFactory();
+    this.callback = new TestClientHandshakeCallback();
+    this.channel = new MockChannel();
     newMessage();
   }
 
   private void newMessage() {
-    chmf.message = new TestClientHandshakeMessage();
+    this.chmf.message = new TestClientHandshakeMessage();
   }
 
   private void createHandshakeMgr() {
-    mgr = new ClientHandshakeManagerImpl(TCLogging.getLogger(ClientHandshakeManagerImpl.class), channel, chmf,
-                                         new NullSink(), new NullSessionManager(), new DsoClusterImpl(), clientVersion,
-                                         Collections.singletonList(callback));
+    List<ClientHandshakeCallback> callbacks = new ArrayList<ClientHandshakeCallback>();
+    callbacks.add(this.callback);
+    this.mgr = new ClientHandshakeManagerImpl(TCLogging.getLogger(ClientHandshakeManagerImpl.class), this.channel,
+                                              this.chmf, new NullSink(), new NullSessionManager(),
+                                              new DsoClusterImpl(), clientVersion, callbacks);
   }
 
   public void tests() {
     createHandshakeMgr();
-    GroupID group = channel.groups[0];
-    assertEquals(1, callback.paused.get());
-    assertEquals(0, callback.initiateHandshake.get());
-    assertEquals(0, callback.unpaused.get());
+    GroupID group = this.channel.groups[0];
+    assertEquals(1, this.callback.paused.get());
+    assertEquals(0, this.callback.initiateHandshake.get());
+    assertEquals(0, this.callback.unpaused.get());
 
     final AtomicBoolean done = new AtomicBoolean(false);
     new Thread(new Runnable() {
       public void run() {
-        mgr.waitForHandshake();
+        ClientHandshakeManagerTest.this.mgr.waitForHandshake();
         done.set(true);
       }
     }).start();
@@ -70,16 +73,16 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     ThreadUtil.reallySleep(2000);
     assertFalse(done.get());
 
-    mgr.connected(group);
+    this.mgr.connected(group);
 
-    assertEquals(1, callback.paused.get());
-    assertEquals(1, callback.initiateHandshake.get());
-    assertEquals(0, callback.unpaused.get());
+    assertEquals(1, this.callback.paused.get());
+    assertEquals(1, this.callback.initiateHandshake.get());
+    assertEquals(0, this.callback.unpaused.get());
 
     assertFalse(done.get());
 
-    TestClientHandshakeMessage sentMessage = (TestClientHandshakeMessage) chmf.newMessageQueue.take();
-    assertTrue(chmf.newMessageQueue.isEmpty());
+    TestClientHandshakeMessage sentMessage = (TestClientHandshakeMessage) this.chmf.newMessageQueue.take();
+    assertTrue(this.chmf.newMessageQueue.isEmpty());
 
     // make sure that the manager called send on the message...
     sentMessage.sendCalls.take();
@@ -87,7 +90,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
 
     // make sure RuntimeException is thrown if client/server versions don't match and version checking is enabled
     try {
-      mgr.acknowledgeHandshake(group, false, new ClientID(1), new ClientID[] {}, clientVersion + "a.b.c");
+      this.mgr.acknowledgeHandshake(group, false, new ClientID(1), new ClientID[] {}, clientVersion + "a.b.c");
       if (checkVersionMatchEnabled()) {
         fail();
       }
@@ -98,11 +101,11 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     }
 
     // now ACK for real
-    mgr.acknowledgeHandshake(group, false, new ClientID(1), new ClientID[] {}, clientVersion);
+    this.mgr.acknowledgeHandshake(group, false, new ClientID(1), new ClientID[] {}, clientVersion);
 
-    assertEquals(1, callback.paused.get());
-    assertEquals(1, callback.initiateHandshake.get());
-    assertEquals(1, callback.unpaused.get());
+    assertEquals(1, this.callback.paused.get());
+    assertEquals(1, this.callback.initiateHandshake.get());
+    assertEquals(1, this.callback.unpaused.get());
 
     while (!done.get()) {
       // Will fail with a timeout
@@ -114,18 +117,18 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     GroupID g0 = new GroupID(0);
     GroupID g1 = new GroupID(1);
     GroupID g2 = new GroupID(2);
-    channel.groups = new GroupID[] { g0, g1, g2 };
+    this.channel.groups = new GroupID[] { g0, g1, g2 };
     createHandshakeMgr();
 
-    assertEquals(1, callback.paused.get());
-    assertEquals(0, callback.initiateHandshake.get());
-    assertEquals(0, callback.unpaused.get());
-    assertEquals(3, callback.disconnected);
+    assertEquals(1, this.callback.paused.get());
+    assertEquals(0, this.callback.initiateHandshake.get());
+    assertEquals(0, this.callback.unpaused.get());
+    assertEquals(3, this.callback.disconnected);
 
     final AtomicBoolean done = new AtomicBoolean(false);
     new Thread(new Runnable() {
       public void run() {
-        mgr.waitForHandshake();
+        ClientHandshakeManagerTest.this.mgr.waitForHandshake();
         done.set(true);
       }
     }).start();
@@ -133,45 +136,45 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     ThreadUtil.reallySleep(2000);
     assertFalse(done.get());
 
-    mgr.connected(g0);
+    this.mgr.connected(g0);
 
-    assertEquals(1, callback.paused.get());
-    assertEquals(1, callback.initiateHandshake.get());
-    assertEquals(0, callback.unpaused.get());
-    assertEquals(3, callback.disconnected);
+    assertEquals(1, this.callback.paused.get());
+    assertEquals(1, this.callback.initiateHandshake.get());
+    assertEquals(0, this.callback.unpaused.get());
+    assertEquals(3, this.callback.disconnected);
 
     ThreadUtil.reallySleep(2000);
     assertFalse(done.get());
 
     // now ACK for real
-    mgr.acknowledgeHandshake(g0, false, new ClientID(1), new ClientID[] {}, clientVersion);
+    this.mgr.acknowledgeHandshake(g0, false, new ClientID(1), new ClientID[] {}, clientVersion);
 
-    assertEquals(1, callback.paused.get());
-    assertEquals(1, callback.initiateHandshake.get());
-    assertEquals(1, callback.unpaused.get());
-    assertEquals(2, callback.disconnected);
+    assertEquals(1, this.callback.paused.get());
+    assertEquals(1, this.callback.initiateHandshake.get());
+    assertEquals(1, this.callback.unpaused.get());
+    assertEquals(2, this.callback.disconnected);
 
     ThreadUtil.reallySleep(2000);
     assertFalse(done.get());
 
-    mgr.connected(g1);
-    mgr.connected(g2);
-    assertEquals(1, callback.paused.get());
-    assertEquals(3, callback.initiateHandshake.get());
-    assertEquals(1, callback.unpaused.get());
-    assertEquals(2, callback.disconnected);
+    this.mgr.connected(g1);
+    this.mgr.connected(g2);
+    assertEquals(1, this.callback.paused.get());
+    assertEquals(3, this.callback.initiateHandshake.get());
+    assertEquals(1, this.callback.unpaused.get());
+    assertEquals(2, this.callback.disconnected);
 
-    mgr.acknowledgeHandshake(g1, false, new ClientID(1), new ClientID[] {}, clientVersion);
-    assertEquals(1, callback.paused.get());
-    assertEquals(3, callback.initiateHandshake.get());
-    assertEquals(2, callback.unpaused.get());
-    assertEquals(1, callback.disconnected);
+    this.mgr.acknowledgeHandshake(g1, false, new ClientID(1), new ClientID[] {}, clientVersion);
+    assertEquals(1, this.callback.paused.get());
+    assertEquals(3, this.callback.initiateHandshake.get());
+    assertEquals(2, this.callback.unpaused.get());
+    assertEquals(1, this.callback.disconnected);
 
-    mgr.acknowledgeHandshake(g2, false, new ClientID(1), new ClientID[] {}, clientVersion);
-    assertEquals(1, callback.paused.get());
-    assertEquals(3, callback.initiateHandshake.get());
-    assertEquals(3, callback.unpaused.get());
-    assertEquals(0, callback.disconnected);
+    this.mgr.acknowledgeHandshake(g2, false, new ClientID(1), new ClientID[] {}, clientVersion);
+    assertEquals(1, this.callback.paused.get());
+    assertEquals(3, this.callback.initiateHandshake.get());
+    assertEquals(3, this.callback.unpaused.get());
+    assertEquals(0, this.callback.disconnected);
 
     while (!done.get()) {
       // Will fail with a timeout
@@ -189,8 +192,8 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     public final NoExceptionLinkedQueue newMessageQueue = new NoExceptionLinkedQueue();
 
     public ClientHandshakeMessage newClientHandshakeMessage(final NodeID remoteNode) {
-      newMessageQueue.put(message);
-      return message;
+      this.newMessageQueue.put(this.message);
+      return this.message;
     }
 
   }
@@ -200,8 +203,8 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     long sequence = 1;
 
     public synchronized void requestBatch(final BatchSequenceReceiver receiver, final int size) {
-      receiver.setNextBatch(sequence, sequence + size);
-      sequence += size;
+      receiver.setNextBatch(this.sequence, this.sequence + size);
+      this.sequence += size;
     }
 
   }
@@ -215,16 +218,16 @@ public class ClientHandshakeManagerTest extends TCTestCase {
 
     public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
                                     final ClientHandshakeMessage handshakeMessage) {
-      initiateHandshake.incrementAndGet();
+      this.initiateHandshake.incrementAndGet();
     }
 
     public void pause(final NodeID remoteNode, final int disconnectedCount) {
-      paused.incrementAndGet();
+      this.paused.incrementAndGet();
       this.disconnected = disconnectedCount;
     }
 
     public void unpause(final NodeID remoteNode, final int disconnectedCount) {
-      unpaused.incrementAndGet();
+      this.unpaused.incrementAndGet();
       this.disconnected = disconnectedCount;
     }
   }
