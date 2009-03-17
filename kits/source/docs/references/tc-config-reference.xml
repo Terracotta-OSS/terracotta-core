@@ -30,6 +30,10 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
 			tc-properties from local tc.properties file
 			tc-properties set via system properties 
 	-->
+
+    <property name="l1.cachemanager.enabled" value="true"/>
+    <property name="logging.maxLogFileSize" value="1024"/>
+    <property name="l1.cachemanager.leastCount" value="9000"/>
   </tc-properties>
   
   <!-- The 'system' section contains configuration data that affects the
@@ -806,10 +810,19 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
          context paths of the applications that should use DSO sessions.
          For the default context path (ie. "/"), use the special value
          'ROOT' (without the quotes)
+
+         There is an attribute "session-locking" in web-application which is 
+         optional and true by default. By default, locking is implicitly 
+         provided and auto-locking is not required when modifying/mutating
+         shared objects in the session.
+         When session-locking=false, applications need to properly synchronize 
+         and auto-lock before mutating shared data, though methods in HttpSession 
+         like setAttribute(), setMaxInactiveInterval() will still have implicit 
+         locking.
       -->
       <web-applications>
         <web-application>petstore</web-application>
-        <web-application>billing_app</web-application>
+        <web-application session-locking="false">billing_app</web-application>
         <web-application>ROOT</web-application>
       </web-applications>
 
@@ -867,8 +880,15 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
 
         <!-- "session-support" specifies if HTTP session clustering should be
           enabled for given web application. Default to false. Can be used,
-          for example, to cluster Spring WebFlow conversations. -->
-        <session-support>false</session-support>
+          for example, to cluster Spring WebFlow conversations. 
+          There is an attribute "session-locking", which is optional and true
+          by default. By default, locking is implicitly provided and auto-locking 
+          is not required when modifying/mutating shared objects in the session.
+          When session-locking=false, applications need to properly synchronize 
+          and auto-lock before mutating shared data, though methods in HttpSession 
+          like setAttribute(), setMaxInactiveInterval() will still have implicit 
+          locking. -->
+        <session-support session-locking="false">false</session-support>
 
         <!-- "application-contexts" define configuration for clustering of
           Spring-managed beans for specific Spring application context. If
