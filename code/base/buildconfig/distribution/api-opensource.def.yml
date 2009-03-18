@@ -1,59 +1,13 @@
 name: Terracotta DSO API
 internal_name: api
-kit_name_pattern: terracotta-api-api.version-bundle
-root_directory: terracotta-api-api.version
+kit_name_pattern: terracotta-api
+root_directory: terracotta-api
 bundled_components:
   - base:
       module_packages:
-        - terracotta-api-api.version:
-            javadoc: true
+        - api-api.version:
             modules:
-              - dso-cluster-api    
-        - terracotta-tim-api-api.version:
-            modules:
-              - common-api
-              - dso-l1-api
-              - license-common
-              - management-api
-              - modules-base
-              - thirdparty-api
-        - terracotta-test-api-api.version:
-            source: tests.base
-            filter: "**/*TestApp.class"
-            modules:
-              - common-api
-              - common
-              - dso-container-tests
-              - dso-l1
-              - dso-system-tests
-              - legacy-test-tree
-              - license-common
-              - simulator
+              - dso-cluster-api
 packaging:
   - tar
-postscripts:
-  - make-build-data:
-      args:
-        - lib/resources
-  - maven-deploy:
-      args:
-        - groupId: org.terracotta.api
-          artifact: api
-          file: terracotta-api-api.version.jar
-          pom: poms/terracotta-api-pom.xml
-          version: api.version  
-        - groupId: org.terracotta.api
-          artifact: tim-api
-          file: terracotta-tim-api-api.version.jar
-          pom: poms/terracotta-tim-api-pom.xml
-          version: api.version
-          inject: 
-            - lib/resources/build-data.txt
-        - groupId: org.terracotta.api
-          artifact: test-api
-          file: terracotta-test-api-api.version.jar
-          pom: poms/terracotta-test-api-pom.xml
-          version: api.version
-          inject: 
-            - lib/resources/build-data.txt
-  - delete-lib
+

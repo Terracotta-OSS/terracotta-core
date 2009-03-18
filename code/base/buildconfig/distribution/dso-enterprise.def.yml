@@ -52,7 +52,7 @@ bundled_components:
           - tc-config-reference
   - common:
       module_packages:
-        - terracotta-tim-api:
+        - tim-api:
             install_directory: lib
             modules:
               - common-api
@@ -71,6 +71,7 @@ bundled_components:
               - dso-statistics-api
               - management-api
         - api-api.version:
+            javadoc: true
             install_directory: lib
             modules:
               - dso-cluster-api              

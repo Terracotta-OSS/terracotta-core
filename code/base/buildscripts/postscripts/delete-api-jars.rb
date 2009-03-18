@@ -10,7 +10,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   def postscript(ant, build_environment, product_directory, *args)
     Dir.chdir(File.join(product_directory.to_s, "lib")) do
       # DEV-2567
-      FileUtils.rm("terracotta-tim-api.jar")
+      FileUtils.rm("tim-api.jar")
     end
   end
 end
