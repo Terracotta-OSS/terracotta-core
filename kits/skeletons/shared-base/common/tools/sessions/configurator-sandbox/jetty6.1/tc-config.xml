@@ -44,9 +44,15 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
            this tends to happen naturally) - this way the list of classes you wish to instrument
            can be concise -->
       <instrumented-classes>
-        <!-- Include all classes for DSO instrumentation -->
+        <!-- Include all application classes that are clustered -->
         <include>
-          <class-expression>*..*</class-expression>
+          <class-expression>demo.cart.DummyCart</class-expression>
+        </include>
+        <include>
+          <class-expression>demo.tasklist.service..*</class-expression>
+        </include>
+        <include>
+          <class-expression>demo.townsend.service..*</class-expression>
         </include>
       </instrumented-classes>
 
