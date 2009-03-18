@@ -27,7 +27,6 @@ import com.tc.config.schema.UpdateCheckConfigObject;
 import com.tc.config.schema.defaults.DefaultValueProvider;
 import com.tc.config.schema.repository.ChildBeanFetcher;
 import com.tc.config.schema.repository.ChildBeanRepository;
-import com.tc.config.schema.test.HaConfigBuilder;
 import com.tc.config.schema.utils.XmlObjectComparator;
 import com.tc.license.Capability;
 import com.tc.license.LicenseCheck;
@@ -466,8 +465,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
                                                   + ".) \n"
                                                   + "If even one server has persistence mode set to  "
                                                   + PersistenceMode.TEMPORARY_SWAP_ONLY
-                                                  + ", then High Availability mode must be set to "
-                                                  + HaConfigBuilder.HA_MODE_NETWORKED_ACTIVE_PASSIVE
+                                                  + ", then High Availability mode must be set to 'networked-active-passive'"
                                                   + "\nFor servers in a mirror group, High Availability mode can be set per"
                                                   + "mirror group. A mirror-group High Availability setting overrides the main"
                                                   + "High Availability for that mirror group.\n\n"
