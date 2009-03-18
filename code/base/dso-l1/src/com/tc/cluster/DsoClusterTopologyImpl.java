@@ -10,6 +10,7 @@ import com.tcclient.cluster.DsoNode;
 import com.tcclient.cluster.DsoNodeImpl;
 import com.tcclient.cluster.DsoNodeInternal;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,7 +28,7 @@ public class DsoClusterTopologyImpl implements DsoClusterTopology {
     nodesReadLock.lock();
     try {
       // yucky cast hack for generics
-      return (Collection) Collections.unmodifiableCollection(nodes.values());
+      return (Collection) Collections.unmodifiableCollection(new ArrayList<DsoNodeInternal>(nodes.values()));
     } finally {
       nodesReadLock.unlock();
     }

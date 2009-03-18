@@ -7,7 +7,6 @@ import com.tc.cluster.DsoCluster;
 import com.tc.cluster.DsoClusterEvent;
 import com.tc.cluster.DsoClusterListener;
 import com.tc.cluster.DsoClusterTopology;
-import com.tc.cluster.exceptions.ClusteredListenerException;
 import com.tc.cluster.exceptions.UnclusteredObjectException;
 import com.tcclient.cluster.DsoNode;
 
@@ -27,6 +26,8 @@ import java.util.Set;
  * application is actually running with Terracotta DSO enabled. Having an instance of {@code SimulatedDsoCluster}
  * assigned to a field, allows code to be written without checks that would have to account for running code without
  * DSO. Using {@code SimulatedDsoCluster} in code makes writing unit tests a lot easier.
+ *
+ * @since 3.0.0
  */
 public class SimulatedDsoCluster implements DsoCluster {
 
@@ -34,6 +35,9 @@ public class SimulatedDsoCluster implements DsoCluster {
   private final DsoClusterTopology topology;
   private final Set<DsoNode>       nodeSet;
 
+  /**
+   * Creates a new {@code SimulatedDsoCluster} instance.
+   */
   public SimulatedDsoCluster() {
     node = new SimulatedDsoNode();
     topology = new SimulatedDsoClusterTopology(node);
@@ -43,7 +47,7 @@ public class SimulatedDsoCluster implements DsoCluster {
     nodeSet = Collections.unmodifiableSet(nodes);
   }
 
-  public void addClusterListener(final DsoClusterListener listener) throws ClusteredListenerException {
+  public void addClusterListener(final DsoClusterListener listener) {
     if (listener != null) {
       final DsoClusterEvent event = new SimulatedDsoClusterEvent(node);
       listener.nodeJoined(event);

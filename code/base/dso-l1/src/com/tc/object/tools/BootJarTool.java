@@ -29,7 +29,6 @@ import com.tc.cluster.DsoCluster;
 import com.tc.cluster.DsoClusterEvent;
 import com.tc.cluster.DsoClusterListener;
 import com.tc.cluster.DsoClusterTopology;
-import com.tc.cluster.exceptions.ClusteredListenerException;
 import com.tc.cluster.exceptions.UnclusteredObjectException;
 import com.tc.config.Directories;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
@@ -624,7 +623,6 @@ public class BootJarTool {
       loadClassIntoJar(spec.getClassName(), bytes, spec.isPreInstrumented());
     }
     loadTerracottaClass(InjectedDsoInstance.class.getName());
-    loadTerracottaClass(ClusteredListenerException.class.getName());
     loadTerracottaClass(UnclusteredObjectException.class.getName());
     loadTerracottaClass(UnsupportedInjectedDsoInstanceTypeException.class.getName());
   }
@@ -1975,7 +1973,7 @@ public class BootJarTool {
     }
   }
 
-  private byte[] addNotClearableInterface(byte[] bytes) {
+  private byte[] addNotClearableInterface(final byte[] bytes) {
     ClassReader cr = new ClassReader(bytes);
     ClassWriter cw = new ClassWriter(cr, 0);
     cr.accept(new AddInterfacesAdapter(cw, new String[] { NotClearable.class.getName().replace('.', '/') }),

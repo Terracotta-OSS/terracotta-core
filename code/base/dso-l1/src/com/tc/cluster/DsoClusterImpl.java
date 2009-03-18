@@ -4,7 +4,6 @@
  */
 package com.tc.cluster;
 
-import com.tc.cluster.exceptions.ClusteredListenerException;
 import com.tc.cluster.exceptions.UnclusteredObjectException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -56,7 +55,7 @@ public class DsoClusterImpl implements DsoClusterInternal {
     this.clientObjectManager = objectManager;
   }
 
-  public void addClusterListener(final DsoClusterListener listener) throws ClusteredListenerException {
+  public void addClusterListener(final DsoClusterListener listener) {
     if (null == listeners) { return; }
 
     stateWriteLock.lock();

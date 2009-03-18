@@ -4,30 +4,50 @@
  */
 package com.tc.injection.exceptions;
 
-
+/**
+ * This exception is thrown when DSO doesn't support the injection type that is specified for a field.
+ *
+ * @since 3.0.0
+ */
 public class UnsupportedInjectedDsoInstanceTypeException extends RuntimeException {
 
   private final String containingClassName;
   private final String fieldName;
-  private final String typeName;
+  private final String type;
 
-  public UnsupportedInjectedDsoInstanceTypeException(final String containingClassName, final String fieldName, final String typeName) {
-    super("Unsupported injection type '"+typeName+"' for field '"+fieldName+"' of class '"+containingClassName+"'");
+  public UnsupportedInjectedDsoInstanceTypeException(final String containingClassName, final String fieldName,
+                                                     final String type) {
+    super("Unsupported injection type '" + type + "' for field '" + fieldName + "' of class '" + containingClassName + "'");
 
     this.containingClassName = containingClassName;
     this.fieldName = fieldName;
-    this.typeName = typeName;
+    this.type = type;
   }
 
+  /**
+   * Returns the name of the class that contains the field with an unsupported injection type.
+   *
+   * @return the name of the field's class
+   */
   public String getContainingClassName() {
     return containingClassName;
   }
 
+  /**
+   * Returns the name the field with an unsupported injection type.
+   *
+   * @return the name of the field
+   */
   public String getFieldName() {
     return fieldName;
   }
 
-  public String getUnsupportedTypeName() {
-    return typeName;
+  /**
+   * Returns the unsupported injection type.
+   *
+   * @return the unsupported injection type
+   */
+  public String getUnsupportedType() {
+    return type;
   }
 }
