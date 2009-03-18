@@ -27,6 +27,7 @@ import com.tc.config.schema.UpdateCheckConfigObject;
 import com.tc.config.schema.defaults.DefaultValueProvider;
 import com.tc.config.schema.repository.ChildBeanFetcher;
 import com.tc.config.schema.repository.ChildBeanRepository;
+import com.tc.config.schema.test.HaConfigBuilder;
 import com.tc.config.schema.utils.XmlObjectComparator;
 import com.tc.license.Capability;
 import com.tc.license.LicenseCheck;
@@ -133,9 +134,9 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
   private void verifyPortUsed(Set<String> serverPorts, String hostname, int port) throws ConfigurationSetupException {
     String hostport = hostname + ":" + port;
-    if (port != 0 && !serverPorts.add(hostport)) {
-      throw new ConfigurationSetupException(hostport + " is duplicated in configuration.");
-    } 
+    if (port != 0 && !serverPorts.add(hostport)) { throw new ConfigurationSetupException(
+                                                                                         hostport
+                                                                                             + " is duplicated in configuration."); }
   }
 
   private void verifyServerPortUsed(Set<String> serverPorts, Server server) throws ConfigurationSetupException {
@@ -458,18 +459,19 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
       if (badServers.size() > 0) {
         // formatting
         throw new ConfigurationSetupException(
-                                              "Your Terracotta system has a clustered DSO configuration -- i.e., "
-                                                  + "DSO is enabled, and more than one server is defined in the configuration file -- but "
-                                                  + "at least one server is in the '"
+                                              "At least one server defined in the Terracotta configuration file is in "
                                                   + PersistenceMode.TEMPORARY_SWAP_ONLY
                                                   + "' persistence mode. (Servers in this mode: "
                                                   + badServers
-                                                  + ".) In a "
-                                                  + "clustered DSO configuration, all servers must be in the '"
-                                                  + PersistenceMode.PERMANENT_STORE
-                                                  + "' mode. Please adjust the "
-                                                  + "persistence/mode element (inside the 'server' element) in your "
-                                                  + "configuration file; see the Terracotta documentation for more details.");
+                                                  + ".) \n"
+                                                  + "If even one server has persistence mode set to  "
+                                                  + PersistenceMode.TEMPORARY_SWAP_ONLY
+                                                  + ", then High Availability mode must be set to "
+                                                  + HaConfigBuilder.HA_MODE_NETWORKED_ACTIVE_PASSIVE
+                                                  + "\nFor servers in a mirror group, High Availability mode can be set per"
+                                                  + "mirror group. A mirror-group High Availability setting overrides the main"
+                                                  + "High Availability for that mirror group.\n\n"
+                                                  + "See the Terracotta documentation for more details.");
       }
     }
   }
