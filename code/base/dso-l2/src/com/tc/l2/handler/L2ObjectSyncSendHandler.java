@@ -24,8 +24,8 @@ import com.tc.net.groups.GroupManager;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.tx.ServerTransactionManager;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 
 public class L2ObjectSyncSendHandler extends AbstractEventHandler {
 
@@ -49,6 +49,8 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
                                                                                   .getLong(
                                                                                            TCPropertiesConsts.L2_OBJECTMANAGER_PASSIVE_SYNC_THROTTLE_TIME);
 
+  private final SyncLogger               syncLogger                           = new SyncLogger(logger);
+
   private final ServerTransactionFactory serverTransactionFactory             = new ServerTransactionFactory();
   private final L2ObjectStateManager     objectStateManager;
 
@@ -60,6 +62,7 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
     this.objectStateManager = objectStateManager;
   }
 
+  @Override
   public void handleEvent(EventContext context) {
     if (context instanceof ManagedObjectSyncContext) {
       ManagedObjectSyncContext mosc = (ManagedObjectSyncContext) context;
@@ -117,7 +120,7 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
       logger.info("Throttling Transaction Acks for " + maxSecsToSleep + " secs maximum since totalPendingTxns reached "
                   + totalPendingTxns);
       // Wait until max time to sleep or until it falls below 66 % of TOTAL_PENDING_TRANSACTIONS_THRESHOLD
-      while (maxSecsToSleep > 0 && totalPendingTxns > ((int) (TOTAL_PENDING_TRANSACTIONS_THRESHOLD *.66))) {
+      while (maxSecsToSleep > 0 && totalPendingTxns > ((int) (TOTAL_PENDING_TRANSACTIONS_THRESHOLD * .66))) {
         try {
           wait(1000);
         } catch (InterruptedException e) {
@@ -158,8 +161,7 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
       ObjectSyncMessage msg = ObjectSyncMessageFactory.createObjectSyncMessageFrom(mosc, sid);
       serverTxnMgr.objectsSynched(mosc.getNodeID(), sid);
       this.groupManager.sendTo(mosc.getNodeID(), msg);
-      logger.info("Sent " + mosc.getTotalObjectsSynced() + " objects out of " + mosc.getTotalObjectsToSync() + " to "
-                  + mosc.getNodeID() + (mosc.getRootsMap().size() == 0 ? "" : " roots = " + mosc.getRootsMap().size()));
+      syncLogger.logSynced(mosc);
       objectStateManager.close(mosc);
       return true;
     } catch (GroupException e) {
@@ -171,6 +173,7 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
     }
   }
 
+  @Override
   public void initialize(ConfigurationContext context) {
     super.initialize(context);
     ServerConfigurationContext oscc = (ServerConfigurationContext) context;
@@ -180,4 +183,25 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
     this.syncRequestSink = oscc.getStage(ServerConfigurationContext.OBJECTS_SYNC_REQUEST_STAGE).getSink();
   }
 
+  private static class SyncLogger {
+    private final TCLogger logger;
+
+    public SyncLogger(TCLogger logger) {
+      this.logger = logger;
+    }
+
+    public void logSynced(ManagedObjectSyncContext mosc) {
+      int current = mosc.getTotalObjectsSynced();
+      int last = current - mosc.getLookupIDs().size();
+      int totalObjectsToSync = mosc.getTotalObjectsToSync();
+      int lastPercent = (last * 100) / totalObjectsToSync;
+      int currentPercent = (current * 100) / totalObjectsToSync;
+
+      if (currentPercent > lastPercent) {
+        logger.info("Sent " + current + " (" + currentPercent + "%) objects out of " + mosc.getTotalObjectsToSync()
+                    + " to " + mosc.getNodeID()
+                    + (mosc.getRootsMap().size() == 0 ? "" : " roots = " + mosc.getRootsMap().size()));
+      }
+    }
+  }
 }
