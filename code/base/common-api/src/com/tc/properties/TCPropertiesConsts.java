@@ -432,6 +432,7 @@ public interface TCPropertiesConsts {
   /*********************************************************************************************************************
    * Section : Ehcache
    ********************************************************************************************************************/
+  public static final String   EHCACHE_CLUSTER_ALL_CACHE_MANAGERS                                 = "ehcache.clusterAllCacheManagers";
   public static final String   EHCAHCE_LOGGING_ENABLED                                            = "ehcache.logging.enabled";
   public static final String   EHCAHCE_EVICTOR_LOGGING_ENABLED                                    = "ehcache.evictor.logging.enabled";
   public static final String   EHCAHCE_EVICTOR_POOL_SIZE                                          = "ehcache.evictor.pool.size";
@@ -517,6 +518,8 @@ public interface TCPropertiesConsts {
   public static final String   L2_HEALTHCHECK_L2_SOCKECT_CONNECT_TIMEOUT                          = "l2.healthcheck.l2.socketConnectTimeout";
   public static final String   L2_HEALTHCHECK_L2_SOCKECT_CONNECT_COUNT                            = "l2.healthcheck.l2.socketConnectCount";
 
+  public static final String   L1_HEALTHCHECK_L2_BIND_ADDRESS                                     = "l1.healthcheck.l2.bindAddress";
+  public static final String   L1_HEALTHCHECK_L2_BIND_PORT                                        = "l1.healthcheck.l2.bindPort";
   public static final String   L1_HEALTHCHECK_L2_PING_ENABLED                                     = "l1.healthcheck.l2.ping.enabled";
   public static final String   L1_HEALTHCHECK_L2_PING_IDLETIME                                    = "l1.healthcheck.l2.ping.idletime";
   public static final String   L1_HEALTHCHECK_L2_PING_INTERVAL                                    = "l1.healthcheck.l2.ping.interval";
