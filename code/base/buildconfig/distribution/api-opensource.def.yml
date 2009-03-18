@@ -9,5 +9,5 @@ bundled_components:
             modules:
               - dso-cluster-api
 packaging:
-  - tar
+  - none
 
