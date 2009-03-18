@@ -4,8 +4,10 @@
  */
 package com.tc.object.handshakemanager;
 
+import com.tc.async.api.Sink;
 import com.tc.async.impl.NullSink;
 import com.tc.cluster.DsoClusterImpl;
+import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
@@ -13,8 +15,10 @@ import com.tc.net.NodeID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.msg.TestClientHandshakeMessage;
+import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.net.MockChannel;
 import com.tc.object.session.NullSessionManager;
+import com.tc.object.session.SessionManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
@@ -22,18 +26,37 @@ import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.sequence.BatchSequenceProvider;
 import com.tc.util.sequence.BatchSequenceReceiver;
+import com.tcclient.cluster.DsoClusterInternal;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ClientHandshakeManagerTest extends TCTestCase {
   private static final String               clientVersion = "x.y.z";
-  private ClientHandshakeManagerImpl        mgr;
+  private TestClientHandshakeManagerImpl    mgr;
   private TestClientHandshakeMessageFactory chmf;
   private TestClientHandshakeCallback       callback;
   private MockChannel                       channel;
+
+  // extend ClientHandshakeManagerImpl to throw RuntimeException instead of system.exit(-1) when version mismatch
+  private class TestClientHandshakeManagerImpl extends ClientHandshakeManagerImpl {
+
+    public TestClientHandshakeManagerImpl(final TCLogger logger, final DSOClientMessageChannel channel,
+                                          final ClientHandshakeMessageFactory chmf, final Sink pauseSink,
+                                          final SessionManager sessionManager, final DsoClusterInternal dsoCluster,
+                                          final String clientVersion,
+                                          final Collection<ClientHandshakeCallback> callbacks) {
+      super(logger, channel, chmf, pauseSink, sessionManager, dsoCluster, clientVersion, callbacks);
+    }
+
+    @Override
+    protected void mismatchExitWay(String msg) {
+      throw new RuntimeException(msg);
+    }
+  }
 
   @Override
   public void setUp() throws Exception {
@@ -50,9 +73,9 @@ public class ClientHandshakeManagerTest extends TCTestCase {
   private void createHandshakeMgr() {
     List<ClientHandshakeCallback> callbacks = new ArrayList<ClientHandshakeCallback>();
     callbacks.add(this.callback);
-    this.mgr = new ClientHandshakeManagerImpl(TCLogging.getLogger(ClientHandshakeManagerImpl.class), this.channel,
-                                              this.chmf, new NullSink(), new NullSessionManager(),
-                                              new DsoClusterImpl(), clientVersion, callbacks);
+    this.mgr = new TestClientHandshakeManagerImpl(TCLogging.getLogger(ClientHandshakeManagerImpl.class), this.channel,
+                                                  this.chmf, new NullSink(), new NullSessionManager(),
+                                                  new DsoClusterImpl(), clientVersion, callbacks);
   }
 
   public void tests() {

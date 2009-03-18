@@ -168,8 +168,13 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
       final String msg = "Client/Server Version Mismatch Error: Client Version: " + this.clientVersion
                          + ", Server Version: " + serverVersion + ".  Terminating client now.";
       CONSOLE_LOGGER.error(msg);
-      System.exit(-1);
+      mismatchExitWay(msg);
     }
+  }
+
+  // to be override by test program
+  protected void mismatchExitWay(String msg) {
+    System.exit(-1);
   }
 
   private void pauseCallbacks(final NodeID remote, final int disconnectedCount) {
