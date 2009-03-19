@@ -77,7 +77,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
   private String                         thisL2Identifier;
   private L2ConfigData                   myConfigData;
-  private ConfigTCProperties             configTCProperties;
+  private final ConfigTCProperties       configTCProperties;
 
   public StandardL2TVSConfigurationSetupManager(ConfigurationCreator configurationCreator, String thisL2Identifier,
                                                 DefaultValueProvider defaultValueProvider,
@@ -458,17 +458,17 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
       if (badServers.size() > 0) {
         // formatting
         throw new ConfigurationSetupException(
-                                              "At least one server defined in the Terracotta configuration file is in "
+                                              "At least one server defined in the Terracotta configuration file is in \n'"
                                                   + PersistenceMode.TEMPORARY_SWAP_ONLY
-                                                  + "' persistence mode. (Servers in this mode: "
+                                                  + "' persistence mode. (Servers in this mode: \n"
                                                   + badServers
-                                                  + ".) \n"
+                                                  + ".) \n\n"
                                                   + "If even one server has persistence mode set to  "
                                                   + PersistenceMode.TEMPORARY_SWAP_ONLY
-                                                  + ", then High Availability mode must be set to 'networked-active-passive'"
-                                                  + "\nFor servers in a mirror group, High Availability mode can be set per"
-                                                  + "mirror group. A mirror-group High Availability setting overrides the main"
-                                                  + "High Availability for that mirror group.\n\n"
+                                                  + ", \nthen High Availability mode must be set to 'networked-active-passive'"
+                                                  + "\n\nFor servers in a mirror group, High Availability mode can be set per"
+                                                  + "\nmirror group. A mirror-group High Availability setting overrides the main"
+                                                  + "\nHigh Availability for that mirror group.\n\n"
                                                   + "See the Terracotta documentation for more details.");
       }
     }
