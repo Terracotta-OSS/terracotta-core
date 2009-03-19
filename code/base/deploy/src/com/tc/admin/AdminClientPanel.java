@@ -131,12 +131,16 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     nodeView = new XContainer(new BorderLayout());
 
     XSplitPane leftSplitter = new XSplitPane(JSplitPane.HORIZONTAL_SPLIT, tree, nodeView);
+    leftSplitter.setDefaultDividerLocation(0.23);
     leftSplitter.setName("LeftSplitter");
+    leftSplitter.setPreferences(getPreferences().node(leftSplitter.getName()));
 
     logsPanel = new LogsPanel(adminClientContext);
 
     XSplitPane mainSplitter = new XSplitPane(JSplitPane.VERTICAL_SPLIT, leftSplitter, logsPanel);
+    mainSplitter.setDefaultDividerLocation(0.72);
     mainSplitter.setName("MainSplitter");
+    mainSplitter.setPreferences(getPreferences().node(mainSplitter.getName()));
 
     add(mainSplitter, BorderLayout.CENTER);
 
@@ -144,9 +148,6 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     statusLine.setEditable(false);
 
     add(statusLine, BorderLayout.SOUTH);
-
-    mainSplitter.setPreferences(getPreferences().node(mainSplitter.getName()));
-    leftSplitter.setPreferences(getPreferences().node(leftSplitter.getName()));
 
     tree.addTreeSelectionListener(new NavTreeSelectionListener());
 

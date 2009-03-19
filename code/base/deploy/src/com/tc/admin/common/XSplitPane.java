@@ -15,6 +15,7 @@ import javax.swing.JSplitPane;
 
 public class XSplitPane extends JSplitPane implements PropertyChangeListener {
   private Integer                dividerLocation;
+  private double                 defaultDividerLocation   = DEFAULT_DIVIDER_LOCATION;
   private Preferences            prefs;
   private static final double    DEFAULT_DIVIDER_LOCATION = 0.7;
   private static final String    SPLIT_PREF_KEY           = "Split";
@@ -27,13 +28,13 @@ public class XSplitPane extends JSplitPane implements PropertyChangeListener {
   public XSplitPane(int orientation) {
     super(orientation);
     setResizeWeight(0.5);
-    super.setDividerLocation(DEFAULT_DIVIDER_LOCATION);
+    super.setDividerLocation(defaultDividerLocation);
   }
 
   public XSplitPane(int orientation, Component leftComponent, Component rightComponent) {
     super(orientation, leftComponent, rightComponent);
     setResizeWeight(0.5);
-    super.setDividerLocation(DEFAULT_DIVIDER_LOCATION);
+    super.setDividerLocation(defaultDividerLocation);
   }
 
   public void setPreferences(Preferences prefs) {
@@ -41,6 +42,11 @@ public class XSplitPane extends JSplitPane implements PropertyChangeListener {
     dividerLocation = Integer.valueOf(prefs != null ? prefs.getInt(SPLIT_PREF_KEY, -1) : -1);
   }
 
+  public void setDefaultDividerLocation(double defaultDividerLocation) {
+    this.defaultDividerLocation = defaultDividerLocation;
+  }
+
+  @Override
   public void setDividerLocation(int dividerLocation) {
     this.dividerLocation = dividerLocation;
     super.setDividerLocation(dividerLocation);
@@ -63,25 +69,31 @@ public class XSplitPane extends JSplitPane implements PropertyChangeListener {
     }
   }
 
+  @Override
   public void add(java.awt.Component comp, Object constraints) {
     super.add(comp, constraints);
     comp.setMinimumSize(CHILD_MIN_SIZE);
   }
 
+  @Override
   public void addNotify() {
     super.addNotify();
     addPropertyChangeListener(this);
   }
 
+  @Override
   public void removeNotify() {
     removePropertyChangeListener(this);
     super.removeNotify();
   }
 
+  @Override
   public void doLayout() {
     if (dividerLocation != null && dividerLocation.intValue() >= 0) {
       // this one takes an absolute integer value
       setDividerLocation(dividerLocation.intValue());
+    } else {
+      setDividerLocation(defaultDividerLocation);
     }
     super.doLayout();
   }

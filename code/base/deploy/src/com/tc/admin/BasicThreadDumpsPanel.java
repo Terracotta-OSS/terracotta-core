@@ -79,9 +79,9 @@ public abstract class BasicThreadDumpsPanel extends XContainer {
     textArea.setPopupMenu(textAreaPopup);
 
     XSplitPane splitter = new XSplitPane(JSplitPane.HORIZONTAL_SPLIT, itemScroller, contentArea);
-    add(splitter);
-    splitter.setDividerLocation(0.2);
+    splitter.setDefaultDividerLocation(0.24);
     splitter.setPreferences(getPreferences().node("ThreadDumpsSplitter"));
+    add(splitter);
   }
 
   protected JPopupMenu createPopupMenu() {

@@ -44,8 +44,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.MouseEvent;
-import java.text.DecimalFormat;
 import java.text.MessageFormat;
+import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -374,8 +374,7 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
     return chartHolder;
   }
 
-  public static JFreeChart createDial(String dialLabel, DialInfo dialInfo, StandardDialScale scale,
-                                      StandardDialRange[] ranges) {
+  public JFreeChart createDial(String dialLabel, DialInfo dialInfo, StandardDialScale scale, StandardDialRange[] ranges) {
     DialPlot plot = new DialPlot();
     plot.setDialFrame(new StandardDialFrame());
 
@@ -392,13 +391,15 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
     plot.addPointer(pointer);
 
     DialTextAnnotation text = new DialTextAnnotation(dialLabel);
+    text.setFont((Font) appContext.getObject("dial.text.font"));
     text.setRadius(0.17);
     plot.addLayer(text);
 
     plot.setDataset(2, dialInfo.dataset);
 
     DialValueIndicator dvi = new DialValueIndicator(2);
-    dvi.setNumberFormat(new DecimalFormat("#,###"));
+    dvi.setNumberFormat((NumberFormat) appContext.getObject("dial.value.format"));
+    dvi.setFont((Font) appContext.getObject("dial.value.font"));
     dvi.setRadius(0.68);
     dvi.setOutlinePaint(Color.black);
     if (scale != null) {

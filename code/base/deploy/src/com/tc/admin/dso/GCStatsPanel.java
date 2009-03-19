@@ -139,6 +139,7 @@ public class GCStatsPanel extends XContainer implements DGCListener {
     chartPanel.setPreferredSize(new Dimension(0, 200));
 
     XSplitPane splitter = new XSplitPane(JSplitPane.VERTICAL_SPLIT, gcStatsPanel, chartPanel);
+    splitter.setDefaultDividerLocation(0.65);
     splitter.setPreferences(appContext.getPrefs().node("GCStatsPanel/Split"));
     add(splitter);
 

@@ -236,6 +236,6 @@ public class AdminClientBundle extends ListResourceBundle {
         { "dashboard.txn-size-rate", "Txn Size KB/s" }, { "dashboard.unacked-txns", "Unacked Txns" },
         { "dashboard.transactions", "Transactions" }, { "dashboard.impeding-factors", "Impeding Factors" },
         { "dashboard.dial.tip.format", "<html>{0}:<br>Max={1}, Average={2}</html>" },
-        { "dashboard.header.label.font", new Font("SansSerif", Font.PLAIN, 11) }, };
+        { "dashboard.header.label.font", new Font("SansSerif", Font.PLAIN, 12) }, };
   }
 }

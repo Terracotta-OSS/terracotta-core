@@ -88,6 +88,10 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   protected long                          activateTime;
   protected String                        persistenceMode;
   protected String                        failoverMode;
+  protected Integer                       jmxPort;
+  protected Integer                       dsoListenPort;
+  protected Integer                       dsoGroupPort;
+
   protected LockStatisticsMonitorMBean    lockProfilerBean;
   protected boolean                       lockProfilingSupported;
   protected int                           lockProfilerTraceDepth;
@@ -433,21 +437,30 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   }
 
   public synchronized int getPort() {
-    ServerConnectionManager scm = getConnectionManager();
-    return scm != null ? scm.getJMXPortNumber() : -1;
+    if (jmxPort == null) {
+      ServerConnectionManager scm = getConnectionManager();
+      jmxPort = Integer.valueOf(scm != null ? scm.getJMXPortNumber() : -1);
+    }
+    return jmxPort.intValue();
   }
 
   public synchronized Integer getDSOListenPort() {
-    TCServerInfoMBean theServerInfoBean = getServerInfoBean();
-    return theServerInfoBean != null ? theServerInfoBean.getDSOListenPort() : Integer.valueOf(-1);
+    if (dsoListenPort == null) {
+      TCServerInfoMBean theServerInfoBean = getServerInfoBean();
+      dsoListenPort = Integer.valueOf(theServerInfoBean != null ? theServerInfoBean.getDSOListenPort() : -1);
+    }
+    return dsoListenPort;
   }
 
   public synchronized Integer getDSOGroupPort() {
-    TCServerInfoMBean theServerInfoBean = getServerInfoBean();
-    return theServerInfoBean != null ? theServerInfoBean.getDSOGroupPort() : Integer.valueOf(-1);
+    if (dsoGroupPort == null) {
+      TCServerInfoMBean theServerInfoBean = getServerInfoBean();
+      dsoGroupPort = Integer.valueOf(theServerInfoBean != null ? theServerInfoBean.getDSOGroupPort() : -1);
+    }
+    return dsoGroupPort;
   }
 
-  public String getPersistenceMode() {
+  public synchronized String getPersistenceMode() {
     if (persistenceMode == null) {
       try {
         persistenceMode = getServerInfoBean().getPersistenceMode();
@@ -458,7 +471,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     return persistenceMode;
   }
 
-  public String getFailoverMode() {
+  public synchronized String getFailoverMode() {
     if (failoverMode == null) {
       try {
         failoverMode = getServerInfoBean().getFailoverMode();
@@ -469,19 +482,19 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     return failoverMode;
   }
 
-  public String getStatsExportServletURI() {
+  public synchronized String getStatsExportServletURI() {
     Integer port = isActive() ? getDSOListenPort() : getDSOGroupPort();
     Object[] args = new Object[] { getHost(), port.toString() };
     return MessageFormat.format("http://{0}:{1}/statistics-gatherer/retrieveStatistics?format=zip", args);
   }
 
-  public String getStatsExportServletURI(String sessionId) {
+  public synchronized String getStatsExportServletURI(String sessionId) {
     Integer port = isActive() ? getDSOListenPort() : getDSOGroupPort();
     Object[] args = new Object[] { getHost(), port.toString(), sessionId };
     return MessageFormat.format("http://{0}:{1}/stats-export?session={2}", args);
   }
 
-  AuthScope getAuthScope() throws Exception {
+  synchronized AuthScope getAuthScope() throws Exception {
     Integer port = isActive() ? getDSOListenPort() : getDSOGroupPort();
     return new AuthScope(getHost(), port);
   }
@@ -600,28 +613,30 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       String capabilities = ProductInfo.UNKNOWN_VALUE;
       String copyright = ProductInfo.UNKNOWN_VALUE;
       try {
-        AttributeList attrList = cc.mbsc.getAttributes(L2MBeanNames.TC_SERVER_INFO, attributes);
-        if (attrList.get(0) != null) {
-          version = (String) ((Attribute) attrList.get(0)).getValue();
-        }
-        boolean isPatched = false;
-        if (attrList.get(1) != null) {
-          isPatched = (Boolean) ((Attribute) attrList.get(1)).getValue();
-        }
-        if (attrList.get(2) != null) {
-          patchLevel = isPatched ? (String) ((Attribute) attrList.get(2)).getValue() : null;
-        }
-        if (attrList.get(3) != null) {
-          patchVersion = (String) ((Attribute) attrList.get(3)).getValue();
-        }
-        if (attrList.get(4) != null) {
-          buildID = (String) ((Attribute) attrList.get(4)).getValue();
-        }
-        if (attrList.get(5) != null) {
-          capabilities = (String) ((Attribute) attrList.get(5)).getValue();
-        }
-        if (attrList.get(6) != null) {
-          copyright = (String) ((Attribute) attrList.get(6)).getValue();
+        if (cc.mbsc != null) {
+          AttributeList attrList = cc.mbsc.getAttributes(L2MBeanNames.TC_SERVER_INFO, attributes);
+          if (attrList.get(0) != null) {
+            version = (String) ((Attribute) attrList.get(0)).getValue();
+          }
+          boolean isPatched = false;
+          if (attrList.get(1) != null) {
+            isPatched = (Boolean) ((Attribute) attrList.get(1)).getValue();
+          }
+          if (attrList.get(2) != null) {
+            patchLevel = isPatched ? (String) ((Attribute) attrList.get(2)).getValue() : null;
+          }
+          if (attrList.get(3) != null) {
+            patchVersion = (String) ((Attribute) attrList.get(3)).getValue();
+          }
+          if (attrList.get(4) != null) {
+            buildID = (String) ((Attribute) attrList.get(4)).getValue();
+          }
+          if (attrList.get(5) != null) {
+            capabilities = (String) ((Attribute) attrList.get(5)).getValue();
+          }
+          if (attrList.get(6) != null) {
+            copyright = (String) ((Attribute) attrList.get(6)).getValue();
+          }
         }
       } catch (Exception e) {
         System.err.println(e);
@@ -1035,6 +1050,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     lockProfilerBean = null;
     clusterStatsBean = null;
     productInfo = null;
+    jmxPort = dsoListenPort = dsoGroupPort = null;
   }
 
   public synchronized void disconnect() {

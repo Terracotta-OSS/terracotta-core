@@ -33,7 +33,6 @@ import javax.swing.BorderFactory;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JViewport;
-import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
 
@@ -161,8 +160,7 @@ public class ClusterLog extends XContainer implements ActionListener {
 
   private JScrollPane createServerLog(IServer server) {
     final ServerLog serverLog = new ServerLog(appContext, server);
-    final JScrollPane scroller = new JScrollPane(serverLog, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    final JScrollPane scroller = new JScrollPane(serverLog);
     JScrollBar scrollBar = scroller.getVerticalScrollBar();
     scrollBar.addMouseListener(new MouseAdapter() {
       @Override

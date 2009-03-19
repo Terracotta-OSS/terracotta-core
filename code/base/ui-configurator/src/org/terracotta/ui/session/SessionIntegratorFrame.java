@@ -350,6 +350,7 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
     rightPanel.add(createL2Panel());
 
     XSplitPane splitter = new XSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightPanel);
+    splitter.setDefaultDividerLocation(0.28);
     splitter.setPreferences(getPreferences().node("ControlSplitter"));
     splitter.setResizeWeight(0.1);
 
@@ -561,6 +562,8 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
 
     XContainer panel = new XContainer(new BorderLayout());
     XSplitPane splitter = new XSplitPane(JSplitPane.VERTICAL_SPLIT, new XScrollPane(xmlPane), problemsTabbedPane);
+    splitter.setDefaultDividerLocation(0.75);
+    splitter.setPreferences(getPreferences().node("ConfigTextSplit"));
     panel.add(topPanel, BorderLayout.NORTH);
     panel.add(splitter, BorderLayout.CENTER);
 
