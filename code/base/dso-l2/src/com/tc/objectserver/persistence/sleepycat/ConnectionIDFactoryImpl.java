@@ -6,6 +6,7 @@ package com.tc.objectserver.persistence.sleepycat;
 
 import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
 
+import com.tc.exception.TCRuntimeException;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.transport.ConnectionID;
@@ -38,7 +39,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
   public ConnectionID nextConnectionId() {
     return buildConnectionId(connectionIDSequence.next());
   }
-  
+
   private ConnectionID buildConnectionId(long channelID) {
     Assert.assertNotNull(uid);
     // Make sure we save the fact that we are giving out this id to someone in the database before giving it out.
@@ -50,16 +51,20 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
 
   public ConnectionID makeConnectionId(long channelID) {
     // provided channelID shall not be using
-    Assert.assertFalse(clientStateStore.containsClient(new ChannelID(channelID)));
-    
-    // adjust next id as needed 
+    if (clientStateStore.containsClient(new ChannelID(channelID))) { throw new TCRuntimeException(
+                                                                                                  "The connectionId "
+                                                                                                      + channelID
+                                                                                                      + " has been used. "
+                                                                                                      + " One possible cause: restarted some mirror groups but not all."); }
+
+    // adjust next id as needed
     if (channelID >= connectionIDSequence.current()) {
       connectionIDSequence.setNext(channelID + 1);
     }
-    
+
     return buildConnectionId(channelID);
   }
-  
+
   public void restoreConnectionId(ConnectionID rv) {
     fireCreationEvent(rv);
   }
