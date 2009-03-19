@@ -71,6 +71,9 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
     NullManagedObjectChangeListenerProvider listenerProvider = new NullManagedObjectChangeListenerProvider();
     ManagedObjectStateFactory.disableSingleton(true);
     ManagedObjectStateFactory.createInstance(listenerProvider, persistor);
+    
+    // wait for completion of daemon threads launched by getAllObjectIDs() & getAllMapsObjectIDs()
+    managedObjectPersistor.containsMapType(new ObjectID(1000));
   }
 
   private DBEnvironment newDBEnvironment() throws Exception {
