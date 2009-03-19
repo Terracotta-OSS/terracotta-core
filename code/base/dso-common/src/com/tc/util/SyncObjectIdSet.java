@@ -14,4 +14,11 @@ public interface SyncObjectIdSet extends Set, PrettyPrintable {
   public void stopPopulating(ObjectIDSet fullSet);
 
   public ObjectIDSet snapshot();
+
+  /**
+   * A Slightly optimized methods to do add() and size() without grabbing the internal lock twice.
+   * 
+   * @return size if object was successfully added, else return -1.
+   */
+  public int addAndGetSize(Object obj);
 }

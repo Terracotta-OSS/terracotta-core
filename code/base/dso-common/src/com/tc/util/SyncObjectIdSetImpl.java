@@ -18,93 +18,115 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
   private boolean      isBlocking = false;
 
   public void startPopulating() {
-    synchronized (lock) {
-      isBlocking = true;
+    synchronized (this.lock) {
+      this.isBlocking = true;
     }
   }
 
   public void stopPopulating(ObjectIDSet fullSet) {
-    synchronized (lock) {
-      ObjectIDSet large = (fullSet.size() > set.size()) ? fullSet : set;
-      ObjectIDSet small = (set == large) ? fullSet : set;
+    synchronized (this.lock) {
+      ObjectIDSet large = (fullSet.size() > this.set.size()) ? fullSet : this.set;
+      ObjectIDSet small = (this.set == large) ? fullSet : this.set;
       large.addAll(small);
-      set = large;
-      isBlocking = false;
-      lock.notifyAll();
+      this.set = large;
+      this.isBlocking = false;
+      this.lock.notifyAll();
     }
   }
 
+  /**
+   * A Slightly optimized methods to do add() and size() without grabbing the internal lock twice.
+   * 
+   * @return size if object was successfully added, else return -1.
+   */
+  public int addAndGetSize(Object obj) {
+    synchronized (this.lock) {
+      boolean added = this.set.add(obj);
+      if (added) {
+        return this.set.size();
+      } else {
+        return -1;
+      }
+    }
+  }
+
+  @Override
   public boolean add(Object obj) {
-    synchronized (lock) {
-      return set.add(obj);
+    synchronized (this.lock) {
+      return this.set.add(obj);
     }
   }
 
   public void addAll(Set s) {
-    synchronized (lock) {
-      set.addAll(s);
+    synchronized (this.lock) {
+      this.set.addAll(s);
     }
   }
 
+  @Override
   public boolean contains(Object o) {
     boolean rv = false;
-    synchronized (lock) {
-      rv = set.contains(o);
-      if (isBlocking && !rv) {
+    synchronized (this.lock) {
+      rv = this.set.contains(o);
+      if (this.isBlocking && !rv) {
         waitWhileBlocked();
-        rv = set.contains(o);
+        rv = this.set.contains(o);
       }
     }
     return rv;
   }
 
+  @Override
   public boolean removeAll(Collection ids) {
     boolean rv = false;
-    synchronized (lock) {
+    synchronized (this.lock) {
       waitWhileBlocked();
-      rv = set.removeAll(ids);
+      rv = this.set.removeAll(ids);
     }
     return rv;
   }
 
+  @Override
   public boolean remove(Object o) {
     boolean rv = false;
-    synchronized (lock) {
+    synchronized (this.lock) {
       waitWhileBlocked();
-      rv = set.remove(o);
+      rv = this.set.remove(o);
     }
     return rv;
   }
 
+  @Override
   public Iterator iterator() {
     Iterator rv = null;
-    synchronized (lock) {
+    synchronized (this.lock) {
       waitWhileBlocked();
-      rv = set.iterator();
+      rv = this.set.iterator();
     }
     return rv;
   }
 
+  @Override
   public int size() {
     int rv = 0;
-    synchronized (lock) {
+    synchronized (this.lock) {
       waitWhileBlocked();
-      rv = set.size();
+      rv = this.set.size();
     }
     return rv;
   }
 
   public ObjectIDSet snapshot() {
-    synchronized (lock) {
+    synchronized (this.lock) {
       waitWhileBlocked();
-      return new ObjectIDSet(set);
+      return new ObjectIDSet(this.set);
     }
   }
 
   private void waitWhileBlocked() {
     try {
-      while (isBlocking) {
-        lock.wait();
+      while (this.isBlocking) {
+        this.lock.wait();
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
@@ -113,10 +135,11 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.println(getClass().getName());
-    synchronized (lock) {
-      out.indent().print("blocking : ").print(new Boolean(isBlocking));
-      out.indent().print("id set   : ").visit(set);
+    synchronized (this.lock) {
+      out.indent().print("blocking : ").print(new Boolean(this.isBlocking));
+      out.indent().print("id set   : ").visit(this.set);
     }
     return out;
   }
+
 }
