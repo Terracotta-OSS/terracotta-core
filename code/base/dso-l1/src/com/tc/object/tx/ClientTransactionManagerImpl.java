@@ -805,6 +805,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
           }
 
           TCObject tco = this.objectManager.lookupOrCreate(p);
+          tco.markAccessed();
           parameters[i] = tco.getObjectID();
           if (p != null) {
             // record the reference in this transaction -- This is to solve the race condition of transactions
