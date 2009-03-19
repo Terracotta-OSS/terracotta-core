@@ -49,7 +49,7 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
                                                                                   .getLong(
                                                                                            TCPropertiesConsts.L2_OBJECTMANAGER_PASSIVE_SYNC_THROTTLE_TIME);
 
-  private final SyncLogger               syncLogger                           = new SyncLogger(logger);
+  private final SyncLogger               syncLogger                           = new SyncLogger();
 
   private final ServerTransactionFactory serverTransactionFactory             = new ServerTransactionFactory();
   private final L2ObjectStateManager     objectStateManager;
@@ -184,11 +184,6 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
   }
 
   private static class SyncLogger {
-    private final TCLogger logger;
-
-    public SyncLogger(TCLogger logger) {
-      this.logger = logger;
-    }
 
     public void logSynced(ManagedObjectSyncContext mosc) {
       int current = mosc.getTotalObjectsSynced();
