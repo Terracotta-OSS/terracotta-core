@@ -167,12 +167,14 @@ public class PrimitiveArrayTestApp extends AbstractErrorCatchingTransparentApp {
       Class type = actual.getClass().getComponentType();
       Object expect = root.getCompareData(type);
 
-      if (withMods) {
-        modifyData(expect, intClassType(type));
-      }
-
-      if (!compareData(actual, expect)) {
-        differentDataError(actual, expect, type);
+      synchronized (actual) {
+        if (withMods) {
+          modifyData(expect, intClassType(type));
+        }
+  
+        if (!compareData(actual, expect)) {
+          differentDataError(actual, expect, type);
+        }
       }
     }
   }
