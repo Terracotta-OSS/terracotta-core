@@ -3,8 +3,10 @@
  */
 package com.tctest;
 
+import com.tc.object.ObjectID;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerUtil;
+import com.tc.object.bytecode.TCMap;
 import com.tc.object.cache.CacheStats;
 import com.tc.object.cache.Evictable;
 import com.tc.object.config.ConfigVisitor;
@@ -16,10 +18,10 @@ import com.tc.util.Assert;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class PartialCollectionEvictionTestApp extends AbstractErrorCatchingTransparentApp {
 
@@ -27,7 +29,7 @@ public class PartialCollectionEvictionTestApp extends AbstractErrorCatchingTrans
     super(appId, cfg, listenerProvider);
   }
 
-  private final Map<String, Object> map = new ConcurrentHashMap<String, Object>();
+  private final Map<String, Object> map = new HashMap<String, Object>();
 
   @Override
   protected void runTest() throws Throwable {
@@ -37,30 +39,36 @@ public class PartialCollectionEvictionTestApp extends AbstractErrorCatchingTrans
     Evictable cache = (Evictable) objectManager.get(mgr);
     
     final int SIZE = 100;
-    for (int i = 0; i < SIZE; i++) {
-      map.put("old mapping " + i, new Object());
+    synchronized (map) {
+      for (int i = 0; i < SIZE; i++) {
+        map.put("old mapping " + i, new Object());
+      }
     }
 
     DummyCacheStats cs = new DummyCacheStats(SIZE);    
     cache.evictCache(cs);    
     Assert.assertEquals(0, cs.evicted);
     
-    for (int i = 0; i < SIZE; i++) {
-      map.put("new mapping " + i, new Object());
+    synchronized (map) {
+      for (int i = 0; i < SIZE; i++) {
+        map.put("new mapping " + i, new Object());
+      }
     }
     
     cache.evictCache(cs);
     Assert.assertEquals(SIZE, cs.evicted);
     
-    Set<String> localKeys = ManagerUtil.getManager().getDsoCluster().getKeysForLocalValues(map);
-    
-    int oldMappingCount = 0;
-    for (String s : localKeys) {
-      if (s.startsWith("old mapping"))
-        oldMappingCount++;
+    int flushedOldMappingCount = 0;
+    final Collection<Map.Entry> entries = ((TCMap) map).__tc_getAllEntriesSnapshot();
+    for (Map.Entry entry : entries) {
+      if (entry.getValue() instanceof ObjectID) {
+        if (((String) entry.getKey()).startsWith("old mapping")) {
+          flushedOldMappingCount++;
+        }
+      }
     }
     
-    Assert.assertTrue("No Old Mappings Flushed", oldMappingCount < SIZE);
+    Assert.assertTrue("No Old Mappings Flushed", flushedOldMappingCount > 0);
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
@@ -68,6 +76,7 @@ public class PartialCollectionEvictionTestApp extends AbstractErrorCatchingTrans
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
 
     spec.addRoot("map", "map");
+    config.addWriteAutolock("* " + testClass + ".runTest()");
   }
 
   static class DummyCacheStats implements CacheStats {
@@ -83,6 +92,7 @@ public class PartialCollectionEvictionTestApp extends AbstractErrorCatchingTrans
     }
 
     public void objectEvicted(int evictedCount, int currentCount, List targetObjects4GC) {
+      System.err.println("Evicted : " + evictedCount);
       evicted += evictedCount;
     }
   }
