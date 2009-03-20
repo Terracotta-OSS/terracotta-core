@@ -54,9 +54,13 @@ public class PartialCollectionEvictionTestApp extends AbstractErrorCatchingTrans
     
     Set<String> localKeys = ManagerUtil.getManager().getDsoCluster().getKeysForLocalValues(map);
     
+    int oldMappingCount = 0;
     for (String s : localKeys) {
-      Assert.assertFalse("Old Mapping Not Flushed", s.startsWith("old mapping"));
+      if (s.startsWith("old mapping"))
+        oldMappingCount++;
     }
+    
+    Assert.assertTrue("No Old Mappings Flushed", oldMappingCount < SIZE);
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
