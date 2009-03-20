@@ -33,25 +33,29 @@ public class AppServerUtil {
   public static void waitForPort(int port, long waitTime) {
     final long timeout = System.currentTimeMillis() + waitTime;
     while (System.currentTimeMillis() < timeout) {
-      Socket s = null;
-      try {
-        s = new Socket("127.0.0.1", port);
-        return;
-      } catch (IOException ioe) {
-        // try again
-      } finally {
-        if (s != null) {
-          try {
-            s.close();
-          } catch (IOException ioe) {
-            // ignore
-          }
-        }
-      }
+      if (pingPort(port)) { return; }
       ThreadUtil.reallySleep(1000);
     }
 
     throw new RuntimeException("Port " + port + " cannot be reached, timeout = " + waitTime);
+  }
+
+  public static boolean pingPort(int port) {
+    Socket s = null;
+    try {
+      s = new Socket("127.0.0.1", port);
+      return true;
+    } catch (IOException ioe) {
+      return false;
+    } finally {
+      if (s != null) {
+        try {
+          s.close();
+        } catch (IOException ioe) {
+          // ignore
+        }
+      }
+    }
   }
 
   public static String getFullName(String serverName, String majorVersion, String minorVersion) {

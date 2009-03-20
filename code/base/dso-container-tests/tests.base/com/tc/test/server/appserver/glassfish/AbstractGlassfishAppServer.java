@@ -28,6 +28,7 @@ import com.tc.test.server.appserver.deployment.WARBuilder;
 import com.tc.test.server.util.AppServerUtil;
 import com.tc.text.Banner;
 import com.tc.util.Assert;
+import com.tc.util.Grep;
 import com.tc.util.PortChooser;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.Os;
@@ -56,6 +57,8 @@ import javax.xml.transform.stream.StreamResult;
  * Glassfish AppServer implementation
  */
 public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
+
+  private static final int    STARTUP_RETRIES    = 3;
 
   private static final String JAVA_CMD           = System.getProperty("java.home") + File.separator + "bin"
                                                    + File.separator + "java";
@@ -157,6 +160,19 @@ public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
 
   public ServerResult start(ServerParameters rawParams) throws Exception {
     AppServerParameters params = (AppServerParameters) rawParams;
+    for (int i = 0; i < STARTUP_RETRIES; i++) {
+      try {
+        return start0(params);
+      } catch (RetryException re) {
+        Banner.warnBanner("Re-trying server startup (" + i + ") " + re.getMessage());
+        continue;
+      }
+    }
+
+    throw new RuntimeException("Failed to start server in " + STARTUP_RETRIES + " attempts");
+  }
+
+  private ServerResult start0(AppServerParameters params) throws Exception {
     instanceDir = createInstance(params);
 
     instanceDir.delete(); // createDomain will fail if directory already exists
@@ -167,12 +183,14 @@ public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
     setProperties(params, httpPort, instanceDir);
 
     final String cmd[] = getStartupCommand(params);
-    final String nodeLogFile = new File(instanceDir.getParent(), instanceDir.getName() + ".log").getAbsolutePath();
+    final File nodeLogFile = new File(instanceDir.getParent(), instanceDir.getName() + ".log");
+    final Process process = Runtime.getRuntime().exec(cmd, null, instanceDir);
 
     runner = new Thread("runner for " + params.instanceName()) {
+      @Override
       public void run() {
         try {
-          Result result = Exec.execute(cmd, nodeLogFile, startupInput(), instanceDir);
+          Result result = Exec.execute(process, cmd, nodeLogFile.getAbsolutePath(), startupInput(), instanceDir);
           if (result.getExitCode() != 0) {
             System.err.println(result);
           }
@@ -184,17 +202,39 @@ public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
     runner.start();
     System.err.println("Starting " + params.instanceName() + " on port " + httpPort + "...");
 
-    AppServerUtil.waitForPort(adminPort, START_STOP_TIMEOUT);
+    boolean started = false;
+    long timeout = System.currentTimeMillis() + START_STOP_TIMEOUT;
+    while (System.currentTimeMillis() < timeout) {
+      if (AppServerUtil.pingPort(adminPort)) {
+        started = true;
+        break;
+      }
+
+      if (!runner.isAlive()) {
+        if (amxDebugCheck(nodeLogFile)) { throw new RetryException("NPE in AMXDebug"); }
+        throw new RuntimeException("Runner thread finished before timeout");
+      }
+    }
+
+    if (!started) { throw new RuntimeException("Failed to start server in " + START_STOP_TIMEOUT + "ms"); }
 
     System.err.println("Started " + params.instanceName() + " on port " + httpPort);
 
     waitForAppInstanceRunning(params);
 
-    deployWars(params.wars());
+    deployWars(process, nodeLogFile, params.wars());
 
     waitForPing();
 
     return new AppServerResult(httpPort, this);
+  }
+
+  private static boolean amxDebugCheck(File nodeLogFile) throws IOException {
+    // see DEV-1722
+    List<CharSequence> hits = Grep.grep("^Caused by: java.lang.NullPointerException$", nodeLogFile);
+    List<CharSequence> hits2 = Grep.grep("^\tat com.sun.appserv.management.base.AMXDebug.getDebug", nodeLogFile);
+
+    return (!hits.isEmpty() && !hits2.isEmpty());
   }
 
   private void waitForPing() {
@@ -286,17 +326,17 @@ public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
     }
   }
 
-  private void deployWars(Map wars) throws Exception {
+  private void deployWars(Process process, File nodeLogFile, Map wars) throws Exception {
     for (Iterator iter = wars.entrySet().iterator(); iter.hasNext();) {
       Map.Entry entry = (Entry) iter.next();
       String warName = (String) entry.getKey();
       File warFile = (File) entry.getValue();
-      deployWar(warName, warFile);
+      deployWar(warName, warFile, process, nodeLogFile);
     }
 
     // deploy the ping app so we can test to see
     // if wars are ready
-    deployWar(PINGWAR, createPingWarFile(PINGWAR + ".war"));
+    deployWar(PINGWAR, createPingWarFile(PINGWAR + ".war"), process, nodeLogFile);
   }
 
   private File createPingWarFile(String warName) throws Exception {
@@ -305,38 +345,36 @@ public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
     return builder.makeDeployment().getFileSystemPath().getFile();
   }
 
-  private void deployWar(String warName, File warFile) throws IOException, Exception {
-    Result result = null;
+  private void deployWar(String warName, File warFile, Process process, File nodeLogFile) throws IOException, Exception {
+    System.err.println("Deploying war [" + warName + "] on " + instanceDir.getName());
 
-    // This retry logic is a bit of a hack for sure but. I mostly want to see if waiting some amount and/or retrying
-    // allows the deploy to eventually succeed (if so, then we can search for another indicator of when GF is ready to
-    // accept things)
-    for (int i = 0; i < 3; i++) {
-      System.err.println("Deploying war [" + warName + "] on " + instanceDir.getName() + " [attempt #" + i + "]");
+    List cmd = new ArrayList();
+    cmd.add(getAsadminScript().getAbsolutePath());
+    cmd.add("deploy");
+    cmd.add("--interactive=false");
+    cmd.add("--user");
+    cmd.add(ADMIN_USER);
+    cmd.add("--passwordfile");
+    cmd.add(getPasswdFile().getAbsolutePath());
+    cmd.add("--contextroot=" + warName);
+    cmd.add("--port=" + adminPort);
+    cmd.add(warFile.getAbsolutePath());
 
-      List cmd = new ArrayList();
-      cmd.add(getAsadminScript().getAbsolutePath());
-      cmd.add("deploy");
-      cmd.add("--interactive=false");
-      cmd.add("--user");
-      cmd.add(ADMIN_USER);
-      cmd.add("--passwordfile");
-      cmd.add(getPasswdFile().getAbsolutePath());
-      cmd.add("--contextroot=" + warName);
-      cmd.add("--port=" + adminPort);
-      cmd.add(warFile.getAbsolutePath());
+    Result result = Exec.execute((String[]) cmd.toArray(new String[] {}));
 
-      result = Exec.execute((String[]) cmd.toArray(new String[] {}));
-
-      if (result.getExitCode() == 0) {
-        System.err.println("Deployed war file successfully.");
-        return;
-      }
-
-      System.err.println("Deploy failed for " + warName + ": " + result);
-      ThreadUtil.reallySleep(5000);
+    if (result.getExitCode() == 0) {
+      System.err.println("Deployed war file successfully.");
+      return;
     }
 
+    // deploy failed. Stop the process and see if it the known "web1" problem
+    process.destroy();
+    ThreadUtil.reallySleep(3000);
+    List<CharSequence> hits = Grep
+        .grep("^SEVERE: WEB0610: WebModule \\[/web1\\] failed to deploy and has been disabled$", nodeLogFile);
+    if (!hits.isEmpty()) { throw new RetryException(result.toString()); }
+
+    // Generic deploy failure
     throw new RuntimeException("Deploy failed for " + warName + ": " + result);
   }
 
@@ -444,9 +482,7 @@ public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
   private void appendDSOParams(Document doc, Node node, AppServerParameters params) {
     String[] jvmArgs = params.jvmArgs().replaceAll("'", "").split("\\s");
 
-    for (int i = 0; i < jvmArgs.length; i++) {
-      String arg = jvmArgs[i];
-
+    for (String arg : jvmArgs) {
       Element element = doc.createElement("jvm-options");
       element.appendChild(doc.createTextNode(arg));
       node.appendChild(element);
@@ -477,6 +513,12 @@ public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
       }
     }
 
+  }
+
+  private static class RetryException extends Exception {
+    RetryException(String msg) {
+      super(msg);
+    }
   }
 
 }
