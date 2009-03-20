@@ -87,5 +87,7 @@ public abstract class MultipleServersTestSetupManager {
 
   public abstract int getGroupElectionTime(int groupIndex);
 
+  public abstract String getGroupName(int groupIndex);
+
   public abstract String getGroupServerShareDataMode(int groupIndex);
 }

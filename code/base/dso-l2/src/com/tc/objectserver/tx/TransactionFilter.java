@@ -16,4 +16,6 @@ public interface TransactionFilter {
    */
   public boolean shutdownNode(NodeID nodeID);
 
+  public void notifyServerHighWaterMark(NodeID nodeID, long serverHighWaterMark);
+
 }

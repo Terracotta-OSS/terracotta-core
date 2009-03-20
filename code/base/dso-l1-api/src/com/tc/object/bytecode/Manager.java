@@ -4,7 +4,6 @@
  */
 package com.tc.object.bytecode;
 
-import com.tc.cluster.ClusterEventListener;
 import com.tc.cluster.DsoCluster;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
@@ -281,7 +280,21 @@ public interface Manager {
    * @throws com.tc.object.util.ReadOnlyException If in read-only transaction
    */
   public void checkWriteAccess(Object context);
-
+  
+  /**
+   * Calculate a hash code for the object that will be the same on all nodes, i.e., that does not depend on
+   * Object.hashCode(). For objects that override hashCode(), the object's hashCode() will be used; for literals that
+   * use Object.hashCode(), like Class, a stable hash code will be computed. Note that for objects that override
+   * hashCode() but that still base the result on Object.hashCode() the result of this method may still be unstable.
+   */
+  public int calculateDsoHashCode(Object obj);
+  
+  /**
+   * @return true if obj is an instance of a {@link com.tc.object.LiteralValues literal type}, 
+   * e.g., Class, Integer, etc.
+   */
+  public boolean isLiteralInstance(Object obj);
+  
   /**
    * Check whether an object is managed
    *
@@ -304,7 +317,7 @@ public interface Manager {
    * @return True if required
    */
   public boolean isDsoMonitorEntered(Object obj);
-
+  
   /**
    * Check whether object is logically instrumented
    *
@@ -420,14 +433,6 @@ public interface Manager {
    */
   public TCProperties getTCProperites();
 
-  // TODO: evaluate what to do with this now that there's ClusterEventsNG
-  /**
-   * Add listener for cluster events
-   *
-   * @param cel Listener
-   */
-  public void addClusterEventListener(ClusterEventListener cel);
-
   /**
    * @return DMI manager
    */
@@ -454,9 +459,11 @@ public interface Manager {
   public void beginLockWithoutTxn(String lockID, int type);
 
   /**
-   * Register the given named classloader with Terracotta
+   * Register a named classloader with Terracotta.
+   * @param webAppName corresponds to the name of a web-application in the TC config, or null
+   * if the classloader being registered is not associated with a web application.
    */
-  public void registerNamedLoader(NamedClassLoader loader);
+  public void registerNamedLoader(NamedClassLoader loader, String webAppName);
 
   /**
    * Get the ClassProvider associated with this Manager

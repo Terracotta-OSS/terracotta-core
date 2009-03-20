@@ -4,8 +4,8 @@
 package com.tc.config.schema;
 
 import com.tc.config.TcProperty;
-import com.terracottatech.config.TcConfigDocument.TcConfig.TcProperties;
-import com.terracottatech.config.TcConfigDocument.TcConfig.TcProperties.Property;
+import com.terracottatech.config.Property;
+import com.terracottatech.config.TcProperties;
 
 
 public class ConfigTCPropertiesFromObject implements ConfigTCProperties {
@@ -20,7 +20,7 @@ public class ConfigTCPropertiesFromObject implements ConfigTCProperties {
     tcProperties = new TcProperty[len];
     
     for(int i = 0; i < len; i++){
-      tcProperties[i] = new TcProperty(props[i].getName().getStringValue(), props[i].getValue().getStringValue());
+      tcProperties[i] = new TcProperty(props[i].getName(), props[i].getValue());
     }
   }
 

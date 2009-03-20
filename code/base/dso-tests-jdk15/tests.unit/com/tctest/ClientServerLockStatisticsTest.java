@@ -43,11 +43,13 @@ import com.tc.object.lockmanager.impl.ClientServerLockStatManagerGlue;
 import com.tc.object.lockmanager.impl.TCLockTimerImpl;
 import com.tc.object.msg.AcknowledgeTransactionMessageFactory;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
-import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.msg.CommitTransactionMessageFactory;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessageFactory;
 import com.tc.object.msg.JMXMessage;
+import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
 import com.tc.object.msg.LockRequestMessageFactory;
+import com.tc.object.msg.NodeMetaDataMessageFactory;
+import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.msg.ObjectIDBatchRequestMessageFactory;
 import com.tc.object.msg.RequestManagedObjectMessageFactory;
 import com.tc.object.msg.RequestRootMessageFactory;
@@ -75,7 +77,7 @@ public class ClientServerLockStatisticsTest extends TCTestCase {
   private TestSessionManager              sessionManager;
   private ClientLockStatManager           clientLockStatManager;
   private L2LockStatsManager              serverLockStatManager;
-  private final ChannelID                       channelId1 = new ChannelID(1);
+  private final ChannelID                 channelId1 = new ChannelID(1);
   private ClientMessageChannel            channel1;
   private TestSink                        sink;
 
@@ -123,7 +125,7 @@ public class ClientServerLockStatisticsTest extends TCTestCase {
 
     Thread t1 = new Thread(new Runnable() {
       public void run() {
-        serverLockManager.clearAllLocksFor(new ClientID(channelId1));
+        serverLockManager.clearAllLocksFor(new ClientID(channelId1.toLong()));
         try {
           localBarrier.await();
         } catch (InterruptedException e) {
@@ -358,7 +360,15 @@ public class ClientServerLockStatisticsTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public NodesWithObjectsMessageFactory getClusterMetaDataMessageFactory() {
+    public NodesWithObjectsMessageFactory getNodesWithObjectsMessageFactory() {
+      throw new ImplementMe();
+    }
+
+    public KeysForOrphanedValuesMessageFactory getKeysForOrphanedValuesMessageFactory() {
+      throw new ImplementMe();
+    }
+
+    public NodeMetaDataMessageFactory getNodeMetaDataMessageFactory() {
       throw new ImplementMe();
     }
 

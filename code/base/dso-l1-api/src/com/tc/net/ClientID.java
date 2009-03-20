@@ -12,55 +12,60 @@ import java.io.IOException;
 import java.io.Serializable;
 
 public class ClientID implements NodeID, Serializable {
+  private static final int     NULL_NUMBER = -1;
 
-  public static final ClientID NULL_ID = new ClientID(ChannelID.NULL_ID);
+  public static final ClientID NULL_ID     = new ClientID(NULL_NUMBER);
+  private long                 id;
 
-  private ChannelID            channelID;
+  // private ChannelID channelID;
 
   public ClientID() {
     // To make serialization happy
   }
 
   // satisfy serialization
-  public ClientID(ChannelID channelID) {
-    this.channelID = channelID;
+  public ClientID(long id) {
+    this.id = id;
   }
 
   public boolean isNull() {
-    return channelID.isNull();
+    return NULL_ID.equals(this);
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (obj instanceof ClientID) {
       ClientID other = (ClientID) obj;
-      return this.channelID.equals(other.channelID);
+      return (this.toLong() == other.toLong());
     }
     return false;
   }
 
+  @Override
   public int hashCode() {
-    return channelID.hashCode();
+    return (int) id;
   }
 
+  @Override
   public String toString() {
-    return "ClientID[" + channelID.toLong() + "]";
+    return "ClientID[" + id + "]";
   }
 
   public ChannelID getChannelID() {
-    return channelID;
+    return new ChannelID(id);
   }
-  
+
   public long toLong() {
-    return channelID.toLong();
+    return id;
   }
 
   public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
-    this.channelID = new ChannelID(serialInput.readLong());
+    this.id = serialInput.readLong();
     return this;
   }
 
   public void serializeTo(TCByteBufferOutput serialOutput) {
-    serialOutput.writeLong(this.channelID.toLong());
+    serialOutput.writeLong(this.id);
   }
 
   public byte getNodeType() {
@@ -69,11 +74,9 @@ public class ClientID implements NodeID, Serializable {
 
   public int compareTo(Object o) {
     NodeID n = (NodeID) o;
-    if(getNodeType() != n.getNodeType()) {
-      return getNodeType() - n.getNodeType();
-    }
+    if (getNodeType() != n.getNodeType()) { return getNodeType() - n.getNodeType(); }
     ClientID c = (ClientID) n;
-    return this.channelID.compareTo(c.channelID);
+    return (int) (toLong() - c.toLong());
   }
 
 }

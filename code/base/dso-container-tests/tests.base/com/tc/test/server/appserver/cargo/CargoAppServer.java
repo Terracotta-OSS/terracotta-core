@@ -24,6 +24,7 @@ import com.tc.test.server.appserver.AppServer;
 import com.tc.test.server.appserver.AppServerInstallation;
 import com.tc.test.server.appserver.AppServerParameters;
 import com.tc.test.server.appserver.AppServerResult;
+import com.tc.test.server.appserver.StandardAppServerParameters;
 import com.tc.test.server.appserver.cargo.CargoJava.Link;
 import com.tc.test.server.util.AppServerUtil;
 
@@ -55,7 +56,10 @@ public abstract class CargoAppServer extends AbstractAppServer {
   }
 
   public final ServerResult start(ServerParameters rawParams) throws Exception {
-    AppServerParameters params = (AppServerParameters) rawParams;
+    StandardAppServerParameters params = (StandardAppServerParameters) rawParams;
+
+    adjustParams(params);
+
     port = AppServerUtil.getPort();
     File instance = createInstance(params);
     setProperties(params, port, instance);
@@ -84,6 +88,10 @@ public abstract class CargoAppServer extends AbstractAppServer {
     return new AppServerResult(port, this);
   }
 
+  protected void adjustParams(StandardAppServerParameters params) throws Exception {
+    // override if desired
+  }
+
   public final void stop() {
     if (container != null) {
       if (container.getState().equals(State.STARTED) || container.getState().equals(State.STARTING)
@@ -99,14 +107,7 @@ public abstract class CargoAppServer extends AbstractAppServer {
             container.getConfiguration().setProperty(GeneralPropertySet.JVMARGS, jvmArgs);
           }
         } catch (ContainerException e) {
-          // TODO: should reconsider this after upgrading WL9.2
-          // WL9.2 has some bug in shutting down
-          // We don't want to fail the test because of it
-          if (e.getMessage().startsWith("Failed to stop the WebLogic 9.x container.")) {
-            System.err.println("Failed to stop WL92. This is a known issue. Ignoring....");
-          } else {
-            throw new RuntimeException(e);
-          }
+          throw new RuntimeException(e);
         }
       }
     }

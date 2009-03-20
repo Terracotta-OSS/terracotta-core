@@ -6,34 +6,41 @@ package com.tc.objectserver.dgc.impl;
 
 import com.tc.objectserver.api.GCStats;
 import com.tc.objectserver.api.GCStatsEventListener;
+import com.tc.objectserver.core.impl.GarbageCollectionID;
 import com.tc.objectserver.dgc.api.GCStatsImpl;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
-import com.tc.stats.LossyStack;
 
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter {
 
-  private List             gcStatsEventListeners = new CopyOnWriteArrayList();
+  private List                     gcStatsEventListeners = new CopyOnWriteArrayList();
 
-  private final LossyStack gcHistory             = new LossyStack(1500);
+  private final LossyLinkedHashMap gcHistory             = new LossyLinkedHashMap(1500);
 
   public void addListener(GCStatsEventListener listener) {
     gcStatsEventListeners.add(listener);
   }
 
   public GCStats[] getGarbageCollectorStats() {
-    return (GCStats[]) gcHistory.toArray(new GCStats[gcHistory.depth()]);
+    return gcHistory.values().toArray(new GCStats[gcHistory.size()]);
   }
 
   public GCStats getLastGarbageCollectorStats() {
-    return (GCStats) gcHistory.peek();
+    Iterator iter = gcHistory.values().iterator();
+    if(iter.hasNext()) {
+      return (GCStats)iter.next();
+    }
+    return null;
   }
-  
+
   public void garbageCollectorStart(GarbageCollectionInfo info) {
     GCStatsImpl gcStats = getGCStats(info);
+    push(info.getGarbageCollectionID(), gcStats);
     fireGCStatsEvent(gcStats);
   }
 
@@ -65,15 +72,20 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
   public void garbageCollectorCompleted(GarbageCollectionInfo info) {
     GCStatsImpl gcStats = getGCStats(info);
     gcStats.setCompleteState();
-    push(gcStats);
+    fireGCStatsEvent(gcStats);
+  }
+
+  public void garbageCollectorCanceled(GarbageCollectionInfo info) {
+    GCStatsImpl gcStats = getGCStats(info);
+    gcStats.setCanceledState();
     fireGCStatsEvent(gcStats);
   }
 
   private GCStatsImpl getGCStats(GarbageCollectionInfo info) {
     GCStatsImpl gcStats = null;
-    if ((gcStats = (GCStatsImpl) info.getObject()) == null) {
+    if ((gcStats = gcHistory.get(info.getGarbageCollectionID())) == null) {
       gcStats = new GCStatsImpl(info.getIteration(), info.isFullGC(), info.getStartTime());
-      info.setObject(gcStats);
+      push(info.getGarbageCollectionID(), gcStats);
     }
     gcStats.setActualGarbageCount(info.getActualGarbageCount());
     gcStats.setBeginObjectCount(info.getBeginObjectCount());
@@ -85,8 +97,8 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
     return gcStats;
   }
 
-  private void push(Object obj) {
-    gcHistory.push(obj);
+  private void push(GarbageCollectionID id, GCStatsImpl stats) {
+    gcHistory.put(id, stats);
   }
 
   public void fireGCStatsEvent(GCStats gcStats) {
@@ -94,6 +106,21 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
       GCStatsEventListener listener = (GCStatsEventListener) iter.next();
       listener.update(gcStats);
     }
+  }
+
+  private static class LossyLinkedHashMap extends LinkedHashMap<GarbageCollectionID, GCStatsImpl> {
+
+    private final int size;
+
+    public LossyLinkedHashMap(int size) {
+      this.size = size;
+    }
+
+    @Override
+    protected boolean removeEldestEntry(Entry<GarbageCollectionID, GCStatsImpl> eldest) {
+      return (size() < size) ? false : true;
+    }
+
   }
 
 }

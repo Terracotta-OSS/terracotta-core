@@ -43,8 +43,7 @@ public class ManagedObjectStateTest extends TestCase {
     types.put("field7", new Short((short) 606));
     types.put("field8", new Double(98.76d));
     types.put("field9", new Float(8.8f));
-    // Not supported in 1.4
-    // types.put("field10", new StackTraceElement("classname", "methodname", "filename", 123));
+    types.put("field10", new StackTraceElement("classname", "methodname", "filename", 123));
 
     TestDNACursor cursor = new TestDNACursor();
     for (Iterator i = types.entrySet().iterator(); i.hasNext();) {
@@ -66,12 +65,12 @@ public class ManagedObjectStateTest extends TestCase {
       assertTrue(classId != 0);
       assertEquals(state.getClassName(), className);
       assertEquals(state.getLoaderDescription(), loaderDesc);
-      
+
       classNameToClassId.put(className, new Integer(classId));
       assertNull(classIdToClassName.get(new Integer(classId)));
       classIdToClassName.put(new Integer(classId), className);
     }
-    
+
     for (int i = 0; i < numOfGeneratedClasses; i++) {
       String className = "com.xxx.SomeClassName" + i;
       PhysicalManagedObjectState state = (PhysicalManagedObjectState) ManagedObjectStateFactory.getInstance()
@@ -82,10 +81,10 @@ public class ManagedObjectStateTest extends TestCase {
 
       Integer storedClassId = (Integer)classNameToClassId.get(className);
       assertEquals(classId, storedClassId.intValue());
-      
+
       String storedClassName = (String)classIdToClassName.get(new Integer(classId));
       assertEquals(className, storedClassName);
-      
+
     }
   }
 
@@ -105,8 +104,7 @@ public class ManagedObjectStateTest extends TestCase {
     types.put("field7", new Short((short) 606));
     types.put("field8", new Double(98.76d));
     types.put("field9", new Float(8.8f));
-    // Not supported in 1.4
-    // types.put("field10", new StackTraceElement("classname", "methodname", "filename", 123));
+    types.put("field10", new StackTraceElement("classname", "methodname", "filename", 123));
 
     TestDNACursor cursor = new TestDNACursor();
     for (Iterator i = types.entrySet().iterator(); i.hasNext();) {

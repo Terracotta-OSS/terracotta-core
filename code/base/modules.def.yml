@@ -57,6 +57,10 @@ modules:
         - common
         - common-api
         - license-common
+  - dso-cluster-api:
+      options:
+        jdk: J2SE-1.5
+        javadoc: true
   - dso-l1-api:
       options:
         jdk: J2SE-1.5
@@ -68,6 +72,7 @@ modules:
         - license-common
         - dso-statistics-api
         - thirdparty-api
+        - dso-cluster-api
   - dso-common:
       options:
         jdk: J2SE-1.5
@@ -76,6 +81,7 @@ modules:
         - common-api
         - license-common
         - dso-l1-api
+        - dso-cluster-api
         - thirdparty-api
         - dso-statistics-api
         - sigarstats
@@ -114,6 +120,7 @@ modules:
       options:
         jdk: J2SE-1.5
       dependencies:
+        - common
         - common-api
         - license-common
         - dso-common
@@ -134,7 +141,7 @@ modules:
         - dso-statistics-api
         - thirdparty-api
         - management-api
-  - modules-common:
+  - modules-base:
       options:
         jdk: J2SE-1.5
         module: true
@@ -150,7 +157,7 @@ modules:
         - common-api
         - license-common
         - dso-l1-api
-        - modules-common
+        - modules-base
   - guimodels-config:
       options:
         jdk: J2SE-1.5
@@ -159,7 +166,7 @@ modules:
         - common-api
         - license-common
         - dso-l1-api
-        - modules-common
+        - modules-base
   - jdk15-preinst-config:
       options:
         jdk: J2SE-1.5
@@ -168,7 +175,7 @@ modules:
         - common-api
         - license-common
         - dso-l1-api
-        - modules-common
+        - modules-base
   - spring-config:
       options:
         jdk: J2SE-1.5
@@ -177,7 +184,7 @@ modules:
         - common-api
         - license-common
         - dso-l1-api
-        - modules-common
+        - modules-base
         - thirdparty-api
   - standard-config:
       options:
@@ -187,7 +194,7 @@ modules:
         - common-api
         - license-common
         - dso-l1-api
-        - modules-common
+        - modules-base
         - thirdparty-api
   - sigarstats:
       options:
@@ -222,71 +229,13 @@ modules:
         - dso-common
         - dso-common-jdk16
         - dso-l1-api
+        - dso-cluster-api
         - dso-statistics
         - dso-statistics-api
         - management
         - management-api
         - thirdparty
         - thirdparty-api
-  - dso-l1-session:
-      options:
-        jdk: J2SE-1.5
-      dependencies:
-        - common
-        - common-api
-        - license-common
-        - dso-common
-        - dso-l1
-        - dso-l1-api
-        - management
-        - management-api
-  - dso-weblogic-stubs:
-      options:
-        jdk: J2SE-1.5
-  - dso-l1-weblogic:
-      options:
-        jdk: J2SE-1.5
-      dependencies:
-        - aspectwerkz
-        - common
-        - common-api
-        - license-common
-        - dso-common
-        - dso-common-jdk16
-        - dso-l1
-        - dso-l1-api
-        - dso-l1-session
-        - dso-weblogic-stubs
-  - dso-l1-tomcat:
-      options:
-        jdk: J2SE-1.5
-      dependencies:
-        - common
-        - common-api
-        - license-common
-        - dso-common
-        - dso-l1
-        - dso-l1-api
-  - dso-l1-tomcat50:
-      options:
-        jdk: J2SE-1.5
-      dependencies:
-        - common
-        - common-api
-        - license-common
-        - dso-l1
-        - dso-l1-api
-        - dso-l1-session
-  - dso-l1-tomcat55:
-      options:
-        jdk: J2SE-1.5
-      dependencies:
-        - common
-        - common-api
-        - license-common
-        - dso-l1
-        - dso-l1-api
-        - dso-l1-session
   - dso-memory-datastore:
       options:
         jdk: J2SE-1.5
@@ -412,9 +361,6 @@ modules:
         jdk: J2SE-1.5
       dependencies:
         - ui-eclipse
-  - installer:
-      options:
-        jdk: J2SE-1.5
   - tim-get-tool:
       options:
         jdk: J2SE-1.5
@@ -440,7 +386,6 @@ modules:
         - dso-common-jdk16
         - dso-l1
         - dso-l1-api
-        - dso-l1-weblogic
         - dso-l2
         - dso-l2-common
         - dso-statistics
@@ -512,7 +457,7 @@ modules:
         - dso-common-jdk16
         - dso-l1
         - dso-l1-api
-        - dso-l1-weblogic
+        - dso-cluster-api
         - dso-l2
         - dso-l2-common
         - dso-memory-datastore
@@ -562,10 +507,12 @@ modules:
         - dso-common-jdk16
         - dso-l1
         - dso-l1-api
+        - dso-cluster-api
         - dso-l2
         - dso-l2-common
         - dso-statistics
         - dso-statistics-api
+        - dso-cluster-api
         - dso-system-tests
         - legacy-test-tree
         - management
@@ -587,7 +534,7 @@ modules:
         - dso-common-jdk16
         - dso-l1
         - dso-l1-api
-        - dso-l1-weblogic
+        - dso-cluster-api
         - dso-l2
         - dso-l2-common
         - dso-memory-datastore
@@ -615,58 +562,12 @@ modules:
         - dso-common-jdk16
         - dso-l1
         - dso-l1-api
-        - dso-l1-weblogic
         - dso-l2
         - dso-l2-common
         - dso-spring
         - dso-statistics
         - dso-statistics-api
         - dso-system-tests
-        - legacy-test-tree
-        - management
-        - management-api
-        - simulator
-        - thirdparty
-        - thirdparty-api
-  - clustered-glassfish-2.0:
-      options:
-        jdk: J2SE-1.5
-        module: true
-      dependencies:
-        - aspectwerkz
-        - common-api
-        - license-common
-        - deploy-api
-        - dso-common
-        - dso-l1
-        - dso-l1-session
-        - dso-l1-tomcat
-        - dso-l1-tomcat50
-        - dso-l1-api
-        - modules-common
-        - dso-statistics-api
-        - management-api
-        - thirdparty
-        - thirdparty-api
-  - clustered-commons-collections-3.1:
-      options:
-        jdk: J2SE-1.5
-        module: true
-      dependencies:
-        - aspectwerkz
-        - common
-        - common-api
-        - license-common
-        - deploy
-        - deploy-api
-        - dso-common
-        - dso-common-jdk16
-        - dso-l1
-        - dso-l1-api
-        - dso-l2
-        - dso-l2-common
-        - dso-statistics
-        - dso-statistics-api
         - legacy-test-tree
         - management
         - management-api
@@ -682,7 +583,7 @@ modules:
         - common-api
         - license-common
         - dso-l1-api
-        - modules-common
+        - modules-base
         - thirdparty-api
   - dso-container-tests:
       options:
@@ -698,7 +599,6 @@ modules:
         - dso-common-jdk16
         - dso-l1
         - dso-l1-api
-        - dso-l1-session
         - dso-l2
         - dso-l2-common
         - dso-statistics
@@ -706,11 +606,12 @@ modules:
         - legacy-test-tree
         - management
         - management-api
-        - modules-common
+        - modules-base
         - sigarstats
         - simulator
         - thirdparty
         - thirdparty-api
+        - tim-get-tool
   - dso-spring-tests:
       options:
         jdk: J2SE-1.5
@@ -726,7 +627,6 @@ modules:
         - dso-container-tests
         - dso-l1
         - dso-l1-api
-        - dso-l1-weblogic
         - dso-l2
         - dso-l2-common
         - dso-spring
@@ -739,6 +639,7 @@ modules:
         - simulator
         - thirdparty
         - thirdparty-api
+        - tim-get-tool
   - dso-spring-aj:
       options:
         jdk: J2SE-1.5
@@ -755,7 +656,6 @@ modules:
         - dso-container-tests
         - dso-l1
         - dso-l1-api
-        - dso-l1-weblogic
         - dso-l2
         - dso-l2-common
         - dso-spring
@@ -765,10 +665,11 @@ modules:
         - legacy-test-tree
         - management
         - management-api
-        - modules-common
+        - modules-base
         - simulator
         - thirdparty
         - thirdparty-api
+        - tim-get-tool
   - eclipsegen:
       options:
         jdk: J2SE-1.5
@@ -784,43 +685,25 @@ module-groups:
     - dso-spring-aj
     - dso-spring-tests
     - dso-spring-crash-tests
-  dso:
+  dso1:
     - common
     - thirdparty
     - aspectwerkz
     - dso-common
     - dso-common-jdk16
     - dso-l1
-    - dso-l1-weblogic
-    - dso-l1-session
-    - dso-l1-tomcat
-    - dso-l1-tomcat50
-    - dso-l1-tomcat55
     - dso-l2-common
     - dso-l2
     - deploy
-    - simulator
-    - examples
-    - legacy-test-tree
-    - dso-system-tests
-    - dso-alt-boot-jar-tests
+    - simulator   
     - dso-tests-jdk15
     - dso-crash-tests
+  dso2:
+    - legacy-test-tree  
+    - examples
+    - dso-system-tests
+    - dso-alt-boot-jar-tests
     - dso-statistics
     - dso-statistics-tests
     - management
     - dso-memory-datastore
-  framework:
-    - clustered-commons-collections-3.1
-    - excludes-config
-    - guimodels-config
-    - jdk15-preinst-config
-    - spring-config
-    - standard-config
-    - modules-common
-  gui:
-    - ui-configurator
-    - ui-eclipse
-    - ui-eclipse-33
-    - ui-eclipse-34
-    - installer

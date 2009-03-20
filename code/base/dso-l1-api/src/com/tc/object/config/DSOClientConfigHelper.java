@@ -11,6 +11,7 @@ import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.config.schema.NewCommonL1Config;
+import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.object.Portability;
 import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.TransparencyClassAdapter;
@@ -47,6 +48,8 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   DSOInstrumentationLoggingOptions getInstrumentationLoggingOptions();
 
   void verifyBootJarContents(File bjf) throws IncompleteBootJarException, UnverifiedBootJarException;
+
+  void validateSessionConfig();
 
   TransparencyClassSpec[] getAllSpecs();
 
@@ -85,6 +88,15 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   boolean isTransient(int modifiers, ClassInfo classInfo, String field);
 
+  /**
+   * Indicates whether a particular field of a class will be injected by DSO.
+   *
+   * @return {@code true} when the field is injected; or {@code false} otherwise
+   */
+  boolean isInjectedField(String className, String fieldName);
+
+  String getInjectedFieldType(ClassInfo classInfo, String field);
+
   boolean isVolatile(int modifiers, ClassInfo classInfo, String field);
 
   String rootNameFor(FieldInfo fi);
@@ -96,6 +108,30 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   TransparencyClassSpec getSpec(String className);
 
   boolean isDSOSessions(String name);
+
+  /**
+   * Examine the app-groups part of the config to determine an appGroup name
+   * given the specified loader description. If the loader name is specified,
+   * &lt;named-classloader&gt; elements will be searched for a match; if a web
+   * app name is specified, &lt;web-application&gt; elements will be searched;
+   * if both are specified, both will be searched, but if a conflict is found
+   * an exception will be thrown.
+   * @param classLoaderName a full classloader name, such as "Tomcat.Catalina:localhost:/events",
+   * or null to ignore &lt;named-classloader&gt; elements in the config.
+   * @param appName a web application name, such as "events", or null to ignore &lt;web-application&gt;
+   * elements in the config.
+   * @return an app-group name, or null if no match was found
+   * @throws com.tc.config.schema.setup.ConfigurationSetupException if a conflict was detected
+   */
+  String getAppGroup(String classLoaderName, String appName);
+
+  /**
+   * Add entries to an app-group. All the specified named classloaders and all
+   * the specified web application names will be added to the app group.
+   * @param namedClassloaders an array of names of NamedClassLoader, or null if none are being added
+   * @param webAppNames an array of names of web-applications, or null if none are being added.
+   */
+  void addToAppGroup(String appGroup, String[] namedClassloaders, String[] webAppNames);
 
   DSORuntimeLoggingOptions runtimeLoggingOptions();
 
@@ -134,6 +170,10 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   boolean matches(final String expression, final MemberInfo methodInfo);
 
   void addTransient(String className, String fieldName);
+
+  void addInjectedField(String className, String fieldName, String instanceType);
+
+  boolean hasOnLoadInjection(ClassInfo classInfo);
 
   String getOnLoadScriptIfDefined(ClassInfo classInfo);
 
@@ -198,8 +238,9 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   void addRepository(String location);
 
   /**
-   * Add module dependency with no groupId, indicating the groupId should be assumed to
-   * be the default: "org.terracotta.modules".
+   * Add module dependency with no groupId, indicating the groupId should be assumed to be the default:
+   * "org.terracotta.modules".
+   *
    * @artifactId Such as tim-foobar
    * @version Such as 1.0.0-SNAPSHOT
    */
@@ -207,13 +248,12 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   /**
    * Add module dependency
+   *
    * @groupId Such as org.terracotta.modules
    * @artifactId Such as tim-foobar
    * @version Such as 1.0.0-SNAPSHOT
    */
   void addModule(String groupId, String artifactId, String version);
-
-  boolean removeCustomAdapter(String name);
 
   // HACK: is also in IStandardDSOClientConfigHelper
   /**
@@ -228,15 +268,17 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   ClassReplacementMapping getClassReplacementMapping();
 
-  URL getClassResource(String className);
+  URL getClassResource(String className, ClassLoader loader, boolean hideSystemResources);
 
-  boolean hasCustomAdapter(ClassInfo classInfo);
+  boolean hasCustomAdapters(ClassInfo classInfo);
 
-  ClassAdapterFactory getCustomAdapter(ClassInfo classInfo);
+  Collection<ClassAdapterFactory> getCustomAdapters(ClassInfo classInfo);
 
   boolean reflectionEnabled();
 
   public ReconnectConfig getL1ReconnectProperties();
+
+  public void validateGroupInfo() throws ConfigurationSetupException;
 
   boolean useResolveLockWhenClearing(Class clazz);
 
@@ -246,10 +288,9 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   boolean isApplicationSessionLocked(String appName);
 
   /**
-   * Add class adapters based on annotations that are present on the class
+   * Add class adapters based on configuration that are present on the class
    *
-   * @return {@code true} when custom adapters were added; or
-   * {@code false} otherwise
+   * @return {@code true} when custom adapters were added; or {@code false} otherwise
    */
-  boolean addAnnotationBasedAdapters(ClassInfo classInfo);
+  boolean addClassConfigBasedAdapters(ClassInfo classInfo);
 }

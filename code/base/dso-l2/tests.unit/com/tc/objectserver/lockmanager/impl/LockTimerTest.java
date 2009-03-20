@@ -25,10 +25,11 @@ public class LockTimerTest extends TestCase {
   private ClientID           clientID;
   private int                timeout;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     ChannelID channelId = new ChannelID(101);
-    this.clientID = new ClientID(channelId);
+    this.clientID = new ClientID(channelId.toLong());
     this.channel = new MockMessageChannel(channelId);
     this.channelManager = new MockChannelManager();
     this.channelManager.addChannel(this.channel);
@@ -128,7 +129,7 @@ public class LockTimerTest extends TestCase {
       }
 
       public NodeID getNodeID() {
-        return new ClientID(new ChannelID(234709381274908237L));
+        return new ClientID(234709381274908237L);
       }
 
       public long getTimeout() {

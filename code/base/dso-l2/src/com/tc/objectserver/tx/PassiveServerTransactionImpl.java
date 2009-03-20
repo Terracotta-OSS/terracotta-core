@@ -23,27 +23,32 @@ public class PassiveServerTransactionImpl extends ServerTransactionImpl implemen
   public PassiveServerTransactionImpl(TxnBatchID batchID, TransactionID txID, SequenceID sequenceID, LockID[] lockIDs,
                                       NodeID source, List dnas, ObjectStringSerializer serializer, Map newRoots,
                                       TxnType transactionType, Collection notifies, DmiDescriptor[] dmis,
-                                      int numApplicationTxn) {
+                                      int numApplicationTxn, long[] highWaterMarks) {
     super(batchID, txID, sequenceID, lockIDs, source, dnas, serializer, newRoots, transactionType, notifies, dmis,
-          numApplicationTxn);
+          numApplicationTxn, highWaterMarks);
   }
 
+  @Override
   public DmiDescriptor[] getDmiDescriptors() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public Collection getNotifies() {
     return Collections.EMPTY_LIST;
   }
 
+  @Override
   public ObjectStringSerializer getSerializer() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public boolean needsBroadcast() {
     return false;
   }
 
+  @Override
   public String toString() {
     return "PassiveServerTransactionImpl [ " + super.toString() + " ]";
   }

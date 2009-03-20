@@ -30,7 +30,6 @@ public class ClientConfigurationContext extends ConfigurationContextImpl {
   public static final String             OOO_NET_SEND_STAGE                   = "ooo_net_send_stage";
   public static final String             OOO_NET_RECEIVE_STAGE                = "ooo_net_receive_stage";
   public static final String             CLUSTER_METADATA_STAGE               = "cluster_metadata_stage";
-  public static final String             CLUSTER_EVENTS_STAGE                 = "cluster_events_stage";
 
   private final ClientLockManager        lockManager;
   private final RemoteObjectManager      remoteObjectManager;

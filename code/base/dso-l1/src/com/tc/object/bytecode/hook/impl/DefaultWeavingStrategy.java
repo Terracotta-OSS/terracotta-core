@@ -32,6 +32,9 @@ import com.tc.aspectwerkz.transform.inlining.weaver.LabelToLineNumberVisitor;
 import com.tc.aspectwerkz.transform.inlining.weaver.MethodCallVisitor;
 import com.tc.aspectwerkz.transform.inlining.weaver.MethodExecutionVisitor;
 import com.tc.aspectwerkz.transform.inlining.weaver.StaticInitializationVisitor;
+import com.tc.backport175.bytecode.AnnotationReader;
+import com.tc.backport175.bytecode.AnnotationReader.ClassKey;
+import com.tc.backport175.bytecode.spi.BytecodeProvider;
 import com.tc.exception.TCLogicalSubclassNotPortableException;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
@@ -51,12 +54,15 @@ import java.io.InputStream;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * A weaving strategy implementing a weaving scheme based on statical compilation, and no reflection.
@@ -77,13 +83,23 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
     }
   }
 
-  private static final TCLogger       consoleLogger = CustomerLogging.getConsoleLogger();
+  private static final TCLogger                   consoleLogger = CustomerLogging.getConsoleLogger();
 
-  private final DSOClientConfigHelper m_configHelper;
-  private final InstrumentationLogger m_logger;
-  private final InstrumentationLogger m_instrumentationLogger;
+  private static final AnnotationByteCodeProvider BYTECODE_PROVIDER;
 
-  public DefaultWeavingStrategy(final DSOClientConfigHelper configHelper, final InstrumentationLogger instrumentationLogger) {
+  static {
+    BYTECODE_PROVIDER = new AnnotationByteCodeProvider(AnnotationReader.getDefaultBytecodeProvider());
+
+    // register our own global bytecode provider for the annotation reading stuff in backport175
+    AnnotationReader.setDefaultBytecodeProvider(BYTECODE_PROVIDER);
+  }
+
+  private final DSOClientConfigHelper             m_configHelper;
+  private final InstrumentationLogger             m_logger;
+  private final InstrumentationLogger             m_instrumentationLogger;
+
+  public DefaultWeavingStrategy(final DSOClientConfigHelper configHelper,
+                                final InstrumentationLogger instrumentationLogger) {
     m_configHelper = configHelper;
     m_instrumentationLogger = instrumentationLogger;
     m_logger = new InstrumentationLoggerImpl(m_configHelper.getInstrumentationLoggingOptions());
@@ -102,9 +118,18 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
    * @param context
    */
   public void transform(final String className, final InstrumentationContext context) {
+    ClassKey key = new ClassKey(className, context.getLoader());
+    BYTECODE_PROVIDER.put(key, context.getInitialBytecode());
     try {
-      final byte[] bytecode = context.getInitialBytecode();
-      InitialClassDumper.INSTANCE.write(className, bytecode);
+      transformInternal(className, context);
+    } finally {
+      BYTECODE_PROVIDER.clear(key);
+    }
+  }
+
+  private void transformInternal(final String className, final InstrumentationContext context) {
+    try {
+      InitialClassDumper.INSTANCE.write(className, context.getInitialBytecode());
 
       final ClassLoader loader = context.getLoader();
 
@@ -119,7 +144,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
         }
       }
 
-      ClassInfo classInfo = AsmClassInfo.getClassInfo(className, bytecode, loader);
+      ClassInfo classInfo = AsmClassInfo.getClassInfo(className, context.getCurrentBytecode(), loader);
 
       // skip Java reflect proxies for which we cannot get the resource as a stream
       // which leads to warnings when using annotation matching
@@ -137,7 +162,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
       }
 
       final boolean isDsoAdaptable = m_configHelper.shouldBeAdapted(classInfo);
-      final boolean hasCustomAdapter = m_configHelper.hasCustomAdapter(classInfo);
+      final boolean hasCustomAdapters = m_configHelper.hasCustomAdapters(classInfo);
 
       // TODO match on (within, null, classInfo) should be equivalent to those ones.
       final Set definitions = context.getDefinitions();
@@ -145,7 +170,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
       // has AW aspects?
       final boolean isAdvisable = isAdvisable(classInfo, definitions);
 
-      if (!isAdvisable && !isDsoAdaptable && !hasCustomAdapter) {
+      if (!isAdvisable && !isDsoAdaptable && !hasCustomAdapters) {
         context.setCurrentBytecode(context.getInitialBytecode());
         return;
       }
@@ -155,7 +180,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
       }
 
       // handle replacement classes
-      if (isDsoAdaptable || hasCustomAdapter) {
+      if (isDsoAdaptable || hasCustomAdapters) {
         ClassReplacementMapping mapping = m_configHelper.getClassReplacementMapping();
         String replacementClassName = mapping.getReplacementClassName(className);
 
@@ -303,18 +328,23 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
       }
 
       // ------------------------------------------------
-      // -- Phase Annotation-based - Add custom adapters based on annotations
-      final boolean hasAnnotationsBasedCustomAdapter = m_configHelper.addAnnotationBasedAdapters(classInfo);
+      // -- Phase class config-based - Add custom adapters based on class configuration
+      final boolean hasClassConfigBasedCustomAdapters;
+      synchronized (m_configHelper) {
+        hasClassConfigBasedCustomAdapters = m_configHelper.addClassConfigBasedAdapters(classInfo);
 
-      // ------------------------------------------------
-      // -- Phase DSO -- DSO clustering
-      if (hasCustomAdapter || hasAnnotationsBasedCustomAdapter) {
-        ClassAdapterFactory factory = m_configHelper.getCustomAdapter(classInfo);
-        final ClassReader reader = new ClassReader(context.getCurrentBytecode());
-        final ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
-        ClassVisitor adapter = factory.create(writer, context.getLoader());
-        reader.accept(adapter, ClassReader.SKIP_FRAMES);
-        context.setCurrentBytecode(writer.toByteArray());
+        // ------------------------------------------------
+        // -- Phase DSO -- DSO clustering
+        if (hasCustomAdapters || hasClassConfigBasedCustomAdapters) {
+          Collection<ClassAdapterFactory> factories = m_configHelper.getCustomAdapters(classInfo);
+          for (ClassAdapterFactory factory : factories) {
+            final ClassReader reader = new ClassReader(context.getCurrentBytecode());
+            final ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
+            ClassVisitor adapter = factory.create(writer, context.getLoader());
+            reader.accept(adapter, ClassReader.SKIP_FRAMES);
+            context.setCurrentBytecode(writer.toByteArray());
+          }
+        }
       }
 
       if (isDsoAdaptable) {
@@ -446,4 +476,33 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
   private static boolean hasPointcut(final SystemDefinition definition, final ExpressionContext ctx) {
     return definition.hasPointcut(ctx);
   }
+
+  private static class AnnotationByteCodeProvider implements BytecodeProvider {
+
+    private final ConcurrentMap<ClassKey, byte[]> bytes = new ConcurrentHashMap<ClassKey, byte[]>();
+    private final BytecodeProvider                defaultBytecodeProvider;
+
+    AnnotationByteCodeProvider(BytecodeProvider defaultBytecodeProvider) {
+      this.defaultBytecodeProvider = defaultBytecodeProvider;
+    }
+
+    void clear(ClassKey key) {
+      bytes.remove(key);
+    }
+
+    void put(ClassKey key, byte[] bytecode) {
+      bytes.put(key, bytecode);
+    }
+
+    public byte[] getBytecode(String className, ClassLoader loader) throws ClassNotFoundException, IOException {
+      ClassKey key = new ClassKey(className, loader);
+
+      byte[] data = bytes.get(key);
+      if (data != null) { return data.clone(); }
+
+      return defaultBytecodeProvider.getBytecode(className, loader);
+    }
+
+  }
+
 }

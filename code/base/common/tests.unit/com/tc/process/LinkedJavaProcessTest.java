@@ -7,6 +7,7 @@ package com.tc.process;
 import com.tc.lcp.HeartBeatServer;
 import com.tc.lcp.LinkedJavaProcess;
 import com.tc.test.TCTestCase;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.File;
 
@@ -137,49 +138,51 @@ public class LinkedJavaProcessTest extends TCTestCase {
     StreamCollector stderr = new StreamCollector(process.STDERR());
     stderr.start();
 
+    System.out.println("Waiting for parent to start");
+    while (destFile.length() < 1) {
+      ThreadUtil.reallySleep(1000);
+    }
+    System.out.println(" parent started");
+
+    System.out.println("Waiting for child1 to start");
+    while (child1File.length() < 1) {
+      ThreadUtil.reallySleep(1000);
+    }
+    System.out.println(" child1 started");
+
+    System.out.println("Waiting for child2 to start");
+    while (child2File.length() < 1) {
+      ThreadUtil.reallySleep(1000);
+    }
+    System.out.println(" child2 started");
+
+    System.out.println(stdout.toString());
+    System.out.println(stderr.toString());
+
+    System.out.println("Killing parent");
+    process.destroy();
+
+    // wait for child process heartbeat to time out and kill themselves
+    System.out.println("Waiting for children to be killed");
+    Thread.sleep(HeartBeatServer.PULSE_INTERVAL * 2);
+
     long origSize = destFile.length();
-    Thread.sleep(6000);
+    Thread.sleep(5000);
     long newSize = destFile.length();
 
-    System.err.println("Parent first: new=" + newSize + "  old=" + origSize);
-    assertTrue(newSize > origSize); // Make sure it's all started + working
+    System.err.println("Parent after kill: new=" + newSize + "  old=" + origSize);
+    assertEquals(origSize, newSize); // Make sure the parent is dead
 
     long child1OrigSize = child1File.length();
     long child2OrigSize = child2File.length();
     Thread.sleep(5000);
     long child1NewSize = child1File.length();
     long child2NewSize = child2File.length();
-
-    System.err.println("Child 1 first: new=" + child1NewSize + "  old=" + child1OrigSize);
-    System.err.println("Child 2 first: new=" + child2NewSize + "  old=" + child2OrigSize);
-    // Make sure the children are all started + working
-    assertTrue(child1NewSize > child1OrigSize);
-    assertTrue(child2NewSize > child2OrigSize);
-
-    System.out.println(stdout.toString());
-    System.out.println(stderr.toString());
-
-    process.destroy();
-    // wait for child process heartbeat to time out and kill themselves
-    Thread.sleep(HeartBeatServer.PULSE_INTERVAL * 2);
-
-    origSize = destFile.length();
-    Thread.sleep(5000);
-    newSize = destFile.length();
-
-    System.err.println("Parent after kill: new=" + newSize + "  old=" + origSize);
-    assertEquals(origSize, newSize); // Make sure the parent is dead
-
-    child1OrigSize = child1File.length();
-    child2OrigSize = child2File.length();
-    Thread.sleep(5000);
-    child1NewSize = child1File.length();
-    child2NewSize = child2File.length();
     System.err.println("Child 1 after kill: new=" + child1NewSize + "  old=" + child1OrigSize);
     System.err.println("Child 2 after kill: new=" + child2NewSize + "  old=" + child2OrigSize);
 
     assertEquals(child1NewSize, child1OrigSize); // Make sure child 1 is dead
-    assertEquals(child2NewSize, child2OrigSize); // Make sure child 1 is dead
+    assertEquals(child2NewSize, child2OrigSize); // Make sure child 2 is dead
   }
 
   private static void debugPrintln(String s) {

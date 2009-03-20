@@ -8,7 +8,6 @@ import com.tc.logging.LossyTCLogger;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
-import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.lockmanager.api.LockFlushCallback;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.msg.ClientHandshakeMessage;
@@ -19,7 +18,7 @@ import com.tc.object.session.SessionManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.Counter;
-import com.tc.stats.counter.sampled.SampledCounter;
+import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.util.Assert;
 import com.tc.util.SequenceID;
 import com.tc.util.State;
@@ -43,7 +42,7 @@ import java.util.Map.Entry;
 /**
  * Sends off committed transactions
  */
-public class RemoteTransactionManagerImpl implements RemoteTransactionManager, ClientHandshakeCallback {
+public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
 
   private static final long                FLUSH_WAIT_INTERVAL         = 15 * 1000;
 
@@ -81,12 +80,14 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, C
 
   private final GroupID                    groupID;
 
-  public RemoteTransactionManagerImpl(GroupID groupID, TCLogger logger, final TransactionBatchFactory batchFactory,
-                                      TransactionIDGenerator transactionIDGenerator, SessionManager sessionManager,
-                                      DSOClientMessageChannel channel, Counter outstandingBatchesCounter,
-                                      SampledCounter numTransactionCounter, SampledCounter numBatchesCounter,
-                                      final SampledCounter batchSizeCounter, final Counter pendingBatchesSize,
-                                      long ackOnExitTimeoutMs) {
+  public RemoteTransactionManagerImpl(final GroupID groupID, final TCLogger logger,
+                                      final TransactionBatchFactory batchFactory,
+                                      final TransactionIDGenerator transactionIDGenerator,
+                                      final SessionManager sessionManager, final DSOClientMessageChannel channel,
+                                      final Counter outstandingBatchesCounter, final Counter pendingBatchesSize,
+                                      final SampledRateCounter transactionSizeCounter,
+                                      final SampledRateCounter transactionsPerBatchCounter,
+                                      final long ackOnExitTimeoutMs) {
     this.groupID = groupID;
     this.logger = logger;
     this.sessionManager = sessionManager;
@@ -94,14 +95,13 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, C
     this.status = RUNNING;
     this.ackOnExitTimeout = ackOnExitTimeoutMs;
     this.sequencer = new TransactionSequencer(groupID, transactionIDGenerator, batchFactory, this.lockAccounting,
-                                              numTransactionCounter, numBatchesCounter, batchSizeCounter,
-                                              pendingBatchesSize);
+                                              pendingBatchesSize, transactionSizeCounter, transactionsPerBatchCounter);
     this.timer.schedule(new RemoteTransactionManagerTimerTask(), COMPLETED_ACK_FLUSH_TIMEOUT,
                         COMPLETED_ACK_FLUSH_TIMEOUT);
     this.outstandingBatchesCounter = outstandingBatchesCounter;
   }
 
-  public void pause(NodeID remote, int disconnected) {
+  public void pause(final NodeID remote, final int disconnected) {
     synchronized (this.lock) {
       if (isStoppingOrStopped()) { return; }
       if (this.status == PAUSED) { throw new AssertionError("Attempt to pause while already paused state."); }
@@ -109,7 +109,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, C
     }
   }
 
-  public void unpause(NodeID remote, int disconnected) {
+  public void unpause(final NodeID remote, final int disconnected) {
     synchronized (this.lock) {
       if (isStoppingOrStopped()) { return; }
       if (this.status != PAUSED) { throw new AssertionError("Attempt to unpause while not in paused state."); }
@@ -119,7 +119,8 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, C
     }
   }
 
-  public void initializeHandshake(NodeID thisNode, NodeID remoteNode, ClientHandshakeMessage handshakeMessage) {
+  public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
+                                  final ClientHandshakeMessage handshakeMessage) {
     synchronized (this.lock) {
       if (this.status != PAUSED) { throw new AssertionError("Attempting to handshake while not in paused state."); }
       handshakeMessage.addTransactionSequenceIDs(getTransactionSequenceIDs());
@@ -184,7 +185,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, C
     this.logger.info("stop(): took " + (System.currentTimeMillis() - start) + " millis to complete");
   }
 
-  public void flush(LockID lockID) {
+  public void flush(final LockID lockID) {
     final long start = System.currentTimeMillis();
     long lastPrinted = 0;
     boolean isInterrupted = false;
@@ -209,7 +210,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, C
   }
 
   /* This does not block unlike flush() */
-  public boolean isTransactionsForLockFlushed(LockID lockID, LockFlushCallback callback) {
+  public boolean isTransactionsForLockFlushed(final LockID lockID, final LockFlushCallback callback) {
     synchronized (this.lock) {
 
       if ((this.lockAccounting.getTransactionsFor(lockID)).isEmpty()) {
@@ -229,7 +230,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, C
     }
   }
 
-  public void commit(ClientTransaction txn) {
+  public void commit(final ClientTransaction txn) {
     if (!txn.hasChangesOrNotifies() && txn.getDmiDescriptors().isEmpty() && txn.getNewRoots().isEmpty()) { throw new AssertionError(
                                                                                                                                     "Attempt to commit an empty transaction."); }
     if (!txn.getTransactionID().isNull()) { throw new AssertionError(
@@ -253,11 +254,11 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, C
     }
   }
 
-  private void sendBatches(boolean ignoreMax) {
+  private void sendBatches(final boolean ignoreMax) {
     sendBatches(ignoreMax, null);
   }
 
-  private void sendBatches(boolean ignoreMax, String message) {
+  private void sendBatches(final boolean ignoreMax, final String message) {
     ClientTransactionBatch batch;
     while ((ignoreMax || canSendBatch()) && (batch = this.sequencer.getNextBatch()) != null) {
       if (message != null) {
@@ -330,7 +331,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, C
     return this.status == STOP_INITIATED || this.status == STOPPED;
   }
 
-  private void sendBatch(ClientTransactionBatch batchToSend, boolean account) {
+  private void sendBatch(final ClientTransactionBatch batchToSend, final boolean account) {
     synchronized (this.lock) {
       if (account) {
         if (this.incompleteBatches.put(batchToSend.getTransactionBatchID(), batchToSend) != null) {
@@ -348,7 +349,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, C
   }
 
   // XXX:: Currently server always sends NULL BatchID
-  public void receivedBatchAcknowledgement(TxnBatchID txnBatchID, NodeID remoteNode) {
+  public void receivedBatchAcknowledgement(final TxnBatchID txnBatchID, final NodeID remoteNode) {
     synchronized (this.lock) {
       if (isStoppingOrStopped()) {
         this.logger.warn(this.status + " : Received ACK for batch = " + txnBatchID);
@@ -364,13 +365,15 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, C
     }
   }
 
-  public void receivedAcknowledgement(SessionID sessionID, TransactionID txID, NodeID remoteNode) {
+  public TransactionBuffer receivedAcknowledgement(final SessionID sessionID, final TransactionID txID,
+                                                   final NodeID remoteNode) {
+    TransactionBuffer tb = null;
     Map callbacks;
     synchronized (this.lock) {
       // waitUntilRunning();
       if (!this.sessionManager.isCurrentSession(remoteNode, sessionID)) {
         this.logger.warn("Ignoring Transaction ACK for " + txID + " from previous session = " + sessionID);
-        return;
+        return tb;
       }
 
       Set completedLocks = this.lockAccounting.acknowledge(txID);
@@ -378,7 +381,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, C
       TxnBatchID container = this.batchAccounting.getBatchByTransactionID(txID);
       if (!container.isNull()) {
         ClientTransactionBatch containingBatch = (ClientTransactionBatch) this.incompleteBatches.get(container);
-        containingBatch.removeTransaction(txID);
+        tb = containingBatch.removeTransaction(txID);
         TxnBatchID completed = this.batchAccounting.acknowledge(txID);
         if (!completed.isNull()) {
           this.incompleteBatches.remove(completed);
@@ -396,6 +399,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, C
       callbacks = getLockFlushCallbacks(completedLocks);
     }
     fireLockFlushCallbacks(callbacks);
+    return tb;
   }
 
   private TransactionID getCompletedTransactionIDLowWaterMark() {
@@ -408,7 +412,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, C
   /*
    * Never fire callbacks while holding lock
    */
-  private void fireLockFlushCallbacks(Map callbacks) {
+  private void fireLockFlushCallbacks(final Map callbacks) {
     if (callbacks.isEmpty()) { return; }
     for (Iterator i = callbacks.entrySet().iterator(); i.hasNext();) {
       Entry e = (Entry) i.next();
@@ -418,7 +422,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, C
     }
   }
 
-  private Map getLockFlushCallbacks(Set completedLocks) {
+  private Map getLockFlushCallbacks(final Set completedLocks) {
     Map callbacks = Collections.EMPTY_MAP;
     if (!completedLocks.isEmpty() && !this.lockFlushCallbacks.isEmpty()) {
       for (Iterator i = completedLocks.iterator(); i.hasNext();) {

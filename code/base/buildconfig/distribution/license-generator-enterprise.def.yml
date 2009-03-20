@@ -11,5 +11,5 @@ bundled_components:
               - ent-license-generator
 packaging:
   - zip:
-      assert: '!@build_environment.has_installanywhere && (@build_environment.os_type =~ /^\s*windows\s*$/i)'
+      assert: '!@build_environment.os_type =~ /^\s*windows\s*$/i'
 

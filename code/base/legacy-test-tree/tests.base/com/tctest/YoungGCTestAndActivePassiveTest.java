@@ -14,6 +14,7 @@ public abstract class YoungGCTestAndActivePassiveTest extends GCAndActivePassive
 
   // Run Young Gen every 10 seconds
   protected void setExtraJvmArgs(final ArrayList jvmArgs) {
+    super.setExtraJvmArgs(jvmArgs);
     ((YoungGCConfigurationHelper) gcConfigHelper).setExtraJvmArgs(jvmArgs);
   }
 

@@ -3,6 +3,7 @@
  */
 package com.tc.config.schema.test;
 
+import com.tc.config.schema.builder.AppGroupConfigBuilder;
 import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
 import com.tc.config.schema.builder.InstrumentedClassConfigBuilder;
 import com.tc.config.schema.builder.LockConfigBuilder;
@@ -51,6 +52,10 @@ public class DSOApplicationConfigBuilderImpl extends BaseConfigBuilder implement
   public void setAdditionalBootJarClasses(String[] value) {
     setProperty("additional-boot-jar-classes", value);
   }
+  
+  public void setAppGroups(AppGroupConfigBuilder[] value) {
+    setProperty("app-groups", value);
+  }
 
   public void setRoots(String value) {
     setProperty("roots", value);
@@ -81,7 +86,7 @@ public class DSOApplicationConfigBuilderImpl extends BaseConfigBuilder implement
   }
 
   private static final String[] ALL_PROPERTIES = new String[] { "instrumented-classes", "transient-fields", "locks",
-      "roots", "distributed-methods", "additional-boot-jar-classes", "web-applications", "spring" };
+      "roots", "distributed-methods", "additional-boot-jar-classes", "web-applications", "spring", "app-groups" };
 
   public String toString() {
     String out = "";

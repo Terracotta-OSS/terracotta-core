@@ -4,10 +4,23 @@
  */
 package com.tc.admin.dso;
 
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.DateAxis;
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYBarRenderer;
+import org.jfree.data.RangeType;
+import org.jfree.data.time.FixedMillisecond;
+import org.jfree.data.time.Second;
+import org.jfree.data.time.TimeSeries;
+import org.jfree.data.xy.IntervalXYDataset;
+
 import com.tc.admin.AbstractClusterListener;
 import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.BrowserLauncher;
+import com.tc.admin.common.DemoChartFactory;
 import com.tc.admin.common.ExceptionHelper;
 import com.tc.admin.common.RolloverButton;
 import com.tc.admin.common.XAbstractAction;
@@ -16,6 +29,7 @@ import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XLabel;
 import com.tc.admin.common.XObjectTable;
 import com.tc.admin.common.XScrollPane;
+import com.tc.admin.common.XSplitPane;
 import com.tc.admin.model.DGCListener;
 import com.tc.admin.model.IClusterModel;
 import com.tc.admin.model.IServer;
@@ -23,6 +37,7 @@ import com.tc.objectserver.api.GCStats;
 import com.tc.util.ProductInfo;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -37,16 +52,20 @@ import java.util.concurrent.Callable;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
+import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 
 public class GCStatsPanel extends XContainer implements DGCListener {
   private ApplicationContext appContext;
   private IClusterModel      clusterModel;
+  private ClusterListener    clusterListener;
   private XObjectTable       table;
   private XLabel             overviewLabel;
   private JPopupMenu         popupMenu;
   private RunGCAction        gcAction;
   private boolean            inited;
+  private final TimeSeries   dgcTimeSeries;
+  private final TimeSeries   releasedObjectsSeries;
 
   public GCStatsPanel(ApplicationContext appContext, IClusterModel clusterModel) {
     super(new BorderLayout());
@@ -78,24 +97,61 @@ public class GCStatsPanel extends XContainer implements DGCListener {
     gbc.anchor = GridBagConstraints.EAST;
     topPanel.add(runDGCButton, gbc);
 
-    add(topPanel, BorderLayout.NORTH);
+    XContainer gcStatsPanel = new XContainer(new BorderLayout());
+    gcStatsPanel.add(topPanel, BorderLayout.NORTH);
 
     table = new GCStatsTable();
     table.setModel(new GCStatsTableModel(appContext));
-    add(new XScrollPane(table), BorderLayout.CENTER);
+    gcStatsPanel.add(new XScrollPane(table), BorderLayout.CENTER);
 
     popupMenu = new JPopupMenu("DGC");
     popupMenu.add(gcAction);
     table.add(popupMenu);
     table.addMouseListener(new TableMouseHandler());
 
-    clusterModel.addPropertyChangeListener(new ClusterListener(clusterModel));
+    String dgcTimeSeriesName = appContext.getString("dso.gcstats.graph.elapsedTime");
+    dgcTimeSeries = new TimeSeries(dgcTimeSeriesName, Second.class);
+    JFreeChart chart = DemoChartFactory.getXYLineChart("", "", dgcTimeSeriesName + " (s.)",
+                                                       new TimeSeries[] { dgcTimeSeries }, true);
+    XYPlot plot = (XYPlot) chart.getPlot();
+    DateAxis axis = (DateAxis) plot.getDomainAxis();
+    axis.setFixedAutoRange(0.0);
+    releasedObjectsSeries = new TimeSeries(appContext.getString("dso.gcstats.graph.freedObjectCount"), Second.class);
+    IntervalXYDataset dataset = DemoChartFactory.createTimeSeriesDataset(releasedObjectsSeries);
+    plot.setDataset(1, dataset);
+    XYBarRenderer xyBarRenderer = new XYBarRenderer();
+    plot.setRenderer(1, xyBarRenderer);
+    xyBarRenderer.setShadowVisible(false);
+    NumberAxis garbageCountAxis = new NumberAxis(releasedObjectsSeries.getKey().toString());
+    plot.setRangeAxis(1, garbageCountAxis);
+    garbageCountAxis.setRangeType(RangeType.POSITIVE);
+    garbageCountAxis.setStandardTickUnits(DemoChartFactory.DEFAULT_TICKS);
+    garbageCountAxis.setAutoRangeMinimumSize(1000.0);
+    NumberAxis elapsedTimeAxis = (NumberAxis) plot.getRangeAxis();
+    elapsedTimeAxis.setAutoRangeMinimumSize(10);
+    elapsedTimeAxis.setStandardTickUnits(DemoChartFactory.DEFAULT_INTEGER_TICKS);
+    elapsedTimeAxis.setLabelFont(garbageCountAxis.getLabelFont());
+
+    plot.mapDatasetToRangeAxis(1, 1);
+
+    ChartPanel chartPanel = BaseRuntimeStatsPanel.createChartPanel(chart);
+    chartPanel.setMinimumSize(new Dimension(0, 0));
+    chartPanel.setPreferredSize(new Dimension(0, 200));
+
+    XSplitPane splitter = new XSplitPane(JSplitPane.VERTICAL_SPLIT, gcStatsPanel, chartPanel);
+    splitter.setDefaultDividerLocation(0.65);
+    splitter.setPreferences(appContext.getPrefs().node("GCStatsPanel/Split"));
+    add(splitter);
+
+    clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
     if (clusterModel.isReady()) {
       IServer activeCoord = clusterModel.getActiveCoordinator();
       if (activeCoord != null) {
         activeCoord.addDGCListener(this);
       }
       init();
+    } else {
+      overviewLabel.setText(appContext.getString("dso.gcstats.overview.not-ready"));
     }
   }
 
@@ -125,8 +181,10 @@ public class GCStatsPanel extends XContainer implements DGCListener {
           return "";
         }
       });
+      overviewLabel.setText(appContext.getString("dso.gcstats.overview.pending"));
     }
 
+    @Override
     protected void finished() {
       Exception e = getException();
       if (e != null) {
@@ -161,7 +219,11 @@ public class GCStatsPanel extends XContainer implements DGCListener {
       super(clusterModel);
     }
 
+    @Override
     public void handleActiveCoordinator(IServer oldActive, IServer newActive) {
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
       if (oldActive != null) {
         oldActive.removeDGCListener(GCStatsPanel.this);
       }
@@ -170,14 +232,21 @@ public class GCStatsPanel extends XContainer implements DGCListener {
       }
     }
 
+    @Override
     public void handleReady() {
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
       if (clusterModel.isReady()) {
         if (!inited) {
           init();
+        } else {
+          appContext.submit(new InitOverviewTextWorker());
         }
       } else {
-        gcAction.setEnabled(false);
+        overviewLabel.setText(appContext.getString("dso.gcstats.overview.not-ready"));
       }
+      gcAction.setEnabled(clusterModel != null && clusterModel.isReady());
     }
   }
 
@@ -204,21 +273,35 @@ public class GCStatsPanel extends XContainer implements DGCListener {
       });
     }
 
+    @Override
     protected void finished() {
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
       Exception e = getException();
       if (e == null) {
         GCStatsTableModel model = (GCStatsTableModel) table.getModel();
-        model.setGCStats(getResult());
+        GCStats[] stats = getResult();
+        model.setGCStats(stats);
+        for (GCStats stat : stats) {
+          if (stat.getElapsedTime() != -1) {
+            FixedMillisecond t = new FixedMillisecond(stat.getStartTime());
+            dgcTimeSeries.addOrUpdate(t, stat.getElapsedTime() / 1000d);
+            releasedObjectsSeries.addOrUpdate(t, stat.getActualGarbageCount());
+          }
+        }
       }
       gcAction.setEnabled(true);
     }
   }
 
   class TableMouseHandler extends MouseAdapter {
+    @Override
     public void mousePressed(MouseEvent e) {
       testPopup(e);
     }
 
+    @Override
     public void mouseReleased(MouseEvent e) {
       testPopup(e);
     }
@@ -233,7 +316,7 @@ public class GCStatsPanel extends XContainer implements DGCListener {
   class RunGCAction extends XAbstractAction {
     RunGCAction() {
       super("Run DGC");
-      setEnabled(false);
+      setEnabled(clusterModel != null && clusterModel.isReady());
     }
 
     public void actionPerformed(ActionEvent ae) {
@@ -242,19 +325,30 @@ public class GCStatsPanel extends XContainer implements DGCListener {
   }
 
   public void statusUpdate(GCStats gcStats) {
+    IClusterModel theClusterModel = getClusterModel();
+    if (theClusterModel == null) { return; }
+
     SwingUtilities.invokeLater(new ModelUpdater(gcStats));
   }
 
   private class ModelUpdater implements Runnable {
-    private GCStats gcStats;
+    private final GCStats gcStats;
 
     private ModelUpdater(GCStats gcStats) {
       this.gcStats = gcStats;
     }
 
     public void run() {
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
       gcAction.setEnabled(gcStats.getElapsedTime() != -1);
       ((GCStatsTableModel) table.getModel()).addGCStats(gcStats);
+      if (gcAction.isEnabled()) {
+        FixedMillisecond t = new FixedMillisecond(gcStats.getStartTime());
+        dgcTimeSeries.addOrUpdate(t, gcStats.getElapsedTime() / 1000d);
+        releasedObjectsSeries.addOrUpdate(t, gcStats.getActualGarbageCount());
+      }
     }
   }
 
@@ -271,7 +365,11 @@ public class GCStatsPanel extends XContainer implements DGCListener {
       });
     }
 
+    @Override
     protected void finished() {
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
       Exception e = getException();
       if (e != null) {
         Frame frame = (Frame) SwingUtilities.getAncestorOfClass(Frame.class, GCStatsPanel.this);
@@ -287,7 +385,11 @@ public class GCStatsPanel extends XContainer implements DGCListener {
     appContext.execute(new RunGCWorker());
   }
 
+  @Override
   public void tearDown() {
+    clusterModel.removePropertyChangeListener(clusterListener);
+    clusterListener.tearDown();
+
     IServer activeCoord = getActiveCoordinator();
     if (activeCoord != null) {
       activeCoord.removeDGCListener(this);
@@ -298,6 +400,7 @@ public class GCStatsPanel extends XContainer implements DGCListener {
     synchronized (this) {
       appContext = null;
       clusterModel = null;
+      clusterListener = null;
       table = null;
       popupMenu = null;
       gcAction = null;

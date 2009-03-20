@@ -7,6 +7,9 @@ package com.tctest;
 import org.apache.commons.collections.FastHashMap;
 
 import com.tc.exception.TCNonPortableObjectError;
+import com.tc.object.bytecode.Clearable;
+import com.tc.object.bytecode.ManagerUtil;
+import com.tc.object.bytecode.TCMap;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.tx.UnlockedSharedObjectException;
@@ -15,7 +18,6 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.app.ErrorContext;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tc.util.TIMUtil;
 
 import gnu.trove.THashMap;
 import gnu.trove.TObjectFunction;
@@ -44,7 +46,7 @@ import java.util.TreeMap;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class GenericMapTestApp extends GenericTestApp {
+public class GenericMapTestApp extends GenericTransparentApp {
 
   private static final int LITERAL_VARIANT   = 1;
   private static final int OBJECT_VARIANT    = 2;
@@ -61,7 +63,7 @@ public class GenericMapTestApp extends GenericTestApp {
 
     // This is just to make sure all the expected maps are here.
     // As new map classes get added to this test, you'll have to adjust this number obviously
-    Assert.assertEquals(25, maps.size());
+    Assert.assertEquals(22, maps.size());
 
     return maps.iterator();
   }
@@ -75,10 +77,6 @@ public class GenericMapTestApp extends GenericTestApp {
     maps.add(new TreeMap(new NullTolerantComparator()));
     maps.add(new LinkedHashMap());
     maps.add(new THashMap());
-    maps.add(new FastHashMap());
-    FastHashMap fm = new FastHashMap();
-    fm.setFast(true);
-    maps.add(fm);
     maps.add(new Properties());
     maps.add(new MyHashMap(11));
     maps.add(new MyHashMap(new HashMap()));
@@ -92,7 +90,6 @@ public class GenericMapTestApp extends GenericTestApp {
     maps.add(new MyLinkedHashMap2());
     maps.add(new MyLinkedHashMap3(true));
     maps.add(new MyTHashMap());
-    maps.add(new MyFastHashMap());
     maps.add(new MyProperties());
     maps.add(new MyProperties2());
     maps.add(new MyProperties3());
@@ -143,7 +140,6 @@ public class GenericMapTestApp extends GenericTestApp {
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClass = GenericMapTestApp.class.getName();
-    config.addModule(TIMUtil.COMMONS_COLLECTIONS_3_1, TIMUtil.getVersion(TIMUtil.COMMONS_COLLECTIONS_3_1));
     config.getOrCreateSpec(testClass);
     String methodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(methodExpression);
@@ -1909,6 +1905,41 @@ public class GenericMapTestApp extends GenericTestApp {
       synchronized (map) {
         // puts count as access on access order linked hash maps
         map.put(E("Second", v), "New Second Value");
+      }
+    }
+  }
+
+  void testClearable(Map map, boolean validate, int v) {
+    // The instance of check should be okay once CDV-1184 is fixed
+    // if (!(map instanceof Clearable)) return;
+    boolean found = false;
+    for (Class iface : map.getClass().getInterfaces()) {
+      if (iface.equals(Clearable.class)) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) return;
+
+    Clearable clearable = (Clearable) map;
+
+    if (validate) {
+      // turn of clearing temporarily to make sure we can observe the value being locally present
+      clearable.setEvictionEnabled(false);
+      byte[] array = (byte[]) map.get("byte array");
+      TCMap tcMap = (TCMap) map;
+      Assert.assertEquals(map.getClass().getName(), 1, tcMap.__tc_getAllLocalEntriesSnapshot().size());
+
+      // clear it out and verify
+      clearable.setEvictionEnabled(true);
+      ManagerUtil.lookupExistingOrNull(array).clearAccessed();
+      int cleared = clearable.__tc_clearReferences(1);
+      Assert.assertEquals(map.getClass().getName(), 1, cleared);
+      Assert.assertEquals(map.getClass().getName(), 0, tcMap.__tc_getAllLocalEntriesSnapshot().size());
+
+    } else {
+      synchronized (map) {
+        map.put("byte array", new byte[] {});
       }
     }
   }

@@ -12,7 +12,8 @@ import java.util.ArrayList;
 
 public class YoungGCConfigurationHelper extends GCConfigurationHelper {
 
-  // increasing Full GC time to 1 minute to give change to Young Gen Gc to run
+  // increasing Full DGC time to 1 minute to give change to Young Gen DGC to run
+  @Override
   public int getGarbageCollectionInterval() {
     return 60;
   }

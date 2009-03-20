@@ -69,7 +69,7 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
                                 ClientTransactionManager txManager, DSOClientConfigHelper theConfig,
                                 PreparedComponentsFromL2Connection connectionComponents) {
     Manager rv = new ManagerImpl(startClient, objectManager, txManager, theConfig, connectionComponents, false);
-    rv.registerNamedLoader(this);
+    rv.registerNamedLoader(this, null);
     return rv;
   }
 
@@ -147,7 +147,7 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
   }
 
   public static String loaderName() {
-    return IsolationClassLoader.class.getName();
+    return Namespace.getIsolationLoaderName();
   }
 
   public void __tc_setClassLoaderName(String name) {

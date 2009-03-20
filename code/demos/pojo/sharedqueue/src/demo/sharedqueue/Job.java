@@ -7,27 +7,20 @@ import java.util.Random;
 
 public class Job {
 
+	private final static int STATE_READY = 0;
+	private final static int STATE_PROCESSING = 1;
+	private final static int STATE_COMPLETE = 2;
+	private final static int STATE_ABORTED = 3;
+
 	private final int duration;
-
 	private final String producer;
-
-	private Worker consumer;
-
 	private final int type;
 
 	private int state;
-
 	private String id;
+	private Worker consumer;
 
-	private final static int STATE_READY = 0;
-
-	private final static int STATE_PROCESSING = 1;
-
-	private final static int STATE_COMPLETE = 2;
-
-	private final static int STATE_ABORTED = 3;
-
-	public Job(String producer, int id) {
+	public Job(final String producer, final int id) {
 		Random random = new Random();
 		this.state = STATE_READY;
 		this.consumer = null;
@@ -40,15 +33,15 @@ public class Job {
 		}
 	}
 
-	public final void run(Worker consumer) {
+	public final void run(final Worker worker) {
 		synchronized (this) {
-			this.state = STATE_PROCESSING;
-			this.consumer = consumer;
+			state = STATE_PROCESSING;
+			consumer = worker;
 			try {
 				Thread.sleep(duration * 1000L);
-				this.state = STATE_COMPLETE;
+				state = STATE_COMPLETE;
 			} catch (InterruptedException ie) {
-				this.state = STATE_ABORTED;
+				state = STATE_ABORTED;
 			}
 		}
 	}

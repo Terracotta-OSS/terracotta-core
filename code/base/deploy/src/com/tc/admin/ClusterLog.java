@@ -4,6 +4,7 @@
  */
 package com.tc.admin;
 
+import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.PagedView;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XLabel;
@@ -32,12 +33,11 @@ import javax.swing.BorderFactory;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JViewport;
-import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
 
 public class ClusterLog extends XContainer implements ActionListener {
-  private IAdminClientContext adminClientContext;
+  private ApplicationContext  appContext;
   private IClusterModel       clusterModel;
   private ClusterListener     clusterListener;
   private ElementChooser      elementChooser;
@@ -46,10 +46,10 @@ public class ClusterLog extends XContainer implements ActionListener {
 
   private static final String EMPTY_PAGE = "EmptyPage";
 
-  public ClusterLog(IAdminClientContext adminClientContext, IClusterModel clusterModel) {
+  public ClusterLog(ApplicationContext appContext, IClusterModel clusterModel) {
     super(new BorderLayout());
 
-    this.adminClientContext = adminClientContext;
+    this.appContext = appContext;
     this.clusterModel = clusterModel;
 
     add(pagedView = new PagedView(), BorderLayout.CENTER);
@@ -81,7 +81,7 @@ public class ClusterLog extends XContainer implements ActionListener {
     setName(clusterModel.toString());
 
     clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
-    if (clusterModel.isReady()) {
+    if (clusterModel.isConnected()) {
       addNodePanels();
     }
   }
@@ -91,10 +91,12 @@ public class ClusterLog extends XContainer implements ActionListener {
       super(clusterModel, ClusterLog.this);
     }
 
+    @Override
     protected XTreeNode[] createTopLevelNodes() {
-      return new XTreeNode[] { new ServerGroupsNode(adminClientContext, clusterModel) };
+      return new XTreeNode[] { new ServerGroupsNode(appContext, clusterModel) };
     }
 
+    @Override
     protected boolean acceptPath(TreePath path) {
       Object o = path.getLastPathComponent();
       return o instanceof ServerNode;
@@ -117,12 +119,27 @@ public class ClusterLog extends XContainer implements ActionListener {
       super(clusterModel);
     }
 
-    protected void handleReady() {
-      if (!inited && clusterModel.isReady()) {
+    @Override
+    protected void handleConnected() {
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
+      if (!inited && clusterModel.isConnected()) {
         addNodePanels();
       }
     }
+
+    @Override
+    protected void handleActiveCoordinator(IServer oldActive, IServer newActive) {
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
+      if (newActive != null) {
+        elementChooser.setSelectedPath(newActive.toString());
+      }
+    }
   }
+
   private void addNodePanels() {
     pagedView.removeAll();
     XLabel emptyPage = new XLabel();
@@ -135,22 +152,23 @@ public class ClusterLog extends XContainer implements ActionListener {
       }
     }
     IServer activeCoord = clusterModel.getActiveCoordinator();
-    if(activeCoord != null) {
+    if (activeCoord != null) {
       elementChooser.setSelectedPath(activeCoord.toString());
     }
     inited = true;
   }
 
   private JScrollPane createServerLog(IServer server) {
-    final ServerLog serverLog = new ServerLog(adminClientContext, server);
-    final JScrollPane scroller = new JScrollPane(serverLog, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    final ServerLog serverLog = new ServerLog(appContext, server);
+    final JScrollPane scroller = new JScrollPane(serverLog);
     JScrollBar scrollBar = scroller.getVerticalScrollBar();
     scrollBar.addMouseListener(new MouseAdapter() {
+      @Override
       public void mousePressed(MouseEvent e) {
         serverLog.setAutoScroll(false);
       }
 
+      @Override
       public void mouseReleased(MouseEvent e) {
         boolean autoScroll = shouldAutoScroll(scroller, serverLog);
         serverLog.setAutoScroll(autoScroll);
@@ -177,6 +195,7 @@ public class ClusterLog extends XContainer implements ActionListener {
       }
     });
     serverLog.addKeyListener(new KeyAdapter() {
+      @Override
       public void keyPressed(KeyEvent e) {
         int keyCode = e.getKeyCode();
         if (keyCode == KeyEvent.VK_ENTER) {
@@ -200,12 +219,15 @@ public class ClusterLog extends XContainer implements ActionListener {
     return clusterModel;
   }
 
+  @Override
   public void tearDown() {
     clusterModel.removePropertyChangeListener(clusterListener);
+    clusterListener.tearDown();
+
     elementChooser.removeActionListener(this);
 
     synchronized (this) {
-      adminClientContext = null;
+      appContext = null;
       clusterModel = null;
       clusterListener = null;
       elementChooser.tearDown();

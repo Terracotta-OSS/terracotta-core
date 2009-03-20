@@ -8,6 +8,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/aspectwerkz"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common-api"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-cluster-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-common-jdk16"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1-api"/>

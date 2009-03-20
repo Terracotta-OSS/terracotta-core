@@ -12,16 +12,18 @@ import java.util.Arrays;
 public class StringUtil {
 
   /** A space character */
-  public static final char   SPACE        = ' ';
+  public static final char   SPACE          = ' ';
 
   /** A space string */
-  public static final String SPACE_STRING = " ";
+  public static final String SPACE_STRING   = " ";
 
   /** The empty string */
-  public static final String EMPTY        = "";
+  public static final String EMPTY          = "";
 
   /** A string representing a null value: "<null>" */
-  public static final String NULL_STRING  = "<null>";
+  public static final String NULL_STRING    = "<null>";
+
+  public static final String LINE_SEPARATOR = System.getProperty("line.separator");
 
   /**
    * Normal toString(), but convert null to the {@link #NULL_STRING}.
@@ -124,8 +126,8 @@ public class StringUtil {
   }
 
   /**
-   * Creates a String representation of an array of objects by calling <code>toString</code> on each one. Formatting
-   * is controlled by the parameters.
+   * Creates a String representation of an array of objects by calling <code>toString</code> on each one. Formatting is
+   * controlled by the parameters.
    * 
    * @param objs (required) the array of objects to display
    * @param separator (optional) a string to place between each object
@@ -191,8 +193,7 @@ public class StringUtil {
    * @param replace the string to replace <code>search</code> occurrences in <code>source</code>, if null then the
    *        search string is simply removed from source and not replaced with anything
    * @param skipQuotedStrings if true then quoted strings will be skipped over
-   * @return a modified version of <code>source</code>, or null if <code>source</code> or <code>search</code> are
-   *         null
+   * @return a modified version of <code>source</code>, or null if <code>source</code> or <code>search</code> are null
    */
   public static final String replaceAll(String source, String search, String replace, boolean skipQuotedStrings) {
     if (source == null || search == null) { return null; }

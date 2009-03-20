@@ -27,8 +27,8 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
   private final static String TC_PUT_METHOD_DESC                  = "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;";
   private final static String TC_HASH_METHOD_NAME                 = ByteCodeUtil.TC_METHOD_PREFIX + "hash";
   private final static String TC_HASH_METHOD_DESC                 = "(Ljava/lang/Object;)I";
-  private final static String TC_IS_DSO_HASH_REQUIRED_METHOD_NAME = ByteCodeUtil.TC_METHOD_PREFIX + "isDsoHashRequired";
-  private final static String TC_IS_DSO_HASH_REQUIRED_METHOD_DESC = "(Ljava/lang/Object;)Z";
+  private final static String TC_IS_POSSIBLE_KEY_METHOD_NAME      = ByteCodeUtil.TC_METHOD_PREFIX + "isPossibleKey";
+  private final static String TC_IS_POSSIBLE_KEY_METHOD_DESC      = "(Ljava/lang/Object;)Z";
   private final static String TC_FULLY_READLOCK_METHOD_NAME       = ByteCodeUtil.TC_METHOD_PREFIX + "fullyReadLock";
   private final static String TC_FULLY_READLOCK_METHOD_DESC       = "()V";
   private final static String TC_FULLY_READUNLOCK_METHOD_NAME     = ByteCodeUtil.TC_METHOD_PREFIX + "fullyReadUnlock";
@@ -716,12 +716,10 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     protected void addCheckManagedKeyCode() {
       mv.visitVarInsn(ALOAD, 0);
       mv.visitVarInsn(ALOAD, 1);
-      mv.visitMethodInsn(INVOKESPECIAL, CONCURRENT_HASH_MAP_SLASH, TC_IS_DSO_HASH_REQUIRED_METHOD_NAME,
-                         TC_IS_DSO_HASH_REQUIRED_METHOD_DESC);
+      mv.visitMethodInsn(INVOKESPECIAL, CONCURRENT_HASH_MAP_SLASH, TC_IS_POSSIBLE_KEY_METHOD_NAME,
+                         TC_IS_POSSIBLE_KEY_METHOD_DESC);
       Label l1 = new Label();
-      mv.visitJumpInsn(IFEQ, l1);
-      Label l2 = new Label();
-      mv.visitLabel(l2);
+      mv.visitJumpInsn(IFNE, l1);
       mv.visitInsn(ICONST_0);
       mv.visitInsn(IRETURN);
       mv.visitLabel(l1);
@@ -736,12 +734,10 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     protected void addCheckManagedKeyCode() {
       mv.visitVarInsn(ALOAD, 0);
       mv.visitVarInsn(ALOAD, 1);
-      mv.visitMethodInsn(INVOKESPECIAL, CONCURRENT_HASH_MAP_SLASH, TC_IS_DSO_HASH_REQUIRED_METHOD_NAME,
-                         TC_IS_DSO_HASH_REQUIRED_METHOD_DESC);
+      mv.visitMethodInsn(INVOKESPECIAL, CONCURRENT_HASH_MAP_SLASH, TC_IS_POSSIBLE_KEY_METHOD_NAME,
+                         TC_IS_POSSIBLE_KEY_METHOD_DESC);
       Label l1 = new Label();
-      mv.visitJumpInsn(IFEQ, l1);
-      Label l2 = new Label();
-      mv.visitLabel(l2);
+      mv.visitJumpInsn(IFNE, l1);
       mv.visitInsn(ACONST_NULL);
       mv.visitInsn(ARETURN);
       mv.visitLabel(l1);
@@ -788,12 +784,10 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     protected void addCheckManagedKeyCode() {
       mv.visitVarInsn(ALOAD, 0);
       mv.visitVarInsn(ALOAD, 1);
-      mv.visitMethodInsn(INVOKESPECIAL, CONCURRENT_HASH_MAP_SLASH, TC_IS_DSO_HASH_REQUIRED_METHOD_NAME,
-                         TC_IS_DSO_HASH_REQUIRED_METHOD_DESC);
+      mv.visitMethodInsn(INVOKESPECIAL, CONCURRENT_HASH_MAP_SLASH, TC_IS_POSSIBLE_KEY_METHOD_NAME,
+                         TC_IS_POSSIBLE_KEY_METHOD_DESC);
       Label l1 = new Label();
-      mv.visitJumpInsn(IFEQ, l1);
-      Label l2 = new Label();
-      mv.visitLabel(l2);
+      mv.visitJumpInsn(IFNE, l1);
       mv.visitInsn(ICONST_0);
       mv.visitInsn(IRETURN);
       mv.visitLabel(l1);

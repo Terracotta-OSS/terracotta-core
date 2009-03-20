@@ -28,16 +28,19 @@ import com.tc.admin.common.XList;
 import com.tc.admin.common.XScrollPane;
 import com.tc.admin.common.XSpinner;
 import com.tc.admin.common.XTabbedPane;
+import com.tc.admin.common.XTextArea;
 import com.tc.admin.model.ClientConnectionListener;
 import com.tc.admin.model.IClient;
 import com.tc.admin.model.IClusterModel;
 import com.tc.admin.model.IClusterStatsListener;
 import com.tc.admin.model.IServer;
+import com.tc.admin.model.IServerGroup;
 import com.tc.statistics.gatherer.exceptions.StatisticsGathererAlreadyConnectedException;
 import com.terracottatech.config.TcStatsConfigDocument;
 import com.terracottatech.config.TcStatsConfigDocument.TcStatsConfig;
 
 import java.awt.BorderLayout;
+import java.awt.Font;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -49,11 +52,18 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
@@ -62,8 +72,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
@@ -74,23 +88,21 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
+import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
 
-/*
- * TODO: remove dependency on StatsRecorderNode
- */
-
-public class StatsRecorderPanel extends XContainer implements PropertyChangeListener, ClientConnectionListener,
-    IClusterStatsListener {
+public class StatsRecorderPanel extends XContainer implements ClientConnectionListener, IClusterStatsListener {
   private ApplicationContext         appContext;
   private IClusterModel              clusterModel;
+  private ClusterListener            clusterListener;
   private JToggleButton              startGatheringStatsButton;
   private JToggleButton              stopGatheringStatsButton;
   private XList                      statsSessionsList;
@@ -111,7 +123,14 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
   private boolean                    haveClientStats;
   private AuthScope                  authScope;
 
-  private static final int           DEFAULT_STATS_POLL_PERIOD_SECONDS = 2;
+  private final XContainer           mainPanel;
+  private final XContainer           messagePanel;
+  private final XContainer           errorPanel;
+
+  private XLabel                     messageLabel;
+  private XTextArea                  errorText;
+
+  private static final int           DEFAULT_STATS_POLL_PERIOD_SECONDS = 5;
   private static final String        DEFAULT_STATS_CONFIG_FILENAME     = "tc-stats-config.xml";
 
   public StatsRecorderPanel(ApplicationContext appContext, IClusterModel clusterModel) {
@@ -120,20 +139,22 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
     this.appContext = appContext;
     this.clusterModel = clusterModel;
 
-    add(createTopPanel(), BorderLayout.NORTH);
-    add(createCenterPanel(), BorderLayout.CENTER);
-    add(createBottomPanel(), BorderLayout.SOUTH);
+    mainPanel = createMainPanel();
+    messagePanel = createMessagePanel();
+    errorPanel = createErrorPanel();
 
-    setVisible(false);
+    add(messagePanel);
 
     if (clusterModel != null) {
-      clusterModel.addPropertyChangeListener(this);
+      clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
       if (clusterModel.isReady()) {
         IServer activeCoord = clusterModel.getActiveCoordinator();
         if (activeCoord != null) {
           activeCoord.addClusterStatsListener(this);
         }
         initiateStatsGathererConnectWorker();
+      } else {
+        messageLabel.setText(appContext.getString("cluster.not.ready.msg"));
       }
     }
   }
@@ -145,6 +166,30 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
   private synchronized IServer getActiveCoordinator() {
     IClusterModel theClusterModel = getClusterModel();
     return theClusterModel != null ? theClusterModel.getActiveCoordinator() : null;
+  }
+
+  private XContainer createMessagePanel() {
+    XContainer panel = new XContainer(new BorderLayout());
+    panel.add(messageLabel = new XLabel());
+    messageLabel.setText(appContext.getString("initializing"));
+    messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    messageLabel.setFont((Font) appContext.getObject("message.label.font"));
+    return panel;
+  }
+
+  private XContainer createErrorPanel() {
+    XContainer panel = new XContainer(new BorderLayout());
+    panel.add(new JScrollPane(errorText = new XTextArea()));
+    errorText.setEditable(false);
+    return panel;
+  }
+
+  private XContainer createMainPanel() {
+    XContainer panel = new XContainer(new BorderLayout());
+    panel.add(createTopPanel(), BorderLayout.NORTH);
+    panel.add(createCenterPanel(), BorderLayout.CENTER);
+    panel.add(createBottomPanel(), BorderLayout.SOUTH);
+    return panel;
   }
 
   private XContainer createTopPanel() {
@@ -236,19 +281,47 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
     return panel;
   }
 
-  public void propertyChange(PropertyChangeEvent evt) {
-    if (IClusterModel.PROP_ACTIVE_COORDINATOR.equals(evt.getPropertyName())) {
-      IServer oldActive = (IServer) evt.getOldValue();
+  private class ClusterListener extends AbstractClusterListener {
+    private ClusterListener(IClusterModel clusterModel) {
+      super(clusterModel);
+    }
+
+    @Override
+    protected void handleReady() {
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
+      if (clusterModel.isReady()) {
+        IServer activeCoord = clusterModel.getActiveCoordinator();
+        if (activeCoord != null) {
+          messageLabel.setText(appContext.getString("initializing"));
+          initiateStatsGathererConnectWorker();
+          activeCoord.addClientConnectionListener(StatsRecorderPanel.this);
+          activeCoord.addClusterStatsListener(StatsRecorderPanel.this);
+        }
+      } else {
+        removeAll();
+        messageLabel.setText(appContext.getString("cluster.not.ready.msg"));
+        add(messagePanel);
+        revalidate();
+        repaint();
+      }
+    }
+
+    @Override
+    protected void handleActiveCoordinator(IServer oldActive, IServer newActive) {
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
       if (oldActive != null) {
-        oldActive.removeClientConnectionListener(this);
-        oldActive.removeClusterStatsListener(this);
+        oldActive.removeClientConnectionListener(StatsRecorderPanel.this);
+        oldActive.removeClusterStatsListener(StatsRecorderPanel.this);
       }
 
-      IServer newActive = (IServer) evt.getOldValue();
       if (newActive != null) {
         initiateStatsGathererConnectWorker();
-        newActive.addClientConnectionListener(this);
-        newActive.addClusterStatsListener(this);
+        newActive.addClientConnectionListener(StatsRecorderPanel.this);
+        newActive.addClusterStatsListener(StatsRecorderPanel.this);
       }
     }
   }
@@ -261,12 +334,11 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
     StatsGathererConnectWorker() {
       super(new Callable() {
         public Void call() throws Exception {
-          IServer activeCoord = getActiveCoordinator();
-          if (activeCoord != null) {
-            if (activeCoord.isClusterStatsSupported()) {
-              activeCoord.startupClusterStats();
-            } else {
-              throw new RuntimeException("Statistics subsystem not active.");
+          for (IServerGroup group : clusterModel.getServerGroups()) {
+            for (IServer server : group.getMembers()) {
+              if (server.isReady() && server.isClusterStatsSupported()) {
+                server.startupClusterStats();
+              }
             }
           }
           return null;
@@ -278,14 +350,29 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
       return ExceptionHelper.getCauseOfType(t, StatisticsGathererAlreadyConnectedException.class) != null;
     }
 
+    @Override
     protected void finished() {
       Exception e = getException();
       if (e != null) {
         if (isAlreadyConnectedException(e)) {
           gathererConnected();
+        } else {
+          showError(e);
         }
       }
     }
+  }
+
+  private void showError(Throwable t) {
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
+    t.printStackTrace(pw);
+    pw.close();
+    errorText.setText(sw.toString());
+    removeAll();
+    add(errorPanel);
+    revalidate();
+    repaint();
   }
 
   private void gathererConnected() {
@@ -304,10 +391,10 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
   }
 
   private static class GathererConnectedState {
-    private boolean  fIsCapturing;
-    private String[] fSessions;
-    private String   fActiveStatsSessionId;
-    private String[] fSupportedStats;
+    private final boolean  fIsCapturing;
+    private final String[] fSessions;
+    private final String   fActiveStatsSessionId;
+    private final String[] fSupportedStats;
 
     GathererConnectedState(boolean isCapturing, String[] sessions, String activeSessionId, String[] supportedStats) {
       fIsCapturing = isCapturing;
@@ -351,12 +438,13 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
       });
     }
 
+    @Override
     public void finished() {
       Exception e = getException();
       if (e != null) {
         Throwable rootCause = ExceptionHelper.getRootCause(e);
         if (!(rootCause instanceof IOException)) {
-          appContext.log(e);
+          showError(e);
         }
       } else {
         GathererConnectedState connectedState = getResult();
@@ -379,7 +467,10 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
         viewStatsButton.setEnabled(haveAnySessions);
         init(sessionInProgress);
         setupStatsConfigPanel(supportedStats);
-        setVisible(true);
+        removeAll();
+        add(mainPanel);
+        revalidate();
+        repaint();
       }
     }
   }
@@ -508,16 +599,20 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
     StartGatheringStatsWorker(final String[] statsToRecord, final long samplePeriodMillis) {
       super(new Callable<Void>() {
         public Void call() {
-          IServer activeCoord = getActiveCoordinator();
-          if (activeCoord != null) {
-            currentStatsSessionId = new Date().toString();
-            activeCoord.startClusterStatsSession(currentStatsSessionId, statsToRecord, samplePeriodMillis);
+          currentStatsSessionId = new Date().toString();
+          for (IServerGroup group : clusterModel.getServerGroups()) {
+            for (IServer server : group.getMembers()) {
+              if (server.isReady() && server.isClusterStatsSupported()) {
+                server.startClusterStatsSession(currentStatsSessionId, statsToRecord, samplePeriodMillis);
+              }
+            }
           }
           return null;
         }
       });
     }
 
+    @Override
     public void finished() {
       stopGatheringStatsButton.setSelected(false);
     }
@@ -534,15 +629,19 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
     StopGatheringStatsWorker() {
       super(new Callable<Void>() {
         public Void call() {
-          IServer activeCoord = getActiveCoordinator();
-          if (activeCoord != null) {
-            activeCoord.endCurrentClusterStatsSession();
+          for (IServerGroup group : clusterModel.getServerGroups()) {
+            for (IServer server : group.getMembers()) {
+              if (server.isReady() && server.isClusterStatsSupported()) {
+                server.endCurrentClusterStatsSession();
+              }
+            }
           }
           return null;
         }
       });
     }
 
+    @Override
     public void finished() {
       /**/
     }
@@ -565,7 +664,7 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
   }
 
   private static class StatsSessionListItem {
-    private String fSessionId;
+    private final String fSessionId;
 
     StatsSessionListItem(String sessionId) {
       fSessionId = sessionId;
@@ -575,6 +674,7 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
       return fSessionId;
     }
 
+    @Override
     public String toString() {
       return fSessionId;
     }
@@ -672,14 +772,28 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
   }
 
   private static class ZipFileFilter extends FileFilter {
+    @Override
     public boolean accept(File file) {
       return file.isDirectory() || file.getName().endsWith(".zip");
     }
 
+    @Override
     public String getDescription() {
       return "ZIP files";
     }
   }
+
+  // private static class CsvFileFilter extends FileFilter {
+  // @Override
+  // public boolean accept(File file) {
+  // return file.isDirectory() || file.getName().endsWith(".csv");
+  // }
+  //
+  // @Override
+  // public String getDescription() {
+  // return "CSV files";
+  // }
+  // }
 
   class ExportStatsHandler implements ActionListener {
     private UsernamePasswordCredentials credentials;
@@ -700,48 +814,53 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
       if (chooser.showSaveDialog(StatsRecorderPanel.this) != JFileChooser.APPROVE_OPTION) return;
       final File file = chooser.getSelectedFile();
       lastExportDir = file.getParentFile();
-      GetMethod get = null;
+      final List<GetMethod> getList = new ArrayList<GetMethod>();
       try {
-        IServer activeCoord = getActiveCoordinator();
-        String uri = activeCoord.getStatsExportServletURI();
-        URL url = new URL(uri);
-        HttpClient httpClient = new HttpClient();
-        get = new GetMethod(url.toString());
-        get.setFollowRedirects(true);
-        if (credentials != null) {
-          httpClient.getState().setCredentials(getAuthScope(), credentials);
-          get.setDoAuthentication(true);
-        }
-        int status = httpClient.executeMethod(get);
-        while (status == HttpStatus.SC_UNAUTHORIZED) {
-          UsernamePasswordCredentials creds = getCredentials();
-          if (creds == null) return;
-          if (creds.getUserName().length() == 0 || creds.getPassword().length() == 0) {
-            credentials = null;
-            continue;
+        for (IServerGroup group : clusterModel.getServerGroups()) {
+          for (IServer server : group.getMembers()) {
+            if (!server.isReady() || !server.isClusterStatsSupported()) continue;
+            String uri = server.getStatsExportServletURI();
+            URL url = new URL(uri);
+            HttpClient httpClient = new HttpClient();
+            GetMethod get = new GetMethod(url.toString());
+            get.setFollowRedirects(true);
+            if (credentials != null) {
+              httpClient.getState().setCredentials(getAuthScope(), credentials);
+              get.setDoAuthentication(true);
+            }
+            int status = httpClient.executeMethod(get);
+            while (status == HttpStatus.SC_UNAUTHORIZED) {
+              UsernamePasswordCredentials creds = getCredentials();
+              if (creds == null) return;
+              if (creds.getUserName().length() == 0 || creds.getPassword().length() == 0) {
+                credentials = null;
+                continue;
+              }
+              httpClient = new HttpClient();
+              httpClient.getState().setCredentials(getAuthScope(), creds);
+              get.setDoAuthentication(true);
+              status = httpClient.executeMethod(get);
+            }
+            if (status != HttpStatus.SC_OK) {
+              appContext.log("The http client has encountered a status code other than ok for the url: " + url
+                             + " status: " + HttpStatus.getStatusText(status));
+              return;
+            }
+            getList.add(get);
           }
-          httpClient = new HttpClient();
-          httpClient.getState().setCredentials(getAuthScope(), creds);
-          get.setDoAuthentication(true);
-          status = httpClient.executeMethod(get);
-        }
-        if (status != HttpStatus.SC_OK) {
-          appContext.log("The http client has encountered a status code other than ok for the url: " + url
-                         + " status: " + HttpStatus.getStatusText(status));
-          return;
         }
         Frame frame = (Frame) SwingUtilities.getAncestorOfClass(Frame.class, StatsRecorderPanel.this);
         final ProgressDialog progressDialog = showProgressDialog(frame, "Exporting statistics to '" + file.getName()
                                                                         + ".' Please wait...");
-        final GetMethod get2 = get;
         progressDialog.addWindowListener(new WindowAdapter() {
+          @Override
           public void windowOpened(WindowEvent e) {
-            new Thread(new StreamCopierRunnable(get2, file, progressDialog)).start();
+            new Thread(new StreamCopierRunnable(getList, file, progressDialog)).start();
           }
         });
       } catch (Exception e) {
         appContext.log(e);
-        if (get != null) {
+        for (GetMethod get : getList) {
           get.releaseConnection();
         }
       }
@@ -762,44 +881,77 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
   }
 
   class StreamCopierRunnable implements Runnable {
-    GetMethod      fGetMethod;
-    File           fOutFile;
-    ProgressDialog fProgressDialog;
+    List<GetMethod> fGetList;
+    File            fOutFile;
+    ProgressDialog  fProgressDialog;
+    File            fTmpFile;
+    String          fOutFileName;
 
-    StreamCopierRunnable(GetMethod getMethod, File outFile, ProgressDialog progressDialog) {
-      fGetMethod = getMethod;
+    StreamCopierRunnable(List<GetMethod> getList, File outFile, ProgressDialog progressDialog) {
+      fGetList = getList;
       fOutFile = outFile;
       fProgressDialog = progressDialog;
     }
 
     public void run() {
-      FileOutputStream out = null;
+      BufferedWriter outWriter = null;
+      boolean ignoreFirstLine = false;
 
       try {
-        out = new FileOutputStream(fOutFile);
-        InputStream in = fGetMethod.getResponseBodyAsStream();
+        fTmpFile = File.createTempFile("foo", null);
+        outWriter = new BufferedWriter(new FileWriter(fTmpFile));
 
-        byte[] buffer = new byte[1024 * 8];
-        int count;
-        try {
-          while ((count = in.read(buffer)) >= 0) {
-            out.write(buffer, 0, count);
-          }
-        } finally {
-          SwingUtilities.invokeAndWait(new Runnable() {
-            public void run() {
-              fProgressDialog.setVisible(false);
-              appContext.setStatus("Wrote '" + fOutFile.getAbsolutePath() + "'");
+        for (GetMethod getMethod : fGetList) {
+          BufferedReader inReader = null;
+
+          try {
+            boolean isFirstLine = true;
+            ZipInputStream zin = new ZipInputStream(getMethod.getResponseBodyAsStream());
+            ZipEntry ze = null;
+
+            while ((ze = zin.getNextEntry()) != null) {
+              if (fOutFileName == null) {
+                fOutFileName = ze.getName();
+              }
+              System.out.println("Unzipping " + ze.getName() + "...");
+              inReader = new BufferedReader(new InputStreamReader(zin));
+              String line;
+
+              while ((line = inReader.readLine()) != null) {
+                if (!isFirstLine || !ignoreFirstLine) {
+                  outWriter.write(line);
+                  outWriter.newLine();
+                }
+                isFirstLine = false;
+                ignoreFirstLine = true;
+              }
             }
-          });
-          IOUtils.closeQuietly(in);
-          IOUtils.closeQuietly(out);
+          } catch (Exception e) {
+            appContext.log(e);
+          } finally {
+            IOUtils.closeQuietly(inReader);
+            getMethod.releaseConnection();
+          }
         }
+        outWriter.close();
+        FileOutputStream fout = new FileOutputStream(fOutFile);
+        ZipOutputStream zout = new ZipOutputStream(fout);
+        zout.setLevel(9);
+        ZipEntry ze = new ZipEntry(fOutFileName);
+        FileInputStream fin = new FileInputStream(fTmpFile);
+        zout.putNextEntry(ze);
+        IOUtils.copy(fin, zout);
+        fin.close();
+        zout.close();
       } catch (Exception e) {
         appContext.log(e);
       } finally {
-        IOUtils.closeQuietly(out);
-        fGetMethod.releaseConnection();
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            fProgressDialog.setVisible(false);
+            appContext.setStatus("Wrote '" + fOutFile.getAbsolutePath() + "'");
+          }
+        });
       }
     }
   }
@@ -816,20 +968,25 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
           final ProgressDialog progressDialog = showProgressDialog(frame, "Clearing statistics from session '" + item
                                                                           + ".' Please wait...");
           SwingWorker worker = new SwingWorker() {
+            @Override
             public Object construct() throws Exception {
-              IServer activeCoord = getActiveCoordinator();
-              if (activeCoord != null) {
-                activeCoord.clearClusterStatsSession(item.getSessionId());
+              for (IServerGroup group : clusterModel.getServerGroups()) {
+                for (IServer server : group.getMembers()) {
+                  if (server.isReady() && server.isClusterStatsSupported()) {
+                    server.clearClusterStatsSession(item.getSessionId());
+                  }
+                }
               }
               return null;
             }
 
+            @Override
             public void finished() {
               progressDialog.setVisible(false);
               InvocationTargetException ite = getException();
               if (ite != null) {
                 Throwable cause = ite.getCause();
-                appContext.log(cause != null ? cause : ite);
+                showError(cause != null ? cause : ite);
                 return;
               }
             }
@@ -850,20 +1007,25 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
         final ProgressDialog progressDialog = showProgressDialog(frame,
                                                                  "Clearing all recorded statistics. Please wait...");
         SwingWorker worker = new SwingWorker() {
+          @Override
           public Object construct() throws Exception {
-            IServer activeCoord = getActiveCoordinator();
-            if (activeCoord != null) {
-              activeCoord.clearAllClusterStats();
+            for (IServerGroup group : clusterModel.getServerGroups()) {
+              for (IServer server : group.getMembers()) {
+                if (server.isReady() && server.isClusterStatsSupported()) {
+                  server.clearAllClusterStats();
+                }
+              }
             }
             return null;
           }
 
+          @Override
           public void finished() {
             progressDialog.setVisible(false);
             InvocationTargetException ite = getException();
             if (ite != null) {
               Throwable cause = ite.getCause();
-              appContext.log(cause != null ? cause : ite);
+              showError(cause != null ? cause : ite);
               return;
             }
           }
@@ -882,10 +1044,10 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
   }
 
   class ViewStatsSessionsHandler implements ActionListener, PropertyChangeListener {
-    private JFrame  svtFrame;
-    private Method  retrieveMethod;
-    private Method  setSessionMethod;
-    private boolean shouldLogErrors = true;
+    private JFrame        svtFrame;
+    private Method        retrieveMethod;
+    private Method        setSessionMethod;
+    private final boolean shouldLogErrors = true;
 
     public void actionPerformed(ActionEvent ae) {
       if (svtFrame == null) {
@@ -922,7 +1084,7 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
 
     private String getActiveCoordinatorAddress() {
       IServer activeCoord = getActiveCoordinator();
-      if (activeCoord != null) { return activeCoord.getHost() + ":" + activeCoord.getDSOListenPort(); }
+      if (activeCoord != null) { return activeCoord.getHost() + ":" + activeCoord.getPort(); }
       return null;
     }
 
@@ -954,10 +1116,13 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
     }
   }
 
+  @Override
   public void tearDown() {
     IClusterModel theClusterModel = getClusterModel();
     if (theClusterModel != null) {
-      theClusterModel.removePropertyChangeListener(this);
+      theClusterModel.removePropertyChangeListener(clusterListener);
+      clusterListener.tearDown();
+
       IServer activeCoord = theClusterModel.getActiveCoordinator();
       if (activeCoord != null) {
         activeCoord.removeClusterStatsListener(this);
@@ -991,8 +1156,8 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
   }
 
   private static class LoginPanel extends JPanel {
-    private JTextField     userNameField;
-    private JPasswordField passwordField;
+    private final JTextField     userNameField;
+    private final JPasswordField passwordField;
 
     private LoginPanel() {
       super();
@@ -1034,10 +1199,13 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
       });
     }
 
+    @Override
     public void finished() {
       Exception e = getException();
       if (e == null) {
         setupStatsConfigPanel(getResult());
+      } else {
+        showError(e);
       }
     }
   }
@@ -1063,6 +1231,10 @@ public class StatsRecorderPanel extends XContainer implements PropertyChangeList
       }
     }
   }
+
+  /*
+   * IClusterStatsListener implementation
+   */
 
   public void allSessionsCleared() {
     SwingUtilities.invokeLater(new Runnable() {

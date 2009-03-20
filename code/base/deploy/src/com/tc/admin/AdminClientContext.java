@@ -17,13 +17,13 @@ import java.util.concurrent.Future;
 import java.util.prefs.Preferences;
 
 public class AdminClientContext implements IAdminClientContext {
-  private AdminClient               client;
-  private AdminClientController     controller;
-  private ResourceBundleHelper      bundleHelper;
-  private Preferences               prefs;
-  private final AbstractNodeFactory nodeFactory     = AbstractNodeFactory.getFactory();
-  private final ExecutorService     executorService = Executors.newCachedThreadPool();
-  private Map<String, IOption>      optionMap;
+  private final AdminClient          client;
+  private AdminClientController      controller;
+  private final ResourceBundleHelper bundleHelper;
+  private final Preferences          prefs;
+  private final AbstractNodeFactory  nodeFactory     = AbstractNodeFactory.getFactory();
+  private final ExecutorService      executorService = Executors.newCachedThreadPool();
+  private final Map<String, IOption> optionMap;
 
   public AdminClientContext(AdminClient client) {
     this.client = client;
@@ -35,7 +35,7 @@ public class AdminClientContext implements IAdminClientContext {
   public void setAdminClientController(AdminClientController controller) {
     this.controller = controller;
   }
-  
+
   public AdminClientController getAdminClientController() {
     return this.controller;
   }
@@ -43,7 +43,7 @@ public class AdminClientContext implements IAdminClientContext {
   public ApplicationController getApplicationController() {
     return getAdminClientController();
   }
-  
+
   public AdminClient getClient() {
     return this.client;
   }
@@ -63,11 +63,15 @@ public class AdminClientContext implements IAdminClientContext {
   public void registerOption(IOption option) {
     optionMap.put(option.getName(), option);
   }
-  
+
   public Iterator<IOption> options() {
     return optionMap.values().iterator();
   }
-  
+
+  public IOption getOption(String name) {
+    return optionMap.get(name);
+  }
+
   public void execute(Runnable r) {
     this.executorService.execute(r);
   }

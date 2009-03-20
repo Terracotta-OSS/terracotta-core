@@ -66,6 +66,15 @@
       <distributed-methods>
         <method-expression>@*..DMI * *..*(..)</method-expression>
       </distributed-methods>
+      <injected-instances>
+      	<injected-field>
+      		<field-name>org.Clusterable.someField</field-name>
+      	</injected-field>
+      	<injected-field>
+      		<field-name>org.Clusterable.someOtherField</field-name>
+      		<instance-type>com.tc.cluster.DsoCluster</instance-type>
+      	</injected-field>
+      </injected-instances>
     </dso>
   </application>
 </tc:tc-config>

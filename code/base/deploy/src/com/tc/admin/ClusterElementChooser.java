@@ -54,20 +54,22 @@ import javax.swing.tree.ExpandVetoException;
 import javax.swing.tree.TreePath;
 
 public abstract class ClusterElementChooser extends XContainer implements TreeWillExpandListener, TreeModelListener {
-  private IClusterModel     clusterModel;
-  private ClusterListener   clusterListener;
-  private AbstractButton    triggerButton;
-  private TriggerHandler    triggerHandler;
-  private XTree             tree;
-  private XTreeModel        treeModel;
-  private TreePath          selectionPath;
-  private TreeMouseHandler  treeMouseHandler;
-  private SelectionRenderer selectionRenderer;
-  private CellRendererPane  cellRendererPane;
-  private XScrollPane       scroller;
-  private JPopupMenu        popup;
-  private boolean           inited;
-  private EventListenerList listenerList;
+  private IClusterModel           clusterModel;
+  private ClusterListener         clusterListener;
+  private AbstractButton          triggerButton;
+  private final TriggerHandler    triggerHandler;
+  private XTree                   tree;
+  private XTreeModel              treeModel;
+  private TreePath                selectionPath;
+  private TreeMouseHandler        treeMouseHandler;
+  private SelectionRenderer       selectionRenderer;
+  private final CellRendererPane  cellRendererPane;
+  private XScrollPane             scroller;
+  private JPopupMenu              popup;
+  private boolean                 inited;
+  private final EventListenerList listenerList;
+
+  private static final int        DEFAULT_SELECTION_RENDERER_WIDTH = 120;
 
   public ClusterElementChooser(IClusterModel clusterModel, ActionListener listener) {
     super(new GridBagLayout());
@@ -101,12 +103,11 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
     tree = new XTree();
     tree.addTreeWillExpandListener(this);
     tree.setModel(treeModel = new XTreeModel());
-    treeModel.addTreeModelListener(this);
     popup.add(scroller = new XScrollPane(tree));
     tree.addMouseListener(treeMouseHandler);
     tree.addMouseMotionListener(treeMouseHandler);
     tree.setSelectionModel(new TreeSelectionModel());
-    
+
     this.clusterModel = clusterModel;
     this.listenerList = new EventListenerList();
     if (listener != null) {
@@ -114,7 +115,7 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
     }
 
     clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
-    if (clusterModel.isReady()) {
+    if (clusterModel.isConnected()) {
       setupTreeModel();
     }
   }
@@ -132,27 +133,34 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
       return paths;
     }
 
+    @Override
     public void setSelectionPaths(TreePath[] paths) {
       super.setSelectionPaths(filterPaths(paths));
     }
 
+    @Override
     public void addSelectionPaths(TreePath[] paths) {
       super.addSelectionPaths(filterPaths(paths));
     }
   }
 
+  private boolean isCurrentlySelectedPath(TreePath path) {
+    return path != null && path.equals(selectionPath);
+  }
+
   private class TreeMouseHandler extends MouseAdapter implements MouseMotionListener {
+    @Override
     public void mouseReleased(MouseEvent e) {
       Point p = e.getPoint();
-      int selRow = tree.getRowForLocation(p.x, p.y);
+      int selRow = tree.getClosestRowForLocation(p.x, p.y);
       if (selRow != -1) {
         TreePath path = tree.getPathForRow(selRow);
-        if (path != null) {
+        if (!isCurrentlySelectedPath(path)) {
           if (acceptPath(path)) {
             setSelectedPath(path);
-            popup.setVisible(false);
           }
         }
+        popup.setVisible(false);
       }
     }
 
@@ -160,7 +168,7 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
 
     private void handleMouseMotion(MouseEvent e) {
       Point p = e.getPoint();
-      int selRow = tree.getRowForLocation(p.x, p.y);
+      int selRow = tree.getClosestRowForLocation(p.x, p.y);
       if (selRow != -1) {
         TreePath path = tree.getPathForRow(selRow);
         if (path != null) {
@@ -180,6 +188,7 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
   }
 
   public void addActionListener(ActionListener l) {
+    removeActionListener(l);
     listenerList.add(ActionListener.class, l);
   }
 
@@ -203,11 +212,16 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
 
   private class TriggerHandler extends MouseAdapter implements ItemListener, HierarchyListener {
     public void itemStateChanged(ItemEvent e) {
-      togglePopup();
+      if (triggerButton.isSelected()) {
+        showPopup();
+      }
     }
 
-    public void mousePressed(MouseEvent e) {
-      triggerButton.doClick();
+    @Override
+    public void mouseReleased(MouseEvent e) {
+      if (!popup.isShowing()) {
+        showPopup();
+      }
     }
 
     public void hierarchyChanged(HierarchyEvent e) {
@@ -215,18 +229,11 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
       if ((flags & HierarchyEvent.SHOWING_CHANGED) != 0) {
         boolean isPopupShowing = popup.isShowing();
         if (triggerButton.isSelected() != isPopupShowing) {
+          triggerButton.removeItemListener(this);
           triggerButton.setSelected(isPopupShowing);
+          triggerButton.addItemListener(this);
         }
       }
-    }
-  }
-
-  protected void togglePopup() {
-    boolean isTriggerSelected = triggerButton.isSelected();
-    if (isTriggerSelected && !popup.isShowing()) {
-      showPopup();
-    } else if (!isTriggerSelected && popup.isShowing()) {
-      hidePopup();
     }
   }
 
@@ -250,10 +257,12 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
   }
 
   public void setSelectedPath(TreePath path) {
-    selectionPath = path;
-    fireActionPerformed(null);
-    revalidate();
-    repaint();
+    if (!isCurrentlySelectedPath(path)) {
+      selectionPath = path;
+      fireActionPerformed(null);
+      revalidate();
+      repaint();
+    }
   }
 
   public void setSelectedPath(String nodeName) {
@@ -268,6 +277,7 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
   }
 
   private class SelectionRenderer extends JComponent {
+    @Override
     protected void paintComponent(Graphics g) {
       if (selectionPath != null) {
         Component c = tree.getRendererComponent(selectionPath);
@@ -277,17 +287,26 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
       }
     }
 
+    @Override
     public boolean isShowing() {
       return true;
     }
   }
 
   private Point getPopupLocation() {
+    scroller.setMaximumSize(null);
+    scroller.setPreferredSize(null);
+    scroller.setMinimumSize(null);
+
+    tree.revalidate();
+
     Dimension popupSize = popup.getPreferredSize();
     popupSize.height = 200;
+    popupSize.width = getWidth();
 
-    int x = getBounds().width - popupSize.width;
+    int x = 0;
     Rectangle popupBounds = computePopupBounds(x, getBounds().height, popupSize.width, popupSize.height);
+
     Dimension scrollSize = popupBounds.getSize();
     Point popupLocation = popupBounds.getLocation();
 
@@ -295,7 +314,7 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
     scroller.setPreferredSize(scrollSize);
     scroller.setMinimumSize(scrollSize);
 
-    tree.revalidate();
+    popup.setSize(popupSize);
 
     return popupLocation;
   }
@@ -330,8 +349,12 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
       super(clusterModel);
     }
 
-    protected void handleReady() {
-      if (!inited && clusterModel.isReady()) {
+    @Override
+    protected void handleConnected() {
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
+      if (!inited && clusterModel.isConnected()) {
         setupTreeModel();
       }
     }
@@ -345,6 +368,8 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
       root.add(child);
     }
     root.nodeStructureChanged();
+    treeModelChanged();
+    treeModel.addTreeModelListener(this);
     inited = true;
   }
 
@@ -376,11 +401,19 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
     return button;
   }
 
-  private void treeModelChanged() {
+  protected void treeModelChanged() {
     tree.expandAll();
-    selectionRenderer.setPreferredSize(tree.getMaxItemSize());
+    Dimension tps = tree.getPreferredSize();
+    Dimension srps = selectionRenderer.getPreferredSize();
+    srps.width = Math.max(tps.width, DEFAULT_SELECTION_RENDERER_WIDTH);
+    srps.height = tree.getRowHeight();
+    selectionRenderer.setPreferredSize(srps);
     revalidate();
     repaint();
+
+    if (popup.isVisible()) {
+      showPopup();
+    }
   }
 
   public void treeNodesChanged(TreeModelEvent e) {
@@ -399,8 +432,11 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
     treeModelChanged();
   }
 
+  @Override
   public void tearDown() {
     clusterModel.removePropertyChangeListener(clusterListener);
+    clusterListener.tearDown();
+
     treeModel.removeTreeModelListener(this);
     tree.removeMouseListener(treeMouseHandler);
     tree.removeMouseMotionListener(treeMouseHandler);

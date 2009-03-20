@@ -314,7 +314,7 @@ public class NewObjectMemoryManagerRaceTest extends ServerCrashingTestBase {
         // the test framework's IsolationClassLaoder
         Loader loader = Loader.create();
         ((NamedClassLoader) loader).__tc_setClassLoaderName(IsolationClassLoader.loaderName());
-        ClassProcessorHelper.registerGlobalLoader((NamedClassLoader) loader);
+        ClassProcessorHelper.registerGlobalLoader((NamedClassLoader) loader, null);
 
         Thread.currentThread().setContextClassLoader(loader);
         Runnable r = (Runnable) loader.loadClass(External.class.getName()).newInstance();

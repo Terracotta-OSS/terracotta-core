@@ -5,6 +5,7 @@
 package com.tc.test.server.appserver.weblogic10x;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.tools.ant.taskdefs.Java;
 import org.apache.tools.ant.types.Path;
 import org.codehaus.cargo.container.InstalledLocalContainer;
 import org.codehaus.cargo.container.State;
@@ -14,7 +15,7 @@ import org.codehaus.cargo.container.weblogic.WebLogic10xInstalledLocalContainer;
 import com.tc.test.AppServerInfo;
 import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.AppServerParameters;
-import com.tc.test.server.appserver.cargo.CargoAppServer;
+import com.tc.test.server.appserver.weblogic.WeblogicAppServerBase;
 import com.tc.util.ReplaceLine;
 import com.tc.util.runtime.Os;
 
@@ -26,7 +27,7 @@ import java.io.InputStream;
 /**
  * Weblogic10x AppServer implementation
  */
-public final class Weblogic10xAppServer extends CargoAppServer {
+public final class Weblogic10xAppServer extends WeblogicAppServerBase {
 
   public Weblogic10xAppServer(Weblogic10xAppServerInstallation installation) {
     super(installation);
@@ -52,6 +53,11 @@ public final class Weblogic10xAppServer extends CargoAppServer {
 
     public TCWebLogic10xInstalledLocalContainer(LocalConfiguration configuration) {
       super(configuration);
+    }
+
+    @Override
+    public void doStop(Java java) throws Exception {
+      WeblogicAppServerBase.doStop(getConfiguration());
     }
 
     protected void setState(State state) {

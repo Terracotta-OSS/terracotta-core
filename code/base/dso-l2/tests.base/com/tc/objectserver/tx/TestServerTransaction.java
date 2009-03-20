@@ -27,9 +27,10 @@ public final class TestServerTransaction implements ServerTransaction {
 
   public List                       changes = new ArrayList();
   public ObjectIDSet                oids    = new ObjectIDSet();
-  private ServerTransactionID       sid;
-  private TxnBatchID                bid;
+  private final ServerTransactionID sid;
+  private final TxnBatchID          bid;
   private final GlobalTransactionID gtid;
+  public long[]                     hwm;
 
   public TestServerTransaction(ServerTransactionID sid, TxnBatchID bid) {
     this(sid, bid, null);
@@ -50,11 +51,11 @@ public final class TestServerTransaction implements ServerTransaction {
   }
 
   public NodeID getSourceID() {
-    return sid.getSourceID();
+    return this.sid.getSourceID();
   }
 
   public TransactionID getTransactionID() {
-    return sid.getClientTransactionID();
+    return this.sid.getClientTransactionID();
   }
 
   public SequenceID getClientSequenceID() {
@@ -62,7 +63,7 @@ public final class TestServerTransaction implements ServerTransaction {
   }
 
   public List getChanges() {
-    return changes;
+    return this.changes;
   }
 
   public Map getNewRoots() {
@@ -74,7 +75,7 @@ public final class TestServerTransaction implements ServerTransaction {
   }
 
   public ObjectIDSet getObjectIDs() {
-    return oids;
+    return this.oids;
   }
 
   public Collection getNotifies() {
@@ -82,11 +83,11 @@ public final class TestServerTransaction implements ServerTransaction {
   }
 
   public ServerTransactionID getServerTransactionID() {
-    return sid;
+    return this.sid;
   }
 
   public TxnBatchID getBatchID() {
-    return bid;
+    return this.bid;
   }
 
   public DmiDescriptor[] getDmiDescriptors() {
@@ -102,7 +103,7 @@ public final class TestServerTransaction implements ServerTransaction {
   }
 
   public GlobalTransactionID getGlobalTransactionID() {
-    if (gtid != null) { return gtid; }
+    if (this.gtid != null) { return this.gtid; }
     throw new AssertionError("Gid is not set !");
   }
 
@@ -116,6 +117,10 @@ public final class TestServerTransaction implements ServerTransaction {
 
   public void setGlobalTransactionID(GlobalTransactionID gid) {
     throw new ImplementMe();
+  }
+
+  public long[] getHighWaterMarks() {
+    return this.hwm;
   }
 
 }

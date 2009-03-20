@@ -5,13 +5,13 @@
 package com.tc.util;
 
 import com.tc.config.schema.ActiveServerGroupConfig;
-import com.terracottatech.config.ActiveServerGroup;
+import com.terracottatech.config.MirrorGroup;
 
 import java.util.Arrays;
 
 public class ActiveCoordinatorHelper {
 
-  public static int getCoordinatorGroup(ActiveServerGroup[] asg) {
+  public static int getCoordinatorGroup(MirrorGroup[] asg) {
     int grpId = -1;
     String groupName = null;
 

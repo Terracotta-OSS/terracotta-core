@@ -41,6 +41,7 @@ public class XTree extends JTree implements TreeModelListener {
     setVisibleRowCount(5);
 
     MouseListener ml = new MouseAdapter() {
+      @Override
       public void mousePressed(MouseEvent e) {
         TreePath path = getPathForLocation(e.getX(), e.getY());
         if (path != null) {
@@ -50,6 +51,7 @@ public class XTree extends JTree implements TreeModelListener {
         testPopup(e);
       }
 
+      @Override
       public void mouseReleased(MouseEvent me) {
         testPopup(me);
       }
@@ -69,6 +71,7 @@ public class XTree extends JTree implements TreeModelListener {
         }
       }
 
+      @Override
       public void mouseClicked(MouseEvent me) {
         TreePath path = getPathForLocation(me.getX(), me.getY());
         if (path != null) {
@@ -173,12 +176,13 @@ public class XTree extends JTree implements TreeModelListener {
 
   public void expandAll() {
     int row = 0;
-    while (row < getRowCount()) {
+    int count = getRowCount();
+    while (row < count) {
       expandRow(row);
       row++;
     }
   }
-  
+
   public Dimension getMaxItemSize() {
     Dimension result = new Dimension();
     DefaultMutableTreeNode root = (DefaultMutableTreeNode) getModel().getRoot();

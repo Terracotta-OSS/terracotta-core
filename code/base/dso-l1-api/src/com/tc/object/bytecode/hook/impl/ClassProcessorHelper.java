@@ -153,7 +153,7 @@ public class ClassProcessorHelper {
       className = name.substring(0, name.length() - CLASS_SUFFIX_LENGTH).replace('/', '.');
     }
 
-    URL resource = getClassResource(className, cl);
+    URL resource = getClassResource(className, cl, false);
 
     if (null == resource) {
       if (!isAWRuntimeDependency(className)) { return null; }
@@ -169,15 +169,15 @@ public class ClassProcessorHelper {
   }
 
   /**
-   * Get TC class definition
+   * Get the exported class if defined. This method is called from java.lang.ClassLoader.loadClassInternal()
    *
    * @param name Class name
    * @param cl Classloader
    * @return Class bytes
    * @throws ClassNotFoundException If class not found
    */
-  public static byte[] getTCClass(String name, ClassLoader cl) throws ClassNotFoundException {
-    URL resource = getClassResource(name, cl);
+  public static byte[] loadClassInternalHook(String name, ClassLoader cl) throws ClassNotFoundException {
+    URL resource = getClassResource(name, cl, true);
 
     if (null == resource) {
       if (!isAWRuntimeDependency(name)) { return null; }
@@ -189,6 +189,14 @@ public class ClassProcessorHelper {
 
     return getResourceBytes(resource);
   }
+
+
+  public static byte[] systemLoaderFindClassHook(String name, ClassLoader loader) throws ClassNotFoundException {
+    URL resource = getClassResource(name, loader, false);
+    if (resource == null) { return null; }
+    return getResourceBytes(resource);
+  }
+
 
   private static byte[] getResourceBytes(URL url) throws ClassNotFoundException {
     InputStream is = null;
@@ -220,10 +228,10 @@ public class ClassProcessorHelper {
     }
   }
 
-  private static URL getClassResource(String name, ClassLoader cl) {
+  private static URL getClassResource(String name, ClassLoader cl, boolean hideSystemResources) {
     if (name != null) {
       DSOContext context = getContext(cl);
-      if (context != null) { return context.getClassResource(name); }
+      if (context != null) { return context.getClassResource(name, cl, hideSystemResources); }
     }
 
     return null;
@@ -351,8 +359,7 @@ public class ClassProcessorHelper {
     String[] parts = tcClasspath.split(File.pathSeparator);
     ArrayList urls = new ArrayList();
 
-    for (int i = 0; i < parts.length; i++) {
-      String part = parts[i];
+    for (String part : parts) {
       if (part.length() > 0) {
 
         File file = new File(part);
@@ -462,7 +469,22 @@ public class ClassProcessorHelper {
     }
   }
 
+  /**
+   * @deprecated here so that old code is not broken. New classloader adapters should be
+   * registered with {@link #registerGlobalLoader(NamedClassLoader, String)} to support
+   * classloader app-group substitution.
+   */
+  @Deprecated
   public static void registerGlobalLoader(NamedClassLoader loader) {
+    registerGlobalLoader(loader, null);
+  }
+
+  /**
+   * Register a named classloader. If using a partitioned context, register the loader in all partitions.
+   * @param webAppName the name of a web application that this is the loader for; or null if this is not
+   * a web application classloader.
+   */
+  public static void registerGlobalLoader(NamedClassLoader loader, String webAppName) {
     if (!USE_GLOBAL_CONTEXT && !USE_PARTITIONED_CONTEXT) { throw new IllegalStateException(
                                                                                            "Not global/partitioned DSO mode"); }
     if (TRACE) traceNamedLoader(loader);
@@ -470,10 +492,10 @@ public class ClassProcessorHelper {
     if (USE_PARTITIONED_CONTEXT) {
       for (Iterator i = partitionedContextMap.values().iterator(); i.hasNext();) {
         DSOContext context = (DSOContext) i.next();
-        context.getManager().registerNamedLoader(loader);
+        context.getManager().registerNamedLoader(loader, webAppName);
       }
     } else {
-      ManagerUtil.registerNamedLoader(loader);
+      ManagerUtil.registerNamedLoader(loader, webAppName);
     }
   }
 
@@ -483,9 +505,9 @@ public class ClassProcessorHelper {
   public static void shutdown() {
     if (USE_PARTITIONED_CONTEXT) {
       Manager[] managers = getPartitionedManagers();
-      for (int i = 0; i < managers.length; i++) {
+      for (Manager manager : managers) {
         try {
-          managers[i].stop();
+          manager.stop();
         } catch (Throwable t) {
           t.printStackTrace();
         }
@@ -500,6 +522,32 @@ public class ClassProcessorHelper {
     } catch (Throwable t) {
       t.printStackTrace();
     }
+  }
+
+  /**
+   * Given a context path, trim and condition it to be usable by methods such as {@link #isDSOSessions(String)}
+   *
+   * @param context a servlet context path, as from HttpServletContext#getPath(); null, "", "/", or "//" will be
+   *        interpreted as ROOT context.
+   * @return a non-null, non-empty string
+   */
+  public static String computeAppName(String context) {
+    // compute app name
+    // deal with possible app strings: null, "", "/", "/xyz", "xyz/", "/xyz/"
+    if (context == null) {
+      return ROOT_WEB_APP_NAME;
+    }
+    context = context.trim();
+    if (context.startsWith("/")) {
+      context = context.substring(1);
+    }
+    if (context.endsWith("/")) {
+      context = context.substring(0, context.length() - 2);
+    }
+    if (context.length() == 0) {
+      return ROOT_WEB_APP_NAME;
+    }
+    return context;
   }
 
   /**
@@ -788,5 +836,7 @@ public class ClassProcessorHelper {
     }
 
   }
+
+
 
 }

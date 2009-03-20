@@ -11,12 +11,12 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
 
   def make_package(srcdir, destdir, filename, install_name, internal_name)
     puts "-"*80
-    puts "pwd     : #{Dir.pwd}"
-    puts "srcdir  : #{srcdir}"
-    puts "destdir : #{destdir}"
-    puts "filename: #{filename}"
-    puts "filename: #{install_name}"
-    puts "filename: #{internal_name}"
+    puts "pwd           : #{Dir.pwd}"
+    puts "srcdir        : #{srcdir}"
+    puts "destdir       : #{destdir}"
+    puts "filename      : #{filename}"
+    puts "install_name  : #{install_name}"
+    puts "internal_name : #{internal_name}"
     puts @static_resources.izpack_installer_template.canonicalize.to_s
     puts "-"*80
 
@@ -57,7 +57,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     ant.taskdef(:name => 'izpack', :classname => 'com.izforge.izpack.ant.IzPackTask') 
 
     # build the package
-    installer_package_name = FilePath.new(destdir.to_s, "#{filename}.jar")
+    installer_package_name = FilePath.new(destdir.to_s, "#{install_name}-installer.jar")
     ant.izpack(
       :installerType    => 'standard', 
       :inheritAll       => true, 

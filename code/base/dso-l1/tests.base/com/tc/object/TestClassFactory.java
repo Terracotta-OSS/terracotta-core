@@ -9,17 +9,18 @@ import com.tc.object.applicator.ChangeApplicator;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.field.TCField;
+import com.tc.object.loaders.LoaderDescription;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 
 public class TestClassFactory implements TCClassFactory {
 
-  public TCClass getOrCreate(Class clazz, ClientObjectManager objectManager) {
+  public TCClass getOrCreate(final Class clazz, final ClientObjectManager objectManager) {
     return new MockTCClass();
   }
 
-  public ChangeApplicator createApplicatorFor(TCClass clazz, boolean indexed) {
+  public ChangeApplicator createApplicatorFor(final TCClass clazz, final boolean indexed) {
     throw new ImplementMe();
   }
 
@@ -39,8 +40,8 @@ public class TestClassFactory implements TCClassFactory {
       //
     }
 
-    public MockTCClass(ClientObjectManager clientObjectManager, boolean hasOnLoadExecuteScript,
-                       boolean hasOnLoadMethod, boolean portable, TCField[] portableFields) {
+    public MockTCClass(final ClientObjectManager clientObjectManager, final boolean hasOnLoadExecuteScript,
+                       final boolean hasOnLoadMethod, final boolean portable, final TCField[] portableFields) {
       this.clientObjectManager = clientObjectManager;
       this.hasOnLoadExecuteScript = hasOnLoadExecuteScript;
       this.hasOnLoadMethod = hasOnLoadMethod;
@@ -76,7 +77,7 @@ public class TestClassFactory implements TCClassFactory {
       return portableFields;
     }
 
-    public TraversedReferences getPortableObjects(Object pojo, TraversedReferences addTo) {
+    public TraversedReferences getPortableObjects(final Object pojo, final TraversedReferences addTo) {
       return addTo;
     }
 
@@ -108,9 +109,8 @@ public class TestClassFactory implements TCClassFactory {
       return portable;
     }
 
-    public TCField getField(String name) {
-      for (int i = 0; i < portableFields.length; i++) {
-        TCField field = portableFields[i];
+    public TCField getField(final String name) {
+      for (TCField field : portableFields) {
         if (name.equals(field.getName())) return field;
       }
       return null;
@@ -120,19 +120,19 @@ public class TestClassFactory implements TCClassFactory {
       return false;
     }
 
-    public void hydrate(TCObject tcObject, DNA dna, Object pojo, boolean force) {
+    public void hydrate(final TCObject tcObject, final DNA dna, final Object pojo, final boolean force) {
       //
     }
 
-    public void dehydrate(TCObject tcObject, DNAWriter writer, Object pojo) {
+    public void dehydrate(final TCObject tcObject, final DNAWriter writer, final Object pojo) {
       //
     }
 
-    public String getDefiningLoaderDescription() {
-      return null;
+    public LoaderDescription getDefiningLoaderDescription() {
+      return new LoaderDescription(null, "mock");
     }
 
-    public TCObject createTCObject(ObjectID id, Object peer, boolean isNew) {
+    public TCObject createTCObject(final ObjectID id, final Object peer, final boolean isNew) {
       return null;
     }
 
@@ -140,7 +140,7 @@ public class TestClassFactory implements TCClassFactory {
       return false;
     }
 
-    public Object getNewInstanceFromNonDefaultConstructor(DNA dna) {
+    public Object getNewInstanceFromNonDefaultConstructor(final DNA dna) {
       return null;
     }
 
@@ -148,7 +148,7 @@ public class TestClassFactory implements TCClassFactory {
       return Object.class;
     }
 
-    public String getFieldNameByOffset(long fieldOffset) {
+    public String getFieldNameByOffset(final long fieldOffset) {
       throw new ImplementMe();
     }
 
@@ -168,12 +168,20 @@ public class TestClassFactory implements TCClassFactory {
       return false;
     }
 
-    public boolean isPortableField(long fieldOffset) {
+    public boolean isPortableField(final long fieldOffset) {
       throw new ImplementMe();
     }
 
     public boolean useResolveLockWhileClearing() {
       return true;
+    }
+
+    public boolean hasOnLoadInjection() {
+      return false;
+    }
+
+    public boolean isNotClearable() {
+      return false;
     }
   }
 
@@ -181,7 +189,7 @@ public class TestClassFactory implements TCClassFactory {
 
     private final String name;
 
-    public MockTCField(String name) {
+    public MockTCField(final String name) {
       this.name = name;
     }
 

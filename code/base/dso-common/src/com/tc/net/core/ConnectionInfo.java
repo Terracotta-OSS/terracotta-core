@@ -12,16 +12,18 @@ public class ConnectionInfo implements java.io.Serializable {
   private final String                 hostname;
   private final int                    port;
   private final int                    groupId;
+  private final String                 groupName;
 
   public ConnectionInfo(String hostname, int port) {
-    this(hostname, port, -1);
+    this(hostname, port, 0, null);
   }
 
-  public ConnectionInfo(String hostname, int port, int groupId) {
+  public ConnectionInfo(String hostname, int port, int groupId, String groupName) {
     Assert.assertNotNull(hostname);
     this.hostname = hostname;
     this.port = port;
     this.groupId = groupId;
+    this.groupName = groupName;
   }
 
   public String getHostname() {
@@ -31,16 +33,25 @@ public class ConnectionInfo implements java.io.Serializable {
   public int getPort() {
     return port;
   }
-  
+
   public int getGroupId() {
     return groupId;
+  }
+
+  public String getGroupName() {
+    return groupName;
   }
 
   public boolean equals(Object o) {
     if (o == this) return true;
     if (o instanceof ConnectionInfo) {
       ConnectionInfo other = (ConnectionInfo) o;
-      return this.hostname.equals(other.getHostname()) && this.port == other.getPort();
+      if (groupName == null) {
+        return this.hostname.equals(other.getHostname()) && this.port == other.getPort();
+      } else {
+        return this.hostname.equals(other.getHostname()) && this.port == other.getPort()
+               && this.groupName.equals(other.groupName);
+      }
     }
     return false;
   }
@@ -52,6 +63,6 @@ public class ConnectionInfo implements java.io.Serializable {
   private String s;
 
   public String toString() {
-    return (s == null ? (s = hostname + ":" + port) : s);
+    return (s == null ? (s = hostname + ":" + port + (groupName != null ? ":" + groupName : "")) : s);
   }
 }

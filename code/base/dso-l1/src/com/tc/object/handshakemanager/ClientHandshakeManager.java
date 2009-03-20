@@ -20,5 +20,4 @@ public interface ClientHandshakeManager {
   public boolean serverIsPersistent();
 
   public void waitForHandshake();
-
 }

@@ -34,7 +34,7 @@ public class ResolverTest extends TestCase {
     String flatRepoUrl = makeFlatRepo("modules.1");
     resolveBundles(new String[] { flatRepoUrl }, jarFiles(), PASS);
   }
-
+  
   public void testResolveBundleInFlatRepoWithSpaces() throws IOException {
     String flatRepoUrl = makeFlatRepo("modules 1");
     resolveBundles(new String[] { flatRepoUrl }, jarFiles(), PASS);
@@ -112,6 +112,26 @@ public class ResolverTest extends TestCase {
           .resolveRepositoryLocation(repo[i]));
     }
   }
+  
+//  public void testResolveBestVersion() throws Exception {
+//    String flatRepoUrl = makeRepoDir("versionRepo");
+//    
+//    // create jars for different versions
+//    
+//    
+//    // resolve a version range to find best match version
+//    
+//    String flatRepoUrl = makeFlatRepo("modules.1");
+//    for (Iterator i = jars.iterator(); i.hasNext();) {
+//      JarFile jar = new JarFile((File) i.next());
+//      Manifest manifest = jar.getManifest();
+//      String[] reqmts = BundleSpec.getRequirements(manifest);
+//      for (int j = 0; j < reqmts.length; j++) {
+//        BundleSpec spec = BundleSpec.newInstance(reqmts[j]);
+//        resolveBundle(repos, spec, expected);
+//      }
+//    }
+//  }
 
   private String makeRepoDir(String repoName) {
     String repoUrl = System.getProperty(TestConfigObject.TC_BASE_DIR) + File.separator + "build" + File.separator
@@ -183,9 +203,17 @@ public class ResolverTest extends TestCase {
 
   private void resolveJars(String[] repos, Collection jars, boolean expected) {
     for (Iterator i = jars.iterator(); i.hasNext();) {
-      File jar = new File(i.next().toString());
-      String version = "3.0.0-SNAPSHOT";
-      String name = jar.getName().replaceAll("-" + version + ".jar", "");
+      String fileName = ((File) i.next()).toString();
+      File jar = new File(fileName);
+
+      String jarName = jar.getName();
+      jarName = jarName.substring(0, jarName.lastIndexOf(".jar"));
+      int versionIndex = jarName.lastIndexOf("-SNAPSHOT");
+      if(versionIndex >= 0) {
+        versionIndex = jarName.lastIndexOf("-", versionIndex-1);
+      }
+      String version = jarName.substring(versionIndex+1);
+      String name = jarName.substring(0, versionIndex);
       resolve(repos, name, version, expected);
     }
   }

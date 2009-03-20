@@ -3,6 +3,8 @@
  */
 package com.tc.cluster;
 
+import com.tcclient.cluster.DsoNode;
+
 public class DsoClusterEventImpl implements DsoClusterEvent {
 
   private final DsoNode node;

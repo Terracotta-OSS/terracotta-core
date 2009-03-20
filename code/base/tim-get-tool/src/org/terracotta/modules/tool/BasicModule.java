@@ -7,6 +7,7 @@ package org.terracotta.modules.tool;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
+import java.net.URI;
 import java.net.URL;
 import java.util.Map;
 
@@ -16,10 +17,10 @@ public class BasicModule extends AbstractModule implements Installable {
   private final Map<String, Object> attributes;
   private final AttributesHelper    attributesHelper;
 
-  public BasicModule(Module owner, Map<String, Object> attributes) {
+  public BasicModule(Module owner, Map<String, Object> attributes, URI relativeUrlBase) {
     this.owner = owner;
     this.attributes = attributes;
-    this.attributesHelper = new AttributesHelper(this.attributes);
+    this.attributesHelper = new AttributesHelper(this.attributes, relativeUrlBase);
 
     groupId = attributesHelper.getAttrValueAsString("groupId", StringUtils.EMPTY);
     artifactId = attributesHelper.getAttrValueAsString("artifactId", StringUtils.EMPTY);

@@ -29,18 +29,29 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
           @ant.copy(:tofile => replacement_file.to_s, :file => file.to_s)
           file = replacement_file
           
-          # Inject resource into jar
-          inject_file = FilePath.new(product_directory, interpolate(arg['inject']))
-          ant.create_jar(replacement_file,
+          arg['inject'].each do |inject| 
+            # Inject resource into jar
+            inject_file = FilePath.new(product_directory, interpolate(inject))
+            ant.create_jar(replacement_file,
                          :update => 'true',
                          :basedir => inject_file.directoryname,
                          :includes => inject_file.filename)
+            end
         end
 
+        group = arg['groupId']
         artifact = arg['artifact']
         version = arg[MAVEN_VERSION_CONFIG_KEY] || config_source[MAVEN_VERSION_CONFIG_KEY] ||
           config_source['version'] || build_environment.version
-        maven.deploy_file(file.to_s, artifact, version, arg['pom'])
+
+        # Allow override of version if a version key is specified.  If so, the value of the key
+        # is the property to look up as defined in build-config.global, etc.
+        if arg['version']
+          versionKey = arg['version']
+          version = arg[versionKey] || config_source[versionKey]
+        end
+
+        maven.deploy_file(file.to_s, group, artifact, version, arg['pom'])
         
         # clean up injected file if it existed
         if arg['inject'] 

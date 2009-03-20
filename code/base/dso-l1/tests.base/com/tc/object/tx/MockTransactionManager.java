@@ -18,7 +18,6 @@ import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.Counter;
 
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -207,14 +206,8 @@ public class MockTransactionManager implements ClientTransactionManager {
     throw new ImplementMe();
   }
 
-  public void dump(Writer writer) {
-    throw new ImplementMe();
-
-  }
-
   public void dumpToLogger() {
     throw new ImplementMe();
-
   }
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {

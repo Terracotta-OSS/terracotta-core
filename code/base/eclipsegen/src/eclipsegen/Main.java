@@ -69,7 +69,7 @@ public class Main {
   }
 
   private void generate(String moduleName) throws Exception {
-    System.err.println("reading " + ossModulesFile);
+    System.err.println("reading " + this.ossModulesFile);
 
     File ossBase = new File(this.ossModulesFile).getParentFile();
 
@@ -78,8 +78,8 @@ public class Main {
     File entBase = null;
     Module[] entModules = null;
     if (this.isEnterprise) {
-      System.err.println("reading " + entModulesFile);
-      entBase = new File(entModulesFile).getParentFile();
+      System.err.println("reading " + this.entModulesFile);
+      entBase = new File(this.entModulesFile).getParentFile();
       entModules = getModules(moduleName, loadModules(this.entModulesFile));
     }
 
@@ -106,17 +106,12 @@ public class Main {
   }
 
   private Module[] getModules(String moduleName, Module[] modules) {
-    if (moduleName == null) {
-      return modules;
-    } else {
-      for (Module module : modules) {
-        if (module.getName().equals(moduleName)) {
-          Module[] temp = new Module[1];
-          temp[0] = module;
-          return temp;
-        }
-      }
+    if (moduleName == null) { return modules; }
+
+    for (Module module : modules) {
+      if (module.getName().equals(moduleName)) { return new Module[] { module }; }
     }
+
     return null;
   }
 
@@ -288,7 +283,7 @@ public class Main {
     File file = new File(modDir, ".project");
 
     // don't overwrite existing .project files (they might be customized)
-    if (file.exists()) return;
+    if (file.exists()) { return; }
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     PrintStream ps = new PrintStream(baos);

@@ -15,21 +15,18 @@ import org.mortbay.jetty.handler.AbstractHandler;
 
 public class SimpleHttpHandler extends AbstractHandler {
 
-	private final demo.sharedqueue.Queue queue;
-
 	public final static String ACTION = "/webapp";
-
 	public final static String ACTION_ADDWORK = "/addWork";
-
 	public final static String ACTION_GETINFO = "/getInfo";
-
 	public final static String UNITS_OF_WORK = "unitsOfWork";
 
-	public SimpleHttpHandler(Queue queue) {
+	private final demo.sharedqueue.Queue queue;
+
+	public SimpleHttpHandler(final Queue queue) {
 		this.queue = queue;
 	}
 
-	private final int getIntForParameter(HttpServletRequest request,
+	private final int getIntForParameter(final HttpServletRequest request,
 			final String name) {
 		String param = request.getParameter(name);
 		try {
@@ -39,9 +36,10 @@ public class SimpleHttpHandler extends AbstractHandler {
 		}
 	}
 
-	public final void handle(String target, HttpServletRequest request,
-			HttpServletResponse response, int dispatch) throws IOException,
-			ServletException {
+	public final void handle(final String target,
+			final HttpServletRequest request,
+			final HttpServletResponse response, final int dispatch)
+			throws IOException, ServletException {
 		Request base_request = (request instanceof Request) ? (Request) request
 				: HttpConnection.getCurrentConnection().getRequest();
 		if (target.equals(ACTION_ADDWORK)) {
@@ -51,8 +49,8 @@ public class SimpleHttpHandler extends AbstractHandler {
 		}
 	}
 
-	private final void doAddWork(Request request, HttpServletResponse response)
-			throws IOException {
+	private final void doAddWork(final Request request,
+			final HttpServletResponse response) throws IOException {
 		final int unitsOfWork = getIntForParameter(request, UNITS_OF_WORK);
 		final Thread processor = new Thread(new Runnable() {
 			public void run() {
@@ -71,8 +69,8 @@ public class SimpleHttpHandler extends AbstractHandler {
 		response.sendRedirect(ACTION);
 	}
 
-	private final void doGetInfo(Request request, HttpServletResponse response)
-			throws IOException {
+	private final void doGetInfo(final Request request,
+			final HttpServletResponse response) throws IOException {
 		response.setContentType("text/xml");
 		response.setStatus(HttpServletResponse.SC_OK);
 		response

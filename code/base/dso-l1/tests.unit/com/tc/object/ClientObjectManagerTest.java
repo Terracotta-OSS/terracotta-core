@@ -417,7 +417,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     }
 
     public String getDefiningLoaderDescription() {
-      return "";
+      return "mock";
     }
 
     public boolean isDelta() {

@@ -7,6 +7,7 @@ package org.terracotta.modules.tool.config;
 public interface ConfigAnnotation {
 
   public static String TERRACOTTA_VERSION               = "TerracottaVersion";
+  public static String RELATIVE_URL_BASE                = "RelativeUrlBase";
   public static String INCLUDE_SNAPSHOTS                = "IncludeSnapshots";
   public static String DATA_CACHE_EXPIRATION_IN_SECONDS = "DataCacheExpirationInSeconds";
   public static String MODULES_DIRECTORY                = "ModulesDirectory";

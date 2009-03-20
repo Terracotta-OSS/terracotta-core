@@ -4,8 +4,6 @@
  */
 package com.tc.objectserver.api;
 
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
-
 import com.tc.async.impl.MockSink;
 import com.tc.exception.ImplementMe;
 import com.tc.lang.TCThreadGroup;
@@ -13,7 +11,6 @@ import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
@@ -45,12 +42,11 @@ import com.tc.objectserver.context.ManagedObjectFaultingContext;
 import com.tc.objectserver.context.ManagedObjectFlushingContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.context.RecallObjectsContext;
-import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.TestDNA;
 import com.tc.objectserver.core.impl.TestManagedObject;
-import com.tc.objectserver.dgc.api.GarbageCollector;
-import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
+import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
+import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
 import com.tc.objectserver.gtx.TestGlobalTransactionManager;
 import com.tc.objectserver.impl.InMemoryManagedObjectStore;
 import com.tc.objectserver.impl.ObjectInstanceMonitorImpl;
@@ -88,13 +84,10 @@ import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.stats.counter.sampled.SampledCounterImpl;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.Counter;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
 import com.tc.util.TCCollections;
-import com.tc.util.concurrent.LifeCycleState;
-import com.tc.util.concurrent.StoppableThread;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.File;
@@ -181,7 +174,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
   private void initObjectManager(ThreadGroup threadGroup, EvictionPolicy cache, ManagedObjectStore store) {
     TestSink faultSink = new TestSink();
     TestSink flushSink = new TestSink();
-    this.objectManager = new ObjectManagerImpl(this.config, threadGroup, this.clientStateManager, store, cache,
+    this.objectManager = new ObjectManagerImpl(this.config, this.clientStateManager, store, cache,
                                                this.persistenceTransactionProvider, faultSink, flushSink,
                                                this.objectStatsRecorder);
     this.testFaultSinkContext = new TestSinkContext();
@@ -385,7 +378,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     ids.add((id1 = new ObjectID(1)));
     ObjectID id2;
     ids.add((id2 = new ObjectID(2)));
-    ClientID key = new ClientID(new ChannelID(0));
+    ClientID key = new ClientID(0);
 
     this.objectManager.createNewObjects(ids);
 
@@ -765,16 +758,16 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     TestSink faultSink = new TestSink();
     TestSink flushSink = new TestSink();
     this.config.paranoid = paranoid;
-    this.objectManager = new ObjectManagerImpl(this.config, createThreadGroup(), this.clientStateManager, store,
-                                               new LRUEvictionPolicy(100), this.persistenceTransactionProvider,
-                                               faultSink, flushSink, this.objectStatsRecorder);
+    this.objectManager = new ObjectManagerImpl(this.config, this.clientStateManager, store, new LRUEvictionPolicy(100),
+                                               this.persistenceTransactionProvider, faultSink, flushSink,
+                                               this.objectStatsRecorder);
     new TestMOFaulter(this.objectManager, store, faultSink, new NullSinkContext()).start();
     new TestMOFlusher(this.objectManager, flushSink, new NullSinkContext()).start();
 
     ObjectID id = new ObjectID(1);
     ObjectIDSet ids = new ObjectIDSet();
     ids.add(id);
-    ClientID key = new ClientID(new ChannelID(0));
+    ClientID key = new ClientID(0);
 
     this.objectManager.createNewObjects(ids);
     TestResultsContext responseContext = new TestResultsContext(ids, ids);
@@ -886,21 +879,10 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     }
   }
 
-  public void testExplodingGarbageCollector() throws Exception {
-    LinkedQueue exceptionQueue = new LinkedQueue();
-    TestThreadGroup tg = new TestThreadGroup(exceptionQueue);
-    initObjectManager(tg);
-    RuntimeException toThrow = new RuntimeException();
-    this.objectManager.setGarbageCollector(new ExplodingGarbageCollector(toThrow));
-    this.objectManager.start();
-    Object o = exceptionQueue.poll(30 * 1000);
-    assertEquals(toThrow, o);
-  }
-
   public void testObjectManagerBasics() {
     initObjectManager();
     final ObjectID id = new ObjectID(0);
-    ManagedObject mo = new TestManagedObject(id, new ObjectID[0]);
+    ManagedObject mo = new TestManagedObject(id, new ArrayList<ObjectID>());
     this.objectManager.createObject(mo);
     assertFalse(this.objectManager.isReferenced(id));
     ManagedObject mo2 = this.objectManager.getObjectByID(id);
@@ -1023,8 +1005,8 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
     ObjectIDSet objectIDs = new ObjectIDSet();
 
-    ManagedObject mo = new TestManagedObject(id, new ObjectID[0]);
-    ManagedObject mo1 = new TestManagedObject(id1, new ObjectID[0]);
+    ManagedObject mo = new TestManagedObject(id, new ArrayList<ObjectID>());
+    ManagedObject mo1 = new TestManagedObject(id1, new ArrayList<ObjectID>());
     this.objectManager.createObject(mo);
     this.objectManager.createObject(mo1);
 
@@ -1164,7 +1146,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
   private void createObjects(int num) {
     for (int i = 0; i < num; i++) {
-      TestManagedObject mo = new TestManagedObject(new ObjectID(i), new ObjectID[] {});
+      TestManagedObject mo = new TestManagedObject(new ObjectID(i), new ArrayList<ObjectID>());
       this.objectManager.createObject(mo);
       this.objectStore.addNewObject(mo);
     }
@@ -1221,14 +1203,14 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     this.objectManager.setGarbageCollector(gc);
     this.objectManager.start();
     final ObjectID id = new ObjectID(0);
-    ManagedObject mo = new TestManagedObject(id, new ObjectID[3]);
+    ManagedObject mo = new TestManagedObject(id, new ArrayList<ObjectID>(3));
     this.objectManager.createObject(mo);
 
     assertFalse(gc.isCollected());
 
     gc.allow_blockUntilReadyToGC_ToProceed();
 
-    this.objectManager.getGarbageCollector().gc();
+    this.objectManager.getGarbageCollector().doGC(GCType.FULL_GC);
     assertTrue(gc.isCollected());
 
     gc.reset();
@@ -1297,10 +1279,10 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     changes.put(new ObjectID(1), new TestPhysicalDNA(new ObjectID(1)));
 
     ServerTransaction stxn1 = new ServerTransactionImpl(new TxnBatchID(1), new TransactionID(1), new SequenceID(1),
-                                                        new LockID[0], new ClientID(new ChannelID(2)),
-                                                        new ArrayList<DNA>(changes.values()),
-                                                        new ObjectStringSerializer(), Collections.EMPTY_MAP,
-                                                        TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1);
+                                                        new LockID[0], new ClientID(2), new ArrayList<DNA>(changes
+                                                            .values()), new ObjectStringSerializer(),
+                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
+                                                        DmiDescriptor.EMPTY_ARRAY, 1, new long[0]);
     List<ServerTransaction> txns = new ArrayList<ServerTransaction>();
     txns.add(stxn1);
 
@@ -1345,10 +1327,10 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     changes.put(new ObjectID(2), new TestPhysicalDNA(new ObjectID(2)));
 
     ServerTransaction stxn2 = new ServerTransactionImpl(new TxnBatchID(2), new TransactionID(2), new SequenceID(1),
-                                                        new LockID[0], new ClientID(new ChannelID(2)),
-                                                        new ArrayList<DNA>(changes.values()),
-                                                        new ObjectStringSerializer(), Collections.EMPTY_MAP,
-                                                        TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1);
+                                                        new LockID[0], new ClientID(2), new ArrayList<DNA>(changes
+                                                            .values()), new ObjectStringSerializer(),
+                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
+                                                        DmiDescriptor.EMPTY_ARRAY, 1, new long[0]);
 
     txns.clear();
     txns.add(stxn2);
@@ -1377,10 +1359,10 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     changes.put(new ObjectID(3), new TestPhysicalDNA(new ObjectID(3)));
 
     ServerTransaction stxn3 = new ServerTransactionImpl(new TxnBatchID(2), new TransactionID(2), new SequenceID(1),
-                                                        new LockID[0], new ClientID(new ChannelID(2)),
-                                                        new ArrayList<DNA>(changes.values()),
-                                                        new ObjectStringSerializer(), Collections.EMPTY_MAP,
-                                                        TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1);
+                                                        new LockID[0], new ClientID(2), new ArrayList<DNA>(changes
+                                                            .values()), new ObjectStringSerializer(),
+                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
+                                                        DmiDescriptor.EMPTY_ARRAY, 1, new long[0]);
 
     txns.clear();
     txns.add(stxn3);
@@ -1476,7 +1458,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     assertTrue(gc.isPaused());
 
     // Complete gc
-    gc.deleteGarbage(new GCResultContext(1, TCCollections.EMPTY_OBJECT_ID_SET));
+    gc.deleteGarbage(new GCResultContext(TCCollections.EMPTY_OBJECT_ID_SET, new GarbageCollectionInfo()));
 
     // Lookup context should have been fired
     loc = (LookupEventContext) this.coordinator.lookupSink.queue.take();
@@ -2160,155 +2142,10 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
   }
 
-  private class ExplodingGarbageCollector implements GarbageCollector {
-
-    private final RuntimeException toThrow;
-    private LifeCycleState         gcState;
-
-    public ExplodingGarbageCollector(RuntimeException toThrow) {
-      this.toThrow = toThrow;
-    }
-
-    public boolean isPausingOrPaused() {
-      return false;
-    }
-
-    public boolean isPaused() {
-      return false;
-    }
-
-    public void notifyReadyToGC() {
-      return;
-    }
-
-    public void requestGCPause() {
-      return;
-    }
-
-    public void notifyGCComplete() {
-      return;
-    }
-
-    public void requestGCDeleteStart() {
-      return;
-    }
-
-    public void blockUntilReadyToGC() {
-      return;
-    }
-
-    public ObjectIDSet collect(Filter traverser, Collection roots, ObjectIDSet managedObjectIds) {
-      throw this.toThrow;
-    }
-
-    public PrettyPrinter prettyPrint(PrettyPrinter out) {
-      return out.print(getClass().getName());
-    }
-
-    public ObjectIDSet collect(Filter traverser, Collection roots, ObjectIDSet managedObjectIds, LifeCycleState state) {
-      return collect(traverser, roots, managedObjectIds);
-    }
-
-    public void changed(ObjectID changedObject, ObjectID oldReference, ObjectID newReference) {
-      // do nothing
-
-    }
-
-    public void gc() {
-      throw this.toThrow;
-    }
-
-    public void addNewReferencesTo(Set rescueIds) {
-      // do nothing
-
-    }
-
-    public void start() {
-      this.gcState.start();
-    }
-
-    public void stop() {
-      // do nothing
-    }
-
-    public void setState(StoppableThread st) {
-      this.gcState = st;
-    }
-
-    public void addListener(GarbageCollectorEventListener listener) {
-      //
-    }
-
-    public GCStats[] getGarbageCollectorStats() {
-      return null;
-    }
-
-    public boolean disableGC() {
-      return false;
-    }
-
-    public void enableGC() {
-      // do nothing
-    }
-
-    public boolean isDisabled() {
-      return false;
-    }
-
-    public boolean isStarted() {
-      return false;
-    }
-
-    public boolean deleteGarbage(GCResultContext resultContext) {
-      return true;
-    }
-
-    public void gcYoung() {
-      // NOP
-    }
-
-    public void notifyNewObjectInitalized(ObjectID id) {
-      // NOP
-    }
-
-    public void notifyObjectCreated(ObjectID id) {
-      // NOP
-    }
-
-    public void notifyObjectsEvicted(Collection evicted) {
-      // NOP
-    }
-
-    public boolean requestGCStart() {
-      return true;
-    }
-
-  }
-
-  private class TestThreadGroup extends ThreadGroup {
-
-    private final LinkedQueue exceptionQueue;
-
-    public TestThreadGroup(LinkedQueue exceptionQueue) {
-      super("test thread group");
-      this.exceptionQueue = exceptionQueue;
-    }
-
-    @Override
-    public void uncaughtException(Thread t, Throwable e) {
-      try {
-        this.exceptionQueue.put(e);
-      } catch (InterruptedException ie) {
-        fail(ie);
-      }
-    }
-
-  }
-
   private class GCCaller implements Runnable {
 
     public void run() {
-      ObjectManagerTest.this.objectManager.getGarbageCollector().gc();
+      ObjectManagerTest.this.objectManager.getGarbageCollector().doGC(GCType.FULL_GC);
     }
   }
 

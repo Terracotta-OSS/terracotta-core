@@ -67,8 +67,7 @@ public class DSOContextImpl implements DSOContext {
     return new DSOContextImpl(configHelper, manager.getClassProvider(), manager);
   }
 
-  public static DSOContext createContext(String configSpec)
-      throws ConfigurationSetupException {
+  public static DSOContext createContext(String configSpec) throws ConfigurationSetupException {
     StandardTVSConfigurationSetupManagerFactory factory = new StandardTVSConfigurationSetupManagerFactory(
                                                                                                           (String[]) null,
                                                                                                           false,
@@ -113,6 +112,7 @@ public class DSOContextImpl implements DSOContext {
 
     try {
       ModulesLoader.initModules(configHelper, classProvider, false);
+      configHelper.validateSessionConfig();
       validateBootJar();
     } catch (Exception e) {
       consoleLogger.fatal(e.getMessage());
@@ -277,12 +277,12 @@ public class DSOContextImpl implements DSOContext {
   public int getSessionLockType(String appName) {
     return configHelper.getSessionLockType(appName);
   }
-  
+
   public boolean isApplicationSessionLocked(String appName) {
     return configHelper.isApplicationSessionLocked(appName);
   }
 
-  public URL getClassResource(String className) {
-    return configHelper.getClassResource(className);
+  public URL getClassResource(String className, ClassLoader loader, boolean hideSystemResources) {
+    return configHelper.getClassResource(className, loader, hideSystemResources);
   }
 }

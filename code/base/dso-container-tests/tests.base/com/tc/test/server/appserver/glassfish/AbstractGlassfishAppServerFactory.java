@@ -72,6 +72,8 @@ public abstract class AbstractGlassfishAppServerFactory extends AppServerFactory
     p.init();
     ProjectHelper helper = ProjectHelper.getProjectHelper();
     p.addReference("ant.projectHelper", helper);
+    p.setBaseDir(installDir);
+    p.setProperty("basedir", null);
     helper.parse(p, antScript);
 
     p.executeTarget(p.getDefaultTarget());

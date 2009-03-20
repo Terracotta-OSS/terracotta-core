@@ -44,7 +44,7 @@ public class ClusterModel implements IClusterModel {
   protected EventListenerList                                  listenerList;
 
   private IServer                                              activeCoordinator;
-  private boolean                                              userDisconnecting;
+  // private boolean userDisconnecting;
   protected PropertyChangeSupport                              propertyChangeSupport;
 
   protected ConnectServerListener                              connectServerListener;
@@ -121,12 +121,17 @@ public class ClusterModel implements IClusterModel {
     }
   }
 
-  public boolean isAutoConnect() {
+  public synchronized boolean isAutoConnect() {
     return this.autoConnect;
   }
 
   public void setAutoConnect(boolean autoConnect) {
-    this.autoConnect = autoConnect;
+    boolean oldAutoConnect;
+    synchronized (this) {
+      oldAutoConnect = isAutoConnect();
+      this.autoConnect = autoConnect;
+    }
+    firePropertyChange(PROP_AUTO_CONNECT, oldAutoConnect, autoConnect);
     if (isConnectListening) {
       connectServer.setAutoConnect(autoConnect);
     }
@@ -232,11 +237,18 @@ public class ClusterModel implements IClusterModel {
     return sb.toString();
   }
 
-  private boolean determineReady() {
+  public boolean determineReady() {
     for (IServerGroup group : serverGroups) {
-      if (group.getActiveServer() == null) { return false; }
+      if (!group.isReady()) { return false; }
     }
-    return true;
+    return serverGroups != IServerGroup.NULL_SET;
+  }
+
+  public boolean determineConnected() {
+    for (IServerGroup group : serverGroups) {
+      if (group.isConnected()) { return true; }
+    }
+    return false;
   }
 
   protected void setReady(boolean ready) {
@@ -279,7 +291,7 @@ public class ClusterModel implements IClusterModel {
       scheduledExecutor = new ScheduledThreadPoolExecutor(1);
       setScheduledExecutor(scheduledExecutor);
       scheduledExecutor.schedule(new PollTask(), pollPeriodSeconds, TimeUnit.SECONDS);
-    } else {
+    } else if (scheduledExecutor != null) {
       scheduledExecutor.shutdownNow();
       scheduledExecutor = null;
     }
@@ -439,9 +451,7 @@ public class ClusterModel implements IClusterModel {
         Iterator<Future<Collection<NodePollResult>>> resultIter = results.iterator();
         while (resultIter.hasNext()) {
           Future<Collection<NodePollResult>> future = resultIter.next();
-          if (future.isCancelled()) {
-            System.err.println("Poll task has timed-out; consider increasing the runtime stats poll period.");
-          } else if (future.isDone()) {
+          if (future.isDone()) {
             try {
               Iterator<NodePollResult> nodeResult = future.get().iterator();
               while (nodeResult.hasNext()) {
@@ -483,12 +493,12 @@ public class ClusterModel implements IClusterModel {
     return connectServer.getConnectErrorMessage(e);
   }
 
-  private synchronized boolean isUserDisconnecting() {
-    return userDisconnecting;
-  }
+  // private synchronized boolean isUserDisconnecting() {
+  // return userDisconnecting;
+  // }
 
   private synchronized void setUserDisconnecting(boolean userDisconnecting) {
-    this.userDisconnecting = userDisconnecting;
+    // this.userDisconnecting = userDisconnecting;
   }
 
   public synchronized void addServerStateListener(ServerStateListener listener) {
@@ -642,17 +652,13 @@ public class ClusterModel implements IClusterModel {
   class ActiveCoordinatorListener implements PropertyChangeListener {
     public void propertyChange(PropertyChangeEvent evt) {
       String prop = evt.getPropertyName();
+      IServer server = (IServer) evt.getSource();
       if (IClusterModelElement.PROP_READY.equals(prop)) {
-        IServer server = (IServer) evt.getSource();
         if (!server.isReady()) {
           clearActiveCoordinator();
           setReady(false);
-          if (isUserDisconnecting()) {
-            setConnected(false);
-          }
+          // setConnected(!isUserDisconnecting() && determineConnected());
         }
-      } else if (IServer.PROP_CONNECTED.equals(prop)) {
-        setConnected((Boolean) evt.getNewValue());
       }
     }
   }
@@ -662,25 +668,20 @@ public class ClusterModel implements IClusterModel {
       if (!isConnectListening) { throw new RuntimeException(
                                                             "ConnectServerListener.propertyChange called when not listening"); }
       String prop = evt.getPropertyName();
-      if (IServer.PROP_CONNECT_ERROR.equals(prop)) {
-        if (connectServer.hasConnectError()) {
-          // System.err.println(connectServer.getConnectErrorMessage());
-        }
-      }
       if (IServer.PROP_CONNECTED.equals(prop)) {
-        setConnected(connectServer.isConnected());
-      } else if (IClusterModelElement.PROP_READY.equals(prop)) {
-        if (connectServer.isReady()) {
+        if (connectServer.isConnected()) {
           serverGroups = connectServer.getClusterServerGroups();
           for (IServerGroup group : serverGroups) {
             if (group.isCoordinator()) {
               activeCoordinatorGroup = group;
+              activeCoordinator = group.getActiveServer();
             }
             group.addServerStateListener(serverStateListenerDelegate);
             group.addPropertyChangeListener(serverGroupListener);
             group.connect();
           }
           stopConnectListener();
+          setConnected(true);
         }
       }
     }
@@ -701,6 +702,8 @@ public class ClusterModel implements IClusterModel {
           setActiveCoordinator(group.getActiveServer());
         }
         setReady(determineReady());
+      } else if (IServerGroup.PROP_CONNECTED.equals(prop)) {
+        setConnected(determineConnected());
       }
     }
   }
@@ -746,13 +749,22 @@ public class ClusterModel implements IClusterModel {
     return null;
   }
 
-  public synchronized ManagedObjectFacade lookupFacade(ObjectID objectID, int limit) throws NoSuchObjectException {
-    IServerGroup group = groupForObjectID(objectID);
+  public synchronized ManagedObjectFacade lookupFacade(ObjectID oid, int limit) throws NoSuchObjectException {
+    IServerGroup group = groupForObjectID(oid);
     if (group != null) {
       IServer activeServer = group.getActiveServer();
-      if (activeServer != null) { return activeServer.lookupFacade(objectID, limit); }
+      if (activeServer != null) { return activeServer.lookupFacade(oid, limit); }
     }
     return null;
+  }
+
+  public boolean isResidentOnClient(IClient client, ObjectID oid) {
+    IServerGroup group = groupForObjectID(oid);
+    if (group != null) {
+      IServer activeServer = group.getActiveServer();
+      if (activeServer != null) { return activeServer.isResidentOnClient(client, oid); }
+    }
+    return false;
   }
 
   public void addPolledAttributeListener(PollScope scope, String attribute, PolledAttributeListener listener) {

@@ -67,8 +67,7 @@ public abstract class BasicThreadDumpsPanel extends XContainer {
     contentArea.add(textScroller = new XScrollPane(textArea = new XTextArea()));
     textArea.setEditable(false);
     textArea.setLineWrap(false);
-    Font f = textArea.getFont();
-    textArea.setFont(new Font("monospaced", f != null ? f.getStyle() : Font.PLAIN, f != null ? f.getSize() : 12));
+    textArea.setFont((Font) appContext.getObject("textarea.font"));
     contentArea.add(new SearchPanel(appContext, textArea), BorderLayout.SOUTH);
 
     deleteAction = new DeleteAction();
@@ -80,9 +79,9 @@ public abstract class BasicThreadDumpsPanel extends XContainer {
     textArea.setPopupMenu(textAreaPopup);
 
     XSplitPane splitter = new XSplitPane(JSplitPane.HORIZONTAL_SPLIT, itemScroller, contentArea);
-    add(splitter);
-    splitter.setDividerLocation(0.2);
+    splitter.setDefaultDividerLocation(0.24);
     splitter.setPreferences(getPreferences().node("ThreadDumpsSplitter"));
+    add(splitter);
   }
 
   protected JPopupMenu createPopupMenu() {
@@ -162,6 +161,7 @@ public abstract class BasicThreadDumpsPanel extends XContainer {
     }
   }
 
+  @Override
   public void tearDown() {
     super.tearDown();
 

@@ -43,12 +43,14 @@ public class ServerTransactionImpl implements ServerTransaction {
   private final ObjectIDSet            newObjectIDs;
   private final TxnBatchID             batchID;
   private final int                    numApplicationTxn;
+  private final long[]                 highWaterMarks;
 
   private GlobalTransactionID          globalTxnID;
 
   public ServerTransactionImpl(TxnBatchID batchID, TransactionID txID, SequenceID sequenceID, LockID[] lockIDs,
                                NodeID source, List dnas, ObjectStringSerializer serializer, Map newRoots,
-                               TxnType transactionType, Collection notifies, DmiDescriptor[] dmis, int numApplicationTxn) {
+                               TxnType transactionType, Collection notifies, DmiDescriptor[] dmis,
+                               int numApplicationTxn, long[] highWaterMarks) {
     this.batchID = batchID;
     this.txID = txID;
     this.seqID = sequenceID;
@@ -56,6 +58,7 @@ public class ServerTransactionImpl implements ServerTransaction {
     this.newRoots = newRoots;
     this.sourceID = source;
     this.numApplicationTxn = numApplicationTxn;
+    this.highWaterMarks = highWaterMarks;
     this.serverTxID = new ServerTransactionID(source, txID);
     this.transactionType = transactionType;
     this.notifies = notifies;
@@ -65,7 +68,7 @@ public class ServerTransactionImpl implements ServerTransaction {
     ObjectIDSet ids = new ObjectIDSet();
     ObjectIDSet newIDs = new ObjectIDSet();
     boolean added = true;
-    for (Iterator i = changes.iterator(); i.hasNext();) {
+    for (Iterator i = this.changes.iterator(); i.hasNext();) {
       DNA dna = (DNA) i.next();
       added &= ids.add(dna.getObjectID());
       if (!dna.isDelta()) {
@@ -82,44 +85,45 @@ public class ServerTransactionImpl implements ServerTransaction {
   // have any common objects between them. hence if g1 is the first txn and g2 is the second txn, g2 can be applied
   // before g1 only when g2 has no common objects(or locks) with g1. If this is not true then we cant assign gid here.
   public void setGlobalTransactionID(GlobalTransactionID gid) throws GlobalTransactionIDAlreadySetException {
-    if (this.globalTxnID != null) throw new GlobalTransactionIDAlreadySetException("Gid already assigned : " + this + " gid : " + gid);
+    if (this.globalTxnID != null) { throw new GlobalTransactionIDAlreadySetException("Gid already assigned : " + this
+                                                                                     + " gid : " + gid); }
     this.globalTxnID = gid;
   }
 
   public int getNumApplicationTxn() {
-    return numApplicationTxn;
+    return this.numApplicationTxn;
   }
 
   public ObjectStringSerializer getSerializer() {
-    return serializer;
+    return this.serializer;
   }
 
   public LockID[] getLockIDs() {
-    return lockIDs;
+    return this.lockIDs;
   }
 
   public NodeID getSourceID() {
-    return sourceID;
+    return this.sourceID;
   }
 
   public TransactionID getTransactionID() {
-    return txID;
+    return this.txID;
   }
 
   public SequenceID getClientSequenceID() {
-    return seqID;
+    return this.seqID;
   }
 
   public List getChanges() {
-    return changes;
+    return this.changes;
   }
 
   public Map getNewRoots() {
-    return newRoots;
+    return this.newRoots;
   }
 
   public TxnType getTransactionType() {
-    return transactionType;
+    return this.transactionType;
   }
 
   public ObjectIDSet getObjectIDs() {
@@ -131,23 +135,24 @@ public class ServerTransactionImpl implements ServerTransaction {
   }
 
   public Collection getNotifies() {
-    return notifies;
+    return this.notifies;
   }
 
   public DmiDescriptor[] getDmiDescriptors() {
-    return dmis;
+    return this.dmis;
   }
 
+  @Override
   public String toString() {
-    return "ServerTransaction[" + seqID + " , " + txID + "," + sourceID + "," + transactionType + "] = { changes = "
-           + changes.size() + ", notifies = " + notifies.size() + ", newRoots = " + newRoots.size() + ", numTxns = "
-           + getNumApplicationTxn() + ", oids =  " + objectIDs + ", newObjectIDs = " + newObjectIDs + ",\n"
-           + getChangesDetails() + " }";
+    return "ServerTransaction[" + this.seqID + " , " + this.txID + "," + this.sourceID + "," + this.transactionType
+           + "] = { changes = " + this.changes.size() + ", notifies = " + this.notifies.size() + ", newRoots = "
+           + this.newRoots.size() + ", numTxns = " + getNumApplicationTxn() + ", oids =  " + this.objectIDs
+           + ", newObjectIDs = " + this.newObjectIDs + ",\n" + getChangesDetails() + " }";
   }
 
   private String getChangesDetails() {
     StringBuilder sb = new StringBuilder();
-    for (Iterator i = changes.iterator(); i.hasNext();) {
+    for (Iterator i = this.changes.iterator(); i.hasNext();) {
       DNA dna = (DNA) i.next();
       sb.append("\t").append(dna.toString()).append("\n");
     }
@@ -155,19 +160,23 @@ public class ServerTransactionImpl implements ServerTransaction {
   }
 
   public ServerTransactionID getServerTransactionID() {
-    return serverTxID;
+    return this.serverTxID;
   }
 
   public TxnBatchID getBatchID() {
-    return batchID;
+    return this.batchID;
   }
 
   public GlobalTransactionID getGlobalTransactionID() {
-    if (this.globalTxnID == null) throw new AssertionError("Gid not assigned : " + this);
+    if (this.globalTxnID == null) { throw new AssertionError("Gid not assigned : " + this); }
     return this.globalTxnID;
   }
 
   public boolean needsBroadcast() {
     return true;
+  }
+
+  public long[] getHighWaterMarks() {
+    return this.highWaterMarks;
   }
 }

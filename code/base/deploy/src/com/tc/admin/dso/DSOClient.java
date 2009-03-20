@@ -22,11 +22,11 @@ import javax.management.NotificationListener;
 import javax.management.ObjectName;
 
 public class DSOClient implements NotificationListener {
-  private ConnectionContext           cc;
-  private ObjectName                  beanName;
-  private DSOClientMBean              delegate;
-  private long                        channelID;
-  private String                      remoteAddress;
+  private final ConnectionContext     cc;
+  private final ObjectName            beanName;
+  private final DSOClientMBean        delegate;
+  private final long                  clientID;
+  private final String                remoteAddress;
   private String                      host;
   private Integer                     port;
   protected PropertyChangeSupport     changeHelper;
@@ -41,7 +41,7 @@ public class DSOClient implements NotificationListener {
     this.cc = cc;
     this.beanName = beanName;
     this.delegate = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, beanName, DSOClientMBean.class, true);
-    channelID = delegate.getChannelID().toLong();
+    clientID = delegate.getClientID().toLong();
     remoteAddress = delegate.getRemoteAddress();
     changeHelper = new PropertyChangeSupport(this);
 
@@ -111,8 +111,8 @@ public class DSOClient implements NotificationListener {
     return delegate.isTunneledBeansRegistered();
   }
 
-  public long getChannelID() {
-    return channelID;
+  public long getClientID() {
+    return clientID;
   }
 
   public String getRemoteAddress() {
@@ -148,6 +148,7 @@ public class DSOClient implements NotificationListener {
     return port.intValue();
   }
 
+  @Override
   public String toString() {
     return getRemoteAddress();
   }

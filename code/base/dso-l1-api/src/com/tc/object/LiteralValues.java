@@ -4,6 +4,7 @@
  */
 package com.tc.object;
 
+import com.tc.object.loaders.NamedClassLoader;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
 
@@ -105,7 +106,7 @@ public class LiteralValues {
 
   /**
    * Determine LiteralValue code for an instance object
-   * 
+   *
    * @param pojo Object instance, should never be null
    * @return Literal value code for the pojo's class
    */
@@ -114,13 +115,13 @@ public class LiteralValues {
 
     Class clazz = pojo.getClass();
     int i = valueForClassName(clazz.getName());
-    if (i == OBJECT && ClassUtils.isEnum(pojo.getClass())) { return ENUM; }
+    if (i == OBJECT && ClassUtils.isDsoEnum(pojo.getClass())) { return ENUM; }
     return i;
   }
 
   /**
    * Determine whether a class is a literal
-   * 
+   *
    * @param className Class name
    * @return True if literal value class
    */
@@ -131,7 +132,7 @@ public class LiteralValues {
 
   /**
    * Determine whether the instance is a literal
-   * 
+   *
    * @param obj Instance object, may be null
    * @return True if literal value instance, false if null or not literal value instance
    */
@@ -148,7 +149,7 @@ public class LiteralValues {
 
   /**
    * Get literal value code for class name
-   * 
+   *
    * @param className Class name, may be null
    * @return Literal value marker or {@link #OBJECT} if className is null
    */
@@ -162,6 +163,72 @@ public class LiteralValues {
   // for tests
   public Collection getTypes() {
     return new ArrayList(this.values.keySet());
+  }
+
+  /**
+   * Calculate a stable hash code for the object.  Many literals (like Integer) have stable
+   * hash codes already, but some (like Class) do not.
+   * @param value must refer to an object for which {@link #isLiteralInstance()} returns true.
+   * This implies that value must be non-null.
+   */
+  public int calculateDsoHashCode(Object value) {
+    final int type = valueFor(value);
+
+    // Use caution when implementing DSO hash codes. This hash must be compatible with
+    // the existing equals. In general a custom DSO hash should only be used if the
+    // object does not already override hashCode (and thus does not override equals).
+    // Most commonly this will apply to objects like Class and Enum, where the VM strictly
+    // enforces identity equality and therefore uses System.identityHashCode.
+    switch (type) {
+
+      case LiteralValues.JAVA_LANG_CLASS:
+        return ((Class)value).getCanonicalName().hashCode();
+
+      case LiteralValues.CURRENCY:
+        return ((Currency) value).getCurrencyCode().hashCode();
+
+      case LiteralValues.JAVA_LANG_CLASSLOADER:
+      {
+        return ((NamedClassLoader)value).__tc_getClassLoaderName().hashCode();
+      }
+
+      case LiteralValues.ENUM:
+      {
+        Enum e = (Enum)value;
+        int hash = 17;
+        hash = (31 * hash) + e.name().hashCode();
+        hash = (31 * hash) + e.getDeclaringClass().getCanonicalName().hashCode();
+        return hash;
+      }
+
+      // Following literal types have stable hashCode() already:
+      case LiteralValues.BOOLEAN:
+      case LiteralValues.BYTE:
+      case LiteralValues.CHARACTER:
+      case LiteralValues.DOUBLE:
+      case LiteralValues.FLOAT:
+      case LiteralValues.INTEGER:
+      case LiteralValues.LONG:
+      case LiteralValues.SHORT:
+      case LiteralValues.STRING:
+      case LiteralValues.BIG_INTEGER:
+      case LiteralValues.BIG_DECIMAL:
+      case LiteralValues.OBJECT_ID:
+      case LiteralValues.JAVA_LANG_CLASSLOADER_HOLDER:
+      case LiteralValues.JAVA_LANG_CLASS_HOLDER:
+      case LiteralValues.STRING_BYTES:
+      case LiteralValues.STRING_BYTES_COMPRESSED:
+      case LiteralValues.STACK_TRACE_ELEMENT:
+      case LiteralValues.ENUM_HOLDER:
+        return value.hashCode();
+
+      // Not supported; isLiteralInstance() returns false for array types.
+      case LiteralValues.ARRAY:
+        throw Assert.failure("Unsupported operation: LiteralValues cannot calculate hash code of an ARRAY");
+
+      default:
+        throw Assert.failure("Illegal type (" + type + "):" + value);
+    }
   }
 
 }

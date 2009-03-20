@@ -22,16 +22,18 @@ public class XTreeCellRendererDelegate implements TreeCellRenderer {
 
   protected TreeCellRenderer getNodeRenderer(Object value) {
     TreeCellRenderer nodeRenderer = null;
-
     if (value instanceof XTreeNode) {
       nodeRenderer = ((XTreeNode) value).getRenderer();
     }
-
     return nodeRenderer != null ? nodeRenderer : defaultRenderer;
   }
 
   public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf,
                                                 int row, boolean focused) {
-    return getNodeRenderer(value).getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, focused);
+    Component c = getNodeRenderer(value).getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, focused);
+    if (value instanceof XTreeNode) {
+      c.setEnabled(((XTreeNode) value).isEnabled());
+    }
+    return c;
   }
 }

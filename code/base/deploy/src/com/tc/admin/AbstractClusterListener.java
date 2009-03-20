@@ -14,13 +14,13 @@ import java.beans.PropertyChangeListener;
 import javax.swing.SwingUtilities;
 
 public class AbstractClusterListener implements PropertyChangeListener {
-  protected final IClusterModel clusterModel;
+  protected IClusterModel clusterModel;
 
   public AbstractClusterListener(IClusterModel clusterModel) {
     this.clusterModel = clusterModel;
   }
 
-  public IClusterModel getClusterModel() {
+  public synchronized IClusterModel getClusterModel() {
     return clusterModel;
   }
 
@@ -28,10 +28,10 @@ public class AbstractClusterListener implements PropertyChangeListener {
     return new PropertyChangeRunnable(evt);
   }
 
-  private class PropertyChangeRunnable implements Runnable {
+  protected class PropertyChangeRunnable implements Runnable {
     protected final PropertyChangeEvent pce;
 
-    PropertyChangeRunnable(PropertyChangeEvent pce) {
+    protected PropertyChangeRunnable(PropertyChangeEvent pce) {
       this.pce = pce;
     }
 
@@ -41,7 +41,7 @@ public class AbstractClusterListener implements PropertyChangeListener {
         handleConnected();
       } else if (IClusterModelElement.PROP_READY.equals(prop)) {
         handleReady();
-      } else if(IClusterModel.PROP_ACTIVE_COORDINATOR.equals(prop)) {
+      } else if (IClusterModel.PROP_ACTIVE_COORDINATOR.equals(prop)) {
         IServer oldActive = (IServer) pce.getOldValue();
         IServer newActive = (IServer) pce.getNewValue();
         handleActiveCoordinator(oldActive, newActive);
@@ -50,6 +50,9 @@ public class AbstractClusterListener implements PropertyChangeListener {
   }
 
   public void propertyChange(PropertyChangeEvent evt) {
+    IClusterModel theClusterModel = getClusterModel();
+    if (theClusterModel == null) { return; }
+
     PropertyChangeEvent clonedEvent = new PropertyChangeEvent(evt.getSource(), evt.getPropertyName(),
                                                               evt.getOldValue(), evt.getNewValue());
     Runnable r = createPropertyChangeRunnable(clonedEvent);
@@ -70,5 +73,9 @@ public class AbstractClusterListener implements PropertyChangeListener {
 
   protected void handleActiveCoordinator(IServer oldActive, IServer newActive) {
     /* override */
+  }
+
+  public synchronized void tearDown() {
+    clusterModel = null;
   }
 }

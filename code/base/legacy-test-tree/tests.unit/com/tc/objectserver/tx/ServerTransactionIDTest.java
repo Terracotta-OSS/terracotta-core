@@ -5,7 +5,6 @@
 package com.tc.objectserver.tx;
 
 import com.tc.net.ClientID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.test.TCTestCase;
@@ -16,7 +15,7 @@ import java.util.Map;
 public class ServerTransactionIDTest extends TCTestCase {
 
   private ServerTransactionID get(int channel, int txn) {
-    return new ServerTransactionID(new ClientID(new ChannelID(channel)), new TransactionID(txn));
+    return new ServerTransactionID(new ClientID(channel), new TransactionID(txn));
   }
 
   public void test() {

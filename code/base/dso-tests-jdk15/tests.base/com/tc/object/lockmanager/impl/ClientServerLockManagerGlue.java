@@ -11,7 +11,6 @@ import com.tc.io.TCByteBufferOutputStream;
 import com.tc.management.L2LockStatsManager;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.LockFlushCallback;
@@ -46,7 +45,7 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
   protected ClientLockManagerImpl clientLockManager;
 
   protected TestSink              sink;
-  private ClientID                clientID  = new ClientID(new ChannelID(1));
+  private final ClientID          clientID  = new ClientID(1);
   protected boolean               stop      = false;
   protected Thread                eventNotifier;
 

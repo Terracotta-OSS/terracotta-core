@@ -63,8 +63,6 @@ public class TestConfigObject {
 
   private static final String     BOOT_JAR_NORMAL                  = DYNAMIC_PROPERTIES_PREFIX + "bootjars.normal";
 
-  private static final String     SESSION_CLASSPATH                = DYNAMIC_PROPERTIES_PREFIX + "session.classpath";
-
   private static final String     AVAILABLE_VARIANTS_PREFIX        = DYNAMIC_PROPERTIES_PREFIX + "variants.available.";
   private static final String     VARIANT_LIBRARIES_PREFIX         = DYNAMIC_PROPERTIES_PREFIX + "libraries.variants.";
   private static final String     SELECTED_VARIANT_PREFIX          = DYNAMIC_PROPERTIES_PREFIX + "variants.selected.";
@@ -394,13 +392,6 @@ public class TestConfigObject {
     return out;
   }
 
-  public String sessionClasspath() {
-    String out = this.properties.getProperty(SESSION_CLASSPATH);
-    Assert.assertNotBlank(out);
-    assertValidClasspath(out);
-    return out;
-  }
-
   public int getJunitTimeoutInSeconds() {
     return Integer.parseInt(getProperty(JUNIT_TEST_TIMEOUT_INSECONDS, "900"));
   }
@@ -418,8 +409,7 @@ public class TestConfigObject {
 
   private void assertValidClasspath(String out) {
     String[] pathElements = out.split(File.pathSeparator);
-    for (int i = 0; i < pathElements.length; i++) {
-      String pathElement = pathElements[i];
+    for (String pathElement : pathElements) {
       Assert.assertTrue("Path element is non-existent: " + pathElement, new File(pathElement).exists());
 
     }

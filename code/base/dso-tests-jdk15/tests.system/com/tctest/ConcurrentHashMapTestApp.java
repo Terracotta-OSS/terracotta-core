@@ -28,7 +28,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("unchecked")
-public class ConcurrentHashMapTestApp extends GenericTestApp {
+public class ConcurrentHashMapTestApp extends GenericTransparentApp {
 
   private final DataKey[]   keyRoots   = new DataKey[] { new DataKey(1), new DataKey(2), new DataKey(3), new DataKey(4) };
   private final DataValue[] valueRoots = new DataValue[] { new DataValue(10), new DataValue(20), new DataValue(30), new DataValue(40) };

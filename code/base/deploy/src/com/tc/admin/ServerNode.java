@@ -5,6 +5,7 @@
 package com.tc.admin;
 
 import com.tc.admin.common.AbstractTreeCellRenderer;
+import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.StatusView;
 import com.tc.admin.model.IClusterModel;
 import com.tc.admin.model.IServer;
@@ -18,17 +19,17 @@ import javax.swing.JPopupMenu;
 import javax.swing.JTree;
 
 public class ServerNode extends ClusterElementNode {
-  protected IAdminClientContext adminClientContext;
-  protected IClusterModel       clusterModel;
-  protected IServer             server;
-  protected ServerListener      serverListener;
-  protected ServerPanel         serverPanel;
-  protected JPopupMenu          popupMenu;
+  protected ApplicationContext appContext;
+  protected IClusterModel      clusterModel;
+  protected IServer            server;
+  protected ServerListener     serverListener;
+  protected ServerPanel        serverPanel;
+  protected JPopupMenu         popupMenu;
 
-  ServerNode(IAdminClientContext adminClientContext, IClusterModel clusterModel, IServer server) {
+  ServerNode(ApplicationContext appContext, IClusterModel clusterModel, IServer server) {
     super(server);
 
-    this.adminClientContext = adminClientContext;
+    this.appContext = appContext;
     this.clusterModel = clusterModel;
     this.server = server;
 
@@ -39,11 +40,12 @@ public class ServerNode extends ClusterElementNode {
     serverListener.startListening();
   }
 
+  @Override
   public java.awt.Component getComponent() {
     if (serverPanel == null) {
-      adminClientContext.block();
+      appContext.block();
       serverPanel = createServerPanel();
-      adminClientContext.unblock();
+      appContext.unblock();
     }
     return serverPanel;
   }
@@ -61,35 +63,40 @@ public class ServerNode extends ClusterElementNode {
       super(server);
     }
 
+    @Override
     protected void handleConnectError() {
-      if (adminClientContext != null) {
+      if (appContext != null) {
         nodeChanged();
       }
     }
 
+    @Override
     protected void handleConnected() {
-      if (adminClientContext != null) {
+      if (appContext != null) {
         nodeChanged();
       }
     }
   }
 
   protected ServerPanel createServerPanel() {
-    return new ServerPanel(adminClientContext, getServer());
+    return new ServerPanel(appContext, getServer());
   }
 
   protected void initMenu() {
     popupMenu = new JPopupMenu("Server Actions");
   }
 
+  @Override
   public Icon getIcon() {
     return ServersHelper.getHelper().getServerIcon();
   }
 
+  @Override
   public JPopupMenu getPopupMenu() {
     return popupMenu;
   }
 
+  @Override
   public String toString() {
     return server != null ? server.toString() : "";
   }
@@ -101,6 +108,7 @@ public class ServerNode extends ClusterElementNode {
       super();
 
       statusView = new StatusView() {
+        @Override
         public void setForeground(Color fg) {
           super.setForeground(fg);
           if (label != null) {
@@ -108,6 +116,7 @@ public class ServerNode extends ClusterElementNode {
           }
         }
 
+        @Override
         public void paint(Graphics g) {
           super.paint(g);
           if (hasFocus) {
@@ -129,11 +138,12 @@ public class ServerNode extends ClusterElementNode {
     }
   }
 
+  @Override
   public void tearDown() {
     super.tearDown();
 
     synchronized (this) {
-      adminClientContext = null;
+      appContext = null;
       clusterModel = null;
       server = null;
       serverPanel = null;

@@ -9,6 +9,7 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.AxisSpace;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.axis.NumberTickUnit;
+import org.jfree.chart.plot.Plot;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.Range;
 import org.jfree.data.time.Second;
@@ -16,6 +17,7 @@ import org.jfree.data.time.TimeSeries;
 import org.jfree.ui.RectangleInsets;
 
 import com.tc.admin.common.ApplicationContext;
+import com.tc.admin.common.BasicChartPanel;
 import com.tc.admin.common.BrowserLauncher;
 import com.tc.admin.common.DemoChartFactory;
 import com.tc.admin.common.LinkButton;
@@ -38,6 +40,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -52,6 +55,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JScrollPane;
+import javax.swing.ToolTipManager;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.AttributeSet;
@@ -60,28 +64,28 @@ import javax.swing.text.html.HTML;
 
 public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisticConstants, PolledAttributeListener,
     PreferenceChangeListener, HierarchyListener {
-  protected ApplicationContext     appContext;
+  protected ApplicationContext          appContext;
 
-  protected XContainer             chartsPanel;
-  private XButton                  manageMonitoringButton;
-  private XButton                  clearSamplesButton;
-  private JButton                  configureOptionsButton;
-  protected AxisSpace              rangeAxisSpace;
-  private boolean                  autoStart;
-  private boolean                  hasAutoStarted;
-  private boolean                  isMonitoring;
+  protected XContainer                  chartsPanel;
+  private XButton                       manageMonitoringButton;
+  private XButton                       clearSamplesButton;
+  private JButton                       configureOptionsButton;
+  protected AxisSpace                   rangeAxisSpace;
+  private boolean                       autoStart;
+  private boolean                       hasAutoStarted;
+  private boolean                       isMonitoring;
 
-  protected static final Dimension fDefaultGraphSize                       = new Dimension(0, 65);
+  protected static final Dimension      fDefaultGraphSize                       = new Dimension(0, 65);
 
-  private static final int         DEFAULT_POLL_PERIOD_SECS                = 3;
-  private static final int         DEFAULT_SAMPLE_HISTORY_MINUTES          = 5;
+  private static final int              DEFAULT_POLL_PERIOD_SECS                = 3;
+  private static final int              DEFAULT_SAMPLE_HISTORY_MINUTES          = 5;
 
-  private static final String      DEFAULT_POLL_PERIOD_SECONDS_PREF_KEY    = "poll-periods-seconds";
-  private static final String      DEFAULT_SAMPLE_HISTORY_MINUTES_PREF_KEY = "sample-history-minutes";
+  private static final String           DEFAULT_POLL_PERIOD_SECONDS_PREF_KEY    = "poll-periods-seconds";
+  private static final String           DEFAULT_SAMPLE_HISTORY_MINUTES_PREF_KEY = "sample-history-minutes";
 
-  private static final ImageIcon   fStartIcon;
-  private static final ImageIcon   fStopIcon;
-  private static final ImageIcon   fClearIcon;
+  private static final ImageIcon        fStartIcon;
+  private static final ImageIcon        fStopIcon;
+  private static final ImageIcon        fClearIcon;
 
   static {
     fStartIcon = new ImageIcon(BaseRuntimeStatsPanel.class.getResource("/com/tc/admin/icons/resume_co.gif"));
@@ -89,10 +93,12 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     fClearIcon = new ImageIcon(BaseRuntimeStatsPanel.class.getResource("/com/tc/admin/icons/clear_co.gif"));
   }
 
-  private ArrayList<TimeSeries>    allSeries;
-  private ArrayList<JFreeChart>    allCharts;
+  protected final ArrayList<TimeSeries> allSeries;
+  protected final ArrayList<JFreeChart> allCharts;
 
-  private static final String      HYPERIC_INSTRUCTIONS_URI                = "/com/tc/admin/HypericInstructions.html";
+  private final boolean                 showControls                            = false;
+
+  private static final String           HYPERIC_INSTRUCTIONS_URI                = "/com/tc/admin/HypericInstructions.html";
 
   public BaseRuntimeStatsPanel(ApplicationContext appContext) {
     super(new BorderLayout());
@@ -105,33 +111,35 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
 
     add(chartsPanel = new XContainer());
 
-    XContainer bottomPanel = new XContainer(new GridBagLayout());
-    GridBagConstraints gbc = new GridBagConstraints();
-    gbc.gridx = gbc.gridy = 0;
-    gbc.insets = new Insets(3, 3, 3, 3);
+    if (showControls) {
+      XContainer bottomPanel = new XContainer(new GridBagLayout());
+      GridBagConstraints gbc = new GridBagConstraints();
+      gbc.gridx = gbc.gridy = 0;
+      gbc.insets = new Insets(3, 3, 3, 3);
 
-    configureOptionsButton = LinkButton.makeLink("Configure Runtime Statistics", new ConfigureOptionsAction());
-    bottomPanel.add(configureOptionsButton, gbc);
-    gbc.gridx++;
+      configureOptionsButton = LinkButton.makeLink("Configure Runtime Statistics", new ConfigureOptionsAction());
+      bottomPanel.add(configureOptionsButton, gbc);
+      gbc.gridx++;
 
-    gbc.weightx = 1.0;
-    gbc.anchor = GridBagConstraints.EAST;
+      gbc.weightx = 1.0;
+      gbc.anchor = GridBagConstraints.EAST;
 
-    manageMonitoringButton = new XButton();
-    manageMonitoringButton.setIcon(fStartIcon);
-    manageMonitoringButton.addActionListener(new ManageMonitoringAction());
-    bottomPanel.add(manageMonitoringButton, gbc);
-    gbc.gridx++;
+      manageMonitoringButton = new XButton();
+      manageMonitoringButton.setIcon(fStartIcon);
+      manageMonitoringButton.addActionListener(new ManageMonitoringAction());
+      bottomPanel.add(manageMonitoringButton, gbc);
+      gbc.gridx++;
 
-    gbc.weightx = 0.0;
-    gbc.anchor = GridBagConstraints.CENTER;
+      gbc.weightx = 0.0;
+      gbc.anchor = GridBagConstraints.CENTER;
 
-    clearSamplesButton = new XButton();
-    clearSamplesButton.setIcon(fClearIcon);
-    clearSamplesButton.addActionListener(new ClearSamplesAction());
-    bottomPanel.add(clearSamplesButton, gbc);
+      clearSamplesButton = new XButton();
+      clearSamplesButton.setIcon(fClearIcon);
+      clearSamplesButton.addActionListener(new ClearSamplesAction());
+      bottomPanel.add(clearSamplesButton, gbc);
 
-    add(bottomPanel, BorderLayout.SOUTH);
+      add(bottomPanel, BorderLayout.SOUTH);
+    }
 
     Preferences prefs = appContext.getPrefs().node("RuntimeStats");
     prefs.addPreferenceChangeListener(this);
@@ -139,7 +147,7 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     addHierarchyListener(this);
   }
 
-  protected ChartPanel createChartPanel(JFreeChart chart) {
+  public static ChartPanel createChartPanel(JFreeChart chart) {
     boolean useBuffer = false;
     boolean properties = false;
     boolean save = false;
@@ -147,12 +155,31 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     boolean zoom = false;
     boolean tooltips = true;
 
-    ChartPanel chartPanel = new ChartPanel(chart, ChartPanel.DEFAULT_WIDTH, ChartPanel.DEFAULT_HEIGHT,
-                                           ChartPanel.DEFAULT_MINIMUM_DRAW_WIDTH,
-                                           ChartPanel.DEFAULT_MINIMUM_DRAW_HEIGHT,
-                                           ChartPanel.DEFAULT_MAXIMUM_DRAW_WIDTH,
-                                           ChartPanel.DEFAULT_MAXIMUM_DRAW_HEIGHT, useBuffer, properties, save, print,
-                                           zoom, tooltips);
+    BasicChartPanel chartPanel = new BasicChartPanel(chart, ChartPanel.DEFAULT_WIDTH, ChartPanel.DEFAULT_HEIGHT,
+        ChartPanel.DEFAULT_MINIMUM_DRAW_WIDTH, ChartPanel.DEFAULT_MINIMUM_DRAW_HEIGHT,
+        ChartPanel.DEFAULT_MAXIMUM_DRAW_WIDTH, ChartPanel.DEFAULT_MAXIMUM_DRAW_HEIGHT, useBuffer, properties, save,
+        print, zoom, tooltips) {
+      @Override
+      public String getToolTipText(MouseEvent e) {
+        String tip = super.getToolTipText(e);
+        return tip != null ? tip : getToolTipText();
+      }
+
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        ToolTipManager.sharedInstance().setEnabled(false);
+        ToolTipManager.sharedInstance().setEnabled(true);
+        super.mouseMoved(e);
+      }
+
+      @Override
+      public void mouseEntered(MouseEvent e) {/**/
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {/**/
+      }
+    };
     chartPanel.setRangeZoomable(false);
     chartPanel.setDomainZoomable(false);
 
@@ -234,6 +261,24 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     return chart;
   }
 
+  protected JFreeChart createXYBarChart(TimeSeries[] seriesArray, boolean createLegend) {
+    JFreeChart chart = DemoChartFactory.getXYBarChart("", "", "", seriesArray, createLegend);
+    int sampleHistoryMinutes = getSampleHistoryMinutes();
+    int sampleHistoryMillis = sampleHistoryMinutes * 60 * 1000;
+
+    XYPlot plot = (XYPlot) chart.getPlot();
+    plot.getDomainAxis().setFixedAutoRange(sampleHistoryMillis);
+    ((NumberAxis) plot.getRangeAxis()).setAutoRangeIncludesZero(true);
+
+    int maxSampleCount = (sampleHistoryMinutes * 60) / getPollPeriodSeconds();
+    for (TimeSeries series : seriesArray) {
+      series.setMaximumItemCount(maxSampleCount);
+    }
+
+    allCharts.add(chart);
+    return chart;
+  }
+
   public void hierarchyChanged(HierarchyEvent e) {
     long flags = e.getChangeFlags();
     if ((flags & HierarchyEvent.SHOWING_CHANGED) != 0) {
@@ -244,6 +289,7 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     }
   }
 
+  @Override
   public void addNotify() {
     super.addNotify();
 
@@ -255,10 +301,15 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
       ChartPanel chartPanel = (ChartPanel) comp;
       JFreeChart chart = chartPanel.getChart();
       if (chart == null) continue;
-      XYPlot plot = ((XYPlot) chart.getPlot());
-      plotList.add(plot);
-      double rangeAxisTickWidth = getRangeAxisTickWidth(chartPanel.getGraphics(), plot);
-      fixedRangeAxisSpace = Math.max(fixedRangeAxisSpace, rangeAxisTickWidth);
+      Plot plot = chart.getPlot();
+      if (plot instanceof XYPlot) {
+        XYPlot xyPlot = ((XYPlot) chart.getPlot());
+        plotList.add(xyPlot);
+        if (xyPlot.getRangeAxis().isVisible()) {
+          double rangeAxisTickWidth = getRangeAxisTickWidth(chartPanel.getGraphics(), xyPlot);
+          fixedRangeAxisSpace = Math.max(fixedRangeAxisSpace, rangeAxisTickWidth);
+        }
+      }
     }
 
     rangeAxisSpace = new AxisSpace();
@@ -277,15 +328,15 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
   private double getRangeAxisTickWidth(Graphics graphics, XYPlot plot) {
     NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
     RectangleInsets tickLabelInsets = numberAxis.getTickLabelInsets();
-//    NumberTickUnit unit = numberAxis.getTickUnit();
+    // NumberTickUnit unit = numberAxis.getTickUnit();
     double upper = 500000000000d;
     NumberTickUnit unit = (NumberTickUnit) DemoChartFactory.DEFAULT_INTEGER_TICKS.getCeilingTickUnit(upper);
-    
+
     // look at lower and upper bounds...
     FontMetrics fm = graphics.getFontMetrics(numberAxis.getTickLabelFont());
     Range range = numberAxis.getRange();
     double lower = range.getLowerBound();
-//    double upper = range.getUpperBound();
+    // double upper = range.getUpperBound();
     String lowerStr = "";
     String upperStr = "";
     NumberFormat formatter = numberAxis.getNumberFormatOverride();
@@ -308,16 +359,19 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
   protected boolean isMonitoringRuntimeStats() {
     return isMonitoring;
   }
-  
+
   public void startMonitoringRuntimeStats() {
-    chartsPanel.setVisible(true);
     isMonitoring = true;
-    manageMonitoringButton.setIcon(fStopIcon);
+    if (showControls) {
+      manageMonitoringButton.setIcon(fStopIcon);
+    }
   }
 
   public void stopMonitoringRuntimeStats() {
     isMonitoring = false;
-    manageMonitoringButton.setIcon(fStartIcon);
+    if (showControls) {
+      manageMonitoringButton.setIcon(fStartIcon);
+    }
   }
 
   private void clearAllRuntimeStatsSamples() {
@@ -409,6 +463,7 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     }
   }
 
+  @Override
   public synchronized void tearDown() {
     removeHierarchyListener(this);
     stopMonitoringRuntimeStats();
@@ -418,7 +473,7 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     appContext = null;
     chartsPanel = null;
     manageMonitoringButton = null;
+    configureOptionsButton = null;
     clearSamplesButton = null;
   }
-
 }

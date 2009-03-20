@@ -23,6 +23,8 @@ import java.util.Map;
 
 public class PrunedServerTransaction implements ServerTransaction {
 
+  private static final long[]     EMPTY_LONG_ARRAY = new long[0];
+
   private final List              prunedChanges;
   private final ServerTransaction orgTxn;
   private final ObjectIDSet       oids;
@@ -36,75 +38,79 @@ public class PrunedServerTransaction implements ServerTransaction {
   }
 
   public Collection getNotifies() {
-    return orgTxn.getNotifies();
+    return this.orgTxn.getNotifies();
   }
 
   public TxnBatchID getBatchID() {
-    return orgTxn.getBatchID();
+    return this.orgTxn.getBatchID();
   }
 
   public List getChanges() {
-    return prunedChanges;
+    return this.prunedChanges;
   }
 
   public NodeID getSourceID() {
-    return orgTxn.getSourceID();
+    return this.orgTxn.getSourceID();
   }
 
   public DmiDescriptor[] getDmiDescriptors() {
-    return orgTxn.getDmiDescriptors();
+    return this.orgTxn.getDmiDescriptors();
   }
 
   public LockID[] getLockIDs() {
-    return orgTxn.getLockIDs();
+    return this.orgTxn.getLockIDs();
   }
 
   public ObjectIDSet getNewObjectIDs() {
-    return newOids;
+    return this.newOids;
   }
 
   public Map getNewRoots() {
-    return orgTxn.getNewRoots();
+    return this.orgTxn.getNewRoots();
   }
 
   public ObjectIDSet getObjectIDs() {
-    return oids;
+    return this.oids;
   }
 
   public ObjectStringSerializer getSerializer() {
-    return orgTxn.getSerializer();
+    return this.orgTxn.getSerializer();
   }
 
   public ServerTransactionID getServerTransactionID() {
-    return orgTxn.getServerTransactionID();
+    return this.orgTxn.getServerTransactionID();
   }
 
   public TransactionID getTransactionID() {
-    return orgTxn.getTransactionID();
+    return this.orgTxn.getTransactionID();
   }
 
   public TxnType getTransactionType() {
-    return orgTxn.getTransactionType();
+    return this.orgTxn.getTransactionType();
   }
 
   public SequenceID getClientSequenceID() {
-    return orgTxn.getClientSequenceID();
+    return this.orgTxn.getClientSequenceID();
   }
 
   public GlobalTransactionID getGlobalTransactionID() {
-    return orgTxn.getGlobalTransactionID();
+    return this.orgTxn.getGlobalTransactionID();
   }
 
   public boolean needsBroadcast() {
-    return orgTxn.needsBroadcast();
+    return this.orgTxn.needsBroadcast();
   }
 
   public int getNumApplicationTxn() {
-    return orgTxn.getNumApplicationTxn();
+    return this.orgTxn.getNumApplicationTxn();
   }
 
   public void setGlobalTransactionID(GlobalTransactionID gid) {
     throw new UnsupportedOperationException();
+  }
+
+  public long[] getHighWaterMarks() {
+    return EMPTY_LONG_ARRAY;
   }
 
 }

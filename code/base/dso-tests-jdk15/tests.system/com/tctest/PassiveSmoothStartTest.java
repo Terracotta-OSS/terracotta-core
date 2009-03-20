@@ -10,10 +10,13 @@ import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.test.ApplicationConfigBuilder;
 import com.tc.config.schema.test.DSOApplicationConfigBuilderImpl;
+import com.tc.config.schema.test.GroupConfigBuilder;
+import com.tc.config.schema.test.GroupsConfigBuilder;
 import com.tc.config.schema.test.HaConfigBuilder;
 import com.tc.config.schema.test.InstrumentedClassConfigBuilderImpl;
 import com.tc.config.schema.test.L2ConfigBuilder;
 import com.tc.config.schema.test.L2SConfigBuilder;
+import com.tc.config.schema.test.MembersConfigBuilder;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.simulator.app.ApplicationConfig;
@@ -72,7 +75,7 @@ public class PassiveSmoothStartTest extends TransparentTestBase {
   }
 
   private void setConfigFactory(TestTVSConfigurationSetupManagerFactory factory) {
-    factory.addServersAndGroupToL1Config(serverNames, dsoPorts, jmxPorts);
+    factory.addServersAndGroupToL1Config("passive-smooth-start", serverNames, dsoPorts, jmxPorts);
   }
 
   private void writeConfigFile(File configFile, int index) {
@@ -99,9 +102,18 @@ public class PassiveSmoothStartTest extends TransparentTestBase {
       HaConfigBuilder ha = new HaConfigBuilder();
       ha.setMode(HaConfigBuilder.HA_MODE_NETWORKED_ACTIVE_PASSIVE);
 
+      GroupsConfigBuilder grpsBuilder = new GroupsConfigBuilder();
+      GroupConfigBuilder grpBuilder = new GroupConfigBuilder("passive-smooth-start");
+      MembersConfigBuilder members = new MembersConfigBuilder();
+      members.addMembers(serverNames);
+      grpBuilder.setMembers(members);
+      grpBuilder.setHa(ha);
+      grpsBuilder.addGroupConfigBuilder(grpBuilder);
+
       L2SConfigBuilder l2sConfigbuilder = new L2SConfigBuilder();
       l2sConfigbuilder.setL2s(l2s);
       l2sConfigbuilder.setHa(ha);
+      l2sConfigbuilder.setGroups(grpsBuilder);
 
       DSOApplicationConfigBuilderImpl appConfigBuilder = new DSOApplicationConfigBuilderImpl();
       InstrumentedClassConfigBuilder[] instrClasses = new InstrumentedClassConfigBuilder[] { new InstrumentedClassConfigBuilderImpl(

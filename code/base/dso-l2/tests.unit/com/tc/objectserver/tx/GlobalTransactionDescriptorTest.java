@@ -5,7 +5,6 @@
 package com.tc.objectserver.tx;
 
 import com.tc.net.ClientID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
@@ -18,19 +17,14 @@ import java.util.TreeMap;
 public class GlobalTransactionDescriptorTest extends TCTestCase {
 
   public void tests() throws Exception {
-    ClientID cid = new ClientID(new ChannelID(1));
+    ClientID cid = new ClientID(1);
     TransactionID tx1 = new TransactionID(1);
     ServerTransactionID stx1 = new ServerTransactionID(cid, tx1);
 
     GlobalTransactionDescriptor d1 = new GlobalTransactionDescriptor(stx1, new GlobalTransactionID(1));
     GlobalTransactionDescriptor d2 = new GlobalTransactionDescriptor(new ServerTransactionID(cid, tx1),
                                                                      new GlobalTransactionID(1));
-    GlobalTransactionDescriptor x1 = new GlobalTransactionDescriptor(
-                                                                     new ServerTransactionID(
-                                                                                             new ClientID(
-                                                                                                          new ChannelID(
-                                                                                                                        4)),
-                                                                                             tx1),
+    GlobalTransactionDescriptor x1 = new GlobalTransactionDescriptor(new ServerTransactionID(new ClientID(4), tx1),
                                                                      new GlobalTransactionID(1));
     GlobalTransactionDescriptor x2 = new GlobalTransactionDescriptor(new ServerTransactionID(cid, tx1),
                                                                      new GlobalTransactionID(2));

@@ -7,6 +7,7 @@ package com.tc.l2.msg;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.object.ObjectID;
+import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.util.ObjectIDSet;
 
 import java.util.ArrayList;
@@ -80,7 +81,7 @@ public class GCResultMessageTest extends TestCase {
 
   public void testBasicSerialization() throws Exception {
     ObjectIDSet deleted = makeObjectIDSet();
-    GCResultMessage gcmsg = GCResultMessageFactory.createGCResultMessage(1, deleted);
+    GCResultMessage gcmsg = GCResultMessageFactory.createGCResultMessage(new GarbageCollectionInfo(), deleted);
     
     GCResultMessage gcmsg1 = writeAndRead(gcmsg);
     validate(gcmsg, gcmsg1);
@@ -88,7 +89,7 @@ public class GCResultMessageTest extends TestCase {
   
   public void testUnmodifiableObjectIDSet() throws Exception {
     ObjectIDSet deleted = ObjectIDSet.unmodifiableObjectIDSet(makeObjectIDSet());
-    GCResultMessage gcmsg = GCResultMessageFactory.createGCResultMessage(1, deleted);
+    GCResultMessage gcmsg = GCResultMessageFactory.createGCResultMessage(new GarbageCollectionInfo(), deleted);
     
     GCResultMessage gcmsg1 = writeAndRead(gcmsg);
     validate(gcmsg, gcmsg1);

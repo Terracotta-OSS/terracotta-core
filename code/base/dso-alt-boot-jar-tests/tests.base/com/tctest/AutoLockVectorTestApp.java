@@ -19,7 +19,7 @@ import java.util.ListIterator;
 import java.util.Stack;
 import java.util.Vector;
 
-public class AutoLockVectorTestApp extends GenericTestApp {
+public class AutoLockVectorTestApp extends GenericTransparentApp {
 
   public AutoLockVectorTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider, Vector.class);

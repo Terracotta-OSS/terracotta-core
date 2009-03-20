@@ -4,7 +4,6 @@
  */
 package com.tc.admin.model;
 
-import com.tc.object.ObjectID;
 import com.tc.statistics.StatisticData;
 
 import java.util.Map;
@@ -55,8 +54,6 @@ public interface IClusterNode extends IClusterModelElement, ILiveObjectCountProv
 
   int getLiveObjectCount();
 
-  boolean isResident(ObjectID oid);
-
   PolledAttribute getPolledAttribute(String name);
 
   void addPolledAttributeListener(String name, PolledAttributeListener listener);
@@ -70,7 +67,7 @@ public interface IClusterNode extends IClusterModelElement, ILiveObjectCountProv
   void removePolledAttributeListener(String name, PolledAttributeListener listener);
 
   void removePolledAttributeListener(Set<String> names, PolledAttributeListener listener);
-  
+
   void removePolledAttributeListener(PolledAttribute polledAttribute, PolledAttributeListener listener);
 
   void removePolledAttributeListener(ObjectName objectName, Set<String> attributeSet, PolledAttributeListener listener);

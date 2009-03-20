@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.io;
 
@@ -22,7 +23,7 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
   private boolean                     closed                  = false;
   private int                         position                = 0;
   private int                         index                   = 0;
-  private Mark                        mark                    = null;
+  private boolean                     marked                  = false;
 
   private TCByteBufferInputStream(TCByteBuffer[] sourceData, int dupeLength, int sourceIndex) {
     this(sourceData, dupeLength, sourceIndex, true);
@@ -82,7 +83,7 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
    */
   public TCByteBufferInput duplicate() {
     checkClosed();
-    return new TCByteBufferInputStream(data, available(), index);
+    return new TCByteBufferInputStream(this.data, available(), this.index);
   }
 
   /**
@@ -126,11 +127,36 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
 
     if (available() == 0) { return EMPTY_BYTE_BUFFER_ARRAY; }
 
-    TCByteBuffer[] rv = new TCByteBuffer[numBufs - index];
-    rv[0] = data[index].slice();
+    TCByteBuffer[] rv = new TCByteBuffer[this.numBufs - this.index];
+    rv[0] = this.data[this.index].slice();
     for (int i = 1, n = rv.length; i < n; i++) {
-      rv[i] = data[index + i].duplicate();
+      rv[i] = this.data[this.index + i].duplicate();
     }
+
+    return rv;
+  }
+
+  public TCByteBuffer[] toArray(Mark s, Mark e) {
+    checkClosed();
+
+    TCMark start = validateMark(s);
+    TCMark end = validateMark(e);
+    if (start.getStreamPosition() > end.getStreamPosition()) {
+      // wrong order, swapping
+      TCMark temp = end;
+      end = start;
+      start = temp;
+    } else if (start.getStreamPosition() == end.getStreamPosition()) { return EMPTY_BYTE_BUFFER_ARRAY; }
+
+    TCByteBuffer[] rv = new TCByteBuffer[end.getBufferIndex() - start.getBufferIndex() + 1];
+    for (int i = start.getBufferIndex(), idx = 0; i <= end.getBufferIndex(); i++, idx++) {
+      rv[idx] = this.data[i].duplicate();
+      rv[idx].position(0);
+    }
+    rv[0].position(start.getBufferPosition());
+    rv[rv.length - 1].limit(end.getBufferPosition());
+    // Creating a sliced view as many assume they can rewind this buffer and that limit is the size that can be read.
+    rv[0] = rv[0].slice();
 
     return rv;
   }
@@ -148,7 +174,7 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
     List newData = new ArrayList();
     int num = limit;
     while (num > 0) {
-      TCByteBuffer current = data[index];
+      TCByteBuffer current = this.data[this.index];
       int avail = current.remaining();
       int take = Math.min(avail, num);
       if (take > 0) {
@@ -169,20 +195,23 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
   }
 
   public int getTotalLength() {
-    return totalLength;
+    return this.totalLength;
   }
 
+  @Override
   public int available() {
-    return totalLength - position;
+    return this.totalLength - this.position;
   }
 
+  @Override
   public void close() {
-    if (!closed) {
-      closed = true;
+    if (!this.closed) {
+      this.closed = true;
       this.data = null;
     }
   }
 
+  @Override
   public void mark(int readlimit) {
     throw new UnsupportedOperationException();
   }
@@ -190,15 +219,18 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
   // XXX: This is a TC special version of mark() to be used in conjunction with tcReset()...We should eventually
   // implement the general purpose mark(int) method as specified by InputStream. NOTE: It has some unusual semantics
   // that make it a little trickier to implement (in our case) than you might think (specifially the readLimit field)
-  public void mark() {
+  public Mark mark() {
     checkClosed();
-    mark = new Mark(index, data[index].position(), position);
+    this.marked = true;
+    return new TCMark(this, this.index, this.data[this.index].position(), this.position);
   }
 
+  @Override
   public boolean markSupported() {
     return false;
   }
 
+  @Override
   public final int read(byte[] b, int off, int len) {
     checkClosed();
 
@@ -211,16 +243,18 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
     int bytesRead = 0;
     int numToRead = Math.min(available(), len);
 
-    while (index < numBufs) {
-      TCByteBuffer buf = data[index];
+    while (this.index < this.numBufs) {
+      TCByteBuffer buf = this.data[this.index];
       if (buf.hasRemaining()) {
         int read = Math.min(buf.remaining(), numToRead);
         buf.get(b, off, read);
         off += read;
-        position += read;
+        this.position += read;
         bytesRead += read;
         numToRead -= read;
-        if (numToRead == 0) break;
+        if (numToRead == 0) {
+          break;
+        }
       }
       nextBuffer();
     }
@@ -228,17 +262,19 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
     return bytesRead;
   }
 
+  @Override
   public final int read(byte[] b) {
     return read(b, 0, b.length);
   }
 
+  @Override
   public final int read() {
     checkClosed();
 
-    while (index < numBufs) {
-      if (this.data[index].hasRemaining()) {
-        position++;
-        return this.data[index].get() & 0xFF;
+    while (this.index < this.numBufs) {
+      if (this.data[this.index].hasRemaining()) {
+        this.position++;
+        return this.data[this.index].get() & 0xFF;
       }
       nextBuffer();
     }
@@ -246,38 +282,47 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
   }
 
   private void nextBuffer() {
-    if (mark == null) {
-      this.data[index] = null;
+    if (!this.marked) {
+      this.data[this.index] = null;
     }
-    index++;
+    this.index++;
   }
 
+  @Override
   public void reset() {
     throw new UnsupportedOperationException();
   }
 
   /**
-   * Reset this input stream to the position recorded by the last call to mark(). This method discards the previous
-   * value of the mark
+   * Reset this input stream to the position recorded by the mark that is passed an input parameter.
    * 
-   * @throws IOException if mark() has never been called on this stream
+   * @throws IllegalArgumentException if m is null or if it was not created against this stream.
    */
-  public void tcReset() {
+  public void tcReset(Mark m) {
     checkClosed();
-    if (mark == null) { throw new IllegalStateException("no mark set"); }
+
+    TCMark mark = validateMark(m);
 
     int rewindToIndex = mark.getBufferIndex();
-    while (index > rewindToIndex) {
-      data[index].position(0);
-      index--;
+    while (this.index > rewindToIndex) {
+      this.data[this.index].position(0);
+      this.index--;
     }
 
-    index = rewindToIndex;
-    data[rewindToIndex].position(mark.getBufferPosition());
-    position = mark.getStreamPosition();
-    mark = null;
+    this.index = rewindToIndex;
+    this.data[rewindToIndex].position(mark.getBufferPosition());
+    this.position = mark.getStreamPosition();
   }
 
+  private TCMark validateMark(Mark m) {
+    if (m == null) { throw new IllegalArgumentException("Mark is null"); }
+    if (!(m instanceof TCMark)) { throw new IllegalArgumentException("Illegal Mark type Exception"); }
+    TCMark mark = (TCMark) m;
+    if (mark.getStream() != this) { throw new IllegalArgumentException("Mark is not from this stream"); }
+    return mark;
+  }
+
+  @Override
   public long skip(long skip) {
     checkClosed();
 
@@ -288,16 +333,18 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
     int numToSkip = Math.min(available(), (int) skip);
 
     int bytesSkipped = 0;
-    while (index < numBufs) {
-      TCByteBuffer buf = data[index];
+    while (this.index < this.numBufs) {
+      TCByteBuffer buf = this.data[this.index];
       int remaining = buf.remaining();
       if (remaining > 0) {
         int numToRead = Math.min(remaining, numToSkip);
         buf.position(buf.position() + numToRead);
-        position += numToRead;
+        this.position += numToRead;
         bytesSkipped += numToRead;
         numToSkip -= numToRead;
-        if (numToSkip == 0) break;
+        if (numToSkip == 0) {
+          break;
+        }
       }
       nextBuffer();
     }
@@ -306,30 +353,43 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
   }
 
   private void checkClosed() {
-    if (closed) { throw new IllegalStateException("stream is closed"); }
+    if (this.closed) { throw new IllegalStateException("stream is closed"); }
   }
 
-  private static class Mark {
-    private final int position;
-    private final int bufferIndex;
-    private final int streamPosition;
+  private static class TCMark implements Mark {
+    private final int                     bufferPosition;
+    private final int                     bufferIndex;
+    private final int                     streamPosition;
+    private final TCByteBufferInputStream stream;
 
-    Mark(int bufferIndex, int bufferPosition, int streamPosition) {
+    TCMark(TCByteBufferInputStream stream, int bufferIndex, int bufferPosition, int streamPosition) {
+      this.stream = stream;
       this.bufferIndex = bufferIndex;
-      this.position = bufferPosition;
+      this.bufferPosition = bufferPosition;
       this.streamPosition = streamPosition;
     }
 
+    public TCByteBufferInputStream getStream() {
+      return this.stream;
+    }
+
     int getBufferIndex() {
-      return bufferIndex;
+      return this.bufferIndex;
     }
 
     int getBufferPosition() {
-      return position;
+      return this.bufferPosition;
     }
 
     int getStreamPosition() {
-      return streamPosition;
+      return this.streamPosition;
+    }
+
+    @Override
+    public String toString() {
+      return "Mark[TCByteBufferInputStream@" + System.identityHashCode(this.stream) + "] { Stream position : "
+             + this.streamPosition + ", Buffer Index : " + this.bufferIndex + ", Buffer position : "
+             + this.bufferPosition + " }";
     }
   }
 
@@ -338,26 +398,26 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
     int byte2 = read();
     int byte3 = read();
     int byte4 = read();
-    if ((byte1 | byte2 | byte3 | byte4) < 0) throw new EOFException();
+    if ((byte1 | byte2 | byte3 | byte4) < 0) { throw new EOFException(); }
     return ((byte1 << 24) + (byte2 << 16) + (byte3 << 8) + (byte4 << 0));
   }
 
   public final byte readByte() throws IOException {
     int b = read();
-    if (b < 0) throw new EOFException();
+    if (b < 0) { throw new EOFException(); }
     return (byte) (b);
   }
 
   public final boolean readBoolean() throws IOException {
     int b = read();
-    if (b < 0) throw new EOFException();
+    if (b < 0) { throw new EOFException(); }
     return (b != 0);
   }
 
   public final char readChar() throws IOException {
     int byte1 = read();
     int byte2 = read();
-    if ((byte1 | byte2) < 0) throw new EOFException();
+    if ((byte1 | byte2) < 0) { throw new EOFException(); }
     return (char) ((byte1 << 8) + (byte2 << 0));
   }
 
@@ -375,7 +435,7 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
     int byte7 = read();
     int byte8 = read();
 
-    if ((byte1 | byte2 | byte3 | byte4 | byte5 | byte6 | byte7 | byte8) < 0) throw new EOFException();
+    if ((byte1 | byte2 | byte3 | byte4 | byte5 | byte6 | byte7 | byte8) < 0) { throw new EOFException(); }
 
     return (((long) byte1 << 56) + ((long) (byte2 & 255) << 48) + ((long) (byte3 & 255) << 40)
             + ((long) (byte4 & 255) << 32) + ((long) (byte5 & 255) << 24) + ((byte6 & 255) << 16)
@@ -389,7 +449,7 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
   public final short readShort() throws IOException {
     int byte1 = read();
     int byte2 = read();
-    if ((byte1 | byte2) < 0) throw new EOFException();
+    if ((byte1 | byte2) < 0) { throw new EOFException(); }
     return (short) ((byte1 << 8) + (byte2 << 0));
   }
 
@@ -428,11 +488,11 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
   }
 
   public final void readFully(byte[] b, int off, int len) throws IOException {
-    if (len < 0) throw new IndexOutOfBoundsException();
+    if (len < 0) { throw new IndexOutOfBoundsException(); }
     int n = 0;
     while (n < len) {
       int count = read(b, off + n, len - n);
-      if (count < 0) throw new EOFException();
+      if (count < 0) { throw new EOFException(); }
       n += count;
     }
   }
@@ -443,14 +503,14 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
 
   public final int readUnsignedByte() throws IOException {
     int b = read();
-    if (b < 0) throw new EOFException();
+    if (b < 0) { throw new EOFException(); }
     return b;
   }
 
   public final int readUnsignedShort() throws IOException {
     int byte1 = read();
     int byte2 = read();
-    if ((byte1 | byte2) < 0) throw new EOFException();
+    if ((byte1 | byte2) < 0) { throw new EOFException(); }
     return (byte1 << 8) + (byte2 << 0);
   }
 
@@ -463,5 +523,4 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
     // Don't implement this method --> use readString() instead
     throw new UnsupportedOperationException();
   }
-
 }

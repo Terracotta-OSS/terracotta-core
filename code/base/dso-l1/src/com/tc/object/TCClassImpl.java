@@ -10,11 +10,13 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.applicator.ChangeApplicator;
+import com.tc.object.bytecode.NotClearable;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.impl.ProxyInstance;
 import com.tc.object.field.TCField;
 import com.tc.object.field.TCFieldFactory;
+import com.tc.object.loaders.LoaderDescription;
 import com.tc.object.loaders.Namespace;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
@@ -36,7 +38,7 @@ import java.util.Map;
  * Peer of a Class under management.
  * <p>
  * This is used to cache the fields of each class by type.
- * 
+ *
  * @author orion
  */
 public class TCClassImpl implements TCClass {
@@ -55,13 +57,14 @@ public class TCClassImpl implements TCClass {
   private final boolean                  isNonStaticInner;
   private final boolean                  isLogical;
   private final boolean                  isCallConstructor;
+  private final boolean                  onLoadInjection;
   private final String                   onLoadScript;
   private final String                   onLoadMethod;
   private final ChangeApplicator         applicator;
   private final String                   parentFieldName;
   private final Map                      declaredTCFieldsByName = new HashMap();
   private final Map                      tcFieldsByName         = new HashMap();
-  private final String                   loaderDesc;
+  private final LoaderDescription        loaderDesc;
   private Constructor                    constructor            = null;
   private final Field                    parentField;
   private final static SerializationUtil SERIALIZATION_UTIL     = new SerializationUtil();
@@ -74,11 +77,13 @@ public class TCClassImpl implements TCClass {
   private final String                   logicalExtendingClassName;
   private final Class                    logicalSuperClass;
   private final boolean                  useResolveLockWhileClearing;
+  private boolean                        isNotClearable;
 
-  TCClassImpl(TCFieldFactory factory, TCClassFactory clazzFactory, ClientObjectManager objectManager, Class peer,
-              Class logicalSuperClass, String loaderDesc, String logicalExtendingClassName, boolean isLogical,
-              boolean isCallConstructor, String onLoadScript, String onLoadMethod, boolean useNonDefaultConstructor,
-              boolean useResolveLockWhileClearing) {
+  TCClassImpl(final TCFieldFactory factory, final TCClassFactory clazzFactory, final ClientObjectManager objectManager,
+              final Class peer, final Class logicalSuperClass, final LoaderDescription loaderDesc,
+              final String logicalExtendingClassName, final boolean isLogical, final boolean isCallConstructor,
+              final boolean onLoadInjection, final String onLoadScript, final String onLoadMethod,
+              final boolean useNonDefaultConstructor, final boolean useResolveLockWhileClearing) {
     this.clazzFactory = clazzFactory;
     this.objectManager = objectManager;
     this.peer = peer;
@@ -95,10 +100,11 @@ public class TCClassImpl implements TCClass {
     this.isLogical = isLogical;
     this.isProxyClass = Proxy.isProxyClass(peer) || ProxyInstance.class.getName().equals(peer.getName());
     this.isCallConstructor = isCallConstructor;
+    this.onLoadInjection = onLoadInjection;
     this.onLoadScript = onLoadScript;
     this.onLoadMethod = onLoadMethod;
     this.superclazz = findSuperClass(peer);
-    this.isEnum = ClassUtils.isEnum(peer);
+    this.isEnum = ClassUtils.isDsoEnum(peer);
     this.logicalExtendingClassName = logicalExtendingClassName;
 
     this.applicator = createApplicator();
@@ -110,10 +116,15 @@ public class TCClassImpl implements TCClass {
     this.logicalSuperClass = logicalSuperClass;
     this.offsetToFieldNames = getFieldOffsets(peer);
     this.useResolveLockWhileClearing = useResolveLockWhileClearing;
+    this.isNotClearable = NotClearable.class.isAssignableFrom(peer);
   }
 
   public Field getParentField() {
     return parentField;
+  }
+
+  public boolean isNotClearable() {
+    return isNotClearable;
   }
 
   public boolean isNonStaticInner() {
@@ -126,13 +137,13 @@ public class TCClassImpl implements TCClass {
 
   private Field findParentField() {
     Field[] fields = peer.getDeclaredFields();
-    for (int i = 0; i < fields.length; i++) {
-      if (SERIALIZATION_UTIL.isParent(fields[i].getName())) return fields[i];
+    for (Field field : fields) {
+      if (SERIALIZATION_UTIL.isParent(field.getName())) return field;
     }
     return null;
   }
 
-  private TCClass findSuperClass(Class c) {
+  private TCClass findSuperClass(final Class c) {
     Class superclass = c.getSuperclass();
     if (superclass != null) { return clazzFactory.getOrCreate(superclass, objectManager); }
     return null;
@@ -142,8 +153,8 @@ public class TCClassImpl implements TCClass {
     return clazzFactory.createApplicatorFor(this, indexed);
   }
 
-  public void hydrate(TCObject tcObject, DNA dna, Object pojo, boolean force) throws IOException,
-      ClassNotFoundException {
+  public void hydrate(final TCObject tcObject, final DNA dna, final Object pojo, final boolean force)
+      throws IOException, ClassNotFoundException {
     // Okay...long story here The application of the DNA used to be a synchronized(applicator) block. As best as Steve
     // and I could tell, the synchronization was solely a memory boundary and not a mutual exlusion mechanism. For the
     // time being, we have resolved that we need no synchronization here (either for memory, or exclusion). The memory
@@ -164,7 +175,7 @@ public class TCClassImpl implements TCClass {
 
   }
 
-  public void dehydrate(TCObject tcObject, DNAWriter writer, Object pojo) {
+  public void dehydrate(final TCObject tcObject, final DNAWriter writer, final Object pojo) {
     try {
       applicator.dehydrate(objectManager, tcObject, writer, pojo);
     } catch (ConcurrentModificationException cme) {
@@ -215,6 +226,10 @@ public class TCClassImpl implements TCClass {
     return constructor;
   }
 
+  public boolean hasOnLoadInjection() {
+    return onLoadInjection;
+  }
+
   public boolean hasOnLoadExecuteScript() {
     return onLoadScript != null;
   }
@@ -234,10 +249,10 @@ public class TCClassImpl implements TCClass {
 
     if (isCallConstructor || isLogical) {
       Constructor[] cons = peer.getDeclaredConstructors();
-      for (int i = 0; i < cons.length; i++) {
-        Class[] types = cons[i].getParameterTypes();
+      for (Constructor con : cons) {
+        Class[] types = con.getParameterTypes();
         if (types.length == 0) {
-          rv = cons[i];
+          rv = con;
           rv.setAccessible(true);
           return rv;
         }
@@ -253,15 +268,15 @@ public class TCClassImpl implements TCClass {
     return parentFieldName;
   }
 
-  private void introspectFields(Class clazz, TCFieldFactory fieldFactory) {
+  private void introspectFields(final Class clazz, final TCFieldFactory fieldFactory) {
     // Note: this gets us all of the fields declared in the class, static
     // as well as instance fields.
     Field[] fields = clazz.equals(Object.class) ? new Field[0] : clazz.getDeclaredFields();
 
     Field field;
     TCField tcField;
-    for (int i = 0; i < fields.length; i++) {
-      field = fields[i];
+    for (Field field2 : fields) {
+      field = field2;
       // The factory does a bunch of callbacks based on the field type.
       tcField = fieldFactory.getInstance(this, field);
       declaredTCFieldsByName.put(field.getName(), tcField);
@@ -269,6 +284,7 @@ public class TCClassImpl implements TCClass {
     }
   }
 
+  @Override
   public String toString() {
     return peer.getName();
   }
@@ -276,7 +292,7 @@ public class TCClassImpl implements TCClass {
   /**
    * Expects the field name in the format <classname>. <fieldname>(e.g. com.foo.Bar.baz)
    */
-  public TCField getField(String name) {
+  public TCField getField(final String name) {
     TCField rv = (TCField) tcFieldsByName.get(name);
     if (rv == null && superclazz != null) {
       rv = superclazz.getField(name);
@@ -288,7 +304,7 @@ public class TCClassImpl implements TCClass {
     return portableFields;
   }
 
-  public TraversedReferences getPortableObjects(Object pojo, TraversedReferences addTo) {
+  public TraversedReferences getPortableObjects(final Object pojo, final TraversedReferences addTo) {
     return applicator.getPortableObjects(pojo, addTo);
   }
 
@@ -309,7 +325,7 @@ public class TCClassImpl implements TCClass {
     return indexed;
   }
 
-  public String getDefiningLoaderDescription() {
+  public LoaderDescription getDefiningLoaderDescription() {
     return loaderDesc;
   }
 
@@ -321,7 +337,7 @@ public class TCClassImpl implements TCClass {
     return objectManager;
   }
 
-  public TCObject createTCObject(ObjectID id, Object pojo, boolean isNew) {
+  public TCObject createTCObject(final ObjectID id, final Object pojo, final boolean isNew) {
     if (isLogical) {
       return new TCObjectLogical(id, pojo, this, isNew);
     } else {
@@ -337,14 +353,14 @@ public class TCClassImpl implements TCClass {
     return useNonDefaultConstructor;
   }
 
-  public Object getNewInstanceFromNonDefaultConstructor(DNA dna) throws IOException, ClassNotFoundException {
+  public Object getNewInstanceFromNonDefaultConstructor(final DNA dna) throws IOException, ClassNotFoundException {
     Object o = applicator.getNewInstance(objectManager, dna);
 
     if (o == null) { throw new AssertionError("Can't find suitable constructor for class: " + getName() + "."); }
     return o;
   }
 
-  private static Map getFieldOffsets(Class peer) {
+  private static Map getFieldOffsets(final Class peer) {
     Map rv = new HashMap();
     if (unsafe != null) {
       try {
@@ -371,14 +387,14 @@ public class TCClassImpl implements TCClass {
     return rv;
   }
 
-  private static String makeFieldName(Field field) {
+  private static String makeFieldName(final Field field) {
     StringBuffer sb = new StringBuffer(field.getDeclaringClass().getName());
     sb.append(".");
     sb.append(field.getName());
     return sb.toString();
   }
 
-  public String getFieldNameByOffset(long fieldOffset) {
+  public String getFieldNameByOffset(final long fieldOffset) {
     Long fieldOffsetObj = new Long(fieldOffset);
 
     String field = (String) this.offsetToFieldNames.get(fieldOffsetObj);
@@ -393,7 +409,7 @@ public class TCClassImpl implements TCClass {
     }
   }
 
-  public boolean isPortableField(long fieldOffset) {
+  public boolean isPortableField(final long fieldOffset) {
     String fieldName = getFieldNameByOffset(fieldOffset);
     TCField tcField = getField(fieldName);
 

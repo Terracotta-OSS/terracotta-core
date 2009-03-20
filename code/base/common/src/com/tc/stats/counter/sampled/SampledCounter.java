@@ -20,6 +20,8 @@ public interface SampledCounter extends Counter {
 
   double getAverage();
   
+  long getAndReset();
+  
   public final static SampledCounter NULL_SAMPLED_COUNTER = new SampledCounter() {
 
     public TimeStampedCounterValue[] getAllSampleValues() {
@@ -80,6 +82,10 @@ public interface SampledCounter extends Counter {
 
     public void setValue(long newValue) {
       //
+    }
+
+    public long getAndReset() {
+      return 0;
     }
   };
   

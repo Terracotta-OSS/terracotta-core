@@ -8,29 +8,38 @@ import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Map;
 
 class AttributesHelper implements Installable {
 
   private final Map<String, Object> attributes;
+  private final URI                 relativeUrlBase;
 
   public AttributesHelper(Map<String, Object> attributes) {
     this.attributes = attributes;
+    try {
+      this.relativeUrlBase = new URI("/");
+    } catch (URISyntaxException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  public AttributesHelper(Map<String, Object> attributes, URI relativeUrlBase) {
+    this.attributes = attributes;
+    this.relativeUrlBase = relativeUrlBase;
+  }
+
+  public AttributesHelper(Map<String, Object> attributes, String relativeUrlBase)
+  throws URISyntaxException {
+    this(attributes, new URI(relativeUrlBase));
   }
 
   static String getAttrValueAsString(Map<String, Object> attributes, String key, String altvalue) {
     String value = (String) attributes.get(key);
     return StringUtils.isEmpty(value) && (altvalue != null) ? altvalue : value.trim();
-  }
-
-  static URL getAttrValueAsUrl(Map<String, Object> attributes, String key, URL altvalue) {
-    try {
-      String value = (String) attributes.get(key);
-      return StringUtils.isEmpty(value) && (altvalue != null) ? altvalue : new URL(value);
-    } catch (MalformedURLException e) {
-      throw new IllegalStateException(e);
-    }
   }
 
   static File getAttrValueAsFile(Map<String, Object> attributes, String key, File altvalue) {
@@ -43,7 +52,32 @@ class AttributesHelper implements Installable {
   }
 
   URL getAttrValueAsUrl(String key, URL altvalue) {
-    return getAttrValueAsUrl(attributes, key, altvalue);
+    try {
+      String value = (String) attributes.get(key);
+      if (value != null) {
+        value = value.trim();
+      }
+      if (StringUtils.isEmpty(value)) {
+        if (altvalue != null) {
+          return altvalue;
+        }
+        else { 
+          return new URL("");
+        }
+      }
+
+      URI uri = new URI(value);
+      if (uri.isAbsolute()) {
+        return uri.toURL();
+      }
+      else {
+        return new URI(this.relativeUrlBase + "/" + uri).normalize().toURL();
+      }
+    } catch (MalformedURLException e) {
+      throw new IllegalStateException(e);
+    } catch (URISyntaxException e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   File getAttrValueAsFile(String key, File altvalue) {
@@ -60,7 +94,7 @@ class AttributesHelper implements Installable {
   }
 
   public URL repoUrl() {
-    return getAttrValueAsUrl(attributes, "repoURL", null);
+    return getAttrValueAsUrl("repoURL", null);
   }
 
   public boolean isInstalled(File repository) {

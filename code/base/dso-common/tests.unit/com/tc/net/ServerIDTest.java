@@ -7,7 +7,6 @@ package com.tc.net;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.groups.NodeIDSerializer;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.util.UUID;
 
 import java.util.ArrayList;
@@ -103,7 +102,7 @@ public class ServerIDTest extends TestCase {
     NodeID n2 = makeNodeID("node2");
 
     assertTrue(n1.compareTo(n2) != 0);
-    assertTrue(n1.compareTo(new ClientID(new ChannelID(0))) != 0);
+    assertTrue(n1.compareTo(new ClientID(0)) != 0);
 
     List all = new ArrayList();
     TreeSet ss = new TreeSet();

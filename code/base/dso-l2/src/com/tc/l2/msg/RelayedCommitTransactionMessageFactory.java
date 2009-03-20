@@ -4,8 +4,10 @@
  */
 package com.tc.l2.msg;
 
+import com.tc.bytes.TCByteBuffer;
+import com.tc.net.NodeID;
+import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
-import com.tc.object.msg.CommitTransactionMessage;
 import com.tc.objectserver.tx.ServerTransaction;
 
 import java.util.Collection;
@@ -15,12 +17,14 @@ import java.util.Map;
 
 public class RelayedCommitTransactionMessageFactory {
 
-  public static RelayedCommitTransactionMessage createRelayedCommitTransactionMessage(
-                                                                                      CommitTransactionMessage commitMsg,
+  public static RelayedCommitTransactionMessage createRelayedCommitTransactionMessage(NodeID nodeID,
+                                                                                      TCByteBuffer[] data,
                                                                                       Collection txns, long seqID,
-                                                                                      GlobalTransactionID lowWaterMark) {
-    RelayedCommitTransactionMessage msg = new RelayedCommitTransactionMessage(commitMsg.getSourceNodeID(), commitMsg
-        .getBatchData(), commitMsg.getSerializer(), getGlobalTransactionIDMapping(txns), seqID, lowWaterMark);
+                                                                                      GlobalTransactionID lowWaterMark,
+                                                                                      ObjectStringSerializer serializer) {
+    RelayedCommitTransactionMessage msg = new RelayedCommitTransactionMessage(nodeID, data, serializer,
+                                                                              getGlobalTransactionIDMapping(txns),
+                                                                              seqID, lowWaterMark);
     return msg;
   }
 

@@ -5,7 +5,6 @@
 package com.tc.objectserver.lockmanager.api;
 
 import com.tc.net.ClientID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.ThreadID;
@@ -18,8 +17,8 @@ import junit.framework.TestCase;
 public class NotifiedWaitersTest extends TestCase {
 
   public void testBasics() throws Exception {
-    ClientID clientID1 = new ClientID(new ChannelID(1));
-    ClientID clientID2 = new ClientID(new ChannelID(2));
+    ClientID clientID1 = new ClientID(1);
+    ClientID clientID2 = new ClientID(2);
 
     Set forChannel1 = new HashSet();
     Set forChannel2 = new HashSet();
@@ -48,7 +47,7 @@ public class NotifiedWaitersTest extends TestCase {
 
     ns = new NotifiedWaiters();
     assertTrue(ns.isEmpty());
-    ns.getNotifiedFor(new ClientID(new ChannelID(1)));
+    ns.getNotifiedFor(new ClientID(1));
     assertTrue(ns.isEmpty());
   }
 

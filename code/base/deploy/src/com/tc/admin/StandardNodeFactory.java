@@ -4,8 +4,6 @@
  */
 package com.tc.admin;
 
-import com.tc.admin.model.IClusterModel;
-import com.tc.admin.model.IServerGroup;
 
 public class StandardNodeFactory extends AbstractNodeFactory {
   @Override
@@ -17,12 +15,6 @@ public class StandardNodeFactory extends AbstractNodeFactory {
   public ClusterNode createClusterNode(IAdminClientContext adminClientContext, String host, int jmxPort,
                                        boolean autoConnect) {
     return new ClusterNode(adminClientContext, host, jmxPort, autoConnect);
-  }
-
-  @Override
-  public ServerGroupNode createServerGroupNode(IAdminClientContext adminClientContext, IClusterModel clusterModel,
-                                               IServerGroup serverGroup) {
-    return new ServerGroupNode(adminClientContext, clusterModel, serverGroup);
   }
 
 }

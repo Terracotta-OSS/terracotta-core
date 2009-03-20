@@ -7,6 +7,7 @@ package com.tc.object.msg;
 import com.tc.exception.ImplementMe;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
+import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.TestMessageChannel;
@@ -39,41 +40,48 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
   private TestMessageChannel    channel;
   private String                clientVersion;
 
+  @Override
   public void send() {
-    sendCalls.put(new Object());
+    this.sendCalls.put(new Object());
   }
 
+  @Override
   public MessageChannel getChannel() {
     synchronized (this) {
-      if (channel == null) {
-        channel = new TestMessageChannel();
-        channel.channelID = clientID.getChannelID();
+      if (this.channel == null) {
+        this.channel = new TestMessageChannel();
+        this.channel.channelID = new ChannelID(this.clientID.toLong());
       }
 
-      return channel;
+      return this.channel;
     }
   }
 
+  @Override
   public NodeID getSourceNodeID() {
     return this.clientID;
   }
 
   public Set getObjectIDs() {
-    return clientObjectIds;
+    return this.clientObjectIds;
   }
 
+  @Override
   public TCMessageType getMessageType() {
     throw new ImplementMe();
   }
 
+  @Override
   public void hydrate() {
     //
   }
 
+  @Override
   public void dehydrate() {
     //
   }
 
+  @Override
   public int getTotalLength() {
     // TODO Auto-generated method stub
     return 0;
@@ -100,7 +108,7 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
   }
 
   public Collection getPendingLockContexts() {
-    return pendingLockContexts;
+    return this.pendingLockContexts;
   }
 
   public List getTransactionSequenceIDs() {
@@ -109,7 +117,7 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
 
   public void addTransactionSequenceIDs(List ids) {
     this.transactionSequenceIDs = ids;
-    this.setTransactionSequenceIDsCalls.put(transactionSequenceIDs);
+    this.setTransactionSequenceIDsCalls.put(this.transactionSequenceIDs);
   }
 
   public void addResentTransactionIDs(List resentTransactionIDs) {
@@ -119,7 +127,7 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
   }
 
   public List getResentTransactionIDs() {
-    return transactionIDs;
+    return this.transactionIDs;
   }
 
   public void setIsObjectIDsRequested(boolean request) {
@@ -127,7 +135,7 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
   }
 
   public boolean isObjectIDsRequested() {
-    return requestedObjectIDs;
+    return this.requestedObjectIDs;
   }
 
   public void addPendingTryLockContext(TryLockContext ctxt) {
@@ -145,5 +153,13 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
 
   public void setClientVersion(String v) {
     this.clientVersion = v;
+  }
+
+  public long getServerHighWaterMark() {
+    throw new ImplementMe();
+  }
+
+  public void setServerHighWaterMark(long serverHighWaterMark) {
+    throw new ImplementMe();
   }
 }

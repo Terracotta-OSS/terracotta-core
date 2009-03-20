@@ -20,35 +20,37 @@ public class ClusterMembershipMessage extends DSOMessageBase {
   private static final byte NODE_ID    = 1;
 
   private int               eventType;
-  private String            nodeId;
+  private NodeID            nodeID;
 
-  public ClusterMembershipMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel,
-                                  TCMessageType type) {
+  public ClusterMembershipMessage(final SessionID sessionID, final MessageMonitor monitor, final TCByteBufferOutputStream out, final MessageChannel channel,
+                                  final TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
 
-  public ClusterMembershipMessage(SessionID sessionID, MessageMonitor monitor, MessageChannel channel,
-                                  TCMessageHeader header, TCByteBuffer[] data) {
+  public ClusterMembershipMessage(final SessionID sessionID, final MessageMonitor monitor, final MessageChannel channel,
+                                  final TCMessageHeader header, final TCByteBuffer[] data) {
     super(sessionID, monitor, channel, header, data);
   }
 
-  public void initialize(int et, NodeID nodeID2, MessageChannel[] channels) {
+  public void initialize(final int et, final NodeID nodeID2, final MessageChannel[] channels) {
     eventType = et;
-    nodeId = nodeID2.toString();
+    nodeID = nodeID2;
   }
 
+  @Override
   protected void dehydrateValues() {
     putNVPair(EVENT_TYPE, eventType);
-    putNVPair(NODE_ID, nodeId);
+    putNVPair(NODE_ID, nodeID);
   }
 
-  protected boolean hydrateValue(byte name) throws IOException {
+  @Override
+  protected boolean hydrateValue(final byte name) throws IOException {
     switch (name) {
       case EVENT_TYPE:
         eventType = getIntValue();
         return true;
       case NODE_ID:
-        nodeId = getStringValue();
+        nodeID = getNodeIDValue();
         return true;
       default:
         return false;
@@ -67,12 +69,13 @@ public class ClusterMembershipMessage extends DSOMessageBase {
     return eventType;
   }
 
-  public String getNodeId() {
-    return nodeId;
+  public NodeID getNodeId() {
+    return nodeID;
   }
 
+  @Override
   protected String describePayload() {
-    return EventType.toString(eventType) + " nodeId=" + nodeId;
+    return EventType.toString(eventType) + " nodeId=" + nodeID;
   }
 
   public static class EventType {
@@ -91,7 +94,7 @@ public class ClusterMembershipMessage extends DSOMessageBase {
       return t == NODE_DISCONNECTED;
     }
 
-    public static String toString(int eventType) {
+    public static String toString(final int eventType) {
       switch (eventType) {
         case NODE_CONNECTED:
           return "NODE_CONNECTED";

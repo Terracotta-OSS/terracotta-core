@@ -24,7 +24,7 @@ import junit.framework.TestCase;
 
 public class KnopflerfishOSGiTest extends TestCase {
 
-  private static final String PRODUCT_VERSION_DASH_QUALIFIER = "3.0.0-SNAPSHOT";
+  private static final String PRODUCT_VERSION_DASH_QUALIFIER = "3.1.0-SNAPSHOT";
   private static final String PRODUCT_VERSION_DOT_QUALIFIER  = PRODUCT_VERSION_DASH_QUALIFIER.replace('-', '.');
   private KnopflerfishOSGi    osgiRuntime                    = null;
 
@@ -112,7 +112,18 @@ public class KnopflerfishOSGiTest extends TestCase {
       file = new File(repo);
     }
     
-    return FileUtils.listFiles(file, new String[] { "jar" }, true);
+    Collection files = FileUtils.listFiles(file, new String[] { "jar" }, true);
+    
+    // Filter modules-base as it will have a different version number that matches the api
+    Iterator iter = files.iterator();
+    while(iter.hasNext()) {
+      File module = (File) iter.next();
+      if(module.getName().contains("modules-base")) {
+        iter.remove();
+      }
+    }
+    
+    return files;
   }
 
   /**

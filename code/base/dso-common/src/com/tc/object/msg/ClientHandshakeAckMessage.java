@@ -4,6 +4,7 @@
  */
 package com.tc.object.msg;
 
+import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.TCMessage;
 
 import java.util.Set;
@@ -12,11 +13,11 @@ public interface ClientHandshakeAckMessage extends TCMessage {
 
   public boolean getPersistentServer();
 
-  public void initialize(boolean persistent, Set allNodes, String thisNodeID, String serverVersion);
+  public void initialize(boolean persistent, Set<ClientID> allNodes, ClientID thisNodeID, String serverVersion);
 
-  public String[] getAllNodes();
+  public ClientID[] getAllNodes();
 
-  public String getThisNodeId();
+  public ClientID getThisNodeId();
 
   public String getServerVersion();
 

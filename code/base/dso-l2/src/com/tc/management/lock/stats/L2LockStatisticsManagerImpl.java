@@ -15,6 +15,7 @@ import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.NoSuchChannelException;
+import com.tc.objectserver.core.api.DSOGlobalServerStats;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
@@ -32,6 +33,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
 
   private DSOChannelManager     channelManager;
   protected final Set<NodeID>   lockSpecRequestedNodeIDs = new HashSet<NodeID>();
+  private SampledCounter        globalLockCounter;
   private SampledCounter        globalLockRecallCounter;
 
   private final static void sendLockStatisticsEnableDisableMessage(MessageChannel channel, boolean statsEnable,
@@ -58,18 +60,23 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
         .getBoolean(TCPropertiesConsts.LOCK_STATISTICS_ENABLED, false);
   }
 
-  public synchronized void start(DSOChannelManager dsoChannelManager, SampledCounter lockRecallCounter) {
+  public synchronized void start(DSOChannelManager dsoChannelManager, DSOGlobalServerStats serverStats) {
     this.channelManager = dsoChannelManager;
+    SampledCounter lockCounter = serverStats == null ? null : serverStats.getGlobalLockCounter();
+    this.globalLockCounter = lockCounter == null ? SampledCounter.NULL_SAMPLED_COUNTER : lockCounter;
+    SampledCounter lockRecallCounter = serverStats == null ? null : serverStats.getGlobalLockRecallCounter();
     this.globalLockRecallCounter = lockRecallCounter == null ? SampledCounter.NULL_SAMPLED_COUNTER : lockRecallCounter;
   }
 
   /**
    * Abstract method implementation section begin
    */
+  @Override
   protected LockStatisticsInfo newLockStatisticsContext(LockID lockID) {
     return new ServerLockStatisticsInfoImpl(lockID);
   }
 
+  @Override
   protected void disableLockStatistics() {
     this.lockStatisticsEnabled = false;
 
@@ -86,6 +93,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
    */
 
   // We cannot synchronized on the whole method in order to prevent deadlock.
+  @Override
   public void setLockStatisticsConfig(int traceDepth, int gatherInterval) {
     synchronized (this) {
       super.setLockStatisticsConfig(traceDepth, gatherInterval);
@@ -94,6 +102,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
     sendLockStatisticsEnableDisableMessageIfNeeded(traceDepth, gatherInterval);
   }
 
+  @Override
   public void setLockStatisticsEnabled(boolean statEnable) {
     super.setLockStatisticsEnabled(statEnable);
 
@@ -104,6 +113,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
     return this.lockStatisticsEnabled;
   }
 
+  @Override
   public synchronized void clear() {
     super.clear();
   }
@@ -127,12 +137,14 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
 
   public synchronized void recordLockAwarded(LockID lockID, NodeID nodeID, ThreadID threadID, boolean isGreedy,
                                              long awardedTimeInMillis) {
+    globalLockCounter.increment();
     if (!lockStatisticsEnabled) { return; }
 
     int depth = super.incrementNestedDepth(new LockKey(nodeID, threadID));
     super.recordLockAwarded(lockID, nodeID, threadID, isGreedy, awardedTimeInMillis, depth);
   }
 
+  @Override
   public synchronized void recordLockReleased(LockID lockID, NodeID nodeID, ThreadID threadID) {
     if (!lockStatisticsEnabled) { return; }
 
@@ -140,6 +152,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
     super.recordLockReleased(lockID, nodeID, threadID);
   }
 
+  @Override
   public synchronized void recordLockRejected(LockID lockID, NodeID nodeID, ThreadID threadID) {
     if (!lockStatisticsEnabled) { return; }
 
@@ -206,7 +219,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
       MessageChannel[] channels = channelManager.getActiveChannels();
       for (int i = 0; i < channels.length; i++) {
         sendLockStatisticsGatheringMessage(channels[i]);
-        lockSpecRequestedNodeIDs.add(new ClientID(channels[i].getChannelID()));
+        lockSpecRequestedNodeIDs.add(new ClientID(channels[i].getChannelID().toLong()));
       }
     }
 

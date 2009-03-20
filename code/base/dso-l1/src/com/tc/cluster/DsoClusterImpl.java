@@ -4,14 +4,21 @@
  */
 package com.tc.cluster;
 
-import com.tc.cluster.exceptions.ClusteredListenerException;
 import com.tc.cluster.exceptions.UnclusteredObjectException;
-import com.tc.exception.ImplementMe;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
+import com.tc.net.ClientID;
 import com.tc.net.NodeID;
+import com.tc.object.ClientObjectManager;
 import com.tc.object.ClusterMetaDataManager;
 import com.tc.object.ObjectID;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.TCMap;
+import com.tc.util.Assert;
+import com.tcclient.cluster.DsoClusterInternal;
+import com.tcclient.cluster.DsoNode;
+import com.tcclient.cluster.DsoNodeInternal;
+import com.tcclient.cluster.DsoNodeMetaData;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -21,74 +28,90 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-
-import junit.framework.Assert;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class DsoClusterImpl implements DsoClusterInternal {
 
-  private volatile DsoNode               currentNode;
+  private static final TCLogger                  LOGGER               = TCLogging.getLogger(DsoClusterImpl.class);
 
-  private final Map<String, DsoNode>     nodes                = new ConcurrentHashMap<String, DsoNode>();
-  private final List<DsoClusterListener> listeners            = new CopyOnWriteArrayList<DsoClusterListener>();
+  private volatile DsoNodeInternal               currentNode;
 
-  private ClusterMetaDataManager         clusterMetaDataManager;
+  private final DsoClusterTopologyImpl           topology             = new DsoClusterTopologyImpl();
+  private final List<DsoClusterListener>         listeners            = new CopyOnWriteArrayList<DsoClusterListener>();
 
-  private boolean                        isNodeJoined         = false;
-  private boolean                        areOperationsEnabled = false;
+  private final ReentrantReadWriteLock           stateLock            = new ReentrantReadWriteLock();
+  private final ReentrantReadWriteLock.ReadLock  stateReadLock        = stateLock.readLock();
+  private final ReentrantReadWriteLock.WriteLock stateWriteLock       = stateLock.writeLock();
 
-  public void init(final ClusterMetaDataManager manager) {
-    this.clusterMetaDataManager = manager;
+  private ClusterMetaDataManager                 clusterMetaDataManager;
+  private ClientObjectManager                    clientObjectManager;
+
+  private boolean                                isNodeJoined         = false;
+  private boolean                                areOperationsEnabled = false;
+
+  public void init(final ClusterMetaDataManager metaDataManager, final ClientObjectManager objectManager) {
+    this.clusterMetaDataManager = metaDataManager;
+    this.clientObjectManager = objectManager;
   }
 
-  public void addClusterListener(final DsoClusterListener listener) throws ClusteredListenerException {
-    final boolean fireThisNodeJoined;
-    synchronized (this) {
-      fireThisNodeJoined = (currentNode != null);
-      if (null == listeners || listeners.contains(listener)) { return; }
+  public void addClusterListener(final DsoClusterListener listener) {
+    if (null == listeners) { return; }
 
+    stateWriteLock.lock();
+    try {
+      if (listeners.contains(listener)) { return; }
       listeners.add(listener);
+    } finally {
+      stateWriteLock.unlock();
     }
 
-    if (fireThisNodeJoined) {
-      System.out.println(">>>>>> " + currentNode + " - DsoClusterImpl.addClusterListener : fireThisNodeJoined = " + fireThisNodeJoined);
-      fireNodeJoined(currentNode.getId());
-      fireOperationsEnabled();
+    if (isNodeJoined) {
+      fireNodeJoinedInternal(new DsoClusterEventImpl(currentNode), listener);
+    }
+
+    if (areOperationsEnabled) {
+      fireOperationsEnabledInternal(new DsoClusterEventImpl(currentNode), listener);
     }
   }
 
-  public synchronized void removeClusterListener(final DsoClusterListener listener) {
-    listeners.remove(listener);
+  public void removeClusterListener(final DsoClusterListener listener) {
+    stateWriteLock.lock();
+    try {
+      listeners.remove(listener);
+    } finally {
+      stateWriteLock.unlock();
+    }
   }
 
-  public synchronized DsoNode getCurrentNode() {
-    return currentNode;
+  public DsoNode getCurrentNode() {
+    stateReadLock.lock();
+    try {
+      return currentNode;
+    } finally {
+      stateReadLock.unlock();
+    }
   }
 
   public DsoClusterTopology getClusterTopology() {
-    throw new ImplementMe();
+    return topology;
   }
 
   public Set<DsoNode> getNodesWithObject(final Object object) throws UnclusteredObjectException {
     Assert.assertNotNull(clusterMetaDataManager);
 
-    if (null == object) {
-      return Collections.emptySet();
-    }
+    if (null == object) { return Collections.emptySet(); }
 
     // we might have to use ManagerUtil.lookupExistingOrNull(object) here if we need to support literals
     if (object instanceof Manageable) {
-      Manageable manageable = (Manageable)object;
+      Manageable manageable = (Manageable) object;
       if (manageable.__tc_isManaged()) {
         Set<NodeID> response = clusterMetaDataManager.getNodesWithObject(manageable.__tc_managed().getObjectID());
-        if (response.isEmpty()) {
-          return Collections.emptySet();
-        }
+        if (response.isEmpty()) { return Collections.emptySet(); }
 
         final Set<DsoNode> result = new HashSet<DsoNode>();
         for (NodeID nodeID : response) {
-          result.add(getDsoNode(nodeID.toString()));
+          result.add(topology.getAndRegisterDsoNode(nodeID));
         }
 
         return result;
@@ -101,9 +124,7 @@ public class DsoClusterImpl implements DsoClusterInternal {
   public Map<?, Set<DsoNode>> getNodesWithObjects(final Object... objects) throws UnclusteredObjectException {
     Assert.assertNotNull(clusterMetaDataManager);
 
-    if (null == objects || 0 == objects.length) {
-      return Collections.emptyMap();
-    }
+    if (null == objects || 0 == objects.length) { return Collections.emptyMap(); }
 
     return getNodesWithObjects(Arrays.asList(objects));
   }
@@ -111,9 +132,7 @@ public class DsoClusterImpl implements DsoClusterInternal {
   public Map<?, Set<DsoNode>> getNodesWithObjects(final Collection<?> objects) throws UnclusteredObjectException {
     Assert.assertNotNull(clusterMetaDataManager);
 
-    if (null == objects || 0 == objects.size()) {
-      return Collections.emptyMap();
-    }
+    if (null == objects || 0 == objects.size()) { return Collections.emptyMap(); }
 
     // ensure that all objects in the collection are managed and collect their object IDs
     // we might have to use ManagerUtil.lookupExistingOrNull(object) here if we need to support literals
@@ -123,7 +142,7 @@ public class DsoClusterImpl implements DsoClusterInternal {
         if (!(object instanceof Manageable)) {
           throw new UnclusteredObjectException(object);
         } else {
-          Manageable manageable = (Manageable)object;
+          Manageable manageable = (Manageable) object;
           if (!manageable.__tc_isManaged()) {
             throw new UnclusteredObjectException(object);
           } else {
@@ -133,15 +152,11 @@ public class DsoClusterImpl implements DsoClusterInternal {
       }
     }
 
-    if (0 == objectIDMapping.size()) {
-      return Collections.emptyMap();
-    }
+    if (0 == objectIDMapping.size()) { return Collections.emptyMap(); }
 
     // retrieve the object locality information from the L2
     final Map<ObjectID, Set<NodeID>> response = clusterMetaDataManager.getNodesWithObjects(objectIDMapping.keySet());
-    if (response.isEmpty()) {
-      return Collections.emptyMap();
-    }
+    if (response.isEmpty()) { return Collections.emptyMap(); }
 
     // transform object IDs and node IDs in actual local instances
     Map<Object, Set<DsoNode>> result = new HashMap<Object, Set<DsoNode>>();
@@ -151,7 +166,7 @@ public class DsoClusterImpl implements DsoClusterInternal {
 
       final Set<DsoNode> dsoNodes = new HashSet<DsoNode>();
       for (NodeID nodeID : entry.getValue()) {
-        dsoNodes.add(getDsoNode(nodeID.toString()));
+        dsoNodes.add(topology.getAndRegisterDsoNode(nodeID));
       }
       result.put(object, dsoNodes);
     }
@@ -160,26 +175,53 @@ public class DsoClusterImpl implements DsoClusterInternal {
   }
 
   public <K> Set<K> getKeysForOrphanedValues(final Map<K, ?> map) throws UnclusteredObjectException {
-    throw new ImplementMe();
+    Assert.assertNotNull(clusterMetaDataManager);
+
+    if (null == map) { return Collections.emptySet(); }
+
+    if (map instanceof Manageable) {
+      Manageable manageable = (Manageable) map;
+      if (manageable.__tc_isManaged()) {
+        if (manageable instanceof TCMap) {
+          final Set<K> result = new HashSet<K>();
+          final Set keys = clusterMetaDataManager.getKeysForOrphanedValues((TCMap)map);
+          for (Object key : keys) {
+            if (key instanceof ObjectID) {
+              try {
+                result.add((K) clientObjectManager.lookupObject((ObjectID) key));
+              } catch (ClassNotFoundException e) {
+                Assert.fail("Unexpected ClassNotFoundException for key '" + key + "' : " + e.getMessage());
+              }
+            } else {
+              result.add((K) key);
+            }
+          }
+          return result;
+        } else {
+          return Collections.emptySet();
+        }
+      }
+    }
+
+    throw new UnclusteredObjectException(map);
   }
 
   public <K> Set<K> getKeysForLocalValues(final Map<K, ?> map) throws UnclusteredObjectException {
-    if (null == map) {
-      return Collections.emptySet();
-    }
+    if (null == map) { return Collections.emptySet(); }
 
     if (map instanceof Manageable) {
-      Manageable manageable = (Manageable)map;
+      Manageable manageable = (Manageable) map;
       if (manageable.__tc_isManaged()) {
         if (manageable instanceof TCMap) {
-          final Collection<Map.Entry> localEntries = ((TCMap)manageable).__tc_getAllLocalEntriesSnapshot();
-          if (0 == localEntries.size()) {
-            return Collections.emptySet();
-          }
+          final Collection<Map.Entry> localEntries = ((TCMap) manageable).__tc_getAllEntriesSnapshot();
+          if (0 == localEntries.size()) { return Collections.emptySet(); }
 
           final Set<K> result = new HashSet<K>();
           for (Map.Entry entry : localEntries) {
-            result.add((K)entry.getKey());
+            if (!(entry.getValue() instanceof ObjectID) ||
+                clientObjectManager.isLocal((ObjectID)entry.getValue())) {
+              result.add((K) entry.getKey());
+            }
           }
 
           return result;
@@ -192,98 +234,160 @@ public class DsoClusterImpl implements DsoClusterInternal {
     throw new UnclusteredObjectException(map);
   }
 
-  public synchronized boolean isNodeJoined() {
-    return isNodeJoined;
+  public DsoNodeMetaData retrieveMetaDataForDsoNode(final DsoNodeInternal node) {
+    Assert.assertNotNull(clusterMetaDataManager);
+
+    return clusterMetaDataManager.retrieveMetaDataForDsoNode(node);
   }
 
-  public synchronized boolean areOperationsEnabled() {
-    return areOperationsEnabled;
-  }
-
-  private DsoClusterEvent createEvent(final String nodeId) {
-    DsoNode node = getDsoNode(nodeId);
-    return new DsoClusterEventImpl(node);
-  }
-
-  private DsoNode getDsoNode(final String nodeId) {
-    synchronized (this) {
-      DsoNode node = nodes.get(nodeId);
-      if (null == node) {
-        node = new DsoNodeImpl(nodeId);
-        nodes.put(nodeId, node);
-      }
-      return node;
+  public boolean isNodeJoined() {
+    stateReadLock.lock();
+    try {
+      return isNodeJoined;
+    } finally {
+      stateReadLock.unlock();
     }
   }
 
-  public void fireThisNodeJoined(final String nodeId) {
-    System.out.println(">>>>>> " + currentNode + " - DsoClusterImpl.fireThisNodeJoined(" + nodeId + ")");
-    synchronized (this) {
-      // we might get multiple calls in a row, ignore all but the first in a row.
+  public boolean areOperationsEnabled() {
+    stateReadLock.lock();
+    try {
+      return areOperationsEnabled;
+    } finally {
+      stateReadLock.unlock();
+    }
+  }
+
+  public void fireThisNodeJoined(final NodeID nodeId, final NodeID[] clusterMembers) {
+    stateWriteLock.lock();
+    try {
+      // we might get multiple calls in a row, ignore all but the first one
       if (currentNode != null) return;
 
-      currentNode = new DsoNodeImpl(nodeId);
+      currentNode = topology.registerDsoNode(nodeId);
       isNodeJoined = true;
-      nodes.put(nodeId, currentNode);
+
+      for (NodeID otherNodeId : clusterMembers) {
+        topology.registerDsoNode(otherNodeId);
+      }
+    } finally {
+      stateWriteLock.unlock();
     }
 
     fireNodeJoined(nodeId);
   }
 
   public void fireThisNodeLeft() {
-    System.out.println(">>>>>> " + currentNode + " - DsoClusterImpl.fireThisNodeLeft(" + currentNode.getId() + ")");
-    synchronized (this) {
-      if (null == currentNode) {
-        // client channels closed before we knew the currentNode. Skip the disconnect event in this case
-        return;
+    boolean fireOperationsDisabled = false;
+    stateWriteLock.lock();
+    try {
+      if (areOperationsEnabled) {
+        fireOperationsDisabled = true;
+        areOperationsEnabled = false;
       }
+    } finally {
+      stateWriteLock.unlock();
+    }
+
+    if (fireOperationsDisabled) {
+      fireOperationsDisabledInternal();
+    }
+
+    stateWriteLock.lock();
+    try {
+      if (!isNodeJoined) { return; }
       isNodeJoined = false;
+    } finally {
+      stateWriteLock.unlock();
     }
 
-    fireNodeLeft(currentNode.getId());
+    fireNodeLeft(new ClientID(currentNode.getChannelId()));
   }
 
-  public void fireNodeJoined(final String nodeId) {
-    System.out.println(">>>>>> " + currentNode + " - DsoClusterImpl.fireNodeJoined(" + nodeId + ")");
-    final DsoClusterEvent event = createEvent(nodeId);
+  public void fireNodeJoined(final NodeID nodeId) {
+    if (topology.containsDsoNode(nodeId)) {
+      return;
+    }
+
+    final DsoClusterEvent event = new DsoClusterEventImpl(topology.getAndRegisterDsoNode(nodeId));
     for (DsoClusterListener listener : listeners) {
+      fireNodeJoinedInternal(event, listener);
+    }
+  }
+
+  private void fireNodeJoinedInternal(final DsoClusterEvent event, final DsoClusterListener listener) {
+    try {
       listener.nodeJoined(event);
+    } catch (Throwable e) {
+      log(e);
     }
   }
 
-  public void fireNodeLeft(final String nodeId) {
-    System.out.println(">>>>>> " + currentNode + " - DsoClusterImpl.fireNodeLeft(" + nodeId + ")");
-    final DsoClusterEvent event = createEvent(nodeId);
+  public void fireNodeLeft(final NodeID nodeId) {
+    if (!topology.containsDsoNode(nodeId)) {
+      return;
+    }
+
+    final DsoClusterEvent event = new DsoClusterEventImpl(topology.getAndRemoveDsoNode(nodeId));
     for (DsoClusterListener listener : listeners) {
-      listener.nodeLeft(event);
+      try {
+        listener.nodeLeft(event);
+      } catch (Throwable e) {
+        log(e);
+      }
     }
   }
 
   public void fireOperationsEnabled() {
-    // only fire this event when the node has already confirmed its connection through a handshake
     if (currentNode != null) {
-      System.out.println(">>>>>> " + currentNode + " - DsoClusterImpl.fireOperationsEnabled(" + currentNode + ")");
-
-      synchronized (this) {
+      stateWriteLock.lock();
+      try {
+        if (areOperationsEnabled) { return; }
         areOperationsEnabled = true;
+      } finally {
+        stateWriteLock.unlock();
       }
 
-      final DsoClusterEvent event = createEvent(currentNode.getId());
+      final DsoClusterEvent event = new DsoClusterEventImpl(currentNode);
       for (DsoClusterListener listener : listeners) {
-        listener.operationsEnabled(event);
+        fireOperationsEnabledInternal(event, listener);
       }
     }
   }
 
+  private void fireOperationsEnabledInternal(final DsoClusterEvent event, final DsoClusterListener listener) {
+    try {
+      listener.operationsEnabled(event);
+    } catch (Throwable e) {
+      log(e);
+    }
+  }
+
   public void fireOperationsDisabled() {
-    System.out.println(">>>>>> " + currentNode + " - DsoClusterImpl.fireOperationsDisabled(" + currentNode + ")");
-    synchronized (this) {
+    stateWriteLock.lock();
+    try {
+      if (!areOperationsEnabled) { return; }
+
       areOperationsEnabled = false;
+    } finally {
+      stateWriteLock.unlock();
     }
 
-    final DsoClusterEvent event = createEvent(currentNode.getId());
+    fireOperationsDisabledInternal();
+  }
+
+  private void fireOperationsDisabledInternal() {
+    final DsoClusterEvent event = new DsoClusterEventImpl(currentNode);
     for (DsoClusterListener listener : listeners) {
-      listener.operationsDisabled(event);
+      try {
+        listener.operationsDisabled(event);
+      } catch (Throwable e) {
+        log(e);
+      }
     }
+  }
+
+  private void log(final Throwable t) {
+    LOGGER.error("Unhandled exception in event callback " + this, t);
   }
 }

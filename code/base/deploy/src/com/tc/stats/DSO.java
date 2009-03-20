@@ -132,6 +132,18 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return getStats().getObjectFaultRate();
   }
 
+  public long getGlobalLockRecallRate() {
+    return getStats().getGlobalLockRecallRate();
+  }
+
+  public long getTransactionSizeRate() {
+    return getStats().getTransactionSizeRate();
+  }
+
+  public long getBroadcastRate() {
+    return getStats().getBroadcastRate();
+  }
+
   public Number[] getStatistics(String[] names) {
     return getStats().getStatistics(names);
   }
@@ -288,6 +300,21 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
       }
     }
     return map;
+  }
+
+  /**
+   * Sum of all unacknowledged client transactions
+   */
+  public long getPendingTransactionsCount() {
+    long result = 0;
+    synchronized (clientObjectNames) {
+      Iterator<ObjectName> iter = clientObjectNames.iterator();
+      while (iter.hasNext()) {
+        ObjectName clientBeanName = iter.next();
+        result += clientMap.get(clientBeanName).getPendingTransactionsCount();
+      }
+    }
+    return result;
   }
 
   public Map<ObjectName, Long> getClientTransactionRates() {

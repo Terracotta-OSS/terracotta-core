@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package org.terracotta.dso;
 
@@ -26,6 +27,7 @@ import com.tc.object.config.LockDefinitionImpl;
 import com.tc.object.config.ModuleSpec;
 import com.tc.object.config.Root;
 import com.tc.object.config.StandardDSOClientConfigHelper;
+import com.tc.object.config.TimCapability;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.TransparencyClassSpecImpl;
 import com.tc.object.config.schema.DSOInstrumentationLoggingOptions;
@@ -60,11 +62,12 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     /**/
   }
 
-  public void addClassReplacement(final String originalClassName, final String replacementClassName, final URL replacementResource) {
+  public void addClassReplacement(final String originalClassName, final String replacementClassName,
+                                  final URL replacementResource) {
     /**/
   }
 
-  public void addClassResource(final String className, final URL resource) {
+  public void addClassResource(final String className, final URL resource, final boolean targetSystemLoader) {
     /**/
   }
 
@@ -80,7 +83,8 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     /**/
   }
 
-  public void addIncludePattern(final String expression, final boolean honorTransient, final boolean oldStyleCallConstructorOnLoad, final boolean honorVolatile) {
+  public void addIncludePattern(final String expression, final boolean honorTransient,
+                                final boolean oldStyleCallConstructorOnLoad, final boolean honorVolatile) {
     /**/
   }
 
@@ -101,10 +105,6 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
   }
 
   public void addWriteAutolock(final String methodPattern) {
-    /**/
-  }
-
-  public void allowCGLIBInstrumentation() {
     /**/
   }
 
@@ -140,7 +140,9 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     /**/
   }
 
-  public void addIncludeAndLockIfRequired(final String expression, final boolean honorTransient, final boolean oldStyleCallConstructorOnLoad, final boolean honorVolatile, final String lockExpression, final ClassInfo classInfo) {
+  public void addIncludeAndLockIfRequired(final String expression, final boolean honorTransient,
+                                          final boolean oldStyleCallConstructorOnLoad, final boolean honorVolatile,
+                                          final String lockExpression, final ClassInfo classInfo) {
     /**/
   }
 
@@ -159,6 +161,7 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
   public void addModule(final String groupId, final String name, final String version) {
     /**/
   }
+
   public void addReadAutoSynchronize(final String methodPattern) {
     /**/
   }
@@ -207,7 +210,7 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     return null;
   }
 
-  public URL getClassResource(final String className) {
+  public URL getClassResource(String className, ClassLoader loader, boolean hideSystemResources) {
     return null;
   }
 
@@ -339,10 +342,6 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     return false;
   }
 
-  public boolean removeCustomAdapter(final String name) {
-    return false;
-  }
-
   public void removeSpec(final String className) {
     /**/
   }
@@ -385,29 +384,26 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     return null;
   }
 
-  public ClassAdapter createClassAdapterFor(final ClassWriter writer, final ClassInfo classInfo, final InstrumentationLogger lgr,
-                                            final ClassLoader caller) {
+  public ClassAdapter createClassAdapterFor(final ClassWriter writer, final ClassInfo classInfo,
+                                            final InstrumentationLogger lgr, final ClassLoader caller) {
     return null;
   }
 
-  public ClassAdapter createClassAdapterFor(final ClassWriter writer, final ClassInfo classInfo, final InstrumentationLogger lgr,
-                                            final ClassLoader caller, final boolean disableSuperClassTypeChecking) {
+  public ClassAdapter createClassAdapterFor(final ClassWriter writer, final ClassInfo classInfo,
+                                            final InstrumentationLogger lgr, final ClassLoader caller,
+                                            final boolean disableSuperClassTypeChecking) {
     return null;
-  }
-
-  public void addCustomAdapter(final String name, final String factoryName) {
-    /**/
   }
 
   public void addNonportablePattern(final String pattern) {
     /**/
   }
 
-  public ClassAdapterFactory getCustomAdapter(final ClassInfo classInfo) {
+  public Collection<ClassAdapterFactory> getCustomAdapters(final ClassInfo classInfo) {
     return null;
   }
 
-  public boolean hasCustomAdapter(final ClassInfo classInfo) {
+  public boolean hasCustomAdapters(final ClassInfo classInfo) {
     return false;
   }
 
@@ -437,10 +433,46 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
 
   public void addSessionLockedApplication(final String name) {
     throw new ImplementMe();
+  }
+
+  public void validateGroupInfo() {
+    //
+  }
+
+  public boolean addClassConfigBasedAdapters(final ClassInfo classInfo) {
+    return false;
+  }
+
+  public void enableCapability(final TimCapability cap) {
+    //
+  }
+
+  public void validateSessionConfig() {
+    //
+  }
+
+  public void addInjectedField(final String className, final String fieldName, final String Type) {
+    //
 
   }
 
-  public boolean addAnnotationBasedAdapters(final ClassInfo classInfo) {
+  public String getInjectedFieldType(final ClassInfo classInfo, final String field) {
+    return null;
+  }
+
+  public void addToAppGroup(final String appGroup, final String[] namedClassloaders, final String[] webAppNames) {
+    //
+  }
+
+  public String getAppGroup(final String classLoaderName, final String appName) {
+    return null;
+  }
+
+  public boolean isInjectedField(final String className, final String fieldName) {
+    return false;
+  }
+
+  public boolean hasOnLoadInjection(final ClassInfo classInfo) {
     return false;
   }
 }

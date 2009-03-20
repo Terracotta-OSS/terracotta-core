@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol;
 
@@ -12,6 +13,7 @@ import com.tc.net.protocol.transport.ConnectionID;
 public class StackNotFoundException extends Exception {
 
   public StackNotFoundException(ConnectionID connectionId, TCSocketAddress socketAddress) {
-    super(connectionId + " not found. Connection is being requested from "+ socketAddress);
+    super(connectionId + " not found. Connection attempts from the Terracotta client at " + socketAddress
+          + " are being rejected by the Terracotta server array.");
   }
 }

@@ -336,7 +336,7 @@ public class ClassLoaderPreProcessorImpl {
 
       mv.visitVarInsn(ALOAD, 1);
       mv.visitVarInsn(ALOAD, 0);
-      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/ClassProcessorHelper", "getTCClass",
+      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/ClassProcessorHelper", "loadClassInternalHook",
                          "(Ljava/lang/String;Ljava/lang/ClassLoader;)[B");
       mv.visitVarInsn(ASTORE, 2);
 

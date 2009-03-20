@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ReflectionFieldTestApp extends GenericTestApp {
+public class ReflectionFieldTestApp extends GenericTransparentApp {
   // This field is used by reflection.
   private DataRoot                  reflectionRoot        = null;
   private Integer                   literalRoot;                                            // used by reflection.

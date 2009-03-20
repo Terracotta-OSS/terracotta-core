@@ -206,7 +206,7 @@ public class SleepycatPersistableMap implements Map, PersistableCollection {
     // XXX::Sleepycat has the most inefficent way to delete objects. Another way would be to delete all records
     // explicitly.
     // XXX:: Since we read in one direction and since we have to read the first record of the next map to break out, we
-    // need READ_COMMITTED to avoid deadlocks between commit thread and GC thread.
+    // need READ_COMMITTED to avoid deadlocks between commit thread and DGC thread.
     int written = 0;
     Cursor c = db.openCursor(persistor.pt2nt(tx), CursorConfig.READ_COMMITTED);
     byte idb[] = Conversion.long2Bytes(id);
@@ -250,6 +250,7 @@ public class SleepycatPersistableMap implements Map, PersistableCollection {
     return true;
   }
 
+  @Override
   public boolean equals(Object other) {
     if (!(other instanceof Map)) { return false; }
     Map that = (Map) other;
@@ -257,6 +258,7 @@ public class SleepycatPersistableMap implements Map, PersistableCollection {
     return entrySet().containsAll(that.entrySet());
   }
 
+  @Override
   public int hashCode() {
     int h = 0;
     for (Iterator i = entrySet().iterator(); i.hasNext();) {
@@ -265,6 +267,7 @@ public class SleepycatPersistableMap implements Map, PersistableCollection {
     return h;
   }
 
+  @Override
   public String toString() {
     return "SleepycatPersistableMap(" + id + ")={ Map.size() = " + map.size() + ", delta.size() = " + delta.size()
            + ", removeCount = " + removeCount + " }";
@@ -273,7 +276,7 @@ public class SleepycatPersistableMap implements Map, PersistableCollection {
   public void load(SleepycatCollectionsPersistor persistor, PersistenceTransaction tx, Database db) throws IOException,
       ClassNotFoundException, DatabaseException {
     // XXX:: Since we read in one direction and since we have to read the first record of the next map to break out, we
-    // need READ_COMMITTED to avoid deadlocks between commit thread and GC thread.
+    // need READ_COMMITTED to avoid deadlocks between commit thread and DGC thread.
     Cursor c = db.openCursor(persistor.pt2nt(tx), CursorConfig.READ_COMMITTED);
     byte idb[] = Conversion.long2Bytes(id);
     DatabaseEntry key = new DatabaseEntry();
@@ -457,18 +460,21 @@ public class SleepycatPersistableMap implements Map, PersistableCollection {
   }
 
   private class KeyIterator extends BaseIterator {
+    @Override
     protected Object getNext() {
       return next.getKey();
     }
   }
 
   private class ValuesIterator extends BaseIterator {
+    @Override
     protected Object getNext() {
       return next.getValue();
     }
   }
 
   private class EntryIterator extends BaseIterator {
+    @Override
     protected Object getNext() {
       return next;
     }

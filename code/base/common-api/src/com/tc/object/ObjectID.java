@@ -53,6 +53,7 @@ public class ObjectID extends AbstractIdentifier implements Serializable {
     return oid;
   }
 
+  @Override
   public String getIdentifierType() {
     return "ObjectID";
   }
@@ -71,8 +72,10 @@ public class ObjectID extends AbstractIdentifier implements Serializable {
     return oid;
   }
 
+  @Override
   public String toString() {
     if (getGroupID() == 0 || toLong() == -1) { return super.toString(); }
     return getIdentifierType() + "=" + "[" + getGroupID() + ":" + getObjectID() + "]";
   }
+
 }

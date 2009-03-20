@@ -131,12 +131,16 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     nodeView = new XContainer(new BorderLayout());
 
     XSplitPane leftSplitter = new XSplitPane(JSplitPane.HORIZONTAL_SPLIT, tree, nodeView);
+    leftSplitter.setDefaultDividerLocation(0.23);
     leftSplitter.setName("LeftSplitter");
+    leftSplitter.setPreferences(getPreferences().node(leftSplitter.getName()));
 
     logsPanel = new LogsPanel(adminClientContext);
 
     XSplitPane mainSplitter = new XSplitPane(JSplitPane.VERTICAL_SPLIT, leftSplitter, logsPanel);
+    mainSplitter.setDefaultDividerLocation(0.72);
     mainSplitter.setName("MainSplitter");
+    mainSplitter.setPreferences(getPreferences().node(mainSplitter.getName()));
 
     add(mainSplitter, BorderLayout.CENTER);
 
@@ -145,13 +149,13 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
 
     add(statusLine, BorderLayout.SOUTH);
 
-    mainSplitter.setPreferences(getPreferences().node(mainSplitter.getName()));
-    leftSplitter.setPreferences(getPreferences().node(leftSplitter.getName()));
-
     tree.addTreeSelectionListener(new NavTreeSelectionListener());
 
     logArea = new LogPane();
     logsPanel.add(adminClientContext.getString("messages"), logArea);
+
+    initNavTreeMenu();
+    registerOptions();
 
     tree.setModel(new NavTreeModel(adminClientContext));
 
@@ -161,9 +165,6 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
 
     getActionMap().put(UNDO, undoCmd = new UndoAction());
     getActionMap().put(REDO, redoCmd = new RedoAction());
-
-    initNavTreeMenu();
-    registerOptions();
 
     XRootNode root = tree.getRootNode();
     int count = root.getChildCount();
@@ -206,7 +207,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       nodeView.revalidate();
       nodeView.repaint();
 
-      if (path != null) {
+      if (path != null && path.getPathCount() > 1) {
         setSelectedClusterNode((ClusterNode) path.getPathComponent(1));
       }
     }
@@ -405,8 +406,13 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
   }
 
   public void expand(XTreeNode node) {
-    if (node != null && node.getParent() != null) {
-      tree.expandPath(new TreePath(node.getPath()));
+    if (node != null) {
+      TreeNode parentNode = node.getParent();
+      if (parentNode != null) {
+        TreePath path = new TreePath(node.getPath());
+        tree.expandPath(path.getParentPath());
+        tree.expandPath(path);
+      }
     }
   }
 
@@ -511,12 +517,16 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     setStatus("");
   }
 
-  class NewClusterAction extends XAbstractAction {
+  class NewClusterAction extends XAbstractAction implements Runnable {
     NewClusterAction() {
       super(adminClientContext.getMessage("new.cluster.action.label"));
     }
 
     public void actionPerformed(ActionEvent ae) {
+      SwingUtilities.invokeLater(this);
+    }
+
+    public void run() {
       XTreeModel model = (XTreeModel) tree.getModel();
       XTreeNode root = (XTreeNode) model.getRoot();
       int index = root.getChildCount();
@@ -536,6 +546,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       storePreferences();
 
       clusterNode.getClusterModel().addPropertyChangeListener(AdminClientPanel.this);
+      adminClientContext.setStatus(adminClientContext.format("added.server", clusterNode));
     }
   }
 
@@ -1131,15 +1142,19 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     return svtFrame;
   }
 
-  public void propertyChange(PropertyChangeEvent evt) {
+  public void propertyChange(final PropertyChangeEvent evt) {
     String prop = evt.getPropertyName();
     if (IClusterModel.PROP_CONNECTED.equals(prop)) {
-      IClusterModel clusterModel = (IClusterModel) evt.getSource();
-      if (clusterModel.isConnected()) {
-        addClusterLog(clusterModel);
-      } else {
-        removeClusterLog(clusterModel);
-      }
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          IClusterModel clusterModel = (IClusterModel) evt.getSource();
+          if (clusterModel.isConnected()) {
+            addClusterLog(clusterModel);
+          } else {
+            removeClusterLog(clusterModel);
+          }
+        }
+      });
     }
   }
 }

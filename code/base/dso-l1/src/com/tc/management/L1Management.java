@@ -18,8 +18,8 @@ import com.tc.management.beans.logging.RuntimeLogging;
 import com.tc.management.beans.logging.RuntimeLoggingMBean;
 import com.tc.management.beans.logging.RuntimeOutputOptions;
 import com.tc.management.beans.logging.RuntimeOutputOptionsMBean;
-import com.tc.management.beans.sessions.SessionMonitorImpl;
 import com.tc.management.beans.sessions.SessionMonitor;
+import com.tc.management.beans.sessions.SessionMonitorImpl;
 import com.tc.management.beans.tx.ClientTxMonitor;
 import com.tc.management.beans.tx.ClientTxMonitorMBean;
 import com.tc.management.exposed.TerracottaCluster;
@@ -30,13 +30,10 @@ import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.util.concurrent.SetOnceFlag;
-import com.tc.util.runtime.Vm;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.lang.management.ManagementFactory;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.management.InstanceAlreadyExistsException;
@@ -147,6 +144,7 @@ public final class L1Management extends TerracottaManagement {
     registrationThread.start();
   }
 
+  @Override
   public Object findMBean(final ObjectName objectName, final Class mBeanInterface) throws IOException {
     if (objectName.equals(MBeanNames.CLIENT_TX_INTERNAL)) return clientTxBean;
     else if (objectName.equals(L1MBeanNames.HTTP_SESSIONS_PUBLIC)) return httpSessionsMonitor;
@@ -170,10 +168,6 @@ public final class L1Management extends TerracottaManagement {
     return httpSessionsMonitor;
   }
 
-  public TerracottaCluster getTerracottaCluster() {
-    return clusterBean;
-  }
-
   public L1InfoMBean findL1InfoMBean() {
     return l1InfoBean;
   }
@@ -191,8 +185,7 @@ public final class L1Management extends TerracottaManagement {
   }
 
   private void attemptToRegister(final boolean createDedicatedMBeanServer) throws InstanceAlreadyExistsException,
-      MBeanRegistrationException, NotCompliantMBeanException, SecurityException, IllegalArgumentException,
-      NoSuchMethodException, ClassNotFoundException, IllegalAccessException, InvocationTargetException {
+      MBeanRegistrationException, NotCompliantMBeanException {
     synchronized (mBeanServerLock) {
       if (mBeanServer == null) {
         if (createDedicatedMBeanServer) {
@@ -201,24 +194,7 @@ public final class L1Management extends TerracottaManagement {
           }
           mBeanServer = MBeanServerFactory.createMBeanServer();
         } else {
-          if (Vm.isJDK14()) {
-            List mBeanServers = MBeanServerFactory.findMBeanServer(null);
-            if (mBeanServers != null && !mBeanServers.isEmpty()) {
-              mBeanServer = (MBeanServer) mBeanServers.get(0);
-            } else {
-              if (logger.isDebugEnabled()) {
-                logger.debug("attemptToRegister(): Inside a 1.4 runtime, try to create an MBeanServer");
-              }
-              mBeanServer = MBeanServerFactory.createMBeanServer();
-            }
-          } else {
-            // CDV-260: Make sure to use java.lang.management.ManagementFactory.getPlatformMBeanServer() on JDK 1.5+
-            if (logger.isDebugEnabled()) {
-              logger
-                  .debug("attemptToRegister(): Inside a 1.5+ runtime, trying to get the platform default MBeanServer");
-            }
-            mBeanServer = getPlatformDefaultMBeanServer();
-          }
+          mBeanServer = getPlatformDefaultMBeanServer();
         }
         addJMXConnectors();
       }
@@ -269,12 +245,8 @@ public final class L1Management extends TerracottaManagement {
     }
   }
 
-  private MBeanServer getPlatformDefaultMBeanServer() throws SecurityException, NoSuchMethodException,
-      ClassNotFoundException, IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-    // 1.5+, this code is irritating since this class needs to compile against 1.4
-    Class managementFactoryClass = Class.forName("java.lang.management.ManagementFactory");
-    Method getPlatformMBeanServerMethod = managementFactoryClass.getDeclaredMethod("getPlatformMBeanServer",
-                                                                                   new Class[0]);
-    return (MBeanServer) getPlatformMBeanServerMethod.invoke(null, new Object[0]);
+  private MBeanServer getPlatformDefaultMBeanServer() {
+    return ManagementFactory.getPlatformMBeanServer();
   }
+
 }

@@ -5,6 +5,7 @@
 package com.tc.admin.common;
 
 import java.awt.Component;
+import java.awt.Cursor;
 
 import javax.swing.JComponent;
 
@@ -51,10 +52,20 @@ public class ComponentNode extends XTreeNode implements IComponentProvider {
     return component;
   }
 
+  @Override
   public String toString() {
     return label != null ? label : super.toString();
   }
-  
+
+  @Override
+  public void setEnabled(boolean enabled) {
+    super.setEnabled(enabled);
+    if (component != null) {
+      component.setCursor(Cursor.getPredefinedCursor(enabled ? Cursor.DEFAULT_CURSOR : Cursor.WAIT_CURSOR));
+    }
+  }
+
+  @Override
   public void tearDown() {
     super.tearDown();
     setLabel(null);

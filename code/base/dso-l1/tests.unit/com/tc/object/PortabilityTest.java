@@ -13,7 +13,7 @@ import junit.framework.TestCase;
 
 public class PortabilityTest extends TestCase {
 
-  public void testOverridesHashCode() throws ClassNotFoundException {
+  public void testOverridesHashCode() {
     Portability p = new PortabilityImpl(null);
     assertTrue(p.overridesHashCode(new A()));
     assertTrue(p.overridesHashCode(new B()));
@@ -36,10 +36,10 @@ public class PortabilityTest extends TestCase {
 
   }
 
-  private void verifyEnum(Portability p) throws ClassNotFoundException {
-    Class threadState = Class.forName("java.lang.Thread$State");
+  private void verifyEnum(Portability p) {
+    Class threadState = java.lang.Thread.State.class;
 
-    assertTrue(ClassUtils.isEnum(threadState));
+    assertTrue(ClassUtils.isDsoEnum(threadState));
 
     assertFalse(p.overridesHashCode(threadState));
   }

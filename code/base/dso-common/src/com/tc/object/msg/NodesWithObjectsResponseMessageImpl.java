@@ -1,12 +1,12 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.msg;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.NodeID;
-import com.tc.net.groups.NodeIDSerializer;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -24,20 +24,24 @@ import java.util.Set;
 
 public class NodesWithObjectsResponseMessageImpl extends DSOMessageBase implements NodesWithObjectsResponseMessage {
 
-  private final static byte THREAD_ID = 1;
-  private final static byte MANAGED_OBJECT_ID = 2;
-  private final static byte NODE_ID = 3;
+  private final static byte          THREAD_ID         = 1;
+  private final static byte          MANAGED_OBJECT_ID = 2;
+  private final static byte          NODE_ID           = 3;
 
-  private ThreadID threadID;
+  private ThreadID                   threadID;
   private Map<ObjectID, Set<NodeID>> nodesWithObjects;
 
-  private Set<NodeID> lastHydratedNodeIDSet;
+  private Set<NodeID>                lastHydratedNodeIDSet;
 
-  public NodesWithObjectsResponseMessageImpl(final SessionID sessionID, final MessageMonitor monitor, final TCByteBufferOutputStream out, final MessageChannel channel, final TCMessageType type) {
+  public NodesWithObjectsResponseMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
+                                             final TCByteBufferOutputStream out, final MessageChannel channel,
+                                             final TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
 
-  public NodesWithObjectsResponseMessageImpl(final SessionID sessionID, final MessageMonitor monitor, final MessageChannel channel, final TCMessageHeader header, final TCByteBuffer[] data) {
+  public NodesWithObjectsResponseMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
+                                             final MessageChannel channel, final TCMessageHeader header,
+                                             final TCByteBuffer[] data) {
     super(sessionID, monitor, channel, header, data);
   }
 
@@ -57,7 +61,7 @@ public class NodesWithObjectsResponseMessageImpl extends DSOMessageBase implemen
       putNVPair(MANAGED_OBJECT_ID, entry.getKey().toLong());
 
       for (NodeID nodeID : entry.getValue()) {
-        putNVPair(NODE_ID, new NodeIDSerializer(nodeID));
+        putNVPair(NODE_ID, nodeID);
       }
     }
   }
@@ -79,7 +83,7 @@ public class NodesWithObjectsResponseMessageImpl extends DSOMessageBase implemen
         return true;
       case NODE_ID:
         Assert.assertNotNull(lastHydratedNodeIDSet);
-        NodeID nodeID = ((NodeIDSerializer) getObject(new NodeIDSerializer())).getNodeID();
+        NodeID nodeID = getNodeIDValue();
         lastHydratedNodeIDSet.add(nodeID);
         return true;
       default:

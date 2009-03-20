@@ -2,9 +2,9 @@ Terracotta
 ==========
 
 Documentation: http://www.terracotta.org/web/display/orgsite/Documentation 
-Forums:        http://www.terracottatech.com/forums/
+Forums:        http://forums.terracotta.org
 Mailing Lists: http://lists.terracotta.org
-Services:      http://www.terracottatech.com/support_services.shtml
+Services:      http://www.terracotta.org/web/display/enterprise/Support
 
 
 Getting Started
@@ -15,7 +15,7 @@ Below are abbreviated install steps for Terracotta.
 Terracotta
    Unix/Linux:
       - Unzip/untar the Terracotta software.
-      - cd into the the top-level directory.
+      - cd into the top-level directory.
       - Launch the Welcome tool by entering the command:
            ./welcome.sh
    Windows:
@@ -87,21 +87,14 @@ Projects for the Forge can be found at:
     - http://forge.terracotta.org 
 
      
-Java Virtual Machine (Windows only)
+Java Virtual Machine
 --------------------
 
-The Terracotta Server runs with the Java Runtime Environment (JRE) that ships
-with Terracotta.
-
-Terracotta Clients can be run with any supported JRE.  The product guide
+Terracotta clusters can be run with any supported JRE.  The product guide
 contains a list of supported JREs.  The JRE used by Terracotta Clients need not
-match the one used by the Terracotta Server.
-
-It is possible to control the JVM that the Terracotta Server uses by
-setting the JAVA_HOME environment variable.  This should be used with caution,
-as doing so may cause the Terracotta Server to run with an unsupported JVM.
-
+match the one used by the Terracotta Server. Control the JVM that the Terracotta
+uses by setting the JAVA_HOME environment variable.
 
 ----
-Copyright (c) 2008, Terracotta, Inc.
+Copyright (c) 2009, Terracotta, Inc.
 http://www.terracotta.org

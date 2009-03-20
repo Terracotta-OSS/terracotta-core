@@ -1,5 +1,5 @@
 <project name="buildsystems" default="install-jruby">
-  <property name="jruby.zip" value="jruby-1.1.2-20090208.zip"/>
+  <property name="jruby.package" value="jruby-1.1.6.tar.gz"/>
 
   <target name="install-jruby">
     <condition property="cache.dest" value="C:\temp\tc" else="${user.home}/.tc">
@@ -8,24 +8,12 @@
     
     <echo message="JRuby cache: ${cache.dest}"/>
     
-    <condition property="jruby-zip-not-cached">
-      <not>
-        <available file="${cache.dest}/${jruby.zip}" />
-      </not>
-    </condition>
+    <get src="http://download.terracotta.org/buildjars/lib/${jruby.package}"
+     dest="${cache.dest}/${jruby.package}"
+     verbose="true"
+     usetimestamp="true"/>
+     
+    <untar src="${cache.dest}/${jruby.package}" dest="${cache.dest}" compression="gzip"/>
     
-    <antcall target="download-jruby"/>
-    <antcall target="unzip-jruby"/>
   </target>
-
-  <target name="download-jruby" if="jruby-zip-not-cached">
-    <get src="http://download.terracotta.org/buildjars/lib/${jruby.zip}"
-         dest="${cache.dest}/${jruby.zip}"
-         verbose="true"/>
-  </target>
-  
-  <target name="unzip-jruby">
-    <unzip src="${cache.dest}/${jruby.zip}" dest="${cache.dest}"/>
-  </target>  
-  
 </project>

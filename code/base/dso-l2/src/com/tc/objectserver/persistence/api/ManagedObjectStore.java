@@ -23,7 +23,7 @@ public interface ManagedObjectStore extends ManagedObjectProvider, ObjectIDSeque
    * synchronous
    */
   public int getObjectCount();
-  
+
   public void addNewObject(ManagedObject managed);
 
   public void commitObject(PersistenceTransaction tx, ManagedObject object);
@@ -41,7 +41,7 @@ public interface ManagedObjectStore extends ManagedObjectProvider, ObjectIDSeque
   public ObjectIDSet getAllObjectIDs();
 
   public boolean containsObject(ObjectID id);
-  
+
   public ObjectID getRootID(String name);
 
   public Set getRoots();
@@ -57,7 +57,7 @@ public interface ManagedObjectStore extends ManagedObjectProvider, ObjectIDSeque
   public Map getRootNamesToIDsMap();
 
   /**
-   * This method is used by the GC to trigger removing Garbage.
+   * This method is used by the DGC to trigger removing Garbage.
    */
   public void removeAllObjectsByID(GCResultContext gcResult);
 }

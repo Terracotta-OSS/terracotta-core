@@ -1,5 +1,5 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * All content copyright (c) 2003-2009 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
 package com.tc.test.server.appserver.deployment;
@@ -28,12 +28,13 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
   protected boolean shouldKillAppServersEachRun() {
     return false;
   }
-
-  public static abstract class TwoServerTestSetup extends ServerTestSetup {
+  
+  private static abstract class TwoServerTestSetupBase extends ServerTestSetup {
     private final Log              logger = LogFactory.getLog(getClass());
 
     private final Class            testClass;
-    private final String           context;
+    private final String           context0;
+    private final String           context1;
     private final TcConfigBuilder  tcConfigBuilder;
 
     private boolean                start  = true;
@@ -41,18 +42,11 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
     protected WebApplicationServer server0;
     protected WebApplicationServer server1;
 
-    protected TwoServerTestSetup(Class testClass, String context) {
-      this(testClass, new TcConfigBuilder(), context);
-    }
-
-    protected TwoServerTestSetup(Class testClass, String tcConfigFile, String context) {
-      this(testClass, new TcConfigBuilder(tcConfigFile), context);
-    }
-
-    protected TwoServerTestSetup(Class testClass, TcConfigBuilder configBuilder, String context) {
+    protected TwoServerTestSetupBase(Class testClass, TcConfigBuilder configBuilder, String context0, String context1) {
       super(testClass);
       this.testClass = testClass;
-      this.context = context;
+      this.context0 = context0;
+      this.context1 = context1;
       this.tcConfigBuilder = configBuilder;
     }
 
@@ -67,13 +61,23 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
         getServerManager();
 
         long l1 = System.currentTimeMillis();
-        Deployment deployment = makeWAR();
+        Deployment deployment0 = makeWAR(0);
         long l2 = System.currentTimeMillis();
-        logger.info("### WAR build " + (l2 - l1) / 1000f + " at " + deployment.getFileSystemPath());
+        logger.info("### WAR build 0 " + (l2 - l1) / 1000f + " at " + deployment0.getFileSystemPath());
+        Deployment deployment1 = null;
+        if (null != context1) {
+          deployment1 = makeWAR(1);
+          long l3 = System.currentTimeMillis();
+          logger.info("### WAR build 1 " + (l3 - l2) / 1000f + " at " + deployment1.getFileSystemPath());
+        }
 
         configureTcConfig(tcConfigBuilder);
-        server0 = createServer(deployment);
-        server1 = createServer(deployment);
+        server0 = createServer(deployment0, context0);
+        if (null != deployment1) {
+          server1 = createServer(deployment1, context1);
+        } else {
+          server1 = createServer(deployment0, context0);
+        }
 
         TestSuite suite = (TestSuite) getTest();
         for (int i = 0; i < suite.testCount(); i++) {
@@ -94,7 +98,7 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
       }
     }
 
-    private WebApplicationServer createServer(Deployment deployment) throws Exception {
+    private WebApplicationServer createServer(Deployment deployment, String context) throws Exception {
       WebApplicationServer server = getServerManager().makeWebApplicationServer(tcConfigBuilder);
       configureServerParamers(server.getServerParameters());
       server.addWarDeployment(deployment, context);
@@ -104,14 +108,19 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
       return server;
     }
 
-    private Deployment makeWAR() throws Exception {
-      DeploymentBuilder builder = makeDeploymentBuilder(this.context + ".war");
+    private Deployment makeWAR(int server) throws Exception {
+      String context = (server == 0) ? context0 : context1;
+      DeploymentBuilder builder = makeDeploymentBuilder(
+          context + ".war");
       builder.addDirectoryOrJARContainingClass(testClass);
-      configureWar(builder);
+      configureWar(server, builder);
       return builder.makeDeployment();
     }
 
-    protected abstract void configureWar(DeploymentBuilder builder);
+    /**
+     * Override this method to add directories or jars to the builder
+     */
+    protected abstract void configureWar(int server, DeploymentBuilder builder);
 
     protected void configureTcConfig(TcConfigBuilder clientConfig) {
       // override this method to modify tc-config.xml
@@ -122,4 +131,39 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
     }
   }
 
+  /**
+   * Use this setup for two servers both running the same app context.
+   */
+  public static abstract class TwoServerTestSetup extends TwoServerTestSetupBase {
+    protected TwoServerTestSetup(Class testClass, String context) {
+      this(testClass, new TcConfigBuilder(), context);
+    }
+
+    protected TwoServerTestSetup(Class testClass, String tcConfigFile, String context) {
+      this(testClass, new TcConfigBuilder(tcConfigFile), context);
+    }
+
+    protected TwoServerTestSetup(Class testClass, TcConfigBuilder configBuilder, String context) {
+      super(testClass, configBuilder, context, null);
+    }
+    
+    final protected void configureWar(int server, DeploymentBuilder builder) {
+      configureWar(builder);
+    }
+    
+    protected abstract void configureWar(DeploymentBuilder builder);
+  }
+  
+  /**
+   * Use this setup for two servers, each with its own context.
+   * The test class and config will still be shared by both.  To add
+   * additional classes to just one of the contexts, override
+   * {@link #configureWar(int, DeploymentBuilder)}.
+   */
+  public static abstract class TwoContextTestSetup extends TwoServerTestSetupBase {
+    protected TwoContextTestSetup(Class testClass, String tcConfigFile, String context0, String context1) {
+      super(testClass, new TcConfigBuilder(tcConfigFile), context0, context1);
+    }
+
+  }
 }

@@ -66,7 +66,7 @@ public class RootsPanel extends XContainer implements PropertyChangeListener {
                     ILiveObjectCountProvider liveObjectCountProvider, IBasicObject[] roots) {
     this(adminClientContext, facadeProvider, liveObjectCountProvider, null, roots);
   }
-  
+
   public RootsPanel(IAdminClientContext adminClientContext, ManagedObjectFacadeProvider facadeProvider,
                     ILiveObjectCountProvider liveObjectCountProvider, IClient client, IBasicObject[] roots) {
     super(new BorderLayout());
@@ -122,7 +122,8 @@ public class RootsPanel extends XContainer implements PropertyChangeListener {
     gbc.gridx++;
 
     inspectObjectField = new XTextField();
-    inspectObjectField.setColumns(10);
+    inspectObjectField.setColumns(16);
+    inspectObjectField.setMinimumSize(inspectObjectField.getPreferredSize());
     inspectObjectField.addActionListener(new InspectFieldHandler());
     InspectObjectAction inspectAction = new InspectObjectAction();
     inspectObjectField.getDocument().addDocumentListener(inspectAction);
@@ -141,7 +142,7 @@ public class RootsPanel extends XContainer implements PropertyChangeListener {
 
     add(bottomPanel, BorderLayout.SOUTH);
 
-    if(client != null) {
+    if (client != null) {
       client.addPropertyChangeListener(this);
     }
   }
@@ -222,6 +223,7 @@ public class RootsPanel extends XContainer implements PropertyChangeListener {
   }
 
   private class ObjectSetMouseListener extends MouseAdapter implements Serializable {
+    @Override
     public void mouseClicked(MouseEvent e) {
       updateLiveObjectCount();
     }
@@ -267,6 +269,7 @@ public class RootsPanel extends XContainer implements PropertyChangeListener {
     }
   }
 
+  @Override
   public void tearDown() {
     objectSetPanel.getTree().removeMouseListener(objectSetMouseListener);
     client.removePropertyChangeListener(this);

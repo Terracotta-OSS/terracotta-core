@@ -16,7 +16,6 @@ module BundledDemos
 
     unless manifest.empty?
       # copy demo sources but exclude non-native scripts
-      non_native = @build_environment.is_unix_like? ? ['*.bat', '*.cmd', '*.exe'] : ['*.sh']
       destdir    = FilePath.new(product_directory, directory).ensure_directory
       includes   = ["#{manifest}#{wildcard}", (Dir.entries(srcdir.to_s).delete_if { |entry|
             #File.directory?(FilePath.new(srcdir, entry).to_s) || non_native.include?(entry.gsub(/.+\./, '*.'))
@@ -33,22 +32,13 @@ module BundledDemos
         fail "The demo `#{name}/#{entry}' was not copied. Please check to make sure that the sources for this demo exist.'" unless demos.include? entry
         demo_directory = FilePath.new(product_directory, directory, entry).to_s
         Dir.chdir(demo_directory) do
-          # pretty print the source files for the demo
-          ant.java(
-            :classname   => 'org.acm.seguin.tools.builder.PrettyPrinter',
-            :classpath   => JavaSystem.getProperty('java.class.path'),
-            :fork        => true,
-            :failonerror => true,
-            :dir         => Dir.getwd) do
-            ant.jvmarg(:value => "-Djava.awt.headless=true")
-            ant.arg(:line => "-u")
-            ant.arg(:line => "-config #{@static_resources.jrefactory_config_directory.to_s}")
-            ant.arg(:line => "src")
-          end
-
           # and make sure it can be rebuilt
           begin
             build_script = 'build.xml'
+
+            # inject api version to build.xml of chatter and sharedqueue
+            @ant.replace(:token => "@api.version@", :value => @config_source['api.version'], :file => File.expand_path(build_script))
+            
             raise AntBuildScriptError.new, "Unable to pre-compile the sample application `#{demo_directory}, the Ant build script `#{build_script}' is missing." unless File.exists?(build_script)
             if File.exists?('DO-NOT-PRE-COMPILE')
               puts :warn, "I did not pre-compile the sample application `#{demo_directory}'; "
@@ -57,8 +47,13 @@ module BundledDemos
               File.delete('DO-NOT-PRE-COMPILE')
             else
               ant_script = @static_resources.ant_script
-              ant_script += ".bat" unless @build_environment.is_unix_like?
-              ant.exec(:executable => ant_script, :dir => Dir.getwd)
+              if ENV['OS'] =~ /Windows/i
+                ant_script += ".bat"
+                ant_script.gsub!(/\\/, "/")
+              end
+              result = %x[#{ant_script}]
+              puts "#{result}"
+              fail("Error running ant in #{Dir.getwd}") unless $? == 0
             end
           rescue AntBuildScriptError => error
             fail "There was a problem compiling the demo `#{name}/#{entry}';\n#{error.message}"

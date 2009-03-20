@@ -4,7 +4,6 @@
  */
 package com.tc.admin.model;
 
-
 public interface IServerGroup extends IClusterModelElement {
   static final String         PROP_ACTIVE_SERVER = "activeServer";
   static final String         PROP_CONNECTED     = "connected";
@@ -22,18 +21,20 @@ public interface IServerGroup extends IClusterModelElement {
   boolean isCoordinator();
 
   void setConnectionCredentials(String[] creds);
-  
+
   IServer getActiveServer();
-  
+
   void addServerStateListener(ServerStateListener listener);
 
   void removeServerStateListener(ServerStateListener listener);
 
   void connect();
-  
+
   void disconnect();
-  
+
+  boolean isConnected();
+
   void tearDown();
-  
+
   String dump();
 }

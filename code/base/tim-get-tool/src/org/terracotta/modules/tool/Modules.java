@@ -6,6 +6,7 @@ package org.terracotta.modules.tool;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 
 public interface Modules {
@@ -38,6 +39,11 @@ public interface Modules {
    * @return A String
    */
   String tcVersion();
+
+  /**
+   * The base URL against which to resolve relative URLs for modules.
+   */
+  URI relativeUrlBase();
 
   /**
    * The absolute path to the location of the modules' repository.
@@ -84,6 +90,11 @@ public interface Modules {
    */
   List<Module> find(List<String> args);
 
+  /**
+   * Find last version of a module that matches artifactId and groupId
+   * Return null if not found
+   */
+  Module findLatest(String artifactId, String groupId);
   /**
    * Download a module.
    * 

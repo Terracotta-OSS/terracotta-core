@@ -147,7 +147,7 @@ public class MultipleServersConfigCreator {
     int indent = 7;
     GroupsConfigBuilder groupsConfigBuilder = new GroupsConfigBuilder();
     for (int i = 0; i < this.groupData.length; i++) {
-      GroupConfigBuilder groupConfigBuilder = new GroupConfigBuilder();
+      GroupConfigBuilder groupConfigBuilder = new GroupConfigBuilder(groupData[i].getGroupName());
       HaConfigBuilder groupHaConfigBuilder = new HaConfigBuilder(indent);
       String mode = null;
       if (setupManager.getGroupServerShareDataMode(i).equals(MultipleServersSharedDataMode.DISK)) mode = HaConfigBuilder.HA_MODE_DISK_BASED_ACTIVE_PASSIVE;

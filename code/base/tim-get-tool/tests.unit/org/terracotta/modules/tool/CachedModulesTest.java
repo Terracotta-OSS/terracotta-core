@@ -5,6 +5,7 @@
 package org.terracotta.modules.tool;
 
 import org.apache.commons.lang.StringUtils;
+import org.terracotta.modules.tool.config.Config;
 
 import java.io.File;
 import java.util.List;
@@ -12,6 +13,12 @@ import java.util.List;
 import junit.framework.TestCase;
 
 public final class CachedModulesTest extends TestCase {
+
+  protected Config testConfig;
+
+  public void setUp() {
+    testConfig = TestConfig.createTestConfig();
+  }
 
   public void testGetSiblinsWithSymbolicName() {
     Modules modules;
@@ -40,6 +47,7 @@ public final class CachedModulesTest extends TestCase {
     }
 
     tcVersion = "0.0.1";
+    testConfig.setTcVersion(tcVersion);
     modules = load(testData, tcVersion);
     module = modules.get("foo.bar", "baz", "0.0.6");
     assertNotNull(module);
@@ -75,6 +83,7 @@ public final class CachedModulesTest extends TestCase {
     }
 
     tcVersion = "0.0.1";
+    testConfig.setTcVersion(tcVersion);
     modules = load(testData, tcVersion);
     module = modules.get("foo.bar", "baz", "0.0.6");
     assertNotNull(module);
@@ -104,6 +113,7 @@ public final class CachedModulesTest extends TestCase {
     assertEquals("0.0.5", module.version());
 
     tcVersion = "0.0.1";
+    testConfig.setTcVersion(tcVersion);
     modules = load(testData, tcVersion);
     module = modules.get("foo.bar", "baz", "0.0.0");
     assertNull(module);
@@ -121,11 +131,13 @@ public final class CachedModulesTest extends TestCase {
     Modules modules;
     String testData = "/testData02.xml";
     String tcVersion = "x.x.x";
+    testConfig.setTcVersion(tcVersion);
 
     modules = load(testData, tcVersion);
     assertTrue(modules.list().isEmpty());
 
     tcVersion = "0.0.0";
+    testConfig.setTcVersion(tcVersion);
     modules = load(testData, tcVersion);
     List<Module> list = modules.list();
     assertFalse(list.isEmpty());
@@ -135,6 +147,7 @@ public final class CachedModulesTest extends TestCase {
     }
 
     tcVersion = "0.0.1";
+    testConfig.setTcVersion(tcVersion);
     modules = load(testData, tcVersion);
     list = modules.list();
     assertFalse(list.isEmpty());
@@ -172,12 +185,12 @@ public final class CachedModulesTest extends TestCase {
   }
 
   private Modules load(String testData, String tcVersion) {
+    testConfig.setTcVersion(tcVersion);
     File tmpdir = new File(System.getProperty("java.io.tmpdir"));
     try {
-      return new CachedModules(tcVersion, true, tmpdir, getClass().getResourceAsStream(testData));
+      return new CachedModules(testConfig, tmpdir, getClass().getResourceAsStream(testData));
     } catch (Exception e) {
-      fail("Unable to load test data: " + testData);
+      throw new RuntimeException(e);
     }
-    return null;
   }
 }

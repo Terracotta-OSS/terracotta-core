@@ -16,7 +16,7 @@ import com.tc.util.Assert;
 import java.util.Arrays;
 import java.util.HashMap;
 
-public class ArrayCopyTestApp extends GenericTestApp {
+public class ArrayCopyTestApp extends GenericTransparentApp {
   private final static int ARRAY_LENGTH     = 20;
   private final static int BIG_ARRAY_LENGTH = 10000;
 

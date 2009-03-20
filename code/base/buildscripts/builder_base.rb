@@ -68,7 +68,30 @@ class TerracottaAnt < Builder::AntBuilder
     license_files.each do |file|
       directory = file.directoryname.to_s
       self.jar(:destfile => jar_file.to_s, :update => 'true',
-               :basedir => directory, :includes => file.filename.to_s)
+        :basedir => directory, :includes => file.filename.to_s)
+    end
+  end
+
+  # Performs a filtered copy from src_dir to dest_dir. Filtering is controlled
+  # by the filters_def hash.
+  def filtered_copy(src_dir, dest_dir, filters_def = Registry[:filters_def])
+    self.copy(:todir => dest_dir.to_s) do
+      self.filterset do
+        filters_def['filters'].each do |filter|
+          token = filter.keys.first
+          value = filter[token]
+          self.filter(:token => token, :value => value)
+        end
+      end
+
+      filters_def['filtered_files'].each do |includes_pattern|
+        self.fileset(:dir => src_dir.to_s, :includes => includes_pattern)
+      end
+    end
+
+    self.copy(:todir => dest_dir.to_s) do
+      self.fileset(:dir => src_dir.to_s, :includes => '**/*',
+                   :excludes => filters_def['filtered_files'].join(','))
     end
   end
 
@@ -170,7 +193,16 @@ class TerracottaBuilder
       Registry[:emma_lib] = "#{Registry[:emma_home]}/lib/emma.jar"
       puts "EMMA_HOME: #{Registry[:emma_home]}"
     end
-    
+
+    # XXX: this is a hack to get around jruby script converting JAVA_HOME to unix path
+    begin
+      if `uname` =~ /CYGWIN/i
+        ENV['JAVA_HOME'] = `cygpath -w #{ENV['JAVA_HOME']}`.strip
+      end
+    rescue
+      # do nothing
+    end
+
     reset
   end
 
@@ -259,7 +291,7 @@ class TerracottaBuilder
     prefix = 'org.terracotta.modules.tool'
     include_snapshots = @config_source['final_kit'] == 'true' ? false : true
     java_opts = ["-D#{prefix}.includeSnapshots=#{include_snapshots}",
-                 "-D#{prefix}.dataFile=#{self.tim_get_index_file}"]
+      "-D#{prefix}.cache=#{self.tim_get_index_cache}"]
     if index_url = @config_source['tim-get.index.url']
       java_opts << "-D#{prefix}.dataFileUrl=#{index_url}"
     end
@@ -280,13 +312,13 @@ class TerracottaBuilder
     result
   end
 
-  def tim_get_index_file
+  def tim_get_index_cache
     require 'tmpdir'
-    File.join(Dir.tmpdir, 'tim-get.index')
+    File.join(Dir.tmpdir, 'tcbuild-tim-get')
   end
 
-  def delete_tim_get_index_file
-    File.delete(tim_get_index_file) if File.exists?(tim_get_index_file)
+  def delete_tim_get_index_cache
+    FileUtils.rm_rf(tim_get_index_cache) if File.exists?(tim_get_index_cache)
   end
 
   # Where should we archive the build to? Returns nil if none. Value comes from the config source.

@@ -21,6 +21,7 @@ import com.tc.admin.model.IServer;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -32,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import javax.swing.BorderFactory;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
 
@@ -41,12 +43,15 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
   private IClusterModel       clusterModel;
   private ClusterListener     clusterListener;
   private IBasicObject[]      roots;
+  private XLabel              currentViewLabel;
   private ElementChooser      elementChooser;
   private PagedView           pagedView;
+  private final XContainer    mainPanel;
+  private final XContainer    messagePanel;
+  private XLabel              messageLabel;
   private boolean             inited;
 
   private static final String CLUSTER_HEAP_NODE_NAME = "ClusterHeapNode";
-  private static final String EMPTY_PAGE             = "EmptyPage";
 
   public ObjectBrowser(IAdminClientContext adminClientContext, IClusterModel clusterModel, IBasicObject[] roots) {
     super(new BorderLayout());
@@ -55,13 +60,40 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
     this.clusterModel = clusterModel;
     this.roots = roots;
 
-    add(pagedView = new PagedView(), BorderLayout.CENTER);
+    mainPanel = createMainPanel();
+    messagePanel = createMessagePanel();
+
+    clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
+    if (clusterModel.isReady()) {
+      addNodePanels();
+      removeAll();
+      add(mainPanel);
+
+    } else {
+      add(messagePanel);
+      messageLabel.setText(adminClientContext.getString("cluster.not.ready.msg"));
+    }
+  }
+
+  private XContainer createMainPanel() {
+    XContainer panel = new XContainer(new BorderLayout());
+
+    panel.add(pagedView = new PagedView(), BorderLayout.CENTER);
 
     XContainer topPanel = new XContainer(new GridBagLayout());
     GridBagConstraints gbc = new GridBagConstraints();
     gbc.gridx = gbc.gridy = 0;
     gbc.insets = new Insets(3, 3, 3, 3);
     gbc.anchor = GridBagConstraints.EAST;
+
+    Font headerFont = (Font) adminClientContext.getObject("header.label.font");
+    XLabel headerLabel = new XLabel(adminClientContext.getString("current.view.type"));
+    topPanel.add(headerLabel, gbc);
+    headerLabel.setFont(headerFont);
+    gbc.gridx++;
+
+    topPanel.add(currentViewLabel = new XLabel(), gbc);
+    gbc.gridx++;
 
     // filler
     gbc.weightx = 1.0;
@@ -72,18 +104,26 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
     gbc.weightx = 0.0;
     gbc.fill = GridBagConstraints.NONE;
 
-    topPanel.add(new XLabel("Filter by:"), gbc);
+    headerLabel = new XLabel(adminClientContext.getString("select.view"));
+    topPanel.add(headerLabel, gbc);
+    headerLabel.setFont(headerFont);
     gbc.gridx++;
 
     topPanel.add(elementChooser = new ElementChooser(), gbc);
 
     topPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.black));
-    add(topPanel, BorderLayout.NORTH);
+    panel.add(topPanel, BorderLayout.NORTH);
 
-    clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
-    if (clusterModel.isReady()) {
-      addNodePanels();
-    }
+    return panel;
+  }
+
+  private XContainer createMessagePanel() {
+    XContainer panel = new XContainer(new BorderLayout());
+    panel.add(messageLabel = new XLabel());
+    messageLabel.setText(adminClientContext.getString("initializing"));
+    messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    messageLabel.setFont((Font) adminClientContext.getObject("message.label.font"));
+    return panel;
   }
 
   private class ElementChooser extends ClusterElementChooser {
@@ -91,17 +131,29 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
       super(clusterModel, ObjectBrowser.this);
     }
 
+    @Override
     protected XTreeNode[] createTopLevelNodes() {
-      ComponentNode clusterHeapNode = new ComponentNode("Cluster Heap");
+      XTreeNode aggregateNode = new XTreeNode(adminClientContext.getString("aggregate.view"));
+      ComponentNode clusterHeapNode = new ComponentNode(adminClientContext.getString("object.browser.cluster.heap"));
       clusterHeapNode.setName(CLUSTER_HEAP_NODE_NAME);
-      ClientsNode clientsNode = new ClientsNode(adminClientContext, clusterModel);
-      clientsNode.setLabel("Client View");
-      return new XTreeNode[] { clusterHeapNode, clientsNode };
+      aggregateNode.add(clusterHeapNode);
+      ClientsNode clientsNode = new ClientsNode(adminClientContext, clusterModel) {
+        @Override
+        protected void updateLabel() {/**/
+        }
+      };
+      clientsNode.setLabel(adminClientContext.getString("runtime.stats.per.client.view"));
+      return new XTreeNode[] { aggregateNode, clientsNode };
     }
 
+    @Override
     protected boolean acceptPath(TreePath path) {
       Object o = path.getLastPathComponent();
-      return !(o instanceof ClientsNode);
+      if (o instanceof XTreeNode) {
+        XTreeNode node = (XTreeNode) o;
+        return CLUSTER_HEAP_NODE_NAME.equals(node.getName()) || node instanceof ClientNode;
+      }
+      return false;
     }
   }
 
@@ -139,9 +191,10 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
     String name = node.getName();
     if (pagedView.hasPage(name)) {
       pagedView.setPage(name);
-    } else {
-      pagedView.setPage(EMPTY_PAGE);
     }
+    TreePath path = elementChooser.getSelectedPath();
+    Object type = path.getPathComponent(1);
+    currentViewLabel.setText(type.toString());
   }
 
   private class ClusterListener extends AbstractClusterListener {
@@ -149,12 +202,26 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
       super(clusterModel);
     }
 
+    @Override
     protected void handleReady() {
-      if (!inited && clusterModel.isReady()) {
-        addNodePanels();
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
+      removeAll();
+      if (clusterModel.isReady()) {
+        if (!inited) {
+          addNodePanels();
+        }
+        add(mainPanel);
+      } else {
+        messageLabel.setText(adminClientContext.getString("cluster.not.ready.msg"));
+        add(messagePanel);
       }
+      revalidate();
+      repaint();
     }
 
+    @Override
     protected void handleActiveCoordinator(IServer oldActive, IServer newActive) {
       if (oldActive != null) {
         oldActive.removeClientConnectionListener(ObjectBrowser.this);
@@ -191,10 +258,6 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
 
   private void addNodePanels() {
     pagedView.removeAll();
-    XLabel emptyPage = new XLabel();
-    emptyPage.setName(EMPTY_PAGE);
-    pagedView.addPage(emptyPage);
-
     pagedView.addPage(createClusterHeapPanel());
     IServer activeCoord = clusterModel.getActiveCoordinator();
     if (activeCoord != null) {
@@ -225,8 +288,11 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
     return clusterModel;
   }
 
+  @Override
   public void tearDown() {
     clusterModel.removePropertyChangeListener(clusterListener);
+    clusterListener.tearDown();
+
     pagedView.removePropertyChangeListener(this);
     elementChooser.removeActionListener(this);
 

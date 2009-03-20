@@ -163,19 +163,19 @@ public class HydrateHandlerTest extends TCTestCase {
     public NodeID getLocalNodeID() {
       throw new ImplementMe();
     }
-    
+
     public void setLocalNodeID(NodeID source) {
       throw new ImplementMe();
-      
+
     }
-    
+
     public NodeID getRemoteNodeID() {
       throw new ImplementMe();
     }
 
     public void setRemoteNodeID(NodeID destination) {
       throw new ImplementMe();
-      
+
     }
 
   }
@@ -198,7 +198,7 @@ public class HydrateHandlerTest extends TCTestCase {
     }
 
     public ClientID getClientID() {
-      return new ClientID(channel.getChannelID());
+      return new ClientID(channel.getChannelID().toLong());
     }
 
     public SessionID getLocalSessionID() {

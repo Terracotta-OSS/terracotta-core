@@ -18,6 +18,8 @@ public interface DSOApplicationConfigBuilder {
   public void setAdditionalBootJarClasses(String value);
 
   public void setAdditionalBootJarClasses(String[] value);
+  
+  public void setAppGroups(AppGroupConfigBuilder[] value);
 
   public void setRoots(String value);
 

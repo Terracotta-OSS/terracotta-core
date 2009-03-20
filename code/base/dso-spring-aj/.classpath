@@ -15,7 +15,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-container-tests"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1-api"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1-weblogic"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l2"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l2-common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-spring"/>
@@ -26,8 +25,9 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/license-common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/management"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/management-api"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/modules-common"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/modules-base"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/simulator"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty-api"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/tim-get-tool"/>
 </classpath>

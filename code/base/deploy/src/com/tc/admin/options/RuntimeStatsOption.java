@@ -17,6 +17,8 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.JSpinner.DefaultEditor;
 
 public class RuntimeStatsOption extends AbstractOption {
+  public static final String  NAME                                    = "RuntimeStats";
+
   private SpinnerNumberModel  samplePeriodModel;
   private SpinnerNumberModel  sampleHistoryModel;
   private ImageIcon           icon;
@@ -29,7 +31,7 @@ public class RuntimeStatsOption extends AbstractOption {
   private static final String DEFAULT_SAMPLE_HISTORY_MINUTES_PREF_KEY = "sample-history-minutes";
 
   public RuntimeStatsOption(ApplicationContext appContext) {
-    super(appContext, "RuntimeStats");
+    super(appContext, NAME);
   }
 
   @Override
@@ -97,11 +99,11 @@ public class RuntimeStatsOption extends AbstractOption {
     return display;
   }
 
-  private int getPollPeriodSeconds() {
+  public int getPollPeriodSeconds() {
     return getIntPref(DEFAULT_POLL_PERIOD_SECONDS_PREF_KEY, DEFAULT_POLL_PERIOD_SECS);
   }
 
-  private int getSampleHistoryMinutes() {
+  public int getSampleHistoryMinutes() {
     return getIntPref(DEFAULT_SAMPLE_HISTORY_MINUTES_PREF_KEY, DEFAULT_SAMPLE_HISTORY_MINUTES);
   }
 }

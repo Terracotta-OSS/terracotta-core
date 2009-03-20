@@ -7,7 +7,7 @@ package com.tc.objectserver.impl;
 public class ObjectManagerConfig {
 
   private final long    gcThreadSleepTime;
-  private boolean       doGC;
+  private final boolean doGC;
   private final boolean verboseGC;
   private final boolean paranoid;
   private final boolean youngGenGCEnabled;
@@ -24,26 +24,32 @@ public class ObjectManagerConfig {
   }
 
   public boolean paranoid() {
-    return paranoid;
+    return this.paranoid;
   }
 
   public boolean doGC() {
-    return doGC;
+    return this.doGC;
   }
 
   public long gcThreadSleepTime() {
-    return gcThreadSleepTime;
+    return this.gcThreadSleepTime;
   }
 
   public boolean verboseGC() {
-    return verboseGC;
+    return this.verboseGC;
   }
 
   public boolean isYoungGenDGCEnabled() {
-    return youngGenGCEnabled;
+    return this.youngGenGCEnabled;
   }
 
   public long getYoungGenDGCFrequencyInMillis() {
-    return youngGenGCFrequency;
+    return this.youngGenGCFrequency;
   }
+
+  public boolean startGCThread() {
+    return ((doGC() && gcThreadSleepTime() > 0) || (isYoungGenDGCEnabled() && getYoungGenDGCFrequencyInMillis() > 0));
+
+  }
+
 }

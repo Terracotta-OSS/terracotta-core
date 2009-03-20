@@ -93,6 +93,10 @@ def delete_deep_folder(folder)
   FileUtils.rm_rf target
 end
 
+def load_yaml_erb(file, _binding)
+  YAML.load(ERB.new(File.read(file), 0, "%<>").result(_binding))
+end
+
 class Hash
   def boolean(key, default = false)
     if has_key?(key)

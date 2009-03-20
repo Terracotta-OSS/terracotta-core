@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-public class GenericSetTestApp extends GenericTestApp {
+public class GenericSetTestApp extends GenericTransparentApp {
 
   private static final int LITERAL_VARIANT = 1;
   private static final int OBJECT_VARIANT  = 2;

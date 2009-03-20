@@ -102,7 +102,7 @@ public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
    */
   public boolean deleteCollection(PersistenceTransaction tx, ObjectID id) throws DatabaseException {
     // XXX:: Since we read in one direction and since we have to read the first record of the next map to break out, we
-    // need this to avoid deadlocks between commit thread and GC thread. Hence READ_COMMITTED
+    // need this to avoid deadlocks between commit thread and DGC thread. Hence READ_COMMITTED
     Cursor c = database.openCursor(pt2nt(tx), CursorConfig.READ_COMMITTED);
     try {
       boolean found = false;

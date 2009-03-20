@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<!DOCTYPE Configure PUBLIC "-//Mort Bay Consulting//DTD Configure//EN" "http://jetty.mortbay.org/configure.dtd">
+
+
+<Configure id="Server" class="org.mortbay.jetty.Server">
+
+    <Set name="Connectors">
+      <Array type="org.mortbay.jetty.Connector">
+        <Item>
+          <New class="org.mortbay.jetty.nio.SelectChannelConnector">
+            <Set name="port"><SystemProperty name="jetty.port" default="9081"/></Set>
+          </New>
+        </Item>
+      </Array>
+    </Set>
+
+    <Set name="sessionIdManager">
+       <New id="tcIdMgr" class="org.mortbay.terracotta.servlet.TerracottaSessionIdManager">
+         <Arg><Ref id="Server"/></Arg>
+         <Set name="workerName">9081</Set>
+       </New>
+    </Set>
+
+    <Call name="setAttribute">
+      <Arg>tcIdMgr</Arg>
+      <Arg><Ref id="tcIdMgr"/></Arg>
+    </Call>
+
+    <Set name="handler">
+      <New id="Handlers" class="org.mortbay.jetty.handler.HandlerCollection">
+        <Set name="handlers">
+         <Array type="org.mortbay.jetty.Handler">
+           <Item>
+             <New id="Contexts" class="org.mortbay.jetty.handler.ContextHandlerCollection"/>
+           </Item>
+           <Item>
+             <New id="DefaultHandler" class="org.mortbay.jetty.handler.DefaultHandler"/>
+           </Item>
+           <Item>
+             <New id="RequestLog" class="org.mortbay.jetty.handler.RequestLogHandler"/>
+           </Item>
+         </Array>
+        </Set>
+      </New>
+    </Set>
+
+    <Call name="addLifeCycle">
+      <Arg>
+        <New class="org.mortbay.jetty.deployer.ContextDeployer">
+          <Set name="contexts"><Ref id="Contexts"/></Set>
+          <Set name="configurationDir">./contexts</Set>
+        </New>
+      </Arg>
+    </Call>
+    
+</Configure>

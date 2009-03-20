@@ -19,6 +19,7 @@ import javax.swing.text.StyledDocument;
 
 public class ServerLog extends LogPane {
   private IServer                         server;
+  private ServerListener                  serverListener;
   private LogListener                     logListener;
 
   private static final SimpleAttributeSet errorIconAttrSet      = new SimpleAttributeSet();
@@ -48,9 +49,30 @@ public class ServerLog extends LogPane {
     warn = appContext.getString("log.warn");
     info = appContext.getString("log.info");
     this.server = server;
-    server.addServerLogListener(logListener = new LogListener());
+    if (server.isReady()) {
+      server.addServerLogListener(logListener = new LogListener());
+    }
+    server.addPropertyChangeListener(serverListener = new ServerListener(server));
     setEditable(false);
     setName(server.toString());
+  }
+
+  private class ServerListener extends AbstractServerListener {
+    private ServerListener(IServer server) {
+      super(server);
+    }
+
+    @Override
+    protected void handleReady() {
+      if (server.isReady()) {
+        if (logListener == null) {
+          logListener = new LogListener();
+        }
+        server.addServerLogListener(logListener);
+      } else {
+        server.removeServerLogListener(logListener);
+      }
+    }
   }
 
   public IServer getServer() {
@@ -71,6 +93,7 @@ public class ServerLog extends LogPane {
     log(sw.toString());
   }
 
+  @Override
   public void append(String s) {
     StyledDocument doc = (StyledDocument) getDocument();
 
@@ -133,8 +156,13 @@ public class ServerLog extends LogPane {
   }
 
   public void tearDown() {
+    server.removePropertyChangeListener(serverListener);
     server.removeServerLogListener(logListener);
-    logListener = null;
-    server = null;
+
+    synchronized (this) {
+      serverListener = null;
+      logListener = null;
+      server = null;
+    }
   }
 }

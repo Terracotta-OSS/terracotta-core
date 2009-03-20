@@ -16,6 +16,7 @@ set JAVA_OPTS=%JAVA_OPTS% -Dcom.sun.management.jmxremote.authenticate=false
 set JAVA_OPTS=%JAVA_OPTS% -Dcom.sun.management.jmxremote.ssl=false
 set JAVA_OPTS=%JAVA_OPTS% -Dtc.node-name=Node1
 set JAVA_OPTS=%JAVA_OPTS% -Djetty.home=%JETTY_HOME%
+set JAVA_OPTS=%JAVA_OPTS% -Djetty.home=%JETTY_HOME%\lib\terracotta\jetty-terracotta-sessions-6.1.15.jar
 set JAVA_OPTS=%JAVA_OPTS% -Djetty.port=8081
 set JAVA_OPTS=%JAVA_OPTS% -DSTOP.PORT=8181
 set JAVA_OPTS=%JAVA_OPTS% -DSTOP.KEY=secret

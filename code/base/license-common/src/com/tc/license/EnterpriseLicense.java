@@ -68,7 +68,8 @@ public final class EnterpriseLicense implements License {
     sb.append(LicenseConstants.LICENSEE).append(" = ").append(licensee).append(NEWLINE);
     sb.append(LicenseConstants.PRODUCT).append(" = ").append(product).append(NEWLINE);
     sb.append(LicenseConstants.MAX_CLIENTS).append(" = ").append(maxClients).append(NEWLINE);
-    sb.append(LicenseConstants.CAPABILITIES).append(" = ").append(capabilities.toString()).append(NEWLINE);
+    sb.append(LicenseConstants.CAPABILITIES).append(" = ").append(capabilities.getLicensedCapabilitiesAsString())
+        .append(NEWLINE);
     if (expirationDate != null) {
       sb.append(LicenseConstants.EXPIRATION_DATE).append(" = ").append(dateToString(expirationDate)).append(NEWLINE);
     }
@@ -87,7 +88,7 @@ public final class EnterpriseLicense implements License {
     sb.append(LicenseConstants.LICENSEE).append(licensee);
     sb.append(LicenseConstants.PRODUCT).append(product);
     sb.append(LicenseConstants.MAX_CLIENTS).append(maxClients);
-    sb.append(LicenseConstants.CAPABILITIES).append(capabilities.toString());
+    sb.append(LicenseConstants.CAPABILITIES).append(capabilities.getLicensedCapabilitiesAsString());
     if (expirationDate != null) {
       sb.append(LicenseConstants.EXPIRATION_DATE).append(dateToString(expirationDate));
     }

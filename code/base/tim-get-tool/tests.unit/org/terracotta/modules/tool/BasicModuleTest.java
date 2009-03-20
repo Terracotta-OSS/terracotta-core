@@ -5,6 +5,7 @@
 package org.terracotta.modules.tool;
 
 import org.apache.commons.lang.StringUtils;
+import org.terracotta.modules.tool.config.Config;
 
 import java.io.File;
 import java.util.Arrays;
@@ -14,6 +15,11 @@ import java.util.Map;
 import junit.framework.TestCase;
 
 public final class BasicModuleTest extends TestCase {
+  protected Config testConfig;
+
+  public void setUp() {
+    testConfig = TestConfig.createTestConfig();
+  }
 
   public void testInvalidConfiguration() {
     BasicModule module;
@@ -93,6 +99,9 @@ public final class BasicModuleTest extends TestCase {
     for (String key : Arrays.asList(excludes)) {
       attributes.remove(key);
     }
-    return new BasicModule(null, attributes);
+    assertNotNull(testConfig.getRelativeUrlBase());
+    BasicModule basicModule = new BasicModule(null, attributes, testConfig.getRelativeUrlBase());
+    assertNotNull(basicModule.repoUrl());
+    return basicModule;
   }
 }

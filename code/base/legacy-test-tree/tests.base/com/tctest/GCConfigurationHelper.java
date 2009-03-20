@@ -16,6 +16,8 @@ public class GCConfigurationHelper {
     public final boolean GC_VERBOSE                  = true;
   }
 
+  private int node_count = Parameters.NODE_COUNT;
+
   public boolean getGCEnabled() {
     return Parameters.GC_ENABLED;
   }
@@ -29,9 +31,13 @@ public class GCConfigurationHelper {
   }
 
   public int getNodeCount() {
-    return Parameters.NODE_COUNT;
+    return node_count;
   }
-  
+
+  public void setNodeCount(int nodes) {
+    node_count = nodes;
+  }
+
   public void setupConfig(TestTVSConfigurationSetupManagerFactory configFactory) {
     configFactory.setGCEnabled(getGCEnabled());
     configFactory.setGCVerbose(getGCVerbose());

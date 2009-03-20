@@ -24,7 +24,7 @@ import java.util.Vector;
 /**
  * This contains the same test cases of GenericListTestApp, plus the jdk1.5 specific test cases.
  */
-public class GenericList15TestApp extends GenericTestApp {
+public class GenericList15TestApp extends GenericTransparentApp {
 
   public GenericList15TestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider, List.class);

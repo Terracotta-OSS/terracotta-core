@@ -8,16 +8,17 @@ import org.apache.xmlbeans.XmlObject;
 import org.apache.xmlbeans.XmlOptions;
 
 import com.tc.util.Assert;
-import com.terracottatech.config.ActiveServerGroup;
-import com.terracottatech.config.ActiveServerGroups;
 import com.terracottatech.config.Application;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.Ha;
 import com.terracottatech.config.HaMode;
 import com.terracottatech.config.Members;
+import com.terracottatech.config.MirrorGroup;
+import com.terracottatech.config.MirrorGroups;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 import com.terracottatech.config.System;
+import com.terracottatech.config.TcProperties;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,10 +38,13 @@ public class TestConfigBeanSet {
   private final Client       rootClientBean;
   private final Servers      rootServersBean;
   private final System       rootSystemBean;
+  private final TcProperties tcPropertiesBean;
   private final Map          rootApplicationBeans;
 
   public TestConfigBeanSet() {
+    
     this.rootClientBean = Client.Factory.newInstance();
+    this.tcPropertiesBean = TcProperties.Factory.newInstance();
 
     this.rootServersBean = Servers.Factory.newInstance();
     Server initialServer = this.rootServersBean.addNewServer();
@@ -49,8 +53,8 @@ public class TestConfigBeanSet {
     Ha commonHa = this.rootServersBean.addNewHa();
     commonHa.setMode(HaMode.DISK_BASED_ACTIVE_PASSIVE);
     commonHa.addNewNetworkedActivePassive();
-    ActiveServerGroups groups = this.rootServersBean.addNewActiveServerGroups();
-    ActiveServerGroup group = groups.addNewActiveServerGroup();
+    MirrorGroups groups = this.rootServersBean.addNewMirrorGroups();
+    MirrorGroup group = groups.addNewMirrorGroup();
     group.setHa(commonHa);
     Members members = group.addNewMembers();
     members.addMember(DEFAULT_SERVER_NAME);
@@ -85,6 +89,11 @@ public class TestConfigBeanSet {
   public Client clientBean() {
     return this.rootClientBean;
   }
+  
+  public TcProperties tcPropertiesBean() {
+    return this.tcPropertiesBean;
+  }
+
 
   public Servers serversBean() {
     return this.rootServersBean;

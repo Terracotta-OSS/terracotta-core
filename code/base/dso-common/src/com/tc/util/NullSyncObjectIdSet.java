@@ -20,26 +20,32 @@ public class NullSyncObjectIdSet extends AbstractSet implements SyncObjectIdSet 
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public boolean add(Object obj) {
     return true;
   }
 
+  @Override
   public boolean contains(Object o) {
     return true;
   }
 
+  @Override
   public boolean removeAll(Collection ids) {
     return true;
   }
 
+  @Override
   public boolean remove(Object o) {
     return true;
   }
 
+  @Override
   public Iterator iterator() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public int size() {
     return 0;
   }
@@ -48,8 +54,11 @@ public class NullSyncObjectIdSet extends AbstractSet implements SyncObjectIdSet 
     throw new UnsupportedOperationException();
   }
 
-
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     return out;
+  }
+
+  public int addAndGetSize(Object obj) {
+    return 0;
   }
 }

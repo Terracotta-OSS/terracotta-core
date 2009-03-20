@@ -8,6 +8,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.objectserver.dgc.api.GarbageCollector;
+import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
 import com.tc.objectserver.impl.ObjectManagerConfig;
 import com.tc.util.concurrent.StoppableThread;
 
@@ -16,78 +17,81 @@ public class GarbageCollectorThread extends StoppableThread {
 
   private final GarbageCollector collector;
   private final Object           stopLock = new Object();
-  private final boolean          doFullGC;
   private final long             fullGCSleepTime;
   private final long             youngGCSleepTime;
+  private final boolean          doFullGC;
 
   public GarbageCollectorThread(ThreadGroup group, String name, GarbageCollector newCollector,
                                 ObjectManagerConfig config) {
     super(group, name);
     this.collector = newCollector;
-    doFullGC = config.doGC();
-    fullGCSleepTime = config.gcThreadSleepTime();
+    this.doFullGC = config.doGC();
+    this.fullGCSleepTime = config.gcThreadSleepTime();
     long youngGCTime = -1;
     if (config.isYoungGenDGCEnabled()) {
       youngGCTime = config.getYoungGenDGCFrequencyInMillis();
-      if (doFullGC && youngGCTime >= fullGCSleepTime) {
+      if (this.doFullGC && youngGCTime >= this.fullGCSleepTime) {
         logger.warn("Disabling YoungGen Garbage Collector since the time interval for YoungGen GC ( " + youngGCTime
-                    + " ms) is greater than or equal to  the time interval for Full GC ( " + fullGCSleepTime + " ms)");
+                    + " ms) is greater than or equal to  the time interval for Full GC ( " + this.fullGCSleepTime
+                    + " ms)");
         youngGCTime = -1;
       } else if (youngGCTime <= 0) {
         logger.warn("Disabling YoungGen GC since time interval is specificed as " + youngGCTime + " ms");
         youngGCTime = -1;
       }
     }
-    if ((youngGCSleepTime = youngGCTime) == -1 && !doFullGC) {
+    if ((this.youngGCSleepTime = youngGCTime) == -1 && !this.doFullGC) {
       logger.warn("Stopping Garbage Collector thread as both Full and YoungGen collectors are disabled.");
       requestStop();
     } else {
-      logger.info("Young Gen Time = " + youngGCTime + " Full Gen Time = " + fullGCSleepTime);
+      logger.info("Young Gen Time = " + youngGCTime + " Full Gen Time = " + this.fullGCSleepTime);
     }
   }
 
+  @Override
   public void requestStop() {
     super.requestStop();
 
-    synchronized (stopLock) {
-      stopLock.notifyAll();
+    synchronized (this.stopLock) {
+      this.stopLock.notifyAll();
     }
   }
 
+  @Override
   public void run() {
     long lastFullGC = System.currentTimeMillis();
     while (true) {
       if (isStopRequested()) { return; }
-      if (doFullGC) {
-        if (youngGCSleepTime <= 0) {
+      if (this.doFullGC) {
+        if (this.youngGCSleepTime <= 0) {
           // young generation GC is disabled
-          doFullGC(fullGCSleepTime);
+          doFullGC(this.fullGCSleepTime);
           lastFullGC = System.currentTimeMillis();
         } else {
           // run young or full GC
           long current = System.currentTimeMillis();
-          if (lastFullGC + fullGCSleepTime > current + youngGCSleepTime) {
+          if (lastFullGC + this.fullGCSleepTime > current + this.youngGCSleepTime) {
             // Run young GC next
-            doYoungGC(youngGCSleepTime);
+            doYoungGC(this.youngGCSleepTime);
           } else {
             // Run full GC next, sleeping at least 1 second
-            doFullGC(Math.max(lastFullGC + fullGCSleepTime - current, 1000));
+            doFullGC(Math.max(lastFullGC + this.fullGCSleepTime - current, 1000));
             lastFullGC = System.currentTimeMillis();
           }
         }
       } else {
-        doYoungGC(youngGCSleepTime);
+        doYoungGC(this.youngGCSleepTime);
       }
     }
   }
 
   private void doYoungGC(long sleepTime) {
     try {
-      synchronized (stopLock) {
-        stopLock.wait(sleepTime);
+      synchronized (this.stopLock) {
+        this.stopLock.wait(sleepTime);
       }
       if (isStopRequested()) { return; }
-      collector.gcYoung();
+      this.collector.doGC(GCType.YOUNG_GEN_GC);
     } catch (InterruptedException ie) {
       throw new TCRuntimeException(ie);
     }
@@ -95,11 +99,11 @@ public class GarbageCollectorThread extends StoppableThread {
 
   private void doFullGC(long sleepTime) {
     try {
-      synchronized (stopLock) {
-        stopLock.wait(sleepTime);
+      synchronized (this.stopLock) {
+        this.stopLock.wait(sleepTime);
       }
       if (isStopRequested()) { return; }
-      collector.gc();
+      this.collector.doGC(GCType.FULL_GC);
     } catch (InterruptedException ie) {
       throw new TCRuntimeException(ie);
     }

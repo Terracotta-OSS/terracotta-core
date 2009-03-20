@@ -24,11 +24,12 @@ import com.tc.object.config.schema.NewL1DSOConfig;
 import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.test.GroupData;
 import com.tc.util.Assert;
-import com.terracottatech.config.ActiveServerGroup;
-import com.terracottatech.config.ActiveServerGroups;
 import com.terracottatech.config.Application;
 import com.terracottatech.config.Members;
+import com.terracottatech.config.MirrorGroup;
+import com.terracottatech.config.MirrorGroups;
 import com.terracottatech.config.PersistenceMode;
+import com.terracottatech.config.Property;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 import com.terracottatech.config.PersistenceMode.Enum;
@@ -46,7 +47,8 @@ import java.util.Set;
  * A {@link com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory} that creates config appropriate for usage in
  * tests. This config behaves just like normal config, except that it reads no files; everything is in-memory instead.
  * You can specify whether you want this config to act like centralized config (all at L2), or distributed config (every
- * L1 has its own copy of the config, too). </p>
+ * L1 has its own copy of the config, too).
+ * </p>
  * <p>
  * To use this class, simply get the appropriate config object that you need by calling a method (<em>e.g.</em>,
  * {@link #systemConfig()}). Then, call a method on it (like {@link com.tc.config.schema.NewSystemConfig#dsoEnabled()},
@@ -61,11 +63,11 @@ import java.util.Set;
  * primitive type, {@link String}, array of {@link String}s or something like that (specifically, the object types
  * returned by the top-level subclasses of {@link com.tc.config.schema.dynamic.XPathBasedConfigItem}) &mdash; then you
  * need to set an implementation of {@link XmlObject}, not the actual Terracotta-defined types that the real
- * {@link ConfigItem}s return. (This is because we're using the real config system &mdash; see below for details &mdash;
- * and it expects {@link XmlObject}s of the appropriate type so it can translate them to the Terracotta-defined types
- * that we really return.) Fortunately, all XML beans have <code>Factory</code> inner classes that will let you create
- * them. If you then wrap these calls in a function and reuse it, you'll be in fine shape if/when the actual XML beans
- * are changed.
+ * {@link ConfigItem}s return. (This is because we're using the real config system &mdash; see below for details
+ * &mdash; and it expects {@link XmlObject}s of the appropriate type so it can translate them to the Terracotta-defined
+ * types that we really return.) Fortunately, all XML beans have <code>Factory</code> inner classes that will let you
+ * create them. If you then wrap these calls in a function and reuse it, you'll be in fine shape if/when the actual XML
+ * beans are changed.
  * </p>
  * <p>
  * Note: There is no support yet for different L1s having different config, or config that differs from L2's.
@@ -74,8 +76,8 @@ import java.util.Set;
  * <p>
  * If you create new typed subinterfaces of {@link ConfigItem}, you do need to make
  * {@link com.tc.config.schema.TestConfigObjectInvocationHandler.OurSettableConfigItem} implement them. Don't worry,
- * though; the methods can just throw {@link com.tc.util.TCAssertionError}, and don't need to (nor should they) actually
- * do anything.
+ * though; the methods can just throw {@link com.tc.util.TCAssertionError}, and don't need to (nor should they)
+ * actually do anything.
  * </p>
  * <p>
  * If you introduce new config objects or new beans to the system, you'll need to do a lot more, but, then, presumably
@@ -112,17 +114,17 @@ import java.util.Set;
  * the {@link L2S} that wraps them all up together), the {@link com.terracottatech.configV1.System} we use for system
  * config, the {@link Application} for each application's config, and so on.</li>
  * <li>These {@link XmlObject}s are honest-to-God real instances, as created by their factories (for example,
- * {@link L1.Factory}. At the start, they have just enough configuration populated into them to make sure they validate.
- * </li>
+ * {@link L1.Factory}. At the start, they have just enough configuration populated into them to make sure they
+ * validate. </li>
  * <li>This class exposes what look like instances of the normal config objects available to the system. However, these
  * are actually proxies created with {@link java.lang.reflect.Proxy}, using a
  * {@link com.tc.config.schema.TestConfigObjectInvocationHandler}.</li>
  * <li>That invocation handler, in response to method calls, parcels out {@link ConfigItem}s that are instances of
  * {@link com.tc.config.schema.TestConfigObjectInvocationHandler.OurSettableConfigItem}. When you call
- * <code>setValue</code> on them, they do their magic: using the {@link XPath} they get from the corresponding "sample"
- * {@link ConfigItem} (see below), they descend the tree of {@link XmlObject}s, starting at the root, creating children
- * along the way as necessary, and finally set the correct property on the correct bean. (This is conceptually easy but
- * actually full of all kinds of nasty mess; this is why {@link OurSettableConfigItem} is such a messy class.) .</li>
+ * <code>setValue</code> on them, they do their magic: using the {@link XPath} they get from the corresponding
+ * "sample" {@link ConfigItem} (see below), they descend the tree of {@link XmlObject}s, starting at the root, creating
+ * children along the way as necessary, and finally set the correct property on the correct bean. (This is conceptually
+ * easy but actually full of all kinds of nasty mess; this is why {@link OurSettableConfigItem} is such a messy class.) .</li>
  * <li>Okay, but how does it know what XPath to use to descend the tree? That's where the "sample" config objects below
  * (fields in this object) come in. They are actual, real config objects that are created around the bean set, before
  * any values are set &mdash; but that doesn't matter, because the only thing we use them for is to get the
@@ -328,10 +330,10 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
     Assert.assertNotNull(beanSetArg);
 
     Servers l2s = beanSetArg.serversBean();
-    ActiveServerGroups groups = l2s.getActiveServerGroups();
+    MirrorGroups groups = l2s.getMirrorGroups();
     Assert.assertNotNull(groups);
     if (groups != null) {
-      ActiveServerGroup[] groupArray = groups.getActiveServerGroupArray();
+      MirrorGroup[] groupArray = groups.getMirrorGroupArray();
 
       if (groupArray.length == 1) {
         Members members = groupArray[0].getMembers();
@@ -340,8 +342,8 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
         Assert.assertNotNull(memberNames);
 
         if (memberNames.length == 1 && memberNames[0].equals(TestConfigBeanSet.DEFAULT_SERVER_NAME)) {
-          groups.removeActiveServerGroup(0);
-          Assert.assertEquals(0, groups.getActiveServerGroupArray().length);
+          groups.removeMirrorGroup(0);
+          Assert.assertEquals(0, groups.getMirrorGroupArray().length);
         }
       }
     }
@@ -357,7 +359,7 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
         addServerToL1Config(grpData[i].getServerNames()[j], grpData[i].getDsoPorts()[j], grpData[i].getJmxPorts()[j],
                             false);
 
-      addServerGroupToL1Config(i, grpData[i].getServerNames());
+      addServerGroupToL1Config(i, grpData[i].getGroupName(), grpData[i].getServerNames());
     }
 
     isConfigDone = true;
@@ -365,13 +367,13 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
 
   // This function will add all the servers in a group in L1 config. Ideally should be used when only 1 group contains
   // all the servers
-  public void addServersAndGroupToL1Config(String[] name, int[] dsoPorts, int[] jmxPorts) {
+  public void addServersAndGroupToL1Config(String groupName, String[] name, int[] dsoPorts, int[] jmxPorts) {
     assertIfCalledBefore();
 
     for (int i = 0; i < name.length; i++)
       addServerToL1Config(name[i], dsoPorts[i], jmxPorts[i], false);
 
-    addServerGroupToL1Config();
+    addServerGroupToL1Config(groupName);
 
     isConfigDone = true;
   }
@@ -387,6 +389,12 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
     addServerGroupToL1Config();
 
     isConfigDone = true;
+  }
+
+  public void addTcPropertyToConfig(String propertyName, String propertyValue) {
+    Property tcProps = l1_beanSet.tcPropertiesBean().addNewProperty();
+    tcProps.setName(propertyName);
+    tcProps.setValue(propertyValue);
   }
 
   private void addServerToL1Config(String name, int dsoPort, int jmxPort, boolean cleanGroupsBeanSet) {
@@ -413,8 +421,12 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
     if (cleanGroupsBeanSet) cleanBeanSetServerGroupsIfNeeded(l1_beanSet);
   }
 
-  // should be called after all servers have been added to l1_beanset
   private void addServerGroupToL1Config() {
+    addServerGroupToL1Config("default-group");
+  }
+
+  // should be called after all servers have been added to l1_beanset
+  private void addServerGroupToL1Config(String groupName) {
     Server[] serverArray = l1_beanSet.serversBean().getServerArray();
     Assert.assertNotNull(serverArray);
     Assert.assertTrue(serverArray.length > 0);
@@ -424,18 +436,19 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
       memberNames[i] = serverArray[i].getName();
     }
 
-    addServerGroupToL1Config(0, memberNames);
+    addServerGroupToL1Config(0, groupName, memberNames);
   }
 
-  private void addServerGroupToL1Config(int groupId, String[] members) {
+  private void addServerGroupToL1Config(int groupId, String groupName, String[] members) {
     Assert.assertNotNull(members);
     Assert.assertTrue(members.length > 0);
     Assert.assertTrue(groupId >= 0);
     cleanBeanSetServerGroupsIfNeeded(l1_beanSet);
 
-    ActiveServerGroups groups = l1_beanSet.serversBean().getActiveServerGroups();
+    MirrorGroups groups = l1_beanSet.serversBean().getMirrorGroups();
     if (groups != null) {
-      ActiveServerGroup group = groups.addNewActiveServerGroup();
+      MirrorGroup group = groups.addNewMirrorGroup();
+      group.setGroupName(groupName);
       Members newMembers = group.addNewMembers();
       for (int i = 0; i < members.length; i++) {
         String memberName = members[i];
@@ -535,7 +548,8 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
   }
 
   public TestTVSConfigurationSetupManagerFactory(String l2Identifier,
-                                                 IllegalConfigurationChangeHandler illegalConfigurationChangeHandler) throws ConfigurationSetupException {
+                                                 IllegalConfigurationChangeHandler illegalConfigurationChangeHandler)
+      throws ConfigurationSetupException {
     this(MODE_CENTRALIZED_CONFIG, l2Identifier, illegalConfigurationChangeHandler);
   }
 

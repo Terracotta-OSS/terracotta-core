@@ -22,11 +22,14 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JTextArea;
 
+/**
+ * TODO: i18n
+ */
+
 public class AboutDialog extends JDialog implements ActionListener {
   private JButton                okButton;
   private JLabel                 versionLabel;
   private JTextArea              sysInfoTextArea;
-  private JLabel                 copyrightLabel;
 
   private static final ImageIcon tcIcon = new ImageIcon(AboutDialog.class.getResource("/com/tc/admin/icons/logo.png"));
 
@@ -58,7 +61,7 @@ public class AboutDialog extends JDialog implements ActionListener {
     gbc.insets = new Insets(5, 5, 5, 5);
     gbc.weightx = 0.0;
     gbc.fill = GridBagConstraints.NONE;
-    add(copyrightLabel = new XLabel(), gbc);
+    add(new XLabel("Copyright Terracotta, Inc. All rights reserved."), gbc);
     gbc.gridy++;
     add(okButton = new XButton("OK"), gbc);
     getRootPane().setDefaultButton(okButton);
@@ -92,7 +95,6 @@ public class AboutDialog extends JDialog implements ActionListener {
     String javaVMInfo = System.getProperty("java.vm.name") + ", " + System.getProperty("java.vm.version") + " ["
                         + Runtime.getRuntime().maxMemory() / (1024 * 1024) + " MB]";
     sysInfoTextArea.setText(osInfo + newLine + javaVersion + newLine + javaHomeDir + newLine + javaVMInfo);
-    copyrightLabel.setText(productInfo.copyright());
   }
 
 }

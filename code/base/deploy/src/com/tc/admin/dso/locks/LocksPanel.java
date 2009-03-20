@@ -86,35 +86,35 @@ import javax.swing.table.TableModel;
 import javax.swing.tree.TreePath;
 
 public class LocksPanel extends XContainer implements PropertyChangeListener {
-  private IAdminClientContext         adminClientContext;
-  private LocksNode                   fLocksNode;
-  private JToggleButton               fEnableButton;
-  private JToggleButton               fDisableButton;
-  private boolean                     fLocksPanelEnabled;
-  private XSpinner                    fTraceDepthSpinner;
-  private ChangeListener              fTraceDepthSpinnerChangeListener;
-  private Timer                       fTraceDepthChangeTimer;
-  private int                         fLastTraceDepth;
-  private XButton                     fRefreshButton;
-  private LockSpecsGetter             fCurrentLockSpecsGetter;
-  private JTabbedPane                 fLocksTabbedPane;
-  private LockTreeTable               fTreeTable;
-  private LockTreeTableModel          fTreeTableModel;
-  private ClientLockSelectionHandler  fClientLockSelectionHandler;
-  private SearchPanel                 fClientSearchPanel;
-  private XObjectTable                fServerLocksTable;
-  private ServerLockTableModel        fServerLockTableModel;
-  private ServerLockSelectionHandler  fServerLockSelectionHandler;
-  private SearchPanel                 fServerSearchPanel;
-  private XTextArea                   fTraceText;
-  private TitledBorder                fConfigBorder;
-  private XTextArea                   fConfigText;
-  private InspectLockObjectAction     fInspectLockObjectAction;
+  private IAdminClientContext           adminClientContext;
+  private LocksNode                     fLocksNode;
+  private JToggleButton                 fEnableButton;
+  private JToggleButton                 fDisableButton;
+  private boolean                       fLocksPanelEnabled;
+  private XSpinner                      fTraceDepthSpinner;
+  private ChangeListener                fTraceDepthSpinnerChangeListener;
+  private Timer                         fTraceDepthChangeTimer;
+  private int                           fLastTraceDepth;
+  private XButton                       fRefreshButton;
+  private LockSpecsGetter               fCurrentLockSpecsGetter;
+  private JTabbedPane                   fLocksTabbedPane;
+  private LockTreeTable                 fTreeTable;
+  private LockTreeTableModel            fTreeTableModel;
+  private ClientLockSelectionHandler    fClientLockSelectionHandler;
+  private SearchPanel                   fClientSearchPanel;
+  private XObjectTable                  fServerLocksTable;
+  private ServerLockTableModel          fServerLockTableModel;
+  private ServerLockSelectionHandler    fServerLockSelectionHandler;
+  private SearchPanel                   fServerSearchPanel;
+  private XTextArea                     fTraceText;
+  private TitledBorder                  fConfigBorder;
+  private XTextArea                     fConfigText;
+  private final InspectLockObjectAction fInspectLockObjectAction;
 
-  private static Collection<LockSpec> EMPTY_LOCK_SPEC_COLLECTION = new HashSet<LockSpec>();
+  private static Collection<LockSpec>   EMPTY_LOCK_SPEC_COLLECTION = new HashSet<LockSpec>();
 
-  private static final int            STATUS_TIMEOUT_SECONDS     = 3;
-  private static final int            REFRESH_TIMEOUT_SECONDS    = Integer.MAX_VALUE;
+  private static final int              STATUS_TIMEOUT_SECONDS     = 3;
+  private static final int              REFRESH_TIMEOUT_SECONDS    = Integer.MAX_VALUE;
 
   public LocksPanel(IAdminClientContext adminClientContext, LocksNode locksNode) {
     super(new BorderLayout());
@@ -188,15 +188,15 @@ public class LocksPanel extends XContainer implements PropertyChangeListener {
     fConfigText.setEditable(false);
     configPanel.setBorder(fConfigBorder = BorderFactory.createTitledBorder("Config"));
 
-    XSplitPane clientsBottom = new XSplitPane(JSplitPane.HORIZONTAL_SPLIT, tracePanel, configPanel);
-    clientsBottom.setResizeWeight(0.5);
-    clientsBottom.setDividerLocation(-1);
+    XSplitPane bottomSplitter = new XSplitPane(JSplitPane.HORIZONTAL_SPLIT, tracePanel, configPanel);
+    bottomSplitter.setDefaultDividerLocation(0.5);
+    bottomSplitter.setPreferences(adminClientContext.getPrefs().node("LocksPanel/BottomSplit"));
 
-    XSplitPane clientsSplitter = new XSplitPane(JSplitPane.VERTICAL_SPLIT, clientsTop, clientsBottom);
-    clientsSplitter.setResizeWeight(0.5);
-    clientsSplitter.setDividerLocation(-1);
+    XSplitPane mainSplitter = new XSplitPane(JSplitPane.VERTICAL_SPLIT, clientsTop, bottomSplitter);
+    mainSplitter.setDefaultDividerLocation(0.66);
+    mainSplitter.setPreferences(adminClientContext.getPrefs().node("LocksPanel/TopSplit"));
 
-    fLocksTabbedPane.addTab("Clients", clientsSplitter);
+    fLocksTabbedPane.addTab("Clients", mainSplitter);
 
     /** Server **/
     XContainer serverPanel = new XContainer(new BorderLayout());
@@ -275,6 +275,7 @@ public class LocksPanel extends XContainer implements PropertyChangeListener {
   }
 
   private class TableMouseListener extends MouseAdapter {
+    @Override
     public void mousePressed(MouseEvent e) {
       JTable table = (JTable) e.getSource();
       int row = table.rowAtPoint(e.getPoint());
@@ -343,6 +344,7 @@ public class LocksPanel extends XContainer implements PropertyChangeListener {
   }
 
   private class TraceDepthSpinnerFocusListener extends FocusAdapter {
+    @Override
     public void focusLost(FocusEvent e) {
       testSetTraceDepth();
     }
@@ -437,6 +439,7 @@ public class LocksPanel extends XContainer implements PropertyChangeListener {
       }, STATUS_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 
+    @Override
     public void finished() {
       Exception e = getException();
       if (e != null) {
@@ -468,6 +471,7 @@ public class LocksPanel extends XContainer implements PropertyChangeListener {
       }, STATUS_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 
+    @Override
     protected void finished() {
       Exception e = getException();
       if (e != null) {
@@ -581,6 +585,7 @@ public class LocksPanel extends XContainer implements PropertyChangeListener {
       });
     }
 
+    @Override
     protected void finished() {
       // Wait for JMX notification to update display
     }
@@ -613,7 +618,7 @@ public class LocksPanel extends XContainer implements PropertyChangeListener {
   }
 
   class LockSpecsGetter extends BasicWorker<Collection<LockSpec>> {
-    private String fRefreshButtonLabel;
+    private final String fRefreshButtonLabel;
 
     LockSpecsGetter(String refreshButtonLabel) {
       super(new Callable<Collection<LockSpec>>() {
@@ -626,6 +631,7 @@ public class LocksPanel extends XContainer implements PropertyChangeListener {
       fRefreshButtonLabel = refreshButtonLabel;
     }
 
+    @Override
     protected void finished() {
       fRefreshButton.setText("Wait...");
       fRefreshButton.setEnabled(false);
@@ -689,6 +695,7 @@ public class LocksPanel extends XContainer implements PropertyChangeListener {
       });
     }
 
+    @Override
     protected void finished() {
       // Wait for JMX notification to update display
     }
@@ -709,6 +716,7 @@ public class LocksPanel extends XContainer implements PropertyChangeListener {
     return getSpinnerValue(fTraceDepthSpinner);
   }
 
+  @Override
   public synchronized void tearDown() {
     IClusterModel clusterModel = getClusterModel();
     if (clusterModel != null) {

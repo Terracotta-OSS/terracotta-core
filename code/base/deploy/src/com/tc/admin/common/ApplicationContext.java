@@ -51,5 +51,7 @@ public interface ApplicationContext {
 
   void registerOption(IOption option);
 
+  IOption getOption(String name);
+
   Iterator<IOption> options();
 }

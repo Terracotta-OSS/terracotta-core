@@ -16,8 +16,18 @@ import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.DefaultDrawingSupplier;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.plot.dial.DialBackground;
+import org.jfree.chart.plot.dial.DialCap;
+import org.jfree.chart.plot.dial.DialPlot;
+import org.jfree.chart.plot.dial.DialPointer;
+import org.jfree.chart.plot.dial.DialTextAnnotation;
+import org.jfree.chart.plot.dial.DialValueIndicator;
+import org.jfree.chart.plot.dial.StandardDialFrame;
+import org.jfree.chart.plot.dial.StandardDialRange;
+import org.jfree.chart.plot.dial.StandardDialScale;
 import org.jfree.data.RangeType;
 import org.jfree.data.category.CategoryDataset;
+import org.jfree.data.general.ValueDataset;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.data.xy.IntervalXYDataset;
@@ -26,22 +36,36 @@ import org.jfree.ui.RectangleInsets;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Font;
+import java.awt.Paint;
 import java.awt.Stroke;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.ResourceBundle;
 
 public class DemoChartFactory {
-  public static final TickUnitSource DEFAULT_TICKS = createStandardTickUnits();
+  public static final TickUnitSource DEFAULT_TICKS         = createStandardTickUnits();
   public static final TickUnitSource DEFAULT_INTEGER_TICKS = createIntegerTickUnits();
-  
+  public static final ResourceBundle bundle                = ResourceBundle
+                                                               .getBundle("com.tc.admin.common.CommonBundle");
+  private static final Font          regularFont           = (Font) bundle.getObject("chart.regular.font");
+
   static {
     // ChartFactory.setChartTheme(StandardChartTheme.createLegacyTheme());
     // ChartFactory.setChartTheme(StandardChartTheme.createDarknessTheme());
 
     StandardChartTheme theme = new StandardChartTheme("Terracotta") {
+      @Override
       public void apply(JFreeChart chart) {
         super.apply(chart);
         chart.setBackgroundPaint(null);
+      }
+
+      @Override
+      public void applyToValueAxis(ValueAxis axis) {
+        super.applyToValueAxis(axis);
+        axis.setTickLabelFont(regularFont);
+        axis.setLabelFont(regularFont);
       }
     };
     DefaultDrawingSupplier drawingSupplier = new DefaultDrawingSupplier(
@@ -55,6 +79,9 @@ public class DemoChartFactory {
     theme.setDomainGridlinePaint(Color.lightGray);
     theme.setRangeGridlinePaint(Color.lightGray);
     theme.setAxisOffset(new RectangleInsets());
+    theme.setRegularFont(regularFont);
+    theme.setLargeFont((Font) bundle.getObject("chart.large.font"));
+    theme.setExtraLargeFont((Font) bundle.getObject("chart.extra-large.font"));
     ChartFactory.setChartTheme(theme);
   }
 
@@ -72,6 +99,12 @@ public class DemoChartFactory {
     return createXYBarChart(header, xLabel, yLabel, dataset, true);
   }
 
+  public static JFreeChart getXYBarChart(String header, String xLabel, String yLabel, TimeSeries[] timeseries,
+                                         boolean legend) {
+    IntervalXYDataset dataset = createTimeSeriesDataset(timeseries);
+    return createXYBarChart(header, xLabel, yLabel, dataset, legend);
+  }
+
   private static JFreeChart createXYBarChart(String header, String xLabel, String yLabel, IntervalXYDataset dataset,
                                              boolean legend) {
     JFreeChart chart = ChartFactory.createXYBarChart(header, xLabel, true, yLabel, dataset, PlotOrientation.VERTICAL,
@@ -82,11 +115,15 @@ public class DemoChartFactory {
     DateAxis axis = (DateAxis) plot.getDomainAxis();
     axis.setFixedAutoRange(30000.0);
     axis.setDateFormatOverride(new SimpleDateFormat("kk:mm:ss"));
+    axis.setTickLabelFont(regularFont);
+    axis.setLabelFont(regularFont);
 
     NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
     numberAxis.setStandardTickUnits(DEFAULT_TICKS);
     numberAxis.setRangeType(RangeType.POSITIVE);
     numberAxis.setAutoRangeMinimumSize(50.0);
+    numberAxis.setTickLabelFont(regularFont);
+    numberAxis.setLabelFont(regularFont);
 
     return chart;
   }
@@ -110,6 +147,8 @@ public class DemoChartFactory {
 
     ValueAxis axis = plot.getDomainAxis();
     axis.setFixedAutoRange(30000.0);
+    axis.setTickLabelFont(regularFont);
+    axis.setLabelFont(regularFont);
     if (axis instanceof DateAxis) {
       ((DateAxis) axis).setDateFormatOverride(new SimpleDateFormat("h:mm:ss"));
     }
@@ -118,6 +157,8 @@ public class DemoChartFactory {
     numberAxis.setRangeType(RangeType.POSITIVE);
     numberAxis.setStandardTickUnits(DEFAULT_TICKS);
     numberAxis.setAutoRangeMinimumSize(50.0);
+    numberAxis.setTickLabelFont(regularFont);
+    numberAxis.setLabelFont(regularFont);
 
     return chart;
   }
@@ -141,6 +182,8 @@ public class DemoChartFactory {
 
     ValueAxis axis = plot.getDomainAxis();
     axis.setFixedAutoRange(30000.0);
+    axis.setTickLabelFont(regularFont);
+    axis.setLabelFont(regularFont);
     if (axis instanceof DateAxis) {
       ((DateAxis) axis).setDateFormatOverride(new SimpleDateFormat("h:mm:ss"));
     }
@@ -149,15 +192,110 @@ public class DemoChartFactory {
     numberAxis.setRangeType(RangeType.POSITIVE);
     numberAxis.setStandardTickUnits(DEFAULT_TICKS);
     numberAxis.setAutoRangeMinimumSize(50.0);
+    numberAxis.setTickLabelFont(regularFont);
+    numberAxis.setLabelFont(regularFont);
 
     return chart;
   }
 
-  private static TimeSeriesCollection createTimeSeriesDataset(TimeSeries s1) {
+  public static StandardDialScale createStandardDialScale(double lowerBound, double upperBound, double startAngle,
+                                                          double extent, double majorTickInterval, int minorTickCount) {
+    StandardDialScale scale = new StandardDialScale(lowerBound, upperBound, startAngle, extent, majorTickInterval,
+                                                    minorTickCount);
+    scale.setTickRadius(0.88);
+    scale.setTickLabelOffset(0.20);
+    scale.setTickLabelFont(new Font("Dialog", Font.PLAIN, 10));
+    scale.setTickLabelFormatter(new DecimalFormat("#,###"));
+    return scale;
+  }
+
+  public static JFreeChart createDial(String dialLabel, ValueDataset dataset, double lowerBound, double upperBound) {
+    return createDial(dialLabel, 12, dataset, lowerBound, upperBound, new StandardDialRange[] {});
+  }
+
+  public static JFreeChart createDial(String dialLabel, int baseFont, ValueDataset dataset, double lowerBound,
+                                      double upperBound) {
+    return createDial(dialLabel, baseFont, dataset, lowerBound, upperBound, new StandardDialRange[] {});
+  }
+
+  public static JFreeChart createDial(String dialLabel, ValueDataset dataset, double lowerBound, double upperBound,
+                                      StandardDialRange[] ranges) {
+    return createDial(dialLabel, 12, dataset, lowerBound, upperBound, ranges);
+  }
+
+  public static JFreeChart createDial(String dialLabel, int baseFont, ValueDataset dataset, double lowerBound,
+                                      double upperBound, StandardDialRange[] ranges) {
+    StandardDialScale scale = createStandardDialScale(lowerBound, upperBound, -140, -260, 1000, 4);
+    return createDial(dialLabel, baseFont, dataset, scale, ranges, new Color(240, 0, 0), new Color(218, 0, 0));
+  }
+
+  public static JFreeChart createDial(String dialLabel, ValueDataset dataset, StandardDialScale scale,
+                                      StandardDialRange[] ranges) {
+    return createDial(dialLabel, 12, dataset, scale, ranges, new Color(240, 0, 0), new Color(218, 0, 0));
+  }
+
+  public static JFreeChart createDial(String dialLabel, ValueDataset dataset, StandardDialScale scale,
+                                      StandardDialRange[] ranges, Paint pointerFillPaint, Paint pointerOutlinePaint) {
+    return createDial(dialLabel, 12, dataset, scale, ranges, pointerFillPaint, pointerOutlinePaint);
+  }
+
+  public static JFreeChart createDial(String dialLabel, int baseFont, ValueDataset dataset, StandardDialScale scale,
+                                      StandardDialRange[] ranges, Paint pointerFillPaint, Paint pointerOutlinePaint) {
+    DialPlot plot = new DialPlot();
+    plot.setView(0.0, 0.0, 1.0, 1.0);
+    plot.setDataset(dataset);
+    plot.setDialFrame(new StandardDialFrame());
+
+    // set the text annotation
+    DialTextAnnotation annotation1 = new DialTextAnnotation(dialLabel);
+    annotation1.setFont(new Font("DialogInput", Font.BOLD, baseFont + 4));
+    annotation1.setRadius(0.17);
+    plot.addLayer(annotation1);
+
+    // set the value indicator
+    DialValueIndicator dvi = new DialValueIndicator(0);
+    dvi.setNumberFormat(new DecimalFormat("#"));
+    dvi.setFont(new Font("Monospaced", Font.BOLD, baseFont + 4));
+    dvi.setRadius(0.68);
+    dvi.setOutlinePaint(Color.black);
+    dvi.setOutlineStroke(new BasicStroke(2.0f));
+    if (scale != null) {
+      dvi.setTemplateValue(Double.valueOf(scale.getUpperBound()));
+    }
+    dvi.setInsets(new RectangleInsets(5, 20, 5, 20));
+    plot.addLayer(dvi);
+
+    if (scale != null) {
+      plot.addScale(0, scale);
+    }
+
+    // set the needle
+    DialPointer.Pointer p = new DialPointer.Pointer();
+    p.setFillPaint(pointerFillPaint);
+    p.setOutlinePaint(pointerOutlinePaint);
+    plot.addPointer(p);
+
+    // set the needle cap
+    DialCap cap = new DialCap();
+    cap.setFillPaint(Color.black);
+    plot.setCap(cap);
+
+    plot.setBackground(new DialBackground(Color.white));
+
+    for (StandardDialRange range : ranges) {
+      range.setInnerRadius(0.90);
+      range.setOuterRadius(0.95);
+      plot.addLayer(range);
+    }
+
+    return new JFreeChart(plot);
+  }
+
+  public static TimeSeriesCollection createTimeSeriesDataset(TimeSeries s1) {
     return createTimeSeriesDataset(new TimeSeries[] { s1 });
   }
 
-  private static TimeSeriesCollection createTimeSeriesDataset(TimeSeries[] series) {
+  public static TimeSeriesCollection createTimeSeriesDataset(TimeSeries[] series) {
     TimeSeriesCollection dataset = new TimeSeriesCollection();
 
     for (int i = 0; i < series.length; i++) {

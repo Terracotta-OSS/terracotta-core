@@ -2,11 +2,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>org.terracotta</groupId>
   <artifactId>parent</artifactId>
-  <version>3.0.0-SNAPSHOT</version>
+  <version>3.1.0-SNAPSHOT</version>
   <name>terracotta base</name>
   <packaging>pom</packaging>
 
@@ -34,7 +35,7 @@
   </licenses>
 
   <properties>
-    <tcVersion>3.0.0-SNAPSHOT</tcVersion>
+    <tcVersion>3.1.0-SNAPSHOT</tcVersion>
     <sigar.version>1.6.0</sigar.version>
   </properties>
 
@@ -166,6 +167,17 @@
          </exclusion>
        </exclusions>
       </dependency>
+      <dependency>
+        <groupId>jfree</groupId>
+        <artifactId>jfreechart</artifactId>
+        <version>1.0.11-experimental</version>
+       <exclusions>
+         <exclusion>
+           <groupId>gnujaxp</groupId>
+           <artifactId>gnujaxp</artifactId>
+         </exclusion>
+       </exclusions>
+      </dependency>      
       <dependency>
         <groupId>org.dijon</groupId>
         <artifactId>appframe</artifactId>
@@ -369,6 +381,18 @@
         <version>${sigar.version}</version>
         <type>so</type>
       </dependency>
+      <dependency>
+        <groupId>org.hyperic</groupId>
+        <artifactId>libsigar-amd64-solaris</artifactId>
+        <version>${sigar.version}</version>
+        <type>so</type>
+      </dependency>
+      <dependency>
+        <groupId>org.hyperic</groupId>
+        <artifactId>libsigar-x86-solaris</artifactId>
+        <version>${sigar.version}</version>
+        <type>so</type>
+      </dependency>      
       <dependency>
         <groupId>org.hyperic</groupId>
         <artifactId>libsigar-x86-linux</artifactId>

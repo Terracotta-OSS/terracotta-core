@@ -39,7 +39,7 @@ public class TerracottaLicenseFormat implements LicenseFormat {
     int signatureIndex = lines.indexOf(LICENSE_SIGNATURE);
     if (headerIndex < 0 || footerIndex < 0 || signatureIndex < 0) {
       //
-      throw new LicenseException("License key structure has been compromised.");
+      throw new LicenseException("Product key structure has been compromised.");
     }
     List properties = lines.subList(headerIndex + 1, signatureIndex);
     String signatureString = (String) lines.get(signatureIndex + 1);

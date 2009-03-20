@@ -19,11 +19,11 @@ import java.util.Set;
 
 public class MockChannelManager implements DSOChannelManager {
 
-  private Map channels = new HashMap();
+  private final Map channels = new HashMap();
 
   public void addChannel(MessageChannel channel) {
     synchronized (channels) {
-      this.channels.put(new ClientID(channel.getChannelID()), channel);
+      this.channels.put(new ClientID(channel.getChannelID().toLong()), channel);
     }
   }
 
@@ -74,7 +74,7 @@ public class MockChannelManager implements DSOChannelManager {
   }
 
   public ClientID getClientIDFor(ChannelID channelID) {
-    return new ClientID(channelID);
+    return new ClientID(channelID.toLong());
   }
 
 }

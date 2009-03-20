@@ -158,7 +158,7 @@ public class UpdateCommand extends OneOrAllCommand {
   }
 
   private void printEpilogue() {
-    out.println("\nDone.");
+    out.println("\nDone. (Make sure to update your tc-config.xml with the new/updated version if necessary)");
   }
 
 }

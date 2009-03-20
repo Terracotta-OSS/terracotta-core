@@ -48,6 +48,10 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
     return 0;
   }
 
+  public int getDSOGroupPort() {
+    return 0;
+  }
+
   public long getStartTime() {
     return 0;
   }
@@ -207,5 +211,4 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   public ServerGroupInfo[] getServerGroupInfo() {
     return null;
   }
-
 }

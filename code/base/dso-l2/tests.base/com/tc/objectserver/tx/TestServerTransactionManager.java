@@ -14,7 +14,6 @@ import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -34,7 +33,7 @@ public class TestServerTransactionManager implements ServerTransactionManager {
   public final List                   incomingTxns        = new ArrayList();
 
   public void shutdownNode(NodeID deadClient) {
-    shutdownClientCalls.put(deadClient);
+    this.shutdownClientCalls.put(deadClient);
   }
 
   public void addWaitingForAcknowledgement(NodeID waiter, TransactionID requestID, NodeID waitee) {
@@ -55,7 +54,7 @@ public class TestServerTransactionManager implements ServerTransactionManager {
   }
 
   public void skipApplyAndCommit(ServerTransaction txn) {
-    skipCalls.put(txn);
+    this.skipCalls.put(txn);
   }
 
   public void addTransactionListener(ServerTransactionListener listener) {
@@ -71,8 +70,8 @@ public class TestServerTransactionManager implements ServerTransactionManager {
   }
 
   public void incomingTransactions(NodeID nodeID, Set txnIDs, Collection txns, boolean relayed) {
-    incomingTxnContexts.add(new Object[] { nodeID, txnIDs, Boolean.valueOf(relayed) });
-    incomingTxns.addAll(txns);
+    this.incomingTxnContexts.add(new Object[] { nodeID, txnIDs, Boolean.valueOf(relayed) });
+    this.incomingTxns.addAll(txns);
   }
 
   public void transactionsRelayed(NodeID node, Set serverTxnIDs) {
@@ -80,7 +79,7 @@ public class TestServerTransactionManager implements ServerTransactionManager {
   }
 
   public void commit(PersistenceTransactionProvider ptxp, Collection objects, Map newRoots,
-                     Collection appliedServerTransactionIDs ) {
+                     Collection appliedServerTransactionIDs) {
     // NOP
   }
 
@@ -105,10 +104,6 @@ public class TestServerTransactionManager implements ServerTransactionManager {
   }
 
   public String dump() {
-    throw new ImplementMe();
-  }
-
-  public void dump(Writer writer) {
     throw new ImplementMe();
   }
 

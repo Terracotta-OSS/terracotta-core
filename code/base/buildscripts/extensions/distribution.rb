@@ -102,6 +102,9 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   end
 
   def dist_maven(flavor = 'OPENSOURCE')
+    # we never publish Enterprise artifacts to maven repo
+    fail("Can't publish Enterprise artifacts") unless flavor == 'OPENSOURCE'
+
     unless config_source[MAVEN_REPO_CONFIG_KEY]
       @internal_config_source[MAVEN_REPO_CONFIG_KEY] = MAVEN_REPO_LOCAL
     end
@@ -110,6 +113,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     @no_demo = true
     begin
       product_definition_files(flavor).each do |def_file|
+        puts "Processing def file #{def_file}"
         product_code = product_code(def_file)
         config = product_config(product_code)
         if postscripts = config['postscripts']
@@ -229,9 +233,6 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   require 'extensions/bundled-modules'
   include BundledModules
 
-  require 'extensions/bundled-jres'
-  include BundledJREs
-
   require 'extensions/packaging'
   include Packaging
 
@@ -268,8 +269,8 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     else
       exec_section :bundled_vendors
       exec_section :bundled_demos
-      exec_section :bundled_jres
     end
+    puts "EXEC POSTSCRIPTS"
     exec_section :postscripts
   end
 

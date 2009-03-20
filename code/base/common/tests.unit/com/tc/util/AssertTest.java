@@ -11,7 +11,7 @@ import java.util.ArrayList;
  * Unit test for {@link Assert}.
  */
 public class AssertTest extends TCTestCase {
-
+  
   public void testAssertNoBlankElements() {
     try {
       Assert.assertNoBlankElements(null);

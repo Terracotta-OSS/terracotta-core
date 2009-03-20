@@ -1,3 +1,0 @@
-CATALINA_HOME=/tomcat6.0
-JAVA_HOME=${JAVA_HOME},${java.home}
-

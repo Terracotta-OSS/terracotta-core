@@ -83,7 +83,7 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
     // Note: on windows, when this osgi startup fails, the jar file is left
     // open and prevents deletion. So, for this particular test, we write
     // instead to the java temp dir and mark to delete on exit
-    File tempDir = new File(System.getProperty("java.io.tmpdir"));
+    File tempDir = this.getTempDirectory();
     File generatedJar1 = createBundle(tempDir, badGroupId, badArtifactId, badVersion, badSymbolicName,
                                       badSymbolicVersion, null, null);
     generatedJar1.deleteOnExit();

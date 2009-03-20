@@ -29,10 +29,10 @@ import javax.swing.JFrame;
 import javax.swing.Timer;
 
 public class XFrame extends JFrame {
-  private boolean  blocked;
-  private Cursor   savedCursor;
-  private Timer    storeTimer;
-  protected Action closeAction;
+  private boolean     blocked;
+  private Cursor      savedCursor;
+  private final Timer storeTimer;
+  protected Action    closeAction;
 
   public XFrame() {
     super();
@@ -57,6 +57,7 @@ public class XFrame extends JFrame {
     setTitle(title);
   }
 
+  @Override
   public void addNotify() {
     super.addNotify();
 
@@ -71,6 +72,7 @@ public class XFrame extends JFrame {
     }
   }
 
+  @Override
   public void setExtendedState(int state) {
     Toolkit toolkit = Toolkit.getDefaultToolkit();
 
@@ -114,6 +116,7 @@ public class XFrame extends JFrame {
     /**/
   }
 
+  @Override
   public void setUndecorated(boolean undecorated) {
     if (isDisplayable()) {
       dispose();
@@ -165,8 +168,8 @@ public class XFrame extends JFrame {
     size.width -= (insets.left + insets.right);
     size.height -= (insets.top + insets.bottom);
 
-    int width = (int) (size.width * 0.75f);
-    int height = (int) (size.height * 0.66f);
+    int width = (int) (size.width * 0.65f);
+    int height = (int) (size.height * 0.75f);
 
     // center
     int x = size.width / 2 - width / 2;
@@ -219,6 +222,7 @@ public class XFrame extends JFrame {
     return null;
   }
 
+  @Override
   protected void processKeyEvent(KeyEvent e) {
     if (!blocked) {
       super.processKeyEvent(e);
@@ -229,6 +233,7 @@ public class XFrame extends JFrame {
     return true;
   }
 
+  @Override
   protected void processWindowEvent(final WindowEvent e) {
     if (!blocked) {
       if (e.getID() == WindowEvent.WINDOW_CLOSING) {
@@ -238,12 +243,14 @@ public class XFrame extends JFrame {
     }
   }
 
+  @Override
   protected void processMouseEvent(MouseEvent e) {
     if (!blocked) {
       super.processMouseEvent(e);
     }
   }
 
+  @Override
   protected void processMouseMotionEvent(MouseEvent e) {
     if (!blocked) {
       super.processMouseMotionEvent(e);
@@ -301,20 +308,24 @@ public class XFrame extends JFrame {
   }
 
   class WindowListener extends WindowAdapter {
+    @Override
     public void windowIconified(WindowEvent e) {
       storeState();
     }
 
+    @Override
     public void windowDeiconified(WindowEvent e) {
       storeState();
     }
 
+    @Override
     public void windowStateChanged(WindowEvent e) {
       storeState();
     }
   }
 
   class ComponentListener extends ComponentAdapter {
+    @Override
     public void componentResized(ComponentEvent e) {
       if (storeTimer.isRunning()) {
         storeTimer.stop();
@@ -322,6 +333,7 @@ public class XFrame extends JFrame {
       storeTimer.start();
     }
 
+    @Override
     public void componentMoved(ComponentEvent e) {
       if (storeTimer.isRunning()) {
         storeTimer.stop();

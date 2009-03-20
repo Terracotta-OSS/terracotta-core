@@ -155,7 +155,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   /*
    * for testing purpose only. Tester needs to do setDiscover().
    */
-  TCGroupManagerImpl(ConnectionPolicy connectionPolicy, String hostname, int port, int groupPort,
+  public TCGroupManagerImpl(ConnectionPolicy connectionPolicy, String hostname, int port, int groupPort,
                      StageManager stageManager) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;

@@ -14,11 +14,11 @@ import com.tc.net.NodeID;
 import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
+import com.tc.object.lockmanager.api.TCLockTimer;
 import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.object.lockmanager.api.TimerCallback;
 import com.tc.object.lockmanager.api.TryLockContext;
 import com.tc.object.lockmanager.api.WaitContext;
-import com.tc.object.lockmanager.api.TCLockTimer;
-import com.tc.object.lockmanager.api.TimerCallback;
 import com.tc.object.lockmanager.impl.TCLockTimerImpl;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.tx.TimerSpec;
@@ -37,7 +37,6 @@ import com.tc.util.Assert;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -49,8 +48,6 @@ import java.util.Map;
 /**
  * Server representation of lock management. We will need to keep track of what locks are checkedout, who has the lock
  * and who wants the lock
- * 
- * @author steve
  */
 public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCallback {
   private static final TCLogger                   logger                     = TCLogging
@@ -109,18 +106,12 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
     this.lockStatsManager = lockStatsManager;
   }
 
-  public synchronized String dump() {
+  public String dump() {
     StringWriter writer = new StringWriter();
     PrintWriter pw = new PrintWriter(writer);
     new PrettyPrinterImpl(pw).visit(this);
     writer.flush();
     return writer.toString();
-  }
-
-  public synchronized void dump(Writer writer) {
-    PrintWriter pw = new PrintWriter(writer);
-    pw.write(dump());
-    pw.flush();
   }
 
   public void dumpToLogger() {
@@ -133,14 +124,14 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
 
   public synchronized void verify(NodeID nodeID, LockID[] lockIDs) {
     if (!isStarted()) { return; }
-    for (int i = 0; i < lockIDs.length; i++) {
-      Lock lock = (Lock) locks.get(lockIDs[i]);
+    for (LockID lockID : lockIDs) {
+      Lock lock = (Lock) this.locks.get(lockID);
       if (lock == null) {
-        String errorMsg = " Lock is not held for " + lockIDs[i] + ". Not by " + nodeID + ". Not by anyone. uhm... Nada";
+        String errorMsg = " Lock is not held for " + lockID + ". Not by " + nodeID + ". Not by anyone. uhm... Nada";
         logger.warn(errorMsg);
         throw new AssertionError(errorMsg);
       }
-      if (!lock.holdsSomeLock(nodeID)) { throw new AssertionError(" Lock " + lockIDs[i] + " is not held by anyone in "
+      if (!lock.holdsSomeLock(nodeID)) { throw new AssertionError(" Lock " + lockID + " is not held by anyone in "
                                                                   + nodeID); }
     }
   }
@@ -148,13 +139,13 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
   public synchronized void reestablishLock(LockID lockID, NodeID nid, ThreadID sourceID, int requestedLevel,
                                            Sink lockResponseSink) {
     assertStarting();
-    ServerThreadContext threadContext = threadContextFactory.getOrCreate(nid, sourceID);
+    ServerThreadContext threadContext = this.threadContextFactory.getOrCreate(nid, sourceID);
     Lock lock = (Lock) this.locks.get(lockID);
 
     if (lock == null) {
       lock = new Lock(lockID, threadContext, this.lockTimeout, this.lockListeners, this.lockPolicy,
-                      threadContextFactory, lockStatsManager);
-      locks.put(lockID, lock);
+                      this.threadContextFactory, this.lockStatsManager);
+      this.locks.put(lockID, lock);
     }
     lock.reestablishLock(threadContext, requestedLevel, lockResponseSink);
   }
@@ -166,12 +157,12 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
 
   private synchronized boolean requestLock(LockID lockID, NodeID nodeID, ThreadID threadID, int requestedLevel,
                                            String lockType, TimerSpec timeout, Sink lockResponseSink, boolean noBlock) {
-    if (!channelManager.isActiveID(nodeID)) return false;
+    if (!this.channelManager.isActiveID(nodeID)) { return false; }
     if (isStarting()) {
       queueRequestLock(lockID, nodeID, threadID, requestedLevel, lockType, timeout, lockResponseSink, noBlock);
       return false;
     }
-    if (!isStarted()) return false;
+    if (!isStarted()) { return false; }
     return basicRequestLock(lockID, nodeID, threadID, requestedLevel, lockType, timeout, lockResponseSink, noBlock);
   }
 
@@ -182,20 +173,21 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
 
   private boolean basicRequestLock(LockID lockID, NodeID nodeID, ThreadID threadID, int requestedLevel,
                                    String lockType, TimerSpec timeout, Sink lockResponseSink, boolean noBlock) {
-    ServerThreadContext threadContext = threadContextFactory.getOrCreate(nodeID, threadID);
+    ServerThreadContext threadContext = this.threadContextFactory.getOrCreate(nodeID, threadID);
     Lock lock = (Lock) this.locks.get(lockID);
 
     boolean lockAwarded = false;
     if (lock != null) {
       if (noBlock) {
-        lockAwarded = lock.tryRequestLock(threadContext, requestedLevel, timeout, waitTimer, this, lockResponseSink);
+        lockAwarded = lock.tryRequestLock(threadContext, requestedLevel, timeout, this.waitTimer, this,
+                                          lockResponseSink);
       } else {
         lockAwarded = lock.requestLock(threadContext, requestedLevel, lockResponseSink);
       }
     } else {
       lock = new Lock(lockID, threadContext, requestedLevel, lockType, lockResponseSink, this.lockTimeout,
-                      this.lockListeners, this.lockPolicy, threadContextFactory, lockStatsManager);
-      locks.put(lockID, lock);
+                      this.lockListeners, this.lockPolicy, this.threadContextFactory, this.lockStatsManager);
+      this.locks.put(lockID, lock);
       lockAwarded = true;
     }
 
@@ -205,11 +197,11 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
   private void queueRequestLock(LockID lockID, NodeID nodeID, ThreadID threadID, int requestedLevel, String lockType,
                                 TimerSpec timeout, Sink lockResponseSink, boolean noBlock) {
     if (timeout == null) {
-      lockRequestQueue.add(new RequestLockContext(lockID, nodeID, threadID, requestedLevel, lockType, lockResponseSink,
-                                                  noBlock));
+      this.lockRequestQueue.add(new RequestLockContext(lockID, nodeID, threadID, requestedLevel, lockType,
+                                                       lockResponseSink, noBlock));
     } else {
-      lockRequestQueue.add(new RequestLockContext(lockID, nodeID, threadID, requestedLevel, lockType, timeout,
-                                                  lockResponseSink, noBlock));
+      this.lockRequestQueue.add(new RequestLockContext(lockID, nodeID, threadID, requestedLevel, lockType, timeout,
+                                                       lockResponseSink, noBlock));
     }
   }
 
@@ -219,10 +211,10 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
                   + "Message Context: [LockID=" + lockID + ", NodeID=" + cid + ", ThreadID=" + threadID + "]");
       return;
     }
-    if (!isStarted()) return;
+    if (!isStarted()) { return; }
 
-    ServerThreadContext threadContext = threadContextFactory.getOrCreate(cid, threadID);
-    Lock lock = (Lock) locks.get(lockID);
+    ServerThreadContext threadContext = this.threadContextFactory.getOrCreate(cid, threadID);
+    Lock lock = (Lock) this.locks.get(lockID);
     if (lock == null) {
       // This lock is not present in the server, we still want to send the right lockID info in the response. Create one
       // for temporary use.
@@ -237,10 +229,10 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
                   + "Message Context: [LockID=" + lockID + ", NodeID=" + cid + ", ThreadID=" + threadID + "]");
       return;
     }
-    if (!isStarted()) return;
+    if (!isStarted()) { return; }
 
     Lock lock = getLockFor(lockID);
-    ServerThreadContext threadContext = threadContextFactory.getOrCreate(cid, threadID);
+    ServerThreadContext threadContext = this.threadContextFactory.getOrCreate(cid, threadID);
     lock.interrupt(threadContext);
   }
 
@@ -250,7 +242,7 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
                   + "Message Context: [LockID=" + id + ", NodeID=" + channelID + ", ThreadID=" + threadID + "]");
       return;
     }
-    if (!isStarted()) return;
+    if (!isStarted()) { return; }
 
     Lock l = getLockFor(id);
     if (l.isNull()) {
@@ -258,16 +250,16 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
                   + " This lock was not held. This could be do to that node being down so it may not be an error.");
       return;
     }
-    basicUnlock(l, threadContextFactory.getOrCreate(channelID, threadID));
+    basicUnlock(l, this.threadContextFactory.getOrCreate(channelID, threadID));
   }
 
   public synchronized void wait(LockID lid, NodeID cid, ThreadID tid, TimerSpec call, Sink lockResponseSink) {
     assertNotStopped();
     Lock lock = (Lock) this.locks.get(lid);
     if (lock != null) {
-      ServerThreadContext threadContext = threadContextFactory.getOrCreate(cid, tid);
+      ServerThreadContext threadContext = this.threadContextFactory.getOrCreate(cid, tid);
       try {
-        lock.wait(threadContext, waitTimer, call, this, lockResponseSink);
+        lock.wait(threadContext, this.waitTimer, call, this, lockResponseSink);
         notifyAll();
       } catch (TCIllegalMonitorStateException e) {
         e.printStackTrace();
@@ -284,11 +276,11 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
                                            Sink lockResponseSink) {
     assertStarting();
     Lock lock = (Lock) this.locks.get(lid);
-    ServerThreadContext threadContext = threadContextFactory.getOrCreate(cid, tid);
+    ServerThreadContext threadContext = this.threadContextFactory.getOrCreate(cid, tid);
     if (lock == null) {
-      lock = new Lock(lid, threadContext, this.lockTimeout, this.lockListeners, this.lockPolicy, threadContextFactory,
-                      lockStatsManager);
-      locks.put(lid, lock);
+      lock = new Lock(lid, threadContext, this.lockTimeout, this.lockListeners, this.lockPolicy,
+                      this.threadContextFactory, this.lockStatsManager);
+      this.locks.put(lid, lock);
     }
     lock.reestablishWait(threadContext, call, lockLevel, lockResponseSink);
   }
@@ -301,7 +293,7 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
                   + "Message Context: [LockID=" + lid + ", NodeID=" + cid + "]");
       return;
     }
-    if (!channelManager.isActiveID(cid)) {
+    if (!this.channelManager.isActiveID(cid)) {
       logger.warn("Ignoring Recall Commit message from disconnected client : " + cid + " : Lock ID : " + lid);
       return;
     }
@@ -311,33 +303,33 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
     synchronized (lock) {
       for (Iterator i = lockContexts.iterator(); i.hasNext();) {
         LockContext ctxt = (LockContext) i.next();
-        ServerThreadContext threadContext = threadContextFactory.getOrCreate(cid, ctxt.getThreadID());
+        ServerThreadContext threadContext = this.threadContextFactory.getOrCreate(cid, ctxt.getThreadID());
         lock.addRecalledHolder(threadContext, ctxt.getLockLevel());
       }
 
       for (Iterator i = waitContexts.iterator(); i.hasNext();) {
         WaitContext ctxt = (WaitContext) i.next();
-        ServerThreadContext threadContext = threadContextFactory.getOrCreate(cid, ctxt.getThreadID());
-        lock.addRecalledWaiter(threadContext, ctxt.getTimerSpec(), ctxt.getLockLevel(), lockResponseSink, waitTimer,
-                               this);
+        ServerThreadContext threadContext = this.threadContextFactory.getOrCreate(cid, ctxt.getThreadID());
+        lock.addRecalledWaiter(threadContext, ctxt.getTimerSpec(), ctxt.getLockLevel(), lockResponseSink,
+                               this.waitTimer, this);
       }
 
       for (Iterator i = pendingLockContexts.iterator(); i.hasNext();) {
         LockContext ctxt = (LockContext) i.next();
-        ServerThreadContext threadContext = threadContextFactory.getOrCreate(cid, ctxt.getThreadID());
+        ServerThreadContext threadContext = this.threadContextFactory.getOrCreate(cid, ctxt.getThreadID());
         lock.addRecalledPendingRequest(threadContext, ctxt.getLockLevel(), lockResponseSink);
       }
 
       for (Iterator i = pendingTryLockContexts.iterator(); i.hasNext();) {
         TryLockContext ctxt = (TryLockContext) i.next();
-        ServerThreadContext threadContext = threadContextFactory.getOrCreate(cid, ctxt.getThreadID());
+        ServerThreadContext threadContext = this.threadContextFactory.getOrCreate(cid, ctxt.getThreadID());
         lock.addRecalledTryLockPendingRequest(threadContext, ctxt.getLockLevel(), ((WaitContext) ctxt).getTimerSpec(),
-                                              lockResponseSink, waitTimer, this);
+                                              lockResponseSink, this.waitTimer, this);
       }
 
-      ServerThreadContext threadContext = threadContextFactory.getOrCreate(cid, ThreadID.VM_ID);
+      ServerThreadContext threadContext = this.threadContextFactory.getOrCreate(cid, ThreadID.VM_ID);
       if (lock.recallCommit(threadContext)) {
-        locks.remove(lid);
+        this.locks.remove(lid);
       }
     }
   }
@@ -365,11 +357,13 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
     }
     Lock lock = (Lock) this.locks.get(lid);
     if (lock != null) {
-      ServerThreadContext threadContext = threadContextFactory.getOrCreate(cid, tid);
+      ServerThreadContext threadContext = this.threadContextFactory.getOrCreate(cid, tid);
       try {
         lock.notify(threadContext, all, addNotifiedWaitersTo);
-        if (false) System.err.println("LockManager.notify(" + lid + ", " + cid + ", " + tid + ", all=" + all
-                                      + ", notifiedWaiters=" + addNotifiedWaitersTo);
+        if (false) {
+          System.err.println("LockManager.notify(" + lid + ", " + cid + ", " + tid + ", all=" + all
+                             + ", notifiedWaiters=" + addNotifiedWaitersTo);
+        }
       } catch (TCIllegalMonitorStateException e) {
         e.printStackTrace();
         throw new AssertionError(e);
@@ -384,7 +378,7 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
     if (isStarted()) {
       boolean clear = lock.nextPending();
       if (clear) {
-        locks.remove(lock.getLockID());
+        this.locks.remove(lock.getLockID());
       }
     }
     notifyAll();
@@ -395,7 +389,7 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
   }
 
   public synchronized void clearAllLocksFor(NodeID nid) {
-    HashSet allLocks = new HashSet(locks.keySet());
+    HashSet allLocks = new HashSet(this.locks.keySet());
 
     // NOTE: These loops might be too expensive as lock and threadContext sets grow large
     // We could keep indexes based on channel to speed things up
@@ -411,15 +405,15 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
         basicUnlock(lock, ServerThreadContext.NULL_CONTEXT);
       }
     }
-    lockStatsManager.clearAllStatsFor(nid);
+    this.lockStatsManager.clearAllStatsFor(nid);
   }
 
   public synchronized void enableLockStatsForNodeIfNeeded(NodeID nid) {
-    lockStatsManager.enableStatsForNodeIfNeeded(nid);
+    this.lockStatsManager.enableStatsForNodeIfNeeded(nid);
   }
 
   private Lock getLockFor(LockID id) {
-    Lock lock = (Lock) locks.get(id);
+    Lock lock = (Lock) this.locks.get(id);
     if (lock == null) {
       logger.warn("Look up of Non-exisiting Lock for ID : " + id);
       return Lock.NULL_LOCK;
@@ -447,15 +441,15 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
   public LockMBean[] getAllLocks() {
     final List copy;
     synchronized (this) {
-      copy = new ArrayList(locks.size());
-      copy.addAll(locks.values());
+      copy = new ArrayList(this.locks.size());
+      copy.addAll(this.locks.values());
     }
 
     int count = 0;
     LockMBean[] rv = new LockMBean[copy.size()];
     for (Iterator i = copy.iterator(); i.hasNext();) {
       Lock lock = (Lock) i.next();
-      rv[count++] = lock.getMBean(channelManager);
+      rv[count++] = lock.getMBean(this.channelManager);
     }
 
     return rv;
@@ -465,37 +459,38 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
     synchronized (this) {
       assertStarting();
       changeState(STARTED);
-      if (lockPolicy == UNINITIALIZED_LOCK_POLICY) {
+      if (this.lockPolicy == UNINITIALIZED_LOCK_POLICY) {
         this.lockPolicy = GREEDY_LOCK_POLICY;
       }
 
-      logger.debug("START Locks re-established -- " + locks.size());
-      for (Iterator i = locks.values().iterator(); i.hasNext();) {
+      logger.debug("START Locks re-established -- " + this.locks.size());
+      for (Iterator i = this.locks.values().iterator(); i.hasNext();) {
         Lock lock = (Lock) i.next();
-        lock.setLockPolicy(lockPolicy);
-        lock.notifyStarted(this, waitTimer);
+        lock.setLockPolicy(this.lockPolicy);
+        lock.notifyStarted(this, this.waitTimer);
       }
 
-      for (Iterator i = lockRequestQueue.iterator(); i.hasNext();) {
+      for (Iterator i = this.lockRequestQueue.iterator(); i.hasNext();) {
         RequestLockContext ctxt = (RequestLockContext) i.next();
         requestLock(ctxt.lockID, ctxt.nodeID, ctxt.threadID, ctxt.requestedLockLevel, ctxt.lockType, ctxt.timeout,
                     ctxt.lockResponseSink, ctxt.noBlock);
       }
-      lockRequestQueue.clear();
+      this.lockRequestQueue.clear();
     }
   }
 
   public synchronized void stop() throws InterruptedException {
-    while (isStarting())
+    while (isStarting()) {
       wait();
+    }
     assertStarted();
     cinfo("Stopping...");
     changeState(STOPPING);
 
-    locks.clear();
+    this.locks.clear();
 
-    if (waitTimer != null) {
-      waitTimer.shutdown();
+    if (this.waitTimer != null) {
+      this.waitTimer.shutdown();
     }
     setLockPolicy(ALTRUISTIC_LOCK_POLICY);
 
@@ -505,13 +500,13 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
   }
 
   public int getLockPolicy() {
-    return lockPolicy;
+    return this.lockPolicy;
   }
 
   public void setLockPolicy(int lockPolicy) {
     Assert.assertTrue(lockPolicy == GREEDY_LOCK_POLICY || lockPolicy == ALTRUISTIC_LOCK_POLICY);
     this.lockPolicy = lockPolicy;
-    for (Iterator i = locks.values().iterator(); i.hasNext();) {
+    for (Iterator i = this.locks.values().iterator(); i.hasNext();) {
       Lock lock = (Lock) i.next();
       lock.setLockPolicy(this.lockPolicy);
     }
@@ -527,29 +522,29 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
   }
 
   private boolean isStopped() {
-    return status == STOPPED;
+    return this.status == STOPPED;
   }
 
   private boolean isStarted() {
-    return status == STARTED;
+    return this.status == STARTED;
   }
 
   private boolean isStarting() {
-    return status == STARTING;
+    return this.status == STARTING;
   }
 
   private void assertStarting() {
-    if (!isStarting()) throw new LockManagerError(NOT_STARTING_ERROR, "LockManager is not starting ("
-                                                                      + this.status.getName() + ")");
+    if (!isStarting()) { throw new LockManagerError(NOT_STARTING_ERROR, "LockManager is not starting ("
+                                                                        + this.status.getName() + ")"); }
   }
 
   private void assertStarted() {
-    if (!isStarted()) throw new LockManagerError(NOT_STARTED_ERROR, "LockManager is not started ("
-                                                                    + this.status.getName() + ")");
+    if (!isStarted()) { throw new LockManagerError(NOT_STARTED_ERROR, "LockManager is not started ("
+                                                                      + this.status.getName() + ")"); }
   }
 
   private void assertNotStopped() {
-    if (isStopped()) throw new LockManagerError(IS_STOPPED_ERROR, "LockManager is stopped");
+    if (isStopped()) { throw new LockManagerError(IS_STOPPED_ERROR, "LockManager is stopped"); }
   }
 
   public static class LockManagerError extends Error {
@@ -573,6 +568,7 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
       this.name = name;
     }
 
+    @Override
     public String toString() {
       return getClass().getName() + "[" + this.name + "]";
     }
@@ -612,9 +608,10 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
       this.timeout = timeout;
     }
 
+    @Override
     public String toString() {
-      return "RequestLockContext [ " + lockID + "," + nodeID + "," + threadID + ","
-             + LockLevel.toString(requestedLockLevel) + ", " + noBlock + ", " + timeout + " ]";
+      return "RequestLockContext [ " + this.lockID + "," + this.nodeID + "," + this.threadID + ","
+             + LockLevel.toString(this.requestedLockLevel) + ", " + this.noBlock + ", " + this.timeout + " ]";
     }
   }
 
@@ -629,6 +626,7 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
       return this.name;
     }
 
+    @Override
     public String toString() {
       return getClass().getName() + "[" + this.name + "]";
     }
@@ -636,8 +634,8 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
 
   public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.println(getClass().getName());
-    out.indent().println("locks: " + locks.size());
-    for (Iterator i = locks.values().iterator(); i.hasNext();) {
+    out.indent().println("locks: " + this.locks.size());
+    for (Iterator i = this.locks.values().iterator(); i.hasNext();) {
       out.println(i.next());
     }
     return out;

@@ -12,6 +12,8 @@ import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.objectserver.control.ExtraProcessServerControl;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.stats.DGCMBean;
+import com.tc.stats.DSOMBean;
 import com.tc.test.GroupData;
 import com.tc.test.MultipleServerManager;
 import com.tc.test.MultipleServersConfigCreator;
@@ -36,10 +38,10 @@ import javax.management.MBeanServerInvocationHandler;
 import javax.management.remote.JMXConnector;
 
 public class ActivePassiveServerManager extends MultipleServerManager {
-  private static final String        HOST               = "localhost";
-  private static final String        SERVER_NAME        = "testserver";
-  private static final boolean       DEBUG              = false;
-  private static final int           NULL_VAL           = -1;
+  private static final String        HOST                = "localhost";
+  private static final String        SERVER_NAME         = "testserver";
+  private static final boolean       DEBUG               = false;
+  private static final int           NULL_VAL            = -1;
 
   private final File                 tempDir;
   private final PortChooser          portChooser;
@@ -63,16 +65,16 @@ public class ActivePassiveServerManager extends MultipleServerManager {
 
   private final List                 errors;
 
-  private int                        activeIndex        = NULL_VAL;
-  private int                        lastCrashedIndex   = NULL_VAL;
+  private int                        activeIndex         = NULL_VAL;
+  private int                        lastCrashedIndex    = NULL_VAL;
   private ActivePassiveServerCrasher serverCrasher;
   private int                        maxCrashCount;
   private final TestState            testState;
   private Random                     random;
   private long                       seed;
   private final File                 javaHome;
-  private int                        pid                = -1;
-  private List                       jvmArgs            = null;
+  private int                        pid                 = -1;
+  private List                       jvmArgs             = null;
   private final boolean              isProxyL2groupPorts;
   private final int[]                proxyL2GroupPorts;
   protected ProxyConnectManager[]    proxyL2Managers;
@@ -83,25 +85,29 @@ public class ActivePassiveServerManager extends MultipleServerManager {
 
   // this is used when active-active tests are run. This will help in differentiating between the names in the different
   // groups
-  private int                        startIndexOfServer = 0;
+  private int                        startIndexOfServer  = 0;
+  private final String               groupName;
+  private static final String        ACTIVEPASSIVE_GROUP = "active-passive-group";
 
   // Should be called directly when an active-passive test is to be run.
   public ActivePassiveServerManager(boolean isActivePassiveTest, File tempDir, PortChooser portChooser,
                                     String configModel, MultipleServersTestSetupManager setupManger, File javaHome,
                                     TestTVSConfigurationSetupManagerFactory configFactory, List extraJvmArgs,
                                     boolean isProxyL2GroupPorts, boolean isProxyDsoPorts) throws Exception {
-    this(isActivePassiveTest, tempDir, portChooser, configModel, setupManger, javaHome, configFactory, extraJvmArgs,
-         isProxyL2GroupPorts, isProxyDsoPorts, false, 0);
+    this(ACTIVEPASSIVE_GROUP, isActivePassiveTest, tempDir, portChooser, configModel, setupManger, javaHome,
+         configFactory, extraJvmArgs, isProxyL2GroupPorts, isProxyDsoPorts, false, 0);
   }
 
   // Should be called directly when an active-active test is to be run. In case of active active config is not written
-  public ActivePassiveServerManager(boolean isActivePassiveTest, File tempDir, PortChooser portChooser,
-                                    String configModel, MultipleServersTestSetupManager setupManger, File javaHome,
+  public ActivePassiveServerManager(String groupName, boolean isActivePassiveTest, File tempDir,
+                                    PortChooser portChooser, String configModel,
+                                    MultipleServersTestSetupManager setupManger, File javaHome,
                                     TestTVSConfigurationSetupManagerFactory configFactory, List extraJvmArgs,
                                     boolean isProxyL2GroupPorts, boolean isProxyDsoPorts, boolean isActiveActive,
                                     int startIndexOfServer) throws Exception {
     super(setupManger);
 
+    this.groupName = groupName;
     this.isProxyL2groupPorts = isProxyL2GroupPorts;
     this.isProxyDsoPorts = isProxyDsoPorts;
     this.jvmArgs = extraJvmArgs;
@@ -141,8 +147,8 @@ public class ActivePassiveServerManager extends MultipleServerManager {
 
     if (!isActiveActive) {
       GroupData[] groupList = new GroupData[1];
-      groupList[0] = new GroupData(dsoPorts, jmxPorts, (isProxyL2GroupPorts) ? proxyL2GroupPorts : l2GroupPorts,
-                                   serverNames);
+      groupList[0] = new GroupData(ACTIVEPASSIVE_GROUP, dsoPorts, jmxPorts, (isProxyL2GroupPorts) ? proxyL2GroupPorts
+          : l2GroupPorts, serverNames);
       MultipleServersConfigCreator serversConfigCreator = new MultipleServersConfigCreator(this.setupManger, groupList,
                                                                                            this.configModel,
                                                                                            configFile, this.tempDir,
@@ -489,6 +495,22 @@ public class ActivePassiveServerManager extends MultipleServerManager {
     return jmxConnector;
   }
 
+  public DSOMBean getDsoMBean(int index) throws IOException {
+    JMXConnectorProxy jmxc = new JMXConnectorProxy(HOST, jmxPorts[index]);
+    MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
+    DSOMBean dsoMBean = (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO,
+                                                                                 DSOMBean.class, false);
+    return dsoMBean;
+  }
+
+  public DGCMBean getLocalDGCMBean(int index) throws IOException {
+    JMXConnectorProxy jmxc = new JMXConnectorProxy(HOST, jmxPorts[index]);
+    MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
+    DGCMBean dgcMBean = (DGCMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.LOCAL_DGC_STATS,
+                                                                                 DSOMBean.class, false);
+    return dgcMBean;
+  }
+
   public void stopServer(int index) throws Exception {
 
     System.out.println("*** stopping server [" + servers[index].getDsoPort() + "]");
@@ -747,6 +769,10 @@ public class ActivePassiveServerManager extends MultipleServerManager {
     return serverCount;
   }
 
+  public String getGroupName() {
+    return groupName;
+  }
+
   public int[] getDsoPorts() {
     return dsoPorts;
   }
@@ -769,7 +795,8 @@ public class ActivePassiveServerManager extends MultipleServerManager {
       debugPrintln("******* adding to L1 config: serverName=[" + serverNames[i] + "] dsoPort=["
                    + (isProxyDsoPorts ? proxyDsoPorts[i] : dsoPorts[i]) + "] jmxPort=[" + jmxPorts[i] + "]");
     }
-    configFactory.addServersAndGroupToL1Config(serverNames, isProxyDsoPorts ? proxyDsoPorts : dsoPorts, jmxPorts);
+    configFactory.addServersAndGroupToL1Config(ACTIVEPASSIVE_GROUP, serverNames, isProxyDsoPorts ? proxyDsoPorts
+        : dsoPorts, jmxPorts);
   }
 
   public void crashServer() throws Exception {
@@ -882,4 +909,29 @@ public class ActivePassiveServerManager extends MultipleServerManager {
   public ProxyConnectManager[] getL1ProxyManagers() {
     return proxyL1Managers;
   }
+
+  public ServerControl[] getServerControls() {
+    ServerControl[] serverControls = new ServerControl[serverCount];
+    for (int i = 0; i < serverCount; i++) {
+      serverControls[i] = servers[i].getServerControl();
+    }
+    return serverControls;
+  }
+
+  public List<DSOMBean> connectAllDsoMBeans() throws IOException {
+    List<DSOMBean> mbeans = new ArrayList<DSOMBean>();
+    for (int i = 0; i < getServerCount(); i++) {
+      mbeans.add(getDsoMBean(i));
+    }
+    return mbeans;
+  }
+
+  public List<DGCMBean> connectAllLocalDGCMBeans() throws IOException {
+    List<DGCMBean> mbeans = new ArrayList<DGCMBean>();
+    for (int i = 0; i < getServerCount(); i++) {
+      mbeans.add(getLocalDGCMBean(i));
+    }
+    return mbeans;
+  }
+
 }

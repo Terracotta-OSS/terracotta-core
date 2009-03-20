@@ -66,9 +66,9 @@ public class ActivityMonitor {
       }
       List list = (List) ref.get();
       if (list == null) {
-        logger.debug(name + " :: GC cleared activity for " + id + "!");
+        logger.debug(name + " :: DGC cleared activity for " + id + "!");
         list = new LinkedList();
-        list.add("GC cleared activity ! - (" + new Date() + ")");
+        list.add("DGC cleared activity ! - (" + new Date() + ")");
         ref = new SoftReference(list);
         activityMap.put(id, ref);
       }
@@ -114,7 +114,7 @@ public class ActivityMonitor {
     }
     List list = (List) ref.get();
     if (list == null) {
-      logger.debug(name + " :: GC cleared Activity for " + id + " !!!");
+      logger.debug(name + " :: DGC cleared Activity for " + id + " !!!");
       return;
 
     }

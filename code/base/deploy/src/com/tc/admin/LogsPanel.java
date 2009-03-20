@@ -15,10 +15,10 @@ import javax.swing.Icon;
 import javax.swing.JComponent;
 
 public class LogsPanel extends XContainer {
-  private IAdminClientContext   adminClientContext;
-  private XTabbedPane           tabbedPane;
-  private LiveObjectCountViewer liveObjectCountViewer;
-  private LogViewer             logViewer;
+  private final IAdminClientContext adminClientContext;
+  private XTabbedPane               tabbedPane;
+  private DashboardViewer           dashboardViewer;
+  private LogViewer                 logViewer;
 
   public LogsPanel(IAdminClientContext adminClientContext) {
     super(new BorderLayout());
@@ -27,8 +27,8 @@ public class LogsPanel extends XContainer {
   }
 
   void select(IClusterModel clusterModel) {
-    if (liveObjectCountViewer != null) {
-      liveObjectCountViewer.select(clusterModel);
+    if (dashboardViewer != null) {
+      dashboardViewer.select(clusterModel);
     }
     if (logViewer != null) {
       logViewer.select(clusterModel);
@@ -47,10 +47,10 @@ public class LogsPanel extends XContainer {
     }
     logViewer.add(clusterModel);
 
-    if (liveObjectCountViewer == null) {
-      add("LiveObjectCount", liveObjectCountViewer = new LiveObjectCountViewer(adminClientContext));
+    if (dashboardViewer == null) {
+      add(adminClientContext.getString("cluster.dashboard"), dashboardViewer = new DashboardViewer(adminClientContext));
     }
-    liveObjectCountViewer.add(clusterModel);
+    dashboardViewer.add(clusterModel);
   }
 
   public void remove(IClusterModel clusterModel) {
@@ -63,12 +63,12 @@ public class LogsPanel extends XContainer {
       }
     }
 
-    if (liveObjectCountViewer != null) {
-      liveObjectCountViewer.remove(clusterModel);
-      if (liveObjectCountViewer.isEmpty()) {
-        tabbedPane.remove(liveObjectCountViewer);
-        liveObjectCountViewer.tearDown();
-        liveObjectCountViewer = null;
+    if (dashboardViewer != null) {
+      dashboardViewer.remove(clusterModel);
+      if (dashboardViewer.isEmpty()) {
+        tabbedPane.remove(dashboardViewer);
+        dashboardViewer.tearDown();
+        dashboardViewer = null;
       }
     }
   }

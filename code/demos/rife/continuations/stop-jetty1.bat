@@ -13,5 +13,6 @@ set JETTY_HOME=%TC_HOME%\vendors\jetty-6.1.15
 set JAVA_OPTS=%JAVA_OPTS% -Djetty.home=%JETTY_HOME%
 set JAVA_OPTS=%JAVA_OPTS% -DSTOP.PORT=8181
 set JAVA_OPTS=%JAVA_OPTS% -DSTOP.KEY=secret
+set JAVA_HOME="%JAVA_HOME:"=%"
 %JAVA_HOME%\bin\java %JAVA_OPTS% -jar %JETTY_HOME%\start.jar --stop
 endlocal

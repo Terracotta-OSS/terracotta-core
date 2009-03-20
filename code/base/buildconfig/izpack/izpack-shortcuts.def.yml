@@ -27,14 +27,14 @@ shortcuts:
   desktop: "yes"
   startup: "no"
   windows:
-    target: $INSTALL_PATH\dev-console.bat
+    target: $INSTALL_PATH\bin\dev-console.bat
     applications: "no"
     startMenu: "no"
     initialState: noShow
     iconFile: $INSTALL_PATH/icons/logo_small.ico
     iconIndex: "0"
   unix:
-    target: $INSTALL_PATH/dev-console.sh
+    target: $INSTALL_PATH/bin/dev-console.sh
     initialState: normal
     type: Application
     categories: "Terracotta;Development;"

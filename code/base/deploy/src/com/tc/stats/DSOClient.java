@@ -179,6 +179,10 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     }
   }
 
+  public ClientID getClientID() {
+    return clientID;
+  }
+
   /**
    * This method returns the same String as the parameter to thisNodeConnected() call in cluster JMX event.
    */
@@ -235,15 +239,15 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
   public long getObjectFaultRate() {
     return faultRate.getValue();
   }
-  
+
   public long getObjectFlushRate() {
     return flushRate.getValue();
   }
-  
+
   public long getPendingTransactionsCount() {
     return pendingTransactions.getValue();
   }
-  
+
   public Number[] getStatistics(final String[] names) {
     int count = names.length;
     Number[] result = new Number[count];
@@ -387,6 +391,7 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     return stateManager.hasReference(clientID, oid);
   }
 
+  @Override
   public MBeanNotificationInfo[] getNotificationInfo() {
     return Arrays.asList(NOTIFICATION_INFO).toArray(EMPTY_NOTIFICATION_INFO);
   }

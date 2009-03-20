@@ -31,16 +31,7 @@ public final class Capabilities {
     return licensedCapabilities.size();
   }
 
-  public String toString() {
-    StringBuffer sb = new StringBuffer();
-    int index = 0;
-    for (Capability c : licensedCapabilities) {
-      if (index > 0) {
-        sb.append(", ");
-      }
-      sb.append(c.toString());
-      index++;
-    }
-    return sb.toString();
+  public String getLicensedCapabilitiesAsString() {
+    return Capability.convertToString(licensedCapabilities);
   }
 }

@@ -20,7 +20,7 @@ import java.util.Set;
  */
 public interface DSOChannelManager {
 
-  public void closeAll(Collection channelIDs);
+  public void closeAll(Collection clientIDs);
 
   public MessageChannel getActiveChannel(NodeID id) throws NoSuchChannelException;
 

@@ -4,10 +4,11 @@
  */
 package com.tc.objectserver.tx;
 
+import com.tc.bytes.TCByteBuffer;
 import com.tc.config.TcProperty;
+import com.tc.io.TCByteBufferInputStream;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ApplicatorDNAEncodingImpl;
 import com.tc.object.MockTCObject;
 import com.tc.object.ObjectID;
@@ -31,11 +32,19 @@ import com.tc.object.tx.TransactionIDGenerator;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
 import com.tc.object.tx.TransactionBatchWriter.FoldingConfig;
+import com.tc.objectserver.core.api.DSOGlobalServerStats;
+import com.tc.objectserver.core.api.DSOGlobalServerStatsImpl;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.stats.counter.CounterManager;
+import com.tc.stats.counter.CounterManagerImpl;
+import com.tc.stats.counter.sampled.TimeStampedCounterValue;
+import com.tc.stats.counter.sampled.derived.SampledRateCounter;
+import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
 import com.tc.util.Assert;
 import com.tc.util.SequenceGenerator;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -49,11 +58,12 @@ import junit.framework.TestCase;
 
 public class TransactionBatchTest extends TestCase {
 
-  private DNAEncoding                         encoding = new ApplicatorDNAEncodingImpl(new MockClassProvider());
+  private final DNAEncoding                   encoding = new ApplicatorDNAEncodingImpl(new MockClassProvider());
 
   private TransactionBatchWriter              writer;
   private TestCommitTransactionMessageFactory messageFactory;
 
+  @Override
   public void setUp() throws Exception {
     messageFactory = new TestCommitTransactionMessageFactory();
     writer = newWriter(new ObjectStringSerializer());
@@ -117,7 +127,7 @@ public class TransactionBatchTest extends TestCase {
   public void testWriteRead() throws IOException {
     ObjectStringSerializer serializer = new ObjectStringSerializer();
     TestCommitTransactionMessageFactory mf = new TestCommitTransactionMessageFactory();
-    ClientID clientID = new ClientID(new ChannelID(69));
+    ClientID clientID = new ClientID(69);
     TxnBatchID batchID = new TxnBatchID(42);
 
     List tx1Notifies = new LinkedList();
@@ -157,9 +167,14 @@ public class TransactionBatchTest extends TestCase {
     writer.addTransaction(txn1, sequenceGenerator, tidGenerator);
     writer.addTransaction(txn2, sequenceGenerator, tidGenerator);
 
+    DSOGlobalServerStats stats = getDSOGlobalServerStats();
     TransactionBatchReaderImpl reader = new TransactionBatchReaderImpl(writer.getData(), clientID, serializer,
-                                                                       new ActiveServerTransactionFactory());
-    assertEquals(2, reader.getRemainingTxnsToBeRead());
+                                                                       new ActiveServerTransactionFactory(), stats);
+    // let transactionSize counter sample
+    ThreadUtil.reallySleep(2000);
+    assertTransactionSize(writer.getData(), 2, stats.getTransactionSizeCounter());
+
+    assertEquals(2, reader.getNumberForTxns());
     assertEquals(batchID, reader.getBatchID());
 
     int count = 0;
@@ -197,12 +212,21 @@ public class TransactionBatchTest extends TestCase {
 
   }
 
+  private DSOGlobalServerStats getDSOGlobalServerStats() {
+    CounterManager counterManager = new CounterManagerImpl();
+    SampledRateCounter transactionSizeCounter = (SampledRateCounter) counterManager
+        .createCounter(new SampledRateCounterConfig(1, 10, true));
+    DSOGlobalServerStats stats = new DSOGlobalServerStatsImpl(null, null, null, null, null, null, null, null, null,
+                                                              null, transactionSizeCounter, null);
+    return stats;
+  }
+
   public void testSimpleFold() throws IOException {
     ObjectStringSerializer serializer = new ObjectStringSerializer();
 
     writer = newWriter(serializer, true, 0, 0);
 
-    ClientID clientID = new ClientID(new ChannelID(69));
+    ClientID clientID = new ClientID(69);
 
     LockID lid1 = new LockID("1");
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
@@ -249,9 +273,14 @@ public class TransactionBatchTest extends TestCase {
     assertFalse(folded);
     assertEquals(2 + startSeq, sequenceGenerator.getCurrentSequence());
 
+    DSOGlobalServerStats stats = getDSOGlobalServerStats();
     TransactionBatchReaderImpl reader = new TransactionBatchReaderImpl(writer.getData(), clientID, serializer,
-                                                                       new ActiveServerTransactionFactory());
-    assertEquals(2, reader.getRemainingTxnsToBeRead());
+                                                                       new ActiveServerTransactionFactory(), stats);
+    // let transactionSize counter sample
+    ThreadUtil.reallySleep(2000);
+    assertTransactionSize(writer.getData(), 2, stats.getTransactionSizeCounter());
+
+    assertEquals(2, reader.getNumberForTxns());
     assertEquals(new TxnBatchID(1), reader.getBatchID());
 
     int count = 0;
@@ -287,6 +316,20 @@ public class TransactionBatchTest extends TestCase {
           fail("count is " + count);
       }
     }
+  }
+
+  private void assertTransactionSize(TCByteBuffer[] actualData, int actualNumTxns,
+                                     SampledRateCounter transactionSizeCounter) {
+    int expectedAvgTxnSize = new TCByteBufferInputStream(actualData).getTotalLength() / actualNumTxns;
+    int actualAvgTxnSize = 0;
+    int nonZeroSamples = 0;
+    for (TimeStampedCounterValue val : transactionSizeCounter.getAllSampleValues()) {
+      // regardless of how many samples, there should be only one sample with a non-zero value
+      actualAvgTxnSize += val.getCounterValue();
+      if (val.getCounterValue() != 0) nonZeroSamples++;
+    }
+    assertEquals(1, nonZeroSamples);
+    assertEquals(expectedAvgTxnSize, actualAvgTxnSize);
   }
 
   public void testFoldObjectLimit() {

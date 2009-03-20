@@ -4,54 +4,64 @@
  */
 package com.tc.objectserver.tx;
 
+import com.tc.bytes.TCByteBuffer;
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
-import com.tc.object.msg.CommitTransactionMessage;
 import com.tc.object.tx.ServerTransactionID;
 
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Set;
 
 public class IncomingTransactionBatchContext implements TransactionBatchContext {
 
-  private final CommitTransactionMessage                              ctm;
-  private final NodeID                                                nodeID;
-  private final LinkedHashMap<ServerTransactionID, ServerTransaction> txns;
-  private final long[]                                                highWatermark;
-  private final Set<ObjectID> newObjectIDs;
+  private final NodeID                   nodeID;
+  private final List<ServerTransaction>  txns;
+  private final Set<ObjectID>            newObjectIDs;
+  private final TransactionBatchReader   reader;
+  private final TCByteBuffer[]           buffers;
+  private final Set<ServerTransactionID> txnIDs;
 
-  public IncomingTransactionBatchContext(NodeID nodeID, CommitTransactionMessage ctm,
-                                         LinkedHashMap<ServerTransactionID, ServerTransaction> txns,
-                                         long[] highWatermark, Set<ObjectID> newObjectIDs) {
+  public IncomingTransactionBatchContext(NodeID nodeID, Set<ServerTransactionID> txnIDs, TransactionBatchReader reader,
+                                         List<ServerTransaction> txns, Set<ObjectID> newObjectIDs) {
+    this(nodeID, txnIDs, reader, txns, newObjectIDs, reader.getBackingBuffers());
+  }
+
+  public IncomingTransactionBatchContext(NodeID nodeID, Set<ServerTransactionID> txnIDs, TransactionBatchReader reader,
+                                         List<ServerTransaction> txns, Set<ObjectID> newObjectIDs,
+                                         TCByteBuffer buffers[]) {
+    this.txnIDs = txnIDs;
+    this.buffers = buffers;
     this.nodeID = nodeID;
-    this.ctm = ctm;
+    this.reader = reader;
     this.txns = txns;
-    this.highWatermark = highWatermark;
     this.newObjectIDs = newObjectIDs;
   }
-  
+
   public Set<ObjectID> getNewObjectIDs() {
-    return newObjectIDs;
+    return this.newObjectIDs;
   }
- 
-  public CommitTransactionMessage getCommitTransactionMessage() {
-    return ctm;
+
+  public TransactionBatchReader getTransactionBatchReader() {
+    return this.reader;
   }
 
   public NodeID getSourceNodeID() {
-    return nodeID;
-  }
-
-  public long[] getHighWatermark() {
-    return highWatermark;
+    return this.nodeID;
   }
 
   public int getNumTxns() {
-    return txns.size();
+    return this.txns.size();
   }
 
-  public LinkedHashMap<ServerTransactionID, ServerTransaction> getTransactions() {
-    return txns;
+  public List<ServerTransaction> getTransactions() {
+    return this.txns;
   }
 
+  public TCByteBuffer[] getBackingBuffers() {
+    return this.buffers;
+  }
+
+  public Set<ServerTransactionID> getTransactionIDs() {
+    return this.txnIDs;
+  }
 }

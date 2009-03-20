@@ -4,7 +4,6 @@
  */
 package com.tc.admin.dso;
 
-import com.tc.admin.AbstractClusterListener;
 import com.tc.admin.ClusterNode;
 import com.tc.admin.ClusterThreadDumpProvider;
 import com.tc.admin.IAdminClientContext;
@@ -15,7 +14,6 @@ import com.tc.admin.common.XScrollPane;
 import com.tc.admin.common.XTextPane;
 import com.tc.admin.dso.locks.LocksNode;
 import com.tc.admin.model.IClusterModel;
-import com.tc.admin.model.IServer;
 
 import java.awt.Component;
 import java.awt.Cursor;
@@ -30,10 +28,7 @@ import javax.swing.text.html.HTML;
 public class DiagnosticsNode extends ComponentNode implements HyperlinkListener {
   protected IAdminClientContext adminClientContext;
   protected IClusterModel       clusterModel;
-  protected ClusterListener     clusterListener;
   protected XScrollPane         diagnosticsPanel;
-  private StatsRecorderNode     statsRecorderNode;
-  private int                   statsRecorderNodeIndex;
 
   public DiagnosticsNode(IAdminClientContext adminClientContext, IClusterModel clusterModel, ClusterNode clusterNode) {
     super(adminClientContext.getString("dso.diagnostics"));
@@ -50,23 +45,7 @@ public class DiagnosticsNode extends ComponentNode implements HyperlinkListener 
       // older version of the server, that doesn't have the LockMonitorMBean we expect.
     }
     add(createThreadDumpsNode(clusterNode));
-    statsRecorderNodeIndex = getChildCount();
-    IServer activeCoord = clusterModel.getActiveCoordinator();
-    if (activeCoord != null) {
-      setStatsRecorderAvailable(activeCoord.isClusterStatsSupported());
-    } else {
-      clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
-    }
-  }
-
-  private class ClusterListener extends AbstractClusterListener {
-    public ClusterListener(IClusterModel clusterModel) {
-      super(clusterModel);
-    }
-
-    protected void handleActiveCoordinator(IServer oldActive, IServer newActive) {
-      setStatsRecorderAvailable(newActive != null && newActive.isClusterStatsSupported());
-    }
+    add(createStatsRecorderNode());
   }
 
   protected RuntimeStatsNode createRuntimeStatsNode() {
@@ -85,21 +64,11 @@ public class DiagnosticsNode extends ComponentNode implements HyperlinkListener 
     return new StatsRecorderNode(adminClientContext, getClusterModel());
   }
 
-  void setStatsRecorderAvailable(boolean showStatsRecorderNode) {
-    if (showStatsRecorderNode && statsRecorderNode == null) {
-      statsRecorderNode = createStatsRecorderNode();
-      insertChild(statsRecorderNode, statsRecorderNodeIndex);
-    } else if (!showStatsRecorderNode && statsRecorderNode != null) {
-      removeChild(statsRecorderNode);
-      statsRecorderNode.tearDown();
-      statsRecorderNode = null;
-    }
-  }
-
   synchronized IClusterModel getClusterModel() {
     return clusterModel;
   }
 
+  @Override
   public Component getComponent() {
     if (diagnosticsPanel == null) {
       XTextPane textPane = new XTextPane();
@@ -129,19 +98,18 @@ public class DiagnosticsNode extends ComponentNode implements HyperlinkListener 
     }
   }
 
+  @Override
   public Icon getIcon() {
     return DSOHelper.getHelper().getDiagnosticsIcon();
   }
 
+  @Override
   public void tearDown() {
-    clusterModel.removePropertyChangeListener(clusterListener);
-
     super.tearDown();
 
     synchronized (this) {
       adminClientContext = null;
       clusterModel = null;
-      clusterListener = null;
       diagnosticsPanel = null;
     }
   }

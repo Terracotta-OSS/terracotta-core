@@ -8,6 +8,8 @@ import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.XObjectTableModel;
 import com.tc.objectserver.api.GCStats;
 
+import java.util.Arrays;
+
 public class GCStatsTableModel extends XObjectTableModel {
   private static final String[] FIELDS   = { "Iteration", "Type", "Status", "StartDate", "BeginObjectCount",
       "PausedStageTime", "MarkStageTime", "ActualGarbageCount", "DeleteStageTime", "ElapsedTime" };
@@ -31,7 +33,7 @@ public class GCStatsTableModel extends XObjectTableModel {
     for (int i = 0; i < count; i++) {
       wrappers[i] = new GCStatsWrapper(gcStats[i]);
     }
-
+    Arrays.sort(wrappers);
     set(wrappers);
   }
 
@@ -69,6 +71,7 @@ public class GCStatsTableModel extends XObjectTableModel {
   }
 
   // no sorting allowed
+  @Override
   public boolean isColumnSortable(int col) {
     return false;
   }

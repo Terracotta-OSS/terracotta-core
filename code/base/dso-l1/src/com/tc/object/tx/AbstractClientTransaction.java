@@ -23,22 +23,22 @@ abstract class AbstractClientTransaction implements ClientTransaction {
   private boolean            alreadyCommittedFlag;
 
   public void setSequenceID(SequenceID sequenceID) {
-    if (!seqID.isNull()) {
+    if (!this.seqID.isNull()) {
       // Formatter
-      throw new AssertionError("Attempt to set sequence id more than once : " + seqID + " : " + sequenceID);
+      throw new AssertionError("Attempt to set sequence id more than once : " + this.seqID + " : " + sequenceID);
     }
 
-    if (sequenceID == null || sequenceID.isNull()) throw new AssertionError("Attempt to set sequence id to null: "
-                                                                            + sequenceID);
+    if (sequenceID == null || sequenceID.isNull()) { throw new AssertionError("Attempt to set sequence id to null: "
+                                                                              + sequenceID); }
     this.seqID = sequenceID;
   }
 
   public void setTransactionID(TransactionID txnID) {
-    if (!txID.isNull()) {
+    if (!this.txID.isNull()) {
       // Formatter
-      throw new AssertionError("Attempt to set Txn id more than once : " + txID + " : " + txnID);
+      throw new AssertionError("Attempt to set Txn id more than once : " + this.txID + " : " + txnID);
     }
-    if (txnID == null || txnID.isNull()) throw new AssertionError("Attempt to set Transaction id to null: " + txnID);
+    if (txnID == null || txnID.isNull()) { throw new AssertionError("Attempt to set Transaction id to null: " + txnID); }
     this.txID = txnID;
   }
 
@@ -52,45 +52,45 @@ abstract class AbstractClientTransaction implements ClientTransaction {
   }
 
   public TxnType getLockType() {
-    return transactionContext.getLockType();
+    return this.transactionContext.getLockType();
   }
 
   public TxnType getEffectiveType() {
-    return transactionContext.getEffectiveType();
+    return this.transactionContext.getEffectiveType();
   }
 
   public boolean isEffectivelyReadOnly() {
-    return transactionContext.isEffectivelyReadOnly();
+    return this.transactionContext.isEffectivelyReadOnly();
   }
 
   public List getAllLockIDs() {
-    return transactionContext.getAllLockIDs();
+    return this.transactionContext.getAllLockIDs();
   }
 
   /**
    * @return the transaction id for this transaction, null id if the transaction is not yet committed.
    */
   public TransactionID getTransactionID() {
-    return txID;
+    return this.txID;
   }
 
   public LockID getLockID() {
-    return transactionContext.getLockID();
+    return this.transactionContext.getLockID();
   }
 
   public final void createObject(TCObject source) {
-    if (transactionContext.isEffectivelyReadOnly()) { throw new AssertionError(
-                                                                               source.getClass().getName()
-                                                                                   + " was already checked to have write access!"); }
+    if (this.transactionContext.isEffectivelyReadOnly()) { throw new AssertionError(
+                                                                                    source.getClass().getName()
+                                                                                        + " was already checked to have write access!"); }
 
     alreadyCommittedCheck();
     basicCreate(source);
   }
 
   public final void createRoot(String name, ObjectID rootID) {
-    if (transactionContext.isEffectivelyReadOnly()) { throw new AssertionError(
-                                                                               name
-                                                                                   + " was already checked to have write access!"); }
+    if (this.transactionContext.isEffectivelyReadOnly()) { throw new AssertionError(
+                                                                                    name
+                                                                                        + " was already checked to have write access!"); }
     alreadyCommittedCheck();
     basicCreateRoot(name, rootID);
   }
@@ -127,11 +127,11 @@ abstract class AbstractClientTransaction implements ClientTransaction {
   }
 
   protected void alreadyCommittedCheck() {
-    if (alreadyCommittedFlag) { throw new AssertionError("Transaction " + txID + " already commited."); }
+    if (this.alreadyCommittedFlag) { throw new AssertionError("Transaction " + this.txID + " already commited."); }
   }
 
   private void assertNotReadOnlyTxn() {
-    if (transactionContext.isEffectivelyReadOnly()) { throw new AssertionError("fail to perform read only check"); }
+    if (this.transactionContext.isEffectivelyReadOnly()) { throw new AssertionError("fail to perform read only check"); }
   }
 
   public void setAlreadyCommitted() {

@@ -32,6 +32,7 @@ public class LicenseConstants {
   public static final String EX                      = "EX";
   public static final String FX                      = "FX";
   public static final String EX_SESSIONS             = "EX/Sessions";
+  public static final String CUSTOM                  = "Custom";
 
   public static final String CANONICAL_ENCODING      = "UTF-8";
   public static final String STRING                  = "String";

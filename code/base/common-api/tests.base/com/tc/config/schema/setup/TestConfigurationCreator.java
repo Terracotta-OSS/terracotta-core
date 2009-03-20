@@ -49,6 +49,7 @@ public class TestConfigurationCreator implements ConfigurationCreator {
                                                   ApplicationsRepository applicationsRepository)
       throws ConfigurationSetupException {
     try {
+      
       l1BeanRepository.setBean(this.beanSet.clientBean(), "from test config");
       addRepository(l1BeanRepository);
       l1BeanRepository.saveCopyOfBeanInAnticipationOfFutureMutation();
@@ -60,6 +61,11 @@ public class TestConfigurationCreator implements ConfigurationCreator {
       systemBeanRepository.setBean(this.beanSet.systemBean(), "from test config");
       addRepository(systemBeanRepository);
       systemBeanRepository.saveCopyOfBeanInAnticipationOfFutureMutation();
+      
+      tcPropertiesRepository.setBean(this.beanSet.tcPropertiesBean(), "from test config");
+      addRepository(tcPropertiesRepository);
+      tcPropertiesRepository.saveCopyOfBeanInAnticipationOfFutureMutation();
+      
       
       String[] allNames = this.beanSet.applicationNames();
       for (int i = 0; i < allNames.length; ++i) {

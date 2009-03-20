@@ -38,16 +38,16 @@ import com.tc.object.config.schema.PersistenceMode;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
-import com.terracottatech.config.ActiveServerGroups;
 import com.terracottatech.config.Application;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.Ha;
+import com.terracottatech.config.MirrorGroups;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 import com.terracottatech.config.System;
 import com.terracottatech.config.TcConfigDocument;
+import com.terracottatech.config.TcProperties;
 import com.terracottatech.config.UpdateCheck;
-import com.terracottatech.config.TcConfigDocument.TcConfig.TcProperties;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -77,7 +77,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
   private String                         thisL2Identifier;
   private L2ConfigData                   myConfigData;
-  private ConfigTCProperties             configTCProperties;
+  private final ConfigTCProperties       configTCProperties;
 
   public StandardL2TVSConfigurationSetupManager(ConfigurationCreator configurationCreator, String thisL2Identifier,
                                                 DefaultValueProvider defaultValueProvider,
@@ -131,27 +131,42 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     return this.thisL2Identifier;
   }
 
+  private void verifyPortUsed(Set<String> serverPorts, String hostname, int port) throws ConfigurationSetupException {
+    String hostport = hostname + ":" + port;
+    if (port != 0 && !serverPorts.add(hostport)) { throw new ConfigurationSetupException(
+                                                                                         hostport
+                                                                                             + " is duplicated in configuration."); }
+  }
+
+  private void verifyServerPortUsed(Set<String> serverPorts, Server server) throws ConfigurationSetupException {
+    String hostname = server.getHost();
+    verifyPortUsed(serverPorts, hostname, server.getDsoPort());
+    verifyPortUsed(serverPorts, hostname, server.getJmxPort());
+    verifyPortUsed(serverPorts, hostname, server.getL2GroupPort());
+  }
+
   private void validateGroups() throws ConfigurationSetupException {
     Server[] serverArray = ((Servers) serversBeanRepository().bean()).getServerArray();
     ActiveServerGroupConfig[] groupArray = this.activeServerGroupsConfig.getActiveServerGroupArray();
+    Set<String> serverPorts = new HashSet<String>();
 
     validateGroupNames(groupArray);
 
     for (int i = 0; i < serverArray.length; i++) {
+      verifyServerPortUsed(serverPorts, serverArray[i]);
       String serverName = serverArray[i].getName();
       boolean found = false;
       int gid = -1;
       for (int j = 0; j < groupArray.length; j++) {
         if (groupArray[j].isMember(serverName)) {
           if (found) { throw new ConfigurationSetupException("Server{" + serverName
-                                                             + "} is part of more than 1 active-server-group:  groups{"
-                                                             + gid + "," + groupArray[j].getGroupId() + "}"); }
+                                                             + "} is part of more than 1 mirror-group:  groups{" + gid
+                                                             + "," + groupArray[j].getGroupId() + "}"); }
           gid = groupArray[j].getGroupId();
           found = true;
         }
       }
-      if (!found) { throw new ConfigurationSetupException("Server{" + serverName
-                                                          + "} is not part of any active-server-group."); }
+      if (!found) { throw new ConfigurationSetupException("Server{" + serverName + "} is not part of any mirror-group."); }
     }
   }
 
@@ -163,7 +178,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
         if (list.contains(grpName)) { throw new ConfigurationSetupException(
                                                                             "Group Name {"
                                                                                 + grpName
-                                                                                + "} is part of more than 1 active-server-group groups"); }
+                                                                                + "} is part of more than 1 mirror-group groups"); }
         list.add(grpName);
       }
     }
@@ -172,18 +187,18 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
   // make sure there is at most one of these
   private ActiveServerGroupsConfig getActiveServerGroupsConfig() throws ConfigurationSetupException, XmlException {
 
-    final ActiveServerGroups defaultActiveServerGroups = ActiveServerGroupsConfigObject
+    final MirrorGroups defaultActiveServerGroups = ActiveServerGroupsConfigObject
         .getDefaultActiveServerGroups(defaultValueProvider, serversBeanRepository(), getCommomOrDefaultHa().getHa());
 
-    ChildBeanRepository beanRepository = new ChildBeanRepository(serversBeanRepository(), ActiveServerGroups.class,
+    ChildBeanRepository beanRepository = new ChildBeanRepository(serversBeanRepository(), MirrorGroups.class,
                                                                  new ChildBeanFetcher() {
                                                                    public XmlObject getChild(XmlObject parent) {
-                                                                     ActiveServerGroups activeServerGroups = ((Servers) parent)
-                                                                         .getActiveServerGroups();
+                                                                     MirrorGroups activeServerGroups = ((Servers) parent)
+                                                                         .getMirrorGroups();
                                                                      if (activeServerGroups == null) {
                                                                        activeServerGroups = defaultActiveServerGroups;
                                                                        ((Servers) parent)
-                                                                           .setActiveServerGroups(activeServerGroups);
+                                                                           .setMirrorGroups(activeServerGroups);
                                                                      }
                                                                      return activeServerGroups;
                                                                    }
@@ -443,18 +458,18 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
       if (badServers.size() > 0) {
         // formatting
         throw new ConfigurationSetupException(
-                                              "Your Terracotta system has a clustered DSO configuration -- i.e., "
-                                                  + "DSO is enabled, and more than one server is defined in the configuration file -- but "
-                                                  + "at least one server is in the '"
+                                              "At least one server defined in the Terracotta configuration file is in \n'"
                                                   + PersistenceMode.TEMPORARY_SWAP_ONLY
-                                                  + "' persistence mode. (Servers in this mode: "
+                                                  + "' persistence mode. (Servers in this mode: \n"
                                                   + badServers
-                                                  + ".) In a "
-                                                  + "clustered DSO configuration, all servers must be in the '"
-                                                  + PersistenceMode.PERMANENT_STORE
-                                                  + "' mode. Please adjust the "
-                                                  + "persistence/mode element (inside the 'server' element) in your "
-                                                  + "configuration file; see the Terracotta documentation for more details.");
+                                                  + ".) \n\n"
+                                                  + "If even one server has persistence mode set to  "
+                                                  + PersistenceMode.TEMPORARY_SWAP_ONLY
+                                                  + ", \nthen High Availability mode must be set to 'networked-active-passive'"
+                                                  + "\n\nFor servers in a mirror group, High Availability mode can be set per"
+                                                  + "\nmirror group. A mirror-group High Availability setting overrides the main"
+                                                  + "\nHigh Availability for that mirror group.\n\n"
+                                                  + "See the Terracotta documentation for more details.");
       }
     }
   }

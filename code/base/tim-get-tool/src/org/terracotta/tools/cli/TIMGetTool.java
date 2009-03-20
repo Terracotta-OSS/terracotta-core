@@ -12,8 +12,10 @@ import org.terracotta.modules.tool.commands.CommandRegistry;
 import org.terracotta.modules.tool.commands.HelpCommand;
 import org.terracotta.modules.tool.commands.InfoCommand;
 import org.terracotta.modules.tool.commands.InstallCommand;
+import org.terracotta.modules.tool.commands.InstallForCommand;
 import org.terracotta.modules.tool.commands.ListCommand;
 import org.terracotta.modules.tool.commands.UpdateCommand;
+import org.terracotta.modules.tool.commands.UpgradeCommand;
 import org.terracotta.modules.tool.config.Config;
 import org.terracotta.modules.tool.util.CommandUtil;
 
@@ -31,9 +33,7 @@ public class TIMGetTool {
   public static void main(String args[]) {
     prologue();
     try {
-      parse(args);
-      configure();
-      execute();
+      mainWithExceptions(args);
     } catch (CommandException e1) {
       System.out.println(e1.getMessage());
       System.out.println();
@@ -44,8 +44,15 @@ public class TIMGetTool {
       }
       System.exit(1);
     } catch (Exception e) {
+      e.printStackTrace();
       System.exit(2);
     }
+  }
+
+  public static void mainWithExceptions(String args[]) throws Exception {
+    parse(args);
+    configure();
+    execute();
   }
 
   private static Config createConfig() throws Exception {
@@ -69,8 +76,10 @@ public class TIMGetTool {
       commandRegistry.addCommand(injector.getInstance(HelpCommand.class));
       commandRegistry.addCommand(injector.getInstance(InfoCommand.class));
       commandRegistry.addCommand(injector.getInstance(InstallCommand.class));
+      commandRegistry.addCommand(injector.getInstance(InstallForCommand.class));
       commandRegistry.addCommand(injector.getInstance(ListCommand.class));
       commandRegistry.addCommand(injector.getInstance(UpdateCommand.class));
+      commandRegistry.addCommand(injector.getInstance(UpgradeCommand.class));
     } catch (Exception e) {
       Throwable rootCause = rootCause(e);
       throw new Exception("Initialization error: " + rootCause.getClass() + ": " + rootCause.getMessage());

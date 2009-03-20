@@ -14,7 +14,10 @@ public class DSOVerifierReplaceSystemLoaderTest extends DSOVerifierTest {
   }
 
   protected Collection<String> getExtraJvmArgs() {
-    return Arrays.asList(new String[] { "-Djava.system.class.loader=" + SystemLoader.class.getName() /*, "-XX:+TraceClassLoading" */ });
+    return Arrays.asList(new String[] { "-Djava.system.class.loader=" + SystemLoader.class.getName() /*
+                                                                                                      * ,
+                                                                                                      * "-XX:+TraceClassLoading"
+                                                                                                      */});
   }
 
   public static class SystemLoader extends ClassLoader {

@@ -49,4 +49,8 @@ public interface ClientHandshakeMessage extends TCMessage {
 
   public boolean isObjectIDsRequested();
 
+  public void setServerHighWaterMark(long serverHighWaterMark);
+
+  public long getServerHighWaterMark();
+
 }

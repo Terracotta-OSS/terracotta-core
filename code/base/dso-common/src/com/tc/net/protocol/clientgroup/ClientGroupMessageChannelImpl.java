@@ -106,6 +106,7 @@ public class ClientGroupMessageChannelImpl extends ClientMessageChannelImpl impl
     return rv;
   }
 
+  @Override
   public TCMessage createMessage(TCMessageType type) {
     return createMessage(coordinatorGroupID, type);
   }
@@ -114,6 +115,7 @@ public class ClientGroupMessageChannelImpl extends ClientMessageChannelImpl impl
     return (ch.getLocalAddress() + " -> " + ch.getRemoteAddress());
   }
 
+  @Override
   public NetworkStackID open() throws TCTimeoutException, UnknownHostException, IOException,
       MaxConnectionsExceededException {
     NetworkStackID nid = null;
@@ -123,7 +125,7 @@ public class ClientGroupMessageChannelImpl extends ClientMessageChannelImpl impl
       ch = getChannel(coordinatorGroupID);
       if (!ch.isOpen()) {
         nid = ch.open();
-        setLocalNodeID(new ClientID(getChannelID()));
+        setLocalNodeID(new ClientID(getChannelID().toLong()));
         logger.info("Opened sub-channel(coordinator): " + connectionInfo(ch));
       }
 
@@ -148,11 +150,13 @@ public class ClientGroupMessageChannelImpl extends ClientMessageChannelImpl impl
     return nid;
   }
 
+  @Override
   public ChannelID getChannelID() {
     // return one of active-coordinator, they are same for all channels
     return getActiveCoordinator().getChannelID();
   }
 
+  @Override
   public int getConnectCount() {
     // an aggregate of all channels
     int count = 0;
@@ -162,6 +166,7 @@ public class ClientGroupMessageChannelImpl extends ClientMessageChannelImpl impl
     return count;
   }
 
+  @Override
   public int getConnectAttemptCount() {
     // an aggregate of all channels
     int count = 0;
@@ -171,6 +176,7 @@ public class ClientGroupMessageChannelImpl extends ClientMessageChannelImpl impl
     return count;
   }
 
+  @Override
   public void routeMessageType(TCMessageType messageType, TCMessageSink dest) {
     for (Iterator i = groupChannelMap.keySet().iterator(); i.hasNext();) {
       getChannel((GroupID) i.next()).routeMessageType(messageType, dest);
@@ -189,41 +195,50 @@ public class ClientGroupMessageChannelImpl extends ClientMessageChannelImpl impl
     message.wasSent();
   }
 
+  @Override
   public void send(final TCNetworkMessage message) {
     getActiveCoordinator().send(message);
   }
 
+  @Override
   public TCSocketAddress getRemoteAddress() {
     return getActiveCoordinator().getRemoteAddress();
   }
 
+  @Override
   public void notifyTransportConnected(MessageTransport transport) {
     throw new AssertionError();
   }
 
+  @Override
   public void notifyTransportDisconnected(MessageTransport transport) {
     throw new AssertionError();
   }
 
+  @Override
   public void notifyTransportConnectAttempt(MessageTransport transport) {
     throw new AssertionError();
   }
 
+  @Override
   public void notifyTransportClosed(MessageTransport transport) {
     throw new AssertionError();
   }
 
+  @Override
   public ChannelIDProvider getChannelIDProvider() {
     // return one from active-coordinator
     return getActiveCoordinator().getChannelIDProvider();
   }
 
+  @Override
   public void close() {
     for (Iterator i = groupChannelMap.keySet().iterator(); i.hasNext();) {
       getChannel((GroupID) i.next()).close();
     }
   }
 
+  @Override
   public boolean isConnected() {
     if (groupChannelMap.size() == 0) return false;
     for (Iterator i = groupChannelMap.keySet().iterator(); i.hasNext();) {
@@ -232,6 +247,7 @@ public class ClientGroupMessageChannelImpl extends ClientMessageChannelImpl impl
     return true;
   }
 
+  @Override
   public boolean isOpen() {
     if (groupChannelMap.size() == 0) return false;
     for (Iterator i = groupChannelMap.keySet().iterator(); i.hasNext();) {
@@ -260,6 +276,7 @@ public class ClientGroupMessageChannelImpl extends ClientMessageChannelImpl impl
     }
   }
 
+  @Override
   public void addListener(ChannelEventListener listener) {
     ClientGroupMessageChannelEventListener middleman = new ClientGroupMessageChannelEventListener(listener);
     for (Iterator i = groupChannelMap.keySet().iterator(); i.hasNext();) {

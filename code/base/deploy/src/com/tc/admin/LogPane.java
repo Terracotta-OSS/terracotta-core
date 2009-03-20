@@ -18,9 +18,10 @@ public class LogPane extends XTextPane {
   public LogPane() {
     super();
     setEditable(false);
-    setFont(Font.getFont("helvetica-plain-12"));
+    setFont(Font.getFont("monospaced-plain-12"));
   }
 
+  @Override
   protected TextComponentHelper createHelper() {
     return new LogPaneHelper();
   }
@@ -30,6 +31,7 @@ public class LogPane extends XTextPane {
       super(LogPane.this);
     }
 
+    @Override
     public JPopupMenu createPopup() {
       JPopupMenu popup = super.createPopup();
       addClearAction(popup);
@@ -45,7 +47,7 @@ public class LogPane extends XTextPane {
             // Would like to just use setCaretPosition here but the if
             // the model isn't changed, that will have no affect.
             // We're just adding a space, removing it, and then
-            // setting the caret position.  Bummer.
+            // setting the caret position. Bummer.
             int end = getDocument().getLength();
             try {
               getDocument().insertString(end, " ", null);

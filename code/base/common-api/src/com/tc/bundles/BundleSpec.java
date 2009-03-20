@@ -12,6 +12,10 @@ import java.util.regex.Pattern;
 import java.lang.reflect.Constructor;
 import java.text.MessageFormat;
 
+/**
+ * Represents an OSGI bundle specification as declared in the Require-Bundle property
+ * of an OSGI bundle as a dependency.
+ */
 public abstract class BundleSpec {
 
   private static final String   REQUIRE_BUNDLE              = "Require-Bundle";

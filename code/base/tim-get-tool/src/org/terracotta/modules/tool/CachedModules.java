@@ -10,7 +10,9 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
+import org.terracotta.modules.tool.config.Config;
 import org.terracotta.modules.tool.config.ConfigAnnotation;
+import org.terracotta.modules.tool.config.InvalidConfigurationException;
 import org.terracotta.modules.tool.util.ChecksumUtil;
 import org.terracotta.modules.tool.util.DataLoader;
 import org.terracotta.modules.tool.util.DownloadUtil;
@@ -21,9 +23,9 @@ import com.google.inject.name.Named;
 import com.tc.bundles.OSGiToMaven;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,6 +37,7 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 public class CachedModules implements Modules {
+  static final String FORMAT_VERSION = "2";
 
   private List<Module>       modules;
   private List<Module>       qualifiedModules;
@@ -43,6 +46,10 @@ public class CachedModules implements Modules {
   @Inject
   @Named(ConfigAnnotation.TERRACOTTA_VERSION)
   private String             tcVersion;
+
+  @Inject
+  @Named(ConfigAnnotation.CONFIG_INSTANCE)
+  private Config              config;
 
   @Inject
   @Named(ConfigAnnotation.INCLUDE_SNAPSHOTS)
@@ -109,10 +116,10 @@ public class CachedModules implements Modules {
   /**
    * XXX: This constructor is used for tests only
    */
-  CachedModules(String tcVersion, boolean includeSnapshots, File repository, InputStream inputStream)
-      throws JDOMException, IOException {
-    this.tcVersion = tcVersion;
-    this.includeSnapshots = includeSnapshots;
+  CachedModules(Config config, File repository, InputStream inputStream) throws JDOMException, IOException {
+    this.config = config;
+    this.tcVersion = config.getTcVersion();
+    this.includeSnapshots = config.getIncludeSnapshots();
     this.repository = repository;
     this.dataLoader = null;
     this.downloader = new DownloadUtil();
@@ -121,14 +128,14 @@ public class CachedModules implements Modules {
 
   private void loadData() {
     if ((modules == null) || modules.isEmpty()) {
-      InputStream datafile = null;
+      InputStream dataStream = null;
       try {
-        datafile = new FileInputStream(dataLoader.getDataFile());
-        loadData(datafile);
+        dataStream = dataLoader.openDataStream();
+        loadData(dataStream);
       } catch (Exception e) {
         throw new RuntimeException("Unable to read TIM index: " + e.getMessage());
       } finally {
-        IOUtils.closeQuietly(datafile);
+        IOUtils.closeQuietly(dataStream);
       }
     }
   }
@@ -137,11 +144,20 @@ public class CachedModules implements Modules {
     if (modules != null) return;
 
     Document document = new SAXBuilder().build(inputStream);
+    validateFormatVersion(document.getRootElement().getAttributeValue("format-version"));
     modules = new ArrayList<Module>();
     List<Element> children = document.getRootElement().getChildren();
     for (Element child : children) {
-      Module module = new Module(this, DocumentToAttributes.transform(child));
+      Module module = new Module(this, DocumentToAttributes.transform(child), relativeUrlBase());
       modules.add(module);
+    }
+  }
+
+  private void validateFormatVersion(String formatVersion) {
+    if (!FORMAT_VERSION.equals(formatVersion)) {
+      String message = "Format version '" + formatVersion +
+          "' does not match expected format version '" + FORMAT_VERSION + "'";
+      throw new InvalidConfigurationException(message);
     }
   }
 
@@ -167,12 +183,22 @@ public class CachedModules implements Modules {
     return list;
   }
 
+  public Module findLatest(String artifactId, String groupId) {
+    for (Module module : listLatest()) {
+      boolean foundArtifactId = module.artifactId().equals(artifactId);
+      boolean foundGroupId = (groupId == null) ? true : module.groupId().equals(groupId);
+      if (!foundArtifactId || !foundGroupId) continue;
+      return module;
+    }
+    return null;
+  }
+
   public Module get(String groupId, String artifactId, String version) {
     Map<String, Object> attributes = new HashMap<String, Object>();
     attributes.put("groupId", groupId);
     attributes.put("artifactId", artifactId);
     attributes.put("version", version);
-    Module module = new Module(null, attributes);
+    Module module = new Module(null, attributes, relativeUrlBase());
     int index = list().indexOf(module);
     return (index == -1) ? null : list().get(index);
   }
@@ -250,4 +276,7 @@ public class CachedModules implements Modules {
     return tcVersion;
   }
 
+  public URI relativeUrlBase() {
+    return config.getRelativeUrlBase();
+  }
 }

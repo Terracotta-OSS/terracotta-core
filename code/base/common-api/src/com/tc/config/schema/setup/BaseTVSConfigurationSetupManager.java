@@ -29,7 +29,7 @@ import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.Servers;
 import com.terracottatech.config.SpringApplication;
 import com.terracottatech.config.System;
-import com.terracottatech.config.TcConfigDocument.TcConfig.TcProperties;
+import com.terracottatech.config.TcProperties;
 
 import java.io.File;
 import java.util.HashMap;

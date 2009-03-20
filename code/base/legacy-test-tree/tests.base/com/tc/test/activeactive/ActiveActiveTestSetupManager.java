@@ -12,10 +12,17 @@ import java.util.List;
 
 public class ActiveActiveTestSetupManager extends MultipleServersTestSetupManager {
 
-  private List activeServerGroups = new ArrayList();
+  private final List          activeServerGroups = new ArrayList();
+  private static final String GROUP_NAME_PREFIX  = "mirror-group-";
+  private static int          groupCount;
 
   public void addActiveServerGroup(int membersCount, String local_activePassiveMode, int local_electionTime) {
-    this.activeServerGroups.add(new Group(membersCount, local_activePassiveMode, local_electionTime));
+    addActiveServerGroup(GROUP_NAME_PREFIX + groupCount++, membersCount, local_activePassiveMode, local_electionTime);
+  }
+
+  public void addActiveServerGroup(String groupName, int membersCount, String local_activePassiveMode,
+                                   int local_electionTime) {
+    this.activeServerGroups.add(new Group(groupName, membersCount, local_activePassiveMode, local_electionTime));
   }
 
   public int getActiveServerGroupCount() {
@@ -31,6 +38,11 @@ public class ActiveActiveTestSetupManager extends MultipleServersTestSetupManage
   public int getGroupElectionTime(int groupIndex) {
     checkServerCount();
     return ((Group) this.activeServerGroups.get(groupIndex)).getElectionTime();
+  }
+
+  public String getGroupName(int groupIndex) {
+    checkServerCount();
+    return ((Group) this.activeServerGroups.get(groupIndex)).getGroupName();
   }
 
   public String getGroupServerShareDataMode(int groupIndex) {
@@ -60,14 +72,20 @@ public class ActiveActiveTestSetupManager extends MultipleServersTestSetupManage
   }
 
   private static class Group {
+    private final String groupName;
     private final int    memberCount;
     private final String groupPersistenceMode;
     private final int    groupElectionTime;
 
-    public Group(int memberCount, String persistenceMode, int electionTime) {
+    public Group(String groupName, int memberCount, String persistenceMode, int electionTime) {
+      this.groupName = groupName;
       this.memberCount = memberCount;
       groupPersistenceMode = persistenceMode;
       groupElectionTime = electionTime;
+    }
+
+    public String getGroupName() {
+      return this.groupName;
     }
 
     public int getMemberCount() {

@@ -33,5 +33,5 @@ set JAVA_HOME="%JAVA_HOME:"=%"
 set TC_CONFIG_PATH=tc-config.xml
 call %TC_INSTALL_DIR%\bin\dso-env.bat -q "%TC_CONFIG%"
 set JAVA_OPTS=%TC_JAVA_OPTS% -Djava.awt.Window.locationByPlatform=true %JAVA_OPTS%
-start "sharededitor" /B %JAVA_HOME%\bin\java %JAVA_OPTS% -cp classes demo.sharededitor.Main %*
+start "sharededitor" %JAVA_HOME%\bin\java %JAVA_OPTS% -cp classes demo.sharededitor.Main %*
 endlocal

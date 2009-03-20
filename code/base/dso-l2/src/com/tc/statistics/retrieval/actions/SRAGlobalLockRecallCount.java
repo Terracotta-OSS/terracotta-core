@@ -19,7 +19,7 @@ import com.tc.util.Assert;
  */
 public class SRAGlobalLockRecallCount implements StatisticRetrievalAction {
 
-  public static final String   ACTION_NAME = "lock recalls";
+  public static final String   ACTION_NAME = "l2 lock recalls";
 
   private final SampledCounter globalLockRecallCounter;
 

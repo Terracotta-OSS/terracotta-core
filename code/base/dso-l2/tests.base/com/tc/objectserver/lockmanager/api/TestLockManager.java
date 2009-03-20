@@ -14,7 +14,6 @@ import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.tx.TimerSpec;
 import com.tc.text.PrettyPrinter;
 
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -28,7 +27,7 @@ public class TestLockManager implements LockManager {
   public final List notifyCalls          = new ArrayList();
 
   public void notify(LockID lid, NodeID cid, ThreadID tid, boolean all, NotifiedWaiters addNotifiedWaitersTo) {
-    notifyCalls.add(new Object[] { lid, cid, tid, new Boolean(all), addNotifiedWaitersTo });
+    this.notifyCalls.add(new Object[] { lid, cid, tid, new Boolean(all), addNotifiedWaitersTo });
   }
 
   public void wait(LockID lid, NodeID cid, ThreadID tid, TimerSpec waitInvocation, Sink lockResponseSink) {
@@ -36,11 +35,11 @@ public class TestLockManager implements LockManager {
   }
 
   public static final class WaitCallContext {
-    public final LockID         lockID;
-    public final NodeID         nid;
-    public final ThreadID       threadID;
+    public final LockID    lockID;
+    public final NodeID    nid;
+    public final ThreadID  threadID;
     public final TimerSpec waitInvocation;
-    public final Sink           lockResponseSink;
+    public final Sink      lockResponseSink;
 
     private WaitCallContext(LockID lockID, NodeID cid, ThreadID tid, int level, TimerSpec waitInvocation,
                             Sink lockResponseSink) {
@@ -52,7 +51,8 @@ public class TestLockManager implements LockManager {
     }
   }
 
-  public boolean requestLock(LockID lockID, NodeID channelID, ThreadID source, int level, String lockType, Sink awardLockSink) {
+  public boolean requestLock(LockID lockID, NodeID channelID, ThreadID source, int level, String lockType,
+                             Sink awardLockSink) {
     throw new ImplementMe();
   }
 
@@ -94,11 +94,13 @@ public class TestLockManager implements LockManager {
 
   public void reestablishWait(LockID lid, NodeID cid, ThreadID tid, int level, TimerSpec waitInvocation,
                               Sink lockResponseSink) {
-    reestablishWaitCalls.add(new WaitCallContext(lid, cid, tid, level, waitInvocation, lockResponseSink));
+    this.reestablishWaitCalls.add(new WaitCallContext(lid, cid, tid, level, waitInvocation, lockResponseSink));
   }
 
   public void reestablishLock(LockID lid, NodeID cid, ThreadID tid, int level, Sink lockResponseSink) {
-    reestablishLockCalls.add(new ReestablishLockContext(new LockContext(lid, cid, tid, level, LockContextInfo.NULL_LOCK_OBJECT_TYPE), lockResponseSink));
+    this.reestablishLockCalls.add(new ReestablishLockContext(new LockContext(lid, cid, tid, level,
+                                                                             LockContextInfo.NULL_LOCK_OBJECT_TYPE),
+                                                             lockResponseSink));
   }
 
   public static class ReestablishLockContext {
@@ -110,8 +112,6 @@ public class TestLockManager implements LockManager {
       this.lockResponseSink = lockResponseSink;
     }
   }
-  
-  
 
   public void queryLock(LockID lockID, NodeID cid, ThreadID threadID, Sink lockResponseSink) {
     throw new ImplementMe();
@@ -121,8 +121,8 @@ public class TestLockManager implements LockManager {
     throw new ImplementMe();
   }
 
-  public boolean tryRequestLock(LockID lockID, NodeID channelID, ThreadID threadID, int level, String lockType, TimerSpec timeout,
-                                Sink awardLockSink) {
+  public boolean tryRequestLock(LockID lockID, NodeID channelID, ThreadID threadID, int level, String lockType,
+                                TimerSpec timeout, Sink awardLockSink) {
     throw new ImplementMe();
   }
 
@@ -139,14 +139,8 @@ public class TestLockManager implements LockManager {
     return null;
   }
 
-  public void dump(Writer writer) {
-    throw new ImplementMe();
-    
-  }
-
   public void dumpToLogger() {
     throw new ImplementMe();
-    
   }
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {

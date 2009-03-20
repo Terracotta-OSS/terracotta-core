@@ -26,14 +26,14 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 /**
- * ClasspathProvider for Terracotta processes, such as TCServer and BootJarTool.
- * Not used for DSO clients.
+ * ClasspathProvider for Terracotta processes, such as TCServer and BootJarTool. Not used for DSO clients.
  */
 public class ClasspathProvider extends StandardClasspathProvider {
   public ClasspathProvider() {
     super();
   }
 
+  @Override
   public IRuntimeClasspathEntry[] computeUnresolvedClasspath(ILaunchConfiguration configuration) {
     IPath jarPath = TcPlugin.getDefault().getLibDirPath().append("tc.jar");
 
@@ -83,27 +83,10 @@ public class ClasspathProvider extends StandardClasspathProvider {
     List<IPath> list = new ArrayList<IPath>();
     IPath buildPath = location.append("..");
 
-    String[] dirs = {
-      "deploy",
-      "deploy-api",
-      "common",
-      "common-api",
-      "management",
-      "management-api",
-      "aspectwerkz",
-      "sigarstats",
-      "thirdparty",
-      "thirdparty-api",
-      "dso-common",
-      "dso-common-jdk16",
-      "dso-l1",
-      "dso-l1-api",
-      "dso-l2",
-      "dso-l2-common",
-      "dso-statistics",
-      "dso-statistics-api",
-      "tim-get-tool",
-      "dso-spring"};
+    String[] dirs = { "deploy", "deploy-api", "common", "common-api", "management", "management-api", "aspectwerkz",
+        "sigarstats", "thirdparty", "thirdparty-api", "dso-common", "dso-common-jdk16", "dso-cluster-api", "dso-l1",
+        "dso-l1-api", "dso-l2", "dso-l2-common", "dso-statistics", "dso-statistics-api", "tim-get-tool", "dso-spring",
+        "license-common" };
 
     for (int i = 0; i < dirs.length; i++) {
       list.add(buildPath.append(dirs[i]).append("build.eclipse").append("src.classes"));
@@ -111,13 +94,12 @@ public class ClasspathProvider extends StandardClasspathProvider {
 
     // this is to get access to build-data.txt in dev mode
     list.add(buildPath.append("common").append("build.eclipse").append("tests.base.classes"));
-    
+
     final List<File> fileList = new ArrayList<File>();
     File libDir;
 
     for (int i = 0; i < dirs.length; i++) {
       libDir = location.append("..").append(dirs[i]).append("lib").toFile();
-
       if (libDir.exists()) {
         fileList.addAll(listArchives(libDir));
       }
@@ -136,6 +118,7 @@ public class ClasspathProvider extends StandardClasspathProvider {
           SAXParserFactory factory = SAXParserFactory.newInstance();
           SAXParser parser = factory.newSAXParser();
           parser.parse(new FileInputStream(ivy), new DefaultHandler() {
+            @Override
             public void startElement(String uri, String localName, String qName, Attributes attributes) {
               if (qName.equals("dependency")) {
                 String jar = attributes.getValue("name") + "-" + attributes.getValue("rev");

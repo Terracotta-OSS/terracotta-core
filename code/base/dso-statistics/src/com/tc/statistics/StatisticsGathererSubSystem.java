@@ -107,7 +107,6 @@ public class StatisticsGathererSubSystem {
       return false;
     }
     String info_msg = "Statistics store: '" + stat_path.getAbsolutePath() + "'.";
-    CONSOLE_LOGGER.info(info_msg);
     DSO_LOGGER.info(info_msg);
 
     statisticsGatherer = new StatisticsGathererImpl(statisticsStore);

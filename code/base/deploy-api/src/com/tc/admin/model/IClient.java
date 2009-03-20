@@ -7,6 +7,8 @@ package com.tc.admin.model;
 import com.tc.management.beans.logging.InstrumentationLoggingMBean;
 import com.tc.management.beans.logging.RuntimeLoggingMBean;
 import com.tc.management.beans.logging.RuntimeOutputOptionsMBean;
+import com.tc.net.ClientID;
+import com.tc.object.ObjectID;
 
 import java.util.Map;
 
@@ -23,6 +25,8 @@ public interface IClient extends IClusterNode {
 
   long getChannelID();
 
+  ClientID getClientID();
+
   String getRemoteAddress();
 
   Map getL1Statistics();
@@ -34,6 +38,8 @@ public interface IClient extends IClusterNode {
   RuntimeLoggingMBean getRuntimeLoggingBean();
 
   RuntimeOutputOptionsMBean getRuntimeOutputOptionsBean();
+
+  boolean isResident(ObjectID oid);
 
   void killClient();
 

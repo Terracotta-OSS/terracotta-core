@@ -8,6 +8,6 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   # - set the execute permission of all the script files in the kit
   protected
   def postscript(ant, build_environment, product_directory, *args)
-    delete_tim_get_index_file
+    delete_tim_get_index_cache
   end
 end

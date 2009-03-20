@@ -71,7 +71,7 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
   }
 
   protected void init() {
-    int count = object.getFieldCount();
+    int count = getChildCount();
     if (children == null) {
       children = new Vector();
     }
@@ -95,13 +95,14 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
     }
   }
 
+  @Override
   public JPopupMenu getPopupMenu() {
     testInitMenu();
     return popupMenu;
   }
 
   private void fillInChildren() {
-    int childCount = getChildCount();
+    int childCount = children.size();
     boolean nso = false;
 
     for (int i = 0; i < childCount; i++) {
@@ -140,6 +141,7 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
     }
   }
 
+  @Override
   public TreeNode getChildAt(int index) {
     if (children != null && children.elementAt(index) == null) {
       adminClientContext.block();
@@ -161,15 +163,18 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
     }
   }
 
+  @Override
   public int getChildCount() {
     return object != null ? object.getFieldCount() : 0;
   }
 
+  @Override
   public Icon getIcon() {
     RootsHelper helper = RootsHelper.getHelper();
     return object.isCycle() ? helper.getCycleIcon() : helper.getFieldIcon();
   }
 
+  @Override
   public void nodeSelected(TreeSelectionEvent e) {
     if (object.isCycle()) {
       IObject cycleRoot = object.getCycleRoot();
@@ -212,10 +217,12 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
     XTreeModel model = getModel();
     XTreeNode node;
 
-    for (int i = getChildCount() - 1; i >= 0; i--) {
+    for (int i = children.size() - 1; i >= 0; i--) {
       node = (XTreeNode) getChildAt(i);
-      node.tearDown();
-      model.removeNodeFromParent(node);
+      if (node != null) {
+        node.tearDown();
+        model.removeNodeFromParent(node);
+      }
     }
 
     try {
@@ -252,6 +259,7 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
     }
   }
 
+  @Override
   public void nodeClicked(MouseEvent me) {
     if (refreshAction != null) {
       refreshAction.actionPerformed(null);
@@ -342,6 +350,7 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
     return batchSize = ConnectionContext.DSO_SMALL_BATCH_SIZE;
   }
 
+  @Override
   public void tearDown() {
     super.tearDown();
 
