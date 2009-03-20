@@ -38,6 +38,7 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   private static final byte REQUEST_OBJECT_IDS       = 7;
   private static final byte PENDING_TRY_LOCK_CONTEXT = 8;
   private static final byte CLIENT_VERSION           = 9;
+  private static final byte SERVER_HIGH_WATER_MARK   = 10;
 
   private final Set         objectIDs                = new HashSet();
   private final Set         lockContexts             = new HashSet();
@@ -47,6 +48,7 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   private final List        sequenceIDs              = new ArrayList();
   private final List        txnIDs                   = new ArrayList();
   private boolean           requestObjectIDs;
+  private long              serverHighWaterMark      = 0;
   private String            clientVersion            = "UNKNOW";
 
   public ClientHandshakeMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
@@ -60,31 +62,31 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   }
 
   public Collection getLockContexts() {
-    return lockContexts;
+    return this.lockContexts;
   }
 
   public Collection getWaitContexts() {
-    return waitContexts;
+    return this.waitContexts;
   }
 
   public Set getObjectIDs() {
-    return objectIDs;
+    return this.objectIDs;
   }
 
   public Collection getPendingLockContexts() {
-    return pendingLockContexts;
+    return this.pendingLockContexts;
   }
 
   public Collection getPendingTryLockContexts() {
-    return pendingTryLockContexts;
+    return this.pendingTryLockContexts;
   }
 
   public List getTransactionSequenceIDs() {
-    return sequenceIDs;
+    return this.sequenceIDs;
   }
 
   public List getResentTransactionIDs() {
-    return txnIDs;
+    return this.txnIDs;
   }
 
   public boolean isObjectIDsRequested() {
@@ -92,7 +94,7 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   }
 
   public String getClientVersion() {
-    return clientVersion;
+    return this.clientVersion;
   }
 
   public void addTransactionSequenceIDs(List seqIDs) {
@@ -108,73 +110,76 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   }
 
   public void setClientVersion(String version) {
-    clientVersion = version;
+    this.clientVersion = version;
   }
 
   public void addLockContext(LockContext ctxt) {
-    lockContexts.add(ctxt);
+    this.lockContexts.add(ctxt);
   }
 
   public void addPendingLockContext(LockContext ctxt) {
-    pendingLockContexts.add(ctxt);
+    this.pendingLockContexts.add(ctxt);
   }
 
   public void addPendingTryLockContext(TryLockContext ctxt) {
-    pendingTryLockContexts.add(ctxt);
+    this.pendingTryLockContexts.add(ctxt);
   }
 
   public void addWaitContext(WaitContext ctxt) {
-    waitContexts.add(ctxt);
+    this.waitContexts.add(ctxt);
   }
 
+  @Override
   protected void dehydrateValues() {
-    for (Iterator i = objectIDs.iterator(); i.hasNext();) {
+    for (Iterator i = this.objectIDs.iterator(); i.hasNext();) {
       putNVPair(MANAGED_OBJECT_ID, ((ObjectID) i.next()).toLong());
     }
-    for (Iterator i = lockContexts.iterator(); i.hasNext();) {
+    for (Iterator i = this.lockContexts.iterator(); i.hasNext();) {
       putNVPair(LOCK_CONTEXT, (TCSerializable) i.next());
     }
-    for (Iterator i = waitContexts.iterator(); i.hasNext();) {
+    for (Iterator i = this.waitContexts.iterator(); i.hasNext();) {
       putNVPair(WAIT_CONTEXT, (TCSerializable) i.next());
     }
-    for (Iterator i = pendingLockContexts.iterator(); i.hasNext();) {
+    for (Iterator i = this.pendingLockContexts.iterator(); i.hasNext();) {
       putNVPair(PENDING_LOCK_CONTEXT, (TCSerializable) i.next());
     }
-    for (Iterator i = pendingTryLockContexts.iterator(); i.hasNext();) {
+    for (Iterator i = this.pendingTryLockContexts.iterator(); i.hasNext();) {
       putNVPair(PENDING_TRY_LOCK_CONTEXT, (TCSerializable) i.next());
     }
-    for (Iterator i = sequenceIDs.iterator(); i.hasNext();) {
+    for (Iterator i = this.sequenceIDs.iterator(); i.hasNext();) {
       putNVPair(TRANSACTION_SEQUENCE_IDS, ((SequenceID) i.next()).toLong());
     }
-    for (Iterator i = txnIDs.iterator(); i.hasNext();) {
+    for (Iterator i = this.txnIDs.iterator(); i.hasNext();) {
       putNVPair(RESENT_TRANSACTION_IDS, ((TransactionID) i.next()).toLong());
     }
     putNVPair(REQUEST_OBJECT_IDS, this.requestObjectIDs);
     putNVPair(CLIENT_VERSION, this.clientVersion);
+    putNVPair(SERVER_HIGH_WATER_MARK, this.serverHighWaterMark);
   }
 
+  @Override
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case MANAGED_OBJECT_ID:
-        objectIDs.add(new ObjectID(getLongValue()));
+        this.objectIDs.add(new ObjectID(getLongValue()));
         return true;
       case LOCK_CONTEXT:
-        lockContexts.add(getObject(new LockContext()));
+        this.lockContexts.add(getObject(new LockContext()));
         return true;
       case WAIT_CONTEXT:
-        waitContexts.add(getObject(new WaitContext()));
+        this.waitContexts.add(getObject(new WaitContext()));
         return true;
       case PENDING_LOCK_CONTEXT:
-        pendingLockContexts.add(getObject(new LockContext()));
+        this.pendingLockContexts.add(getObject(new LockContext()));
         return true;
       case PENDING_TRY_LOCK_CONTEXT:
-        pendingTryLockContexts.add(getObject(new TryLockContext()));
+        this.pendingTryLockContexts.add(getObject(new TryLockContext()));
         return true;
       case TRANSACTION_SEQUENCE_IDS:
-        sequenceIDs.add(new SequenceID(getLongValue()));
+        this.sequenceIDs.add(new SequenceID(getLongValue()));
         return true;
       case RESENT_TRANSACTION_IDS:
-        txnIDs.add(new TransactionID(getLongValue()));
+        this.txnIDs.add(new TransactionID(getLongValue()));
         return true;
       case REQUEST_OBJECT_IDS:
         this.requestObjectIDs = getBooleanValue();
@@ -182,9 +187,19 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
       case CLIENT_VERSION:
         this.clientVersion = getStringValue();
         return true;
+      case SERVER_HIGH_WATER_MARK:
+        this.serverHighWaterMark = getLongValue();
+        return true;
       default:
         return false;
     }
   }
 
+  public long getServerHighWaterMark() {
+    return this.serverHighWaterMark;
+  }
+
+  public void setServerHighWaterMark(long serverHWM) {
+    this.serverHighWaterMark = serverHWM;
+  }
 }

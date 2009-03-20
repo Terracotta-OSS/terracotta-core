@@ -80,11 +80,14 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
 
   private final GroupID                    groupID;
 
-  public RemoteTransactionManagerImpl(final GroupID groupID, final TCLogger logger, final TransactionBatchFactory batchFactory,
-                                      final TransactionIDGenerator transactionIDGenerator, final SessionManager sessionManager,
-                                      final DSOClientMessageChannel channel, final Counter outstandingBatchesCounter,
-                                      final Counter pendingBatchesSize, final SampledRateCounter transactionSizeCounter,
-                                      final SampledRateCounter transactionsPerBatchCounter, final long ackOnExitTimeoutMs) {
+  public RemoteTransactionManagerImpl(final GroupID groupID, final TCLogger logger,
+                                      final TransactionBatchFactory batchFactory,
+                                      final TransactionIDGenerator transactionIDGenerator,
+                                      final SessionManager sessionManager, final DSOClientMessageChannel channel,
+                                      final Counter outstandingBatchesCounter, final Counter pendingBatchesSize,
+                                      final SampledRateCounter transactionSizeCounter,
+                                      final SampledRateCounter transactionsPerBatchCounter,
+                                      final long ackOnExitTimeoutMs) {
     this.groupID = groupID;
     this.logger = logger;
     this.sessionManager = sessionManager;
@@ -116,7 +119,8 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
     }
   }
 
-  public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode, final ClientHandshakeMessage handshakeMessage) {
+  public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
+                                  final ClientHandshakeMessage handshakeMessage) {
     synchronized (this.lock) {
       if (this.status != PAUSED) { throw new AssertionError("Attempting to handshake while not in paused state."); }
       handshakeMessage.addTransactionSequenceIDs(getTransactionSequenceIDs());
@@ -361,13 +365,15 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
     }
   }
 
-  public void receivedAcknowledgement(final SessionID sessionID, final TransactionID txID, final NodeID remoteNode) {
+  public TransactionBuffer receivedAcknowledgement(final SessionID sessionID, final TransactionID txID,
+                                                   final NodeID remoteNode) {
+    TransactionBuffer tb = null;
     Map callbacks;
     synchronized (this.lock) {
       // waitUntilRunning();
       if (!this.sessionManager.isCurrentSession(remoteNode, sessionID)) {
         this.logger.warn("Ignoring Transaction ACK for " + txID + " from previous session = " + sessionID);
-        return;
+        return tb;
       }
 
       Set completedLocks = this.lockAccounting.acknowledge(txID);
@@ -375,7 +381,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
       TxnBatchID container = this.batchAccounting.getBatchByTransactionID(txID);
       if (!container.isNull()) {
         ClientTransactionBatch containingBatch = (ClientTransactionBatch) this.incompleteBatches.get(container);
-        containingBatch.removeTransaction(txID);
+        tb = containingBatch.removeTransaction(txID);
         TxnBatchID completed = this.batchAccounting.acknowledge(txID);
         if (!completed.isNull()) {
           this.incompleteBatches.remove(completed);
@@ -393,6 +399,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
       callbacks = getLockFlushCallbacks(completedLocks);
     }
     fireLockFlushCallbacks(callbacks);
+    return tb;
   }
 
   private TransactionID getCompletedTransactionIDLowWaterMark() {

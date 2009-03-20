@@ -34,8 +34,10 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
     this.transaction = txn;
   }
 
-  public void receivedAcknowledgement(final SessionID sessionID, final TransactionID ackTxID, final NodeID nodeID) {
+  public TransactionBuffer receivedAcknowledgement(final SessionID sessionID, final TransactionID ackTxID,
+                                                   final NodeID nodeID) {
     this.acked = ackTxID;
+    return null;
   }
 
   public void receivedBatchAcknowledgement(final TxnBatchID batchID, final NodeID nodeID) {

@@ -113,8 +113,8 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     return false;
   }
 
-  public synchronized void removeTransaction(TransactionID txID) {
-    TransactionBuffer removed = (TransactionBuffer) this.transactionData.remove(txID);
+  public synchronized TransactionBuffer removeTransaction(TransactionID txID) {
+    TransactionBufferImpl removed = (TransactionBufferImpl) this.transactionData.remove(txID);
     if (removed == null) { throw new AssertionError("Attempt to remove a transaction that doesn't exist"); }
     // if we get some ACKs from the previous instance of the server after we resend this
     // transaction, but before we write to the network, then we don't recycle. We lose those
@@ -123,10 +123,11 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     if (this.outstandingWriteCount == 0) {
       removed.recycle();
     }
+    return removed;
   }
 
-  private TransactionBuffer getOrCreateBuffer(ClientTransaction txn, SequenceGenerator sequenceGenerator,
-                                              TransactionIDGenerator tidGenerator) {
+  private TransactionBufferImpl getOrCreateBuffer(ClientTransaction txn, SequenceGenerator sequenceGenerator,
+                                                  TransactionIDGenerator tidGenerator) {
     if (this.foldingEnabled) {
       final boolean exceedsLimits = exceedsLimits(txn);
 
@@ -237,7 +238,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
       logger.info("NOT folding, created new sequence " + sid);
     }
 
-    TransactionBuffer txnBuffer = createTransactionBuffer(sid, newOutputStream(), this.serializer, this.encoding);
+    TransactionBufferImpl txnBuffer = createTransactionBuffer(sid, newOutputStream(), this.serializer, this.encoding);
 
     if (this.foldingEnabled) {
       // copy the locks since the internal list might be mutated later if locks are nested and lock commits are out of
@@ -254,10 +255,10 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
   }
 
   // Overridden in active-active
-  protected TransactionBuffer createTransactionBuffer(SequenceID sid, TCByteBufferOutputStream newOutputStream,
-                                                      ObjectStringSerializer objectStringserializer,
-                                                      DNAEncoding dnaEncoding) {
-    return new TransactionBuffer(sid, newOutputStream, objectStringserializer, dnaEncoding);
+  protected TransactionBufferImpl createTransactionBuffer(SequenceID sid, TCByteBufferOutputStream newOutputStream,
+                                                          ObjectStringSerializer objectStringserializer,
+                                                          DNAEncoding dnaEncoding) {
+    return new TransactionBufferImpl(sid, newOutputStream, objectStringserializer, dnaEncoding);
   }
 
   private void registerKeyForOids(Set oids, FoldingKey key) {
@@ -317,7 +318,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
 
     removeEmptyDeltaDna(txn);
 
-    TransactionBuffer txnBuffer = getOrCreateBuffer(txn, sequenceGenerator, tidGenerator);
+    TransactionBufferImpl txnBuffer = getOrCreateBuffer(txn, sequenceGenerator, tidGenerator);
 
     this.bytesWritten += txnBuffer.write(txn);
 
@@ -370,13 +371,13 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
   }
 
   public synchronized SequenceID getMinTransactionSequence() {
-    return this.transactionData.isEmpty() ? SequenceID.NULL_ID : ((TransactionBuffer) this.transactionData.values()
+    return this.transactionData.isEmpty() ? SequenceID.NULL_ID : ((TransactionBufferImpl) this.transactionData.values()
         .iterator().next()).getSequenceID();
   }
 
   public Collection addTransactionSequenceIDsTo(Collection sequenceIDs) {
     for (Iterator i = this.transactionData.values().iterator(); i.hasNext();) {
-      TransactionBuffer tb = ((TransactionBuffer) i.next());
+      TransactionBufferImpl tb = ((TransactionBufferImpl) i.next());
       sequenceIDs.add(tb.getSequenceID());
     }
     return sequenceIDs;
@@ -397,13 +398,13 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     for (Iterator i = this.transactionData.entrySet().iterator(); i.hasNext();) {
       Map.Entry entry = (Entry) i.next();
       sb.append(entry.getKey()).append(" = ");
-      sb.append(((TransactionBuffer) entry.getValue()).dump());
+      sb.append(((TransactionBufferImpl) entry.getValue()).dump());
       sb.append("\n");
     }
     return sb.append(" } ").toString();
   }
 
-  protected static class TransactionBuffer implements Recyclable {
+  protected static class TransactionBufferImpl implements Recyclable, TransactionBuffer {
 
     private static final int               UNINITIALIZED_LENGTH = -1;
 
@@ -424,8 +425,8 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     private Mark                           changesCountMark;
     private Mark                           txnCountMark;
 
-    TransactionBuffer(SequenceID sequenceID, TCByteBufferOutputStream output, ObjectStringSerializer serializer,
-                      DNAEncoding encoding) {
+    TransactionBufferImpl(SequenceID sequenceID, TCByteBufferOutputStream output, ObjectStringSerializer serializer,
+                          DNAEncoding encoding) {
       this.sequenceID = sequenceID;
       this.output = output;
       this.serializer = serializer;
@@ -475,7 +476,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
       return this.sequenceID;
     }
 
-    int write(ClientTransaction txn) {
+    public int write(ClientTransaction txn) {
       // Holding on the object references, this method could be called more than once for folded transactions.
       // By definition on the second and subsequent calls will have repeated object references in it, so put() to the
       // map here to not store dupes.
@@ -629,13 +630,13 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
   }
 
   private static class FoldingKey {
-    private final List              lockIDs;
-    private final Set               objectIDs;
-    private final TxnType           txnType;
-    private final TransactionBuffer buffer;
-    private boolean                 closed;
+    private final List                  lockIDs;
+    private final Set                   objectIDs;
+    private final TxnType               txnType;
+    private final TransactionBufferImpl buffer;
+    private boolean                     closed;
 
-    FoldingKey(TransactionBuffer buffer, TxnType txnType, List lockIDs, Set objectIDs) {
+    FoldingKey(TransactionBufferImpl buffer, TxnType txnType, List lockIDs, Set objectIDs) {
       this.buffer = buffer;
       this.txnType = txnType;
       this.lockIDs = lockIDs;
@@ -665,7 +666,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
              || CollectionUtils.containsAny(this.objectIDs, oids);
     }
 
-    public TransactionBuffer getBuffer() {
+    public TransactionBufferImpl getBuffer() {
       return this.buffer;
     }
 

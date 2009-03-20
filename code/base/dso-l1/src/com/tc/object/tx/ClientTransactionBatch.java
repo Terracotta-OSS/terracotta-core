@@ -29,7 +29,7 @@ public interface ClientTransactionBatch extends TransactionBatch {
   public boolean addTransaction(ClientTransaction txn, SequenceGenerator sequenceGenerator,
                                 TransactionIDGenerator transactionIDGenerator);
 
-  public void removeTransaction(TransactionID txID);
+  public TransactionBuffer removeTransaction(TransactionID txID);
 
   /**
    * Send the transaction to the server.

@@ -15,14 +15,18 @@ public class PassThruTransactionFilter implements TransactionFilter, PostInit {
 
   public void initializeContext(ConfigurationContext context) {
     ServerConfigurationContext scc = (ServerConfigurationContext) context;
-    transactionBatchManager = scc.getTransactionBatchManager();
+    this.transactionBatchManager = scc.getTransactionBatchManager();
   }
 
   public void addTransactionBatch(TransactionBatchContext transactionBatchContext) {
-    transactionBatchManager.processTransactions(transactionBatchContext);
+    this.transactionBatchManager.processTransactions(transactionBatchContext);
   }
 
   public boolean shutdownNode(NodeID nodeID) {
     return true;
+  }
+
+  public void notifyServerHighWaterMark(NodeID nodeID, long serverHighWaterMark) {
+    // NOP
   }
 }

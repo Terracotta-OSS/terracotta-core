@@ -22,4 +22,6 @@ public interface TransactionBatchManager {
 
   public void processTransactions(TransactionBatchContext batchContext);
 
+  public void notifyServerHighWaterMark(NodeID nodeID, long serverHighWaterMark);
+
 }

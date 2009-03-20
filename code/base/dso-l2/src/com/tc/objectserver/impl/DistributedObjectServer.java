@@ -831,7 +831,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
                                                  new RequestLockUnLockHandler(), 1, maxStageSize);
     ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(this.communicationsManager,
                                                                                   transactionBatchManager,
-                                                                                  channelManager, haConfig);
+                                                                                  channelManager, this.haConfig);
     stageManager.createStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE, channelLifeCycleHandler, 1,
                              maxStageSize);
     channelManager.addEventListener(channelLifeCycleHandler);
@@ -898,6 +898,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
                                                                                                .getLogger(ServerClientHandshakeManager.class),
                                                                                            channelManager,
                                                                                            this.transactionManager,
+                                                                                           transactionBatchManager,
                                                                                            sequenceValidator,
                                                                                            this.clientStateManager,
                                                                                            this.lockManager,
@@ -938,7 +939,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
                                                                                   .getGarbageCollector()));
     this.l2Management.findObjectManagementMonitorMBean().registerObjectIdFetcher(new ObjectIdsFetcher() {
       public Set getAllObjectIds() {
-        return objectManager.getAllObjectIDs();
+        return DistributedObjectServer.this.objectManager.getAllObjectIDs();
       }
     });
 

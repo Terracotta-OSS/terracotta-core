@@ -154,6 +154,10 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
     this.transactionManager.nodeConnected(nodeID);
   }
 
+  public void notifyServerHighWaterMark(NodeID nodeID, long serverHighWaterMark) {
+    this.filter.notifyServerHighWaterMark(nodeID, serverHighWaterMark);
+  }
+
   public void shutdownNode(NodeID nodeID) {
     if (this.filter.shutdownNode(nodeID)) {
       shutdownBatchStats(nodeID);

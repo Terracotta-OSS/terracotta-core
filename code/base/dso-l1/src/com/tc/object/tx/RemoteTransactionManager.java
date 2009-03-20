@@ -24,7 +24,7 @@ public interface RemoteTransactionManager extends ClientHandshakeCallback {
 
   public void commit(ClientTransaction transaction);
 
-  public void receivedAcknowledgement(SessionID sessionID, TransactionID txID, NodeID nodeID);
+  public TransactionBuffer receivedAcknowledgement(SessionID sessionID, TransactionID txID, NodeID nodeID);
 
   public void receivedBatchAcknowledgement(TxnBatchID batchID, NodeID nodeID);
 
