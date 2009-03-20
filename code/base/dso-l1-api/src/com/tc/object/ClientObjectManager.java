@@ -36,7 +36,7 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
    * Checks whether the state of an ObjectID is present on the current node.
    *
    * @param objectID the object ID to check
-   * @return {@code true}Êwhen the state of the object ID is present on the current node; or {@code false} otherwise
+   * @return {@code true} when the state of the object ID is present on the current node; or {@code false} otherwise
    */
   public boolean isLocal(ObjectID objectID);
 
