@@ -425,6 +425,7 @@ public class ServerManager {
     for (TimGetUrls urls : TIM_GET_URLS) {
       try {
         System.setProperty(Config.KEYSPACE + Config.TC_VERSION, ProductInfo.getInstance().mavenArtifactsVersion());
+        System.setProperty(Config.KEYSPACE + Config.API_VERSION, ProductInfo.getInstance().apiVersion());
         System.setProperty(Config.KEYSPACE + Config.INCLUDE_SNAPSHOTS, "true");
         System.setProperty(Config.KEYSPACE + Config.MODULES_DIR, getTimGetModulesDir());
         System.setProperty(Config.KEYSPACE + Config.CACHE, this.sandbox.getAbsolutePath());

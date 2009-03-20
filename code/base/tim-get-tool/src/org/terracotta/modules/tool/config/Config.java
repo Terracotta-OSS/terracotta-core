@@ -22,6 +22,7 @@ public class Config {
   public static final String KEYSPACE          = "org.terracotta.modules.tool.";
 
   public static final String TC_VERSION        = "tcVersion";
+  public static final String API_VERSION       = "apiVersion";
   public static final String RELATIVE_URL_BASE = "relativeUrlBase";
   public static final String INCLUDE_SNAPSHOTS = "includeSnapshots";
   public static final String PROXY_URL         = "proxyUrl";
@@ -30,6 +31,7 @@ public class Config {
   public static final String CACHE             = "cache";
 
   private String             tcVersion;
+  private String             apiVersion;
   private URI                relativeUrlBase;
   private boolean            includeSnapshots;
   private URL                proxyUrl;
@@ -46,6 +48,7 @@ public class Config {
   public Config(Properties properties) {
     properties = new PropertiesInterpolator().interpolated(properties);
     this.setTcVersion(getProperty(properties, TC_VERSION));
+    this.setApiVersion(getProperty(properties, API_VERSION));
 
     try {
       this.setRelativeUrlBase(new URI(getProperty(properties, RELATIVE_URL_BASE)));
@@ -98,6 +101,14 @@ public class Config {
 
   public void setTcVersion(String tcVersion) {
     this.tcVersion = tcVersion;
+  }
+  
+  public String getApiVersion() {
+    return apiVersion;
+  }
+  
+  public void setApiVersion(String apiVersion) {
+    this.apiVersion = apiVersion;
   }
 
   public URI getRelativeUrlBase() {

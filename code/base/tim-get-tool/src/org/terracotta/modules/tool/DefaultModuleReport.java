@@ -102,7 +102,12 @@ public class DefaultModuleReport extends ModuleReport {
       out.println();
     }
 
-    String compatibility = module.tcVersion().equals("*") ? "any Terracotta version." : "TC " + module.tcVersion();
+    String compatibility = "any Terracotta version.";
+    if(! module.tcVersion().equals(VersionMatcher.ANY_VERSION)) {
+      compatibility = "TC " + module.tcVersion();
+    } else if(! module.apiVersion().equals(VersionMatcher.ANY_VERSION)) {
+      compatibility = "API " + module.apiVersion();
+    }
     out.println("Compatible with " + compatibility);
 
     String text = indent(writer.toString());
@@ -184,7 +189,7 @@ public class DefaultModuleReport extends ModuleReport {
     }
 
     if (module.versions().isEmpty()) {
-      out.println("There are no other versions of this TIM that are compatible with TC " + module.tcVersion());
+      out.println("There are no other versions of this TIM that are compatible with the current installation.");
     } else {
       out.println("The following versions are also available:\n ");
       List<Module> siblings = module.siblings();

@@ -48,6 +48,10 @@ public class CachedModules implements Modules {
   private String             tcVersion;
 
   @Inject
+  @Named(ConfigAnnotation.API_VERSION)
+  private String             apiVersion;
+
+  @Inject
   @Named(ConfigAnnotation.CONFIG_INSTANCE)
   private Config              config;
 
@@ -119,6 +123,7 @@ public class CachedModules implements Modules {
   CachedModules(Config config, File repository, InputStream inputStream) throws JDOMException, IOException {
     this.config = config;
     this.tcVersion = config.getTcVersion();
+    this.apiVersion = config.getApiVersion();
     this.includeSnapshots = config.getIncludeSnapshots();
     this.repository = repository;
     this.dataLoader = null;
@@ -225,8 +230,8 @@ public class CachedModules implements Modules {
     return list;
   }
 
-  private boolean qualify(Module module) {
-    return "*".equals(module.tcVersion()) || tcVersion().equals(module.tcVersion());
+  boolean qualify(Module module) {
+    return new VersionMatcher(tcVersion, apiVersion).matches(module.tcVersion(), module.apiVersion());
   }
 
   public List<Module> list() {
@@ -274,6 +279,10 @@ public class CachedModules implements Modules {
 
   public String tcVersion() {
     return tcVersion;
+  }
+  
+  public String apiVersion() {
+    return apiVersion;
   }
 
   public URI relativeUrlBase() {

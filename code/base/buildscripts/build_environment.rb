@@ -101,6 +101,11 @@ class BuildEnvironment < Environment
     @config_source['maven.version'] || 'unknown'
   end
 
+  # return api version defined in build-config.global
+  def api_version
+    @config_source['api.version'] || 'unknown'
+  end
+
   # Edition info: opensource or enterprise  
   def edition
     is_ee_branch? ? 'Enterprise' : 'Opensource'
