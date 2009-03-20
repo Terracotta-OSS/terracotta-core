@@ -27,7 +27,7 @@ import com.tctest.runner.TransparentAppConfig;
 import java.io.File;
 import java.io.FileOutputStream;
 
-public class ClusterMetaDataOrphanedValuesTest extends TransparentTestBase {
+public class ClusterMetaDataPrefetchTest extends TransparentTestBase {
 
   private int              port;
   private File             configFile;
@@ -35,17 +35,17 @@ public class ClusterMetaDataOrphanedValuesTest extends TransparentTestBase {
 
   @Override
   public void doSetUp(final TransparentTestIface t) throws Exception {
-    t.getTransparentAppConfig().setClientCount(ClusterMetaDataOrphanedValuesTestApp.NODE_COUNT);
+    t.getTransparentAppConfig().setClientCount(ClusterMetaDataPrefetchTestApp.NODE_COUNT);
     t.initializeTestRunner();
     TransparentAppConfig cfg = t.getTransparentAppConfig();
-    cfg.setAttribute(ClusterMetaDataOrphanedValuesTestApp.CONFIG_FILE, configFile.getAbsolutePath());
-    cfg.setAttribute(ClusterMetaDataOrphanedValuesTestApp.PORT_NUMBER, String.valueOf(port));
-    cfg.setAttribute(ClusterMetaDataOrphanedValuesTestApp.HOST_NAME, "localhost");
+    cfg.setAttribute(ClusterMetaDataPrefetchTestApp.CONFIG_FILE, configFile.getAbsolutePath());
+    cfg.setAttribute(ClusterMetaDataPrefetchTestApp.PORT_NUMBER, String.valueOf(port));
+    cfg.setAttribute(ClusterMetaDataPrefetchTestApp.HOST_NAME, "localhost");
   }
 
   @Override
   protected Class getApplicationClass() {
-    return ClusterMetaDataOrphanedValuesTestApp.class;
+    return ClusterMetaDataPrefetchTestApp.class;
   }
 
   @Override
@@ -78,9 +78,9 @@ public class ClusterMetaDataOrphanedValuesTest extends TransparentTestBase {
     out.getServers().getL2s()[0].setJMXPort(adminPort);
     out.getServers().getL2s()[0].setPersistenceMode(L2ConfigBuilder.PERSISTENCE_MODE_PERMANENT_STORE);
 
-    out.getClient().setFaultCount(1);
+    out.getClient().setFaultCount(2);
 
-    String testClassName = ClusterMetaDataOrphanedValuesTestApp.class.getName();
+    String testClassName = ClusterMetaDataPrefetchTestApp.class.getName();
     String testClassSuperName = AbstractTransparentApp.class.getName();
 
     InstrumentedClassConfigBuilder instrumented1 = new InstrumentedClassConfigBuilderImpl();
@@ -103,11 +103,11 @@ public class ClusterMetaDataOrphanedValuesTest extends TransparentTestBase {
 
     out.getApplication().getDSO().setInstrumentedClasses(new InstrumentedClassConfigBuilder[] { instrumented1, instrumented2, instrumented3, instrumented4, instrumented5, instrumented6 });
 
-    RootConfigBuilder map = new RootConfigBuilderImpl(ClusterMetaDataOrphanedValuesTestApp.L1Client.class, "map", "map");
+    RootConfigBuilder map = new RootConfigBuilderImpl(ClusterMetaDataPrefetchTestApp.L1Client.class, "map", "map");
     out.getApplication().getDSO().setRoots( new RootConfigBuilder[] { map });
 
     LockConfigBuilder l1ClientAutoLocks = new LockConfigBuilderImpl( LockConfigBuilder.TAG_AUTO_LOCK);
-    l1ClientAutoLocks.setMethodExpression("* " + ClusterMetaDataOrphanedValuesTestApp.L1Client.class.getName() + "*.*(..)");
+    l1ClientAutoLocks.setMethodExpression("* " + ClusterMetaDataPrefetchTestApp.L1Client.class.getName() + "*.*(..)");
     l1ClientAutoLocks.setLockLevel(LockConfigBuilder.LEVEL_WRITE);
     out.getApplication().getDSO().setLocks( new LockConfigBuilder[] { l1ClientAutoLocks });
 

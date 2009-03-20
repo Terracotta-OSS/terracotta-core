@@ -111,6 +111,10 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
     throw new ImplementMe();
   }
 
+  public boolean isPrefetched(final ObjectID id) {
+    throw new ImplementMe();
+  }
+
   public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode, final ClientHandshakeMessage handshakeMessage) {
     throw new ImplementMe();
 

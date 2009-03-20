@@ -213,12 +213,15 @@ public class DsoClusterImpl implements DsoClusterInternal {
       Manageable manageable = (Manageable) map;
       if (manageable.__tc_isManaged()) {
         if (manageable instanceof TCMap) {
-          final Collection<Map.Entry> localEntries = ((TCMap) manageable).__tc_getAllLocalEntriesSnapshot();
+          final Collection<Map.Entry> localEntries = ((TCMap) manageable).__tc_getAllEntriesSnapshot();
           if (0 == localEntries.size()) { return Collections.emptySet(); }
 
           final Set<K> result = new HashSet<K>();
           for (Map.Entry entry : localEntries) {
-            result.add((K) entry.getKey());
+            if (!(entry.getValue() instanceof ObjectID) ||
+                clientObjectManager.isLocal((ObjectID)entry.getValue())) {
+              result.add((K) entry.getKey());
+            }
           }
 
           return result;

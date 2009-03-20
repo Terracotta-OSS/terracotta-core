@@ -354,6 +354,10 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
     }
   }
 
+  public synchronized boolean isPrefetched(final ObjectID id) {
+    return this.dnaRequests.get(id) != null;
+  }
+
   public class ObjectRequestContextImpl implements ObjectRequestContext {
 
     private final long            timestamp;

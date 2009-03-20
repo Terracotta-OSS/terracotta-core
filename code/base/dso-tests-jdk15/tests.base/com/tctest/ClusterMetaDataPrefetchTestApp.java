@@ -25,9 +25,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-public class ClusterMetaDataOrphanedValuesTestApp extends AbstractTransparentApp {
+public class ClusterMetaDataPrefetchTestApp extends AbstractTransparentApp {
 
   public static final int         NODE_COUNT  = 1;
 
@@ -37,7 +36,7 @@ public class ClusterMetaDataOrphanedValuesTestApp extends AbstractTransparentApp
 
   private final ApplicationConfig config;
 
-  public ClusterMetaDataOrphanedValuesTestApp(final String appId, final ApplicationConfig config,
+  public ClusterMetaDataPrefetchTestApp(final String appId, final ApplicationConfig config,
                                               final ListenerProvider listenerProvider) {
     super(appId, config, listenerProvider);
     this.config = config;
@@ -97,20 +96,15 @@ public class ClusterMetaDataOrphanedValuesTestApp extends AbstractTransparentApp
         }
       } else {
         synchronized (map) {
-          final Set keysBeforeFault = cluster.getKeysForOrphanedValues(map);
-          Assert.assertEquals(3, keysBeforeFault.size());
-          Assert.assertTrue(keysBeforeFault.contains("key1"));
-          Assert.assertTrue(keysBeforeFault.contains("key2"));
-          Assert.assertTrue(keysBeforeFault.contains(new MyMojo("mojo quattro")));
+          Assert.assertEquals(2, cluster.getKeysForOrphanedValues(map).size());
+          Assert.assertEquals(2, cluster.getKeysForLocalValues(map).size());
 
-          map.get("key1");
-          map.get("key2");
+          for (Object value : map.values()) {
+            value.toString();
+          }
 
-          final Set keysAfterFault = cluster.getKeysForOrphanedValues(map);
-          Assert.assertEquals(1, keysAfterFault.size());
-          Assert.assertFalse(keysAfterFault.contains("key1"));
-          Assert.assertFalse(keysAfterFault.contains("key2"));
-          Assert.assertTrue(keysAfterFault.contains(new MyMojo("mojo quattro")));
+          Assert.assertEquals(0, cluster.getKeysForOrphanedValues(map).size());
+          Assert.assertEquals(4, cluster.getKeysForLocalValues(map).size());
         }
       }
     }

@@ -35,12 +35,12 @@ public class TestClientObjectManager implements ClientObjectManager {
   private ReferenceQueue           referenceQueue;
   private ClientTransactionManager txManager;
 
-  public void add(Object id, TCObject tc) {
+  public void add(final Object id, final TCObject tc) {
     this.objects.put(id, tc);
     this.object2TCObject.put(tc.getPeerObject(), tc);
   }
 
-  public void setIsManaged(boolean b) {
+  public void setIsManaged(final boolean b) {
     this.isManaged = b;
   }
 
@@ -48,25 +48,25 @@ public class TestClientObjectManager implements ClientObjectManager {
     return this.isManaged;
   }
 
-  public boolean isManaged(Object pojo) {
+  public boolean isManaged(final Object pojo) {
     return this.object2TCObject.containsKey(pojo) || this.isManaged;
   }
 
-  public boolean isPortableInstance(Object pojo) {
+  public boolean isPortableInstance(final Object pojo) {
     return true;
   }
 
-  public boolean isPortableClass(Class clazz) {
+  public boolean isPortableClass(final Class clazz) {
     return true;
   }
 
-  public void sharedIfManaged(Object pojo) {
+  public void sharedIfManaged(final Object pojo) {
     if (isManaged(pojo)) {
       lookupOrCreate(pojo);
     }
   }
 
-  public synchronized TCObject lookupOrCreate(Object obj) {
+  public synchronized TCObject lookupOrCreate(final Object obj) {
     // System.out.println(this + ".lookupOrCreate(" + obj + ")");
     TCObject rv = lookup(obj);
     if (rv == null) {
@@ -79,12 +79,12 @@ public class TestClientObjectManager implements ClientObjectManager {
     return rv;
   }
 
-  private synchronized TCObject lookup(Object obj) {
+  private synchronized TCObject lookup(final Object obj) {
     TCObject rv = (TCObject) this.object2TCObject.get(obj);
     return rv;
   }
 
-  public Object lookupOrCreateRoot(String name, Object candidate) {
+  public Object lookupOrCreateRoot(final String name, final Object candidate) {
     Object rv = null;
     if (candidate == null) {
       rv = this.root;
@@ -95,41 +95,41 @@ public class TestClientObjectManager implements ClientObjectManager {
     return rv;
   }
 
-  public TCObject lookupIfLocal(ObjectID id) {
+  public TCObject lookupIfLocal(final ObjectID id) {
     throw new ImplementMe();
   }
 
-  public Collection getAllObjectIDsAndClear(Collection c) {
+  public Collection getAllObjectIDsAndClear(final Collection c) {
     c.addAll(this.objects.keySet());
     return c;
   }
 
-  public TCObject lookup(ObjectID id) {
+  public TCObject lookup(final ObjectID id) {
     System.out.println(this + ".lookup(" + id + ")");
     return (TCObject) this.objects.get(id);
   }
 
-  public WeakReference createNewPeer(TCClass clazz, int size, ObjectID id, ObjectID parentID) {
+  public WeakReference createNewPeer(final TCClass clazz, final int size, final ObjectID id, final ObjectID parentID) {
     throw new ImplementMe();
   }
 
-  public Object lookupObject(ObjectID id) {
+  public Object lookupObject(final ObjectID id) {
     return ((TCObject) this.objects.get(id)).getPeerObject();
   }
 
-  public Object lookupObject(ObjectID id, ObjectID parentContext) {
+  public Object lookupObject(final ObjectID id, final ObjectID parentContext) {
     return ((TCObject) this.objects.get(id)).getPeerObject();
   }
 
-  public TCClass getOrCreateClass(Class clazz) {
+  public TCClass getOrCreateClass(final Class clazz) {
     throw new ImplementMe();
   }
 
-  public void setTransactionManager(ClientTransactionManager txManager) {
+  public void setTransactionManager(final ClientTransactionManager txManager) {
     this.txManager = txManager;
   }
 
-  public void setReferenceQueue(ReferenceQueue rq) {
+  public void setReferenceQueue(final ReferenceQueue rq) {
     this.referenceQueue = rq;
   }
 
@@ -137,11 +137,11 @@ public class TestClientObjectManager implements ClientObjectManager {
     return this.referenceQueue;
   }
 
-  public ObjectID lookupExistingObjectID(Object obj) {
+  public ObjectID lookupExistingObjectID(final Object obj) {
     return ((TCObject) this.object2TCObject.get(obj)).getObjectID();
   }
 
-  public void markReferenced(TCObject tcobj) {
+  public void markReferenced(final TCObject tcobj) {
     // mark referenced
   }
 
@@ -153,11 +153,11 @@ public class TestClientObjectManager implements ClientObjectManager {
     return this.txManager;
   }
 
-  public Class getClassFor(String className, LoaderDescription loaderDesc) {
+  public Class getClassFor(final String className, final LoaderDescription loaderDesc) {
     throw new ImplementMe();
   }
 
-  public TCObject lookupExistingOrNull(Object pojo) {
+  public TCObject lookupExistingOrNull(final Object pojo) {
     // if (isManaged) {
     // lookupOrCreate(pojo);
     // }
@@ -165,7 +165,7 @@ public class TestClientObjectManager implements ClientObjectManager {
     return (TCObject) this.object2TCObject.get(pojo);
   }
 
-  public Object lookupRoot(String name) {
+  public Object lookupRoot(final String name) {
     throw new ImplementMe();
   }
 
@@ -181,28 +181,28 @@ public class TestClientObjectManager implements ClientObjectManager {
     return;
   }
 
-  public void checkPortabilityOfField(Object value, String fieldName, Object pojo) throws TCNonPortableObjectError {
+  public void checkPortabilityOfField(final Object value, final String fieldName, final Object pojo) throws TCNonPortableObjectError {
     return;
   }
 
-  public void checkPortabilityOfLogicalAction(Object[] params, int index, String methodName, Object pojo)
+  public void checkPortabilityOfLogicalAction(final Object[] params, final int index, final String methodName, final Object pojo)
       throws TCNonPortableObjectError {
     return;
   }
 
-  public WeakReference createNewPeer(TCClass clazz, DNA dna) {
+  public WeakReference createNewPeer(final TCClass clazz, final DNA dna) {
     throw new ImplementMe();
   }
 
-  public void replaceRootIDIfNecessary(String rootName, ObjectID newRootID) {
+  public void replaceRootIDIfNecessary(final String rootName, final ObjectID newRootID) {
     throw new ImplementMe();
   }
 
-  public Object lookupOrCreateRoot(String name, Object obj, boolean dsoFinal) {
+  public Object lookupOrCreateRoot(final String name, final Object obj, final boolean dsoFinal) {
     throw new ImplementMe();
   }
 
-  public TCObject lookupOrShare(Object pojo) {
+  public TCObject lookupOrShare(final Object pojo) {
     throw new ImplementMe();
   }
 
@@ -218,31 +218,31 @@ public class TestClientObjectManager implements ClientObjectManager {
     return false;
   }
 
-  public Object lookupObjectNoDepth(ObjectID id) {
+  public Object lookupObjectNoDepth(final ObjectID id) {
     throw new ImplementMe();
   }
 
-  public Object lookupOrCreateRootNoDepth(String rootName, Object object) {
+  public Object lookupOrCreateRootNoDepth(final String rootName, final Object object) {
     throw new ImplementMe();
   }
 
-  public Object createOrReplaceRoot(String rootName, Object r) {
+  public Object createOrReplaceRoot(final String rootName, final Object r) {
     throw new ImplementMe();
   }
 
-  public void storeObjectHierarchy(Object pojo, ApplicationEventContext context) {
+  public void storeObjectHierarchy(final Object pojo, final ApplicationEventContext context) {
     throw new ImplementMe();
   }
 
-  public void sendApplicationEvent(Object pojo, ApplicationEvent event) {
+  public void sendApplicationEvent(final Object pojo, final ApplicationEvent event) {
     throw new ImplementMe();
   }
 
-  public Object cloneAndInvokeLogicalOperation(Object pojo, String methodName, Object[] parameters) {
+  public Object cloneAndInvokeLogicalOperation(final Object pojo, final String methodName, final Object[] parameters) {
     throw new ImplementMe();
   }
 
-  public ToggleableStrongReference getOrCreateToggleRef(ObjectID id, Object peer) {
+  public ToggleableStrongReference getOrCreateToggleRef(final ObjectID id, final Object peer) {
     throw new ImplementMe();
   }
 
@@ -254,12 +254,16 @@ public class TestClientObjectManager implements ClientObjectManager {
     throw new ImplementMe();
   }
 
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+  public PrettyPrinter prettyPrint(final PrettyPrinter out) {
     throw new ImplementMe();
   }
 
-  public WeakReference newWeakObjectReference(ObjectID objectID, Object peer) {
+  public WeakReference newWeakObjectReference(final ObjectID objectID, final Object peer) {
     return new WeakObjectReference(objectID, peer, this.referenceQueue);
+  }
+
+  public boolean isLocal(final ObjectID objectID) {
+    throw new ImplementMe();
   }
 
 }

@@ -50,39 +50,39 @@ public class ManagerImplTest extends BaseDSOTestCase {
 
   private static class TxnMgr implements ClientTransactionManager {
 
-    public boolean begin(String lock, int lockLevel, String lockType, String contextInfo) {
+    public boolean begin(final String lock, final int lockLevel, final String lockType, final String contextInfo) {
       throw new AssertionError("should not be called");
     }
 
-    public void apply(TxnType txType, List lockIDs, Collection objectChanges, Map newRoots) {
+    public void apply(final TxnType txType, final List lockIDs, final Collection objectChanges, final Map newRoots) {
       throw new ImplementMe();
     }
 
-    public void createObject(TCObject source) {
+    public void createObject(final TCObject source) {
       throw new ImplementMe();
     }
 
-    public void createRoot(String name, ObjectID id) {
+    public void createRoot(final String name, final ObjectID id) {
       throw new ImplementMe();
     }
 
-    public void fieldChanged(TCObject source, String classname, String fieldname, Object newValue, int index) {
+    public void fieldChanged(final TCObject source, final String classname, final String fieldname, final Object newValue, final int index) {
       throw new ImplementMe();
     }
 
-    public void logicalInvoke(TCObject source, int method, String methodName, Object[] parameters) {
+    public void logicalInvoke(final TCObject source, final int method, final String methodName, final Object[] parameters) {
       throw new ImplementMe();
     }
 
-    public void notify(String lockName, boolean all, Object object) throws UnlockedSharedObjectException {
+    public void notify(final String lockName, final boolean all, final Object object) throws UnlockedSharedObjectException {
       throw new ImplementMe();
     }
 
-    public void checkWriteAccess(Object context) {
+    public void checkWriteAccess(final Object context) {
       throw new ImplementMe();
     }
 
-    public void addReference(TCObject tco) {
+    public void addReference(final TCObject tco) {
       throw new ImplementMe();
     }
 
@@ -90,23 +90,23 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public boolean isLocked(String lockName, int lockLevel) {
+    public boolean isLocked(final String lockName, final int lockLevel) {
       throw new ImplementMe();
     }
 
-    public void commit(String lockName) throws UnlockedSharedObjectException {
+    public void commit(final String lockName) throws UnlockedSharedObjectException {
       throw new AssertionError("should not be called");
     }
 
-    public void wait(String lockName, TimerSpec call, Object object) throws UnlockedSharedObjectException {
+    public void wait(final String lockName, final TimerSpec call, final Object object) throws UnlockedSharedObjectException {
       throw new ImplementMe();
     }
 
-    public int queueLength(String lockName) {
+    public int queueLength(final String lockName) {
       throw new ImplementMe();
     }
 
-    public int waitLength(String lockName) {
+    public int waitLength(final String lockName) {
       throw new ImplementMe();
     }
 
@@ -122,35 +122,35 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public boolean isHeldByCurrentThread(String lockName, int lockLevel) {
+    public boolean isHeldByCurrentThread(final String lockName, final int lockLevel) {
       throw new ImplementMe();
     }
 
-    public boolean beginInterruptibly(String lockID, int type, String lockObjectType, String contextInfo) {
+    public boolean beginInterruptibly(final String lockID, final int type, final String lockObjectType, final String contextInfo) {
       throw new ImplementMe();
     }
 
-    public boolean tryBegin(String lock, TimerSpec timeout, int lockLevel, String lockType) {
+    public boolean tryBegin(final String lock, final TimerSpec timeout, final int lockLevel, final String lockType) {
       throw new ImplementMe();
     }
 
-    public void arrayChanged(TCObject src, int startPos, Object array, int length) {
+    public void arrayChanged(final TCObject src, final int startPos, final Object array, final int length) {
       throw new ImplementMe();
     }
 
-    public void literalValueChanged(TCObject source, Object newValue, Object oldValue) {
+    public void literalValueChanged(final TCObject source, final Object newValue, final Object oldValue) {
       throw new ImplementMe();
     }
 
-    public void addDmiDescriptor(DmiDescriptor d) {
+    public void addDmiDescriptor(final DmiDescriptor d) {
       throw new ImplementMe();
     }
 
-    public int localHeldCount(String lockName, int lockLevel) {
+    public int localHeldCount(final String lockName, final int lockLevel) {
       throw new ImplementMe();
     }
 
-    public boolean isLockOnTopStack(String lockName) {
+    public boolean isLockOnTopStack(final String lockName) {
       return false;
     }
 
@@ -162,7 +162,7 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    public PrettyPrinter prettyPrint(final PrettyPrinter out) {
       throw new ImplementMe();
     }
 
@@ -170,99 +170,99 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public void receivedAcknowledgement(SessionID sessionID, TransactionID requestID, NodeID nodeID) {
+    public void receivedAcknowledgement(final SessionID sessionID, final TransactionID requestID, final NodeID nodeID) {
       throw new ImplementMe();
     }
 
-    public void receivedBatchAcknowledgement(TxnBatchID batchID, NodeID nodeID) {
+    public void receivedBatchAcknowledgement(final TxnBatchID batchID, final NodeID nodeID) {
       throw new ImplementMe();
     }
 
-    public boolean beginLockWithoutTxn(String lockName, int lockLevel, String lockObjectType, String contextInfo) {
+    public boolean beginLockWithoutTxn(final String lockName, final int lockLevel, final String lockObjectType, final String contextInfo) {
       throw new ImplementMe();
     }
   }
 
   private static class ObjMgr implements ClientObjectManager {
 
-    public Class getClassFor(String className, LoaderDescription loaderDesc) {
+    public Class getClassFor(final String className, final LoaderDescription loaderDesc) {
       throw new ImplementMe();
     }
 
-    public boolean isManaged(Object pojo) {
+    public boolean isManaged(final Object pojo) {
       return false;
     }
 
-    public void markReferenced(TCObject tcobj) {
+    public void markReferenced(final TCObject tcobj) {
       throw new ImplementMe();
     }
 
-    public boolean isPortableInstance(Object pojo) {
+    public boolean isPortableInstance(final Object pojo) {
       throw new ImplementMe();
     }
 
-    public boolean isPortableClass(Class clazz) {
+    public boolean isPortableClass(final Class clazz) {
       throw new ImplementMe();
     }
 
-    public void checkPortabilityOfField(Object value, String fieldName, Object pojo) throws TCNonPortableObjectError {
+    public void checkPortabilityOfField(final Object value, final String fieldName, final Object pojo) throws TCNonPortableObjectError {
       throw new ImplementMe();
     }
 
-    public void checkPortabilityOfLogicalAction(Object[] params, int index, String methodName, Object pojo)
+    public void checkPortabilityOfLogicalAction(final Object[] params, final int index, final String methodName, final Object pojo)
         throws TCNonPortableObjectError {
       throw new ImplementMe();
     }
 
-    public Object lookupObject(ObjectID id) {
+    public Object lookupObject(final ObjectID id) {
       throw new ImplementMe();
     }
 
-    public Object lookupObject(ObjectID id, ObjectID parentContext) {
+    public Object lookupObject(final ObjectID id, final ObjectID parentContext) {
       throw new ImplementMe();
     }
 
-    public TCObject lookupOrCreate(Object obj) {
+    public TCObject lookupOrCreate(final Object obj) {
       throw new ImplementMe();
     }
 
-    public ObjectID lookupExistingObjectID(Object obj) {
+    public ObjectID lookupExistingObjectID(final Object obj) {
       throw new ImplementMe();
     }
 
-    public Object lookupRoot(String name) {
+    public Object lookupRoot(final String name) {
       throw new ImplementMe();
     }
 
-    public Object lookupOrCreateRoot(String name, Object obj) {
+    public Object lookupOrCreateRoot(final String name, final Object obj) {
       throw new ImplementMe();
     }
 
-    public TCObject lookupIfLocal(ObjectID id) {
+    public TCObject lookupIfLocal(final ObjectID id) {
       throw new ImplementMe();
     }
 
-    public TCObject lookup(ObjectID id) {
+    public TCObject lookup(final ObjectID id) {
       throw new ImplementMe();
     }
 
-    public TCObject lookupExistingOrNull(Object pojo) {
+    public TCObject lookupExistingOrNull(final Object pojo) {
       return null;
     }
 
-    public WeakReference createNewPeer(TCClass clazz, DNA dna) {
+    public WeakReference createNewPeer(final TCClass clazz, final DNA dna) {
       throw new ImplementMe();
     }
 
-    public WeakReference createNewPeer(TCClass clazz, int size, ObjectID id, ObjectID parentID) {
+    public WeakReference createNewPeer(final TCClass clazz, final int size, final ObjectID id, final ObjectID parentID) {
       throw new ImplementMe();
     }
 
-    public TCClass getOrCreateClass(Class clazz) {
+    public TCClass getOrCreateClass(final Class clazz) {
       throw new ImplementMe();
     }
 
-    public void setTransactionManager(ClientTransactionManager txManager) {
+    public void setTransactionManager(final ClientTransactionManager txManager) {
       throw new ImplementMe();
     }
 
@@ -274,16 +274,16 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public void replaceRootIDIfNecessary(String rootName, ObjectID newRootID) {
+    public void replaceRootIDIfNecessary(final String rootName, final ObjectID newRootID) {
       throw new ImplementMe();
 
     }
 
-    public Object lookupOrCreateRoot(String name, Object obj, boolean dsoFinal) {
+    public Object lookupOrCreateRoot(final String name, final Object obj, final boolean dsoFinal) {
       throw new ImplementMe();
     }
 
-    public TCObject lookupOrShare(Object pojo) {
+    public TCObject lookupOrShare(final Object pojo) {
       throw new ImplementMe();
     }
 
@@ -299,31 +299,31 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public Object lookupObjectNoDepth(ObjectID id) {
+    public Object lookupObjectNoDepth(final ObjectID id) {
       throw new ImplementMe();
     }
 
-    public Object lookupOrCreateRootNoDepth(String rootName, Object object) {
+    public Object lookupOrCreateRootNoDepth(final String rootName, final Object object) {
       throw new ImplementMe();
     }
 
-    public Object createOrReplaceRoot(String rootName, Object root) {
+    public Object createOrReplaceRoot(final String rootName, final Object root) {
       throw new ImplementMe();
     }
 
-    public void storeObjectHierarchy(Object pojo, ApplicationEventContext context) {
+    public void storeObjectHierarchy(final Object pojo, final ApplicationEventContext context) {
       throw new ImplementMe();
     }
 
-    public void sendApplicationEvent(Object pojo, ApplicationEvent event) {
+    public void sendApplicationEvent(final Object pojo, final ApplicationEvent event) {
       throw new ImplementMe();
     }
 
-    public Object cloneAndInvokeLogicalOperation(Object pojo, String methodName, Object[] parameters) {
+    public Object cloneAndInvokeLogicalOperation(final Object pojo, final String methodName, final Object[] parameters) {
       throw new ImplementMe();
     }
 
-    public ToggleableStrongReference getOrCreateToggleRef(ObjectID id, Object peer) {
+    public ToggleableStrongReference getOrCreateToggleRef(final ObjectID id, final Object peer) {
       throw new ImplementMe();
     }
 
@@ -335,11 +335,15 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    public PrettyPrinter prettyPrint(final PrettyPrinter out) {
       throw new ImplementMe();
     }
 
-    public WeakReference newWeakObjectReference(ObjectID objectID, Object peer) {
+    public WeakReference newWeakObjectReference(final ObjectID objectID, final Object peer) {
+      throw new ImplementMe();
+    }
+
+    public boolean isLocal(final ObjectID objectID) {
       throw new ImplementMe();
     }
 
