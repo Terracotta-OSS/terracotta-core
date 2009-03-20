@@ -301,7 +301,37 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
         </garbage-collection>
       </dso>
     </server>
-    
+    <!-- This section lets you divide your servers in groups. Each 
+        group can be composed of one or more servers out of which 1 server 
+        will act as an Active server i.e. each group will have 1 Active 
+        server. You can omit this section if you want to have only
+        1 Active server in the cluster. 
+    --> 
+    <mirror-groups>
+      <!-- Each group can also be assigned a group name. Each group has members 
+        which are actually the "name" of the server specified above in the server section.
+        More than one member can be present in a mirror group.
+      -->
+      <mirror-group group-name="group1">
+        <members>
+          <member>server1</member>
+        </members>
+        <!-- Each group can have its own ha, otherwise it is taken as the common
+            ha defined
+        -->
+        <ha>
+          <mode>networked-active-passive</mode>
+          <networked-active-passive>
+            <election-time>5</election-time>
+          </networked-active-passive>
+        </ha>
+       </mirror-group>
+       <mirror-group>
+         <members>
+           <member>server2</member>
+         </members>
+       </mirror-group>
+    </mirror-groups>     
     <!-- This section allows you to indicate properties associated 
        with running your servers in active-passive mode. The properties 
        apply to all servers defined. You can omit this section, in which 
