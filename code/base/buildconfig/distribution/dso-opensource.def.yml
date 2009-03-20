@@ -52,15 +52,6 @@ bundled_components:
           - tc-config-reference
   - common:
       module_packages:
-        - tim-api:
-            install_directory: lib
-            modules:
-              - common-api
-              - dso-l1-api
-              - license-common
-              - management-api
-              - modules-base
-              - thirdparty-api
         - terracotta-jmx-api:
             install_directory: lib
             modules:
@@ -69,12 +60,37 @@ bundled_components:
               - dso-l1-api
               - dso-l2-common
               - dso-statistics-api
+              - management-api      
+        - tim-api-api.version:
+                            # install in 'api-jars' folder so it can be deleted later
+            install_directory: api-jars
+            modules:
+              - common-api
+              - dso-l1-api
+              - license-common
               - management-api
+              - modules-base
+              - thirdparty-api
+        - test-api-api.version:
+                            # install in 'api-jars' folder so it can be deleted later
+            install_directory: api-jars
+            source: tests.base
+            filter: "**/*TestApp.class"
+            modules:
+              - common-api
+              - common
+              - dso-container-tests
+              - dso-l1
+              - dso-system-tests
+              - legacy-test-tree
+              - license-common
+              - simulator
         - api-api.version:
             javadoc: true
             install_directory: lib
             modules:
-              - dso-cluster-api             
+              - dso-cluster-api
+
       # NOTE: this section also controls what goes into the 'tc.jar' file
       modules:
         - aspectwerkz:
@@ -183,7 +199,7 @@ postscripts:
           pom: poms/tcstats-pom.xml
         - groupId: org.terracotta.api
           artifact: tim-api
-          file: lib/tim-api.jar
+          file: api-jars/tim-api-api.version.jar
           pom: poms/terracotta-tim-api-pom.xml
           version: api.version
           inject: 
@@ -199,5 +215,13 @@ postscripts:
           file: lib/api-api.version.jar
           pom: poms/terracotta-api-pom.xml
           version: api.version
+        - groupId: org.terracotta.api
+          artifact: test-api
+          file: api-jars/test-api-api.version.jar
+          pom: poms/terracotta-test-api-pom.xml
+          version: api.version
+          inject: 
+            - lib/resources/build-data.txt
+          
   - delete-api-jars
           

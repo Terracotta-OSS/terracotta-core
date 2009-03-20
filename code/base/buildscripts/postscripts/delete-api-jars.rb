@@ -8,9 +8,9 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   # - set the execute permission of all the script files in the kit
   protected
   def postscript(ant, build_environment, product_directory, *args)
-    Dir.chdir(File.join(product_directory.to_s, "lib")) do
+    Dir.chdir(File.join(product_directory.to_s)) do
       # DEV-2567
-      FileUtils.rm("tim-api.jar")
+      FileUtils.rm_rf("api-jars")
     end
   end
 end

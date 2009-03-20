@@ -113,6 +113,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     @no_demo = true
     begin
       product_definition_files(flavor).each do |def_file|
+        puts "Processing def file #{def_file}"
         product_code = product_code(def_file)
         config = product_config(product_code)
         if postscripts = config['postscripts']
