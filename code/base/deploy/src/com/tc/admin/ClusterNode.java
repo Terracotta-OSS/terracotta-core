@@ -133,7 +133,21 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
     }
 
     @Override
-    public void handleActiveCoordinator(IServer oldActive, IServer newActive) {
+    protected void handleConnectError(Exception connectError) {
+      if (connectDialog != null && connectDialog.isVisible()) { return; }
+
+      if (connectError instanceof SecurityException) {
+        reportConnectError(connectError);
+        try {
+          beginConnect();
+        } catch (Exception e) {
+          adminClientContext.log(e);
+        }
+      }
+    }
+
+    @Override
+    protected void handleActiveCoordinator(IServer oldActive, IServer newActive) {
       if (oldActive != null) {
         oldActive.removeClusterStatsListener(ClusterNode.this);
         oldActive.removePropertyChangeListener(ClusterNode.this);
@@ -156,9 +170,6 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
           versionMismatchDialog.setVisible(false);
         }
         handleDisconnect();
-        if (clusterModel.hasConnectError()) {
-          reportConnectError(clusterModel.getConnectError());
-        }
         if (isAutoConnect()) {
           clusterModel.connect();
         }
@@ -298,14 +309,19 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
    * Messaged by ConnectDialog.
    */
   public void handleConnection() {
-    JMXConnector jmxc;
+    final JMXConnector jmxc;
     if ((jmxc = connectDialog.getConnector()) != null) {
-      try {
-        clusterModel.setJMXConnector(jmxc);
-        clusterModel.refreshCachedCredentials();
-      } catch (IOException ioe) {
-        reportConnectError(ioe);
-      }
+      clusterPanel.setStatusLabel(adminClientContext.getString("connecting"));
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          try {
+            clusterModel.setJMXConnector(jmxc);
+            clusterModel.refreshCachedCredentials();
+          } catch (IOException ioe) {
+            reportConnectError(ioe);
+          }
+        }
+      });
     }
   }
 

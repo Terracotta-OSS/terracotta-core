@@ -136,11 +136,13 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
                                                                             };
 
-  public ClientObjectManagerImpl(final RemoteObjectManager remoteObjectManager, final DSOClientConfigHelper clientConfiguration,
-                                 final ObjectIDProvider idProvider, final EvictionPolicy cache, final RuntimeLogger runtimeLogger,
-                                 final ClientIDProvider provider, final ClassProvider classProvider, final TCClassFactory classFactory,
-                                 final TCObjectFactory objectFactory, final Portability portability,
-                                 final DSOClientMessageChannel channel, final ToggleableReferenceManager referenceManager) {
+  public ClientObjectManagerImpl(final RemoteObjectManager remoteObjectManager,
+                                 final DSOClientConfigHelper clientConfiguration, final ObjectIDProvider idProvider,
+                                 final EvictionPolicy cache, final RuntimeLogger runtimeLogger,
+                                 final ClientIDProvider provider, final ClassProvider classProvider,
+                                 final TCClassFactory classFactory, final TCObjectFactory objectFactory,
+                                 final Portability portability, final DSOClientMessageChannel channel,
+                                 final ToggleableReferenceManager referenceManager) {
     this.remoteObjectManager = remoteObjectManager;
     this.cache = cache;
     this.clientConfiguration = clientConfiguration;
@@ -177,13 +179,9 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   public synchronized boolean isLocal(final ObjectID objectID) {
-    if (null == objectID) {
-      return false;
-    }
+    if (null == objectID) { return false; }
 
-    if (idToManaged.containsKey(objectID)) {
-      return true;
-    }
+    if (idToManaged.containsKey(objectID)) { return true; }
 
     return remoteObjectManager.isPrefetched(objectID);
   }
@@ -266,7 +264,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return ols;
   }
 
-  private synchronized void markCreateInProgress(final ObjectLatchState ols, final TCObject object, final LocalLookupContext lookupContext) {
+  private synchronized void markCreateInProgress(final ObjectLatchState ols, final TCObject object,
+                                                 final LocalLookupContext lookupContext) {
     ResetableLatch latch = lookupContext.getLatch();
     // Make sure this thread owns this object lookup
     Assert.assertTrue(ols.getLatch() == latch);
@@ -425,7 +424,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return lookupObject(id, parentContext, false);
   }
 
-  private Object lookupObject(final ObjectID objectID, final ObjectID parentContext, final boolean noDepth) throws ClassNotFoundException {
+  private Object lookupObject(final ObjectID objectID, final ObjectID parentContext, final boolean noDepth)
+      throws ClassNotFoundException {
     if (objectID.isNull()) { return null; }
     Object o = null;
     while (o == null) {
@@ -472,7 +472,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return lookup(id, null, false);
   }
 
-  private TCObject lookup(final ObjectID id, final ObjectID parentContext, final boolean noDepth) throws ClassNotFoundException {
+  private TCObject lookup(final ObjectID id, final ObjectID parentContext, final boolean noDepth)
+      throws ClassNotFoundException {
     TCObject obj = null;
     boolean retrieveNeeded = false;
     boolean isInterrupted = false;
@@ -648,8 +649,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return !(pojo instanceof Class) && literals.isLiteralInstance(pojo);
   }
 
-  private Object lookupOrCreateRoot(final String rootName, final Object root, final boolean dsoFinal, final boolean noDepth)
-      throws ClassNotFoundException {
+  private Object lookupOrCreateRoot(final String rootName, final Object root, final boolean dsoFinal,
+                                    final boolean noDepth) throws ClassNotFoundException {
     if (root != null) {
       // this will throw an exception if root is not portable
       this.checkPortabilityOfRoot(root, rootName, root.getClass());
@@ -677,7 +678,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
   }
 
-  private void checkPortabilityOfRoot(final Object root, final String rootName, final Class rootType) throws TCNonPortableObjectError {
+  private void checkPortabilityOfRoot(final Object root, final String rootName, final Class rootType)
+      throws TCNonPortableObjectError {
     NonPortableReason reason = checkPortabilityOf(root);
     if (reason != null) {
       NonPortableRootContext context = this.appEventContextFactory.createNonPortableRootContext(rootName, root);
@@ -690,7 +692,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
   }
 
-  public void checkPortabilityOfField(final Object fieldValue, final String fieldName, final Object pojo) throws TCNonPortableObjectError {
+  public void checkPortabilityOfField(final Object fieldValue, final String fieldName, final Object pojo)
+      throws TCNonPortableObjectError {
     NonPortableReason reason = checkPortabilityOf(fieldValue);
     if (reason != null) {
       NonPortableFieldSetContext context = this.appEventContextFactory.createNonPortableFieldSetContext(pojo,
@@ -742,8 +745,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return pojo;
   }
 
-  public void checkPortabilityOfLogicalAction(final Object[] params, final int index, final String methodName, final Object pojo)
-      throws TCNonPortableObjectError {
+  public void checkPortabilityOfLogicalAction(final Object[] params, final int index, final String methodName,
+                                              final Object pojo) throws TCNonPortableObjectError {
     Object param = params[index];
     NonPortableReason reason = checkPortabilityOf(param);
     if (reason != null) {
@@ -759,8 +762,9 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
   }
 
-  private void throwNonPortableException(final Object obj, final NonPortableReason reason, final NonPortableEventContext context,
-                                         final String message) throws TCNonPortableObjectError {
+  private void throwNonPortableException(final Object obj, final NonPortableReason reason,
+                                         final NonPortableEventContext context, final String message)
+      throws TCNonPortableObjectError {
     // XXX: The message should probably be part of the context
     reason.setMessage(message);
     context.addDetailsTo(reason);
@@ -810,8 +814,9 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     this.roots.put(rootName, newRootID);
   }
 
-  private Object lookupRootOptionallyCreateOrReplace(final String rootName, final Object rootPojo, final boolean create,
-                                                     final boolean dsoFinal, final boolean noDepth) throws ClassNotFoundException {
+  private Object lookupRootOptionallyCreateOrReplace(final String rootName, final Object rootPojo,
+                                                     final boolean create, final boolean dsoFinal, final boolean noDepth)
+      throws ClassNotFoundException {
     boolean replaceRootIfExistWhenCreate = !dsoFinal && create;
 
     ObjectID rootID = null;

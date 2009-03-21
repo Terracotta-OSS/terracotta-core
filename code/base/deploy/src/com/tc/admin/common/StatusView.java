@@ -57,8 +57,7 @@ public class StatusView extends XContainer {
 
   public void setText(String text) {
     label.setText(text);
-    revalidate();
-    repaint();
+    paintImmediately(0, 0, getWidth(), getHeight());
   }
 
   public void setIndicator(Color color) {
@@ -67,7 +66,7 @@ public class StatusView extends XContainer {
     indicator.setMinimumSize(new Dimension(10, 10));
     indicator.setPreferredSize(new Dimension(10, 10));
     revalidate();
-    repaint();
+    paintImmediately(0, 0, getWidth(), getHeight());
   }
 
   @Override

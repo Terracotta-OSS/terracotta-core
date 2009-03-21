@@ -192,8 +192,6 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
   private static final String            L2_SHUTDOWN_SCRIPT          = "stop-tc-server" + SCRIPT_EXTENSION;
   private static final String            L2_STARTUP_TRIGGER          = "Terracotta Server instance has started up";
   private static final int               SERVER1_PORT                = 9081;
-  // private static final String WEBSERVER_STARTUP_SCRIPT = "start-web-server" + SCRIPT_EXTENSION;
-  // private static final String WEBSERVER_SHUTDOWN_SCRIPT = "stop-web-server" + SCRIPT_EXTENSION;
   private static final int               SERVER2_PORT                = 9082;
   private static final String            HELP_DOC                    = TC_INSTALL_DIR + FS + "docs" + FS
                                                                        + "TerracottaSessionsQuickStart.html";
@@ -218,9 +216,6 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
   private static final String            STOPPED_LABEL               = " [Stopped]";
   private static final String            FAILED_LABEL                = " [Failed]";
   private static final String            DISABLED_LABEL              = " [Disabled]";
-
-  // private Process m_jetty1Proc;
-  // private Process m_jetty2Proc;
 
   public SessionIntegratorFrame(SessionIntegratorContext sessionIntegratorContext) {
     super();
@@ -1067,30 +1062,36 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
     }
   }
 
+  private static boolean supportsWebtide = true;
+
   private static String contextFile(String warFile, String contextPath) {
     String s = "<?xml version=\"1.0\"  encoding=\"ISO-8859-1\"?>\n";
     s += "<Configure class=\"org.mortbay.jetty.webapp.WebAppContext\">\n";
     s += "  <Set name=\"contextPath\">/" + contextPath + "</Set>\n";
     s += "  <Set name=\"war\"><SystemProperty name=\"user.dir\"/>/webapps/" + warFile + "</Set>\n";
     s += "\n";
-    s += "  <Property name=\"Server\">\n";
-    s += "    <Call id=\"tcIdMgr\" name=\"getAttribute\">\n";
-    s += "      <Arg>tcIdMgr</Arg>\n";
-    s += "    </Call>\n";
-    s += "  </Property>\n";
-    s += "\n";
-    s += "  <New id=\"tcmgr\" class=\"org.mortbay.terracotta.servlet.TerracottaSessionManager\">\n";
-    s += "    <Set name=\"idManager\">\n";
-    s += "      <Ref id=\"tcIdMgr\"/>\n";
-    s += "    </Set>\n";
-    s += "  </New>\n";
-    s += "\n";
-    s += "  <Set name=\"sessionHandler\">\n";
-    s += "    <New class=\"org.mortbay.terracotta.servlet.TerracottaSessionHandler\">\n";
-    s += "      <Arg><Ref id=\"tcmgr\"/></Arg>\n";
-    s += "    </New>\n";
-    s += "  </Set>\n";
-    s += "  \n";
+
+    if (supportsWebtide) {
+      s += "  <Property name=\"Server\">\n";
+      s += "    <Call id=\"tcIdMgr\" name=\"getAttribute\">\n";
+      s += "      <Arg>tcIdMgr</Arg>\n";
+      s += "    </Call>\n";
+      s += "  </Property>\n";
+      s += "\n";
+      s += "  <New id=\"tcmgr\" class=\"org.mortbay.terracotta.servlet.TerracottaSessionManager\">\n";
+      s += "    <Set name=\"idManager\">\n";
+      s += "      <Ref id=\"tcIdMgr\"/>\n";
+      s += "    </Set>\n";
+      s += "  </New>\n";
+      s += "\n";
+      s += "  <Set name=\"sessionHandler\">\n";
+      s += "    <New class=\"org.mortbay.terracotta.servlet.TerracottaSessionHandler\">\n";
+      s += "      <Arg><Ref id=\"tcmgr\"/></Arg>\n";
+      s += "    </New>\n";
+      s += "  </Set>\n";
+      s += "  \n";
+    }
+
     s += "</Configure>\n";
     return s;
   }
@@ -1704,7 +1705,9 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
         if (process != null) {
           try {
             int exitCode = process.exitValue();
-
+            if (debug) {
+              l2OutView.append("L2 terminated with exitCode=" + exitCode);
+            }
             if (exitCode != 0) {
               SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
@@ -1714,6 +1717,7 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
               return;
             } else {
               process = null;
+              return;
             }
           } catch (IllegalThreadStateException itse) {/**/
           }
@@ -1998,9 +2002,6 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
     cp.setLayout(new BorderLayout());
     cp.add(panel);
     panel.setEvent(event);
-
-    XSplitPane splitter = panel.getIssuesSplitter();
-    splitter.setPreferences(prefs.node("IssuesSplitter"));
 
     String s;
     if ((s = prefs.get(NON_PORTABLE_DIALOG_SIZE, null)) != null) {
@@ -2436,10 +2437,6 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
 
     Process process;
     try {
-      // String dso = isDsoEnabled() ? "dso" : "nodso";
-      // String[] args = new String[] { getSelectedServerName(), Integer.toString(port), dso };
-
-      // process = invokeScript(WEBSERVER_STARTUP_SCRIPT, args);
       process = startJetty(port);
       IOUtils.closeQuietly(process.getOutputStream());
       new ProcessMonitor(process, new ProcessTerminationListener() {
@@ -2489,10 +2486,10 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
     if (isDsoEnabled()) {
       File jettyTerracottaJar = findJettyTerracottaJar(jettyHome);
       cmdarray = new String[] { getJavaCmd().getAbsolutePath(),
-          "-Djetty.class.path=" + jettyTerracottaJar.getAbsolutePath(), "-Dtc.config=../tc-config.xml",
-          "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(), "-Xbootclasspath/p:" + bootPath,
-          "-Djetty.home=" + jettyHome.getAbsolutePath(), "-DSTOP.PORT=" + stopPort, "-DSTOP.KEY=secret", "-jar",
-          startJar.getAbsolutePath(), "tc-conf.xml" };
+          "-Djetty.class.path=" + jettyTerracottaJar.getAbsolutePath(), "-Dproject.name=SessionConfigurator",
+          "-Dtc.config=../tc-config.xml", "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(),
+          "-Xbootclasspath/p:" + bootPath, "-Djetty.home=" + jettyHome.getAbsolutePath(), "-DSTOP.PORT=" + stopPort,
+          "-DSTOP.KEY=secret", "-jar", startJar.getAbsolutePath(), "tc-conf.xml" };
     } else {
       cmdarray = new String[] { getJavaCmd().getAbsolutePath(), "-Djetty.home=" + jettyHome.getAbsolutePath(),
           "-DSTOP.PORT=" + stopPort, "-DSTOP.KEY=secret", "-jar", startJar.getAbsolutePath(), "conf.xml" };

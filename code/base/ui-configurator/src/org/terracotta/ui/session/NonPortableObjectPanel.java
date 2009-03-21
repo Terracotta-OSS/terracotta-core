@@ -76,53 +76,54 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
 public class NonPortableObjectPanel extends XContainer implements TreeSelectionListener {
-  private NonPortableObjectEvent     fEvent;
-  private SessionIntegratorFrame     fMainFrame;
-  private XLabel                     fMessageLabel;
-  private XSplitPane                 fIssuesSplitter;
-  private XList                      fIssueList;
-  private DefaultListModel           fIssueListModel;
-  private IssueListSelectionHandler  fIssueListSelectionHandler;
-  private XTree                      fObjectTree;
-  private XContainer                 fIssueDetailsPanel;
-  private XLabel                     fSummaryLabel;
-  private XTextArea                  fDescriptionText;
-  private XContainer                 fResolutionsPanel;
-  private XTree                      fActionTree;
-  private ActionTreeSelectionHandler fActionTreeSelectionHandler;
-  private PagedView                  fActionPanel;
-  private OnLoadPanel                fOnLoadPanel;
+  private NonPortableObjectEvent       fEvent;
+  private final SessionIntegratorFrame fMainFrame;
+  private XLabel                       fMessageLabel;
+  private final XSplitPane             fIssuesSplitter;
+  private final XList                  fIssueList;
+  private DefaultListModel             fIssueListModel;
+  private IssueListSelectionHandler    fIssueListSelectionHandler;
+  private final XTree                  fObjectTree;
+  private XContainer                   fIssueDetailsPanel;
+  private XLabel                       fSummaryLabel;
+  private XTextArea                    fDescriptionText;
+  private XContainer                   fResolutionsPanel;
+  private XTree                        fActionTree;
+  private ActionTreeSelectionHandler   fActionTreeSelectionHandler;
+  private PagedView                    fActionPanel;
+  private OnLoadPanel                  fOnLoadPanel;
 
-  private XList                      fIncludeTypesList;
-  private XList                      fBootTypesList;
+  private XList                        fIncludeTypesList;
+  private XList                        fBootTypesList;
 
-  private XButton                    fPreviousIssueButton;
-  private XButton                    fNextIssueButton;
-  private XButton                    fApplyButton;
-  private XButton                    fCancelButton;
-  private ConfigHelper               fConfigHelper;
-  private TcConfig                   fNewConfig;
+  private XButton                      fPreviousIssueButton;
+  private XButton                      fNextIssueButton;
+  private XButton                      fApplyButton;
+  private XButton                      fCancelButton;
+  private final ConfigHelper           fConfigHelper;
+  private final TcConfig               fNewConfig;
 
-  private static final ImageIcon     NOT_PORTABLE_ICON     = new ImageIcon(
-                                                                           NonPortableWalkNode.class
-                                                                               .getResource("/com/tc/admin/icons/field_private_obj.gif"));
-  private static final ImageIcon     NEVER_PORTABLE_ICON   = new ImageIcon(
-                                                                           NonPortableWalkNode.class
-                                                                               .getResource("/com/tc/admin/icons/field_private_obj.gif"));
-  private static final ImageIcon     TRANSIENT_ICON        = new ImageIcon(NonPortableWalkNode.class
-                                                               .getResource("/com/tc/admin/icons/field_public_obj.gif"));
-  private static final ImageIcon     PORTABLE_ICON         = new ImageIcon(
-                                                                           NonPortableWalkNode.class
-                                                                               .getResource("/com/tc/admin/icons/field_default_obj.gif"));
-  private static final ImageIcon     PRE_INSTRUMENTED_ICON = new ImageIcon(
-                                                                           NonPortableWalkNode.class
-                                                                               .getResource("/com/tc/admin/icons/field_protected_obj.gif"));
-  private static final ImageIcon     OBJ_CYCLE_ICON        = new ImageIcon(NonPortableWalkNode.class
-                                                               .getResource("/com/tc/admin/icons/obj_cycle.gif"));
-  private static final ImageIcon     RESOLVED_ICON         = new ImageIcon(NonPortableWalkNode.class
-                                                               .getResource("/com/tc/admin/icons/installed_ovr.gif"));
-  private static final ImageIcon     BLANK_ICON            = new ImageIcon(NonPortableWalkNode.class
-                                                               .getResource("/com/tc/admin/icons/blank12x12.gif"));
+  private static final ImageIcon       NOT_PORTABLE_ICON     = new ImageIcon(
+                                                                             NonPortableWalkNode.class
+                                                                                 .getResource("/com/tc/admin/icons/field_private_obj.gif"));
+  private static final ImageIcon       NEVER_PORTABLE_ICON   = new ImageIcon(
+                                                                             NonPortableWalkNode.class
+                                                                                 .getResource("/com/tc/admin/icons/field_private_obj.gif"));
+  private static final ImageIcon       TRANSIENT_ICON        = new ImageIcon(
+                                                                             NonPortableWalkNode.class
+                                                                                 .getResource("/com/tc/admin/icons/field_public_obj.gif"));
+  private static final ImageIcon       PORTABLE_ICON         = new ImageIcon(
+                                                                             NonPortableWalkNode.class
+                                                                                 .getResource("/com/tc/admin/icons/field_default_obj.gif"));
+  private static final ImageIcon       PRE_INSTRUMENTED_ICON = new ImageIcon(
+                                                                             NonPortableWalkNode.class
+                                                                                 .getResource("/com/tc/admin/icons/field_protected_obj.gif"));
+  private static final ImageIcon       OBJ_CYCLE_ICON        = new ImageIcon(NonPortableWalkNode.class
+                                                                 .getResource("/com/tc/admin/icons/obj_cycle.gif"));
+  private static final ImageIcon       RESOLVED_ICON         = new ImageIcon(NonPortableWalkNode.class
+                                                                 .getResource("/com/tc/admin/icons/installed_ovr.gif"));
+  private static final ImageIcon       BLANK_ICON            = new ImageIcon(NonPortableWalkNode.class
+                                                                 .getResource("/com/tc/admin/icons/blank12x12.gif"));
 
   public NonPortableObjectPanel(SessionIntegratorFrame frame) {
     super(new GridBagLayout());
@@ -158,10 +159,12 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     fIssuesSplitter = new XSplitPane(JSplitPane.HORIZONTAL_SPLIT, new XScrollPane(fIssueList),
                                      new XScrollPane(fObjectTree));
     fIssuesSplitter.setPreferences(prefs.node("IssuesSplitter"));
+    fIssuesSplitter.setDefaultDividerLocation(0.5);
     fIssuesSplitter.setResizeWeight(0.5);
 
     XSplitPane mainSplitter = new XSplitPane(JSplitPane.VERTICAL_SPLIT, fIssuesSplitter, createIssueDetailsPanel());
     mainSplitter.setResizeWeight(0.5);
+    mainSplitter.setDefaultDividerLocation(0.35);
     mainSplitter.setPreferences(prefs.node("MainSplitter"));
     add(mainSplitter, gbc);
     gbc.gridy++;
@@ -308,6 +311,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
   }
 
   class ConfigCopyHelper extends ConfigHelper {
+    @Override
     public TcConfig getConfig() {
       return fNewConfig;
     }
@@ -468,6 +472,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
       setOpaque(true);
     }
 
+    @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
                                                   boolean cellHasFocus) {
       super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
@@ -583,6 +588,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
   }
 
   class ObjectTreeCellRenderer extends XTreeCellRenderer {
+    @Override
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded,
                                                   boolean leaf, int row, boolean focused) {
       JLabel label = (JLabel) super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, focused);
@@ -646,6 +652,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
       super(action);
     }
 
+    @Override
     public void setUserObject(Object o) {/**/
     }
 
@@ -663,7 +670,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     void setSelected(boolean selected) {
       AbstractResolutionAction action = getAction();
       if (action != null) {
-        if(action.isSelected() == selected) return;
+        if (action.isSelected() == selected) return;
         action.setSelected(selected);
         if (selected) {
           ((ActionTreeRootNode) getParent()).setSelected(false);
@@ -696,12 +703,14 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
       userObject = NonPortableMessages.getString("TAKE_NO_ACTION");
     }
 
+    @Override
     boolean isSelected() {
       return fSelected;
     }
 
+    @Override
     void setSelected(boolean selected) {
-      if(fSelected == selected) return;
+      if (fSelected == selected) return;
       if ((fSelected = selected) == true) {
         for (int i = 0; i < getChildCount(); i++) {
           ((ActionTreeNode) getChildAt(i)).setSelected(false);
@@ -758,6 +767,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
   class ActionTreeNodeRenderer extends DefaultTreeCellRenderer {
     ActionTreeCellRendererComponent atcrc = new ActionTreeCellRendererComponent();
 
+    @Override
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded,
                                                   boolean leaf, int row, boolean focused) {
       Component comp = super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, focused);
@@ -805,13 +815,16 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
       atcrc.checkBox.addActionListener(new ActionSelectionHandler());
     }
 
+    @Override
     public boolean isCellEditable(EventObject event) {
       return true;
     }
 
+    @Override
     protected void fireEditingStopped() {/**/
     }
 
+    @Override
     public boolean shouldSelectCell(final EventObject event) {
       if (event instanceof MouseEvent) {
         MouseEvent me = (MouseEvent) event;
@@ -832,6 +845,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
       return true;
     }
 
+    @Override
     public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded,
                                                 boolean leaf, int row) {
       Component comp = super.getTreeCellEditorComponent(tree, value, isSelected, expanded, leaf, row);
@@ -858,10 +872,12 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
       super(fActionTree, new ActionTreeNodeRenderer(), new CellEditor());
     }
 
+    @Override
     protected boolean canEditImmediately(EventObject event) {
       return true;
     }
 
+    @Override
     protected void determineOffset(JTree theTree, Object value, boolean isSelected, boolean expanded, boolean leaf,
                                    int row) {
       editingIcon = null;
@@ -1009,6 +1025,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
       super(workState);
     }
 
+    @Override
     public void showControl(Object parentControl) {
       NonPortableObjectPanel parent = (NonPortableObjectPanel) parentControl;
       String fieldName = fWorkState.getFieldName();
@@ -1021,10 +1038,12 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
       }
     }
 
+    @Override
     public String getText() {
       return NonPortableMessages.getString("DO_NOT_SHARE");
     }
 
+    @Override
     public void setSelected(boolean selected) {
       if (!fActionPanel.getPage().equals("IncludeRulePage")) {
         showControl(NonPortableObjectPanel.this);
@@ -1057,6 +1076,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
       fOnLoadPanel.updateInclude();
     }
 
+    @Override
     public void apply() {
       fOnLoadPanel.updateInclude();
     }
@@ -1067,6 +1087,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
       super(workState);
     }
 
+    @Override
     public void showControl(Object parentControl) {
       NonPortableObjectPanel parent = (NonPortableObjectPanel) parentControl;
       parent.setIncludeTypes(fWorkState.getRequiredIncludeTypes());
@@ -1074,10 +1095,12 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
       parent.fActionPanel.setPage("IncludeTypesPage");
     }
 
+    @Override
     public String getText() {
       return NonPortableMessages.getString("MAKE_PORTABLE");
     }
 
+    @Override
     public void setSelected(boolean selected) {
       if (!fActionPanel.getPage().equals("IncludeTypesPage")) {
         showControl(NonPortableObjectPanel.this);

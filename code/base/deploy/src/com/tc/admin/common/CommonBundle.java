@@ -33,6 +33,9 @@ public class CommonBundle extends ListResourceBundle {
         { "cluster.not.ready.msg", "Cluster is not yet ready for action.  Are all the mirror groups active?" },
         { "initializing", "Initializing..." }, { "dial.text.font", new Font("DialogInput", Font.PLAIN, 14) },
         { "dial.value.font", new Font("Monospaced", Font.PLAIN, 14) },
-        { "dial.value.format", new DecimalFormat("#,###") } };
+        { "dial.value.format", new DecimalFormat("#,###") },
+        { "connect-dialog.connecting.format", "Connecting to {0} ..." }, { "connect-dialog.username", "Username:" },
+        { "connect-dialog.password", "Password:" }, { "connect-dialog.credentials", "Credentials" },
+        { "connect-dialog.timed-out", "Timed-out" } };
   }
 }

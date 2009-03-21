@@ -37,7 +37,9 @@ public class AbstractClusterListener implements PropertyChangeListener {
 
     public void run() {
       String prop = pce.getPropertyName();
-      if (IServer.PROP_CONNECTED.equals(prop)) {
+      if (IClusterModel.PROP_CONNECT_ERROR.equals(prop)) {
+        handleConnectError((Exception) pce.getNewValue());
+      } else if (IClusterModel.PROP_CONNECTED.equals(prop)) {
         handleConnected();
       } else if (IClusterModelElement.PROP_READY.equals(prop)) {
         handleReady();
@@ -61,6 +63,10 @@ public class AbstractClusterListener implements PropertyChangeListener {
     } else {
       SwingUtilities.invokeLater(r);
     }
+  }
+
+  protected void handleConnectError(Exception e) {
+    /* override */
   }
 
   protected void handleConnected() {

@@ -14,12 +14,17 @@ import java.awt.BorderLayout;
 import java.util.prefs.Preferences;
 
 public class SessionIntegratorAdminPanel extends XContainer {
-  private SessionIntegratorContext sessionIntegratorContext;
+  private final SessionIntegratorContext sessionIntegratorContext;
 
-  public SessionIntegratorAdminPanel(SessionIntegratorContext sessionIntegratorContext) {
+  public SessionIntegratorAdminPanel(final SessionIntegratorContext sessionIntegratorContext) {
     super(new BorderLayout());
     this.sessionIntegratorContext = sessionIntegratorContext;
-    add(new MonitorPanel(new AdminClientContext(new AdminClient())));
+    add(new MonitorPanel(new AdminClientContext(new AdminClient()) {
+      @Override
+      public Preferences getPrefs() {
+        return sessionIntegratorContext.getPrefs();
+      }
+    }));
   }
 
   protected boolean shouldAddAboutItem() {
@@ -30,11 +35,13 @@ public class SessionIntegratorAdminPanel extends XContainer {
     MonitorPanel(IAdminClientContext adminClientContext) {
       super(adminClientContext);
     }
-    
+
+    @Override
     protected Preferences getPreferences() {
       return sessionIntegratorContext.getPrefs().node("MonitorPanel");
     }
 
+    @Override
     protected void storePreferences() {
       sessionIntegratorContext.storePrefs();
     }

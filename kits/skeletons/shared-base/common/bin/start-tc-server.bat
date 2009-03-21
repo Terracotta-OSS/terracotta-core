@@ -24,4 +24,5 @@ if %ERRORLEVEL% EQU 11 (
 	ECHO start-tc-server: Restarting the server...
 	GOTO START_TCSERVER
 )
+exit /b %ERRORLEVEL%
 endlocal

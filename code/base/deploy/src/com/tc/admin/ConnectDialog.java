@@ -61,7 +61,8 @@ public final class ConnectDialog extends JDialog implements HierarchyListener {
   private XButton                    authCancelButton;
   private XContainer                 authPanel;
 
-  public ConnectDialog(ApplicationContext appContext, Frame parent, IClusterModel clusterModel, ConnectionListener listener) {
+  public ConnectDialog(ApplicationContext appContext, Frame parent, IClusterModel clusterModel,
+                       ConnectionListener listener) {
     super(parent, true);
 
     this.appContext = appContext;
@@ -75,9 +76,9 @@ public final class ConnectDialog extends JDialog implements HierarchyListener {
     cp.setLayout(new GridBagLayout());
     GridBagConstraints gbc = new GridBagConstraints();
     gbc.gridx = gbc.gridy = 0;
-    gbc.insets = new Insets(8,8,8,8);
+    gbc.insets = new Insets(8, 8, 8, 8);
 
-    label = new XLabel("Connecting to " + clusterModel + ". Please wait...");
+    label = new XLabel(appContext.format("connect-dialog.connecting.format", clusterModel));
     cp.add(label, gbc);
     gbc.gridy++;
 
@@ -96,10 +97,11 @@ public final class ConnectDialog extends JDialog implements HierarchyListener {
       }
     });
 
-    hideTimer = new Timer(100, new DialogCloserTask());
+    hideTimer = new Timer(10, new DialogCloserTask());
     hideTimer.setRepeats(false);
 
     addWindowListener(new WindowAdapter() {
+      @Override
       public void windowClosing(WindowEvent e) {
         cancelButton.doClick();
       }
@@ -137,27 +139,28 @@ public final class ConnectDialog extends JDialog implements HierarchyListener {
     gbc.gridx = gbc.gridy = 0;
     gbc.insets = new Insets(3, 3, 3, 3);
 
-    credentialsPanel.add(new XLabel("Username:"), gbc);
+    credentialsPanel.add(new XLabel(appContext.getString("connect-dialog.username")), gbc);
     gbc.gridx++;
 
-    usernameField = new XTextField("controlRole");
+    usernameField = new XTextField();
     usernameField.setColumns(16);
     credentialsPanel.add(usernameField, gbc);
     gbc.gridx--;
     gbc.gridy++;
 
-    credentialsPanel.add(new XLabel("Password:"), gbc);
+    credentialsPanel.add(new XLabel(appContext.getString("connect-dialog.password")), gbc);
     gbc.gridx++;
 
-    passwordField = new JPasswordField("R&D");
+    passwordField = new JPasswordField();
     passwordField.setColumns(16);
     credentialsPanel.add(passwordField, gbc);
 
-    credentialsPanel.setBorder(BorderFactory.createTitledBorder("Credentials"));
+    credentialsPanel.setBorder(BorderFactory.createTitledBorder(appContext.getString("connect-dialog.credentials")));
 
     return credentialsPanel;
   }
 
+  @Override
   public void setVisible(boolean visible) {
     getContentPane().removeHierarchyListener(this);
     if (visible) {
@@ -170,7 +173,7 @@ public final class ConnectDialog extends JDialog implements HierarchyListener {
     public void actionPerformed(ActionEvent ae) {
       cancelButton.setEnabled(false);
       connectInitiator.cancel(true);
-      error = new RuntimeException("Canceled");
+      error = new RuntimeException(appContext.getString("canceled"));
       ConnectDialog.this.setVisible(false);
       fireHandleConnect();
     }
@@ -232,7 +235,7 @@ public final class ConnectDialog extends JDialog implements HierarchyListener {
   public void setClusterModel(IClusterModel clusterModel) {
     this.clusterModel = clusterModel;
     jmxc = new AuthenticatingJMXConnector(clusterModel);
-    label.setText("Connecting to " + clusterModel + ". Please wait...");
+    label.setText(appContext.format("connect-dialog.connecting.format", clusterModel));
     pack();
   }
 
@@ -288,7 +291,7 @@ public final class ConnectDialog extends JDialog implements HierarchyListener {
           listener.handleException();
         }
       } catch (RuntimeException rte) {
-        rte.printStackTrace();
+        appContext.log(rte);
       }
     }
     isAuthenticating = false;
@@ -304,7 +307,7 @@ public final class ConnectDialog extends JDialog implements HierarchyListener {
         hideTimer.start();
         return;
       } catch (TimeoutException te) {
-        error = new TimeoutException("Timed-out");
+        error = new TimeoutException(appContext.getString("connect-dialog.timed-out"));
         hideTimer.start();
         return;
       } catch (InterruptedException ie) {
@@ -339,13 +342,16 @@ public final class ConnectDialog extends JDialog implements HierarchyListener {
       env.clear();
     }
 
-    appContext = null;
-    clusterModel = null;
-    listener = null;
-    jmxc = null;
-    connectInitiator = null;
-    cancelButton = null;
-    hideTimer = null;
-    error = null;
+    synchronized (this) {
+      appContext = null;
+      clusterModel = null;
+      listener = null;
+      jmxc = null;
+      connectInitiator = null;
+      cancelButton = null;
+      hideTimer = null;
+      error = null;
+      label = null;
+    }
   }
 }

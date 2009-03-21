@@ -46,5 +46,7 @@ do
  if test "$exitValue" = "11"; then
    start=true;
    echo "start-tc-server: Restarting the server..."
+ else
+   exit $?
  fi
 done

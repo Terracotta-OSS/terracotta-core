@@ -39,12 +39,12 @@ public class ClusterModel implements IClusterModel {
   private IServer                                              connectServer;
   private boolean                                              autoConnect;
   private boolean                                              connected;
+  private Exception                                            connectException;
   private boolean                                              ready;
   private IServerGroup[]                                       serverGroups;
   protected EventListenerList                                  listenerList;
 
   private IServer                                              activeCoordinator;
-  // private boolean userDisconnecting;
   protected PropertyChangeSupport                              propertyChangeSupport;
 
   protected ConnectServerListener                              connectServerListener;
@@ -114,10 +114,8 @@ public class ClusterModel implements IClusterModel {
 
   public void setConnectionCredentials(String[] creds) {
     connectServer.setConnectionCredentials(creds);
-    if (isReady()) {
-      for (IServerGroup group : getServerGroups()) {
-        group.setConnectionCredentials(creds);
-      }
+    for (IServerGroup group : getServerGroups()) {
+      group.setConnectionCredentials(creds);
     }
   }
 
@@ -481,24 +479,29 @@ public class ClusterModel implements IClusterModel {
     }
   }
 
-  public boolean hasConnectError() {
-    return connectServer.hasConnectError();
+  private void setConnectError(Exception e) {
+    Exception oldConnectError;
+    synchronized (this) {
+      oldConnectError = connectException;
+      connectException = e;
+    }
+    firePropertyChange(PROP_CONNECT_ERROR, oldConnectError, e);
   }
 
-  public Exception getConnectError() {
-    return connectServer.getConnectError();
+  private void clearConnectError() {
+    setConnectError(null);
+  }
+
+  public synchronized boolean hasConnectError() {
+    return connectException != null;
+  }
+
+  public synchronized Exception getConnectError() {
+    return connectException;
   }
 
   public String getConnectErrorMessage(Exception e) {
     return connectServer.getConnectErrorMessage(e);
-  }
-
-  // private synchronized boolean isUserDisconnecting() {
-  // return userDisconnecting;
-  // }
-
-  private synchronized void setUserDisconnecting(boolean userDisconnecting) {
-    // this.userDisconnecting = userDisconnecting;
   }
 
   public synchronized void addServerStateListener(ServerStateListener listener) {
@@ -524,7 +527,6 @@ public class ClusterModel implements IClusterModel {
   }
 
   public void disconnect() {
-    setUserDisconnecting(true);
     for (IServerGroup group : getServerGroups()) {
       group.disconnect();
     }
@@ -537,7 +539,6 @@ public class ClusterModel implements IClusterModel {
       this.connected = connected;
     }
     firePropertyChange(PROP_CONNECTED, oldConnected, connected);
-    setUserDisconnecting(false);
   }
 
   public synchronized boolean isConnected() {
@@ -657,7 +658,6 @@ public class ClusterModel implements IClusterModel {
         if (!server.isReady()) {
           clearActiveCoordinator();
           setReady(false);
-          // setConnected(!isUserDisconnecting() && determineConnected());
         }
       }
     }
@@ -668,14 +668,19 @@ public class ClusterModel implements IClusterModel {
       if (!isConnectListening) { throw new RuntimeException(
                                                             "ConnectServerListener.propertyChange called when not listening"); }
       String prop = evt.getPropertyName();
-      if (IServer.PROP_CONNECTED.equals(prop)) {
+      if (IServer.PROP_CONNECT_ERROR.equals(prop)) {
+        setConnectError(connectServer.getConnectError());
+      } else if (IServer.PROP_CONNECTED.equals(prop)) {
         if (connectServer.isConnected()) {
+          clearConnectError();
+          String[] connectCreds = connectServer.getConnectionCredentials();
           serverGroups = connectServer.getClusterServerGroups();
           for (IServerGroup group : serverGroups) {
             if (group.isCoordinator()) {
               activeCoordinatorGroup = group;
               activeCoordinator = group.getActiveServer();
             }
+            group.setConnectionCredentials(connectCreds);
             group.addServerStateListener(serverStateListenerDelegate);
             group.addPropertyChangeListener(serverGroupListener);
             group.connect();
