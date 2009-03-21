@@ -14,17 +14,17 @@
       </Array>
     </Set>
 
-    <Set name="sessionIdManager">
-       <New id="tcIdMgr" class="org.mortbay.terracotta.servlet.TerracottaSessionIdManager">
-         <Arg><Ref id="Server"/></Arg>
-         <Set name="workerName">9082</Set>
-       </New>
-    </Set>
-
-    <Call name="setAttribute">
-      <Arg>tcIdMgr</Arg>
-      <Arg><Ref id="tcIdMgr"/></Arg>
-    </Call>
+    <!--     <Set name="sessionIdManager"> -->
+    <!--        <New id="tcIdMgr" class="org.mortbay.terracotta.servlet.TerracottaSessionIdManager"> -->
+    <!--          <Arg><Ref id="Server"/></Arg> -->
+    <!--          <Set name="workerName">9082</Set> -->
+    <!--        </New> -->
+    <!--     </Set> -->
+    
+    <!--     <Call name="setAttribute"> -->
+    <!--       <Arg>tcIdMgr</Arg> -->
+    <!--       <Arg><Ref id="tcIdMgr"/></Arg> -->
+    <!--     </Call> -->
 
     <Set name="handler">
       <New id="Handlers" class="org.mortbay.jetty.handler.HandlerCollection">

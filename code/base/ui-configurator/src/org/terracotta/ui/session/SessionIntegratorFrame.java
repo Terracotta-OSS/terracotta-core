@@ -1062,7 +1062,7 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
     }
   }
 
-  private static boolean supportsWebtide = true;
+  private static final boolean supportsWebtide = false;
 
   private static String contextFile(String warFile, String contextPath) {
     String s = "<?xml version=\"1.0\"  encoding=\"ISO-8859-1\"?>\n";
