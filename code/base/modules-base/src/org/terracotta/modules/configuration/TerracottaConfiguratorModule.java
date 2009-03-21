@@ -80,7 +80,7 @@ public abstract class TerracottaConfiguratorModule implements BundleActivator {
    * java.lang.ClassLoader.loadClassInternal(). Specifically if the loadClass() method is directly being invoked from
    * code someplace, the class export will not function. Code that does a "new <exported class name>", or that uses
    * java.lang.Class.forName(..) will work though
-   * 
+   *
    * @param classname the bundle class name to export
    * @param targetSystemLoaderOnly True if only the systen classloader should have visibility to this exported class
    */
@@ -104,7 +104,7 @@ public abstract class TerracottaConfiguratorModule implements BundleActivator {
    * The export will only work for class loads that pass through java.lang.ClassLoader.loadClassInternal(). Specifically
    * if the loadClass() method is directly being invoked from code someplace, the class export will not function. Code
    * that does a "new <exported class name>", or that uses java.lang.Class.forName(..) will work though
-   * 
+   *
    * @param classname the tc.jar class name to export
    */
   protected final void addExportedTcJarClass(final String classname) {
@@ -133,15 +133,13 @@ public abstract class TerracottaConfiguratorModule implements BundleActivator {
 
   protected Bundle getExportedBundle(final BundleContext context, String targetBundleName) {
     // find the bundle that contains the replacement classes
-    Bundle[] bundles = context.getBundles();
-    Bundle bundle = null;
-    for (Bundle bundle2 : bundles) {
-      if (BundleSpec.isMatchingSymbolicName(targetBundleName, bundle2.getSymbolicName())) {
-        bundle = bundle2;
-        break;
+    for (Bundle bundle : context.getBundles()) {
+      if (BundleSpec.isMatchingSymbolicName(targetBundleName, bundle.getSymbolicName())) {
+        //
+        return bundle;
       }
     }
-    return bundle;
+    return null;
   }
 
 }

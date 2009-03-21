@@ -31,24 +31,26 @@ import java.util.Map;
 import java.util.Set;
 
 public class Jetty6xAppServer extends AbstractAppServer {
-  private static final String JAVA_CMD           = System.getProperty("java.home") + File.separator + "bin"
-                                                   + File.separator + "java";
-  private static final String STOP_KEY           = "secret";
-  private static final String JETTY_MAIN_CLASS   = "org.mortbay.start.Main";
-  private static final long   START_STOP_TIMEOUT = 240 * 1000;
+  private static final boolean NEW_INTEGRATION    = false;
 
-  private static final String webAppTarget       = "<SystemProperty name=\"jetty.home\" default=\".\"/>/webapps";
-  private static final String contextsTarget     = "<SystemProperty name=\"jetty.home\" default=\".\"/>/contexts";
-  private static final String eofTarget          = "</Configure>";
+  private static final String  JAVA_CMD           = System.getProperty("java.home") + File.separator + "bin"
+                                                    + File.separator + "java";
+  private static final String  STOP_KEY           = "secret";
+  private static final String  JETTY_MAIN_CLASS   = "org.mortbay.start.Main";
+  private static final long    START_STOP_TIMEOUT = 240 * 1000;
 
-  private String              configFile;
-  private String              instanceName;
-  private File                instanceDir;
-  private File                workDir;
+  private static final String  webAppTarget       = "<SystemProperty name=\"jetty.home\" default=\".\"/>/webapps";
+  private static final String  contextsTarget     = "<SystemProperty name=\"jetty.home\" default=\".\"/>/contexts";
+  private static final String  eofTarget          = "</Configure>";
 
-  private int                 jetty_port         = 0;
-  private int                 stop_port          = 0;
-  private Thread              runner             = null;
+  private String               configFile;
+  private String               instanceName;
+  private File                 instanceDir;
+  private File                 workDir;
+
+  private int                  jetty_port         = 0;
+  private int                  stop_port          = 0;
+  private Thread               runner             = null;
 
   public Jetty6xAppServer(Jetty6xAppServerInstallation installation) {
     super(installation);
@@ -84,13 +86,17 @@ public class Jetty6xAppServer extends AbstractAppServer {
     prepareDeployment(params);
 
     // Find the jetty-terracotta module jar
-    File tcModuleDir = new File(this.serverInstallDirectory() + File.separator + "lib" + File.separator + "terracotta");
-    if (!tcModuleDir.isDirectory()) { throw new IllegalStateException(tcModuleDir + " is not a directory"); }
-    String[] jars = tcModuleDir.list();
-    if (jars.length != 1) { throw new IllegalStateException("wrong number of jars found in " + tcModuleDir + ": "
-                                                            + Arrays.asList(jars)); }
-    File tcModuleJar = new File(tcModuleDir, jars[0]);
-    System.err.println("Found terracotta module jar: " + tcModuleJar);
+    File tcModuleJar = null;
+    if (NEW_INTEGRATION) {
+      File tcModuleDir = new File(this.serverInstallDirectory() + File.separator + "lib" + File.separator
+                                  + "terracotta");
+      if (!tcModuleDir.isDirectory()) { throw new IllegalStateException(tcModuleDir + " is not a directory"); }
+      String[] jars = tcModuleDir.list();
+      if (jars.length != 1) { throw new IllegalStateException("wrong number of jars found in " + tcModuleDir + ": "
+                                                              + Arrays.asList(jars)); }
+      tcModuleJar = new File(tcModuleDir, jars[0]);
+      System.err.println("Found terracotta module jar: " + tcModuleJar);
+    }
 
     String[] jvmargs = params.jvmArgs().replaceAll("'", "").split("\\s+");
     List cmd = new ArrayList(Arrays.asList(jvmargs));
@@ -99,7 +105,7 @@ public class Jetty6xAppServer extends AbstractAppServer {
     cmd.add(this.serverInstallDirectory() + File.separator + "start.jar" + File.pathSeparator
             + TestConfigObject.getInstance().extraClassPathForAppServer());
 
-    if (GenericServer.dsoEnabled()) {
+    if (GenericServer.dsoEnabled() && NEW_INTEGRATION) {
       cmd.add("-Djetty.class.path=" + tcModuleJar.getAbsolutePath());
     }
     cmd.add("-Djetty.home=" + this.serverInstallDirectory());
@@ -225,7 +231,7 @@ public class Jetty6xAppServer extends AbstractAppServer {
 
       startIndex = buffer.indexOf(eofTarget);
       if (startIndex > 0) {
-        if (GenericServer.dsoEnabled()) {
+        if (GenericServer.dsoEnabled() && NEW_INTEGRATION) {
           buffer.insert(startIndex, jettyXmlAddition(instanceName));
         }
       } else {
@@ -273,7 +279,7 @@ public class Jetty6xAppServer extends AbstractAppServer {
     s += "  <Set name=\"war\">" + warFile + "</Set>\n";
     s += "\n";
 
-    if (GenericServer.dsoEnabled()) {
+    if (GenericServer.dsoEnabled() && NEW_INTEGRATION) {
       s += "  <Property name=\"Server\">\n";
       s += "    <Call id=\"tcIdMgr\" name=\"getAttribute\">\n";
       s += "      <Arg>tcIdMgr</Arg>\n";
