@@ -44,7 +44,6 @@ public class TestTransactionBatchManager implements TransactionBatchManager {
   }
 
   public void notifyServerHighWaterMark(NodeID nodeID, long serverHighWaterMark) {
-    throw new ImplementMe();
-
+    // Ignore
   }
 }
