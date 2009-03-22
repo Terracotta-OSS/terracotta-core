@@ -49,10 +49,10 @@ public class UpdateModulesAction extends Action implements IActionDelegate, IWor
   private static final String MAIN_TYPE          = "org.terracotta.tools.cli.TIMGetTool";
   private static final String CLASSPATH_PROVIDER = "org.terracotta.dso.classpathProvider";
   private static final String EXCEPTION_TITLE    = "Terracotta DSO";
-  private static final String EXCEPTION_MESSAGE  = "Problem Updating Modules";
+  private static final String EXCEPTION_MESSAGE  = "Problem Updating Integration Modules";
 
   public UpdateModulesAction() {
-    super("Update modules...");
+    super("Update integration modules...");
   }
 
   public void run(IAction action) {
@@ -66,14 +66,14 @@ public class UpdateModulesAction extends Action implements IActionDelegate, IWor
         ExceptionDialog dialog = new ExceptionDialog(activeShell, EXCEPTION_TITLE, EXCEPTION_MESSAGE, cause);
         dialog.open();
       } else {
-        TcPlugin.getDefault().openError("Updating modules", cause);
+        TcPlugin.getDefault().openError("Updating integration modules", cause);
       }
     }
   }
 
   public void run(IProgressMonitor monitor) throws InvocationTargetException {
     try {
-      monitor.beginTask("Updating modules...", IProgressMonitor.UNKNOWN);
+      monitor.beginTask("Updating integration modules...", IProgressMonitor.UNKNOWN);
       doFinish(monitor);
       monitor.done();
     } catch (Exception e) {
@@ -155,7 +155,7 @@ public class UpdateModulesAction extends Action implements IActionDelegate, IWor
 
     outStream.close();
 
-    if (m_process.getExitValue() != 0) {
+    if (!monitor.isCanceled() && m_process.getExitValue() != 0) {
       m_process = null;
       monitor.done();
       throw new RuntimeException(errMonitor.getContents());
@@ -164,16 +164,14 @@ public class UpdateModulesAction extends Action implements IActionDelegate, IWor
     m_process = null;
   }
 
-  private void checkCancel(IProgressMonitor monitor) throws InterruptedException {
+  private void checkCancel(IProgressMonitor monitor) {
     if (monitor.isCanceled()) {
       try {
         if (m_process != null && !m_process.isTerminated()) {
           m_process.terminate();
         }
-        m_process = null;
       } catch (Exception e) {/**/
       }
-      throw new InterruptedException("Module update cancelled.");
     }
   }
 
