@@ -52,7 +52,7 @@ public class UpdateModulesAction extends Action implements IActionDelegate, IWor
   private static final String EXCEPTION_MESSAGE  = "Problem Updating Integration Modules";
 
   public UpdateModulesAction() {
-    super("Update integration modules...");
+    super("Update Integration Modules...");
   }
 
   public void run(IAction action) {
@@ -66,14 +66,14 @@ public class UpdateModulesAction extends Action implements IActionDelegate, IWor
         ExceptionDialog dialog = new ExceptionDialog(activeShell, EXCEPTION_TITLE, EXCEPTION_MESSAGE, cause);
         dialog.open();
       } else {
-        TcPlugin.getDefault().openError("Updating integration modules", cause);
+        TcPlugin.getDefault().openError("Updating Integration Modules", cause);
       }
     }
   }
 
   public void run(IProgressMonitor monitor) throws InvocationTargetException {
     try {
-      monitor.beginTask("Updating integration modules...", IProgressMonitor.UNKNOWN);
+      monitor.beginTask("Updating Integration Modules...", IProgressMonitor.UNKNOWN);
       doFinish(monitor);
       monitor.done();
     } catch (Exception e) {
