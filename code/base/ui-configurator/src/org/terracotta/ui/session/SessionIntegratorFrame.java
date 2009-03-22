@@ -2486,10 +2486,11 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
     if (isDsoEnabled()) {
       File jettyTerracottaJar = findJettyTerracottaJar(jettyHome);
       cmdarray = new String[] { getJavaCmd().getAbsolutePath(),
-          "-Djetty.class.path=" + jettyTerracottaJar.getAbsolutePath(), "-Dproject.name=SessionConfigurator",
-          "-Dtc.config=../tc-config.xml", "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(),
-          "-Xbootclasspath/p:" + bootPath, "-Djetty.home=" + jettyHome.getAbsolutePath(), "-DSTOP.PORT=" + stopPort,
-          "-DSTOP.KEY=secret", "-jar", startJar.getAbsolutePath(), "tc-conf.xml" };
+          supportsWebtide ? "-Djetty.class.path=" + jettyTerracottaJar.getAbsolutePath() : "",
+          "-Dproject.name=SessionConfigurator", "-Dtc.config=../tc-config.xml",
+          "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(), "-Xbootclasspath/p:" + bootPath,
+          "-Djetty.home=" + jettyHome.getAbsolutePath(), "-DSTOP.PORT=" + stopPort, "-DSTOP.KEY=secret", "-jar",
+          startJar.getAbsolutePath(), "tc-conf.xml" };
     } else {
       cmdarray = new String[] { getJavaCmd().getAbsolutePath(), "-Djetty.home=" + jettyHome.getAbsolutePath(),
           "-DSTOP.PORT=" + stopPort, "-DSTOP.KEY=secret", "-jar", startJar.getAbsolutePath(), "conf.xml" };

@@ -4,23 +4,4 @@
 <Configure class="org.mortbay.jetty.webapp.WebAppContext">
   <Set name="contextPath">/Cart</Set>
   <Set name="war"><SystemProperty name="user.dir"/>/webapps/Cart.war</Set>
-
-  <!--   <Property name="Server"> -->
-  <!--     <Call id="tcIdMgr" name="getAttribute"> -->
-  <!--       <Arg>tcIdMgr</Arg> -->
-  <!--     </Call> -->
-  <!--   </Property> -->
-  
-  <!--   <New id="tcmgr" class="org.mortbay.terracotta.servlet.TerracottaSessionManager"> -->
-  <!--     <Set name="idManager"> -->
-  <!--       <Ref id="tcIdMgr"/> -->
-  <!--     </Set> -->
-  <!--   </New> -->
-  
-  <!--   <Set name="sessionHandler"> -->
-  <!--     <New class="org.mortbay.terracotta.servlet.TerracottaSessionHandler"> -->
-  <!--       <Arg><Ref id="tcmgr"/></Arg> -->
-  <!--     </New> -->
-  <!--   </Set> -->
-  
 </Configure>
