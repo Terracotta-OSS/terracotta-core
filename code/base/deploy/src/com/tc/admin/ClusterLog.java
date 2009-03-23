@@ -78,7 +78,7 @@ public class ClusterLog extends XContainer implements ActionListener {
     topPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.black));
     add(topPanel, BorderLayout.NORTH);
 
-    setName(clusterModel.toString());
+    setName(clusterModel.getName());
 
     clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
     if (clusterModel.isConnected()) {
