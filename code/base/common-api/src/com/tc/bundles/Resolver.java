@@ -252,11 +252,12 @@ public class Resolver {
     Locator locator = new Locator() {
       public boolean check(File bundle, Manifest manifest) {
         if (!isBundleMatch(bundle, manifest, symname, osgiVersion)) return false;
-        addToRegistry(bundle, manifest);
         return true;
       }
     };
-    return findJar(groupId, name, version, locator);
+    File jarFile = findJar(groupId, name, version, locator);
+    if (jarFile != null) addToRegistry(jarFile, getManifest(jarFile));
+    return jarFile;
   }
 
   private boolean isBundleMatch(File bundle, Manifest manifest, String symname, Version version) {
