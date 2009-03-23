@@ -4,7 +4,7 @@
   
   <dependencies>
     <dependency name="linked-child-process" rev="1.0.2" org="org.terracotta"/>
-    <dependency name="native-tool" rev="1.0.0" org="org.terracotta"/>
+    <dependency name="native-tool" rev="1.0.1" org="org.terracotta"/>
     <dependency name="ant" rev="1.7.1" org="terracotta"/>
     <dependency name="ant-launcher" rev="1.7.1" org="terracotta"/>
     <dependency name="ant-junit" rev="1.7.1" org="terracotta"/>
