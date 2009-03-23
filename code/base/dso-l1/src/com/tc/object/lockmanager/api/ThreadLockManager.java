@@ -28,4 +28,10 @@ public interface ThreadLockManager {
   public int queueLength(LockID lockId);
   
   public int waitLength(LockID lockId);
+  
+  public void pinLock(LockID lockId);
+  
+  public void unpinLock(LockID lockId);
+  
+  public void evictLock(LockID lockId);
 }

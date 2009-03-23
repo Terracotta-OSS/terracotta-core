@@ -267,4 +267,9 @@ public interface ClientTransactionManager extends DumpHandler, PrettyPrintable {
 
   public boolean beginLockWithoutTxn(String lockName, int lockLevel, String lockObjectType, String contextInfo);
 
+  public void pinLock(String lockName);
+  
+  public void unpinLock(String lockName);
+  
+  public void evictLock(String lockName);
 }

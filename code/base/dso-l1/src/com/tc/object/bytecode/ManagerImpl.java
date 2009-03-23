@@ -709,6 +709,18 @@ public class ManagerImpl implements Manager {
     }
   }
 
+  public void pinLock(String lockName) {
+    txManager.pinLock(lockName);
+  }
+
+  public void unpinLock(String lockName) {
+    txManager.unpinLock(lockName);
+  }
+
+  public void evictLock(String lockName) {
+    txManager.evictLock(lockName);
+  }
+
   public Object lookupObject(final ObjectID id) throws ClassNotFoundException {
     return this.objectManager.lookupObject(id);
   }

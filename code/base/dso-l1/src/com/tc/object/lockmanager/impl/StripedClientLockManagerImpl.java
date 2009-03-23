@@ -166,6 +166,18 @@ public class StripedClientLockManagerImpl implements ClientLockManager {
   public void waitTimedOut(final LockID lockID, final ThreadID threadID) {
     lockManagerFor(lockID).waitTimedOut(lockID, threadID);
   }
+  
+  public void pinLock(final LockID lockId) {
+    lockManagerFor(lockId).pinLock(lockId);
+  }
+  
+  public void unpinLock(final LockID lockId) {
+    lockManagerFor(lockId).unpinLock(lockId);
+  }
+  
+  public void evictLock(final LockID lockId) {
+    lockManagerFor(lockId).evictLock(lockId);
+  }
 
   public void addAllLocksTo(final LockInfoByThreadID lockInfo) {
     for (ClientLockManagerImpl lockManager : this.lockManagers) {

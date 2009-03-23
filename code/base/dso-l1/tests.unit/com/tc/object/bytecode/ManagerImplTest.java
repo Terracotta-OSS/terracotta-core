@@ -181,6 +181,18 @@ public class ManagerImplTest extends BaseDSOTestCase {
     public boolean beginLockWithoutTxn(final String lockName, final int lockLevel, final String lockObjectType, final String contextInfo) {
       throw new ImplementMe();
     }
+
+    public void evictLock(String lockName) {
+      throw new ImplementMe();
+    }
+
+    public void pinLock(String lockName) {
+      throw new ImplementMe();
+    }
+
+    public void unpinLock(String lockName) {
+      throw new ImplementMe();
+    }
   }
 
   private static class ObjMgr implements ClientObjectManager {

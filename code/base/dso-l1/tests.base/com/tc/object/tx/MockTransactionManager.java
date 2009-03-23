@@ -221,4 +221,16 @@ public class MockTransactionManager implements ClientTransactionManager {
   public boolean beginLockWithoutTxn(String lockName, int lockLevel, String lockObjectType, String contextInfo) {
     throw new ImplementMe();
   }
+
+  public void evictLock(String lockName) {
+    throw new ImplementMe();
+  }
+
+  public void pinLock(String lockName) {
+    throw new ImplementMe();
+  }
+
+  public void unpinLock(String lockName) {
+    throw new ImplementMe();
+  }
 }

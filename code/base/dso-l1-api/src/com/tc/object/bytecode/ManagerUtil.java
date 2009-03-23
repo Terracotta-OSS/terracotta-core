@@ -223,6 +223,49 @@ public class ManagerUtil {
   }
 
   /**
+   * Manually pin the ClientLock instance associated with this lock.
+   * <p>
+   * Pinning a lock prevents its associated ClientLock instance from become a lock-gc candidate.  Until it is
+   * unpinned or evicted the ClientLock will not be removed from the L1 heap.  Pinning an already pinned lock is
+   * a no-op.
+   * <p>
+   * This method is part of the manual lock management API.
+   * 
+   * @param lockName name of the lock
+   */
+  public static void pinLock(final String lockName) {
+    getManager().pinLock(lockName);
+  }
+  
+  /**
+   * Release the ClientLock instance associated with this lock.
+   * <p>
+   * Unpinning a previously pinned lock allows the associated ClientLock object to become  a garbage collection
+   * candidate for the client lock-gc algorithm.  Unpinning a lock which is not currently pinned is a no-op.
+   * <p>
+   * This method is part of the manual lock management API.
+   * 
+   * @param lockName name of the lock
+   */
+  public static void unpinLock(final String lockName) {
+    getManager().unpinLock(lockName);
+  }
+  
+  /**
+   * Evict the ClientLock instance associated with this lock.
+   * <p>
+   * Evicting a pinned lock forces the immediate release of any associated greedy locks and the removal of the
+   * associated ClientLock instance.  Evicting a lock which is not currently pinned is a no-op.
+   * <p>
+   * This method is part of the manual lock management API.
+   * 
+   * @param lockName name of the lock
+   */
+  public static void evictLock(final String lockName) {
+    getManager().evictLock(lockName);
+  }
+  
+  /**
    * Find managed object, which may be null
    *
    * @param pojo The object instance

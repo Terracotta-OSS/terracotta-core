@@ -68,7 +68,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   private final Map                     pendingQueryLockRequestsByID = new ListOrderedMap();
   private final Map                     lockInfoByID                 = new HashMap();
   private final RemoteLockManager       remoteLockManager;
-  private final Map                     locksByID                    = new HashMap(INIT_LOCK_MAP_SIZE);
+  private final Map<LockID, ClientLock> locksByID                    = new HashMap(INIT_LOCK_MAP_SIZE);
 
   // This is specifically insertion ordered so that locks that are likely to be garbage are in the front, added first
   private final LinkedHashSet           gcCandidates                 = new LinkedHashSet();
@@ -178,7 +178,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
       Iterator iter;
       for (iter = this.gcCandidates.iterator(); iter.hasNext() && k < 1000; k++) {
         LockID lockID = (LockID) iter.next();
-        ClientLock lock = (ClientLock) this.locksByID.get(lockID);
+        ClientLock lock = this.locksByID.get(lockID);
         if (lock.timedout(timeOutMillis)) {
           toGC.add(lockID);
         } else {
@@ -283,7 +283,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     ClientLock lock;
     synchronized (this) {
       waitUntilRunning();
-      lock = (ClientLock) this.locksByID.get(lockID);
+      lock = this.locksByID.get(lockID);
     }
     if (lock == null) {
       return 0;
@@ -298,7 +298,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     ClientLock lock;
     synchronized (this) {
       waitUntilRunning();
-      lock = (ClientLock) this.locksByID.get(lockID);
+      lock = this.locksByID.get(lockID);
     }
     if (lock != null) {
       return lock.isHeldBy(threadID, lockLevel);
@@ -350,7 +350,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
 
   private void decrementUseCount(final ClientLock lock) {
     int useCount = lock.decUseCount();
-    if (useCount == 0) {
+    if ((useCount == 0) && (!lock.pinned())) {
       this.gcCandidates.add(lock.getLockID());
     }
   }
@@ -402,7 +402,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
 
     synchronized (this) {
       waitUntilRunning();
-      lock = (ClientLock) this.locksByID.get(lockID);
+      lock = this.locksByID.get(lockID);
       if (lock == null) { throw missingLockException(lockID); }
       decrementUseCount(lock);
     }
@@ -420,7 +420,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     final ClientLock myLock;
     synchronized (this) {
       waitUntilRunning();
-      myLock = (ClientLock) this.locksByID.get(lockID);
+      myLock = this.locksByID.get(lockID);
     }
     if (myLock == null) { throw missingLockException(lockID); }
     myLock.wait(threadID, call, waitLock, listener);
@@ -430,7 +430,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     final ClientLock myLock;
     synchronized (this) {
       waitUntilRunning();
-      myLock = (ClientLock) this.locksByID.get(lockID);
+      myLock = this.locksByID.get(lockID);
     }
     if (myLock == null) { throw missingLockException(lockID); }
     return myLock.notify(threadID, all);
@@ -446,7 +446,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
                        + LockLevel.toString(interestedLevel));
       return;
     }
-    final ClientLock myLock = (ClientLock) this.locksByID.get(lockID);
+    final ClientLock myLock = this.locksByID.get(lockID);
     if (myLock != null) {
       if (leaseTimeInMs > 0) {
         myLock.recall(interestedLevel, this, leaseTimeInMs);
@@ -461,7 +461,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     final ClientLock myLock;
     synchronized (this) {
       waitUntilRunning();
-      myLock = (ClientLock) this.locksByID.get(lockID);
+      myLock = this.locksByID.get(lockID);
     }
     if (myLock != null) {
       myLock.transactionsForLockFlushed(lockID);
@@ -511,7 +511,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
       this.logger.warn("Ignoring notified call from dead server : " + lockID + ", " + threadID);
       return;
     }
-    final ClientLock myLock = (ClientLock) this.locksByID.get(lockID);
+    final ClientLock myLock = this.locksByID.get(lockID);
     if (myLock == null) { throw new AssertionError(lockID.toString()); }
     myLock.notified(threadID);
   }
@@ -526,7 +526,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
                        + lockID + " " + threadID + " " + LockLevel.toString(level) + " state = " + this.state);
       return;
     }
-    final ClientLock lock = (ClientLock) this.locksByID.get(lockID);
+    final ClientLock lock = this.locksByID.get(lockID);
     if (lock != null) {
       lock.awardLock(threadID, level);
     } else if (LockLevel.isGreedy(level)) {
@@ -545,20 +545,47 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
                        + lockID + " " + threadID + " level = " + level + " state = " + this.state);
       return;
     }
-    final ClientLock lock = (ClientLock) this.locksByID.get(lockID);
+    final ClientLock lock = this.locksByID.get(lockID);
     if (lock != null) {
       lock.cannotAwardLock(threadID, level);
     }
   }
 
+  public synchronized void pinLock(final LockID lockId) {
+    ClientLock lock = getOrCreateLock(lockId, MISSING_LOCK_TEXT);
+    lock.pin();
+  }
+  
+  public synchronized void unpinLock(final LockID lockId) {
+    ClientLock lock = locksByID.get(lockId);
+    if (lock != null && lock.unpin()) {
+      gcCandidates.add(lockId);
+      cleanUp(lock);
+    }        
+  }
+  
+  public synchronized void evictLock(final LockID lockId) {
+    ClientLock lock = locksByID.get(lockId);
+    if (lock != null) {
+      if (lock.unpin()) {
+        if (lock.isEvictable()) {
+          recall(lockId, ThreadID.VM_ID, LockLevel.WRITE, -1);
+        } else {
+          gcCandidates.add(lockId);
+          cleanUp(lock);
+        }
+      }
+    }
+  }
+  
   // This method should be called within a synchronized(this) block.
   private ClientLock getLock(final LockID id) {
-    return (ClientLock) this.locksByID.get(id);
+    return this.locksByID.get(id);
   }
 
   private synchronized ClientLock getOrCreateLock(final LockID id, final String lockObjectType) {
 
-    ClientLock lock = (ClientLock) this.locksByID.get(id);
+    ClientLock lock = this.locksByID.get(id);
     if (lock == null) {
       lock = new ClientLock(id, lockObjectType, this.remoteLockManager, this.waitTimer, this.lockStatManager);
       this.locksByID.put(id, lock);
@@ -626,7 +653,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   }
 
   synchronized boolean haveLock(final LockID lockID, final ThreadID threadID, final int lockType) {
-    ClientLock l = (ClientLock) this.locksByID.get(lockID);
+    ClientLock l = this.locksByID.get(lockID);
     if (l == null) { return false; }
     return l.isHeldBy(threadID, lockType);
   }
