@@ -8,8 +8,8 @@ import java.util.Arrays;
 import java.util.TreeSet;
 
 /**
- * This class's sole purpose is to give a definite order to a set of GroupIDs, that way you don't have to encode the
- * GroupIDs mapping in many places.
+ * This class's purpose is to give a definite order to a set of GroupIDs and determine the coordinator GroupID, that way
+ * you don't have to encode the GroupIDs mapping in many places.
  */
 public class OrderedGroupIDs {
 
@@ -35,6 +35,11 @@ public class OrderedGroupIDs {
 
   public int getGroupIDIndex(GroupID gid) {
     return Arrays.binarySearch(this.groupIDs, gid);
+  }
+
+  public GroupID getActiveCoordinatorGroup() {
+    // This assumption that index 0 is coordinator group should not be exposed anywhere else.
+    return this.groupIDs[0];
   }
 
 }
