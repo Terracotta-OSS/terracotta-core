@@ -114,7 +114,7 @@ public class Main implements DsoClusterListener {
 	static final String getHostName() {
 		try {
 			InetAddress addr = InetAddress.getLocalHost();
-			return addr.getHostName();
+			return addr.getHostAddress();
 		} catch (UnknownHostException e) {
 			return "Unknown";
 		}
