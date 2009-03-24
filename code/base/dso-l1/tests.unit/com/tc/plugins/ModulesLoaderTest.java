@@ -219,6 +219,43 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
       shutdownAndCleanUpJars(osgiRuntime, new File[] { generatedJar1 });
     }
   }
+  
+  public void testModuleInMultipleRepo() throws Exception {
+    String multipleRepoGroupId = "org.terracotta.modules";
+    String multipleRepoArtifactId = "multiplerepomodule";
+    String multRepoVersion = "1.0.0";
+    String multRepoSymbolicName = multipleRepoGroupId + "." + multipleRepoArtifactId;
+
+    // Create bundle jar based on these attributes
+    File tempDir = getTempDirectory();
+    File repo1 = new File(tempDir, "repo1");
+    File repo2 = new File(tempDir, "repo2");
+    repo1.mkdir();
+    repo2.mkdir();
+
+    File generatedJar1 = createBundle(repo1, multipleRepoGroupId, multipleRepoArtifactId, multRepoVersion,
+                                      multRepoSymbolicName, multRepoVersion, null, TC_OK_CONFIG);
+    File generatedJar2 = createBundle(repo2, multipleRepoGroupId, multipleRepoArtifactId, multRepoVersion,
+                                      multRepoSymbolicName, multRepoVersion, null, TC_OK_CONFIG);
+
+    EmbeddedOSGiRuntime osgiRuntime = null;
+    try {
+      DSOClientConfigHelper configHelper = configHelper();
+
+      // Add both repo's to list of repository locations to pick up bundle above
+      configHelper.addRepository(repo1.getAbsolutePath());
+      configHelper.addRepository(repo2.getAbsolutePath());
+      configHelper.addModule(multipleRepoArtifactId, multRepoVersion);
+      ClassProvider classProvider = new MockClassProvider();
+
+      Modules modules = configHelper.getModulesForInitialization();
+      osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
+      ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false);
+
+    } finally {
+      shutdownAndCleanUpJars(osgiRuntime, new File[] { generatedJar1, generatedJar2 });
+    }
+  }
 
   /**
    * Test catch and throw of ConfigSetupException due to root with no field or expression
