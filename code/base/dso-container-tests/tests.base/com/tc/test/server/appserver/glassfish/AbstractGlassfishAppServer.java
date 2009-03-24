@@ -40,9 +40,11 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Map.Entry;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -162,7 +164,7 @@ public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
     AppServerParameters params = (AppServerParameters) rawParams;
     for (int i = 0; i < STARTUP_RETRIES; i++) {
       try {
-        return start0(params);
+        return start0(new ParamsWithRetry(params, i));
       } catch (RetryException re) {
         Banner.warnBanner("Re-trying server startup (" + i + ") " + re.getMessage());
         continue;
@@ -176,6 +178,9 @@ public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
     instanceDir = createInstance(params);
 
     instanceDir.delete(); // createDomain will fail if directory already exists
+    if (instanceDir.exists()) { throw new RuntimeException("Instance dir must not exist: "
+                                                           + instanceDir.getAbsolutePath()); }
+
     createDomain(params);
 
     modifyDomainConfig(params);
@@ -519,6 +524,42 @@ public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
     RetryException(String msg) {
       super(msg);
     }
+  }
+
+  private static class ParamsWithRetry implements AppServerParameters {
+
+    private final AppServerParameters delegate;
+    private final int                 retryNum;
+
+    ParamsWithRetry(AppServerParameters delegate, int retryNum) {
+      this.delegate = delegate;
+      this.retryNum = retryNum;
+    }
+
+    public String classpath() {
+      return delegate.classpath();
+    }
+
+    public String instanceName() {
+      return delegate.instanceName() + (retryNum == 0 ? "" : "-retry" + retryNum);
+    }
+
+    public String jvmArgs() {
+      return delegate.jvmArgs();
+    }
+
+    public Properties properties() {
+      return delegate.properties();
+    }
+
+    public Collection sars() {
+      return delegate.sars();
+    }
+
+    public Map wars() {
+      return delegate.wars();
+    }
+
   }
 
 }
