@@ -111,8 +111,8 @@ module BundledComponents
               :author => true, :version => true, :use => true, :defaultexcludes => "true",
               :bottom => "<i>All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.</i>",
               :doctitle => "Terracotta API", :windowtitle => "Terracotta API Documentation") do
-              ant.fileset(:dir => a_module.name, :defaultexcludes => true) do
-                ant.include(:name => 'src/**')
+              ant.packageset(:dir => a_module.name + '/src', :defaultexcludes => true) do
+                ant.include(:name => 'com/tc/**')
               end
             end
             puts "Done javadoc"

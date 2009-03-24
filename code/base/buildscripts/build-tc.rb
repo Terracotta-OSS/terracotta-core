@@ -304,8 +304,8 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
       :windowtitle => "Terracotta API Documentation") do
       modules = @module_set.find_all {|mod| mod.javadoc?}
       modules.each do |mod|
-        @ant.fileset(:dir => mod.name, :defaultexcludes => true) do
-          @ant.include(:name => 'src/**')
+        @ant.packageset(:dir => mod.name + '/src', :defaultexcludes => true) do
+          @ant.include(:name => 'com/tc/**')
         end
       end
     end
