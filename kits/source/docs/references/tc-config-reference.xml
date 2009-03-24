@@ -31,9 +31,9 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
 			tc-properties set via system properties 
 	-->
 
+    <property name="l2.nha.dirtydb.autoDelete" value="true"/>
     <property name="l1.cachemanager.enabled" value="true"/>
     <property name="logging.maxLogFileSize" value="1024"/>
-    <property name="l1.cachemanager.leastCount" value="9000"/>
   </tc-properties>
   
   <!-- The 'system' section contains configuration data that affects the
