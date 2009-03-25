@@ -30,11 +30,18 @@ if $cygwin; then
   [ -n "$TC_INSTALL_DIR" ] && TC_INSTALL_DIR=`cygpath --windows "$TC_INSTALL_DIR"`
 fi
 
+${JAVA_HOME}/bin/java -server > /dev/null 2>&1
+if test "$?" = "0" ; then
+  SERVER_OPT=-server
+else
+  SERVER_OPT=
+fi
+
 start=true
 while "$start"
 do
 "${JAVA_HOME}/bin/java" \
-   -server -Xms512m -Xmx512m -XX:NewRatio=3 -XX:MaxTenuringThreshold=15 -XX:+HeapDumpOnOutOfMemoryError \
+   $SERVER_OPT -Xms512m -Xmx512m -XX:NewRatio=3 -XX:MaxTenuringThreshold=15 -XX:+HeapDumpOnOutOfMemoryError \
    -Dcom.sun.management.jmxremote \
    -Dtc.install-root="${TC_INSTALL_DIR}" \
    ${JAVA_OPTS} \
@@ -47,6 +54,6 @@ do
    start=true;
    echo "start-tc-server: Restarting the server..."
  else
-   exit $?
+   exit $exitValue
  fi
 done

@@ -265,7 +265,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
   }
 
   private void internalRunServer() {
-    String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-server", "-Xms256m", "-Xmx256m",
+    String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-Xms256m", "-Xmx256m",
         "-Dcom.sun.management.jmxremote", "-Dtc.config=tc-config.xml",
         "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(), "-cp", getTCLib().getAbsolutePath(),
         ServerConstants.SERVER_MAIN_CLASS_NAME };
