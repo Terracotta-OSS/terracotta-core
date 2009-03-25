@@ -589,8 +589,8 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
             <!-- One of either <execute> or <method> is required within an <on-load> element -->
 
             <!-- This (zero argument) method will be called on instances of the specified class
-               on load of the object. Used to intialize transient fields. You are free to use
-               whatever method name you please. -->
+               on load of the object. Used to initialize transient fields. Use any method name
+               you have designated for on-load execution. -->
             <!-- <method>initTransients</method> -->
 
             <!-- This bean shell script is called right after an object is loaded -->
