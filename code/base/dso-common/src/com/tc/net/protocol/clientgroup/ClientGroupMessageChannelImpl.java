@@ -62,13 +62,15 @@ public class ClientGroupMessageChannelImpl extends ClientMessageChannelImpl impl
     logger.info("Create active channels");
     Assert.assertTrue(addressProviders.length > 0);
     Map channels = new LinkedHashMap();
-    coordinatorGroupID = createSubChannel(channels, maxReconnectTries, addressProviders[0]);
-    for (int i = 1; i < addressProviders.length; ++i) {
+    
+    for (int i = 0; i < addressProviders.length; ++i) {
       createSubChannel(channels, maxReconnectTries, addressProviders[i]);
     }
     this.groupChannelMap = Collections.unmodifiableMap(channels);
     this.groupIDs = new OrderedGroupIDs((GroupID[]) groupChannelMap.keySet()
         .toArray(new GroupID[groupChannelMap.size()]));
+    
+    coordinatorGroupID = this.groupIDs.getActiveCoordinatorGroup();
   }
 
   private GroupID createSubChannel(Map channels, final int maxReconnectTries, ConnectionAddressProvider addressProvider) {

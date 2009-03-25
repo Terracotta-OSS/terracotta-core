@@ -137,7 +137,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   private static OrderedGroupIDs createOrderedGroupIds(ActiveServerGroupConfig[] groupArray) {
     GroupID[] gids = new GroupID[groupArray.length];
     for (int i = 0; i < groupArray.length; i++) {
-      gids[i] = new GroupID(groupArray[i].getGroupId());
+      gids[i] = groupArray[i].getGroupId();
     }
     return new OrderedGroupIDs(gids);
   }
@@ -147,19 +147,19 @@ public class TCServerImpl extends SEDA implements TCServer {
     ActiveServerGroupConfig[] groupArray = this.configurationSetupManager.activeServerGroupsConfig()
         .getActiveServerGroupArray();
     OrderedGroupIDs orderedGroupsIds = createOrderedGroupIds(groupArray);
-    int coordinatorId = orderedGroupsIds.getActiveCoordinatorGroup().toInt();
+    GroupID coordinatorId = orderedGroupsIds.getActiveCoordinatorGroup();
     ServerGroupInfo[] result = new ServerGroupInfo[groupArray.length];
     for (int i = 0; i < groupArray.length; i++) {
       ActiveServerGroupConfig groupInfo = groupArray[i];
-      int groupId = groupInfo.getGroupId();
+      GroupID groupId = groupInfo.getGroupId();
       List<L2Info> memberList = new ArrayList<L2Info>();
       for (L2Info l2Info : l2Infos) {
         if (groupInfo.isMember(l2Info.name())) {
           memberList.add(l2Info);
         }
       }
-      result[i] = new ServerGroupInfo(memberList.toArray(new L2Info[0]), groupInfo.getGroupName(), groupId,
-                                      coordinatorId == groupId);
+      result[i] = new ServerGroupInfo(memberList.toArray(new L2Info[0]), groupInfo.getGroupName(), groupId.toInt(),
+                                      coordinatorId.equals(groupId));
     }
     return result;
   }

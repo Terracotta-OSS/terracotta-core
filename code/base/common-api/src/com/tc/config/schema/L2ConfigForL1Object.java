@@ -21,6 +21,8 @@ import com.terracottatech.config.Servers;
 import com.terracottatech.config.System;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -33,7 +35,7 @@ import java.util.Set;
  */
 public class L2ConfigForL1Object implements L2ConfigForL1 {
 
-  private static final String         DEFAULT_HOST     = "localhost";
+  private static final String         DEFAULT_HOST = "localhost";
 
   private final ConfigContext         l2sContext;
   private final ConfigContext         systemContext;
@@ -43,7 +45,6 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
   private final Map                   l2DataByName;
   private final Map                   l2DataByGroupId;
   private ObjectArrayConfigItem[]     l2DataByGroup;
-  private int                         coordinatorGrpId = -1;
 
   public L2ConfigForL1Object(final ConfigContext l2sContext, final ConfigContext systemContext) {
     this(l2sContext, systemContext, null);
@@ -119,6 +120,17 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
         Assert.assertNotNull(asgArray);
         Assert.assertTrue(asgArray.length >= 1);
 
+        // Set group names if not already set
+        for (int i = 0; i < asgArray.length; i++) {
+          String groupName = asgArray[i].getGroupName();
+          if (groupName == null) {
+            groupName = ActiveCoordinatorHelper.getGroupNameFrom(asgArray[i].getMembers().getMemberArray());
+            asgArray[i].setGroupName(groupName);
+          }
+        }
+        // Sort the array according to the group names
+        Arrays.sort(asgArray, new MirrorGroupNameComparator());
+
         for (int i = 0; i < asgArray.length; i++) {
           String[] members = asgArray[i].getMembers().getMemberArray();
           List groupList = (List) L2ConfigForL1Object.this.l2DataByGroupId.get(new Integer(i));
@@ -135,16 +147,10 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
             Assert.assertNotNull(data);
             data.setGroupId(i);
             String groupName = asgArray[i].getGroupName();
-            if (groupName == null) {
-              groupName = ActiveCoordinatorHelper.getGroupNameFrom(asgArray[i].getMembers().getMemberArray());
-            }
-
             data.setGroupName(groupName);
             groupList.add(data);
           }
         }
-
-        L2ConfigForL1Object.this.coordinatorGrpId = ActiveCoordinatorHelper.getCoordinatorGroup(asgArray);
       }
     };
   }
@@ -177,7 +183,6 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
     this.l2DataByGroup = new ObjectArrayConfigItem[keys.size()];
 
     int l2DataByGroupPosition = 0;
-    boolean isCoordinatorSet = false;
     for (Iterator iter = keys.iterator(); iter.hasNext();) {
       Integer key = (Integer) iter.next();
       List l2DataList = (List) this.l2DataByGroupId.get(key);
@@ -187,13 +192,8 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
         L2Data data = (L2Data) iterator.next();
         l2DataArray[position++] = data;
       }
-      if ((l2DataByGroupPosition != this.coordinatorGrpId) || isCoordinatorSet) {
-        setL2DataInGrp(l2DataByGroupPosition + 1, l2DataArray);
-        l2DataByGroupPosition++;
-      } else {
-        setL2DataInGrp(0, l2DataArray);
-        isCoordinatorSet = true;
-      }
+      setL2DataInGrp(l2DataByGroupPosition, l2DataArray);
+      l2DataByGroupPosition++;
     }
   }
 
@@ -207,4 +207,9 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
     };
   }
 
+  public static class MirrorGroupNameComparator implements Comparator<MirrorGroup> {
+    public int compare(MirrorGroup obj1, MirrorGroup obj2) {
+      return obj1.getGroupName().compareTo(obj2.getGroupName());
+    }
+  }
 }
