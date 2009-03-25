@@ -106,7 +106,7 @@ module BundledComponents
           a_module.subtree(src).copy_classes(@build_results, runtime_classes_dir, ant, :excludes => excludes)
           if javadoc
             puts "Generating javadoc for #{a_module.name}"
-            javadoc_destdir = FilePath.new(File.dirname(destdir.to_s), "docs", "api", @config_source['api.version'], "javadoc").ensure_directory
+            javadoc_destdir = FilePath.new(File.dirname(destdir.to_s), "docs", "javadoc").ensure_directory
             title = "Terracotta API version #{@config_source['api.version']}"
             ant.javadoc(:destdir => javadoc_destdir.to_s,
               :author => true, :version => true, :use => true, :defaultexcludes => "true",
