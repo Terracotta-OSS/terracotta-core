@@ -636,6 +636,7 @@ public class ClusterModel implements IClusterModel {
 
   public void setHost(String host) {
     connectServer.setHost(host);
+    displayLabel = connectServer.toString();
   }
 
   public String getHost() {

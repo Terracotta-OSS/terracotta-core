@@ -788,14 +788,12 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
 
     public void actionPerformed(ActionEvent ae) {
       if (aboutDialog == null) {
-        if (aboutDialog == null) {
-          aboutDialog = new AboutDialog(SessionIntegratorFrame.this);
-        }
-
-        aboutDialog.pack();
-        WindowHelper.center(aboutDialog, SessionIntegratorFrame.this);
-        aboutDialog.setVisible(true);
+        aboutDialog = new AboutDialog(SessionIntegratorFrame.this);
       }
+
+      aboutDialog.pack();
+      WindowHelper.center(aboutDialog, SessionIntegratorFrame.this);
+      aboutDialog.setVisible(true);
     }
   }
 

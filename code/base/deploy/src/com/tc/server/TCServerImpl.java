@@ -23,7 +23,6 @@ import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.config.Directories;
 import com.tc.config.schema.ActiveServerGroupConfig;
-import com.tc.config.schema.ActiveServerGroupsConfig;
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.NewCommonL2Config;
 import com.tc.config.schema.NewHaConfig;
@@ -45,6 +44,8 @@ import com.tc.logging.TCLogging;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.L2State;
 import com.tc.management.beans.TCServerInfo;
+import com.tc.net.GroupID;
+import com.tc.net.OrderedGroupIDs;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
 import com.tc.object.config.schema.NewL2DSOConfig;
@@ -133,21 +134,32 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
   }
 
+  private static OrderedGroupIDs createOrderedGroupIds(ActiveServerGroupConfig[] groupArray) {
+    GroupID[] gids = new GroupID[groupArray.length];
+    for (int i = 0; i < groupArray.length; i++) {
+      gids[i] = new GroupID(groupArray[i].getGroupId());
+    }
+    return new OrderedGroupIDs(gids);
+  }
+
   public ServerGroupInfo[] serverGroups() {
     L2Info[] l2Infos = infoForAllL2s();
-    ActiveServerGroupsConfig config = this.configurationSetupManager.activeServerGroupsConfig();
-    ActiveServerGroupConfig[] groupArray = config.getActiveServerGroupArray();
+    ActiveServerGroupConfig[] groupArray = this.configurationSetupManager.activeServerGroupsConfig()
+        .getActiveServerGroupArray();
+    OrderedGroupIDs orderedGroupsIds = createOrderedGroupIds(groupArray);
+    int coordinatorId = orderedGroupsIds.getActiveCoordinatorGroup().toInt();
     ServerGroupInfo[] result = new ServerGroupInfo[groupArray.length];
     for (int i = 0; i < groupArray.length; i++) {
-      ActiveServerGroupConfig serverGroupInfo = groupArray[i];
+      ActiveServerGroupConfig groupInfo = groupArray[i];
+      int groupId = groupInfo.getGroupId();
       List<L2Info> memberList = new ArrayList<L2Info>();
       for (L2Info l2Info : l2Infos) {
-        if (serverGroupInfo.isMember(l2Info.name())) {
+        if (groupInfo.isMember(l2Info.name())) {
           memberList.add(l2Info);
         }
       }
-      result[i] = new ServerGroupInfo(memberList.toArray(new L2Info[0]), serverGroupInfo.getGroupName(),
-                                      serverGroupInfo.getGroupId(), i == 0);
+      result[i] = new ServerGroupInfo(memberList.toArray(new L2Info[0]), groupInfo.getGroupName(), groupId,
+                                      coordinatorId == groupId);
     }
     return result;
   }
