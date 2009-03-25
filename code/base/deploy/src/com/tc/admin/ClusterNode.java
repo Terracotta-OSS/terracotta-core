@@ -136,8 +136,8 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
     protected void handleConnectError(Exception connectError) {
       if (connectDialog != null && connectDialog.isVisible()) { return; }
 
+      reportConnectError(connectError);
       if (connectError instanceof SecurityException) {
-        reportConnectError(connectError);
         try {
           beginConnect();
         } catch (Exception e) {

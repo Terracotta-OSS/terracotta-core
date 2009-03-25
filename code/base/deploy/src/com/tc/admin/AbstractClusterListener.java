@@ -42,7 +42,10 @@ public class AbstractClusterListener implements PropertyChangeListener {
       try {
         String prop = pce.getPropertyName();
         if (IClusterModel.PROP_CONNECT_ERROR.equals(prop)) {
-          handleConnectError((Exception) pce.getNewValue());
+          Exception connectError = (Exception) pce.getNewValue();
+          if (connectError != null) {
+            handleConnectError(connectError);
+          }
         } else if (IClusterModel.PROP_CONNECTED.equals(prop)) {
           handleConnected();
         } else if (IClusterModelElement.PROP_READY.equals(prop)) {

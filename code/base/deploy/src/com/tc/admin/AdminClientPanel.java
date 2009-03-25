@@ -214,10 +214,6 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
   }
 
   private void setSelectedClusterNode(ClusterNode clusterNode) {
-    if (clusterNode != null) {
-      log(clusterNode.getClusterModel().dump());
-    }
-
     if (selectedClusterNode != clusterNode) {
       selectedClusterNode = clusterNode;
       logsPanel.select(clusterNode.getClusterModel());
