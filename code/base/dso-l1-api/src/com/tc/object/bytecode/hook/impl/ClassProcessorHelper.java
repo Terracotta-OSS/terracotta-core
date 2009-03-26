@@ -190,13 +190,11 @@ public class ClassProcessorHelper {
     return getResourceBytes(resource);
   }
 
-
   public static byte[] systemLoaderFindClassHook(String name, ClassLoader loader) throws ClassNotFoundException {
     URL resource = getClassResource(name, loader, false);
     if (resource == null) { return null; }
     return getResourceBytes(resource);
   }
-
 
   private static byte[] getResourceBytes(URL url) throws ClassNotFoundException {
     InputStream is = null;
@@ -441,32 +439,10 @@ public class ClassProcessorHelper {
     return 1;
   }
 
-  private static void initTCLogging() throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException,
-      InvocationTargetException {
-    // This code is here because users can set various Log4J properties that will, for example, cause Log4J to try
-    // to use arbitrary classes as appenders. If users try to use one of their own classes as an appender, we'll try
-    // to load it in our classloader and fail in fairly unpleasant ways.
-    //
-    // Yes, saving and restoring a system property really sucks, but there isn't really a better way to do it. Users
-    // can request that Log4J read config from an arbitrary URL otherwise, and there's no way to intercept that at
-    // all. As a result, this seems like a better solution.
-    //
-    // See LKC-1974 for more details.
-
-    String oldDefaultInitOverrideValue = null;
-
-    try {
-      oldDefaultInitOverrideValue = System.setProperty("log4j.defaultInitOverride", "true");
-      Class loggerClass = tcLoader.loadClass("org.apache.log4j.Logger");
-      Method theMethod = loggerClass.getDeclaredMethod("getRootLogger", new Class[0]);
-      theMethod.invoke(null, (Object[]) null);
-    } finally {
-      if (oldDefaultInitOverrideValue == null) {
-        System.getProperties().remove("log4j.defaultInitOverride");
-      } else {
-        System.setProperty("log4j.defaultInitOverride", oldDefaultInitOverrideValue);
-      }
-    }
+  private static void initTCLogging() throws Exception {
+    Class loggerClass = tcLoader.loadClass("com.tc.logging.Log4jSafeInit");
+    Method theMethod = loggerClass.getMethod("init", new Class[0]);
+    theMethod.invoke(null, (Object[]) null);
   }
 
   /**
@@ -836,7 +812,5 @@ public class ClassProcessorHelper {
     }
 
   }
-
-
 
 }

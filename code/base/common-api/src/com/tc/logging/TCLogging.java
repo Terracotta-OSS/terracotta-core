@@ -70,7 +70,7 @@ public class TCLogging {
   private static final String       CONSOLE_PATTERN_DEVELOPMENT        = "%d [%t] %p %c - %m%n";
   // This next pattern is used when we're *only* logging to the console.
   private static final String       CONSOLE_LOGGING_ONLY_PATTERN       = "[TC] %d %p - %m%n";
-  public static  final String       FILE_AND_JMX_PATTERN               = "%d [%t] %p %c - %m%n";
+  public static final String        FILE_AND_JMX_PATTERN               = "%d [%t] %p %c - %m%n";
 
   private static TCLogger           console;
   private static Appender           consoleAppender;
@@ -364,6 +364,8 @@ public class TCLogging {
   static {
     ClassLoader prevLoader = Thread.currentThread().getContextClassLoader();
     Thread.currentThread().setContextClassLoader(TCLogging.class.getClassLoader());
+
+    Log4jSafeInit.init();
 
     try {
       currentLoggingDirectory = null;
