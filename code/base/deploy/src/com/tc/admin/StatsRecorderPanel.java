@@ -238,7 +238,7 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
     gbc.weightx = 1.0;
     gbc.anchor = GridBagConstraints.EAST;
 
-    XContainer buttonPanel = new XContainer(new GridLayout(2, 1));
+    XContainer buttonPanel = new XContainer(new GridLayout(2, 1, 3, 3));
     buttonPanel.add(importStatsConfigButton = new XButton("Import configuration..."));
     importStatsConfigButton.addActionListener(new ImportStatsConfigHandler());
     buttonPanel.add(exportStatsConfigButton = new XButton("Export configuration..."));
@@ -264,7 +264,7 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
     statsSessionsList.setModel(statsSessionsListModel = new DefaultListModel());
     statsSessionsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    XContainer buttonPanel = new XContainer(new GridLayout(4, 1, 1, 1));
+    XContainer buttonPanel = new XContainer(new GridLayout(4, 1, 3, 3));
     buttonPanel.add(exportStatsButton = new XButton("Export All Sessions..."));
     exportStatsButton.addActionListener(new ExportStatsHandler());
     buttonPanel.add(clearStatsSessionButton = new XButton("Clear Session"));

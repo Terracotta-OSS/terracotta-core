@@ -12,6 +12,7 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.event.MouseEvent;
 import java.text.DateFormat;
+import java.text.NumberFormat;
 import java.util.Date;
 
 public class DGCIntervalMarker extends IntervalMarker implements ToolTipProvider {
@@ -53,29 +54,31 @@ public class DGCIntervalMarker extends IntervalMarker implements ToolTipProvider
    */
   private void buildToolTip() {
     StringBuffer sb = new StringBuffer();
+    NumberFormat numFormat = NumberFormat.getNumberInstance();
+    DateFormat dateFormat = DateFormat.getInstance();
     sb.append("<html><table cellspacing=1 cellpadding=1>");
-    buildRow(sb, "iteration", dgcInfo.getIteration());
+    buildRow(sb, "iteration", numFormat.format(dgcInfo.getIteration()));
     if (dgcInfo.getType() != null) {
       buildRow(sb, "type", dgcInfo.getType());
     }
-    buildRow(sb, "start time", DateFormat.getInstance().format(new Date(dgcInfo.getStartTime())));
+    buildRow(sb, "start time", dateFormat.format(new Date(dgcInfo.getStartTime())));
     if (dgcInfo.getElapsedTime() != -1) {
-      buildRow(sb, "total elapsed time", dgcInfo.getElapsedTime());
+      buildRow(sb, "total elapsed seconds", numFormat.format(dgcInfo.getElapsedTime()));
     }
     if (dgcInfo.getBeginObjectCount() != -1) {
-      buildRow(sb, "begin object count", dgcInfo.getBeginObjectCount());
+      buildRow(sb, "begin object count", numFormat.format(dgcInfo.getBeginObjectCount()));
     }
     if (dgcInfo.getPausedStageTime() != -1) {
-      buildRow(sb, "paused stage time", dgcInfo.getPausedStageTime());
+      buildRow(sb, "paused stage seconds", numFormat.format(dgcInfo.getPausedStageTime()));
     }
     if (dgcInfo.getMarkStageTime() != -1) {
-      buildRow(sb, "mark stage time", dgcInfo.getMarkStageTime());
+      buildRow(sb, "mark stage seconds", numFormat.format(dgcInfo.getMarkStageTime()));
     }
     if (dgcInfo.getActualGarbageCount() != -1) {
-      buildRow(sb, "garbage count", dgcInfo.getActualGarbageCount());
+      buildRow(sb, "garbage count", numFormat.format(dgcInfo.getActualGarbageCount()));
     }
     if (dgcInfo.getDeleteStageTime() != -1) {
-      buildRow(sb, "delete stage time", dgcInfo.getDeleteStageTime());
+      buildRow(sb, "delete stage seconds", numFormat.format(dgcInfo.getDeleteStageTime()));
     }
     sb.append("</table></html>");
     fToolTip = sb.toString();

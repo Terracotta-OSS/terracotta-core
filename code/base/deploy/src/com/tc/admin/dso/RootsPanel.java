@@ -230,8 +230,12 @@ public class RootsPanel extends XContainer implements PropertyChangeListener {
   }
 
   private void updateLiveObjectCount() {
-    int count = liveObjectCountProvider.getLiveObjectCount();
-    liveObjectCountValueLabel.setText(NumberFormat.getNumberInstance().format(count));
+    try {
+      int count = liveObjectCountProvider.getLiveObjectCount();
+      liveObjectCountValueLabel.setText(NumberFormat.getNumberInstance().format(count));
+    } catch (Exception e) {
+      /**/
+    }
   }
 
   public void setObjects(IBasicObject[] roots) {
@@ -257,14 +261,14 @@ public class RootsPanel extends XContainer implements PropertyChangeListener {
     private String getKitID() {
       String kitID = ProductInfo.getInstance().kitID();
       if (ProductInfo.UNKNOWN_VALUE.equals(kitID)) {
-        kitID = System.getProperty("com.tc.kitID", "42.0");
+        kitID = System.getProperty("com.tc.kitID", "3.0");
       }
       return kitID;
     }
 
     public void actionPerformed(ActionEvent e) {
       String kitID = getKitID();
-      String loc = adminClientContext.format("console.guide.url", kitID) + "#AdminConsoleGuide-Roots";
+      String loc = adminClientContext.format("console.guide.url", kitID) + "#TerracottaDeveloperConsole-Roots";
       BrowserLauncher.openURL(loc);
     }
   }

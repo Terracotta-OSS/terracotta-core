@@ -27,10 +27,10 @@ import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 
 public class SplashDialog extends JDialog {
-  private XButton   importButton;
-  private XButton   helpButton;
-  private XButton   skipButton;
-  private XCheckBox noSplashToggle;
+  private XButton         importButton;
+  private XButton         helpButton;
+  private XButton         skipButton;
+  private final XCheckBox noSplashToggle;
 
   public SplashDialog(JFrame parent, boolean modal) {
     super(parent, modal);
@@ -65,7 +65,7 @@ public class SplashDialog extends JDialog {
     gbc.weighty = 0.0;
 
     XContainer bottomPanel = new XContainer(new BorderLayout());
-    XContainer buttonPanel = new XContainer(new GridLayout(0, 1));
+    XContainer buttonPanel = new XContainer(new GridLayout(0, 1, 1, 3));
     buttonPanel.add(importButton = new XButton("Import..."));
     buttonPanel.add(helpButton = new XButton("Help..."));
     buttonPanel.add(skipButton = new XButton("Skip"));

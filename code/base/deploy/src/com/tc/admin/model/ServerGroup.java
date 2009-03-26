@@ -168,7 +168,7 @@ public class ServerGroup implements IServerGroup {
       IServer server = (Server) evt.getSource();
       fireServerStateChanged(server, evt);
       if (IServer.PROP_CONNECTED.equals(prop)) {
-        if (server.isActive()) {
+        if (server.isConnected() && server.isActive()) {
           setActiveServer(server);
         }
         setConnected(determineConnected());

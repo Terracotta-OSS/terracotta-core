@@ -951,6 +951,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       Frame frame = getFrame();
       if (aboutDialog == null) {
         aboutDialog = new AboutDialog(frame);
+        aboutDialog.setTitle(adminClientContext.getString("about.prefix") + adminClientContext.getString("title"));
       }
 
       aboutDialog.pack();

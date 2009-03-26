@@ -202,14 +202,15 @@ public class GCStatsPanel extends XContainer implements DGCListener {
     private String getKitID() {
       String kitID = ProductInfo.getInstance().kitID();
       if (ProductInfo.UNKNOWN_VALUE.equals(kitID)) {
-        kitID = System.getProperty("com.tc.kitID", "42.0");
+        kitID = System.getProperty("com.tc.kitID", "3.0");
       }
       return kitID;
     }
 
     public void actionPerformed(ActionEvent e) {
       String kitID = getKitID();
-      String loc = appContext.format("console.guide.url", kitID) + "#AdminConsoleGuide-DistributedGarbageCollection";
+      String loc = appContext.format("console.guide.url", kitID)
+                   + "#TerracottaDeveloperConsole-DistributedGarbageCollection";
       BrowserLauncher.openURL(loc);
     }
   }
