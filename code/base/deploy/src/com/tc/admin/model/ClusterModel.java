@@ -54,7 +54,6 @@ public class ClusterModel implements IClusterModel {
   protected IServerGroup                                       activeCoordinatorGroup;
 
   private String                                               displayLabel;
-  public boolean                                               isConnectListening;
 
   private final Map<PollScope, Map<String, EventListenerList>> pollScopes;
   private Set<PolledAttributeListener>                         allScopedPollListeners;
@@ -64,7 +63,6 @@ public class ClusterModel implements IClusterModel {
   }
 
   public ClusterModel(final String host, final int jmxPort, boolean autoConnect) {
-    isConnectListening = false;
     listenerList = new EventListenerList();
     connectServer = createConnectServer(host, jmxPort);
     displayLabel = connectServer.toString();
@@ -86,22 +84,16 @@ public class ClusterModel implements IClusterModel {
   }
 
   public void startConnectListener() {
-    if (!isConnectListening) {
-      connectServer.addPropertyChangeListener(connectServerListener);
-      if (autoConnect) {
-        connectServer.setAutoConnect(autoConnect);
-      }
+    connectServer.addPropertyChangeListener(connectServerListener);
+    if (autoConnect) {
+      connectServer.setAutoConnect(autoConnect);
     }
-    isConnectListening = true;
   }
 
   protected void stopConnectListener() {
-    if (isConnectListening) {
-      connectServer.removePropertyChangeListener(connectServerListener);
-      connectServer.setAutoConnect(false);
-      connectServer.disconnect();
-    }
-    isConnectListening = false;
+    connectServer.removePropertyChangeListener(connectServerListener);
+    connectServer.setAutoConnect(false);
+    connectServer.disconnect();
   }
 
   protected IServer createConnectServer(String host, int jmxPort) {
@@ -130,9 +122,7 @@ public class ClusterModel implements IClusterModel {
       this.autoConnect = autoConnect;
     }
     firePropertyChange(PROP_AUTO_CONNECT, oldAutoConnect, autoConnect);
-    if (isConnectListening) {
-      connectServer.setAutoConnect(autoConnect);
-    }
+    connectServer.setAutoConnect(autoConnect);
   }
 
   public String[] getConnectionCredentials() {
@@ -230,8 +220,16 @@ public class ClusterModel implements IClusterModel {
     sb.append(isConnected());
     sb.append(", ready=");
     sb.append(isReady());
-    sb.append(", active-server=");
-    sb.append(getActiveCoordinator());
+    sb.append(", active-server='");
+    IServer activeCoord = getActiveCoordinator();
+    sb.append(activeCoord != null ? activeCoord.dump() : "null");
+    sb.append("'");
+    sb.append(", connect-server='");
+    sb.append(connectServer != null ? connectServer.dump() : "null");
+    sb.append("'");
+    sb.append(", mirror-groups='");
+    sb.append(serverGroups != null ? Arrays.asList(serverGroups) : "null");
+    sb.append("'");
     return sb.toString();
   }
 
@@ -539,6 +537,9 @@ public class ClusterModel implements IClusterModel {
       this.connected = connected;
     }
     firePropertyChange(PROP_CONNECTED, oldConnected, connected);
+    if (!connected) {
+      tearDownGroups();
+    }
   }
 
   public synchronized boolean isConnected() {
@@ -615,10 +616,7 @@ public class ClusterModel implements IClusterModel {
     return result;
   }
 
-  public synchronized void tearDown() {
-    connectServer.removePropertyChangeListener(connectServerListener);
-    connectServer.tearDown();
-    connectServer = null;
+  private synchronized void tearDownGroups() {
     if (serverGroups != null) {
       for (IServerGroup group : serverGroups) {
         group.removeServerStateListener(serverStateListenerDelegate);
@@ -627,6 +625,13 @@ public class ClusterModel implements IClusterModel {
       }
       serverGroups = null;
     }
+  }
+
+  public synchronized void tearDown() {
+    connectServer.removePropertyChangeListener(connectServerListener);
+    connectServer.tearDown();
+    connectServer = null;
+    tearDownGroups();
     connectServerListener = null;
     activeCoordinatorListener = null;
     serverStateListenerDelegate = null;
@@ -666,8 +671,6 @@ public class ClusterModel implements IClusterModel {
 
   class ConnectServerListener implements PropertyChangeListener {
     public void propertyChange(PropertyChangeEvent evt) {
-      if (!isConnectListening) { throw new RuntimeException(
-                                                            "ConnectServerListener.propertyChange called when not listening"); }
       String prop = evt.getPropertyName();
       if (IServer.PROP_CONNECT_ERROR.equals(prop)) {
         setConnectError(connectServer.getConnectError());
@@ -710,6 +713,8 @@ public class ClusterModel implements IClusterModel {
         setReady(determineReady());
       } else if (IServerGroup.PROP_CONNECTED.equals(prop)) {
         setConnected(determineConnected());
+      } else if (IClusterModelElement.PROP_READY.equals(prop)) {
+        setReady(determineReady());
       }
     }
   }

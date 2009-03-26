@@ -44,6 +44,7 @@ public final class ConnectDialog extends JDialog implements HierarchyListener {
   public static final long           CONNECT_TIMEOUT_MILLIS         = Long.getLong("com.tc.admin.connect-timeout",
                                                                                    DEFAULT_CONNECT_TIMEOUT_MILLIS)
                                                                         .longValue();
+  private static final int           HIDE_TIMER_DELAY_MILLIS        = 650;
 
   private IClusterModel              clusterModel;
   private long                       timeout;
@@ -97,7 +98,7 @@ public final class ConnectDialog extends JDialog implements HierarchyListener {
       }
     });
 
-    hideTimer = new Timer(10, new DialogCloserTask());
+    hideTimer = new Timer(HIDE_TIMER_DELAY_MILLIS, new DialogCloserTask());
     hideTimer.setRepeats(false);
 
     addWindowListener(new WindowAdapter() {
