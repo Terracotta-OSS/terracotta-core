@@ -493,33 +493,6 @@ modules:
         - simulator
         - thirdparty
         - thirdparty-api
-  - dso-tests-jdk15:
-      options:
-        jdk: J2SE-1.5
-      dependencies:
-        - aspectwerkz
-        - common
-        - common-api
-        - license-common
-        - deploy
-        - deploy-api
-        - dso-common
-        - dso-common-jdk16
-        - dso-l1
-        - dso-l1-api
-        - dso-cluster-api
-        - dso-l2
-        - dso-l2-common
-        - dso-statistics
-        - dso-statistics-api
-        - dso-cluster-api
-        - dso-system-tests
-        - legacy-test-tree
-        - management
-        - management-api
-        - simulator
-        - thirdparty
-        - thirdparty-api
   - dso-crash-tests:
       options:
         jdk: J2SE-1.5
@@ -541,7 +514,6 @@ modules:
         - dso-statistics
         - dso-statistics-api
         - dso-system-tests
-        - dso-tests-jdk15
         - legacy-test-tree
         - management
         - management-api
@@ -696,7 +668,6 @@ module-groups:
     - dso-l2
     - deploy
     - simulator   
-    - dso-tests-jdk15
     - dso-crash-tests
   dso2:
     - legacy-test-tree  

@@ -1,2 +1,0 @@
-include-dso-boot-jar=true
-test.tc.properties=com/tc/properties/tests.properties
