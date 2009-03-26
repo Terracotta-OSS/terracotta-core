@@ -4,3 +4,9 @@ LinkedQueueTest
 FastReadSlowWriteTest
 SimplePrimitiveArrayTest
 MaxConnectionTest
+ConcurrentHashMapGCTest
+#LinkedBlockingQueueGCTest
+ConcurrentHashMapLoadTest
+FutureTaskTest
+ReentrantReadWriteLockTest
+

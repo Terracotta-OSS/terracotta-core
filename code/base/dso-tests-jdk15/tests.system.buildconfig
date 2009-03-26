@@ -1,4 +1,0 @@
-include-dso-boot-jar=true
-timeout=1800
-test.tc.properties=com/tc/properties/tests.properties
-jvmargs=-Xms128m,-Xmx512m
