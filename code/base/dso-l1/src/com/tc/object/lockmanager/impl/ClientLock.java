@@ -70,6 +70,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
   private final ClientLockStatManager     lockStatManager;
   private final String                    lockObjectType;
   private TimerTask                       recallTimerTask;
+  private boolean                         pinned                   = false;
 
   ClientLock(LockID lockID, String lockObjectType, RemoteLockManager remoteLockManager, TCLockTimer waitTimer,
              ClientLockStatManager lockStatManager) {
@@ -828,6 +829,25 @@ class ClientLock implements TimerCallback, LockFlushCallback {
     }
   }
 
+  public synchronized void pin() {
+    if (!pinned) {
+      pinned = true;
+    }
+  }
+  
+  public synchronized boolean unpin() {
+    if (pinned) {
+      pinned = false;
+      return (useCount == 0);
+    } else {
+      return false;
+    }
+  }
+  
+  public synchronized boolean pinned() {
+    return pinned;
+  }
+  
   private void flush() {
     remoteLockManager.flush(lockID);
   }
@@ -1134,7 +1154,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
   }
 
   public synchronized boolean isClear() {
-    return (holders.isEmpty() && greediness.isNotGreedy() && pendingLockRequests.isEmpty() && (useCount == 0));
+    return (!pinned() && holders.isEmpty() && greediness.isNotGreedy() && pendingLockRequests.isEmpty() && (useCount == 0));
   }
 
   // This method is synchronized such that we can quickly inspect for potential timeouts and only on possible
@@ -1142,8 +1162,18 @@ class ClientLock implements TimerCallback, LockFlushCallback {
   public boolean timedout(long timeoutInterval) {
     if (useCount != 0) { return false; }
     synchronized (this) {
-      return (holders.isEmpty() && greediness.isGreedy() && pendingLockRequests.isEmpty() && (useCount == 0)
+      return ((!pinned()) && holders.isEmpty() && greediness.isGreedy() && pendingLockRequests.isEmpty() && (useCount == 0)
           && ((System.currentTimeMillis() - timeUsed) > timeoutInterval));
+    }
+  }
+
+  public boolean isEvictable() {
+    if (useCount != 0) {
+      return false;
+    } else {
+      synchronized (this) {
+        return (!pinned()) && holders.isEmpty() && greediness.isGreedy() && pendingLockRequests.isEmpty() && (useCount == 0);
+      }
     }
   }
 

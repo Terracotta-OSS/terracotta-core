@@ -361,7 +361,7 @@ public class ClusterPanel extends XContainer implements HyperlinkListener {
     setupConnectButton();
     setStatusLabel(adminClientContext.format(labelKey, time.toString()));
     testShowProductInfo();
-    connectSummaryLabel.setText("Connect to " + hostField.getText() + ":" + portField.getText() + " at " + time);
+    connectSummaryLabel.setText("Connected to " + hostField.getText() + ":" + portField.getText() + " at " + time);
     pagedView.setPage(CONNECTED_PAGE);
   }
 
@@ -432,7 +432,7 @@ public class ClusterPanel extends XContainer implements HyperlinkListener {
     statusView.setIndicator(clusterNode.getServerStatusColor());
     statusView.setVisible(true);
     statusView.revalidate();
-    statusView.repaint();
+    statusView.paintImmediately(0, 0, statusView.getWidth(), statusView.getHeight());
   }
 
   boolean isProductInfoShowing() {

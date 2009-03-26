@@ -96,7 +96,7 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
     super(appContext);
 
     this.clusterModel = clusterModel;
-    setName(clusterModel.toString());
+    setName(clusterModel.getName());
 
     messagePanel = createMessagePanel();
 

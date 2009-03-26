@@ -47,7 +47,7 @@ public class LogViewer extends XContainer {
   }
 
   public void select(IClusterModel clusterModel) {
-    String pageName = clusterModel.toString();
+    String pageName = clusterModel.getName();
     if (!pagedView.hasPage(pageName)) {
       pageName = EMPTY_PAGE;
     }

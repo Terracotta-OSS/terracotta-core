@@ -34,16 +34,16 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableCellRenderer;
 
 public class ServerPanel extends XContainer {
-  private ApplicationContext   appContext;
-  private IServer              server;
-  private final ServerListener serverListener;
-  private XTabbedPane          tabbedPane;
-  private StatusView           statusView;
-  private XContainer           restartInfoItem;
-  private PropertyTable        propertyTable;
-  private XTextArea            environmentTextArea;
-  private XTextArea            configTextArea;
-  private ServerLoggingPanel   loggingPanel;
+  private ApplicationContext appContext;
+  private IServer            server;
+  private ServerListener     serverListener;
+  private XTabbedPane        tabbedPane;
+  private StatusView         statusView;
+  private XContainer         restartInfoItem;
+  private PropertyTable      propertyTable;
+  private XTextArea          environmentTextArea;
+  private XTextArea          configTextArea;
+  private ServerLoggingPanel loggingPanel;
 
   public ServerPanel(ApplicationContext appContext, IServer server) {
     super(new BorderLayout());
@@ -450,8 +450,11 @@ public class ServerPanel extends XContainer {
   }
 
   void setConnectExceptionMessage(String msg) {
-    setStatusLabel(msg);
-    setTabbedPaneEnabled(false);
+    IServer theServer = getServer();
+    if (theServer != null) {
+      setStatusLabel(msg);
+      setTabbedPaneEnabled(false);
+    }
   }
 
   void setStatusLabel(String text) {
@@ -508,12 +511,15 @@ public class ServerPanel extends XContainer {
 
   @Override
   public synchronized void tearDown() {
+    server.removePropertyChangeListener(serverListener);
+    serverListener.tearDown();
     statusView.tearDown();
 
     super.tearDown();
 
     appContext = null;
     server = null;
+    serverListener = null;
     propertyTable = null;
     statusView = null;
     tabbedPane = null;

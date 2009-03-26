@@ -62,7 +62,7 @@ bundled_components:
               - dso-statistics-api
               - management-api      
         - tim-api-api.version:
-                            # install in 'api-jars' folder so it can be deleted later
+            # install in 'api-jars' folder so it can be deleted later
             install_directory: api-jars
             modules:
               - common-api
@@ -72,7 +72,7 @@ bundled_components:
               - modules-base
               - thirdparty-api
         - test-api-api.version:
-                            # install in 'api-jars' folder so it can be deleted later
+            # install in 'api-jars' folder so it can be deleted later
             install_directory: api-jars
             source: tests.base
             filter: "**/*TestApp.class"

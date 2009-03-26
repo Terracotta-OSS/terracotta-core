@@ -23,8 +23,9 @@ import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
 
 public class ServerStat {
-  private static final String   UNKNOWN      = "unknown";
-  private static final String   NEWLINE      = System.getProperty("line.separator");
+  private static final String   UNKNOWN          = "unknown";
+  private static final String   NEWLINE          = System.getProperty("line.separator");
+  private static final int      DEFAULT_JMX_PORT = 9520;
 
   public String                 host;
   public int                    port;
@@ -33,7 +34,7 @@ public class ServerStat {
 
   private TCServerInfoMBean     infoBean;
   private boolean               connected;
-  private String                errorMessage = "";
+  private String                errorMessage     = "";
 
   public ServerStat(String host, int port) {
     this.host = host;
@@ -94,7 +95,8 @@ public class ServerStat {
 
     CommandLineBuilder commandLineBuilder = new CommandLineBuilder(ServerStat.class.getName(), args);
 
-    commandLineBuilder.addOption("s", true, "Terracotta server instance list (comma separated)", String.class, false, "list");
+    commandLineBuilder.addOption("s", true, "Terracotta server instance list (comma separated)", String.class, false,
+                                 "list");
     commandLineBuilder.addOption("f", true, "Terracotta tc-config file", String.class, false, "file");
     commandLineBuilder.addOption("h", "help", String.class, false);
     commandLineBuilder.setUsageMessage(usage);
@@ -134,7 +136,8 @@ public class ServerStat {
       String host = servers[i].getHost();
       if ("%h".equals(host)) host = ParameterSubstituter.getHostname();
       if ("%i".equals(host)) host = ParameterSubstituter.getIpAddress();
-      ServerStat stat = new ServerStat(host, servers[i].getJmxPort());
+      int jmxPort = servers[i].getJmxPort() == 0 ? DEFAULT_JMX_PORT : servers[i].getJmxPort();
+      ServerStat stat = new ServerStat(host, jmxPort);
       System.out.println(stat.toString());
     }
   }
@@ -154,7 +157,7 @@ public class ServerStat {
   // info = host | host:port
   private static void printStat(String info) {
     String host = info;
-    int port = 9520;
+    int port = DEFAULT_JMX_PORT;
     if (info.indexOf(':') > 0) {
       String[] args = info.split(":");
       host = args[0];

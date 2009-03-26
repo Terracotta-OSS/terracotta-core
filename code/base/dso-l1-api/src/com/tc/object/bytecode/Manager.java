@@ -136,6 +136,12 @@ public interface Manager {
    */
   public void commitLock(String lockName);
 
+  public void pinLock(String lockName);
+  
+  public void unpinLock(String lockName);
+  
+  public void evictLock(String lockName);
+  
   /**
    * Look up object by ID, faulting into the JVM if necessary
    *

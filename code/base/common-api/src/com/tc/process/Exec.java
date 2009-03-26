@@ -48,7 +48,11 @@ public class Exec {
 
   public static Result execute(String cmd[], String outputLog, byte[] input, File workingDir) throws Exception {
     Process process = Runtime.getRuntime().exec(cmd, null, workingDir);
+    return execute(process, cmd, outputLog, input, workingDir);
+  }
 
+  public static Result execute(Process process, String cmd[], String outputLog, byte[] input, File workingDir)
+      throws Exception {
     Thread inputThread = new InputPumper(input == null ? new byte[] {} : input, process.getOutputStream());
 
     StreamCollector stderr = null;

@@ -8,11 +8,12 @@ import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.ActiveServerGroupsConfig;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
+import com.tc.net.GroupID;
+import com.tc.net.OrderedGroupIDs;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.groups.Node;
 import com.tc.net.groups.ServerGroup;
 import com.tc.object.config.schema.NewL2DSOConfig;
-import com.tc.util.ActiveCoordinatorHelper;
 import com.tc.util.Assert;
 
 import java.util.HashSet;
@@ -36,8 +37,23 @@ public class HaConfigImpl implements HaConfig {
     for (int i = 0; i < groupCount; i++) {
       this.groups[i] = new ServerGroup(groupsConfig.getActiveServerGroupArray()[i]);
     }
-    int coodinatorIndex = ActiveCoordinatorHelper.getCoordinatorGroup(groupsConfig.getActiveServerGroupArray());
-    this.activeCoordinatorGroup = coodinatorIndex != -1 ? this.groups[coodinatorIndex] : null;
+    // Create GroupIds array and get the active-coordinator group id
+    GroupID[] grpIds = new GroupID[groupCount];
+    for (int i = 0; i < groupCount; i++) {
+      grpIds[i] = groups[i].getGroupId();
+    }
+    GroupID activeCoordinatorGroupId = new OrderedGroupIDs(grpIds).getActiveCoordinatorGroup();
+    ServerGroup tempServerGrp = null;
+    // Search for the group id which matches activeCoordinator GroupId
+    for (int i = 0; i < groupCount; i++) {
+      if (activeCoordinatorGroupId.equals(groups[i].getGroupId())) {
+        tempServerGrp = groups[i];
+        break;
+      }
+    }
+
+    this.activeCoordinatorGroup = tempServerGrp;
+    Assert.assertNotNull(this.activeCoordinatorGroup);
 
     this.thisGroupNodes = makeThisGroupNodes();
     this.allNodes = makeAllNodes();

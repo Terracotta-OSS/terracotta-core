@@ -159,7 +159,11 @@ public class Module extends AbstractModule implements Installable {
   }
 
   public String apiVersion() {
-    return attributesHelper.getAttrValueAsString("api-version", null);
+    if(attributes.containsKey("api-version")) {
+      return attributesHelper.getAttrValueAsString("api-version", null);
+    } else {
+      return VersionMatcher.ANY_VERSION;
+    }
   }
 
   public String vendor() {

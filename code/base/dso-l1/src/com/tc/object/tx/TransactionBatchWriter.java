@@ -126,8 +126,8 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     return removed;
   }
 
-  private TransactionBufferImpl getOrCreateBuffer(ClientTransaction txn, SequenceGenerator sequenceGenerator,
-                                                  TransactionIDGenerator tidGenerator) {
+  private TransactionBuffer getOrCreateBuffer(ClientTransaction txn, SequenceGenerator sequenceGenerator,
+                                              TransactionIDGenerator tidGenerator) {
     if (this.foldingEnabled) {
       final boolean exceedsLimits = exceedsLimits(txn);
 
@@ -238,7 +238,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
       logger.info("NOT folding, created new sequence " + sid);
     }
 
-    TransactionBufferImpl txnBuffer = createTransactionBuffer(sid, newOutputStream(), this.serializer, this.encoding);
+    TransactionBuffer txnBuffer = createTransactionBuffer(sid, newOutputStream(), this.serializer, this.encoding);
 
     if (this.foldingEnabled) {
       // copy the locks since the internal list might be mutated later if locks are nested and lock commits are out of
@@ -255,9 +255,9 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
   }
 
   // Overridden in active-active
-  protected TransactionBufferImpl createTransactionBuffer(SequenceID sid, TCByteBufferOutputStream newOutputStream,
-                                                          ObjectStringSerializer objectStringserializer,
-                                                          DNAEncoding dnaEncoding) {
+  protected TransactionBuffer createTransactionBuffer(SequenceID sid, TCByteBufferOutputStream newOutputStream,
+                                                      ObjectStringSerializer objectStringserializer,
+                                                      DNAEncoding dnaEncoding) {
     return new TransactionBufferImpl(sid, newOutputStream, objectStringserializer, dnaEncoding);
   }
 
@@ -318,7 +318,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
 
     removeEmptyDeltaDna(txn);
 
-    TransactionBufferImpl txnBuffer = getOrCreateBuffer(txn, sequenceGenerator, tidGenerator);
+    TransactionBuffer txnBuffer = getOrCreateBuffer(txn, sequenceGenerator, tidGenerator);
 
     this.bytesWritten += txnBuffer.write(txn);
 
@@ -620,7 +620,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
       }
     }
 
-    int getTxnCount() {
+    public int getTxnCount() {
       return this.txnCount;
     }
 
@@ -630,14 +630,14 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
   }
 
   private static class FoldingKey {
-    private final List                  lockIDs;
-    private final Set                   objectIDs;
-    private final TxnType               txnType;
-    private final TransactionBufferImpl buffer;
-    private boolean                     closed;
+    private final List              lockIDs;
+    private final Set               objectIDs;
+    private final TxnType           txnType;
+    private final TransactionBuffer buffer;
+    private boolean                 closed;
 
-    FoldingKey(TransactionBufferImpl buffer, TxnType txnType, List lockIDs, Set objectIDs) {
-      this.buffer = buffer;
+    FoldingKey(TransactionBuffer txnBuffer, TxnType txnType, List lockIDs, Set objectIDs) {
+      this.buffer = txnBuffer;
       this.txnType = txnType;
       this.lockIDs = lockIDs;
       this.objectIDs = objectIDs;
@@ -666,7 +666,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
              || CollectionUtils.containsAny(this.objectIDs, oids);
     }
 
-    public TransactionBufferImpl getBuffer() {
+    public TransactionBuffer getBuffer() {
       return this.buffer;
     }
 

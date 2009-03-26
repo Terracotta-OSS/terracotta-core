@@ -63,6 +63,12 @@ public interface ClientLockManager extends DumpHandler, PrettyPrintable, ClientH
    */
   public void recall(LockID lockID, ThreadID threadID, int level, int leaseTimeInMs);
 
+  public void pinLock(LockID lockId);
+  
+  public void unpinLock(LockID lockId);
+  
+  public void evictLock(LockID lockId);
+  
   public void addAllLocksTo(LockInfoByThreadID lockInfo);
 
   public int queueLength(LockID lockID, ThreadID threadID);

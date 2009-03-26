@@ -6,6 +6,7 @@ package com.tc.net.groups;
 
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.NewHaConfig;
+import com.tc.net.GroupID;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -14,7 +15,7 @@ import java.util.Map;
 
 public class ServerGroup {
 
-  private final int         groupId;
+  private final GroupID     groupId;
   private final String[]    members;
   private final NewHaConfig haMode;
   private final Map         nodes;
@@ -26,7 +27,7 @@ public class ServerGroup {
     this.nodes = new HashMap();
   }
 
-  public int getGroupId() {
+  public GroupID getGroupId() {
     return groupId;
   }
 
@@ -84,7 +85,7 @@ public class ServerGroup {
   }
 
   public int hashCode() {
-    return groupId;
+    return groupId.toInt();
   }
 
   public String toString() {

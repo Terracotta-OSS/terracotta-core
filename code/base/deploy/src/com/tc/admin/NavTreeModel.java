@@ -19,7 +19,7 @@ public class NavTreeModel extends XTreeModel {
   public NavTreeModel(IAdminClientContext adminClientContext) {
     super();
 
-    Preferences prefs = adminClientContext.getPrefs().node("AdminClient");
+    Preferences prefs = adminClientContext.getPrefs();
     Preferences serverPrefs = prefs.node(SERVERS);
     PrefsHelper prefsHelper = PrefsHelper.getHelper();
     String[] children = prefsHelper.childrenNames(serverPrefs);

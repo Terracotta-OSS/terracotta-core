@@ -26,6 +26,7 @@ import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XTextPane;
 import com.tc.admin.model.PolledAttributeListener;
 import com.tc.admin.model.PolledAttributesResult;
+import com.tc.admin.options.RuntimeStatsOption;
 import com.tc.management.RuntimeStatisticConstants;
 
 import java.awt.BorderLayout;
@@ -65,7 +66,6 @@ import javax.swing.text.html.HTML;
 public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisticConstants, PolledAttributeListener,
     PreferenceChangeListener, HierarchyListener {
   protected ApplicationContext          appContext;
-
   protected XContainer                  chartsPanel;
   private XButton                       manageMonitoringButton;
   private XButton                       clearSamplesButton;
@@ -141,8 +141,8 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
       add(bottomPanel, BorderLayout.SOUTH);
     }
 
-    Preferences prefs = appContext.getPrefs().node("RuntimeStats");
-    prefs.addPreferenceChangeListener(this);
+    Preferences runtimeStatsPrefs = appContext.getPrefs().node(RuntimeStatsOption.NAME);
+    runtimeStatsPrefs.addPreferenceChangeListener(this);
 
     addHierarchyListener(this);
   }
@@ -204,7 +204,9 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
 
   private class ConfigureOptionsAction implements ActionListener {
     public void actionPerformed(ActionEvent ae) {
-      appContext.getApplicationController().showOption("RuntimeStats");
+      if (appContext != null) {
+        appContext.getApplicationController().showOption(RuntimeStatsOption.NAME);
+      }
     }
   }
 
@@ -382,7 +384,11 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
   }
 
   private int getIntPref(String key, int defaultValue) {
-    return appContext.getPrefs().node("RuntimeStats").getInt(key, defaultValue);
+    if (appContext != null) {
+      return appContext.getPrefs().node(RuntimeStatsOption.NAME).getInt(key, defaultValue);
+    } else {
+      return defaultValue;
+    }
   }
 
   private void setRuntimeStatsPollPeriodSeconds(int seconds) {
@@ -465,6 +471,8 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
 
   @Override
   public synchronized void tearDown() {
+    Preferences runtimeStatsPrefs = appContext.getPrefs().node(RuntimeStatsOption.NAME);
+    runtimeStatsPrefs.removePreferenceChangeListener(this);
     removeHierarchyListener(this);
     stopMonitoringRuntimeStats();
 

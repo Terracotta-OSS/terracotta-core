@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package org.terracotta.dso.actions;
 
@@ -11,38 +12,47 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
 import com.tc.admin.common.BrowserLauncher;
+import com.tc.util.ProductInfo;
 
-public class ContactTerracottaAction extends Action
-  implements IActionDelegate,
-             IWorkbenchWindowActionDelegate
-{
+import java.text.MessageFormat;
+
+public class ContactTerracottaAction extends Action implements IActionDelegate, IWorkbenchWindowActionDelegate {
   public ContactTerracottaAction() {
     super();
   }
 
+  private static String getKitID() {
+    String kitID = ProductInfo.getInstance().kitID();
+    if (kitID == null || ProductInfo.UNKNOWN_VALUE.equals(kitID)) {
+      if ((kitID = System.getProperty("com.tc.kitID")) == null) {
+        kitID = "3.0";
+      }
+    }
+    return kitID;
+  }
+
   public void run(IAction action) {
-    String id  = action.getId();
+    String id = action.getId();
     String url = null;
-    
-    if(id.equals("visitForumsAction")) {
-      url = "http://www.terracottatech.com/forums/";
-    }
-    else if(id.equals("contactSupportAction")) {
-      url = "http://www.terracottatech.com/support_services.shtml";
-    }
-    else if(id.equals("contactFieldAction")) {
-      url = "http://www.terracottatech.com/contact/field/";
-    }
-    else if(id.equals("contactSalesAction")) {
-      url = "http://www.terracottatech.com/contact/";
+    String kitID = getKitID();
+
+    if (id.equals("visitForumsAction")) {
+      url = MessageFormat.format("http://www.terracotta.org/kit/reflector?kitID={0}&pageID=Forums", kitID);
+    } else if (id.equals("contactSupportAction")) {
+      url = MessageFormat.format("http://www.terracotta.org/kit/reflector?kitID={0}&pageID=SupportServices", kitID);
     }
 
-    if(url != null) {
+    if (url != null) {
       BrowserLauncher.openURL(url);
     }
   }
 
-  public void selectionChanged(IAction action, ISelection selection) {/**/}
-  public void dispose() {/**/}
-  public void init(IWorkbenchWindow window) {/**/}
+  public void selectionChanged(IAction action, ISelection selection) {/**/
+  }
+
+  public void dispose() {/**/
+  }
+
+  public void init(IWorkbenchWindow window) {/**/
+  }
 }

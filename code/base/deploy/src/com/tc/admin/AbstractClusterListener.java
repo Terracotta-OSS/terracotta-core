@@ -36,17 +36,33 @@ public class AbstractClusterListener implements PropertyChangeListener {
     }
 
     public void run() {
-      String prop = pce.getPropertyName();
-      if (IServer.PROP_CONNECTED.equals(prop)) {
-        handleConnected();
-      } else if (IClusterModelElement.PROP_READY.equals(prop)) {
-        handleReady();
-      } else if (IClusterModel.PROP_ACTIVE_COORDINATOR.equals(prop)) {
-        IServer oldActive = (IServer) pce.getOldValue();
-        IServer newActive = (IServer) pce.getNewValue();
-        handleActiveCoordinator(oldActive, newActive);
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
+      try {
+        String prop = pce.getPropertyName();
+        if (IClusterModel.PROP_CONNECT_ERROR.equals(prop)) {
+          Exception connectError = (Exception) pce.getNewValue();
+          if (connectError != null) {
+            handleConnectError(connectError);
+          }
+        } else if (IClusterModel.PROP_CONNECTED.equals(prop)) {
+          handleConnected();
+        } else if (IClusterModelElement.PROP_READY.equals(prop)) {
+          handleReady();
+        } else if (IClusterModel.PROP_ACTIVE_COORDINATOR.equals(prop)) {
+          IServer oldActive = (IServer) pce.getOldValue();
+          IServer newActive = (IServer) pce.getNewValue();
+          handleActiveCoordinator(oldActive, newActive);
+        }
+      } catch (Exception e) {
+        handleUncaughtError(e);
       }
     }
+  }
+
+  protected void handleUncaughtError(Exception e) {
+    e.printStackTrace();
   }
 
   public void propertyChange(PropertyChangeEvent evt) {
@@ -61,6 +77,10 @@ public class AbstractClusterListener implements PropertyChangeListener {
     } else {
       SwingUtilities.invokeLater(r);
     }
+  }
+
+  protected void handleConnectError(Exception e) {
+    /* override */
   }
 
   protected void handleConnected() {

@@ -20,6 +20,7 @@ public class ServerGroup implements IServerGroup {
   private final String                name;
   private final int                   id;
   private boolean                     connected;
+  private boolean                     ready;
 
   private IServer                     activeServer;
   private final PropertyChangeSupport propertyChangeSupport;
@@ -95,6 +96,7 @@ public class ServerGroup implements IServerGroup {
     if (theActiveServer != null) {
       theActiveServer.addPropertyChangeListener(activeServerListener);
     }
+    setReady(determineReady());
   }
 
   private IServer _setActiveServer(IServer server) {
@@ -147,6 +149,19 @@ public class ServerGroup implements IServerGroup {
     }
   }
 
+  protected void setReady(boolean ready) {
+    boolean oldReady;
+    synchronized (this) {
+      oldReady = isReady();
+      this.ready = ready;
+    }
+    firePropertyChange(PROP_READY, oldReady, ready);
+  }
+
+  public synchronized boolean isReady() {
+    return ready;
+  }
+
   private class ServerPropertyChangeListener implements PropertyChangeListener {
     public void propertyChange(PropertyChangeEvent evt) {
       String prop = evt.getPropertyName();
@@ -157,6 +172,8 @@ public class ServerGroup implements IServerGroup {
           setActiveServer(server);
         }
         setConnected(determineConnected());
+      } else if (IClusterModelElement.PROP_READY.equals(prop)) {
+        setReady(determineReady());
       }
     }
   }
@@ -237,6 +254,10 @@ public class ServerGroup implements IServerGroup {
     sb.append(name);
     sb.append(", id=");
     sb.append(id);
+    sb.append(", connected=");
+    sb.append(connected);
+    sb.append(", ready=");
+    sb.append(ready);
     sb.append(", isCoordinator=");
     sb.append(isCoordinator);
     sb.append(", members=");
@@ -248,18 +269,13 @@ public class ServerGroup implements IServerGroup {
       sb.append("], ");
     }
     sb.append("activeServer=");
-    IServer theActiveServer = getActiveServer();
-    if (theActiveServer != null) {
-      sb.append(theActiveServer.dump());
-    } else {
-      sb.append("null");
-    }
+    sb.append(getActiveServer());
     return sb.toString();
   }
 
-  public boolean isReady() {
+  private boolean determineReady() {
     IServer theActiveServer = getActiveServer();
-    return theActiveServer != null;
+    return theActiveServer != null && theActiveServer.isReady();
   }
 
   private boolean determineConnected() {

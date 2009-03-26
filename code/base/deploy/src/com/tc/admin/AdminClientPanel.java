@@ -130,7 +130,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     tree = new NavTree();
     nodeView = new XContainer(new BorderLayout());
 
-    XSplitPane leftSplitter = new XSplitPane(JSplitPane.HORIZONTAL_SPLIT, tree, nodeView);
+    XSplitPane leftSplitter = new XSplitPane(JSplitPane.HORIZONTAL_SPLIT, new XScrollPane(tree), nodeView);
     leftSplitter.setDefaultDividerLocation(0.23);
     leftSplitter.setName("LeftSplitter");
     leftSplitter.setPreferences(getPreferences().node(leftSplitter.getName()));
@@ -459,7 +459,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     XRootNode root = tree.getRootNode();
     int count = root.getChildCount();
     PrefsHelper helper = PrefsHelper.getHelper();
-    Preferences prefs = adminClientContext.getPrefs().node("AdminClient");
+    Preferences prefs = adminClientContext.getPrefs();
     Preferences serverPrefs = prefs.node(ServersHelper.SERVERS);
     Preferences serverPref;
 
@@ -538,7 +538,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       tree.setSelectionPath(path);
 
       PrefsHelper helper = PrefsHelper.getHelper();
-      Preferences prefs = adminClientContext.getPrefs().node("AdminClient");
+      Preferences prefs = adminClientContext.getPrefs();
       Preferences servers = prefs.node(ServersHelper.SERVERS);
       int count = helper.childrenNames(servers).length;
 

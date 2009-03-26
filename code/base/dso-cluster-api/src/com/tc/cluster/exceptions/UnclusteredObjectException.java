@@ -4,6 +4,11 @@
  */
 package com.tc.cluster.exceptions;
 
+/**
+ * This exception is thrown when an operation was performed on an object that is expected to be clustered through DSO.
+ *
+ * @since 3.0.0
+ */
 public class UnclusteredObjectException extends RuntimeException {
 
   private final Object unclusteredObject;
@@ -12,6 +17,11 @@ public class UnclusteredObjectException extends RuntimeException {
     this.unclusteredObject = unclusteredObject;
   }
 
+  /**
+   * Returns the unclustered object
+   *
+   * @return the unclustered object
+   */
   public Object getUnclusteredObject() {
     return unclusteredObject;
   }

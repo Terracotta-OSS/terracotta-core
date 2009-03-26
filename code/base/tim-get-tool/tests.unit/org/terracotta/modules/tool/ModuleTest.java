@@ -206,6 +206,46 @@ public final class ModuleTest extends TCTestCase {
     assertNotNull(module);
     assertTrue(module.versions().isEmpty());
   }
+  
+  public void testApiVersions() throws IOException {
+    Modules modules;
+    String tcVersion = "3.0.0";
+    String apiVersion = "1.0.1";
+
+    // API version 1.0.0 -> should pull in 2 versions of 2 modules each
+    modules = loadModules("/testData04.xml", tcVersion, apiVersion);
+    List<Module> list = modules.list();
+    assertEquals(4, list.size());
+
+    String version = "2.0.0";
+    Module module = modules.get("foo.bar", "abc", version);
+    assertNotNull(module);
+    assertEquals("[1.0.0,1.1.0)", module.apiVersion());
+
+    List<String> versions = module.versions();
+    assertEquals(1, versions.size());
+    assertFalse(versions.contains(version));
+    assertEquals("2.0.1", versions.get(0));
+
+    // API version 1.1.0 -> should pull in only 2 modules
+    apiVersion = "1.1.0";
+    modules = loadModules("/testData04.xml", tcVersion, apiVersion);
+    list = modules.list();
+    assertEquals(2, list.size());
+    
+    module = modules.get("foo.bar", "abc", "2.1.0");
+    assertNotNull(module);
+    assertEquals("[1.1.0,1.2.0)", module.apiVersion());
+    versions = module.versions();
+    assertEquals(0, versions.size());
+    
+    // API version 2.0.0 -> should pull in no modules
+    apiVersion = "2.0.0";
+    testConfig.setApiVersion(apiVersion);
+    modules = loadModules("/testData04.xml", tcVersion, apiVersion);
+    list = modules.list();
+    assertTrue(list.isEmpty());
+  }
 
   public void testIsLatest() throws IOException {
     Modules modules;
@@ -513,7 +553,15 @@ public final class ModuleTest extends TCTestCase {
   }
 
   private Modules loadModules(String testData, String tcVersion) throws IOException {
+    return loadModules(testData, tcVersion, "1.0.0");
+  }
+  
+  private Modules loadModules(String testData, String tcVersion, String apiVersion) throws IOException {
     testConfig.setTcVersion(tcVersion);
+    if(apiVersion != null) {
+      testConfig.setApiVersion(apiVersion);
+    }
+    
     File tmpdir = this.getTempDirectory();
     File repodir = new File(tmpdir, "modules");
     try {

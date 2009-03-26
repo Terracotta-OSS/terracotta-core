@@ -31,9 +31,9 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
 			tc-properties set via system properties 
 	-->
 
+    <property name="l2.nha.dirtydb.autoDelete" value="true"/>
     <property name="l1.cachemanager.enabled" value="true"/>
     <property name="logging.maxLogFileSize" value="1024"/>
-    <property name="l1.cachemanager.leastCount" value="9000"/>
   </tc-properties>
   
   <!-- The 'system' section contains configuration data that affects the
@@ -301,7 +301,37 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
         </garbage-collection>
       </dso>
     </server>
-    
+    <!-- This section lets you divide your servers in groups. Each 
+        group can be composed of one or more servers out of which 1 server 
+        will act as an Active server i.e. each group will have 1 Active 
+        server. You can omit this section if you want to have only
+        1 Active server in the cluster. 
+    --> 
+    <mirror-groups>
+      <!-- Each group can also be assigned a group name. Each group has members 
+        which are actually the "name" of the server specified above in the server section.
+        More than one member can be present in a mirror group.
+      -->
+      <mirror-group group-name="group1">
+        <members>
+          <member>server1</member>
+        </members>
+        <!-- Each group can have its own ha, otherwise it is taken as the common
+            ha defined
+        -->
+        <ha>
+          <mode>networked-active-passive</mode>
+          <networked-active-passive>
+            <election-time>5</election-time>
+          </networked-active-passive>
+        </ha>
+       </mirror-group>
+       <mirror-group>
+         <members>
+           <member>server2</member>
+         </members>
+       </mirror-group>
+    </mirror-groups>     
     <!-- This section allows you to indicate properties associated 
        with running your servers in active-passive mode. The properties 
        apply to all servers defined. You can omit this section, in which 
@@ -559,8 +589,8 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
             <!-- One of either <execute> or <method> is required within an <on-load> element -->
 
             <!-- This (zero argument) method will be called on instances of the specified class
-               on load of the object. Used to intialize transient fields. You are free to use
-               whatever method name you please. -->
+               on load of the object. Used to initialize transient fields. Use any method name
+               you have designated for on-load execution. -->
             <!-- <method>initTransients</method> -->
 
             <!-- This bean shell script is called right after an object is loaded -->

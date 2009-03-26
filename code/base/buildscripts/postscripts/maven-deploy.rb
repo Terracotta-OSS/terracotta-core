@@ -15,6 +15,10 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
       maven = MavenDeploy.new(:repository_url => repo,
         :repository_id => config_source[MAVEN_REPO_ID_CONFIG_KEY],
         :snapshot => config_source[MAVEN_SNAPSHOT_CONFIG_KEY])
+
+      # rudementary check to make sure we're not missing an artifact by mistake
+      fail("Expecting to deploy 9 TC maven artifacts but found only #{args.size}") unless args.size == 9
+
       args.each do |arg|
         next unless arg
         if arg['file']
@@ -33,10 +37,10 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
             # Inject resource into jar
             inject_file = FilePath.new(product_directory, interpolate(inject))
             ant.create_jar(replacement_file,
-                         :update => 'true',
-                         :basedir => inject_file.directoryname,
-                         :includes => inject_file.filename)
-            end
+              :update => 'true',
+              :basedir => inject_file.directoryname,
+              :includes => inject_file.filename)
+          end
         end
 
         group = arg['groupId']

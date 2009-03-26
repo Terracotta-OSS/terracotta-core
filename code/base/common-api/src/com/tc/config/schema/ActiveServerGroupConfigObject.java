@@ -13,6 +13,7 @@ import com.tc.config.schema.repository.ChildBeanRepository;
 import com.tc.config.schema.repository.MutableBeanRepository;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.StandardL2TVSConfigurationSetupManager;
+import com.tc.net.GroupID;
 import com.tc.util.ActiveCoordinatorHelper;
 import com.terracottatech.config.Ha;
 import com.terracottatech.config.Members;
@@ -30,18 +31,15 @@ public class ActiveServerGroupConfigObject extends BaseNewConfigObject implement
   // "active-server-groups/active-server-group[@id]")).getBigIntegerValue().intValue();
   public static final int     defaultGroupId = 0;
 
-  private final int           groupId;
+  private GroupID             groupId;
   private final NewHaConfig   haConfig;
   private final MembersConfig membersConfig;
   private final String        grpName;
 
-  public ActiveServerGroupConfigObject(ConfigContext context, StandardL2TVSConfigurationSetupManager setupManager,
-                                       int groupId) {
+  public ActiveServerGroupConfigObject(ConfigContext context, StandardL2TVSConfigurationSetupManager setupManager) {
     super(context);
     context.ensureRepositoryProvides(MirrorGroup.class);
     MirrorGroup group = (MirrorGroup) context.bean();
-
-    this.groupId = groupId;
 
     String groupName = group.getGroupName();
     if (groupName == null) {
@@ -52,6 +50,10 @@ public class ActiveServerGroupConfigObject extends BaseNewConfigObject implement
 
     membersConfig = new MembersConfigObject(createContext(setupManager, true, group));
     haConfig = new NewHaConfigObject(createContext(setupManager, false, group));
+  }
+
+  public void setGroupId(GroupID groupId) {
+    this.groupId = groupId;
   }
 
   public NewHaConfig getHa() {
@@ -66,7 +68,7 @@ public class ActiveServerGroupConfigObject extends BaseNewConfigObject implement
     return this.membersConfig;
   }
 
-  public int getGroupId() {
+  public GroupID getGroupId() {
     return this.groupId;
   }
 
@@ -92,7 +94,7 @@ public class ActiveServerGroupConfigObject extends BaseNewConfigObject implement
   }
 
   public static MirrorGroup getDefaultActiveServerGroup(DefaultValueProvider defaultValueProvider,
-                                                              MutableBeanRepository serversBeanRepository, Ha commonHa)
+                                                        MutableBeanRepository serversBeanRepository, Ha commonHa)
       throws ConfigurationSetupException {
     MirrorGroup asg = MirrorGroup.Factory.newInstance();
     asg.setHa(commonHa);

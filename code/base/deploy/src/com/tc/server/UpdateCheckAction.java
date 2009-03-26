@@ -10,8 +10,8 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
-import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.util.ProductInfo;
 
 import java.io.IOException;
@@ -28,7 +28,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 class UpdateCheckAction extends TimerTask {
-  private static final TCLogger consoleLogger         = CustomerLogging.getConsoleLogger();
+  private static final TCLogger logger                = TCLogging.getLogger(UpdateCheckAction.class);
 
   private static String         UPDATE_PROPERTIES_URL = "http://www.terracotta.org/kit/reflector?kitID=default&pageID=update.properties";
   private static ProductInfo    productInfo           = ProductInfo.getInstance();
@@ -98,7 +98,7 @@ class UpdateCheckAction extends TimerTask {
   }
 
   private void showMessage(String msg) {
-    consoleLogger.info(msg);
+    logger.info(msg);
   }
 
   public Properties getResponseBody(URL url, HttpClient client) throws ConnectException, IOException {
@@ -163,9 +163,9 @@ class UpdateCheckAction extends TimerTask {
         showMessage("Update Checker: No updates found");
       }
     } catch (RuntimeException re) {
-      consoleLogger.info("Update Checker: Check failed (" + re.getClass().getName() + ": " + re.getMessage() + ")");
+      logger.info("Update Checker: Check failed (" + re.getClass().getName() + ": " + re.getMessage() + ")");
     } catch (Exception e) {
-      consoleLogger.info("Update Checker: Check failed (" + e.getClass().getName() + ": " + e.getMessage() + ")");
+      logger.info("Update Checker: Check failed (" + e.getClass().getName() + ": " + e.getMessage() + ")");
     }
 
     showMessage("Update Checker: Next check at " + new Date(System.currentTimeMillis() + periodMillis));

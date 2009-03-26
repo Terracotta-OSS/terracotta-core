@@ -1736,10 +1736,12 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   public String dump() {
     StringBuilder sb = new StringBuilder();
     sb.append(toString());
-    sb.append(" ready: ");
+    sb.append(" ready=");
     sb.append(isReady());
-    sb.append(" isConnected: ");
+    sb.append(" isConnected=");
     sb.append(isConnected());
+    sb.append(" autoConnect=");
+    sb.append(isAutoConnect());
     return sb.toString();
   }
 

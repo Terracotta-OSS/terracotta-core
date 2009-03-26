@@ -38,6 +38,7 @@ public final class ProductInfo {
   private static final String               BUILD_DATA_ROOT_KEY          = "terracotta.build.";
   private static final String               BUILD_DATA_VERSION_KEY       = "version";
   private static final String               BUILD_DATA_MAVEN_VERSION_KEY = "maven.artifacts.version";
+  private static final String               BUILD_DATA_API_VERSION_KEY   = "api.version";
   private static final String               BUILD_DATA_EDITION_KEY       = "edition";
   private static final String               BUILD_DATA_TIMESTAMP_KEY     = "timestamp";
   private static final String               BUILD_DATA_HOST_KEY          = "host";
@@ -54,6 +55,7 @@ public final class ProductInfo {
 
   private final String                      moniker;
   private final String                      maven_version;
+  private final String                      api_version;
   private final Date                        timestamp;
   private final String                      host;
   private final String                      user;
@@ -102,6 +104,7 @@ public final class ProductInfo {
     // Get all release build properties
     this.version = getBuildProperty(properties, BUILD_DATA_VERSION_KEY, UNKNOWN_VALUE);
     this.maven_version = getBuildProperty(properties, BUILD_DATA_MAVEN_VERSION_KEY, UNKNOWN_VALUE);
+    this.api_version = getBuildProperty(properties, BUILD_DATA_API_VERSION_KEY, UNKNOWN_VALUE);
     this.edition = getBuildProperty(properties, BUILD_DATA_EDITION_KEY, OPENSOURCE);
 
     this.timestamp = parseTimestamp(getBuildProperty(properties, BUILD_DATA_TIMESTAMP_KEY, null));
@@ -197,6 +200,10 @@ public final class ProductInfo {
 
   public String mavenArtifactsVersion() {
     return maven_version;
+  }
+  
+  public String apiVersion() {
+    return api_version;
   }
 
   public String kitID() {

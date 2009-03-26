@@ -67,4 +67,16 @@ public class ThreadLockManagerImpl implements ThreadLockManager {
   public void unlock(final LockID lockID) {
     lockManager.unlock(lockID, threadIDManager.getThreadID());
   }
+
+  public void pinLock(LockID lockId) {
+    lockManager.pinLock(lockId);
+  }
+
+  public void unpinLock(LockID lockId) {
+    lockManager.unpinLock(lockId);
+  }
+
+  public void evictLock(LockID lockId) {
+    lockManager.evictLock(lockId);
+  }
 }

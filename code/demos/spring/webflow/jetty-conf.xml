@@ -14,37 +14,10 @@
       </Array>
     </Set>
 
-    <Set name="sessionIdManager">
-       <New id="tcIdMgr" class="org.mortbay.terracotta.servlet.TerracottaSessionIdManager">
-         <Arg><Ref id="Server"/></Arg>
-         <Set name="workerName">9081</Set>
-       </New>
-    </Set>
-
-    <Call name="setAttribute">
-      <Arg>tcIdMgr</Arg>
-      <Arg><Ref id="tcIdMgr"/></Arg>
-    </Call>
-
     <Set name="handler">
       <New class="org.mortbay.jetty.webapp.WebAppContext">
         <Set name="contextPath">/webflow</Set>
         <Set name="war"><SystemProperty name="webflow.dir" default="."/>/target/webflow.war</Set>
-        <Property name="Server">
-          <Call id="tcIdMgr" name="getAttribute">
-            <Arg>tcIdMgr</Arg>
-          </Call>
-        </Property>
-        <New id="tcmgr" class="org.mortbay.terracotta.servlet.TerracottaSessionManager">
-          <Set name="idManager">
-            <Ref id="tcIdMgr"/>
-          </Set>
-        </New>
-        <Set name="sessionHandler">
-          <New class="org.mortbay.terracotta.servlet.TerracottaSessionHandler">
-            <Arg><Ref id="tcmgr"/></Arg>
-          </New>
-        </Set>
       </New>
     </Set>
     

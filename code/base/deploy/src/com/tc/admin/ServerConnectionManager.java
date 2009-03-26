@@ -315,6 +315,7 @@ public class ServerConnectionManager implements NotificationListener {
       setPriority(MIN_PRIORITY);
     }
 
+    @Override
     public void run() {
       while (!cancel && !connected) {
         try {
@@ -453,6 +454,7 @@ public class ServerConnectionManager implements NotificationListener {
   }
 
   private class ConnectionMonitorAction extends TimerTask {
+    @Override
     public void run() {
       if (connectCntx != null && connectCntx.isConnected()) {
         try {
@@ -543,6 +545,7 @@ public class ServerConnectionManager implements NotificationListener {
     }
   }
 
+  @Override
   public String toString() {
     return safeGetHostName() + ":" + getJMXPortNumber();
   }
@@ -589,10 +592,12 @@ public class ServerConnectionManager implements NotificationListener {
     }
   }
 
+  @Override
   public int hashCode() {
     return new HashCodeBuilder().append(getJMXPortNumber()).append(safeGetHostName()).toHashCode();
   }
 
+  @Override
   public boolean equals(Object o) {
     if (!(o instanceof ServerConnectionManager)) return false;
 

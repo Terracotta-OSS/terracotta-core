@@ -184,8 +184,48 @@ public final class CachedModulesTest extends TestCase {
     assertEquals("0.0.6", module.version());
   }
 
+  public void testApiVersion() {
+    Modules modules;
+    String testData = "/testData04.xml";
+
+    modules = load(testData, "0.0.0", "0.0.0");
+    assertTrue(modules.listLatest().isEmpty());
+
+
+    modules = load(testData, "3.0.0", "1.0.0");
+    List<Module> list = modules.listLatest();
+    assertFalse(list.isEmpty());
+    assertEquals(2, list.size());
+    Module module = list.get(0);
+    assertEquals("foo.bar.abc", module.symbolicName());
+    assertEquals("2.0.0", module.version());
+    module = list.get(1);
+    assertEquals("foo.bar.def", module.symbolicName());
+    assertEquals("2.0.0", module.version());
+    assertEquals(2, modules.list().size());  
+    
+    modules = load(testData, "3.0.0", "1.0.1");
+    list = modules.listLatest();
+    assertFalse(list.isEmpty());
+    assertEquals(2, list.size());
+    module = list.get(0);
+    assertEquals("foo.bar.abc", module.symbolicName());
+    assertEquals("2.0.1", module.version());
+    module = list.get(1);
+    assertEquals("foo.bar.def", module.symbolicName());
+    assertEquals("2.0.1", module.version());
+    assertEquals(4, modules.list().size());  
+  }
+  
   private Modules load(String testData, String tcVersion) {
+    return load(testData, tcVersion, "1.0.0");
+  }
+    
+  private Modules load(String testData, String tcVersion, String apiVersion) {
     testConfig.setTcVersion(tcVersion);
+    if(apiVersion != null) {
+      testConfig.setApiVersion(apiVersion);
+    }
     File tmpdir = new File(System.getProperty("java.io.tmpdir"));
     try {
       return new CachedModules(testConfig, tmpdir, getClass().getResourceAsStream(testData));

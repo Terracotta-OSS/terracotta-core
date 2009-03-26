@@ -140,4 +140,16 @@ public class TestLockManager implements ClientLockManager {
   public void unpause(final NodeID remoteNode, final int disconnected) {
     throw new ImplementMe();
   }
+  
+  public void pinLock(final LockID lockId) {
+    throw new ImplementMe();
+  }
+  
+  public void unpinLock(final LockID lockId) {
+    throw new ImplementMe();
+  }
+  
+  public void evictLock(final LockID lockId) {
+    throw new ImplementMe();
+  }
 }

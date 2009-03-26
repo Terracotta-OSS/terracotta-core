@@ -16,6 +16,7 @@ public class HelpHandler extends BaseMenuCreator {
     super();
   }
 
+  @Override
   public Menu getMenu(Control parent) {
     Menu menu = null;
 
@@ -24,6 +25,7 @@ public class HelpHandler extends BaseMenuCreator {
     return menu;
   }
 
+  @Override
   public Menu getMenu(Menu parent) {
     Menu menu = null;
 
@@ -32,8 +34,19 @@ public class HelpHandler extends BaseMenuCreator {
     return menu;
   }
 
-  protected void fillMenu(Menu menu) {
+  private static String getKitID() {
     String kitID = ProductInfo.getInstance().kitID();
+    if (kitID == null || ProductInfo.UNKNOWN_VALUE.equals(kitID)) {
+      if ((kitID = System.getProperty("com.tc.kitID")) == null) {
+        kitID = "3.0";
+      }
+    }
+    return kitID;
+  }
+
+  @Override
+  protected void fillMenu(Menu menu) {
+    String kitID = getKitID();
 
     addMenuAction(menu, new HelpAction("Concept and Architecture Guide",
                                        "http://www.terracotta.org/kit/reflector?kitID=" + kitID
@@ -47,6 +60,7 @@ public class HelpHandler extends BaseMenuCreator {
                                                            + "&pageID=PluginReferenceGuide"));
   }
 
+  @Override
   protected IJavaElement getJavaElement(ISelection selection) {
     return null;
   }

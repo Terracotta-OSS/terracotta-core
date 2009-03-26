@@ -5,6 +5,7 @@
 package com.tc.test.server.appserver.deployment;
 
 import org.terracotta.modules.tool.config.Config;
+import org.terracotta.modules.tool.exception.RemoteIndexIOException;
 import org.terracotta.tools.cli.TIMGetTool;
 
 import com.tc.logging.TCLogger;
@@ -425,6 +426,7 @@ public class ServerManager {
     for (TimGetUrls urls : TIM_GET_URLS) {
       try {
         System.setProperty(Config.KEYSPACE + Config.TC_VERSION, ProductInfo.getInstance().mavenArtifactsVersion());
+        System.setProperty(Config.KEYSPACE + Config.API_VERSION, ProductInfo.getInstance().apiVersion());
         System.setProperty(Config.KEYSPACE + Config.INCLUDE_SNAPSHOTS, "true");
         System.setProperty(Config.KEYSPACE + Config.MODULES_DIR, getTimGetModulesDir());
         System.setProperty(Config.KEYSPACE + Config.CACHE, this.sandbox.getAbsolutePath());
@@ -441,8 +443,10 @@ public class ServerManager {
         if (entries.length != 1) { throw new RuntimeException("unexpected directory contents ["
                                                               + Arrays.asList(entries) + "] in " + src); }
         return entries[0];
+      } catch (RemoteIndexIOException e) {
+        Banner.infoBanner("Repository location not available [" + urls.getUrl() + "] for tim-get, moving on to the next one");
       } catch (Exception e) {
-        Banner.errorBanner("Error using url [" + urls.getUrl() + "] for tim-get, moving on to the next one");
+        Banner.errorBanner("Unexpected error using url [" + urls.getUrl() + "] for tim-get, trying the next one");
         e.printStackTrace();
       }
     }

@@ -3,6 +3,7 @@
 terracotta.build.productname=terracotta
 terracotta.build.version=1.2.3-SNAPSHOT
 terracotta.build.maven.artifacts.version=1.2.3-SNAPSHOT
+terracotta.build.api.version=1.0.0-SNAPSHOT
 terracotta.build.host=thehost
 terracotta.build.user=theuser
 terracotta.build.timestamp=20080616-130651

@@ -821,6 +821,18 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     }
   }
 
+  public void pinLock(String lockName) {
+    lockManager.pinLock(lockManager.lockIDFor(lockName));
+  }
+
+  public void unpinLock(String lockName) {
+    lockManager.unlock(lockManager.lockIDFor(lockName));
+  }
+  
+  public void evictLock(String lockName) {
+    lockManager.evictLock(lockManager.lockIDFor(lockName));
+  }
+
   private ReadOnlyException makeReadOnlyException(final String details) {
     long vmId = this.cidProvider.getClientID().toLong();
 

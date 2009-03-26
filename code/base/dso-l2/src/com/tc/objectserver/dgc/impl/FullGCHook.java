@@ -76,10 +76,10 @@ public class FullGCHook extends AbstractGCHook {
     return new ObjectIDSet(references);
   }
 
-  private int request_count = 0;
-
+  private long request_count = 0;
   private void throttleIfNecessary() {
     if (THROTTLE_GC_MILLIS > 0 && ++this.request_count % REQUESTS_PER_THROTTLE == 0) {
+      this.request_count = 0;
       ThreadUtil.reallySleep(THROTTLE_GC_MILLIS);
     }
   }

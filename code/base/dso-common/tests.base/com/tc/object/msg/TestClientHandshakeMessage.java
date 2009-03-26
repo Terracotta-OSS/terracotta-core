@@ -156,7 +156,7 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
   }
 
   public long getServerHighWaterMark() {
-    throw new ImplementMe();
+    return 0;
   }
 
   public void setServerHighWaterMark(long serverHighWaterMark) {

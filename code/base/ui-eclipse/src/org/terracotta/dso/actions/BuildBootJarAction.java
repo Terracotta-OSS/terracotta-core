@@ -102,9 +102,10 @@ public class BuildBootJarAction extends Action implements IActionDelegate, IWork
     try {
       monitor.beginTask("Creating DSO BootJar...", IProgressMonitor.UNKNOWN);
       doFinish(monitor);
-      monitor.done();
     } catch (Exception e) {
       throw new InvocationTargetException(e);
+    } finally {
+      monitor.done();
     }
   }
 
@@ -194,6 +195,11 @@ public class BuildBootJarAction extends Action implements IActionDelegate, IWork
       ThreadUtil.reallySleep(100);
     }
 
+    if (monitor.isCanceled()) {
+      m_process = null;
+      return;
+    }
+
     if (m_process.getExitValue() != 0) {
       m_process = null;
       monitor.done();
@@ -220,16 +226,14 @@ public class BuildBootJarAction extends Action implements IActionDelegate, IWork
     }
   }
 
-  private void checkCancel(IProgressMonitor monitor) throws InterruptedException {
+  private void checkCancel(IProgressMonitor monitor) {
     if (monitor.isCanceled()) {
       try {
         if (m_process != null && !m_process.isTerminated()) {
           m_process.terminate();
         }
-        m_process = null;
       } catch (Exception e) {/**/
       }
-      throw new InterruptedException("BootJar creation cancelled.");
     }
   }
 

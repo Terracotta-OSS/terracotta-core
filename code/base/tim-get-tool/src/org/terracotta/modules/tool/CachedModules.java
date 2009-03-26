@@ -13,6 +13,7 @@ import org.jdom.input.SAXBuilder;
 import org.terracotta.modules.tool.config.Config;
 import org.terracotta.modules.tool.config.ConfigAnnotation;
 import org.terracotta.modules.tool.config.InvalidConfigurationException;
+import org.terracotta.modules.tool.exception.RemoteIndexIOException;
 import org.terracotta.modules.tool.util.ChecksumUtil;
 import org.terracotta.modules.tool.util.DataLoader;
 import org.terracotta.modules.tool.util.DownloadUtil;
@@ -23,6 +24,7 @@ import com.google.inject.name.Named;
 import com.tc.bundles.OSGiToMaven;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -46,6 +48,10 @@ public class CachedModules implements Modules {
   @Inject
   @Named(ConfigAnnotation.TERRACOTTA_VERSION)
   private String             tcVersion;
+
+  @Inject
+  @Named(ConfigAnnotation.API_VERSION)
+  private String             apiVersion;
 
   @Inject
   @Named(ConfigAnnotation.CONFIG_INSTANCE)
@@ -87,7 +93,7 @@ public class CachedModules implements Modules {
     }
 
     if (inspect && !attributesVerified(srcfile, (AbstractModule) module)) {
-      String msg = "The file might be corrupt - the name and/or version retrieved does not jive with what was requested.";
+      String msg = "The file might be corrupt - the name and/or version retrieved does not match what was requested.";
       throw new IOException(msg);
     }
     return srcfile;
@@ -119,6 +125,7 @@ public class CachedModules implements Modules {
   CachedModules(Config config, File repository, InputStream inputStream) throws JDOMException, IOException {
     this.config = config;
     this.tcVersion = config.getTcVersion();
+    this.apiVersion = config.getApiVersion();
     this.includeSnapshots = config.getIncludeSnapshots();
     this.repository = repository;
     this.dataLoader = null;
@@ -130,10 +137,17 @@ public class CachedModules implements Modules {
     if ((modules == null) || modules.isEmpty()) {
       InputStream dataStream = null;
       try {
-        dataStream = dataLoader.openDataStream();
-        loadData(dataStream);
-      } catch (Exception e) {
-        throw new RuntimeException("Unable to read TIM index: " + e.getMessage());
+          dataStream = dataLoader.openDataStream();
+        
+          try {
+            loadData(dataStream);
+          } catch(JDOMException e) {
+            throw new RuntimeException("Error parsing index file: " + e.getMessage(), e);
+          }
+      } catch (FileNotFoundException e) {
+        throw new RemoteIndexIOException("Remote index file not found: " + e.getMessage(), e);
+      } catch (IOException e) {
+        throw new RemoteIndexIOException("Error reading remote index file: " + e.getMessage(), e);
       } finally {
         IOUtils.closeQuietly(dataStream);
       }
@@ -225,8 +239,8 @@ public class CachedModules implements Modules {
     return list;
   }
 
-  private boolean qualify(Module module) {
-    return "*".equals(module.tcVersion()) || tcVersion().equals(module.tcVersion());
+  boolean qualify(Module module) {
+    return new VersionMatcher(tcVersion, apiVersion).matches(module.tcVersion(), module.apiVersion());
   }
 
   public List<Module> list() {
@@ -274,6 +288,10 @@ public class CachedModules implements Modules {
 
   public String tcVersion() {
     return tcVersion;
+  }
+  
+  public String apiVersion() {
+    return apiVersion;
   }
 
   public URI relativeUrlBase() {

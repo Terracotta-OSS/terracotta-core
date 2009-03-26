@@ -35,3 +35,5 @@ exec "${JAVA_HOME}/bin/java" \
   ${JAVA_OPTS} \
   -cp "${TC_INSTALL_DIR}/lib/tc.jar" \
   com.tc.object.tools.BootJarTool make "$@"
+exit $?
+

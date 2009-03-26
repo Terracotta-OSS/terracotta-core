@@ -71,7 +71,7 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
     super(appContext);
     this.clusterModel = clusterModel;
     setup(chartsPanel);
-    setName(clusterModel.toString());
+    setName(clusterModel.getName());
     clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
     if (clusterModel.isReady()) {
       IServer activeCoord = clusterModel.getActiveCoordinator();

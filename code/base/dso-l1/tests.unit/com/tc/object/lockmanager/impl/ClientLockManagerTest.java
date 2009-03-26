@@ -75,7 +75,7 @@ public class ClientLockManagerTest extends TCTestCase {
 
     lockManager = new ClientLockManagerImpl(new NullTCLogger(), rmtLockManager, sessionManager,
                                             ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
-                                            new NullClientLockManagerConfig());
+                                            new NullClientLockManagerConfig(100));
     rmtLockManager.setClientLockManager(lockManager);
   }
 
@@ -1030,7 +1030,96 @@ public class ClientLockManagerTest extends TCTestCase {
     assertEquals(1, rmtLockManager.getLockRequestCount());
     assertEquals(1, rmtLockManager.getUnlockRequestCount());
   }
+  
+  public void testLockPinning() throws Exception {
+    ThreadID tid0 = new ThreadID(0);
+    LockID lid0 = new LockID("0");
+    
+    rmtLockManager.makeLocksGreedy();
+    
+    lockManager.lock(lid0, tid0, LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE, LockContextInfo.NULL_LOCK_CONTEXT_INFO);    
+    Assert.assertTrue(lockManager.haveLock(lid0, tid0, LockLevel.WRITE));
+    lockManager.pinLock(lid0);
+    lockManager.unlock(lid0, tid0);
+    ThreadUtil.reallySleep(200);
+    lockManager.runGC();
+    Assert.assertEquals(1, lockManager.getLocksByIDSize());
+    lockManager.unpinLock(lid0);
+    lockManager.runGC();    
+    Assert.assertEquals(0, lockManager.getLocksByIDSize());
+    
+    rmtLockManager.makeLocksNotGreedy();
+    
+    lockManager.lock(lid0, tid0, LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE, LockContextInfo.NULL_LOCK_CONTEXT_INFO);    
+    Assert.assertTrue(lockManager.haveLock(lid0, tid0, LockLevel.WRITE));
+    lockManager.pinLock(lid0);
+    lockManager.unlock(lid0, tid0);
+    ThreadUtil.reallySleep(200);
+    lockManager.runGC();
+    Assert.assertEquals(1, lockManager.getLocksByIDSize());
+    lockManager.unpinLock(lid0);
+    lockManager.runGC();
+    Assert.assertEquals(0, lockManager.getLocksByIDSize());
+  }
 
+  public void testLockEviction() throws Exception {
+    ThreadID tid0 = new ThreadID(0);
+    LockID lid0 = new LockID("0");
+    
+    rmtLockManager.makeLocksGreedy();
+    
+    lockManager.lock(lid0, tid0, LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE, LockContextInfo.NULL_LOCK_CONTEXT_INFO);    
+    Assert.assertTrue(lockManager.haveLock(lid0, tid0, LockLevel.WRITE));
+    lockManager.pinLock(lid0);
+    lockManager.unlock(lid0, tid0);
+    ThreadUtil.reallySleep(200);
+    lockManager.runGC();
+    Assert.assertEquals(1, lockManager.getLocksByIDSize());
+    lockManager.evictLock(lid0);
+    Assert.assertEquals(0, lockManager.getLocksByIDSize());
+    
+    rmtLockManager.makeLocksNotGreedy();
+    
+    lockManager.lock(lid0, tid0, LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE, LockContextInfo.NULL_LOCK_CONTEXT_INFO);    
+    Assert.assertTrue(lockManager.haveLock(lid0, tid0, LockLevel.WRITE));
+    lockManager.pinLock(lid0);
+    lockManager.unlock(lid0, tid0);
+    ThreadUtil.reallySleep(200);
+    Assert.assertEquals(1, lockManager.getLocksByIDSize());
+    lockManager.evictLock(lid0);
+    Assert.assertEquals(0, lockManager.getLocksByIDSize());
+  }
+  
+  public void testInvalidEvictionAndUnpin() throws Exception {
+    ThreadID tid0 = new ThreadID(0);
+    LockID lid0 = new LockID("0");
+    
+    rmtLockManager.makeLocksGreedy();
+    
+    lockManager.lock(lid0, tid0, LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE, LockContextInfo.NULL_LOCK_CONTEXT_INFO);    
+    Assert.assertTrue(lockManager.haveLock(lid0, tid0, LockLevel.WRITE));
+    lockManager.evictLock(lid0);
+    lockManager.unpinLock(lid0);
+    Assert.assertTrue(lockManager.haveLock(lid0, tid0, LockLevel.WRITE));
+    Assert.assertEquals(1, lockManager.getLocksByIDSize());
+    lockManager.unlock(lid0, tid0);
+    Assert.assertEquals(1, lockManager.getLocksByIDSize());
+    ThreadUtil.reallySleep(200);
+    lockManager.runGC();
+    Assert.assertEquals(0, lockManager.getLocksByIDSize());
+
+    rmtLockManager.makeLocksNotGreedy();
+    
+    lockManager.lock(lid0, tid0, LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE, LockContextInfo.NULL_LOCK_CONTEXT_INFO);    
+    Assert.assertTrue(lockManager.haveLock(lid0, tid0, LockLevel.WRITE));
+    lockManager.evictLock(lid0);
+    lockManager.unpinLock(lid0);
+    Assert.assertTrue(lockManager.haveLock(lid0, tid0, LockLevel.WRITE));
+    Assert.assertEquals(1, lockManager.getLocksByIDSize());
+    lockManager.unlock(lid0, tid0);    
+    Assert.assertEquals(0, lockManager.getLocksByIDSize());    
+  }
+  
   private void pause() {
     lockManager.pause(GroupID.ALL_GROUPS, 1);
   }

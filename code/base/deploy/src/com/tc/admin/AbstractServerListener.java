@@ -13,7 +13,7 @@ import java.beans.PropertyChangeListener;
 import javax.swing.SwingUtilities;
 
 public class AbstractServerListener implements PropertyChangeListener {
-  protected final IServer server;
+  protected IServer server;
 
   public AbstractServerListener(IServer server) {
     this.server = server;
@@ -22,13 +22,16 @@ public class AbstractServerListener implements PropertyChangeListener {
   public void startListening() {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
+        IServer theServer = getServer();
+        if (theServer == null) { return; }
+
         handleConnected();
-        server.addPropertyChangeListener(AbstractServerListener.this);
+        theServer.addPropertyChangeListener(AbstractServerListener.this);
       }
     });
   }
 
-  public IServer getServer() {
+  public synchronized IServer getServer() {
     return server;
   }
 
@@ -55,29 +58,43 @@ public class AbstractServerListener implements PropertyChangeListener {
     }
 
     public void run() {
-      String prop = pce.getPropertyName();
-      if (IServer.PROP_CONNECTED.equals(prop)) {
-        if (server.isConnected()) {
-          handleConnected();
+      IServer theServer = getServer();
+      if (theServer == null) { return; }
+
+      try {
+        String prop = pce.getPropertyName();
+        if (IServer.PROP_CONNECTED.equals(prop)) {
+          if (theServer.isConnected()) {
+            handleConnected();
+          }
+        } else if (IClusterModelElement.PROP_READY.equals(prop)) {
+          handleReady();
+        } else if (IServer.PROP_CONNECT_ERROR.equals(prop)) {
+          if (pce.getNewValue() != null) {
+            handleConnectError();
+          }
         }
-      } else if (IClusterModelElement.PROP_READY.equals(prop)) {
-        handleReady();
-      } else if (IServer.PROP_CONNECT_ERROR.equals(prop)) {
-        if (pce.getNewValue() != null) {
-          handleConnectError();
-        }
+      } catch (Exception e) {
+        handleUncaughtError(e);
       }
     }
   }
 
+  protected void handleUncaughtError(Exception e) {
+    e.printStackTrace();
+  }
+
   protected void handleConnected() {
-    if (server.isActive()) {
+    IServer theServer = getServer();
+    if (theServer == null) { return; }
+
+    if (theServer.isActive()) {
       handleActivation();
-    } else if (server.isPassiveStandby()) {
+    } else if (theServer.isPassiveStandby()) {
       handlePassiveStandby();
-    } else if (server.isPassiveUninitialized()) {
+    } else if (theServer.isPassiveUninitialized()) {
       handlePassiveUninitialized();
-    } else if (server.isStarted()) {
+    } else if (theServer.isStarted()) {
       handleStarting();
     }
   }
@@ -93,7 +110,7 @@ public class AbstractServerListener implements PropertyChangeListener {
   protected void handleReady() {
     /* override */
   }
-  
+
   protected void handleActivation() {
     /* override */
   }
@@ -110,4 +127,7 @@ public class AbstractServerListener implements PropertyChangeListener {
     /* override */
   }
 
+  public synchronized void tearDown() {
+    server = null;
+  }
 }

@@ -272,4 +272,16 @@ public final class NullManager implements Manager {
   public DsoCluster getDsoCluster() {
     throw new UnsupportedOperationException();
   }
+
+  public void evictLock(String lockName) {
+    //
+  }
+
+  public void pinLock(String lockName) {
+    //
+  }
+
+  public void unpinLock(String lockName) {
+    //
+  }
 }

@@ -4,6 +4,8 @@
  */
 package com.tc.config.schema;
 
+import com.tc.net.GroupID;
+
 public interface ActiveServerGroupConfig extends NewConfig {
   MembersConfig getMembers();
 
@@ -11,7 +13,7 @@ public interface ActiveServerGroupConfig extends NewConfig {
 
   NewHaConfig getHa();
 
-  int getGroupId();
+  GroupID getGroupId();
   
   String getGroupName();
 }

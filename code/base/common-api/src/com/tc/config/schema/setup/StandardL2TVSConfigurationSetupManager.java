@@ -162,7 +162,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
           if (found) { throw new ConfigurationSetupException("Server{" + serverName
                                                              + "} is part of more than 1 mirror-group:  groups{" + gid
                                                              + "," + groupArray[j].getGroupId() + "}"); }
-          gid = groupArray[j].getGroupId();
+          gid = groupArray[j].getGroupId().toInt();
           found = true;
         }
       }

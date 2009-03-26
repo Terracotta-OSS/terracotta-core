@@ -36,7 +36,8 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
   private final int                workSize          = 1 * 100;
   private final int                testObjectDepth   = 1 * 50;
   // Beware when tuning down the iteration count, it might not run long enough to actually do a useful crash test
-  private final int                iterationCount    = 10;
+  // But, high iteration counts can cause test timeouts in slow boxes : MNK-941
+  private final int                iterationCount    = 5;
   private final List               workQueue         = new ArrayList();
   private final Collection         resultSet         = new HashSet();
   private final SynchronizedInt    complete          = new SynchronizedInt(0);

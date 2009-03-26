@@ -11,4 +11,6 @@ interface TransactionBuffer {
 
   public int write(ClientTransaction txn);
 
+  public int getTxnCount();
+
 }

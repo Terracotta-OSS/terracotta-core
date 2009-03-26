@@ -14,9 +14,13 @@ import com.tc.config.schema.repository.ChildBeanRepository;
 import com.tc.config.schema.repository.MutableBeanRepository;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.StandardL2TVSConfigurationSetupManager;
+import com.tc.net.GroupID;
 import com.terracottatech.config.Ha;
 import com.terracottatech.config.MirrorGroup;
 import com.terracottatech.config.MirrorGroups;
+
+import java.util.Arrays;
+import java.util.Comparator;
 
 public class ActiveServerGroupsConfigObject extends BaseNewConfigObject implements ActiveServerGroupsConfig {
   private final ActiveServerGroupConfig[] groupConfigArray;
@@ -38,16 +42,24 @@ public class ActiveServerGroupsConfigObject extends BaseNewConfigObject implemen
 
     this.activeServerGroupCount = groupArray.length;
 
-    this.groupConfigArray = new ActiveServerGroupConfig[groupArray.length];
+    ActiveServerGroupConfigObject[] tempGroupConfigArray = new ActiveServerGroupConfigObject[groupArray.length];
 
     for (int i = 0; i < groupArray.length; i++) {
       // if no Ha element defined for this group then set it to common ha
       if (!groupArray[i].isSetHa()) {
         groupArray[i].setHa(setupManager.getCommomOrDefaultHa().getHa());
       }
-      this.groupConfigArray[i] = new ActiveServerGroupConfigObject(createContext(setupManager, groupArray[i]),
-                                                                   setupManager, i);
+      tempGroupConfigArray[i] = new ActiveServerGroupConfigObject(createContext(setupManager, groupArray[i]),
+                                                                  setupManager);
     }
+
+    // Assign GroupID to groups in sorted order according to the group names
+    Arrays.sort(tempGroupConfigArray, new ActiveGroupNameComparator());
+    for (int i = 0; i < tempGroupConfigArray.length; i++) {
+      tempGroupConfigArray[i].setGroupId(new GroupID(i));
+    }
+
+    this.groupConfigArray = tempGroupConfigArray;
   }
 
   public int getActiveServerGroupCount() {
@@ -58,8 +70,7 @@ public class ActiveServerGroupsConfigObject extends BaseNewConfigObject implemen
     return groupConfigArray;
   }
 
-  private final ConfigContext createContext(StandardL2TVSConfigurationSetupManager setupManager,
-                                            final MirrorGroup group) {
+  private final ConfigContext createContext(StandardL2TVSConfigurationSetupManager setupManager, final MirrorGroup group) {
     ChildBeanRepository beanRepository = new ChildBeanRepository(setupManager.serversBeanRepository(),
                                                                  MirrorGroup.class, new ChildBeanFetcher() {
                                                                    public XmlObject getChild(XmlObject parent) {
@@ -70,7 +81,7 @@ public class ActiveServerGroupsConfigObject extends BaseNewConfigObject implemen
   }
 
   public static MirrorGroups getDefaultActiveServerGroups(DefaultValueProvider defaultValueProvider,
-                                                                MutableBeanRepository serversBeanRepository, Ha commonHa)
+                                                          MutableBeanRepository serversBeanRepository, Ha commonHa)
       throws ConfigurationSetupException {
     MirrorGroups asgs = MirrorGroups.Factory.newInstance();
     MirrorGroup[] groupArray = new MirrorGroup[1];
@@ -85,5 +96,11 @@ public class ActiveServerGroupsConfigObject extends BaseNewConfigObject implemen
       if (groupConfigArray[groupCount].isMember(name)) { return groupConfigArray[groupCount]; }
     }
     return null;
+  }
+
+  public static class ActiveGroupNameComparator implements Comparator<ActiveServerGroupConfig> {
+    public int compare(ActiveServerGroupConfig obj1, ActiveServerGroupConfig obj2) {
+      return obj1.getGroupName().compareTo(obj2.getGroupName());
+    }
   }
 }
