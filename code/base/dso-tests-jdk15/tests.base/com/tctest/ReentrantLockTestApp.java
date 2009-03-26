@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -70,12 +71,14 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
       toStringTest(new ReentrantLock(), 0, 1);
 
       sharedUnSharedTesting();
+      basicUnsharedSignalTesting();
       multipleReentrantLocksTesting();
       singleNodeTryBeginLockTesting();
       variousLockUnLockPatternTesting();
 
       System.err.println("Testing unfair lock ...");
 
+      basicSignalTesting(root.getUnfairLock(), root.getUnfairCondition());
       basicConditionVariableTesting(root.getUnfairLock(), root.getUnfairCondition());
       basicConditionVariableWaitTesting(root.getUnfairLock(), root.getUnfairCondition());
       basicUnsharedLockTesting(unsharedUnfairLock);
@@ -97,6 +100,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
       
       System.err.println("Testing fair lock ...");
 
+      basicSignalTesting(root.getFairLock(), root.getFairCondition());
       basicConditionVariableTesting(root.getFairLock(), root.getFairCondition());
       basicConditionVariableWaitTesting(root.getFairLock(), root.getFairCondition());
       basicUnsharedLockTesting(unsharedFairLock);
@@ -447,6 +451,116 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
     }
 
     barrier.await();
+  }
+
+  private void basicUnsharedSignalTesting() throws Exception {
+    if (barrier.await() == 0) {
+      final ReentrantLock lock = new ReentrantLock();
+      final Condition condition = lock.newCondition();
+      
+      Thread[] threads = new Thread[10];
+      for (int i = 0; i < threads.length; i++) {
+        threads[i] = new Thread(new Runnable() {
+          public void run() {
+            lock.lock();
+            try {
+              condition.awaitUninterruptibly();
+              System.out.println("Thread Waking");
+            } finally {
+              lock.unlock();
+            }
+          }
+        });
+      }
+      
+      for (Thread t : threads) {
+        t.start();
+      }
+      
+      while (lock.getWaitQueueLength(condition) < threads.length) {
+        Thread.sleep(100);
+      }
+      
+      int signalCount = 0;
+      while (lock.hasWaiters(condition)) {
+        lock.lock();
+        try {
+          System.out.println("Signalling...");
+          condition.signal();
+        } finally {
+          lock.unlock();
+        }
+        signalCount++;
+        Thread.sleep(100);
+      }
+        
+      int expected = threads.length;
+      Assert.assertEquals("Signal calls needed to wake " + expected + " threads", expected, signalCount);
+
+      for (Thread t : threads) {
+        t.join(1000);
+        Assert.assertFalse(t.isAlive());
+      }
+    }
+  }
+  
+  private void basicSignalTesting(final ReentrantLock lock, final Condition condition) throws Exception {
+    int index = barrier.await();
+
+    final AtomicInteger count = new AtomicInteger();
+    Thread[] threads = new Thread[10];
+    for (int i = 0; i < threads.length; i++) {
+      threads[i] = new Thread(new Runnable() {
+        public void run() {
+          lock.lock();
+          try {
+            count.incrementAndGet();
+            condition.awaitUninterruptibly();
+            System.out.println("\tClient " + ManagerUtil.getClientID() + " Thread Waking");
+          } finally {
+            lock.unlock();
+          }
+        }
+      });
+    }
+    
+    for (Thread t : threads) {
+      t.start();
+    }
+    
+    barrier.await();
+
+    // lock.getWaitQueueLength(condition) is busted for greedy locks - I don't trust it.
+    while (count.get() < threads.length) {
+      Thread.sleep(100);
+    }
+    
+    barrier.await();
+    
+    if (index == 0) {
+      int signalCount = 0;
+      while (lock.hasWaiters(condition)) {
+        lock.lock();
+        try {
+          System.out.println("Signalling...");
+          condition.signal();
+        } finally {
+          lock.unlock();
+        }
+        signalCount++;
+        Thread.sleep(100);
+      }
+      
+      int expected = getParticipantCount() * threads.length;
+      Assert.assertEquals("Signal calls needed to wake " + expected + " threads", expected, signalCount);      
+    }
+
+    barrier.await();
+    
+    for (Thread t : threads) {
+      t.join(1000);
+      Assert.assertFalse(t.isAlive());
+    }
   }
 
   /**

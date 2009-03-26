@@ -22,7 +22,7 @@ import java.util.concurrent.locks.Lock;
 
 public class ConditionObject implements Condition, java.io.Serializable {
   private transient List      waitingThreads;
-  private transient int       numOfWaitingThreards;
+  private transient int       numOfWaitingThreads;
   private transient Map       waitOnUnshared;
 
   private final Lock          originalLock;
@@ -36,7 +36,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
     this.originalLock = originalLock;
     this.realCondition = new SyncCondition();
     this.waitingThreads = new ArrayList();
-    this.numOfWaitingThreards = 0;
+    this.numOfWaitingThreads = 0;
     this.waitOnUnshared = new HashMap();
   }
 
@@ -44,7 +44,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
     this.originalLock = null;
     this.realCondition = null;
     this.waitingThreads = new ArrayList();
-    this.numOfWaitingThreards = 0;
+    this.numOfWaitingThreads = 0;
     this.waitOnUnshared = new HashMap();
   }
 
@@ -70,7 +70,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
   }
 
   private void addWaitOnUnshared() {
-    waitOnUnshared.put(Thread.currentThread(), ManagerUtil.isManaged(realCondition) ? Boolean.FALSE : Boolean.TRUE);
+    waitOnUnshared.put(Thread.currentThread(), Boolean.valueOf(!ManagerUtil.isManaged(realCondition)));
   }
 
   private boolean isLockRealConditionInUnshared() {
@@ -96,7 +96,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
       try {
         if (realCondition.hasNotSignalledOnVersion(version)) {
           waitingThreads.add(currentThread);
-          numOfWaitingThreards++;
+          numOfWaitingThreads++;
 
           addWaitOnUnshared();
           try {
@@ -104,7 +104,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
           } finally {
             waitOnUnshared.remove(currentThread);
             waitingThreads.remove(currentThread);
-            numOfWaitingThreards--;
+            numOfWaitingThreads--;
           }
         }
       } finally {
@@ -138,7 +138,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
         if (realCondition.hasNotSignalledOnVersion(version)) {
           while (true) {
             waitingThreads.add(currentThread);
-            numOfWaitingThreards++;
+            numOfWaitingThreads++;
 
             addWaitOnUnshared();
             try {
@@ -149,7 +149,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
             } finally {
               waitOnUnshared.remove(currentThread);
               waitingThreads.remove(currentThread);
-              numOfWaitingThreards--;
+              numOfWaitingThreads--;
             }
           }
         }
@@ -185,7 +185,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
       try {
         if (realCondition.hasNotSignalledOnVersion(version)) {
           waitingThreads.add(currentThread);
-          numOfWaitingThreards++;
+          numOfWaitingThreads++;
 
           addWaitOnUnshared();
           try {
@@ -196,7 +196,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
           } finally {
             waitOnUnshared.remove(currentThread);
             waitingThreads.remove(currentThread);
-            numOfWaitingThreards--;
+            numOfWaitingThreads--;
           }
         } else {
           return nanosTimeout;
@@ -239,9 +239,10 @@ public class ConditionObject implements Condition, java.io.Serializable {
     UnsafeUtil.monitorEnter(realCondition);
     boolean isLockInUnshared = isLockRealConditionInUnshared();
     try {
-      ManagerUtil.objectNotify(realCondition);
       if (hasWaitOnUnshared()) {
         realCondition.notify();
+      } else {
+        ManagerUtil.objectNotify(realCondition);
       }
       realCondition.setSignalled();
     } finally {
@@ -275,7 +276,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
   public int getWaitQueueLength(Lock lock) {
     if (originalLock != lock) throw new IllegalArgumentException("not owner");
     if (!ManagerUtil.isManaged(originalLock)) {
-      return numOfWaitingThreards;
+      return numOfWaitingThreads;
     } else {
       return ManagerUtil.waitLength(realCondition);
     }
@@ -289,7 +290,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
   private void readObject(java.io.ObjectInputStream s) throws java.io.IOException, ClassNotFoundException {
     s.defaultReadObject();
     this.waitingThreads = new ArrayList();
-    this.numOfWaitingThreards = 0;
+    this.numOfWaitingThreads = 0;
     this.waitOnUnshared = new HashMap();
   }
 
