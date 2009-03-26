@@ -89,7 +89,7 @@ class BootJar
   # a given instance of this object, so you don't have to worry about repeating work.
   def ensure_created
     unless @created
-      classpath = @module_set['dso-tests-jdk15'].subtree('src').classpath(@build_results, :full, :runtime)
+      classpath = @module_set['dso-system-tests'].subtree('src').classpath(@build_results, :full, :runtime)
       puts("Creating boot JAR with: #{@jvm}; using classpath: #{classpath}")
       
       File.delete(path.to_s) if FileTest.exist?(path.to_s)

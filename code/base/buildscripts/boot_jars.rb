@@ -104,7 +104,7 @@ class BootJar
   def ensure_created(options = {})
     File.delete(path.to_s) if options[:delete_existing] && exist?
     unless exist?
-      classpath = @module_set['dso-tests-jdk15'].subtree('src').classpath(@build_results, :full, :runtime)
+      classpath = @module_set['dso-system-tests'].subtree('src').classpath(@build_results, :full, :runtime)
       classpath = PathSet.new(classpath, Registry[:emma_lib]).to_s if Registry[:emma]
       puts("Creating boot JAR with: #{@jvm} and config file: #{@config_file}")
 
