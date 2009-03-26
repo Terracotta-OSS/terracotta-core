@@ -19,7 +19,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
       end
     end
     raise("Cannot find any schema file in #{srcdir}") if xsd_file.nil?
-    version
+    return xsd_file, version
   end
   
   def postscript(ant, build_environment, product_directory, *args)
@@ -33,14 +33,14 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
       srcdir = @static_resources.config_schema_source_directory(@module_set)
 
       ant.copy(:todir => destdir.to_s) do
-        ant.fileset(:dir => srcdir.to_s, :includes => '*.xsd')
+        ant.fileset(:dir => srcdir.to_s, :includes => 'terracotta*.xsd')
       end
       
       docflex           = FilePath.new(@static_resources.docflex_home)
       docflex_lib       = FilePath.new(docflex, "lib")
       docflex_template  = FilePath.new(docflex, "templates", "XSDDoc", "FramedDoc.tpl")
       docflex_classpath = "#{docflex_lib.to_s}/xercesImpl.jar:#{docflex_lib.to_s}/xml-apis.jar:#{docflex_lib.to_s}/docflex-xml-re.jar"
-      schema_version  = extract_schema_version(srcdir)
+      xsd_file, schema_version  = extract_schema_version(destdir)
 
       ant.java(
         :classname   => 'com.docflex.xml.Generator',
@@ -58,7 +58,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
         ant.arg(:line => "-nodialog=true")
         ant.arg(:line => "-quiet=true")
         ant.arg(:line => "-launchviewer=false")
-        ant.arg(:line => "*")
+        ant.arg(:line => File.basename(xsd_file.to_s))
       end
     end
 
