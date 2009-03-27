@@ -49,9 +49,6 @@ public class DGCIntervalMarker extends IntervalMarker implements ToolTipProvider
     sb.append("</td></tr>");
   }
 
-  /**
-   * PausedStageTime, MarkStageTime, and DeleteStageTime are new in 2.7. Show these values only if set.
-   */
   private void buildToolTip() {
     StringBuffer sb = new StringBuffer();
     NumberFormat numFormat = NumberFormat.getNumberInstance();
@@ -63,22 +60,22 @@ public class DGCIntervalMarker extends IntervalMarker implements ToolTipProvider
     }
     buildRow(sb, "start time", dateFormat.format(new Date(dgcInfo.getStartTime())));
     if (dgcInfo.getElapsedTime() != -1) {
-      buildRow(sb, "total elapsed seconds", numFormat.format(dgcInfo.getElapsedTime()));
+      buildRow(sb, "total elapsed time (ms.)", numFormat.format(dgcInfo.getElapsedTime()));
     }
     if (dgcInfo.getBeginObjectCount() != -1) {
       buildRow(sb, "begin object count", numFormat.format(dgcInfo.getBeginObjectCount()));
     }
     if (dgcInfo.getPausedStageTime() != -1) {
-      buildRow(sb, "paused stage seconds", numFormat.format(dgcInfo.getPausedStageTime()));
+      buildRow(sb, "paused stage time (ms.)", numFormat.format(dgcInfo.getPausedStageTime()));
     }
     if (dgcInfo.getMarkStageTime() != -1) {
-      buildRow(sb, "mark stage seconds", numFormat.format(dgcInfo.getMarkStageTime()));
+      buildRow(sb, "mark stage time (ms.)", numFormat.format(dgcInfo.getMarkStageTime()));
     }
     if (dgcInfo.getActualGarbageCount() != -1) {
       buildRow(sb, "garbage count", numFormat.format(dgcInfo.getActualGarbageCount()));
     }
     if (dgcInfo.getDeleteStageTime() != -1) {
-      buildRow(sb, "delete stage seconds", numFormat.format(dgcInfo.getDeleteStageTime()));
+      buildRow(sb, "delete stage time (ms.)", numFormat.format(dgcInfo.getDeleteStageTime()));
     }
     sb.append("</table></html>");
     fToolTip = sb.toString();

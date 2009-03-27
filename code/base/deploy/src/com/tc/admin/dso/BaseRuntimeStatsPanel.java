@@ -395,8 +395,18 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     Iterator<JFreeChart> chartIter = allCharts.iterator();
     int sampleHistoryMinutes = getSampleHistoryMinutes();
     int sampleHistoryMillis = sampleHistoryMinutes * 60 * 1000;
+    int maxSampleCount = (sampleHistoryMinutes * 60) / seconds;
+
+    Iterator<TimeSeries> seriesIter = allSeries.iterator();
+    while (seriesIter.hasNext()) {
+      seriesIter.next().setMaximumItemCount(maxSampleCount);
+    }
+
     while (chartIter.hasNext()) {
-      ((XYPlot) chartIter.next().getPlot()).getDomainAxis().setFixedAutoRange(sampleHistoryMillis);
+      Plot plot = chartIter.next().getPlot();
+      if (plot instanceof XYPlot) {
+        ((XYPlot) plot).getDomainAxis().setFixedAutoRange(sampleHistoryMillis);
+      }
     }
   }
 
@@ -411,7 +421,10 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
 
     Iterator<JFreeChart> chartIter = allCharts.iterator();
     while (chartIter.hasNext()) {
-      ((XYPlot) chartIter.next().getPlot()).getDomainAxis().setFixedAutoRange(sampleHistoryMillis);
+      Plot plot = chartIter.next().getPlot();
+      if (plot instanceof XYPlot) {
+        ((XYPlot) plot).getDomainAxis().setFixedAutoRange(sampleHistoryMillis);
+      }
     }
   }
 

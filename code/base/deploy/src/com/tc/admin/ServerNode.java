@@ -98,7 +98,7 @@ public class ServerNode extends ClusterElementNode {
 
   @Override
   public String toString() {
-    return server != null ? server.toString() : "";
+    return server != null ? server.getName() : "";
   }
 
   private class ServerNodeTreeCellRenderer extends AbstractTreeCellRenderer {

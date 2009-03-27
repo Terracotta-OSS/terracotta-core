@@ -86,6 +86,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   protected List<IBasicObject>            roots;
   protected Map<ObjectName, IBasicObject> rootMap;
   protected LogListener                   logListener;
+  protected String                        name;
   protected long                          startTime;
   protected long                          activateTime;
   protected String                        persistenceMode;
@@ -168,8 +169,11 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   }
 
   public synchronized String getName() {
-    ServerConnectionManager scm = getConnectionManager();
-    return scm != null ? scm.getName() : "not connected";
+    if (name == null) {
+      ServerConnectionManager scm = getConnectionManager();
+      name = scm != null ? scm.getName() : "";
+    }
+    return name;
   }
 
   public void propertyChange(PropertyChangeEvent evt) {
@@ -186,6 +190,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   }
 
   private void init() {
+    name = null;
     startTime = activateTime = -1;
     displayLabel = connectManager.toString();
     listenerList = new EventListenerList();
@@ -1654,7 +1659,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
 
   @Override
   public String toString() {
-    return displayLabel;
+    return getName();
   }
 
   @Override

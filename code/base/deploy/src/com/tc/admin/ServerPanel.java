@@ -471,10 +471,10 @@ public class ServerPanel extends XContainer {
    * uses reflection to access values to display. TODO: i18n
    */
   private void showProductInfo() {
-    String[] fields = { "CanonicalHostName", "HostAddress", "Port", "DSOListenPort", "ProductVersion",
+    String[] fields = { "Name", "CanonicalHostName", "HostAddress", "Port", "DSOListenPort", "ProductVersion",
         "ProductBuildID", "ProductLicense", "PersistenceMode", "FailoverMode" };
-    String[] headings = { "Host", "Address", "JMX port", "DSO port", "Version", "Build", "License", "Persistence mode",
-        "Failover mode" };
+    String[] headings = { "Name", "Host", "Address", "JMX port", "DSO port", "Version", "Build", "License",
+        "Persistence mode", "Failover mode" };
     List<String> fieldList = new ArrayList(Arrays.asList(fields));
     List<String> headingList = new ArrayList(Arrays.asList(headings));
     String patch = server.getProductPatchLevel();
