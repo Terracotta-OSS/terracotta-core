@@ -64,4 +64,8 @@ public abstract class MultipleServersTransparentTestBase extends TransparentTest
     }
     super.tearDown();
   }
+  
+  public String getConfigFileLocation() {
+    return multipleServerManager.getConfigFileLocation();
+  }
 }

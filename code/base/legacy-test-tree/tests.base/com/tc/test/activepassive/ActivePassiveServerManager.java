@@ -5,6 +5,7 @@
 package com.tc.test.activepassive;
 
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.test.DSOApplicationConfigBuilderImpl;
 import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.L2MBeanNames;
@@ -149,10 +150,14 @@ public class ActivePassiveServerManager extends MultipleServerManager {
       GroupData[] groupList = new GroupData[1];
       groupList[0] = new GroupData(ACTIVEPASSIVE_GROUP, dsoPorts, jmxPorts, (isProxyL2GroupPorts) ? proxyL2GroupPorts
           : l2GroupPorts, serverNames);
-      MultipleServersConfigCreator serversConfigCreator = new MultipleServersConfigCreator(this.setupManger, groupList,
+      MultipleServersConfigCreator serversConfigCreator = new MultipleServersConfigCreator(
+                                                                                           this.setupManger,
+                                                                                           groupList,
                                                                                            this.configModel,
-                                                                                           configFile, this.tempDir,
-                                                                                           configFactory);
+                                                                                           configFile,
+                                                                                           this.tempDir,
+                                                                                           configFactory,
+                                                                                           new DSOApplicationConfigBuilderImpl());
       this.serverConfigCreator = serversConfigCreator;
       serverConfigCreator.writeL2Config();
     }
@@ -833,6 +838,10 @@ public class ActivePassiveServerManager extends MultipleServerManager {
     if (!(new File(directory).delete())) { throw new AssertionError("delete file=[" + directory + "] failed"); }
     debugPrintln("\n ##### deleted directory=[" + directory + "]");
     debugPrintln("\n ##### dataFile=[" + directory + "] still exists? [" + (new File(directory).exists()) + "]");
+  }
+  
+  public final String getConfigFileLocation() {
+    return configFileLocation;
   }
 
   /*

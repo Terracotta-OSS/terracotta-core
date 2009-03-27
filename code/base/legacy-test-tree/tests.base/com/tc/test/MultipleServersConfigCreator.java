@@ -6,6 +6,7 @@ package com.tc.test;
 
 import org.apache.commons.io.FileUtils;
 
+import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.test.ApplicationConfigBuilder;
 import com.tc.config.schema.test.GroupConfigBuilder;
@@ -38,6 +39,7 @@ public class MultipleServersConfigCreator {
   protected final File                                    tempDir;
   protected final TestTVSConfigurationSetupManagerFactory configFactory;
   protected final String[]                                dataLocations;
+  protected final DSOApplicationConfigBuilder             dsoApplicationBuilder;
   protected static TCLogger                               logger    = TCLogging
                                                                         .getTestingLogger(MultipleServersConfigCreator.class);
 
@@ -46,7 +48,8 @@ public class MultipleServersConfigCreator {
 
   public MultipleServersConfigCreator(MultipleServersTestSetupManager setupManager, GroupData[] groupData,
                                       String configModel, File configFile, File tempDir,
-                                      TestTVSConfigurationSetupManagerFactory configFactory) {
+                                      TestTVSConfigurationSetupManagerFactory configFactory,
+                                      DSOApplicationConfigBuilder dsoApplicationBuilder) {
 
     this.setupManager = setupManager;
     this.groupData = groupData;
@@ -59,6 +62,7 @@ public class MultipleServersConfigCreator {
     this.tempDir = tempDir;
     this.configFactory = configFactory;
     dataLocations = new String[serverCount];
+    this.dsoApplicationBuilder = dsoApplicationBuilder;
 
     checkPersistenceAndDiskLessMode();
   }
@@ -165,6 +169,7 @@ public class MultipleServersConfigCreator {
     l2sConfigbuilder.setGroups(groupsConfigBuilder);
 
     ApplicationConfigBuilder app = ApplicationConfigBuilder.newMinimalInstance();
+    app.setDSO(dsoApplicationBuilder);
 
     TerracottaConfigBuilder configBuilder = new TerracottaConfigBuilder();
     configBuilder.setSystem(system);

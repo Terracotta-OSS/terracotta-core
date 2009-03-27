@@ -37,5 +37,7 @@ public abstract class MultipleServerManager {
   public int getPid() {
     throw new ImplementMe();
   }
+  
+  public abstract String getConfigFileLocation();
 
 }

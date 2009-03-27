@@ -4,6 +4,7 @@
  */
 package com.tc.test.activeactive;
 
+import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.stats.DGCMBean;
@@ -31,15 +32,17 @@ public class ActiveActiveServerManager extends MultipleServerManager {
   private ProxyConnectManager[]        proxyL2Managers;
   private ProxyConnectManager[]        proxyL1Managers;
   private GroupData[]                  groupsData;
+  private final String                 configFileLocation;
 
   public ActiveActiveServerManager(File tempDir, PortChooser portChooser, String configModel,
                                    ActiveActiveTestSetupManager setupManger, File javaHome,
                                    TestTVSConfigurationSetupManagerFactory configFactory, List extraJvmArgs,
-                                   boolean isProxyL2GroupPorts, boolean isProxyDsoPorts) throws Exception {
+                                   boolean isProxyL2GroupPorts, boolean isProxyDsoPorts,
+                                   DSOApplicationConfigBuilder dsoApplicationBuilder) throws Exception {
     super(setupManger);
     int groupCount = setupManger.getActiveServerGroupCount();
     activePassiveServerManagers = new ActivePassiveServerManager[groupCount];
-    String configFileLocation = tempDir + File.separator + CONFIG_FILE_NAME;
+    configFileLocation = tempDir + File.separator + CONFIG_FILE_NAME;
     File configFile = new File(configFileLocation);
 
     if (this.setupManger.getServerCount() < 2) { throw new AssertionError(
@@ -64,7 +67,7 @@ public class ActiveActiveServerManager extends MultipleServerManager {
     groupsData = createGroups();
     // Create a active-active config creator and then write the config
     serverConfigCreator = new MultipleServersConfigCreator(this.setupManger, groupsData, configModel, configFile,
-                                                           tempDir, configFactory);
+                                                           tempDir, configFactory, dsoApplicationBuilder);
     serverConfigCreator.writeL2Config();
 
     for (int i = 0; i < activePassiveServerManagers.length; i++) {
@@ -244,5 +247,9 @@ public class ActiveActiveServerManager extends MultipleServerManager {
     }
 
     return controls;
+  }
+
+  public String getConfigFileLocation() {
+    return configFileLocation;
   }
 }
