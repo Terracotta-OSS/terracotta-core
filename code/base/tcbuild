@@ -10,17 +10,16 @@ if test -z "${ANT_HOME}"; then
   exit 1
 fi
 
-jruby_version=jruby-1.1.6
+jruby_version=jruby-1.1.6a
 build_system_dir=`dirname $0`/../../buildsystems
 cache_dir=$HOME/.tc
 extra_jruby_cp=
 for j in $build_system_dir/jruby-lib/*; do
-  extra_jruby_cp=$j:$extra_jruby_cp
+  extra_jruby_cp=${j}:${extra_jruby_cp}
 done
 
 if [ `uname | grep CYGWIN` ]; then
   cache_dir=c:/temp/tc
-  extra_jruby_cp=`cygpath -w -p $extra_jruby_cp`
 fi
 
 if [ ! -d "$cache_dir" ]; then
@@ -35,7 +34,7 @@ if [ ! -d "${JRUBY_HOME}" ]; then
 	"${ANT_HOME}/bin/ant" -buildfile "$build_system_dir/install-jruby-build.xml"
 fi
 
-export CLASSPATH=$extra_jruby_cp
+export TC_CP=$extra_jruby_cp
 
 echo ""
 echo "--------------------------------------------------------------------------------"

@@ -12,7 +12,7 @@ if "x%ANT_HOME%"=="x" (
 
 setlocal enabledelayedexpansion
 
-set jruby_version=jruby-1.1.6
+set jruby_version=jruby-1.1.6a
 set build_system_dir=%~dp0..\..\buildsystems
 set old_CD=%CD%
 cd %build_system_dir%
@@ -34,7 +34,7 @@ if not exist "%JRUBY_HOME%" (
 	call %ANT_HOME%\bin\ant.bat -buildfile %build_system_dir%\install-jruby-build.xml
 )
 
-set CLASSPATH=%extra_jruby_cp%
+set TC_CP=%extra_jruby_cp%
 
 echo.
 echo --------------------------------------------------------------------------------
