@@ -98,7 +98,7 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
         tccomm = new MockTCConnection();
         cmt.attachNewConnection(tccomm);
         cmt.closeEvent(new TCConnectionEvent(tccomm));
-        ThreadUtil.reallySleep(200);
+        ThreadUtil.reallySleep(500);
         msg = clientChannel.createMessage(TCMessageType.PING_MESSAGE);
         Assert.assertEquals(msg.getLocalSessionID(), cmci.getSessionID());
 
