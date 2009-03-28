@@ -111,8 +111,10 @@ public class ClusterThreadDumpsPanel extends BasicThreadDumpsPanel implements Tr
     if (lastSelectedThreadDumpTreeNode != null) {
       lastSelectedThreadDumpTreeNode.setViewPosition(textScroller.getViewport().getViewPosition());
     }
-    ThreadDumpTreeNode tdtn = (ThreadDumpTreeNode) threadDumpTree.getLastSelectedPathComponent();
-    if (tdtn != null) {
+    ThreadDumpTreeNode tdtn = null;
+    Object node = threadDumpTree.getLastSelectedPathComponent();
+    if (node instanceof ThreadDumpTreeNode) {
+      tdtn = (ThreadDumpTreeNode) node;
       textArea.setText(tdtn.getContent());
       final Point viewPosition = tdtn.getViewPosition();
       if (viewPosition != null && !viewPosition.equals(ORIGIN)) {
@@ -122,6 +124,9 @@ public class ClusterThreadDumpsPanel extends BasicThreadDumpsPanel implements Tr
           }
         });
       }
+    }
+    if (tdtn == null) {
+      textArea.setText("");
     }
     return tdtn;
   }
