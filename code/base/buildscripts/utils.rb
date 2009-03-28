@@ -93,6 +93,20 @@ def delete_deep_folder(folder)
   FileUtils.rm_rf target
 end
 
+def create_abnormal_junit_report(filename, classname)
+  File.open(filename, "w") do |file|
+    file.puts "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+    file.puts "<testsuite errors=\"0\" failures=\"1\" name=\"#{classname.xml_escape}\" tests=\"1\" time=\"0.000\">"
+    file.puts "<testcase classname=\"#{classname.xml_escape}\" name=\"test\" time=\"0.0\">"
+    file.puts "  <failure type=\"junit.framework.AssertionFailedError\" message=\"Failed abnormally\">"
+    file.puts "      Failed abnormally"
+    file.puts "   </failure>"
+    file.puts "</testcase>"
+    file.puts "<system-out/><system-err/>"
+    file.puts "</testsuite>"
+  end
+end
+  
 def load_yaml_erb(file, _binding)
   YAML.load(ERB.new(File.read(file), 0, "%<>").result(_binding))
 end

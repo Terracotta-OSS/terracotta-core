@@ -693,8 +693,6 @@ class SubtreeTestRun
         failure_properties << failure_property_name
 
         @ant.batchtest(:todir => @testrun_results.results_dir(@subtree).to_s, :fork => true, :failureproperty => failure_property_name) {
-          # formatter that out put JUnit XML result file
-          #@ant.formatter(:classname => 'com.tc.test.TCXMLJUnitFormatter', :usefile => false)
           @ant.fileset(:dir => @build_results.classes_directory(@subtree).to_s, :includes => "**/#{pattern}.class")
         }
       end
@@ -706,35 +704,14 @@ class SubtreeTestRun
     # Aggregate the results into the aggregation directory, if it's set.
     unless @aggregation_directory.nil?
       puts "Copying test result files to '#{@aggregation_directory}'..."
-      @ant.copy(:todir => @aggregation_directory.to_s) {
-        @ant.fileset(:dir => @testrun_results.results_dir(@subtree).to_s, :includes => '*.xml')
-      }
-
-      Dir.open(@aggregation_directory.to_s).each do | file |
-
-        next if File.size(FilePath.new(@aggregation_directory.to_s, file).to_s) > 0
-        next unless file =~ /\.xml$/
-        classname = file.scan(/TEST-(.+)\.xml/).join("")
-
-        content = <<END
-<?xml version="1.0" encoding="UTF-8" ?>
-<testsuite errors="0" failures="1" name="#{classname}" tests="1" time="0">
-  <testcase classname="#{classname}" name="test" time="0">
-      <failure type="junit.framework.AssertionFailedError" message="Failed abnormally">
-         Failed abnormally.
-      </failure>
-  </testcase>
-  <system-out/>
-  <system-err/>
-</testsuite>
-END
-
-        File.open(FilePath.new(@aggregation_directory.to_s, file).to_s, "w")  do | f |
-          f << content
+      Dir.chdir(@testrun_results.results_dir(@subtree).to_s) do
+        Dir.glob("*.xml").each do |filename|
+          org.terracotta.JUnitReportCleaner.new(File.expand_path(filename), File.join(@aggregation_directory.to_s, filename)).clean
         end
       end
     end
   end
+
 
   # Call this when you're all done with tests. It doesn't do anything yet, but it well may in the future.
   def tearDown
