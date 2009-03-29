@@ -117,15 +117,16 @@ class TestSuiteRunRecord
     # Make sure this filename looks like the name of a standard JUnir result XML file.
     if file.filename =~ /^TEST-(\S+)\.xml$/i
       file_classname = $1
-            
+      cleaned_file = file.to_s + ".tmp"
+      cleaner = org.terracotta.JUnitReportCleaner.new
+      cleaner.cleanToFile(file.to_s, cleaned_file)
+
       # We're using Java here, instead of REXML, because Java is *vastly* faster.
       # REXML is beautiful but very slow when running in Ruby-interpeted-on-top-of-Java-
       # interpreted-on-top-of-CPU. 
       builder_factory = JavaDocumentBuilderFactory.newInstance
       builder = builder_factory.newDocumentBuilder
-            
-      java_file = JavaFile.new(file.to_s)
-      document = builder.parse(java_file)
+      document = builder.parse(JavaFile.new(cleaned_file))
             
       xml_classname = document.getDocumentElement.getAttribute("name")
 

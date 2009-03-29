@@ -706,7 +706,8 @@ class SubtreeTestRun
       puts "Copying test result files to '#{@aggregation_directory}'..."
       Dir.chdir(@testrun_results.results_dir(@subtree).to_s) do
         Dir.glob("*.xml").each do |filename|
-          org.terracotta.JUnitReportCleaner.new(File.expand_path(filename), File.join(@aggregation_directory.to_s, filename)).clean
+          cleaner = org.terracotta.JUnitReportCleaner.new
+          cleaner.cleanToFile(File.expand_path(filename), File.join(@aggregation_directory.to_s, filename))
         end
       end
     end
