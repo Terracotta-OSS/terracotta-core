@@ -1431,8 +1431,10 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
 
   public boolean isLockProfilingEnabled() {
     if (lockProfilingEnabled != null) return lockProfilingEnabled.booleanValue();
-    if (lockProfilerBean != null) { return lockProfilingEnabled = Boolean.valueOf(lockProfilerBean
-        .isLockStatisticsEnabled()); }
+    if (lockProfilerBean != null) {
+      lockProfilingEnabled = Boolean.valueOf(lockProfilerBean.isLockStatisticsEnabled());
+      return lockProfilingEnabled;
+    }
     return false;
   }
 

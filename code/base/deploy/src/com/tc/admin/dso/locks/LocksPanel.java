@@ -27,6 +27,7 @@ import com.tc.admin.model.BasicTcObject;
 import com.tc.admin.model.ClusterModel;
 import com.tc.admin.model.IBasicObject;
 import com.tc.admin.model.IClusterModel;
+import com.tc.admin.model.IClusterModelElement;
 import com.tc.admin.model.IServer;
 import com.tc.management.lock.stats.LockSpec;
 import com.tc.object.ObjectID;
@@ -90,7 +91,6 @@ public class LocksPanel extends XContainer implements PropertyChangeListener {
   private LocksNode                     fLocksNode;
   private JToggleButton                 fEnableButton;
   private JToggleButton                 fDisableButton;
-  private boolean                       fLocksPanelEnabled;
   private XSpinner                      fTraceDepthSpinner;
   private ChangeListener                fTraceDepthSpinnerChangeListener;
   private Timer                         fTraceDepthChangeTimer;
@@ -113,7 +113,7 @@ public class LocksPanel extends XContainer implements PropertyChangeListener {
 
   private static Collection<LockSpec>   EMPTY_LOCK_SPEC_COLLECTION = new HashSet<LockSpec>();
 
-  private static final int              STATUS_TIMEOUT_SECONDS     = 3;
+  private static final int              STATUS_TIMEOUT_SECONDS     = Integer.MAX_VALUE;
   private static final int              REFRESH_TIMEOUT_SECONDS    = Integer.MAX_VALUE;
 
   public LocksPanel(IAdminClientContext adminClientContext, LocksNode locksNode) {
@@ -240,8 +240,17 @@ public class LocksPanel extends XContainer implements PropertyChangeListener {
   }
 
   public void propertyChange(PropertyChangeEvent evt) {
+    IClusterModel theClusterModel = getClusterModel();
+    if (theClusterModel == null) { return; }
+
     String prop = evt.getPropertyName();
-    if (IClusterModel.PROP_ACTIVE_COORDINATOR.equals(prop)) {
+    if (IClusterModelElement.PROP_READY.equals(prop)) {
+      IServer activeCoord = theClusterModel.getActiveCoordinator();
+      if (activeCoord != null) {
+        activeCoord.addPropertyChangeListener(this);
+      }
+      adminClientContext.execute(new LocksPanelEnabledWorker());
+    } else if (IClusterModel.PROP_ACTIVE_COORDINATOR.equals(prop)) {
       IServer oldActive = (IServer) evt.getOldValue();
       if (oldActive != null) {
         oldActive.removePropertyChangeListener(this);
@@ -590,19 +599,25 @@ public class LocksPanel extends XContainer implements PropertyChangeListener {
 
     @Override
     protected void finished() {
+      Exception e = getException();
+      if (e != null) {
+        adminClientContext.log(e);
+      }
+
       // Wait for JMX notification to update display
     }
   }
 
   private void toggleLocksPanelEnabled() {
-    boolean lockStatsEnabled = fLocksPanelEnabled ? false : true;
+    IServer activeCoord = getActiveCoordinator();
+    if (activeCoord == null) { return; }
+
+    boolean lockStatsEnabled = activeCoord.isLockProfilingEnabled() ? false : true;
     adminClientContext.execute(new LockStatsStateWorker(lockStatsEnabled));
   }
 
   private void setLocksPanelEnabled(boolean enabled) {
     fRefreshButton.setEnabled(enabled);
-
-    fLocksPanelEnabled = enabled;
 
     fEnableButton.setSelected(enabled);
     fEnableButton.setEnabled(!enabled);
