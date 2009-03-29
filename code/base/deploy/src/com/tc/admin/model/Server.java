@@ -40,6 +40,7 @@ import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -51,8 +52,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-import javax.management.Attribute;
-import javax.management.AttributeList;
 import javax.management.MBeanServerNotification;
 import javax.management.Notification;
 import javax.management.NotificationListener;
@@ -179,11 +178,11 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   public void propertyChange(PropertyChangeEvent evt) {
     String prop = evt.getPropertyName();
     if (IServerGroup.PROP_ACTIVE_SERVER.equals(prop)) {
-      if (isActiveCoordinator() && isConnected()) {
+      if (isActiveCoordinator() && isReady()) {
         try {
           setupFromDSOBean();
         } catch (Exception e) {
-          e.printStackTrace();
+          /**/
         }
       }
     }
@@ -207,14 +206,21 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     ready = false;
   }
 
-  private void initReadySet() {
-    readySet.add(L2MBeanNames.TC_SERVER_INFO);
-    readySet.add(L2MBeanNames.DSO);
-    readySet.add(L2MBeanNames.SERVER_DB_BACKUP);
-    readySet.add(L2MBeanNames.OBJECT_MANAGEMENT);
-    readySet.add(L2MBeanNames.LOGGER);
-    readySet.add(L2MBeanNames.LOCK_STATISTICS);
-    readySet.add(StatisticsMBeanNames.STATISTICS_GATHERER);
+  private synchronized Set<ObjectName> getReadySet() {
+    return readySet;
+  }
+
+  private synchronized void initReadySet() {
+    Set<ObjectName> theReadySet = getReadySet();
+    if (theReadySet != null) {
+      theReadySet.add(L2MBeanNames.TC_SERVER_INFO);
+      theReadySet.add(L2MBeanNames.DSO);
+      theReadySet.add(L2MBeanNames.SERVER_DB_BACKUP);
+      theReadySet.add(L2MBeanNames.OBJECT_MANAGEMENT);
+      theReadySet.add(L2MBeanNames.LOGGER);
+      theReadySet.add(L2MBeanNames.LOCK_STATISTICS);
+      theReadySet.add(StatisticsMBeanNames.STATISTICS_GATHERER);
+    }
   }
 
   private void initPolledAttributes() {
@@ -233,11 +239,12 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   }
 
   private synchronized void filterReadySet() {
-    Iterator<ObjectName> iter = readySet.iterator();
-    while (iter.hasNext()) {
-      ObjectName beanName = iter.next();
-      if (isMBeanRegistered(beanName)) {
-        iter.remove();
+    Set<ObjectName> theReadySet = getReadySet();
+    if (theReadySet != null) {
+      for (ObjectName beanName : theReadySet.toArray(new ObjectName[0])) {
+        if (isMBeanRegistered(beanName)) {
+          testInitRegisteredBean(theReadySet, beanName);
+        }
       }
     }
   }
@@ -307,45 +314,16 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   }
 
   private void connectionEstablished() {
-    if (readySet == null) return;
+    Set<ObjectName> theReadySet = getReadySet();
+    if (theReadySet == null) return;
+
     try {
       ObjectName mbsd = getConnectionContext().queryName("JMImplementation:type=MBeanServerDelegate");
       getConnectionContext().addNotificationListener(mbsd, this);
       testAddLogListener();
       filterReadySet();
-      if (!readySet.contains(L2MBeanNames.DSO)) {
-        setupFromDSOBean();
-      }
-      /*
-       * We don't want to have knowledge of if/how/when MBeans are handled by the server but for backward compatibility
-       * reasons, if the SERVER_DB_BACKUP bean isn't registered by this time, we can remove it from readySet and deal
-       * with it not existing. The set of MBeans already registered at connection time are defined by
-       * L2Management.registerMBeans.
-       */
-      if (!readySet.contains(L2MBeanNames.SERVER_DB_BACKUP)) {
-        serverDBBackupSupported = true;
-        getServerDBBackupBean();
-      } else {
-        readySet.remove(L2MBeanNames.SERVER_DB_BACKUP);
-        serverDBBackupSupported = false;
-      }
-      if (!readySet.contains(L2MBeanNames.LOCK_STATISTICS)) {
-        lockProfilingSupported = true;
-        getLockProfilerBean();
-      } else {
-        readySet.remove(L2MBeanNames.LOCK_STATISTICS);
-        lockProfilingSupported = false;
-      }
-      if (!readySet.contains(StatisticsMBeanNames.STATISTICS_GATHERER)) {
-        clusterStatsSupported = true;
-        getClusterStatsBean();
-      } else {
-        readySet.remove(StatisticsMBeanNames.STATISTICS_GATHERER);
-        clusterStatsSupported = false;
-      }
-      setReady(readySet.isEmpty());
     } catch (Exception e) {
-      e.printStackTrace();
+      /* Connection probably dropped */
     }
   }
 
@@ -639,43 +617,41 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
 
   public synchronized IProductVersion getProductInfo() {
     if (productInfo == null) {
-      ConnectionContext cc = getConnectionContext();
+      Map<ObjectName, Set<String>> requestMap = new HashMap<ObjectName, Set<String>>();
       String[] attributes = { "Version", "Patched", "PatchLevel", "PatchVersion", "BuildID",
           "DescriptionOfCapabilities", "Copyright" };
+      requestMap.put(L2MBeanNames.TC_SERVER_INFO, new HashSet(Arrays.asList(attributes)));
+      Map<ObjectName, Map<String, Object>> resultMap = getDSOBean().getAttributeMap(requestMap, Integer.MAX_VALUE,
+                                                                                    TimeUnit.SECONDS);
+      Map<String, Object> results = resultMap.get(L2MBeanNames.TC_SERVER_INFO);
       String version = ProductInfo.UNKNOWN_VALUE;
       String patchLevel = ProductInfo.UNKNOWN_VALUE;
       String patchVersion = ProductInfo.UNKNOWN_VALUE;
       String buildID = ProductInfo.UNKNOWN_VALUE;
       String capabilities = ProductInfo.UNKNOWN_VALUE;
       String copyright = ProductInfo.UNKNOWN_VALUE;
-      try {
-        if (cc.mbsc != null) {
-          AttributeList attrList = cc.mbsc.getAttributes(L2MBeanNames.TC_SERVER_INFO, attributes);
-          if (attrList.get(0) != null) {
-            version = (String) ((Attribute) attrList.get(0)).getValue();
-          }
-          boolean isPatched = false;
-          if (attrList.get(1) != null) {
-            isPatched = (Boolean) ((Attribute) attrList.get(1)).getValue();
-          }
-          if (attrList.get(2) != null) {
-            patchLevel = isPatched ? (String) ((Attribute) attrList.get(2)).getValue() : null;
-          }
-          if (attrList.get(3) != null) {
-            patchVersion = (String) ((Attribute) attrList.get(3)).getValue();
-          }
-          if (attrList.get(4) != null) {
-            buildID = (String) ((Attribute) attrList.get(4)).getValue();
-          }
-          if (attrList.get(5) != null) {
-            capabilities = (String) ((Attribute) attrList.get(5)).getValue();
-          }
-          if (attrList.get(6) != null) {
-            copyright = (String) ((Attribute) attrList.get(6)).getValue();
-          }
-        }
-      } catch (Exception e) {
-        System.err.println(e);
+      Object value;
+      if ((value = results.get("Version")) != null) {
+        version = (String) value;
+      }
+      boolean isPatched = false;
+      if ((value = results.get("Patched")) != null) {
+        isPatched = (Boolean) value;
+      }
+      if ((value = results.get("PatchLevel")) != null) {
+        patchLevel = isPatched ? (String) value : null;
+      }
+      if ((value = results.get("PatchVersion")) != null) {
+        patchVersion = (String) value;
+      }
+      if ((value = results.get("BuildID")) != null) {
+        buildID = (String) value;
+      }
+      if ((value = results.get("DescriptionOfCapabilities")) != null) {
+        capabilities = (String) value;
+      }
+      if ((value = results.get("Copyright")) != null) {
+        copyright = (String) value;
       }
       productInfo = new ProductVersion(version, patchLevel, patchVersion, buildID, capabilities, copyright);
     }
@@ -843,15 +819,33 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   }
 
   private void beanRegistered(ObjectName beanName) {
-    if (beanName.equals(L2MBeanNames.DSO)) {
-      try {
-        setupFromDSOBean();
-      } catch (Exception e) {
-        e.printStackTrace();
+    Set<ObjectName> theReadySet = getReadySet();
+    if (theReadySet == null) { return; }
+
+    testInitRegisteredBean(theReadySet, beanName);
+  }
+
+  private void testInitRegisteredBean(Set<ObjectName> theReadySet, ObjectName beanName) {
+    if (theReadySet.contains(beanName)) {
+      if (beanName.equals(L2MBeanNames.DSO)) {
+        try {
+          setupFromDSOBean();
+        } catch (Exception e) {
+          /**/
+        }
+      } else if (beanName.equals(StatisticsMBeanNames.STATISTICS_GATHERER)) {
+        initClusterStatsBean();
+      } else if (beanName.equals(L2MBeanNames.SERVER_DB_BACKUP)) {
+        initServerDBBackupBean();
+      } else if (beanName.equals(L2MBeanNames.LOCK_STATISTICS)) {
+        initLockProfilerBean();
       }
+
+      synchronized (this) {
+        theReadySet.remove(beanName);
+      }
+      setReady(theReadySet.isEmpty());
     }
-    readySet.remove(beanName);
-    setReady(readySet.isEmpty());
   }
 
   private synchronized boolean isMBeanRegistered(ObjectName beanName) {
@@ -1043,12 +1037,6 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   public synchronized String getHostAddress() {
     ServerConnectionManager scm = getConnectionManager();
     return scm != null ? scm.safeGetHostAddress() : "not connected";
-  }
-
-  public StatisticsLocalGathererMBean getStatisticsGathererMBean() {
-    ConnectionContext cc = getConnectionContext();
-    return MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, StatisticsMBeanNames.STATISTICS_GATHERER,
-                                                    StatisticsLocalGathererMBean.class, true);
   }
 
   public IServer[] getClusterServers() {
@@ -1249,21 +1237,22 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     }
   }
 
-  public synchronized ServerDBBackupMBean getServerDBBackupBean() {
-    if (!serverDBBackupSupported) return null;
-    if (serverDBBackupBean != null) return serverDBBackupBean;
+  public synchronized void initServerDBBackupBean() {
     ConnectionContext cc = getConnectionContext();
     if (cc != null) {
       try {
         serverDBBackupBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, L2MBeanNames.SERVER_DB_BACKUP,
                                                                       ServerDBBackupMBean.class, true);
-        if (serverDBBackupBean != null && serverDBBackupBean.isBackupEnabled()) {
+        if ((serverDBBackupSupported = serverDBBackupBean.isBackupEnabled()) == true) {
           cc.addNotificationListener(L2MBeanNames.SERVER_DB_BACKUP, new ServerDBBackupListener());
         }
       } catch (Exception e) {
-        /* Connection probably dropped */
+        serverDBBackupSupported = false;
       }
     }
+  }
+
+  public synchronized ServerDBBackupMBean getServerDBBackupBean() {
     return serverDBBackupBean;
   }
 
@@ -1391,18 +1380,21 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     return "not connected";
   }
 
-  public synchronized LockStatisticsMonitorMBean getLockProfilerBean() {
-    if (lockProfilerBean != null) return lockProfilerBean;
+  public synchronized void initLockProfilerBean() {
     ConnectionContext cc = getConnectionContext();
     if (cc != null) {
       try {
         lockProfilerBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, L2MBeanNames.LOCK_STATISTICS,
                                                                     LockStatisticsMonitorMBean.class, true);
         cc.addNotificationListener(L2MBeanNames.LOCK_STATISTICS, new LockStatsNotificationListener());
+        lockProfilingSupported = true;
       } catch (Exception e) {
         lockProfilingSupported = false;
       }
     }
+  }
+
+  public synchronized LockStatisticsMonitorMBean getLockProfilerBean() {
     return lockProfilerBean;
   }
 
@@ -1421,7 +1413,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     }
   }
 
-  public boolean isLockProfilingSupported() {
+  public synchronized boolean isLockProfilingSupported() {
     return lockProfilingSupported;
   }
 
@@ -1455,21 +1447,23 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     return Collections.emptySet();
   }
 
-  public synchronized StatisticsLocalGathererMBean getClusterStatsBean() {
-    if (clusterStatsBean != null) return clusterStatsBean;
+  private synchronized void initClusterStatsBean() {
     ConnectionContext cc = getConnectionContext();
     if (cc != null) {
       try {
         clusterStatsBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, StatisticsMBeanNames.STATISTICS_GATHERER,
                                                                     StatisticsLocalGathererMBean.class, true);
-        clusterStatsSupported = clusterStatsBean.isActive();
-        if (clusterStatsSupported) {
+        if ((clusterStatsSupported = clusterStatsBean.isActive()) == true) {
           cc.addNotificationListener(StatisticsMBeanNames.STATISTICS_GATHERER, new ClusterStatsNotificationListener());
         }
       } catch (Exception e) {
+        e.printStackTrace();
         clusterStatsSupported = false;
       }
     }
+  }
+
+  public synchronized StatisticsLocalGathererMBean getClusterStatsBean() {
     return clusterStatsBean;
   }
 
@@ -1579,7 +1573,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     }
   }
 
-  public boolean isClusterStatsSupported() {
+  public synchronized boolean isClusterStatsSupported() {
     return clusterStatsSupported;
   }
 
@@ -1590,6 +1584,8 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     StatisticsLocalGathererMBean theClusterStatsBean = getClusterStatsBean();
     if (theClusterStatsBean != null) {
       theClusterStatsBean.startup();
+    } else {
+      throw new RuntimeException("startupClusterStats: ClusterStatsBean not initialized.");
     }
   }
 

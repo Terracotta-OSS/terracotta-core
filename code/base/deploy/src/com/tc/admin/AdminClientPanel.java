@@ -152,7 +152,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     tree.addTreeSelectionListener(new NavTreeSelectionListener());
 
     logArea = new LogPane();
-    logsPanel.add(adminClientContext.getString("messages"), logArea);
+    logsPanel.add(adminClientContext.getString("messages"), new XScrollPane(logArea));
 
     initNavTreeMenu();
     registerOptions();

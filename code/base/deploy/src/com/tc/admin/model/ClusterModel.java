@@ -234,10 +234,13 @@ public class ClusterModel implements IClusterModel {
   }
 
   public boolean determineReady() {
-    for (IServerGroup group : serverGroups) {
+    IServerGroup[] theServerGroups = getServerGroups();
+    if (theServerGroups == null) { return false; }
+
+    for (IServerGroup group : theServerGroups) {
       if (!group.isReady()) { return false; }
     }
-    return serverGroups != IServerGroup.NULL_SET;
+    return theServerGroups != IServerGroup.NULL_SET;
   }
 
   public boolean determineConnected() {
@@ -628,10 +631,10 @@ public class ClusterModel implements IClusterModel {
   }
 
   public synchronized void tearDown() {
+    tearDownGroups();
     connectServer.removePropertyChangeListener(connectServerListener);
     connectServer.tearDown();
     connectServer = null;
-    tearDownGroups();
     connectServerListener = null;
     activeCoordinatorListener = null;
     serverStateListenerDelegate = null;

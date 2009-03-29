@@ -32,9 +32,11 @@ import com.tc.admin.common.XTextArea;
 import com.tc.admin.model.ClientConnectionListener;
 import com.tc.admin.model.IClient;
 import com.tc.admin.model.IClusterModel;
+import com.tc.admin.model.IClusterModelElement;
 import com.tc.admin.model.IClusterStatsListener;
 import com.tc.admin.model.IServer;
 import com.tc.admin.model.IServerGroup;
+import com.tc.admin.model.ServerStateListener;
 import com.tc.statistics.gatherer.exceptions.StatisticsGathererAlreadyConnectedException;
 import com.terracottatech.config.TcStatsConfigDocument;
 import com.terracottatech.config.TcStatsConfigDocument.TcStatsConfig;
@@ -103,6 +105,7 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
   private ApplicationContext         appContext;
   private IClusterModel              clusterModel;
   private ClusterListener            clusterListener;
+  private ServerListener             serverListener;
   private JToggleButton              startGatheringStatsButton;
   private JToggleButton              stopGatheringStatsButton;
   private XList                      statsSessionsList;
@@ -147,6 +150,7 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
 
     if (clusterModel != null) {
       clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
+      clusterModel.addServerStateListener(serverListener = new ServerListener());
       if (clusterModel.isReady()) {
         IServer activeCoord = clusterModel.getActiveCoordinator();
         if (activeCoord != null) {
@@ -291,8 +295,8 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
       IClusterModel theClusterModel = getClusterModel();
       if (theClusterModel == null) { return; }
 
-      if (clusterModel.isReady()) {
-        IServer activeCoord = clusterModel.getActiveCoordinator();
+      if (theClusterModel.isReady()) {
+        IServer activeCoord = theClusterModel.getActiveCoordinator();
         if (activeCoord != null) {
           messageLabel.setText(appContext.getString("initializing"));
           initiateStatsGathererConnectWorker();
@@ -319,9 +323,51 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
       }
 
       if (newActive != null) {
-        initiateStatsGathererConnectWorker();
+        if (theClusterModel.isReady()) {
+          initiateStatsGathererConnectWorker();
+        }
         newActive.addClientConnectionListener(StatsRecorderPanel.this);
         newActive.addClusterStatsListener(StatsRecorderPanel.this);
+      }
+    }
+  }
+
+  private class ServerListener implements ServerStateListener {
+    public void serverStateChanged(IServer server, PropertyChangeEvent pce) {
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
+      if (isRecording) {
+        String prop = pce.getPropertyName();
+        if (prop.equals(IClusterModelElement.PROP_READY)) {
+          if (server.isReady() && !server.isActiveCoordinator() && server.isClusterStatsSupported()) {
+            java.util.List<String> statList = getSelectedStats();
+            String[] stats = statList.toArray(new String[0]);
+            long samplePeriodMillis = getSamplePeriodMillis();
+
+            appContext.execute(new JoinStatsGatheringWorker(server, stats, samplePeriodMillis));
+          }
+        }
+      }
+    }
+  }
+
+  private class JoinStatsGatheringWorker extends BasicWorker<Void> {
+    JoinStatsGatheringWorker(final IServer server, final String[] statsToRecord, final long samplePeriodMillis) {
+      super(new Callable<Void>() {
+        public Void call() {
+          server.startupClusterStats();
+          server.startClusterStatsSession(currentStatsSessionId, statsToRecord, samplePeriodMillis);
+          return null;
+        }
+      });
+    }
+
+    @Override
+    protected void finished() {
+      Exception e = getException();
+      if (e != null) {
+        showError(e);
       }
     }
   }
@@ -364,6 +410,8 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
   }
 
   private void showError(Throwable t) {
+    t.printStackTrace();
+
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
     t.printStackTrace(pw);
@@ -631,9 +679,7 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
         public Void call() {
           for (IServerGroup group : clusterModel.getServerGroups()) {
             for (IServer server : group.getMembers()) {
-              if (server.isReady() && server.isClusterStatsSupported()) {
-                server.endCurrentClusterStatsSession();
-              }
+              server.endCurrentClusterStatsSession();
             }
           }
           return null;
@@ -643,7 +689,10 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
 
     @Override
     public void finished() {
-      /**/
+      Exception e = getException();
+      if (e != null) {
+        appContext.log(e);
+      }
     }
   }
 
@@ -913,7 +962,6 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
               if (fOutFileName == null) {
                 fOutFileName = ze.getName();
               }
-              System.out.println("Unzipping " + ze.getName() + "...");
               inReader = new BufferedReader(new InputStreamReader(zin));
               String line;
 
@@ -1122,6 +1170,7 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
     if (theClusterModel != null) {
       theClusterModel.removePropertyChangeListener(clusterListener);
       clusterListener.tearDown();
+      theClusterModel.removeServerStateListener(serverListener);
 
       IServer activeCoord = theClusterModel.getActiveCoordinator();
       if (activeCoord != null) {
@@ -1136,6 +1185,8 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
     synchronized (this) {
       appContext = null;
       clusterModel = null;
+      clusterListener = null;
+      serverListener = null;
       startGatheringStatsButton = null;
       stopGatheringStatsButton = null;
       statsSessionsList = null;
