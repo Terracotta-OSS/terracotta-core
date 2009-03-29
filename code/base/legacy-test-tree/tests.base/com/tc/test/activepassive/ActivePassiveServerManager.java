@@ -4,6 +4,7 @@
  */
 package com.tc.test.activepassive;
 
+import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.test.DSOApplicationConfigBuilderImpl;
 import com.tc.management.JMXConnectorProxy;
@@ -94,9 +95,10 @@ public class ActivePassiveServerManager extends MultipleServerManager {
   public ActivePassiveServerManager(boolean isActivePassiveTest, File tempDir, PortChooser portChooser,
                                     String configModel, MultipleServersTestSetupManager setupManger, File javaHome,
                                     TestTVSConfigurationSetupManagerFactory configFactory, List extraJvmArgs,
-                                    boolean isProxyL2GroupPorts, boolean isProxyDsoPorts) throws Exception {
+                                    boolean isProxyL2GroupPorts, boolean isProxyDsoPorts,
+                                    DSOApplicationConfigBuilder dsoApplicationBuilder) throws Exception {
     this(ACTIVEPASSIVE_GROUP, isActivePassiveTest, tempDir, portChooser, configModel, setupManger, javaHome,
-         configFactory, extraJvmArgs, isProxyL2GroupPorts, isProxyDsoPorts, false, 0);
+         configFactory, extraJvmArgs, isProxyL2GroupPorts, isProxyDsoPorts, false, 0, dsoApplicationBuilder);
   }
 
   // Should be called directly when an active-active test is to be run. In case of active active config is not written
@@ -105,7 +107,8 @@ public class ActivePassiveServerManager extends MultipleServerManager {
                                     MultipleServersTestSetupManager setupManger, File javaHome,
                                     TestTVSConfigurationSetupManagerFactory configFactory, List extraJvmArgs,
                                     boolean isProxyL2GroupPorts, boolean isProxyDsoPorts, boolean isActiveActive,
-                                    int startIndexOfServer) throws Exception {
+                                    int startIndexOfServer, DSOApplicationConfigBuilder dsoApplicationBuilder)
+      throws Exception {
     super(setupManger);
 
     this.groupName = groupName;
@@ -150,14 +153,11 @@ public class ActivePassiveServerManager extends MultipleServerManager {
       GroupData[] groupList = new GroupData[1];
       groupList[0] = new GroupData(ACTIVEPASSIVE_GROUP, dsoPorts, jmxPorts, (isProxyL2GroupPorts) ? proxyL2GroupPorts
           : l2GroupPorts, serverNames);
-      MultipleServersConfigCreator serversConfigCreator = new MultipleServersConfigCreator(
-                                                                                           this.setupManger,
-                                                                                           groupList,
+      MultipleServersConfigCreator serversConfigCreator = new MultipleServersConfigCreator(this.setupManger, groupList,
                                                                                            this.configModel,
-                                                                                           configFile,
-                                                                                           this.tempDir,
+                                                                                           configFile, this.tempDir,
                                                                                            configFactory,
-                                                                                           new DSOApplicationConfigBuilderImpl());
+                                                                                           dsoApplicationBuilder);
       this.serverConfigCreator = serversConfigCreator;
       serverConfigCreator.writeL2Config();
     }
@@ -839,7 +839,7 @@ public class ActivePassiveServerManager extends MultipleServerManager {
     debugPrintln("\n ##### deleted directory=[" + directory + "]");
     debugPrintln("\n ##### dataFile=[" + directory + "] still exists? [" + (new File(directory).exists()) + "]");
   }
-  
+
   public final String getConfigFileLocation() {
     return configFileLocation;
   }

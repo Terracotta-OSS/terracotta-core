@@ -56,7 +56,7 @@ public class ActiveActiveServerManager extends MultipleServerManager {
                                                                       portChooser, configModel,
                                                                       activePasssiveTestSetupManager, javaHome,
                                                                       configFactory, extraJvmArgs, isProxyL2GroupPorts,
-                                                                      isProxyDsoPorts, true, noOfServers);
+                                                                      isProxyDsoPorts, true, noOfServers, dsoApplicationBuilder);
       noOfServers += setupManger.getGroupMemberCount(i);
     }
 

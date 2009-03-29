@@ -4,6 +4,8 @@
  */
 package com.tctest;
 
+import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
+import com.tc.config.schema.test.DSOApplicationConfigBuilderImpl;
 import com.tc.test.MultipleServersConfigCreator;
 import com.tc.test.TestConfigObject;
 import com.tc.test.activepassive.ActivePassiveServerManager;
@@ -24,6 +26,11 @@ public abstract class ActivePassiveTransparentTestBase extends MultipleServersTr
   protected void setUpMultipleServersTest(PortChooser portChooser, ArrayList jvmArgs) throws Exception {
     setUpActivePassiveServers(portChooser, jvmArgs);
   }
+  
+  // to be override for L1 application config
+  protected DSOApplicationConfigBuilder createDsoApplicationConfig() {
+    return (new DSOApplicationConfigBuilderImpl());
+  }
 
   private void setUpActivePassiveServers(PortChooser portChooser, List jvmArgs) throws Exception {
     controlledCrashMode = true;
@@ -36,7 +43,8 @@ public abstract class ActivePassiveTransparentTestBase extends MultipleServersTr
                                                                                 apSetupManager, javaHome,
                                                                                 configFactory(), jvmArgs,
                                                                                 canRunL2ProxyConnect(),
-                                                                                canRunL1ProxyConnect());
+                                                                                canRunL1ProxyConnect(),
+                                                                                createDsoApplicationConfig());
 
     apServerManager.addServersAndGroupToL1Config(configFactory());
     if (canRunL2ProxyConnect()) setupL2ProxyConnectTest(apServerManager.getL2ProxyManagers());
