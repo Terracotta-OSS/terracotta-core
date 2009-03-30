@@ -6,7 +6,6 @@ package com.tc.test.activepassive;
 
 import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
-import com.tc.config.schema.test.DSOApplicationConfigBuilderImpl;
 import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.L2MBeanNames;
