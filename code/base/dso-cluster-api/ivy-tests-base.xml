@@ -3,8 +3,8 @@
   <info organisation="ibiblio" module="dso-cluster-api-tests-base"/>
   
   <dependencies>
-    <dependency name="ant" rev="1.7.1"/>
-    <dependency name="ant-junit" rev="1.7.1"/>
+    <dependency name="ant" rev="1.7.1" org="terracotta"/>
+    <dependency name="ant-junit" rev="1.7.1" org="terracotta"/>
     <dependency name="junit" rev="3.8.1"/>
     <dependency name="junit-addons" rev="1.4"/>
   </dependencies>

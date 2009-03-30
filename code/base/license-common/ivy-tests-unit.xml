@@ -3,6 +3,8 @@
   <info organisation="ibiblio" module="license-common-tests-unit"/>
   
   <dependencies>
+    <dependency name="ant" rev="1.7.1" org="terracotta"/>
+    <dependency name="ant-junit" rev="1.7.1" org="terracotta"/>
     <dependency name="junit" rev="3.8.1"/>
   </dependencies>
   
