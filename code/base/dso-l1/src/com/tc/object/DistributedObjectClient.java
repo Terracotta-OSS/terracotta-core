@@ -279,7 +279,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         this.config.validateGroupInfo();
       } catch (ConfigurationSetupException e) {
         CONSOLE_LOGGER.error(e.getMessage());
-        DSO_LOGGER.error("", e);
         System.exit(1);
       }
     }

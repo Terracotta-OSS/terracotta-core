@@ -157,14 +157,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   /**
    * A map of class names to TransparencyClassSpec
-   *
+   * 
    * @GuardedBy {@link #specLock}
    */
   private final Map                                          userDefinedBootSpecs               = new HashMap();
 
   /**
    * A map of class names to TransparencyClassSpec for individual classes
-   *
+   * 
    * @GuardedBy {@link #specLock}
    */
   private final Map                                          classSpecs                         = new HashMap();
@@ -1936,8 +1936,11 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       }
     }
 
-    String errMsg = "The client config and the server config doesn't match.";
-    if (connInfoFromL1.size() != connInfoFromL2.size()) { throw new ConfigurationSetupException(errMsg); }
+    String errMsg = "The client config and the server config doesn't match.\n";
+    if (connInfoFromL1.size() != connInfoFromL2.size()) {
+      errMsg = errMsg + "The number of servers in the client config and the server config are not the same.";
+      throw new ConfigurationSetupException(errMsg);
+    }
 
     /**
      * This check is there because of TC_SERVER env variable
@@ -1951,6 +1954,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       if (portFromL1 == portFromL2) {
         return;
       } else {
+        errMsg = "The dso port does not match for the client and the server config.";
         throw new ConfigurationSetupException(errMsg);
       }
     }
@@ -1958,6 +1962,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     if (!connInfoFromL1.containsAll(connInfoFromL2)) {
       logger.info("L1 connection info: " + connInfoFromL1);
       logger.info("L2 connection info: " + connInfoFromL2);
+      errMsg = errMsg + "Please see the log files for more information on L1 and L2 connection info.";
       throw new ConfigurationSetupException(errMsg);
     }
   }
