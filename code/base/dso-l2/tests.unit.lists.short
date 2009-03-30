@@ -1,3 +1,4 @@
 ManagedObjectSerializerTest
 MarkAndSweepGarbageCollectorTest
 PhysicalStateClassLoaderTest
+ObjectManagerTest

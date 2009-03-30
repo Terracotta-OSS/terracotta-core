@@ -11,7 +11,6 @@ import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
-import com.tc.object.BaseDSOTestCase;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.cache.EvictionPolicy;
@@ -84,6 +83,7 @@ import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.stats.counter.sampled.SampledCounterImpl;
+import com.tc.test.TCTestCase;
 import com.tc.util.Counter;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
@@ -108,7 +108,7 @@ import java.util.concurrent.CyclicBarrier;
 /**
  * @author steve
  */
-public class ObjectManagerTest extends BaseDSOTestCase {
+public class ObjectManagerTest extends TCTestCase {
 
   private Map                                managed;
   private ObjectManagerImpl                  objectManager;
