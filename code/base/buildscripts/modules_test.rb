@@ -676,7 +676,6 @@ class SubtreeTestRun
       :showoutput => true,
       :jvm => tests_jvm.java.to_s) {
       @ant.classpath {
-        @ant.pathelement( :path => JavaSystem.getProperty("java.class.path"))
         # add path to TCJUnitFormatter class
         @ant.pathelement( :path => junit_formatter_classpath)
       }
