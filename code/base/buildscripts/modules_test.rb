@@ -701,15 +701,22 @@ class SubtreeTestRun
     failure_properties.each { |property_name| failed = failed || (@ant.get_ant_property(property_name) != nil) }
     script_results.failed("Execution of tests in subtree '#{@subtree.module_subtree_name}' failed.") if failed
 
+
+    # clean junit reports of redundant info to help speed up parsing
+    # and avoid OOME while parsing big result files
+    cleaner = org.terracotta.JUnitReportCleaner.new
+    Dir.chdir(@testrun_results.results_dir(@subtree).to_s) do
+      Dir.glob("TEST*.xml").each do |filename|
+        cleaner.clean(File.expand_path(filename))
+      end
+    end
+
     # Aggregate the results into the aggregation directory, if it's set.
     unless @aggregation_directory.nil?
       puts "Copying test result files to '#{@aggregation_directory}'..."
-      Dir.chdir(@testrun_results.results_dir(@subtree).to_s) do
-        Dir.glob("*.xml").each do |filename|
-          cleaner = org.terracotta.JUnitReportCleaner.new
-          cleaner.cleanToFile(File.expand_path(filename), File.join(@aggregation_directory.to_s, filename))
-        end
-      end
+      @ant.copy(:todir => @aggregation_directory.to_s) {
+        @ant.fileset(:dir => @testrun_results.results_dir(@subtree).to_s, :includes => '*.xml')
+      }
     end
   end
 

@@ -998,11 +998,9 @@ END
     puts ""
 
     testrun_record.setUp(test_set)
-    have_started_at_least_one_test = false
 
     begin
       prepare_and_run_block_on_tests(test_set, testrun_results, Proc.new do |testrun|
-          have_started_at_least_one_test = true
           testrun.run(@script_results)
         end, testrun_record)
     ensure
