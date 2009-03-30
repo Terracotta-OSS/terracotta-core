@@ -48,7 +48,7 @@ public class MapsSystemTestApp extends AbstractTransparentApp {
     }
 
     index = waitOnBarrier();
-    if (index != 0) restartServer();
+    if (index == 0) restartServer();
     waitOnBarrier();
 
     validate();
