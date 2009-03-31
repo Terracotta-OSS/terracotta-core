@@ -27,7 +27,8 @@ modules:
         jdk: J2SE-1.5
         javadoc: true
       dependencies:
-        - license-common        
+        - license-common
+        - sigarstats        
   - common:
       options:
         jdk: J2SE-1.5

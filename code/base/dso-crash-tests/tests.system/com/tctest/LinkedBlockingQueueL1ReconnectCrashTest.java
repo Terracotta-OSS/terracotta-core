@@ -4,6 +4,10 @@
  */
 package com.tctest;
 
+import com.tc.test.restart.RestartTestHelper;
+import com.tc.util.runtime.Memory;
+import com.tc.util.runtime.Os;
+
 public class LinkedBlockingQueueL1ReconnectCrashTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 8;
@@ -15,6 +19,15 @@ public class LinkedBlockingQueueL1ReconnectCrashTest extends TransparentTestBase
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
+  }
+  
+  @Override
+  protected long getRestartInterval(RestartTestHelper helper) {
+    if(Os.isSolaris() || Memory.isMemoryLow()) {
+      return super.getRestartInterval(helper) * 3;
+    } else {
+      return super.getRestartInterval(helper);
+    }
   }
 
   protected Class getApplicationClass() {

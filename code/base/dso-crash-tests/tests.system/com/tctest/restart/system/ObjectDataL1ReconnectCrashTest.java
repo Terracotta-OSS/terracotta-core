@@ -4,6 +4,9 @@
  */
 package com.tctest.restart.system;
 
+import com.tc.test.restart.RestartTestHelper;
+import com.tc.util.runtime.Memory;
+import com.tc.util.runtime.Os;
 import com.tctest.TestConfigurator;
 import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
@@ -21,6 +24,15 @@ public class ObjectDataL1ReconnectCrashTest extends TransparentTestBase implemen
     t.initializeTestRunner();
   }
 
+  @Override
+  protected long getRestartInterval(RestartTestHelper helper) {
+    if(Os.isSolaris() || Memory.isMemoryLow()) {
+      return super.getRestartInterval(helper) * 3;
+    } else {
+      return super.getRestartInterval(helper);
+    }
+  }
+  
   protected boolean canRunCrash() {
     return true;
   }

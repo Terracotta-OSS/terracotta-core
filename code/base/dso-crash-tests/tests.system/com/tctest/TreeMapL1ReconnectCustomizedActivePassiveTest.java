@@ -9,7 +9,10 @@ import com.tc.test.MultipleServersPersistenceMode;
 import com.tc.test.MultipleServersSharedDataMode;
 import com.tc.test.activepassive.ActivePassiveServerManager;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
+import com.tc.test.restart.RestartTestHelper;
 import com.tc.util.Assert;
+import com.tc.util.runtime.Memory;
+import com.tc.util.runtime.Os;
 
 public class TreeMapL1ReconnectCustomizedActivePassiveTest extends ActivePassiveTransparentTestBase {
 
@@ -26,6 +29,15 @@ public class TreeMapL1ReconnectCustomizedActivePassiveTest extends ActivePassive
   
   protected boolean enableL1Reconnect() {
     return true;
+  }
+  
+  @Override
+  protected long getRestartInterval(RestartTestHelper helper) {
+    if(Os.isSolaris() || Memory.isMemoryLow()) {
+      return super.getRestartInterval(helper) * 3;
+    } else {
+      return super.getRestartInterval(helper);
+    }
   }
 
   protected boolean canRunCrash() {
