@@ -60,7 +60,7 @@ public class ReflectorTest extends TCTestCase {
       urlConnection.setRequestMethod("HEAD");
       urlConnection.connect();
       String redirectLink = urlConnection.getHeaderField("Location");
-      if (redirectLink != null && !url.equals(redirectLink)) {
+      if (redirectLink != null && !link.equals(redirectLink)) {
         return isValid(redirectLink);
       } else {
         return urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK;
