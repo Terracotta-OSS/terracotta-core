@@ -31,6 +31,7 @@ import com.tc.test.restart.RestartTestHelper;
 import com.tc.test.restart.ServerCrasher;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
+import com.tc.util.runtime.Os;
 import com.tc.util.runtime.ThreadDump;
 import com.tctest.runner.DistributedTestRunner;
 import com.tctest.runner.DistributedTestRunnerConfig;
@@ -197,7 +198,13 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
     if (isCrashy() && canRunCrash()) {
       crashTestState = new TestState(false);
-      crasher = new ServerCrasher(serverControl, helper.getServerCrasherConfig().getRestartInterval(), helper
+      long restartInterval = 0;
+      if(Os.isSolaris()) {
+        restartInterval = helper.getServerCrasherConfig().getRestartInterval(); 
+      } else {
+        restartInterval = helper.getServerCrasherConfig().getRestartInterval() * 3;
+      }
+      crasher = new ServerCrasher(serverControl, restartInterval , helper
           .getServerCrasherConfig().isCrashy(), crashTestState, proxyMgr);
       if (canRunL1ProxyConnect()) crasher.setProxyConnectMode(true);
       crasher.startAutocrash();
