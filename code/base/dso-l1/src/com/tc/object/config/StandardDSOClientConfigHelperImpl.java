@@ -1936,9 +1936,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       }
     }
 
-    String errMsg = "The client config and the server config doesn't match.\n";
+    String errMsg = "Client and server configurations don't match.\n";
     if (connInfoFromL1.size() != connInfoFromL2.size()) {
-      errMsg = errMsg + "The number of servers in the client config and the server config are not the same.";
+      errMsg = errMsg + "The number of servers specified in the client and server configs are different.";
       throw new ConfigurationSetupException(errMsg);
     }
 
@@ -1954,17 +1954,23 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       if (portFromL1 == portFromL2) {
         return;
       } else {
-        errMsg = "The dso port does not match for the client and the server config.";
-        throw new ConfigurationSetupException(errMsg);
+        logConfigMismatchAndThrowException(connInfoFromL1, connInfoFromL2, errMsg);
       }
     }
 
     if (!connInfoFromL1.containsAll(connInfoFromL2)) {
-      logger.info("L1 connection info: " + connInfoFromL1);
-      logger.info("L2 connection info: " + connInfoFromL2);
-      errMsg = errMsg + "Please see the log files for more information on L1 and L2 connection info.";
-      throw new ConfigurationSetupException(errMsg);
+      logConfigMismatchAndThrowException(connInfoFromL1, connInfoFromL2, errMsg);
     }
+  }
+
+  private void logConfigMismatchAndThrowException(HashSet<ConnectionInfo> connInfoFromL1,
+                                                  HashSet<ConnectionInfo> connInfoFromL2, String errMsg)
+      throws ConfigurationSetupException {
+    logger.info("L1 connection info: " + connInfoFromL1);
+    logger.info("L2 connection info: " + connInfoFromL2);
+    errMsg = errMsg
+             + "See \"L1 connection info\" and \"L2 connection info\" in the Terracotta log files for more information.";
+    throw new ConfigurationSetupException(errMsg);
   }
 
   private String getIpAddressOfServer(final String name) throws ConfigurationSetupException {
