@@ -5,75 +5,48 @@
 package com.tc.stats.counter;
 
 import java.io.Serializable;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * A simple counter implementation
  */
 public class CounterImpl implements Counter, Serializable {
-  private long value;
-  private long min;
-  private long max;
+  private AtomicLong value;
 
   public CounterImpl() {
     this(0L);
   }
 
   public CounterImpl(long initialValue) {
-    this.value = initialValue;
-    this.min = initialValue;
-    this.max = initialValue;
+    this.value = new AtomicLong(initialValue);
   }
 
-  public synchronized long increment() {
-    final long newValue = ++this.value;
-    setValue(newValue);
-    return newValue;
+  public long increment() {
+    return value.incrementAndGet();
   }
 
-  public synchronized long decrement() {
-    final long newValue = --this.value;
-    setValue(newValue);
-    return newValue;
+  public long decrement() {
+    return value.decrementAndGet();
   }
 
-  public synchronized long getAndSet(long newValue) {
-    final long previousValue = this.value;
-    setValue(newValue);
-    return previousValue;
+  public long getAndSet(long newValue) {
+    return value.getAndSet(newValue);
   }
 
-  public synchronized long getValue() {
-    return this.value;
+  public long getValue() {
+    return value.get();
   }
 
-  public synchronized long getMaxValue() {
-    return this.max;
+  public long increment(long amount) {
+    return value.addAndGet(amount);
   }
 
-  public synchronized long getMinValue() {
-    return this.min;
+  public long decrement(long amount) {
+    return value.addAndGet(amount * -1);
   }
 
-  public synchronized long increment(long amount) {
-    final long newValue = this.value += amount;
-    setValue(newValue);
-    return newValue;
-  }
-
-  public synchronized long decrement(long amount) {
-    final long newValue = this.value -= amount;
-    setValue(newValue);
-    return newValue;
-  }
-
-  public synchronized void setValue(long newValue) {
-    if (newValue > this.max) {
-      this.max = newValue;
-    } else if (newValue < this.min) {
-      this.min = newValue;
-    }
-
-    this.value = newValue;
+  public void setValue(long newValue) {
+    value.set(newValue);
   }
 
 }

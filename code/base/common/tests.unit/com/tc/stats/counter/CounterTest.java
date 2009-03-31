@@ -80,45 +80,6 @@ public class CounterTest extends TestCase {
 
     assertEquals(local.get(), counter.getValue());
   }
-
-  
-  public void testMinMax() {
-    Counter counter = new CounterImpl();
-    assertEquals(0, counter.getMinValue());
-    assertEquals(0, counter.getMaxValue());
-    
-    counter.increment();
-    assertEquals(0, counter.getMinValue());
-    assertEquals(1, counter.getMaxValue());
-    
-    counter.decrement();
-    assertEquals(0, counter.getMinValue());
-    assertEquals(1, counter.getMaxValue());
-    counter.decrement();
-    assertEquals(-1, counter.getMinValue());
-    assertEquals(1, counter.getMaxValue());
-    
-    counter.increment(10);
-    assertEquals(-1, counter.getMinValue());
-    assertEquals(9, counter.getMaxValue());
-    
-    counter.decrement(20);
-    assertEquals(-11, counter.getMinValue());
-    assertEquals(9, counter.getMaxValue());
-    
-    counter.setValue(100);
-    assertEquals(-11, counter.getMinValue());
-    assertEquals(100, counter.getMaxValue());
-    
-    counter.setValue(-100);
-    assertEquals(-100, counter.getMinValue());
-    assertEquals(100, counter.getMaxValue());
-    
-    counter.getAndSet(5);
-    assertEquals(-100, counter.getMinValue());
-    assertEquals(100, counter.getMaxValue());      
-  }
-  
   
   public void test() {
     Counter counter = new CounterImpl();

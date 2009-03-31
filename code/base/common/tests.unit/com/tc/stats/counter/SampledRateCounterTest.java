@@ -10,7 +10,6 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
 import com.tc.util.Assert;
-import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Random;
 
@@ -70,26 +69,6 @@ public class SampledRateCounterTest extends TestCase {
 
     try {
       counter.decrement(0);
-    } catch (UnsupportedOperationException e) {
-      // expected
-      nullException = e;
-    }
-    if (nullException == null) {
-      Assert.fail("Should be unsupported");
-    }
-
-    try {
-      counter.getMaxValue();
-    } catch (UnsupportedOperationException e) {
-      // expected
-      nullException = e;
-    }
-    if (nullException == null) {
-      Assert.fail("Should be unsupported");
-    }
-
-    try {
-      counter.getMinValue();
     } catch (UnsupportedOperationException e) {
       // expected
       nullException = e;
@@ -189,58 +168,6 @@ public class SampledRateCounterTest extends TestCase {
     long localVal = localDenominator.get() == 0 ? 0 : (localNumerator.get() / localDenominator.get());
     System.out.println("localValue=" + localVal + " counter.getValue()=" + counter.getValue());
     assertEquals(localVal, counter.getValue());
-  }
-
-  public void testMinMax() {
-    SampledRateCounterConfig config = new SampledRateCounterConfig(1, 300, true);
-    final SampledRateCounter counter = (SampledRateCounter) counterManager.createCounter(config);
-
-    assertEquals(0, counter.getMin().getCounterValue());
-    assertEquals(0, counter.getMax().getCounterValue());
-
-    counter.increment(1, 1);
-    ThreadUtil.reallySleep(1500);
-    assertEquals(0, counter.getMin().getCounterValue());
-    assertEquals(1, counter.getMax().getCounterValue());
-
-    counter.decrement(1, -1);
-    ThreadUtil.reallySleep(1500);
-    assertEquals(-1, counter.getMin().getCounterValue());
-    assertEquals(1, counter.getMax().getCounterValue());
-
-    ThreadUtil.reallySleep(1500);
-    counter.decrement(12, -1);
-    counter.decrement(-2, -1);
-    ThreadUtil.reallySleep(1500);
-    assertEquals(-5, counter.getMin().getCounterValue());
-    assertEquals(1, counter.getMax().getCounterValue());
-
-    ThreadUtil.reallySleep(1500);
-    counter.increment(10, 1);
-    counter.increment(2, 1);
-    ThreadUtil.reallySleep(1500);
-    assertEquals(-5, counter.getMin().getCounterValue());
-    assertEquals(6, counter.getMax().getCounterValue());
-
-    ThreadUtil.reallySleep(1500);
-    counter.decrement(20, -1);
-    ThreadUtil.reallySleep(1500);
-    assertEquals(-20, counter.getMin().getCounterValue());
-    assertEquals(6, counter.getMax().getCounterValue());
-
-    counter.setValue(100, 1);
-    ThreadUtil.reallySleep(1500);
-    assertEquals(-20, counter.getMin().getCounterValue());
-    assertEquals(100, counter.getMax().getCounterValue());
-
-    counter.setValue(-100, 1);
-    ThreadUtil.reallySleep(1500);
-    assertEquals(-100, counter.getMin().getCounterValue());
-    assertEquals(100, counter.getMax().getCounterValue());
-
-    counter.getAndReset();
-    assertEquals(-100, counter.getMin().getCounterValue());
-    assertEquals(100, counter.getMax().getCounterValue());
   }
 
   public void test() {

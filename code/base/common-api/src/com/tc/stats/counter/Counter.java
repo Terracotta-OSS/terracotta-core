@@ -17,10 +17,6 @@ public interface Counter {
 
   long getValue();
 
-  long getMaxValue();
-
-  long getMinValue();
-
   long increment(long amount);
 
   long decrement(long amount);
