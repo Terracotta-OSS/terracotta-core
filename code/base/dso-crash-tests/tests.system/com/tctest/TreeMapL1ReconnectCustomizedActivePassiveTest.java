@@ -11,7 +11,6 @@ import com.tc.test.activepassive.ActivePassiveServerManager;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 import com.tc.test.restart.RestartTestHelper;
 import com.tc.util.Assert;
-import com.tc.util.runtime.Memory;
 import com.tc.util.runtime.Os;
 
 public class TreeMapL1ReconnectCustomizedActivePassiveTest extends ActivePassiveTransparentTestBase {

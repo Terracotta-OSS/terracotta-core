@@ -28,6 +28,5 @@
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/xbean_xpath-2.1.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/xmlbeans-jsr173_1.0_api.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/license-common"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/sigarstats"/>
 	<classpathentry exported="true" kind="lib" path="lib/tcconfig-xmlbeans-generated.jar"/>
 </classpath>

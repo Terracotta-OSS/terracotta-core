@@ -9,7 +9,6 @@ import com.tc.test.MultipleServersPersistenceMode;
 import com.tc.test.MultipleServersSharedDataMode;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 import com.tc.test.restart.RestartTestHelper;
-import com.tc.util.runtime.Memory;
 import com.tc.util.runtime.Os;
 import com.tctest.runner.TransparentAppConfig;
 

@@ -6,8 +6,8 @@ package com.tctest.restart.system;
 
 import com.tc.test.proxyconnect.ProxyConnectManager;
 import com.tc.test.restart.RestartTestHelper;
-import com.tc.util.runtime.Memory;
 import com.tc.util.runtime.Os;
+import com.tctest.Memory;
 import com.tctest.TestConfigurator;
 import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;

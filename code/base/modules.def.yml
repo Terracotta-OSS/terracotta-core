@@ -28,7 +28,6 @@ modules:
         javadoc: true
       dependencies:
         - license-common
-        - sigarstats        
   - common:
       options:
         jdk: J2SE-1.5
@@ -203,7 +202,7 @@ modules:
       dependencies:
         - common
         - common-api
-        - license-common
+        - license-common 
         - dso-statistics-api
   - dso-statistics:
       options:
@@ -519,6 +518,7 @@ modules:
         - management
         - management-api
         - simulator
+        - sigarstats
         - thirdparty
         - thirdparty-api
   - dso-spring-crash-tests:

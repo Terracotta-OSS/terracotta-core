@@ -1,7 +1,7 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
-package com.tc.util.runtime;
+package com.tctest;
 
 import org.hyperic.sigar.Mem;
 import org.hyperic.sigar.Sigar;

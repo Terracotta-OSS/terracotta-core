@@ -5,7 +5,6 @@
 package com.tctest;
 
 import com.tc.test.restart.RestartTestHelper;
-import com.tc.util.runtime.Memory;
 import com.tc.util.runtime.Os;
 
 public class LinkedBlockingQueueL1ReconnectCrashTest extends TransparentTestBase {
