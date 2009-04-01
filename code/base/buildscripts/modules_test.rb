@@ -702,6 +702,8 @@ class SubtreeTestRun
     cleaner = org.terracotta.JUnitReportCleaner.new
     Dir.chdir(@testrun_results.results_dir(@subtree).to_s) do
       Dir.glob("TEST*.xml").each do |filename|
+        puts "saving copy"
+        FileUtils.cp(filename, "/var/tmp")
         cleaner.clean(File.expand_path(filename))
       end
     end

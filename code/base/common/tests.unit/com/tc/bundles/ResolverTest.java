@@ -19,10 +19,13 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import junit.framework.TestCase;
 
 public class ResolverTest extends TestCase {
+  private static final Pattern ARTIFACT_PATTERN = Pattern.compile("(.*)-(\\d+.*)");
   private static boolean PASS = true;
   private static boolean FAIL = false;
 
@@ -112,26 +115,6 @@ public class ResolverTest extends TestCase {
           .resolveRepositoryLocation(repo[i]));
     }
   }
-  
-//  public void testResolveBestVersion() throws Exception {
-//    String flatRepoUrl = makeRepoDir("versionRepo");
-//    
-//    // create jars for different versions
-//    
-//    
-//    // resolve a version range to find best match version
-//    
-//    String flatRepoUrl = makeFlatRepo("modules.1");
-//    for (Iterator i = jars.iterator(); i.hasNext();) {
-//      JarFile jar = new JarFile((File) i.next());
-//      Manifest manifest = jar.getManifest();
-//      String[] reqmts = BundleSpec.getRequirements(manifest);
-//      for (int j = 0; j < reqmts.length; j++) {
-//        BundleSpec spec = BundleSpec.newInstance(reqmts[j]);
-//        resolveBundle(repos, spec, expected);
-//      }
-//    }
-//  }
 
   private String makeRepoDir(String repoName) {
     String repoUrl = System.getProperty(TestConfigObject.TC_BASE_DIR) + File.separator + "build" + File.separator
@@ -208,13 +191,14 @@ public class ResolverTest extends TestCase {
 
       String jarName = jar.getName();
       jarName = jarName.substring(0, jarName.lastIndexOf(".jar"));
-      int versionIndex = jarName.lastIndexOf("-SNAPSHOT");
-      if(versionIndex >= 0) {
-        versionIndex = jarName.lastIndexOf("-", versionIndex-1);
+      Matcher m = ARTIFACT_PATTERN.matcher(jarName);
+      if (m.matches()) {
+        String name = m.group(1);
+        String version = m.group(2);
+        resolve(repos, name, version, expected);
+      } else {
+        throw new RuntimeException("Can't parse name and veresion from jar name: " + jarName);
       }
-      String version = jarName.substring(versionIndex+1);
-      String name = jarName.substring(0, versionIndex);
-      resolve(repos, name, version, expected);
     }
   }
 
@@ -249,10 +233,6 @@ public class ResolverTest extends TestCase {
     } catch (MissingDefaultRepositoryException e) {
       fail(e.getMessage());
     }
-    // } catch (BundleException e) {
-    // if (PASS == expected) fail(e.getMessage());
-    // else assertTrue(FAIL == expected);
-    // }
   }
 
   private void resolve(String[] repos, String name, String version, boolean expected) {

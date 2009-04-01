@@ -10,6 +10,7 @@ import org.osgi.framework.BundleException;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.util.ProductInfo;
 import com.terracottatech.config.Module;
 
 import java.io.File;
@@ -24,7 +25,7 @@ import junit.framework.TestCase;
 
 public class KnopflerfishOSGiTest extends TestCase {
 
-  private static final String PRODUCT_VERSION_DASH_QUALIFIER = "3.1.0-SNAPSHOT";
+  private static final String PRODUCT_VERSION_DASH_QUALIFIER = ProductInfo.getInstance().version();
   private static final String PRODUCT_VERSION_DOT_QUALIFIER  = PRODUCT_VERSION_DASH_QUALIFIER.replace('-', '.');
   private KnopflerfishOSGi    osgiRuntime                    = null;
 
