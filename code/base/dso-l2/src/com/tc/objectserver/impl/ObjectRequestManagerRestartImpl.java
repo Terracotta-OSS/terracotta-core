@@ -81,10 +81,12 @@ public class ObjectRequestManagerRestartImpl extends AbstractServerTransactionLi
   @Override
   public void clearAllTransactionsFor(NodeID client) {
     if (this.state == STARTED) { return; }
-    for (Iterator iter = this.resentTransactionIDs.iterator(); iter.hasNext();) {
-      ServerTransactionID stxID = (ServerTransactionID) iter.next();
-      if (stxID.getSourceID().equals(client)) {
-        iter.remove();
+    synchronized (this.resentTransactionIDs) {
+      for (Iterator iter = this.resentTransactionIDs.iterator(); iter.hasNext();) {
+        ServerTransactionID stxID = (ServerTransactionID) iter.next();
+        if (stxID.getSourceID().equals(client)) {
+          iter.remove();
+        }
       }
     }
     moveToStartedIfPossible();
