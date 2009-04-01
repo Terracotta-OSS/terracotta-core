@@ -44,12 +44,12 @@ public class ManagedObjectSyncContext implements ObjectManagerResultsContext {
     this.rootsMap = Collections.emptyMap();
   }
 
-  public ManagedObjectSyncContext(NodeID nodeID, Map<String, ObjectID> rootsMap, boolean more, Sink sink,
-                                  int totalObjectsToSync, int totalObjectsSynced) {
+  public ManagedObjectSyncContext(NodeID nodeID, Map<String, ObjectID> rootsMap, ObjectIDSet oids, boolean more,
+                                  Sink sink, int totalObjectsToSync, int totalObjectsSynced) {
     this.nodeID = nodeID;
     this.totalObjectsToSync = totalObjectsToSync;
     this.totalObjectsSynced = totalObjectsSynced;
-    this.oids = new ObjectIDSet(rootsMap.values());
+    this.oids = oids;
     this.more = more;
     this.nextSink = sink;
     this.rootsMap = rootsMap;
@@ -58,28 +58,28 @@ public class ManagedObjectSyncContext implements ObjectManagerResultsContext {
   public void setResults(ObjectManagerLookupResults results) {
     this.result = results;
     assertNoMissingObjects(results.getMissingObjectIDs());
-    nextSink.add(this);
+    this.nextSink.add(this);
   }
 
   public ObjectIDSet getLookupIDs() {
-    return oids;
+    return this.oids;
   }
 
   public Map getRootsMap() {
-    return rootsMap;
+    return this.rootsMap;
   }
 
   public Map getObjects() {
-    Assert.assertNotNull(result);
-    return result.getObjects();
+    Assert.assertNotNull(this.result);
+    return this.result.getObjects();
   }
 
   public int getTotalObjectsToSync() {
-    return totalObjectsToSync;
+    return this.totalObjectsToSync;
   }
 
   public int getTotalObjectsSynced() {
-    return totalObjectsSynced;
+    return this.totalObjectsSynced;
   }
 
   public void setDehydratedBytes(TCByteBuffer[] buffers, int count, ObjectStringSerializer os) {
@@ -89,26 +89,26 @@ public class ManagedObjectSyncContext implements ObjectManagerResultsContext {
   }
 
   public NodeID getNodeID() {
-    return nodeID;
+    return this.nodeID;
   }
 
   public ObjectStringSerializer getObjectSerializer() {
-    Assert.assertNotNull(serializer);
-    return serializer;
+    Assert.assertNotNull(this.serializer);
+    return this.serializer;
   }
 
   public TCByteBuffer[] getSerializedDNAs() {
-    Assert.assertNotNull(dnas);
-    return dnas;
+    Assert.assertNotNull(this.dnas);
+    return this.dnas;
   }
 
   public int getDNACount() {
-    Assert.assertTrue(dnaCount > 0);
-    return dnaCount;
+    Assert.assertTrue(this.dnaCount > 0);
+    return this.dnaCount;
   }
 
   public boolean hasMore() {
-    return more;
+    return this.more;
   }
 
   public ObjectIDSet getNewObjectIDs() {
@@ -129,9 +129,10 @@ public class ManagedObjectSyncContext implements ObjectManagerResultsContext {
                                                        + this); }
   }
 
+  @Override
   public String toString() {
-    return "ManagedObjectSyncContext [" + nodeID + " , oids = " + oids + " ,  rootsMap = " + rootsMap + " , more = "
-           + more + "]";
+    return "ManagedObjectSyncContext [" + this.nodeID + " , oids = " + this.oids + " ,  rootsMap = " + this.rootsMap
+           + " , more = " + this.more + "]";
   }
 
   public boolean updateStats() {

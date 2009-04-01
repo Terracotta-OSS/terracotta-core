@@ -35,6 +35,7 @@ import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
 import com.tc.objectserver.persistence.impl.InMemoryPersistor;
 import com.tc.test.TCTestCase;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.PortChooser;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.concurrent.QueueFactory;
@@ -101,8 +102,11 @@ public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
     }
     Sink sink = new MockSink();
     ObjectStringSerializer objectStringSerializer = new ObjectStringSerializer();
-    ManagedObjectSyncContext managedObjectSyncContext = new ManagedObjectSyncContext(nodeID, rootsMap, true, sink, 100,
-                                                                                     10);
+    ManagedObjectSyncContext managedObjectSyncContext = new ManagedObjectSyncContext(
+                                                                                     nodeID,
+                                                                                     rootsMap,
+                                                                                     new ObjectIDSet(rootsMap.values()),
+                                                                                     true, sink, 100, 10);
     TCByteBufferOutputStream out = new TCByteBufferOutputStream();
     for (long i = 0; i < oidsCount; ++i) {
       ManagedObject m = new ManagedObjectImpl(new ObjectID(i));
@@ -145,11 +149,11 @@ public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
     NoExceptionLinkedQueue queue = new NoExceptionLinkedQueue();
 
     public void messageReceived(NodeID fromNode, GroupMessage msg) {
-      queue.put(msg);
+      this.queue.put(msg);
     }
 
     public GroupMessage take() {
-      return (GroupMessage) queue.take();
+      return (GroupMessage) this.queue.take();
     }
   }
 }

@@ -11,6 +11,7 @@ import com.tc.l2.context.ManagedObjectSyncContext;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
+import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TxnsInSystemCompletionLister;
@@ -41,29 +42,29 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
   }
 
   public void registerForL2ObjectStateChangeEvents(L2ObjectStateListener listener) {
-    listeners.add(listener);
+    this.listeners.add(listener);
   }
 
   private void fireMissingObjectsStateEvent(NodeID nodeID, int missingObjects) {
-    for (Iterator i = listeners.iterator(); i.hasNext();) {
+    for (Iterator i = this.listeners.iterator(); i.hasNext();) {
       L2ObjectStateListener l = (L2ObjectStateListener) i.next();
       l.missingObjectsFor(nodeID, missingObjects);
     }
   }
 
   private void fireObjectSyncCompleteEvent(NodeID nodeID) {
-    for (Iterator i = listeners.iterator(); i.hasNext();) {
+    for (Iterator i = this.listeners.iterator(); i.hasNext();) {
       L2ObjectStateListener l = (L2ObjectStateListener) i.next();
       l.objectSyncCompleteFor(nodeID);
     }
   }
 
   public int getL2Count() {
-    return nodes.size();
+    return this.nodes.size();
   }
 
   public void removeL2(NodeID nodeID) {
-    Object l2State = nodes.remove(nodeID);
+    Object l2State = this.nodes.remove(nodeID);
     if (l2State == null) {
       logger.warn("L2State Not found for " + nodeID);
     }
@@ -71,18 +72,18 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
 
   public boolean addL2(NodeID nodeID, Set oids) {
     L2ObjectStateImpl l2State;
-    synchronized (nodes) {
-      l2State = (L2ObjectStateImpl) nodes.get(nodeID);
+    synchronized (this.nodes) {
+      l2State = (L2ObjectStateImpl) this.nodes.get(nodeID);
       if (l2State != null) {
         logger.warn("L2State already present for " + nodeID + ". " + l2State
                     + " IGNORING setExistingObjectsList : oids count = " + oids.size());
         return false;
       }
       l2State = new L2ObjectStateImpl(nodeID, oids);
-      nodes.put(nodeID, l2State);
+      this.nodes.put(nodeID, l2State);
     }
     final L2ObjectStateImpl _l2State = l2State;
-    transactionManager.callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionLister() {
+    this.transactionManager.callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionLister() {
       public void onCompletion() {
         _l2State.moveToReadyToSyncState();
       }
@@ -91,7 +92,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
   }
 
   public ManagedObjectSyncContext getSomeObjectsToSyncContext(NodeID nodeID, int count, Sink sink) {
-    L2ObjectStateImpl l2State = (L2ObjectStateImpl) nodes.get(nodeID);
+    L2ObjectStateImpl l2State = (L2ObjectStateImpl) this.nodes.get(nodeID);
     if (l2State != null) {
       return l2State.getSomeObjectsToSyncContext(count, sink);
     } else {
@@ -101,7 +102,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
   }
 
   public void close(ManagedObjectSyncContext mosc) {
-    L2ObjectStateImpl l2State = (L2ObjectStateImpl) nodes.get(mosc.getNodeID());
+    L2ObjectStateImpl l2State = (L2ObjectStateImpl) this.nodes.get(mosc.getNodeID());
     if (l2State != null) {
       l2State.close(mosc);
     } else {
@@ -110,7 +111,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
   }
 
   public Collection getL2ObjectStates() {
-    return nodes.values();
+    return this.nodes.values();
   }
 
   private static final State START                  = new State("START");
@@ -140,42 +141,61 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     }
 
     private void close(ManagedObjectSyncContext mosc) {
-      Assert.assertTrue(mosc == syncingContext);
-      syncingContext = null;
-      if (missingOids.isEmpty()) {
-        state = IN_SYNC_PENDING_NOTIFY;
-        transactionManager.callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionLister() {
-          public void onCompletion() {
-            moveToInSyncState();
-          }
-        });
+      Assert.assertTrue(mosc == this.syncingContext);
+      this.syncingContext = null;
+      if (this.missingOids.isEmpty()) {
+        this.state = IN_SYNC_PENDING_NOTIFY;
+        L2ObjectStateManagerImpl.this.transactionManager
+            .callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionLister() {
+              public void onCompletion() {
+                moveToInSyncState();
+              }
+            });
       }
     }
 
     private ManagedObjectSyncContext getSomeObjectsToSyncContext(int count, Sink sink) {
-      Assert.assertTrue(state == SYNC_STARTED);
-      Assert.assertNull(syncingContext);
+      Assert.assertTrue(this.state == SYNC_STARTED);
+      Assert.assertNull(this.syncingContext);
       if (isRootsMissing()) { return getMissingRootsSynccontext(sink); }
       ObjectIDSet oids = new ObjectIDSet();
-      for (Iterator i = missingOids.iterator(); i.hasNext() && --count >= 0;) {
+      addSomeMissingObjectIDsTo(oids, count);
+      this.totalObjectsSynced += oids.size();
+      this.syncingContext = new ManagedObjectSyncContext(this.nodeID, oids, !this.missingOids.isEmpty(), sink,
+                                                         this.totalObjectsToSync, this.totalObjectsSynced);
+      return this.syncingContext;
+    }
+
+    private void addSomeMissingObjectIDsTo(ObjectIDSet oids, int count) {
+      for (Iterator i = this.missingOids.iterator(); i.hasNext() && --count >= 0;) {
         oids.add(i.next());
-        // XXX::FIXME This has to be commented because ObjectIDSet2 doesnt support remove().
+        // XXX:: This has to be commented because even though ObjectIDSet supports remove() now it is slightly slower
+        // than removeAll.
         // i.remove();
       }
-      missingOids.removeAll(oids); // @see above comment
-      totalObjectsSynced += oids.size();
-      syncingContext = new ManagedObjectSyncContext(nodeID, oids, !missingOids.isEmpty(), sink, totalObjectsToSync,
-                                                    totalObjectsSynced);
-      return syncingContext;
+      this.missingOids.removeAll(oids); // @see above comment
+
     }
 
     private ManagedObjectSyncContext getMissingRootsSynccontext(Sink sink) {
-      missingOids.removeAll(this.missingRoots.values());
-      totalObjectsSynced += missingRoots.size();
-      syncingContext = new ManagedObjectSyncContext(nodeID, new HashMap(this.missingRoots), !missingOids.isEmpty(),
-                                                    sink, totalObjectsToSync, totalObjectsSynced);
+      ObjectIDSet oids = new ObjectIDSet();
+      // NOTE:: some root IDs might not be present in this mirror group in AA config
+      for (Iterator i = this.missingRoots.values().iterator(); i.hasNext();) {
+        ObjectID rootID = (ObjectID) i.next();
+        if (this.missingOids.remove(rootID)) {
+          oids.add(rootID);
+        }
+      }
+      if (oids.isEmpty()) {
+        // Get some objects anyways
+        addSomeMissingObjectIDsTo(oids, this.missingRoots.size());
+      }
+      this.totalObjectsSynced += oids.size();
+      this.syncingContext = new ManagedObjectSyncContext(this.nodeID, new HashMap(this.missingRoots), oids,
+                                                         !this.missingOids.isEmpty(), sink, this.totalObjectsToSync,
+                                                         this.totalObjectsSynced);
       this.missingRoots.clear();
-      return syncingContext;
+      return this.syncingContext;
     }
 
     private boolean isRootsMissing() {
@@ -183,53 +203,57 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     }
 
     private int computeDiff() {
-      this.missingOids = objectManager.getAllObjectIDs();
-      this.missingRoots = objectManager.getRootNamesToIDsMap();
-      int objectCount = missingOids.size();
+      this.missingOids = L2ObjectStateManagerImpl.this.objectManager.getAllObjectIDs();
+      this.missingRoots = L2ObjectStateManagerImpl.this.objectManager.getRootNamesToIDsMap();
+      int objectCount = this.missingOids.size();
       Set missingHere = new HashSet();
-      for (Iterator i = existingOids.iterator(); i.hasNext();) {
+      for (Iterator i = this.existingOids.iterator(); i.hasNext();) {
         Object o = i.next();
-        if (!missingOids.remove(o)) {
+        if (!this.missingOids.remove(o)) {
           missingHere.add(o);
         }
       }
-      totalObjectsToSync = missingOids.size();
-      existingOids = null; // Let DGC work for us
-      missingRoots.values().retainAll(this.missingOids);
-      logger.info(nodeID + " : is missing " + missingOids.size() + " out of " + objectCount
-                  + " objects of which missing roots = " + missingRoots.size());
+      this.totalObjectsToSync = this.missingOids.size();
+      // NOTE :: Missing roots is calculated slightly differently to accommodate AA config, where all roots are present
+      // in the coordinator but not necessarily all root objects. Also it is possible that existing root id mapping are
+      // resent in partially synced passives case in AA since exisitingOids wont contain oid of other mirror groups. But
+      // this should not have any adverse effect as the are just rewritten on the passive end.
+      this.missingRoots.values().removeAll(this.existingOids);
+      this.existingOids = null; // Let DGC work for us
+      logger.info(this.nodeID + " : is missing " + this.missingOids.size() + " out of " + objectCount
+                  + " objects of which missing roots = " + this.missingRoots.size());
       if (!missingHere.isEmpty()) {
         // XXX:: This is possible because some message (Transaction message with new object creation or object delete
         // message from DGC) from previous active reached the other node and not this node and the active crashed
         logger.warn("Object IDs MISSING HERE : " + missingHere.size() + " : " + missingHere);
       }
-      int missingCount = missingOids.size();
+      int missingCount = this.missingOids.size();
       if (missingCount == 0) {
-        state = IN_SYNC;
+        this.state = IN_SYNC;
       } else {
-        state = SYNC_STARTED;
+        this.state = SYNC_STARTED;
       }
       return missingCount;
     }
 
     public NodeID getNodeID() {
-      return nodeID;
+      return this.nodeID;
     }
 
     @Override
     public String toString() {
-      return "L2StateObjectImpl [ " + nodeID + " ] : " + (missingOids != null ? "missing = " + missingOids.size() : "")
-             + " state = " + state;
+      return "L2StateObjectImpl [ " + this.nodeID + " ] : "
+             + (this.missingOids != null ? "missing = " + this.missingOids.size() : "") + " state = " + this.state;
     }
 
     private void moveToReadyToSyncState() {
-      state = READY_TO_SYNC;
+      this.state = READY_TO_SYNC;
       int missingObjects = computeDiff();
       fireMissingObjectsStateEvent(this.nodeID, missingObjects);
     }
 
     private void moveToInSyncState() {
-      state = IN_SYNC;
+      this.state = IN_SYNC;
       fireObjectSyncCompleteEvent(this.nodeID);
     }
   }

@@ -18,6 +18,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
+import com.tc.util.ObjectIDSet;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -31,6 +32,7 @@ public class ObjectSyncMessageTest extends TestCase {
   private ObjectStringSerializer   objectStringSerializer;
   private final int                dnaCount = 56;
 
+  @Override
   public void setUp() {
     NodeID nodeID = new ServerID("foo", "foobar".getBytes());
     HashMap rootsMap = new HashMap();
@@ -38,16 +40,19 @@ public class ObjectSyncMessageTest extends TestCase {
     rootsMap.put("root2", new ObjectID(2));
     rootsMap.put("root3", new ObjectID(3));
     Sink sink = new MockSink();
-    objectStringSerializer = new ObjectStringSerializer();
+    this.objectStringSerializer = new ObjectStringSerializer();
     TCByteBuffer tcbb = TCByteBufferFactory.getInstance(false, 3452);
-    tcByteBufferArray = new TCByteBuffer[] { tcbb };
-    managedObjectSyncContext = new ManagedObjectSyncContext(nodeID, rootsMap, true, sink, 100, 10);
-    managedObjectSyncContext.setDehydratedBytes(new TCByteBuffer[] { tcbb }, dnaCount, objectStringSerializer);
-    managedObjectSyncContext.setSequenceID(11);
+    this.tcByteBufferArray = new TCByteBuffer[] { tcbb };
+    this.managedObjectSyncContext = new ManagedObjectSyncContext(nodeID, rootsMap, new ObjectIDSet(rootsMap.values()),
+                                                                 true, sink, 100, 10);
+    this.managedObjectSyncContext.setDehydratedBytes(new TCByteBuffer[] { tcbb }, this.dnaCount,
+                                                     this.objectStringSerializer);
+    this.managedObjectSyncContext.setSequenceID(11);
   }
 
+  @Override
   public void tearDown() {
-    managedObjectSyncContext = null;
+    this.managedObjectSyncContext = null;
   }
 
   private void validate(ObjectSyncMessage osm, ObjectSyncMessage osm1) {
@@ -72,7 +77,7 @@ public class ObjectSyncMessageTest extends TestCase {
 
     TCByteBuffer[] dnas1 = osm1.getUnprocessedDNAs();
 
-    TCByteBufferTestUtil.checkEquals(tcByteBufferArray, dnas1);
+    TCByteBufferTestUtil.checkEquals(this.tcByteBufferArray, dnas1);
 
     assertEquals(osm.getSequenceID(), osm1.getSequenceID());
   }
@@ -90,10 +95,9 @@ public class ObjectSyncMessageTest extends TestCase {
 
   public void testBasicSerialization() throws Exception {
     ObjectSyncMessage osm = ObjectSyncMessageFactory
-        .createObjectSyncMessageFrom(managedObjectSyncContext, new ServerTransactionID(new ServerID("xyz",
-                                                                                                      new byte[] { 3,
-                                                                                                          4, 5 }),
-                                                                                       new TransactionID(99)));
+        .createObjectSyncMessageFrom(this.managedObjectSyncContext,
+                                     new ServerTransactionID(new ServerID("xyz", new byte[] { 3, 4, 5 }),
+                                                             new TransactionID(99)));
     ObjectSyncMessage osm1 = writeAndRead(osm);
     validate(osm, osm1);
   }
