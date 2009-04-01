@@ -1,26 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-  All content copyright (c) 2003-2008 Terracotta, Inc.,
-  except as may otherwise be noted in a separate copyright notice.
-  All rights reserved.
+All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
 
 -->
-<tc:tc-config xmlns:tc="http://www.terracotta.org/config"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://www.terracotta.org/schema/terracotta-4.xsd">
+<tc:tc-config xsi:schemaLocation="http://www.terracotta.org/schema/terracotta-4.xsd" xmlns:tc="http://www.terracotta.org/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <!--Server is colocated with client and DSO is listening on
        default port (9510).-->
   <servers>
     <server host="%i" name="sample"/>
   </servers>
-
   <!--Configure DSO for 'development' mode;
        See the Terracotta Configuration Guide and Reference for additional information.-->
   <system>
     <configuration-model>development</configuration-model>
   </system>
-
   <!--Tell DSO where to put the generated client logs
        See the Terracotta Configuration Guide and Reference for additional
        information.-->
@@ -28,7 +22,6 @@
     <logs>terracotta/client-logs/pojo/sharededitor/%D</logs>
     <statistics>terracotta/client-statistics/pojo/sharededitor/%D</statistics>
   </clients>
-
   <application>
     <dso>
       <!--The app requires these custom objects/classes to be shared - the following declarations
@@ -90,7 +83,8 @@
            section tells DSO to assume a lock on those objects for the duration of the call-->
       <locks>
         <autolock>
-          <method-expression>* *..*.*(..)</method-expression>
+          <method-expression>* demo.sharededitor.models.*.*(..)</method-expression>
+          <lock-level>write</lock-level>
         </autolock>
       </locks>
       <!--We declare the field 'demo.sharededitor.controls.Dispatcher.objmgr' a root, making it
