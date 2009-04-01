@@ -5,7 +5,6 @@
 package com.tctest;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
 
 import com.tc.exception.TCRuntimeException;
 import com.tc.object.bytecode.Manageable;
@@ -30,12 +29,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import junit.framework.Assert;
 
 public class LinkedBlockingQueueSpawningTestApp extends AbstractTransparentApp {
-  private static final Logger                        logger             = Logger
-                                                                            .getLogger(LinkedBlockingQueueSpawningTestApp.class);
   public static String                               CONFIG_FILE        = "config-file";
 
   private static final long                          SPAWN_SLEEP_PERIOD = 1000;
-  private static final int                           SPAWN_COUNT        = 6;
+  private static final int                           SPAWN_COUNT        = 4;
   private static final int                           PRODUCERS          = 5;
   private static final int                           CONSUMERS          = 3;
   private static final int                           LBQ_CAPACITY       = 300;
@@ -55,7 +52,7 @@ public class LinkedBlockingQueueSpawningTestApp extends AbstractTransparentApp {
   public LinkedBlockingQueueSpawningTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     this.config = cfg;
-    logger.info("XXX Test for spawning LBQClient " + SPAWN_COUNT + " times and sleep " + SPAWN_SLEEP_PERIOD
+    System.out.println("XXX Test for spawning LBQClient " + SPAWN_COUNT + " times and sleep " + SPAWN_SLEEP_PERIOD
                 + "ms in between.");
   }
 
@@ -148,7 +145,7 @@ public class LinkedBlockingQueueSpawningTestApp extends AbstractTransparentApp {
 
     public void run() {
       try {
-        logger.info("Starting... with counter=" + counter.get() + " counter:"
+        System.out.println("Starting... with counter=" + counter.get() + " counter:"
                     + ((Manageable) counter).__tc_managed().getObjectID());
 
         for (int i = 0; i < PRODUCERS; i++) {
@@ -177,7 +174,7 @@ public class LinkedBlockingQueueSpawningTestApp extends AbstractTransparentApp {
           pool.awaitTermination(runtime + 200L, TimeUnit.MILLISECONDS);
         }
       } catch (InterruptedException e) {
-        logger.error("Got interrupted while waiting for all threads to finish");
+        System.out.println("Got interrupted while waiting for all threads to finish");
         exitCode = 1;
       }
     }
@@ -185,14 +182,14 @@ public class LinkedBlockingQueueSpawningTestApp extends AbstractTransparentApp {
     public static void main(String[] args) {
       Runtime.getRuntime().addShutdownHook(new Thread() {
         public void run() {
-          logger.info(LBQClient.class.getName() + " shutdown.");
+          System.out.println(LBQClient.class.getName() + " shutdown.");
         }
       });
 
       final LBQClient t = new LBQClient(CLIENT_RUNTIME);
       t.run();
       t.await();
-      logger.info("One client done. exit=" + t.exitCode);
+      System.out.println("One client done. exit=" + t.exitCode);
       System.exit(t.exitCode);
     }
   }
@@ -211,7 +208,7 @@ public class LinkedBlockingQueueSpawningTestApp extends AbstractTransparentApp {
             WorkItem d = new WorkItem(counter.getAndIncrement());
             queue.put(d);
             if (d.getID() % 100 == 0) {
-              logger.info("XXX produce " + d.getID());
+              System.out.println("XXX produce " + d.getID());
             }
           }
           Thread.sleep(3);
@@ -243,7 +240,7 @@ public class LinkedBlockingQueueSpawningTestApp extends AbstractTransparentApp {
             WorkItem data = queue.take();
             Assert.assertEquals("Sequence mismatch!", outCounter.getAndIncrement(), data.getID());
             if (data.getID() % 100 == 0) {
-              logger.info("XXX consume " + data.getID());
+              System.out.println("XXX consume " + data.getID());
             }
           }
         }
