@@ -363,6 +363,7 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
   }
 
   public void startMonitoringRuntimeStats() {
+    clearAllRuntimeStatsSamples();
     isMonitoring = true;
     if (showControls) {
       manageMonitoringButton.setIcon(fStopIcon);
@@ -370,7 +371,7 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
   }
 
   public void stopMonitoringRuntimeStats() {
-    isMonitoring = false;
+    hasAutoStarted = isMonitoring = false;
     if (showControls) {
       manageMonitoringButton.setIcon(fStartIcon);
     }

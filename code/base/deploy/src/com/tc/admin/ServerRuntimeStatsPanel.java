@@ -79,6 +79,8 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     protected void handleReady() {
       if (!server.isReady() && isMonitoringRuntimeStats()) {
         stopMonitoringRuntimeStats();
+      } else if (server.isReady() && isShowing() && getAutoStart()) {
+        startMonitoringRuntimeStats();
       }
     }
   }
