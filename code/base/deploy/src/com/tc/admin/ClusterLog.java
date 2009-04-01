@@ -230,9 +230,10 @@ public class ClusterLog extends XContainer implements ActionListener {
       appContext = null;
       clusterModel = null;
       clusterListener = null;
-      elementChooser.tearDown();
       elementChooser = null;
       pagedView = null;
     }
+
+    super.tearDown();
   }
 }

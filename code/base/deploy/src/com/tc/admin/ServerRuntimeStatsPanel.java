@@ -40,6 +40,7 @@ import javax.swing.border.TitledBorder;
 
 public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
   private IServer                  server;
+  private ServerListener           serverListener;
 
   private TimeSeries               memoryMaxSeries;
   private TimeSeries               memoryUsedSeries;
@@ -66,6 +67,20 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     this.server = server;
     setup(chartsPanel);
     setName(server.toString());
+    server.addPropertyChangeListener(serverListener = new ServerListener(server));
+  }
+
+  private class ServerListener extends AbstractServerListener {
+    private ServerListener(IServer server) {
+      super(server);
+    }
+
+    @Override
+    protected void handleReady() {
+      if (!server.isReady() && isMonitoringRuntimeStats()) {
+        stopMonitoringRuntimeStats();
+      }
+    }
   }
 
   synchronized IServer getServer() {
@@ -299,11 +314,18 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
   }
 
   @Override
-  public synchronized void tearDown() {
-    stopMonitoringRuntimeStats();
-    server = null;
-    super.tearDown();
+  public void tearDown() {
+    server.removePropertyChangeListener(serverListener);
+    serverListener.tearDown();
+
     clearAllTimeSeries();
-    cpuPanel = null;
+
+    synchronized (this) {
+      server = null;
+      serverListener = null;
+      cpuPanel = null;
+    }
+
+    super.tearDown();
   }
 }

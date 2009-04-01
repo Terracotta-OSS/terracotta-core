@@ -69,7 +69,7 @@ public class ServerConnectionManager implements NotificationListener {
   }
 
   public ServerConnectionManager(String host, int port, boolean autoConnect, ConnectionListener listener) {
-    this(new L2Info(host, host, port), autoConnect, listener);
+    this(new L2Info(null, host, port), autoConnect, listener);
   }
 
   public ServerConnectionManager(L2Info l2Info, boolean autoConnect, ConnectionListener listener) {
@@ -356,7 +356,8 @@ public class ServerConnectionManager implements NotificationListener {
   }
 
   public synchronized String getName() {
-    return l2Info.name();
+    String name = l2Info.name();
+    return name != null ? name : l2Info.host();
   }
 
   public synchronized String getHostname() {

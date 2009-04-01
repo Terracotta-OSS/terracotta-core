@@ -96,6 +96,7 @@ public class AdminClientBundle extends ListResourceBundle {
                 "<html>Average number of outstanding<br>locks held by acquiring thread<br>at grant time</html>" } },
         { "refresh.name", "Refresh" },
         { "dso.roots.refreshing", "Refreshing roots..." },
+        { "refreshing.field.pattern", "Refreshing field {0}..." },
         { "dso.deadlocks.detect", "Detect deadlocks" },
         { "dso.deadlocks.detecting", "Detecting deadlocks..." },
         { "dso.classes", "Instance counts" },

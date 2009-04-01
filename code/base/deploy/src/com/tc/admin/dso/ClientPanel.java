@@ -147,5 +147,6 @@ public class ClientPanel extends XContainer implements PropertyChangeListener {
     propertyTable = null;
     environmentTextArea = null;
     configTextArea = null;
+    controlArea = null;
   }
 }

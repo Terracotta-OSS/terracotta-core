@@ -44,7 +44,7 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
 
     this.adminClientContext = adminClientContext;
     this.object = object;
-    batchSize = ConnectionContext.DSO_SMALL_BATCH_SIZE;
+    batchSize = object.getBatchSize();
     setResident(true);
 
     init();
@@ -159,7 +159,7 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
       BasicObjectTreeModel model = (BasicObjectTreeModel) getModel();
       return model.newObjectNode((IBasicObject) theObject);
     } else {
-      return new XTreeNode("Collected...");
+      return new XTreeNode("Collected.");
     }
   }
 
@@ -220,7 +220,6 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
     for (int i = children.size() - 1; i >= 0; i--) {
       node = (XTreeNode) getChildAt(i);
       if (node != null) {
-        node.tearDown();
         model.removeNodeFromParent(node);
       }
     }
@@ -228,7 +227,7 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
     try {
       object.refresh();
     } catch (Exception e) {
-      // TODO: ask parent to teardown
+      // TODO: ask parent to tearDown
       e.printStackTrace();
     }
 
@@ -242,14 +241,12 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
 
   private class RefreshAction extends XAbstractAction {
     private RefreshAction() {
-      super("Refresh", RootsHelper.getHelper().getRefreshIcon());
+      super(adminClientContext.getString("refresh"), RootsHelper.getHelper().getRefreshIcon());
       setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0, true));
     }
 
     public void actionPerformed(ActionEvent ae) {
-      String name = object.getName();
-
-      adminClientContext.setStatus("Refreshing field " + name + "...");
+      adminClientContext.setStatus(adminClientContext.format("refreshing.field.pattern", object.getName()));
       adminClientContext.block();
 
       refresh();
@@ -268,18 +265,16 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
 
   private class MoreAction extends XAbstractAction {
     private MoreAction() {
-      super("More");
-      setEnabled(object.isArray() || !object.isComplete());
+      super(adminClientContext.getString("more"));
+      setEnabled(batchSize == ConnectionContext.DSO_SMALL_BATCH_SIZE);
     }
 
     public void actionPerformed(ActionEvent ae) {
-      String name = object.getName();
-
       setEnabled(incrementDSOBatchSize() != ConnectionContext.DSO_MAX_BATCH_SIZE);
       lessAction.setEnabled(true);
       object.setBatchSize(batchSize);
 
-      adminClientContext.setStatus("Refreshing " + name + "...");
+      adminClientContext.setStatus(adminClientContext.format("refreshing.field.pattern", object.getName()));
       adminClientContext.block();
 
       refresh();
@@ -292,18 +287,16 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
 
   private class LessAction extends XAbstractAction {
     private LessAction() {
-      super("Less");
-      setEnabled(false);
+      super(adminClientContext.getString("less"));
+      setEnabled(batchSize > ConnectionContext.DSO_SMALL_BATCH_SIZE);
     }
 
     public void actionPerformed(ActionEvent ae) {
-      String name = object.getName();
-
       setEnabled(decrementDSOBatchSize() != ConnectionContext.DSO_SMALL_BATCH_SIZE);
       moreAction.setEnabled(true);
       object.setBatchSize(batchSize);
 
-      adminClientContext.setStatus("Refreshing " + name + "...");
+      adminClientContext.setStatus(adminClientContext.format("refreshing.field.pattern", object.getName()));
       adminClientContext.block();
 
       refresh();

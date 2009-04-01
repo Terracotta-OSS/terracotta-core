@@ -106,8 +106,8 @@ public class XTreeNode extends DefaultMutableTreeNode {
       XTreeNode node;
       for (int i = getChildCount() - 1; i >= 0; i--) {
         if ((node = (XTreeNode) children.get(i)) != null) {
-          node.tearDown();
           node.removeFromParent();
+          node.tearDown();
         }
       }
     }

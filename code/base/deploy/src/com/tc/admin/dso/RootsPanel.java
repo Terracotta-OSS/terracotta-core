@@ -276,7 +276,9 @@ public class RootsPanel extends XContainer implements PropertyChangeListener {
   @Override
   public void tearDown() {
     objectSetPanel.getTree().removeMouseListener(objectSetMouseListener);
-    client.removePropertyChangeListener(this);
+    if (client != null) {
+      client.removePropertyChangeListener(this);
+    }
 
     super.tearDown();
 

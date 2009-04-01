@@ -232,32 +232,19 @@ public class XTree extends JTree implements TreeModelListener {
     if (e == null) return;
 
     TreePath parentPath = e.getTreePath();
-    XTreeNode parentNode = (XTreeNode) parentPath.getLastPathComponent();
     Object[] children = e.getChildren();
 
     if (children == null) return;
 
     TreePath selPath = getSelectionPath();
-    int[] indices = e.getChildIndices();
-
     for (int i = 0; i < children.length; i++) {
       XTreeNode node = (XTreeNode) children[i];
-      int index = indices[i];
       TreePath nodePath = parentPath.pathByAddingChild(node);
 
       if (nodePath.isDescendant(selPath)) {
-        int count = parentNode.getChildCount();
-
-        if (count > 0) {
-          node = (XTreeNode) parentNode.getChildAt(index < count ? index : count - 1);
-        } else {
-          node = parentNode;
-        }
-
-        setSelectionPath(new TreePath(node.getPath()));
-
-        ((XTreeNode) children[i]).tearDown();
+        setSelectionPath(selPath = parentPath);
       }
+      node.tearDown();
     }
   }
 

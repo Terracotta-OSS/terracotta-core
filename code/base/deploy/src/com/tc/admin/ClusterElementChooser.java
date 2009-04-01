@@ -446,6 +446,7 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
       clusterListener = null;
       triggerButton = null;
       tree = null;
+      treeModel.tearDown();
       treeModel = null;
       selectionRenderer = null;
       treeMouseHandler = null;

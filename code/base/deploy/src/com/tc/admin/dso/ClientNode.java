@@ -19,7 +19,7 @@ public class ClientNode extends ClusterElementNode {
     super(client);
 
     setLabel(client.getRemoteAddress());
-    
+
     this.adminClientContext = adminClientContext;
     this.client = client;
   }
@@ -28,6 +28,7 @@ public class ClientNode extends ClusterElementNode {
     return new ClientPanel(adminClientContext, client);
   }
 
+  @Override
   public Component getComponent() {
     if (clientPanel == null) {
       clientPanel = createClientPanel();
@@ -39,17 +40,16 @@ public class ClientNode extends ClusterElementNode {
     return client;
   }
 
+  @Override
   public void tearDown() {
-    if (clientPanel != null) {
-      clientPanel.tearDown();
-      clientPanel = null;
-    }
-
-    super.tearDown();
-
     synchronized (this) {
       adminClientContext = null;
       client = null;
+      if (clientPanel != null) {
+        clientPanel.tearDown();
+        clientPanel = null;
+      }
     }
+    super.tearDown();
   }
 }

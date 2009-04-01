@@ -8,17 +8,32 @@ import com.tc.admin.dso.DSOObjectVisitor;
 import com.tc.objectserver.mgmt.MapEntryFacade;
 
 public class TcMapEntryObject extends AbstractTcObject implements IMapEntry {
-  private MapEntryFacade facade;
-  private IObject        key;
-  private IObject        value;
-  private String         label;
+  private final MapEntryFacade facade;
+  private IObject              key;
+  private IObject              value;
+  private String               label;
 
   public TcMapEntryObject(ManagedObjectFacadeProvider facadeProvider, String name, MapEntryFacade facade, IObject parent) {
     super(facadeProvider, name, parent);
     this.facade = facade;
+    initLabel();
+  }
+
+  protected TcMapEntryObject(TcMapEntryObject other) {
+    super(other.facadeProvider, other.name, other.parent);
+    this.facade = other.facade;
+    initLabel();
+  }
+
+  public IObject newCopy() {
+    return new TcMapEntryObject(this);
+  }
+
+  private void initLabel() {
     label = name + " (MapEntry)";
   }
 
+  @Override
   public Object getFacade() {
     return facade;
   }
@@ -46,6 +61,7 @@ public class TcMapEntryObject extends AbstractTcObject implements IMapEntry {
     return null;
   }
 
+  @Override
   public String toString() {
     return label;
   }

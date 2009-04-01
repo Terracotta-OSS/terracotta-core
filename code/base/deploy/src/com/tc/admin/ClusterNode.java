@@ -684,7 +684,6 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
       adminClientContext.getAdminClientController().select(this);
 
       tearDownChildren();
-      removeAllChildren();
       nodeStructureChanged();
       clusterPanel.disconnected();
       versionCheckOccurred.set(false);

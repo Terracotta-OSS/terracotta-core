@@ -46,6 +46,7 @@ public class BasicObjectTreeModel extends XTreeModel {
 
   public static BasicObjectNode newObjectNode(IAdminClientContext adminClientContext, IClient client,
                                               IBasicObject object) {
+    object = object.newCopy();
     BasicObjectNode objectNode = new BasicObjectNode(adminClientContext, object);
     objectNode.setResident(client != null ? isResidentOnClient(client, object) : true);
     return objectNode;

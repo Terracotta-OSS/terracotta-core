@@ -382,27 +382,29 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   }
 
   public static String getConnectErrorMessage(Exception e, ConnectionContext cc) {
-    String msg = null;
-    Throwable cause = ExceptionHelper.getRootCause(e);
+    String msg;
 
+    MessageFormat form = new MessageFormat("Unable to connect to {0}");
+    msg = form.format(new Object[] { cc });
+
+    Throwable cause = ExceptionHelper.getRootCause(e);
     if (cause instanceof ServiceUnavailableException) {
-      MessageFormat form = new MessageFormat("Service Unavailable: {0}");
-      Object[] args = new Object[] { cc };
-      msg = form.format(args);
+      form = new MessageFormat("Service Unavailable: {0}");
+      msg = form.format(new Object[] { cc });
     } else if (cause instanceof ConnectException) {
-      MessageFormat form = new MessageFormat("Unable to connect to {0}");
-      Object[] args = new Object[] { cc };
-      msg = form.format(args);
+      form = new MessageFormat("Unable to connect to {0}");
+      msg = form.format(new Object[] { cc });
     } else if (cause instanceof UnknownHostException || cause instanceof java.rmi.UnknownHostException) {
-      MessageFormat form = new MessageFormat("Unknown host: {0}");
-      Object[] args = new Object[] { cc.host };
-      msg = form.format(args);
+      form = new MessageFormat("Unknown host: {0}");
+      msg = form.format(new Object[] { cc.host });
     } else if (cause instanceof CommunicationException) {
-      MessageFormat form = new MessageFormat("Unable to connect to {0}");
-      Object[] args = new Object[] { cc };
-      msg = form.format(args);
+      form = new MessageFormat("Unable to connect to {0}");
+      msg = form.format(new Object[] { cc });
     } else {
-      msg = cause != null ? cause.getMessage() : e.getMessage();
+      String exceptionMessage = cause != null ? cause.getMessage() : e.getMessage();
+      if (exceptionMessage != null) {
+        msg = exceptionMessage;
+      }
     }
 
     return "<html>" + msg + "</html>";
@@ -433,6 +435,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     if (!host.equals(scm.getHostname())) {
       scm.setHostname(host);
       displayLabel = getConnectionManager().toString();
+      name = getConnectionManager().getName();
     }
   }
 
@@ -1346,37 +1349,25 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
 
   public synchronized boolean isDBBackupRunning() {
     ServerDBBackupMBean backupBean = getServerDBBackupBean();
-    if (backupBean != null) {
-      ensureDBBackupEnabled();
-      return backupBean.isBackUpRunning();
-    }
+    if (backupBean != null) { return backupBean.isBackUpRunning(); }
     return false;
   }
 
   public synchronized String getDefaultDBBackupPath() {
     ServerDBBackupMBean backupBean = getServerDBBackupBean();
-    if (backupBean != null) {
-      ensureDBBackupEnabled();
-      return backupBean.getDefaultPathForBackup();
-    }
+    if (backupBean != null) { return backupBean.getDefaultPathForBackup(); }
     return "not connected";
   }
 
   public synchronized boolean isDBBackupEnabled() {
     ServerDBBackupMBean backupBean = getServerDBBackupBean();
-    if (backupBean != null) {
-      ensureDBBackupEnabled();
-      return backupBean.isBackupEnabled();
-    }
+    if (backupBean != null) { return backupBean.isBackupEnabled(); }
     return false;
   }
 
   public synchronized String getDBHome() {
     ServerDBBackupMBean backupBean = getServerDBBackupBean();
-    if (backupBean != null) {
-      ensureDBBackupEnabled();
-      return backupBean.getDbHome();
-    }
+    if (backupBean != null) { return backupBean.getDbHome(); }
     return "not connected";
   }
 

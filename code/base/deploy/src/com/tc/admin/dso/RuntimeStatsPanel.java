@@ -246,10 +246,11 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
       adminClientContext = null;
       clusterModel = null;
       clusterListener = null;
-      elementChooser.tearDown();
       elementChooser = null;
       pagedView = null;
       currentViewLabel = null;
     }
+
+    super.tearDown();
   }
 }

@@ -18,7 +18,7 @@ public class StatsRecorderNode extends ComponentNode implements IClusterStatsLis
   private IClusterModel        clusterModel;
   private StatsRecorderPanel   statsRecorderPanel;
   private String               baseLabel;
-  private String               recordingSuffix;
+  private final String         recordingSuffix;
 
   public StatsRecorderNode(ApplicationContext appContext, IClusterModel clusterModel) {
     super();
@@ -39,6 +39,7 @@ public class StatsRecorderNode extends ComponentNode implements IClusterStatsLis
     }
   }
 
+  @Override
   public Component getComponent() {
     if (statsRecorderPanel == null) {
       statsRecorderPanel = createStatsRecorderPanel(appContext, clusterModel);
@@ -65,6 +66,7 @@ public class StatsRecorderNode extends ComponentNode implements IClusterStatsLis
       super(clusterModel);
     }
 
+    @Override
     public void handleActiveCoordinator(IServer oldActive, IServer newActive) {
       if (oldActive != null) {
         oldActive.removeClusterStatsListener(StatsRecorderNode.this);
@@ -90,20 +92,24 @@ public class StatsRecorderNode extends ComponentNode implements IClusterStatsLis
     nodeChanged();
   }
 
+  @Override
   public void tearDown() {
     super.tearDown();
 
     synchronized (this) {
       appContext = null;
       clusterModel = null;
-      statsRecorderPanel = null;
+      if (statsRecorderPanel != null) {
+        statsRecorderPanel.tearDown();
+        statsRecorderPanel = null;
+      }
     }
   }
 
   /*
    * IClusterStatsListener implementation
    */
-  
+
   public void allSessionsCleared() {
     /**/
   }

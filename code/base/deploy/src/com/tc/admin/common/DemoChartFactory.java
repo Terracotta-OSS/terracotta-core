@@ -204,7 +204,7 @@ public class DemoChartFactory {
                                                     minorTickCount);
     scale.setTickRadius(0.88);
     scale.setTickLabelOffset(0.20);
-    scale.setTickLabelFont(new Font("Dialog", Font.PLAIN, 10));
+    scale.setTickLabelFont((Font) bundle.getObject("dial.tick.label.font"));
     scale.setTickLabelFormatter(new DecimalFormat("#,###"));
     return scale;
   }

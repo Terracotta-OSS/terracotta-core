@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -567,14 +568,14 @@ public class ClusterModel implements IClusterModel {
     if (activeCoord != null) {
       ExecutorService pool = Executors.newCachedThreadPool();
       long requestMillis = System.currentTimeMillis();
-      Map<IClusterNode, Future<String>> map = new HashMap<IClusterNode, Future<String>>();
+      Map<IClusterNode, Future<String>> map = new LinkedHashMap<IClusterNode, Future<String>>();
+      for (IClient client : activeCoord.getClients()) {
+        map.put(client, threadDumpFuture(pool, client, requestMillis));
+      }
       for (IServerGroup group : getServerGroups()) {
         for (IServer server : group.getMembers()) {
           map.put(server, threadDumpFuture(pool, server, requestMillis));
         }
-      }
-      for (IClient client : activeCoord.getClients()) {
-        map.put(client, threadDumpFuture(pool, client, requestMillis));
       }
       pool.shutdown();
       return map;

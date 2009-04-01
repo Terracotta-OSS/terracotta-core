@@ -29,6 +29,7 @@ public class RuntimeStatsNode extends ComponentNode {
     return clusterModel;
   }
 
+  @Override
   public Component getComponent() {
     if (runtimeStatsPanel == null) {
       runtimeStatsPanel = new RuntimeStatsPanel(adminClientContext, clusterModel);
@@ -36,13 +37,17 @@ public class RuntimeStatsNode extends ComponentNode {
     return runtimeStatsPanel;
   }
 
+  @Override
   public void tearDown() {
     super.tearDown();
 
     synchronized (this) {
       adminClientContext = null;
       clusterModel = null;
-      runtimeStatsPanel = null;
+      if (runtimeStatsPanel != null) {
+        runtimeStatsPanel.tearDown();
+        runtimeStatsPanel = null;
+      }
     }
   }
 }

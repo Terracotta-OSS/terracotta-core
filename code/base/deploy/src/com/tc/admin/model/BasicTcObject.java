@@ -18,7 +18,7 @@ public class BasicTcObject extends AbstractTcObject implements IBasicObject {
   private boolean               isList;
   private boolean               isSet;
   private boolean               isArray;
-  private String                type;
+  private final String          type;
   private String[]              fieldNames;
   private IObject[]             fields;
   private String                label;
@@ -36,14 +36,28 @@ public class BasicTcObject extends AbstractTcObject implements IBasicObject {
     updateLabel();
   }
 
+  public BasicTcObject(BasicTcObject other) {
+    super(other.facadeProvider, other.name, other.parent);
+    this.value = other.value;
+    this.type = other.type;
+    initFields();
+    updateLabel();
+  }
+
+  public IBasicObject newCopy() {
+    return new BasicTcObject(this);
+  }
+
   public Object getValue() {
     return value;
   }
 
+  @Override
   public Object getFacade() {
     return value instanceof ManagedObjectFacade ? (ManagedObjectFacade) value : null;
   }
 
+  @Override
   public ObjectID getObjectID() {
     if (value instanceof ManagedObjectFacade) { return ((ManagedObjectFacade) value).getObjectId(); }
     return null;
@@ -97,6 +111,7 @@ public class BasicTcObject extends AbstractTcObject implements IBasicObject {
     return isCycle ? 0 : ensureFieldNames().length;
   }
 
+  @Override
   public String toString() {
     return label;
   }

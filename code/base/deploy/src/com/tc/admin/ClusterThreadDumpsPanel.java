@@ -215,11 +215,16 @@ public class ClusterThreadDumpsPanel extends BasicThreadDumpsPanel implements Tr
 
   @Override
   public void tearDown() {
+    threadDumpTreeModel.removeTreeModelListener(this);
+
     super.tearDown();
 
-    clusterThreadDumpProvider = null;
-    threadDumpTree = null;
-    threadDumpTreeModel = null;
-    lastSelectedThreadDumpTreeNode = null;
+    synchronized (this) {
+      clusterThreadDumpProvider = null;
+      threadDumpTree = null;
+      threadDumpTreeModel.tearDown();
+      threadDumpTreeModel = null;
+      lastSelectedThreadDumpTreeNode = null;
+    }
   }
 }

@@ -146,7 +146,10 @@ public class ServerNode extends ClusterElementNode {
       appContext = null;
       clusterModel = null;
       server = null;
-      serverPanel = null;
+      if (serverPanel != null) {
+        serverPanel.tearDown();
+        serverPanel = null;
+      }
       popupMenu = null;
     }
   }

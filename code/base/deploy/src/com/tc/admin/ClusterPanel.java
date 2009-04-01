@@ -208,6 +208,7 @@ public class ClusterPanel extends XContainer implements HyperlinkListener {
 
   private void updateHost() {
     String host = hostField.getText().trim();
+
     if (host == null || host.length() == 0) {
       hostField.setText(host = "localhost");
     }

@@ -52,6 +52,7 @@ public class BasicObjectSetPanel extends XContainer implements PropertyChangeLis
   }
 
   private static class BasicObjectCellRenderer extends XTreeCellRenderer {
+    @Override
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded,
                                                   boolean leaf, int row, boolean focused) {
       Component comp = super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, focused);
@@ -94,9 +95,13 @@ public class BasicObjectSetPanel extends XContainer implements PropertyChangeLis
     tree.repaint();
   }
 
+  @Override
   public void tearDown() {
-    super.tearDown();
+    BasicObjectTreeModel treeModel = getObjectTreeModel();
+    treeModel.tearDown();
     tree = null;
+
+    super.tearDown();
   }
 
   public void propertyChange(PropertyChangeEvent evt) {

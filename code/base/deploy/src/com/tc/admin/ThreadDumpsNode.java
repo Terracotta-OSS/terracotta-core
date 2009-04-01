@@ -4,8 +4,6 @@
  */
 package com.tc.admin;
 
-import com.tc.admin.IAdminClientContext;
-import com.tc.admin.ServerHelper;
 import com.tc.admin.common.ComponentNode;
 import com.tc.admin.model.IClusterModel;
 
@@ -32,6 +30,7 @@ public class ThreadDumpsNode extends ComponentNode {
     return clusterModel;
   }
 
+  @Override
   public Component getComponent() {
     if (threadDumpsPanel == null) {
       threadDumpsPanel = new ThreadDumpsPanel(adminClientContext, clusterModel, threadDumpProvider);
@@ -39,6 +38,7 @@ public class ThreadDumpsNode extends ComponentNode {
     return threadDumpsPanel;
   }
 
+  @Override
   public void tearDown() {
     super.tearDown();
 
@@ -46,7 +46,10 @@ public class ThreadDumpsNode extends ComponentNode {
       adminClientContext = null;
       clusterModel = null;
       threadDumpProvider = null;
-      threadDumpsPanel = null;
+      if (threadDumpsPanel != null) {
+        threadDumpsPanel.tearDown();
+        threadDumpsPanel = null;
+      }
     }
   }
 }

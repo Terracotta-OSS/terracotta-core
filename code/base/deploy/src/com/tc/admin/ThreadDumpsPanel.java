@@ -197,9 +197,10 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Prop
       clusterModel = null;
       threadDumpProvider = null;
       clusterListener = null;
-      elementChooser.tearDown();
       elementChooser = null;
       pagedView = null;
     }
+
+    super.tearDown();
   }
 }

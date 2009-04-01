@@ -245,11 +245,13 @@ public class LocksPanel extends XContainer implements PropertyChangeListener {
 
     String prop = evt.getPropertyName();
     if (IClusterModelElement.PROP_READY.equals(prop)) {
-      IServer activeCoord = theClusterModel.getActiveCoordinator();
-      if (activeCoord != null) {
-        activeCoord.addPropertyChangeListener(this);
+      if (theClusterModel.isReady()) {
+        IServer activeCoord = theClusterModel.getActiveCoordinator();
+        if (activeCoord != null) {
+          activeCoord.addPropertyChangeListener(this);
+        }
+        adminClientContext.execute(new LocksPanelEnabledWorker());
       }
-      adminClientContext.execute(new LocksPanelEnabledWorker());
     } else if (IClusterModel.PROP_ACTIVE_COORDINATOR.equals(prop)) {
       IServer oldActive = (IServer) evt.getOldValue();
       if (oldActive != null) {

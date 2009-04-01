@@ -4,6 +4,7 @@
  */
 package com.tc.admin.dso;
 
+import com.tc.admin.AbstractClusterListener;
 import com.tc.admin.ConnectionContext;
 import com.tc.admin.IAdminClientContext;
 import com.tc.admin.common.BasicWorker;
@@ -16,8 +17,6 @@ import com.tc.admin.model.IClusterModel;
 import com.tc.admin.model.IServer;
 
 import java.awt.Component;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,9 +25,10 @@ import java.util.concurrent.Callable;
 
 import javax.swing.SwingUtilities;
 
-public class ClientsNode extends ComponentNode implements ClientConnectionListener, PropertyChangeListener {
+public class ClientsNode extends ComponentNode implements ClientConnectionListener {
   protected IAdminClientContext adminClientContext;
   protected IClusterModel       clusterModel;
+  protected ClusterListener     clusterListener;
   protected ConnectionContext   cc;
   protected IClient[]           clients;
   protected ClientsPanel        clientsPanel;
@@ -37,8 +37,11 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
     super();
     this.adminClientContext = adminClientContext;
     this.clusterModel = clusterModel;
-    clusterModel.addPropertyChangeListener(this);
-    init();
+    setLabel(adminClientContext.getMessage("connected-clients"));
+    clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
+    if (clusterModel.isReady()) {
+      init();
+    }
   }
 
   private synchronized IClusterModel getClusterModel() {
@@ -50,18 +53,23 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
     return theClusterModel != null ? theClusterModel.getActiveCoordinator() : null;
   }
 
-  public void propertyChange(PropertyChangeEvent evt) {
-    if (IClusterModel.PROP_ACTIVE_COORDINATOR.equals(evt.getPropertyName())) {
-      IServer newActive = (IServer) evt.getNewValue();
-      if (newActive != null) {
-        SwingUtilities.invokeLater(new InitRunnable());
+  private class ClusterListener extends AbstractClusterListener {
+    private ClusterListener(IClusterModel clusterModel) {
+      super(clusterModel);
+    }
+
+    @Override
+    protected void handleReady() {
+      if (clusterModel.isReady()) {
+        init();
       }
     }
-  }
 
-  private class InitRunnable implements Runnable {
-    public void run() {
-      init();
+    @Override
+    protected void handleActiveCoordinator(IServer oldActive, IServer newActive) {
+      if (oldActive != null) {
+        oldActive.removeClientConnectionListener(ClientsNode.this);
+      }
     }
   }
 
@@ -161,17 +169,21 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
     if (activeCoord != null) {
       activeCoord.removeClientConnectionListener(this);
     }
-    clusterModel.removePropertyChangeListener(this);
+    clusterModel.removePropertyChangeListener(clusterListener);
+    clusterListener.tearDown();
 
     if (clientsPanel != null) {
       clientsPanel.tearDown();
-      clientsPanel = null;
     }
 
-    adminClientContext = null;
-    clusterModel = null;
-    cc = null;
-    clients = null;
+    synchronized (this) {
+      adminClientContext = null;
+      clusterModel = null;
+      clusterListener = null;
+      cc = null;
+      clients = null;
+      clientsPanel = null;
+    }
 
     super.tearDown();
   }

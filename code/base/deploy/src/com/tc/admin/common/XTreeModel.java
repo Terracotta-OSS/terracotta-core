@@ -8,11 +8,18 @@ import javax.swing.tree.DefaultTreeModel;
 
 public class XTreeModel extends DefaultTreeModel {
   public XTreeModel() {
-    this(new XRootNode());
+    this(new XRootNode("root"));
   }
 
   public XTreeModel(XRootNode root) {
     super(root);
     ((XRootNode) getRoot()).setModel(this);
+  }
+
+  public void tearDown() {
+    XRootNode theRoot = (XRootNode) getRoot();
+    if (theRoot != null) {
+      theRoot.tearDown();
+    }
   }
 }

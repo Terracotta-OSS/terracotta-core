@@ -301,10 +301,11 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
       clusterModel = null;
       clusterListener = null;
       roots = null;
-      elementChooser.tearDown();
       elementChooser = null;
       pagedView = null;
     }
+
+    super.tearDown();
   }
 
 }
