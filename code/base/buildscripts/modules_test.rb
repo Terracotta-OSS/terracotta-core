@@ -696,10 +696,6 @@ class SubtreeTestRun
         }
       end
     }
-    # Check the failures by looking for the properies we set under failure_property_name, above.
-    failure_properties.each { |property_name| failed = failed || (@ant.get_ant_property(property_name) != nil) }
-    script_results.failed("Execution of tests in subtree '#{@subtree.module_subtree_name}' failed.") if failed
-
 
     # clean junit reports of redundant info to help speed up parsing
     # and avoid OOME while parsing big result files
