@@ -69,7 +69,9 @@ public class PassiveSmoothStartTestApp extends AbstractTransparentApp {
     CrashServerNodeAndRestart(1);
 
     // Verification 1: parent dirty-objectdb-backup directory created ??
-    Assert.eval(dirtyObjectDB1.exists());
+    while (!dirtyObjectDB1.exists()) {
+      System.out.println("XXX waiting for crashed server to create backup for dirty db");
+    }
 
     // Verification 2: dirty-objectdb-<timestamp> directory created ??
     verifyDirtyObjectDbBackupDirs(dirtyObjectDB1, 1);
@@ -95,7 +97,9 @@ public class PassiveSmoothStartTestApp extends AbstractTransparentApp {
     // 0 - Passive Server Index
 
     // Verification 1: parent dirty-objectdb-backup directory created ??
-    Assert.eval(dirtyObjectDB0.exists());
+    while (!dirtyObjectDB0.exists()) {
+      System.out.println("XXX waiting for crashed server to create backup for dirty db");
+    }
 
     // Verification 2: dirty-objectdb-<timestamp> directory created ??
     verifyDirtyObjectDbBackupDirs(dirtyObjectDB0, 1);
@@ -139,13 +143,13 @@ public class PassiveSmoothStartTestApp extends AbstractTransparentApp {
 
   private void verifyDirtyObjectDbBackupDirs(File dirtyObjectDB, int expectedBackupCount) {
     File[] dirtyObjectDBTimeStampedDirs = dirtyObjectDB.listFiles();
-    Assert.eval(dirtyObjectDBTimeStampedDirs.length == expectedBackupCount);
     for (int i = 0; i < dirtyObjectDBTimeStampedDirs.length; i++) {
       Assert.eval(new String(dirtyObjectDBTimeStampedDirs[0].getName())
           .startsWith(NewL2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX));
       System.out.println("XXX Successfully created Timestamped DirtyObjectDB Backup dir "
-                         + dirtyObjectDBTimeStampedDirs[0].getAbsolutePath());
+                         + dirtyObjectDBTimeStampedDirs[i].getAbsolutePath());
     }
+    Assert.assertEquals(expectedBackupCount, dirtyObjectDBTimeStampedDirs.length);
   }
 
   private void checkClusterStates(int activeIndex, int passiveIndex) {
