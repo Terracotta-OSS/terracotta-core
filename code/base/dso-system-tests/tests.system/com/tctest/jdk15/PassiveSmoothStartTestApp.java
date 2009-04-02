@@ -70,6 +70,7 @@ public class PassiveSmoothStartTestApp extends AbstractTransparentApp {
 
     // Verification 1: parent dirty-objectdb-backup directory created ??
     while (!dirtyObjectDB1.exists()) {
+      ThreadUtil.reallySleep(5000);
       System.out.println("XXX waiting for crashed server to create backup for dirty db");
     }
 
@@ -98,6 +99,7 @@ public class PassiveSmoothStartTestApp extends AbstractTransparentApp {
 
     // Verification 1: parent dirty-objectdb-backup directory created ??
     while (!dirtyObjectDB0.exists()) {
+      ThreadUtil.reallySleep(5000);
       System.out.println("XXX waiting for crashed server to create backup for dirty db");
     }
 
