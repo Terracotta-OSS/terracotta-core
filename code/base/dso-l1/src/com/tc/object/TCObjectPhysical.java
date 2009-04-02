@@ -13,7 +13,9 @@ import com.tc.util.ClassUtils;
 import gnu.trove.THashMap;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 public class TCObjectPhysical extends TCObjectImpl {
   private Map references = null;
@@ -49,12 +51,27 @@ public class TCObjectPhysical extends TCObjectImpl {
   public void resolveAllReferences() {
     TCClass tcc = getTCClass();
 
-    while (tcc != null) {
-      TCField[] fields = tcc.getPortableFields();
-      for (int i = 0; i < fields.length; i++) {
-        if (fields[i].canBeReference()) resolveReference(fields[i].getName());
+    if (tcc.isIndexed()) {
+      if (!hasReferences()) return;
+      Object[] po = (Object[]) getPeerObject();
+
+      for (Iterator iter = references.entrySet().iterator(); iter.hasNext();) {
+        Map.Entry entry = (Entry) iter.next();
+
+        int index = Integer.parseInt((String) entry.getKey());
+        ObjectID id = (ObjectID) entry.getValue();
+        setArrayReference(po, index, id);
+
+        iter.remove();
       }
-      tcc = tcc.getSuperclass();
+    } else {
+      while (tcc != null) {
+        TCField[] fields = tcc.getPortableFields();
+        for (TCField field : fields) {
+          if (field.canBeReference()) resolveReference(field.getName());
+        }
+        tcc = tcc.getSuperclass();
+      }
     }
   }
 
@@ -62,12 +79,15 @@ public class TCObjectPhysical extends TCObjectImpl {
   public final void resolveArrayReference(int index) {
     this.markAccessed();
 
-    Object[] po = (Object[]) getPeerObject();
     if (!hasReferences()) return;
 
     ObjectID id = removeReference(Integer.toString(index));
-
     if (id == null) return;
+
+    setArrayReference((Object[]) getPeerObject(), index, id);
+  }
+
+  private void setArrayReference(Object[] po, int index, ObjectID id) {
     if (id.isNull()) {
       po[index] = null;
     } else {
@@ -199,8 +219,7 @@ public class TCObjectPhysical extends TCObjectImpl {
     if (fields.length == 0) { return 0; }
     Map fieldValues = null;
     int cleared = 0;
-    for (int i = 0; i < fields.length; i++) {
-      TCField field = fields[i];
+    for (TCField field : fields) {
       if (!field.canBeReference()) continue;
       if (fieldValues == null) {
         // lazy instantiation. TODO:: Add a new method in TransparentAccess __tc_getFieldNoResolve()

@@ -30,7 +30,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
   private final String               autoLockContextInfo;
   private final InstrumentationSpec  spec;
   private final MemberInfo           memberInfo;
-  private boolean                    isConstructor;
+  private final boolean              isConstructor;
 
   private final TransparencyCodeSpec codeSpec;
   private final Label                labelZero          = new Label();
@@ -42,7 +42,8 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
   // MemberInfo memberInfo, String originalName) {
   public TransparencyCodeAdapter(InstrumentationSpec spec, LockDefinition autoLockDefinition, MethodVisitor mv,
                                  MemberInfo memberInfo, String originalName) {
-    super(new ExceptionTableOrderingMethodAdapter(mv), memberInfo.getModifiers(), originalName, memberInfo.getSignature());
+    super(new ExceptionTableOrderingMethodAdapter(mv), memberInfo.getModifiers(), originalName, memberInfo
+        .getSignature());
     this.spec = spec;
     this.isAutolock = autoLockDefinition != null;
     this.autoLockType = isAutolock ? autoLockDefinition.getLockLevelAsInt() : -1;
@@ -79,6 +80,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
     }
   }
 
+  @Override
   public void visitMethodInsn(int opcode, String owner, String name, String desc) {
     if (spec.hasDelegatedToLogicalClass() && isConstructor) {
       logicalInitVisitMethodInsn(opcode, owner, name, desc);
@@ -111,6 +113,11 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
 
   private void basicVisitMethodInsn(int opcode, String classname, String theMethodName, String desc) {
     if (handleSubclassOfLogicalClassMethodInsn(opcode, classname, theMethodName, desc)) { return; }
+
+    if ("clone".equals(theMethodName)) {
+      if (handleCloneCall(opcode, classname, theMethodName, desc)) { return; }
+    }
+
     if (codeSpec.isArraycopyInstrumentationReq(classname, theMethodName)) {
       rewriteArraycopy();
     } else if (classname.equals("java/lang/Object")) {
@@ -149,8 +156,6 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
   private void handleJavaLangObjectMethodCall(int opcode, String classname, String theMethodName, String desc) {
     if (handleJavaLangObjectWaitNotifyCalls(opcode, classname, theMethodName, desc)) {
       return;
-    } else if (handleJavaLangObjectCloneCall(opcode, classname, theMethodName, desc)) {
-      return;
     } else {
       super.visitMethodInsn(opcode, classname, theMethodName, desc);
     }
@@ -159,14 +164,15 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
   /**
    * The assumption here is that the compiler wouldn't call invokevirtual on a classname other than java.lang.Object
    * when there is no implementation of clone() defined in that classes' hierarchy. If it does, it a bug in the compiler
-   * ;-) This adaption is needed for both PORTABLE and ADAPTABLE classes as we can have instance where Logical subclass
-   * of ADAPTABLE class calls clone() to make a copy of itself. The resolveLock needs to be held for the duration of the
-   * clone() call if the reference is to a shared object
-   *
+   * ;-). Starting with 1.5 javac though it seems that clone() calls on array types are not bound to java.lang.Object as
+   * they were with 1.4. This adaption is needed for both PORTABLE and ADAPTABLE classes as we can have instance where
+   * Logical subclass of ADAPTABLE class calls clone() to make a copy of itself. The resolveLock needs to be held for
+   * the duration of the clone() call if the reference is to a shared object
+   * 
    * <pre>
    * Object refToBeCloned;
    * Object rv;
-   * TCObject tco = (refToBeCloned instanceof Manageable) ? ((Manageable) refToBeCloned).__tc_managed() : null;
+   * TCObject tco = ManagerUtil.lookupExistingOrNull(refToBeCloned)
    * if (tco != null) {
    *   synchronized (tco.getResolveLock()) {
    *     tco.resolveAllReferences();
@@ -176,12 +182,12 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
    *   rv = refToBeCloned.clone();
    * }
    * </pre>
-   *
+   * 
+   * @return
    * @see AbstractMap and HashMap
    */
-  private boolean handleJavaLangObjectCloneCall(int opcode, String classname, String theMethodName, String desc) {
-    if ("clone".equals(theMethodName) && "()Ljava/lang/Object;".equals(desc)) {
-
+  private boolean handleCloneCall(int opcode, String classname, String theMethodName, String desc) {
+    if ("clone".equals(theMethodName) && "()Ljava/lang/Object;".equals(desc) && (classname.startsWith("[") || classname.equals("java/lang/Object"))) {
       Type objectType = Type.getObjectType("java/lang/Object");
 
       int refToBeCloned = newLocal(objectType);
@@ -197,18 +203,8 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
       Label l3 = new Label();
       super.visitTryCatchBlock(l2, l3, l2, null);
       super.visitVarInsn(ALOAD, refToBeCloned);
-      super.visitTypeInsn(INSTANCEOF, "com/tc/object/bytecode/Manageable");
-      Label l5 = new Label();
-      super.visitJumpInsn(IFEQ, l5);
-      super.visitVarInsn(ALOAD, refToBeCloned);
-      super.visitTypeInsn(CHECKCAST, "com/tc/object/bytecode/Manageable");
-      super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/bytecode/Manageable", "__tc_managed",
-                            "()Lcom/tc/object/TCObject;");
-      Label l6 = new Label();
-      super.visitJumpInsn(GOTO, l6);
-      super.visitLabel(l5);
-      super.visitInsn(ACONST_NULL);
-      super.visitLabel(l6);
+      super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "lookupExistingOrNull",
+                            "(Ljava/lang/Object;)Lcom/tc/object/TCObject;");
       super.visitVarInsn(ASTORE, ref2);
       super.visitVarInsn(ALOAD, ref2);
       Label l8 = new Label();
@@ -359,6 +355,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
     }
   }
 
+  @Override
   public void visitInsn(int opCode) {
     if (isMonitorInstrumentationReq(opCode)) {
       switch (opCode) {
@@ -395,46 +392,52 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
         case AALOAD:
           Label end = new Label();
           Label notManaged = new Label();
-          
+
           Label lockedStart = new Label();
           Label lockedEnd = new Label();
           Label unlockException = new Label();
           super.visitTryCatchBlock(lockedStart, lockedEnd, unlockException, null);
-                                                                                               //..., array, index
-          super.visitInsn(DUP2);                                                               //..., array, index, array, index
-          super.visitInsn(POP);                                                                //..., array, index, array
-          callArrayManagerMethod("getObject", "(Ljava/lang/Object;)Lcom/tc/object/TCObject;"); //..., array, index, tcobj
-          super.visitInsn(DUP);                                                                //..., array, index, tcobj, tcobj
-          super.visitJumpInsn(IFNULL, notManaged);                                             //..., array, index, tcobj
-          super.visitInsn(DUP);                                                                //..., array, index, tcobj, tcobj
-          super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject",
-                                "getResolveLock", "()Ljava/lang/Object;");                     //..., array, index, tcobj, rlock
-          super.visitInsn(DUP);                                                                //..., array, index, tcobj, rlock, rlock
+          // ..., array, index
+          super.visitInsn(DUP2); // ..., array, index, array, index
+          super.visitInsn(POP); // ..., array, index, array
+          callArrayManagerMethod("getObject", "(Ljava/lang/Object;)Lcom/tc/object/TCObject;"); // ..., array, index,
+          // tcobj
+          super.visitInsn(DUP); // ..., array, index, tcobj, tcobj
+          super.visitJumpInsn(IFNULL, notManaged); // ..., array, index, tcobj
+          super.visitInsn(DUP); // ..., array, index, tcobj, tcobj
+          super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject", "getResolveLock", "()Ljava/lang/Object;"); // ...,
+          // array,
+          // index,
+          // tcobj,
+          // rlock
+          super.visitInsn(DUP); // ..., array, index, tcobj, rlock, rlock
           int lockSlot = newLocal(Type.getType(Object.class));
-          mv.visitVarInsn(ASTORE, lockSlot);                                                   //..., array, index, tcobj, rlock
-          super.visitInsn(MONITORENTER);                                                       //..., array, index, tcobj
+          mv.visitVarInsn(ASTORE, lockSlot); // ..., array, index, tcobj, rlock
+          super.visitInsn(MONITORENTER); // ..., array, index, tcobj
 
-          super.visitLabel(lockedStart);                                                       //..., array, index, tcobj
-          super.visitInsn(DUP2);                                                               //..., array, index, tcobj, index, tcobj
-          super.visitInsn(SWAP);                                                               //..., array, index, tcobj, tcobj, index
-          super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject",
-                                "resolveArrayReference", "(I)V");                              //..., array, index, tcobj
-          super.visitInsn(POP);                                                                //..., array, index
-          super.visitInsn(opCode);                                                             //..., reslt
-          mv.visitVarInsn(ALOAD, lockSlot);                                                    //..., reslt, rlock
-          super.visitInsn(MONITOREXIT);                                                        //..., reslt
-          super.visitLabel(lockedEnd);                                                         //..., reslt
-          super.visitJumpInsn(GOTO, end);                                                      //..., reslt
-          
-          super.visitLabel(unlockException);                                                   //excep
-          mv.visitVarInsn(ALOAD, lockSlot);                                                    //excep, rlock
-          super.visitInsn(MONITOREXIT);                                                        //excep
-          super.visitInsn(ATHROW);                                                             //<--->
-          
-          super.visitLabel(notManaged);                                                        //..., array, index, tcobj
-          super.visitInsn(POP);                                                                //..., array, index
-          super.visitInsn(opCode);                                                             //..., reslt
-          super.visitLabel(end);                                                               //..., reslt
+          super.visitLabel(lockedStart); // ..., array, index, tcobj
+          super.visitInsn(DUP2); // ..., array, index, tcobj, index, tcobj
+          super.visitInsn(SWAP); // ..., array, index, tcobj, tcobj, index
+          super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject", "resolveArrayReference", "(I)V"); // ...,
+          // array,
+          // index,
+          // tcobj
+          super.visitInsn(POP); // ..., array, index
+          super.visitInsn(opCode); // ..., reslt
+          mv.visitVarInsn(ALOAD, lockSlot); // ..., reslt, rlock
+          super.visitInsn(MONITOREXIT); // ..., reslt
+          super.visitLabel(lockedEnd); // ..., reslt
+          super.visitJumpInsn(GOTO, end); // ..., reslt
+
+          super.visitLabel(unlockException); // excep
+          mv.visitVarInsn(ALOAD, lockSlot); // excep, rlock
+          super.visitInsn(MONITOREXIT); // excep
+          super.visitInsn(ATHROW); // <--->
+
+          super.visitLabel(notManaged); // ..., array, index, tcobj
+          super.visitInsn(POP); // ..., array, index
+          super.visitInsn(opCode); // ..., reslt
+          super.visitLabel(end); // ..., reslt
           return;
         case AASTORE:
           callArrayManagerMethod("objectArrayChanged", "([Ljava/lang/Object;ILjava/lang/Object;)V");
@@ -479,10 +482,12 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
     super.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, name, desc);
   }
 
+  @Override
   public void visitMaxs(int stack, int vars) {
     super.visitMaxs(stack, vars + 1);
   }
 
+  @Override
   public void visitFieldInsn(final int opcode, final String classname, final String fieldName, final String desc) {
     spec.shouldProceedInstrumentation(fieldName, desc);
 
@@ -615,9 +620,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
   private boolean isRoot(String classname, String fieldName) {
     ClassInfo classInfo = AsmClassInfo.getClassInfo(classname.replace('/', '.'), spec.getCaller());
     FieldInfo[] fields = classInfo.getFields();
-    for (int i = 0; i < fields.length; i++) {
-      FieldInfo fieldInfo = fields[i];
-
+    for (FieldInfo fieldInfo : fields) {
       if (fieldName.equals(fieldInfo.getName())) {
         if (getTransparencyClassSpec().isRoot(fieldInfo)) { return true; }
       }
@@ -626,6 +629,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
     return false;
   }
 
+  @Override
   protected void onMethodEnter() {
     if (isConstructor) {
       visitInit = true;
@@ -636,6 +640,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
     }
   }
 
+  @Override
   protected void onMethodExit(int opcode) {
     if (isConstructor && getTransparencyClassSpec().isLockMethod(memberInfo)) {
 
@@ -650,6 +655,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
     }
   }
 
+  @Override
   public void visitEnd() {
     if (isConstructor && getTransparencyClassSpec().isLockMethod(memberInfo)) {
       Label labelEnd = new Label();
