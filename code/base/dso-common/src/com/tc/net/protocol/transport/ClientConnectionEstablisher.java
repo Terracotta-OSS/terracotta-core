@@ -121,7 +121,6 @@ public class ClientConnectionEstablisher {
       connection.close(100);
       throw e;
     } catch (TCTimeoutException e) {
-      connection.close(100);
       throw e;
     }
     return connection;
