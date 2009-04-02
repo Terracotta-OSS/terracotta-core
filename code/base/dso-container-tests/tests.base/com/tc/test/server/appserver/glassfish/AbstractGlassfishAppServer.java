@@ -388,8 +388,20 @@ public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
   private String[] getStartupCommand(AppServerParameters params) throws Exception {
     File startScript = getInstanceFile("bin/" + getPlatformScript("startserv"));
 
-    Result result = Exec.execute(getDisplayCommand(startScript.getAbsolutePath()), null, null, startScript
-        .getParentFile());
+    Result result;
+
+    try {
+      result = Exec.execute(getDisplayCommand(startScript.getAbsolutePath()), null, null, startScript.getParentFile());
+    } catch (IOException ioe) {
+      String script = startScript.getAbsolutePath();
+      if (Os.isUnix()) {
+        // Debug permission denied errors
+        Result ls = Exec.execute(new String[] { "ls", "-l", script });
+        System.err.println(ls.toString());
+      }
+
+      throw ioe;
+    }
     if (result.getExitCode() != 0) { throw new RuntimeException("error executing startserv script: " + result); }
 
     String output = result.getStdout().trim();
