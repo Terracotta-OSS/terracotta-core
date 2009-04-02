@@ -368,21 +368,21 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
       case TYPE_ID_JAVA_LANG_CLASS_HOLDER:
         return readClass(input, type);
       case TYPE_ID_BOOLEAN:
-        return new Boolean(input.readBoolean());
+        return Boolean.valueOf(input.readBoolean());
       case TYPE_ID_BYTE:
-        return new Byte(input.readByte());
+        return Byte.valueOf(input.readByte());
       case TYPE_ID_CHAR:
-        return new Character(input.readChar());
+        return Character.valueOf(input.readChar());
       case TYPE_ID_DOUBLE:
-        return new Double(input.readDouble());
+        return Double.valueOf(input.readDouble());
       case TYPE_ID_FLOAT:
-        return new Float(input.readFloat());
+        return Float.valueOf(input.readFloat());
       case TYPE_ID_INT:
-        return new Integer(input.readInt());
+        return Integer.valueOf(input.readInt());
       case TYPE_ID_LONG:
-        return new Long(input.readLong());
+        return Long.valueOf(input.readLong());
       case TYPE_ID_SHORT:
-        return new Short(input.readShort());
+        return Short.valueOf(input.readShort());
       case TYPE_ID_STRING:
         return readString(input, type);
       case TYPE_ID_STRING_COMPRESSED:

@@ -82,7 +82,6 @@ public class TransparencyTestApp extends AbstractTransparentApp {
       testFunnyInner();
       testFunnyCstr();
     }
-
   }
 
   private void testStaticNonRoot() {
@@ -200,6 +199,17 @@ public class TransparencyTestApp extends AbstractTransparentApp {
       System.out.println("Verified Empty Now Full");
       myRoot.put("value", "5");
     }
+    if (myRoot.get("value").equals("5")) {
+      System.out.println("5");
+      TestObj testObjectEmpty = (TestObj) myRoot.get("testObjectEmpty");
+
+      // reference equality should work on field values of type java.lang.Boolean (even though they are literals)
+      Assert.assertTrue(testObjectEmpty.booleanFALSE == Boolean.FALSE);
+      Assert.assertTrue(testObjectEmpty.booleanTRUE == Boolean.TRUE);
+
+      myRoot.put("value", "6");
+    }
+
   }
 
   private TestObj initialize(TestObj obj) {
@@ -530,7 +540,7 @@ public class TransparencyTestApp extends AbstractTransparentApp {
       }
     }
 
-    private Runnable anonymousSubclass = new Runnable() {
+    private final Runnable anonymousSubclass = new Runnable() {
                                          private Object o;
 
                                          public void run() {
@@ -598,6 +608,10 @@ public class TransparencyTestApp extends AbstractTransparentApp {
     private Object[]      objectArray;
     private BigInteger    bigIntegerObject;
     private BigDecimal    bigDecimalObject;
+
+    private final Boolean booleanTRUE = Boolean.TRUE;
+    private final Boolean booleanFALSE = Boolean.FALSE;
+
 
     public TestObj(TestObj obj) {
       this.obj = obj;
