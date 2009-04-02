@@ -7,9 +7,10 @@ package com.tctest;
 import com.tc.test.MultipleServersCrashMode;
 import com.tc.test.MultipleServersPersistenceMode;
 import com.tc.test.MultipleServersSharedDataMode;
+import com.tc.test.activepassive.ActivePassiveServerManager;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 
-public class ConcurrentHashMapGCRandomCrashTest extends GCAndActivePassiveTest {
+public class ConcurrentHashMapGCRandomCrashTest extends GCAndActivePassiveTestBase {
 
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setAttribute(ConcurrentHashMapSwappingTestApp.GC_TEST_KEY, "true");
@@ -28,4 +29,11 @@ public class ConcurrentHashMapGCRandomCrashTest extends GCAndActivePassiveTest {
     setupManager.setServerPersistenceMode(MultipleServersPersistenceMode.TEMPORARY_SWAP_ONLY);
   }
 
+  @Override
+  protected void customizeActivePassiveTest(ActivePassiveServerManager manager) throws Exception {
+    super.customizeActivePassiveTest(manager);
+    if (isMultipleServerTest()) {
+      addPostAction(new VerifyDGCPostAction(manager.connectAllDsoMBeans()));
+    }
+  }
 }

@@ -25,36 +25,6 @@ public class StatisticsRestInterfaceDisabledTest extends AbstractStatisticsTrans
   }
 
   @Override
-  protected void duringRunningCluster() throws Exception {
-    waitForAllNodesToConnectToGateway(StatisticsRestInterfaceTestApp.NODE_COUNT+1);
-
-    final String urlBase = "http://localhost:" + getDsoPort() + TCServerImpl.STATISTICS_GATHERER_SERVLET_PREFIX + "/";
-
-    WebConversation wc = new WebConversation();
-
-    try {
-      wc.getResponse(new GetMethodWebRequest(urlBase));
-      Assert.fail("expected exception");
-    } catch (HttpNotFoundException e) {
-      // expected
-    }
-
-    try {
-      wc.getResponse(new GetMethodWebRequest(urlBase + "startup"));
-      Assert.fail("expected exception");
-    } catch (HttpNotFoundException e) {
-      // expected
-    }
-
-    try {
-      wc.getResponse(new GetMethodWebRequest(urlBase + "shutdown"));
-      Assert.fail("expected exception");
-    } catch (HttpNotFoundException e) {
-      // expected
-    }
-  }
-
-  @Override
   protected Class getApplicationClass() {
     return StatisticsRestInterfaceTestApp.class;
   }
@@ -63,5 +33,47 @@ public class StatisticsRestInterfaceDisabledTest extends AbstractStatisticsTrans
   public void doSetUp(final TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(StatisticsRestInterfaceTestApp.NODE_COUNT);
     t.initializeTestRunner();
+  }
+
+  @Override
+  protected void loadPostActions() {
+    addPostAction(new StatisticsPostAction(this));
+  }
+
+  private static class StatisticsPostAction extends BaseStatisticsPostAction {
+
+    public StatisticsPostAction(AbstractStatisticsTransparentTestBase test) {
+      super(test);
+    }
+
+    @Override
+    public void execute() throws Exception {
+      waitForAllNodesToConnectToGateway(StatisticsRestInterfaceTestApp.NODE_COUNT + 1);
+
+      final String urlBase = "http://localhost:" + test.getDsoPort() + TCServerImpl.STATISTICS_GATHERER_SERVLET_PREFIX + "/";
+
+      WebConversation wc = new WebConversation();
+
+      try {
+        wc.getResponse(new GetMethodWebRequest(urlBase));
+        Assert.fail("expected exception");
+      } catch (HttpNotFoundException e) {
+        // expected
+      }
+
+      try {
+        wc.getResponse(new GetMethodWebRequest(urlBase + "startup"));
+        Assert.fail("expected exception");
+      } catch (HttpNotFoundException e) {
+        // expected
+      }
+
+      try {
+        wc.getResponse(new GetMethodWebRequest(urlBase + "shutdown"));
+        Assert.fail("expected exception");
+      } catch (HttpNotFoundException e) {
+        // expected
+      }
+    }
   }
 }

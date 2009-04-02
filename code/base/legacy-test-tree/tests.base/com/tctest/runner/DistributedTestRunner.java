@@ -42,7 +42,7 @@ import java.util.Map;
  * Takes an application configuration and some parameters and runs a single-vm, multi-node (multi-classloader) test.
  */
 public class DistributedTestRunner implements ResultsListener {
-  private static final boolean                          DEBUG   = true;
+  private static final boolean                          DEBUG       = true;
 
   private final boolean                                 startServer;
 
@@ -56,8 +56,8 @@ public class DistributedTestRunner implements ResultsListener {
   private final ContainerStateFactory                   containerStateFactory;
   private final TestGlobalIdGenerator                   globalIdGenerator;
   private final TCServer                                server;
-  private final List                                    errors  = new ArrayList();
-  private final List                                    results = new ArrayList();
+  private final List                                    errors      = new ArrayList();
+  private final List                                    results     = new ArrayList();
   private final DistributedTestRunnerConfig             config;
   private final TestTVSConfigurationSetupManagerFactory configFactory;
   private boolean                                       startTimedOut;
@@ -81,6 +81,7 @@ public class DistributedTestRunner implements ResultsListener {
   private ApplicationBuilder[]                          applicationBuilders;
   private Container[]                                   containers;
   private Container[]                                   validatorContainers;
+  private final List                                    postActions = new ArrayList();
 
   /**
    * @param applicationClass Class of the application to be executed. It should implement the static method required by
@@ -134,6 +135,10 @@ public class DistributedTestRunner implements ResultsListener {
     } else {
       server = null;
     }
+  }
+
+  public void addPostAction(PostAction action) {
+    this.postActions.add(action);
   }
 
   protected TCServer instantiateTCServer() {
@@ -249,7 +254,21 @@ public class DistributedTestRunner implements ResultsListener {
     } catch (Throwable t) {
       notifyError(new ErrorContext(t));
     } finally {
-      if (false && this.startServer) this.server.stop();
+      if (false && this.startServer) {
+        try {
+          executePostActions();
+        } catch (Exception e) {
+          notifyError(new ErrorContext(e));
+        }
+        this.server.stop();
+      }
+    }
+  }
+
+  private void executePostActions() throws Exception {
+    for (Iterator iter = postActions.iterator(); iter.hasNext();) {
+      PostAction postAction = (PostAction) iter.next();
+      postAction.execute();
     }
   }
 

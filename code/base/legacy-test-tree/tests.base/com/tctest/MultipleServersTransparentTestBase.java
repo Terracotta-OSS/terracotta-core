@@ -18,7 +18,7 @@ public abstract class MultipleServersTransparentTestBase extends TransparentTest
    * The server manager which currently takes care of active-passive and active-active tests
    */
   protected MultipleServerManager multipleServerManager;
-
+ 
   public void initializeTestRunner(boolean isMutateValidateTest, TransparentAppConfig transparentAppCfg,
                                    DistributedTestRunnerConfig runnerCfg) throws Exception {
     if (!isMultipleServerTest()) {
@@ -29,6 +29,7 @@ public abstract class MultipleServersTransparentTestBase extends TransparentTest
                                        getOptionalAttributes(), getApplicationConfigBuilder().newApplicationConfig(),
                                        false, isMutateValidateTest, isMultipleServerTest(), multipleServerManager,
                                        transparentAppCfg);
+    
   }
 
   protected boolean canRun() {
