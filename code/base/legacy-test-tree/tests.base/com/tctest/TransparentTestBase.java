@@ -31,6 +31,7 @@ import com.tc.test.restart.RestartTestHelper;
 import com.tc.test.restart.ServerCrasher;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
+import com.tc.util.runtime.Os;
 import com.tc.util.runtime.ThreadDump;
 import com.tctest.runner.DistributedTestRunner;
 import com.tctest.runner.DistributedTestRunnerConfig;
@@ -113,6 +114,13 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     System.setProperty("com.tc." + TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "true");
 
     jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED + "=true");
+
+    // for windows, it takes 10 seconds to restart proxy port
+    if (Os.isWindows()) {
+      tcProps.setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_TIMEOUT, "20000");
+      System.setProperty("com.tc." + TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_TIMEOUT, "20000");
+      jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_TIMEOUT + "=20000");
+    }
   }
 
   protected void setJvmArgsCvtIsolation(final ArrayList jvmArgs) {
@@ -197,13 +205,13 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
     if (isCrashy() && canRunCrash()) {
       crashTestState = new TestState(false);
-      crasher = new ServerCrasher(serverControl, getRestartInterval(helper) , helper
-          .getServerCrasherConfig().isCrashy(), crashTestState, proxyMgr);
+      crasher = new ServerCrasher(serverControl, getRestartInterval(helper),
+                                  helper.getServerCrasherConfig().isCrashy(), crashTestState, proxyMgr);
       if (canRunL1ProxyConnect()) crasher.setProxyConnectMode(true);
       crasher.startAutocrash();
     }
   }
-  
+
   protected long getRestartInterval(RestartTestHelper helper) {
     return helper.getServerCrasherConfig().getRestartInterval();
   }
@@ -472,7 +480,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     return (mode().equals(TestConfigObject.TRANSPARENT_TESTS_MODE_NORMAL) && canRunNormal())
            || (mode().equals(TestConfigObject.TRANSPARENT_TESTS_MODE_CRASH) && canRunCrash());
   }
-  
+
   protected boolean isRunNormalMode() {
     return (mode().equals(TestConfigObject.TRANSPARENT_TESTS_MODE_NORMAL));
   }
