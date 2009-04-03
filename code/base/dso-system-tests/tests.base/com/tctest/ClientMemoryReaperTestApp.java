@@ -29,7 +29,7 @@ import java.util.Vector;
 public class ClientMemoryReaperTestApp extends AbstractErrorCatchingTransparentApp {
   public static final String SYNCHRONOUS_WRITE         = "synch-write";
 
-  private static final long  OBJECT_COUNT              = 2000;
+  private static final long  OBJECT_COUNT              = 1800;
   private static final long  MINIMUM_MEM_NEEDED        = 60 * 1024 * 1024;
   private static final int   MEMORY_BLOCKS             = 1024 * 1024;
 
