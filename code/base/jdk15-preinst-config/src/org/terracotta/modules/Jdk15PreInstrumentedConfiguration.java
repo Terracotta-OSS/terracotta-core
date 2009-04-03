@@ -37,6 +37,9 @@ public class Jdk15PreInstrumentedConfiguration extends TerracottaConfiguratorMod
         }
       }
 
+      spec = getOrCreateSpec("java.util.concurrent.atomic.AtomicReference");
+      spec.setHonorVolatile(true);
+
       // ---------------------------------------------------------------------
       // The following section of specs are specified in the BootJarTool
       // also.

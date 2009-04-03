@@ -80,7 +80,6 @@ public class ExcludesConfiguration
       configHelper.addPermanentExcludePattern("java.util.concurrent.atomic.AtomicLongArray*");
       configHelper.addPermanentExcludePattern("java.util.concurrent.atomic.AtomicLongFieldUpdater*");
       configHelper.addPermanentExcludePattern("java.util.concurrent.atomic.AtomicMarkableReference*");
-      configHelper.addPermanentExcludePattern("java.util.concurrent.atomic.AtomicReference*");
       configHelper.addPermanentExcludePattern("java.util.concurrent.atomic.AtomicReferenceArray*");
       configHelper.addPermanentExcludePattern("java.util.concurrent.atomic.AtomicReferenceFieldUpdater*");
       configHelper.addPermanentExcludePattern("java.util.concurrent.atomic.AtomicStampedReference*");
