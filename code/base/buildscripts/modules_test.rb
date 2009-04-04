@@ -658,7 +658,6 @@ class SubtreeTestRun
     puts "RUNNING tests (#{@test_patterns.join(', ')}) on #{@subtree.module_subtree_name}..."
     puts ""
 
-    failed = false
     failure_properties = [ ]
 
     junit_formatter_classpath = @build_module.module_set['junit-formatter'].subtree('tests.base').classpath(@build_results, :module_only, :runtime)
@@ -667,51 +666,53 @@ class SubtreeTestRun
     # method, which puts the necessary <jvmarg>, <sysproperty>, and so forth elements
     # into the junit task.
 
-    @ant.junit(
-      :printsummary => "yes",
-      :timeout => @timeout,
-      :dir => @cwd.to_s,
-      :tempdir => @testrun_results.ant_temp_dir(@subtree).to_s,
-      :fork => true,
-      :showoutput => true,
-      :jvm => tests_jvm.java.to_s) {
-      @ant.classpath {
-        # add path to TCJUnitFormatter class
-        @ant.pathelement( :path => junit_formatter_classpath)
+    begin
+      @ant.junit(
+        :printsummary => "yes",
+        :timeout => @timeout,
+        :dir => @cwd.to_s,
+        :tempdir => @testrun_results.ant_temp_dir(@subtree).to_s,
+        :fork => true,
+        :showoutput => true,
+        :jvm => tests_jvm.java.to_s) {
+        @ant.classpath {
+          # add path to TCJUnitFormatter class
+          @ant.pathelement( :path => junit_formatter_classpath)
+        }
+        splice_into_ant_junit
+
+        # formatter that outputs result to console
+        @ant.formatter(:type => "xml")
+        @ant.formatter(:classname => 'com.tc.test.TCJUnitFormatter', :usefile => false)
+
+        # Create a <batchtest> element for each pattern we have.
+        @test_patterns.each do |pattern|
+          failure_property_name = "tests_failed_%d" % @@next_failure_property_sequence
+          @@next_failure_property_sequence += 1
+          failure_properties << failure_property_name
+
+          @ant.batchtest(:todir => @testrun_results.results_dir(@subtree).to_s, :fork => true, :failureproperty => failure_property_name) {
+            @ant.fileset(:dir => @build_results.classes_directory(@subtree).to_s, :includes => "**/#{pattern}.class")
+          }
+        end
       }
-      splice_into_ant_junit
+    ensure
+      # clean junit reports of redundant info to help speed up parsing
+      # and avoid OOME while parsing big result files
+      cleaner = org.terracotta.JUnitReportCleaner.new
+      Dir.chdir(@testrun_results.results_dir(@subtree).to_s) do
+        Dir.glob("TEST*.xml").each do |filename|
+          cleaner.clean(File.expand_path(filename))
+        end
+      end
 
-      # formatter that outputs result to console
-      @ant.formatter(:type => "xml")
-      @ant.formatter(:classname => 'com.tc.test.TCJUnitFormatter', :usefile => false)
-
-      # Create a <batchtest> element for each pattern we have.
-      @test_patterns.each do |pattern|
-        failure_property_name = "tests_failed_%d" % @@next_failure_property_sequence
-        @@next_failure_property_sequence += 1
-        failure_properties << failure_property_name
-
-        @ant.batchtest(:todir => @testrun_results.results_dir(@subtree).to_s, :fork => true, :failureproperty => failure_property_name) {
-          @ant.fileset(:dir => @build_results.classes_directory(@subtree).to_s, :includes => "**/#{pattern}.class")
+      # Aggregate the results into the aggregation directory, if it's set.
+      unless @aggregation_directory.nil?
+        puts "Copying test result files to '#{@aggregation_directory}'..."
+        @ant.copy(:todir => @aggregation_directory.to_s) {
+          @ant.fileset(:dir => @testrun_results.results_dir(@subtree).to_s, :includes => '*.xml')
         }
       end
-    }
-
-    # clean junit reports of redundant info to help speed up parsing
-    # and avoid OOME while parsing big result files
-    cleaner = org.terracotta.JUnitReportCleaner.new
-    Dir.chdir(@testrun_results.results_dir(@subtree).to_s) do
-      Dir.glob("TEST*.xml").each do |filename|
-        cleaner.clean(File.expand_path(filename))
-      end
-    end
-
-    # Aggregate the results into the aggregation directory, if it's set.
-    unless @aggregation_directory.nil?
-      puts "Copying test result files to '#{@aggregation_directory}'..."
-      @ant.copy(:todir => @aggregation_directory.to_s) {
-        @ant.fileset(:dir => @testrun_results.results_dir(@subtree).to_s, :includes => '*.xml')
-      }
     end
   end
 
