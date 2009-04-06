@@ -65,7 +65,7 @@ public class ServerManager {
   private static final TimGetUrls[]   TIM_GET_URLS   = {
       new TimGetUrls("http://forge-stage.terracotta.lan/api/2/index.xml.gz", "http://kong.terracotta.lan/maven2"),
       new TimGetUrls("http://forge-dev.terracotta.lan/api/2/index.xml.gz", "http://forge-dev.terracotta.lan/repo"),
-      new TimGetUrls("http://forge.terracotta.org/api/2/index.xml.gz", "http://download.terracotta.org/maven2") };
+      new TimGetUrls("http://forge.terracotta.org/api/2/index.xml.gz", "http://www.terracotta.org/download/reflector/maven2") };
 
   protected final static TCLogger     logger         = TCLogging.getLogger(ServerManager.class);
   private static int                  appServerIndex = 0;
