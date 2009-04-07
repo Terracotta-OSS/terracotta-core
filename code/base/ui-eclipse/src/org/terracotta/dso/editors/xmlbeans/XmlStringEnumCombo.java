@@ -33,6 +33,7 @@ public class XmlStringEnumCombo implements XmlObjectHolder {
   protected void addListeners() {
     m_combo.addModifyListener(m_modifyListener);
     m_combo.addKeyListener(m_keyListener);
+    m_listening = true;
   }
 
   protected XmlStringEnumCombo(Combo combo) {
@@ -51,6 +52,7 @@ public class XmlStringEnumCombo implements XmlObjectHolder {
   }
 
   private class ComboKeyAdapter extends KeyAdapter {
+    @Override
     public void keyPressed(KeyEvent e) {
       if (!m_listening) return;
       switch (e.keyCode) {

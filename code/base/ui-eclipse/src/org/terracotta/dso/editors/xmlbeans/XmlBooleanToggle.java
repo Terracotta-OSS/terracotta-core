@@ -32,9 +32,11 @@ public class XmlBooleanToggle implements XmlObjectHolder {
 
   protected void addListeners() {
     m_button.addSelectionListener(m_selectionListener);
+    m_listening = true;
   }
 
   private class ButtonSelectionAdapter extends SelectionAdapter {
+    @Override
     public void widgetSelected(SelectionEvent e) {
       if (m_listening) {
         set();

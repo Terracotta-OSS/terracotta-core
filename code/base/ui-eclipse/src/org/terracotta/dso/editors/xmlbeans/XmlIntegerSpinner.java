@@ -37,6 +37,7 @@ public class XmlIntegerSpinner implements XmlObjectHolder {
     m_spinner.addFocusListener(m_focusListener);
     m_spinner.addSelectionListener(m_selectionListener);
     m_spinner.addKeyListener(m_keyListener);
+    m_listening = true;
   }
 
   protected XmlIntegerSpinner(Spinner spinner) {
@@ -48,6 +49,7 @@ public class XmlIntegerSpinner implements XmlObjectHolder {
   }
 
   private class SpinnerFocusAdapter extends FocusAdapter {
+    @Override
     public void focusLost(FocusEvent e) {
       if (m_listening) {
         set();
@@ -56,14 +58,17 @@ public class XmlIntegerSpinner implements XmlObjectHolder {
   }
 
   private class SpinnerSelectionAdapter extends SelectionAdapter {
+    @Override
     public void widgetSelected(SelectionEvent se) {
-      if (m_listening) {
+      // If spinner is FocusControl, the focusLost event will handle setting.
+      if (m_listening && !m_spinner.isFocusControl()) {
         set();
       }
     }
   }
 
   private class SpinnerKeyAdapter extends KeyAdapter {
+    @Override
     public void keyPressed(KeyEvent e) {
       if (!m_listening) return;
       switch (e.keyCode) {
@@ -152,6 +157,9 @@ public class XmlIntegerSpinner implements XmlObjectHolder {
   }
 
   public void setSelection(int value) {
-    m_spinner.setSelection(value);
+    int curVal = m_spinner.getSelection();
+    if (curVal != value) {
+      m_spinner.setSelection(value);
+    }
   }
 }

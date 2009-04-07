@@ -39,9 +39,11 @@ public class XmlStringField implements XmlObjectHolder {
   protected void addListeners() {
     m_text.addFocusListener(m_focusListener);
     m_text.addKeyListener(m_keyListener);
+    m_listening = true;
   }
 
   private class TextFocusAdapter extends FocusAdapter {
+    @Override
     public void focusLost(FocusEvent e) {
       if (m_listening) {
         set();
@@ -50,6 +52,7 @@ public class XmlStringField implements XmlObjectHolder {
   }
 
   private class TextKeyAdapter extends KeyAdapter {
+    @Override
     public void keyPressed(KeyEvent e) {
       if (!m_listening) return;
       switch (e.keyCode) {

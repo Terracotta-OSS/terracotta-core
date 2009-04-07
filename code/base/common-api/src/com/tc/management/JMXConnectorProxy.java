@@ -40,7 +40,7 @@ public class JMXConnectorProxy implements JMXConnector {
   static {
     System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog");
   }
-  
+
   public JMXConnectorProxy(final String host, final int port, final Map env) {
     m_host = host;
     m_port = port;
@@ -100,8 +100,6 @@ public class JMXConnectorProxy implements JMXConnector {
       if (status == HttpStatus.SC_OK) { throw new RuntimeException("Please specify the JMX port, not the DSO port"); }
     } catch (IOException ioe) {
       /* this is good */
-    } catch (Throwable t) {
-      t.printStackTrace();
     } finally {
       get.releaseConnection();
     }
@@ -187,6 +185,7 @@ public class JMXConnectorProxy implements JMXConnector {
     m_connectorProxy.removeConnectionNotificationListener(listener, filter, data);
   }
 
+  @Override
   public String toString() {
     return m_host + ":" + m_port;
   }
