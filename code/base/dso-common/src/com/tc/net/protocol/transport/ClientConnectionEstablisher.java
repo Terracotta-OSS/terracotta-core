@@ -23,6 +23,8 @@ import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 /**
  * This guy establishes a connection to the server for the Client.
@@ -152,7 +154,12 @@ public class ClientConnectionEstablisher {
           // DEV-1945
           if (i == 0) {
             String previousConnectHostName = cmt.getRemoteAddress().getAddress().getHostName();
-            String connectingToHostName = connInfo.getHostname();
+            String connectingToHostName = "";
+            try {
+              connectingToHostName = InetAddress.getByName(connInfo.getHostname()).getHostName();
+            } catch (UnknownHostException e) {
+              // these errors are caught even before
+            }
 
             int previousConnectHostPort = cmt.getRemoteAddress().getPort();
             int connectingToHostPort = connInfo.getPort();
