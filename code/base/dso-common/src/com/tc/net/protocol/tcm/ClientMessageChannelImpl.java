@@ -53,7 +53,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
       if (status.isOpen()) { throw new IllegalStateException("Channel already open"); }
       ((MessageTransport) this.sendLayer).initConnectionID(new ConnectionID((((ClientID) getLocalNodeID()).toLong())));
       NetworkStackID id = this.sendLayer.open();
-      getStatus().open();
+      channelOpened();
       this.channelID = new ChannelID(id.toLong());
       setLocalNodeID(new ClientID(id.toLong()));
       this.cidProvider.setChannelID(this.channelID);

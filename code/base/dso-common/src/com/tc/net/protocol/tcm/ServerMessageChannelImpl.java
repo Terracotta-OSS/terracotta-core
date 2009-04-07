@@ -29,7 +29,9 @@ public class ServerMessageChannelImpl extends AbstractMessageChannel implements 
     setLocalNodeID(serverID);
 
     // server message channels should always be open initially
-    this.getStatus().open();
+    synchronized (getStatus()) {
+      channelOpened();
+    }
   }
 
   public ChannelID getChannelID() {

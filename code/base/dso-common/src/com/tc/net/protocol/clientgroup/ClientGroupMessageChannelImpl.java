@@ -257,6 +257,15 @@ public class ClientGroupMessageChannelImpl extends ClientMessageChannelImpl impl
     }
     return true;
   }
+  
+  @Override
+  public boolean isClosed() {
+    if (groupChannelMap.size() == 0) return false;
+    for (Iterator i = groupChannelMap.keySet().iterator(); i.hasNext();) {
+      if (!getChannel((GroupID) i.next()).isClosed()) return false;
+    }
+    return true;
+  }
 
   /*
    * As a middleman between ClientHandshakeManager and multiple ClientMessageChannels. Bookkeeping sub-channels' events

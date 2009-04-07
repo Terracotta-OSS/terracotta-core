@@ -162,6 +162,7 @@ public class ClientGroupMessageChannelTest extends TCTestCase {
 
   public void testAttachments() throws Exception {
     setUp(10);
+    groupChannel.open();
     String key = "key";
     MessageChannel channel = createClientMessageChannel(10);
     assertNull(channel.getAttachment(key));

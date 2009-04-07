@@ -126,13 +126,24 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
     routeMessageType(messageType, new TCMessageSinkToSedaSink(destSink, hydrateSink));
   }
 
+  private void fireChannelOpenedEvent() {
+    fireEvent(new ChannelEventImpl(ChannelEventType.CHANNEL_OPENED_EVENT, AbstractMessageChannel.this));
+  }
+
+  private void fireChannelClosedEvent() {
+    fireEvent(new ChannelEventImpl(ChannelEventType.CHANNEL_CLOSED_EVENT, AbstractMessageChannel.this));
+  }
+  
+  void channelOpened() {
+    status.open();
+    fireChannelOpenedEvent();
+  }
+  
   public void close() {
-    synchronized (status) {
-      if (!status.isClosed()) {
-        Assert.assertNotNull(this.sendLayer);
-        this.sendLayer.close();
-        status.close();
-      }
+    if (!status.getAndSetIsClosed()) {
+      Assert.assertNotNull(this.sendLayer);
+      this.sendLayer.close();
+      fireChannelClosedEvent();
     }
   }
 
@@ -253,21 +264,25 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
     private ChannelState state;
 
     public ChannelStatus() {
-      this.state = ChannelState.CLOSED;
+      this.state = ChannelState.INIT;
     }
 
-    // this method non-public on purpose. Only the channel should change it's own status
-    synchronized void close() {
-      changeState(ChannelState.CLOSED);
-      fireEvent(new ChannelEventImpl(ChannelEventType.CHANNEL_CLOSED_EVENT, AbstractMessageChannel.this));
-    }
-
-    // this method non-public on purpose. Only the channel should change it's own status
     synchronized void open() {
-      changeState(ChannelState.OPEN);
-      fireEvent(new ChannelEventImpl(ChannelEventType.CHANNEL_OPENED_EVENT, AbstractMessageChannel.this));
+      Assert.assertTrue("Switch only from init state to open state", ChannelState.INIT.equals(state));
+      state = ChannelState.OPEN;
     }
 
+    synchronized boolean getAndSetIsClosed() {
+      // must not in INIT state
+      Assert.assertFalse("Wrong to be in init state to switch to close state", ChannelState.INIT.equals(state));
+      if (ChannelState.CLOSED.equals(state)) {
+        return true;
+      } else {
+        state = ChannelState.CLOSED;
+        return false;
+      }
+    }
+    
     synchronized boolean isOpen() {
       return ChannelState.OPEN.equals(state);
     }
@@ -276,15 +291,14 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
       return ChannelState.CLOSED.equals(state);
     }
 
-    private synchronized void changeState(ChannelState newState) {
-      state = newState;
-    }
   }
 
   private static class ChannelState {
+    private static final int  STATE_INIT   = 0;
     private static final int  STATE_OPEN   = 1;
     private static final int  STATE_CLOSED = 2;
 
+    static final ChannelState INIT         = new ChannelState(STATE_INIT);
     static final ChannelState OPEN         = new ChannelState(STATE_OPEN);
     static final ChannelState CLOSED       = new ChannelState(STATE_CLOSED);
 
@@ -296,6 +310,8 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
 
     public String toString() {
       switch (state) {
+        case STATE_INIT:
+          return "INIT";
         case STATE_OPEN:
           return "OPEN";
         case STATE_CLOSED:

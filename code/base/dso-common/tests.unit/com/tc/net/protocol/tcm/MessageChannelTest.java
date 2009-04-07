@@ -151,6 +151,7 @@ public class MessageChannelTest extends TCTestCase {
 
   public void testAttachments() throws Exception {
     setUp(10);
+    clientChannel.open();
     String key = "key";
     MessageChannel channel = createClientMessageChannel(10);
     assertNull(channel.getAttachment(key));
@@ -202,6 +203,7 @@ public class MessageChannelTest extends TCTestCase {
       // expected
       System.err.println("Expected: Connection Error: " + e);
     }
+    clientChannel = null;
   }
 
   public void testAutomaticReconnect() throws Exception {
