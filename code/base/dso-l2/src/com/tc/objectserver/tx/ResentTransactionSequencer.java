@@ -16,6 +16,7 @@ import com.tc.util.State;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -73,14 +74,14 @@ public class ResentTransactionSequencer extends AbstractServerTransactionListene
   public void addTransactions(Collection txns) {
     boolean addPendingCallbacks = false;
     synchronized (this) {
-      State lstate = state;
+      State lstate = this.state;
       if (lstate == PASS_THRU_ACTIVE || lstate == PASS_THRU_PASSIVE) {
-        txnObjectManager.addTransactions(txns);
+        this.txnObjectManager.addTransactions(txns);
       } else if (lstate == INCOMING_RESENT) {
         addToPending(txns);
         addPendingCallbacks = processResent();
       } else {
-        throw new AssertionError("Illegal State : " + state + " resentTxns : " + resentTxns);
+        throw new AssertionError("Illegal State : " + this.state + " resentTxns : " + this.resentTxns);
       }
     }
     if (addPendingCallbacks) {
@@ -91,25 +92,26 @@ public class ResentTransactionSequencer extends AbstractServerTransactionListene
   public void callBackOnResentTxnsInSystemCompletion(TxnsInSystemCompletionLister l) {
     boolean addCallBack = false;
     synchronized (this) {
-      if (state == PASS_THRU_ACTIVE) {
+      if (this.state == PASS_THRU_ACTIVE) {
         addCallBack = true;
       } else {
-        logger.info("Making callback " + l + " pending since in " + state + " resent txns size : " + resentTxns.size());
-        pendingCallBacks.add(l);
+        logger.info("Making callback " + l + " pending since in " + this.state + " resent txns size : "
+                    + this.resentTxns.size());
+        this.pendingCallBacks.add(l);
       }
     }
     if (addCallBack) {
       // We can't be sure that the resent transactions are actually applied and committed already, so we wait for all
       // TXNs in the system to complete before calling back.
-      transactionManager.callBackOnTxnsInSystemCompletion(l);
+      this.transactionManager.callBackOnTxnsInSystemCompletion(l);
     }
   }
 
   private boolean processResent() {
     ArrayList txns2Process = new ArrayList();
-    for (Iterator i = resentTxns.iterator(); i.hasNext();) {
+    for (Iterator i = this.resentTxns.iterator(); i.hasNext();) {
       TransactionDesc desc = (TransactionDesc) i.next();
-      ServerTransaction txn = (ServerTransaction) pendingTxns.remove(desc.getServerTransactionID());
+      ServerTransaction txn = (ServerTransaction) this.pendingTxns.remove(desc.getServerTransactionID());
       if (txn != null) {
         txns2Process.add(txn);
         i.remove();
@@ -118,7 +120,7 @@ public class ResentTransactionSequencer extends AbstractServerTransactionListene
       }
     }
     if (!txns2Process.isEmpty()) {
-      txnObjectManager.addTransactions(txns2Process);
+      this.txnObjectManager.addTransactions(txns2Process);
     }
     return moveToPassThruActiveIfPossible();
   }
@@ -126,7 +128,7 @@ public class ResentTransactionSequencer extends AbstractServerTransactionListene
   private void addToPending(Collection txns) {
     for (Iterator i = txns.iterator(); i.hasNext();) {
       ServerTransaction txn = (ServerTransaction) i.next();
-      pendingTxns.put(txn.getServerTransactionID(), txn);
+      this.pendingTxns.put(txn.getServerTransactionID(), txn);
     }
   }
 
@@ -135,6 +137,7 @@ public class ResentTransactionSequencer extends AbstractServerTransactionListene
     this.state = ADD_RESENT;
   }
 
+  @Override
   public void transactionManagerStarted(Set cids) {
     boolean addPendingCallbacks = false;
     synchronized (this) {
@@ -148,7 +151,7 @@ public class ResentTransactionSequencer extends AbstractServerTransactionListene
   }
 
   private void removeAllExceptFrom(Set cids) {
-    for (Iterator i = resentTxns.iterator(); i.hasNext();) {
+    for (Iterator i = this.resentTxns.iterator(); i.hasNext();) {
       TransactionDesc desc = (TransactionDesc) i.next();
       if (!cids.contains(desc.getServerTransactionID().getSourceID())) {
         logger.warn("Removing " + desc + " because not in startup set " + cids);
@@ -158,10 +161,11 @@ public class ResentTransactionSequencer extends AbstractServerTransactionListene
   }
 
   private boolean moveToPassThruActiveIfPossible() {
-    if (resentTxns.isEmpty()) {
+    if (this.resentTxns.isEmpty()) {
       this.state = PASS_THRU_ACTIVE;
       clearPending();
-      logger.info("Unregistering ResentTransactionSequencer since no more resent Transactions : " + resentTxns.size());
+      logger.info("Unregistering ResentTransactionSequencer since no more resent Transactions : "
+                  + this.resentTxns.size());
       this.transactionManager.removeTransactionListener(this);
       return true;
     }
@@ -169,33 +173,49 @@ public class ResentTransactionSequencer extends AbstractServerTransactionListene
   }
 
   private void clearPending() {
-    txnObjectManager.addTransactions(pendingTxns.values());
-    pendingTxns.clear();
+    this.txnObjectManager.addTransactions(this.pendingTxns.values());
+    this.pendingTxns.clear();
   }
 
+  @Override
   public synchronized void addResentServerTransactionIDs(Collection stxIDs) {
-    Assert.assertEquals(ADD_RESENT, state);
+    Assert.assertEquals(ADD_RESENT, this.state);
+    Set clientIDs = new HashSet();
+    int newlyAssigned = 0;
     for (Iterator i = stxIDs.iterator(); i.hasNext();) {
       ServerTransactionID stxID = (ServerTransactionID) i.next();
-      GlobalTransactionID gid = gtxm.getGlobalTransactionID(stxID);
+      GlobalTransactionID gid = this.gtxm.getGlobalTransactionID(stxID);
+      clientIDs.add(stxID.getSourceID());
       if (!gid.isNull()) {
-        logger.info("Resent Transaction : " + stxID + " old gid = " + gid);
+        if (logger.isDebugEnabled()) {
+          logger.debug("Resent Transaction : " + stxID + " old gid = " + gid);
+        }
       } else {
-        gid = gtxm.getOrCreateGlobalTransactionID(stxID);
-        logger.info("Resent Transaction : " + stxID + " newly assigned gid = " + gid);
+        gid = this.gtxm.getOrCreateGlobalTransactionID(stxID);
+        if (logger.isDebugEnabled()) {
+          logger.debug("Resent Transaction : " + stxID + " newly assigned gid = " + gid);
+        }
+        newlyAssigned++;
       }
       addOrdered(stxID, gid);
     }
     assertGidsInOrder();
-    logger.info("Resent Txns = " + resentTxns);
+    logger.info("Resent Txns from " + clientIDs + " : Total number of resent txns = " + stxIDs.size()
+                + " : Old already assigned gid = " + (stxIDs.size() - newlyAssigned) + " : Newly assigned gids = "
+                + newlyAssigned);
+    if (logger.isDebugEnabled()) {
+      logger.debug("Total resent Txns so far = " + this.resentTxns);
+    } else {
+      logger.info("Total resent Txns so far = " + this.resentTxns.size());
+    }
   }
 
   private void assertGidsInOrder() {
     long last = Long.MIN_VALUE;
-    for (Iterator i = resentTxns.iterator(); i.hasNext();) {
+    for (Iterator i = this.resentTxns.iterator(); i.hasNext();) {
       TransactionDesc desc = (TransactionDesc) i.next();
       long current = desc.getGlobalTransactionID().toLong();
-      if (current <= last) { throw new AssertionError("Resent TransactionSequence Ordering error : " + resentTxns
+      if (current <= last) { throw new AssertionError("Resent TransactionSequence Ordering error : " + this.resentTxns
                                                       + " current = " + current + " last = " + last); }
       last = current;
     }
@@ -205,7 +225,7 @@ public class ResentTransactionSequencer extends AbstractServerTransactionListene
     TransactionDesc toAdd = new TransactionDesc(stxID, gid);
     ListIterator i;
     // Going from the reverse means less iterations
-    for (i = resentTxns.listIterator(resentTxns.size()); i.hasPrevious();) {
+    for (i = this.resentTxns.listIterator(this.resentTxns.size()); i.hasPrevious();) {
       TransactionDesc desc = (TransactionDesc) i.previous();
       if (desc.getGlobalTransactionID().lessThan(toAdd.getGlobalTransactionID())) {
         i.next(); // move to the right position
@@ -215,10 +235,11 @@ public class ResentTransactionSequencer extends AbstractServerTransactionListene
     i.add(toAdd);
   }
 
+  @Override
   public void clearAllTransactionsFor(NodeID deadNode) {
     boolean addPendingCallBacks;
     synchronized (this) {
-      for (Iterator i = resentTxns.iterator(); i.hasNext();) {
+      for (Iterator i = this.resentTxns.iterator(); i.hasNext();) {
         TransactionDesc desc = (TransactionDesc) i.next();
         if (desc.getServerTransactionID().getSourceID().equals(deadNode)) {
           logger.warn("Removing " + desc + " because " + deadNode + " is dead");
@@ -234,14 +255,14 @@ public class ResentTransactionSequencer extends AbstractServerTransactionListene
 
   private void addAndClearPendingCallBacks() {
     TxnsInSystemCompletionLister[] pendingCallBacksCopy;
-    synchronized (pendingCallBacks) {
-      pendingCallBacksCopy = (TxnsInSystemCompletionLister[]) pendingCallBacks
-          .toArray(new TxnsInSystemCompletionLister[pendingCallBacks.size()]);
-      pendingCallBacks.clear();
+    synchronized (this.pendingCallBacks) {
+      pendingCallBacksCopy = (TxnsInSystemCompletionLister[]) this.pendingCallBacks
+          .toArray(new TxnsInSystemCompletionLister[this.pendingCallBacks.size()]);
+      this.pendingCallBacks.clear();
     }
-    for (int j = 0; j < pendingCallBacksCopy.length; j++) {
-      logger.info("Adding Pending resent CallBacks to  TxnMgr : " + pendingCallBacksCopy[j]);
-      transactionManager.callBackOnTxnsInSystemCompletion(pendingCallBacksCopy[j]);
+    for (TxnsInSystemCompletionLister element : pendingCallBacksCopy) {
+      logger.info("Adding Pending resent CallBacks to  TxnMgr : " + element);
+      this.transactionManager.callBackOnTxnsInSystemCompletion(element);
     }
   }
 
@@ -256,15 +277,16 @@ public class ResentTransactionSequencer extends AbstractServerTransactionListene
     }
 
     public GlobalTransactionID getGlobalTransactionID() {
-      return gid;
+      return this.gid;
     }
 
     public ServerTransactionID getServerTransactionID() {
-      return stxID;
+      return this.stxID;
     }
 
+    @Override
     public String toString() {
-      return "TxnDesc [" + gid + " , " + stxID + "]";
+      return "TxnDesc [" + this.gid + " , " + this.stxID + "]";
     }
 
   }
