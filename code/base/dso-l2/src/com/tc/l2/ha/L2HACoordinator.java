@@ -145,7 +145,6 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     this.rTxnManager = new ReplicatedTransactionManagerImpl(groupManager, orderedObjectsSyncSink, transactionManager,
                                                             gtxm, recycler);
 
-    
     this.rObjectManager = new ReplicatedObjectManagerImpl(groupManager, stateManager, l2ObjectStateManager,
                                                           rTxnManager, objectManager, transactionManager,
                                                           objectsSyncRequestSink, sequenceGenerator);
@@ -237,9 +236,10 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
         rClusterStateMgr.publishClusterState(nodeID);
         rObjectManager.query(nodeID);
       } catch (GroupException ge) {
-        logger.error("Error publishing states to the newly joined node : " + nodeID + " Zapping it : ", ge);
-        groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR, "Error publishing states to "
-                                                                                      + nodeID
+        String errMesg = "A Terracotta server tried to join the mirror group as a second ACTIVE: " + nodeID
+                         + " Zapping it to allow it to join as PASSIVE standby (backup): ";
+        logger.error(errMesg, ge);
+        groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR, errMesg
                                                                                       + L2HAZapNodeRequestProcessor
                                                                                           .getErrorString(ge));
       }
