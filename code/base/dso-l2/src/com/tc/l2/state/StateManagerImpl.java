@@ -228,7 +228,7 @@ public class StateManagerImpl implements StateManager {
     if (state == ACTIVE_COORDINATOR) {
       // Can't get Election Won from another node : Split brain
       String error = state + " Received Election Won Msg : " + clusterMsg
-                     + ". Possibly two or more Active servers detected in the cluster";
+                     + ". A Terracotta server tried to join the mirror group as a second ACTIVE";
       logger.error(error);
       if (clusterMsg.getType() == L2StateMessage.ELECTION_WON_ALREADY) {
         sendNGResponse(clusterMsg.messageFrom(), clusterMsg);

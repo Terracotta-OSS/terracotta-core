@@ -121,7 +121,7 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
 
   private void handleSplitBrainScenario(NodeID nodeID, int zapNodeType, String reason, long[] weights) {
     long myWeights[] = factory.generateWeightSequence();
-    logger.warn("Possibly two or more Active servers detected in the cluster : My weights = " + toString(myWeights)
+    logger.warn("A Terracotta server tried to join the mirror group as a second ACTIVE : My weights = " + toString(myWeights)
                 + " Other servers weights = " + toString(weights));
     Enrollment mine = new Enrollment(groupManager.getLocalNodeID(), false, myWeights);
     Enrollment hisOrHers = new Enrollment(nodeID, false, weights);
