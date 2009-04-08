@@ -158,10 +158,12 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
 
     logger.info("Total Number of files to be copied:" + filesForBackup.length);
 
-    // Copy the files to archival storage.
-    copyFiles(filesForBackup, envHome, destinationDir);
-
-    backupHelper.endBackup();
+    try {
+      // Copy the files to archival storage.
+      copyFiles(filesForBackup, envHome, destinationDir);
+    } finally {
+      backupHelper.endBackup();
+    }
   }
 
   public void reset() {
