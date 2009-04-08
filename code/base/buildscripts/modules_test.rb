@@ -696,6 +696,9 @@ class SubtreeTestRun
           }
         end
       }
+    rescue
+      STDERR.puts "Runtime error: #{$!.message}"
+      script_results.failed("Execution of tests in subtree '#{@subtree.module_subtree_name}' failed.")
     ensure
       # clean junit reports of redundant info to help speed up parsing
       # and avoid OOME while parsing big result files

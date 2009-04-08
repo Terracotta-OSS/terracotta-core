@@ -108,7 +108,7 @@ class BuildResults
 
       ant.jar(:destfile => path.to_s) do
         ant.fileset(:dir => @build_dir.to_s,
-          :includes => "**/testrun*/**",
+          :includes => "**/testrun*/**, **/tests_aggregation/**",
           :excludes => "**/*.jar,**/*.class,**/objectdb/**,**/*.war,**/*.rar,**/var/**,**/repository/**,**/META-INF/**")
         ant.fileset(:dir => @build_dir.to_s,
           :includes => "**/boot-jars/**,**/build-config.local,**/war/*.war")
