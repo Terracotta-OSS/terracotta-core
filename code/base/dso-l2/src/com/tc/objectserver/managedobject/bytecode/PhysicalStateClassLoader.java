@@ -9,126 +9,23 @@ import com.tc.asm.FieldVisitor;
 import com.tc.asm.Label;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
-import com.tc.exception.TCRuntimeException;
 import com.tc.object.LiteralValues;
 import com.tc.objectserver.managedobject.HasParentIdStorage;
 import com.tc.util.AdaptedClassDumper;
-import com.tc.util.Assert;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
-
-  public static class MethodDetail {
-
-    private final String methodName;
-    private final String methodDesc;
-
-    public MethodDetail(String methodName, String methodDesc) {
-      this.methodName = methodName;
-      this.methodDesc = methodDesc;
-    }
-
-    public String getMethodDescriptor() {
-      return methodDesc;
-    }
-
-    public String getMethodName() {
-      return methodName;
-    }
-
-  }
 
   private static final String[] HAS_PARENT_ID_INTERFACES = new String[] { HasParentIdStorage.class.getName()
                                                              .replace('.', '/') };
 
   private static final String   PARENT_ID_FIELD          = "parentId";
 
-  private static final Map      OBJECT_OUTPUT_METHODS    = Collections.synchronizedMap(new HashMap());
-  private static final Map      OBJECT_INPUT_METHODS     = Collections.synchronizedMap(new HashMap());
-
-  static {
-    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.INTEGER, "writeInt", "(I)V");
-    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.LONG, "writeLong", "(J)V");
-    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.CHARACTER, "writeChar", "(I)V");
-    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.BYTE, "writeByte", "(I)V");
-    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.SHORT, "writeShort", "(I)V");
-    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.FLOAT, "writeFloat", "(F)V");
-    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.DOUBLE, "writeDouble", "(D)V");
-    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.BOOLEAN, "writeBoolean", "(Z)V");
-    // rest are written as Objects - Since we use TCObjectOutputStream, we optimize it there.
-    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.OBJECT, "writeObject", "(Ljava/lang/Object;)V");
-    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.OBJECT_ID, "writeObject", "(Ljava/lang/Object;)V");
-    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.ARRAY, "writeObject", "(Ljava/lang/Object;)V");
-    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.JAVA_LANG_CLASS, "writeObject", "(Ljava/lang/Object;)V");
-    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.JAVA_LANG_CLASS_HOLDER, "writeObject", "(Ljava/lang/Object;)V");
-    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.STACK_TRACE_ELEMENT, "writeObject", "(Ljava/lang/Object;)V");
-    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.STRING, "writeObject", "(Ljava/lang/Object;)V");
-    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.STRING_BYTES, "writeObject", "(Ljava/lang/Object;)V");
-    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.STRING_BYTES_COMPRESSED, "writeObject", "(Ljava/lang/Object;)V");
-    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.BIG_INTEGER, "writeObject", "(Ljava/lang/Object;)V");
-    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.BIG_DECIMAL, "writeObject", "(Ljava/lang/Object;)V");
-
-    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.JAVA_LANG_CLASSLOADER, "writeObject", "(Ljava/lang/Object;)V");
-    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.JAVA_LANG_CLASSLOADER_HOLDER, "writeObject",
-               "(Ljava/lang/Object;)V");
-    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.ENUM, "writeObject", "(Ljava/lang/Object;)V");
-    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.ENUM_HOLDER, "writeObject", "(Ljava/lang/Object;)V");
-    addMapping(OBJECT_OUTPUT_METHODS, LiteralValues.CURRENCY, "writeObject", "(Ljava/lang/Object;)V");
-
-    addMapping(OBJECT_INPUT_METHODS, LiteralValues.INTEGER, "readInt", "()I");
-    addMapping(OBJECT_INPUT_METHODS, LiteralValues.LONG, "readLong", "()J");
-    addMapping(OBJECT_INPUT_METHODS, LiteralValues.CHARACTER, "readChar", "()C");
-    addMapping(OBJECT_INPUT_METHODS, LiteralValues.BYTE, "readByte", "()B");
-    addMapping(OBJECT_INPUT_METHODS, LiteralValues.SHORT, "readShort", "()S");
-    addMapping(OBJECT_INPUT_METHODS, LiteralValues.FLOAT, "readFloat", "()F");
-    addMapping(OBJECT_INPUT_METHODS, LiteralValues.DOUBLE, "readDouble", "()D");
-    addMapping(OBJECT_INPUT_METHODS, LiteralValues.BOOLEAN, "readBoolean", "()Z");
-    // rest are read as Objects - Since we use TCObjectInputStream, we optimize it there.
-    addMapping(OBJECT_INPUT_METHODS, LiteralValues.OBJECT, "readObject", "()Ljava/lang/Object;");
-    addMapping(OBJECT_INPUT_METHODS, LiteralValues.OBJECT_ID, "readObject", "()Ljava/lang/Object;");
-    addMapping(OBJECT_INPUT_METHODS, LiteralValues.ARRAY, "readObject", "()Ljava/lang/Object;");
-    addMapping(OBJECT_INPUT_METHODS, LiteralValues.JAVA_LANG_CLASS, "readObject", "()Ljava/lang/Object;");
-    addMapping(OBJECT_INPUT_METHODS, LiteralValues.JAVA_LANG_CLASS_HOLDER, "readObject", "()Ljava/lang/Object;");
-    addMapping(OBJECT_INPUT_METHODS, LiteralValues.STACK_TRACE_ELEMENT, "readObject", "()Ljava/lang/Object;");
-    addMapping(OBJECT_INPUT_METHODS, LiteralValues.STRING, "readObject", "()Ljava/lang/Object;");
-    addMapping(OBJECT_INPUT_METHODS, LiteralValues.STRING_BYTES, "readObject", "()Ljava/lang/Object;");
-    addMapping(OBJECT_INPUT_METHODS, LiteralValues.STRING_BYTES_COMPRESSED, "readObject", "()Ljava/lang/Object;");
-    addMapping(OBJECT_INPUT_METHODS, LiteralValues.BIG_INTEGER, "readObject", "()Ljava/lang/Object;");
-    addMapping(OBJECT_INPUT_METHODS, LiteralValues.BIG_DECIMAL, "readObject", "()Ljava/lang/Object;");
-
-    addMapping(OBJECT_INPUT_METHODS, LiteralValues.JAVA_LANG_CLASSLOADER, "readObject", "()Ljava/lang/Object;");
-    addMapping(OBJECT_INPUT_METHODS, LiteralValues.JAVA_LANG_CLASSLOADER_HOLDER, "readObject", "()Ljava/lang/Object;");
-    addMapping(OBJECT_INPUT_METHODS, LiteralValues.ENUM, "readObject", "()Ljava/lang/Object;");
-    addMapping(OBJECT_INPUT_METHODS, LiteralValues.ENUM_HOLDER, "readObject", "()Ljava/lang/Object;");
-    addMapping(OBJECT_INPUT_METHODS, LiteralValues.CURRENCY, "readObject", "()Ljava/lang/Object;");
-  }
-
   public PhysicalStateClassLoader(ClassLoader parent) {
     super(parent);
-  }
-
-  private static void addMapping(Map map, int type, String methodName, String methodDesc) {
-    map.put(new Integer(type), new MethodDetail(methodName, methodDesc));
-  }
-
-  private static MethodDetail get(Map map, int type) {
-    MethodDetail md = (MethodDetail) map.get(new Integer(type));
-    if (md == null) { throw new TCRuntimeException("Unknown Type : " + type + " Map = " + map); }
-    return md;
-  }
-
-  // Helper Method for tests
-  public static void verifyTypePresent(int type) {
-    MethodDetail md = get(OBJECT_INPUT_METHODS, type);
-    Assert.assertNotNull(md);
-    md = get(OBJECT_OUTPUT_METHODS, type);
-    Assert.assertNotNull(md);
   }
 
   public PhysicalStateClassLoader() {
@@ -262,9 +159,9 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
       FieldType f = (FieldType) i.next();
       mv.visitVarInsn(ALOAD, 1);
       mv.visitVarInsn(ALOAD, 0);
-      mv.visitFieldInsn(GETFIELD, classNameSlash, f.getLocalFieldName(), getFieldTypeDesc(f.getType()));
-      MethodDetail md = get(OBJECT_OUTPUT_METHODS, f.getType());
-      mv.visitMethodInsn(INVOKEINTERFACE, "java/io/ObjectOutput", md.getMethodName(), md.getMethodDescriptor());
+      mv.visitFieldInsn(GETFIELD, classNameSlash, f.getLocalFieldName(), f.getType().getTypeDesc());
+      LiteralValues fType = f.getType();
+      mv.visitMethodInsn(INVOKEINTERFACE, "java/io/ObjectOutput", fType.getOutputMethodName(), fType.getOutputMethodDescriptor());
     }
     mv.visitInsn(RETURN);
     mv.visitMaxs(3, 2);
@@ -300,9 +197,9 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
       FieldType f = (FieldType) i.next();
       mv.visitVarInsn(ALOAD, 0);
       mv.visitVarInsn(ALOAD, 1);
-      MethodDetail md = get(OBJECT_INPUT_METHODS, f.getType());
-      mv.visitMethodInsn(INVOKEINTERFACE, "java/io/ObjectInput", md.getMethodName(), md.getMethodDescriptor());
-      mv.visitFieldInsn(PUTFIELD, classNameSlash, f.getLocalFieldName(), getFieldTypeDesc(f.getType()));
+      LiteralValues fType = f.getType();
+      mv.visitMethodInsn(INVOKEINTERFACE, "java/io/ObjectInput", fType.getInputMethodName(), fType.getInputMethodDescriptor());
+      mv.visitFieldInsn(PUTFIELD, classNameSlash, f.getLocalFieldName(), f.getType().getTypeDesc());
     }
     mv.visitInsn(RETURN);
     mv.visitMaxs(3, 2);
@@ -428,7 +325,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
       mv.visitVarInsn(ALOAD, 0);
       mv.visitVarInsn(ALOAD, 2);
       getValueFrom(mv, classNameSlash, f);
-      mv.visitFieldInsn(PUTFIELD, classNameSlash, f.getLocalFieldName(), getFieldTypeDesc(f.getType()));
+      mv.visitFieldInsn(PUTFIELD, classNameSlash, f.getLocalFieldName(), f.getType().getTypeDesc());
       mv.visitVarInsn(ALOAD, 3);
       mv.visitInsn(ARETURN);
       mv.visitLabel(l1);
@@ -474,12 +371,12 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
    * (if needed) and leave that value in the top of the stack.
    */
   private void getValueFrom(MethodVisitor mv, String classNameSlash, FieldType f) {
-    String classOnStack = getClassNameFor(f.getType());
+    String classOnStack = f.getType().getClassNameSlashForPrimitives();
     if ("java/lang/Object".equals(classOnStack)) { return; }
     mv.visitTypeInsn(CHECKCAST, classOnStack);
-    mv.visitMethodInsn(INVOKEVIRTUAL, classOnStack, getMethodNameForPrimitives(f.getType()), "()"
-                                                                                             + getFieldTypeDesc((f
-                                                                                                 .getType())));
+    mv.visitMethodInsn(INVOKEVIRTUAL, classOnStack, f.getType().getMethodNameForPrimitives(), "()"
+                                                                                              + f.getType()
+                                                                                                  .getTypeDesc());
 
   }
 
@@ -487,13 +384,13 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
    * This method generates code so that the object equivalent of the field is left on the stack.
    */
   private void getObjectFor(MethodVisitor mv, String classNameSlash, FieldType f) {
-    String classToReturn = getClassNameFor(f.getType());
+    String classToReturn = f.getType().getClassNameSlashForPrimitives();
     if ("java/lang/Object".equals(classToReturn)) {
       mv.visitVarInsn(ALOAD, 0);
-      mv.visitFieldInsn(GETFIELD, classNameSlash, f.getLocalFieldName(), getFieldTypeDesc(f.getType()));
+      mv.visitFieldInsn(GETFIELD, classNameSlash, f.getLocalFieldName(), f.getType().getTypeDesc());
       return;
     }
-    String fieldTypeDesc = getFieldTypeDesc(f.getType());
+    String fieldTypeDesc = f.getType().getTypeDesc();
     String constructorDesc = "(" + fieldTypeDesc + ")V";
     mv.visitTypeInsn(NEW, classToReturn);
     mv.visitInsn(DUP);
@@ -565,18 +462,18 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
     for (Iterator i = referenceFields.iterator(); i.hasNext();) {
       FieldType f = (FieldType) i.next();
       mv.visitVarInsn(ALOAD, 0);
-      mv.visitFieldInsn(GETFIELD, classNameSlash, f.getLocalFieldName(), getFieldTypeDesc(f.getType()));
+      mv.visitFieldInsn(GETFIELD, classNameSlash, f.getLocalFieldName(), f.getType().getTypeDesc());
       mv.visitTypeInsn(INSTANCEOF, "com/tc/object/ObjectID");
       Label l2 = new Label();
       mv.visitJumpInsn(IFEQ, l2);
       mv.visitVarInsn(ALOAD, 0);
-      mv.visitFieldInsn(GETFIELD, classNameSlash, f.getLocalFieldName(), getFieldTypeDesc(f.getType()));
+      mv.visitFieldInsn(GETFIELD, classNameSlash, f.getLocalFieldName(), f.getType().getTypeDesc());
       mv.visitTypeInsn(CHECKCAST, "com/tc/object/ObjectID");
       mv.visitMethodInsn(INVOKEVIRTUAL, "com/tc/object/ObjectID", "isNull", "()Z");
       mv.visitJumpInsn(IFNE, l2);
       mv.visitVarInsn(ALOAD, 1);
       mv.visitVarInsn(ALOAD, 0);
-      mv.visitFieldInsn(GETFIELD, classNameSlash, f.getLocalFieldName(), getFieldTypeDesc(f.getType()));
+      mv.visitFieldInsn(GETFIELD, classNameSlash, f.getLocalFieldName(), f.getType().getTypeDesc());
       mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Set", "add", "(Ljava/lang/Object;)Z");
       mv.visitInsn(POP);
       mv.visitLabel(l2);
@@ -598,85 +495,8 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
   private void createFields(ClassWriter cw, List fields) {
     for (Iterator i = fields.iterator(); i.hasNext();) {
       FieldType f = (FieldType) i.next();
-      FieldVisitor fv = cw.visitField(ACC_PRIVATE, f.getLocalFieldName(), getFieldTypeDesc(f.getType()), null, null);
+      FieldVisitor fv = cw.visitField(ACC_PRIVATE, f.getLocalFieldName(), f.getType().getTypeDesc(), null, null);
       fv.visitEnd();
-    }
-  }
-
-  private String getFieldTypeDesc(int type) {
-    switch (type) {
-      case LiteralValues.INTEGER:
-        return "I";
-      case LiteralValues.LONG:
-        return "J";
-      case LiteralValues.CHARACTER:
-        return "C";
-      case LiteralValues.FLOAT:
-        return "F";
-      case LiteralValues.DOUBLE:
-        return "D";
-      case LiteralValues.BYTE:
-        return "B";
-      case LiteralValues.SHORT:
-        return "S";
-      case LiteralValues.BOOLEAN:
-        return "Z";
-      case LiteralValues.OBJECT_ID:
-        return "Ljava/lang/Object;"; // ObjectIDs are NOT stored as longs anymore :(
-      default:
-        return "Ljava/lang/Object;"; // Everything else is stored as Object reference
-    }
-  }
-
-  // TODO:: Clean up to use MethodDetail class
-  private String getMethodNameForPrimitives(int type) {
-    switch (type) {
-      case LiteralValues.INTEGER:
-        return "intValue";
-      case LiteralValues.LONG:
-        return "longValue";
-      case LiteralValues.CHARACTER:
-        return "charValue";
-      case LiteralValues.FLOAT:
-        return "floatValue";
-      case LiteralValues.DOUBLE:
-        return "doubleValue";
-      case LiteralValues.BYTE:
-        return "byteValue";
-      case LiteralValues.SHORT:
-        return "shortValue";
-      case LiteralValues.BOOLEAN:
-        return "booleanValue";
-        // ObjectIDs are NOT stored as longs anymore :(
-        // case LiteralValues.OBJECT_ID:
-        // return "toLong";
-      default:
-        throw new AssertionError("This type is invalid : " + type);
-    }
-  }
-
-  private String getClassNameFor(int type) {
-    switch (type) {
-      case LiteralValues.INTEGER:
-        return "java/lang/Integer";
-      case LiteralValues.LONG:
-        return "java/lang/Long";
-      case LiteralValues.CHARACTER:
-        return "java/lang/Character";
-      case LiteralValues.FLOAT:
-        return "java/lang/Float";
-      case LiteralValues.DOUBLE:
-        return "java/lang/Double";
-      case LiteralValues.BYTE:
-        return "java/lang/Byte";
-      case LiteralValues.SHORT:
-        return "java/lang/Short";
-      case LiteralValues.BOOLEAN:
-        return "java/lang/Boolean";
-      case LiteralValues.OBJECT_ID:
-        return "java/lang/Object"; // ObjectIDs are NOT stored as longs anymore :(
-      default:
-        return "java/lang/Object"; // Everything else is stored as Object reference
     }
   }
 

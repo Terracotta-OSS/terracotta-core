@@ -55,11 +55,10 @@ public class OverridesHashCodeSystemTest extends TransparentTestBase {
     }
 
     private void verifyLiterals() throws ClassNotFoundException {
-      LiteralValues lv = new LiteralValues();
-      Collection types = lv.getTypes();
-      for (Iterator iter = types.iterator(); iter.hasNext();) {
+      Collection<String> types = LiteralValues.getTypes();
+      for (Iterator<String> iter = types.iterator(); iter.hasNext();) {
 
-        String type = (String) iter.next();
+        String type = iter.next();
 
         // skip TC and primitive types
         if (type.startsWith("com.tc.") || type.indexOf('.') < 0) {

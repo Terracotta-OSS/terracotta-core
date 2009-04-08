@@ -55,7 +55,6 @@ import java.util.Map;
 
 public class ManagerImpl implements Manager {
   private static final TCLogger                    logger                       = TCLogging.getLogger(Manager.class);
-  private static final LiteralValues               literals                     = new LiteralValues();
   private final SetOnceFlag                        clientStarted                = new SetOnceFlag();
   private final DSOClientConfigHelper              config;
   private final ClassProvider                      classProvider;
@@ -493,7 +492,7 @@ public class ManagerImpl implements Manager {
 
   private boolean isLiteralAutolock(final Object o) {
     if (o instanceof Manageable) { return false; }
-    return (!(o instanceof Class)) && (!(o instanceof ObjectID)) && literals.isLiteralInstance(o);
+    return (!(o instanceof Class)) && (!(o instanceof ObjectID)) && LiteralValues.isLiteralInstance(o);
   }
 
   public boolean isDsoMonitorEntered(final Object o) {
@@ -760,9 +759,9 @@ public class ManagerImpl implements Manager {
   }
   
   public int calculateDsoHashCode(final Object obj) {
-    if (literals.isLiteralInstance(obj)) {
+    if (LiteralValues.isLiteralInstance(obj)) {
       // isLiteralInstance() returns false for array types, so we don't need recursion here.
-      return literals.calculateDsoHashCode(obj);
+      return LiteralValues.calculateDsoHashCode(obj);
     } 
     if (overridesHashCode(obj)) {
       return obj.hashCode();
@@ -777,7 +776,7 @@ public class ManagerImpl implements Manager {
   }
   
   public boolean isLiteralInstance(final Object obj) {
-    return literals.isLiteralInstance(obj);
+    return LiteralValues.isLiteralInstance(obj);
   }
   
   public boolean isManaged(final Object obj) {
@@ -823,7 +822,7 @@ public class ManagerImpl implements Manager {
 
   private static String generateLiteralLockName(final Object obj) {
     Assert.assertNotNull(obj);
-    return ByteCodeUtil.generateLiteralLockName(literals.valueFor(obj), obj);
+    return ByteCodeUtil.generateLiteralLockName(LiteralValues.valueFor(obj).name(), obj);
   }
 
   public boolean isLogical(final Object object) {

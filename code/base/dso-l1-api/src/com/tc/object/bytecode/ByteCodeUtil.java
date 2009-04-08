@@ -493,15 +493,15 @@ public class ByteCodeUtil implements Opcodes {
   }
 
   /**
-   * The first argument should be "(new LiteralValues()).valueFor(obj)", but I didn't want to slurp in a whole mess of
+   * The first argument should be "LiteralValues.valueFor(obj).name()", but I didn't want to slurp in a whole mess of
    * classes into the boot jar by including LiteralValues. It's gross, but ManagerImpl just makes the call itself.
    *
-   * @param literalValuesValueFor Literal value code
+   * @param literalValueTypeStr Literal value code
    * @param obj The lock object
    */
-  public static String generateLiteralLockName(final int literalValuesValueFor, final Object obj) {
+  public static String generateLiteralLockName(final String literalValueTypeStr, final Object obj) {
     Assert.assertNotNull(obj);
-    return literalValuesValueFor + LITERAL_LOCK_PREFIX + obj;
+    return literalValueTypeStr + LITERAL_LOCK_PREFIX + obj;
   }
 
   private static String generateAutolockName(final long objectId) {

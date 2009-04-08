@@ -25,8 +25,6 @@ import javax.swing.tree.MutableTreeNode;
 
 public class WalkVisitor implements Visitor, WalkTest {
 
-  private static final LiteralValues    literals               = new LiteralValues();
-
   private final ClientObjectManager     objMgr;
   private final DSOClientConfigHelper   config;
   private final ApplicationEventContext context;
@@ -361,13 +359,12 @@ public class WalkVisitor implements Visitor, WalkTest {
   }
 
   private boolean isLiteralInstance(Object obj) {
-    if (obj == null) { return false; }
-    return literals.isLiteralInstance(obj);
+    return LiteralValues.isLiteralInstance(obj);
   }
 
   private boolean isSimpleLiteralInstance(Object obj) {
     if (obj == null) { return false; }
-    int i = literals.valueFor(obj);
+    LiteralValues i = LiteralValues.valueFor(obj);
     return i != LiteralValues.OBJECT && i != LiteralValues.ARRAY && i != LiteralValues.JAVA_LANG_CLASS
            && i != LiteralValues.JAVA_LANG_CLASS_HOLDER && i != LiteralValues.JAVA_LANG_CLASSLOADER
            && i != LiteralValues.JAVA_LANG_CLASSLOADER_HOLDER;

@@ -23,7 +23,6 @@ public class PortabilityImpl implements Portability {
   private static final Class[]                EMPTY_CLASS_ARRAY      = new Class[] {};
   private static final Class                  OBJECT_CLASS           = Object.class;
   private static final NonInstrumentedClasses nonInstrumentedClasses = new NonInstrumentedClasses();
-  private static final LiteralValues          literalValues          = new LiteralValues();
 
   private final Map<Class, Boolean>           portableCache          = new ConcurrentHashMap<Class, Boolean>();
   private final Map<Class, Boolean>           physicalCache          = new ConcurrentHashMap<Class, Boolean>();
@@ -123,7 +122,7 @@ public class PortabilityImpl implements Portability {
 
     String clazzName = clazz.getName();
 
-    boolean bool = literalValues.isLiteral(clazzName) || config.isLogical(clazzName) || clazz.isArray()
+    boolean bool = LiteralValues.isLiteral(clazzName) || config.isLogical(clazzName) || clazz.isArray()
                    || Proxy.isProxyClass(clazz) || ClassUtils.isDsoEnum(clazz) || isClassPhysicallyInstrumented(clazz)
                    || isInstrumentationNotNeeded(clazzName) || ClassUtils.isPortableReflectionClass(clazz)
                    || config.isPortableModuleClass(clazz);

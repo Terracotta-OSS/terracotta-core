@@ -16,8 +16,6 @@ import java.lang.reflect.Modifier;
  */
 public class GenericTCField implements TCField {
 
-  private static final LiteralValues literalValues = new LiteralValues();
-
   private final TCClass              tcClass;
   private final boolean              isPortable;
   private final String               fieldName;
@@ -41,7 +39,7 @@ public class GenericTCField implements TCField {
     if (Modifier.isStatic(field.getModifiers())) return false;
     Class type = field.getType();
 
-    if (literalValues.isLiteral(type.getName())) { return !type.isPrimitive(); }
+    if (LiteralValues.isLiteral(type.getName())) { return !type.isPrimitive(); }
 
     return true;
   }

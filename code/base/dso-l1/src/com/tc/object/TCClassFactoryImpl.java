@@ -35,8 +35,7 @@ import java.util.Map;
  */
 public class TCClassFactoryImpl implements TCClassFactory {
   private static final boolean        IS_IBM                    = Vm.isIBM();
-
-  private static final LiteralValues  literalValues             = new LiteralValues();
+  
   private static Class[]              APPLICATOR_CSTR_SIGNATURE = new Class[] { DNAEncoding.class };
 
   private final Map                   classes                   = new HashMap();
@@ -108,7 +107,7 @@ public class TCClassFactoryImpl implements TCClassFactory {
     Class applicatorClazz = config.getChangeApplicator(clazz.getPeerClass());
 
     if (applicatorClazz == null) {
-      if (literalValues.isLiteral(name)) {
+      if (LiteralValues.isLiteral(name)) {
         return new LiteralTypesApplicator(clazz, encoding);
       } else if (clazz.isProxyClass()) {
         return new ProxyApplicator(encoding);

@@ -37,7 +37,6 @@ import javax.management.MBeanServerInvocationHandler;
 import javax.management.remote.JMXConnector;
 
 public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
-  private static final LiteralValues LITERAL_VALUES   = new LiteralValues();
   private static final String NAMED_LOCK_NAME = "nameLock";
 
   public static final String         CONFIG_FILE      = "config-file";
@@ -198,7 +197,7 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
       waitForAllToMoveOn();
       connect();
       Thread.sleep(2000);
-      verifyClientStat(ByteCodeUtil.generateLiteralLockName(LITERAL_VALUES.valueFor(lockName), lockName), 1, traceDepth);
+      verifyClientStat(ByteCodeUtil.generateLiteralLockName(LiteralValues.valueFor(lockName).name(), lockName), 1, traceDepth);
       disconnect();
     } else {
       int count = 2;
@@ -230,7 +229,7 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
     if (index == 0) {
       connect();
       waitForAllToMoveOn();
-      String lockID = ByteCodeUtil.generateLiteralLockName(LITERAL_VALUES.valueFor(lockName), lockName);
+      String lockID = ByteCodeUtil.generateLiteralLockName(LiteralValues.valueFor(lockName).name(), lockName);
       long avgWaitTimeInMillis = getServerAggregateAverageWaitTime(lockID);
       long avgHeldTimeInMillis = getServerAggregateAverageHeldTime(lockID);
 
@@ -263,7 +262,7 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
     if (index == 0) {
       connect();
       waitForAllToMoveOn();
-      String lockID = ByteCodeUtil.generateLiteralLockName(LITERAL_VALUES.valueFor(lockName), lockName);
+      String lockID = ByteCodeUtil.generateLiteralLockName(LiteralValues.valueFor(lockName).name(), lockName);
       long avgWaitTimeInMillis = getAggregateAverageWaitTime(lockID);
       long avgHeldTimeInMillis = getAggregateAverageHeldTime(lockID);
 
@@ -294,7 +293,7 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
 
   private void testBasicStatistics(String lockName, int index) throws Throwable {
     if (index == 0) {
-      String lockID = ByteCodeUtil.generateLiteralLockName(LITERAL_VALUES.valueFor(lockName), lockName);
+      String lockID = ByteCodeUtil.generateLiteralLockName(LiteralValues.valueFor(lockName).name(), lockName);
       connect();
       waitForAllToMoveOn();
 

@@ -28,12 +28,11 @@ import java.util.Map;
 import java.util.Set;
 
 public class ArrayManagedObjectState extends LogicalManagedObjectState implements PrettyPrintable {
-  private static final LiteralValues LITERAL_VALUES = new LiteralValues();
 
-  private Object                      arrayData;
-  private int                         size           = DNA.NULL_ARRAY_SIZE;
-  private boolean                     isPrimitive;
-  private int                         literalType;
+  private Object        arrayData;
+  private int           size = DNA.NULL_ARRAY_SIZE;
+  private boolean       isPrimitive;
+  private LiteralValues literalType;
 
   ArrayManagedObjectState(long classID) {
     super(classID);
@@ -78,34 +77,34 @@ public class ArrayManagedObjectState extends LogicalManagedObjectState implement
     arrayData = array;
     size = Array.getLength(arrayData);
     Class clazz = arrayData.getClass().getComponentType();
-    literalType = LITERAL_VALUES.valueForClassName(clazz.getName());
+    literalType = LiteralValues.valueForClassName(clazz.getName());
     isPrimitive = clazz.isPrimitive();
   }
 
-  private static void setArrayElement(Object array, int index, Object value, int type) {
+  private static void setArrayElement(Object array, int index, Object value, LiteralValues type) {
     switch (type) {
-      case LiteralValues.BOOLEAN:
+      case BOOLEAN:
         ((boolean[]) array)[index] = ((Boolean) value).booleanValue();
         break;
-      case LiteralValues.BYTE:
+      case BYTE:
         ((byte[]) array)[index] = ((Byte) value).byteValue();
         break;
-      case LiteralValues.CHARACTER:
+      case CHARACTER:
         ((char[]) array)[index] = ((Character) value).charValue();
         break;
-      case LiteralValues.DOUBLE:
+      case DOUBLE:
         ((double[]) array)[index] = ((Double) value).doubleValue();
         break;
-      case LiteralValues.FLOAT:
+      case FLOAT:
         ((float[]) array)[index] = ((Float) value).floatValue();
         break;
-      case LiteralValues.INTEGER:
+      case INTEGER:
         ((int[]) array)[index] = ((Integer) value).intValue();
         break;
-      case LiteralValues.LONG:
+      case LONG:
         ((long[]) array)[index] = ((Long) value).longValue();
         break;
-      case LiteralValues.SHORT:
+      case SHORT:
         ((short[]) array)[index] = ((Short) value).shortValue();
         break;
       default:
@@ -220,23 +219,23 @@ public class ArrayManagedObjectState extends LogicalManagedObjectState implement
     }
   }
 
-  private static boolean equals(Object a1, Object a2, int type) {
+  private static boolean equals(Object a1, Object a2, LiteralValues type) {
     switch (type) {
-      case LiteralValues.BOOLEAN:
+      case BOOLEAN:
         return Arrays.equals((boolean[]) a1, (boolean[]) a2);
-      case LiteralValues.BYTE:
+      case BYTE:
         return Arrays.equals((byte[]) a1, (byte[]) a2);
-      case LiteralValues.CHARACTER:
+      case CHARACTER:
         return Arrays.equals((char[]) a1, (char[]) a2);
-      case LiteralValues.DOUBLE:
+      case DOUBLE:
         return Arrays.equals((double[]) a1, (double[]) a2);
-      case LiteralValues.FLOAT:
+      case FLOAT:
         return Arrays.equals((float[]) a1, (float[]) a2);
-      case LiteralValues.INTEGER:
+      case INTEGER:
         return Arrays.equals((int[]) a1, (int[]) a2);
-      case LiteralValues.LONG:
+      case LONG:
         return Arrays.equals((long[]) a1, (long[]) a2);
-      case LiteralValues.SHORT:
+      case SHORT:
         return Arrays.equals((short[]) a1, (short[]) a2);
       default:
         return Arrays.equals((Object[]) a1, (Object[]) a2);

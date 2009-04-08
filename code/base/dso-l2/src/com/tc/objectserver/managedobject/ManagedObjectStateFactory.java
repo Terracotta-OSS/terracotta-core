@@ -25,8 +25,7 @@ import java.util.Map;
  * Creates state for managed objects
  */
 public class ManagedObjectStateFactory {
-
-  private static final LiteralValues                literalValues       = new LiteralValues();
+  
   private static final Map                          classNameToStateMap = new ConcurrentHashMap();
   private final ManagedObjectChangeListenerProvider listenerProvider;
   private final StringIndex                         stringIndex;
@@ -222,7 +221,7 @@ public class ManagedObjectStateFactory {
 
     Byte type = (Byte) classNameToStateMap.get(className);
     if (type != null) { return type.byteValue(); }
-    if (literalValues.isLiteral(className)) { return ManagedObjectState.LITERAL_TYPE; }
+    if (LiteralValues.isLiteral(className)) { return ManagedObjectState.LITERAL_TYPE; }
     return ManagedObjectState.PHYSICAL_TYPE;
   }
 

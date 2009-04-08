@@ -55,8 +55,6 @@ public class ClassesPanel extends XContainer {
 
   private static final String[]       IGNORE_CLASS_LIST = { "com.tcclient", "java." };
 
-  private static LiteralValues        LITERALS          = new LiteralValues();
-
   private static final DSOClassInfo[] EMPTY_INFO        = {};
 
   static {
@@ -263,7 +261,7 @@ public class ClassesPanel extends XContainer {
   }
 
   private boolean ignoreClass(String className) {
-    if (LITERALS.isLiteral(className)) { return true; }
+    if (LiteralValues.isLiteral(className)) { return true; }
     for (String pattern : IGNORE_CLASS_LIST) {
       if (className.startsWith(pattern)) return true;
     }

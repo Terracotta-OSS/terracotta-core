@@ -8,14 +8,12 @@ import com.tc.object.LiteralValues;
 
 public class FieldType {
 
-  public static final LiteralValues literalValues = new LiteralValues();
+  private final String        localFieldName;
+  private final String        fullName;
+  private final LiteralValues type;
+  private final boolean       isReference;
 
-  private final String              localFieldName;
-  private final String              fullName;
-  private final int                 type;
-  private final boolean             isReference;
-
-  public FieldType(String name, String fullName, int type, boolean isReference) {
+  public FieldType(String name, String fullName, LiteralValues type, boolean isReference) {
     this.localFieldName = name;
     this.fullName = fullName;
     this.type = type;
@@ -25,7 +23,7 @@ public class FieldType {
   public static FieldType create(String fullyQualifiedName, Object value, boolean isReference, int id) {
     String localName = getLocalFieldName(fullyQualifiedName, id);
     if (value == null) { return new FieldType(localName, fullyQualifiedName, LiteralValues.OBJECT, isReference); }
-    return new FieldType(localName, fullyQualifiedName, literalValues.valueFor(value), isReference);
+    return new FieldType(localName, fullyQualifiedName, LiteralValues.valueFor(value), isReference);
   }
 
   // TODO:: field Names are currently fully qualified unnecessarily.
@@ -49,7 +47,7 @@ public class FieldType {
     return fullName;
   }
 
-  public int getType() {
+  public LiteralValues getType() {
     if (isReference) return LiteralValues.OBJECT_ID;
     return type;
   }

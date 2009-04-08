@@ -32,8 +32,6 @@ class InstrumentationSpec {
   public static final byte            IS_NOT_NEEDED               = 0x04;
   public static final byte            IS_NEEDED                   = 0x05;
 
-  private static final LiteralValues  literalValues               = new LiteralValues();
-
   private byte                        instrumentationAction       = TransparencyClassSpec.NOT_ADAPTABLE;
 
   private byte                        managedMethods              = IS_NOT_NEEDED;
@@ -123,7 +121,7 @@ class InstrumentationSpec {
   }
 
   private boolean isArray(String className) {
-    return literalValues.valueForClassName(className) == LiteralValues.ARRAY;
+    return LiteralValues.valueForClassName(className) == LiteralValues.ARRAY;
   }
 
   private void handleSubclassOfLogicalClass(int access, String className, String superName) {

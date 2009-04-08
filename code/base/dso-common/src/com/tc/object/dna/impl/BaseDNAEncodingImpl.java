@@ -56,7 +56,6 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
   static final byte                  PHYSICAL_ACTION_TYPE_REF_OBJECT      = 6;
   static final byte                  SUB_ARRAY_ACTION_TYPE                = 7;
 
-  private static final LiteralValues literalValues                        = new LiteralValues();
   private static final TCLogger      logger                               = TCLogging
                                                                               .getLogger(BaseDNAEncodingImpl.class);
 
@@ -119,76 +118,74 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
       value = ObjectID.NULL_ID;
     }
 
-    // final Class valueClass = value.getClass();
-    // final int type = literalValues.valueFor(valueClass.getName());
-    final int type = literalValues.valueFor(value);
+    final LiteralValues type = LiteralValues.valueFor(value);
 
     switch (type) {
-      case LiteralValues.CURRENCY:
+      case CURRENCY:
         output.writeByte(TYPE_ID_CURRENCY);
         writeString(((Currency) value).getCurrencyCode(), output);
         break;
-      case LiteralValues.ENUM:
+      case ENUM:
         output.writeByte(TYPE_ID_ENUM);
         Class enumClass = ((Enum)value).getDeclaringClass();
         writeString(enumClass.getName(), output);
         writeString(classProvider.getLoaderDescriptionFor(enumClass).toDelimitedString(), output);
         writeString(((Enum) value).name(), output);
         break;
-      case LiteralValues.ENUM_HOLDER:
+      case ENUM_HOLDER:
         output.writeByte(TYPE_ID_ENUM_HOLDER);
         writeEnumInstance((EnumInstance) value, output);
         break;
-      case LiteralValues.JAVA_LANG_CLASSLOADER:
+      case JAVA_LANG_CLASSLOADER:
         encodeClassLoader((ClassLoader) value, output);
         break;
-      case LiteralValues.JAVA_LANG_CLASSLOADER_HOLDER:
+      case JAVA_LANG_CLASSLOADER_HOLDER:
         output.writeByte(TYPE_ID_JAVA_LANG_CLASSLOADER_HOLDER);
         writeClassLoaderInstance((ClassLoaderInstance) value, output);
         break;
-      case LiteralValues.JAVA_LANG_CLASS:
+      case JAVA_LANG_CLASS:
         output.writeByte(TYPE_ID_JAVA_LANG_CLASS);
         Class c = (Class) value;
         writeString(c.getName(), output);
         writeString(classProvider.getLoaderDescriptionFor(c).toDelimitedString(), output);
         break;
-      case LiteralValues.JAVA_LANG_CLASS_HOLDER:
+      case JAVA_LANG_CLASS_HOLDER:
         output.writeByte(TYPE_ID_JAVA_LANG_CLASS_HOLDER);
         writeClassInstance((ClassInstance) value, output);
         break;
-      case LiteralValues.BOOLEAN:
+      case BOOLEAN:
         output.writeByte(TYPE_ID_BOOLEAN);
         output.writeBoolean(((Boolean) value).booleanValue());
         break;
-      case LiteralValues.BYTE:
+      case BYTE:
         output.writeByte(TYPE_ID_BYTE);
         output.writeByte(((Byte) value).byteValue());
         break;
-      case LiteralValues.CHARACTER:
+      case CHARACTER:
         output.writeByte(TYPE_ID_CHAR);
         output.writeChar(((Character) value).charValue());
         break;
-      case LiteralValues.DOUBLE:
+      case DOUBLE:
         output.writeByte(TYPE_ID_DOUBLE);
         output.writeDouble(((Double) value).doubleValue());
         break;
-      case LiteralValues.FLOAT:
+      case FLOAT:
         output.writeByte(TYPE_ID_FLOAT);
         output.writeFloat(((Float) value).floatValue());
         break;
-      case LiteralValues.INTEGER:
+      case INTEGER:
         output.writeByte(TYPE_ID_INT);
         output.writeInt(((Integer) value).intValue());
         break;
-      case LiteralValues.LONG:
+      case LONG:
         output.writeByte(TYPE_ID_LONG);
         output.writeLong(((Long) value).longValue());
         break;
-      case LiteralValues.SHORT:
+      case SHORT:
         output.writeByte(TYPE_ID_SHORT);
         output.writeShort(((Short) value).shortValue());
         break;
-      case LiteralValues.STRING:
+      case STRING:
         String s = (String) value;
         boolean stringInterned = false;
 
@@ -206,7 +203,7 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
           writeString(s, output);
         }
         break;
-      case LiteralValues.STRING_BYTES:
+      case STRING_BYTES:
         UTF8ByteDataHolder utfBytes = (UTF8ByteDataHolder) value;
         boolean stringbytesInterned = false;
         if (utfBytes.isInterned()) {
@@ -217,7 +214,7 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
         output.writeBoolean(stringbytesInterned);
         writeByteArray(utfBytes.getBytes(), output);
         break;
-      case LiteralValues.STRING_BYTES_COMPRESSED:
+      case STRING_BYTES_COMPRESSED:
         UTF8ByteCompressedDataHolder utfCompressedBytes = (UTF8ByteCompressedDataHolder) value;
         boolean interned = false;
 
@@ -233,24 +230,24 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
         output.writeInt(utfCompressedBytes.getStringHash());
         break;
 
-      case LiteralValues.OBJECT_ID:
+      case OBJECT_ID:
         output.writeByte(TYPE_ID_REFERENCE);
         output.writeLong(((ObjectID) value).toLong());
         break;
-      case LiteralValues.STACK_TRACE_ELEMENT:
+      case STACK_TRACE_ELEMENT:
         output.writeByte(TYPE_ID_STACK_TRACE_ELEMENT);
         StackTraceElement ste = (StackTraceElement) value;
         writeStackTraceElement(ste, output);
         break;
-      case LiteralValues.BIG_INTEGER:
+      case BIG_INTEGER:
         output.writeByte(TYPE_ID_BIG_INTEGER);
         writeByteArray(((BigInteger) value).toByteArray(), output);
         break;
-      case LiteralValues.BIG_DECIMAL:
+      case BIG_DECIMAL:
         output.writeByte(TYPE_ID_BIG_DECIMAL);
         writeByteArray(((BigDecimal) value).toString().getBytes(), output);
         break;
-      case LiteralValues.ARRAY:
+      case ARRAY:
         encodeArray(value, output);
         break;
       // case LiteralValues.URL:

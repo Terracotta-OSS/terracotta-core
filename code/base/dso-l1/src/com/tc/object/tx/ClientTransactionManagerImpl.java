@@ -68,7 +68,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
   private final ClientObjectManager            objectManager;
   private final ThreadLockManager              lockManager;
   private final NonPortableEventContextFactory appEventContextFactory;
-  private final LiteralValues                  literalValues   = new LiteralValues();
 
   private final WaitListener                   waitListener    = new WaitListener() {
                                                                  public void handleWaitEvent() {
@@ -673,7 +672,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
 
       logFieldChanged0(source, classname, fieldname, newValue, tx);
 
-      if (newValue != null && this.literalValues.isLiteralInstance(newValue)) {
+      if (newValue != null && LiteralValues.isLiteralInstance(newValue)) {
         tx.fieldChanged(source, classname, fieldname, newValue, index);
       } else {
         if (newValue != null) {
@@ -731,7 +730,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
         for (int i = 0; i < length; i++) {
 
           Object element = objArray[i];
-          if (!this.literalValues.isLiteralInstance(element)) {
+          if (!LiteralValues.isLiteralInstance(element)) {
             if (element != null) {
               this.objectManager.checkPortabilityOfField(element, String.valueOf(i), pojo);
             }
@@ -798,7 +797,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
 
       for (int i = 0; i < parameters.length; i++) {
         Object p = parameters[i];
-        boolean isLiteral = this.literalValues.isLiteralInstance(p);
+        boolean isLiteral = LiteralValues.isLiteralInstance(p);
         if (!isLiteral) {
           if (p != null) {
             this.objectManager.checkPortabilityOfLogicalAction(parameters, i, methodName, pojo);

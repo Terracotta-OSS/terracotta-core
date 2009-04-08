@@ -18,25 +18,11 @@ import com.tc.object.dna.api.DNAEncoding;
 public abstract class BaseApplicator implements ChangeApplicator {
 
   private static final TCLogger      logger   = TCLogging.getLogger(BaseApplicator.class);
-  private static final LiteralValues literals = createLiteralValuesInstance();
 
   /**
    * The encoding to use when reading/writing DNA
    */
   protected final DNAEncoding        encoding;
-
-  private static final LiteralValues createLiteralValuesInstance() {
-    try {
-      Class klazz = Class.forName("com.tc.object.LiteralValues");
-      return (LiteralValues) klazz.newInstance();
-    } catch (ClassNotFoundException e) {
-      throw new Error(e);
-    } catch (InstantiationException e) {
-      throw new Error(e);
-    } catch (IllegalAccessException e) {
-      throw new Error(e);
-    }
-  }
 
   /**
    * Construct a BaseApplicator with an encoding to use when reading/writing DNA
@@ -57,7 +43,7 @@ public abstract class BaseApplicator implements ChangeApplicator {
   protected final Object getDehydratableObject(Object pojo, ClientObjectManager objectManager) {
     if (pojo == null) {
       return ObjectID.NULL_ID;
-    } else if (literals.isLiteralInstance(pojo)) {
+    } else if (LiteralValues.isLiteralInstance(pojo)) {
       return pojo;
     } else {
       TCObject tcObject = objectManager.lookupExistingOrNull(pojo);
@@ -79,7 +65,7 @@ public abstract class BaseApplicator implements ChangeApplicator {
    * @return True if literal
    */
   protected final boolean isLiteralInstance(Object pojo) {
-    return literals.isLiteralInstance(pojo);
+    return LiteralValues.isLiteralInstance(pojo);
   }
 
   /**
@@ -89,7 +75,7 @@ public abstract class BaseApplicator implements ChangeApplicator {
    * @return True if portable
    */
   protected boolean isPortableReference(Class c) {
-    return !literals.isLiteral(c.getName());
+    return !LiteralValues.isLiteral(c.getName());
   }
 
 }

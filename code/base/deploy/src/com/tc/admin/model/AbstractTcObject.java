@@ -5,7 +5,6 @@
 package com.tc.admin.model;
 
 import com.tc.admin.ConnectionContext;
-import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.MapEntryFacade;
@@ -15,8 +14,6 @@ public abstract class AbstractTcObject implements IObject {
   protected String                      name;
   protected IObject                     parent;
   protected int                         batchSize;
-
-  protected final static LiteralValues  literals = new LiteralValues();
 
   protected AbstractTcObject(ManagedObjectFacadeProvider facadeProvider, String name, IObject parent) {
     this.facadeProvider = facadeProvider;

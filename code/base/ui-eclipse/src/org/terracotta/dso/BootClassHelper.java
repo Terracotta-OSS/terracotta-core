@@ -33,7 +33,6 @@ import java.util.jar.JarFile;
 
 public class BootClassHelper {
   private Set<String>          m_bootClasses = new HashSet<String>();
-  private static LiteralValues m_literals    = new LiteralValues();
 
   public static String getBootJarName(IJavaProject javaProject) {
     String bootJarName = BootJarHelper.getHelper().getBootJarName(javaProject);
@@ -191,6 +190,6 @@ public class BootClassHelper {
   }
 
   public boolean isAdaptable(String fullName) {
-    return m_literals.isLiteral(fullName) || (m_bootClasses != null && m_bootClasses.contains(fullName));
+    return LiteralValues.isLiteral(fullName) || (m_bootClasses != null && m_bootClasses.contains(fullName));
   }
 }

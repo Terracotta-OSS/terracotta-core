@@ -102,8 +102,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   private static final String                                CGLIB_PATTERN                      = "$$EnhancerByCGLIB$$";
 
-  private static final LiteralValues                         literalValues                      = new LiteralValues();
-
   private static final TCLogger                              logger                             = CustomerLogging
                                                                                                     .getDSOGenericLogger();
   private static final TCLogger                              consoleLogger                      = CustomerLogging
@@ -1508,7 +1506,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   // TODO: Need to optimize this by identifying the module to query instead of querying all the modules.
   public boolean isUseNonDefaultConstructor(final Class clazz) {
     String className = clazz.getName();
-    if (literalValues.isLiteral(className)) { return true; }
+    if (LiteralValues.isLiteral(className)) { return true; }
     TransparencyClassSpec spec = getSpec(className);
     if (spec != null) { return spec.isUseNonDefaultConstructor(); }
     if (moduleSpecs != null) {

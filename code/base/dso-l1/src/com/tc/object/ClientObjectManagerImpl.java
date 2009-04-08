@@ -81,7 +81,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   private static final State                   PAUSED                       = new State("PAUSED");
   private static final State                   RUNNING                      = new State("RUNNING");
 
-  private static final LiteralValues           literals                     = new LiteralValues();
   private static final TCLogger                staticLogger                 = TCLogging
                                                                                 .getLogger(ClientObjectManager.class);
 
@@ -459,7 +458,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   public boolean isManaged(final Object pojo) {
-    return pojo != null && !literals.isLiteral(pojo.getClass().getName()) && lookupExistingOrNull(pojo) != null;
+    return pojo != null && !LiteralValues.isLiteral(pojo.getClass().getName()) && lookupExistingOrNull(pojo) != null;
   }
 
   public boolean isCreationInProgress() {
@@ -646,7 +645,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   private boolean isLiteralPojo(final Object pojo) {
-    return !(pojo instanceof Class) && literals.isLiteralInstance(pojo);
+    return !(pojo instanceof Class) && LiteralValues.isLiteralInstance(pojo);
   }
 
   private Object lookupOrCreateRoot(final String rootName, final Object root, final boolean dsoFinal,
@@ -1010,7 +1009,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     public boolean shouldTraverse(final Object object) {
       // literals should be skipped -- without this check, literal members (field values, array element values, in
       // collection, etc) of newly shared instances would get TCObjects and ObjectIDs assigned to them.
-      if (literals.isLiteralInstance(object)) { return false; }
+      if (LiteralValues.isLiteralInstance(object)) { return false; }
 
       TCObject tco = basicLookup(object);
       if (tco == null) { return true; }

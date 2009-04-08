@@ -96,7 +96,7 @@ public class ObjectIDTest extends TestCase {
 
   private void groupIDObjectIDTest(int gid, long oid) {
     ObjectID id = new ObjectID(oid, gid);
-    System.err.println(gid + "," + oid + " : " + id);
+    // System.err.println(gid + "," + oid + " : " + id);
     assertEquals(gid, id.getGroupID());
     assertEquals(oid, id.getObjectID());
     ObjectID clone = new ObjectID(id.toLong());
