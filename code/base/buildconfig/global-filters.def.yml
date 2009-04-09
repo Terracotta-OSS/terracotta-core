@@ -9,10 +9,10 @@ filters:
   <% for key in config_source.keys %>
   <% value = config_source[key] %>
   - <%= key %>: <%= value %>
-  # Anywhere there is a config_source value that ends with -SNAPSHOT, assume it
+  # Anywhere there is a config_source key that matches /version/, assume it
   # is a version number and define an additional filter fit for OSGi manifest entries.
-  <% if value =~ /(.+)-SNAPSHOT$/ %>
-  - <%= key + ".OSGi" %>: <%= $1 + ".SNAPSHOT" %>
+  <% if key =~ /version/i %>
+  - <%= key + ".OSGi" %>: <%= value.sub(/-SNAPSHOT$/, '.SNAPSHOT') %>
   <% end %>
   <% end %>
 

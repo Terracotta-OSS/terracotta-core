@@ -296,6 +296,10 @@ class TerracottaBuilder
       java_opts << "-D#{prefix}.dataFileUrl=#{index_url}"
     end
 
+    if relative_url_base = @config_source['tim-get.index.relativeUrlBase']
+      java_opts << "-D#{prefix}.relativeUrlBase=#{relative_url_base}"
+    end
+
     ENV['JAVA_OPTS'] = java_opts.join(' ')
 
     result = yield [@tim_get.to_s.gsub(/\\/, '/'), subcommand.to_s, *flags]
