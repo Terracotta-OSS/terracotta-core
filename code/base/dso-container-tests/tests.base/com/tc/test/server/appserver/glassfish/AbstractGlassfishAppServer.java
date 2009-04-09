@@ -388,20 +388,18 @@ public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
   private String[] getStartupCommand(AppServerParameters params) throws Exception {
     File startScript = getInstanceFile("bin/" + getPlatformScript("startserv"));
 
-    Result result;
-
-    try {
-      result = Exec.execute(getDisplayCommand(startScript.getAbsolutePath()), null, null, startScript.getParentFile());
-    } catch (IOException ioe) {
-      String script = startScript.getAbsolutePath();
-      if (Os.isUnix()) {
-        // Debug permission denied errors
-        Result ls = Exec.execute(new String[] { "ls", "-l", script });
-        System.err.println(ls.toString());
-      }
-
-      throw ioe;
+    String[] displayCommand = getDisplayCommand(startScript.getAbsolutePath());
+    if (Os.isUnix()) {
+      // This is an attempt to workaround "cannot execute" IOExceptions we see on the monkey
+      // The problem does NOT appear to be a lack of having execute permission on the script
+      String[] tmp = new String[displayCommand.length + 1];
+      tmp[0] = "/bin/sh";
+      System.arraycopy(displayCommand, 0, tmp, 1, displayCommand.length);
+      displayCommand = tmp;
     }
+
+    Result result = Exec.execute(displayCommand, null, null, startScript.getParentFile());
+
     if (result.getExitCode() != 0) { throw new RuntimeException("error executing startserv script: " + result); }
 
     String output = result.getStdout().trim();
