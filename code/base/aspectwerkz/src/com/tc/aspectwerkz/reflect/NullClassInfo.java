@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.aspectwerkz.reflect;
 
@@ -8,10 +9,12 @@ import com.tc.backport175.bytecode.AnnotationReader;
 
 public class NullClassInfo implements ClassInfo {
 
-  private String name = "__UNKNOWN__";
+  private final ClassLoader loader;
+  private final String      name;
 
-  public NullClassInfo() {
-    //
+  public NullClassInfo(String name, ClassLoader loader) {
+    this.name = name;
+    this.loader = loader;
   }
 
   public ConstructorInfo getConstructor(int hash) {
@@ -58,7 +61,7 @@ public class NullClassInfo implements ClassInfo {
   }
 
   public ClassLoader getClassLoader() {
-    return null;
+    return loader;
   }
 
   public ClassInfo getComponentType() {
@@ -81,10 +84,6 @@ public class NullClassInfo implements ClassInfo {
     return name;
   }
 
-  public void setName(String name) {
-    this.name = name;
-  }
-
   public String getSignature() {
     return null;
   }
@@ -102,6 +101,6 @@ public class NullClassInfo implements ClassInfo {
   }
 
   public AnnotationReader getAnnotationReader() {
-    return null;
+    return AnnotationReader.getReaderFor(name, loader);
   }
 }

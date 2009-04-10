@@ -39,7 +39,7 @@ import java.util.List;
  * are lazily gathered, unless required to visit them at the same time as we visit methods and fields. <p/> This
  * implementation guarantees that the method, fields and constructors can be retrieved in the same order as they were in
  * the bytecode (it can depends of the compiler and might not be the order of the source code - f.e. IBM compiler)
- *
+ * 
  * @author <a href="mailto:jboner@codehaus.org">Jonas Bonér </a>
  * @author <a href="mailto:alex@gnilux.com">Alexandre Vasseur </a>
  */
@@ -708,14 +708,10 @@ public class AsmClassInfo implements ClassInfo {
         // might be more than one dimension
         if (componentName.indexOf('[') > 0) { return getClassInfo(componentName, loader); }
 
-//        System.out.println("AW::WARNING - could not load class [" + componentName + "] as a resource in loader ["
-//                           + loader + "]");
+        // System.out.println("AW::WARNING - could not load class [" + componentName + "] as a resource in loader ["
+        // + loader + "]");
 
-        NullClassInfo nullInfo = new NullClassInfo();
-        nullInfo.setName(componentName.replace('/', '.'));
-
-        // remember this missing resource so that later lookups will return early
-        AsmClassInfoRepository.getRepository(loader).addClassInfo(nullInfo);
+        NullClassInfo nullInfo = new NullClassInfo(componentName.replace('/', '.'), loader);
         return nullInfo;
       }
 
@@ -860,10 +856,10 @@ public class AsmClassInfo implements ClassInfo {
    * @author <a href="mailto:alex AT gnilux DOT com">Alexandre Vasseur</a>
    */
   static class MethodParameterNamesCodeAdapter extends AsmNullAdapter.NullMethodAdapter {
-    private final boolean m_isStatic;
-    private final int     m_parameterCount;
+    private final boolean       m_isStatic;
+    private final int           m_parameterCount;
     private AsmMethodInfo m_methodInfo;
-    private int           m_signatureParameterRegisterDepth = 0;
+    private int                 m_signatureParameterRegisterDepth = 0;
     private String[]      m_parameterNames;
 
     public MethodParameterNamesCodeAdapter(boolean isStatic, int parameterCount, AsmMethodInfo methodInfo) {
