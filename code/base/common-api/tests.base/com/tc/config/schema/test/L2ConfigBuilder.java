@@ -10,6 +10,7 @@ package com.tc.config.schema.test;
  */
 public class L2ConfigBuilder extends BaseConfigBuilder {
 
+  private String host;
   private String name;
 
   public L2ConfigBuilder() {
@@ -18,6 +19,10 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
 
   public void setName(String name) {
     this.name = name;
+  }
+
+  public void setHost(String host) {
+    this.host = host;
   }
 
   String getName() {
@@ -111,10 +116,12 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
 
   private static final String[] ALL_PROPERTIES      = concat(new Object[] { L2, AUTHENTICATION, DSO });
 
+  @Override
   public String toString() {
     String out = "";
 
-    out += indent() + "<server" + (this.name != null ? " name=\"" + this.name + "\"" : "") + ">\n";
+    out += indent() + "<server host=" + (this.host != null ? this.host : "\"%i\"")
+           + (this.name != null ? " name=\"" + this.name + "\"" : "") + ">\n";
 
     out += elements(L2) + elementGroup("authentication", AUTHENTICATION) + openElement("dso", DSO)
            + elements(DSO_RECONNECTWINDOW) + elementGroup("persistence", DSO_PERSISTENCE)
