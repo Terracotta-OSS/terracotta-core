@@ -204,8 +204,8 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
 
     if (out == null) configurationFetchFailed(sources, startTime);
 
-    loadConfigurationData(out, trustedSource, descrip, l1BeanRepository, l2sBeanRepository, 
-                          systemBeanRepository, tcPropertiesRepository, applicationsRepository);
+    loadConfigurationData(out, trustedSource, descrip, l1BeanRepository, l2sBeanRepository, systemBeanRepository,
+                          tcPropertiesRepository, applicationsRepository);
     consoleLogger.info("Configuration loaded from the " + descrip + ".");
   }
 
@@ -328,8 +328,8 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
 
       TcConfig config = ((TcConfigDocument) beanWithErrors.bean()).getTcConfig();
       Servers servers = config.getServers();
-      
-      if(servers == null) {
+
+      if (servers == null) {
         servers = Servers.Factory.newInstance();
         Server[] serverArray = new Server[1];
         serverArray[0] = Server.Factory.newInstance();
@@ -337,16 +337,21 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
         config.setServers(servers);
         servers = config.getServers();
       }
-      
+
       if (servers != null) {
         Server server;
         for (int i = 0; i < servers.sizeOfServerArray(); i++) {
           server = servers.getServerArray(i);
-          // CDV-166: per our documentation in the schema itself, host is supposed to default to '%i' and name is
-          // supposed to default to 'host:dso-port'
+          // CDV-1220: per our documentation in the schema itself, host is supposed to default to server name or '%i'
+          // and name is supposed to default to 'host:dso-port'
           if (!server.isSetHost() || server.getHost().trim().length() == 0) {
-            server.setHost("%i");
+            if (!server.isSetName()) {
+              server.setHost("%i");
+            } else {
+              server.setHost(server.getName());
+            }
           }
+
           if (!server.isSetName() || server.getName().trim().length() == 0) {
             int dsoPort = server.getDsoPort();
             if (dsoPort == 0) {
@@ -371,7 +376,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
           server.setBind(ParameterSubstituter.substitute(server.getBind()));
         }
       }
-      
+
       clientBeanRepository.setBean(config.getClients(), descrip);
       serversBeanRepository.setBean(config.getServers(), descrip);
       systemBeanRepository.setBean(config.getSystem(), descrip);
@@ -406,7 +411,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   public String rawConfigText() {
     return rawConfigText;
   }
-  
+
   public String describeSources() {
     if (configDescription == null) {
       return "The configuration specified by '" + configurationSpec + "'";

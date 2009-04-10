@@ -62,7 +62,8 @@
   -->
   <servers>
 
-    <!-- The host and symbolic name of the server; host defaults to "%i" (the machine's
+    <!-- The host and symbolic name of the server; host defaults to the server name
+    	if it is provided in the config else it defaults to "%i" (the machine's
        IP address) and name defaults to "host:dso-port".  Expansion parameters may be
        used in both attributes. -->
     <server host="my.host.name" name="My Server Name">

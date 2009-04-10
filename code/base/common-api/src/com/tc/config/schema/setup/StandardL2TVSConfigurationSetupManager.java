@@ -134,8 +134,11 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
   private void verifyPortUsed(Set<String> serverPorts, String hostname, int port) throws ConfigurationSetupException {
     String hostport = hostname + ":" + port;
     if (port != 0 && !serverPorts.add(hostport)) { throw new ConfigurationSetupException(
-                                                                                         hostport
-                                                                                             + " is duplicated in configuration."); }
+                                                                                         "The server "
+                                                                                             + hostport
+                                                                                             + " is specified more than once in tc-config."
+                                                                                             + "\nPlease provide different server name or port numbers(dso-port, jmx-port, "
+                                                                                             + "\nl2-group-port) in tc-config."); }
   }
 
   private void verifyServerPortUsed(Set<String> serverPorts, Server server) throws ConfigurationSetupException {
