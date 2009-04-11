@@ -6,7 +6,6 @@ package com.tc.util.runtime;
 
 import com.tc.exception.TCRuntimeException;
 import com.tc.process.StreamCollector;
-import com.tc.test.TestConfigObject;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.exception.ExceptionUtil;
 
@@ -104,7 +103,7 @@ public class ThreadDump {
   }
 
   private static void doWindowsDump(int pid) {
-    doSignal(new String[] {}, pid);
+    doSignal(new String[] {"-F", "-l"}, pid);
   }
 
   private static void doIbmDump() throws ClassNotFoundException, SecurityException, NoSuchMethodException,
@@ -157,7 +156,7 @@ public class ThreadDump {
 
       if (Os.isWindows()) {
         try {
-          rv = new File(TestConfigObject.getInstance().executableSearchPath(), "SendSignal.EXE");
+          rv = new File(System.getenv("JAVA_HOME"), "bin\\jstack");
         } catch (Exception e) {
           throw new RuntimeException(e);
         }
