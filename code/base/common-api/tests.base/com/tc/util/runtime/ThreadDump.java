@@ -156,7 +156,7 @@ public class ThreadDump {
 
       if (Os.isWindows()) {
         try {
-          rv = new File(System.getenv("JAVA_HOME"), "bin\\jstack");
+          rv = new File(System.getenv("JAVA_HOME"), "bin\\jstack.exe");
         } catch (Exception e) {
           throw new RuntimeException(e);
         }
