@@ -247,6 +247,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
 
   protected LinkedJavaProcess createLinkedJavaProcess(String mainClassName, String[] arguments) {
     LinkedJavaProcess result = new LinkedJavaProcess(mainClassName, arguments);
+    result.setMaxRuntime(TestConfigObject.getInstance().getJunitTimeoutInSeconds() + 180);
     result.setDirectory(this.runningDirectory);
     File processJavaHome = getJavaHome();
     if (processJavaHome != null) {
