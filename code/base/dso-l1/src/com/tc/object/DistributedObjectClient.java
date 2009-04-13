@@ -131,6 +131,7 @@ import com.tc.statistics.retrieval.actions.SRACacheObjectsEvicted;
 import com.tc.statistics.retrieval.actions.SRAHttpSessions;
 import com.tc.statistics.retrieval.actions.SRAL1OutstandingBatches;
 import com.tc.statistics.retrieval.actions.SRAL1PendingBatchesSize;
+import com.tc.statistics.retrieval.actions.SRAL1TransactionCount;
 import com.tc.statistics.retrieval.actions.SRAL1TransactionSize;
 import com.tc.statistics.retrieval.actions.SRAL1TransactionsPerBatch;
 import com.tc.statistics.retrieval.actions.SRAMemoryUsage;
@@ -141,6 +142,8 @@ import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.CounterConfig;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
+import com.tc.stats.counter.sampled.SampledCounter;
+import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
 import com.tc.util.Assert;
@@ -250,7 +253,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                                    final Counter outstandingBatchesCounter,
                                                    final Counter pendingBatchesSize,
                                                    final SampledRateCounter transactionSizeCounter,
-                                                   final SampledRateCounter transactionsPerBatchCounter) {
+                                                   final SampledRateCounter transactionsPerBatchCounter,
+                                                   final SampledCounter txCounter) {
     registry.registerActionInstance(new SRAMemoryUsage());
     registry.registerActionInstance(new SRASystemProperties());
     registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRACpu");
@@ -267,6 +271,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     registry.registerActionInstance(new SRAL1TransactionSize(transactionSizeCounter));
     registry.registerActionInstance(new SRAL1PendingBatchesSize(pendingBatchesSize));
     registry.registerActionInstance(new SRAHttpSessions());
+    registry.registerActionInstance(new SRAL1TransactionCount(txCounter));
   }
 
   public synchronized void start() {
@@ -397,11 +402,15 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     ToggleableReferenceManager toggleRefMgr = new ToggleableReferenceManager();
 
+    // for SRA L1 Tx count
+    SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
+    SampledCounter txnCounter = (SampledCounter) this.counterManager.createCounter(sampledCounterConfig);
+    
     // setup statistics subsystem
     if (this.statisticsAgentSubSystem.setup(this.config.getNewCommonL1Config())) {
       populateStatisticsRetrievalRegistry(this.statisticsAgentSubSystem.getStatisticsRetrievalRegistry(), stageManager,
                                           mm, outstandingBatchesCounter, pendingBatchesSize, transactionSizeCounter,
-                                          transactionsPerBatchCounter);
+                                          transactionsPerBatchCounter, txnCounter);
     }
 
     RemoteObjectManager remoteObjectManager = this.dsoClientBuilder
@@ -457,7 +466,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                                       this.objectManager,
                                                       new ThreadLockManagerImpl(this.lockManager, this.threadIDManager),
                                                       txFactory, this.rtxManager, this.runtimeLogger, this.l1Management
-                                                          .findClientTxMonitorMBean());
+                                                          .findClientTxMonitorMBean(), txnCounter);
 
     this.threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter(this.txManager));
 

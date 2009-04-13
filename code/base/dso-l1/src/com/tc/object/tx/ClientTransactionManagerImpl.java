@@ -30,6 +30,7 @@ import com.tc.object.lockmanager.api.WaitListener;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.session.SessionID;
 import com.tc.object.util.ReadOnlyException;
+import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.text.Banner;
 import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
@@ -78,6 +79,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
   private final ClientIDProvider               cidProvider;
 
   private final ClientTxMonitorMBean           txMonitor;
+  private final SampledCounter                 txCounter;
 
   private final boolean                        sendErrors      = System.getProperty("project.name") != null;
 
@@ -91,7 +93,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
   public ClientTransactionManagerImpl(final ClientIDProvider cidProvider, final ClientObjectManager objectManager,
                                       final ThreadLockManager lockManager, final ClientTransactionFactory txFactory,
                                       final RemoteTransactionManager remoteTxManager,
-                                      final RuntimeLogger runtimeLogger, final ClientTxMonitorMBean txMonitor) {
+                                      final RuntimeLogger runtimeLogger, final ClientTxMonitorMBean txMonitor,
+                                      SampledCounter txCounter) {
     this.cidProvider = cidProvider;
     this.txFactory = txFactory;
     this.remoteTxManager = remoteTxManager;
@@ -99,6 +102,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     this.objectManager.setTransactionManager(this);
     this.lockManager = lockManager;
     this.txMonitor = txMonitor;
+    this.txCounter = txCounter;
     this.appEventContextFactory = new NonPortableEventContextFactory(cidProvider);
   }
 
@@ -286,7 +290,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
   }
 
   private String getIllegalMonitorStateExceptionMessage() {
-    StringBuffer errorMsg = new StringBuffer("An IllegalMonitorStateException is usually caused by one of the following:");
+    StringBuffer errorMsg = new StringBuffer(
+                                             "An IllegalMonitorStateException is usually caused by one of the following:");
     errorMsg.append(StringUtil.LINE_SEPARATOR);
     errorMsg.append("1) No synchronization");
     errorMsg.append(StringUtil.LINE_SEPARATOR);
@@ -527,6 +532,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
         if (this.txMonitor.isEnabled()) {
           currentTransaction.updateMBean(this.txMonitor);
         }
+        this.txCounter.increment();
         this.remoteTxManager.commit(currentTransaction);
       }
       return true;

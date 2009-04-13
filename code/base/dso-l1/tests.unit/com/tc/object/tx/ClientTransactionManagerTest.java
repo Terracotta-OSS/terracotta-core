@@ -18,6 +18,7 @@ import com.tc.object.lockmanager.api.TestLockManager;
 import com.tc.object.lockmanager.impl.ThreadLockManagerImpl;
 import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.object.util.ReadOnlyException;
+import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.util.runtime.NullThreadIDMapImpl;
 import com.tc.util.runtime.ThreadIDManagerImpl;
 
@@ -39,7 +40,7 @@ public class ClientTransactionManagerTest extends TestCase {
     lockMgr = new TestLockManager();
     clientTxnMgr = new ClientTransactionManagerImpl(new ClientIDProviderImpl(new TestChannelIDProvider()), objMgr,
                                                     new ThreadLockManagerImpl(lockMgr, new ThreadIDManagerImpl(new NullThreadIDMapImpl())), clientTxnFactory, rmtTxnMgr,
-                                                    new NullRuntimeLogger(), new MockClientTxMonitor());
+                                                    new NullRuntimeLogger(), new MockClientTxMonitor(), SampledCounter.NULL_SAMPLED_COUNTER);
   }
 
   @Override
