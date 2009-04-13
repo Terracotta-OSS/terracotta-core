@@ -11,7 +11,7 @@
       <artifact pattern="http://download.terracotta.org/buildjars/eclipse-api/[artifact]-[revision].[ext]"/>
     </url>
     <url name="terracotta-maven2" m2compatible="true">
-      <artifact pattern="http://download.terracotta.org/maven2/[organisation]/[artifact]/[revision]/[artifact]-[revision].[ext]"/>
+      <artifact pattern="http://repo.terracotta.org/maven2/[organisation]/[artifact]/[revision]/[artifact]-[revision].[ext]"/>
     </url>
     <chain name="ibiblio-chain" returnFirst="true">
       <ibiblio name="ibiblio" />
