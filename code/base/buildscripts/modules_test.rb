@@ -112,6 +112,10 @@ class BuildSubtree
         write_dynamic_property(file, "l2.startup.mode", "internal")
       end
 
+      # Write out JAVA_HOME_15 and JAVA_HOME_16
+      write_dynamic_property(file, "JAVA_HOME_15", Registry[:jvm_set]['1.5'].home)
+      write_dynamic_property(file, "JAVA_HOME_16", Registry[:jvm_set]['1.6'].home)
+
       if Registry[:emma]
         write_dynamic_property(file, "emma.lib", Registry[:emma_lib])
       end
