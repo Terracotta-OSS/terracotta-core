@@ -32,7 +32,7 @@ if defined DSO_BOOT_JAR goto tc_set_dso_boot_jar__1_1
 goto tc_set_dso_boot_jar__1_0
 
  :tc_set_dso_boot_jar__1_0
-   if not defined TMPFILE set TMPFILE=%TEMP%\var~
+   call :GETTEMPNAME
    %TC_JAVACMD% %JAVA_OPTS% -cp %TC_JAR% com.tc.object.tools.BootJarSignature >%TMPFILE%
    for /F %%i in (%TMPFILE%) do @set DSO_BOOT_JAR_NAME=%%i
    del %TMPFILE%
@@ -71,6 +71,10 @@ goto tc_set_dso_boot_jar__1_0
      call %TC_INSTALL_DIR%\bin\make-boot-jar.bat -o %DSO_BOOT_JAR%
      if %ERRORLEVEL% NEQ 0 goto error
      goto return
+
+:GETTEMPNAME
+set TMPFILE=%TMP%\boot-jar-path-%RANDOM%-%TIME:~6,5%.tmp
+if exist "%TMPFILE%" GOTO :GETTEMPNAME
 
 :error
 exit /b %ERRORLEVEL%
