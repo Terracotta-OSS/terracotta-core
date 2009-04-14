@@ -136,7 +136,7 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.println(getClass().getName());
     synchronized (this.lock) {
-      out.indent().print("blocking : ").print(new Boolean(this.isBlocking));
+      out.indent().print("blocking : ").print(Boolean.valueOf(this.isBlocking));
       out.indent().print("id set   : ").visit(this.set);
     }
     return out;

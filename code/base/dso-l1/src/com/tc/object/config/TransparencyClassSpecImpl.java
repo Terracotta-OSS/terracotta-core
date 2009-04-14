@@ -34,14 +34,14 @@ import java.util.Set;
  */
 public class TransparencyClassSpecImpl implements TransparencyClassSpec {
 
-  private static final Object         HONOR_TRANSIENT_KEY        = "honor-transient";
-  private static final Object         HONOR_VOLATILE_KEY         = "honor-volatile";
+  private static final String         HONOR_TRANSIENT_KEY        = "honor-transient";
+  private static final String         HONOR_VOLATILE_KEY         = "honor-volatile";
 
   private final DSOClientConfigHelper configuration;
   private final String                className;
   private final List                  supportMethodCreators      = new LinkedList();
   private final Map                   methodAdapters             = new HashMap();
-  private final Map                   flags                      = new HashMap();
+  private final Map<String, Boolean>  flags                      = new HashMap();
   private final Map                   codeSpecs                  = new HashMap();
   private final Set                   nonInstrumentedMethods     = Collections.synchronizedSet(new HashSet());
   private String                      changeApplicatorClassName;
@@ -380,7 +380,7 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
   }
 
   public TransparencyClassSpec setHonorVolatile(final boolean b) {
-    flags.put(HONOR_VOLATILE_KEY, new Boolean(b));
+    flags.put(HONOR_VOLATILE_KEY, b);
     return this;
   }
 
@@ -389,13 +389,13 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
   }
 
   public boolean isHonorVolatile() {
-    Object flag = flags.get(HONOR_VOLATILE_KEY);
+    Boolean flag = flags.get(HONOR_VOLATILE_KEY);
     if (flag == null) return false;
-    return ((Boolean) flag).booleanValue();
+    return flag;
   }
 
   public TransparencyClassSpec setHonorTransient(final boolean b) {
-    flags.put(HONOR_TRANSIENT_KEY, new Boolean(b));
+    flags.put(HONOR_TRANSIENT_KEY, b);
     return this;
   }
 
@@ -415,7 +415,7 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
   }
 
   private boolean basicIsHonorJavaTransient() {
-    return ((Boolean) flags.get(HONOR_TRANSIENT_KEY)).booleanValue();
+    return flags.get(HONOR_TRANSIENT_KEY);
   }
 
   public boolean isCallConstructorSet() {

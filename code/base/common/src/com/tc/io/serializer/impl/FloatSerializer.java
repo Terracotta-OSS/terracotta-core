@@ -19,11 +19,11 @@ public final class FloatSerializer implements Serializer {
   }
 
   public Object deserializeFrom(ObjectInput in) throws IOException {
-    return new Float(in.readFloat());
+    return Float.valueOf(in.readFloat());
   }
 
   public byte getSerializerID() {
     return FLOAT;
   }
-  
+
 }

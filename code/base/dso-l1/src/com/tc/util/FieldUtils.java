@@ -57,7 +57,7 @@ public class FieldUtils {
       throwIllegalArgumentException(field.getType().getName());
     }
 
-    return set(obj, new Boolean(value), field);
+    return set(obj, Boolean.valueOf(value), field);
   }
 
   public static boolean setFloat(Object obj, float value, Field field) throws IllegalAccessException {

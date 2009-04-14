@@ -48,7 +48,7 @@ public abstract class BaseConfigBuilder {
   }
 
   protected final void setProperty(String property, boolean value) {
-    setProperty(property, new Boolean(value));
+    setProperty(property, Boolean.valueOf(value));
   }
 
   protected final void setProperty(String property, Object value) {
@@ -97,6 +97,7 @@ public abstract class BaseConfigBuilder {
       return this.values;
     }
 
+    @Override
     public String toString() {
       ++currentIndentLevel;
 
@@ -129,6 +130,7 @@ public abstract class BaseConfigBuilder {
       this.values = values;
     }
 
+    @Override
     public String toString() {
       ++currentIndentLevel;
 
@@ -218,10 +220,10 @@ public abstract class BaseConfigBuilder {
     ++this.currentIndentLevel;
     return out;
   }
-  
+
   protected final String selfCloseElement(String tagName, Map attributes) {
     Assert.assertNotBlank(tagName);
-    String out = indent() + "<" + tagName + " " + attributesToString(attributes) + "/>";    
+    String out = indent() + "<" + tagName + " " + attributesToString(attributes) + "/>";
     return out;
   }
 

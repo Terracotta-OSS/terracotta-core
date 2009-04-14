@@ -57,7 +57,7 @@ public class IncludeOnLoad {
 
   public void setToCallConstructorOnLoad(boolean b) {
     this.type = CALL_CONSTRUCTOR;
-    this.value = new Boolean(b);
+    this.value = Boolean.valueOf(b);
   }
 
   public void setExecuteScriptOnLoad(String script) {
@@ -78,6 +78,7 @@ public class IncludeOnLoad {
     return value;
   }
 
+  @Override
   public String toString() {
     return "type: " + type + " value=" + value;
   }

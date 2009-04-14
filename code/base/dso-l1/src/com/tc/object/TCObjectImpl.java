@@ -334,35 +334,35 @@ public abstract class TCObjectImpl implements TCObject {
   }
 
   public void booleanFieldChanged(final String classname, final String fieldname, final boolean newValue, final int index) {
-    objectFieldChanged(classname, fieldname, new Boolean(newValue), index);
+    objectFieldChanged(classname, fieldname, Boolean.valueOf(newValue), index);
   }
 
   public void byteFieldChanged(final String classname, final String fieldname, final byte newValue, final int index) {
-    objectFieldChanged(classname, fieldname, new Byte(newValue), index);
+    objectFieldChanged(classname, fieldname, Byte.valueOf(newValue), index);
   }
 
   public void charFieldChanged(final String classname, final String fieldname, final char newValue, final int index) {
-    objectFieldChanged(classname, fieldname, new Character(newValue), index);
+    objectFieldChanged(classname, fieldname, Character.valueOf(newValue), index);
   }
 
   public void doubleFieldChanged(final String classname, final String fieldname, final double newValue, final int index) {
-    objectFieldChanged(classname, fieldname, new Double(newValue), index);
+    objectFieldChanged(classname, fieldname, Double.valueOf(newValue), index);
   }
 
   public void floatFieldChanged(final String classname, final String fieldname, final float newValue, final int index) {
-    objectFieldChanged(classname, fieldname, new Float(newValue), index);
+    objectFieldChanged(classname, fieldname, Float.valueOf(newValue), index);
   }
 
   public void intFieldChanged(final String classname, final String fieldname, final int newValue, final int index) {
-    objectFieldChanged(classname, fieldname, new Integer(newValue), index);
+    objectFieldChanged(classname, fieldname, Integer.valueOf(newValue), index);
   }
 
   public void longFieldChanged(final String classname, final String fieldname, final long newValue, final int index) {
-    objectFieldChanged(classname, fieldname, new Long(newValue), index);
+    objectFieldChanged(classname, fieldname, Long.valueOf(newValue), index);
   }
 
   public void shortFieldChanged(final String classname, final String fieldname, final short newValue, final int index) {
-    objectFieldChanged(classname, fieldname, new Short(newValue), index);
+    objectFieldChanged(classname, fieldname, Short.valueOf(newValue), index);
   }
 
   public void objectArrayChanged(final int startPos, final Object[] array, final int length) {

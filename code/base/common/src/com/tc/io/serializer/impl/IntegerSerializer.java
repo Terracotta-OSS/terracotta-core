@@ -19,11 +19,11 @@ public final class IntegerSerializer implements Serializer {
   }
 
   public Object deserializeFrom(ObjectInput in) throws IOException {
-    return new Integer(in.readInt());
+    return Integer.valueOf(in.readInt());
   }
 
   public byte getSerializerID() {
     return INTEGER;
   }
-  
+
 }

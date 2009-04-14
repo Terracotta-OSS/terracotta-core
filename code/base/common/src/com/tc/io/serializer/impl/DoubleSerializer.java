@@ -19,11 +19,11 @@ public final class DoubleSerializer implements Serializer {
   }
 
   public Object deserializeFrom(ObjectInput in) throws IOException {
-    return new Double(in.readDouble());
+    return Double.valueOf(in.readDouble());
   }
 
   public byte getSerializerID() {
     return DOUBLE;
   }
-  
+
 }

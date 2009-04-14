@@ -87,7 +87,7 @@ public class AccessibleObjectApplicator extends BaseApplicator {
     writer.addPhysicalAction(ACCESSIBLE_OBJECT_TYPE, ao.getClass().getName());
     writer.addPhysicalAction(DECLARING_CLASS_FIELD_NAME, declaringClass);
     writer.addPhysicalAction(ACCESSIBLE_OBJECT_NAME_FILED_NAME, name);
-    writer.addPhysicalAction(OVERRIDE_FIELD_NAME, new Boolean(override));
+    writer.addPhysicalAction(OVERRIDE_FIELD_NAME, Boolean.valueOf(override));
     if (!(ao instanceof Field)) {
       writer.addPhysicalAction(PARAMETER_TYPES, parameterTypes);
     }

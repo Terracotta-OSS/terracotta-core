@@ -13,17 +13,17 @@ import java.io.ObjectOutput;
  * Byte
  */
 public final class ByteSerializer implements Serializer {
-  
+
   public void serializeTo(Object o, ObjectOutput out) throws IOException {
     out.writeByte(((Byte)o).byteValue());
   }
-  
+
   public Object deserializeFrom(ObjectInput in) throws IOException {
-    return new Byte(in.readByte());
+    return Byte.valueOf(in.readByte());
   }
 
   public byte getSerializerID() {
     return BYTE;
   }
-  
+
 }

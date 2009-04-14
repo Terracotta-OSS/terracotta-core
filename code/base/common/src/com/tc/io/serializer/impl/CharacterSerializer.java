@@ -19,11 +19,11 @@ public final class CharacterSerializer implements Serializer {
   }
 
   public Object deserializeFrom(ObjectInput in) throws IOException {
-    return new Character(in.readChar());
+    return Character.valueOf(in.readChar());
   }
 
   public byte getSerializerID() {
     return CHARACTER;
   }
-  
+
 }

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.dynamic;
 
@@ -13,13 +14,14 @@ import com.tc.config.schema.context.ConfigContext;
 public class BooleanXPathBasedConfigItem extends XPathBasedConfigItem implements BooleanConfigItem {
 
   public BooleanXPathBasedConfigItem(ConfigContext context, String xpath, boolean defaultValue) {
-    super(context, xpath, new Boolean(defaultValue));
+    super(context, xpath, Boolean.valueOf(defaultValue));
   }
 
   public BooleanXPathBasedConfigItem(ConfigContext context, String xpath) {
     super(context, xpath);
   }
 
+  @Override
   protected Object fetchDataFromXmlObject(XmlObject xmlObject) {
     return super.fetchDataFromXmlObjectByReflection(xmlObject, "getBooleanValue");
   }

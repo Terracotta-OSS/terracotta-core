@@ -379,11 +379,11 @@ public class TestConfigObjectInvocationHandler implements InvocationHandler {
     }
 
     public void setValue(boolean newValue) {
-      setValue(new Boolean(newValue));
+      setValue(Boolean.valueOf(newValue));
     }
 
     public void setValue(int newValue) {
-      setValue(new Integer(newValue));
+      setValue(Integer.valueOf(newValue));
     }
 
     public boolean getBoolean() {

@@ -19,11 +19,11 @@ public final class LongSerializer implements Serializer {
   }
 
   public Object deserializeFrom(ObjectInput in) throws IOException {
-    return new Long(in.readLong());
+    return Long.valueOf(in.readLong());
   }
 
   public byte getSerializerID() {
     return LONG;
   }
-  
+
 }

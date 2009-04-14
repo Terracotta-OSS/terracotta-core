@@ -30,11 +30,12 @@ public class LinkedHashMapManagedObjectState extends PartialMapManagedObjectStat
   LinkedHashMapManagedObjectState(long classID) {
     super(classID, new LinkedHashMap(1));
   }
-  
+
   protected LinkedHashMapManagedObjectState(ObjectInput in) throws IOException {
     super(in);
   }
 
+  @Override
   public void apply(ObjectID objectID, DNACursor cursor, BackReferences includeIDs) throws IOException {
     if (!cursor.next()) { return; }
     Object action = cursor.getAction();
@@ -57,6 +58,7 @@ public class LinkedHashMapManagedObjectState extends PartialMapManagedObjectStat
     }
   }
 
+  @Override
   protected void applyMethod(ObjectID objectID, BackReferences includeIDS, int method, Object[] params) {
     switch (method) {
       case SerializationUtil.GET:
@@ -77,21 +79,25 @@ public class LinkedHashMapManagedObjectState extends PartialMapManagedObjectStat
     }
   }
 
+  @Override
   public void dehydrate(ObjectID objectID, DNAWriter writer) {
-    writer.addPhysicalAction(ACCESS_ORDER_FIELDNAME, new Boolean(accessOrder));
+    writer.addPhysicalAction(ACCESS_ORDER_FIELDNAME, Boolean.valueOf(accessOrder));
     super.dehydrate(objectID, writer);
   }
 
   // TODO: The Facade does not include the access order.
+  @Override
   public ManagedObjectFacade createFacade(ObjectID objectID, String className, int limit) {
     return super.createFacade(objectID, className, limit);
   }
 
+  @Override
   public byte getType() {
     return LINKED_HASHMAP_TYPE;
   }
-  
+
   //TODO:: Until partial collections support is enabled for this class
+  @Override
   protected void basicWriteTo(ObjectOutput out) throws IOException {
     out.writeBoolean(accessOrder);
     out.writeInt(references.size());
@@ -116,5 +122,5 @@ public class LinkedHashMapManagedObjectState extends PartialMapManagedObjectStat
     linkedsmo.setMap(map);
     return linkedsmo;
   }
-  
+
 }

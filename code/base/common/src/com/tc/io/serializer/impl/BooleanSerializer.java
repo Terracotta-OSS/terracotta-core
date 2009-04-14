@@ -20,11 +20,11 @@ public final class BooleanSerializer implements Serializer {
   }
 
   public Object deserializeFrom(ObjectInput in) throws IOException {
-    return new Boolean(in.readBoolean());
+    return Boolean.valueOf(in.readBoolean());
   }
 
   public byte getSerializerID() {
     return BOOLEAN;
   }
-  
+
 }

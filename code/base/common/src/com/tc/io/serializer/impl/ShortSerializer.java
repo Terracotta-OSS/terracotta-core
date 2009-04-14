@@ -19,11 +19,11 @@ public final class ShortSerializer implements Serializer {
   }
 
   public Object deserializeFrom(ObjectInput in) throws IOException {
-    return new Short(in.readShort());
+    return Short.valueOf(in.readShort());
   }
 
   public byte getSerializerID() {
     return SHORT;
   }
-  
+
 }

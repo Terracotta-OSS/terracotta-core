@@ -8,8 +8,8 @@ import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
-import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.util.Assert;
@@ -39,6 +39,7 @@ public class LinkedHashMapApplicator extends PartialHashMapApplicator {
     super(encoding);
   }
 
+  @Override
   public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object pojo) throws IOException,
       ClassNotFoundException {
     DNACursor cursor = dna.getCursor();
@@ -65,6 +66,7 @@ public class LinkedHashMapApplicator extends PartialHashMapApplicator {
     }
   }
 
+  @Override
   protected void apply(ClientObjectManager objectManager, Object pojo, int method, Object[] params) throws ClassNotFoundException {
     switch (method) {
       case SerializationUtil.GET:
@@ -83,11 +85,13 @@ public class LinkedHashMapApplicator extends PartialHashMapApplicator {
     }
   }
 
+  @Override
   public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
-    writer.addPhysicalAction(ACCESS_ORDER_FIELDNAME, new Boolean(getAccessOrder(pojo)));
+    writer.addPhysicalAction(ACCESS_ORDER_FIELDNAME, Boolean.valueOf(getAccessOrder(pojo)));
     super.dehydrate(objectManager, tcObject, writer, pojo);
   }
 
+  @Override
   public Object getNewInstance(ClientObjectManager objectManager, DNA dna) throws IOException, ClassNotFoundException {
     DNACursor cursor = dna.getCursor();
     if (!cursor.next(encoding)) { throw new AssertionError(
