@@ -1007,6 +1007,8 @@ END
       testrun_record.tearDown
       # copy failed-tests.txt file to the aggreation directory
       if monkey?
+        puts "From: " + testrun_record.failed_test_classnames_file.to_s
+        puts "To: " + tests_aggregation_directory.to_s
         FileUtils.cp(testrun_record.failed_test_classnames_file.to_s, tests_aggregation_directory.to_s)
       end
       puts "\n\n"
@@ -1017,9 +1019,9 @@ END
       puts "\n\n"
       puts "========================================================================"
       if testrun_record.failed?
-        puts "     Tests FAILED. See results above."
+        @script_results.failed("Tests FAILED. See results above.")
       elsif testrun_record.total_suites == 0
-        loud_message "No tests ran."
+        @script_results.failed("No test found.")
       else
         puts "     Tests passed."
       end
