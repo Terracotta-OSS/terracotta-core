@@ -12,10 +12,6 @@ import java.util.ArrayList;
  */
 public class AssertTest extends TCTestCase {
   
-  public void testFailure() {
-    fail("Die you vermint!");
-  }
-
   public void testAssertNoBlankElements() {
     try {
       Assert.assertNoBlankElements(null);
