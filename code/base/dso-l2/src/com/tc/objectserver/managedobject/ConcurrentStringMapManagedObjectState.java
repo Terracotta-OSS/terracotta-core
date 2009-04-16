@@ -1,31 +1,27 @@
 package com.tc.objectserver.managedobject;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Map;
-
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.objectserver.managedobject.BackReferences;
-import com.tc.objectserver.managedobject.MapManagedObjectState;
-import com.tc.objectserver.managedobject.PartialMapManagedObjectState;
-import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.util.Assert;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Map;
 
 // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
 public class ConcurrentStringMapManagedObjectState extends PartialMapManagedObjectState {
   public static final String DSO_LOCK_TYPE_FIELDNAME = "dsoLockType";
 
   private int dsoLockType;
-  
+
   private ConcurrentStringMapManagedObjectState(ObjectInput in) throws IOException {
     super(in);
   }
-  
+
   protected ConcurrentStringMapManagedObjectState(long classId, Map map) {
     super(classId, map);
   }
@@ -61,12 +57,6 @@ public class ConcurrentStringMapManagedObjectState extends PartialMapManagedObje
   @Override
   protected void basicWriteTo(ObjectOutput out) throws IOException {
     out.writeInt(dsoLockType);
-  }
-
-  @Override
-  public ManagedObjectFacade createFacade(ObjectID objectID, String className, int limit) {
-    // TODO What does this do?
-    return super.createFacade(objectID, className, limit);
   }
 
   @Override
