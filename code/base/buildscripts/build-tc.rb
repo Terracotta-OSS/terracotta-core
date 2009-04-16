@@ -1007,8 +1007,6 @@ END
       testrun_record.tearDown
       # copy failed-tests.txt file to the aggreation directory
       if monkey?
-        puts "From: " + testrun_record.failed_test_classnames_file.to_s
-        puts "To: " + tests_aggregation_directory.to_s
         FileUtils.cp(testrun_record.failed_test_classnames_file.to_s, tests_aggregation_directory.to_s)
       end
       puts "\n\n"
