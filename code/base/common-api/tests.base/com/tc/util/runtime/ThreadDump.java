@@ -104,7 +104,7 @@ public class ThreadDump {
   }
 
   private static void doWindowsDump(int pid) {
-    doSignal(new String[] { "-l" }, pid);
+    doSignal(new String[] {}, pid);
   }
 
   private static void doIbmDump() throws ClassNotFoundException, SecurityException, NoSuchMethodException,
@@ -157,7 +157,7 @@ public class ThreadDump {
 
       if (Os.isWindows()) {
         try {
-          rv = new File(TestConfigObject.getInstance().javaHome16(), "bin\\jstack.exe");
+          rv = new File(TestConfigObject.getInstance().executableSearchPath(), "SendSignal.EXE");
         } catch (Exception e) {
           throw new RuntimeException(e);
         }
