@@ -91,7 +91,7 @@ class TerracottaAnt < Builder::AntBuilder
 
     self.copy(:todir => dest_dir.to_s) do
       self.fileset(:dir => src_dir.to_s, :includes => '**/*',
-                   :excludes => filters_def['filtered_files'].join(','))
+        :excludes => filters_def['filtered_files'].join(','))
     end
   end
 
@@ -223,26 +223,27 @@ class TerracottaBuilder
       message = "Received exception from the build system: #{e} [#{e.class}]\n" +
         e.backtrace.join("\n     ")
       @script_results.failed(message)
+    ensure
+      end_time = Time.now
+      # This is so that, even if the series of scripts leading from, say, CruiseControl to this
+      # code doesn't correctly carry back the exit code (as it inexplicably seems not to on
+      # Windows), the parent can tell if it passed or not.
+      write_failure_file_if_necessary_at_end
+
+      # Support for making build archives.
+      # archive only if "force-archive=true", or when the run fails
+      if ((@config_source['monkey-name'] && @script_results.failed?) ||
+            @config_source["force-archive"] =~ /true/)
+        archive_build_if_necessary
+      end
+
+      # Print out the duration and the results at the end.
+      puts ""
+      puts "[%8.2f seconds] %s" % [ (end_time - @start_time), @script_results.to_s ]
+      ExitCodeHelper.exit(@script_results.result_code)
     end
 
-    end_time = Time.now
 
-    # This is so that, even if the series of scripts leading from, say, CruiseControl to this
-    # code doesn't correctly carry back the exit code (as it inexplicably seems not to on
-    # Windows), the parent can tell if it passed or not.
-    write_failure_file_if_necessary_at_end
-
-    # Support for making build archives.
-    # archive only if "force-archive=true", or when the run fails
-    if ((@config_source['monkey-name'] && @script_results.failed?) ||
-          @config_source["force-archive"] =~ /true/)
-      archive_build_if_necessary
-    end
-
-    # Print out the duration and the results at the end.
-    puts ""
-    puts "[%8.2f seconds] %s" % [ (end_time - @start_time), @script_results.to_s ]
-    ExitCodeHelper.exit(@script_results.result_code)
   end
 
   # Resets the dependency-tracking mechanism.
