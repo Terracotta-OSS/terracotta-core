@@ -99,8 +99,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
     this.sequencer = new TransactionSequencer(groupID, transactionIDGenerator, batchFactory, this.lockAccounting,
                                               pendingBatchesSize, transactionSizeCounter, transactionsPerBatchCounter);
     this.remoteTxManagerTimerTask = new RemoteTransactionManagerTimerTask();
-    this.timer.schedule(new RemoteTransactionManagerTimerTask(), COMPLETED_ACK_FLUSH_TIMEOUT,
-                        COMPLETED_ACK_FLUSH_TIMEOUT);
+    this.timer.schedule(this.remoteTxManagerTimerTask, COMPLETED_ACK_FLUSH_TIMEOUT, COMPLETED_ACK_FLUSH_TIMEOUT);
     this.outstandingBatchesCounter = outstandingBatchesCounter;
   }
 
