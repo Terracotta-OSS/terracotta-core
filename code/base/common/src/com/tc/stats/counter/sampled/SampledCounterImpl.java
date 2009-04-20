@@ -4,8 +4,8 @@
  */
 package com.tc.stats.counter.sampled;
 
-import com.tc.stats.LossyStack;
 import com.tc.stats.counter.CounterImpl;
+import com.tc.util.concurrent.CircularLossyQueue;
 
 import java.util.TimerTask;
 
@@ -13,16 +13,16 @@ import java.util.TimerTask;
  * A counter that keeps sampled values
  */
 public class SampledCounterImpl extends CounterImpl implements SampledCounter {
-  protected final LossyStack history;
-  protected final boolean    resetOnSample;
-  private final TimerTask    samplerTask;
-  private final long         intervalMillis;
+  protected final CircularLossyQueue<TimeStampedCounterValue> history;
+  protected final boolean                                     resetOnSample;
+  private final TimerTask                                     samplerTask;
+  private final long                                          intervalMillis;
 
   public SampledCounterImpl(SampledCounterConfig config) {
     super(config.getInitialValue());
 
     this.intervalMillis = config.getIntervalSecs() * 1000;
-    this.history = new LossyStack(config.getHistorySize());
+    this.history = new CircularLossyQueue<TimeStampedCounterValue>(config.getHistorySize());
     this.resetOnSample = config.isResetOnSample();
 
     this.samplerTask = new TimerTask() {
@@ -35,11 +35,11 @@ public class SampledCounterImpl extends CounterImpl implements SampledCounter {
   }
 
   public TimeStampedCounterValue getMostRecentSample() {
-    return (TimeStampedCounterValue) this.history.peek();
+    return this.history.peek();
   }
 
   public TimeStampedCounterValue[] getAllSampleValues() {
-    return (TimeStampedCounterValue[]) this.history.toArray(new TimeStampedCounterValue[this.history.depth()]);
+    return this.history.toArray(new TimeStampedCounterValue[this.history.depth()]);
   }
 
   public void shutdown() {
