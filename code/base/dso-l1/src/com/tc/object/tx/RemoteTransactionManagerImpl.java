@@ -44,41 +44,43 @@ import java.util.Map.Entry;
  */
 public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
 
-  private static final long                FLUSH_WAIT_INTERVAL         = 15 * 1000;
+  private static final long                       FLUSH_WAIT_INTERVAL         = 15 * 1000;
 
-  private static final int                 MAX_OUTSTANDING_BATCHES     = TCPropertiesImpl
-                                                                           .getProperties()
-                                                                           .getInt(
-                                                                                   TCPropertiesConsts.L1_TRANSACTIONMANAGER_MAXOUTSTANDING_BATCHSIZE);
-  private static final long                COMPLETED_ACK_FLUSH_TIMEOUT = TCPropertiesImpl
-                                                                           .getProperties()
-                                                                           .getLong(
-                                                                                    TCPropertiesConsts.L1_TRANSACTIONMANAGER_COMPLETED_ACK_FLUSH_TIMEOUT);
+  private static final int                        MAX_OUTSTANDING_BATCHES     = TCPropertiesImpl
+                                                                                  .getProperties()
+                                                                                  .getInt(
+                                                                                          TCPropertiesConsts.L1_TRANSACTIONMANAGER_MAXOUTSTANDING_BATCHSIZE);
+  private static final long                       COMPLETED_ACK_FLUSH_TIMEOUT = TCPropertiesImpl
+                                                                                  .getProperties()
+                                                                                  .getLong(
+                                                                                           TCPropertiesConsts.L1_TRANSACTIONMANAGER_COMPLETED_ACK_FLUSH_TIMEOUT);
 
-  private static final State               RUNNING                     = new State("RUNNING");
-  private static final State               PAUSED                      = new State("PAUSED");
-  private static final State               STOP_INITIATED              = new State("STOP-INITIATED");
-  private static final State               STOPPED                     = new State("STOPPED");
+  private static final State                      RUNNING                     = new State("RUNNING");
+  private static final State                      PAUSED                      = new State("PAUSED");
+  private static final State                      STOP_INITIATED              = new State("STOP-INITIATED");
+  private static final State                      STOPPED                     = new State("STOPPED");
 
-  private final Object                     lock                        = new Object();
-  private final Map                        incompleteBatches           = new HashMap();
-  private final HashMap                    lockFlushCallbacks          = new HashMap();
+  private final Object                            lock                        = new Object();
+  private final Map                               incompleteBatches           = new HashMap();
+  private final HashMap                           lockFlushCallbacks          = new HashMap();
 
-  private final Counter                    outstandingBatchesCounter;
-  private final TransactionBatchAccounting batchAccounting             = new TransactionBatchAccounting();
-  private final LockAccounting             lockAccounting              = new LockAccounting();
-  private final TCLogger                   logger;
-  private final long                       ackOnExitTimeout;
+  private final Counter                           outstandingBatchesCounter;
+  private final TransactionBatchAccounting        batchAccounting             = new TransactionBatchAccounting();
+  private final LockAccounting                    lockAccounting              = new LockAccounting();
+  private final TCLogger                          logger;
+  private final long                              ackOnExitTimeout;
 
-  private int                              outStandingBatches          = 0;
-  private State                            status;
-  private final SessionManager             sessionManager;
-  private final TransactionSequencer       sequencer;
-  private final DSOClientMessageChannel    channel;
-  private final Timer                      timer                       = new Timer("RemoteTransactionManager Flusher",
-                                                                                   true);
+  private int                                     outStandingBatches          = 0;
+  private State                                   status;
+  private final SessionManager                    sessionManager;
+  private final TransactionSequencer              sequencer;
+  private final DSOClientMessageChannel           channel;
+  private final Timer                             timer                       = new Timer(
+                                                                                          "RemoteTransactionManager Flusher",
+                                                                                          true);
+  private final RemoteTransactionManagerTimerTask remoteTxManagerTimerTask;
 
-  private final GroupID                    groupID;
+  private final GroupID                           groupID;
 
   public RemoteTransactionManagerImpl(final GroupID groupID, final TCLogger logger,
                                       final TransactionBatchFactory batchFactory,
@@ -96,6 +98,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
     this.ackOnExitTimeout = ackOnExitTimeoutMs;
     this.sequencer = new TransactionSequencer(groupID, transactionIDGenerator, batchFactory, this.lockAccounting,
                                               pendingBatchesSize, transactionSizeCounter, transactionsPerBatchCounter);
+    this.remoteTxManagerTimerTask = new RemoteTransactionManagerTimerTask();
     this.timer.schedule(new RemoteTransactionManagerTimerTask(), COMPLETED_ACK_FLUSH_TIMEOUT,
                         COMPLETED_ACK_FLUSH_TIMEOUT);
     this.outstandingBatchesCounter = outstandingBatchesCounter;
@@ -103,6 +106,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
 
   public void pause(final NodeID remote, final int disconnected) {
     synchronized (this.lock) {
+      this.remoteTxManagerTimerTask.reset();
       if (isStoppingOrStopped()) { return; }
       if (this.status == PAUSED) { throw new AssertionError("Attempt to pause while already paused state."); }
       this.status = PAUSED;
@@ -460,7 +464,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
 
   private class RemoteTransactionManagerTimerTask extends TimerTask {
 
-    private TransactionID currentLWM = TransactionID.NULL_ID;
+    private volatile TransactionID currentLWM = TransactionID.NULL_ID;
 
     @Override
     public void run() {
@@ -470,6 +474,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
         if (this.currentLWM.toLong() > lwm.toLong()) { throw new AssertionError(
                                                                                 "Transaction Low watermark moved down from "
                                                                                     + this.currentLWM + " to " + lwm); }
+        if (this.currentLWM.toLong() == lwm.toLong()) { return; }
         this.currentLWM = lwm;
         CompletedTransactionLowWaterMarkMessage ctm = RemoteTransactionManagerImpl.this.channel
             .getCompletedTransactionLowWaterMarkMessageFactory()
@@ -480,6 +485,10 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
         RemoteTransactionManagerImpl.this.logger.error("Error sending Low water mark : ", e);
         throw new AssertionError(e);
       }
+    }
+
+    public void reset() {
+      this.currentLWM = TransactionID.NULL_ID;
     }
   }
 }
