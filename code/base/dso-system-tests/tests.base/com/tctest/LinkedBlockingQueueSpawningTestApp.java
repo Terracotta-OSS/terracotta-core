@@ -14,6 +14,7 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.io.File;
@@ -61,6 +62,7 @@ public class LinkedBlockingQueueSpawningTestApp extends AbstractTransparentApp {
     try {
       for (int i = 0; i < SPAWN_COUNT; ++i) {
         spawnNewClientAndWaitForCompletion("" + i, LBQClient.class);
+        ThreadUtil.reallySleep(SPAWN_SLEEP_PERIOD);
       }
     } catch (Exception e) {
       throw new TCRuntimeException(e);
