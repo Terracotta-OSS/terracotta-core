@@ -91,4 +91,8 @@ public class TestGroupManager implements GroupManager {
   public void zapNode(NodeID nodeID, int type, String reason) {
     // NOP
   }
+
+  public boolean isConnectionToNodeActive(NodeID sid) {
+    return true;
+  }
 }

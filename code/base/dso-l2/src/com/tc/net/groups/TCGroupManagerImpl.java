@@ -17,6 +17,7 @@ import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
+import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.L2ReconnectConfigImpl;
@@ -97,7 +98,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
                                                                                             .synchronizedSet(new HashSet<NodeID>());
   private final StageManager                                stageManager;
   private final boolean                                     isUseOOOLayer;
-  private final AtomicBoolean                               alreadyJoined                      = new AtomicBoolean(false);
+  private final AtomicBoolean                               alreadyJoined               = new AtomicBoolean(false);
 
   private CommunicationsManager                             communicationsManager;
   private NetworkListener                                   groupListener;
@@ -109,7 +110,6 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   private Stage                                             handshakeMessageStage;
   private Stage                                             discoveryStage;
   private TCProperties                                      l2Properties;
-
 
   /*
    * Setup a communication manager which can establish channel from either sides.
@@ -152,11 +152,23 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     setDiscover(new TCGroupMemberDiscoveryStatic(this));
   }
 
+  public boolean isConnectionToNodeActive(NodeID sid) {
+    TCGroupMember m = members.get(sid);
+    if (m != null) {
+      TCSocketAddress remoteAddr = m.getChannel().getRemoteAddress();
+      TCConnection[] conns = communicationsManager.getConnectionManager().getAllActiveConnections();
+      for (int i = 0; i < conns.length; ++i) {
+        if (conns[i].getRemoteAddress().equals(remoteAddr)) { return true; }
+      }
+    }
+    return false;
+  }
+
   /*
    * for testing purpose only. Tester needs to do setDiscover().
    */
   public TCGroupManagerImpl(ConnectionPolicy connectionPolicy, String hostname, int port, int groupPort,
-                     StageManager stageManager) {
+                            StageManager stageManager) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
     this.l2ReconnectConfig = new L2ReconnectConfigImpl();
@@ -440,8 +452,8 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
         return new SimpleSequence();
       }
     });
-    ClientMessageChannel channel = communicationsManager.createClientChannel(sessionProvider, 0, null,
-                                                                             -1, 10000, addrProvider);
+    ClientMessageChannel channel = communicationsManager.createClientChannel(sessionProvider, 0, null, -1, 10000,
+                                                                             addrProvider);
 
     channel.addClassMapping(TCMessageType.GROUP_WRAPPER_MESSAGE, TCGroupMessageWrapper.class);
     channel.routeMessageType(TCMessageType.GROUP_WRAPPER_MESSAGE, receiveGroupMessageStage.getSink(), hydrateStage

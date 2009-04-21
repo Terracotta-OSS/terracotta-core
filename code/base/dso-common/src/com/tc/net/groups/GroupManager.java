@@ -37,4 +37,6 @@ public interface GroupManager {
   
   public void setZapNodeRequestProcessor(ZapNodeRequestProcessor processor);
   
+  public boolean isConnectionToNodeActive(NodeID sid);
+  
 }
