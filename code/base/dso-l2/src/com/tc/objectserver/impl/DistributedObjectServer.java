@@ -235,6 +235,7 @@ import com.tc.statistics.retrieval.actions.SRAServerTransactionSequencer;
 import com.tc.statistics.retrieval.actions.SRAStageQueueDepths;
 import com.tc.statistics.retrieval.actions.SRASystemProperties;
 import com.tc.statistics.retrieval.actions.SRAVmGarbageCollector;
+import com.tc.statistics.retrieval.actions.SRAVmGarbageCollector.SRAVmGarbageCollectorType;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
@@ -1137,7 +1138,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
       registry.registerActionInstance(new SRACacheObjectsEvictRequest());
       registry.registerActionInstance(new SRACacheObjectsEvicted());
       registry.registerActionInstance(new SRADistributedGC());
-      registry.registerActionInstance(new SRAVmGarbageCollector());
+      registry.registerActionInstance(new SRAVmGarbageCollector(SRAVmGarbageCollectorType.L2_VM_GARBAGE_COLLECTOR));
       registry.registerActionInstance(new SRAMessages(messageMonitor));
       registry.registerActionInstance(new SRAL2FaultsFromDisk(serverStats));
       registry.registerActionInstance(new SRAL1ToL2FlushRate(serverStats));

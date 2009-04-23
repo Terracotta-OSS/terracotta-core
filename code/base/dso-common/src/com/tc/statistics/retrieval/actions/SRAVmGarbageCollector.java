@@ -31,10 +31,34 @@ import java.util.List;
  * This statistic will only be available in nodes running in JRE-1.5 or higher
  */
 public class SRAVmGarbageCollector implements StatisticRetrievalAction {
+  
+  public static enum SRAVmGarbageCollectorType {
+    L2_VM_GARBAGE_COLLECTOR() {
 
-  public static final String ACTION_NAME = "vm garbage collector";
+      @Override
+      public String getActionName() {
+        return "l2 vm garbage collector";
+      }
+    },
+    L1_VM_GARBAGE_COLLECTOR() {
+
+      @Override
+      public String getActionName() {
+        return "l1 vm garbage collector";
+      }
+    };
+
+    public String getActionName() {
+      throw new UnsupportedOperationException("Must be overrided by individual enums");
+    }
+  }
 
   private static final List<GarbageCollectorMXBean> gcBeans = ManagementFactory.getGarbageCollectorMXBeans();
+  private final SRAVmGarbageCollectorType type;
+  
+  public SRAVmGarbageCollector(SRAVmGarbageCollectorType type) {
+    this.type = type;
+  }
 
   public StatisticData[] retrieveStatisticData() {
     if (gcBeans == null) {
@@ -50,14 +74,14 @@ public class SRAVmGarbageCollector implements StatisticRetrievalAction {
 
   private Collection<? extends StatisticData> getStatisticData(GarbageCollectorMXBean gcBean) {
     Collection<StatisticData> data = new ArrayList<StatisticData>();
-    data.add(new StatisticData(ACTION_NAME, gcBean.getName() + ":collection count", gcBean.getCollectionCount()));
-    data.add(new StatisticData(ACTION_NAME, gcBean.getName() + ":collection time", gcBean.getCollectionTime()));
-    data.add(new StatisticData(ACTION_NAME, gcBean.getName() + ":memory pool names", Arrays.asList(gcBean.getMemoryPoolNames()).toString()));
+    data.add(new StatisticData(type.getActionName(), gcBean.getName() + ":collection count", gcBean.getCollectionCount()));
+    data.add(new StatisticData(type.getActionName(), gcBean.getName() + ":collection time", gcBean.getCollectionTime()));
+    data.add(new StatisticData(type.getActionName(), gcBean.getName() + ":memory pool names", Arrays.asList(gcBean.getMemoryPoolNames()).toString()));
     return data;
   }
 
   public String getName() {
-    return ACTION_NAME;
+    return type.getActionName();
   }
 
   public StatisticType getType() {

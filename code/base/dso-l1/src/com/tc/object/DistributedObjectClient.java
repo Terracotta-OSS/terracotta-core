@@ -138,6 +138,8 @@ import com.tc.statistics.retrieval.actions.SRAMemoryUsage;
 import com.tc.statistics.retrieval.actions.SRAMessages;
 import com.tc.statistics.retrieval.actions.SRAStageQueueDepths;
 import com.tc.statistics.retrieval.actions.SRASystemProperties;
+import com.tc.statistics.retrieval.actions.SRAVmGarbageCollector;
+import com.tc.statistics.retrieval.actions.SRAVmGarbageCollector.SRAVmGarbageCollectorType;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.CounterConfig;
 import com.tc.stats.counter.CounterManager;
@@ -264,7 +266,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     registry.registerActionInstance(new SRAStageQueueDepths(stageManager));
     registry.registerActionInstance(new SRACacheObjectsEvictRequest());
     registry.registerActionInstance(new SRACacheObjectsEvicted());
-    registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRAVmGarbageCollector");
     registry.registerActionInstance(new SRAMessages(messageMonitor));
     registry.registerActionInstance(new SRAL1OutstandingBatches(outstandingBatchesCounter));
     registry.registerActionInstance(new SRAL1TransactionsPerBatch(transactionsPerBatchCounter));
@@ -272,6 +273,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     registry.registerActionInstance(new SRAL1PendingBatchesSize(pendingBatchesSize));
     registry.registerActionInstance(new SRAHttpSessions());
     registry.registerActionInstance(new SRAL1TransactionCount(txCounter));
+    registry.registerActionInstance(new SRAVmGarbageCollector(SRAVmGarbageCollectorType.L1_VM_GARBAGE_COLLECTOR));
   }
 
   public synchronized void start() {
