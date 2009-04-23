@@ -117,10 +117,6 @@
       <artifactId>jfreechart</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.dijon</groupId>
-      <artifactId>appframe</artifactId>
-    </dependency>
-    <dependency>
       <groupId>treemap</groupId>
       <artifactId>treemap</artifactId>
     </dependency>
