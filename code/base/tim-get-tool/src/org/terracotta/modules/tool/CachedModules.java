@@ -39,7 +39,7 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 public class CachedModules implements Modules {
-  static final String FORMAT_VERSION = "2";
+  static final String        FORMAT_VERSION = "2";
 
   private List<Module>       modules;
   private List<Module>       qualifiedModules;
@@ -55,7 +55,7 @@ public class CachedModules implements Modules {
 
   @Inject
   @Named(ConfigAnnotation.CONFIG_INSTANCE)
-  private Config              config;
+  private Config             config;
 
   @Inject
   @Named(ConfigAnnotation.INCLUDE_SNAPSHOTS)
@@ -63,6 +63,7 @@ public class CachedModules implements Modules {
 
   private final File         repository;
   private final DataLoader   dataLoader;
+  private String             timeStamp;
 
   @Inject
   @Named(ConfigAnnotation.DOWNLOADUTIL_INSTANCE)
@@ -137,13 +138,13 @@ public class CachedModules implements Modules {
     if ((modules == null) || modules.isEmpty()) {
       InputStream dataStream = null;
       try {
-          dataStream = dataLoader.openDataStream();
-        
-          try {
-            loadData(dataStream);
-          } catch(JDOMException e) {
-            throw new RuntimeException("Error parsing index file: " + e.getMessage(), e);
-          }
+        dataStream = dataLoader.openDataStream();
+
+        try {
+          loadData(dataStream);
+        } catch (JDOMException e) {
+          throw new RuntimeException("Error parsing index file: " + e.getMessage(), e);
+        }
       } catch (FileNotFoundException e) {
         throw new RemoteIndexIOException("Remote index file not found: " + e.getMessage(), e);
       } catch (IOException e) {
@@ -159,6 +160,7 @@ public class CachedModules implements Modules {
 
     Document document = new SAXBuilder().build(inputStream);
     validateFormatVersion(document.getRootElement().getAttributeValue("format-version"));
+    timeStamp = document.getRootElement().getAttributeValue("timestamp");
     modules = new ArrayList<Module>();
     List<Element> children = document.getRootElement().getChildren();
     for (Element child : children) {
@@ -169,8 +171,8 @@ public class CachedModules implements Modules {
 
   private void validateFormatVersion(String formatVersion) {
     if (!FORMAT_VERSION.equals(formatVersion)) {
-      String message = "Format version '" + formatVersion +
-          "' does not match expected format version '" + FORMAT_VERSION + "'";
+      String message = "Format version '" + formatVersion + "' does not match expected format version '"
+                       + FORMAT_VERSION + "'";
       throw new InvalidConfigurationException(message);
     }
   }
@@ -289,9 +291,13 @@ public class CachedModules implements Modules {
   public String tcVersion() {
     return tcVersion;
   }
-  
+
   public String apiVersion() {
     return apiVersion;
+  }
+  
+  public String indexTimeStamp() {
+    return timeStamp;
   }
 
   public URI relativeUrlBase() {

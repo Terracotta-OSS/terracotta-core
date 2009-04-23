@@ -14,12 +14,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class HelpCommand extends AbstractCommand {
+public class HelpCommand extends ModuleOperatorCommand {
   private final CommandRegistry commandRegistry;
 
   @Inject
   public HelpCommand(CommandRegistry registry) {
     this.commandRegistry = registry;
+    options.addOption("d", "debug", false, "Display debug information");
     arguments.put("command-names", "(OPTIONAL) Space delimited list of command names to get a help on");
   }
 
@@ -35,6 +36,10 @@ public class HelpCommand extends AbstractCommand {
   }
 
   public void execute(CommandLine cli) {
+    if (cli.hasOption("d") || cli.hasOption("debug")) {
+      displayDebugInfo();
+    }
+
     List<String> topics = cli.getArgList();
     if (topics.isEmpty()) {
       List<String> list = new ArrayList<String>(commandRegistry.commandNames());
@@ -78,5 +83,19 @@ public class HelpCommand extends AbstractCommand {
         out.println("Command not supported: " + cmdname);
       }
     }
+  }
+
+  private void displayDebugInfo() {
+    // call this so the index file can be parsed once
+    modules.list();
+    
+    out.println("Debug info:");
+    out.println("   Index timestamp: " + modules.indexTimeStamp());
+    out.println("   Index URL:       " + config.getDataFileUrl());
+    out.println("   Repo URL:        " + config.getRelativeUrlBase());
+    out.println("   Cached index:    " + config.getIndexFile());
+    out.println("   TC version:      " + config.getTcVersion());
+    out.println("   API version:     " + config.getApiVersion());
+    out.println();
   }
 }

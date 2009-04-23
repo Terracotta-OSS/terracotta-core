@@ -106,4 +106,8 @@ public interface Modules {
    */
   File download(Installable module, boolean verify, boolean inspect) throws IOException;
 
+  /**
+   * The timestamp of the index file (when it was created). Used for debugging purpose
+   */
+  String indexTimeStamp();
 }

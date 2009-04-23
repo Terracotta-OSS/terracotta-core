@@ -104,6 +104,8 @@ public class DataLoader {
       if (this.localDataFile.exists()) {
         // TODO: use logging instead of or in addition to System.err
         System.err.println("WARNING: Failed to download remote data file.  Using cached copy.");
+        System.err.println("Error message: " + e.getMessage());
+        System.err.flush();
       } else {
         throw e;
       }
