@@ -77,11 +77,13 @@ public class MultipleServersConfigCreator {
                                                                                                     "Unknown operating mode."); }
   }
 
-  protected void cleanDataDirectory(String dataLocation) throws IOException {
+  protected void createOrCleanDataDirectory(String dataLocation) throws IOException {
     File dbDir = new File(dataLocation);
     logger.info("DBHome: " + dbDir.getAbsolutePath());
     if (dbDir.exists()) {
       FileUtils.cleanDirectory(dbDir);
+    } else {
+      FileUtils.forceMkdir(dbDir);
     }
   }
 
@@ -98,7 +100,7 @@ public class MultipleServersConfigCreator {
     system.setConfigurationModel(configModel);
 
     String dataLocationHome = tempDir.getAbsolutePath() + File.separator + "server-data";
-    cleanDataDirectory(dataLocationHome);
+    createOrCleanDataDirectory(dataLocationHome);
     String logLocationHome = tempDir.getAbsolutePath() + File.separator + "server-logs" + File.separator;
 
     boolean gcEnabled = configFactory.getGCEnabled();
