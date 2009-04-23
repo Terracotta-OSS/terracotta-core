@@ -57,7 +57,6 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.impl.ClientStateManagerImpl;
 import com.tc.objectserver.managedobject.BackReferences;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
-import com.tc.objectserver.managedobject.ManagedObjectTraverser;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.MapEntryFacade;
@@ -286,6 +285,7 @@ public class ObjectManagerTest extends TCTestCase {
     }
   }
 
+  // DEV-2324
   public void testReachableObjects() {
     this.config.paranoid = true;
     initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))),
@@ -296,33 +296,33 @@ public class ObjectManagerTest extends TCTestCase {
     assertEquals(0, this.stats.getTotalCacheMisses());
 
     // each object has 1000 distinct reachable objects
-    createObjects(0, 1, createObjects(1000, 2000, new HashSet<ObjectID>(), true), true);
-    createObjects(1, 2, createObjects(2000, 3000, new HashSet<ObjectID>(), true), true);
-    createObjects(2, 3, createObjects(3000, 4000, new HashSet<ObjectID>(), true), true);
-    createObjects(3, 4, createObjects(4000, 5000, new HashSet<ObjectID>(), true), true);
-    createObjects(4, 5, createObjects(5000, 6000, new HashSet<ObjectID>(), true), true);
-    createObjects(5, 6, createObjects(6000, 7000, new HashSet<ObjectID>(), true), true);
-    createObjects(6, 7, createObjects(7000, 8000, new HashSet<ObjectID>(), true), true);
-    createObjects(7, 8, createObjects(8000, 9000, new HashSet<ObjectID>(), true), true);
-    createObjects(8, 9, createObjects(9000, 10000, new HashSet<ObjectID>(), true), true);
-    createObjects(9, 10, createObjects(10000, 11000, new HashSet<ObjectID>(), true), true);
+    createObjects(0, 1, createObjects(1000, 2000, new HashSet<ObjectID>()));
+    createObjects(1, 2, createObjects(2000, 3000, new HashSet<ObjectID>()));
+    createObjects(2, 3, createObjects(3000, 4000, new HashSet<ObjectID>()));
+    createObjects(3, 4, createObjects(4000, 5000, new HashSet<ObjectID>()));
+    createObjects(4, 5, createObjects(5000, 6000, new HashSet<ObjectID>()));
+    createObjects(5, 6, createObjects(6000, 7000, new HashSet<ObjectID>()));
+    createObjects(6, 7, createObjects(7000, 8000, new HashSet<ObjectID>()));
+    createObjects(7, 8, createObjects(8000, 9000, new HashSet<ObjectID>()));
+    createObjects(8, 9, createObjects(9000, 10000, new HashSet<ObjectID>()));
+    createObjects(9, 10, createObjects(10000, 11000, new HashSet<ObjectID>()));
 
     // evict cache is not done. So, all objects reside in cache
 
     ObjectIDSet ids = makeObjectIDSet(0, 10);
     TestResultsContext results = new TestResultsContext(ids, new ObjectIDSet(), true);
     this.testFaultSinkContext.resetCounter();
-    
+
     // fetch 10 objects and with fault-count -1
     this.objectManager.lookupObjectsAndSubObjectsFor(null, results, -1);
     Assert.assertEquals(10, results.objects.size());
     this.objectManager.releaseAll(this.NULL_TRANSACTION, results.objects.values());
-    
+
     // fetch 10 objects and with fault-count 1K
     this.objectManager.lookupObjectsAndSubObjectsFor(null, results, 1000);
     Assert.assertEquals(1000, results.objects.size());
     this.objectManager.releaseAll(this.NULL_TRANSACTION, results.objects.values());
-    
+
     // fetch 10 objects and with fault-count 10K
     this.objectManager.lookupObjectsAndSubObjectsFor(null, results, 10000);
     Assert.assertEquals(10000, results.objects.size());
@@ -332,7 +332,19 @@ public class ObjectManagerTest extends TCTestCase {
     this.objectManager.lookupObjectsAndSubObjectsFor(null, results, 20000);
     Assert.assertEquals(10010, results.objects.size());
     this.objectManager.releaseAll(this.NULL_TRANSACTION, results.objects.values());
-    
+
+    // single object reaching more objects than fault count
+    createObjects(10, 11, createObjects(11000, 18000, new HashSet<ObjectID>()));
+
+    ids = makeObjectIDSet(10, 11);
+    results = new TestResultsContext(ids, new ObjectIDSet(), true);
+    this.testFaultSinkContext.resetCounter();
+
+    // fetch 1 object and with fault-count 5K. but, object can reach 7K
+    this.objectManager.lookupObjectsAndSubObjectsFor(null, results, 5000);
+    Assert.assertEquals(5000, results.objects.size());
+    this.objectManager.releaseAll(this.NULL_TRANSACTION, results.objects.values());
+
   }
 
   public void testPreFetchObjects() {
@@ -1196,20 +1208,15 @@ public class ObjectManagerTest extends TCTestCase {
   }
 
   private Set<ObjectID> createObjects(int num) {
-    return createObjects(0, num, new HashSet(), false);
+    return createObjects(0, num, new HashSet());
   }
 
-  public Set<ObjectID> createObjects(int startID, int endID, Set<ObjectID> children, boolean useCustomizedMO) {
+  public Set<ObjectID> createObjects(int startID, int endID, Set<ObjectID> children) {
     Set<ObjectID> oidSet = new HashSet<ObjectID>(endID - startID);
     for (int i = startID; i < endID; i++) {
       ObjectID oid = new ObjectID(i);
       oidSet.add(oid);
-      TestManagedObject mo;
-      if (useCustomizedMO) {
-        mo = new CustomizedTestManagedObject(oid, new ArrayList<ObjectID>(children));
-      } else {
-        mo = new TestManagedObject(oid, new ArrayList<ObjectID>(children));
-      }
+      TestManagedObject mo = new TestManagedObject(oid, new ArrayList<ObjectID>(children));
 
       this.objectManager.createObject(mo);
       this.objectStore.addNewObject(mo);
@@ -2338,23 +2345,6 @@ public class ObjectManagerTest extends TCTestCase {
   private interface SinkContext {
 
     void postProcess();
-
-  }
-
-  private class CustomizedTestManagedObject extends TestManagedObject {
-
-    public CustomizedTestManagedObject(ObjectID id) {
-      super(id);
-    }
-
-    public CustomizedTestManagedObject(ObjectID id, ArrayList<ObjectID> references) {
-      super(id, references);
-    }
-
-    @Override
-    public void addObjectReferencesTo(ManagedObjectTraverser traverser) {
-      traverser.addReachableObjectIDs(getObjectReferences());
-    }
 
   }
 }

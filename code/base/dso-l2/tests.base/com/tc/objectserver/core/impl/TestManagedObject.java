@@ -213,7 +213,7 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
   }
 
   public void addObjectReferencesTo(ManagedObjectTraverser traverser) {
-    return;
+    traverser.addReachableObjectIDs(getObjectReferences());
   }
 
   public void apply(DNA dna, TransactionID txnID, BackReferences includeIDs, ObjectInstanceMonitor instanceMonitor,
