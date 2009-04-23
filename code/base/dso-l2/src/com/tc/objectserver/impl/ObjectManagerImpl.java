@@ -76,7 +76,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   // XXX:: Should go to property file
   private static final int                            INITIAL_SET_SIZE         = 16;
   private static final float                          LOAD_FACTOR              = 0.75f;
-  private static final int                            MAX_LOOKUP_OBJECTS_COUNT = 5000;
 
   private final ManagedObjectStore                    objectStore;
   private final Map<ObjectID, ManagedObjectReference> references;
@@ -527,6 +526,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       }
       this.stateManager.removeReferencedFrom(nodeID, lookupObjectIDs);
       for (final ObjectID id : lookupObjectIDs) {
+        if (objects.size() >= maxReachableObjects) {
+          break;
+        }
         ManagedObjectReference newRef = getReference(id);
         // Note : Objects are looked up only if it is in the memory and not referenced
         if (newRef != null && !newRef.isReferenced() && !newRef.isNew()) {
@@ -535,7 +537,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
           }
         }
       }
-    } while (objects.size() < MAX_LOOKUP_OBJECTS_COUNT);
+    } while (objects.size() < maxReachableObjects);
     return traverser.getPendingObjectsToLookup(lookedUpObjects);
   }
 
