@@ -37,7 +37,7 @@ public class BroadcastDisconnectingClientTest extends ServerCrashingTestBase {
   static final int SHORT_RUNNERS_INTERVAL = 30*1000;
   static final int LIST_MAX = 50;
   static final int INNER_LIST_SIZE = 1;
-  private static final int TIMEOUT_SECONDS = 20*60;
+  private static final int TIMEOUT_SECONDS = 25*60;
 
   private static final Class externalClientClass = DisconnectingALClient.class;
   private static final Class internalClientClass = BroadcastDisconnectingClientApp.class;
