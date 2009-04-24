@@ -182,6 +182,8 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
 
             if (!connContext.probeIfAlive()) {
               // Connection is dead. Disconnect the transport.
+              logger.error("Declared connection dead " + mtb.getConnectionId() + " due to long idle time "
+                           + mtb.getConnection().getIdleReceiveTime());
               mtb.disconnect();
               connectionIterator.remove();
             }
