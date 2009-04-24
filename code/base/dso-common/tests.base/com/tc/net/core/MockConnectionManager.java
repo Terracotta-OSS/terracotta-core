@@ -16,7 +16,7 @@ public class MockConnectionManager implements TCConnectionManager {
 
   TCConnection conn;
   
-  TCListener listener;
+  TCListener listener = new TestTCListener();
   
   int createConnectionCallCount = 0;
   
