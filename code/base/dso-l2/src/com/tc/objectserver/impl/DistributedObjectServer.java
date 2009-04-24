@@ -215,6 +215,7 @@ import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
+import com.tc.statistics.retrieval.actions.SRABerkeleyDB;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvictRequest;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvicted;
 import com.tc.statistics.retrieval.actions.SRADistributedGC;
@@ -501,6 +502,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
     final GarbageCollectionInfoPublisher gcPublisher = new GarbageCollectionInfoPublisherImpl();
     logger.debug("server swap enabled: " + swapEnabled);
     final ManagedObjectChangeListenerProviderImpl managedObjectChangeListenerProvider = new ManagedObjectChangeListenerProviderImpl();
+    SRABerkeleyDB sraBdb = null;
+
     if (swapEnabled) {
       File dbhome = new File(this.configSetupManager.commonl2Config().dataPath().getFile(),
                              NewL2DSOConfig.OBJECTDB_DIRNAME);
@@ -520,9 +523,11 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
       DBEnvironment dbenv = new DBEnvironment(persistent, dbhome, this.l2Properties.getPropertiesFor("berkeleydb")
           .addAllPropertiesTo(new Properties()));
       SerializationAdapterFactory serializationAdapterFactory = new CustomSerializationAdapterFactory();
+
       this.persistor = new SleepycatPersistor(TCLogging.getLogger(SleepycatPersistor.class), dbenv,
                                               serializationAdapterFactory, this.configSetupManager.commonl2Config()
                                                   .dataPath().getFile(), this.objectStatsRecorder);
+      sraBdb = new SRABerkeleyDB((SleepycatPersistor) this.persistor);
       // Setting the DB environment for the bean which takes backup of the active server
       if (persistent) {
         ServerDBBackup mbean = this.l2Management.findServerDbBackupMBean();
@@ -971,7 +976,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
 
     // populate the statistics retrieval register
     populateStatisticsRetrievalRegistry(serverStats, this.seda.getStageManager(), mm, this.transactionManager,
-                                        serverTransactionSequencerImpl);
+                                        serverTransactionSequencerImpl, sraBdb);
 
     // XXX: yucky casts
     this.managementContext = new ServerManagementContext(this.transactionManager,
@@ -1116,11 +1121,13 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
     });
   }
 
-  private void populateStatisticsRetrievalRegistry(final DSOGlobalServerStats serverStats,
+  private void populateStatisticsRetrievalRegistry(
+                                                   final DSOGlobalServerStats serverStats,
                                                    final StageManager stageManager,
                                                    final MessageMonitor messageMonitor,
                                                    final ServerTransactionManagerImpl txnManager,
-                                                   final ServerTransactionSequencerStats serverTransactionSequencerStats) {
+                                                   final ServerTransactionSequencerStats serverTransactionSequencerStats,
+                                                   final SRABerkeleyDB sraBdb) {
     if (this.statisticsAgentSubSystem.isActive()) {
       StatisticsRetrievalRegistry registry = this.statisticsAgentSubSystem.getStatisticsRetrievalRegistry();
       registry.registerActionInstance(new SRAL2ToL1FaultRate(serverStats));
@@ -1147,6 +1154,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
       registry.registerActionInstance(new SRAL1ReferenceCount(this.clientStateManager));
       registry.registerActionInstance(new SRAGlobalLockRecallCount(serverStats));
       registry.registerActionInstance(new SRAL2GlobalLockCount(serverStats));
+      if (sraBdb != null) {
+        registry.registerActionInstance(sraBdb);
+      }
+
       this.serverBuilder.populateAdditionalStatisticsRetrivalRegistry(registry);
     }
   }

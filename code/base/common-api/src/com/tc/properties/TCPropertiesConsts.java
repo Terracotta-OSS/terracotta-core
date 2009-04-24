@@ -141,7 +141,6 @@ public interface TCPropertiesConsts {
   public static final String   L2_BERKELEYDB_JE_CLEANER_DETAIL_MAXMEMORY_PERCENTAGE               = "l2.berkeleydb.je.cleaner.detailMaxMemoryPercentage";
   public static final String   L2_BERKELEYDB_JE_CLEANER_LOOKAHEAD_CACHESIZE                       = "l2.berkeleydb.je.cleaner.lookAheadCacheSize";
   public static final String   L2_BERKELEYDB_JE_CLEANER_MINAGE                                    = "l2.berkeleydb.je.cleaner.minAge";
-  public static final String   L2_BDB_JE_STATS_LOGGING_ENABLED                                    = "l2.bdb.je.stats.logging.enabled";
 
   /*********************************************************************************************************************
    * <code>
