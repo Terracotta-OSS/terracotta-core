@@ -17,7 +17,7 @@ public class SRABerkeleyDB implements StatisticRetrievalAction {
   private final SRABDBCleaner sraCleaner;
   private final SRABDBIO      sraIo;
 
-  private SleepycatPersistor  persistor;
+  private final SleepycatPersistor  persistor;
 
   public SRABerkeleyDB(SleepycatPersistor persistor) {
     sraLogging = new SRABDBLogging();
