@@ -74,6 +74,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   private final NetworkStackHarnessFactory       stackHarnessFactory;
   private final TransportHandshakeMessageFactory transportMessageFactory;
   private final MessageMonitor                   monitor;
+  private final HealthCheckerConfig              healthCheckerConfig;
   private final ConnectionPolicy                 connectionPolicy;
   private ConnectionHealthChecker                connectionHealthChecker;
   private ServerID                               serverID             = ServerID.NULL_ID;
@@ -120,12 +121,13 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
    */
   public CommunicationsManagerImpl(MessageMonitor monitor, NetworkStackHarnessFactory stackHarnessFactory,
                                    TCConnectionManager connMgr, ConnectionPolicy connectionPolicy, int workerCommCount,
-                                   HealthCheckerConfig healthCheckerConfig) {
+                                   HealthCheckerConfig healthCheckerConf) {
 
     this.monitor = monitor;
     this.transportMessageFactory = new TransportMessageFactoryImpl();
     this.connectionPolicy = connectionPolicy;
     this.stackHarnessFactory = stackHarnessFactory;
+    this.healthCheckerConfig = healthCheckerConf;
     privateConnMgr = (connMgr == null);
 
     if (null == connMgr) {
@@ -294,25 +296,36 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                                                 this.transportMessageFactory, connectionIdFactory,
                                                                 this.connectionPolicy,
                                                                 new WireProtocolAdaptorFactoryImpl(httpSink),
+
                                                                 wireProtocolMessageSink);
-    return connectionManager.createListener(addr, stackProvider, Constants.DEFAULT_ACCEPT_QUEUE_DEPTH, resueAddr);
+    
+    TCListener listener = connectionManager.createListener(addr, stackProvider, Constants.DEFAULT_ACCEPT_QUEUE_DEPTH, resueAddr); 
+    
+    // XXX: since we don't create multiple listeners per commsMgr, its OK to set
+    // L2's callbackPort here. Otherwise, have interface method and set after starting
+    // commsMgr listener.
+    if (!this.healthCheckerConfig.isCallbackPortListenerNeeded()) {
+      this.callbackPort = listener.getBindPort();
+    }
+    
+    return listener;
   }
 
-  private void startHealthCheckCallbackPortListener(HealthCheckerConfig healthCheckerConfig) {
-    if (!healthCheckerConfig.isCallbackPortListenerNeeded()) {
+  private void startHealthCheckCallbackPortListener(HealthCheckerConfig healthCheckrConfig) {
+    if (!healthCheckrConfig.isCallbackPortListenerNeeded()) {
       // Callback Port Listeners are not needed for L2s.
       logger.info("HealtCheck CallbackPort Listener not requested");
       return;
     }
 
-    int bindPort = healthCheckerConfig.getCallbackPortListenerBindPort();
+    int bindPort = healthCheckrConfig.getCallbackPortListenerBindPort();
     if (bindPort == TransportHandshakeMessage.NO_CALLBACK_PORT) {
       logger.info("HealtCheck CallbackPort Listener disabled");
       return;
     }
 
     InetAddress bindAddr;
-    String bindAddress = healthCheckerConfig.getCallbackPortListenerBindAddress();
+    String bindAddress = healthCheckrConfig.getCallbackPortListenerBindAddress();
     if (bindAddress == null || bindAddress.equals("")) {
       bindAddress = TCSocketAddress.WILDCARD_IP;
     }
