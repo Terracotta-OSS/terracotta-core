@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -34,7 +35,7 @@ import java.util.Map.Entry;
 
 public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
 
-  private static final int LOOP_COUNT   = 20;
+  private static final int LOOP_COUNT   = 10;
   private static final int DEPTH_COUNT  = 5;
   private static final int BREATH_COUNT = 3;
 
@@ -62,6 +63,7 @@ public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
     new CyclicBarrierSpec().visit(visitor, config);
   }
 
+  @Override
   public void runTest() throws BrokenBarrierException, InterruptedException {
     setCyclicBarrier();
     int myid = uid.increment();
@@ -183,7 +185,8 @@ public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
 
   private Map getPopulatedMap(Map m) {
     for (int i = 0; i < 10; i++) {
-      m.put(StringUtil.reduce("Hello - " + i), StringUtil.reduce("Hehehehehehehehehehehehehehehehehheheheheheheheheheheheheheheheheh-" + i));
+      m.put(StringUtil.reduce("Hello - " + i), StringUtil
+          .reduce("Hehehehehehehehehehehehehehehehehheheheheheheheheheheheheheheheheh-" + i));
     }
     return m;
   }
