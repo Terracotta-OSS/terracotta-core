@@ -4,14 +4,27 @@
  */
 package com.tctest;
 
+import com.tc.exception.TCRuntimeException;
 import com.tc.test.proxyconnect.ProxyConnectManager;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Date;
 
 public class LinkedBlockingQueueProxyCrashTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 4;
 
   public LinkedBlockingQueueProxyCrashTest() {
-    //disableAllUntil("2007-06-30");
+    String computerName;
+    try {
+      computerName = InetAddress.getLocalHost().getHostName();
+    } catch (UnknownHostException e) {
+      throw new TCRuntimeException(e);
+    }
+    if (computerName.startsWith("rh5mo0")) {
+      disableAllUntil(new Date(Long.MAX_VALUE));
+    }
   }
 
   public void doSetUp(TransparentTestIface t) throws Exception {
@@ -39,6 +52,5 @@ public class LinkedBlockingQueueProxyCrashTest extends TransparentTestBase {
     mgr.setProxyWaitTime(30 * 1000);
     mgr.setProxyDownTime(100);
   }
-
 
 }
