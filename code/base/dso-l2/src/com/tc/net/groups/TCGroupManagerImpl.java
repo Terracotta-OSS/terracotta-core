@@ -158,7 +158,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
       TCSocketAddress remoteAddr = m.getChannel().getRemoteAddress();
       TCConnection[] conns = communicationsManager.getConnectionManager().getAllActiveConnections();
       for (int i = 0; i < conns.length; ++i) {
-        if (conns[i].getRemoteAddress().equals(remoteAddr)) { return true; }
+        if (conns[i].isConnected() && conns[i].getRemoteAddress().equals(remoteAddr)) { return true; }
       }
     }
     return false;
