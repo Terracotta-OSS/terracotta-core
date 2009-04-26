@@ -8,7 +8,7 @@ import com.tc.admin.common.BrowserLauncher;
 import com.tc.admin.common.InputStreamDrainer;
 import com.tc.admin.common.LAFHelper;
 import com.tc.admin.common.Splash;
-import com.tc.admin.common.XTabbedPane;
+import com.tc.admin.common.XScrollPane;
 import com.tc.admin.common.XTextPane;
 import com.tc.util.ResourceBundleHelper;
 import com.tc.util.runtime.Os;
@@ -39,10 +39,9 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 
 public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, PropertyChangeListener {
-  private static String[]             PRODUCTS     = { "Pojo", "Spring", "Sessions" };
   private static ResourceBundleHelper bundleHelper = new ResourceBundleHelper(WelcomeFrame.class);
 
-  private XTabbedPane                 tabbedPane;
+  private XTextPane                   textPane;
   private final ArrayList             startupList;
 
   public WelcomeFrame(String[] args) {
@@ -59,7 +58,7 @@ public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, P
 
     Container cp = getContentPane();
     cp.setLayout(new BorderLayout());
-    cp.add(tabbedPane = new XTabbedPane());
+    cp.add(new XScrollPane(textPane = new XTextPane()));
 
     addWindowListener(new WindowAdapter() {
       @Override
@@ -78,21 +77,15 @@ public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, P
       }
     });
 
-    for (int i = 0; i < PRODUCTS.length; i++) {
-      XTextPane textPane = new XTextPane();
-      startupList.add(textPane);
-      textPane.setBackground(Color.WHITE);
-      textPane.setEditable(false);
-      textPane.addHyperlinkListener(this);
-      textPane.addPropertyChangeListener("page", this);
-      try {
-        textPane.setPage(getClass().getResource("Welcome" + PRODUCTS[i] + ".html"));
-      } catch (IOException ioe) {
-        textPane.setText(ioe.getMessage());
-      }
-
-      tabbedPane.add(PRODUCTS[i], textPane);
-      tabbedPane.setBackgroundAt(i, Color.WHITE);
+    startupList.add(textPane);
+    textPane.setBackground(Color.WHITE);
+    textPane.setEditable(false);
+    textPane.addHyperlinkListener(this);
+    textPane.addPropertyChangeListener("page", this);
+    try {
+      textPane.setPage(getClass().getResource("Welcome.html"));
+    } catch (IOException ioe) {
+      textPane.setText(ioe.getMessage());
     }
   }
 
@@ -100,13 +93,8 @@ public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, P
     return bundleHelper.getString(key);
   }
 
-  private XTextPane getTextPane() {
-    return (XTextPane) tabbedPane.getSelectedComponent();
-  }
-
   protected void setTextPaneCursor(int type) {
     Cursor c = Cursor.getPredefinedCursor(type);
-    XTextPane textPane = getTextPane();
     HTMLEditorKit kit = (HTMLEditorKit) textPane.getEditorKit();
 
     textPane.setCursor(c);
@@ -117,7 +105,6 @@ public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, P
   }
 
   public void hyperlinkUpdate(HyperlinkEvent e) {
-    XTextPane textPane = getTextPane();
     HyperlinkEvent.EventType type = e.getEventType();
     Element elem = e.getSourceElement();
 
@@ -130,10 +117,6 @@ public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, P
 
       hyperlinkActivated(anchor, action);
     }
-  }
-
-  private String getProduct() {
-    return PRODUCTS[tabbedPane.getSelectedIndex()];
   }
 
   private void runDSOSampleLauncher() {
@@ -158,34 +141,20 @@ public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, P
 
   protected void hyperlinkActivated(AttributeSet anchor, String action) {
     if (action.equals("show_samples")) {
-      if ("Pojo".equals(getProduct())) {
-        runDSOSampleLauncher();
-      } else {
-        File file = new File(getProductDirectory(), "samples.html");
-
-        openURL("file://" + file.getAbsolutePath());
-      }
+      runDSOSampleLauncher();
     } else if (action.equals("run_dev_center")) {
       startFakeWaitPeriod();
       runScript("dev-console");
     } else if (action.equals("run_configurator")) {
       startFakeWaitPeriod();
       runScript("sessions-configurator", "tools" + System.getProperty("file.separator") + "sessions");
-    } else if (action.equals("show_guide")) {
-      File file = new File(getProductDirectory(), "docs");
-      String doc = (String) anchor.getAttribute(HTML.Attribute.NAME);
-
-      file = new File(file, doc);
-
-      openURL(file.getAbsolutePath());
     } else {
       openURL(action);
     }
   }
 
   protected File getProductDirectory() {
-    int index = tabbedPane.getSelectedIndex();
-    return new File(getSamplesDir(), PRODUCTS[index].toLowerCase());
+    return new File(getSamplesDir(), "pojo");
   }
 
   protected void openURL(String url) {
@@ -255,7 +224,6 @@ public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, P
   }
 
   public void propertyChange(PropertyChangeEvent pce) {
-    XTextPane textPane = (XTextPane) pce.getSource();
     startupList.remove(textPane);
 
     if (startupList.isEmpty()) {
