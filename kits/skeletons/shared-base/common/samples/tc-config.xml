@@ -19,12 +19,11 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
        for additional information. -->
   <servers>
     <server host="%i" name="sample">
+      <dso-port>9510</dso-port>
+      <jmx-port>9520</jmx-port>
       <data>terracotta/demo-server/server-data</data>
       <logs>terracotta/demo-server/server-logs</logs>
       <statistics>terracotta/demo-server/server-statistics</statistics>
     </server>
-    <update-check>
-      <enabled>true</enabled>
-    </update-check>
   </servers>
 </tc:tc-config>
