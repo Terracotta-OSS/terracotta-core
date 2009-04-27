@@ -54,7 +54,7 @@ public class LinkedBlockingQueueSpawningTestApp extends AbstractTransparentApp {
     super(appId, cfg, listenerProvider);
     this.config = cfg;
     System.out.println("XXX Test for spawning LBQClient " + SPAWN_COUNT + " times and sleep " + SPAWN_SLEEP_PERIOD
-                + "ms in between.");
+                       + "ms in between.");
   }
 
   public void run() {
@@ -148,7 +148,7 @@ public class LinkedBlockingQueueSpawningTestApp extends AbstractTransparentApp {
     public void run() {
       try {
         System.out.println("Starting... with counter=" + counter.get() + " counter:"
-                    + ((Manageable) counter).__tc_managed().getObjectID());
+                           + ((Manageable) counter).__tc_managed().getObjectID());
 
         for (int i = 0; i < PRODUCERS; i++) {
           pool.execute(new Producer(this, timeout));
@@ -173,7 +173,7 @@ public class LinkedBlockingQueueSpawningTestApp extends AbstractTransparentApp {
         if (runtime == 0) {
           pool.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
         } else {
-          pool.awaitTermination(runtime + 200L, TimeUnit.MILLISECONDS);
+          pool.awaitTermination(runtime + 60000L, TimeUnit.MILLISECONDS);
         }
       } catch (InterruptedException e) {
         System.out.println("Got interrupted while waiting for all threads to finish");
@@ -205,7 +205,7 @@ public class LinkedBlockingQueueSpawningTestApp extends AbstractTransparentApp {
 
     public void run() {
       try {
-        while (canRun() || (queue.size() < CONSUMERS)) {
+        while (canRun()) {
           synchronized (inputLock) {
             WorkItem d = new WorkItem(counter.getAndIncrement());
             queue.put(d);
@@ -227,7 +227,7 @@ public class LinkedBlockingQueueSpawningTestApp extends AbstractTransparentApp {
   }
 
   public static class Consumer implements Runnable {
-    private long timeout;
+    private long            timeout;
     private final LBQClient client;
 
     public Consumer(LBQClient client, long timeout) {
@@ -237,13 +237,18 @@ public class LinkedBlockingQueueSpawningTestApp extends AbstractTransparentApp {
 
     public void run() {
       try {
-        while (canRun() || (queue.remainingCapacity() < PRODUCERS)) {
-          synchronized (outputLock) {
-            WorkItem data = queue.take();
-            Assert.assertEquals("Sequence mismatch!", outCounter.getAndIncrement(), data.getID());
+        while (canRun()) {
+          WorkItem data;
+          if (queue.size() > 0) {
+            synchronized (outputLock) {
+              data = queue.take();
+              Assert.assertEquals("Sequence mismatch!", outCounter.getAndIncrement(), data.getID());
+            }
             if (data.getID() % 100 == 0) {
               System.out.println("XXX consume " + data.getID());
             }
+          } else {
+            Thread.sleep(3);
           }
         }
       } catch (Throwable e) {
