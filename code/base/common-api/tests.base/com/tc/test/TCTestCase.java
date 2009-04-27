@@ -124,6 +124,10 @@ public class TCTestCase extends TestCase {
     // NOP - Overridden by subclasses
   }
 
+  public static boolean commitTimeoutTaskAdded(boolean from, boolean to) {
+    return timeoutTaskAdded.commit(from, to);
+  }
+
   // override this method if you want to do something before your test times out
   protected void beforeTimeout() throws Throwable {
     if (false) throw new AssertionError(); // silence compiler warning
@@ -193,7 +197,7 @@ public class TCTestCase extends TestCase {
     }
   }
 
-  private void scheduleTimeoutTask() {
+  public void scheduleTimeoutTask() {
     // enforce some sanity
     final int MINIMUM = 30;
     long junitTimeout = this.getTimeoutValueInSeconds();

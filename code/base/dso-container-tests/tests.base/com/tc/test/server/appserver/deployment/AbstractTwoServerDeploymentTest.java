@@ -17,6 +17,12 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
   public WebApplicationServer server0;
   public WebApplicationServer server1;
 
+  public AbstractTwoServerDeploymentTest() {
+    if (commitTimeoutTaskAdded(false, true)) {
+      scheduleTimeoutTask();
+    }
+  }
+  
   public void setServer0(WebApplicationServer server0) {
     this.server0 = server0;
   }

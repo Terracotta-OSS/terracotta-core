@@ -16,6 +16,12 @@ import junit.framework.TestSuite;
 public abstract class AbstractOneServerDeploymentTest extends AbstractDeploymentTest {
   public WebApplicationServer server0;
 
+  public AbstractOneServerDeploymentTest() {
+    if (commitTimeoutTaskAdded(false, true)) {
+      scheduleTimeoutTask();
+    }
+  }
+
   public void setServer0(WebApplicationServer server0) {
     this.server0 = server0;
   }
