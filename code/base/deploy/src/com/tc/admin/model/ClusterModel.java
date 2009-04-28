@@ -268,7 +268,8 @@ public class ClusterModel implements IClusterModel {
   }
 
   private ScheduledThreadPoolExecutor scheduledExecutor;
-  private long                        pollPeriodSeconds = 3;
+  private long                        pollPeriodSeconds  = 1;
+  private long                        pollTimeoutSeconds = 1;
 
   public void setPollPeriod(long seconds) {
     pollPeriodSeconds = seconds;
@@ -276,6 +277,14 @@ public class ClusterModel implements IClusterModel {
 
   public long getPollPeriod() {
     return pollPeriodSeconds;
+  }
+
+  public void setPollTimeout(long seconds) {
+    pollTimeoutSeconds = seconds;
+  }
+
+  public long getPollTimeoutSeconds() {
+    return pollTimeoutSeconds;
   }
 
   private synchronized void setScheduledExecutor(ScheduledThreadPoolExecutor scheduledExecutor) {
@@ -345,8 +354,11 @@ public class ClusterModel implements IClusterModel {
           }
         }
         if (attrMap.isEmpty()) { return Collections.singleton(new NodePollResult(server)); }
-        Map<ObjectName, Map<String, Object>> combinedResultMap = server.getAttributeMap(attrMap, pollPeriodSeconds,
-                                                                                        TimeUnit.SECONDS);
+        Map<ObjectName, Map<String, Object>> combinedResultMap = null;
+        combinedResultMap = server.getAttributeMap(attrMap, pollTimeoutSeconds, TimeUnit.SECONDS);
+        if (combinedResultMap == null) {
+          combinedResultMap = new HashMap<ObjectName, Map<String, Object>>();
+        }
         if (!cprList.isEmpty()) {
           List<NodePollResult> result = new ArrayList<NodePollResult>();
           Iterator<ClientPollResult> cprIter = cprList.iterator();
@@ -372,7 +384,7 @@ public class ClusterModel implements IClusterModel {
         if (attrMap.isEmpty()) {
           resultMap = Collections.emptyMap();
         } else {
-          resultMap = server.getAttributeMap(attrMap, pollPeriodSeconds, TimeUnit.SECONDS);
+          resultMap = server.getAttributeMap(attrMap, pollTimeoutSeconds, TimeUnit.SECONDS);
         }
         return Collections.singleton(new NodePollResult(server, resultMap));
       }
@@ -428,55 +440,59 @@ public class ClusterModel implements IClusterModel {
 
   private class PollTask implements Runnable {
     public void run() {
-      List<Callable<Collection<NodePollResult>>> tasks = new ArrayList<Callable<Collection<NodePollResult>>>();
-      for (IServerGroup group : getServerGroups()) {
-        for (IServer server : group.getMembers()) {
-          if (server.isReady()) {
-            Map<ObjectName, Set<String>> attributeMap = server.getPolledAttributes();
-            mergeScopePolledAttributes(server, attributeMap, PollScope.ALL_SERVERS);
-            if (server.isActive()) {
-              mergeScopePolledAttributes(server, attributeMap, PollScope.ACTIVE_SERVERS);
-            }
-            if (server.isActiveCoordinator() || !attributeMap.isEmpty()) {
-              tasks.add(new NodePollWorker(server, attributeMap));
-            }
-          }
-        }
-      }
       try {
-        final Map<IClusterNode, Map<ObjectName, Map<String, Object>>> resultObj = new HashMap<IClusterNode, Map<ObjectName, Map<String, Object>>>();
-        Set<PolledAttributeListener> listenerSet = getAllScopedPollListeners();
-        List<Future<Collection<NodePollResult>>> results = executor.invokeAll(tasks, 2 * pollPeriodSeconds,
-                                                                              TimeUnit.SECONDS);
-        Iterator<Future<Collection<NodePollResult>>> resultIter = results.iterator();
-        while (resultIter.hasNext()) {
-          Future<Collection<NodePollResult>> future = resultIter.next();
-          if (future.isDone()) {
-            try {
-              Iterator<NodePollResult> nodeResult = future.get().iterator();
-              while (nodeResult.hasNext()) {
-                NodePollResult npr = nodeResult.next();
-                if (!npr.attributeMap.isEmpty()) {
-                  resultObj.put(npr.clusterNode, npr.attributeMap);
-                  Set<PolledAttributeListener> listeners = npr.clusterNode.getPolledAttributeListeners();
-                  listenerSet.addAll(listeners);
-                }
+        List<Callable<Collection<NodePollResult>>> tasks = new ArrayList<Callable<Collection<NodePollResult>>>();
+        for (IServerGroup group : getServerGroups()) {
+          for (IServer server : group.getMembers()) {
+            if (server.isReady()) {
+              Map<ObjectName, Set<String>> attributeMap = server.getPolledAttributes();
+              mergeScopePolledAttributes(server, attributeMap, PollScope.ALL_SERVERS);
+              if (server.isActive()) {
+                mergeScopePolledAttributes(server, attributeMap, PollScope.ACTIVE_SERVERS);
               }
-            } catch (Exception e) {
-              /**/
+              if (server.isActiveCoordinator() || !attributeMap.isEmpty()) {
+                tasks.add(new NodePollWorker(server, attributeMap));
+              }
             }
           }
         }
-        Iterator<PolledAttributeListener> listenerIter = listenerSet.iterator();
-        PolledAttributesResult par = new PolledAttributesResultImpl(resultObj);
-        while (listenerIter.hasNext()) {
-          listenerIter.next().attributesPolled(par);
+        try {
+          final Map<IClusterNode, Map<ObjectName, Map<String, Object>>> resultObj = new HashMap<IClusterNode, Map<ObjectName, Map<String, Object>>>();
+          Set<PolledAttributeListener> listenerSet = getAllScopedPollListeners();
+          List<Future<Collection<NodePollResult>>> results = executor.invokeAll(tasks);
+          Iterator<Future<Collection<NodePollResult>>> resultIter = results.iterator();
+          while (resultIter.hasNext()) {
+            Future<Collection<NodePollResult>> future = resultIter.next();
+            if (future.isDone() && !future.isCancelled()) {
+              try {
+                Iterator<NodePollResult> nodeResult = future.get().iterator();
+                while (nodeResult.hasNext()) {
+                  NodePollResult npr = nodeResult.next();
+                  if (!npr.attributeMap.isEmpty()) {
+                    resultObj.put(npr.clusterNode, npr.attributeMap);
+                    Set<PolledAttributeListener> listeners = npr.clusterNode.getPolledAttributeListeners();
+                    listenerSet.addAll(listeners);
+                  }
+                }
+              } catch (Exception e) {
+                /* CancellationException, ExecutionException */
+              }
+            }
+          }
+          if (resultObj.size() > 0) {
+            Iterator<PolledAttributeListener> listenerIter = listenerSet.iterator();
+            PolledAttributesResult par = new PolledAttributesResultImpl(resultObj);
+            while (listenerIter.hasNext()) {
+              listenerIter.next().attributesPolled(par);
+            }
+          }
+        } catch (InterruptedException ie) {/**/
         }
-      } catch (InterruptedException ie) {/**/
-      }
-      ScheduledThreadPoolExecutor theScheduledExecutor = getScheduledExecutor();
-      if (theScheduledExecutor != null) {
-        theScheduledExecutor.schedule(PollTask.this, pollPeriodSeconds, TimeUnit.SECONDS);
+      } finally {
+        ScheduledThreadPoolExecutor theScheduledExecutor = getScheduledExecutor();
+        if (theScheduledExecutor != null) {
+          theScheduledExecutor.schedule(PollTask.this, pollPeriodSeconds, TimeUnit.SECONDS);
+        }
       }
     }
   }

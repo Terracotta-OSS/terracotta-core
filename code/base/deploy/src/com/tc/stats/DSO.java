@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -192,7 +193,6 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
       try {
         rootID = objMgr.lookupRootID(name);
       } catch (Exception e) {
-        e.printStackTrace();
         continue;
       }
 
@@ -476,6 +476,8 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     }
   }
 
+  private static final AttributeList EMPTY_ATTR_LIST = new AttributeList();
+
   private class AttributeListTask implements Callable<SourcedAttributeList> {
     private final ObjectName  objectName;
     private final Set<String> attributeSet;
@@ -485,8 +487,13 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
       this.attributeSet = attributeSet;
     }
 
-    public SourcedAttributeList call() throws Exception {
-      AttributeList attributeList = mbeanServer.getAttributes(objectName, attributeSet.toArray(new String[0]));
+    public SourcedAttributeList call() {
+      AttributeList attributeList;
+      try {
+        attributeList = mbeanServer.getAttributes(objectName, attributeSet.toArray(new String[0]));
+      } catch (Exception e) {
+        attributeList = EMPTY_ATTR_LIST;
+      }
       return new SourcedAttributeList(objectName, attributeList);
     }
   }
@@ -506,7 +513,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
       Iterator<Future<SourcedAttributeList>> resultIter = results.iterator();
       while (resultIter.hasNext()) {
         Future<SourcedAttributeList> future = resultIter.next();
-        if (future.isDone()) {
+        if (future.isDone() && !future.isCancelled()) {
           try {
             SourcedAttributeList sal = future.get();
             Iterator<Attribute> attrIter = sal.attributeList.iterator();
@@ -516,8 +523,10 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
               onMap.put(attr.getName(), attr.getValue());
             }
             result.put(sal.objectName, onMap);
+          } catch (CancellationException ce) {
+            /**/
           } catch (ExecutionException ee) {
-            ee.printStackTrace();
+            /**/
           }
         }
       }

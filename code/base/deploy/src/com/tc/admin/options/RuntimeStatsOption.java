@@ -20,14 +20,17 @@ public class RuntimeStatsOption extends AbstractOption {
   public static final String  NAME                                    = "RuntimeStats";
 
   private SpinnerNumberModel  samplePeriodModel;
+  private SpinnerNumberModel  sampleTimeoutModel;
   private SpinnerNumberModel  sampleHistoryModel;
   private ImageIcon           icon;
 
   private static final int    DEFAULT_POLL_PERIOD_SECS                = 3;
+  private static final int    DEFAULT_POLL_TIMEOUT_SECS               = 1;
   private static final int    DEFAULT_SAMPLE_HISTORY_MINUTES          = 5;
   private static final int    SAMPLE_SAMPLE_HISTORY_STEP_SIZE         = 1;
 
   private static final String DEFAULT_POLL_PERIOD_SECONDS_PREF_KEY    = "poll-periods-seconds";
+  private static final String DEFAULT_POLL_TIMEOUT_SECONDS_PREF_KEY   = "poll-timeout-seconds";
   private static final String DEFAULT_SAMPLE_HISTORY_MINUTES_PREF_KEY = "sample-history-minutes";
 
   public RuntimeStatsOption(ApplicationContext appContext) {
@@ -50,6 +53,7 @@ public class RuntimeStatsOption extends AbstractOption {
   @Override
   public void apply() {
     putIntPref(DEFAULT_POLL_PERIOD_SECONDS_PREF_KEY, samplePeriodModel.getNumber().intValue());
+    putIntPref(DEFAULT_POLL_TIMEOUT_SECONDS_PREF_KEY, sampleTimeoutModel.getNumber().intValue());
     putIntPref(DEFAULT_SAMPLE_HISTORY_MINUTES_PREF_KEY, sampleHistoryModel.getNumber().intValue());
   }
 
@@ -73,6 +77,20 @@ public class RuntimeStatsOption extends AbstractOption {
       samplePeriodSpinner.setModel(samplePeriodModel);
       ((DefaultEditor) samplePeriodSpinner.getEditor()).getTextField().setColumns(3);
       panel.add(samplePeriodSpinner, gbc);
+      gbc.gridx--;
+      gbc.gridy++;
+
+      panel.add(new XLabel("Poll timeout seconds:"), gbc);
+      gbc.gridx++;
+      gbc.anchor = GridBagConstraints.WEST;
+
+      XSpinner sampleTimeoutSpinner = new XSpinner();
+      samplePeriodSpinner.setToolTipText("Sample poll timeout (seconds)");
+      sampleTimeoutModel = new SpinnerNumberModel(Integer.valueOf(getPollTimeoutSeconds()), Integer.valueOf(1), null,
+                                                  Integer.valueOf(1));
+      sampleTimeoutSpinner.setModel(sampleTimeoutModel);
+      ((DefaultEditor) sampleTimeoutSpinner.getEditor()).getTextField().setColumns(3);
+      panel.add(sampleTimeoutSpinner, gbc);
       gbc.gridx--;
       gbc.gridy++;
 
@@ -101,6 +119,10 @@ public class RuntimeStatsOption extends AbstractOption {
 
   public int getPollPeriodSeconds() {
     return getIntPref(DEFAULT_POLL_PERIOD_SECONDS_PREF_KEY, DEFAULT_POLL_PERIOD_SECS);
+  }
+
+  public int getPollTimeoutSeconds() {
+    return getIntPref(DEFAULT_POLL_TIMEOUT_SECONDS_PREF_KEY, DEFAULT_POLL_TIMEOUT_SECS);
   }
 
   public int getSampleHistoryMinutes() {

@@ -24,10 +24,13 @@ import com.tc.admin.common.LinkButton;
 import com.tc.admin.common.XButton;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XTextPane;
+import com.tc.admin.model.IClusterNode;
 import com.tc.admin.model.PolledAttributeListener;
 import com.tc.admin.model.PolledAttributesResult;
 import com.tc.admin.options.RuntimeStatsOption;
 import com.tc.management.RuntimeStatisticConstants;
+import com.tc.statistics.StatisticData;
+import com.tc.statistics.retrieval.actions.SRAMemoryUsage;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -92,6 +95,9 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     fStopIcon = new ImageIcon(BaseRuntimeStatsPanel.class.getResource("/com/tc/admin/icons/suspend_co.gif"));
     fClearIcon = new ImageIcon(BaseRuntimeStatsPanel.class.getResource("/com/tc/admin/icons/clear_co.gif"));
   }
+
+  private static final String[]         MEMORY_USAGE_SERIES_NAMES               = { SRAMemoryUsage.DATA_NAME_MAX,
+      SRAMemoryUsage.DATA_NAME_USED                                            };
 
   protected final ArrayList<TimeSeries> allSeries;
   protected final ArrayList<JFreeChart> allCharts;
@@ -224,6 +230,24 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     public void actionPerformed(ActionEvent ae) {
       clearAllRuntimeStatsSamples();
     }
+  }
+
+  protected TimeSeries[] createMemoryUsageSeries() {
+    String[] names = MEMORY_USAGE_SERIES_NAMES;
+    TimeSeries[] result = new TimeSeries[names.length];
+    for (int i = 0; i < names.length; i++) {
+      result[i] = createTimeSeries(names[i]);
+    }
+    return result;
+  }
+
+  protected TimeSeries[] createCpusSeries(IClusterNode clusterNode) {
+    String[] cpus = clusterNode.getCpuStatNames();
+    TimeSeries[] result = new TimeSeries[cpus.length];
+    for (int i = 0; i < cpus.length; i++) {
+      result[i] = createTimeSeries(cpus[i]);
+    }
+    return result;
   }
 
   protected TimeSeries createTimeSeries(String name) {
@@ -432,8 +456,62 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
   protected Date tmpDate = new Date();
 
   protected void updateSeries(TimeSeries series, Number value) {
-    if (value != null) {
-      series.addOrUpdate(new Second(tmpDate), value);
+    series.addOrUpdate(new Second(tmpDate), getValueOrMissing(series, value));
+  }
+
+  private static final boolean SHOW_LAST_ON_MISSING = true;
+
+  protected static Number getValueOrMissing(TimeSeries timeSeries, Number value) {
+    if (value != null) { return value; }
+    if (SHOW_LAST_ON_MISSING) {
+      int itemCount = timeSeries.getItemCount();
+      if (itemCount > 0) { return timeSeries.getValue(itemCount - 1); }
+    }
+    return Double.valueOf(0);
+  }
+
+  protected static Number getValueOrMissing(TimeSeries series, StatisticData[] data, int index) {
+    Number result = null;
+    if (data != null && data.length > 0) {
+      StatisticData seriesData = data[index];
+      if (seriesData != null) {
+        result = (Number) seriesData.getData();
+      }
+    }
+    if (SHOW_LAST_ON_MISSING) {
+      if (result == null) {
+        int itemCount = series.getItemCount();
+        if (itemCount > 0) {
+          result = series.getValue(itemCount - 1);
+        }
+      }
+    }
+    if (result == null) {
+      result = Double.valueOf(0);
+    }
+    return result;
+  }
+
+  protected static void handleTransactionRate(TimeSeries series, Long value) {
+    if (series != null) {
+      series.addOrUpdate(new Second(), getValueOrMissing(series, value));
+    }
+  }
+
+  protected static void handleCpuUsage(TimeSeries[] series, StatisticData[] data) {
+    if (series != null && series.length > 0) {
+      Second now = new Second();
+      for (int i = 0; i < series.length; i++) {
+        series[i].addOrUpdate(now, getValueOrMissing(series[i], data, i));
+      }
+    }
+  }
+
+  protected static void handleMemoryUsage(TimeSeries[] series, Long max, Long used) {
+    if (series != null) {
+      Second now = new Second();
+      series[0].addOrUpdate(now, getValueOrMissing(series[0], max));
+      series[1].addOrUpdate(now, getValueOrMissing(series[1], used));
     }
   }
 

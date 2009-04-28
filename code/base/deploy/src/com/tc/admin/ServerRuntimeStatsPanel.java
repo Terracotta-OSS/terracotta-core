@@ -29,10 +29,8 @@ import com.tc.statistics.StatisticData;
 import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -47,7 +45,6 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
 
   private ChartPanel               cpuPanel;
   private TimeSeries[]             cpuTimeSeries;
-  private Map<String, TimeSeries>  cpuTimeSeriesMap;
 
   private TimeSeries               flushRateSeries;
   private TimeSeries               faultRateSeries;
@@ -143,15 +140,7 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
 
       if (cpuTimeSeries != null) {
         StatisticData[] cpuUsageData = (StatisticData[]) result.getPolledAttribute(theServer, POLLED_ATTR_CPU_USAGE);
-        if (cpuUsageData != null) {
-          for (int i = 0; i < cpuUsageData.length; i++) {
-            StatisticData cpuData = cpuUsageData[i];
-            TimeSeries timeSeries = cpuTimeSeriesMap.get(cpuData.getElement());
-            if (timeSeries != null) {
-              updateSeries(timeSeries, (Number) cpuData.getData());
-            }
-          }
-        }
+        handleCpuUsage(cpuTimeSeries, cpuUsageData);
       }
     }
   }
@@ -217,13 +206,8 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     memoryPanel.setToolTipText(appContext.getString("server.stats.heap.usage.tip"));
   }
 
-  private synchronized void setupCpuSeries(int processorCount) {
-    cpuTimeSeriesMap = new HashMap<String, TimeSeries>();
-    cpuTimeSeries = new TimeSeries[processorCount];
-    for (int i = 0; i < processorCount; i++) {
-      String cpuName = "cpu " + i;
-      cpuTimeSeriesMap.put(cpuName, cpuTimeSeries[i] = createTimeSeries(cpuName));
-    }
+  private synchronized void setupCpuSeries(TimeSeries[] cpuTimeSeries) {
+    this.cpuTimeSeries = cpuTimeSeries;
     JFreeChart cpuChart = createChart(cpuTimeSeries);
     XYPlot plot = (XYPlot) cpuChart.getPlot();
     NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
@@ -236,12 +220,12 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     cpuPanel.setRangeZoomable(false);
   }
 
-  private class CpuPanelWorker extends BasicWorker<String[]> {
+  private class CpuPanelWorker extends BasicWorker<TimeSeries[]> {
     private CpuPanelWorker() {
-      super(new Callable<String[]>() {
-        public String[] call() throws Exception {
+      super(new Callable<TimeSeries[]>() {
+        public TimeSeries[] call() throws Exception {
           IServer theServer = getServer();
-          if (theServer != null) { return theServer.getCpuStatNames(); }
+          if (theServer != null) { return createCpusSeries(theServer); }
           return null;
         }
       });
@@ -253,9 +237,9 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
       if (e != null) {
         setupInstructions();
       } else {
-        String[] cpuNames = getResult();
-        if (cpuNames.length > 0) {
-          setupCpuSeries(cpuNames.length);
+        TimeSeries[] cpus = getResult();
+        if (cpus.length > 0) {
+          setupCpuSeries(cpus);
         } else {
           setupInstructions();
         }
@@ -281,8 +265,6 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     if (cpuTimeSeries != null) {
       list.addAll(Arrays.asList(cpuTimeSeries));
       cpuTimeSeries = null;
-      cpuTimeSeriesMap.clear();
-      cpuTimeSeriesMap = null;
     }
     if (memoryMaxSeries != null) {
       list.add(memoryMaxSeries);

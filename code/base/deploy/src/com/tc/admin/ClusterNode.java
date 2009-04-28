@@ -95,6 +95,7 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
     RuntimeStatsOption runtimeStatsOption = (RuntimeStatsOption) adminClientContext.getOption(RuntimeStatsOption.NAME);
     if (runtimeStatsOption != null) {
       clusterModel.setPollPeriod(runtimeStatsOption.getPollPeriodSeconds());
+      clusterModel.setPollTimeout(runtimeStatsOption.getPollTimeoutSeconds());
     }
     Preferences prefs = adminClientContext.getPrefs().node(RuntimeStatsOption.NAME);
     prefs.addPreferenceChangeListener(this);
