@@ -124,8 +124,10 @@ public class ClusterLog extends XContainer implements ActionListener {
       IClusterModel theClusterModel = getClusterModel();
       if (theClusterModel == null) { return; }
 
-      if (!inited && clusterModel.isConnected()) {
+      if (!inited && theClusterModel.isConnected()) {
         addNodePanels();
+      } else if (inited && !theClusterModel.isConnected()) {
+        reset();
       }
     }
 
@@ -138,6 +140,11 @@ public class ClusterLog extends XContainer implements ActionListener {
         elementChooser.setSelectedPath(newActive.toString());
       }
     }
+  }
+
+  private void reset() {
+    pagedView.removeAll();
+    inited = false;
   }
 
   private void addNodePanels() {

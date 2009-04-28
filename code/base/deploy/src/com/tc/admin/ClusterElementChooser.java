@@ -354,8 +354,10 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
       IClusterModel theClusterModel = getClusterModel();
       if (theClusterModel == null) { return; }
 
-      if (!inited && clusterModel.isConnected()) {
+      if (!inited && theClusterModel.isConnected()) {
         setupTreeModel();
+      } else if (inited && !theClusterModel.isConnected()) {
+        reset();
       }
     }
   }
@@ -371,6 +373,14 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
     treeModelChanged();
     treeModel.addTreeModelListener(this);
     inited = true;
+  }
+
+  private void reset() {
+    treeModel.removeTreeModelListener(this);
+    XRootNode root = (XRootNode) treeModel.getRoot();
+    root.removeAllChildren();
+    root.nodeStructureChanged();
+    inited = false;
   }
 
   public TreePath getPath(IClusterModelElement clusterElement) {
