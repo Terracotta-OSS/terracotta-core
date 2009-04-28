@@ -8,7 +8,6 @@ import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
@@ -541,21 +540,16 @@ public class ArrayCopyTestApp extends GenericTransparentApp {
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    TransparencyClassSpec spec = config.getOrCreateSpec(CyclicBarrier.class.getName());
+    config.getOrCreateSpec(CyclicBarrier.class.getName());
     config.addWriteAutolock("* " + CyclicBarrier.class.getName() + "*.*(..)");
 
     String testClass = ArrayCopyTestApp.class.getName();
-    spec = config.getOrCreateSpec(testClass);
+    config.getOrCreateSpec(testClass);
 
     config.addIncludePattern(testClass + "$*");
 
     String methodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(methodExpression);
-
-    spec.addRoot("root", "root");
-    spec.addRoot("sharedArray", "sharedArray");
-    spec.addRoot("bigRoot", "bigRoot");
-    spec.addRoot("barrier", "barrier");
   }
 
   private static class TestObject {
