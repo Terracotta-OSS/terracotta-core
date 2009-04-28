@@ -17,6 +17,7 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 import com.tc.util.StringUtil;
+import com.tc.util.runtime.Os;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.text.DateFormat;
@@ -35,7 +36,7 @@ import java.util.Map.Entry;
 
 public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
 
-  private static final int LOOP_COUNT   = 10;
+  private static int       LOOP_COUNT   = 20;
   private static final int DEPTH_COUNT  = 5;
   private static final int BREATH_COUNT = 3;
 
@@ -45,6 +46,9 @@ public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
 
   public MapOfMapsTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
+    if (Os.isSolaris()) {
+      LOOP_COUNT = 10;
+    }
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
