@@ -198,20 +198,22 @@ public class GCStatsPanel extends XContainer implements DGCListener {
     }
   }
 
-  private class HelpButtonHandler implements ActionListener {
-    private String getKitID() {
-      String kitID = ProductInfo.getInstance().kitID();
-      if (ProductInfo.UNKNOWN_VALUE.equals(kitID)) {
-        kitID = System.getProperty("com.tc.kitID", "3.0");
-      }
-      return kitID;
+  protected String getKitID() {
+    String kitID = ProductInfo.getInstance().kitID();
+    if (ProductInfo.UNKNOWN_VALUE.equals(kitID)) {
+      kitID = System.getProperty("com.tc.kitID", "3.0");
     }
+    return kitID;
+  }
 
+  protected String getHelpButtonTarget() {
+    return appContext.format("console.guide.url", getKitID())
+           + "#TerracottaDeveloperConsole-DistributedGarbageCollection";
+  }
+
+  private class HelpButtonHandler implements ActionListener {
     public void actionPerformed(ActionEvent e) {
-      String kitID = getKitID();
-      String loc = appContext.format("console.guide.url", kitID)
-                   + "#TerracottaDeveloperConsole-DistributedGarbageCollection";
-      BrowserLauncher.openURL(loc);
+      BrowserLauncher.openURL(getHelpButtonTarget());
     }
   }
 
