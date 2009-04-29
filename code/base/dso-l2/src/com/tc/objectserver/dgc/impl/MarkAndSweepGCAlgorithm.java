@@ -111,6 +111,7 @@ final class MarkAndSweepGCAlgorithm {
 
     long deleteStartMillis = System.currentTimeMillis();
     gcInfo.setPausedStageTime(deleteStartMillis - pauseStartMillis);
+    gcInfo.setActualGarbageCount(toDelete.size());
     gcPublisher.fireGCMarkCompleteEvent(gcInfo);
 
     // Delete Garbage

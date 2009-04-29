@@ -18,7 +18,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter {
 
-  private List                     gcStatsEventListeners = new CopyOnWriteArrayList();
+  private final List               gcStatsEventListeners = new CopyOnWriteArrayList();
 
   private final LossyLinkedHashMap gcHistory             = new LossyLinkedHashMap(1500);
 
@@ -32,24 +32,25 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
 
   public GCStats getLastGarbageCollectorStats() {
     Iterator iter = gcHistory.values().iterator();
-    if(iter.hasNext()) {
-      return (GCStats)iter.next();
-    }
+    if (iter.hasNext()) { return (GCStats) iter.next(); }
     return null;
   }
 
+  @Override
   public void garbageCollectorStart(GarbageCollectionInfo info) {
     GCStatsImpl gcStats = getGCStats(info);
     push(info.getGarbageCollectionID(), gcStats);
     fireGCStatsEvent(gcStats);
   }
 
+  @Override
   public void garbageCollectorMark(GarbageCollectionInfo info) {
     GCStatsImpl gcStats = getGCStats(info);
     gcStats.setMarkState();
     fireGCStatsEvent(gcStats);
   }
 
+  @Override
   public void garbageCollectorPausing(GarbageCollectionInfo info) {
     GCStatsImpl gcStats = getGCStats(info);
     gcStats.setPauseState();
@@ -57,24 +58,29 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
 
   }
 
+  @Override
   public void garbageCollectorMarkComplete(GarbageCollectionInfo info) {
     GCStatsImpl gcStats = getGCStats(info);
     gcStats.setMarkCompleteState();
+    gcStats.setActualGarbageCount(info.getActualGarbageCount());
     fireGCStatsEvent(gcStats);
   }
 
+  @Override
   public void garbageCollectorDelete(GarbageCollectionInfo info) {
     GCStatsImpl gcStats = getGCStats(info);
     gcStats.setDeleteState();
     fireGCStatsEvent(gcStats);
   }
 
+  @Override
   public void garbageCollectorCompleted(GarbageCollectionInfo info) {
     GCStatsImpl gcStats = getGCStats(info);
     gcStats.setCompleteState();
     fireGCStatsEvent(gcStats);
   }
 
+  @Override
   public void garbageCollectorCanceled(GarbageCollectionInfo info) {
     GCStatsImpl gcStats = getGCStats(info);
     gcStats.setCanceledState();
