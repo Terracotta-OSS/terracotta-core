@@ -6,6 +6,7 @@ package com.tc.objectserver.persistence.sleepycat;
 
 import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
 
+import com.tc.exception.TCRuntimeException;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.transport.ConnectionID;
@@ -50,6 +51,13 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
 
   public ConnectionID makeConnectionId(long channelID) {
     Assert.assertTrue(channelID != ChannelID.NULL_ID.toLong());
+    // provided channelID shall not be using
+    if (clientStateStore.containsClient(new ChannelID(channelID))) { throw new TCRuntimeException(
+                                                                                                  "The connectionId "
+                                                                                                      + channelID
+                                                                                                      + " has been used. "
+                                                                                                      + " One possible cause: restarted some mirror groups but not all."); }
+
     return buildConnectionId(channelID);
   }
 
