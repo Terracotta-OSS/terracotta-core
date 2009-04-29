@@ -108,11 +108,16 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     System.setProperty("com.tc." + TCPropertiesConsts.L2_L1RECONNECT_ENABLED, "true");
 
     jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_L1RECONNECT_ENABLED + "=true");
-    
+
     if (Os.isSolaris()) {
       tcProps.setProperty(TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS, "80000");
       System.setProperty("com.tc." + TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS, "80000");
       jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS + "=80000");
+    } else if (Os.isLinux()) {
+      // default 5000 ms seems to small occasionally in few linux machines
+      tcProps.setProperty(TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS, "10000");
+      System.setProperty("com.tc." + TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS, "10000");
+      jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS + "=10000");
     }
   }
 
@@ -476,22 +481,20 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     initializeTestRunner(isMutateValidateTest, transparentAppConfig, runnerConfig);
     initPostActions();
   }
-  
+
   public void addPostAction(PostAction postAction) {
     this.postActions.add(postAction);
   }
-  
+
   protected void loadPostActions() {
-    //do not removed.
+    // do not removed.
   }
-  
+
   private void initPostActions() {
-    for(Iterator iter = postActions.iterator(); iter.hasNext();) {
-      runner.addPostAction((PostAction)iter.next());
+    for (Iterator iter = postActions.iterator(); iter.hasNext();) {
+      runner.addPostAction((PostAction) iter.next());
     }
   }
-  
-  
 
   public void initializeTestRunner(boolean isMutateValidateTest, TransparentAppConfig transparentAppCfg,
                                    DistributedTestRunnerConfig runnerCfg) throws Exception {
