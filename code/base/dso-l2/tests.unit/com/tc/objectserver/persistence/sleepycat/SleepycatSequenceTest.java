@@ -155,4 +155,26 @@ public class SleepycatSequenceTest extends TCTestCase {
     db.close();
     environment.close();
   }
+  
+  public void testLongBatchSize() throws Exception {
+    assertTrue(env.open().isClean());
+    SleepycatPersistenceTransactionProvider persistenceTransactionProvider = new SleepycatPersistenceTransactionProvider(
+                                                                                                                         env
+                                                                                                                             .getEnvironment());
+    TCLogger logger = TCLogging.getLogger(SleepycatSequenceTest.class);
+    SleepycatSequence sequence = new SleepycatSequence(persistenceTransactionProvider, logger,
+                                                       SleepycatSequenceKeys.CLIENTID_SEQUENCE_NAME, 1, env
+                                                           .getGlobalSequenceDatabase());
+    long id = sequence.next();
+    assertEquals(1, id);
+    long batchSize = Integer.MAX_VALUE * 2L;
+    System.out.println("Testing with batch size = " + batchSize);
+    id = sequence.nextBatch(batchSize);
+    assertEquals(2, id);
+    id = sequence.next();
+    assertEquals(batchSize + 2, id);
+
+    closeDBAndCheckSequence();
+  }
+
 }

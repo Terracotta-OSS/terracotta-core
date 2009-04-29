@@ -22,8 +22,8 @@ public final class TestMutableSequence implements MutableSequence {
     return sequence;
   }
 
-  public long nextBatch(int batchSize) {
-    nextBatchQueue.put(new Object[] { new Integer(batchSize) });
+  public long nextBatch(long batchSize) {
+    nextBatchQueue.put(new Object[] { new Integer((int)batchSize) });
     long ls = sequence;
     sequence += batchSize;
     return ls;

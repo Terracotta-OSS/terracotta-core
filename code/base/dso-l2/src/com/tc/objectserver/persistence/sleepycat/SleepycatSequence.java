@@ -21,7 +21,7 @@ import com.tc.util.UUID;
 import com.tc.util.sequence.MutableSequence;
 
 class SleepycatSequence extends SleepycatPersistorBase implements MutableSequence {
-  private static final String UID_KEY = "UIDKEY-3475674589230";
+  private static final String UID_KEY    = "UIDKEY-3475674589230";
   private final String        uid;
   private final Database      sequenceDB;
   private final Sequence      sequence;
@@ -41,6 +41,7 @@ class SleepycatSequence extends SleepycatPersistorBase implements MutableSequenc
     Sequence seq = null;
     SequenceConfig config = new SequenceConfig();
     config.setAllowCreate(true);
+    config.setCacheSize(0);
     try {
       seq = sequenceDB.openSequence(null, key, config);
       long currentVal = currentValueOfSequence(seq);
@@ -110,14 +111,24 @@ class SleepycatSequence extends SleepycatPersistorBase implements MutableSequenc
     return nextBatch(1);
   }
 
-  public synchronized long nextBatch(int batchSize) {
+  public synchronized long nextBatch(long batchSize) {
     return nextBatchForSequence(batchSize, sequence);
   }
 
-  private synchronized long nextBatchForSequence(int batchSize, Sequence seq) {
+  private synchronized long nextBatchForSequence(long batchSize, Sequence seq) {
     if (batchSize < 1) throw new AssertionError("Can't increment by a value less than 1.");
     try {
-      long sequenceNo = seq.get(null, batchSize);
+      if (batchSize > Integer.MAX_VALUE) {
+        long sequenceNo = seq.get(null, Integer.MAX_VALUE);
+        batchSize = batchSize - Integer.MAX_VALUE;
+        while (batchSize > 0) {
+          int size = batchSize > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) batchSize;
+          seq.get(null, size);
+          batchSize = batchSize - Integer.MAX_VALUE;
+        }
+        return sequenceNo;
+      }
+      long sequenceNo = seq.get(null, (int) batchSize);
       return sequenceNo;
     } catch (Exception t) {
       t.printStackTrace();
@@ -129,7 +140,7 @@ class SleepycatSequence extends SleepycatPersistorBase implements MutableSequenc
     return uid;
   }
 
-  public void setNext(long next) {
+  public synchronized void setNext(long next) {
     setNextForSequnce(next, sequence);
   }
 
@@ -139,7 +150,6 @@ class SleepycatSequence extends SleepycatPersistorBase implements MutableSequenc
                                                         "Cant setNext sequence to a value less than current: current = "
                                                             + currentValue + " next = " + next); }
 
-    int batchSize = (int) (next - currentValue);
-    nextBatchForSequence(batchSize, seq);
+    nextBatchForSequence(next - currentValue, seq);
   }
 }

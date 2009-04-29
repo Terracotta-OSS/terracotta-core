@@ -8,7 +8,7 @@ public interface MutableSequence extends Sequence {
   // This provide a unique id for an instance of the sequence.
   public String getUID();
 
-  public long nextBatch(int batchSize);
+  public long nextBatch(long batchSize);
   
   public void setNext(long next);
 

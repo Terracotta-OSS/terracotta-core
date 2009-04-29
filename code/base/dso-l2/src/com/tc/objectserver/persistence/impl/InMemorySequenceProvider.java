@@ -25,7 +25,7 @@ public class InMemorySequenceProvider implements MutableSequence {
     return nextID - 1;
   }
 
-  public synchronized long nextBatch(int batchSize) {
+  public synchronized long nextBatch(long batchSize) {
     long lid = nextID;
     nextID += batchSize;
     return lid;
