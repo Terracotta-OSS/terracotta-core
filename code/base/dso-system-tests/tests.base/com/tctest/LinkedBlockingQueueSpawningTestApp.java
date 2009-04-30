@@ -37,7 +37,7 @@ public class LinkedBlockingQueueSpawningTestApp extends AbstractTransparentApp {
   private static final int                           PRODUCERS          = 5;
   private static final int                           CONSUMERS          = 3;
   private static final int                           LBQ_CAPACITY       = 300;
-  private static final int                           CLIENT_RUNTIME     = 30 * 1000;
+  private static final long                          CLIENT_RUNTIME     = 30 * 1000;
 
   // roots
   private static final LinkedBlockingQueue<WorkItem> queue              = new LinkedBlockingQueue<WorkItem>(
@@ -132,7 +132,7 @@ public class LinkedBlockingQueueSpawningTestApp extends AbstractTransparentApp {
   }
 
   public static class LBQClient {
-    private final ExecutorService pool     = Executors.newCachedThreadPool();
+    private final ExecutorService pool     = Executors.newFixedThreadPool(PRODUCERS + CONSUMERS);
 
     private final long            timeout;
     private long                  runtime;
@@ -206,12 +206,13 @@ public class LinkedBlockingQueueSpawningTestApp extends AbstractTransparentApp {
     public void run() {
       try {
         while (canRun()) {
+          WorkItem d;
           synchronized (inputLock) {
-            WorkItem d = new WorkItem(counter.getAndIncrement());
+            d = new WorkItem(counter.getAndIncrement());
             queue.put(d);
-            if (d.getID() % 100 == 0) {
-              System.out.println("XXX produce " + d.getID());
-            }
+          }
+          if (d.getID() % 100 == 0) {
+            System.out.println("XXX produce " + d.getID());
           }
           Thread.sleep(3);
         }
@@ -238,12 +239,14 @@ public class LinkedBlockingQueueSpawningTestApp extends AbstractTransparentApp {
     public void run() {
       try {
         while (canRun()) {
-          WorkItem data;
-          if (queue.size() > 0) {
-            synchronized (outputLock) {
+          WorkItem data = null;
+          synchronized (outputLock) {
+            if (queue.size() > 0) {
               data = queue.take();
               Assert.assertEquals("Sequence mismatch!", outCounter.getAndIncrement(), data.getID());
             }
+          }
+          if (data != null) {
             if (data.getID() % 100 == 0) {
               System.out.println("XXX consume " + data.getID());
             }
