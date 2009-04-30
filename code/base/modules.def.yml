@@ -5,7 +5,7 @@
 #
 #
 # NOTE: if you want tests in a module be run in monkeys, you have to add your module
-# to a module-group as below (spring, dso, container, etc...)
+# to a module-group as below ( dso, container, etc...)
 
 modules:
   - junit-formatter:
@@ -176,16 +176,6 @@ modules:
         - license-common
         - dso-l1-api
         - modules-base
-  - spring-config:
-      options:
-        jdk: J2SE-1.5
-        module: true
-      dependencies:
-        - common-api
-        - license-common
-        - dso-l1-api
-        - modules-base
-        - thirdparty-api
   - standard-config:
       options:
         jdk: J2SE-1.5
@@ -419,30 +409,6 @@ modules:
         - simulator
         - thirdparty
         - thirdparty-api
-  - dso-spring:
-      options:
-        jdk: J2SE-1.5
-      dependencies:
-        - aspectwerkz
-        - common
-        - common-api
-        - license-common
-        - deploy
-        - deploy-api
-        - dso-common
-        - dso-common-jdk16
-        - dso-l1
-        - dso-l1-api
-        - dso-l2
-        - dso-l2-common
-        - dso-statistics
-        - dso-statistics-api
-        - legacy-test-tree
-        - management
-        - management-api
-        - simulator
-        - thirdparty
-        - thirdparty-api
   - dso-system-tests:
       options:
         jdk: J2SE-1.5
@@ -521,32 +487,6 @@ modules:
         - sigarstats
         - thirdparty
         - thirdparty-api
-  - dso-spring-crash-tests:
-      options:
-        jdk: J2SE-1.5
-      dependencies:
-        - aspectwerkz
-        - common
-        - common-api
-        - license-common
-        - deploy
-        - deploy-api
-        - dso-common
-        - dso-common-jdk16
-        - dso-l1
-        - dso-l1-api
-        - dso-l2
-        - dso-l2-common
-        - dso-spring
-        - dso-statistics
-        - dso-statistics-api
-        - dso-system-tests
-        - legacy-test-tree
-        - management
-        - management-api
-        - simulator
-        - thirdparty
-        - thirdparty-api
   - clustered-surefire-2.3:
       options:
         jdk: J2SE-1.5
@@ -585,64 +525,6 @@ modules:
         - thirdparty
         - thirdparty-api
         - tim-get-tool
-  - dso-spring-tests:
-      options:
-        jdk: J2SE-1.5
-      dependencies:
-        - aspectwerkz
-        - common
-        - common-api
-        - license-common
-        - deploy
-        - deploy-api
-        - dso-common
-        - dso-common-jdk16
-        - dso-container-tests
-        - dso-l1
-        - dso-l1-api
-        - dso-l2
-        - dso-l2-common
-        - dso-spring
-        - dso-statistics
-        - dso-statistics-api
-        - legacy-test-tree
-        - management
-        - management-api
-        - sigarstats
-        - simulator
-        - thirdparty
-        - thirdparty-api
-        - tim-get-tool
-  - dso-spring-aj:
-      options:
-        jdk: J2SE-1.5
-        aspectj: true
-      dependencies:
-        - aspectwerkz
-        - common
-        - common-api
-        - license-common
-        - deploy
-        - deploy-api
-        - dso-common
-        - dso-common-jdk16
-        - dso-container-tests
-        - dso-l1
-        - dso-l1-api
-        - dso-l2
-        - dso-l2-common
-        - dso-spring
-        - dso-spring-tests
-        - dso-statistics
-        - dso-statistics-api
-        - legacy-test-tree
-        - management
-        - management-api
-        - modules-base
-        - simulator
-        - thirdparty
-        - thirdparty-api
-        - tim-get-tool
   - eclipsegen:
       options:
         jdk: J2SE-1.5
@@ -653,11 +535,6 @@ module-groups:
     - reflector-test
   container:
     - dso-container-tests
-  spring:
-    - dso-spring
-    - dso-spring-aj
-    - dso-spring-tests
-    - dso-spring-crash-tests
   dso1:
     - common
     - thirdparty
