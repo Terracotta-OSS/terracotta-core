@@ -257,6 +257,13 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
       }
     };
 
+    // XXX: since we don't create multiple listeners per commsMgr, its OK to set
+    // L2's callbackPort here. Otherwise, have interface method and set after starting
+    // commsMgr listener.
+    if (!this.healthCheckerConfig.isCallbackPortListenerNeeded()) {
+      this.callbackPort = addr.getPort();
+    }
+
     final ChannelManagerImpl channelManager = new ChannelManagerImpl(transportDisconnectRemovesChannel, channelFactory);
     return new NetworkListenerImpl(addr, this, channelManager, msgFactory, msgRouter, reuseAddr, connectionIdFactory,
                                    httpSink, wireProtoMsgSnk);
@@ -298,17 +305,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                                                 new WireProtocolAdaptorFactoryImpl(httpSink),
 
                                                                 wireProtocolMessageSink);
-    
-    TCListener listener = connectionManager.createListener(addr, stackProvider, Constants.DEFAULT_ACCEPT_QUEUE_DEPTH, resueAddr); 
-    
-    // XXX: since we don't create multiple listeners per commsMgr, its OK to set
-    // L2's callbackPort here. Otherwise, have interface method and set after starting
-    // commsMgr listener.
-    if (!this.healthCheckerConfig.isCallbackPortListenerNeeded()) {
-      this.callbackPort = listener.getBindPort();
-    }
-    
-    return listener;
+    return connectionManager.createListener(addr, stackProvider, Constants.DEFAULT_ACCEPT_QUEUE_DEPTH, resueAddr);
   }
 
   private void startHealthCheckCallbackPortListener(HealthCheckerConfig healthCheckrConfig) {

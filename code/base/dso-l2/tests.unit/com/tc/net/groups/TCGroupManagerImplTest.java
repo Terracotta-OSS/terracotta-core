@@ -31,12 +31,14 @@ import com.tc.net.protocol.tcm.TCMessageFactoryImpl;
 import com.tc.net.protocol.tcm.TCMessageRouter;
 import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
+import com.tc.net.proxy.TCPProxy;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.PortChooser;
@@ -47,6 +49,7 @@ import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.ThreadDump;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -132,6 +135,54 @@ public class TCGroupManagerImplTest extends TCTestCase {
     assertEquals(0, groups[0].size());
     assertEquals(0, groups[1].size());
 
+    tearGroups();
+  }
+
+  public void testCallbackPort() throws Exception {
+    setupGroups(2);
+
+    int proxyPort = new PortChooser().chooseRandomPort();
+    TCPProxy proxy = new TCPProxy(proxyPort, InetAddress.getByName(LOCALHOST), groupPorts[1], 0, false, null);
+    proxy.start();
+
+    groups[0].setDiscover(new NullTCGroupMemberDiscovery());
+    groups[1].setDiscover(new NullTCGroupMemberDiscovery());
+    groups[0].join(nodes[0], nodes);
+    groups[1].join(nodes[1], nodes);
+    // open test
+    groups[0].openChannel(LOCALHOST, proxyPort, new NullChannelEventListener());
+
+    Thread.sleep(2000);
+
+    assertEquals(1, groups[0].size());
+    assertEquals(1, groups[1].size());
+    TCGroupMember member1 = getMember(groups[0], 0);
+    TCGroupMember member2 = getMember(groups[1], 0);
+    assertTrue("Expected  " + member1.getLocalNodeID() + " but got " + member2.getPeerNodeID(), member1
+        .getLocalNodeID().equals(member2.getPeerNodeID()));
+    assertTrue("Expected  " + member1.getPeerNodeID() + " but got " + member2.getLocalNodeID(), member1.getPeerNodeID()
+        .equals(member2.getLocalNodeID()));
+
+    proxy.setDelay(Integer.MAX_VALUE);
+
+    long minTimeToSayDead = TCPropertiesImpl.getProperties().getLong("l2.healthcheck.l1.ping.idletime")
+                            + (TCPropertiesImpl.getProperties().getLong("l2.healthcheck.l1.ping.interval") * TCPropertiesImpl
+                                .getProperties().getLong("l2.healthcheck.l1.ping.probes"));
+    //giving more buffer time, to catch problem if any
+    minTimeToSayDead += (3 * TCPropertiesImpl.getProperties().getLong("l2.healthcheck.l1.ping.interval"));
+
+    // HC will not say the other end is DEAD as the callback port from the client TCGroupMgr is available
+    System.out.println("Sleeping for min time " + minTimeToSayDead);
+    ThreadUtil.reallySleep(minTimeToSayDead);
+    System.out.println("checking the client state");
+    assertEquals(1, groups[1].size());
+
+    // eventually after full probe, the node has to goto DEAD state
+    while (groups[1].size() != 0) {
+      System.out.println(".");
+      ThreadUtil.reallySleep(TCPropertiesImpl.getProperties().getLong("l2.healthcheck.l1.ping.interval")
+                             * TCPropertiesImpl.getProperties().getLong("l2.healthcheck.l1.ping.probes"));
+    }
     tearGroups();
   }
 
