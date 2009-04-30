@@ -9,7 +9,7 @@
    <info>
       <appname>Terracotta</appname>
       <appversion><%= @build_environment.version %></appversion>
-      <appsubpath><%= install_name %></appsubpath>
+      <appsubpath>terracotta/<%= install_name %></appsubpath>
       <url>http://www.terracotta.org/</url>
       <javaversion>1.5</javaversion>
    </info>
