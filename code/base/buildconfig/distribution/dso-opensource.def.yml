@@ -3,10 +3,6 @@ internal_name: dso
 kit_name_pattern: terracotta-version
 root_directory: terracotta-version
 bundled_demos:
-  - rife:
-      install_directory: samples/rife
-      manifest:
-        - continuations
   - pojo:
       install_directory: samples/pojo
       manifest:
@@ -136,16 +132,13 @@ postscripts:
   - install-forge-tims:
       args:
         - tim-apache-struts-1.1
-        - tim-rife-1.6.0
         - tim-jetty-6.1
   - inject-forge-tims:
       args:
         - tims: 
             - tim-apache-struts-1.1
-            - tim-rife-1.6.0
             - tim-jetty-6.1
         - dest: 
-            - samples/rife
             - tools/sessions/configurator-sandbox
   - delete-tim-get-index
   - include-schemas:
@@ -153,7 +146,6 @@ postscripts:
         - schema
   - make-srcdocs:
       args:
-        - samples/rife
         - samples/pojo
         - samples/sessions
   - maven-deploy:
