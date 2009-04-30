@@ -16,13 +16,6 @@ bundled_demos:
         - jtable
         - sharededitor
         - sharedqueue
-  - spring:
-      install_directory: samples/spring
-      manifest:
-        - coordination
-        - events
-        - jmx
-        - webflow
   - sessions:
       install_directory: samples/sessions
       manifest:
@@ -46,7 +39,6 @@ bundled_components:
         install_directory: docs
         guides:
           - TerracottaDSOGuide
-          - TerracottaSpringGuide
           - TerracottaSessionsQuickStart
         references:
           - tc-config-reference
@@ -107,8 +99,6 @@ bundled_components:
         - dso-cluster-api
         - dso-l2
         - dso-l2-common
-        - dso-spring:
-            exclude-runtime-libraries: true
         - dso-statistics
         - dso-statistics-api
         - sigarstats
@@ -129,7 +119,6 @@ bundled_modules:
         - excludes-config
         - guimodels-config
         - jdk15-preinst-config
-        - spring-config
         - standard-config
         - modules-base
 packaging:
@@ -157,10 +146,6 @@ postscripts:
             - tim-jetty-6.1
         - dest: 
             - samples/rife
-            - samples/spring/events
-            - samples/spring/jmx
-            - samples/spring/coordination
-            - samples/spring/webflow
             - tools/sessions/configurator-sandbox
   - delete-tim-get-index
   - include-schemas:
@@ -170,7 +155,6 @@ postscripts:
       args:
         - samples/rife
         - samples/pojo
-        - samples/spring
         - samples/sessions
   - maven-deploy:
       args:
