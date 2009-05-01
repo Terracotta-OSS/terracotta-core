@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+  All content copyright (c) 2003-2008 Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved.
+
+-->
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<beans>
+
+  <bean id="counterController" class="demo.jmx.web.CounterFormController">
+    <property name="localCounter" ref="localCounter" />
+    <property name="localHistory" ref="localHistory" />
+    <property name="clusteredCounter" ref="clusteredCounter" />
+    <property name="clusteredHistory" ref="clusteredHistory" />
+    <property name="methodNameResolver">
+      <bean
+        class="org.springframework.web.servlet.mvc.multiaction.PropertiesMethodNameResolver">
+        <property name="mappings">
+          <props>
+            <prop key="/index.html">handleRefresh</prop>
+            <prop key="/incrementLocal.html">incrementLocal</prop>
+            <prop key="/incrementClustered.html">incrementClustered</prop>
+          </props>
+        </property>
+      </bean>
+    </property>
+  </bean>
+
+  <bean id="urlMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+    <property name="urlMap">
+      <map>
+        <entry key="/index.html" value-ref="counterController" />
+        <entry key="/incrementLocal.html" value-ref="counterController"/>
+        <entry key="/incrementClustered.html" value-ref="counterController"/>
+        <entry key="/error.html" value-ref="urlFilenameViewController"/>
+      </map>
+    </property>
+  </bean>
+
+  <bean id="urlFilenameViewController" class="org.springframework.web.servlet.mvc.UrlFilenameViewController" />
+
+
+  <bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+    <property name="viewClass"
+      value="org.springframework.web.servlet.view.JstlView" />
+    <property name="prefix" value="/WEB-INF/view/" />
+    <property name="suffix" value=".jsp" />
+  </bean>
+
+  <bean id="localeResolver" class="org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver" />
+
+  <bean id="exceptionResolver" class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+    <property name="defaultErrorView" value="error" />
+  </bean>
+
+</beans>
+

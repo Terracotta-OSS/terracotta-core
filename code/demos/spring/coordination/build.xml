@@ -1,0 +1,42 @@
+<!--
+
+  All content copyright (c) 2003-2008 Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved.
+
+-->
+
+<project name="coordination" default="build" basedir=".">
+  <target name="init">
+    <mkdir dir="target/classes"/>
+    <path id="lib.dir">
+      <fileset dir="lib">
+        <include name="*.jar"/>
+      </fileset>
+    </path>
+  </target>
+
+  <target name="clean">
+    <delete dir="target/classes"/>
+    <delete file="target/coordination.war"/>
+  </target>
+
+  <target name="build" depends="init">
+    <javac srcdir="src/main/java" destdir="target/classes" classpathref="lib.dir" target="1.4" source="1.4"/>
+    <zip destfile="target/coordination.war">
+      <zipfileset dir="src/main/webapp"/>
+      <zipfileset dir="src/main/resources" prefix="WEB-INF/classes"/>
+      <zipfileset dir="target/classes" prefix="WEB-INF/classes"/>        
+      <zipfileset dir="lib" prefix="WEB-INF/lib">
+        <include name="commons-logging-1.0.4.jar"/>
+        <include name="spring-beans-2.5.4.jar"/>
+        <include name="spring-context-2.5.4.jar"/>
+        <include name="spring-core-2.5.4.jar"/>
+        <include name="spring-web-2.5.4.jar"/>
+        <include name="spring-webmvc-2.5.4.jar"/>
+        <include name="dwr-2.0.5.jar"/>
+        <include name="backport-util-concurrent-3.0.jar"/>
+      </zipfileset>
+    </zip>
+  </target>
+</project>

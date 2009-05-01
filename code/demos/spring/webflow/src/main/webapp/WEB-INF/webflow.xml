@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<!--
+		All content copyright (c) 2003-2008 Terracotta, Inc., except as may
+		otherwise be noted in a separate copyright notice. All rights
+		reserved.
+	-->
+<flow xmlns="http://www.springframework.org/schema/webflow"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/webflow http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+	start-state="stateA">
+	<var name="webflow" class="demo.webflow.WebFlowBean" />
+	<view-state id="stateA" view="webflow">
+		<transition on="submit" to="changeA" />
+	</view-state>
+	<action-state id="changeA">
+		<evaluate expression="flowScope.webflow.setA(requestParameters.value)"
+			result="requestScope.state" />
+		<transition on="stateB" to="stateB" />
+		<transition to="stateA" />
+	</action-state>
+	<view-state id="stateB" view="webflow">
+		<transition on="submit" to="changeB" />
+	</view-state>
+	<action-state id="changeB">
+		<evaluate expression="flowScope.webflow.setB(requestParameters.value)"
+			result="requestScope.state" />
+		<transition on="stateC" to="stateC" />
+		<transition to="stateB" />
+	</action-state>
+	<view-state id="stateC" view="webflow">
+		<transition on="submit" to="changeC" />
+	</view-state>
+	<action-state id="changeC">
+		<evaluate expression="flowScope.webflow.setC(requestParameters.value)"
+			result="requestScope.state" />
+		<transition on="stateD" to="stateD" />
+		<transition to="stateC" />
+	</action-state>
+	<view-state id="stateD" view="webflow">
+		<transition on="submit" to="changeD" />
+	</view-state>
+	<action-state id="changeD">
+		<evaluate expression="flowScope.webflow.setD(requestParameters.value)"
+			result="requestScope.state" />
+		<transition on="complete" to="complete" />
+		<transition to="stateD" />
+	</action-state>
+	<end-state id="complete" view="webflow" />
+</flow>
