@@ -44,6 +44,7 @@
       <res id="InfoPanel.info" src="readme.txt" />
       <res src="../izpack/windows_shortcuts.xml" id="shortcutSpec.xml" />
       <res src="../izpack/unix_shortcuts.xml" id="Unix_shortcutSpec.xml" />
+      <res id="SimpleMessageFinishPanel.message" src="../izpack/finish_message.txt" />
    </resources>
 
    <panels>
@@ -53,7 +54,7 @@
       <panel classname="SummaryPanel" id="summary"/>
       <panel classname="InstallPanel" id="install"/>
       <panel classname="ShortcutPanel" id="shortcuts"/>
-      <panel classname="SimpleFinishPanel" id="finish"/>
+      <panel classname="SimpleMessageFinishPanel" id="finish"/>
    </panels>
 
    <packs>
