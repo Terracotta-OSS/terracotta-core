@@ -5,7 +5,6 @@
 package com.tc.cluster;
 
 import com.tc.cluster.exceptions.UnclusteredObjectException;
-import com.tc.cluster.simulation.SimulatedDsoCluster;
 import com.tc.injection.annotations.InjectedDsoInstance;
 import com.tcclient.cluster.DsoNode;
 
@@ -23,7 +22,7 @@ import java.util.Set;
  * happens before any constructor logic.
  * <p>
  * To allow cluster events and meta data to be tested without Terracotta DSO being active, the
- * {@link SimulatedDsoCluster} class can be used.
+ * SimulatedDsoCluster class can be used.
  * <p>
  * Note that only DSO client nodes are taken into account for the cluster events and meta data, information about DSO
  * server nodes is not available.

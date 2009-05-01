@@ -5,7 +5,6 @@
 package com.tctest.jdk15;
 
 import com.tc.cluster.DsoCluster;
-import com.tc.cluster.simulation.SimulatedDsoCluster;
 import com.tc.injection.annotations.InjectedDsoInstance;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -60,11 +59,11 @@ public class InjectionAnnotationTestApp extends DedicatedMethodsTestApp {
 
   public static class ClassWithAnnotatedInjectedInstanceNotEmpty {
     @InjectedDsoInstance
-    private final DsoCluster cluster = new SimulatedDsoCluster();
+    private final DsoCluster cluster = new DummyDsoCluster();
 
     public void checkCluster() {
       Assert.assertNotNull(cluster);
-      Assert.assertFalse(cluster instanceof SimulatedDsoCluster);
+      Assert.assertFalse(cluster instanceof DummyDsoCluster);
     }
   }
 
@@ -78,4 +77,5 @@ public class InjectionAnnotationTestApp extends DedicatedMethodsTestApp {
   protected CyclicBarrier getBarrierForNodeCoordination() {
     return null;
   }
+  
 }
