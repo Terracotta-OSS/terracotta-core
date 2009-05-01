@@ -26,6 +26,17 @@ For more information, please see the product documentation.
   <!-- Tell DSO where to put the generated client logs -->
   <clients>
     <logs>%(user.home)/terracotta/client-logs</logs>
+    <modules>
+      <!-- Include the Terracotta Integration Module for the appropriate version of 
+      Tomcat. The TIM version will vary depending on the Terracotta release.  To get
+      the correct version, use the tim-get tool in the bin directory to download the 
+      latest appropriate version with a command like:
+         bin/tim-get.sh install tim-tomcat-6.0
+      The tim-get tool will report the version that was installed which you can put 
+      in the version attribute here.  tim-get can also tell you about other supported
+      application server versions. -->
+      <module name="tim-tomcat-6.0" version="1.0.0"/>
+    </modules>
   </clients>
 
   <application>
@@ -39,18 +50,13 @@ For more information, please see the product documentation.
       this tends to happen naturally) - this way the list of classes you wish to instrument
       can be concise -->
       <instrumented-classes>
-        <!-- Start by including all classes for instrumentation.
-        It's more efficient to instrument only those classes that
-        hold shared roots or are part of a shared root's graph -->
+        <!-- Start by including just the classes you expect to get added to the shared 
+        graph.  These typically include domain classes and shared data structures.  If you 
+        miss classes, Terracotta will throw NonPortableOjectExceptions telling you more 
+        about what needs to be added. -->
         <include>
-          <class-expression>*..*</class-expression>
+          <class-expression>com.mydomain.myapp.mymodels..*</class-expression>
         </include>
-
-        <!-- Exclude tomcat internals to improve performance of webapp loading -->
-        <exclude>org.apache.coyote..*</exclude>
-        <exclude>org.apache.catalina..*</exclude>
-        <exclude>org.apache.jasper..*</exclude>
-        <exclude>org.apache.tomcat..*</exclude>
       </instrumented-classes>
 
       <!-- Declare which web application context names should use DSO sessions -->

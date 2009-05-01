@@ -33,13 +33,13 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
   <application>
     <dso>
 
-      <!-- Start by including all classes for instrumentation.
-           It's more efficient to instrument only those classes that
-           hold shared roots or are part of a shared root's graph.
-        -->
+        <!-- Start by including just the classes you expect to get added to the shared 
+             graph.  These typically include domain classes and shared data structures.  
+             If you miss classes, Terracotta will throw NonPortableOjectExceptions 
+             telling you more about what needs to be added. -->
       <instrumented-classes>
         <include>
-          <class-expression>*..*</class-expression>
+          <class-expression>com.mydomain.myapp.mymodels..*</class-expression>
         </include>
       </instrumented-classes>
 
@@ -50,7 +50,7 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
       <locks>
         <autolock>
           <lock-level>write</lock-level>
-          <method-expression>* *..*.*(..)</method-expression>
+          <method-expression>* com.mydomain.myapp.mymodels..*.*(..)</method-expression>
         </autolock>
       </locks>
     </dso>
