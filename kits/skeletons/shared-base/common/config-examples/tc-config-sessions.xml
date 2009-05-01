@@ -7,15 +7,15 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
 
 -->
 <!-- This is a Terracotta configuration file that has been pre-configured
-for use with Weblogic.
+for use with Tomcat.
 
-For more information, please see the product documentation
--->
+For more information, please see the product documentation.
+ -->
 <tc:tc-config xmlns:tc="http://www.terracotta.org/config"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://www.terracotta.org/schema/terracotta-4.xsd">
 
-  <!-- Tell DSO where the Terracotta server can be found. -->
+  <!-- Tell DSO where the Terracotta server can be found -->
   <servers>
     <server host="localhost">
       <data>%(user.home)/terracotta/server-data</data>
@@ -28,14 +28,16 @@ For more information, please see the product documentation
     <logs>%(user.home)/terracotta/client-logs</logs>
     <modules>
       <!-- Include the Terracotta Integration Module for the appropriate version of 
-      Weblogic. The TIM version will vary depending on the Terracotta release.  To get
+      your sessions container.  You can view the list of supported TIMs with the 
+      tim-get tool in the bin directory:
+        bin/tim-get.sh list
+      The TIM version will vary depending on the Terracotta release.  To get
       the correct version, use the tim-get tool in the bin directory to download the 
       latest appropriate version with a command like:
-         bin/tim-get.sh install tim-weblogic-10
+         bin/tim-get.sh install tim-tomcat-6.0
       The tim-get tool will report the version that was installed which you can put 
-      in the version attribute here.  tim-get can also tell you about other supported
-      application server versions. -->
-      <module name="tim-weblogic-10" version="1.0.0"/>
+      in the version attribute here. -->
+      <module name="tim-tomcat-6.0" version="1.0.0"/>
     </modules>
   </clients>
 
