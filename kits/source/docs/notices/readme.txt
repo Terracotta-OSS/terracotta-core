@@ -20,10 +20,9 @@ Terracotta
            ./welcome.sh
    Windows:
       - Run the Terracotta installer.
-      - After a successful installation, the Welcome tool is launched.
-      - Alternatively, you can launch the Welcome tool from the start menu:
+      - After a successful installation, launch the Welcome tool from the start menu:
            Programs --> Terracotta --> Terracotta Pojos Welcome
-
+           
 Terracotta DSO Eclipse Plug-in
    Follow the installation directions at:
       - http://www.terracotta.org/web/display/docs/Eclipse+Plugin+Guide
