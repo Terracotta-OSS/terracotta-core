@@ -206,12 +206,14 @@ public class LinkedBlockingQueueSpawningTestApp extends AbstractTransparentApp {
     public void run() {
       try {
         while (canRun()) {
-          WorkItem d;
+          WorkItem d = null;
           synchronized (inputLock) {
-            d = new WorkItem(counter.getAndIncrement());
-            queue.put(d);
+            if (queue.remainingCapacity() > 0) {
+              d = new WorkItem(counter.getAndIncrement());
+              queue.put(d);
+            }
           }
-          if (d.getID() % 100 == 0) {
+          if (d != null && d.getID() % 100 == 0) {
             System.out.println("XXX produce " + d.getID());
           }
           Thread.sleep(3);
