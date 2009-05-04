@@ -69,8 +69,7 @@ public class TCConnectionManagerJDK14 implements TCConnectionManager {
     ServerSocketChannel ssc = ServerSocketChannel.open();
     ssc.configureBlocking(false);
     ServerSocket serverSocket = ssc.socket();
-    serverSocket.setReuseAddress(reuseAddr);
-    serverSocket.setReceiveBufferSize(64 * 1024);
+    this.socketParams.applyServerSocketParams(serverSocket, reuseAddr);
 
     try {
       serverSocket.bind(new InetSocketAddress(addr.getAddress(), addr.getPort()), backlog);

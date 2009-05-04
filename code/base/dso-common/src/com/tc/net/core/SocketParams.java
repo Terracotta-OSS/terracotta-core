@@ -9,6 +9,7 @@ import com.tc.logging.TCLogging;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 
@@ -65,6 +66,23 @@ class SocketParams {
       s.setKeepAlive(keepAlive);
     } catch (SocketException e) {
       logger.error("error setting KeepAlive to " + keepAlive, e);
+    }
+  }
+
+  void applyServerSocketParams(ServerSocket s, boolean reuseAddress) {
+
+    try {
+      s.setReuseAddress(reuseAddress);
+    } catch (SocketException e) {
+      logger.error("error setting recvBuffer to " + recvBuffer, e);
+    }
+
+    if (recvBuffer > 0) {
+      try {
+        s.setReceiveBufferSize(recvBuffer);
+      } catch (SocketException e) {
+        logger.error("error setting recvBuffer to " + recvBuffer, e);
+      }
     }
   }
 
