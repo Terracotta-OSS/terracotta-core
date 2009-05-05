@@ -1246,10 +1246,10 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       try {
         serverDBBackupBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, L2MBeanNames.SERVER_DB_BACKUP,
                                                                       ServerDBBackupMBean.class, true);
-        if ((serverDBBackupSupported = serverDBBackupBean.isBackupEnabled()) == true) {
-          cc.addNotificationListener(L2MBeanNames.SERVER_DB_BACKUP, new ServerDBBackupListener());
-        }
+        serverDBBackupSupported = serverDBBackupBean.isBackupEnabled();
+        cc.addNotificationListener(L2MBeanNames.SERVER_DB_BACKUP, new ServerDBBackupListener());
       } catch (Exception e) {
+        e.printStackTrace();
         serverDBBackupSupported = false;
       }
     }
@@ -1263,7 +1263,10 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     public void handleNotification(Notification notification, Object handback) {
       String type = notification.getType();
 
-      if (ServerDBBackupMBean.BACKUP_STARTED.equals(type)) {
+      if (ServerDBBackupMBean.BACKUP_ENABLED.equals(type)) {
+        serverDBBackupSupported = Boolean.valueOf((String) handback);
+        fireDBBackupEnabled();
+      } else if (ServerDBBackupMBean.BACKUP_STARTED.equals(type)) {
         fireDBBackupStarted();
       } else if (ServerDBBackupMBean.BACKUP_COMPLETED.equals(type)) {
         fireDBBackupCompleted();
@@ -1285,6 +1288,15 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
 
   public void removeDBBackupListener(DBBackupListener listener) {
     listenerList.remove(DBBackupListener.class, listener);
+  }
+
+  private void fireDBBackupEnabled() {
+    Object[] listeners = listenerList.getListenerList();
+    for (int i = listeners.length - 2; i >= 0; i -= 2) {
+      if (listeners[i] == DBBackupListener.class) {
+        ((DBBackupListener) listeners[i + 1]).backupEnabled();
+      }
+    }
   }
 
   private void fireDBBackupStarted() {

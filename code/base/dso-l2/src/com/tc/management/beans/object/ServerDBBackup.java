@@ -32,6 +32,7 @@ import javax.management.NotCompliantMBeanException;
 
 public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBackupMBean {
 
+  private boolean                   enabled;
   private final String              defaultPathForBackup;
   private final long                throttleTime;
   private final SynchronizedBoolean isBackupRunning;
@@ -233,10 +234,18 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
   public void setDbEnvironment(Environment environment, File environmentHome) {
     this.env = environment;
     if (environmentHome != null) this.envHome = environmentHome.getAbsolutePath();
+    setBackupEnabled(env != null && envHome != null);
+  }
+
+  private void setBackupEnabled(boolean enabled) {
+    if (this.enabled != enabled) {
+      this.enabled = enabled;
+      sendNotification(BACKUP_ENABLED, this, Boolean.toString(enabled));
+    }
   }
 
   public boolean isBackupEnabled() {
-    return (env != null && envHome != null);
+    return enabled;
   }
 
   public String getDbHome() {

@@ -10,6 +10,7 @@ import java.io.IOException;
 
 public interface ServerDBBackupMBean extends TerracottaMBean {
 
+  public static final String BACKUP_ENABLED    = "com.tc.management.beans.object.serverdbbackup.enabled";
   public static final String PERCENTAGE_COPIED = "com.tc.management.beans.object.serverdbbackup.percentagecopied";
   public static final String BACKUP_STARTED    = "com.tc.management.beans.object.serverdbbackup.backupstarted";
   public static final String BACKUP_COMPLETED  = "com.tc.management.beans.object.serverdbbackup.backupcompleted";
