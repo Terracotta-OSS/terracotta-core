@@ -228,7 +228,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   private void addRootMBean(String name, ObjectID rootID) {
     // XXX: There should be a cleaner way to do this ignore
     if (name.startsWith("@")) {
-      // ignore iternal roots
+      // ignore literal roots
       return;
     }
 

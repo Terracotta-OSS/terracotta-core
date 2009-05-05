@@ -24,8 +24,16 @@ public class DSORoot implements DSORootMBean {
     return this.rootName;
   }
 
+  /**
+   * NOTE: this only works in a non-AA cluster. Leaving it here because RootTool uses it.
+   */
+  @Deprecated
   public ManagedObjectFacade lookupFacade(int limit) throws NoSuchObjectException {
     return this.objMgr.lookupFacade(this.objectID, limit);
+  }
+
+  public ObjectID getObjectID() {
+    return objectID;
   }
 
 }

@@ -968,7 +968,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
 
   private ManagedObjectFacade safeLookupFacade(DSORootMBean rootBean) {
     try {
-      return rootBean.lookupFacade(ConnectionContext.DSO_SMALL_BATCH_SIZE);
+      return clusterModel.lookupFacade(rootBean.getObjectID(), ConnectionContext.DSO_SMALL_BATCH_SIZE);
     } catch (Exception e) {
       return null;
     }
