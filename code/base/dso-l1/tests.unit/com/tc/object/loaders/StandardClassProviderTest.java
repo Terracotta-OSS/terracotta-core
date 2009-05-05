@@ -24,6 +24,26 @@ public class StandardClassProviderTest extends TestCase {
   }
 
   /**
+   * Verify that accessing a non-registered loader causes an exception to be thrown.
+   * See CDV-1183.
+   */
+  public void testUnregisteredLoader() throws Exception {
+    NamedClassLoader loader = (NamedClassLoader) new NullLoader();
+    try {
+      loader.__tc_getClassLoaderName();
+    } catch (Exception e) {
+      // exact text may vary, but it better mention the possibility of a missing TIM.
+      assertTrue(e.getMessage().contains("Terracotta Integration Module"));
+      return;
+    }
+    fail("Expected an IllegalStateException but did not receive one");
+  }
+
+  private class NullLoader extends ClassLoader {
+    // do nothing
+  }
+
+  /**
    * Register a loader without an app-group
    */
   public void testRegisterNonAppGroupLoader() throws Exception {

@@ -1,5 +1,5 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * All content copyright (c) 2003-2009 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
 package com.tc.object.loaders;
@@ -17,6 +17,9 @@ import com.tc.object.bytecode.ClassAdapterFactory;
  */
 public class NamedLoaderAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
 
+  private static final String CLASSLOADER_NAME_NOT_SET = 
+    "This classloader instance has not been registered. This may indicate that a required Terracotta " +
+    "Integration Module is missing from the Terracotta configuration. (loader class:";
   private static final String LOADER_NAME_FIELD = ByteCodeUtil.TC_FIELD_PREFIX + "loaderName";
   private String              owner;
 
@@ -61,8 +64,7 @@ public class NamedLoaderAdapter extends ClassAdapter implements Opcodes, ClassAd
     mv.visitInsn(DUP);
     mv.visitTypeInsn(NEW, "java/lang/StringBuffer");
     mv.visitInsn(DUP);
-    mv
-        .visitLdcInsn("Classloader name not set, instances defined from this loader not supported in Terracotta (loader: ");
+    mv.visitLdcInsn(CLASSLOADER_NAME_NOT_SET);
     mv.visitMethodInsn(INVOKESPECIAL, "java/lang/StringBuffer", "<init>", "(Ljava/lang/String;)V");
     mv.visitVarInsn(ALOAD, 0);
     mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;");
