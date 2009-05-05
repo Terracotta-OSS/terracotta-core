@@ -34,6 +34,7 @@ public class StandardClassProviderTest extends TestCase {
     } catch (Exception e) {
       // exact text may vary, but it better mention the possibility of a missing TIM.
       assertTrue(e.getMessage().contains("Terracotta Integration Module"));
+      assertTrue(e.getMessage().contains("http://www.terracotta.org/tim-error"));
       return;
     }
     fail("Expected an IllegalStateException but did not receive one");

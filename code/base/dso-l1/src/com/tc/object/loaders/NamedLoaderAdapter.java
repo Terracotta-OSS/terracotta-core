@@ -17,9 +17,35 @@ import com.tc.object.bytecode.ClassAdapterFactory;
  */
 public class NamedLoaderAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
 
-  private static final String CLASSLOADER_NAME_NOT_SET = 
-    "This classloader instance has not been registered. This may indicate that a required Terracotta " +
-    "Integration Module is missing from the Terracotta configuration. (loader class:";
+  private static final String CLASSLOADER_NAME_NOT_SET_PREFIX = 
+    "This classloader instance has not been registered (loader class:";
+  private static final String CLASSLOADER_NAME_NOT_SET_SUFFIX =
+    ").\n" +
+    "\n" + 
+    "The correct Terracotta Integration Module (TIM) may be missing from this\n" + 
+    "installation of Terracotta. TIMs are required to integrate Terracotta with\n" + 
+    "web containers, frameworks, and other technologies.\n" + 
+    "\n" + 
+    "For example, to integrate Apache Tomcat 5.5 with Terracotta on UNIX/Linux,\n" + 
+    "install the correct TIM by entering the following command from the Terracotta\n" + 
+    "installation root directory:\n" + 
+    "\n" + 
+    "[PROMPT] bin/tim-get.sh install tim-tomcat-5.5\n" + 
+    "\n" + 
+    "On Microsoft Windows, enter:\n" + 
+    "\n" + 
+    "[PROMPT] bin/tim-get.bat install tim-tomcat-5.5\n" + 
+    "\n" + 
+    "You must also add the TIM to the Terracotta configuration file (tc-config.xml\n" + 
+    "by default) by adding its name and version number using a <module> element:\n" + 
+    "\n" + 
+    "<modules>\n" + 
+    "  <module name=\"tim-tomcat-5.5\" version=\"1.0.0-SNAPSHOT\" />\n" + 
+    "  <module name=\"tim-another-one\" version=\"1.2.3\" />\n" + 
+    "  ...\n" + 
+    "</modules>\n" + 
+    "\n" + 
+    "For more information, see http://www.terracotta.org/tim-error.\n";
   private static final String LOADER_NAME_FIELD = ByteCodeUtil.TC_FIELD_PREFIX + "loaderName";
   private String              owner;
 
@@ -64,14 +90,14 @@ public class NamedLoaderAdapter extends ClassAdapter implements Opcodes, ClassAd
     mv.visitInsn(DUP);
     mv.visitTypeInsn(NEW, "java/lang/StringBuffer");
     mv.visitInsn(DUP);
-    mv.visitLdcInsn(CLASSLOADER_NAME_NOT_SET);
+    mv.visitLdcInsn(CLASSLOADER_NAME_NOT_SET_PREFIX);
     mv.visitMethodInsn(INVOKESPECIAL, "java/lang/StringBuffer", "<init>", "(Ljava/lang/String;)V");
     mv.visitVarInsn(ALOAD, 0);
     mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;");
     mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "getName", "()Ljava/lang/String;");
     mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append",
                        "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
-    mv.visitLdcInsn(")");
+    mv.visitLdcInsn(CLASSLOADER_NAME_NOT_SET_SUFFIX);
     mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append",
                        "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
     mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "toString", "()Ljava/lang/String;");
