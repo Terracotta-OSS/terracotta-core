@@ -23,7 +23,11 @@ public class NamedLoaderAdapter extends ClassAdapter implements Opcodes, ClassAd
     ").\n" +
     "\n" + 
     "The correct Terracotta Integration Module (TIM) may be missing from this\n" + 
-    "installation of Terracotta. TIMs are required to integrate Terracotta with\n" + 
+    "installation of Terracotta, or an unsupported platform is being used.\n" + 
+    "See the current list of supported platforms at\n" + 
+    "http://www.terracotta.org/web/display/docs/Platform+Support.\n" + 
+    "\n" + 
+    "TIMs are required to integrate Terracotta with\n" + 
     "web containers, frameworks, and other technologies.\n" + 
     "\n" + 
     "For example, to integrate Apache Tomcat 5.5 with Terracotta on UNIX/Linux,\n" + 
@@ -45,7 +49,7 @@ public class NamedLoaderAdapter extends ClassAdapter implements Opcodes, ClassAd
     "  ...\n" + 
     "</modules>\n" + 
     "\n" + 
-    "For more information, see http://www.terracotta.org/tim-error.\n";
+    "For more information, see http://www.terracotta.org/tim-error.";
   private static final String LOADER_NAME_FIELD = ByteCodeUtil.TC_FIELD_PREFIX + "loaderName";
   private String              owner;
 
