@@ -23,18 +23,22 @@ public class L1MBeanNames {
   static {
     try {
       HTTP_SESSIONS_PUBLIC = TerracottaManagement.createObjectName(Type.Sessions, Subsystem.None, null,
-                                                                     "Terracotta for Sessions", true);
+                                                                   "Terracotta for Sessions",
+                                                                   TerracottaManagement.MBeanDomain.PUBLIC);
       CLUSTER_BEAN_PUBLIC = TerracottaManagement.createObjectName(Type.Cluster, Subsystem.None, null,
-                                                                  "Terracotta Cluster Bean", true);
-      L1INFO_PUBLIC = TerracottaManagement.createObjectName(Type.DsoClient, Subsystem.None, null, "L1 Info Bean", true);
+                                                                  "Terracotta Cluster Bean",
+                                                                  TerracottaManagement.MBeanDomain.PUBLIC);
+      L1INFO_PUBLIC = TerracottaManagement.createObjectName(Type.DsoClient, Subsystem.None, null, "L1 Info Bean",
+                                                            TerracottaManagement.MBeanDomain.PUBLIC);
       RUNTIME_LOGGING_PUBLIC = TerracottaManagement.createObjectName(Type.DsoClient, Subsystem.Logging, null,
-                                                                     "Terracotta Runtime Logging Bean", true);
+                                                                     "Terracotta Runtime Logging Bean",
+                                                                     TerracottaManagement.MBeanDomain.PUBLIC);
       INSTRUMENTATION_LOGGING_PUBLIC = TerracottaManagement.createObjectName(Type.DsoClient, Subsystem.Logging, null,
                                                                              "Terracotta Instrumentation Logging Bean",
-                                                                             true);
+                                                                             TerracottaManagement.MBeanDomain.PUBLIC);
       RUNTIME_OUTPUT_OPTIONS_PUBLIC = TerracottaManagement.createObjectName(Type.DsoClient, Subsystem.Logging, null,
                                                                             "Terracotta Runtime Output Options Bean",
-                                                                            true);
+                                                                            TerracottaManagement.MBeanDomain.PUBLIC);
     } catch (MalformedObjectNameException mone) {
       throw new RuntimeException(mone);
     } catch (NullPointerException npe) {

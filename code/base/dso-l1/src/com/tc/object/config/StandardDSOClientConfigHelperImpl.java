@@ -155,14 +155,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   /**
    * A map of class names to TransparencyClassSpec
-   * 
+   *
    * @GuardedBy {@link #specLock}
    */
   private final Map                                          userDefinedBootSpecs               = new HashMap();
 
   /**
    * A map of class names to TransparencyClassSpec for individual classes
-   * 
+   *
    * @GuardedBy {@link #specLock}
    */
   private final Map                                          classSpecs                         = new HashMap();
@@ -185,6 +185,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   private int                                                faultCount                         = -1;
 
   private ModuleSpec[]                                       moduleSpecs                        = null;
+
+  private MBeanSpec[]                                        mbeanSpecs                         = null;
+
+  private SRASpec[]                                          sraSpecs                           = null;
 
   private final ModulesContext                               modulesContext                     = new ModulesContext();
 
@@ -836,7 +840,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  public URL getClassResource(final String className, ClassLoader loader, boolean hideSystemLoaderOnlyResources) {
+  public URL getClassResource(final String className, final ClassLoader loader, final boolean hideSystemLoaderOnlyResources) {
     Resource res = this.classResources.get(className);
     if (res == null) return null;
 
@@ -1521,6 +1525,22 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     this.moduleSpecs = moduleSpecs;
   }
 
+  public void setMBeanSpecs(final MBeanSpec[] mbeanSpecs) {
+    this.mbeanSpecs = mbeanSpecs;
+  }
+
+  public MBeanSpec[] getMBeanSpecs() {
+    return this.mbeanSpecs;
+  }
+
+  public void setSRASpecs(final SRASpec[] sraSpecs) {
+    this.sraSpecs = sraSpecs;
+  }
+
+  public SRASpec[] getSRASpecs() {
+    return this.sraSpecs;
+  }
+
   /*
    * public String getChangeApplicatorClassNameFor(String className) { TransparencyClassSpec spec = getSpec(className);
    * if (spec == null) return null; return spec.getChangeApplicatorClassName(); }
@@ -1961,8 +1981,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  private void logConfigMismatchAndThrowException(HashSet<ConnectionInfo> connInfoFromL1,
-                                                  HashSet<ConnectionInfo> connInfoFromL2, String errMsg)
+  private void logConfigMismatchAndThrowException(final HashSet<ConnectionInfo> connInfoFromL1,
+                                                  final HashSet<ConnectionInfo> connInfoFromL2, String errMsg)
       throws ConfigurationSetupException {
     logger.info("L1 connection info: " + connInfoFromL1);
     logger.info("L2 connection info: " + connInfoFromL2);

@@ -21,6 +21,10 @@ class ManagementResources {
     return resources.getString("domain.internal");
   }
 
+  String getTimMBeanDomain() {
+    return resources.getString("domain.tim");
+  }
+
   String getNodeNameSystemProperty() {
     return resources.getString("system-property.node-name");
   }
@@ -45,6 +49,10 @@ class ManagementResources {
     return TerracottaManagement.quoteIfNecessary(resources.getString("type.agent"));
   }
 
+  String getTerracottaTimType() {
+    return TerracottaManagement.quoteIfNecessary(resources.getString("type.tim"));
+  }
+
   String getTransactionSubsystem() {
     return TerracottaManagement.quoteIfNecessary(resources.getString("subsystem.tx"));
   }
@@ -60,7 +68,7 @@ class ManagementResources {
   String getLoggingSubsystem() {
     return TerracottaManagement.quoteIfNecessary(resources.getString("subsystem.logging"));
   }
-  
+
   String getStatisticsSubsystem() {
     return TerracottaManagement.quoteIfNecessary(resources.getString("subsystem.statistics"));
   }

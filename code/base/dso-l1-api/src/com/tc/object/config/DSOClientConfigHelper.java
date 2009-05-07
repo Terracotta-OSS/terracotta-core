@@ -72,7 +72,15 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   boolean isPortableModuleClass(Class clazz);
 
-  void setModuleSpecs(ModuleSpec[] pluginSpecs);
+  void setModuleSpecs(ModuleSpec[] moduleSpecs);
+
+  void setMBeanSpecs(MBeanSpec[] mbeanSpecs);
+
+  MBeanSpec[] getMBeanSpecs();
+
+  void setSRASpecs(SRASpec[] sraSpecs);
+
+  SRASpec[] getSRASpecs();
 
   // HACK: is also in IStandardDSOClientConfigHelper
   TransparencyClassSpec getOrCreateSpec(String className);

@@ -24,8 +24,10 @@ import com.tc.object.config.DistributedMethodSpec;
 import com.tc.object.config.Lock;
 import com.tc.object.config.LockDefinition;
 import com.tc.object.config.LockDefinitionImpl;
+import com.tc.object.config.MBeanSpec;
 import com.tc.object.config.ModuleSpec;
 import com.tc.object.config.Root;
+import com.tc.object.config.SRASpec;
 import com.tc.object.config.StandardDSOClientConfigHelper;
 import com.tc.object.config.TimCapability;
 import com.tc.object.config.TransparencyClassSpec;
@@ -210,7 +212,7 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     return null;
   }
 
-  public URL getClassResource(String className, ClassLoader loader, boolean hideSystemResources) {
+  public URL getClassResource(final String className, final ClassLoader loader, final boolean hideSystemResources) {
     return null;
   }
 
@@ -362,8 +364,24 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     /**/
   }
 
-  public void setModuleSpecs(final ModuleSpec[] pluginSpecs) {
+  public void setModuleSpecs(final ModuleSpec[] moduleSpecs) {
     /**/
+  }
+
+  public void setMBeanSpecs(final MBeanSpec[] mbeanSpecs) {
+    /**/
+  }
+
+  public MBeanSpec[] getMBeanSpecs() {
+    return null;
+  }
+
+  public SRASpec[] getSRASpecs() {
+    return null;
+  }
+
+  public void setSRASpecs(final SRASpec[] sraSpecs) {
+    throw new ImplementMe();
   }
 
   public boolean shouldBeAdapted(final ClassInfo classInfo) {

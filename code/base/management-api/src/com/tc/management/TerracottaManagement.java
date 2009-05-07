@@ -33,6 +33,7 @@ public abstract class TerracottaManagement {
     public static final Type Server      = new Type(MANAGEMENT_RESOURCES.getTerracottaServerType());
     public static final Type Cluster     = new Type(MANAGEMENT_RESOURCES.getTerracottaClusterType());
     public static final Type Agent       = new Type(MANAGEMENT_RESOURCES.getTerracottaAgentType());
+    public static final Type Tim         = new Type(MANAGEMENT_RESOURCES.getTerracottaTimType());
 
     private final String     type;
 
@@ -41,11 +42,12 @@ public abstract class TerracottaManagement {
       typesByName.put(type, this);
     }
 
+    @Override
     public String toString() {
       return type;
     }
 
-    static Type getType(String name) {
+    static Type getType(final String name) {
       return (Type) typesByName.get(name);
     }
   }
@@ -67,11 +69,12 @@ public abstract class TerracottaManagement {
       subsystemByName.put(subsystem, this);
     }
 
+    @Override
     public String toString() {
       return subsystem;
     }
 
-    static Subsystem getSubsystem(String name) {
+    static Subsystem getSubsystem(final String name) {
       return (Subsystem) subsystemByName.get(name);
     }
   }
@@ -84,8 +87,22 @@ public abstract class TerracottaManagement {
     public static final String NAME            = "name";
   }
 
-  public static final String  PUBLIC_DOMAIN   = MANAGEMENT_RESOURCES.getPublicMBeanDomain();
-  public static final String  INTERNAL_DOMAIN = MANAGEMENT_RESOURCES.getInternalMBeanDomain();
+  public enum MBeanDomain {
+    PUBLIC (MANAGEMENT_RESOURCES.getPublicMBeanDomain()),
+    INTERNAL (MANAGEMENT_RESOURCES.getInternalMBeanDomain()),
+    TIM (MANAGEMENT_RESOURCES.getTimMBeanDomain());
+
+    private final String value;
+
+    private MBeanDomain(final String value) {
+      this.value = value;
+    }
+
+    @Override
+    public String toString() {
+      return value;
+    }
+  }
 
   private static final String COMMA           = ",";
   private static final String COLON           = ":";
@@ -99,8 +116,8 @@ public abstract class TerracottaManagement {
 
   public static ObjectName createObjectName(final Type type, final Subsystem subsystem,
                                             final TCSocketAddress remoteBeanHome, final String uiFriendlyName,
-                                            final boolean isPublic) throws MalformedObjectNameException {
-    final StringBuffer objName = new StringBuffer(isPublic ? PUBLIC_DOMAIN : INTERNAL_DOMAIN);
+                                            final MBeanDomain domain) throws MalformedObjectNameException {
+    final StringBuffer objName = new StringBuffer(null == domain ? MBeanDomain.INTERNAL.toString() : domain.toString());
     objName.append(COLON);
     if (NODE_NAME != null || remoteBeanHome != null) {
       objName.append(NODE_PREFIX);
@@ -120,14 +137,14 @@ public abstract class TerracottaManagement {
     return new ObjectName(objName.toString());
   }
 
-  private static void addNodeInfo(StringBuffer objName, TCSocketAddress addr) {
+  private static void addNodeInfo(final StringBuffer objName, final TCSocketAddress addr) {
     String remoteHost = addr.getAddress().getCanonicalHostName();
     int remotePort = addr.getPort();
     objName.append(COMMA).append(MBeanKeys.MBEAN_NODE).append(EQUALS).append(remoteHost).append(SLASH)
         .append(remotePort);
   }
 
-  public static ObjectName addNodeInfo(ObjectName objName, TCSocketAddress addr) throws MalformedObjectNameException {
+  public static ObjectName addNodeInfo(final ObjectName objName, final TCSocketAddress addr) throws MalformedObjectNameException {
     if (objName.getKeyProperty(MBeanKeys.MBEAN_NODE) != null) { return objName; }
     StringBuffer sb = new StringBuffer(objName.getCanonicalName());
     if (objName.getKeyProperty(NODE_PREFIX_KEY) == null) {
@@ -140,7 +157,7 @@ public abstract class TerracottaManagement {
   public abstract Object findMBean(final ObjectName objectName, final Class mBeanInterface) throws Exception;
 
   public static final Object findMBean(final ObjectName objectName, final Class mBeanInterface,
-                                       MBeanServerConnection mBeanServer) throws IOException {
+                                       final MBeanServerConnection mBeanServer) throws IOException {
     final Set matchingBeans = mBeanServer.queryMBeans(objectName, null);
     final Iterator beanPos = matchingBeans.iterator();
     if (beanPos.hasNext()) { return MBeanServerInvocationHandler.newProxyInstance(mBeanServer, objectName,
@@ -150,18 +167,26 @@ public abstract class TerracottaManagement {
 
   public static final QueryExp matchAllTerracottaMBeans() {
     try {
-      return Query.or(new ObjectName(PUBLIC_DOMAIN + ":*"), new ObjectName(INTERNAL_DOMAIN + ":*"));
+      return Query.or(new ObjectName(MBeanDomain.PUBLIC + ":*"), new ObjectName(MBeanDomain.INTERNAL + ":*"));
     } catch (MalformedObjectNameException e) {
       throw new RuntimeException(e);
     }
   }
 
-  public static final String quoteIfNecessary(String objectNamePart) {
+  public static final QueryExp matchAllTimMBeans() {
+    try {
+      return new ObjectName(MBeanDomain.TIM + ":*");
+    } catch (MalformedObjectNameException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public static final String quoteIfNecessary(final String objectNamePart) {
     if (objectNamePart.matches("[,=:*?\"']")) { return ObjectName.quote(objectNamePart); }
     return objectNamePart;
   }
 
-  public static final Set getAllL1DumperMBeans(MBeanServerConnection mbs) throws MalformedObjectNameException,
+  public static final Set getAllL1DumperMBeans(final MBeanServerConnection mbs) throws MalformedObjectNameException,
       NullPointerException, IOException {
     return mbs.queryNames(new ObjectName(MBeanNames.L1DUMPER_INTERNAL.getCanonicalName() + ",*"), null);
   }

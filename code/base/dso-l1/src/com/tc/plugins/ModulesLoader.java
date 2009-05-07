@@ -25,7 +25,10 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.config.ConfigLoader;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.config.MBeanSpec;
 import com.tc.object.config.ModuleSpec;
+import com.tc.object.config.OsgiServiceSpec;
+import com.tc.object.config.SRASpec;
 import com.tc.object.config.StandardDSOClientConfigHelper;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.loaders.NamedClassLoader;
@@ -61,7 +64,7 @@ public class ModulesLoader {
 
   private static final Comparator SERVICE_COMPARATOR = new Comparator() {
 
-                                                       public int compare(Object arg0, Object arg1) {
+                                                       public int compare(final Object arg0, final Object arg1) {
                                                          ServiceReference s1 = (ServiceReference) arg0;
                                                          ServiceReference s2 = (ServiceReference) arg1;
 
@@ -70,8 +73,8 @@ public class ModulesLoader {
                                                          Integer r2 = (Integer) s2
                                                              .getProperty(Constants.SERVICE_RANKING);
 
-                                                         if (r1 == null) r1 = ModuleSpec.NORMAL_RANK;
-                                                         if (r2 == null) r2 = ModuleSpec.NORMAL_RANK;
+                                                         if (r1 == null) r1 = OsgiServiceSpec.NORMAL_RANK;
+                                                         if (r2 == null) r2 = OsgiServiceSpec.NORMAL_RANK;
 
                                                          return r2.compareTo(r1);
                                                        }
@@ -103,6 +106,8 @@ public class ModulesLoader {
         initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), forBootJar);
         if (!forBootJar) {
           getModulesCustomApplicatorSpecs(osgiRuntime, configHelper);
+          getModulesMBeanSpecs(osgiRuntime, configHelper);
+          getModulesSRASpecs(osgiRuntime, configHelper);
         }
       } catch (BundleException e) {
         if (e instanceof BundleExceptionSummary) {
@@ -178,12 +183,12 @@ public class ModulesLoader {
     if (additionalModuleList != null) {
       final String[] additionalModules = additionalModuleList.split(";");
       Pattern pattern = Pattern.compile("(.+?)-([0-9\\.]+)-([0-9\\.\\-]+)");
-      for (int i = 0; i < additionalModules.length; i++) {
-        if (additionalModules[i].length() == 0) continue;
+      for (String additionalModule : additionalModules) {
+        if (additionalModule.length() == 0) continue;
 
-        final Matcher matcher = pattern.matcher(additionalModules[i]);
+        final Matcher matcher = pattern.matcher(additionalModule);
         if (!matcher.find() || matcher.groupCount() < 3) {
-          logger.error("Invalid bundle-jar filename " + additionalModules[i]
+          logger.error("Invalid bundle-jar filename " + additionalModule
                        + "; filenames need to match the pattern: " + pattern.toString());
           continue;
         }
@@ -220,7 +225,7 @@ public class ModulesLoader {
     classProvider.registerNamedLoader(ncl, appGroup);
   }
 
-  private static NamedClassLoader getClassLoader(Bundle bundle) throws BundleException {
+  private static NamedClassLoader getClassLoader(final Bundle bundle) throws BundleException {
     try {
       Method m = bundle.getClass().getDeclaredMethod("getClassLoader", new Class[0]);
       m.setAccessible(true);
@@ -246,6 +251,42 @@ public class ModulesLoader {
       osgiRuntime.ungetService(serviceReferences[i]);
     }
     configHelper.setModuleSpecs(modulesSpecs);
+  }
+
+  private static void getModulesMBeanSpecs(final EmbeddedOSGiRuntime osgiRuntime,
+                                           final DSOClientConfigHelper configHelper) throws InvalidSyntaxException {
+    ServiceReference[] serviceReferences = osgiRuntime.getAllServiceReferences(MBeanSpec.class.getName(), null);
+    if (serviceReferences != null && serviceReferences.length > 0) {
+      Arrays.sort(serviceReferences, SERVICE_COMPARATOR);
+    }
+
+    if (serviceReferences == null) {
+      return;
+    }
+    MBeanSpec[] mbeanSpecs = new MBeanSpec[serviceReferences.length];
+    for (int i = 0; i < serviceReferences.length; i++) {
+      mbeanSpecs[i] = (MBeanSpec) osgiRuntime.getService(serviceReferences[i]);
+      osgiRuntime.ungetService(serviceReferences[i]);
+    }
+    configHelper.setMBeanSpecs(mbeanSpecs);
+  }
+
+  private static void getModulesSRASpecs(final EmbeddedOSGiRuntime osgiRuntime,
+                                           final DSOClientConfigHelper configHelper) throws InvalidSyntaxException {
+    ServiceReference[] serviceReferences = osgiRuntime.getAllServiceReferences(SRASpec.class.getName(), null);
+    if (serviceReferences != null && serviceReferences.length > 0) {
+      Arrays.sort(serviceReferences, SERVICE_COMPARATOR);
+    }
+
+    if (serviceReferences == null) {
+      return;
+    }
+    SRASpec[] sraSpecs = new SRASpec[serviceReferences.length];
+    for (int i = 0; i < serviceReferences.length; i++) {
+      sraSpecs[i] = (SRASpec) osgiRuntime.getService(serviceReferences[i]);
+      osgiRuntime.ungetService(serviceReferences[i]);
+    }
+    configHelper.setSRASpecs(sraSpecs);
   }
 
   /**
@@ -282,8 +323,7 @@ public class ModulesLoader {
       throws BundleException {
     // attempt to load all of the config fragments found in the config-bundle
     final String[] paths = getConfigPath(bundle);
-    for (int i = 0; i < paths.length; i++) {
-      final String configPath = paths[i];
+    for (final String configPath : paths) {
       final InputStream is;
       try {
         is = JarResourceLoader.getJarResource(new URL(bundle.getLocation()), configPath);
@@ -333,10 +373,10 @@ public class ModulesLoader {
 
   /**
    * DEV-1238 and DEV-2205
-   * 
+   *
    * @author hhuynh
    */
-  private static void validateBundleFragment(DsoApplication application) throws XmlException {
+  private static void validateBundleFragment(final DsoApplication application) throws XmlException {
     // Create an XmlOptions instance and set the error listener.
     XmlOptions validateOptions = new XmlOptions();
     ArrayList errorList = new ArrayList();
@@ -360,7 +400,7 @@ public class ModulesLoader {
 
   }
 
-  private static void logConfig(DsoApplication application, Bundle bundle, String configPath) {
+  private static void logConfig(final DsoApplication application, final Bundle bundle, final String configPath) {
     logger.info("Config loaded from module: " + bundle.getSymbolicName() + " (" + configPath + ")");
     ByteArrayOutputStream bas = new ByteArrayOutputStream();
     BufferedOutputStream buf = new BufferedOutputStream(bas);

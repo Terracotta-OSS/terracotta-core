@@ -25,7 +25,7 @@ public abstract class TerracottaConfiguratorModule implements BundleActivator {
   protected StandardDSOClientConfigHelper configHelper;
   private Bundle                          thisBundle;
 
-  protected ServiceReference getConfigHelperReference(BundleContext context) throws Exception {
+  protected ServiceReference getConfigHelperReference(final BundleContext context) throws Exception {
     final String CONFIGHELPER_CLASS_NAME = "com.tc.object.config.StandardDSOClientConfigHelper";
     final ServiceReference configHelperRef = context.getServiceReference(CONFIGHELPER_CLASS_NAME);
     if (configHelperRef == null) { throw new BundleException("Expected the " + CONFIGHELPER_CLASS_NAME
@@ -41,6 +41,8 @@ public abstract class TerracottaConfiguratorModule implements BundleActivator {
     addInstrumentation(context);
     context.ungetService(configHelperRef);
     registerModuleSpec(context);
+    registerMBeanSpec(context);
+    registerSRASpec(context);
   }
 
   protected Bundle getThisBundle() {
@@ -56,6 +58,14 @@ public abstract class TerracottaConfiguratorModule implements BundleActivator {
   }
 
   protected void registerModuleSpec(final BundleContext context) {
+    // default empty body
+  }
+
+  protected void registerMBeanSpec(final BundleContext context) {
+    // default empty body
+  }
+
+  protected void registerSRASpec(final BundleContext context) {
     // default empty body
   }
 
@@ -131,7 +141,7 @@ public abstract class TerracottaConfiguratorModule implements BundleActivator {
     configHelper.addLock(expr, ld);
   }
 
-  protected Bundle getExportedBundle(final BundleContext context, String targetBundleName) {
+  protected Bundle getExportedBundle(final BundleContext context, final String targetBundleName) {
     // find the bundle that contains the replacement classes
     for (Bundle bundle : context.getBundles()) {
       if (BundleSpec.isMatchingSymbolicName(targetBundleName, bundle.getSymbolicName())) {

@@ -55,6 +55,7 @@ import com.tc.object.cache.CacheConfigImpl;
 import com.tc.object.cache.CacheManager;
 import com.tc.object.cache.ClockEvictionPolicy;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.config.SRASpec;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.event.DmiManager;
 import com.tc.object.event.DmiManagerImpl;
@@ -123,6 +124,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.runtime.TCMemoryManagerImpl;
 import com.tc.runtime.logging.LongGCLogger;
+import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
@@ -168,6 +170,7 @@ import com.tcclient.cluster.DsoClusterInternal;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -274,6 +277,19 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     registry.registerActionInstance(new SRAHttpSessions());
     registry.registerActionInstance(new SRAL1TransactionCount(txCounter));
     registry.registerActionInstance(new SRAVmGarbageCollector(SRAVmGarbageCollectorType.L1_VM_GARBAGE_COLLECTOR));
+
+    // register the SRAs from TIMs
+    final SRASpec[] sraSpecs = config.getSRASpecs();
+    if (sraSpecs != null) {
+      for (SRASpec spec : sraSpecs) {
+        final Collection<StatisticRetrievalAction> sras = spec.getSRAs();
+        if (sras != null && sras.size() > 0) {
+          for (StatisticRetrievalAction sra : sras) {
+            registry.registerActionInstance(sra);
+          }
+        }
+      }
+    }
   }
 
   public synchronized void start() {
@@ -407,7 +423,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     // for SRA L1 Tx count
     SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
     SampledCounter txnCounter = (SampledCounter) this.counterManager.createCounter(sampledCounterConfig);
-    
+
     // setup statistics subsystem
     if (this.statisticsAgentSubSystem.setup(this.config.getNewCommonL1Config())) {
       populateStatisticsRetrievalRegistry(this.statisticsAgentSubSystem.getStatisticsRetrievalRegistry(), stageManager,
@@ -459,7 +475,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     // Set up the JMX management stuff
     final TunnelingEventHandler teh = this.dsoClientBuilder.createTunnelingEventHandler(this.channel.channel());
     this.l1Management = new L1Management(teh, this.statisticsAgentSubSystem, this.runtimeLogger, this.manager
-        .getInstrumentationLogger(), this.config.rawConfigText(), this);
+        .getInstrumentationLogger(), this.config.rawConfigText(), this, config.getMBeanSpecs());
     this.l1Management.start(this.createDedicatedMBeanServer);
 
     // Setup the transaction manager

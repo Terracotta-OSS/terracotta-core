@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.statistics.beans;
 
@@ -17,10 +18,22 @@ public class StatisticsMBeanNames {
 
   static {
     try {
-      STATISTICS_EMITTER = TerracottaManagement.createObjectName(TerracottaManagement.Type.Agent, TerracottaManagement.Subsystem.Statistics, null, "Terracotta Statistics Emitter", false);
-      STATISTICS_MANAGER = TerracottaManagement.createObjectName(TerracottaManagement.Type.Agent, TerracottaManagement.Subsystem.Statistics, null, "Terracotta Statistics Manager", false);
-      STATISTICS_GATEWAY = TerracottaManagement.createObjectName(TerracottaManagement.Type.Server, TerracottaManagement.Subsystem.Statistics, null, "Terracotta Statistics Gateway", false);
-      STATISTICS_GATHERER = TerracottaManagement.createObjectName(TerracottaManagement.Type.Server, TerracottaManagement.Subsystem.Statistics, null, "Terracotta Statistics Gatherer", true);
+      STATISTICS_EMITTER = TerracottaManagement.createObjectName(TerracottaManagement.Type.Agent,
+                                                                 TerracottaManagement.Subsystem.Statistics, null,
+                                                                 "Terracotta Statistics Emitter",
+                                                                 TerracottaManagement.MBeanDomain.INTERNAL);
+      STATISTICS_MANAGER = TerracottaManagement.createObjectName(TerracottaManagement.Type.Agent,
+                                                                 TerracottaManagement.Subsystem.Statistics, null,
+                                                                 "Terracotta Statistics Manager",
+                                                                 TerracottaManagement.MBeanDomain.INTERNAL);
+      STATISTICS_GATEWAY = TerracottaManagement.createObjectName(TerracottaManagement.Type.Server,
+                                                                 TerracottaManagement.Subsystem.Statistics, null,
+                                                                 "Terracotta Statistics Gateway",
+                                                                 TerracottaManagement.MBeanDomain.INTERNAL);
+      STATISTICS_GATHERER = TerracottaManagement.createObjectName(TerracottaManagement.Type.Server,
+                                                                  TerracottaManagement.Subsystem.Statistics, null,
+                                                                  "Terracotta Statistics Gatherer",
+                                                                  TerracottaManagement.MBeanDomain.PUBLIC);
     } catch (MalformedObjectNameException mone) {
       throw new TCRuntimeException(mone);
     } catch (NullPointerException npe) {

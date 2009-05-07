@@ -4,12 +4,12 @@
  */
 package com.tc.management.beans;
 
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-
 import com.tc.management.TerracottaManagement;
 import com.tc.management.TerracottaManagement.Subsystem;
 import com.tc.management.TerracottaManagement.Type;
+
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 
 public class MBeanNames {
 
@@ -20,9 +20,9 @@ public class MBeanNames {
     try {
       CLIENT_TX_INTERNAL = TerracottaManagement.createObjectName(TerracottaManagement.Type.DsoClient,
                                                                  TerracottaManagement.Subsystem.Tx, null,
-                                                                 "Client transactions", false);
+                                                                 "Client transactions", TerracottaManagement.MBeanDomain.INTERNAL);
       L1DUMPER_INTERNAL = TerracottaManagement.createObjectName(Type.DsoClient, Subsystem.None, null,
-                                                                "DSO Client Dump Bean", false);
+                                                                "DSO Client Dump Bean", TerracottaManagement.MBeanDomain.INTERNAL);
     } catch (MalformedObjectNameException mone) {
       throw new RuntimeException(mone);
     } catch (NullPointerException npe) {

@@ -26,6 +26,7 @@ import com.tc.management.exposed.TerracottaCluster;
 import com.tc.management.remote.protocol.ProtocolProvider;
 import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
 import com.tc.management.remote.protocol.terracotta.TunnelingMessageConnectionServer;
+import com.tc.object.config.MBeanSpec;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
@@ -65,17 +66,20 @@ public final class L1Management extends TerracottaManagement {
 
   private final StatisticsAgentSubSystemImpl statisticsAgentSubSystem;
 
+  private final MBeanSpec[]                  mbeanSpecs;
+
   private final L1Dumper                     l1DumpBean;
 
   public L1Management(final TunnelingEventHandler tunnelingHandler,
                       final StatisticsAgentSubSystemImpl statisticsAgentSubSystem, final RuntimeLogger runtimeLogger,
                       final InstrumentationLogger instrumentationLogger, final String rawConfigText,
-                      final TCClient client) {
+                      final TCClient client, final MBeanSpec[] mbeanSpecs) {
     super();
 
     started = new SetOnceFlag();
     this.tunnelingHandler = tunnelingHandler;
     this.statisticsAgentSubSystem = statisticsAgentSubSystem;
+    this.mbeanSpecs = mbeanSpecs;
 
     try {
       l1DumpBean = new L1Dumper(client);
@@ -211,6 +215,13 @@ public final class L1Management extends TerracottaManagement {
     mBeanServer.registerMBean(instrumentationLoggingBean, L1MBeanNames.INSTRUMENTATION_LOGGING_PUBLIC);
     mBeanServer.registerMBean(runtimeOutputOptionsBean, L1MBeanNames.RUNTIME_OUTPUT_OPTIONS_PUBLIC);
     mBeanServer.registerMBean(runtimeLoggingBean, L1MBeanNames.RUNTIME_LOGGING_PUBLIC);
+    if (mbeanSpecs != null) {
+      for (MBeanSpec spec : mbeanSpecs) {
+        for (Map.Entry<ObjectName, Object> bean : spec.getMBeans().entrySet()) {
+          mBeanServer.registerMBean(bean.getValue(), bean.getKey());
+        }
+      }
+    }
   }
 
   private void addJMXConnectors() {

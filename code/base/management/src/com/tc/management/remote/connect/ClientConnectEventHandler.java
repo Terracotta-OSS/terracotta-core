@@ -12,8 +12,8 @@ import com.tc.management.TerracottaMBean;
 import com.tc.management.TerracottaManagement;
 import com.tc.management.remote.protocol.ProtocolProvider;
 import com.tc.management.remote.protocol.terracotta.ClientProvider;
-import com.tc.management.remote.protocol.terracotta.ClientTunnelingEventHandler.L1ConnectionMessage;
 import com.tc.management.remote.protocol.terracotta.TunnelingMessageConnection;
+import com.tc.management.remote.protocol.terracotta.ClientTunnelingEventHandler.L1ConnectionMessage;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.statistics.StatisticsGateway;
@@ -27,7 +27,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.management.Attribute;
+import javax.management.AttributeList;
+import javax.management.AttributeNotFoundException;
+import javax.management.DynamicMBean;
+import javax.management.InstanceNotFoundException;
+import javax.management.IntrospectionException;
+import javax.management.InvalidAttributeValueException;
 import javax.management.ListenerNotFoundException;
+import javax.management.MBeanException;
 import javax.management.MBeanInfo;
 import javax.management.MBeanNotificationInfo;
 import javax.management.MBeanServer;
@@ -39,6 +47,7 @@ import javax.management.NotificationBroadcaster;
 import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
+import javax.management.ReflectionException;
 import javax.management.StandardMBean;
 import javax.management.remote.JMXConnectionNotification;
 import javax.management.remote.JMXConnector;
@@ -50,7 +59,7 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
 
   private final StatisticsGateway statisticsGateway;
 
-  public ClientConnectEventHandler(StatisticsGateway statisticsGateway) {
+  public ClientConnectEventHandler(final StatisticsGateway statisticsGateway) {
     this.statisticsGateway = statisticsGateway;
   }
 
@@ -82,7 +91,8 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
 
   private static final TCLogger logger = TCLogging.getLogger(ClientConnectEventHandler.class);
 
-  public void handleEvent(EventContext context) {
+  @Override
+  public void handleEvent(final EventContext context) {
     L1ConnectionMessage msg = (L1ConnectionMessage) context;
     if (msg.isConnectingMsg()) {
       addJmxConnection(msg);
@@ -92,11 +102,12 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
   }
 
   class ProxyStandardMBean extends StandardMBean implements NotificationBroadcaster {
-    ProxyStandardMBean(Object proxy, Class interfaceClass) throws NotCompliantMBeanException {
+    ProxyStandardMBean(final Object proxy, final Class interfaceClass) throws NotCompliantMBeanException {
       super(proxy, interfaceClass);
     }
 
-    protected String getClassName(MBeanInfo info) {
+    @Override
+    protected String getClassName(final MBeanInfo info) {
       Object proxy = getImplementation();
       if(proxy instanceof NotificationBroadcaster) {
         return NotificationBroadcaster.class.getName();
@@ -104,7 +115,7 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
       return super.getClassName(info);
     }
 
-    public void addNotificationListener(NotificationListener listener, NotificationFilter filter, Object handback)
+    public void addNotificationListener(final NotificationListener listener, final NotificationFilter filter, final Object handback)
         throws IllegalArgumentException {
       Object proxy = getImplementation();
       if(proxy instanceof NotificationBroadcaster) {
@@ -120,7 +131,7 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
       return new MBeanNotificationInfo[0];
     }
 
-    public void removeNotificationListener(NotificationListener listener) throws ListenerNotFoundException {
+    public void removeNotificationListener(final NotificationListener listener) throws ListenerNotFoundException {
       Object proxy = getImplementation();
       if(proxy instanceof NotificationBroadcaster) {
         ((NotificationBroadcaster)proxy).removeNotificationListener(listener);
@@ -128,7 +139,87 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
     }
 
   }
-  
+
+  class ProxyDynamicMBean implements DynamicMBean {
+    private final MBeanServerConnection mbsc;
+    private final ObjectName            objectName;
+
+    public ProxyDynamicMBean(final MBeanServerConnection mbsc, final ObjectName objectName) {
+      this.mbsc = mbsc;
+      this.objectName = objectName;
+    }
+
+    public Object getAttribute(final String name) throws AttributeNotFoundException, MBeanException, ReflectionException {
+      try {
+        return mbsc.getAttribute(objectName, name);
+      } catch (IOException e) {
+        throw new MBeanException(e);
+      } catch (InstanceNotFoundException e) {
+        throw new MBeanException(e);
+      }
+    }
+
+    public AttributeList getAttributes(final String[] attributes) {
+      try {
+        return mbsc.getAttributes(objectName, attributes);
+      } catch (InstanceNotFoundException e) {
+        throw new RuntimeException(e);
+      } catch (ReflectionException e) {
+        throw new RuntimeException(e);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    public MBeanInfo getMBeanInfo() {
+      try {
+        return mbsc.getMBeanInfo(objectName);
+      } catch (InstanceNotFoundException e) {
+        throw new RuntimeException(e);
+      } catch (IntrospectionException e) {
+        throw new RuntimeException(e);
+      } catch (ReflectionException e) {
+        throw new RuntimeException(e);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    public Object invoke(final String actionName, final Object[] params, final String[] signature) throws MBeanException,
+        ReflectionException {
+      try {
+        return mbsc.invoke(objectName, actionName, params, signature);
+      } catch (InstanceNotFoundException e) {
+        throw new MBeanException(e);
+      } catch (IOException e) {
+        throw new MBeanException(e);
+      }
+    }
+
+    public void setAttribute(final Attribute attribute) throws AttributeNotFoundException, InvalidAttributeValueException,
+        MBeanException, ReflectionException {
+      try {
+        mbsc.setAttribute(objectName, attribute);
+      } catch (InstanceNotFoundException e) {
+        throw new MBeanException(e);
+      } catch (IOException e) {
+        throw new MBeanException(e);
+      }
+    }
+
+    public AttributeList setAttributes(final AttributeList attributes) {
+      try {
+        return mbsc.setAttributes(objectName, attributes);
+      } catch (InstanceNotFoundException e) {
+        throw new RuntimeException(e);
+      } catch (ReflectionException e) {
+        throw new RuntimeException(e);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+
   private void addJmxConnection(final L1ConnectionMessage msg) {
     final MessageChannel channel = msg.getChannel();
     final TCSocketAddress remoteAddress = channel != null ? channel.getRemoteAddress() : null;
@@ -164,31 +255,56 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
 
           statisticsGateway.addStatisticsAgent(channel.getChannelID(), l1MBeanServerConnection);
 
-          Set mBeans = l1MBeanServerConnection.queryNames(null, TerracottaManagement.matchAllTerracottaMBeans());
-          List modifiedObjectNames = new ArrayList();
-          for (Iterator iter = mBeans.iterator(); iter.hasNext();) {
-            ObjectName objName = (ObjectName) iter.next();
-            try {
-              TerracottaMBean mBeanProxy = (TerracottaMBean) MBeanServerInvocationHandler
-                  .newProxyInstance(l1MBeanServerConnection, objName, TerracottaMBean.class, false);
-              ObjectName modifiedObjName = TerracottaManagement.addNodeInfo(objName, channel.getRemoteAddress());
-              Class interfaceClass = Class.forName(mBeanProxy.getInterfaceClassName());
-              boolean isNotificationBroadcaster = mBeanProxy.isNotificationBroadcaster();
-              Object obj = MBeanServerInvocationHandler.newProxyInstance(l1MBeanServerConnection, objName,
-                                                                         interfaceClass, isNotificationBroadcaster);
-              l2MBeanServer.registerMBean(new ProxyStandardMBean(obj, interfaceClass), modifiedObjName);
-              modifiedObjectNames.add(modifiedObjName);
-            } catch (Exception e) {
-              if (isConnectionException(e)) {
-                logger.warn("Client disconnected before all beans could be registered");
-                unregisterBeans(l2MBeanServer, modifiedObjectNames);
-                return;
-              }
+          final List<ObjectName> modifiedObjectNames = new ArrayList<ObjectName>();
 
-              logger.error("Unable to register remote DSO client MBean[" + objName.getCanonicalName() + "] for host["
-                           + channel.getRemoteAddress() + "], this bean will not show up in monitoring tools!!", e);
+          try {
+            // Handle Terracotta internal and public beans
+            final Set<ObjectName> tcMBeans = l1MBeanServerConnection.queryNames(null, TerracottaManagement.matchAllTerracottaMBeans());
+            for (ObjectName objName : tcMBeans) {
+              try {
+                TerracottaMBean mBeanProxy = (TerracottaMBean) MBeanServerInvocationHandler
+                    .newProxyInstance(l1MBeanServerConnection, objName, TerracottaMBean.class, false);
+                ObjectName modifiedObjName = TerracottaManagement.addNodeInfo(objName, channel.getRemoteAddress());
+                Class interfaceClass = Class.forName(mBeanProxy.getInterfaceClassName());
+                boolean isNotificationBroadcaster = mBeanProxy.isNotificationBroadcaster();
+                Object obj = MBeanServerInvocationHandler.newProxyInstance(l1MBeanServerConnection, objName,
+                                                                           interfaceClass, isNotificationBroadcaster);
+                l2MBeanServer.registerMBean(new ProxyStandardMBean(obj, interfaceClass), modifiedObjName);
+                modifiedObjectNames.add(modifiedObjName);
+              } catch (Exception e) {
+                if (!isConnectionException(e)) {
+                  logger.error("Unable to register remote DSO client MBean[" + objName.getCanonicalName() + "] for host["
+                               + channel.getRemoteAddress() + "], this bean will not show up in monitoring tools!!", e);
+                } else {
+                  throw e;
+                }
+
+              }
             }
+
+            // Handle TIM beans
+            final Set<ObjectName> timMBeans = l1MBeanServerConnection.queryNames(null, TerracottaManagement.matchAllTimMBeans());
+            for (ObjectName objName : timMBeans) {
+              try {
+                ObjectName modifiedObjName = TerracottaManagement.addNodeInfo(objName, channel.getRemoteAddress());
+                l2MBeanServer.registerMBean(new ProxyDynamicMBean(l1MBeanServerConnection, objName), modifiedObjName);
+                modifiedObjectNames.add(modifiedObjName);
+              } catch (Exception e) {
+                if (!isConnectionException(e)) {
+                  logger.error("Unable to register remote DSO client MBean[" + objName.getCanonicalName() + "] for host["
+                               + channel.getRemoteAddress() + "], this bean will not show up in monitoring tools!!", e);
+                } else {
+                  throw e;
+                }
+
+              }
+            }
+          } catch (Exception e) {
+            logger.warn("Client disconnected before all beans could be registered");
+            unregisterBeans(l2MBeanServer, modifiedObjectNames);
+            return;
           }
+
           try {
             jmxConnector.addConnectionNotificationListener(new ConnectorClosedListener(l2MBeanServer),
                                                            new ConnectorClosedFilter(), modifiedObjectNames);
@@ -210,7 +326,7 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
     }
   }
 
-  private static void unregisterBeans(MBeanServer beanServer, List modifiedObjectNames) {
+  private static void unregisterBeans(final MBeanServer beanServer, final List modifiedObjectNames) {
     for (Iterator i = modifiedObjectNames.iterator(); i.hasNext();) {
       ObjectName on = (ObjectName) i.next();
       try {
@@ -256,7 +372,7 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
           final JMXConnector jmxConnector = (JMXConnector) channelIdToJmxConnector.remove(channel.getChannelID());
           if (jmxConnector != null) {
             statisticsGateway.removeStatisticsAgent(channel.getChannelID());
-            
+
             try {
               jmxConnector.close();
             } catch (IOException ioe) {
