@@ -230,10 +230,13 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
   protected DSOClientBuilder createClientBuilder() {
     if (this.connectionComponents.isActiveActive()) {
-      throw new AssertionError("Active Server Arrays cannot be handled by CE Client");
-    } else {
-      return new StandardDSOClientBuilder();
+      CONSOLE_LOGGER
+          .fatal("An attempt to start a Terracotta server array with more than one active server failed. "
+                 + "This feature is not available in the currently installed Terracotta platform. For more information on "
+                 + "supported features for Terracotta platforms, please see this link http://www.terracotta.org/sadne");
+      System.exit(3);
     }
+    return new StandardDSOClientBuilder();
   }
 
   public ThreadIDMap getThreadIDMap() {
