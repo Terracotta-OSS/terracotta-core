@@ -11,7 +11,7 @@ fi
 
 IN="$1"
 CHECKOUT="$2"
-DEST=`pwd`/"$3"
+DEST="$3"
 
 if [ ! -f "$IN" ]; then
     echo "ERROR: input file [$IN] does not exist"
@@ -31,6 +31,9 @@ if [ ! -d "$DEST" ]; then
     echo "ERROR: destination dir [$DEST] is not a directory"
     exit 1
 fi
+
+cd "$DEST"
+DEST=`pwd`
 
 if [ "${IN#*.}" == "xml" ]; then
     TIMS=`grep '<module name' $IN | sed -e 's/^.*<module name="//' | sed -e 's/".*//'`
