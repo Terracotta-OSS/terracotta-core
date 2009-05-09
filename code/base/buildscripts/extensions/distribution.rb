@@ -286,6 +286,19 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     end
     puts "EXEC POSTSCRIPTS"
     exec_section :postscripts
+
+    if (timlist = @config_source['timlist']) && (forgedir = @config_source['forgedir'])
+      timlist = File.expand_path(timlist)
+      forgedir = File.expand_path(forgedir)
+      destdir = "#{product_directory.to_s}/modules".gsub!(/\\/, "/")
+
+      cmd = "buildscripts/timbuild.sh #{timlist} #{forgedir} #{destdir}"
+
+      puts "EXEC #{cmd}"
+      result = system("sh #{cmd}")
+
+      fail("timbuild.sh script failed") unless result
+    end
   end
 
   def __package

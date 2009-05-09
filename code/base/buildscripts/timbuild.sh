@@ -13,6 +13,16 @@ IN="$1"
 CHECKOUT="$2"
 DEST="$3"
 
+if [ `uname | grep CYGWIN` ]; then
+  IN=`cygpath -u $IN`
+  CHECKOUT=`cygpath -u $CHECKOUT`
+  DEST=`cygpath -u $DEST`
+fi
+
+echo "IN: $IN"
+echo "CHECKOUT: $CHECKOUT"
+echo "DEST: $DEST"
+
 if [ ! -f "$IN" ]; then
     echo "ERROR: input file [$IN] does not exist"
     exit 1
