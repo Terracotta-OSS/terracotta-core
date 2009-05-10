@@ -17,16 +17,16 @@ import java.util.Set;
 
 public class ServerStackProviderTest extends TCTestCase {
 
-  private ServerStackProvider                  provider;
-  private MockStackHarnessFactory              harnessFactory;
-  private MockNetworkStackHarness              harness;
-  private MockTransportMessageFactory transportHandshakeMessageFactory;
-  private ConnectionID                         connId;
-  private ConnectionIDFactory                  connectionIdFactory;
-  private TestConnectionPolicy                 connectionPolicy;
-  private TestWireProtocolAdaptorFactory       wpaFactory;
-  private MockMessageTransportFactory          transportFactory;
-  private DefaultConnectionIdFactory           connectionIDProvider;
+  private ServerStackProvider            provider;
+  private MockStackHarnessFactory        harnessFactory;
+  private MockNetworkStackHarness        harness;
+  private MockTransportMessageFactory    transportHandshakeMessageFactory;
+  private ConnectionID                   connId;
+  private ConnectionIDFactory            connectionIdFactory;
+  private TestConnectionPolicy           connectionPolicy;
+  private TestWireProtocolAdaptorFactory wpaFactory;
+  private MockMessageTransportFactory    transportFactory;
+  private DefaultConnectionIdFactory     connectionIDProvider;
 
   public ServerStackProviderTest() {
     super();
@@ -62,6 +62,8 @@ public class ServerStackProviderTest extends TCTestCase {
    */
   public void testConnectionPolicyInteraction() throws Exception {
 
+    // 1. client connect
+
     assertNull(wpaFactory.newWireProtocolAdaptorCalls.poll(0));
     // XXX: This is yucky. This has the effect of creating a new TCProtocolAdapter which creates a wire protocol
     // message sink which is the thing we need to drop messages on.
@@ -76,14 +78,14 @@ public class ServerStackProviderTest extends TCTestCase {
     syn.connection = connection;
 
     MockMessageTransport transport = new MockMessageTransport();
-    transportFactory.transport = transport;
 
+    transportFactory.transport = transport;
     // make sure that createSynACk calls in the transport handshake message factory are clear
     assertNull(transportHandshakeMessageFactory.createSynAckCalls.poll(0));
     // make sure the send calls in the transport are clear
     assertNull(transport.sendToConnectionCalls.poll(0));
     connectionPolicy.maxConnections = 13;
-    connectionPolicy.maxConnectionsExceeded = true;
+    connectionPolicy.maxConnectionsExceeded = false;
     // Send SYN message
     sink.putMessage(syn);
     // the client should have sent the SYN_ACK message
@@ -97,12 +99,30 @@ public class ServerStackProviderTest extends TCTestCase {
     assertEquals(new Boolean(connectionPolicy.maxConnectionsExceeded), args.getIsMaxConnectionsExceeded());
     assertEquals(new Integer(connectionPolicy.maxConnections), args.getMaxConnections());
 
-    assertEquals(0, connectionPolicy.clientDisconnected);
-    // XXX: This is yucky. THis is the connection id that the stack provider assigns to the transport (via the
-    // connection id factory)
-    transport.connectionId = this.connId;
+    provider.notifyTransportDisconnected(transport);
+    assertEquals(0, connectionPolicy.clientConnected);
+
     provider.notifyTransportClosed(transport);
-    assertEquals(1, connectionPolicy.clientConnected);
+    assertEquals(0, connectionPolicy.clientConnected);
+
+    // reset
+    connectionPolicy.clientConnected = 0;
+    provider.getInstance();
+    sink = (WireProtocolMessageSink) wpaFactory.newWireProtocolAdaptorCalls.take();
+
+    // 2. Client connect when the max connections reached.
+
+    connectionPolicy.maxConnectionsExceeded = true;
+    sink.putMessage(syn);
+    assertSame(synAck, transport.sendToConnectionCalls.take());
+
+    assertEquals(0, connectionPolicy.clientConnected);
+    args = (CallContext) transportHandshakeMessageFactory.createSynAckCalls.poll(0);
+    assertEquals(new Boolean(connectionPolicy.maxConnectionsExceeded), args.getIsMaxConnectionsExceeded());
+    assertEquals(new Integer(connectionPolicy.maxConnections), args.getMaxConnections());
+
+    provider.notifyTransportClosed(transport);
+    assertEquals(0, connectionPolicy.clientConnected);
 
   }
 
@@ -130,22 +150,25 @@ public class ServerStackProviderTest extends TCTestCase {
 
   public void testNotifyTransportDisconnected() throws Exception {
     TestTCConnection conn = new TestTCConnection();
+
+    MockMessageTransport transport = new MockMessageTransport();
+    transportFactory.transport = transport;
+
     provider.attachNewConnection(ConnectionID.NULL_ID, conn);
 
+    assertEquals(0, connectionPolicy.clientConnected);
+
     // send a transport disconnected event
-    MockMessageTransport transport = new MockMessageTransport();
-    transport.connectionId = this.connId;
-    assertEquals(0, connectionPolicy.clientDisconnected);
     provider.notifyTransportDisconnected(transport);
 
-    // transport disconnect event doesnt close client
-    assertEquals(0, connectionPolicy.clientDisconnected);
+    // transport disconnect event works only if the same client prev connected
+    assertEquals(0, connectionPolicy.clientConnected);
 
     // send transport close event
     provider.notifyTransportClosed(transport);
 
-    // make sure that the connection policy is decremented
-    assertEquals(1, connectionPolicy.clientDisconnected);
+    // transport close event works only if the same client prev connected
+    assertEquals(0, connectionPolicy.clientConnected);
 
   }
 
@@ -244,9 +267,9 @@ public class ServerStackProviderTest extends TCTestCase {
       connId = super.nextConnectionId();
       return connId;
     }
-    
+
     public ConnectionID makeConnectionId(long channelID) {
-      return(super.makeConnectionId(channelID));
+      return (super.makeConnectionId(channelID));
     }
   }
 

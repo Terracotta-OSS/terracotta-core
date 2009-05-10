@@ -262,11 +262,12 @@ public class ClientMessageTransport extends MessageTransportBase {
     wireNewConnection(connection);
     try {
       HandshakeResult result = handShake();
-      sendAck();
+      // DEV-2781 - check for MaxConnectionsExceeded message from server during reconnects
       if (result.isMaxConnectionsExceeded()) {
         close();
         throw new MaxConnectionsExceededException(getMaxConnectionsExceededMessage(result.maxConnections()));
       }
+      sendAck();
     } catch (Exception t) {
       status.reset();
       throw t;

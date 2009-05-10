@@ -5,14 +5,12 @@ package com.tc.net.protocol.transport;
 
 public interface ConnectionPolicy {
 
-  public void clientConnected();
+  public boolean connectClient(ConnectionID connID);
 
-  public void clientDisconnected();
+  public void clientDisconnected(ConnectionID connID);
 
-  public boolean maxConnectionsExceeded();
+  public boolean isMaxConnectionsReached();
 
   public int getMaxConnections();
-
-  public void setMaxConnections(int i);
 
 }

@@ -150,11 +150,10 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
    * A client disconnected.
    */
   public void notifyTransportDisconnected(MessageTransport transport) {
-    // Currenly we dont care about this event here. In AbstractMessageChannel in the server, this event closes the
-    // channel
-    // so effectively a disconnected transport means a closed channel in the server. When we later implement clients
-    // reconnect
-    // this will change and this will trigger a reconnect window for that client here.
+    /*
+     * Even for temporary disconnects, we need to keep proper accounting. Otherwise, the same client reconnect may fail.
+     */
+    this.connectionPolicy.clientDisconnected(transport.getConnectionId());
   }
 
   private void close(ConnectionID connectionId) {
@@ -174,7 +173,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
    */
   public void notifyTransportClosed(MessageTransport transport) {
     close(transport.getConnectionId());
-    this.connectionPolicy.clientDisconnected();
+    this.connectionPolicy.clientDisconnected(transport.getConnectionId());
   }
 
   /*********************************************************************************************************************
@@ -308,16 +307,16 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
       TransportHandshakeMessage synAck;
       boolean isError = (errorContext != null);
       int maxConnections = connectionPolicy.getMaxConnections();
-      connectionPolicy.clientConnected();
-      // NOTE: There's a race here which should be ok, since it doesn't matter which client gets told there are
-      // no more connections left...
-      boolean isMaxConnectionsExceeded = connectionPolicy.maxConnectionsExceeded();
+      boolean isMaxConnectionsReached = false;
+      // clients after max connections are not added. clients anyway close after seeing max connection reached
+      // message. Server on getting the close event from these clients, removes the stack harness.
+      isMaxConnectionsReached = connectionPolicy.connectClient(connectionId) ? false : true;
       if (isError) {
-        synAck = handshakeMessageFactory.createSynAck(connectionId, errorContext, source, isMaxConnectionsExceeded,
+        synAck = handshakeMessageFactory.createSynAck(connectionId, errorContext, source, isMaxConnectionsReached,
                                                       maxConnections);
       } else {
         int callbackPort = source.getLocalAddress().getPort();
-        synAck = handshakeMessageFactory.createSynAck(connectionId, source, isMaxConnectionsExceeded, maxConnections,
+        synAck = handshakeMessageFactory.createSynAck(connectionId, source, isMaxConnectionsReached, maxConnections,
                                                       callbackPort);
       }
       sendMessage(synAck);

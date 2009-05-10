@@ -77,6 +77,10 @@ class MessageTransportStatus {
   synchronized boolean isDisconnected() {
     return this.state.equals(MessageTransportState.STATE_DISCONNECTED);
   }
+  
+  synchronized boolean isClosed() {
+    return this.state.equals(MessageTransportState.STATE_CLOSED);
+  }
 
   synchronized boolean isEnd() {
     return this.state.equals(MessageTransportState.STATE_END);

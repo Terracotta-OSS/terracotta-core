@@ -284,10 +284,11 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
 
     if (isSameConnection) {
       synchronized (status) {
+        logger.warn("CLOSE EVENT : " + this.connection + ". STATUS : " + status);
         if (status.isEstablished() || status.isDisconnected()) {
           status.reset();
         } else {
-          logger.warn("Ignore redundant close event: " + event);
+          logger.warn("closing down connection - " + event);
           return;
         }
       }

@@ -6,10 +6,12 @@ package com.tc.net.protocol.transport;
 
 import com.tc.util.Assert;
 
+import java.util.HashSet;
+
 public class ConnectionPolicyImpl implements ConnectionPolicy {
 
-  private int maxConnections;
-  private int connectionCount;
+  private HashSet<ConnectionID> clientSet = new HashSet<ConnectionID>();
+  private int                   maxConnections;
 
   public ConnectionPolicyImpl(int maxConnections) {
     Assert.assertTrue("negative maxConnections", maxConnections >= 0);
@@ -17,28 +19,28 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
   }
 
   public synchronized String toString() {
-    return "ConnectionPolicy[maxConnections=" + maxConnections + ", connectionCount=" + connectionCount + "]";
+    return "ConnectionPolicy[maxConnections=" + maxConnections + ", connectionCount=" + clientSet.size() + "]";
   }
 
-  public synchronized void clientConnected() {
-    connectionCount++;
-  }
-
-  public synchronized void clientDisconnected() {
-    if (connectionCount > 0) {
-      connectionCount--;
+  public synchronized boolean connectClient(ConnectionID connID) {
+    if (!isMaxConnectionsReached()) {
+      clientSet.add(connID);
+      return true;
     }
+    return false;
   }
 
-  public synchronized boolean maxConnectionsExceeded() {
-    return connectionCount > maxConnections;
+  public synchronized void clientDisconnected(ConnectionID connID) {
+    // not all times clientSet has connID client disconnect removes the connID. after reconnect timeout, for close event
+    // we get here again.
+    clientSet.remove(connID);
+  }
+
+  public synchronized boolean isMaxConnectionsReached() {
+    return (clientSet.size() >= maxConnections);
   }
 
   public synchronized int getMaxConnections() {
     return maxConnections;
-  }
-
-  public synchronized void setMaxConnections(int i) {
-    this.maxConnections = i;
   }
 }

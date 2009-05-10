@@ -22,6 +22,7 @@ public class MockMessageTransportFactory implements MessageTransportFactory {
                                              TransportHandshakeMessageFactory handshakeMessageFactory,
                                              List transportListeners) {
     callCount++;
+    if (transport != null) transport.initConnectionID(connectionID);
     return transport;
   }
 
@@ -30,6 +31,7 @@ public class MockMessageTransportFactory implements MessageTransportFactory {
                                              TransportHandshakeMessageFactory handshakeMessageFactory,
                                              List transportListeners) {
     callCount++;
+    if (transport != null) transport.initConnectionID(connectionId);
     return transport;
   }
 }
