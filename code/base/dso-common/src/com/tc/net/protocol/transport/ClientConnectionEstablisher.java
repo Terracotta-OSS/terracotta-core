@@ -6,6 +6,7 @@ package com.tc.net.protocol.transport;
 
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 
+import com.tc.logging.CustomerLogging;
 import com.tc.logging.LossyTCLogger;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -307,7 +308,8 @@ public class ClientConnectionEstablisher {
             break;
           }
         } catch (MaxConnectionsExceededException e) {
-          cmt.logger.warn(e);
+          String connInfo = ((cmt == null) ? "" : (cmt.getLocalAddress() + "->" + cmt.getRemoteAddress() + " "));
+          CustomerLogging.getConsoleLogger().fatal(connInfo + e.getMessage());
           cmt.logger.warn("No longer trying to reconnect.");
           return;
         } catch (Throwable t) {

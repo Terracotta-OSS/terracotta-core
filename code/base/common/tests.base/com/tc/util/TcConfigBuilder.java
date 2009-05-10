@@ -4,12 +4,12 @@ import org.apache.commons.io.IOUtils;
 import org.apache.xmlbeans.XmlOptions;
 
 import com.tc.config.Loader;
-import com.tc.util.PortChooser;
 import com.terracottatech.config.AppGroup;
 import com.terracottatech.config.Autolock;
 import com.terracottatech.config.Include;
 import com.terracottatech.config.LockLevel;
 import com.terracottatech.config.Module;
+import com.terracottatech.config.Property;
 import com.terracottatech.config.QualifiedClassName;
 import com.terracottatech.config.Root;
 import com.terracottatech.config.Server;
@@ -93,23 +93,50 @@ public class TcConfigBuilder {
   }
 
   public void setDsoPort(int portNo) {
+    setDsoPort(0, portNo);
+  }
+
+  public void setDsoPort(int serverIndex, int portNo) {
     ensureServers();
-    tcConfig.getServers().getServerArray(0).setDsoPort(portNo);
+    Assert.assertNotNull(tcConfig.getServers().getServerArray(serverIndex));
+    tcConfig.getServers().getServerArray(serverIndex).setDsoPort(portNo);
   }
 
   public int getDsoPort() {
+    return getDsoPort(0);
+  }
+
+  public int getDsoPort(int serverIndex) {
     ensureServers();
-    return tcConfig.getServers().getServerArray(0).getDsoPort();
+    Assert.assertNotNull(tcConfig.getServers().getServerArray(serverIndex));
+    return tcConfig.getServers().getServerArray(serverIndex).getDsoPort();
   }
 
   public void setJmxPort(int portNo) {
+    setJmxPort(0, portNo);
+  }
+
+  public void setJmxPort(int serverIndex, int portNo) {
     ensureServers();
-    tcConfig.getServers().getServerArray(0).setJmxPort(portNo);
+    Assert.assertNotNull(tcConfig.getServers().getServerArray(serverIndex));
+    tcConfig.getServers().getServerArray(serverIndex).setJmxPort(portNo);
   }
 
   public int getJmxPort() {
+    return getJmxPort(0);
+  }
+
+  public int getJmxPort(int serverIndex) {
     ensureServers();
+    Assert.assertNotNull(tcConfig.getServers().getServerArray(serverIndex));
     return tcConfig.getServers().getServerArray(0).getJmxPort();
+  }
+
+  public void addProperty(String key, String value) {
+    ensureTcProprties();
+    Property tcProps = tcConfig.getTcProperties().addNewProperty();
+    tcProps.setName(key);
+    tcProps.setValue(value);
   }
 
   public void setServerLogs(String path) {
@@ -213,7 +240,7 @@ public class TcConfigBuilder {
     ensureModules();
     tcConfig.getClients().getModules().addRepository(location);
   }
-  
+
   public void addAppGroup(String name, String[] namedClassLoaders, String[] webAppNames) {
     ensureAppGroups();
     AppGroup ag = tcConfig.getApplication().getDso().getAppGroups().addNewAppGroup();
@@ -302,6 +329,12 @@ public class TcConfigBuilder {
   private void ensureServers() {
     if (!tcConfig.isSetServers()) {
       tcConfig.addNewServers();
+    }
+  }
+
+  private void ensureTcProprties() {
+    if (!tcConfig.isSetTcProperties()) {
+      tcConfig.addNewTcProperties();
     }
   }
 

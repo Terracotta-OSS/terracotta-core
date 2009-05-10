@@ -83,8 +83,7 @@ public class ClientMessageTransport extends MessageTransportBase {
           clearConnection();
           this.addTransportListeners(tl);
           status.reset();
-          throw new MaxConnectionsExceededException("Your product key only allows maximum " + result.maxConnections()
-                                                    + " clients to connect.");
+          throw new MaxConnectionsExceededException(getMaxConnectionsExceededMessage(result.maxConnections()));
         }
         sendAck();
         Assert.eval(!this.connectionId.isNull());
@@ -275,7 +274,7 @@ public class ClientMessageTransport extends MessageTransportBase {
   }
 
   private String getMaxConnectionsExceededMessage(int maxConnections) {
-    return "Maximum number of client connections exceeded: " + maxConnections;
+    return "Your product key only allows maximum " + maxConnections  + " clients to connect.";
   }
 
   TCProtocolAdaptor getProtocolAdapter() {
