@@ -6,6 +6,6 @@ TO RUN:
 <project basedir="." default="replace">
   <target name="replace">
     <echo message="Updating kitID"/>
-    <replace token="kitID=newvalue" value="kitID=newvalue" dir="." excludes="**/build.xml"/>
+    <replace token="kitID=3.0" value="kitID=newvalue" dir="." excludes="**/updateKitID.xml"/>
   </target>
 </project>
