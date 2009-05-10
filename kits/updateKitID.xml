@@ -1,0 +1,11 @@
+<!-- use this script to update the kitID in the URLs of samples 
+TO RUN:
+    - modify the new kitID new value below
+    - in this folder, run:  ant -f updateKitID.xml
+ -->
+<project basedir="." default="replace">
+  <target name="replace">
+    <echo message="Updating kitID"/>
+    <replace token="kitID=newvalue" value="kitID=newvalue" dir="." excludes="**/build.xml"/>
+  </target>
+</project>
