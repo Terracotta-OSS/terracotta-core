@@ -19,20 +19,20 @@ import java.util.Date;
  * New instances are usually filled in through the specialized constructors.
  *
  * The {@code agentIp} and {@code agentDifferentiator} properties don't have
- * to be filled in. When an instance of {@code StatisticData} is stored in the
+ * to be filled in. When an instance of {@code StatisticData} is stored in the
  * {@code StatisticsBuffer} of the CVT agent, these properties are set when
  * they are {@code null}. This should be the desired behavior is almost all of
- * the cases. Also, the {@code moment} property will be filled in by the
- * {@code StatisticsRetriever} to ensure that all the data in one retrieval
+ * the cases. Also, the {@code moment} property will be filled in by the
+ * {@code StatisticsRetriever} to ensure that all the data in one retrieval
  * action can be correlated.
  *
- * Only four types of data can be stored within a {@code StatisticData} 
+ * Only four types of data can be stored within a {@code StatisticData}
  * instance and they are mutually exclusive. The reason why it doesn't allow
  * any {@code Object} to be used as data is to allow for the CVT back-end to
  * store the data while preserving its type. This makes is easier to query
  * on the data values after collection.
  *
- * The {@code name} of a {@code StatisticData} instance should identify the
+ * The {@code name} of a {@code StatisticData} instance should identify the
  * type of data that it contains, for instance "{@code cpu combined}". The
  * {@code element} property can be {@code null}, but when it's used it should
  * identify different elements of the same data. For instance when CPU data is
@@ -41,11 +41,11 @@ import java.util.Date;
  * the individual data points.
  *
  * Finally, when {@link StatisticRetrievalAction}s return an array of
- * {@code StatisticData} instances, the {@code moment} property of each
+ * {@code StatisticData} instances, the {@code moment} property of each
  * individual data instance should be the same so that the entire array
  * can be situated at the same location on a timeline. Usually this is done
  * by creating a {@link Date} instance before instantiating the
- * {@code StatisticData} instances and passing that {@code Date} instance to
+ * {@code StatisticData} instances and passing that {@code Date} instance to
  * the constructor of each data element.
  */
 public class StatisticData implements Serializable {
@@ -67,7 +67,7 @@ public class StatisticData implements Serializable {
   public StatisticData() {
     //
   }
-  
+
   public StatisticData(final String name, final Long value) {
     setName(name);
     setData(value);
@@ -116,11 +116,11 @@ public class StatisticData implements Serializable {
     return sessionId;
   }
 
-  public void setSessionId(String sessionId) {
+  public void setSessionId(final String sessionId) {
     this.sessionId = sessionId;
   }
 
-  public StatisticData sessionId(String sessionID) {
+  public StatisticData sessionId(final String sessionID) {
     setSessionId(sessionID);
     return this;
   }
@@ -129,11 +129,11 @@ public class StatisticData implements Serializable {
     return agentIp;
   }
 
-  public void setAgentIp(String agentIp) {
+  public void setAgentIp(final String agentIp) {
     this.agentIp = agentIp;
   }
 
-  public StatisticData agentIp(String agentIP) {
+  public StatisticData agentIp(final String agentIP) {
     setAgentIp(agentIP);
     return this;
   }
@@ -142,20 +142,20 @@ public class StatisticData implements Serializable {
     return agentDifferentiator;
   }
 
-  public StatisticData agentDifferentiator(String agentDiff) {
+  public StatisticData agentDifferentiator(final String agentDiff) {
     setAgentDifferentiator(agentDiff);
     return this;
   }
 
-  public void setAgentDifferentiator(String agentDifferentiator) {
+  public void setAgentDifferentiator(final String agentDifferentiator) {
     this.agentDifferentiator = agentDifferentiator;
   }
 
-  public void setMoment(Date moment) {
+  public void setMoment(final Date moment) {
     this.moment = moment;
   }
 
-  public StatisticData moment(Date date) {
+  public StatisticData moment(final Date date) {
     setMoment(date);
     return this;
   }
@@ -168,11 +168,11 @@ public class StatisticData implements Serializable {
     return name;
   }
 
-  public void setName(String name) {
+  public void setName(final String name) {
     this.name = name;
   }
 
-  public StatisticData name(String nameArg) {
+  public StatisticData name(final String nameArg) {
     setName(nameArg);
     return this;
   }
@@ -181,11 +181,11 @@ public class StatisticData implements Serializable {
     return element;
   }
 
-  public void setElement(String element) {
+  public void setElement(final String element) {
     this.element = element;
   }
 
-  public StatisticData element(String elementArg) {
+  public StatisticData element(final String elementArg) {
     setElement(elementArg);
     return this;
   }
@@ -194,47 +194,48 @@ public class StatisticData implements Serializable {
     return data;
   }
 
-  private void setData(Object data) {
+  private void setData(final Object data) {
     this.data = data;
   }
 
-  private StatisticData data(Object obj) {
+  private StatisticData data(final Object obj) {
     setData(obj);
     return this;
   }
 
-  public void setData(Long data) {
+  public void setData(final Long data) {
     setData((Object)data);
   }
 
-  public StatisticData data(Long longData) {
+  public StatisticData data(final Long longData) {
     return data((Object)longData);
   }
 
-  public void setData(String data) {
+  public void setData(final String data) {
     setData((Object)data);
   }
 
-  public StatisticData data(String strData) {
+  public StatisticData data(final String strData) {
     return data((Object)strData);
   }
 
-  public void setData(Date data) {
+  public void setData(final Date data) {
     setData((Object)data);
   }
 
-  public StatisticData data(Date dateData) {
+  public StatisticData data(final Date dateData) {
     return data((Object)dateData);
   }
 
-  public void setData(BigDecimal data) {
+  public void setData(final BigDecimal data) {
     setData((Object)data);
   }
 
-  public StatisticData data(BigDecimal bigDecimalData) {
+  public StatisticData data(final BigDecimal bigDecimalData) {
     return data((Object)bigDecimalData);
   }
 
+  @Override
   public Object clone() {
     return new StatisticData()
       .sessionId(sessionId)
@@ -246,6 +247,7 @@ public class StatisticData implements Serializable {
       .data(data);
   }
 
+  @Override
   public String toString() {
     DateFormat format = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss SSS");
     String data_formatted;
@@ -403,25 +405,25 @@ public class StatisticData implements Serializable {
       result.append(sessionId);
     }
     result.append("</sessionId>");
-    
+
     result.append("<agentIp>");
     if (agentIp != null) {
       result.append(agentIp);
     }
     result.append("</agentIp>");
-    
+
     result.append("<agentDifferentiator>");
     if (agentDifferentiator != null) {
       result.append(agentDifferentiator);
     }
     result.append("</agentDifferentiator>");
-    
+
     result.append("<moment>");
     if (moment != null) {
       result.append(new Long((moment).getTime()));
     }
     result.append("</moment>");
-    
+
     result.append("<name>");
     if (name != null) {
       result.append(name);
@@ -445,7 +447,7 @@ public class StatisticData implements Serializable {
     result.append("</value>");
     return result.toString();
   }
-  
+
   /**
    * Creates a new data instance from a single line of CSV data.
    *
@@ -460,7 +462,7 @@ public class StatisticData implements Serializable {
    * provided CSV text line
    * @param line the line of text that contains the fields for a single
    * {@code StatisticData} instance
-   * @return the {@code StatisticData} instance that corresponds to the
+   * @return the {@code StatisticData} instance that corresponds to the
    * provided CSV line
    * @throws ParseException when the provided format version is not
    * supported; or
