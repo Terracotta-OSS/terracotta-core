@@ -26,17 +26,20 @@ import java.util.concurrent.Callable;
 import javax.swing.SwingUtilities;
 
 public class ClientsNode extends ComponentNode implements ClientConnectionListener {
-  protected IAdminClientContext adminClientContext;
-  protected IClusterModel       clusterModel;
-  protected ClusterListener     clusterListener;
-  protected ConnectionContext   cc;
-  protected IClient[]           clients;
-  protected ClientsPanel        clientsPanel;
+  protected IAdminClientContext  adminClientContext;
+  protected IClusterModel        clusterModel;
+  protected ClusterListener      clusterListener;
+  protected ConnectionContext    cc;
+  protected IClient[]            clients;
+  protected ClientsPanel         clientsPanel;
+
+  private static final IClient[] NULL_CLIENTS = {};
 
   public ClientsNode(IAdminClientContext adminClientContext, IClusterModel clusterModel) {
     super();
     this.adminClientContext = adminClientContext;
     this.clusterModel = clusterModel;
+    clients = NULL_CLIENTS;
     setLabel(adminClientContext.getMessage("connected-clients"));
     clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
     if (clusterModel.isReady()) {
@@ -78,7 +81,7 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
     if (activeCoord != null) {
       activeCoord.removeClientConnectionListener(this);
       setLabel(adminClientContext.getMessage("connected-clients"));
-      clients = new IClient[0];
+      clients = NULL_CLIENTS;
       for (int i = getChildCount() - 1; i >= 0; i--) {
         removeChild((XTreeNode) getChildAt(i));
       }
