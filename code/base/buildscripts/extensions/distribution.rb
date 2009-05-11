@@ -290,12 +290,12 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     if (timlist = @config_source['timlist']) && (forgedir = @config_source['forgedir'])
       timlist = File.expand_path(timlist)
       forgedir = File.expand_path(forgedir)
-      destdir = "#{product_directory.to_s}/modules".gsub!(/\\/, "/")
+      destdir = "#{product_directory.to_s}/modules".gsub(/\\/, "/")
 
       cmd = "buildscripts/timbuild.sh #{timlist} #{forgedir} #{destdir}"
 
       puts "EXEC #{cmd}"
-      result = system("sh #{cmd}")
+      result = system("bash #{cmd}")
 
       fail("timbuild.sh script failed") unless result
     end
