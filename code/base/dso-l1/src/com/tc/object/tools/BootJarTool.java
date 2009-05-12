@@ -2667,8 +2667,9 @@ public class BootJarTool {
         System.exit(1);
       }
     } catch (Exception e) {
-      consoleLogger.fatal("BootJarTool: " + e.getMessage());
-      consoleLogger.fatal(e);
+      // See CDV-835, DEV-2792: for some messages it would be better to print e.getMessage() but
+      // for others the message is not sufficient and we need the entire stack trace.
+      consoleLogger.fatal("BootJarTool: ", e);
       System.exit(1);
     }
   }
