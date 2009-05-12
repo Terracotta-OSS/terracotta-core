@@ -82,8 +82,10 @@ public class PagedView extends XContainer implements ComponentListener {
 
   @Override
   public void remove(Component comp) {
-    super.remove(comp);
-    comp.removeComponentListener(this);
+    if (comp != null) {
+      super.remove(comp);
+      comp.removeComponentListener(this);
+    }
   }
 
   @Override

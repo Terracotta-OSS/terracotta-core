@@ -243,7 +243,10 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
   public void clientDisconnected(final IClient client) {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        pagedView.remove(pagedView.getPage(client.toString()));
+        Component page = pagedView.getPage(client.toString());
+        if (page != null) {
+          pagedView.remove(page);
+        }
       }
     });
   }
