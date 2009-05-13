@@ -69,10 +69,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 public class ClientObjectManagerImpl implements ClientObjectManager, ClientHandshakeCallback, PortableObjectProvider,
     Evictable, DumpHandler, PrettyPrintable {
@@ -100,7 +102,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   private final RemoteObjectManager            remoteObjectManager;
   private final EvictionPolicy                 cache;
   private final Traverser                      traverser;
-  private final Traverser                      shareObjectsTraverser;
   private final TraverseTest                   traverseTest;
   private final DSOClientConfigHelper          clientConfiguration;
   private final TCClassFactory                 clazzFactory;
@@ -153,8 +154,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     this.logger = new ClientIDLogger(provider, TCLogging.getLogger(ClientObjectManager.class));
     this.classProvider = classProvider;
     this.traverseTest = new NewObjectTraverseTest();
-    this.traverser = new Traverser(new AddManagedObjectAction(), this);
-    this.shareObjectsTraverser = new Traverser(new SharedObjectsAction(), this);
+    this.traverser = new Traverser(this);
     this.clazzFactory = classFactory;
     this.factory = objectFactory;
     this.factory.setObjectManager(this);
@@ -286,12 +286,12 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   private TCObject create(final Object pojo, final NonPortableEventContext context) {
-    addToManagedFromRoot(pojo, context);
+    traverse(pojo, context, new AddManagedObjectAction());
     return basicLookup(pojo);
   }
 
   private TCObject share(final Object pojo, final NonPortableEventContext context) {
-    addToSharedFromRoot(pojo, context);
+    traverse(pojo, context, new SharedObjectsAction());
     return basicLookup(pojo);
   }
 
@@ -360,17 +360,15 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   /**
-   * This method is created for situations in which a method needs to be taken place when an object moved from
-   * non-shared to shared. The method could be an instrumented method. For instance, for ConcurrentHashMap, we need to
-   * re-hash the objects already in the map because the hashing algorithm is different when a ConcurrentHashMap is
-   * shared. The rehash method is an instrumented method. This should be executed only once.
+   * This method is created for situations in which a method needs to be invoked when an object moved from non-shared to
+   * shared (but not until the end of the current traverser that caused the change). The method could be an instrumented
+   * method. For instance, for ConcurrentHashMap, we need to re-hash the objects already in the map because the hashing
+   * algorithm is different when a ConcurrentHashMap is shared. The rehash method is an instrumented method. This should
+   * be executed only once.
    */
-  private void executePostCreateMethod(final Object pojo) {
-    String onLookupMethodName = this.clientConfiguration.getPostCreateMethodIfDefined(pojo.getClass().getName());
-    if (onLookupMethodName != null) {
-      executeMethod(pojo, onLookupMethodName, "postCreate method (" + onLookupMethodName + ") failed on object of "
-                                              + pojo.getClass());
-    }
+  private void executePostCreateMethod(final Object pojo, final String onLookupMethodName) {
+    executeMethod(pojo, onLookupMethodName, "postCreate method (" + onLookupMethodName + ") failed on object of "
+                                            + pojo.getClass());
   }
 
   private void executeMethod(final Object pojo, final String onLookupMethodName, final String loggingMessage) {
@@ -385,11 +383,15 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
         t = t.getCause();
       }
       this.logger.warn(loggingMessage, t);
-      if (!(t instanceof RuntimeException)) {
-        t = new RuntimeException(t);
-      }
-      throw (RuntimeException) t;
+
+      wrapIfNeededAndThrow(t);
     }
+  }
+
+  private static void wrapIfNeededAndThrow(Throwable t) {
+    if (t instanceof Error) { throw (Error) t; }
+    if (t instanceof RuntimeException) { throw (RuntimeException) t; }
+    throw new RuntimeException(t);
   }
 
   private TCObject lookupExistingLiteralRootOrNull(final String rootName) {
@@ -768,10 +770,10 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     reason.setMessage(message);
     context.addDetailsTo(reason);
 
-    // Send this event to L2
-    JMXMessage jmxMsg = this.channel.getJMXMessage();
-    jmxMsg.setJMXObject(new NonPortableObjectEvent(context, reason));
-    jmxMsg.send();
+      // Send this event to L2
+      JMXMessage jmxMsg = this.channel.getJMXMessage();
+      jmxMsg.setJMXObject(new NonPortableObjectEvent(context, reason));
+      jmxMsg.send();
 
     StringWriter formattedReason = new StringWriter();
     PrintWriter out = new PrintWriter(formattedReason);
@@ -939,8 +941,34 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
   }
 
-  private void addToManagedFromRoot(final Object root, final NonPortableEventContext context) {
-    this.traverser.traverse(root, this.traverseTest, context);
+  private void traverse(Object root, NonPortableEventContext context, TraversalAction action) {
+    // if set this will be final exception thrown
+    Throwable exception = null;
+
+    PostCreateMethodGatherer postCreate = (PostCreateMethodGatherer) action;
+    try {
+      this.traverser.traverse(root, this.traverseTest, context, action);
+    } catch (Throwable t) {
+      exception = t;
+    } finally {
+      // even if we're throwing an exception from the traversal the postCreate methods for the objects that became
+      // shared should still be called
+      for (Entry<Object, String> entry : postCreate.getPostCreateMethods().entrySet()) {
+        try {
+          executePostCreateMethod(entry.getKey(), entry.getValue());
+        } catch (Throwable t) {
+          if (exception == null) {
+            exception = t;
+          } else {
+            // exceptions are already logged, no need to do it here
+          }
+        }
+      }
+    }
+
+    if (exception != null) {
+      wrapIfNeededAndThrow(exception);
+    }
   }
 
   private void dumpObjectHierarchy(final Object root, final NonPortableEventContext context) {
@@ -980,17 +1008,45 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
   }
 
-  private void addToSharedFromRoot(final Object root, final NonPortableEventContext context) {
-    this.shareObjectsTraverser.traverse(root, this.traverseTest, context);
-  }
-
   public ToggleableStrongReference getOrCreateToggleRef(final ObjectID id, final Object peer) {
     // We don't need ObjectID param anymore, but it is useful when debugging so I didn't remove it
     return this.referenceManager.getOrCreateFor(peer);
   }
 
-  private class AddManagedObjectAction implements TraversalAction {
-    public void visit(final List objects) {
+  private static abstract class BaseAction implements TraversalAction, PostCreateMethodGatherer {
+    private final DSOClientConfigHelper config;
+    private final Map<Object, String>   postCreateMethods = new IdentityHashMap<Object, String>();
+
+    protected BaseAction(DSOClientConfigHelper config) {
+      this.config = config;
+    }
+
+    public final void visit(List objects) {
+      for (Object pojo : objects) {
+        String onLookupMethodName = config.getPostCreateMethodIfDefined(pojo.getClass().getName());
+        if (onLookupMethodName != null) {
+          Object prev = postCreateMethods.put(pojo, onLookupMethodName);
+          Assert.assertNull(prev);
+        }
+      }
+
+      basicVisit(objects);
+    }
+
+    protected abstract void basicVisit(List objects);
+
+    public final Map<Object, String> getPostCreateMethods() {
+      return postCreateMethods;
+    }
+  }
+
+  private class AddManagedObjectAction extends BaseAction {
+    AddManagedObjectAction() {
+      super(clientConfiguration);
+    }
+
+    @Override
+    protected void basicVisit(final List objects) {
       List tcObjects = basicCreateIfNecessary(objects);
       for (Iterator i = tcObjects.iterator(); i.hasNext();) {
         ClientObjectManagerImpl.this.txManager.createObject((TCObject) i.next());
@@ -998,8 +1054,13 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
   }
 
-  private class SharedObjectsAction implements TraversalAction {
-    public void visit(final List objects) {
+  private class SharedObjectsAction extends BaseAction {
+    SharedObjectsAction() {
+      super(clientConfiguration);
+    }
+
+    @Override
+    protected void basicVisit(final List objects) {
       basicShareObjectsIfNecessary(objects);
     }
   }
@@ -1030,7 +1091,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
           .getClass(), true);
       this.txManager.createObject(obj);
       basicAddLocal(obj, false);
-      executePostCreateMethod(pojo);
       if (this.runtimeLogger.getNewManagedObjectDebug()) {
         this.runtimeLogger.newManagedObject(obj);
       }
@@ -1314,6 +1374,10 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     public String toString() {
       return "ObjectLatchState [" + this.objectID + " , " + this.latch + ", " + this.state + " ]";
     }
+  }
+
+  private interface PostCreateMethodGatherer {
+    Map<Object, String> getPostCreateMethods();
   }
 
 }

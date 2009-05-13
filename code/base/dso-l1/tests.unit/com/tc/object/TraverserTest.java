@@ -27,23 +27,23 @@ public class TraverserTest extends BaseDSOTestCase {
     TestB tb1 = new TestB(ta1, null, ta1, null);
     TestA ta2 = new TestA(ta1, tb1);
     final ArrayList results = new ArrayList();
-    new Traverser(new TraversalAction() {
+    new Traverser(new TestPortableObjectProvider()).traverse(ta2, new TraversalAction() {
       public void visit(List objects) {
         System.out.println("Adding:" + objects);
         results.addAll(objects);
       }
-    }, new TestPortableObjectProvider()).traverse(ta2);
+    });
     assertTrue("Expected 3 but got:" + results.size(), results.size() == 3);
     assertTrue(results.contains(ta1));
     assertTrue(results.contains(ta2));
     assertTrue(results.contains(tb1));
 
     String[] strings = new String[] { "one", "two", "three" };
-    new Traverser(new TraversalAction() {
+    new Traverser(new TestPortableObjectProvider()).traverse(strings, new TraversalAction() {
       public void visit(List objects) {
         results.add(objects);
       }
-    }, new TestPortableObjectProvider()).traverse(strings);
+    });
 
     // Test stack overflows don't happen
     final LinkedList list = new LinkedList();
@@ -52,11 +52,11 @@ public class TraverserTest extends BaseDSOTestCase {
       list.add(new Object());
     }
     try {
-      new Traverser(new TraversalAction() {
+      new Traverser(new TestPortableObjectProvider()).traverse(list, new TraversalAction() {
         public void visit(List objects) {
           //
         }
-      }, new TestPortableObjectProvider()).traverse(list);
+      });
       System.out.println("Traversed");
       assertTrue(true);
     } catch (StackOverflowError e) {
@@ -88,8 +88,8 @@ public class TraverserTest extends BaseDSOTestCase {
         TestA tb = (TestA) start;
         values = new Object[] { tb.ta, tb.tb };
       }
-      for (int i = 0; i < values.length; i++) {
-        addTo.addAnonymousReference(values[i]);
+      for (Object value : values) {
+        addTo.addAnonymousReference(value);
       }
       return addTo;
     }
@@ -127,11 +127,11 @@ public class TraverserTest extends BaseDSOTestCase {
   }
 
   private static class TestB extends TestA implements Serializable {
-    private TestA  tc;
+    private TestA        tc;
 
-    private TestB  td;
+    private TestB        td;
 
-    private String bstring = "bstring";
+    private final String bstring = "bstring";
 
     public TestB(TestA ta, TestB tb, TestA tc, TestB td) {
       super(ta, tb);

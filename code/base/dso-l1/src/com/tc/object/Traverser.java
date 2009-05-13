@@ -20,11 +20,9 @@ import java.util.Map;
  */
 public class Traverser {
   private static final TraverseTest    NULL_TEST = new NullTraverseTest();
-  private final TraversalAction        action;
   private final PortableObjectProvider portableObjectProvider;
 
-  public Traverser(TraversalAction action, PortableObjectProvider portableObjectProvider) {
-    this.action = action;
+  public Traverser(PortableObjectProvider portableObjectProvider) {
     this.portableObjectProvider = portableObjectProvider;
   }
 
@@ -67,11 +65,11 @@ public class Traverser {
     return false;
   }
 
-  public void traverse(Object object) {
-    traverse(object, NULL_TEST, null);
+  public void traverse(Object object, TraversalAction action) {
+    traverse(object, NULL_TEST, null, action);
   }
 
-  public void traverse(Object object, TraverseTest traverseTest, NonPortableEventContext ctx) {
+  public void traverse(Object object, TraverseTest traverseTest, NonPortableEventContext ctx, TraversalAction action) {
     Map visited = new IdentityHashMap();
     List toAdd = new ArrayList();
 
