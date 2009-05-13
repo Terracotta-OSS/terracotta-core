@@ -169,14 +169,51 @@ public class GarbageCollectionInfo implements Cloneable, TCSerializable {
 
   @Override
   public String toString() {
-    return "GarbageCollectionInfo [ Iteration = " + this.gcID.toLong() + " ] = " + " type  = "
-           + (this.fullGC ? " full, " : " young, ") + " startTime = " + this.startTime + " begin object count = "
-           + this.beginObjectCount + " markStageTime = " + this.markStageTime + " pauseStageTime = "
-           + this.pauseStageTime + " deleteStageTime = " + this.deleteStageTime + " elapsedTime = " + this.elapsedTime
-           + " totalMarkCycletime  = " + this.totalMarkCycleTime + " candiate garabage  count = "
-           + this.candidateGarbageCount + " actual garbage count  = " + this.actualGarbageCount
-           + " pre rescue count = " + this.preRescueCount + " rescue1Time = " + rescue1Time + " rescue 1 count = "
-           + this.rescue1Count + " rescue2Time = " + rescue2Time;
+    StringBuilder gcInfo = new StringBuilder();
+    gcInfo.append("GarbageCollectionInfo [ Iteration = ");
+    gcInfo.append(this.gcID.toLong());
+    gcInfo.append(" ] = " + " type  = " + (this.fullGC ? " full, " : " young, "));
+
+    if (this.startTime != NOT_INITIALIZED) {
+      gcInfo.append(" startTime = " + this.startTime);
+    }
+    if (this.beginObjectCount != NOT_INITIALIZED) {
+      gcInfo.append(" begin object count = " + this.beginObjectCount);
+    }
+    if (this.markStageTime != NOT_INITIALIZED) {
+      gcInfo.append(" markStageTime = " + this.markStageTime);
+    }
+    if (this.pauseStageTime != NOT_INITIALIZED) {
+      gcInfo.append(" pauseStageTime = " + this.pauseStageTime);
+    }
+    if (this.deleteStageTime != NOT_INITIALIZED) {
+      gcInfo.append(" deleteStageTime = " + this.deleteStageTime);
+    }
+    if (this.elapsedTime != NOT_INITIALIZED) {
+      gcInfo.append(" elapsedTime = " + this.elapsedTime);
+    }
+    if (this.totalMarkCycleTime != NOT_INITIALIZED) {
+      gcInfo.append(" totalMarkCycleTime = " + this.totalMarkCycleTime);
+    }
+    if (this.candidateGarbageCount != NOT_INITIALIZED) {
+      gcInfo.append(" candiate garabage  count = " + this.candidateGarbageCount);
+    }
+    if (this.actualGarbageCount != NOT_INITIALIZED) {
+      gcInfo.append(" actual garbage count = " + this.actualGarbageCount);
+    }
+    if (this.preRescueCount != NOT_INITIALIZED) {
+      gcInfo.append(" pre rescue count = " + this.preRescueCount);
+    }
+    if (this.rescue1Time != NOT_INITIALIZED) {
+      gcInfo.append(" rescue1Time = " + this.rescue1Time);
+    }
+    if (this.rescue1Count != NOT_INITIALIZED) {
+      gcInfo.append(" rescue 1 Count = " + this.rescue1Count);
+    }
+    if (this.rescue2Time != NOT_INITIALIZED) {
+      gcInfo.append(" rescue2Time = " + this.rescue2Time);
+    }
+    return gcInfo.toString();
   }
 
   @Override
