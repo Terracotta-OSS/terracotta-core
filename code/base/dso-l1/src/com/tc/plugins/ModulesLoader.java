@@ -37,6 +37,7 @@ import com.tc.object.util.JarResourceLoader;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
+import com.tc.util.StringUtil;
 import com.tc.util.VendorVmSignature;
 import com.tc.util.VendorVmSignatureException;
 import com.terracottatech.config.DsoApplication;
@@ -55,6 +56,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Dictionary;
+import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -147,6 +149,7 @@ public class ModulesLoader {
         Bundle bundle = (Bundle) payload;
         if (bundle != null) {
           if (!forBootJar) registerClassLoader(configHelper, classProvider, bundle);
+          printModuleBuildInfo(bundle);
           loadConfiguration(configHelper, bundle);
         }
       }
@@ -175,6 +178,22 @@ public class ModulesLoader {
     osgiRuntime.startBundles(bundleURLs, handler);
   }
 
+  protected static void printModuleBuildInfo(Bundle bundle) {
+    Dictionary headers = bundle.getHeaders();
+    StringBuilder sb = new StringBuilder("Terracotta-BuildInfo for this module: " + StringUtil.LINE_SEPARATOR);
+    boolean found = false;
+    for (Enumeration keys = headers.keys(); keys.hasMoreElements();) {
+      String key = (String) keys.nextElement();
+      if (key.startsWith("Terracotta-BuildInfo")) {
+        sb.append("  " + key + ": " + headers.get(key)).append(StringUtil.LINE_SEPARATOR);
+        found = true;
+      }
+    }
+    if (found) {
+      logger.info(sb.toString());
+    }
+  }
+
   private static List getAdditionalModules() {
     final List modules = new ArrayList();
     final TCProperties modulesProps = TCPropertiesImpl.getProperties().getPropertiesFor("l1.modules");
@@ -188,8 +207,8 @@ public class ModulesLoader {
 
         final Matcher matcher = pattern.matcher(additionalModule);
         if (!matcher.find() || matcher.groupCount() < 3) {
-          logger.error("Invalid bundle-jar filename " + additionalModule
-                       + "; filenames need to match the pattern: " + pattern.toString());
+          logger.error("Invalid bundle-jar filename " + additionalModule + "; filenames need to match the pattern: "
+                       + pattern.toString());
           continue;
         }
 
@@ -215,8 +234,8 @@ public class ModulesLoader {
     return modules;
   }
 
-  private static void registerClassLoader(final DSOClientConfigHelper config, final ClassProvider classProvider, final Bundle bundle)
-      throws BundleException {
+  private static void registerClassLoader(final DSOClientConfigHelper config, final ClassProvider classProvider,
+                                          final Bundle bundle) throws BundleException {
     NamedClassLoader ncl = getClassLoader(bundle);
 
     String loaderName = Namespace.createLoaderName(Namespace.MODULES_NAMESPACE, ncl.toString());
@@ -260,9 +279,7 @@ public class ModulesLoader {
       Arrays.sort(serviceReferences, SERVICE_COMPARATOR);
     }
 
-    if (serviceReferences == null) {
-      return;
-    }
+    if (serviceReferences == null) { return; }
     MBeanSpec[] mbeanSpecs = new MBeanSpec[serviceReferences.length];
     for (int i = 0; i < serviceReferences.length; i++) {
       mbeanSpecs[i] = (MBeanSpec) osgiRuntime.getService(serviceReferences[i]);
@@ -271,16 +288,14 @@ public class ModulesLoader {
     configHelper.setMBeanSpecs(mbeanSpecs);
   }
 
-  private static void getModulesSRASpecs(final EmbeddedOSGiRuntime osgiRuntime,
-                                           final DSOClientConfigHelper configHelper) throws InvalidSyntaxException {
+  private static void getModulesSRASpecs(final EmbeddedOSGiRuntime osgiRuntime, final DSOClientConfigHelper configHelper)
+      throws InvalidSyntaxException {
     ServiceReference[] serviceReferences = osgiRuntime.getAllServiceReferences(SRASpec.class.getName(), null);
     if (serviceReferences != null && serviceReferences.length > 0) {
       Arrays.sort(serviceReferences, SERVICE_COMPARATOR);
     }
 
-    if (serviceReferences == null) {
-      return;
-    }
+    if (serviceReferences == null) { return; }
     SRASpec[] sraSpecs = new SRASpec[serviceReferences.length];
     for (int i = 0; i < serviceReferences.length; i++) {
       sraSpecs[i] = (SRASpec) osgiRuntime.getService(serviceReferences[i]);
@@ -373,7 +388,7 @@ public class ModulesLoader {
 
   /**
    * DEV-1238 and DEV-2205
-   *
+   * 
    * @author hhuynh
    */
   private static void validateBundleFragment(final DsoApplication application) throws XmlException {
@@ -401,13 +416,13 @@ public class ModulesLoader {
   }
 
   private static void logConfig(final DsoApplication application, final Bundle bundle, final String configPath) {
-    logger.info("Config loaded from module: " + bundle.getSymbolicName() + " (" + configPath + ")");
     ByteArrayOutputStream bas = new ByteArrayOutputStream();
     BufferedOutputStream buf = new BufferedOutputStream(bas);
     try {
       application.save(buf);
       buf.close();
-      logger.info(NEWLINE + bas.toString() + NEWLINE);
+      logger.info("Config loaded from module: " + bundle.getSymbolicName() + " (" + configPath + ")" + NEWLINE
+                  + bas.toString());
     } catch (IOException e) {
       logger.warn("Unable to generate a log entry to for the module's config info.");
     }
