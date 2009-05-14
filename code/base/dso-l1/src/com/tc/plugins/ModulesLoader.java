@@ -180,7 +180,7 @@ public class ModulesLoader {
 
   protected static void printModuleBuildInfo(Bundle bundle) {
     Dictionary headers = bundle.getHeaders();
-    StringBuilder sb = new StringBuilder("Terracotta-BuildInfo for this module: " + StringUtil.LINE_SEPARATOR);
+    StringBuilder sb = new StringBuilder("Terracotta-BuildInfo for module: " + bundle.getSymbolicName() + StringUtil.LINE_SEPARATOR);
     boolean found = false;
     for (Enumeration keys = headers.keys(); keys.hasMoreElements();) {
       String key = (String) keys.nextElement();
