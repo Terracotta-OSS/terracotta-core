@@ -195,18 +195,8 @@
       </dependency>
       <dependency>
         <groupId>org.apache.tomcat</groupId>
-        <artifactId>tribes</artifactId>
-        <version>6.0.11-20071126</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.tomcat</groupId>
         <artifactId>juli</artifactId>
         <version>6.0.9</version>
-      </dependency>
-      <dependency>
-        <groupId>stax</groupId>
-        <artifactId>stax</artifactId>
-        <version>1.2.0</version>
       </dependency>
       <dependency>
         <groupId>com.h2database</groupId>
