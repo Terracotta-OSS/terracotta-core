@@ -81,7 +81,7 @@ for tim in ${TIMS[@]}; do
   fi
 
   echo "copying snapshots to dest dir"
-  find . -type f -name "*.jar" -exec cp {} $DEST \;
+  find . -type f -name *.jar -a ! -name '*-sources.jar' -a ! -name '*-tests.jar' -exec cp {} $DEST \;
   if [ $? -ne 0 ]; then
     echo "ERROR: error copying snapshots to $DEST"
     exit 1
