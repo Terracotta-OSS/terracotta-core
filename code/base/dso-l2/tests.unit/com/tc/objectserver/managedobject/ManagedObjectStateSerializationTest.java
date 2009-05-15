@@ -24,9 +24,7 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
   public void testCheckIfMissingAnyManagedObjectType() throws Exception {
     Field[] fields = ManagedObjectState.class.getDeclaredFields();
 
-    for (int i = 0; i < fields.length; i++) {
-      Field field = fields[i];
-
+    for (Field field : fields) {
       int fieldModifier = field.getModifiers();
       if (Modifier.isStatic(fieldModifier) && Modifier.isFinal(fieldModifier)) {
         Byte type = (Byte) field.get(null);
@@ -186,7 +184,7 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
 
     serializationValidation(state, cursor, ManagedObjectState.LIST_TYPE);
   }
-  
+
   public void testLinkedList() throws Exception {
     String className = "java.util.LinkedList";
     TestDNACursor cursor = new TestDNACursor();
@@ -210,7 +208,7 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
 
     serializationValidation(state, cursor, ManagedObjectState.SET_TYPE);
   }
-  
+
   public void testLinkedHashSet() throws Exception {
     String className = "java.util.LinkedHashSet";
     TestDNACursor cursor = new TestDNACursor();
@@ -309,17 +307,18 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
   public void testConcurrentStringMap() throws Exception {
     String className = "org.terracotta.modules.concurrent.collections.ConcurrentStringMapDsoInstrumented";
     TestDNACursor cursor = new TestDNACursor();
-    
+
     cursor.addPhysicalAction(ConcurrentStringMapManagedObjectState.DSO_LOCK_TYPE_FIELDNAME, new Integer(42), false);
+    cursor.addPhysicalAction(ConcurrentStringMapManagedObjectState.HASH_CODE_LOCKING_FIELDNAME, Boolean.TRUE, false);
 
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2001), new ObjectID(2003) });
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2002), new ObjectID(2004) });
-   
+
     ManagedObjectState state = applyValidation(className, cursor);
-    
+
     serializationValidation(state, cursor, ManagedObjectState.CONCURRENT_STRING_MAP_TYPE);
   }
-  
+
   public interface MyProxyInf1 {
     public int getValue();
 
@@ -333,8 +332,8 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
   }
 
   public static class MyInvocationHandler implements InvocationHandler {
-    private Map values       = new HashMap();
-    private Map stringValues = new HashMap();
+    private final Map values       = new HashMap();
+    private final Map stringValues = new HashMap();
 
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
       if (method.getName().equals("getValue")) {
