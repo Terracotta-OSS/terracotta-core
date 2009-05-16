@@ -129,6 +129,10 @@
       <artifactId>juli</artifactId>
     </dependency>
     <dependency>
+      <groupId>stax</groupId>
+      <artifactId>stax</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
     </dependency>
