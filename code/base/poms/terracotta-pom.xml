@@ -96,17 +96,13 @@
       <artifactId>bsh</artifactId>
     </dependency>
     <dependency>
-      <groupId>xmlbeans</groupId>
-      <artifactId>xbean</artifactId>
-    </dependency>
+      <groupId>org.apache.xmlbeans</groupId>
+      <artifactId>xmlbeans</artifactId>
+    </dependency> 
     <dependency>
-      <groupId>xmlbeans</groupId>
-      <artifactId>xbean_xpath</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>xmlbeans</groupId>
-      <artifactId>xmlpublic</artifactId>
-    </dependency>
+      <groupId>org.apache.xmlbeans</groupId>
+      <artifactId>xmlbeans-xpath</artifactId>
+    </dependency> 
     <dependency>
       <groupId>knopflerfish-tc</groupId>
       <artifactId>knopflerfish-tc</artifactId>

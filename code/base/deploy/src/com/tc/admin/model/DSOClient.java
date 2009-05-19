@@ -22,6 +22,7 @@ import java.util.Map;
 import javax.management.Attribute;
 import javax.management.AttributeList;
 import javax.management.MBeanServerInvocationHandler;
+import javax.management.MalformedObjectNameException;
 import javax.management.Notification;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
@@ -62,6 +63,15 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
       setupTunneledBeans();
     } else {
       startListeningForTunneledBeans();
+    }
+  }
+
+  public ObjectName getTunneledBeanName(ObjectName on) {
+    try {
+      String name = on.getCanonicalName() + ",clients=Clients,node=" + getRemoteAddress().replace(':', '/');
+      return new ObjectName(name);
+    } catch (MalformedObjectNameException mone) {
+      throw new RuntimeException("Creating ObjectName", mone);
     }
   }
 

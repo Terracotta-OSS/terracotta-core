@@ -17,7 +17,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import javax.management.InstanceNotFoundException;
+import javax.management.ListenerNotFoundException;
+import javax.management.NotificationListener;
 import javax.management.ObjectName;
+import javax.management.QueryExp;
 import javax.management.remote.JMXConnector;
 
 public interface IServer extends IClusterNode, ManagedObjectFacadeProvider {
@@ -53,6 +57,16 @@ public interface IServer extends IClusterNode, ManagedObjectFacadeProvider {
   JMXConnector getJMXConnector();
 
   void setJMXConnector(JMXConnector jmxc) throws IOException;
+
+  <T> T getMBeanProxy(ObjectName on, Class<T> mbeanType);
+
+  boolean removeNotificationListener(ObjectName on, NotificationListener listener) throws IOException,
+      InstanceNotFoundException, ListenerNotFoundException;
+
+  boolean addNotificationListener(ObjectName on, NotificationListener listener) throws IOException,
+      InstanceNotFoundException;
+
+  Set<ObjectName> queryNames(ObjectName on, QueryExp query) throws IOException;
 
   void setConnectionCredentials(String[] creds);
 

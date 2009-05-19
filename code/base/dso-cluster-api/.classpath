@@ -6,5 +6,4 @@
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/ant-junit-1.7.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/junit-3.8.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/junit-addons-1.4.jar"/>
-	<classpathentry kind="output" path="bin"/>
 </classpath>

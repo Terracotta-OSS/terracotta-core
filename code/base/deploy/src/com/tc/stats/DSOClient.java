@@ -170,7 +170,7 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     // nothing to reset
   }
 
-  private ObjectName getTunneledBeanName(ObjectName on) {
+  public ObjectName getTunneledBeanName(ObjectName on) {
     try {
       String name = on.getCanonicalName() + ",clients=Clients,node=" + getRemoteAddress().replace(':', '/');
       return new ObjectName(name);

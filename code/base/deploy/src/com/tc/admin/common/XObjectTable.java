@@ -61,6 +61,7 @@ public class XObjectTable extends XTable {
     setDefaultEditor(Method.class, new MethodEditor());
 
     getTableHeader().addMouseListener(new MouseAdapter() {
+      @Override
       public void mouseClicked(MouseEvent me) {
         if (me.getClickCount() == 2) {
           int col = columnAtPoint(me.getPoint());
@@ -77,6 +78,7 @@ public class XObjectTable extends XTable {
     getTableHeader().setDefaultRenderer(columnRenderer);
   }
 
+  @Override
   public void createDefaultColumnsFromModel() {
     super.createDefaultColumnsFromModel();
 
@@ -91,14 +93,15 @@ public class XObjectTable extends XTable {
     }
   }
 
+  @Override
   public void addNotify() {
     super.addNotify();
     loadSortPrefs();
   }
 
   protected class TableColumnRenderer extends XTableCellRenderer {
-    private JComponent sortView;
-    private Border     border;
+    private final JComponent sortView;
+    private final Border     border;
 
     public TableColumnRenderer() {
       super();
@@ -108,6 +111,7 @@ public class XObjectTable extends XTable {
       border = Os.isMac() ? new BevelBorder(BevelBorder.RAISED) : UIManager.getBorder("TableHeader.cellBorder");
     }
 
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
                                                    int row, int column) {
       if (table != null) {
@@ -147,8 +151,8 @@ public class XObjectTable extends XTable {
   }
 
   private void internalSetSortColumn(int columnIndex) {
-    sortColumn = columnIndex;
-    if (columnIndex < getColumnCount() && sortColumn != -1) {
+    sortColumn = Math.min(columnIndex, getModel().getColumnCount() - 1);
+    if (sortColumn != -1) {
       sort();
     }
   }
@@ -222,10 +226,12 @@ public class XObjectTable extends XTable {
     }
   }
 
+  @Override
   protected TableModel createDefaultDataModel() {
     return new XObjectTableModel();
   }
 
+  @Override
   public void setModel(TableModel model) {
     super.setModel(model);
     if (sortColumn != -1) {
@@ -292,6 +298,7 @@ public class XObjectTable extends XTable {
       return new MethodEditor();
     }
 
+    @Override
     public java.awt.Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                                                             boolean hasFocus, int row, int col) {
       return editor.getTableCellEditorComponent(table, value, false, row, col);
@@ -324,6 +331,7 @@ public class XObjectTable extends XTable {
       clickCountToStart = 1;
     }
 
+    @Override
     public java.awt.Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row,
                                                           int col) {
       super.getTableCellEditorComponent(table, value, isSelected, row, col);
@@ -425,6 +433,7 @@ public class XObjectTable extends XTable {
       return d;
     }
 
+    @Override
     protected void processMouseEvent(MouseEvent e) {
       if (!ignoreNextMouseEvent) {
         super.processMouseEvent(e);

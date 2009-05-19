@@ -52,10 +52,13 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import javax.management.InstanceNotFoundException;
+import javax.management.ListenerNotFoundException;
 import javax.management.MBeanServerNotification;
 import javax.management.Notification;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
+import javax.management.QueryExp;
 import javax.management.remote.JMXConnector;
 import javax.naming.CommunicationException;
 import javax.naming.ServiceUnavailableException;
@@ -583,6 +586,38 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     ServerConnectionManager scm = getConnectionManager();
     if (scm == null) throw new IllegalStateException("ServerConnectionManager is null");
     scm.setJMXConnector(jmxc);
+  }
+
+  public synchronized <T> T getMBeanProxy(ObjectName on, Class<T> mbeanType) {
+    ConnectionContext cc = getConnectionContext();
+    if (cc != null) { return MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, on, mbeanType, false); }
+    return null;
+  }
+
+  public boolean addNotificationListener(ObjectName on, NotificationListener listener) throws IOException,
+      InstanceNotFoundException {
+    ConnectionContext cc = getConnectionContext();
+    if (cc != null) {
+      cc.mbsc.addNotificationListener(on, listener, null, null);
+      return true;
+    }
+    return false;
+  }
+
+  public boolean removeNotificationListener(ObjectName on, NotificationListener listener) throws IOException,
+      InstanceNotFoundException, ListenerNotFoundException {
+    ConnectionContext cc = getConnectionContext();
+    if (cc != null) {
+      cc.mbsc.removeNotificationListener(on, listener, null, null);
+      return true;
+    }
+    return false;
+  }
+
+  public Set<ObjectName> queryNames(ObjectName on, QueryExp query) throws IOException {
+    ConnectionContext cc = getConnectionContext();
+    if (cc != null) { return cc.mbsc.queryNames(on, query); }
+    return Collections.emptySet();
   }
 
   protected synchronized TCServerInfoMBean getServerInfoBean() {
@@ -1249,7 +1284,6 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
         serverDBBackupSupported = serverDBBackupBean.isBackupEnabled();
         cc.addNotificationListener(L2MBeanNames.SERVER_DB_BACKUP, new ServerDBBackupListener());
       } catch (Exception e) {
-        e.printStackTrace();
         serverDBBackupSupported = false;
       }
     }
@@ -1462,7 +1496,6 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
           cc.addNotificationListener(StatisticsMBeanNames.STATISTICS_GATHERER, new ClusterStatsNotificationListener());
         }
       } catch (Exception e) {
-        e.printStackTrace();
         clusterStatsSupported = false;
       }
     }

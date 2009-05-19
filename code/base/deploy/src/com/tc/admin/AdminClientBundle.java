@@ -73,6 +73,7 @@ public class AdminClientBundle extends ListResourceBundle {
         { "dso.heap", "Clustered heap" },
         { "dso.diagnostics", "Diagnostics" },
         { "cluster.topology", "Topology" },
+        { "cluster.features", "My application" },
         { "dso.runtime.stats", "Runtime statistics" },
         { "dso.roots.suffix.singular", "root" },
         { "dso.roots.suffix.plural", "roots" },

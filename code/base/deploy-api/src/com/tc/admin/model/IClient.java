@@ -41,6 +41,8 @@ public interface IClient extends IClusterNode {
 
   boolean isResident(ObjectID oid);
 
+  ObjectName getTunneledBeanName(ObjectName on);
+
   void killClient();
 
   String dump();

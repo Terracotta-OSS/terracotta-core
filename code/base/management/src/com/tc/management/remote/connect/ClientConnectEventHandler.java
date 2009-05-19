@@ -8,7 +8,6 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.management.TerracottaMBean;
 import com.tc.management.TerracottaManagement;
 import com.tc.management.remote.protocol.ProtocolProvider;
 import com.tc.management.remote.protocol.terracotta.ClientProvider;
@@ -27,28 +26,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.management.Attribute;
-import javax.management.AttributeList;
-import javax.management.AttributeNotFoundException;
-import javax.management.DynamicMBean;
-import javax.management.InstanceNotFoundException;
-import javax.management.IntrospectionException;
-import javax.management.InvalidAttributeValueException;
-import javax.management.ListenerNotFoundException;
-import javax.management.MBeanException;
-import javax.management.MBeanInfo;
-import javax.management.MBeanNotificationInfo;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerConnection;
-import javax.management.MBeanServerInvocationHandler;
-import javax.management.NotCompliantMBeanException;
+import javax.management.MBeanServerNotification;
 import javax.management.Notification;
-import javax.management.NotificationBroadcaster;
 import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
-import javax.management.ReflectionException;
-import javax.management.StandardMBean;
 import javax.management.remote.JMXConnectionNotification;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
@@ -64,7 +48,6 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
   }
 
   private static final class ConnectorClosedFilter implements NotificationFilter {
-
     public boolean isNotificationEnabled(final Notification notification) {
       boolean enabled = false;
       if (notification instanceof JMXConnectionNotification) {
@@ -77,7 +60,6 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
   }
 
   private static final class ConnectorClosedListener implements NotificationListener {
-
     private final MBeanServer beanServer;
 
     ConnectorClosedListener(final MBeanServer mBeanServer) {
@@ -86,6 +68,32 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
 
     final public void handleNotification(final Notification notification, final Object context) {
       unregisterBeans(beanServer, (List) context);
+    }
+  }
+
+  private final class MBeanRegistrationListener implements NotificationListener {
+    private final MBeanServer    l2MBeanServer;
+    private final MessageChannel channel;
+    private final List           modifiedObjectNames;
+
+    MBeanRegistrationListener(final MBeanServer l2MBeanServer, final MessageChannel channel,
+                              final List modifiedObjectNames) {
+      this.l2MBeanServer = l2MBeanServer;
+      this.channel = channel;
+      this.modifiedObjectNames = modifiedObjectNames;
+    }
+
+    final public void handleNotification(final Notification notification, final Object context) {
+      if (notification instanceof MBeanServerNotification) {
+        String type = notification.getType();
+        MBeanServerNotification mbsn = (MBeanServerNotification) notification;
+        if (type.equals(MBeanServerNotification.REGISTRATION_NOTIFICATION)) {
+          MBeanServerConnection l1MBeanServerConnection = (MBeanServerConnection) context;
+          registerBean(l1MBeanServerConnection, l2MBeanServer, mbsn.getMBeanName(), channel, modifiedObjectNames);
+        } else if (type.equals(MBeanServerNotification.UNREGISTRATION_NOTIFICATION)) {
+          unregisterBean(l2MBeanServer, mbsn.getMBeanName(), modifiedObjectNames);
+        }
+      }
     }
   }
 
@@ -98,125 +106,6 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
       addJmxConnection(msg);
     } else {
       removeJmxConnection(msg);
-    }
-  }
-
-  class ProxyStandardMBean extends StandardMBean implements NotificationBroadcaster {
-    ProxyStandardMBean(final Object proxy, final Class interfaceClass) throws NotCompliantMBeanException {
-      super(proxy, interfaceClass);
-    }
-
-    @Override
-    protected String getClassName(final MBeanInfo info) {
-      Object proxy = getImplementation();
-      if(proxy instanceof NotificationBroadcaster) {
-        return NotificationBroadcaster.class.getName();
-      }
-      return super.getClassName(info);
-    }
-
-    public void addNotificationListener(final NotificationListener listener, final NotificationFilter filter, final Object handback)
-        throws IllegalArgumentException {
-      Object proxy = getImplementation();
-      if(proxy instanceof NotificationBroadcaster) {
-        ((NotificationBroadcaster)proxy).addNotificationListener(listener, filter, handback);
-      }
-    }
-
-    public MBeanNotificationInfo[] getNotificationInfo() {
-      Object proxy = getImplementation();
-      if(proxy instanceof NotificationBroadcaster) {
-        return ((NotificationBroadcaster)proxy).getNotificationInfo();
-      }
-      return new MBeanNotificationInfo[0];
-    }
-
-    public void removeNotificationListener(final NotificationListener listener) throws ListenerNotFoundException {
-      Object proxy = getImplementation();
-      if(proxy instanceof NotificationBroadcaster) {
-        ((NotificationBroadcaster)proxy).removeNotificationListener(listener);
-      }
-    }
-
-  }
-
-  class ProxyDynamicMBean implements DynamicMBean {
-    private final MBeanServerConnection mbsc;
-    private final ObjectName            objectName;
-
-    public ProxyDynamicMBean(final MBeanServerConnection mbsc, final ObjectName objectName) {
-      this.mbsc = mbsc;
-      this.objectName = objectName;
-    }
-
-    public Object getAttribute(final String name) throws AttributeNotFoundException, MBeanException, ReflectionException {
-      try {
-        return mbsc.getAttribute(objectName, name);
-      } catch (IOException e) {
-        throw new MBeanException(e);
-      } catch (InstanceNotFoundException e) {
-        throw new MBeanException(e);
-      }
-    }
-
-    public AttributeList getAttributes(final String[] attributes) {
-      try {
-        return mbsc.getAttributes(objectName, attributes);
-      } catch (InstanceNotFoundException e) {
-        throw new RuntimeException(e);
-      } catch (ReflectionException e) {
-        throw new RuntimeException(e);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    public MBeanInfo getMBeanInfo() {
-      try {
-        return mbsc.getMBeanInfo(objectName);
-      } catch (InstanceNotFoundException e) {
-        throw new RuntimeException(e);
-      } catch (IntrospectionException e) {
-        throw new RuntimeException(e);
-      } catch (ReflectionException e) {
-        throw new RuntimeException(e);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    public Object invoke(final String actionName, final Object[] params, final String[] signature) throws MBeanException,
-        ReflectionException {
-      try {
-        return mbsc.invoke(objectName, actionName, params, signature);
-      } catch (InstanceNotFoundException e) {
-        throw new MBeanException(e);
-      } catch (IOException e) {
-        throw new MBeanException(e);
-      }
-    }
-
-    public void setAttribute(final Attribute attribute) throws AttributeNotFoundException, InvalidAttributeValueException,
-        MBeanException, ReflectionException {
-      try {
-        mbsc.setAttribute(objectName, attribute);
-      } catch (InstanceNotFoundException e) {
-        throw new MBeanException(e);
-      } catch (IOException e) {
-        throw new MBeanException(e);
-      }
-    }
-
-    public AttributeList setAttributes(final AttributeList attributes) {
-      try {
-        return mbsc.setAttributes(objectName, attributes);
-      } catch (InstanceNotFoundException e) {
-        throw new RuntimeException(e);
-      } catch (ReflectionException e) {
-        throw new RuntimeException(e);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
     }
   }
 
@@ -255,56 +144,20 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
 
           statisticsGateway.addStatisticsAgent(channel.getChannelID(), l1MBeanServerConnection);
 
-          final List<ObjectName> modifiedObjectNames = new ArrayList<ObjectName>();
-
-          try {
-            // Handle Terracotta internal and public beans
-            final Set<ObjectName> tcMBeans = l1MBeanServerConnection.queryNames(null, TerracottaManagement.matchAllTerracottaMBeans());
-            for (ObjectName objName : tcMBeans) {
-              try {
-                TerracottaMBean mBeanProxy = (TerracottaMBean) MBeanServerInvocationHandler
-                    .newProxyInstance(l1MBeanServerConnection, objName, TerracottaMBean.class, false);
-                ObjectName modifiedObjName = TerracottaManagement.addNodeInfo(objName, channel.getRemoteAddress());
-                Class interfaceClass = Class.forName(mBeanProxy.getInterfaceClassName());
-                boolean isNotificationBroadcaster = mBeanProxy.isNotificationBroadcaster();
-                Object obj = MBeanServerInvocationHandler.newProxyInstance(l1MBeanServerConnection, objName,
-                                                                           interfaceClass, isNotificationBroadcaster);
-                l2MBeanServer.registerMBean(new ProxyStandardMBean(obj, interfaceClass), modifiedObjName);
-                modifiedObjectNames.add(modifiedObjName);
-              } catch (Exception e) {
-                if (!isConnectionException(e)) {
-                  logger.error("Unable to register remote DSO client MBean[" + objName.getCanonicalName() + "] for host["
-                               + channel.getRemoteAddress() + "], this bean will not show up in monitoring tools!!", e);
-                } else {
-                  throw e;
-                }
-
+          Set mBeans = l1MBeanServerConnection.queryNames(null, TerracottaManagement.matchAllTerracottaMBeans());
+          List modifiedObjectNames = new ArrayList();
+          for (Iterator iter = mBeans.iterator(); iter.hasNext();) {
+            ObjectName objName = (ObjectName) iter.next();
+            try {
+              registerBean(l1MBeanServerConnection, l2MBeanServer, objName, channel, modifiedObjectNames);
+            } catch (Exception e) {
+              if (isConnectionException(e)) {
+                logger.warn("Client disconnected before all beans could be registered");
+                unregisterBeans(l2MBeanServer, modifiedObjectNames);
+                return;
               }
             }
-
-            // Handle TIM beans
-            final Set<ObjectName> timMBeans = l1MBeanServerConnection.queryNames(null, TerracottaManagement.matchAllTimMBeans());
-            for (ObjectName objName : timMBeans) {
-              try {
-                ObjectName modifiedObjName = TerracottaManagement.addNodeInfo(objName, channel.getRemoteAddress());
-                l2MBeanServer.registerMBean(new ProxyDynamicMBean(l1MBeanServerConnection, objName), modifiedObjName);
-                modifiedObjectNames.add(modifiedObjName);
-              } catch (Exception e) {
-                if (!isConnectionException(e)) {
-                  logger.error("Unable to register remote DSO client MBean[" + objName.getCanonicalName() + "] for host["
-                               + channel.getRemoteAddress() + "], this bean will not show up in monitoring tools!!", e);
-                } else {
-                  throw e;
-                }
-
-              }
-            }
-          } catch (Exception e) {
-            logger.warn("Client disconnected before all beans could be registered");
-            unregisterBeans(l2MBeanServer, modifiedObjectNames);
-            return;
           }
-
           try {
             jmxConnector.addConnectionNotificationListener(new ConnectorClosedListener(l2MBeanServer),
                                                            new ConnectorClosedFilter(), modifiedObjectNames);
@@ -312,6 +165,15 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
             logger.error("Unable to register a JMX connection listener for the DSO client["
                          + channel.getRemoteAddress()
                          + "], if the DSO client disconnects the then its (dead) beans will not be unregistered", e);
+          }
+          try {
+            ObjectName on = new ObjectName("JMImplementation:type=MBeanServerDelegate");
+            l1MBeanServerConnection.addNotificationListener(on, new MBeanRegistrationListener(l2MBeanServer, channel,
+                                                                                              modifiedObjectNames),
+                                                            null, l1MBeanServerConnection);
+          } catch (Exception e) {
+            logger.error("Unable to add listener to remove MBeanServerDelegate, no client MBeans "
+                         + " registered after connect-time will be tunneled into the L2");
           }
         } catch (IOException ioe) {
           logger.error("Unable to create tunneled JMX connection to the DSO client on host["
@@ -328,12 +190,31 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
 
   private static void unregisterBeans(final MBeanServer beanServer, final List modifiedObjectNames) {
     for (Iterator i = modifiedObjectNames.iterator(); i.hasNext();) {
-      ObjectName on = (ObjectName) i.next();
-      try {
-        beanServer.unregisterMBean(on);
-      } catch (Exception e) {
-        logger.warn("Unable to unregister DSO client bean[" + on + "]", e);
+      unregisterBean(beanServer, (ObjectName) i.next(), modifiedObjectNames);
+    }
+  }
+
+  private void registerBean(MBeanServerConnection l1MBeanServerConnection, MBeanServer l2MBeanServer,
+                            ObjectName objName, MessageChannel channel, List modifiedObjectNames) {
+    try {
+      if (TerracottaManagement.matchAllTerracottaMBeans().apply(objName)) {
+        ObjectName modifiedObjName = TerracottaManagement.addNodeInfo(objName, channel.getRemoteAddress());
+        MBeanMirror mirror = MBeanMirrorFactory.newMBeanMirror(l1MBeanServerConnection, objName);
+        l2MBeanServer.registerMBean(mirror, modifiedObjName);
+        modifiedObjectNames.add(modifiedObjName);
+        logger.info("Tunneled MBean '" + modifiedObjName + "'");
       }
+    } catch (Exception e) {
+      logger.warn("Unable to register DSO client bean[" + objName + "]", e);
+    }
+  }
+
+  private static void unregisterBean(MBeanServer beanServer, ObjectName on, List modifiedObjectNames) {
+    try {
+      beanServer.unregisterMBean(on);
+      modifiedObjectNames.remove(on);
+    } catch (Exception e) {
+      logger.warn("Unable to unregister DSO client bean[" + on + "]", e);
     }
   }
 

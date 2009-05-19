@@ -17,17 +17,17 @@ public interface L1InfoMBean extends TerracottaMBean, NotificationEmitter, Runti
   String getVersion();
 
   String getBuildID();
-  
+
   boolean isPatched();
-  
+
   String getPatchLevel();
-  
+
   String getPatchVersion();
-  
+
   String getPatchBuildID();
-  
+
   String getCopyright();
-  
+
   String takeThreadDump(long requestMillis);
 
   void startBeanShell(int port);
@@ -41,9 +41,8 @@ public interface L1InfoMBean extends TerracottaMBean, NotificationEmitter, Runti
   Map getStatistics();
 
   long getUsedMemory();
-  
+
   long getMaxMemory();
 
   StatisticData[] getCpuUsage();
-
 }

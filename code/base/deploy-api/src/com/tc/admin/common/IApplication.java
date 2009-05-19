@@ -3,6 +3,7 @@
  */
 package com.tc.admin.common;
 
+
 import java.util.prefs.Preferences;
 
 public interface IApplication {

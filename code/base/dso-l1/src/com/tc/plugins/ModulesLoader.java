@@ -23,6 +23,7 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.management.beans.TIMByteProviderMBean;
 import com.tc.object.config.ConfigLoader;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.MBeanSpec;
@@ -49,6 +50,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -61,6 +63,10 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import javax.management.StandardMBean;
 
 public class ModulesLoader {
 
@@ -148,7 +154,15 @@ public class ModulesLoader {
         Assert.assertTrue(payload instanceof Bundle);
         Bundle bundle = (Bundle) payload;
         if (bundle != null) {
-          if (!forBootJar) registerClassLoader(configHelper, classProvider, bundle);
+          if (!forBootJar) {
+            registerClassLoader(configHelper, classProvider, bundle);
+
+            Dictionary headers = bundle.getHeaders();
+            if (headers.get("Presentation-Factory") != null) {
+              logger.info("Installing TIMByteProvider for bundle '" + bundle.getSymbolicName() + "'");
+              installTIMByteProvider(bundle);
+            }
+          }
           printModuleBuildInfo(bundle);
           loadConfiguration(configHelper, bundle);
         }
@@ -176,6 +190,29 @@ public class ModulesLoader {
 
     osgiRuntime.installBundles(bundleURLs);
     osgiRuntime.startBundles(bundleURLs, handler);
+  }
+
+  private static void installTIMByteProvider(final Bundle bundle) {
+    try {
+      MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+      Dictionary headers = bundle.getHeaders();
+      String description = (String) headers.get("Bundle-Description");
+      String version = (String) headers.get("Bundle-Version");
+      String feature = bundle.getSymbolicName() + "-" + version;
+      String prefix;
+      if (description != null) {
+        prefix = "org.terracotta:type=Loader,name=" + description + ",feature=";
+      } else {
+        prefix = "org.terracotta:type=Loader,feature=";
+      }
+      ObjectName loader = new ObjectName(prefix + feature);
+      if (!mbs.isRegistered(loader)) {
+        mbs.registerMBean(new StandardMBean(new TIMByteProvider(bundle.getLocation()), TIMByteProviderMBean.class),
+                          loader);
+      }
+    } catch (Exception e) {
+      logger.warn("Unable to install TIMByteProvider for bundle '" + bundle.getSymbolicName() + "'", e);
+    }
   }
 
   protected static void printModuleBuildInfo(Bundle bundle) {

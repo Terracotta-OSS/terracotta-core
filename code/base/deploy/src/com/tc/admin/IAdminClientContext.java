@@ -5,6 +5,7 @@ package com.tc.admin;
 
 import com.tc.admin.common.ApplicationContext;
 
+
 public interface IAdminClientContext extends ApplicationContext {
   void setAdminClientController(AdminClientController controller);
   AdminClientController getAdminClientController();
