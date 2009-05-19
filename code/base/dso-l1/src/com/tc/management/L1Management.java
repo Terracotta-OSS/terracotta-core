@@ -223,6 +223,10 @@ public final class L1Management extends TerracottaManagement {
       }
     }
   }
+  
+  public MBeanServer getMBeanServer() {
+    return mBeanServer;
+  }
 
   private void addJMXConnectors() {
     JMXServiceURL url = null;

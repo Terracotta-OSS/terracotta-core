@@ -18,6 +18,8 @@ import com.tc.properties.TCProperties;
 
 import java.lang.reflect.Field;
 
+import javax.management.MBeanServer;
+
 /**
  * Null implementation of the manager.
  */
@@ -283,5 +285,9 @@ public final class NullManager implements Manager {
 
   public void unpinLock(String lockName) {
     //
+  }
+
+  public MBeanServer getMBeanServer() {
+    return null;
   }
 }

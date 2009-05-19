@@ -19,6 +19,8 @@ import com.tc.properties.TCProperties;
 
 import java.lang.reflect.Field;
 
+import javax.management.MBeanServer;
+
 /**
  * The Manager interface
  */
@@ -482,5 +484,12 @@ public interface Manager {
    * @return the DSO cluster instance for this manager
    */
   public DsoCluster getDsoCluster();
+  
+  /**
+   * Retrieves the MBean server that's used by this Terracotta client
+   * 
+   * @return the MBean server for this client
+   */
+  public MBeanServer getMBeanServer();
 
 }

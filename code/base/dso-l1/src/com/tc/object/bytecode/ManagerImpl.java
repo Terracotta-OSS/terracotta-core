@@ -53,6 +53,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import javax.management.MBeanServer;
+
 public class ManagerImpl implements Manager {
   private static final TCLogger                    logger                       = TCLogging.getLogger(Manager.class);
   private final SetOnceFlag                        clientStarted                = new SetOnceFlag();
@@ -970,5 +972,9 @@ public class ManagerImpl implements Manager {
 
   public DsoCluster getDsoCluster() {
     return this.dsoCluster;
+  }
+  
+  public MBeanServer getMBeanServer() {
+    return this.dso.getL1Management().getMBeanServer();
   }
 }

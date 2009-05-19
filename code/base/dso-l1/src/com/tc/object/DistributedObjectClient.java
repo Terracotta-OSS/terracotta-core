@@ -736,6 +736,10 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   public SessionMonitor getHttpSessionMonitor() {
     return this.l1Management.getHttpSessionMonitor();
   }
+  
+  public L1Management getL1Management() {
+    return this.l1Management;
+  }
 
   public DmiManager getDmiManager() {
     return this.dmiManager;
