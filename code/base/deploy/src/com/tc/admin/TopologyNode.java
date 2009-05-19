@@ -49,10 +49,6 @@ public class TopologyNode extends ComponentNode implements HyperlinkListener {
     return clusterModel;
   }
 
-  public void selectClientNode(String remoteAddr) {
-    clientsNode.selectClientNode(remoteAddr);
-  }
-
   @Override
   public Component getComponent() {
     if (topologyPanel == null) {

@@ -111,7 +111,7 @@ public class FeaturesNode extends ComponentNode implements NotificationListener 
       Map.Entry<String, Feature> entry = featureIter.next();
       Feature feature = entry.getValue();
       if (!nodeMap.containsKey(feature)) {
-        add(newFeatureNode(feature));
+        addChild(newFeatureNode(feature));
         if (featuresPanel != null) {
           featuresPanel.add(feature);
         }

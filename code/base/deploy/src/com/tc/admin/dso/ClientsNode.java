@@ -6,7 +6,7 @@ package com.tc.admin.dso;
 
 import com.tc.admin.AbstractClusterListener;
 import com.tc.admin.ConnectionContext;
-import com.tc.admin.IAdminClientContext;
+import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.ComponentNode;
 import com.tc.admin.common.ExceptionHelper;
@@ -26,7 +26,7 @@ import java.util.concurrent.Callable;
 import javax.swing.SwingUtilities;
 
 public class ClientsNode extends ComponentNode implements ClientConnectionListener {
-  protected IAdminClientContext  adminClientContext;
+  protected ApplicationContext   appContext;
   protected IClusterModel        clusterModel;
   protected ClusterListener      clusterListener;
   protected ConnectionContext    cc;
@@ -35,12 +35,12 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
 
   private static final IClient[] NULL_CLIENTS = {};
 
-  public ClientsNode(IAdminClientContext adminClientContext, IClusterModel clusterModel) {
+  public ClientsNode(ApplicationContext appContext, IClusterModel clusterModel) {
     super();
-    this.adminClientContext = adminClientContext;
+    this.appContext = appContext;
     this.clusterModel = clusterModel;
     clients = NULL_CLIENTS;
-    setLabel(adminClientContext.getMessage("connected-clients"));
+    setLabel(appContext.getMessage("connected-clients"));
     clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
     if (clusterModel.isReady()) {
       init();
@@ -80,7 +80,7 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
     IServer activeCoord = getActiveCoordinator();
     if (activeCoord != null) {
       activeCoord.removeClientConnectionListener(this);
-      setLabel(adminClientContext.getMessage("connected-clients"));
+      setLabel(appContext.getMessage("connected-clients"));
       clients = NULL_CLIENTS;
       for (int i = getChildCount() - 1; i >= 0; i--) {
         removeChild((XTreeNode) getChildAt(i));
@@ -88,7 +88,7 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
       if (clientsPanel != null) {
         clientsPanel.setClients(clients);
       }
-      adminClientContext.execute(new InitWorker());
+      appContext.execute(new InitWorker());
     }
   }
 
@@ -113,7 +113,7 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
       if (e != null) {
         Throwable rootCause = ExceptionHelper.getRootCause(e);
         if (!(rootCause instanceof IOException)) {
-          adminClientContext.log(e);
+          appContext.log(e);
         }
       } else {
         clients = getResult();
@@ -126,11 +126,11 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
   }
 
   protected ClientNode createClientNode(IClient client) {
-    return new ClientNode(adminClientContext, client);
+    return new ClientNode(appContext, client);
   }
 
   protected ClientsPanel createClientsPanel(ClientsNode clientsNode, IClient[] theClients) {
-    return new ClientsPanel(adminClientContext, getClusterModel(), theClients);
+    return new ClientsPanel(appContext, getClusterModel(), theClients);
   }
 
   @Override
@@ -139,18 +139,6 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
       clientsPanel = createClientsPanel(ClientsNode.this, clients);
     }
     return clientsPanel;
-  }
-
-  public void selectClientNode(String remoteAddr) {
-    int childCount = getChildCount();
-    for (int i = 0; i < childCount; i++) {
-      ClientNode ctn = (ClientNode) getChildAt(i);
-      String ctnRemoteAddr = ctn.getClient().getRemoteAddress();
-      if (ctnRemoteAddr.equals(remoteAddr)) {
-        adminClientContext.getAdminClientController().select(ctn);
-        return;
-      }
-    }
   }
 
   private void addClientNode(ClientNode clientNode) {
@@ -162,7 +150,7 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
   }
 
   protected void updateLabel() {
-    setLabel(adminClientContext.getMessage("connected-clients") + " (" + getChildCount() + ")");
+    setLabel(appContext.getMessage("connected-clients") + " (" + getChildCount() + ")");
     nodeChanged();
   }
 
@@ -180,7 +168,7 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
     }
 
     synchronized (this) {
-      adminClientContext = null;
+      appContext = null;
       clusterModel = null;
       clusterListener = null;
       cc = null;
@@ -192,7 +180,7 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
   }
 
   public void clientConnected(IClient client) {
-    if (adminClientContext == null) return;
+    if (appContext == null) return;
     SwingUtilities.invokeLater(new ClientConnectedRunnable(client));
   }
 
@@ -204,19 +192,19 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
     }
 
     public void run() {
-      if (adminClientContext == null) return;
-      adminClientContext.setStatus(adminClientContext.getMessage("dso.client.retrieving"));
+      if (appContext == null) return;
+      appContext.setStatus(appContext.getMessage("dso.client.retrieving"));
       List<IClient> list = new ArrayList(Arrays.asList(clients));
       list.add(client);
       clients = list.toArray(new IClient[list.size()]);
       addClientNode(createClientNode(client));
       updateLabel();
-      adminClientContext.setStatus(adminClientContext.getMessage("dso.client.new") + client);
+      appContext.setStatus(appContext.getMessage("dso.client.new") + client);
     }
   }
 
   public void clientDisconnected(IClient client) {
-    if (adminClientContext == null) return;
+    if (appContext == null) return;
     SwingUtilities.invokeLater(new ClientDisconnectedRunnable(client));
   }
 
@@ -228,8 +216,8 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
     }
 
     public void run() {
-      if (adminClientContext == null) return;
-      adminClientContext.setStatus(adminClientContext.getMessage("dso.client.detaching"));
+      if (appContext == null) return;
+      appContext.setStatus(appContext.getMessage("dso.client.detaching"));
       ArrayList<IClient> list = new ArrayList<IClient>(Arrays.asList(clients));
       int nodeIndex = list.indexOf(client);
       if (nodeIndex != -1) {
@@ -241,7 +229,7 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
         }
       }
       updateLabel();
-      adminClientContext.setStatus(adminClientContext.getMessage("dso.client.detached") + client);
+      appContext.setStatus(appContext.getMessage("dso.client.detached") + client);
     }
   }
 
