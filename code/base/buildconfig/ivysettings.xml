@@ -14,6 +14,9 @@
       <artifact pattern="http://repo.terracotta.org/maven2/[organisation]/[artifact]/[revision]/[artifact]-[revision].[ext]"/>
     </url>
     <chain name="ibiblio-chain" returnFirst="true">
+      <url name="ibiblio_maven">
+        <artifact pattern="http://www.ibiblio.org/maven/[organisation]/jars/[artifact](-[revision]).[ext]"/>
+      </url>
       <ibiblio name="ibiblio" />
       <url name="tc-mirror">
         <artifact pattern="http://download.terracotta.org/buildjars/mirror/[artifact]-[revision].[ext]"/>
