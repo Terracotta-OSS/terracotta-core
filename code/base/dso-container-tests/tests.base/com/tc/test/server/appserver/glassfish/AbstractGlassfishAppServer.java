@@ -13,6 +13,7 @@ import org.w3c.dom.NodeList;
 
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
+import com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl;
 import com.tc.lcp.CargoLinkedChildProcess;
 import com.tc.lcp.HeartBeatService;
 import com.tc.process.Exec;
@@ -480,7 +481,7 @@ public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
 
     appendDSOParams(document, javaConfig, params);
 
-    TransformerFactory transformerFactory = TransformerFactory.newInstance();
+    TransformerFactory transformerFactory = new TransformerFactoryImpl();
     Transformer transformer = transformerFactory.newTransformer();
 
     if (document.getDoctype() != null) {

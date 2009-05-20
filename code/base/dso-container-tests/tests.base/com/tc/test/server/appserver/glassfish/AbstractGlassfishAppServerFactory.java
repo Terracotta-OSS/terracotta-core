@@ -13,6 +13,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl;
 import com.tc.test.AppServerInfo;
 import com.tc.test.server.appserver.AppServer;
 import com.tc.test.server.appserver.AppServerFactory;
@@ -39,10 +40,12 @@ public abstract class AbstractGlassfishAppServerFactory extends AppServerFactory
     super(protectedKey);
   }
 
+  @Override
   public AppServerParameters createParameters(String instanceName, Properties props) {
     return new StandardAppServerParameters(instanceName, props);
   }
 
+  @Override
   public abstract AppServer createAppServer(AppServerInstallation installation);
 
   private void doSetup(GlassfishAppServerInstallation install) throws IOException, Exception {
@@ -116,7 +119,7 @@ public abstract class AbstractGlassfishAppServerFactory extends AppServerFactory
       chmod.setAttribute("parallel", "false");
     }
 
-    TransformerFactory transformerFactory = TransformerFactory.newInstance();
+    TransformerFactory transformerFactory = new TransformerFactoryImpl();
     Transformer transformer = transformerFactory.newTransformer();
 
     StringWriter sw = new StringWriter();
@@ -125,6 +128,7 @@ public abstract class AbstractGlassfishAppServerFactory extends AppServerFactory
     FileUtils.writeStringToFile(antScript, sw.toString(), "UTF-8");
   }
 
+  @Override
   public AppServerInstallation createInstallation(File home, File workingDir, AppServerInfo appServerInfo)
       throws Exception {
     GlassfishAppServerInstallation install = new GlassfishAppServerInstallation(home, workingDir, appServerInfo);
