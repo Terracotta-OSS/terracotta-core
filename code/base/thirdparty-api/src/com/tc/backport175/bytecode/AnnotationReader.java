@@ -202,20 +202,17 @@ public class AnnotationReader {
      * @return the annotation reader
      */
     public static AnnotationReader getReaderFor(final ClassKey classKey) {
-        AnnotationReader reader;
-        Object value = READERS.get(classKey);
-        if (value == null) {
-            synchronized (READERS) {
-                reader = new AnnotationReader(classKey);
+        final Reference ref;
+        synchronized(READERS) {
+           ref = (Reference) READERS.get(classKey);
+        }
+
+        AnnotationReader reader = (AnnotationReader) (ref == null ? null : ref.get());
+
+        if (reader == null) {
+            reader = new AnnotationReader(classKey);
+            synchronized(READERS) {
                 READERS.put(classKey, new WeakReference(reader));//reader strong refs its own key in the weakhahsmap..
-            }
-        } else {
-            reader = (AnnotationReader) ((Reference)value).get();
-            if (reader == null) {//WeakReference content can be null
-                synchronized (READERS) {
-                      reader = new AnnotationReader(classKey);
-                      READERS.put(classKey, new WeakReference(reader));
-                }
             }
         }
         return reader;
@@ -258,12 +255,19 @@ public class AnnotationReader {
      * This method calls <code>parse</code> and is therefore all the is needed to invoke to get a fully updated reader.
      */
     public static void refreshAll() {
-        for (Iterator it = READERS.values().iterator(); it.hasNext();) {
-            AnnotationReader reader = (AnnotationReader) ((Reference)it.next()).get();
-            synchronized (reader) {
-                reader.refresh();
-            }
+      Object[] readers;
+      synchronized (READERS) {
+        readers = READERS.values().toArray();
+      }
+
+      for (int i = 0; i < readers.length; i++) {
+        AnnotationReader reader = (AnnotationReader) ((Reference) readers[i]).get();
+        if (reader != null) {
+          synchronized (reader) {
+            reader.refresh();
+          }
         }
+      }
     }
 
     /**
