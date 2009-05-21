@@ -387,6 +387,10 @@ public class ArrayManagerTest extends TestCase {
     public void dehydrate(DNAWriter writer) {
       throw new ImplementMe();
     }
+
+    public void unresolveReference(String fieldName) {
+      throw new ImplementMe();
+    }
   }
 
 }

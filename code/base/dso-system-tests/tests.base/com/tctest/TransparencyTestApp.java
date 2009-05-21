@@ -4,7 +4,9 @@
  */
 package com.tctest;
 
+import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.ManagerUtil;
+import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -56,7 +58,6 @@ public class TransparencyTestApp extends AbstractTransparentApp {
     appSpec.addRoot("out", "out");
 
     TransparencyClassSpec spec = config.getOrCreateSpec("com.tctest.TransparencyTestApp$TestObj");
-
     spec.addTransient("transientObject");
     spec.addTransient("transientPrimitive");
     config.addWriteAutolock("* com.tctest.TransparencyTestApp.*(..)");
@@ -82,7 +83,37 @@ public class TransparencyTestApp extends AbstractTransparentApp {
       testFunnyInner();
       testFunnyCstr();
     }
+
+    testUnresolveValue();
   }
+
+  private void testUnresolveValue() {
+    TestObj to = new TestObj(new TestObj(null));
+    synchronized (myRoot) {
+      myRoot.clear();
+      myRoot.put("key", to);
+    }
+
+    String fieldName;
+    try {
+      fieldName = to.getClass().getName() + "." + to.getClass().getDeclaredField("obj").getName();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    TestObj ref = to.getObj();
+    Assert.assertNotNull(ref);
+    Map values = new HashMap();
+    ((TransparentAccess)to).__tc_getallfields(values);
+    Assert.assertTrue(values.containsKey(fieldName));
+    Assert.assertEquals(ref, values.get(fieldName));
+
+    ((Manageable) to).__tc_managed().unresolveReference(fieldName);
+    ((TransparentAccess) to).__tc_getallfields(values);
+    Assert.assertTrue(values.containsKey(fieldName));
+    Assert.assertEquals(null, values.get(fieldName));
+  }
+
+
 
   private void testStaticNonRoot() {
     try {
@@ -525,20 +556,6 @@ public class TransparencyTestApp extends AbstractTransparentApp {
   public static class TestObj {
 
     public static final Object staticFinalNonRoot = new Object();
-
-    public void __tc_getallfieldvalues(Map values) {
-      values.put("transientObject", transientObject);
-      values.put("transientPrimitive", new Long(transientPrimitive));
-    }
-
-    public void __tc_setfieldvalue(String fieldName, Object value) {
-      if (fieldName.equals("transientObject")) {
-        this.transientObject = value;
-      }
-      if (fieldName.equals("transientPrimitive")) {
-        this.transientPrimitive = ((Long) value).longValue();
-      }
-    }
 
     private final Runnable anonymousSubclass = new Runnable() {
                                          private Object o;

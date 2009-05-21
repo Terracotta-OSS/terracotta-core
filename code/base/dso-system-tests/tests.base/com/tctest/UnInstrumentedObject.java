@@ -3,6 +3,7 @@
  */
 package com.tctest;
 
+import com.tc.exception.ImplementMe;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.TransparentAccess;
 
@@ -14,7 +15,7 @@ public class UnInstrumentedObject implements TransparentAccess {
   private UnInstrumentedObject objectValue;
   private UnInstrumentedObject objectValue1;
   private UnInstrumentedObject objectValue2;
-  private Object               object      = new Object();
+  private final Object               object      = new Object();
   public Object                lock        = new Object();
   private boolean              protect     = false;
   private final Object         protectLock = new Object();
@@ -121,11 +122,13 @@ public class UnInstrumentedObject implements TransparentAccess {
 
   public Object __tc_getmanagedfield(String name) {
     return null;
-    
   }
 
   public void __tc_setmanagedfield(String name, Object value) {
     //
-    
+  }
+
+  public Object __tc_getfield(String name) {
+    throw new ImplementMe();
   }
 }

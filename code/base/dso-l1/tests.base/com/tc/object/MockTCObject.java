@@ -19,12 +19,12 @@ import java.util.List;
  * Mock implementation of TCObject for testing.
  */
 public class MockTCObject implements TCObject {
-  private ObjectID         id;
-  private Object           peer;
-  private List             history          = new LinkedList();
+  private final ObjectID         id;
+  private final Object           peer;
+  private final List             history          = new LinkedList();
   private final Object     resolveLock      = new Object();
   private long             version          = 0;
-  private TCClass          tcClazz;
+  private final TCClass          tcClazz;
   private boolean          accessed         = false;
   private boolean          isNew            = false;
   private RuntimeException hydrateException = null;
@@ -124,6 +124,7 @@ public class MockTCObject implements TCObject {
       this.parameters = parameters;
     }
 
+    @Override
     public String toString() {
       StringBuffer sb = new StringBuffer();
       sb.append(method);
@@ -273,5 +274,9 @@ public class MockTCObject implements TCObject {
 
   public void dehydrate(DNAWriter writer) {
     //
+  }
+
+  public void unresolveReference(String fieldName) {
+    throw new ImplementMe();
   }
 }

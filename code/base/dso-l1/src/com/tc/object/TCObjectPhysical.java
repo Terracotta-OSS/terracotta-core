@@ -217,17 +217,21 @@ public class TCObjectPhysical extends TCObjectImpl {
   private int clearObjectReferences(TransparentAccess ta) {
     TCField[] fields = tcClazz.getPortableFields();
     if (fields.length == 0) { return 0; }
+
     Map fieldValues = null;
     int cleared = 0;
     for (TCField field : fields) {
       if (!field.canBeReference()) continue;
+
       if (fieldValues == null) {
         // lazy instantiation. TODO:: Add a new method in TransparentAccess __tc_getFieldNoResolve()
         fieldValues = new HashMap();
         ta.__tc_getallfields(fieldValues);
       }
+
       Object obj = fieldValues.get(field.getName());
       if (obj == null) continue;
+
       TCObject tobj = getObjectManager().lookupExistingOrNull(obj);
       if (tobj != null) {
         ObjectID lid = tobj.getObjectID();
@@ -236,5 +240,30 @@ public class TCObjectPhysical extends TCObjectImpl {
       }
     }
     return cleared;
+  }
+
+  public void unresolveReference(String fieldName) {
+    TCField field = tcClazz.getField(fieldName);
+    if (field == null) { throw new IllegalArgumentException("No such field: " + fieldName); }
+    if (!field.canBeReference()) return;
+
+    TransparentAccess ta = (TransparentAccess) getPeerObject();
+    if (ta == null) return;
+
+    synchronized (getResolveLock()) {
+      // check if already unresolved
+      if (hasReferences() && references.containsKey(fieldName)) return;
+
+      HashMap values = new HashMap();
+      ta.__tc_getallfields(values);
+      Object obj = values.get(fieldName);
+
+      if (obj != null) {
+        TCObject tobj = getObjectManager().lookupExistingOrNull(obj);
+        if (tobj != null) {
+          setValue(fieldName, tobj.getObjectID());
+        }
+      }
+    }
   }
 }

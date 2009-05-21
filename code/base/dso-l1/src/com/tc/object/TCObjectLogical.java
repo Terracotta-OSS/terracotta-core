@@ -17,6 +17,7 @@ public class TCObjectLogical extends TCObjectImpl {
     getObjectManager().getTransactionManager().logicalInvoke(this, method, methodName, parameters);
   }
 
+  @Override
   protected boolean isEvictable() {
     Object peer;
     if ((peer = getPeerObject()) instanceof Clearable) {
@@ -26,6 +27,7 @@ public class TCObjectLogical extends TCObjectImpl {
     }
   }
 
+  @Override
   protected int clearReferences(Object pojo, int toClear) {
     if(! (pojo instanceof Clearable)) {
       Assert.fail("TCObjectLogical.clearReferences expected Clearable but got " + (pojo == null ? "null" : pojo.getClass().getName()));
@@ -34,4 +36,7 @@ public class TCObjectLogical extends TCObjectImpl {
     return clearable.__tc_clearReferences(toClear);
   }
 
+  public void unresolveReference(String fieldName) {
+    throw new AssertionError();
+  }
 }

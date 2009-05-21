@@ -233,4 +233,8 @@ public class NullTCObject implements TCObject {
   public void dehydrate(DNAWriter writer) {
     throw new AssertionError();
   }
+
+  public void unresolveReference(String fieldName) {
+    //
+  }
 }

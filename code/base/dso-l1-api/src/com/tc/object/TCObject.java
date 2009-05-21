@@ -220,10 +220,17 @@ public interface TCObject extends Cacheable {
 
   /**
    * Fault in field object if necessary
-   *
-   * @param fieldName Fully-qualified fieldn name
+   * 
+   * @param fieldName Fully-qualified field name
    */
   public void resolveReference(String fieldName);
+
+  /**
+   * Release this object's reference to the given field
+   * 
+   * @param fieldName Fully-qualified field name
+   */
+  public void unresolveReference(String fieldName);
 
   /**
    * Fault in an array reference
