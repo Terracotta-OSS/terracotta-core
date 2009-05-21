@@ -15,7 +15,10 @@
     </url>
     <chain name="ibiblio-chain" returnFirst="true">
       <ibiblio name="ibiblio" />
-      <url name="tc-mirror">
+      <url name="tc-repo">
+        <artifact pattern="http://download.terracotta.org/buildjars/lib/[artifact]-[revision].[ext]"/>
+      </url>
+      <url name="tc-repo-mirror">
         <artifact pattern="http://download.terracotta.org/buildjars/mirror/[artifact]-[revision].[ext]"/>
       </url>
     </chain>
