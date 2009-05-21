@@ -109,11 +109,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
     jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_L1RECONNECT_ENABLED + "=true");
 
-    if (Os.isSolaris()) {
-      tcProps.setProperty(TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS, "80000");
-      System.setProperty("com.tc." + TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS, "80000");
-      jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS + "=80000");
-    } else if (Os.isLinux()) {
+   if (Os.isLinux() || Os.isSolaris()) {
       // default 5000 ms seems to small occasionally in few linux machines
       tcProps.setProperty(TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS, "10000");
       System.setProperty("com.tc." + TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS, "10000");
