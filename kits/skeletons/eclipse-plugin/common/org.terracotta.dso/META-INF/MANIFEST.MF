@@ -88,7 +88,6 @@ Bundle-ClassPath: ../dependencies/lib/antlr-2.7.3.jar,
  ../thirdparty-api/build.eclipse/src.classes,
  ../management/build.eclipse/src.classes,
  ../management-api/build.eclipse/src.classes,
- ../dso-spring/build.eclipse/src.classes,
  ../dso-cluster-api/build.eclipse/src.classes,
  ../license-common/build.eclipse/src.classes
 Bundle-Activator: org.terracotta.dso.TcPlugin
