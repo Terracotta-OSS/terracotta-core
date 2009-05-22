@@ -4,46 +4,38 @@
  */
 package com.tc.util.runtime;
 
-import java.util.concurrent.CyclicBarrier;
+import com.tc.util.Assert;
 
-import junit.framework.TestCase;
+public class ThreadDumpUtilJdk16Test extends ThreadDumpUtilTestBase {
 
-public class ThreadDumpUtilJdk16Test extends TestCase {
-
-  public void testThreadDump() {
-    CyclicBarrier barrier = new CyclicBarrier(10);
-
-    for (int i = 0; i < 10; i++) {
-      new WaitingThread(barrier).start();
-    }
-
-    synchronized (this) {
-      // validate that correct thread dump is taken.
-      String dump = ThreadDumpUtil.getThreadDump();
-      assertTrue(dump.contains("- locked"));
-    }
+  public void testThreadDump() throws Exception {
+    final int numThreads = 10;
+    String dump = getDump(numThreads, TraceThread.class);
+    
+    assertTrue(dump.contains("- locked"));
+    
+    Assert.eval("The text \"Full thread dump \" should be present in the thread dump",
+                dump.indexOf("Full thread dump ") >= 0);
+    
+    // we expect to see all the created threads waiting on a CountDownLatch
+    assertEquals(numThreads, countSubstrings(dump, CDL_AWAIT));
   }
 
-  private static class WaitingThread extends Thread {
-
-    private CyclicBarrier barrier;
-
-    public WaitingThread(CyclicBarrier barrier) {
-      this.barrier = barrier;
-    }
-
-    @Override
-    public void run() {
-      try {
-        barrier.await();
-
-        // now wait.. for thread dump
-        wait(5000);
-      } catch (Exception ignore) {
-        // ignore exception.. we just some threads to wait
-        // to fill up the thread dump.
-      }
-    }
-
+  /**
+   * Thread.getId() should be final but it isn't, so subclasses can break the contract.
+   * When this happens we need to behave gracefully.  See CDV-1262.
+   */
+  public void testBadThreadId() throws Exception {
+    int numThreads = 10;
+    String dump = getDump(numThreads, BadIdThread.class);
+    
+    Assert.eval("The text \"Full thread dump \" should be present in the thread dump",
+                dump.indexOf("Full thread dump ") >= 0);
+    
+    // we expect to see all the created threads waiting on a CountDownLatch
+    assertEquals(numThreads, countSubstrings(dump, CDL_AWAIT));
+    
+    // half the strings should be complaining about unrecognized IDs
+    assertEquals(numThreads / 2, countSubstrings(dump, OVERRIDDEN));
   }
 }

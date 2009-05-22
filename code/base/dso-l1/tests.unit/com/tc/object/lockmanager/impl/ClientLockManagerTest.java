@@ -938,7 +938,59 @@ public class ClientLockManagerTest extends TCTestCase {
     done[1].acquire();
     done[2].acquire();
   }
-
+  
+  /**
+   * CDV-1262: overriding Thread.getId() is a bad idea, but people do it anyway;
+   * our locks should still function correctly although dump information may not 
+   * be available.
+   */
+  public void testOverriddenThreadId() throws Exception {
+    
+    final ThreadIDMap threadIDMap = ThreadIDMapUtil.getInstance();
+    final ThreadLockManager threadLockManager = new ThreadLockManagerImpl(lockManager, new ThreadIDManagerImpl(threadIDMap));
+    
+    final LockID lid0 = threadLockManager.lockIDFor("Locky0");
+    final boolean[] success = new boolean[2];
+    
+    Thread t0 = new Thread("peaches_thread") {
+      @Override
+      public long getId() {
+        return 0xCAFED00DL;
+      }
+      
+      @Override
+      public void run() {
+        threadLockManager.lock(lid0, LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE,
+                               LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+        threadLockManager.unlock(lid0);
+        success[0] = true;
+      }
+    };
+    
+    Thread t1 = new Thread("herb_thread") {
+      @Override
+      public long getId() {
+        return 0xCAFED00DL;
+      }
+      
+      @Override
+      public void run() {
+        threadLockManager.lock(lid0, LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE,
+                               LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+        threadLockManager.unlock(lid0);
+        success[1] = true;
+      }
+    };
+    
+    t0.start();
+    t1.start();
+    
+    t0.join();
+    t1.join();
+    assertTrue(success[0]);
+    assertTrue(success[1]);
+  }
+  
   public void testBasicUnlock() throws Exception {
     assertEquals(0, rmtLockManager.getLockRequestCount());
     assertEquals(0, rmtLockManager.getUnlockRequestCount());
@@ -1190,7 +1242,7 @@ public class ClientLockManagerTest extends TCTestCase {
       return this.exceptions;
     }
   }
-
+  
   private class LockGetter extends Thread {
     LockID   lid;
     ThreadID tid;

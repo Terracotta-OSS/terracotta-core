@@ -9,12 +9,16 @@ import com.tc.logging.TCLogging;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.util.Assert;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 
 public class ThreadDumpUtil {
 
-  private static final TCLogger logger = TCLogging.getLogger(ThreadDumpUtil.class);
+  protected static final TCLogger logger = TCLogging.getLogger(ThreadDumpUtil.class);
+  protected static ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+  protected static volatile ThreadGroup rootThreadGroup;
 
   private static Class          threadDumpUtilJdk15Type;
   private static Class          threadDumpUtilJdk16Type;
@@ -101,6 +105,40 @@ public class ThreadDumpUtil {
     return lockList;
   }
 
+  /**
+   * Get all threads. 
+   */
+  public static Thread[] getAllThreads() {
+    final ThreadGroup root = getRootThreadGroup( );
+    int alloc = threadMXBean.getThreadCount( );
+    int size = 0;
+    Thread[] threads;
+    // ThreadGroup.enumerate() will only return as many threads as it can fit in 
+    // the array it's given, and we have no accurate way to know how many threads 
+    // there will be at the time it is called.    
+    do {
+      alloc *= 2;
+      threads = new Thread[ alloc ];
+      size = root.enumerate( threads, true );
+    } while ( size >= alloc );
+    Thread[] trimmed = new Thread[size];
+    System.arraycopy(threads, 0, trimmed, 0, size);
+    return trimmed;
+  }
+
+  public static ThreadGroup getRootThreadGroup() {
+    if (rootThreadGroup == null) {
+      ThreadGroup tg = Thread.currentThread().getThreadGroup();
+      ThreadGroup parent = tg.getParent();
+      while (parent != null) {
+        tg = parent;
+        parent = tg.getParent();
+      }
+      rootThreadGroup = tg;
+    }
+    return rootThreadGroup;
+  }
+  
   public static void main(String[] args) {
     System.out.println(getThreadDump());
   }
