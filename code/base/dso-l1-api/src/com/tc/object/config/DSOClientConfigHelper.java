@@ -219,10 +219,6 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   Map getAspectModules();
 
-  void addDSOSpringConfig(DSOSpringConfigHelper config);
-
-  Collection getDSOSpringConfigs();
-
   void addDistributedMethodCall(DistributedMethodSpec dms);
 
   Portability getPortability();

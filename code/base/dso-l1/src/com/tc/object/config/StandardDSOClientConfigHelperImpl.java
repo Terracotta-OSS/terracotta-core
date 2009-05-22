@@ -174,8 +174,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   private final Map                                          aspectModules                      = new ConcurrentHashMap();
 
-  private final List                                         springConfigs                      = new CopyOnWriteArrayList();
-
   private final boolean                                      supportSharingThroughReflection;
 
   private final Portability                                  portability;
@@ -1709,20 +1707,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   public Map getAspectModules() {
     return this.aspectModules;
-  }
-
-  public void addDSOSpringConfig(final DSOSpringConfigHelper config) {
-    this.springConfigs.add(config);
-
-    synchronized (aspectModules) {
-      if (!this.aspectModules.containsKey("org.springframework")) {
-        addAspectModule("org.springframework", "com.tc.object.config.SpringAspectModule");
-      }
-    }
-  }
-
-  public Collection getDSOSpringConfigs() {
-    return this.springConfigs;
   }
 
   public String getLogicalExtendingClassName(final String className) {
