@@ -22,25 +22,29 @@ public class TCClassTest extends BaseDSOTestCase {
     DNAEncoding encoding = new ApplicatorDNAEncodingImpl(classProvider);
     TCClassFactory classFactory = new TCClassFactoryImpl(fieldFactory, config, classProvider, encoding);
     TCClass tcc1 = new TCClassImpl(fieldFactory, classFactory, objectManager, TCClassTest.class, null,
-                                   MockClassProvider.MOCK_LOADER, null, false, false, false, null, null, false, true);
+                                   MockClassProvider.MOCK_LOADER, null, false, false, false, null, null, false, true,
+                                   null, null);
     assertFalse(tcc1.isIndexed());
     assertFalse(tcc1.isNonStaticInner());
     TCClass tcc2 = new TCClassImpl(fieldFactory, classFactory, objectManager, TestClass1.class, null,
-                                   MockClassProvider.MOCK_LOADER, null, false, false, false, null, null, false, true);
+                                   MockClassProvider.MOCK_LOADER, null, false, false, false, null, null, false, true,
+                                   null, null);
     assertFalse(tcc2.isIndexed());
     assertTrue(tcc2.isNonStaticInner());
     TCClass tcc3 = new TCClassImpl(fieldFactory, classFactory, objectManager, TestClass2.class, null,
-                                   MockClassProvider.MOCK_LOADER, null, false, false, false, null, null, false, true);
+                                   MockClassProvider.MOCK_LOADER, null, false, false, false, null, null, false, true,
+                                   null, null);
     assertFalse(tcc3.isIndexed());
     assertFalse(tcc3.isNonStaticInner());
     TCClass tcc4 = new TCClassImpl(fieldFactory, classFactory, objectManager, TestClass1[].class, null,
-                                   MockClassProvider.MOCK_LOADER, null, true, false, false, null, null, false, true);
+                                   MockClassProvider.MOCK_LOADER, null, true, false, false, null, null, false, true,
+                                   null, null);
     assertTrue(tcc4.isIndexed());
     assertFalse(tcc4.isNonStaticInner());
 
     LoaderDescription mockLoader2 = new LoaderDescription(null, "mock2");
     TCClass tcc5 = new TCClassImpl(fieldFactory, classFactory, objectManager, TestClass1[].class, null, mockLoader2,
-                                   null, true, false, false, null, null, false, true);
+                                   null, true, false, false, null, null, false, true, null, null);
     assertEquals(mockLoader2, tcc5.getDefiningLoaderDescription());
   }
 

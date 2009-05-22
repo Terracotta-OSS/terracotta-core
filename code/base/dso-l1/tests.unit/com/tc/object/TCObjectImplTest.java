@@ -15,8 +15,10 @@ import com.tc.objectserver.core.api.TestDNAWriter;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -266,6 +268,14 @@ public class TCObjectImplTest extends BaseDSOTestCase {
 
     public boolean isNotClearable() {
       return false;
+    }
+
+    public List<Method> getPostCreateMethods() {
+      throw new ImplementMe();
+    }
+
+    public List<Method> getPreCreateMethods() {
+      throw new ImplementMe();
     }
   }
 }

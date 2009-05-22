@@ -12,6 +12,8 @@ import com.tc.object.loaders.LoaderDescription;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.List;
 
 /**
  * Interface for peer to java.lang.Class. The Class of every object under management is represented by an instance of
@@ -242,4 +244,16 @@ public interface TCClass {
    * Returns true if instances of this type should NOT be cleared by the memory manager
    */
   public boolean isNotClearable();
+
+  /**
+   * List of method handles for the post create methods for this type. This list will include the post create methods
+   * for all superclasses and may be empty (but never null)
+   */
+  public List<Method> getPostCreateMethods();
+
+  /**
+   * List of method handles for the pre create methods for this type. This list will include the post create methods for
+   * all superclasses and may be empty (but never null)
+   */
+  public List<Method> getPreCreateMethods();
 }

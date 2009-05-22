@@ -26,12 +26,16 @@ import com.tc.util.UnsafeUtil;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -44,6 +48,7 @@ import java.util.Map;
 public class TCClassImpl implements TCClass {
   private final static TCLogger          logger                 = TCLogging.getLogger(TCClassImpl.class);
   private final static Unsafe            unsafe                 = UnsafeUtil.getUnsafe();
+  private final static SerializationUtil SERIALIZATION_UTIL     = new SerializationUtil();
 
   /**
    * Peer java class that this TCClass represents.
@@ -65,30 +70,30 @@ public class TCClassImpl implements TCClass {
   private final Map                      declaredTCFieldsByName = new HashMap();
   private final Map                      tcFieldsByName         = new HashMap();
   private final LoaderDescription        loaderDesc;
-  private Constructor                    constructor            = null;
   private final Field                    parentField;
-  private final static SerializationUtil SERIALIZATION_UTIL     = new SerializationUtil();
   private final boolean                  useNonDefaultConstructor;
   private final Map                      offsetToFieldNames;
   private final ClientObjectManager      objectManager;
   private final boolean                  isProxyClass;
   private final boolean                  isEnum;
-
   private final String                   logicalExtendingClassName;
   private final Class                    logicalSuperClass;
   private final boolean                  useResolveLockWhileClearing;
-  private boolean                        isNotClearable;
+  private final boolean                  isNotClearable;
+  private final List<Method>             postCreateMethods;
+  private final List<Method>             preCreateMethods;
+  private Constructor                    constructor            = null;
 
   TCClassImpl(final TCFieldFactory factory, final TCClassFactory clazzFactory, final ClientObjectManager objectManager,
               final Class peer, final Class logicalSuperClass, final LoaderDescription loaderDesc,
               final String logicalExtendingClassName, final boolean isLogical, final boolean isCallConstructor,
               final boolean onLoadInjection, final String onLoadScript, final String onLoadMethod,
-              final boolean useNonDefaultConstructor, final boolean useResolveLockWhileClearing) {
+              final boolean useNonDefaultConstructor, final boolean useResolveLockWhileClearing,
+              String postCreateMethod, String preCreateMethod) {
     this.clazzFactory = clazzFactory;
     this.objectManager = objectManager;
     this.peer = peer;
     this.loaderDesc = loaderDesc;
-
     this.indexed = peer.isArray();
 
     boolean isStatic = Modifier.isStatic(peer.getModifiers());
@@ -117,6 +122,31 @@ public class TCClassImpl implements TCClass {
     this.offsetToFieldNames = getFieldOffsets(peer);
     this.useResolveLockWhileClearing = useResolveLockWhileClearing;
     this.isNotClearable = NotClearable.class.isAssignableFrom(peer);
+    this.postCreateMethods = resolveCreateMethods(postCreateMethod, false);
+    this.preCreateMethods = resolveCreateMethods(preCreateMethod, true);
+  }
+
+  private List<Method> resolveCreateMethods(String methodName, boolean preCreate) {
+    List<Method> rv = new ArrayList<Method>();
+    if (superclazz != null) {
+      rv.addAll(preCreate ? superclazz.getPreCreateMethods() : superclazz.getPostCreateMethods());
+    } else {
+      Assert.assertEquals(Object.class, peer);
+    }
+
+    if (methodName != null) {
+      try {
+        Method method = peer.getDeclaredMethod(methodName);
+        method.setAccessible(true);
+        rv.add(method);
+      } catch (Exception e) {
+        logger.error("Exception resolving method '" + methodName + "' on " + peer, e);
+      }
+    }
+
+    if (rv.isEmpty()) { return Collections.EMPTY_LIST; }
+
+    return Collections.unmodifiableList(rv);
   }
 
   public Field getParentField() {
@@ -422,5 +452,13 @@ public class TCClassImpl implements TCClass {
 
   public boolean useResolveLockWhileClearing() {
     return useResolveLockWhileClearing;
+  }
+
+  public List<Method> getPostCreateMethods() {
+    return this.postCreateMethods;
+  }
+
+  public List<Method> getPreCreateMethods() {
+    return this.preCreateMethods;
   }
 }

@@ -345,39 +345,25 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     Assert.assertNotNull(pojo);
     TCObject obj = basicLookup(pojo);
     if (obj == null || obj.isNew()) {
-      executePreCreateMethod(pojo);
+      executePreCreateMethods(pojo);
       obj = create(pojo, context);
     }
     return obj;
   }
 
-  private void executePreCreateMethod(final Object pojo) {
-    String onLookupMethodName = this.clientConfiguration.getPreCreateMethodIfDefined(pojo.getClass().getName());
-    if (onLookupMethodName != null) {
-      executeMethod(pojo, onLookupMethodName, "preCreate method (" + onLookupMethodName + ") failed on object of "
-                                              + pojo.getClass());
+  private void executePreCreateMethods(final Object pojo) {
+    TCClass tcClass = clazzFactory.getOrCreate(pojo.getClass(), this);
+
+    for (Method m : tcClass.getPreCreateMethods()) {
+      executeMethod(pojo, m, "preCreate method (" + m.getName() + ") failed on object of " + pojo.getClass());
     }
   }
 
-  /**
-   * This method is created for situations in which a method needs to be invoked when an object moved from non-shared to
-   * shared (but not until the end of the current traverser that caused the change). The method could be an instrumented
-   * method. For instance, for ConcurrentHashMap, we need to re-hash the objects already in the map because the hashing
-   * algorithm is different when a ConcurrentHashMap is shared. The rehash method is an instrumented method. This should
-   * be executed only once.
-   */
-  private void executePostCreateMethod(final Object pojo, final String onLookupMethodName) {
-    executeMethod(pojo, onLookupMethodName, "postCreate method (" + onLookupMethodName + ") failed on object of "
-                                            + pojo.getClass());
-  }
-
-  private void executeMethod(final Object pojo, final String onLookupMethodName, final String loggingMessage) {
+  private void executeMethod(final Object pojo, final Method method, final String loggingMessage) {
     // This method used to use beanshell, but I changed it to reflection to hopefully avoid a deadlock -- CDV-130
 
     try {
-      Method m = pojo.getClass().getDeclaredMethod(onLookupMethodName, new Class[] {});
-      m.setAccessible(true);
-      m.invoke(pojo, new Object[] {});
+      method.invoke(pojo, new Object[] {});
     } catch (Throwable t) {
       if (t instanceof InvocationTargetException) {
         t = t.getCause();
@@ -770,10 +756,10 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     reason.setMessage(message);
     context.addDetailsTo(reason);
 
-      // Send this event to L2
-      JMXMessage jmxMsg = this.channel.getJMXMessage();
-      jmxMsg.setJMXObject(new NonPortableObjectEvent(context, reason));
-      jmxMsg.send();
+    // Send this event to L2
+    JMXMessage jmxMsg = this.channel.getJMXMessage();
+    jmxMsg.setJMXObject(new NonPortableObjectEvent(context, reason));
+    jmxMsg.send();
 
     StringWriter formattedReason = new StringWriter();
     PrintWriter out = new PrintWriter(formattedReason);
@@ -953,14 +939,19 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     } finally {
       // even if we're throwing an exception from the traversal the postCreate methods for the objects that became
       // shared should still be called
-      for (Entry<Object, String> entry : postCreate.getPostCreateMethods().entrySet()) {
-        try {
-          executePostCreateMethod(entry.getKey(), entry.getValue());
-        } catch (Throwable t) {
-          if (exception == null) {
-            exception = t;
-          } else {
-            // exceptions are already logged, no need to do it here
+      for (Entry<Object, List<Method>> entry : postCreate.getPostCreateMethods().entrySet()) {
+        Object target = entry.getKey();
+
+        for (Method method : entry.getValue()) {
+          try {
+            executeMethod(target, method, "postCreate method (" + method.getName() + ") failed on object of "
+                                          + target.getClass());
+          } catch (Throwable t) {
+            if (exception == null) {
+              exception = t;
+            } else {
+              // exceptions are already logged, no need to do it here
+            }
           }
         }
       }
@@ -1013,51 +1004,41 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return this.referenceManager.getOrCreateFor(peer);
   }
 
-  private static abstract class BaseAction implements TraversalAction, PostCreateMethodGatherer {
-    private final DSOClientConfigHelper config;
-    private final Map<Object, String>   postCreateMethods = new IdentityHashMap<Object, String>();
-
-    protected BaseAction(DSOClientConfigHelper config) {
-      this.config = config;
-    }
+  private abstract class BaseAction implements TraversalAction, PostCreateMethodGatherer {
+    private final Map<Object, List<Method>> toCall = new IdentityHashMap<Object, List<Method>>();
 
     public final void visit(List objects) {
       for (Object pojo : objects) {
-        String onLookupMethodName = config.getPostCreateMethodIfDefined(pojo.getClass().getName());
-        if (onLookupMethodName != null) {
-          Object prev = postCreateMethods.put(pojo, onLookupMethodName);
+        List<Method> postCreateMethods = clazzFactory.getOrCreate(pojo.getClass(), ClientObjectManagerImpl.this)
+            .getPostCreateMethods();
+        if (!postCreateMethods.isEmpty()) {
+          Object prev = toCall.put(pojo, postCreateMethods);
           Assert.assertNull(prev);
         }
-      }
 
-      basicVisit(objects);
+        basicVisit(objects);
+      }
     }
 
     protected abstract void basicVisit(List objects);
 
-    public final Map<Object, String> getPostCreateMethods() {
-      return postCreateMethods;
+    public final Map<Object, List<Method>> getPostCreateMethods() {
+      return toCall;
     }
   }
 
   private class AddManagedObjectAction extends BaseAction {
-    AddManagedObjectAction() {
-      super(clientConfiguration);
-    }
 
     @Override
     protected void basicVisit(final List objects) {
       List tcObjects = basicCreateIfNecessary(objects);
       for (Iterator i = tcObjects.iterator(); i.hasNext();) {
-        ClientObjectManagerImpl.this.txManager.createObject((TCObject) i.next());
+        txManager.createObject((TCObject) i.next());
       }
     }
   }
 
   private class SharedObjectsAction extends BaseAction {
-    SharedObjectsAction() {
-      super(clientConfiguration);
-    }
 
     @Override
     protected void basicVisit(final List objects) {
@@ -1377,7 +1358,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   private interface PostCreateMethodGatherer {
-    Map<Object, String> getPostCreateMethods();
+    Map<Object, List<Method>> getPostCreateMethods();
   }
 
 }

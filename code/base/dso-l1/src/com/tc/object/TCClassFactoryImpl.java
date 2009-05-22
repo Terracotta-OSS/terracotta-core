@@ -27,22 +27,22 @@ import com.tc.util.runtime.Vm;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author steve
  */
 public class TCClassFactoryImpl implements TCClassFactory {
-  private static final boolean        IS_IBM                    = Vm.isIBM();
-  
-  private static Class[]              APPLICATOR_CSTR_SIGNATURE = new Class[] { DNAEncoding.class };
+  private static final boolean                   IS_IBM                    = Vm.isIBM();
 
-  private final Map                   classes                   = new HashMap();
-  private final TCFieldFactory        fieldFactory;
-  private final DSOClientConfigHelper config;
-  private final ClassProvider         classProvider;
-  private final DNAEncoding           encoding;
+  private static Class[]                         APPLICATOR_CSTR_SIGNATURE = new Class[] { DNAEncoding.class };
+
+  private final ConcurrentMap<Class<?>, TCClass> classes                   = new ConcurrentHashMap<Class<?>, TCClass>();
+  private final TCFieldFactory                   fieldFactory;
+  private final DSOClientConfigHelper            config;
+  private final ClassProvider                    classProvider;
+  private final DNAEncoding                      encoding;
 
   public TCClassFactoryImpl(final TCFieldFactory fieldFactory, final DSOClientConfigHelper config,
                             final ClassProvider classProvider, final DNAEncoding dnaEncoding) {
@@ -53,25 +53,22 @@ public class TCClassFactoryImpl implements TCClassFactory {
   }
 
   public TCClass getOrCreate(final Class clazz, final ClientObjectManager objectManager) {
-    synchronized (classes) {
-      TCClass rv = (TCClass) classes.get(clazz);
-      if (rv == null) {
-        LoaderDescription loaderDesc = classProvider.getLoaderDescriptionFor(clazz);
-        String className = clazz.getName();
-        ClassInfo classInfo = JavaClassInfo.getClassInfo(clazz);
-        rv = new TCClassImpl(fieldFactory,
-                             this,
-                             objectManager,
-                             config.getTCPeerClass(clazz),
-                             getLogicalSuperClassWithDefaultConstructor(clazz),
-                             loaderDesc, config.getLogicalExtendingClassName(className), config.isLogical(className),
-                             config.isCallConstructorOnLoad(classInfo), config.hasOnLoadInjection(classInfo),
-                             config.getOnLoadScriptIfDefined(classInfo), config.getOnLoadMethodIfDefined(classInfo),
-                             config.isUseNonDefaultConstructor(clazz), config.useResolveLockWhenClearing(clazz));
-        classes.put(clazz, rv);
-      }
-      return rv;
-    }
+    TCClass rv = classes.get(clazz);
+    if (rv != null) return rv;
+
+    LoaderDescription loaderDesc = classProvider.getLoaderDescriptionFor(clazz);
+    String className = clazz.getName();
+    ClassInfo classInfo = JavaClassInfo.getClassInfo(clazz);
+    rv = new TCClassImpl(fieldFactory, this, objectManager, config.getTCPeerClass(clazz),
+                         getLogicalSuperClassWithDefaultConstructor(clazz), loaderDesc, config
+                             .getLogicalExtendingClassName(className), config.isLogical(className), config
+                             .isCallConstructorOnLoad(classInfo), config.hasOnLoadInjection(classInfo), config
+                             .getOnLoadScriptIfDefined(classInfo), config.getOnLoadMethodIfDefined(classInfo), config
+                             .isUseNonDefaultConstructor(clazz), config.useResolveLockWhenClearing(clazz), config
+                             .getPostCreateMethodIfDefined(className), config.getPreCreateMethodIfDefined(className));
+
+    TCClass existing = classes.putIfAbsent(clazz, rv);
+    return existing == null ? rv : existing;
   }
 
   public Class getLogicalSuperClassWithDefaultConstructor(Class clazz) {

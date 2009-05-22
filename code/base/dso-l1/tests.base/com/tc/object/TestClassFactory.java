@@ -13,6 +13,8 @@ import com.tc.object.loaders.LoaderDescription;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.List;
 
 public class TestClassFactory implements TCClassFactory {
 
@@ -182,6 +184,14 @@ public class TestClassFactory implements TCClassFactory {
 
     public boolean isNotClearable() {
       return false;
+    }
+
+    public List<Method> getPostCreateMethods() {
+      throw new ImplementMe();
+    }
+
+    public List<Method> getPreCreateMethods() {
+      throw new ImplementMe();
     }
   }
 

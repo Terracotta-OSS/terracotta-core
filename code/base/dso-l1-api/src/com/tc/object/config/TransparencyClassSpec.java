@@ -283,9 +283,9 @@ public interface TransparencyClassSpec {
    * @param memberInfo Method
    * @return Custom adapter
    */
-  public MethodAdapter customMethodAdapterFor(int access, String methodName,
-                                              String origMethodName, String description, String signature,
-                                              String[] exceptions, InstrumentationLogger logger, MemberInfo memberInfo);
+  public MethodAdapter customMethodAdapterFor(int access, String methodName, String origMethodName, String description,
+                                              String signature, String[] exceptions, InstrumentationLogger logger,
+                                              MemberInfo memberInfo);
 
   /**
    * @return Change applicator specification
@@ -596,7 +596,13 @@ public interface TransparencyClassSpec {
 
   /**
    * Get method to call post-create
-   *
+   * <p>
+   * This facility is for situations in which a method needs to be invoked when an object moved from non-shared to
+   * shared (but not until the end of the current traverser that caused the change). The method could be an instrumented
+   * method. For instance, for ConcurrentHashMap, we need to re-hash the objects already in the map because the hashing
+   * algorithm is different when a ConcurrentHashMap is shared. The rehash method is an instrumented method. This should
+   * be executed only once.
+   * 
    * @return Method name
    */
   public String getPostCreateMethod();

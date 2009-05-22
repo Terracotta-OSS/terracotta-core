@@ -12,6 +12,8 @@ import com.tc.object.loaders.LoaderDescription;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.List;
 
 public class MockTCClass implements TCClass {
   private final String  name = MockTCClass.class.getName();
@@ -150,6 +152,14 @@ public class MockTCClass implements TCClass {
 
   public boolean isNotClearable() {
     return false;
+  }
+
+  public List<Method> getPostCreateMethods() {
+    throw new ImplementMe();
+  }
+
+  public List<Method> getPreCreateMethods() {
+    throw new ImplementMe();
   }
 
 }
