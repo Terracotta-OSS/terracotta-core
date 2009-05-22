@@ -45,6 +45,7 @@ import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.LockInfoByThreadID;
 import com.tc.util.runtime.ThreadIDManagerImpl;
 import com.tc.util.runtime.ThreadIDMap;
+import com.tc.util.runtime.ThreadIDMapJdk15;
 import com.tc.util.runtime.ThreadIDMapUtil;
 
 import java.util.ArrayList;
@@ -989,6 +990,46 @@ public class ClientLockManagerTest extends TCTestCase {
     t1.join();
     assertTrue(success[0]);
     assertTrue(success[1]);
+  }
+  
+  /**
+   * CDV-1262: dead threads should not remain in the ThreadIDMap.
+   */
+  public void testThreadIDMapCleanup() throws Exception {
+    final ThreadIDMapJdk15 threadIDMap = (ThreadIDMapJdk15)ThreadIDMapUtil.getInstance();
+    final int numThreads = 10000;
+    int originalSize = threadIDMap.getSize();
+    int size = makeLotsOfThreads(numThreads);
+    assertTrue(size == originalSize + numThreads);
+    ThreadUtil.reallySleep(200);
+    System.gc();
+    assertTrue(threadIDMap.getSize() < size);
+  }
+  
+  /**
+   * Start and stop a bunch of threads.
+   * Keep all the thread references around till the routine is exited.
+   * @return the size of the ThreadIDMap when all the threads are still ref'd.
+   */
+  private int makeLotsOfThreads(final int numThreads) throws Exception {
+    final ThreadIDMapJdk15 threadIDMap = (ThreadIDMapJdk15)ThreadIDMapUtil.getInstance();
+    final ThreadLockManager threadLockManager = new ThreadLockManagerImpl(lockManager, new ThreadIDManagerImpl(threadIDMap));
+    
+    final LockID lid0 = threadLockManager.lockIDFor("Locky0");
+    Thread threads[] = new Thread[numThreads];
+    for (int i = 0; i < numThreads; ++i) {
+      threads[i] = new Thread() {
+        @Override
+        public void run() {
+          threadLockManager.lock(lid0, LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE,
+                                 LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+          threadLockManager.unlock(lid0);
+        }
+      };
+      threads[i].start();
+      threads[i].join();
+    }
+    return threadIDMap.getSize();
   }
   
   public void testBasicUnlock() throws Exception {

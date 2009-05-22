@@ -27,10 +27,11 @@ public class ThreadDumpUtilTestBase extends TCTestCase {
     final CountDownLatch startLatch = new CountDownLatch(numThreads);
     final CountDownLatch doneLatch = new CountDownLatch(1);
     
+    TraceThread[] threads = new TraceThread[numThreads];
     for (int i = 0; i < numThreads; i++) {
-      TraceThread thread = threadClazz.newInstance();
-      thread.init(startLatch, doneLatch);
-      thread.start();
+      threads[i] = threadClazz.newInstance();
+      threads[i].init(startLatch, doneLatch);
+      threads[i].start();
     }
     
     startLatch.await();
@@ -39,6 +40,11 @@ public class ThreadDumpUtilTestBase extends TCTestCase {
       dump = ThreadDumpUtil.getThreadDump();
     }
     doneLatch.countDown();
+    
+    // Make sure all threads are gone before the next test starts
+    for (int i = 0; i < numThreads; ++i) {
+      threads[i].join();
+    }
     
     return dump;
   }
