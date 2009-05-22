@@ -968,6 +968,10 @@ public class ClientLockManagerTest extends TCTestCase {
       }
     };
     
+    t0.start();
+    t0.join();
+    assertTrue(success[0]);
+    
     Thread t1 = new Thread("herb_thread") {
       @Override
       public long getId() {
@@ -983,12 +987,8 @@ public class ClientLockManagerTest extends TCTestCase {
       }
     };
     
-    t0.start();
     t1.start();
-    
-    t0.join();
     t1.join();
-    assertTrue(success[0]);
     assertTrue(success[1]);
   }
   
