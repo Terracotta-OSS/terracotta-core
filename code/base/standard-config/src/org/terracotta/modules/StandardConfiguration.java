@@ -18,6 +18,8 @@ public class StandardConfiguration extends TerracottaConfiguratorModule {
         configExceptionTypes();
         configArrayTypes();
         configUnsafe();
+        configThirdParty();
+        configProxy();
     }
 
     private void configUnsafe() {
@@ -58,6 +60,18 @@ public class StandardConfiguration extends TerracottaConfiguratorModule {
         getOrCreateSpec("java.lang.Error");
         getOrCreateSpec("java.util.ConcurrentModificationException");
         getOrCreateSpec("java.util.NoSuchElementException");
+    }
+    
+    private void configThirdParty() {
+      configHelper.addIncludePattern("gnu.trove..*", false, false, true);
+    }
+    
+    private void configProxy() {
+      configHelper.addIncludePattern("java.lang.reflect.Proxy", false, false, false);
+      configHelper.addIncludePattern("com.tc.aspectwerkz.proxy..*", false, false, true);
+
+      // TODO remove if we find a better way using ProxyApplicator etc.
+      configHelper.addIncludePattern("$Proxy..*", false, false, true);
     }
 
 }

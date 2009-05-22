@@ -8,7 +8,7 @@ import com.tc.aspectwerkz.proxy.Uuid;
 
 public class SharedLockBean implements ISharedLock {
   // shared variables
-  private int                        i               = 0;
+  private int                        val             = 0;
   private Long                       firstHolder     = null;
 
   // variables not shared
@@ -23,13 +23,11 @@ public class SharedLockBean implements ISharedLock {
 
   public void lockAndMutate() {
     try {
-      synchronized (this) {
+      synchronized (firstHolder) {
         holdsSharedLock = true;
 
         if (firstHolder == null) {
-          synchronized (localLock) {
-            firstHolder = new Long(localID);
-          }
+          firstHolder = new Long(localID);
 
           while (!release) {
             sleep(100);
@@ -55,7 +53,7 @@ public class SharedLockBean implements ISharedLock {
   }
 
   public Long getFirstHolder() {
-    synchronized (localLock) {
+    synchronized (firstHolder) {
       return firstHolder;
     }
   }
@@ -70,7 +68,7 @@ public class SharedLockBean implements ISharedLock {
 
   public void unlockedMutate() {
     try {
-      i++;
+      val++;
     } catch (RuntimeException e) {
       if (e.getClass().getName().equals("com.tc.object.tx.UnlockedSharedObjectException")) {
         // expected
@@ -79,7 +77,7 @@ public class SharedLockBean implements ISharedLock {
       }
     }
 
-    if (i != 0) { throw new AssertionError("variable changed to " + i); }
+    if (val != 0) { throw new AssertionError("variable changed to " + val); }
   }
 
   public boolean isFirstHolder() {

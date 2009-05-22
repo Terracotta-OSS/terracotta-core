@@ -24,34 +24,39 @@
 	</servers>
 
 	<application>
-		<spring>
-      <jee-application name="appCtxDef1shared">
-        <application-contexts>
-          <application-context>
-            <paths>
-              <path>*.xml</path>
-            </paths>
-            <beans>
-              <bean name="bean1"/>
-            </beans>
-          </application-context>
-        </application-contexts>
-      </jee-application>
-
-      <jee-application name="appCtxDef2shared">
-        <application-contexts>
-          <application-context>
-            <paths>
-              <path>*.xml</path>
-            </paths>
-            <beans>
-              <bean name="bean1"/>
-              <bean name="bean2"/>
-            </beans>
-          </application-context>
-        </application-contexts>
-      </jee-application>
-		</spring>
+	  <dso>
+	    <instrumented-classes>
+		  <include>
+	        <class-expression>com.tctest.spring.bean.*</class-expression>
+	        <honor-transient>true</honor-transient>
+	      </include>
+	    </instrumented-classes>
+	  	<roots>
+	      <root>
+	        <field-name>com.tctest.spring.bean.AppCtxDefBean1.value</field-name>
+	      </root>
+	      <root>
+	        <field-name>com.tctest.spring.bean.AppCtxDefBean1.bean</field-name>
+	      </root>	      
+	      <root>
+	        <field-name>com.tctest.spring.bean.AppCtxDefBean2.bean</field-name>
+	      </root>	      
+	  	</roots>
+	  	<locks>
+	      <autolock auto-synchronized="true">
+	        <method-expression>* com.tctest.spring.bean.*.get*(..)</method-expression>
+	        <lock-level>read</lock-level>
+	      </autolock>
+	      <autolock auto-synchronized="true">
+	        <method-expression>* com.tctest.spring.bean.*.set*(..)</method-expression>
+	        <lock-level>write</lock-level>
+	      </autolock>	    
+	      <autolock auto-synchronized="true">
+	        <method-expression>* com.tctest.spring.bean.*.*Counter(..)</method-expression>
+	        <lock-level>write</lock-level>
+	      </autolock>
+	  	</locks>
+	  </dso>
 	</application>
 
 </tc:tc-config>

@@ -56,7 +56,6 @@ public class ConfigLoaderTest extends TestCase {
       ConfigLoader loader = new ConfigLoader(config, logger);
       try {
         loader.loadDsoConfig(application.getDso());
-        loader.loadSpringConfig(application.getSpring());
       } catch (XmlValueOutOfRangeException e) {
         fail(e.getMessage());
       }

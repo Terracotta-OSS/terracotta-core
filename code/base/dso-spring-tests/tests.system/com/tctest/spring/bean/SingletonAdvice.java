@@ -10,14 +10,16 @@ public class SingletonAdvice implements MethodInterceptor, ISingletonAdvice {
   private int counter = 0;
   
   public Object invoke(MethodInvocation invocation) throws Throwable {
-    synchronized(this) {
-      this.counter++;      
-    }
+    incrementCounter();
     return invocation.proceed();
   }
   
-  synchronized public int getCounter() {
+  public synchronized int getCounter() {
     return counter;
+  }
+  
+  public synchronized void incrementCounter() {
+    counter++;
   }
 
 }

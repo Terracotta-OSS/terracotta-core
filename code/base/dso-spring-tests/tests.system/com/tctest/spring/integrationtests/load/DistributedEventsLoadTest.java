@@ -31,7 +31,7 @@ public class DistributedEventsLoadTest extends SpringDeploymentTest {
   private Deployment           deployment;
 
   public DistributedEventsLoadTest() {
-    //
+    disableAllUntil("2009-06-30");
   }
 
   public static Test suite() {

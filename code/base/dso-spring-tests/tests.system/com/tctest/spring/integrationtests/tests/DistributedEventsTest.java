@@ -12,27 +12,26 @@ import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
 
 import junit.framework.Test;
 
-
 public class DistributedEventsTest extends AbstractTwoServerDeploymentTest {
 
-  private static final String REMOTE_SERVICE_NAME           = "EventManager";
+  private static final String REMOTE_SERVICE_NAME = "EventManager";
 
-  private EventManager eventManager1;
-  private EventManager eventManager2;
+  private EventManager        eventManager1;
+  private EventManager        eventManager2;
 
-//  public DistributedEventsTest() {
-//    disableAllUntil("2007-02-27");
-//  }
+  public DistributedEventsTest() {
+    disableAllUntil("2009-06-30");
+  }
 
   protected void setUp() throws Exception {
     super.setUp();
-    
+
     eventManager1 = (EventManager) server0.getProxy(EventManager.class, REMOTE_SERVICE_NAME);
     eventManager2 = (EventManager) server1.getProxy(EventManager.class, REMOTE_SERVICE_NAME);
 
     eventManager1.clear();
     eventManager2.clear();
-    
+
     assertEquals(0, eventManager1.size());
     assertEquals(0, eventManager2.size());
   }
@@ -48,14 +47,14 @@ public class DistributedEventsTest extends AbstractTwoServerDeploymentTest {
       }
     });
   }
-  
+
   public void testNonDistributedEvent() throws Throwable {
     eventManager1.publishLocalEvent("foo2", "bar1");
     Thread.sleep(1000L * 5);
     assertEquals("Got local", 1, eventManager1.size());
     assertEquals("Should not be distributed", 0, eventManager2.size());
   }
-  
+
   private static class SingletonTestSetup extends SpringTwoServerTestSetup {
 
     private SingletonTestSetup() {

@@ -8,7 +8,6 @@ import com.tc.config.schema.L2ConfigForL1;
 import com.tc.config.schema.NewCommonL1Config;
 import com.tc.object.config.schema.NewDSOApplicationConfig;
 import com.tc.object.config.schema.NewL1DSOConfig;
-import com.tc.object.config.schema.NewSpringApplicationConfig;
 
 /**
  * Knows how to set up configuration for L1.
@@ -30,6 +29,4 @@ public interface L1TVSConfigurationSetupManager {
   String[] applicationNames();
 
   NewDSOApplicationConfig dsoApplicationConfigFor(String applicationName);
-
-  NewSpringApplicationConfig springApplicationConfigFor(String applicationName);
 }

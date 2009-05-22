@@ -25,6 +25,10 @@ public class ParentChildBeanTest extends AbstractTwoServerDeploymentTest {
   private FooService   foo2a;
   private FooService   foo1b;
   private FooService   foo2b;
+  
+  public ParentChildBeanTest() {
+    disableAllUntil("2009-06-30");
+  }
 
   protected void setUp() throws Exception {
     super.setUp();

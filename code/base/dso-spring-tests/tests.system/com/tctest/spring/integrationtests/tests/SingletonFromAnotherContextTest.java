@@ -58,18 +58,18 @@ public class SingletonFromAnotherContextTest extends AbstractTwoServerDeployment
     assertEquals(2, singleton1N1.getCounter());
     assertEquals(2, singleton1N2.getCounter());
     
-    assertEquals(0, singleton2N1.getCounter());
-    assertEquals(0, singleton2N2.getCounter());
+    assertEquals(2, singleton2N1.getCounter());
+    assertEquals(2, singleton2N2.getCounter());
 
     singleton2N1.incrementCounter();
     singleton2N2.incrementCounter();
     
     // only singleton2s are getting the changes
-    assertEquals(2, singleton2N1.getCounter());
-    assertEquals(2, singleton2N2.getCounter());
+    assertEquals(4, singleton2N1.getCounter());
+    assertEquals(4, singleton2N2.getCounter());
        
-    assertEquals(2, singleton1N1.getCounter());
-    assertEquals(2, singleton1N2.getCounter());
+    assertEquals(4, singleton1N1.getCounter());
+    assertEquals(4, singleton1N2.getCounter());
     
     logger.debug("!!!! Asserts passed !!!");
   }

@@ -29,7 +29,7 @@ public class SimpleBean implements ISimpleBean, BeanNameAware {
   public SimpleBean() {
     synchronized(SimpleBean.class) {
       instanceCnt ++;               // this should have the number of instance in one CL, assuming constructor is invoked
-      sharedId = timeStamp;
+      setSharedId(timeStamp);
     }
   }
   

@@ -24,36 +24,46 @@
 	</servers>
 
 	<application>
-		<spring>
-			<jee-application name="test-singleton">
-				<application-contexts>
-					<application-context>
-						<paths>
-							<path>*.xml</path>
-						</paths>
-						<beans>
-							<bean name="singleton" />
-						</beans>
-					</application-context>
-				</application-contexts>
-			</jee-application>
-
-			<jee-application name="test-parent-child">
-				<session-support>false</session-support>
-
-				<application-contexts>
-					<application-context>
-						<paths>
-							<path>*.xml</path>
-						</paths>
-						<beans>
-							<bean name="service1" />
-							<bean name="service2" />
-						</beans>
-					</application-context>
-				</application-contexts>
-			</jee-application>
-		</spring>
+	  <dso>
+	    <instrumented-classes>
+		  <include>
+	        <class-expression>com.tctest.spring.bean.*</class-expression>
+	        <honor-transient>true</honor-transient>
+	      </include>
+	    </instrumented-classes>
+	  	<roots>
+	      <root>
+	        <field-name>com.tctest.spring.bean.Singleton.counter</field-name>
+	      </root>
+	      <root>
+	        <field-name>com.tctest.spring.bean.Singleton.sharedBoolean</field-name>
+	      </root>
+	      <root>
+	        <field-name>com.tctest.spring.bean.Singleton.recorder</field-name>
+	      </root>		  	
+	      <root>
+	        <field-name>com.tctest.spring.bean.FooServiceImpl.counter</field-name>
+	      </root>
+	  	</roots>
+	  	<locks>
+	      <autolock auto-synchronized="true">
+	        <method-expression>* com.tctest.spring.bean.*.get*(..)</method-expression>
+	        <lock-level>read</lock-level>
+	      </autolock>
+	      <autolock auto-synchronized="true">
+	        <method-expression>* com.tctest.spring.bean.*.set*(..)</method-expression>
+	        <lock-level>write</lock-level>
+	      </autolock>	    
+	      <autolock auto-synchronized="true">
+	        <method-expression>* com.tctest.spring.bean.*.next*(..)</method-expression>
+	        <lock-level>write</lock-level>
+	      </autolock>
+	      <autolock auto-synchronized="true">
+	        <method-expression>* com.tctest.spring.bean.Singleton.*Counter(..)</method-expression>
+	        <lock-level>write</lock-level>
+	      </autolock>	      
+	  	</locks>
+	  </dso>	
 	</application>
 
 </tc:tc-config>

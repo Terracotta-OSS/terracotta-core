@@ -20,14 +20,11 @@ import com.tc.config.schema.repository.StandardBeanRepository;
 import com.tc.config.schema.utils.XmlObjectComparator;
 import com.tc.object.config.schema.NewDSOApplicationConfig;
 import com.tc.object.config.schema.NewDSOApplicationConfigObject;
-import com.tc.object.config.schema.NewSpringApplicationConfig;
-import com.tc.object.config.schema.NewSpringApplicationConfigObject;
 import com.tc.util.Assert;
 import com.terracottatech.config.Application;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.Servers;
-import com.terracottatech.config.SpringApplication;
 import com.terracottatech.config.System;
 import com.terracottatech.config.TcProperties;
 
@@ -134,33 +131,11 @@ public class BaseTVSConfigurationSetupManager {
     return out;
   }
 
-  public synchronized NewSpringApplicationConfig springApplicationConfigFor(String applicationName) {
-    // When we support multiple applications, just take this assertion out.
-    Assert.eval(applicationName.equals(TVSConfigurationSetupManagerFactory.DEFAULT_APPLICATION_NAME));
-
-    NewSpringApplicationConfig out = (NewSpringApplicationConfig) this.springApplicationConfigs.get(applicationName);
-    if (out == null) {
-      out = createNewSpringApplicationConfig(applicationName);
-      this.springApplicationConfigs.put(applicationName, out);
-    }
-
-    return out;
-  }
-
   protected NewDSOApplicationConfig createNewDSOApplicationConfig(String applicationName) {
     return new NewDSOApplicationConfigObject(createContext(new ChildBeanRepository(this.applicationsRepository
         .repositoryFor(applicationName), DsoApplication.class, new ChildBeanFetcher() {
       public XmlObject getChild(XmlObject parent) {
         return ((Application) parent).getDso();
-      }
-    }), null));
-  }
-
-  protected NewSpringApplicationConfig createNewSpringApplicationConfig(String applicationName) {
-    return new NewSpringApplicationConfigObject(createContext(new ChildBeanRepository(this.applicationsRepository
-        .repositoryFor(applicationName), SpringApplication.class, new ChildBeanFetcher() {
-      public XmlObject getChild(XmlObject parent) {
-        return ((Application) parent).getSpring();
       }
     }), null));
   }

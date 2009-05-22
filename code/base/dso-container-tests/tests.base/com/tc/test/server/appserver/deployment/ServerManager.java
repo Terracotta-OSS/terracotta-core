@@ -224,6 +224,8 @@ public class ServerManager {
 
     if (useTimGet) {
       aCopy.addRepository(getTimGetModulesDir());
+    } else {
+      aCopy.addRepository("%(user.home)/.m2/repository");
     }
 
     int appId = config.appServerId();

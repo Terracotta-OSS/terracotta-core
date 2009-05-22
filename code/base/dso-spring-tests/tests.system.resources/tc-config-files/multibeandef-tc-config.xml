@@ -24,25 +24,47 @@
   </servers>
 
   <application>
-    <spring>
-      <jee-application name="test-multibeandef">
-        <application-contexts>
-          <application-context>
-            <paths>
-              <path>*.xml</path>
-            </paths>
-            <beans>
-              <bean name="distributedMasterBean"/>
-            </beans>
-          </application-context>
-        </application-contexts>
-        <instrumented-classes>
-          <include>
-            <class-expression>com.tctest.spring.bean.Singleton</class-expression>
-          </include>
-        </instrumented-classes>
-      </jee-application>
-    </spring>
+	  <dso>
+	    <instrumented-classes>
+		  <include>
+	        <class-expression>com.tctest.spring.bean.*</class-expression>
+	        <honor-transient>true</honor-transient>
+	      </include>
+	    </instrumented-classes>
+	  	<roots>
+	      <root>
+	        <field-name>com.tctest.spring.bean.MasterBean.values</field-name>
+	      </root>
+	      <root>
+	        <field-name>com.tctest.spring.bean.MasterBean.sharedSingletons</field-name>
+	      </root>
+	      <root>
+	        <field-name>com.tctest.spring.bean.MasterBean.singleton</field-name>
+	      </root>
+	  	</roots>
+	  	<locks>
+	      <autolock auto-synchronized="true">
+	        <method-expression>* com.tctest.spring.bean.*.get*(..)</method-expression>
+	        <lock-level>read</lock-level>
+	      </autolock>
+	      <autolock auto-synchronized="true">
+	        <method-expression>* com.tctest.spring.bean.*.set*(..)</method-expression>
+	        <lock-level>write</lock-level>
+	      </autolock>	    
+	      <autolock auto-synchronized="true">
+	        <method-expression>* com.tctest.spring.bean.*.add*(..)</method-expression>
+	        <lock-level>write</lock-level>
+	      </autolock>	  	  
+	      <autolock>
+	        <method-expression>* com.tctest.spring.bean.MasterBean.afterPropertiesSet(..)</method-expression>
+	        <lock-level>write</lock-level>
+	      </autolock>
+	      <autolock>
+	        <method-expression>* com.tctest.spring.bean.MasterBean.isTheSameSingletonReferenceUsed(..)</method-expression>
+	        <lock-level>read</lock-level>
+	      </autolock>	      
+	  	</locks>
+	  </dso>  
   </application>
 
 </tc:tc-config>

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.spring.integrationtests.tests;
 
@@ -24,8 +25,12 @@ public class LifeCycleTest extends AbstractTwoServerDeploymentTest {
   private static final String BEAN_DEFINITION_FILE_FOR_TEST = "classpath:/com/tctest/spring/beanfactory.xml";
   private static final String CONFIG_FILE_FOR_TEST          = "/tc-config-files/lifecycle-tc-config.xml";
 
-  private ILifeCycle   mLifeCycleBean1;
-  private ILifeCycle   mLifeCycleBean2;
+  private ILifeCycle          mLifeCycleBean1;
+  private ILifeCycle          mLifeCycleBean2;
+
+  public LifeCycleTest() {
+    disableAllUntil("2009-06-30");
+  }
 
   protected void setUp() throws Exception {
     super.setUp();
@@ -33,7 +38,6 @@ public class LifeCycleTest extends AbstractTwoServerDeploymentTest {
     mLifeCycleBean1 = (ILifeCycle) server0.getProxy(ILifeCycle.class, REMOTE_SERVICE_NAME);
     mLifeCycleBean2 = (ILifeCycle) server1.getProxy(ILifeCycle.class, REMOTE_SERVICE_NAME);
   }
-
 
   public void test() throws Exception {
     logger.debug("testing bean life cycle");
@@ -64,9 +68,9 @@ public class LifeCycleTest extends AbstractTwoServerDeploymentTest {
     assertTrue("Bean2 setBeanName not invoked: " + records2, records2.contains("setBeanName-" + systemId2));
 
     assertTrue("Bean1 setApplicationContext not invoked: " + records1, records1.contains("setApplicationContext-"
-        + systemId1));
+                                                                                         + systemId1));
     assertTrue("Bean2 setApplicationContext not invoked: " + records2, records2.contains("setApplicationContext-"
-        + systemId2));
+                                                                                         + systemId2));
 
     // check distributed behavior
     assertTrue("Replication failure: " + records1, records1.contains("afterPropertiesSet-" + systemId2));
@@ -104,7 +108,7 @@ public class LifeCycleTest extends AbstractTwoServerDeploymentTest {
       builder.addRemoteService(RmiServiceExporter.class, "LifeCycle", "lifeCycleBean", ILifeCycle.class);
 
       builder.addRemoteServiceBlock("<bean id=\"lifeCycleBean\" class=\"com.tctest.spring.bean.LifeCycleBean\">" + "\n"
-          + "<property name=\"prop\" ref=\"recorder\"/>" + "\n" + "</bean>");
+                                    + "<property name=\"prop\" ref=\"recorder\"/>" + "\n" + "</bean>");
 
     }
   }

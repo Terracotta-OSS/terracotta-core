@@ -2,7 +2,7 @@
 
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
   targetNamespace="http://www.terracotta.org/config"
-  xmlns="http://www.terracotta.org/config" version="4">
+  xmlns="http://www.terracotta.org/config" version="5">
 
   <xs:element name="tc-config">
     <xs:complexType>
@@ -435,17 +435,7 @@
     </xs:all>
   </xs:complexType>
 
-  <xs:complexType name="spring-application">
-    <xs:sequence>
-      <xs:element name="jee-application" type="spring-apps" minOccurs="1" maxOccurs="unbounded" />
-    </xs:sequence>
-  </xs:complexType>
 
-  <xs:complexType name="spring-bean">
-    <xs:sequence>
-      <xs:element name="bean" type="non-distributed-fields" minOccurs="0" maxOccurs="unbounded" />
-    </xs:sequence>
-  </xs:complexType>
 
   <xs:complexType name="non-distributed-fields">
     <xs:sequence>
@@ -454,33 +444,9 @@
     <xs:attribute name="name" type="xs:string" use="required" />
   </xs:complexType>
 
-  <xs:complexType name="spring-app-contexts">
-    <xs:sequence>
-      <xs:element name="application-context" type="spring-app-context" maxOccurs="unbounded" />
-    </xs:sequence>
-  </xs:complexType>
 
-  <xs:complexType name="spring-distributed-event">
-    <xs:sequence>
-      <xs:element name="distributed-event" type="non-blank-token" maxOccurs="unbounded" />
-    </xs:sequence>
-  </xs:complexType>
 
-  <xs:complexType name="spring-app-context">
-    <xs:all>
-      <xs:element name="root-name" type="qualified-class-name" minOccurs="0"/>
-      <xs:element name="enable-location-info" type="xs:boolean" minOccurs="0"/>
-      <xs:element name="paths" type="spring-path" />
-      <xs:element name="distributed-events" type="spring-distributed-event" minOccurs="0" />
-      <xs:element name="beans" type="spring-bean" minOccurs="0" />
-    </xs:all>
-  </xs:complexType>
 
-  <xs:complexType name="spring-path">
-    <xs:sequence>
-      <xs:element name="path" type="path" maxOccurs="unbounded" />
-    </xs:sequence>
-  </xs:complexType>
 
   <xs:complexType name='session-support'>
     <xs:simpleContent>
@@ -490,18 +456,6 @@
     </xs:simpleContent>
   </xs:complexType>
 
-  <xs:complexType name="spring-apps">
-    <xs:all>
-      <xs:element name="fast-proxy" type="xs:boolean" minOccurs="0" default="false" />
-      <xs:element name="session-support" type="session-support" minOccurs="0" default="false"/>
-      <xs:element name="locks" type="locks" minOccurs="0" />
-      <xs:element name="instrumented-classes" type="instrumented-classes" minOccurs="0" />
-        <xs:element name="application-contexts" type="spring-app-contexts" minOccurs="0" />
-      <xs:element name="transient-fields" type="transient-fields" minOccurs="0" />
-      <xs:element name="injected-instances" type="injected-instances" minOccurs="0" />
-    </xs:all>
-    <xs:attribute name="name" type="xs:string" use="required" />
-  </xs:complexType>
 
   <xs:complexType name="authentication">
     <xs:all>
@@ -898,17 +852,6 @@
           <xs:documentation>
             This section controls how Terracotta DSO behaves
             in your application.
-          </xs:documentation>
-        </xs:annotation>
-      </xs:element>
-
-      <xs:element name="spring" type="spring-application"
-        minOccurs="0">
-        <xs:annotation>
-          <xs:documentation>
-            This section is a self-contained configuration
-            that controls how Terracotta for Spring behaves in
-            your application.
           </xs:documentation>
         </xs:annotation>
       </xs:element>

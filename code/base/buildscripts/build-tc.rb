@@ -427,7 +427,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   def check_crashtests
     depends :init, :compile
     @internal_config_source['tc.tests.configuration.transparent-tests.mode'] = 'crash'
-    run_tests(FixedModuleTypeTestSet.new([ 'dso-crash-tests', 'dso-spring-crash-tests' ], [ 'system' ]))
+    run_tests(FixedModuleTypeTestSet.new([ 'dso-crash-tests'], [ 'system' ]))
   end
 
   # Runs the active/passive tests. Uses the internal configuration source to set
@@ -520,6 +520,7 @@ END
     puts text % [ schema_dir.to_s, dest_jar.to_s ]
 
     generated_source_dir.delete
+
 
     ant.xmlbean(:destfile => dest_jar.to_s,
       :executable => @jvm_set['J2SE-1.5'].javac.to_s,

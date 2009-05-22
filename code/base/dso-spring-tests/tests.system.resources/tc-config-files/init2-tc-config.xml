@@ -24,20 +24,7 @@
 	</servers>
 
 	<application>
-		<spring>
-			<jee-application name="test-initializingbean2">
-				<application-contexts>
-					<application-context>
-						<paths>
-							<path>*.xml</path>
-						</paths>
-						<beans>
-							<bean name="distributedInitBean"/>
-						</beans>
-					</application-context>
-				</application-contexts>
-			</jee-application>
-		</spring>
+
 	</application>
 
 </tc:tc-config>

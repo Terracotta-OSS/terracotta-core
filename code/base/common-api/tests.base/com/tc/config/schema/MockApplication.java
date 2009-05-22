@@ -21,7 +21,6 @@ import com.tc.test.UniqueSequenceGenerator;
 import com.terracottatech.config.Application;
 import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.Modules;
-import com.terracottatech.config.SpringApplication;
 
 import java.io.File;
 import java.io.InputStream;
@@ -275,19 +274,7 @@ public class MockApplication implements Application {
     return "<MockApplication: " + this.identity + ">";
   }
 
-  public SpringApplication addNewSpring() {
-    throw new ImplementMe();
-  }
-
-  public SpringApplication getSpring() {
-    throw new ImplementMe();
-  }
-
   public boolean isSetSpring() {
-    throw new ImplementMe();
-  }
-
-  public void setSpring(SpringApplication arg0) {
     throw new ImplementMe();
   }
 

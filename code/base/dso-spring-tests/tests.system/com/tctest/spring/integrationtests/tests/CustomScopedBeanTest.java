@@ -22,7 +22,6 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.context.request.SessionScope;
 import org.springframework.web.servlet.DispatcherServlet;
 
-import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.ProxyBuilder;
@@ -57,7 +56,7 @@ public class CustomScopedBeanTest extends AbstractTwoServerDeploymentTest {
   private ITestFacade         beanN2C2;                         // node2 session1 conv2
 
   public CustomScopedBeanTest() {
-    disableVariant(TestConfigObject.SPRING_VARIANT, "128");
+    disableAllUntil("2009-06-30");
   }
 
   protected void setUp() throws Exception {

@@ -9,23 +9,19 @@ public class AppCtxDefBean1 implements AppCtxDefBean {
   private int           value;
   private AppCtxDefBean bean;
 
-  public int getValue() {
-    synchronized (this) {
-      return value;
-    }
+  public synchronized int getValue() {
+    return value;
   }
 
-  public void setValue(int value) {
-    synchronized (this) {
-      this.value = value;
-    }
+  public synchronized void setValue(int value) {
+    this.value = value;
   }
 
-  public void setBean(AppCtxDefBean bean) {
+  public synchronized void setBean(AppCtxDefBean bean) {
     this.bean = bean;
   }
 
-  public AppCtxDefBean getBean() {
+  public synchronized AppCtxDefBean getBean() {
     return bean;
   }
 

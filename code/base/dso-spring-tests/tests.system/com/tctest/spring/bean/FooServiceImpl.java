@@ -9,19 +9,23 @@ public class FooServiceImpl implements FooService {
   private String prefix = "rawValue";
   
   
-  public void setPrefix(String prefix) {
+  public synchronized void setPrefix(String prefix) {
     this.prefix = prefix;
   }
+  
+  public synchronized String getPrefix() {
+    return prefix;
+  }
 
-  public String serviceMethod() {
-    return prefix + "-" + nextValue();
+  public synchronized String serviceMethod() {
+    return getPrefix() + "-" + nextValue();
   }
  
   private synchronized int nextValue() {
     return counter++;
   }
   
-  public int getCounter() {
+  public synchronized int getCounter() {
     return counter;
   }
 

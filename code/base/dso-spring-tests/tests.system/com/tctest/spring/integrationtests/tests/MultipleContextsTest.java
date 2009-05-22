@@ -64,8 +64,8 @@ public class MultipleContextsTest extends AbstractTwoServerDeploymentTest {
     assertEquals("Replication test faled", bean11.getSharedId(), bean21.getSharedId());
     assertEquals("Replication test faled", bean12.getSharedId(), bean22.getSharedId());
 
-    // but NOT across contexts
-    assertTrue("Replication test faled", bean11.getSharedId() != bean12.getSharedId());
+    // hhuynh: after removing Spring, beans across context are also shared
+    assertEquals("Replication test faled", bean11.getSharedId(), bean12.getSharedId());
   }
 
   public void testBeansFrom1Clustered1LocalContexts() throws Exception {
@@ -79,13 +79,13 @@ public class MultipleContextsTest extends AbstractTwoServerDeploymentTest {
     assertEquals("Pre-condition checking failed" + " - " + bean11.getId() + " - " + bean13.getId() + " - " + bean21.getId() + " - " + bean23.getId(),  
                  4, s.size());
 
-    // only the clustered have the same value
+    // hhuynh: only the clustered have the same value
     assertEquals("Replication test faled", bean11.getSharedId(), bean21.getSharedId());
-    assertTrue("Replication test faled", bean13.getSharedId() != bean23.getSharedId());
+    assertEquals("Replication test faled", bean13.getSharedId(), bean23.getSharedId());
 
-    // and NOT across contexts
-    assertTrue("Replication test faled", bean11.getSharedId() != bean13.getSharedId());
-    assertTrue("Replication test faled", bean21.getSharedId() != bean23.getSharedId());
+    // hhuynh: and across contexts
+    assertEquals("Replication test faled", bean11.getSharedId(), bean13.getSharedId());
+    assertEquals("Replication test faled", bean21.getSharedId(), bean23.getSharedId());
   }
 
   private static class MultipleContextsTestSetup extends SpringTwoServerTestSetup {

@@ -33,16 +33,9 @@ import com.terracottatech.config.InstrumentedClasses;
 import com.terracottatech.config.LockLevel;
 import com.terracottatech.config.Locks;
 import com.terracottatech.config.NamedLock;
-import com.terracottatech.config.NonDistributedFields;
 import com.terracottatech.config.OnLoad;
 import com.terracottatech.config.Root;
 import com.terracottatech.config.Roots;
-import com.terracottatech.config.SpringAppContext;
-import com.terracottatech.config.SpringApplication;
-import com.terracottatech.config.SpringApps;
-import com.terracottatech.config.SpringBean;
-import com.terracottatech.config.SpringDistributedEvent;
-import com.terracottatech.config.SpringPath;
 import com.terracottatech.config.TransientFields;
 import com.terracottatech.config.WebApplication;
 import com.terracottatech.config.WebApplications;
@@ -79,18 +72,6 @@ public class ConfigLoader {
     loadInjectedInstances(dsoApplication.getInjectedInstances());
 
     addAdditionalBootJarClasses(dsoApplication.getAdditionalBootJarClasses());
-  }
-
-  public void loadSpringConfig(final SpringApplication springApplication) throws ConfigurationSetupException {
-    if (springApplication != null) {
-      SpringApps[] springApps = springApplication.getJeeApplicationArray();
-      for (int i = 0; springApps != null && i < springApps.length; i++) {
-        SpringApps springApp = springApps[i];
-        if (springApp != null) {
-          loadSpringApp(springApp);
-        }
-      }
-    }
   }
 
   private void addRoot(final Root root) throws ConfigurationSetupException {
@@ -210,74 +191,6 @@ public class ConfigLoader {
     }
   }
 
-  private void loadSpringApp(final SpringApps springApp) throws ConfigurationSetupException {
-    // TODO scope the following by app namespace https://jira.terracotta.lan/jira/browse/LKC-2284
-    loadLocks(springApp.getLocks());
-    loadTransientFields(springApp.getTransientFields());
-    loadInstrumentedClasses(springApp.getInstrumentedClasses());
-
-    if (springApp.getSessionSupport() != null && springApp.getSessionSupport().getBooleanValue()) {
-      config.addApplicationName(springApp.getName()); // enable session support
-      if (springApp.getSessionSupport().getSessionLocking()) {
-        config.addSessionLockedApplication(springApp.getName());
-      }
-    }
-
-    if (springApp.getApplicationContexts() != null) {
-      loadSpringAppContexts(springApp);
-    }
-  }
-
-  private void loadSpringAppContexts(final SpringApps springApp) {
-    String appName = springApp.getName();
-    boolean fastProxy = springApp.getFastProxy();
-    SpringAppContext[] applicationContexts = springApp.getApplicationContexts().getApplicationContextArray();
-    for (int i = 0; applicationContexts != null && i < applicationContexts.length; i++) {
-      SpringAppContext appContext = applicationContexts[i];
-      if (appContext == null) continue;
-
-      DSOSpringConfigHelper springConfigHelper = new StandardDSOSpringConfigHelper();
-      springConfigHelper.addApplicationNamePattern(appName);
-      springConfigHelper.setFastProxyEnabled(fastProxy); // copy flag to all subcontexts
-      springConfigHelper.setRootName(appContext.getRootName());
-      springConfigHelper.setLocationInfoEnabled(appContext.getEnableLocationInfo());
-
-      SpringDistributedEvent distributedEventList = appContext.getDistributedEvents();
-      if (distributedEventList != null) {
-        String[] distributedEvents = distributedEventList.getDistributedEventArray();
-        for (int k = 0; distributedEvents != null && k < distributedEvents.length; k++) {
-          springConfigHelper.addDistributedEvent(distributedEvents[k]);
-        }
-      }
-
-      SpringPath pathList = appContext.getPaths();
-      if (pathList != null) {
-        String[] paths = pathList.getPathArray();
-        for (int j = 0; paths != null && j < paths.length; j++) {
-          springConfigHelper.addConfigPattern(paths[j]);
-        }
-      }
-
-      SpringBean springBean = appContext.getBeans();
-      if (springBean != null) {
-        NonDistributedFields[] nonDistributedFields = springBean.getBeanArray();
-        for (int j = 0; nonDistributedFields != null && j < nonDistributedFields.length; j++) {
-          NonDistributedFields nonDistributedField = nonDistributedFields[j];
-
-          String beanName = nonDistributedField.getName();
-          springConfigHelper.addBean(beanName);
-
-          String[] fields = nonDistributedField.getNonDistributedFieldArray();
-          for (int k = 0; fields != null && k < fields.length; k++) {
-            springConfigHelper.excludeField(beanName, fields[k]);
-          }
-        }
-      }
-
-      config.addDSOSpringConfig(springConfigHelper);
-    }
-  }
-
   private ConfigLockLevel getLockLevel(final LockLevel.Enum lockLevel, final boolean autoSynchronized) {
     if (lockLevel == null || LockLevel.WRITE.equals(lockLevel)) {
       return autoSynchronized ? ConfigLockLevel.AUTO_SYNCHRONIZED_WRITE : ConfigLockLevel.WRITE;
@@ -344,7 +257,8 @@ public class ConfigLoader {
     }
   }
 
-  private void loadInstrumentedClasses(final InstrumentedClasses instrumentedClasses) throws ConfigurationSetupException {
+  private void loadInstrumentedClasses(final InstrumentedClasses instrumentedClasses)
+      throws ConfigurationSetupException {
     if (instrumentedClasses != null) {
       // Call selectPath() rather than using getIncludeArray and getExcludeArray(),
       // because we need to preserve the relative order of includes and excludes.
@@ -392,7 +306,8 @@ public class ConfigLoader {
       try {
         for (InjectedField injectedField : injectedFields) {
           ClassSpec spec = ClassUtils.parseFullyQualifiedFieldName(injectedField.getFieldName());
-          config.addInjectedField(spec.getFullyQualifiedClassName(), spec.getShortFieldName(), injectedField.getInstanceType());
+          config.addInjectedField(spec.getFullyQualifiedClassName(), spec.getShortFieldName(), injectedField
+              .getInstanceType());
         }
       } catch (ParseException e) {
         throw new ConfigurationSetupException(e.getLocalizedMessage(), e);

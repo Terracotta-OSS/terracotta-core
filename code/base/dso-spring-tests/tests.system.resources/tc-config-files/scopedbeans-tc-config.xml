@@ -24,33 +24,24 @@
 	</servers>
 
 	<application>
-		<spring>
-      <jee-application name="scopedBeans">
-        <session-support>true</session-support>
-        
-        <instrumented-classes>
+	  <dso>
+	  	<instrumented-classes>
           <include>
             <class-expression>com.tctest.spring.bean.ScopedBean</class-expression>
             <honor-transient>true</honor-transient>
           </include>
-        </instrumented-classes>          
-        
-        <!-- can't use bean declaration because of LKC-1903; so above include is used instead
-        <application-contexts>
-          <application-context>
-            <paths>
-              <path>*FOOscopedBeans-servlet.xml</path>
-            </paths>
-             
-            <beans>
-              <bean name="sessionScopedBean"/>
-            </beans>
-            
-          </application-context>
-        </application-contexts>
-        -->        
-      </jee-application>
-		</spring>
+        </instrumented-classes> 
+	      <locks>
+	        <autolock>
+	          <method-expression>* com.tctest.spring.bean.*.get*(..)</method-expression>
+	          <lock-level>read</lock-level>
+	        </autolock>
+	        <autolock>
+	          <method-expression>* com.tctest.spring.bean.*.set*(..)</method-expression>
+	          <lock-level>write</lock-level>
+	        </autolock>
+	      </locks>        
+	  </dso>  	
 	</application>
 
 </tc:tc-config>
