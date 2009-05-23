@@ -25,7 +25,7 @@ import java.util.Map;
  * Creates state for managed objects
  */
 public class ManagedObjectStateFactory {
-  
+
   private static final Map                          classNameToStateMap = new ConcurrentHashMap();
   private final ManagedObjectChangeListenerProvider listenerProvider;
   private final StringIndex                         stringIndex;
@@ -76,6 +76,10 @@ public class ManagedObjectStateFactory {
     // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
     classNameToStateMap.put("org.terracotta.modules.concurrent.collections.ConcurrentStringMapDsoInstrumented",
                             new Byte(ManagedObjectState.CONCURRENT_STRING_MAP_TYPE));
+    // XXX: hack to support Hibernate cache entry type
+    classNameToStateMap.put(TcHibernateSerializedEntryManagedObjectState.SERIALIZED_ENTRY,
+                            new Byte(ManagedObjectState.TC_HIBERNATE_SERIALIZED_ENTRY));
+
   }
 
   private ManagedObjectStateFactory(ManagedObjectChangeListenerProvider listenerProvider, StringIndex stringIndex,
@@ -175,6 +179,9 @@ public class ManagedObjectStateFactory {
       case ManagedObjectState.CONCURRENT_STRING_MAP_TYPE:
         return new ConcurrentStringMapManagedObjectState(classID, this.persistentCollectionFactory
             .createPersistentMap(oid));
+      case ManagedObjectState.TC_HIBERNATE_SERIALIZED_ENTRY:
+        return new TcHibernateSerializedEntryManagedObjectState(classID);
+
     }
     // Unreachable
     throw new AssertionError("Type : " + type + " is unknown !");
@@ -267,6 +274,8 @@ public class ManagedObjectStateFactory {
           // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
         case ManagedObjectState.CONCURRENT_STRING_MAP_TYPE:
           return ConcurrentStringMapManagedObjectState.readFrom(in);
+        case ManagedObjectState.TC_HIBERNATE_SERIALIZED_ENTRY:
+          return TcHibernateSerializedEntryManagedObjectState.readFrom(in);
         default:
           throw new AssertionError("Unknown type : " + type + " : Dont know how to deserialize this type !");
       }

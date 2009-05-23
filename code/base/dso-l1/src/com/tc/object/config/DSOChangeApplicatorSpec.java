@@ -9,8 +9,7 @@ public final class DSOChangeApplicatorSpec implements ChangeApplicatorSpec {
   private final ClassLoader classLoader;
 
   public DSOChangeApplicatorSpec(String changeApplicatorClassName) {
-    this.changeApplicatorClassName = changeApplicatorClassName;
-    classLoader = null;
+    this(changeApplicatorClassName, null);
   }
 
   public DSOChangeApplicatorSpec(String changeApplicatorClassName, ClassLoader classLoader) {

@@ -48,6 +48,7 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
   private ManagedObjectPersistorImpl         managedObjectPersistor;
   private TestPersistenceTransactionProvider ptp;
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
 
@@ -71,7 +72,7 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
     NullManagedObjectChangeListenerProvider listenerProvider = new NullManagedObjectChangeListenerProvider();
     ManagedObjectStateFactory.disableSingleton(true);
     ManagedObjectStateFactory.createInstance(listenerProvider, persistor);
-    
+
     // wait for completion of daemon threads launched by getAllObjectIDs() & getAllMapsObjectIDs()
     managedObjectPersistor.containsMapType(new ObjectID(1000));
   }
@@ -82,6 +83,7 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
     return new DBEnvironment(true, dbHome);
   }
 
+  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
     env.close();
@@ -129,9 +131,9 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
   }
 
   public class TestDNAWriter implements DNAWriter {
-    private List physicalActions = new ArrayList();
-    private List logicalActions  = new ArrayList();
-    private List literalActions  = new ArrayList();
+    private final List physicalActions = new ArrayList();
+    private final List logicalActions  = new ArrayList();
+    private final List literalActions  = new ArrayList();
 
     public TestDNAWriter() {
       //
@@ -228,13 +230,26 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
       if (a1.getObject() != null && a2.getObject() == null) { return false; }
 
       if (a1.isEntireArray()) {
-        return Arrays.equals((Object[]) a1.getObject(), (Object[]) a2.getObject());
+        return compareArrays(a1.getObject(), a2.getObject());
       } else if (a1.getObject() instanceof Object[] && a2.getObject() instanceof Object[]) {
-        return Arrays.equals((Object[]) a1.getObject(), (Object[]) a2.getObject());
+        return compareArrays(a1.getObject(), a2.getObject());
       } else {
         if (a1.getFieldName().equals(a2.getFieldName())) { return (a1.getObject().equals(a2.getObject())); }
       }
       return false;
+    }
+
+    private boolean compareArrays(Object o1, Object o2) {
+      if (o1 instanceof boolean[]) { return Arrays.equals((boolean[]) o1, (boolean[]) o2); }
+      if (o1 instanceof byte[]) { return Arrays.equals((byte[]) o1, (byte[]) o2); }
+      if (o2 instanceof char[]) { return Arrays.equals((char[]) o1, (char[]) o2); }
+      if (o2 instanceof double[]) { return Arrays.equals((double[]) o1, (double[]) o2); }
+      if (o2 instanceof float[]) { return Arrays.equals((float[]) o1, (float[]) o2); }
+      if (o2 instanceof int[]) { return Arrays.equals((int[]) o1, (int[]) o2); }
+      if (o2 instanceof long[]) { return Arrays.equals((long[]) o1, (long[]) o2); }
+      if (o2 instanceof short[]) { return Arrays.equals((short[]) o1, (short[]) o2); }
+
+      return Arrays.equals((Object[]) o1, (Object[]) o2);
     }
 
     private boolean identicalLogicalAction(LogicalAction a1, LogicalAction a2) {
@@ -283,8 +298,12 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
   }
 
   public static class TestDNACursor implements DNACursor {
-    private List actions = new ArrayList();
-    private int  current = -1;
+    private final List actions = new ArrayList();
+    private int        current = -1;
+
+    public void addEntireArray(Object array) {
+      actions.add(new PhysicalAction(array));
+    }
 
     public void addPhysicalAction(String addFieldName, Object addObj, boolean isref) {
       actions.add(new PhysicalAction(addFieldName, addObj, isref));

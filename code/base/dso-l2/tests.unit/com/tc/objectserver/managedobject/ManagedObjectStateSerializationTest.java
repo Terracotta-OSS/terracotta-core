@@ -79,12 +79,30 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
           case ManagedObjectState.CONCURRENT_STRING_MAP_TYPE:
             testConcurrentStringMap();
             break;
+          case ManagedObjectState.TC_HIBERNATE_SERIALIZED_ENTRY:
+            testTcHibernateSerializedEntry();
+            break;
           default:
             throw new AssertionError("Type " + type
                                      + " does not have a test case in ManagedObjectStateSerializationTest.");
         }
       }
     }
+  }
+
+  public void testTcHibernateSerializedEntry() throws Exception {
+    String className = TcHibernateSerializedEntryManagedObjectState.SERIALIZED_ENTRY;
+    TestDNACursor cursor = new TestDNACursor();
+
+    cursor.addPhysicalAction(TcHibernateSerializedEntryManagedObjectState.CONFIG_FIELD, new ObjectID(1), true);
+    cursor.addPhysicalAction(TcHibernateSerializedEntryManagedObjectState.CREATE_TIME_FIELD, new Integer(1), false);
+    cursor
+        .addPhysicalAction(TcHibernateSerializedEntryManagedObjectState.LAST_ACCESS_TIME_FIELD, new Integer(2), false);
+    cursor.addEntireArray(new byte[] { 1, 2, 3, 4 });
+
+    ManagedObjectState state = applyValidation(className, cursor);
+
+    serializationValidation(state, cursor, ManagedObjectState.TC_HIBERNATE_SERIALIZED_ENTRY);
   }
 
   public void testProxy() throws Exception {

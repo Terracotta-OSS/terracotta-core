@@ -26,24 +26,25 @@ public interface ManagedObjectState {
    * defined to be public static final. This will ensure that Serialization support is added to
    * ManagedObjectStateFactory.
    */
-  public static final byte PHYSICAL_TYPE              = 0x01;
-  public static final byte DATE_TYPE                  = 0x02;
-  public static final byte MAP_TYPE                   = 0x03;
-  public static final byte LINKED_HASHMAP_TYPE        = 0x04;
-  public static final byte ARRAY_TYPE                 = 0x05;
-  public static final byte LITERAL_TYPE               = 0x06;
-  public static final byte LIST_TYPE                  = 0x07;
-  public static final byte SET_TYPE                   = 0x08;
-  public static final byte TREE_SET_TYPE              = 0x09;
-  public static final byte TREE_MAP_TYPE              = 0x0a;
-  public static final byte QUEUE_TYPE                 = 0x0b;
-  public static final byte CONCURRENT_HASHMAP_TYPE    = 0x0c;
-  public static final byte PARTIAL_MAP_TYPE           = 0x0d;
-  public static final byte URL_TYPE                   = 0x0e;
-  public static final byte LINKED_HASHSET_TYPE        = 0x0f;
-  public static final byte LINKED_LIST_TYPE           = 0x10;
-  //XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
-  public static final byte CONCURRENT_STRING_MAP_TYPE = 0x11;
+  public static final byte PHYSICAL_TYPE                 = 0x01;
+  public static final byte DATE_TYPE                     = 0x02;
+  public static final byte MAP_TYPE                      = 0x03;
+  public static final byte LINKED_HASHMAP_TYPE           = 0x04;
+  public static final byte ARRAY_TYPE                    = 0x05;
+  public static final byte LITERAL_TYPE                  = 0x06;
+  public static final byte LIST_TYPE                     = 0x07;
+  public static final byte SET_TYPE                      = 0x08;
+  public static final byte TREE_SET_TYPE                 = 0x09;
+  public static final byte TREE_MAP_TYPE                 = 0x0a;
+  public static final byte QUEUE_TYPE                    = 0x0b;
+  public static final byte CONCURRENT_HASHMAP_TYPE       = 0x0c;
+  public static final byte PARTIAL_MAP_TYPE              = 0x0d;
+  public static final byte URL_TYPE                      = 0x0e;
+  public static final byte LINKED_HASHSET_TYPE           = 0x0f;
+  public static final byte LINKED_LIST_TYPE              = 0x10;
+  // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
+  public static final byte CONCURRENT_STRING_MAP_TYPE    = 0x11;
+  public static final byte TC_HIBERNATE_SERIALIZED_ENTRY = 0x12;
 
   public void apply(ObjectID objectID, DNACursor cursor, BackReferences includeIDs) throws IOException;
 

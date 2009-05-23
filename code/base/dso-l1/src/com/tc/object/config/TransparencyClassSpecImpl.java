@@ -166,7 +166,8 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     return this;
   }
 
-  public TransparencyClassSpec addDistributedMethodCall(final String methodName, final String description, final boolean runOnAllNodes) {
+  public TransparencyClassSpec addDistributedMethodCall(final String methodName, final String description,
+                                                        final boolean runOnAllNodes) {
     if ("<init>".equals(methodName) || "<clinit>".equals(methodName)) { throw new AssertionError(
                                                                                                  "Initializers of class "
                                                                                                      + className
@@ -263,12 +264,14 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     return memberInfo != null && getMethodAdapter(memberInfo) != null;
   }
 
-  public MethodAdapter customMethodAdapterFor(final int access, final String methodName,
-                                              final String origMethodName, final String description, final String signature,
-                                              final String[] exceptions, final InstrumentationLogger logger, final MemberInfo memberInfo) {
+  public MethodAdapter customMethodAdapterFor(final int access, final String methodName, final String origMethodName,
+                                              final String description, final String signature,
+                                              final String[] exceptions, final InstrumentationLogger logger,
+                                              final MemberInfo memberInfo) {
     MethodAdapter ma = getMethodAdapter(memberInfo);
-    ma.initialize(access, className, methodName, origMethodName, description, signature, exceptions,
-                  logger, memberInfo);
+    ma
+        .initialize(access, className, methodName, origMethodName, description, signature, exceptions, logger,
+                    memberInfo);
     return ma;
   }
 
@@ -296,6 +299,10 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     this.changeApplicatorClassName = superClassSpec.getChangeApplicatorClassName();
     this.changeApplicatorSpec = new DSOChangeApplicatorSpec(superClassSpec.getChangeApplicatorClassName());
     this.logicalExtendingClassName = superClassLogicalExtendingClassName;
+  }
+
+  public void setChangeApplicatorSpec(ChangeApplicatorSpec changeApplicatorSpec) {
+    this.changeApplicatorSpec = changeApplicatorSpec;
   }
 
   public void addAlwaysLogSpec(final String name) {
