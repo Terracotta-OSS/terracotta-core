@@ -130,8 +130,6 @@ public class TCClassImpl implements TCClass {
     List<Method> rv = new ArrayList<Method>();
     if (superclazz != null) {
       rv.addAll(preCreate ? superclazz.getPreCreateMethods() : superclazz.getPostCreateMethods());
-    } else {
-      Assert.assertEquals(Object.class, peer);
     }
 
     if (methodName != null) {
