@@ -1028,9 +1028,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
           Object prev = this.toCall.put(pojo, postCreateMethods);
           Assert.assertNull(prev);
         }
-
-        basicVisit(objects);
       }
+      basicVisit(objects);
     }
 
     protected abstract void basicVisit(List objects);
