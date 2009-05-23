@@ -596,6 +596,10 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
       throw new ImplementMe();
     }
 
+    public boolean isPrefetched() {
+      throw new ImplementMe();
+    }
+
   }
 
 }

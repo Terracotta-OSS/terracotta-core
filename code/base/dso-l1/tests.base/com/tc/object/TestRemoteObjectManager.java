@@ -29,8 +29,8 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
   public static final DNA             THROW_NOT_FOUND       = new ThrowNotFound();
 
   public DNA retrieve(final ObjectID id) {
-    retrieveCalls.put(id);
-    DNA dna = (DNA) retrieveResults.take();
+    this.retrieveCalls.put(id);
+    DNA dna = (DNA) this.retrieveResults.take();
     if (dna == THROW_NOT_FOUND) { throw new TCObjectNotFoundException("missing ID", Collections.EMPTY_LIST); }
     return dna;
   }
@@ -40,8 +40,8 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
   }
 
   public ObjectID retrieveRootID(final String name) {
-    retrieveRootIDCalls.put(name);
-    return (ObjectID) retrieveRootIDResults.take();
+    this.retrieveRootIDCalls.put(name);
+    return (ObjectID) this.retrieveRootIDResults.take();
   }
 
   public void removed(final ObjectID id) {
@@ -60,7 +60,8 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
     throw new ImplementMe();
   }
 
-  public void objectsNotFoundFor(final SessionID sessionID, final long batchID, final Set missingObjectIDs, final NodeID nodeID) {
+  public void objectsNotFoundFor(final SessionID sessionID, final long batchID, final Set missingObjectIDs,
+                                 final NodeID nodeID) {
     throw new ImplementMe();
   }
 
@@ -115,7 +116,8 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
     throw new ImplementMe();
   }
 
-  public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode, final ClientHandshakeMessage handshakeMessage) {
+  public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
+                                  final ClientHandshakeMessage handshakeMessage) {
     throw new ImplementMe();
 
   }
@@ -130,4 +132,7 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
 
   }
 
+  public void preFetchObject(ObjectID id) {
+    throw new ImplementMe();
+  }
 }

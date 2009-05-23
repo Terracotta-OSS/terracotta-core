@@ -34,7 +34,7 @@ public final class NullManager implements Manager {
 
   /**
    * Get instance of the null manager
-   *
+   * 
    * @return NullManager
    */
   public static Manager getInstance() {
@@ -109,7 +109,8 @@ public final class NullManager implements Manager {
     //
   }
 
-  public final boolean distributedMethodCall(final Object receiver, final String method, final Object[] params, final boolean runOnAllNodes) {
+  public final boolean distributedMethodCall(final Object receiver, final String method, final Object[] params,
+                                             final boolean runOnAllNodes) {
     return true;
   }
 
@@ -124,11 +125,11 @@ public final class NullManager implements Manager {
   public final boolean isManaged(final Object object) {
     return false;
   }
-  
+
   public final boolean isLiteralInstance(final Object object) {
     return false;
   }
-  
+
   public final int calculateDsoHashCode(final Object object) {
     return 0;
   }
@@ -152,11 +153,11 @@ public final class NullManager implements Manager {
   public final void commitLock(final String lockName) {
     // do nothing
   }
-  
+
   public final boolean isLocked(final Object obj, final int lockLevel) {
     return false;
   }
-  
+
   public final int queueLength(final Object obj) {
     return 0;
   }
@@ -173,7 +174,8 @@ public final class NullManager implements Manager {
     return false;
   }
 
-  public final void logicalInvokeWithTransaction(final Object object, final Object lockObject, final String methodName, final Object[] params) {
+  public final void logicalInvokeWithTransaction(final Object object, final Object lockObject, final String methodName,
+                                                 final Object[] params) {
     throw new UnsupportedOperationException();
   }
 
@@ -289,5 +291,9 @@ public final class NullManager implements Manager {
 
   public MBeanServer getMBeanServer() {
     return null;
+  }
+
+  public void preFetchObject(ObjectID id) {
+    return;
   }
 }

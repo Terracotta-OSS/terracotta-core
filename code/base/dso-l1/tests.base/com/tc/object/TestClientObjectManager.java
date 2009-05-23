@@ -23,9 +23,6 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
-/**
- * @author steve
- */
 public class TestClientObjectManager implements ClientObjectManager {
   public final Map                 objects         = new HashMap();
   public final Map                 object2TCObject = new IdentityHashMap();
@@ -181,12 +178,13 @@ public class TestClientObjectManager implements ClientObjectManager {
     return;
   }
 
-  public void checkPortabilityOfField(final Object value, final String fieldName, final Object pojo) throws TCNonPortableObjectError {
+  public void checkPortabilityOfField(final Object value, final String fieldName, final Object pojo)
+      throws TCNonPortableObjectError {
     return;
   }
 
-  public void checkPortabilityOfLogicalAction(final Object[] params, final int index, final String methodName, final Object pojo)
-      throws TCNonPortableObjectError {
+  public void checkPortabilityOfLogicalAction(final Object[] params, final int index, final String methodName,
+                                              final Object pojo) throws TCNonPortableObjectError {
     return;
   }
 
@@ -266,4 +264,7 @@ public class TestClientObjectManager implements ClientObjectManager {
     throw new ImplementMe();
   }
 
+  public void preFetchObject(ObjectID id) {
+    throw new ImplementMe();
+  }
 }

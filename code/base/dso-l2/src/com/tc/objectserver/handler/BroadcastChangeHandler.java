@@ -65,8 +65,7 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
 
     final MessageChannel[] channels = this.channelManager.getActiveChannels();
 
-    for (int i = 0; i < channels.length; i++) {
-      MessageChannel client = channels[i];
+    for (MessageChannel client : channels) {
       // TODO:: make message channel return clientID and short channelManager call.
       ClientID clientID = this.channelManager.getClientIDFor(client.getChannelID());
 
@@ -92,7 +91,7 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
         if (lookupObjectIDs.size() > 0) {
           this.managedObjectRequestSink.add(new ObjectRequestServerContextImpl(clientID, ObjectRequestID.NULL_ID,
                                                                                lookupObjectIDs, Thread.currentThread()
-                                                                                   .getName(), -1, true));
+                                                                                   .getName(), -1, true, true));
         }
         final DmiDescriptor[] dmi = (includeDmi) ? prunedDmis : DmiDescriptor.EMPTY_ARRAY;
         BroadcastTransactionMessage responseMessage = (BroadcastTransactionMessage) client
@@ -105,7 +104,7 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
 
         this.broadcastCounter.increment();
         // changesPerBroadcast = number of changes/number of broadcasts
-        changesPerBroadcast.increment(prunedChanges.size(), 1);
+        this.changesPerBroadcast.increment(prunedChanges.size(), 1);
       }
     }
     this.transactionManager.broadcasted(committerID, txnID);
@@ -127,8 +126,7 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
     if (dmiDescriptors.length == 0) { return dmiDescriptors; }
 
     List list = new ArrayList();
-    for (int i = 0; i < dmiDescriptors.length; i++) {
-      DmiDescriptor dd = dmiDescriptors[i];
+    for (DmiDescriptor dd : dmiDescriptors) {
       if (dd.isFaultReceiver() || clientStateManager.hasReference(clientID, dd.getReceiverId())) {
         list.add(dd);
       }

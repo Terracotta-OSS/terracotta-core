@@ -180,9 +180,9 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   public synchronized boolean isLocal(final ObjectID objectID) {
     if (null == objectID) { return false; }
 
-    if (idToManaged.containsKey(objectID)) { return true; }
+    if (this.idToManaged.containsKey(objectID)) { return true; }
 
-    return remoteObjectManager.isPrefetched(objectID);
+    return this.remoteObjectManager.isPrefetched(objectID);
   }
 
   public synchronized void pause(final NodeID remote, final int disconnected) {
@@ -352,7 +352,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   private void executePreCreateMethods(final Object pojo) {
-    TCClass tcClass = clazzFactory.getOrCreate(pojo.getClass(), this);
+    TCClass tcClass = this.clazzFactory.getOrCreate(pojo.getClass(), this);
 
     for (Method m : tcClass.getPreCreateMethods()) {
       executeMethod(pojo, m, "preCreate method (" + m.getName() + ") failed on object of " + pojo.getClass());
@@ -397,6 +397,19 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   public void markReferenced(final TCObject tcobj) {
     this.cache.markReferenced(tcobj);
+  }
+
+  /**
+   * Prefetch object by ID, faulting into the JVM if necessary, Async lookup and will not cause ObjectNotFoundException
+   * like lookupObject. Non-existent objects are ignored by the server.
+   * 
+   * @param id Object identifier
+   */
+  public void preFetchObject(ObjectID id) {
+    synchronized (this) {
+      if (basicHasLocal(id)) { return; }
+    }
+    this.remoteObjectManager.preFetchObject(id);
   }
 
   public Object lookupObjectNoDepth(final ObjectID id) throws ClassNotFoundException {
@@ -1009,10 +1022,10 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
     public final void visit(List objects) {
       for (Object pojo : objects) {
-        List<Method> postCreateMethods = clazzFactory.getOrCreate(pojo.getClass(), ClientObjectManagerImpl.this)
-            .getPostCreateMethods();
+        List<Method> postCreateMethods = ClientObjectManagerImpl.this.clazzFactory
+            .getOrCreate(pojo.getClass(), ClientObjectManagerImpl.this).getPostCreateMethods();
         if (!postCreateMethods.isEmpty()) {
-          Object prev = toCall.put(pojo, postCreateMethods);
+          Object prev = this.toCall.put(pojo, postCreateMethods);
           Assert.assertNull(prev);
         }
 
@@ -1023,7 +1036,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     protected abstract void basicVisit(List objects);
 
     public final Map<Object, List<Method>> getPostCreateMethods() {
-      return toCall;
+      return this.toCall;
     }
   }
 
@@ -1033,7 +1046,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     protected void basicVisit(final List objects) {
       List tcObjects = basicCreateIfNecessary(objects);
       for (Iterator i = tcObjects.iterator(); i.hasNext();) {
-        txManager.createObject((TCObject) i.next());
+        ClientObjectManagerImpl.this.txManager.createObject((TCObject) i.next());
       }
     }
   }

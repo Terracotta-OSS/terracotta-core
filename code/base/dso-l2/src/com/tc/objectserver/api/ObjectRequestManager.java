@@ -15,6 +15,7 @@ public interface ObjectRequestManager {
   public void requestObjects(ObjectRequestServerContext requestContext);
 
   public void sendObjects(ClientID requestedNodeID, Collection objs, ObjectIDSet requestedObjectIDs,
-                          ObjectIDSet missingObjectIDs, boolean isServerInitiated, int maxRequestDepth);
+                          ObjectIDSet missingObjectIDs, boolean isServerInitiated, boolean isPrefetched,
+                          int maxRequestDepth);
 
 }

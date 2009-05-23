@@ -153,6 +153,14 @@ public interface Manager {
   public Object lookupObject(ObjectID id) throws ClassNotFoundException;
 
   /**
+   * Prefetch object by ID, faulting into the JVM if necessary, Async lookup and will not cause ObjectNotFoundException
+   * like lookupObject. Non-existent objects are ignored by the server.
+   * 
+   * @param id Object identifier
+   */
+  public void preFetchObject(ObjectID id);
+  
+  /**
    * Look up object by ID, faulting into the JVM if necessary, This method also passes the parent Object context so that
    * more intelligent prefetching is possible at the L2.
    *
@@ -491,5 +499,6 @@ public interface Manager {
    * @return the MBean server for this client
    */
   public MBeanServer getMBeanServer();
+
 
 }

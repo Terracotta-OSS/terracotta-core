@@ -81,5 +81,9 @@ public class RequestManagedObjectMessageImplTest extends TCTestCase {
     public int getRequestDepth() {
       return 10;
     }
+
+    public boolean isPrefetched() {
+      return false;
+    }
   }
 }

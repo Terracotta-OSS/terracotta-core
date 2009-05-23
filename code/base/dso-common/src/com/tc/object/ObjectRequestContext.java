@@ -18,4 +18,5 @@ public interface ObjectRequestContext {
 
   public int getRequestDepth();
 
+  public boolean isPrefetched();
 }

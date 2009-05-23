@@ -725,6 +725,10 @@ public class ManagerImpl implements Manager {
   public Object lookupObject(final ObjectID id) throws ClassNotFoundException {
     return this.objectManager.lookupObject(id);
   }
+  
+  public void preFetchObject(ObjectID id) {
+    this.objectManager.preFetchObject(id);
+  }
 
   public Object lookupObject(final ObjectID id, final ObjectID parentContext) throws ClassNotFoundException {
     return this.objectManager.lookupObject(id, parentContext);

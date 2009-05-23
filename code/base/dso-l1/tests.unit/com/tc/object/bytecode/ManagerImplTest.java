@@ -66,15 +66,18 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public void fieldChanged(final TCObject source, final String classname, final String fieldname, final Object newValue, final int index) {
+    public void fieldChanged(final TCObject source, final String classname, final String fieldname,
+                             final Object newValue, final int index) {
       throw new ImplementMe();
     }
 
-    public void logicalInvoke(final TCObject source, final int method, final String methodName, final Object[] parameters) {
+    public void logicalInvoke(final TCObject source, final int method, final String methodName,
+                              final Object[] parameters) {
       throw new ImplementMe();
     }
 
-    public void notify(final String lockName, final boolean all, final Object object) throws UnlockedSharedObjectException {
+    public void notify(final String lockName, final boolean all, final Object object)
+        throws UnlockedSharedObjectException {
       throw new ImplementMe();
     }
 
@@ -98,7 +101,8 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new AssertionError("should not be called");
     }
 
-    public void wait(final String lockName, final TimerSpec call, final Object object) throws UnlockedSharedObjectException {
+    public void wait(final String lockName, final TimerSpec call, final Object object)
+        throws UnlockedSharedObjectException {
       throw new ImplementMe();
     }
 
@@ -126,7 +130,8 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public boolean beginInterruptibly(final String lockID, final int type, final String lockObjectType, final String contextInfo) {
+    public boolean beginInterruptibly(final String lockID, final int type, final String lockObjectType,
+                                      final String contextInfo) {
       throw new ImplementMe();
     }
 
@@ -178,7 +183,8 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public boolean beginLockWithoutTxn(final String lockName, final int lockLevel, final String lockObjectType, final String contextInfo) {
+    public boolean beginLockWithoutTxn(final String lockName, final int lockLevel, final String lockObjectType,
+                                       final String contextInfo) {
       throw new ImplementMe();
     }
 
@@ -217,12 +223,13 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public void checkPortabilityOfField(final Object value, final String fieldName, final Object pojo) throws TCNonPortableObjectError {
+    public void checkPortabilityOfField(final Object value, final String fieldName, final Object pojo)
+        throws TCNonPortableObjectError {
       throw new ImplementMe();
     }
 
-    public void checkPortabilityOfLogicalAction(final Object[] params, final int index, final String methodName, final Object pojo)
-        throws TCNonPortableObjectError {
+    public void checkPortabilityOfLogicalAction(final Object[] params, final int index, final String methodName,
+                                                final Object pojo) throws TCNonPortableObjectError {
       throw new ImplementMe();
     }
 
@@ -356,6 +363,10 @@ public class ManagerImplTest extends BaseDSOTestCase {
     }
 
     public boolean isLocal(final ObjectID objectID) {
+      throw new ImplementMe();
+    }
+
+    public void preFetchObject(ObjectID id) {
       throw new ImplementMe();
     }
 

@@ -79,4 +79,8 @@ public class TestRequestManagedObjectMessage implements RequestManagedObjectMess
   public ClientID getClientID() {
     return new ClientID(0);
   }
+
+  public boolean isPrefetched() {
+    return false;
+  }
 }

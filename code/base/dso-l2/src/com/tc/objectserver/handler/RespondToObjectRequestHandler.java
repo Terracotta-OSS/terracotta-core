@@ -15,13 +15,16 @@ public class RespondToObjectRequestHandler extends AbstractEventHandler {
 
   private ObjectRequestManager objectRequestManager;
 
+  @Override
   public void handleEvent(EventContext context) {
     RespondToObjectRequestContext rtorc = (RespondToObjectRequestContext) context;
-    objectRequestManager.sendObjects(rtorc.getRequestedNodeID(), rtorc.getObjs(), rtorc.getRequestedObjectIDs(), rtorc
-        .getMissingObjectIDs(), rtorc.isServerInitiated(), rtorc.getRequestDepth());
+    this.objectRequestManager.sendObjects(rtorc.getRequestedNodeID(), rtorc.getObjs(), rtorc.getRequestedObjectIDs(),
+                                          rtorc.getMissingObjectIDs(), rtorc.isServerInitiated(), rtorc.isPreFetched(),
+                                          rtorc.getRequestDepth());
 
   }
 
+  @Override
   public void initialize(ConfigurationContext context) {
     super.initialize(context);
     ServerConfigurationContext oscc = (ServerConfigurationContext) context;

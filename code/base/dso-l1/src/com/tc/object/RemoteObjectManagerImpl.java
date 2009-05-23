@@ -42,7 +42,7 @@ import java.util.Map.Entry;
  */
 public class RemoteObjectManagerImpl implements RemoteObjectManager {
 
-  private static final long                        RETRIEVE_WAIT_INTERVAL     = 15000;
+  private static final long                        RETRIEVE_WAIT_INTERVAL    = 15000;
 
   private static final State                       PAUSED                    = new State("PAUSED");
   private static final State                       RUNNING                   = new State("RUNNING");
@@ -77,8 +77,10 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
   private long                                     miss                      = 0;
 
   public RemoteObjectManagerImpl(final GroupID groupID, final TCLogger logger, final ClientIDProvider cip,
-                                 final RequestRootMessageFactory rrmFactory, final RequestManagedObjectMessageFactory rmomFactory,
-                                 final ObjectRequestMonitor requestMonitor, final int defaultDepth, final SessionManager sessionManager) {
+                                 final RequestRootMessageFactory rrmFactory,
+                                 final RequestManagedObjectMessageFactory rmomFactory,
+                                 final ObjectRequestMonitor requestMonitor, final int defaultDepth,
+                                 final SessionManager sessionManager) {
     this.groupID = groupID;
     this.logger = logger;
     this.cip = cip;
@@ -99,7 +101,8 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
     notifyAll();
   }
 
-  public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode, final ClientHandshakeMessage handshakeMessage) {
+  public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
+                                  final ClientHandshakeMessage handshakeMessage) {
     // NOP
   }
 
@@ -150,6 +153,18 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
       RequestRootMessage rrm = createRootMessage((String) i.next());
       rrm.send();
     }
+  }
+
+  public synchronized void preFetchObject(ObjectID id) {
+    if (isPrefetched(id)) { return; }
+
+    // These objects are not marked as being pre-fetched so multiple request for the same object can end up in the
+    // server. A potential optimization that can be done.
+    ObjectRequestContext ctxt = new ObjectRequestContextImpl(this.cip.getClientID(),
+                                                             new ObjectRequestID(this.objectRequestIDCounter++), id,
+                                                             this.defaultDepth, ObjectID.NULL_ID, true);
+    RequestManagedObjectMessage rmom = createRequestManagedObjectMessage(ctxt);
+    rmom.send();
   }
 
   public DNA retrieve(final ObjectID id) {
@@ -291,7 +306,8 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
     notifyAll();
   }
 
-  public synchronized void addAllObjects(final SessionID sessionID, final long batchID, final Collection dnas, final NodeID nodeID) {
+  public synchronized void addAllObjects(final SessionID sessionID, final long batchID, final Collection dnas,
+                                         final NodeID nodeID) {
     waitUntilRunning();
     if (!this.sessionManager.isCurrentSession(nodeID, sessionID)) {
       this.logger.warn("Ignoring DNA added from a different session: " + sessionID + ", " + this.sessionManager);
@@ -312,7 +328,8 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
     notifyAll();
   }
 
-  public synchronized void objectsNotFoundFor(final SessionID sessionID, final long batchID, final Set missingOIDs, final NodeID nodeID) {
+  public synchronized void objectsNotFoundFor(final SessionID sessionID, final long batchID, final Set missingOIDs,
+                                              final NodeID nodeID) {
     waitUntilRunning();
     if (!this.sessionManager.isCurrentSession(nodeID, sessionID)) {
       this.logger.warn("Ignoring Missing Object IDs " + missingOIDs + " from a different session: " + sessionID + ", "
@@ -370,22 +387,36 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
 
     private final int             depth;
 
-    private ObjectRequestContextImpl(final ClientID clientID, final ObjectRequestID requestID, final ObjectID objectID, final int depth,
-                                     final ObjectID parentContext) {
-      this(clientID, requestID, new ObjectIDSet(), depth);
-      this.objectIDs.add(objectID);
+    private final boolean         prefetch;
+
+    ObjectRequestContextImpl(final ClientID clientID, final ObjectRequestID requestID, final ObjectID id,
+                             final int depth, final ObjectID parentContext) {
+      this(clientID, requestID, id, depth, parentContext, false);
+    }
+
+    ObjectRequestContextImpl(final ClientID clientID, final ObjectRequestID requestID, final ObjectIDSet objectIDs,
+                             final int depth) {
+      this(clientID, requestID, objectIDs, depth, false);
+    }
+
+    ObjectRequestContextImpl(final ClientID clientID, final ObjectRequestID requestID, final ObjectID id,
+                             final int depth, final ObjectID parentContext, final boolean prefetch) {
+      this(clientID, requestID, new ObjectIDSet(), depth, prefetch);
+      this.objectIDs.add(id);
       // XXX:: This is a hack for now. This parent context could be exposed to the L2 to make it more elegant.
       if (!parentContext.isNull()) {
         this.objectIDs.add(parentContext);
       }
     }
 
-    private ObjectRequestContextImpl(final ClientID clientID, final ObjectRequestID requestID, final ObjectIDSet objectIDs, final int depth) {
+    private ObjectRequestContextImpl(final ClientID clientID, final ObjectRequestID requestID,
+                                     final ObjectIDSet objectIDs, final int depth, boolean prefetch) {
       this.timestamp = System.currentTimeMillis();
       this.clientID = clientID;
       this.requestID = requestID;
       this.objectIDs = objectIDs;
       this.depth = depth;
+      this.prefetch = false;
     }
 
     public ClientID getClientID() {
@@ -404,10 +435,14 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
       return this.depth;
     }
 
+    public boolean isPrefetched() {
+      return this.prefetch;
+    }
+
     @Override
     public String toString() {
       return getClass().getName() + "[" + new Date(this.timestamp) + ", requestID =" + this.requestID + ", objectIDs ="
-             + this.objectIDs + ", depth = " + this.depth + "]";
+             + this.objectIDs + ", depth = " + this.depth + ", prefetched = " + this.prefetch + "]";
     }
   }
 

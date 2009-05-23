@@ -103,6 +103,14 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
   public void replaceRootIDIfNecessary(String rootName, ObjectID newRootID);
 
   /**
+   * Prefetch object by ID, faulting into the JVM if necessary, Async lookup and will not cause ObjectNotFoundException
+   * like lookupObject. Non-existent objects are ignored by the server.
+   * 
+   * @param id Object identifier
+   */
+  public void preFetchObject(ObjectID id);
+
+  /**
    * Find object by ID. If necessary, the object will be faulted into the JVM. The default fault-count will be used to
    * limit the number of dependent objects that are also faulted in.
    *
