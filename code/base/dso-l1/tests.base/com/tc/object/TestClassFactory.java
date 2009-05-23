@@ -14,6 +14,7 @@ import com.tc.object.loaders.LoaderDescription;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.List;
 
 public class TestClassFactory implements TCClassFactory {
@@ -187,11 +188,11 @@ public class TestClassFactory implements TCClassFactory {
     }
 
     public List<Method> getPostCreateMethods() {
-      throw new ImplementMe();
+      return Collections.EMPTY_LIST;
     }
 
     public List<Method> getPreCreateMethods() {
-      throw new ImplementMe();
+      return Collections.EMPTY_LIST;
     }
   }
 
