@@ -60,6 +60,7 @@ public class XTable extends JTable {
     getTableHeader().setReorderingAllowed(false);
   }
 
+  @Override
   public void addNotify() {
     super.addNotify();
 
@@ -72,7 +73,11 @@ public class XTable extends JTable {
   public static class BaseRenderer extends AbstractTableCellRenderer {
     protected Format formatter;
     protected XLabel label;
-    
+
+    public BaseRenderer() {
+      this((Format) null);
+    }
+
     public BaseRenderer(String format) {
       this(new DecimalFormat(format));
     }
@@ -87,16 +92,19 @@ public class XTable extends JTable {
     protected void setText(String text) {
       label.setText(text);
     }
-   
+
     protected void setIcon(Icon icon) {
       label.setIcon(icon);
     }
-    
+
+    @Override
     public void setValue(Object value) {
       String text = "";
 
       try {
-        text = (value == null) ? "" : formatter.format(value);
+        if (value != null) {
+          text = formatter != null ? formatter.format(value) : value.toString();
+        }
       } catch (Exception nfe) {
         System.out.println(value.toString());
       }
@@ -158,6 +166,7 @@ public class XTable extends JTable {
     return popupHelper.getPopupMenu();
   }
 
+  @Override
   public void setModel(TableModel model) {
     super.setModel(model);
 
@@ -211,6 +220,7 @@ public class XTable extends JTable {
     helper.flush(prefs);
   }
 
+  @Override
   public void columnMarginChanged(ChangeEvent e) {
     boolean isValid = isValid();
 
@@ -223,6 +233,7 @@ public class XTable extends JTable {
     }
   }
 
+  @Override
   public Dimension getPreferredSize() {
     int rowCount = getRowCount();
 

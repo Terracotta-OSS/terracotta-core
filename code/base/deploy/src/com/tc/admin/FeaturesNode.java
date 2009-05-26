@@ -22,6 +22,7 @@ import javax.management.MBeanServerNotification;
 import javax.management.Notification;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
+import javax.swing.SwingUtilities;
 
 public class FeaturesNode extends ComponentNode implements NotificationListener {
   protected IAdminClientContext       adminClientContext;
@@ -111,10 +112,13 @@ public class FeaturesNode extends ComponentNode implements NotificationListener 
       Map.Entry<String, Feature> entry = featureIter.next();
       Feature feature = entry.getValue();
       if (!nodeMap.containsKey(feature)) {
-        addChild(newFeatureNode(feature));
+        FeatureNode featureNode = newFeatureNode(feature);
+        add(featureNode);
         if (featuresPanel != null) {
           featuresPanel.add(feature);
         }
+        nodeStructureChanged();
+        adminClientContext.getAdminClientController().expand(featureNode);
       }
     }
   }
@@ -137,9 +141,6 @@ public class FeaturesNode extends ComponentNode implements NotificationListener 
       TIMByteProviderMBean byteProvider = clusterModel.getActiveCoordinator().getMBeanProxy(on,
                                                                                             TIMByteProviderMBean.class);
       feature.addTIMByteProvider(on, byteProvider);
-      if (featuresPanel != null) {
-        featuresPanel.add(feature);
-      }
       return true;
     }
     return false;
@@ -164,7 +165,7 @@ public class FeaturesNode extends ComponentNode implements NotificationListener 
     if (featuresPanel != null) {
       featuresPanel.remove(feature);
     }
-    FeatureNode node = nodeMap.get(feature);
+    FeatureNode node = nodeMap.remove(feature);
     if (node != null) {
       removeChild(node);
       node.tearDown();
@@ -174,13 +175,21 @@ public class FeaturesNode extends ComponentNode implements NotificationListener 
   public void handleNotification(Notification notification, Object handback) {
     String type = notification.getType();
     if (notification instanceof MBeanServerNotification) {
-      MBeanServerNotification mbsn = (MBeanServerNotification) notification;
+      final MBeanServerNotification mbsn = (MBeanServerNotification) notification;
       if (type.equals(MBeanServerNotification.REGISTRATION_NOTIFICATION)) {
-        if (testRegisterFeature(mbsn.getMBeanName())) {
-          ensureFeatureNodes();
-        }
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            if (testRegisterFeature(mbsn.getMBeanName())) {
+              ensureFeatureNodes();
+            }
+          }
+        });
       } else if (type.equals(MBeanServerNotification.UNREGISTRATION_NOTIFICATION)) {
-        testUnregisterFeature(mbsn.getMBeanName());
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            testUnregisterFeature(mbsn.getMBeanName());
+          }
+        });
       }
     }
   }

@@ -32,7 +32,7 @@ public class Feature extends ClassLoader {
   private int                                         tab           = -1;
   private final HashMap<String, File>                 resourceTable = new HashMap<String, File>();
 
-  public Feature() {
+  protected Feature() {
     super(Feature.class.getClassLoader());
     byteProviderMap = new LinkedHashMap<ObjectName, TIMByteProviderMBean>();
   }
@@ -100,7 +100,7 @@ public class Feature extends ClassLoader {
     }
     classClass = defineClass(className, classBytes, 0, classBytes.length);
     if (classClass == null) { throw new ClassFormatError(className); }
-    logger.info(className + " loaded from the ByteProvider");
+    logger.debug(className + " loaded from the ByteProvider");
     return classClass;
   }
 
@@ -168,6 +168,20 @@ public class Feature extends ClassLoader {
     } else {
       return result;
     }
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (other == this) return true;
+    if (!(other instanceof Feature)) return false;
+
+    Feature otherFeature = (Feature) other;
+    return StringUtils.equals(getSymbolicName(), otherFeature.getSymbolicName());
+  }
+
+  @Override
+  public int hashCode() {
+    return symbolicName.hashCode();
   }
 
   @Override

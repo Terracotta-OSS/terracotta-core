@@ -12,8 +12,8 @@
     <dependency name="knopflerfish" rev="2.0.1-tc-20080108" org="terracotta"/>
     <dependency name="commons-httpclient" rev="3.0.1"/>
     <dependency name="log4j" rev="1.2.9"/>
-    <dependency name="xmlbeans-xpath" rev="2.4.0" org="org.apache.xmlbeans"/>
-    <dependency name="xmlbeans" rev="2.4.0" org="org.apache.xmlbeans"/>
+    <dependency name="xmlbeans-xpath" rev="2.4.0" org="terracotta"/>
+    <dependency name="xmlbeans" rev="2.4.0" org="terracotta"/>
     <dependency name="xmlbeans" rev="jsr173_1.0_api" org="terracotta"/>
   </dependencies>
 </ivy-module>
