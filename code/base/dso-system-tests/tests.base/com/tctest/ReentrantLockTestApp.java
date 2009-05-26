@@ -782,9 +782,10 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
           Thread t = new Thread() {
             public void run() {
               try {
+                System.out.print(":LK" + ManagerUtil.getClientID());
                 lock.lockInterruptibly();
               } catch (InterruptedException e) {
-                System.out.print(":IL" + ManagerUtil.getClientID());
+                System.out.print(":LI" + ManagerUtil.getClientID());
               }
             }
           };
@@ -796,12 +797,19 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
             //
           }
           t.interrupt();
+          System.out.print(":INT" + ManagerUtil.getClientID());
           /* In crash tests if the L2 crashes at the wrong moment then this thread join
            * will fail unless we factor in the time for L2 restart in the timeout.
            */
           t.join(5 * 60 * 1000);
 
           if (t.isAlive()) {
+            synchronized (System.err) {
+              System.err.println("Stack Trace Of Interruptibly Locking Thread [Client " + ManagerUtil.getClientID() + "]");
+              for (StackTraceElement e : t.getStackTrace()) {
+                System.err.println("\tat " + e);
+              }
+            }
             t.stop();
             exit.toggle();
             throw new AssertionError("Thread " + t + " failed to respond to an interrupt during lockInterruptibly()");
