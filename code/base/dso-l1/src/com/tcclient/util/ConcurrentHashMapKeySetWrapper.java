@@ -4,10 +4,8 @@
 package com.tcclient.util;
 
 import com.tc.object.bytecode.Manageable;
-import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.TCMap;
 
-import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -117,18 +115,7 @@ public class ConcurrentHashMapKeySetWrapper implements Set {
   }
 
   public Object[] toArray(Object[] a) {
-    int size = size();
-    if (a.length < size) a = (Object[]) Array.newInstance(((Object) (a)).getClass().getComponentType(), size);
-
-    int index = 0;
-    for (Iterator iterator = iterator(); iterator.hasNext();) {
-      ManagerUtil.objectArrayChanged(a, index++, iterator.next());
-    }
-
-    if (a.length > size) {
-      ManagerUtil.objectArrayChanged(a, size, null);
-    }
-    return a;
+    return realKeySet.toArray(a);
   }
   
   private static class IteratorWrapper implements Iterator {
