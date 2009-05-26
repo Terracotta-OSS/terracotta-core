@@ -6,47 +6,47 @@ package com.tc.util.runtime;
 
 import com.tc.test.TCTestCase;
 
-import java.util.concurrent.CountDownLatch;
-
 /**
  * Base class for ThreadDumpUtil tests
  */
 public class ThreadDumpUtilTestBase extends TCTestCase {
 
-  /** shows up in stack trace of a thread waiting on CountDownLatch.await() */
-  protected static final String CDL_AWAIT = "java.util.concurrent.CountDownLatch.await";
+  /** shows up in stack trace of a thread waiting on ObserverGate.waiter() */
+  protected static final String OBSERVER_GATE = "com.tc.util.runtime.ThreadDumpUtilTestBase$ObserverGate.waiter";
   /** shows up in stack trace of a thread with an overridden thread ID */
   protected static final String OVERRIDDEN = "unrecognized thread id; thread state is unavailable";
 
-  private static final Object lock = new Object();
-  
   /**
    * Create some threads, and take a thread dump.
    */
   protected static String getDump(int numThreads, Class<? extends TraceThread> threadClazz) throws Exception {
-    final CountDownLatch startLatch = new CountDownLatch(numThreads);
-    final CountDownLatch doneLatch = new CountDownLatch(1);
+    final Object lock = new Object();
+    final String[] dump = new String[1];
+    Runnable runnable = new Runnable() {
+      public void run() {
+        // This lock should show up in the thread dump
+        synchronized (lock) {
+          dump[0] = ThreadDumpUtil.getThreadDump();
+        }
+      }
+    };
+    final ObserverGate gate = new ObserverGate(numThreads, runnable);
     
     TraceThread[] threads = new TraceThread[numThreads];
     for (int i = 0; i < numThreads; i++) {
       threads[i] = threadClazz.newInstance();
-      threads[i].init(startLatch, doneLatch);
+      threads[i].init(gate);
       threads[i].start();
     }
     
-    startLatch.await();
-    String dump;
-    synchronized(lock) {
-      dump = ThreadDumpUtil.getThreadDump();
-    }
-    doneLatch.countDown();
+    gate.master();
     
     // Make sure all threads are gone before the next test starts
     for (int i = 0; i < numThreads; ++i) {
       threads[i].join();
     }
     
-    return dump;
+    return dump[0];
   }
   
   /**
@@ -54,21 +54,18 @@ public class ThreadDumpUtilTestBase extends TCTestCase {
    */
   protected static class TraceThread extends Thread {
     
-    private CountDownLatch startLatch;
-    private CountDownLatch doneLatch;
+    private ObserverGate gate;
     @Override
     public void run() {
       try {
-        startLatch.countDown();
-        doneLatch.await();
+        gate.waiter();
       } catch (Exception e) {
         e.printStackTrace();
       }
     } 
     
-    public void init(CountDownLatch start, CountDownLatch done) {
-      this.startLatch = start;
-      this.doneLatch = done;
+    public void init(ObserverGate g) {
+      this.gate = g;
     }
     
   }
@@ -101,6 +98,47 @@ public class ThreadDumpUtilTestBase extends TCTestCase {
       }
     }
     return 0;
+  }
+  
+  /**
+   * Wait till N waiter threads are waiting, then run a Runnable on the
+   * master thread, and then release all the threads.
+   */
+  private static class ObserverGate {
+    private final int waiters;
+    private final Object lock = new Object();
+    private final Runnable runnable;
+    private int waiting;
+    private boolean done = false;
+    
+    /**
+     * @param waiters number of waiter threads, not including master thread
+     */
+    public ObserverGate(int waiters, Runnable runnable) {
+      this.waiters = waiters;
+      this.runnable = runnable;
+    }
+    
+    public void master() throws InterruptedException {
+      synchronized (lock) {
+        while (waiting < waiters) {
+          lock.wait();
+        }
+        runnable.run();
+        done = true;
+        lock.notifyAll();
+      }
+    }
+    
+    public void waiter() throws InterruptedException {
+      synchronized (lock) {
+        waiting++;
+        lock.notifyAll();
+        while (!done) {
+          lock.wait();
+        }
+      }
+    }
   }
 
 }
