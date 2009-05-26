@@ -122,6 +122,11 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
 
     if (1 == nodeId) {
       final Set<DsoNode> nodes = cluster.getNodesWithObject(pojo.getYourMojo());
+      System.out.println(">>>>>> nodes : "+nodes.size());
+      for (DsoNode node : nodes) {
+        System.out.println(">>>>>> node : "+node+", "+node.hashCode());
+      }
+      System.out.println(">>>>>> currentNode : "+currentNode+", "+currentNode.hashCode());
       Assert.assertTrue(nodes.contains(currentNode));
       Assert.assertEquals(1, nodes.size());
     }

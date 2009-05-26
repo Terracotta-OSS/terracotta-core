@@ -225,7 +225,7 @@ public final class NullManager implements Manager {
     throw new UnsupportedOperationException();
   }
 
-  public final TCProperties getTCProperites() {
+  public final TCProperties getTCProperties() {
     throw new UnsupportedOperationException();
   }
 

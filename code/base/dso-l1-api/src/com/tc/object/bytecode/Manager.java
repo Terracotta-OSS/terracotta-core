@@ -447,7 +447,7 @@ public interface Manager {
   /**
    * @return TCProperties
    */
-  public TCProperties getTCProperites();
+  public TCProperties getTCProperties();
 
   /**
    * @return DMI manager

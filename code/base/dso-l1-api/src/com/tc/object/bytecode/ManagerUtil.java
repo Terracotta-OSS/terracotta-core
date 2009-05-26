@@ -1037,7 +1037,7 @@ public class ManagerUtil {
    * @return TCProperties
    */
   public static TCProperties getTCProperties() {
-    return getManager().getTCProperites();
+    return getManager().getTCProperties();
   }
 
   /**
