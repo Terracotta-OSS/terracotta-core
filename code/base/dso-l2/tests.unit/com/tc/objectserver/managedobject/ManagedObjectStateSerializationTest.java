@@ -327,7 +327,7 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
     TestDNACursor cursor = new TestDNACursor();
 
     cursor.addPhysicalAction(ConcurrentStringMapManagedObjectState.DSO_LOCK_TYPE_FIELDNAME, new Integer(42), false);
-    cursor.addPhysicalAction(ConcurrentStringMapManagedObjectState.HASH_CODE_LOCKING_FIELDNAME, Boolean.TRUE, false);
+    cursor.addPhysicalAction(ConcurrentStringMapManagedObjectState.LOCK_STRATEGY_FIELDNAME, new ObjectID(12), true);
 
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2001), new ObjectID(2003) });
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2002), new ObjectID(2004) });
