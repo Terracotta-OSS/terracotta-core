@@ -5,12 +5,12 @@ package com.tc.object.handler;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
-import com.tc.management.lock.stats.LockStatisticsResponseMessage;
+import com.tc.management.lock.stats.LockStatisticsResponseMessageImpl;
 
 public class LockStatisticsResponseHandler extends AbstractEventHandler {
 
   public void handleEvent(EventContext context) {
-    LockStatisticsResponseMessage msg = (LockStatisticsResponseMessage) context;
+    LockStatisticsResponseMessageImpl msg = (LockStatisticsResponseMessageImpl) context;
     msg.send();
   }
 

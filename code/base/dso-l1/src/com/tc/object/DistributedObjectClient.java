@@ -29,7 +29,7 @@ import com.tc.management.TCClient;
 import com.tc.management.beans.sessions.SessionMonitor;
 import com.tc.management.lock.stats.ClientLockStatisticsManagerImpl;
 import com.tc.management.lock.stats.LockStatisticsMessage;
-import com.tc.management.lock.stats.LockStatisticsResponseMessage;
+import com.tc.management.lock.stats.LockStatisticsResponseMessageImpl;
 import com.tc.management.remote.protocol.terracotta.JmxRemoteTunnelMessage;
 import com.tc.management.remote.protocol.terracotta.L1JmxReady;
 import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
@@ -79,8 +79,8 @@ import com.tc.object.idprovider.api.ObjectIDProvider;
 import com.tc.object.idprovider.impl.RemoteObjectIDBatchSequenceProvider;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.lockmanager.api.ClientLockManager;
+import com.tc.object.lockmanager.api.RemoteLockManager;
 import com.tc.object.lockmanager.impl.ClientLockManagerConfigImpl;
-import com.tc.object.lockmanager.impl.RemoteLockManagerImpl;
 import com.tc.object.lockmanager.impl.ThreadLockManagerImpl;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.msg.AcknowledgeTransactionMessageImpl;
@@ -396,12 +396,12 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     ClientLockStatManager lockStatManager = new ClientLockStatisticsManagerImpl();
 
+    RemoteLockManager remoteLockManager = this.dsoClientBuilder.createRemoteLockManager(this.channel, this.channel
+        .getLockRequestMessageFactory(), gtxManager);
     this.lockManager = this.dsoClientBuilder
-        .createLockManager(new ClientIDLogger(this.channel.getClientIDProvider(), TCLogging
-            .getLogger(ClientLockManager.class)),
-                           new RemoteLockManagerImpl(this.channel.getLockRequestMessageFactory(), gtxManager),
-                           sessionManager, lockStatManager, new ClientLockManagerConfigImpl(this.l1Properties
-                               .getPropertiesFor("lockmanager")));
+        .createLockManager(this.channel, new ClientIDLogger(this.channel.getClientIDProvider(), TCLogging
+            .getLogger(ClientLockManager.class)), remoteLockManager, sessionManager, lockStatManager,
+                           new ClientLockManagerConfigImpl(this.l1Properties.getPropertiesFor("lockmanager")));
     this.threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter(this.lockManager));
 
     RemoteObjectIDBatchSequenceProvider remoteIDProvider = new RemoteObjectIDBatchSequenceProvider(this.channel
@@ -571,7 +571,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.channel.addClassMapping(TCMessageType.LOCK_RECALL_MESSAGE, LockResponseMessage.class);
     this.channel.addClassMapping(TCMessageType.LOCK_QUERY_RESPONSE_MESSAGE, LockResponseMessage.class);
     this.channel.addClassMapping(TCMessageType.LOCK_STAT_MESSAGE, LockStatisticsMessage.class);
-    this.channel.addClassMapping(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE, LockStatisticsResponseMessage.class);
+    this.channel.addClassMapping(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE, LockStatisticsResponseMessageImpl.class);
     this.channel.addClassMapping(TCMessageType.COMMIT_TRANSACTION_MESSAGE, CommitTransactionMessageImpl.class);
     this.channel.addClassMapping(TCMessageType.REQUEST_ROOT_RESPONSE_MESSAGE, RequestRootResponseMessage.class);
     this.channel.addClassMapping(TCMessageType.REQUEST_MANAGED_OBJECT_MESSAGE, RequestManagedObjectMessageImpl.class);

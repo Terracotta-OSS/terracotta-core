@@ -8,7 +8,9 @@ import org.apache.commons.collections.map.ListOrderedMap;
 
 import com.tc.logging.TCLogger;
 import com.tc.management.ClientLockStatManager;
+import com.tc.net.GroupID;
 import com.tc.net.NodeID;
+import com.tc.net.OrderedGroupIDs;
 import com.tc.object.lockmanager.api.ClientLockManager;
 import com.tc.object.lockmanager.api.ClientLockManagerConfig;
 import com.tc.object.lockmanager.api.LockContext;
@@ -56,38 +58,42 @@ import java.util.TimerTask;
  */
 public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallback {
 
-  private static final int              INIT_LOCK_MAP_SIZE           = 10000;
+  private static final int               INIT_LOCK_MAP_SIZE           = 10000;
 
-  private static final State            RUNNING                      = new State("RUNNING");
-  private static final State            STARTING                     = new State("STARTING");
-  private static final State            PAUSED                       = new State("PAUSED");
+  private static final State             RUNNING                      = new State("RUNNING");
+  private static final State             STARTING                     = new State("STARTING");
+  private static final State             PAUSED                       = new State("PAUSED");
 
-  private static final String           MISSING_LOCK_TEXT            = makeMissingLockText();
+  private static final String            MISSING_LOCK_TEXT            = makeMissingLockText();
 
-  private State                         state                        = RUNNING;
-  private final Map                     pendingQueryLockRequestsByID = new ListOrderedMap();
-  private final Map                     lockInfoByID                 = new HashMap();
-  private final RemoteLockManager       remoteLockManager;
-  private final Map<LockID, ClientLock> locksByID                    = new HashMap(INIT_LOCK_MAP_SIZE);
+  private final Map<NodeID, State>       grpToState                   = new HashMap<NodeID, State>();
+  private final Map                      pendingQueryLockRequestsByID = new ListOrderedMap();
+  private final Map                      lockInfoByID                 = new HashMap();
+  private final RemoteLockManager        remoteLockManager;
+  private final Map<LockID, ClientLock>  locksByID                    = new HashMap(INIT_LOCK_MAP_SIZE);
 
   // This is specifically insertion ordered so that locks that are likely to be garbage are in the front, added first
-  private final LinkedHashSet           gcCandidates                 = new LinkedHashSet();
-  private final TCLogger                logger;
-  private final SessionManager          sessionManager;
-  private final ClientLockStatManager   lockStatManager;
-  private final ClientLockManagerConfig clientLockManagerConfig;
-  private final TCLockTimer             waitTimer;
+  private final LinkedHashSet            gcCandidates                 = new LinkedHashSet();
+  private final TCLogger                 logger;
+  private final SessionManager           sessionManager;
+  private final ClientLockStatManager    lockStatManager;
+  private final ClientLockManagerConfig  clientLockManagerConfig;
+  private final TCLockTimer              waitTimer;
+  private final LockDistributionStrategy lockDistributionStrategy;
 
   // For tests
-  public ClientLockManagerImpl(final TCLogger logger, final RemoteLockManager remoteLockManager, final SessionManager sessionManager,
-                               final ClientLockStatManager lockStatManager, final ClientLockManagerConfig clientLockManagerConfig) {
-    this(logger, remoteLockManager, sessionManager, lockStatManager, clientLockManagerConfig, new TCLockTimerImpl());
-
+  public ClientLockManagerImpl(final LockDistributionStrategy strategy, OrderedGroupIDs groupIds,
+                               final TCLogger logger, final RemoteLockManager remoteLockManager,
+                               final SessionManager sessionManager, final ClientLockStatManager lockStatManager,
+                               final ClientLockManagerConfig clientLockManagerConfig) {
+    this(strategy, groupIds, logger, remoteLockManager, sessionManager, lockStatManager, clientLockManagerConfig,
+         new TCLockTimerImpl());
   }
 
-  public ClientLockManagerImpl(final TCLogger logger, final RemoteLockManager remoteLockManager, final SessionManager sessionManager,
-                               final ClientLockStatManager lockStatManager, final ClientLockManagerConfig clientLockManagerConfig,
-                               final TCLockTimer waitTimer) {
+  public ClientLockManagerImpl(final LockDistributionStrategy strategy, OrderedGroupIDs groupIds,
+                               final TCLogger logger, final RemoteLockManager remoteLockManager,
+                               final SessionManager sessionManager, final ClientLockStatManager lockStatManager,
+                               final ClientLockManagerConfig clientLockManagerConfig, final TCLockTimer waitTimer) {
     this.logger = logger;
     this.remoteLockManager = remoteLockManager;
     this.sessionManager = sessionManager;
@@ -96,6 +102,10 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     this.waitTimer = waitTimer;
     this.waitTimer.getTimer().schedule(new LockGCTask(this), clientLockManagerConfig.getTimeoutInterval(),
                                        clientLockManagerConfig.getTimeoutInterval());
+    this.lockDistributionStrategy = strategy;
+    for (int i = 0, len = groupIds.length(); i < len; i++) {
+      grpToState.put(groupIds.getGroup(i), RUNNING);
+    }
   }
 
   // for testing
@@ -104,51 +114,86 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   }
 
   public synchronized void pause(final NodeID remote, final int disconnected) {
-    if (this.state == PAUSED) { throw new AssertionError("Attempt to pause while already paused : " + this.state); }
-    this.state = PAUSED;
+    if (isState(PAUSED, remote)) { throw new AssertionError("Attempt to pause while already paused : " + grpToState); }
+    setStateForNodeID(remote, PAUSED);
     for (Iterator iter = new HashSet(this.locksByID.values()).iterator(); iter.hasNext();) {
       ClientLock lock = (ClientLock) iter.next();
-      lock.pause();
+      GroupID grpId = lockDistributionStrategy.getGroupIdForLock(lock.getLockID().asString());
+      if (grpId.equals(remote) || remote.equals(GroupID.ALL_GROUPS)) {
+        lock.pause();
+      }
+    }
+  }
+
+  private boolean areAllState(State state) {
+    for (Iterator<Map.Entry<NodeID, State>> iter = grpToState.entrySet().iterator(); iter.hasNext();) {
+      State stateEntry = iter.next().getValue();
+      if (stateEntry != state) return false;
+
+    }
+    return true;
+  }
+
+  private boolean isState(State state, NodeID remote) {
+    if (GroupID.ALL_GROUPS.equals(remote)) { return areAllState(state); }
+
+    return grpToState.get(remote) == state;
+  }
+
+  private void setStateForNodeID(final NodeID remoteNode, State state) {
+    if (GroupID.ALL_GROUPS.equals(remoteNode)) {
+      NodeID[] nodeids = grpToState.keySet().toArray(new NodeID[grpToState.size()]);
+      for (int i = 0; i < nodeids.length; i++) {
+        grpToState.put(nodeids[i], state);
+      }
+    } else {
+      grpToState.put(remoteNode, state);
     }
   }
 
   public synchronized void unpause(final NodeID remote, final int disconnected) {
-    if (this.state != STARTING) { throw new AssertionError("Attempt to unpause when not in starting : " + this.state); }
-    this.state = RUNNING;
+    if (!isState(STARTING, remote)) { throw new AssertionError("Attempt to unpause when not in starting : "
+                                                               + grpToState); }
+    setStateForNodeID(remote, RUNNING);
     notifyAll();
     for (Iterator iter = this.locksByID.values().iterator(); iter.hasNext();) {
       ClientLock lock = (ClientLock) iter.next();
-      lock.unpause();
+      GroupID grpId = lockDistributionStrategy.getGroupIdForLock(lock.getLockID().asString());
+      if (grpId.equals(remote) || remote.equals(GroupID.ALL_GROUPS)) {
+        lock.unpause();
+      }
     }
     resubmitQueryLockRequests();
   }
 
   public synchronized void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
                                                final ClientHandshakeMessage handshakeMessage) {
-    if (this.state != PAUSED) { throw new AssertionError("Attempt to initiateHandshake when not paused: " + this.state); }
-    this.state = STARTING;
-    for (Iterator i = addAllHeldLocksTo(new HashSet()).iterator(); i.hasNext();) {
+    if (!isState(PAUSED, remoteNode)) { throw new AssertionError("Attempt to initiateHandshake when not paused: "
+                                                                 + grpToState); }
+    setStateForNodeID(remoteNode, STARTING);
+
+    for (Iterator i = addAllHeldLocksTo(new HashSet(), remoteNode).iterator(); i.hasNext();) {
       LockRequest request = (LockRequest) i.next();
       LockContext ctxt = new LockContext(request.lockID(), thisNode, request.threadID(), request.lockLevel(), request
           .lockType());
       handshakeMessage.addLockContext(ctxt);
     }
 
-    for (Iterator i = addAllWaitersTo(new HashSet()).iterator(); i.hasNext();) {
+    for (Iterator i = addAllWaitersTo(new HashSet(), remoteNode).iterator(); i.hasNext();) {
       WaitLockRequest request = (WaitLockRequest) i.next();
       WaitContext ctxt = new WaitContext(request.lockID(), thisNode, request.threadID(), request.lockLevel(), request
           .lockType(), request.getTimerSpec());
       handshakeMessage.addWaitContext(ctxt);
     }
 
-    for (Iterator i = addAllPendingLockRequestsTo(new HashSet()).iterator(); i.hasNext();) {
+    for (Iterator i = addAllPendingLockRequestsTo(new HashSet(), remoteNode).iterator(); i.hasNext();) {
       LockRequest request = (LockRequest) i.next();
       LockContext ctxt = new LockContext(request.lockID(), thisNode, request.threadID(), request.lockLevel(), request
           .lockType());
       handshakeMessage.addPendingLockContext(ctxt);
     }
 
-    for (Iterator i = addAllPendingTryLockRequestsTo(new HashSet()).iterator(); i.hasNext();) {
+    for (Iterator i = addAllPendingTryLockRequestsTo(new HashSet(), remoteNode).iterator(); i.hasNext();) {
       TryLockRequest request = (TryLockRequest) i.next();
       TryLockContext ctxt = new TryLockContext(request.lockID(), thisNode, request.threadID(), request.lockLevel(),
                                                request.lockType(), request.getTimerSpec());
@@ -329,7 +374,8 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     }
   }
 
-  public void lock(final LockID lockID, final ThreadID threadID, final int lockType, final String lockObjectType, final String contextInfo) {
+  public void lock(final LockID lockID, final ThreadID threadID, final int lockType, final String lockObjectType,
+                   final String contextInfo) {
     Assert.assertNotNull("threadID", threadID);
     final ClientLock lock;
 
@@ -355,8 +401,8 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     }
   }
 
-  public void lockInterruptibly(final LockID lockID, final ThreadID threadID, final int lockType, final String lockObjectType,
-                                final String contextInfo) throws InterruptedException {
+  public void lockInterruptibly(final LockID lockID, final ThreadID threadID, final int lockType,
+                                final String lockObjectType, final String contextInfo) throws InterruptedException {
     Assert.assertNotNull("threadID", threadID);
     final ClientLock lock;
 
@@ -377,7 +423,8 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     }
   }
 
-  public boolean tryLock(final LockID lockID, final ThreadID threadID, final TimerSpec timeout, final int lockType, final String lockObjectType) {
+  public boolean tryLock(final LockID lockID, final ThreadID threadID, final TimerSpec timeout, final int lockType,
+                         final String lockObjectType) {
     Assert.assertNotNull("threadID", threadID);
     final ClientLock lock;
 
@@ -415,8 +462,8 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     return new AssertionError(MISSING_LOCK_TEXT + " Missing lock ID is " + lockID);
   }
 
-  public void wait(final LockID lockID, final ThreadID threadID, final TimerSpec call, final Object waitLock, final WaitListener listener)
-      throws InterruptedException {
+  public void wait(final LockID lockID, final ThreadID threadID, final TimerSpec call, final Object waitLock,
+                   final WaitListener listener) throws InterruptedException {
     final ClientLock myLock;
     synchronized (this) {
       waitUntilRunning();
@@ -439,7 +486,8 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   /*
    * The level represents the reason why server wanted a recall and will determine when a recall commit will happen.
    */
-  public synchronized void recall(final LockID lockID, final ThreadID threadID, final int interestedLevel, final int leaseTimeInMs) {
+  public synchronized void recall(final LockID lockID, final ThreadID threadID, final int interestedLevel,
+                                  final int leaseTimeInMs) {
     Assert.assertEquals(ThreadID.VM_ID, threadID);
     if (isPaused()) {
       this.logger.warn("Ignoring recall request from dead server : " + lockID + ", " + threadID + " interestedLevel : "
@@ -520,10 +568,11 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
    * XXX::This method is called from a stage thread. It operate on the lock inside the scope of the synchronization
    * unlike other methods because, we want to decide whether to process this award or not and go with it atomically
    */
-  public synchronized void awardLock(final NodeID nid, final SessionID sessionID, final LockID lockID, final ThreadID threadID, final int level) {
+  public synchronized void awardLock(final NodeID nid, final SessionID sessionID, final LockID lockID,
+                                     final ThreadID threadID, final int level) {
     if (isPaused() || !this.sessionManager.isCurrentSession(nid, sessionID)) {
       this.logger.warn("Ignoring lock award from a dead server :" + sessionID + ", " + this.sessionManager + " : "
-                       + lockID + " " + threadID + " " + LockLevel.toString(level) + " state = " + this.state);
+                       + lockID + " " + threadID + " " + LockLevel.toString(level) + " state = " + grpToState);
       return;
     }
     final ClientLock lock = this.locksByID.get(lockID);
@@ -539,10 +588,11 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   /*
    * XXX:: @read comment for awardLock();
    */
-  public synchronized void cannotAwardLock(final NodeID nid, final SessionID sessionID, final LockID lockID, final ThreadID threadID, final int level) {
+  public synchronized void cannotAwardLock(final NodeID nid, final SessionID sessionID, final LockID lockID,
+                                           final ThreadID threadID, final int level) {
     if (isPaused() || !this.sessionManager.isCurrentSession(nid, sessionID)) {
       this.logger.warn("Ignoring lock award from a dead server :" + sessionID + ", " + this.sessionManager + " : "
-                       + lockID + " " + threadID + " level = " + level + " state = " + this.state);
+                       + lockID + " " + threadID + " level = " + level + " state = " + grpToState);
       return;
     }
     final ClientLock lock = this.locksByID.get(lockID);
@@ -555,15 +605,15 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     ClientLock lock = getOrCreateLock(lockId, MISSING_LOCK_TEXT);
     lock.pin();
   }
-  
+
   public synchronized void unpinLock(final LockID lockId) {
     ClientLock lock = locksByID.get(lockId);
     if (lock != null && lock.unpin()) {
       gcCandidates.add(lockId);
       cleanUp(lock);
-    }        
+    }
   }
-  
+
   public synchronized void evictLock(final LockID lockId) {
     ClientLock lock = locksByID.get(lockId);
     if (lock != null) {
@@ -577,7 +627,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
       }
     }
   }
-  
+
   // This method should be called within a synchronized(this) block.
   private ClientLock getLock(final LockID id) {
     return this.locksByID.get(id);
@@ -598,34 +648,46 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     return new LockID(id);
   }
 
-  public synchronized Collection addAllWaitersTo(final Collection c) {
+  public synchronized Collection addAllWaitersTo(final Collection c, NodeID nodeID) {
     for (Iterator i = this.locksByID.values().iterator(); i.hasNext();) {
       ClientLock lock = (ClientLock) i.next();
-      lock.addAllWaitersTo(c);
+      GroupID grpId = lockDistributionStrategy.getGroupIdForLock(lock.getLockID().asString());
+      if (grpId.equals(nodeID) || nodeID.equals(GroupID.ALL_GROUPS)) {
+        lock.addAllWaitersTo(c);
+      }
     }
     return c;
   }
 
-  synchronized Collection addAllHeldLocksTo(final Collection c) {
+  synchronized Collection addAllHeldLocksTo(final Collection c, NodeID nodeID) {
     for (Iterator i = this.locksByID.values().iterator(); i.hasNext();) {
       ClientLock lock = (ClientLock) i.next();
-      lock.addHoldersToAsLockRequests(c);
+      GroupID grpId = lockDistributionStrategy.getGroupIdForLock(lock.getLockID().asString());
+      if (grpId.equals(nodeID) || nodeID.equals(GroupID.ALL_GROUPS)) {
+        lock.addHoldersToAsLockRequests(c);
+      }
     }
     return c;
   }
 
-  synchronized Collection addAllPendingLockRequestsTo(final Collection c) {
+  synchronized Collection addAllPendingLockRequestsTo(final Collection c, NodeID nodeID) {
     for (Iterator i = this.locksByID.values().iterator(); i.hasNext();) {
       ClientLock lock = (ClientLock) i.next();
-      lock.addAllPendingLockRequestsTo(c);
+      GroupID grpId = lockDistributionStrategy.getGroupIdForLock(lock.getLockID().asString());
+      if (grpId.equals(nodeID) || nodeID.equals(GroupID.ALL_GROUPS)) {
+        lock.addAllPendingLockRequestsTo(c);
+      }
     }
     return c;
   }
 
-  synchronized Collection addAllPendingTryLockRequestsTo(final Collection c) {
+  synchronized Collection addAllPendingTryLockRequestsTo(final Collection c, NodeID nodeID) {
     for (Iterator i = this.locksByID.values().iterator(); i.hasNext();) {
       ClientLock lock = (ClientLock) i.next();
-      lock.addAllPendingTryLockRequestsTo(c);
+      GroupID grpId = lockDistributionStrategy.getGroupIdForLock(lock.getLockID().asString());
+      if (grpId.equals(nodeID) || nodeID.equals(GroupID.ALL_GROUPS)) {
+        lock.addAllPendingTryLockRequestsTo(c);
+      }
     }
     return c;
   }
@@ -647,9 +709,9 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     this.lockStatManager.setLockStatisticsEnabled(statEnable);
   }
 
-  public synchronized void requestLockSpecs() {
+  public synchronized void requestLockSpecs(NodeID nodeID) {
     waitUntilRunning();
-    this.lockStatManager.requestLockSpecs();
+    this.lockStatManager.requestLockSpecs(nodeID, lockDistributionStrategy);
   }
 
   synchronized boolean haveLock(final LockID lockID, final ThreadID threadID, final int lockType) {
@@ -671,11 +733,11 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   }
 
   public synchronized boolean isRunning() {
-    return (this.state == RUNNING);
+    return areAllState(RUNNING);
   }
 
   public synchronized boolean isPaused() {
-    return (this.state == PAUSED);
+    return areAllState(PAUSED);
   }
 
   /*

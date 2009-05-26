@@ -10,6 +10,7 @@ import com.tc.logging.TCLogging;
 import com.tc.management.ClientLockStatManager;
 import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
 import com.tc.net.GroupID;
+import com.tc.net.OrderedGroupIDs;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
@@ -31,11 +32,15 @@ import com.tc.object.idprovider.impl.ObjectIDProviderImpl;
 import com.tc.object.idprovider.impl.RemoteObjectIDBatchSequenceProvider;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.lockmanager.api.ClientLockManager;
+import com.tc.object.lockmanager.api.RemoteLockManager;
 import com.tc.object.lockmanager.impl.ClientLockManagerConfigImpl;
+import com.tc.object.lockmanager.impl.LockDistributionStrategy;
 import com.tc.object.lockmanager.impl.RemoteLockManagerImpl;
+import com.tc.object.lockmanager.impl.StandardLockDistributionStrategy;
 import com.tc.object.lockmanager.impl.StripedClientLockManagerImpl;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
+import com.tc.object.msg.LockRequestMessageFactory;
 import com.tc.object.msg.NodeMetaDataMessageFactory;
 import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.net.DSOClientMessageChannel;
@@ -124,12 +129,17 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                        dsoChannel, toggleRefMgr);
   }
 
-  public ClientLockManager createLockManager(final ClientIDLogger clientIDLogger,
-                                             final RemoteLockManagerImpl remoteLockManagerImpl,
+  public ClientLockManager createLockManager(final DSOClientMessageChannel dsoChannel,
+                                             final ClientIDLogger clientIDLogger,
+                                             final RemoteLockManager remoteLockManager,
                                              final SessionManager sessionManager,
                                              final ClientLockStatManager lockStatManager,
                                              final ClientLockManagerConfigImpl clientLockManagerConfigImpl) {
-    return new StripedClientLockManagerImpl(clientIDLogger, remoteLockManagerImpl, sessionManager, lockStatManager,
+    GroupID defaultGroups[] = dsoChannel.getGroupIDs();
+    assert defaultGroups != null && defaultGroups.length == 1;
+    LockDistributionStrategy strategy = new StandardLockDistributionStrategy(defaultGroups[0]);
+    return new StripedClientLockManagerImpl(strategy, new OrderedGroupIDs(defaultGroups), clientIDLogger,
+                                            remoteLockManager, sessionManager, lockStatManager,
                                             clientLockManagerConfigImpl);
   }
 
@@ -167,7 +177,8 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
     return new ObjectIDClientHandshakeRequester(sequence);
   }
 
-  public BatchSequence[] createSequences(final RemoteObjectIDBatchSequenceProvider remoteIDProvider, final int requestSize) {
+  public BatchSequence[] createSequences(final RemoteObjectIDBatchSequenceProvider remoteIDProvider,
+                                         final int requestSize) {
     return new BatchSequence[] { new BatchSequence(remoteIDProvider, requestSize) };
   }
 
@@ -180,6 +191,14 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
   public BatchSequenceReceiver getBatchReceiver(final BatchSequence[] sequences) {
     Assert.assertTrue(sequences.length == 1);
     return sequences[0];
+  }
+
+  public RemoteLockManager createRemoteLockManager(final DSOClientMessageChannel dsoChannel,
+                                                   final LockRequestMessageFactory lockRequestMessageFactory,
+                                                   final ClientGlobalTransactionManager gtxManager) {
+    GroupID defaultGroups[] = dsoChannel.getGroupIDs();
+    assert defaultGroups != null && defaultGroups.length == 1;
+    return new RemoteLockManagerImpl(defaultGroups[0], lockRequestMessageFactory, gtxManager);
   }
 
 }

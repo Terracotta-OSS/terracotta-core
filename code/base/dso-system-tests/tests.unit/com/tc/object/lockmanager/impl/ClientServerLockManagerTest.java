@@ -10,6 +10,8 @@ import com.tc.config.lock.LockContextInfo;
 import com.tc.logging.NullTCLogger;
 import com.tc.management.ClientLockStatManager;
 import com.tc.management.L2LockStatsManager;
+import com.tc.net.GroupID;
+import com.tc.net.OrderedGroupIDs;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.LockRequest;
@@ -41,7 +43,9 @@ public class ClientServerLockManagerTest extends TestCase {
     super.setUp();
     sessionManager = new TestSessionManager();
     glue = new ClientServerLockManagerGlue(sessionManager);
-    clientLockManager = new ClientLockManagerImpl(new NullTCLogger(), glue, sessionManager,
+    clientLockManager = new ClientLockManagerImpl(new StandardLockDistributionStrategy(GroupID.NULL_ID),
+                                                  new OrderedGroupIDs(new GroupID[] { GroupID.NULL_ID }),
+                                                  new NullTCLogger(), glue, sessionManager,
                                                   ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
                                                   new NullClientLockManagerConfig());
 
@@ -253,7 +257,7 @@ public class ClientServerLockManagerTest extends TestCase {
     sleep(1000l);
 
     boolean found = false;
-    for (Iterator i = clientLockManager.addAllHeldLocksTo(new HashSet()).iterator(); i.hasNext();) {
+    for (Iterator i = clientLockManager.addAllHeldLocksTo(new HashSet(), GroupID.NULL_ID).iterator(); i.hasNext();) {
       LockRequest request = (LockRequest) i.next();
       if (request.lockID().equals(lockID1) && request.threadID().equals(tx1)) {
         if (LockLevel.isRead(request.lockLevel())) { throw new AssertionError("Should not have READ lock level."); }
@@ -310,7 +314,7 @@ public class ClientServerLockManagerTest extends TestCase {
     sleep(1000l);
 
     boolean found = false;
-    for (Iterator i = clientLockManager.addAllHeldLocksTo(new HashSet()).iterator(); i.hasNext();) {
+    for (Iterator i = clientLockManager.addAllHeldLocksTo(new HashSet(), GroupID.NULL_ID).iterator(); i.hasNext();) {
       LockRequest request = (LockRequest) i.next();
       if (request.lockID().equals(lockID1) && request.threadID().equals(tx1)) {
         // Since READ was given locally only WRITE gets here
@@ -367,7 +371,7 @@ public class ClientServerLockManagerTest extends TestCase {
     sleep(1000l);
 
     boolean found = false;
-    for (Iterator i = clientLockManager.addAllHeldLocksTo(new HashSet()).iterator(); i.hasNext();) {
+    for (Iterator i = clientLockManager.addAllHeldLocksTo(new HashSet(), GroupID.NULL_ID).iterator(); i.hasNext();) {
       LockRequest request = (LockRequest) i.next();
       if (request.lockID().equals(lockID1) && request.threadID().equals(tx2)) {
         if (LockLevel.isRead(request.lockLevel()) || !LockLevel.isWrite(request.lockLevel())) {
@@ -429,7 +433,7 @@ public class ClientServerLockManagerTest extends TestCase {
     sleep(1000l);
 
     boolean found = false;
-    for (Iterator i = clientLockManager.addAllHeldLocksTo(new HashSet()).iterator(); i.hasNext();) {
+    for (Iterator i = clientLockManager.addAllHeldLocksTo(new HashSet(), GroupID.NULL_ID).iterator(); i.hasNext();) {
       LockRequest request = (LockRequest) i.next();
       if (request.lockID().equals(lockID1) && request.threadID().equals(tx2)) {
         if (LockLevel.isRead(request.lockLevel()) || !LockLevel.isWrite(request.lockLevel())) {
@@ -490,7 +494,7 @@ public class ClientServerLockManagerTest extends TestCase {
     clientLockManager.unlock(lockID1, tx1); // should release READ
 
     boolean found = false;
-    for (Iterator i = clientLockManager.addAllHeldLocksTo(new HashSet()).iterator(); i.hasNext();) {
+    for (Iterator i = clientLockManager.addAllHeldLocksTo(new HashSet(), GroupID.NULL_ID).iterator(); i.hasNext();) {
       LockRequest request = (LockRequest) i.next();
       if (request.lockID().equals(lockID1) && request.threadID().equals(tx1)) {
         if (LockLevel.isRead(request.lockLevel()) || !LockLevel.isWrite(request.lockLevel())) {
@@ -557,10 +561,9 @@ public class ClientServerLockManagerTest extends TestCase {
           // XXX :: Should I do this -- Come back
           /*
            * if ( waiters1[i].getStartTime() != waiters2[j].getStartTime() ||
-           * waiters1[i].getWaitInvocation().equals(waiters2[j].getWaitInvocation())) {
-           * System.err.println("Not equal - " + waiters1[i].getStartTime() + " - " + waiters2[j].getStartTime());
-           * System.err.println("Not equal - " + waiters1[i].getWaitInvocation() + " - " +
-           * waiters2[j].getWaitInvocation()); return false; }
+           * waiters1[i].getWaitInvocation().equals(waiters2[j].getWaitInvocation())) { System.err.println("Not equal - " +
+           * waiters1[i].getStartTime() + " - " + waiters2[j].getStartTime()); System.err.println("Not equal - " +
+           * waiters1[i].getWaitInvocation() + " - " + waiters2[j].getWaitInvocation()); return false; }
            */
           found = true;
           break;

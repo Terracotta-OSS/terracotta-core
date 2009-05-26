@@ -8,6 +8,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TextDecoratorTCLogger;
 import com.tc.management.ClientLockStatManager;
 import com.tc.net.NodeID;
+import com.tc.net.OrderedGroupIDs;
 import com.tc.object.lockmanager.api.ClientLockManager;
 import com.tc.object.lockmanager.api.ClientLockManagerConfig;
 import com.tc.object.lockmanager.api.LockID;
@@ -23,8 +24,6 @@ import com.tc.object.tx.TimerSpec;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.runtime.LockInfoByThreadID;
 
-import java.util.Collection;
-
 public class StripedClientLockManagerImpl implements ClientLockManager {
 
   private final ClientLockManagerImpl lockManagers[];
@@ -32,7 +31,8 @@ public class StripedClientLockManagerImpl implements ClientLockManager {
   private final int                   segmentMask;
   private final TCLogger              logger;
 
-  public StripedClientLockManagerImpl(final TCLogger logger, final RemoteLockManager remoteLockManager,
+  public StripedClientLockManagerImpl(final LockDistributionStrategy strategy, final OrderedGroupIDs groupIds,
+                                      final TCLogger logger, final RemoteLockManager remoteLockManager,
                                       final SessionManager sessionManager, final ClientLockStatManager lockStatManager,
                                       final ClientLockManagerConfig clientLockManagerConfig) {
     this.logger = logger;
@@ -50,7 +50,8 @@ public class StripedClientLockManagerImpl implements ClientLockManager {
     this.lockManagers = new ClientLockManagerImpl[ssize];
     TCLockTimer waitTimer = new TCLockTimerImpl();
     for (int i = 0; i < this.lockManagers.length; i++) {
-      this.lockManagers[i] = new ClientLockManagerImpl(new TextDecoratorTCLogger(logger, "LM[" + i + "]"),
+      this.lockManagers[i] = new ClientLockManagerImpl(strategy, groupIds, new TextDecoratorTCLogger(logger, "LM[" + i
+                                                                                                             + "]"),
                                                        remoteLockManager, sessionManager, lockStatManager,
                                                        clientLockManagerConfig, waitTimer);
     }
@@ -70,7 +71,7 @@ public class StripedClientLockManagerImpl implements ClientLockManager {
 
   /**
    * Returns the segment that should be used for key with given hash
-   *
+   * 
    * @param hash the hash code for the key
    * @return the segment
    */
@@ -95,21 +96,25 @@ public class StripedClientLockManagerImpl implements ClientLockManager {
     }
   }
 
-  public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode, final ClientHandshakeMessage handshakeMessage) {
+  public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
+                                  final ClientHandshakeMessage handshakeMessage) {
     for (ClientLockManagerImpl lockManager : this.lockManagers) {
       lockManager.initializeHandshake(thisNode, remoteNode, handshakeMessage);
     }
   }
 
-  public void lock(final LockID id, final ThreadID threadID, final int lockType, final String lockObjectType, final String contextInfo) {
+  public void lock(final LockID id, final ThreadID threadID, final int lockType, final String lockObjectType,
+                   final String contextInfo) {
     lockManagerFor(id).lock(id, threadID, lockType, lockObjectType, contextInfo);
   }
 
-  public void awardLock(final NodeID nid, final SessionID sessionID, final LockID id, final ThreadID threadID, final int type) {
+  public void awardLock(final NodeID nid, final SessionID sessionID, final LockID id, final ThreadID threadID,
+                        final int type) {
     lockManagerFor(id).awardLock(nid, sessionID, id, threadID, type);
   }
 
-  public void cannotAwardLock(final NodeID nid, final SessionID sessionID, final LockID id, final ThreadID threadID, final int type) {
+  public void cannotAwardLock(final NodeID nid, final SessionID sessionID, final LockID id, final ThreadID threadID,
+                              final int type) {
     lockManagerFor(id).cannotAwardLock(nid, sessionID, id, threadID, type);
   }
 
@@ -141,12 +146,13 @@ public class StripedClientLockManagerImpl implements ClientLockManager {
     lockManagerFor(lockID).recall(lockID, threadID, level, leaseTimeInMs);
   }
 
-  public void lockInterruptibly(final LockID id, final ThreadID threadID, final int lockType, final String lockObjectType, final String contextInfo)
-      throws InterruptedException {
+  public void lockInterruptibly(final LockID id, final ThreadID threadID, final int lockType,
+                                final String lockObjectType, final String contextInfo) throws InterruptedException {
     lockManagerFor(id).lockInterruptibly(id, threadID, lockType, lockObjectType, contextInfo);
   }
 
-  public boolean tryLock(final LockID id, final ThreadID threadID, final TimerSpec timeout, final int lockType, final String lockObjectType) {
+  public boolean tryLock(final LockID id, final ThreadID threadID, final TimerSpec timeout, final int lockType,
+                         final String lockObjectType) {
     return lockManagerFor(id).tryLock(id, threadID, timeout, lockType, lockObjectType);
   }
 
@@ -154,8 +160,8 @@ public class StripedClientLockManagerImpl implements ClientLockManager {
     lockManagerFor(id).unlock(id, threadID);
   }
 
-  public void wait(final LockID lockID, final ThreadID threadID, final TimerSpec call, final Object waitObject, final WaitListener listener)
-      throws InterruptedException {
+  public void wait(final LockID lockID, final ThreadID threadID, final TimerSpec call, final Object waitObject,
+                   final WaitListener listener) throws InterruptedException {
     lockManagerFor(lockID).wait(lockID, threadID, call, waitObject, listener);
   }
 
@@ -166,15 +172,15 @@ public class StripedClientLockManagerImpl implements ClientLockManager {
   public void waitTimedOut(final LockID lockID, final ThreadID threadID) {
     lockManagerFor(lockID).waitTimedOut(lockID, threadID);
   }
-  
+
   public void pinLock(final LockID lockId) {
     lockManagerFor(lockId).pinLock(lockId);
   }
-  
+
   public void unpinLock(final LockID lockId) {
     lockManagerFor(lockId).unpinLock(lockId);
   }
-  
+
   public void evictLock(final LockID lockId) {
     lockManagerFor(lockId).evictLock(lockId);
   }
@@ -185,41 +191,13 @@ public class StripedClientLockManagerImpl implements ClientLockManager {
     }
   }
 
-  public Collection addAllHeldLocksTo(final Collection c) {
-    for (ClientLockManagerImpl lockManager : this.lockManagers) {
-      lockManager.addAllHeldLocksTo(c);
-    }
-    return c;
-  }
-
-  public Collection addAllPendingLockRequestsTo(final Collection c) {
-    for (ClientLockManagerImpl lockManager : this.lockManagers) {
-      lockManager.addAllPendingLockRequestsTo(c);
-    }
-    return c;
-  }
-
-  public Collection addAllPendingTryLockRequestsTo(final Collection c) {
-    for (ClientLockManagerImpl lockManager : this.lockManagers) {
-      lockManager.addAllPendingTryLockRequestsTo(c);
-    }
-    return c;
-  }
-
-  public Collection addAllWaitersTo(final Collection c) {
-    for (ClientLockManagerImpl lockManager : this.lockManagers) {
-      lockManager.addAllWaitersTo(c);
-    }
-    return c;
-  }
-
   public void queryLockCommit(final ThreadID threadID, final GlobalLockInfo globalLockInfo) {
     lockManagerFor(globalLockInfo.getLockID()).queryLockCommit(threadID, globalLockInfo);
   }
 
-  public void requestLockSpecs() {
+  public void requestLockSpecs(NodeID nodeID) {
     for (ClientLockManagerImpl lockManager : this.lockManagers) {
-      lockManager.requestLockSpecs();
+      lockManager.requestLockSpecs(nodeID);
     }
   }
 

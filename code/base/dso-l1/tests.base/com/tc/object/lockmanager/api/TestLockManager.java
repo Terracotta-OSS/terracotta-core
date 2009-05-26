@@ -100,10 +100,6 @@ public class TestLockManager implements ClientLockManager {
     throw new ImplementMe();
   }
 
-  public void requestLockSpecs() {
-    throw new ImplementMe();
-  }
-
   public void setLockStatisticsConfig(final int traceDepth, final int gatherInterval) {
     throw new ImplementMe();
   }
@@ -151,5 +147,10 @@ public class TestLockManager implements ClientLockManager {
   
   public void evictLock(final LockID lockId) {
     throw new ImplementMe();
+  }
+
+  public void requestLockSpecs(NodeID nodeID) {
+    throw new ImplementMe();
+    
   }
 }

@@ -20,7 +20,9 @@ import com.tc.management.ClientLockStatManager;
 import com.tc.management.L2LockStatsManager;
 import com.tc.management.lock.stats.LockSpec;
 import com.tc.management.lock.stats.TCStackTraceElement;
+import com.tc.net.GroupID;
 import com.tc.net.NodeID;
+import com.tc.net.OrderedGroupIDs;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.TestMessageChannel;
@@ -34,6 +36,7 @@ import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.NullClientLockManagerConfig;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.lockmanager.impl.RemoteLockManagerImpl;
+import com.tc.object.lockmanager.impl.StandardLockDistributionStrategy;
 import com.tc.object.lockmanager.impl.StripedClientLockManagerImpl;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockRequestMessageFactory;
@@ -67,19 +70,21 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
 
   private static final TCLogger logger = CustomerLogging.getDSOGenericLogger();
 
-  private ClientLockManager clientLockManager;
+  private ClientLockManager     clientLockManager;
 
   public void setUp() throws Exception {
     BoundedLinkedQueue clientLockRequestQueue = new BoundedLinkedQueue();
     BoundedLinkedQueue serverLockRespondQueue = new BoundedLinkedQueue();
-    
+
     TestRemoteLockManagerImpl rmtLockManager = new TestRemoteLockManagerImpl(new TestLockRequestMessageFactory(),
                                                                              new TestClientGlobalTransactionManager(),
                                                                              clientLockRequestQueue);
 
-    clientLockManager = new StripedClientLockManagerImpl(logger, rmtLockManager, new NullSessionManager(),
-                                                  ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
-                                                   new NullClientLockManagerConfig());
+    clientLockManager = new StripedClientLockManagerImpl(new StandardLockDistributionStrategy(GroupID.NULL_ID),
+                                                         new OrderedGroupIDs(new GroupID[] { GroupID.NULL_ID }),
+                                                         logger, rmtLockManager, new NullSessionManager(),
+                                                         ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER,
+                                                         new NullClientLockManagerConfig());
 
     LockManager serverLockManager = new LockManagerImpl(new MockChannelManager(), new MockL2LockStatsManager());
 
@@ -126,14 +131,14 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     amount *= (slow ? 300 : 50);
     ThreadUtil.reallySleep(amount);
   }
-  
+
   public void testLockAwardOrder() throws Exception {
     final LockID l1 = new LockID("1");
 
     final ThreadID tid1 = new ThreadID(1);
     final ThreadID tid2 = new ThreadID(2);
     final ThreadID tid3 = new ThreadID(3);
-    
+
     final List lockRequestOrder = new ArrayList(2);
     final List lockAwardOrder = new ArrayList(2);
 
@@ -144,26 +149,26 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
         System.err.println("Thread " + threadName + " request lock");
         lockRequestOrder.add(threadName);
         LockManagerSystemTest.this.clientLockManager.lock(l1, tid3, LockLevel.WRITE, String.class.getName(),
-                                                    LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+                                                          LockContextInfo.NULL_LOCK_CONTEXT_INFO);
         System.err.println("Thread " + threadName + " obtain lock");
         lockAwardOrder.add(threadName);
       }
     };
-    
+
     Thread t2 = new Thread() {
       public void run() {
         String threadName = "t2";
         System.err.println("Thread " + threadName + " request lock");
         lockRequestOrder.add(threadName);
-        //to make sure that lock request order is correct i.e. t2 request the lock after t1
+        // to make sure that lock request order is correct i.e. t2 request the lock after t1
         ThreadUtil.reallySleep(30000);
         LockManagerSystemTest.this.clientLockManager.lock(l1, tid2, LockLevel.READ, String.class.getName(),
-                                                    LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+                                                          LockContextInfo.NULL_LOCK_CONTEXT_INFO);
         System.err.println("Thread " + threadName + " obtain lock");
         lockAwardOrder.add(threadName);
       }
     };
-    
+
     t1.start();
     sleep(5);
     t2.start();
@@ -173,14 +178,13 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     t1.join();
     clientLockManager.unlock(l1, tid3);
     t2.join();
-    
+
     System.err.println(lockRequestOrder);
     System.err.println(lockAwardOrder);
-    
+
     assertEquals(lockRequestOrder.get(0), lockAwardOrder.get(0));
     assertEquals(lockRequestOrder.get(1), lockAwardOrder.get(1));
   }
-
 
   public void testUpgradeNotSupported() throws Exception {
     final LockID l1 = new LockID("1");
@@ -224,7 +228,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
       }
     };
     secondReader.start();
-    
+
     sleep(5);
 
     Thread secondWriter = new Thread() {
@@ -374,7 +378,8 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
       public void run() {
         System.out.println("Trying second lock 100 times");
         for (int i = 0; i < 100; i++) {
-          if (!clientLockManager.tryLock(l1, tid2, new TimerSpec(0), LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE)) {
+          if (!clientLockManager.tryLock(l1, tid2, new TimerSpec(0), LockLevel.WRITE,
+                                         LockContextInfo.NULL_LOCK_OBJECT_TYPE)) {
             count1[0]++;
           }
         }
@@ -398,7 +403,8 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
       public void run() {
         System.out.println("Trying second lock once more 100 times");
         for (int i = 0; i < 100; i++) {
-          if (!clientLockManager.tryLock(l1, tid2, new TimerSpec(0), LockLevel.WRITE, LockContextInfo.NULL_LOCK_OBJECT_TYPE)) {
+          if (!clientLockManager.tryLock(l1, tid2, new TimerSpec(0), LockLevel.WRITE,
+                                         LockContextInfo.NULL_LOCK_OBJECT_TYPE)) {
             count2[0]++;
           }
         }
@@ -417,7 +423,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
 
     public TestRemoteLockManagerImpl(LockRequestMessageFactory lrmf, ClientGlobalTransactionManager gtxManager,
                                      BoundedLinkedQueue clientLockRequestQueue) {
-      super(lrmf, gtxManager);
+      super(GroupID.NULL_ID, lrmf, gtxManager);
       this.clientLockRequestQueue = clientLockRequestQueue;
     }
 
@@ -507,12 +513,12 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     }
 
     public void start(DSOChannelManager channelManager, DSOGlobalServerStats serverStats) {
-      throw new ImplementMe(); 
+      throw new ImplementMe();
     }
 
     public synchronized TimeStampedCounterValue[] getGlobalLockRecallHistory() {
       return null;
-    }    
+    }
 
   }
 

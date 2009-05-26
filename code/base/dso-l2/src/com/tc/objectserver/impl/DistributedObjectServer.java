@@ -52,7 +52,7 @@ import com.tc.management.beans.object.ServerDBBackup;
 import com.tc.management.beans.object.ObjectManagementMonitor.ObjectIdsFetcher;
 import com.tc.management.lock.stats.L2LockStatisticsManagerImpl;
 import com.tc.management.lock.stats.LockStatisticsMessage;
-import com.tc.management.lock.stats.LockStatisticsResponseMessage;
+import com.tc.management.lock.stats.LockStatisticsResponseMessageImpl;
 import com.tc.management.remote.connect.ClientConnectEventHandler;
 import com.tc.management.remote.protocol.terracotta.ClientTunnelingEventHandler;
 import com.tc.management.remote.protocol.terracotta.JmxRemoteTunnelMessage;
@@ -1054,7 +1054,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
     this.l1Listener.addClassMapping(TCMessageType.LOCK_QUERY_RESPONSE_MESSAGE, LockResponseMessage.class);
     this.l1Listener.addClassMapping(TCMessageType.LOCK_STAT_MESSAGE, LockStatisticsMessage.class);
     this.l1Listener
-        .addClassMapping(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE, LockStatisticsResponseMessage.class);
+        .addClassMapping(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE, LockStatisticsResponseMessageImpl.class);
     this.l1Listener.addClassMapping(TCMessageType.COMMIT_TRANSACTION_MESSAGE, CommitTransactionMessageImpl.class);
     this.l1Listener.addClassMapping(TCMessageType.REQUEST_ROOT_RESPONSE_MESSAGE, RequestRootResponseMessage.class);
     this.l1Listener

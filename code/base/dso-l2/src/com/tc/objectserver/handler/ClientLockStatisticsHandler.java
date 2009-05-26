@@ -6,7 +6,7 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
 import com.tc.management.L2LockStatsManager;
-import com.tc.management.lock.stats.LockStatisticsResponseMessage;
+import com.tc.management.lock.stats.LockStatisticsResponseMessageImpl;
 import com.tc.net.NodeID;
 
 import java.util.Collection;
@@ -20,7 +20,7 @@ public class ClientLockStatisticsHandler extends AbstractEventHandler {
   }
 
   public void handleEvent(EventContext context) {
-    LockStatisticsResponseMessage lsrm = (LockStatisticsResponseMessage)context;
+    LockStatisticsResponseMessageImpl lsrm = (LockStatisticsResponseMessageImpl)context;
     NodeID nodeID = lsrm.getSourceNodeID();
     Collection lockStatElements = lsrm.getStackTraceElements();
     lockStatsManager.recordClientStat(nodeID, lockStatElements);

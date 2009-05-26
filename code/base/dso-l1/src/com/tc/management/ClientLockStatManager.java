@@ -4,8 +4,10 @@
 package com.tc.management;
 
 import com.tc.async.api.Sink;
+import com.tc.net.NodeID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.object.lockmanager.impl.LockDistributionStrategy;
 import com.tc.object.net.DSOClientMessageChannel;
 
 public interface ClientLockStatManager {
@@ -43,7 +45,7 @@ public interface ClientLockStatManager {
       // do nothing
     }
     
-    public void requestLockSpecs() {
+    public void requestLockSpecs(NodeID nodeID, LockDistributionStrategy strategy) {
       // do nothing
     }
   };
@@ -64,5 +66,5 @@ public interface ClientLockStatManager {
   
   public void setLockStatisticsEnabled(boolean statEnable);
   
-  public void requestLockSpecs();
+  public void requestLockSpecs(NodeID nodeID, LockDistributionStrategy strategy);
 }

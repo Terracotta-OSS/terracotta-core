@@ -7,13 +7,13 @@ package com.tc.management.lock.stats;
 import com.tc.async.api.Sink;
 import com.tc.exception.TCRuntimeException;
 import com.tc.management.ClientLockStatManager;
+import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
-import com.tc.net.protocol.tcm.ClientMessageChannel;
-import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.object.lockmanager.impl.LockDistributionStrategy;
 import com.tc.object.net.DSOClientMessageChannel;
 
 import java.lang.reflect.Field;
@@ -42,10 +42,10 @@ public class ClientLockStatisticsManagerImpl extends LockStatisticsManager imple
     IGNORE_STACK_TRACES_PACKAGE.add("com.tcclient.");
   }
 
-  private static LockStatisticsResponseMessage createLockStatisticsResponseMessage(ClientMessageChannel channel,
-                                                                                   Collection allTCLockStatElements) {
-    LockStatisticsResponseMessage message = (LockStatisticsResponseMessage) channel
-        .createMessage(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE);
+  private LockStatisticsResponseMessage createLockStatisticsResponseMessage(NodeID remoteID,
+                                                                            Collection allTCLockStatElements) {
+    LockStatisticsReponseMessageFactory factory = channel.getLockStatisticsReponseMessageFactory();
+    LockStatisticsResponseMessage message = factory.newLockStatisticsResponseMessage(remoteID);
     message.initialize(allTCLockStatElements);
     return message;
   }
@@ -198,17 +198,19 @@ public class ClientLockStatisticsManagerImpl extends LockStatisticsManager imple
     return false;
   }
 
-  public void requestLockSpecs() {
+  public void requestLockSpecs(NodeID nodeID, LockDistributionStrategy strategy) {
     Collection allTCLockStatElements = new ArrayList();
 
     synchronized (this) {
       Set allLockIDs = lockStats.keySet();
       for (Iterator i = allLockIDs.iterator(); i.hasNext();) {
         LockID lockID = (LockID) i.next();
-        LockStatElement lockStatElement = getLockStatElement(lockID);
-        allTCLockStatElements.add(new TCStackTraceElement(lockID, lockStatElement));
+        if (strategy.getGroupIdForLock(lockID.asString()).equals(nodeID) || GroupID.ALL_GROUPS.equals(nodeID)) {
+          LockStatElement lockStatElement = getLockStatElement(lockID);
+          allTCLockStatElements.add(new TCStackTraceElement(lockID, lockStatElement));
+        }
       }
     }
-    sink.add(createLockStatisticsResponseMessage(channel.channel(), allTCLockStatElements));
+    sink.add(createLockStatisticsResponseMessage(nodeID, allTCLockStatElements));
   }
 }

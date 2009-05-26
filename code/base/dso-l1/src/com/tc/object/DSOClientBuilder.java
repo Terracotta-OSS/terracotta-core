@@ -23,10 +23,11 @@ import com.tc.object.idprovider.impl.ObjectIDClientHandshakeRequester;
 import com.tc.object.idprovider.impl.RemoteObjectIDBatchSequenceProvider;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.lockmanager.api.ClientLockManager;
+import com.tc.object.lockmanager.api.RemoteLockManager;
 import com.tc.object.lockmanager.impl.ClientLockManagerConfigImpl;
-import com.tc.object.lockmanager.impl.RemoteLockManagerImpl;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
+import com.tc.object.msg.LockRequestMessageFactory;
 import com.tc.object.msg.NodeMetaDataMessageFactory;
 import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.net.DSOClientMessageChannel;
@@ -77,9 +78,9 @@ public interface DSOClientBuilder {
                                               final Portability portability, final DSOClientMessageChannel dsoChannel,
                                               final ToggleableReferenceManager toggleRefMgr);
 
-  ClientLockManager createLockManager(final ClientIDLogger clientIDLogger,
-                                      final RemoteLockManagerImpl remoteLockManagerImpl,
-                                      final SessionManager sessionManager, final ClientLockStatManager lockStatManager,
+  ClientLockManager createLockManager(final DSOClientMessageChannel dsoChannel, final ClientIDLogger clientIDLogger,
+                                      final RemoteLockManager remoteLockManager, final SessionManager sessionManager,
+                                      final ClientLockStatManager lockStatManager,
                                       final ClientLockManagerConfigImpl clientLockManagerConfigImpl);
 
   RemoteTransactionManager createRemoteTransactionManager(final ClientIDProvider cidProvider,
@@ -100,5 +101,9 @@ public interface DSOClientBuilder {
   ObjectIDProvider createObjectIdProvider(BatchSequence[] sequences, ClientIDProvider clientIDProvider);
 
   BatchSequenceReceiver getBatchReceiver(BatchSequence[] sequences);
+
+  RemoteLockManager createRemoteLockManager(final DSOClientMessageChannel dsoChannel,
+                                            final LockRequestMessageFactory lockRequestMessageFactory,
+                                            final ClientGlobalTransactionManager gtxManager);
 
 }

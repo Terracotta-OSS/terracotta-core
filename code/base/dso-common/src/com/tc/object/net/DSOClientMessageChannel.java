@@ -5,6 +5,7 @@
 package com.tc.object.net;
 
 import com.tc.async.api.Sink;
+import com.tc.management.lock.stats.LockStatisticsReponseMessageFactory;
 import com.tc.net.GroupID;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.protocol.tcm.ChannelEventListener;
@@ -67,6 +68,8 @@ public interface DSOClientMessageChannel {
   public KeysForOrphanedValuesMessageFactory getKeysForOrphanedValuesMessageFactory();
 
   public NodeMetaDataMessageFactory getNodeMetaDataMessageFactory();
+  
+  public LockStatisticsReponseMessageFactory getLockStatisticsReponseMessageFactory();
 
   public JMXMessage getJMXMessage();
 

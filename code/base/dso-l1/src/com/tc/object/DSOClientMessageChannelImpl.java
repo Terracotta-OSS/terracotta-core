@@ -5,6 +5,8 @@
 package com.tc.object;
 
 import com.tc.async.api.Sink;
+import com.tc.management.lock.stats.LockStatisticsReponseMessageFactory;
+import com.tc.management.lock.stats.LockStatisticsResponseMessage;
 import com.tc.net.GroupID;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
@@ -44,7 +46,7 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     RequestRootMessageFactory, RequestManagedObjectMessageFactory, ClientHandshakeMessageFactory,
     ObjectIDBatchRequestMessageFactory, CommitTransactionMessageFactory, AcknowledgeTransactionMessageFactory,
     CompletedTransactionLowWaterMarkMessageFactory, NodesWithObjectsMessageFactory,
-    KeysForOrphanedValuesMessageFactory, NodeMetaDataMessageFactory {
+    KeysForOrphanedValuesMessageFactory, NodeMetaDataMessageFactory, LockStatisticsReponseMessageFactory {
 
   private final ClientMessageChannel channel;
   private final GroupID              groups[];
@@ -84,7 +86,7 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     this.channel.close();
   }
 
-  public LockRequestMessage newLockRequestMessage() {
+  public LockRequestMessage newLockRequestMessage(final NodeID nodeID) {
     return (LockRequestMessage) this.channel.createMessage(TCMessageType.LOCK_REQUEST_MESSAGE);
   }
 
@@ -183,7 +185,16 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return this;
   }
 
+  public LockStatisticsResponseMessage newLockStatisticsResponseMessage(final NodeID remoteID) {
+    return (LockStatisticsResponseMessage) this.channel.createMessage(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE);
+  }
+
+  public LockStatisticsReponseMessageFactory getLockStatisticsReponseMessageFactory() {
+    return this;
+  }
+
   public GroupID[] getGroupIDs() {
     return this.groups;
   }
+
 }
