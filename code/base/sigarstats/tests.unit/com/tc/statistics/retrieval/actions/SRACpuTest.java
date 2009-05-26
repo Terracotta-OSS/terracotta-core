@@ -10,6 +10,8 @@ import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.retrieval.SigarUtil;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 
 import junit.framework.TestCase;
 
@@ -58,12 +60,20 @@ public class SRACpuTest extends TestCase {
       threads[i].join();
     }
 
+    final MathContext mathcontext = new MathContext(2, RoundingMode.UP);
+
     // assert that the cpu usage was higher during the second data collection
     for (int i = 0; i < cpuCount; i++) {
-      System.out.println("test values for cpu " + i + ": " + values1[i][0] + " <= " + values2[i][0] + ", "
-                         + values1[i][1] + " >= " + values2[i][1]);
-      assertTrue(values1[i][0].compareTo(values2[i][0]) <= 0);
-      assertTrue(values1[i][1].compareTo(values2[i][1]) >= 0);
+      // applying rounding for some occasional sampling errors compensation
+      BigDecimal values1_0 = values1[i][0].round(mathcontext);
+      BigDecimal values1_1 = values1[i][1].round(mathcontext);
+      BigDecimal values2_0 = values2[i][0].round(mathcontext);
+      BigDecimal values2_1 = values2[i][1].round(mathcontext);
+
+      System.out.println("test values for cpu " + i + ": " + values1_0 + " <= " + values2_0 + ", "
+                         + values1_1 + " >= " + values2_1);
+      assertTrue(values1_0.compareTo(values2_0) <= 0);
+      assertTrue(values1_1.compareTo(values2_1) >= 0);
     }
   }
 
