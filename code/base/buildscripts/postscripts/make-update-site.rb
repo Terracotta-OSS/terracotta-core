@@ -11,7 +11,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   protected
   def postscript(ant, build_environment, product_dir, *args)
     
-    plugin_version = createVersionString(build_environment)    
+    plugin_version = create_eclipse_plugin_version(build_environment)
 
     eclipse_dir = FilePath.new(product_dir, 'eclipse')
     plugin_name = "org.terracotta.dso_" + plugin_version    

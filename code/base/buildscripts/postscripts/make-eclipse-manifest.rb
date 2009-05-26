@@ -15,7 +15,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     dso_directory        = FilePath.new(eclipse_directory.to_s, 'org.terracotta.dso')
     common_lib_directory = FilePath.new(dso_directory.to_s, *relative_libpath.split('/'))
 
-    plugin_version = createVersionString(build_environment)
+    plugin_version = create_eclipse_plugin_version(build_environment)
 
     meta_directory = FilePath.new(dso_directory, 'META-INF').ensure_directory
     manifest_path = FilePath.new(meta_directory, 'MANIFEST.MF')
@@ -64,34 +64,21 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     destdir = dso_directory.to_s + "_" + plugin_version
     ant.move(:file => dso_directory.to_s, :tofile => destdir.to_s)
   end
-  
-  def createVersionString(build_environment)
-    # eclipse plugin standard
-    # 3.2.2.r322_v20070109
-    raw_version = get_config(:version, build_environment.maven_version)
-    if raw_version =~ /trunk/
-      raw_version = build_environment.maven_version
-    end
-    tokens = raw_version.split(/-/).delete_if { |t| t =~ /rev/ }    
-    if tokens.first =~ /^\d+\.\d+/
-      version_number = tokens.first
-      tokens.delete_at(0)
-    else
-      version_number = "1.0.0"
-    end    
-    
-    # make sure version number has pattern /^\d+\.\d+\.\d+/
-    version_number = "#{version_number}.0" unless version_number =~ /^\d+\.\d+\.\d+/
-    
-    # add revision number and timestamp
-    tokens << "r#{build_environment.os_revision}"
-    tokens << "v#{Time.now.strftime('%Y%m%d')}"
-    
-    version = version_number
-    version = "#{version_number}.#{tokens.join('_')}"
 
-    fail("version string #{version} doesn't conform to eclipse standard") unless version =~ /^\d+\.\d+\.\d+\.[^\.]/
-    version
+  def create_eclipse_plugin_version(build_environment)
+    tc_version = build_environment.version
+    if tc_version =~ /trunk/
+      tc_version = build_environment.maven_version
+    end
+    if tc_version =~ /(\d)+\.(\d)+\.(\d)+(-\w+)?/
+      main_version = "#{$1}.#{$2}.#{$3}"
+      tag = $4 || ''
+      tag = tag.gsub(/-/, '_')
+      qualifier = "r#{build_environment.os_revision}_v#{Time.now.strftime('%Y%m%d')}#{tag}"
+      eclipse_version = "#{main_version}.#{qualifier}"
+    else
+      fail("TC version #{tc_version} doesn't match expected pattern: x.y.z or x.y.z-tag")
+    end
+    eclipse_version
   end
-  
 end
