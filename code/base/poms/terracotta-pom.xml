@@ -98,7 +98,13 @@
     <dependency>
       <groupId>org.apache.xmlbeans</groupId>
       <artifactId>xmlbeans</artifactId>
-    </dependency> 
+      <exclusions>
+         <exclusion>
+            <groupId>stax</groupId>
+            <artifactId>stax-api</artifactId>
+         </exclusion>
+      </exclusions>
+   </dependency> 
     <dependency>
       <groupId>org.apache.xmlbeans</groupId>
       <artifactId>xmlbeans-xpath</artifactId>
@@ -150,10 +156,6 @@
     <dependency>
       <groupId>org.apache.tomcat</groupId>
       <artifactId>juli</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>stax</groupId>
-      <artifactId>stax</artifactId>
     </dependency>
     <dependency>
       <groupId>com.h2database</groupId>
