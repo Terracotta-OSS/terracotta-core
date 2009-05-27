@@ -32,6 +32,7 @@ import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -56,7 +57,8 @@ public class CustomScopedBeanTest extends AbstractTwoServerDeploymentTest {
   private ITestFacade         beanN2C2;                         // node2 session1 conv2
 
   public CustomScopedBeanTest() {
-    disableAllUntil("2009-06-30");
+    // DEV-2847
+    disableAllUntil(new Date(Long.MAX_VALUE));
   }
 
   protected void setUp() throws Exception {

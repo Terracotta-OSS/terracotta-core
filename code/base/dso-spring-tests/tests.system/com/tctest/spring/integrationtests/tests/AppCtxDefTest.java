@@ -12,6 +12,8 @@ import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tctest.spring.bean.AppCtxDefBean;
 import com.tctest.spring.integrationtests.SpringServerTestSetup;
 
+import java.util.Date;
+
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -24,7 +26,8 @@ import junit.framework.TestSuite;
 public class AppCtxDefTest extends AbstractTwoServerDeploymentTest {
 
   public AppCtxDefTest() {
-    disableAllUntil("2009-06-30");
+    // DEV-2847
+    disableAllUntil(new Date(Long.MAX_VALUE));
   }
 
   public static Test suite() {

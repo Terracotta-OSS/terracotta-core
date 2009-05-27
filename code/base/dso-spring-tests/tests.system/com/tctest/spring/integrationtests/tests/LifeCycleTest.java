@@ -9,6 +9,7 @@ import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tctest.spring.bean.ILifeCycle;
 import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
 
+import java.util.Date;
 import java.util.List;
 
 import junit.framework.Test;
@@ -29,7 +30,8 @@ public class LifeCycleTest extends AbstractTwoServerDeploymentTest {
   private ILifeCycle          mLifeCycleBean2;
 
   public LifeCycleTest() {
-    disableAllUntil("2009-06-30");
+    // DEV-2847
+    disableAllUntil(new Date(Long.MAX_VALUE));
   }
 
   protected void setUp() throws Exception {

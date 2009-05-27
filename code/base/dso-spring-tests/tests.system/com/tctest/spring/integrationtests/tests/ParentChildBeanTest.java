@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.spring.integrationtests.tests;
 
@@ -7,6 +8,8 @@ import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tctest.spring.bean.FooService;
 import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
+
+import java.util.Date;
 
 import junit.framework.Test;
 
@@ -21,13 +24,14 @@ public class ParentChildBeanTest extends AbstractTwoServerDeploymentTest {
   private static final String BEAN_DEFINITION_FILE_FOR_TEST = "classpath:/com/tctest/spring/beanfactory-parent-child.xml";
   private static final String CONFIG_FILE_FOR_TEST          = "/tc-config-files/parent-child-tc-config.xml";
 
-  private FooService   foo1a;
-  private FooService   foo2a;
-  private FooService   foo1b;
-  private FooService   foo2b;
-  
+  private FooService          foo1a;
+  private FooService          foo2a;
+  private FooService          foo1b;
+  private FooService          foo2b;
+
   public ParentChildBeanTest() {
-    disableAllUntil("2009-06-30");
+    // DEV-2847
+    disableAllUntil(new Date(Long.MAX_VALUE));
   }
 
   protected void setUp() throws Exception {
@@ -38,7 +42,7 @@ public class ParentChildBeanTest extends AbstractTwoServerDeploymentTest {
     foo1b = (FooService) server0.getProxy(FooService.class, REMOTE_SERVICE_NAME2);
     foo2b = (FooService) server1.getProxy(FooService.class, REMOTE_SERVICE_NAME2);
   }
-  
+
   public void testParentChildBeanDefinitionWithConcreteParent() throws Exception {
     assertEquals("rawValue-0", foo1a.serviceMethod());
     assertEquals("rawValue-1", foo2a.serviceMethod());
