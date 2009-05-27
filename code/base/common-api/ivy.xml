@@ -14,8 +14,5 @@
     <dependency name="log4j" rev="1.2.9"/>
     <dependency name="xmlbeans-jsr173-api" rev="1.0" org="terracotta"/>
     <dependency name="xmlbeans" rev="2.4.0" org="terracotta"/>
-<!--
-    <dependency name="xbean_xpath" rev="2.4.0" org="terracotta"/>
--->
   </dependencies>
 </ivy-module>
