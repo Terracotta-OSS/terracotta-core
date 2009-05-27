@@ -110,6 +110,10 @@
       <artifactId>xmlbeans-xpath</artifactId>
     </dependency> 
     <dependency>
+      <groupId>org.apache.xmlbeans</groupId>
+      <artifactId>xmlbeans-jsr173-api</artifactId>
+    </dependency>
+    <dependency>
       <groupId>knopflerfish-tc</groupId>
       <artifactId>knopflerfish-tc</artifactId>
     </dependency>
