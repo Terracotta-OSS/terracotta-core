@@ -32,14 +32,15 @@ public class ExternalDsoClient {
   private final List          args                   = new ArrayList();
   private final File          workingDir;
   private final Class         clientClass;
-  private String              clientName;
+  private final String        clientName;
   private FileOutputStream    logOutputStream;
   private LinkedJavaProcess   process;
 
-  public ExternalDsoClient(File workingDir, InputStream configInput, Class clientClass) {
+  public ExternalDsoClient(String clientName, File workingDir, InputStream configInput, Class clientClass) {
     this.workingDir = workingDir;
     this.clientLog = new File(workingDir, "dso-client.log");
     this.clientClass = clientClass;
+    this.clientName = clientName;
     try {
       this.configFile = saveToFile(configInput);
     } catch (IOException e) {
@@ -105,6 +106,10 @@ public class ExternalDsoClient {
     return process.exitValue();
   }
 
+  public String getClientName() {
+    return clientName;
+  }
+
   public File getClientLog() {
     return clientLog;
   }
@@ -131,10 +136,6 @@ public class ExternalDsoClient {
 
   public void addArg(String arg) {
     args.add(arg);
-  }
-
-  public void setClientName(String clientName) {
-    this.clientName = clientName;
   }
 
   private void prepareTCJvmArgs() {
