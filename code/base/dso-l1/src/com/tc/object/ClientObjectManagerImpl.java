@@ -391,7 +391,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   public synchronized ObjectID lookupExistingObjectID(final Object pojo) {
     TCObject obj = basicLookup(pojo);
-    if (obj == null) { throw new AssertionError("Missing object ID for:" + pojo); }
+    if (obj == null) { throw new AssertionError("Missing object ID for: Object of class " + pojo.getClass().getName()
+                                                + " [Identity Hashcode : 0x" + Integer.toHexString(System.identityHashCode(pojo)) + "] "); }
     return obj.getObjectID();
   }
 
@@ -909,7 +910,9 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   private void basicAddLocal(final TCObject obj, final boolean fromLookup) {
     synchronized (this) {
       ObjectID id = obj.getObjectID();
-      if (basicHasLocal(id)) { throw Assert.failure("Attempt to add an object that already exists: " + obj); }
+      if (basicHasLocal(id)) { throw Assert.failure("Attempt to add an object that already exists: Object of class "
+                                                    + obj.getClass() + " [Identity Hashcode : 0x"
+                                                    + Integer.toHexString(System.identityHashCode(obj)) + "] "); }
       this.idToManaged.put(id, obj);
 
       Object pojo = obj.getPeerObject();

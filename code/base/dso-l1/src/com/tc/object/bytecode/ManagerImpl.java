@@ -504,9 +504,9 @@ public class ManagerImpl implements Manager {
 
     if (!dsoMonitorEntered && isManaged(o)) {
       logger
-          .info("Object "
-                + o
-                + " is a shared object, but a shared lock is not obtained within a locking context. This usually means the object get shared within a synchronized block/method.");
+          .info("An unlock is being attempted on an Object of class " + o.getClass().getName()
+                + " [Identity Hashcode : 0x" + Integer.toHexString(System.identityHashCode(o)) + "] "
+                + " which is a shared object, however there is no associated clustered lock held by the current thread. This usually means that the object became shared within a synchronized block/method.");
     }
 
     return dsoMonitorEntered;
