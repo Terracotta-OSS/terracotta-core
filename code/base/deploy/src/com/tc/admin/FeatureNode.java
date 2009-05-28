@@ -29,7 +29,9 @@ public class FeatureNode extends ComponentNode {
   @Override
   public Component getComponent() {
     if (featurePanel == null) {
+      adminClientContext.block();
       featurePanel = new FeaturePanel(feature, adminClientContext, clusterModel);
+      adminClientContext.unblock();
     }
     return featurePanel;
   }

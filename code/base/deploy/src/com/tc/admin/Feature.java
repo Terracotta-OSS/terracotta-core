@@ -16,24 +16,29 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashMap;
+import java.net.URLClassLoader;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import javax.management.ObjectName;
 
-public class Feature extends ClassLoader {
-  private static TCLogger                             logger        = TCLogging.getLogger(Feature.class);
+public class Feature extends URLClassLoader {
+  private static TCLogger                             logger = TCLogging.getLogger(Feature.class);
 
   private String                                      symbolicName;
   private String                                      displayName;
   private final Map<ObjectName, TIMByteProviderMBean> byteProviderMap;
-  private int                                         tab           = -1;
-  private final HashMap<String, File>                 resourceTable = new HashMap<String, File>();
+  private int                                         tab    = -1;
+  // private final HashMap<String, File> resourceTable = new HashMap<String, File>();
+  private URL                                         moduleLocation;
 
   protected Feature() {
-    super(Feature.class.getClassLoader());
+    super(new URL[] {}, Feature.class.getClassLoader());
     byteProviderMap = new LinkedHashMap<ObjectName, TIMByteProviderMBean>();
   }
 
@@ -52,8 +57,16 @@ public class Feature extends ClassLoader {
     return displayName != null ? displayName : symbolicName;
   }
 
+  private boolean loadingModule = false;
+
   public void addTIMByteProvider(ObjectName objName, TIMByteProviderMBean byteProvider) {
     byteProviderMap.put(objName, byteProvider);
+    synchronized (this) {
+      if (moduleLocation == null && !loadingModule) {
+        loadingModule = true;
+        loadModule();
+      }
+    }
   }
 
   public boolean removeTIMByteProvider(ObjectName objName) {
@@ -88,47 +101,47 @@ public class Feature extends ClassLoader {
     return null;
   }
 
-  @Override
-  protected Class findClass(String className) throws ClassNotFoundException, ClassFormatError {
-    byte[] classBytes = null;
-    Class classClass = null;
-
-    try {
-      classBytes = loadFromByteProviders(className.replace('.', '/') + ".class");
-    } catch (IOException ioe) {
-      throw new ClassNotFoundException(className, ioe);
-    }
-    classClass = defineClass(className, classBytes, 0, classBytes.length);
-    if (classClass == null) { throw new ClassFormatError(className); }
-    logger.debug(className + " loaded from the ByteProvider");
-    return classClass;
-  }
-
-  @Override
-  protected URL findResource(String name) {
-    try {
-      File localResourceFile = resourceTable.get(name);
-      if (localResourceFile == null) {
-        logger.debug("findResource: " + name + " at the ByteProvider.");
-        byte[] resourceBytes = loadFromByteProviders(name);
-        if (resourceBytes == null) {
-          logger.debug("Resource " + name + " not found by ByteProvider.");
-          return null;
-        }
-        localResourceFile = createLocalResourceFile(name, resourceBytes);
-        resourceTable.put(name, localResourceFile);
-        logger.debug("stored locally: " + localResourceFile);
-      }
-      return getLocalResourceURL(localResourceFile);
-    } catch (Exception e) {
-      logger.debug("Exception " + e);
-    }
-    return super.findResource(name);
-  }
-
-  protected URL getLocalResourceURL(File file) throws MalformedURLException {
-    return file.toURL();
-  }
+  // @Override
+  // protected Class findClass(String className) throws ClassNotFoundException, ClassFormatError {
+  // byte[] classBytes = null;
+  // Class classClass = null;
+  //
+  // try {
+  // classBytes = loadFromByteProviders(className.replace('.', '/') + ".class");
+  // } catch (IOException ioe) {
+  // throw new ClassNotFoundException(className, ioe);
+  // }
+  // classClass = defineClass(className, classBytes, 0, classBytes.length);
+  // if (classClass == null) { throw new ClassFormatError(className); }
+  // logger.debug(className + " loaded from the ByteProvider");
+  // return classClass;
+  // }
+  //
+  // @Override
+  // public URL findResource(String name) {
+  // try {
+  // File localResourceFile = resourceTable.get(name);
+  // if (localResourceFile == null) {
+  // logger.debug("findResource: " + name + " at the ByteProvider.");
+  // byte[] resourceBytes = loadFromByteProviders(name);
+  // if (resourceBytes == null) {
+  // logger.debug("Resource " + name + " not found by ByteProvider.");
+  // return null;
+  // }
+  // localResourceFile = createLocalResourceFile(name, resourceBytes);
+  // resourceTable.put(name, localResourceFile);
+  // logger.debug("stored locally: " + localResourceFile);
+  // }
+  // return getLocalResourceURL(localResourceFile);
+  // } catch (Exception e) {
+  // logger.debug("Exception " + e);
+  // }
+  // return super.findResource(name);
+  // }
+  //
+  // protected URL getLocalResourceURL(File file) throws MalformedURLException {
+  // return file.toURL();
+  // }
 
   protected File createLocalResourceFile(String name, byte[] bytes) throws MalformedURLException,
       FileNotFoundException, IOException {
@@ -153,6 +166,23 @@ public class Feature extends ClassLoader {
     return result;
   }
 
+  public byte[] loadModuleBytes() throws IOException {
+    byte[] result = null;
+    Iterator<TIMByteProviderMBean> iter = byteProviders();
+    while (iter.hasNext()) {
+      try {
+        result = iter.next().getModuleBytes();
+      } catch (IOException ioe) {
+        /**/
+      }
+    }
+    if (result == null) {
+      throw new IOException("Bytes for '" + symbolicName + "' not found by any ByteProvider");
+    } else {
+      return result;
+    }
+  }
+
   protected byte[] loadFromByteProviders(String name) throws IOException {
     byte[] result = null;
     Iterator<TIMByteProviderMBean> iter = byteProviders();
@@ -167,6 +197,30 @@ public class Feature extends ClassLoader {
       throw new IOException("Bytes for '" + name + "' not found by any ByteProvider");
     } else {
       return result;
+    }
+  }
+
+  private void loadModule() {
+    ExecutorService executorService = Executors.newSingleThreadExecutor();
+    final Future<URL> future = executorService.submit(new ModuleLoaderFuture());
+    new Thread() {
+      @Override
+      public void run() {
+        try {
+          addURL(moduleLocation = future.get());
+          loadingModule = false;
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+    }.start();
+  }
+
+  private class ModuleLoaderFuture implements Callable<URL> {
+    public URL call() throws Exception {
+      byte[] bytes = loadModuleBytes();
+      File f = createLocalResourceFile(symbolicName, bytes);
+      return f.toURL();
     }
   }
 

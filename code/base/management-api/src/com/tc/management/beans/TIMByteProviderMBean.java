@@ -9,4 +9,6 @@ public interface TIMByteProviderMBean {
   public String getManifestEntry(String name);
 
   public byte[] getResourceAsByteArray(String name) throws IOException;
+
+  public byte[] getModuleBytes() throws IOException;
 }
