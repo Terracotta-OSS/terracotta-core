@@ -318,6 +318,10 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
           XmlError error = beanWithErrors.errors()[i];
           buf.append("  [" + i + "]: Line " + error.getLine() + ", column " + error.getColumn() + ": "
                      + error.getMessage() + "\n");
+          if (error.getMessage().indexOf("spring") > -1) {
+            buf.append("  Clustered Spring bean support has been removed in this version of Terracotta. Please visit this page " +
+                       "http://www.terracotta.org/web/display/orgsite/Spring+Integration for more information.\n");
+          }
         }
 
         throw new ConfigurationSetupException("The configuration data in the " + descrip + " does not obey the "
