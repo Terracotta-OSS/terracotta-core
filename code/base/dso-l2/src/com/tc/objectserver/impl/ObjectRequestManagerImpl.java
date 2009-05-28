@@ -191,7 +191,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
       }
 
       if (!missingObjectIDs.isEmpty()) {
-        if (isServerInitiated || isPrefetched) {
+        if (isServerInitiated) {
           // This is a possible case where changes are flying in and server is initiating some lookups and the lookups
           // go pending and in the meantime the changes made those looked up objects garbage and DGC removes those
           // objects. Now we don't want to send those missing objects to clients. Its not really an issue as the

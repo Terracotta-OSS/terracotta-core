@@ -156,15 +156,14 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
   }
 
   public synchronized void preFetchObject(ObjectID id) {
-    if (isPrefetched(id)) { return; }
+    if (this.dnaRequests.containsKey(id)) { return; }
 
     // These objects are not marked as being pre-fetched so multiple request for the same object can end up in the
     // server. A potential optimization that can be done.
     ObjectRequestContext ctxt = new ObjectRequestContextImpl(this.cip.getClientID(),
                                                              new ObjectRequestID(this.objectRequestIDCounter++), id,
                                                              this.defaultDepth, ObjectID.NULL_ID, true);
-    RequestManagedObjectMessage rmom = createRequestManagedObjectMessage(ctxt);
-    rmom.send();
+    sendRequest(ctxt);
   }
 
   public DNA retrieve(final ObjectID id) {
@@ -192,30 +191,31 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
     boolean inMemory = true;
     long startTime = System.currentTimeMillis();
     long totalTime = 0;
-    while (!this.dnaRequests.containsKey(id) || this.dnaRequests.get(id) == null || this.missingObjectIDs.contains(id)) {
+    while (true) {
       waitUntilRunning();
-      if (this.missingObjectIDs.contains(id)) {
+      DNA dna = (DNA) this.dnaRequests.get(id);
+      if (dna != null) {
+        break;
+      } else if (this.missingObjectIDs.contains(id)) {
         throw new TCObjectNotFoundException(id.toString(), this.missingObjectIDs);
       } else if (!this.dnaRequests.containsKey(id)) {
-        inMemory = false;
         sendRequest(ctxt);
       } else if (!this.outstandingObjectRequests.containsKey(id)) {
         this.outstandingObjectRequests.put(id, ctxt);
       }
 
-      if (this.dnaRequests.get(id) == null) {
-        long current = System.currentTimeMillis();
-        if (current - startTime >= RETRIEVE_WAIT_INTERVAL) {
-          totalTime += current - startTime;
-          startTime = current;
-          this.logger.warn("Still waiting for " + totalTime + " ms to retrieve " + id + " depth : " + depth
-                           + " parent : " + parentContext);
-        }
-        try {
-          wait(RETRIEVE_WAIT_INTERVAL);
-        } catch (InterruptedException e) {
-          isInterrupted = true;
-        }
+      inMemory = false;
+      long current = System.currentTimeMillis();
+      if (current - startTime >= RETRIEVE_WAIT_INTERVAL) {
+        totalTime += current - startTime;
+        startTime = current;
+        this.logger.warn("Still waiting for " + totalTime + " ms to retrieve " + id + " depth : " + depth
+                         + " parent : " + parentContext);
+      }
+      try {
+        wait(RETRIEVE_WAIT_INTERVAL);
+      } catch (InterruptedException e) {
+        isInterrupted = true;
       }
     }
     Util.selfInterruptIfNeeded(isInterrupted);
