@@ -19,7 +19,7 @@ public class ThreadDumpUtilTestBase extends TCTestCase {
   /**
    * Create some threads, and take a thread dump.
    */
-  protected static String getDump(int numThreads, Class<? extends TraceThread> threadClazz) throws Exception {
+  protected static String getDump(TraceThread[] threads) throws Exception {
     final Object lock = new Object();
     final String[] dump = new String[1];
     Runnable runnable = new Runnable() {
@@ -30,11 +30,10 @@ public class ThreadDumpUtilTestBase extends TCTestCase {
         }
       }
     };
+    int numThreads = threads.length;
     final ObserverGate gate = new ObserverGate(numThreads, runnable);
     
-    TraceThread[] threads = new TraceThread[numThreads];
     for (int i = 0; i < numThreads; i++) {
-      threads[i] = threadClazz.newInstance();
       threads[i].init(gate);
       threads[i].start();
     }
@@ -52,7 +51,7 @@ public class ThreadDumpUtilTestBase extends TCTestCase {
   /**
    * A thread that we will look for on the stack trace
    */
-  protected static class TraceThread extends Thread {
+  public static class TraceThread extends Thread {
     
     private ObserverGate gate;
     @Override
@@ -73,14 +72,11 @@ public class ThreadDumpUtilTestBase extends TCTestCase {
   /**
    * A thread that overrides getId() - kids, don't try this at home
    */
-  protected static class BadIdThread extends TraceThread {
+  public static class BadIdThread extends TraceThread {
     
     @Override
     public long getId() {
-      long id = super.getId();
-      // override half the ids
-      id = (id % 2 == 0) ? id : id + 1000000L; // 1000000L to avoid collisions with system threads
-      return id;
+      return super.getId() + 1000000L; // 1000000L to avoid collisions with system threads
     }
     
   }

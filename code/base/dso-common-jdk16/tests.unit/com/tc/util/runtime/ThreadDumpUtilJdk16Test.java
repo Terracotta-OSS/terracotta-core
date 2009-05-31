@@ -10,7 +10,11 @@ public class ThreadDumpUtilJdk16Test extends ThreadDumpUtilTestBase {
 
   public void testThreadDump() throws Throwable {
     final int numThreads = 10;
-    String dump = getDump(numThreads, TraceThread.class);
+    TraceThread[] threads = new TraceThread[numThreads];
+    for (int i = 0; i < numThreads; ++i) {
+      threads[i] = new TraceThread();
+    }
+    String dump = getDump(threads);
     
     try {
       assertTrue(dump.contains("- locked"));
@@ -20,9 +24,9 @@ public class ThreadDumpUtilJdk16Test extends ThreadDumpUtilTestBase {
       
       // we expect to see all the created threads waiting on a CountDownLatch
       assertEquals(numThreads, countSubstrings(dump, OBSERVER_GATE));
-    } catch (Throwable e) {
+    } catch (Throwable t) {
       System.err.println(dump);
-      throw e;
+      throw t;
     }
   }
 
@@ -31,8 +35,12 @@ public class ThreadDumpUtilJdk16Test extends ThreadDumpUtilTestBase {
    * When this happens we need to behave gracefully.  See CDV-1262.
    */
   public void testBadThreadId() throws Throwable {
-    int numThreads = 10;
-    String dump = getDump(numThreads, BadIdThread.class);
+    final int numThreads = 10;
+    TraceThread[] threads = new TraceThread[numThreads];
+    for (int i = 0; i < numThreads; ++i) {
+      threads[i] = (i % 2 == 0) ? new TraceThread() : new BadIdThread();
+    }
+    String dump = getDump(threads);
     
     try {
       Assert.eval("The text \"Full thread dump \" should be present in the thread dump",
@@ -43,9 +51,9 @@ public class ThreadDumpUtilJdk16Test extends ThreadDumpUtilTestBase {
       
       // half the strings should be complaining about unrecognized IDs
       assertEquals(numThreads / 2, countSubstrings(dump, OVERRIDDEN));
-    } catch (Throwable e) {
+    } catch (Throwable t) {
       System.err.println(dump);
-      throw e;
+      throw t;
     }
   }
 }
