@@ -1,8 +1,10 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.io;
 
+import java.io.IOException;
 
 public final class TestTCDataOutput implements TCDataOutput {
 
@@ -62,6 +64,18 @@ public final class TestTCDataOutput implements TCDataOutput {
 
   public void writeString(String string) {
     out.writeString(string);
+  }
+
+  public void writeBytes(String s) throws IOException {
+    out.writeBytes(s);
+  }
+
+  public void writeChars(String s) throws IOException {
+    out.writeChars(s);
+  }
+
+  public void writeUTF(String str) throws IOException {
+    out.writeUTF(str);
   }
 
 }
