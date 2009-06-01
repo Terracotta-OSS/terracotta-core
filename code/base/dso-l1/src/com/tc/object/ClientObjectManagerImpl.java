@@ -397,10 +397,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return obj.getObjectID();
   }
 
-  public void markReferenced(final TCObject tcobj) {
-    this.cache.markReferenced(tcobj);
-  }
-
   /**
    * Prefetch object by ID, faulting into the JVM if necessary, Async lookup and will not cause ObjectNotFoundException
    * like lookupObject. Non-existent objects are ignored by the server.

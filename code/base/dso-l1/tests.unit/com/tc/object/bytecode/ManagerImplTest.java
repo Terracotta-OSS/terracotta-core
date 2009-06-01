@@ -211,10 +211,6 @@ public class ManagerImplTest extends BaseDSOTestCase {
       return false;
     }
 
-    public void markReferenced(final TCObject tcobj) {
-      throw new ImplementMe();
-    }
-
     public boolean isPortableInstance(final Object pojo) {
       throw new ImplementMe();
     }

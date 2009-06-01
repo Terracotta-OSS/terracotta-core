@@ -18,7 +18,6 @@ import com.tc.util.Assert;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -26,10 +25,10 @@ import java.util.Map;
 public class TestClientObjectManager implements ClientObjectManager {
   public final Map                 objects         = new HashMap();
   public final Map                 object2TCObject = new IdentityHashMap();
-  private int                      idSequence      = 1;
+  private final ReferenceQueue     referenceQueue  = new ReferenceQueue();
   private final Object             root            = new IdentityHashMap();
   private boolean                  isManaged;
-  private ReferenceQueue           referenceQueue;
+  private int                      idSequence      = 1;
   private ClientTransactionManager txManager;
 
   public void add(final Object id, final TCObject tc) {
@@ -96,11 +95,6 @@ public class TestClientObjectManager implements ClientObjectManager {
     throw new ImplementMe();
   }
 
-  public Collection getAllObjectIDsAndClear(final Collection c) {
-    c.addAll(this.objects.keySet());
-    return c;
-  }
-
   public TCObject lookup(final ObjectID id) {
     System.out.println(this + ".lookup(" + id + ")");
     return (TCObject) this.objects.get(id);
@@ -126,20 +120,8 @@ public class TestClientObjectManager implements ClientObjectManager {
     this.txManager = txManager;
   }
 
-  public void setReferenceQueue(final ReferenceQueue rq) {
-    this.referenceQueue = rq;
-  }
-
-  public ReferenceQueue getReferenceQueue() {
-    return this.referenceQueue;
-  }
-
   public ObjectID lookupExistingObjectID(final Object obj) {
     return ((TCObject) this.object2TCObject.get(obj)).getObjectID();
-  }
-
-  public void markReferenced(final TCObject tcobj) {
-    // mark referenced
   }
 
   public void shutdown() {
@@ -164,18 +146,6 @@ public class TestClientObjectManager implements ClientObjectManager {
 
   public Object lookupRoot(final String name) {
     throw new ImplementMe();
-  }
-
-  public void unpause() {
-    return;
-  }
-
-  public void pause() {
-    return;
-  }
-
-  public void starting() {
-    return;
   }
 
   public void checkPortabilityOfField(final Object value, final String fieldName, final Object pojo)
