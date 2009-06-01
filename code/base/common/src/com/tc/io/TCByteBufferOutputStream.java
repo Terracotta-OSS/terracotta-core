@@ -78,6 +78,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
     return new Mark(buffers.size(), current.position(), getBytesWritten());
   }
 
+  @Override
   public void write(int b) {
     checkClosed();
 
@@ -90,6 +91,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
     current.put((byte) b);
   }
 
+  @Override
   public void write(byte b[]) {
     write(b, 0, b.length);
   }
@@ -116,14 +118,14 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
       buffers.add(current.limit(current.position()).position(0));
     }
 
-    for (int i = 0, n = data.length; i < n; i++) {
-      int len = data[i].limit();
+    for (TCByteBuffer element : data) {
+      int len = element.limit();
       if (len == 0) {
         continue;
       }
 
       written += len;
-      buffers.add(data[i].duplicate().position(0));
+      buffers.add(element.duplicate().position(0));
     }
 
     if (!reuseCurrent) {
@@ -136,6 +138,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
     return written;
   }
 
+  @Override
   public void write(byte b[], final int offset, final int length) {
     checkClosed();
 
@@ -161,6 +164,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
     }
   }
 
+  @Override
   public void close() {
     if (!closed) {
       finalizeBuffers();
@@ -177,6 +181,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
     return (TCByteBuffer[]) buffers.toArray(rv);
   }
 
+  @Override
   public String toString() {
     return (buffers == null) ? "null" : buffers.toString();
   }
@@ -324,7 +329,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
     writeString(string, false);
   }
 
-  public void writeString(String string, boolean forceRaw) {
+  private void writeString(String string, boolean forceRaw) {
     // Is null? (true/false)
     if (string == null) {
       writeBoolean(true);
@@ -443,7 +448,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
 
     /**
      * Copy (by invoking write() on the destination stream) the given length of bytes starting at this mark
-     *
+     * 
      * @throws IOException
      */
     public void copyTo(TCByteBufferOutput dest, int length) {
@@ -473,6 +478,18 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
         buffer.recycle();
       }
     }
+  }
+
+  public void writeBytes(String s) {
+    throw new UnsupportedOperationException("use writeString() instead");
+  }
+
+  public void writeChars(String s) {
+    writeString(s, true);
+  }
+
+  public void writeUTF(String str) {
+    throw new UnsupportedOperationException("use writeString() instead");
   }
 
 }
