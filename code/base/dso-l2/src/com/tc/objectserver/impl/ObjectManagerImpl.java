@@ -886,7 +886,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
 
     // TODO:: Send the right objects to the cache manager
-    stat.objectEvicted(evicted, references_size(), Collections.EMPTY_LIST);
+    stat.objectEvicted(evicted, references_size(), Collections.EMPTY_LIST, true);
   }
 
   private void updateFlushStats(final Collection<ManagedObject> toFlush, final Collection<ManagedObjectReference> removedObjects) {

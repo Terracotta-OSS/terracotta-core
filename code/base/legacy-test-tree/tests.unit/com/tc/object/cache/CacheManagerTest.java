@@ -136,7 +136,7 @@ public class CacheManagerTest extends TCTestCase implements Evictable {
         evicted++;
       }
     }
-    stat.objectEvicted(evicted, v.size(), targetObjects4GC);
+    stat.objectEvicted(evicted, v.size(), targetObjects4GC, true);
     if (callCount.increment() % 10 == 1) {
       log(stat.toString());
       log("Asked to evict - " + toEvict + " Evicted : " + evicted + " Vector Size : " + v.size());
@@ -165,7 +165,7 @@ public class CacheManagerTest extends TCTestCase implements Evictable {
         int toEvict = stat.getObjectCountToEvict(v.size());
         int willRemain = v.size() - toEvict;
         log("Current Size : " + v.size() + " To Evict : " + toEvict + " Will Remain : " + willRemain);
-        if (toEvict == 0) return;   // Below threshold
+        if (toEvict == 0) return; // Below threshold
         assertTrue(willRemain <= criticalObjectCount);
         assertTrue((willRemain + (2 * criticalObjectCount * evictionPercentage / 100)) > criticalObjectCount);
         CacheManagerTest.this.evict(stat, toEvict);

@@ -9,5 +9,5 @@ public interface CacheStats {
   
   public int getObjectCountToEvict(int currentCount);
   
-  public void objectEvicted(int evictedCount, int currentCount, List targetObjects4GC);
+  public void objectEvicted(int evictedCount, int currentCount, List targetObjects4GC, boolean printNewObjects);
 }

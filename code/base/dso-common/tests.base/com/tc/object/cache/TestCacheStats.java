@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.cache;
 
@@ -30,7 +31,7 @@ public class TestCacheStats implements CacheStats {
     return toEvict;
   }
 
-  public void objectEvicted(int evictedCount, int currentCount, List targetObjects4GC) {
+  public void objectEvicted(int evictedCount, int currentCount, List targetObjects4GC, boolean printNewObjects) {
     this.evicted = evictedCount;
     this.countAfter = currentCount;
     this.objectsEvicted = targetObjects4GC;

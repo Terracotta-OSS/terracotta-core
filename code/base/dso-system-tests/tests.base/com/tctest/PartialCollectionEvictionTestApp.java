@@ -91,7 +91,7 @@ public class PartialCollectionEvictionTestApp extends AbstractErrorCatchingTrans
       return Math.max(target - evicted, 0);
     }
 
-    public void objectEvicted(int evictedCount, int currentCount, List targetObjects4GC) {
+    public void objectEvicted(int evictedCount, int currentCount, List targetObjects4GC, boolean printNewObjects) {
       System.err.println("Evicted : " + evictedCount);
       evicted += evictedCount;
     }

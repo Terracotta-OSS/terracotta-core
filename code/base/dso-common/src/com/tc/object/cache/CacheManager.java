@@ -184,7 +184,7 @@ public class CacheManager implements CacheMemoryEventsListener {
       }
     }
 
-    public void objectEvicted(int evictedCount, int currentCount, List targetObjects4GC) {
+    public void objectEvicted(int evictedCount, int currentCount, List targetObjects4GC, boolean printNewObjects) {
       this.evicted = evictedCount;
       this.countAfter = currentCount;
       state = COMPLETE;
@@ -192,8 +192,13 @@ public class CacheManager implements CacheMemoryEventsListener {
       final int newObjectsCount = getNewObjectsCount();
       final long timeTaken = System.currentTimeMillis() - startTime;
       if (config.isLoggingEnabled()) {
-        logger.info("Evicted " + evictedCount + " current Size = " + currentCount + " new objects created = "
-                    + newObjectsCount + " time taken = " + timeTaken + " ms");
+        if (!printNewObjects) {
+          logger.info("Evicted " + evictedCount + " current Size = " + currentCount + " time taken = " + timeTaken
+                      + " ms");
+        } else {
+          logger.info("Evicted " + evictedCount + " current Size = " + currentCount + " new objects created = "
+                      + newObjectsCount + " time taken = " + timeTaken + " ms");
+        }
       }
       if (statisticsAgentSubSystem.isActive()) {
         storeCacheObjectsEvictedStats(evictedCount, currentCount, newObjectsCount, timeTaken);

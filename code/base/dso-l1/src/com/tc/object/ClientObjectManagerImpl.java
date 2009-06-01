@@ -392,7 +392,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   public synchronized ObjectID lookupExistingObjectID(final Object pojo) {
     TCObject obj = basicLookup(pojo);
     if (obj == null) { throw new AssertionError("Missing object ID for: Object of class " + pojo.getClass().getName()
-                                                + " [Identity Hashcode : 0x" + Integer.toHexString(System.identityHashCode(pojo)) + "] "); }
+                                                + " [Identity Hashcode : 0x"
+                                                + Integer.toHexString(System.identityHashCode(pojo)) + "] "); }
     return obj.getObjectID();
   }
 
@@ -1267,7 +1268,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       toEvict -= removalCandidates.size();
     }
     // TODO:: Send the correct set of targetObjects2GC
-    stat.objectEvicted(totalReferencesCleared, idToManaged_size(), Collections.EMPTY_LIST);
+    stat.objectEvicted(totalReferencesCleared, idToManaged_size(), Collections.EMPTY_LIST, false);
   }
 
   // XXX:: Not synchronizing to improve performance, should be called only during cache eviction
