@@ -49,17 +49,19 @@ import java.util.Map.Entry;
 class ClientLock implements TimerCallback, LockFlushCallback {
   private static final int                COLLECTIONS_INTIAL_SIZE  = 4;
   private static final TCLogger           logger                   = TCLogging.getLogger(ClientLock.class);
+  private static final Map                EMPTY_MAP                = Collections.emptyMap();
+  private static final Set                EMPTY_SET                = Collections.emptySet();
 
   private static final State              RUNNING                  = new State("RUNNING");
   private static final State              PAUSED                   = new State("PAUSED");
 
   private final Map<ThreadID, LockHold>   holders                  = Collections.synchronizedMap(new HashMap(COLLECTIONS_INTIAL_SIZE));
-  private Set<ThreadID>                   rejectedLockRequesterIDs = Collections.<ThreadID>emptySet();
+  private Set<ThreadID>                   rejectedLockRequesterIDs = EMPTY_SET;
   private final Object                    rejectedLockRequesterGuard = new Object();
   private final LockID                    lockID;
-  private Map<ThreadID, Object>           waitLocksByRequesterID   = Collections.<ThreadID, Object>emptyMap();
-  private Map<ThreadID, LockRequest>      pendingLockRequests      = Collections.<ThreadID, LockRequest>emptyMap();
-  private Map<WaitLockRequest, TimerTask> waitTimers               = Collections.<WaitLockRequest, TimerTask>emptyMap();
+  private Map<ThreadID, Object>           waitLocksByRequesterID   = EMPTY_MAP;
+  private Map<ThreadID, LockRequest>      pendingLockRequests      = EMPTY_MAP;
+  private Map<WaitLockRequest, TimerTask> waitTimers               = EMPTY_MAP;
   private final RemoteLockManager         remoteLockManager;
   private final TCLockTimer               lockTimer;
 
@@ -356,24 +358,18 @@ class ClientLock implements TimerCallback, LockFlushCallback {
           Assert.assertNotNull(holder);
           server_level = holder.goToWaitState();
 
-          Object prev;
-          try {
-            prev = waitLocksByRequesterID.put(threadID, waitLock);
-          } catch (UnsupportedOperationException e) {
+          if (waitLocksByRequesterID == EMPTY_MAP) {
             waitLocksByRequesterID = new HashMap<ThreadID, Object>(COLLECTIONS_INTIAL_SIZE);
-            prev = waitLocksByRequesterID.put(threadID, waitLock);
           }
+          Object prev = waitLocksByRequesterID.put(threadID, waitLock);
           Assert.eval(prev == null);
 
           WaitLockRequest waitLockRequest = new WaitLockRequest(lockID, threadID, server_level, lockObjectType, call);
 
-          LockRequest outstanding;
-          try {
-            outstanding = pendingLockRequests.put(threadID, waitLockRequest);
-          } catch (UnsupportedOperationException e) {
+          if (pendingLockRequests == EMPTY_MAP) {
             pendingLockRequests = new LinkedHashMap<ThreadID, LockRequest>(COLLECTIONS_INTIAL_SIZE);
-            outstanding = pendingLockRequests.put(threadID, waitLockRequest);
           }
+          LockRequest outstanding = pendingLockRequests.put(threadID, waitLockRequest);
           Assert.assertNull("WaitLockRequest already pending", outstanding);
 
           if (action.doAwardGreedyLocks()) {
@@ -458,12 +454,10 @@ class ClientLock implements TimerCallback, LockFlushCallback {
     } else {
       logger.warn("Pending request " + pending + " is not a waiter: " + waiter);
     }
-    try {
-      pendingLockRequests.put(threadID, pending);
-    } catch (UnsupportedOperationException e) {
+    if (pendingLockRequests == EMPTY_MAP) {
       pendingLockRequests = new LinkedHashMap<ThreadID, LockRequest>(COLLECTIONS_INTIAL_SIZE);
-      pendingLockRequests.put(threadID, pending);
     }
+    pendingLockRequests.put(threadID, pending);
   }
 
   /**
@@ -534,12 +528,10 @@ class ClientLock implements TimerCallback, LockFlushCallback {
 
   private void reject(ThreadID threadID) {
     synchronized (rejectedLockRequesterGuard) {
-      try {
-        rejectedLockRequesterIDs.add(threadID);
-      } catch (UnsupportedOperationException e) {
+      if (rejectedLockRequesterIDs == EMPTY_SET) {
         rejectedLockRequesterIDs = new HashSet<ThreadID>(COLLECTIONS_INTIAL_SIZE);
-        rejectedLockRequesterIDs.add(threadID);
       }
+      rejectedLockRequesterIDs.add(threadID);
     }
   }
 
@@ -612,27 +604,21 @@ class ClientLock implements TimerCallback, LockFlushCallback {
     } else {
       lockRequest = new LockRequest(lockID, threadID, lockLevel, lockObjectType);
     }
-    Object old;
-    try {
-      old = pendingLockRequests.put(threadID, lockRequest);
-    } catch (UnsupportedOperationException e) {
+    if (pendingLockRequests == EMPTY_MAP) {
       pendingLockRequests = new LinkedHashMap<ThreadID, LockRequest>(COLLECTIONS_INTIAL_SIZE);
-      old = pendingLockRequests.put(threadID, lockRequest);
     }
+    Object old = pendingLockRequests.put(threadID, lockRequest);
     if (old != null) {
       // formatting
-      throw new AssertionError("Lock request already outstandind - " + old);
+      throw new AssertionError("Lock request already outstanding - " + old);
     }
 
     // Add wait object for lock request
     Object o = new Object();
-    Object prev;
-    try {
-      prev = waitLocksByRequesterID.put(threadID, o);
-    } catch (UnsupportedOperationException e) {
+    if (waitLocksByRequesterID == EMPTY_MAP) {
       waitLocksByRequesterID = new HashMap<ThreadID, Object>(COLLECTIONS_INTIAL_SIZE);
-      prev = waitLocksByRequesterID.put(threadID, o);
     }
+    Object prev = waitLocksByRequesterID.put(threadID, o);
     if (prev != null) { throw new AssertionError("Assert Failed : Previous value is not null. Prev = " + prev
                                                  + " Thread id = " + threadID); }
     return o;
@@ -705,12 +691,10 @@ class ClientLock implements TimerCallback, LockFlushCallback {
   private synchronized void scheduleWaitTimeout(WaitLockRequest waitLockRequest) {
     final TimerTask timer = lockTimer.scheduleTimer(this, waitLockRequest.getTimerSpec(), waitLockRequest);
     if (timer != null) {
-      try {
-        waitTimers.put(waitLockRequest, timer);
-      } catch (UnsupportedOperationException e) {
+      if (waitTimers == EMPTY_MAP) {
         waitTimers = new HashMap<WaitLockRequest, TimerTask>(COLLECTIONS_INTIAL_SIZE);
-        waitTimers.put(waitLockRequest, timer);
       }
+      waitTimers.put(waitLockRequest, timer);
     }
   }
 
