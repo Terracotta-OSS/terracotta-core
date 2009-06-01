@@ -217,11 +217,11 @@ public class ModulesLoader {
 
   protected static void printModuleBuildInfo(Bundle bundle) {
     Dictionary headers = bundle.getHeaders();
-    StringBuilder sb = new StringBuilder("Terracotta-BuildInfo for module: " + bundle.getSymbolicName() + StringUtil.LINE_SEPARATOR);
+    StringBuilder sb = new StringBuilder("BuildInfo for module: " + bundle.getSymbolicName() + StringUtil.LINE_SEPARATOR);
     boolean found = false;
     for (Enumeration keys = headers.keys(); keys.hasMoreElements();) {
       String key = (String) keys.nextElement();
-      if (key.startsWith("Terracotta-BuildInfo")) {
+      if (key.indexOf("BuildInfo") > -1) {
         sb.append("  " + key + ": " + headers.get(key)).append(StringUtil.LINE_SEPARATOR);
         found = true;
       }
