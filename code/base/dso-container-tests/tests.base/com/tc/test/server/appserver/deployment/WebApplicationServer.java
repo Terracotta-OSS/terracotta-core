@@ -35,6 +35,4 @@ public interface WebApplicationServer extends Server {
   public File getWorkingDirectory();
   
   public File getTcConfigFile();
-
-  public File getCoresidentConfigFile();
 }

@@ -199,15 +199,6 @@ public class ServerManager {
     return appServer;
   }
 
-  public WebApplicationServer makeCoresidentWebApplicationServer(TcConfigBuilder config0, TcConfigBuilder config1,
-                                                                 final boolean enableDebug) throws Exception {
-    int i = ServerManager.appServerIndex++;
-    WebApplicationServer appServer = new GenericServer(config, factory, installation, config0.getTcConfigFile(),
-                                                       config1.getTcConfigFile(), i, tempDir, true, enableDebug);
-    addServerToStop(appServer);
-    return appServer;
-  }
-
   public FileSystemPath getTcConfigFile(String tcConfigPath) {
     URL url = getClass().getResource(tcConfigPath);
     Assert.assertNotNull("could not find: " + tcConfigPath, url);

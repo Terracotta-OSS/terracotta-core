@@ -75,16 +75,9 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
   private final File                        workingDir;
   private final String                      serverInstanceName;
   private final File                        tcConfigFile;
-  private final File                        coresidentConfigFile;
 
   public GenericServer(TestConfigObject config, AppServerFactory factory, AppServerInstallation installation,
                        File tcConfigFile, int serverId, File tempDir) throws Exception {
-    this(config, factory, installation, tcConfigFile, null, serverId, tempDir, false, false);
-  }
-
-  public GenericServer(TestConfigObject config, AppServerFactory factory, AppServerInstallation installation,
-                       File tcConfigFile, File coresidentConfigFile, int serverId, File tempDir, boolean coresident,
-                       boolean enableDebug) throws Exception {
     this.factory = factory;
     this.installation = installation;
     this.rmiRegistryPort = AppServerUtil.getPort();
@@ -93,7 +86,6 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     this.parameters = (StandardAppServerParameters) factory.createParameters(serverInstanceName);
     this.workingDir = new File(installation.sandboxDirectory(), serverInstanceName);
     this.tcConfigFile = tcConfigFile;
-    this.coresidentConfigFile = coresidentConfigFile;
 
     File bootJarFile = new File(config.normalBootJar());
 
@@ -101,13 +93,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
       parameters.appendSysProp("tc.base-dir", System.getProperty(TestConfigObject.TC_BASE_DIR));
       parameters.appendSysProp("com.tc.l1.modules.repositories", System.getProperty("com.tc.l1.modules.repositories"));
 
-      if (coresident) {
-        parameters.appendSysProp("tc.config", this.tcConfigFile.getAbsolutePath() + "#"
-                                              + this.coresidentConfigFile.getAbsolutePath());
-        parameters.appendSysProp("tc.dso.globalmode", false);
-      } else {
-        parameters.appendSysProp("tc.config", this.tcConfigFile.getAbsolutePath());
-      }
+      parameters.appendSysProp("tc.config", this.tcConfigFile.getAbsolutePath());
 
       parameters.appendJvmArgs("-Xbootclasspath/p:" + bootJarFile.getAbsolutePath());
       parameters.appendSysProp("tc.classpath", writeTerracottaClassPathFile());
@@ -137,7 +123,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
       }
     }
 
-    enableDebug(serverId, enableDebug);
+    enableDebug(serverId);
 
     // app server specific system props
     switch (appId) {
@@ -182,7 +168,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     return result.serverPort();
   }
 
-  private void enableDebug(int serverId, final boolean enableDebug) {
+  private void enableDebug(int serverId) {
     if (GC_LOGGING && !Vm.isIBM()) {
       parameters.appendJvmArgs("-verbose:gc");
       parameters.appendJvmArgs("-XX:+PrintGCDetails");
@@ -192,7 +178,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
                                    .getAbsolutePath());
     }
 
-    if (ENABLE_DEBUGGER || enableDebug) {
+    if (ENABLE_DEBUGGER) {
       int debugPort = 8000 + serverId;
       parameters.appendJvmArgs("-Xdebug");
       parameters.appendJvmArgs("-Xrunjdwp:server=y,transport=dt_socket,address=" + debugPort + ",suspend=y");
@@ -424,9 +410,5 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
 
   public File getTcConfigFile() {
     return tcConfigFile;
-  }
-
-  public File getCoresidentConfigFile() {
-    return coresidentConfigFile;
   }
 }
