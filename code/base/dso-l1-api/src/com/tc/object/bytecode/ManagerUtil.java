@@ -15,7 +15,6 @@ import com.tc.object.TCObject;
 import com.tc.object.bytecode.hook.impl.ArrayManager;
 import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.object.loaders.NamedClassLoader;
-import com.tc.object.partitions.PartitionManager;
 import com.tc.properties.TCProperties;
 
 import java.lang.reflect.Field;
@@ -43,17 +42,14 @@ public class ManagerUtil {
 
   public static Manager getManager() {
     if (!enabled) { return NULL_MANAGER; }
-    Manager rv = null;
     if (ClassProcessorHelper.USE_GLOBAL_CONTEXT) {
       return GlobalManagerHolder.instance;
-    } else if (ClassProcessorHelper.USE_PARTITIONED_CONTEXT) {
-      rv = PartitionManager.getPartitionManager();
     } else {
       ClassLoader loader = Thread.currentThread().getContextClassLoader();
-      rv = ClassProcessorHelper.getManager(loader);
+      Manager rv = ClassProcessorHelper.getManager(loader);
+      if (rv == null) { return NULL_MANAGER; }
+      return rv;
     }
-    if (rv == null) { return NULL_MANAGER; }
-    return rv;
   }
 
   /**

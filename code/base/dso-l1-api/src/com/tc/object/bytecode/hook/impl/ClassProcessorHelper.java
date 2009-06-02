@@ -5,7 +5,6 @@
 package com.tc.object.bytecode.hook.impl;
 
 import com.tc.aspectwerkz.transform.TransformationConstants;
-import com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory;
 import com.tc.net.NIOWorkarounds;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerUtil;
@@ -14,9 +13,7 @@ import com.tc.object.bytecode.hook.ClassPostProcessor;
 import com.tc.object.bytecode.hook.ClassPreProcessor;
 import com.tc.object.bytecode.hook.DSOContext;
 import com.tc.object.loaders.NamedClassLoader;
-import com.tc.object.partitions.PartitionManager;
 import com.tc.text.Banner;
-import com.tc.util.Assert;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -31,8 +28,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.logging.LogManager;
@@ -64,7 +59,6 @@ public class ClassProcessorHelper {
   private static final boolean     GLOBAL_MODE_DEFAULT       = true;
 
   public static final boolean      USE_GLOBAL_CONTEXT;
-  public static final boolean      USE_PARTITIONED_CONTEXT;
 
   private static final State       initState                 = new State();
 
@@ -73,7 +67,6 @@ public class ClassProcessorHelper {
   // This map should only hold a weak reference to the loader (key).
   // If we didn't we'd prevent loaders from being GC'd
   private static final Map         contextMap                = new WeakHashMap();
-  private static final Map         partitionedContextMap     = new HashMap();
 
   private static URLClassLoader    tcLoader;
   private static DSOContext        globalContext;
@@ -81,15 +74,11 @@ public class ClassProcessorHelper {
   private static final boolean     TRACE;
   private static final PrintStream TRACE_STREAM;
 
-  private static final String      PARTITIONED_MODE_SEP      = "#";
-
   private static volatile boolean  systemLoaderInitialized   = false;
 
   static {
 
     try {
-      // eagerly load this class
-      PartitionManager.init();
 
       // Make sure that the DSOContext class is loaded before using the
       // TC functionalities. This is needed for the IBM JDK when Hashtable is
@@ -101,13 +90,6 @@ public class ClassProcessorHelper {
         USE_GLOBAL_CONTEXT = Boolean.valueOf(global).booleanValue();
       } else {
         USE_GLOBAL_CONTEXT = GLOBAL_MODE_DEFAULT;
-      }
-
-      USE_PARTITIONED_CONTEXT = inferPartionedMode();
-      if (USE_PARTITIONED_CONTEXT && USE_GLOBAL_CONTEXT) {
-        Banner.errorBanner("Both Global Context and Partitioned Context can not be enabled at the same time."
-                           + "To use Partioned Context, you must set " + TC_DSO_GLOBALMODE_SYSPROP + "=false");
-        Util.exit();
       }
 
       // See if we should trace or not -- if so grab System.[out|err] and keep a local reference to it. Applications
@@ -132,12 +114,6 @@ public class ClassProcessorHelper {
 
   private static URLClassLoader createTCLoader() throws Exception {
     return new URLClassLoader(buildTerracottaClassPath(), null);
-  }
-
-  private static boolean inferPartionedMode() {
-    String tcConfig = System.getProperty(TVSConfigurationSetupManagerFactory.CONFIG_FILE_PROPERTY_NAME, null);
-    if (tcConfig == null) return false;
-    return tcConfig.indexOf(PARTITIONED_MODE_SEP) >= 0;
   }
 
   /**
@@ -397,10 +373,6 @@ public class ClassProcessorHelper {
         if (USE_GLOBAL_CONTEXT) {
           globalContext = createGlobalContext();
         }
-
-        if (USE_PARTITIONED_CONTEXT) {
-          initParitionedContexts();
-        }
         initState.initialized();
 
         System.setProperty(TC_ACTIVE_SYSPROP, Boolean.TRUE.toString());
@@ -411,34 +383,7 @@ public class ClassProcessorHelper {
       }
     }
   }
-
-  private static void initParitionedContexts() throws Exception {
-    String tcConfig = System.getProperty(TVSConfigurationSetupManagerFactory.CONFIG_FILE_PROPERTY_NAME);
-
-    Assert.assertNotNull(tcConfig);
-    Assert.assertTrue(tcConfig, tcConfig.indexOf(PARTITIONED_MODE_SEP) >= 0);
-
-    String partitionedConfigSpecs[] = tcConfig.split(PARTITIONED_MODE_SEP);
-    for (int i = 0; i < partitionedConfigSpecs.length; i++) {
-      Method m = getContextMethod("createContext", new Class[] { String.class });
-      DSOContext context = (DSOContext) m.invoke(null, new Object[] { partitionedConfigSpecs[i] });
-      context.getManager().init();
-      synchronized (partitionedContextMap) {
-        partitionedContextMap.put("Partition" + i, context);
-      }
-    }
-  }
-
-  public static int getNumPartitions() {
-    if (USE_PARTITIONED_CONTEXT) {
-      synchronized (partitionedContextMap) {
-        return partitionedContextMap.size();
-      }
-    }
-
-    return 1;
-  }
-
+  
   private static void initTCLogging() throws Exception {
     Class loggerClass = tcLoader.loadClass("com.tc.logging.Log4jSafeInit");
     Method theMethod = loggerClass.getMethod("init", new Class[0]);
@@ -456,41 +401,21 @@ public class ClassProcessorHelper {
   }
 
   /**
-   * Register a named classloader. If using a partitioned context, register the loader in all partitions.
+   * Register a named classloader.
    * @param webAppName the name of a web application that this is the loader for; or null if this is not
    * a web application classloader.
    */
   public static void registerGlobalLoader(NamedClassLoader loader, String webAppName) {
-    if (!USE_GLOBAL_CONTEXT && !USE_PARTITIONED_CONTEXT) { throw new IllegalStateException(
-                                                                                           "Not global/partitioned DSO mode"); }
+    if (!USE_GLOBAL_CONTEXT) { throw new IllegalStateException("Not global DSO mode"); }
     if (TRACE) traceNamedLoader(loader);
-
-    if (USE_PARTITIONED_CONTEXT) {
-      for (Iterator i = partitionedContextMap.values().iterator(); i.hasNext();) {
-        DSOContext context = (DSOContext) i.next();
-        context.getManager().registerNamedLoader(loader, webAppName);
-      }
-    } else {
-      ManagerUtil.registerNamedLoader(loader, webAppName);
-    }
+    ManagerUtil.registerNamedLoader(loader, webAppName);
   }
 
   /**
    * Shut down the ClassProcessorHelper
    */
   public static void shutdown() {
-    if (USE_PARTITIONED_CONTEXT) {
-      Manager[] managers = getPartitionedManagers();
-      for (Manager manager : managers) {
-        try {
-          manager.stop();
-        } catch (Throwable t) {
-          t.printStackTrace();
-        }
-      }
-      return;
-    }
-    if (!USE_GLOBAL_CONTEXT) { throw new IllegalStateException("Not global/partitioned DSO mode"); }
+    if (!USE_GLOBAL_CONTEXT) { throw new IllegalStateException("Not global DSO mode"); }
     try {
       if (globalContext != null) {
         globalContext.getManager().stop();
@@ -533,7 +458,6 @@ public class ClassProcessorHelper {
    * @return True if DSO sessions enabled
    */
   public static boolean isDSOSessions(String appName) {
-    if (USE_PARTITIONED_CONTEXT) return false;
 
     appName = ("/".equals(appName)) ? ROOT_WEB_APP_NAME : appName;
     try {
@@ -553,8 +477,7 @@ public class ClassProcessorHelper {
    * @param context DSOContext
    */
   public static void setContext(ClassLoader loader, DSOContext context) {
-    if (USE_GLOBAL_CONTEXT || USE_PARTITIONED_CONTEXT) { throw new IllegalStateException(
-                                                                                         "DSO Context is global/Partitioned in this VM"); }
+    if (USE_GLOBAL_CONTEXT) { throw new IllegalStateException("DSO Context is global in this VM"); }
 
     if ((loader == null) || (context == null)) {
       // bad dog
@@ -580,22 +503,6 @@ public class ClassProcessorHelper {
     return context.getManager();
   }
 
-  public static Manager[] getPartitionedManagers() {
-    if (!USE_PARTITIONED_CONTEXT) { return new Manager[] { ManagerUtil.getManager() }; }
-
-    final DSOContext[] contexts;
-    synchronized (partitionedContextMap) {
-      contexts = (DSOContext[]) partitionedContextMap.values().toArray(new DSOContext[partitionedContextMap.size()]);
-    }
-
-    Manager[] managers = new Manager[contexts.length];
-    for (int i = 0; i < contexts.length; i++) {
-      managers[i] = contexts[i].getManager();
-    }
-
-    return managers;
-  }
-
   /**
    * Get the DSOContext for this classloader
    *
@@ -604,7 +511,6 @@ public class ClassProcessorHelper {
    */
   public static DSOContext getContext(ClassLoader cl) {
     if (USE_GLOBAL_CONTEXT) return globalContext;
-    if (USE_PARTITIONED_CONTEXT) { return getFirstPartionedContext(); }
 
     synchronized (contextMap) {
       return (DSOContext) contextMap.get(cl);
@@ -695,16 +601,8 @@ public class ClassProcessorHelper {
 
   private static ClassPreProcessor getPreProcessor(ClassLoader caller) {
     if (USE_GLOBAL_CONTEXT) { return globalContext; }
-    if (USE_PARTITIONED_CONTEXT) { return getFirstPartionedContext(); }
     synchronized (contextMap) {
       return (ClassPreProcessor) contextMap.get(caller);
-    }
-  }
-
-  private static DSOContext getFirstPartionedContext() {
-    synchronized (partitionedContextMap) {
-      Iterator iter = partitionedContextMap.values().iterator();
-      return (DSOContext) (iter.hasNext() ? iter.next() : null);
     }
   }
 

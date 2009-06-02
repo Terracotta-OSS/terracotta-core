@@ -145,7 +145,6 @@ import com.tc.object.loaders.StandardClassLoaderAdapter;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.InstrumentationLoggerImpl;
 import com.tc.object.logging.NullInstrumentationLogger;
-import com.tc.object.partitions.PartitionManager;
 import com.tc.object.util.OverrideCheck;
 import com.tc.object.util.ToggleableStrongReference;
 import com.tc.plugins.ModulesLoader;
@@ -544,8 +543,6 @@ public class BootJarTool {
 
       loadTerracottaClass(IBatisAccessPlanInstance.class.getName());
       loadTerracottaClass(HibernateProxyInstance.class.getName());
-
-      loadTerracottaClass(PartitionManager.class.getName());
 
       addManagementClasses();
 
