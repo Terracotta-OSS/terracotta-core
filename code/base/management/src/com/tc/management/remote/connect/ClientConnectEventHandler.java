@@ -189,7 +189,8 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
   }
 
   private static void unregisterBeans(final MBeanServer beanServer, final List modifiedObjectNames) {
-    for (Iterator i = modifiedObjectNames.iterator(); i.hasNext();) {
+    List copy = new ArrayList(modifiedObjectNames);
+    for (Iterator i = copy.iterator(); i.hasNext();) {
       unregisterBean(beanServer, (ObjectName) i.next(), modifiedObjectNames);
     }
   }

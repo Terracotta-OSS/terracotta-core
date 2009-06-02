@@ -171,7 +171,9 @@ public class Feature extends URLClassLoader {
     Iterator<TIMByteProviderMBean> iter = byteProviders();
     while (iter.hasNext()) {
       try {
-        result = iter.next().getModuleBytes();
+        if ((result = iter.next().getModuleBytes()) != null) {
+          break;
+        }
       } catch (IOException ioe) {
         /**/
       }
