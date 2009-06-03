@@ -45,9 +45,11 @@ public class CommandRegistry {
     CommandLineParser parser = new GnuParser();
     try {
       CommandLine cli = parser.parse(cmd.options(), args);
-      if (cli.hasOption('h') || cli.hasOption("help")) {
+      if (cli.hasOption(AbstractCommand.OPTION_HELP) || cli.hasOption(AbstractCommand.LONGOPT_HELP)) {
         cmd.printHelp();
         return;
+      } else if (cli.hasOption(AbstractCommand.OPTION_UPDATE_INDEX) || cli.hasOption(AbstractCommand.LONGOPT_UDPATE_INDEX)) {
+        cmd.forceIndexUpdate();
       }
       cmd.execute(cli);
     } catch (ParseException e) {

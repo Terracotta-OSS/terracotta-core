@@ -49,4 +49,9 @@ public interface Command {
    * Print the help text for this command.
    */
   public void printHelp();
+  
+  /**
+   * Force tim-get to pull down fresh index
+   */
+  public void forceIndexUpdate();
 }

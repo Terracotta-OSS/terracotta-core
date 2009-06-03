@@ -29,16 +29,16 @@ import java.util.Map.Entry;
  * @author Jason Voegele (jvoegele@terracotta.org)
  */
 public abstract class AbstractCommand implements Command {
-  private static final String   OPTION_HELP  = "h";
-  private static final String   LONGOPT_HELP = "help";
-  // private static final String OPTION_PROXY = "p";
-  // private static final String LONGOPT_PROXY = "proxy";
+  static final String           OPTION_HELP          = "h";
+  static final String           LONGOPT_HELP         = "help";
+  static final String           OPTION_UPDATE_INDEX  = "u";
+  static final String           LONGOPT_UDPATE_INDEX = "update-index";
 
-  protected Options             options      = createOptions();
-  protected Map<String, String> arguments    = createArguments();
+  protected Options             options              = createOptions();
+  protected Map<String, String> arguments            = createArguments();
 
-  protected PrintWriter         out          = new PrintWriter(System.out, true);
-  protected PrintWriter         err          = new PrintWriter(System.err, true);
+  protected PrintWriter         out                  = new PrintWriter(System.out, true);
+  protected PrintWriter         err                  = new PrintWriter(System.err, true);
 
   @Inject
   @Named(ConfigAnnotation.CONFIG_INSTANCE)
@@ -48,7 +48,8 @@ public abstract class AbstractCommand implements Command {
     Options opts = new Options();
     opts.addOption(OPTION_HELP, LONGOPT_HELP, false,
                    "Display help information; ignores all other arguments when specified");
-    // opts.addOption(OPTION_PROXY, LONGOPT_PROXY, true, "HTTP proxy to use for remote operations");
+    opts.addOption(OPTION_UPDATE_INDEX, LONGOPT_UDPATE_INDEX, false,
+                   "Pull down fresh index instead of using cached version");
     return opts;
   }
 
@@ -99,13 +100,18 @@ public abstract class AbstractCommand implements Command {
     return "No description.";
   }
 
+  public void forceIndexUpdate() {
+    out.println("Index is set to be refreshed.");
+    config.setDataCacheExpirationInSeconds(0);
+  }
+
   /**
    * Default implementation that returns the name of the class (in lowercase) minus the "Command" suffix if it has one,
    */
   public String name() {
     return CommandUtil.deductNameFromClass(getClass());
   }
-  
+
   public Options options() {
     return options;
   }
