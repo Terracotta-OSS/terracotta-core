@@ -37,6 +37,8 @@ public class XContainer extends JPanel {
     for (Component comp : getComponents()) {
       if (comp instanceof XContainer) {
         ((XContainer) comp).tearDown();
+      } else if (comp instanceof XTabbedPane) {
+        ((XTabbedPane) comp).tearDown();
       }
     }
     removeAll();

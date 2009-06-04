@@ -9,13 +9,11 @@ import com.tc.admin.model.IClusterModel;
 
 import java.awt.Component;
 
-import javax.swing.JComponent;
-
 public class FeatureNode extends ComponentNode {
   protected Feature             feature;
   protected IAdminClientContext adminClientContext;
   protected IClusterModel       clusterModel;
-  protected JComponent          featurePanel;
+  protected FeaturePanel        featurePanel;
   protected ClientsNode         clientsNode;
 
   public FeatureNode(Feature feature, IAdminClientContext adminClientContext, IClusterModel clusterModel) {
@@ -38,5 +36,22 @@ public class FeatureNode extends ComponentNode {
 
   public Feature getFeature() {
     return feature;
+  }
+
+  @Override
+  public void tearDown() {
+    if (featurePanel != null) {
+      featurePanel.tearDown();
+    }
+
+    synchronized (this) {
+      feature = null;
+      adminClientContext = null;
+      clusterModel = null;
+      featurePanel = null;
+      clientsNode = null;
+    }
+
+    super.tearDown();
   }
 }

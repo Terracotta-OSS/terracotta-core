@@ -33,9 +33,8 @@ public class Feature extends URLClassLoader {
   private String                                      symbolicName;
   private String                                      displayName;
   private final Map<ObjectName, TIMByteProviderMBean> byteProviderMap;
-  private int                                         tab    = -1;
-  // private final HashMap<String, File> resourceTable = new HashMap<String, File>();
   private URL                                         moduleLocation;
+  private int                                         tab    = -1;
 
   protected Feature() {
     super(new URL[] {}, Feature.class.getClassLoader());
@@ -100,48 +99,6 @@ public class Feature extends URLClassLoader {
     }
     return null;
   }
-
-  // @Override
-  // protected Class findClass(String className) throws ClassNotFoundException, ClassFormatError {
-  // byte[] classBytes = null;
-  // Class classClass = null;
-  //
-  // try {
-  // classBytes = loadFromByteProviders(className.replace('.', '/') + ".class");
-  // } catch (IOException ioe) {
-  // throw new ClassNotFoundException(className, ioe);
-  // }
-  // classClass = defineClass(className, classBytes, 0, classBytes.length);
-  // if (classClass == null) { throw new ClassFormatError(className); }
-  // logger.debug(className + " loaded from the ByteProvider");
-  // return classClass;
-  // }
-  //
-  // @Override
-  // public URL findResource(String name) {
-  // try {
-  // File localResourceFile = resourceTable.get(name);
-  // if (localResourceFile == null) {
-  // logger.debug("findResource: " + name + " at the ByteProvider.");
-  // byte[] resourceBytes = loadFromByteProviders(name);
-  // if (resourceBytes == null) {
-  // logger.debug("Resource " + name + " not found by ByteProvider.");
-  // return null;
-  // }
-  // localResourceFile = createLocalResourceFile(name, resourceBytes);
-  // resourceTable.put(name, localResourceFile);
-  // logger.debug("stored locally: " + localResourceFile);
-  // }
-  // return getLocalResourceURL(localResourceFile);
-  // } catch (Exception e) {
-  // logger.debug("Exception " + e);
-  // }
-  // return super.findResource(name);
-  // }
-  //
-  // protected URL getLocalResourceURL(File file) throws MalformedURLException {
-  // return file.toURL();
-  // }
 
   protected File createLocalResourceFile(String name, byte[] bytes) throws MalformedURLException,
       FileNotFoundException, IOException {

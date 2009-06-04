@@ -18,6 +18,7 @@ public class FeaturePanel extends XContainer {
   protected Feature             feature;
   protected IAdminClientContext adminClientContext;
   protected IClusterModel       clusterModel;
+  protected Presentation        presentation;
 
   public FeaturePanel(Feature feature, IAdminClientContext adminClientContext, IClusterModel clusterModel) {
     super(new BorderLayout());
@@ -33,10 +34,10 @@ public class FeaturePanel extends XContainer {
     try {
       PresentationFactory factory;
       if ((factory = feature.getPresentationFactory()) != null) {
-        Presentation featurePanel = factory.create(PresentationContext.DEV);
-        if (featurePanel != null) {
-          add(featurePanel);
-          featurePanel.setup(adminClientContext, clusterModel);
+        presentation = factory.create(PresentationContext.DEV);
+        if (presentation != null) {
+          add(presentation);
+          presentation.setup(adminClientContext, clusterModel);
         } else {
           System.err.println("Failed to instantiate instance of '" + factory + "'");
         }
@@ -46,5 +47,21 @@ public class FeaturePanel extends XContainer {
     } catch (Exception e) {
       e.printStackTrace();
     }
+  }
+
+  @Override
+  public void tearDown() {
+    if (presentation != null) {
+      presentation.tearDown();
+    }
+
+    synchronized (this) {
+      feature = null;
+      adminClientContext = null;
+      clusterModel = null;
+      presentation = null;
+    }
+
+    super.tearDown();
   }
 }

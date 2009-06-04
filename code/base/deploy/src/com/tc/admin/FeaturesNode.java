@@ -25,20 +25,22 @@ import javax.management.ObjectName;
 import javax.swing.SwingUtilities;
 
 public class FeaturesNode extends ComponentNode implements NotificationListener {
-  protected IAdminClientContext       adminClientContext;
-  protected IClusterModel             clusterModel;
-  protected ClusterListener           clusterListener;
-  protected FeaturesPanel             featuresPanel;
-  protected ClientsNode               clientsNode;
-  protected Map<String, Feature>      featureMap;
-  protected Map<Feature, FeatureNode> nodeMap;
+  protected IAdminClientContext               adminClientContext;
+  protected IClusterModel                     clusterModel;
+  protected ClusterListener                   clusterListener;
+  protected FeaturesPanel                     featuresPanel;
+  protected ClientsNode                       clientsNode;
+  protected Map<String, Feature>              activeFeatureMap;
+  protected Map<Feature, FeatureNode>         nodeMap;
+
+  protected static final Map<String, Feature> allFeaturesMap = new LinkedHashMap<String, Feature>();
 
   public FeaturesNode(IAdminClientContext adminClientContext, IClusterModel clusterModel) {
     super(adminClientContext.getString("cluster.features"));
     this.adminClientContext = adminClientContext;
     this.clusterModel = clusterModel;
     this.clusterListener = new ClusterListener(clusterModel);
-    featureMap = new LinkedHashMap<String, Feature>();
+    activeFeatureMap = new LinkedHashMap<String, Feature>();
     nodeMap = new LinkedHashMap<Feature, FeatureNode>();
 
     clusterModel.addPropertyChangeListener(clusterListener);
@@ -107,7 +109,7 @@ public class FeaturesNode extends ComponentNode implements NotificationListener 
   }
 
   private void ensureFeatureNodes() {
-    Iterator<Map.Entry<String, Feature>> featureIter = featureMap.entrySet().iterator();
+    Iterator<Map.Entry<String, Feature>> featureIter = activeFeatureMap.entrySet().iterator();
     while (featureIter.hasNext()) {
       Map.Entry<String, Feature> entry = featureIter.next();
       Feature feature = entry.getValue();
@@ -133,10 +135,12 @@ public class FeaturesNode extends ComponentNode implements NotificationListener 
     if (StringUtils.equals("org.terracotta", on.getDomain()) && StringUtils.equals("Loader", on.getKeyProperty("type"))) {
       String symbolicName = on.getKeyProperty("feature");
       String name = on.getKeyProperty("name");
-      Feature feature = featureMap.get(symbolicName);
+      Feature feature = allFeaturesMap.get(symbolicName);
       if (feature == null) {
-        feature = new Feature(symbolicName, name);
-        featureMap.put(symbolicName, feature);
+        allFeaturesMap.put(symbolicName, feature = new Feature(symbolicName, name));
+      }
+      if (!activeFeatureMap.containsKey(symbolicName)) {
+        activeFeatureMap.put(symbolicName, feature);
       }
       TIMByteProviderMBean byteProvider = clusterModel.getActiveCoordinator().getMBeanProxy(on,
                                                                                             TIMByteProviderMBean.class);
@@ -149,7 +153,7 @@ public class FeaturesNode extends ComponentNode implements NotificationListener 
   protected boolean testUnregisterFeature(ObjectName on) {
     if (StringUtils.equals("org.terracotta", on.getDomain()) && StringUtils.equals("Loader", on.getKeyProperty("type"))) {
       String symbolicName = on.getKeyProperty("feature");
-      Feature feature = featureMap.get(symbolicName);
+      Feature feature = activeFeatureMap.get(symbolicName);
       if (feature != null) {
         feature.removeTIMByteProvider(on);
         if (feature.getTIMByteProviderCount() == 0) {
@@ -165,6 +169,7 @@ public class FeaturesNode extends ComponentNode implements NotificationListener 
     if (featuresPanel != null) {
       featuresPanel.remove(feature);
     }
+    activeFeatureMap.remove(feature.getSymbolicName());
     FeatureNode node = nodeMap.remove(feature);
     if (node != null) {
       removeChild(node);
@@ -198,7 +203,7 @@ public class FeaturesNode extends ComponentNode implements NotificationListener 
   public Component getComponent() {
     if (featuresPanel == null) {
       featuresPanel = new FeaturesPanel(adminClientContext, clusterModel);
-      featuresPanel.init(featureMap);
+      featuresPanel.init(activeFeatureMap);
     }
     return featuresPanel;
   }
@@ -210,14 +215,19 @@ public class FeaturesNode extends ComponentNode implements NotificationListener 
     clusterModel.removePropertyChangeListener(clusterListener);
     clusterListener.tearDown();
 
+    if (featuresPanel != null) {
+      featuresPanel.tearDown();
+    }
+
     synchronized (this) {
       adminClientContext = null;
       clusterModel = null;
       clusterListener = null;
-      featureMap.clear();
-      featureMap = null;
+      activeFeatureMap.clear();
+      activeFeatureMap = null;
       nodeMap.clear();
       nodeMap = null;
+      featuresPanel = null;
     }
 
     super.tearDown();
