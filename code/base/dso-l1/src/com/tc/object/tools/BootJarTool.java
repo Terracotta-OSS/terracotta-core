@@ -13,6 +13,7 @@ import org.apache.commons.cli.PosixParser;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.osgi.framework.BundleException;
 
 import com.tc.asm.ClassReader;
 import com.tc.asm.ClassVisitor;
@@ -254,7 +255,11 @@ public class BootJarTool {
     }
 
     // load the modules
-    ModulesLoader.initModules(this.configHelper, null, true);
+    try {
+      ModulesLoader.initModules(this.configHelper, null, true);
+    } catch (BundleException e) {
+      exit("Error during module initialization.", e);
+    }
 
     // put the user defined specs back not already included by modules
     for (Iterator i = userSpecs.iterator(); i.hasNext();) {
@@ -336,7 +341,7 @@ public class BootJarTool {
    * Checks if the given bootJarFile is complete; meaning: - All the classes declared in the configurations
    * <additional-boot-jar-classes/> section is present in the boot jar. - And there are no user-classes present in the
    * boot jar that is not declared in the <additional-boot-jar-classes/> section
-   * 
+   *
    * @return <code>true</code> if the boot jar is complete.
    */
   private final boolean isBootJarComplete(final File bootJarFile) {
@@ -1485,7 +1490,7 @@ public class BootJarTool {
 
   /**
    * Locates the root most cause of an Exception and returns its error message.
-   * 
+   *
    * @param throwable The exception whose root cause message is extracted.
    * @return The message of the root cause of an exception.
    */
@@ -1501,7 +1506,7 @@ public class BootJarTool {
 
   /**
    * Convenience method. Will delegate to exit(msg, null)
-   * 
+   *
    * @param msg The custom message to print
    */
   private final void exit(final String msg) {
@@ -1510,7 +1515,7 @@ public class BootJarTool {
 
   /**
    * Print custom error message and abort the application. The exit code is set to a non-zero value.
-   * 
+   *
    * @param msg The custom message to print
    * @param throwable The exception that caused the application to abort. If this parameter is not null then the message
    *        from the exception is also printed.
