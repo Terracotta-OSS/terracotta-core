@@ -41,8 +41,9 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
   private static final State                                PAUSED                                   = new State("PAUSED");
   private static final State                                RUNNING                                  = new State("RUNNING");
 
-  private final GroupID                                     groupID;
   private State                                             state                                    = RUNNING;
+
+  private final GroupID                                     groupID;
   private final DNAEncoding                                 encoding;
   private final ThreadIDManager                             threadIDManager;
   private final NodesWithObjectsMessageFactory              nwoFactory;
@@ -167,7 +168,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
 
     final WaitForResponse waitObject = new WaitForResponse();
 
-    synchronized (this) {
+    synchronized (waitObjects) {
       Assert.assertFalse(waitObjects.containsKey(thisThread));
 
       waitObjects.put(thisThread, waitObject);
@@ -187,7 +188,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
       Thread.currentThread().interrupt();
       // todo: should we return something special here?
     } finally {
-      synchronized (this) {
+      synchronized (waitObjects) {
         waitObjects.remove(thisThread);
         response = (R) responses.remove(thisThread);
       }
@@ -197,7 +198,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
 
   public void setResponse(final ThreadID threadID, final Object response) {
     final WaitForResponse waitObject;
-    synchronized (this) {
+    synchronized (waitObjects) {
       waitObject = waitObjects.get(threadID);
       if (null == waitObject) {
         // check if there was actually a wait object, since the waiting
@@ -214,35 +215,39 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     }
   }
 
-  private synchronized void resendOutstanding() {
-    for (NodesWithObjectsMessage oldMessage : outstandingNodesWithObjectsRequests.values()) {
-      final NodesWithObjectsMessage newMessage = nwoFactory.newNodesWithObjectsMessage(groupID);
-      for (ObjectID objectID : oldMessage.getObjectIDs()) {
-        newMessage.addObjectID(objectID);
+  private void resendOutstanding() {
+    synchronized (this) {
+      for (NodesWithObjectsMessage oldMessage : outstandingNodesWithObjectsRequests.values()) {
+        final NodesWithObjectsMessage newMessage = nwoFactory.newNodesWithObjectsMessage(groupID);
+        for (ObjectID objectID : oldMessage.getObjectIDs()) {
+          newMessage.addObjectID(objectID);
+        }
+        newMessage.setThreadID(oldMessage.getThreadID());
+        newMessage.send();
       }
-      newMessage.setThreadID(oldMessage.getThreadID());
-      newMessage.send();
-    }
 
-    for (KeysForOrphanedValuesMessage oldMessage : outstandingKeysForOrphanedValuesRequests.values()) {
-      final KeysForOrphanedValuesMessage newMessage = kfovFactory.newKeysForOrphanedValuesMessage(groupID);
-      newMessage.setMapObjectID(oldMessage.getMapObjectID());
-      newMessage.setThreadID(oldMessage.getThreadID());
-      newMessage.send();
-    }
+      for (KeysForOrphanedValuesMessage oldMessage : outstandingKeysForOrphanedValuesRequests.values()) {
+        final KeysForOrphanedValuesMessage newMessage = kfovFactory.newKeysForOrphanedValuesMessage(groupID);
+        newMessage.setMapObjectID(oldMessage.getMapObjectID());
+        newMessage.setThreadID(oldMessage.getThreadID());
+        newMessage.send();
+      }
 
-    for (NodeMetaDataMessage oldMessage : outstandingNodeMetaDataRequests.values()) {
-      final NodeMetaDataMessage newMessage = nmdmFactory.newNodeMetaDataMessage();
-      newMessage.setNodeID(oldMessage.getNodeID());
-      newMessage.setThreadID(oldMessage.getThreadID());
-      newMessage.send();
+      for (NodeMetaDataMessage oldMessage : outstandingNodeMetaDataRequests.values()) {
+        final NodeMetaDataMessage newMessage = nmdmFactory.newNodeMetaDataMessage();
+        newMessage.setNodeID(oldMessage.getNodeID());
+        newMessage.setThreadID(oldMessage.getThreadID());
+        newMessage.send();
+      }
     }
   }
 
-  public synchronized void pause(final NodeID remote, final int disconnected) {
-    assertNotPaused("Attempt to pause while PAUSED");
-    this.state = PAUSED;
-    notifyAll();
+  public void pause(final NodeID remote, final int disconnected) {
+    synchronized (this) {
+      assertNotPaused("Attempt to pause while PAUSED");
+      this.state = PAUSED;
+      this.notifyAll();
+    }
   }
 
   public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
@@ -250,20 +255,24 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     // NOP
   }
 
-  public synchronized void unpause(final NodeID remote, final int disconnected) {
-    assertPaused("Attempt to unpause while not PAUSED");
-    this.state = RUNNING;
-    resendOutstanding();
-    notifyAll();
+  public void unpause(final NodeID remote, final int disconnected) {
+    synchronized (this) {
+      assertPaused("Attempt to unpause while not PAUSED");
+      this.state = RUNNING;
+      resendOutstanding();
+      this.notifyAll();
+    }
   }
 
   private void waitUntilRunning() {
     boolean isInterrupted = false;
-    while (this.state != RUNNING) {
-      try {
-        wait();
-      } catch (InterruptedException e) {
-        isInterrupted = true;
+    synchronized (this) {
+      while (this.state != RUNNING) {
+        try {
+          this.wait();
+        } catch (InterruptedException e) {
+          isInterrupted = true;
+        }
       }
     }
     Util.selfInterruptIfNeeded(isInterrupted);
