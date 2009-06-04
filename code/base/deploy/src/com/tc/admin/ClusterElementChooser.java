@@ -63,7 +63,6 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
   private TreePath                selectionPath;
   private TreeMouseHandler        treeMouseHandler;
   private SelectionRenderer       selectionRenderer;
-  private final CellRendererPane  cellRendererPane;
   private XScrollPane             scroller;
   private JPopupMenu              popup;
   private boolean                 inited;
@@ -78,19 +77,19 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
     treeMouseHandler = new TreeMouseHandler();
 
     setBackground(UIManager.getColor("TextField.background"));
+    setForeground(UIManager.getColor("TextField.foreground"));
     setBorder(UIManager.getBorder("TextField.border"));
 
     GridBagConstraints gbc = new GridBagConstraints();
     gbc.gridy = gbc.gridx = 0;
     gbc.insets = new Insets(0, 1, 0, 0);
 
-    cellRendererPane = new CellRendererPane();
-    add(cellRendererPane);
-
+    gbc.fill = GridBagConstraints.BOTH;
     add(selectionRenderer = new SelectionRenderer(), gbc);
     gbc.gridx++;
     selectionRenderer.addMouseListener(triggerHandler);
 
+    gbc.fill = GridBagConstraints.NONE;
     add(triggerButton = createArrowButton(), gbc);
     triggerButton.setRequestFocusEnabled(false);
     triggerButton.resetKeyboardActions();
@@ -277,6 +276,8 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
   }
 
   private class SelectionRenderer extends JComponent {
+    CellRendererPane cellRendererPane = new CellRendererPane();
+
     @Override
     protected void paintComponent(Graphics g) {
       if (selectionPath != null) {
