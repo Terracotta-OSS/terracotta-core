@@ -15,10 +15,10 @@ class MavenDeploy
     end
 
     packaging ||= case file
-      when /pom.*\.xml$/: 'pom'
-      when /\.jar/: 'jar'
-      else
-        File.extname(file)[1..-1]
+    when /pom.*\.xml$/: 'pom'
+    when /\.jar/: 'jar'
+    else
+      File.extname(file)[1..-1]
     end
 
     command = dry_run ? ['echo'] : []
@@ -58,7 +58,13 @@ class MavenDeploy
 
     full_command = command + command_args.map { |key, val| "-D#{key}=#{val}" }
 
+    if ENV['OS'] =~ /Windows/i
+      full_command = ['cmd.exe', '/C'] +  full_command
+    end
+
     puts("Deploying #{File.basename(file)} to Maven repository at #@repository_url")
+    puts "Cmd: #{full_command.join(' ')}"
+    
     unless system(*full_command)
       fail("deployment failed")
     end
