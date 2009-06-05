@@ -298,7 +298,7 @@
         <!-- dso-container-tests -->
         <groupId>org.terracotta</groupId>
         <artifactId>tc-cargo-core-uberjar</artifactId>
-        <version>0.9.20090106</version>
+        <version>0.9.20090605</version>
       </dependency>
       <dependency>
         <!-- dso-spring-tests -->
