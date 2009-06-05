@@ -135,6 +135,39 @@ public class ClientHandshakeManagerTest extends TCTestCase {
       ThreadUtil.reallySleep(1000);
     }
   }
+  
+  public void testCrashAfterConnectedEvent() {
+    createHandshakeMgr();
+    GroupID group = this.channel.groups[0];
+    assertEquals(1, this.callback.paused.get());
+    assertEquals(0, this.callback.initiateHandshake.get());
+    assertEquals(0, this.callback.unpaused.get());
+
+    final AtomicBoolean done = new AtomicBoolean(false);
+    new Thread(new Runnable() {
+      public void run() {
+        ClientHandshakeManagerTest.this.mgr.waitForHandshake();
+        done.set(true);
+      }
+    }).start();
+
+    ThreadUtil.reallySleep(2000);
+    assertFalse(done.get());
+
+    this.mgr.connected(group);
+
+    assertEquals(1, this.callback.paused.get());
+    assertEquals(1, this.callback.initiateHandshake.get());
+    assertEquals(0, this.callback.unpaused.get());
+
+    assertFalse(done.get());
+    
+    this.mgr.disconnected(group);
+
+    assertEquals(2, this.callback.paused.get());
+    assertEquals(1, this.callback.initiateHandshake.get());
+    assertEquals(0, this.callback.unpaused.get());
+  }
 
   public void testMultipleGroups() {
     GroupID g0 = new GroupID(0);
