@@ -19,7 +19,6 @@ import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -30,13 +29,11 @@ public class TcHibernateSerializedEntryManagedObjectState extends AbstractManage
 
   public static final String    SERIALIZED_ENTRY       = "org.terracotta.modules.hibernatecache.SerializedEntry";
 
-  public static final String    CONFIG_FIELD           = SERIALIZED_ENTRY + ".config";
   public static final String    CREATE_TIME_FIELD      = SERIALIZED_ENTRY + ".createTime";
   public static final String    LAST_ACCESS_TIME_FIELD = SERIALIZED_ENTRY + ".lastAccessedTime";
 
   private final long            classID;
 
-  private ObjectID              config;
   private byte[]                value;
   private int                   createTime;
   private int                   lastAccessedTime;
@@ -53,9 +50,7 @@ public class TcHibernateSerializedEntryManagedObjectState extends AbstractManage
     if (lastAccessedTime != other.lastAccessedTime) return false;
     if (!Arrays.equals(value, other.value)) return false;
 
-    if (config == null) return other.config == null;
-    return config.equals(other.config);
-
+    return true;
   }
 
   public void addObjectReferencesTo(ManagedObjectTraverser traverser) {
@@ -89,15 +84,6 @@ public class TcHibernateSerializedEntryManagedObjectState extends AbstractManage
           } else {
             logInvalidType(CREATE_TIME_FIELD, val);
           }
-        } else if (CONFIG_FIELD.equals(field)) {
-          if (val instanceof ObjectID) {
-            ObjectID newVal = (ObjectID) val;
-            getListener().changed(objectID, config, newVal);
-            includeIDs.addBackReference(newVal, objectID);
-            config = newVal;
-          } else {
-            logInvalidType(CONFIG_FIELD, val);
-          }
         } else {
           logger.error("recieved data for field named [" + field + "] -- ignoring it");
         }
@@ -117,7 +103,6 @@ public class TcHibernateSerializedEntryManagedObjectState extends AbstractManage
   public ManagedObjectFacade createFacade(ObjectID objectID, String className, int limit) {
     // The byte[] value field is not shown in the admin console
     Map data = new HashMap();
-    data.put(CONFIG_FIELD, config);
     data.put(CREATE_TIME_FIELD, Integer.valueOf(createTime));
     data.put(LAST_ACCESS_TIME_FIELD, Integer.valueOf(lastAccessedTime));
 
@@ -126,7 +111,6 @@ public class TcHibernateSerializedEntryManagedObjectState extends AbstractManage
 
   public void dehydrate(ObjectID objectID, DNAWriter writer) {
     writer.addEntireArray(value);
-    writer.addPhysicalAction(CONFIG_FIELD, config, true);
     writer.addPhysicalAction(CREATE_TIME_FIELD, Integer.valueOf(createTime));
     writer.addPhysicalAction(LAST_ACCESS_TIME_FIELD, Integer.valueOf(lastAccessedTime));
   }
@@ -140,12 +124,6 @@ public class TcHibernateSerializedEntryManagedObjectState extends AbstractManage
   }
 
   public Set getObjectReferences() {
-    if (config != null) {
-      Set set = new HashSet();
-      set.add(config);
-      return set;
-    }
-
     return Collections.EMPTY_SET;
   }
 
@@ -155,7 +133,6 @@ public class TcHibernateSerializedEntryManagedObjectState extends AbstractManage
 
   public void writeTo(ObjectOutput out) throws IOException {
     out.writeLong(classID);
-    out.writeLong(config == null ? ObjectID.NULL_ID.toLong() : config.toLong());
     out.writeInt(createTime);
     out.writeInt(lastAccessedTime);
     if (value != null) {
@@ -169,12 +146,6 @@ public class TcHibernateSerializedEntryManagedObjectState extends AbstractManage
   static TcHibernateSerializedEntryManagedObjectState readFrom(ObjectInput in) throws IOException {
     TcHibernateSerializedEntryManagedObjectState state = new TcHibernateSerializedEntryManagedObjectState(in.readLong());
 
-    long oid = in.readLong();
-    if (oid == ObjectID.NULL_ID.toLong()) {
-      state.config = ObjectID.NULL_ID;
-    } else {
-      state.config = new ObjectID(oid);
-    }
     state.createTime = in.readInt();
     state.lastAccessedTime = in.readInt();
 

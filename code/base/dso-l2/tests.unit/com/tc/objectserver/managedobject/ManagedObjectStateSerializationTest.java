@@ -94,7 +94,6 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
     String className = TcHibernateSerializedEntryManagedObjectState.SERIALIZED_ENTRY;
     TestDNACursor cursor = new TestDNACursor();
 
-    cursor.addPhysicalAction(TcHibernateSerializedEntryManagedObjectState.CONFIG_FIELD, new ObjectID(1), true);
     cursor.addPhysicalAction(TcHibernateSerializedEntryManagedObjectState.CREATE_TIME_FIELD, new Integer(1), false);
     cursor
         .addPhysicalAction(TcHibernateSerializedEntryManagedObjectState.LAST_ACCESS_TIME_FIELD, new Integer(2), false);
