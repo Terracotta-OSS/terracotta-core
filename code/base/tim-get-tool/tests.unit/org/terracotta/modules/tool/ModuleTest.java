@@ -57,7 +57,7 @@ public final class ModuleTest extends TCTestCase {
     Module module = modules.get("foo.bar", "baz", "0.0.0");
     assertNotNull(module);
     List<String> installedList = new ArrayList<String>();
-    module.install(new Listener(installedList), InstallOption.SKIP_INSPECT);
+    module.install(new Listener(installedList), InstallOption.SKIP_INSPECT, InstallOption.FAIL_FAST);
     assertTrue(module.isInstalled());
 
     assertEquals(1, installedList.size());
