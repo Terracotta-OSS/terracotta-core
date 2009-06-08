@@ -13,6 +13,7 @@ import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
 import com.tc.stats.counter.sampled.SampledCounter;
+import com.tc.stats.counter.sampled.TimeStampedCounterValue;
 
 /**
  * This statistic gives the fault rate of objects faulted from disk to L2. <p/> The {@link StatisticData} contains the
@@ -66,9 +67,15 @@ public class SRAL2FaultsFromDisk implements StatisticRetrievalAction {
 
   public StatisticData[] retrieveStatisticData() {
     if (faultCounter == null) return EMPTY_STATISTIC_DATA;
-    long faultCount = faultCounter.getMostRecentSample().getCounterValue();
-    long time2Fault = time2FaultFromDisk.getMostRecentSample().getCounterValue();
-    long time2Add = time2Add2ObjectMgr.getMostRecentSample().getCounterValue();
+    TimeStampedCounterValue sample = faultCounter.getMostRecentSample();
+    long faultCount = sample == null ? 0 : sample.getCounterValue();
+
+    sample = time2FaultFromDisk.getMostRecentSample();
+    long time2Fault = sample == null ? 0 : sample.getCounterValue();
+
+    sample = time2Add2ObjectMgr.getMostRecentSample();
+    long time2Add = sample == null ? 0 : sample.getCounterValue();
+
     return new StatisticData[] {
         new StatisticData(ACTION_NAME, ELEMENT_NAME_FAULT_COUNT, faultCount),
         new StatisticData(ACTION_NAME, ELEMENT_NAME_AVG_TIME_2_FAULT_FROM_DISK, (faultCount == 0 ? 0 : time2Fault
