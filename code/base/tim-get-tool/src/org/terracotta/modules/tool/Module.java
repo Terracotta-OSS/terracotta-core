@@ -159,7 +159,7 @@ public class Module extends AbstractModule implements Installable {
   }
 
   public String apiVersion() {
-    if(attributes.containsKey("api-version")) {
+    if (attributes.containsKey("api-version")) {
       return attributesHelper.getAttrValueAsString("api-version", null);
     } else {
       return VersionMatcher.ANY_VERSION;
@@ -271,9 +271,13 @@ public class Module extends AbstractModule implements Installable {
           FileUtils.forceMkdir(destdir);
           FileUtils.copyFile(srcfile, destfile);
         } catch (IOException e) {
-          String message = destfile + " (" + e.getMessage() + ")";
-          notifyListener(listener, entry, InstallNotification.INSTALL_FAILED, message);
-          continue;
+          if (options.contains(InstallOption.FAIL_FAST)) {
+            throw new RuntimeException(e);
+          } else {
+            String message = destfile + " (" + e.getMessage() + ")";
+            notifyListener(listener, entry, InstallNotification.INSTALL_FAILED, message);
+            continue;
+          }
         }
       }
 

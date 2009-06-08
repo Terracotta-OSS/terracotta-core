@@ -21,5 +21,8 @@ public enum InstallOption {
   FORCE,
 
   /** Download and perform all other checks except actual installation */
-  PRETEND
+  PRETEND,
+  
+  /** Fail immediately when install fails instead of only notifying the listener **/
+  FAIL_FAST
 }

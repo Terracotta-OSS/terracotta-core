@@ -57,7 +57,7 @@ public final class ModuleTest extends TCTestCase {
     Module module = modules.get("foo.bar", "baz", "0.0.0");
     assertNotNull(module);
     List<String> installedList = new ArrayList<String>();
-    module.install(new Listener(installedList), InstallOption.SKIP_INSPECT);
+    module.install(new Listener(installedList), InstallOption.SKIP_INSPECT, InstallOption.FAIL_FAST);
     assertTrue(module.isInstalled());
 
     assertEquals(1, installedList.size());
@@ -206,7 +206,7 @@ public final class ModuleTest extends TCTestCase {
     assertNotNull(module);
     assertTrue(module.versions().isEmpty());
   }
-  
+
   public void testApiVersions() throws IOException {
     Modules modules;
     String tcVersion = "3.0.0";
@@ -232,13 +232,13 @@ public final class ModuleTest extends TCTestCase {
     modules = loadModules("/testData04.xml", tcVersion, apiVersion);
     list = modules.list();
     assertEquals(2, list.size());
-    
+
     module = modules.get("foo.bar", "abc", "2.1.0");
     assertNotNull(module);
     assertEquals("[1.1.0,1.2.0)", module.apiVersion());
     versions = module.versions();
     assertEquals(0, versions.size());
-    
+
     // API version 2.0.0 -> should pull in no modules
     apiVersion = "2.0.0";
     testConfig.setApiVersion(apiVersion);
@@ -322,7 +322,8 @@ public final class ModuleTest extends TCTestCase {
       assertEquals("Copyright (c) 2007 Terracotta, Inc.", module.copyright());
       assertEquals("Terracotta Integration Module", module.category());
       assertEquals("Terracotta Integration Module for clustering Ehcache", module.description());
-      assertEquals("http://forge-dev.terracotta.lan/repo/org/terracotta/modules/tim-ehcache-1.3/1.0.2/tim-ehcache-1.3-1.0.2.jar",
+      assertEquals(
+                   "http://forge-dev.terracotta.lan/repo/org/terracotta/modules/tim-ehcache-1.3/1.0.2/tim-ehcache-1.3-1.0.2.jar",
                    module.repoUrl().toString());
       assertEquals(FilenameUtils.separatorsToSystem("org/terracotta/modules/tim-ehcache-1.3/1.0.2"), module
           .installPath().toString());
@@ -555,13 +556,13 @@ public final class ModuleTest extends TCTestCase {
   private Modules loadModules(String testData, String tcVersion) throws IOException {
     return loadModules(testData, tcVersion, "1.0.0");
   }
-  
+
   private Modules loadModules(String testData, String tcVersion, String apiVersion) throws IOException {
     testConfig.setTcVersion(tcVersion);
-    if(apiVersion != null) {
+    if (apiVersion != null) {
       testConfig.setApiVersion(apiVersion);
     }
-    
+
     File tmpdir = this.getTempDirectory();
     File repodir = new File(tmpdir, "modules");
     try {
