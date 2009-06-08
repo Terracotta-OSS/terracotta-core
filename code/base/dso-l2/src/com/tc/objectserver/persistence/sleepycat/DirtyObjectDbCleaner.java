@@ -76,7 +76,7 @@ public class DirtyObjectDbCleaner {
       logger.info("dirtyDbBackupPath : " + dirtyDbBackupPath.getFile().getAbsolutePath());
     }
 
-    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmSS");
+    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmssSS");
     Date d = new Date();
     String timeStamp = dateFormat.format(d);
     File dirtyDbSourcedir = new File(dataPath + File.separator + NewL2DSOConfig.OBJECTDB_DIRNAME + File.separator);
