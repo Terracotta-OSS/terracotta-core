@@ -69,7 +69,7 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
         // server ping client
         TCMessage msg = serverChannel.createMessage(TCMessageType.PING_MESSAGE);
         msg.send();
-        ThreadUtil.reallySleep(100);
+        ThreadUtil.reallySleep(500);
         Assert.assertEquals(1, clientSink.getReceivedCount());
         PingMessage pingReceived = clientSink.getReceivedPing();
         Assert.assertTrue(msg.getSourceNodeID().equals(server.getDSOServer().getServerNodeID()));
@@ -78,7 +78,7 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
         // client ping server
         msg = clientChannel.createMessage(TCMessageType.PING_MESSAGE);
         msg.send();
-        ThreadUtil.reallySleep(100);
+        ThreadUtil.reallySleep(500);
         Assert.assertEquals(1, serverSink.getReceivedCount());
         pingReceived = serverSink.getReceivedPing();
         Assert.assertTrue(msg.getSourceNodeID().equals(pingReceived.getSourceNodeID()));
