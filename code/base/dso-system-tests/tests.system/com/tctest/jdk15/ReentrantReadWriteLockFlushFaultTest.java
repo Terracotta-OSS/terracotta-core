@@ -11,13 +11,11 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
-import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
-import java.lang.ref.WeakReference;
 import java.util.Random;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -60,9 +58,6 @@ public class ReentrantReadWriteLockFlushFaultTest extends TransparentTestBase {
       initLocks();
 
       useLocksAndClearRefs();
-
-      ensureUnlockedLocksCanBeCollected(true);
-      ensureUnlockedLocksCanBeCollected(false);
     }
 
     private void initLocks() {
@@ -73,57 +68,6 @@ public class ReentrantReadWriteLockFlushFaultTest extends TransparentTestBase {
           ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
           readLocks[i] = rwLock.readLock();
           writeLocks[i] = rwLock.writeLock();
-        }
-      }
-    }
-
-    private WeakReference<Lock>[] lockAndWeaklyRef(boolean read) {
-      WeakReference<Lock>[] refs = new WeakReference[SIZE * 2];
-
-      for (int i = 0, j = 0; j < refs.length; i++, j += 2) {
-
-        Lock lock = locks[i];
-        Lock rw = read ? readLocks[i] : writeLocks[i];
-
-        lock.lock();
-        rw.lock();
-
-        refs[j] = new WeakReference<Lock>(lock);
-        refs[j + 1] = new WeakReference<Lock>(rw);
-      }
-
-      return refs;
-    }
-
-    private void ensureUnlockedLocksCanBeCollected(boolean read) {
-      WeakReference<Lock>[] refs = lockAndWeaklyRef(read);
-
-      System.gc();
-      ThreadUtil.reallySleep(SLEEP);
-      System.gc();
-      ThreadUtil.reallySleep(SLEEP);
-
-      assertRefs(refs, true);
-
-      unlockLockRefs(refs);
-
-      clearDsoManagedReferences();
-
-      assertRefs(refs, false);
-    }
-
-    private void unlockLockRefs(WeakReference<Lock>[] refs) {
-      for (int i = 0; i < refs.length; i++) {
-        refs[i].get().unlock();
-      }
-    }
-
-    private void assertRefs(WeakReference<Lock>[] refs, boolean notNull) {
-      for (int i = 0; i < refs.length; i++) {
-        if (notNull) {
-          Assert.assertNotNull("ref " + i, refs[i].get());
-        } else {
-          Assert.assertNull("ref " + i, refs[i].get());
         }
       }
     }
