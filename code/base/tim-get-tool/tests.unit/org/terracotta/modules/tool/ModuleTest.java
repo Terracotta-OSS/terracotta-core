@@ -57,7 +57,7 @@ public final class ModuleTest extends TCTestCase {
     Module module = modules.get("foo.bar", "baz", "0.0.0");
     assertNotNull(module);
     List<String> installedList = new ArrayList<String>();
-    module.install(new Listener(installedList), InstallOption.SKIP_INSPECT, InstallOption.FAIL_FAST);
+    module.install(new Listener(installedList), InstallOption.SKIP_INSPECT);
     assertTrue(module.isInstalled());
 
     assertEquals(1, installedList.size());
@@ -652,6 +652,7 @@ public final class ModuleTest extends TCTestCase {
     }
 
     public void notify(Object source, InstallNotification type, String message) {
+      System.out.println("InstallListener: type=" + type + ". Message: " + message);
       if (!InstallNotification.INSTALLED.equals(type) && !InstallNotification.SKIPPED.equals(type)) return;
       installedList.add(source.toString());
     }

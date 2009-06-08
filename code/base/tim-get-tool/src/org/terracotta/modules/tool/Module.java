@@ -243,7 +243,7 @@ public class Module extends AbstractModule implements Installable {
       manifest = manifest();
     } catch (IllegalStateException e) {
       String message = "Unable to compute manifest for installation: " + e.getMessage();
-      notifyListener(listener, this, InstallNotification.ABORTED, message);
+      handleInstallFailure(e, installOptions, listener, this, InstallNotification.ABORTED, message);
       return;
     }
 
@@ -263,7 +263,7 @@ public class Module extends AbstractModule implements Installable {
           srcfile = modules.download(module, installOptions.verify(), installOptions.inspect());
         } catch (IOException e) {
           String message = "Attempt to download TIM file at " + module.repoUrl() + " failed - " + e.getMessage();
-          notifyListener(listener, entry, InstallNotification.DOWNLOAD_FAILED, message);
+          handleInstallFailure(e, installOptions, listener, entry, InstallNotification.DOWNLOAD_FAILED, message);
           continue;
         }
 
@@ -271,17 +271,22 @@ public class Module extends AbstractModule implements Installable {
           FileUtils.forceMkdir(destdir);
           FileUtils.copyFile(srcfile, destfile);
         } catch (IOException e) {
-          if (options.contains(InstallOption.FAIL_FAST)) {
-            throw new RuntimeException(e);
-          } else {
-            String message = destfile + " (" + e.getMessage() + ")";
-            notifyListener(listener, entry, InstallNotification.INSTALL_FAILED, message);
-            continue;
-          }
+          String message = destfile + " (" + e.getMessage() + ")";
+          handleInstallFailure(e, installOptions, listener, entry, InstallNotification.INSTALL_FAILED, message);
+          continue;
         }
       }
 
       notifyListener(listener, entry, InstallNotification.INSTALLED, "Ok");
+    }
+  }
+
+  private void handleInstallFailure(Throwable e, InstallOptionsHelper installOptions, InstallListener listener,
+                                    AbstractModule source, InstallNotification type, String message) {
+    if (installOptions.failFast()) {
+      throw new RuntimeException(e);
+    } else {
+      notifyListener(listener, source, type, message);
     }
   }
 }

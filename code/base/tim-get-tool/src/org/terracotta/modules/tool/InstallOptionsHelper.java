@@ -42,6 +42,10 @@ public class InstallOptionsHelper {
     return isOptionSet(InstallOption.PRETEND);
   }
 
+  public boolean failFast() {
+    return isOptionSet(InstallOption.FAIL_FAST);
+  }
+  
   public boolean isOptionSet(InstallOption option) {
     return this.options.contains(option);
   }
