@@ -62,7 +62,6 @@ public class FeaturesPanel extends XContainer {
     synchronized (this) {
       adminClientContext = null;
       clusterModel = null;
-      featureList.setModel(null);
       featureList = null;
       featureListModel.clear();
       featureListModel = null;

@@ -534,4 +534,65 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     }
     return result;
   }
+
+  private static class SimpleInvokeResult {
+    final ObjectName objectName;
+    final Object     result;
+
+    private SimpleInvokeResult(ObjectName objectName, Object result) {
+      this.objectName = objectName;
+      this.result = result;
+    }
+  }
+
+  private static final Object[] SIMPLE_INVOKE_PARAMS = new Object[0];
+  private static final String[] SIMPLE_INVOKE_SIG    = new String[0];
+
+  private class SimpleInvokeTask implements Callable<SimpleInvokeResult> {
+    private final ObjectName objectName;
+    private final String     operation;
+
+    SimpleInvokeTask(ObjectName objectName, String operation) {
+      this.objectName = objectName;
+      this.operation = operation;
+    }
+
+    public SimpleInvokeResult call() {
+      Object result;
+      try {
+        result = mbeanServer.invoke(objectName, operation, SIMPLE_INVOKE_PARAMS, SIMPLE_INVOKE_SIG);
+      } catch (Exception e) {
+        result = e;
+      }
+      return new SimpleInvokeResult(objectName, result);
+    }
+  }
+
+  public Map<ObjectName, Object> invoke(Set<ObjectName> onSet, String operation, long timeout, TimeUnit unit) {
+    Map<ObjectName, Object> result = new HashMap<ObjectName, Object>();
+    List<Callable<SimpleInvokeResult>> tasks = new ArrayList<Callable<SimpleInvokeResult>>();
+    Iterator<ObjectName> onIter = onSet.iterator();
+    while (onIter.hasNext()) {
+      tasks.add(new SimpleInvokeTask(onIter.next(), operation));
+    }
+    try {
+      List<Future<SimpleInvokeResult>> results = pool.invokeAll(tasks, timeout, unit);
+      Iterator<Future<SimpleInvokeResult>> resultIter = results.iterator();
+      while (resultIter.hasNext()) {
+        Future<SimpleInvokeResult> future = resultIter.next();
+        if (future.isDone() && !future.isCancelled()) {
+          try {
+            SimpleInvokeResult sir = future.get();
+            result.put(sir.objectName, sir.result);
+          } catch (CancellationException ce) {
+            /**/
+          } catch (ExecutionException ee) {
+            /**/
+          }
+        }
+      }
+    } catch (InterruptedException ie) {/**/
+    }
+    return result;
+  }
 }

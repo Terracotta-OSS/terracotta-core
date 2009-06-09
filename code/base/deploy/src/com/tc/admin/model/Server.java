@@ -1823,4 +1823,9 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     if (isReady()) { return getDSOBean().getAttributeMap(attributeMap, timeout, unit); }
     return Collections.emptyMap();
   }
+
+  public Map<ObjectName, Object> invoke(Set<ObjectName> onSet, String operation, long timeout, TimeUnit unit) {
+    if (isReady()) { return getDSOBean().invoke(onSet, operation, timeout, unit); }
+    return Collections.emptyMap();
+  }
 }
