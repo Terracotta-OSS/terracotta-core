@@ -161,7 +161,8 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
       mv.visitVarInsn(ALOAD, 0);
       mv.visitFieldInsn(GETFIELD, classNameSlash, f.getLocalFieldName(), f.getType().getTypeDesc());
       LiteralValues fType = f.getType();
-      mv.visitMethodInsn(INVOKEINTERFACE, "java/io/ObjectOutput", fType.getOutputMethodName(), fType.getOutputMethodDescriptor());
+      mv.visitMethodInsn(INVOKEINTERFACE, "java/io/ObjectOutput", fType.getOutputMethodName(), fType
+          .getOutputMethodDescriptor());
     }
     mv.visitInsn(RETURN);
     mv.visitMaxs(3, 2);
@@ -198,7 +199,8 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
       mv.visitVarInsn(ALOAD, 0);
       mv.visitVarInsn(ALOAD, 1);
       LiteralValues fType = f.getType();
-      mv.visitMethodInsn(INVOKEINTERFACE, "java/io/ObjectInput", fType.getInputMethodName(), fType.getInputMethodDescriptor());
+      mv.visitMethodInsn(INVOKEINTERFACE, "java/io/ObjectInput", fType.getInputMethodName(), fType
+          .getInputMethodDescriptor());
       mv.visitFieldInsn(PUTFIELD, classNameSlash, f.getLocalFieldName(), f.getType().getTypeDesc());
     }
     mv.visitInsn(RETURN);
@@ -445,7 +447,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
 
     mv.visitTypeInsn(NEW, "java/util/HashSet");
     mv.visitInsn(DUP);
-    mv.visitIntInsn(BIPUSH, size);
+    mv.visitLdcInsn(Integer.valueOf(size));
     mv.visitMethodInsn(INVOKESPECIAL, "java/util/HashSet", "<init>", "(I)V");
     mv.visitVarInsn(ASTORE, 1);
 
