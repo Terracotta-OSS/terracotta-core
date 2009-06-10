@@ -319,8 +319,9 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
           buf.append("  [" + i + "]: Line " + error.getLine() + ", column " + error.getColumn() + ": "
                      + error.getMessage() + "\n");
           if (error.getMessage().indexOf("spring") > -1) {
-            buf.append("  Clustered Spring bean support has been removed in this version of Terracotta. Please visit this page " +
-                       "http://www.terracotta.org/web/display/orgsite/Spring+Integration for more information.\n");
+            buf
+                .append("  The Spring configuration in your Terracotta configuration file is not valid. "
+                        + "Clustering Spring no longer requires special configuration. For more information, see http://www.terracotta.org/spring.\n");
           }
         }
 
