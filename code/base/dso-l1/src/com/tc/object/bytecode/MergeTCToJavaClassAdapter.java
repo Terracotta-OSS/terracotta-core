@@ -143,12 +143,22 @@ public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter i
     this.visitedMethods.add(methodDesc);
 
     if (!isInitMethod(name)) {
-      List tcMethods = tcClassNode.methods;
-      for (Iterator i = tcMethods.iterator(); i.hasNext();) {
-        MethodNode mNode = (MethodNode) i.next();
-        if (0 == (mNode.access & ACC_ABSTRACT) && mNode.name.equals(name) && mNode.desc.equals(desc)) {
-          mNode.signature = signature;
-          return super.visitMethod(ACC_PRIVATE, getNewName(name), desc, signature, exceptions);
+      for (MethodNode replacement : (List<MethodNode>) tcClassNode.methods) {
+        if (0 == (replacement.access & ACC_ABSTRACT) && replacement.name.equals(name) && replacement.desc.equals(desc)) {
+          final String remappedName = getNewName(name);
+          boolean remappedIsDefined = false;
+          for (MethodNode remapped : (List<MethodNode>) tcClassNode.methods) {
+            if (0 == (remapped.access & ACC_ABSTRACT) && remapped.name.equals(remappedName) && remapped.desc.equals(desc)) {
+              remappedIsDefined = true;
+              break;
+            }
+          }
+          if (remappedIsDefined) {
+            return null;
+          } else {
+            replacement.signature = signature;
+            return super.visitMethod(ACC_PRIVATE, remappedName, desc, signature, exceptions);
+          }
         }
       }
     }

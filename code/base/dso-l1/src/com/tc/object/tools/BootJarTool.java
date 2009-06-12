@@ -92,7 +92,6 @@ import com.tc.object.bytecode.JavaUtilConcurrentHashMapHashEntryAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentHashMapSegmentAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentHashMapValueIteratorAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentHashMapWriteThroughEntryAdapter;
-import com.tc.object.bytecode.JavaUtilConcurrentLinkedBlockingQueueAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentLinkedBlockingQueueClassAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentLinkedBlockingQueueIteratorClassAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentLinkedBlockingQueueNodeClassAdapter;
@@ -1994,59 +1993,63 @@ public class BootJarTool {
   private final void addInstrumentedJavaUtilConcurrentLinkedBlockingQueue() {
     if (!Vm.isJDK15Compliant()) { return; }
 
-    // Instrumentation for Itr inner class
-    byte[] bytes = getSystemBytes("java.util.concurrent.LinkedBlockingQueue$Itr");
+    
+    { // Instrumentation for Itr inner class
+      byte[] bytes = getSystemBytes("java.util.concurrent.LinkedBlockingQueue$Itr");
 
-    ClassReader cr = new ClassReader(bytes);
-    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    ClassVisitor cv = new JavaUtilConcurrentLinkedBlockingQueueIteratorClassAdapter(cw);
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
+      ClassReader cr = new ClassReader(bytes);
+      ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+      ClassVisitor cv = new JavaUtilConcurrentLinkedBlockingQueueIteratorClassAdapter(cw);
+      cr.accept(cv, ClassReader.SKIP_FRAMES);
 
-    bytes = cw.toByteArray();
-    loadClassIntoJar("java.util.concurrent.LinkedBlockingQueue$Itr", bytes, true);
+      bytes = cw.toByteArray();
+      loadClassIntoJar("java.util.concurrent.LinkedBlockingQueue$Itr", bytes, true);
+    }
 
-    // Instrumentation for Node inner class
-    bytes = getSystemBytes("java.util.concurrent.LinkedBlockingQueue$Node");
+    { // Instrumentation for Node inner class
+      byte[] bytes = getSystemBytes("java.util.concurrent.LinkedBlockingQueue$Node");
 
-    cr = new ClassReader(bytes);
-    cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    cv = new JavaUtilConcurrentLinkedBlockingQueueNodeClassAdapter(cw);
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
+      ClassReader cr = new ClassReader(bytes);
+      ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+      ClassVisitor cv = new JavaUtilConcurrentLinkedBlockingQueueNodeClassAdapter(cw);
+      cr.accept(cv, ClassReader.SKIP_FRAMES);
 
-    bytes = cw.toByteArray();
-    loadClassIntoJar("java.util.concurrent.LinkedBlockingQueue$Node", bytes, true);
+      bytes = cw.toByteArray();
+      loadClassIntoJar("java.util.concurrent.LinkedBlockingQueue$Node", bytes, true);
+    }
 
-    // Instrumentation for LinkedBlockingQueue class
-    bytes = getSystemBytes("java.util.concurrent.LinkedBlockingQueue");
+    { // Instrumentation for LinkedBlockingQueue class
+      String jClassNameDots = "java.util.concurrent.LinkedBlockingQueue";
+      String tcClassNameDots = "java.util.concurrent.LinkedBlockingQueueTC";
 
-    cr = new ClassReader(bytes);
-    cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    cv = new JavaUtilConcurrentLinkedBlockingQueueClassAdapter(cw);
-    cr.accept(cv, ClassReader.SKIP_FRAMES);
+      byte[] tcData = getSystemBytes(tcClassNameDots);
+      ClassReader tcCR = new ClassReader(tcData);
+      ClassNode tcCN = new ClassNode();
+      tcCR.accept(tcCN, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
-    bytes = cw.toByteArray();
+      byte[] jData = getSystemBytes(jClassNameDots);
+      ClassReader jCR = new ClassReader(jData);
+      ClassWriter cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
 
-    TransparencyClassSpec spec = this.configHelper
-        .getOrCreateSpec("java.util.concurrent.LinkedBlockingQueue",
-                         "com.tc.object.applicator.LinkedBlockingQueueApplicator");
-    // spec.addMethodAdapter(SerializationUtil.QUEUE_PUT_SIGNATURE,
-    // new JavaUtilConcurrentLinkedBlockingQueueAdapter.PutAdapter());
-    spec.addMethodAdapter(SerializationUtil.TAKE_SIGNATURE,
-                          new JavaUtilConcurrentLinkedBlockingQueueAdapter.TakeAdapter());
-    spec.addMethodAdapter(SerializationUtil.POLL_TIMEOUT_SIGNATURE,
-                          new JavaUtilConcurrentLinkedBlockingQueueAdapter.TakeAdapter());
-    spec.addMethodAdapter(SerializationUtil.POLL_SIGNATURE,
-                          new JavaUtilConcurrentLinkedBlockingQueueAdapter.TakeAdapter());
-    spec.addMethodAdapter(SerializationUtil.CLEAR_SIGNATURE,
-                          new JavaUtilConcurrentLinkedBlockingQueueAdapter.ClearAdapter());
-    spec.addMethodAdapter(SerializationUtil.DRAIN_TO_SIGNATURE,
-                          new JavaUtilConcurrentLinkedBlockingQueueAdapter.ClearAdapter());
-    spec.addMethodAdapter(SerializationUtil.DRAIN_TO_N_SIGNATURE,
-                          new JavaUtilConcurrentLinkedBlockingQueueAdapter.RemoveFirstNAdapter());
-    spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
-    spec.markPreInstrumented();
-    bytes = doDSOTransform(spec.getClassName(), bytes);
-    loadClassIntoJar("java.util.concurrent.LinkedBlockingQueue", bytes, spec.isPreInstrumented());
+      ClassInfo jClassInfo = AsmClassInfo.getClassInfo(jClassNameDots, this.systemLoader);
+      TransparencyClassAdapter dsoAdapter = this.configHelper.createDsoClassAdapterFor(cw, jClassInfo,
+                                                                                       this.instrumentationLogger,
+                                                                                       getClass().getClassLoader(),
+                                                                                       true, true);
+      Map instrumentedContext = new HashMap();
+      ClassVisitor cv = new SerialVersionUIDAdder(new JavaUtilConcurrentLinkedBlockingQueueClassAdapter
+                                                  (new MergeTCToJavaClassAdapter
+                                                   (cw, dsoAdapter, jClassNameDots, tcClassNameDots, tcCN, instrumentedContext)));
+      jCR.accept(cv, ClassReader.SKIP_FRAMES);
+      jData = cw.toByteArray();
+      
+      TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(jClassNameDots,
+                                                                     "com.tc.object.applicator.LinkedBlockingQueueApplicator");
+      spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
+      spec.markPreInstrumented();
+      jData = doDSOTransform(spec.getClassName(), jData);
+      loadClassIntoJar(spec.getClassName(), jData, true);
+    }
   }
 
   private final void addInstrumentedJavaUtilConcurrentFutureTask() {
