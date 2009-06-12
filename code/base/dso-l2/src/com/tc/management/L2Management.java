@@ -25,7 +25,7 @@ import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.object.ObjectManagementMonitor;
 import com.tc.management.beans.object.ServerDBBackup;
 import com.tc.net.protocol.tcm.ChannelID;
-import com.tc.statistics.StatisticsAgentSubSystemImpl;
+import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.beans.StatisticsMBeanNames;
 import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
 import com.tc.util.concurrent.TCExceptionResultException;
@@ -75,7 +75,7 @@ public class L2Management extends TerracottaManagement {
   private final TCDumper                       tcDumper;
   private final ObjectManagementMonitor        objectManagementBean;
   private final LockStatisticsMonitorMBean     lockStatistics;
-  private final StatisticsAgentSubSystemImpl   statisticsAgentSubSystem;
+  private final StatisticsAgentSubSystem   statisticsAgentSubSystem;
   private final StatisticsGatewayMBeanImpl     statisticsGateway;
   private static final Map                     rmiRegistryMap = new HashMap();
   private final int                            jmxPort;
@@ -84,7 +84,7 @@ public class L2Management extends TerracottaManagement {
   private final Sink                           remoteEventsSink;
 
   public L2Management(TCServerInfoMBean tcServerInfo, LockStatisticsMonitorMBean lockStatistics,
-                      StatisticsAgentSubSystemImpl statisticsAgentSubSystem,
+                      StatisticsAgentSubSystem statisticsAgentSubSystem,
                       StatisticsGatewayMBeanImpl statisticsGateway,
                       L2TVSConfigurationSetupManager configurationSetupManager, TCDumper tcDumper,
                       InetAddress bindAddr, int port, Sink remoteEventsSink) throws MBeanRegistrationException,

@@ -95,12 +95,17 @@ public class ModulesLoader {
   private static final Object     lock               = new Object();
   private static final String     NEWLINE            = System.getProperty("line.separator", "\n");
 
+  public static final String TC_BOOTJAR_CREATION = "tc.bootjar.creation";
+
   private ModulesLoader() {
     // cannot be instantiated
   }
 
   public static void initModules(final DSOClientConfigHelper configHelper, final ClassProvider classProvider,
                                  final boolean forBootJar) throws Exception {
+    if (forBootJar) {
+      System.setProperty(TC_BOOTJAR_CREATION, Boolean.TRUE.toString());
+    }
     EmbeddedOSGiRuntime osgiRuntime = null;
     synchronized (lock) {
       final Modules modules = configHelper.getModulesForInitialization();
@@ -125,6 +130,7 @@ public class ModulesLoader {
         throw e;
       } finally {
         if (forBootJar) {
+          System.getProperties().remove(TC_BOOTJAR_CREATION);
           shutdown(osgiRuntime);
         }
       }

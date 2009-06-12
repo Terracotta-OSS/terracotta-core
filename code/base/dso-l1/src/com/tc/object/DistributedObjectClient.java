@@ -126,7 +126,7 @@ import com.tc.runtime.TCMemoryManagerImpl;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticsAgentSubSystem;
-import com.tc.statistics.StatisticsAgentSubSystemImpl;
+import com.tc.statistics.StatisticsAgentSubSystemCallback;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvictRequest;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvicted;
@@ -188,7 +188,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   private final Manager                              manager;
   private final DsoClusterInternal                   dsoCluster;
   private final TCThreadGroup                        threadGroup;
-  private final StatisticsAgentSubSystemImpl         statisticsAgentSubSystem;
+  private final StatisticsAgentSubSystem            statisticsAgentSubSystem;
   private final RuntimeLogger                        runtimeLogger;
   private final ThreadIDMap                          threadIDMap;
 
@@ -213,6 +213,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   public DistributedObjectClient(final DSOClientConfigHelper config, final TCThreadGroup threadGroup,
                                  final ClassProvider classProvider,
                                  final PreparedComponentsFromL2Connection connectionComponents, final Manager manager,
+                                 final StatisticsAgentSubSystem statisticsAgentSubSystem,
                                  final DsoClusterInternal dsoCluster, final RuntimeLogger runtimeLogger) {
     super(threadGroup, BoundedLinkedQueue.class.getName());
     Assert.assertNotNull(config);
@@ -222,7 +223,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.manager = manager;
     this.dsoCluster = dsoCluster;
     this.threadGroup = threadGroup;
-    this.statisticsAgentSubSystem = new StatisticsAgentSubSystemImpl();
+    this.statisticsAgentSubSystem = statisticsAgentSubSystem;
     this.threadIDMap = ThreadIDMapUtil.getInstance();
     this.runtimeLogger = runtimeLogger;
     this.dsoClientBuilder = createClientBuilder();
@@ -255,40 +256,58 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.createDedicatedMBeanServer = createDedicatedMBeanServer;
   }
 
-  private void populateStatisticsRetrievalRegistry(final StatisticsRetrievalRegistry registry,
-                                                   final StageManager stageManager,
-                                                   final MessageMonitor messageMonitor,
-                                                   final Counter outstandingBatchesCounter,
-                                                   final Counter pendingBatchesSize,
-                                                   final SampledRateCounter transactionSizeCounter,
-                                                   final SampledRateCounter transactionsPerBatchCounter,
-                                                   final SampledCounter txCounter) {
-    registry.registerActionInstance(new SRAMemoryUsage());
-    registry.registerActionInstance(new SRASystemProperties());
-    registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRACpu");
-    registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRANetworkActivity");
-    registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRADiskActivity");
-    registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRAThreadDump");
-    registry.registerActionInstance(new SRAStageQueueDepths(stageManager));
-    registry.registerActionInstance(new SRACacheObjectsEvictRequest());
-    registry.registerActionInstance(new SRACacheObjectsEvicted());
-    registry.registerActionInstance(new SRAMessages(messageMonitor));
-    registry.registerActionInstance(new SRAL1OutstandingBatches(outstandingBatchesCounter));
-    registry.registerActionInstance(new SRAL1TransactionsPerBatch(transactionsPerBatchCounter));
-    registry.registerActionInstance(new SRAL1TransactionSize(transactionSizeCounter));
-    registry.registerActionInstance(new SRAL1PendingBatchesSize(pendingBatchesSize));
-    registry.registerActionInstance(new SRAHttpSessions());
-    registry.registerActionInstance(new SRAL1TransactionCount(txCounter));
-    registry.registerActionInstance(new SRAVmGarbageCollector(SRAVmGarbageCollectorType.L1_VM_GARBAGE_COLLECTOR));
+  private class StatisticsSetupCallback implements StatisticsAgentSubSystemCallback {
+    final StageManager       stageManager;
+    final MessageMonitor     messageMonitor;
+    final Counter            outstandingBatchesCounter;
+    final Counter            pendingBatchesSize;
+    final SampledRateCounter transactionSizeCounter;
+    final SampledRateCounter transactionsPerBatchCounter;
+    final SampledCounter     txCounter;
 
-    // register the SRAs from TIMs
-    final SRASpec[] sraSpecs = config.getSRASpecs();
-    if (sraSpecs != null) {
-      for (SRASpec spec : sraSpecs) {
-        final Collection<StatisticRetrievalAction> sras = spec.getSRAs();
-        if (sras != null && sras.size() > 0) {
-          for (StatisticRetrievalAction sra : sras) {
-            registry.registerActionInstance(sra);
+    public StatisticsSetupCallback(final StageManager stageManager, final MessageMonitor messageMonitor,
+                                   final Counter outstandingBatchesCounter, final Counter pendingBatchesSize,
+                                   final SampledRateCounter transactionSizeCounter,
+                                   final SampledRateCounter transactionsPerBatchCounter, final SampledCounter txCounter) {
+      this.stageManager = stageManager;
+      this.messageMonitor = messageMonitor;
+      this.outstandingBatchesCounter = outstandingBatchesCounter;
+      this.pendingBatchesSize = pendingBatchesSize;
+      this.transactionSizeCounter = transactionSizeCounter;
+      this.transactionsPerBatchCounter = transactionsPerBatchCounter;
+      this.txCounter = txCounter;
+    }
+
+    public void setupComplete(final StatisticsAgentSubSystem subsystem) {
+      final StatisticsRetrievalRegistry registry = subsystem.getStatisticsRetrievalRegistry();
+
+      registry.registerActionInstance(new SRAMemoryUsage());
+      registry.registerActionInstance(new SRASystemProperties());
+      registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRACpu");
+      registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRANetworkActivity");
+      registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRADiskActivity");
+      registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRAThreadDump");
+      registry.registerActionInstance(new SRAStageQueueDepths(stageManager));
+      registry.registerActionInstance(new SRACacheObjectsEvictRequest());
+      registry.registerActionInstance(new SRACacheObjectsEvicted());
+      registry.registerActionInstance(new SRAMessages(messageMonitor));
+      registry.registerActionInstance(new SRAL1OutstandingBatches(outstandingBatchesCounter));
+      registry.registerActionInstance(new SRAL1TransactionsPerBatch(transactionsPerBatchCounter));
+      registry.registerActionInstance(new SRAL1TransactionSize(transactionSizeCounter));
+      registry.registerActionInstance(new SRAL1PendingBatchesSize(pendingBatchesSize));
+      registry.registerActionInstance(new SRAHttpSessions());
+      registry.registerActionInstance(new SRAL1TransactionCount(txCounter));
+      registry.registerActionInstance(new SRAVmGarbageCollector(SRAVmGarbageCollectorType.L1_VM_GARBAGE_COLLECTOR));
+
+      // register the SRAs from TIMs
+      final SRASpec[] sraSpecs = config.getSRASpecs();
+      if (sraSpecs != null) {
+        for (SRASpec spec : sraSpecs) {
+          final Collection<StatisticRetrievalAction> sras = spec.getSRAs();
+          if (sras != null && sras.size() > 0) {
+            for (StatisticRetrievalAction sra : sras) {
+              registry.registerActionInstance(sra);
+            }
           }
         }
       }
@@ -428,11 +447,10 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     SampledCounter txnCounter = (SampledCounter) this.counterManager.createCounter(sampledCounterConfig);
 
     // setup statistics subsystem
-    if (this.statisticsAgentSubSystem.setup(this.config.getNewCommonL1Config())) {
-      populateStatisticsRetrievalRegistry(this.statisticsAgentSubSystem.getStatisticsRetrievalRegistry(), stageManager,
-                                          mm, outstandingBatchesCounter, pendingBatchesSize, transactionSizeCounter,
-                                          transactionsPerBatchCounter, txnCounter);
-    }
+    statisticsAgentSubSystem.addCallback(new StatisticsSetupCallback(stageManager, mm, outstandingBatchesCounter,
+                                                                     pendingBatchesSize, transactionSizeCounter,
+                                                                     transactionsPerBatchCounter, txnCounter));
+    this.statisticsAgentSubSystem.setup(this.config.getNewCommonL1Config());
 
     RemoteObjectManager remoteObjectManager = this.dsoClientBuilder
         .createRemoteObjectManager(new ClientIDLogger(this.channel.getClientIDProvider(), TCLogging
@@ -736,7 +754,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   public SessionMonitor getHttpSessionMonitor() {
     return this.l1Management.getHttpSessionMonitor();
   }
-  
+
   public L1Management getL1Management() {
     return this.l1Management;
   }

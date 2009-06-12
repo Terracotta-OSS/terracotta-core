@@ -7,6 +7,8 @@ import org.hyperic.sigar.CpuPerc;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
@@ -17,10 +19,12 @@ import java.text.NumberFormat;
 import java.util.Locale;
 
 public class SRACpu implements StatisticRetrievalAction, SRACpuConstants {
-  
-  private final static String ELEMENT_PREFIX = "cpu ";
 
-  private final Sigar sigar;
+  public final static TCLogger LOGGER         = TCLogging.getLogger(StatisticRetrievalAction.class);
+
+  private final static String  ELEMENT_PREFIX = "cpu ";
+
+  private final Sigar          sigar;
 
   public SRACpu() {
     sigar = SigarUtil.newSigar();

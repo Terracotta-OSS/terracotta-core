@@ -42,6 +42,9 @@ import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.tx.TimerSpec;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.statistics.StatisticRetrievalAction;
+import com.tc.statistics.StatisticsAgentSubSystem;
+import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.util.Assert;
 import com.tc.util.Util;
 import com.tc.util.concurrent.SetOnceFlag;
@@ -64,6 +67,7 @@ public class ManagerImpl implements Manager {
   private final PreparedComponentsFromL2Connection connectionComponents;
   private final Thread                             shutdownAction;
   private final Portability                        portability;
+  private final StatisticsAgentSubSystem           statisticsAgentSubSystem;
   private final DsoClusterImpl                     dsoCluster;
   private final RuntimeLogger                      runtimeLogger;
 
@@ -99,6 +103,7 @@ public class ManagerImpl implements Manager {
     this.startClient = startClient;
     this.connectionComponents = connectionComponents;
     this.dsoCluster = new DsoClusterImpl();
+    this.statisticsAgentSubSystem = new StatisticsAgentSubSystemImpl();
     if (shutdownActionRequired) {
       shutdownAction = new Thread(new ShutdownAction());
       // Register a shutdown hook for the DSO client
@@ -191,7 +196,7 @@ public class ManagerImpl implements Manager {
       public void execute() throws Throwable {
         AbstractClientFactory clientFactory = AbstractClientFactory.getFactory();
         dso = clientFactory.createClient(config, group, classProvider, connectionComponents, ManagerImpl.this,
-                                         dsoCluster, runtimeLogger);
+                                         statisticsAgentSubSystem, dsoCluster, runtimeLogger);
 
         if (forTests) {
           dso.setCreateDedicatedMBeanServer(true);
@@ -556,7 +561,7 @@ public class ManagerImpl implements Manager {
       Util.printLogAndRethrowError(t, logger);
     }
   }
-  
+
   public boolean isLocked(final Object obj, final int lockLevel) {
     if (obj == null) { throw new NullPointerException("isLocked called on a null object"); }
 
@@ -710,23 +715,23 @@ public class ManagerImpl implements Manager {
     }
   }
 
-  public void pinLock(String lockName) {
+  public void pinLock(final String lockName) {
     txManager.pinLock(lockName);
   }
 
-  public void unpinLock(String lockName) {
+  public void unpinLock(final String lockName) {
     txManager.unpinLock(lockName);
   }
 
-  public void evictLock(String lockName) {
+  public void evictLock(final String lockName) {
     txManager.evictLock(lockName);
   }
 
   public Object lookupObject(final ObjectID id) throws ClassNotFoundException {
     return this.objectManager.lookupObject(id);
   }
-  
-  public void preFetchObject(ObjectID id) {
+
+  public void preFetchObject(final ObjectID id) {
     this.objectManager.preFetchObject(id);
   }
 
@@ -763,12 +768,12 @@ public class ManagerImpl implements Manager {
       }
     }
   }
-  
+
   public int calculateDsoHashCode(final Object obj) {
     if (LiteralValues.isLiteralInstance(obj)) {
       // isLiteralInstance() returns false for array types, so we don't need recursion here.
       return LiteralValues.calculateDsoHashCode(obj);
-    } 
+    }
     if (overridesHashCode(obj)) {
       return obj.hashCode();
     }
@@ -780,11 +785,11 @@ public class ManagerImpl implements Manager {
     // A not-shareable, not-literal object?  Hmm, seems we shouldn't get here.
     throw Assert.failure("Cannot calculate stable DSO hash code for an object that is not literal and not shareable");
   }
-  
+
   public boolean isLiteralInstance(final Object obj) {
     return LiteralValues.isLiteralInstance(obj);
   }
-  
+
   public boolean isManaged(final Object obj) {
     if (obj instanceof Manageable) {
       TCObject tcobj = ((Manageable) obj).__tc_managed();
@@ -977,8 +982,14 @@ public class ManagerImpl implements Manager {
   public DsoCluster getDsoCluster() {
     return this.dsoCluster;
   }
-  
+
   public MBeanServer getMBeanServer() {
     return this.dso.getL1Management().getMBeanServer();
+  }
+
+  public StatisticRetrievalAction getStatisticRetrievalActionInstance(final String name) {
+    this.statisticsAgentSubSystem.waitUntilActive();
+
+    return this.statisticsAgentSubSystem.getStatisticsRetrievalRegistry().getActionInstance(name);
   }
 }

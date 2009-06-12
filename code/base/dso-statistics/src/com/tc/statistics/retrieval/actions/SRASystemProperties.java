@@ -3,6 +3,8 @@
  */
 package com.tc.statistics.retrieval.actions;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
@@ -16,7 +18,9 @@ import java.util.Properties;
  */
 public class SRASystemProperties implements StatisticRetrievalAction {
 
-  public final static String ACTION_NAME = "system properties";
+  public final static TCLogger LOGGER      = TCLogging.getLogger(StatisticRetrievalAction.class);
+
+  public final static String   ACTION_NAME = "system properties";
 
   public String getName() {
     return ACTION_NAME;

@@ -8,6 +8,8 @@ import org.hyperic.sigar.FileSystemUsage;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
@@ -28,13 +30,15 @@ import java.util.List;
  */
 public class SRADiskActivity implements StatisticRetrievalAction {
 
-  public final static String ACTION_NAME = "disk activity";
-  public final static String ELEMENT_BYTES_READ = "bytes read";
-  public final static String ELEMENT_BYTES_WRITTEN = "bytes written";
-  public final static String ELEMENT_READS = "reads";
-  public final static String ELEMENT_WRITES = "writes";
+  public final static TCLogger LOGGER                = TCLogging.getLogger(StatisticRetrievalAction.class);
 
-  private final Sigar sigar;
+  public final static String   ACTION_NAME           = "disk activity";
+  public final static String   ELEMENT_BYTES_READ    = "bytes read";
+  public final static String   ELEMENT_BYTES_WRITTEN = "bytes written";
+  public final static String   ELEMENT_READS         = "reads";
+  public final static String   ELEMENT_WRITES        = "writes";
+
+  private final Sigar          sigar;
 
   public SRADiskActivity() {
     sigar = SigarUtil.newSigar();
@@ -48,9 +52,9 @@ public class SRADiskActivity implements StatisticRetrievalAction {
       long writes = 0;
 
       FileSystem[] list = sigar.getFileSystemList();
-      for (int i = 0; i < list.length; i++) {
-        if (list[i].getType() == FileSystem.TYPE_LOCAL_DISK) {
-          FileSystemUsage usage = sigar.getFileSystemUsage(list[i].getDirName());
+      for (FileSystem element : list) {
+        if (element.getType() == FileSystem.TYPE_LOCAL_DISK) {
+          FileSystemUsage usage = sigar.getFileSystemUsage(element.getDirName());
           bytesRead += usage.getDiskReadBytes();
           bytesWrite += usage.getDiskWriteBytes();
           reads += usage.getDiskReads();

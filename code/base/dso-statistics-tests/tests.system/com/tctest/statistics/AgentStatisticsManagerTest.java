@@ -8,6 +8,7 @@ import com.tc.config.schema.dynamic.ConfigItemListener;
 import com.tc.config.schema.dynamic.FileConfigItem;
 import com.tc.statistics.AgentStatisticsManager;
 import com.tc.statistics.StatisticData;
+import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.statistics.StatisticsManager;
 import com.tc.statistics.beans.StatisticsEmitterMBean;
@@ -43,7 +44,7 @@ public class AgentStatisticsManagerTest extends TCTestCase {
   private AgentStatisticsManager agentManager;
   private StatisticsManager statisticsManager;
   private MBeanServer beanServer;
-  private StatisticsAgentSubSystemImpl agentSubSystem;
+  private StatisticsAgentSubSystem agentSubSystem;
 
   protected void setUp() throws Exception {
     agentSubSystem = new StatisticsAgentSubSystemImpl();

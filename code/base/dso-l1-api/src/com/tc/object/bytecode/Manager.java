@@ -16,6 +16,7 @@ import com.tc.object.loaders.NamedClassLoader;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.properties.TCProperties;
+import com.tc.statistics.StatisticRetrievalAction;
 
 import java.lang.reflect.Field;
 
@@ -139,11 +140,11 @@ public interface Manager {
   public void commitLock(String lockName);
 
   public void pinLock(String lockName);
-  
+
   public void unpinLock(String lockName);
-  
+
   public void evictLock(String lockName);
-  
+
   /**
    * Look up object by ID, faulting into the JVM if necessary
    *
@@ -296,7 +297,7 @@ public interface Manager {
    * @throws com.tc.object.util.ReadOnlyException If in read-only transaction
    */
   public void checkWriteAccess(Object context);
-  
+
   /**
    * Calculate a hash code for the object that will be the same on all nodes, i.e., that does not depend on
    * Object.hashCode(). For objects that override hashCode(), the object's hashCode() will be used; for literals that
@@ -304,13 +305,13 @@ public interface Manager {
    * hashCode() but that still base the result on Object.hashCode() the result of this method may still be unstable.
    */
   public int calculateDsoHashCode(Object obj);
-  
+
   /**
-   * @return true if obj is an instance of a {@link com.tc.object.LiteralValues literal type}, 
+   * @return true if obj is an instance of a {@link com.tc.object.LiteralValues literal type},
    * e.g., Class, Integer, etc.
    */
   public boolean isLiteralInstance(Object obj);
-  
+
   /**
    * Check whether an object is managed
    *
@@ -333,7 +334,7 @@ public interface Manager {
    * @return True if required
    */
   public boolean isDsoMonitorEntered(Object obj);
-  
+
   /**
    * Check whether object is logically instrumented
    *
@@ -500,5 +501,7 @@ public interface Manager {
    */
   public MBeanServer getMBeanServer();
 
+
+  public StatisticRetrievalAction getStatisticRetrievalActionInstance(String name);
 
 }

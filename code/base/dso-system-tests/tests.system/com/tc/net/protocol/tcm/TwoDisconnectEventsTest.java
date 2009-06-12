@@ -31,6 +31,7 @@ import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.server.TCServer;
 import com.tc.server.TCServerImpl;
+import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.tc.util.concurrent.ThreadUtil;
@@ -158,8 +159,9 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
                                                                      .getLogger(DistributedObjectClient.class))),
                                                                  new MockClassProvider(),
                                                                  new PreparedComponentsFromL2Connection(manager),
-                                                                 NullManager.getInstance(), new DsoClusterImpl(),
-                                                                 new NullRuntimeLogger());
+                                                                 NullManager.getInstance(),
+                                                                 new StatisticsAgentSubSystemImpl(),
+                                                                 new DsoClusterImpl(), new NullRuntimeLogger());
     client.start();
     return client;
   }

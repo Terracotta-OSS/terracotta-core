@@ -15,6 +15,7 @@ import com.tc.object.loaders.NamedClassLoader;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.NullInstrumentationLogger;
 import com.tc.properties.TCProperties;
+import com.tc.statistics.StatisticRetrievalAction;
 
 import java.lang.reflect.Field;
 
@@ -34,7 +35,7 @@ public final class NullManager implements Manager {
 
   /**
    * Get instance of the null manager
-   * 
+   *
    * @return NullManager
    */
   public static Manager getInstance() {
@@ -277,15 +278,15 @@ public final class NullManager implements Manager {
     throw new UnsupportedOperationException();
   }
 
-  public void evictLock(String lockName) {
+  public void evictLock(final String lockName) {
     //
   }
 
-  public void pinLock(String lockName) {
+  public void pinLock(final String lockName) {
     //
   }
 
-  public void unpinLock(String lockName) {
+  public void unpinLock(final String lockName) {
     //
   }
 
@@ -293,7 +294,11 @@ public final class NullManager implements Manager {
     return null;
   }
 
-  public void preFetchObject(ObjectID id) {
+  public void preFetchObject(final ObjectID id) {
     return;
+  }
+
+  public StatisticRetrievalAction getStatisticRetrievalActionInstance(final String name) {
+    return null;
   }
 }

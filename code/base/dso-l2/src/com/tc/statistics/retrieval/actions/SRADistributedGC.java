@@ -4,6 +4,8 @@
  */
 package com.tc.statistics.retrieval.actions;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.objectserver.dgc.impl.GCStatisticsAgentSubSystemEventListener;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
@@ -30,21 +32,23 @@ import com.tc.statistics.StatisticType;
  */
 public class SRADistributedGC implements StatisticRetrievalAction {
 
-  public static final String ACTION_NAME                    = GCStatisticsAgentSubSystemEventListener.DISTRIBUTED_GC_STATISTICS;
+  public final static TCLogger LOGGER                         = TCLogging.getLogger(StatisticRetrievalAction.class);
 
-  public static final String ITERATION_ELEMENT              = "iteration";
-  public static final String TYPE_ELEMENT                   = "type";
-  public static final String START_TIME_ELEMENT             = "start time";
-  public static final String ELAPSED_TIME_ELEMENT           = "elapsed time";
-  public static final String BEGIN_OBJECT_COUNT_ELEMENT     = "begin object count";
-  public static final String CANDIDATE_OBJECT_COUNT_ELEMENT = "candidate garbage count";
-  public static final String ACTUAL_GARBAGE_COUNT_ELEMENT   = "actual garbage count";
-  public static final String PAUSE_TIME_ELEMENT             = "pause time";
-  public static final String MARK_TIME_ELEMENT              = "mark time";
-  public static final String DELETE_TIME_ELEMENT            = "delete time";
+  public static final String   ACTION_NAME                    = GCStatisticsAgentSubSystemEventListener.DISTRIBUTED_GC_STATISTICS;
 
-  public static final String TYPE_FULL                      = "Full";
-  public static final String TYPE_YOUNG_GEN                 = "YoungGen";
+  public static final String   ITERATION_ELEMENT              = "iteration";
+  public static final String   TYPE_ELEMENT                   = "type";
+  public static final String   START_TIME_ELEMENT             = "start time";
+  public static final String   ELAPSED_TIME_ELEMENT           = "elapsed time";
+  public static final String   BEGIN_OBJECT_COUNT_ELEMENT     = "begin object count";
+  public static final String   CANDIDATE_OBJECT_COUNT_ELEMENT = "candidate garbage count";
+  public static final String   ACTUAL_GARBAGE_COUNT_ELEMENT   = "actual garbage count";
+  public static final String   PAUSE_TIME_ELEMENT             = "pause time";
+  public static final String   MARK_TIME_ELEMENT              = "mark time";
+  public static final String   DELETE_TIME_ELEMENT            = "delete time";
+
+  public static final String   TYPE_FULL                      = "Full";
+  public static final String   TYPE_YOUNG_GEN                 = "YoungGen";
 
   public StatisticData[] retrieveStatisticData() {
     LOGGER.warn("Data for statistic '" + ACTION_NAME + " can't be retrieved using the action instance. "

@@ -150,6 +150,10 @@ import com.tc.object.util.OverrideCheck;
 import com.tc.object.util.ToggleableStrongReference;
 import com.tc.plugins.ModulesLoader;
 import com.tc.properties.TCProperties;
+import com.tc.statistics.LazilyInitializedSRA;
+import com.tc.statistics.StatisticData;
+import com.tc.statistics.StatisticDataCSVParser;
+import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.text.Banner;
 import com.tc.util.AbstractIdentifier;
 import com.tc.util.Assert;
@@ -567,6 +571,10 @@ public class BootJarTool {
       addObjectStreamClass();
 
       addClusterEventsAndMetaDataClasses();
+      loadTerracottaClass(StatisticRetrievalAction.class.getName());
+      loadTerracottaClass(StatisticData.class.getName());
+      loadTerracottaClass(StatisticDataCSVParser.class.getName());
+      loadTerracottaClass(LazilyInitializedSRA.class.getName());
 
       addIBMSpecific();
 

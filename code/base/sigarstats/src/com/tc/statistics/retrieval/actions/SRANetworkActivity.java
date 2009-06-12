@@ -7,6 +7,8 @@ import org.hyperic.sigar.NetInterfaceStat;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
@@ -24,12 +26,14 @@ import java.util.List;
  * <li>bytes written</li>
  */
 public class SRANetworkActivity implements StatisticRetrievalAction {
-  
-  public final static String ACTION_NAME = "network activity";
-  public static final String ELEMENT_BYTES_READ = "bytes read";
-  public static final String ELEMENT_BYTES_WRITTEN = "bytes written";
 
-  private final Sigar sigar;
+  public final static TCLogger LOGGER                = TCLogging.getLogger(StatisticRetrievalAction.class);
+
+  public final static String   ACTION_NAME           = "network activity";
+  public static final String   ELEMENT_BYTES_READ    = "bytes read";
+  public static final String   ELEMENT_BYTES_WRITTEN = "bytes written";
+
+  private final Sigar          sigar;
 
   public SRANetworkActivity() {
     sigar = SigarUtil.newSigar();
@@ -40,8 +44,7 @@ public class SRANetworkActivity implements StatisticRetrievalAction {
       String[] iFaceList = sigar.getNetInterfaceList();
       long in = 0L;
       long out = 0L;
-      for (int i = 0; i < iFaceList.length; i++) {
-        String iFace = iFaceList[i];
+      for (String iFace : iFaceList) {
         NetInterfaceStat stat = sigar.getNetInterfaceStat(iFace);
         in += stat.getRxBytes();
         out += stat.getTxBytes();

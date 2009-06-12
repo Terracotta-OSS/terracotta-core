@@ -27,6 +27,7 @@ import com.tc.server.TCServer;
 import com.tc.server.TCServerImpl;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticsAgentSubSystem;
+import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 
 import java.util.Collection;
@@ -53,13 +54,14 @@ abstract public class AbstractAgentSRACorrectnessTestCase extends BaseDSOTestCas
     configFactory().addServerToL1Config(null, dsoPort, jmxPort);
     L1TVSConfigurationSetupManager manager = super.createL1ConfigManager();
 
-    DistributedObjectClient client = new DistributedObjectClient(
-      new StandardDSOClientConfigHelperImpl(manager),
-      new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(DistributedObjectClient.class))),
-      new MockClassProvider(),
-      new PreparedComponentsFromL2Connection(manager),
-      NullManager.getInstance(),
-      new DsoClusterImpl(), new NullRuntimeLogger());
+    DistributedObjectClient client = new DistributedObjectClient(new StandardDSOClientConfigHelperImpl(manager),
+                                                                 new TCThreadGroup(new ThrowableHandler(TCLogging
+                                                                     .getLogger(DistributedObjectClient.class))),
+                                                                 new MockClassProvider(),
+                                                                 new PreparedComponentsFromL2Connection(manager),
+                                                                 NullManager.getInstance(),
+                                                                 new StatisticsAgentSubSystemImpl(),
+                                                                 new DsoClusterImpl(), new NullRuntimeLogger());
     client.start();
     return client;
   }

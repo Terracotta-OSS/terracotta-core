@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.statistics.retrieval.actions;
 
@@ -7,6 +8,8 @@ import org.hyperic.sigar.CpuPerc;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
@@ -16,13 +19,15 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.util.Locale;
 
-public class SRACpuCombined implements StatisticRetrievalAction, SRACpuConstants  {
+public class SRACpuCombined implements StatisticRetrievalAction, SRACpuConstants {
 
-  public final static String ACTION_NAME = "cpu combined";
+  public final static TCLogger LOGGER         = TCLogging.getLogger(StatisticRetrievalAction.class);
 
-  private final static String ELEMENT_PREFIX = "cpu ";
+  public final static String   ACTION_NAME    = "cpu combined";
 
-  private final Sigar sigar;
+  private final static String  ELEMENT_PREFIX = "cpu ";
+
+  private final Sigar          sigar;
 
   public SRACpuCombined() {
     sigar = SigarUtil.newSigar();
@@ -39,7 +44,8 @@ public class SRACpuCombined implements StatisticRetrievalAction, SRACpuConstants
       for (int i = 0; i < cpuPercList.length; i++) {
         String element = ELEMENT_PREFIX + i;
         double combined = cpuPercList[i].getCombined();
-        data[i] = new StatisticData(ACTION_NAME, element, Double.isNaN(combined) || Double.isInfinite(combined) ? null : new BigDecimal(format.format(combined)));
+        data[i] = new StatisticData(ACTION_NAME, element, Double.isNaN(combined) || Double.isInfinite(combined) ? null
+            : new BigDecimal(format.format(combined)));
       }
       return data;
     } catch (SigarException e) {

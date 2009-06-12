@@ -41,8 +41,10 @@ public abstract class TerracottaConfiguratorModule implements BundleActivator {
     addInstrumentation(context);
     context.ungetService(configHelperRef);
     registerModuleSpec(context);
-    registerMBeanSpec(context);
-    registerSRASpec(context);
+    if (!Boolean.getBoolean("tc.bootjar.creation")) {
+      registerMBeanSpec(context);
+      registerSRASpec(context);
+    }
   }
 
   protected Bundle getThisBundle() {

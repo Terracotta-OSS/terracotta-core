@@ -3,13 +3,10 @@
  */
 package com.tc.statistics;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
-
 /**
- * This interface has to be implemented to retrieve data from system, for
- * storage into the CVT. {@code StatisticRetrievalAction} is abbreviated as SRA
- * throughout the CVT.
+ * This interface has to be implemented to retrieve statistics data from system.
+ * {@code StatisticRetrievalAction} is abbreviated as SRA throughout the
+ * statistics infrastructure.
  *
  * The accent is really situated on the 'retrieval' part. Usually, a
  * {@code StatisticRetrievalAction} implementation will interact with
@@ -17,7 +14,7 @@ import com.tc.logging.TCLogging;
  * the data itself.
  *
  * SRA classes are instantiated only once within the agent that they
- * belong to. The instances are shared amongst CVT capture sessions. Therefore,
+ * belong to. The instances are shared amongst statistics capture sessions. Therefore,
  * SRA classes should not have any non-final instance state.
  */
 public interface StatisticRetrievalAction {
@@ -25,11 +22,6 @@ public interface StatisticRetrievalAction {
    * Convenience field that allows SRAs to return empty data.
    */
   public final static StatisticData[] EMPTY_STATISTIC_DATA = new StatisticData[0];
-
-  /**
-   * Logger that can be used by all SRAs.
-   */
-  public final static TCLogger LOGGER = TCLogging.getLogger(StatisticRetrievalAction.class);
 
   /**
    * Retrieves statistics data from the system and formats it as an array of
@@ -51,7 +43,7 @@ public interface StatisticRetrievalAction {
   /**
    * The name that uniquely identifies this SRA.
    *
-   * This name is used when SRAs are listed by a CVT agent and when they are
+   * This name is used when SRAs are listed by a statistics agent and when they are
    * activated/deactivated. This is independent of the name that is used
    * within the {@code StatisticData} instances that are returned from
    * {@link #retrieveStatisticData}. It is however recommended for the SRA

@@ -29,7 +29,7 @@ import com.tc.management.remote.protocol.terracotta.TunnelingMessageConnectionSe
 import com.tc.object.config.MBeanSpec;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.RuntimeLogger;
-import com.tc.statistics.StatisticsAgentSubSystemImpl;
+import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.util.concurrent.SetOnceFlag;
 
 import java.io.IOException;
@@ -49,29 +49,29 @@ import javax.management.remote.JMXServiceURL;
 
 public final class L1Management extends TerracottaManagement {
 
-  private static final TCLogger              logger = TCLogging.getLogger(L1Management.class);
+  private static final TCLogger          logger = TCLogging.getLogger(L1Management.class);
 
-  private final SetOnceFlag                  started;
-  private final TunnelingEventHandler        tunnelingHandler;
-  private final Object                       mBeanServerLock;
-  private MBeanServer                        mBeanServer;
+  private final SetOnceFlag              started;
+  private final TunnelingEventHandler    tunnelingHandler;
+  private final Object                   mBeanServerLock;
+  private MBeanServer                    mBeanServer;
 
-  private final ClientTxMonitor              clientTxBean;
-  private final SessionMonitor               httpSessionsMonitor;
-  private final TerracottaCluster            clusterBean;
-  private final L1Info                       l1InfoBean;
-  private final InstrumentationLogging       instrumentationLoggingBean;
-  private final RuntimeOutputOptions         runtimeOutputOptionsBean;
-  private final RuntimeLogging               runtimeLoggingBean;
+  private final ClientTxMonitor          clientTxBean;
+  private final SessionMonitor           httpSessionsMonitor;
+  private final TerracottaCluster        clusterBean;
+  private final L1Info                   l1InfoBean;
+  private final InstrumentationLogging   instrumentationLoggingBean;
+  private final RuntimeOutputOptions     runtimeOutputOptionsBean;
+  private final RuntimeLogging           runtimeLoggingBean;
 
-  private final StatisticsAgentSubSystemImpl statisticsAgentSubSystem;
+  private final StatisticsAgentSubSystem statisticsAgentSubSystem;
 
-  private final MBeanSpec[]                  mbeanSpecs;
+  private final MBeanSpec[]              mbeanSpecs;
 
-  private final L1Dumper                     l1DumpBean;
+  private final L1Dumper                 l1DumpBean;
 
   public L1Management(final TunnelingEventHandler tunnelingHandler,
-                      final StatisticsAgentSubSystemImpl statisticsAgentSubSystem, final RuntimeLogger runtimeLogger,
+                      final StatisticsAgentSubSystem statisticsAgentSubSystem, final RuntimeLogger runtimeLogger,
                       final InstrumentationLogger instrumentationLogger, final String rawConfigText,
                       final TCClient client, final MBeanSpec[] mbeanSpecs) {
     super();

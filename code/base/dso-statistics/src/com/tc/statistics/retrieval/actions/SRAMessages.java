@@ -3,6 +3,8 @@
  */
 package com.tc.statistics.retrieval.actions;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.MessageMonitorImpl;
 import com.tc.properties.TCPropertiesConsts;
@@ -31,42 +33,44 @@ import java.util.List;
  */
 public class SRAMessages implements StatisticRetrievalAction {
 
-  public static final String ACTION_NAME = "message monitor";
+  public final static TCLogger     LOGGER                 = TCLogging.getLogger(StatisticRetrievalAction.class);
+
+  public static final String       ACTION_NAME            = "message monitor";
 
   private final MessageMonitorImpl monitor;
 
   /**
    * Element name for incoming count
    */
-  public static final String ELEMENT_INCOMING_COUNT = "incoming count";
+  public static final String       ELEMENT_INCOMING_COUNT = "incoming count";
 
   /**
    * Element name for incoming data
    */
-  public static final String ELEMENT_INCOMING_DATA = "incoming data";
+  public static final String       ELEMENT_INCOMING_DATA  = "incoming data";
 
   /**
    * Element name for outgoing count
    */
-  public static final String ELEMENT_OUTGOING_COUNT = "outgoing count";
+  public static final String       ELEMENT_OUTGOING_COUNT = "outgoing count";
 
   /**
    * Element name for outgoing data
    */
-  public static final String ELEMENT_OUTGOING_DATA = "outgoing data";
+  public static final String       ELEMENT_OUTGOING_DATA  = "outgoing data";
 
   /**
    * Delimiter String that is between the mesage type and the data in an element
    */
-  public static final String ELEMENT_NAME_DELIMITER = ":";
+  public static final String       ELEMENT_NAME_DELIMITER = ":";
 
   public SRAMessages(final MessageMonitor monitor) {
     if (monitor instanceof MessageMonitorImpl) {
-      this.monitor = (MessageMonitorImpl)monitor;
+      this.monitor = (MessageMonitorImpl) monitor;
     } else {
       this.monitor = null;
-      LOGGER.info("\"" + ACTION_NAME + "\" statistic is not enabled. Please enable the property \"" + TCPropertiesConsts.TCM_MONITOR_DELAY +
-                  "\" to collect this statistics.");
+      LOGGER.info("\"" + ACTION_NAME + "\" statistic is not enabled. Please enable the property \""
+                  + TCPropertiesConsts.TCM_MONITOR_DELAY + "\" to collect this statistics.");
     }
   }
 

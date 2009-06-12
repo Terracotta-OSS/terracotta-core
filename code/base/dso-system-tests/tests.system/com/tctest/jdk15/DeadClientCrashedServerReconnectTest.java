@@ -24,6 +24,7 @@ import com.tc.objectserver.control.ServerControl;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.stats.DSOMBean;
 import com.tc.test.proxyconnect.ProxyConnectManager;
 import com.tc.test.proxyconnect.ProxyConnectManagerImpl;
@@ -81,6 +82,7 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
                                                                      .getLogger(DistributedObjectClient.class))),
                                                                  new MockClassProvider(), components, NullManager
                                                                      .getInstance(),
+                                                                 new StatisticsAgentSubSystemImpl(),
                                                                  new DsoClusterImpl(), new NullRuntimeLogger());
     client.setCreateDedicatedMBeanServer(true);
     client.start();

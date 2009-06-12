@@ -3,6 +3,8 @@
  */
 package com.tc.statistics.retrieval.actions;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.object.cache.CacheManager;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
@@ -27,11 +29,13 @@ import com.tc.statistics.StatisticType;
  */
 public class SRACacheObjectsEvictRequest implements StatisticRetrievalAction {
 
-  public static final String ACTION_NAME = CacheManager.CACHE_OBJECTS_EVICT_REQUEST;
+  public static final String   ACTION_NAME = CacheManager.CACHE_OBJECTS_EVICT_REQUEST;
+
+  public final static TCLogger LOGGER      = TCLogging.getLogger(StatisticRetrievalAction.class);
 
   public StatisticData[] retrieveStatisticData() {
-    LOGGER.warn("Data for statistic '" + ACTION_NAME + " can't be retrieved using the action instance. " +
-                "It will be collected automatically when triggered by the system.");
+    LOGGER.warn("Data for statistic '" + ACTION_NAME + " can't be retrieved using the action instance. "
+                + "It will be collected automatically when triggered by the system.");
     return EMPTY_STATISTIC_DATA;
   }
 
