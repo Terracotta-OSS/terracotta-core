@@ -51,6 +51,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
   private final Map                                dnaRequests               = new HashMap();
   private final Map                                outstandingObjectRequests = new HashMap();
   private final Map                                outstandingRootRequests   = new HashMap();
+  private final Set                                preFetchInProgress        = new HashSet();
   private final Set                                missingObjectIDs          = new HashSet();
   private long                                     objectRequestIDCounter    = 0;
   private final ObjectRequestMonitor               requestMonitor;
@@ -157,9 +158,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
 
   public synchronized void preFetchObject(ObjectID id) {
     if (this.dnaRequests.containsKey(id)) { return; }
-
-    // These objects are not marked as being pre-fetched so multiple request for the same object can end up in the
-    // server. A potential optimization that can be done.
+    this.preFetchInProgress.add(id);
     ObjectRequestContext ctxt = new ObjectRequestContextImpl(this.cip.getClientID(),
                                                              new ObjectRequestID(this.objectRequestIDCounter++), id,
                                                              this.defaultDepth, ObjectID.NULL_ID, true);
@@ -191,6 +190,8 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
     boolean inMemory = true;
     long startTime = System.currentTimeMillis();
     long totalTime = 0;
+    removePreFetchInProgress(id);
+
     while (true) {
       waitUntilRunning();
       DNA dna = (DNA) this.dnaRequests.get(id);
@@ -229,6 +230,11 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
       this.logger.info("Cache Hit : Miss ratio = " + this.hit + "  : " + this.miss);
     }
     return (DNA) this.dnaRequests.remove(id);
+  }
+
+  private boolean removePreFetchInProgress(ObjectID id) {
+    if (this.preFetchInProgress.size() > 0) { return this.preFetchInProgress.remove(id); }
+    return false;
   }
 
   private void sendRequest(final ObjectRequestContext ctxt) {
@@ -336,8 +342,18 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
                        + this.sessionManager);
       return;
     }
-    this.logger.warn("Received Missing Object IDs from server : " + missingOIDs);
-    this.missingObjectIDs.addAll(missingOIDs);
+    for (Iterator i = missingOIDs.iterator(); i.hasNext();) {
+      ObjectID oid = (ObjectID) i.next();
+      boolean prefetched = removePreFetchInProgress(oid);
+      this.logger.warn("Received Missing Object ID from server : " + oid + " prefetched : " + prefetched);
+      if (prefetched) {
+        // Ignoring pre-fetch requests, as it could made under incorrect locking, reset the data structures
+        this.dnaRequests.remove(oid);
+        this.outstandingObjectRequests.remove(oid);
+      } else {
+        this.missingObjectIDs.add(oid);
+      }
+    }
     notifyAll();
   }
 
@@ -355,8 +371,10 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
   }
 
   private void basicAddObject(final DNA dna) {
-    this.dnaRequests.put(dna.getObjectID(), dna);
-    this.outstandingObjectRequests.remove(dna.getObjectID());
+    ObjectID id = dna.getObjectID();
+    this.dnaRequests.put(id, dna);
+    this.outstandingObjectRequests.remove(id);
+    removePreFetchInProgress(id);
   }
 
   public synchronized void removed(final ObjectID id) {
