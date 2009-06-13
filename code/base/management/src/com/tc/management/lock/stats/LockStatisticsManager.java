@@ -101,7 +101,8 @@ public abstract class LockStatisticsManager implements Serializable {
     LockStatisticsInfo lsc = (LockStatisticsInfo) lockStats.get(lockID);
     if (lsc == null) {
       lsc = newLockStatisticsContext(lockID);
-      lockStats.putIfAbsent(lockID, lsc);
+      LockStatisticsInfo existLsc = (LockStatisticsInfo) lockStats.putIfAbsent(lockID, lsc);
+      if (existLsc != null) return existLsc;
     }
     return lsc;
   }
