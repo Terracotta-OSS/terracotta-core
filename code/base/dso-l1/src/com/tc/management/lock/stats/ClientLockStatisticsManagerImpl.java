@@ -55,7 +55,7 @@ public class ClientLockStatisticsManagerImpl extends LockStatisticsManager imple
     this.sink = sinkArg;
   }
 
-  public synchronized void recordLockRequested(LockID lockID, ThreadID threadID, String contextInfo,
+  public void recordLockRequested(LockID lockID, ThreadID threadID, String contextInfo,
                                                int numberOfPendingLockRequests) {
     if (!isClientStatEnabled()) { return; }
 

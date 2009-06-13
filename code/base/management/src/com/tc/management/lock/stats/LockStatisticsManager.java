@@ -14,16 +14,17 @@ import com.tc.util.Counter;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Methods in this class are not synchronized because they are called from the context of its concrete subclasses.
  */
 public abstract class LockStatisticsManager implements Serializable {
-  protected final Map            lockStats              = new HashMap();       // map<lockID, LockStatisticsInfo>
-  protected final LockStatConfig lockStatConfig         = new LockStatConfig();
-  protected final Map            nestedDepth            = new HashMap();       // map<ThreadID/NodeID, int>
+  protected final ConcurrentHashMap lockStats      = new ConcurrentHashMap(); // map<lockID, LockStatisticsInfo>
+  protected final LockStatConfig    lockStatConfig = new LockStatConfig();
+  protected final Map               nestedDepth    = new HashMap();          // map<ThreadID/NodeID, int>
 
-  protected boolean              lockStatisticsEnabled;
+  protected boolean                 lockStatisticsEnabled;
 
   public void recordLockRequested(LockID lockID, NodeID nodeID, ThreadID threadID, StackTraceElement[] stackTraces,
                                   String contextInfo, int numberOfPendingRequests) {
@@ -100,7 +101,7 @@ public abstract class LockStatisticsManager implements Serializable {
     LockStatisticsInfo lsc = (LockStatisticsInfo) lockStats.get(lockID);
     if (lsc == null) {
       lsc = newLockStatisticsContext(lockID);
-      lockStats.put(lockID, lsc);
+      lockStats.putIfAbsent(lockID, lsc);
     }
     return lsc;
   }
