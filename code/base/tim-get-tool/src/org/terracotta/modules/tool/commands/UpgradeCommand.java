@@ -106,11 +106,9 @@ public class UpgradeCommand extends ModuleOperatorCommand {
       } else {
         if (!latest.isInstalled()) {
           neededToInstall = true;
-          out.println(": not yet installed");
         } else {
           if (latest.version().compareTo(xmlModule.getVersion()) > 0) {
             neededToInstall = true;
-            out.println(": latest version " + latest.version());
           } else {
             out.println(": up to date");
           }
@@ -118,6 +116,7 @@ public class UpgradeCommand extends ModuleOperatorCommand {
       }
       
       if (neededToInstall) {
+        out.println(": latest version " + latest.version());
         xmlModule.setVersion(latest.version());
         latest.install(listener, installOptions);
         out.println();
