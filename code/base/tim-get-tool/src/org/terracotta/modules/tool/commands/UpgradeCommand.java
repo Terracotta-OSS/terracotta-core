@@ -86,39 +86,53 @@ public class UpgradeCommand extends ModuleOperatorCommand {
 
     InstallListener listener = new DefaultInstallListener(report, out);
 
-    boolean foundNewer = false;
+    boolean updateConfig = false;
     TcConfigDocument tcConfigDocument = new Loader().parse(tcConfigPath);
     TcConfig tcConfig = tcConfigDocument.getTcConfig();
     if (tcConfig.getClients() == null || tcConfig.getClients().getModules() == null) {
       out.print("Found no module to upgrade.");
       return;
     }
+    
     com.terracottatech.config.Module[] xmlModules = tcConfig.getClients().getModules().getModuleArray();
+    
     for (com.terracottatech.config.Module xmlModule : xmlModules) {
-      out.print("Parsing module: " + xmlModule.getName() + "-" + xmlModule.getVersion());
+      out.print("* Parsing module: " + xmlModule.getName() + "-" + xmlModule.getVersion());
       Module latest = modules.findLatest(xmlModule.getName(), xmlModule.getGroupId());
+      boolean neededToInstall = false;
+      
       if (latest == null) {
         out.println(": No module found on server");
       } else {
-        if (latest.version().compareTo(xmlModule.getVersion()) > 0) {
-          out.println(": newer version " + latest.version());
-          xmlModule.setVersion(latest.version());
-          foundNewer = true;
-          latest.install(listener, installOptions);
+        if (!latest.isInstalled()) {
+          neededToInstall = true;
+          out.println(": not yet installed");
         } else {
-          out.println(": up to date");
+          if (latest.version().compareTo(xmlModule.getVersion()) > 0) {
+            neededToInstall = true;
+            out.println(": latest version " + latest.version());
+          } else {
+            out.println(": up to date");
+          }
         }
       }
-      out.println();
+      
+      if (neededToInstall) {
+        xmlModule.setVersion(latest.version());
+        latest.install(listener, installOptions);
+        out.println();
+        updateConfig = true;
+      }
     }
 
     // save original file to .original if found newer module
-    if (foundNewer) {
+    if (updateConfig) {
       File originalFile = new File(tcConfigPath.getAbsolutePath() + ".original");
       FileUtils.copyFile(tcConfigPath, originalFile);
       out.println("Your original config file has been saved to " + originalFile);
       tcConfigDocument.save(tcConfigPath);
     } else {
+      out.println();
       out.println("Found no module that requires upgrade.");
     }
   }
