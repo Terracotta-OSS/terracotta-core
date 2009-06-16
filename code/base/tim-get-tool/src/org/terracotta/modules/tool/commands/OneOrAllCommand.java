@@ -30,7 +30,7 @@ abstract class OneOrAllCommand extends ModuleOperatorCommand {
     out.println("You need to at least specify the name of the integration module as argument.");
 
     if (!isAllSupported()) return;
-    out.println("Alternatively, you can ause --" + LONGOPT_ALL + " option to " + this.name() + " everything.");
+    out.println("Alternatively, you can use --" + LONGOPT_ALL + " option to " + this.name() + " everything.");
   }
 
   protected boolean isAllSupported() {
