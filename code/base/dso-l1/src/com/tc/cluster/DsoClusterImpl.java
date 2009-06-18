@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -159,7 +160,7 @@ public class DsoClusterImpl implements DsoClusterInternal {
     if (response.isEmpty()) { return Collections.emptyMap(); }
 
     // transform object IDs and node IDs in actual local instances
-    Map<Object, Set<DsoNode>> result = new HashMap<Object, Set<DsoNode>>();
+    Map<Object, Set<DsoNode>> result = new IdentityHashMap<Object, Set<DsoNode>>();
     for (Map.Entry<ObjectID, Set<NodeID>> entry : response.entrySet()) {
       final Object object = objectIDMapping.get(entry.getKey());
       Assert.assertNotNull(object);
