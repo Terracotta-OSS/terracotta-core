@@ -74,6 +74,73 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
     Assert.assertNotNull(result2);
     Assert.assertEquals(0, result2.size());
   }
+  
+  void testGetNodesWithObjectsThatMatchHashCodes() throws Exception {
+    final int nodeId = barrier.await();
+
+    Object bh1 = new BadMojo("abc");
+    Object bh2 = new BadMojo("def");
+    Object bh3 = new BadMojo("ghi");
+
+    if (1 == nodeId) {
+      synchronized(map) {
+        map.put("BH1", bh1);
+        map.put("BH2", bh2);
+        map.put("BH3", bh3);
+      }
+    }
+
+    barrier.await();
+
+    if (2 == nodeId) {
+      synchronized(map) {
+        bh1 = map.get("BH1");
+        bh2 = map.get("BH2");
+      }
+    }
+
+    barrier.await();
+    
+    final DsoNode currentNode = cluster.getCurrentNode();
+
+    if(nodeId == 1 || nodeId == 2) {
+      final Map<?, Set<DsoNode>> nodes = cluster.getNodesWithObjects(bh1, bh2);
+      Assert.assertEquals(2, nodes.size());
+      Assert.assertTrue(nodes.get(bh1).contains(currentNode));
+      Assert.assertTrue(nodes.get(bh2).contains(currentNode));
+      
+      if(nodeId == 1) {
+        final Map<?, Set<DsoNode>> nodes2 = cluster.getNodesWithObjects(bh3);
+        Assert.assertEquals(1, nodes2.size());
+        Assert.assertTrue(nodes2.get(bh3).contains(currentNode));
+      }
+    }
+
+    barrier.await();
+  }
+  
+  public static class BadMojo extends AbstractMojo {
+    public BadMojo(final String mojo) {
+      this.mojo = mojo;
+    }
+    
+    public String getValue() { return this.mojo; }
+
+    @Override
+    public boolean equals(final Object obj) {
+      if (obj == this) {
+        return true;
+      } else if (obj instanceof BadMojo) {
+        return true;
+      }
+      return false;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+  }
 
   void testGetNodesWithObjectsNullElement() {
     final Map<?, Set<DsoNode>> result1 = cluster.getNodesWithObjects((Object) null);
@@ -509,6 +576,8 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
     config.addWriteAutolock("* " + YourMojo.class.getName() + "*.*(..)");
 
     config.addWriteAutolock("* " + MyMojo.class.getName() + "*.*(..)");
+    
+    config.addWriteAutolock("* " + BadMojo.class.getName() + "*.*(..)");
   }
 
   public static class SomePojo {
