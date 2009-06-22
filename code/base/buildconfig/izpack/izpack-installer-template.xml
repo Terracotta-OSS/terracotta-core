@@ -29,6 +29,7 @@
    </locale>
 
    <native type="izpack" name="ShellLink.dll" />
+   <native type="izpack" name="ShellLink_x64.dll"/>
 
    <variables>
       <variable name="DesktopShortcutCheckboxEnabled" value="true" />
