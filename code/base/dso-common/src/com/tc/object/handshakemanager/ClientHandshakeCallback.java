@@ -14,5 +14,7 @@ public interface ClientHandshakeCallback {
   public void unpause(NodeID remoteNode, int disconnected);
 
   public void initializeHandshake(NodeID thisNode, NodeID remoteNode, ClientHandshakeMessage handshakeMessage);
+  
+  public void shutdown();
 
 }

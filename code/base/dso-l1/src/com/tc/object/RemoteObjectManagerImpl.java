@@ -46,6 +46,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
 
   private static final State                       PAUSED                    = new State("PAUSED");
   private static final State                       RUNNING                   = new State("RUNNING");
+  private static final State                       STARTING                  = new State("STARTING");
 
   private final LinkedHashMap                      rootRequests              = new LinkedHashMap();
   private final Map                                dnaRequests               = new HashMap();
@@ -76,6 +77,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
   private static final int                         REMOVE_OBJECTS_THRESHOLD  = 10000;
   private long                                     hit                       = 0;
   private long                                     miss                      = 0;
+  private volatile boolean                         isShutdown                = false;
 
   public RemoteObjectManagerImpl(final GroupID groupID, final TCLogger logger, final ClientIDProvider cip,
                                  final RequestRootMessageFactory rrmFactory,
@@ -92,7 +94,12 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
     this.sessionManager = sessionManager;
   }
 
+  public void shutdown() {
+    isShutdown = true;
+  }
+
   public synchronized void pause(final NodeID remote, final int disconnected) {
+    if (isShutdown) return;
     assertNotPaused("Attempt to pause while PAUSED");
     this.state = PAUSED;
     // XXX:: We are clearing unmaterialized DNAs and removed objects here because on connect we are going to send
@@ -104,11 +111,14 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
 
   public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
                                   final ClientHandshakeMessage handshakeMessage) {
-    // NOP
+    if (isShutdown) return;
+    assertPaused("Attempt to init handshake while not PAUSED");
+    this.state = STARTING;
   }
 
   public synchronized void unpause(final NodeID remote, final int disconnected) {
-    assertPaused("Attempt to unpause while not PAUSED");
+    if (isShutdown) return;
+    assertNotRunning("Attempt to unpause while not PAUSED");
     this.state = RUNNING;
     requestOutstanding();
     notifyAll();
@@ -143,6 +153,10 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
 
   private void assertNotPaused(final Object message) {
     if (this.state == PAUSED) { throw new AssertionError(message + ": " + this.state); }
+  }
+  
+  private void assertNotRunning(final Object message) {
+    if (this.state == RUNNING) { throw new AssertionError(message + ": " + this.state); }
   }
 
   synchronized void requestOutstanding() {

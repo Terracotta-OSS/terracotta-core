@@ -47,6 +47,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
   private final GroupID[]                           groupIDs;
   private volatile int                              disconnected;
   private volatile boolean                          serverIsPersistent = false;
+  private volatile boolean                          isShutdown         = false;
 
   public ClientHandshakeManagerImpl(final TCLogger logger, final DSOClientMessageChannel channel,
                                     final ClientHandshakeMessageFactory chmf, final Sink pauseSink,
@@ -64,6 +65,18 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
     this.disconnected = this.groupIDs.length;
     initGroupStates(PAUSED);
     pauseCallbacks(GroupID.ALL_GROUPS, this.disconnected);
+  }
+
+  public void shutdown() {
+    isShutdown = true;
+    shutdownCallbacks();
+  }
+  
+  private boolean checkShutdown() {
+    if (isShutdown) {
+      this.logger.warn("Drop handshaking due to client shutting down...");
+    }
+    return isShutdown;
   }
 
   private synchronized void initGroupStates(final State state) {
@@ -103,6 +116,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
   }
 
   public void disconnected(final NodeID remoteNode) {
+    if(checkShutdown()) return;
     State currentState = getState(remoteNode);
     if (currentState == PAUSED) {
       this.logger.warn("Pause called while already PAUSED for " + remoteNode);
@@ -136,6 +150,8 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
       this.logger.warn("Unpause called while not PAUSED for " + remoteNode);
       return;
     }
+    // drop handshaking if shutting down
+    if(checkShutdown()) return;
     initiateHandshake(remoteNode);
   }
 
@@ -182,6 +198,12 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
   // to be override by test program
   protected void mismatchExitWay(String msg) {
     System.exit(-1);
+  }
+  
+  private void shutdownCallbacks() {
+    for (ClientHandshakeCallback c : this.callBacks) {
+      c.shutdown();
+    }
   }
 
   private void pauseCallbacks(final NodeID remote, final int disconnectedCount) {

@@ -40,4 +40,8 @@ public class ObjectIDClientHandshakeRequester implements ClientHandshakeCallback
     // NOP
   }
 
+  public void shutdown() {
+    // NOP
+  }
+
 }

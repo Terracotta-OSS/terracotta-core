@@ -83,6 +83,12 @@ public class StripedClientLockManagerImpl implements ClientLockManager {
     int hash = hash(lockID.hashCode());
     return this.lockManagers[(hash >>> this.segmentShift) & this.segmentMask];
   }
+  
+  public void shutdown() {
+    for (ClientLockManagerImpl lockManager : this.lockManagers) {
+      lockManager.shutdown();
+    }
+  }
 
   public synchronized void pause(final NodeID remote, final int disconnected) {
     for (ClientLockManagerImpl lockManager : this.lockManagers) {

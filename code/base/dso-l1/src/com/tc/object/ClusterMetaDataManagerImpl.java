@@ -56,6 +56,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
 
   private final Map<ThreadID, WaitForResponse>              waitObjects                              = new HashMap<ThreadID, WaitForResponse>();
   private final Map<ThreadID, Object>                       responses                                = new HashMap<ThreadID, Object>();
+  private volatile boolean                                  isShutdown                               = false;
 
   public ClusterMetaDataManagerImpl(final GroupID groupID, final DNAEncoding encoding,
                                     final ThreadIDManager threadIDManager,
@@ -242,7 +243,12 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     }
   }
 
+  public void shutdown() {
+    isShutdown = true;
+  }
+
   public void pause(final NodeID remote, final int disconnected) {
+    if (isShutdown) return;
     synchronized (this) {
       assertNotPaused("Attempt to pause while PAUSED");
       this.state = PAUSED;
@@ -256,6 +262,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
   }
 
   public void unpause(final NodeID remote, final int disconnected) {
+    if (isShutdown) return;
     synchronized (this) {
       assertPaused("Attempt to unpause while not PAUSED");
       this.state = RUNNING;

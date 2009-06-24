@@ -73,4 +73,8 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
   public void unpause(final NodeID remoteNode, final int disconnected) {
     throw new ImplementMe();
   }
+  
+  public void shutdown() {
+    // NOP
+  }
 }

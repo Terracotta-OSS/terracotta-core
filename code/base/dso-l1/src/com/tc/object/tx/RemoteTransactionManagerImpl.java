@@ -81,6 +81,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   private final RemoteTransactionManagerTimerTask remoteTxManagerTimerTask;
 
   private final GroupID                           groupID;
+  private volatile boolean                        isShutdown                  = false;
 
   public RemoteTransactionManagerImpl(final GroupID groupID, final TCLogger logger,
                                       final TransactionBatchFactory batchFactory,
@@ -103,7 +104,12 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
     this.outstandingBatchesCounter = outstandingBatchesCounter;
   }
 
+  public void shutdown() {
+    isShutdown = true;
+  }
+
   public void pause(final NodeID remote, final int disconnected) {
+    if (isShutdown) return;
     synchronized (this.lock) {
       this.remoteTxManagerTimerTask.reset();
       if (isStoppingOrStopped()) { return; }
@@ -113,6 +119,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   }
 
   public void unpause(final NodeID remote, final int disconnected) {
+    if (isShutdown) return;
     synchronized (this.lock) {
       if (isStoppingOrStopped()) { return; }
       if (this.status != PAUSED) { throw new AssertionError("Attempt to unpause while not in paused state."); }
@@ -124,8 +131,11 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
 
   public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
                                   final ClientHandshakeMessage handshakeMessage) {
+    if (isShutdown) return;
     synchronized (this.lock) {
-      if (this.status != PAUSED) { throw new AssertionError("Attempting to handshake while not in paused state."); }
+      if (this.status != PAUSED) { throw new AssertionError("At " + this.status + " from " + remoteNode + " to "
+                                                            + thisNode + " . "
+                                                            + "Attempting to handshake while not in paused state."); }
       handshakeMessage.addTransactionSequenceIDs(getTransactionSequenceIDs());
       handshakeMessage.addResentTransactionIDs(getResentTransactionIDs());
     }

@@ -64,6 +64,9 @@ public class ClientShutdownManager {
 
   private void closeLocalWork() {
 
+    // stop handshaking while shutting down
+    handshakeManager.shutdown();
+    
     boolean immediate = isImmediate();
     if (!immediate) {
       if (rtxManager != null) {

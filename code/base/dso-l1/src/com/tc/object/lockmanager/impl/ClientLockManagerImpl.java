@@ -80,6 +80,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   private final ClientLockManagerConfig  clientLockManagerConfig;
   private final TCLockTimer              waitTimer;
   private final LockDistributionStrategy lockDistributionStrategy;
+  private volatile boolean               isShutdown                   = false;
 
   // For tests
   public ClientLockManagerImpl(final LockDistributionStrategy strategy, OrderedGroupIDs groupIds,
@@ -114,6 +115,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   }
 
   public synchronized void pause(final NodeID remote, final int disconnected) {
+    if (isShutdown) return;
     if (isState(PAUSED, remote)) { throw new AssertionError("Attempt to pause while already paused : " + grpToState); }
     setStateForNodeID(remote, PAUSED);
     for (Iterator iter = new HashSet(this.locksByID.values()).iterator(); iter.hasNext();) {
@@ -152,6 +154,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   }
 
   public synchronized void unpause(final NodeID remote, final int disconnected) {
+    if (isShutdown) return;
     if (!isState(STARTING, remote)) { throw new AssertionError("Attempt to unpause when not in starting : "
                                                                + grpToState); }
     setStateForNodeID(remote, RUNNING);
@@ -168,6 +171,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
 
   public synchronized void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
                                                final ClientHandshakeMessage handshakeMessage) {
+    if(isShutdown) return;
     if (!isState(PAUSED, remoteNode)) { throw new AssertionError("Attempt to initiateHandshake when not paused: "
                                                                  + grpToState); }
     setStateForNodeID(remoteNode, STARTING);
@@ -808,6 +812,10 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
       out.println(i.next());
     }
     return out;
+  }
+
+  public void shutdown() {
+    isShutdown = false;
   }
 
 }

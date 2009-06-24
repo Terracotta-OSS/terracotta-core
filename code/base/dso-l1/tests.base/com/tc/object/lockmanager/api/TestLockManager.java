@@ -128,6 +128,10 @@ public class TestLockManager implements ClientLockManager {
                                   final ClientHandshakeMessage handshakeMessage) {
     throw new ImplementMe();
   }
+  
+  public void shutdown() {
+    // NOP
+  }
 
   public void pause(final NodeID remoteNode, final int disconnected) {
     throw new ImplementMe();
