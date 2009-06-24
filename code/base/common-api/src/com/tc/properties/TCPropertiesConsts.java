@@ -20,7 +20,7 @@ public interface TCPropertiesConsts {
       "l2.nha.groupcomm.type", "l2.nha.tribes.failuredetector.millis", "l2.nha.tribes.orderinterceptor.enabled",
       "l2.nha.tribes.mcast.mcastPort", "l2.nha.tribes.mcast.mcastAddress", "l2.nha.tribes.mcast.memberDropTime",
       "l2.nha.tribes.mcast.mcastFrequency", "l2.nha.tribes.mcast.tcpListenPort", "l2.nha.tribes.mcast.tcpListenHost",
-      "l2.nha.mcast.enabled"                                                                     };
+      "l2.nha.mcast.enabled", "l1.serverarray.objectCreationStrategy.roundRobin.coordinatorLoad"     };
 
   /*********************************************************************************************************************
    * <code>
@@ -219,7 +219,6 @@ public interface TCPropertiesConsts {
   public static final String   L1_SERVERARRAY_OBJECTCREATIONSTRATEGY                              = "l1.serverarray.objectCreationStrategy";
   public static final String   L1_SERVERARRAY_OBJECTCREATIONSTRATEGY_GROUPAFFINITY_GROUPNAME      = "l1.serverarray.objectCreationStrategy.groupAffinity.groupName";
   public static final String   L1_SERVERARRAY_OBJECTCREATIONSTRATEGY_ROUND_ROBIN_START_INDEX      = "l1.serverarray.objectCreationStrategy.roundRobin.startIndex";
-  public static final String   L1_SERVERARRAY_OBJECTCREATIONSTRATEGY_ROUND_ROBIN_COORDINATOR_LOAD = "l1.serverarray.objectCreationStrategy.roundRobin.coordinatorLoad";
 
   /*********************************************************************************************************************
    * <code>
