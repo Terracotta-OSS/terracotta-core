@@ -23,6 +23,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.tc.util.ProductInfo;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -56,13 +57,14 @@ public class TIMGetTool {
   }
 
   private static Config createConfig() throws Exception {
-    try {
-      Properties props = new Properties();
-      props.load(TIMGetTool.class.getResourceAsStream("/tim-get.properties"));
-      return new Config(props);
-    } catch (Exception e) {
-      throw new Exception("Could not read configuration: " + e.getMessage());
+    InputStream in = TIMGetTool.class.getResourceAsStream("/tim-get.properties");
+    if (in == null) {
+      System.err.println("Can't locate tim-get.properties file. Did you have a complete kit?");
+      System.exit(1);
     }
+    Properties props = new Properties();
+    props.load(in);
+    return new Config(props);
   }
 
   private static CommandRegistry commandRegistry;
