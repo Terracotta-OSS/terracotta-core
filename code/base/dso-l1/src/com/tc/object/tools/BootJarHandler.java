@@ -5,6 +5,9 @@ package com.tc.object.tools;
 
 import org.apache.commons.io.FileUtils;
 
+import com.tc.logging.CustomerLogging;
+import com.tc.logging.TCLogger;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -17,16 +20,19 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 public class BootJarHandler {
+  
+  private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
+  
   private final boolean write_out_temp_file;
   private final File    outputFile;
   private final File    tempOutputFile;
   private final String  tempOutputFileAbsPath;
-  private final String  outputFileAbsPath;
+  private final String  outputFileCanonicalPath;
 
-  public BootJarHandler(boolean write_out_temp_file, File outputFile) {
+  public BootJarHandler(boolean write_out_temp_file, File outputFile) throws Exception {
     this.write_out_temp_file = write_out_temp_file;
     this.outputFile = outputFile;
-    outputFileAbsPath = this.outputFile.getAbsolutePath();
+    outputFileCanonicalPath = this.outputFile.getCanonicalPath();
     if (this.write_out_temp_file) {
       try {
         tempOutputFile = File.createTempFile("tc-bootjar", null);
@@ -59,7 +65,7 @@ public class BootJarHandler {
   }
 
   public void announceCreationStart() {
-    announce("Creating boot JAR at '" + outputFileAbsPath + "...");
+    announce("Creating boot JAR file at '" + outputFileCanonicalPath + "'...");
   }
 
   public BootJar getBootJar() throws UnsupportedVMException {
@@ -77,14 +83,14 @@ public class BootJarHandler {
 
   public String getCloseErrorMessage() {
     if (write_out_temp_file) { return "Failed to create temp jar file:" + tempOutputFileAbsPath; }
-    return "Failed to create jar file:" + outputFileAbsPath;
+    return "Failed to create jar file:" + outputFileCanonicalPath;
   }
 
   public void announceCreationEnd() throws BootJarHandlerException {
     if (write_out_temp_file) {
       createFinalBootJar();
     }
-    announce("Successfully created boot JAR file at '" + outputFileAbsPath + "'.");
+    announce("Successfully created boot JAR file at '" + outputFileCanonicalPath + "'.");
   }
 
   private void createFinalBootJar() throws BootJarHandlerException {
@@ -127,7 +133,7 @@ public class BootJarHandler {
   }
 
   private void announce(String msg) {
-    System.out.println(msg);
+    consoleLogger.info(msg);
   }
 
   private void copyFile(File src, File dest) throws IOException {

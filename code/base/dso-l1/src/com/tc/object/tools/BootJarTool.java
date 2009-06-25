@@ -2664,6 +2664,11 @@ public class BootJarTool {
       BootJarTool bjTool = new BootJarTool(new StandardDSOClientConfigHelperImpl(config, false), targetFile,
                                            systemLoader, !verbose);
       if (mode.equals(MAKE_MODE)) {
+        boolean validating = false;
+        if (targetFile.exists()) {
+          consoleLogger.info("Found boot JAR file at '" + targetFile.getCanonicalPath() + "'; validating...");
+          validating = true;
+        }
         boolean makeItAnyway = cmdLine.hasOption("w");
         if (makeItAnyway || !targetFile.exists() || (targetFile.exists() && !bjTool.isBootJarComplete(targetFile))) {
           // Don't reuse boot jar tool instance since its config might have been mutated by isBootJarComplete()
@@ -2672,8 +2677,13 @@ public class BootJarTool {
           bjTool.generateJar();
         }
         bjTool.verifyJar(targetFile);
+        if (validating) {
+          consoleLogger.info("Valid.");
+        }
       } else if (mode.equals(SCAN_MODE)) {
+        consoleLogger.info("Scanning boot JAR file at '" + targetFile.getCanonicalPath() + "'...");
         bjTool.scanJar(targetFile);
+        consoleLogger.info("Done.");
       } else {
         consoleLogger.fatal("\nInvalid mode specified, valid modes are: '" + MAKE_MODE + "' and '" + SCAN_MODE + "';"
                             + "use the -h option to view the options for this tool.");
