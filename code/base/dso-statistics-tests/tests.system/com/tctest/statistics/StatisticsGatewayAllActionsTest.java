@@ -46,6 +46,7 @@ public class StatisticsGatewayAllActionsTest extends AbstractStatisticsTranspare
 
     @Override
     public void execute() throws Exception {
+      System.out.println("statistics_post_action");
       JMXConnectorProxy jmxc = new JMXConnectorProxy("localhost", test.getAdminPort());
       MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
 

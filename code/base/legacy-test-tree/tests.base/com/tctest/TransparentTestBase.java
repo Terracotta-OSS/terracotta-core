@@ -475,6 +475,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
   public void initializeTestRunner(boolean isMutateValidateTest) throws Exception {
     initializeTestRunner(isMutateValidateTest, transparentAppConfig, runnerConfig);
+    loadPostActions();
     initPostActions();
   }
 

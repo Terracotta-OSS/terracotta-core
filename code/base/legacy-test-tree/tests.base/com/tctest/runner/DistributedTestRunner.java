@@ -194,9 +194,7 @@ public class DistributedTestRunner implements ResultsListener {
       }
     } catch (Throwable t) {
       notifyError(new ErrorContext(t));
-    } finally {
-      if (false && this.startServer) this.server.stop();
-    }
+    } 
   }
 
   private void startStatsOutputPrinterThread() {
@@ -254,13 +252,13 @@ public class DistributedTestRunner implements ResultsListener {
     } catch (Throwable t) {
       notifyError(new ErrorContext(t));
     } finally {
-      if (false && this.startServer) {
-        try {
+
+      try {
+        if (this.startServer) {
           executePostActions();
-        } catch (Exception e) {
-          notifyError(new ErrorContext(e));
         }
-        this.server.stop();
+      } catch (Exception e) {
+        notifyError(new ErrorContext(e));
       }
     }
   }
