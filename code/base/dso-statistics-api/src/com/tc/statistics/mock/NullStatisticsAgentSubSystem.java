@@ -8,6 +8,7 @@ import com.tc.config.schema.NewStatisticsConfig;
 import com.tc.statistics.AgentStatisticsManager;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemCallback;
+import com.tc.statistics.StatisticsSystemType;
 import com.tc.statistics.retrieval.NullStatisticsRetrievalRegistry;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 
@@ -43,7 +44,7 @@ public class NullStatisticsAgentSubSystem implements StatisticsAgentSubSystem {
     // no-op
   }
 
-  public boolean setup(final NewStatisticsConfig config) {
+  public boolean setup(final StatisticsSystemType type, final NewStatisticsConfig config) {
     // nothing to setup
     return true;
   }
@@ -60,7 +61,7 @@ public class NullStatisticsAgentSubSystem implements StatisticsAgentSubSystem {
     // no-op
   }
 
-  public boolean waitUntilActive() {
+  public boolean waitUntilSetupComplete() {
     return false;
   }
 }

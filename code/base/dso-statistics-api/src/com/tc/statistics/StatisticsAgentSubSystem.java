@@ -47,9 +47,9 @@ public interface StatisticsAgentSubSystem {
    *
    * @return {@code true} if the statistics agent was setup successfully; or {@code false} otherwise
    */
-  public boolean setup(final NewStatisticsConfig config);
+  public boolean setup(StatisticsSystemType type, NewStatisticsConfig config);
 
-  public boolean waitUntilActive();
+  public boolean waitUntilSetupComplete();
 
   public void setDefaultAgentIp(String defaultAgentIp);
 

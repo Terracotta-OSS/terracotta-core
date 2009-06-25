@@ -12,6 +12,7 @@ import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.statistics.StatisticData;
+import com.tc.statistics.StatisticsSystemType;
 import com.tc.statistics.buffer.StatisticsBuffer;
 import com.tc.statistics.buffer.StatisticsBufferListener;
 import com.tc.statistics.buffer.StatisticsConsumer;
@@ -82,6 +83,7 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
 
   private final static Random rand = new Random();
 
+  private final StatisticsSystemType type;
   private final StatisticsConfig config;
   private final File lockFile;
   private final StatisticsDatabase database;
@@ -92,7 +94,8 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
 
   private final Set listeners = new CopyOnWriteArraySet();
 
-  public H2StatisticsBufferImpl(final StatisticsConfig config, final File dbDir) {
+  public H2StatisticsBufferImpl(final StatisticsSystemType type, final StatisticsConfig config, final File dbDir) {
+    Assert.assertNotNull("type", type);
     Assert.assertNotNull("config", config);
     final String suffix;
     if (TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.CVT_BUFFER_RANDOM_SUFFIX_ENABLED, false)) {
@@ -103,6 +106,7 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
       suffix = H2_URL_SUFFIX;
     }
     this.database = new H2StatisticsDatabase(dbDir, suffix);
+    this.type = type;
     this.config = config;
     this.lockFile = new File(dbDir, suffix+"-tc.lck");
     try {
@@ -152,6 +156,11 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
   }
 
   public void open() throws StatisticsBufferException {
+    if (StatisticsSystemType.CLIENT == type &&
+      TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.CVT_CLIENT_FAIL_BUFFER_OPEN, false)) {
+      throw new StatisticsBufferException("Forcibly failing opening the statistics buffer through the " + TCPropertiesConsts.CVT_CLIENT_FAIL_BUFFER_OPEN + " property", null);
+    }
+
     synchronized (this) {
       try {
         FileLockGuard.guard(lockFile, new FileLockGuard.Guarded() {

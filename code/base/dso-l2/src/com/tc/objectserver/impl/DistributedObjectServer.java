@@ -213,6 +213,7 @@ import com.tc.runtime.TCMemoryManagerImpl;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
+import com.tc.statistics.StatisticsSystemType;
 import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.statistics.retrieval.actions.SRABerkeleyDB;
@@ -437,7 +438,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
 
     // setup the statistics subsystem
     this.statisticsAgentSubSystem = new StatisticsAgentSubSystemImpl();
-    if (!this.statisticsAgentSubSystem.setup(this.configSetupManager.commonl2Config())) {
+    if (!this.statisticsAgentSubSystem.setup(StatisticsSystemType.SERVER, this.configSetupManager.commonl2Config())) {
       System.exit(-1);
     }
     if (TCSocketAddress.WILDCARD_IP.equals(bindAddress) || TCSocketAddress.LOOPBACK_IP.equals(bindAddress)) {

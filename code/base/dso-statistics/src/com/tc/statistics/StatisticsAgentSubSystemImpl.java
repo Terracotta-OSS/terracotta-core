@@ -1,7 +1,3 @@
-/*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
- * notice. All rights reserved.
- */
 package com.tc.statistics;
 
 import com.tc.config.schema.NewStatisticsConfig;
@@ -36,18 +32,17 @@ import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 
 public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
-  private final static TCLogger                        DSO_LOGGER     = CustomerLogging.getDSOGenericLogger();
-  private final static TCLogger                        CONSOLE_LOGGER = CustomerLogging.getConsoleLogger();
 
-  private volatile StatisticsBuffer                    statisticsBuffer;
-  private volatile StatisticsEmitterMBean              statisticsEmitterMBean;
-  private volatile StatisticsManagerMBeanImpl          statisticsManagerMBean;
-  private volatile StatisticsRetrievalRegistry         statisticsRetrievalRegistry;
-  private volatile StatisticsLogger                    statisticsLogger;
-
-  private volatile boolean                             active         = false;
-
-  private final List<StatisticsAgentSubSystemCallback> callbacks      = new CopyOnWriteArrayList<StatisticsAgentSubSystemCallback>();
+  private final static TCLogger DSO_LOGGER = CustomerLogging.getDSOGenericLogger();
+  private final static TCLogger CONSOLE_LOGGER = CustomerLogging.getConsoleLogger();
+  private final List<StatisticsAgentSubSystemCallback> callbacks = new CopyOnWriteArrayList<StatisticsAgentSubSystemCallback>();
+  private final StatisticsRetrievalRegistry statisticsRetrievalRegistry = new StatisticsRetrievalRegistryImpl();
+  private volatile StatisticsBuffer statisticsBuffer;
+  private volatile StatisticsEmitterMBean statisticsEmitterMBean;
+  private volatile StatisticsManagerMBeanImpl statisticsManagerMBean;
+  private volatile StatisticsLogger statisticsLogger;
+  private volatile boolean setupComplete = false;
+  private volatile boolean active = false;
 
   public boolean isActive() {
     return active;
@@ -66,117 +61,134 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
   }
 
   public void setDefaultAgentIp(final String defaultAgentIp) {
-    if (null == statisticsBuffer) throw new AssertionError("The statistics subsystem has to be setup before.");
+    if (null == statisticsBuffer) {
+      throw new AssertionError("The statistics subsystem has to be setup before.");
+    }
     statisticsBuffer.setDefaultAgentIp(defaultAgentIp);
   }
 
   public void setDefaultAgentDifferentiator(final String defaultAgentDifferentiator) {
-    if (null == statisticsBuffer) throw new AssertionError("The statistics subsystem has to be setup before.");
+    if (null == statisticsBuffer) {
+      throw new AssertionError("The statistics subsystem has to be setup before.");
+    }
     statisticsBuffer.setDefaultAgentDifferentiator(defaultAgentDifferentiator);
   }
 
-  public synchronized boolean setup(final NewStatisticsConfig config) {
-    StatisticsConfig statistics_config = new StatisticsConfigImpl();
+  public synchronized boolean setup(final StatisticsSystemType type, final NewStatisticsConfig config) {
+    try {
+      StatisticsConfig statistics_config = new StatisticsConfigImpl();
 
-    // setup the statistics logger
-    statisticsLogger = new StatisticsLoggerImpl(statistics_config);
-    statisticsLogger.registerAction(new SRAMemoryUsage());
-    statisticsLogger.startup();
+      // setup the statistics logger
+      statisticsLogger = new StatisticsLoggerImpl(statistics_config);
+      statisticsLogger.registerAction(new SRAMemoryUsage());
+      statisticsLogger.startup();
 
-    // create the statistics buffer
-    File stat_path = config.statisticsPath().getFile();
-    if (!TCFileUtils.ensureWritableDir(stat_path, new TCFileUtils.EnsureWritableDirReporter() {
+      // create the statistics buffer
+      File stat_path = config.statisticsPath().getFile();
+      if (!TCFileUtils.ensureWritableDir(stat_path, new TCFileUtils.EnsureWritableDirReporter() {
 
-      public void reportFailedCreate(final File dir, final Exception e) {
+        public void reportFailedCreate(final File dir, final Exception e) {
+          // TODO: needs to be properly written and put in a properties file
+          String msg = "\n**************************************************************************************\n" +
+            "Unable to create the directory '" +
+            dir.getAbsolutePath() + "' for the statistics buffer.\n" +
+            "The CVT system will not be active for this node. To fix this, ensure that the Terracotta\n" +
+            "client has read and write privileges to this directory and its parent directories.\n" +
+            "**************************************************************************************\n";
+          CONSOLE_LOGGER.warn(msg);
+          DSO_LOGGER.warn(msg, e);
+        }
+
+        public void reportReadOnly(final File dir, final Exception e) {
+          // TODO: needs to be properly written and put in a properties file
+          String msg = "\n**************************************************************************************\n" +
+            "Unable to write to the directory '" +
+            dir.getAbsolutePath() + "' for the statistics buffer.\n" +
+            "The CVT system will not be active for this node. To fix this, ensure that the Terracotta\n" +
+            "client has write privileges in this directory.\n" +
+            "**************************************************************************************\n";
+          CONSOLE_LOGGER.warn(msg);
+          DSO_LOGGER.warn(msg, e);
+        }
+      })) {
+        return false;
+      }
+      try {
+        statisticsBuffer = new H2StatisticsBufferImpl(type, statistics_config, stat_path);
+        statisticsBuffer.open();
+      } catch (StatisticsDatabaseStructureMismatchError e) {
         // TODO: needs to be properly written and put in a properties file
-        String msg = "\n**************************************************************************************\n"
-                     + "Unable to create the directory '" + dir.getAbsolutePath() + "' for the statistics buffer.\n"
-                     + "The CVT system will not be active for this node. To fix this, ensure that the Terracotta\n"
-                     + "client has read and write privileges to this directory and its parent directories.\n"
-                     + "**************************************************************************************\n";
+        String msg = "\n**************************************************************************************\n" +
+          "The statistics buffer couldn't be opened at \n" + "'" +
+          stat_path.getAbsolutePath() + "'.\n" +
+          "The CVT system will not be active for this node because the statistics buffer database\n" +
+          "structure version doesn't correspond to the one expected by the system.\n" +
+          "\n" +
+          "A simple solution is to delete the directory in which the statistics are stored so\n" +
+          "that a new version of the database can be installed.\n" +
+          "**************************************************************************************\n";
         CONSOLE_LOGGER.warn(msg);
         DSO_LOGGER.warn(msg, e);
-      }
-
-      public void reportReadOnly(final File dir, final Exception e) {
+        return false;
+      } catch (StatisticsBufferException e) {
         // TODO: needs to be properly written and put in a properties file
-        String msg = "\n**************************************************************************************\n"
-                     + "Unable to write to the directory '" + dir.getAbsolutePath() + "' for the statistics buffer.\n"
-                     + "The CVT system will not be active for this node. To fix this, ensure that the Terracotta\n"
-                     + "client has write privileges in this directory.\n"
-                     + "**************************************************************************************\n";
+        String msg = "\n**************************************************************************************\n" +
+          "The statistics buffer couldn't be opened at \n" + "'" +
+          stat_path.getAbsolutePath() + "'.\n" +
+          "The CVT system will not be active for this node.\n" + "\n" +
+          "A common reason for this is that you're launching several Terracotta L1\n" +
+          "clients on the same machine. The default directory for the statistics buffer\n" +
+          "uses the IP address of the machine that it runs on as the identifier.\n" +
+          "When several clients are being executed on the same machine, a typical solution\n" +
+          "to properly separate these directories is by using a JVM property at startup\n" +
+          "that is unique for each client.\n" + "\n" +
+          "For example:\n" +
+          "  dso-java.sh -Dtc.node-name=node1 your.main.Class\n" +
+          "\n" +
+          "You can then adapt the tc-config.xml file so that this JVM property is picked\n" +
+          "up when the statistics directory is configured by using %(tc.node-name) in the\n" +
+          "statistics path.\n" +
+          "**************************************************************************************\n";
         CONSOLE_LOGGER.warn(msg);
         DSO_LOGGER.warn(msg, e);
+        return false;
+      }
+      String infoMsg = "Statistics buffer: '" +
+        stat_path.getAbsolutePath() + "'.";
+      DSO_LOGGER.info(infoMsg);
+
+      // create the statistics emitter mbean
+      try {
+        statisticsEmitterMBean = new StatisticsEmitterMBeanImpl(statistics_config, statisticsBuffer);
+      } catch (NotCompliantMBeanException e) {
+        throw new TCRuntimeException("Unable to construct the " +
+          StatisticsEmitterMBeanImpl.class.getName() +
+          " MBean; this is a programming error. Please go fix that class.", e);
       }
 
-    })) { return false; }
-    try {
-      statisticsBuffer = new H2StatisticsBufferImpl(statistics_config, stat_path);
-      statisticsBuffer.open();
-    } catch (StatisticsDatabaseStructureMismatchError e) {
-      // TODO: needs to be properly written and put in a properties file
-      String msg = "\n**************************************************************************************\n"
-                   + "The statistics buffer couldn't be opened at \n" + "'" + stat_path.getAbsolutePath() + "'.\n"
-                   + "The CVT system will not be active for this node because the statistics buffer database\n"
-                   + "structure version doesn't correspond to the one expected by the system.\n" + "\n"
-                   + "A simple solution is to delete the directory in which the statistics are stored so\n"
-                   + "that a new version of the database can be installed.\n"
-                   + "**************************************************************************************\n";
-      CONSOLE_LOGGER.warn(msg);
-      DSO_LOGGER.warn(msg, e);
-      return false;
-    } catch (StatisticsBufferException e) {
-      // TODO: needs to be properly written and put in a properties file
-      String msg = "\n**************************************************************************************\n"
-                   + "The statistics buffer couldn't be opened at \n" + "'" + stat_path.getAbsolutePath() + "'.\n"
-                   + "The CVT system will not be active for this node.\n" + "\n"
-                   + "A common reason for this is that you're launching several Terracotta L1\n"
-                   + "clients on the same machine. The default directory for the statistics buffer\n"
-                   + "uses the IP address of the machine that it runs on as the identifier.\n"
-                   + "When several clients are being executed on the same machine, a typical solution\n"
-                   + "to properly separate these directories is by using a JVM property at startup\n"
-                   + "that is unique for each client.\n" + "\n" + "For example:\n"
-                   + "  dso-java.sh -Dtc.node-name=node1 your.main.Class\n" + "\n"
-                   + "You can then adapt the tc-config.xml file so that this JVM property is picked\n"
-                   + "up when the statistics directory is configured by using %(tc.node-name) in the\n"
-                   + "statistics path.\n"
-                   + "**************************************************************************************\n";
-      CONSOLE_LOGGER.warn(msg);
-      DSO_LOGGER.warn(msg, e);
-      return false;
-    }
-    String infoMsg = "Statistics buffer: '" + stat_path.getAbsolutePath() + "'.";
-    DSO_LOGGER.info(infoMsg);
+      // setup the statistics manager
+      try {
+        statisticsManagerMBean = new StatisticsManagerMBeanImpl(statistics_config, statisticsRetrievalRegistry,
+          statisticsBuffer);
+      } catch (NotCompliantMBeanException e) {
+        throw new TCRuntimeException("Unable to construct the " +
+          StatisticsManagerMBeanImpl.class.getName() +
+          " MBean; this is a programming error. Please go fix that class.", e);
+      }
 
-    // create the statistics emitter mbean
-    try {
-      statisticsEmitterMBean = new StatisticsEmitterMBeanImpl(statistics_config, statisticsBuffer);
-    } catch (NotCompliantMBeanException e) {
-      throw new TCRuntimeException("Unable to construct the " + StatisticsEmitterMBeanImpl.class.getName()
-                                   + " MBean; this is a programming error. Please go fix that class.", e);
-    }
+      for (StatisticsAgentSubSystemCallback callback : callbacks) {
+        callback.setupComplete(this);
+      }
 
-    // setup an empty statistics retrieval registry
-    statisticsRetrievalRegistry = new StatisticsRetrievalRegistryImpl();
-    try {
-      statisticsManagerMBean = new StatisticsManagerMBeanImpl(statistics_config, statisticsRetrievalRegistry,
-                                                              statisticsBuffer);
-    } catch (NotCompliantMBeanException e) {
-      throw new TCRuntimeException("Unable to construct the " + StatisticsManagerMBeanImpl.class.getName()
-                                   + " MBean; this is a programming error. Please go fix that class.", e);
+      active = true;
+    } finally {
+      setupComplete = true;
+      this.notifyAll();
     }
-
-    for (StatisticsAgentSubSystemCallback callback : callbacks) {
-      callback.setupComplete(this);
-    }
-
-    active = true;
-    this.notifyAll();
     return true;
   }
 
-  public void registerMBeans(final MBeanServer server) throws MBeanRegistrationException, NotCompliantMBeanException,
-      InstanceAlreadyExistsException {
+  public void registerMBeans(final MBeanServer server) throws MBeanRegistrationException, NotCompliantMBeanException, InstanceAlreadyExistsException {
     server.registerMBean(statisticsEmitterMBean, StatisticsMBeanNames.STATISTICS_EMITTER);
     server.registerMBean(statisticsManagerMBean, StatisticsMBeanNames.STATISTICS_MANAGER);
   }
@@ -185,14 +197,14 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
     try {
       server.unregisterMBean(StatisticsMBeanNames.STATISTICS_EMITTER);
     } catch (InstanceNotFoundException e) {
-      DSO_LOGGER
-          .warn("Unexpected error while unregistering mbean '" + StatisticsMBeanNames.STATISTICS_EMITTER + "'", e);
+      DSO_LOGGER.warn("Unexpected error while unregistering mbean '" +
+        StatisticsMBeanNames.STATISTICS_EMITTER + "'", e);
     }
     try {
       server.unregisterMBean(StatisticsMBeanNames.STATISTICS_MANAGER);
     } catch (Exception e) {
-      DSO_LOGGER
-          .warn("Unexpected error while unregistering mbean '" + StatisticsMBeanNames.STATISTICS_MANAGER + "'", e);
+      DSO_LOGGER.warn("Unexpected error while unregistering mbean '" +
+        StatisticsMBeanNames.STATISTICS_MANAGER + "'", e);
     }
   }
 
@@ -226,9 +238,9 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
     return statisticsLogger;
   }
 
-  public boolean waitUntilActive() {
+  public boolean waitUntilSetupComplete() {
     synchronized (this) {
-      while (!active) {
+      while (!setupComplete) {
         try {
           this.wait();
         } catch (InterruptedException e) {

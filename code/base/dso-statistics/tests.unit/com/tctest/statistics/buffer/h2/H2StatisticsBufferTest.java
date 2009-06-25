@@ -4,6 +4,7 @@
 package com.tctest.statistics.buffer.h2;
 
 import com.tc.statistics.StatisticData;
+import com.tc.statistics.StatisticsSystemType;
 import com.tc.statistics.buffer.StatisticsBuffer;
 import com.tc.statistics.buffer.StatisticsBufferListener;
 import com.tc.statistics.buffer.StatisticsConsumer;
@@ -37,7 +38,7 @@ public class H2StatisticsBufferTest extends TestCase {
 
   public void setUp() throws Exception {
     tmpDir = createTmpDir();
-    buffer = new H2StatisticsBufferImpl(new StatisticsConfigImpl(), tmpDir);
+    buffer = new H2StatisticsBufferImpl(StatisticsSystemType.CLIENT, new StatisticsConfigImpl(), tmpDir);
     buffer.open();
     buffer.setDefaultAgentDifferentiator("L2");
   }
@@ -58,7 +59,7 @@ public class H2StatisticsBufferTest extends TestCase {
 
   public void testInvalidBufferDirectory() throws Exception {
     try {
-      new H2StatisticsBufferImpl(new StatisticsConfigImpl(), null);
+      new H2StatisticsBufferImpl(StatisticsSystemType.CLIENT, new StatisticsConfigImpl(), null);
       fail("expected exception");
     } catch (TCAssertionError e) {
       // dir can't be null
@@ -67,7 +68,7 @@ public class H2StatisticsBufferTest extends TestCase {
     File tmp_dir = createTmpDir();
     tmp_dir.delete();
     try {
-      new H2StatisticsBufferImpl(new StatisticsConfigImpl(), tmp_dir);
+      new H2StatisticsBufferImpl(StatisticsSystemType.CLIENT, new StatisticsConfigImpl(), tmp_dir);
       fail("expected exception");
     } catch (TCAssertionError e) {
       // dir doesn't exist
@@ -77,7 +78,7 @@ public class H2StatisticsBufferTest extends TestCase {
     tmp_dir.delete();
     tmp_dir.createNewFile();
     try {
-      new H2StatisticsBufferImpl(new StatisticsConfigImpl(), tmp_dir);
+      new H2StatisticsBufferImpl(StatisticsSystemType.CLIENT, new StatisticsConfigImpl(), tmp_dir);
       fail("expected exception");
     } catch (TCAssertionError e) {
       // path is not a dir
@@ -88,7 +89,7 @@ public class H2StatisticsBufferTest extends TestCase {
     tmp_dir = createTmpDir();
     tmp_dir.setReadOnly();
     try {
-      new H2StatisticsBufferImpl(new StatisticsConfigImpl(), tmp_dir);
+      new H2StatisticsBufferImpl(StatisticsSystemType.CLIENT, new StatisticsConfigImpl(), tmp_dir);
       fail("expected exception");
     } catch (TCAssertionError e) {
       // dir is not writable
@@ -149,7 +150,7 @@ public class H2StatisticsBufferTest extends TestCase {
     buffer.close();
 
     File tmp_dir = createTmpDir();
-    StatisticsBuffer newBuffer = new H2StatisticsBufferImpl(new StatisticsConfigImpl(), tmp_dir);
+    StatisticsBuffer newBuffer = new H2StatisticsBufferImpl(StatisticsSystemType.CLIENT, new StatisticsConfigImpl(), tmp_dir);
     newBuffer.close(); // should not throw an exception
   }
 

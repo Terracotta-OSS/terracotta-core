@@ -988,7 +988,7 @@ public class ManagerImpl implements Manager {
   }
 
   public StatisticRetrievalAction getStatisticRetrievalActionInstance(final String name) {
-    this.statisticsAgentSubSystem.waitUntilActive();
+    this.statisticsAgentSubSystem.waitUntilSetupComplete();
 
     return this.statisticsAgentSubSystem.getStatisticsRetrievalRegistry().getActionInstance(name);
   }

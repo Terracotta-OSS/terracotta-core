@@ -127,6 +127,7 @@ import com.tc.runtime.logging.LongGCLogger;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemCallback;
+import com.tc.statistics.StatisticsSystemType;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvictRequest;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvicted;
@@ -178,6 +179,8 @@ import java.util.List;
  * This is the main point of entry into the DSO client.
  */
 public class DistributedObjectClient extends SEDA implements TCClient {
+
+  public final static String DEFAULT_AGENT_DIFFERENTIATOR_PREFIX = "L1/";
 
   protected static final TCLogger                    DSO_LOGGER                 = CustomerLogging.getDSOGenericLogger();
   private static final TCLogger                      CONSOLE_LOGGER             = CustomerLogging.getConsoleLogger();
@@ -450,7 +453,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     statisticsAgentSubSystem.addCallback(new StatisticsSetupCallback(stageManager, mm, outstandingBatchesCounter,
                                                                      pendingBatchesSize, transactionSizeCounter,
                                                                      transactionsPerBatchCounter, txnCounter));
-    this.statisticsAgentSubSystem.setup(this.config.getNewCommonL1Config());
+    this.statisticsAgentSubSystem.setup(StatisticsSystemType.CLIENT, this.config.getNewCommonL1Config());
 
     RemoteObjectManager remoteObjectManager = this.dsoClientBuilder
         .createRemoteObjectManager(new ClientIDLogger(this.channel.getClientIDProvider(), TCLogging
@@ -688,7 +691,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     DSO_LOGGER.info(infoMsg);
 
     if (this.statisticsAgentSubSystem.isActive()) {
-      this.statisticsAgentSubSystem.setDefaultAgentDifferentiator("L1/"
+      this.statisticsAgentSubSystem.setDefaultAgentDifferentiator(DEFAULT_AGENT_DIFFERENTIATOR_PREFIX
                                                                   + this.channel.channel().getChannelID().toLong());
     }
 

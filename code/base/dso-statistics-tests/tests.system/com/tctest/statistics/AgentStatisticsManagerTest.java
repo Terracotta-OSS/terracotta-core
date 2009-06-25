@@ -11,6 +11,7 @@ import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.statistics.StatisticsManager;
+import com.tc.statistics.StatisticsSystemType;
 import com.tc.statistics.beans.StatisticsEmitterMBean;
 import com.tc.statistics.beans.StatisticsMBeanNames;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
@@ -48,7 +49,7 @@ public class AgentStatisticsManagerTest extends TCTestCase {
 
   protected void setUp() throws Exception {
     agentSubSystem = new StatisticsAgentSubSystemImpl();
-    agentSubSystem.setup(new NewStatisticsConfig() {
+    agentSubSystem.setup(StatisticsSystemType.CLIENT, new NewStatisticsConfig() {
       public FileConfigItem statisticsPath() {
         return new FileConfigItem() {
           public File getFile() {

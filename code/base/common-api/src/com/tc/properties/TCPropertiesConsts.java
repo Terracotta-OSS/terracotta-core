@@ -491,6 +491,8 @@ public interface TCPropertiesConsts {
    * cvt.buffer.randomsuffix.enabled       - If true, add a random suffix when a buffer is created
    * cvt.store.randomsuffix.enabled        - If true, add a random suffix when a store is created
    * cvt.rest.interface.enabled            - If false, the REST interface for the CVT will be disabled. True by default
+   * cvt.fail.buffer.creation              - If true, always fail the open of the CVT statistics buffer on a client. This is
+   *                                         supposed to be used by tests. False by default
    * </code>
    ********************************************************************************************************************/
   public static final String   CVT_RETRIEVER_NOTIFICATION_INTERVAL                                = "cvt.retriever.notification.interval";
@@ -498,6 +500,7 @@ public interface TCPropertiesConsts {
   public static final String   CVT_BUFFER_RANDOM_SUFFIX_ENABLED                                   = "cvt.buffer.randomsuffix.enabled";
   public static final String   CVT_STORE_RANDOM_SUFFIX_ENABLED                                    = "cvt.store.randomsuffix.enabled";
   public static final String   CVT_REST_INTERFACE_ENABLED                                         = "cvt.rest.interface.enabled";
+  public static final String   CVT_CLIENT_FAIL_BUFFER_OPEN                                        = "cvt.client.fail.buffer.open";
 
   /*********************************************************************************************************************
    * Section : HealthChecker { server->client, server->server (HA), client->server }
