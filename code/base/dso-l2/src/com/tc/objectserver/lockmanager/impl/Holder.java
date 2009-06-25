@@ -17,18 +17,16 @@ public class Holder implements LockAwardContext {
   private final LockID              lockID;
   private final NodeID              nodeID;
   private final ThreadID            threadID;
-  private final long                timeout;
   private final long                timestamp;
   private int                       lockLevel;
   private Sink                      sink;
 
-  public Holder(LockID lockID, ServerThreadContext txn, long timeout) {
+  public Holder(LockID lockID, ServerThreadContext txn) {
     this.timestamp = System.currentTimeMillis();
     this.lockID = lockID;
     this.threadContext = txn;
     this.nodeID = txn.getId().getNodeID();
     this.threadID = txn.getId().getClientThreadID();
-    this.timeout = timeout;
     this.lockLevel = LockLevel.NIL_LOCK_LEVEL;
   }
 
@@ -56,10 +54,6 @@ public class Holder implements LockAwardContext {
     return lockID;
   }
 
-  public long getTimeout() {
-    return this.timeout;
-  }
-
   public ThreadID getThreadID() {
     return threadID;
   }
@@ -74,7 +68,7 @@ public class Holder implements LockAwardContext {
 
   public String toString() {
     return "Holder" + "@" + System.identityHashCode(this) + "[" + nodeID + "," + threadID + ",level="
-           + LockLevel.toString(getLockLevel()) + ",timeout=" + timeout + "]";
+           + LockLevel.toString(getLockLevel()) + "]";
   }
 
   ServerThreadContext getThreadContext() {

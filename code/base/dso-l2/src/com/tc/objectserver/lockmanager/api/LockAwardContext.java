@@ -10,8 +10,6 @@ public interface LockAwardContext {
 
   public NodeID getNodeID();
 
-  public LockID getLockID();
-  
-  public long getTimeout();
+  public LockID getLockID();  
 
 }

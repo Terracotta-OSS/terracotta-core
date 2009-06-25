@@ -9,20 +9,15 @@ import com.tc.async.impl.MockSink;
 import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.management.L2LockStatsManager;
 import com.tc.net.ClientID;
-import com.tc.net.NodeID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.TCLockTimer;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.lockmanager.impl.TCLockTimerImpl;
 import com.tc.object.tx.TimerSpec;
-import com.tc.objectserver.lockmanager.api.LockAwardContext;
-import com.tc.objectserver.lockmanager.api.LockEventListener;
-import com.tc.objectserver.lockmanager.api.LockEventMonitor;
 import com.tc.objectserver.lockmanager.api.NotifiedWaiters;
 import com.tc.objectserver.lockmanager.api.NullChannelManager;
 import com.tc.objectserver.lockmanager.api.TCIllegalMonitorStateException;
-import com.tc.objectserver.lockmanager.api.LockEventMonitor.CallContext;
 import com.tc.util.TCAssertionError;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -65,7 +60,7 @@ public class LockTest extends TestCase {
     ServerThreadContext thread2 = makeTxn(cid1, txnId2);
     ServerThreadContext thread3 = makeTxn(cid1, txnId3);
 
-    Lock lock = new Lock(new LockID("timmy"), 0, new LockEventListener[] {});
+    Lock lock = new Lock(new LockID("timmy"));
     lock.requestLock(thread1, LockLevel.READ, sink);
     lock.requestLock(thread2, LockLevel.READ, sink);
     lock.requestLock(thread3, LockLevel.READ, sink);
@@ -136,7 +131,7 @@ public class LockTest extends TestCase {
 
     ServerThreadContext thread1 = makeTxn(cid1, txnId1);
 
-    Lock lock = new Lock(new LockID("timmy"), 0, new LockEventListener[] {});
+    Lock lock = new Lock(new LockID("timmy"));
     lock.requestLock(thread1, LockLevel.WRITE, sink);
     assertEquals(1, lock.getHoldersCount());
     assertEquals(0, lock.getWaiterCount());
@@ -170,7 +165,7 @@ public class LockTest extends TestCase {
     ServerThreadContext good = makeTxn(goodClientID, goodTxnId);
     ServerThreadContext bad = makeTxn(badDClientID, badTxnId);
 
-    Lock lock = new Lock(new LockID("timmy"), 0, new LockEventListener[] {});
+    Lock lock = new Lock(new LockID("timmy"));
     lock.requestLock(good, LockLevel.WRITE, sink);
     assertEquals(1, lock.getHoldersCount());
     assertFalse(lock.hasPending());
@@ -254,7 +249,7 @@ public class LockTest extends TestCase {
     ServerThreadContext thread1 = makeTxn(cid1, txnId1);
     ServerThreadContext thread2 = makeTxn(cid1, txnId2);
 
-    Lock lock = new Lock(new LockID("timmy"), 0, new LockEventListener[] {});
+    Lock lock = new Lock(new LockID("timmy"));
     lock.requestLock(thread1, LockLevel.WRITE, sink);
 
     assertEquals(1, lock.getHoldersCount());
@@ -287,7 +282,7 @@ public class LockTest extends TestCase {
 
     ServerThreadContext thread1 = makeTxn(cid1, txnId1);
 
-    Lock lock = new Lock(new LockID("timmy"), 0, new LockEventListener[] {});
+    Lock lock = new Lock(new LockID("timmy"));
     lock.requestLock(thread1, LockLevel.WRITE, sink);
     assertEquals(1, lock.getHoldersCount());
     assertEquals(0, lock.getWaiterCount());
@@ -319,7 +314,7 @@ public class LockTest extends TestCase {
     // Test that a wait() timeout will obtain an uncontended lock
     ServerThreadContext thread1 = makeTxn(cid1, txnId1);
 
-    Lock lock = new Lock(new LockID("timmy"), 0, new LockEventListener[] {});
+    Lock lock = new Lock(new LockID("timmy"));
     lock.requestLock(thread1, LockLevel.WRITE, sink);
     assertEquals(1, lock.getHoldersCount());
     assertEquals(0, lock.getWaiterCount());
@@ -358,7 +353,7 @@ public class LockTest extends TestCase {
       // Test that a wait() timeout will obtain an uncontended lock
       ServerThreadContext thread1 = makeTxn(cid1, txnId1);
 
-      Lock lock = new Lock(new LockID("timmy"), 0, new LockEventListener[] {});
+      Lock lock = new Lock(new LockID("timmy"));
       lock.requestLock(thread1, LockLevel.WRITE, sink);
       assertEquals(1, lock.getHoldersCount());
       assertEquals(0, lock.getWaiterCount());
@@ -389,7 +384,7 @@ public class LockTest extends TestCase {
       // list (instead of instantly getting the lock)
       ServerThreadContext thread1 = makeTxn(cid1, txnId1);
       ServerThreadContext thread2 = makeTxn(cid1, txnId2);
-      Lock lock = new Lock(new LockID("timmy"), 0, new LockEventListener[] {});
+      Lock lock = new Lock(new LockID("timmy"));
       lock.requestLock(thread1, LockLevel.WRITE, sink);
       assertEquals(1, lock.getHoldersCount());
       assertEquals(0, lock.getWaiterCount());
@@ -430,7 +425,7 @@ public class LockTest extends TestCase {
 
     ServerThreadContext thread1 = makeTxn(cid1, txnId1);
 
-    Lock lock = new Lock(new LockID("timmy"), 0, new LockEventListener[] {});
+    Lock lock = new Lock(new LockID("timmy"));
     lock.requestLock(thread1, LockLevel.WRITE, sink);
     assertEquals(1, lock.getHoldersCount());
     assertEquals(0, lock.getWaiterCount());
@@ -449,7 +444,7 @@ public class LockTest extends TestCase {
     ServerThreadContext thread1 = makeTxn(cid1, new ThreadID(1));
     ServerThreadContext thread2 = makeTxn(cid1, new ThreadID(2));
 
-    Lock lock = new Lock(new LockID("timmy"), 0, new LockEventListener[] {});
+    Lock lock = new Lock(new LockID("timmy"));
     lock.requestLock(thread1, LockLevel.WRITE, sink);
     assertEquals(1, lock.getHoldersCount());
     assertEquals(0, lock.getWaiterCount());
@@ -559,7 +554,7 @@ public class LockTest extends TestCase {
   }
 
   private Lock createLockWithIndefiniteWaits(int numWaits) throws TCIllegalMonitorStateException {
-    Lock lock = new Lock(new LockID("timmy"), 0, new LockEventListener[] {});
+    Lock lock = new Lock(new LockID("timmy"));
 
     for (int i = 0; i < numWaits; i++) {
       int before = lock.getWaiterCount();
@@ -575,44 +570,6 @@ public class LockTest extends TestCase {
     assertEquals(0, lock.getPendingCount());
 
     return lock;
-  }
-
-  public void testAddPending() throws Exception {
-    LockEventMonitor monitor = new LockEventMonitor();
-    Lock lock = new Lock(new LockID("yo"), 0, new LockEventListener[] { monitor });
-
-    ServerThreadContext thread1 = makeTxn(getUniqueClientID(), getUniqueTransactionID());
-    ServerThreadContext thread2 = makeTxn(getUniqueClientID(), getUniqueTransactionID());
-
-    lock.requestLock(thread1, LockLevel.WRITE, sink);
-    lock.requestLock(thread2, LockLevel.WRITE, sink);
-
-    // make sure that addPending(...) causes notifyAddPending to be called with
-    // the correct pending count and
-    // for each holder's lock award context.
-    //
-    // The pending count should now be 1.
-    int pendingCount = 1;
-
-    Collection holders = lock.getHoldersCollection();
-    assertEquals(1, holders.size());
-    checkNotifyAddPendingCallContextForAllHolders(lock, monitor, pendingCount, holders);
-  }
-
-  private void checkNotifyAddPendingCallContextForAllHolders(Lock lock, LockEventMonitor monitor, int waiterCount,
-                                                             Collection holders) throws Exception {
-    for (Iterator iter = holders.iterator(); iter.hasNext();) {
-      Holder holder = (Holder) iter.next();
-      checkCallContext(monitor.waitForNotifyAddPending(0), lock.getLockID(), holder.getNodeID(), waiterCount);
-    }
-  }
-
-  private void checkCallContext(CallContext cc, LockID theLockId, NodeID nodeID, int waiterCount) {
-    assertNotNull(cc);
-    LockAwardContext ac = cc.ctxt;
-    assertEquals(theLockId, ac.getLockID());
-    assertEquals(nodeID, ac.getNodeID());
-    assertEquals(waiterCount, cc.waiterCount);
   }
 
 }

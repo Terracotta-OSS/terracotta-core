@@ -21,7 +21,6 @@ public class GlobalLockStateInfo implements TCSerializable {
   private LockID   lockID;
   private NodeID   nodeID;
   private ThreadID threadID;
-  private long     timeout;
   private long     timestamp;
   private int      lockLevel;
 
@@ -29,13 +28,11 @@ public class GlobalLockStateInfo implements TCSerializable {
     super();
   }
 
-  public GlobalLockStateInfo(LockID lockID, NodeID nodeID, ThreadID threadID, long timestamp, long timeout,
-                             int lockLevel) {
+  public GlobalLockStateInfo(LockID lockID, NodeID nodeID, ThreadID threadID, long timestamp, int lockLevel) {
     this.lockID = lockID;
     this.nodeID = nodeID;
     this.threadID = threadID;
     this.timestamp = timestamp;
-    this.timeout = timeout;
     this.lockLevel = lockLevel;
   }
 
@@ -49,10 +46,6 @@ public class GlobalLockStateInfo implements TCSerializable {
 
   public int getLockLevel() {
     return lockLevel;
-  }
-
-  public long getTimeout() {
-    return timeout;
   }
 
   public long getTimestamp() {
@@ -69,7 +62,6 @@ public class GlobalLockStateInfo implements TCSerializable {
     NodeIDSerializer ns = new NodeIDSerializer(nodeID);
     ns.serializeTo(serialOutput);
     serialOutput.writeLong(threadID.toLong());
-    serialOutput.writeLong(timeout);
     serialOutput.writeInt(lockLevel);
   }
 
@@ -80,7 +72,6 @@ public class GlobalLockStateInfo implements TCSerializable {
     ns.deserializeFrom(serialInput);
     this.nodeID = ns.getNodeID();
     this.threadID = new ThreadID(serialInput.readLong());
-    this.timeout = serialInput.readLong();
     this.lockLevel = serialInput.readInt();
     return this;
   }

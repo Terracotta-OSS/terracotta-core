@@ -4,8 +4,6 @@
  */
 package com.tc.objectserver.lockmanager.impl;
 
-import org.apache.commons.collections.map.ListOrderedMap;
-
 import com.tc.async.api.Sink;
 import com.tc.exception.TCInternalError;
 import com.tc.exception.TCLockUpgradeNotSupportedError;
@@ -24,7 +22,6 @@ import com.tc.object.lockmanager.impl.LockHolder;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.tx.TimerSpec;
 import com.tc.objectserver.context.LockResponseContext;
-import com.tc.objectserver.lockmanager.api.LockEventListener;
 import com.tc.objectserver.lockmanager.api.LockMBean;
 import com.tc.objectserver.lockmanager.api.LockWaitContext;
 import com.tc.objectserver.lockmanager.api.NotifiedWaiters;
@@ -40,76 +37,73 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimerTask;
 
 public class Lock {
-  private static final TCLogger            logger              = TCLogging.getLogger(Lock.class);
-  private final static boolean             LOCK_LEASE_ENABLE   = TCPropertiesImpl
-                                                                   .getProperties()
-                                                                   .getBoolean(
-                                                                               TCPropertiesConsts.L2_LOCKMANAGER_GREEDY_LEASE_ENABLED);
-  private final static int                 LOCK_LEASE_TIME     = TCPropertiesImpl
-                                                                   .getProperties()
-                                                                   .getInt(
-                                                                           TCPropertiesConsts.L2_LOCKMANAGER_GREEDY_LEASE_LEASETIME_INMILLS);
-  public final static Lock                 NULL_LOCK           = new Lock(LockID.NULL_ID, 0,
-                                                                          new LockEventListener[] {}, true,
-                                                                          LockManagerImpl.ALTRUISTIC_LOCK_POLICY,
-                                                                          ServerThreadContextFactory.DEFAULT_FACTORY,
-                                                                          L2LockStatsManager.NULL_LOCK_STATS_MANAGER);
+  private static final TCLogger                               logger              = TCLogging.getLogger(Lock.class);
+  private static final LinkedHashMap                          EMPTY_MAP           = new EmptyMap();
 
-  private final LockEventListener[]        listeners;
+  private final static boolean                                LOCK_LEASE_ENABLE   = TCPropertiesImpl
+                                                                                      .getProperties()
+                                                                                      .getBoolean(
+                                                                                                  TCPropertiesConsts.L2_LOCKMANAGER_GREEDY_LEASE_ENABLED);
+  private final static int                                    LOCK_LEASE_TIME     = TCPropertiesImpl
+                                                                                      .getProperties()
+                                                                                      .getInt(
+                                                                                              TCPropertiesConsts.L2_LOCKMANAGER_GREEDY_LEASE_LEASETIME_INMILLS);
+  public final static Lock                                    NULL_LOCK           = new Lock(
+                                                                                             LockID.NULL_ID,
+                                                                                             LockManagerImpl.ALTRUISTIC_LOCK_POLICY,
+                                                                                             ServerThreadContextFactory.DEFAULT_FACTORY,
+                                                                                             L2LockStatsManager.NULL_LOCK_STATS_MANAGER,
+                                                                                             "");
+  private static final int                                    MAP_SIZE            = 1;
+  private static final float                                  LOAD_FACTOR         = 1F;
 
-  private final Map                        greedyHolders       = new HashMap();
-  private final Map                        holders             = new HashMap();
-  private final Map                        tryLockTimers       = new HashMap();
-  private final ListOrderedMap             pendingLockRequests = new ListOrderedMap();
-  private final ListOrderedMap             waiters             = new ListOrderedMap();
-  private final Map                        waitTimers          = new HashMap();
+  private final Map<NodeID, Holder>                           greedyHolders       = new HashMap(MAP_SIZE, LOAD_FACTOR);
+  private final Map<ServerThreadContext, Holder>              holders             = new HashMap(MAP_SIZE, LOAD_FACTOR);
+  private final LockID                                        lockID;
+  private final ServerThreadContextFactory                    threadContextFactory;
+  private final L2LockStatsManager                            lockStatsManager;
+  private final String                                        lockType;
 
-  private final LockID                     lockID;
-  private final long                       timeout;
-  private final boolean                    isNull;
-  private final ServerThreadContextFactory threadContextFactory;
-  private final L2LockStatsManager         lockStatsManager;
+  private Map<ServerThreadContext, TimerTask>                 tryLockTimers       = EMPTY_MAP;
+  private LinkedHashMap<ServerThreadContext, Request>         pendingLockRequests = EMPTY_MAP;
+  private LinkedHashMap<ServerThreadContext, LockWaitContext> waiters             = EMPTY_MAP;
+  private Map<LockWaitContext, TimerTask>                     waitTimers          = EMPTY_MAP;
 
-  private int                              level;
-  private boolean                          recalled            = false;
-  private int                              lockPolicy;
-  private String                           lockType;
+  private int                                                 level;
+  private boolean                                             recalled            = false;
+  private int                                                 lockPolicy;
 
   // real constructor used by lock manager
   Lock(final LockID lockID, final ServerThreadContext txn, final int lockLevel, final String lockType,
-       final Sink lockResponseSink, final long timeout, final LockEventListener[] listeners, final int lockPolicy,
-       final ServerThreadContextFactory threadContextFactory, final L2LockStatsManager lockStatsManager) {
-    this(lockID, timeout, listeners, false, lockPolicy, threadContextFactory, lockStatsManager);
-    this.lockType = lockType;
+       final Sink lockResponseSink, final int lockPolicy, final ServerThreadContextFactory threadContextFactory,
+       final L2LockStatsManager lockStatsManager) {
+    this(lockID, lockPolicy, threadContextFactory, lockStatsManager, lockType);
     requestLock(txn, lockLevel, lockResponseSink);
   }
 
-  // real constructor used by lock manager when re-establishing waits and lock holds on
-  // restart.
-  Lock(final LockID lockID, final ServerThreadContext txn, final long timeout, final LockEventListener[] listeners,
-       final int lockPolicy, final ServerThreadContextFactory threadContextFactory,
-       final L2LockStatsManager lockStatsManager) {
-    this(lockID, timeout, listeners, false, lockPolicy, threadContextFactory, lockStatsManager);
+  // real constructor used by lock manager when re-establishing waits and lock holds on restart.
+  Lock(final LockID lockID, final ServerThreadContext txn, final int lockPolicy,
+       final ServerThreadContextFactory threadContextFactory, final L2LockStatsManager lockStatsManager) {
+    this(lockID, lockPolicy, threadContextFactory, lockStatsManager, "");
   }
 
   // used in tests and in query lock when Locks don't exists.
-  Lock(final LockID lockID, final long timeout, final LockEventListener[] listeners) {
-    this(lockID, timeout, listeners, false, LockManagerImpl.ALTRUISTIC_LOCK_POLICY,
-         ServerThreadContextFactory.DEFAULT_FACTORY, L2LockStatsManager.NULL_LOCK_STATS_MANAGER);
+  Lock(final LockID lockID) {
+    this(lockID, LockManagerImpl.ALTRUISTIC_LOCK_POLICY, ServerThreadContextFactory.DEFAULT_FACTORY,
+         L2LockStatsManager.NULL_LOCK_STATS_MANAGER, "");
   }
 
-  private Lock(final LockID lockID, final long timeout, final LockEventListener[] listeners, final boolean isNull,
-               final int lockPolicy, final ServerThreadContextFactory threadContextFactory,
-               final L2LockStatsManager lockStatsManager) {
+  private Lock(final LockID lockID, final int lockPolicy, final ServerThreadContextFactory threadContextFactory,
+               final L2LockStatsManager lockStatsManager, String lockType) {
     this.lockID = lockID;
-    this.listeners = listeners;
-    this.timeout = timeout;
-    this.isNull = isNull;
+    this.lockType = lockType;
     this.lockPolicy = lockPolicy;
     this.threadContextFactory = threadContextFactory;
     this.lockStatsManager = lockStatsManager;
@@ -172,8 +166,7 @@ public class Lock {
     Waiter[] waits = new Waiter[this.waiters.size()];
 
     count = 0;
-    for (Iterator i = this.holders.values().iterator(); i.hasNext();) {
-      Holder h = (Holder) i.next();
+    for (Holder h : this.holders.values()) {
       NodeID cid = h.getNodeID();
       holds[count] = new LockHolder(h.getLockID(), channelManager.getChannelAddress(cid), h.getThreadID(), h
           .getLockLevel(), h.getTimestamp());
@@ -181,16 +174,14 @@ public class Lock {
     }
 
     count = 0;
-    for (Iterator i = this.pendingLockRequests.values().iterator(); i.hasNext();) {
-      Request r = (Request) i.next();
+    for (Request r : this.pendingLockRequests.values()) {
       NodeID cid = r.getRequesterID();
       reqs[count++] = new ServerLockRequest(channelManager.getChannelAddress(cid), r.getSourceID(), r.getLockLevel(), r
           .getTimestamp());
     }
 
     count = 0;
-    for (Iterator i = this.waiters.values().iterator(); i.hasNext();) {
-      LockWaitContext wc = (LockWaitContext) i.next();
+    for (LockWaitContext wc : this.waiters.values()) {
       NodeID cid = wc.getNodeID();
       waits[count++] = new Waiter(channelManager.getChannelAddress(cid), wc.getThreadID(), wc.getTimerSpec(), wc
           .getTimestamp());
@@ -387,11 +378,7 @@ public class Lock {
       return request;
     }
 
-    this.pendingLockRequests.put(threadContext, request);
-    for (Iterator currentHolders = holders.values().iterator(); currentHolders.hasNext();) {
-      Holder holder = (Holder) currentHolders.next();
-      notifyAddPending(holder);
-    }
+    initPendingLockRequests().put(threadContext, request);
     return request;
   }
 
@@ -456,8 +443,7 @@ public class Lock {
   private void recall(final int recallLevel) {
     if (recalled) { return; }
     recordLockHoppedStat();
-    for (Iterator i = greedyHolders.values().iterator(); i.hasNext();) {
-      Holder holder = (Holder) i.next();
+    for (Holder holder : greedyHolders.values()) {
       holder.getSink().add(
                            createLockRecallResponseContext(holder.getLockID(), holder.getThreadContext().getId(),
                                                            recallLevel));
@@ -474,7 +460,7 @@ public class Lock {
     if (waiters.size() > 0) {
       final int numToNotify = all ? waiters.size() : 1;
       for (int i = 0; i < numToNotify; i++) {
-        LockWaitContext wait = (LockWaitContext) waiters.remove(0);
+        LockWaitContext wait = (LockWaitContext) removeFirstValue(waiters);
         removeAndCancelWaitTimer(wait);
         recordLockRequestStat(wait.getNodeID(), wait.getThreadID());
         createPendingFromWaiter(wait);
@@ -484,19 +470,30 @@ public class Lock {
     }
   }
 
+  private static Object removeFirstValue(LinkedHashMap map) {
+    Iterator iter = map.values().iterator();
+    if (iter.hasNext()) {
+      Object removed = iter.next();
+      iter.remove();
+      return removed;
+    }
+
+    return null;
+  }
+
   synchronized void interrupt(final ServerThreadContext txn) {
     if (waiters.size() == 0 || !waiters.containsKey(txn)) {
       logger.warn("Cannot interrupt: " + txn + " is not waiting.");
       return;
     }
-    LockWaitContext wait = (LockWaitContext) waiters.remove(txn);
+    LockWaitContext wait = waiters.remove(txn);
     recordLockRequestStat(wait.getNodeID(), wait.getThreadID());
     removeAndCancelWaitTimer(wait);
     createPendingFromWaiter(wait);
   }
 
   private void removeAndCancelWaitTimer(final LockWaitContext wait) {
-    TimerTask task = (TimerTask) waitTimers.remove(wait);
+    TimerTask task = waitTimers.remove(wait);
     if (task != null) task.cancel();
   }
 
@@ -510,7 +507,7 @@ public class Lock {
 
   private void createPending(final LockWaitContext wait, final Request request) {
     ServerThreadContext txn = ((LockWaitContextImpl) wait).getThreadContext();
-    pendingLockRequests.put(txn, request);
+    initPendingLockRequests().put(txn, request);
 
     if (isPolicyGreedy() && hasGreedyHolders()) {
       recall(request.getLockLevel());
@@ -568,7 +565,7 @@ public class Lock {
     Assert.assertNotNull(current);
 
     LockWaitContext waitContext = new LockWaitContextImpl(txn, this, call, current.getLockLevel(), lockResponseSink);
-    waiters.put(txn, waitContext);
+    initWaiters().put(txn, waitContext);
 
     scheduleWait(callback, waitTimer, waitContext);
     removeCurrentHold(txn);
@@ -593,7 +590,7 @@ public class Lock {
       logger.debug("addRecalledWaiter(): Ignoring " + waitContext + " as it is already in pending list.");
       return;
     }
-    waiters.put(txn, waitContext);
+    initWaiters().put(txn, waitContext);
     scheduleWait(callback, waitTimer, waitContext);
   }
 
@@ -602,7 +599,7 @@ public class Lock {
   synchronized void reestablishWait(final ServerThreadContext txn, final TimerSpec call, final int lockLevel,
                                     final Sink lockResponseSink) {
     LockWaitContext waitContext = new LockWaitContextImpl(txn, this, call, lockLevel, lockResponseSink);
-    Object old = waiters.put(txn, waitContext);
+    Object old = initWaiters().put(txn, waitContext);
     if (old != null) throw Assert.failure("Already in wait set: " + txn);
   }
 
@@ -636,7 +633,7 @@ public class Lock {
   private void scheduleWait(final TimerCallback callback, final TCLockTimer waitTimer, final LockWaitContext waitContext) {
     final TimerTask timer = waitTimer.scheduleTimer(callback, waitContext.getTimerSpec(), waitContext);
     if (timer != null) {
-      waitTimers.put(waitContext, timer);
+      initWaitTimers().put(waitContext, timer);
     }
   }
 
@@ -646,9 +643,37 @@ public class Lock {
     final TimerTask timer = waitTimer.scheduleTimer(callback, tryLockWaitRequestContext.getTimerSpec(),
                                                     tryLockWaitRequestContext);
     if (timer != null) {
-      tryLockTimers.put(tryLockWaitRequestContext.getThreadContext(), timer);
+      initTryLockTimers().put(tryLockWaitRequestContext.getThreadContext(), timer);
     }
     return timer;
+  }
+
+  private Map initTryLockTimers() {
+    if (tryLockTimers == EMPTY_MAP) {
+      tryLockTimers = new HashMap<ServerThreadContext, TimerTask>(MAP_SIZE, LOAD_FACTOR);
+    }
+    return tryLockTimers;
+  }
+
+  private LinkedHashMap initPendingLockRequests() {
+    if (pendingLockRequests == EMPTY_MAP) {
+      pendingLockRequests = new LinkedHashMap<ServerThreadContext, Request>(MAP_SIZE, LOAD_FACTOR);
+    }
+    return pendingLockRequests;
+  }
+
+  private LinkedHashMap initWaiters() {
+    if (waiters == EMPTY_MAP) {
+      waiters = new LinkedHashMap<ServerThreadContext, LockWaitContext>(MAP_SIZE, LOAD_FACTOR);
+    }
+    return waiters;
+  }
+
+  private Map initWaitTimers() {
+    if (waitTimers == EMPTY_MAP) {
+      waitTimers = new HashMap<LockWaitContext, TimerTask>(MAP_SIZE, LOAD_FACTOR);
+    }
+    return waitTimers;
   }
 
   private void checkLegalWaitNotifyState(final ServerThreadContext threadContext) throws TCIllegalMonitorStateException {
@@ -696,18 +721,18 @@ public class Lock {
       rv.append(lockID).append(", ").append("Level: ").append(LockLevel.toString(this.level)).append("\r\n");
 
       rv.append("Holders (").append(holders.size()).append(")\r\n");
-      for (Iterator iter = holders.values().iterator(); iter.hasNext();) {
-        rv.append('\t').append(iter.next().toString()).append("\r\n");
+      for (Object element : holders.values()) {
+        rv.append('\t').append(element.toString()).append("\r\n");
       }
 
       rv.append("Wait Set (").append(waiters.size()).append(")\r\n");
-      for (Iterator iter = waiters.values().iterator(); iter.hasNext();) {
-        rv.append('\t').append(iter.next().toString()).append("\r\n");
+      for (Object element : waiters.values()) {
+        rv.append('\t').append(element.toString()).append("\r\n");
       }
 
       rv.append("Pending lock requests (").append(pendingLockRequests.size()).append(")\r\n");
-      for (Iterator iter = pendingLockRequests.values().iterator(); iter.hasNext();) {
-        rv.append('\t').append(iter.next().toString()).append("\r\n");
+      for (Object element : pendingLockRequests.values()) {
+        rv.append('\t').append(element.toString()).append("\r\n");
       }
 
       return rv.toString();
@@ -723,22 +748,13 @@ public class Lock {
     Holder holder = getHolder(threadContext);
 
     Assert.assertNull(holder);
-    holder = new Holder(this.lockID, threadContext, this.timeout);
+    holder = new Holder(this.lockID, threadContext);
     holder.addLockLevel(lockLevel);
     Object prev = this.holders.put(threadContext, holder);
     Assert.assertNull(prev);
     this.level = holder.getLockLevel();
-    notifyAwardLock(holder);
     recordLockAwardStat(holder.getNodeID(), requestThreadID, isGreedyRequest(threadContext), holder.getTimestamp());
     return holder;
-  }
-
-  private void notifyAwardLock(final Holder holder) {
-    final int waitingCount = this.pendingLockRequests.size();
-
-    for (LockEventListener listener : listeners) {
-      listener.notifyAward(waitingCount, holder);
-    }
   }
 
   public synchronized boolean isRead() {
@@ -756,23 +772,15 @@ public class Lock {
   }
 
   private Holder getHolder(final ServerThreadContext threadContext) {
-    return (Holder) this.holders.get(threadContext);
+    return this.holders.get(threadContext);
   }
 
   public Holder getLockHolder(final ServerThreadContext threadContext) {
-    Holder lockHolder = (Holder) this.holders.get(threadContext);
+    Holder lockHolder = this.holders.get(threadContext);
     if (lockHolder == null) {
-      lockHolder = (Holder) this.holders.get(getClientVMContext(threadContext));
+      lockHolder = this.holders.get(getClientVMContext(threadContext));
     }
     return lockHolder;
-  }
-
-  private void notifyAddPending(final Holder holder) {
-    final int waitingCount = this.pendingLockRequests.size();
-
-    for (LockEventListener listener : this.listeners) {
-      listener.notifyAddPending(waitingCount, holder);
-    }
   }
 
   synchronized int getWaiterCount() {
@@ -800,7 +808,7 @@ public class Lock {
   }
 
   public boolean isNull() {
-    return this.isNull;
+    return this.lockID.isNull();
   }
 
   @Override
@@ -820,7 +828,7 @@ public class Lock {
   private boolean readHolder() {
     // We only need to check the first holder as we cannot have 2 holder, one holding a READ and another holding a
     // WRITE.
-    Holder holder = (Holder) holders.values().iterator().next();
+    Holder holder = holders.values().iterator().next();
     return holder != null && LockLevel.isRead(holder.getLockLevel());
   }
 
@@ -834,7 +842,7 @@ public class Lock {
       // DEV-1999 : Note this can be called on node disconnects. If the lock state is in recalled, we shouldn't be
       // giving new request.
       if (!pendingLockRequests.isEmpty() && !recalled) {
-        Request request = (Request) pendingLockRequests.get(pendingLockRequests.get(0));
+        Request request = pendingLockRequests.values().iterator().next();
         int reqLockLevel = request.getLockLevel();
 
         boolean canGrantRequest = (reqLockLevel == LockLevel.READ) ? (holders.isEmpty() || readHolder()) : holders
@@ -843,7 +851,7 @@ public class Lock {
 
           switch (reqLockLevel) {
             case LockLevel.WRITE: {
-              pendingLockRequests.remove(0);
+              removeFirstValue(pendingLockRequests);
               cancelTryLockTimer(request);
               // Give locks greedily only if there is no one waiting or pending for this lock
               if (isPolicyGreedy()) {
@@ -892,7 +900,7 @@ public class Lock {
     if (!(request instanceof TryLockRequest)) { return null; }
 
     ServerThreadContext requestThreadContext = request.getThreadContext();
-    TimerTask recallTimer = (TimerTask) tryLockTimers.remove(requestThreadContext);
+    TimerTask recallTimer = tryLockTimers.remove(requestThreadContext);
     if (recallTimer != null) {
       recallTimer.cancel();
       return request;
@@ -927,7 +935,6 @@ public class Lock {
         removeGreedyHolder(threadContext.getId().getNodeID());
       }
       this.level = (holders.size() == 0 ? LockLevel.NIL_LOCK_LEVEL : LockLevel.READ);
-      notifyRevoke(holder);
       recordLockReleaseStat(holder.getNodeID(), holder.getThreadID());
     }
     return false;
@@ -990,8 +997,7 @@ public class Lock {
   }
 
   synchronized boolean holdsSomeLock(final NodeID nodeID) {
-    for (Iterator iter = holders.values().iterator(); iter.hasNext();) {
-      Holder holder = (Holder) iter.next();
+    for (Holder holder : holders.values()) {
       if (holder.getNodeID().equals(nodeID)) { return true; }
     }
     return false;
@@ -1002,27 +1008,19 @@ public class Lock {
   }
 
   synchronized boolean canAwardGreedilyOnTheClient(final ServerThreadContext threadContext, final int lockLevel) {
-    Holder holder = (Holder) greedyHolders.get(threadContext.getId().getNodeID());
+    Holder holder = greedyHolders.get(threadContext.getId().getNodeID());
     if (holder != null) { return (LockLevel.isWrite(holder.getLockLevel()) || holder.getLockLevel() == lockLevel); }
     return false;
   }
 
-  private void notifyRevoke(final Holder holder) {
-    for (LockEventListener listener : this.listeners) {
-      listener.notifyRevoke(holder);
-    }
-  }
-
   void notifyStarted(final TimerCallback callback, final TCLockTimer timer) {
-    for (Iterator i = waiters.values().iterator(); i.hasNext();) {
-      LockWaitContext ctxt = (LockWaitContext) i.next();
+    for (LockWaitContext ctxt : waiters.values()) {
       scheduleWait(callback, timer, ctxt);
     }
   }
 
   synchronized boolean isAllPendingLockRequestsFromNode(final NodeID nodeID) {
-    for (Iterator i = pendingLockRequests.values().iterator(); i.hasNext();) {
-      Request r = (Request) i.next();
+    for (Request r : pendingLockRequests.values()) {
       if (!r.getRequesterID().equals(nodeID)) { return false; }
     }
     return true;
@@ -1059,7 +1057,7 @@ public class Lock {
       LockWaitContext wc = (LockWaitContext) i.next();
       if (wc.getNodeID().equals(nid)) {
         try {
-          TimerTask task = (TimerTask) waitTimers.get(wc);
+          TimerTask task = waitTimers.get(wc);
           task.cancel();
         } finally {
           i.remove();
@@ -1120,5 +1118,90 @@ public class Lock {
   // }
   // logger.warn(builder.toString());
   // }
+
+  // The only purpose of this map is to allow it to be type compatible with LHM
+  // Any attempt to add to it will throw an exceptionT
+  private static class EmptyMap extends LinkedHashMap {
+
+    @Override
+    public Object clone() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int hashCode() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String toString() {
+      return getClass().getName();
+    }
+
+    @Override
+    public void clear() {
+      //
+    }
+
+    @Override
+    public boolean containsKey(Object key) {
+      return false;
+    }
+
+    @Override
+    public boolean containsValue(Object value) {
+      return false;
+    }
+
+    @Override
+    public Set entrySet() {
+      return Collections.EMPTY_SET;
+    }
+
+    @Override
+    public Object get(Object key) {
+      return null;
+    }
+
+    @Override
+    public boolean isEmpty() {
+      return true;
+    }
+
+    @Override
+    public Set keySet() {
+      return Collections.EMPTY_SET;
+    }
+
+    @Override
+    public Object put(Object key, Object value) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void putAll(Map t) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Object remove(Object key) {
+      return null;
+    }
+
+    @Override
+    public int size() {
+      return 0;
+    }
+
+    @Override
+    public Collection values() {
+      return Collections.EMPTY_LIST;
+    }
+  }
 
 }

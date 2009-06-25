@@ -115,11 +115,12 @@ public class LockResponseContext implements EventContext {
   public boolean isLockNotAwarded() {
     return (this.responseType == LOCK_NOT_AWARDED);
   }
-  
+
   public int getAwardLeaseTime() {
     return this.leaseTimeInMs;
   }
 
+  @Override
   public String toString() {
     return "LockResponseContext(" + lockID + "," + nodeID + "," + threadID + ", " + LockLevel.toString(level) + " , "
            + toString(responseType) + ")";
@@ -147,7 +148,7 @@ public class LockResponseContext implements EventContext {
     for (Iterator i = holderInfo.iterator(); i.hasNext();) {
       Holder holder = (Holder) i.next();
       holdersInfo.add(new GlobalLockStateInfo(holder.getLockID(), holder.getNodeID(), holder.getThreadID(), holder
-          .getTimestamp(), holder.getTimeout(), holder.getLockLevel()));
+          .getTimestamp(), holder.getLockLevel()));
     }
     return holdersInfo;
   }
@@ -157,7 +158,7 @@ public class LockResponseContext implements EventContext {
     for (Iterator i = waiters.iterator(); i.hasNext();) {
       LockWaitContext lockWaitContext = (LockWaitContext) i.next();
       waitersInfo.add(new GlobalLockStateInfo(id, lockWaitContext.getNodeID(), lockWaitContext.getThreadID(),
-                                              lockWaitContext.getTimestamp(), -1, lockWaitContext.lockLevel()));
+                                              lockWaitContext.getTimestamp(), lockWaitContext.lockLevel()));
     }
     return waitersInfo;
   }

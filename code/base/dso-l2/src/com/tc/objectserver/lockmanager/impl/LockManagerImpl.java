@@ -24,7 +24,6 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.object.tx.TimerSpec;
 import com.tc.objectserver.lockmanager.api.DeadlockChain;
 import com.tc.objectserver.lockmanager.api.DeadlockResults;
-import com.tc.objectserver.lockmanager.api.LockEventListener;
 import com.tc.objectserver.lockmanager.api.LockMBean;
 import com.tc.objectserver.lockmanager.api.LockManager;
 import com.tc.objectserver.lockmanager.api.LockManagerMBean;
@@ -77,13 +76,9 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
 
   private State                                   status                     = STARTING;
   private final Map                               locks                      = new HashMap();
-  private final LockEventListener                 lockTimer;
   private final DSOChannelManager                 channelManager;
-  private final LockEventListener[]               lockListeners;
   private final TCLockTimer                       waitTimer;
 
-  // XXX: These lock timeout/policy needs to be configurable-- probably per lock...
-  private final long                              lockTimeout                = 1000 * 60 * 2;
   private int                                     lockPolicy                 = UNINITIALIZED_LOCK_POLICY;
   // private int lockPolicy = ALTRUISTIC_LOCK_POLICY;
 
@@ -93,12 +88,6 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
 
   public LockManagerImpl(DSOChannelManager channelManager, L2LockStatsManager lockStatsManager) {
     this.channelManager = channelManager;
-
-    // Replacing real lock timer with a null lock timer until the OOP stuff is
-    // put in for real --Orion 2/24/2005
-    // this.lockTimer = new LockTimer(this.channelManager);
-    this.lockTimer = new NullLockTimer();
-    this.lockListeners = new LockEventListener[] { this.lockTimer };
 
     // This could maybe be combined with the lock timeout stuff, but for now
     // just use a dedicated Timer instance
@@ -143,8 +132,7 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
     Lock lock = (Lock) this.locks.get(lockID);
 
     if (lock == null) {
-      lock = new Lock(lockID, threadContext, this.lockTimeout, this.lockListeners, this.lockPolicy,
-                      this.threadContextFactory, this.lockStatsManager);
+      lock = new Lock(lockID, threadContext, this.lockPolicy, this.threadContextFactory, this.lockStatsManager);
       this.locks.put(lockID, lock);
     }
     lock.reestablishLock(threadContext, requestedLevel, lockResponseSink);
@@ -185,8 +173,8 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
         lockAwarded = lock.requestLock(threadContext, requestedLevel, lockResponseSink);
       }
     } else {
-      lock = new Lock(lockID, threadContext, requestedLevel, lockType, lockResponseSink, this.lockTimeout,
-                      this.lockListeners, this.lockPolicy, this.threadContextFactory, this.lockStatsManager);
+      lock = new Lock(lockID, threadContext, requestedLevel, lockType, lockResponseSink, this.lockPolicy,
+                      this.threadContextFactory, this.lockStatsManager);
       this.locks.put(lockID, lock);
       lockAwarded = true;
     }
@@ -218,7 +206,7 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
     if (lock == null) {
       // This lock is not present in the server, we still want to send the right lockID info in the response. Create one
       // for temporary use.
-      lock = new Lock(lockID, this.lockTimeout, this.lockListeners);
+      lock = new Lock(lockID);
     }
     lock.queryLock(threadContext, lockResponseSink);
   }
@@ -278,8 +266,7 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
     Lock lock = (Lock) this.locks.get(lid);
     ServerThreadContext threadContext = this.threadContextFactory.getOrCreate(cid, tid);
     if (lock == null) {
-      lock = new Lock(lid, threadContext, this.lockTimeout, this.lockListeners, this.lockPolicy,
-                      this.threadContextFactory, this.lockStatsManager);
+      lock = new Lock(lid, threadContext, this.lockPolicy, this.threadContextFactory, this.lockStatsManager);
       this.locks.put(lid, lock);
     }
     lock.reestablishWait(threadContext, call, lockLevel, lockResponseSink);
