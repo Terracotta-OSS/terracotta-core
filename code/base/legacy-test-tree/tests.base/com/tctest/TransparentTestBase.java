@@ -559,6 +559,10 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     }
   }
 
+  protected void duringRunningCluster() throws Exception {
+         // do not delete this method, it is used by tests that override it
+  }
+  
   public void test() throws Exception {
     if (canRun()) {
       if (controlledCrashMode && serverControls != null) {
@@ -578,6 +582,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
         }
       }
       this.runner.run();
+      duringRunningCluster();
       if (this.runner.executionTimedOut() || this.runner.startTimedOut()) {
         try {
           if (isCrashy() && canRunCrash()) {
