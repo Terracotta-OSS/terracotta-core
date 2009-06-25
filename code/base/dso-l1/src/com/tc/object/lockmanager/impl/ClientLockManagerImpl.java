@@ -58,7 +58,7 @@ import java.util.TimerTask;
  */
 public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallback {
 
-  private static final int               INIT_LOCK_MAP_SIZE           = 10000;
+  private static final int               INIT_LOCK_MAP_SIZE           = 512;
 
   private static final State             RUNNING                      = new State("RUNNING");
   private static final State             STARTING                     = new State("STARTING");
