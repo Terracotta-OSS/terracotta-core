@@ -17,6 +17,7 @@ import org.terracotta.modules.tool.commands.ListCommand;
 import org.terracotta.modules.tool.commands.UpdateCommand;
 import org.terracotta.modules.tool.commands.UpgradeCommand;
 import org.terracotta.modules.tool.config.Config;
+import org.terracotta.modules.tool.exception.RemoteIndexIOException;
 import org.terracotta.modules.tool.util.CommandUtil;
 
 import com.google.inject.Guice;
@@ -44,10 +45,26 @@ public class TIMGetTool {
         System.out.println(e2.getMessage());
       }
       System.exit(1);
+    } catch (RemoteIndexIOException e) {
+      System.out.println("There were some error trying to resolve the index file.");
+      System.out.println("Error Message: " + e.getMessage());
+      System.out.println("   1) Cannot load remote index file from '" + getRemoteURLString(e) + "'.");
+      if (e.getLocalDataFile() != null) {
+        System.out.println("   2) Cannot resolve local cached copy at '" + e.getLocalDataFile().getAbsolutePath()
+                           + "' either.");
+      }
+      System.out.println("Please make sure you are connected to the internet.");
+      System.out.println();
+      System.out.flush();
+
     } catch (Exception e) {
       e.printStackTrace();
       System.exit(2);
     }
+  }
+
+  private static String getRemoteURLString(RemoteIndexIOException e) {
+    return e.getRemoteDataUrl() == null ? "UNKNOWN" : e.getRemoteDataUrl().toString();
   }
 
   public static void mainWithExceptions(String args[]) throws Exception {

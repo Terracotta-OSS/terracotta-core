@@ -103,7 +103,8 @@ public class DataLoader {
     } catch (IOException e) {
       if (this.localDataFile.exists()) {
         // TODO: use logging instead of or in addition to System.err
-        System.err.println("WARNING: Failed to download remote data file.  Using cached copy.");
+        System.err.println("WARNING: Failed to download remote data file.  Using cached copy at '"
+                           + localDataFile.getAbsolutePath() + "'.");
         System.err.println("Error message: " + e.getMessage());
         System.err.flush();
       } else {
@@ -167,4 +168,13 @@ public class DataLoader {
       return new FileInputStream(getDataFile());
     }
   }
+
+  public URL getRemoteDataUrl() {
+    return remoteDataUrl;
+  }
+
+  public File getLocalDataFile() {
+    return localDataFile;
+  }
+
 }
