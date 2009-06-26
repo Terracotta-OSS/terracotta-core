@@ -476,6 +476,10 @@ public class TCByteBufferInputStream extends InputStream implements TCDataInput,
 
   private String readStringFromChars() throws IOException {
     int len = readInt();
+
+    // special case the empty String
+    if (len == 0) { return ""; }
+
     char[] chars = new char[len];
     for (int i = 0, n = chars.length; i < n; i++) {
       chars[i] = readChar();

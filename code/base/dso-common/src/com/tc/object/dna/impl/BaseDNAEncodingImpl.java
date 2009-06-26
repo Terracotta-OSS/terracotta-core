@@ -37,70 +37,69 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
 
   // XXX: These warning thresholds should be done in a non-static way so they can be made configurable
   // and architecture sensitive.
-  private static final int           WARN_THRESHOLD                       = 8 * 1000 * 1000;
-  private static final int           BOOLEAN_WARN                         = WARN_THRESHOLD / 1;
-  private static final int           BYTE_WARN                            = WARN_THRESHOLD / 1;
-  private static final int           CHAR_WARN                            = WARN_THRESHOLD / 2;
-  private static final int           DOUBLE_WARN                          = WARN_THRESHOLD / 8;
-  private static final int           FLOAT_WARN                           = WARN_THRESHOLD / 4;
-  private static final int           INT_WARN                             = WARN_THRESHOLD / 4;
-  private static final int           LONG_WARN                            = WARN_THRESHOLD / 8;
-  private static final int           SHORT_WARN                           = WARN_THRESHOLD / 2;
-  private static final int           REF_WARN                             = WARN_THRESHOLD / 4;
+  private static final int       WARN_THRESHOLD                       = 8 * 1000 * 1000;
+  private static final int       BOOLEAN_WARN                         = WARN_THRESHOLD / 1;
+  private static final int       BYTE_WARN                            = WARN_THRESHOLD / 1;
+  private static final int       CHAR_WARN                            = WARN_THRESHOLD / 2;
+  private static final int       DOUBLE_WARN                          = WARN_THRESHOLD / 8;
+  private static final int       FLOAT_WARN                           = WARN_THRESHOLD / 4;
+  private static final int       INT_WARN                             = WARN_THRESHOLD / 4;
+  private static final int       LONG_WARN                            = WARN_THRESHOLD / 8;
+  private static final int       SHORT_WARN                           = WARN_THRESHOLD / 2;
+  private static final int       REF_WARN                             = WARN_THRESHOLD / 4;
 
-  static final byte                  LOGICAL_ACTION_TYPE                  = 1;
-  static final byte                  PHYSICAL_ACTION_TYPE                 = 2;
-  static final byte                  ARRAY_ELEMENT_ACTION_TYPE            = 3;
-  static final byte                  ENTIRE_ARRAY_ACTION_TYPE             = 4;
-  static final byte                  LITERAL_VALUE_ACTION_TYPE            = 5;
-  static final byte                  PHYSICAL_ACTION_TYPE_REF_OBJECT      = 6;
-  static final byte                  SUB_ARRAY_ACTION_TYPE                = 7;
+  static final byte              LOGICAL_ACTION_TYPE                  = 1;
+  static final byte              PHYSICAL_ACTION_TYPE                 = 2;
+  static final byte              ARRAY_ELEMENT_ACTION_TYPE            = 3;
+  static final byte              ENTIRE_ARRAY_ACTION_TYPE             = 4;
+  static final byte              LITERAL_VALUE_ACTION_TYPE            = 5;
+  static final byte              PHYSICAL_ACTION_TYPE_REF_OBJECT      = 6;
+  static final byte              SUB_ARRAY_ACTION_TYPE                = 7;
 
-  private static final TCLogger      logger                               = TCLogging
-                                                                              .getLogger(BaseDNAEncodingImpl.class);
+  private static final TCLogger  logger                               = TCLogging.getLogger(BaseDNAEncodingImpl.class);
 
-  protected static final byte        TYPE_ID_REFERENCE                    = 1;
-  protected static final byte        TYPE_ID_BOOLEAN                      = 2;
-  protected static final byte        TYPE_ID_BYTE                         = 3;
-  protected static final byte        TYPE_ID_CHAR                         = 4;
-  protected static final byte        TYPE_ID_DOUBLE                       = 5;
-  protected static final byte        TYPE_ID_FLOAT                        = 6;
-  protected static final byte        TYPE_ID_INT                          = 7;
-  protected static final byte        TYPE_ID_LONG                         = 10;
-  protected static final byte        TYPE_ID_SHORT                        = 11;
-  protected static final byte        TYPE_ID_STRING                       = 12;
-  protected static final byte        TYPE_ID_STRING_BYTES                 = 13;
-  protected static final byte        TYPE_ID_ARRAY                        = 14;
-  protected static final byte        TYPE_ID_JAVA_LANG_CLASS              = 15;
-  protected static final byte        TYPE_ID_JAVA_LANG_CLASS_HOLDER       = 16;
-  protected static final byte        TYPE_ID_BIG_INTEGER                  = 17;
-  protected static final byte        TYPE_ID_STACK_TRACE_ELEMENT          = 18;
-  protected static final byte        TYPE_ID_BIG_DECIMAL                  = 19;
-  protected static final byte        TYPE_ID_JAVA_LANG_CLASSLOADER        = 20;
-  protected static final byte        TYPE_ID_JAVA_LANG_CLASSLOADER_HOLDER = 21;
-  protected static final byte        TYPE_ID_ENUM                         = 22;
-  protected static final byte        TYPE_ID_ENUM_HOLDER                  = 23;
-  protected static final byte        TYPE_ID_CURRENCY                     = 24;
-  protected static final byte        TYPE_ID_STRING_COMPRESSED            = 25;
+  protected static final byte    TYPE_ID_REFERENCE                    = 1;
+  protected static final byte    TYPE_ID_BOOLEAN                      = 2;
+  protected static final byte    TYPE_ID_BYTE                         = 3;
+  protected static final byte    TYPE_ID_CHAR                         = 4;
+  protected static final byte    TYPE_ID_DOUBLE                       = 5;
+  protected static final byte    TYPE_ID_FLOAT                        = 6;
+  protected static final byte    TYPE_ID_INT                          = 7;
+  protected static final byte    TYPE_ID_LONG                         = 10;
+  protected static final byte    TYPE_ID_SHORT                        = 11;
+  protected static final byte    TYPE_ID_STRING                       = 12;
+  protected static final byte    TYPE_ID_STRING_BYTES                 = 13;
+  protected static final byte    TYPE_ID_ARRAY                        = 14;
+  protected static final byte    TYPE_ID_JAVA_LANG_CLASS              = 15;
+  protected static final byte    TYPE_ID_JAVA_LANG_CLASS_HOLDER       = 16;
+  protected static final byte    TYPE_ID_BIG_INTEGER                  = 17;
+  protected static final byte    TYPE_ID_STACK_TRACE_ELEMENT          = 18;
+  protected static final byte    TYPE_ID_BIG_DECIMAL                  = 19;
+  protected static final byte    TYPE_ID_JAVA_LANG_CLASSLOADER        = 20;
+  protected static final byte    TYPE_ID_JAVA_LANG_CLASSLOADER_HOLDER = 21;
+  protected static final byte    TYPE_ID_ENUM                         = 22;
+  protected static final byte    TYPE_ID_ENUM_HOLDER                  = 23;
+  protected static final byte    TYPE_ID_CURRENCY                     = 24;
+  protected static final byte    TYPE_ID_STRING_COMPRESSED            = 25;
   // protected static final byte TYPE_ID_URL = 26;
 
-  private static final byte          ARRAY_TYPE_PRIMITIVE                 = 1;
-  private static final byte          ARRAY_TYPE_NON_PRIMITIVE             = 2;
+  private static final byte      ARRAY_TYPE_PRIMITIVE                 = 1;
+  private static final byte      ARRAY_TYPE_NON_PRIMITIVE             = 2;
 
-  private static final boolean       STRING_COMPRESSION_ENABLED           = TCPropertiesImpl
-                                                                              .getProperties()
-                                                                              .getBoolean(
-                                                                                          TCPropertiesConsts.L1_TRANSACTIONMANAGER_STRINGS_COMPRESS_ENABLED);
-  protected static final boolean     STRING_COMPRESSION_LOGGING_ENABLED   = TCPropertiesImpl
-                                                                              .getProperties()
-                                                                              .getBoolean(
-                                                                                          TCPropertiesConsts.L1_TRANSACTIONMANAGER_STRINGS_COMPRESS_LOGGING_ENABLED);
-  private static final int           STRING_COMPRESSION_MIN_SIZE          = TCPropertiesImpl
-                                                                              .getProperties()
-                                                                              .getInt(
-                                                                                      TCPropertiesConsts.L1_TRANSACTIONMANAGER_STRINGS_COMPRESS_MINSIZE);
+  private static final boolean   STRING_COMPRESSION_ENABLED           = TCPropertiesImpl
+                                                                          .getProperties()
+                                                                          .getBoolean(
+                                                                                      TCPropertiesConsts.L1_TRANSACTIONMANAGER_STRINGS_COMPRESS_ENABLED);
+  protected static final boolean STRING_COMPRESSION_LOGGING_ENABLED   = TCPropertiesImpl
+                                                                          .getProperties()
+                                                                          .getBoolean(
+                                                                                      TCPropertiesConsts.L1_TRANSACTIONMANAGER_STRINGS_COMPRESS_LOGGING_ENABLED);
+  private static final int       STRING_COMPRESSION_MIN_SIZE          = TCPropertiesImpl
+                                                                          .getProperties()
+                                                                          .getInt(
+                                                                                  TCPropertiesConsts.L1_TRANSACTIONMANAGER_STRINGS_COMPRESS_MINSIZE);
 
-  protected final ClassProvider      classProvider;
+  protected final ClassProvider  classProvider;
 
   public BaseDNAEncodingImpl(ClassProvider classProvider) {
     this.classProvider = classProvider;
@@ -127,7 +126,7 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
         break;
       case ENUM:
         output.writeByte(TYPE_ID_ENUM);
-        Class enumClass = ((Enum)value).getDeclaringClass();
+        Class enumClass = ((Enum) value).getDeclaringClass();
         writeString(enumClass.getName(), output);
         writeString(classProvider.getLoaderDescriptionFor(enumClass).toDelimitedString(), output);
         writeString(((Enum) value).name(), output);
@@ -737,6 +736,9 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
     boolean isInterned = input.readBoolean();
     byte[] data = readByteArray(input);
     if (useUTF8String(type)) {
+      // special case the empty string to save memory
+      if (data.length == 0) { return ""; }
+
       if (isInterned) {
         String temp = new String(data, "UTF-8");
         return temp.intern();
