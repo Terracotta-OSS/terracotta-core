@@ -40,45 +40,47 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TimerTask;
 
 public class Lock {
-  private static final TCLogger                               logger              = TCLogging.getLogger(Lock.class);
-  private static final LinkedHashMap                          EMPTY_MAP           = new EmptyMap();
+  private static final TCLogger                     logger              = TCLogging.getLogger(Lock.class);
+  private static final Map                          EMPTY_MAP           = Collections.EMPTY_MAP;
 
-  private final static boolean                                LOCK_LEASE_ENABLE   = TCPropertiesImpl
-                                                                                      .getProperties()
-                                                                                      .getBoolean(
-                                                                                                  TCPropertiesConsts.L2_LOCKMANAGER_GREEDY_LEASE_ENABLED);
-  private final static int                                    LOCK_LEASE_TIME     = TCPropertiesImpl
-                                                                                      .getProperties()
-                                                                                      .getInt(
-                                                                                              TCPropertiesConsts.L2_LOCKMANAGER_GREEDY_LEASE_LEASETIME_INMILLS);
-  public final static Lock                                    NULL_LOCK           = new Lock(
-                                                                                             LockID.NULL_ID,
-                                                                                             LockManagerImpl.ALTRUISTIC_LOCK_POLICY,
-                                                                                             ServerThreadContextFactory.DEFAULT_FACTORY,
-                                                                                             L2LockStatsManager.NULL_LOCK_STATS_MANAGER,
-                                                                                             "");
-  private static final int                                    MAP_SIZE            = 1;
-  private static final float                                  LOAD_FACTOR         = 1F;
+  private final static boolean                      LOCK_LEASE_ENABLE   = TCPropertiesImpl
+                                                                            .getProperties()
+                                                                            .getBoolean(
+                                                                                        TCPropertiesConsts.L2_LOCKMANAGER_GREEDY_LEASE_ENABLED);
+  private final static int                          LOCK_LEASE_TIME     = TCPropertiesImpl
+                                                                            .getProperties()
+                                                                            .getInt(
+                                                                                    TCPropertiesConsts.L2_LOCKMANAGER_GREEDY_LEASE_LEASETIME_INMILLS);
+  public final static Lock                          NULL_LOCK           = new Lock(
+                                                                                   LockID.NULL_ID,
+                                                                                   LockManagerImpl.ALTRUISTIC_LOCK_POLICY,
+                                                                                   ServerThreadContextFactory.DEFAULT_FACTORY,
+                                                                                   L2LockStatsManager.NULL_LOCK_STATS_MANAGER,
+                                                                                   "");
 
-  private final Map<NodeID, Holder>                           greedyHolders       = new HashMap(MAP_SIZE, LOAD_FACTOR);
-  private final Map<ServerThreadContext, Holder>              holders             = new HashMap(MAP_SIZE, LOAD_FACTOR);
-  private final LockID                                        lockID;
-  private final ServerThreadContextFactory                    threadContextFactory;
-  private final L2LockStatsManager                            lockStatsManager;
-  private final String                                        lockType;
+  // These settings are optimized for the assumed common case of small size (and often size 1) of the various maps that
+  // comprise the lock accounting. With these settings the maps will not grow/rehash until their size reaches the
+  // current capacity which is space tradeoff from the default settings that kick in at 75% full
+  private static final int                          MAP_SIZE            = 1;
+  private static final float                        LOAD_FACTOR         = 1F;
 
-  private Map<ServerThreadContext, TimerTask>                 tryLockTimers       = EMPTY_MAP;
-  private LinkedHashMap<ServerThreadContext, Request>         pendingLockRequests = EMPTY_MAP;
-  private LinkedHashMap<ServerThreadContext, LockWaitContext> waiters             = EMPTY_MAP;
-  private Map<LockWaitContext, TimerTask>                     waitTimers          = EMPTY_MAP;
+  private final Map<NodeID, Holder>                 greedyHolders       = new HashMap(MAP_SIZE, LOAD_FACTOR);
+  private final Map<ServerThreadContext, Holder>    holders             = new HashMap(MAP_SIZE, LOAD_FACTOR);
+  private final LockID                              lockID;
+  private final ServerThreadContextFactory          threadContextFactory;
+  private final L2LockStatsManager                  lockStatsManager;
+  private final String                              lockType;
 
-  private int                                                 level;
-  private boolean                                             recalled            = false;
-  private int                                                 lockPolicy;
+  private Map<TimerKey, TimerTask>                  timers              = EMPTY_MAP;
+  private Map<ServerThreadContext, Request>         pendingLockRequests = EMPTY_MAP;
+  private Map<ServerThreadContext, LockWaitContext> waiters             = EMPTY_MAP;
+
+  private int                                       level;
+  private boolean                                   recalled            = false;
+  private int                                       lockPolicy;
 
   // real constructor used by lock manager
   Lock(final LockID lockID, final ServerThreadContext txn, final int lockLevel, final String lockType,
@@ -470,8 +472,13 @@ public class Lock {
     }
   }
 
-  private static Object removeFirstValue(LinkedHashMap map) {
-    Iterator iter = map.values().iterator();
+  private static Object removeFirstValue(Map map) {
+    if (map == EMPTY_MAP) { return null; }
+
+    // Make sure we're dealing with a LinkedHashMap here since this method assumes an ordered map
+    LinkedHashMap lhm = (LinkedHashMap) map;
+
+    Iterator iter = lhm.values().iterator();
     if (iter.hasNext()) {
       Object removed = iter.next();
       iter.remove();
@@ -493,7 +500,7 @@ public class Lock {
   }
 
   private void removeAndCancelWaitTimer(final LockWaitContext wait) {
-    TimerTask task = waitTimers.remove(wait);
+    TimerTask task = timers.remove(wait);
     if (task != null) task.cancel();
   }
 
@@ -517,7 +524,7 @@ public class Lock {
   synchronized void tryRequestLockTimeout(final LockWaitContext context) {
     TryLockContextImpl tryLockContext = (TryLockContextImpl) context;
     ServerThreadContext txn = tryLockContext.getThreadContext();
-    Object removed = tryLockTimers.remove(txn);
+    Object removed = timers.remove(txn);
     if (removed != null) {
       pendingLockRequests.remove(txn);
       Sink lockResponseSink = context.getLockResponseSink();
@@ -534,7 +541,7 @@ public class Lock {
     Object removed = waiters.remove(txn);
 
     if (removed != null) {
-      waitTimers.remove(context);
+      timers.remove(context);
       Sink lockResponseSink = context.getLockResponseSink();
       int lockLevel = context.lockLevel();
 
@@ -633,7 +640,7 @@ public class Lock {
   private void scheduleWait(final TimerCallback callback, final TCLockTimer waitTimer, final LockWaitContext waitContext) {
     final TimerTask timer = waitTimer.scheduleTimer(callback, waitContext.getTimerSpec(), waitContext);
     if (timer != null) {
-      initWaitTimers().put(waitContext, timer);
+      initTimers().put(waitContext, timer);
     }
   }
 
@@ -643,37 +650,30 @@ public class Lock {
     final TimerTask timer = waitTimer.scheduleTimer(callback, tryLockWaitRequestContext.getTimerSpec(),
                                                     tryLockWaitRequestContext);
     if (timer != null) {
-      initTryLockTimers().put(tryLockWaitRequestContext.getThreadContext(), timer);
+      initTimers().put(tryLockWaitRequestContext.getThreadContext(), timer);
     }
     return timer;
   }
 
-  private Map initTryLockTimers() {
-    if (tryLockTimers == EMPTY_MAP) {
-      tryLockTimers = new HashMap<ServerThreadContext, TimerTask>(MAP_SIZE, LOAD_FACTOR);
+  private Map<TimerKey, TimerTask> initTimers() {
+    if (timers == EMPTY_MAP) {
+      timers = new HashMap<TimerKey, TimerTask>(MAP_SIZE, LOAD_FACTOR);
     }
-    return tryLockTimers;
+    return timers;
   }
 
-  private LinkedHashMap initPendingLockRequests() {
+  private Map<ServerThreadContext, Request> initPendingLockRequests() {
     if (pendingLockRequests == EMPTY_MAP) {
       pendingLockRequests = new LinkedHashMap<ServerThreadContext, Request>(MAP_SIZE, LOAD_FACTOR);
     }
     return pendingLockRequests;
   }
 
-  private LinkedHashMap initWaiters() {
+  private Map<ServerThreadContext, LockWaitContext> initWaiters() {
     if (waiters == EMPTY_MAP) {
       waiters = new LinkedHashMap<ServerThreadContext, LockWaitContext>(MAP_SIZE, LOAD_FACTOR);
     }
     return waiters;
-  }
-
-  private Map initWaitTimers() {
-    if (waitTimers == EMPTY_MAP) {
-      waitTimers = new HashMap<LockWaitContext, TimerTask>(MAP_SIZE, LOAD_FACTOR);
-    }
-    return waitTimers;
   }
 
   private void checkLegalWaitNotifyState(final ServerThreadContext threadContext) throws TCIllegalMonitorStateException {
@@ -900,7 +900,7 @@ public class Lock {
     if (!(request instanceof TryLockRequest)) { return null; }
 
     ServerThreadContext requestThreadContext = request.getThreadContext();
-    TimerTask recallTimer = tryLockTimers.remove(requestThreadContext);
+    TimerTask recallTimer = timers.remove(requestThreadContext);
     if (recallTimer != null) {
       recallTimer.cancel();
       return request;
@@ -1053,11 +1053,11 @@ public class Lock {
       }
     }
 
-    for (Iterator i = waitTimers.keySet().iterator(); i.hasNext();) {
+    for (Iterator i = timers.keySet().iterator(); i.hasNext();) {
       LockWaitContext wc = (LockWaitContext) i.next();
       if (wc.getNodeID().equals(nid)) {
         try {
-          TimerTask task = waitTimers.get(wc);
+          TimerTask task = timers.get(wc);
           task.cancel();
         } finally {
           i.remove();
@@ -1118,90 +1118,5 @@ public class Lock {
   // }
   // logger.warn(builder.toString());
   // }
-
-  // The only purpose of this map is to allow it to be type compatible with LHM
-  // Any attempt to add to it will throw an exceptionT
-  private static class EmptyMap extends LinkedHashMap {
-
-    @Override
-    public Object clone() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public int hashCode() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public String toString() {
-      return getClass().getName();
-    }
-
-    @Override
-    public void clear() {
-      //
-    }
-
-    @Override
-    public boolean containsKey(Object key) {
-      return false;
-    }
-
-    @Override
-    public boolean containsValue(Object value) {
-      return false;
-    }
-
-    @Override
-    public Set entrySet() {
-      return Collections.EMPTY_SET;
-    }
-
-    @Override
-    public Object get(Object key) {
-      return null;
-    }
-
-    @Override
-    public boolean isEmpty() {
-      return true;
-    }
-
-    @Override
-    public Set keySet() {
-      return Collections.EMPTY_SET;
-    }
-
-    @Override
-    public Object put(Object key, Object value) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void putAll(Map t) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Object remove(Object key) {
-      return null;
-    }
-
-    @Override
-    public int size() {
-      return 0;
-    }
-
-    @Override
-    public Collection values() {
-      return Collections.EMPTY_LIST;
-    }
-  }
 
 }
