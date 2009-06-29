@@ -115,6 +115,7 @@ module BundledComponents
               :doctitle => title, :windowtitle => title) do
               ant.packageset(:dir => a_module.name + '/src', :defaultexcludes => true) do
                 ant.include(:name => 'com/tc/**')
+                ant.include(:name => 'com/tcclient/**')
               end
             end
             puts "Done javadoc"
