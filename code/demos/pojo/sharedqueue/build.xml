@@ -9,7 +9,7 @@
 <project name="sharedqueue" default="build" basedir=".">
   <property name="src.dir" location="src"/>
   <property name="build.dir" location="classes"/>
-  <property name="api.jar" value="../../../lib/api-@api.version@.jar"/>
+  <property name="api.jar" value="../../../lib/terracotta-api-@api.version@.jar"/>
   
   <target name="init">
     <mkdir dir="${build.dir}"/>
