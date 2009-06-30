@@ -114,8 +114,7 @@ module BundledComponents
               :bottom => "<i>All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.</i>",
               :doctitle => title, :windowtitle => title) do
               ant.packageset(:dir => a_module.name + '/src', :defaultexcludes => true) do
-                ant.include(:name => 'com/tc/**')
-                ant.include(:name => 'com/tcclient/**')
+                ant.include(:name => '**/**')
               end
             end
             puts "Done javadoc"
