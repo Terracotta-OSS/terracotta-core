@@ -85,20 +85,20 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
       stateMachine.connected();
     } catch (TCTimeoutException e) {
       stateMachine.connectTimeout();
-      stateMachine.loggerWarn("Node:" + node + " " + e);
+      stateMachine.loggerWarn("Node:" + node + " not up. Connect Timeout occured.");
     } catch (UnknownHostException e) {
       stateMachine.unknownHost();
-      stateMachine.loggerWarn("Node:" + node + " " + e);
+      stateMachine.loggerWarn("Node:" + node + " not up. Unknown host.");
     } catch (MaxConnectionsExceededException e) {
       stateMachine.maxConnExceed();
-      stateMachine.loggerWarn("Node:" + node + " " + e);
+      stateMachine.loggerWarn("Node:" + node + " not up. Max connections exceeded.");
     } catch (IOException e) {
       stateMachine.connetIOException();
-      stateMachine.loggerWarn("Node:" + node + " " + e);
+      stateMachine.loggerWarn("Node:" + node + " not up. IOException occured:" + e.getMessage());
     } catch (Throwable t) {
       // catch all throwables to prevent discover from dying
       stateMachine.throwableException();
-      stateMachine.loggerWarn("Node:" + node + " " + t);
+      stateMachine.loggerWarn("Node:" + node + " not up. Exception occured:" + t.getMessage());
     } finally {
       decConnectingCount();
     }
