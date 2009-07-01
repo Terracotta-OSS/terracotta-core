@@ -48,12 +48,33 @@ public class TCPropertiesContsTest extends TCTestCase {
         throw new AssertionError(e);
       }
     }
+    tcPropertiesConsts.remove(TCPropertiesConsts.OLD_PROPERTIES.toString());
     Set tcProperties = props.keySet();
-    for (Iterator iter = tcProperties.iterator(); iter.hasNext();) {
-      String tcProperty = (String) iter.next();
+    for (Iterator<String> iter = tcProperties.iterator(); iter.hasNext();) {
+      String tcProperty = iter.next();
       Assert
           .assertTrue("There is no constant declared for " + tcProperty + " in " + TCPropertiesConsts.class.getName(),
                       tcPropertiesConsts.contains(tcProperty));
+    }
+
+    for (Iterator<String> iter = tcPropertiesConsts.iterator(); iter.hasNext();) {
+      String tcProperty = iter.next();
+      // TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT is added only for internal testing purposes
+      if (!tcProperty.equals(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT)
+          && !tcProperties.contains(tcProperty)) {
+        int index;
+        for (index = 0; index < TCPropertiesConsts.OLD_PROPERTIES.length; index++) {
+          if (TCPropertiesConsts.OLD_PROPERTIES[index].equals(tcProperty)) {
+            break;
+          }
+        }
+        if (index == TCPropertiesConsts.OLD_PROPERTIES.length) {
+          Assert.fail(tcProperty + " is defined in " + TCPropertiesConsts.class.getName()
+                      + " but is not present in tc.properties file. " + " Plesase remove it from "
+                      + TCPropertiesConsts.class.getName() + " and add it to " + TCPropertiesConsts.class.getName()
+                      + " OLD_PROPERTIES field");
+        }
+      }
     }
   }
 }
