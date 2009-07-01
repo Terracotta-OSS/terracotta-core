@@ -383,11 +383,13 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     String serverHost = connectionInfo[0].getHostname();
     int serverPort = connectionInfo[0].getPort();
 
-    int timeout = tcProperties.getInt(TCPropertiesConsts.L1_SOCKET_CONNECT_TIMEOUT);
-    if (timeout < 0) { throw new IllegalArgumentException("invalid socket time value: " + timeout); }
-
+    int socketConnectTimeout = tcProperties.getInt(TCPropertiesConsts.L1_SOCKET_CONNECT_TIMEOUT);
+    int maxReconnectTries = tcProperties.getInt(TCPropertiesConsts.L1_MAX_CONNECT_RETRIES);
+    if (socketConnectTimeout < 0) { throw new IllegalArgumentException("invalid socket time value: "
+                                                                       + socketConnectTimeout); }
     this.channel = this.dsoClientBuilder.createDSOClientMessageChannel(this.communicationsManager,
-                                                                       this.connectionComponents, sessionProvider);
+                                                                       this.connectionComponents, sessionProvider,
+                                                                       maxReconnectTries, socketConnectTimeout);
     ClientIDLoggerProvider cidLoggerProvider = new ClientIDLoggerProvider(this.channel.getClientIDProvider());
     stageManager.setLoggerProvider(cidLoggerProvider);
 

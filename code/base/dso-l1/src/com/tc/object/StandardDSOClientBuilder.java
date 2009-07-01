@@ -66,12 +66,13 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
 
   public DSOClientMessageChannel createDSOClientMessageChannel(final CommunicationsManager commMgr,
                                                                final PreparedComponentsFromL2Connection connComp,
-                                                               final SessionProvider sessionProvider) {
+                                                               final SessionProvider sessionProvider,
+                                                               int maxReconnectTries, int socketConnectTimeout) {
     ClientMessageChannel cmc;
     ConfigItem connectionInfoItem = connComp.createConnectionInfoConfigItem();
     ConnectionInfo[] connectionInfo = (ConnectionInfo[]) connectionInfoItem.getObject();
     ConnectionAddressProvider cap = new ConnectionAddressProvider(connectionInfo);
-    cmc = commMgr.createClientChannel(sessionProvider, -1, null, 0, 10000, cap);
+    cmc = commMgr.createClientChannel(sessionProvider, maxReconnectTries, null, 0, socketConnectTimeout, cap);
     return new DSOClientMessageChannelImpl(cmc, new GroupID[] { new GroupID(cap.getGroupId()) });
   }
 

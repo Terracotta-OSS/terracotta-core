@@ -52,7 +52,8 @@ public class ClientGroupMessageChannelImpl extends ClientMessageChannelImpl impl
   private final OrderedGroupIDs       groupIDs;
 
   public ClientGroupMessageChannelImpl(TCMessageFactory msgFactory, SessionProvider sessionProvider,
-                                       final int maxReconnectTries, CommunicationsManager communicationsManager,
+                                       final int maxReconnectTries, final int socketConnectTimeout,
+                                       CommunicationsManager communicationsManager,
                                        ConnectionAddressProvider[] addressProviders) {
     super(msgFactory, null, sessionProvider, GroupID.ALL_GROUPS);
     this.msgFactory = msgFactory;
@@ -62,20 +63,23 @@ public class ClientGroupMessageChannelImpl extends ClientMessageChannelImpl impl
     logger.info("Create active channels");
     Assert.assertTrue(addressProviders.length > 0);
     Map channels = new LinkedHashMap();
-    
+
     for (int i = 0; i < addressProviders.length; ++i) {
-      createSubChannel(channels, maxReconnectTries, addressProviders[i]);
+      createSubChannel(channels, maxReconnectTries, socketConnectTimeout, addressProviders[i]);
     }
     this.groupChannelMap = Collections.unmodifiableMap(channels);
     this.groupIDs = new OrderedGroupIDs((GroupID[]) groupChannelMap.keySet()
         .toArray(new GroupID[groupChannelMap.size()]));
-    
+
     coordinatorGroupID = this.groupIDs.getActiveCoordinatorGroup();
   }
 
-  private GroupID createSubChannel(Map channels, final int maxReconnectTries, ConnectionAddressProvider addressProvider) {
+  private GroupID createSubChannel(Map channels, final int maxReconnectTries, final int socketConnectTimeout,
+                                   ConnectionAddressProvider addressProvider) {
+
     ClientMessageChannel channel = this.communicationsManager.createClientChannel(this.sessionProvider,
-                                                                                  maxReconnectTries, null, 0, 10000,
+                                                                                  maxReconnectTries, null, 0,
+                                                                                  socketConnectTimeout,
                                                                                   addressProvider, null,
                                                                                   this.msgFactory,
                                                                                   new TCMessageRouterImpl());
@@ -257,7 +261,7 @@ public class ClientGroupMessageChannelImpl extends ClientMessageChannelImpl impl
     }
     return true;
   }
-  
+
   @Override
   public boolean isClosed() {
     if (groupChannelMap.size() == 0) return false;

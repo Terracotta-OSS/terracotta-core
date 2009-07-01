@@ -30,12 +30,14 @@ public class ClientGroupCommunicationsManagerImpl extends CommunicationsManagerI
   }
 
   public ClientGroupMessageChannel createClientGroupChannel(final SessionProvider sessionProvider,
-                                                            final int maxReconnectTries, final int timeout,
+                                                            final int maxReconnectTries,
+                                                            final int socketConnectTimeout,
                                                             ConnectionAddressProvider[] addressProviders) {
 
     ClientGroupMessageChannel clientGroup = new ClientGroupMessageChannelImpl(new TCMessageFactoryImpl(sessionProvider,
                                                                                                        monitor),
-                                                                              sessionProvider, maxReconnectTries, this,
+                                                                              sessionProvider, maxReconnectTries,
+                                                                              socketConnectTimeout, this,
                                                                               addressProviders);
     return (clientGroup);
   }

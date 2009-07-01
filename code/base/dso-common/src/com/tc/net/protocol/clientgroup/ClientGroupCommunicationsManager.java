@@ -11,7 +11,8 @@ import com.tc.object.session.SessionProvider;
 public interface ClientGroupCommunicationsManager extends CommunicationsManager {
 
   public ClientGroupMessageChannel createClientGroupChannel(final SessionProvider sessionProvider,
-                                                            final int maxReconnectTries, final int timeout,
+                                                            final int maxReconnectTries,
+                                                            final int socketConnectTimeout,
                                                             ConnectionAddressProvider[] addressProviders);
 
 }

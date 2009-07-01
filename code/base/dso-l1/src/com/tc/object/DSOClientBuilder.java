@@ -47,7 +47,8 @@ public interface DSOClientBuilder {
 
   DSOClientMessageChannel createDSOClientMessageChannel(final CommunicationsManager commMgr,
                                                         final PreparedComponentsFromL2Connection connComp,
-                                                        final SessionProvider sessionProvider);
+                                                        final SessionProvider sessionProvider, int maxReconnectTries,
+                                                        int socketConnectTimeout);
 
   CommunicationsManager createCommunicationsManager(final MessageMonitor monitor,
                                                     final NetworkStackHarnessFactory stackHarnessFactory,
