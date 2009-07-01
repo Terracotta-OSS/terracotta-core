@@ -18,13 +18,17 @@ import java.util.Set;
 public class TCPropertiesContsTest extends TCTestCase {
 
   // This file resides in src.resource/com/tc/properties directory
-  private static final String DEFAULT_TC_PROPERTIES_FILE = "tc.properties";
+  private static final String      DEFAULT_TC_PROPERTIES_FILE = "tc.properties";
+  private static final Set<String> exemptedProperties         = new HashSet<String>();
 
-  private final Properties    props                      = new Properties();
+  private final Properties         props                      = new Properties();
 
   @Override
   protected void setUp() {
     loadDefaults(DEFAULT_TC_PROPERTIES_FILE);
+    exemptedProperties.add(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT);
+    exemptedProperties.add(TCPropertiesConsts.LICENSE_RESOURCE_PATH);
+    exemptedProperties.add(TCPropertiesConsts.LICENSE_URL);
   }
 
   private void loadDefaults(String propFile) {
@@ -60,8 +64,7 @@ public class TCPropertiesContsTest extends TCTestCase {
     for (Iterator<String> iter = tcPropertiesConsts.iterator(); iter.hasNext();) {
       String tcProperty = iter.next();
       // TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT is added only for internal testing purposes
-      if (!tcProperty.equals(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT)
-          && !tcProperties.contains(tcProperty)) {
+      if (!exemptedProperties.contains(tcProperty) && !tcProperties.contains(tcProperty)) {
         int index;
         for (index = 0; index < TCPropertiesConsts.OLD_PROPERTIES.length; index++) {
           if (TCPropertiesConsts.OLD_PROPERTIES[index].equals(tcProperty)) {
