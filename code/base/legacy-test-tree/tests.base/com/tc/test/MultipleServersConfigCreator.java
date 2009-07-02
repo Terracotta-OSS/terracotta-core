@@ -77,9 +77,9 @@ public class MultipleServersConfigCreator {
                                                                                                     "Unknown operating mode."); }
   }
 
-  protected void createOrCleanDataDirectory(String dataLocation) throws IOException {
+  protected void createOrCleanDirectory(String dataLocation, String dirFor) throws IOException {
     File dbDir = new File(dataLocation);
-    logger.info("DBHome: " + dbDir.getAbsolutePath());
+    logger.info(dirFor + ": " + dbDir.getAbsolutePath());
     if (dbDir.exists()) {
       FileUtils.cleanDirectory(dbDir);
     } else {
@@ -100,8 +100,11 @@ public class MultipleServersConfigCreator {
     system.setConfigurationModel(configModel);
 
     String dataLocationHome = tempDir.getAbsolutePath() + File.separator + "server-data";
-    createOrCleanDataDirectory(dataLocationHome);
+    createOrCleanDirectory(dataLocationHome, "DBHome");
     String logLocationHome = tempDir.getAbsolutePath() + File.separator + "server-logs" + File.separator;
+    createOrCleanDirectory(logLocationHome, "Log home");
+    String statisticsLocationHome = tempDir.getAbsolutePath() + File.separator + "server-statistics" + File.separator;
+    createOrCleanDirectory(statisticsLocationHome, "Statistics home");
 
     boolean gcEnabled = configFactory.getGCEnabled();
     boolean gcVerbose = configFactory.getGCVerbose();
@@ -125,6 +128,7 @@ public class MultipleServersConfigCreator {
         }
         l2.setData(dataLocations[serverIndex]);
         l2.setLogs(logLocationHome + "server-" + serverIndex);
+        l2.setStatistics(statisticsLocationHome + "server-" + serverIndex);
         l2.setName(groupData[i].getServerNames()[j]);
         l2.setDSOPort(groupData[i].getDsoPorts()[j]);
         l2.setJMXPort(groupData[i].getJmxPorts()[j]);
