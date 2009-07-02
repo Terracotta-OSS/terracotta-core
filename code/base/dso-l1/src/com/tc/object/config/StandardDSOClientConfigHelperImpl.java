@@ -153,14 +153,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   /**
    * A map of class names to TransparencyClassSpec
-   *
+   * 
    * @GuardedBy {@link #specLock}
    */
   private final Map                                          userDefinedBootSpecs               = new HashMap();
 
   /**
    * A map of class names to TransparencyClassSpec for individual classes
-   *
+   * 
    * @GuardedBy {@link #specLock}
    */
   private final Map                                          classSpecs                         = new HashMap();
@@ -239,7 +239,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     supportSharingThroughReflection = appConfig.supportSharingThroughReflection().getBoolean();
     try {
-      doPreInstrumentedAutoconfig(interrogateBootJar);
+      doPreInstrumentedAutoconfig();
       doAutoconfig(interrogateBootJar);
     } catch (Exception e) {
       throw new ConfigurationSetupException(e.getLocalizedMessage(), e);
@@ -363,7 +363,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return this.configSetupManager.dsoL1Config().instrumentationLoggingOptions();
   }
 
-  private void doPreInstrumentedAutoconfig(final boolean interrogateBootJar) {
+  private void doPreInstrumentedAutoconfig() {
     TransparencyClassSpec spec = null;
 
     spec = getOrCreateSpec("java.util.TreeMap", "com.tc.object.applicator.TreeMapApplicator");
@@ -833,7 +833,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  public URL getClassResource(final String className, final ClassLoader loader, final boolean hideSystemLoaderOnlyResources) {
+  public URL getClassResource(final String className, final ClassLoader loader,
+                              final boolean hideSystemLoaderOnlyResources) {
     Resource res = this.classResources.get(className);
     if (res == null) return null;
 
